@@ -32,6 +32,17 @@ import html
 import json
 import re
 import sys
+from pathlib import Path
+
+try:
+    HERE = Path(__file__).resolve()
+    # shared/scripts in the built plugin, else in this repo's source tree
+    sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
+                                     HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
+    import hook_io
+except Exception as exc:  # a crash would let the call through
+    sys.stderr.write(f"Refused: rule-gate cannot load its helper: {exc!r}\n")
+    sys.exit(2)
 
 PREFIX = "Refused: "
 ENFORCE_QUESTION = "Do you want me to enforce that rule for all future sessions?"
@@ -141,12 +152,11 @@ def read_transcript(path):
 
 
 def refuse(message):
-    sys.stderr.write(PREFIX + message + "\n" + CEREMONY + "\n")
-    return 2
+    return hook_io.refuse(PREFIX + message + "\n" + CEREMONY)
 
 
 def main():
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    payload = hook_io.payload()
     tool_input = payload.get("tool_input") or {}
     op = tool_input.get("op")
     if op not in ("add", "retire"):
@@ -186,8 +196,5 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    try:
-        sys.exit(main())
-    except Exception as exc:  # the gate's own failure refuses the call
-        sys.exit(refuse(f"the gate itself failed: {exc!r}"))
+    # the gate's own failure refuses the call
+    hook_io.run(main, "rule-gate", closed=lambda exc: refuse(f"the gate itself failed: {exc!r}"))

@@ -16,6 +16,9 @@ import sys
 import tempfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+import hook_io  # noqa: E402
+
 LANES = {
     "drafting": {"draft", "publish", "polish-substance", "assemble", "prepare", "work"},
 }
@@ -73,7 +76,7 @@ def lane_from_transcript(path):
 
 
 def main():
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    payload = hook_io.payload()
     session = re.sub(r"[^\w-]", "", payload.get("session_id") or "")
     if not session:
         return 0
@@ -86,9 +89,8 @@ def main():
     if AUDIT_TOOL_RE.search(payload.get("tool_name") or ""):
         # The audit shows rules hidden from /draft (rules-DAG spec §4.9); it enters no lane.
         if held and held[0] == "drafting":
-            sys.stderr.write("Blocked: auditing Probanda's guidance is for a review session, never a drafting "
-                             f"session{started(held[1])}. Start a new session for the audit.\n")
-            return 2
+            return hook_io.refuse("Blocked: auditing Probanda's guidance is for a review session, never a drafting "
+                                  f"session{started(held[1])}. Start a new session for the audit.")
         return 0
     lane, label = entry(payload)
     if lane is not None and held is None:
@@ -97,10 +99,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        sys.exit(main())
-    except SystemExit:
-        raise
-    except Exception as exc:  # fail OPEN, loudly
-        sys.stderr.write(f"session-lane-guard hook error (allowing): {type(exc).__name__}: {exc}\n")
-        sys.exit(0)
+    hook_io.run(main, "session-lane-guard")

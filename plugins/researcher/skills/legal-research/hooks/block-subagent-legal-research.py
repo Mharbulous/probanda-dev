@@ -19,8 +19,11 @@ SKILL.md without the Skill tool. Policy: .claude/skills/shared/legal-research.md
 Registered in plugins/litigation/.claude-plugin/plugin.json. Fails OPEN on any
 unexpected error, loudly.
 """
-import json
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "scripts"))
+import hook_io  # noqa: E402
 
 GATE_SKILL = "legal-research"
 QUERY_SUBSKILL = "westlaw-query-optimizer"
@@ -30,7 +33,7 @@ Stop and return this item to the main session, which runs /legal-research itself
 
 
 def main():
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    payload = hook_io.payload()
     if payload.get("tool_name") != "Skill":
         return 0
     tool_input = payload.get("tool_input") or {}
@@ -40,23 +43,9 @@ def main():
     if (tool_input.get("args") or "").strip().startswith(QUERY_SUBSKILL):
         return 0
     if payload.get("agent_id"):
-        sys.stderr.write(BLOCK_MESSAGE + "\n")
-        return 2
+        return hook_io.refuse(BLOCK_MESSAGE)
     return 0
 
 
 if __name__ == "__main__":
-    try:
-        try:
-            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
-        sys.exit(main())
-    except SystemExit:
-        raise
-    except Exception as exc:  # fail OPEN, loudly
-        sys.stderr.write(
-            "block-subagent-legal-research hook error (allowing call): "
-            + type(exc).__name__ + ": " + str(exc) + "\n"
-        )
-        sys.exit(0)
+    hook_io.run(main, "block-subagent-legal-research")

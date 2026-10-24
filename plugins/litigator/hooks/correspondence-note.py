@@ -10,8 +10,14 @@ words (shared/correspondence-isolation.md); /draft's source-trace review (draft/
 references/source-trace.md) checks each fact before delivery. It lives in litigator because
 lawyer may name nothing in litigator. Never blocks: always exits 0.
 """
-import json
 import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve()
+# shared/scripts in the built plugin, else in this repo's source tree
+sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
+                                 HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
+import hook_io  # noqa: E402
 
 NOTE = (
     "Every letter, email or memo that leaves the firm goes through /litigator:draft, never written in "
@@ -26,8 +32,4 @@ NOTE = (
 )
 
 if __name__ == "__main__":
-    try:
-        print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": NOTE}}))
-    except Exception as err:  # never block a session start, but say so
-        print(f"correspondence-note: {err}", file=sys.stderr)
-    sys.exit(0)
+    hook_io.run(lambda: hook_io.note("SessionStart", NOTE), "correspondence-note")  # never blocks a session start

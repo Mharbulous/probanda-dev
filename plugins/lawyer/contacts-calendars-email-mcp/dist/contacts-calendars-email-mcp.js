@@ -1,4 +1,4 @@
-// build-stamp: 9a9c537d4ff5
+// build-stamp: 9ac1a8b227b7
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108007,6 +108007,7 @@ function validateValue(label, value, schema) {
   if (type === "object" && !isPlainObject3(value)) {
     throw new ValidationError(`${label} must be an object`);
   }
+  if (type === "array" && !Array.isArray(value)) throw new ValidationError(`${label} must be an array`);
   const allowedValues = schema.enum;
   if (allowedValues && !allowedValues.includes(value)) {
     throw new ValidationError(`${label} must be one of: ${allowedValues.join(", ")}`);

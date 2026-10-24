@@ -1,7 +1,7 @@
 {
   "name": "timekeeper",
   "displayName": "Timekeeper",
-  "version": "0.2.24",
+  "version": "0.2.25",
   "description": "Optional Probanda plugin for British Columbia lawyers that tracks time automatically: it gathers the evidence of a day's work (TimeCamp, phone logs, calendars, sent mail, screen activity), sorts it to client matters, corrects TimeCamp and drafts time entries. Billing, invoices and trust stay in the lawyer plugin. Requires the lawyer plugin: install lawyer first.",
   "author": {
     "name": "Probanda Legal",

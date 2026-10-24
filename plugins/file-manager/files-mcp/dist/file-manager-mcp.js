@@ -1,4 +1,4 @@
-// build-stamp: 9c709817547f
+// build-stamp: f89022b33dc1
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15713,6 +15713,7 @@ function validateValue(label, value, schema) {
   if (type === "object" && !isPlainObject3(value)) {
     throw new ValidationError(`${label} must be an object`);
   }
+  if (type === "array" && !Array.isArray(value)) throw new ValidationError(`${label} must be an array`);
   const allowedValues = schema.enum;
   if (allowedValues && !allowedValues.includes(value)) {
     throw new ValidationError(`${label} must be one of: ${allowedValues.join(", ")}`);
@@ -16622,7 +16623,8 @@ def do_execute(req, resolved):
                 try:
                     con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
                 except Exception:
-                    con.execute("ROLLBACK")
+                    if con.in_transaction:
+                        con.execute("ROLLBACK")
                     raise
             if bootstrap:
                 con.executescript(triggers_sql)

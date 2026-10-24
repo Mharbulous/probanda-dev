@@ -1,4 +1,4 @@
-// build-stamp: 05ddc554f25e
+// build-stamp: 5c9f5daad344
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75802,9 +75802,9 @@ function flatten(id, item) {
   return row2;
 }
 function rowsOf(items, kind) {
-  const rows22 = [];
-  for (const [id, item] of items) if (item.kind === kind) rows22.push(flatten(id, item));
-  return rows22.sort((a3, b3) => String(a3.created_at).localeCompare(String(b3.created_at)) || String(a3.id).localeCompare(String(b3.id)));
+  const rows29 = [];
+  for (const [id, item] of items) if (item.kind === kind) rows29.push(flatten(id, item));
+  return rows29.sort((a3, b3) => String(a3.created_at).localeCompare(String(b3.created_at)) || String(a3.id).localeCompare(String(b3.id)));
 }
 function describe2(id, item) {
   const data = item?.data ?? {};
@@ -77123,7 +77123,7 @@ function mergeKinds(shipped, local, noVenue) {
   const conflicts = [];
   const view = { kinds: [], conflicts };
   const byFile = /* @__PURE__ */ new Map();
-  const rows22 = (source) => {
+  const rows29 = (source) => {
     const doc = objectAt(source.doc, source.file, "the index");
     onlyKeys(doc, ["kinds"], source.file, "the index");
     return arrayAt(doc, "kinds", source.file, "the index", true).map((raw, i3) => {
@@ -77142,7 +77142,7 @@ function mergeKinds(shipped, local, noVenue) {
     });
   };
   if (shipped) {
-    for (const { row: row2, where, file } of rows22(shipped)) {
+    for (const { row: row2, where, file } of rows29(shipped)) {
       if (byFile.has(file)) invalid(shipped.file, where, `file "${file}" appears twice`);
       const recipient = recipientOf(row2, shipped.file, where, noVenue);
       if (noVenue && recipient === void 0) invalid(shipped.file, `${where}.recipient`, "is required under _NoVenue");
@@ -77158,7 +77158,7 @@ function mergeKinds(shipped, local, noVenue) {
     }
   }
   if (local) {
-    for (const { row: row2, where, file } of rows22(local)) {
+    for (const { row: row2, where, file } of rows29(local)) {
       const aliases = aliasesOf(row2, local.file, where, "local", false);
       const recipient = recipientOf(row2, local.file, where, noVenue);
       const existing = byFile.get(file);
@@ -78781,10 +78781,10 @@ function resolveMatter(items, ref) {
   else if (ref.matt_num) match = (row2) => row2.matt_num === normalizeMattNum(ref.matt_num);
   else if (ref.file_number) match = (row2) => row2.file_number === String(ref.file_number);
   if (!match) return null;
-  const rows22 = rowsOf(items, "matter").filter(match);
-  if (rows22.length === 0) return null;
-  if (rows22.length > 1) throw new AmbiguousMatchError("Matter reference matched more than one matter");
-  return { id: String(rows22[0].id), row: rows22[0] };
+  const rows29 = rowsOf(items, "matter").filter(match);
+  if (rows29.length === 0) return null;
+  if (rows29.length > 1) throw new AmbiguousMatchError("Matter reference matched more than one matter");
+  return { id: String(rows29[0].id), row: rows29[0] };
 }
 function requireMatter(items, ref) {
   const resolved = resolveMatter(items, ref);
@@ -78806,9 +78806,9 @@ function addDaysIso(isoDate, days) {
   dt3.setUTCDate(dt3.getUTCDate() + days);
   return dt3.toISOString().slice(0, 10);
 }
-function effectiveCutoff(rows22) {
+function effectiveCutoff(rows29) {
   let best = null;
-  for (const row2 of rows22) {
+  for (const row2 of rows29) {
     let candidate = null;
     if (typeof row2.date_to === "string" && row2.date_to) {
       candidate = { cutoff_date: addDaysIso(row2.date_to, 1), cutoff_source: "date_to" };
@@ -78830,12 +78830,12 @@ function asString(value, label2) {
 function withClient(matter, clients) {
   return { ...matter, ...clientContext(clients.get(String(matter.client_id))) };
 }
-function byId(rows22) {
-  return new Map(rows22.map((row2) => [String(row2.id), row2]));
+function byId(rows29) {
+  return new Map(rows29.map((row2) => [String(row2.id), row2]));
 }
-function groupBy(rows22, field) {
+function groupBy(rows29, field) {
   const groups = /* @__PURE__ */ new Map();
-  for (const row2 of rows22) {
+  for (const row2 of rows29) {
     const key = String(row2[field]);
     const list = groups.get(key) ?? [];
     list.push(row2);
@@ -78866,8 +78866,8 @@ async function matter_lookup(store, args) {
   }
   return { rows: withMatterRoots(matched.map((matter) => withClient(matter, clients)), store.env) };
 }
-function withMatterRoots(rows22, env) {
-  if (!rows22.some((row2) => typeof row2.folder === "string")) return rows22;
+function withMatterRoots(rows29, env) {
+  if (!rows29.some((row2) => typeof row2.folder === "string")) return rows29;
   let library = null;
   let error2 = "";
   try {
@@ -78875,7 +78875,7 @@ function withMatterRoots(rows22, env) {
   } catch (err) {
     error2 = err.message;
   }
-  return rows22.map((row2) => {
+  return rows29.map((row2) => {
     if (typeof row2.folder !== "string") return row2;
     return library !== null ? { ...row2, matter_root: join7(library, row2.folder) } : { ...row2, matter_root: null, matter_root_error: error2 };
   });
@@ -78903,7 +78903,7 @@ async function wip_hours(store, args) {
   const entries = rowsOf(items, "time_entry").filter((entry) => entry.billable === true && (!target || entry.matter_id === target) && (!explicitCutoff || String(entry.entry_date ?? "") >= explicitCutoff));
   const entriesByMatter = groupBy(entries, "matter_id");
   const invoicesByMatter = groupBy(rowsOf(items, "invoice"), "matter_id");
-  const rows22 = [];
+  const rows29 = [];
   for (const [matterId, matterEntries] of entriesByMatter) {
     const matter = matterById.get(matterId);
     if (!target && !isBillable(matter)) continue;
@@ -78919,7 +78919,7 @@ async function wip_hours(store, args) {
       }
     }
     const totalHours = scopedEntries.reduce((sum, entry) => sum + Number(entry.hours ?? 0), 0);
-    rows22.push({
+    rows29.push({
       matter_id: matterId,
       matt_num: matter?.matt_num ?? null,
       file_number: matter?.file_number ?? null,
@@ -78930,7 +78930,7 @@ async function wip_hours(store, args) {
       cutoff_source: cutoffSource
     });
   }
-  return { rows: rows22 };
+  return { rows: rows29 };
 }
 async function time_entries_query(store, args) {
   const items = store.items();
@@ -78939,7 +78939,7 @@ async function time_entries_query(store, args) {
   const matterId = args.matt_num || args.matter_id || args.file_number ? requireMatter(items, args).id : null;
   const fromDate = args.from_date ? String(args.from_date) : null;
   const toDate = args.to_date ? String(args.to_date) : null;
-  const rows22 = rowsOf(items, "time_entry").filter((entry) => (!matterId || entry.matter_id === matterId) && (!fromDate || String(entry.entry_date ?? "") >= fromDate) && (!toDate || String(entry.entry_date ?? "") <= toDate)).map((entry) => {
+  const rows29 = rowsOf(items, "time_entry").filter((entry) => (!matterId || entry.matter_id === matterId) && (!fromDate || String(entry.entry_date ?? "") >= fromDate) && (!toDate || String(entry.entry_date ?? "") <= toDate)).map((entry) => {
     const matter = matterById.get(String(entry.matter_id));
     return {
       ...entry,
@@ -78949,7 +78949,7 @@ async function time_entries_query(store, args) {
       ...clientContext(matter ? clients.get(String(matter.client_id)) : void 0)
     };
   });
-  return { rows: rows22 };
+  return { rows: rows29 };
 }
 async function open_tasks(store, args) {
   const items = store.items();
@@ -78963,7 +78963,7 @@ async function open_tasks(store, args) {
     const sentAt = String(notice2.sent_at ?? "");
     if (!latestNotice.has(id) || sentAt > (latestNotice.get(id) ?? "")) latestNotice.set(id, sentAt);
   }
-  const rows22 = taskRows.map((task) => {
+  const rows29 = taskRows.map((task) => {
     const matter = task.matter_id ? matterById.get(String(task.matter_id)) : void 0;
     return {
       ...task,
@@ -78974,7 +78974,7 @@ async function open_tasks(store, args) {
       last_retainer_notice_at: task.matter_id ? latestNotice.get(String(task.matter_id)) ?? null : null
     };
   });
-  return { rows: rows22 };
+  return { rows: rows29 };
 }
 async function active_deadlines(store, args) {
   const items = store.items();
@@ -79022,7 +79022,7 @@ async function ar_data(store) {
     wipByMatter.set(id, (wipByMatter.get(id) ?? 0) + Number(entry.hours ?? 0));
   }
   const pendingByMatter = groupBy(rowsOf(items, "payment").filter((row2) => row2.cleared === false), "matter_id");
-  const rows22 = rowsOf(items, "matter").filter((matter) => matter.status !== "closed" && isBillable(matter)).map((matter) => {
+  const rows29 = rowsOf(items, "matter").filter((matter) => matter.status !== "closed" && isBillable(matter)).map((matter) => {
     const cutoff = cutoffByMatter.get(String(matter.id)) ?? null;
     return {
       ...matter,
@@ -79033,18 +79033,18 @@ async function ar_data(store) {
       payments_in_flight: pendingByMatter.get(String(matter.id)) ?? []
     };
   });
-  return { rows: rows22 };
+  return { rows: rows29 };
 }
 async function court_calendar_coverage(store, args) {
   const years = Array.isArray(args.years) ? args.years.map(Number) : null;
-  const rows22 = store.rows("calendar_year");
-  return { rows: years ? rows22.filter((row2) => years.includes(Number(row2.year))) : rows22 };
+  const rows29 = store.rows("calendar_year");
+  return { rows: years ? rows29.filter((row2) => years.includes(Number(row2.year))) : rows29 };
 }
 async function court_calendar_days(store, args) {
   const fromDate = args.from_date ? String(args.from_date) : null;
   const toDate = args.to_date ? String(args.to_date) : null;
-  const rows22 = store.rows("calendar_day").filter((row2) => (!fromDate || String(row2.calendar_date ?? "") >= fromDate) && (!toDate || String(row2.calendar_date ?? "") <= toDate));
-  return { rows: rows22 };
+  const rows29 = store.rows("calendar_day").filter((row2) => (!fromDate || String(row2.calendar_date ?? "") >= fromDate) && (!toDate || String(row2.calendar_date ?? "") <= toDate));
+  return { rows: rows29 };
 }
 async function read_signals(store, args) {
   const items = store.items();
@@ -80757,8 +80757,8 @@ async function manage_payment_in_flight(store, args) {
   if (action === "query") {
     const items = store.items();
     const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
-    const rows22 = rowsOf(items, "payment").filter((row2) => row2.cleared === false && (!matterId || row2.matter_id === matterId));
-    return { rows: rows22 };
+    const rows29 = rowsOf(items, "payment").filter((row2) => row2.cleared === false && (!matterId || row2.matter_id === matterId));
+    return { rows: rows29 };
   }
   throw new ValidationError(`Unknown manage_payment_in_flight action "${action}"`);
 }
@@ -80868,13 +80868,13 @@ function invoicesOf(items, matterId) {
   return rowsOf(items, "invoice").filter((row2) => row2.matter_id === matterId);
 }
 async function import_invoices(store, args) {
-  const rows22 = args.rows;
-  if (!Array.isArray(rows22)) throw new ValidationError("import_invoices requires a rows array");
+  const rows29 = args.rows;
+  if (!Array.isArray(rows29)) throw new ValidationError("import_invoices requires a rows array");
   const confirmRegression = args.confirm_regression === true;
   const result = { imported: 0, skipped_no_matter: 0, skipped_negative: 0, not_saved: 0, questions: [] };
   const items = store.items();
   const byMatter = /* @__PURE__ */ new Map();
-  for (const raw of rows22) {
+  for (const raw of rows29) {
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
       throw new ValidationError("import_invoices rows must be objects");
     }
@@ -80951,13 +80951,13 @@ async function import_invoices(store, args) {
 async function invoices_query(store, args) {
   const items = store.items();
   const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
-  const rows22 = rowsOf(items, "invoice").filter((row2) => (!matterId || row2.matter_id === matterId) && (!args.status || row2.status === String(args.status)));
+  const rows29 = rowsOf(items, "invoice").filter((row2) => (!matterId || row2.matter_id === matterId) && (!args.status || row2.status === String(args.status)));
   let lastImport = null;
-  for (const row2 of rows22) {
+  for (const row2 of rows29) {
     const value = typeof row2.last_import_at === "string" ? row2.last_import_at : null;
     if (value && (!lastImport || value > lastImport)) lastImport = value;
   }
-  return { rows: rows22, last_import_at: lastImport };
+  return { rows: rows29, last_import_at: lastImport };
 }
 
 // src/tools/practice/firm-profile.ts
@@ -82973,14 +82973,14 @@ async function ingestAuthority(request2, env = process.env) {
   const counts2 = {};
   const named2 = {};
   plan.statements.forEach((statement, i3) => {
-    const { rowcount, rows: rows22 } = done.results[i3];
+    const { rowcount, rows: rows29 } = done.results[i3];
     if (statement.count) {
       const count = counts2[statement.count.table] ??= { inserted: 0, skipped: 0 };
       count.inserted += rowcount;
       count.skipped += statement.count.of - rowcount;
     }
-    if (statement.value_as) named2[statement.value_as] = Object.values(rows22[0])[0];
-    if (statement.rows_as) named2[statement.rows_as] = rows22;
+    if (statement.value_as) named2[statement.value_as] = Object.values(rows29[0])[0];
+    if (statement.rows_as) named2[statement.rows_as] = rows29;
   });
   return {
     ok: true,
@@ -86291,25 +86291,25 @@ function draftingParties(caseDataDir, proceeding, parties2, env = process.env) {
     };
   }
   const read3 = new Map((record2?.parties ?? []).map((c3) => [c3.case_party_id, c3]));
-  const rows22 = [];
+  const rows29 = [];
   const resolved = parties2.map((p3) => {
     const link = linkOf(p3);
     const caseParty = link === null ? void 0 : read3.get(link);
-    if (link === null) rows22.push({ ...base(p3), kind: "unlinked" });
-    else if (caseParty === void 0) rows22.push({ ...base(p3), kind: "not_of_record" });
+    if (link === null) rows29.push({ ...base(p3), kind: "unlinked" });
+    else if (caseParty === void 0) rows29.push({ ...base(p3), kind: "not_of_record" });
     return withCaseData(p3, caseParty);
   });
-  return { parties: resolved, drift: { rows: rows22 } };
+  return { parties: resolved, drift: { rows: rows29 } };
 }
 function matterPartiesDrift(dbPath, env = process.env) {
-  const rows22 = [];
+  const rows29 = [];
   const uncheckedWhy = [];
   for (const proceeding of fetchAllProceedings(dbPath)) {
     const { drift } = draftingParties(dirname11(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
-    rows22.push(...drift.rows);
+    rows29.push(...drift.rows);
     if (drift.unchecked) uncheckedWhy.push(drift.unchecked.note);
   }
-  return { rows: rows22, ...uncheckedWhy.length > 0 ? { note: uncheckedWhy.join("; ") } : {} };
+  return { rows: rows29, ...uncheckedWhy.length > 0 ? { note: uncheckedWhy.join("; ") } : {} };
 }
 function heldValues(p3) {
   const held = {};
@@ -86354,8 +86354,8 @@ function counselOffers(dbPath, env = process.env) {
   }
   return offers;
 }
-function partiesDriftLines(rows22) {
-  return rows22.map((r3) => {
+function partiesDriftLines(rows29) {
+  return rows29.map((r3) => {
     const what = r3.kind === "unlinked" ? "not linked to a party in case data, so no counsel or address for service is printed; confirm which party it is" : r3.kind === "not_of_record" ? r3.file_number === "" ? `linked to matter-data party ${r3.case_party_id}, which case data does not hold; confirm the link` : `linked to matter-data party ${r3.case_party_id}, which is not a party of record in ${r3.file_number}; confirm the link` : `counsel and address for service not read from case data: ${r3.reason}`;
     return mockupMessage(gapMarker("not_recorded"), `${r3.name} (${r3.role}): ${what}`);
   });
@@ -86366,14 +86366,14 @@ function withLeadLines(markdown, lines2) {
   const frontmatter = /^---\n[\s\S]*?\n---\n/.exec(markdown);
   return frontmatter ? frontmatter[0] + block2 + markdown.slice(frontmatter[0].length) : block2 + markdown;
 }
-function withPartiesDriftLines(markdown, rows22) {
-  return withLeadLines(markdown, partiesDriftLines(rows22));
+function withPartiesDriftLines(markdown, rows29) {
+  return withLeadLines(markdown, partiesDriftLines(rows29));
 }
 
 // src/build-stamp.ts
 import { readFileSync as readFileSync17 } from "node:fs";
 import { join as join23 } from "node:path";
-var BUILD_STAMP = false ? null : "05ddc554f25e";
+var BUILD_STAMP = false ? null : "5c9f5daad344";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -86619,11 +86619,6 @@ function runDriver4(label2, driver, payload, env, defaultTimeoutMs) {
   return parsed.result ?? {};
 }
 
-// src/knowledge/tools.ts
-import { createHash as createHash8 } from "node:crypto";
-import { copyFileSync as copyFileSync2, existsSync as existsSync23, mkdirSync as mkdirSync10, readdirSync as readdirSync12, readFileSync as readFileSync20, realpathSync as realpathSync3, renameSync as renameSync4, unlinkSync as unlinkSync5 } from "node:fs";
-import { win32 as pathWin3212 } from "node:path";
-
 // src/files/skill-source.ts
 import { createHash as createHash5 } from "node:crypto";
 import { existsSync as existsSync20, readFileSync as readFileSync18, readdirSync as readdirSync11, statSync as statSync10 } from "node:fs";
@@ -86851,7 +86846,7 @@ function parseSidecar(text5, file, knowledgePath) {
     invalid2(file, "file", `must name the file it sits beside, "${knowledgePath}"`);
   }
   if (!Array.isArray(top.items)) invalid2(file, "items", "must be an array");
-  const rows22 = [];
+  const rows29 = [];
   top.items.forEach((raw, i3) => {
     const where = `items[${i3}]`;
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) invalid2(file, where, "must be an object");
@@ -86862,7 +86857,7 @@ function parseSidecar(text5, file, knowledgePath) {
       if (typeof row2[key] !== "string" || row2[key] === "") invalid2(file, `${where}.${key}`, "must be a non-empty string");
     }
     if (row2.status !== "confirmed" && row2.status !== "corrected") invalid2(file, `${where}.status`, 'must be "confirmed" or "corrected"');
-    if (rows22.some((seen) => seen.rule_ref === row2.rule_ref)) invalid2(file, where, `rule_ref "${row2.rule_ref}" has two rows`);
+    if (rows29.some((seen) => seen.rule_ref === row2.rule_ref)) invalid2(file, where, `rule_ref "${row2.rule_ref}" has two rows`);
     const against = row2.confirmed_against;
     if (typeof against !== "object" || against === null || Array.isArray(against)) {
       invalid2(file, `${where}.confirmed_against`, "must be {passage_hash, currency}");
@@ -86881,7 +86876,7 @@ function parseSidecar(text5, file, knowledgePath) {
     }
     const stamp2 = stampProblem(row2);
     if (stamp2) invalid2(file, `${where}.${stamp2[0]}`, stamp2[1]);
-    rows22.push({
+    rows29.push({
       rule_ref: row2.rule_ref,
       status: row2.status,
       by: row2.by,
@@ -86892,7 +86887,7 @@ function parseSidecar(text5, file, knowledgePath) {
       ...row2.shipped_from !== void 0 ? { shipped_from: row2.shipped_from } : {}
     });
   });
-  return rows22;
+  return rows29;
 }
 function freshnessOf(item, checked) {
   const facts = checked?.find((record2) => record2.record.toLowerCase() === item.record.toLowerCase());
@@ -87007,13 +87002,13 @@ function readRows(sidecarAbs, knowledgePath) {
 }
 async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check) {
   return withFileLock(sidecarAbs, () => {
-    const rows22 = readRows(sidecarAbs, knowledgePath);
-    const at = rows22.findIndex((known) => known.rule_ref === row2.rule_ref);
-    if (at === -1) rows22.push(row2);
-    else rows22[at] = row2;
-    check(rows22);
-    writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows22 }, null, 2) + "\n");
-    return rows22;
+    const rows29 = readRows(sidecarAbs, knowledgePath);
+    const at = rows29.findIndex((known) => known.rule_ref === row2.rule_ref);
+    if (at === -1) rows29.push(row2);
+    else rows29[at] = row2;
+    check(rows29);
+    writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows29 }, null, 2) + "\n");
+    return rows29;
   });
 }
 
@@ -87689,6 +87684,47 @@ async function checkKnowledgeFile(path, label2, seams, fetcher) {
   return result;
 }
 
+// src/knowledge/common.ts
+function provenance3(shipped_from, seams) {
+  return { shipped_from, plugin_version: pluginVersion(seams.installRoot), build_stamp: BUILD_STAMP };
+}
+function parseJson(file, label2) {
+  try {
+    return JSON.parse(file.text);
+  } catch (err) {
+    throw new DataServerError(`${label2}: ${file.abs} is not valid JSON: ${err.message}`, "invalid_index");
+  }
+}
+var INDEX_NAMES = { venues: ["venues.json", "venues.local.json"], kinds: ["kinds.json", "kinds.local.json"] };
+function mergedIndex(folder, index, seams, label2) {
+  const problem = grammarProblem(folder.head, folder.rest, "dir", "shipped");
+  if (problem) throw new DataServerError(`${label2}: ${folder.path} breaks the folder grammar: ${problem}`, "grammar_violation");
+  const [shippedName, localName] = INDEX_NAMES[index];
+  const shippedKp = parseKnowledgePath(`${folder.path}/${shippedName}`, label2);
+  const localKp = parseKnowledgePath(`${folder.path}/${localName}`, label2);
+  const shipped = readLayerFiles(locate(shippedKp, seams, label2), label2).shipped;
+  const loc = locate(localKp, seams, label2);
+  const local = readLayerFiles(loc, label2).local;
+  if (!shipped && !local) {
+    throw new DataServerError(`${label2}: no ${index} index at ${folder.path} in either layer`, "index_missing");
+  }
+  const source = (file) => file ? { doc: parseJson(file, label2), file: file.abs } : null;
+  const noVenue = index === "kinds" && folder.rest[2] === NO_VENUE;
+  const view = index === "venues" ? mergeVenues(source(shipped), source(local)) : mergeKinds(source(shipped), source(local), noVenue);
+  return { view, layers: { shipped: shipped !== null, local: local !== null }, shipped_from: loc.shipped_from, noVenue };
+}
+function shadowedRows(conflicts) {
+  const rows29 = conflicts.filter((conflict) => conflict.shadowed_local).map(({ key, shipped, local }) => ({ key, shipped, local }));
+  return rows29.length ? { shadowed_local: rows29 } : {};
+}
+function folderOf(kp, label2) {
+  return parseKnowledgePath(kp.segments.slice(0, -1).join("/"), label2);
+}
+function today2() {
+  const now = /* @__PURE__ */ new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
 // src/knowledge/declared-format.ts
 var FORMAT_PROPERTIES = [
   "paper",
@@ -87809,49 +87845,7 @@ function substituteFormat(raw, corrections, file) {
   return { block: block2, defaulted, substituted };
 }
 
-// src/knowledge/tools.ts
-function provenance3(shipped_from, seams) {
-  return { shipped_from, plugin_version: pluginVersion(seams.installRoot), build_stamp: BUILD_STAMP };
-}
-function parseJson(file, label2) {
-  try {
-    return JSON.parse(file.text);
-  } catch (err) {
-    throw new DataServerError(`${label2}: ${file.abs} is not valid JSON: ${err.message}`, "invalid_index");
-  }
-}
-var INDEX_NAMES = { venues: ["venues.json", "venues.local.json"], kinds: ["kinds.json", "kinds.local.json"] };
-function mergedIndex(folder, index, seams, label2) {
-  const problem = grammarProblem(folder.head, folder.rest, "dir", "shipped");
-  if (problem) throw new DataServerError(`${label2}: ${folder.path} breaks the folder grammar: ${problem}`, "grammar_violation");
-  const [shippedName, localName] = INDEX_NAMES[index];
-  const shippedKp = parseKnowledgePath(`${folder.path}/${shippedName}`, label2);
-  const localKp = parseKnowledgePath(`${folder.path}/${localName}`, label2);
-  const shipped = readLayerFiles(locate(shippedKp, seams, label2), label2).shipped;
-  const loc = locate(localKp, seams, label2);
-  const local = readLayerFiles(loc, label2).local;
-  if (!shipped && !local) {
-    throw new DataServerError(`${label2}: no ${index} index at ${folder.path} in either layer`, "index_missing");
-  }
-  const source = (file) => file ? { doc: parseJson(file, label2), file: file.abs } : null;
-  const noVenue = index === "kinds" && folder.rest[2] === NO_VENUE;
-  const view = index === "venues" ? mergeVenues(source(shipped), source(local)) : mergeKinds(source(shipped), source(local), noVenue);
-  return { view, layers: { shipped: shipped !== null, local: local !== null }, shipped_from: loc.shipped_from, noVenue };
-}
-function shadowedRows(conflicts) {
-  const rows22 = conflicts.filter((conflict) => conflict.shadowed_local).map(({ key, shipped, local }) => ({ key, shipped, local }));
-  return rows22.length ? { shadowed_local: rows22 } : {};
-}
-function folderOf(kp, label2) {
-  return parseKnowledgePath(kp.segments.slice(0, -1).join("/"), label2);
-}
-function headerOf(front) {
-  const header = {};
-  for (const [key, value] of Object.entries(front ?? {})) {
-    if (!Array.isArray(value)) header[key] = value;
-  }
-  return header;
-}
+// src/knowledge/items.ts
 function itemsOf(kp, front, seams, label2) {
   const items = [];
   const shadowed_sources = [];
@@ -87888,25 +87882,6 @@ function blockKindOf(kp) {
   if (kp.skill === "publish" && kp.rest.length === 4 && name === "format.md") return { kind: "format", noVenue };
   return null;
 }
-function sidecarRows(kp, seams, label2) {
-  const sidecarKp = parseKnowledgePath(`${kp.path}${SIDECAR_SUFFIX}`, label2);
-  const loc = locate(sidecarKp, seams, label2);
-  const type = entryType(loc.local, label2, sidecarKp.path);
-  if (type === null) return [];
-  if (type === "dir") throw new DataServerError(`${label2}: ${sidecarKp.path} is a folder, not a sidecar`, "invalid_sidecar");
-  const text5 = readLayerBytes(loc.local.abs, label2).toString("utf-8");
-  const rows22 = parseSidecar(text5.startsWith("\uFEFF") ? text5.slice(1) : text5, loc.local.abs, kp.path);
-  if (kp.rest.length === 5 && kp.rest[3] === "Sources") {
-    const i3 = rows22.findIndex((row2) => row2.status === "corrected");
-    if (i3 !== -1) {
-      throw new DataServerError(
-        `${loc.local.abs}: items[${i3}]: rule_ref "${rows22[i3].rule_ref}" of ${kp.path} is corrected, but a Sources\\ excerpt is not correctable; its passage is fixed by refresh`,
-        "invalid_sidecar"
-      );
-    }
-  }
-  return rows22;
-}
 function blockOf(kp, content, status2, items) {
   const kindOf = blockKindOf(kp);
   if (!kindOf) return {};
@@ -87935,6 +87910,34 @@ function blockOf(kp, content, status2, items) {
   uncited(citedItems(raw, kindOf.kind, kp.path).map((item) => item.rule_ref));
   const { block: block2, substituted } = substituteLayout(raw, kindOf.kind, corrections, kp.path, context);
   return { layout: block2, corrections_substituted: substituted };
+}
+
+// src/knowledge/read.ts
+function headerOf(front) {
+  const header = {};
+  for (const [key, value] of Object.entries(front ?? {})) {
+    if (!Array.isArray(value)) header[key] = value;
+  }
+  return header;
+}
+function sidecarRows(kp, seams, label2) {
+  const sidecarKp = parseKnowledgePath(`${kp.path}${SIDECAR_SUFFIX}`, label2);
+  const loc = locate(sidecarKp, seams, label2);
+  const type = entryType(loc.local, label2, sidecarKp.path);
+  if (type === null) return [];
+  if (type === "dir") throw new DataServerError(`${label2}: ${sidecarKp.path} is a folder, not a sidecar`, "invalid_sidecar");
+  const text5 = readLayerBytes(loc.local.abs, label2).toString("utf-8");
+  const rows29 = parseSidecar(text5.startsWith("\uFEFF") ? text5.slice(1) : text5, loc.local.abs, kp.path);
+  if (kp.rest.length === 5 && kp.rest[3] === "Sources") {
+    const i3 = rows29.findIndex((row2) => row2.status === "corrected");
+    if (i3 !== -1) {
+      throw new DataServerError(
+        `${loc.local.abs}: items[${i3}]: rule_ref "${rows29[i3].rule_ref}" of ${kp.path} is corrected, but a Sources\\ excerpt is not correctable; its passage is fixed by refresh`,
+        "invalid_sidecar"
+      );
+    }
+  }
+  return rows29;
 }
 function rawResult(kp, file, shipped_from, seams) {
   return {
@@ -87991,6 +87994,8 @@ function knowledgeRead(path, seams = {}) {
     ...provenance3(served.shipped_from, seams)
   };
 }
+
+// src/knowledge/list.ts
 function knowledgeList(args = {}, seams = {}) {
   const label2 = "knowledge__list.dir";
   const kp = parseKnowledgePath(args.dir, label2, true);
@@ -88117,9 +88122,11 @@ function resolveAt(kp, given, recipient, seams) {
     ...provenance3(merged.shipped_from, seams)
   };
 }
+
+// src/knowledge/overlay.ts
+import { existsSync as existsSync23, mkdirSync as mkdirSync10, realpathSync as realpathSync3 } from "node:fs";
+import { win32 as pathWin3212 } from "node:path";
 var REPO_RUN_MARKER = "repo-run";
-var HOSTS_FILE = "_hosts.json";
-var MAX_DOCUMENT_BYTES = 200 * 1024;
 function matterOf(raw, tool) {
   if (typeof raw !== "string" || raw.trim() === "" || /[\r\n]/.test(raw)) {
     throw new ValidationError(`${tool}.matter must name, on one line, the live matter this run serves`);
@@ -88134,14 +88141,14 @@ function matterOf(raw, tool) {
 }
 async function stampedMatter(matter, seams, path) {
   if (!seams.lookUpMatter) throw new Error("knowledge__write: no practice-data matter lookup is wired");
-  const rows22 = await seams.lookUpMatter(matter);
-  if (rows22.length !== 1 || typeof rows22[0].matt_num !== "string") {
+  const rows29 = await seams.lookUpMatter(matter);
+  if (rows29.length !== 1 || typeof rows29[0].matt_num !== "string") {
     throw new DataServerError(
-      `${path}: matter_unknown: ${JSON.stringify(matter)} is not the matter number of exactly one practice-data matter (found ${rows22.length}). Pass the live matter's number (e.g. L1234), never its name. Nothing was written.`,
+      `${path}: matter_unknown: ${JSON.stringify(matter)} is not the matter number of exactly one practice-data matter (found ${rows29.length}). Pass the live matter's number (e.g. L1234), never its name. Nothing was written.`,
       "matter_unknown"
     );
   }
-  return rows22[0].matt_num;
+  return rows29[0].matt_num;
 }
 function refuseArgs(args, keys, why) {
   const present3 = keys.filter((key) => args[key] !== void 0);
@@ -88179,32 +88186,120 @@ function writableOverlayPath(kp, seams, label2) {
   entryType({ canon, abs }, label2, kp.path);
   return { canon, abs };
 }
-async function knowledgeWrite(args, seams = {}) {
-  const label2 = "knowledge__write.path";
-  const matter = matterOf(args.matter, "knowledge__write");
-  const kp = parseKnowledgePath(args.path, label2);
-  if (kp.path === HOSTS_FILE) return writeHostEntry(kp, args, seams, label2);
-  if (!kp.skill) {
-    throw new DataServerError(
-      `${label2}: knowledge__write writes a skill's tree and ${HOSTS_FILE} only; "${kp.head}" is written by its own tool (knowledge__retire, sources__fetch) or by the practitioner`,
-      "reserved_entry"
-    );
-  }
-  const name = kp.segments[kp.segments.length - 1];
-  if (args.operation === "confirm" || args.operation === "correct") return confirmItem(kp, args, args.operation, seams, label2);
-  if (args.operation !== "create") throw new ValidationError('knowledge__write.operation must be "create", "confirm" or "correct"');
-  refuseArgs(args, ["rule_ref", "value"], "to create");
-  if (name.endsWith(SIDECAR_SUFFIX)) {
-    throw new DataServerError(`${label2}: the ${SIDECAR_SUFFIX} suffix is reserved for confirm and correct, and create refuses it (${kp.path})`, "reserved_suffix");
-  }
-  if (name === "venues.json" || name === "kinds.json") {
-    throw new DataServerError(`${label2}: the overlay never holds ${name}; write one row to ${name.replace(".json", ".local.json")} beside it (${kp.path})`, "grammar_violation");
+function rowString(row2, key) {
+  const value = row2[key];
+  if (typeof value !== "string" || value === "") throw new ValidationError(`knowledge__write.row.${key} must be a non-empty string`);
+  return value;
+}
+
+// src/knowledge/write-document.ts
+import { readFileSync as readFileSync21 } from "node:fs";
+
+// src/knowledge/fetched.ts
+import { createHash as createHash8 } from "node:crypto";
+import { copyFileSync as copyFileSync2, existsSync as existsSync24, readdirSync as readdirSync12, readFileSync as readFileSync20, realpathSync as realpathSync4, unlinkSync as unlinkSync5 } from "node:fs";
+import { win32 as pathWin3213 } from "node:path";
+function savedCopyOf(raw, record2, front, seams) {
+  const label2 = "knowledge__write.saved_copy";
+  if (typeof raw !== "string") throw new ValidationError(`${label2} must be the knowledge path of a file under _inbox`);
+  const kp = parseKnowledgePath(raw, label2);
+  if (kp.head !== "_inbox" || kp.rest.length === 0) {
+    throw new DataServerError(`${label2}: ${kp.path} is not a file under _inbox, where the practitioner saves a copy`, "invalid_saved_copy");
   }
   grammarCheck(kp, "file", label2);
-  const index = indexAt(kp);
-  if (index) return writeIndexRow(kp, index, args, seams, label2);
-  return writeDocument(kp, args, matter, seams, label2);
+  if (typeof front.page_url !== "string" || front.page_url === "") {
+    throw new DataServerError(`${label2}: ${record2} is not a source record (its front matter has no page_url), so it takes no saved copy`, "invalid_saved_copy");
+  }
+  const url = typeof front.pdf_url === "string" ? front.pdf_url : front.page_url;
+  const canon = overlayCanon(seams, label2);
+  const inboxAbs = pathWin3213.join(canon, "_inbox");
+  const abs = pathWin3213.join(inboxAbs, ...kp.rest);
+  const inboxCanon = existsSync24(inboxAbs) ? realpathSync4.native(inboxAbs) : null;
+  if (inboxCanon !== null) assertContained(canon, inboxCanon, label2, kp.path);
+  const type = entryType({ canon: inboxCanon, abs }, label2, kp.path);
+  if (type === null) throw new DataServerError(`${label2}: ${kp.path} is not in the overlay`, "not_found");
+  if (type === "dir") throw new DataServerError(`${label2}: ${kp.path} is a folder; name the saved file`, "not_a_file");
+  const bytes = readLayerBytes(abs, label2);
+  if (bytes.subarray(0, 5).toString("latin1") !== "%PDF-") {
+    if (front.pdf_sha256 !== void 0) {
+      throw new DataServerError(`${label2}: ${kp.path} is not a PDF, so ${record2} records no pdf_sha256 for it; remove the field`, "invalid_saved_copy");
+    }
+    return { path: kp.path, abs, pdf: null };
+  }
+  let host;
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    throw new ValidationError(`${record2}: ${JSON.stringify(url)} is not a URL, so the saved copy has no host folder`);
+  }
+  const sha2563 = createHash8("sha256").update(bytes).digest("hex");
+  const to2 = parseKnowledgePath(`_fetched/${host}/${sha2563.slice(0, 12)}.pdf`, label2);
+  grammarCheck(to2, "file", label2);
+  return { path: kp.path, abs, pdf: { sha256: sha2563, to: to2 } };
 }
+function copySavedCopy(saved, seams, label2) {
+  if (!saved.pdf) return { path: saved.path, copied: false, reason: "not_pdf" };
+  try {
+    copyFileSync2(saved.abs, writableOverlayPath(saved.pdf.to, seams, label2).abs);
+  } catch (err) {
+    const code = err.code;
+    if (typeof code !== "string") throw err;
+    return { path: saved.path, copied: false, error: code };
+  }
+  return { path: saved.path, copied: true, to: saved.pdf.to.path, sha256: saved.pdf.sha256 };
+}
+var PDF_SHA_LINE = /^\s*pdf_sha256:\s*["']?([0-9a-fA-F]{64})["']?\s*$/gm;
+function pdfHashesIn(text5) {
+  return [...new Set([...text5.matchAll(PDF_SHA_LINE)].map((m3) => m3[1].toLowerCase()))];
+}
+function liveKnowledgeTexts(canon, seams) {
+  const texts = [];
+  const walk4 = (dir) => {
+    for (const entry of readdirSync12(dir, { withFileTypes: true })) {
+      const abs = pathWin3213.join(dir, entry.name);
+      if (entry.isDirectory()) walk4(abs);
+      else if (entry.isFile() && entry.name.endsWith(".md")) texts.push(readFileSync20(abs, "utf-8").toLowerCase());
+    }
+  };
+  for (const skill of KNOWLEDGE_SKILLS) {
+    const dir = pathWin3213.join(canon, skill);
+    if (existsSync24(dir)) walk4(dir);
+    const shipped = shippedLayer(skill, [], seams).layer.canon;
+    if (shipped === null) continue;
+    for (const entry of readdirSync12(shipped, { withFileTypes: true })) {
+      if (entry.isDirectory() && inTree([entry.name])) walk4(pathWin3213.join(shipped, entry.name));
+    }
+  }
+  return texts;
+}
+function deleteUnreferencedPdfs(hashes, seams, label2) {
+  if (hashes.length === 0) return [];
+  const canon = overlayCanon(seams, label2);
+  const fetched = pathWin3213.join(canon, "_fetched");
+  if (!existsSync24(fetched)) return [];
+  const live = liveKnowledgeTexts(canon, seams);
+  const deleted = [];
+  for (const hash of hashes) {
+    if (live.some((text5) => text5.includes(hash))) continue;
+    for (const host of readdirSync12(fetched, { withFileTypes: true })) {
+      if (!host.isDirectory()) continue;
+      const name = `${hash.slice(0, 12)}.pdf`;
+      const pdf = pathWin3213.join(fetched, host.name, name);
+      if (!existsSync24(pdf)) continue;
+      try {
+        unlinkSync5(pdf);
+      } catch (err) {
+        if (err.code === "ENOENT") continue;
+        throw err;
+      }
+      deleted.push(`_fetched/${host.name}/${name}`);
+    }
+  }
+  return deleted;
+}
+
+// src/knowledge/write-document.ts
+var MAX_DOCUMENT_BYTES = 200 * 1024;
 function stampHeader(content, stamp2) {
   const keys = Object.keys(stamp2);
   const eol = content.includes("\r\n") ? "\r\n" : "\n";
@@ -88318,7 +88413,7 @@ async function writeDocument(kp, args, matter, seams, label2) {
         "exists"
       );
     }
-    const old = existing === "file" ? readFileSync20(target.abs, "utf-8") : null;
+    const old = existing === "file" ? readFileSync21(target.abs, "utf-8") : null;
     const stale_check = old === null ? null : checkStaleBody(kp.path, target.abs, old, front, fetcher);
     writeTextAtomic(target.abs, text5);
     return { old, stale_check };
@@ -88335,109 +88430,134 @@ async function writeDocument(kp, args, matter, seams, label2) {
     ...provenance3(loc.shipped_from, seams)
   };
 }
-function savedCopyOf(raw, record2, front, seams) {
-  const label2 = "knowledge__write.saved_copy";
-  if (typeof raw !== "string") throw new ValidationError(`${label2} must be the knowledge path of a file under _inbox`);
-  const kp = parseKnowledgePath(raw, label2);
-  if (kp.head !== "_inbox" || kp.rest.length === 0) {
-    throw new DataServerError(`${label2}: ${kp.path} is not a file under _inbox, where the practitioner saves a copy`, "invalid_saved_copy");
+
+// src/knowledge/write-hosts.ts
+var HOSTS_FILE = "_hosts.json";
+var HOST_CATEGORIES = ["venue", "statute", "regulator"];
+var HOSTNAME = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?=[a-z0-9-]*[a-z])[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+async function writeHostEntry(kp, args, seams, label2) {
+  if (args.operation !== "create") throw new ValidationError(`knowledge__write: ${HOSTS_FILE} takes operation "create" with one row`);
+  refuseArgs(args, ["content", "overwrite", "rule_ref", "value", "saved_copy"], `to ${HOSTS_FILE}, which is written one host row at a time`);
+  const row2 = args.row;
+  if (typeof row2 !== "object" || row2 === null || Array.isArray(row2)) {
+    throw new ValidationError(`knowledge__write.row must be one ${HOSTS_FILE} entry: {host, category, page_url}`);
   }
-  grammarCheck(kp, "file", label2);
-  if (typeof front.page_url !== "string" || front.page_url === "") {
-    throw new DataServerError(`${label2}: ${record2} is not a source record (its front matter has no page_url), so it takes no saved copy`, "invalid_saved_copy");
+  const extra = Object.keys(row2).filter((key) => !["host", "category", "page_url"].includes(key));
+  if (extra.length) throw new ValidationError(`knowledge__write.row: ${extra.join(", ")} is not a caller field of a ${HOSTS_FILE} entry; the runtime stamps added and approved_by`);
+  const host = rowString(row2, "host").toLowerCase();
+  if (!HOSTNAME.test(host)) throw new ValidationError(`knowledge__write.row.host must be a hostname, such as civilresolutionbc.ca; got ${JSON.stringify(row2.host)}`);
+  const category = rowString(row2, "category");
+  if (!HOST_CATEGORIES.includes(category)) {
+    throw new ValidationError(`knowledge__write.row.category must be one of ${HOST_CATEGORIES.join(", ")} (the admitted official sources); got ${JSON.stringify(category)}`);
   }
-  const url = typeof front.pdf_url === "string" ? front.pdf_url : front.page_url;
-  const canon = overlayCanon(seams, label2);
-  const inboxAbs = pathWin3212.join(canon, "_inbox");
-  const abs = pathWin3212.join(inboxAbs, ...kp.rest);
-  const inboxCanon = existsSync23(inboxAbs) ? realpathSync3.native(inboxAbs) : null;
-  if (inboxCanon !== null) assertContained(canon, inboxCanon, label2, kp.path);
-  const type = entryType({ canon: inboxCanon, abs }, label2, kp.path);
-  if (type === null) throw new DataServerError(`${label2}: ${kp.path} is not in the overlay`, "not_found");
-  if (type === "dir") throw new DataServerError(`${label2}: ${kp.path} is a folder; name the saved file`, "not_a_file");
-  const bytes = readLayerBytes(abs, label2);
-  if (bytes.subarray(0, 5).toString("latin1") !== "%PDF-") {
-    if (front.pdf_sha256 !== void 0) {
-      throw new DataServerError(`${label2}: ${kp.path} is not a PDF, so ${record2} records no pdf_sha256 for it; remove the field`, "invalid_saved_copy");
+  const page_url = rowString(row2, "page_url");
+  const target = writableOverlayPath(kp, seams, label2);
+  return withFileLock(target.abs, () => {
+    if (entryType(target, label2, kp.path) === "dir") throw new DataServerError(`${label2}: ${kp.path} is a folder in the overlay`, "not_a_file");
+    const entries = readHostEntries(target.abs);
+    const known = entries.find((entry2) => typeof entry2 === "object" && entry2 !== null && String(entry2.host).toLowerCase() === host);
+    if (known && admittedHost(known) === null) {
+      throw new DataServerError(
+        `${target.abs}: the entry for ${host} lacks a category or approved_by "practitioner", so it is not admitted, and only the practitioner corrects it by hand. Nothing was written.`,
+        "invalid_hosts_file"
+      );
     }
-    return { path: kp.path, abs, pdf: null };
-  }
-  let host;
-  try {
-    host = new URL(url).hostname;
-  } catch {
-    throw new ValidationError(`${record2}: ${JSON.stringify(url)} is not a URL, so the saved copy has no host folder`);
-  }
-  const sha2563 = createHash8("sha256").update(bytes).digest("hex");
-  const to2 = parseKnowledgePath(`_fetched/${host}/${sha2563.slice(0, 12)}.pdf`, label2);
-  grammarCheck(to2, "file", label2);
-  return { path: kp.path, abs, pdf: { sha256: sha2563, to: to2 } };
+    if (known) return { path: kp.path, host, status: "exists", entry: known, ...provenance3(null, seams) };
+    const entry = { host, category, page_url, added: today2(), approved_by: "practitioner" };
+    writeTextAtomic(target.abs, JSON.stringify([...entries, entry], null, 2) + "\n");
+    return { path: kp.path, host, status: "created", entry, ...provenance3(null, seams) };
+  });
 }
-function copySavedCopy(saved, seams, label2) {
-  if (!saved.pdf) return { path: saved.path, copied: false, reason: "not_pdf" };
-  try {
-    copyFileSync2(saved.abs, writableOverlayPath(saved.pdf.to, seams, label2).abs);
-  } catch (err) {
-    const code = err.code;
-    if (typeof code !== "string") throw err;
-    return { path: saved.path, copied: false, error: code };
+
+// src/knowledge/confirm.ts
+var CONFIRM_ACT = { unset: "a confirmation has no author", act: "confirms or corrects", why: ", because a confirmation lifts the filed refusal" };
+function rosterLawyer(profile, what) {
+  if (profile.person === null) {
+    throw new DataServerError(
+      `person is not set: this machine's probanda.json names no firm roster key ("person"), so ${what.unset}. Set it with practice_data__upsert_firm_profile, then retry.`,
+      "person_unset"
+    );
   }
-  return { path: saved.path, copied: true, to: saved.pdf.to.path, sha256: saved.pdf.sha256 };
+  const entry = profile.roster.find((candidate) => candidate.key === profile.person);
+  const role = entry?.role;
+  if (role !== "lawyer") {
+    throw new DataServerError(
+      `person "${profile.person}" is ${role === "staff" ? "staff" : `not a lawyer (role ${JSON.stringify(role)})`} on the firm roster; only a roster lawyer ${what.act}${what.why}`,
+      "not_a_lawyer"
+    );
+  }
+  if (entry.active === false) {
+    throw new DataServerError(
+      `person "${profile.person}" (${String(entry.name)}) is a lawyer marked inactive on the firm roster; only an active roster lawyer ${what.act}`,
+      "not_active"
+    );
+  }
+  return profile.person;
 }
-var PDF_SHA_LINE = /^\s*pdf_sha256:\s*["']?([0-9a-fA-F]{64})["']?\s*$/gm;
-function pdfHashesIn(text5) {
-  return [...new Set([...text5.matchAll(PDF_SHA_LINE)].map((m3) => m3[1].toLowerCase()))];
+async function confirmingLawyer(env) {
+  return rosterLawyer(await firm_profile(env), CONFIRM_ACT);
 }
-function liveKnowledgeTexts(canon, seams) {
-  const texts = [];
-  const walk4 = (dir) => {
-    for (const entry of readdirSync12(dir, { withFileTypes: true })) {
-      const abs = pathWin3212.join(dir, entry.name);
-      if (entry.isDirectory()) walk4(abs);
-      else if (entry.isFile() && entry.name.endsWith(".md")) texts.push(readFileSync20(abs, "utf-8").toLowerCase());
+function validateCorrections(kp, content, kind, noVenue, rows29) {
+  const corrections = rows29.filter((row2) => row2.status === "corrected").map(({ rule_ref, value }) => ({ rule_ref, value }));
+  if (kind === "format") {
+    substituteFormat(extractJsonBlock(content, kp.path, false, "invalid_format"), corrections, kp.path);
+  } else {
+    substituteLayout(extractJsonBlock(content, kp.path, true), kind, corrections, kp.path, { noVenue });
+  }
+}
+async function confirmItem(kp, args, operation, seams, label2) {
+  refuseArgs(args, ["content", "row", "overwrite", "saved_copy"], `to ${operation}`);
+  if (operation === "confirm") refuseArgs(args, ["value"], "to confirm; value appears only on a correction");
+  else if (!Object.hasOwn(args, "value")) {
+    throw new ValidationError("knowledge__write.value is required to correct: the item's value, in the shape its file contract declares");
+  }
+  const ruleRef = args.rule_ref;
+  if (typeof ruleRef !== "string" || ruleRef === "") throw new ValidationError(`knowledge__write.rule_ref is required to ${operation}`);
+  if (kp.path.endsWith(SIDECAR_SUFFIX)) throw new DataServerError(`${label2}: name the knowledge file itself; its sidecar follows from it (${kp.path})`, "reserved_suffix");
+  if (indexAt(kp)) throw new DataServerError(`${label2}: ${kp.path} is an index file, whose rows carry no rule_ref`, "not_confirmable");
+  const by = await confirmingLawyer(seams.env ?? process.env);
+  const served = readServed(kp, seams, label2);
+  const content = served.served.text;
+  const { items } = itemsOf(kp, readFrontMatter(content, kp.path), seams, label2);
+  const item = items.find((candidate) => candidate.rule_ref === ruleRef);
+  if (!item) {
+    throw new DataServerError(`${kp.path}: no item of the merged file carries rule_ref ${JSON.stringify(ruleRef)}`, "rule_ref_not_found");
+  }
+  const kindOf = blockKindOf(kp);
+  if (operation === "correct") {
+    if (kp.rest.length === 5 && kp.rest[3] === "Sources") {
+      throw new DataServerError(`${kp.path}: a Sources\\ excerpt is not correctable; its passage is fixed by refresh`, "not_correctable");
     }
+    if (!kindOf) {
+      throw new DataServerError(
+        `${kp.path}: the runtime holds no validator for this file's contract, so its items are not correctable here (a /draft type file or venue.md, or a /publish format.md, is)`,
+        "not_correctable"
+      );
+    }
+  }
+  const row2 = {
+    rule_ref: ruleRef,
+    status: operation === "confirm" ? "confirmed" : "corrected",
+    by,
+    on: today2(),
+    confirmed_against: { passage_hash: passageHash(item.passage), currency: item.currency },
+    ...operation === "correct" ? { value: args.value } : {},
+    // The writer's stamp (#992 item 9): the plugin that served the copy the passage hash binds to.
+    // A skill-tree path always has a shipped layer, so shipped_from is never null here.
+    plugin_version: pluginVersion(seams.installRoot),
+    shipped_from: served.shipped_from
   };
-  for (const skill of KNOWLEDGE_SKILLS) {
-    const dir = pathWin3212.join(canon, skill);
-    if (existsSync23(dir)) walk4(dir);
-    const shipped = shippedLayer(skill, [], seams).layer.canon;
-    if (shipped === null) continue;
-    for (const entry of readdirSync12(shipped, { withFileTypes: true })) {
-      if (entry.isDirectory() && inTree([entry.name])) walk4(pathWin3212.join(shipped, entry.name));
-    }
-  }
-  return texts;
+  const sidecarKp = parseKnowledgePath(`${kp.path}${SIDECAR_SUFFIX}`, label2);
+  grammarCheck(sidecarKp, "file", label2);
+  const target = writableOverlayPath(sidecarKp, seams, label2);
+  const rows29 = await upsertSidecarRow(target.abs, kp.path, row2, (next) => {
+    if (operation === "correct") validateCorrections(kp, content, kindOf.kind, kindOf.noVenue, next);
+  });
+  return { path: kp.path, sidecar: sidecarKp.path, row: row2, rows: rows29.length, ...provenance3(served.shipped_from, seams) };
 }
-function deleteUnreferencedPdfs(hashes, seams, label2) {
-  if (hashes.length === 0) return [];
-  const canon = overlayCanon(seams, label2);
-  const fetched = pathWin3212.join(canon, "_fetched");
-  if (!existsSync23(fetched)) return [];
-  const live = liveKnowledgeTexts(canon, seams);
-  const deleted = [];
-  for (const hash of hashes) {
-    if (live.some((text5) => text5.includes(hash))) continue;
-    for (const host of readdirSync12(fetched, { withFileTypes: true })) {
-      if (!host.isDirectory()) continue;
-      const name = `${hash.slice(0, 12)}.pdf`;
-      const pdf = pathWin3212.join(fetched, host.name, name);
-      if (!existsSync23(pdf)) continue;
-      try {
-        unlinkSync5(pdf);
-      } catch (err) {
-        if (err.code === "ENOENT") continue;
-        throw err;
-      }
-      deleted.push(`_fetched/${host.name}/${name}`);
-    }
-  }
-  return deleted;
-}
-function rowString(row2, key) {
-  const value = row2[key];
-  if (typeof value !== "string" || value === "") throw new ValidationError(`knowledge__write.row.${key} must be a non-empty string`);
-  return value;
-}
+
+// src/knowledge/write-index.ts
+import { readFileSync as readFileSync22 } from "node:fs";
 function listAndKey(index, row2) {
   if (index === "kinds") return { list: "kinds", key: rowString(row2, "file") };
   if (row2.resolves_to !== void 0) return { list: "not_venues", key: normalizeName(rowString(row2, "name")) };
@@ -88530,7 +88650,7 @@ async function writeIndexRow(kp, index, args, seams, label2) {
     const existing = entryType(target, label2, kp.path);
     let doc = {};
     if (existing === "file") {
-      const text5 = readFileSync20(target.abs, "utf-8");
+      const text5 = readFileSync22(target.abs, "utf-8");
       try {
         doc = JSON.parse(text5.startsWith("\uFEFF") ? text5.slice(1) : text5);
       } catch (err) {
@@ -88538,142 +88658,50 @@ async function writeIndexRow(kp, index, args, seams, label2) {
       }
       merge2(doc, target.abs);
     }
-    const rows22 = Array.isArray(doc[list]) ? [...doc[list]] : [];
-    const at = rows22.findIndex((known) => keyIn(list, known) === key);
-    const without = rows22.filter((_3, i3) => i3 !== at);
+    const rows29 = Array.isArray(doc[list]) ? [...doc[list]] : [];
+    const at = rows29.findIndex((known) => keyIn(list, known) === key);
+    const without = rows29.filter((_3, i3) => i3 !== at);
     checkIndexRow(kp, merge2({ ...doc, [list]: without }, target.abs), list, key, row2, noVenue, target.abs);
-    if (at === -1) rows22.push(row2);
-    else rows22[at] = row2;
-    const next = { ...doc, [list]: rows22 };
+    if (at === -1) rows29.push(row2);
+    else rows29[at] = row2;
+    const next = { ...doc, [list]: rows29 };
     const view = merge2(next, target.abs);
     writeTextAtomic(target.abs, JSON.stringify(next, null, 2) + "\n");
     return { path: kp.path, index, list, key, status: at === -1 ? "created" : "updated", view, ...provenance3(loc.shipped_from, seams) };
   });
 }
-var HOST_CATEGORIES = ["venue", "statute", "regulator"];
-var HOSTNAME = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?=[a-z0-9-]*[a-z])[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
-async function writeHostEntry(kp, args, seams, label2) {
-  if (args.operation !== "create") throw new ValidationError(`knowledge__write: ${HOSTS_FILE} takes operation "create" with one row`);
-  refuseArgs(args, ["content", "overwrite", "rule_ref", "value", "saved_copy"], `to ${HOSTS_FILE}, which is written one host row at a time`);
-  const row2 = args.row;
-  if (typeof row2 !== "object" || row2 === null || Array.isArray(row2)) {
-    throw new ValidationError(`knowledge__write.row must be one ${HOSTS_FILE} entry: {host, category, page_url}`);
-  }
-  const extra = Object.keys(row2).filter((key) => !["host", "category", "page_url"].includes(key));
-  if (extra.length) throw new ValidationError(`knowledge__write.row: ${extra.join(", ")} is not a caller field of a ${HOSTS_FILE} entry; the runtime stamps added and approved_by`);
-  const host = rowString(row2, "host").toLowerCase();
-  if (!HOSTNAME.test(host)) throw new ValidationError(`knowledge__write.row.host must be a hostname, such as civilresolutionbc.ca; got ${JSON.stringify(row2.host)}`);
-  const category = rowString(row2, "category");
-  if (!HOST_CATEGORIES.includes(category)) {
-    throw new ValidationError(`knowledge__write.row.category must be one of ${HOST_CATEGORIES.join(", ")} (the admitted official sources); got ${JSON.stringify(category)}`);
-  }
-  const page_url = rowString(row2, "page_url");
-  const target = writableOverlayPath(kp, seams, label2);
-  return withFileLock(target.abs, () => {
-    if (entryType(target, label2, kp.path) === "dir") throw new DataServerError(`${label2}: ${kp.path} is a folder in the overlay`, "not_a_file");
-    const entries = readHostEntries(target.abs);
-    const known = entries.find((entry2) => typeof entry2 === "object" && entry2 !== null && String(entry2.host).toLowerCase() === host);
-    if (known && admittedHost(known) === null) {
-      throw new DataServerError(
-        `${target.abs}: the entry for ${host} lacks a category or approved_by "practitioner", so it is not admitted, and only the practitioner corrects it by hand. Nothing was written.`,
-        "invalid_hosts_file"
-      );
-    }
-    if (known) return { path: kp.path, host, status: "exists", entry: known, ...provenance3(null, seams) };
-    const entry = { host, category, page_url, added: today2(), approved_by: "practitioner" };
-    writeTextAtomic(target.abs, JSON.stringify([...entries, entry], null, 2) + "\n");
-    return { path: kp.path, host, status: "created", entry, ...provenance3(null, seams) };
-  });
-}
-function today2() {
-  const now = /* @__PURE__ */ new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
-var CONFIRM_ACT = { unset: "a confirmation has no author", act: "confirms or corrects", why: ", because a confirmation lifts the filed refusal" };
-function rosterLawyer(profile, what) {
-  if (profile.person === null) {
+
+// src/knowledge/write.ts
+async function knowledgeWrite(args, seams = {}) {
+  const label2 = "knowledge__write.path";
+  const matter = matterOf(args.matter, "knowledge__write");
+  const kp = parseKnowledgePath(args.path, label2);
+  if (kp.path === HOSTS_FILE) return writeHostEntry(kp, args, seams, label2);
+  if (!kp.skill) {
     throw new DataServerError(
-      `person is not set: this machine's probanda.json names no firm roster key ("person"), so ${what.unset}. Set it with practice_data__upsert_firm_profile, then retry.`,
-      "person_unset"
+      `${label2}: knowledge__write writes a skill's tree and ${HOSTS_FILE} only; "${kp.head}" is written by its own tool (knowledge__retire, sources__fetch) or by the practitioner`,
+      "reserved_entry"
     );
   }
-  const entry = profile.roster.find((candidate) => candidate.key === profile.person);
-  const role = entry?.role;
-  if (role !== "lawyer") {
-    throw new DataServerError(
-      `person "${profile.person}" is ${role === "staff" ? "staff" : `not a lawyer (role ${JSON.stringify(role)})`} on the firm roster; only a roster lawyer ${what.act}${what.why}`,
-      "not_a_lawyer"
-    );
+  const name = kp.segments[kp.segments.length - 1];
+  if (args.operation === "confirm" || args.operation === "correct") return confirmItem(kp, args, args.operation, seams, label2);
+  if (args.operation !== "create") throw new ValidationError('knowledge__write.operation must be "create", "confirm" or "correct"');
+  refuseArgs(args, ["rule_ref", "value"], "to create");
+  if (name.endsWith(SIDECAR_SUFFIX)) {
+    throw new DataServerError(`${label2}: the ${SIDECAR_SUFFIX} suffix is reserved for confirm and correct, and create refuses it (${kp.path})`, "reserved_suffix");
   }
-  if (entry.active === false) {
-    throw new DataServerError(
-      `person "${profile.person}" (${String(entry.name)}) is a lawyer marked inactive on the firm roster; only an active roster lawyer ${what.act}`,
-      "not_active"
-    );
+  if (name === "venues.json" || name === "kinds.json") {
+    throw new DataServerError(`${label2}: the overlay never holds ${name}; write one row to ${name.replace(".json", ".local.json")} beside it (${kp.path})`, "grammar_violation");
   }
-  return profile.person;
+  grammarCheck(kp, "file", label2);
+  const index = indexAt(kp);
+  if (index) return writeIndexRow(kp, index, args, seams, label2);
+  return writeDocument(kp, args, matter, seams, label2);
 }
-async function confirmingLawyer(env) {
-  return rosterLawyer(await firm_profile(env), CONFIRM_ACT);
-}
-function validateCorrections(kp, content, kind, noVenue, rows22) {
-  const corrections = rows22.filter((row2) => row2.status === "corrected").map(({ rule_ref, value }) => ({ rule_ref, value }));
-  if (kind === "format") {
-    substituteFormat(extractJsonBlock(content, kp.path, false, "invalid_format"), corrections, kp.path);
-  } else {
-    substituteLayout(extractJsonBlock(content, kp.path, true), kind, corrections, kp.path, { noVenue });
-  }
-}
-async function confirmItem(kp, args, operation, seams, label2) {
-  refuseArgs(args, ["content", "row", "overwrite", "saved_copy"], `to ${operation}`);
-  if (operation === "confirm") refuseArgs(args, ["value"], "to confirm; value appears only on a correction");
-  else if (!Object.hasOwn(args, "value")) {
-    throw new ValidationError("knowledge__write.value is required to correct: the item's value, in the shape its file contract declares");
-  }
-  const ruleRef = args.rule_ref;
-  if (typeof ruleRef !== "string" || ruleRef === "") throw new ValidationError(`knowledge__write.rule_ref is required to ${operation}`);
-  if (kp.path.endsWith(SIDECAR_SUFFIX)) throw new DataServerError(`${label2}: name the knowledge file itself; its sidecar follows from it (${kp.path})`, "reserved_suffix");
-  if (indexAt(kp)) throw new DataServerError(`${label2}: ${kp.path} is an index file, whose rows carry no rule_ref`, "not_confirmable");
-  const by = await confirmingLawyer(seams.env ?? process.env);
-  const served = readServed(kp, seams, label2);
-  const content = served.served.text;
-  const { items } = itemsOf(kp, readFrontMatter(content, kp.path), seams, label2);
-  const item = items.find((candidate) => candidate.rule_ref === ruleRef);
-  if (!item) {
-    throw new DataServerError(`${kp.path}: no item of the merged file carries rule_ref ${JSON.stringify(ruleRef)}`, "rule_ref_not_found");
-  }
-  const kindOf = blockKindOf(kp);
-  if (operation === "correct") {
-    if (kp.rest.length === 5 && kp.rest[3] === "Sources") {
-      throw new DataServerError(`${kp.path}: a Sources\\ excerpt is not correctable; its passage is fixed by refresh`, "not_correctable");
-    }
-    if (!kindOf) {
-      throw new DataServerError(
-        `${kp.path}: the runtime holds no validator for this file's contract, so its items are not correctable here (a /draft type file or venue.md, or a /publish format.md, is)`,
-        "not_correctable"
-      );
-    }
-  }
-  const row2 = {
-    rule_ref: ruleRef,
-    status: operation === "confirm" ? "confirmed" : "corrected",
-    by,
-    on: today2(),
-    confirmed_against: { passage_hash: passageHash(item.passage), currency: item.currency },
-    ...operation === "correct" ? { value: args.value } : {},
-    // The writer's stamp (#992 item 9): the plugin that served the copy the passage hash binds to.
-    // A skill-tree path always has a shipped layer, so shipped_from is never null here.
-    plugin_version: pluginVersion(seams.installRoot),
-    shipped_from: served.shipped_from
-  };
-  const sidecarKp = parseKnowledgePath(`${kp.path}${SIDECAR_SUFFIX}`, label2);
-  grammarCheck(sidecarKp, "file", label2);
-  const target = writableOverlayPath(sidecarKp, seams, label2);
-  const rows22 = await upsertSidecarRow(target.abs, kp.path, row2, (next) => {
-    if (operation === "correct") validateCorrections(kp, content, kindOf.kind, kindOf.noVenue, next);
-  });
-  return { path: kp.path, sidecar: sidecarKp.path, row: row2, rows: rows22.length, ...provenance3(served.shipped_from, seams) };
-}
+
+// src/knowledge/retire.ts
+import { existsSync as existsSync25, readFileSync as readFileSync23, renameSync as renameSync4 } from "node:fs";
+import { win32 as pathWin3214 } from "node:path";
 async function retireOne(kp, seams, label2) {
   if (entryType(locate(kp, seams, label2).local, label2, kp.path) === null) {
     throw new DataServerError(`${kp.path} is not in the overlay (a second retire getting not_found counts as done)`, "not_found");
@@ -88688,15 +88716,15 @@ async function retireOne(kp, seams, label2) {
       const type = entryType(source, label2, kp.path);
       if (type === null) throw new DataServerError(`${kp.path} is not in the overlay (a second retire getting not_found counts as done)`, "not_found");
       if (type === "dir") throw new DataServerError(`${label2}: ${kp.path} is a folder; retire moves one file and its sidecar`, "not_a_file");
-      const hasSidecar = existsSync23(sidecar2);
-      const to2 = pathWin3212.join(source.canon, ...dest.segments);
+      const hasSidecar = existsSync25(sidecar2);
+      const to2 = pathWin3214.join(source.canon, ...dest.segments);
       for (const abs of [to2, ...hasSidecar ? [`${to2}${SIDECAR_SUFFIX}`] : []]) {
-        if (existsSync23(abs)) {
+        if (existsSync25(abs)) {
           throw new DataServerError(`${abs} already holds a retired copy, which is never overwritten; nothing was moved`, "superseded_exists");
         }
       }
       const target = writableOverlayPath(dest, seams, label2);
-      const text5 = readFileSync20(source.abs, "utf-8");
+      const text5 = readFileSync23(source.abs, "utf-8");
       renameSync4(source.abs, target.abs);
       if (hasSidecar) renameSync4(sidecar2, `${target.abs}${SIDECAR_SUFFIX}`);
       return {
@@ -88780,8 +88808,8 @@ function predatedProvision(row2, provisions) {
 
 // src/submission/forms/law-statement-line.ts
 var CITATION_MISSING = "[citation missing]";
-function scrutinyFailedTag(rows22) {
-  const findings = rows22.filter((r3) => r3.verification === "failed").map((r3) => (r3.doubt ?? "").replace(/\s+/g, " ").trim());
+function scrutinyFailedTag(rows29) {
+  const findings = rows29.filter((r3) => r3.verification === "failed").map((r3) => (r3.doubt ?? "").replace(/\s+/g, " ").trim());
   return findings.length > 0 ? ` (scrutiny failed: ${findings.join("; ")})` : "";
 }
 function settledTag(row2) {
@@ -88826,176 +88854,7 @@ function lawStatementMarkers(row2, deployed = true) {
   ]);
 }
 
-// src/submission/forms/brief-only-cap.ts
-var authorityNotKilled = (s3) => s3.authority_killed_on === null;
-var authorityNotOverruled = (s3) => s3.treatment !== "overruled";
-var countsAsSupport = (s3) => s3.verification === "verified" || s3.verification === "settled";
-var notFailed = (s3) => s3.verification !== "failed";
-var passesBriefOnlyCap = (s3) => countsAsSupport(s3) && authorityNotKilled(s3) && authorityNotOverruled(s3);
-var BRIEF_ONLY_CAP_SQL = "(a.killed_on IS NULL AND a.treatment IS NOT 'overruled' AND sl.verification IN ('verified', 'settled'))";
-
-// src/submission/forms/components.ts
-var BLANK_UNDERLINE = "________";
-function frontmatterHeader(f3) {
-  const lists = (f3.lists ?? []).filter((l3) => l3.items.length > 0).flatMap((l3) => [`${l3.label}:`, ...l3.items.map((item) => `  - ${item}`)]);
-  return [
-    "---",
-    `Matter no: ${f3.matterNo}`,
-    `Matter Description: ${f3.matterDescription}`,
-    `Client Name: ${f3.clientName}`,
-    `Client no: ${f3.clientNo}`,
-    `Document Type: ${f3.documentType}`,
-    `Document Name: ${f3.documentName}`,
-    `Document Date: ${f3.documentDate}`,
-    `Venue: ${f3.venue}`,
-    `Proceeding File no: ${f3.proceedingFileNo}`,
-    `Revision: ${f3.revision}`,
-    `Rendered: ${f3.rendered}`,
-    ...lists,
-    "---"
-  ].join("\n");
-}
-function pluralizeRole(role, count) {
-  if (count <= 1) return role;
-  return role.endsWith("s") ? role : `${role}s`;
-}
-function groupPartiesByRole(parties2) {
-  const sorted = [...parties2].sort((a3, b3) => a3.ordinal - b3.ordinal);
-  const groups = [];
-  for (const p3 of sorted) {
-    const last = groups[groups.length - 1];
-    if (last && last.role === p3.role) {
-      last.names.push(p3.name);
-    } else {
-      groups.push({ role: p3.role, names: [p3.name] });
-    }
-  }
-  return groups;
-}
-function formatNameList(names) {
-  if (names.length === 0) return "";
-  if (names.length === 1) return names[0];
-  if (names.length === 2) return `${names[0]} and ${names[1]}`;
-  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
-}
-function styleOfProceedingCaption(parties2, opts) {
-  const lines2 = [];
-  lines2.push("| | | |");
-  lines2.push("| :--- | :---: | ---: |");
-  const { heading } = opts;
-  if (heading.registry_label !== null) lines2.push(`| | | ${opts.registry ?? ""} ${heading.registry_label} |`);
-  if (heading.registry_label !== null || opts.fileNumber) lines2.push(`| | | ${heading.file_number_label} ${opts.fileNumber ?? ""} |`);
-  for (const line of [heading.caption_lines].flat()) lines2.push(`| | **${line}** | |`);
-  const groups = groupPartiesByRole(parties2);
-  groups.forEach((group, i3) => {
-    lines2.push(`| ${i3 === 0 ? "BETWEEN:" : "AND:"} | | |`);
-    lines2.push(`| | ${group.names.map((n3) => n3.toUpperCase()).join(" and ")} | |`);
-    lines2.push(`| | | *${pluralizeRole(group.role, group.names.length)}* |`);
-  });
-  if (opts.titleLine !== void 0) lines2.push(`| | **${opts.titleLine}** | |`);
-  return lines2.join("\n");
-}
-function signatureBlock(party, officerSigned) {
-  const lines2 = [];
-  lines2.push(`Date: ________________`);
-  if (party.counselName) {
-    lines2.push(`Signature of ${party.counselName}, lawyer for the ${party.role}, ${party.name}`);
-  } else {
-    lines2.push(`Signature of ${party.name}, ${party.role} (self-represented)`);
-  }
-  if (officerSigned) {
-    lines2.push("");
-    lines2.push("[ ] Party  [ ] Lawyer for party  [ ] Legal representative for party");
-  }
-  return lines2.join("\n");
-}
-function requisitionWrapper(f3) {
-  const lines2 = [];
-  lines2.push(f3.captionMarkdown);
-  lines2.push("");
-  lines2.push(`**Filed by:** ${f3.filedBy}`);
-  lines2.push("");
-  lines2.push(`**Required:** ${f3.required}`);
-  lines2.push("");
-  if (f3.checklistLeadIn) {
-    lines2.push(f3.checklistLeadIn);
-    lines2.push("");
-  }
-  f3.checklist.forEach((item, i3) => lines2.push(`${i3 + 1}. ${item}`));
-  return lines2.join("\n");
-}
-var STANDARD_MATERIAL_LINES = ["Pleadings filed in this proceeding", "Such further affidavits or filed court documents as this honourable court may allow"];
-function checkboxOrderBlock(rows22) {
-  const lines2 = [];
-  lines2.push("[ ] The order(s) set out in Part 1 of this notice were made in the terms requested in Part 1 of this notice.");
-  lines2.push("[ ] The order(s) set out in Part 1 of this notice were made with the following variations and additional terms:");
-  lines2.push("");
-  rows22.forEach((r3) => lines2.push(`- ${r3.text}${r3.marker ? ` ${r3.marker}` : ""}`));
-  return lines2.join("\n");
-}
-function buildLowerCourtRoleByRole(parties2) {
-  const valuesByRole = /* @__PURE__ */ new Map();
-  for (const p3 of parties2) {
-    const list = valuesByRole.get(p3.role) ?? [];
-    list.push(p3.lower_court_role);
-    valuesByRole.set(p3.role, list);
-  }
-  const result = {};
-  for (const [role, values] of valuesByRole) {
-    const first = values[0];
-    if (first !== null && values.every((v3) => v3 === first)) result[role] = first;
-  }
-  return result;
-}
-var CONTACT_COLUMNS = [
-  { column: "counsel_firm", missing: "firm" },
-  { column: "counsel_name", missing: "counsel" },
-  { column: "address_for_service", missing: "address for service" },
-  { column: "counsel_phone", missing: "telephone" },
-  { column: "counsel_email", missing: "email" }
-];
-function contactCells(c3, gapMarker2) {
-  const texts = [c3.counselFirm ?? gapMarker2, `Attn: ${c3.counselName ?? gapMarker2}`, c3.addressForService ?? gapMarker2, `Tel: ${c3.counselPhone ?? gapMarker2}`, c3.counselEmail ?? gapMarker2];
-  return CONTACT_COLUMNS.map((col, i3) => ({ ...col, text: texts[i3] }));
-}
-function bccaCoverPage(parties2, fields) {
-  const lines2 = [];
-  lines2.push("| | | |");
-  lines2.push("| :--- | :---: | ---: |");
-  if (fields.heading.registry_label !== null) {
-    lines2.push(`| | | ${fields.registry ?? ""} ${fields.heading.registry_label} |`);
-    lines2.push(`| | | ${fields.heading.file_number_label} ${fields.fileNumber ?? ""} |`);
-  }
-  lines2.push(`| | | ${fields.recordLabel} |`);
-  lines2.push("| | **COURT OF APPEAL** | |");
-  if (fields.onAppealFrom && fields.onAppealFrom.judge && fields.onAppealFrom.court && fields.onAppealFrom.pronounced) {
-    lines2.push(
-      `| | ON APPEAL FROM the order of ${fields.onAppealFrom.judge} of the ${fields.onAppealFrom.court} pronounced on ${fields.onAppealFrom.pronounced} | |`
-    );
-  }
-  const groups = groupPartiesByRole(parties2);
-  groups.forEach((group, i3) => {
-    lines2.push(`| ${i3 === 0 ? "BETWEEN:" : "AND:"} | | |`);
-    lines2.push(`| | ${group.names.map((n3) => n3.toUpperCase()).join(" and ")} | |`);
-    lines2.push(`| | | *${pluralizeRole(group.role, group.names.length)}* |`);
-    const lowerCourtRole = fields.lowerCourtRoleByRole?.[group.role];
-    if (lowerCourtRole) lines2.push(`| | | *${lowerCourtRole}* |`);
-  });
-  if (fields.accessRestrictions) {
-    for (const line of fields.accessRestrictions.split("\n")) lines2.push(`| | ${line} | |`);
-  }
-  lines2.push(`| | **${fields.titleLine}** | |`);
-  if (fields.filingPartyPhrase) lines2.push(`| | ${fields.filingPartyPhrase} | |`);
-  lines2.push("");
-  lines2.push(`| ${fields.contacts.map((c3) => formatNameList(c3.names.map((n3) => n3.toUpperCase()))).join(" | ")} |`);
-  lines2.push(`| ${fields.contacts.map(() => ":---").join(" | ")} |`);
-  const cells = fields.contacts.map((c3) => contactCells(c3, fields.gapMarker));
-  for (let row2 = 0; row2 < CONTACT_COLUMNS.length; row2++) lines2.push(`| ${cells.map((c3) => c3[row2].text).join(" | ")} |`);
-  lines2.push(`| ${fields.contacts.map((c3) => `Counsel for the ${pluralizeRole(c3.role, c3.names.length)}`).join(" | ")} |`);
-  return lines2.join("\n");
-}
-
-// src/submission/forms/render-vaniac-submissions.ts
+// src/submission/forms/submission-reads.ts
 function rows2(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
@@ -89061,28 +88920,100 @@ function fetchFactStatements(dbPath, factIds) {
     factIds
   );
 }
+function fetchDeployedIds(dbPath, filingId, document2) {
+  return {
+    orderIds: new Set(
+      rows2(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ? AND document = ?`, [filingId, document2]).map(
+        (r3) => r3.order_sought_id
+      )
+    ),
+    submissionIds: new Set(
+      rows2(
+        dbPath,
+        `SELECT fs.submission_id FROM filing_submissions fs
+         JOIN submissions s ON s.id = fs.submission_id
+         WHERE fs.filing_id = ? AND fs.document = ? AND s.killed_on IS NULL`,
+        [filingId, document2]
+      ).map((r3) => r3.submission_id)
+    ),
+    factIds: new Set(
+      rows2(dbPath, `SELECT fact_id FROM filing_facts WHERE filing_id = ? AND document = ?`, [filingId, document2]).map((r3) => r3.fact_id)
+    )
+  };
+}
+
+// src/submission/forms/exhibit-documents.ts
+function rows3(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
 function fetchDocumentLabels(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = documentIds.map(() => "?").join(",");
-  const found = rows2(dbPath, `SELECT id, label FROM documents WHERE id IN (${placeholders})`, documentIds);
+  const found = rows3(dbPath, `SELECT id, label FROM documents WHERE id IN (${placeholders})`, documentIds);
   return new Map(found.map((d3) => [d3.id, d3.label]));
 }
 function fetchNotBestCopyMarkers(dbPath, proceedingId) {
   return notBestCopyMarkers(
-    rows2(dbPath, `SELECT id, label, is_best_copy FROM documents WHERE proceeding_id = ?`, [proceedingId])
+    rows3(dbPath, `SELECT id, label, is_best_copy FROM documents WHERE proceeding_id = ?`, [proceedingId])
   );
+}
+function exhibitNumbersFromOrderedIds(documentIds) {
+  const map = /* @__PURE__ */ new Map();
+  documentIds.forEach((id, i3) => map.set(id, i3 + 1));
+  return map;
+}
+function fetchProceedingExhibitNumbers(dbPath, proceedingId) {
+  const ordered = rows3(
+    dbPath,
+    `SELECT fd.document_id
+     FROM filing_documents fd
+     JOIN filings f ON f.id = fd.filing_id
+     WHERE f.proceeding_id = ?
+       AND f.kind = 'submissions_package'
+       AND fd.role != 'witness_statement'
+       AND NOT (f.retired_on IS NOT NULL AND f.filed_on IS NULL)
+     ORDER BY (f.filed_on IS NULL), f.filed_on, f.id, fd.ordinal`,
+    [proceedingId]
+  );
+  const seen = /* @__PURE__ */ new Set();
+  const firstOccurrence = [];
+  for (const r3 of ordered) {
+    if (seen.has(r3.document_id)) continue;
+    seen.add(r3.document_id);
+    firstOccurrence.push(r3.document_id);
+  }
+  return exhibitNumbersFromOrderedIds(firstOccurrence);
+}
+function exhibitNumbersForFiling(dbPath, filing, filingDocumentIds) {
+  return filing.kind === "submissions_package" ? fetchProceedingExhibitNumbers(dbPath, filing.proceeding_id) : exhibitNumbersFromOrderedIds(filingDocumentIds);
+}
+function fetchFilingDocuments(dbPath, filingId) {
+  return rows3(
+    dbPath,
+    `SELECT fd.id, fd.document_id, fd.ordinal, fd.role, fd.provenance, d.label, d.document_date, d.description, d.file_path
+     FROM filing_documents fd
+     JOIN documents d ON d.id = fd.document_id
+     WHERE fd.filing_id = ? AND fd.role != 'witness_statement'
+     ORDER BY fd.ordinal`,
+    [filingId]
+  );
+}
+
+// src/submission/forms/review-state.ts
+function rows4(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchReviewState(dbPath, proceedingId) {
   const held = rhetoricHeld(dbPath);
   const tables = Object.keys(REVIEW_SNAPSHOT_FIELDS).filter((t3) => held || t3 !== "rhetorical_paragraphs");
   const scope = (t3) => t3 === "filing_prose" || t3 === "filing_orders" ? "filing_id IN (SELECT id FROM filings WHERE proceeding_id = ?)" : "proceeding_id = ?";
   const noteHeld = treatmentNoteHeld(dbPath);
-  const current = rows2(
+  const current = rows4(
     dbPath,
     tables.map((t3) => `SELECT '${t3}' AS entity, id AS entity_id, ${reviewSnapshotSql(t3, noteHeld)} AS snapshot FROM ${t3} WHERE ${scope(t3)}`).join(" UNION ALL "),
     Array(tables.length).fill(proceedingId)
   );
-  const approved = rows2(
+  const approved = rows4(
     dbPath,
     `SELECT entity, entity_id, snapshot FROM review_approvals ra
      WHERE ra.id = (SELECT MAX(id) FROM review_approvals WHERE entity = ra.entity AND entity_id = ra.entity_id)`
@@ -89107,36 +89038,8 @@ function orderReviewMarkerFor(review, inv, lineGlyphs, order) {
   const override2 = order.wording_override === null ? "" : reviewMarkerFor(review, inv, lineGlyphs, "filing_orders", order.pointer_id, order.wording);
   return own || override2;
 }
-function exhibitNumbersFromOrderedIds(documentIds) {
-  const map = /* @__PURE__ */ new Map();
-  documentIds.forEach((id, i3) => map.set(id, i3 + 1));
-  return map;
-}
-function fetchProceedingExhibitNumbers(dbPath, proceedingId) {
-  const ordered = rows2(
-    dbPath,
-    `SELECT fd.document_id
-     FROM filing_documents fd
-     JOIN filings f ON f.id = fd.filing_id
-     WHERE f.proceeding_id = ?
-       AND f.kind = 'submissions_package'
-       AND fd.role != 'witness_statement'
-       AND NOT (f.retired_on IS NOT NULL AND f.filed_on IS NULL)
-     ORDER BY (f.filed_on IS NULL), f.filed_on, f.id, fd.ordinal`,
-    [proceedingId]
-  );
-  const seen = /* @__PURE__ */ new Set();
-  const firstOccurrence = [];
-  for (const r3 of ordered) {
-    if (seen.has(r3.document_id)) continue;
-    seen.add(r3.document_id);
-    firstOccurrence.push(r3.document_id);
-  }
-  return exhibitNumbersFromOrderedIds(firstOccurrence);
-}
-function exhibitNumbersForFiling(dbPath, filing, filingDocumentIds) {
-  return filing.kind === "submissions_package" ? fetchProceedingExhibitNumbers(dbPath, filing.proceeding_id) : exhibitNumbersFromOrderedIds(filingDocumentIds);
-}
+
+// src/submission/forms/statement-lines.ts
 function factStatementCitationLine(exhibitMap, labelMap, s3) {
   const parts = [];
   if (s3.instrument_id !== null) {
@@ -89183,6 +89086,8 @@ function pushStatementLines(lines2, excerpt, citationLine, markers, tag, id) {
   const idComment = `<!-- ${tag} ${id} -->`;
   lines2.push(`   ${[markers, idComment].filter(Boolean).join(" ")}`);
 }
+
+// src/submission/forms/submission-groups.ts
 function groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphs, suppressedFactIds = /* @__PURE__ */ new Set()) {
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const s3 of statementRows) {
@@ -89228,6 +89133,16 @@ function groupSubmissionLaw(lawRows) {
   for (const [subId, subMap] of bySubmission) result.set(subId, [...subMap.values()]);
   return result;
 }
+
+// src/submission/forms/brief-only-cap.ts
+var authorityNotKilled = (s3) => s3.authority_killed_on === null;
+var authorityNotOverruled = (s3) => s3.treatment !== "overruled";
+var countsAsSupport = (s3) => s3.verification === "verified" || s3.verification === "settled";
+var notFailed = (s3) => s3.verification !== "failed";
+var passesBriefOnlyCap = (s3) => countsAsSupport(s3) && authorityNotKilled(s3) && authorityNotOverruled(s3);
+var BRIEF_ONLY_CAP_SQL = "(a.killed_on IS NULL AND a.treatment IS NOT 'overruled' AND sl.verification IN ('verified', 'settled'))";
+
+// src/submission/forms/submission-paragraphs.ts
 function renderSubmissionParagraphs(submissionId, contention, startPara, facts, lawAssertions, exhibitMap, labelMap, copyMarkers, extraFirstParagraphMarker = "", renderedLawAssertions = /* @__PURE__ */ new Map(), opts = {}) {
   const prefix = opts.paragraphPrefix ?? "";
   const inv = opts.inventory;
@@ -89338,8 +89253,13 @@ function overruledAuthorityTag(live) {
 function recordParagraph(ctx, submissionId, document2, startPara) {
   if (!ctx.paragraphLedger.has(submissionId)) ctx.paragraphLedger.set(submissionId, { document: document2, para: startPara + 1 });
 }
+
+// src/submission/forms/orders-sought.ts
+function rows5(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
 function fetchOrdersSought(dbPath, filingId, document2) {
-  const orders = rows2(
+  const orders = rows5(
     dbPath,
     `SELECT o.id, o.wording, fo.wording_override, o.amount, o.template_key, o.template_values,
             o.crossed_out_on, fo.ordinal AS filing_ordinal, fo.id AS pointer_id,
@@ -89363,7 +89283,7 @@ function fetchJurisdictionEdges(dbPath, orderIds) {
   const edgesByOrder = /* @__PURE__ */ new Map();
   if (orderIds.length === 0) return edgesByOrder;
   const placeholders = orderIds.map(() => "?").join(",");
-  const edges = rows2(
+  const edges = rows5(
     dbPath,
     `SELECT req.order_sought_id, req.basis_state, sl.id AS statement_id, sl.excerpt, sl.pinpoint, sl.source, sl.verification,
             auth.treatment, auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, auth.killed_on AS authority_killed_on,
@@ -89381,8 +89301,13 @@ function fetchJurisdictionEdges(dbPath, orderIds) {
   }
   return edgesByOrder;
 }
+
+// src/submission/forms/opposing-points.ts
+function rows6(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
 function fetchOpposingPoints(dbPath, proceedingId) {
-  return rows2(
+  return rows6(
     dbPath,
     `SELECT op.id, op.component, op.pinpoint, op.verbatim_words, op.answered_by_submission_id,
             s.contention AS answered_by_contention
@@ -89393,6 +89318,256 @@ function fetchOpposingPoints(dbPath, proceedingId) {
     [proceedingId]
   );
 }
+
+// src/submission/forms/admission-annotations.ts
+function rows7(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function fetchAdmissionStates(dbPath, whereClause, params) {
+  const inputRows = rows7(
+    dbPath,
+    `SELECT
+       a.id,
+       a.fact_id,
+       a.party,
+       a.method,
+       a.instrument,
+       inst.served_on AS instrument_served_on,
+       a.instrument_pinpoint,
+       a.response_due,
+       a.response,
+       resp.document_date AS response_date,
+       a.response_pinpoint,
+       a.response_excerpt,
+       a.answer,
+       a.struck_on,
+       EXISTS(SELECT 1 FROM filing_documents fd WHERE fd.document_id = a.response) AS response_filing_selected,
+       EXISTS(
+         SELECT 1 FROM filing_documents fd1
+         WHERE fd1.document_id = a.instrument
+           AND EXISTS(SELECT 1 FROM filing_documents fd2 WHERE fd2.filing_id = fd1.filing_id AND fd2.role = 'affidavit')
+       ) AS instrument_and_service_selected,
+       EXISTS(
+         SELECT 1 FROM filings f
+         WHERE f.proceeding_id = a.proceeding_id AND f.kind = 'requisition_default_judgment'
+       ) AS default_judgment_requisition_exists
+     FROM admissions a
+     LEFT JOIN documents inst ON inst.id = a.instrument
+     LEFT JOIN documents resp ON resp.id = a.response
+     WHERE ${whereClause}`,
+    params
+  );
+  return inputRows.map((r3) => ({
+    id: r3.id,
+    factId: r3.fact_id,
+    partyId: r3.party,
+    input: {
+      method: r3.method,
+      instrument: r3.instrument,
+      instrumentServedOn: r3.instrument_served_on,
+      instrumentPinpoint: r3.instrument_pinpoint,
+      responseDue: r3.response_due,
+      response: r3.response,
+      responseDate: r3.response_date,
+      responsePinpoint: r3.response_pinpoint,
+      responseExcerpt: r3.response_excerpt,
+      answer: r3.answer,
+      struckOn: r3.struck_on,
+      responseFilingSelected: r3.response_filing_selected === 1,
+      instrumentAndServiceSelected: r3.instrument_and_service_selected === 1,
+      defaultJudgmentRequisitionExists: r3.default_judgment_requisition_exists === 1
+    }
+  }));
+}
+function fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today4) {
+  const spentGlyphByFact = /* @__PURE__ */ new Map();
+  if (factIds.length === 0) return { admittedFactIds: /* @__PURE__ */ new Set(), spentGlyphByFact, suppressedFactIds: /* @__PURE__ */ new Set() };
+  const placeholders = factIds.map(() => "?").join(",");
+  const byFact = /* @__PURE__ */ new Map();
+  const spentByFact = /* @__PURE__ */ new Map();
+  for (const r3 of fetchAdmissionStates(dbPath, `a.fact_id IN (${placeholders})`, factIds)) {
+    const state = admissionLadderState(r3.input, today4);
+    const role = admissionRole(state);
+    if (role === "tenders") {
+      const set = byFact.get(r3.factId) ?? /* @__PURE__ */ new Set();
+      set.add(r3.partyId);
+      byFact.set(r3.factId, set);
+    } else if (role === "spent") {
+      const list = spentByFact.get(r3.factId) ?? [];
+      list.push(admissionRungMarker(state));
+      spentByFact.set(r3.factId, list);
+    }
+  }
+  for (const [factId, glyphs] of spentByFact) spentGlyphByFact.set(factId, dedupeLineMarkers(glyphs));
+  const admittedFactIds = opposingIds.length === 0 ? /* @__PURE__ */ new Set() : new Set(factIds.filter((id) => admittedAgainstAllOpposing(byFact.get(id) ?? /* @__PURE__ */ new Set(), opposingIds)));
+  return { admittedFactIds, spentGlyphByFact, suppressedFactIds: suppressedWitnessFactIds(dbPath, factIds) };
+}
+function fetchFactAdmissionCoverage(dbPath, factIds, opposingIds, today4) {
+  return fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today4).admittedFactIds;
+}
+
+// src/submission/forms/components.ts
+var BLANK_UNDERLINE = "________";
+function frontmatterHeader(f3) {
+  const lists = (f3.lists ?? []).filter((l3) => l3.items.length > 0).flatMap((l3) => [`${l3.label}:`, ...l3.items.map((item) => `  - ${item}`)]);
+  return [
+    "---",
+    `Matter no: ${f3.matterNo}`,
+    `Matter Description: ${f3.matterDescription}`,
+    `Client Name: ${f3.clientName}`,
+    `Client no: ${f3.clientNo}`,
+    `Document Type: ${f3.documentType}`,
+    `Document Name: ${f3.documentName}`,
+    `Document Date: ${f3.documentDate}`,
+    `Venue: ${f3.venue}`,
+    `Proceeding File no: ${f3.proceedingFileNo}`,
+    `Revision: ${f3.revision}`,
+    `Rendered: ${f3.rendered}`,
+    ...lists,
+    "---"
+  ].join("\n");
+}
+function pluralizeRole(role, count) {
+  if (count <= 1) return role;
+  return role.endsWith("s") ? role : `${role}s`;
+}
+function groupPartiesByRole(parties2) {
+  const sorted = [...parties2].sort((a3, b3) => a3.ordinal - b3.ordinal);
+  const groups = [];
+  for (const p3 of sorted) {
+    const last = groups[groups.length - 1];
+    if (last && last.role === p3.role) {
+      last.names.push(p3.name);
+    } else {
+      groups.push({ role: p3.role, names: [p3.name] });
+    }
+  }
+  return groups;
+}
+function formatNameList(names) {
+  if (names.length === 0) return "";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+function styleOfProceedingCaption(parties2, opts) {
+  const lines2 = [];
+  lines2.push("| | | |");
+  lines2.push("| :--- | :---: | ---: |");
+  const { heading } = opts;
+  if (heading.registry_label !== null) lines2.push(`| | | ${opts.registry ?? ""} ${heading.registry_label} |`);
+  if (heading.registry_label !== null || opts.fileNumber) lines2.push(`| | | ${heading.file_number_label} ${opts.fileNumber ?? ""} |`);
+  for (const line of [heading.caption_lines].flat()) lines2.push(`| | **${line}** | |`);
+  const groups = groupPartiesByRole(parties2);
+  groups.forEach((group, i3) => {
+    lines2.push(`| ${i3 === 0 ? "BETWEEN:" : "AND:"} | | |`);
+    lines2.push(`| | ${group.names.map((n3) => n3.toUpperCase()).join(" and ")} | |`);
+    lines2.push(`| | | *${pluralizeRole(group.role, group.names.length)}* |`);
+  });
+  if (opts.titleLine !== void 0) lines2.push(`| | **${opts.titleLine}** | |`);
+  return lines2.join("\n");
+}
+function signatureBlock(party, officerSigned) {
+  const lines2 = [];
+  lines2.push(`Date: ________________`);
+  if (party.counselName) {
+    lines2.push(`Signature of ${party.counselName}, lawyer for the ${party.role}, ${party.name}`);
+  } else {
+    lines2.push(`Signature of ${party.name}, ${party.role} (self-represented)`);
+  }
+  if (officerSigned) {
+    lines2.push("");
+    lines2.push("[ ] Party  [ ] Lawyer for party  [ ] Legal representative for party");
+  }
+  return lines2.join("\n");
+}
+function requisitionWrapper(f3) {
+  const lines2 = [];
+  lines2.push(f3.captionMarkdown);
+  lines2.push("");
+  lines2.push(`**Filed by:** ${f3.filedBy}`);
+  lines2.push("");
+  lines2.push(`**Required:** ${f3.required}`);
+  lines2.push("");
+  if (f3.checklistLeadIn) {
+    lines2.push(f3.checklistLeadIn);
+    lines2.push("");
+  }
+  f3.checklist.forEach((item, i3) => lines2.push(`${i3 + 1}. ${item}`));
+  return lines2.join("\n");
+}
+var STANDARD_MATERIAL_LINES = ["Pleadings filed in this proceeding", "Such further affidavits or filed court documents as this honourable court may allow"];
+function checkboxOrderBlock(rows29) {
+  const lines2 = [];
+  lines2.push("[ ] The order(s) set out in Part 1 of this notice were made in the terms requested in Part 1 of this notice.");
+  lines2.push("[ ] The order(s) set out in Part 1 of this notice were made with the following variations and additional terms:");
+  lines2.push("");
+  rows29.forEach((r3) => lines2.push(`- ${r3.text}${r3.marker ? ` ${r3.marker}` : ""}`));
+  return lines2.join("\n");
+}
+function buildLowerCourtRoleByRole(parties2) {
+  const valuesByRole = /* @__PURE__ */ new Map();
+  for (const p3 of parties2) {
+    const list = valuesByRole.get(p3.role) ?? [];
+    list.push(p3.lower_court_role);
+    valuesByRole.set(p3.role, list);
+  }
+  const result = {};
+  for (const [role, values] of valuesByRole) {
+    const first = values[0];
+    if (first !== null && values.every((v3) => v3 === first)) result[role] = first;
+  }
+  return result;
+}
+var CONTACT_COLUMNS = [
+  { column: "counsel_firm", missing: "firm" },
+  { column: "counsel_name", missing: "counsel" },
+  { column: "address_for_service", missing: "address for service" },
+  { column: "counsel_phone", missing: "telephone" },
+  { column: "counsel_email", missing: "email" }
+];
+function contactCells(c3, gapMarker2) {
+  const texts = [c3.counselFirm ?? gapMarker2, `Attn: ${c3.counselName ?? gapMarker2}`, c3.addressForService ?? gapMarker2, `Tel: ${c3.counselPhone ?? gapMarker2}`, c3.counselEmail ?? gapMarker2];
+  return CONTACT_COLUMNS.map((col, i3) => ({ ...col, text: texts[i3] }));
+}
+function bccaCoverPage(parties2, fields) {
+  const lines2 = [];
+  lines2.push("| | | |");
+  lines2.push("| :--- | :---: | ---: |");
+  if (fields.heading.registry_label !== null) {
+    lines2.push(`| | | ${fields.registry ?? ""} ${fields.heading.registry_label} |`);
+    lines2.push(`| | | ${fields.heading.file_number_label} ${fields.fileNumber ?? ""} |`);
+  }
+  lines2.push(`| | | ${fields.recordLabel} |`);
+  lines2.push("| | **COURT OF APPEAL** | |");
+  if (fields.onAppealFrom && fields.onAppealFrom.judge && fields.onAppealFrom.court && fields.onAppealFrom.pronounced) {
+    lines2.push(
+      `| | ON APPEAL FROM the order of ${fields.onAppealFrom.judge} of the ${fields.onAppealFrom.court} pronounced on ${fields.onAppealFrom.pronounced} | |`
+    );
+  }
+  const groups = groupPartiesByRole(parties2);
+  groups.forEach((group, i3) => {
+    lines2.push(`| ${i3 === 0 ? "BETWEEN:" : "AND:"} | | |`);
+    lines2.push(`| | ${group.names.map((n3) => n3.toUpperCase()).join(" and ")} | |`);
+    lines2.push(`| | | *${pluralizeRole(group.role, group.names.length)}* |`);
+    const lowerCourtRole = fields.lowerCourtRoleByRole?.[group.role];
+    if (lowerCourtRole) lines2.push(`| | | *${lowerCourtRole}* |`);
+  });
+  if (fields.accessRestrictions) {
+    for (const line of fields.accessRestrictions.split("\n")) lines2.push(`| | ${line} | |`);
+  }
+  lines2.push(`| | **${fields.titleLine}** | |`);
+  if (fields.filingPartyPhrase) lines2.push(`| | ${fields.filingPartyPhrase} | |`);
+  lines2.push("");
+  lines2.push(`| ${fields.contacts.map((c3) => formatNameList(c3.names.map((n3) => n3.toUpperCase()))).join(" | ")} |`);
+  lines2.push(`| ${fields.contacts.map(() => ":---").join(" | ")} |`);
+  const cells = fields.contacts.map((c3) => contactCells(c3, fields.gapMarker));
+  for (let row2 = 0; row2 < CONTACT_COLUMNS.length; row2++) lines2.push(`| ${cells.map((c3) => c3[row2].text).join(" | ")} |`);
+  lines2.push(`| ${fields.contacts.map((c3) => `Counsel for the ${pluralizeRole(c3.role, c3.names.length)}`).join(" | ")} |`);
+  return lines2.join("\n");
+}
+
+// src/submission/forms/vaniac-frontmatter.ts
 function frontmatterFor(documentType, proceeding, filing, revision, rendered, clientName, clientNo, matterNo, matterDescription) {
   const fields = {
     matterNo,
@@ -89409,29 +89584,13 @@ function frontmatterFor(documentType, proceeding, filing, revision, rendered, cl
   };
   return frontmatterHeader(fields);
 }
-function fetchDeployedIds(dbPath, filingId, document2) {
-  return {
-    orderIds: new Set(
-      rows2(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ? AND document = ?`, [filingId, document2]).map(
-        (r3) => r3.order_sought_id
-      )
-    ),
-    submissionIds: new Set(
-      rows2(
-        dbPath,
-        `SELECT fs.submission_id FROM filing_submissions fs
-         JOIN submissions s ON s.id = fs.submission_id
-         WHERE fs.filing_id = ? AND fs.document = ? AND s.killed_on IS NULL`,
-        [filingId, document2]
-      ).map((r3) => r3.submission_id)
-    ),
-    factIds: new Set(
-      rows2(dbPath, `SELECT fact_id FROM filing_facts WHERE filing_id = ? AND document = ?`, [filingId, document2]).map((r3) => r3.fact_id)
-    )
-  };
+
+// src/submission/forms/witness-statement-reads.ts
+function rows8(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchWitnessStatements(dbPath, filingId) {
-  return rows2(
+  return rows8(
     dbPath,
     `SELECT d.id, d.deponent AS witness_id, d.execution, d.signed_at, d.label, fd.ordinal,
             w.name AS witness_name
@@ -89444,7 +89603,7 @@ function fetchWitnessStatements(dbPath, filingId) {
   );
 }
 function fetchStatementParagraphs(dbPath, documentId) {
-  return rows2(
+  return rows8(
     dbPath,
     `SELECT id, ordinal, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`,
     [documentId]
@@ -89453,7 +89612,7 @@ function fetchStatementParagraphs(dbPath, documentId) {
 function fetchParagraphFacts(dbPath, paragraphIds) {
   if (paragraphIds.length === 0) return [];
   const placeholders = paragraphIds.map(() => "?").join(",");
-  return rows2(
+  return rows8(
     dbPath,
     `SELECT psof.statement_paragraph_id, sof.fact_id, psof.statement_of_fact_id
      FROM paragraph_statements_of_fact psof
@@ -89463,7 +89622,7 @@ function fetchParagraphFacts(dbPath, paragraphIds) {
   );
 }
 function fetchIncludedStatementsOfFactForWitness(dbPath, witnessId) {
-  return rows2(
+  return rows8(
     dbPath,
     `SELECT sof.id, sof.fact_id, sof.interviewed, sof.pinpoint, sof.doubt,
             sof.exhibit_id, sof.exhibit_pinpoint,
@@ -89475,6 +89634,21 @@ function fetchIncludedStatementsOfFactForWitness(dbPath, witnessId) {
     [witnessId]
   );
 }
+function fetchDocumentsReliedOn(dbPath, statementDocumentId) {
+  return rows8(
+    dbPath,
+    `SELECT DISTINCT d.id, d.label, d.document_date
+     FROM statement_paragraphs sp
+     JOIN paragraph_statements_of_fact psof ON psof.statement_paragraph_id = sp.id
+     JOIN statements_of_fact sof ON sof.id = psof.statement_of_fact_id
+     JOIN documents d ON d.id = sof.exhibit_id
+     WHERE sp.document_id = ? AND sof.exhibit_id IS NOT NULL
+     ORDER BY d.id`,
+    [statementDocumentId]
+  );
+}
+
+// src/submission/forms/render-witness-statements.ts
 function unlinkedFactMarkers(f3, admitted) {
   const courtRecordLinked = f3.fact_court_record !== null;
   if (isAdmittedGuard(courtRecordLinked, admitted)) return doubtMarker(f3.doubt);
@@ -89490,19 +89664,6 @@ function unlinkedFactMarkers(f3, admitted) {
     }),
     doubtMarker(f3.doubt)
   ]);
-}
-function fetchDocumentsReliedOn(dbPath, statementDocumentId) {
-  return rows2(
-    dbPath,
-    `SELECT DISTINCT d.id, d.label, d.document_date
-     FROM statement_paragraphs sp
-     JOIN paragraph_statements_of_fact psof ON psof.statement_paragraph_id = sp.id
-     JOIN statements_of_fact sof ON sof.id = psof.statement_of_fact_id
-     JOIN documents d ON d.id = sof.exhibit_id
-     WHERE sp.document_id = ? AND sof.exhibit_id IS NOT NULL
-     ORDER BY d.id`,
-    [statementDocumentId]
-  );
 }
 function renderWitnessStatements(ctx) {
   const statements = fetchWitnessStatements(ctx.dbPath, ctx.filing.id);
@@ -89599,21 +89760,15 @@ function renderWitnessStatements(ctx) {
     return { witnessName: s3.witness_name, markdown: lines2.join("\n").trimEnd() + "\n" };
   });
 }
-function fetchFilingDocuments(dbPath, filingId) {
-  return rows2(
-    dbPath,
-    `SELECT fd.id, fd.document_id, fd.ordinal, fd.role, fd.provenance, d.label, d.document_date, d.description, d.file_path
-     FROM filing_documents fd
-     JOIN documents d ON d.id = fd.document_id
-     WHERE fd.filing_id = ? AND fd.role != 'witness_statement'
-     ORDER BY fd.ordinal`,
-    [filingId]
-  );
+
+// src/submission/forms/document-tenders.ts
+function rows9(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchExhibitTenders(dbPath, documentIds) {
   if (documentIds.length === 0) return [];
   const placeholders = documentIds.map(() => "?").join(",");
-  return rows2(
+  return rows9(
     dbPath,
     `SELECT sof.exhibit_id, 'witness' AS tender_kind, w.name AS name, inst.label AS instrument_label, sof.purpose, NULL AS admission_id, NULL AS fact_postulate, 0 AS tender_rank, sof.id AS tender_ord
      FROM statements_of_fact sof
@@ -89629,88 +89784,6 @@ function fetchExhibitTenders(dbPath, documentIds) {
      ORDER BY tender_rank, tender_ord`,
     [...documentIds, ...documentIds]
   );
-}
-function fetchAdmissionStates(dbPath, whereClause, params) {
-  const inputRows = rows2(
-    dbPath,
-    `SELECT
-       a.id,
-       a.fact_id,
-       a.party,
-       a.method,
-       a.instrument,
-       inst.served_on AS instrument_served_on,
-       a.instrument_pinpoint,
-       a.response_due,
-       a.response,
-       resp.document_date AS response_date,
-       a.response_pinpoint,
-       a.response_excerpt,
-       a.answer,
-       a.struck_on,
-       EXISTS(SELECT 1 FROM filing_documents fd WHERE fd.document_id = a.response) AS response_filing_selected,
-       EXISTS(
-         SELECT 1 FROM filing_documents fd1
-         WHERE fd1.document_id = a.instrument
-           AND EXISTS(SELECT 1 FROM filing_documents fd2 WHERE fd2.filing_id = fd1.filing_id AND fd2.role = 'affidavit')
-       ) AS instrument_and_service_selected,
-       EXISTS(
-         SELECT 1 FROM filings f
-         WHERE f.proceeding_id = a.proceeding_id AND f.kind = 'requisition_default_judgment'
-       ) AS default_judgment_requisition_exists
-     FROM admissions a
-     LEFT JOIN documents inst ON inst.id = a.instrument
-     LEFT JOIN documents resp ON resp.id = a.response
-     WHERE ${whereClause}`,
-    params
-  );
-  return inputRows.map((r3) => ({
-    id: r3.id,
-    factId: r3.fact_id,
-    partyId: r3.party,
-    input: {
-      method: r3.method,
-      instrument: r3.instrument,
-      instrumentServedOn: r3.instrument_served_on,
-      instrumentPinpoint: r3.instrument_pinpoint,
-      responseDue: r3.response_due,
-      response: r3.response,
-      responseDate: r3.response_date,
-      responsePinpoint: r3.response_pinpoint,
-      responseExcerpt: r3.response_excerpt,
-      answer: r3.answer,
-      struckOn: r3.struck_on,
-      responseFilingSelected: r3.response_filing_selected === 1,
-      instrumentAndServiceSelected: r3.instrument_and_service_selected === 1,
-      defaultJudgmentRequisitionExists: r3.default_judgment_requisition_exists === 1
-    }
-  }));
-}
-function fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today4) {
-  const spentGlyphByFact = /* @__PURE__ */ new Map();
-  if (factIds.length === 0) return { admittedFactIds: /* @__PURE__ */ new Set(), spentGlyphByFact, suppressedFactIds: /* @__PURE__ */ new Set() };
-  const placeholders = factIds.map(() => "?").join(",");
-  const byFact = /* @__PURE__ */ new Map();
-  const spentByFact = /* @__PURE__ */ new Map();
-  for (const r3 of fetchAdmissionStates(dbPath, `a.fact_id IN (${placeholders})`, factIds)) {
-    const state = admissionLadderState(r3.input, today4);
-    const role = admissionRole(state);
-    if (role === "tenders") {
-      const set = byFact.get(r3.factId) ?? /* @__PURE__ */ new Set();
-      set.add(r3.partyId);
-      byFact.set(r3.factId, set);
-    } else if (role === "spent") {
-      const list = spentByFact.get(r3.factId) ?? [];
-      list.push(admissionRungMarker(state));
-      spentByFact.set(r3.factId, list);
-    }
-  }
-  for (const [factId, glyphs] of spentByFact) spentGlyphByFact.set(factId, dedupeLineMarkers(glyphs));
-  const admittedFactIds = opposingIds.length === 0 ? /* @__PURE__ */ new Set() : new Set(factIds.filter((id) => admittedAgainstAllOpposing(byFact.get(id) ?? /* @__PURE__ */ new Set(), opposingIds)));
-  return { admittedFactIds, spentGlyphByFact, suppressedFactIds: suppressedWitnessFactIds(dbPath, factIds) };
-}
-function fetchFactAdmissionCoverage(dbPath, factIds, opposingIds, today4) {
-  return fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today4).admittedFactIds;
 }
 function tenderedByCitation(t3, admissionGlyphs) {
   if (t3.tender_kind === "admission") {
@@ -89782,6 +89855,8 @@ function fetchDocumentTenderStatus(dbPath, documentIds, today4, inventory) {
   }
   return result;
 }
+
+// src/submission/forms/render-evidence-index.ts
 function renderEvidenceIndex(ctx) {
   const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
   const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, docs.map((d3) => d3.document_id));
@@ -90081,12 +90156,12 @@ function withNoteUpSteps(proposals, inventory, pinpoints, contentions) {
 }
 
 // src/submission/forms/render-rhetoric.ts
-function rows3(dbPath, sql, params = []) {
+function rows10(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchRhetoric(dbPath, filingId, document2, part) {
   if (!rhetoricHeld(dbPath)) return [];
-  const found = rows3(
+  const found = rows10(
     dbPath,
     `SELECT rp.id, rp.wording, rp.states_law, rp.states_fact, fr.ordinal,
             EXISTS(SELECT 1 FROM rhetorical_paragraph_law l WHERE l.rhetorical_paragraph_id = rp.id) AS has_law,
@@ -90100,7 +90175,7 @@ function fetchRhetoric(dbPath, filingId, document2, part) {
   );
   if (found.length === 0) return [];
   const ids = [...new Set(found.map((r3) => r3.id))];
-  const recordRows = rows3(
+  const recordRows = rows10(
     dbPath,
     `SELECT rec.rhetorical_paragraph_id, rec.id, doc.label, rec.pinpoint, rec.excerpt
      FROM rhetorical_paragraph_record rec
@@ -90670,15 +90745,15 @@ function renderPart(ctx, part, state) {
 function composeLayoutSnapshot(key, seams = {}) {
   const folder = `draft/${key.country}/${key.jurisdiction}/${key.venue}`;
   const { kinds } = knowledgeRead(`${folder}/Documents/kinds.json`, seams).view;
-  const rows22 = kinds.filter((row2) => row2.file === key.kind || row2.aliases.some((alias) => alias.name === key.kind));
-  if (rows22.length !== 1) {
-    const candidates = rows22.map((row2) => `${row2.file}${row2.recipient ? ` (recipient ${row2.recipient})` : ""}`);
+  const rows29 = kinds.filter((row2) => row2.file === key.kind || row2.aliases.some((alias) => alias.name === key.kind));
+  if (rows29.length !== 1) {
+    const candidates = rows29.map((row2) => `${row2.file}${row2.recipient ? ` (recipient ${row2.recipient})` : ""}`);
     throw new DataServerError(
-      `kind "${key.kind}" matches ${rows22.length} rows of ${folder}/Documents/kinds.json; exactly one is required (candidates: ${candidates.length > 0 ? candidates.join(", ") : "none"})`,
+      `kind "${key.kind}" matches ${rows29.length} rows of ${folder}/Documents/kinds.json; exactly one is required (candidates: ${candidates.length > 0 ? candidates.join(", ") : "none"})`,
       "kind_unresolved"
     );
   }
-  const typeFile = rows22[0].file;
+  const typeFile = rows29[0].file;
   const passage_hashes = {};
   const blockOf2 = (path, kind) => {
     const read3 = knowledgeRead(path, seams);
@@ -90721,7 +90796,7 @@ function composeLayoutSnapshot(key, seams = {}) {
     layout_snapshot: JSON.stringify(stored),
     type_file: typeFile,
     stored,
-    recipient: rows22[0].recipient ?? null,
+    recipient: rows29[0].recipient ?? null,
     learned: typeRead.learned === true
   };
 }
@@ -91001,7 +91076,7 @@ function sameBoard(a3, b3) {
 function boardKey(board) {
   return board.filing_id === null ? `proceeding:${board.proceeding_id}` : `filing:${board.filing_id}`;
 }
-function rows4(dbPath, sql, params = []) {
+function rows11(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 var BoardIndex = class {
@@ -91009,9 +91084,9 @@ var BoardIndex = class {
   firstFiling = /* @__PURE__ */ new Map();
   filings;
   constructor(dbPath) {
-    this.filings = rows4(dbPath, "SELECT id, proceeding_id, kind FROM filings ORDER BY id");
+    this.filings = rows11(dbPath, "SELECT id, proceeding_id, kind FROM filings ORDER BY id");
     for (const f3 of this.filings) if (!this.firstFiling.has(f3.proceeding_id)) this.firstFiling.set(f3.proceeding_id, f3);
-    for (const r3 of rows4(dbPath, `SELECT key, value FROM db_meta WHERE key GLOB '${PREFIX}*'`)) {
+    for (const r3 of rows11(dbPath, `SELECT key, value FROM db_meta WHERE key GLOB '${PREFIX}*'`)) {
       const v3 = JSON.parse(r3.value);
       this.rows.set(r3.key, { filing_id: v3.filing_id ?? null, proceeding_id: v3.proceeding_id });
     }
@@ -91358,16 +91433,16 @@ function partiesSnapshotStatements(dbPath, filing, tool, env = process.env) {
 }
 
 // src/submission/forms/sent-write.ts
-import { existsSync as existsSync25 } from "node:fs";
+import { existsSync as existsSync27 } from "node:fs";
 import { extname, join as join28 } from "node:path";
 
 // src/submission/render-manifest.ts
 import { createHash as createHash9 } from "node:crypto";
-import { existsSync as existsSync24, mkdirSync as mkdirSync11, readFileSync as readFileSync21, realpathSync as realpathSync4, writeFileSync as writeFileSync7 } from "node:fs";
+import { existsSync as existsSync26, mkdirSync as mkdirSync11, readFileSync as readFileSync24, realpathSync as realpathSync5, writeFileSync as writeFileSync7 } from "node:fs";
 import { basename as basename4, dirname as dirname13, isAbsolute as isAbsolute4, join as join27, resolve as resolve4 } from "node:path";
 
 // src/files/zones.ts
-import { win32 as pathWin3213 } from "node:path";
+import { win32 as pathWin3215 } from "node:path";
 var FIREWALL = /^(privileged|disclosed)$/i;
 var TRASH = /^trash$/i;
 var CASE_DATA = /^0\. case data$/i;
@@ -91385,7 +91460,7 @@ function zoneProblem(purpose, path, root, draftUnchanged = false) {
   const zone = ZONES[purpose];
   const segments = path.split(/[\\/]+/);
   if (segments.some((s3) => FIREWALL.test(s3))) return `a privileged or disclosed folder is ${zone.phrase}`;
-  const below = root === void 0 ? [] : pathWin3213.relative(root, path).split(pathWin3213.sep).filter(Boolean);
+  const below = root === void 0 ? [] : pathWin3215.relative(root, path).split(pathWin3215.sep).filter(Boolean);
   if (purpose === "move-to" && draftUnchanged) {
     return below.length === 1 && DRAFT_FOLDER.test(below[0]) ? null : "Move to 0. DRAFT unchanged moves only into the matter's 0. DRAFT folder";
   }
@@ -91421,9 +91496,9 @@ function isFolderName(name) {
   return typeof name === "string" && name.trim() !== "" && name !== "." && name !== ".." && !/[\\/]/.test(name);
 }
 function parseManifest(file) {
-  if (!existsSync24(file)) return null;
+  if (!existsSync26(file)) return null;
   try {
-    const parsed = JSON.parse(readFileSync21(file, "utf-8"));
+    const parsed = JSON.parse(readFileSync24(file, "utf-8"));
     if (!parsed || typeof parsed !== "object" || !parsed.stamp || !Array.isArray(parsed.files) || !Array.isArray(parsed.inventory) || !parsed.inventory.every(isInventoryEntry)) {
       return null;
     }
@@ -91456,7 +91531,7 @@ function renderState(dbPath, filingId, stamp2, partiesDrift) {
   if (manifest === null) return "never";
   if (!stampsEqual(manifest.stamp, stamp2) || manifest.parties_drift !== partiesDrift) return "stale";
   const dir = manifestDir(dbPath, manifest);
-  return manifest.files.every((f3) => existsSync24(join27(dir, f3.file_name))) ? "fresh" : "stale";
+  return manifest.files.every((f3) => existsSync26(join27(dir, f3.file_name))) ? "fresh" : "stale";
 }
 function freshManifest(dbPath, filingId, stamp2, partiesDrift) {
   const manifest = readManifest(dbPath, filingId);
@@ -91465,10 +91540,10 @@ function freshManifest(dbPath, filingId, stamp2, partiesDrift) {
   const contents = /* @__PURE__ */ new Map();
   for (const f3 of manifest.files) {
     const file = join27(dir, f3.file_name);
-    if (!existsSync24(file)) return null;
+    if (!existsSync26(file)) return null;
     let text5;
     try {
-      text5 = readFileSync21(file, "utf-8");
+      text5 = readFileSync24(file, "utf-8");
     } catch {
       return null;
     }
@@ -91483,7 +91558,7 @@ function resolveDraftDir(draftDir, param2 = "drafting_forms__bootstrap.draft_dir
   const dir = resolve4(draftDir);
   let real;
   try {
-    real = realpathSync4.native(dir);
+    real = realpathSync5.native(dir);
   } catch {
     throw refuse2("does not exist");
   }
@@ -91513,6 +91588,486 @@ function draftDirOf(dbPath) {
 }
 function recordsDir(dbPath) {
   return join27(draftDirOf(dbPath), RECORDS_FOLDER);
+}
+
+// src/submission/forms/work-board-reads.ts
+function rows12(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function fetchProceedingTickets(dbPath, proceedingId) {
+  return rows12(dbPath, `SELECT * FROM tickets WHERE proceeding_id = ?${liveTicketClause(dbPath)} ORDER BY priority DESC, id`, [proceedingId]);
+}
+function fetchDeletedTickets(dbPath, proceedingId) {
+  if (!deletedAtHeld(dbPath)) return [];
+  return rows12(dbPath, "SELECT id, title, filing_id FROM tickets WHERE proceeding_id = ? AND deleted_at IS NOT NULL ORDER BY id", [proceedingId]);
+}
+function fetchAttachments(dbPath, proceedingId, filingId) {
+  if (!boardAttachmentsHeld(dbPath)) return [];
+  return rows12(
+    dbPath,
+    "SELECT id, filing_id, path, kind, attached_on FROM board_attachments WHERE proceeding_id = ? AND (? IS NULL OR filing_id = ? OR (filing_id IS NULL AND ? = (SELECT MIN(id) FROM filings WHERE proceeding_id = ? AND retired_on IS NULL AND kind <> ?))) ORDER BY id",
+    [proceedingId, filingId, filingId, filingId, proceedingId, JOB_BOARD_KIND]
+  );
+}
+
+// src/submission/forms/work-board-ticket.ts
+var INELIGIBLE_REASONS = [
+  "not_ready",
+  "filing_filed",
+  "no_inventory",
+  "not_one_step",
+  "no_proposal_keys",
+  "dead_key",
+  "reworded",
+  "marker_not_eligible",
+  "live_partner",
+  "shared_material"
+];
+
+// src/submission/forms/work-board-seeds.ts
+var RANK_GROUP_LABELS = {
+  decision: "Practitioner remarks and decisions already made",
+  tooling: "Plugin and tooling feedback",
+  housekeeping: "matter-data and law-folder housekeeping",
+  research: "Research offers and research questions",
+  authority: "Writing doesn't match an authority as cited",
+  evidence: "Writing doesn't match the evidence or pleadings",
+  other: "Miscellaneous"
+};
+function inRankOrder(seeds) {
+  return [...seeds].sort((a3, b3) => (a3.rank === null ? 1 : 0) - (b3.rank === null ? 1 : 0) || (a3.rank ?? 0) - (b3.rank ?? 0) || a3.id - b3.id);
+}
+function seedOrigin(s3) {
+  if (s3.origin_ticket_id !== null) return `from Job #${s3.origin_ticket_id}${s3.from_filing === null ? "" : ` on ${s3.from_filing}`}`;
+  return s3.from_filing === null ? null : `from ${s3.from_filing}`;
+}
+function columnHeld(dbPath, table, column) {
+  return rows12(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
+}
+function openSeedCondition(dbPath, deletedIds) {
+  const deletedList = [...deletedIds];
+  const outlinedIntoDeleted = deletedList.length === 0 ? "" : ` OR charted_into IN (${deletedList.map(() => "?").join(",")})`;
+  return { sql: `(charted_into IS NULL${outlinedIntoDeleted})${liveSeedClause(dbPath)}`, params: deletedList };
+}
+function fetchDiscardedSeeds(dbPath, proceedingId) {
+  if (seedClosedColumns(dbPath).length < 2) return [];
+  return rows12(
+    dbPath,
+    "SELECT id, idea, filing_id, discarded_at, suggested_at FROM seeds WHERE proceeding_id = ? AND (discarded_at IS NOT NULL OR suggested_at IS NOT NULL) ORDER BY id",
+    [proceedingId]
+  );
+}
+function fetchResolvedSeeds(dbPath, proceedingId) {
+  const closed = seedClosedColumns(dbPath);
+  const column = (name) => closed.includes(name) ? `s.${name}` : `NULL AS ${name}`;
+  const resolved = [...closed.map((name) => `s.${name} IS NOT NULL`), "t.id IS NOT NULL"].join(" OR ");
+  return rows12(
+    dbPath,
+    `SELECT s.id, s.idea, ${column("discarded_at")}, ${column("suggested_at")}, t.id AS job_id, t.title AS job_title, t.created AS job_created
+     FROM seeds s LEFT JOIN tickets t ON t.id = s.charted_into${liveTicketClause(dbPath, "t")}
+     WHERE s.proceeding_id = ? AND (${resolved})`,
+    [proceedingId]
+  ).map((r3) => {
+    if (r3.discarded_at !== null) return { id: r3.id, idea: r3.idea, how: "discarded", at: r3.discarded_at, job_id: null, job_title: null };
+    if (r3.suggested_at !== null) return { id: r3.id, idea: r3.idea, how: "suggested", at: r3.suggested_at, job_id: null, job_title: null };
+    return { id: r3.id, idea: r3.idea, how: "job", at: r3.job_created, job_id: r3.job_id, job_title: r3.job_title };
+  }).sort((a3, b3) => a3.at === b3.at ? a3.id - b3.id : a3.at < b3.at ? 1 : -1);
+}
+function fetchOpenSeeds(dbPath, proceedingId, deletedIds = new Set(fetchDeletedTickets(dbPath, proceedingId).map((d3) => d3.id))) {
+  const open = openSeedCondition(dbPath, deletedIds);
+  const ranking = columnHeld(dbPath, "seeds", "rank") ? "rank, rank_group, rank_reason" : "NULL AS rank, NULL AS rank_group, NULL AS rank_reason";
+  const job = columnHeld(dbPath, "seeds", "rank_job") ? "rank_job" : "NULL AS rank_job";
+  const deferral = columnHeld(dbPath, "seeds", "deferred_at") ? "deferred_at" : "NULL AS deferred_at";
+  return rows12(
+    dbPath,
+    `SELECT id, filing_id, origin_ticket_id, created, surfaced_by, idea, ${ranking}, ${job}, ${deferral} FROM seeds WHERE ${open.sql} AND proceeding_id = ? ORDER BY id`,
+    [...open.params, proceedingId]
+  ).map((s3) => ({
+    id: s3.id,
+    idea: s3.idea,
+    surfaced_by: s3.surfaced_by,
+    created: s3.created,
+    filing_id: s3.filing_id,
+    origin_ticket_id: s3.origin_ticket_id !== null && deletedIds.has(s3.origin_ticket_id) ? null : s3.origin_ticket_id,
+    rank: s3.rank,
+    rank_group: s3.rank_group,
+    rank_reason: s3.rank_reason,
+    rank_job: s3.rank_job,
+    deferred_at: s3.deferred_at
+  }));
+}
+function withFromFiling(dbPath, proceedingId, filingId, seeds) {
+  const filingTitles = new Map(rows12(dbPath, "SELECT id, title FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.title]));
+  return seeds.map((s3) => ({ ...s3, from_filing: s3.filing_id === null || s3.filing_id === filingId ? null : filingTitles.get(s3.filing_id) ?? null }));
+}
+
+// src/submission/forms/work-board-data.ts
+var WORKBOARD_DATA_FILE = "workboard-data.js";
+
+// src/submission/forms/step-state.ts
+var minute = (stamp2) => stamp2.replace(" ", "T").slice(0, 16);
+function stepView(s3, now) {
+  if (s3.done_at !== null) return "done";
+  if (s3.status === "waiting") return s3.wait_until && minute(s3.wait_until) > minute(now) ? "waiting" : "open";
+  if (s3.status === "retry" || s3.status === "cancelled" || s3.status === "deferred") return s3.status;
+  return "open";
+}
+function stepResolved(s3) {
+  return s3.done_at !== null || s3.status === "cancelled" || s3.status === "deferred";
+}
+function stepGlyphText(s3, now) {
+  const view = stepView(s3, now);
+  return view === "waiting" ? `${STEP_GLYPHS.waiting} until ${minute(s3.wait_until).slice(11)}` : STEP_GLYPHS[view];
+}
+
+// src/submission/forms/ticket-category.ts
+function reachesItself(startId, blockersOf) {
+  const stack = [...blockersOf.get(startId) ?? []];
+  const seen = /* @__PURE__ */ new Set();
+  while (stack.length > 0) {
+    const cur = stack.pop();
+    if (cur === startId) return true;
+    if (seen.has(cur)) continue;
+    seen.add(cur);
+    for (const next of blockersOf.get(cur) ?? []) stack.push(next);
+  }
+  return false;
+}
+var allStepsDone = (steps) => steps.length > 0 && steps.every(stepResolved);
+var holdsMaterial = (t3) => t3.status === "wip" && !allStepsDone(t3.steps);
+function latestStamp(stamps) {
+  let latest = null;
+  for (const s3 of stamps) if (s3 !== null && (latest === null || s3.replace(" ", "T") > latest.replace(" ", "T"))) latest = s3;
+  return latest;
+}
+function activeAt(ticket, stamp2) {
+  if (ticket.status !== "wip" || stamp2 === void 0 || ticket.locked_at === null) return null;
+  return stamp2.replace(" ", "T") >= ticket.locked_at.replace(" ", "T") ? stamp2 : null;
+}
+function classify(ticket, blockers, conflictPartners, today4) {
+  if (ticket.rejected_at !== null) return "rejected";
+  if (ticket.status === "completed") return "completed";
+  if (ticket.status === "superseded") return "superseded";
+  if (ticket.status === "wip") return "wip";
+  if (ticket.bf_on != null && ticket.bf_on > today4) return "bring_forward";
+  if (blockers.some((b3) => b3.status !== "completed")) return "waiting";
+  if (conflictPartners.some((p3) => p3.status === "wip")) return "waiting";
+  return "ready";
+}
+function supersededReason(ticket, retiredOn) {
+  if (ticket.status !== "superseded" || ticket.superseded_by !== null) return null;
+  if (ticket.superseded_marker_gone_at !== null) return `Superseded: its marker no longer shows (${ticket.superseded_marker_gone_at.slice(0, 10)})`;
+  const retired = ticket.filing_id === null ? null : retiredOn.get(ticket.filing_id) ?? null;
+  return retired === null ? null : `Superseded by: retirement of this Writing (${retired})`;
+}
+var scopesShare = (a3, b3) => a3 === b3 || a3.split(":")[0] === b3 || b3.split(":")[0] === a3;
+function localMinutes(stamp2) {
+  const m3 = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(stamp2);
+  return m3 === null ? null : Math.round(new Date(+m3[1], +m3[2] - 1, +m3[3], +m3[4], +m3[5]).getTime() / 6e4);
+}
+function withIdleFlag(t3, rendered, hours) {
+  if (hours === null || t3.category !== "wip") return t3;
+  const now = localMinutes(rendered);
+  const last = t3.last_activity_at === null ? null : localMinutes(t3.last_activity_at);
+  if (now === null || last === null || now - last <= hours * 60) return t3;
+  return { ...t3, idle_flag: `idle past ${hours} h` };
+}
+
+// src/submission/forms/track-source.ts
+var TOOL5 = "drafting_data__track_source";
+var NOW2 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var KINDS = ["decision", "legislation", "file"];
+var OUTCOMES = ["got", "not_retrieved"];
+var LABEL_MAX = 200;
+var REASON_MAX = 60;
+var ticketSourcesHeldDbs = /* @__PURE__ */ new Set();
+function ticketSourcesHeld(dbPath) {
+  if (ticketSourcesHeldDbs.has(dbPath)) return true;
+  const [{ n: n3 }] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'ticket_sources'").rows;
+  if (n3 > 0) ticketSourcesHeldDbs.add(dbPath);
+  return n3 > 0;
+}
+function oneLine(value, field, max) {
+  if (typeof value !== "string" || value.trim() === "" || /[\r\n]/.test(value) || value.trim().length > max) {
+    throw new ValidationError(`${TOOL5}.${field} must be one line of 1 to ${max} characters; nothing was written`, "invalid_item");
+  }
+  return value.trim();
+}
+function oneOf(value, field, allowed) {
+  if (typeof value !== "string" || !allowed.includes(value)) {
+    throw new ValidationError(`${TOOL5}.${field} must be one of ${allowed.join(", ")}; nothing was written`, "invalid_item");
+  }
+  return value;
+}
+async function submissionDataTrackSource(args, env = process.env) {
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL5}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
+    throw new ValidationError(`${TOOL5}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+  }
+  const id = args.ticket_id;
+  const token = args.session_token;
+  const add = (args.add ?? []).map((a3) => ({ kind: oneOf(a3.kind, "add.kind", KINDS), label: oneLine(a3.label, "add.label", LABEL_MAX) }));
+  const close = (args.close ?? []).map((c3) => ({
+    kind: oneOf(c3.kind, "close.kind", KINDS),
+    label: oneLine(c3.label, "close.label", LABEL_MAX),
+    outcome: oneOf(c3.outcome, "close.outcome", OUTCOMES),
+    reason: c3.reason === void 0 ? null : oneLine(c3.reason, "close.reason", REASON_MAX)
+  }));
+  if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
+    throw new NotFoundError(`${TOOL5}: no job ${id} in ${args.db_path}`, "not_found");
+  }
+  if (!ticketSourcesHeld(args.db_path)) {
+    throw new ValidationError(
+      `${TOOL5}: ${args.db_path} is held below schema v76, so no source to get can be recorded on job ${id}; nothing was written. Say once that the matter's database needs the v76 migration, and carry on with the work.`,
+      "schema_below_v76"
+    );
+  }
+  const held = "EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)";
+  const statements = [
+    ...add.flatMap((a3) => [
+      {
+        sql: `UPDATE ticket_sources SET closed_at = NULL, outcome = NULL, reason = NULL WHERE ticket_id = ? AND kind = ? AND label = ? AND closed_at IS NOT NULL AND ${held}`,
+        params: [id, a3.kind, a3.label, id, token]
+      },
+      {
+        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${NOW2} FROM tickets WHERE id = ? AND locked_by = ?`,
+        params: [a3.kind, a3.label, id, token]
+      }
+    ]),
+    ...close.map((c3) => ({
+      sql: `UPDATE ticket_sources SET closed_at = ${NOW2}, outcome = ?, reason = ? WHERE ticket_id = ? AND kind = ? AND label = ? AND ${held}`,
+      params: [c3.outcome, c3.reason, id, c3.kind, c3.label, id, token]
+    }))
+  ];
+  const written = statements.length === 0 ? null : await submissionDataWriteAll(args.db_path, statements, env);
+  const [read3] = submissionDataQuery(args.db_path, "SELECT status, rejected_at, locked_by FROM tickets WHERE id = ?", [id]).rows;
+  if (read3 === void 0) throw new NotFoundError(`${TOOL5}: no job ${id} in ${args.db_path}`, "not_found");
+  const sources = submissionDataQuery(args.db_path, "SELECT id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id = ? ORDER BY id", [id]).rows;
+  const open = sources.filter((s3) => s3.closed_at === null).length;
+  const on2 = new Set(sources.map((s3) => `${s3.kind}: ${s3.label}`));
+  let outcome;
+  let note;
+  let unknown2 = [];
+  if (read3.locked_by === token) {
+    outcome = "recorded";
+    unknown2 = close.map((c3) => `${c3.kind}: ${c3.label}`).filter((k3) => !on2.has(k3));
+    note = `Job ${id} is this session's: ${sources.length} source${sources.length === 1 ? "" : "s"} to get on it, ${open} open.${unknown2.length > 0 ? ` ${unknown2.length} close item${unknown2.length === 1 ? " names" : "s name"} no source on the job and closed nothing.` : ""}`;
+  } else if (read3.locked_by !== null) {
+    outcome = "not_held";
+    note = `Nothing was written: another session holds job ${id} (taken over). Dispatch nothing for this job; report it and stop.`;
+  } else if (read3.rejected_at !== null) {
+    outcome = "shelved";
+    note = `Nothing was written: job ${id} is shelved (rejected_at ${read3.rejected_at}). Dispatch nothing for this job; report it and stop.`;
+  } else if (read3.status === "completed") {
+    outcome = "completed";
+    note = `Nothing was written: job ${id} is completed. Dispatch nothing for this job; report it and stop.`;
+  } else {
+    outcome = "no_match";
+    note = `Nothing was written: job ${id} is status=${read3.status} with no holder, so the guards matched nothing. Dispatch nothing for this job; report it and stop.`;
+  }
+  return {
+    ticket_id: id,
+    outcome,
+    sources,
+    open,
+    unknown: unknown2,
+    locked_by: read3.locked_by,
+    status: read3.status,
+    rejected_at: read3.rejected_at,
+    note,
+    ...written?.warning ? { warning: written.warning } : {}
+  };
+}
+
+// src/submission/forms/unattended-eligibility.ts
+function deadKeySubtitle(ticket, printed) {
+  if (printed === null || ticket.rejected_at !== null || ticket.status !== "queued" && ticket.status !== "wip") return null;
+  const dead = ticket.proposal_keys.filter((key) => !printed.has(key)).length;
+  return dead === 0 ? null : `${dead} of ${ticket.proposal_keys.length} items no longer show their marker`;
+}
+var UNATTENDED_TOKEN_PREFIX = "sess-unattended-";
+var UNATTENDED_ELIGIBLE = /* @__PURE__ */ new Map([
+  ["\u{1F9E9}", []],
+  ["\u{1F3DB}\uFE0F", []],
+  ["\u{1F4D6}", []],
+  ["\u{1F4DC}", []],
+  ["\u{1F4D1}", []],
+  ["\u{1F4AC}", []],
+  ["\u{1F4CD}", []],
+  // The court-record instance, keyed on `facts` (actor: holder of the record), is out.
+  ["\u{1F4CC}", ["statements_of_fact", "admissions"]],
+  ["\u{1F9F7}", ["statements_of_fact", "admissions"]],
+  ["\u{1F52C}", []],
+  ["\u21A9\uFE0F", []],
+  ["\u{1F443}", []],
+  ["\u{1F4C7}", []],
+  ["\u{1F3F7}\uFE0F", ["documents"]],
+  ["\u{1F575}\uFE0F", []],
+  ["\u2B1C", []],
+  ["\u{1F464}", []],
+  ["\u{1F5E3}\uFE0F", []],
+  ["\u270D\uFE0F", []],
+  ["\u{1F58B}\uFE0F", []],
+  ["\u2712\uFE0F", []],
+  ["\u{1F3BE}", []],
+  ["\u{1F579}\uFE0F", []],
+  ["\u{1F949}", []],
+  ["\u{1F948}", []],
+  ["\u{1F3C5}", []],
+  ["\u{1F9B5}", []],
+  ["\u{1F9F5}", []],
+  ["\u{1F9FE}", []],
+  ["\u{1F4DA}", []],
+  ["\u{1F9D0}", []]
+]);
+function eligibleKey(key) {
+  const [slug, table] = key.split(":");
+  return [...GLYPH_SLUGS].some(([glyph2, s3]) => s3 === slug && (UNATTENDED_ELIGIBLE.get(glyph2) ?? []).includes(table));
+}
+var livePartner = (p3) => p3.status === null || (p3.status === "queued" || p3.status === "wip") && !p3.rejected;
+function ineligibleReasons(ticket, filed, printed, titles, inProgress2) {
+  const texts = [ticket.title, ticket.intent, ...ticket.steps.slice(0, 1).map((s3) => s3.text)];
+  const failing = {
+    not_ready: ticket.category !== "ready",
+    filing_filed: filed,
+    no_inventory: printed === null,
+    not_one_step: ticket.steps.length !== 1,
+    no_proposal_keys: ticket.proposal_keys.length === 0,
+    dead_key: printed !== null && ticket.proposal_keys.some((key) => !printed.has(key)),
+    reworded: printed !== null && ticket.proposal_keys.some((key) => printed.has(key) && texts.some((text5) => text5 !== titles.get(key))),
+    marker_not_eligible: ticket.proposal_keys.some((key) => !eligibleKey(key)),
+    live_partner: ticket.conflicts.some(livePartner),
+    shared_material: inProgress2.some((held) => held.id !== ticket.id && held.scope.some((h3) => ticket.scope.some((s3) => scopesShare(h3, s3))))
+  };
+  return INELIGIBLE_REASONS.filter((reason) => failing[reason]);
+}
+
+// src/submission/forms/build-proceeding-board.ts
+function groupBy2(items, key) {
+  const map = /* @__PURE__ */ new Map();
+  for (const item of items) {
+    const list = map.get(key(item)) ?? [];
+    list.push(item);
+    map.set(key(item), list);
+  }
+  return map;
+}
+function localToday() {
+  const d3 = /* @__PURE__ */ new Date();
+  return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+}
+function buildProceedingBoard(dbPath, proceedingId, today4 = localToday()) {
+  const proceedingTickets = fetchProceedingTickets(dbPath, proceedingId);
+  const ticketById = new Map(proceedingTickets.map((t3) => [t3.id, t3]));
+  const proceedingIds = proceedingTickets.map((t3) => t3.id);
+  const idList = proceedingIds.map(() => "?").join(",");
+  const deleted = fetchDeletedTickets(dbPath, proceedingId);
+  const deletedIds = new Set(deleted.map((d3) => d3.id));
+  const blocks2 = (proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT * FROM ticket_blocks WHERE blocker_id IN (${idList}) OR blocked_id IN (${idList})`, [...proceedingIds, ...proceedingIds])).filter((b3) => !deletedIds.has(b3.blocker_id) && !deletedIds.has(b3.blocked_id));
+  const conflicts = (proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT * FROM ticket_conflicts WHERE a_id IN (${idList}) OR b_id IN (${idList})`, [...proceedingIds, ...proceedingIds])).filter((c3) => !deletedIds.has(c3.a_id) && !deletedIds.has(c3.b_id));
+  const steps = proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT * FROM ticket_steps WHERE ticket_id IN (${idList})`, proceedingIds);
+  const scopeRows = proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT * FROM ticket_scope WHERE ticket_id IN (${idList})`, proceedingIds);
+  const proposalRows = proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT ticket_id, proposal_key, item FROM ticket_proposals WHERE ticket_id IN (${idList})`, proceedingIds);
+  const captures = proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT origin_ticket_id, created FROM seeds WHERE origin_ticket_id IN (${idList})`, proceedingIds);
+  const answerRows = proceedingIds.length === 0 || !ticketAnswersHeld(dbPath) ? [] : rows12(dbPath, `SELECT ticket_id, file_path, saved_at FROM ticket_answers WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
+  const sourceRows = proceedingIds.length === 0 || !ticketSourcesHeld(dbPath) ? [] : rows12(dbPath, `SELECT ticket_id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
+  const blockersOf = /* @__PURE__ */ new Map();
+  for (const b3 of blocks2) blockersOf.set(b3.blocked_id, [...blockersOf.get(b3.blocked_id) ?? [], b3.blocker_id]);
+  const conflictsOf = /* @__PURE__ */ new Map();
+  for (const c3 of conflicts) {
+    conflictsOf.set(c3.a_id, [...conflictsOf.get(c3.a_id) ?? [], c3.b_id]);
+    conflictsOf.set(c3.b_id, [...conflictsOf.get(c3.b_id) ?? [], c3.a_id]);
+  }
+  const stepsByTicket = groupBy2(steps, (s3) => s3.ticket_id);
+  const scopeByTicket = groupBy2(scopeRows, (s3) => s3.ticket_id);
+  const proposalsByTicket = groupBy2(proposalRows, (p3) => p3.ticket_id);
+  const capturesByTicket = groupBy2(captures, (s3) => s3.origin_ticket_id);
+  const answersByTicket = groupBy2(answerRows, (a3) => a3.ticket_id);
+  const sourcesByTicket = groupBy2(sourceRows, (s3) => s3.ticket_id);
+  const activeById = new Map(
+    rows12(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r3) => [Number(r3.key.slice("job_active:".length)), r3.value])
+  );
+  const retiredOn = new Map(rows12(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.retired_on]));
+  const edge = (id) => {
+    const other = ticketById.get(id);
+    return { id, status: other?.status ?? null, rejected: other !== void 0 && other.status === "queued" && other.rejected_at !== null };
+  };
+  const holders = /* @__PURE__ */ new Map();
+  for (const t3 of [...proceedingTickets].sort((a3, b3) => a3.id - b3.id)) {
+    if (t3.rejected_at !== null || t3.status !== "queued" && t3.status !== "wip") continue;
+    for (const p3 of proposalsByTicket.get(t3.id) ?? []) {
+      if (!holders.has(p3.proposal_key)) holders.set(p3.proposal_key, { ticket_id: t3.id, filing_id: t3.filing_id });
+    }
+  }
+  const tickets = proceedingTickets.map((t3) => {
+    const blockedBy = (blockersOf.get(t3.id) ?? []).map(edge);
+    const conflictPartners = (conflictsOf.get(t3.id) ?? []).map(edge);
+    const category = classify(t3, blockedBy, conflictPartners, today4);
+    const ticket = {
+      id: t3.id,
+      title: t3.title,
+      intent: t3.intent,
+      kind: t3.kind,
+      priority: t3.priority,
+      status: t3.status,
+      category,
+      locked_by: t3.locked_by,
+      locked_at: t3.locked_at,
+      completed_at: t3.completed_at,
+      rejected_at: t3.rejected_at,
+      bf_on: t3.bf_on ?? null,
+      // A stale gate job pointed at a deleted replacement reads as superseded with no pointer.
+      superseded_by: t3.superseded_by === null || deletedIds.has(t3.superseded_by) ? null : edge(t3.superseded_by),
+      scope: (scopeByTicket.get(t3.id) ?? []).map((s3) => s3.entity_id === null ? s3.entity : `${s3.entity}:${s3.entity_id}`),
+      blocked_by: blockedBy,
+      conflicts: conflictPartners,
+      circular: category === "waiting" && reachesItself(t3.id, blockersOf),
+      steps: [...stepsByTicket.get(t3.id) ?? []].sort((a3, b3) => a3.ordinal - b3.ordinal).map((s3) => ({
+        ordinal: s3.ordinal,
+        text: s3.text,
+        done_at: s3.done_at,
+        status: s3.status ?? null,
+        wait_until: s3.wait_until ?? null,
+        status_note: s3.status_note ?? null
+      })),
+      proposal_keys: (proposalsByTicket.get(t3.id) ?? []).map((p3) => p3.proposal_key),
+      proposal_items: Object.fromEntries((proposalsByTicket.get(t3.id) ?? []).map((p3) => [p3.proposal_key, p3.item])),
+      superseded_reason: supersededReason(t3, retiredOn),
+      // Set by a filing's board, which holds the inventory the dead keys are read against.
+      subtitle: null,
+      eligible: false,
+      // A board with no filing has no inventory; a filing's board replaces this.
+      ineligible_reasons: ["no_inventory"],
+      dispatch_skips: [],
+      lock_note: category === "wip" && t3.locked_by?.startsWith(UNATTENDED_TOKEN_PREFIX) ? "In progress with nobody present" : null,
+      answers: (answersByTicket.get(t3.id) ?? []).map((a3) => ({ file_path: a3.file_path, saved_at: a3.saved_at })),
+      sources: (sourcesByTicket.get(t3.id) ?? []).map((s3) => ({ kind: s3.kind, label: s3.label, outcome: s3.outcome, reason: s3.reason })),
+      last_activity_at: latestStamp([
+        t3.locked_at,
+        ...(stepsByTicket.get(t3.id) ?? []).map((s3) => s3.done_at),
+        ...(capturesByTicket.get(t3.id) ?? []).map((s3) => s3.created),
+        ...(answersByTicket.get(t3.id) ?? []).map((a3) => a3.saved_at),
+        ...(sourcesByTicket.get(t3.id) ?? []).flatMap((s3) => [s3.added_at, s3.closed_at])
+      ]),
+      active_at: activeAt(t3, activeById.get(t3.id))
+    };
+    return { filing_id: t3.filing_id, ticket };
+  });
+  const holding = tickets.map((t3) => t3.ticket).filter(holdsMaterial);
+  for (const { ticket } of tickets) {
+    if (ticket.category !== "ready") continue;
+    if (ticket.title.startsWith("Counsel's review of ")) ticket.dispatch_skips.push({ reason: "practitioner_own" });
+    for (const p3 of ticket.conflicts) if (p3.status === "queued" && !p3.rejected) ticket.dispatch_skips.push({ reason: "either_or", job: p3.id });
+    for (const held of holding) {
+      if (held.id === ticket.id) continue;
+      const material = ticket.scope.filter((s3) => held.scope.some((h3) => scopesShare(h3, s3)));
+      if (material.length > 0) ticket.dispatch_skips.push({ reason: "shared_material", job: held.id, material });
+    }
+  }
+  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted, discardedSeeds: fetchDiscardedSeeds(dbPath, proceedingId) };
+}
+function onFilingBoard(rowFilingId, filingId) {
+  return rowFilingId === filingId || rowFilingId === null;
 }
 
 // src/submission/forms/writing-label.ts
@@ -91718,423 +92273,7 @@ function renderGeneral(ctx, stored, cited2) {
   return { markdown: [header, ...lines2].join("\n").trimEnd() + "\n", unwritten: [...new Set(state.unwritten)], currency_withheld: state.currency_withheld, prose_format: state.prose_format };
 }
 
-// src/submission/forms/track-source.ts
-var TOOL5 = "drafting_data__track_source";
-var NOW2 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
-var KINDS = ["decision", "legislation", "file"];
-var OUTCOMES = ["got", "not_retrieved"];
-var LABEL_MAX = 200;
-var REASON_MAX = 60;
-var ticketSourcesHeldDbs = /* @__PURE__ */ new Set();
-function ticketSourcesHeld(dbPath) {
-  if (ticketSourcesHeldDbs.has(dbPath)) return true;
-  const [{ n: n3 }] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'ticket_sources'").rows;
-  if (n3 > 0) ticketSourcesHeldDbs.add(dbPath);
-  return n3 > 0;
-}
-function oneLine(value, field, max) {
-  if (typeof value !== "string" || value.trim() === "" || /[\r\n]/.test(value) || value.trim().length > max) {
-    throw new ValidationError(`${TOOL5}.${field} must be one line of 1 to ${max} characters; nothing was written`, "invalid_item");
-  }
-  return value.trim();
-}
-function oneOf(value, field, allowed) {
-  if (typeof value !== "string" || !allowed.includes(value)) {
-    throw new ValidationError(`${TOOL5}.${field} must be one of ${allowed.join(", ")}; nothing was written`, "invalid_item");
-  }
-  return value;
-}
-async function submissionDataTrackSource(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL5}.ticket_id must be a positive integer`, "invalid_ticket_id");
-  if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL5}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
-  }
-  const id = args.ticket_id;
-  const token = args.session_token;
-  const add = (args.add ?? []).map((a3) => ({ kind: oneOf(a3.kind, "add.kind", KINDS), label: oneLine(a3.label, "add.label", LABEL_MAX) }));
-  const close = (args.close ?? []).map((c3) => ({
-    kind: oneOf(c3.kind, "close.kind", KINDS),
-    label: oneLine(c3.label, "close.label", LABEL_MAX),
-    outcome: oneOf(c3.outcome, "close.outcome", OUTCOMES),
-    reason: c3.reason === void 0 ? null : oneLine(c3.reason, "close.reason", REASON_MAX)
-  }));
-  if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
-    throw new NotFoundError(`${TOOL5}: no job ${id} in ${args.db_path}`, "not_found");
-  }
-  if (!ticketSourcesHeld(args.db_path)) {
-    throw new ValidationError(
-      `${TOOL5}: ${args.db_path} is held below schema v76, so no source to get can be recorded on job ${id}; nothing was written. Say once that the matter's database needs the v76 migration, and carry on with the work.`,
-      "schema_below_v76"
-    );
-  }
-  const held = "EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)";
-  const statements = [
-    ...add.flatMap((a3) => [
-      {
-        sql: `UPDATE ticket_sources SET closed_at = NULL, outcome = NULL, reason = NULL WHERE ticket_id = ? AND kind = ? AND label = ? AND closed_at IS NOT NULL AND ${held}`,
-        params: [id, a3.kind, a3.label, id, token]
-      },
-      {
-        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${NOW2} FROM tickets WHERE id = ? AND locked_by = ?`,
-        params: [a3.kind, a3.label, id, token]
-      }
-    ]),
-    ...close.map((c3) => ({
-      sql: `UPDATE ticket_sources SET closed_at = ${NOW2}, outcome = ?, reason = ? WHERE ticket_id = ? AND kind = ? AND label = ? AND ${held}`,
-      params: [c3.outcome, c3.reason, id, c3.kind, c3.label, id, token]
-    }))
-  ];
-  const written = statements.length === 0 ? null : await submissionDataWriteAll(args.db_path, statements, env);
-  const [read3] = submissionDataQuery(args.db_path, "SELECT status, rejected_at, locked_by FROM tickets WHERE id = ?", [id]).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL5}: no job ${id} in ${args.db_path}`, "not_found");
-  const sources = submissionDataQuery(args.db_path, "SELECT id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id = ? ORDER BY id", [id]).rows;
-  const open = sources.filter((s3) => s3.closed_at === null).length;
-  const on2 = new Set(sources.map((s3) => `${s3.kind}: ${s3.label}`));
-  let outcome;
-  let note;
-  let unknown2 = [];
-  if (read3.locked_by === token) {
-    outcome = "recorded";
-    unknown2 = close.map((c3) => `${c3.kind}: ${c3.label}`).filter((k3) => !on2.has(k3));
-    note = `Job ${id} is this session's: ${sources.length} source${sources.length === 1 ? "" : "s"} to get on it, ${open} open.${unknown2.length > 0 ? ` ${unknown2.length} close item${unknown2.length === 1 ? " names" : "s name"} no source on the job and closed nothing.` : ""}`;
-  } else if (read3.locked_by !== null) {
-    outcome = "not_held";
-    note = `Nothing was written: another session holds job ${id} (taken over). Dispatch nothing for this job; report it and stop.`;
-  } else if (read3.rejected_at !== null) {
-    outcome = "shelved";
-    note = `Nothing was written: job ${id} is shelved (rejected_at ${read3.rejected_at}). Dispatch nothing for this job; report it and stop.`;
-  } else if (read3.status === "completed") {
-    outcome = "completed";
-    note = `Nothing was written: job ${id} is completed. Dispatch nothing for this job; report it and stop.`;
-  } else {
-    outcome = "no_match";
-    note = `Nothing was written: job ${id} is status=${read3.status} with no holder, so the guards matched nothing. Dispatch nothing for this job; report it and stop.`;
-  }
-  return {
-    ticket_id: id,
-    outcome,
-    sources,
-    open,
-    unknown: unknown2,
-    locked_by: read3.locked_by,
-    status: read3.status,
-    rejected_at: read3.rejected_at,
-    note,
-    ...written?.warning ? { warning: written.warning } : {}
-  };
-}
-
-// src/submission/forms/step-state.ts
-var minute = (stamp2) => stamp2.replace(" ", "T").slice(0, 16);
-function stepView(s3, now) {
-  if (s3.done_at !== null) return "done";
-  if (s3.status === "waiting") return s3.wait_until && minute(s3.wait_until) > minute(now) ? "waiting" : "open";
-  if (s3.status === "retry" || s3.status === "cancelled" || s3.status === "deferred") return s3.status;
-  return "open";
-}
-function stepResolved(s3) {
-  return s3.done_at !== null || s3.status === "cancelled" || s3.status === "deferred";
-}
-function stepGlyphText(s3, now) {
-  const view = stepView(s3, now);
-  return view === "waiting" ? `${STEP_GLYPHS.waiting} until ${minute(s3.wait_until).slice(11)}` : STEP_GLYPHS[view];
-}
-
-// src/submission/forms/render-work-board.ts
-function rows5(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-var RANK_GROUP_LABELS = {
-  decision: "Practitioner remarks and decisions already made",
-  tooling: "Plugin and tooling feedback",
-  housekeeping: "matter-data and law-folder housekeeping",
-  research: "Research offers and research questions",
-  authority: "Writing doesn't match an authority as cited",
-  evidence: "Writing doesn't match the evidence or pleadings",
-  other: "Miscellaneous"
-};
-function inRankOrder(seeds) {
-  return [...seeds].sort((a3, b3) => (a3.rank === null ? 1 : 0) - (b3.rank === null ? 1 : 0) || (a3.rank ?? 0) - (b3.rank ?? 0) || a3.id - b3.id);
-}
-function seedOrigin(s3) {
-  if (s3.origin_ticket_id !== null) return `from Job #${s3.origin_ticket_id}${s3.from_filing === null ? "" : ` on ${s3.from_filing}`}`;
-  return s3.from_filing === null ? null : `from ${s3.from_filing}`;
-}
-var WORKBOARD_DATA_FILE = "workboard-data.js";
-function fetchProceedingTickets(dbPath, proceedingId) {
-  return rows5(dbPath, `SELECT * FROM tickets WHERE proceeding_id = ?${liveTicketClause(dbPath)} ORDER BY priority DESC, id`, [proceedingId]);
-}
-function fetchDeletedTickets(dbPath, proceedingId) {
-  if (!deletedAtHeld(dbPath)) return [];
-  return rows5(dbPath, "SELECT id, title, filing_id FROM tickets WHERE proceeding_id = ? AND deleted_at IS NOT NULL ORDER BY id", [proceedingId]);
-}
-function reachesItself(startId, blockersOf) {
-  const stack = [...blockersOf.get(startId) ?? []];
-  const seen = /* @__PURE__ */ new Set();
-  while (stack.length > 0) {
-    const cur = stack.pop();
-    if (cur === startId) return true;
-    if (seen.has(cur)) continue;
-    seen.add(cur);
-    for (const next of blockersOf.get(cur) ?? []) stack.push(next);
-  }
-  return false;
-}
-var allStepsDone = (steps) => steps.length > 0 && steps.every(stepResolved);
-var holdsMaterial = (t3) => t3.status === "wip" && !allStepsDone(t3.steps);
-function latestStamp(stamps) {
-  let latest = null;
-  for (const s3 of stamps) if (s3 !== null && (latest === null || s3.replace(" ", "T") > latest.replace(" ", "T"))) latest = s3;
-  return latest;
-}
-function activeAt(ticket, stamp2) {
-  if (ticket.status !== "wip" || stamp2 === void 0 || ticket.locked_at === null) return null;
-  return stamp2.replace(" ", "T") >= ticket.locked_at.replace(" ", "T") ? stamp2 : null;
-}
-function classify(ticket, blockers, conflictPartners, today4) {
-  if (ticket.rejected_at !== null) return "rejected";
-  if (ticket.status === "completed") return "completed";
-  if (ticket.status === "superseded") return "superseded";
-  if (ticket.status === "wip") return "wip";
-  if (ticket.bf_on != null && ticket.bf_on > today4) return "bring_forward";
-  if (blockers.some((b3) => b3.status !== "completed")) return "waiting";
-  if (conflictPartners.some((p3) => p3.status === "wip")) return "waiting";
-  return "ready";
-}
-function supersededReason(ticket, retiredOn) {
-  if (ticket.status !== "superseded" || ticket.superseded_by !== null) return null;
-  if (ticket.superseded_marker_gone_at !== null) return `Superseded: its marker no longer shows (${ticket.superseded_marker_gone_at.slice(0, 10)})`;
-  const retired = ticket.filing_id === null ? null : retiredOn.get(ticket.filing_id) ?? null;
-  return retired === null ? null : `Superseded by: retirement of this Writing (${retired})`;
-}
-function groupBy2(items, key) {
-  const map = /* @__PURE__ */ new Map();
-  for (const item of items) {
-    const list = map.get(key(item)) ?? [];
-    list.push(item);
-    map.set(key(item), list);
-  }
-  return map;
-}
-function localToday() {
-  const d3 = /* @__PURE__ */ new Date();
-  return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
-}
-function buildProceedingBoard(dbPath, proceedingId, today4 = localToday()) {
-  const proceedingTickets = fetchProceedingTickets(dbPath, proceedingId);
-  const ticketById = new Map(proceedingTickets.map((t3) => [t3.id, t3]));
-  const proceedingIds = proceedingTickets.map((t3) => t3.id);
-  const idList = proceedingIds.map(() => "?").join(",");
-  const deleted = fetchDeletedTickets(dbPath, proceedingId);
-  const deletedIds = new Set(deleted.map((d3) => d3.id));
-  const blocks2 = (proceedingIds.length === 0 ? [] : rows5(dbPath, `SELECT * FROM ticket_blocks WHERE blocker_id IN (${idList}) OR blocked_id IN (${idList})`, [...proceedingIds, ...proceedingIds])).filter((b3) => !deletedIds.has(b3.blocker_id) && !deletedIds.has(b3.blocked_id));
-  const conflicts = (proceedingIds.length === 0 ? [] : rows5(dbPath, `SELECT * FROM ticket_conflicts WHERE a_id IN (${idList}) OR b_id IN (${idList})`, [...proceedingIds, ...proceedingIds])).filter((c3) => !deletedIds.has(c3.a_id) && !deletedIds.has(c3.b_id));
-  const steps = proceedingIds.length === 0 ? [] : rows5(dbPath, `SELECT * FROM ticket_steps WHERE ticket_id IN (${idList})`, proceedingIds);
-  const scopeRows = proceedingIds.length === 0 ? [] : rows5(dbPath, `SELECT * FROM ticket_scope WHERE ticket_id IN (${idList})`, proceedingIds);
-  const proposalRows = proceedingIds.length === 0 ? [] : rows5(dbPath, `SELECT ticket_id, proposal_key, item FROM ticket_proposals WHERE ticket_id IN (${idList})`, proceedingIds);
-  const captures = proceedingIds.length === 0 ? [] : rows5(dbPath, `SELECT origin_ticket_id, created FROM seeds WHERE origin_ticket_id IN (${idList})`, proceedingIds);
-  const answerRows = proceedingIds.length === 0 || !ticketAnswersHeld(dbPath) ? [] : rows5(dbPath, `SELECT ticket_id, file_path, saved_at FROM ticket_answers WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
-  const sourceRows = proceedingIds.length === 0 || !ticketSourcesHeld(dbPath) ? [] : rows5(dbPath, `SELECT ticket_id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
-  const blockersOf = /* @__PURE__ */ new Map();
-  for (const b3 of blocks2) blockersOf.set(b3.blocked_id, [...blockersOf.get(b3.blocked_id) ?? [], b3.blocker_id]);
-  const conflictsOf = /* @__PURE__ */ new Map();
-  for (const c3 of conflicts) {
-    conflictsOf.set(c3.a_id, [...conflictsOf.get(c3.a_id) ?? [], c3.b_id]);
-    conflictsOf.set(c3.b_id, [...conflictsOf.get(c3.b_id) ?? [], c3.a_id]);
-  }
-  const stepsByTicket = groupBy2(steps, (s3) => s3.ticket_id);
-  const scopeByTicket = groupBy2(scopeRows, (s3) => s3.ticket_id);
-  const proposalsByTicket = groupBy2(proposalRows, (p3) => p3.ticket_id);
-  const capturesByTicket = groupBy2(captures, (s3) => s3.origin_ticket_id);
-  const answersByTicket = groupBy2(answerRows, (a3) => a3.ticket_id);
-  const sourcesByTicket = groupBy2(sourceRows, (s3) => s3.ticket_id);
-  const activeById = new Map(
-    rows5(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r3) => [Number(r3.key.slice("job_active:".length)), r3.value])
-  );
-  const retiredOn = new Map(rows5(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.retired_on]));
-  const edge = (id) => {
-    const other = ticketById.get(id);
-    return { id, status: other?.status ?? null, rejected: other !== void 0 && other.status === "queued" && other.rejected_at !== null };
-  };
-  const holders = /* @__PURE__ */ new Map();
-  for (const t3 of [...proceedingTickets].sort((a3, b3) => a3.id - b3.id)) {
-    if (t3.rejected_at !== null || t3.status !== "queued" && t3.status !== "wip") continue;
-    for (const p3 of proposalsByTicket.get(t3.id) ?? []) {
-      if (!holders.has(p3.proposal_key)) holders.set(p3.proposal_key, { ticket_id: t3.id, filing_id: t3.filing_id });
-    }
-  }
-  const tickets = proceedingTickets.map((t3) => {
-    const blockedBy = (blockersOf.get(t3.id) ?? []).map(edge);
-    const conflictPartners = (conflictsOf.get(t3.id) ?? []).map(edge);
-    const category = classify(t3, blockedBy, conflictPartners, today4);
-    const ticket = {
-      id: t3.id,
-      title: t3.title,
-      intent: t3.intent,
-      kind: t3.kind,
-      priority: t3.priority,
-      status: t3.status,
-      category,
-      locked_by: t3.locked_by,
-      locked_at: t3.locked_at,
-      completed_at: t3.completed_at,
-      rejected_at: t3.rejected_at,
-      bf_on: t3.bf_on ?? null,
-      // A stale gate job pointed at a deleted replacement reads as superseded with no pointer.
-      superseded_by: t3.superseded_by === null || deletedIds.has(t3.superseded_by) ? null : edge(t3.superseded_by),
-      scope: (scopeByTicket.get(t3.id) ?? []).map((s3) => s3.entity_id === null ? s3.entity : `${s3.entity}:${s3.entity_id}`),
-      blocked_by: blockedBy,
-      conflicts: conflictPartners,
-      circular: category === "waiting" && reachesItself(t3.id, blockersOf),
-      steps: [...stepsByTicket.get(t3.id) ?? []].sort((a3, b3) => a3.ordinal - b3.ordinal).map((s3) => ({
-        ordinal: s3.ordinal,
-        text: s3.text,
-        done_at: s3.done_at,
-        status: s3.status ?? null,
-        wait_until: s3.wait_until ?? null,
-        status_note: s3.status_note ?? null
-      })),
-      proposal_keys: (proposalsByTicket.get(t3.id) ?? []).map((p3) => p3.proposal_key),
-      proposal_items: Object.fromEntries((proposalsByTicket.get(t3.id) ?? []).map((p3) => [p3.proposal_key, p3.item])),
-      superseded_reason: supersededReason(t3, retiredOn),
-      // Set by a filing's board, which holds the inventory the dead keys are read against.
-      subtitle: null,
-      eligible: false,
-      // A board with no filing has no inventory; a filing's board replaces this.
-      ineligible_reasons: ["no_inventory"],
-      dispatch_skips: [],
-      lock_note: category === "wip" && t3.locked_by?.startsWith(UNATTENDED_TOKEN_PREFIX) ? "In progress with nobody present" : null,
-      answers: (answersByTicket.get(t3.id) ?? []).map((a3) => ({ file_path: a3.file_path, saved_at: a3.saved_at })),
-      sources: (sourcesByTicket.get(t3.id) ?? []).map((s3) => ({ kind: s3.kind, label: s3.label, outcome: s3.outcome, reason: s3.reason })),
-      last_activity_at: latestStamp([
-        t3.locked_at,
-        ...(stepsByTicket.get(t3.id) ?? []).map((s3) => s3.done_at),
-        ...(capturesByTicket.get(t3.id) ?? []).map((s3) => s3.created),
-        ...(answersByTicket.get(t3.id) ?? []).map((a3) => a3.saved_at),
-        ...(sourcesByTicket.get(t3.id) ?? []).flatMap((s3) => [s3.added_at, s3.closed_at])
-      ]),
-      active_at: activeAt(t3, activeById.get(t3.id))
-    };
-    return { filing_id: t3.filing_id, ticket };
-  });
-  const holding = tickets.map((t3) => t3.ticket).filter(holdsMaterial);
-  for (const { ticket } of tickets) {
-    if (ticket.category !== "ready") continue;
-    if (ticket.title.startsWith("Counsel's review of ")) ticket.dispatch_skips.push({ reason: "practitioner_own" });
-    for (const p3 of ticket.conflicts) if (p3.status === "queued" && !p3.rejected) ticket.dispatch_skips.push({ reason: "either_or", job: p3.id });
-    for (const held of holding) {
-      if (held.id === ticket.id) continue;
-      const material = ticket.scope.filter((s3) => held.scope.some((h3) => scopesShare(h3, s3)));
-      if (material.length > 0) ticket.dispatch_skips.push({ reason: "shared_material", job: held.id, material });
-    }
-  }
-  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted, discardedSeeds: fetchDiscardedSeeds(dbPath, proceedingId) };
-}
-function columnHeld(dbPath, table, column) {
-  return rows5(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
-}
-function openSeedCondition(dbPath, deletedIds) {
-  const deletedList = [...deletedIds];
-  const outlinedIntoDeleted = deletedList.length === 0 ? "" : ` OR charted_into IN (${deletedList.map(() => "?").join(",")})`;
-  return { sql: `(charted_into IS NULL${outlinedIntoDeleted})${liveSeedClause(dbPath)}`, params: deletedList };
-}
-function fetchDiscardedSeeds(dbPath, proceedingId) {
-  if (seedClosedColumns(dbPath).length < 2) return [];
-  return rows5(
-    dbPath,
-    "SELECT id, idea, filing_id, discarded_at, suggested_at FROM seeds WHERE proceeding_id = ? AND (discarded_at IS NOT NULL OR suggested_at IS NOT NULL) ORDER BY id",
-    [proceedingId]
-  );
-}
-var discardedSeedLines = (seeds) => seeds.map((s3) => ({ id: s3.id, idea: s3.idea, discarded_at: s3.discarded_at, suggested_at: s3.suggested_at }));
-function fetchResolvedSeeds(dbPath, proceedingId) {
-  const closed = seedClosedColumns(dbPath);
-  const column = (name) => closed.includes(name) ? `s.${name}` : `NULL AS ${name}`;
-  const resolved = [...closed.map((name) => `s.${name} IS NOT NULL`), "t.id IS NOT NULL"].join(" OR ");
-  return rows5(
-    dbPath,
-    `SELECT s.id, s.idea, ${column("discarded_at")}, ${column("suggested_at")}, t.id AS job_id, t.title AS job_title, t.created AS job_created
-     FROM seeds s LEFT JOIN tickets t ON t.id = s.charted_into${liveTicketClause(dbPath, "t")}
-     WHERE s.proceeding_id = ? AND (${resolved})`,
-    [proceedingId]
-  ).map((r3) => {
-    if (r3.discarded_at !== null) return { id: r3.id, idea: r3.idea, how: "discarded", at: r3.discarded_at, job_id: null, job_title: null };
-    if (r3.suggested_at !== null) return { id: r3.id, idea: r3.idea, how: "suggested", at: r3.suggested_at, job_id: null, job_title: null };
-    return { id: r3.id, idea: r3.idea, how: "job", at: r3.job_created, job_id: r3.job_id, job_title: r3.job_title };
-  }).sort((a3, b3) => a3.at === b3.at ? a3.id - b3.id : a3.at < b3.at ? 1 : -1);
-}
-function fetchOpenSeeds(dbPath, proceedingId, deletedIds = new Set(fetchDeletedTickets(dbPath, proceedingId).map((d3) => d3.id))) {
-  const open = openSeedCondition(dbPath, deletedIds);
-  const ranking = columnHeld(dbPath, "seeds", "rank") ? "rank, rank_group, rank_reason" : "NULL AS rank, NULL AS rank_group, NULL AS rank_reason";
-  const job = columnHeld(dbPath, "seeds", "rank_job") ? "rank_job" : "NULL AS rank_job";
-  const deferral = columnHeld(dbPath, "seeds", "deferred_at") ? "deferred_at" : "NULL AS deferred_at";
-  return rows5(
-    dbPath,
-    `SELECT id, filing_id, origin_ticket_id, created, surfaced_by, idea, ${ranking}, ${job}, ${deferral} FROM seeds WHERE ${open.sql} AND proceeding_id = ? ORDER BY id`,
-    [...open.params, proceedingId]
-  ).map((s3) => ({
-    id: s3.id,
-    idea: s3.idea,
-    surfaced_by: s3.surfaced_by,
-    created: s3.created,
-    filing_id: s3.filing_id,
-    origin_ticket_id: s3.origin_ticket_id !== null && deletedIds.has(s3.origin_ticket_id) ? null : s3.origin_ticket_id,
-    rank: s3.rank,
-    rank_group: s3.rank_group,
-    rank_reason: s3.rank_reason,
-    rank_job: s3.rank_job,
-    deferred_at: s3.deferred_at
-  }));
-}
-function fetchAttachments(dbPath, proceedingId, filingId) {
-  if (!boardAttachmentsHeld(dbPath)) return [];
-  return rows5(
-    dbPath,
-    "SELECT id, filing_id, path, kind, attached_on FROM board_attachments WHERE proceeding_id = ? AND (? IS NULL OR filing_id = ? OR (filing_id IS NULL AND ? = (SELECT MIN(id) FROM filings WHERE proceeding_id = ? AND retired_on IS NULL AND kind <> ?))) ORDER BY id",
-    [proceedingId, filingId, filingId, filingId, proceedingId, JOB_BOARD_KIND]
-  );
-}
-function withFromFiling(dbPath, proceedingId, filingId, seeds) {
-  const filingTitles = new Map(rows5(dbPath, "SELECT id, title FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.title]));
-  return seeds.map((s3) => ({ ...s3, from_filing: s3.filing_id === null || s3.filing_id === filingId ? null : filingTitles.get(s3.filing_id) ?? null }));
-}
-function onFilingBoard(rowFilingId, filingId) {
-  return rowFilingId === filingId || rowFilingId === null;
-}
-function proposalsFor(ctx, board) {
-  if (ctx.filing.retired_on || ctx.inventory === null) return { proposals: [], lapsed_keys: [], shelved: /* @__PURE__ */ new Set(), current: /* @__PURE__ */ new Set() };
-  const titles = new Map(rows5(ctx.dbPath, "SELECT id, title FROM filings WHERE proceeding_id = ?", [ctx.proceeding.id]).map((f3) => [f3.id, f3.title]));
-  const holders = /* @__PURE__ */ new Map();
-  for (const [key, h3] of board.holders) {
-    const ticketedOn = h3.filing_id === null || h3.filing_id === ctx.filing.id ? null : titles.get(h3.filing_id) ?? null;
-    holders.set(key, { ticket_id: h3.ticket_id, ticketed_on: ticketedOn });
-  }
-  const deletedIds = new Set(board.deleted.map((d3) => d3.id));
-  const rejections = new Map(
-    rows5(ctx.dbPath, "SELECT proposal_key, ticket_id, marker, item FROM proposal_rejections").filter((r3) => r3.ticket_id === null || !deletedIds.has(r3.ticket_id)).map((r3) => [r3.proposal_key, { ticket_id: r3.ticket_id, marker: r3.marker, item: r3.item }])
-  );
-  const asDirect = new Map([...rejections].map(([key, r3]) => [key, { ...r3, ticket_id: null }]));
-  const every = deriveProposals(ctx.inventory, holders, asDirect).proposals;
-  const shelved = new Set(every.filter((p3) => p3.lane === "rejected").map((p3) => p3.key));
-  const current = new Set(every.map((p3) => p3.key));
-  const derived = deriveProposals(ctx.inventory, holders, rejections);
-  if (!ctx.inventory.some((e3) => e3.generating !== false && e3.provision !== void 0)) return { ...derived, shelved, current };
-  const kinds = [...LEGISLATION_KINDS];
-  const pinpoints = rows5(
-    ctx.dbPath,
-    `SELECT sl.authority_id, sl.pinpoint FROM statements_of_law sl JOIN authorities a ON a.id = sl.authority_id
-      WHERE sl.proceeding_id = ? AND a.kind IN (${kinds.map(() => "?").join(", ")}) AND a.killed_on IS NULL AND sl.pinpoint IS NOT NULL
-      ORDER BY sl.id`,
-    [ctx.proceeding.id, ...kinds]
-  );
-  const contentions = rows5(
-    ctx.dbPath,
-    `SELECT s.contention FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
-      WHERE fs.filing_id = ? AND s.killed_on IS NULL ORDER BY fs.document, fs.ordinal`,
-    [ctx.filing.id]
-  ).map((r3) => r3.contention);
-  return { ...derived, proposals: withNoteUpSteps(derived.proposals, ctx.inventory, pinpoints, contentions), shelved, current };
-}
+// src/submission/forms/goal-criteria.ts
 var slugs = (...members) => (e3) => e3.generating && members.includes(e3.slug);
 var glyph = (marker, ...instances) => (e3) => !e3.generating && e3.marker === marker && (instances.length === 0 || e3.instance !== void 0 && instances.includes(e3.instance));
 var unchosenExcept = (instance) => (e3) => !e3.generating && e3.marker === "\u2B1C" && e3.instance !== instance;
@@ -92210,23 +92349,6 @@ function declaredCriteria(filing) {
   const declared = raw;
   return declared.filter((name) => name !== "hearing-date").map((name) => name === "open-items" ? openItems(declared) : DECLARABLE.get(name) ?? bad(`names "${name}", which is not a goal criterion`));
 }
-function declaredIngestInputs(filing) {
-  if (filing.layout_snapshot === null) return void 0;
-  const raw = storedLayout(filing).layout.ingest_inputs;
-  if (raw === void 0) return void 0;
-  if (!Array.isArray(raw) || !raw.every((name) => typeof name === "string")) {
-    throw new DataServerError(`"${filing.title}": its stored list of document types to read is not a list of names`, "invalid_layout_snapshot");
-  }
-  return raw;
-}
-function hearingDateCriterion(dbPath, filing) {
-  const met = fetchHearingDate(dbPath, filing.id) !== null;
-  return { id: "hearing-date", text: "The hearing date is recorded", state: met ? "met" : "unmet", outstanding: 0, items: [], source: "sqlite" };
-}
-var HELD_CRITERIA = ["primary-authority", "excerpts", "noting-up", "recipients"];
-function holdsBeforeSend(filing) {
-  return filing.needs_forum_parts === 0 || filing.layout_snapshot !== null && storedLayout(filing).layout.renderer === "general";
-}
 var RESERVE_INVENTORY_DOC = "Counsel_brief";
 var NEVER_DELIVERED_DOCS = /* @__PURE__ */ new Set([RESERVE_INVENTORY_DOC, "Work_board"]);
 function isEvidenceWork(e3) {
@@ -92262,6 +92384,8 @@ function inventoryCriterion(def, forum, shelved, current) {
     ...new Set(items).size < items.length ? { locators: listed.map(([key]) => key) } : {}
   };
 }
+
+// src/submission/forms/goal-gate.ts
 var GATE_TITLE = "Pre-filing consistency gate";
 var POSITION_CONFLICT_TITLE = "Decide a position our own correspondence contradicts";
 var PRE_SEND_TITLE = "Pre-send gate";
@@ -92317,6 +92441,48 @@ function readGate(tickets, revision, filed, kind, jobs2) {
   const waived = gate.steps.filter((s3) => s3.text.includes(WAIVER)).map((s3) => s3.text);
   return { ...reading, criterion: criterion("met", 0, [...ran, ...waived]) };
 }
+
+// src/submission/forms/board-proposals.ts
+function proposalsFor(ctx, board) {
+  if (ctx.filing.retired_on || ctx.inventory === null) return { proposals: [], lapsed_keys: [], shelved: /* @__PURE__ */ new Set(), current: /* @__PURE__ */ new Set() };
+  const titles = new Map(rows12(ctx.dbPath, "SELECT id, title FROM filings WHERE proceeding_id = ?", [ctx.proceeding.id]).map((f3) => [f3.id, f3.title]));
+  const holders = /* @__PURE__ */ new Map();
+  for (const [key, h3] of board.holders) {
+    const ticketedOn = h3.filing_id === null || h3.filing_id === ctx.filing.id ? null : titles.get(h3.filing_id) ?? null;
+    holders.set(key, { ticket_id: h3.ticket_id, ticketed_on: ticketedOn });
+  }
+  const deletedIds = new Set(board.deleted.map((d3) => d3.id));
+  const rejections = new Map(
+    rows12(ctx.dbPath, "SELECT proposal_key, ticket_id, marker, item FROM proposal_rejections").filter((r3) => r3.ticket_id === null || !deletedIds.has(r3.ticket_id)).map((r3) => [r3.proposal_key, { ticket_id: r3.ticket_id, marker: r3.marker, item: r3.item }])
+  );
+  const asDirect = new Map([...rejections].map(([key, r3]) => [key, { ...r3, ticket_id: null }]));
+  const every = deriveProposals(ctx.inventory, holders, asDirect).proposals;
+  const shelved = new Set(every.filter((p3) => p3.lane === "rejected").map((p3) => p3.key));
+  const current = new Set(every.map((p3) => p3.key));
+  const derived = deriveProposals(ctx.inventory, holders, rejections);
+  if (!ctx.inventory.some((e3) => e3.generating !== false && e3.provision !== void 0)) return { ...derived, shelved, current };
+  const kinds = [...LEGISLATION_KINDS];
+  const pinpoints = rows12(
+    ctx.dbPath,
+    `SELECT sl.authority_id, sl.pinpoint FROM statements_of_law sl JOIN authorities a ON a.id = sl.authority_id
+      WHERE sl.proceeding_id = ? AND a.kind IN (${kinds.map(() => "?").join(", ")}) AND a.killed_on IS NULL AND sl.pinpoint IS NOT NULL
+      ORDER BY sl.id`,
+    [ctx.proceeding.id, ...kinds]
+  );
+  const contentions = rows12(
+    ctx.dbPath,
+    `SELECT s.contention FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
+      WHERE fs.filing_id = ? AND s.killed_on IS NULL ORDER BY fs.document, fs.ordinal`,
+    [ctx.filing.id]
+  ).map((r3) => r3.contention);
+  return { ...derived, proposals: withNoteUpSteps(derived.proposals, ctx.inventory, pinpoints, contentions), shelved, current };
+}
+
+// src/submission/forms/pre-send-hold.ts
+var HELD_CRITERIA = ["primary-authority", "excerpts", "noting-up", "recipients"];
+function holdsBeforeSend(filing) {
+  return filing.needs_forum_parts === 0 || filing.layout_snapshot !== null && storedLayout(filing).layout.renderer === "general";
+}
 function readPreSendGate(ctx, tickets, filed, drafting, jobs2) {
   if (tickets.some((t3) => t3.title === PRE_SEND_TITLE && t3.status !== "superseded")) return readGate(tickets, ctx.revision, filed, PRE_SEND, jobs2);
   const held = drafting.filter((c3) => HELD_CRITERIA.includes(c3.id));
@@ -92337,43 +92503,6 @@ function readPreSendGate(ctx, tickets, filed, drafting, jobs2) {
     current: false,
     jobs: jobs2.length
   };
-}
-function cardText(drafting, gate, hearing, deadlines, send, serve2) {
-  if (gate.jobs > 0) return null;
-  if (drafting.every((c3) => c3.state === "met")) {
-    if (gate.criterion.state === "met") {
-      if (hearing?.state === "unmet" && !serve2) return "Only the hearing date remains to be recorded.";
-      const partial2 = deadlines.some((c3) => c3.state !== "met") || hearing?.state === "unmet";
-      return `Every ${partial2 ? "drafting " : ""}condition holds. Awaiting your approval to ${send ? "send" : serve2 ? "serve" : "file"}.`;
-    }
-    if (gate.present && gate.open === 0) return `Drafting conditions hold. ${(send ? PRE_SEND : PRE_FILING).stale}`;
-    if (gate.current) return `Drafting conditions hold. ${send ? "Pre-send" : "Pre-filing"} checks: ${gate.open} open.`;
-    return send ? "Every drafting condition holds. Recording it as sent runs the pre-send checks again." : "Every drafting condition holds. The next session assembles the package and runs the pre-filing checks.";
-  }
-  const reviewOnly = drafting.every((c3) => c3.state === "met" || c3.id === "counsel-review" && c3.state === "unmet");
-  return reviewOnly ? "Only your review remains. Every other drafting condition holds." : null;
-}
-var NO_CRITERIA_TEXT = "No completion criteria are declared for this type of Writing.";
-function goalFor(ctx, tickets, shelved, current, deadlines) {
-  const sentence = "Completion Criteria";
-  if (ctx.lifecycle.state === "retired") {
-    const reason = ctx.filing.retirement_reason;
-    return { goal: { sentence, state: "pending", text: `Retired on ${ctx.lifecycle.since}` + (reason ? ` \u2014 ${reason.replace(/_/g, " ")}` : "") }, criteria: [] };
-  }
-  const send = holdsBeforeSend(ctx.filing);
-  const serve2 = SERVED_KINDS.has(ctx.filing.kind);
-  const verb = ctx.filing.needs_forum_parts === 0 ? "Sent" : serve2 && ctx.filing.sent_copy_id !== null ? "Served" : "Filed";
-  const filed = ctx.filing.filed_on === null ? null : `${verb} on ${ctx.filing.filed_on}`;
-  const declared = declaredCriteria(ctx.filing);
-  if (declared.length === 0) return { goal: { sentence, state: "pending", text: filed ?? NO_CRITERIA_TEXT }, criteria: [] };
-  const forum = ctx.inventory === null ? null : ctx.inventory.filter((e3) => !NEVER_DELIVERED_DOCS.has(e3.doc));
-  const drafting = declared.map((c3) => inventoryCriterion(c3, forum, shelved, current));
-  const jobs2 = openJobs(tickets);
-  const gate = send ? readPreSendGate(ctx, tickets, filed !== null, drafting, jobs2) : readGate(tickets, ctx.revision, filed !== null, PRE_FILING, jobs2);
-  const hearing = storedLayout(ctx.filing).layout.goal_criteria.includes("hearing-date") ? hearingDateCriterion(ctx.dbPath, ctx.filing) : null;
-  const criteria = [...drafting, gate.criterion, ...hearing === null ? [] : [hearing], ...deadlines];
-  const state = forum === null ? "pending" : criteria.every((c3) => c3.state === "met") ? "met" : "unmet";
-  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines, send, serve2) }, criteria };
 }
 function unmetHeldCriteria(dbPath, filing, inventory) {
   const board = buildProceedingBoard(dbPath, filing.proceeding_id);
@@ -92405,7 +92534,7 @@ function unmetAuthorityConfirmedCriterion(filing) {
   };
 }
 function unmetPositionConflictCriterion(dbPath, filing) {
-  const open = rows5(
+  const open = rows12(
     dbPath,
     `SELECT id FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip') AND rejected_at IS NULL${liveTicketClause(dbPath)} ORDER BY id`,
     [filing.id, POSITION_CONFLICT_TITLE]
@@ -92420,139 +92549,9 @@ function unmetPositionConflictCriterion(dbPath, filing) {
     source: "sqlite"
   };
 }
-function deadKeySubtitle(ticket, printed) {
-  if (printed === null || ticket.rejected_at !== null || ticket.status !== "queued" && ticket.status !== "wip") return null;
-  const dead = ticket.proposal_keys.filter((key) => !printed.has(key)).length;
-  return dead === 0 ? null : `${dead} of ${ticket.proposal_keys.length} items no longer show their marker`;
-}
-var UNATTENDED_TOKEN_PREFIX = "sess-unattended-";
-var UNATTENDED_ELIGIBLE = /* @__PURE__ */ new Map([
-  ["\u{1F9E9}", []],
-  ["\u{1F3DB}\uFE0F", []],
-  ["\u{1F4D6}", []],
-  ["\u{1F4DC}", []],
-  ["\u{1F4D1}", []],
-  ["\u{1F4AC}", []],
-  ["\u{1F4CD}", []],
-  // The court-record instance, keyed on `facts` (actor: holder of the record), is out.
-  ["\u{1F4CC}", ["statements_of_fact", "admissions"]],
-  ["\u{1F9F7}", ["statements_of_fact", "admissions"]],
-  ["\u{1F52C}", []],
-  ["\u21A9\uFE0F", []],
-  ["\u{1F443}", []],
-  ["\u{1F4C7}", []],
-  ["\u{1F3F7}\uFE0F", ["documents"]],
-  ["\u{1F575}\uFE0F", []],
-  ["\u2B1C", []],
-  ["\u{1F464}", []],
-  ["\u{1F5E3}\uFE0F", []],
-  ["\u270D\uFE0F", []],
-  ["\u{1F58B}\uFE0F", []],
-  ["\u2712\uFE0F", []],
-  ["\u{1F3BE}", []],
-  ["\u{1F579}\uFE0F", []],
-  ["\u{1F949}", []],
-  ["\u{1F948}", []],
-  ["\u{1F3C5}", []],
-  ["\u{1F9B5}", []],
-  ["\u{1F9F5}", []],
-  ["\u{1F9FE}", []],
-  ["\u{1F4DA}", []],
-  ["\u{1F9D0}", []]
-]);
-function eligibleKey(key) {
-  const [slug, table] = key.split(":");
-  return [...GLYPH_SLUGS].some(([glyph2, s3]) => s3 === slug && (UNATTENDED_ELIGIBLE.get(glyph2) ?? []).includes(table));
-}
-var livePartner = (p3) => p3.status === null || (p3.status === "queued" || p3.status === "wip") && !p3.rejected;
-var scopesShare = (a3, b3) => a3 === b3 || a3.split(":")[0] === b3 || b3.split(":")[0] === a3;
-var INELIGIBLE_REASONS = [
-  "not_ready",
-  "filing_filed",
-  "no_inventory",
-  "not_one_step",
-  "no_proposal_keys",
-  "dead_key",
-  "reworded",
-  "marker_not_eligible",
-  "live_partner",
-  "shared_material"
-];
-function ineligibleReasons(ticket, filed, printed, titles, inProgress2) {
-  const texts = [ticket.title, ticket.intent, ...ticket.steps.slice(0, 1).map((s3) => s3.text)];
-  const failing = {
-    not_ready: ticket.category !== "ready",
-    filing_filed: filed,
-    no_inventory: printed === null,
-    not_one_step: ticket.steps.length !== 1,
-    no_proposal_keys: ticket.proposal_keys.length === 0,
-    dead_key: printed !== null && ticket.proposal_keys.some((key) => !printed.has(key)),
-    reworded: printed !== null && ticket.proposal_keys.some((key) => printed.has(key) && texts.some((text5) => text5 !== titles.get(key))),
-    marker_not_eligible: ticket.proposal_keys.some((key) => !eligibleKey(key)),
-    live_partner: ticket.conflicts.some(livePartner),
-    shared_material: inProgress2.some((held) => held.id !== ticket.id && held.scope.some((h3) => ticket.scope.some((s3) => scopesShare(h3, s3))))
-  };
-  return INELIGIBLE_REASONS.filter((reason) => failing[reason]);
-}
-function localMinutes(stamp2) {
-  const m3 = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(stamp2);
-  return m3 === null ? null : Math.round(new Date(+m3[1], +m3[2] - 1, +m3[3], +m3[4], +m3[5]).getTime() / 6e4);
-}
-function withIdleFlag(t3, rendered, hours) {
-  if (hours === null || t3.category !== "wip") return t3;
-  const now = localMinutes(rendered);
-  const last = t3.last_activity_at === null ? null : localMinutes(t3.last_activity_at);
-  if (now === null || last === null || now - last <= hours * 60) return t3;
-  return { ...t3, idle_flag: `idle past ${hours} h` };
-}
-function buildWorkBoardData(ctx, deadlines = []) {
-  if (isJobOnlyBoard(ctx.filing)) return buildJobOnlyBoardData(ctx);
-  const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id, ctx.rendered.slice(0, 10));
-  const idleHours = idleFlagHours(process.env);
-  const printed = ctx.inventory === null ? null : new Set(ctx.inventory.flatMap((e3) => e3.generating ? [proposalKey(e3)] : []));
-  const { proposals, lapsed_keys, shelved, current } = proposalsFor(ctx, board);
-  const titles = new Map(proposals.map((p3) => [p3.key, p3.title]));
-  const filed = ctx.filing.filed_on !== null;
-  const inProgress2 = board.tickets.map((t3) => t3.ticket).filter(holdsMaterial);
-  const tickets = board.tickets.filter((t3) => onFilingBoard(t3.filing_id, ctx.filing.id)).map((t3) => {
-    const ineligible_reasons = ineligibleReasons(t3.ticket, filed, printed, titles, inProgress2);
-    const eligible = ineligible_reasons.length === 0;
-    return withIdleFlag({ ...t3.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t3.ticket, printed), ...t3.filing_id === null ? { general: true } : {} }, ctx.rendered, idleHours);
-  });
-  const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);
-  const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines);
-  const gate = criteria.find((c3) => c3.id === "gate");
-  const gated = gate === void 0 || gate.state === "met" ? tickets : tickets.map((t3) => t3.category === "ready" && waitsOnGate(t3.title) ? { ...t3, dispatch_skips: [...t3.dispatch_skips, { reason: "before_gate" }] } : t3);
-  const inputTypes = declaredIngestInputs(ctx.filing);
-  const readyJobs = board.tickets.filter((t3) => t3.filing_id === ctx.filing.id && t3.ticket.category === "ready").map((t3) => t3.ticket.id);
-  return {
-    meta: {
-      revision: ctx.revision,
-      matter: ctx.matterNo,
-      client: ctx.clientName,
-      file: ctx.proceeding.file_number ?? "",
-      filing: ctx.filing.title,
-      filing_id: ctx.filing.id,
-      proceeding_id: ctx.proceeding.id,
-      rendered: ctx.rendered,
-      state: ctx.lifecycle.state,
-      state_label: LIFECYCLE_LABELS[ctx.lifecycle.state],
-      state_since: ctx.lifecycle.since,
-      ready_to_retire: ctx.lifecycle.readyToRetire,
-      ...inputTypes !== void 0 ? { ingest_inputs: { types: inputTypes, ready_jobs: readyJobs } } : {}
-    },
-    tickets: gated,
-    seeds,
-    deleted: board.deleted.filter((d3) => onFilingBoard(d3.filing_id, ctx.filing.id)).map((d3) => ({ id: d3.id, title: d3.title })),
-    discardedSeeds: discardedSeedLines(board.discardedSeeds),
-    attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id),
-    proposals,
-    lapsed_keys,
-    goals: fetchBoardGoals(ctx.dbPath, { filing_id: ctx.filing.id, proceeding_id: ctx.proceeding.id }, ctx.filing.title),
-    goal,
-    criteria
-  };
-}
+
+// src/submission/forms/no-writing-boards.ts
+var discardedSeedLines = (seeds) => seeds.map((s3) => ({ id: s3.id, idea: s3.idea, discarded_at: s3.discarded_at, suggested_at: s3.suggested_at }));
 function preFilingLabel(proceeding) {
   return proceeding.forum === null ? "Forum not yet chosen" : "No filing yet";
 }
@@ -92618,6 +92617,108 @@ function buildPreFilingBoardData(dbPath, proceeding, meta2) {
   };
 }
 
+// src/submission/forms/goal-card.ts
+function hearingDateCriterion(dbPath, filing) {
+  const met = fetchHearingDate(dbPath, filing.id) !== null;
+  return { id: "hearing-date", text: "The hearing date is recorded", state: met ? "met" : "unmet", outstanding: 0, items: [], source: "sqlite" };
+}
+function cardText(drafting, gate, hearing, deadlines, send, serve2) {
+  if (gate.jobs > 0) return null;
+  if (drafting.every((c3) => c3.state === "met")) {
+    if (gate.criterion.state === "met") {
+      if (hearing?.state === "unmet" && !serve2) return "Only the hearing date remains to be recorded.";
+      const partial2 = deadlines.some((c3) => c3.state !== "met") || hearing?.state === "unmet";
+      return `Every ${partial2 ? "drafting " : ""}condition holds. Awaiting your approval to ${send ? "send" : serve2 ? "serve" : "file"}.`;
+    }
+    if (gate.present && gate.open === 0) return `Drafting conditions hold. ${(send ? PRE_SEND : PRE_FILING).stale}`;
+    if (gate.current) return `Drafting conditions hold. ${send ? "Pre-send" : "Pre-filing"} checks: ${gate.open} open.`;
+    return send ? "Every drafting condition holds. Recording it as sent runs the pre-send checks again." : "Every drafting condition holds. The next session assembles the package and runs the pre-filing checks.";
+  }
+  const reviewOnly = drafting.every((c3) => c3.state === "met" || c3.id === "counsel-review" && c3.state === "unmet");
+  return reviewOnly ? "Only your review remains. Every other drafting condition holds." : null;
+}
+var NO_CRITERIA_TEXT = "No completion criteria are declared for this type of Writing.";
+function goalFor(ctx, tickets, shelved, current, deadlines) {
+  const sentence = "Completion Criteria";
+  if (ctx.lifecycle.state === "retired") {
+    const reason = ctx.filing.retirement_reason;
+    return { goal: { sentence, state: "pending", text: `Retired on ${ctx.lifecycle.since}` + (reason ? ` \u2014 ${reason.replace(/_/g, " ")}` : "") }, criteria: [] };
+  }
+  const send = holdsBeforeSend(ctx.filing);
+  const serve2 = SERVED_KINDS.has(ctx.filing.kind);
+  const verb = ctx.filing.needs_forum_parts === 0 ? "Sent" : serve2 && ctx.filing.sent_copy_id !== null ? "Served" : "Filed";
+  const filed = ctx.filing.filed_on === null ? null : `${verb} on ${ctx.filing.filed_on}`;
+  const declared = declaredCriteria(ctx.filing);
+  if (declared.length === 0) return { goal: { sentence, state: "pending", text: filed ?? NO_CRITERIA_TEXT }, criteria: [] };
+  const forum = ctx.inventory === null ? null : ctx.inventory.filter((e3) => !NEVER_DELIVERED_DOCS.has(e3.doc));
+  const drafting = declared.map((c3) => inventoryCriterion(c3, forum, shelved, current));
+  const jobs2 = openJobs(tickets);
+  const gate = send ? readPreSendGate(ctx, tickets, filed !== null, drafting, jobs2) : readGate(tickets, ctx.revision, filed !== null, PRE_FILING, jobs2);
+  const hearing = storedLayout(ctx.filing).layout.goal_criteria.includes("hearing-date") ? hearingDateCriterion(ctx.dbPath, ctx.filing) : null;
+  const criteria = [...drafting, gate.criterion, ...hearing === null ? [] : [hearing], ...deadlines];
+  const state = forum === null ? "pending" : criteria.every((c3) => c3.state === "met") ? "met" : "unmet";
+  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines, send, serve2) }, criteria };
+}
+
+// src/submission/forms/build-work-board.ts
+function declaredIngestInputs(filing) {
+  if (filing.layout_snapshot === null) return void 0;
+  const raw = storedLayout(filing).layout.ingest_inputs;
+  if (raw === void 0) return void 0;
+  if (!Array.isArray(raw) || !raw.every((name) => typeof name === "string")) {
+    throw new DataServerError(`"${filing.title}": its stored list of document types to read is not a list of names`, "invalid_layout_snapshot");
+  }
+  return raw;
+}
+function buildWorkBoardData(ctx, deadlines = []) {
+  if (isJobOnlyBoard(ctx.filing)) return buildJobOnlyBoardData(ctx);
+  const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id, ctx.rendered.slice(0, 10));
+  const idleHours = idleFlagHours(process.env);
+  const printed = ctx.inventory === null ? null : new Set(ctx.inventory.flatMap((e3) => e3.generating ? [proposalKey(e3)] : []));
+  const { proposals, lapsed_keys, shelved, current } = proposalsFor(ctx, board);
+  const titles = new Map(proposals.map((p3) => [p3.key, p3.title]));
+  const filed = ctx.filing.filed_on !== null;
+  const inProgress2 = board.tickets.map((t3) => t3.ticket).filter(holdsMaterial);
+  const tickets = board.tickets.filter((t3) => onFilingBoard(t3.filing_id, ctx.filing.id)).map((t3) => {
+    const ineligible_reasons = ineligibleReasons(t3.ticket, filed, printed, titles, inProgress2);
+    const eligible = ineligible_reasons.length === 0;
+    return withIdleFlag({ ...t3.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t3.ticket, printed), ...t3.filing_id === null ? { general: true } : {} }, ctx.rendered, idleHours);
+  });
+  const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);
+  const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines);
+  const gate = criteria.find((c3) => c3.id === "gate");
+  const gated = gate === void 0 || gate.state === "met" ? tickets : tickets.map((t3) => t3.category === "ready" && waitsOnGate(t3.title) ? { ...t3, dispatch_skips: [...t3.dispatch_skips, { reason: "before_gate" }] } : t3);
+  const inputTypes = declaredIngestInputs(ctx.filing);
+  const readyJobs = board.tickets.filter((t3) => t3.filing_id === ctx.filing.id && t3.ticket.category === "ready").map((t3) => t3.ticket.id);
+  return {
+    meta: {
+      revision: ctx.revision,
+      matter: ctx.matterNo,
+      client: ctx.clientName,
+      file: ctx.proceeding.file_number ?? "",
+      filing: ctx.filing.title,
+      filing_id: ctx.filing.id,
+      proceeding_id: ctx.proceeding.id,
+      rendered: ctx.rendered,
+      state: ctx.lifecycle.state,
+      state_label: LIFECYCLE_LABELS[ctx.lifecycle.state],
+      state_since: ctx.lifecycle.since,
+      ready_to_retire: ctx.lifecycle.readyToRetire,
+      ...inputTypes !== void 0 ? { ingest_inputs: { types: inputTypes, ready_jobs: readyJobs } } : {}
+    },
+    tickets: gated,
+    seeds,
+    deleted: board.deleted.filter((d3) => onFilingBoard(d3.filing_id, ctx.filing.id)).map((d3) => ({ id: d3.id, title: d3.title })),
+    discardedSeeds: discardedSeedLines(board.discardedSeeds),
+    attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id),
+    proposals,
+    lapsed_keys,
+    goals: fetchBoardGoals(ctx.dbPath, { filing_id: ctx.filing.id, proceeding_id: ctx.proceeding.id }, ctx.filing.title),
+    goal,
+    criteria
+  };
+}
+
 // src/submission/forms/sent-write.ts
 var TOOL6 = "drafting_data__record_sent";
 var NOW3 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -92627,13 +92728,13 @@ var PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back
 function refused(message, code) {
   return new DataServerError(`${TOOL6}: ${message}`, code);
 }
-function rows6(dbPath, sql, params) {
+function rows13(dbPath, sql, params) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 var RECORD_ACT = { unset: "the Sent write has no recorder", act: "records a Writing as sent", why: "" };
 function signerSnapshot(dbPath, filing, profile) {
   if (filing.signer_party_id !== null) {
-    const [party] = rows6(dbPath, "SELECT id, name, role FROM parties WHERE id = ?", [filing.signer_party_id]);
+    const [party] = rows13(dbPath, "SELECT id, name, role FROM parties WHERE id = ?", [filing.signer_party_id]);
     if (party === void 0) throw refused(`"${filing.title}": its signing party is not in the matter's records`, "invalid_signer");
     return { party_id: party.id, name: party.name, role: party.role };
   }
@@ -92661,10 +92762,10 @@ function unmetStep(c3, rev) {
 }
 var liveJobSql = (dbPath) => `SELECT id FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${liveTicketClause(dbPath)} ORDER BY id`;
 function planPreSendGate(dbPath, filing, held, rev) {
-  const live = rows6(dbPath, liveJobSql(dbPath), [filing.id, PRE_SEND_TITLE]);
+  const live = rows13(dbPath, liveJobSql(dbPath), [filing.id, PRE_SEND_TITLE]);
   if (live.length === 0) {
     if (held.length === 0) return { live: null, job: null, statements: [] };
-    const [anchor] = rows6(
+    const [anchor] = rows13(
       dbPath,
       "SELECT billing_anchor FROM tickets WHERE filing_id = ? AND billing_anchor IS NOT NULL ORDER BY (title = 'Deliver') DESC, id DESC LIMIT 1",
       [filing.id]
@@ -92688,7 +92789,7 @@ function planPreSendGate(dbPath, filing, held, rev) {
     return { live: null, job, statements: statements2 };
   }
   const ticketId = live[0].id;
-  const steps = rows6(dbPath, "SELECT ordinal, text, done_at FROM ticket_steps WHERE ticket_id = ? ORDER BY ordinal", [ticketId]);
+  const steps = rows13(dbPath, "SELECT ordinal, text, done_at FROM ticket_steps WHERE ticket_id = ? ORDER BY ordinal", [ticketId]);
   const byId2 = new Map(held.map((c3) => [c3.id, c3]));
   const statements = [];
   const stepped = /* @__PURE__ */ new Set();
@@ -92713,7 +92814,7 @@ function gateChanged(filing) {
 }
 function storedParagraphs(dbPath, filing, stored) {
   const prose = fetchProse(dbPath, filing.id);
-  const clauses = () => rows6(
+  const clauses = () => rows13(
     dbPath,
     "SELECT COALESCE(fc.wording_override, c.wording) AS wording FROM filing_clauses fc JOIN clauses c ON c.id = fc.clause_id WHERE fc.filing_id = ? ORDER BY fc.ordinal",
     [filing.id]
@@ -92749,7 +92850,7 @@ function checkArgs(args) {
     if (![".eml", ".pdf", ".msg"].includes(extname(args.sent_copy_path).toLowerCase())) {
       throw new ValidationError(`${TOOL6}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
     }
-    if (!existsSync25(args.sent_copy_path)) throw new ValidationError(`${TOOL6}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
+    if (!existsSync27(args.sent_copy_path)) throw new ValidationError(`${TOOL6}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
   }
   if (args.send_anyway !== void 0 && args.send_anyway.trim() === "") {
     throw new ValidationError(`${TOOL6}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
@@ -92757,7 +92858,7 @@ function checkArgs(args) {
 }
 async function submissionDataRecordSent(args, env = process.env) {
   checkArgs(args);
-  const [filing] = rows6(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]);
+  const [filing] = rows13(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]);
   if (filing === void 0) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
   if (isJobOnlyBoard(filing)) throw refused(`Job Board ${filing.id} has no Writing, so there is nothing to record as sent`, "job_board_only");
   if (filing.retired_on) throw refused(`"${filing.title}" was retired on ${filing.retired_on}`, "writing_retired");
@@ -92788,7 +92889,7 @@ async function submissionDataRecordSent(args, env = process.env) {
   const gate = planPreSendGate(args.db_path, filing, held, revision);
   if (held.length > 0 && args.send_anyway === void 0) {
     if (gate.statements.length > 0 && !(await submissionDataWriteAll(args.db_path, gate.statements, env)).ok) throw gateChanged(filing);
-    const jobId = gate.live ?? rows6(args.db_path, liveJobSql(args.db_path), [filing.id, PRE_SEND_TITLE])[0].id;
+    const jobId = gate.live ?? rows13(args.db_path, liveJobSql(args.db_path), [filing.id, PRE_SEND_TITLE])[0].id;
     throw refused(
       `sending is held: ${held.map((c3) => `${c3.id} (${c3.items.join("; ")})`).join(", ")} unmet now. Pre-send gate job ${jobId} names each; meet them and render again, or record it as sent with send_anyway carrying the practitioner's words`,
       "held"
@@ -92836,7 +92937,7 @@ async function submissionDataRecordSent(args, env = process.env) {
       expect_changes: 1
     });
   }
-  const deliverId = rows6(args.db_path, `${liveJobSql(args.db_path).replace("ORDER BY", "AND rejected_at IS NULL ORDER BY")}`, [filing.id, DELIVER_TITLE])[0]?.id ?? null;
+  const deliverId = rows13(args.db_path, `${liveJobSql(args.db_path).replace("ORDER BY", "AND rejected_at IS NULL ORDER BY")}`, [filing.id, DELIVER_TITLE])[0]?.id ?? null;
   if (deliverId !== null) {
     const live = "status IN ('queued', 'wip') AND rejected_at IS NULL";
     statements.push(
@@ -92852,9 +92953,9 @@ async function submissionDataRecordSent(args, env = process.env) {
     if (written.failed <= recordedAt) throw refused(`"${filing.title}" was sent or retired while it was being recorded; nothing was written`, "already_sent");
     throw gateChanged(filing);
   }
-  const gateJob = gate.job === null ? null : gate.live ?? rows6(args.db_path, "SELECT id FROM tickets WHERE filing_id = ? AND title = ? ORDER BY id DESC LIMIT 1", [filing.id, PRE_SEND_TITLE])[0].id;
+  const gateJob = gate.job === null ? null : gate.live ?? rows13(args.db_path, "SELECT id FROM tickets WHERE filing_id = ? AND title = ? ORDER BY id DESC LIMIT 1", [filing.id, PRE_SEND_TITLE])[0].id;
   const unused = args.send_anyway !== void 0 && waived.length === 0 ? " Nothing held sending, so the send_anyway words were not recorded." : "";
-  const [after] = rows6(args.db_path, "SELECT sent_copy_id FROM filings WHERE id = ?", [filing.id]);
+  const [after] = rows13(args.db_path, "SELECT sent_copy_id FROM filings WHERE id = ?", [filing.id]);
   return {
     filing_id: filing.id,
     sent_on: args.sent_on,
@@ -92922,14 +93023,14 @@ async function submissionDataRecordFiled(args, env = process.env) {
 }
 
 // src/submission/forms/served-write.ts
-import { existsSync as existsSync26 } from "node:fs";
+import { existsSync as existsSync28 } from "node:fs";
 var TOOL8 = "drafting_data__record_served";
 function refused3(message, code) {
   return new DataServerError(`${TOOL8}: ${message}`, code);
 }
 async function submissionDataRecordServed(args, env = process.env) {
   if (!isCalendarDate(args.served_on)) throw new ValidationError(`${TOOL8}.served_on must be a calendar date, YYYY-MM-DD`, "invalid_served_on");
-  if (args.served_copy_path !== void 0 && !existsSync26(args.served_copy_path)) {
+  if (args.served_copy_path !== void 0 && !existsSync28(args.served_copy_path)) {
     throw new ValidationError(`${TOOL8}.served_copy_path does not exist: ${args.served_copy_path}`, "invalid_served_copy");
   }
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows;
@@ -93208,7 +93309,7 @@ async function submissionDataSetStep(args, env = process.env) {
 }
 
 // src/submission/writing-folder.ts
-import { existsSync as existsSync27, mkdirSync as mkdirSync12, readdirSync as readdirSync13, readFileSync as readFileSync22, renameSync as renameSync5, rmdirSync, statSync as statSync12, unlinkSync as unlinkSync6 } from "node:fs";
+import { existsSync as existsSync29, mkdirSync as mkdirSync12, readdirSync as readdirSync13, readFileSync as readFileSync25, renameSync as renameSync5, rmdirSync, statSync as statSync12, unlinkSync as unlinkSync6 } from "node:fs";
 import { dirname as dirname14, extname as extname2, join as join29 } from "node:path";
 var GENERAL_DOCUMENT_TYPE = "General_writing";
 var OLD_BOARD_FILES = ["Job Board.html", "Work Board.html", "Work Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
@@ -93217,8 +93318,8 @@ function sanitizeForPath(name) {
   return name.replace(/[\\/:*?"<>|]/g, "_").trim();
 }
 function readExistingRevision(filePath) {
-  if (!existsSync27(filePath)) return void 0;
-  const text5 = readFileSync22(filePath, "utf-8");
+  if (!existsSync29(filePath)) return void 0;
+  const text5 = readFileSync25(filePath, "utf-8");
   const match = text5.match(/^Revision:[ \t]*(\d+)/m) ?? text5.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text5.match(/data-k="Rev">(\d+)</);
   return match ? Number(match[1]) : void 0;
 }
@@ -93260,21 +93361,21 @@ function isDir2(path) {
   }
 }
 function writingFolders(dbPath, draft = draftDirOf(dbPath)) {
-  const rows22 = folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3));
+  const rows29 = folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3));
   const taken = /* @__PURE__ */ new Set([RECORDS_FOLDER.toLowerCase()]);
   const result = /* @__PURE__ */ new Map();
   const take = (row2, folder) => {
     result.set(row2.id, folder);
     taken.add(folder.name.toLowerCase());
   };
-  for (const row2 of rows22) {
+  for (const row2 of rows29) {
     const manifest = readManifest(dbPath, row2.id);
     if (manifest !== null && isDir2(join29(draft, manifest.folder)) && !taken.has(manifest.folder.toLowerCase())) {
       take(row2, { name: manifest.folder, legacy: matchOf(manifest.folder, row2) === "legacy" });
     }
   }
   const dirs = readdirSync13(draft, { withFileTypes: true }).filter((e3) => e3.isDirectory()).map((e3) => e3.name);
-  for (const row2 of rows22.filter((r3) => !result.has(r3.id))) {
+  for (const row2 of rows29.filter((r3) => !result.has(r3.id))) {
     const candidates = dirs.filter((d3) => !taken.has(d3.toLowerCase()) && matchOf(d3, row2) !== null);
     if (candidates.length === 1) {
       take(row2, { name: candidates[0], legacy: matchOf(candidates[0], row2) === "legacy" });
@@ -93297,7 +93398,7 @@ function renamedLegacy(name, title) {
 function settled(draft, title, folder) {
   if (!folder.legacy) return folder.name;
   const target = renamedLegacy(folder.name, title);
-  if (existsSync27(join29(draft, target)) || !renameable(join29(draft, folder.name))) return folder.name;
+  if (existsSync29(join29(draft, target)) || !renameable(join29(draft, folder.name))) return folder.name;
   renameSync5(join29(draft, folder.name), join29(draft, target));
   return target;
 }
@@ -93319,7 +93420,7 @@ function freeName(dir, name) {
   const ext = extname2(name);
   const stem3 = name.slice(0, name.length - ext.length);
   let candidate = name;
-  for (let n3 = 2; existsSync27(join29(dir, candidate)); n3++) candidate = `${stem3} (${n3})${ext}`;
+  for (let n3 = 2; existsSync29(join29(dir, candidate)); n3++) candidate = `${stem3} (${n3})${ext}`;
   return candidate;
 }
 function moveInto(src, dir, name) {
@@ -93345,7 +93446,7 @@ function emptyLegacyFolder(legacy, dir, row2, current) {
   const files = [];
   for (const f3 of legacy.manifest?.files ?? []) {
     const src = join29(legacy.dir, f3.file_name);
-    if (!existsSync27(src)) continue;
+    if (!existsSync29(src)) continue;
     const name = `${documentStem(row2, f3.document_type, f3.file_name)}${extname2(f3.file_name)}`;
     if (!current) {
       moveInto(src, archive, `${labels.get(f3.document_type)} @rev${legacy.manifest?.stamp.revision} ${nowLabel()}${extname2(f3.file_name)}`);
@@ -93353,9 +93454,9 @@ function emptyLegacyFolder(legacy, dir, row2, current) {
     }
     for (const copy of /* @__PURE__ */ new Set([f3.file_name, name])) {
       const path = join29(dir, copy);
-      if (existsSync27(path) && readExistingRevision(path) !== void 0) unlinkSync6(path);
+      if (existsSync29(path) && readExistingRevision(path) !== void 0) unlinkSync6(path);
     }
-    if (existsSync27(join29(dir, name))) {
+    if (existsSync29(join29(dir, name))) {
       moveInto(src, archive, `${labels.get(f3.document_type)} @rev${legacy.manifest?.stamp.revision} ${nowLabel()}${extname2(f3.file_name)}`);
       continue;
     }
@@ -93384,12 +93485,12 @@ function later(a3, b3, id) {
 }
 function moveCaseDataMockups(dbPath) {
   const root = join29(dirname14(dbPath), "mockups");
-  if (!existsSync27(root)) return [];
+  if (!existsSync29(root)) return [];
   const draft = draftDirOf(dbPath);
   const records = recordsDir(dbPath);
   mkdirSync12(records, { recursive: true });
   const older = join29(records, OLDER_MOCKUPS);
-  const rows22 = new Map(folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3)).map((r3) => [r3.id, r3]));
+  const rows29 = new Map(folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3)).map((r3) => [r3.id, r3]));
   const moves = [];
   const byFiling = /* @__PURE__ */ new Map();
   for (const entry of readdirSync13(root, { withFileTypes: true })) {
@@ -93402,7 +93503,7 @@ function moveCaseDataMockups(dbPath) {
     }
     const manifest = readLegacyManifest(path);
     const id = manifest?.stamp.filing_id ?? Number(/^Filing (\d+)$/.exec(entry.name)?.[1] ?? NaN);
-    if (!rows22.has(id)) {
+    if (!rows29.has(id)) {
       moves.push({ from: path, to: moveInto(path, older, entry.name) });
       continue;
     }
@@ -93410,7 +93511,7 @@ function moveCaseDataMockups(dbPath) {
   }
   const folders = writingFolders(dbPath, draft);
   for (const [id, found] of byFiling) {
-    const row2 = rows22.get(id);
+    const row2 = rows29.get(id);
     const folder = settled(draft, row2.title, folders.get(id));
     const dir = join29(draft, folder);
     mkdirSync12(dir, { recursive: true });
@@ -93516,63 +93617,63 @@ function renderStateFor(dbPath, stamp2, filing, digest) {
 import { basename as basename9, dirname as dirname22, join as join37 } from "node:path";
 
 // src/submission/matter-pages.ts
-import { existsSync as existsSync31, mkdirSync as mkdirSync15, readdirSync as readdirSync17, readFileSync as readFileSync24 } from "node:fs";
+import { existsSync as existsSync33, mkdirSync as mkdirSync15, readdirSync as readdirSync17, readFileSync as readFileSync27 } from "node:fs";
 import { dirname as dirname18, join as join35, relative as relative3 } from "node:path";
 
 // src/file_ops/trash.ts
 import {
   appendFileSync,
-  existsSync as existsSync28,
+  existsSync as existsSync30,
   lstatSync,
   mkdirSync as mkdirSync13,
   readdirSync as readdirSync14,
-  realpathSync as realpathSync5,
+  realpathSync as realpathSync6,
   renameSync as renameSync6,
   statSync as statSync13
 } from "node:fs";
-import { win32 as pathWin3214 } from "node:path";
+import { win32 as pathWin3216 } from "node:path";
 var TRASH2 = "TRASH";
 var TRASH_LOG = ".trash-log.jsonl";
 function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
-  if (typeof path !== "string" || !pathWin3214.isAbsolute(path)) {
+  if (typeof path !== "string" || !pathWin3216.isAbsolute(path)) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
   let target;
   try {
-    target = pathWin3214.join(realpathSync5.native(pathWin3214.dirname(path)), pathWin3214.basename(path));
+    target = pathWin3216.join(realpathSync6.native(pathWin3216.dirname(path)), pathWin3216.basename(path));
     lstatSync(target);
   } catch {
     throw new DataServerError(`path does not exist: ${path}`, "not_found");
   }
   const stat = lstatSync(target);
   const ancestors = [target];
-  for (let dir = pathWin3214.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin3214.dirname(dir)) {
+  for (let dir = pathWin3216.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin3216.dirname(dir)) {
     ancestors.push(dir);
   }
-  if (ancestors.some((dir) => existsSync28(pathWin3214.join(dir, ".git")))) {
+  if (ancestors.some((dir) => existsSync30(pathWin3216.join(dir, ".git")))) {
     throw new DataServerError(
       `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
       "git_worktree"
     );
   }
-  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile2(pathWin3214.join(dir, marker))));
+  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile2(pathWin3216.join(dir, marker))));
   if (root === void 0) {
     throw new DataServerError(
       `no ${POINTER_FILES.join(" or ")} at or above the path; not a client-matter file: ${target}`,
       "not_a_matter_file"
     );
   }
-  const rel = pathWin3214.relative(root, target);
+  const rel = pathWin3216.relative(root, target);
   if (zoneProblem("move-from", target, root)) {
     throw new DataServerError(
       `path is protected (the workspace root, the matter pointer, ${TRASH2}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
       "protected"
     );
   }
-  let dest = pathWin3214.join(root, TRASH2, rel);
+  let dest = pathWin3216.join(root, TRASH2, rel);
   if (present2(dest)) {
     const suffix = ` (trashed ${stamp(now)})`;
-    const ext = stat.isDirectory() ? "" : pathWin3214.extname(dest);
+    const ext = stat.isDirectory() ? "" : pathWin3216.extname(dest);
     dest = dest.slice(0, dest.length - ext.length) + suffix + ext;
     if (present2(dest)) {
       throw new DataServerError(`destination already exists: ${dest}`, "dest_exists");
@@ -93580,7 +93681,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   }
   if (dryRun) return { would_move_from: target, would_move_to: dest };
   const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync14(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
-  mkdirSync13(pathWin3214.dirname(dest), { recursive: true });
+  mkdirSync13(pathWin3216.dirname(dest), { recursive: true });
   try {
     renameSync6(target, dest);
   } catch (err) {
@@ -93594,14 +93695,14 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   }
   try {
     const line = JSON.stringify({ when: now.toISOString(), from: target, to: dest });
-    appendFileSync(pathWin3214.join(root, TRASH2, TRASH_LOG), line + "\n", "utf-8");
+    appendFileSync(pathWin3216.join(root, TRASH2, TRASH_LOG), line + "\n", "utf-8");
   } catch (err) {
     result.log_error = err instanceof Error ? err.message : String(err);
   }
   return result;
 }
 function isFile2(path) {
-  return existsSync28(path) && statSync13(path).isFile();
+  return existsSync30(path) && statSync13(path).isFile();
 }
 function present2(path) {
   try {
@@ -93617,7 +93718,7 @@ function stamp(d3) {
 }
 
 // src/submission/board-attachments.ts
-import { closeSync as closeSync7, existsSync as existsSync29, openSync as openSync7, readdirSync as readdirSync15, readSync, realpathSync as realpathSync6, statSync as statSync14 } from "node:fs";
+import { closeSync as closeSync7, existsSync as existsSync31, openSync as openSync7, readdirSync as readdirSync15, readSync, realpathSync as realpathSync7, statSync as statSync14 } from "node:fs";
 import { dirname as dirname15, isAbsolute as isAbsolute5, join as join30, relative as relative2, resolve as resolve5, sep } from "node:path";
 var REVIEW_LINE = /^Counsel['’]s review:\s*/;
 var FIRST_LINE_BYTES = 4096;
@@ -93664,10 +93765,10 @@ function attachedDrafts(draftDir, section2) {
       proceeding_wide: section2.meta.filing_id !== null && a3.filing_id === null
     };
     if (leavesDraftFolder(relative2(draftDir, abs))) return { ...entry, state: "outside", review: [] };
-    if (!existsSync29(abs)) return { ...entry, state: "missing", review: [] };
+    if (!existsSync31(abs)) return { ...entry, state: "missing", review: [] };
     try {
-      const real = realpathSync6.native(abs);
-      if (leavesDraftFolder(relative2(realpathSync6.native(draftDir), real)) || zoneProblem("read", real)) {
+      const real = realpathSync7.native(abs);
+      if (leavesDraftFolder(relative2(realpathSync7.native(draftDir), real)) || zoneProblem("read", real)) {
         return { ...entry, state: "outside", review: [] };
       }
       const isFolder = statSync14(abs).isDirectory();
@@ -93896,14 +93997,14 @@ var view_folder_css_default = '.board{gap:0}\n.tabs{display:flex;align-items:fle
 var view_head_html_default = '<!doctype html>\n<html lang="en" data-view-page>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">';
 
 // src/submission/forms/arguments-page.ts
-function rows7(dbPath, sql, params = []) {
+function rows14(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function tableHeld(dbPath, table) {
-  return rows7(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])[0].n > 0;
+  return rows14(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])[0].n > 0;
 }
 function columnHeld2(dbPath, table, column) {
-  return rows7(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
+  return rows14(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
 }
 function buildArgumentsData(dbPath, filing) {
   const filings = Array.isArray(filing) ? filing : [filing];
@@ -93917,7 +94018,7 @@ function buildArgumentsData(dbPath, filing) {
 }
 function argumentsFor(dbPath, proceedingId, ids, merged) {
   const inIds = `(${ids.map(() => "?").join(", ")})`;
-  const submissions = rows7(
+  const submissions = rows14(
     dbPath,
     `SELECT s.id, s.contention FROM submissions s
      LEFT JOIN filing_submissions fs ON fs.submission_id = s.id AND fs.filing_id IN ${inIds}
@@ -93927,7 +94028,7 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
               MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
     [...ids, proceedingId]
   );
-  const deployments = rows7(
+  const deployments = rows14(
     dbPath,
     `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
      FROM filing_submissions fs JOIN filings f ON f.id = fs.filing_id
@@ -93935,22 +94036,22 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
      ORDER BY f.id`,
     [proceedingId]
   );
-  const facts = rows7(
+  const facts = rows14(
     dbPath,
     `SELECT sf.submission_id, f.postulate FROM submission_facts sf JOIN facts f ON f.id = sf.fact_id
      WHERE f.proceeding_id = ? ORDER BY f.id`,
     [proceedingId]
   );
   const killedOn = columnHeld2(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
-  const law = rows7(
+  const law = rows14(
     dbPath,
     `SELECT sl.submission_id, la.proposition, ${killedOn}
      FROM submission_law sl JOIN law_assertions la ON la.id = sl.law_assertion_id
      WHERE la.proceeding_id = ? ORDER BY la.id`,
     [proceedingId]
   );
-  const raisedLinks = tableHeld(dbPath, "submission_rebuts_opposing_points") ? rows7(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points") : [];
-  const anticipatedLinks = tableHeld(dbPath, "submission_rebuts_anticipated_points") ? rows7(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points") : [];
+  const raisedLinks = tableHeld(dbPath, "submission_rebuts_opposing_points") ? rows14(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points") : [];
+  const anticipatedLinks = tableHeld(dbPath, "submission_rebuts_anticipated_points") ? rows14(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points") : [];
   const links = [
     ...raisedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `raised:${l3.point_id}` })),
     ...anticipatedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `anticipated:${l3.point_id}` }))
@@ -93964,7 +94065,7 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
       source: [p3.component, p3.pinpoint].filter((part) => part !== null && part !== "").join(", "),
       linked: []
     })),
-    ...rows7(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
+    ...rows14(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
       (p3) => ({ key: `anticipated:${p3.id}`, kind: "anticipated", text: p3.point, source: null, linked: [] })
     )
   ];
@@ -94129,11 +94230,11 @@ var material_facts_html_default = '@@include(view-head.html)@@\n<title>Material 
 var procedural_history_html_default = '@@include(view-head.html)@@\n<title>Procedural History</title>\n<style>\n@@include(board.css)@@\n\n@@include(facts.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Procedural History</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(facts.js)@@\n</script>\n</body>\n</html>';
 
 // src/submission/forms/facts-pages.ts
-function rows8(dbPath, sql, params = []) {
+function rows15(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function factsInFilingOrder(dbPath, filingId) {
-  const found = rows8(
+  const found = rows15(
     dbPath,
     `SELECT f.*, cr.label AS court_record_label
      FROM (SELECT fact_id, 0 AS grp, ordinal AS k1, 0 AS k2 FROM filing_facts WHERE filing_id = ? AND document = 'form'
@@ -94157,7 +94258,7 @@ function factsInFilingOrder(dbPath, filingId) {
 }
 function statementsOf(dbPath, factIds) {
   if (factIds.length === 0) return [];
-  return rows8(
+  return rows15(
     dbPath,
     `SELECT sof.*, w.name AS witness_name, ins.label AS instrument_label, ex.label AS exhibit_label
      FROM statements_of_fact sof
@@ -94255,15 +94356,15 @@ var MATERIAL_FACTS = {
 
 // src/page-api/token.ts
 import { createHmac as createHmac2, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
-import { existsSync as existsSync30, linkSync as linkSync2, mkdirSync as mkdirSync14, readFileSync as readFileSync23, unlinkSync as unlinkSync7, writeFileSync as writeFileSync8 } from "node:fs";
+import { existsSync as existsSync32, linkSync as linkSync2, mkdirSync as mkdirSync14, readFileSync as readFileSync26, unlinkSync as unlinkSync7, writeFileSync as writeFileSync8 } from "node:fs";
 import { dirname as dirname16, join as join31 } from "node:path";
 var DEFAULT_PAGE_API_PORT = 47615;
 var SECRET_FILE = "page-api.secret";
 var SECRET_BYTES = 32;
 function pageApiPort(env = process.env) {
   const path = configPath(env);
-  if (!existsSync30(path)) return DEFAULT_PAGE_API_PORT;
-  const value = JSON.parse(readFileSync23(path, "utf-8"))?.page_api_port;
+  if (!existsSync32(path)) return DEFAULT_PAGE_API_PORT;
+  const value = JSON.parse(readFileSync26(path, "utf-8"))?.page_api_port;
   if (value === void 0 || value === null) return DEFAULT_PAGE_API_PORT;
   if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 65535) {
     throw new ValidationError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value)}`, "invalid_page_api_port");
@@ -94275,7 +94376,7 @@ function pageApiSecretPath(env = process.env) {
 }
 function pageApiSecret(env) {
   const path = pageApiSecretPath(env);
-  if (!existsSync30(path)) {
+  if (!existsSync32(path)) {
     mkdirSync14(dirname16(path), { recursive: true });
     const temp = `${path}.${process.pid}.${randomBytes3(6).toString("hex")}.tmp`;
     writeFileSync8(temp, randomBytes3(SECRET_BYTES), { flag: "wx" });
@@ -94287,7 +94388,7 @@ function pageApiSecret(env) {
       unlinkSync7(temp);
     }
   }
-  const secret = readFileSync23(path);
+  const secret = readFileSync26(path);
   if (secret.length !== SECRET_BYTES) throw new Error(`${path} holds ${secret.length} bytes, not ${SECRET_BYTES}; delete it and re-render the page`);
   return secret;
 }
@@ -94746,14 +94847,14 @@ function rawResearchClass(row2) {
   if (row2.proposition_killed_on !== null || row2.authority_killed_on !== null) return "not_relevant";
   return row2.in_use ? "in_use" : "undecided";
 }
-function rows9(dbPath, sql, params = []) {
+function rows16(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 var columnsHeld = /* @__PURE__ */ new Set();
 function columnHeld3(dbPath, table, column) {
   const key = `${dbPath}\0${table}.${column}`;
   if (columnsHeld.has(key)) return true;
-  const held = rows9(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = '${column}'`)[0].n > 0;
+  const held = rows16(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = '${column}'`)[0].n > 0;
   if (held) columnsHeld.add(key);
   return held;
 }
@@ -94764,7 +94865,7 @@ function propositionKilledOnColumn(dbPath) {
   return columnHeld3(dbPath, "law_assertions", "killed_on") ? "killed_on" : "NULL AS killed_on";
 }
 function fetchStatements(dbPath, proceedingId) {
-  return rows9(
+  return rows16(
     dbPath,
     `SELECT sl.id AS statement_id, sl.law_assertion_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification,
             ${settledOnColumn(dbPath)}, ${excerptSpeakerColumn(dbPath)}, ${verifiedOnColumn(dbPath)},
@@ -94805,13 +94906,13 @@ function buildRawResearchData(dbPath, filing) {
 function rawResearchFor(dbPath, proceedingId, ids, merged) {
   const inIds = `(${ids.map(() => "?").join(", ")})`;
   const here = merged ? "this board's Writings" : "this Writing";
-  const propositions = rows9(
+  const propositions = rows16(
     dbPath,
     `SELECT id, proposition, dead_end, ${propositionKilledOnColumn(dbPath)} FROM law_assertions WHERE proceeding_id = ? ORDER BY id`,
     [proceedingId]
   );
   const statements = fetchStatements(dbPath, proceedingId);
-  const links = rows9(
+  const links = rows16(
     dbPath,
     `SELECT sbl.law_assertion_id, s.id AS submission_id, s.contention, s.killed_on
      FROM submission_law sbl JOIN submissions s ON s.id = sbl.submission_id
@@ -94819,7 +94920,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      ORDER BY s.ordinal, s.id`,
     [proceedingId]
   );
-  const onFiling = rows9(
+  const onFiling = rows16(
     dbPath,
     `SELECT s.id, s.contention
      FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
@@ -94827,7 +94928,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      ORDER BY CASE fs.document WHEN 'form' THEN 0 ELSE 1 END, fs.ordinal, fs.id`,
     ids
   );
-  const elsewhere = rows9(
+  const elsewhere = rows16(
     dbPath,
     `SELECT s.id, s.contention FROM submissions s
      WHERE s.proceeding_id = ? AND s.killed_on IS NULL
@@ -94835,7 +94936,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      ORDER BY s.ordinal, s.id`,
     [proceedingId, ...ids]
   );
-  const required2 = rows9(
+  const required2 = rows16(
     dbPath,
     `SELECT r.law_assertion_id, r.excerpt_id,
             EXISTS (SELECT 1 FROM filing_orders fo WHERE fo.order_sought_id = r.order_sought_id AND fo.filing_id IN ${inIds}) AS on_filing
@@ -94843,7 +94944,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      WHERE o.proceeding_id = ? AND (r.law_assertion_id IS NOT NULL OR r.excerpt_id IS NOT NULL)`,
     [...ids, proceedingId]
   );
-  const citedHere = new Set(rows9(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r3) => r3.statement_id));
+  const citedHere = new Set(rows16(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r3) => r3.statement_id));
   const onFilingIds = new Set(onFiling.map((s3) => s3.id));
   const present3 = (list) => list.filter((id) => id !== null);
   const deployed = /* @__PURE__ */ new Set([
@@ -95058,18 +95159,18 @@ async function submissionDataRecordViewed(args, env = process.env) {
     entry.keys = [t3.key, ...entry.keys.filter((k3) => k3 !== t3.key)];
     lists.set(boardKey(t3.board), entry);
   }
-  const rows22 = [...lists.values()].map(({ board, keys }) => {
+  const rows29 = [...lists.values()].map(({ board, keys }) => {
     const current = new Set(targets.filter((t3) => boardKey(t3.board) === boardKey(board)).map((t3) => t3.key));
     return { key: viewedKey(board), value: JSON.stringify(keys.filter((k3) => current.has(k3))) };
   });
   const written = await submissionDataWriteAll(
     args.db_path,
-    rows22.map((r3) => ({ sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [r3.key, r3.value], expect_changes: 1 })),
+    rows29.map((r3) => ({ sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [r3.key, r3.value], expect_changes: 1 })),
     env
   );
   if (!written.ok) throw new DataServerError(`${TOOL12}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
   return {
-    keys: rows22.map((r3) => r3.key),
+    keys: rows29.map((r3) => r3.key),
     note: "Recorded. The Job Board shows the new order the next time its page is written; this call does not rewrite it.",
     ...written.warning ? { warning: written.warning } : {}
   };
@@ -96744,7 +96845,7 @@ function guardTargets(names, views) {
 function refuseForeignPages(draftDir, targets) {
   for (const { name, marker, page: page2 } of targets) {
     const file = join35(draftDir, name);
-    if (existsSync31(file) && !readFileSync24(file, "utf-8").includes(marker)) {
+    if (existsSync33(file) && !readFileSync27(file, "utf-8").includes(marker)) {
       throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page2}'s marker, so this renderer did not write it`);
     }
   }
@@ -96760,7 +96861,7 @@ function stem(fileName) {
 var OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
 var PREVIEW_FILE = / preview \d+\.html$/i;
 function generatorWrote(file) {
-  const text5 = readFileSync24(file, "utf-8");
+  const text5 = readFileSync27(file, "utf-8");
   return text5.includes(JOB_BOARD_MARKER) || text5.includes(MATTER_BOARD_MARKER) || text5.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
 }
 function sweepOldPages(draftDir, names) {
@@ -96899,7 +97000,7 @@ function isRecord(value) {
 }
 function readPagesState(dbPath) {
   try {
-    const parsed = JSON.parse(readFileSync24(statePath(dbPath), "utf-8"));
+    const parsed = JSON.parse(readFileSync27(statePath(dbPath), "utf-8"));
     const sections = parsed.sections;
     if (!isRecord(sections)) return { sections: {} };
     return {
@@ -97202,10 +97303,10 @@ function attachedLines(attached) {
     })
   ];
 }
-function courtFileLines(rows22) {
+function courtFileLines(rows29) {
   return [
-    `## Court File (${rows22.length})`,
-    ...rows22.map((a3) => {
+    `## Court File (${rows29.length})`,
+    ...rows29.map((a3) => {
       const parts = [`- ${a3.label}`, a3.court_file === null ? `court file: none found${a3.note ? ` (${a3.note})` : ""}` : `court file: ${a3.court_file.file_name}`];
       if (a3.mismatch !== null) parts.push(`mismatch: ${a3.mismatch}`);
       return parts.join(" \xB7 ");
@@ -97342,27 +97443,27 @@ function row(cells) {
 function buildLegend(markdown, documentType) {
   const sets = [...scannedText(markdown).matchAll(RUN_RE)].map((m3) => splitGlyphs(m3[0]));
   const present3 = new Set(sets.flat());
-  const rows22 = [];
+  const rows29 = [];
   const notes = [];
   for (const symbol of SYMBOLS) {
     if (!present3.has(symbol.glyph)) continue;
     const work = symbol.work && symbol.actor ? `${symbol.work} (${symbol.actor})` : symbol.work;
-    rows22.push(row([symbol.glyph, symbol.name, symbol.meaning, work]));
+    rows29.push(row([symbol.glyph, symbol.name, symbol.meaning, work]));
     if (symbol.modelNote) notes.push(`${symbol.glyph}: ${symbol.modelNote}`);
     for (const placement of PLACEMENTS) {
       if (placement.glyph !== symbol.glyph || !(placement.documents?.includes(documentType) ?? true)) continue;
-      rows22.push(row([placement.glyph, placement.line ?? "", placement.text, ""]));
+      rows29.push(row([placement.glyph, placement.line ?? "", placement.text, ""]));
       if (placement.modelNote) notes.push(`${placement.glyph} (${placement.line ?? documentType}): ${placement.modelNote}`);
     }
   }
   for (const combination of COMBINATIONS) {
     const glyphs = splitGlyphs(combination.key);
     if (!sets.some((set) => glyphs.every((g3) => set.includes(g3)))) continue;
-    rows22.push(row([combination.key, "", combination.meaning, combination.work]));
+    rows29.push(row([combination.key, "", combination.meaning, combination.work]));
     if (combination.modelNote) notes.push(`${combination.key}: ${combination.modelNote}`);
   }
-  if (rows22.length === 0) return { text: "", notes: [] };
-  return { text: [LEGEND_HEADING, "", row(["Symbol", "Name", "Meaning", "Work"]), "|---|---|---|---|", ...rows22].join("\n") + "\n", notes };
+  if (rows29.length === 0) return { text: "", notes: [] };
+  return { text: [LEGEND_HEADING, "", row(["Symbol", "Name", "Meaning", "Work"]), "|---|---|---|---|", ...rows29].join("\n") + "\n", notes };
 }
 function withLegend(markdown, documentType) {
   const legend = buildLegend(markdown, documentType);
@@ -97596,20 +97697,20 @@ function textHits(filedFace) {
   }
   return hits;
 }
-function tracked(hit, rows22) {
+function tracked(hit, rows29) {
   if (hit.citation !== null) {
     const wanted = normalCitation(hit.citation).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const within = new RegExp(`(^|[^a-z0-9])${wanted}([^a-z0-9]|$)`);
-    if (rows22.some((r3) => r3.citation !== null && within.test(normalCitation(r3.citation)))) return true;
+    if (rows29.some((r3) => r3.citation !== null && within.test(normalCitation(r3.citation)))) return true;
   }
   if (hit.name !== null) {
     const wanted = normalName(hit.name);
-    if (rows22.some((r3) => normalName(r3.style_of_cause_or_title) === wanted)) return true;
+    if (rows29.some((r3) => normalName(r3.style_of_cause_or_title) === wanted)) return true;
   }
   return false;
 }
 function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
-  const rows22 = submissionDataQuery(
+  const rows29 = submissionDataQuery(
     dbPath,
     "SELECT style_of_cause_or_title, citation FROM authorities WHERE proceeding_id = ? AND killed_on IS NULL",
     [proceedingId]
@@ -97622,7 +97723,7 @@ function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
       const repeat = keys.some((k3) => seen.has(k3));
       keys.forEach((k3) => seen.add(k3));
       if (repeat) continue;
-      if (tracked(hit, rows22)) continue;
+      if (tracked(hit, rows29)) continue;
       const item = `cited but not tracked: ${hit.text}`;
       inventory.push({ generating: false, marker: "\u{1F4C7}", table: UNTRACKED_CITATION_TABLE, id: lines2.length + 1, item, doc: doc.documentType });
       lines2.push(mockupMessage("\u{1F4C7}", `Cited but not tracked: ${hit.text}`));
@@ -97632,16 +97733,16 @@ function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
 }
 
 // src/submission/forms/render-notice-of-application.ts
-function rows10(dbPath, sql, params = []) {
+function rows17(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchHearingDetails(dbPath, filingId) {
-  const found = rows10(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  const found = rows17(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
   return found[0];
 }
 var ASSOCIATE_JUDGE_UNDETERMINED_LINE = `Associate judge jurisdiction: not yet determined ${gapMarker("unchosen")}`;
 function fetchFacts(dbPath, filingId, part) {
-  return rows10(
+  return rows17(
     dbPath,
     `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
      FROM filing_facts ff
@@ -97655,7 +97756,7 @@ function fetchFacts(dbPath, filingId, part) {
 function fetchStatementsOfFact(dbPath, factIds) {
   if (factIds.length === 0) return [];
   const placeholders = factIds.map(() => "?").join(",");
-  return rows10(
+  return rows17(
     dbPath,
     `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
             sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
@@ -97670,7 +97771,7 @@ function fetchStatementsOfFact(dbPath, factIds) {
 function fetchWitnessBackedFlags(dbPath, factIds) {
   if (factIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = factIds.map(() => "?").join(",");
-  const found = rows10(
+  const found = rows17(
     dbPath,
     `SELECT f.id AS fact_id,
             EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
@@ -97937,11 +98038,11 @@ function renderNoticeOfApplication(ctx) {
 }
 
 // src/submission/forms/render-requisition.ts
-function rows11(dbPath, sql, params = []) {
+function rows18(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchAlternatives(dbPath, chosenId) {
-  return rows11(
+  return rows18(
     dbPath,
     `SELECT id, wording, template_key, template_values, crossed_out_on
      FROM order_sought WHERE alternative_to = ?`,
@@ -97950,7 +98051,7 @@ function fetchAlternatives(dbPath, chosenId) {
 }
 function fetchPlacedAlternativeIds(dbPath, filing) {
   if (filing.kind !== "requisition_default_judgment") return [];
-  return rows11(
+  return rows18(
     dbPath,
     `SELECT o.id FROM order_sought o
      JOIN filing_orders fo ON fo.order_sought_id = o.alternative_to
@@ -98398,8 +98499,8 @@ function refuseJobOnlyBoard(filing) {
   }
 }
 function readDbMetaValue(dbPath, key) {
-  const rows22 = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
-  return rows22.length > 0 ? rows22[0].value : null;
+  const rows29 = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
+  return rows29.length > 0 ? rows29[0].value : null;
 }
 function readSchemaVersion(dbPath) {
   const value = readDbMetaValue(dbPath, "schema_version");
@@ -98407,13 +98508,13 @@ function readSchemaVersion(dbPath) {
 }
 
 // src/submission/forms/mockup-files.ts
-import { existsSync as existsSync32, mkdirSync as mkdirSync16, renameSync as renameSync7, unlinkSync as unlinkSync8 } from "node:fs";
+import { existsSync as existsSync34, mkdirSync as mkdirSync16, renameSync as renameSync7, unlinkSync as unlinkSync8 } from "node:fs";
 import { basename as basename7, dirname as dirname19, extname as extname3, join as join36 } from "node:path";
 function existingMockupPaths(dbPath, filingId) {
   const manifest = readManifest(dbPath, filingId);
   if (manifest === null) return [];
   const dir = manifestDir(dbPath, manifest);
-  return manifest.files.map((f3) => join36(dir, f3.file_name)).filter((p3) => existsSync32(p3));
+  return manifest.files.map((f3) => join36(dir, f3.file_name)).filter((p3) => existsSync34(p3));
 }
 function fileStem(fileName) {
   return fileName.slice(0, fileName.length - extname3(fileName).length);
@@ -98428,7 +98529,7 @@ function archiveFile(filePath, formLabel, revision) {
   mkdirSync16(archiveDir, { recursive: true });
   const name = `${sanitizeForPath(formLabel)} @rev${revision} ${nowStamp().replace(/[: ]/g, "-")}`;
   let archivePath = join36(archiveDir, `${name}${extname3(filePath)}`);
-  for (let n3 = 2; existsSync32(archivePath); n3++) archivePath = join36(archiveDir, `${name} (${n3})${extname3(filePath)}`);
+  for (let n3 = 2; existsSync34(archivePath); n3++) archivePath = join36(archiveDir, `${name} (${n3})${extname3(filePath)}`);
   renameSync7(filePath, archivePath);
 }
 function archiveDroppedFiles(dbPath, previous, written) {
@@ -98459,7 +98560,7 @@ function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
   for (const name of names) {
     const file = join36(dir, name);
     try {
-      if (existsSync32(file)) unlinkSync8(file);
+      if (existsSync34(file)) unlinkSync8(file);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
     }
@@ -98474,14 +98575,14 @@ function removeOldBoardFiles(dir) {
 function refuseForeignTargets(dir, fileNames2) {
   for (const name of fileNames2) {
     const target = join36(dir, name);
-    if (existsSync32(target) && readExistingRevision(target) === void 0) {
+    if (existsSync34(target) && readExistingRevision(target) === void 0) {
       throw new ValidationError(`${target} was not written by Probanda, so it is not overwritten. Move it out of the Writing's folder, then render again`);
     }
   }
 }
 
 // src/submission/forms/render-dirs.ts
-import { existsSync as existsSync33, realpathSync as realpathSync7 } from "node:fs";
+import { existsSync as existsSync35, realpathSync as realpathSync8 } from "node:fs";
 import { basename as basename8, dirname as dirname20, isAbsolute as isAbsolute6, resolve as resolve7 } from "node:path";
 function resolvePresentationDir(dbPath, presentationDir, filingTitle, styleOfCause) {
   if (!isAbsolute6(presentationDir)) {
@@ -98491,40 +98592,40 @@ function resolvePresentationDir(dbPath, presentationDir, filingTitle, styleOfCau
   const refuse2 = (why) => new ValidationError(`drafting_forms__render.presentation_dir ${dir}: ${why}`);
   let parent;
   try {
-    parent = realpathSync7.native(dirname20(dir));
+    parent = realpathSync8.native(dirname20(dir));
   } catch {
     throw refuse2("its parent must be the matter's existing 0. DRAFT folder, and it does not exist");
   }
   if (!/^0\. DRAFT/i.test(basename8(parent))) throw refuse2("its parent must be the matter's 0. DRAFT folder");
   if (zoneProblem("write", parent)) throw refuse2("it lies inside a privileged or disclosed tree, TRASH or 0. CASE DATA");
-  if (parent.toLowerCase() !== realpathSync7.native(draftDirOf(dbPath)).toLowerCase()) throw refuse2("its parent must be the 0. DRAFT folder of this database's matter");
+  if (parent.toLowerCase() !== realpathSync8.native(draftDirOf(dbPath)).toLowerCase()) throw refuse2("its parent must be the 0. DRAFT folder of this database's matter");
   const titles = [filingTitle, ...styleOfCause ? [`${filingTitle} - ${styleOfCause}`] : []].map((t3) => sanitizeForPath(t3).toLowerCase());
   const name = basename8(dir).replace(/^\d{4}-\d{2}-\d{2} /, "").toLowerCase();
   if (!titles.includes(name)) {
     throw refuse2(`the folder must be named "${sanitizeForPath(filingTitle)}" (this filing's title), with or without a leading YYYY-MM-DD`);
   }
-  if (existsSync33(dir) && dirname20(realpathSync7.native(dir)).toLowerCase() !== parent.toLowerCase()) {
+  if (existsSync35(dir) && dirname20(realpathSync8.native(dir)).toLowerCase() !== parent.toLowerCase()) {
     throw refuse2("it resolves outside its 0. DRAFT folder");
   }
   return dir;
 }
 function draftDirOfCaller(dbPath, draftDir, param2 = "drafting_forms__render.draft_dir") {
   const draft = resolveDraftDir(draftDir, param2);
-  if (realpathSync7.native(draft).toLowerCase() !== realpathSync7.native(draftDirOf(dbPath)).toLowerCase()) {
+  if (realpathSync8.native(draft).toLowerCase() !== realpathSync8.native(draftDirOf(dbPath)).toLowerCase()) {
     throw new ValidationError(`${param2} ${draftDir}: it is not the 0. DRAFT folder of this database's matter, ${draftDirOf(dbPath)}`);
   }
   return draft;
 }
 
 // src/submission/forms/filler-registry.ts
-import { readFileSync as readFileSync25 } from "node:fs";
+import { readFileSync as readFileSync28 } from "node:fs";
 
 // src/submission/forms/render-application-response.ts
-function rows12(dbPath, sql, params = []) {
+function rows19(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchHearingDetails2(dbPath, filingId) {
-  const found = rows12(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  const found = rows19(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
   return found[0];
 }
 function hearingDateSentence(hearing) {
@@ -98549,7 +98650,7 @@ function formatTimeEstimate2(minutes) {
   return parts.join(" ");
 }
 function fetchFilingPositions(dbPath, filingId) {
-  return rows12(
+  return rows19(
     dbPath,
     `SELECT oo.id AS opposing_order_id, oo.paragraph_number, oo.wording, oo.document_id,
             fp.position, fp.proposed_terms
@@ -98566,7 +98667,7 @@ function resolveRespondedToDocument(dbPath, proceedingId, positions) {
   if (positionedIds.size === 1) {
     documentId = [...positionedIds][0];
   } else if (positionedIds.size === 0) {
-    const candidates = rows12(
+    const candidates = rows19(
       dbPath,
       `SELECT DISTINCT document_id FROM opposing_orders WHERE proceeding_id = ?`,
       [proceedingId]
@@ -98574,11 +98675,11 @@ function resolveRespondedToDocument(dbPath, proceedingId, positions) {
     if (candidates.length === 1) documentId = candidates[0].document_id;
   }
   if (documentId === void 0) return void 0;
-  const found = rows12(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
+  const found = rows19(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
   return found[0];
 }
 function fetchUnpositionedOrders(dbPath, filingId, documentId) {
-  return rows12(
+  return rows19(
     dbPath,
     `SELECT oo.id, oo.paragraph_number, oo.wording
      FROM opposing_orders oo
@@ -98589,7 +98690,7 @@ function fetchUnpositionedOrders(dbPath, filingId, documentId) {
   );
 }
 function fetchFacts2(dbPath, filingId) {
-  return rows12(
+  return rows19(
     dbPath,
     `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
      FROM filing_facts ff
@@ -98601,7 +98702,7 @@ function fetchFacts2(dbPath, filingId) {
   );
 }
 function fetchPartSixProvenance(dbPath, filingId) {
-  const found = rows12(
+  const found = rows19(
     dbPath,
     `SELECT document_id, provenance FROM filing_documents WHERE filing_id = ? AND role != 'witness_statement'`,
     [filingId]
@@ -98616,7 +98717,7 @@ function provenanceLabel(p3) {
 function fetchStatementsOfFact2(dbPath, factIds) {
   if (factIds.length === 0) return [];
   const placeholders = factIds.map(() => "?").join(",");
-  return rows12(
+  return rows19(
     dbPath,
     `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
             sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
@@ -98631,7 +98732,7 @@ function fetchStatementsOfFact2(dbPath, factIds) {
 function witnessBackedFlags(dbPath, factIds) {
   if (factIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = factIds.map(() => "?").join(",");
-  const found = rows12(
+  const found = rows19(
     dbPath,
     `SELECT f.id AS fact_id, EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
      FROM facts f WHERE f.id IN (${placeholders})`,
@@ -98907,11 +99008,11 @@ function renderApplicationResponse(ctx) {
 }
 
 // src/submission/forms/render-bcca-stay-response.ts
-function rows13(dbPath, sql, params = []) {
+function rows20(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchFacts3(dbPath, filingId) {
-  return rows13(
+  return rows20(
     dbPath,
     `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.ordinal AS filing_ordinal
      FROM filing_facts ff
@@ -98925,7 +99026,7 @@ function fetchFacts3(dbPath, filingId) {
 function fetchStatementsOfFact3(dbPath, factIds) {
   if (factIds.length === 0) return [];
   const placeholders = factIds.map(() => "?").join(",");
-  return rows13(
+  return rows20(
     dbPath,
     `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
             sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
@@ -99025,7 +99126,7 @@ function renderFactParagraphsWithRhetoric(ctx, facts, rhetoric, startPara, copyM
 function fetchAffidavitDetails(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = documentIds.map(() => "?").join(",");
-  const found = rows13(
+  const found = rows20(
     dbPath,
     `SELECT d.id AS document_id, w.name AS deponent_name, d.affidavit_number
      FROM documents d
@@ -99036,7 +99137,7 @@ function fetchAffidavitDetails(dbPath, documentIds) {
   return new Map(found.map((r3) => [r3.document_id, r3]));
 }
 function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
-  return rows13(
+  return rows20(
     dbPath,
     `SELECT MIN(a.id) AS id, a.style_of_cause_or_title, a.citation
      FROM filing_submissions fs
@@ -99051,11 +99152,11 @@ function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
   );
 }
 function fetchOpposingAuthoritiesCount(dbPath, proceedingId) {
-  const found = rows13(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
+  const found = rows20(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
   return found[0]?.n ?? 0;
 }
 function fetchAttachedExhibits(dbPath, affidavitDocumentId) {
-  return rows13(
+  return rows20(
     dbPath,
     `SELECT DISTINCT d.id AS document_id, d.label, d.document_date
      FROM statements_of_fact sof
@@ -99108,12 +99209,12 @@ function buildToc(inv, docs, affidavitDetails, exhibitMap, dbPath, hasAuthoritie
   out.push("");
   out.push("| Item | Page |");
   out.push("| :--- | ---: |");
-  const { rows: rows22 } = buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, (_what, gap2) => {
+  const { rows: rows29 } = buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, (_what, gap2) => {
     const marker = gapMarker("gap");
     recordCriterionGlyphs(inv, marker, ["\u{1F9E9}"], gap2);
     return marker;
   });
-  rows22.forEach((r3) => out.push(`| ${"&nbsp;&nbsp;".repeat(r3.indent)}${r3.text} | TBD |`));
+  rows29.forEach((r3) => out.push(`| ${"&nbsp;&nbsp;".repeat(r3.indent)}${r3.text} | TBD |`));
   out.push("");
   return out;
 }
@@ -99147,7 +99248,7 @@ function renderBccaStayResponse(ctx) {
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
   const client = ctx.parties.find((p3) => p3.is_client === 1);
   const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
-  const hearingDate = rows13(
+  const hearingDate = rows20(
     ctx.dbPath,
     "SELECT hearing_date, hearing_time FROM hearing_details WHERE filing_id = ?",
     [ctx.filing.id]
@@ -99406,7 +99507,7 @@ function renderBccaStayResponse(ctx) {
 }
 
 // src/submission/forms/render-bcca-factum.ts
-function rows14(dbPath, sql, params = []) {
+function rows21(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function pushGap(ctx, lines2, line, field, item) {
@@ -99423,10 +99524,10 @@ function longDate(iso2) {
   return `${MONTHS2[Number(m3[2]) - 1]} ${Number(m3[3])}, ${m3[1]}`;
 }
 function fetchChronology(dbPath, filingId) {
-  return rows14(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
+  return rows21(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
 }
 function fetchProseParagraphs(dbPath, filingId) {
-  const found = rows14(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
+  const found = rows21(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
   return new Map(
     found.map((r3) => [
       r3.slot,
@@ -99437,7 +99538,7 @@ function fetchProseParagraphs(dbPath, filingId) {
 function fetchCitedStatements(dbPath, lawAssertionIds) {
   if (lawAssertionIds.length === 0) return [];
   const placeholders = lawAssertionIds.map(() => "?").join(",");
-  return rows14(
+  return rows21(
     dbPath,
     `SELECT sl.law_assertion_id, a.id AS authority_id, a.style_of_cause_or_title AS title, a.citation, a.kind, sl.pinpoint, sl.excerpt
      FROM statements_of_law sl
@@ -99812,7 +99913,7 @@ function renderBccaFactum(ctx) {
 }
 
 // src/submission/forms/render-bcsc-affidavit.ts
-function rows15(dbPath, sql, params = []) {
+function rows22(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 var EXHIBIT_TOKEN = /\{exhibit:(\d+)\}/g;
@@ -99835,7 +99936,7 @@ function withExhibitLetters(text5, letters) {
   return text5.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
 }
 function fetchAffidavits(dbPath, filingId) {
-  return rows15(
+  return rows22(
     dbPath,
     `SELECT d.id, d.deponent AS witness_id, w.name AS deponent_name, d.execution, d.signed_at, d.label, d.affidavit_number
      FROM filing_documents fd
@@ -99852,7 +99953,7 @@ function affidavitFileName(a3) {
 function fetchParagraphLinks(dbPath, paragraphIds) {
   if (paragraphIds.length === 0) return [];
   const placeholders = paragraphIds.map(() => "?").join(",");
-  return rows15(
+  return rows22(
     dbPath,
     `SELECT psof.statement_paragraph_id, psof.statement_of_fact_id, sof.fact_id, sof.exhibit_id
      FROM paragraph_statements_of_fact psof
@@ -99863,7 +99964,7 @@ function fetchParagraphLinks(dbPath, paragraphIds) {
   );
 }
 function fetchPlacedInProceeding(dbPath, proceedingId) {
-  const texts = rows15(
+  const texts = rows22(
     dbPath,
     `SELECT sp.text FROM statement_paragraphs sp
      JOIN documents d ON d.id = sp.document_id
@@ -99889,7 +99990,7 @@ function frontmatterFor7(ctx) {
   return frontmatterHeader(fields);
 }
 function renderAffidavit(ctx, a3) {
-  const paragraphs = rows15(ctx.dbPath, `SELECT id, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
+  const paragraphs = rows22(ctx.dbPath, `SELECT id, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
   const links = fetchParagraphLinks(
     ctx.dbPath,
     paragraphs.map((p3) => p3.id)
@@ -99960,7 +100061,7 @@ function renderAffidavit(ctx, a3) {
 }
 
 // src/submission/forms/render-companions.ts
-function rows16(dbPath, sql, params = []) {
+function rows23(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 var WRITTEN_ARGUMENTS_VENUES = /* @__PURE__ */ new Map([
@@ -100020,7 +100121,7 @@ function renderWrittenArguments(ctx, documentKey) {
   const includedRelief = relief.filter((r3) => r3.crossed_out_on === null);
   const crossedOutRelief = relief.filter((r3) => r3.crossed_out_on !== null);
   const total = includedRelief.reduce((sum, r3) => sum + (r3.amount ?? 0), 0);
-  const servedRows = submissionIds.length === 0 ? [] : rows16(
+  const servedRows = submissionIds.length === 0 ? [] : rows23(
     ctx.dbPath,
     `SELECT sb.submission_id, sb.order_sought_id, o.crossed_out_on, o.wording
            FROM order_sought_served_by sb
@@ -100145,7 +100246,7 @@ function renderWrittenArguments(ctx, documentKey) {
   return lines2.join("\n").trimEnd() + "\n";
 }
 function fetchProceedingOrders(dbPath, proceedingId) {
-  const orders = rows16(
+  const orders = rows23(
     dbPath,
     `SELECT o.id, o.wording, o.crossed_out_on,
             EXISTS(
@@ -100160,7 +100261,7 @@ function fetchProceedingOrders(dbPath, proceedingId) {
   return orders.map((o3) => ({ ...o3, hasServedBy: o3.has_served_by === 1, requires: edgesByOrder.get(o3.id) ?? [] }));
 }
 function fetchOtherFilingDeployments(dbPath, proceedingId, filingId) {
-  const filings = rows16(
+  const filings = rows23(
     dbPath,
     // A Job Board with no Writing deploys nothing.
     `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
@@ -100169,18 +100270,18 @@ function fetchOtherFilingDeployments(dbPath, proceedingId, filingId) {
   const orders = /* @__PURE__ */ new Set();
   const submissions = /* @__PURE__ */ new Set();
   for (const f3 of filings) {
-    for (const r3 of rows16(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f3.id])) {
+    for (const r3 of rows23(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f3.id])) {
       orders.add(r3.order_sought_id);
     }
     for (const id of fetchPlacedAlternativeIds(dbPath, f3)) orders.add(id);
-    for (const r3 of rows16(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f3.id])) {
+    for (const r3 of rows23(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f3.id])) {
       submissions.add(r3.submission_id);
     }
   }
   return { orders, submissions };
 }
 function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
-  const relied = rows16(
+  const relied = rows23(
     dbPath,
     `SELECT sl.law_assertion_id FROM submission_law sl
        JOIN filing_submissions fs ON fs.submission_id = sl.submission_id
@@ -100197,14 +100298,14 @@ function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
   return new Set(relied.map((r3) => r3.law_assertion_id));
 }
 function fetchProceedingSubmissions(dbPath, proceedingId) {
-  return rows16(
+  return rows23(
     dbPath,
     `SELECT s.id, s.contention, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()} FROM submissions s WHERE s.proceeding_id = ? AND s.killed_on IS NULL ORDER BY s.ordinal, s.id`,
     [proceedingId]
   );
 }
 function fetchStruckSubmissionIds(dbPath, proceedingId) {
-  const served = rows16(
+  const served = rows23(
     dbPath,
     `SELECT sb.submission_id, o.crossed_out_on
      FROM order_sought_served_by sb
@@ -100368,7 +100469,7 @@ function readShipped(path, seams) {
   const kp = parseKnowledgePath(path, "type file lookup");
   const { layer } = shippedLayer(kp.skill, kp.rest, seams);
   try {
-    return readFileSync25(layer.abs, "utf-8");
+    return readFileSync28(layer.abs, "utf-8");
   } catch (err) {
     if (err.code !== "ENOENT") throw err;
     throw new DataServerError(`${path}: not in /draft's shipped knowledge tree (${layer.abs})`, "type_file_missing");
@@ -100389,14 +100490,14 @@ function resolveTypeFile(venue, kind, seams = {}) {
     if (err instanceof DataServerError) throw err;
     throw new DataServerError(`${indexPath}: not valid JSON: ${err.message}`, "invalid_index");
   }
-  const rows22 = mergeKinds({ doc, file: indexPath }, null, noVenue).kinds.filter((row2) => row2.aliases.some((alias) => alias.name === kind));
-  if (rows22.length !== 1) {
+  const rows29 = mergeKinds({ doc, file: indexPath }, null, noVenue).kinds.filter((row2) => row2.aliases.some((alias) => alias.name === kind));
+  if (rows29.length !== 1) {
     throw new DataServerError(
-      `${indexPath}: ${rows22.length === 0 ? "no row lists" : `${rows22.length} rows list`} kind "${kind}" as an alias${rows22.length === 0 ? "" : ` (${rows22.map((row2) => row2.file).join(", ")})`}; a stored kind names exactly one type file`,
+      `${indexPath}: ${rows29.length === 0 ? "no row lists" : `${rows29.length} rows list`} kind "${kind}" as an alias${rows29.length === 0 ? "" : ` (${rows29.map((row2) => row2.file).join(", ")})`}; a stored kind names exactly one type file`,
       "kind_unresolved"
     );
   }
-  const file = `${documents}/${rows22[0].file}.md`;
+  const file = `${documents}/${rows29[0].file}.md`;
   const block2 = extractJsonBlock(readShipped(file, seams), file, true);
   validateTypeBlock(block2, file, { noVenue });
   return { file, block: block2 };
@@ -100754,14 +100855,14 @@ function submissionFormsRenderProceedingBoard(dbPath, proceedingId, client = {},
 }
 
 // src/submission/forms/render-form32-filed-face.ts
-function rows17(dbPath, sql, params = []) {
+function rows24(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchHearingDetails3(dbPath, filingId) {
-  return rows17(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId])[0];
+  return rows24(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId])[0];
 }
 function fetchPart2Facts(dbPath, filingId) {
-  return rows17(
+  return rows24(
     dbPath,
     `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ff.ordinal AS filing_ordinal
      FROM filing_facts ff
@@ -100810,7 +100911,7 @@ var ITALIC_SPAN = /(?<!\*)\*[^*\n]+\*(?!\*)/g;
 function authorityNamePattern(dbPath, proceedingId) {
   const names = [
     ...new Set(
-      rows17(dbPath, "SELECT style_of_cause_or_title AS name FROM authorities WHERE proceeding_id = ?", [proceedingId]).map(
+      rows24(dbPath, "SELECT style_of_cause_or_title AS name FROM authorities WHERE proceeding_id = ?", [proceedingId]).map(
         (r3) => r3.name.trim()
       )
     )
@@ -100841,7 +100942,7 @@ function pushExcerptBlockquote(lines2, excerpt, citationLine) {
 }
 function fetchAffidavitFields(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
-  const found = rows17(
+  const found = rows24(
     dbPath,
     `SELECT d.id, d.instrument, d.affidavit_number, d.execution, w.name AS deponent_name
      FROM documents d
@@ -101068,7 +101169,7 @@ function renderForm32FiledFace(ctx, warnings) {
 }
 
 // src/submission/forms/render-form33-filed-face.ts
-function rows18(dbPath, sql, params = []) {
+function rows25(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 var NOTICE_DATE_PLACEHOLDER = "[notice date]";
@@ -101120,7 +101221,7 @@ function pushExcerptBlockquote2(lines2, excerpt, citationLine) {
 function struckSubmissionIds(dbPath, submissionIds) {
   if (submissionIds.length === 0) return /* @__PURE__ */ new Set();
   const placeholders = submissionIds.map(() => "?").join(",");
-  const served = rows18(
+  const served = rows25(
     dbPath,
     `SELECT sb.submission_id, o.crossed_out_on
      FROM order_sought_served_by sb
@@ -101406,15 +101507,15 @@ function publishSidecar(ctx, emitterWarnings, coverNotes) {
 }
 
 // src/submission/substance-file.ts
-import { existsSync as existsSync34, mkdirSync as mkdirSync17, realpathSync as realpathSync8, writeFileSync as writeFileSync9 } from "node:fs";
-import { win32 as pathWin3215 } from "node:path";
+import { existsSync as existsSync36, mkdirSync as mkdirSync17, realpathSync as realpathSync9, writeFileSync as writeFileSync9 } from "node:fs";
+import { win32 as pathWin3217 } from "node:path";
 var BCSC_SUBSTANCE_FOLDER = "bcsc-form-substance";
 function confineCaseDataFolder(dbPath, caseDataFolder2) {
-  if (!pathWin3215.isAbsolute(caseDataFolder2)) {
+  if (!pathWin3217.isAbsolute(caseDataFolder2)) {
     throw new PathOutOfScopeError(`case_data_folder must be an absolute path: ${caseDataFolder2}`);
   }
   const folder = canonicalRoot(caseDataFolder2, `case_data_folder not found: ${caseDataFolder2}. Run /matter-data initialize on this matter first.`, "case_data_missing");
-  const dbFolder = canonicalRoot(pathWin3215.dirname(dbPath), `db_path's folder not found: ${dbPath}`, "not_found");
+  const dbFolder = canonicalRoot(pathWin3217.dirname(dbPath), `db_path's folder not found: ${dbPath}`, "not_found");
   if (folder.toLowerCase() !== dbFolder.toLowerCase()) {
     throw new PathOutOfScopeError(
       `case_data_folder must be the matter's matter-data folder, the one holding db_path (${dbFolder}); got ${caseDataFolder2} (${folder})`
@@ -101423,14 +101524,14 @@ function confineCaseDataFolder(dbPath, caseDataFolder2) {
   return folder;
 }
 function writeSubstanceFile(caseData, fileName, markdown, folders = [BCSC_SUBSTANCE_FOLDER]) {
-  const dirs = folders.map((_3, i3) => pathWin3215.join(caseData, ...folders.slice(0, i3 + 1)));
-  const path = pathWin3215.join(dirs[dirs.length - 1], fileName);
+  const dirs = folders.map((_3, i3) => pathWin3217.join(caseData, ...folders.slice(0, i3 + 1)));
+  const path = pathWin3217.join(dirs[dirs.length - 1], fileName);
   for (const p3 of [...dirs, path]) {
-    if (existsSync34(p3) && realpathSync8.native(p3).toLowerCase() !== p3.toLowerCase()) {
-      throw new PathOutOfScopeError(`${p3} resolves elsewhere (${realpathSync8.native(p3)})`);
+    if (existsSync36(p3) && realpathSync9.native(p3).toLowerCase() !== p3.toLowerCase()) {
+      throw new PathOutOfScopeError(`${p3} resolves elsewhere (${realpathSync9.native(p3)})`);
     }
   }
-  for (const dir of dirs) if (!existsSync34(dir)) mkdirSync17(dir);
+  for (const dir of dirs) if (!existsSync36(dir)) mkdirSync17(dir);
   writeFileSync9(path, markdown, "utf-8");
   return path;
 }
@@ -101523,7 +101624,7 @@ function submissionFormsEmitForm33(dbPath, filingId, caseDataFolder2, seams = {}
 }
 
 // src/submission/forms/emit-affidavit.ts
-function rows19(dbPath, sql, params = []) {
+function rows26(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function renderAffidavitFiledFace(ctx, a3) {
@@ -101538,14 +101639,14 @@ Resolve each through /drafting-data, re-render the mockup, then emit again.`
   if (a3.affidavit_number === null) {
     throw new ValidationError(`${a3.label}: its affidavit number is not recorded. Record it, then make the affidavit again.`);
   }
-  const paragraphs = rows19(ctx.dbPath, `SELECT text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
+  const paragraphs = rows26(ctx.dbPath, `SELECT text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
   if (paragraphs.length === 0) {
     throw new ValidationError(`Affidavit ${a3.id} (${a3.label}): no paragraphs are stored, so there is no text to emit.`);
   }
   const letters = exhibitLetters(paragraphs.map((p3) => p3.text));
   const ids = [...letters.keys()];
   const docs = new Map(
-    ids.length === 0 ? [] : rows19(
+    ids.length === 0 ? [] : rows26(
       ctx.dbPath,
       `SELECT id, label, file_path FROM documents WHERE id IN (${ids.map(() => "?").join(",")})`,
       ids
@@ -101986,7 +102087,7 @@ function submissionFormsEmitBccaFactum(dbPath, filingId, datedOn) {
 }
 
 // src/submission/pre-filing/index.ts
-import { existsSync as existsSync35, readdirSync as readdirSync18, realpathSync as realpathSync9, statSync as statSync15 } from "node:fs";
+import { existsSync as existsSync37, readdirSync as readdirSync18, realpathSync as realpathSync10, statSync as statSync15 } from "node:fs";
 import { basename as basename10, dirname as dirname23, isAbsolute as isAbsolute7, join as join38, resolve as resolve8 } from "node:path";
 
 // src/submission/pre-filing/consistency-checks.ts
@@ -102261,13 +102362,13 @@ function resolvePackageDir(packageDir) {
   if (!isAbsolute7(packageDir)) throw new ValidationError(`drafting_forms__pre_filing_check.package_dir must be an absolute path: ${packageDir}`);
   const dir = resolve8(packageDir);
   const refuse2 = (why) => new ValidationError(`drafting_forms__pre_filing_check.package_dir ${dir}: ${why}`);
-  if (!existsSync35(dir) || !statSync15(dir).isDirectory()) throw refuse2("it does not exist or is not a folder");
-  const real = realpathSync9.native(dir);
+  if (!existsSync37(dir) || !statSync15(dir).isDirectory()) throw refuse2("it does not exist or is not a folder");
+  const real = realpathSync10.native(dir);
   const parts = real.split(/[\\/]/);
   if (zoneProblem("read", real)) throw refuse2("it lies inside a privileged or disclosed tree, TRASH or 0. CASE DATA");
   const draftIdx = parts.findIndex((p3) => /^0\. DRAFT/i.test(p3));
   if (draftIdx === -1 || draftIdx === parts.length - 1) throw refuse2("it must lie beneath the matter's 0. DRAFT folder");
-  if (basename10(real).toLowerCase() !== basename10(dir).toLowerCase() || dirname23(real).toLowerCase() !== realpathSync9.native(dirname23(dir)).toLowerCase()) {
+  if (basename10(real).toLowerCase() !== basename10(dir).toLowerCase() || dirname23(real).toLowerCase() !== realpathSync10.native(dirname23(dir)).toLowerCase()) {
     throw refuse2("it resolves outside its 0. DRAFT folder");
   }
   return dir;
@@ -102283,18 +102384,18 @@ function runPreFilingChecks(dbPath, filingId, packageDir) {
     `SELECT p.id, p.file_number, f.kind FROM filings f JOIN proceedings p ON p.id = f.proceeding_id WHERE f.id = ?`,
     [filingId]
   );
-  const rows22 = fetchFilingDocuments(dbPath, filingId);
+  const rows29 = fetchFilingDocuments(dbPath, filingId);
   const filing = { kind: proceeding?.kind, proceeding_id: proceeding?.id ?? -1 };
-  const numbers = exhibitNumbersForFiling(dbPath, filing, rows22.map((r3) => r3.document_id));
+  const numbers = exhibitNumbersForFiling(dbPath, filing, rows29.map((r3) => r3.document_id));
   const proceedingNumbers = filing.kind === "submissions_package" ? numbers : /* @__PURE__ */ new Map();
-  const index = rows22.map((r3) => ({
+  const index = rows29.map((r3) => ({
     exhibit_number: numbers.get(r3.document_id),
     document_id: r3.document_id,
     label: r3.label,
     file_path: r3.file_path,
     already_delivered: r3.provenance === "already_in_court_file"
   }));
-  const dates = rows22.filter((r3) => /^\d{4}-\d{2}-\d{2}$/.test(r3.document_date ?? "")).map((r3) => ({ exhibit_number: numbers.get(r3.document_id), label: r3.label, document_date: r3.document_date }));
+  const dates = rows29.filter((r3) => /^\d{4}-\d{2}-\d{2}$/.test(r3.document_date ?? "")).map((r3) => ({ exhibit_number: numbers.get(r3.document_id), label: r3.label, document_date: r3.document_date }));
   const amounts = queryRows(
     dbPath,
     `SELECT DISTINCT os.id AS order_sought_id, os.wording, os.amount
@@ -102510,13 +102611,13 @@ function rankFilings(dbPath, client, now, stamp2, timings) {
 
 // src/submission/forms/bootstrap.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { existsSync as existsSync36 } from "node:fs";
+import { existsSync as existsSync38 } from "node:fs";
 function newSessionToken(unattended) {
   return `${unattended ? UNATTENDED_TOKEN_PREFIX : "sess-"}${randomBytes4(9).toString("hex")}`;
 }
 var MIN_READABLE_SCHEMA_VERSION = 42;
 function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDir, todos = TODOS_NOT_READ, unattended = false, dates = DATES_NOT_READ) {
-  if (!existsSync36(dbPath)) {
+  if (!existsSync38(dbPath)) {
     throw new ValidationError(`No drafting records found at ${dbPath}. Set the matter's drafting records up first.`);
   }
   const draft = draftDir === void 0 ? void 0 : draftDirOfCaller(dbPath, draftDir, "drafting_forms__bootstrap.draft_dir");
@@ -102956,11 +103057,11 @@ async function submissionDataMergeJobs(args, env = process.env) {
 }
 
 // src/submission/open-session.ts
-import { existsSync as existsSync38, readdirSync as readdirSync19 } from "node:fs";
+import { existsSync as existsSync40, readdirSync as readdirSync19 } from "node:fs";
 import { basename as basename11, dirname as dirname25, join as join40 } from "node:path";
 
 // src/case/ingest-coverage.ts
-import { existsSync as existsSync37 } from "node:fs";
+import { existsSync as existsSync39 } from "node:fs";
 import { join as join39 } from "node:path";
 var DRIVER5 = String.raw`
 import json, sys
@@ -102979,7 +103080,7 @@ main()
 `.trim();
 var COVERAGE_TIMEOUT_MS = 3e4;
 function readIngestCoverage(caseDataDir, matterRoot, folderGlobs, correspondenceGlobs, env = process.env) {
-  if (!existsSync37(join39(caseDataDir, "main.sqlite"))) {
+  if (!existsSync39(join39(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
   try {
@@ -103012,14 +103113,14 @@ function readIngestCoverage(caseDataDir, matterRoot, folderGlobs, correspondence
 var text3 = (value) => value === null || value === void 0 ? null : String(value);
 async function readMatterTodos(practiceDb2, matterNo) {
   if (matterNo === void 0) return { note: "No matter number was given, so this matter's to-dos were not read." };
-  let rows22;
+  let rows29;
   try {
-    rows22 = (await open_tasks(practiceDb2, { matt_num: matterNo })).rows;
+    rows29 = (await open_tasks(practiceDb2, { matt_num: matterNo })).rows;
   } catch (err) {
     return { note: `This matter's to-dos could not be read (${matterNo}): ${err.message}` };
   }
   return {
-    rows: rows22.map((row2) => ({
+    rows: rows29.map((row2) => ({
       id: String(row2.id),
       description: text3(row2.description) ?? "",
       bf_date: text3(row2.next_nudge_date),
@@ -103138,17 +103239,17 @@ async function lookUpMatter(root, practiceDb2, client) {
       client
     };
   }
-  let rows22;
+  let rows29;
   try {
-    rows22 = (await matter_lookup(practiceDb2, { matt_num: token })).rows;
+    rows29 = (await matter_lookup(practiceDb2, { matt_num: token })).rows;
   } catch (err) {
     return { lookup: { matt_num: token, found: false, note: `Matter lookup for ${token} failed: ${err.message}` }, client };
   }
-  if (rows22.length !== 1) {
-    const why = rows22.length === 0 ? "found no matter" : `found ${rows22.length} matters`;
+  if (rows29.length !== 1) {
+    const why = rows29.length === 0 ? "found no matter" : `found ${rows29.length} matters`;
     return { lookup: { matt_num: token, found: false, note: `Matter lookup for ${token} ${why}; client identity not filled in.` }, client };
   }
-  const row2 = rows22[0];
+  const row2 = rows29[0];
   const text5 = (v3) => v3 === null || v3 === void 0 || v3 === "" ? void 0 : String(v3);
   const resolved = {
     clientName: client.clientName ?? text5(row2.client_name),
@@ -103180,7 +103281,7 @@ function practiceConfigBlocking(dbPath) {
 function backups(dbPath) {
   const dir = dirname25(dbPath);
   const prefix = `${basename11(dbPath)}.bak-`;
-  return new Set(existsSync38(dir) ? readdirSync19(dir).filter((name) => name.startsWith(prefix)) : []);
+  return new Set(existsSync40(dir) ? readdirSync19(dir).filter((name) => name.startsWith(prefix)) : []);
 }
 async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, unattended = false, filingId) {
   const started = performance.now();
@@ -103267,8 +103368,8 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
 }
 
 // src/submission/bcsc-form-harness.ts
-import { existsSync as existsSync39, readdirSync as readdirSync20, readFileSync as readFileSync26, realpathSync as realpathSync10, statSync as statSync16 } from "node:fs";
-import { win32 as pathWin3216 } from "node:path";
+import { existsSync as existsSync41, readdirSync as readdirSync20, readFileSync as readFileSync29, realpathSync as realpathSync11, statSync as statSync16 } from "node:fs";
+import { win32 as pathWin3218 } from "node:path";
 var DRIVER6 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
 sys.argv = [payload["harness"], *payload["argv"]]
@@ -103302,8 +103403,8 @@ function bcscFormHarnessPath(env = process.env, installRoot) {
     subject: "the publish-bcsc-form harness",
     installRoot
   });
-  const path = pathWin3216.join(shipped.root, ...rel);
-  if (!existsSync39(path)) {
+  const path = pathWin3218.join(shipped.root, ...rel);
+  if (!existsSync41(path)) {
     throw new DataServerError(
       `harness.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -103367,17 +103468,17 @@ function assertSegment(value, label2) {
   }
 }
 function confinedSessionsDir(caseData) {
-  const dir = pathWin3216.join(caseData, "form-sessions");
-  if (existsSync39(dir) && realpathSync10.native(dir).toLowerCase() !== dir.toLowerCase()) {
-    throw new PathOutOfScopeError(`${dir} resolves elsewhere (${realpathSync10.native(dir)})`);
+  const dir = pathWin3218.join(caseData, "form-sessions");
+  if (existsSync41(dir) && realpathSync11.native(dir).toLowerCase() !== dir.toLowerCase()) {
+    throw new PathOutOfScopeError(`${dir} resolves elsewhere (${realpathSync11.native(dir)})`);
   }
   return dir;
 }
 function confineSessionDir(sessions, sessionId) {
   assertSegment(sessionId, "harness_session");
-  const dir = pathWin3216.join(sessions, sessionId);
-  if (existsSync39(dir) && realpathSync10.native(dir).toLowerCase() !== dir.toLowerCase()) {
-    throw new PathOutOfScopeError(`session ${sessionId} resolves elsewhere (${realpathSync10.native(dir)})`);
+  const dir = pathWin3218.join(sessions, sessionId);
+  if (existsSync41(dir) && realpathSync11.native(dir).toLowerCase() !== dir.toLowerCase()) {
+    throw new PathOutOfScopeError(`session ${sessionId} resolves elsewhere (${realpathSync11.native(dir)})`);
   }
   return dir;
 }
@@ -103386,19 +103487,19 @@ function confineWritingFolder(root, writingFolder) {
   const candidates = [];
   for (const entry of readdirSync20(root, { withFileTypes: true })) {
     if (!/^0\. DRAFT/i.test(entry.name)) continue;
-    candidates.push(resolveWithin(root, pathWin3216.join(entry.name, writingFolder), "writing_folder", false));
+    candidates.push(resolveWithin(root, pathWin3218.join(entry.name, writingFolder), "writing_folder", false));
   }
   return candidates;
 }
 function checkSession(root, caseData, sessions, sessionId) {
-  const ctxPath = pathWin3216.join(confineSessionDir(sessions, sessionId), "ctx.json");
-  if (!existsSync39(ctxPath)) {
+  const ctxPath = pathWin3218.join(confineSessionDir(sessions, sessionId), "ctx.json");
+  if (!existsSync41(ctxPath)) {
     throw new DataServerError(`no session ${sessionId} under ${sessions}. Call this tool with command list to see the sessions.`, "session_not_found");
   }
-  const ctx = JSON.parse(readFileSync26(ctxPath).toString("utf-8").replace(/\0+$/, ""));
+  const ctx = JSON.parse(readFileSync29(ctxPath).toString("utf-8").replace(/\0+$/, ""));
   const same2 = (stored, expected) => {
-    if (typeof stored !== "string" || stored === "" || !existsSync39(stored)) return false;
-    return realpathSync10.native(stored).toLowerCase() === expected.toLowerCase() && statSync16(stored).isDirectory();
+    if (typeof stored !== "string" || stored === "" || !existsSync41(stored)) return false;
+    return realpathSync11.native(stored).toLowerCase() === expected.toLowerCase() && statSync16(stored).isDirectory();
   };
   if (!same2(ctx.matter_path, root) || !same2(ctx.case_data_folder, caseData)) {
     throw new PathOutOfScopeError(
@@ -103426,10 +103527,10 @@ function confineLocatePaths(caseData, resultJson) {
     const value = data[key];
     if (value === void 0) continue;
     const label2 = `result_json data.${key}`;
-    if (typeof value !== "string" || !pathWin3216.isAbsolute(value)) {
+    if (typeof value !== "string" || !pathWin3218.isAbsolute(value)) {
       throw new PathOutOfScopeError(`${label2} must be an absolute path inside the matter-data folder ${caseData}: ${JSON.stringify(value)}`);
     }
-    const resolved = existsSync39(value) ? realpathSync10.native(value) : pathWin3216.resolve(value);
+    const resolved = existsSync41(value) ? realpathSync11.native(value) : pathWin3218.resolve(value);
     assertContained(caseData, resolved, label2, value);
   }
 }
@@ -103451,12 +103552,12 @@ function timeoutAdvice(command, sessionId) {
 }
 
 // src/submission/publish-tools.ts
-import { existsSync as existsSync41, readdirSync as readdirSync22 } from "node:fs";
-import { win32 as pathWin3218 } from "node:path";
+import { existsSync as existsSync43, readdirSync as readdirSync22 } from "node:fs";
+import { win32 as pathWin3220 } from "node:path";
 
 // src/submission/publish-host.ts
-import { existsSync as existsSync40, readdirSync as readdirSync21 } from "node:fs";
-import { win32 as pathWin3217 } from "node:path";
+import { existsSync as existsSync42, readdirSync as readdirSync21 } from "node:fs";
+import { win32 as pathWin3219 } from "node:path";
 var DRIVER7 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
 code, last = 0, None
@@ -103520,8 +103621,8 @@ function subskillScriptPath(skill, subskill, script, env = process.env, installR
     subject: `the ${subskill} script`,
     installRoot
   });
-  const path = pathWin3217.join(shipped.root, ...rel);
-  if (!existsSync40(path)) {
+  const path = pathWin3219.join(shipped.root, ...rel);
+  if (!existsSync42(path)) {
     throw new DataServerError(
       `${script} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -103606,7 +103707,7 @@ function publishVaniacPackage(args, env = process.env, installRoot) {
   const target = publishTarget(args.matter_root, args.db_path, args.writing_folder, env);
   const dataFolders = ["vaniac-submissions", vaniacFilingFolder(args.writing_folder)];
   const pkg = writingSubfolder(target, "Package");
-  const previous = existsSync41(pkg) ? readdirSync22(pkg).filter((name) => PREVIOUS_SET.test(name)) : [];
+  const previous = existsSync43(pkg) ? readdirSync22(pkg).filter((name) => PREVIOUS_SET.test(name)) : [];
   if (previous.length > 0) {
     return {
       success: false,
@@ -103627,14 +103728,14 @@ function publishVaniacPackage(args, env = process.env, installRoot) {
     const witness = WITNESS_SOURCE.exec(doc.file_name);
     if (witness) witnesses.push(witness[1]);
   }
-  const data = pathWin3218.join(target.caseData, ...dataFolders);
-  const argv = [data, pkg, "--round", args.round, "--index-json", pathWin3218.join(data, "Package index.json")];
+  const data = pathWin3220.join(target.caseData, ...dataFolders);
+  const argv = [data, pkg, "--round", args.round, "--index-json", pathWin3220.join(data, "Package index.json")];
   for (const name of witnesses) argv.push("--witness", name);
   return runPublishFill("publish-vaniac-package", "fill_vaniac.py", [argv], env, installRoot);
 }
 
 // src/submission/assemble-tools.ts
-import { win32 as pathWin3219 } from "node:path";
+import { win32 as pathWin3221 } from "node:path";
 function draftFile(target, name, label2, suffix) {
   assertSegment(name, label2);
   if (!name.toLowerCase().endsWith(suffix)) throw new ValidationError(`${label2} must be a file name ending ${suffix}: ${name}`);
@@ -103648,7 +103749,7 @@ function assembleGeneral(args, env = process.env, installRoot) {
   const target = bindDraftTarget(args.matter_root, env);
   const docx = draftFile(target, args.docx_name, "docx_name", ".docx");
   const output = args.pdf_name === void 0 ? null : draftFile(target, args.pdf_name, "pdf_name", ".pdf");
-  const enclosures = args.enclosures.map(({ label: label2, path, pages }) => ({ label: label2, path: path && pathWin3219.resolve(target.root, path), ...pages === void 0 ? {} : { pages } }));
+  const enclosures = args.enclosures.map(({ label: label2, path, pages }) => ({ label: label2, path: path && pathWin3221.resolve(target.root, path), ...pages === void 0 ? {} : { pages } }));
   const manifest = writeWorkingFile(target, ["assemble-general"], "enclosures.json", JSON.stringify({ docx, output, enclosures }, null, 2));
   return runSubskillScript(
     {
@@ -103667,8 +103768,8 @@ function assembleGeneral(args, env = process.env, installRoot) {
 }
 
 // src/submission/draft-harness.ts
-import { existsSync as existsSync43, mkdirSync as mkdirSync19, readdirSync as readdirSync24, realpathSync as realpathSync12 } from "node:fs";
-import { win32 as pathWin3222 } from "node:path";
+import { existsSync as existsSync45, mkdirSync as mkdirSync19, readdirSync as readdirSync24, realpathSync as realpathSync13 } from "node:fs";
+import { win32 as pathWin3224 } from "node:path";
 
 // src/submission/email-recipients.ts
 import { dirname as dirname26 } from "node:path";
@@ -103720,7 +103821,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
     for (const r3 of recipients) lists.recipient(r3);
   } else {
     const proceedings = source.proceeding_id === void 0 ? fetchAllProceedings(dbPath) : [fetchProceeding(dbPath, source.proceeding_id)];
-    const rows22 = [];
+    const rows29 = [];
     const drifted = /* @__PURE__ */ new Map();
     for (const proceeding of proceedings) {
       const { parties: parties2, drift } = draftingParties(dirname26(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
@@ -103729,9 +103830,9 @@ function emailRecipients(dbPath, source, senderKey, env) {
         const why = d3.kind === "unlinked" ? `${d3.name} is not linked to a party in case data, so its counsel cannot be read` : d3.kind === "not_of_record" ? `${d3.name} is linked to a party case data does not hold for this proceeding` : `counsel were not read from case data: ${d3.reason}`;
         for (const r3 of counsel) if (r3.party_id === d3.party_id) drifted.set(r3.id, why);
       }
-      rows22.push(...counsel);
+      rows29.push(...counsel);
     }
-    for (const r3 of mergeSharedRecipients(rows22)) lists.recipient(r3, drifted.get(r3.id));
+    for (const r3 of mergeSharedRecipients(rows29)) lists.recipient(r3, drifted.get(r3.id));
     if (source.proceeding_id === void 0 && proceedings.length > 1) {
       note = `No proceeding was named, so this addresses counsel on the service lists of all ${proceedings.length} proceedings, each once.`;
     }
@@ -103753,13 +103854,13 @@ function emailRecipients(dbPath, source, senderKey, env) {
 }
 
 // src/submission/scrutiny-review.ts
-import { copyFileSync as copyFileSync3, existsSync as existsSync42, mkdirSync as mkdirSync18, mkdtempSync, readdirSync as readdirSync23, readFileSync as readFileSync27, realpathSync as realpathSync11, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync9, writeFileSync as writeFileSync10 } from "node:fs";
+import { copyFileSync as copyFileSync3, existsSync as existsSync44, mkdirSync as mkdirSync18, mkdtempSync, readdirSync as readdirSync23, readFileSync as readFileSync30, realpathSync as realpathSync12, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync9, writeFileSync as writeFileSync10 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
-import { win32 as pathWin3221 } from "node:path";
+import { win32 as pathWin3223 } from "node:path";
 
 // src/case/authority-source.ts
 import { homedir as homedir9 } from "node:os";
-import { win32 as pathWin3220 } from "node:path";
+import { win32 as pathWin3222 } from "node:path";
 var DRIVER8 = String.raw`
 import json, sys
 
@@ -103799,7 +103900,7 @@ function resolveAuthoritySource(request2, env = process.env, installRoot) {
   return parsed.result;
 }
 function authorityPdfCacheDir(env) {
-  return pathWin3220.join(env.LOCALAPPDATA || homedir9(), "Coclerk", "scrutiny-review");
+  return pathWin3222.join(env.LOCALAPPDATA || homedir9(), "Coclerk", "scrutiny-review");
 }
 
 // src/submission/scrutiny-review.ts
@@ -103832,7 +103933,7 @@ function scrutinyReview(args, env = process.env, installRoot) {
   const started = Date.now();
   const input = validated(args);
   const target = publishDraftTarget(args.matter_root, input.dbPath, env);
-  const folder = resolveWithin(target.draft, pathWin3221.join(PRESENTATION_FOLDER, `statement ${input.statementId}`), "the scrutiny review folder", false);
+  const folder = resolveWithin(target.draft, pathWin3223.join(PRESENTATION_FOLDER, `statement ${input.statementId}`), "the scrutiny review folder", false);
   const foreign = foreignEntries(folder);
   const sourcePath = input.sourcePath === void 0 ? void 0 : confineMatterFile(target.root, input.sourcePath, "source_path");
   const scripts = {
@@ -103856,9 +103957,9 @@ function scrutinyReview(args, env = process.env, installRoot) {
   const statement = { ...read3.statement, pinpoint_paragraph: paragraphOf(read3.statement.pinpoint) };
   const finding = { text: read3.finding, answer_file: answerFile(target.root, read3.answer_file_named) };
   const derived = input.contextParas === void 0 ? findingParas(read3.finding, statement.pinpoint_paragraph) : void 0;
-  const scratch = mkdtempSync(pathWin3221.join(tmpdir3(), "coclerk-scrutiny-"));
+  const scratch = mkdtempSync(pathWin3223.join(tmpdir3(), "coclerk-scrutiny-"));
   try {
-    const excerptFile = pathWin3221.join(scratch, "excerpt.txt");
+    const excerptFile = pathWin3223.join(scratch, "excerpt.txt");
     writeFileSync10(excerptFile, read3.excerpt ?? "", "utf-8");
     const ctx = {
       env,
@@ -103879,11 +103980,11 @@ function scrutinyReview(args, env = process.env, installRoot) {
     if ("success" in current) return current;
     let findingFile;
     if (finding.answer_file === null && finding.text !== null) {
-      const name = `${pathWin3221.basename(current.cited.pdf, ".pdf").replace(/^1 cited/, "3 finding")}.txt`;
-      const from = pathWin3221.join(scratch, "finding.txt");
+      const name = `${pathWin3223.basename(current.cited.pdf, ".pdf").replace(/^1 cited/, "3 finding")}.txt`;
+      const from = pathWin3223.join(scratch, "finding.txt");
       writeFileSync10(from, finding.text, "utf-8");
       current.files.push({ from, name });
-      findingFile = pathWin3221.join(folder, name);
+      findingFile = pathWin3223.join(folder, name);
     }
     let proposal;
     if (input.proposed) {
@@ -103974,19 +104075,19 @@ function findingParas(finding, pinpoint) {
   return [...found].sort((x3, y3) => x3 - y3);
 }
 function foreignEntries(folder) {
-  if (!existsSync42(folder)) return [];
+  if (!existsSync44(folder)) return [];
   return readdirSync23(folder, { withFileTypes: true }).filter((entry) => !(entry.isFile() && OWN_FILE.test(entry.name))).map((entry) => entry.name);
 }
 function confineMatterFile(root, given, label2) {
-  const absolute = pathWin3221.isAbsolute(given) ? given : pathWin3221.join(root, given);
+  const absolute = pathWin3223.isAbsolute(given) ? given : pathWin3223.join(root, given);
   let canonical;
   try {
-    canonical = realpathSync11.native(absolute);
+    canonical = realpathSync12.native(absolute);
   } catch {
-    canonical = pathWin3221.normalize(absolute);
+    canonical = pathWin3223.normalize(absolute);
   }
-  const relative5 = pathWin3221.relative(root, canonical);
-  if (relative5 === "" || relative5.split(pathWin3221.sep)[0] === ".." || pathWin3221.isAbsolute(relative5)) {
+  const relative5 = pathWin3223.relative(root, canonical);
+  if (relative5 === "" || relative5.split(pathWin3223.sep)[0] === ".." || pathWin3223.isAbsolute(relative5)) {
     throw new PathOutOfScopeError(`${label2} must lie inside the matter folder ${root}: ${given}`);
   }
   const resolved = resolveWithin(root, relative5, label2, false);
@@ -103998,12 +104099,12 @@ function confineMatterFile(root, given, label2) {
 function answerFile(root, named2) {
   if (named2 === null) return null;
   const path = confineMatterFile(root, named2, "the answer file the finding names");
-  return { named: named2, path, exists: existsSync42(path) };
+  return { named: named2, path, exists: existsSync44(path) };
 }
 function skillScript(rel, env, installRoot) {
   const shipped = resolveShippedRoot(rel.join("/"), env, { code: "repo_root_missing", subject: `the ${rel[0]} scripts`, installRoot });
-  const path = pathWin3221.join(shipped.root, ...rel);
-  if (!existsSync42(path)) {
+  const path = pathWin3223.join(shipped.root, ...rel);
+  if (!existsSync44(path)) {
     throw new DataServerError(
       `${rel[rel.length - 1]} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this step, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -104013,7 +104114,7 @@ function skillScript(rel, env, installRoot) {
 }
 function runCli(ctx, script, args, countPages) {
   return runPythonDriver({
-    label: `scrutiny review ${pathWin3221.basename(script)}`,
+    label: `scrutiny review ${pathWin3223.basename(script)}`,
     driver: pythonDriverFile("scrutiny-review-cli-driver", CLI_DRIVER),
     payload: JSON.stringify({ script, args, count_pages: countPages ?? null, timeout_s: (CLI_TIMEOUT_MS - 2e3) / 1e3 }),
     env: ctx.env,
@@ -104025,7 +104126,7 @@ function buildPackage(ctx, spec) {
   const resolved = spec.resolved ?? resolve9(ctx, spec.authority);
   if ("success" in resolved) return resolved;
   const { source, pdf } = resolved;
-  const proposedFile = pathWin3221.join(ctx.scratch, "proposed.txt");
+  const proposedFile = pathWin3223.join(ctx.scratch, "proposed.txt");
   let verbatim = spec.span ? void 0 : resolved.verbatim ?? verbatimCheck(ctx, spec.excerptFile, pdf);
   const cited2 = citedExtract(ctx, spec, pdf, proposedFile);
   if ("success" in cited2) return cited2;
@@ -104039,7 +104140,7 @@ function buildPackage(ctx, spec) {
     cited: cited2.extract,
     context: context.extract,
     files: [...cited2.files, ...context.files],
-    proposedExcerpt: spec.span ? readFileSync27(proposedFile, "utf-8").replace(/\r?\n$/, "") : null
+    proposedExcerpt: spec.span ? readFileSync30(proposedFile, "utf-8").replace(/\r?\n$/, "") : null
   };
 }
 function resolve9(ctx, authority) {
@@ -104092,8 +104193,8 @@ function withheld(opcodes, all) {
   });
 }
 function citedExtract(ctx, spec, pdf, proposedFile) {
-  const dir = pathWin3221.join(ctx.scratch, `${spec.prefix}cited`);
-  const base = [pdf, "--out", pathWin3221.join(dir, "extract.pdf"), "--preview", dir];
+  const dir = pathWin3223.join(ctx.scratch, `${spec.prefix}cited`);
+  const base = [pdf, "--out", pathWin3223.join(dir, "extract.pdf"), "--preview", dir];
   const excerpt = ["--excerpt", spec.excerptFile];
   const para = spec.paragraph === null ? [] : ["--para", String(spec.paragraph), "yellow"];
   const span = spec.span ? ["--span", spec.span.start, spec.span.end, "yellow", "--excerpt-out", proposedFile] : [];
@@ -104131,13 +104232,13 @@ function citedExtract(ctx, spec, pdf, proposedFile) {
   };
 }
 function contextExtract(ctx, spec, pdf, cited2, excerptFile) {
-  const dir = pathWin3221.join(ctx.scratch, `${spec.prefix}context`);
+  const dir = pathWin3223.join(ctx.scratch, `${spec.prefix}context`);
   const first = Math.max(1, cited2.firstPage - 1);
   const last = Math.min(cited2.pageCount || cited2.lastPage, cited2.lastPage + 1);
   const fallback = spec.paragraph === null ? [] : [spec.paragraph];
   const out = (paras) => [
     "--out",
-    pathWin3221.join(dir, "extract.pdf"),
+    pathWin3223.join(dir, "extract.pdf"),
     "--preview",
     dir,
     ...paras.length > 0 ? paras.flatMap((n3) => ["--para", String(n3), "yellow"]) : ["--excerpt", excerptFile]
@@ -104183,11 +104284,11 @@ function contextExtract(ctx, spec, pdf, cited2, excerptFile) {
   };
 }
 function extractFiles(ctx, dir, stem3, stdout, pages, painted) {
-  const files = [{ from: pathWin3221.join(dir, "extract.pdf"), name: `${stem3}.pdf` }];
+  const files = [{ from: pathWin3223.join(dir, "extract.pdf"), name: `${stem3}.pdf` }];
   for (const match of stdout.matchAll(/^preview: (.*-p(\d+)\.png)$/gm)) {
     files.push({ from: match[1], name: `${stem3}-p${match[2]}.png` });
   }
-  const at = (name) => pathWin3221.join(ctx.folder, name);
+  const at = (name) => pathWin3223.join(ctx.folder, name);
   return { extract: { pdf: at(files[0].name), pngs: files.slice(1).map((f3) => at(f3.name)), pages, painted }, files };
 }
 function failedSpecs(stdout) {
@@ -104227,10 +104328,10 @@ function pathSafe(name) {
 function publish2(folder, files) {
   mkdirSync18(folder, { recursive: true });
   for (const entry of readdirSync23(folder)) {
-    if (OWN_FILE.test(entry)) unlinkSync9(pathWin3221.join(folder, entry));
+    if (OWN_FILE.test(entry)) unlinkSync9(pathWin3223.join(folder, entry));
   }
   for (const file of files) {
-    const final = pathWin3221.join(folder, file.name);
+    const final = pathWin3223.join(folder, file.name);
     copyFileSync3(file.from, `${final}.tmp`);
     renameSync8(`${final}.tmp`, final);
   }
@@ -104262,13 +104363,13 @@ function writeEmail(args, env, installRoot) {
   let root;
   let outDir;
   if (args.matter_root === void 0) {
-    const relative5 = attachments.filter((path) => !pathWin3222.isAbsolute(path));
+    const relative5 = attachments.filter((path) => !pathWin3224.isAbsolute(path));
     if (relative5.length) {
       throw new ValidationError(`drafting_forms__draft_harness.attachments must be absolute paths when no matter_root is given: ${relative5.join(", ")}`);
     }
-    root = realpathSync12.native(resolveCaseDataRoot(env));
-    const drafts = pathWin3222.join("_practice", "drafts");
-    outDir = resolveWithin(root, args.folder === void 0 ? drafts : pathWin3222.join(drafts, args.folder), "the firm drafts folder", false);
+    root = realpathSync13.native(resolveCaseDataRoot(env));
+    const drafts = pathWin3224.join("_practice", "drafts");
+    outDir = resolveWithin(root, args.folder === void 0 ? drafts : pathWin3224.join(drafts, args.folder), "the firm drafts folder", false);
   } else {
     root = validateMatterRoot(args.matter_root);
     outDir = args.folder === void 0 ? oneDraftFolder2(root, draftFolders(root)) : oneDraftFolder2(root, confineWritingFolder(root, args.folder));
@@ -104288,7 +104389,7 @@ function writeEmail(args, env, installRoot) {
       };
     }
   }
-  if (args.matter_root === void 0) mkdirSync19(pathWin3222.join(root, "_practice", "drafts"), { recursive: true });
+  if (args.matter_root === void 0) mkdirSync19(pathWin3224.join(root, "_practice", "drafts"), { recursive: true });
   const result = runPythonDriver({
     label: "draft write_email (write_eml.py)",
     driver: writeEmlPath(env, installRoot),
@@ -104302,7 +104403,7 @@ function writeEmail(args, env, installRoot) {
       subject,
       body,
       // A relative attachment is read against the matter folder; every path goes in absolute.
-      attachments: attachments.map((path) => pathWin3222.resolve(root, path)),
+      attachments: attachments.map((path) => pathWin3224.resolve(root, path)),
       out_dir: outDir,
       out_name: outputName
     }),
@@ -104399,8 +104500,8 @@ function writeEmlPath(env = process.env, installRoot) {
     subject: "the draft write_eml script",
     installRoot
   });
-  const path = pathWin3222.join(shipped.root, ...rel);
-  if (!existsSync43(path)) {
+  const path = pathWin3224.join(shipped.root, ...rel);
+  if (!existsSync45(path)) {
     throw new DataServerError(
       `write_eml.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -104410,8 +104511,8 @@ function writeEmlPath(env = process.env, installRoot) {
 }
 
 // src/correspondence/message.ts
-import { readdirSync as readdirSync25, readFileSync as readFileSync28, realpathSync as realpathSync13, statSync as statSync17 } from "node:fs";
-import { extname as extname4, win32 as pathWin3223 } from "node:path";
+import { readdirSync as readdirSync25, readFileSync as readFileSync31, realpathSync as realpathSync14, statSync as statSync17 } from "node:fs";
+import { extname as extname4, win32 as pathWin3225 } from "node:path";
 
 // src/correspondence/cfb.ts
 var MAGIC = Buffer.from([208, 207, 17, 224, 161, 177, 26, 225]);
@@ -105295,13 +105396,13 @@ function scanMessageHeaders(root) {
       return true;
     }
     for (const entry of entries) {
-      const full = pathWin3223.join(dir, entry.name);
+      const full = pathWin3225.join(dir, entry.name);
       const relPath = rel ? `${rel}\\${entry.name}` : entry.name;
       if (entry.isDirectory() || entry.isSymbolicLink()) {
         if (zoneProblem("scan", full)) continue;
         let real;
         try {
-          real = realpathSync13.native(full);
+          real = realpathSync14.native(full);
           assertContained(root, real, "folder", relPath);
           if (!statSync17(real).isDirectory()) continue;
         } catch {
@@ -105315,7 +105416,7 @@ function scanMessageHeaders(root) {
       if (seen >= SCAN_LIMIT2) return false;
       seen += 1;
       try {
-        messages.push({ path: relPath, ...parseMessageHeaders(readFileSync28(full), extname4(entry.name)) });
+        messages.push({ path: relPath, ...parseMessageHeaders(readFileSync31(full), extname4(entry.name)) });
       } catch {
       }
     }
@@ -105325,7 +105426,7 @@ function scanMessageHeaders(root) {
   return { messages, truncated: !complete };
 }
 function rejectFirewall(relative5) {
-  if (zoneProblem("read", pathWin3223.dirname(relative5))) {
+  if (zoneProblem("read", pathWin3225.dirname(relative5))) {
     throw new PathOutOfScopeError(`path lies in a folder this tool never reads (TRASH, 0. CASE DATA, privileged, disclosed): ${relative5}`);
   }
 }
@@ -105339,9 +105440,9 @@ function readMessage(args) {
   if (hasPath) {
     const given = args.path;
     let full2;
-    if (pathWin3223.isAbsolute(given)) {
+    if (pathWin3225.isAbsolute(given)) {
       try {
-        full2 = realpathSync13.native(given);
+        full2 = realpathSync14.native(given);
       } catch {
         throw new DataServerError(`path not found: ${given}`, "not_found");
       }
@@ -105349,13 +105450,13 @@ function readMessage(args) {
     } else {
       full2 = resolveWithin(root, given, "path");
     }
-    const relative5 = pathWin3223.relative(root, full2);
+    const relative5 = pathWin3225.relative(root, full2);
     rejectFirewall(relative5);
     const ext = extname4(full2).toLowerCase();
     if (!MESSAGE_EXTENSIONS.has(ext)) {
       throw new DataServerError(`not a message file: ${relative5} (only .msg and .eml)`, "unsupported_extension");
     }
-    return { path: relative5, ...parseMessage(readFileSync28(full2), ext) };
+    return { path: relative5, ...parseMessage(readFileSync31(full2), ext) };
   }
   const needle = args.from.trim().toLowerCase();
   const scan = scanMessageHeaders(root);
@@ -105367,18 +105468,18 @@ function readMessage(args) {
     );
   }
   const newest2 = matches[0];
-  const full = pathWin3223.join(root, newest2.path);
+  const full = pathWin3225.join(root, newest2.path);
   return {
     path: newest2.path,
-    ...parseMessage(readFileSync28(full), extname4(full)),
+    ...parseMessage(readFileSync31(full), extname4(full)),
     other_candidates: matches.slice(1, 1 + OTHER_CANDIDATES),
     scan_truncated: scan.truncated
   };
 }
 
 // src/correspondence/reply-draft.ts
-import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync26, readFileSync as readFileSync29, realpathSync as realpathSync14, writeSync as writeSync7 } from "node:fs";
-import { basename as basename12, extname as extname5, win32 as pathWin3224 } from "node:path";
+import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync26, readFileSync as readFileSync32, realpathSync as realpathSync15, writeSync as writeSync7 } from "node:fs";
+import { basename as basename12, extname as extname5, win32 as pathWin3226 } from "node:path";
 
 // src/correspondence/zip.ts
 import { deflateRawSync } from "node:zlib";
@@ -105584,7 +105685,7 @@ function writeNextFree(dir, stem3, ext, data) {
   const candidates = [[stem3, own]];
   for (let v3 = Math.max(2, own + 1); v3 < 1e3; v3 += 1) candidates.push([`${base} v${v3}`, v3]);
   for (const [name, version2] of candidates) {
-    const path = pathWin3224.join(dir, `${name}${ext}`);
+    const path = pathWin3226.join(dir, `${name}${ext}`);
     let fd;
     try {
       fd = openSync8(path, "wx");
@@ -105603,7 +105704,7 @@ function writeNextFree(dir, stem3, ext, data) {
 }
 function realpathOrMissing(path) {
   try {
-    return realpathSync14.native(path);
+    return realpathSync15.native(path);
   } catch {
     throw new DataServerError(`path not found: ${path}`, "not_found");
   }
@@ -105627,17 +105728,17 @@ function exportDocx(args, root) {
   const given = args.path;
   if (typeof given !== "string" || given === "") throw new ValidationError("drafting_forms__reply_draft.path is required for step export_docx");
   const dir = draftFolder2(root);
-  if (!pathWin3224.isAbsolute(given)) assertSegment(given, "path");
-  const source = pathWin3224.isAbsolute(given) ? realpathOrMissing(given) : resolveWithin(dir, given, "path");
+  if (!pathWin3226.isAbsolute(given)) assertSegment(given, "path");
+  const source = pathWin3226.isAbsolute(given) ? realpathOrMissing(given) : resolveWithin(dir, given, "path");
   assertContained(dir, source, "path", given);
-  if (pathWin3224.dirname(source).toLowerCase() !== dir.toLowerCase()) {
+  if (pathWin3226.dirname(source).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`path must be a .md at the top of the 0. DRAFT folder: ${given}`);
   }
   if (extname5(source).toLowerCase() !== ".md") throw new ValidationError(`path must be a saved .md draft: ${given}`);
   const stem3 = basename12(source, extname5(source));
-  const docx = markdownToDocx(readFileSync29(source, "utf-8"));
+  const docx = markdownToDocx(readFileSync32(source, "utf-8"));
   const written = writeNextFree(dir, stem3, ".docx", docx);
-  const wanted = pathWin3224.join(dir, `${stem3}.docx`);
+  const wanted = pathWin3226.join(dir, `${stem3}.docx`);
   return {
     success: true,
     path: written.path,
@@ -106152,11 +106253,11 @@ function parseFile(path, content, sha2563, isSkill) {
   });
   return { path, sha256: sha2563, linesTotal: lines2.length, unmapped, atoms, vocab: isSkill ? vocab : null };
 }
-function parseVocabulary(rows22) {
+function parseVocabulary(rows29) {
   const ops = [];
   const facts = /* @__PURE__ */ new Map();
   let mode = null;
-  for (const { where, line } of rows22) {
+  for (const { where, line } of rows29) {
     const trimmed = line.trim();
     if (!trimmed.startsWith("|")) continue;
     const cells = trimmed.replace(/^\|/, "").replace(/\|$/, "").split("|").map((c3) => c3.trim());
@@ -106374,9 +106475,9 @@ function checkArgs2(tool, dbPath, token) {
     throw new ValidationError(`${tool}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
 }
-var rows20 = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
+var rows27 = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
 function assertSchema(tool, dbPath) {
-  const [row2] = rows20(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'");
+  const [row2] = rows27(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'");
   const version2 = row2 === void 0 ? 0 : Number(row2.value);
   if (version2 < POSITION_SCHEMA_VERSION) {
     throw new DataServerError(
@@ -106386,7 +106487,7 @@ function assertSchema(tool, dbPath) {
   }
 }
 function readPositions(dbPath, token) {
-  const found = rows20(
+  const found = rows27(
     dbPath,
     "SELECT branch, path, session_facts, in_force FROM session_position WHERE session_token = ? ORDER BY branch",
     [token]
@@ -106399,14 +106500,14 @@ function readPositions(dbPath, token) {
   );
 }
 function heldJob(dbPath, token) {
-  const [row2] = rows20(dbPath, "SELECT id FROM tickets WHERE locked_by = ? AND status = 'wip' ORDER BY id LIMIT 1", [token]);
+  const [row2] = rows27(dbPath, "SELECT id FROM tickets WHERE locked_by = ? AND status = 'wip' ORDER BY id LIMIT 1", [token]);
   return row2 === void 0 ? null : row2.id;
 }
 function databaseFacts(dag, dbPath, job) {
   const facts = {};
   if (dag.facts.has("job_held")) facts.job_held = job === null ? "false" : "true";
   if (job !== null && dag.facts.has("job_steps")) {
-    const [{ n: n3 }] = rows20(dbPath, "SELECT COUNT(*) AS n FROM ticket_steps WHERE ticket_id = ?", [job]);
+    const [{ n: n3 }] = rows27(dbPath, "SELECT COUNT(*) AS n FROM ticket_steps WHERE ticket_id = ?", [job]);
     if (n3 === 1) facts.job_steps = "one";
     else if (n3 > 1) facts.job_steps = "many";
   }
@@ -106522,7 +106623,7 @@ async function rulesMove(args, env = process.env) {
     if (job === null) {
       throw new ValidationError(`${tool}: this session holds no job to take over; assign it first (drafting_data__assign_job with takeover: true)`);
     }
-    const [row2] = rows20(
+    const [row2] = rows27(
       dbPath,
       "SELECT last_in_bounds_path, went_out_of_bounds_to FROM job_position WHERE job_id = ?",
       [job]
@@ -106532,7 +106633,7 @@ async function rulesMove(args, env = process.env) {
     }
     let note = null;
     if (row2.went_out_of_bounds_to !== null) {
-      const [visit] = rows20(dbPath, "SELECT from_path, visited_at FROM out_of_bounds_visit WHERE id = ?", [row2.went_out_of_bounds_to]);
+      const [visit] = rows27(dbPath, "SELECT from_path, visited_at FROM out_of_bounds_visit WHERE id = ?", [row2.went_out_of_bounds_to]);
       note = `The previous holder went out of bounds from ${visit.from_path} at ${visit.visited_at}; the rules it improvised there are not served.`;
     }
     takeover = { path: row2.last_in_bounds_path.split(" "), note };
@@ -106597,7 +106698,7 @@ async function rulesMove(args, env = process.env) {
     head.push(`  <takeover job="${job}"${takeover.note === null ? "" : ` note="${xmlAttr(takeover.note)}"`}/>`);
   }
   if (entersOutOfBounds) {
-    const [visit] = rows20(
+    const [visit] = rows27(
       dbPath,
       "SELECT id, from_path FROM out_of_bounds_visit WHERE session_token = ? ORDER BY id DESC LIMIT 1",
       [token]
@@ -106656,7 +106757,7 @@ async function rulesProvisional(args, env = process.env) {
   if (main === void 0 || at !== `${main.path[0]}/out-of-bounds`) {
     throw new ValidationError(`${tool}: this session's position is ${at ?? "not set"}, not out of bounds; rules__move to out_of_bounds first`);
   }
-  const [visit] = rows20(
+  const [visit] = rows27(
     dbPath,
     "SELECT id, provisional_rules FROM out_of_bounds_visit WHERE session_token = ? ORDER BY id DESC LIMIT 1",
     [token]
@@ -106747,7 +106848,7 @@ async function rulesBranch(args, env = process.env) {
 
 // src/files/rules-lifecycle.ts
 var DATE_RE2 = /^\d{4}-\d\d-\d\d$/;
-var rows21 = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
+var rows28 = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
 var skillOf = (id) => id.split(/[/ ]/)[0];
 var counts = (r3) => ` sessions="${r3.sessions}" served="${r3.served}" first_served="${xmlAttr(r3.first_served)}" last_served="${xmlAttr(r3.last_served)}"`;
 function rulesLifecycle(dbPath, since) {
@@ -106755,11 +106856,11 @@ function rulesLifecycle(dbPath, since) {
   if (typeof dbPath !== "string" || dbPath.trim() === "") throw new ValidationError(`${tool}.db_path must be the matter's drafting database`);
   if (since !== void 0 && (!DATE_RE2.test(since) || Number.isNaN(Date.parse(since)))) throw new ValidationError(`${tool}.since must be a date, YYYY-MM-DD, not ${JSON.stringify(since)}`);
   assertSchema(tool, dbPath);
-  const served = rows21(
+  const served = rows28(
     dbPath,
     "SELECT rule_id, node, COUNT(DISTINCT session_token) AS sessions, COUNT(*) AS served, MIN(served_at) AS first_served, MAX(served_at) AS last_served FROM rule_served GROUP BY rule_id, node ORDER BY rule_id, node"
   );
-  const visits = rows21(
+  const visits = rows28(
     dbPath,
     "SELECT id, from_path, turn_summary, provisional_rules, visited_at FROM out_of_bounds_visit WHERE visited_at >= ? ORDER BY id",
     [since ?? ""]
@@ -106798,7 +106899,7 @@ function rulesLifecycle(dbPath, since) {
 
 // src/preferences/tools.ts
 import { randomUUID as randomUUID9 } from "node:crypto";
-import { existsSync as existsSync44, readFileSync as readFileSync30 } from "node:fs";
+import { existsSync as existsSync46, readFileSync as readFileSync33 } from "node:fs";
 import { dirname as dirname27, join as join41 } from "node:path";
 
 // src/preferences/redact.ts
@@ -106865,14 +106966,14 @@ function text4(raw, name) {
 }
 function readJson2(file) {
   try {
-    return JSON.parse(readFileSync30(file, "utf-8"));
+    return JSON.parse(readFileSync33(file, "utf-8"));
   } catch (err) {
     throw new DataServerError(`${file} is not valid JSON: ${err.message}`, "invalid_file");
   }
 }
 function person(env) {
   const config2 = configPath(env);
-  const raw = existsSync44(config2) ? readJson2(config2).person : void 0;
+  const raw = existsSync46(config2) ? readJson2(config2).person : void 0;
   if (raw === void 0 || raw === null || raw === "") {
     throw new DataServerError(
       `person is not set: this machine's probanda.json names no firm roster key ("person"), so a preference has no owner. Set it with practice_data__upsert_firm_profile, then retry.`,
@@ -106889,7 +106990,7 @@ function preferencesFile(env) {
   return { file: join41(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
 }
 function readEntries(file) {
-  if (!existsSync44(file)) return [];
+  if (!existsSync46(file)) return [];
   const entries = readJson2(file).entries;
   if (!Array.isArray(entries)) throw new DataServerError(`${file} has no "entries" list`, "invalid_file");
   return entries;
@@ -106949,7 +107050,7 @@ function suggestionLogPath(env) {
   return join41(dirname27(configPath(env)), "suggestions.local.json");
 }
 function readLog(file) {
-  if (!existsSync44(file)) return { suggestions: [], held: [] };
+  if (!existsSync46(file)) return { suggestions: [], held: [] };
   const { suggestions, held = [] } = readJson2(file);
   if (!Array.isArray(suggestions)) throw new DataServerError(`${file} has no "suggestions" list`, "invalid_file");
   if (!Array.isArray(held)) throw new DataServerError(`${file} has a "held" entry that is not a list`, "invalid_file");
@@ -107020,14 +107121,14 @@ async function suggestionLogWrite(args, env = process.env) {
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync45, mkdirSync as mkdirSync20, readFileSync as readFileSync31, statSync as statSync18, writeFileSync as writeFileSync11 } from "node:fs";
-import { win32 as pathWin3225 } from "node:path";
+import { existsSync as existsSync47, mkdirSync as mkdirSync20, readFileSync as readFileSync34, statSync as statSync18, writeFileSync as writeFileSync11 } from "node:fs";
+import { win32 as pathWin3227 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
   const repoRoot = resolveRepoRoot(env, { code: "docs_root_missing", subject: "the docs tree" });
   const cached3 = rootCache2.get(repoRoot);
   if (cached3) return cached3;
-  const target = pathWin3225.join(repoRoot, "docs");
+  const target = pathWin3227.join(repoRoot, "docs");
   const canon = canonicalRoot(
     target,
     `docs tree not found at ${target} (repo root ${repoRoot}); the repo has moved or COCLERK_REPO_ROOT is wrong`,
@@ -107043,7 +107144,7 @@ function repoDocsWrite(relative5, content, overwrite = false, env) {
   const root = docsRoot(env);
   assertRelativeSyntax(relative5, "path");
   const resolved = resolveWithin(root, relative5, "path", false);
-  const exists = existsSync45(resolved);
+  const exists = existsSync47(resolved);
   if (exists && statSync18(resolved).isDirectory()) {
     throw new DataServerError(
       `path is a directory, not a file: ${relative5}`,
@@ -107056,7 +107157,7 @@ function repoDocsWrite(relative5, content, overwrite = false, env) {
       "exists"
     );
   }
-  mkdirSync20(pathWin3225.dirname(resolved), { recursive: true });
+  mkdirSync20(pathWin3227.dirname(resolved), { recursive: true });
   writeFileSync11(resolved, content, "utf-8");
   return {
     path: toPosixRelative(root, resolved),
@@ -107076,7 +107177,7 @@ function repoDocsRead(relative5, env) {
   }
   return {
     path: toPosixRelative(root, resolved),
-    content: readFileSync31(resolved, "utf-8")
+    content: readFileSync34(resolved, "utf-8")
   };
 }
 
@@ -108631,14 +108732,14 @@ import {
   appendFileSync as appendFileSync2,
   constants,
   copyFileSync as copyFileSync4,
-  existsSync as existsSync47,
+  existsSync as existsSync49,
   mkdirSync as mkdirSync22,
   readdirSync as readdirSync28,
-  readFileSync as readFileSync37,
+  readFileSync as readFileSync40,
   statSync as statSync21,
   writeFileSync as writeFileSync14
 } from "node:fs";
-import { win32 as pathWin3228 } from "node:path";
+import { win32 as pathWin3230 } from "node:path";
 
 // src/files/coverage-line.ts
 var REASON = "\\S.*";
@@ -108695,10 +108796,10 @@ function checkCoverageLine(text5) {
 // src/files/downloads.ts
 import { statSync as statSync19 } from "node:fs";
 import { homedir as homedir10 } from "node:os";
-import { win32 as pathWin3226 } from "node:path";
+import { win32 as pathWin3228 } from "node:path";
 var IN_PROGRESS_EXTENSIONS = /* @__PURE__ */ new Set([".crdownload", ".tmp", ".partial"]);
 function downloadsDir(env = process.env) {
-  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3226.join(homedir10(), "Downloads");
+  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3228.join(homedir10(), "Downloads");
   const dir = canonicalRoot(probe2, `Downloads folder not found at ${probe2}`, "downloads_missing");
   if (!statSync19(dir).isDirectory()) {
     throw new DataServerError(`Downloads path is not a folder: ${probe2}`, "downloads_missing");
@@ -108707,11 +108808,11 @@ function downloadsDir(env = process.env) {
 }
 
 // src/files/text-extract.ts
-import { readFileSync as readFileSync36 } from "node:fs";
-import { win32 as pathWin3227 } from "node:path";
+import { readFileSync as readFileSync39 } from "node:fs";
+import { win32 as pathWin3229 } from "node:path";
 
 // src/files/extract/doc.ts
-import { readFileSync as readFileSync32 } from "node:fs";
+import { readFileSync as readFileSync35 } from "node:fs";
 var CFB_SIGNATURE = Buffer.from([208, 207, 17, 224, 161, 177, 26, 225]);
 var END_OF_CHAIN2 = 4294967294;
 var FREE_SECT = 4294967295;
@@ -108852,7 +108953,7 @@ function plain(raw) {
   return out;
 }
 function docText(path) {
-  const streams = cfbStreams(readFileSync32(path));
+  const streams = cfbStreams(readFileSync35(path));
   const wd = streams.get("WordDocument");
   if (!wd || wd.length < 154) throw new Error("not a Word document (no WordDocument stream)");
   if (wd.readUInt16LE(0) !== WORD_IDENT) throw new Error("not a Word document (bad FIB identifier)");
@@ -108900,7 +109001,7 @@ ${notes.join("\n\n")}
 }
 
 // src/files/extract/docx.ts
-import { readFileSync as readFileSync33 } from "node:fs";
+import { readFileSync as readFileSync36 } from "node:fs";
 import { inflateRawSync as inflateRawSync2 } from "node:zlib";
 var EOCD_SIG = 101010256;
 var CENTRAL_SIG = 33639248;
@@ -108937,13 +109038,13 @@ function zipEntry(zip, name) {
   throw new Error(`no ${name} in the archive`);
 }
 function docxText(path) {
-  const xml = zipEntry(readFileSync33(path), "word/document.xml").toString("utf-8");
+  const xml = zipEntry(readFileSync36(path), "word/document.xml").toString("utf-8");
   return xml.replace(/<w:tab\/>/g, "	").replace(/<\/w:p>/g, "\n").replace(/<w:br[^>]*\/>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
 }
 
 // src/files/extract/page-images.ts
 import { createHash as createHash10 } from "node:crypto";
-import { existsSync as existsSync46, mkdtempSync as mkdtempSync2, readFileSync as readFileSync34, statSync as statSync20, writeFileSync as writeFileSync13 } from "node:fs";
+import { existsSync as existsSync48, mkdtempSync as mkdtempSync2, readFileSync as readFileSync37, statSync as statSync20, writeFileSync as writeFileSync13 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
 import { extname as extname6, isAbsolute as isAbsolute8, join as join44 } from "node:path";
 import { deflateSync } from "node:zlib";
@@ -114615,7 +114716,7 @@ function loadPdfium(wasm) {
   let lib = loaded.get(wasm.href);
   if (!lib) {
     lib = (async () => {
-      const module = await init({ wasmBinary: readFileSync34(wasm), print: console.error, printErr: console.error });
+      const module = await init({ wasmBinary: readFileSync37(wasm), print: console.error, printErr: console.error });
       module.PDFiumExt_Init();
       return module;
     })();
@@ -114634,9 +114735,9 @@ function malloc(lib, bytes) {
 }
 async function withPdf(path, wasm, work) {
   if (!isAbsolute8(path)) throw new ValidationError(`path must be absolute: ${path}`);
-  if (!existsSync46(path) || !statSync20(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
+  if (!existsSync48(path) || !statSync20(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname6(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
-  const data = readFileSync34(path);
+  const data = readFileSync37(path);
   const pending3 = loadPdfium(wasm);
   let lib;
   try {
@@ -114706,13 +114807,13 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
       const { width, height, tiles } = plan;
       renderDir ??= mkdtempSync2(join44(tmpdir5(), "probanda-pages-"));
       const images = [];
-      for (const [i3, [top, rows22]] of tiles.entries()) {
+      for (const [i3, [top, rows29]] of tiles.entries()) {
         await nextTurn();
-        const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows22));
+        const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows29));
         const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
         const file = join44(renderDir, `${name}.png`);
         writeFileSync13(file, png);
-        const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows22 };
+        const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows29 };
         if (tiles.length > 1) image.tile = i3 + 1;
         images.push(image);
       }
@@ -114752,11 +114853,11 @@ function pageSize(lib, page2, n3, dpi) {
     height: Math.max(1, Math.round(hPt * scale))
   };
 }
-function tileRows(width, top, rows22) {
+function tileRows(width, top, rows29) {
   const maxRows = Math.min(MAX_SIDE, Math.floor(MAX_PIXELS / width));
-  const each = Math.ceil(rows22 / Math.ceil(rows22 / maxRows));
+  const each = Math.ceil(rows29 / Math.ceil(rows29 / maxRows));
   const tiles = [];
-  for (let t3 = top; t3 < top + rows22; t3 += each) tiles.push([t3, Math.min(each, top + rows22 - t3)]);
+  for (let t3 = top; t3 < top + rows29; t3 += each) tiles.push([t3, Math.min(each, top + rows29 - t3)]);
   return tiles;
 }
 function overlappingHalves(width, height) {
@@ -114831,21 +114932,21 @@ function coverage(rects, [left, bottom, right, top]) {
   }
   return grid.reduce((sum, v3) => sum + v3, 0) / (N3 * N3);
 }
-function renderPng(lib, page2, n3, width, height, top, rows22) {
-  return encodePng(renderRgb(lib, page2, n3, width, height, top, rows22), width, rows22);
+function renderPng(lib, page2, n3, width, height, top, rows29) {
+  return encodePng(renderRgb(lib, page2, n3, width, height, top, rows29), width, rows29);
 }
-function renderRgb(lib, page2, n3, width, height, top, rows22, flags = 0, form = 0) {
-  const bitmap = lib.FPDFBitmap_CreateEx(width, rows22, BITMAP_BGR, 0, 0);
-  if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows22} bitmap for page ${n3}`, "page_too_large");
+function renderRgb(lib, page2, n3, width, height, top, rows29, flags = 0, form = 0) {
+  const bitmap = lib.FPDFBitmap_CreateEx(width, rows29, BITMAP_BGR, 0, 0);
+  if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows29} bitmap for page ${n3}`, "page_too_large");
   try {
-    lib.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows22, 4294967295);
+    lib.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows29, 4294967295);
     lib.FPDF_RenderPageBitmap(bitmap, page2, 0, -top, width, height, 0, flags);
     if (form) lib.FPDF_FFLDraw(form, bitmap, page2, 0, -top, width, height, 0, flags);
     const buffer = lib.FPDFBitmap_GetBuffer(bitmap);
     const stride = lib.FPDFBitmap_GetStride(bitmap);
     const heap = heapU8(lib);
-    const rgb = Buffer.alloc(width * 3 * rows22);
-    for (let y3 = 0; y3 < rows22; y3++) {
+    const rgb = Buffer.alloc(width * 3 * rows29);
+    for (let y3 = 0; y3 < rows29; y3++) {
       const src = buffer + y3 * stride;
       const dst = y3 * width * 3;
       for (let x3 = 0; x3 < width; x3++) {
@@ -114859,13 +114960,13 @@ function renderRgb(lib, page2, n3, width, height, top, rows22, flags = 0, form =
     lib.FPDFBitmap_Destroy(bitmap);
   }
 }
-function encodePng(rgb, width, rows22) {
+function encodePng(rgb, width, rows29) {
   const line = width * 3 + 1;
-  const raw = Buffer.alloc(line * rows22);
-  for (let y3 = 0; y3 < rows22; y3++) rgb.copy(raw, y3 * line + 1, y3 * width * 3, (y3 + 1) * width * 3);
+  const raw = Buffer.alloc(line * rows29);
+  for (let y3 = 0; y3 < rows29; y3++) rgb.copy(raw, y3 * line + 1, y3 * width * 3, (y3 + 1) * width * 3);
   const header = Buffer.alloc(13);
   header.writeUInt32BE(width, 0);
-  header.writeUInt32BE(rows22, 4);
+  header.writeUInt32BE(rows29, 4);
   header[8] = 8;
   header[9] = 2;
   return Buffer.concat([PNG_SIGNATURE, chunk("IHDR", header), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
@@ -114891,7 +114992,7 @@ function chunk(type, data) {
 }
 
 // src/files/extract/pdf.ts
-import { readFileSync as readFileSync35 } from "node:fs";
+import { readFileSync as readFileSync38 } from "node:fs";
 var pdfjs;
 var quietDepth = 0;
 var savedLog = console.log;
@@ -114924,7 +115025,7 @@ function loadPdfJs() {
 var PdfExtractorUnavailable = class extends Error {
 };
 async function pdfPages(path) {
-  const data = new Uint8Array(readFileSync35(path));
+  const data = new Uint8Array(readFileSync38(path));
   if (data.length === 0) throw new Error("file is empty (0 bytes)");
   return quietStdout(async () => {
     let lib;
@@ -114973,11 +115074,11 @@ var SCANNED_BYTES_PER_PAGE = 500;
 var COPIED_EXTENSIONS = /* @__PURE__ */ new Set([".txt", ".md", ".json", ".htm", ".html"]);
 var unread = (reason) => ({ status: "unread", reason });
 async function extractText(path) {
-  const ext = pathWin3227.extname(path).toLowerCase();
+  const ext = pathWin3229.extname(path).toLowerCase();
   let result;
   try {
     if (COPIED_EXTENSIONS.has(ext)) {
-      result = { status: "ok", kind: "text", method: "copy", text: readFileSync36(path, "utf-8"), pages: null };
+      result = { status: "ok", kind: "text", method: "copy", text: readFileSync39(path, "utf-8"), pages: null };
     } else if (ext === ".pdf") {
       const scanned = (await classifyPdfPages(path)).indexOf("scanned");
       if (scanned >= 0) {
@@ -115037,14 +115138,14 @@ function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE
   const entries = [];
   for (const name of readdirSync28(dir)) {
     if (filename !== void 0 && name !== filename) continue;
-    const stat = statSync21(pathWin3228.join(dir, name));
+    const stat = statSync21(pathWin3230.join(dir, name));
     if (!stat.isFile()) continue;
     if (since !== void 0 && stat.mtimeMs < since) continue;
     entries.push({
       filename: name,
       mtime: stat.mtime.toISOString(),
       bytes: stat.size,
-      in_progress: IN_PROGRESS_EXTENSIONS.has(pathWin3228.extname(name).toLowerCase())
+      in_progress: IN_PROGRESS_EXTENSIONS.has(pathWin3230.extname(name).toLowerCase())
     });
   }
   entries.sort((a3, b3) => a3.mtime < b3.mtime ? 1 : a3.mtime > b3.mtime ? -1 : 0);
@@ -115052,7 +115153,7 @@ function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE
 }
 function listLawFolder(destinationDir) {
   const dir = resolveLawDir(destinationDir);
-  const entries = readdirSync28(dir).map((name) => ({ name, stat: statSync21(pathWin3228.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
+  const entries = readdirSync28(dir).map((name) => ({ name, stat: statSync21(pathWin3230.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
   return { entries };
 }
 function fileDownload(destinationDir, sourceFilename, destinationFilename, env = process.env) {
@@ -115060,15 +115161,15 @@ function fileDownload(destinationDir, sourceFilename, destinationFilename, env =
   assertBareFilename(sourceFilename, "source_filename");
   const destName = destinationFilename ?? sourceFilename;
   assertBareFilename(destName, "destination_filename");
-  const source = pathWin3228.join(downloadsDir(env), sourceFilename);
-  if (!existsSync47(source) || !statSync21(source).isFile()) {
+  const source = pathWin3230.join(downloadsDir(env), sourceFilename);
+  if (!existsSync49(source) || !statSync21(source).isFile()) {
     throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
   }
-  if (IN_PROGRESS_EXTENSIONS.has(pathWin3228.extname(sourceFilename).toLowerCase())) {
+  if (IN_PROGRESS_EXTENSIONS.has(pathWin3230.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
-  const dest = pathWin3228.join(dir, destName);
-  if (existsSync47(dest)) {
+  const dest = pathWin3230.join(dir, destName);
+  if (existsSync49(dest)) {
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
   const bytes = statSync21(source).size;
@@ -115080,14 +115181,14 @@ function appendManifest(destinationDir, record2) {
   if (record2 === null || typeof record2 !== "object" || Array.isArray(record2)) {
     throw new DataServerError("record must be a JSON object", "invalid_argument");
   }
-  const path = pathWin3228.join(dir, MANIFEST);
+  const path = pathWin3230.join(dir, MANIFEST);
   appendFileSync2(path, JSON.stringify(record2) + "\n", "utf-8");
-  const records = readFileSync37(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
+  const records = readFileSync40(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
   return { path, records };
 }
 function saveAnswer(destinationDir, filename, text5, fromScratch) {
   assertBareFilename(filename, "filename");
-  const ext = pathWin3228.extname(filename);
+  const ext = pathWin3230.extname(filename);
   if (ext.toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
@@ -115109,27 +115210,27 @@ function saveAnswer(destinationDir, filename, text5, fromScratch) {
   return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created, sha256: sha2563 };
 }
 function scratchBytes(destinationDir, fromScratch) {
-  if (typeof fromScratch !== "string" || !pathWin3228.isAbsolute(fromScratch)) {
+  if (typeof fromScratch !== "string" || !pathWin3230.isAbsolute(fromScratch)) {
     throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
   }
-  let law = existsSync47(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3228.dirname(destinationDir));
-  while (pathWin3228.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3228.dirname(law);
-  const root = validateMatterRoot(pathWin3228.dirname(law));
+  let law = existsSync49(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3230.dirname(destinationDir));
+  while (pathWin3230.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3230.dirname(law);
+  const root = validateMatterRoot(pathWin3230.dirname(law));
   const draft = findDraftDir(root);
   if (draft === void 0) {
     throw new DataServerError(`${root} has no 0. DRAFT folder, so it has no scratchpad`, "draft_dir_missing");
   }
-  const scratchDir = pathWin3228.join(draft, ...SCRATCH_SUBFOLDERS);
+  const scratchDir = pathWin3230.join(draft, ...SCRATCH_SUBFOLDERS);
   const realScratchDir = canonicalRoot(scratchDir, `the matter has no scratchpad folder: ${scratchDir}`, "not_scratch");
   assertUnprotected(realScratchDir);
   const source = canonicalRoot(fromScratch, `from_scratch not found: ${fromScratch}`, "not_found");
-  if (pathWin3228.dirname(source).toLowerCase() !== realScratchDir.toLowerCase()) {
+  if (pathWin3230.dirname(source).toLowerCase() !== realScratchDir.toLowerCase()) {
     throw new DataServerError(`from_scratch is not in this matter's scratchpad ${realScratchDir}: ${source}`, "not_scratch");
   }
   if (!statSync21(source).isFile()) {
     throw new DataServerError(`from_scratch is not a file: ${source}`, "not_found");
   }
-  const body = readFileSync37(source);
+  const body = readFileSync40(source);
   if (body.length === 0) {
     throw new DataServerError(`from_scratch is empty: ${source}`, "invalid_argument");
   }
@@ -115137,7 +115238,7 @@ function scratchBytes(destinationDir, fromScratch) {
 }
 function writeScratch(matterRoot, filename, text5, kind) {
   assertBareFilename(filename, "filename");
-  if (pathWin3228.extname(filename).toLowerCase() !== ".md") {
+  if (pathWin3230.extname(filename).toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
   if (typeof text5 !== "string" || text5.length === 0) {
@@ -115162,7 +115263,7 @@ function researchScratchDir(root) {
   let dir = draft;
   let created = false;
   for (const name of SCRATCH_SUBFOLDERS) {
-    dir = pathWin3228.join(dir, name);
+    dir = pathWin3230.join(dir, name);
     try {
       mkdirSync22(dir);
       created = true;
@@ -115203,11 +115304,11 @@ function pickLawFile(files, wanted) {
   const picked = /* @__PURE__ */ new Set();
   const htmlOnly = [];
   for (const name of named2) {
-    if (!HTML_EXTENSIONS.has(pathWin3228.extname(name).toLowerCase())) {
+    if (!HTML_EXTENSIONS.has(pathWin3230.extname(name).toLowerCase())) {
       picked.add(name);
       continue;
     }
-    const stem3 = name.slice(0, -pathWin3228.extname(name).length).toLowerCase();
+    const stem3 = name.slice(0, -pathWin3230.extname(name).length).toLowerCase();
     const sibling = files.find(
       (other) => TEXT_SIBLING_EXTENSIONS.some((ext) => other.toLowerCase() === stem3 + ext)
     );
@@ -115236,10 +115337,10 @@ function nonNegativeInt(value, label2, fallback, min) {
   return value;
 }
 function manifestMarker(law, file) {
-  const path = pathWin3228.join(law, MANIFEST);
-  if (!existsSync47(path)) return null;
+  const path = pathWin3230.join(law, MANIFEST);
+  if (!existsSync49(path)) return null;
   let marker = null;
-  for (const line of readFileSync37(path, "utf-8").split("\n")) {
+  for (const line of readFileSync40(path, "utf-8").split("\n")) {
     if (line.trim() === "") continue;
     let record2;
     try {
@@ -115300,7 +115401,7 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
   if (options.pattern === void 0 && (options.context !== void 0 || options.max_matches !== void 0)) {
     throw new DataServerError("context and max_matches need a pattern", "invalid_argument");
   }
-  const listed = readdirSync28(law).filter((name) => statSync21(pathWin3228.join(law, name)).isFile()).sort();
+  const listed = readdirSync28(law).filter((name) => statSync21(pathWin3230.join(law, name)).isFile()).sort();
   const files = options.file === void 0 ? listed : [pickLawFile(listed, options.file)];
   if (options.pattern !== void 0) {
     const context = nonNegativeInt(options.context, "context", DEFAULT_CONTEXT, 0);
@@ -115317,12 +115418,12 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
     let truncated = false;
     for (const file of files) {
       if (truncated) break;
-      if (HTML_EXTENSIONS.has(pathWin3228.extname(file).toLowerCase())) {
+      if (HTML_EXTENSIONS.has(pathWin3230.extname(file).toLowerCase())) {
         searched.push({ file, status: "unread", reason: "html_page: an HTML page is never read; search its text sibling" });
         continue;
       }
       if (file === MANIFEST) continue;
-      const read3 = await cachedExtract(pathWin3228.join(law, file));
+      const read3 = await cachedExtract(pathWin3230.join(law, file));
       if (read3.status === "unread") {
         searched.push({ file, status: "unread", reason: read3.reason });
         continue;
@@ -115340,23 +115441,23 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
   const below = segments.slice(segments.findIndex((s3) => s3.toLowerCase() === LAW_SEGMENT) + 1);
   let outDir = researchScratchDir(root).dir;
   for (const name of [LAW_TEXT_SUBFOLDER, ...below]) {
-    outDir = pathWin3228.join(outDir, name);
+    outDir = pathWin3230.join(outDir, name);
     mkdirSync22(outDir, { recursive: true });
     assertUnprotected(canonicalRoot(outDir, `law-text folder does not resolve: ${outDir}`, "not_found"));
   }
-  const rows22 = [];
+  const rows29 = [];
   for (const file of files) {
-    const read3 = await cachedExtract(pathWin3228.join(law, file));
+    const read3 = await cachedExtract(pathWin3230.join(law, file));
     if (read3.status === "unread") {
-      rows22.push({ file, text_path: null, bytes: 0, status: "unread", reason: read3.reason });
+      rows29.push({ file, text_path: null, bytes: 0, status: "unread", reason: read3.reason });
       continue;
     }
-    const textPath = pathWin3228.join(outDir, `${file}.txt`);
+    const textPath = pathWin3230.join(outDir, `${file}.txt`);
     const body = Buffer.from(read3.text, "utf-8");
     writeFileSync14(textPath, body);
-    rows22.push({ file, text_path: textPath, bytes: body.length, method: read3.method, status: "ok" });
+    rows29.push({ file, text_path: textPath, bytes: body.length, method: read3.method, status: "ok" });
   }
-  return { out_dir: outDir, files: rows22 };
+  return { out_dir: outDir, files: rows29 };
 }
 function assertUnprotected(realDir) {
   if (zoneProblem("write", realDir)) {
@@ -115378,7 +115479,7 @@ function fileFetched(url, destinationDir, filename, record2, seams = {}, now = /
   }
   const pdf = fetched.bytes.subarray(0, 5).toString("latin1") === "%PDF-";
   const ext = pdf ? ".pdf" : ".md";
-  if (pathWin3228.extname(filename).toLowerCase() !== ext) {
+  if (pathWin3230.extname(filename).toLowerCase() !== ext) {
     throw new DataServerError(
       `filename must end in ${ext}, because ${fetched.final_url} returned ${pdf ? "a PDF" : "an HTML page"}: ${filename}`,
       "invalid_filename"
@@ -115454,11 +115555,11 @@ function filledString(value) {
   return typeof value === "string" && value.trim() !== "";
 }
 function writeNewVersion(dir, filename, body) {
-  const ext = pathWin3228.extname(filename);
+  const ext = pathWin3230.extname(filename);
   const stem3 = filename.slice(0, -ext.length);
   for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt++) {
     const name = nextVersionName(dir, stem3, ext);
-    const path = pathWin3228.join(dir, name);
+    const path = pathWin3230.join(dir, name);
     try {
       writeFileSync14(path, body, { flag: "wx" });
     } catch (err) {
@@ -115476,15 +115577,15 @@ function resolveOrCreateLawDir(destinationDir) {
   try {
     return { dir: resolveLawDir(destinationDir), created: false };
   } catch (err) {
-    if (err.code !== "not_found" || existsSync47(destinationDir)) throw err;
+    if (err.code !== "not_found" || existsSync49(destinationDir)) throw err;
   }
-  const parent = resolveLawDir(pathWin3228.dirname(destinationDir));
-  if (zoneProblem("write", pathWin3228.join(parent, pathWin3228.basename(destinationDir)))) {
+  const parent = resolveLawDir(pathWin3230.dirname(destinationDir));
+  if (zoneProblem("write", pathWin3230.join(parent, pathWin3230.basename(destinationDir)))) {
     throw new DataServerError(`destination_dir is inside a privileged/disclosed tree, TRASH or 0. CASE DATA: ${destinationDir}`, "protected");
   }
   let created = true;
   try {
-    mkdirSync22(pathWin3228.join(parent, pathWin3228.basename(destinationDir)));
+    mkdirSync22(pathWin3230.join(parent, pathWin3230.basename(destinationDir)));
   } catch (err) {
     if (err.code !== "EEXIST") throw err;
     created = false;
@@ -115492,7 +115593,7 @@ function resolveOrCreateLawDir(destinationDir) {
   return { dir: resolveLawDir(destinationDir), created };
 }
 function resolveLawDir(destinationDir) {
-  if (typeof destinationDir !== "string" || !pathWin3228.isAbsolute(destinationDir)) {
+  if (typeof destinationDir !== "string" || !pathWin3230.isAbsolute(destinationDir)) {
     throw new DataServerError(`destination_dir must be an absolute host path: ${destinationDir}`, "invalid_path");
   }
   const dir = canonicalRoot(destinationDir, `destination folder not found: ${destinationDir}`, "not_found");
@@ -115563,8 +115664,8 @@ function researchPreflight(seams = {}) {
 
 // src/files/legislation-search.ts
 import { createHash as createHash12 } from "node:crypto";
-import { readFileSync as readFileSync38, statSync as statSync22 } from "node:fs";
-import { win32 as pathWin3229 } from "node:path";
+import { readFileSync as readFileSync41, statSync as statSync22 } from "node:fs";
+import { win32 as pathWin3231 } from "node:path";
 var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".txt"]);
 var HTML_EXTENSIONS2 = /* @__PURE__ */ new Set([".htm", ".html"]);
 var EXTRACTED_EXTENSIONS = /* @__PURE__ */ new Set([".pdf", ".docx"]);
@@ -115596,9 +115697,9 @@ function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}, p
   if (termList.length === 0 && pattern === null && pin === null) {
     throw new DataServerError("give terms, a regex, or both, or a pinpoint", "invalid_argument");
   }
-  const ext = pathWin3229.extname(file).toLowerCase();
+  const ext = pathWin3231.extname(file).toLowerCase();
   const range = checkPages(pages, ext);
-  const bytes = readFileSync38(file);
+  const bytes = readFileSync41(file);
   const { lines: lines2, source, marker } = textLines(file, ext, bytes, range, seams);
   const currency = marker ?? lines2.find((l3) => /\bcurrent to\b/i.test(l3.text))?.text ?? null;
   const chunks = fixedChunks(sectionChunks(lines2));
@@ -115669,7 +115770,7 @@ function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}, p
 }
 function resolveMatterFile(matterRoot, path) {
   const root = validateMatterRoot(matterRoot);
-  if (typeof path !== "string" || !pathWin3229.isAbsolute(path)) {
+  if (typeof path !== "string" || !pathWin3231.isAbsolute(path)) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
   const file = canonicalRoot(path, `file not found: ${path}`, "not_found");
@@ -115935,11 +116036,11 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
           const dir = join46(workDir, side);
           mkdirSync23(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
-          return tiles.map(([top, rows22], i3) => {
+          return tiles.map(([top, rows29], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
             const file = join46(dir, `${name}.png`);
-            const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows22) * facts.width * 3);
-            writeFileSync15(file, encodePng(rgb, facts.width, rows22));
+            const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows29) * facts.width * 3);
+            writeFileSync15(file, encodePng(rgb, facts.width, rows29));
             return file;
           });
         };
@@ -116995,7 +117096,7 @@ function textResult(result) {
 }
 
 // src/page-api/server.ts
-import { existsSync as existsSync48 } from "node:fs";
+import { existsSync as existsSync50 } from "node:fs";
 import { createServer as createServer3 } from "node:http";
 import { isAbsolute as isAbsolute9 } from "node:path";
 
@@ -117114,7 +117215,7 @@ async function handle3(req, res, env, startedAt) {
   if (typeof token !== "string" || !pageApiTokenValid(token, dbPath, proceedingId, env)) {
     return json2(req, res, 403, { error: "This page's token does not match its database. Ask a Claude session to render the page again." });
   }
-  if (!isAbsolute9(dbPath) || !existsSync48(dbPath)) {
+  if (!isAbsolute9(dbPath) || !existsSync50(dbPath)) {
     return json2(req, res, 400, { error: `There is no drafting database at ${dbPath}.` });
   }
   const result = await setSeedDeferral({ db_path: dbPath, proceeding_id: proceedingId, seed_id: Number(m3[1]), action: m3[2] }, env);

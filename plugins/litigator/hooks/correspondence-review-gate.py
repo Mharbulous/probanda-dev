@@ -27,6 +27,17 @@ practitioner-words-gate does.
 """
 import json
 import sys
+from pathlib import Path
+
+try:
+    HERE = Path(__file__).resolve()
+    # shared/scripts in the built plugin, else in this repo's source tree
+    sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "scripts",
+                                     HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
+    import hook_io
+except Exception as exc:  # a crash would let the call through
+    sys.stderr.write(f"Refused: correspondence-review-gate cannot load its helper: {exc!r}\n")
+    sys.exit(2)
 
 REVIEWER = "source-tracer"
 
@@ -89,22 +100,18 @@ def read_transcript(path):
     return returned, written
 
 
-def deny(message):
-    sys.stdout.write(json.dumps({"hookSpecificOutput": {
-        "hookEventName": "PreToolUse",
-        "permissionDecision": "deny",
-        "permissionDecisionReason": message,
-    }}) + "\n")
-    return 0
+def failed(exc):
+    sys.stderr.write("correspondence-review-gate hook error: " + type(exc).__name__ + ": " + str(exc) + "\n")
+    return hook_io.deny(ERROR_MESSAGE)
 
 
 def main():
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    payload = hook_io.payload()
     name = payload.get("tool_name") or ""
     tool_input = payload.get("tool_input") or {}
     if name in ("Write", "Edit", "MultiEdit"):
         path = str(tool_input.get("file_path") or "")
-        return deny(HAND_MESSAGE) if path.casefold().endswith(".eml") else 0
+        return hook_io.deny(HAND_MESSAGE) if path.casefold().endswith(".eml") else 0
     is_write = name.endswith("drafting_forms__draft_harness")
     if is_write and tool_input.get("step") != "write_email":
         return 0
@@ -113,23 +120,13 @@ def main():
         return 0  # an empty body states nothing to trace
     transcript = payload.get("transcript_path") or ""
     if not transcript:
-        return deny(EMAIL_MESSAGE if is_write else SAVE_MESSAGE)
+        return hook_io.deny(EMAIL_MESSAGE if is_write else SAVE_MESSAGE)
     reviewed, written = read_transcript(transcript)
     if is_write:
-        return 0 if any(body in norm(prompt) for prompt in reviewed) else deny(EMAIL_MESSAGE)
+        return 0 if any(body in norm(prompt) for prompt in reviewed) else hook_io.deny(EMAIL_MESSAGE)
     target = path_key(str(tool_input.get("eml_path") or ""))
-    return 0 if target and any(target in path_key(text) for text in written) else deny(SAVE_MESSAGE)
+    return 0 if target and any(target in path_key(text) for text in written) else hook_io.deny(SAVE_MESSAGE)
 
 
 if __name__ == "__main__":
-    try:
-        try:
-            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
-        sys.exit(main())
-    except SystemExit:
-        raise
-    except Exception as exc:  # fail CLOSED, loudly
-        sys.stderr.write("correspondence-review-gate hook error: " + type(exc).__name__ + ": " + str(exc) + "\n")
-        sys.exit(deny(ERROR_MESSAGE))
+    hook_io.run(main, "correspondence-review-gate", closed=failed)  # fail CLOSED, loudly

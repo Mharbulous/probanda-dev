@@ -62,6 +62,9 @@ import sys
 import tempfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "scripts"))
+import hook_io  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # DESTRUCTIVE_PATTERNS -- extend here. Non-exhaustive by design.
 #
@@ -921,19 +924,8 @@ def block_message(label, offending):
     return "\n".join(lines)
 
 
-def emit(decision, reason, updated_input=None):
-    output = {
-        "hookEventName": "PreToolUse",
-        "permissionDecision": decision,
-        "permissionDecisionReason": reason,
-    }
-    if updated_input is not None:
-        output["updatedInput"] = updated_input
-    sys.stdout.write(json.dumps({"hookSpecificOutput": output}) + "\n")
-
-
 def main():
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    payload = hook_io.payload()
     tool_name = payload.get("tool_name") or ""
     if not TOOL_RE.fullmatch(tool_name):
         return 0
@@ -976,26 +968,11 @@ def main():
         except Exception:
             guarded = None
         if guarded is not None:
-            emit("allow", "rm guarded on the device: refuses any target in or above the matter folders",
-                 {**tool_input, "command": guarded})
-            return 0
+            return hook_io.pre_tool("allow", "rm guarded on the device: refuses any target in or above the matter folders",
+                                    updatedInput={**tool_input, "command": guarded})
 
-    emit("deny", block_message(label, offending))
-    return 0
+    return hook_io.deny(block_message(label, offending))
 
 
 if __name__ == "__main__":
-    try:
-        try:
-            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
-        sys.exit(main())
-    except SystemExit:
-        raise
-    except Exception as exc:  # fail OPEN, loudly
-        sys.stderr.write(
-            "redirect-delete-to-trash hook error (allowing command): "
-            + type(exc).__name__ + ": " + str(exc) + "\n"
-        )
-        sys.exit(0)
+    hook_io.run(main, "redirect-delete-to-trash")

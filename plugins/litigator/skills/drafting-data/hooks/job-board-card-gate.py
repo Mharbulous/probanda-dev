@@ -24,6 +24,10 @@ Fails OPEN on its own error, loudly on stderr, so a bug here never traps a sessi
 import json
 import re
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "scripts"))
+import hook_io  # noqa: E402
 
 OPEN = re.compile(r"mcp__(.+__)?plugin_lawyer_data__drafting_forms__open_session")
 RENDER = re.compile(r"mcp__(.+__)?plugin_lawyer_data__drafting_forms__render")
@@ -76,17 +80,6 @@ def due_pages(tool, response):
     return [path] if isinstance(path, str) and path else []
 
 
-def strings(value):
-    if isinstance(value, str):
-        yield value
-    elif isinstance(value, dict):
-        for item in value.values():
-            yield from strings(item)
-    elif isinstance(value, list):
-        for item in value:
-            yield from strings(item)
-
-
 def how_to_present(paths):
     return ("Present " + ", ".join(f'"{p}"' for p in paths) + " as a file card now, before ending the turn, "
             "by its path, with the card tool in your tool list, as the shared rules for HTML pages and for "
@@ -100,10 +93,7 @@ def how_to_present(paths):
 def post_tool_use(payload):
     paths = due_pages(payload.get("tool_name") or "", payload.get("tool_response"))
     if paths:
-        sys.stdout.write(json.dumps({"hookSpecificOutput": {
-            "hookEventName": "PostToolUse",
-            "additionalContext": how_to_present(paths),
-        }}) + "\n")
+        return hook_io.note("PostToolUse", how_to_present(paths))
     return 0
 
 
@@ -140,7 +130,7 @@ def unpresented(blocks):
         if block.get("type") == "tool_use":
             calls[block.get("id")] = block.get("name") or ""
             if CARD.fullmatch(block.get("name") or ""):
-                named = {basename(s) for s in strings(block.get("input"))}
+                named = {basename(s) for s in hook_io.strings(block.get("input"))}
                 owed = [p for p in owed if basename(p) not in named]
         elif block.get("type") == "tool_result" and block.get("tool_use_id") in calls:
             owed += due_pages(calls[block["tool_use_id"]], block.get("content"))
@@ -161,7 +151,7 @@ def stop(payload):
 
 
 def main():
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    payload = hook_io.payload()
     event = payload.get("hook_event_name")
     if event == "PostToolUse":
         return post_tool_use(payload)
@@ -171,14 +161,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        try:
-            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
-        sys.exit(main())
-    except SystemExit:
-        raise
-    except Exception as exc:  # fail OPEN, loudly
-        sys.stderr.write("job-board-card-gate hook error (allowing): " + type(exc).__name__ + ": " + str(exc) + "\n")
-        sys.exit(0)
+    hook_io.run(main, "job-board-card-gate")

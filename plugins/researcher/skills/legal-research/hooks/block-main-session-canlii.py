@@ -31,9 +31,12 @@ Decision rule
 Registered in source/researcher/plugin.json. Fails OPEN on any
 unexpected error, loudly.
 """
-import json
 import re
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "scripts"))
+import hook_io  # noqa: E402
 
 CANLII_TOOL_RE = re.compile(r"^mcp__(?:.+__)?plugin_researcher_canlii__(.+)$")
 SETUP_TOOLS = {"configure_status", "configure_credential"}
@@ -52,7 +55,7 @@ The CanLII citator (get_case_citator, get_case_citator_tease) runs only inside c
 
 
 def main():
-    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    payload = hook_io.payload()
     match = CANLII_TOOL_RE.match(payload.get("tool_name") or "")
     if match is None or match.group(1) in SETUP_TOOLS or match.group(1) == CURRENCY_TOOL:
         return 0
@@ -60,24 +63,9 @@ def main():
     if payload.get("agent_id") and agent_type.startswith(RESEARCH_AGENT_PREFIXES):
         if match.group(1) in CITATOR_TOOLS and agent_type == NOTE_UP_AGENT:
             return 0
-        sys.stderr.write(IN_AGENT_BLOCK_MESSAGE + "\n")
-        return 2
-    sys.stderr.write(BLOCK_MESSAGE + "\n")
-    return 2
+        return hook_io.refuse(IN_AGENT_BLOCK_MESSAGE)
+    return hook_io.refuse(BLOCK_MESSAGE)
 
 
 if __name__ == "__main__":
-    try:
-        try:
-            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
-        sys.exit(main())
-    except SystemExit:
-        raise
-    except Exception as exc:  # fail OPEN, loudly
-        sys.stderr.write(
-            "block-main-session-canlii hook error (allowing call): "
-            + type(exc).__name__ + ": " + str(exc) + "\n"
-        )
-        sys.exit(0)
+    hook_io.run(main, "block-main-session-canlii")
