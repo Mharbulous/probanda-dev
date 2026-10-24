@@ -3,12 +3,69 @@
 import { submissionDataQuery } from "../backend.js";
 import { renderState, type RenderState, type RenderStamp } from "../render-manifest.js";
 import { fetchHearingDate, requireForum, type FilingRow, type PartyRow, type ProceedingRow } from "./query.js";
-import { fetchReviewState, type RenderContext } from "./render-vaniac-submissions.js";
+import type { MarkerInventory } from "./proposal-inventory.js";
+import { fetchReviewState, type ReviewState } from "./review-state.js";
+import type { PointerDocument } from "./submission-reads.js";
 import { storedLayout, type StoredLayout } from "./layout-snapshot.js";
-import { deriveLifecycle } from "./lifecycle.js";
+import { deriveLifecycle, type Lifecycle } from "./lifecycle.js";
 import { nowStamp } from "./timings.js";
 
 export type RenderMode = "mockup" | "filed";
+
+/** What a venue renderer actually assigned to one submission's contention paragraph. */
+export interface LedgerEntry {
+  document: PointerDocument;
+  para: number;
+}
+
+export interface RenderContext {
+  dbPath: string;
+  proceeding: ProceedingRow;
+  parties: PartyRow[];
+  filing: FilingRow;
+  revision: number;
+  rendered: string;
+  clientName: string;
+  clientNo: string;
+  matterNo: string;
+  /** The matter's description from practice data, "" when the caller resolved none. */
+  matterDescription: string;
+  /**
+   * submission_id -> the paragraph number and source document a venue renderer actually assigned
+   * to that submission's contention. Written first-write-wins by every renderSubmissionParagraphs
+   * call site; read only by recordReserveInventory, which reproduces the venue numbering rather than
+   * re-deriving it (each venue document has its own base offset -- NoA Part 3 restarts at 1, the
+   * Application Response continues from Part 4's fact count, the BCCA response book runs one
+   * counter across the whole document, Written Arguments starts at 1). That walk must therefore
+   * stay LAST in forms.ts's documentsForFiling, after every renderer that fills this. Required,
+   * not optional, so a future RenderContext construction site cannot silently forget it.
+   * Per-filing: buildContext creates a fresh Map for each render.
+   */
+  paragraphLedger: Map<number, LedgerEntry>;
+  /** The filing's derived lifecycle state (schema v17, forms/lifecycle.ts). Read by the Work
+   * Board only -- no advocacy document shows it. Required, not optional, so a future
+   * RenderContext construction site cannot silently forget it. */
+  lifecycle: Lifecycle;
+  /**
+   * Every generating work-marker glyph this render emitted, recorded at its emit site on the row
+   * the work is done on (Work Board Proposals design §8; forms/proposal-inventory.ts), plus the
+   * glyphs a Goal-card criterion counts although they never generate, flagged `generating: false`
+   * (Goal card design §2.2). forms.ts stamps each entry with the document that emitted it. The Job
+   * Board derives its proposed and Shelved lanes from it, and render-manifest.json saves
+   * it so a stamp hit derives the same lanes without re-rendering. Every mockup render builds all
+   * documents before the board, so the inventory is complete by the time the board reads it -- the
+   * ORDER IS LOAD-BEARING comment in forms.ts's documentsForFiling is what guarantees that.
+   * Required, not optional, for the same reason as paragraphLedger above.
+   */
+  inventory: MarkerInventory;
+  /**
+   * Every reviewed object's current snapshot and latest approval (fetchReviewState; the
+   * /drafting-data reference review.md). Read by the forum emit sites through reviewMarkerFor,
+   * which prints 🧐 final review; the reserve inventory never reads it. Required, not optional, so
+   * a future RenderContext construction site cannot forget it.
+   */
+  review: ReviewState;
+}
 
 export interface ClientContext {
   clientName?: string;
