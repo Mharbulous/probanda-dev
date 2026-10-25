@@ -153,12 +153,6 @@ export function filingBoardData(
   return buildWorkBoardData({ ...ctx, inventory: manifest?.inventory ?? null }, deadlineCriteria(dates, filing.id));
 }
 
-/** A section's Job Board page name, by the id a retitle never changes: a live filing's, or a
- * pre-filing proceeding's when `filing` is null (ADR 0033, 2026-10-05 amendments). */
-export function jobBoardFile(proceeding: ProceedingRow, filing: FilingRow | null): string {
-  return filing === null ? `Job Board - proceeding ${proceeding.id}.html` : `Job Board ${filing.id}.html`;
-}
-
 /** One board section's page: the section's own ids, and the file of the page it is drawn on. */
 interface PageTarget {
   filing_id: number | null;
