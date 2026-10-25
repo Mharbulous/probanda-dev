@@ -1,11 +1,11 @@
 ---
-description: Cloud only. Implement the open `suggestion` issues and the triaged `ready-for-agent` + `cloud` issues one after another, relabel any that cannot be done in the cloud `local`, and push each finished one to main.
+description: Cloud only. Under the implementer lock, work the implement queue (open `suggestion` issues and triaged `ready-for-agent` + `cloud` issues), lowest issue number first, relabel any that cannot be done in the cloud `local`, and push each finished one to main.
 argument-hint: [issue number]
 ---
 
 # /implement-suggestions
 
-Run by a scheduled cloud routine, or by a cloud session started by hand with one issue number, unattended. Nobody answers questions during the run: where a step would need a person, the issue is unsuitable (step 4). Each issue filed by `/suggestion-triage` is a complete work order with the sections Plan, Scope and Done when, and ends with a `Suggestion <id>` line. An issue triaged by `/triage-issue` carries the same three sections in its latest `## Agent Brief` comment, which governs over the issue body.
+Run unattended in the cloud: by the session that just queued an issue (triage or Suggestion Box intake), by the daily backstop routine, or by a session started by hand, optionally with one issue number to take first. Only one run works at a time, under the implementer lock (`docs/agents/issue-tracker.md`, **Implementer lock**). Nobody answers questions during the run: where a step would need a person, the issue is unsuitable (step 4). Each issue filed by `/suggestion-triage` is a complete work order with the sections Plan, Scope and Done when, and ends with a `Suggestion <id>` line. An issue triaged by `/triage-issue` carries the same three sections in its latest `## Agent Brief` comment, which governs over the issue body.
 
 The cloud does not load Brahm's own global rules, so these hold for the whole run:
 
@@ -27,12 +27,13 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 - `git remote get-url origin` names `Mharbulous/probanda-dev`. Otherwise stop.
 - `git config core.filemode false`. The build sets file modes that differ on Linux, and those changes must never be committed.
 - `git fetch origin`, then `git checkout -B main origin/main`. Check: `git status` is clean.
+- Take the implementer lock (**Implementer lock**, Take). If it is held, stop and report `Implementer lock held`: the holder works the queue, including any issue this run was started for.
 
 ## 2. Pick
 
-With an issue number in the arguments, take that issue alone, and stop and go to step 8 once it is handled. Otherwise list `GET /issues?labels=suggestion&state=open&sort=created&direction=asc&per_page=100` and `GET /issues?labels=ready-for-agent,cloud&state=open&sort=created&direction=asc&per_page=100`. Drop entries with a `pull_request` field, issues labelled `local`, issues this run already handled, and issues with a live claim (the claim-comment read under **Claim** in `docs/agents/issue-tracker.md`). Take the oldest left.
+Refresh the implementer lock (**Implementer lock**, Refresh). With an issue number in the arguments that this run has not handled yet, take that issue. Otherwise list `GET /issues?labels=suggestion&state=open&per_page=100` and `GET /issues?labels=ready-for-agent,cloud&state=open&per_page=100`. Drop entries with a `pull_request` field, issues labelled `local`, issues this run already handled, and issues with a live claim (the claim-comment read under **Claim** in `docs/agents/issue-tracker.md`). Take the lowest issue number left.
 
-Stop and go to step 8 when none is left or three issues have been handled this run.
+Go to step 8 when none is left.
 
 ## 3. Claim
 
@@ -82,6 +83,8 @@ When the issue is unsuitable, mark it (step 7, "Mark local") and go back to step
 - Comment one line naming which gate item or check failed, with the failing output quoted when there is one.
 - Release the claim by `docs/agents/issue-tracker.md` **Release**.
 
-## 8. Report
+## 8. Release and report
+
+Release the implementer lock (**Implementer lock**, Release). Then list the queue once more as in step 2. If an issue is left, take the lock again and go back to step 2. If the lock is now held, another run has the queue: stop.
 
 End with a short report: each issue implemented with its SHA, each issue relabelled `local` with its reason, and each issue skipped as claimed or blocked.

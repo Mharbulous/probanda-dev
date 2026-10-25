@@ -40,7 +40,7 @@ Never put a standalone `-` (including `--input -` and `--body-file -`) in the ar
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
 - **Close**: `gh issue close <number> --comment "..."`
 - **Suggestion issues**: `/suggestion-triage` files them with the label `suggestion`.
-- **Location labels**: `cloud` and `local` say where the work can run. Triage never adds `ready-for-agent` or `ready-for-human` without exactly one of them, so an issue with no location label is not ready. `.claude/commands/triage-issue.md` triages one issue unattended and sets them, and a scheduled cloud task runs it on every newly opened issue. A daily cloud routine runs `.claude/commands/implement-suggestions.md` over the `suggestion` issues and the `ready-for-agent` + `cloud` issues, and relabels any it cannot do from `cloud` to `local`. Swap the label back to let the routine try again. A local session never takes a `cloud` issue unless one is named to it.
+- **Location labels**: `cloud` and `local` say where the work can run. Triage never adds `ready-for-agent` or `ready-for-human` without exactly one of them, so an issue with no location label is not ready. `.claude/commands/triage-issue.md` triages one issue unattended and sets them, and a cloud task runs it on every newly opened issue, then runs `.claude/commands/implement-suggestions.md` when it queued the issue (see **Implementer lock**). An hourly cloud task runs `.claude/commands/intake-suggestions.md`, which plans new Suggestion Box entries, files the approved ones and runs the implementer the same way. The implementer relabels any issue it cannot do from `cloud` to `local`, and a daily run of it is the backstop. Swap the label back to let the routine try again. A local session never takes a `cloud` issue unless one is named to it.
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
@@ -63,6 +63,12 @@ GitHub shares one number space across issues and PRs, so a bare `#42` may be eit
 - **Take.** Read the lock issue's claim comments. If a live one exists, the lock is held: stop, and report `Triage lock held since <created_at>`. Otherwise post the fixed claim comment on #61, read again, and hold the lock only if your comment is the earliest live one. If it is not, delete your comment and stop the same way.
 - **Refresh.** Post a new claim comment, then delete your old one. Your old comment stays live in between, so no other sweep can take the lock.
 - **Release.** Delete your own claim comment (`gh api --method DELETE repos/Mharbulous/probanda-dev/issues/comments/<claim id>`), and nothing else.
+
+## Implementer lock
+
+**Lock issue: #189** (closed, never reopened). It keeps two runs of `.claude/commands/implement-suggestions.md` from working at once, so their releases never collide on version numbers or built plugin files. Its Take, Refresh and Release are the **Triage lock** operations above, on #189 instead of #61, over the cloud route, with a **90-minute** live window. A run refreshes it before each issue it starts.
+
+The implement queue is every open `suggestion` issue and every open `ready-for-agent` + `cloud` issue, lowest issue number first. Any session that leaves an issue in the queue then runs `/implement-suggestions` with no issue number. A run that finds the lock held stops at once: the holder works the queue until it is empty. The holder releases the lock and only then reads the queue once more, and takes the lock again if anything is left, so an issue queued while the holder was finishing is never stranded.
 
 ## When a skill says "publish to the issue tracker"
 
