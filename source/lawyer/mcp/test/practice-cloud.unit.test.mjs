@@ -199,6 +199,20 @@ for (const [mode, saved] of [["down", "before the cloud saved it"], ["lost-reply
   });
 }
 
+test("a timed-out request keeps the write pending, never reports it unsaved: the cloud may have it", async (t) => {
+  const { store } = await setup(t);
+  await seedMatter(store);
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
+  };
+  t.after(() => {
+    globalThis.fetch = realFetch;
+  });
+  await assert.rejects(writes.upsert_task(store, { matt_num: "L100", task_type: "client", description: "Settle it" }), { code: "write_pending" });
+  assert.equal(store.pendingCount(), 1);
+});
+
 test("a reset write the cloud refuses on replay returns its question in replayed_writes, with the item described (#162)", async (t) => {
   const { cloud, kv, store } = await setup(t);
   await seedMatter(store);

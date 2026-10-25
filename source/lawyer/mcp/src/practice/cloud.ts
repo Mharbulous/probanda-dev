@@ -35,7 +35,9 @@ export class CloudResetError extends DataServerError {
   }
 }
 
-// The fetch failures that can come after the request went out.
+const TIMEOUT_MS = 60_000;
+
+// The fetch failures that can come after the request went out. A timeout is one too.
 const RESET_CODES = new Set(["ECONNRESET", "UND_ERR_SOCKET"]);
 
 function failure(err: unknown): { detail: string; code?: string } {
@@ -70,10 +72,12 @@ export async function callItems(
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: staticKey },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {
     const { detail, code } = failure(err);
-    throw RESET_CODES.has(code ?? "") ? new CloudResetError(detail) : new CloudUnreachableError(detail);
+    const reset = RESET_CODES.has(code ?? "") || (err as Error).name === "TimeoutError";
+    throw reset ? new CloudResetError(detail) : new CloudUnreachableError(detail);
   }
   if (!res.ok) throw new CloudUnreachableError(`HTTP ${res.status}`);
   let text: string;

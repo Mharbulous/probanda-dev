@@ -34,6 +34,7 @@ export const REQUEST_FIELDS = ["full_name", "year_of_call", "call_date", "firm_n
 const MAX_NAME = 200;
 const MAX_EMAIL = 254;
 const MAX_PHONE = 40;
+const TIMEOUT_MS = 60_000;
 const TITLE = "Ask Probanda for a key";
 
 interface SavedRequest {
@@ -129,11 +130,18 @@ const NEXT: Record<string, string> = {
 // The path is written out whole at each call, so check_plugin.py's bundle-purity
 // check sees it.
 async function post(projectUrl: string, path: string, body: Record<string, unknown>, what: string): Promise<Record<string, unknown>> {
-  const res = await fetch(`${projectUrl.replace(/\/$/, "")}/${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${projectUrl.replace(/\/$/, "")}/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new ValidationError(`Probanda's Cloud did not answer, so it is not known whether it got this request (${detail})`);
+  }
   const text = await res.text();
   let reply: Record<string, unknown> = {};
   try {

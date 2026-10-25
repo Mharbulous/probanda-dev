@@ -36,6 +36,7 @@ let requestQueue: Promise<void> = Promise.resolve();
 let dailyCount = 0;
 let dailyResetDate = new Date().toDateString();
 const MIN_INTERVAL_MS = 500;
+const TIMEOUT_MS = 60_000;
 let lastRequestTime = 0;
 
 function missingKeyMessage(): string {
@@ -71,7 +72,7 @@ async function apiFetch(url: string): Promise<Response> {
 			}
 			lastRequestTime = Date.now();
 			dailyCount++;
-			return fetch(url);
+			return fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
 		}).then(resolve, reject);
 	});
 }
@@ -428,7 +429,7 @@ server.tool(
 				if (!response.ok) throw new Error(`HTTP ${response.status}`);
 				return response.json();
 			}, async (url) => {
-				const response = await fetch(url);
+				const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
 				if (!response.ok) throw new Error(`HTTP ${response.status}`);
 				return response.text();
 			}, new Date().toLocaleDateString("en-CA"));

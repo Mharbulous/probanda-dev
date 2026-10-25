@@ -1,6 +1,8 @@
 import { TransportError, ValidationError } from "../errors.js";
 import type { LegalCommonsConfig } from "./config.js";
 
+const TIMEOUT_MS = 60_000;
+
 // Slim PostgREST client for the layer-3 pool. Deliberately separate from
 // src/db/rest.ts (which is bound to the per-session JWT tokenProvider and the
 // default `public` schema): legal-commons uses a static credential and a
@@ -172,6 +174,7 @@ export class LegalCommonsClient {
         ...extraHeaders,
       },
       body: body === undefined ? undefined : JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     const text = await res.text();
     if (!res.ok) {

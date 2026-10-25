@@ -3,6 +3,8 @@ import { loadCloudKey } from "../cloud-key.js";
 import { ValidationError } from "../errors.js";
 import { serveKeyPage } from "./page.js";
 
+const TIMEOUT_MS = 60_000;
+
 // cloud_key__configure_credential: sets Probanda's one Cloud key on this
 // computer, the Windows Credential Manager entry every server reads through
 // source/mcp-shared/commons-key.js (practice writes here, the Suggestion Box and
@@ -59,6 +61,7 @@ async function probe(supabaseUrl: string, staticKey: string): Promise<void> {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: staticKey },
       body: "{}",
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (error) {
     throw new ValidationError(

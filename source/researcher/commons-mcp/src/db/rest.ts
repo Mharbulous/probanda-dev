@@ -1,5 +1,7 @@
 import { TransportError } from "../errors.js";
 
+const TIMEOUT_MS = 60_000;
+
 export interface RestConfig {
   url: string;
   anonKey: string;
@@ -117,6 +119,7 @@ export class RestClient {
       method,
       headers,
       body: bodyText,
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   }
 }
