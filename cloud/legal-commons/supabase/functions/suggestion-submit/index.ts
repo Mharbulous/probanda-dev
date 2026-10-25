@@ -16,6 +16,12 @@
 // for personal and matter details before it sends it; this function checks
 // only the shape (shape.ts for items and previews). Nothing here logs a request
 // body; a fault logs its SQLSTATE only.
+//
+// Once a row is saved, it starts the maintainer's "Suggestion Box intake" cloud
+// task through that task's API trigger (INTAKE_FIRE_URL and INTAKE_FIRE_TOKEN,
+// function secrets), sending no suggestion text: the task reads new rows itself.
+// A failed start is logged and does not fail the save, because the task's daily
+// schedule picks the row up.
 
 import { reply, serve } from "../_shared/caller.ts";
 import { type Json, sql } from "../_shared/db.ts";
@@ -26,6 +32,31 @@ const MAX_TAG = 100;
 const SOURCES = new Set(["user", "llm", "assisted"]);
 
 const field = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+
+async function startIntake() {
+  const url = Deno.env.get("INTAKE_FIRE_URL");
+  const token = Deno.env.get("INTAKE_FIRE_TOKEN");
+  if (!url || !token) {
+    console.error("suggestion-submit: intake trigger not configured");
+    return;
+  }
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "anthropic-beta": "experimental-cc-routine-2026-04-01",
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) console.error("suggestion-submit: intake trigger refused", res.status);
+  } catch (err) {
+    console.error("suggestion-submit: intake trigger failed", (err as Error).name);
+  }
+}
 
 serve(async (_key, body) => {
   const title = field(body.title);
@@ -54,6 +85,7 @@ serve(async (_key, body) => {
       values (${title}, ${text}, ${source}, ${pluginVersion}, ${skill || null},
         ${items.ok ? sql.json(items.ok as Json) : null}, ${previews.ok ? sql.json(previews.ok as Json) : null})
       returning suggestion_id, items is not null as items_saved, previews is not null as previews_saved`;
+    await startIntake();
     return reply(200, { suggestion_id: row.suggestion_id, items_saved: row.items_saved, previews_saved: row.previews_saved });
   } catch (err) {
     console.error("suggestion-submit: database fault", (err as { code?: unknown })?.code ?? "no code");

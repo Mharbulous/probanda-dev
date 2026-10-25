@@ -4,7 +4,7 @@ description: Cloud only. Plan every new Suggestion Box entry, apply the planner'
 
 # /intake-suggestions
 
-Run unattended by a scheduled cloud routine. It is `/suggestion-triage` (`.claude/skills/suggestion-triage/SKILL.md`) with Brahm's choice at its step 3 made by the rule in step 3 below: Brahm chose to have suggestions built without his review.
+Run unattended by the "Suggestion Box intake" cloud task, which the Suggestion Box's save function starts each time a suggestion is saved, and which also runs daily as a backstop. Only one run works at a time, under the intake lock (`docs/agents/issue-tracker.md`, **Intake lock**). It is `/suggestion-triage` (`.claude/skills/suggestion-triage/SKILL.md`) with Brahm's choice at its step 3 made by the rule in step 3 below: Brahm chose to have suggestions built without his review.
 
 The cloud does not load Brahm's own global rules, so these hold for the whole run:
 
@@ -19,11 +19,11 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 
 ## 1. List
 
-`node cloud/suggestions/tools/triage.mjs list`. If it prints `set POOL_SECRET_KEY first`, or the request is refused for its host, stop and report that the cloud environment lacks the key or network access. If no row is `new`, stop and report that.
+Take the intake lock (**Intake lock**, Take). If it is held, stop and report `Intake lock held`: the holder takes every new row. Then `node cloud/suggestions/tools/triage.mjs list`. If it prints `set POOL_SECRET_KEY first`, or the request is refused for its host, stop and report that the cloud environment lacks the key or network access. If no row is `new`, stop and report that.
 
 ## 2. Plan
 
-For each `new` row, oldest first, dispatch one Agent with model `fable` and only the Read, Glob and Grep tools. Its prompt is the body of `source/developer/agents/suggestion-planner.md` (below its frontmatter), followed by the row's `suggestion_id`, `skill`, `plugin_version`, `source`, and its full title and body.
+For each `new` row, oldest first, refresh the intake lock, then dispatch one Agent with model `fable` and only the Read, Glob and Grep tools. Its prompt is the body of `source/developer/agents/suggestion-planner.md` (below its frontmatter), followed by the row's `suggestion_id`, `skill`, `plugin_version`, `source`, and its full title and body.
 
 ## 3. Decide
 
@@ -36,6 +36,8 @@ Apply the first rule that fits the planner's TLDR:
 Filing an issue means `POST /issues` with its title, its body and `"labels":["suggestion"]`, then at once `node cloud/suggestions/tools/triage.mjs set-status <suggestion_id> <status> --issue <n>`. If the set-status call fails, comment its output on the issue and carry on.
 
 ## 4. Implement
+
+Release the intake lock (**Intake lock**, Release). Then list new suggestions once more. If any is left, take the lock again and go back to step 2 for it; if the lock is now held, another run has it.
 
 When any issue was filed, run `/implement-suggestions` with no issue number (read `.claude/commands/implement-suggestions.md` if it is not offered). It works the queue under the implementer lock, or stops at once when another run holds it.
 
