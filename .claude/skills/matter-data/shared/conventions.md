@@ -75,7 +75,7 @@ Pointer resolution, temp-copy staging, `ATTACH`, the schema-version guard, and t
 
    - **`matter_data__ingest_authority`** — `{ matter_root, result_path, file_path, file_hash, bundled_pages? }`. Writes one extracted legal authority's rows from the extractor's result file, through `matter_data__execute`'s own lock, trigger layer, single transaction and dump. Only [`../operations/ingest-extract.md`](../operations/ingest-extract.md) Path D calls it, and that section is its contract. A result of `ok: false` with `problems` means nothing was written. Any other non-success result falls under the verify-before-retry rule above.
 
-   - **`matter_data__migrate`** — `{ matter_root, mode, plan_token?, user_confirmation?, backup_id? }`. The schema-upgrade path; `plan` then `apply`, gated on a plan token from a fresh dry-run (`user_confirmation` echoes the plan's `user_confirmation_required` string). Full contract in `../operations/migrate.md`; run it through the `migration-runner` subagent, not inline.
+   - **`matter_data__migrate`** — `{ matter_root, mode, plan_token?, user_confirmation?, backup_id? }`. The schema-upgrade path; `plan` then `apply`, gated on a plan token from a fresh dry-run (`user_confirmation` echoes the plan's `user_confirmation_required` string). Full contract in `../operations/migrate.md`; run it through the `lawyer:migration-runner` subagent, not inline.
 
    - **`matter_data__relocate`** — `{ matter_root, mode }`. Moves a matter's case data from the firm-level root into the matter's own `0. CASE DATA` (ADR 0013); `plan` then `apply`. Full contract in `../operations/relocate.md`.
 

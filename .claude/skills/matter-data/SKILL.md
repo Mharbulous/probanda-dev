@@ -27,7 +27,7 @@ This skill is the **sole gatekeeper** for CRUD operations on a litigation matter
 4. Before composing any SQL, read `references/schema.sql`. Never guess a table or column name.
 5. Before modifying this skill itself, read `references/design-decisions.md` — it records load-bearing design decisions.
 
-**This works from any originating skill.** If you arrived here mid-task from another skill's workflow rather than from `/matter-data` itself, nothing further is required: following steps 1–4 above *is* what the `matter_data__*` tools mean by "Only the /matter-data skill may call this tool." Read the operation file the routing table names and do exactly what it says — for most operations that means calling `matter_data__query` / `matter_data__execute` yourself; `operations/migrate.md` is the exception and routes through the `migration-runner` subagent.
+**This works from any originating skill.** If you arrived here mid-task from another skill's workflow rather than from `/matter-data` itself, nothing further is required: following steps 1–4 above *is* what the `matter_data__*` tools mean by "Only the /matter-data skill may call this tool." Read the operation file the routing table names and do exactly what it says — for most operations that means calling `matter_data__query` / `matter_data__execute` yourself; `operations/migrate.md` is the exception and routes through the `lawyer:migration-runner` subagent.
 
 ## Operation routing
 

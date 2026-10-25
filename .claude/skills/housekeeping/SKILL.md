@@ -86,7 +86,7 @@ Repeat this check, a fresh `housekeeping__preflight` call, before every write ph
 
 Follow the profile's **record-backend** protocol: invoke `/matter-data`, ask whether the matter has a case database, run its `pointer-health`, and show the result as its one line.
 
-- **A schema-version failure** (the case database is older than this build needs): halt the whole run and say so in chat. Nothing is ingested against an old schema, and no page is built. Name the fix: `/matter-data`'s migrate operation, run through its `migration-runner` agent.
+- **A schema-version failure** (the case database is older than this build needs): halt the whole run and say so in chat. Nothing is ingested against an old schema, and no page is built. Name the fix: `/matter-data`'s migrate operation, run through its `lawyer:migration-runner` agent.
 - **No case database:** this flow cannot run without one, because every file it files is read into the case database and its review log lives there. Of the profile's two options, offer only **set up the case database now**. If it is set up, give the profile's verbatim message and end the run. If it is declined, end the run.
 - **A stale pointer, or the `matter_data__*` tools absent:** halt and name the error.
 
