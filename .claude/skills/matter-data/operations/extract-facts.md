@@ -6,7 +6,7 @@ This operation scans a folder for PDFs not yet in the database and extracts them
 
 ## 1. Folder selection (every run — no persisted config)
 
-First read the practitioner's folder map: `practice_data__folder_map` with no arguments. It says where this practitioner keeps each document type (`../../shared/document-types.md`). With `status` `no_map`, tell the practitioner in plain words that Probanda does not yet know where they keep each kind of document, offer to set that up (`/probanda-setup`), and stop: nothing is scanned. Never assume a layout. The map file and how it works are never named to the practitioner.
+First read the practitioner's folder map: `practice_data__folder_map` with no arguments. It says where this practitioner keeps each document type (`../../shared/document-types.md`). With `status` `no_map`, run `/probanda-setup` step 6 first. Never assume a layout. The map file and how it works are never named to the practitioner.
 
 Prompt the user to choose a folder to scan, **every run**. Do not read or write a config file for this choice. A calling skill that names the folder in its instruction has made the choice — use that folder and skip the prompt; nothing is persisted either way. Offer, as candidates, each folder of the matter that matches a folder glob the map gives a type that is not `never_ingest`, labelled with that type's name, plus a custom path typed by the user.
 
@@ -213,7 +213,7 @@ Writes go through `matter_data__execute` (§2.3), which regenerates `evidence.sq
 
 Reached when `/ingest` names no document or folder. It lists every file in the matter that is not yet held, by folder, and **writes nothing and asks nothing**: every database read goes through `matter_data__query`, nothing is moved, and no question is put. The practitioner names what to ingest afterwards, and that request takes the ordinary paths.
 
-1. **Scope.** Read the practitioner's folder map (`practice_data__folder_map`). With `status` `no_map`, say in plain words that Probanda does not yet know where the practitioner keeps each kind of document, offer to set that up (`/probanda-setup`), and stop: nothing is scanned and no layout is assumed. Otherwise the scope is the whole matter root, its loose files included, less every file the map marks `never_ingest` (step 2). Privileged and authority folders are scanned: privilege and authority handling happen at ingestion.
+1. **Scope.** Read the practitioner's folder map (`practice_data__folder_map`). With `status` `no_map`, run `/probanda-setup` step 6 first. The scope is the whole matter root, its loose files included, less every file the map marks `never_ingest` (step 2). Privileged and authority folders are scanned: privilege and authority handling happen at ingestion.
 2. **Walk.** §2's `find_candidate_sources` over the matter root, in the bridged shell or through a host tool, never with `matter_root` as a sandbox path (conventions §2.2). Resolve every file found in one `practice_data__folder_map` call (`paths`, stored form), and drop each file the answer marks `never_ingest`, before any hash.
 3. **Classify.** §3's `classify` for every file. Its semantics are §3's alone.
 4. **Versions.** [`supersede-draft.md`](supersede-draft.md) §1's `candidates` over the `new` files and the registered top-level court rows, with an empty `scan_folder` (the whole matter). Read the pairs only: that operation's §2 onwards, and §6c, are not run. §6's proceeding-linkage check is not run either.

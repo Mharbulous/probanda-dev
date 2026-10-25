@@ -14,10 +14,8 @@ one glob per extension, nothing else.
 
 Read the practitioner's folder map (`practice_data__folder_map`). It says
 which of the matter's folders hold each document type
-(`shared/document-types.md`). **With `status` `no_map`, stop:** tell the
-practitioner in plain words that Probanda does not yet know where they keep
-each kind of document, offer to set that up (`/probanda-setup`), and never
-assume a layout. The map file and how it works are never named to them.
+(`shared/document-types.md`). With `status` `no_map`, run `/probanda-setup`
+step 6 first. The map file and how it works are never named to them.
 
 With a map, give each folder of the matter that a map glob matches the first
 **folder type** below whose document types it holds. The folder types group the

@@ -307,7 +307,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("set_folder_map"),
-      description: "Replace the folder map of the roster person this machine's probanda.json names, at <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. Call it only with a map the practitioner approved under /show-me. entries is the whole map, [{type, folders}]: each type a glossary id (practice_data__folder_map's document_types), at most once; folders a non-empty list of globs relative to the matter folder. A type the practitioner never files is left out. Refused, writing nothing, when an entry names an unknown type, repeats a type, or gives an absolute glob or a . or .. segment, and when this machine names no person. Returns the person, the path written and the entries.",
+      description: "Replace the folder map of the roster person this machine's probanda.json names, at <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. entries is the whole map, [{type, folders}]: each type a glossary id (practice_data__folder_map's document_types), at most once; folders a non-empty list of globs relative to the matter folder. A type the practitioner never files is left out. Refused, writing nothing, when an entry names an unknown type, repeats a type, or gives an absolute glob or a . or .. segment, and when this machine names no person. Returns the person, the path written and the entries.",
       inputSchema: {
         type: "object",
         properties: {

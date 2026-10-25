@@ -63,8 +63,7 @@ depends on the profile's **Kind**:
 
 - For a `rename-in-place` profile: the in-scope subfolders, resolved from
   the practitioner's folder map (each with its own type/label and the notes
-  chunk it should be reviewed with), or the no-map stop the profile states, the
-  always-skip list, disambiguation tips, the verbatim-path rule, and the
+  chunk it should be reviewed with), the always-skip list, disambiguation tips, the verbatim-path rule, and the
   argument rule.
 - For a `route-to-destination` profile: the in-scope location (e.g. files
   loose directly at the profile root, non-recursive), the never-descend

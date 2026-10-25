@@ -14,7 +14,6 @@ description: "Set Probanda up on a device where it has never been set up: a prac
 A missing `probanda.json` means Probanda has not been set up on this device. It is not a fault. This skill sets the device up and then hands back to whatever the practitioner was doing.
 
 **Rules that hold throughout:**
-- Every root, folder and setting is written only after the practitioner approves it under `/show-me`. Ask one question at a time.
 - Write `probanda.json` only through the practice_data tools named below. Never write it or `firm.json` by hand.
 - Nothing written holds client or matter content: no client names, matter names or document text. It holds only folder paths, the firm's name and the roster.
 - Setup creates only Probanda's own folders and files: the `0. CASE DATA` folder when the practitioner approves creating it, `_practice\` and `practice.db`, `_practice\firm\firm.json`, and this person's folder map. It never deletes, moves or renames a file, and never creates a folder inside a matter. A matter's own `0. CASE DATA` folder is created by matter-data's initialize, not here.
@@ -58,7 +57,7 @@ Whether to store client names is asked by retainer-tracking's First Import, and 
 
 ## Step 6 — Record the folder map
 
-Follow `references/folder-layout.md`. It proposes, from one of the practitioner's matter folders, where they keep each kind of document, and records it only on their yes.
+Follow `references/folder-layout.md`. It proposes, from one of the practitioner's matter folders, where they keep each kind of document.
 
 ## Step 7 — Verify and hand back
 
