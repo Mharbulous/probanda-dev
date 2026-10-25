@@ -21601,9 +21601,23 @@ async function apiFetch(url) {
       }
       lastRequestTime = Date.now();
       dailyCount++;
-      return fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+      try {
+        return await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+      } catch (error2) {
+        const detail = sanitizeError(error2 instanceof Error ? error2.message : String(error2));
+        throw new Error(`network: CanLII could not be reached (${detail})`);
+      }
     }).then(resolve, reject);
   });
+}
+async function readJson(response) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    const flat = text.replace(/\s+/g, " ").trim();
+    throw new Error(`CanLII returned a reply that is not JSON: ${flat.length > 200 ? `${flat.slice(0, 200)}\u2026` : flat}`);
+  }
 }
 var version2 = "1.3.0";
 var server = new McpServer({
@@ -21667,7 +21681,7 @@ server.tool(
       if (!response.ok) {
         return errorResponse(`Error: Failed to fetch case citator data (${response.status})`);
       }
-      const data = await response.json();
+      const data = await readJson(response);
       const schemaMap = {
         citedCases: CitedCasesResponseSchema,
         citingCases: CitingCasesResponseSchema,
@@ -21700,7 +21714,7 @@ server.tool(
       if (!response.ok) {
         return errorResponse(`Error: Failed to fetch citator tease data (${response.status})`);
       }
-      const data = await response.json();
+      const data = await readJson(response);
       const schemaMap = {
         citedCases: CitedCasesResponseSchema,
         citingCases: CitingCasesResponseSchema,
@@ -21733,7 +21747,7 @@ server.tool(
       if (!response.ok) {
         return errorResponse(`Error: Failed to fetch legislation databases (${response.status})`);
       }
-      const data = await response.json();
+      const data = await readJson(response);
       const parsed = LegislationResponseSchema.parse(data);
       return jsonResponse(parsed);
     } catch (error2) {
@@ -21765,7 +21779,7 @@ server.tool(
       if (!response.ok) {
         return errorResponse(`Error: Failed to fetch legislation list (${response.status})`);
       }
-      const data = await response.json();
+      const data = await readJson(response);
       const parsed = LegislationItemResponseSchema.parse(data);
       const needle = titleContains?.trim().toLowerCase();
       const matched = needle ? parsed.legislations.filter((l) => l.title.toLowerCase().includes(needle) || l.citation.toLowerCase().includes(needle)) : parsed.legislations;
@@ -21802,7 +21816,7 @@ server.tool(
       if (!response.ok) {
         return errorResponse(`Error: Failed to fetch legislation metadata (${response.status})`);
       }
-      const data = await response.json();
+      const data = await readJson(response);
       const parsed = LegislationMetadataSchema.parse(data);
       return jsonResponse(parsed);
     } catch (error2) {
@@ -21832,7 +21846,7 @@ server.tool(
         const params = new URLSearchParams({ api_key: apiKey });
         const response = await apiFetch(`https://api.canlii.org/v1/${path}?${params.toString()}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.json();
+        return readJson(response);
       }, async (url) => {
         const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);

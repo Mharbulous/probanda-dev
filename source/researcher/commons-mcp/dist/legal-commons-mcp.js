@@ -17311,24 +17311,44 @@ var LegalCommonsClient = class {
       );
     }
     const url = this.config.supabaseUrl.replace(/\/$/, "");
-    const res = await fetch(`${url}${path}`, {
-      method,
-      headers: {
-        apikey: this.config.staticKey,
-        Authorization: `Bearer ${this.config.staticKey}`,
-        "Content-Type": "application/json",
-        ...extraHeaders
-      },
-      body: body === void 0 ? void 0 : JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS)
-    });
-    const text = await res.text();
-    if (!res.ok) {
-      throw new TransportError(`${this.config.label ?? "legal_commons"} ${method} ${path} failed (${res.status}): ${text || res.statusText}`, res.status);
+    const label = this.config.label ?? "legal_commons";
+    let res;
+    try {
+      res = await fetch(`${url}${path}`, {
+        method,
+        redirect: "manual",
+        headers: {
+          apikey: this.config.staticKey,
+          Authorization: `Bearer ${this.config.staticKey}`,
+          "Content-Type": "application/json",
+          ...extraHeaders
+        },
+        body: body === void 0 ? void 0 : JSON.stringify(body),
+        signal: AbortSignal.timeout(TIMEOUT_MS)
+      });
+    } catch (error2) {
+      const detail = error2 instanceof Error ? error2.message : String(error2);
+      throw new TransportError(`${label} could not be reached (${detail})`);
     }
-    return text ? JSON.parse(text) : null;
+    const text = await res.text();
+    if (res.status >= 300 && res.status < 400) {
+      throw new TransportError(`${label} redirected ${method} ${path} (HTTP ${res.status}); the request was not followed`, res.status);
+    }
+    if (!res.ok) {
+      throw new TransportError(`${label} ${method} ${path} failed (${res.status}): ${text || res.statusText}`, res.status);
+    }
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new TransportError(`${label} ${method} ${path} returned a reply that is not JSON: ${snippet(text)}`, res.status);
+    }
   }
 };
+function snippet(text) {
+  const flat = text.replace(/\s+/g, " ").trim();
+  return flat.length > 200 ? `${flat.slice(0, 200)}\u2026` : flat;
+}
 
 // src/legal-commons/config.ts
 async function loadLegalCommonsConfig(env = process.env) {

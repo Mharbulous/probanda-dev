@@ -1,4 +1,4 @@
-// build-stamp: b4565f0bd3bc
+// build-stamp: 675a6831c66e
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15674,20 +15674,13 @@ function isPlainObject3(value) {
 
 // src/timecamp/page.ts
 import { randomBytes } from "node:crypto";
+
+// src/key-request/page.ts
 import { createServer } from "node:http";
 var MAX_BODY = 4 * 1024;
-var TITLE = "Probanda TimeCamp connector";
-var pending;
-var listening;
-async function serveTokenPage(save) {
-  const link = randomBytes(24).toString("hex");
-  pending = { link, save };
-  listening ??= listen();
-  return `http://127.0.0.1:${await listening}/timecamp/${link}`;
-}
-function listen() {
+function listen(handle2, onError) {
   const server = createServer((req, res) => {
-    handle(req, res).catch(() => {
+    handle2(req, res).catch(() => {
       if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
       else res.destroy();
     });
@@ -15695,7 +15688,7 @@ function listen() {
   server.on("connection", (socket) => socket.unref());
   return new Promise((resolve, reject) => {
     server.once("error", (err) => {
-      listening = void 0;
+      onError();
       reject(err);
     });
     server.listen(0, "127.0.0.1", () => {
@@ -15704,27 +15697,6 @@ function listen() {
     });
   });
 }
-async function handle(req, res) {
-  const m = /^\/timecamp\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
-  const current = pending;
-  if (!m || !current || m[1] !== current.link) {
-    return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
-  }
-  if (req.method === "GET") return page(res, 200, TITLE, FORM);
-  if (req.method !== "POST") return page(res, 405, "Not allowed", "");
-  const typed = (new URLSearchParams(await readBody(req)).get("secret") ?? "").trim();
-  let outcome;
-  try {
-    outcome = await current.save(typed);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return page(res, 200, TITLE, `<p class="error">Not saved: ${escape2(message)}</p>${FORM}`);
-  }
-  if (pending === current) pending = void 0;
-  const saved = outcome.persisted ? "<p>It is saved on this computer, encrypted, and will be used after a restart.</p>" : `<p class="error">It works for this session only and could not be saved: ${escape2(outcome.warning ?? "")}</p>`;
-  page(res, 200, "Connected", `<p>Connected to TimeCamp as ${escape2(outcome.user)}.</p>${saved}<p>You can close this tab and return to Claude.</p>`);
-}
-var FORM = '<p>Find your token in TimeCamp: click your avatar, open Profile Settings, and scroll to the bottom for "Your programming API token".</p><p>Your token will be sent to: www.timecamp.com</p><form method="post"><label>TimeCamp API token<br><input type="password" name="secret" autocomplete="off" required autofocus></label><button type="submit">Check and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>';
 function page(res, status2, title, body) {
   res.writeHead(status2, {
     "Content-Type": "text/html; charset=utf-8",
@@ -15758,6 +15730,40 @@ function readBody(req) {
     req.on("error", reject);
   });
 }
+
+// src/timecamp/page.ts
+var TITLE = "Probanda TimeCamp connector";
+var pending;
+var listening;
+async function serveTokenPage(save) {
+  const link = randomBytes(24).toString("hex");
+  pending = { link, save };
+  listening ??= listen(handle, () => {
+    listening = void 0;
+  });
+  return `http://127.0.0.1:${await listening}/timecamp/${link}`;
+}
+async function handle(req, res) {
+  const m = /^\/timecamp\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
+  const current = pending;
+  if (!m || !current || m[1] !== current.link) {
+    return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
+  }
+  if (req.method === "GET") return page(res, 200, TITLE, FORM);
+  if (req.method !== "POST") return page(res, 405, "Not allowed", "");
+  const typed = (new URLSearchParams(await readBody(req)).get("secret") ?? "").trim();
+  let outcome;
+  try {
+    outcome = await current.save(typed);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return page(res, 200, TITLE, `<p class="error">Not saved: ${escape2(message)}</p>${FORM}`);
+  }
+  if (pending === current) pending = void 0;
+  const saved = outcome.persisted ? "<p>It is saved on this computer, encrypted, and will be used after a restart.</p>" : `<p class="error">It works for this session only and could not be saved: ${escape2(outcome.warning ?? "")}</p>`;
+  page(res, 200, "Connected", `<p>Connected to TimeCamp as ${escape2(outcome.user)}.</p>${saved}<p>You can close this tab and return to Claude.</p>`);
+}
+var FORM = '<p>Find your token in TimeCamp: click your avatar, open Profile Settings, and scroll to the bottom for "Your programming API token".</p><p>Your token will be sent to: www.timecamp.com</p><form method="post"><label>TimeCamp API token<br><input type="password" name="secret" autocomplete="off" required autofocus></label><button type="submit">Check and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>';
 
 // src/timecamp/tools.ts
 var DATE = "^\\d{4}-\\d{2}-\\d{2}$";

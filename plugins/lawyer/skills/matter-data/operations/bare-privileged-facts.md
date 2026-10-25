@@ -176,7 +176,7 @@ Re-running it changes nothing: an emptied row no longer has a description, and a
 
 Confirm with `matter_data__query` before any retry (conventions §2.3): re-run the §3 query and expect no `empty` rows. Then confirm each emptied fact has a provenance row whose note holds a `STATEMENT:` line. Compare counts only.
 
-A matter on an older schema is refused by the tool. Migrate it first, through the `migration-runner` agent only (`migrate.md`).
+A matter on an older schema is refused by the tool. Migrate it first, through the `lawyer:migration-runner` agent only (`migrate.md`).
 
 ## 5. Fill (a non-privileged source states the same Fact)
 

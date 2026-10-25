@@ -1,4 +1,4 @@
-// build-stamp: d98d32afbe08
+// build-stamp: 381a9fe16b7f
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -80115,7 +80115,7 @@ function listCaseParties(caseDataDir, env = process.env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync6 } from "node:fs";
 import { join as join10 } from "node:path";
-var BUILD_STAMP = false ? null : "d98d32afbe08";
+var BUILD_STAMP = false ? null : "381a9fe16b7f";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -83299,7 +83299,7 @@ function route(store, name, args) {
   }
 }
 
-// src/case/migrate.ts
+// src/migrate-driver.ts
 var MIGRATE_DRIVER = String.raw`
 import json, sys
 
@@ -83324,6 +83324,23 @@ def main():
 
 main()
 `.trim();
+function throwDriverRefusal(parsed, fallbackMessage) {
+  const error2 = parsed.error ?? {};
+  const details = error2.details && Object.keys(error2.details).length ? ` [${JSON.stringify(error2.details)}]` : "";
+  throw new DataServerError(
+    `${error2.message ?? fallbackMessage}${details}`,
+    error2.code ?? "migrate_error"
+  );
+}
+function pushStaleLockWarning(result, store, subject) {
+  const warnings = Array.isArray(result.warnings) ? result.warnings : [];
+  warnings.push(
+    `broke a stale ${store} write lock (>15 min old) before running; if another session is still writing to or migrating this ${subject}, stop and reconcile before continuing`
+  );
+  result.warnings = warnings;
+}
+
+// src/case/migrate.ts
 function driverFile() {
   return pythonDriverFile("case-migrate-driver", MIGRATE_DRIVER);
 }
@@ -83331,13 +83348,7 @@ async function caseDataMigrate(matterRoot, mode, opts = {}, env = process.env) {
   const lock = await acquireCaseLock(matterRoot, env);
   try {
     const result = runDriver(matterRoot, mode, opts, env);
-    if (lock.brokeStale) {
-      const warnings = Array.isArray(result.warnings) ? result.warnings : [];
-      warnings.push(
-        "broke a stale matter-data write lock (>15 min old) before running; if another session is still writing to or migrating this matter, stop and reconcile before continuing"
-      );
-      result.warnings = warnings;
-    }
+    if (lock.brokeStale) pushStaleLockWarning(result, "matter-data", "matter");
     return result;
   } finally {
     lock.release();
@@ -83361,14 +83372,7 @@ function runDriver(matterRoot, mode, opts, env) {
     extraEnv: { PYTHONPATH: scriptsDir },
     timeoutAdvice: `If an apply had begun replacing the databases, the next migrate refuses with apply_interrupted until it is recovered with mode 'restore'.`
   });
-  if (!parsed.ok) {
-    const error2 = parsed.error ?? {};
-    const details = error2.details && Object.keys(error2.details).length ? ` [${JSON.stringify(error2.details)}]` : "";
-    throw new DataServerError(
-      `${error2.message ?? "matter-data migrate refused"}${details}`,
-      error2.code ?? "migrate_error"
-    );
-  }
+  if (!parsed.ok) throwDriverRefusal(parsed, "matter-data migrate refused");
   return parsed.result ?? {};
 }
 
@@ -84077,30 +84081,6 @@ function pruneBackups(dbPath, before) {
 }
 
 // src/timecamping/migrate.ts
-var MIGRATE_DRIVER2 = String.raw`
-import json, sys
-
-
-def main():
-    request = json.loads(sys.stdin.read())
-    from migrate_engine import MigrateError, run
-    try:
-        sys.stdout.write(json.dumps({"ok": True, "result": run(request)}))
-    except MigrateError as exc:
-        sys.stdout.write(json.dumps({"ok": False, "error": exc.as_dict()}))
-    except BaseException as exc:
-        sys.stdout.write(json.dumps({
-            "ok": False,
-            "error": {
-                "code": "internal_error",
-                "message": "Unexpected migrate driver failure",
-                "details": {"exception": type(exc).__name__, "reason": str(exc)},
-            },
-        }))
-
-
-main()
-`.trim();
 function driverFile2(name, source) {
   return pythonDriverFile(`timecamping-${name}-driver`, source);
 }
@@ -84109,14 +84089,8 @@ async function timecampingDataMigrate(env = process.env) {
   const lock = await acquireDataLock2(dbPath, env);
   try {
     const backupsBefore = timestampedBackups(dbPath);
-    const result = runDriver3("migrate", driverFile2("migrate", MIGRATE_DRIVER2), JSON.stringify({ db_path: dbPath }), env);
-    if (lock.brokeStale) {
-      const warnings = Array.isArray(result.warnings) ? result.warnings : [];
-      warnings.push(
-        "broke a stale timecamping-data write lock (>15 min old) before running; if another session is still writing to or migrating this database, stop and reconcile before continuing"
-      );
-      result.warnings = warnings;
-    }
+    const result = runDriver3("migrate", driverFile2("migrate", MIGRATE_DRIVER), JSON.stringify({ db_path: dbPath }), env);
+    if (lock.brokeStale) pushStaleLockWarning(result, "timecamping-data", "database");
     const pruneWarnings = pruneBackups(dbPath, backupsBefore);
     if (pruneWarnings.length > 0) result.warnings = [...Array.isArray(result.warnings) ? result.warnings : [], ...pruneWarnings];
     return result;
@@ -84136,14 +84110,7 @@ function runDriver3(label2, driver, payload, env) {
     // Hops apply one at a time (issue #612), so a kill can stop between them.
     timeoutAdvice: `It may have stopped between hops. Before migrating again, check whether the database is at the target schema version; if it is not, copy back the timecamping.db.bak-* this run wrote (stamped at this run's start -- an older one would discard every write made since it). A fresh create has no backup; delete the partial database instead.`
   });
-  if (!parsed.ok) {
-    const error2 = parsed.error ?? {};
-    const details = error2.details && Object.keys(error2.details).length ? ` [${JSON.stringify(error2.details)}]` : "";
-    throw new DataServerError(
-      `${error2.message ?? "timecamping-data migrate refused"}${details}`,
-      error2.code ?? "migrate_error"
-    );
-  }
+  if (!parsed.ok) throwDriverRefusal(parsed, "timecamping-data migrate refused");
   return parsed.result ?? {};
 }
 
@@ -86720,30 +86687,6 @@ function assertMigrationWithinBundle(dbPath, engineTarget, env = process.env) {
 }
 
 // src/submission/migrate.ts
-var MIGRATE_DRIVER3 = String.raw`
-import json, sys
-
-
-def main():
-    request = json.loads(sys.stdin.read())
-    from migrate_engine import MigrateError, run
-    try:
-        sys.stdout.write(json.dumps({"ok": True, "result": run(request)}))
-    except MigrateError as exc:
-        sys.stdout.write(json.dumps({"ok": False, "error": exc.as_dict()}))
-    except BaseException as exc:
-        sys.stdout.write(json.dumps({
-            "ok": False,
-            "error": {
-                "code": "internal_error",
-                "message": "Unexpected migrate driver failure",
-                "details": {"exception": type(exc).__name__, "reason": str(exc)},
-            },
-        }))
-
-
-main()
-`.trim();
 var VERSION_DRIVER = String.raw`
 import json, sys
 
@@ -86762,7 +86705,7 @@ async function submissionDataMigrate(dbPath, env = process.env) {
     const backupsBefore = timestampedBackups(dbPath);
     const migrate2 = (targetVersion) => runDriver4(
       "migrate",
-      driverFile3("migrate", MIGRATE_DRIVER3),
+      driverFile3("migrate", MIGRATE_DRIVER),
       JSON.stringify({ db_path: dbPath, ...targetVersion !== void 0 ? { target_version: targetVersion } : {} }),
       env,
       WRITE_TIMEOUT_MS
@@ -86775,13 +86718,7 @@ async function submissionDataMigrate(dbPath, env = process.env) {
     }
     const result = migrate2();
     if (staged !== void 0) result.applied = [...staged.applied, ...result.applied];
-    if (lock.brokeStale) {
-      const warnings = Array.isArray(result.warnings) ? result.warnings : [];
-      warnings.push(
-        "broke a stale drafting-data write lock (>15 min old) before running; if another session is still writing to or migrating this database, stop and reconcile before continuing"
-      );
-      result.warnings = warnings;
-    }
+    if (lock.brokeStale) pushStaleLockWarning(result, "drafting-data", "database");
     const pruneWarnings = pruneBackups(dbPath, backupsBefore);
     if (pruneWarnings.length > 0) result.warnings = [...Array.isArray(result.warnings) ? result.warnings : [], ...pruneWarnings];
     return result;
@@ -86845,14 +86782,7 @@ function runDriver4(label2, driver, payload, env, defaultTimeoutMs) {
     timeoutMs: pythonTimeoutMs2(env, defaultTimeoutMs),
     extraEnv: { PYTHONPATH: scriptsDir }
   });
-  if (!parsed.ok) {
-    const error2 = parsed.error ?? {};
-    const details = error2.details && Object.keys(error2.details).length ? ` [${JSON.stringify(error2.details)}]` : "";
-    throw new DataServerError(
-      `${error2.message ?? "drafting-data migrate refused"}${details}`,
-      error2.code ?? "migrate_error"
-    );
-  }
+  if (!parsed.ok) throwDriverRefusal(parsed, "drafting-data migrate refused");
   return parsed.result ?? {};
 }
 
@@ -116286,7 +116216,6 @@ async function saveAnswerTool(args, env = process.env) {
 
 // src/key-request/tools.ts
 import { createHash as createHash14, randomBytes as randomBytes6 } from "node:crypto";
-import { createServer as createServer2 } from "node:http";
 import { join as join51 } from "node:path";
 
 // src/key-request/page.ts
@@ -116299,12 +116228,14 @@ var listening;
 async function serveKeyPage(save2) {
   const link = randomBytes5(24).toString("hex");
   pending = { link, save: save2 };
-  listening ??= listen();
+  listening ??= listen(handle, () => {
+    listening = void 0;
+  });
   return `http://127.0.0.1:${await listening}/cloud-key/${link}`;
 }
-function listen() {
+function listen(handle4, onError) {
   const server = createServer((req, res) => {
-    handle(req, res).catch(() => {
+    handle4(req, res).catch(() => {
       if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
       else res.destroy();
     });
@@ -116312,7 +116243,7 @@ function listen() {
   server.on("connection", (socket) => socket.unref());
   return new Promise((resolve10, reject) => {
     server.once("error", (err) => {
-      listening = void 0;
+      onError();
       reject(err);
     });
     server.listen(0, "127.0.0.1", () => {
@@ -116459,7 +116390,9 @@ async function submit(env) {
   }
   const link = randomBytes6(24).toString("hex");
   pending2 = { link, projectUrl: key.supabaseUrl, env };
-  listening2 ??= listen2();
+  listening2 ??= listen(handle2, () => {
+    listening2 = void 0;
+  });
   return {
     status: "awaiting_details",
     url: `http://127.0.0.1:${await listening2}/key-request/${link}`,
@@ -116554,25 +116487,6 @@ function requestBody(form, tokenHash, thisYear = (/* @__PURE__ */ new Date()).ge
     ...phone ? { phone } : {},
     token_hash: tokenHash
   };
-}
-function listen2() {
-  const server = createServer2((req, res) => {
-    handle2(req, res).catch(() => {
-      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
-      else res.destroy();
-    });
-  });
-  server.on("connection", (socket) => socket.unref());
-  return new Promise((resolve10, reject) => {
-    server.once("error", (err) => {
-      listening2 = void 0;
-      reject(err);
-    });
-    server.listen(0, "127.0.0.1", () => {
-      server.unref();
-      resolve10(server.address().port);
-    });
-  });
 }
 async function handle2(req, res) {
   const m3 = /^\/key-request\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
@@ -117143,7 +117057,7 @@ function textResult(result) {
 
 // src/page-api/server.ts
 import { existsSync as existsSync50 } from "node:fs";
-import { createServer as createServer3 } from "node:http";
+import { createServer as createServer2 } from "node:http";
 import { isAbsolute as isAbsolute9 } from "node:path";
 
 // src/submission/forms/seed-deferral.ts
@@ -117188,7 +117102,7 @@ async function startPageApi(env = process.env, options = {}) {
   let stopped = false;
   let warnedBusy = false;
   let retry;
-  const server = createServer3((req, res) => {
+  const server = createServer2((req, res) => {
     handle3(req, res, env, startedAt).catch((err) => {
       if (!res.headersSent) json2(req, res, 500, { error: err instanceof Error ? err.message : String(err) });
       else res.destroy();

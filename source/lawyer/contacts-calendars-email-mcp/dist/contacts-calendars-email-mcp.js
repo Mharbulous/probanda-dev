@@ -1,4 +1,4 @@
-// build-stamp: 9ac1a8b227b7
+// build-stamp: a2d669b0c5ec
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -118430,7 +118430,31 @@ var draftsFolder = (client) => specialFolder(client, "\\Drafts", ["Drafts"]);
 // src/mail/page.ts
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
+
+// src/key-request/page.ts
 var MAX_BODY = 4 * 1024;
+function escape2(text2) {
+  return text2.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
+}
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on("data", (chunk) => {
+      size += chunk.length;
+      if (size > MAX_BODY) {
+        reject(new Error("the form is larger than 4 KB"));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+    req.on("error", reject);
+  });
+}
+
+// src/mail/page.ts
 var TITLE = "Probanda mail connector";
 var SECRET_INPUT = '<input type="password" name="secret" autocomplete="current-password" required autofocus>';
 var SECRET_HINT = "Your mail password. For iCloud and most hosted mail, use an app-specific password, never the account password.";
@@ -118516,26 +118540,6 @@ function page(res, status2, title, body) {
   );
 }
 var STYLE = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}dt{font-weight:600}dd{margin:0 0 .5rem}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}h2{font-size:1.1rem;margin-top:2rem}li{margin-bottom:.5rem}.disclaimer{font-style:italic;margin-top:4rem;color:#555;font-size:.85rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note,.disclaimer{color:#aaa}}";
-function escape2(text2) {
-  return text2.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
-}
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    let size = 0;
-    req.on("data", (chunk) => {
-      size += chunk.length;
-      if (size > MAX_BODY) {
-        reject(new Error("the form is larger than 4 KB"));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
-    req.on("error", reject);
-  });
-}
 
 // node_modules/tsdav/dist/tsdav.mjs
 var import_debug = __toESM(require_src2(), 1);
