@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
-import { defaultStateDir } from "../dpapi-store.js";
+import { defaultStateDir } from "../../../../mcp-shared/dpapi-store.js";
 
 // The opaque id this install contributes and verifies rule periods under. The
 // pool has one shared key and no user identity, so the id is advisory: it names

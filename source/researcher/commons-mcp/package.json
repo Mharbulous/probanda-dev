@@ -1,7 +1,7 @@
 {
   "name": "legal-commons-mcp",
   "version": "0.5.0",
-  "description": "MCP server serving the shared legal-commons pool (Supabase) and local-backed practice_data / case_data tools",
+  "description": "MCP server serving the shared legal-commons pool (Supabase), the troubleshooting store and the Suggestion Box",
   "type": "module",
   "main": "dist/legal-commons-mcp.js",
   "engines": {

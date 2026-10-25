@@ -3,12 +3,9 @@ import type { LegalCommonsConfig } from "./config.js";
 
 const TIMEOUT_MS = 60_000;
 
-// Slim PostgREST client for the layer-3 pool. Deliberately separate from
-// src/db/rest.ts (which is bound to the per-session JWT tokenProvider and the
-// default `public` schema): legal-commons uses a static credential and a
+// Slim PostgREST client for the layer-3 pool. It uses a static credential and a
 // non-public Postgres schema reached via PostgREST profile headers
-// (Accept-Profile / Content-Profile). Keeping it separate leaves the legacy
-// REST path untouched. Retrieval is in-Postgres (FTS + trigram + citation/tag joins)
+// (Accept-Profile / Content-Profile). Retrieval is in-Postgres (FTS + trigram + citation/tag joins)
 // so there is no external embeddings call here.
 
 export interface SelectOptions {

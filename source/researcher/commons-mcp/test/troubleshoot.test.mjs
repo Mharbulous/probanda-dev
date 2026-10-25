@@ -6,7 +6,7 @@ import test from "node:test";
 
 const index = await import("../build/index.js");
 const schemaGen = await import("../build/schema-gen.js");
-const { BAKED_SUPABASE_URL } = await import("../build/config.js");
+const { BAKED_SUPABASE_URL } = await import("../../../mcp-shared/commons-key.js");
 const { LegalCommonsClient } = await import("../build/legal-commons/client.js");
 const { credentialPath: poolCredentialPath } = await import("../build/legal-commons/config.js");
 const {

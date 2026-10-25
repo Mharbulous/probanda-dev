@@ -1,7 +1,7 @@
 import { join } from "node:path";
 
-import { BAKED_SUPABASE_URL } from "../config.js";
-import { defaultStateDir, readProtectedJson, writeProtectedJson } from "../dpapi-store.js";
+import { BAKED_SUPABASE_URL } from "../../../../mcp-shared/commons-key.js";
+import { defaultStateDir, readProtectedJson, writeProtectedJson } from "../../../../mcp-shared/dpapi-store.js";
 import type { LegalCommonsConfig } from "../legal-commons/config.js";
 
 // Troubleshooting store config. The store is a SECOND, separate Supabase
