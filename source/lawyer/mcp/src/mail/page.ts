@@ -14,6 +14,7 @@ import { randomBytes } from "node:crypto";
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 
+import { escape, readBody } from "../key-request/page.js";
 import type { MailCredential } from "./config.js";
 
 export type CredentialFields = Omit<MailCredential, "password">;
@@ -40,7 +41,6 @@ interface Pending {
   save: SaveSecret;
 }
 
-const MAX_BODY = 4 * 1024;
 const TITLE = "Probanda mail connector";
 // Plain strings, not template literals: the src/mail/ scan refuses a template literal naming it.
 const SECRET_INPUT = '<input type="password" name="secret" autocomplete="current-password" required autofocus>';
@@ -189,25 +189,3 @@ const STYLE =
   "h2{font-size:1.1rem;margin-top:2rem}li{margin-bottom:.5rem}" +
   ".disclaimer{font-style:italic;margin-top:4rem;color:#555;font-size:.85rem}" +
   "@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note,.disclaimer{color:#aaa}}";
-
-function escape(text: string): string {
-  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-}
-
-function readBody(req: IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    let size = 0;
-    req.on("data", (chunk: Buffer) => {
-      size += chunk.length;
-      if (size > MAX_BODY) {
-        reject(new Error("the form is larger than 4 KB"));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
-    req.on("error", reject);
-  });
-}

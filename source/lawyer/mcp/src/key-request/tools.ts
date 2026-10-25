@@ -1,12 +1,11 @@
 import { createHash, randomBytes } from "node:crypto";
-import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
-import type { AddressInfo } from "node:net";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { join } from "node:path";
 
 import { defaultStateDir, readProtectedJson, writeProtectedJson } from "../../../../mcp-shared/dpapi-store.js";
 import { loadCloudKey } from "../cloud-key.js";
 import { ValidationError } from "../errors.js";
-import { escape, page, readBody } from "./page.js";
+import { escape, listen, page, readBody } from "./page.js";
 import { configureCloudKey } from "./save-key.js";
 
 // Runtime logic for the key_request namespace: a practitioner with no key asks
@@ -77,7 +76,7 @@ async function submit(env: NodeJS.ProcessEnv): Promise<unknown> {
   }
   const link = randomBytes(24).toString("hex");
   pending = { link, projectUrl: key.supabaseUrl, env };
-  listening ??= listen();
+  listening ??= listen(handle, () => { listening = undefined; });
   return {
     status: "awaiting_details",
     url: `http://127.0.0.1:${await listening}/key-request/${link}`,
@@ -190,26 +189,6 @@ export function requestBody(form: URLSearchParams, tokenHash: string, thisYear =
     ...(phone ? { phone } : {}),
     token_hash: tokenHash,
   };
-}
-
-function listen(): Promise<number> {
-  const server: Server = createServer((req, res) => {
-    handle(req, res).catch(() => {
-      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
-      else res.destroy();
-    });
-  });
-  server.on("connection", (socket) => socket.unref());
-  return new Promise((resolve, reject) => {
-    server.once("error", (err) => {
-      listening = undefined;
-      reject(err);
-    });
-    server.listen(0, "127.0.0.1", () => {
-      server.unref();
-      resolve((server.address() as AddressInfo).port);
-    });
-  });
 }
 
 async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {

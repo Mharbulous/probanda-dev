@@ -23,11 +23,12 @@ let listening: Promise<number> | undefined;
 export async function serveKeyPage(save: SaveKey): Promise<string> {
   const link = randomBytes(24).toString("hex");
   pending = { link, save };
-  listening ??= listen();
+  listening ??= listen(handle, () => { listening = undefined; });
   return `http://127.0.0.1:${await listening}/cloud-key/${link}`;
 }
 
-function listen(): Promise<number> {
+/** Starts a page listener on 127.0.0.1 for `handle`; `onError` runs before the returned promise rejects. */
+export function listen(handle: (req: IncomingMessage, res: ServerResponse) => Promise<void>, onError: () => void): Promise<number> {
   const server: Server = createServer((req, res) => {
     handle(req, res).catch(() => {
       if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
@@ -37,7 +38,7 @@ function listen(): Promise<number> {
   server.on("connection", (socket) => socket.unref());
   return new Promise((resolve, reject) => {
     server.once("error", (err) => {
-      listening = undefined;
+      onError();
       reject(err);
     });
     server.listen(0, "127.0.0.1", () => {
