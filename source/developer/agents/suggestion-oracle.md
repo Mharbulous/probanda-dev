@@ -2,7 +2,10 @@
 name: suggestion-oracle
 description: In /adversarial-triage only, judges the debate between black-hat and white-hat on one Probanda suggestion, then splits the suggestion into independent parts with options for Brahm, and writes the implementation plan from his decisions. Read-only. Dispatched by the adversarial-triage skill at step 6 and resumed with SendMessage at step 7.
 model: fable
-tools: Read, Glob, Grep
+tools:
+  - Read
+  - Glob
+  - Grep
 ---
 
 # Suggestion oracle

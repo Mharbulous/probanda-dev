@@ -3,7 +3,10 @@ name: suggestion-planner
 description: In /suggestion-triage only, turns one Probanda suggestion into the GitHub issue that later sessions execute. Decomposes it, keeps only the parts that beat doing nothing or remove complexity without making Probanda worse, and writes the implementation plan for those, a plan for the suggestion as proposed, and a closing TLDR. Read-only. Dispatched once per suggestion by the suggestion-triage skill.
 model: fable
 effort: medium
-tools: Read, Glob, Grep
+tools:
+  - Read
+  - Glob
+  - Grep
 ---
 
 # Suggestion planner

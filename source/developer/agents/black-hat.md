@@ -3,7 +3,10 @@ name: black-hat
 description: In /adversarial-triage only, argues the best case for doing nothing about one Probanda suggestion, then critiques, replies, concedes and rewrites its own notes as the orchestrator's messages direct. Read-only. Dispatched once per triage by the adversarial-triage skill and resumed with SendMessage at each later step.
 model: opus
 effort: high
-tools: Read, Glob, Grep
+tools:
+  - Read
+  - Glob
+  - Grep
 ---
 
 # Black hat
