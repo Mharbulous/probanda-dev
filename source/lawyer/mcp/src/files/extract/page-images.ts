@@ -11,7 +11,7 @@
 // renderer out of the contacts, files and timecamp bundles.
 
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { extname, isAbsolute, join } from "node:path";
 import { deflateSync } from "node:zlib";
@@ -167,10 +167,14 @@ export async function classifyPdfPages(path: string, wasm: URL = DEFAULT_WASM): 
 }
 
 export async function pdfPageImages(
-  args: { path: string; pages?: string; tiles?: boolean },
+  args: { path: string; pages?: string; tiles?: boolean; destination_dir?: string },
   wasm: URL = DEFAULT_WASM
 ): Promise<PageImagesResult> {
+  if (args.destination_dir !== undefined && !isAbsolute(args.destination_dir)) {
+    throw new ValidationError(`destination_dir must be absolute: ${args.destination_dir}`);
+  }
   return withPdf(args.path, wasm, async (lib, doc, data) => {
+    const sourceSha256 = createHash("sha256").update(data).digest("hex");
     const pageCount = lib.FPDF_GetPageCount(doc);
     const [first, last] = pageRange(args.pages, pageCount);
     let renderDir: string | null = null;
@@ -187,7 +191,14 @@ export async function pdfPageImages(
         continue;
       }
       const { width, height, tiles } = plan;
-      renderDir ??= mkdtempSync(join(tmpdir(), "probanda-pages-"));
+      // In destination_dir, one folder per PDF, so a re-render overwrites the same bytes.
+      if (renderDir === null) {
+        if (args.destination_dir === undefined) renderDir = mkdtempSync(join(tmpdir(), "probanda-pages-"));
+        else {
+          renderDir = join(args.destination_dir, sourceSha256.slice(0, 16));
+          mkdirSync(renderDir, { recursive: true });
+        }
+      }
       const images: PageImage[] = [];
       for (const [i, [top, rows]] of tiles.entries()) {
         // Each tile loads the page again, so its render, encoding and free stay within one turn.
@@ -203,7 +214,7 @@ export async function pdfPageImages(
       pages.push({ page: n, kind: "scanned", images });
     }
     return {
-      source_sha256: createHash("sha256").update(data).digest("hex"),
+      source_sha256: sourceSha256,
       page_count: pageCount,
       render_dir: renderDir,
       pages,

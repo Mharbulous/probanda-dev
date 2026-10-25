@@ -5,7 +5,7 @@
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import test from "node:test";
@@ -27,6 +27,15 @@ test("an OCR'd scan, also one in a translated form XObject, is scanned; a page o
   assert.equal(got.pages[1].images, undefined);
   assert.equal(got.source_sha256, createHash("sha256").update(readFileSync(SCANNED)).digest("hex"));
   assert.match(got.render_dir, /probanda-pages-/);
+});
+
+test("with destination_dir the PNGs go in its subfolder named for the PDF's hash, the same on each render; a relative one is refused", async () => {
+  const dest = join(DIR, "Page images");
+  const first = await render({ path: SCANNED, destination_dir: dest });
+  assert.equal(first.render_dir, join(dest, first.source_sha256.slice(0, 16)));
+  assert.ok(first.pages[0].images.every((image) => image.path.startsWith(first.render_dir) && existsSync(image.path)));
+  assert.equal((await render({ path: SCANNED, destination_dir: dest })).render_dir, first.render_dir);
+  await assert.rejects(render({ path: SCANNED, destination_dir: "Page images" }), /destination_dir must be absolute/);
 });
 
 test("classifyPdfPages gives the same kinds and renders nothing", async () => {

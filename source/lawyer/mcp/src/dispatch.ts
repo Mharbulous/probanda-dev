@@ -665,6 +665,7 @@ export async function callTool(
       path: args.path as string,
       pages: args.pages as string | undefined,
       tiles: args.tiles as boolean | undefined,
+      destination_dir: args.destination_dir as string | undefined,
     });
   }
 

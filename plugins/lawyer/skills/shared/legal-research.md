@@ -118,8 +118,9 @@ other question runs the duties in their numbered order.
    cannot reach the host scratchpad, as in a cloud session with the matter on the
    desktop, stage only the rows' `text_path` files, at most 50 paths per
    `device_stage_files` call, the calls in parallel, confirm every file staged,
-   and name the staged paths. Stage each manifest's PNGs the same way and name
-   their staged paths in the manifest. Never stage or convert the `6. LAW` files
+   and name the staged paths. Stage each manifest's PNGs the same way, rendered
+   by `/matter-data`'s verify-law operation §2, and name their staged paths in
+   the manifest. Never stage or convert the `6. LAW` files
    themselves. When only some lines of one filed file are needed, such as one
    provision to quote into the spawn prompt, call `law_folder_text` with `file`
    and a `pattern` instead of extracting and staging the folder: the matching
