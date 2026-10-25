@@ -4,7 +4,7 @@
 // that this file pins down with assertions.
 //
 // IMPORTANT: this suite runs on a real dev machine where the repo genuinely
-// sits at the conventional %USERPROFILE%\Git\Coclerk location, and the
+// sits at the conventional %USERPROFILE%\Git\probanda-dev location, and the
 // default `startDir` (this module's own build/ dir) walks up to the real
 // repo too. Every test exercising steps 3 or 4 must therefore ALSO pass an
 // isolated `startDir` so step 2 genuinely misses -- otherwise step 2 wins
@@ -51,7 +51,7 @@ function makeMarked(dir) {
 /**
  * Fully isolated resolution inputs: a marker-free `startDir` to walk up from,
  * scratch `appData` (no Coclerk/coclerk.json under it), and scratch
- * `userProfile` (no Git/Coclerk under it) -- so steps 2, 3 and 4 all
+ * `userProfile` (no Git/probanda-dev under it) -- so steps 2, 3 and 4 all
  * genuinely miss unless the test deliberately populates one of them.
  *
  * Returns `req`, pre-merged with `startDir`, so every call site automatically
@@ -164,9 +164,9 @@ test("coclerk.json falls through when the repo_root key is empty", (t) => {
 
 // ---------------------------------------------------- step 4: conventional --
 
-test("step 4 marker-validates %USERPROFILE%\\Git\\Coclerk", (t) => {
+test("step 4 marker-validates %USERPROFILE%\\Git\\probanda-dev", (t) => {
   const { env, req, userProfile } = isolatedEnv(t);
-  const half = join(userProfile, "Git", "Coclerk");
+  const half = join(userProfile, "Git", "probanda-dev");
 
   // Not there yet.
   assert.equal(codeOf(() => resolveRepoRoot(env, req)), "skills_root_missing");
@@ -183,8 +183,14 @@ test("step 4 marker-validates %USERPROFILE%\\Git\\Coclerk", (t) => {
 test("step 4 falls back to HOME when USERPROFILE is unset", (t) => {
   const { env, req, userProfile } = isolatedEnv(t);
   delete env.USERPROFILE; // HOME (set by isolatedEnv to the same scratch dir) should still be tried
+  makeMarked(join(userProfile, "Git", "probanda-dev"));
+  assert.equal(resolveRepoRoot(env, req), join(userProfile, "Git", "probanda-dev"));
+});
+
+test("step 4 no longer probes the legacy %USERPROFILE%\\Git\\Coclerk", (t) => {
+  const { env, req, userProfile } = isolatedEnv(t);
   makeMarked(join(userProfile, "Git", "Coclerk"));
-  assert.equal(resolveRepoRoot(env, req), join(userProfile, "Git", "Coclerk"));
+  assert.equal(codeOf(() => resolveRepoRoot(env, req)), "skills_root_missing");
 });
 
 // --------------------------------------------------------------- ordering --
@@ -197,7 +203,7 @@ test("ordering: walk-up (2) beats coclerk.json (3) beats the probe (4)", (t) => 
     join(appData, "Coclerk", "coclerk.json"),
     JSON.stringify({ repo_root: "C:\\should-not-be-reached-via-step-3" }),
   );
-  makeMarked(join(userProfile, "Git", "Coclerk")); // a valid step-4 candidate too
+  makeMarked(join(userProfile, "Git", "probanda-dev")); // a valid step-4 candidate too
 
   assert.equal(resolveRepoRoot(env, req), startDir);
 });
@@ -209,7 +215,7 @@ test("ordering: coclerk.json (3) beats the probe (4)", (t) => {
     join(appData, "Coclerk", "coclerk.json"),
     JSON.stringify({ repo_root: "C:\\step-3-wins" }),
   );
-  makeMarked(join(userProfile, "Git", "Coclerk")); // a valid step-4 candidate too
+  makeMarked(join(userProfile, "Git", "probanda-dev")); // a valid step-4 candidate too
 
   assert.equal(resolveRepoRoot(env, req), "C:\\step-3-wins");
 });

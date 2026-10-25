@@ -424,7 +424,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
     {
       name: "repo_docs__write",
       description:
-        "Write a file under the Coclerk repo's docs/ tree (git-versioned, non-privileged). `path` is relative to docs/ (e.g. `E2E-tests/2026-07-19 foo-e2e-test.md`); intermediate directories are created as needed. Fails with code `exists` unless `overwrite: true` -- on that error pick a new name rather than overwriting blindly. This surface cannot touch matter files, code, or anything outside docs/; use it to deliver dev-tool artifacts such as introspection E2E reports without a repo folder grant.",
+        "Write a file under the probanda-dev repo's docs/ tree (git-versioned, non-privileged). `path` is relative to docs/ (e.g. `E2E-tests/2026-07-19 foo-e2e-test.md`); intermediate directories are created as needed. Fails with code `exists` unless `overwrite: true` -- on that error pick a new name rather than overwriting blindly. This surface cannot touch matter files, code, or anything outside docs/; use it to deliver dev-tool artifacts such as introspection E2E reports without a repo folder grant.",
       inputSchema: {
         type: "object",
         properties: {
@@ -440,7 +440,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
     {
       name: "repo_docs__read",
       description:
-        "Read one file under the Coclerk repo's docs/ tree as UTF-8 text, without a repo folder grant. Read-only. `path` is relative to docs/, as `repo_docs__write` takes it; returns {path, content}. Fails with code `not_found` for a missing file and `path_out_of_scope` for any path that leaves docs/.",
+        "Read one file under the probanda-dev repo's docs/ tree as UTF-8 text, without a repo folder grant. Read-only. `path` is relative to docs/, as `repo_docs__write` takes it; returns {path, content}. Fails with code `not_found` for a missing file and `path_out_of_scope` for any path that leaves docs/.",
       inputSchema: {
         type: "object",
         properties: {

@@ -1,4 +1,4 @@
-// Single resolution of the Coclerk repo root for every surface that needs it:
+// Single resolution of the development repo root for every surface that needs it:
 // the skills tree (files/skill-source.ts), the docs tree (files/repo-docs.ts),
 // and the migration engines in the skills tree (below).
 //
@@ -38,7 +38,8 @@
 //      config that already exists for this purpose (see
 //      practice/backend.ts's "case_data_root", which this mirrors).
 //   4. Marker-validated probe of the conventional checkout location,
-//      %USERPROFILE%\Git\Coclerk.
+//      %USERPROFILE%\Git\probanda-dev. The legacy Git\Coclerk is not probed:
+//      a machine without probanda-dev fails loudly rather than writing there.
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
@@ -186,7 +187,7 @@ function readConfigRepoRoot(cfgPath: string, tried: string[]): string | undefine
 
 function conventionalCandidates(env: NodeJS.ProcessEnv): string[] {
   const home = env.USERPROFILE || env.HOME || homedir();
-  return home ? [join(home, "Git", "Coclerk")] : [];
+  return home ? [join(home, "Git", "probanda-dev")] : [];
 }
 
 export type ShippedFrom = "install" | "checkout";
