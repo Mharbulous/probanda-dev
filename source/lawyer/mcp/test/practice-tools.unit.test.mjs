@@ -552,3 +552,16 @@ test("set_time_entries_billable flips every entry in a batch_tag sweep larger th
   assert.equal(stored.length, 1001);
   assert.ok(stored.every((row) => row.tags.billable === true), "no entry past the 1000th is left unflipped");
 });
+
+test("today() is the local date, not the UTC date, in a Vancouver evening", async (t) => {
+  const { today } = await import("../build/tools/practice/contacts.js");
+  const tz = process.env.TZ;
+  process.env.TZ = "America/Vancouver";
+  t.after(() => {
+    if (tz === undefined) delete process.env.TZ;
+    else process.env.TZ = tz;
+  });
+  // 20:30 on 2026-10-24 in Vancouver is already 2026-10-25 in UTC.
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-25T03:30:00Z") });
+  assert.equal(today(), "2026-10-24");
+});

@@ -1,5 +1,6 @@
 // One proceeding's tickets, each classified, with its open loose threads and its Proposal holders.
 
+import { today as localToday } from "../../knowledge/common.js";
 import { ticketAnswersHeld } from "./query.js";
 import { ticketSourcesHeld } from "./track-source.js";
 import {
@@ -46,12 +47,6 @@ export interface ProceedingBoard {
   deleted: DeletedTicket[];
   /** The proceeding's discarded and suggested loose threads, in id order. They are in no count and in no summary. */
   discardedSeeds: DiscardedSeed[];
-}
-
-/** Today's local date, `YYYY-MM-DD`, which a bring-forward date reads against as a string. */
-function localToday(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /** `today` is the local date the Bring Forward lane reads against: a section builder passes its

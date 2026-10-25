@@ -18,6 +18,7 @@ import { dirname, join } from "node:path";
 
 import { configPath } from "../config-path.js";
 import { DataServerError, ValidationError } from "../errors.js";
+import { today } from "../knowledge/common.js";
 import { withFileLock, writeTextAtomic } from "../knowledge/sidecar.js";
 import { resolveCaseDataRoot } from "../practice/matter-data-root.js";
 import { pluginVersion } from "../repo-root.js";
@@ -65,11 +66,6 @@ const QUESTIONS: Record<string, string> = {
   matter_folder: "Could the instruction say \"the matter's folder\" rather than naming a particular matter?",
   too_long: "Could the instruction be said in a few sentences, as a rule the skill should follow every time?",
 };
-
-function today(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
 
 function text(raw: unknown, name: string): string {
   if (typeof raw !== "string" || raw.trim() === "") throw new ValidationError(`${name} must be a non-empty string`);

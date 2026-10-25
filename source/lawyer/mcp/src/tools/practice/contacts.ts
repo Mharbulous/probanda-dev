@@ -10,15 +10,14 @@ import { dirname, join } from "node:path";
 import { caseDataFolder } from "../../case/backend.js";
 import { listCaseParties } from "../../case/list-parties.js";
 import { NotFoundError, ValidationError } from "../../errors.js";
+import { today } from "../../knowledge/common.js";
 import { resolveCaseDataRoot } from "../../practice/matter-data-root.js";
 import { flatten, rowsOf, type Item, type Row } from "../../practice/items.js";
 import { canonicalJson, type OpSpec } from "../../practice/ops.js";
 import type { PracticeStore } from "../../practice/store.js";
-import { asString, loadClientsById, newId, normalizeMattNum, nowIso, requireMatter } from "./shared.js";
+import { asString, loadClientsById, newId, normalizeMattNum, requireMatter } from "./shared.js";
 
-export function today(): string {
-  return nowIso().slice(0, 10);
-}
+export { today };
 
 function rowOf(items: Map<string, Item>, id: string): Row {
   const item = items.get(id);
