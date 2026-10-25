@@ -17,7 +17,7 @@ You relay. You read no source and give no opinion on the suggestion. Nothing you
 
 1. **Pick.** Run `node cloud/suggestions/tools/triage.mjs list`. Take the oldest row unless Brahm named a `suggestion_id`. If none is `new`, say so and stop.
 2. **Plan.** Dispatch `developer:suggestion-planner` with the row's `suggestion_id`, `skill`, `plugin_version`, `source`, and its full title and body.
-3. **Show.** In one message, show Brahm the suggestion's title and body verbatim, its `skill`, `plugin_version` and `source`, and then the planner's return in full, which ends with its TLDR. Then ask one question with these choices, each with the gain and `(Recommended)` mark the TLDR gives it:
+3. **Show.** Write the planner's return in full to a temporary file. In one message, show Brahm the suggestion's title and body verbatim, its `skill`, `plugin_version` and `source`, and then the planner's TLDR verbatim, and send the file as a file card. Then ask one question with these choices, each with the gain and `(Recommended)` mark the TLDR gives it:
    1. Approve as originally proposed. Leave it out when the planner says it cannot be built as proposed.
    2. Approve with the planner's adjustments. Leave it out with `Verdict: none`.
    3. Dismiss unimplemented.
