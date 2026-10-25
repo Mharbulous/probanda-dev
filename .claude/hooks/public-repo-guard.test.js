@@ -39,6 +39,13 @@ const PASS = [
 ];
 
 const ASK = [
+  "\tgit grep --output=public/public-approved.json x",
+  "ls ;\tgit grep --output=public/public-approved.json x",
+  "sed -n 1p * public/public-approved.json",
+  "sed -n 1p $F public/public-approved.json",
+  "sed -n '1p' public/public-approved.json",
+  "rg x * public/public-approved.json",
+  "git grep x $F -- public/public-approved.json",
   "sed -n 1p -i public/public-approved.json",
   "sed -n 1p --in-place public/public-approved.json",
   "sed -n 1w public/public-approved.json x",

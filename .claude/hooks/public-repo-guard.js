@@ -34,8 +34,12 @@ function ask(reason) {
 const PUBLIC_REPO = /probanda-app[\\/](?:probanda(?:-legal)?|legal|plugins|litigation)\b/i;
 const APPROVAL = /public-approved\.json|approve_public/i;
 const ALLOWED = /^(?:git(?: -C (?:"[^"\n]*"|'[^'\n]*'|\S+))? (?:add|commit|push|pull|fetch|status|diff|log|show|grep|ls-files|ls-tree|blame)|cat|head|tail|wc|grep|rg|jq|ls|echo)(?: |$)/;
-// sed -n with only a line-range print; any later option (-i, --in-place, -s) or other script asks.
-const SED_PRINT = /^sed -n '?\d+(?:,\d+)?p'?(?: +[^\s-]\S*)* *$/;
+// sed can write (-i, w) and run commands (e), so it passes only as sed -n N,Mp followed by literal
+// file names: no option, quote, wildcard or $ that could expand into an option such as -i.
+const SED_PRINT = /^sed -n \d+(?:,\d+)?p(?: +[^\s\-*?[$'"][^\s*?[$'"]*)* *$/;
+// git and rg take options that write a file or run a program, and an unquoted wildcard or $ could
+// expand into one (a file named --pre=x), so their parts may hold neither.
+const EXPANDS = /[*?[$]/;
 // Options that write a file or run a program: git --output and -O/--open-files-in-pager (git
 // takes abbreviations such as --op, and -O inside a cluster such as -nO), rg --pre/--pre-glob.
 const OPTION_RUNS = /--o(?:p|ut)|--pre(?:-glob)?(?:[=\s]|$)|(?:^|\s)-[A-Za-z]*O/;
@@ -76,13 +80,15 @@ if (typeof input.command === "string") {
     }
   }
   const plain = literalBlanked(command);
+  const parts = plain.split(";").map((part) => part.trim());
   const partHarmless = (part) => {
-    const [first, ...piped] = part.trim().split("|");
+    const [first, ...piped] = part.split("|");
+    if (/^(?:git|rg)\b/.test(first) && EXPANDS.test(first)) return false;
     return (ALLOWED.test(first) || SED_PRINT.test(first.trim())) && piped.every((s) => PIPE_TAIL.test(s));
   };
   // OPTION_RUNS names git and rg options, so a grep pattern such as "--out" does not trip it.
-  const runsGitOrRg = /(?:^|[;|]) *(?:git|rg)\b/.test(plain);
-  const harmless = (plain.split(";").every(partHarmless) && !(runsGitOrRg && OPTION_RUNS.test(command))) || SHOW_ONLY.test(command) || TEST_RUN.test(command);
+  const runsGitOrRg = parts.some((part) => /^(?:git|rg)\b/.test(part));
+  const harmless = (parts.every(partHarmless) && !(runsGitOrRg && OPTION_RUNS.test(command))) || SHOW_ONLY.test(command) || TEST_RUN.test(command);
   if (APPROVAL.test(command) && !(harmless && !CHAINING.test(plain))) {
     ask("This command names public-approved.json or approve_public.py and may approve files for publication.");
   }
