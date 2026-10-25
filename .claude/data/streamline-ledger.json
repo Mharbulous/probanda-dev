@@ -1,0 +1,10 @@
+{
+  "files": {
+    "scripts/check_plugin.py": {
+      "lastReviewedAt": "e65771a027366e6e162ebf16f0b9a0657a024833",
+      "lastAutophagyResult": "clean",
+      "lastStreamlinedAt": "e65771a027366e6e162ebf16f0b9a0657a024833",
+      "lastStreamlineResult": "decomposed"
+    }
+  }
+}
