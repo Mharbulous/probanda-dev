@@ -20,39 +20,12 @@
 
 import { join } from "node:path";
 
-import { DataServerError } from "../errors.js";
+import { type DriverResponse, MIGRATE_DRIVER, pushStaleLockWarning, throwDriverRefusal } from "../migrate-driver.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs, WRITE_TIMEOUT_MS } from "../python-timeout.js";
 import { caseDataMigrateScriptsDir } from "../repo-root.js";
 import { acquireCaseLock } from "./case-lock.js";
-
-// Pure plumbing: one JSON request in on stdin, one JSON response out on stdout.
-// Contains no SQL, no schema, no migration knowledge.
-const MIGRATE_DRIVER = String.raw`
-import json, sys
-
-
-def main():
-    request = json.loads(sys.stdin.read())
-    from migrate_engine import MigrateError, run
-    try:
-        sys.stdout.write(json.dumps({"ok": True, "result": run(request)}))
-    except MigrateError as exc:
-        sys.stdout.write(json.dumps({"ok": False, "error": exc.as_dict()}))
-    except BaseException as exc:
-        sys.stdout.write(json.dumps({
-            "ok": False,
-            "error": {
-                "code": "internal_error",
-                "message": "Unexpected migrate driver failure",
-                "details": {"exception": type(exc).__name__, "reason": str(exc)},
-            },
-        }))
-
-
-main()
-`.trim();
 
 function driverFile(): string {
   return pythonDriverFile("case-migrate-driver", MIGRATE_DRIVER);
@@ -66,12 +39,6 @@ export interface MigrateOptions {
   backupId?: string;
 }
 
-interface DriverResponse {
-  ok: boolean;
-  result?: Record<string, unknown>;
-  error?: { code?: string; message?: string; details?: Record<string, unknown> };
-}
-
 export async function caseDataMigrate(
   matterRoot: string,
   mode: MigrateMode,
@@ -81,14 +48,7 @@ export async function caseDataMigrate(
   const lock = await acquireCaseLock(matterRoot, env);
   try {
     const result = runDriver(matterRoot, mode, opts, env);
-    if (lock.brokeStale) {
-      const warnings = Array.isArray(result.warnings) ? (result.warnings as string[]) : [];
-      warnings.push(
-        "broke a stale matter-data write lock (>15 min old) before running; if another session " +
-          "is still writing to or migrating this matter, stop and reconcile before continuing"
-      );
-      result.warnings = warnings;
-    }
+    if (lock.brokeStale) pushStaleLockWarning(result, "matter-data", "matter");
     return result;
   } finally {
     lock.release();
@@ -122,18 +82,6 @@ function runDriver(
       `If an apply had begun replacing the databases, the next migrate refuses with ` +
       `apply_interrupted until it is recovered with mode 'restore'.`,
   }) as DriverResponse;
-  if (!parsed.ok) {
-    const error = parsed.error ?? {};
-    // DataServerError carries no details field, and these details are the
-    // difference between a usable refusal ("backup 2026...-9f2c1a is
-    // available") and a mystery -- so fold them into the message.
-    const details = error.details && Object.keys(error.details).length
-      ? ` [${JSON.stringify(error.details)}]`
-      : "";
-    throw new DataServerError(
-      `${error.message ?? "matter-data migrate refused"}${details}`,
-      error.code ?? "migrate_error"
-    );
-  }
+  if (!parsed.ok) throwDriverRefusal(parsed, "matter-data migrate refused");
   return parsed.result ?? {};
 }

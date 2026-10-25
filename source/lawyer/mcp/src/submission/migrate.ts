@@ -43,6 +43,7 @@ import { join } from "node:path";
 
 import { DataServerError } from "../errors.js";
 import { pruneBackups, timestampedBackups } from "../migrate-backups.js";
+import { type DriverResponse, MIGRATE_DRIVER, pushStaleLockWarning, throwDriverRefusal } from "../migrate-driver.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { submissionDataMigrateScriptsDir } from "../repo-root.js";
@@ -51,34 +52,7 @@ import { acquireDataLock } from "./lock.js";
 import { counselOffers, matterPartiesDrift, type CounselOffer, type PartiesDriftRow } from "./parties-drift.js";
 import { assertMigrationWithinBundle } from "./schema-ceiling.js";
 
-// Pure plumbing: one JSON request in on stdin, one JSON response out on stdout.
-// Contains no SQL, no schema, no migration knowledge.
-const MIGRATE_DRIVER = String.raw`
-import json, sys
-
-
-def main():
-    request = json.loads(sys.stdin.read())
-    from migrate_engine import MigrateError, run
-    try:
-        sys.stdout.write(json.dumps({"ok": True, "result": run(request)}))
-    except MigrateError as exc:
-        sys.stdout.write(json.dumps({"ok": False, "error": exc.as_dict()}))
-    except BaseException as exc:
-        sys.stdout.write(json.dumps({
-            "ok": False,
-            "error": {
-                "code": "internal_error",
-                "message": "Unexpected migrate driver failure",
-                "details": {"exception": type(exc).__name__, "reason": str(exc)},
-            },
-        }))
-
-
-main()
-`.trim();
-
-// Read-only companion to the driver above: reports the version the engine
+// Read-only companion to MIGRATE_DRIVER (../migrate-driver.ts): reports the version the engine
 // targets, without opening a database or applying anything. TARGET_SCHEMA_VERSION
 // is the SSOT for that number ("the single place this version is stated for the
 // Python side" -- migrate_engine.py's own docstring), so asking the engine is
@@ -94,12 +68,6 @@ sys.stdout.write(json.dumps({"ok": True, "result": {"target_schema_version": TAR
 
 function driverFile(name: string, source: string): string {
   return pythonDriverFile(`submission-${name}-driver`, source);
-}
-
-interface DriverResponse {
-  ok: boolean;
-  result?: Record<string, unknown>;
-  error?: { code?: string; message?: string; details?: Record<string, unknown> };
 }
 
 export async function submissionDataMigrate(
@@ -133,14 +101,7 @@ export async function submissionDataMigrate(
     }
     const result = migrate();
     if (staged !== undefined) result.applied = [...(staged.applied as unknown[]), ...(result.applied as unknown[])];
-    if (lock.brokeStale) {
-      const warnings = Array.isArray(result.warnings) ? (result.warnings as string[]) : [];
-      warnings.push(
-        "broke a stale drafting-data write lock (>15 min old) before running; if another " +
-          "session is still writing to or migrating this database, stop and reconcile before continuing"
-      );
-      result.warnings = warnings;
-    }
+    if (lock.brokeStale) pushStaleLockWarning(result, "drafting-data", "database");
     const pruneWarnings = pruneBackups(dbPath, backupsBefore);
     if (pruneWarnings.length > 0) result.warnings = [...(Array.isArray(result.warnings) ? (result.warnings as string[]) : []), ...pruneWarnings];
     return result;
@@ -253,15 +214,6 @@ function runDriver(
     timeoutMs: pythonTimeoutMs(env, defaultTimeoutMs),
     extraEnv: { PYTHONPATH: scriptsDir },
   }) as DriverResponse;
-  if (!parsed.ok) {
-    const error = parsed.error ?? {};
-    const details = error.details && Object.keys(error.details).length
-      ? ` [${JSON.stringify(error.details)}]`
-      : "";
-    throw new DataServerError(
-      `${error.message ?? "drafting-data migrate refused"}${details}`,
-      error.code ?? "migrate_error"
-    );
-  }
+  if (!parsed.ok) throwDriverRefusal(parsed, "drafting-data migrate refused");
   return parsed.result ?? {};
 }

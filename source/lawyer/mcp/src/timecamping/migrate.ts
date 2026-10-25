@@ -35,8 +35,8 @@
 
 import { join } from "node:path";
 
-import { DataServerError } from "../errors.js";
 import { pruneBackups, timestampedBackups } from "../migrate-backups.js";
+import { type DriverResponse, MIGRATE_DRIVER, pushStaleLockWarning, throwDriverRefusal } from "../migrate-driver.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs, WRITE_TIMEOUT_MS } from "../python-timeout.js";
@@ -44,41 +44,8 @@ import { timecampingDataMigrateScriptsDir } from "../repo-root.js";
 import { resolveTimecampingDbPath } from "./backend.js";
 import { acquireDataLock } from "./lock.js";
 
-// Pure plumbing: one JSON request in on stdin, one JSON response out on stdout.
-// Contains no SQL, no schema, no migration knowledge.
-const MIGRATE_DRIVER = String.raw`
-import json, sys
-
-
-def main():
-    request = json.loads(sys.stdin.read())
-    from migrate_engine import MigrateError, run
-    try:
-        sys.stdout.write(json.dumps({"ok": True, "result": run(request)}))
-    except MigrateError as exc:
-        sys.stdout.write(json.dumps({"ok": False, "error": exc.as_dict()}))
-    except BaseException as exc:
-        sys.stdout.write(json.dumps({
-            "ok": False,
-            "error": {
-                "code": "internal_error",
-                "message": "Unexpected migrate driver failure",
-                "details": {"exception": type(exc).__name__, "reason": str(exc)},
-            },
-        }))
-
-
-main()
-`.trim();
-
 function driverFile(name: string, source: string): string {
   return pythonDriverFile(`timecamping-${name}-driver`, source);
-}
-
-interface DriverResponse {
-  ok: boolean;
-  result?: Record<string, unknown>;
-  error?: { code?: string; message?: string; details?: Record<string, unknown> };
 }
 
 export async function timecampingDataMigrate(
@@ -89,14 +56,7 @@ export async function timecampingDataMigrate(
   try {
     const backupsBefore = timestampedBackups(dbPath);
     const result = runDriver("migrate", driverFile("migrate", MIGRATE_DRIVER), JSON.stringify({ db_path: dbPath }), env);
-    if (lock.brokeStale) {
-      const warnings = Array.isArray(result.warnings) ? (result.warnings as string[]) : [];
-      warnings.push(
-        "broke a stale timecamping-data write lock (>15 min old) before running; if another " +
-          "session is still writing to or migrating this database, stop and reconcile before continuing"
-      );
-      result.warnings = warnings;
-    }
+    if (lock.brokeStale) pushStaleLockWarning(result, "timecamping-data", "database");
     // After a successful migrate only the copy taken before its first hop is kept (../migrate-backups.ts).
     const pruneWarnings = pruneBackups(dbPath, backupsBefore);
     if (pruneWarnings.length > 0) result.warnings = [...(Array.isArray(result.warnings) ? (result.warnings as string[]) : []), ...pruneWarnings];
@@ -127,15 +87,6 @@ function runDriver(
       `(stamped at this run's start -- an older one would discard every write made since it). A fresh ` +
       `create has no backup; delete the partial database instead.`,
   }) as DriverResponse;
-  if (!parsed.ok) {
-    const error = parsed.error ?? {};
-    const details = error.details && Object.keys(error.details).length
-      ? ` [${JSON.stringify(error.details)}]`
-      : "";
-    throw new DataServerError(
-      `${error.message ?? "timecamping-data migrate refused"}${details}`,
-      error.code ?? "migrate_error"
-    );
-  }
+  if (!parsed.ok) throwDriverRefusal(parsed, "timecamping-data migrate refused");
   return parsed.result ?? {};
 }
