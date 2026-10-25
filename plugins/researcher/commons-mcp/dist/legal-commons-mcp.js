@@ -16499,6 +16499,7 @@ function validateValue(label, value, schema) {
   if (type === "object" && !isPlainObject4(value)) {
     throw new ValidationError(`${label} must be an object`);
   }
+  if (type === "array" && !Array.isArray(value)) throw new ValidationError(`${label} must be an array`);
   const allowedValues = schema.enum;
   if (allowedValues && !allowedValues.includes(value)) {
     throw new ValidationError(`${label} must be one of: ${allowedValues.join(", ")}`);
@@ -17196,6 +17197,7 @@ function textResult(result) {
 }
 
 // src/legal-commons/client.ts
+var TIMEOUT_MS = 6e4;
 var LegalCommonsClient = class {
   // `reload` reads the credential store again. Only the pool's client has one:
   // the lawyer plugin's cloud_key__configure_credential saves the key from
@@ -17317,7 +17319,8 @@ var LegalCommonsClient = class {
         "Content-Type": "application/json",
         ...extraHeaders
       },
-      body: body === void 0 ? void 0 : JSON.stringify(body)
+      body: body === void 0 ? void 0 : JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS)
     });
     const text = await res.text();
     if (!res.ok) {

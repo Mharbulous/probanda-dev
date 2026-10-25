@@ -1,4 +1,4 @@
-// build-stamp: e4f56f29f84f
+// build-stamp: 1ef6b8e0824b
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75248,6 +75248,7 @@ var CloudResetError = class extends DataServerError {
   }
   detail;
 };
+var TIMEOUT_MS = 6e4;
 var RESET_CODES = /* @__PURE__ */ new Set(["ECONNRESET", "UND_ERR_SOCKET"]);
 function failure(err) {
   const cause = err.cause;
@@ -75270,11 +75271,13 @@ async function callItems(env, fn2, body) {
     res = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/${PATHS[fn2]}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: staticKey },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS)
     });
   } catch (err) {
     const { detail, code } = failure(err);
-    throw RESET_CODES.has(code ?? "") ? new CloudResetError(detail) : new CloudUnreachableError(detail);
+    const reset = RESET_CODES.has(code ?? "") || err.name === "TimeoutError";
+    throw reset ? new CloudResetError(detail) : new CloudUnreachableError(detail);
   }
   if (!res.ok) throw new CloudUnreachableError(`HTTP ${res.status}`);
   let text5;
@@ -76421,7 +76424,7 @@ function practiceToolDefinitions() {
     },
     {
       name: practicePrefixed("set_folder_map"),
-      description: "Replace the folder map of the roster person this machine's probanda.json names, at <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. Call it only with a map the practitioner approved under /show-me. entries is the whole map, [{type, folders}]: each type a glossary id (practice_data__folder_map's document_types), at most once; folders a non-empty list of globs relative to the matter folder. A type the practitioner never files is left out. Refused, writing nothing, when an entry names an unknown type, repeats a type, or gives an absolute glob or a . or .. segment, and when this machine names no person. Returns the person, the path written and the entries.",
+      description: "Replace the folder map of the roster person this machine's probanda.json names, at <case_data_root>\\_practice\\firm\\folder-maps\\<person>.json. entries is the whole map, [{type, folders}]: each type a glossary id (practice_data__folder_map's document_types), at most once; folders a non-empty list of globs relative to the matter folder. A type the practitioner never files is left out. Refused, writing nothing, when an entry names an unknown type, repeats a type, or gives an absolute glob or a . or .. segment, and when this machine names no person. Returns the person, the path written and the entries.",
       inputSchema: {
         type: "object",
         properties: {
@@ -79057,8 +79060,8 @@ async function read_signals(store, args) {
 import { isAbsolute, relative } from "node:path";
 
 // src/tools/practice/contacts.ts
-import { existsSync as existsSync7, readdirSync as readdirSync5 } from "node:fs";
-import { dirname as dirname4, join as join10 } from "node:path";
+import { existsSync as existsSync7, readdirSync as readdirSync6 } from "node:fs";
+import { dirname as dirname4, join as join11 } from "node:path";
 
 // src/case/backend.ts
 import { existsSync as existsSync6, readFileSync as readFileSync5 } from "node:fs";
@@ -80108,10 +80111,432 @@ function listCaseParties(caseDataDir, env = process.env) {
   }
 }
 
-// src/tools/practice/contacts.ts
-function today() {
-  return nowIso().slice(0, 10);
+// src/build-stamp.ts
+import { readFileSync as readFileSync6 } from "node:fs";
+import { join as join10 } from "node:path";
+var BUILD_STAMP = false ? null : "1ef6b8e0824b";
+var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
+function noComparison(build_note) {
+  return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
 }
+function buildNote(running, current, installed) {
+  const action = installed === current ? "Start a new session; the installed copy is current." : "Reinstall the lawyer plugin, then restart the app fully.";
+  return `This server is running build ${running}; the repo's current build is ${current}. ${action}`;
+}
+function installedStamp() {
+  try {
+    return STAMP_LINE.exec(readFileSync6(join10(INSTALL_ROOT, "mcp", "dist", "litigation-mcp.js"), "utf-8"))?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+function buildStampStatus(env = process.env) {
+  if (BUILD_STAMP === null) {
+    return noComparison("This server runs unbundled code, which carries no build stamp -- no build comparison was made.");
+  }
+  let current;
+  try {
+    const repoRoot = resolveRepoRoot(env, { code: "repo_root_missing", subject: "the tracked litigation bundle" });
+    const tracked2 = join10(repoRoot, "source", "lawyer", "mcp", "dist", "litigation-mcp.js");
+    current = STAMP_LINE.exec(readFileSync6(tracked2, "utf-8"))?.[1] ?? null;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return noComparison(`No build comparison was made -- the repo's tracked litigation bundle could not be read: ${message}`);
+  }
+  if (current === null) {
+    return noComparison("No build comparison was made -- the repo's tracked litigation bundle carries no build-stamp line.");
+  }
+  if (current === BUILD_STAMP) {
+    return { build_stamp: BUILD_STAMP, current_build_stamp: current, server_outdated: false };
+  }
+  return {
+    build_stamp: BUILD_STAMP,
+    current_build_stamp: current,
+    server_outdated: true,
+    build_note: buildNote(BUILD_STAMP, current, installedStamp())
+  };
+}
+
+// src/knowledge/tree.ts
+import { readFileSync as readFileSync7, readdirSync as readdirSync5, realpathSync as realpathSync2, statSync as statSync3 } from "node:fs";
+import { win32 as pathWin325 } from "node:path";
+
+// src/files/scope.ts
+import { realpathSync } from "node:fs";
+import { win32 as pathWin324 } from "node:path";
+var PathOutOfScopeError = class extends DataServerError {
+  constructor(message) {
+    super(message, "path_out_of_scope");
+  }
+};
+var DRIVE_PREFIX = /^[A-Za-z]:/;
+function assertRelativeSyntax(relative5, label2) {
+  if (typeof relative5 !== "string" || relative5.length === 0) {
+    throw new PathOutOfScopeError(`${label2} must be a non-empty relative path`);
+  }
+  if (relative5.includes("\0")) {
+    throw new PathOutOfScopeError(`${label2} contains a NUL byte`);
+  }
+  if (DRIVE_PREFIX.test(relative5)) {
+    throw new PathOutOfScopeError(`${label2} must be relative, not a drive-qualified path: ${relative5}`);
+  }
+  if (relative5.startsWith("\\\\") || relative5.startsWith("//")) {
+    throw new PathOutOfScopeError(`${label2} must be relative, not a UNC path: ${relative5}`);
+  }
+  if (relative5.startsWith("/") || relative5.startsWith("\\")) {
+    throw new PathOutOfScopeError(`${label2} must be relative, not rooted: ${relative5}`);
+  }
+  const segments = relative5.split(/[\\/]+/);
+  if (segments.some((s3) => s3 === "..")) {
+    throw new PathOutOfScopeError(`${label2} must not contain a '..' segment: ${relative5}`);
+  }
+}
+function canonicalRoot(root, missingMessage2, code = "skills_root_missing") {
+  try {
+    return realpathSync.native(root);
+  } catch {
+    throw new DataServerError(missingMessage2, code);
+  }
+}
+function resolveWithin(canonRoot, relative5, label2, mustExist = true) {
+  const joined = pathWin324.join(canonRoot, relative5);
+  let resolved;
+  if (mustExist) {
+    try {
+      resolved = realpathSync.native(joined);
+    } catch {
+      throw new DataServerError(`${label2} not found: ${relative5}`, "not_found");
+    }
+  } else {
+    resolved = resolveDeepestExisting(joined);
+  }
+  assertContained(canonRoot, resolved, label2, relative5);
+  return resolved;
+}
+function resolveDeepestExisting(target) {
+  const tail = [];
+  let cursor = target;
+  for (; ; ) {
+    try {
+      const base = realpathSync.native(cursor);
+      return tail.length ? pathWin324.join(base, ...tail.reverse()) : base;
+    } catch {
+      const parent = pathWin324.dirname(cursor);
+      if (parent === cursor) {
+        return pathWin324.normalize(target);
+      }
+      tail.push(pathWin324.basename(cursor));
+      cursor = parent;
+    }
+  }
+}
+function assertContained(canonRoot, resolved, label2, original) {
+  const needle = resolved.toLowerCase();
+  const prefix = (canonRoot.endsWith(pathWin324.sep) ? canonRoot : canonRoot + pathWin324.sep).toLowerCase();
+  if (needle !== canonRoot.toLowerCase() && !needle.startsWith(prefix)) {
+    throw new PathOutOfScopeError(
+      `${label2} resolves outside its permitted root (${original} -> ${resolved})`
+    );
+  }
+}
+function toPosixRelative(canonRoot, resolved) {
+  return pathWin324.relative(canonRoot, resolved).split(pathWin324.sep).join("/");
+}
+
+// src/knowledge/tree.ts
+var KNOWLEDGE_SKILLS = ["draft", "publish", "assemble", "legal-research", "docket-clerk"];
+var SHIPPED_DIR = { "docket-clerk": "shared/docket-clerk" };
+var OVERLAY_RESERVED = ["_superseded", "_fetched", "_inbox", "_hosts.json"];
+var SIDECAR_SUFFIX = ".confirmations.local.json";
+var MAX_PATH_CHARS = 259;
+var MAX_SEGMENT_CHARS = 255;
+var FORBIDDEN_CHARS = /[<>:"|?*\u0000-\u001f]/;
+var DEVICE_NAME = /^(?:con|prn|aux|nul|com[0-9]|lpt[0-9])(?:\.|$)/i;
+var NAME_CHARS = /^[A-Za-z0-9._-]+$/;
+function segmentProblem(segment) {
+  if (segment === "." || segment === "..") return "is not a file or folder name";
+  if (FORBIDDEN_CHARS.test(segment)) return 'contains a character Windows or OneDrive refuses (< > : " | ? * or a control character)';
+  if (DEVICE_NAME.test(segment)) return "is a reserved Windows device name";
+  if (/[ .]$/.test(segment)) return "ends with a space or a period";
+  if (segment.startsWith(" ")) return "begins with a space, which OneDrive refuses";
+  if (segment.startsWith("~$")) return "begins with ~$, which OneDrive refuses";
+  if (/_vti_/i.test(segment)) return "contains _vti_, which OneDrive refuses";
+  if (/^(?:\.lock|desktop\.ini)$/i.test(segment)) return "is a name OneDrive refuses";
+  if (segment.length > MAX_SEGMENT_CHARS) return `is longer than ${MAX_SEGMENT_CHARS} characters`;
+  if (!NAME_CHARS.test(segment)) return 'holds a character other than a letter, a digit, ".", "_" or "-", which the plugin upload validator refuses';
+  return null;
+}
+function parseKnowledgePath(raw, label2, allowRoot = false) {
+  if (allowRoot && (raw === void 0 || raw === "")) return { path: "", segments: [], head: "", skill: null, rest: [] };
+  if (typeof raw !== "string") throw new PathOutOfScopeError(`${label2} must be a relative knowledge path`);
+  assertRelativeSyntax(raw, label2);
+  const segments = raw.split(/[\\/]+/).filter((segment) => segment !== "");
+  if (segments.length === 0) throw new PathOutOfScopeError(`${label2} must be a non-empty relative path`);
+  for (const segment of segments) {
+    const problem = segmentProblem(segment);
+    if (problem) throw new PathOutOfScopeError(`${label2}: "${segment}" ${problem} (${raw})`);
+  }
+  const head = segments[0];
+  const isSkill = KNOWLEDGE_SKILLS.includes(head);
+  if (!isSkill && !OVERLAY_RESERVED.includes(head)) {
+    throw new PathOutOfScopeError(
+      `${label2} must start with a skill that owns a knowledge tree (${KNOWLEDGE_SKILLS.join(", ")}) or an overlay reserved entry (${OVERLAY_RESERVED.join(", ")}); got "${head}" (${raw})`
+    );
+  }
+  return { path: segments.join("/"), segments, head, skill: isSkill ? head : null, rest: segments.slice(1) };
+}
+function joinRelative(fromPath, relative5) {
+  const slash = fromPath.lastIndexOf("/");
+  const dir = slash === -1 ? "" : fromPath.slice(0, slash);
+  return pathWin325.normalize(dir ? `${dir}\\${relative5}` : relative5).split("\\").join("/");
+}
+var COUNTRY = /^[A-Z]{3}$/;
+var JURISDICTION = /^[A-Z]{2,3}$/;
+var RESERVED_FOLDERS = ["Documents", "Locations", "Judges", "Sources"];
+var FETCHED_PDF = /^[0-9a-f]{12}\.pdf$/;
+var HOST_NAME = /^[a-z0-9.-]+$/i;
+function inTree(rest) {
+  return rest.length === 0 || COUNTRY.test(rest[0]);
+}
+function grammarProblem(head, rest, type, layer) {
+  const name = rest.length ? rest[rest.length - 1] : head;
+  const segment = segmentProblem(name);
+  if (segment) return `"${name}" ${segment}`;
+  if (head === "_hosts.json") return rest.length === 0 && type === "file" ? null : "_hosts.json is a file with nothing below it";
+  if (head === "_inbox") return rest.length === 0 && type === "file" ? "_inbox is a folder" : null;
+  if (head === "_fetched") {
+    if (rest.length === 0) return type === "dir" ? null : "_fetched is a folder";
+    if (!HOST_NAME.test(rest[0])) return `"${rest[0]}" is not a host name`;
+    if (rest.length === 1) return type === "dir" ? null : "_fetched holds one folder per host";
+    if (rest.length > 2 || type === "dir" || !FETCHED_PDF.test(rest[1])) {
+      return "_fetched holds <host>\\<first 12 hex characters of the sha256>.pdf only";
+    }
+    return null;
+  }
+  if (head === "_superseded") {
+    if (rest.length === 0) return type === "dir" ? null : "_superseded is a folder";
+    if (!KNOWLEDGE_SKILLS.includes(rest[0])) return `_superseded holds skill trees only; "${rest[0]}" is not one`;
+    return treeProblem(rest[0], rest.slice(1), type, "local");
+  }
+  return treeProblem(head, rest, type, layer);
+}
+function treeProblem(skill, rest, type, layer) {
+  if (rest.length === 0) return type === "dir" ? null : `${skill} is a folder`;
+  const [country, jurisdiction, venue, folder, leaf] = rest;
+  if (!COUNTRY.test(country)) return `"${country}" is not a three-letter ISO country code (CAN, USA)`;
+  if (rest.length === 1) return type === "dir" ? null : "a country folder holds jurisdiction folders only";
+  if (!JURISDICTION.test(jurisdiction)) return `"${jurisdiction}" is not a jurisdiction code (BC, CA, NY or FED)`;
+  if (rest.length === 2) return type === "dir" ? null : "a jurisdiction is a folder";
+  if (rest.length === 3 && type === "file") return jurisdictionFileProblem(skill, venue, layer);
+  if (venue.startsWith("_") && venue !== "_NoVenue") return `"${venue}": _NoVenue is the only member of the reserved "_" prefix`;
+  if (RESERVED_FOLDERS.includes(venue)) return `"${venue}" is a reserved folder name, not a venue`;
+  if (rest.length === 3) return null;
+  const noVenue = venue === "_NoVenue";
+  if (rest.length === 4 && type === "file") return venueFileProblem(skill, folder, noVenue, layer);
+  if (folder === "Locations" || folder === "Judges") return noVenue ? `${folder}\\ is refused under _NoVenue` : null;
+  if (folder === "Documents" && skill === "legal-research") return "/legal-research's tree holds no Documents\\ folder";
+  if (folder !== "Documents" && folder !== "Sources") return `"${folder}" is not a venue folder (Documents, Sources, Locations or Judges)`;
+  if (rest.length === 4) return null;
+  if (rest.length > 5 || type === "dir") return `${folder}\\ holds files only`;
+  return folder === "Documents" ? documentsFileProblem(leaf, layer) : fileProblem(leaf, layer, mdOnly(folder));
+}
+function mdOnly(folder) {
+  return (base) => base.endsWith(".md") ? null : `${folder}\\ holds .md files only; "${base}" is not one`;
+}
+function fileProblem(name, layer, check) {
+  if (!name.endsWith(SIDECAR_SUFFIX)) return check(name);
+  if (layer === "shipped") return "a confirmation sidecar never ships";
+  const base = name.slice(0, -SIDECAR_SUFFIX.length);
+  if (!base.endsWith(".md")) return "a confirmation sidecar sits only beside a .md knowledge file";
+  return check(base);
+}
+function indexNameProblem(name, shippedName, localName, layer) {
+  if (name === (layer === "shipped" ? shippedName : localName)) return null;
+  if (name === shippedName) return `the overlay never holds ${shippedName}; it writes ${localName}`;
+  if (name === localName) return `${localName} belongs to the overlay only`;
+  return void 0;
+}
+function jurisdictionFileProblem(skill, name, layer) {
+  const index = indexNameProblem(name, "venues.json", "venues.local.json", layer);
+  if (index !== void 0) return index;
+  if (name === "sources.json" && skill === "legal-research") return null;
+  return `"${name}" is not a jurisdiction file (the venues index${skill === "legal-research" ? " or sources.json" : ""})`;
+}
+function venueFileProblem(skill, name, noVenue, layer) {
+  if (name === "sources.json" && skill === "legal-research") return null;
+  return fileProblem(name, layer, (base) => {
+    if (base === "venue.md") {
+      if (skill !== "draft") return "venue.md sits only in /draft's tree";
+      return noVenue ? "venue.md is refused under _NoVenue" : null;
+    }
+    if (base === "format.md") return skill === "publish" ? null : "format.md sits only in /publish's tree";
+    return `"${base}" is not a venue file (venue.md in /draft's tree, format.md in /publish's)`;
+  });
+}
+function documentsFileProblem(name, layer) {
+  const index = indexNameProblem(name, "kinds.json", "kinds.local.json", layer);
+  if (index !== void 0) return index;
+  return fileProblem(name, layer, mdOnly("Documents"));
+}
+function indexAt(kp) {
+  if (!kp.skill) return null;
+  const name = kp.rest[kp.rest.length - 1];
+  if (kp.rest.length === 3 && (name === "venues.json" || name === "venues.local.json")) return "venues";
+  if (kp.rest.length === 5 && kp.rest[3] === "Documents" && (name === "kinds.json" || name === "kinds.local.json")) return "kinds";
+  return null;
+}
+function shippedLayer(skill, rest, seams) {
+  const env = seams.env ?? process.env;
+  const dir = SHIPPED_DIR[skill] ?? skill;
+  const shipped = resolveShippedRoot([dir, "references", ...rest].join("/"), env, { installRoot: seams.installRoot });
+  const skillsRoot = canonicalRoot(
+    shipped.root,
+    shipped.shipped_from === "install" ? `bundled skill source not found at ${shipped.root}; reinstall the plugin and fully restart` : `skills tree not found at ${shipped.root}; the repo has moved or COCLERK_REPO_ROOT is wrong`,
+    "skills_root_missing"
+  );
+  const references = pathWin325.join(skillsRoot, ...dir.split("/"), "references");
+  let canon = null;
+  try {
+    canon = realpathSync2.native(references);
+  } catch {
+    canon = null;
+  }
+  if (canon !== null) assertContained(skillsRoot, canon, `${skill}/references`, references);
+  return { layer: { canon, abs: pathWin325.join(canon ?? references, ...rest) }, shipped_from: shipped.shipped_from };
+}
+function overlayLayer(segments, seams, label2) {
+  const configured = resolveCaseDataRoot(seams.env ?? process.env, seams.caseDataRoot);
+  const shown = pathWin325.join(configured, "_practice", "knowledge", ...segments);
+  if (shown.length > MAX_PATH_CHARS) {
+    throw new DataServerError(
+      `${label2}: the overlay path is ${shown.length} characters, over the Windows limit of ${MAX_PATH_CHARS}: ${shown}`,
+      "path_too_long"
+    );
+  }
+  const caseRoot = canonicalRoot(configured, `case_data_root not found: ${configured}`, "case_data_root_missing");
+  const knowledgeDir = pathWin325.join(caseRoot, "_practice", "knowledge");
+  let canon = null;
+  try {
+    canon = realpathSync2.native(knowledgeDir);
+  } catch {
+    canon = null;
+  }
+  if (canon !== null) assertContained(caseRoot, canon, label2, knowledgeDir);
+  return { canon, abs: pathWin325.join(canon ?? knowledgeDir, ...segments) };
+}
+function locate(kp, seams, label2 = "path") {
+  const local = overlayLayer(kp.segments, seams, label2);
+  if (!kp.skill) return { kp, shipped: null, local, shipped_from: null };
+  const { layer, shipped_from } = shippedLayer(kp.skill, kp.rest, seams);
+  return { kp, shipped: layer, local, shipped_from };
+}
+function entryType(root, label2, original) {
+  if (root.canon === null) return null;
+  let real;
+  try {
+    real = realpathSync2.native(root.abs);
+  } catch {
+    return null;
+  }
+  assertContained(root.canon, real, label2, original);
+  return statSync3(real).isDirectory() ? "dir" : "file";
+}
+function readLayerBytes(abs, label2) {
+  try {
+    return readFileSync7(abs);
+  } catch (err) {
+    const code = err.code;
+    if (code === "ENOENT") throw new DataServerError(`${label2} not found: ${abs}`, "not_found");
+    if (code === "UNKNOWN" || code === "EIO") {
+      throw new DataServerError(
+        `${label2} exists but could not be read (${code}): ${abs}. It is most likely a OneDrive online-only file that is not downloaded. Open its folder in File Explorer, choose "Always keep on this device", and retry.`,
+        "not_downloaded"
+      );
+    }
+    throw err;
+  }
+}
+function readLayerFiles(loc, label2) {
+  const read3 = (layer, root) => {
+    if (!root) return null;
+    const type = entryType(root, label2, loc.kp.path);
+    if (type === null) return null;
+    if (type === "dir") throw new DataServerError(`${label2} is a folder, not a file: ${loc.kp.path} (use knowledge__list)`, "not_a_file");
+    const bytes = readLayerBytes(root.abs, label2);
+    const text5 = bytes.toString("utf-8");
+    return { layer, abs: root.abs, bytes, text: text5.startsWith("\uFEFF") ? text5.slice(1) : text5 };
+  };
+  return { shipped: read3("shipped", loc.shipped), local: read3("local", loc.local) };
+}
+function identicalText(a3, b3) {
+  const lf = (text5) => text5.replace(/\r\n?/g, "\n");
+  return lf(a3) === lf(b3);
+}
+function assertTreeFile(kp, label2) {
+  const problem = grammarProblem(kp.head, kp.rest, "file", kp.skill ? "shipped" : "local");
+  if (problem) throw new DataServerError(`${label2}: ${kp.path} is not a knowledge-tree file: ${problem}`, "grammar_violation");
+}
+function readServed(kp, seams, label2 = "path") {
+  assertTreeFile(kp, label2);
+  const loc = locate(kp, seams, label2);
+  const { shipped, local } = readLayerFiles(loc, label2);
+  const served = shipped ?? local;
+  if (!served) throw new DataServerError(`${label2} not found in either layer: ${kp.path}`, "not_found");
+  return { kp, served, shadowed: shipped && local ? local : null, shipped_from: loc.shipped_from };
+}
+function readLayerDir(root, label2, original) {
+  if (!root) return null;
+  const type = entryType(root, label2, original);
+  if (type === null) return null;
+  if (type === "file") throw new DataServerError(`${label2} is a file, not a folder: ${original} (use knowledge__read)`, "not_a_folder");
+  return readdirSync5(root.abs).map((name) => {
+    const child = entryType({ canon: root.canon, abs: pathWin325.join(root.abs, name) }, label2, `${original}/${name}`);
+    return { name, type: child ?? "file" };
+  });
+}
+
+// src/knowledge/common.ts
+function provenance2(shipped_from, seams) {
+  return { shipped_from, plugin_version: pluginVersion(seams.installRoot), build_stamp: BUILD_STAMP };
+}
+function parseJson(file, label2) {
+  try {
+    return JSON.parse(file.text);
+  } catch (err) {
+    throw new DataServerError(`${label2}: ${file.abs} is not valid JSON: ${err.message}`, "invalid_index");
+  }
+}
+var INDEX_NAMES = { venues: ["venues.json", "venues.local.json"], kinds: ["kinds.json", "kinds.local.json"] };
+function mergedIndex(folder, index, seams, label2) {
+  const problem = grammarProblem(folder.head, folder.rest, "dir", "shipped");
+  if (problem) throw new DataServerError(`${label2}: ${folder.path} breaks the folder grammar: ${problem}`, "grammar_violation");
+  const [shippedName, localName] = INDEX_NAMES[index];
+  const shippedKp = parseKnowledgePath(`${folder.path}/${shippedName}`, label2);
+  const localKp = parseKnowledgePath(`${folder.path}/${localName}`, label2);
+  const shipped = readLayerFiles(locate(shippedKp, seams, label2), label2).shipped;
+  const loc = locate(localKp, seams, label2);
+  const local = readLayerFiles(loc, label2).local;
+  if (!shipped && !local) {
+    throw new DataServerError(`${label2}: no ${index} index at ${folder.path} in either layer`, "index_missing");
+  }
+  const source = (file) => file ? { doc: parseJson(file, label2), file: file.abs } : null;
+  const noVenue = index === "kinds" && folder.rest[2] === NO_VENUE;
+  const view = index === "venues" ? mergeVenues(source(shipped), source(local)) : mergeKinds(source(shipped), source(local), noVenue);
+  return { view, layers: { shipped: shipped !== null, local: local !== null }, shipped_from: loc.shipped_from, noVenue };
+}
+function shadowedRows(conflicts) {
+  const rows29 = conflicts.filter((conflict) => conflict.shadowed_local).map(({ key, shipped, local }) => ({ key, shipped, local }));
+  return rows29.length ? { shadowed_local: rows29 } : {};
+}
+function folderOf(kp, label2) {
+  return parseKnowledgePath(kp.segments.slice(0, -1).join("/"), label2);
+}
+function today() {
+  const now = /* @__PURE__ */ new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
+// src/tools/practice/contacts.ts
 function rowOf(items, id) {
   const item = items.get(id);
   if (!item) throw new NotFoundError(`Item ${id} is not in practice.db after the write`);
@@ -80283,7 +80708,7 @@ async function contact_checks(store, args) {
     }
     if (root !== null) {
       const caseDataRoot = root;
-      const holding = (parent, sub) => readdirSync5(parent, { withFileTypes: true }).filter((entry) => entry.isDirectory() && existsSync7(join10(parent, entry.name, sub, "main.sqlite"))).map((entry) => ({ name: entry.name, folder: join10(parent, entry.name, sub) }));
+      const holding = (parent, sub) => readdirSync6(parent, { withFileTypes: true }).filter((entry) => entry.isDirectory() && existsSync7(join11(parent, entry.name, sub, "main.sqlite"))).map((entry) => ({ name: entry.name, folder: join11(parent, entry.name, sub) }));
       const library = dirname4(caseDataRoot);
       const inMatter = holding(library, "0. CASE DATA");
       const children2 = holding(caseDataRoot, "");
@@ -80961,9 +81386,548 @@ async function invoices_query(store, args) {
 }
 
 // src/tools/practice/firm-profile.ts
-import { existsSync as existsSync8, mkdirSync as mkdirSync3, readFileSync as readFileSync6, writeFileSync as writeFileSync2 } from "node:fs";
-import { dirname as dirname5, join as join11 } from "node:path";
+import { existsSync as existsSync11, mkdirSync as mkdirSync5, readFileSync as readFileSync10, writeFileSync as writeFileSync3 } from "node:fs";
+import { dirname as dirname5, join as join13 } from "node:path";
 import { inflateRawSync } from "node:zlib";
+
+// src/knowledge/sidecar.ts
+import { createHash as createHash4, randomUUID as randomUUID7 } from "node:crypto";
+import { closeSync as closeSync5, existsSync as existsSync10, mkdirSync as mkdirSync4, openSync as openSync5, statSync as statSync6, writeSync as writeSync5 } from "node:fs";
+import { win32 as pathWin327 } from "node:path";
+
+// src/submission/render-job.ts
+import { randomUUID as randomUUID6 } from "node:crypto";
+import { closeSync as closeSync4, existsSync as existsSync9, openSync as openSync4, readFileSync as readFileSync9, renameSync, statSync as statSync5, unlinkSync as unlinkSync3, utimesSync, writeFileSync as writeFileSync2, writeSync as writeSync4 } from "node:fs";
+import { join as join12 } from "node:path";
+
+// src/submission/lock.ts
+import { createHash as createHash3, randomUUID as randomUUID5 } from "node:crypto";
+import { closeSync as closeSync3, existsSync as existsSync8, mkdirSync as mkdirSync3, openSync as openSync3, readFileSync as readFileSync8, statSync as statSync4, writeSync as writeSync3 } from "node:fs";
+import { homedir as homedir6 } from "node:os";
+import { win32 as pathWin326 } from "node:path";
+var LOCK_ATTEMPTS2 = 25;
+var LOCK_RETRY_MS2 = 400;
+var LOCK_STALE_MS2 = 9e5;
+function lockDir2(env) {
+  const base = env.COCLERK_SUBMISSION_LOCK_ROOT || pathWin326.join(env.LOCALAPPDATA || homedir6(), "Coclerk", "submission-locks");
+  mkdirSync3(base, { recursive: true });
+  return base;
+}
+function hostLocalPath(dbPath, suffix, env = process.env) {
+  const key = createHash3("sha256").update(pathWin326.normalize(dbPath).toLowerCase()).digest("hex").slice(0, 16);
+  return pathWin326.join(lockDir2(env), `${key}.${suffix}`);
+}
+function lockPath2(dbPath, env) {
+  return hostLocalPath(dbPath, "lock", env);
+}
+async function acquireDataLock(dbPath, env = process.env) {
+  const lock = lockPath2(dbPath, env);
+  let brokeStale = false;
+  for (let attempt = 0; attempt < LOCK_ATTEMPTS2; attempt++) {
+    try {
+      const token = randomUUID5();
+      const fd = openSync3(lock, "wx");
+      writeSync3(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), dbPath, token }));
+      closeSync3(fd);
+      return {
+        brokeStale,
+        release() {
+          releaseIfOurs2(lock, token);
+        }
+      };
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+      const key = readLockKey(lock, "token");
+      if (key === null) continue;
+      if (isStale2(lock) && removeLockIfKey(lock, "token", key, () => isStale2(lock))) {
+        brokeStale = true;
+        continue;
+      }
+      if (attempt < LOCK_ATTEMPTS2 - 1) await sleep2(LOCK_RETRY_MS2);
+    }
+  }
+  throw new DataServerError(
+    `could not acquire the drafting-data write lock within ${LOCK_ATTEMPTS2 * LOCK_RETRY_MS2 / 1e3}s (${lock}: ${holderOf2(lock)}); another session is writing to or migrating this database`,
+    "lock_unavailable"
+  );
+}
+function releaseIfOurs2(lock, token) {
+  try {
+    removeLockIfKey(lock, "token", token, void 0, 500);
+  } catch {
+  }
+}
+function isStale2(lock) {
+  try {
+    return Date.now() - statSync4(lock).mtimeMs > LOCK_STALE_MS2;
+  } catch {
+    return false;
+  }
+}
+function holderOf2(lock) {
+  try {
+    return (existsSync8(lock) ? readFileSync8(lock, "utf-8").trim() : "released") + orphanClaims(lock);
+  } catch {
+    return "unreadable";
+  }
+}
+function sleep2(ms2) {
+  return new Promise((resolve10) => setTimeout(resolve10, ms2));
+}
+
+// src/submission/render-job.ts
+var STATUS_FILE = "workboard-status.js";
+var DEFAULT_STALL_MS = 6e4;
+var jobs = /* @__PURE__ */ new Map();
+var exitHandlerInstalled = false;
+function nowIso2() {
+  return (/* @__PURE__ */ new Date()).toISOString();
+}
+function stallMs(env) {
+  const value = Number(env.COCLERK_RENDER_STALL_MS);
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_STALL_MS;
+}
+function readLock(lockFile) {
+  try {
+    return JSON.parse(readFileSync9(lockFile, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+function pidAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return err.code !== "ESRCH";
+  }
+}
+function holderIsStale(lockFile, holder, stall) {
+  let mtimeMs;
+  try {
+    mtimeMs = statSync5(lockFile).mtimeMs;
+  } catch {
+    return null;
+  }
+  if (holder && typeof holder.pid === "number") {
+    if (!pidAlive(holder.pid)) return true;
+    if (holder.pid === process.pid && !jobs.has(lockFile)) return true;
+  }
+  return Date.now() - mtimeMs > 3 * stall;
+}
+function acquire(lockFile, dbPath, stall) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const record2 = { job_id: randomUUID6(), pid: process.pid, started_at: nowIso2(), db_path: dbPath };
+    try {
+      const fd = openSync4(lockFile, "wx");
+      try {
+        writeSync4(fd, JSON.stringify(record2));
+      } finally {
+        closeSync4(fd);
+      }
+      return { acquired: record2 };
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+    }
+    const key = readLockKey(lockFile, "job_id");
+    const holder = readLock(lockFile);
+    const stale = holderIsStale(lockFile, holder, stall);
+    if (stale === false) return { holder };
+    if (stale === null || key === null) continue;
+    if (!removeLockIfKey(lockFile, "job_id", key, () => holderIsStale(lockFile, readLock(lockFile), stall) === true)) {
+      sleepSync2(50);
+    }
+  }
+  return { holder: readLock(lockFile) };
+}
+function sleepSync2(ms2) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms2);
+}
+function writeStatusFile(target, text5, { attempts = 10, delayMs = 50 } = {}) {
+  const temp = `${target}.${process.pid}.tmp`;
+  try {
+    writeFileSync2(temp, text5, "utf-8");
+  } catch (err) {
+    return err.code ?? "UNKNOWN";
+  }
+  let code = "UNKNOWN";
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      renameSync(temp, target);
+      return null;
+    } catch (err) {
+      code = err.code ?? "UNKNOWN";
+      if (!["EPERM", "EBUSY", "EACCES"].includes(code)) break;
+      if (attempt < attempts - 1) sleepSync2(delayMs);
+    }
+  }
+  try {
+    unlinkSync3(temp);
+  } catch {
+  }
+  return code;
+}
+function ours(job) {
+  return readLock(job.lockFile)?.job_id === job.status.job_id;
+}
+function publish(job) {
+  if (!ours(job)) return false;
+  job.status.updated_at = nowIso2();
+  if (job.pageFile) {
+    const page2 = `window.WORKBOARD_STATUS = ${JSON.stringify(job.status).replace(/</g, "\\u003c")};
+`;
+    const code2 = writeStatusFile(job.pageFile, page2);
+    if (code2 !== null) job.status.write_error = { target: job.pageFile, code: code2, at: nowIso2() };
+  }
+  const code = writeStatusFile(job.mirrorFile, JSON.stringify(job.status));
+  if (code !== null) job.status.write_error = { target: job.mirrorFile, code, at: nowIso2() };
+  return true;
+}
+function releaseLock(job) {
+  try {
+    removeLockIfKey(job.lockFile, "job_id", job.status.job_id, void 0, 500);
+  } catch {
+  }
+}
+function finish(job, release) {
+  if (release) releaseLock(job);
+  jobs.delete(job.lockFile);
+  job.resolve({ job_id: job.status.job_id, rendered: job.rendered, done: job.status.done, failed: job.status.failed });
+}
+function schedule(job) {
+  setImmediate(() => step(job)).unref();
+}
+function step(job) {
+  try {
+    if (!ours(job)) return finish(job, false);
+    if (!existsSync9(job.dbPath)) {
+      job.status.state = "aborted";
+      job.status.current = null;
+      publish(job);
+      return finish(job, true);
+    }
+    const id = job.status.current;
+    const started = performance.now();
+    try {
+      if (!job.skip.has(id) && !job.isFresh(id)) {
+        job.render(id);
+        job.rendered.push(id);
+        console.error(`[render-job] filing ${id} ${Math.round(performance.now() - started)} ms`);
+      }
+      job.status.done.push(id);
+    } catch (err) {
+      job.status.failed.push({ filing_id: id, error: err instanceof Error ? err.message : String(err) });
+    }
+    job.status.current = job.status.queued.shift() ?? null;
+    if (job.status.current === null) {
+      job.status.state = "done";
+      if (job.settle && job.rendered.length > 0) {
+        try {
+          job.settle();
+        } catch (err) {
+          job.status.write_error = { target: "settle", code: err instanceof Error ? err.message : String(err), at: nowIso2() };
+        }
+      }
+    }
+    try {
+      utimesSync(job.lockFile, /* @__PURE__ */ new Date(), /* @__PURE__ */ new Date());
+    } catch {
+    }
+    if (!publish(job)) return finish(job, false);
+    if (job.status.state === "done") return finish(job, true);
+    schedule(job);
+  } catch (err) {
+    try {
+      job.status.state = "aborted";
+      job.status.write_error ??= { target: job.mirrorFile, code: err instanceof Error ? err.message : String(err), at: nowIso2() };
+      publish(job);
+    } finally {
+      finish(job, true);
+    }
+  }
+}
+function installExitHandler() {
+  if (exitHandlerInstalled) return;
+  exitHandlerInstalled = true;
+  process.on("exit", () => {
+    for (const job of jobs.values()) {
+      job.status.state = "aborted";
+      job.status.current = null;
+      if (publish(job)) releaseLock(job);
+    }
+  });
+}
+function mirrorStatus(dbPath, env) {
+  const lockFile = hostLocalPath(dbPath, "render-job.lock", env);
+  const job = jobs.get(lockFile);
+  let status2;
+  if (job) {
+    status2 = job.status;
+  } else {
+    try {
+      status2 = JSON.parse(readFileSync9(hostLocalPath(dbPath, "render-job.status.json", env), "utf-8"));
+    } catch {
+      return { state: "idle" };
+    }
+  }
+  if (status2.state !== "running") return { ...status2 };
+  if (!job && !existsSync9(lockFile)) return { ...status2, state: "aborted" };
+  if (Date.now() - Date.parse(status2.updated_at) > status2.stall_after_ms) return { ...status2, state: "stalled" };
+  return { ...status2 };
+}
+function backgroundJobStatus(dbPath, env = process.env) {
+  return mirrorStatus(dbPath, env);
+}
+function startRenderJob(options) {
+  const env = options.env ?? process.env;
+  const stall = stallMs(env);
+  const lockFile = hostLocalPath(options.dbPath, "render-job.lock", env);
+  const result = acquire(lockFile, options.dbPath, stall);
+  if ("holder" in result) {
+    const reported2 = mirrorStatus(options.dbPath, env);
+    if (result.holder && reported2.state !== "idle" && "job_id" in reported2 && reported2.job_id === result.holder.job_id) {
+      return { ...reported2, joined: true };
+    }
+    return { state: "running", job_id: result.holder?.job_id ?? null, started_at: result.holder?.started_at ?? null, joined: true };
+  }
+  let resolve10;
+  const promise = new Promise((r3) => resolve10 = r3);
+  const [current = null, ...queued] = options.queue;
+  const job = {
+    lockFile,
+    mirrorFile: hostLocalPath(options.dbPath, "render-job.status.json", env),
+    ...options.draftDir ? { pageFile: join12(options.draftDir, STATUS_FILE) } : {},
+    dbPath: options.dbPath,
+    status: {
+      job_id: result.acquired.job_id,
+      state: current === null ? "done" : "running",
+      started_at: result.acquired.started_at,
+      updated_at: result.acquired.started_at,
+      stall_after_ms: stall,
+      queued,
+      done: [],
+      failed: [],
+      current
+    },
+    rendered: [],
+    skip: /* @__PURE__ */ new Set(),
+    render: options.render,
+    isFresh: options.isFresh,
+    ...options.settle ? { settle: options.settle } : {},
+    promise,
+    resolve: resolve10
+  };
+  jobs.set(lockFile, job);
+  installExitHandler();
+  publish(job);
+  const reported = { ...job.status };
+  if (current === null) finish(job, true);
+  else schedule(job);
+  return reported;
+}
+function markRenderedInForeground(dbPath, filingId, env = process.env) {
+  const job = jobs.get(hostLocalPath(dbPath, "render-job.lock", env));
+  if (!job || job.status.state !== "running") return;
+  const queuedAt = job.status.queued.indexOf(filingId);
+  if (queuedAt === -1 && job.status.current !== filingId) return;
+  if (!job.isFresh(filingId)) return;
+  job.skip.add(filingId);
+  if (queuedAt !== -1) {
+    job.status.queued.splice(queuedAt, 1);
+    job.status.done.push(filingId);
+    publish(job);
+  }
+}
+
+// src/knowledge/sidecar.ts
+function passageHash(passage) {
+  return createHash4("sha256").update(passage.replace(/\s+/g, " ").trim(), "utf8").digest("hex");
+}
+function invalid2(file, where, rule) {
+  throw new DataServerError(`${file}: ${where}: ${rule}`, "invalid_sidecar");
+}
+function parseSidecar(text5, file, knowledgePath) {
+  let doc;
+  try {
+    doc = JSON.parse(text5);
+  } catch (err) {
+    return invalid2(file, "the sidecar", `is not valid JSON: ${err.message}`);
+  }
+  if (typeof doc !== "object" || doc === null || Array.isArray(doc)) invalid2(file, "the sidecar", "must be an object");
+  const top = doc;
+  const extra = Object.keys(top).filter((key) => key !== "file" && key !== "items");
+  if (extra.length) invalid2(file, "the sidecar", `unknown field(s) ${extra.join(", ")}`);
+  if (typeof top.file !== "string" || top.file.split("\\").join("/").toLowerCase() !== knowledgePath.toLowerCase()) {
+    invalid2(file, "file", `must name the file it sits beside, "${knowledgePath}"`);
+  }
+  if (!Array.isArray(top.items)) invalid2(file, "items", "must be an array");
+  const rows29 = [];
+  top.items.forEach((raw, i3) => {
+    const where = `items[${i3}]`;
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) invalid2(file, where, "must be an object");
+    const row2 = raw;
+    const unknown2 = Object.keys(row2).filter((key) => !["rule_ref", "status", "by", "on", "confirmed_against", "value", ...STAMP_KEYS].includes(key));
+    if (unknown2.length) invalid2(file, where, `unknown field(s) ${unknown2.join(", ")}`);
+    for (const key of ["rule_ref", "by", "on"]) {
+      if (typeof row2[key] !== "string" || row2[key] === "") invalid2(file, `${where}.${key}`, "must be a non-empty string");
+    }
+    if (row2.status !== "confirmed" && row2.status !== "corrected") invalid2(file, `${where}.status`, 'must be "confirmed" or "corrected"');
+    if (rows29.some((seen) => seen.rule_ref === row2.rule_ref)) invalid2(file, where, `rule_ref "${row2.rule_ref}" has two rows`);
+    const against = row2.confirmed_against;
+    if (typeof against !== "object" || against === null || Array.isArray(against)) {
+      invalid2(file, `${where}.confirmed_against`, "must be {passage_hash, currency}");
+    }
+    if (typeof against.passage_hash !== "string" || !/^[0-9a-f]{64}$/.test(against.passage_hash)) {
+      invalid2(file, `${where}.confirmed_against.passage_hash`, "must be a sha256 hex digest");
+    }
+    if (against.currency !== null && typeof against.currency !== "string") {
+      invalid2(file, `${where}.confirmed_against.currency`, "must be a string or null");
+    }
+    const extraAgainst = Object.keys(against).filter((key) => key !== "passage_hash" && key !== "currency");
+    if (extraAgainst.length) invalid2(file, `${where}.confirmed_against`, `unknown field(s) ${extraAgainst.join(", ")}`);
+    const corrected = row2.status === "corrected";
+    if (corrected !== Object.hasOwn(row2, "value")) {
+      invalid2(file, `${where}.value`, corrected ? "is required on a corrected row" : "appears only on a corrected row");
+    }
+    const stamp2 = stampProblem(row2);
+    if (stamp2) invalid2(file, `${where}.${stamp2[0]}`, stamp2[1]);
+    rows29.push({
+      rule_ref: row2.rule_ref,
+      status: row2.status,
+      by: row2.by,
+      on: row2.on,
+      confirmed_against: { passage_hash: against.passage_hash, currency: against.currency ?? null },
+      ...corrected ? { value: row2.value } : {},
+      ...row2.plugin_version !== void 0 ? { plugin_version: row2.plugin_version } : {},
+      ...row2.shipped_from !== void 0 ? { shipped_from: row2.shipped_from } : {}
+    });
+  });
+  return rows29;
+}
+function freshnessOf(item, checked) {
+  const facts = checked?.find((record2) => record2.record.toLowerCase() === item.record.toLowerCase());
+  const present3 = facts?.items?.find((entry) => entry.rule_ref === item.rule_ref)?.present;
+  if (present3 === true) return "verified";
+  if (present3 === false) return "missing";
+  return "not verified";
+}
+function effectiveStatus(input) {
+  const out = {
+    items: [],
+    stale_confirmation: [],
+    orphaned_confirmations: [],
+    currency_moved: [],
+    corrections: [],
+    sources_check: input.checked ? "consulted" : "none"
+  };
+  const byRef = new Map(input.rows.map((row2) => [row2.rule_ref, row2]));
+  for (const item of input.items) {
+    const hash = passageHash(item.passage);
+    const freshness = freshnessOf(item, input.checked);
+    const row2 = byRef.get(item.rule_ref);
+    let status2 = "unconfirmed";
+    let practitioner = false;
+    if (row2?.status === "corrected") {
+      status2 = "corrected";
+      out.corrections.push({ rule_ref: row2.rule_ref, value: row2.value, by: row2.by, on: row2.on, passage_changed: row2.confirmed_against.passage_hash !== hash });
+    } else if (row2?.status === "confirmed") {
+      if (row2.confirmed_against.passage_hash === hash) {
+        status2 = "confirmed";
+      } else {
+        out.stale_confirmation.push({ rule_ref: row2.rule_ref, by: row2.by, on: row2.on, confirmed_against: row2.confirmed_against, passage_hash: hash });
+      }
+    } else if (input.practitionerConfirms && item.source === "practitioner") {
+      status2 = "confirmed";
+      practitioner = true;
+    }
+    if (row2 && row2.confirmed_against.passage_hash === hash && row2.confirmed_against.currency !== item.currency) {
+      out.currency_moved.push({ rule_ref: row2.rule_ref, confirmed_currency: row2.confirmed_against.currency, currency: item.currency });
+    }
+    if (freshness === "missing" && (status2 === "confirmed" || status2 === "corrected")) status2 = "unconfirmed";
+    out.items.push({
+      rule_ref: item.rule_ref,
+      status: status2,
+      freshness,
+      passage_hash: hash,
+      currency: item.currency,
+      record: item.record,
+      ...item.from_file && item.page !== null ? { pdf_page: item.page } : {},
+      ...practitioner ? { practitioner_sourced: true } : {}
+    });
+  }
+  const refs = new Set(input.items.map((item) => item.rule_ref));
+  out.orphaned_confirmations = input.rows.filter((row2) => !refs.has(row2.rule_ref));
+  return out;
+}
+var LOCK_ATTEMPTS3 = 5;
+var LOCK_RETRY_MS3 = 400;
+var LOCK_STALE_MS3 = 6e4;
+function lockIsStale(lock) {
+  try {
+    return Date.now() - statSync6(lock).mtimeMs > LOCK_STALE_MS3;
+  } catch {
+    return false;
+  }
+}
+async function acquireLock(lock) {
+  for (let attempt = 0; attempt < LOCK_ATTEMPTS3; attempt++) {
+    try {
+      const token = randomUUID7();
+      const fd = openSync5(lock, "wx");
+      writeSync5(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), token }));
+      closeSync5(fd);
+      return token;
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+      const key = readLockKey(lock, "token");
+      if (key === null) continue;
+      if (lockIsStale(lock) && removeLockIfKey(lock, "token", key, () => lockIsStale(lock))) continue;
+      if (attempt < LOCK_ATTEMPTS3 - 1) await new Promise((resolve10) => setTimeout(resolve10, LOCK_RETRY_MS3));
+    }
+  }
+  throw new DataServerError(
+    `could not acquire the knowledge write lock within ${LOCK_ATTEMPTS3 * LOCK_RETRY_MS3 / 1e3}s (${lock}${orphanClaims(lock)}); another session is writing`,
+    "lock_timeout"
+  );
+}
+async function withFileLock(target, fn2) {
+  mkdirSync4(pathWin327.dirname(target), { recursive: true });
+  const lock = `${target}.lock`;
+  const token = await acquireLock(lock);
+  try {
+    return await fn2();
+  } finally {
+    try {
+      removeLockIfKey(lock, "token", token, void 0, 500);
+    } catch {
+    }
+  }
+}
+function writeTextAtomic(target, text5) {
+  const code = writeStatusFile(target, text5);
+  if (code) throw new DataServerError(`could not write ${target}: ${code}`, "write_failed");
+}
+function writeBytesAtomic(target, bytes) {
+  writeTextAtomic(target, bytes);
+}
+function readRows(sidecarAbs, knowledgePath) {
+  if (!existsSync10(sidecarAbs)) return [];
+  const text5 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
+  return parseSidecar(text5.startsWith("\uFEFF") ? text5.slice(1) : text5, sidecarAbs, knowledgePath);
+}
+async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check) {
+  return withFileLock(sidecarAbs, () => {
+    const rows29 = readRows(sidecarAbs, knowledgePath);
+    const at = rows29.findIndex((known) => known.rule_ref === row2.rule_ref);
+    if (at === -1) rows29.push(row2);
+    else rows29[at] = row2;
+    check(rows29);
+    writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows29 }, null, 2) + "\n");
+    return rows29;
+  });
+}
+
+// src/tools/practice/firm-profile.ts
 var ROSTER_FIELDS = ["key", "name", "designation", "role", "email", "direct_line", "closing", "initials", "active"];
 var ROLES = ["lawyer", "staff"];
 var SIGNER_FIELDS = ["name", "email", "direct_line", "closing", "initials"];
@@ -80971,25 +81935,25 @@ var TOKENS = ["{{AUTHOR_NAME}}", "{{AUTHOR_EMAIL}}", "{{DIRECT_LINE}}", "{{FILE_
 var HEADER_FOOTER_PART = /^word\/(header|footer)\d*\.xml$/;
 var THEME_PART = "word/theme/theme1.xml";
 function firmPaths(env, fallback) {
-  const dir = join11(resolveCaseDataRoot(env, fallback), "_practice", "firm");
-  return { firm: join11(dir, "firm.json"), letterhead: join11(dir, "letterhead.docx") };
+  const dir = join13(resolveCaseDataRoot(env, fallback), "_practice", "firm");
+  return { firm: join13(dir, "firm.json"), letterhead: join13(dir, "letterhead.docx") };
 }
 function emailSignaturePath(env, key) {
-  return join11(dirname5(firmPaths(env).firm), "email-signatures", `${key}.htm`);
+  return join13(dirname5(firmPaths(env).firm), "email-signatures", `${key}.htm`);
 }
 function readJson(path) {
   try {
-    return JSON.parse(readFileSync6(path, "utf-8"));
+    return JSON.parse(readFileSync10(path, "utf-8"));
   } catch (err) {
     throw new ValidationError(`${path} is not valid JSON: ${err.message}`);
   }
 }
 function readConfig(env) {
   const path = configPath(env);
-  return existsSync8(path) ? readJson(path) : { version: 1 };
+  return existsSync11(path) ? readJson(path) : { version: 1 };
 }
 function writeJson(path, value) {
-  writeFileSync2(path, JSON.stringify(value, null, 2) + "\n", "utf-8");
+  writeTextAtomic(path, JSON.stringify(value, null, 2) + "\n");
 }
 function rosterOf(firm, firmPath) {
   if (firm.roster === void 0) return [];
@@ -81004,7 +81968,7 @@ function isPositiveHours(value) {
 }
 function idleFlagHours(env = process.env) {
   try {
-    const hours = JSON.parse(readFileSync6(firmPaths(env).firm, "utf-8"))?.idle_flag_hours;
+    const hours = JSON.parse(readFileSync10(firmPaths(env).firm, "utf-8"))?.idle_flag_hours;
     return isPositiveHours(hours) ? hours : null;
   } catch {
     return null;
@@ -81015,7 +81979,7 @@ async function firm_profile(env = process.env) {
 }
 function readFirmProfile(env = process.env, fallback) {
   const paths = firmPaths(env, fallback);
-  const firm = existsSync8(paths.firm) ? readJson(paths.firm) : void 0;
+  const firm = existsSync11(paths.firm) ? readJson(paths.firm) : void 0;
   const firmName = typeof firm?.firm_name === "string" ? firm.firm_name : "";
   if (!firm || firmName === "") {
     const missing = firm ? `firm_name in ${paths.firm}` : `firm.json (${paths.firm})`;
@@ -81025,7 +81989,7 @@ function readFirmProfile(env = process.env, fallback) {
   }
   const roster = rosterOf(firm, paths.firm);
   const config2 = configPath(env);
-  const machine = existsSync8(config2) ? readJson(config2) : void 0;
+  const machine = existsSync11(config2) ? readJson(config2) : void 0;
   const raw = machine?.person;
   const person2 = raw === void 0 || raw === null || raw === "" ? null : raw;
   const quirks = machine?.practice_quirks;
@@ -81043,7 +82007,7 @@ function readFirmProfile(env = process.env, fallback) {
   return {
     firm_name: firmName,
     roster,
-    letterhead: existsSync8(paths.letterhead) ? paths.letterhead : null,
+    letterhead: existsSync11(paths.letterhead) ? paths.letterhead : null,
     person: person2,
     practice_quirks: typeof quirks === "string" && quirks !== "" ? quirks : null,
     ...isPositiveHours(firm.idle_flag_hours) ? { idle_flag_hours: firm.idle_flag_hours } : {},
@@ -81154,7 +82118,7 @@ async function upsert_firm_profile(args, env = process.env) {
   }
   const paths = resolved;
   const result = { changed: [], written: [] };
-  const current = resolved && existsSync8(paths.firm) ? readJson(paths.firm) : void 0;
+  const current = resolved && existsSync11(paths.firm) ? readJson(paths.firm) : void 0;
   let firm;
   if (args.firm_name !== void 0 || args.roster_entry !== void 0 || args.idle_flag_hours !== void 0 || args.cc_on_counsel_email !== void 0) {
     firm = { firm_name: void 0, roster: [], ...current };
@@ -81200,7 +82164,7 @@ async function upsert_firm_profile(args, env = process.env) {
   }
   if (config2 && args.signature !== void 0) {
     const signature = asString(args.signature, "signature");
-    if (!existsSync8(signature)) throw new NotFoundError(`signature file not found: ${signature}`);
+    if (!existsSync11(signature)) throw new NotFoundError(`signature file not found: ${signature}`);
     config2.signature = signature;
     result.changed.push("signature");
   }
@@ -81219,8 +82183,8 @@ async function upsert_firm_profile(args, env = process.env) {
   let letterhead;
   if (args.letterhead !== void 0) {
     const source = asString(args.letterhead, "letterhead");
-    if (!existsSync8(source)) throw new NotFoundError(`letterhead source not found: ${source}`);
-    letterhead = readFileSync6(source);
+    if (!existsSync11(source)) throw new NotFoundError(`letterhead source not found: ${source}`);
+    letterhead = readFileSync10(source);
     const { major, minor } = checkLetterhead(letterhead, source);
     if (major !== void 0 && minor !== void 0 && major !== minor) result.theme_faces_differ = { major, minor };
     result.changed.push("letterhead");
@@ -81235,18 +82199,18 @@ async function upsert_firm_profile(args, env = process.env) {
   const person2 = (config2 ?? readConfig(env)).person;
   const preparer = roster.find((entry) => typeof person2 === "string" && entry.key === person2);
   if (preparer && !preparer.initials) result.preparer_initials_missing = person2;
-  if (firm || letterhead) mkdirSync3(dirname5(paths.firm), { recursive: true });
+  if (firm || letterhead) mkdirSync5(dirname5(paths.firm), { recursive: true });
   if (firm) {
     writeJson(paths.firm, firm);
     result.written.push(paths.firm);
   }
   if (letterhead) {
-    writeFileSync2(paths.letterhead, letterhead);
+    writeFileSync3(paths.letterhead, letterhead);
     result.written.push(paths.letterhead);
   }
   if (config2) {
     for (const target of configWritePaths(env)) {
-      mkdirSync3(dirname5(target), { recursive: true });
+      mkdirSync5(dirname5(target), { recursive: true });
       writeJson(target, config2);
       result.written.push(target);
     }
@@ -81255,17 +82219,17 @@ async function upsert_firm_profile(args, env = process.env) {
 }
 
 // src/tools/practice/folder-map.ts
-import { existsSync as existsSync9, mkdirSync as mkdirSync4, readdirSync as readdirSync6, readFileSync as readFileSync7, writeFileSync as writeFileSync3 } from "node:fs";
-import { dirname as dirname6, join as join12, win32 as pathWin324 } from "node:path";
+import { existsSync as existsSync12, mkdirSync as mkdirSync6, readdirSync as readdirSync7, readFileSync as readFileSync11, writeFileSync as writeFileSync4 } from "node:fs";
+import { dirname as dirname6, join as join14, win32 as pathWin328 } from "node:path";
 var FLAGS = ["never_ingest", "privileged_by_default", "authority"];
 var GLOSSARY = "shared/document-types.md";
 var ROW = /^\| `([a-z_]+)` \| ([^|]+?) \| ([^|]+?) \|([^|]*)\|$/;
 function documentTypes(env = process.env) {
   const root = resolveShippedRoot(GLOSSARY, env, { subject: "the document-type glossary", plugin: "lawyer" }).root;
-  const path = join12(root, ...GLOSSARY.split("/"));
-  if (!existsSync9(path)) throw new DataServerError(`the document-type glossary is missing: ${path}`, "skills_root_missing");
+  const path = join14(root, ...GLOSSARY.split("/"));
+  if (!existsSync12(path)) throw new DataServerError(`the document-type glossary is missing: ${path}`, "skills_root_missing");
   const types = [];
-  for (const line of readFileSync7(path, "utf-8").split(/\r?\n/)) {
+  for (const line of readFileSync11(path, "utf-8").split(/\r?\n/)) {
     const m3 = ROW.exec(line.trim());
     if (!m3) continue;
     const flags = [...m3[4].matchAll(/`([a-z_]+)`/g)].map((f3) => f3[1]);
@@ -81277,17 +82241,17 @@ function documentTypes(env = process.env) {
   return types;
 }
 function folderMapsDir(env) {
-  return join12(resolveCaseDataRoot(env), "_practice", "firm", "folder-maps");
+  return join14(resolveCaseDataRoot(env), "_practice", "firm", "folder-maps");
 }
 function folderMapPath(env, key) {
-  return join12(folderMapsDir(env), `${key}.json`);
+  return join14(folderMapsDir(env), `${key}.json`);
 }
 function machinePerson(env) {
   const config2 = configPath(env);
-  if (!existsSync9(config2)) return null;
+  if (!existsSync12(config2)) return null;
   let person2;
   try {
-    person2 = JSON.parse(readFileSync7(config2, "utf-8"))?.person;
+    person2 = JSON.parse(readFileSync11(config2, "utf-8"))?.person;
   } catch (err) {
     throw new ValidationError(`${config2} is not valid JSON: ${err.message}`);
   }
@@ -81300,7 +82264,7 @@ function splitGlob(glob) {
 }
 function checkGlob(glob, where) {
   if (typeof glob !== "string" || glob.trim() === "") throw new ValidationError(`${where}: a folder must be a non-empty string`);
-  if (pathWin324.isAbsolute(glob) || /^[a-z]:/i.test(glob) || /^[\\/]/.test(glob)) {
+  if (pathWin328.isAbsolute(glob) || /^[a-z]:/i.test(glob) || /^[\\/]/.test(glob)) {
     throw new ValidationError(`${where}: "${glob}" must be relative to the matter folder`);
   }
   if (splitGlob(glob).some((s3) => s3 === "" || s3 === "." || s3 === "..")) {
@@ -81330,12 +82294,12 @@ function readFolderMap(env = process.env, types = documentTypes(env)) {
     return { status: "no_map", person: null, map_path: null, reason: "this machine names no person, so no folder map applies" };
   }
   const path = folderMapPath(env, person2);
-  if (!existsSync9(path)) {
+  if (!existsSync12(path)) {
     return { status: "no_map", person: person2, map_path: path, reason: `no folder map is recorded for ${person2}` };
   }
   let parsed;
   try {
-    parsed = JSON.parse(readFileSync7(path, "utf-8"));
+    parsed = JSON.parse(readFileSync11(path, "utf-8"));
   } catch (err) {
     throw new ValidationError(`${path} is not valid JSON: ${err.message}`);
   }
@@ -81355,7 +82319,7 @@ function expandGlob(root, glob) {
   let dirs = [root];
   for (const segment of splitGlob(glob)) {
     dirs = dirs.flatMap(
-      (dir) => readdirSync6(dir, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && segmentMatches(segment, e3.name)).map((e3) => join12(dir, e3.name)).sort()
+      (dir) => readdirSync7(dir, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && segmentMatches(segment, e3.name)).map((e3) => join14(dir, e3.name)).sort()
     );
   }
   return dirs;
@@ -81404,120 +82368,36 @@ async function set_folder_map(args, env = process.env) {
     throw new ValidationError("this machine names no person, so there is no one to record a folder map for. Set person with practice_data__upsert_firm_profile first. Nothing was written.");
   }
   const path = folderMapPath(env, person2);
-  mkdirSync4(dirname6(path), { recursive: true });
-  writeFileSync3(path, JSON.stringify({ entries }, null, 2) + "\n", "utf-8");
+  mkdirSync6(dirname6(path), { recursive: true });
+  writeFileSync4(path, JSON.stringify({ entries }, null, 2) + "\n", "utf-8");
   return { person: person2, written: path, entries };
 }
 
 // src/tools/practice/config.ts
-import { existsSync as existsSync11, mkdirSync as mkdirSync5, readdirSync as readdirSync8, readFileSync as readFileSync9, renameSync, statSync as statSync4, writeFileSync as writeFileSync4 } from "node:fs";
-import { homedir as homedir6 } from "node:os";
-import { dirname as dirname8, isAbsolute as isAbsolute3, join as join14 } from "node:path";
+import { existsSync as existsSync14, mkdirSync as mkdirSync7, readdirSync as readdirSync9, readFileSync as readFileSync13, renameSync as renameSync2, statSync as statSync8, writeFileSync as writeFileSync5 } from "node:fs";
+import { homedir as homedir7 } from "node:os";
+import { dirname as dirname8, isAbsolute as isAbsolute3, join as join16 } from "node:path";
 
 // src/files/matter-root.ts
-import { existsSync as existsSync10, readdirSync as readdirSync7, readFileSync as readFileSync8, statSync as statSync3 } from "node:fs";
-import { basename as basename2, dirname as dirname7, isAbsolute as isAbsolute2, join as join13, normalize, resolve as resolve2, win32 as pathWin326 } from "node:path";
-
-// src/files/scope.ts
-import { realpathSync } from "node:fs";
-import { win32 as pathWin325 } from "node:path";
-var PathOutOfScopeError = class extends DataServerError {
-  constructor(message) {
-    super(message, "path_out_of_scope");
-  }
-};
-var DRIVE_PREFIX = /^[A-Za-z]:/;
-function assertRelativeSyntax(relative5, label2) {
-  if (typeof relative5 !== "string" || relative5.length === 0) {
-    throw new PathOutOfScopeError(`${label2} must be a non-empty relative path`);
-  }
-  if (relative5.includes("\0")) {
-    throw new PathOutOfScopeError(`${label2} contains a NUL byte`);
-  }
-  if (DRIVE_PREFIX.test(relative5)) {
-    throw new PathOutOfScopeError(`${label2} must be relative, not a drive-qualified path: ${relative5}`);
-  }
-  if (relative5.startsWith("\\\\") || relative5.startsWith("//")) {
-    throw new PathOutOfScopeError(`${label2} must be relative, not a UNC path: ${relative5}`);
-  }
-  if (relative5.startsWith("/") || relative5.startsWith("\\")) {
-    throw new PathOutOfScopeError(`${label2} must be relative, not rooted: ${relative5}`);
-  }
-  const segments = relative5.split(/[\\/]+/);
-  if (segments.some((s3) => s3 === "..")) {
-    throw new PathOutOfScopeError(`${label2} must not contain a '..' segment: ${relative5}`);
-  }
-}
-function canonicalRoot(root, missingMessage2, code = "skills_root_missing") {
-  try {
-    return realpathSync.native(root);
-  } catch {
-    throw new DataServerError(missingMessage2, code);
-  }
-}
-function resolveWithin(canonRoot, relative5, label2, mustExist = true) {
-  const joined = pathWin325.join(canonRoot, relative5);
-  let resolved;
-  if (mustExist) {
-    try {
-      resolved = realpathSync.native(joined);
-    } catch {
-      throw new DataServerError(`${label2} not found: ${relative5}`, "not_found");
-    }
-  } else {
-    resolved = resolveDeepestExisting(joined);
-  }
-  assertContained(canonRoot, resolved, label2, relative5);
-  return resolved;
-}
-function resolveDeepestExisting(target) {
-  const tail = [];
-  let cursor = target;
-  for (; ; ) {
-    try {
-      const base = realpathSync.native(cursor);
-      return tail.length ? pathWin325.join(base, ...tail.reverse()) : base;
-    } catch {
-      const parent = pathWin325.dirname(cursor);
-      if (parent === cursor) {
-        return pathWin325.normalize(target);
-      }
-      tail.push(pathWin325.basename(cursor));
-      cursor = parent;
-    }
-  }
-}
-function assertContained(canonRoot, resolved, label2, original) {
-  const needle = resolved.toLowerCase();
-  const prefix = (canonRoot.endsWith(pathWin325.sep) ? canonRoot : canonRoot + pathWin325.sep).toLowerCase();
-  if (needle !== canonRoot.toLowerCase() && !needle.startsWith(prefix)) {
-    throw new PathOutOfScopeError(
-      `${label2} resolves outside its permitted root (${original} -> ${resolved})`
-    );
-  }
-}
-function toPosixRelative(canonRoot, resolved) {
-  return pathWin325.relative(canonRoot, resolved).split(pathWin325.sep).join("/");
-}
-
-// src/files/matter-root.ts
+import { existsSync as existsSync13, readdirSync as readdirSync8, readFileSync as readFileSync12, statSync as statSync7 } from "node:fs";
+import { basename as basename2, dirname as dirname7, isAbsolute as isAbsolute2, join as join15, normalize, resolve as resolve2, win32 as pathWin329 } from "node:path";
 var POINTER_FILES = ["probanda.json", "coclerk.json"];
 var POINTER_SCHEMA_VERSION = 5;
 var LEGACY_ARTIFACTS_DIR = "9. AI";
 var SUBMISSION_DB_FILE = "submission.sqlite";
 var CASE_DATA_FOLDER = "0. CASE DATA";
 function findPointer(root) {
-  return POINTER_FILES.map((name) => join13(root, name)).find((path) => existsSync10(path));
+  return POINTER_FILES.map((name) => join15(root, name)).find((path) => existsSync13(path));
 }
 function validateMatterRoot(matterRoot) {
   if (typeof matterRoot !== "string" || matterRoot.length === 0) {
     throw new DataServerError("matter_root is required", "invalid_root");
   }
-  if (!pathWin326.isAbsolute(matterRoot)) {
+  if (!pathWin329.isAbsolute(matterRoot)) {
     throw new DataServerError(`matter_root must be an absolute path: ${matterRoot}`, "invalid_root");
   }
   const canon = canonicalRoot(matterRoot, `matter_root not found: ${matterRoot}`, "invalid_root");
-  if (!statSync3(canon).isDirectory()) {
+  if (!statSync7(canon).isDirectory()) {
     throw new DataServerError(`matter_root is not a directory: ${matterRoot}`, "invalid_root");
   }
   if (findPointer(canon) === void 0) {
@@ -81529,32 +82409,32 @@ function validateMatterRoot(matterRoot) {
   return canon;
 }
 function findDraftDir(root) {
-  const matches = readdirSync7(root, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && /^0\. DRAFT/i.test(e3.name)).map((e3) => e3.name).sort();
+  const matches = readdirSync8(root, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && /^0\. DRAFT/i.test(e3.name)).map((e3) => e3.name).sort();
   if (matches.length > 1) {
     throw new DataServerError(
       `${root} has ${matches.length} 0. DRAFT folders (${matches.map((m3) => `"${m3}"`).join(", ")}); keep one so the Litigation Strategy has a single home.`,
       "draft_dir_ambiguous"
     );
   }
-  return matches.length === 1 ? join13(root, matches[0]) : void 0;
+  return matches.length === 1 ? join15(root, matches[0]) : void 0;
 }
 function existingCaseDataFolder(root, env = process.env) {
   const dir = caseDataFolder(root, env);
   const missing = `the matter's matter-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
   const canon = canonicalRoot(dir, missing, "case_data_missing");
-  if (!statSync3(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
+  if (!statSync7(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
   return canon;
 }
 function pointerRefusal(root, why) {
   return new DataServerError(
-    `${findPointer(root) ?? join13(root, POINTER_FILES[0])} ${why}. Run /matter-data on this matter to initialize or repair its pointer; drafting_forms__open_session never rewrites it.`,
+    `${findPointer(root) ?? join15(root, POINTER_FILES[0])} ${why}. Run /matter-data on this matter to initialize or repair its pointer; drafting_forms__open_session never rewrites it.`,
     "pointer_unusable"
   );
 }
 function resolveCaseDataDir(root) {
   let pointer;
   try {
-    pointer = JSON.parse(readFileSync8(findPointer(root) ?? join13(root, POINTER_FILES[0]), "utf-8").replace(/\0/g, ""));
+    pointer = JSON.parse(readFileSync12(findPointer(root) ?? join15(root, POINTER_FILES[0]), "utf-8").replace(/\0/g, ""));
   } catch (err) {
     throw pointerRefusal(root, `is not readable JSON (${err.message})`);
   }
@@ -81566,15 +82446,15 @@ function resolveCaseDataDir(root) {
     throw pointerRefusal(root, "has no case_data_dir");
   }
   const caseDataDir = normalize(isAbsolute2(stored) ? stored : resolve2(root, stored));
-  if (caseDataDir.toLowerCase() === normalize(join13(root, LEGACY_ARTIFACTS_DIR)).toLowerCase()) {
+  if (caseDataDir.toLowerCase() === normalize(join15(root, LEGACY_ARTIFACTS_DIR)).toLowerCase()) {
     throw pointerRefusal(root, `still points at the legacy "${LEGACY_ARTIFACTS_DIR}" folder`);
   }
   return caseDataDir;
 }
 function resolveDbPath(root) {
   const caseDataDir = resolveCaseDataDir(root);
-  const dbPath = join13(caseDataDir, SUBMISSION_DB_FILE);
-  if (!existsSync10(dbPath) && !existsSync10(dirname7(caseDataDir))) {
+  const dbPath = join15(caseDataDir, SUBMISSION_DB_FILE);
+  if (!existsSync13(dbPath) && !existsSync13(dirname7(caseDataDir))) {
     throw pointerRefusal(root, `names ${caseDataDir}, whose parent folder does not exist on this device`);
   }
   return dbPath;
@@ -81582,7 +82462,7 @@ function resolveDbPath(root) {
 function caseDataRootFromCaseDataDir(dir, env) {
   const normal = normalize(dir);
   const inMatter = basename2(normal).toLowerCase() === CASE_DATA_FOLDER.toLowerCase();
-  const parent = inMatter ? join13(dirname7(dirname7(normal)), CASE_DATA_FOLDER) : dirname7(normal);
+  const parent = inMatter ? join15(dirname7(dirname7(normal)), CASE_DATA_FOLDER) : dirname7(normal);
   const override2 = env.COCLERK_CASE_DATA_ROOT;
   const named2 = inMatter || basename2(parent).toLowerCase() === CASE_DATA_FOLDER.toLowerCase() || !!override2 && normalize(override2).toLowerCase() === parent.toLowerCase();
   if (!named2) return null;
@@ -81592,7 +82472,7 @@ function caseDataRootFromCaseDataDir(dir, env) {
   } catch {
     return null;
   }
-  return statSync3(canon).isDirectory() ? canon : null;
+  return statSync7(canon).isDirectory() ? canon : null;
 }
 function caseDataRootFromMatterRoot(matterRoot, env) {
   const root = validateMatterRoot(matterRoot);
@@ -81618,20 +82498,20 @@ var DOCUMENTED_KEYS = [
 ];
 function isFile(path) {
   try {
-    return statSync4(path).isFile();
+    return statSync8(path).isFile();
   } catch {
     return false;
   }
 }
 function isDir(path) {
   try {
-    return statSync4(path).isDirectory();
+    return statSync8(path).isDirectory();
   } catch {
     return false;
   }
 }
 function practiceDb(root) {
-  return join14(root, "_practice", "practice.db");
+  return join16(root, "_practice", "practice.db");
 }
 function rootWorks(root) {
   return typeof root === "string" && root !== "" && isDir(root) && isFile(practiceDb(root));
@@ -81640,33 +82520,33 @@ function keysMissing(config2) {
   return DOCUMENTED_KEYS.filter((key) => config2[key] === void 0 || config2[key] === null || config2[key] === "");
 }
 function redirectedCopies(env) {
-  const packages = join14(env.LOCALAPPDATA || join14(homedir6(), "AppData", "Local"), "Packages");
+  const packages = join16(env.LOCALAPPDATA || join16(homedir7(), "AppData", "Local"), "Packages");
   let names;
   try {
-    names = readdirSync8(packages);
+    names = readdirSync9(packages);
   } catch {
     return [];
   }
-  return names.flatMap((name) => [CONFIG_FOLDER, LEGACY_CONFIG_FOLDER].flatMap((folder) => [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file) => join14(packages, name, "LocalCache", "Roaming", folder, file)))).filter(isFile);
+  return names.flatMap((name) => [CONFIG_FOLDER, LEGACY_CONFIG_FOLDER].flatMap((folder) => [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file) => join16(packages, name, "LocalCache", "Roaming", folder, file)))).filter(isFile);
 }
 var SCAN_DEPTH = 4;
 var SCAN_LIMIT = 5e3;
 var SCAN_SKIP = /* @__PURE__ */ new Set(["appdata", "node_modules"]);
 function scanCandidates(env) {
   const roots = [];
-  const queue = [[env.USERPROFILE || homedir6(), 0]];
+  const queue = [[env.USERPROFILE || homedir7(), 0]];
   let visited = 0;
   for (let i3 = 0; i3 < queue.length; i3++) {
     const [dir, depth] = queue[i3];
     let names;
     try {
-      names = readdirSync8(dir);
+      names = readdirSync9(dir);
     } catch {
       continue;
     }
     for (const name of names) {
       if (name.startsWith(".") || SCAN_SKIP.has(name.toLowerCase())) continue;
-      const child = join14(dir, name);
+      const child = join16(dir, name);
       if (!isDir(child)) continue;
       if (++visited > SCAN_LIMIT) return { roots, truncated: true };
       if (name.toLowerCase() === "0. case data" || rootWorks(child)) roots.push(child);
@@ -81678,7 +82558,7 @@ function scanCandidates(env) {
 function pendingWrites(env) {
   try {
     const path = resolvePracticeDbPath(env);
-    if (!isFile(path) || statSync4(path).size === 0) return 0;
+    if (!isFile(path) || statSync8(path).size === 0) return 0;
     return new PracticeStore(env).pendingCount();
   } catch {
     return null;
@@ -81709,7 +82589,7 @@ async function config_status(args, env = process.env) {
   }
   if (status2.exists && status2.path) {
     try {
-      const config2 = JSON.parse(readFileSync9(status2.path, "utf-8"));
+      const config2 = JSON.parse(readFileSync13(status2.path, "utf-8"));
       status2.keys_present = Object.keys(config2);
       status2.keys_missing = keysMissing(config2);
       if (typeof config2.practice_quirks === "string" && config2.practice_quirks !== "") {
@@ -81754,11 +82634,11 @@ async function config_set_root(args, env = process.env) {
       `Refused: ${practiceDb(root)} does not exist. case_data_root must name a folder that already holds _practice\\practice.db, unless initialize is true for a new device's approved root. Nothing was written.`
     );
   }
-  const created = !existsSync11(path);
+  const created = !existsSync14(path);
   let config2 = { version: 1 };
   if (!created) {
     try {
-      config2 = JSON.parse(readFileSync9(path, "utf-8"));
+      config2 = JSON.parse(readFileSync13(path, "utf-8"));
     } catch (err) {
       throw new ValidationError(`${path} is not valid JSON (${err.message}); repair it by hand. Nothing was written.`);
     }
@@ -81774,13 +82654,13 @@ async function config_set_root(args, env = process.env) {
   }
   const previous = typeof config2.case_data_root === "string" ? config2.case_data_root : null;
   config2.case_data_root = root;
-  if (initialize) mkdirSync5(join14(root, "_practice"), { recursive: true });
+  if (initialize) mkdirSync7(join16(root, "_practice"), { recursive: true });
   const written = configWritePaths(env);
   for (const target of written) {
-    mkdirSync5(dirname8(target), { recursive: true });
+    mkdirSync7(dirname8(target), { recursive: true });
     const temp = `${target}.${process.pid}.tmp`;
-    writeFileSync4(temp, JSON.stringify(config2, null, 2) + "\n", "utf-8");
-    renameSync(temp, target);
+    writeFileSync5(temp, JSON.stringify(config2, null, 2) + "\n", "utf-8");
+    renameSync2(temp, target);
   }
   const result = { path: written[0], created, previous_case_data_root: previous, case_data_root: root, keys_missing: keysMissing(config2) };
   if (initialize) {
@@ -81791,8 +82671,8 @@ async function config_set_root(args, env = process.env) {
 }
 
 // src/tools/practice/practice-board.ts
-import { existsSync as existsSync14, readFileSync as readFileSync12 } from "node:fs";
-import { dirname as dirname9, join as join16 } from "node:path";
+import { existsSync as existsSync15, readFileSync as readFileSync14 } from "node:fs";
+import { dirname as dirname9, join as join17 } from "node:path";
 
 // src/compose-template.ts
 var INCLUDE = /@@include\(([^)]*)\)@@/g;
@@ -82163,350 +83043,6 @@ function pageDates(dates, sections) {
   return { writing, header, criteria };
 }
 
-// src/submission/render-job.ts
-import { randomUUID as randomUUID6 } from "node:crypto";
-import { closeSync as closeSync4, existsSync as existsSync13, openSync as openSync4, readFileSync as readFileSync11, renameSync as renameSync2, statSync as statSync6, unlinkSync as unlinkSync3, utimesSync, writeFileSync as writeFileSync5, writeSync as writeSync4 } from "node:fs";
-import { join as join15 } from "node:path";
-
-// src/submission/lock.ts
-import { createHash as createHash3, randomUUID as randomUUID5 } from "node:crypto";
-import { closeSync as closeSync3, existsSync as existsSync12, mkdirSync as mkdirSync6, openSync as openSync3, readFileSync as readFileSync10, statSync as statSync5, writeSync as writeSync3 } from "node:fs";
-import { homedir as homedir7 } from "node:os";
-import { win32 as pathWin327 } from "node:path";
-var LOCK_ATTEMPTS2 = 25;
-var LOCK_RETRY_MS2 = 400;
-var LOCK_STALE_MS2 = 9e5;
-function lockDir2(env) {
-  const base = env.COCLERK_SUBMISSION_LOCK_ROOT || pathWin327.join(env.LOCALAPPDATA || homedir7(), "Coclerk", "submission-locks");
-  mkdirSync6(base, { recursive: true });
-  return base;
-}
-function hostLocalPath(dbPath, suffix, env = process.env) {
-  const key = createHash3("sha256").update(pathWin327.normalize(dbPath).toLowerCase()).digest("hex").slice(0, 16);
-  return pathWin327.join(lockDir2(env), `${key}.${suffix}`);
-}
-function lockPath2(dbPath, env) {
-  return hostLocalPath(dbPath, "lock", env);
-}
-async function acquireDataLock(dbPath, env = process.env) {
-  const lock = lockPath2(dbPath, env);
-  let brokeStale = false;
-  for (let attempt = 0; attempt < LOCK_ATTEMPTS2; attempt++) {
-    try {
-      const token = randomUUID5();
-      const fd = openSync3(lock, "wx");
-      writeSync3(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), dbPath, token }));
-      closeSync3(fd);
-      return {
-        brokeStale,
-        release() {
-          releaseIfOurs2(lock, token);
-        }
-      };
-    } catch (err) {
-      if (err.code !== "EEXIST") throw err;
-      const key = readLockKey(lock, "token");
-      if (key === null) continue;
-      if (isStale2(lock) && removeLockIfKey(lock, "token", key, () => isStale2(lock))) {
-        brokeStale = true;
-        continue;
-      }
-      if (attempt < LOCK_ATTEMPTS2 - 1) await sleep2(LOCK_RETRY_MS2);
-    }
-  }
-  throw new DataServerError(
-    `could not acquire the drafting-data write lock within ${LOCK_ATTEMPTS2 * LOCK_RETRY_MS2 / 1e3}s (${lock}: ${holderOf2(lock)}); another session is writing to or migrating this database`,
-    "lock_unavailable"
-  );
-}
-function releaseIfOurs2(lock, token) {
-  try {
-    removeLockIfKey(lock, "token", token, void 0, 500);
-  } catch {
-  }
-}
-function isStale2(lock) {
-  try {
-    return Date.now() - statSync5(lock).mtimeMs > LOCK_STALE_MS2;
-  } catch {
-    return false;
-  }
-}
-function holderOf2(lock) {
-  try {
-    return (existsSync12(lock) ? readFileSync10(lock, "utf-8").trim() : "released") + orphanClaims(lock);
-  } catch {
-    return "unreadable";
-  }
-}
-function sleep2(ms2) {
-  return new Promise((resolve10) => setTimeout(resolve10, ms2));
-}
-
-// src/submission/render-job.ts
-var STATUS_FILE = "workboard-status.js";
-var DEFAULT_STALL_MS = 6e4;
-var jobs = /* @__PURE__ */ new Map();
-var exitHandlerInstalled = false;
-function nowIso2() {
-  return (/* @__PURE__ */ new Date()).toISOString();
-}
-function stallMs(env) {
-  const value = Number(env.COCLERK_RENDER_STALL_MS);
-  return Number.isFinite(value) && value > 0 ? value : DEFAULT_STALL_MS;
-}
-function readLock(lockFile) {
-  try {
-    return JSON.parse(readFileSync11(lockFile, "utf-8"));
-  } catch {
-    return null;
-  }
-}
-function pidAlive(pid) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (err) {
-    return err.code !== "ESRCH";
-  }
-}
-function holderIsStale(lockFile, holder, stall) {
-  let mtimeMs;
-  try {
-    mtimeMs = statSync6(lockFile).mtimeMs;
-  } catch {
-    return null;
-  }
-  if (holder && typeof holder.pid === "number") {
-    if (!pidAlive(holder.pid)) return true;
-    if (holder.pid === process.pid && !jobs.has(lockFile)) return true;
-  }
-  return Date.now() - mtimeMs > 3 * stall;
-}
-function acquire(lockFile, dbPath, stall) {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const record2 = { job_id: randomUUID6(), pid: process.pid, started_at: nowIso2(), db_path: dbPath };
-    try {
-      const fd = openSync4(lockFile, "wx");
-      try {
-        writeSync4(fd, JSON.stringify(record2));
-      } finally {
-        closeSync4(fd);
-      }
-      return { acquired: record2 };
-    } catch (err) {
-      if (err.code !== "EEXIST") throw err;
-    }
-    const key = readLockKey(lockFile, "job_id");
-    const holder = readLock(lockFile);
-    const stale = holderIsStale(lockFile, holder, stall);
-    if (stale === false) return { holder };
-    if (stale === null || key === null) continue;
-    if (!removeLockIfKey(lockFile, "job_id", key, () => holderIsStale(lockFile, readLock(lockFile), stall) === true)) {
-      sleepSync2(50);
-    }
-  }
-  return { holder: readLock(lockFile) };
-}
-function sleepSync2(ms2) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms2);
-}
-function writeStatusFile(target, text5, { attempts = 10, delayMs = 50 } = {}) {
-  const temp = `${target}.${process.pid}.tmp`;
-  try {
-    writeFileSync5(temp, text5, "utf-8");
-  } catch (err) {
-    return err.code ?? "UNKNOWN";
-  }
-  let code = "UNKNOWN";
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    try {
-      renameSync2(temp, target);
-      return null;
-    } catch (err) {
-      code = err.code ?? "UNKNOWN";
-      if (!["EPERM", "EBUSY", "EACCES"].includes(code)) break;
-      if (attempt < attempts - 1) sleepSync2(delayMs);
-    }
-  }
-  try {
-    unlinkSync3(temp);
-  } catch {
-  }
-  return code;
-}
-function ours(job) {
-  return readLock(job.lockFile)?.job_id === job.status.job_id;
-}
-function publish(job) {
-  if (!ours(job)) return false;
-  job.status.updated_at = nowIso2();
-  if (job.pageFile) {
-    const page2 = `window.WORKBOARD_STATUS = ${JSON.stringify(job.status).replace(/</g, "\\u003c")};
-`;
-    const code2 = writeStatusFile(job.pageFile, page2);
-    if (code2 !== null) job.status.write_error = { target: job.pageFile, code: code2, at: nowIso2() };
-  }
-  const code = writeStatusFile(job.mirrorFile, JSON.stringify(job.status));
-  if (code !== null) job.status.write_error = { target: job.mirrorFile, code, at: nowIso2() };
-  return true;
-}
-function releaseLock(job) {
-  try {
-    removeLockIfKey(job.lockFile, "job_id", job.status.job_id, void 0, 500);
-  } catch {
-  }
-}
-function finish(job, release) {
-  if (release) releaseLock(job);
-  jobs.delete(job.lockFile);
-  job.resolve({ job_id: job.status.job_id, rendered: job.rendered, done: job.status.done, failed: job.status.failed });
-}
-function schedule(job) {
-  setImmediate(() => step(job)).unref();
-}
-function step(job) {
-  try {
-    if (!ours(job)) return finish(job, false);
-    if (!existsSync13(job.dbPath)) {
-      job.status.state = "aborted";
-      job.status.current = null;
-      publish(job);
-      return finish(job, true);
-    }
-    const id = job.status.current;
-    const started = performance.now();
-    try {
-      if (!job.skip.has(id) && !job.isFresh(id)) {
-        job.render(id);
-        job.rendered.push(id);
-        console.error(`[render-job] filing ${id} ${Math.round(performance.now() - started)} ms`);
-      }
-      job.status.done.push(id);
-    } catch (err) {
-      job.status.failed.push({ filing_id: id, error: err instanceof Error ? err.message : String(err) });
-    }
-    job.status.current = job.status.queued.shift() ?? null;
-    if (job.status.current === null) {
-      job.status.state = "done";
-      if (job.settle && job.rendered.length > 0) {
-        try {
-          job.settle();
-        } catch (err) {
-          job.status.write_error = { target: "settle", code: err instanceof Error ? err.message : String(err), at: nowIso2() };
-        }
-      }
-    }
-    try {
-      utimesSync(job.lockFile, /* @__PURE__ */ new Date(), /* @__PURE__ */ new Date());
-    } catch {
-    }
-    if (!publish(job)) return finish(job, false);
-    if (job.status.state === "done") return finish(job, true);
-    schedule(job);
-  } catch (err) {
-    try {
-      job.status.state = "aborted";
-      job.status.write_error ??= { target: job.mirrorFile, code: err instanceof Error ? err.message : String(err), at: nowIso2() };
-      publish(job);
-    } finally {
-      finish(job, true);
-    }
-  }
-}
-function installExitHandler() {
-  if (exitHandlerInstalled) return;
-  exitHandlerInstalled = true;
-  process.on("exit", () => {
-    for (const job of jobs.values()) {
-      job.status.state = "aborted";
-      job.status.current = null;
-      if (publish(job)) releaseLock(job);
-    }
-  });
-}
-function mirrorStatus(dbPath, env) {
-  const lockFile = hostLocalPath(dbPath, "render-job.lock", env);
-  const job = jobs.get(lockFile);
-  let status2;
-  if (job) {
-    status2 = job.status;
-  } else {
-    try {
-      status2 = JSON.parse(readFileSync11(hostLocalPath(dbPath, "render-job.status.json", env), "utf-8"));
-    } catch {
-      return { state: "idle" };
-    }
-  }
-  if (status2.state !== "running") return { ...status2 };
-  if (!job && !existsSync13(lockFile)) return { ...status2, state: "aborted" };
-  if (Date.now() - Date.parse(status2.updated_at) > status2.stall_after_ms) return { ...status2, state: "stalled" };
-  return { ...status2 };
-}
-function backgroundJobStatus(dbPath, env = process.env) {
-  return mirrorStatus(dbPath, env);
-}
-function startRenderJob(options) {
-  const env = options.env ?? process.env;
-  const stall = stallMs(env);
-  const lockFile = hostLocalPath(options.dbPath, "render-job.lock", env);
-  const result = acquire(lockFile, options.dbPath, stall);
-  if ("holder" in result) {
-    const reported2 = mirrorStatus(options.dbPath, env);
-    if (result.holder && reported2.state !== "idle" && "job_id" in reported2 && reported2.job_id === result.holder.job_id) {
-      return { ...reported2, joined: true };
-    }
-    return { state: "running", job_id: result.holder?.job_id ?? null, started_at: result.holder?.started_at ?? null, joined: true };
-  }
-  let resolve10;
-  const promise = new Promise((r3) => resolve10 = r3);
-  const [current = null, ...queued] = options.queue;
-  const job = {
-    lockFile,
-    mirrorFile: hostLocalPath(options.dbPath, "render-job.status.json", env),
-    ...options.draftDir ? { pageFile: join15(options.draftDir, STATUS_FILE) } : {},
-    dbPath: options.dbPath,
-    status: {
-      job_id: result.acquired.job_id,
-      state: current === null ? "done" : "running",
-      started_at: result.acquired.started_at,
-      updated_at: result.acquired.started_at,
-      stall_after_ms: stall,
-      queued,
-      done: [],
-      failed: [],
-      current
-    },
-    rendered: [],
-    skip: /* @__PURE__ */ new Set(),
-    render: options.render,
-    isFresh: options.isFresh,
-    ...options.settle ? { settle: options.settle } : {},
-    promise,
-    resolve: resolve10
-  };
-  jobs.set(lockFile, job);
-  installExitHandler();
-  publish(job);
-  const reported = { ...job.status };
-  if (current === null) finish(job, true);
-  else schedule(job);
-  return reported;
-}
-function markRenderedInForeground(dbPath, filingId, env = process.env) {
-  const job = jobs.get(hostLocalPath(dbPath, "render-job.lock", env));
-  if (!job || job.status.state !== "running") return;
-  const queuedAt = job.status.queued.indexOf(filingId);
-  if (queuedAt === -1 && job.status.current !== filingId) return;
-  if (!job.isFresh(filingId)) return;
-  job.skip.add(filingId);
-  if (queuedAt !== -1) {
-    job.status.queued.splice(queuedAt, 1);
-    job.status.done.push(filingId);
-    publish(job);
-  }
-}
-
 // src/tools/practice/practice-board.ts
 var HORIZON_DAYS = 14;
 var text2 = (value) => value === null || value === void 0 || value === "" ? null : String(value);
@@ -82515,7 +83051,7 @@ function localDate(d3) {
   return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())}`;
 }
 async function buildPracticeBoardData(store, now) {
-  const today4 = localDate(now);
+  const today2 = localDate(now);
   const horizon = localDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + HORIZON_DAYS));
   const matterRows = store.rows("matter");
   const matterById = new Map(matterRows.map((row2) => [String(row2.id), row2]));
@@ -82584,14 +83120,14 @@ async function buildPracticeBoardData(store, now) {
   const panels = { overdue: [], due_today: [], coming_up: [], other: [] };
   for (const i3 of items) {
     if (i3.date === null) panels.other.push(i3);
-    else if (i3.date < today4) panels.overdue.push(i3);
-    else if (i3.date === today4) panels.due_today.push(i3);
+    else if (i3.date < today2) panels.overdue.push(i3);
+    else if (i3.date === today2) panels.due_today.push(i3);
     else if (i3.date <= horizon) panels.coming_up.push(i3);
     else panels.other.push(i3);
   }
   const pad = (n3) => String(n3).padStart(2, "0");
   return {
-    meta: { rendered: `${today4} ${pad(now.getHours())}:${pad(now.getMinutes())}`, today: today4, horizon_days: HORIZON_DAYS },
+    meta: { rendered: `${today2} ${pad(now.getHours())}:${pad(now.getMinutes())}`, today: today2, horizon_days: HORIZON_DAYS },
     panels,
     notes,
     conflicted,
@@ -82601,8 +83137,8 @@ async function buildPracticeBoardData(store, now) {
 async function render_practice_board(store) {
   const data = await buildPracticeBoardData(store, /* @__PURE__ */ new Date());
   const { panels } = data;
-  const file = join16(dirname9(resolvePracticeDbPath(store.env)), PRACTICE_BOARD_FILE);
-  if (existsSync14(file) && !readFileSync12(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
+  const file = join17(dirname9(resolvePracticeDbPath(store.env)), PRACTICE_BOARD_FILE);
+  if (existsSync15(file) && !readFileSync14(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
     throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Work Board's marker, so this renderer did not write it`);
   }
   const code = writeStatusFile(file, renderPracticeBoardHtml(data));
@@ -82836,7 +83372,7 @@ function runDriver(matterRoot, mode, opts, env) {
 }
 
 // src/case/relocate.ts
-import { join as join17 } from "node:path";
+import { join as join18 } from "node:path";
 var RELOCATE_DRIVER = String.raw`
 import json, sys
 
@@ -82865,7 +83401,7 @@ main()
 async function caseDataRelocate(matterRoot, mode, env = process.env) {
   const caseLock = await acquireCaseLock(matterRoot, env);
   try {
-    const dataLock = await acquireDataLock(join17(caseDataFolder(matterRoot, env), "submission.sqlite"), env);
+    const dataLock = await acquireDataLock(join18(caseDataFolder(matterRoot, env), "submission.sqlite"), env);
     try {
       const result = runDriver2(matterRoot, mode, env);
       if (caseLock.brokeStale || dataLock.brokeStale) {
@@ -82994,8 +83530,8 @@ async function ingestAuthority(request2, env = process.env) {
 }
 
 // src/case/procedural-history.ts
-import { existsSync as existsSync15, readFileSync as readFileSync13, renameSync as renameSync3, writeFileSync as writeFileSync6 } from "node:fs";
-import { join as join18 } from "node:path";
+import { existsSync as existsSync16, readFileSync as readFileSync15, renameSync as renameSync3, writeFileSync as writeFileSync6 } from "node:fs";
+import { join as join19 } from "node:path";
 var FILE_NAME = "ProceduralHistory.md";
 var TITLE = "# Procedural history";
 var HEADING = /^## (\d{4}-\d{2}-\d{2})\s*$/;
@@ -83068,7 +83604,7 @@ function serialize(stamp2, sections, eol) {
 }
 function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
   const root = validateMatterRoot(args.matter_root);
-  const path = join18(root, FILE_NAME);
+  const path = join19(root, FILE_NAME);
   const hasEntry = args.date !== void 0 || args.line !== void 0;
   if (hasEntry && (args.date === void 0 || args.line === void 0)) {
     throw new ValidationError("matter_data__procedural_history_append takes date and line together, or neither to stamp last_updated alone", "invalid_entry");
@@ -83079,7 +83615,7 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
   if (args.source_path !== void 0 && args.told_on !== void 0) {
     throw new ValidationError("matter_data__procedural_history_append takes source_path or told_on, never both", "invalid_entry");
   }
-  const existing = existsSync15(path) ? readFileSync13(path, "utf-8") : void 0;
+  const existing = existsSync16(path) ? readFileSync15(path, "utf-8") : void 0;
   const eol = existing?.includes("\r\n") ? "\r\n" : "\n";
   const { sections } = existing === void 0 ? { sections: [] } : parse3(existing);
   let bullet;
@@ -83144,11 +83680,11 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
 }
 
 // src/time-pipeline/backend.ts
-import { join as join19 } from "node:path";
+import { join as join20 } from "node:path";
 function resolveTimePipelineDbPath(env = process.env) {
   if (env.COCLERK_TIME_PIPELINE_DB_PATH) return env.COCLERK_TIME_PIPELINE_DB_PATH;
   const root = resolveCaseDataRoot(env);
-  return join19(root, "_practice", env.COCLERK_TIME_PIPELINE_DB_NAME || "time_pipeline.db");
+  return join20(root, "_practice", env.COCLERK_TIME_PIPELINE_DB_NAME || "time_pipeline.db");
 }
 function timePipelineTimeoutMs(op, env = process.env) {
   const defaultMs = isKvRead(op) ? READ_TIMEOUT_MS : op === "bulk_apply" ? WRITE_TIMEOUT_MS : EXECUTE_TIMEOUT_MS;
@@ -83189,34 +83725,34 @@ function timePipelineExport(namespace, prefix, path, env = process.env) {
 }
 
 // src/timecamping/backend.ts
-import { join as join20 } from "node:path";
+import { join as join21 } from "node:path";
 
 // src/timecamping/lock.ts
-import { createHash as createHash4, randomUUID as randomUUID7 } from "node:crypto";
-import { closeSync as closeSync5, existsSync as existsSync16, mkdirSync as mkdirSync7, openSync as openSync5, readFileSync as readFileSync14, statSync as statSync7, writeSync as writeSync5 } from "node:fs";
+import { createHash as createHash5, randomUUID as randomUUID8 } from "node:crypto";
+import { closeSync as closeSync6, existsSync as existsSync17, mkdirSync as mkdirSync8, openSync as openSync6, readFileSync as readFileSync16, statSync as statSync9, writeSync as writeSync6 } from "node:fs";
 import { homedir as homedir8 } from "node:os";
-import { win32 as pathWin328 } from "node:path";
-var LOCK_ATTEMPTS3 = 5;
-var LOCK_RETRY_MS3 = 400;
-var LOCK_STALE_MS3 = 9e5;
+import { win32 as pathWin3210 } from "node:path";
+var LOCK_ATTEMPTS4 = 5;
+var LOCK_RETRY_MS4 = 400;
+var LOCK_STALE_MS4 = 9e5;
 function lockDir3(env) {
-  const base = env.COCLERK_TIMECAMPING_LOCK_ROOT || pathWin328.join(env.LOCALAPPDATA || homedir8(), "Coclerk", "timecamping-locks");
-  mkdirSync7(base, { recursive: true });
+  const base = env.COCLERK_TIMECAMPING_LOCK_ROOT || pathWin3210.join(env.LOCALAPPDATA || homedir8(), "Coclerk", "timecamping-locks");
+  mkdirSync8(base, { recursive: true });
   return base;
 }
 function lockPath3(dbPath, env) {
-  const key = createHash4("sha256").update(pathWin328.normalize(dbPath).toLowerCase()).digest("hex").slice(0, 16);
-  return pathWin328.join(lockDir3(env), `${key}.lock`);
+  const key = createHash5("sha256").update(pathWin3210.normalize(dbPath).toLowerCase()).digest("hex").slice(0, 16);
+  return pathWin3210.join(lockDir3(env), `${key}.lock`);
 }
 async function acquireDataLock2(dbPath, env = process.env) {
   const lock = lockPath3(dbPath, env);
   let brokeStale = false;
-  for (let attempt = 0; attempt < LOCK_ATTEMPTS3; attempt++) {
+  for (let attempt = 0; attempt < LOCK_ATTEMPTS4; attempt++) {
     try {
-      const token = randomUUID7();
-      const fd = openSync5(lock, "wx");
-      writeSync5(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), dbPath, token }));
-      closeSync5(fd);
+      const token = randomUUID8();
+      const fd = openSync6(lock, "wx");
+      writeSync6(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), dbPath, token }));
+      closeSync6(fd);
       return {
         brokeStale,
         release() {
@@ -83231,11 +83767,11 @@ async function acquireDataLock2(dbPath, env = process.env) {
         brokeStale = true;
         continue;
       }
-      if (attempt < LOCK_ATTEMPTS3 - 1) await sleep3(LOCK_RETRY_MS3);
+      if (attempt < LOCK_ATTEMPTS4 - 1) await sleep3(LOCK_RETRY_MS4);
     }
   }
   throw new DataServerError(
-    `could not acquire the timecamping-data write lock within ${LOCK_ATTEMPTS3 * LOCK_RETRY_MS3 / 1e3}s (${lock}: ${holderOf3(lock)}); another session is writing to or migrating this database`,
+    `could not acquire the timecamping-data write lock within ${LOCK_ATTEMPTS4 * LOCK_RETRY_MS4 / 1e3}s (${lock}: ${holderOf3(lock)}); another session is writing to or migrating this database`,
     "lock_unavailable"
   );
 }
@@ -83247,14 +83783,14 @@ function releaseIfOurs3(lock, token) {
 }
 function isStale3(lock) {
   try {
-    return Date.now() - statSync7(lock).mtimeMs > LOCK_STALE_MS3;
+    return Date.now() - statSync9(lock).mtimeMs > LOCK_STALE_MS4;
   } catch {
     return false;
   }
 }
 function holderOf3(lock) {
   try {
-    return (existsSync16(lock) ? readFileSync14(lock, "utf-8").trim() : "released") + orphanClaims(lock);
+    return (existsSync17(lock) ? readFileSync16(lock, "utf-8").trim() : "released") + orphanClaims(lock);
   } catch {
     return "unreadable";
   }
@@ -83267,7 +83803,7 @@ function sleep3(ms2) {
 function resolveTimecampingDbPath(env = process.env) {
   if (env.COCLERK_TIMECAMPING_DB_PATH) return env.COCLERK_TIMECAMPING_DB_PATH;
   const root = resolveCaseDataRoot(env);
-  return join20(root, "_practice", env.COCLERK_TIMECAMPING_DB_NAME || "timecamping.db");
+  return join21(root, "_practice", env.COCLERK_TIMECAMPING_DB_NAME || "timecamping.db");
 }
 var PY_HELPER3 = String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile
@@ -83515,13 +84051,13 @@ async function timecampingDataBulkUpsert(path, env = process.env) {
 }
 
 // src/migrate-backups.ts
-import { existsSync as existsSync17, readdirSync as readdirSync9, unlinkSync as unlinkSync4 } from "node:fs";
-import { basename as basename3, dirname as dirname10, join as join21 } from "node:path";
+import { existsSync as existsSync18, readdirSync as readdirSync10, unlinkSync as unlinkSync4 } from "node:fs";
+import { basename as basename3, dirname as dirname10, join as join22 } from "node:path";
 var STAMP = /^\.bak-\d{8}T\d{6}Z(-\d+)?$/;
 function timestampedBackups(dbPath) {
   const dir = dirname10(dbPath);
   const name = basename3(dbPath);
-  return new Set(existsSync17(dir) ? readdirSync9(dir).filter((f3) => f3.startsWith(name) && STAMP.test(f3.slice(name.length))) : []);
+  return new Set(existsSync18(dir) ? readdirSync10(dir).filter((f3) => f3.startsWith(name) && STAMP.test(f3.slice(name.length))) : []);
 }
 function pruneBackups(dbPath, before) {
   const all = [...timestampedBackups(dbPath)];
@@ -83531,7 +84067,7 @@ function pruneBackups(dbPath, before) {
   for (const f3 of all) {
     if (f3 === kept) continue;
     try {
-      unlinkSync4(join21(dirname10(dbPath), f3));
+      unlinkSync4(join22(dirname10(dbPath), f3));
     } catch (err) {
       warnings.push(`could not remove the older migration backup ${f3} (${err.message}); the migrate succeeded and ${kept} is the backup to keep`);
     }
@@ -83999,7 +84535,7 @@ async function submissionDataWriteAll(dbPath, statements, env = process.env) {
 }
 
 // src/submission/migrate.ts
-import { existsSync as existsSync19, statSync as statSync9 } from "node:fs";
+import { existsSync as existsSync20, statSync as statSync10 } from "node:fs";
 import { join as join24 } from "node:path";
 
 // src/submission/parties-drift.ts
@@ -85172,9 +85708,9 @@ function classifyAdmission(row2) {
       return { state: "no_knowledge" };
   }
 }
-function deemedOrWaitingAdmission(row2, today4) {
+function deemedOrWaitingAdmission(row2, today2) {
   if (row2.responseDue === null) return { state: "waiting" };
-  if (today4 <= row2.responseDue) return { state: "waiting" };
+  if (today2 <= row2.responseDue) return { state: "waiting" };
   if (row2.method === "interrogatories") {
     return { state: "deemed" };
   }
@@ -85191,7 +85727,7 @@ function refineTender(result, row2) {
   }
   return outstanding ? { state: "tender", base: result.base } : { state: "clean", base: result.base };
 }
-function admissionLadderState(row2, today4) {
+function admissionLadderState(row2, today2) {
   if (row2.instrument === null) return { state: "not_sought" };
   if (row2.method === "oral") {
     if (row2.struckOn !== null) return { state: "struck" };
@@ -85206,8 +85742,8 @@ function admissionLadderState(row2, today4) {
     if (row2.responseDue === null || row2.responseDue <= struckOn) {
       return { state: "struck" };
     }
-    if (today4 <= row2.responseDue) return { state: "waiting", struckReset: true };
-    return deemedOrWaitingAdmission(row2, today4);
+    if (today2 <= row2.responseDue) return { state: "waiting", struckReset: true };
+    return deemedOrWaitingAdmission(row2, today2);
   }
   if (row2.response !== null) {
     const late = row2.responseDue !== null && row2.responseDate !== null && row2.responseDate > row2.responseDue;
@@ -85220,7 +85756,7 @@ function admissionLadderState(row2, today4) {
       if (!late && row2.answer !== null) return classifyAdmission(row2);
     }
   }
-  return deemedOrWaitingAdmission(row2, today4);
+  return deemedOrWaitingAdmission(row2, today2);
 }
 function admissionRungMarker(r3) {
   switch (r3.state) {
@@ -85281,7 +85817,7 @@ function admissionCaptureMarkers(row2, state) {
 }
 
 // src/submission/forms/query.ts
-import { readFileSync as readFileSync16 } from "node:fs";
+import { readFileSync as readFileSync17 } from "node:fs";
 
 // src/knowledge/declared-layout.ts
 function fail(file, field, rule) {
@@ -85552,260 +86088,6 @@ function substituteLayout(raw, kind, corrections, file, context) {
   return { block: block2, substituted };
 }
 
-// src/knowledge/tree.ts
-import { readFileSync as readFileSync15, readdirSync as readdirSync10, realpathSync as realpathSync2, statSync as statSync8 } from "node:fs";
-import { win32 as pathWin329 } from "node:path";
-var KNOWLEDGE_SKILLS = ["draft", "publish", "assemble", "legal-research", "docket-clerk"];
-var SHIPPED_DIR = { "docket-clerk": "shared/docket-clerk" };
-var OVERLAY_RESERVED = ["_superseded", "_fetched", "_inbox", "_hosts.json"];
-var SIDECAR_SUFFIX = ".confirmations.local.json";
-var MAX_PATH_CHARS = 259;
-var MAX_SEGMENT_CHARS = 255;
-var FORBIDDEN_CHARS = /[<>:"|?*\u0000-\u001f]/;
-var DEVICE_NAME = /^(?:con|prn|aux|nul|com[0-9]|lpt[0-9])(?:\.|$)/i;
-var NAME_CHARS = /^[A-Za-z0-9._-]+$/;
-function segmentProblem(segment) {
-  if (segment === "." || segment === "..") return "is not a file or folder name";
-  if (FORBIDDEN_CHARS.test(segment)) return 'contains a character Windows or OneDrive refuses (< > : " | ? * or a control character)';
-  if (DEVICE_NAME.test(segment)) return "is a reserved Windows device name";
-  if (/[ .]$/.test(segment)) return "ends with a space or a period";
-  if (segment.startsWith(" ")) return "begins with a space, which OneDrive refuses";
-  if (segment.startsWith("~$")) return "begins with ~$, which OneDrive refuses";
-  if (/_vti_/i.test(segment)) return "contains _vti_, which OneDrive refuses";
-  if (/^(?:\.lock|desktop\.ini)$/i.test(segment)) return "is a name OneDrive refuses";
-  if (segment.length > MAX_SEGMENT_CHARS) return `is longer than ${MAX_SEGMENT_CHARS} characters`;
-  if (!NAME_CHARS.test(segment)) return 'holds a character other than a letter, a digit, ".", "_" or "-", which the plugin upload validator refuses';
-  return null;
-}
-function parseKnowledgePath(raw, label2, allowRoot = false) {
-  if (allowRoot && (raw === void 0 || raw === "")) return { path: "", segments: [], head: "", skill: null, rest: [] };
-  if (typeof raw !== "string") throw new PathOutOfScopeError(`${label2} must be a relative knowledge path`);
-  assertRelativeSyntax(raw, label2);
-  const segments = raw.split(/[\\/]+/).filter((segment) => segment !== "");
-  if (segments.length === 0) throw new PathOutOfScopeError(`${label2} must be a non-empty relative path`);
-  for (const segment of segments) {
-    const problem = segmentProblem(segment);
-    if (problem) throw new PathOutOfScopeError(`${label2}: "${segment}" ${problem} (${raw})`);
-  }
-  const head = segments[0];
-  const isSkill = KNOWLEDGE_SKILLS.includes(head);
-  if (!isSkill && !OVERLAY_RESERVED.includes(head)) {
-    throw new PathOutOfScopeError(
-      `${label2} must start with a skill that owns a knowledge tree (${KNOWLEDGE_SKILLS.join(", ")}) or an overlay reserved entry (${OVERLAY_RESERVED.join(", ")}); got "${head}" (${raw})`
-    );
-  }
-  return { path: segments.join("/"), segments, head, skill: isSkill ? head : null, rest: segments.slice(1) };
-}
-function joinRelative(fromPath, relative5) {
-  const slash = fromPath.lastIndexOf("/");
-  const dir = slash === -1 ? "" : fromPath.slice(0, slash);
-  return pathWin329.normalize(dir ? `${dir}\\${relative5}` : relative5).split("\\").join("/");
-}
-var COUNTRY = /^[A-Z]{3}$/;
-var JURISDICTION = /^[A-Z]{2,3}$/;
-var RESERVED_FOLDERS = ["Documents", "Locations", "Judges", "Sources"];
-var FETCHED_PDF = /^[0-9a-f]{12}\.pdf$/;
-var HOST_NAME = /^[a-z0-9.-]+$/i;
-function inTree(rest) {
-  return rest.length === 0 || COUNTRY.test(rest[0]);
-}
-function grammarProblem(head, rest, type, layer) {
-  const name = rest.length ? rest[rest.length - 1] : head;
-  const segment = segmentProblem(name);
-  if (segment) return `"${name}" ${segment}`;
-  if (head === "_hosts.json") return rest.length === 0 && type === "file" ? null : "_hosts.json is a file with nothing below it";
-  if (head === "_inbox") return rest.length === 0 && type === "file" ? "_inbox is a folder" : null;
-  if (head === "_fetched") {
-    if (rest.length === 0) return type === "dir" ? null : "_fetched is a folder";
-    if (!HOST_NAME.test(rest[0])) return `"${rest[0]}" is not a host name`;
-    if (rest.length === 1) return type === "dir" ? null : "_fetched holds one folder per host";
-    if (rest.length > 2 || type === "dir" || !FETCHED_PDF.test(rest[1])) {
-      return "_fetched holds <host>\\<first 12 hex characters of the sha256>.pdf only";
-    }
-    return null;
-  }
-  if (head === "_superseded") {
-    if (rest.length === 0) return type === "dir" ? null : "_superseded is a folder";
-    if (!KNOWLEDGE_SKILLS.includes(rest[0])) return `_superseded holds skill trees only; "${rest[0]}" is not one`;
-    return treeProblem(rest[0], rest.slice(1), type, "local");
-  }
-  return treeProblem(head, rest, type, layer);
-}
-function treeProblem(skill, rest, type, layer) {
-  if (rest.length === 0) return type === "dir" ? null : `${skill} is a folder`;
-  const [country, jurisdiction, venue, folder, leaf] = rest;
-  if (!COUNTRY.test(country)) return `"${country}" is not a three-letter ISO country code (CAN, USA)`;
-  if (rest.length === 1) return type === "dir" ? null : "a country folder holds jurisdiction folders only";
-  if (!JURISDICTION.test(jurisdiction)) return `"${jurisdiction}" is not a jurisdiction code (BC, CA, NY or FED)`;
-  if (rest.length === 2) return type === "dir" ? null : "a jurisdiction is a folder";
-  if (rest.length === 3 && type === "file") return jurisdictionFileProblem(skill, venue, layer);
-  if (venue.startsWith("_") && venue !== "_NoVenue") return `"${venue}": _NoVenue is the only member of the reserved "_" prefix`;
-  if (RESERVED_FOLDERS.includes(venue)) return `"${venue}" is a reserved folder name, not a venue`;
-  if (rest.length === 3) return null;
-  const noVenue = venue === "_NoVenue";
-  if (rest.length === 4 && type === "file") return venueFileProblem(skill, folder, noVenue, layer);
-  if (folder === "Locations" || folder === "Judges") return noVenue ? `${folder}\\ is refused under _NoVenue` : null;
-  if (folder === "Documents" && skill === "legal-research") return "/legal-research's tree holds no Documents\\ folder";
-  if (folder !== "Documents" && folder !== "Sources") return `"${folder}" is not a venue folder (Documents, Sources, Locations or Judges)`;
-  if (rest.length === 4) return null;
-  if (rest.length > 5 || type === "dir") return `${folder}\\ holds files only`;
-  return folder === "Documents" ? documentsFileProblem(leaf, layer) : fileProblem(leaf, layer, mdOnly(folder));
-}
-function mdOnly(folder) {
-  return (base) => base.endsWith(".md") ? null : `${folder}\\ holds .md files only; "${base}" is not one`;
-}
-function fileProblem(name, layer, check) {
-  if (!name.endsWith(SIDECAR_SUFFIX)) return check(name);
-  if (layer === "shipped") return "a confirmation sidecar never ships";
-  const base = name.slice(0, -SIDECAR_SUFFIX.length);
-  if (!base.endsWith(".md")) return "a confirmation sidecar sits only beside a .md knowledge file";
-  return check(base);
-}
-function indexNameProblem(name, shippedName, localName, layer) {
-  if (name === (layer === "shipped" ? shippedName : localName)) return null;
-  if (name === shippedName) return `the overlay never holds ${shippedName}; it writes ${localName}`;
-  if (name === localName) return `${localName} belongs to the overlay only`;
-  return void 0;
-}
-function jurisdictionFileProblem(skill, name, layer) {
-  const index = indexNameProblem(name, "venues.json", "venues.local.json", layer);
-  if (index !== void 0) return index;
-  if (name === "sources.json" && skill === "legal-research") return null;
-  return `"${name}" is not a jurisdiction file (the venues index${skill === "legal-research" ? " or sources.json" : ""})`;
-}
-function venueFileProblem(skill, name, noVenue, layer) {
-  if (name === "sources.json" && skill === "legal-research") return null;
-  return fileProblem(name, layer, (base) => {
-    if (base === "venue.md") {
-      if (skill !== "draft") return "venue.md sits only in /draft's tree";
-      return noVenue ? "venue.md is refused under _NoVenue" : null;
-    }
-    if (base === "format.md") return skill === "publish" ? null : "format.md sits only in /publish's tree";
-    return `"${base}" is not a venue file (venue.md in /draft's tree, format.md in /publish's)`;
-  });
-}
-function documentsFileProblem(name, layer) {
-  const index = indexNameProblem(name, "kinds.json", "kinds.local.json", layer);
-  if (index !== void 0) return index;
-  return fileProblem(name, layer, mdOnly("Documents"));
-}
-function indexAt(kp) {
-  if (!kp.skill) return null;
-  const name = kp.rest[kp.rest.length - 1];
-  if (kp.rest.length === 3 && (name === "venues.json" || name === "venues.local.json")) return "venues";
-  if (kp.rest.length === 5 && kp.rest[3] === "Documents" && (name === "kinds.json" || name === "kinds.local.json")) return "kinds";
-  return null;
-}
-function shippedLayer(skill, rest, seams) {
-  const env = seams.env ?? process.env;
-  const dir = SHIPPED_DIR[skill] ?? skill;
-  const shipped = resolveShippedRoot([dir, "references", ...rest].join("/"), env, { installRoot: seams.installRoot });
-  const skillsRoot = canonicalRoot(
-    shipped.root,
-    shipped.shipped_from === "install" ? `bundled skill source not found at ${shipped.root}; reinstall the plugin and fully restart` : `skills tree not found at ${shipped.root}; the repo has moved or COCLERK_REPO_ROOT is wrong`,
-    "skills_root_missing"
-  );
-  const references = pathWin329.join(skillsRoot, ...dir.split("/"), "references");
-  let canon = null;
-  try {
-    canon = realpathSync2.native(references);
-  } catch {
-    canon = null;
-  }
-  if (canon !== null) assertContained(skillsRoot, canon, `${skill}/references`, references);
-  return { layer: { canon, abs: pathWin329.join(canon ?? references, ...rest) }, shipped_from: shipped.shipped_from };
-}
-function overlayLayer(segments, seams, label2) {
-  const configured = resolveCaseDataRoot(seams.env ?? process.env, seams.caseDataRoot);
-  const shown = pathWin329.join(configured, "_practice", "knowledge", ...segments);
-  if (shown.length > MAX_PATH_CHARS) {
-    throw new DataServerError(
-      `${label2}: the overlay path is ${shown.length} characters, over the Windows limit of ${MAX_PATH_CHARS}: ${shown}`,
-      "path_too_long"
-    );
-  }
-  const caseRoot = canonicalRoot(configured, `case_data_root not found: ${configured}`, "case_data_root_missing");
-  const knowledgeDir = pathWin329.join(caseRoot, "_practice", "knowledge");
-  let canon = null;
-  try {
-    canon = realpathSync2.native(knowledgeDir);
-  } catch {
-    canon = null;
-  }
-  if (canon !== null) assertContained(caseRoot, canon, label2, knowledgeDir);
-  return { canon, abs: pathWin329.join(canon ?? knowledgeDir, ...segments) };
-}
-function locate(kp, seams, label2 = "path") {
-  const local = overlayLayer(kp.segments, seams, label2);
-  if (!kp.skill) return { kp, shipped: null, local, shipped_from: null };
-  const { layer, shipped_from } = shippedLayer(kp.skill, kp.rest, seams);
-  return { kp, shipped: layer, local, shipped_from };
-}
-function entryType(root, label2, original) {
-  if (root.canon === null) return null;
-  let real;
-  try {
-    real = realpathSync2.native(root.abs);
-  } catch {
-    return null;
-  }
-  assertContained(root.canon, real, label2, original);
-  return statSync8(real).isDirectory() ? "dir" : "file";
-}
-function readLayerBytes(abs, label2) {
-  try {
-    return readFileSync15(abs);
-  } catch (err) {
-    const code = err.code;
-    if (code === "ENOENT") throw new DataServerError(`${label2} not found: ${abs}`, "not_found");
-    if (code === "UNKNOWN" || code === "EIO") {
-      throw new DataServerError(
-        `${label2} exists but could not be read (${code}): ${abs}. It is most likely a OneDrive online-only file that is not downloaded. Open its folder in File Explorer, choose "Always keep on this device", and retry.`,
-        "not_downloaded"
-      );
-    }
-    throw err;
-  }
-}
-function readLayerFiles(loc, label2) {
-  const read3 = (layer, root) => {
-    if (!root) return null;
-    const type = entryType(root, label2, loc.kp.path);
-    if (type === null) return null;
-    if (type === "dir") throw new DataServerError(`${label2} is a folder, not a file: ${loc.kp.path} (use knowledge__list)`, "not_a_file");
-    const bytes = readLayerBytes(root.abs, label2);
-    const text5 = bytes.toString("utf-8");
-    return { layer, abs: root.abs, bytes, text: text5.startsWith("\uFEFF") ? text5.slice(1) : text5 };
-  };
-  return { shipped: read3("shipped", loc.shipped), local: read3("local", loc.local) };
-}
-function identicalText(a3, b3) {
-  const lf = (text5) => text5.replace(/\r\n?/g, "\n");
-  return lf(a3) === lf(b3);
-}
-function assertTreeFile(kp, label2) {
-  const problem = grammarProblem(kp.head, kp.rest, "file", kp.skill ? "shipped" : "local");
-  if (problem) throw new DataServerError(`${label2}: ${kp.path} is not a knowledge-tree file: ${problem}`, "grammar_violation");
-}
-function readServed(kp, seams, label2 = "path") {
-  assertTreeFile(kp, label2);
-  const loc = locate(kp, seams, label2);
-  const { shipped, local } = readLayerFiles(loc, label2);
-  const served = shipped ?? local;
-  if (!served) throw new DataServerError(`${label2} not found in either layer: ${kp.path}`, "not_found");
-  return { kp, served, shadowed: shipped && local ? local : null, shipped_from: loc.shipped_from };
-}
-function readLayerDir(root, label2, original) {
-  if (!root) return null;
-  const type = entryType(root, label2, original);
-  if (type === null) return null;
-  if (type === "file") throw new DataServerError(`${label2} is a file, not a folder: ${original} (use knowledge__read)`, "not_a_folder");
-  return readdirSync10(root.abs).map((name) => {
-    const child = entryType({ canon: root.canon, abs: pathWin329.join(root.abs, name) }, label2, `${original}/${name}`);
-    return { name, type: child ?? "file" };
-  });
-}
-
 // src/submission/forms/query.ts
 var JOB_BOARD_KIND = "task-board";
 function isJobOnlyBoard(filing) {
@@ -85864,7 +86146,7 @@ function shippedVenueBlock(filing, forum) {
   const { layer } = shippedLayer("draft", parseKnowledgePath(path, `"${filing.title}"'s court or tribunal`).rest, {});
   let content;
   try {
-    content = readFileSync16(layer.abs, "utf-8");
+    content = readFileSync17(layer.abs, "utf-8");
   } catch (err) {
     if (err.code !== "ENOENT") throw err;
     throw new DataServerError(`"${filing.title}": Probanda has no layout for its court or tribunal, ${forum}`, "venue_missing");
@@ -86214,8 +86496,8 @@ function opposingPartyIds(parties2) {
 }
 
 // src/case/parties-of-record.ts
-import { existsSync as existsSync18 } from "node:fs";
-import { join as join22 } from "node:path";
+import { existsSync as existsSync19 } from "node:fs";
+import { join as join23 } from "node:path";
 var DRIVER4 = String.raw`
 import json, sys
 
@@ -86238,7 +86520,7 @@ function readPartiesById(caseDataDir, casePartyIds, env = process.env) {
   return read2(caseDataDir, { file_number: null, case_party_ids: casePartyIds }, env);
 }
 function read2(caseDataDir, request2, env) {
-  if (!existsSync18(join22(caseDataDir, "main.sqlite"))) {
+  if (!existsSync19(join23(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
   try {
@@ -86368,52 +86650,6 @@ function withLeadLines(markdown, lines2) {
 }
 function withPartiesDriftLines(markdown, rows29) {
   return withLeadLines(markdown, partiesDriftLines(rows29));
-}
-
-// src/build-stamp.ts
-import { readFileSync as readFileSync17 } from "node:fs";
-import { join as join23 } from "node:path";
-var BUILD_STAMP = false ? null : "e4f56f29f84f";
-var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
-function noComparison(build_note) {
-  return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
-}
-function buildNote(running, current, installed) {
-  const action = installed === current ? "Start a new session; the installed copy is current." : "Reinstall the lawyer plugin, then restart the app fully.";
-  return `This server is running build ${running}; the repo's current build is ${current}. ${action}`;
-}
-function installedStamp() {
-  try {
-    return STAMP_LINE.exec(readFileSync17(join23(INSTALL_ROOT, "mcp", "dist", "litigation-mcp.js"), "utf-8"))?.[1] ?? null;
-  } catch {
-    return null;
-  }
-}
-function buildStampStatus(env = process.env) {
-  if (BUILD_STAMP === null) {
-    return noComparison("This server runs unbundled code, which carries no build stamp -- no build comparison was made.");
-  }
-  let current;
-  try {
-    const repoRoot = resolveRepoRoot(env, { code: "repo_root_missing", subject: "the tracked litigation bundle" });
-    const tracked2 = join23(repoRoot, "source", "lawyer", "mcp", "dist", "litigation-mcp.js");
-    current = STAMP_LINE.exec(readFileSync17(tracked2, "utf-8"))?.[1] ?? null;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return noComparison(`No build comparison was made -- the repo's tracked litigation bundle could not be read: ${message}`);
-  }
-  if (current === null) {
-    return noComparison("No build comparison was made -- the repo's tracked litigation bundle carries no build-stamp line.");
-  }
-  if (current === BUILD_STAMP) {
-    return { build_stamp: BUILD_STAMP, current_build_stamp: current, server_outdated: false };
-  }
-  return {
-    build_stamp: BUILD_STAMP,
-    current_build_stamp: current,
-    server_outdated: true,
-    build_note: buildNote(BUILD_STAMP, current, installedStamp())
-  };
 }
 
 // src/submission/schema-ceiling.ts
@@ -86554,7 +86790,7 @@ async function submissionDataMigrate(dbPath, env = process.env) {
 }
 var COUNSEL_COPY_DROPPED = 43;
 function storedSchemaVersion(dbPath) {
-  if (!existsSync19(dbPath)) return null;
+  if (!existsSync20(dbPath)) return null;
   const [meta2] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'db_meta'").rows;
   if (meta2.n === 0) return null;
   const [row2] = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").rows;
@@ -86584,7 +86820,7 @@ function assertCounselReconciled(dbPath, staged, env) {
 var versionCache;
 function currentSchemaVersion(env = process.env) {
   const scriptsDir = submissionDataMigrateScriptsDir(env);
-  const engine = statSync9(join24(scriptsDir, "migrate_engine.py"));
+  const engine = statSync10(join24(scriptsDir, "migrate_engine.py"));
   const key = [scriptsDir, engine.mtimeMs, engine.size, pythonTimeoutMs2(env, READ_TIMEOUT_MS)].join("|");
   if (versionCache?.key === key) return versionCache.value;
   const result = runDriver4("schema-version", driverFile3("schema-version", VERSION_DRIVER), "", env, READ_TIMEOUT_MS);
@@ -86620,9 +86856,9 @@ function runDriver4(label2, driver, payload, env, defaultTimeoutMs) {
 }
 
 // src/files/skill-source.ts
-import { createHash as createHash5 } from "node:crypto";
-import { existsSync as existsSync20, readFileSync as readFileSync18, readdirSync as readdirSync11, statSync as statSync10 } from "node:fs";
-import { win32 as pathWin3210 } from "node:path";
+import { createHash as createHash6 } from "node:crypto";
+import { existsSync as existsSync21, readFileSync as readFileSync18, readdirSync as readdirSync11, statSync as statSync11 } from "node:fs";
+import { win32 as pathWin3211 } from "node:path";
 var rootCache = /* @__PURE__ */ new Map();
 function servedRoot(shipped) {
   const cached3 = rootCache.get(shipped.root);
@@ -86646,7 +86882,7 @@ function resolveServed(shipped, root, relative5, label2, original) {
     );
   }
 }
-function provenance2(shipped, installRoot) {
+function provenance3(shipped, installRoot) {
   return {
     plugin: shipped.plugin,
     plugin_version: shipped.shipped_from === "install" ? shipped.plugin_version : pluginVersion(installRoot),
@@ -86657,18 +86893,18 @@ var SKILLS_PREFIX = /^.*[.](?:agents|claude)[\\/]+skills[\\/]+/i;
 function normalizeSkillPath(relative5) {
   if (typeof relative5 !== "string" || relative5 === "") return relative5;
   const stripped = relative5.replace(SKILLS_PREFIX, "");
-  return stripped === "" ? "" : pathWin3210.normalize(stripped);
+  return stripped === "" ? "" : pathWin3211.normalize(stripped);
 }
 function resolveReference(relative5, env, installRoot, from) {
   const normalized2 = normalizeSkillPath(relative5);
   if (!from || typeof relative5 !== "string" || relative5 === "") return normalized2;
   const stripped = relative5.replace(SKILLS_PREFIX, "");
   if (stripped !== relative5) return normalized2;
-  const anchor = normalizeSkillPath(from).split(pathWin3210.sep).join("/");
+  const anchor = normalizeSkillPath(from).split(pathWin3211.sep).join("/");
   const slash = anchor.lastIndexOf("/");
   const bases = [.../* @__PURE__ */ new Set([slash === -1 ? "" : anchor.slice(0, slash), anchor.split("/")[0], ""])];
   for (const base of bases) {
-    const candidate = pathWin3210.normalize(pathWin3210.join(base, stripped));
+    const candidate = pathWin3211.normalize(pathWin3211.join(base, stripped));
     if (candidate.split(/[\\/]/)[0] === "..") continue;
     let root;
     try {
@@ -86677,7 +86913,7 @@ function resolveReference(relative5, env, installRoot, from) {
       if (err instanceof DataServerError) continue;
       throw err;
     }
-    if (existsSync20(pathWin3210.join(root, candidate))) return candidate;
+    if (existsSync21(pathWin3211.join(root, candidate))) return candidate;
   }
   return normalized2;
 }
@@ -86702,7 +86938,7 @@ function skillSourceRead(relative5, env, from, match, installRoot) {
   const shipped = resolveShippedRoot(normalizedInput, e3, { installRoot });
   const root = servedRoot(shipped);
   const resolved = resolveServed(shipped, root, normalizedInput, "path", relative5);
-  const stats = statSync10(resolved);
+  const stats = statSync11(resolved);
   if (stats.isDirectory()) {
     throw new DataServerError(
       `path is a directory, not a file: ${relative5} (use skill_source__list)`,
@@ -86717,9 +86953,9 @@ function skillSourceRead(relative5, env, from, match, installRoot) {
     path,
     dir: slash === -1 ? "" : path.slice(0, slash),
     size: bytes.byteLength,
-    sha256: createHash5("sha256").update(bytes).digest("hex"),
+    sha256: createHash6("sha256").update(bytes).digest("hex"),
     shipped_from: shipped.shipped_from,
-    ...provenance2(shipped, installRoot)
+    ...provenance3(shipped, installRoot)
   };
   if (match === void 0) return { ...base, content: whole };
   const terms2 = (Array.isArray(match) ? match : [match]).filter((term) => typeof term === "string" && term !== "").map((term) => term.toLowerCase());
@@ -86760,14 +86996,14 @@ function skillSourceList(dir = "", recursive = false, env, installRoot) {
     const shipped = resolveShippedRoot(normalizedDir, e3, { installRoot });
     const root = servedRoot(shipped);
     const base = resolveServed(shipped, root, normalizedDir, "dir", dir);
-    if (!statSync10(base).isDirectory()) {
+    if (!statSync11(base).isDirectory()) {
       throw new DataServerError(`dir is a file, not a directory: ${dir}`, "not_found");
     }
     walk(base, root, recursive, shipped, entries);
     served = shipped;
   }
   entries.sort((a3, b3) => a3.path < b3.path ? -1 : a3.path > b3.path ? 1 : 0);
-  if (served) return { entries, shipped_from: served.shipped_from, ...provenance2(served, installRoot) };
+  if (served) return { entries, shipped_from: served.shipped_from, ...provenance3(served, installRoot) };
   return { entries, plugin_version: pluginVersion(installRoot), build_stamp: BUILD_STAMP };
 }
 function listTreeRoot(recursive, env, installRoot, out) {
@@ -86802,12 +87038,12 @@ function listTreeRoot(recursive, env, installRoot, out) {
 }
 function walk(dirPath, root, recursive, shipped, out) {
   for (const entry of readdirSync11(dirPath, { withFileTypes: true })) {
-    const full = pathWin3210.join(dirPath, entry.name);
+    const full = pathWin3211.join(dirPath, entry.name);
     const isDir3 = entry.isDirectory();
     out.push({
       path: toPosixRelative(root, full),
       type: isDir3 ? "dir" : "file",
-      size: isDir3 ? null : statSync10(full).size,
+      size: isDir3 ? null : statSync11(full).size,
       shipped_from: shipped.shipped_from,
       plugin: shipped.plugin
     });
@@ -86820,197 +87056,6 @@ import { createHash as createHash7 } from "node:crypto";
 import { mkdirSync as mkdirSync9 } from "node:fs";
 import * as https from "node:https";
 import { join as join26 } from "node:path";
-
-// src/knowledge/sidecar.ts
-import { createHash as createHash6, randomUUID as randomUUID8 } from "node:crypto";
-import { closeSync as closeSync6, existsSync as existsSync21, mkdirSync as mkdirSync8, openSync as openSync6, statSync as statSync11, writeSync as writeSync6 } from "node:fs";
-import { win32 as pathWin3211 } from "node:path";
-function passageHash(passage) {
-  return createHash6("sha256").update(passage.replace(/\s+/g, " ").trim(), "utf8").digest("hex");
-}
-function invalid2(file, where, rule) {
-  throw new DataServerError(`${file}: ${where}: ${rule}`, "invalid_sidecar");
-}
-function parseSidecar(text5, file, knowledgePath) {
-  let doc;
-  try {
-    doc = JSON.parse(text5);
-  } catch (err) {
-    return invalid2(file, "the sidecar", `is not valid JSON: ${err.message}`);
-  }
-  if (typeof doc !== "object" || doc === null || Array.isArray(doc)) invalid2(file, "the sidecar", "must be an object");
-  const top = doc;
-  const extra = Object.keys(top).filter((key) => key !== "file" && key !== "items");
-  if (extra.length) invalid2(file, "the sidecar", `unknown field(s) ${extra.join(", ")}`);
-  if (typeof top.file !== "string" || top.file.split("\\").join("/").toLowerCase() !== knowledgePath.toLowerCase()) {
-    invalid2(file, "file", `must name the file it sits beside, "${knowledgePath}"`);
-  }
-  if (!Array.isArray(top.items)) invalid2(file, "items", "must be an array");
-  const rows29 = [];
-  top.items.forEach((raw, i3) => {
-    const where = `items[${i3}]`;
-    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) invalid2(file, where, "must be an object");
-    const row2 = raw;
-    const unknown2 = Object.keys(row2).filter((key) => !["rule_ref", "status", "by", "on", "confirmed_against", "value", ...STAMP_KEYS].includes(key));
-    if (unknown2.length) invalid2(file, where, `unknown field(s) ${unknown2.join(", ")}`);
-    for (const key of ["rule_ref", "by", "on"]) {
-      if (typeof row2[key] !== "string" || row2[key] === "") invalid2(file, `${where}.${key}`, "must be a non-empty string");
-    }
-    if (row2.status !== "confirmed" && row2.status !== "corrected") invalid2(file, `${where}.status`, 'must be "confirmed" or "corrected"');
-    if (rows29.some((seen) => seen.rule_ref === row2.rule_ref)) invalid2(file, where, `rule_ref "${row2.rule_ref}" has two rows`);
-    const against = row2.confirmed_against;
-    if (typeof against !== "object" || against === null || Array.isArray(against)) {
-      invalid2(file, `${where}.confirmed_against`, "must be {passage_hash, currency}");
-    }
-    if (typeof against.passage_hash !== "string" || !/^[0-9a-f]{64}$/.test(against.passage_hash)) {
-      invalid2(file, `${where}.confirmed_against.passage_hash`, "must be a sha256 hex digest");
-    }
-    if (against.currency !== null && typeof against.currency !== "string") {
-      invalid2(file, `${where}.confirmed_against.currency`, "must be a string or null");
-    }
-    const extraAgainst = Object.keys(against).filter((key) => key !== "passage_hash" && key !== "currency");
-    if (extraAgainst.length) invalid2(file, `${where}.confirmed_against`, `unknown field(s) ${extraAgainst.join(", ")}`);
-    const corrected = row2.status === "corrected";
-    if (corrected !== Object.hasOwn(row2, "value")) {
-      invalid2(file, `${where}.value`, corrected ? "is required on a corrected row" : "appears only on a corrected row");
-    }
-    const stamp2 = stampProblem(row2);
-    if (stamp2) invalid2(file, `${where}.${stamp2[0]}`, stamp2[1]);
-    rows29.push({
-      rule_ref: row2.rule_ref,
-      status: row2.status,
-      by: row2.by,
-      on: row2.on,
-      confirmed_against: { passage_hash: against.passage_hash, currency: against.currency ?? null },
-      ...corrected ? { value: row2.value } : {},
-      ...row2.plugin_version !== void 0 ? { plugin_version: row2.plugin_version } : {},
-      ...row2.shipped_from !== void 0 ? { shipped_from: row2.shipped_from } : {}
-    });
-  });
-  return rows29;
-}
-function freshnessOf(item, checked) {
-  const facts = checked?.find((record2) => record2.record.toLowerCase() === item.record.toLowerCase());
-  const present3 = facts?.items?.find((entry) => entry.rule_ref === item.rule_ref)?.present;
-  if (present3 === true) return "verified";
-  if (present3 === false) return "missing";
-  return "not verified";
-}
-function effectiveStatus(input) {
-  const out = {
-    items: [],
-    stale_confirmation: [],
-    orphaned_confirmations: [],
-    currency_moved: [],
-    corrections: [],
-    sources_check: input.checked ? "consulted" : "none"
-  };
-  const byRef = new Map(input.rows.map((row2) => [row2.rule_ref, row2]));
-  for (const item of input.items) {
-    const hash = passageHash(item.passage);
-    const freshness = freshnessOf(item, input.checked);
-    const row2 = byRef.get(item.rule_ref);
-    let status2 = "unconfirmed";
-    let practitioner = false;
-    if (row2?.status === "corrected") {
-      status2 = "corrected";
-      out.corrections.push({ rule_ref: row2.rule_ref, value: row2.value, by: row2.by, on: row2.on, passage_changed: row2.confirmed_against.passage_hash !== hash });
-    } else if (row2?.status === "confirmed") {
-      if (row2.confirmed_against.passage_hash === hash) {
-        status2 = "confirmed";
-      } else {
-        out.stale_confirmation.push({ rule_ref: row2.rule_ref, by: row2.by, on: row2.on, confirmed_against: row2.confirmed_against, passage_hash: hash });
-      }
-    } else if (input.practitionerConfirms && item.source === "practitioner") {
-      status2 = "confirmed";
-      practitioner = true;
-    }
-    if (row2 && row2.confirmed_against.passage_hash === hash && row2.confirmed_against.currency !== item.currency) {
-      out.currency_moved.push({ rule_ref: row2.rule_ref, confirmed_currency: row2.confirmed_against.currency, currency: item.currency });
-    }
-    if (freshness === "missing" && (status2 === "confirmed" || status2 === "corrected")) status2 = "unconfirmed";
-    out.items.push({
-      rule_ref: item.rule_ref,
-      status: status2,
-      freshness,
-      passage_hash: hash,
-      currency: item.currency,
-      record: item.record,
-      ...item.from_file && item.page !== null ? { pdf_page: item.page } : {},
-      ...practitioner ? { practitioner_sourced: true } : {}
-    });
-  }
-  const refs = new Set(input.items.map((item) => item.rule_ref));
-  out.orphaned_confirmations = input.rows.filter((row2) => !refs.has(row2.rule_ref));
-  return out;
-}
-var LOCK_ATTEMPTS4 = 5;
-var LOCK_RETRY_MS4 = 400;
-var LOCK_STALE_MS4 = 6e4;
-function lockIsStale(lock) {
-  try {
-    return Date.now() - statSync11(lock).mtimeMs > LOCK_STALE_MS4;
-  } catch {
-    return false;
-  }
-}
-async function acquireLock(lock) {
-  for (let attempt = 0; attempt < LOCK_ATTEMPTS4; attempt++) {
-    try {
-      const token = randomUUID8();
-      const fd = openSync6(lock, "wx");
-      writeSync6(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), token }));
-      closeSync6(fd);
-      return token;
-    } catch (err) {
-      if (err.code !== "EEXIST") throw err;
-      const key = readLockKey(lock, "token");
-      if (key === null) continue;
-      if (lockIsStale(lock) && removeLockIfKey(lock, "token", key, () => lockIsStale(lock))) continue;
-      if (attempt < LOCK_ATTEMPTS4 - 1) await new Promise((resolve10) => setTimeout(resolve10, LOCK_RETRY_MS4));
-    }
-  }
-  throw new DataServerError(
-    `could not acquire the knowledge write lock within ${LOCK_ATTEMPTS4 * LOCK_RETRY_MS4 / 1e3}s (${lock}${orphanClaims(lock)}); another session is writing`,
-    "lock_timeout"
-  );
-}
-async function withFileLock(target, fn2) {
-  mkdirSync8(pathWin3211.dirname(target), { recursive: true });
-  const lock = `${target}.lock`;
-  const token = await acquireLock(lock);
-  try {
-    return await fn2();
-  } finally {
-    try {
-      removeLockIfKey(lock, "token", token, void 0, 500);
-    } catch {
-    }
-  }
-}
-function writeTextAtomic(target, text5) {
-  const code = writeStatusFile(target, text5);
-  if (code) throw new DataServerError(`could not write ${target}: ${code}`, "write_failed");
-}
-function writeBytesAtomic(target, bytes) {
-  writeTextAtomic(target, bytes);
-}
-function readRows(sidecarAbs, knowledgePath) {
-  if (!existsSync21(sidecarAbs)) return [];
-  const text5 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
-  return parseSidecar(text5.startsWith("\uFEFF") ? text5.slice(1) : text5, sidecarAbs, knowledgePath);
-}
-async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check) {
-  return withFileLock(sidecarAbs, () => {
-    const rows29 = readRows(sidecarAbs, knowledgePath);
-    const at = rows29.findIndex((known) => known.rule_ref === row2.rule_ref);
-    if (at === -1) rows29.push(row2);
-    else rows29[at] = row2;
-    check(rows29);
-    writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows29 }, null, 2) + "\n");
-    return rows29;
-  });
-}
 
 // src/sources/hosts.ts
 import { existsSync as existsSync22, readFileSync as readFileSync19 } from "node:fs";
@@ -87684,47 +87729,6 @@ async function checkKnowledgeFile(path, label2, seams, fetcher) {
   return result;
 }
 
-// src/knowledge/common.ts
-function provenance3(shipped_from, seams) {
-  return { shipped_from, plugin_version: pluginVersion(seams.installRoot), build_stamp: BUILD_STAMP };
-}
-function parseJson(file, label2) {
-  try {
-    return JSON.parse(file.text);
-  } catch (err) {
-    throw new DataServerError(`${label2}: ${file.abs} is not valid JSON: ${err.message}`, "invalid_index");
-  }
-}
-var INDEX_NAMES = { venues: ["venues.json", "venues.local.json"], kinds: ["kinds.json", "kinds.local.json"] };
-function mergedIndex(folder, index, seams, label2) {
-  const problem = grammarProblem(folder.head, folder.rest, "dir", "shipped");
-  if (problem) throw new DataServerError(`${label2}: ${folder.path} breaks the folder grammar: ${problem}`, "grammar_violation");
-  const [shippedName, localName] = INDEX_NAMES[index];
-  const shippedKp = parseKnowledgePath(`${folder.path}/${shippedName}`, label2);
-  const localKp = parseKnowledgePath(`${folder.path}/${localName}`, label2);
-  const shipped = readLayerFiles(locate(shippedKp, seams, label2), label2).shipped;
-  const loc = locate(localKp, seams, label2);
-  const local = readLayerFiles(loc, label2).local;
-  if (!shipped && !local) {
-    throw new DataServerError(`${label2}: no ${index} index at ${folder.path} in either layer`, "index_missing");
-  }
-  const source = (file) => file ? { doc: parseJson(file, label2), file: file.abs } : null;
-  const noVenue = index === "kinds" && folder.rest[2] === NO_VENUE;
-  const view = index === "venues" ? mergeVenues(source(shipped), source(local)) : mergeKinds(source(shipped), source(local), noVenue);
-  return { view, layers: { shipped: shipped !== null, local: local !== null }, shipped_from: loc.shipped_from, noVenue };
-}
-function shadowedRows(conflicts) {
-  const rows29 = conflicts.filter((conflict) => conflict.shadowed_local).map(({ key, shipped, local }) => ({ key, shipped, local }));
-  return rows29.length ? { shadowed_local: rows29 } : {};
-}
-function folderOf(kp, label2) {
-  return parseKnowledgePath(kp.segments.slice(0, -1).join("/"), label2);
-}
-function today2() {
-  const now = /* @__PURE__ */ new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
-
 // src/knowledge/declared-format.ts
 var FORMAT_PROPERTIES = [
   "paper",
@@ -87945,7 +87949,7 @@ function rawResult(kp, file, shipped_from, seams) {
     layer: file.layer,
     size: file.bytes.byteLength,
     content: file.text,
-    ...provenance3(shipped_from, seams)
+    ...provenance2(shipped_from, seams)
   };
 }
 function knowledgeRead(path, seams = {}) {
@@ -87963,7 +87967,7 @@ function knowledgeRead(path, seams = {}) {
   const index = indexAt(kp);
   if (index) {
     const merged = mergedIndex(folderOf(kp, label2), index, seams, label2);
-    return { path: kp.path, index, view: merged.view, layers: merged.layers, ...shadowedRows(merged.view.conflicts), ...provenance3(merged.shipped_from, seams) };
+    return { path: kp.path, index, view: merged.view, layers: merged.layers, ...shadowedRows(merged.view.conflicts), ...provenance2(merged.shipped_from, seams) };
   }
   const served = readServed(kp, seams, label2);
   const content = served.served.text;
@@ -87991,7 +87995,7 @@ function knowledgeRead(path, seams = {}) {
     ...blockOf(kp, content, status2, items),
     ...served.shadowed ? { shadowed_local: { path: served.shadowed.abs, identical: identicalText(content, served.shadowed.text) } } : {},
     ...shadowed_sources.length ? { shadowed_sources } : {},
-    ...provenance3(served.shipped_from, seams)
+    ...provenance2(served.shipped_from, seams)
   };
 }
 
@@ -88010,7 +88014,7 @@ function knowledgeList(args = {}, seams = {}) {
     shipped_from = walk2(kp, args.recursive === true, seams, entries, breaks, true);
   }
   entries.sort((a3, b3) => a3.path < b3.path ? -1 : a3.path > b3.path ? 1 : 0);
-  return { dir: kp.path, entries, grammar_breaks: breaks, ...provenance3(shipped_from, seams) };
+  return { dir: kp.path, entries, grammar_breaks: breaks, ...provenance2(shipped_from, seams) };
 }
 function listRoot(recursive, seams, entries, breaks) {
   const label2 = "knowledge__list.dir";
@@ -88106,7 +88110,7 @@ function resolveAt(kp, given, recipient, seams) {
     if (recipient !== void 0) throw new ValidationError("knowledge__list.recipient applies only to a _NoVenue Documents folder");
     const merged2 = mergedIndex(kp, "venues", seams, label2);
     const resolution2 = resolveVenue(merged2.view, given, jurisdiction);
-    return { dir: kp.path, index: "venues", resolve: given, ...resolution2, conflicts: merged2.view.conflicts, ...shadowedRows(merged2.view.conflicts), ...provenance3(merged2.shipped_from, seams) };
+    return { dir: kp.path, index: "venues", resolve: given, ...resolution2, conflicts: merged2.view.conflicts, ...shadowedRows(merged2.view.conflicts), ...provenance2(merged2.shipped_from, seams) };
   }
   const noVenue = kp.rest[2] === NO_VENUE;
   const merged = mergedIndex(kp, "kinds", seams, label2);
@@ -88119,7 +88123,7 @@ function resolveAt(kp, given, recipient, seams) {
     ...resolution,
     conflicts: merged.view.conflicts,
     ...shadowedRows(merged.view.conflicts),
-    ...provenance3(merged.shipped_from, seams)
+    ...provenance2(merged.shipped_from, seams)
   };
 }
 
@@ -88427,7 +88431,7 @@ async function writeDocument(kp, args, matter, seams, label2) {
     ...previous.stale_check ? { stale_check: previous.stale_check } : {},
     ...saved ? { saved_copy: copySavedCopy(saved, seams, label2) } : {},
     fetched_deleted: previous.old === null ? [] : deleteUnreferencedPdfs(pdfHashesIn(previous.old), seams, label2),
-    ...provenance3(loc.shipped_from, seams)
+    ...provenance2(loc.shipped_from, seams)
   };
 }
 
@@ -88462,10 +88466,10 @@ async function writeHostEntry(kp, args, seams, label2) {
         "invalid_hosts_file"
       );
     }
-    if (known) return { path: kp.path, host, status: "exists", entry: known, ...provenance3(null, seams) };
-    const entry = { host, category, page_url, added: today2(), approved_by: "practitioner" };
+    if (known) return { path: kp.path, host, status: "exists", entry: known, ...provenance2(null, seams) };
+    const entry = { host, category, page_url, added: today(), approved_by: "practitioner" };
     writeTextAtomic(target.abs, JSON.stringify([...entries, entry], null, 2) + "\n");
-    return { path: kp.path, host, status: "created", entry, ...provenance3(null, seams) };
+    return { path: kp.path, host, status: "created", entry, ...provenance2(null, seams) };
   });
 }
 
@@ -88539,7 +88543,7 @@ async function confirmItem(kp, args, operation, seams, label2) {
     rule_ref: ruleRef,
     status: operation === "confirm" ? "confirmed" : "corrected",
     by,
-    on: today2(),
+    on: today(),
     confirmed_against: { passage_hash: passageHash(item.passage), currency: item.currency },
     ...operation === "correct" ? { value: args.value } : {},
     // The writer's stamp (#992 item 9): the plugin that served the copy the passage hash binds to.
@@ -88553,7 +88557,7 @@ async function confirmItem(kp, args, operation, seams, label2) {
   const rows29 = await upsertSidecarRow(target.abs, kp.path, row2, (next) => {
     if (operation === "correct") validateCorrections(kp, content, kindOf.kind, kindOf.noVenue, next);
   });
-  return { path: kp.path, sidecar: sidecarKp.path, row: row2, rows: rows29.length, ...provenance3(served.shipped_from, seams) };
+  return { path: kp.path, sidecar: sidecarKp.path, row: row2, rows: rows29.length, ...provenance2(served.shipped_from, seams) };
 }
 
 // src/knowledge/write-index.ts
@@ -88667,7 +88671,7 @@ async function writeIndexRow(kp, index, args, seams, label2) {
     const next = { ...doc, [list]: rows29 };
     const view = merge2(next, target.abs);
     writeTextAtomic(target.abs, JSON.stringify(next, null, 2) + "\n");
-    return { path: kp.path, index, list, key, status: at === -1 ? "created" : "updated", view, ...provenance3(loc.shipped_from, seams) };
+    return { path: kp.path, index, list, key, status: at === -1 ? "created" : "updated", view, ...provenance2(loc.shipped_from, seams) };
   });
 }
 
@@ -88775,7 +88779,7 @@ async function knowledgeRetire(args, seams = {}) {
     retired: retired.map(({ pdf_hashes: _hashes, ...entry }) => entry),
     ...skipped ? { skipped } : {},
     fetched_deleted: deleteUnreferencedPdfs(hashes, seams, label2),
-    ...provenance3(null, seams)
+    ...provenance2(null, seams)
   };
 }
 
@@ -89379,14 +89383,14 @@ function fetchAdmissionStates(dbPath, whereClause, params) {
     }
   }));
 }
-function fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today4) {
+function fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today2) {
   const spentGlyphByFact = /* @__PURE__ */ new Map();
   if (factIds.length === 0) return { admittedFactIds: /* @__PURE__ */ new Set(), spentGlyphByFact, suppressedFactIds: /* @__PURE__ */ new Set() };
   const placeholders = factIds.map(() => "?").join(",");
   const byFact = /* @__PURE__ */ new Map();
   const spentByFact = /* @__PURE__ */ new Map();
   for (const r3 of fetchAdmissionStates(dbPath, `a.fact_id IN (${placeholders})`, factIds)) {
-    const state = admissionLadderState(r3.input, today4);
+    const state = admissionLadderState(r3.input, today2);
     const role = admissionRole(state);
     if (role === "tenders") {
       const set = byFact.get(r3.factId) ?? /* @__PURE__ */ new Set();
@@ -89402,8 +89406,8 @@ function fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today4) {
   const admittedFactIds = opposingIds.length === 0 ? /* @__PURE__ */ new Set() : new Set(factIds.filter((id) => admittedAgainstAllOpposing(byFact.get(id) ?? /* @__PURE__ */ new Set(), opposingIds)));
   return { admittedFactIds, spentGlyphByFact, suppressedFactIds: suppressedWitnessFactIds(dbPath, factIds) };
 }
-function fetchFactAdmissionCoverage(dbPath, factIds, opposingIds, today4) {
-  return fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today4).admittedFactIds;
+function fetchFactAdmissionCoverage(dbPath, factIds, opposingIds, today2) {
+  return fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today2).admittedFactIds;
 }
 
 // src/submission/forms/components.ts
@@ -89669,7 +89673,7 @@ function renderWitnessStatements(ctx) {
   const statements = fetchWitnessStatements(ctx.dbPath, ctx.filing.id);
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
   const opposing = opposingPartyIds(ctx.parties);
-  const today4 = ctx.rendered.slice(0, 10);
+  const today2 = ctx.rendered.slice(0, 10);
   const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, fetchFilingDocuments(ctx.dbPath, ctx.filing.id).map((d3) => d3.document_id));
   return statements.map((s3) => {
     const paragraphs = fetchStatementParagraphs(ctx.dbPath, s3.id);
@@ -89690,7 +89694,7 @@ function renderWitnessStatements(ctx) {
       ctx.dbPath,
       unlinkedFacts.map((f3) => f3.fact_id),
       opposing,
-      today4
+      today2
     );
     const lines2 = [];
     lines2.push(
@@ -89815,7 +89819,7 @@ function recordAdmissionGlyphs(dbPath, inventory, admissionRows, states, glyphs,
     });
   }
 }
-function fetchDocumentTenderStatus(dbPath, documentIds, today4, inventory) {
+function fetchDocumentTenderStatus(dbPath, documentIds, today2, inventory) {
   const result = /* @__PURE__ */ new Map();
   for (const id of documentIds) result.set(id, { hasTender: false, spentGlyphs: "", tenderedBy: "" });
   const tenders = fetchExhibitTenders(dbPath, documentIds);
@@ -89832,7 +89836,7 @@ function fetchDocumentTenderStatus(dbPath, documentIds, today4, inventory) {
   if (admissionIds.length > 0) {
     const placeholders = admissionIds.map(() => "?").join(",");
     for (const r3 of fetchAdmissionStates(dbPath, `a.id IN (${placeholders})`, admissionIds)) {
-      const state = admissionLadderState(r3.input, today4);
+      const state = admissionLadderState(r3.input, today2);
       states.set(r3.id, state);
       glyphs.set(r3.id, dedupeLineMarkers([admissionRungMarker(state), admissionCaptureMarkers(r3.input, state)]));
       admissionRows.push(r3);
@@ -91374,16 +91378,16 @@ var LIFECYCLE_LABELS = {
   retired: "Retired"
 };
 var SERVED_KINDS = /* @__PURE__ */ new Set(["notice_of_application", "application_response"]);
-function deriveLifecycle(filing, hearingDate, today4, appealDeadline) {
+function deriveLifecycle(filing, hearingDate, today2, appealDeadline) {
   if (filing.retired_on) return { state: "retired", since: filing.retired_on, readyToRetire: false, offerDelivered: false };
   if (filing.needs_forum_parts === 0) {
     if (filing.filed_on) return { state: "sent", since: filing.filed_on, readyToRetire: false, offerDelivered: true };
     return { state: "drafting", since: null, readyToRetire: false, offerDelivered: false };
   }
-  if (appealDeadline && appealDeadline < today4) return { state: "appeal_expired", since: appealDeadline, readyToRetire: true, offerDelivered: false };
+  if (appealDeadline && appealDeadline < today2) return { state: "appeal_expired", since: appealDeadline, readyToRetire: true, offerDelivered: false };
   if (filing.entered_on) return { state: "entered", since: filing.entered_on, readyToRetire: false, offerDelivered: false };
   if (filing.decided_on) return { state: "decided", since: filing.decided_on, readyToRetire: false, offerDelivered: false };
-  if (hearingDate && hearingDate <= today4) return { state: "heard", since: hearingDate, readyToRetire: false, offerDelivered: false };
+  if (hearingDate && hearingDate <= today2) return { state: "heard", since: hearingDate, readyToRetire: false, offerDelivered: false };
   if (filing.filed_on) {
     const served = filing.kind !== void 0 && SERVED_KINDS.has(filing.kind) && filing.sent_copy_id != null;
     return { state: served ? "served" : "filed", since: filing.filed_on, readyToRetire: false, offerDelivered: false };
@@ -91744,12 +91748,12 @@ function activeAt(ticket, stamp2) {
   if (ticket.status !== "wip" || stamp2 === void 0 || ticket.locked_at === null) return null;
   return stamp2.replace(" ", "T") >= ticket.locked_at.replace(" ", "T") ? stamp2 : null;
 }
-function classify(ticket, blockers, conflictPartners, today4) {
+function classify(ticket, blockers, conflictPartners, today2) {
   if (ticket.rejected_at !== null) return "rejected";
   if (ticket.status === "completed") return "completed";
   if (ticket.status === "superseded") return "superseded";
   if (ticket.status === "wip") return "wip";
-  if (ticket.bf_on != null && ticket.bf_on > today4) return "bring_forward";
+  if (ticket.bf_on != null && ticket.bf_on > today2) return "bring_forward";
   if (blockers.some((b3) => b3.status !== "completed")) return "waiting";
   if (conflictPartners.some((p3) => p3.status === "wip")) return "waiting";
   return "ready";
@@ -91952,11 +91956,7 @@ function groupBy2(items, key) {
   }
   return map;
 }
-function localToday() {
-  const d3 = /* @__PURE__ */ new Date();
-  return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
-}
-function buildProceedingBoard(dbPath, proceedingId, today4 = localToday()) {
+function buildProceedingBoard(dbPath, proceedingId, today2 = today()) {
   const proceedingTickets = fetchProceedingTickets(dbPath, proceedingId);
   const ticketById = new Map(proceedingTickets.map((t3) => [t3.id, t3]));
   const proceedingIds = proceedingTickets.map((t3) => t3.id);
@@ -92002,7 +92002,7 @@ function buildProceedingBoard(dbPath, proceedingId, today4 = localToday()) {
   const tickets = proceedingTickets.map((t3) => {
     const blockedBy = (blockersOf.get(t3.id) ?? []).map(edge);
     const conflictPartners = (conflictsOf.get(t3.id) ?? []).map(edge);
-    const category = classify(t3, blockedBy, conflictPartners, today4);
+    const category = classify(t3, blockedBy, conflictPartners, today2);
     const ticket = {
       id: t3.id,
       title: t3.title,
@@ -97486,7 +97486,7 @@ var STEMS = {
   "form-32": ["notice-of-application"],
   "form-33": ["application-response"]
 };
-function formCurrency(formKey, today4, seams = {}) {
+function formCurrency(formKey, today2, seams = {}) {
   const read3 = (path) => skillSourceRead(path, seams.env, void 0, void 0, seams.installRoot).content;
   const record2 = JSON.parse(read3("shared/docket-clerk/references/rule-freshness.json"));
   const identityFiles = [];
@@ -97515,7 +97515,7 @@ function formCurrency(formKey, today4, seams = {}) {
   for (const enactment of record2.enactments) {
     for (const change of enactment.pending_changes ?? []) {
       if (formNumber === null || !change.forms?.includes(formNumber)) continue;
-      if (!change.amending_reg || !change.commencement_date || change.commencement_date > today4) continue;
+      if (!change.amending_reg || !change.commencement_date || change.commencement_date > today2) continue;
       if (conformedTo.includes(change.amending_reg)) continue;
       unconformed.push({
         amending_reg: change.amending_reg,
@@ -97538,7 +97538,7 @@ function formCurrency(formKey, today4, seams = {}) {
   return {
     form_key: formKey,
     form_number: formNumber,
-    today: today4,
+    today: today2,
     identity_file: front === null ? null : identityFiles.join(", "),
     conformed_to: conformedTo,
     unconformed,
@@ -106956,10 +106956,6 @@ var QUESTIONS = {
   matter_folder: `Could the instruction say "the matter's folder" rather than naming a particular matter?`,
   too_long: "Could the instruction be said in a few sentences, as a rule the skill should follow every time?"
 };
-function today3() {
-  const now = /* @__PURE__ */ new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
 function text4(raw, name) {
   if (typeof raw !== "string" || raw.trim() === "") throw new ValidationError(`${name} must be a non-empty string`);
   return raw.trim();
@@ -107020,7 +107016,7 @@ async function preferencesWrite(args, env = process.env, seams = {}) {
       id: randomUUID9(),
       skill,
       instruction,
-      created_on: today3(),
+      created_on: today(),
       retired_on: null,
       plugin_version: pluginVersion(seams.installRoot)
     };
@@ -107038,7 +107034,7 @@ async function preferencesWrite(args, env = process.env, seams = {}) {
       const entry = entries.find((candidate) => candidate.id === id);
       if (!entry) throw new DataServerError(`no preference of ${key} has id ${id}; call preferences__read for the ids`, "not_found");
       if (entry.retired_on !== null) return { status: "already_retired", id, retired_on: entry.retired_on };
-      entry.retired_on = today3();
+      entry.retired_on = today();
       writeTextAtomic(file, `${JSON.stringify({ person: key, entries }, null, 2)}
 `);
       return { status: "retired", id, retired_on: entry.retired_on };
@@ -107071,7 +107067,7 @@ async function suggestionLogWrite(args, env = process.env) {
     return withFileLock(file, () => {
       const log = readLog(file);
       if (log.suggestions.some((entry) => entry.suggestion_id === suggestionId)) return { status: "exists", suggestion_id: suggestionId };
-      log.suggestions.push({ suggestion_id: suggestionId, title, posted_on: today3(), last_status: "new", last_shown_status: null });
+      log.suggestions.push({ suggestion_id: suggestionId, title, posted_on: today(), last_status: "new", last_shown_status: null });
       writeLog(file, log);
       return { status: "added", suggestion_id: suggestionId };
     });
@@ -107099,7 +107095,7 @@ async function suggestionLogWrite(args, env = process.env) {
     }
     text4(draft.title, "draft.title");
     text4(draft.body, "draft.body");
-    const entry = { held_id: randomUUID9(), held_on: today3(), draft };
+    const entry = { held_id: randomUUID9(), held_on: today(), draft };
     return withFileLock(file, () => {
       const log = readLog(file);
       log.held.push(entry);
@@ -116345,6 +116341,7 @@ function readBody(req) {
 }
 
 // src/key-request/save-key.ts
+var TIMEOUT_MS2 = 6e4;
 async function configureCloudKey(env = process.env) {
   const url = await serveKeyPage((typed) => saveKey(typed, env));
   return {
@@ -116376,7 +116373,8 @@ async function probe(supabaseUrl, staticKey) {
     res = await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/items-sync`, {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: staticKey },
-      body: "{}"
+      body: "{}",
+      signal: AbortSignal.timeout(TIMEOUT_MS2)
     });
   } catch (error2) {
     throw new ValidationError(
@@ -116392,6 +116390,7 @@ async function probe(supabaseUrl, staticKey) {
 var MAX_NAME = 200;
 var MAX_EMAIL = 254;
 var MAX_PHONE = 40;
+var TIMEOUT_MS3 = 6e4;
 var TITLE3 = "Ask Probanda for a key";
 var pending2;
 var listening2;
@@ -116459,11 +116458,18 @@ var NEXT = {
   declined: "Probanda could not verify the details sent. The practitioner can check them against their own entry in the Law Society of British Columbia's directory and send a new request with key_request__submit."
 };
 async function post(projectUrl, path, body, what) {
-  const res = await fetch(`${projectUrl.replace(/\/$/, "")}/${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
+  let res;
+  try {
+    res = await fetch(`${projectUrl.replace(/\/$/, "")}/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS3)
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new ValidationError(`Probanda's Cloud did not answer, so it is not known whether it got this request (${detail})`);
+  }
   const text5 = await res.text();
   let reply = {};
   try {

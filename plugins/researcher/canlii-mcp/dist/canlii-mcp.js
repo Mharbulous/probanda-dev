@@ -21155,16 +21155,89 @@ var CitedLegislationsResponseSchema = external_exports.object({
 }).passthrough();
 
 // src/dpapi-store.ts
+import { join as join2 } from "node:path";
+
+// ../../mcp-shared/dpapi-store.js
 import { spawn } from "node:child_process";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-function defaultStateDir(env = process.env) {
+function defaultStateDir(env = process.env, name = "legal-commons") {
   const root = env.LOCALAPPDATA || env.APPDATA || homedir();
-  return join(root, "Coclerk", "canlii");
+  return join(root, "Coclerk", name);
 }
+async function readProtectedJson(path, fallback, protect = process.platform === "win32") {
+  try {
+    const stored = await readFile(path);
+    const data = protect ? await unprotectLocalSecret(stored) : stored;
+    return JSON.parse(data.toString("utf8"));
+  } catch (error2) {
+    if (error2?.code === "ENOENT") return fallback;
+    throw error2;
+  }
+}
+async function writeProtectedJson(path, value, protect = process.platform === "win32") {
+  await mkdir(dirname(path), { recursive: true });
+  const data = Buffer.from(JSON.stringify(value), "utf8");
+  const stored = protect ? await protectLocalSecret(data) : data;
+  const tmp = `${path}.${process.pid}.${Date.now()}.tmp`;
+  await writeFile(tmp, stored);
+  await rename(tmp, path);
+}
+async function protectLocalSecret(data) {
+  if (process.platform !== "win32") {
+    throw new Error("Persistent local secret storage is supported only on Windows in v1");
+  }
+  return runDpapi("Protect", data);
+}
+async function unprotectLocalSecret(data) {
+  if (process.platform !== "win32") {
+    throw new Error("Persistent local secret storage is supported only on Windows in v1");
+  }
+  return runDpapi("Unprotect", data);
+}
+async function runDpapi(action, data) {
+  const script = action === "Protect" ? protectScript : unprotectScript;
+  const out = await runPowerShell(`Windows DPAPI ${action}`, script, data.toString("base64"));
+  return Buffer.from(out, "base64");
+}
+async function runPowerShell(label, script, stdin = "") {
+  const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
+    stdio: ["pipe", "pipe", "pipe"],
+    windowsHide: true
+  });
+  const stdout = [];
+  const stderr = [];
+  child.stdout.on("data", (chunk) => stdout.push(chunk));
+  child.stderr.on("data", (chunk) => stderr.push(chunk));
+  const done = new Promise((resolve, reject) => {
+    child.on("error", reject);
+    child.on("exit", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`${label} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
+    });
+  });
+  child.stdin.end(stdin);
+  await done;
+  return Buffer.concat(stdout).toString("utf8").trim();
+}
+var scriptPreamble = `
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Security
+$inputText = [Console]::In.ReadToEnd().Trim()
+$bytes = [Convert]::FromBase64String($inputText)`;
+var protectScript = `${scriptPreamble}
+$protected = [System.Security.Cryptography.ProtectedData]::Protect($bytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+[Console]::Out.Write([Convert]::ToBase64String($protected))
+`;
+var unprotectScript = `${scriptPreamble}
+$plain = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+[Console]::Out.Write([Convert]::ToBase64String($plain))
+`;
+
+// src/dpapi-store.ts
 function credentialPath(env = process.env) {
-  return join(defaultStateDir(env), "credential.json.dpapi");
+  return join2(defaultStateDir(env, "canlii"), "credential.json.dpapi");
 }
 async function loadApiKey(env = process.env) {
   const fromEnv = (env.CANLII_API_KEY ?? "").trim();
@@ -21186,71 +21259,6 @@ function redactedKeyHint(key) {
   if (key.length <= 8) return "****";
   return `${key.slice(0, 4)}\u2026${key.slice(-4)}`;
 }
-async function readProtectedJson(path, fallback, protect = process.platform === "win32") {
-  try {
-    const stored = await readFile(path);
-    const data = protect ? await unprotectLocalSecret(stored) : stored;
-    return JSON.parse(data.toString("utf8"));
-  } catch (error2) {
-    const code = error2.code;
-    if (code === "ENOENT") return fallback;
-    throw error2;
-  }
-}
-async function writeProtectedJson(path, value, protect = process.platform === "win32") {
-  await mkdir(dirname(path), { recursive: true });
-  const data = Buffer.from(JSON.stringify(value), "utf8");
-  const stored = protect ? await protectLocalSecret(data) : data;
-  const tmp = `${path}.${process.pid}.${Date.now()}.tmp`;
-  await writeFile(tmp, stored);
-  await rename(tmp, path);
-}
-async function protectLocalSecret(data) {
-  if (process.platform !== "win32") {
-    throw new Error("Persistent local secret storage is supported only on Windows");
-  }
-  return runDpapi("Protect", data);
-}
-async function unprotectLocalSecret(data) {
-  if (process.platform !== "win32") {
-    throw new Error("Persistent local secret storage is supported only on Windows");
-  }
-  return runDpapi("Unprotect", data);
-}
-async function runDpapi(action, data) {
-  const script = action === "Protect" ? protectScript : unprotectScript;
-  const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
-    stdio: ["pipe", "pipe", "pipe"],
-    windowsHide: true
-  });
-  const stdout = [];
-  const stderr = [];
-  child.stdout.on("data", (chunk) => stdout.push(chunk));
-  child.stderr.on("data", (chunk) => stderr.push(chunk));
-  const done = new Promise((resolve, reject) => {
-    child.on("error", reject);
-    child.on("exit", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`Windows DPAPI ${action} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
-    });
-  });
-  child.stdin.end(data.toString("base64"));
-  await done;
-  return Buffer.from(Buffer.concat(stdout).toString("utf8").trim(), "base64");
-}
-var scriptPreamble = `
-$ErrorActionPreference = 'Stop'
-Add-Type -AssemblyName System.Security
-$inputText = [Console]::In.ReadToEnd().Trim()
-$bytes = [Convert]::FromBase64String($inputText)`;
-var protectScript = `${scriptPreamble}
-$protected = [System.Security.Cryptography.ProtectedData]::Protect($bytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-[Console]::Out.Write([Convert]::ToBase64String($protected))
-`;
-var unprotectScript = `${scriptPreamble}
-$plain = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-[Console]::Out.Write([Convert]::ToBase64String($plain))
-`;
 
 // src/amendments.ts
 var BCLAWS = "https://www.bclaws.gov.bc.ca";
@@ -21567,6 +21575,7 @@ var requestQueue = Promise.resolve();
 var dailyCount = 0;
 var dailyResetDate = (/* @__PURE__ */ new Date()).toDateString();
 var MIN_INTERVAL_MS = 500;
+var TIMEOUT_MS = 6e4;
 var lastRequestTime = 0;
 function missingKeyMessage() {
   return "CanLII API key not configured. Case-law and legislation lookup is an optional feature. To enable it, either set the CANLII_API_KEY environment variable (Claude Code CLI inherits it), or \u2014 if the environment variable is not reaching this server, which is the case in Cowork \u2014 call the canlii configure_credential tool with your key. Request a free research key via CanLII's feedback form. Every other litigation feature works without it." + (credentialError ? ` (Note: a saved key exists on this machine but could not be read \u2014 ${credentialError} \u2014 so re-supply it via configure_credential.)` : "");
@@ -21592,7 +21601,7 @@ async function apiFetch(url) {
       }
       lastRequestTime = Date.now();
       dailyCount++;
-      return fetch(url);
+      return fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     }).then(resolve, reject);
   });
 }
@@ -21825,7 +21834,7 @@ server.tool(
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
       }, async (url) => {
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.text();
       }, (/* @__PURE__ */ new Date()).toLocaleDateString("en-CA"));
