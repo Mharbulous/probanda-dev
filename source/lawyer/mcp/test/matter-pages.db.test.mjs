@@ -1149,7 +1149,7 @@ async function heldJobBoard(t) {
      INSERT INTO seeds (id, proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea) VALUES (1, 1, NULL, 1, '2026-01-16T09:20', 'noticed in the Westlaw memo', 'Is the guarantor a party?');
      INSERT INTO seeds (id, proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea) VALUES (2, 1, NULL, NULL, '2026-01-16T11:50', 'a practitioner aside', 'Not this job''s.');`
   );
-  const law = join(dirname(f.dbPath), "6. LAW");
+  const law = join(dirname(dirname(f.dbPath)), "6. LAW");
   mkdirSync(join(law, "Limitation"), { recursive: true });
   return { f, law };
 }
