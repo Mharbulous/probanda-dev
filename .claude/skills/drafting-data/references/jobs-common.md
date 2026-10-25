@@ -61,7 +61,7 @@ No rows at all means no such job — a wrong id, which is a composition bug in t
 
 **Foreign-scope read**, before every on-the-fly revision of one reviewed paragraph (`paragraph-revision.md` §3), in every session, holding a job or not: it asks whether a `wip` job of another session has claimed the row about to be edited, and any row back refuses the revision, naming the job. It leaves the holder's own scope read above unchanged: a session holding a job runs both. A fact move reads `filing_facts`, `facts` and `filings` scope, as `paragraph-revision.md` §6 sets out.
 
-**Lock read before a dispatch** — immediately before every `research-paralegal` dispatch and every law-audit agent spawn or re-invocation (`research-agent`, or whichever audit agent `/legal-research` dispatches) made while this session holds a job. A dispatch writes nothing to this database, so no guard refuses it: after a take-over, the old holder's later writes are refused, but its research would still run and be paid for. One read per dispatch, never one per batch, because a take-over can land between two dispatches:
+**Lock read before a dispatch** — immediately before every `researcher:research-paralegal` dispatch and every law-audit agent spawn or re-invocation (`researcher:research-agent`, or whichever audit agent `/legal-research` dispatches) made while this session holds a job. A dispatch writes nothing to this database, so no guard refuses it: after a take-over, the old holder's later writes are refused, but its research would still run and be paid for. One read per dispatch, never one per batch, because a take-over can land between two dispatches:
 
 ```sql
 SELECT locked_by, status, rejected_at FROM tickets WHERE id = 42;

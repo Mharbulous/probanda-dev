@@ -59,7 +59,7 @@ permitted to make statements of law.
    that too, and follow it.
 2. Tell the practitioner: "That's a question about the law — I'll put it to the
    research-agent agent."
-2a. Plan, before any search. Spawn `research-agent` with `mode: plan`
+2a. Plan, before any search. Spawn `researcher:research-agent` with `mode: plan`
    (`shared/legal-audit-scoped.md`), the question, the `Job question:` line
    (`shared/legal-research.md`'s spawn template), the factual context, the matter root,
    the `Preflight:` rows and the issue folders' `6. LAW\` listing
@@ -92,7 +92,7 @@ permitted to make statements of law.
 3. Run Westlaw before the audit, without asking unless the practitioner declined: for each issue no pinpointable
    text in tiers 1–3 answers (a handoff's say-so is no check), run the
    `westlaw-query-optimizer` subskill (on a supplied or earlier-session query too),
-   then `research-paralegal` in deep-research mode and in citation mode
+   then `researcher:research-paralegal` in deep-research mode and in citation mode
    `source: westlaw-first` for every citation already known. If it returns
    `status: blocked (chrome-not-connected)` or `status: blocked (westlaw-not-signed-in)`,
    stop the whole question (no audit agent, no CanLII in its place) and tell the
@@ -104,16 +104,16 @@ permitted to make statements of law.
    the run has finished and can be downloaded: the paralegal has returned and its memo is
    filed in the `6. LAW` folder. If not, set the step ⏳ for 5 minutes again. Never
    dispatch a second `research-paralegal` while one is out. A `blocked (...)` return sets
-   the step ↻, never done. Then run the doctrine's duty 4: dispatch `legislation-fetcher` once per
+   the step ↻, never done. Then run the doctrine's duty 4: dispatch `researcher:legislation-fetcher` once per
    statute, regulation or bylaw in issue, and on a `host_not_allowed` refusal ask the
    practitioner once and, on a yes, re-dispatch with `allow_host`. For an instrument it
    files nothing for, ask `/matter-data` for a held copy before marking it unread. A
    statutory-text question, one naming an instrument and asking what it provides,
    requires, permits or lacks, runs duty 4 first and Westlaw after it, as the doctrine
-   orders. Then run duty 5: dispatch `citation-checker` for each court decision the
+   orders. Then run duty 5: dispatch `researcher:citation-checker` for each court decision the
    question asks to have noted up, never while `research-paralegal` is out. Its
    Westlaw stops are the same stop as the paralegal's.
-4. Spawn `research-agent`. Fill the doctrine's spawn-prompt template: the question, the
+4. Spawn `researcher:research-agent`. Fill the doctrine's spawn-prompt template: the question, the
    factual context, the matter root, the matter's file number, who asked, today's date,
    the file stem, CRAC unless the practitioner named IRAC or CREAC, any pooled-layer results your own pre-spawn
    lookup returned, the Westlaw memo and decision files retrieved, the note-up records

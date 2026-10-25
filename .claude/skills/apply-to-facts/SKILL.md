@@ -5,7 +5,7 @@ description: >
   has a claim, whether a defence or a limitation argument holds, whether the facts on the record
   satisfy a legal test, what follows for this file. Counterpart to `legal-research`,
   which owns what the law IS. Where the artifact rather than the conclusion is what's wanted: a
-  date -> the `docket-clerk` agent; the application itself -> `draft`.
+  date -> the `lawyer:docket-clerk` agent; the application itself -> `draft`.
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
@@ -29,7 +29,7 @@ never reason from law you established yourself.
 This skill is not an exception to the legal-research gate; it is a caller of it.
 `shared/legal-research.md` lists "whether conduct is actionable" among the assertions
 that are not yours to make, and that still holds here. What makes the reasoning below
-permissible is step 2: the test comes back from `research-agent`, with citations, before
+permissible is step 2: the test comes back from `researcher:research-agent`, with citations, before
 any of it is applied. Skip step 2 and every conclusion downstream is an unverified
 statement of law wearing a conclusion's clothes.
 
@@ -65,7 +65,7 @@ Two things carry over from `shared/legal-research.md` and bind you as the caller
 
 An ingested primary authority or output of `/verify-law` with `verify-authorities` may be quoted without a fresh spawn,
 on the terms of item 2 in `shared/legal-research.md`, which is the canonical rule. It may not be
-reasoned from: the test you apply still comes back from `research-agent`. A research memo or case brief is a lead:
+reasoned from: the test you apply still comes back from `researcher:research-agent`. A research memo or case brief is a lead:
 pass it into the spawn, or relay it labelled unverified and conclude nothing on it.
 
 Turn the returned test into the criteria the step 3 dispatch needs, one per element or factor,
@@ -82,7 +82,7 @@ for facts: which proceeding this issue sits in, the client's party id, and the i
 parties the question is tested against. Decline any backfill or profile-completion offer it
 makes; that is separate work for the practitioner to start.
 
-Then dispatch the `marshal-facts` agent. It finds the facts in case data itself and applies
+Then dispatch the `litigator:marshal-facts` agent. It finds the facts in case data itself and applies
 each criterion to them, so the facts never pass through this session. Give it:
 
 - `matter_root`, the live host path of the matter folder (never a sandbox mount path), and
@@ -148,7 +148,7 @@ wrong skill and the work belongs to its owner:
 |---|---|
 | Interest owed under a judgment or statute | ``/calculate`` with ``court-interest-calculator`` |
 | Interest owed under a contract's own term | ``/calculate`` with ``contract-interest-rates`` |
-| A date, a deadline, or the deadline register | the ``lawyer:docket-clerk`` agent (spawn it, relay its open items, re-spawn with the answers: `shared/deadline-isolation.md`, "Calling docket-clerk") |
+| A date, a deadline, or the deadline register | the `lawyer:docket-clerk` agent (spawn it, relay its open items, re-spawn with the answers: `shared/deadline-isolation.md`, "Calling docket-clerk") |
 | The application itself, or a response to one | ``draft`` |
 
 These run in both directions. A conclusion this skill reaches often needs one of them to turn
