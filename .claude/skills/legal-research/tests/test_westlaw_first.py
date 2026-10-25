@@ -307,7 +307,7 @@ class NoteUpRoutingTests(unittest.TestCase):
         self.assertNotIn("Use CanLII for citator note-up only", text)
         duty_5 = flat(text[text.index("5. **Note-up, before the audit"):
                            text.index("**Westlaw unreachable is a hard stop.**")])
-        self.assertIn("dispatch `citation-checker`", duty_5)
+        self.assertIn("dispatch `researcher:citation-checker`", duty_5)
         self.assertIn("never sent to it", duty_5)
         self.assertIn("citation-checker returns", flat(text))
         template = text[text.index("**Spawn the agent from this template.**"):

@@ -70,7 +70,7 @@ class GateTests(unittest.TestCase):
 
     def test_skill_step_three_carries_the_exception(self):
         text = flat(SKILL)
-        step = text[text.index("3. Run Westlaw before the audit"):text.index("4. Spawn `research-agent`")]
+        step = text[text.index("3. Run Westlaw before the audit"):text.index("4. Spawn `researcher:research-agent`")]
         self.assertIn("ask `/matter-data` for a held copy before marking it unread", step)
         self.assertIn("runs duty 4 first and Westlaw after it", step)
 
