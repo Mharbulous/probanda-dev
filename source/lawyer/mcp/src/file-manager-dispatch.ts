@@ -10,7 +10,7 @@ import { validateToolInput } from "./validate.js";
 import { fileOpsTrash } from "./file_ops/trash.js";
 import { fileOpsMove } from "./file_ops/move.js";
 import { fileOpsMoveFromDownloads } from "./file_ops/move-from-downloads.js";
-import { orderCandidates } from "./housekeeping/order.js";
+import { type CandidatesArgs, candidates } from "./housekeeping/candidates.js";
 import { journalAppend, newRun, writeRunFile } from "./housekeeping/run-files.js";
 import { preflight } from "./housekeeping/preflight.js";
 import { reconcile } from "./housekeeping/reconcile.js";
@@ -80,8 +80,8 @@ export async function callFileManagerTool(name: string, rawArgs: unknown): Promi
     return newRun(args.matter_root as string);
   }
 
-  if (name === "housekeeping__order_candidates") {
-    return orderCandidates(args.matter_root as string, args.run_id as string, args.candidates);
+  if (name === "housekeeping__candidates") {
+    return candidates(args as unknown as CandidatesArgs);
   }
 
   if (name === "housekeeping__write_run_file") {

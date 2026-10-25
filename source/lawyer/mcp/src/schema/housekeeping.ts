@@ -24,7 +24,7 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
     {
       name: "housekeeping__new_run",
       description:
-        "Start a /housekeeping run for a client matter: create `<matter-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the matter-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the matter-data folder does not exist (run /matter-data initialize first).",
+        "Start a /housekeeping run for a client matter: create `<matter-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the matter-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the matter-data folder does not exist (run /matter-data initialize first).",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" } },
@@ -34,24 +34,34 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: false, openWorldHint: false },
     },
     {
-      name: "housekeeping__order_candidates",
+      name: "housekeeping__candidates",
       description:
-        "Order a /housekeeping run's admitted files and cap them at 50, before anything is ingested. `candidates` is every admitted file as {path, hash}: `path` matter-root-relative in stored form, `hash` its lowercase SHA-256; a path given twice is refused (`invalid_argument`). The order is fresh root files, fresh subfolder files, rotated root files, rotated subfolder files; root files by name, subfolder files by folder, then name, compared lowercased by character code. A file is rotated when its hash was an offered row on the previous run's page and was not approved there (left as is, or a stuck or misfiled row); matched by hash, never by name. The previous run is the newest run earlier than `run_id` whose proposal.json is valid, approved or not; with none, every file is fresh. Fails `approval_corrupt` when that run's approval.json is there but unreadable. Returns {run_id, previous_run, admitted, deferred}, each file {path, hash, rotated}: `admitted` (at most 50) are this run's rows, in this order, and the only files ingest reads; `deferred` are `deferred` rows. housekeeping__write_run_file refuses a proposal.json whose rows break this order.",
+        "Build a /housekeeping run's work list in one read-only call (Steps 6-7): list the candidates, hash them, run the name gate and its mechanical second pass, read ingest status and the review log, admit, order and cap at 50. Nothing per file goes in. `swept_folders` are the folders the folder map matches, by their on-disk names (matter-root-relative), each {path, folder_type, flag_tokens?, second_pass?}: `folder_type` the folder type's name (`Law`, `Discovery`, `Court File`, ...), `flag_tokens` the Law folder's, `second_pass: true` on Law and Discovery. `skip_folders` are the root folders the profile always skips (neither swept nor listed). `subfolder` (sweep only that folder, no root files) or `files` (only those stored-form paths) apply the run's argument; `finished` lists the stored paths Step 5's recovery finished, which are left out; `force` drops the settled-verdict condition from the name arm only. Listing: root files except `~`/`.` names, probanda.json, CLAUDE.md, AGENTS.md, ProceduralHistory.md, `.cm*`, desktop.ini and `.lnk`; a root file with a `~$` sibling is open in Word and only named in `header.open_in_word`; files with `.pdf .docx .doc .eml .msg .xls` anywhere inside a swept folder; root folders other than TRASH, `Claude outputs`, skipped and swept ones are named in `header.folders_not_looked_inside`. Admission: a root file always; a subfolder file when (its name does not conform AND no settled verdict matches) OR (it is not ingested AND no `not_ingested` row matches its hash). Order: fresh root, fresh subfolder, rotated root, rotated subfolder (rotated = offered and not approved on the previous run's page, by hash). Returns {run_id, previous_run, header, errors: [{path, error}] (unreadable files, left out of the run), admitted (at most 50, this run's rows in this order, each {path, hash, rotated, location, folder_type, admitted_by, name: {verdict conforms|fails|second_pass_required, reason, flags} or null at the root, ingest: the ingest-status entry, review: {reviewed, outcome, reviewed_at, matched_on, not_ingested, ingest_failure}}), deferred: [{path, hash}] (past the cap, for proposal.json's deferred rows)}. A file not admitted is not returned. `second_pass_required`: the name failed the gate in a Law or Discovery folder and matches neither mechanical form; judge it against the folder's notes. Fails whole past its time budget, never with a partial list. Fails `approval_corrupt` when the previous run's approval.json is unreadable.",
       inputSchema: {
         type: "object",
         properties: {
           ...matterRun,
-          candidates: {
+          swept_folders: {
             type: "array",
             items: {
               type: "object",
-              properties: { path: { type: "string" }, hash: { type: "string" } },
-              required: ["path", "hash"],
+              properties: {
+                path: { type: "string" },
+                folder_type: { type: "string" },
+                flag_tokens: { type: "array", items: { type: "string" } },
+                second_pass: { type: "boolean" },
+              },
+              required: ["path", "folder_type"],
               additionalProperties: false,
             },
           },
+          skip_folders: { type: "array", items: { type: "string" } },
+          subfolder: { type: "string" },
+          files: { type: "array", items: { type: "string" } },
+          finished: { type: "array", items: { type: "string" } },
+          force: { type: "boolean" },
         },
-        required: ["matter_root", "run_id", "candidates"],
+        required: ["matter_root", "run_id", "swept_folders", "skip_folders"],
         additionalProperties: false,
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -59,7 +69,7 @@ export function housekeepingToolDefinitions(): ToolDefinition[] {
     {
       name: "housekeeping__write_run_file",
       description:
-        "Write one file into a /housekeeping run directory. `file_name` is `proposal.json`, `questions.json` or `rule_gaps.json`; any other name is refused (`invalid_filename`), and approval.json and applied.jsonl are refused (`reserved_file`) because only the page and housekeeping__journal_append write them. `proposal.json` is the approval page's whole model: it must parse and validate (`invalid_proposal`, naming every problem), its `run_id` and `matter_root` must be this run's, its rows must be in housekeeping__order_candidates' order with only the rows past the first 50 `deferred` (else `proposal_out_of_order`, naming the first row out of place; the check sees only the rows written, so it cannot tell that an admitted file was left off; `approval_corrupt` when the previous run's approval.json is unreadable), and it is write-once -- the same content again is a no-op, other content is refused `proposal_exists` (start a new run instead). Written temp-then-rename. Returns {run_id, path, bytes}.",
+        "Write one file into a /housekeeping run directory. `file_name` is `proposal.json`, `questions.json` or `rule_gaps.json`; any other name is refused (`invalid_filename`), and approval.json and applied.jsonl are refused (`reserved_file`) because only the page and housekeeping__journal_append write them. `proposal.json` is the approval page's whole model: it must parse and validate (`invalid_proposal`, naming every problem), its `run_id` and `matter_root` must be this run's, its rows must be in housekeeping__candidates' order with only the rows past the first 50 `deferred` (else `proposal_out_of_order`, naming the first row out of place; the check sees only the rows written, so it cannot tell that an admitted file was left off; `approval_corrupt` when the previous run's approval.json is unreadable), and it is write-once -- the same content again is a no-op, other content is refused `proposal_exists` (start a new run instead). Written temp-then-rename. Returns {run_id, path, bytes}.",
       inputSchema: {
         type: "object",
         properties: { ...matterRun, file_name: { type: "string" }, content: { type: "string" } },

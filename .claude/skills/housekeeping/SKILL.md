@@ -17,8 +17,8 @@ description: Read the loose files in a litigation matter's main folder into the 
 | Step 3 — Half-commit check | Start of a run, and before every write phase |
 | Step 4 — Case database and schema | After the profile, to check the case database and schema |
 | Step 5 — Finish interrupted approvals | Before building anything, to finish earlier approved runs |
-| Step 6 — Build the candidate list | Listing, hashing and name-gating candidate files |
-| Step 7 — Ingest status, then admit, order and cap | Deciding which files are admitted and in what order, up to 50 |
+| Step 6 — Start the run | Minting the run before the work list |
+| Step 7 — Build the work list | Getting the admitted files, in order, up to 50, and what the run knows about each |
 | Step 8 — Page-1 routing read | Reading page 1 of files that need ingest, and flagging firm drafts |
 | Step 9 — Ingest | Running the one capped ingest call |
 | Step 10 — Naming evidence from page 1 | Dispatching the page-1 reader and assembling each row's naming-evidence block |
@@ -41,10 +41,10 @@ The matter's main folder is its inbox: a file sitting loose there has not yet be
 
 This skill is the only front door, for litigation matters only, and holds **no database particulars**. It reaches data only through these public interfaces:
 
-- `/matter-data`: `pointer-health`, `ingest-status`, `ingest-unattended`, `relocate-source`, and `housekeeping-log` (modes `lookup`, `record`, `retry`). A matter's parties, court file numbers, client name and recorded filing lawyer and firm come from its ordinary read operations. Its `render_document.py` script, in the `references` scripts folder of the installed `lawyer` plugin's `matter-data` skill (found the way `hash_files.py` is found in `file-manager`'s), renders a `.docx`, `.eml` or `.msg` and cuts its head (`--head-chars`).
+- `/matter-data`: `pointer-health`, `ingest-status` (Step 9's second call), `ingest-unattended`, `relocate-source`, and `housekeeping-log` (modes `record`, `retry`). A matter's parties, court file numbers, client name and recorded filing lawyer and firm come from its ordinary read operations. Its `render_document.py` script, in the `references` scripts folder of the installed `lawyer` plugin's `matter-data` skill, renders a `.docx`, `.eml` or `.msg` and cuts its head (`--head-chars`).
 - `/drafting-data`: re-pointing its stored document paths after a move ("Re-point after a move").
-- `/file-sorting`: `detect-profile`, `scope`, `record-backend`, and the litigation-matter profile's folder notes. `/file-apply`: `../file-apply/scripts/hash_files.py`. `/file-naming` (in the `lawyer` plugin): the **gate** intent, invoked through the Skill tool, and its references, read with `skill_source__read`.
-- The `file-manager` plugin's `files` server tools (prefix `mcp__plugin_file-manager_files__`, or its Cowork-bridged name): `housekeeping__preflight`, `housekeeping__new_run`, `housekeeping__order_candidates`, `housekeeping__write_run_file`, `housekeeping__serve_page`, `housekeeping__wait_approval`, `housekeeping__resolve`, `housekeeping__reconcile`, `housekeeping__journal_append`, `file_ops__move`, `file_ops__trash`. The `lawyer` plugin's data server tool (prefix `mcp__plugin_lawyer_data__`, or its Cowork-bridged name): `research_filing__append_manifest`.
+- `/file-sorting`: `detect-profile`, `scope`, `record-backend`, and the litigation-matter profile's folder notes. `/file-naming` (in the `lawyer` plugin): the **gate** intent for Step 12's and Step 16's name checks, invoked through the Skill tool, and its references, read with `skill_source__read`.
+- The `file-manager` plugin's `files` server tools (prefix `mcp__plugin_file-manager_files__`, or its Cowork-bridged name): `housekeeping__preflight`, `housekeeping__new_run`, `housekeeping__candidates`, `housekeeping__write_run_file`, `housekeeping__serve_page`, `housekeeping__wait_approval`, `housekeeping__resolve`, `housekeeping__reconcile`, `housekeeping__journal_append`, `file_ops__move`, `file_ops__trash`. The `lawyer` plugin's data server tool (prefix `mcp__plugin_lawyer_data__`, or its Cowork-bridged name): `research_filing__append_manifest`.
 - The `housekeeping-reader` agent (`file-manager:housekeeping-reader`) and the `housekeeping-namer` agent (`file-manager:housekeeping-namer`).
 
 ## Terms
@@ -62,7 +62,7 @@ This skill is the only front door, for litigation matters only, and holds **no d
 | none, or the matter root | the full run |
 | a subfolder path | sweep only that folder (and the folders inside it), per the profile's argument rule. No root files |
 | a file list | only those files, root or subfolder |
-| `--force` | the review log's settled verdicts no longer keep a subfolder file off the work list (Step 7's name arm). It never overrides the ingest arm. Say so in the opening message |
+| `--force` | the review log's settled verdicts no longer keep a subfolder file off the work list (the name arm of Step 7's admission). It never overrides the ingest arm. Say so in the opening message |
 
 ## Step 1 — Model
 
@@ -94,39 +94,30 @@ Follow the profile's **record-backend** protocol: invoke `/matter-data`, ask whe
 
 Run **Recovery** (below) for every interrupted run of this matter before building anything. Rows it finishes take no place in this run's 50. Keep its summary for the page header, for example "Finished 16 files you approved on 23 Sep. 2 could not be finished and are shown below."
 
-## Step 6 — Build the candidate list
+## Step 6 — Start the run
 
-First call `housekeeping__new_run` (`matter_root`) for this run's `run_id`. The new run directory stops every earlier page from approving, so the previous run that Step 7's order rotates against cannot change under this run. A run that stops before Step 13 leaves its directory without a `proposal.json`; later runs read past it.
+Call `housekeeping__new_run` (`matter_root`) for this run's `run_id`. The new run directory stops every earlier page from approving, so the previous run that Step 7's order rotates against cannot change under this run. A run that stops before Step 13 leaves its directory without a `proposal.json`; later runs read past it.
 
-List the root of `matter_folder`, not recursively.
+## Step 7 — Build the work list
 
-- **Never a candidate, never mentioned:** any file or folder whose name starts with `~` or `.`; at the root, `probanda.json`, `CLAUDE.md`, `AGENTS.md`, `ProceduralHistory.md`, CaseMap files (`.cm12`, `.cm14` and every other `.cm*` extension), `desktop.ini`, `.lnk` shortcuts, and hidden or system files; the root folders `TRASH` and `Claude outputs`.
-- **Open in Word.** A root file is open when a sibling `~$` file has the same extension and a stem equal to the file's stem with 0, 1 or 2 leading characters removed. It is not read, rowed or counted. List its name for the header line "Open in Word, skipped this run".
-- **Root folders.** Folders the profile always skips, whose document types are all never ingested, are neither swept nor listed. Folders numbered 0 or 1 are never destinations either, except `0. DRAFT` on a `draft` row; `0. DRAFT\Superseded` is matter-data's own destination for a superseded version, never housekeeping's. A folder the folder map matches is swept. Any other root folder is never looked inside, and its name goes on the header line "Folders not looked inside".
-- **Root files:** every other root file is a candidate, whatever its extension.
-- **Subfolder files:** every file with a whitelisted extension (`.pdf .docx .doc .eml .msg .xls`, per the profile; `.xlsx` is not on it) anywhere inside a swept folder, skipping `~`- and `.`-prefixed names at every level. Research downloads filed straight into a `6. LAW` issue folder are subfolder files, picked up where they sit.
+Make **one** `housekeeping__candidates` call. It lists, hashes, name-gates and looks up every candidate on the host, admits, orders and caps, and returns only the admitted files: no file list, hash or gate output passes through this session. Pass only what Step 2 and Step 5 produced:
 
-Apply the argument (above) to this list.
+- `matter_root`, `run_id`;
+- `swept_folders`: each folder the folder map matches, by its on-disk name, `{path, folder_type, flag_tokens?, second_pass?}`, `folder_type` the folder type's name (`Correspondence`, `Law`, `Court File`, `Discovery`), `flag_tokens` the Law folder's, `second_pass: true` on Law and Discovery;
+- `skip_folders`: the root folders the profile always skips;
+- the argument (above): `subfolder` for a subfolder path, `files` for a file list (stored form), `force: true` for `--force`;
+- `finished`: the stored paths Step 5 finished, which take no place in this run.
 
-**Hash every candidate once**, in one call: `/file-apply`'s `../file-apply/scripts/hash_files.py --files <path> ...` (in Cowork it sits in the installed `file-manager` plugin's `file-apply` skill folder). A file in its `errors` is left out of the run and named in the report with the error. Hashing a cloud-only file (one the folder's sync client holds only online) downloads it.
+It applies these rules, which this session never re-applies:
 
-**Name gate over every subfolder candidate's current name**, one call of `/file-naming`'s **gate** intent, passing the Law folder's flag tokens for names in a Law folder (materialize `code-registry.md` from `skill_source__read` to a temp file when the registry is not on disk). Then run the profile's second pass over the failures in folders with alternate whole-name formats (Law, Discovery): a match with its notes' format **conforms**. A Law name whose gate result carries a flag token does not conform.
+- **Listing.** The root, not recursively, and every file with a whitelisted extension (`.pdf .docx .doc .eml .msg .xls`) anywhere inside a swept folder. Never a candidate, never mentioned: names starting `~` or `.` at every level; at the root `probanda.json` (or the legacy `coclerk.json`), `CLAUDE.md`, `AGENTS.md`, `ProceduralHistory.md`, `.cm*` files, `desktop.ini` and `.lnk` shortcuts; the root folders `TRASH`, `Claude outputs` and the skipped ones. A root file with a `~$` sibling of its extension whose stem is the file's less 0, 1 or 2 leading characters is open in Word: it is not read, rowed or counted, and is named in `header.open_in_word`. Any other root folder that is not swept, a folder numbered 0 or 1 included, is never looked inside and is named in `header.folders_not_looked_inside`. Folders numbered 0 or 1 are never destinations either, except `0. DRAFT` on a `draft` row; `0. DRAFT\Superseded` is matter-data's own destination for a superseded version, never housekeeping's. Research downloads filed straight into a `6. LAW` issue folder are subfolder files, picked up where they sit.
+- **Hashing.** A file that cannot be read is in `errors` with its error: it leaves the run and is named in the report. Hashing a cloud-only file (one the folder's sync client holds only online) downloads it.
+- **Name gate and second pass** over every subfolder file's current name, with the Law folder's flag tokens. The profile's mechanical second-pass forms (Law's citation and AI-memo forms, Discovery's listed-document form and its legacy bare item numbers) **conform**. A Law name whose gate result carries a flag token does not conform. A failure in a Law or Discovery folder that matches neither form is `second_pass_required`: it counts as not conforming, so it is admitted unless a settled verdict matches, and this session judges its name against the folder's notes when it builds the row (Step 12).
+- **Ingest status and review log** per file, as `/matter-data`'s `ingest-status` and the review log's lookup define them. A file counts as **ingested** when its verdict is `ingested`, `ingested_by_reference` or `superseded` (an earlier version of a court document case data holds); verification is not required. A `duplicate_of` file is a **duplicate** (the later of two identical files, or a copy of a file still at its stored path): never ingested, never re-pointed. Keep the pick of which copy is the duplicate; never swap it, even when the other copy is already filed. A `moved` file was moved by hand: it is ingested, and `relocate-source` repairs its stored path when it is filed.
+- **Admission.** A root file is always admitted; the review log is never consulted for it. A subfolder file is admitted when **(its name does not conform AND no settled verdict matches it)** OR **(it is not ingested AND no `not_ingested` row matches its hash)**. `--force` drops the settled-verdict condition from the first arm only.
+- **Order and cap: 50.** Fresh root, fresh subfolder, rotated root, rotated subfolder, where a file is rotated when the previous run's page offered it and it was not approved there (left as is, `stuck` or `misfiled`). Rotation changes order only, never admission.
 
-**Review-log lookup:** one `/matter-data` `housekeeping-log` `lookup` over every candidate's `{file_name, file_hash}`. Per candidate it returns whether a settled verdict matches (`reviewed`), whether a `not_ingested` row matches by hash, and any remembered ingest failure (`ingest_failure`, with its reason and whether the next run retries it automatically).
-
-The order of the candidates is not decided here, and no earlier run directory is read: Step 7's `housekeeping__order_candidates` computes the order, with rotation, from the admitted files.
-
-## Step 7 — Ingest status, then admit, order and cap
-
-One `/matter-data` `ingest-status` call over every candidate, in path order: `matter_root`, `matter_folder`, and `{path, hash}` per file. Per file it returns a verdict (`ingested`, `ingested_by_reference`, `superseded`, `partial`, `failed`, `none`), the store, source ids, the stored path, `moved`, `duplicate_of` with `twin_ingested`, `pending` markers, and the stored `metadata`. A file counts as **ingested** when its verdict is `ingested`, `ingested_by_reference` or `superseded` (an earlier version of a court document case data holds); verification is not required. A `duplicate_of` file is a **duplicate** (the later of two identical files, or a copy of a file still at its stored path): never ingested, never re-pointed. Keep `ingest-status`'s pick of which copy is the duplicate; never swap it, even when the other copy is already filed. A `moved` file was moved by hand: it is ingested, and `relocate-source` repairs its stored path when it is filed.
-
-**Admission:**
-
-- **Root file:** always admitted. The review log is never consulted for admission.
-- **Subfolder file:** admitted when **(its name does not conform (Step 6) AND no settled verdict matches it)** OR **(it is not ingested AND no `not_ingested` row matches its hash)**. `--force` drops the settled-verdict condition from the first arm only.
-- A file finished by Step 5 is not admitted this run.
-
-**Order and cap: 50.** Make one `housekeeping__order_candidates` call (`matter_root`, `run_id`, and every admitted file as `{path, hash}` in stored form). It orders them fresh root, fresh subfolder, rotated root, rotated subfolder, where a file is rotated when the previous run's page offered it and it was not approved there (left as is, `stuck` or `misfiled`), and caps them at 50. Rotation changes order only, never admission. Its `admitted` list, in its order, is this run's rows, read or not: only these files go on to Step 8 and Step 9. Its `deferred` list is the `deferred` rows: each is recorded in `proposal.json` for the count and nothing else happens to it. Never reorder, trim or extend either list: `housekeeping__write_run_file` refuses a `proposal.json` whose rows break the order or the cap.
+It returns `header` (`open_in_word`, `folders_not_looked_inside`), `errors`, `admitted` and `deferred`. Each `admitted` row carries `path`, `hash`, `rotated`, `location`, `folder_type`, `admitted_by`, `name` (`verdict`, `reason`, `flags`; null for a root file), `ingest` (the verdict, the store, source ids, the stored path, `moved`, `duplicate_of` with `twin_ingested`, `pending` markers, the stored `metadata`, `anomaly`, `superseded_by`, `move_pending`, `possible_version_of`) and `review` (`reviewed`, `outcome`, `matched_on`, `not_ingested`, and any remembered `ingest_failure` with its reason and whether the next run retries it automatically). The `admitted` list, in its order, is this run's rows, read or not: only these files go on to Step 8 and Step 9. Each `deferred` file (`path`, `hash`) is a `deferred` row: it is recorded in `proposal.json` for the count and nothing else happens to it. Never reorder, trim or extend either list: `housekeeping__write_run_file` refuses a `proposal.json` whose rows break the order or the cap. A call that fails past its time budget returns no list: say so, and offer a run on one subfolder or a file list.
 
 ## Step 8 — Page-1 routing read
 
@@ -178,7 +169,7 @@ A report with `readability` `partial` or `poor` on a `scanned` page 1 is read on
 
 ## Step 11 — Compose
 
-**What is composed.** Every admitted row with a block, except privileged-store rows, which this session composes itself (below). A subfolder row admitted only by the ingest arm, whose name conforms, still goes to the namer, so its folder's misfile test runs (a misfiled file is caught even when its name is fine); its proposal stays its current name unless the namer raises `misfiled`. A duplicate is composed from its twin's stored record (the `metadata` `ingest-status` returned with it); with none, its proposal is the twin's own name and folder.
+**What is composed.** Every admitted row with a block, except privileged-store rows, which this session composes itself (below). A subfolder row admitted only by the ingest arm, whose name conforms, still goes to the namer, so its folder's misfile test runs (a misfiled file is caught even when its name is fine); its proposal stays its current name unless the namer raises `misfiled`. A duplicate is composed from its twin's stored record (the `ingest.metadata` the work list returned with it); with none, its proposal is the twin's own name and folder.
 
 **The namer.** The matter's party names and court file numbers are the ones fetched at the start of Step 8. Split the namer's rows into batches of about 15 and dispatch every batch **in one turn**, in parallel: Agent tool, `subagent_type: "file-manager:housekeeping-namer"`, `model: "haiku"`, `effort: "medium"`. If that agent type is not in this session's roster, stop and say so; no other agent composes names. Each dispatch carries one JSON object:
 
@@ -209,7 +200,7 @@ Build every row from Steps 7 to 11, using **Rows** (below) for its section, its 
 
 1. **Name gate** on the proposal, with the destination's flag tokens and the profile's second pass. A failing proposal is a signal.
 2. **Collision.** Two rows proposing the same name for the same folder, or a file of the proposed name already in the destination, is a signal on each row concerned.
-3. **Cross-check** every ingested row against its stored record: Step 7's `ingest-status` `metadata` for a row ingested before this run, Step 9's second `ingest-status` for one ingested now. The proposed name's date, code family and parties must agree with the stored date, category and parties. A disagreement is a Contradicts itself signal quoting both. The stored record is no longer evidence for the name (Step 10), so this is where the two still meet. It catches a reading that contradicts the ingest; it does not check truth.
+3. **Cross-check** every ingested row against its stored record: the work list's `ingest.metadata` for a row ingested before this run, Step 9's second `ingest-status` for one ingested now. The proposed name's date, code family and parties must agree with the stored date, category and parties. A disagreement is a Contradicts itself signal quoting both. The stored record is no longer evidence for the name (Step 10), so this is where the two still meet. It catches a reading that contradicts the ingest; it does not check truth.
 4. **A reader report** missing or off contract twice is the Step 10 defect.
 
 **Precomputes (`name_checks`).** For each row with a proposed name, check it against its one destination: that folder's name check (the gate with that folder's flag tokens, and the second pass for Law's citation and AI-memo forms and Discovery's listed-document form), and whether a file of that name is already there. Record the pair when it passes only through a folder's second pass. A name that raises one of the destination folder's flag tokens fails that folder's check even when it matches a second-pass format, and is never recorded `ok`. A name that fails, or clashes, is never proposed: pick another name or folder, or make the row `stuck` ("possible duplicate of <path>" for a clash). When the current name already passes the check for the destination, the row keeps it: `move` when the file needs another folder, `ingested_only` when it needs nothing.
@@ -224,7 +215,7 @@ Write `proposal.json` into this run (Step 6's `run_id`) with `housekeeping__writ
 - `header`: `open_in_word`, `folders_not_looked_inside` (names), and `finished_line` from Step 5 when it has one;
 - `folders`: `{path, exists, flag_tokens?, second_pass?}` for each filing folder (Step 12's list), `flag_tokens` on the Law folder, `second_pass: true` on Law and Discovery;
 - `draft_folder`: the on-disk `0. DRAFT*` folder, or null;
-- `rows`: `{row_id, current_path, hash, ingest_outcome, store?, source_ids, section, action?, name_checks, notes, twin?}` in `housekeeping__order_candidates`' order, its `admitted` files then its `deferred` ones, `row_id` short and unique (`r001`), arrays empty where there is nothing. `section` is `offered`, `ingested_only` or `deferred`; `action` (**Rows**) is present exactly on `offered` rows. `twin` is `{path, row_id?, ingested}`; its `row_id` is required when the twin is itself a row on the page. `ingest_outcome` is the file's state as the page is built (`ingest-unattended`'s `not_ingested` is `none`). Signals, reasons and evidence are this session's working and are not written: the page shows none of them;
+- `rows`: `{row_id, current_path, hash, ingest_outcome, store?, source_ids, section, action?, name_checks, notes, twin?}` in `housekeeping__candidates`' order, its `admitted` files then its `deferred` ones, `row_id` short and unique (`r001`), arrays empty where there is nothing. `section` is `offered`, `ingested_only` or `deferred`; `action` (**Rows**) is present exactly on `offered` rows. `twin` is `{path, row_id?, ingested}`; its `row_id` is required when the twin is itself a row on the page. `ingest_outcome` is the file's state as the page is built (`ingest-unattended`'s `not_ingested` is `none`). Signals, reasons and evidence are this session's working and are not written: the page shows none of them;
 - `rule_gaps` (Step 12).
 
 When any row's action carries an `answer`, also write `questions.json`: per row id, the `stop_reason` and the options as `{value, label}`. The action's `answer` is the label this session picked; apply maps it back to its value.
