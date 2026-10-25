@@ -42,8 +42,7 @@ REPO = Path(__file__).resolve().parent.parent
 
 SCAN_EXTS = (".md", ".py", ".json", ".sql")
 EXCLUDE_DIRS = ("__pycache__", "sessions", "tests", "determinizing-tests", "evals", ".pytest_cache")
-# Private skills, and one skills folder per public plugin.
-SKILL_ROOTS = (".claude/skills", "public/plugins/*/skills")
+SKILL_ROOTS = plugin_layout.SKILL_ROOTS
 # The data server ships in lawyer, but these tool families belong to litigator's
 # skills: a file outside litigator that names one leans on litigator's data.
 LITIGATOR_TOOL_FAMILIES = ("drafting_data__", "drafting_forms__", "rules__")

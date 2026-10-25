@@ -57,7 +57,7 @@ RULINGS = Path("source") / "file-ops.json"
 WHYS = ("own-output", "temp", "own-database", "own-overlay", "own-run", "conditional", "mention")
 EXEMPT_PLUGIN = "file-manager"
 
-SKILL_ROOTS = (".claude/skills", "public/plugins/*/skills")
+SKILL_ROOTS = plugin_layout.SKILL_ROOTS
 SKIP_DIRS = {"__pycache__", "tests", "test", "determinizing-tests", "evals", ".pytest_cache",
              "node_modules", "dist", "sessions"}
 SKILL_EXTS = {".md", ".py", ".sh", ".ps1", ".bat", ".cmd", ".js", ".mjs", ".ts"}

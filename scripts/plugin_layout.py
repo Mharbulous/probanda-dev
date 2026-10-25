@@ -21,6 +21,8 @@ SINGLE_PLUGIN = "probanda"
 # built plugin. The bundle is at <folder>/dist/.
 SERVER_DIRS = {"data": "mcp", "canlii": "canlii-mcp", "commons": "commons-mcp", "files": "files-mcp",
                "timecamp": "timecamp-mcp", "contacts-calendars-email": "contacts-calendars-email-mcp"}
+# Private skills, and one skills folder per public plugin (globs from the repo root).
+SKILL_ROOTS = (".claude/skills", "public/plugins/*/skills")
 
 
 def stop(message):
