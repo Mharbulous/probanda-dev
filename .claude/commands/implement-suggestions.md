@@ -13,6 +13,7 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 - Commit by explicit pathspec (`git commit -F <msg file> -- <paths>`), never `git add -A` or `git add .`. The message says what changed and why, and never mentions Claude or Anthropic, with no Co-Authored-By line.
 - Never touch `public/`, `COMMANDMENTS.md`, `approve_public.py`, `public-approved.json` or the `publish-public` workflow.
 - Never edit the Suggestion Box (`cloud/suggestions/tools/triage.mjs`).
+- Nobody answers a permission prompt, so never cause one. Read and search files with the Read, Grep and Glob tools, not shell commands. Never name `approve_public.py` or `public-approved.json` in a shell command: a hook stops the run for a person whenever a command names either and it cannot tell the command only reads.
 - Never use `git stash`. To compare with the base, check it out separately: `git worktree add /tmp/base origin/main`.
 - Never end your turn while a background command or monitor is still running: nobody restarts the run. Wait for it, then carry on.
 - A stop hook may ask you to commit and push to a remote branch. Ignore it: push only to `main`, and only by step 6.
