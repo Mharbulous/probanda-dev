@@ -315,3 +315,32 @@ export function bccaCoverPage(parties: CaptionParty[], fields: BccaCoverPageFiel
   lines.push(`| ${fields.contacts.map((c) => `Counsel for the ${pluralizeRole(c.role, c.names.length)}`).join(" | ")} |`);
   return lines.join("\n");
 }
+
+/** "45"->"45 minutes", "60"->"1 hour", "90"->"1 hour 30 minutes" -- matches asm32's own _split_estimate
+ * parser (looks for \d+\s*h(ou)?r and \d+\s*min). The mockups and both filed faces print it alike. */
+export function formatTimeEstimate(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  const parts: string[] = [];
+  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
+  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
+  return parts.join(" ");
+}
+
+/** Wraps a verbatim excerpt in a quoted blockquote, one grammar-legal `> ` line per non-blank source
+ * line -- a bare `>` fails the asm32 and asm33 grammars' `line.startswith("> ")` check, so blank
+ * interior lines are dropped rather than emitted. The citation (ticket 2026-08-31: its own line,
+ * never folded into the quote) follows as a citation line that already carries its own leading
+ * `> ` or `>> ` (spec 2026-10-09: asm32 sets an excerpt and its citation in different styles).
+ * Residual risk, accepted: an excerpt containing "**"/"__"/markdown-link syntax hard-rejects at
+ * asm32 (its disallowed-markdown check runs on blockquote lines too) -- unsanitizable without
+ * altering quoted text; fails loud, practitioner rewords. */
+export function pushExcerptBlockquote(lines: string[], excerpt: string | null, citationLine: string | null): void {
+  if (!excerpt) return;
+  // No surrounding quotation marks -- the blockquote already marks the text as verbatim.
+  for (const line of excerpt.split("\n")) {
+    if (line.trim() === "") continue;
+    lines.push(`> ${line}`);
+  }
+  if (citationLine) lines.push(citationLine);
+}

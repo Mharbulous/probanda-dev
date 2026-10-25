@@ -11,19 +11,17 @@
 // purpose-built renderer, structurally incapable of emitting a marker,
 // an HTML comment, or bold -- not something stripped afterward.
 //
-// A few small fetchers/helpers are duplicated here rather than imported,
-// on purpose: fetchHearingDetails/fetchFacts mirror private functions in
-// render-notice-of-application.ts; factStatementCitation/
-// lawStatementCitation mirror private functions in
-// render-vaniac-submissions.ts, which #398 owns and this ticket must not
-// edit (exporting them would touch that file). Part 4 and "Ex. N" read the
-// shared fetchFilingDocuments, the same list the NoA mockup reads (#458).
+// fetchHearingDetails and lawStatementCitationLine are kept here; the facts,
+// the fact-statement citation line (with its own `>> ` prefix), the time
+// estimate and the excerpt blockquote come from the shared modules. Part 4
+// and "Ex. N" read the shared fetchFilingDocuments, the same list the NoA
+// mockup reads (#458).
 
 import { ValidationError } from "../../errors.js";
 import { submissionDataQuery } from "../backend.js";
 import type { PublishWarning } from "../publish-sidecar.js";
 import { passesBriefOnlyCap } from "./brief-only-cap.js";
-import { STANDARD_MATERIAL_LINES } from "./components.js";
+import { formatTimeEstimate, pushExcerptBlockquote, STANDARD_MATERIAL_LINES } from "./components.js";
 import {
   CITATION_MISSING,
   exhibitNumbersFromOrderedIds,
@@ -36,13 +34,14 @@ import {
   fetchSubmissions,
   groupSubmissionFacts,
   groupSubmissionLaw,
-  type FactStatementRow,
   type LawAssertionRow,
   type RenderContext,
 } from "./render-vaniac-submissions.js";
 import { fetchRhetoric, interleave, renderRhetoricFiled } from "./render-rhetoric.js";
 import { longDate } from "./render-bcca-factum.js";
 import type { FilingDocumentRow } from "./render-vaniac-submissions.js";
+import { factsPart, fetchFacts } from "./filing-facts.js";
+import { factStatementCitationLine } from "./statement-lines.js";
 
 function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
   return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
@@ -57,46 +56,6 @@ interface HearingDetailsRow {
 
 function fetchHearingDetails(dbPath: string, filingId: number): HearingDetailsRow | undefined {
   return rows<HearingDetailsRow>(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId])[0];
-}
-
-interface Part2FactRow {
-  id: number;
-  postulate: string;
-  court_record: number | null;
-  court_record_pinpoint: string | null;
-  /** filing_facts.ordinal, the scale a facts-part rhetorical paragraph is placed on (render-rhetoric.ts). */
-  filing_ordinal: number;
-}
-
-function fetchPart2Facts(dbPath: string, filingId: number): Part2FactRow[] {
-  return rows<Part2FactRow>(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ff.ordinal AS filing_ordinal
-     FROM filing_facts ff
-     JOIN facts f ON f.id = ff.fact_id
-     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = 'part2'
-     ORDER BY ff.ordinal`,
-    [filingId]
-  );
-}
-
-/** Duplicated from render-vaniac-submissions.ts (private there, and that file is out of scope for this ticket) -- citation as its own blockquote line (ticket 2026-08-31), not folded into the excerpt's parenthetical. */
-function factStatementCitationLine(exhibitMap: Map<number, number>, labelMap: Map<number, string>, s: FactStatementRow): string | null {
-  const parts: string[] = [];
-  if (s.instrument_id !== null) {
-    const instrumentLabel = labelMap.get(s.instrument_id);
-    if (instrumentLabel !== undefined) parts.push(instrumentLabel);
-    if (s.pinpoint) parts.push(s.pinpoint);
-  } else if (s.pinpoint) {
-    parts.push(s.pinpoint);
-  }
-  if (s.exhibit_id !== null) {
-    const num = exhibitMap.get(s.exhibit_id);
-    const exhibitLabel = num !== undefined ? `Ex. ${num}` : labelMap.get(s.exhibit_id);
-    if (exhibitLabel !== undefined) parts.push(exhibitLabel);
-    if (s.exhibit_pinpoint) parts.push(s.exhibit_pinpoint);
-  }
-  return parts.length === 0 ? null : `>> ${parts.join(", ")}`;
 }
 
 /** Duplicated from render-vaniac-submissions.ts (private there, and that file is out of scope for this ticket). authority_title === null is structurally unreachable via groupSubmissionLaw's output -- kept defensive, not deleted. */
@@ -152,27 +111,6 @@ function authorityNamePattern(dbPath: string, proceedingId: number): RegExp | nu
 function italicizeNames(line: string, names: RegExp): string {
   const marked = [...line.matchAll(ITALIC_SPAN)].map((m) => [m.index, m.index + m[0].length]);
   return line.replace(names, (name: string, offset: number) => (marked.some(([start, end]) => offset >= start && offset < end) ? name : `*${name}*`));
-}
-
-/** "45"->"45 minutes", "60"->"1 hour", "90"->"1 hour 30 minutes" -- matches asm32's own _split_estimate parser (looks for \d+\s*h(ou)?r and \d+\s*min). */
-function formatTimeEstimate(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const parts: string[] = [];
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
-  return parts.join(" ");
-}
-
-/** Wraps a verbatim excerpt in a quoted blockquote, one grammar-legal `> ` line per non-blank source line -- a bare `>` fails the grammar's `line.startswith("> ")` check, so blank interior lines are dropped rather than emitted. The citation (ticket 2026-08-31: its own line, never folded into the quote) follows as a citation line, already carrying its own leading `>> ` (spec 2026-10-09: asm32 sets an excerpt and its citation in different styles). Residual risk, accepted: an excerpt containing "**"/"__"/markdown-link syntax hard-rejects at asm32 (its disallowed-markdown check runs on blockquote lines too) -- unsanitizable without altering quoted text; fails loud, practitioner rewords. */
-function pushExcerptBlockquote(lines: string[], excerpt: string | null, citationLine: string | null): void {
-  if (!excerpt) return;
-  // No surrounding quotation marks -- the blockquote already marks the text as verbatim.
-  for (const line of excerpt.split("\n")) {
-    if (line.trim() === "") continue;
-    lines.push(`> ${line}`);
-  }
-  if (citationLine) lines.push(citationLine);
 }
 
 interface AffidavitFieldsRow {
@@ -278,7 +216,7 @@ export function renderForm32FiledFace(ctx: RenderContext, warnings?: PublishWarn
       `"${ctx.filing.title}": whether the application is within the jurisdiction of an associate judge is not yet settled, so Form 32 is not filled with a jurisdiction sentence nobody confirmed. Record whether it is within that jurisdiction, then fill the form again.`
     );
   }
-  const facts = fetchPart2Facts(ctx.dbPath, ctx.filing.id);
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("notice_of_application"));
   // A rhetorical paragraph placed in Part 2 is Part 2 content, as a fact is.
   const factsRhetoric = fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts");
   const part2Content = facts.length + factsRhetoric.length;
@@ -430,7 +368,7 @@ export function renderForm32FiledFace(ctx: RenderContext, warnings?: PublishWarn
       }
       for (const stmt of part2Statements) {
         if (stmt.fact_id !== f.id || stmt.purpose === "impeachment") continue;
-        const citationLine = factStatementCitationLine(exhibitMap, labelMap, stmt);
+        const citationLine = factStatementCitationLine(exhibitMap, labelMap, stmt, ">> ");
         if (citationLine) lines.push(citationLine);
       }
     }
@@ -468,7 +406,7 @@ export function renderForm32FiledFace(ctx: RenderContext, warnings?: PublishWarn
         lines.push(`${n}. ${f.postulate}`);
         for (const stmt of f.statements) {
           if (stmt.purpose === "impeachment") continue;
-          pushExcerptBlockquote(lines, stmt.exhibit_id !== null ? stmt.exhibit_excerpt : stmt.excerpt, factStatementCitationLine(exhibitMap, labelMap, stmt));
+          pushExcerptBlockquote(lines, stmt.exhibit_id !== null ? stmt.exhibit_excerpt : stmt.excerpt, factStatementCitationLine(exhibitMap, labelMap, stmt, ">> "));
         }
       }
       for (const la of lawBySubmission.get(s.id) ?? []) {

@@ -16,20 +16,17 @@
 import { submissionDataQuery } from "../backend.js";
 import { BRIEF_ONLY_CAP_SQL } from "./brief-only-cap.js";
 import {
-  BLANK_UNDERLINE,
   bccaCoverPage,
   buildLowerCourtRoleByRole,
   formatNameList,
-  frontmatterHeader,
   groupPartiesByRole,
   pluralizeRole,
   type BccaCoverPageContact,
   type CaptionParty,
-  type FrontmatterFields,
 } from "./components.js";
 import { gapMarker, mockupMessage, rebuttalMarker } from "./markers.js";
 import { recordCriterionGlyphs } from "./proposal-inventory.js";
-import { captionHeadingFor, opposingPartyIds, type ProceedingRow } from "./query.js";
+import { captionHeadingFor, opposingPartyIds } from "./query.js";
 import {
   exhibitNumbersFromOrderedIds,
   fetchDocumentLabels,
@@ -49,8 +46,10 @@ import {
   renderSubmissionParagraphs,
   type RenderContext,
 } from "./render-vaniac-submissions.js";
-import { fetchFacts, recordContactGaps, renderFactParagraphsWithRhetoric } from "./render-bcca-stay-response.js";
+import { recordContactGaps, renderFactParagraphsWithRhetoric } from "./render-bcca-stay-response.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
+import { factsPart, fetchFacts } from "./filing-facts.js";
+import { filingFrontmatter } from "./filing-frontmatter.js";
 
 function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
   return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
@@ -254,23 +253,6 @@ export function factumRecordLabel(roleLabel: string | null): string {
   return `${role}${role.endsWith("s") ? "'" : "'s"} Factum`;
 }
 
-function frontmatterFor(proceeding: ProceedingRow, ctx: RenderContext): string {
-  const fields: FrontmatterFields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType: "Factum",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered,
-  };
-  return frontmatterHeader(fields);
-}
-
 function wordCount(lines: string[]): number {
   return lines
     .join(" ")
@@ -293,7 +275,7 @@ export function renderBccaFactum(ctx: RenderContext): string {
   const signer = factumSigner(ctx);
   const prose = fetchProseParagraphs(ctx.dbPath, ctx.filing.id);
 
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id);
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("bcca_factum"));
   const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
   const submissionIds = submissions.map((s) => s.id);
   const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
@@ -336,7 +318,7 @@ export function renderBccaFactum(ctx: RenderContext): string {
   const title = factumRecordLabel(signer.roleLabel);
 
   const lines: string[] = [];
-  lines.push(frontmatterFor(ctx.proceeding, ctx));
+  lines.push(filingFrontmatter(ctx.proceeding, ctx, "Factum"));
   lines.push("");
   lines.push(
     bccaCoverPage(captionParties, {

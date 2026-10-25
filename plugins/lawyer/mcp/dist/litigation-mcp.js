@@ -1,4 +1,4 @@
-// build-stamp: 381a9fe16b7f
+// build-stamp: 459c2d80c30a
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75805,9 +75805,9 @@ function flatten(id, item) {
   return row2;
 }
 function rowsOf(items, kind) {
-  const rows29 = [];
-  for (const [id, item] of items) if (item.kind === kind) rows29.push(flatten(id, item));
-  return rows29.sort((a3, b3) => String(a3.created_at).localeCompare(String(b3.created_at)) || String(a3.id).localeCompare(String(b3.id)));
+  const rows30 = [];
+  for (const [id, item] of items) if (item.kind === kind) rows30.push(flatten(id, item));
+  return rows30.sort((a3, b3) => String(a3.created_at).localeCompare(String(b3.created_at)) || String(a3.id).localeCompare(String(b3.id)));
 }
 function describe2(id, item) {
   const data = item?.data ?? {};
@@ -77126,7 +77126,7 @@ function mergeKinds(shipped, local, noVenue) {
   const conflicts = [];
   const view = { kinds: [], conflicts };
   const byFile = /* @__PURE__ */ new Map();
-  const rows29 = (source) => {
+  const rows30 = (source) => {
     const doc = objectAt(source.doc, source.file, "the index");
     onlyKeys(doc, ["kinds"], source.file, "the index");
     return arrayAt(doc, "kinds", source.file, "the index", true).map((raw, i3) => {
@@ -77145,7 +77145,7 @@ function mergeKinds(shipped, local, noVenue) {
     });
   };
   if (shipped) {
-    for (const { row: row2, where, file } of rows29(shipped)) {
+    for (const { row: row2, where, file } of rows30(shipped)) {
       if (byFile.has(file)) invalid(shipped.file, where, `file "${file}" appears twice`);
       const recipient = recipientOf(row2, shipped.file, where, noVenue);
       if (noVenue && recipient === void 0) invalid(shipped.file, `${where}.recipient`, "is required under _NoVenue");
@@ -77161,7 +77161,7 @@ function mergeKinds(shipped, local, noVenue) {
     }
   }
   if (local) {
-    for (const { row: row2, where, file } of rows29(local)) {
+    for (const { row: row2, where, file } of rows30(local)) {
       const aliases = aliasesOf(row2, local.file, where, "local", false);
       const recipient = recipientOf(row2, local.file, where, noVenue);
       const existing = byFile.get(file);
@@ -78785,10 +78785,10 @@ function resolveMatter(items, ref) {
   else if (ref.matt_num) match = (row2) => row2.matt_num === normalizeMattNum(ref.matt_num);
   else if (ref.file_number) match = (row2) => row2.file_number === String(ref.file_number);
   if (!match) return null;
-  const rows29 = rowsOf(items, "matter").filter(match);
-  if (rows29.length === 0) return null;
-  if (rows29.length > 1) throw new AmbiguousMatchError("Matter reference matched more than one matter");
-  return { id: String(rows29[0].id), row: rows29[0] };
+  const rows30 = rowsOf(items, "matter").filter(match);
+  if (rows30.length === 0) return null;
+  if (rows30.length > 1) throw new AmbiguousMatchError("Matter reference matched more than one matter");
+  return { id: String(rows30[0].id), row: rows30[0] };
 }
 function requireMatter(items, ref) {
   const resolved = resolveMatter(items, ref);
@@ -78810,9 +78810,9 @@ function addDaysIso(isoDate, days) {
   dt3.setUTCDate(dt3.getUTCDate() + days);
   return dt3.toISOString().slice(0, 10);
 }
-function effectiveCutoff(rows29) {
+function effectiveCutoff(rows30) {
   let best = null;
-  for (const row2 of rows29) {
+  for (const row2 of rows30) {
     let candidate = null;
     if (typeof row2.date_to === "string" && row2.date_to) {
       candidate = { cutoff_date: addDaysIso(row2.date_to, 1), cutoff_source: "date_to" };
@@ -78834,12 +78834,12 @@ function asString(value, label2) {
 function withClient(matter, clients) {
   return { ...matter, ...clientContext(clients.get(String(matter.client_id))) };
 }
-function byId(rows29) {
-  return new Map(rows29.map((row2) => [String(row2.id), row2]));
+function byId(rows30) {
+  return new Map(rows30.map((row2) => [String(row2.id), row2]));
 }
-function groupBy(rows29, field) {
+function groupBy(rows30, field) {
   const groups = /* @__PURE__ */ new Map();
-  for (const row2 of rows29) {
+  for (const row2 of rows30) {
     const key = String(row2[field]);
     const list = groups.get(key) ?? [];
     list.push(row2);
@@ -78870,8 +78870,8 @@ async function matter_lookup(store, args) {
   }
   return { rows: withMatterRoots(matched.map((matter) => withClient(matter, clients)), store.env) };
 }
-function withMatterRoots(rows29, env) {
-  if (!rows29.some((row2) => typeof row2.folder === "string")) return rows29;
+function withMatterRoots(rows30, env) {
+  if (!rows30.some((row2) => typeof row2.folder === "string")) return rows30;
   let library = null;
   let error2 = "";
   try {
@@ -78879,7 +78879,7 @@ function withMatterRoots(rows29, env) {
   } catch (err) {
     error2 = err.message;
   }
-  return rows29.map((row2) => {
+  return rows30.map((row2) => {
     if (typeof row2.folder !== "string") return row2;
     return library !== null ? { ...row2, matter_root: join7(library, row2.folder) } : { ...row2, matter_root: null, matter_root_error: error2 };
   });
@@ -78907,7 +78907,7 @@ async function wip_hours(store, args) {
   const entries = rowsOf(items, "time_entry").filter((entry) => entry.billable === true && (!target || entry.matter_id === target) && (!explicitCutoff || String(entry.entry_date ?? "") >= explicitCutoff));
   const entriesByMatter = groupBy(entries, "matter_id");
   const invoicesByMatter = groupBy(rowsOf(items, "invoice"), "matter_id");
-  const rows29 = [];
+  const rows30 = [];
   for (const [matterId, matterEntries] of entriesByMatter) {
     const matter = matterById.get(matterId);
     if (!target && !isBillable(matter)) continue;
@@ -78923,7 +78923,7 @@ async function wip_hours(store, args) {
       }
     }
     const totalHours = scopedEntries.reduce((sum, entry) => sum + Number(entry.hours ?? 0), 0);
-    rows29.push({
+    rows30.push({
       matter_id: matterId,
       matt_num: matter?.matt_num ?? null,
       file_number: matter?.file_number ?? null,
@@ -78934,7 +78934,7 @@ async function wip_hours(store, args) {
       cutoff_source: cutoffSource
     });
   }
-  return { rows: rows29 };
+  return { rows: rows30 };
 }
 async function time_entries_query(store, args) {
   const items = store.items();
@@ -78943,7 +78943,7 @@ async function time_entries_query(store, args) {
   const matterId = args.matt_num || args.matter_id || args.file_number ? requireMatter(items, args).id : null;
   const fromDate = args.from_date ? String(args.from_date) : null;
   const toDate = args.to_date ? String(args.to_date) : null;
-  const rows29 = rowsOf(items, "time_entry").filter((entry) => (!matterId || entry.matter_id === matterId) && (!fromDate || String(entry.entry_date ?? "") >= fromDate) && (!toDate || String(entry.entry_date ?? "") <= toDate)).map((entry) => {
+  const rows30 = rowsOf(items, "time_entry").filter((entry) => (!matterId || entry.matter_id === matterId) && (!fromDate || String(entry.entry_date ?? "") >= fromDate) && (!toDate || String(entry.entry_date ?? "") <= toDate)).map((entry) => {
     const matter = matterById.get(String(entry.matter_id));
     return {
       ...entry,
@@ -78953,7 +78953,7 @@ async function time_entries_query(store, args) {
       ...clientContext(matter ? clients.get(String(matter.client_id)) : void 0)
     };
   });
-  return { rows: rows29 };
+  return { rows: rows30 };
 }
 async function open_tasks(store, args) {
   const items = store.items();
@@ -78967,7 +78967,7 @@ async function open_tasks(store, args) {
     const sentAt = String(notice2.sent_at ?? "");
     if (!latestNotice.has(id) || sentAt > (latestNotice.get(id) ?? "")) latestNotice.set(id, sentAt);
   }
-  const rows29 = taskRows.map((task) => {
+  const rows30 = taskRows.map((task) => {
     const matter = task.matter_id ? matterById.get(String(task.matter_id)) : void 0;
     return {
       ...task,
@@ -78978,7 +78978,7 @@ async function open_tasks(store, args) {
       last_retainer_notice_at: task.matter_id ? latestNotice.get(String(task.matter_id)) ?? null : null
     };
   });
-  return { rows: rows29 };
+  return { rows: rows30 };
 }
 async function active_deadlines(store, args) {
   const items = store.items();
@@ -79026,7 +79026,7 @@ async function ar_data(store) {
     wipByMatter.set(id, (wipByMatter.get(id) ?? 0) + Number(entry.hours ?? 0));
   }
   const pendingByMatter = groupBy(rowsOf(items, "payment").filter((row2) => row2.cleared === false), "matter_id");
-  const rows29 = rowsOf(items, "matter").filter((matter) => matter.status !== "closed" && isBillable(matter)).map((matter) => {
+  const rows30 = rowsOf(items, "matter").filter((matter) => matter.status !== "closed" && isBillable(matter)).map((matter) => {
     const cutoff = cutoffByMatter.get(String(matter.id)) ?? null;
     return {
       ...matter,
@@ -79037,18 +79037,18 @@ async function ar_data(store) {
       payments_in_flight: pendingByMatter.get(String(matter.id)) ?? []
     };
   });
-  return { rows: rows29 };
+  return { rows: rows30 };
 }
 async function court_calendar_coverage(store, args) {
   const years = Array.isArray(args.years) ? args.years.map(Number) : null;
-  const rows29 = store.rows("calendar_year");
-  return { rows: years ? rows29.filter((row2) => years.includes(Number(row2.year))) : rows29 };
+  const rows30 = store.rows("calendar_year");
+  return { rows: years ? rows30.filter((row2) => years.includes(Number(row2.year))) : rows30 };
 }
 async function court_calendar_days(store, args) {
   const fromDate = args.from_date ? String(args.from_date) : null;
   const toDate = args.to_date ? String(args.to_date) : null;
-  const rows29 = store.rows("calendar_day").filter((row2) => (!fromDate || String(row2.calendar_date ?? "") >= fromDate) && (!toDate || String(row2.calendar_date ?? "") <= toDate));
-  return { rows: rows29 };
+  const rows30 = store.rows("calendar_day").filter((row2) => (!fromDate || String(row2.calendar_date ?? "") >= fromDate) && (!toDate || String(row2.calendar_date ?? "") <= toDate));
+  return { rows: rows30 };
 }
 async function read_signals(store, args) {
   const items = store.items();
@@ -80115,7 +80115,7 @@ function listCaseParties(caseDataDir, env = process.env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync6 } from "node:fs";
 import { join as join10 } from "node:path";
-var BUILD_STAMP = false ? null : "381a9fe16b7f";
+var BUILD_STAMP = false ? null : "459c2d80c30a";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80526,8 +80526,8 @@ function mergedIndex(folder, index, seams, label2) {
   return { view, layers: { shipped: shipped !== null, local: local !== null }, shipped_from: loc.shipped_from, noVenue };
 }
 function shadowedRows(conflicts) {
-  const rows29 = conflicts.filter((conflict) => conflict.shadowed_local).map(({ key, shipped, local }) => ({ key, shipped, local }));
-  return rows29.length ? { shadowed_local: rows29 } : {};
+  const rows30 = conflicts.filter((conflict) => conflict.shadowed_local).map(({ key, shipped, local }) => ({ key, shipped, local }));
+  return rows30.length ? { shadowed_local: rows30 } : {};
 }
 function folderOf(kp, label2) {
   return parseKnowledgePath(kp.segments.slice(0, -1).join("/"), label2);
@@ -81183,8 +81183,8 @@ async function manage_payment_in_flight(store, args) {
   if (action === "query") {
     const items = store.items();
     const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
-    const rows29 = rowsOf(items, "payment").filter((row2) => row2.cleared === false && (!matterId || row2.matter_id === matterId));
-    return { rows: rows29 };
+    const rows30 = rowsOf(items, "payment").filter((row2) => row2.cleared === false && (!matterId || row2.matter_id === matterId));
+    return { rows: rows30 };
   }
   throw new ValidationError(`Unknown manage_payment_in_flight action "${action}"`);
 }
@@ -81294,13 +81294,13 @@ function invoicesOf(items, matterId) {
   return rowsOf(items, "invoice").filter((row2) => row2.matter_id === matterId);
 }
 async function import_invoices(store, args) {
-  const rows29 = args.rows;
-  if (!Array.isArray(rows29)) throw new ValidationError("import_invoices requires a rows array");
+  const rows30 = args.rows;
+  if (!Array.isArray(rows30)) throw new ValidationError("import_invoices requires a rows array");
   const confirmRegression = args.confirm_regression === true;
   const result = { imported: 0, skipped_no_matter: 0, skipped_negative: 0, not_saved: 0, questions: [] };
   const items = store.items();
   const byMatter = /* @__PURE__ */ new Map();
-  for (const raw of rows29) {
+  for (const raw of rows30) {
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
       throw new ValidationError("import_invoices rows must be objects");
     }
@@ -81377,13 +81377,13 @@ async function import_invoices(store, args) {
 async function invoices_query(store, args) {
   const items = store.items();
   const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
-  const rows29 = rowsOf(items, "invoice").filter((row2) => (!matterId || row2.matter_id === matterId) && (!args.status || row2.status === String(args.status)));
+  const rows30 = rowsOf(items, "invoice").filter((row2) => (!matterId || row2.matter_id === matterId) && (!args.status || row2.status === String(args.status)));
   let lastImport = null;
-  for (const row2 of rows29) {
+  for (const row2 of rows30) {
     const value = typeof row2.last_import_at === "string" ? row2.last_import_at : null;
     if (value && (!lastImport || value > lastImport)) lastImport = value;
   }
-  return { rows: rows29, last_import_at: lastImport };
+  return { rows: rows30, last_import_at: lastImport };
 }
 
 // src/tools/practice/firm-profile.ts
@@ -81762,7 +81762,7 @@ function parseSidecar(text5, file, knowledgePath) {
     invalid2(file, "file", `must name the file it sits beside, "${knowledgePath}"`);
   }
   if (!Array.isArray(top.items)) invalid2(file, "items", "must be an array");
-  const rows29 = [];
+  const rows30 = [];
   top.items.forEach((raw, i3) => {
     const where = `items[${i3}]`;
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) invalid2(file, where, "must be an object");
@@ -81773,7 +81773,7 @@ function parseSidecar(text5, file, knowledgePath) {
       if (typeof row2[key] !== "string" || row2[key] === "") invalid2(file, `${where}.${key}`, "must be a non-empty string");
     }
     if (row2.status !== "confirmed" && row2.status !== "corrected") invalid2(file, `${where}.status`, 'must be "confirmed" or "corrected"');
-    if (rows29.some((seen) => seen.rule_ref === row2.rule_ref)) invalid2(file, where, `rule_ref "${row2.rule_ref}" has two rows`);
+    if (rows30.some((seen) => seen.rule_ref === row2.rule_ref)) invalid2(file, where, `rule_ref "${row2.rule_ref}" has two rows`);
     const against = row2.confirmed_against;
     if (typeof against !== "object" || against === null || Array.isArray(against)) {
       invalid2(file, `${where}.confirmed_against`, "must be {passage_hash, currency}");
@@ -81792,7 +81792,7 @@ function parseSidecar(text5, file, knowledgePath) {
     }
     const stamp2 = stampProblem(row2);
     if (stamp2) invalid2(file, `${where}.${stamp2[0]}`, stamp2[1]);
-    rows29.push({
+    rows30.push({
       rule_ref: row2.rule_ref,
       status: row2.status,
       by: row2.by,
@@ -81803,7 +81803,7 @@ function parseSidecar(text5, file, knowledgePath) {
       ...row2.shipped_from !== void 0 ? { shipped_from: row2.shipped_from } : {}
     });
   });
-  return rows29;
+  return rows30;
 }
 function freshnessOf(item, checked) {
   const facts = checked?.find((record2) => record2.record.toLowerCase() === item.record.toLowerCase());
@@ -81918,13 +81918,13 @@ function readRows(sidecarAbs, knowledgePath) {
 }
 async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check) {
   return withFileLock(sidecarAbs, () => {
-    const rows29 = readRows(sidecarAbs, knowledgePath);
-    const at = rows29.findIndex((known) => known.rule_ref === row2.rule_ref);
-    if (at === -1) rows29.push(row2);
-    else rows29[at] = row2;
-    check(rows29);
-    writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows29 }, null, 2) + "\n");
-    return rows29;
+    const rows30 = readRows(sidecarAbs, knowledgePath);
+    const at = rows30.findIndex((known) => known.rule_ref === row2.rule_ref);
+    if (at === -1) rows30.push(row2);
+    else rows30[at] = row2;
+    check(rows30);
+    writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows30 }, null, 2) + "\n");
+    return rows30;
   });
 }
 
@@ -83514,14 +83514,14 @@ async function ingestAuthority(request2, env = process.env) {
   const counts2 = {};
   const named2 = {};
   plan.statements.forEach((statement, i3) => {
-    const { rowcount, rows: rows29 } = done.results[i3];
+    const { rowcount, rows: rows30 } = done.results[i3];
     if (statement.count) {
       const count = counts2[statement.count.table] ??= { inserted: 0, skipped: 0 };
       count.inserted += rowcount;
       count.skipped += statement.count.of - rowcount;
     }
-    if (statement.value_as) named2[statement.value_as] = Object.values(rows29[0])[0];
-    if (statement.rows_as) named2[statement.rows_as] = rows29;
+    if (statement.value_as) named2[statement.value_as] = Object.values(rows30[0])[0];
+    if (statement.rows_as) named2[statement.rows_as] = rows30;
   });
   return {
     ok: true,
@@ -86541,25 +86541,25 @@ function draftingParties(caseDataDir, proceeding, parties2, env = process.env) {
     };
   }
   const read3 = new Map((record2?.parties ?? []).map((c3) => [c3.case_party_id, c3]));
-  const rows29 = [];
+  const rows30 = [];
   const resolved = parties2.map((p3) => {
     const link = linkOf(p3);
     const caseParty = link === null ? void 0 : read3.get(link);
-    if (link === null) rows29.push({ ...base(p3), kind: "unlinked" });
-    else if (caseParty === void 0) rows29.push({ ...base(p3), kind: "not_of_record" });
+    if (link === null) rows30.push({ ...base(p3), kind: "unlinked" });
+    else if (caseParty === void 0) rows30.push({ ...base(p3), kind: "not_of_record" });
     return withCaseData(p3, caseParty);
   });
-  return { parties: resolved, drift: { rows: rows29 } };
+  return { parties: resolved, drift: { rows: rows30 } };
 }
 function matterPartiesDrift(dbPath, env = process.env) {
-  const rows29 = [];
+  const rows30 = [];
   const uncheckedWhy = [];
   for (const proceeding of fetchAllProceedings(dbPath)) {
     const { drift } = draftingParties(dirname11(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
-    rows29.push(...drift.rows);
+    rows30.push(...drift.rows);
     if (drift.unchecked) uncheckedWhy.push(drift.unchecked.note);
   }
-  return { rows: rows29, ...uncheckedWhy.length > 0 ? { note: uncheckedWhy.join("; ") } : {} };
+  return { rows: rows30, ...uncheckedWhy.length > 0 ? { note: uncheckedWhy.join("; ") } : {} };
 }
 function heldValues(p3) {
   const held = {};
@@ -86604,8 +86604,8 @@ function counselOffers(dbPath, env = process.env) {
   }
   return offers;
 }
-function partiesDriftLines(rows29) {
-  return rows29.map((r3) => {
+function partiesDriftLines(rows30) {
+  return rows30.map((r3) => {
     const what = r3.kind === "unlinked" ? "not linked to a party in case data, so no counsel or address for service is printed; confirm which party it is" : r3.kind === "not_of_record" ? r3.file_number === "" ? `linked to matter-data party ${r3.case_party_id}, which case data does not hold; confirm the link` : `linked to matter-data party ${r3.case_party_id}, which is not a party of record in ${r3.file_number}; confirm the link` : `counsel and address for service not read from case data: ${r3.reason}`;
     return mockupMessage(gapMarker("not_recorded"), `${r3.name} (${r3.role}): ${what}`);
   });
@@ -86616,8 +86616,8 @@ function withLeadLines(markdown, lines2) {
   const frontmatter = /^---\n[\s\S]*?\n---\n/.exec(markdown);
   return frontmatter ? frontmatter[0] + block2 + markdown.slice(frontmatter[0].length) : block2 + markdown;
 }
-function withPartiesDriftLines(markdown, rows29) {
-  return withLeadLines(markdown, partiesDriftLines(rows29));
+function withPartiesDriftLines(markdown, rows30) {
+  return withLeadLines(markdown, partiesDriftLines(rows30));
 }
 
 // src/submission/schema-ceiling.ts
@@ -87862,17 +87862,17 @@ function sidecarRows(kp, seams, label2) {
   if (type === null) return [];
   if (type === "dir") throw new DataServerError(`${label2}: ${sidecarKp.path} is a folder, not a sidecar`, "invalid_sidecar");
   const text5 = readLayerBytes(loc.local.abs, label2).toString("utf-8");
-  const rows29 = parseSidecar(text5.startsWith("\uFEFF") ? text5.slice(1) : text5, loc.local.abs, kp.path);
+  const rows30 = parseSidecar(text5.startsWith("\uFEFF") ? text5.slice(1) : text5, loc.local.abs, kp.path);
   if (kp.rest.length === 5 && kp.rest[3] === "Sources") {
-    const i3 = rows29.findIndex((row2) => row2.status === "corrected");
+    const i3 = rows30.findIndex((row2) => row2.status === "corrected");
     if (i3 !== -1) {
       throw new DataServerError(
-        `${loc.local.abs}: items[${i3}]: rule_ref "${rows29[i3].rule_ref}" of ${kp.path} is corrected, but a Sources\\ excerpt is not correctable; its passage is fixed by refresh`,
+        `${loc.local.abs}: items[${i3}]: rule_ref "${rows30[i3].rule_ref}" of ${kp.path} is corrected, but a Sources\\ excerpt is not correctable; its passage is fixed by refresh`,
         "invalid_sidecar"
       );
     }
   }
-  return rows29;
+  return rows30;
 }
 function rawResult(kp, file, shipped_from, seams) {
   return {
@@ -88076,14 +88076,14 @@ function matterOf(raw, tool) {
 }
 async function stampedMatter(matter, seams, path) {
   if (!seams.lookUpMatter) throw new Error("knowledge__write: no practice-data matter lookup is wired");
-  const rows29 = await seams.lookUpMatter(matter);
-  if (rows29.length !== 1 || typeof rows29[0].matt_num !== "string") {
+  const rows30 = await seams.lookUpMatter(matter);
+  if (rows30.length !== 1 || typeof rows30[0].matt_num !== "string") {
     throw new DataServerError(
-      `${path}: matter_unknown: ${JSON.stringify(matter)} is not the matter number of exactly one practice-data matter (found ${rows29.length}). Pass the live matter's number (e.g. L1234), never its name. Nothing was written.`,
+      `${path}: matter_unknown: ${JSON.stringify(matter)} is not the matter number of exactly one practice-data matter (found ${rows30.length}). Pass the live matter's number (e.g. L1234), never its name. Nothing was written.`,
       "matter_unknown"
     );
   }
-  return rows29[0].matt_num;
+  return rows30[0].matt_num;
 }
 function refuseArgs(args, keys, why) {
   const present3 = keys.filter((key) => args[key] !== void 0);
@@ -88432,8 +88432,8 @@ function rosterLawyer(profile, what) {
 async function confirmingLawyer(env) {
   return rosterLawyer(await firm_profile(env), CONFIRM_ACT);
 }
-function validateCorrections(kp, content, kind, noVenue, rows29) {
-  const corrections = rows29.filter((row2) => row2.status === "corrected").map(({ rule_ref, value }) => ({ rule_ref, value }));
+function validateCorrections(kp, content, kind, noVenue, rows30) {
+  const corrections = rows30.filter((row2) => row2.status === "corrected").map(({ rule_ref, value }) => ({ rule_ref, value }));
   if (kind === "format") {
     substituteFormat(extractJsonBlock(content, kp.path, false, "invalid_format"), corrections, kp.path);
   } else {
@@ -88485,10 +88485,10 @@ async function confirmItem(kp, args, operation, seams, label2) {
   const sidecarKp = parseKnowledgePath(`${kp.path}${SIDECAR_SUFFIX}`, label2);
   grammarCheck(sidecarKp, "file", label2);
   const target = writableOverlayPath(sidecarKp, seams, label2);
-  const rows29 = await upsertSidecarRow(target.abs, kp.path, row2, (next) => {
+  const rows30 = await upsertSidecarRow(target.abs, kp.path, row2, (next) => {
     if (operation === "correct") validateCorrections(kp, content, kindOf.kind, kindOf.noVenue, next);
   });
-  return { path: kp.path, sidecar: sidecarKp.path, row: row2, rows: rows29.length, ...provenance2(served.shipped_from, seams) };
+  return { path: kp.path, sidecar: sidecarKp.path, row: row2, rows: rows30.length, ...provenance2(served.shipped_from, seams) };
 }
 
 // src/knowledge/write-index.ts
@@ -88593,13 +88593,13 @@ async function writeIndexRow(kp, index, args, seams, label2) {
       }
       merge2(doc, target.abs);
     }
-    const rows29 = Array.isArray(doc[list]) ? [...doc[list]] : [];
-    const at = rows29.findIndex((known) => keyIn(list, known) === key);
-    const without = rows29.filter((_3, i3) => i3 !== at);
+    const rows30 = Array.isArray(doc[list]) ? [...doc[list]] : [];
+    const at = rows30.findIndex((known) => keyIn(list, known) === key);
+    const without = rows30.filter((_3, i3) => i3 !== at);
     checkIndexRow(kp, merge2({ ...doc, [list]: without }, target.abs), list, key, row2, noVenue, target.abs);
-    if (at === -1) rows29.push(row2);
-    else rows29[at] = row2;
-    const next = { ...doc, [list]: rows29 };
+    if (at === -1) rows30.push(row2);
+    else rows30[at] = row2;
+    const next = { ...doc, [list]: rows30 };
     const view = merge2(next, target.abs);
     writeTextAtomic(target.abs, JSON.stringify(next, null, 2) + "\n");
     return { path: kp.path, index, list, key, status: at === -1 ? "created" : "updated", view, ...provenance2(loc.shipped_from, seams) };
@@ -88743,8 +88743,8 @@ function predatedProvision(row2, provisions) {
 
 // src/submission/forms/law-statement-line.ts
 var CITATION_MISSING = "[citation missing]";
-function scrutinyFailedTag(rows29) {
-  const findings = rows29.filter((r3) => r3.verification === "failed").map((r3) => (r3.doubt ?? "").replace(/\s+/g, " ").trim());
+function scrutinyFailedTag(rows30) {
+  const findings = rows30.filter((r3) => r3.verification === "failed").map((r3) => (r3.doubt ?? "").replace(/\s+/g, " ").trim());
   return findings.length > 0 ? ` (scrutiny failed: ${findings.join("; ")})` : "";
 }
 function settledTag(row2) {
@@ -88975,7 +88975,7 @@ function orderReviewMarkerFor(review, inv, lineGlyphs, order) {
 }
 
 // src/submission/forms/statement-lines.ts
-function factStatementCitationLine(exhibitMap, labelMap, s3) {
+function factStatementCitationLine(exhibitMap, labelMap, s3, prefix = "> ") {
   const parts = [];
   if (s3.instrument_id !== null) {
     const instrumentLabel = labelMap.get(s3.instrument_id);
@@ -88990,7 +88990,7 @@ function factStatementCitationLine(exhibitMap, labelMap, s3) {
     if (exhibitLabel !== void 0) parts.push(exhibitLabel);
     if (s3.exhibit_pinpoint) parts.push(s3.exhibit_pinpoint);
   }
-  return parts.length === 0 ? null : `> ${parts.join(", ")}`;
+  return parts.length === 0 ? null : `${prefix}${parts.join(", ")}`;
 }
 function factStatementMarkers(s3, courtRecordLinked, admitted, copyMarker) {
   if (isAdmittedGuard(courtRecordLinked, admitted)) return dedupeLineMarkers([doubtMarker(s3.doubt), copyMarker]);
@@ -89432,12 +89432,12 @@ function requisitionWrapper(f3) {
   return lines2.join("\n");
 }
 var STANDARD_MATERIAL_LINES = ["Pleadings filed in this proceeding", "Such further affidavits or filed court documents as this honourable court may allow"];
-function checkboxOrderBlock(rows29) {
+function checkboxOrderBlock(rows30) {
   const lines2 = [];
   lines2.push("[ ] The order(s) set out in Part 1 of this notice were made in the terms requested in Part 1 of this notice.");
   lines2.push("[ ] The order(s) set out in Part 1 of this notice were made with the following variations and additional terms:");
   lines2.push("");
-  rows29.forEach((r3) => lines2.push(`- ${r3.text}${r3.marker ? ` ${r3.marker}` : ""}`));
+  rows30.forEach((r3) => lines2.push(`- ${r3.text}${r3.marker ? ` ${r3.marker}` : ""}`));
   return lines2.join("\n");
 }
 function buildLowerCourtRoleByRole(parties2) {
@@ -89500,6 +89500,22 @@ function bccaCoverPage(parties2, fields) {
   for (let row2 = 0; row2 < CONTACT_COLUMNS.length; row2++) lines2.push(`| ${cells.map((c3) => c3[row2].text).join(" | ")} |`);
   lines2.push(`| ${fields.contacts.map((c3) => `Counsel for the ${pluralizeRole(c3.role, c3.names.length)}`).join(" | ")} |`);
   return lines2.join("\n");
+}
+function formatTimeEstimate(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  const parts = [];
+  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
+  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
+  return parts.join(" ");
+}
+function pushExcerptBlockquote(lines2, excerpt, citationLine) {
+  if (!excerpt) return;
+  for (const line of excerpt.split("\n")) {
+    if (line.trim() === "") continue;
+    lines2.push(`> ${line}`);
+  }
+  if (citationLine) lines2.push(citationLine);
 }
 
 // src/submission/forms/vaniac-frontmatter.ts
@@ -90680,15 +90696,15 @@ function renderPart(ctx, part, state) {
 function composeLayoutSnapshot(key, seams = {}) {
   const folder = `draft/${key.country}/${key.jurisdiction}/${key.venue}`;
   const { kinds } = knowledgeRead(`${folder}/Documents/kinds.json`, seams).view;
-  const rows29 = kinds.filter((row2) => row2.file === key.kind || row2.aliases.some((alias) => alias.name === key.kind));
-  if (rows29.length !== 1) {
-    const candidates = rows29.map((row2) => `${row2.file}${row2.recipient ? ` (recipient ${row2.recipient})` : ""}`);
+  const rows30 = kinds.filter((row2) => row2.file === key.kind || row2.aliases.some((alias) => alias.name === key.kind));
+  if (rows30.length !== 1) {
+    const candidates = rows30.map((row2) => `${row2.file}${row2.recipient ? ` (recipient ${row2.recipient})` : ""}`);
     throw new DataServerError(
-      `kind "${key.kind}" matches ${rows29.length} rows of ${folder}/Documents/kinds.json; exactly one is required (candidates: ${candidates.length > 0 ? candidates.join(", ") : "none"})`,
+      `kind "${key.kind}" matches ${rows30.length} rows of ${folder}/Documents/kinds.json; exactly one is required (candidates: ${candidates.length > 0 ? candidates.join(", ") : "none"})`,
       "kind_unresolved"
     );
   }
-  const typeFile = rows29[0].file;
+  const typeFile = rows30[0].file;
   const passage_hashes = {};
   const blockOf2 = (path, kind) => {
     const read3 = knowledgeRead(path, seams);
@@ -90731,7 +90747,7 @@ function composeLayoutSnapshot(key, seams = {}) {
     layout_snapshot: JSON.stringify(stored),
     type_file: typeFile,
     stored,
-    recipient: rows29[0].recipient ?? null,
+    recipient: rows30[0].recipient ?? null,
     learned: typeRead.learned === true
   };
 }
@@ -93292,21 +93308,21 @@ function isDir2(path) {
   }
 }
 function writingFolders(dbPath, draft = draftDirOf(dbPath)) {
-  const rows29 = folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3));
+  const rows30 = folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3));
   const taken = /* @__PURE__ */ new Set([RECORDS_FOLDER.toLowerCase()]);
   const result = /* @__PURE__ */ new Map();
   const take = (row2, folder) => {
     result.set(row2.id, folder);
     taken.add(folder.name.toLowerCase());
   };
-  for (const row2 of rows29) {
+  for (const row2 of rows30) {
     const manifest = readManifest(dbPath, row2.id);
     if (manifest !== null && isDir2(join29(draft, manifest.folder)) && !taken.has(manifest.folder.toLowerCase())) {
       take(row2, { name: manifest.folder, legacy: matchOf(manifest.folder, row2) === "legacy" });
     }
   }
   const dirs = readdirSync13(draft, { withFileTypes: true }).filter((e3) => e3.isDirectory()).map((e3) => e3.name);
-  for (const row2 of rows29.filter((r3) => !result.has(r3.id))) {
+  for (const row2 of rows30.filter((r3) => !result.has(r3.id))) {
     const candidates = dirs.filter((d3) => !taken.has(d3.toLowerCase()) && matchOf(d3, row2) !== null);
     if (candidates.length === 1) {
       take(row2, { name: candidates[0], legacy: matchOf(candidates[0], row2) === "legacy" });
@@ -93421,7 +93437,7 @@ function moveCaseDataMockups(dbPath) {
   const records = recordsDir(dbPath);
   mkdirSync12(records, { recursive: true });
   const older = join29(records, OLDER_MOCKUPS);
-  const rows29 = new Map(folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3)).map((r3) => [r3.id, r3]));
+  const rows30 = new Map(folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3)).map((r3) => [r3.id, r3]));
   const moves = [];
   const byFiling = /* @__PURE__ */ new Map();
   for (const entry of readdirSync13(root, { withFileTypes: true })) {
@@ -93434,7 +93450,7 @@ function moveCaseDataMockups(dbPath) {
     }
     const manifest = readLegacyManifest(path);
     const id = manifest?.stamp.filing_id ?? Number(/^Filing (\d+)$/.exec(entry.name)?.[1] ?? NaN);
-    if (!rows29.has(id)) {
+    if (!rows30.has(id)) {
       moves.push({ from: path, to: moveInto(path, older, entry.name) });
       continue;
     }
@@ -93442,7 +93458,7 @@ function moveCaseDataMockups(dbPath) {
   }
   const folders = writingFolders(dbPath, draft);
   for (const [id, found] of byFiling) {
-    const row2 = rows29.get(id);
+    const row2 = rows30.get(id);
     const folder = settled(draft, row2.title, folders.get(id));
     const dir = join29(draft, folder);
     mkdirSync12(dir, { recursive: true });
@@ -95425,18 +95441,18 @@ async function submissionDataRecordViewed(args, env = process.env) {
     entry.keys = [t3.key, ...entry.keys.filter((k3) => k3 !== t3.key)];
     lists.set(boardKey(t3.board), entry);
   }
-  const rows29 = [...lists.values()].map(({ board, keys }) => {
+  const rows30 = [...lists.values()].map(({ board, keys }) => {
     const current = new Set(targets.filter((t3) => boardKey(t3.board) === boardKey(board)).map((t3) => t3.key));
     return { key: viewedKey(board), value: JSON.stringify(keys.filter((k3) => current.has(k3))) };
   });
   const written = await submissionDataWriteAll(
     args.db_path,
-    rows29.map((r3) => ({ sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [r3.key, r3.value], expect_changes: 1 })),
+    rows30.map((r3) => ({ sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [r3.key, r3.value], expect_changes: 1 })),
     env
   );
   if (!written.ok) throw new DataServerError(`${TOOL12}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
   return {
-    keys: rows29.map((r3) => r3.key),
+    keys: rows30.map((r3) => r3.key),
     note: "Recorded. The Job Board shows the new order the next time its page is written; this call does not rewrite it.",
     ...written.warning ? { warning: written.warning } : {}
   };
@@ -97248,10 +97264,10 @@ function attachedLines(attached) {
     })
   ];
 }
-function courtFileLines(rows29) {
+function courtFileLines(rows30) {
   return [
-    `## Court File (${rows29.length})`,
-    ...rows29.map((a3) => {
+    `## Court File (${rows30.length})`,
+    ...rows30.map((a3) => {
       const parts = [`- ${a3.label}`, a3.court_file === null ? `court file: none found${a3.note ? ` (${a3.note})` : ""}` : `court file: ${a3.court_file.file_name}`];
       if (a3.mismatch !== null) parts.push(`mismatch: ${a3.mismatch}`);
       return parts.join(" \xB7 ");
@@ -97402,27 +97418,27 @@ function row(cells) {
 function buildLegend(markdown, documentType) {
   const sets = [...scannedText(markdown).matchAll(RUN_RE)].map((m3) => splitGlyphs(m3[0]));
   const present3 = new Set(sets.flat());
-  const rows29 = [];
+  const rows30 = [];
   const notes = [];
   for (const symbol of SYMBOLS) {
     if (!present3.has(symbol.glyph)) continue;
     const work = symbol.work && symbol.actor ? `${symbol.work} (${symbol.actor})` : symbol.work;
-    rows29.push(row([symbol.glyph, symbol.name, symbol.meaning, work]));
+    rows30.push(row([symbol.glyph, symbol.name, symbol.meaning, work]));
     if (symbol.modelNote) notes.push(`${symbol.glyph}: ${symbol.modelNote}`);
     for (const placement of PLACEMENTS) {
       if (placement.glyph !== symbol.glyph || !(placement.documents?.includes(documentType) ?? true)) continue;
-      rows29.push(row([placement.glyph, placement.line ?? "", placement.text, ""]));
+      rows30.push(row([placement.glyph, placement.line ?? "", placement.text, ""]));
       if (placement.modelNote) notes.push(`${placement.glyph} (${placement.line ?? documentType}): ${placement.modelNote}`);
     }
   }
   for (const combination of COMBINATIONS) {
     const glyphs = splitGlyphs(combination.key);
     if (!sets.some((set) => glyphs.every((g3) => set.includes(g3)))) continue;
-    rows29.push(row([combination.key, "", combination.meaning, combination.work]));
+    rows30.push(row([combination.key, "", combination.meaning, combination.work]));
     if (combination.modelNote) notes.push(`${combination.key}: ${combination.modelNote}`);
   }
-  if (rows29.length === 0) return { text: "", notes: [] };
-  return { text: [LEGEND_HEADING, "", row(["Symbol", "Name", "Meaning", "Work"]), "|---|---|---|---|", ...rows29].join("\n") + "\n", notes };
+  if (rows30.length === 0) return { text: "", notes: [] };
+  return { text: [LEGEND_HEADING, "", row(["Symbol", "Name", "Meaning", "Work"]), "|---|---|---|---|", ...rows30].join("\n") + "\n", notes };
 }
 function withLegend(markdown, documentType) {
   const legend = buildLegend(markdown, documentType);
@@ -97656,20 +97672,20 @@ function textHits(filedFace) {
   }
   return hits;
 }
-function tracked(hit, rows29) {
+function tracked(hit, rows30) {
   if (hit.citation !== null) {
     const wanted = normalCitation(hit.citation).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const within = new RegExp(`(^|[^a-z0-9])${wanted}([^a-z0-9]|$)`);
-    if (rows29.some((r3) => r3.citation !== null && within.test(normalCitation(r3.citation)))) return true;
+    if (rows30.some((r3) => r3.citation !== null && within.test(normalCitation(r3.citation)))) return true;
   }
   if (hit.name !== null) {
     const wanted = normalName(hit.name);
-    if (rows29.some((r3) => normalName(r3.style_of_cause_or_title) === wanted)) return true;
+    if (rows30.some((r3) => normalName(r3.style_of_cause_or_title) === wanted)) return true;
   }
   return false;
 }
 function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
-  const rows29 = submissionDataQuery(
+  const rows30 = submissionDataQuery(
     dbPath,
     "SELECT style_of_cause_or_title, citation FROM authorities WHERE proceeding_id = ? AND killed_on IS NULL",
     [proceedingId]
@@ -97682,7 +97698,7 @@ function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
       const repeat = keys.some((k3) => seen.has(k3));
       keys.forEach((k3) => seen.add(k3));
       if (repeat) continue;
-      if (tracked(hit, rows29)) continue;
+      if (tracked(hit, rows30)) continue;
       const item = `cited but not tracked: ${hit.text}`;
       inventory.push({ generating: false, marker: "\u{1F4C7}", table: UNTRACKED_CITATION_TABLE, id: lines2.length + 1, item, doc: doc.documentType });
       lines2.push(mockupMessage("\u{1F4C7}", `Cited but not tracked: ${hit.text}`));
@@ -97691,15 +97707,21 @@ function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
   return lines2;
 }
 
-// src/submission/forms/render-notice-of-application.ts
+// src/submission/forms/filing-facts.ts
 function rows17(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
-function fetchHearingDetails(dbPath, filingId) {
-  const found = rows17(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
-  return found[0];
+var FACTS_PART = /* @__PURE__ */ new Map([
+  ["notice_of_application", "part2"],
+  ["application_response", "part4"],
+  ["bcca_stay_response", "part2"],
+  ["bcca_factum", "part2"]
+]);
+function factsPart(kind) {
+  const part = FACTS_PART.get(kind);
+  if (part === void 0) throw new Error(`No facts Part is registered for kind ${kind}`);
+  return part;
 }
-var ASSOCIATE_JUDGE_UNDETERMINED_LINE = `Associate judge jurisdiction: not yet determined ${gapMarker("unchosen")}`;
 function fetchFacts(dbPath, filingId, part) {
   return rows17(
     dbPath,
@@ -97727,10 +97749,38 @@ function fetchStatementsOfFact(dbPath, factIds) {
     factIds
   );
 }
+
+// src/submission/forms/filing-frontmatter.ts
+function filingFrontmatter(proceeding, ctx, documentType) {
+  const fields = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
+    proceedingFileNo: proceeding.file_number ?? "",
+    documentType,
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields);
+}
+
+// src/submission/forms/render-notice-of-application.ts
+function rows18(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+function fetchHearingDetails(dbPath, filingId) {
+  const found = rows18(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  return found[0];
+}
+var ASSOCIATE_JUDGE_UNDETERMINED_LINE = `Associate judge jurisdiction: not yet determined ${gapMarker("unchosen")}`;
 function fetchWitnessBackedFlags(dbPath, factIds) {
   if (factIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = factIds.map(() => "?").join(",");
-  const found = rows17(
+  const found = rows18(
     dbPath,
     `SELECT f.id AS fact_id,
             EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
@@ -97739,30 +97789,6 @@ function fetchWitnessBackedFlags(dbPath, factIds) {
   );
   return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
 }
-function frontmatterFor2(proceeding, ctx) {
-  const fields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType: "Notice_of_application",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields);
-}
-function formatTimeEstimate(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const parts = [];
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
-  return parts.join(" ");
-}
 function renderNoticeOfApplication(ctx) {
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
   const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? ctx.parties.find((p3) => p3.is_client === 1);
@@ -97770,7 +97796,7 @@ function renderNoticeOfApplication(ctx) {
   const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
   const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
   const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, "part2");
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("notice_of_application"));
   const statementsOfFact = fetchStatementsOfFact(
     ctx.dbPath,
     facts.map((f3) => f3.id)
@@ -97810,7 +97836,7 @@ function renderNoticeOfApplication(ctx) {
   const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
   const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
   const lines2 = [];
-  lines2.push(frontmatterFor2(ctx.proceeding, ctx));
+  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Notice_of_application"));
   lines2.push("");
   lines2.push(
     styleOfProceedingCaption(captionParties2, {
@@ -97997,11 +98023,11 @@ function renderNoticeOfApplication(ctx) {
 }
 
 // src/submission/forms/render-requisition.ts
-function rows18(dbPath, sql, params = []) {
+function rows19(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchAlternatives(dbPath, chosenId) {
-  return rows18(
+  return rows19(
     dbPath,
     `SELECT id, wording, template_key, template_values, crossed_out_on
      FROM order_sought WHERE alternative_to = ?`,
@@ -98010,7 +98036,7 @@ function fetchAlternatives(dbPath, chosenId) {
 }
 function fetchPlacedAlternativeIds(dbPath, filing) {
   if (filing.kind !== "requisition_default_judgment") return [];
-  return rows18(
+  return rows19(
     dbPath,
     `SELECT o.id FROM order_sought o
      JOIN filing_orders fo ON fo.order_sought_id = o.alternative_to
@@ -98018,7 +98044,7 @@ function fetchPlacedAlternativeIds(dbPath, filing) {
     [filing.id]
   ).map((r3) => r3.id);
 }
-function frontmatterFor3(ctx, documentType) {
+function frontmatterFor2(ctx, documentType) {
   const fields = {
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
@@ -98100,7 +98126,7 @@ function renderRequisitionDefaultJudgment(ctx) {
   checklist.push(`${orderGap ? `${orderGap} ` : ""}${orderItem}`);
   checklist.push(`${affidavitGap ? `${affidavitGap} ` : ""}${affidavitItem}`);
   const lines2 = [];
-  lines2.push(frontmatterFor3(ctx, "Requisition"));
+  lines2.push(frontmatterFor2(ctx, "Requisition"));
   lines2.push("");
   lines2.push(
     requisitionWrapper({
@@ -98128,7 +98154,7 @@ function renderForm8DefaultJudgment(ctx) {
     titleLine: "DEFAULT JUDGMENT"
   });
   const lines2 = [];
-  lines2.push(frontmatterFor3(ctx, "Default_judgment"));
+  lines2.push(frontmatterFor2(ctx, "Default_judgment"));
   lines2.push("");
   lines2.push(caption2);
   lines2.push("");
@@ -98182,7 +98208,7 @@ function renderRequisitionConsent(ctx) {
     "No party is under a legal disability."
   ];
   const lines2 = [];
-  lines2.push(frontmatterFor3(ctx, "Requisition"));
+  lines2.push(frontmatterFor2(ctx, "Requisition"));
   lines2.push("");
   lines2.push(
     requisitionWrapper({
@@ -98210,7 +98236,7 @@ function renderConsentOrder(ctx) {
     titleLine: "CONSENT ORDER"
   });
   const lines2 = [];
-  lines2.push(frontmatterFor3(ctx, "Consent_order"));
+  lines2.push(frontmatterFor2(ctx, "Consent_order"));
   lines2.push("");
   lines2.push(caption2);
   lines2.push("");
@@ -98247,13 +98273,10 @@ function renderConsentOrder(ctx) {
 }
 
 // src/submission/forms/unplaced-facts.ts
-var FACTS_PART = /* @__PURE__ */ new Map([
-  ["notice_of_application", "part2"],
-  ["application_response", "part4"]
-]);
+var CHECKED_KINDS = /* @__PURE__ */ new Set(["notice_of_application", "application_response"]);
 function fetchUnplacedFacts(dbPath, filing) {
-  const part = FACTS_PART.get(filing.kind);
-  if (part === void 0 || filing.filed_on || filing.retired_on) return [];
+  if (!CHECKED_KINDS.has(filing.kind) || filing.filed_on || filing.retired_on) return [];
+  const part = factsPart(filing.kind);
   return submissionDataQuery(
     dbPath,
     `SELECT fs.submission_id, sf.fact_id, f.postulate
@@ -98272,7 +98295,7 @@ function refuseUnplacedFacts(dbPath, filing, tool) {
   const unplaced = fetchUnplacedFacts(dbPath, filing);
   if (unplaced.length === 0) return;
   throw new ValidationError(
-    `Refusing ${tool}: Writing ${filing.id} has submissions resting on facts its facts Part does not hold, which the filed face would drop: ` + unplaced.map((u3) => `submission ${u3.submission_id}, fact ${u3.fact_id} ${JSON.stringify(u3.postulate)}`).join("; ") + `. The mockup names each NOT PLACED. Place each fact in the form's facts Part (filing_facts, document 'form', part '${FACTS_PART.get(filing.kind)}'), or detach it from its submission, then call ${tool} again.`,
+    `Refusing ${tool}: Writing ${filing.id} has submissions resting on facts its facts Part does not hold, which the filed face would drop: ` + unplaced.map((u3) => `submission ${u3.submission_id}, fact ${u3.fact_id} ${JSON.stringify(u3.postulate)}`).join("; ") + `. The mockup names each NOT PLACED. Place each fact in the form's facts Part (filing_facts, document 'form', part '${factsPart(filing.kind)}'), or detach it from its submission, then call ${tool} again.`,
     "facts_not_placed"
   );
 }
@@ -98458,8 +98481,8 @@ function refuseJobOnlyBoard(filing) {
   }
 }
 function readDbMetaValue(dbPath, key) {
-  const rows29 = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
-  return rows29.length > 0 ? rows29[0].value : null;
+  const rows30 = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
+  return rows30.length > 0 ? rows30[0].value : null;
 }
 function readSchemaVersion(dbPath) {
   const value = readDbMetaValue(dbPath, "schema_version");
@@ -98580,11 +98603,11 @@ function draftDirOfCaller(dbPath, draftDir, param2 = "drafting_forms__render.dra
 import { readFileSync as readFileSync29 } from "node:fs";
 
 // src/submission/forms/render-application-response.ts
-function rows19(dbPath, sql, params = []) {
+function rows20(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchHearingDetails2(dbPath, filingId) {
-  const found = rows19(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  const found = rows20(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
   return found[0];
 }
 function hearingDateSentence(hearing) {
@@ -98600,16 +98623,8 @@ function hearingDateSentence(hearing) {
       return null;
   }
 }
-function formatTimeEstimate2(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const parts = [];
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
-  return parts.join(" ");
-}
 function fetchFilingPositions(dbPath, filingId) {
-  return rows19(
+  return rows20(
     dbPath,
     `SELECT oo.id AS opposing_order_id, oo.paragraph_number, oo.wording, oo.document_id,
             fp.position, fp.proposed_terms
@@ -98626,7 +98641,7 @@ function resolveRespondedToDocument(dbPath, proceedingId, positions) {
   if (positionedIds.size === 1) {
     documentId = [...positionedIds][0];
   } else if (positionedIds.size === 0) {
-    const candidates = rows19(
+    const candidates = rows20(
       dbPath,
       `SELECT DISTINCT document_id FROM opposing_orders WHERE proceeding_id = ?`,
       [proceedingId]
@@ -98634,11 +98649,11 @@ function resolveRespondedToDocument(dbPath, proceedingId, positions) {
     if (candidates.length === 1) documentId = candidates[0].document_id;
   }
   if (documentId === void 0) return void 0;
-  const found = rows19(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
+  const found = rows20(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
   return found[0];
 }
 function fetchUnpositionedOrders(dbPath, filingId, documentId) {
-  return rows19(
+  return rows20(
     dbPath,
     `SELECT oo.id, oo.paragraph_number, oo.wording
      FROM opposing_orders oo
@@ -98648,20 +98663,8 @@ function fetchUnpositionedOrders(dbPath, filingId, documentId) {
     [documentId, filingId]
   );
 }
-function fetchFacts2(dbPath, filingId) {
-  return rows19(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
-     FROM filing_facts ff
-     JOIN facts f ON f.id = ff.fact_id
-     LEFT JOIN documents cr ON cr.id = f.court_record
-     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = 'part4'
-     ORDER BY ff.ordinal`,
-    [filingId]
-  );
-}
 function fetchPartSixProvenance(dbPath, filingId) {
-  const found = rows19(
+  const found = rows20(
     dbPath,
     `SELECT document_id, provenance FROM filing_documents WHERE filing_id = ? AND role != 'witness_statement'`,
     [filingId]
@@ -98673,47 +98676,16 @@ function provenanceLabel(p3) {
   if (p3 === "already_in_court_file") return "already in the court file";
   return "";
 }
-function fetchStatementsOfFact2(dbPath, factIds) {
-  if (factIds.length === 0) return [];
-  const placeholders = factIds.map(() => "?").join(",");
-  return rows19(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
-            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
-            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents doc ON doc.id = sof.instrument
-     WHERE sof.fact_id IN (${placeholders})`,
-    factIds
-  );
-}
 function witnessBackedFlags(dbPath, factIds) {
   if (factIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = factIds.map(() => "?").join(",");
-  const found = rows19(
+  const found = rows20(
     dbPath,
     `SELECT f.id AS fact_id, EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
      FROM facts f WHERE f.id IN (${placeholders})`,
     factIds
   );
   return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
-}
-function frontmatterFor4(proceeding, ctx) {
-  const fields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType: "Application_response",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields);
 }
 function afsCheckbox(party) {
   if (!party) return `[ ] Yes  [ ] No ${gapMarker("question")}`;
@@ -98730,8 +98702,8 @@ function renderApplicationResponse(ctx) {
   const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
   const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
   const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
-  const facts = fetchFacts2(ctx.dbPath, ctx.filing.id);
-  const statementsOfFact = fetchStatementsOfFact2(ctx.dbPath, facts.map((f3) => f3.id));
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("application_response"));
+  const statementsOfFact = fetchStatementsOfFact(ctx.dbPath, facts.map((f3) => f3.id));
   const witnessBacked = witnessBackedFlags(ctx.dbPath, facts.map((f3) => f3.id));
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const stmt of statementsOfFact) {
@@ -98765,7 +98737,7 @@ function renderApplicationResponse(ctx) {
   const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
   const provenanceMap = fetchPartSixProvenance(ctx.dbPath, ctx.filing.id);
   const lines2 = [];
-  lines2.push(frontmatterFor4(ctx.proceeding, ctx));
+  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Application_response"));
   lines2.push("");
   lines2.push(
     styleOfProceedingCaption(captionParties2, {
@@ -98779,7 +98751,7 @@ function renderApplicationResponse(ctx) {
   const clientName = client?.name ?? gapMarker("gap");
   const applicantName = applicant?.name ?? gapMarker("gap");
   const datedOn = respondedTo?.document_date ?? gapMarker("gap");
-  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate2(hearing.time_estimate_minutes) : gapMarker("gap");
+  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : gapMarker("gap");
   const hearingDate = hearingDateSentence(hearing) ?? `The application respondent(s) ${gapMarker("gap")}`;
   recordCriterionGlyphs(ctx.inventory, clientName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of application respondent" });
   recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Name of applicant" });
@@ -98967,39 +98939,12 @@ function renderApplicationResponse(ctx) {
 }
 
 // src/submission/forms/render-bcca-stay-response.ts
-function rows20(dbPath, sql, params = []) {
+function rows21(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
-}
-function fetchFacts3(dbPath, filingId) {
-  return rows20(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.ordinal AS filing_ordinal
-     FROM filing_facts ff
-     JOIN facts f ON f.id = ff.fact_id
-     LEFT JOIN documents cr ON cr.id = f.court_record
-     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = 'part2'
-     ORDER BY ff.ordinal`,
-    [filingId]
-  );
-}
-function fetchStatementsOfFact3(dbPath, factIds) {
-  if (factIds.length === 0) return [];
-  const placeholders = factIds.map(() => "?").join(",");
-  return rows20(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
-            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
-            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents doc ON doc.id = sof.instrument
-     WHERE sof.fact_id IN (${placeholders})`,
-    factIds
-  );
 }
 function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, inventory, review) {
   const statementsByFact = /* @__PURE__ */ new Map();
-  for (const stmt of fetchStatementsOfFact3(dbPath, facts.map((f3) => f3.id))) {
+  for (const stmt of fetchStatementsOfFact(dbPath, facts.map((f3) => f3.id))) {
     const list = statementsByFact.get(stmt.fact_id) ?? [];
     list.push(stmt);
     statementsByFact.set(stmt.fact_id, list);
@@ -99085,7 +99030,7 @@ function renderFactParagraphsWithRhetoric(ctx, facts, rhetoric, startPara, copyM
 function fetchAffidavitDetails(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = documentIds.map(() => "?").join(",");
-  const found = rows20(
+  const found = rows21(
     dbPath,
     `SELECT d.id AS document_id, w.name AS deponent_name, d.affidavit_number
      FROM documents d
@@ -99096,7 +99041,7 @@ function fetchAffidavitDetails(dbPath, documentIds) {
   return new Map(found.map((r3) => [r3.document_id, r3]));
 }
 function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
-  return rows20(
+  return rows21(
     dbPath,
     `SELECT MIN(a.id) AS id, a.style_of_cause_or_title, a.citation
      FROM filing_submissions fs
@@ -99111,11 +99056,11 @@ function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
   );
 }
 function fetchOpposingAuthoritiesCount(dbPath, proceedingId) {
-  const found = rows20(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
+  const found = rows21(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
   return found[0]?.n ?? 0;
 }
 function fetchAttachedExhibits(dbPath, affidavitDocumentId) {
-  return rows20(
+  return rows21(
     dbPath,
     `SELECT DISTINCT d.id AS document_id, d.label, d.document_date
      FROM statements_of_fact sof
@@ -99168,30 +99113,14 @@ function buildToc(inv, docs, affidavitDetails, exhibitMap, dbPath, hasAuthoritie
   out.push("");
   out.push("| Item | Page |");
   out.push("| :--- | ---: |");
-  const { rows: rows29 } = buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, (_what, gap2) => {
+  const { rows: rows30 } = buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, (_what, gap2) => {
     const marker = gapMarker("gap");
     recordCriterionGlyphs(inv, marker, ["\u{1F9E9}"], gap2);
     return marker;
   });
-  rows29.forEach((r3) => out.push(`| ${"&nbsp;&nbsp;".repeat(r3.indent)}${r3.text} | TBD |`));
+  rows30.forEach((r3) => out.push(`| ${"&nbsp;&nbsp;".repeat(r3.indent)}${r3.text} | TBD |`));
   out.push("");
   return out;
-}
-function frontmatterFor5(proceeding, ctx) {
-  const fields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType: "Response_book",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields);
 }
 function recordContactGaps(inv, contacts) {
   for (const c3 of contacts) {
@@ -99207,7 +99136,7 @@ function renderBccaStayResponse(ctx) {
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
   const client = ctx.parties.find((p3) => p3.is_client === 1);
   const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
-  const hearingDate = rows20(
+  const hearingDate = rows21(
     ctx.dbPath,
     "SELECT hearing_date, hearing_time FROM hearing_details WHERE filing_id = ?",
     [ctx.filing.id]
@@ -99215,7 +99144,7 @@ function renderBccaStayResponse(ctx) {
   const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
   const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
   const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
-  const facts = fetchFacts3(ctx.dbPath, ctx.filing.id);
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("bcca_stay_response"));
   const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
   const submissionIds = submissions.map((s3) => s3.id);
   const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
@@ -99262,7 +99191,7 @@ function renderBccaStayResponse(ctx) {
     };
   });
   const lines2 = [];
-  lines2.push(frontmatterFor5(ctx.proceeding, ctx));
+  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Response_book"));
   lines2.push("");
   lines2.push(
     bccaCoverPage(captionParties2, {
@@ -99466,7 +99395,7 @@ function renderBccaStayResponse(ctx) {
 }
 
 // src/submission/forms/render-bcca-factum.ts
-function rows21(dbPath, sql, params = []) {
+function rows22(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function pushGap(ctx, lines2, line, field, item) {
@@ -99483,10 +99412,10 @@ function longDate(iso2) {
   return `${MONTHS2[Number(m3[2]) - 1]} ${Number(m3[3])}, ${m3[1]}`;
 }
 function fetchChronology(dbPath, filingId) {
-  return rows21(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
+  return rows22(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
 }
 function fetchProseParagraphs(dbPath, filingId) {
-  const found = rows21(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
+  const found = rows22(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
   return new Map(
     found.map((r3) => [
       r3.slot,
@@ -99497,7 +99426,7 @@ function fetchProseParagraphs(dbPath, filingId) {
 function fetchCitedStatements(dbPath, lawAssertionIds) {
   if (lawAssertionIds.length === 0) return [];
   const placeholders = lawAssertionIds.map(() => "?").join(",");
-  return rows21(
+  return rows22(
     dbPath,
     `SELECT sl.law_assertion_id, a.id AS authority_id, a.style_of_cause_or_title AS title, a.citation, a.kind, sl.pinpoint, sl.excerpt
      FROM statements_of_law sl
@@ -99568,22 +99497,6 @@ function factumRecordLabel(roleLabel) {
   const role = roleLabel ?? "Respondent";
   return `${role}${role.endsWith("s") ? "'" : "'s"} Factum`;
 }
-function frontmatterFor6(proceeding, ctx) {
-  const fields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType: "Factum",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields);
-}
 function wordCount2(lines2) {
   return lines2.join(" ").replace(/<!--[\s\S]*?-->/g, " ").split(/\s+/).filter((w3) => /[\p{L}\p{N}]/u.test(w3)).length;
 }
@@ -99599,7 +99512,7 @@ function renderBccaFactum(ctx) {
   const clientGroup = client ? roleGroups.find((g3) => g3.role === client.role) : void 0;
   const signer = factumSigner(ctx);
   const prose = fetchProseParagraphs(ctx.dbPath, ctx.filing.id);
-  const facts = fetchFacts3(ctx.dbPath, ctx.filing.id);
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("bcca_factum"));
   const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
   const submissionIds = submissions.map((s3) => s3.id);
   const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
@@ -99640,7 +99553,7 @@ function renderBccaFactum(ctx) {
   });
   const title = factumRecordLabel(signer.roleLabel);
   const lines2 = [];
-  lines2.push(frontmatterFor6(ctx.proceeding, ctx));
+  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Factum"));
   lines2.push("");
   lines2.push(
     bccaCoverPage(captionParties2, {
@@ -99872,7 +99785,7 @@ function renderBccaFactum(ctx) {
 }
 
 // src/submission/forms/render-bcsc-affidavit.ts
-function rows22(dbPath, sql, params = []) {
+function rows23(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 var EXHIBIT_TOKEN = /\{exhibit:(\d+)\}/g;
@@ -99895,7 +99808,7 @@ function withExhibitLetters(text5, letters) {
   return text5.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
 }
 function fetchAffidavits(dbPath, filingId) {
-  return rows22(
+  return rows23(
     dbPath,
     `SELECT d.id, d.deponent AS witness_id, w.name AS deponent_name, d.execution, d.signed_at, d.label, d.affidavit_number
      FROM filing_documents fd
@@ -99912,7 +99825,7 @@ function affidavitFileName(a3) {
 function fetchParagraphLinks(dbPath, paragraphIds) {
   if (paragraphIds.length === 0) return [];
   const placeholders = paragraphIds.map(() => "?").join(",");
-  return rows22(
+  return rows23(
     dbPath,
     `SELECT psof.statement_paragraph_id, psof.statement_of_fact_id, sof.fact_id, sof.exhibit_id
      FROM paragraph_statements_of_fact psof
@@ -99923,7 +99836,7 @@ function fetchParagraphLinks(dbPath, paragraphIds) {
   );
 }
 function fetchPlacedInProceeding(dbPath, proceedingId) {
-  const texts = rows22(
+  const texts = rows23(
     dbPath,
     `SELECT sp.text FROM statement_paragraphs sp
      JOIN documents d ON d.id = sp.document_id
@@ -99932,7 +99845,7 @@ function fetchPlacedInProceeding(dbPath, proceedingId) {
   );
   return new Set(texts.flatMap((t3) => placedDocumentIds(t3.text)));
 }
-function frontmatterFor7(ctx) {
+function frontmatterFor3(ctx) {
   const fields = {
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
@@ -99949,7 +99862,7 @@ function frontmatterFor7(ctx) {
   return frontmatterHeader(fields);
 }
 function renderAffidavit(ctx, a3) {
-  const paragraphs = rows22(ctx.dbPath, `SELECT id, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
+  const paragraphs = rows23(ctx.dbPath, `SELECT id, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
   const links = fetchParagraphLinks(
     ctx.dbPath,
     paragraphs.map((p3) => p3.id)
@@ -99961,7 +99874,7 @@ function renderAffidavit(ctx, a3) {
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
   const deponent = a3.deponent_name ?? "________________";
   const lines2 = [];
-  lines2.push(frontmatterFor7(ctx));
+  lines2.push(frontmatterFor3(ctx));
   lines2.push("");
   lines2.push(`This is Affidavit #${a3.affidavit_number ?? "____"} of ${deponent} in this case and was made on ${a3.execution ?? "________________"}.`);
   lines2.push("");
@@ -100020,7 +99933,7 @@ function renderAffidavit(ctx, a3) {
 }
 
 // src/submission/forms/render-companions.ts
-function rows23(dbPath, sql, params = []) {
+function rows24(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 var WRITTEN_ARGUMENTS_VENUES = /* @__PURE__ */ new Map([
@@ -100037,7 +99950,7 @@ function writtenArgumentsVenue(proceeding) {
   }
   return venue;
 }
-function frontmatterFor8(ctx, documentType) {
+function frontmatterFor4(ctx, documentType) {
   const fields = {
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
@@ -100080,7 +99993,7 @@ function renderWrittenArguments(ctx, documentKey) {
   const includedRelief = relief.filter((r3) => r3.crossed_out_on === null);
   const crossedOutRelief = relief.filter((r3) => r3.crossed_out_on !== null);
   const total = includedRelief.reduce((sum, r3) => sum + (r3.amount ?? 0), 0);
-  const servedRows = submissionIds.length === 0 ? [] : rows23(
+  const servedRows = submissionIds.length === 0 ? [] : rows24(
     ctx.dbPath,
     `SELECT sb.submission_id, sb.order_sought_id, o.crossed_out_on, o.wording
            FROM order_sought_served_by sb
@@ -100100,7 +100013,7 @@ function renderWrittenArguments(ctx, documentKey) {
     return served[0];
   }
   const lines2 = [];
-  lines2.push(frontmatterFor8(ctx, "Written_arguments"));
+  lines2.push(frontmatterFor4(ctx, "Written_arguments"));
   lines2.push("");
   lines2.push(
     styleOfProceedingCaption(captionParties2, {
@@ -100205,7 +100118,7 @@ function renderWrittenArguments(ctx, documentKey) {
   return lines2.join("\n").trimEnd() + "\n";
 }
 function fetchProceedingOrders(dbPath, proceedingId) {
-  const orders = rows23(
+  const orders = rows24(
     dbPath,
     `SELECT o.id, o.wording, o.crossed_out_on,
             EXISTS(
@@ -100220,7 +100133,7 @@ function fetchProceedingOrders(dbPath, proceedingId) {
   return orders.map((o3) => ({ ...o3, hasServedBy: o3.has_served_by === 1, requires: edgesByOrder.get(o3.id) ?? [] }));
 }
 function fetchOtherFilingDeployments(dbPath, proceedingId, filingId) {
-  const filings = rows23(
+  const filings = rows24(
     dbPath,
     // A Job Board with no Writing deploys nothing.
     `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
@@ -100229,18 +100142,18 @@ function fetchOtherFilingDeployments(dbPath, proceedingId, filingId) {
   const orders = /* @__PURE__ */ new Set();
   const submissions = /* @__PURE__ */ new Set();
   for (const f3 of filings) {
-    for (const r3 of rows23(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f3.id])) {
+    for (const r3 of rows24(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f3.id])) {
       orders.add(r3.order_sought_id);
     }
     for (const id of fetchPlacedAlternativeIds(dbPath, f3)) orders.add(id);
-    for (const r3 of rows23(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f3.id])) {
+    for (const r3 of rows24(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f3.id])) {
       submissions.add(r3.submission_id);
     }
   }
   return { orders, submissions };
 }
 function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
-  const relied = rows23(
+  const relied = rows24(
     dbPath,
     `SELECT sl.law_assertion_id FROM submission_law sl
        JOIN filing_submissions fs ON fs.submission_id = sl.submission_id
@@ -100257,14 +100170,14 @@ function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
   return new Set(relied.map((r3) => r3.law_assertion_id));
 }
 function fetchProceedingSubmissions(dbPath, proceedingId) {
-  return rows23(
+  return rows24(
     dbPath,
     `SELECT s.id, s.contention, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()} FROM submissions s WHERE s.proceeding_id = ? AND s.killed_on IS NULL ORDER BY s.ordinal, s.id`,
     [proceedingId]
   );
 }
 function fetchStruckSubmissionIds(dbPath, proceedingId) {
-  const served = rows23(
+  const served = rows24(
     dbPath,
     `SELECT sb.submission_id, o.crossed_out_on
      FROM order_sought_served_by sb
@@ -100449,14 +100362,14 @@ function resolveTypeFile(venue, kind, seams = {}) {
     if (err instanceof DataServerError) throw err;
     throw new DataServerError(`${indexPath}: not valid JSON: ${err.message}`, "invalid_index");
   }
-  const rows29 = mergeKinds({ doc, file: indexPath }, null, noVenue).kinds.filter((row2) => row2.aliases.some((alias) => alias.name === kind));
-  if (rows29.length !== 1) {
+  const rows30 = mergeKinds({ doc, file: indexPath }, null, noVenue).kinds.filter((row2) => row2.aliases.some((alias) => alias.name === kind));
+  if (rows30.length !== 1) {
     throw new DataServerError(
-      `${indexPath}: ${rows29.length === 0 ? "no row lists" : `${rows29.length} rows list`} kind "${kind}" as an alias${rows29.length === 0 ? "" : ` (${rows29.map((row2) => row2.file).join(", ")})`}; a stored kind names exactly one type file`,
+      `${indexPath}: ${rows30.length === 0 ? "no row lists" : `${rows30.length} rows list`} kind "${kind}" as an alias${rows30.length === 0 ? "" : ` (${rows30.map((row2) => row2.file).join(", ")})`}; a stored kind names exactly one type file`,
       "kind_unresolved"
     );
   }
-  const file = `${documents}/${rows29[0].file}.md`;
+  const file = `${documents}/${rows30[0].file}.md`;
   const block2 = extractJsonBlock(readShipped(file, seams), file, true);
   validateTypeBlock(block2, file, { noVenue });
   return { file, block: block2 };
@@ -100814,39 +100727,11 @@ function submissionFormsRenderProceedingBoard(dbPath, proceedingId, client = {},
 }
 
 // src/submission/forms/render-form32-filed-face.ts
-function rows24(dbPath, sql, params = []) {
+function rows25(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchHearingDetails3(dbPath, filingId) {
-  return rows24(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId])[0];
-}
-function fetchPart2Facts(dbPath, filingId) {
-  return rows24(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ff.ordinal AS filing_ordinal
-     FROM filing_facts ff
-     JOIN facts f ON f.id = ff.fact_id
-     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = 'part2'
-     ORDER BY ff.ordinal`,
-    [filingId]
-  );
-}
-function factStatementCitationLine2(exhibitMap, labelMap, s3) {
-  const parts = [];
-  if (s3.instrument_id !== null) {
-    const instrumentLabel = labelMap.get(s3.instrument_id);
-    if (instrumentLabel !== void 0) parts.push(instrumentLabel);
-    if (s3.pinpoint) parts.push(s3.pinpoint);
-  } else if (s3.pinpoint) {
-    parts.push(s3.pinpoint);
-  }
-  if (s3.exhibit_id !== null) {
-    const num = exhibitMap.get(s3.exhibit_id);
-    const exhibitLabel = num !== void 0 ? `Ex. ${num}` : labelMap.get(s3.exhibit_id);
-    if (exhibitLabel !== void 0) parts.push(exhibitLabel);
-    if (s3.exhibit_pinpoint) parts.push(s3.exhibit_pinpoint);
-  }
-  return parts.length === 0 ? null : `>> ${parts.join(", ")}`;
+  return rows25(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId])[0];
 }
 function lawStatementCitationLine2(row2) {
   if (row2.authority_title === null) return row2.pinpoint ? `>> ${row2.pinpoint}` : null;
@@ -100870,7 +100755,7 @@ var ITALIC_SPAN = /(?<!\*)\*[^*\n]+\*(?!\*)/g;
 function authorityNamePattern(dbPath, proceedingId) {
   const names = [
     ...new Set(
-      rows24(dbPath, "SELECT style_of_cause_or_title AS name FROM authorities WHERE proceeding_id = ?", [proceedingId]).map(
+      rows25(dbPath, "SELECT style_of_cause_or_title AS name FROM authorities WHERE proceeding_id = ?", [proceedingId]).map(
         (r3) => r3.name.trim()
       )
     )
@@ -100883,25 +100768,9 @@ function italicizeNames(line, names) {
   const marked = [...line.matchAll(ITALIC_SPAN)].map((m3) => [m3.index, m3.index + m3[0].length]);
   return line.replace(names, (name, offset) => marked.some(([start2, end]) => offset >= start2 && offset < end) ? name : `*${name}*`);
 }
-function formatTimeEstimate3(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const parts = [];
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
-  return parts.join(" ");
-}
-function pushExcerptBlockquote(lines2, excerpt, citationLine) {
-  if (!excerpt) return;
-  for (const line of excerpt.split("\n")) {
-    if (line.trim() === "") continue;
-    lines2.push(`> ${line}`);
-  }
-  if (citationLine) lines2.push(citationLine);
-}
 function fetchAffidavitFields(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
-  const found = rows24(
+  const found = rows25(
     dbPath,
     `SELECT d.id, d.instrument, d.affidavit_number, d.execution, w.name AS deponent_name
      FROM documents d
@@ -100943,7 +100812,7 @@ function renderForm32FiledFace(ctx, warnings) {
       `"${ctx.filing.title}": whether the application is within the jurisdiction of an associate judge is not yet settled, so Form 32 is not filled with a jurisdiction sentence nobody confirmed. Record whether it is within that jurisdiction, then fill the form again.`
     );
   }
-  const facts = fetchPart2Facts(ctx.dbPath, ctx.filing.id);
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("notice_of_application"));
   const factsRhetoric = fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts");
   const part2Content = facts.length + factsRhetoric.length;
   const pureLawOn = ctx.filing.pure_law_on ?? null;
@@ -101017,7 +100886,7 @@ function renderForm32FiledFace(ctx, warnings) {
     ["hearing_place", frontmatterValue(ctx.proceeding.courthouse_address)],
     // The style of proceeding's registry line; asm32 prints it as "<registry> Registry".
     ["registry", frontmatterValue(ctx.proceeding.registry)],
-    ["time_estimate", hearing?.time_estimate_minutes != null ? formatTimeEstimate3(hearing.time_estimate_minutes) : null],
+    ["time_estimate", hearing?.time_estimate_minutes != null ? formatTimeEstimate(hearing.time_estimate_minutes) : null],
     ["associate_judge", hearing?.associate_judge == null ? null : hearing.associate_judge === 1 ? "yes" : "no"],
     ["pure_law_confirmed", pureLawOn !== null ? "true" : null]
   ];
@@ -101067,7 +100936,7 @@ function renderForm32FiledFace(ctx, warnings) {
       }
       for (const stmt of part2Statements) {
         if (stmt.fact_id !== f3.id || stmt.purpose === "impeachment") continue;
-        const citationLine = factStatementCitationLine2(exhibitMap, labelMap, stmt);
+        const citationLine = factStatementCitationLine(exhibitMap, labelMap, stmt, ">> ");
         if (citationLine) lines2.push(citationLine);
       }
     }
@@ -101094,7 +100963,7 @@ function renderForm32FiledFace(ctx, warnings) {
         lines2.push(`${n3}. ${f3.postulate}`);
         for (const stmt of f3.statements) {
           if (stmt.purpose === "impeachment") continue;
-          pushExcerptBlockquote(lines2, stmt.exhibit_id !== null ? stmt.exhibit_excerpt : stmt.excerpt, factStatementCitationLine2(exhibitMap, labelMap, stmt));
+          pushExcerptBlockquote(lines2, stmt.exhibit_id !== null ? stmt.exhibit_excerpt : stmt.excerpt, factStatementCitationLine(exhibitMap, labelMap, stmt, ">> "));
         }
       }
       for (const la2 of lawBySubmission.get(s3.id) ?? []) {
@@ -101128,38 +100997,13 @@ function renderForm32FiledFace(ctx, warnings) {
 }
 
 // src/submission/forms/render-form33-filed-face.ts
-function rows25(dbPath, sql, params = []) {
+function rows26(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 var NOTICE_DATE_PLACEHOLDER = "[notice date]";
 var HEARING_DATE_PLACEHOLDER = "[agree, or propose other hearing date(s)]";
 var TIME_ESTIMATE_PLACEHOLDER = "[time estimate]";
 var NO_FACTUAL_BASIS2 = "[factual basis: no facts recorded]";
-function formatTimeEstimate4(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const parts = [];
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
-  return parts.join(" ");
-}
-function factStatementCitationLine3(exhibitMap, labelMap, s3) {
-  const parts = [];
-  if (s3.instrument_id !== null) {
-    const instrumentLabel = labelMap.get(s3.instrument_id);
-    if (instrumentLabel !== void 0) parts.push(instrumentLabel);
-    if (s3.pinpoint) parts.push(s3.pinpoint);
-  } else if (s3.pinpoint) {
-    parts.push(s3.pinpoint);
-  }
-  if (s3.exhibit_id !== null) {
-    const num = exhibitMap.get(s3.exhibit_id);
-    const exhibitLabel = num !== void 0 ? `Ex. ${num}` : labelMap.get(s3.exhibit_id);
-    if (exhibitLabel !== void 0) parts.push(exhibitLabel);
-    if (s3.exhibit_pinpoint) parts.push(s3.exhibit_pinpoint);
-  }
-  return parts.length === 0 ? null : `> ${parts.join(", ")}`;
-}
 function lawStatementCitationLine3(row2) {
   if (row2.authority_title === null) return row2.pinpoint ? `> ${row2.pinpoint}` : null;
   const citation = row2.authority_citation ?? CITATION_MISSING;
@@ -101169,18 +101013,10 @@ function lawStatementCitationLine3(row2) {
   }
   return `> *${row2.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}`;
 }
-function pushExcerptBlockquote2(lines2, excerpt, citationLine) {
-  if (!excerpt) return;
-  for (const line of excerpt.split("\n")) {
-    if (line.trim() === "") continue;
-    lines2.push(`> ${line}`);
-  }
-  if (citationLine) lines2.push(citationLine);
-}
 function struckSubmissionIds(dbPath, submissionIds) {
   if (submissionIds.length === 0) return /* @__PURE__ */ new Set();
   const placeholders = submissionIds.map(() => "?").join(",");
-  const served = rows25(
+  const served = rows26(
     dbPath,
     `SELECT sb.submission_id, o.crossed_out_on
      FROM order_sought_served_by sb
@@ -101249,7 +101085,7 @@ function renderForm33FiledFace(ctx, warnings) {
     position: p3.position === "consented" ? "consent" : p3.position === "opposed" ? "oppose" : "no-position",
     terms: p3.position === "consented" ? p3.proposed_terms ?? "" : ""
   }));
-  const facts = fetchFacts2(ctx.dbPath, ctx.filing.id);
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("application_response"));
   const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
   const struck = struckSubmissionIds(
     ctx.dbPath,
@@ -101327,7 +101163,7 @@ function renderForm33FiledFace(ctx, warnings) {
     `notice_dated: ${respondedTo.document_date ?? NOTICE_DATE_PLACEHOLDER}`,
     // "Nil." when the applicant proposed no date: the form then prints no hearing-date line.
     `hearing_date: ${hearingDate === "" ? "Nil." : hearingDate ?? `The application respondent(s) ${HEARING_DATE_PLACEHOLDER}.`}`,
-    `time_estimate: ${hearing?.time_estimate_minutes ? formatTimeEstimate4(hearing.time_estimate_minutes) : TIME_ESTIMATE_PLACEHOLDER}`,
+    `time_estimate: ${hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : TIME_ESTIMATE_PLACEHOLDER}`,
     `orders: ${JSON.stringify(orders)}`,
     ...pureLawOn !== null ? ["pure_law_confirmed: true"] : [],
     "---"
@@ -101354,7 +101190,7 @@ function renderForm33FiledFace(ctx, warnings) {
       if (f3.court_record !== null && f3.court_record_pinpoint) body.push(`> (${f3.court_record_pinpoint})`);
       for (const stmt of part4Statements) {
         if (stmt.fact_id !== f3.id || stmt.purpose === "impeachment") continue;
-        const citationLine = factStatementCitationLine3(exhibitMap, labelMap, stmt);
+        const citationLine = factStatementCitationLine(exhibitMap, labelMap, stmt);
         if (citationLine) body.push(citationLine);
       }
     }
@@ -101381,7 +101217,7 @@ function renderForm33FiledFace(ctx, warnings) {
         n3 += 1;
         for (const stmt of f3.statements) {
           if (stmt.purpose === "impeachment") continue;
-          pushExcerptBlockquote2(body, stmt.exhibit_id !== null ? stmt.exhibit_excerpt : stmt.excerpt, factStatementCitationLine3(exhibitMap, labelMap, stmt));
+          pushExcerptBlockquote(body, stmt.exhibit_id !== null ? stmt.exhibit_excerpt : stmt.excerpt, factStatementCitationLine(exhibitMap, labelMap, stmt));
         }
       }
       for (const la2 of lawBySubmission.get(s3.id) ?? []) {
@@ -101395,7 +101231,7 @@ function renderForm33FiledFace(ctx, warnings) {
         body.push(`${n3}. ${la2.proposition}`);
         n3 += 1;
         for (const stmt of la2.statements.filter(passesBriefOnlyCap)) {
-          pushExcerptBlockquote2(body, stmt.excerpt, lawStatementCitationLine3(stmt));
+          pushExcerptBlockquote(body, stmt.excerpt, lawStatementCitationLine3(stmt));
         }
       }
     }
@@ -101583,7 +101419,7 @@ function submissionFormsEmitForm33(dbPath, filingId, caseDataFolder2, seams = {}
 }
 
 // src/submission/forms/emit-affidavit.ts
-function rows26(dbPath, sql, params = []) {
+function rows27(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 function renderAffidavitFiledFace(ctx, a3) {
@@ -101598,14 +101434,14 @@ Resolve each through /drafting-data, re-render the mockup, then emit again.`
   if (a3.affidavit_number === null) {
     throw new ValidationError(`${a3.label}: its affidavit number is not recorded. Record it, then make the affidavit again.`);
   }
-  const paragraphs = rows26(ctx.dbPath, `SELECT text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
+  const paragraphs = rows27(ctx.dbPath, `SELECT text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
   if (paragraphs.length === 0) {
     throw new ValidationError(`Affidavit ${a3.id} (${a3.label}): no paragraphs are stored, so there is no text to emit.`);
   }
   const letters = exhibitLetters(paragraphs.map((p3) => p3.text));
   const ids = [...letters.keys()];
   const docs = new Map(
-    ids.length === 0 ? [] : rows26(
+    ids.length === 0 ? [] : rows27(
       ctx.dbPath,
       `SELECT id, label, file_path FROM documents WHERE id IN (${ids.map(() => "?").join(",")})`,
       ids
@@ -101856,7 +101692,7 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   const place = (prose.get("signing_place") ?? []).join(" ");
   if (!place) refuse2("the place of signing is not recorded");
   const factsPosition = prose.get("facts_position") ?? [];
-  const facts = fetchFacts3(ctx.dbPath, filing.id);
+  const facts = fetchFacts(ctx.dbPath, filing.id, factsPart("bcca_factum"));
   const factsRhetoric = fetchRhetoric(ctx.dbPath, filing.id, "form", "facts");
   if (factsPosition.length === 0 && facts.length === 0 && factsRhetoric.length === 0) refuse2("Part 1 has neither a position on the appellants' facts nor any fact");
   const submissions = fetchSubmissions(ctx.dbPath, filing.id, "form");
@@ -102343,18 +102179,18 @@ function runPreFilingChecks(dbPath, filingId, packageDir) {
     `SELECT p.id, p.file_number, f.kind FROM filings f JOIN proceedings p ON p.id = f.proceeding_id WHERE f.id = ?`,
     [filingId]
   );
-  const rows29 = fetchFilingDocuments(dbPath, filingId);
+  const rows30 = fetchFilingDocuments(dbPath, filingId);
   const filing = { kind: proceeding?.kind, proceeding_id: proceeding?.id ?? -1 };
-  const numbers = exhibitNumbersForFiling(dbPath, filing, rows29.map((r3) => r3.document_id));
+  const numbers = exhibitNumbersForFiling(dbPath, filing, rows30.map((r3) => r3.document_id));
   const proceedingNumbers = filing.kind === "submissions_package" ? numbers : /* @__PURE__ */ new Map();
-  const index = rows29.map((r3) => ({
+  const index = rows30.map((r3) => ({
     exhibit_number: numbers.get(r3.document_id),
     document_id: r3.document_id,
     label: r3.label,
     file_path: r3.file_path,
     already_delivered: r3.provenance === "already_in_court_file"
   }));
-  const dates = rows29.filter((r3) => /^\d{4}-\d{2}-\d{2}$/.test(r3.document_date ?? "")).map((r3) => ({ exhibit_number: numbers.get(r3.document_id), label: r3.label, document_date: r3.document_date }));
+  const dates = rows30.filter((r3) => /^\d{4}-\d{2}-\d{2}$/.test(r3.document_date ?? "")).map((r3) => ({ exhibit_number: numbers.get(r3.document_id), label: r3.label, document_date: r3.document_date }));
   const amounts = queryRows(
     dbPath,
     `SELECT DISTINCT os.id AS order_sought_id, os.wording, os.amount
@@ -103072,14 +102908,14 @@ function readIngestCoverage(caseDataDir, matterRoot, folderGlobs, correspondence
 var text3 = (value) => value === null || value === void 0 ? null : String(value);
 async function readMatterTodos(practiceDb2, matterNo) {
   if (matterNo === void 0) return { note: "No matter number was given, so this matter's to-dos were not read." };
-  let rows29;
+  let rows30;
   try {
-    rows29 = (await open_tasks(practiceDb2, { matt_num: matterNo })).rows;
+    rows30 = (await open_tasks(practiceDb2, { matt_num: matterNo })).rows;
   } catch (err) {
     return { note: `This matter's to-dos could not be read (${matterNo}): ${err.message}` };
   }
   return {
-    rows: rows29.map((row2) => ({
+    rows: rows30.map((row2) => ({
       id: String(row2.id),
       description: text3(row2.description) ?? "",
       bf_date: text3(row2.next_nudge_date),
@@ -103198,17 +103034,17 @@ async function lookUpMatter(root, practiceDb2, client) {
       client
     };
   }
-  let rows29;
+  let rows30;
   try {
-    rows29 = (await matter_lookup(practiceDb2, { matt_num: token })).rows;
+    rows30 = (await matter_lookup(practiceDb2, { matt_num: token })).rows;
   } catch (err) {
     return { lookup: { matt_num: token, found: false, note: `Matter lookup for ${token} failed: ${err.message}` }, client };
   }
-  if (rows29.length !== 1) {
-    const why = rows29.length === 0 ? "found no matter" : `found ${rows29.length} matters`;
+  if (rows30.length !== 1) {
+    const why = rows30.length === 0 ? "found no matter" : `found ${rows30.length} matters`;
     return { lookup: { matt_num: token, found: false, note: `Matter lookup for ${token} ${why}; client identity not filled in.` }, client };
   }
-  const row2 = rows29[0];
+  const row2 = rows30[0];
   const text5 = (v3) => v3 === null || v3 === void 0 || v3 === "" ? void 0 : String(v3);
   const resolved = {
     clientName: client.clientName ?? text5(row2.client_name),
@@ -103780,7 +103616,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
     for (const r3 of recipients) lists.recipient(r3);
   } else {
     const proceedings = source.proceeding_id === void 0 ? fetchAllProceedings(dbPath) : [fetchProceeding(dbPath, source.proceeding_id)];
-    const rows29 = [];
+    const rows30 = [];
     const drifted = /* @__PURE__ */ new Map();
     for (const proceeding of proceedings) {
       const { parties: parties2, drift } = draftingParties(dirname28(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
@@ -103789,9 +103625,9 @@ function emailRecipients(dbPath, source, senderKey, env) {
         const why = d3.kind === "unlinked" ? `${d3.name} is not linked to a party in case data, so its counsel cannot be read` : d3.kind === "not_of_record" ? `${d3.name} is linked to a party case data does not hold for this proceeding` : `counsel were not read from case data: ${d3.reason}`;
         for (const r3 of counsel) if (r3.party_id === d3.party_id) drifted.set(r3.id, why);
       }
-      rows29.push(...counsel);
+      rows30.push(...counsel);
     }
-    for (const r3 of mergeSharedRecipients(rows29)) lists.recipient(r3, drifted.get(r3.id));
+    for (const r3 of mergeSharedRecipients(rows30)) lists.recipient(r3, drifted.get(r3.id));
     if (source.proceeding_id === void 0 && proceedings.length > 1) {
       note = `No proceeding was named, so this addresses counsel on the service lists of all ${proceedings.length} proceedings, each once.`;
     }
@@ -106212,11 +106048,11 @@ function parseFile(path, content, sha2563, isSkill) {
   });
   return { path, sha256: sha2563, linesTotal: lines2.length, unmapped, atoms, vocab: isSkill ? vocab : null };
 }
-function parseVocabulary(rows29) {
+function parseVocabulary(rows30) {
   const ops = [];
   const facts = /* @__PURE__ */ new Map();
   let mode = null;
-  for (const { where, line } of rows29) {
+  for (const { where, line } of rows30) {
     const trimmed = line.trim();
     if (!trimmed.startsWith("|")) continue;
     const cells = trimmed.replace(/^\|/, "").replace(/\|$/, "").split("|").map((c3) => c3.trim());
@@ -106434,9 +106270,9 @@ function checkArgs2(tool, dbPath, token) {
     throw new ValidationError(`${tool}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
 }
-var rows27 = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
+var rows28 = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
 function assertSchema(tool, dbPath) {
-  const [row2] = rows27(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'");
+  const [row2] = rows28(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'");
   const version2 = row2 === void 0 ? 0 : Number(row2.value);
   if (version2 < POSITION_SCHEMA_VERSION) {
     throw new DataServerError(
@@ -106446,7 +106282,7 @@ function assertSchema(tool, dbPath) {
   }
 }
 function readPositions(dbPath, token) {
-  const found = rows27(
+  const found = rows28(
     dbPath,
     "SELECT branch, path, session_facts, in_force FROM session_position WHERE session_token = ? ORDER BY branch",
     [token]
@@ -106459,14 +106295,14 @@ function readPositions(dbPath, token) {
   );
 }
 function heldJob(dbPath, token) {
-  const [row2] = rows27(dbPath, "SELECT id FROM tickets WHERE locked_by = ? AND status = 'wip' ORDER BY id LIMIT 1", [token]);
+  const [row2] = rows28(dbPath, "SELECT id FROM tickets WHERE locked_by = ? AND status = 'wip' ORDER BY id LIMIT 1", [token]);
   return row2 === void 0 ? null : row2.id;
 }
 function databaseFacts(dag, dbPath, job) {
   const facts = {};
   if (dag.facts.has("job_held")) facts.job_held = job === null ? "false" : "true";
   if (job !== null && dag.facts.has("job_steps")) {
-    const [{ n: n3 }] = rows27(dbPath, "SELECT COUNT(*) AS n FROM ticket_steps WHERE ticket_id = ?", [job]);
+    const [{ n: n3 }] = rows28(dbPath, "SELECT COUNT(*) AS n FROM ticket_steps WHERE ticket_id = ?", [job]);
     if (n3 === 1) facts.job_steps = "one";
     else if (n3 > 1) facts.job_steps = "many";
   }
@@ -106582,7 +106418,7 @@ async function rulesMove(args, env = process.env) {
     if (job === null) {
       throw new ValidationError(`${tool}: this session holds no job to take over; assign it first (drafting_data__assign_job with takeover: true)`);
     }
-    const [row2] = rows27(
+    const [row2] = rows28(
       dbPath,
       "SELECT last_in_bounds_path, went_out_of_bounds_to FROM job_position WHERE job_id = ?",
       [job]
@@ -106592,7 +106428,7 @@ async function rulesMove(args, env = process.env) {
     }
     let note = null;
     if (row2.went_out_of_bounds_to !== null) {
-      const [visit] = rows27(dbPath, "SELECT from_path, visited_at FROM out_of_bounds_visit WHERE id = ?", [row2.went_out_of_bounds_to]);
+      const [visit] = rows28(dbPath, "SELECT from_path, visited_at FROM out_of_bounds_visit WHERE id = ?", [row2.went_out_of_bounds_to]);
       note = `The previous holder went out of bounds from ${visit.from_path} at ${visit.visited_at}; the rules it improvised there are not served.`;
     }
     takeover = { path: row2.last_in_bounds_path.split(" "), note };
@@ -106657,7 +106493,7 @@ async function rulesMove(args, env = process.env) {
     head.push(`  <takeover job="${job}"${takeover.note === null ? "" : ` note="${xmlAttr(takeover.note)}"`}/>`);
   }
   if (entersOutOfBounds) {
-    const [visit] = rows27(
+    const [visit] = rows28(
       dbPath,
       "SELECT id, from_path FROM out_of_bounds_visit WHERE session_token = ? ORDER BY id DESC LIMIT 1",
       [token]
@@ -106716,7 +106552,7 @@ async function rulesProvisional(args, env = process.env) {
   if (main === void 0 || at !== `${main.path[0]}/out-of-bounds`) {
     throw new ValidationError(`${tool}: this session's position is ${at ?? "not set"}, not out of bounds; rules__move to out_of_bounds first`);
   }
-  const [visit] = rows27(
+  const [visit] = rows28(
     dbPath,
     "SELECT id, provisional_rules FROM out_of_bounds_visit WHERE session_token = ? ORDER BY id DESC LIMIT 1",
     [token]
@@ -106807,7 +106643,7 @@ async function rulesBranch(args, env = process.env) {
 
 // src/files/rules-lifecycle.ts
 var DATE_RE2 = /^\d{4}-\d\d-\d\d$/;
-var rows28 = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
+var rows29 = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
 var skillOf = (id) => id.split(/[/ ]/)[0];
 var counts = (r3) => ` sessions="${r3.sessions}" served="${r3.served}" first_served="${xmlAttr(r3.first_served)}" last_served="${xmlAttr(r3.last_served)}"`;
 function rulesLifecycle(dbPath, since) {
@@ -106815,11 +106651,11 @@ function rulesLifecycle(dbPath, since) {
   if (typeof dbPath !== "string" || dbPath.trim() === "") throw new ValidationError(`${tool}.db_path must be the matter's drafting database`);
   if (since !== void 0 && (!DATE_RE2.test(since) || Number.isNaN(Date.parse(since)))) throw new ValidationError(`${tool}.since must be a date, YYYY-MM-DD, not ${JSON.stringify(since)}`);
   assertSchema(tool, dbPath);
-  const served = rows28(
+  const served = rows29(
     dbPath,
     "SELECT rule_id, node, COUNT(DISTINCT session_token) AS sessions, COUNT(*) AS served, MIN(served_at) AS first_served, MAX(served_at) AS last_served FROM rule_served GROUP BY rule_id, node ORDER BY rule_id, node"
   );
-  const visits = rows28(
+  const visits = rows29(
     dbPath,
     "SELECT id, from_path, turn_summary, provisional_rules, visited_at FROM out_of_bounds_visit WHERE visited_at >= ? ORDER BY id",
     [since ?? ""]
@@ -114772,13 +114608,13 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
         }
       }
       const images = [];
-      for (const [i3, [top, rows29]] of tiles.entries()) {
+      for (const [i3, [top, rows30]] of tiles.entries()) {
         await nextTurn();
-        const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows29));
+        const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows30));
         const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
         const file = join48(renderDir, `${name}.png`);
         writeFileSync13(file, png);
-        const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows29 };
+        const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows30 };
         if (tiles.length > 1) image.tile = i3 + 1;
         images.push(image);
       }
@@ -114818,11 +114654,11 @@ function pageSize(lib, page2, n3, dpi) {
     height: Math.max(1, Math.round(hPt * scale))
   };
 }
-function tileRows(width, top, rows29) {
+function tileRows(width, top, rows30) {
   const maxRows = Math.min(MAX_SIDE, Math.floor(MAX_PIXELS / width));
-  const each = Math.ceil(rows29 / Math.ceil(rows29 / maxRows));
+  const each = Math.ceil(rows30 / Math.ceil(rows30 / maxRows));
   const tiles = [];
-  for (let t3 = top; t3 < top + rows29; t3 += each) tiles.push([t3, Math.min(each, top + rows29 - t3)]);
+  for (let t3 = top; t3 < top + rows30; t3 += each) tiles.push([t3, Math.min(each, top + rows30 - t3)]);
   return tiles;
 }
 function overlappingHalves(width, height) {
@@ -114897,21 +114733,21 @@ function coverage(rects, [left, bottom, right, top]) {
   }
   return grid.reduce((sum, v3) => sum + v3, 0) / (N3 * N3);
 }
-function renderPng(lib, page2, n3, width, height, top, rows29) {
-  return encodePng(renderRgb(lib, page2, n3, width, height, top, rows29), width, rows29);
+function renderPng(lib, page2, n3, width, height, top, rows30) {
+  return encodePng(renderRgb(lib, page2, n3, width, height, top, rows30), width, rows30);
 }
-function renderRgb(lib, page2, n3, width, height, top, rows29, flags = 0, form = 0) {
-  const bitmap = lib.FPDFBitmap_CreateEx(width, rows29, BITMAP_BGR, 0, 0);
-  if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows29} bitmap for page ${n3}`, "page_too_large");
+function renderRgb(lib, page2, n3, width, height, top, rows30, flags = 0, form = 0) {
+  const bitmap = lib.FPDFBitmap_CreateEx(width, rows30, BITMAP_BGR, 0, 0);
+  if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows30} bitmap for page ${n3}`, "page_too_large");
   try {
-    lib.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows29, 4294967295);
+    lib.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows30, 4294967295);
     lib.FPDF_RenderPageBitmap(bitmap, page2, 0, -top, width, height, 0, flags);
     if (form) lib.FPDF_FFLDraw(form, bitmap, page2, 0, -top, width, height, 0, flags);
     const buffer = lib.FPDFBitmap_GetBuffer(bitmap);
     const stride = lib.FPDFBitmap_GetStride(bitmap);
     const heap = heapU8(lib);
-    const rgb = Buffer.alloc(width * 3 * rows29);
-    for (let y3 = 0; y3 < rows29; y3++) {
+    const rgb = Buffer.alloc(width * 3 * rows30);
+    for (let y3 = 0; y3 < rows30; y3++) {
       const src = buffer + y3 * stride;
       const dst = y3 * width * 3;
       for (let x3 = 0; x3 < width; x3++) {
@@ -114925,13 +114761,13 @@ function renderRgb(lib, page2, n3, width, height, top, rows29, flags = 0, form =
     lib.FPDFBitmap_Destroy(bitmap);
   }
 }
-function encodePng(rgb, width, rows29) {
+function encodePng(rgb, width, rows30) {
   const line = width * 3 + 1;
-  const raw = Buffer.alloc(line * rows29);
-  for (let y3 = 0; y3 < rows29; y3++) rgb.copy(raw, y3 * line + 1, y3 * width * 3, (y3 + 1) * width * 3);
+  const raw = Buffer.alloc(line * rows30);
+  for (let y3 = 0; y3 < rows30; y3++) rgb.copy(raw, y3 * line + 1, y3 * width * 3, (y3 + 1) * width * 3);
   const header = Buffer.alloc(13);
   header.writeUInt32BE(width, 0);
-  header.writeUInt32BE(rows29, 4);
+  header.writeUInt32BE(rows30, 4);
   header[8] = 8;
   header[9] = 2;
   return Buffer.concat([PNG_SIGNATURE, chunk("IHDR", header), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
@@ -115410,19 +115246,19 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
     mkdirSync24(outDir, { recursive: true });
     assertUnprotected(canonicalRoot(outDir, `law-text folder does not resolve: ${outDir}`, "not_found"));
   }
-  const rows29 = [];
+  const rows30 = [];
   for (const file of files) {
     const read3 = await cachedExtract(pathWin3230.join(law, file));
     if (read3.status === "unread") {
-      rows29.push({ file, text_path: null, bytes: 0, status: "unread", reason: read3.reason });
+      rows30.push({ file, text_path: null, bytes: 0, status: "unread", reason: read3.reason });
       continue;
     }
     const textPath = pathWin3230.join(outDir, `${file}.txt`);
     const body = Buffer.from(read3.text, "utf-8");
     writeFileSync14(textPath, body);
-    rows29.push({ file, text_path: textPath, bytes: body.length, method: read3.method, status: "ok" });
+    rows30.push({ file, text_path: textPath, bytes: body.length, method: read3.method, status: "ok" });
   }
-  return { out_dir: outDir, files: rows29 };
+  return { out_dir: outDir, files: rows30 };
 }
 function assertUnprotected(realDir) {
   if (zoneProblem("write", realDir)) {
@@ -116001,11 +115837,11 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
           const dir = join50(workDir, side);
           mkdirSync25(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
-          return tiles.map(([top, rows29], i3) => {
+          return tiles.map(([top, rows30], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
             const file = join50(dir, `${name}.png`);
-            const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows29) * facts.width * 3);
-            writeFileSync15(file, encodePng(rgb, facts.width, rows29));
+            const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows30) * facts.width * 3);
+            writeFileSync15(file, encodePng(rgb, facts.width, rows30));
             return file;
           });
         };

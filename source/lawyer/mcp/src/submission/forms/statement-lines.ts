@@ -9,11 +9,13 @@ import type { FactStatementRow } from "./submission-reads.js";
  * the line entirely rather than printing an empty "> ". The fact side never prints
  * CITATION_MISSING: its "citation" is an exhibit/instrument label, not a nullable authorities
  * column, so a resolved label is either present or the statement has nothing to point at yet
- * (covered by 📑/💬 and 📌/🧷, not this placeholder). */
+ * (covered by 📑/💬 and 📌/🧷, not this placeholder). The Form 32 filed face passes `prefix` ">> ":
+ * asm32 sets a citation in its own style. */
 export function factStatementCitationLine(
   exhibitMap: Map<number, number>,
   labelMap: Map<number, string>,
-  s: Pick<FactStatementRow, "instrument_id" | "pinpoint" | "exhibit_id" | "exhibit_pinpoint">
+  s: Pick<FactStatementRow, "instrument_id" | "pinpoint" | "exhibit_id" | "exhibit_pinpoint">,
+  prefix = "> "
 ): string | null {
   const parts: string[] = [];
   if (s.instrument_id !== null) {
@@ -29,7 +31,7 @@ export function factStatementCitationLine(
     if (exhibitLabel !== undefined) parts.push(exhibitLabel);
     if (s.exhibit_pinpoint) parts.push(s.exhibit_pinpoint);
   }
-  return parts.length === 0 ? null : `> ${parts.join(", ")}`;
+  return parts.length === 0 ? null : `${prefix}${parts.join(", ")}`;
 }
 
 /** copyMarker is looked up by the caller from s.instrument_id (never exhibit_id --

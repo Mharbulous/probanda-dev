@@ -19,7 +19,7 @@ import {
   fetchChronology,
   fetchProseParagraphs,
 } from "./render-bcca-factum.js";
-import { fetchFacts } from "./render-bcca-stay-response.js";
+import { factsPart, fetchFacts } from "./filing-facts.js";
 import {
   exhibitNumbersFromOrderedIds,
   fetchDocumentLabels,
@@ -106,7 +106,7 @@ export function renderBccaFactumFiledFace(ctx: RenderContext, datedOn: string): 
   if (!place) refuse("the place of signing is not recorded");
 
   const factsPosition = prose.get("facts_position") ?? [];
-  const facts = fetchFacts(ctx.dbPath, filing.id);
+  const facts = fetchFacts(ctx.dbPath, filing.id, factsPart("bcca_factum"));
   // A rhetorical paragraph placed in Part 1 is Part 1 content, as a fact is.
   const factsRhetoric = fetchRhetoric(ctx.dbPath, filing.id, "form", "facts");
   if (factsPosition.length === 0 && facts.length === 0 && factsRhetoric.length === 0) refuse("Part 1 has neither a position on the appellants' facts nor any fact");

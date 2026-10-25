@@ -9,6 +9,7 @@
 
 import { ValidationError } from "../../errors.js";
 import { submissionDataQuery } from "../backend.js";
+import { factsPart } from "./filing-facts.js";
 import type { FilingRow } from "./query.js";
 
 export interface UnplacedFact {
@@ -17,18 +18,15 @@ export interface UnplacedFact {
   postulate: string;
 }
 
-/** Each kind's facts Part, as its form's filing_facts rows record it. */
-const FACTS_PART = new Map([
-  ["notice_of_application", "part2"],
-  ["application_response", "part4"],
-]);
+/** The kinds whose submissions rest on facts this check places; each one's facts Part is filing-facts.ts's. */
+const CHECKED_KINDS = new Set(["notice_of_application", "application_response"]);
 
 /** Every fact attached to a live submission on a drafting Notice of Application's or Application
  * Response's form that the form's facts Part does not hold, in form order. Empty for a sent or
  * retired Writing and for every other kind. */
 export function fetchUnplacedFacts(dbPath: string, filing: Pick<FilingRow, "id" | "kind" | "filed_on" | "retired_on">): UnplacedFact[] {
-  const part = FACTS_PART.get(filing.kind);
-  if (part === undefined || filing.filed_on || filing.retired_on) return [];
+  if (!CHECKED_KINDS.has(filing.kind) || filing.filed_on || filing.retired_on) return [];
+  const part = factsPart(filing.kind);
   return submissionDataQuery(
     dbPath,
     `SELECT fs.submission_id, sf.fact_id, f.postulate
@@ -52,7 +50,7 @@ export function refuseUnplacedFacts(dbPath: string, filing: Pick<FilingRow, "id"
   throw new ValidationError(
     `Refusing ${tool}: Writing ${filing.id} has submissions resting on facts its facts Part does not hold, which the filed face would drop: ` +
       unplaced.map((u) => `submission ${u.submission_id}, fact ${u.fact_id} ${JSON.stringify(u.postulate)}`).join("; ") +
-      `. The mockup names each NOT PLACED. Place each fact in the form's facts Part (filing_facts, document 'form', part '${FACTS_PART.get(filing.kind)}'), or detach it from its submission, then call ${tool} again.`,
+      `. The mockup names each NOT PLACED. Place each fact in the form's facts Part (filing_facts, document 'form', part '${factsPart(filing.kind)}'), or detach it from its submission, then call ${tool} again.`,
     "facts_not_placed"
   );
 }

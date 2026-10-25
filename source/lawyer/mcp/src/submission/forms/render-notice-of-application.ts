@@ -6,18 +6,16 @@
 
 import { submissionDataQuery } from "../backend.js";
 import {
-  BLANK_UNDERLINE,
+  formatTimeEstimate,
   checkboxOrderBlock,
-  frontmatterHeader,
   signatureBlock,
   STANDARD_MATERIAL_LINES,
   styleOfProceedingCaption,
   type CaptionParty,
-  type FrontmatterFields,
 } from "./components.js";
 import { courtRecordCitation, courtRecordPinpointMarker, dedupeLineMarkers, doubtMarker, exhibitPinpointMarker, gapMarker, isAdmittedGuard, isExhibitTenderRole, looseThreadMarker, noWitnessMarker, suppressMarker, printMarkerSets, statementOfFactMarkers, testimonyPinpointMarker, unservedPetitumMarker, unsponsoredExhibitMarker } from "./markers.js";
 import { recordCriterionGlyphs, recordFactStatementGlyphs, recordGlyphs, recordJurisdictionLadder } from "./proposal-inventory.js";
-import { captionHeadingFor, courtRecordDocumentColumns, opposingPartyIds, type ProceedingRow } from "./query.js";
+import { captionHeadingFor, opposingPartyIds } from "./query.js";
 import {
   exhibitNumbersFromOrderedIds,
   factStatementCitationLine,
@@ -41,6 +39,8 @@ import {
   type RenderContext,
 } from "./render-vaniac-submissions.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
+import { factsPart, fetchFacts, fetchStatementsOfFact, type StatementOfFactRow } from "./filing-facts.js";
+import { filingFrontmatter } from "./filing-frontmatter.js";
 
 function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
   return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
@@ -62,71 +62,6 @@ function fetchHearingDetails(dbPath: string, filingId: number): HearingDetailsRo
  * no hearing_details row) -- ⬜, alternative unchosen. forms.ts's filed face refuses on this line. */
 export const ASSOCIATE_JUDGE_UNDETERMINED_LINE = `Associate judge jurisdiction: not yet determined ${gapMarker("unchosen")}`;
 
-interface FactRow {
-  id: number;
-  postulate: string;
-  court_record: number | null;
-  court_record_pinpoint: string | null;
-  /** The court-record document's execution and exhibit_letters (v56), for 📌. */
-  court_record_execution: string | null;
-  court_record_exhibit_letters: string | null;
-  /** filing_facts.id -- 🧵 loose-thread keys on the venue form's pointer row, not the fact
-   * (design §4). Read by the Proposal inventory alone; nothing rendered uses it. */
-  pointer_id: number;
-  /** filing_facts.ordinal, the scale a facts-part rhetorical paragraph is placed on (render-rhetoric.ts). */
-  filing_ordinal: number;
-}
-
-function fetchFacts(dbPath: string, filingId: number, part: string): FactRow[] {
-  return rows<FactRow>(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
-     FROM filing_facts ff
-     JOIN facts f ON f.id = ff.fact_id
-     LEFT JOIN documents cr ON cr.id = f.court_record
-     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = ?
-     ORDER BY ff.ordinal`,
-    [filingId, part]
-  );
-}
-
-interface StatementOfFactRow {
-  id: number;
-  fact_id: number;
-  pinpoint: string | null;
-  doubt: string | null;
-  interviewed: number;
-  instrument_id: number | null;
-  instrument_kind: "witness_statement" | "affidavit" | null;
-  instrument_execution: string | null;
-  exhibit_id: number | null;
-  exhibit_pinpoint: string | null;
-  /** 'impeachment' never rides a delivered document, so it gets no 🧐 (renderSubmissionParagraphs skips it too). */
-  purpose: string | null;
-  /** Witness and instrument identity for the Proposal inventory alone (design §8: 🗣️/✍️ key on
-   * the witness, 🖋️/✒️ on the instrument, and a statement's item reads `<witness>: <postulate>`).
-   * Nothing rendered uses any of the three. */
-  witness_id: number;
-  witness_name: string;
-  instrument_label: string | null;
-}
-
-function fetchStatementsOfFact(dbPath: string, factIds: number[]): StatementOfFactRow[] {
-  if (factIds.length === 0) return [];
-  const placeholders = factIds.map(() => "?").join(",");
-  return rows<StatementOfFactRow>(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
-            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
-            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents doc ON doc.id = sof.instrument
-     WHERE sof.fact_id IN (${placeholders})`,
-    factIds
-  );
-}
-
 interface WitnessBackedCheck {
   fact_id: number;
   has_statement: number;
@@ -145,33 +80,6 @@ function fetchWitnessBackedFlags(dbPath: string, factIds: number[]): Map<number,
   return new Map(found.map((r) => [r.fact_id, r.has_statement === 1]));
 }
 
-function frontmatterFor(proceeding: ProceedingRow, ctx: RenderContext): string {
-  const fields: FrontmatterFields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType: "Notice_of_application",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered,
-  };
-  return frontmatterHeader(fields);
-}
-
-/** Duplicated from render-form32-filed-face.ts (private there), so the mockup's estimate sentence reads exactly as the filed face emits it. */
-function formatTimeEstimate(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const parts: string[] = [];
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
-  return parts.join(" ");
-}
-
 export function renderNoticeOfApplication(ctx: RenderContext): string {
   const captionParties: CaptionParty[] = ctx.parties.map((p) => ({ name: p.name, role: p.role, ordinal: p.ordinal }));
   const applicant = ctx.parties.find((p) => p.is_applicant === 1) ?? ctx.parties.find((p) => p.is_client === 1);
@@ -185,7 +93,7 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
   // not a bug (see #384's resolution).
   const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
 
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, "part2");
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("notice_of_application"));
   const statementsOfFact = fetchStatementsOfFact(
     ctx.dbPath,
     facts.map((f) => f.id)
@@ -234,7 +142,7 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
   const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
 
   const lines: string[] = [];
-  lines.push(frontmatterFor(ctx.proceeding, ctx));
+  lines.push(filingFrontmatter(ctx.proceeding, ctx, "Notice_of_application"));
   lines.push("");
   lines.push(
     styleOfProceedingCaption(captionParties, {

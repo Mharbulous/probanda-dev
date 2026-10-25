@@ -30,18 +30,15 @@
 import { submissionDataQuery } from "../backend.js";
 import { BRIEF_ONLY_CAP_SQL } from "./brief-only-cap.js";
 import {
-  BLANK_UNDERLINE,
   bccaCoverPage,
   buildLowerCourtRoleByRole,
   contactCells,
   formatNameList,
-  frontmatterHeader,
   groupPartiesByRole,
   pluralizeRole,
   signatureBlock,
   type BccaCoverPageContact,
   type CaptionParty,
-  type FrontmatterFields,
 } from "./components.js";
 import {
   courtRecordCitation,
@@ -60,7 +57,7 @@ import {
   unpositionedOrderMarker,
 } from "./markers.js";
 import { recordCriterionGlyphs, recordFactStatementGlyphs, recordGlyphs, type MarkerInventory } from "./proposal-inventory.js";
-import { captionHeadingFor, courtRecordDocumentColumns, opposingPartyIds, type ProceedingRow } from "./query.js";
+import { captionHeadingFor, opposingPartyIds } from "./query.js";
 import {
   exhibitNumbersFromOrderedIds,
   fetchDocumentLabels,
@@ -89,75 +86,11 @@ import {
   type PositionRow,
 } from "./render-application-response.js";
 import { fetchRhetoric, interleave, renderRhetoricLine, type RhetoricRow } from "./render-rhetoric.js";
+import { factsPart, fetchFacts, fetchStatementsOfFact, type FactRow, type StatementOfFactRow } from "./filing-facts.js";
+import { filingFrontmatter } from "./filing-frontmatter.js";
 
 function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
   return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
-
-export interface FactRow {
-  id: number;
-  postulate: string;
-  court_record: number | null;
-  court_record_pinpoint: string | null;
-  /** The court-record document's execution and exhibit_letters (v56), for 📌. */
-  court_record_execution: string | null;
-  court_record_exhibit_letters: string | null;
-  /** filing_facts.ordinal, the scale a facts-part rhetorical paragraph is placed on (render-rhetoric.ts). */
-  filing_ordinal: number;
-}
-
-/** filing_facts scoped to document='form' AND part='part2' -- this kind's own slot value
- * (checklists §10): the written argument's Statement of Facts. 'part4' stays the BCSC
- * Application Response's. Exported: the BCCA factum uses the same slot for its Part 1 facts
- * (checklists §12). */
-export function fetchFacts(dbPath: string, filingId: number): FactRow[] {
-  return rows<FactRow>(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.ordinal AS filing_ordinal
-     FROM filing_facts ff
-     JOIN facts f ON f.id = ff.fact_id
-     LEFT JOIN documents cr ON cr.id = f.court_record
-     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = 'part2'
-     ORDER BY ff.ordinal`,
-    [filingId]
-  );
-}
-
-interface StatementOfFactRow {
-  id: number;
-  fact_id: number;
-  pinpoint: string | null;
-  doubt: string | null;
-  interviewed: number;
-  instrument_id: number | null;
-  instrument_kind: "witness_statement" | "affidavit" | null;
-  instrument_execution: string | null;
-  exhibit_id: number | null;
-  exhibit_pinpoint: string | null;
-  /** 'impeachment' never rides a delivered document, so it gets no 🧐 (renderSubmissionParagraphs skips it too). */
-  purpose: string | null;
-  /** Witness and instrument identity for the Proposal inventory alone (design §8: 🗣️/✍️ key on
-   * the witness, 🖋️/✒️ on the instrument, and a statement's item reads `<witness>: <postulate>`).
-   * Nothing rendered uses any of the three. */
-  witness_id: number;
-  witness_name: string;
-  instrument_label: string | null;
-}
-
-function fetchStatementsOfFact(dbPath: string, factIds: number[]): StatementOfFactRow[] {
-  if (factIds.length === 0) return [];
-  const placeholders = factIds.map(() => "?").join(",");
-  return rows<StatementOfFactRow>(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
-            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
-            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents doc ON doc.id = sof.instrument
-     WHERE sof.fact_id IN (${placeholders})`,
-    factIds
-  );
 }
 
 /** Statement-of-Facts paragraphs for part2-slot facts, numbered from startPara + 1, each with its
@@ -470,23 +403,6 @@ function buildToc(
   return out;
 }
 
-function frontmatterFor(proceeding: ProceedingRow, ctx: RenderContext): string {
-  const fields: FrontmatterFields = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType: "Response_book",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered,
-  };
-  return frontmatterHeader(fields);
-}
-
 /** Records each 🧩 cell of a cover page's contact table, keyed `counsel_of_record.<field>` on the party
  * row (#1226): counsel of record is case data's, so the key names the value missing, never a
  * submission column (#1306). Called once per render however many covers print the table, from the
@@ -517,7 +433,7 @@ export function renderBccaStayResponse(ctx: RenderContext): string {
   const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
   const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
 
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id);
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("bcca_stay_response"));
 
   const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
   const submissionIds = submissions.map((s) => s.id);
@@ -572,7 +488,7 @@ export function renderBccaStayResponse(ctx: RenderContext): string {
   });
 
   const lines: string[] = [];
-  lines.push(frontmatterFor(ctx.proceeding, ctx));
+  lines.push(filingFrontmatter(ctx.proceeding, ctx, "Response_book"));
   lines.push("");
   lines.push(
     bccaCoverPage(captionParties, {

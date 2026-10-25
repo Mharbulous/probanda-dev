@@ -14,9 +14,8 @@ import { submissionDataQuery } from "../backend.js";
 import type { PublishWarning } from "../publish-sidecar.js";
 import { ValidationError } from "../../errors.js";
 import { passesBriefOnlyCap } from "./brief-only-cap.js";
-import { STANDARD_MATERIAL_LINES } from "./components.js";
+import { formatTimeEstimate, pushExcerptBlockquote, STANDARD_MATERIAL_LINES } from "./components.js";
 import {
-  fetchFacts,
   fetchFilingPositions,
   fetchHearingDetails,
   fetchUnpositionedOrders,
@@ -34,11 +33,12 @@ import {
   fetchSubmissions,
   groupSubmissionFacts,
   groupSubmissionLaw,
-  type FactStatementRow,
   type LawAssertionRow,
   type RenderContext,
 } from "./render-vaniac-submissions.js";
 import { fetchRhetoric, interleave, renderRhetoricFiled } from "./render-rhetoric.js";
+import { factsPart, fetchFacts } from "./filing-facts.js";
+import { factStatementCitationLine } from "./statement-lines.js";
 
 function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
   return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
@@ -49,34 +49,6 @@ const NOTICE_DATE_PLACEHOLDER = "[notice date]";
 const HEARING_DATE_PLACEHOLDER = "[agree, or propose other hearing date(s)]";
 const TIME_ESTIMATE_PLACEHOLDER = "[time estimate]";
 const NO_FACTUAL_BASIS = "[factual basis: no facts recorded]";
-
-function formatTimeEstimate(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const parts: string[] = [];
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (mins > 0 || hours === 0) parts.push(`${mins} minute${mins === 1 ? "" : "s"}`);
-  return parts.join(" ");
-}
-
-/** Duplicated from render-vaniac-submissions.ts (private there) -- mirrors render-form32-filed-face.ts's own copy. Citation as its own blockquote line (ticket 2026-08-31), not folded into the excerpt's parenthetical. */
-function factStatementCitationLine(exhibitMap: Map<number, number>, labelMap: Map<number, string>, s: FactStatementRow): string | null {
-  const parts: string[] = [];
-  if (s.instrument_id !== null) {
-    const instrumentLabel = labelMap.get(s.instrument_id);
-    if (instrumentLabel !== undefined) parts.push(instrumentLabel);
-    if (s.pinpoint) parts.push(s.pinpoint);
-  } else if (s.pinpoint) {
-    parts.push(s.pinpoint);
-  }
-  if (s.exhibit_id !== null) {
-    const num = exhibitMap.get(s.exhibit_id);
-    const exhibitLabel = num !== undefined ? `Ex. ${num}` : labelMap.get(s.exhibit_id);
-    if (exhibitLabel !== undefined) parts.push(exhibitLabel);
-    if (s.exhibit_pinpoint) parts.push(s.exhibit_pinpoint);
-  }
-  return parts.length === 0 ? null : `> ${parts.join(", ")}`;
-}
 
 /** Duplicated from render-vaniac-submissions.ts (private there) -- mirrors render-form32-filed-face.ts's own copy. authority_title === null is structurally unreachable via groupSubmissionLaw's output -- kept defensive, not deleted. */
 function lawStatementCitationLine(row: LawAssertionRow): string | null {
@@ -89,17 +61,6 @@ function lawStatementCitationLine(row: LawAssertionRow): string | null {
     pin = pin.slice(row.authority_citation.length).replace(/^[\s,;]+/, "") || null;
   }
   return `> *${row.authority_title}*, ${citation}${pin ? `, ${pin}` : ""}`;
-}
-
-/** Duplicated from render-form32-filed-face.ts (private there) -- same grammar-legal blockquote shape. */
-function pushExcerptBlockquote(lines: string[], excerpt: string | null, citationLine: string | null): void {
-  if (!excerpt) return;
-  // No surrounding quotation marks -- the blockquote already marks the text as verbatim.
-  for (const line of excerpt.split("\n")) {
-    if (line.trim() === "") continue;
-    lines.push(`> ${line}`);
-  }
-  if (citationLine) lines.push(citationLine);
 }
 
 /** Submissions cascade-struck the same way the Written Arguments renders them (render-companions.ts's
@@ -212,7 +173,7 @@ export function renderForm33FiledFace(ctx: RenderContext, warnings?: PublishWarn
     terms: p.position === "consented" ? p.proposed_terms ?? "" : "",
   }));
 
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id);
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("application_response"));
   const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
   const struck = struckSubmissionIds(
     ctx.dbPath,
