@@ -77,6 +77,13 @@ matches citation form — the flag means a suffix-vs-substantive call that only
 the caption can resolve (`notes/law-notes.md`). The name gate itself makes no
 suffix judgment beyond reporting that flag.
 
+For `/housekeeping`'s work list the server applies the mechanical forms
+itself: Law's citation form and its `Alexi`, `Westlaw` and `Claude` AI-memo
+forms, Discovery's `[Party][Part].[No] - ` prefix before a name that passes
+the gate, and Discovery's legacy bare item numbers (left alone, so they
+conform). Every other failure in those folders comes back as
+`second_pass_required`, and the session judges it against the notes as above.
+
 **Flag tokens:** for the Law folder, pass the corporate-designator drop list
 (`notes/law-notes.md`) to `/file-naming`'s gate as `--flag-tokens` so a
 flagged token surfaces regardless of verdict.

@@ -1,4 +1,4 @@
-// build-stamp: 5c9f5daad344
+// build-stamp: e4f56f29f84f
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77707,7 +77707,7 @@ function fileToolDefinitions() {
     },
     {
       name: "repo_docs__write",
-      description: "Write a file under the Coclerk repo's docs/ tree (git-versioned, non-privileged). `path` is relative to docs/ (e.g. `E2E-tests/2026-07-19 foo-e2e-test.md`); intermediate directories are created as needed. Fails with code `exists` unless `overwrite: true` -- on that error pick a new name rather than overwriting blindly. This surface cannot touch matter files, code, or anything outside docs/; use it to deliver dev-tool artifacts such as introspection E2E reports without a repo folder grant.",
+      description: "Write a file under the probanda-dev repo's docs/ tree (git-versioned, non-privileged). `path` is relative to docs/ (e.g. `E2E-tests/2026-07-19 foo-e2e-test.md`); intermediate directories are created as needed. Fails with code `exists` unless `overwrite: true` -- on that error pick a new name rather than overwriting blindly. This surface cannot touch matter files, code, or anything outside docs/; use it to deliver dev-tool artifacts such as introspection E2E reports without a repo folder grant.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77722,7 +77722,7 @@ function fileToolDefinitions() {
     },
     {
       name: "repo_docs__read",
-      description: "Read one file under the Coclerk repo's docs/ tree as UTF-8 text, without a repo folder grant. Read-only. `path` is relative to docs/, as `repo_docs__write` takes it; returns {path, content}. Fails with code `not_found` for a missing file and `path_out_of_scope` for any path that leaves docs/.",
+      description: "Read one file under the probanda-dev repo's docs/ tree as UTF-8 text, without a repo folder grant. Read-only. `path` is relative to docs/, as `repo_docs__write` takes it; returns {path, content}. Fails with code `not_found` for a missing file and `path_out_of_scope` for any path that leaves docs/.",
       inputSchema: {
         type: "object",
         properties: {
@@ -79145,7 +79145,7 @@ function readConfigRepoRoot(cfgPath, tried) {
 }
 function conventionalCandidates(env) {
   const home = env.USERPROFILE || env.HOME || homedir4();
-  return home ? [join8(home, "Git", "Coclerk")] : [];
+  return home ? [join8(home, "Git", "probanda-dev")] : [];
 }
 function bundledSkillFolders(installRoot = INSTALL_ROOT) {
   const dir = installSkillsRoot(installRoot);
@@ -86373,7 +86373,7 @@ function withPartiesDriftLines(markdown, rows29) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync17 } from "node:fs";
 import { join as join23 } from "node:path";
-var BUILD_STAMP = false ? null : "5c9f5daad344";
+var BUILD_STAMP = false ? null : "e4f56f29f84f";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };

@@ -4,6 +4,8 @@ Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the li
 
 Read-only and batched. For a list of files, each named by its path and the SHA-256 of its bytes, report whether the case database already holds the file and what it stores about it. **This operation writes nothing.** The housekeeping review log is a separate call ([`housekeeping-log.md`](housekeeping-log.md), mode `lookup`).
 
+[`../references/scripts/housekeeping_lookup.py`](../references/scripts/housekeeping_lookup.py) runs this operation host-side for the review log's work-list caller (design-decisions #73), executing this file's own fenced code; it is not a model-facing tool.
+
 A file is **ingested** when its hash matches one of:
 
 1. a top-level `main.sources` row with `ingestion_status = 'complete'`, or with `ingestion_status` NULL and at least one child row (the gate's rule, [`ingest.md`](ingest.md) Step 4);

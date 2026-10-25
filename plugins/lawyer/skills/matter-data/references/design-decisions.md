@@ -1264,6 +1264,14 @@ Before any read of a PDF's content, the session calls the lawyer data server's `
 
 This supersedes #41's "chains of successive changes reconstruct from the court file" only. #41's two fields and its rejection of a history table inside case data stand.
 
+## 73. `/housekeeping`'s work list reads ingest status and the review log host-side, through one script (2026-10-25, #174)
+
+A housekeeping run on a matter of about 330 files passed every candidate's path and hash through the session five times before any document was read. The file-manager plugin's `housekeeping__candidates` tool now lists, hashes and name-gates the candidates itself, and reads this skill's data through `references/scripts/housekeeping_lookup.py`, spawned once per run over `PYTHONPATH` as #60's script is.
+
+**The `files` server reads the case database only through this script.** The script executes `operations/ingest-status.md`'s probe and `ingest_status`, `operations/housekeeping-log.md`'s `-- housekeeping-log lookup` query with its placeholders bound as `?` lists, and `shared/conventions.md`'s `stored_form`, read from the skill tree beside it. The SQL and the verdict code stay in this skill, the rule the data server's case backend states, and the lookup's join rules (hash match preferred over name, `not_ingested` by hash only, the newest `ingest_failed` by hash) are the operation's, coded once in the script. The review log is still read only by its own operation's query, so #26 (d) holds.
+
+**Its read discipline is #60's:** temp copies of all three databases in a `staging_prefix` folder, no lock, version-guarded through `resolve_paths.EXPECTED_USER_VERSION`, three statuses each with its reason, and no model-facing tool. The session keeps `ingest-status` for Step 9's second call and `housekeeping-log` for every write.
+
 ---
 
 **Closing principle:** schemas encode categorical invariants; prose + verifier backlog encode judgment. Do not swap them.

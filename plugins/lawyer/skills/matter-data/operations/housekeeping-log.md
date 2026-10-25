@@ -12,6 +12,8 @@ Three modes. The caller names one.
 | `record` | "These files were applied" or "this ingest failed" — after the fact |
 | `retry` | "Try reading these failed files again next run" |
 
+[`../references/scripts/housekeeping_lookup.py`](../references/scripts/housekeeping_lookup.py) runs mode `lookup` host-side for `/housekeeping`'s work list, executing this file's own fenced query and the join rules below; it is not a model-facing tool.
+
 **The caller never sees a table name, a column name, or SQL.** It hands over files as `{file_name, file_hash}` and gets back verdicts, or hands over closed outcomes and gets back a count. Everything below the interface is this file's.
 
 ## Outcomes

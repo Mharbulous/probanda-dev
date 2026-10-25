@@ -1,4 +1,4 @@
-// build-stamp: f89022b33dc1
+// build-stamp: 923df2d9a415
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -6859,8 +6859,8 @@ var require_dist = __commonJS({
         return ajv;
       }
       const [formats, exportName] = opts.mode === "fast" ? [formats_1.fastFormats, fastName] : [formats_1.fullFormats, fullName];
-      const list = opts.formats || formats_1.formatNames;
-      addFormats(ajv, list, formats, exportName);
+      const list2 = opts.formats || formats_1.formatNames;
+      addFormats(ajv, list2, formats, exportName);
       if (opts.keywords)
         (0, limit_1.default)(ajv);
       return ajv;
@@ -6872,11 +6872,11 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats(ajv, list, fs, exportName) {
+    function addFormats(ajv, list2, fs, exportName) {
       var _a3;
       var _b;
       (_a3 = (_b = ajv.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
-      for (const f of list)
+      for (const f of list2)
         ajv.addFormat(f, fs[f]);
     }
     module.exports = exports = formatsPlugin;
@@ -15543,7 +15543,7 @@ function housekeepingToolDefinitions() {
     },
     {
       name: "housekeeping__new_run",
-      description: "Start a /housekeeping run for a client matter: create `<matter-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the matter-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__order_candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the matter-data folder does not exist (run /matter-data initialize first).",
+      description: "Start a /housekeeping run for a client matter: create `<matter-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the matter-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the matter-data folder does not exist (run /matter-data initialize first).",
       inputSchema: {
         type: "object",
         properties: { matter_root: { type: "string" } },
@@ -15553,30 +15553,40 @@ function housekeepingToolDefinitions() {
       annotations: { destructiveHint: false, openWorldHint: false }
     },
     {
-      name: "housekeeping__order_candidates",
-      description: "Order a /housekeeping run's admitted files and cap them at 50, before anything is ingested. `candidates` is every admitted file as {path, hash}: `path` matter-root-relative in stored form, `hash` its lowercase SHA-256; a path given twice is refused (`invalid_argument`). The order is fresh root files, fresh subfolder files, rotated root files, rotated subfolder files; root files by name, subfolder files by folder, then name, compared lowercased by character code. A file is rotated when its hash was an offered row on the previous run's page and was not approved there (left as is, or a stuck or misfiled row); matched by hash, never by name. The previous run is the newest run earlier than `run_id` whose proposal.json is valid, approved or not; with none, every file is fresh. Fails `approval_corrupt` when that run's approval.json is there but unreadable. Returns {run_id, previous_run, admitted, deferred}, each file {path, hash, rotated}: `admitted` (at most 50) are this run's rows, in this order, and the only files ingest reads; `deferred` are `deferred` rows. housekeeping__write_run_file refuses a proposal.json whose rows break this order.",
+      name: "housekeeping__candidates",
+      description: "Build a /housekeeping run's work list in one read-only call (Steps 6-7): list the candidates, hash them, run the name gate and its mechanical second pass, read ingest status and the review log, admit, order and cap at 50. Nothing per file goes in. `swept_folders` are the folders the folder map matches, by their on-disk names (matter-root-relative), each {path, folder_type, flag_tokens?, second_pass?}: `folder_type` the folder type's name (`Law`, `Discovery`, `Court File`, ...), `flag_tokens` the Law folder's, `second_pass: true` on Law and Discovery. `skip_folders` are the root folders the profile always skips (neither swept nor listed). `subfolder` (sweep only that folder, no root files) or `files` (only those stored-form paths) apply the run's argument; `finished` lists the stored paths Step 5's recovery finished, which are left out; `force` drops the settled-verdict condition from the name arm only. Listing: root files except `~`/`.` names, probanda.json, CLAUDE.md, AGENTS.md, ProceduralHistory.md, `.cm*`, desktop.ini and `.lnk`; a root file with a `~$` sibling is open in Word and only named in `header.open_in_word`; files with `.pdf .docx .doc .eml .msg .xls` anywhere inside a swept folder; root folders other than TRASH, `Claude outputs`, skipped and swept ones are named in `header.folders_not_looked_inside`. Admission: a root file always; a subfolder file when (its name does not conform AND no settled verdict matches) OR (it is not ingested AND no `not_ingested` row matches its hash). Order: fresh root, fresh subfolder, rotated root, rotated subfolder (rotated = offered and not approved on the previous run's page, by hash). Returns {run_id, previous_run, header, errors: [{path, error}] (unreadable files, left out of the run), admitted (at most 50, this run's rows in this order, each {path, hash, rotated, location, folder_type, admitted_by, name: {verdict conforms|fails|second_pass_required, reason, flags} or null at the root, ingest: the ingest-status entry, review: {reviewed, outcome, reviewed_at, matched_on, not_ingested, ingest_failure}}), deferred: [{path, hash}] (past the cap, for proposal.json's deferred rows)}. A file not admitted is not returned. `second_pass_required`: the name failed the gate in a Law or Discovery folder and matches neither mechanical form; judge it against the folder's notes. Fails whole past its time budget, never with a partial list. Fails `approval_corrupt` when the previous run's approval.json is unreadable.",
       inputSchema: {
         type: "object",
         properties: {
           ...matterRun,
-          candidates: {
+          swept_folders: {
             type: "array",
             items: {
               type: "object",
-              properties: { path: { type: "string" }, hash: { type: "string" } },
-              required: ["path", "hash"],
+              properties: {
+                path: { type: "string" },
+                folder_type: { type: "string" },
+                flag_tokens: { type: "array", items: { type: "string" } },
+                second_pass: { type: "boolean" }
+              },
+              required: ["path", "folder_type"],
               additionalProperties: false
             }
-          }
+          },
+          skip_folders: { type: "array", items: { type: "string" } },
+          subfolder: { type: "string" },
+          files: { type: "array", items: { type: "string" } },
+          finished: { type: "array", items: { type: "string" } },
+          force: { type: "boolean" }
         },
-        required: ["matter_root", "run_id", "candidates"],
+        required: ["matter_root", "run_id", "swept_folders", "skip_folders"],
         additionalProperties: false
       },
       annotations: { readOnlyHint: true, openWorldHint: false }
     },
     {
       name: "housekeeping__write_run_file",
-      description: "Write one file into a /housekeeping run directory. `file_name` is `proposal.json`, `questions.json` or `rule_gaps.json`; any other name is refused (`invalid_filename`), and approval.json and applied.jsonl are refused (`reserved_file`) because only the page and housekeeping__journal_append write them. `proposal.json` is the approval page's whole model: it must parse and validate (`invalid_proposal`, naming every problem), its `run_id` and `matter_root` must be this run's, its rows must be in housekeeping__order_candidates' order with only the rows past the first 50 `deferred` (else `proposal_out_of_order`, naming the first row out of place; the check sees only the rows written, so it cannot tell that an admitted file was left off; `approval_corrupt` when the previous run's approval.json is unreadable), and it is write-once -- the same content again is a no-op, other content is refused `proposal_exists` (start a new run instead). Written temp-then-rename. Returns {run_id, path, bytes}.",
+      description: "Write one file into a /housekeeping run directory. `file_name` is `proposal.json`, `questions.json` or `rule_gaps.json`; any other name is refused (`invalid_filename`), and approval.json and applied.jsonl are refused (`reserved_file`) because only the page and housekeeping__journal_append write them. `proposal.json` is the approval page's whole model: it must parse and validate (`invalid_proposal`, naming every problem), its `run_id` and `matter_root` must be this run's, its rows must be in housekeeping__candidates' order with only the rows past the first 50 `deferred` (else `proposal_out_of_order`, naming the first row out of place; the check sees only the rows written, so it cannot tell that an admitted file was left off; `approval_corrupt` when the previous run's approval.json is unreadable), and it is write-once -- the same content again is a no-op, other content is refused `proposal_exists` (start a new run instead). Written temp-then-rename. Returns {run_id, path, bytes}.",
       inputSchema: {
         type: "object",
         properties: { ...matterRun, file_name: { type: "string" }, content: { type: "string" } },
@@ -15771,10 +15781,10 @@ import { join as join2 } from "node:path";
 var pythonStarts = { count: 0 };
 function runPythonDriver(opts) {
   const { label, driver, payload, env, timeoutMs, extraEnv, timeoutAdvice, stagingDescription } = opts;
-  const candidates = [env.COCLERK_PYTHON, "python", "python3"].filter(Boolean);
+  const candidates2 = [env.COCLERK_PYTHON, "python", "python3"].filter(Boolean);
   let lastErr = "";
   const tag = randomBytes(8).toString("hex");
-  for (const py of candidates) {
+  for (const py of candidates2) {
     pythonStarts.count++;
     const res = spawnSync(py, [driver], {
       input: payload,
@@ -15811,7 +15821,7 @@ function runPythonDriver(opts) {
     }
   }
   throw new DataServerError(
-    `No Python interpreter found for the ${label} (tried ${candidates.join(", ")}). Install Python 3 or set COCLERK_PYTHON. Last error: ${lastErr}`
+    `No Python interpreter found for the ${label} (tried ${candidates2.join(", ")}). Install Python 3 or set COCLERK_PYTHON. Last error: ${lastErr}`
   );
 }
 function removeKilledStaging(tag, description = "staging copy of the database") {
@@ -15972,7 +15982,7 @@ function readConfigRepoRoot(cfgPath, tried) {
 }
 function conventionalCandidates(env) {
   const home = env.USERPROFILE || env.HOME || homedir2();
-  return home ? [join4(home, "Git", "Coclerk")] : [];
+  return home ? [join4(home, "Git", "probanda-dev")] : [];
 }
 function bundledSkillFolders(installRoot = INSTALL_ROOT) {
   const dir = installSkillsRoot(installRoot);
@@ -15995,15 +16005,15 @@ function siblingInstalls(installRoot = INSTALL_ROOT) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve(installRoot);
   const parent = dirname(own);
-  const candidates = new Set(childDirs(parent));
+  const candidates2 = new Set(childDirs(parent));
   if (basename(own) === pluginManifest(own).version) {
     for (const branch of childDirs(dirname(parent))) {
-      for (const dir of childDirs(branch)) candidates.add(dir);
+      for (const dir of childDirs(branch)) candidates2.add(dir);
     }
   }
-  candidates.delete(own);
+  candidates2.delete(own);
   const winners = /* @__PURE__ */ new Map();
-  for (const dir of candidates) {
+  for (const dir of candidates2) {
     const manifest = pluginManifest(dir);
     if (manifest.name === null || !SIBLING_PLUGINS.includes(manifest.name)) continue;
     const skills = installSkillsRoot(dir);
@@ -16091,6 +16101,30 @@ function rosterLine(installRoot, segment, plugin) {
   const siblings = siblingInstalls(installRoot).map((sibling) => `${sibling.name} ${sibling.version ?? "(no version)"}`);
   const folder = segment ? `"${segment}"` : "this path's folder";
   return `This installed plugin bundles skill source for: ${bundled.join(", ")}. ${folder} is not among them. ` + (siblings.length ? `Plugins found installed beside this one: ${siblings.join(", ")}. None of them holds ${folder} either. ` : "No other Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager or timekeeper) was found installed beside this one. ") + (plugin ? `The "${plugin}" plugin ships ${folder}. Install it, or update it, in the desktop app, then fully restart.` : `The plugin that holds ${folder} is not installed on this PC's copy of the plugins (in Cowork, that copy is the desktop app's store). Check for updates in the desktop app, then restart it.`);
+}
+function caseDataMigrateScriptsDir(env, installRoot) {
+  return migrateScriptsDir("matter-data", env, installRoot);
+}
+var MIGRATE_SKILL_PLUGIN = {
+  "matter-data": "lawyer",
+  "timecamping-data": "timekeeper",
+  "drafting-data": "litigator"
+};
+function migrateScriptsDir(skill, env, installRoot) {
+  const shipped = resolveShippedRoot(`${skill}/references/scripts/migrate_engine.py`, env ?? process.env, {
+    code: "repo_root_missing",
+    subject: `the ${skill} maintenance scripts`,
+    plugin: MIGRATE_SKILL_PLUGIN[skill],
+    installRoot
+  });
+  const dir = pathWin32.join(shipped.root, skill, "references", "scripts");
+  if (!existsSync3(pathWin32.join(dir, "migrate_engine.py"))) {
+    throw new DataServerError(
+      `migrate_engine.py not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
+      "repo_root_missing"
+    );
+  }
+  return dir;
 }
 function missingMessage(subject, env, tried) {
   const cfg = configPath(env);
@@ -16927,19 +16961,19 @@ function validateProposal(value, runId, root) {
   const rows = p.rows;
   const ids = /* @__PURE__ */ new Set();
   rows.forEach((r, i) => validateRow(v, r, `rows[${i}]`, ids, p.draft_folder));
-  const byPath = /* @__PURE__ */ new Map();
+  const byPath2 = /* @__PURE__ */ new Map();
   rows.forEach((r, i) => {
     if (typeof r?.current_path !== "string" || typeof r.row_id !== "string") return;
     const key = samePath(r.current_path);
-    const earlier = byPath.get(key);
+    const earlier = byPath2.get(key);
     if (earlier !== void 0) v.add(`rows[${i}].current_path ${r.current_path} is repeated: rows ${earlier} and ${r.row_id} name the same file`);
-    else byPath.set(key, r.row_id);
+    else byPath2.set(key, r.row_id);
   });
   rows.forEach((r, i) => {
     const twin = r?.twin;
     if (typeof twin?.path !== "string") return;
     const label = `rows[${i}] (${r.row_id}).twin.row_id`;
-    const twinRow = byPath.get(samePath(twin.path));
+    const twinRow = byPath2.get(samePath(twin.path));
     if (twinRow !== void 0 && twin.row_id !== twinRow) v.add(`${label} must be ${twinRow}: the twin ${twin.path} is that row on this page`);
     else if (twinRow === void 0 && twin.row_id !== void 0) {
       if (!ids.has(twin.row_id)) v.add(`${label} ${twin.row_id} is not a row`);
@@ -17556,8 +17590,8 @@ function nameVerdict(gate, row3, decision, proposal2) {
   if (gate.flags.length) return { verdict: "fail", reason: `flag token raised: ${gate.flags.join(", ")}`, flags: gate.flags };
   if (gate.verdict === "conforms") return { verdict: "pass" };
   if (precomputed?.ok) return { verdict: "pass", reason: "passed the page-build check for this folder" };
-  const secondPass = folderEntry(proposal2, folderRel)?.second_pass === true;
-  return { verdict: secondPass ? "second_pass_required" : "fail", reason: gate.reason };
+  const secondPass2 = folderEntry(proposal2, folderRel)?.second_pass === true;
+  return { verdict: secondPass2 ? "second_pass_required" : "fail", reason: gate.reason };
 }
 function clashCheck(res, claimed) {
   if (!res.move || !res.new_path) return { ok: true };
@@ -17643,14 +17677,14 @@ var TemplateTree = class {
     return this.listings.get(dir);
   }
 };
-function matchName(candidates, wanted, stems = false) {
-  const exact = candidates.filter((c) => c.toLowerCase() === wanted.toLowerCase());
+function matchName(candidates2, wanted, stems = false) {
+  const exact = candidates2.filter((c) => c.toLowerCase() === wanted.toLowerCase());
   if (exact.length) return { name: exact[0] };
-  const plural = candidates.filter((c) => depluralize(c) === depluralize(wanted));
+  const plural = candidates2.filter((c) => depluralize(c) === depluralize(wanted));
   if (plural.length > 1) return { ambiguous: plural };
   if (plural.length === 1) return { name: plural[0] };
   if (stems) {
-    const stem = candidates.find((c) => c.endsWith("#") && wanted.toLowerCase().startsWith(c.toLowerCase()));
+    const stem = candidates2.find((c) => c.endsWith("#") && wanted.toLowerCase().startsWith(c.toLowerCase()));
     if (stem) return { name: stem };
   }
   return {};
@@ -17965,6 +17999,10 @@ function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env =
   return result;
 }
 
+// src/housekeeping/candidates.ts
+import { readdirSync as readdirSync10 } from "node:fs";
+import { win32 as pathWin3214 } from "node:path";
+
 // src/housekeeping/order.ts
 import { win32 as pathWin3212 } from "node:path";
 var CAP = 50;
@@ -18000,17 +18038,17 @@ function compare(a, b) {
   for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] < kb[i] ? -1 : 1;
   return 0;
 }
-function orderIn(matter, runId, candidates) {
+function orderIn(matter, runId, candidates2) {
   const { previousRun, rotated } = rotation(matter, runId);
-  const ordered = candidates.map((c) => ({ path: c.path, hash: c.hash, rotated: rotated.has(c.hash) })).sort(compare);
+  const ordered = candidates2.map((c) => ({ path: c.path, hash: c.hash, rotated: rotated.has(c.hash) })).sort(compare);
   return { run_id: runId, previous_run: previousRun, admitted: ordered.slice(0, CAP), deferred: ordered.slice(CAP) };
 }
-function orderCandidates(matterRoot, runId, candidates) {
+function orderCandidates(matterRoot, runId, candidates2) {
   const matter = openMatter(matterRoot);
   existingRunDir(matter, runId);
-  if (!Array.isArray(candidates)) throw new DataServerError("candidates must be an array of {path, hash}", "invalid_argument");
+  if (!Array.isArray(candidates2)) throw new DataServerError("candidates must be an array of {path, hash}", "invalid_argument");
   const seen = /* @__PURE__ */ new Set();
-  candidates.forEach((c, i) => {
+  candidates2.forEach((c, i) => {
     const refuse = (problem) => new DataServerError(`candidates[${i}] ${problem}`, "invalid_argument");
     if (typeof c !== "object" || c === null) throw refuse("must be an object {path, hash}");
     const pathProblem = relativePathProblem(c.path);
@@ -18019,7 +18057,7 @@ function orderCandidates(matterRoot, runId, candidates) {
     if (seen.has(samePath(c.path))) throw refuse(`path ${c.path} is given twice`);
     seen.add(samePath(c.path));
   });
-  return orderIn(matter, runId, candidates);
+  return orderIn(matter, runId, candidates2);
 }
 function orderProblem(matter, runId, rows) {
   const { admitted, deferred } = orderIn(matter, runId, rows.map((r) => ({ path: r.current_path, hash: r.hash })));
@@ -18036,6 +18074,386 @@ function orderProblem(matter, runId, rows) {
     }
   }
   return null;
+}
+
+// src/housekeeping/reconcile.ts
+import { createHash as createHash2 } from "node:crypto";
+import { createReadStream, lstatSync as lstatSync4, realpathSync as realpathSync8 } from "node:fs";
+import { pipeline } from "node:stream/promises";
+import { win32 as pathWin3213 } from "node:path";
+async function reconcile(matterRoot, runId, env = process.env) {
+  const matter = openMatter(matterRoot);
+  const ids = runId === void 0 ? listRuns(matter) : [runId];
+  const runs = [];
+  for (const id of ids) {
+    const dir = existingRunDir(matter, id);
+    const { proposal: proposal2, problem } = readProposal(dir, id, matter.root);
+    if (!proposal2) {
+      if (runId !== void 0) throw new DataServerError(`run ${id} cannot be reconciled: ${problem}`, "invalid_proposal");
+      continue;
+    }
+    const saved = readApproval(dir, id);
+    if (runId === void 0 && !saved.approval && !saved.problem) continue;
+    const approval2 = saved.approval ?? requireApproval(dir, id);
+    const journal = readJournal(dir);
+    const planned = planRows(matter, proposal2, approval2, journal, env);
+    if (!planned.some(({ res }) => needsJournalLine(res) && !journal.has(res.row_id))) continue;
+    const rows = [];
+    const all = checkRows(planned, proposal2, env);
+    for (const res of all) {
+      if (journal.has(res.row_id) || !needsJournalLine(res)) continue;
+      if (res.kind === "invalid") {
+        rows.push(row(res, "unresolvable", "journal_failed", res.failure));
+      } else if (res.kind === "trash") {
+        rows.push(await trashRow(matter, proposal2, res, all));
+      } else {
+        rows.push(await moveRow(proposal2, res));
+      }
+    }
+    runs.push({ run_id: id, approved_at: approval2.approved_at, rows });
+  }
+  return { runs };
+}
+async function moveRow(proposal2, res) {
+  const approved = rowOf(proposal2, res.row_id).hash;
+  const newPath = res.new_path;
+  const old = await hashAt(res.old_path);
+  const dest = await hashAt(newPath);
+  if (old.kind !== "absent" && dest.kind !== "absent" && sameFile(res.old_path, newPath)) {
+    const onDisk = pathWin3213.basename(realpathSync8.native(res.old_path));
+    if (!holds(old, approved)) return row(res, "changed", "journal_failed", "changed since approval");
+    return onDisk === pathWin3213.basename(newPath) ? row(res, "moved", "post_move_steps") : notMoved(res);
+  }
+  if (old.kind !== "absent" && !holds(old, approved)) return row(res, "changed", "journal_failed", "changed since approval");
+  if (old.kind === "absent") {
+    return holds(dest, approved) ? row(res, "moved", "post_move_steps") : row(res, "missing", "journal_failed", "approved file not found");
+  }
+  if (dest.kind === "absent") return notMoved(res);
+  if (holds(dest, approved)) return row(res, "duplicate_at_destination", "journal_failed", "duplicate at destination");
+  return row(res, "clash", "journal_failed", "a different file is at the destination");
+}
+function notMoved(res) {
+  if (res.kind === "answered_question" || res.kind === "final") return row(res, "not_moved", "needs_ingest_status");
+  const pendingSecondPass = res.checks?.name.verdict === "second_pass_required" && res.checks.clash.ok && res.checks.folder.ok;
+  if (res.ok || pendingSecondPass) return row(res, "not_moved", "apply");
+  return row(res, "not_moved", "journal_failed", res.failure);
+}
+async function trashRow(matter, proposal2, res, all) {
+  const r = rowOf(proposal2, res.row_id);
+  const old = await hashAt(res.old_path);
+  if (old.kind === "absent") return row(res, "trashed", "journal_done");
+  if (!holds(old, r.hash)) return row(res, "changed", "journal_failed", "changed since approval");
+  const twin = r.twin;
+  const candidates2 = [pathWin3213.join(matter.root, twin.path)];
+  const twinRes = twin.row_id === void 0 ? void 0 : all.find((x) => x.row_id === twin.row_id);
+  if (twinRes?.new_path) candidates2.push(twinRes.new_path);
+  for (const path of candidates2) {
+    if (holds(await hashAt(path), r.hash)) return row(res, "not_moved", "trash");
+  }
+  return row(res, "not_moved", "journal_failed", "the other copy was not found with the same contents");
+}
+function row(res, state, action, reason) {
+  const out = { row_id: res.row_id, kind: res.kind, state, action, old_path: res.old_path, resolution: res };
+  if (res.new_path) out.new_path = res.new_path;
+  if (reason) out.reason = reason;
+  return out;
+}
+function rowOf(proposal2, rowId) {
+  const found = proposal2.rows.find((r) => r.row_id === rowId);
+  if (!found) throw new DataServerError(`row ${rowId} is not in proposal.json`, "unknown_row");
+  return found;
+}
+function holds(at, sha256) {
+  return at.kind === "file" && at.sha256 === sha256;
+}
+async function hashAt(path) {
+  try {
+    if (!lstatSync4(path).isFile()) return { kind: "not_a_file" };
+  } catch {
+    return { kind: "absent" };
+  }
+  const hash = createHash2("sha256");
+  await pipeline(createReadStream(path), hash);
+  return { kind: "file", sha256: hash.digest("hex") };
+}
+
+// src/housekeeping/candidates.ts
+var CANDIDATES_TIMEOUT_MS = 12e4;
+var WHITELIST = /* @__PURE__ */ new Set([".pdf", ".docx", ".doc", ".eml", ".msg", ".xls"]);
+var NEVER_ROOT_FILES = /* @__PURE__ */ new Set(["probanda.json", "coclerk.json", "claude.md", "agents.md", "proceduralhistory.md", "desktop.ini"]);
+var NEVER_ROOT_FOLDERS = /* @__PURE__ */ new Set(["trash", "claude outputs"]);
+var NUMBERED_0_OR_1 = /^[01](?!\d)/;
+var HASH_CONCURRENCY = 8;
+var LAW_CITATION = /^\d{4} [A-Za-z][A-Za-z.]* \d+ \S.*$/;
+var LAW_AI_MEMO = /^\d{4}-\d{2}-\d{2} (?:Alexi|Westlaw|Claude) \S.*$/;
+var DISCOVERY_ITEM = /^[A-Za-z]+\d+\.\d+ - (.+)$/;
+var DISCOVERY_LEGACY = /^[A-Za-z]*\d+\.\d+$/;
+var DRIVER2 = String.raw`
+import json, sys
+
+
+def main():
+    request = json.loads(sys.stdin.read())
+    try:
+        from housekeeping_lookup import run
+        sys.stdout.write(json.dumps({"ok": True, "result": run(request)}))
+    except BaseException as exc:
+        sys.stdout.write(json.dumps({"ok": False, "error": "%s: %s" % (type(exc).__name__, exc)}))
+
+
+main()
+`.trim();
+var HELD = /* @__PURE__ */ new Set(["ingested", "ingested_by_reference", "superseded"]);
+async function candidates(args, deps = {}) {
+  const env = deps.env ?? process.env;
+  const started = Date.now();
+  const budget = pythonTimeoutMs(env, CANDIDATES_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS");
+  const matter = openMatter(args.matter_root);
+  existingRunDir(matter, args.run_id);
+  const swept = checkSwept(matter.root, args.swept_folders);
+  const { listed, header } = list(matter.root, swept, args.skip_folders ?? []);
+  const scoped = applyArgument(listed, args);
+  const errors = [];
+  const hashed = await hashAll(matter.root, scoped, errors);
+  if (Date.now() - started > budget) throw overBudget(budget, `hashing ${scoped.length} files`);
+  const names = gateNames(hashed, deps.gate ?? runNameGate, env);
+  const lookup = deps.lookup ?? runLookup;
+  const remaining = Math.max(budget - (Date.now() - started), 1);
+  const found = lookup({ case_data_dir: matter.caseData, matter_root: matter.root, files: hashed.map(({ path, hash }) => ({ path, hash })) }, env, remaining);
+  if (found.ingest.length !== hashed.length || found.reviews.length !== hashed.length) {
+    throw new DataServerError(
+      `the matter-data lookup returned ${found.ingest.length} ingest entries and ${found.reviews.length} review entries for ${hashed.length} files`,
+      "lookup_failed"
+    );
+  }
+  const rows = /* @__PURE__ */ new Map();
+  hashed.forEach((c, i) => {
+    const ingest = found.ingest[i];
+    const review = found.reviews[i];
+    const name = names[i];
+    let admittedBy = null;
+    if (c.folder === null) {
+      admittedBy = "root";
+    } else {
+      const nameArm = name.verdict !== "conforms" && (args.force === true || !review.reviewed);
+      const ingestArm = !HELD.has(ingest.verdict) && !review.not_ingested;
+      admittedBy = nameArm && ingestArm ? "both" : nameArm ? "name" : ingestArm ? "ingest" : null;
+    }
+    if (admittedBy === null) return;
+    const { path: _p, hash: _h, ...entry } = ingest;
+    rows.set(samePath(c.path), {
+      path: c.path,
+      hash: c.hash,
+      rotated: false,
+      location: c.folder === null ? "root" : "subfolder",
+      folder_type: c.folder?.folder_type ?? null,
+      admitted_by: admittedBy,
+      name,
+      ingest: entry,
+      review
+    });
+  });
+  const ordered = orderCandidates(args.matter_root, args.run_id, [...rows.values()].map(({ path, hash }) => ({ path, hash })));
+  return {
+    run_id: ordered.run_id,
+    previous_run: ordered.previous_run,
+    header,
+    errors,
+    admitted: ordered.admitted.map((c) => ({ ...rows.get(samePath(c.path)), rotated: c.rotated })),
+    deferred: ordered.deferred.map((c) => ({ path: c.path, hash: c.hash }))
+  };
+}
+function checkSwept(root, swept) {
+  if (!Array.isArray(swept)) throw new DataServerError("swept_folders must be an array", "invalid_argument");
+  return swept.map((f, i) => {
+    const refuse = (problem) => new DataServerError(`swept_folders[${i}] ${problem}`, "invalid_argument");
+    const pathProblem = relativePathProblem(f?.path);
+    if (pathProblem) throw refuse(`path ${pathProblem}`);
+    if (typeof f.folder_type !== "string" || f.folder_type === "") throw refuse("folder_type must be the folder type's name");
+    const segments = f.path.split(/[\\/]+/);
+    if (!childDirNames(pathWin3214.join(root, ...segments.slice(0, -1))).includes(segments[segments.length - 1])) {
+      throw refuse(`path ${f.path} is not a folder in the matter (give its on-disk name)`);
+    }
+    return { ...f, path: segments.join("\\") };
+  });
+}
+function list(root, swept, skip) {
+  const skipped = new Set(skip.map((s) => s.toLowerCase()));
+  const entries = readdirSync10(root, { withFileTypes: true });
+  const lockFiles = entries.filter((e) => e.isFile() && e.name.startsWith("~$")).map((e) => e.name.slice(2).toLowerCase());
+  const header = { open_in_word: [], folders_not_looked_inside: [] };
+  const listed = [];
+  for (const e of entries) {
+    const name = e.name;
+    const lower = name.toLowerCase();
+    if (name.startsWith("~") || name.startsWith(".")) continue;
+    if (e.isDirectory()) {
+      if (NEVER_ROOT_FOLDERS.has(lower) || skipped.has(lower)) continue;
+      const sweptHere = !NUMBERED_0_OR_1.test(name) && swept.some((f) => f.path.split("\\")[0].toLowerCase() === lower);
+      if (!sweptHere) header.folders_not_looked_inside.push(name);
+      continue;
+    }
+    if (!e.isFile()) continue;
+    const ext = pathWin3214.extname(lower);
+    if (NEVER_ROOT_FILES.has(lower) || /^\.cm/.test(ext) || ext === ".lnk") continue;
+    if (isOpenInWord(lower, lockFiles)) {
+      header.open_in_word.push(name);
+      continue;
+    }
+    listed.push({ path: name, folder: null });
+  }
+  const sweptPaths = new Set(swept.map((f) => f.path.toLowerCase()));
+  for (const folder of swept) {
+    if (NUMBERED_0_OR_1.test(folder.path)) continue;
+    walk(root, folder.path, folder, sweptPaths, listed);
+  }
+  listed.sort(byPath);
+  header.open_in_word.sort();
+  header.folders_not_looked_inside.sort();
+  return { listed, header };
+}
+function isOpenInWord(lower, lockFiles) {
+  const ext = pathWin3214.extname(lower);
+  const stem = lower.slice(0, lower.length - ext.length);
+  return lockFiles.some((lock) => {
+    const lockExt = pathWin3214.extname(lock);
+    if (lockExt !== ext) return false;
+    const lockStem = lock.slice(0, lock.length - lockExt.length);
+    return [0, 1, 2].some((k) => stem.slice(k) === lockStem);
+  });
+}
+function walk(root, rel, folder, sweptPaths, out) {
+  for (const e of readdirSync10(pathWin3214.join(root, rel), { withFileTypes: true })) {
+    if (e.name.startsWith("~") || e.name.startsWith(".")) continue;
+    const child = `${rel}\\${e.name}`;
+    if (e.isDirectory()) {
+      if (!sweptPaths.has(child.toLowerCase())) walk(root, child, folder, sweptPaths, out);
+    } else if (e.isFile() && WHITELIST.has(pathWin3214.extname(e.name).toLowerCase())) {
+      out.push({ path: child, folder });
+    }
+  }
+}
+function byPath(a, b) {
+  const key = (l) => {
+    const p = samePath(l.path);
+    const cut = p.lastIndexOf("\\");
+    return [cut < 0 ? 0 : 1, cut < 0 ? "" : p.slice(0, cut).replace(/\\/g, "\0"), p.slice(cut + 1)];
+  };
+  const [ka, kb] = [key(a), key(b)];
+  for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] < kb[i] ? -1 : 1;
+  return 0;
+}
+function applyArgument(listed, args) {
+  let out = listed;
+  if (args.subfolder !== void 0) {
+    const problem = relativePathProblem(args.subfolder);
+    if (problem) throw new DataServerError(`subfolder ${problem}`, "invalid_argument");
+    const prefix = `${samePath(args.subfolder)}\\`;
+    out = out.filter((l) => l.folder !== null && samePath(l.path).startsWith(prefix));
+  }
+  if (args.files !== void 0) {
+    const wanted = new Set(args.files.map((f) => samePath(f)));
+    out = out.filter((l) => wanted.has(samePath(l.path)));
+  }
+  if (args.finished !== void 0) {
+    const done = new Set(args.finished.map((f) => samePath(f)));
+    out = out.filter((l) => !done.has(samePath(l.path)));
+  }
+  return out;
+}
+async function hashAll(root, listed, errors) {
+  const hashes = new Array(listed.length).fill(null);
+  let next = 0;
+  const worker = async () => {
+    while (next < listed.length) {
+      const i = next++;
+      const l = listed[i];
+      try {
+        const at = await hashAt(pathWin3214.join(root, ...l.path.split("\\")));
+        if (at.kind === "file") hashes[i] = at.sha256;
+        else errors.push({ path: l.path, error: at.kind === "absent" ? "the file is gone" : "not a file" });
+      } catch (err) {
+        errors.push({ path: l.path, error: err.message });
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: HASH_CONCURRENCY }, worker));
+  errors.sort((a, b) => samePath(a.path) < samePath(b.path) ? -1 : 1);
+  return listed.flatMap((l, i) => hashes[i] === null ? [] : [{ ...l, hash: hashes[i] }]);
+}
+function gateNames(hashed, gate, env) {
+  const groups = [];
+  const slot = (tokens, name) => {
+    let g = groups.findIndex((x) => x.flag_tokens.join("\0") === tokens.join("\0"));
+    if (g < 0) g = groups.push({ names: [], flag_tokens: tokens }) - 1;
+    return [g, groups[g].names.push(name) - 1];
+  };
+  const slots = hashed.map((c) => {
+    if (c.folder === null) return null;
+    const name = pathWin3214.basename(c.path);
+    const tokens = c.folder.flag_tokens ?? [];
+    const own = slot(tokens, name);
+    const item = isType(c.folder, "Discovery") ? DISCOVERY_ITEM.exec(name) : null;
+    return { own, tail: item ? slot(tokens, item[1]) : null };
+  });
+  const results = groups.length ? gate(groups, env) : [];
+  const at = ([g, i]) => results[g][i];
+  return hashed.map((c, i) => {
+    const s = slots[i];
+    if (s === null || c.folder === null) return null;
+    return secondPass(at(s.own), s.tail ? at(s.tail) : null, c.folder, pathWin3214.basename(c.path));
+  });
+}
+function isType(folder, type) {
+  return folder.second_pass === true && folder.folder_type.trim().toLowerCase() === type.toLowerCase();
+}
+function secondPass(gate, tail, folder, name) {
+  if (gate.flags.length) return { verdict: "fails", reason: `flag token raised: ${gate.flags.join(", ")}`, flags: gate.flags };
+  if (gate.verdict === "conforms") return { verdict: "conforms", reason: gate.reason, flags: [] };
+  if (folder.second_pass !== true) return { verdict: "fails", reason: gate.reason, flags: [] };
+  const stem = name.slice(0, name.length - pathWin3214.extname(name).length);
+  if (isType(folder, "Law")) {
+    if (LAW_CITATION.test(stem)) return { verdict: "conforms", reason: "Law citation form", flags: [] };
+    if (LAW_AI_MEMO.test(stem)) return { verdict: "conforms", reason: "Law AI research memo form", flags: [] };
+  }
+  if (isType(folder, "Discovery")) {
+    if (DISCOVERY_LEGACY.test(stem)) return { verdict: "conforms", reason: "Discovery legacy bare item number", flags: [] };
+    if (tail && tail.verdict === "conforms" && tail.flags.length === 0) {
+      return { verdict: "conforms", reason: "Discovery listed-document form", flags: [] };
+    }
+  }
+  return { verdict: "second_pass_required", reason: gate.reason, flags: [] };
+}
+function overBudget(budget, what) {
+  return new DataServerError(
+    `building the work list took longer than its ${budget} ms budget (${what}). Nothing was written and no list is returned; run /housekeeping on one subfolder at a time, or on a file list, to make the run smaller.`,
+    "python_timeout"
+  );
+}
+function runLookup(request, env, timeoutMs) {
+  const parsed = runPythonDriver({
+    label: "matter-data housekeeping lookup",
+    driver: pythonDriverFile("housekeeping-lookup-driver", DRIVER2),
+    payload: JSON.stringify(request),
+    env,
+    timeoutMs,
+    extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env) },
+    timeoutAdvice: "Reading ingest status and the review log for the work list outlasted the budget. Nothing was written; run /housekeeping on one subfolder at a time, or on a file list, to make the run smaller.",
+    stagingDescription: "staging copy of the matter-data databases"
+  });
+  if (!parsed.ok || !parsed.result) {
+    throw new DataServerError(`the matter-data lookup failed: ${parsed.error ?? "no result"}`, "lookup_failed");
+  }
+  const r = parsed.result;
+  if (r.status !== "ok") throw new DataServerError(`the matter-data lookup is ${r.status}: ${r.reason}`, "lookup_failed");
+  return { ingest: r.ingest ?? [], reviews: r.reviews ?? [] };
+}
+function childDirNames(dir) {
+  try {
+    return readdirSync10(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+  } catch {
+    return [];
+  }
 }
 
 // src/housekeeping/run-files.ts
@@ -18101,10 +18519,10 @@ function journalAppend(matterRoot, runId, rowId, outcome, reason) {
 }
 
 // src/housekeeping/preflight.ts
-import { readdirSync as readdirSync10 } from "node:fs";
-import { win32 as pathWin3213 } from "node:path";
+import { readdirSync as readdirSync11 } from "node:fs";
+import { win32 as pathWin3215 } from "node:path";
 function preflight(matterRoot, includeTemplate = false, env = process.env) {
-  const pointerless = typeof matterRoot === "string" && pathWin3213.isAbsolute(matterRoot) && isDirectory2(matterRoot) && findPointer(matterRoot) === void 0;
+  const pointerless = typeof matterRoot === "string" && pathWin3215.isAbsolute(matterRoot) && isDirectory2(matterRoot) && findPointer(matterRoot) === void 0;
   const out = pointerless ? { half_commit: [], case_data_found: false } : halfCommits(matterRoot, env);
   if (includeTemplate) {
     const root = templateRoot(env);
@@ -18118,119 +18536,18 @@ function halfCommits(matterRoot, env) {
   const dir = caseDataFolder(matterRoot, env);
   const found = isDirectory2(dir);
   return {
-    half_commit: found ? readdirSync10(dir).filter((name) => name.startsWith(HALF_COMMIT_PREFIX)).sort().map((name) => pathWin3213.join(dir, name)) : [],
+    half_commit: found ? readdirSync11(dir).filter((name) => name.startsWith(HALF_COMMIT_PREFIX)).sort().map((name) => pathWin3215.join(dir, name)) : [],
     case_data_found: found
   };
 }
 function folderTree(root, rel) {
   const out = [];
-  const entries = readdirSync10(pathWin3213.join(root, rel), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
+  const entries = readdirSync11(pathWin3215.join(root, rel), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
   for (const name of entries) {
     const child = rel ? `${rel}\\${name}` : name;
     out.push(child, ...folderTree(root, child));
   }
   return out;
-}
-
-// src/housekeeping/reconcile.ts
-import { createHash as createHash2 } from "node:crypto";
-import { createReadStream, lstatSync as lstatSync4, realpathSync as realpathSync8 } from "node:fs";
-import { pipeline } from "node:stream/promises";
-import { win32 as pathWin3214 } from "node:path";
-async function reconcile(matterRoot, runId, env = process.env) {
-  const matter = openMatter(matterRoot);
-  const ids = runId === void 0 ? listRuns(matter) : [runId];
-  const runs = [];
-  for (const id of ids) {
-    const dir = existingRunDir(matter, id);
-    const { proposal: proposal2, problem } = readProposal(dir, id, matter.root);
-    if (!proposal2) {
-      if (runId !== void 0) throw new DataServerError(`run ${id} cannot be reconciled: ${problem}`, "invalid_proposal");
-      continue;
-    }
-    const saved = readApproval(dir, id);
-    if (runId === void 0 && !saved.approval && !saved.problem) continue;
-    const approval2 = saved.approval ?? requireApproval(dir, id);
-    const journal = readJournal(dir);
-    const planned = planRows(matter, proposal2, approval2, journal, env);
-    if (!planned.some(({ res }) => needsJournalLine(res) && !journal.has(res.row_id))) continue;
-    const rows = [];
-    const all = checkRows(planned, proposal2, env);
-    for (const res of all) {
-      if (journal.has(res.row_id) || !needsJournalLine(res)) continue;
-      if (res.kind === "invalid") {
-        rows.push(row(res, "unresolvable", "journal_failed", res.failure));
-      } else if (res.kind === "trash") {
-        rows.push(await trashRow(matter, proposal2, res, all));
-      } else {
-        rows.push(await moveRow(proposal2, res));
-      }
-    }
-    runs.push({ run_id: id, approved_at: approval2.approved_at, rows });
-  }
-  return { runs };
-}
-async function moveRow(proposal2, res) {
-  const approved = rowOf(proposal2, res.row_id).hash;
-  const newPath = res.new_path;
-  const old = await hashAt(res.old_path);
-  const dest = await hashAt(newPath);
-  if (old.kind !== "absent" && dest.kind !== "absent" && sameFile(res.old_path, newPath)) {
-    const onDisk = pathWin3214.basename(realpathSync8.native(res.old_path));
-    if (!holds(old, approved)) return row(res, "changed", "journal_failed", "changed since approval");
-    return onDisk === pathWin3214.basename(newPath) ? row(res, "moved", "post_move_steps") : notMoved(res);
-  }
-  if (old.kind !== "absent" && !holds(old, approved)) return row(res, "changed", "journal_failed", "changed since approval");
-  if (old.kind === "absent") {
-    return holds(dest, approved) ? row(res, "moved", "post_move_steps") : row(res, "missing", "journal_failed", "approved file not found");
-  }
-  if (dest.kind === "absent") return notMoved(res);
-  if (holds(dest, approved)) return row(res, "duplicate_at_destination", "journal_failed", "duplicate at destination");
-  return row(res, "clash", "journal_failed", "a different file is at the destination");
-}
-function notMoved(res) {
-  if (res.kind === "answered_question" || res.kind === "final") return row(res, "not_moved", "needs_ingest_status");
-  const pendingSecondPass = res.checks?.name.verdict === "second_pass_required" && res.checks.clash.ok && res.checks.folder.ok;
-  if (res.ok || pendingSecondPass) return row(res, "not_moved", "apply");
-  return row(res, "not_moved", "journal_failed", res.failure);
-}
-async function trashRow(matter, proposal2, res, all) {
-  const r = rowOf(proposal2, res.row_id);
-  const old = await hashAt(res.old_path);
-  if (old.kind === "absent") return row(res, "trashed", "journal_done");
-  if (!holds(old, r.hash)) return row(res, "changed", "journal_failed", "changed since approval");
-  const twin = r.twin;
-  const candidates = [pathWin3214.join(matter.root, twin.path)];
-  const twinRes = twin.row_id === void 0 ? void 0 : all.find((x) => x.row_id === twin.row_id);
-  if (twinRes?.new_path) candidates.push(twinRes.new_path);
-  for (const path of candidates) {
-    if (holds(await hashAt(path), r.hash)) return row(res, "not_moved", "trash");
-  }
-  return row(res, "not_moved", "journal_failed", "the other copy was not found with the same contents");
-}
-function row(res, state, action, reason) {
-  const out = { row_id: res.row_id, kind: res.kind, state, action, old_path: res.old_path, resolution: res };
-  if (res.new_path) out.new_path = res.new_path;
-  if (reason) out.reason = reason;
-  return out;
-}
-function rowOf(proposal2, rowId) {
-  const found = proposal2.rows.find((r) => r.row_id === rowId);
-  if (!found) throw new DataServerError(`row ${rowId} is not in proposal.json`, "unknown_row");
-  return found;
-}
-function holds(at, sha256) {
-  return at.kind === "file" && at.sha256 === sha256;
-}
-async function hashAt(path) {
-  try {
-    if (!lstatSync4(path).isFile()) return { kind: "not_a_file" };
-  } catch {
-    return { kind: "absent" };
-  }
-  const hash = createHash2("sha256");
-  await pipeline(createReadStream(path), hash);
-  return { kind: "file", sha256: hash.digest("hex") };
 }
 
 // src/pages/preview-file.ts
@@ -18582,7 +18899,7 @@ function housekeepingPreview(args) {
 import { randomBytes as randomBytes3 } from "node:crypto";
 import { createReadStream as createReadStream2, existsSync as existsSync12, realpathSync as realpathSync9, statSync as statSync10 } from "node:fs";
 import { createServer } from "node:http";
-import { win32 as pathWin3215 } from "node:path";
+import { win32 as pathWin3216 } from "node:path";
 var MAX_BODY = 5 * 1024 * 1024;
 var CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
 var FILE_CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
@@ -18699,7 +19016,7 @@ async function approve(grant, req, res) {
   if (shown.length) {
     return json(res, 400, { error: `Rows ${shown.join(", ")} are shown for information only and cannot be approved. Nothing was approved.` });
   }
-  const path = pathWin3215.join(grant.runDir, APPROVAL);
+  const path = pathWin3216.join(grant.runDir, APPROVAL);
   if (existsSync12(path)) return json(res, 409, { error: savedApprovalError(grant) });
   const approval2 = { run_id: grant.runId, approved_at: (/* @__PURE__ */ new Date()).toISOString(), rows: posted.rows };
   try {
@@ -18720,18 +19037,18 @@ function file(grant, rowId, res) {
   if (!rel) return send(res, 404, "text/plain; charset=utf-8", "No such file on this page");
   let real;
   try {
-    real = realpathSync9.native(pathWin3215.join(grant.matter.root, rel));
+    real = realpathSync9.native(pathWin3216.join(grant.matter.root, rel));
     if (!statSync10(real).isFile()) throw new Error("not a file");
   } catch {
     return send(res, 404, "text/plain; charset=utf-8", "The file is no longer there");
   }
-  const inside = pathWin3215.relative(grant.matter.root, real);
-  if (inside.startsWith("..") || pathWin3215.isAbsolute(inside) || zoneProblem("run-files", real)) {
+  const inside = pathWin3216.relative(grant.matter.root, real);
+  if (inside.startsWith("..") || pathWin3216.isAbsolute(inside) || zoneProblem("run-files", real)) {
     return send(res, 403, "text/plain; charset=utf-8", "This file is not opened from the page");
   }
-  const ext = pathWin3215.extname(real).toLowerCase();
+  const ext = pathWin3216.extname(real).toLowerCase();
   const type = INLINE_TYPES[ext];
-  const name = encodeURIComponent(pathWin3215.basename(real));
+  const name = encodeURIComponent(pathWin3216.basename(real));
   res.writeHead(200, {
     "Content-Type": type ?? "application/octet-stream",
     "Content-Disposition": `${type ? "inline" : "attachment"}; filename*=UTF-8''${name}`,
@@ -18747,14 +19064,14 @@ function servedFile(req, token, name, res) {
   }
   if (req.method !== "GET") return send(res, 405, "text/plain; charset=utf-8", "Method not allowed");
   if (!Object.hasOwn(grant.files, name)) return send(res, 404, "text/plain; charset=utf-8", "Not found");
-  const path = pathWin3215.join(grant.folder, grant.files[name]);
+  const path = pathWin3216.join(grant.folder, grant.files[name]);
   try {
     if (!statSync10(path).isFile()) throw new Error("not a file");
   } catch {
     return send(res, 404, "text/plain; charset=utf-8", "Not found");
   }
   res.writeHead(200, {
-    "Content-Type": FILE_TYPES[pathWin3215.extname(path).toLowerCase()] ?? "application/octet-stream",
+    "Content-Type": FILE_TYPES[pathWin3216.extname(path).toLowerCase()] ?? "application/octet-stream",
     "Content-Security-Policy": FILE_CSP,
     "X-Content-Type-Options": "nosniff",
     "Cache-Control": "no-store",
@@ -18794,7 +19111,7 @@ function send(res, status, type, body) {
 }
 
 // src/housekeeping/wait.ts
-import { win32 as pathWin3216 } from "node:path";
+import { win32 as pathWin3217 } from "node:path";
 var WAIT_TIMEOUT_MS = 45e3;
 var POLL_MS = 300;
 async function waitApproval(matterRoot, runId, env = process.env) {
@@ -18805,7 +19122,7 @@ async function waitApproval(matterRoot, runId, env = process.env) {
   for (; ; ) {
     const { approval: approval2, problem } = readApproval(dir, runId);
     if (approval2) return { status: "approved", run_id: runId, approved_at: approval2.approved_at, rows: approval2.rows.length };
-    if (problem) return { status: "corrupt", run_id: runId, file: pathWin3216.join(dir, APPROVAL), problem };
+    if (problem) return { status: "corrupt", run_id: runId, file: pathWin3217.join(dir, APPROVAL), problem };
     const newer = newerRun(matter, runId);
     if (newer !== null) return { status: "invalidated", run_id: runId, newer_run: newer };
     const waited = Date.now() - started;
@@ -18862,8 +19179,8 @@ async function callFileManagerTool(name, rawArgs) {
   if (name === "housekeeping__new_run") {
     return newRun(args.matter_root);
   }
-  if (name === "housekeeping__order_candidates") {
-    return orderCandidates(args.matter_root, args.run_id, args.candidates);
+  if (name === "housekeeping__candidates") {
+    return candidates(args);
   }
   if (name === "housekeeping__write_run_file") {
     return writeRunFile(args.matter_root, args.run_id, args.file_name, args.content);
