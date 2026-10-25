@@ -11,9 +11,8 @@ every path and identifier moved to this repo: skill sources under
 legal-commons/), plugin sources under source/<plugin>/, and the built plugin
 under plugins/<plugin>/.
 
-The checks run once for each plugin the repo builds (plugin_layout.py: the one
-plugin probanda while source/assignment.json is "planned", every plugin in it at
-"cutover"), then the checks across plugins run once. Each check prints one
+The checks run once for each plugin the repo builds (plugin_layout.py: every
+plugin in source/assignment.json), then the checks across plugins run once. Each check prints one
 `[PASS]` or `[FAIL]` line, or an `[N/A]` line saying why it does not apply to a
 plugin that does not ship the skill, agent or server it guards; there are no
 silent skips. The baselines live in check_plugin_baselines/ beside this file.
@@ -30,40 +29,22 @@ import check_internals  # noqa: E402
 import check_layering  # noqa: E402
 import plugin_layout  # noqa: E402
 from check_plugin_sources import (  # noqa: E402
-    BASELINES, COMMONS_SKILL, SHARED_TREE, EXTRA_TREES, PUBLIC_SKILLS, COMMONS_AGENTS, COMMONS_FORBIDDEN,
-    RESERVED_NAME, HOST_PATH, WORKTREE_PATH, NotApplicable, skills_root, source_path, server_path,
-    ships_skill, ships_agent, agents_dir, agent_names, roster, packaged_assets, extra_trees,
-    public_skill_dirs, public_skills, skill_names, skill_md, grep_tree, grep_dir, check_roster_sanity,
-    check_reserved_name, check_inverse_reference, check_commons_encapsulation, check_dependencies)
+    BASELINES, NotApplicable, skills_root, source_path, server_path, ships_agent, agents_dir, agent_names,
+    roster, packaged_assets, extra_trees, skill_names, check_roster_sanity, check_reserved_name,
+    check_inverse_reference, check_commons_encapsulation, check_dependencies)
 from check_plugin_skill_md import (  # noqa: E402
-    XML_TAG, DESCRIPTION_MAX_CHARS, DESCRIPTION_WARN_CHARS, read_frontmatter_lines, extract_field,
-    scalar_value, description_length, preamble_lines, stamp_skill_md, check_description_no_xml_tags,
-    check_description_length)
-from check_plugin_refs import (  # noqa: E402
-    TREE_PREFIX, REF_EXPLICIT, REF_MDLINK, REF_BACKTICK, REF_PRESENCE_GLOB, HAS_EXT, URL_SCHEME, DRIVE,
-    RUNTIME_DIRS, RUNTIME_FILES, PLACEHOLDER, reference_candidates, reference_resolves, broken_references,
-    reference_hit_verdict, check_no_absolute_repo_paths)
-from check_plugin_entry_points import (  # noqa: E402
-    ENTRY_POINT_REGISTRY, entry_point_violations, consumer_import_violations, check_entry_point_registry)
+    DESCRIPTION_MAX_CHARS, check_description_no_xml_tags, check_description_length)
+from check_plugin_refs import broken_references, reference_hit_verdict, check_no_absolute_repo_paths  # noqa: E402
+from check_plugin_entry_points import check_entry_point_registry  # noqa: E402
 from check_plugin_bundles import (  # noqa: E402
-    SOURCES_ALLOWED_HOSTS, _BUNDLE_MODULE, _SOURCES_NETWORK_CALL, _TOP_LEVEL_FUNCTION, DATA_BUNDLE,
-    PURITY_SERVERS, DATA_FUNCTION_PATHS, _FUNCTIONS_PATH, HOST_PATH_SERVERS, sources_host_guard_violations,
-    bundle_purity_hits, check_bundle_purity, check_sources_host_guard, check_bundle_no_host_path,
-    BAKED_SCHEMA, ENGINE_TARGET, check_bundle_schema_ceiling)
+    check_bundle_purity, check_sources_host_guard, check_bundle_no_host_path, check_bundle_schema_ceiling)
 from check_plugin_agents import (  # noqa: E402
-    FETCH_TOOL, FETCH_GRANT_AGENTS, PLAIN_PREFIX, BRIDGE_PREFIX, RECITAL_RULE_SOURCE,
-    RECITAL_RULE_SKILL_MIRRORS, RECITAL_RULE_AGENT_MIRRORS, RECITAL_RULE_BLOCK, TOOL_EVENTS, AGENT_EVENTS,
-    MATCHER_TOOL, MATCHER_AGENT, agent_tools, fetch_grants, fetch_grant_allowlist_violations,
-    agent_bridged_grant_violations, recital_rule_blocks, recital_rule_mirrors,
-    recital_rule_mirror_violations, hook_matcher_violations, check_recital_rule_mirror, agents_name_mcp_tool,
-    check_agent_bridged_grants)
+    FETCH_GRANT_AGENTS, fetch_grants, fetch_grant_allowlist_violations, hook_matcher_violations,
+    check_recital_rule_mirror, check_agent_bridged_grants)
 from check_plugin_tree import (  # noqa: E402
-    SHIPPED_PREFIX, VISION_FILE, TREE_EXCLUDE_DIRS, TREE_TEXT_EXTS, TRANSIENT_ASSET_PREFIX, MATTER_CODE,
-    UTBMS_TASK_CODES, UTBMS_CONTEXT, SKILL_SOURCE_BASELINE, sha256_file, shipped_manifest,
-    skill_source_expected, matter_codes, _text_of, skill_source_hit_counts, shipped_tree_purity,
-    check_shipped_tree_purity)
+    SKILL_SOURCE_BASELINE, skill_source_expected, skill_source_hit_counts, check_shipped_tree_purity)
 
-REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+REPO = plugin_layout.REPO
 
 # Skills-tree paths the data runtime resolves at call time (resolveShippedRoot). A
 # rename on either side breaks every write that needs the file, and only on an
@@ -90,29 +71,11 @@ SHIPPED_PATH_REGISTRY = (
 REFERENCE_UNSHIPPED_BASELINE = os.path.join(BASELINES, "reference_unshipped_baseline.json")
 
 
-# --- repo layout -------------------------------------------------------------------
-# A `plugin` argument is one spec of built_plugins(): its name, source folder, the
-# plugins it requires, its servers, and the skills and agents the assignment gives it
-# (None while the one plugin ships everything).
-
-def built_plugins(repo):
-    """{name: spec} for every plugin the repo builds (plugin_layout.plugins)."""
-    return plugin_layout.plugins(repo)
-
-
-def server_owner(repo, server):
-    """The one built plugin that ships a server."""
-    owners = [p for p in built_plugins(repo).values() if server in p["servers"]]
-    if len(owners) != 1:
-        raise ValueError(f"{len(owners)} built plugins ship the {server} server, expected 1")
-    return owners[0]
-
-
 def write_skill_source_baseline(repo, path=SKILL_SOURCE_BASELINE):
     """Rewrite the ratchet baseline from what the sources say should ship, in every
     built plugin."""
     counts = {"host_path": {}, "matter_code": {}}
-    for plugin in built_plugins(repo).values():
+    for plugin in plugin_layout.plugins(repo).values():
         rels = sorted(skill_source_expected(skills_root(repo), sorted(roster(repo, plugin)),
                                             packaged_assets(repo, plugin), extra_trees(plugin)))
         for scan, found in skill_source_hit_counts(repo, plugin, rels).items():
@@ -124,8 +87,9 @@ def write_skill_source_baseline(repo, path=SKILL_SOURCE_BASELINE):
 
 
 # --- the checks ----------------------------------------------------------------------------------
-# Each returns (ok, detail). A check of one plugin takes (repo, plugin) and raises
-# NotApplicable when the plugin does not ship what it guards.
+# Each returns (ok, detail). A check of one plugin takes (repo, plugin), one spec of
+# plugin_layout.plugins(), and raises NotApplicable when the plugin does not ship what
+# it guards.
 
 
 def check_reference_resolution(repo, plugin):
@@ -139,7 +103,7 @@ def check_reference_resolution(repo, plugin):
         known = set(json.load(f)["known_unshipped"])
     # The list is one for the repo. An entry of a skill another plugin ships is that
     # plugin's to hit, so it is not stale here.
-    elsewhere = {s for other in built_plugins(repo).values() if other["name"] != plugin["name"]
+    elsewhere = {s for other in plugin_layout.plugins(repo).values() if other["name"] != plugin["name"]
                  for s in skill_names(repo, other)}
     known = {entry for entry in known if entry.split("/", 1)[0] not in elsewhere}
     ref_fail, n_known = reference_hit_verdict([f"{rel} -> {ref}" for rel, ref in ref_hits], known)
@@ -167,17 +131,17 @@ def check_shipped_path_registry(repo, plugin):
 def check_fetch_grant_allowlist(repo, plugin):
     listed_here = any(ships_agent(plugin, fn[:-len(".md")]) for fn in FETCH_GRANT_AGENTS)
     fetch_hits = fetch_grant_allowlist_violations(
-        agents_dir(repo, plugin), fetch_grants(server_owner(repo, "data")["name"]), expect_grant=listed_here)
+        agents_dir(repo, plugin), fetch_grants(plugin_layout.server_owner(repo, "data")["name"]), expect_grant=listed_here)
     return not fetch_hits, "; ".join(fetch_hits)
 
 
 def check_hook_matchers(repo, plugin):
     with open(source_path(repo, plugin, "plugin.json"), encoding="utf-8") as f:
         manifest = json.load(f)
-    plugins = built_plugins(repo)
+    plugins = plugin_layout.plugins(repo)
     hits, count = hook_matcher_violations(
         manifest, plugin, {name: p["servers"] for name, p in plugins.items()},
-        {name: agent_names(repo, p) for name, p in plugins.items()}, strict=plugin_layout.is_cutover(repo))
+        {name: agent_names(repo, p) for name, p in plugins.items()})
     if not count:
         raise NotApplicable(f"{plugin['name']} declares no hook matcher")
     return not hits, "; ".join(hits) if hits else f"{count} matchers read"
@@ -187,7 +151,7 @@ def check_unique_names(repo):
     hits = []
     for kind, names_of in (("skill", skill_names), ("agent", agent_names)):
         owners = {}
-        for plugin in built_plugins(repo).values():
+        for plugin in plugin_layout.plugins(repo).values():
             for name in names_of(repo, plugin):
                 owners.setdefault(name, []).append(plugin["name"])
         hits += [f"{kind} '{name}' ships in {' and '.join(found)}"
@@ -196,19 +160,17 @@ def check_unique_names(repo):
 
 
 def check_layering_rule(repo):
-    """check_layering.py's verdict: its --report run until cutover, its strict run from then."""
+    """check_layering.py's verdict, from its strict run."""
     try:
         _shared, _upward, _ruling, found, unruled, stale, todo = check_layering.judge(Path(repo))
     except SystemExit as exc:
         return False, str(exc)
-    strict = plugin_layout.is_cutover(repo)
     hits = [f"no ruling: {f} names {t}" for f, t in unruled]
     hits += [f"stale ruling (nothing matches it): {f} names {t}" for f, t in stale]
-    if strict:
-        hits += [f"still to fix: {f} names {t}" for f, t in todo]
+    hits += [f"still to fix: {f} names {t}" for f, t in todo]
     if hits:
         return False, "; ".join(hits)
-    return True, f"{len(found)} upward pairs" + (f", {len(todo)} still to fix before cutover" if todo else "")
+    return True, f"{len(found)} upward pairs"
 
 
 def check_file_ops_rule(repo):
@@ -286,7 +248,7 @@ def run_checks(repo):
     the checks across plugins, under the plugin name None. `ok` is None for a check
     that does not apply to the plugin. A check that raises is a FAIL."""
     runs = [(plugin["name"], label, fn, (repo, plugin))
-            for plugin in built_plugins(repo).values() for label, fn in CHECKS]
+            for plugin in plugin_layout.plugins(repo).values() for label, fn in CHECKS]
     runs += [(None, label, fn, (repo,)) for label, fn in REPO_CHECKS]
     results = []
     for name, label, fn, args in runs:
@@ -312,7 +274,7 @@ def main(argv):
     if argv[1:]:
         print(__doc__)
         return 2
-    plugins = built_plugins(REPO)
+    plugins = plugin_layout.plugins(REPO)
     results = run_checks(REPO)
     marks = {True: "PASS", False: "FAIL", None: "N/A"}
     for name in [*plugins, None]:

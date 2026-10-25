@@ -14,15 +14,16 @@ is also planted in a throwaway agents dir.
 Run: python -m pytest -q scripts/tests/test_check_agent_bridged_grants.py
 """
 
-import importlib.util
 import os
+import sys
 import tempfile
 import unittest
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_spec = importlib.util.spec_from_file_location("check_plugin", os.path.join(SCRIPTS, "check_plugin.py"))
-check_plugin = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(check_plugin)
+sys.path.insert(0, SCRIPTS)
+import check_plugin_agents  # noqa: E402
+import check_plugin_sources  # noqa: E402
+import plugin_layout  # noqa: E402
 
 PLAIN = "mcp__plugin_probanda_data__matter_data__query"
 BRIDGED = "mcp__remote-devices__plugin_probanda_data__matter_data__query"
@@ -40,7 +41,7 @@ class AgentBridgedGrantViolationsTest(unittest.TestCase):
             for name, tools in agents.items():
                 with open(os.path.join(tmp, name), "w", encoding="utf-8", newline="\n") as f:
                     f.write(agent(tools))
-            return check_plugin.agent_bridged_grant_violations(tmp)
+            return check_plugin_agents.agent_bridged_grant_violations(tmp)
 
     def test_mirrored_grants_pass(self):
         self.assertEqual(self.violations({"a.md": ["Read", PLAIN, BRIDGED], "b.md": ["Read"]}), [])
@@ -66,18 +67,18 @@ class AgentBridgedGrantViolationsTest(unittest.TestCase):
 
     def test_no_agent_files_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            self.assertEqual(check_plugin.agent_bridged_grant_violations(tmp), ["no plugin agent files found"])
+            self.assertEqual(check_plugin_agents.agent_bridged_grant_violations(tmp), ["no plugin agent files found"])
 
 
 class RealAgentsTest(unittest.TestCase):
     def test_every_plugin_mcp_grant_has_its_bridged_twin_and_nothing_more(self):
-        for plugin in check_plugin.built_plugins(check_plugin.REPO).values():
-            if check_plugin.agent_names(check_plugin.REPO, plugin):
-                agents_dir = check_plugin.source_path(check_plugin.REPO, plugin, "agents")
-                if not check_plugin.agents_name_mcp_tool(agents_dir):
+        for plugin in plugin_layout.plugins(plugin_layout.REPO).values():
+            if check_plugin_sources.agent_names(plugin_layout.REPO, plugin):
+                agents_dir = check_plugin_sources.source_path(plugin_layout.REPO, plugin, "agents")
+                if not check_plugin_agents.agents_name_mcp_tool(agents_dir):
                     continue  # the developer agents use only Read, Glob and Grep
                 with self.subTest(plugin=plugin["name"]):
-                    self.assertEqual(check_plugin.agent_bridged_grant_violations(agents_dir), [])
+                    self.assertEqual(check_plugin_agents.agent_bridged_grant_violations(agents_dir), [])
 
 
 if __name__ == "__main__":

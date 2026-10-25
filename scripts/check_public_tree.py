@@ -36,7 +36,6 @@ is missing, 2 source/assignment.json is missing or unreadable. Standard library 
 """
 import argparse
 import hashlib
-import importlib.util
 import json
 import os
 import re
@@ -44,7 +43,8 @@ import sys
 from pathlib import Path, PurePosixPath
 
 REPO = Path(__file__).resolve().parent.parent
-SCRIPTS = Path(__file__).resolve().parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import plugin_layout  # noqa: E402
 
 PUBLIC = "public"
 # The human-approved list of public files: {path under public/: sha256}. Written
@@ -118,13 +118,6 @@ CREATED = re.compile(
 RULES_MARKER = re.compile(r"<!--\s*(?:node|edge)\b")
 
 
-def load_script(name):
-    spec = importlib.util.spec_from_file_location(name, SCRIPTS / f"{name}.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
 def walk(root):
     """(POSIX path relative to root, bytes) for every file under root, sorted."""
     for dirpath, dirs, names in os.walk(root):
@@ -151,7 +144,7 @@ def private_roots(repo):
     """(private folders to fingerprint, private files public/ may repeat), as paths from
     the repo root. The plugin source folders, which hold the server source, are where
     source/assignment.json says the repo builds from."""
-    sources = [spec["source"] for spec in load_script("plugin_layout").plugins(repo).values()]
+    sources = [spec["source"] for spec in plugin_layout.plugins(repo).values()]
     return (*PRIVATE_ROOTS, *sources), {f"{source}/{name}" for source in sources for name in SHARED_FILES}
 
 
@@ -270,8 +263,9 @@ def commit_message(text):
 def plugin_problems(repo, files):
     """[(path, line, message)] for a plugin public/ may not ship: a folder or marketplace
     entry outside export_public.PUBLIC_PLUGINS, or a skill or agent of the developer plugin."""
-    public = load_script("export_public").PUBLIC_PLUGINS
-    developer = load_script("plugin_layout").plugins(repo).get(DEVELOPER) or {}
+    import export_public  # here, not at the top: export_public imports this module
+    public = export_public.PUBLIC_PLUGINS
+    developer = plugin_layout.plugins(repo).get(DEVELOPER) or {}
     skills, agents = set(developer.get("skills") or ()), set(developer.get("agents") or ())
     found = []
     for rel, data in files.items():
@@ -297,8 +291,10 @@ def plugin_problems(repo, files):
 def problems_in(repo, files, hook=False):
     """Every problem in files. At write time (hook) only what could be a Trade Secret or
     Client Information counts: the format checks wait for the full-tree check."""
-    found = tree_problems(files, fingerprints(repo), load_script("check_publishable").file_problems,
-                          load_script("check_plugin").matter_codes, formats=not hook)
+    import check_plugin_tree
+    import check_publishable
+    found = tree_problems(files, fingerprints(repo), check_publishable.file_problems,
+                          check_plugin_tree.matter_codes, formats=not hook)
     found += plugin_problems(repo, files)
     if CHANGELOG in files and not hook:
         found += [(CHANGELOG, 1, message) for message in release_problems(text_of(files[CHANGELOG]) or "")]

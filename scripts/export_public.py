@@ -25,14 +25,12 @@ Exit codes: 0 exported (or --plan found nothing wrong), 1 a check refused the
 export, 2 a bad target or arguments. Standard library only.
 """
 import argparse
-import importlib.util
 import shutil
 import sys
 from collections import Counter
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SCRIPTS = Path(__file__).resolve().parent
 
 # The plugins of the public repository, each under public/plugins/<name>/.
 PUBLIC_PLUGINS = ("lawyer", "researcher", "litigator", "solicitor")
@@ -42,14 +40,8 @@ REQUIRED_FILES = (".claude-plugin/marketplace.json", "README.md", "CHANGELOG.md"
                   *(f"plugins/{name}/.claude-plugin/plugin.json" for name in PUBLIC_PLUGINS))
 
 
-def load_script(name):
-    spec = importlib.util.spec_from_file_location(name, SCRIPTS / f"{name}.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-public_tree = load_script("check_public_tree")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import check_public_tree as public_tree  # noqa: E402
 
 
 def tree_summary(files):

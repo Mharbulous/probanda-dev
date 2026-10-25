@@ -153,15 +153,15 @@ def recital_rule_mirror_violations(repo, source, mirrors):
 
 # --- hook-matchers --------------------------------------------------------------------------------
 
-def hook_matcher_violations(manifest, plugin, servers, agents, strict):
+def hook_matcher_violations(manifest, plugin, servers, agents):
     """(hits, matchers read) for the hook matchers of one plugin.json. A matcher that
     names a plugin tool must name a server that plugin ships, and one that names a
     plugin agent must name an agent that plugin ships: a matcher that names anything
     else matches nothing, so its hook never runs. `servers` and `agents` are {plugin
-    name: what it ships} for every built plugin. With `strict`, the named plugin must
-    also be this one or one it requires. A matcher that names a host tool, or a
+    name: what it ships} for every built plugin. The named plugin must also be this
+    one or one it requires. A matcher that names a host tool, or a
     pattern tied to no plugin, passes."""
-    reachable = {plugin["name"], *plugin["requires"]} if strict else set(servers)
+    reachable = {plugin["name"], *plugin["requires"]}
     hits, count = [], 0
     for event in TOOL_EVENTS + AGENT_EVENTS:
         pattern, ships, kind = (MATCHER_TOOL, servers, "server") if event in TOOL_EVENTS \

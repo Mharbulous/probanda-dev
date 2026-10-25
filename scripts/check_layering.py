@@ -22,9 +22,8 @@ shared/ ships in every plugin and is read only when a skill points at it, so its
 files are listed by --shared and never fail the check.
 
 Skills are read from .claude/skills/ and from every public/plugins/*/skills/.
-Agents are read from source/probanda/agents/ until the assignment's status is
-"cutover", then from each plugin's source/<plugin>/agents/. check_plugin.py runs
-this check too, through judge(): as --report until cutover, strict from then.
+Agents are read from each plugin's source/<plugin>/agents/. check_plugin.py runs
+this check too, through judge(), strict.
 
 Exit codes: 0 clean, 1 a reference with no ruling (in strict mode, also any
 "todo"), or a stale ruling. Standard library only.
@@ -57,10 +56,8 @@ FAMILY_START = r"(?:(?<![a-z_])|(?<=__))"
 
 
 def agent_files(repo):
-    """Every agent file: under source/probanda/agents/ until the assignment's status
-    is "cutover", then under each plugin's source/<plugin>/agents/."""
-    assignment = plugin_layout.load(repo)
-    owners = assignment["plugins"] if assignment["status"] == "cutover" else ("probanda",)
+    """Every agent file, under each plugin's source/<plugin>/agents/."""
+    owners = plugin_layout.load(repo)["plugins"]
     return sorted(path for owner in owners for path in (repo / "source" / owner / "agents").glob("*.md"))
 
 

@@ -10,20 +10,21 @@ class reads the real repo to pin the registry against it.
 Run: python -m pytest -q scripts/tests/test_check_entry_points.py
 """
 
-import importlib.util
 import os
+import sys
 import tempfile
 import unittest
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_spec = importlib.util.spec_from_file_location("check_plugin", os.path.join(SCRIPTS, "check_plugin.py"))
-check_plugin = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(check_plugin)
+sys.path.insert(0, SCRIPTS)
+import check_plugin_entry_points  # noqa: E402
+import check_plugin_sources  # noqa: E402
+import plugin_layout  # noqa: E402
 
 MIGRATE_ENGINE_REAL = os.path.join(
-    check_plugin.REPO, ".claude", "skills", "drafting-data", "references", "scripts", "migrate_engine.py")
-MIGRATE_TS_REAL = check_plugin.server_path(
-    check_plugin.REPO, check_plugin.server_owner(check_plugin.REPO, "data"), "data", "src", "submission", "migrate.ts")
+    plugin_layout.REPO, ".claude", "skills", "drafting-data", "references", "scripts", "migrate_engine.py")
+MIGRATE_TS_REAL = check_plugin_sources.server_path(
+    plugin_layout.REPO, plugin_layout.server_owner(plugin_layout.REPO, "data"), "data", "src", "submission", "migrate.ts")
 
 FIXTURE_MODULE = '''\
 class MigrateError(RuntimeError):
@@ -51,38 +52,38 @@ class TestEntryPointViolations(unittest.TestCase):
         return path
 
     def test_green_path_no_violations(self):
-        self.assertEqual(check_plugin.entry_point_violations(self._write(FIXTURE_MODULE), SYMBOLS), [])
+        self.assertEqual(check_plugin_entry_points.entry_point_violations(self._write(FIXTURE_MODULE), SYMBOLS), [])
 
     def test_deliberate_rename_of_a_function_is_caught(self):
         path = self._write(FIXTURE_MODULE.replace("def run(request):", "def run2(request):"))
-        violations = check_plugin.entry_point_violations(path, SYMBOLS)
+        violations = check_plugin_entry_points.entry_point_violations(path, SYMBOLS)
         self.assertEqual(len(violations), 1)
         self.assertIn("'run'", violations[0])
 
     def test_deliberate_removal_of_a_class_is_caught(self):
         removed = FIXTURE_MODULE.split("class MigrateError")[0] + "def run(request):\n    return {}\n"
-        violations = check_plugin.entry_point_violations(self._write(removed), SYMBOLS)
+        violations = check_plugin_entry_points.entry_point_violations(self._write(removed), SYMBOLS)
         self.assertEqual(len(violations), 2)  # MigrateError itself, and its as_dict
 
     def test_deliberate_rename_of_a_method_is_caught(self):
         path = self._write(FIXTURE_MODULE.replace("def as_dict(self):", "def to_dict(self):"))
-        self.assertEqual(check_plugin.entry_point_violations(path, SYMBOLS),
+        self.assertEqual(check_plugin_entry_points.entry_point_violations(path, SYMBOLS),
                          [f"{path}: 'MigrateError.as_dict' not found at top level"])
 
     def test_missing_file(self):
-        violations = check_plugin.entry_point_violations(
+        violations = check_plugin_entry_points.entry_point_violations(
             os.path.join(tempfile.gettempdir(), "does-not-exist-98213.py"), ("run",))
         self.assertEqual(len(violations), 1)
         self.assertIn("not found", violations[0])
 
     def test_unparseable_file(self):
-        violations = check_plugin.entry_point_violations(self._write("def broken(:\n"), ("run",))
+        violations = check_plugin_entry_points.entry_point_violations(self._write("def broken(:\n"), ("run",))
         self.assertEqual(len(violations), 1)
         self.assertIn("could not parse", violations[0])
 
     def test_import_and_assignment_targets_count_as_top_level_names(self):
         path = self._write("from somewhere import run\nMigrateError = run\n")
-        self.assertEqual(check_plugin.entry_point_violations(path, ("run", "MigrateError")), [])
+        self.assertEqual(check_plugin_entry_points.entry_point_violations(path, ("run", "MigrateError")), [])
 
 
 class TestConsumerImportViolations(unittest.TestCase):
@@ -97,11 +98,11 @@ class TestConsumerImportViolations(unittest.TestCase):
     def test_consumer_importing_only_pinned_names_is_clean(self):
         path = self._write("from migrate_engine import MigrateError, run\n")
         self.assertEqual(
-            check_plugin.consumer_import_violations(path, "migrate_engine", ("run", "MigrateError")), [])
+            check_plugin_entry_points.consumer_import_violations(path, "migrate_engine", ("run", "MigrateError")), [])
 
     def test_consumer_importing_an_unpinned_name_is_caught(self):
         path = self._write("from migrate_engine import MigrateError, run, extra_helper\n")
-        violations = check_plugin.consumer_import_violations(path, "migrate_engine", ("run", "MigrateError"))
+        violations = check_plugin_entry_points.consumer_import_violations(path, "migrate_engine", ("run", "MigrateError"))
         self.assertEqual(len(violations), 1)
         self.assertIn("extra_helper", violations[0])
 
@@ -109,10 +110,10 @@ class TestConsumerImportViolations(unittest.TestCase):
         path = self._write(
             "def main():\n    from migrate_engine import MigrateError, run\n    try:\n        pass\n")
         self.assertEqual(
-            check_plugin.consumer_import_violations(path, "migrate_engine", ("run", "MigrateError")), [])
+            check_plugin_entry_points.consumer_import_violations(path, "migrate_engine", ("run", "MigrateError")), [])
 
     def test_missing_consumer_file(self):
-        violations = check_plugin.consumer_import_violations(
+        violations = check_plugin_entry_points.consumer_import_violations(
             os.path.join(tempfile.gettempdir(), "does-not-exist-98214.ts"), "migrate_engine", ("run",))
         self.assertEqual(len(violations), 1)
         self.assertIn("not found", violations[0])
@@ -124,9 +125,9 @@ class TestRegistryAgainstTheRealRepo(unittest.TestCase):
     def test_migrate_engine_entry_is_consistent(self):
         self.assertTrue(os.path.isfile(MIGRATE_ENGINE_REAL), MIGRATE_ENGINE_REAL)
         self.assertTrue(os.path.isfile(MIGRATE_TS_REAL), MIGRATE_TS_REAL)
-        entry = check_plugin.ENTRY_POINT_REGISTRY[0]
-        violations = check_plugin.entry_point_violations(MIGRATE_ENGINE_REAL, entry["symbols"])
-        violations += check_plugin.consumer_import_violations(MIGRATE_TS_REAL, "migrate_engine", entry["symbols"])
+        entry = check_plugin_entry_points.ENTRY_POINT_REGISTRY[0]
+        violations = check_plugin_entry_points.entry_point_violations(MIGRATE_ENGINE_REAL, entry["symbols"])
+        violations += check_plugin_entry_points.consumer_import_violations(MIGRATE_TS_REAL, "migrate_engine", entry["symbols"])
         self.assertEqual(violations, [])
 
 

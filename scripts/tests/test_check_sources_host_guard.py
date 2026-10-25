@@ -13,17 +13,18 @@ in-memory copy, and requires the checker to notice. The bundle is never written 
 Run: python -m pytest -q scripts/tests/test_check_sources_host_guard.py
 """
 
-import importlib.util
 import os
+import sys
 import unittest
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_spec = importlib.util.spec_from_file_location("check_plugin", os.path.join(SCRIPTS, "check_plugin.py"))
-check_plugin = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(check_plugin)
+sys.path.insert(0, SCRIPTS)
+import check_plugin_bundles  # noqa: E402
+import check_plugin_sources  # noqa: E402
+import plugin_layout  # noqa: E402
 
-SERVER_JS = check_plugin.server_path(
-    check_plugin.REPO, check_plugin.server_owner(check_plugin.REPO, "data"), "data", *check_plugin.DATA_BUNDLE)
+SERVER_JS = check_plugin_sources.server_path(
+    plugin_layout.REPO, plugin_layout.server_owner(plugin_layout.REPO, "data"), "data", *check_plugin_bundles.DATA_BUNDLE)
 
 
 class SourcesHostGuardTest(unittest.TestCase):
@@ -38,7 +39,7 @@ class SourcesHostGuardTest(unittest.TestCase):
 
     def assertCaught(self, broken, fragment):
         """The mutated bundle must produce a violation naming `fragment`."""
-        hits = check_plugin.sources_host_guard_violations(broken)
+        hits = check_plugin_bundles.sources_host_guard_violations(broken)
         self.assertTrue(hits, "checker reported NO violation for a broken bundle")
         self.assertTrue(
             any(fragment in h for h in hits),
@@ -53,7 +54,7 @@ class SourcesHostGuardTest(unittest.TestCase):
 
     def test_the_shipped_bundle_is_clean(self):
         """Guards against the check passing only because the bundle drifted."""
-        self.assertEqual([], check_plugin.sources_host_guard_violations(self.clean))
+        self.assertEqual([], check_plugin_bundles.sources_host_guard_violations(self.clean))
 
     # -- the guard runs before every request ---------------------------------
 

@@ -39,10 +39,10 @@ PRIVATE = {
     "CLAUDE.md": "dev notes\n",
     "COMMANDMENTS.md": "rules\n",
     "README.md": "the private readme\n",
-    "source/assignment.json": '{"status": "planned", "plugins": {}}',
-    "source/probanda/plugin.json": "{}",
+    "source/assignment.json": '{"status": "cutover", "plugins": {"lawyer": {"requires": [], "skills": [], "agents": [], "hooks": {}, "servers": []}}}',
+    "source/lawyer/plugin.json": "{}",
     "cloud/pool/notes.md": "the pool\n",
-    "plugins/probanda/skills/secret/SKILL.md": "the development plugin\n",
+    "plugins/lawyer/skills/secret/SKILL.md": "the development plugin\n",
     ".claude/skills/data/schema.sql": f"{DDL};\n",
 }
 

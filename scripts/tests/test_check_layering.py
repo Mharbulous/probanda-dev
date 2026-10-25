@@ -31,14 +31,17 @@ def make_repo(root, skills, agents=None, hooks=None):
     plugins = json.loads(json.dumps(PLUGINS))
     for plugin, mapping in (hooks or {}).items():
         plugins[plugin]["hooks"] = mapping
-    (root / "source" / "probanda" / "agents").mkdir(parents=True)
-    (root / "source" / "assignment.json").write_text(json.dumps({"status": "planned", "plugins": plugins}), encoding="utf-8")
+    (root / "source").mkdir(parents=True)
+    (root / "source" / "assignment.json").write_text(json.dumps({"status": "cutover", "plugins": plugins}), encoding="utf-8")
     for name, text in skills.items():
         path = root / ".claude" / "skills" / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
     for name, text in (agents or {}).items():
-        (root / "source" / "probanda" / "agents" / f"{name}.md").write_text(text, encoding="utf-8")
+        owner = next(p for p, spec in plugins.items() if name in spec["agents"])
+        path = root / "source" / owner / "agents" / f"{name}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
     return plugins
 
 
@@ -68,22 +71,21 @@ class ScanTest(unittest.TestCase):
     def test_tool_of_a_higher_plugin(self):
         self.assertEqual(
             self.pairs({"show-me/SKILL.md": "x\n"},
-                       agents={"docket-clerk": "- mcp__plugin_probanda_data__drafting_data__query\n"
-                                               "- mcp__plugin_probanda_commons__legal_commons__browse\n"
-                                               "- mcp__plugin_probanda_data__skill_rules__applicable\n"}),
-            [("source/probanda/agents/docket-clerk.md", "commons server"),
-             ("source/probanda/agents/docket-clerk.md", "drafting_data__*")])
+                       agents={"docket-clerk": "- mcp__plugin_practice_data__drafting_data__query\n"
+                                               "- mcp__plugin_research_commons__legal_commons__browse\n"
+                                               "- mcp__plugin_practice_data__skill_rules__applicable\n"}),
+            [("source/practice/agents/docket-clerk.md", "commons server"),
+             ("source/practice/agents/docket-clerk.md", "drafting_data__*")])
 
-    def test_at_cutover_agents_are_read_from_each_plugin_folder_and_skills_from_any_public_plugin(self):
+    def test_agents_are_read_from_each_plugin_folder_and_skills_from_any_public_plugin(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             plugins = make_repo(root, {"show-me/SKILL.md": "x\n"},
-                                agents={"docket-clerk": "- mcp__plugin_probanda_data__matter_data__query\n"})
+                                agents={"docket-clerk": "- mcp__plugin_practice_data__rules__at\n"})
             plugins["practice"]["skills"].append("tldr")
             (root / "source" / "assignment.json").write_text(
                 json.dumps({"status": "cutover", "plugins": plugins}), encoding="utf-8")
-            for rel, text in (("source/practice/agents/docket-clerk.md", "- mcp__plugin_practice_data__rules__at\n"),
-                              ("public/plugins/practice/skills/tldr/SKILL.md", "Ask `/matter-data`.\n")):
+            for rel, text in (("public/plugins/practice/skills/tldr/SKILL.md", "Ask `/matter-data`.\n"),):
                 (root / rel).parent.mkdir(parents=True)
                 (root / rel).write_text(text, encoding="utf-8")
             self.assertEqual(sorted({(f["file"], f["target"]) for f in check_layering.scan(root, plugins)}),

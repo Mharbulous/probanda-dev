@@ -10,15 +10,15 @@ the real repo.
 Run: python -m pytest -q scripts/tests/test_check_recital_rule.py
 """
 
-import importlib.util
 import os
+import sys
 import tempfile
 import unittest
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_spec = importlib.util.spec_from_file_location("check_plugin", os.path.join(SCRIPTS, "check_plugin.py"))
-check_plugin = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(check_plugin)
+sys.path.insert(0, SCRIPTS)
+import check_plugin_agents  # noqa: E402
+import plugin_layout  # noqa: E402
 
 BLOCK = ("<!-- recital-rule: begin. Source: x. -->\n"
          "**Whose reasons are they?** Support comes only from the court's own reasons.\n"
@@ -31,7 +31,7 @@ class RecitalRuleMirrorTest(unittest.TestCase):
             for name, text in {"source.md": source, **mirrors}.items():
                 with open(os.path.join(tmp, name), "w", encoding="utf-8", newline=newline) as f:
                     f.write(text)
-            return check_plugin.recital_rule_mirror_violations(tmp, "source.md", tuple(mirrors))
+            return check_plugin_agents.recital_rule_mirror_violations(tmp, "source.md", tuple(mirrors))
 
     def test_identical_copies_pass(self):
         self.assertEqual(self.violations(f"# S\n\n{BLOCK}\n", {
@@ -57,7 +57,7 @@ class RecitalRuleMirrorTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with open(os.path.join(tmp, "source.md"), "w", encoding="utf-8") as f:
                 f.write(BLOCK)
-            hits = check_plugin.recital_rule_mirror_violations(tmp, "source.md", ("gone.md",))
+            hits = check_plugin_agents.recital_rule_mirror_violations(tmp, "source.md", ("gone.md",))
         self.assertEqual(hits, ["gone.md: file missing"])
 
     def test_source_without_block_fails(self):
@@ -66,26 +66,27 @@ class RecitalRuleMirrorTest(unittest.TestCase):
 
     AGENTS = ("verify-claim", "verify-edges", "extract-caselaw", "verify-caselaw")
 
-    def test_the_single_plugin_checks_every_mirror_in_its_own_agent_sources(self):
-        plugin = {"name": "probanda", "source": "source/probanda", "skills": None, "agents": None}
-        mirrors = check_plugin.recital_rule_mirrors(plugin)
+    def test_a_plugin_that_ships_every_mirror_checks_each_in_its_own_agent_sources(self):
+        skills = sorted({rel.split("/")[0] for rel in check_plugin_agents.RECITAL_RULE_SKILL_MIRRORS} - {"shared"})
+        plugin = {"name": "litigator", "source": "source/litigator", "skills": skills, "agents": list(self.AGENTS)}
+        mirrors = check_plugin_agents.recital_rule_mirrors(plugin)
         self.assertEqual([m for m in mirrors if not m.startswith(".claude/")],
-                         [f"source/probanda/agents/{n}.md" for n in self.AGENTS])
+                         [f"source/litigator/agents/{n}.md" for n in self.AGENTS])
         self.assertEqual([m for m in mirrors if m.startswith(".claude/")],
-                         [f".claude/skills/{rel}" for rel in check_plugin.RECITAL_RULE_SKILL_MIRRORS])
+                         [f".claude/skills/{rel}" for rel in check_plugin_agents.RECITAL_RULE_SKILL_MIRRORS])
 
     def test_a_plugin_checks_only_the_mirrors_it_ships_and_always_the_shared_one(self):
         plugin = {"name": "research", "source": "source/research", "skills": ["verify-law"], "agents": ["verify-claim"]}
-        self.assertEqual(check_plugin.recital_rule_mirrors(plugin),
+        self.assertEqual(check_plugin_agents.recital_rule_mirrors(plugin),
                          (".claude/skills/shared/legal-audit-protocol.md",
                           ".claude/skills/verify-law/agents/verify-claim.md",
                           "source/research/agents/verify-claim.md"))
 
     def test_real_repo_copies_match(self):
-        for plugin in check_plugin.built_plugins(check_plugin.REPO).values():
+        for plugin in plugin_layout.plugins(plugin_layout.REPO).values():
             with self.subTest(plugin=plugin["name"]):
-                self.assertEqual(check_plugin.recital_rule_mirror_violations(
-                    check_plugin.REPO, check_plugin.RECITAL_RULE_SOURCE, check_plugin.recital_rule_mirrors(plugin)), [])
+                self.assertEqual(check_plugin_agents.recital_rule_mirror_violations(
+                    plugin_layout.REPO, check_plugin_agents.RECITAL_RULE_SOURCE, check_plugin_agents.recital_rule_mirrors(plugin)), [])
 
 
 if __name__ == "__main__":

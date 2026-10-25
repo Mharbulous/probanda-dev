@@ -58,11 +58,11 @@ def server_path(repo, plugin, server, *parts):
 
 
 def ships_skill(plugin, skill):
-    return plugin["skills"] is None or skill in plugin["skills"]
+    return skill in plugin["skills"]
 
 
 def ships_agent(plugin, agent):
-    return plugin["agents"] is None or agent in plugin["agents"]
+    return agent in plugin["agents"]
 
 
 def agents_dir(repo, plugin):
@@ -72,11 +72,8 @@ def agents_dir(repo, plugin):
 
 
 def agent_names(repo, plugin):
-    """The agents the plugin ships: the assignment's list, or every agent file in its
-    source while the one plugin ships everything."""
-    if plugin["agents"] is not None:
-        return sorted(plugin["agents"])
-    return sorted(os.path.basename(p)[:-len(".md")] for p in glob.glob(source_path(repo, plugin, "agents", "*.md")))
+    """The agents the plugin ships: the assignment's list."""
+    return sorted(plugin["agents"])
 
 
 def roster(repo, plugin):
@@ -174,7 +171,7 @@ def check_roster_sanity(repo, plugin):
     missing = [s for s in names if not os.path.isfile(skill_md(repo, s))]
     if missing:
         return False, "missing source for: " + ", ".join(missing)
-    if plugin["skills"] is not None and set(plugin["skills"]) != set(names):
+    if set(plugin["skills"]) != set(names):
         return False, ("roster.json and source/assignment.json disagree on: "
                        + ", ".join(sorted(set(plugin["skills"]) ^ set(names))))
     return True, ""
@@ -186,7 +183,7 @@ def check_reserved_name(repo, plugin):
 
 
 def check_inverse_reference(repo, plugin):
-    if plugin["agents"] is not None and set(COMMONS_AGENTS) <= set(plugin["agents"]):
+    if set(COMMONS_AGENTS) <= set(plugin["agents"]):
         return True, f"{plugin['name']} ships the commons agents: " + ", ".join(COMMONS_AGENTS)
     needles = COMMONS_AGENTS
     inv_hits = []

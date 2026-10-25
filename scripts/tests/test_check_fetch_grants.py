@@ -9,20 +9,19 @@ agent. A listed agent that is absent passes. Each case builds a throwaway agents
 Run: python -m pytest -q scripts/tests/test_check_fetch_grants.py
 """
 
-import importlib.util
 import os
+import sys
 import tempfile
 import unittest
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_spec = importlib.util.spec_from_file_location("check_plugin", os.path.join(SCRIPTS, "check_plugin.py"))
-check_plugin = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(check_plugin)
+sys.path.insert(0, SCRIPTS)
+import check_plugin_agents  # noqa: E402
 
-PLAIN = "mcp__plugin_probanda_data__sources__fetch"
-BRIDGED = "mcp__remote-devices__plugin_probanda_data__sources__fetch"
-OTHER = "mcp__plugin_probanda_data__skill_source__read"
-OTHER_BRIDGED = "mcp__remote-devices__plugin_probanda_data__skill_source__read"
+PLAIN = "mcp__plugin_lawyer_data__sources__fetch"
+BRIDGED = "mcp__remote-devices__plugin_lawyer_data__sources__fetch"
+OTHER = "mcp__plugin_lawyer_data__skill_source__read"
+OTHER_BRIDGED = "mcp__remote-devices__plugin_lawyer_data__skill_source__read"
 LOCALIZE = "localize-helper.md"
 FETCHER = "legislation-fetcher.md"
 
@@ -40,11 +39,11 @@ class FetchGrantAllowlistTest(unittest.TestCase):
             for name, tools in agents.items():
                 with open(os.path.join(tmp, name), "w", encoding="utf-8", newline="\n") as f:
                     f.write(agent(tools))
-            return check_plugin.fetch_grant_allowlist_violations(tmp, (PLAIN, BRIDGED), **kwargs)
+            return check_plugin_agents.fetch_grant_allowlist_violations(tmp, (PLAIN, BRIDGED), **kwargs)
 
     def test_the_grants_carry_the_name_of_the_plugin_that_ships_the_data_server(self):
-        self.assertEqual(check_plugin.fetch_grants("probanda"), (PLAIN, BRIDGED))
-        self.assertEqual(check_plugin.fetch_grants("practice"),
+        self.assertEqual(check_plugin_agents.fetch_grants("lawyer"), (PLAIN, BRIDGED))
+        self.assertEqual(check_plugin_agents.fetch_grants("practice"),
                          ("mcp__plugin_practice_data__sources__fetch",
                           "mcp__remote-devices__plugin_practice_data__sources__fetch"))
 
@@ -55,7 +54,7 @@ class FetchGrantAllowlistTest(unittest.TestCase):
         self.assertIn("third.md grants sources__fetch but is not in FETCH_GRANT_AGENTS", hits[0])
 
     def test_the_allowlist_names_the_two_agents(self):
-        self.assertEqual(check_plugin.FETCH_GRANT_AGENTS, (LOCALIZE, FETCHER))
+        self.assertEqual(check_plugin_agents.FETCH_GRANT_AGENTS, (LOCALIZE, FETCHER))
 
     def test_both_listed_agents_granting_both_names_pass(self):
         self.assertEqual(self.violations({
@@ -92,7 +91,7 @@ class FetchGrantAllowlistTest(unittest.TestCase):
                          [f"{LOCALIZE} does not grant {PLAIN}", f"{LOCALIZE} does not grant {BRIDGED}"])
 
     def test_a_longer_tool_name_is_not_a_fetch_grant(self):
-        hits = self.violations({"other.md": ["mcp__plugin_probanda_data__sources__fetch_extra"]})
+        hits = self.violations({"other.md": ["mcp__plugin_lawyer_data__sources__fetch_extra"]})
         self.assertEqual(hits, ["no agent grants sources__fetch"])
 
     def test_no_agent_granting_fetch_fails(self):

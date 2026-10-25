@@ -6,20 +6,12 @@ Usage:
   python scripts/build_plugin.py --check      compare a fresh build with plugins/<plugin>/
   python scripts/build_plugin.py --out <dir>  build into <dir> instead (replaced wholesale)
 
-Which plugins are built is set by "status" in source/assignment.json (see
-plugin_layout.py):
-
-  "planned"  one plugin, probanda. Sources: the skill trees under .claude/skills/
-             (every key of source/probanda/roster.json, plus shared/ and
-             legal-commons/), every skill under public/plugins/*/skills/, and the
-             plugin files under source/probanda/. --out <dir> is the plugin folder.
-  "cutover"  every plugin in the assignment file. Plugin P is built from
-             source/P/ (plugin.json and roster.json, and .mcp.json, README.md,
-             VISION.md, agents/ and hooks/ where they exist), the skills the
-             assignment gives P, the whole shared/ tree, and the bundles of the
-             servers the assignment gives P. --out <dir> holds one folder per
-             plugin, <dir>/P/. A folder under plugins/ that no plugin builds is
-             reported stale by --check and removed by a build.
+Every plugin in source/assignment.json is built (see plugin_layout.py). Plugin P
+is built from source/P/ (plugin.json and roster.json, and .mcp.json, README.md,
+VISION.md, agents/ and hooks/ where they exist), the skills the assignment gives
+P, the whole shared/ tree, and the bundles of the servers the assignment gives P.
+--out <dir> holds one folder per plugin, <dir>/P/. A folder under plugins/ that
+no plugin builds is reported stale by --check and removed by a build.
 
 A skill is found at .claude/skills/<name>/ or at public/plugins/*/skills/<name>/,
 never both. The skill selection and the SKILL.md stamp are ported from CoClerk's
@@ -59,10 +51,9 @@ TREE_TEXT_EXTS = (".md", ".py", ".sql", ".json")
 TRANSIENT_ASSET_PREFIX = "~$"
 # Files written with LF line endings and scanned for old plugin identifiers.
 TEXT_SUFFIXES = {".md", ".py", ".json", ".js", ".txt", ".html", ".css", ".csv", ".yaml", ".yml", ".sql"}
-OLD_IDENTIFIERS = (rb"plugin_litigation_", rb"plugin_legal-commons_", rb"plugin_legal_")
-# The single plugin's own identifiers, a tool name and an agent or skill prefix.
-# They are old in any plugin with another name.
-SINGLE_PLUGIN_IDENTIFIERS = (rb"plugin_probanda_", rb"probanda:[A-Za-z]")
+# The retired single plugin probanda's tool-name and agent or skill prefixes are old too.
+OLD_IDENTIFIERS = (rb"plugin_litigation_", rb"plugin_legal-commons_", rb"plugin_legal_",
+                   rb"plugin_probanda_", rb"probanda:[A-Za-z]")
 REPLACE_RETRY_SECONDS = 30  # a file watcher or sync client locks a folder for seconds
 # A path a hook runs from the installed plugin's folder.
 HOOK_PATH = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\s\"']+)")
@@ -281,22 +272,19 @@ def collect(repo, spec):
     both = [t for t in public if t in roster or t in EXTRA_TREES or (skills_root / t).exists()]
     if both:
         stop("skill in both public/ and .claude/skills/ (a skill lives in one): " + ", ".join(both))
-    if spec["skills"] is None:
-        extra = list(EXTRA_TREES)
-    else:
-        # The assignment says which skills and agents the plugin ships, and the
-        # plugin's source says which folders of a private skill are assets and
-        # holds the agent files, so the two must agree.
-        public = {t: public[t] for t in sorted(spec["skills"]) if t in public}
-        extra = [t for t in EXTRA_TREES if t == SHARED_TREE or t in spec["skills"]]
-        private = {t for t in spec["skills"] if t not in public and t not in EXTRA_TREES}
-        if private != set(roster):
-            stop(f"{src / 'roster.json'} and source/assignment.json disagree on the private skills of '{name}': "
-                 + ", ".join(sorted(private ^ set(roster))))
-        agents = {p.stem for p in (src / "agents").glob("*.md")}
-        if agents != set(spec["agents"]):
-            stop(f"{src / 'agents'} and source/assignment.json disagree on the agents of '{name}': "
-                 + ", ".join(sorted(agents ^ set(spec["agents"]))))
+    # The assignment says which skills and agents the plugin ships, and the
+    # plugin's source says which folders of a private skill are assets and
+    # holds the agent files, so the two must agree.
+    public = {t: public[t] for t in sorted(spec["skills"]) if t in public}
+    extra = [t for t in EXTRA_TREES if t == SHARED_TREE or t in spec["skills"]]
+    private = {t for t in spec["skills"] if t not in public and t not in EXTRA_TREES}
+    if private != set(roster):
+        stop(f"{src / 'roster.json'} and source/assignment.json disagree on the private skills of '{name}': "
+             + ", ".join(sorted(private ^ set(roster))))
+    agents = {p.stem for p in (src / "agents").glob("*.md")}
+    if agents != set(spec["agents"]):
+        stop(f"{src / 'agents'} and source/assignment.json disagree on the agents of '{name}': "
+             + ", ".join(sorted(agents ^ set(spec["agents"]))))
     declared = sorted(json.loads((src / ".mcp.json").read_text(encoding="utf-8"))) \
         if (src / ".mcp.json").is_file() else []
     if declared != sorted(spec["servers"]):
@@ -345,9 +333,8 @@ def collect(repo, spec):
         for rel in HOOK_PATH.findall(word):
             if rel not in files:
                 stop(f"hook path ${{CLAUDE_PLUGIN_ROOT}}/{rel} names no file in the built plugin '{name}'")
-    old = OLD_IDENTIFIERS + (() if name == plugin_layout.SINGLE_PLUGIN else SINGLE_PLUGIN_IDENTIFIERS)
     leftovers = [f"{p}: {needle.decode()}" for p, data in files.items() if Path(p).suffix.lower() in TEXT_SUFFIXES
-                 for needle in old if re.search(needle, data)]
+                 for needle in OLD_IDENTIFIERS if re.search(needle, data)]
     if leftovers:
         stop(f"old plugin identifiers in the output of '{name}':\n  " + "\n  ".join(leftovers))
     return files
@@ -431,22 +418,18 @@ def main():
     parser.add_argument("--repo", type=Path, default=REPO, help="repo to read sources from (for tests)")
     args = parser.parse_args()
     repo = args.repo.resolve()
-    cutover = plugin_layout.is_cutover(repo)
     # Every gate of every plugin runs before anything is written.
     built = {name: collect(repo, spec) for name, spec in plugin_layout.plugins(repo).items()}
     plugins_dir = repo / "plugins"
     stale = sorted(p for p in plugins_dir.iterdir() if p.is_dir() and p.name not in built
-                   and not p.name.startswith(".")) if cutover and plugins_dir.is_dir() else []
+                   and not p.name.startswith(".")) if plugins_dir.is_dir() else []
     if args.check:
         code = max([check(files, plugins_dir / name) for name, files in built.items()], default=0)
         for folder in stale:
             print(f"{folder} is stale: no plugin in source/assignment.json builds it")
         return 1 if stale else code
     for name, files in built.items():
-        if args.out:
-            out = args.out.resolve() / name if cutover else args.out.resolve()
-        else:
-            out = plugins_dir / name
+        out = (args.out.resolve() if args.out else plugins_dir) / name
         write(files, out)
         print(f"{out}: {len(files)} files")
     if not args.out:
