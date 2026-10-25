@@ -28,4 +28,4 @@ Goal: a spec for restructuring the skills this session used, so future sessions 
    - destination
    - the exact replacement pointer text
 
-   Every location names the source path (`.claude/skills/...` or `source/...`), never a built `plugins/` path or an installed copy's path. Save the spec as `docs/skill-streamlining/<YYYY-MM-DD>_<skill-names>.md` in the probanda-dev repo. Where the repo is not granted as a folder, such as Cowork, write it with `mcp__plugin_lawyer_data__repo_docs__write`, whose `path` is relative to `docs/` (`skill-streamlining/<YYYY-MM-DD>_<skill-names>.md`). Report the path and a one-paragraph summary.
+   Every location names the source path (`.claude/skills/<skill>/...` or `source/...`), never a built `plugins/` path or an installed copy's path. Save the spec as `docs/skill-streamlining/<YYYY-MM-DD>_<skill-names>.md` in the probanda-dev repo. Where the repo is not granted as a folder, such as Cowork, write it with `mcp__plugin_lawyer_data__repo_docs__write`, whose `path` is relative to `docs/` (`skill-streamlining/<YYYY-MM-DD>_<skill-names>.md`). Report the path and a one-paragraph summary.
