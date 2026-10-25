@@ -105,7 +105,7 @@ run a citator sweep across an inventory — nothing here is being relied on yet.
 
 Noting up a court decision is `citation-checker`'s work, dispatched by the
 `/legal-research` gate (`shared/legal-research.md`). A dispatch naming `mode: note-up`
-is malformed: audit nothing, and tell the caller to dispatch `citation-checker`.
+is malformed: audit nothing, and tell the caller to dispatch `researcher:citation-checker`.
 
 ## `mode: plan` — what must the research cover?
 

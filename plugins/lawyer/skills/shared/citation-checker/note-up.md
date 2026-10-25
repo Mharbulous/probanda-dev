@@ -3,7 +3,7 @@
 # Note-up playbook
 
 `citation-checker` fetches this file at the start of every invocation with
-`mcp__plugin_lawyer_data__skill_source__read`, path `shared/citation-checker/note-up.md`,
+`skill_source__read` (under whichever of `mcp__plugin_lawyer_data__skill_source__read` and `mcp__remote-devices__plugin_lawyer_data__skill_source__read` this host grants), path `shared/citation-checker/note-up.md`,
 and follows it exactly. The agent definition holds the hard rules. This file holds the
 order of work, the record and the manifest line.
 

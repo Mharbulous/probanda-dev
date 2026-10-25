@@ -1,6 +1,8 @@
 ---
 name: extract-provision
 description: Reads one statutory, regulatory or treatise provision set and returns the transportable legal knowledge it states — the concepts it establishes and their criteria — as strict JSON. Read-only — never writes. Dispatched by /matter-data ingest-extract, one instance per provision set.
+model: opus
+effort: high
 tools:
   - Read
 ---

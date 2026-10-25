@@ -5,10 +5,10 @@ description: >
   has a claim, whether a defence or a limitation argument holds, whether the facts on the record
   satisfy a legal test, what follows for this file. Counterpart to `legal-research`,
   which owns what the law IS. Where the artifact rather than the conclusion is what's wanted: a
-  date -> the `docket-clerk` agent; the application itself -> `draft`.
+  date -> the `lawyer:docket-clerk` agent; the application itself -> `draft`.
 ---
 
-<!-- litigator v0.10.6 -->
+<!-- litigator v0.10.7 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -33,7 +33,7 @@ never reason from law you established yourself.
 This skill is not an exception to the legal-research gate; it is a caller of it.
 `shared/legal-research.md` lists "whether conduct is actionable" among the assertions
 that are not yours to make, and that still holds here. What makes the reasoning below
-permissible is step 2: the test comes back from `research-agent`, with citations, before
+permissible is step 2: the test comes back from `researcher:research-agent`, with citations, before
 any of it is applied. Skip step 2 and every conclusion downstream is an unverified
 statement of law wearing a conclusion's clothes.
 
@@ -69,7 +69,7 @@ Two things carry over from `shared/legal-research.md` and bind you as the caller
 
 An ingested primary authority or output of `/verify-law` with `verify-authorities` may be quoted without a fresh spawn,
 on the terms of item 2 in `shared/legal-research.md`, which is the canonical rule. It may not be
-reasoned from: the test you apply still comes back from `research-agent`. A research memo or case brief is a lead:
+reasoned from: the test you apply still comes back from `researcher:research-agent`. A research memo or case brief is a lead:
 pass it into the spawn, or relay it labelled unverified and conclude nothing on it.
 
 Turn the returned test into the criteria the step 3 dispatch needs, one per element or factor,
@@ -86,7 +86,7 @@ for facts: which proceeding this issue sits in, the client's party id, and the i
 parties the question is tested against. Decline any backfill or profile-completion offer it
 makes; that is separate work for the practitioner to start.
 
-Then dispatch the `marshal-facts` agent. It finds the facts in case data itself and applies
+Then dispatch the `litigator:marshal-facts` agent. It finds the facts in case data itself and applies
 each criterion to them, so the facts never pass through this session. Give it:
 
 - `matter_root`, the live host path of the matter folder (never a sandbox mount path), and
@@ -152,7 +152,7 @@ wrong skill and the work belongs to its owner:
 |---|---|
 | Interest owed under a judgment or statute | ``/calculate`` with ``court-interest-calculator`` |
 | Interest owed under a contract's own term | ``/calculate`` with ``contract-interest-rates`` |
-| A date, a deadline, or the deadline register | the ``lawyer:docket-clerk`` agent (spawn it, relay its open items, re-spawn with the answers: `shared/deadline-isolation.md`, "Calling docket-clerk") |
+| A date, a deadline, or the deadline register | the `lawyer:docket-clerk` agent (spawn it, relay its open items, re-spawn with the answers: `shared/deadline-isolation.md`, "Calling docket-clerk") |
 | The application itself, or a response to one | ``draft`` |
 
 These run in both directions. A conclusion this skill reaches often needs one of them to turn

@@ -14,7 +14,8 @@ project/task assignment and a colour, shown in TimeCamp's own timesheet view.
 ## The TimeCamp connector
 
 Same connector as build-timeline's activity fetch: the timekeeper plugin's
-`timecamp` server (`mcp__plugin_timekeeper_timecamp__*`), which holds the one
+`timecamp` server (each tool under whichever of `mcp__plugin_timekeeper_timecamp__<name>` and
+`mcp__remote-devices__plugin_timekeeper_timecamp__<name>` this host grants), which holds the one
 API token for the account. No skill reads, stores or passes the token.
 
 **Hard rule.** Call the connector's `status` first. If it reports

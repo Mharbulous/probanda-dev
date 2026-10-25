@@ -4,7 +4,7 @@ user-invocable: false
 description: Internal writer of every skill's knowledge tree. Learns a venue's or audience's requirements for one or two document kinds from official published sources and records them in the calling skill's tree, or confirms, corrects, refreshes or retires a learned file. Invoked by name by a tree-owning skill (draft, publish, or the docket-clerk agent's caller), never by the user.
 ---
 
-<!-- lawyer v0.9.9 -->
+<!-- lawyer v0.9.10 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -25,7 +25,7 @@ description: Internal writer of every skill's knowledge tree. Learns a venue's o
 
 # localize
 
-The only writer of every knowledge tree. A caller invokes it by name. This skill decides the write target, spawns the `localize-helper` agent, and relays what the helper returns. It never writes a tree itself, apart from the repo-session move in "Write targets".
+The only writer of every knowledge tree. A caller invokes it by name. This skill decides the write target, spawns the `lawyer:localize-helper` agent, and relays what the helper returns. It never writes a tree itself, apart from the repo-session move in "Write targets".
 
 Grammar, index files, resolve, overlay layout, merge, record contract and the confirmation sidecar are `shared/knowledge-tree.md` §3 to §8 and §10. This file does not restate them. The helper's tool sequences are its playbook, `references/playbook.md`.
 
@@ -67,7 +67,7 @@ This supersedes `venue-knowledge`'s "Adding a venue" and its update procedure.
 
 ## 4. Spawning the helper
 
-Spawn `localize-helper` by an explicit fresh-context Agent-tool Task spawn. Never run it inline or with `context: fork`. Hand it, as one JSON object, every argument of section 1 plus `run: "repo" | "matter"`. It reads its own playbook.
+Spawn `lawyer:localize-helper` by an explicit fresh-context Agent-tool Task spawn. Never run it inline or with `context: fork`. Hand it, as one JSON object, every argument of section 1 plus `run: "repo" | "matter"`. It reads its own playbook.
 
 ## 5. Returns
 

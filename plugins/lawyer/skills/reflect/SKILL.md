@@ -14,7 +14,7 @@ description: >
   inspection.
 ---
 
-<!-- lawyer v0.9.9 -->
+<!-- lawyer v0.9.10 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` (the folder that held this plugin's folder), take the folder named as this plugin's folder with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, stages, authors or requests a screenshot of one, but may present one to a human user to view, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -138,8 +138,9 @@ has started, mid-workflow, or after one has completed — and always reports on 
 as it stands at the moment of invocation.
 
 **Runtime fit — check before Step 1.** Delivery, unlike timing, has a precondition: Steps 1,
-6, and 7 assume the Coclerk delivery environment — the `repo_docs__write` tool (full name
-`mcp__plugin_lawyer_data__repo_docs__write`) is available, or the Coclerk repo's
+6, and 7 assume the Coclerk delivery environment — the `repo_docs__write` tool (under whichever of
+`mcp__plugin_lawyer_data__repo_docs__write` and
+`mcp__remote-devices__plugin_lawyer_data__repo_docs__write` this host grants) is available, or the Coclerk repo's
 `docs\E2E-tests\` tree is directly writable. Check whether either holds. If neither does —
 the skill was invoked from an unrelated project (a different repo in Claude Code CLI, for
 example) — still run the phase in full, taking the **non-Coclerk fallback** branches marked
@@ -539,7 +540,8 @@ on whether the repo is directly writable from this session:
 - **Cowork session** (the repo is not mounted, and there is no repo folder
   grant): write the report
   into the repo directly with the `repo_docs__write` tool on the litigation
-  data server (full name `mcp__plugin_lawyer_data__repo_docs__write`).
+  data server (under whichever of `mcp__plugin_lawyer_data__repo_docs__write`
+  and `mcp__remote-devices__plugin_lawyer_data__repo_docs__write` this host grants).
   The `path` argument is relative to docs/ — e.g.
   `E2E-tests/2026-07-19-2243 demo-skill-e2e-test.md`. If the call still fails
   with code `exists`, retry once with a numeric suffix before the extension. Do

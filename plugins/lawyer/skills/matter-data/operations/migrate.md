@@ -9,7 +9,7 @@ migrate's entire job is to run against a database the guard exists to refuse.
 Read `../shared/conventions.md` first. The tool contract, temp-copy staging and
 `PRAGMA journal_mode = DELETE` are defined there and are not restated here.
 
-**Run this operation through the `migration-runner` subagent.** If you are not
+**Run this operation through the `lawyer:migration-runner` subagent.** If you are not
 that subagent, spawn it (Agent tool, fresh context, `model: opus`) and relay its
 checkpoints to the practitioner — do not call `matter_data__migrate` yourself. The
 subagent's job is judgment the tool cannot supply: is this the right plan for

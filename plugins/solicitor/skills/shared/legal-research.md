@@ -78,7 +78,7 @@ instrument provides, requires, permits or lacks. For it, run duty 4 first, so th
 instrument's full text is on disk before Westlaw runs. Then run duty 3, telling
 `westlaw-query-optimizer` that the instrument's text is on file, so the query seeks
 judicial consideration and commentary rather than the text. Then dispatch
-`legislation-fetcher` for each `legislation_skipped` title not yet on disk, with one
+`researcher:legislation-fetcher` for each `legislation_skipped` title not yet on disk, with one
 more legislation-currency dispatch covering only those titles. Put only the instruments
 the question, the matter or a memo names through duty 4: an instrument the question
 reaches only by its subject is the audit agent's to offer, never yours to infer. Every
@@ -131,10 +131,10 @@ other question runs the duties in their numbered order.
 3. **Tier 4, Westlaw — before the audit, never after it.** After tiers 1–3, for
    each issue no pinpointable text on disk answers, run Westlaw without asking unless the practitioner declined it this run:
    1. run the `westlaw-query-optimizer` subskill on the question;
-   2. dispatch `research-paralegal` in **deep-research** mode with the optimized
+   2. dispatch `researcher:research-paralegal` in **deep-research** mode with the optimized
       query, the verified client-matter ID, the jurisdiction and the issue's
       existing `6. LAW\<issue>\` folder;
-   3. dispatch `research-paralegal` in **citation** mode, `source: westlaw-first`,
+   3. dispatch `researcher:research-paralegal` in **citation** mode, `source: westlaw-first`,
       for every citation already known on the issue (from the matter, a prior memo,
       or a prior research-agent answer), into the same folder;
    4. only then, once duties 4 and 5 have run, spawn the audit agent, naming the memo
@@ -162,7 +162,7 @@ other question runs the duties in their numbered order.
    does not answer.
 4. **Legislation text, before the audit.** After the Westlaw duty (before it, for a
    statutory-text question), so that its
-   `legislation_skipped` titles are known, dispatch the `legislation-fetcher` agent
+   `legislation_skipped` titles are known, dispatch the `researcher:legislation-fetcher` agent
    once for each statute, regulation or bylaw cited in the question, known on the
    issue, or listed in `legislation_skipped`. Skip an instrument whose `downloaded`
    record is already in the issue folder's `case-download-manifest.json`. The dispatch
@@ -202,7 +202,7 @@ other question runs the duties in their numbered order.
    Record every instrument in the spawn prompt's `Legislation:` field.
 5. **Note-up, before the audit.** For each court decision the question asks to have
    noted up (a note-up request, such as a `/draft` note-up step or the `Note up all
-   cited authorities` job), dispatch `citation-checker` once, after duty 3's dispatches
+   cited authorities` job), dispatch `researcher:citation-checker` once, after duty 3's dispatches
    have returned: `{citations: [{citation, since?}], client_matter_id,
    destination_dir}`, with duty 3's verified client-matter ID and the issue's existing
    `6. LAW\<issue>\` folder. A caller working a `/draft` job adds its `db_path`,
@@ -294,10 +294,10 @@ records nothing.
 gate.** When the agent returns a `needs_download` list, a `needs_note_up` list or a
 hand-off packet on an issue of the question, execute it without asking, whatever its
 other gaps (a declined issue dispatches nothing):
-dispatch `research-paralegal` in
+dispatch `researcher:research-paralegal` in
 citation mode, `source: westlaw-first`, for the `needs_download` citations, run
 a hand-off packet through `westlaw-query-optimizer` and a deep-research dispatch, and
-once those have returned, dispatch `citation-checker` for the `needs_note_up`
+once those have returned, dispatch `researcher:citation-checker` for the `needs_note_up`
 citations by duty 5.
 Then re-invoke the same audit agent once, naming the new files, with
 `Re-invocation: yes` listing every citation the `westlaw-first` dispatch did not
@@ -381,7 +381,7 @@ complete before the session ends: never leave a session with a cited decision un
 2. For every court decision the answer cites (in support, distinguished, or
    rejected) that case data does not already hold and that is not already on disk
    under the matter's `6. LAW\` (the pre-spawn Westlaw retrieval usually filed it),
-   dispatch `research-paralegal` in
+   dispatch `researcher:research-paralegal` in
    citation mode, `source: canlii-only`, with that same research folder as the
    destination, whichever issue the decision is cited on. Step 1's save means the
    folder exists before dispatch. Batch as its playbook allows, one dispatch at a time.
