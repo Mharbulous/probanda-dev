@@ -67,11 +67,11 @@ Invoke the `practice-data` skill's `invoice-data` operation for the matter numbe
 
 This step needs the timekeeper plugin. If no timekeeper skill is in your skill list, tell the practitioner that pulling time from TimeCamp needs the timekeeper plugin installed, and stop.
 
-TimeCamp is read only through the timekeeper plugin's `timecamp` connector, whose tools are `mcp__plugin_timekeeper_timecamp__*`. It holds the API token itself.
+TimeCamp is read only through the timekeeper plugin's `timecamp` connector, whose tools are named below without their prefix. Call each under whichever of `mcp__plugin_timekeeper_timecamp__<name>` and `mcp__remote-devices__plugin_timekeeper_timecamp__<name>` this host grants. It holds the API token itself.
 
-1. **Check the connector.** Call `mcp__plugin_timekeeper_timecamp__status`. If it reports `usable: false`, stop and tell the practitioner its `reason` (no token, auth refused, network). When no token is set, call `mcp__plugin_timekeeper_timecamp__configure_credential`, send the practitioner the link it returns, ask them to paste the token on that page and never in chat, then call `status` again. **Never open the TimeCamp web app as a substitute**, and never tally time from it: a figure that did not come from the connector is not used.
-2. **Find the matter's task.** Call `mcp__plugin_timekeeper_timecamp__tasks` with `query` set to the matter number. Exactly one active match must be the matter itself (its `path` names the matter number). If none matches, or more than one could be the matter, stop and show the practitioner the matches with their `path` and `task_id`.
-3. **Pull the entries.** Call `mcp__plugin_timekeeper_timecamp__entries` with:
+1. **Check the connector.** Call `status`. If it reports `usable: false`, stop and tell the practitioner its `reason` (no token, auth refused, network). When no token is set, call `configure_credential`, send the practitioner the link it returns, ask them to paste the token on that page and never in chat, then call `status` again. **Never open the TimeCamp web app as a substitute**, and never tally time from it: a figure that did not come from the connector is not used.
+2. **Find the matter's task.** Call `tasks` with `query` set to the matter number. Exactly one active match must be the matter itself (its `path` names the matter number). If none matches, or more than one could be the matter, stop and show the practitioner the matches with their `path` and `task_id`.
+3. **Pull the entries.** Call `entries` with:
    - `from`: the day after the last-billed date (Step 4)
    - `to`: today, unless the practitioner names another end date (note the one used)
    - `task_ids`: the matter's `task_id` (the connector adds its active subtasks)

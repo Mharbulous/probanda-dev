@@ -20,7 +20,9 @@ It does not answer agenda or day-summary prompts. It never writes to the calenda
 
 ## Query
 
-Use `mcp__plugin_lawyer_contacts-calendars-email__calendar__list_events`:
+Tools are named without their prefix. Call each under whichever of `mcp__plugin_lawyer_contacts-calendars-email__<name>` and `mcp__remote-devices__plugin_lawyer_contacts-calendars-email__<name>` this host grants.
+
+Use `calendar__list_events`:
 
 - `calendars`: omit it to read every calendar, unless the user names one (`calendar__list_calendars` lists the names).
 - `start`: the date 7 calendar days before today.

@@ -18,7 +18,9 @@ Which app a `tel:` link opens, and which fallback line exists, is the practition
 
 ## Steps
 
-1. Search the contacts for the name with `mcp__plugin_lawyer_contacts-calendars-email__contacts__search` (`query`: the name as they said it). If that finds nothing, try just the first name or just the last name. On `dav_not_configured`, say the contacts connector is not set up, and set it up with `mail__configure_credential` and its contacts fields as `practice-data`'s "Mail" section describes for the mail credential.
+Tools are named without their prefix. Call each under whichever of `mcp__plugin_lawyer_contacts-calendars-email__<name>` and `mcp__remote-devices__plugin_lawyer_contacts-calendars-email__<name>` this host grants.
+
+1. Search the contacts for the name with `contacts__search` (`query`: the name as they said it). If that finds nothing, try just the first name or just the last name. On `dav_not_configured`, say the contacts connector is not set up, and set it up with `mail__configure_credential` and its contacts fields as `practice-data`'s "Mail" section describes for the mail credential.
 2. Handle the results:
    - **One match:** show that contact.
    - **Several matches:** show each matching contact with its numbers, so they can pick.

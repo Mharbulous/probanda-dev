@@ -134,8 +134,9 @@ has started, mid-workflow, or after one has completed — and always reports on 
 as it stands at the moment of invocation.
 
 **Runtime fit — check before Step 1.** Delivery, unlike timing, has a precondition: Steps 1,
-6, and 7 assume the Coclerk delivery environment — the `repo_docs__write` tool (full name
-`mcp__plugin_lawyer_data__repo_docs__write`) is available, or the Coclerk repo's
+6, and 7 assume the Coclerk delivery environment — the `repo_docs__write` tool (under whichever of
+`mcp__plugin_lawyer_data__repo_docs__write` and
+`mcp__remote-devices__plugin_lawyer_data__repo_docs__write` this host grants) is available, or the Coclerk repo's
 `docs\E2E-tests\` tree is directly writable. Check whether either holds. If neither does —
 the skill was invoked from an unrelated project (a different repo in Claude Code CLI, for
 example) — still run the phase in full, taking the **non-Coclerk fallback** branches marked
@@ -535,7 +536,8 @@ on whether the repo is directly writable from this session:
 - **Cowork session** (the repo is not mounted, and there is no repo folder
   grant): write the report
   into the repo directly with the `repo_docs__write` tool on the litigation
-  data server (full name `mcp__plugin_lawyer_data__repo_docs__write`).
+  data server (under whichever of `mcp__plugin_lawyer_data__repo_docs__write`
+  and `mcp__remote-devices__plugin_lawyer_data__repo_docs__write` this host grants).
   The `path` argument is relative to docs/ — e.g.
   `E2E-tests/2026-07-19-2243 demo-skill-e2e-test.md`. If the call still fails
   with code `exists`, retry once with a numeric suffix before the extension. Do

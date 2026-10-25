@@ -195,7 +195,7 @@ Before assigning activities, ensure the project tree is loaded. Check:
 
 ``time-pipeline-data`` `get` — `namespace: "timesort"`, `key: "projects:synced_at"`
 
-If found and fresh, also `get` `projects:lookup` and check one entry for `parent_id` (the shape trigger under **When to sync** below). If not found, stale (> 24 hours), or in the old shape, sync the tree through the `timecamp` connector (`mcp__plugin_timekeeper_timecamp__*`). Call its `status` first: if it reports the API unusable, stop and tell the practitioner its reason. Never open the TimeCamp web app as a substitute. Then call its `tasks` with no `query` to fetch every active Project and Task.
+If found and fresh, also `get` `projects:lookup` and check one entry for `parent_id` (the shape trigger under **When to sync** below). If not found, stale (> 24 hours), or in the old shape, sync the tree through the `timecamp` connector, calling each tool under whichever of `mcp__plugin_timekeeper_timecamp__<name>` and `mcp__remote-devices__plugin_timekeeper_timecamp__<name>` this host grants. Call its `status` first: if it reports the API unusable, stop and tell the practitioner its reason. Never open the TimeCamp web app as a substitute. Then call its `tasks` with no `query` to fetch every active Project and Task.
 
 The connector keeps the mandatory trailing slash on `/tasks/`. Confirmed live 2026-09-24 (#940): HTTP 200, 487 entries (Projects and Tasks together).
 
