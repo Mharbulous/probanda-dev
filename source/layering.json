@@ -8,7 +8,6 @@
     {"file": ".claude/skills/localize/references/playbook.md", "target": "draft", "why": "caller", "note": "Example knowledge paths that start with the calling skill."},
     {"file": ".claude/skills/fix-this/SKILL.md", "target": "draft", "why": "mention", "note": "Where a defect in a /draft working rule is fixed."},
     {"file": ".claude/skills/fix-this/SKILL.md", "target": "work", "why": "mention", "note": "Where a /work working rule's pilot atom lives."},
-    {"file": ".claude/skills/fix-this/references/fan-out.md", "target": "legal-commons", "why": "mention", "note": "Example text."},
     {"file": ".claude/skills/practice-data/SKILL.md", "target": "draft", "why": "caller", "note": "Says who reads the review and style blocks."},
     {"file": ".claude/skills/reflect/SKILL.md", "target": "legal-research", "why": "mention", "note": "A maintainer comment."},
     {"file": ".claude/skills/reflect/SKILL.md", "target": "research-agent", "why": "mention", "note": "Reads that agent's returns in a transcript, when there are any."},

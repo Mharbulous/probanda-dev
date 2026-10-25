@@ -39,14 +39,14 @@ Steps 1 to 3 run once per defect in every mode. Steps 4 and 5 are for single-blo
 1. **Name it.** One line: what went wrong or is wasteful, and in which skill, operation file, tool or server. Confirm it is a tooling or skill-design defect and not a task-input problem. If it is not, say so in one sentence and stop.
 2. **Gather evidence** per rule 7: exact tool and skill names, the specific instruction or tool description that causes it (short verbatim quote), measured cost or frequency (sizes in bytes or tokens, number of calls, wall time), exact error text if any, and the workaround in use. Prefer numbers over adjectives.
 3. **Classify the owner** in one word: `skill-text`, `tool-design`, `mcp-server`, `harness`, or `standing-instruction`. If unsure, give your best guess marked `UNVERIFIED`.
-4. **Write the blocks** using the template below, one block per group under rule 3 (steps 1 to 3 run once per defect). Each block starts with its `FIX` line, so parallel sessions can be told apart from the top, and ends with the duplication check. Keep each block self-contained: Claude Code has no memory of this session. Aim for 40 lines or fewer per defect.
+4. **Write the blocks** using the template below, one block per group under rule 3. Keep each block self-contained: Claude Code has no memory of this session. Aim for 40 lines or fewer per defect.
 5. **Deliver.** If tool calls are still pending in the interrupted task, send the blocks with `SendUserMessage` so they arrive verbatim. Otherwise put them in the reply. After the blocks come, in this order: the rule 3 sentence about blocks to run one after the other, if needed, then one sentence naming what you are resuming. Then resume. Do not save a file unless asked. In fan-out mode, saving the spec files is the deliverable. Do not summarise or restate the blocks outside them.
 
 Fan-out mode: after step 3, follow `references/fan-out.md`.
 
 ## Block template
 
-Use an outer fence longer than any fence inside it (four backticks or `~~~~`). Fill every field; write `none` or `not recoverable` rather than omitting one. The block opens with the `FIX` line and ends with `DUPLICATION CHECK`, each once per block. `TASK`, `SCOPE` and `FILES EXPECTED TO EDIT` appear once at the top of the block and cover every defect in it. Copy `SCOPE` verbatim. It overrides any standing instruction in the receiving session about the release, and leaves version bumps to `/release`. The part from `TITLE` to `IMPLEMENTATION CRITERIA` is written once per defect; when a block holds more than one defect, head each copy `DEFECT 1`, `DEFECT 2`, and so on.
+Use an outer fence longer than any fence inside it (four backticks or `~~~~`). Fill every field; write `none` or `not recoverable` rather than omitting one. The block opens with the `FIX` line and ends with `DUPLICATION CHECK`, each once per block. `TASK`, `SCOPE` and `FILES EXPECTED TO EDIT` appear once at the top of the block and cover every defect in it. Copy `SCOPE` verbatim. The part from `TITLE` to `IMPLEMENTATION CRITERIA` is written once per defect; when a block holds more than one defect, head each copy `DEFECT 1`, `DEFECT 2`, and so on.
 
     FIX: <one-line title naming the defect(s) in this block>
 
@@ -55,7 +55,8 @@ Use an outer fence longer than any fence inside it (four backticks or `~~~~`). F
     SCOPE (overrides any standing instruction in this session)
     - In scope: confirm each cause in the source, edit the source files the fix needs (skill text, mcp/src, docs), write, update and run the tests the fix needs, run `python scripts/build_plugin.py` and `python scripts/check_plugin.py`, commit the source and `plugins/` by pathspec, and push to `main`.
     - Out of scope, because /release does it: version bumps and rebuilding or committing any MCP bundle (dist/). Never build a `.plugin` archive.
-    - Only when the fix is finished: write the line "Implementation of <one-line description of the fix> complete!", then a short recap of what you verified (checks run, files read in full), what you assumed without verifying, and what you changed. If an open question blocked the work, ask it instead, with no completion line and no recap.
+    - Fix by deleting before adding. Anything added must be shorter than the text it makes unnecessary, and that text is deleted in the same change.
+    - Only when the fix is finished: write the line "Implementation of <one-line description of the fix> complete!", then a short recap of what you verified (checks run, files read in full), what you assumed without verifying, what you deleted (with line counts), and what you added and why deletion alone could not do it. If an open question blocked the work, ask it instead, with no completion line and no recap.
 
     FILES EXPECTED TO EDIT (UNVERIFIED unless stated)
     - skill-source paths or tool names as this session saw them, one per line, covering every defect in this block
@@ -76,8 +77,8 @@ Use an outer fence longer than any fence inside it (four backticks or `~~~~`). F
     CONSTRAINTS THAT MUST STILL HOLD
     - safety gates, invariants, data-integrity rules the fix must not weaken
 
-    OPTIONS
-    1. option - trade-off  (recommended)
+    OPTIONS (every rule costs reading on every run: list what to remove before what to add)
+    1. remove <text> - trade-off  (recommended)
     2. option - trade-off
     3. option - trade-off
 
