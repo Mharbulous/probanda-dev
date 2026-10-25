@@ -35,9 +35,7 @@ SHARED_SRC = "source/mcp-shared/"
 MIGRATE_ENGINE = ".claude/skills/drafting-data/references/scripts/migrate_engine.py"
 
 
-def stop(message):
-    print(f"STOP: {message}", file=sys.stderr)
-    sys.exit(2)
+stop = plugin_layout.stop
 
 
 def git(repo, *args):

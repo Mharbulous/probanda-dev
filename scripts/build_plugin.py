@@ -89,9 +89,7 @@ PUBLIC_TEMPLATE_ASSET = re.compile(
 ARCHIVE_PATH = re.compile(r"^[A-Za-z0-9._/-]+$")
 
 
-def stop(message):
-    print(f"STOP: {message}", file=sys.stderr)
-    sys.exit(2)
+stop = plugin_layout.stop
 
 
 def preamble_lines(plugin, version):
