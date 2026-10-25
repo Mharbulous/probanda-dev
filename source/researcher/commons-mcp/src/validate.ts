@@ -54,6 +54,7 @@ function validateValue(label: string, value: unknown, schema: Record<string, unk
   if (type === "object" && !isPlainObject(value)) {
     throw new ValidationError(`${label} must be an object`);
   }
+  if (type === "array" && !Array.isArray(value)) throw new ValidationError(`${label} must be an array`);
 
   const allowedValues = schema.enum as unknown[] | undefined;
   if (allowedValues && !allowedValues.includes(value)) {
