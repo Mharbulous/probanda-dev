@@ -10,6 +10,7 @@ import { inflateRawSync } from "node:zlib";
 
 import { configPath, configWritePaths } from "../../config-path.js";
 import { NotFoundError, ValidationError } from "../../errors.js";
+import { writeTextAtomic } from "../../knowledge/sidecar.js";
 import { resolveCaseDataRoot } from "../../practice/backend.js";
 import { asString } from "./shared.js";
 
@@ -50,7 +51,7 @@ function readConfig(env: NodeJS.ProcessEnv): Record<string, unknown> {
 }
 
 function writeJson(path: string, value: unknown): void {
-  writeFileSync(path, JSON.stringify(value, null, 2) + "\n", "utf-8");
+  writeTextAtomic(path, JSON.stringify(value, null, 2) + "\n");
 }
 
 function rosterOf(firm: Record<string, unknown>, firmPath: string): RosterEntry[] {
