@@ -163,7 +163,7 @@ function looseIdeasMeta(data: LooseIdeasData): [string, string][] {
 }
 
 /** The page's name. A filing's Job Board names it, in plain text, in its Loose Threads section (workboard-shell.ts).
- * Before 2026-10-08 it was "Loose Ideas"; the page write moves an old file to TRASH (matter-pages.ts OLD_PAGE). */
+ * Before 2026-10-08 it was "Loose Ideas"; the page write moves an old file to TRASH (matter-page-files.ts OLD_PAGE). */
 export const LOOSE_THREADS_PAGE_NAME = "Loose Threads";
 
 // The page's script (loose-threads.js) draws window.VIEW_PAGE.data into .board as folder tabs (All, Ranked, Unranked, Deferred, Resolved)

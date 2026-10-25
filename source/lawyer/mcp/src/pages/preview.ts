@@ -7,7 +7,7 @@
 // A fixture preview goes in the fixture preview folder (preview-file.ts), named as the fixture's own
 // page (its Writing is id 1). A real-data preview goes beside the page it previews: the Work Board's
 // beside practice.db, a matter page's in the matter's draft folder, where the page write's sweep
-// leaves it (matter-pages.ts PREVIEW_FILE). The real data is built exactly as the page write builds
+// leaves it (matter-page-files.ts PREVIEW_FILE). The real data is built exactly as the page write builds
 // it, and nothing is written but the preview. A real Loose Threads preview's buttons carry port 0 and
 // no token, so the page's "Buttons need the Claude desktop app running" line shows and no click can
 // reach the listener.

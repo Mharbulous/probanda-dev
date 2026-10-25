@@ -19,7 +19,7 @@
 // literally, sharing view-head.html and shared.js; its page file composes it.
 //
 // Provable Facts became Procedural History and Material Facts on 2026-10-20 (docs/ADRs/0011). A
-// `Provable Facts - Job Board <id>.html` left from before is an old page file (matter-pages.ts OLD_PAGE).
+// `Provable Facts - Job Board <id>.html` left from before is an old page file (matter-page-files.ts OLD_PAGE).
 
 import { join } from "node:path";
 
