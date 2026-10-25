@@ -9,7 +9,7 @@ Triages one issue: the number in the arguments, or, when a GitHub event started 
 
 The cloud does not load Brahm's own global rules, so these hold for the whole run:
 
-- Change no file in the repo and push nothing. The only writes are to the issue: one comment and its labels.
+- Triage changes no file in the repo and pushes nothing. Its only writes are to the issue: one comment and its labels. A command the session runs after triage, such as the implementer, follows its own rules.
 - Never mention Claude or Anthropic in the comment.
 - Nobody answers a permission prompt, so never cause one. Read and search files with the Read, Grep and Glob tools, not shell commands. Never name `approve_public.py` or `public-approved.json` in a shell command: a hook stops the run for a person whenever a command names either and it cannot tell the command only reads.
 
