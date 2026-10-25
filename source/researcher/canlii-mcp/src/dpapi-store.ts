@@ -1,7 +1,6 @@
-import { spawn } from "node:child_process";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
+
+import { defaultStateDir, readProtectedJson, writeProtectedJson } from "../../../mcp-shared/dpapi-store.js";
 
 // Host-backed local persistence for the CanLII API key.
 //
@@ -14,8 +13,7 @@ import { dirname, join } from "node:path";
 // read on every later server start. env still wins outright, so Claude Code CLI
 // — which does inherit the user env — is unaffected.
 //
-// Ported from plugins/legal-commons/mcp/src/dpapi-store.ts + legal-commons/config.ts,
-// which is the proven pattern for exactly this Cowork delivery gap.
+// The DPAPI store itself is shared: source/mcp-shared/dpapi-store.js.
 
 export interface ResolvedKey {
   key: string;
@@ -27,13 +25,8 @@ interface PersistedCredential {
   apiKey: string;
 }
 
-export function defaultStateDir(env: NodeJS.ProcessEnv = process.env): string {
-  const root = env.LOCALAPPDATA || env.APPDATA || homedir();
-  return join(root, "Coclerk", "canlii");
-}
-
 export function credentialPath(env: NodeJS.ProcessEnv = process.env): string {
-  return join(defaultStateDir(env), "credential.json.dpapi");
+  return join(defaultStateDir(env, "canlii"), "credential.json.dpapi");
 }
 
 // env wins outright; only when env is blank do we pay for a DPAPI unprotect (a
@@ -76,97 +69,3 @@ export function redactedKeyHint(key: string): string | null {
   if (key.length <= 8) return "****";
   return `${key.slice(0, 4)}…${key.slice(-4)}`;
 }
-
-// ---------------------------------------------------------------------------
-// DPAPI-backed JSON at rest (ported verbatim from legal-commons/dpapi-store.ts)
-// ---------------------------------------------------------------------------
-
-export async function readProtectedJson<T>(
-  path: string,
-  fallback: T | null,
-  protect = process.platform === "win32"
-): Promise<T | null> {
-  try {
-    const stored = await readFile(path);
-    const data = protect ? await unprotectLocalSecret(stored) : stored;
-    return JSON.parse(data.toString("utf8")) as T;
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code;
-    if (code === "ENOENT") return fallback;
-    throw error;
-  }
-}
-
-export async function writeProtectedJson(
-  path: string,
-  value: unknown,
-  protect = process.platform === "win32"
-): Promise<void> {
-  await mkdir(dirname(path), { recursive: true });
-  const data = Buffer.from(JSON.stringify(value), "utf8");
-  const stored = protect ? await protectLocalSecret(data) : data;
-  const tmp = `${path}.${process.pid}.${Date.now()}.tmp`;
-  await writeFile(tmp, stored);
-  await rename(tmp, path);
-}
-
-async function protectLocalSecret(data: Buffer): Promise<Buffer> {
-  if (process.platform !== "win32") {
-    throw new Error("Persistent local secret storage is supported only on Windows");
-  }
-  return runDpapi("Protect", data);
-}
-
-async function unprotectLocalSecret(data: Buffer): Promise<Buffer> {
-  if (process.platform !== "win32") {
-    throw new Error("Persistent local secret storage is supported only on Windows");
-  }
-  return runDpapi("Unprotect", data);
-}
-
-async function runDpapi(action: "Protect" | "Unprotect", data: Buffer): Promise<Buffer> {
-  const script = action === "Protect" ? protectScript : unprotectScript;
-  const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
-    stdio: ["pipe", "pipe", "pipe"],
-    windowsHide: true,
-  });
-
-  const stdout: Buffer[] = [];
-  const stderr: Buffer[] = [];
-  child.stdout.on("data", (chunk: Buffer) => stdout.push(chunk));
-  child.stderr.on("data", (chunk: Buffer) => stderr.push(chunk));
-
-  const done = new Promise<void>((resolve, reject) => {
-    child.on("error", reject);
-    child.on("exit", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`Windows DPAPI ${action} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
-    });
-  });
-
-  child.stdin.end(data.toString("base64"));
-  await done;
-  return Buffer.from(Buffer.concat(stdout).toString("utf8").trim(), "base64");
-}
-
-// Windows PowerShell 5.1 does not load System.Security by default, so
-// [System.Security.Cryptography.ProtectedData] is an unresolvable type without
-// the Add-Type line — omitting it fails every call with "Unable to find type".
-// $ErrorActionPreference makes that class of failure terminating, so a broken
-// call exits non-zero and surfaces below rather than returning empty stdout that
-// would silently persist as an empty credential file.
-const scriptPreamble = `
-$ErrorActionPreference = 'Stop'
-Add-Type -AssemblyName System.Security
-$inputText = [Console]::In.ReadToEnd().Trim()
-$bytes = [Convert]::FromBase64String($inputText)`;
-
-const protectScript = `${scriptPreamble}
-$protected = [System.Security.Cryptography.ProtectedData]::Protect($bytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-[Console]::Out.Write([Convert]::ToBase64String($protected))
-`;
-
-const unprotectScript = `${scriptPreamble}
-$plain = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-[Console]::Out.Write([Convert]::ToBase64String($plain))
-`;
