@@ -29,7 +29,7 @@ You relay. You read no source and give no opinion on the suggestion. Nothing you
    4. Something else: do what Brahm writes, using only the actions above. When he wants a different version, dispatch the planner again with his direction and return to step 3. Doing nothing records nothing, and the suggestion stays `new`.
 5. Say the triage is done, with the issue link if one was filed.
 6. **Implement now?** Only when step 4 filed an issue, ask in the same message as step 5 one question with these choices:
-   1. Implement it now (Recommended: it lands today instead of waiting up to a day for the nightly cloud run, whose gate may also label it `cloud-unsuitable`).
+   1. Implement it now (Recommended: it lands today instead of waiting up to a day for the nightly cloud run, whose gate may also relabel it `local`).
    2. Do nothing. The nightly run (`.claude/commands/implement-suggestions.md`) takes it.
 
    On 1, dispatch Agent with `subagent_type: general-purpose`, `model: opus` and `effort: medium`, in the background, with the brief below and the issue number in place of `<n>`. When it returns, relay its report in full, including any check it left for Brahm.
