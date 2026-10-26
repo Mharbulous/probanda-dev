@@ -1,4 +1,4 @@
-// build-stamp: 459c2d80c30a
+// build-stamp: 54d55a1b312d
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75805,9 +75805,9 @@ function flatten(id, item) {
   return row2;
 }
 function rowsOf(items, kind) {
-  const rows30 = [];
-  for (const [id, item] of items) if (item.kind === kind) rows30.push(flatten(id, item));
-  return rows30.sort((a3, b3) => String(a3.created_at).localeCompare(String(b3.created_at)) || String(a3.id).localeCompare(String(b3.id)));
+  const rows2 = [];
+  for (const [id, item] of items) if (item.kind === kind) rows2.push(flatten(id, item));
+  return rows2.sort((a3, b3) => String(a3.created_at).localeCompare(String(b3.created_at)) || String(a3.id).localeCompare(String(b3.id)));
 }
 function describe2(id, item) {
   const data = item?.data ?? {};
@@ -77126,7 +77126,7 @@ function mergeKinds(shipped, local, noVenue) {
   const conflicts = [];
   const view = { kinds: [], conflicts };
   const byFile = /* @__PURE__ */ new Map();
-  const rows30 = (source) => {
+  const rows2 = (source) => {
     const doc = objectAt(source.doc, source.file, "the index");
     onlyKeys(doc, ["kinds"], source.file, "the index");
     return arrayAt(doc, "kinds", source.file, "the index", true).map((raw, i3) => {
@@ -77145,7 +77145,7 @@ function mergeKinds(shipped, local, noVenue) {
     });
   };
   if (shipped) {
-    for (const { row: row2, where, file } of rows30(shipped)) {
+    for (const { row: row2, where, file } of rows2(shipped)) {
       if (byFile.has(file)) invalid(shipped.file, where, `file "${file}" appears twice`);
       const recipient = recipientOf(row2, shipped.file, where, noVenue);
       if (noVenue && recipient === void 0) invalid(shipped.file, `${where}.recipient`, "is required under _NoVenue");
@@ -77161,7 +77161,7 @@ function mergeKinds(shipped, local, noVenue) {
     }
   }
   if (local) {
-    for (const { row: row2, where, file } of rows30(local)) {
+    for (const { row: row2, where, file } of rows2(local)) {
       const aliases = aliasesOf(row2, local.file, where, "local", false);
       const recipient = recipientOf(row2, local.file, where, noVenue);
       const existing = byFile.get(file);
@@ -78785,10 +78785,10 @@ function resolveMatter(items, ref) {
   else if (ref.matt_num) match = (row2) => row2.matt_num === normalizeMattNum(ref.matt_num);
   else if (ref.file_number) match = (row2) => row2.file_number === String(ref.file_number);
   if (!match) return null;
-  const rows30 = rowsOf(items, "matter").filter(match);
-  if (rows30.length === 0) return null;
-  if (rows30.length > 1) throw new AmbiguousMatchError("Matter reference matched more than one matter");
-  return { id: String(rows30[0].id), row: rows30[0] };
+  const rows2 = rowsOf(items, "matter").filter(match);
+  if (rows2.length === 0) return null;
+  if (rows2.length > 1) throw new AmbiguousMatchError("Matter reference matched more than one matter");
+  return { id: String(rows2[0].id), row: rows2[0] };
 }
 function requireMatter(items, ref) {
   const resolved = resolveMatter(items, ref);
@@ -78810,9 +78810,9 @@ function addDaysIso(isoDate, days) {
   dt3.setUTCDate(dt3.getUTCDate() + days);
   return dt3.toISOString().slice(0, 10);
 }
-function effectiveCutoff(rows30) {
+function effectiveCutoff(rows2) {
   let best = null;
-  for (const row2 of rows30) {
+  for (const row2 of rows2) {
     let candidate = null;
     if (typeof row2.date_to === "string" && row2.date_to) {
       candidate = { cutoff_date: addDaysIso(row2.date_to, 1), cutoff_source: "date_to" };
@@ -78834,12 +78834,12 @@ function asString(value, label2) {
 function withClient(matter, clients) {
   return { ...matter, ...clientContext(clients.get(String(matter.client_id))) };
 }
-function byId(rows30) {
-  return new Map(rows30.map((row2) => [String(row2.id), row2]));
+function byId(rows2) {
+  return new Map(rows2.map((row2) => [String(row2.id), row2]));
 }
-function groupBy(rows30, field) {
+function groupBy(rows2, field) {
   const groups = /* @__PURE__ */ new Map();
-  for (const row2 of rows30) {
+  for (const row2 of rows2) {
     const key = String(row2[field]);
     const list = groups.get(key) ?? [];
     list.push(row2);
@@ -78870,8 +78870,8 @@ async function matter_lookup(store, args) {
   }
   return { rows: withMatterRoots(matched.map((matter) => withClient(matter, clients)), store.env) };
 }
-function withMatterRoots(rows30, env) {
-  if (!rows30.some((row2) => typeof row2.folder === "string")) return rows30;
+function withMatterRoots(rows2, env) {
+  if (!rows2.some((row2) => typeof row2.folder === "string")) return rows2;
   let library = null;
   let error2 = "";
   try {
@@ -78879,7 +78879,7 @@ function withMatterRoots(rows30, env) {
   } catch (err) {
     error2 = err.message;
   }
-  return rows30.map((row2) => {
+  return rows2.map((row2) => {
     if (typeof row2.folder !== "string") return row2;
     return library !== null ? { ...row2, matter_root: join7(library, row2.folder) } : { ...row2, matter_root: null, matter_root_error: error2 };
   });
@@ -78907,7 +78907,7 @@ async function wip_hours(store, args) {
   const entries = rowsOf(items, "time_entry").filter((entry) => entry.billable === true && (!target || entry.matter_id === target) && (!explicitCutoff || String(entry.entry_date ?? "") >= explicitCutoff));
   const entriesByMatter = groupBy(entries, "matter_id");
   const invoicesByMatter = groupBy(rowsOf(items, "invoice"), "matter_id");
-  const rows30 = [];
+  const rows2 = [];
   for (const [matterId, matterEntries] of entriesByMatter) {
     const matter = matterById.get(matterId);
     if (!target && !isBillable(matter)) continue;
@@ -78923,7 +78923,7 @@ async function wip_hours(store, args) {
       }
     }
     const totalHours = scopedEntries.reduce((sum, entry) => sum + Number(entry.hours ?? 0), 0);
-    rows30.push({
+    rows2.push({
       matter_id: matterId,
       matt_num: matter?.matt_num ?? null,
       file_number: matter?.file_number ?? null,
@@ -78934,7 +78934,7 @@ async function wip_hours(store, args) {
       cutoff_source: cutoffSource
     });
   }
-  return { rows: rows30 };
+  return { rows: rows2 };
 }
 async function time_entries_query(store, args) {
   const items = store.items();
@@ -78943,7 +78943,7 @@ async function time_entries_query(store, args) {
   const matterId = args.matt_num || args.matter_id || args.file_number ? requireMatter(items, args).id : null;
   const fromDate = args.from_date ? String(args.from_date) : null;
   const toDate = args.to_date ? String(args.to_date) : null;
-  const rows30 = rowsOf(items, "time_entry").filter((entry) => (!matterId || entry.matter_id === matterId) && (!fromDate || String(entry.entry_date ?? "") >= fromDate) && (!toDate || String(entry.entry_date ?? "") <= toDate)).map((entry) => {
+  const rows2 = rowsOf(items, "time_entry").filter((entry) => (!matterId || entry.matter_id === matterId) && (!fromDate || String(entry.entry_date ?? "") >= fromDate) && (!toDate || String(entry.entry_date ?? "") <= toDate)).map((entry) => {
     const matter = matterById.get(String(entry.matter_id));
     return {
       ...entry,
@@ -78953,7 +78953,7 @@ async function time_entries_query(store, args) {
       ...clientContext(matter ? clients.get(String(matter.client_id)) : void 0)
     };
   });
-  return { rows: rows30 };
+  return { rows: rows2 };
 }
 async function open_tasks(store, args) {
   const items = store.items();
@@ -78967,7 +78967,7 @@ async function open_tasks(store, args) {
     const sentAt = String(notice2.sent_at ?? "");
     if (!latestNotice.has(id) || sentAt > (latestNotice.get(id) ?? "")) latestNotice.set(id, sentAt);
   }
-  const rows30 = taskRows.map((task) => {
+  const rows2 = taskRows.map((task) => {
     const matter = task.matter_id ? matterById.get(String(task.matter_id)) : void 0;
     return {
       ...task,
@@ -78978,7 +78978,7 @@ async function open_tasks(store, args) {
       last_retainer_notice_at: task.matter_id ? latestNotice.get(String(task.matter_id)) ?? null : null
     };
   });
-  return { rows: rows30 };
+  return { rows: rows2 };
 }
 async function active_deadlines(store, args) {
   const items = store.items();
@@ -79026,7 +79026,7 @@ async function ar_data(store) {
     wipByMatter.set(id, (wipByMatter.get(id) ?? 0) + Number(entry.hours ?? 0));
   }
   const pendingByMatter = groupBy(rowsOf(items, "payment").filter((row2) => row2.cleared === false), "matter_id");
-  const rows30 = rowsOf(items, "matter").filter((matter) => matter.status !== "closed" && isBillable(matter)).map((matter) => {
+  const rows2 = rowsOf(items, "matter").filter((matter) => matter.status !== "closed" && isBillable(matter)).map((matter) => {
     const cutoff = cutoffByMatter.get(String(matter.id)) ?? null;
     return {
       ...matter,
@@ -79037,18 +79037,18 @@ async function ar_data(store) {
       payments_in_flight: pendingByMatter.get(String(matter.id)) ?? []
     };
   });
-  return { rows: rows30 };
+  return { rows: rows2 };
 }
 async function court_calendar_coverage(store, args) {
   const years = Array.isArray(args.years) ? args.years.map(Number) : null;
-  const rows30 = store.rows("calendar_year");
-  return { rows: years ? rows30.filter((row2) => years.includes(Number(row2.year))) : rows30 };
+  const rows2 = store.rows("calendar_year");
+  return { rows: years ? rows2.filter((row2) => years.includes(Number(row2.year))) : rows2 };
 }
 async function court_calendar_days(store, args) {
   const fromDate = args.from_date ? String(args.from_date) : null;
   const toDate = args.to_date ? String(args.to_date) : null;
-  const rows30 = store.rows("calendar_day").filter((row2) => (!fromDate || String(row2.calendar_date ?? "") >= fromDate) && (!toDate || String(row2.calendar_date ?? "") <= toDate));
-  return { rows: rows30 };
+  const rows2 = store.rows("calendar_day").filter((row2) => (!fromDate || String(row2.calendar_date ?? "") >= fromDate) && (!toDate || String(row2.calendar_date ?? "") <= toDate));
+  return { rows: rows2 };
 }
 async function read_signals(store, args) {
   const items = store.items();
@@ -80115,7 +80115,7 @@ function listCaseParties(caseDataDir, env = process.env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync6 } from "node:fs";
 import { join as join10 } from "node:path";
-var BUILD_STAMP = false ? null : "459c2d80c30a";
+var BUILD_STAMP = false ? null : "54d55a1b312d";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80526,8 +80526,8 @@ function mergedIndex(folder, index, seams, label2) {
   return { view, layers: { shipped: shipped !== null, local: local !== null }, shipped_from: loc.shipped_from, noVenue };
 }
 function shadowedRows(conflicts) {
-  const rows30 = conflicts.filter((conflict) => conflict.shadowed_local).map(({ key, shipped, local }) => ({ key, shipped, local }));
-  return rows30.length ? { shadowed_local: rows30 } : {};
+  const rows2 = conflicts.filter((conflict) => conflict.shadowed_local).map(({ key, shipped, local }) => ({ key, shipped, local }));
+  return rows2.length ? { shadowed_local: rows2 } : {};
 }
 function folderOf(kp, label2) {
   return parseKnowledgePath(kp.segments.slice(0, -1).join("/"), label2);
@@ -81183,8 +81183,8 @@ async function manage_payment_in_flight(store, args) {
   if (action === "query") {
     const items = store.items();
     const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
-    const rows30 = rowsOf(items, "payment").filter((row2) => row2.cleared === false && (!matterId || row2.matter_id === matterId));
-    return { rows: rows30 };
+    const rows2 = rowsOf(items, "payment").filter((row2) => row2.cleared === false && (!matterId || row2.matter_id === matterId));
+    return { rows: rows2 };
   }
   throw new ValidationError(`Unknown manage_payment_in_flight action "${action}"`);
 }
@@ -81294,13 +81294,13 @@ function invoicesOf(items, matterId) {
   return rowsOf(items, "invoice").filter((row2) => row2.matter_id === matterId);
 }
 async function import_invoices(store, args) {
-  const rows30 = args.rows;
-  if (!Array.isArray(rows30)) throw new ValidationError("import_invoices requires a rows array");
+  const rows2 = args.rows;
+  if (!Array.isArray(rows2)) throw new ValidationError("import_invoices requires a rows array");
   const confirmRegression = args.confirm_regression === true;
   const result = { imported: 0, skipped_no_matter: 0, skipped_negative: 0, not_saved: 0, questions: [] };
   const items = store.items();
   const byMatter = /* @__PURE__ */ new Map();
-  for (const raw of rows30) {
+  for (const raw of rows2) {
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
       throw new ValidationError("import_invoices rows must be objects");
     }
@@ -81377,13 +81377,13 @@ async function import_invoices(store, args) {
 async function invoices_query(store, args) {
   const items = store.items();
   const matterId = args.matt_num || args.matter_id ? requireMatter(items, args).id : null;
-  const rows30 = rowsOf(items, "invoice").filter((row2) => (!matterId || row2.matter_id === matterId) && (!args.status || row2.status === String(args.status)));
+  const rows2 = rowsOf(items, "invoice").filter((row2) => (!matterId || row2.matter_id === matterId) && (!args.status || row2.status === String(args.status)));
   let lastImport = null;
-  for (const row2 of rows30) {
+  for (const row2 of rows2) {
     const value = typeof row2.last_import_at === "string" ? row2.last_import_at : null;
     if (value && (!lastImport || value > lastImport)) lastImport = value;
   }
-  return { rows: rows30, last_import_at: lastImport };
+  return { rows: rows2, last_import_at: lastImport };
 }
 
 // src/tools/practice/firm-profile.ts
@@ -81762,7 +81762,7 @@ function parseSidecar(text5, file, knowledgePath) {
     invalid2(file, "file", `must name the file it sits beside, "${knowledgePath}"`);
   }
   if (!Array.isArray(top.items)) invalid2(file, "items", "must be an array");
-  const rows30 = [];
+  const rows2 = [];
   top.items.forEach((raw, i3) => {
     const where = `items[${i3}]`;
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) invalid2(file, where, "must be an object");
@@ -81773,7 +81773,7 @@ function parseSidecar(text5, file, knowledgePath) {
       if (typeof row2[key] !== "string" || row2[key] === "") invalid2(file, `${where}.${key}`, "must be a non-empty string");
     }
     if (row2.status !== "confirmed" && row2.status !== "corrected") invalid2(file, `${where}.status`, 'must be "confirmed" or "corrected"');
-    if (rows30.some((seen) => seen.rule_ref === row2.rule_ref)) invalid2(file, where, `rule_ref "${row2.rule_ref}" has two rows`);
+    if (rows2.some((seen) => seen.rule_ref === row2.rule_ref)) invalid2(file, where, `rule_ref "${row2.rule_ref}" has two rows`);
     const against = row2.confirmed_against;
     if (typeof against !== "object" || against === null || Array.isArray(against)) {
       invalid2(file, `${where}.confirmed_against`, "must be {passage_hash, currency}");
@@ -81792,7 +81792,7 @@ function parseSidecar(text5, file, knowledgePath) {
     }
     const stamp2 = stampProblem(row2);
     if (stamp2) invalid2(file, `${where}.${stamp2[0]}`, stamp2[1]);
-    rows30.push({
+    rows2.push({
       rule_ref: row2.rule_ref,
       status: row2.status,
       by: row2.by,
@@ -81803,7 +81803,7 @@ function parseSidecar(text5, file, knowledgePath) {
       ...row2.shipped_from !== void 0 ? { shipped_from: row2.shipped_from } : {}
     });
   });
-  return rows30;
+  return rows2;
 }
 function freshnessOf(item, checked) {
   const facts = checked?.find((record2) => record2.record.toLowerCase() === item.record.toLowerCase());
@@ -81918,13 +81918,13 @@ function readRows(sidecarAbs, knowledgePath) {
 }
 async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check) {
   return withFileLock(sidecarAbs, () => {
-    const rows30 = readRows(sidecarAbs, knowledgePath);
-    const at = rows30.findIndex((known) => known.rule_ref === row2.rule_ref);
-    if (at === -1) rows30.push(row2);
-    else rows30[at] = row2;
-    check(rows30);
-    writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows30 }, null, 2) + "\n");
-    return rows30;
+    const rows2 = readRows(sidecarAbs, knowledgePath);
+    const at = rows2.findIndex((known) => known.rule_ref === row2.rule_ref);
+    if (at === -1) rows2.push(row2);
+    else rows2[at] = row2;
+    check(rows2);
+    writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows2 }, null, 2) + "\n");
+    return rows2;
   });
 }
 
@@ -83514,14 +83514,14 @@ async function ingestAuthority(request2, env = process.env) {
   const counts2 = {};
   const named2 = {};
   plan.statements.forEach((statement, i3) => {
-    const { rowcount, rows: rows30 } = done.results[i3];
+    const { rowcount, rows: rows2 } = done.results[i3];
     if (statement.count) {
       const count = counts2[statement.count.table] ??= { inserted: 0, skipped: 0 };
       count.inserted += rowcount;
       count.skipped += statement.count.of - rowcount;
     }
-    if (statement.value_as) named2[statement.value_as] = Object.values(rows30[0])[0];
-    if (statement.rows_as) named2[statement.rows_as] = rows30;
+    if (statement.value_as) named2[statement.value_as] = Object.values(rows2[0])[0];
+    if (statement.rows_as) named2[statement.rows_as] = rows2;
   });
   return {
     ok: true,
@@ -86056,13 +86056,40 @@ function substituteLayout(raw, kind, corrections, file, context) {
   return { block: block2, substituted };
 }
 
+// src/submission/query-rows.ts
+function rows(dbPath, sql, params = []) {
+  return submissionDataQuery(dbPath, sql, params).rows;
+}
+
+// src/submission/schema-capabilities.ts
+var snapshots = /* @__PURE__ */ new Map();
+function readSnapshot(dbPath) {
+  const held = /* @__PURE__ */ new Set();
+  for (const r3 of rows(
+    dbPath,
+    "SELECT m.name AS tbl, p.name AS col FROM sqlite_master m LEFT JOIN pragma_table_info(m.name) p WHERE m.type = 'table'"
+  )) {
+    held.add(r3.tbl);
+    if (r3.col !== null) held.add(`${r3.tbl}.${r3.col}`);
+  }
+  snapshots.set(dbPath, held);
+  return held;
+}
+function holds(dbPath, key) {
+  if (snapshots.get(dbPath)?.has(key)) return true;
+  return readSnapshot(dbPath).has(key);
+}
+function hasTable(dbPath, table) {
+  return holds(dbPath, table);
+}
+function hasColumn(dbPath, table, column) {
+  return holds(dbPath, `${table}.${column}`);
+}
+
 // src/submission/forms/query.ts
 var JOB_BOARD_KIND = "task-board";
 function isJobOnlyBoard(filing) {
   return filing.kind === JOB_BOARD_KIND;
-}
-function rows(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
 }
 function fetchFiling(dbPath, filingId) {
   const found = rows(dbPath, "SELECT * FROM filings WHERE id = ?", [filingId]);
@@ -86163,12 +86190,8 @@ function fetchSentParties(dbPath, filing) {
     [filing.proceeding_id, filing.id]
   );
 }
-var recipientsSnapshotHeld = /* @__PURE__ */ new Set();
 function hasRecipientsSnapshot(dbPath) {
-  if (recipientsSnapshotHeld.has(dbPath)) return true;
-  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'recipients_snapshot'")[0].n > 0;
-  if (held) recipientsSnapshotHeld.add(dbPath);
-  return held;
+  return hasTable(dbPath, "recipients_snapshot");
 }
 function fetchFilingRecipients(dbPath, filing, parties2) {
   const byId2 = new Map(parties2.map((p3) => [p3.id, p3]));
@@ -86260,21 +86283,11 @@ function fetchProse(dbPath, filingId) {
     rows(dbPath, "SELECT id, slot, text FROM filing_prose WHERE filing_id = ?", [filingId]).map((r3) => [r3.slot, { id: r3.id, text: r3.text }])
   );
 }
-var settledOnHeld = /* @__PURE__ */ new Set();
 function settledOnColumn(dbPath) {
-  if (!settledOnHeld.has(dbPath)) {
-    const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('statements_of_law') WHERE name = 'settled_on'")[0].n > 0;
-    if (!held) return "NULL AS settled_on";
-    settledOnHeld.add(dbPath);
-  }
-  return "sl.settled_on";
+  return hasColumn(dbPath, "statements_of_law", "settled_on") ? "sl.settled_on" : "NULL AS settled_on";
 }
-var authorityFitHeldDbs = /* @__PURE__ */ new Set();
 function authorityFitHeld(dbPath) {
-  if (authorityFitHeldDbs.has(dbPath)) return true;
-  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('statements_of_law') WHERE name = 'excerpt_speaker'")[0].n > 0;
-  if (held) authorityFitHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "statements_of_law", "excerpt_speaker");
 }
 function excerptSpeakerColumn(dbPath) {
   return authorityFitHeld(dbPath) ? "sl.excerpt_speaker" : "NULL AS excerpt_speaker";
@@ -86286,32 +86299,15 @@ function linkedProvisionsColumn(dbPath) {
              WHERE o.law_assertion_id = sl.law_assertion_id AND o.id <> sl.id
                AND oa.kind IN ('statute', 'regulation', 'rule') AND oa.killed_on IS NULL) AS linked_provisions`;
 }
-var noFactsNeededHeld = /* @__PURE__ */ new Set();
 function noFactsNeededColumn(dbPath) {
-  if (!noFactsNeededHeld.has(dbPath)) {
-    const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('submissions') WHERE name = 'no_facts_needed_on'")[0].n > 0;
-    if (!held) return "NULL AS no_facts_needed_on";
-    noFactsNeededHeld.add(dbPath);
-  }
-  return "s.no_facts_needed_on";
+  return hasColumn(dbPath, "submissions", "no_facts_needed_on") ? "s.no_facts_needed_on" : "NULL AS no_facts_needed_on";
 }
-var noLawNeededHeld = /* @__PURE__ */ new Set();
 function noLawNeededColumn(dbPath) {
-  if (!noLawNeededHeld.has(dbPath)) {
-    const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('submissions') WHERE name = 'no_law_needed_on'")[0].n > 0;
-    if (!held) return "NULL AS no_law_needed_on";
-    noLawNeededHeld.add(dbPath);
-  }
-  return "s.no_law_needed_on";
+  return hasColumn(dbPath, "submissions", "no_law_needed_on") ? "s.no_law_needed_on" : "NULL AS no_law_needed_on";
 }
-var markerSuppressionsHeld = /* @__PURE__ */ new Set();
 function suppressedWitnessFactIds(dbPath, factIds) {
   if (factIds.length === 0) return /* @__PURE__ */ new Set();
-  if (!markerSuppressionsHeld.has(dbPath)) {
-    const held = rows(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'marker_suppressions'")[0].n > 0;
-    if (!held) return /* @__PURE__ */ new Set();
-    markerSuppressionsHeld.add(dbPath);
-  }
+  if (!hasTable(dbPath, "marker_suppressions")) return /* @__PURE__ */ new Set();
   const placeholders = factIds.map(() => "?").join(",");
   return new Set(
     rows(
@@ -86329,71 +86325,35 @@ function servedOrderWordingsColumn() {
            json_each(json_array(o.wording, fo.wording_override)) w
            WHERE sb.submission_id = s.id AND o.crossed_out_on IS NULL AND w.value IS NOT NULL) AS served_order_wordings`;
 }
-var treatmentNoteHeldDbs = /* @__PURE__ */ new Set();
 function treatmentNoteHeld(dbPath) {
-  if (treatmentNoteHeldDbs.has(dbPath)) return true;
-  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('authorities') WHERE name = 'treatment_note'")[0].n > 0;
-  if (held) treatmentNoteHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "authorities", "treatment_note");
 }
 function treatmentNoteColumn(dbPath) {
   return treatmentNoteHeld(dbPath) ? "auth.treatment_note" : "NULL AS treatment_note";
 }
-var ticketAnswersHeldDbs = /* @__PURE__ */ new Set();
 function ticketAnswersHeld(dbPath) {
-  if (ticketAnswersHeldDbs.has(dbPath)) return true;
-  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'ticket_answers'")[0].n > 0;
-  if (held) ticketAnswersHeldDbs.add(dbPath);
-  return held;
+  return hasTable(dbPath, "ticket_answers");
 }
-var boardAttachmentsHeldDbs = /* @__PURE__ */ new Set();
 function boardAttachmentsHeld(dbPath) {
-  if (boardAttachmentsHeldDbs.has(dbPath)) return true;
-  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'board_attachments'")[0].n > 0;
-  if (held) boardAttachmentsHeldDbs.add(dbPath);
-  return held;
+  return hasTable(dbPath, "board_attachments");
 }
-var rhetoricHeldDbs = /* @__PURE__ */ new Set();
 function rhetoricHeld(dbPath) {
-  if (rhetoricHeldDbs.has(dbPath)) return true;
-  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'rhetorical_paragraphs'")[0].n > 0;
-  if (held) rhetoricHeldDbs.add(dbPath);
-  return held;
+  return hasTable(dbPath, "rhetorical_paragraphs");
 }
-var deletedAtHeldDbs = /* @__PURE__ */ new Set();
 function deletedAtHeld(dbPath) {
-  if (deletedAtHeldDbs.has(dbPath)) return true;
-  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('tickets') WHERE name = 'deleted_at'")[0].n > 0;
-  if (held) deletedAtHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "tickets", "deleted_at");
 }
-var createdByHeldDbs = /* @__PURE__ */ new Set();
 function createdByHeld(dbPath) {
-  if (createdByHeldDbs.has(dbPath)) return true;
-  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('tickets') WHERE name = 'created_by'")[0].n > 0;
-  if (held) createdByHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "tickets", "created_by");
 }
-var bfOnHeldDbs = /* @__PURE__ */ new Set();
 function bfOnHeld(dbPath) {
-  if (bfOnHeldDbs.has(dbPath)) return true;
-  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('tickets') WHERE name = 'bf_on'")[0].n > 0;
-  if (held) bfOnHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "tickets", "bf_on");
 }
-var stepStatusHeldDbs = /* @__PURE__ */ new Set();
 function stepStatusHeld(dbPath) {
-  if (stepStatusHeldDbs.has(dbPath)) return true;
-  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('ticket_steps') WHERE name = 'status'")[0].n > 0;
-  if (held) stepStatusHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "ticket_steps", "status");
 }
-var exhibitLettersHeldDbs = /* @__PURE__ */ new Set();
 function exhibitLettersHeld(dbPath) {
-  if (exhibitLettersHeldDbs.has(dbPath)) return true;
-  const held = rows(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('documents') WHERE name = 'exhibit_letters'")[0].n > 0;
-  if (held) exhibitLettersHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "documents", "exhibit_letters");
 }
 function courtRecordDocumentColumns(dbPath, alias) {
   return `${alias}.execution AS court_record_execution, ${exhibitLettersHeld(dbPath) ? `${alias}.exhibit_letters` : "NULL"} AS court_record_exhibit_letters`;
@@ -86402,7 +86362,7 @@ function liveTicketClause(dbPath, alias) {
   return deletedAtHeld(dbPath) ? ` AND ${alias === void 0 ? "" : `${alias}.`}deleted_at IS NULL` : "";
 }
 function seedClosedColumns(dbPath) {
-  return rows(dbPath, "SELECT name FROM pragma_table_info('seeds') WHERE name IN ('discarded_at', 'suggested_at') ORDER BY name").map((c3) => c3.name);
+  return ["discarded_at", "suggested_at"].filter((column) => hasColumn(dbPath, "seeds", column));
 }
 function liveSeedClause(dbPath) {
   return seedClosedColumns(dbPath).map((column) => ` AND ${column} IS NULL`).join("");
@@ -86541,25 +86501,25 @@ function draftingParties(caseDataDir, proceeding, parties2, env = process.env) {
     };
   }
   const read3 = new Map((record2?.parties ?? []).map((c3) => [c3.case_party_id, c3]));
-  const rows30 = [];
+  const rows2 = [];
   const resolved = parties2.map((p3) => {
     const link = linkOf(p3);
     const caseParty = link === null ? void 0 : read3.get(link);
-    if (link === null) rows30.push({ ...base(p3), kind: "unlinked" });
-    else if (caseParty === void 0) rows30.push({ ...base(p3), kind: "not_of_record" });
+    if (link === null) rows2.push({ ...base(p3), kind: "unlinked" });
+    else if (caseParty === void 0) rows2.push({ ...base(p3), kind: "not_of_record" });
     return withCaseData(p3, caseParty);
   });
-  return { parties: resolved, drift: { rows: rows30 } };
+  return { parties: resolved, drift: { rows: rows2 } };
 }
 function matterPartiesDrift(dbPath, env = process.env) {
-  const rows30 = [];
+  const rows2 = [];
   const uncheckedWhy = [];
   for (const proceeding of fetchAllProceedings(dbPath)) {
     const { drift } = draftingParties(dirname11(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
-    rows30.push(...drift.rows);
+    rows2.push(...drift.rows);
     if (drift.unchecked) uncheckedWhy.push(drift.unchecked.note);
   }
-  return { rows: rows30, ...uncheckedWhy.length > 0 ? { note: uncheckedWhy.join("; ") } : {} };
+  return { rows: rows2, ...uncheckedWhy.length > 0 ? { note: uncheckedWhy.join("; ") } : {} };
 }
 function heldValues(p3) {
   const held = {};
@@ -86604,8 +86564,8 @@ function counselOffers(dbPath, env = process.env) {
   }
   return offers;
 }
-function partiesDriftLines(rows30) {
-  return rows30.map((r3) => {
+function partiesDriftLines(rows2) {
+  return rows2.map((r3) => {
     const what = r3.kind === "unlinked" ? "not linked to a party in case data, so no counsel or address for service is printed; confirm which party it is" : r3.kind === "not_of_record" ? r3.file_number === "" ? `linked to matter-data party ${r3.case_party_id}, which case data does not hold; confirm the link` : `linked to matter-data party ${r3.case_party_id}, which is not a party of record in ${r3.file_number}; confirm the link` : `counsel and address for service not read from case data: ${r3.reason}`;
     return mockupMessage(gapMarker("not_recorded"), `${r3.name} (${r3.role}): ${what}`);
   });
@@ -86616,8 +86576,8 @@ function withLeadLines(markdown, lines2) {
   const frontmatter = /^---\n[\s\S]*?\n---\n/.exec(markdown);
   return frontmatter ? frontmatter[0] + block2 + markdown.slice(frontmatter[0].length) : block2 + markdown;
 }
-function withPartiesDriftLines(markdown, rows30) {
-  return withLeadLines(markdown, partiesDriftLines(rows30));
+function withPartiesDriftLines(markdown, rows2) {
+  return withLeadLines(markdown, partiesDriftLines(rows2));
 }
 
 // src/submission/schema-ceiling.ts
@@ -87862,17 +87822,17 @@ function sidecarRows(kp, seams, label2) {
   if (type === null) return [];
   if (type === "dir") throw new DataServerError(`${label2}: ${sidecarKp.path} is a folder, not a sidecar`, "invalid_sidecar");
   const text5 = readLayerBytes(loc.local.abs, label2).toString("utf-8");
-  const rows30 = parseSidecar(text5.startsWith("\uFEFF") ? text5.slice(1) : text5, loc.local.abs, kp.path);
+  const rows2 = parseSidecar(text5.startsWith("\uFEFF") ? text5.slice(1) : text5, loc.local.abs, kp.path);
   if (kp.rest.length === 5 && kp.rest[3] === "Sources") {
-    const i3 = rows30.findIndex((row2) => row2.status === "corrected");
+    const i3 = rows2.findIndex((row2) => row2.status === "corrected");
     if (i3 !== -1) {
       throw new DataServerError(
-        `${loc.local.abs}: items[${i3}]: rule_ref "${rows30[i3].rule_ref}" of ${kp.path} is corrected, but a Sources\\ excerpt is not correctable; its passage is fixed by refresh`,
+        `${loc.local.abs}: items[${i3}]: rule_ref "${rows2[i3].rule_ref}" of ${kp.path} is corrected, but a Sources\\ excerpt is not correctable; its passage is fixed by refresh`,
         "invalid_sidecar"
       );
     }
   }
-  return rows30;
+  return rows2;
 }
 function rawResult(kp, file, shipped_from, seams) {
   return {
@@ -88076,14 +88036,14 @@ function matterOf(raw, tool) {
 }
 async function stampedMatter(matter, seams, path) {
   if (!seams.lookUpMatter) throw new Error("knowledge__write: no practice-data matter lookup is wired");
-  const rows30 = await seams.lookUpMatter(matter);
-  if (rows30.length !== 1 || typeof rows30[0].matt_num !== "string") {
+  const rows2 = await seams.lookUpMatter(matter);
+  if (rows2.length !== 1 || typeof rows2[0].matt_num !== "string") {
     throw new DataServerError(
-      `${path}: matter_unknown: ${JSON.stringify(matter)} is not the matter number of exactly one practice-data matter (found ${rows30.length}). Pass the live matter's number (e.g. L1234), never its name. Nothing was written.`,
+      `${path}: matter_unknown: ${JSON.stringify(matter)} is not the matter number of exactly one practice-data matter (found ${rows2.length}). Pass the live matter's number (e.g. L1234), never its name. Nothing was written.`,
       "matter_unknown"
     );
   }
-  return rows30[0].matt_num;
+  return rows2[0].matt_num;
 }
 function refuseArgs(args, keys, why) {
   const present3 = keys.filter((key) => args[key] !== void 0);
@@ -88432,8 +88392,8 @@ function rosterLawyer(profile, what) {
 async function confirmingLawyer(env) {
   return rosterLawyer(await firm_profile(env), CONFIRM_ACT);
 }
-function validateCorrections(kp, content, kind, noVenue, rows30) {
-  const corrections = rows30.filter((row2) => row2.status === "corrected").map(({ rule_ref, value }) => ({ rule_ref, value }));
+function validateCorrections(kp, content, kind, noVenue, rows2) {
+  const corrections = rows2.filter((row2) => row2.status === "corrected").map(({ rule_ref, value }) => ({ rule_ref, value }));
   if (kind === "format") {
     substituteFormat(extractJsonBlock(content, kp.path, false, "invalid_format"), corrections, kp.path);
   } else {
@@ -88485,10 +88445,10 @@ async function confirmItem(kp, args, operation, seams, label2) {
   const sidecarKp = parseKnowledgePath(`${kp.path}${SIDECAR_SUFFIX}`, label2);
   grammarCheck(sidecarKp, "file", label2);
   const target = writableOverlayPath(sidecarKp, seams, label2);
-  const rows30 = await upsertSidecarRow(target.abs, kp.path, row2, (next) => {
+  const rows2 = await upsertSidecarRow(target.abs, kp.path, row2, (next) => {
     if (operation === "correct") validateCorrections(kp, content, kindOf.kind, kindOf.noVenue, next);
   });
-  return { path: kp.path, sidecar: sidecarKp.path, row: row2, rows: rows30.length, ...provenance2(served.shipped_from, seams) };
+  return { path: kp.path, sidecar: sidecarKp.path, row: row2, rows: rows2.length, ...provenance2(served.shipped_from, seams) };
 }
 
 // src/knowledge/write-index.ts
@@ -88593,13 +88553,13 @@ async function writeIndexRow(kp, index, args, seams, label2) {
       }
       merge2(doc, target.abs);
     }
-    const rows30 = Array.isArray(doc[list]) ? [...doc[list]] : [];
-    const at = rows30.findIndex((known) => keyIn(list, known) === key);
-    const without = rows30.filter((_3, i3) => i3 !== at);
+    const rows2 = Array.isArray(doc[list]) ? [...doc[list]] : [];
+    const at = rows2.findIndex((known) => keyIn(list, known) === key);
+    const without = rows2.filter((_3, i3) => i3 !== at);
     checkIndexRow(kp, merge2({ ...doc, [list]: without }, target.abs), list, key, row2, noVenue, target.abs);
-    if (at === -1) rows30.push(row2);
-    else rows30[at] = row2;
-    const next = { ...doc, [list]: rows30 };
+    if (at === -1) rows2.push(row2);
+    else rows2[at] = row2;
+    const next = { ...doc, [list]: rows2 };
     const view = merge2(next, target.abs);
     writeTextAtomic(target.abs, JSON.stringify(next, null, 2) + "\n");
     return { path: kp.path, index, list, key, status: at === -1 ? "created" : "updated", view, ...provenance2(loc.shipped_from, seams) };
@@ -88743,8 +88703,8 @@ function predatedProvision(row2, provisions) {
 
 // src/submission/forms/law-statement-line.ts
 var CITATION_MISSING = "[citation missing]";
-function scrutinyFailedTag(rows30) {
-  const findings = rows30.filter((r3) => r3.verification === "failed").map((r3) => (r3.doubt ?? "").replace(/\s+/g, " ").trim());
+function scrutinyFailedTag(rows2) {
+  const findings = rows2.filter((r3) => r3.verification === "failed").map((r3) => (r3.doubt ?? "").replace(/\s+/g, " ").trim());
   return findings.length > 0 ? ` (scrutiny failed: ${findings.join("; ")})` : "";
 }
 function settledTag(row2) {
@@ -88790,11 +88750,8 @@ function lawStatementMarkers(row2, deployed = true) {
 }
 
 // src/submission/forms/submission-reads.ts
-function rows2(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchSubmissions(dbPath, filingId, document2) {
-  return rows2(
+  return rows(
     dbPath,
     `SELECT s.id, s.contention, fs.ordinal AS filing_ordinal, fs.id AS pointer_id, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()}
      FROM filing_submissions fs
@@ -88807,7 +88764,7 @@ function fetchSubmissions(dbPath, filingId, document2) {
 function fetchSubmissionLaw(dbPath, submissionIds) {
   if (submissionIds.length === 0) return [];
   const placeholders = submissionIds.map(() => "?").join(",");
-  return rows2(
+  return rows(
     dbPath,
     `SELECT sub_law.submission_id, la.id AS law_assertion_id, la.proposition, la.dead_end,
             sl.id AS statement_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification, ${settledOnColumn(dbPath)},
@@ -88827,7 +88784,7 @@ function fetchSubmissionLaw(dbPath, submissionIds) {
 function fetchSubmissionFacts(dbPath, submissionIds) {
   if (submissionIds.length === 0) return [];
   const placeholders = submissionIds.map(() => "?").join(",");
-  return rows2(
+  return rows(
     dbPath,
     `SELECT sf.submission_id, f.id AS fact_id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}
      FROM submission_facts sf
@@ -88841,7 +88798,7 @@ function fetchSubmissionFacts(dbPath, submissionIds) {
 function fetchFactStatements(dbPath, factIds) {
   if (factIds.length === 0) return [];
   const placeholders = factIds.map(() => "?").join(",");
-  return rows2(
+  return rows(
     dbPath,
     `SELECT sof.fact_id, sof.id AS statement_id, sof.instrument AS instrument_id,
             sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
@@ -88858,12 +88815,12 @@ function fetchFactStatements(dbPath, factIds) {
 function fetchDeployedIds(dbPath, filingId, document2) {
   return {
     orderIds: new Set(
-      rows2(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ? AND document = ?`, [filingId, document2]).map(
+      rows(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ? AND document = ?`, [filingId, document2]).map(
         (r3) => r3.order_sought_id
       )
     ),
     submissionIds: new Set(
-      rows2(
+      rows(
         dbPath,
         `SELECT fs.submission_id FROM filing_submissions fs
          JOIN submissions s ON s.id = fs.submission_id
@@ -88872,24 +88829,21 @@ function fetchDeployedIds(dbPath, filingId, document2) {
       ).map((r3) => r3.submission_id)
     ),
     factIds: new Set(
-      rows2(dbPath, `SELECT fact_id FROM filing_facts WHERE filing_id = ? AND document = ?`, [filingId, document2]).map((r3) => r3.fact_id)
+      rows(dbPath, `SELECT fact_id FROM filing_facts WHERE filing_id = ? AND document = ?`, [filingId, document2]).map((r3) => r3.fact_id)
     )
   };
 }
 
 // src/submission/forms/exhibit-documents.ts
-function rows3(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchDocumentLabels(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = documentIds.map(() => "?").join(",");
-  const found = rows3(dbPath, `SELECT id, label FROM documents WHERE id IN (${placeholders})`, documentIds);
+  const found = rows(dbPath, `SELECT id, label FROM documents WHERE id IN (${placeholders})`, documentIds);
   return new Map(found.map((d3) => [d3.id, d3.label]));
 }
 function fetchNotBestCopyMarkers(dbPath, proceedingId) {
   return notBestCopyMarkers(
-    rows3(dbPath, `SELECT id, label, is_best_copy FROM documents WHERE proceeding_id = ?`, [proceedingId])
+    rows(dbPath, `SELECT id, label, is_best_copy FROM documents WHERE proceeding_id = ?`, [proceedingId])
   );
 }
 function exhibitNumbersFromOrderedIds(documentIds) {
@@ -88898,7 +88852,7 @@ function exhibitNumbersFromOrderedIds(documentIds) {
   return map;
 }
 function fetchProceedingExhibitNumbers(dbPath, proceedingId) {
-  const ordered = rows3(
+  const ordered = rows(
     dbPath,
     `SELECT fd.document_id
      FROM filing_documents fd
@@ -88923,7 +88877,7 @@ function exhibitNumbersForFiling(dbPath, filing, filingDocumentIds) {
   return filing.kind === "submissions_package" ? fetchProceedingExhibitNumbers(dbPath, filing.proceeding_id) : exhibitNumbersFromOrderedIds(filingDocumentIds);
 }
 function fetchFilingDocuments(dbPath, filingId) {
-  return rows3(
+  return rows(
     dbPath,
     `SELECT fd.id, fd.document_id, fd.ordinal, fd.role, fd.provenance, d.label, d.document_date, d.description, d.file_path
      FROM filing_documents fd
@@ -88935,20 +88889,17 @@ function fetchFilingDocuments(dbPath, filingId) {
 }
 
 // src/submission/forms/review-state.ts
-function rows4(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchReviewState(dbPath, proceedingId) {
   const held = rhetoricHeld(dbPath);
   const tables = Object.keys(REVIEW_SNAPSHOT_FIELDS).filter((t3) => held || t3 !== "rhetorical_paragraphs");
   const scope = (t3) => t3 === "filing_prose" || t3 === "filing_orders" ? "filing_id IN (SELECT id FROM filings WHERE proceeding_id = ?)" : "proceeding_id = ?";
   const noteHeld = treatmentNoteHeld(dbPath);
-  const current = rows4(
+  const current = rows(
     dbPath,
     tables.map((t3) => `SELECT '${t3}' AS entity, id AS entity_id, ${reviewSnapshotSql(t3, noteHeld)} AS snapshot FROM ${t3} WHERE ${scope(t3)}`).join(" UNION ALL "),
     Array(tables.length).fill(proceedingId)
   );
-  const approved = rows4(
+  const approved = rows(
     dbPath,
     `SELECT entity, entity_id, snapshot FROM review_approvals ra
      WHERE ra.id = (SELECT MAX(id) FROM review_approvals WHERE entity = ra.entity AND entity_id = ra.entity_id)`
@@ -89190,11 +89141,8 @@ function recordParagraph(ctx, submissionId, document2, startPara) {
 }
 
 // src/submission/forms/orders-sought.ts
-function rows5(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchOrdersSought(dbPath, filingId, document2) {
-  const orders = rows5(
+  const orders = rows(
     dbPath,
     `SELECT o.id, o.wording, fo.wording_override, o.amount, o.template_key, o.template_values,
             o.crossed_out_on, fo.ordinal AS filing_ordinal, fo.id AS pointer_id,
@@ -89218,7 +89166,7 @@ function fetchJurisdictionEdges(dbPath, orderIds) {
   const edgesByOrder = /* @__PURE__ */ new Map();
   if (orderIds.length === 0) return edgesByOrder;
   const placeholders = orderIds.map(() => "?").join(",");
-  const edges = rows5(
+  const edges = rows(
     dbPath,
     `SELECT req.order_sought_id, req.basis_state, sl.id AS statement_id, sl.excerpt, sl.pinpoint, sl.source, sl.verification,
             auth.treatment, auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, auth.killed_on AS authority_killed_on,
@@ -89238,11 +89186,8 @@ function fetchJurisdictionEdges(dbPath, orderIds) {
 }
 
 // src/submission/forms/opposing-points.ts
-function rows6(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchOpposingPoints(dbPath, proceedingId) {
-  return rows6(
+  return rows(
     dbPath,
     `SELECT op.id, op.component, op.pinpoint, op.verbatim_words, op.answered_by_submission_id,
             s.contention AS answered_by_contention
@@ -89255,11 +89200,8 @@ function fetchOpposingPoints(dbPath, proceedingId) {
 }
 
 // src/submission/forms/admission-annotations.ts
-function rows7(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchAdmissionStates(dbPath, whereClause, params) {
-  const inputRows = rows7(
+  const inputRows = rows(
     dbPath,
     `SELECT
        a.id,
@@ -89432,12 +89374,12 @@ function requisitionWrapper(f3) {
   return lines2.join("\n");
 }
 var STANDARD_MATERIAL_LINES = ["Pleadings filed in this proceeding", "Such further affidavits or filed court documents as this honourable court may allow"];
-function checkboxOrderBlock(rows30) {
+function checkboxOrderBlock(rows2) {
   const lines2 = [];
   lines2.push("[ ] The order(s) set out in Part 1 of this notice were made in the terms requested in Part 1 of this notice.");
   lines2.push("[ ] The order(s) set out in Part 1 of this notice were made with the following variations and additional terms:");
   lines2.push("");
-  rows30.forEach((r3) => lines2.push(`- ${r3.text}${r3.marker ? ` ${r3.marker}` : ""}`));
+  rows2.forEach((r3) => lines2.push(`- ${r3.text}${r3.marker ? ` ${r3.marker}` : ""}`));
   return lines2.join("\n");
 }
 function buildLowerCourtRoleByRole(parties2) {
@@ -89537,11 +89479,8 @@ function frontmatterFor(documentType, proceeding, filing, revision, rendered, cl
 }
 
 // src/submission/forms/witness-statement-reads.ts
-function rows8(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchWitnessStatements(dbPath, filingId) {
-  return rows8(
+  return rows(
     dbPath,
     `SELECT d.id, d.deponent AS witness_id, d.execution, d.signed_at, d.label, fd.ordinal,
             w.name AS witness_name
@@ -89554,7 +89493,7 @@ function fetchWitnessStatements(dbPath, filingId) {
   );
 }
 function fetchStatementParagraphs(dbPath, documentId) {
-  return rows8(
+  return rows(
     dbPath,
     `SELECT id, ordinal, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`,
     [documentId]
@@ -89563,7 +89502,7 @@ function fetchStatementParagraphs(dbPath, documentId) {
 function fetchParagraphFacts(dbPath, paragraphIds) {
   if (paragraphIds.length === 0) return [];
   const placeholders = paragraphIds.map(() => "?").join(",");
-  return rows8(
+  return rows(
     dbPath,
     `SELECT psof.statement_paragraph_id, sof.fact_id, psof.statement_of_fact_id
      FROM paragraph_statements_of_fact psof
@@ -89573,7 +89512,7 @@ function fetchParagraphFacts(dbPath, paragraphIds) {
   );
 }
 function fetchIncludedStatementsOfFactForWitness(dbPath, witnessId) {
-  return rows8(
+  return rows(
     dbPath,
     `SELECT sof.id, sof.fact_id, sof.interviewed, sof.pinpoint, sof.doubt,
             sof.exhibit_id, sof.exhibit_pinpoint,
@@ -89586,7 +89525,7 @@ function fetchIncludedStatementsOfFactForWitness(dbPath, witnessId) {
   );
 }
 function fetchDocumentsReliedOn(dbPath, statementDocumentId) {
-  return rows8(
+  return rows(
     dbPath,
     `SELECT DISTINCT d.id, d.label, d.document_date
      FROM statement_paragraphs sp
@@ -89713,13 +89652,10 @@ function renderWitnessStatements(ctx) {
 }
 
 // src/submission/forms/document-tenders.ts
-function rows9(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchExhibitTenders(dbPath, documentIds) {
   if (documentIds.length === 0) return [];
   const placeholders = documentIds.map(() => "?").join(",");
-  return rows9(
+  return rows(
     dbPath,
     `SELECT sof.exhibit_id, 'witness' AS tender_kind, w.name AS name, inst.label AS instrument_label, sof.purpose, NULL AS admission_id, NULL AS fact_postulate, 0 AS tender_rank, sof.id AS tender_ord
      FROM statements_of_fact sof
@@ -90107,12 +90043,9 @@ function withNoteUpSteps(proposals, inventory, pinpoints, contentions) {
 }
 
 // src/submission/forms/render-rhetoric.ts
-function rows10(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchRhetoric(dbPath, filingId, document2, part) {
   if (!rhetoricHeld(dbPath)) return [];
-  const found = rows10(
+  const found = rows(
     dbPath,
     `SELECT rp.id, rp.wording, rp.states_law, rp.states_fact, fr.ordinal,
             EXISTS(SELECT 1 FROM rhetorical_paragraph_law l WHERE l.rhetorical_paragraph_id = rp.id) AS has_law,
@@ -90126,7 +90059,7 @@ function fetchRhetoric(dbPath, filingId, document2, part) {
   );
   if (found.length === 0) return [];
   const ids = [...new Set(found.map((r3) => r3.id))];
-  const recordRows = rows10(
+  const recordRows = rows(
     dbPath,
     `SELECT rec.rhetorical_paragraph_id, rec.id, doc.label, rec.pinpoint, rec.excerpt
      FROM rhetorical_paragraph_record rec
@@ -90567,12 +90500,8 @@ var formSource = (ctx, _part, state) => {
   const form = fetchFilingDocuments(ctx.dbPath, ctx.filing.id).find((d3) => d3.role === "other");
   return form === void 0 ? [empty(ctx, "form-source", state)] : [`<!-- form copy: document_id ${form.document_id} -->`];
 };
-var provisionCurrencyHeld = /* @__PURE__ */ new Set();
 function hasProvisionCurrency(dbPath) {
-  if (provisionCurrencyHeld.has(dbPath)) return true;
-  const [row2] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'provision_currency'").rows;
-  if (row2.n > 0) provisionCurrencyHeld.add(dbPath);
-  return row2.n > 0;
+  return hasTable(dbPath, "provision_currency");
 }
 function fetchClauses(dbPath, filingId) {
   const held = hasProvisionCurrency(dbPath);
@@ -90696,15 +90625,15 @@ function renderPart(ctx, part, state) {
 function composeLayoutSnapshot(key, seams = {}) {
   const folder = `draft/${key.country}/${key.jurisdiction}/${key.venue}`;
   const { kinds } = knowledgeRead(`${folder}/Documents/kinds.json`, seams).view;
-  const rows30 = kinds.filter((row2) => row2.file === key.kind || row2.aliases.some((alias) => alias.name === key.kind));
-  if (rows30.length !== 1) {
-    const candidates = rows30.map((row2) => `${row2.file}${row2.recipient ? ` (recipient ${row2.recipient})` : ""}`);
+  const rows2 = kinds.filter((row2) => row2.file === key.kind || row2.aliases.some((alias) => alias.name === key.kind));
+  if (rows2.length !== 1) {
+    const candidates = rows2.map((row2) => `${row2.file}${row2.recipient ? ` (recipient ${row2.recipient})` : ""}`);
     throw new DataServerError(
-      `kind "${key.kind}" matches ${rows30.length} rows of ${folder}/Documents/kinds.json; exactly one is required (candidates: ${candidates.length > 0 ? candidates.join(", ") : "none"})`,
+      `kind "${key.kind}" matches ${rows2.length} rows of ${folder}/Documents/kinds.json; exactly one is required (candidates: ${candidates.length > 0 ? candidates.join(", ") : "none"})`,
       "kind_unresolved"
     );
   }
-  const typeFile = rows30[0].file;
+  const typeFile = rows2[0].file;
   const passage_hashes = {};
   const blockOf2 = (path, kind) => {
     const read3 = knowledgeRead(path, seams);
@@ -90747,7 +90676,7 @@ function composeLayoutSnapshot(key, seams = {}) {
     layout_snapshot: JSON.stringify(stored),
     type_file: typeFile,
     stored,
-    recipient: rows30[0].recipient ?? null,
+    recipient: rows2[0].recipient ?? null,
     learned: typeRead.learned === true
   };
 }
@@ -91027,17 +90956,14 @@ function sameBoard(a3, b3) {
 function boardKey(board) {
   return board.filing_id === null ? `proceeding:${board.proceeding_id}` : `filing:${board.filing_id}`;
 }
-function rows11(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 var BoardIndex = class {
   rows = /* @__PURE__ */ new Map();
   firstFiling = /* @__PURE__ */ new Map();
   filings;
   constructor(dbPath) {
-    this.filings = rows11(dbPath, "SELECT id, proceeding_id, kind FROM filings ORDER BY id");
+    this.filings = rows(dbPath, "SELECT id, proceeding_id, kind FROM filings ORDER BY id");
     for (const f3 of this.filings) if (!this.firstFiling.has(f3.proceeding_id)) this.firstFiling.set(f3.proceeding_id, f3);
-    for (const r3 of rows11(dbPath, `SELECT key, value FROM db_meta WHERE key GLOB '${PREFIX}*'`)) {
+    for (const r3 of rows(dbPath, `SELECT key, value FROM db_meta WHERE key GLOB '${PREFIX}*'`)) {
       const v3 = JSON.parse(r3.value);
       this.rows.set(r3.key, { filing_id: v3.filing_id ?? null, proceeding_id: v3.proceeding_id });
     }
@@ -91542,19 +91468,16 @@ function recordsDir(dbPath) {
 }
 
 // src/submission/forms/work-board-reads.ts
-function rows12(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchProceedingTickets(dbPath, proceedingId) {
-  return rows12(dbPath, `SELECT * FROM tickets WHERE proceeding_id = ?${liveTicketClause(dbPath)} ORDER BY priority DESC, id`, [proceedingId]);
+  return rows(dbPath, `SELECT * FROM tickets WHERE proceeding_id = ?${liveTicketClause(dbPath)} ORDER BY priority DESC, id`, [proceedingId]);
 }
 function fetchDeletedTickets(dbPath, proceedingId) {
   if (!deletedAtHeld(dbPath)) return [];
-  return rows12(dbPath, "SELECT id, title, filing_id FROM tickets WHERE proceeding_id = ? AND deleted_at IS NOT NULL ORDER BY id", [proceedingId]);
+  return rows(dbPath, "SELECT id, title, filing_id FROM tickets WHERE proceeding_id = ? AND deleted_at IS NOT NULL ORDER BY id", [proceedingId]);
 }
 function fetchAttachments(dbPath, proceedingId, filingId) {
   if (!boardAttachmentsHeld(dbPath)) return [];
-  return rows12(
+  return rows(
     dbPath,
     "SELECT id, filing_id, path, kind, attached_on FROM board_attachments WHERE proceeding_id = ? AND (? IS NULL OR filing_id = ? OR (filing_id IS NULL AND ? = (SELECT MIN(id) FROM filings WHERE proceeding_id = ? AND retired_on IS NULL AND kind <> ?))) ORDER BY id",
     [proceedingId, filingId, filingId, filingId, proceedingId, JOB_BOARD_KIND]
@@ -91592,9 +91515,6 @@ function seedOrigin(s3) {
   if (s3.origin_ticket_id !== null) return `from Job #${s3.origin_ticket_id}${s3.from_filing === null ? "" : ` on ${s3.from_filing}`}`;
   return s3.from_filing === null ? null : `from ${s3.from_filing}`;
 }
-function columnHeld(dbPath, table, column) {
-  return rows12(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
-}
 function openSeedCondition(dbPath, deletedIds) {
   const deletedList = [...deletedIds];
   const outlinedIntoDeleted = deletedList.length === 0 ? "" : ` OR charted_into IN (${deletedList.map(() => "?").join(",")})`;
@@ -91602,7 +91522,7 @@ function openSeedCondition(dbPath, deletedIds) {
 }
 function fetchDiscardedSeeds(dbPath, proceedingId) {
   if (seedClosedColumns(dbPath).length < 2) return [];
-  return rows12(
+  return rows(
     dbPath,
     "SELECT id, idea, filing_id, discarded_at, suggested_at FROM seeds WHERE proceeding_id = ? AND (discarded_at IS NOT NULL OR suggested_at IS NOT NULL) ORDER BY id",
     [proceedingId]
@@ -91612,7 +91532,7 @@ function fetchResolvedSeeds(dbPath, proceedingId) {
   const closed = seedClosedColumns(dbPath);
   const column = (name) => closed.includes(name) ? `s.${name}` : `NULL AS ${name}`;
   const resolved = [...closed.map((name) => `s.${name} IS NOT NULL`), "t.id IS NOT NULL"].join(" OR ");
-  return rows12(
+  return rows(
     dbPath,
     `SELECT s.id, s.idea, ${column("discarded_at")}, ${column("suggested_at")}, t.id AS job_id, t.title AS job_title, t.created AS job_created
      FROM seeds s LEFT JOIN tickets t ON t.id = s.charted_into${liveTicketClause(dbPath, "t")}
@@ -91626,10 +91546,10 @@ function fetchResolvedSeeds(dbPath, proceedingId) {
 }
 function fetchOpenSeeds(dbPath, proceedingId, deletedIds = new Set(fetchDeletedTickets(dbPath, proceedingId).map((d3) => d3.id))) {
   const open = openSeedCondition(dbPath, deletedIds);
-  const ranking = columnHeld(dbPath, "seeds", "rank") ? "rank, rank_group, rank_reason" : "NULL AS rank, NULL AS rank_group, NULL AS rank_reason";
-  const job = columnHeld(dbPath, "seeds", "rank_job") ? "rank_job" : "NULL AS rank_job";
-  const deferral = columnHeld(dbPath, "seeds", "deferred_at") ? "deferred_at" : "NULL AS deferred_at";
-  return rows12(
+  const ranking = hasColumn(dbPath, "seeds", "rank") ? "rank, rank_group, rank_reason" : "NULL AS rank, NULL AS rank_group, NULL AS rank_reason";
+  const job = hasColumn(dbPath, "seeds", "rank_job") ? "rank_job" : "NULL AS rank_job";
+  const deferral = hasColumn(dbPath, "seeds", "deferred_at") ? "deferred_at" : "NULL AS deferred_at";
+  return rows(
     dbPath,
     `SELECT id, filing_id, origin_ticket_id, created, surfaced_by, idea, ${ranking}, ${job}, ${deferral} FROM seeds WHERE ${open.sql} AND proceeding_id = ? ORDER BY id`,
     [...open.params, proceedingId]
@@ -91648,7 +91568,7 @@ function fetchOpenSeeds(dbPath, proceedingId, deletedIds = new Set(fetchDeletedT
   }));
 }
 function withFromFiling(dbPath, proceedingId, filingId, seeds) {
-  const filingTitles = new Map(rows12(dbPath, "SELECT id, title FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.title]));
+  const filingTitles = new Map(rows(dbPath, "SELECT id, title FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.title]));
   return seeds.map((s3) => ({ ...s3, from_filing: s3.filing_id === null || s3.filing_id === filingId ? null : filingTitles.get(s3.filing_id) ?? null }));
 }
 
@@ -91731,12 +91651,8 @@ var KINDS = ["decision", "legislation", "file"];
 var OUTCOMES = ["got", "not_retrieved"];
 var LABEL_MAX = 200;
 var REASON_MAX = 60;
-var ticketSourcesHeldDbs = /* @__PURE__ */ new Set();
 function ticketSourcesHeld(dbPath) {
-  if (ticketSourcesHeldDbs.has(dbPath)) return true;
-  const [{ n: n3 }] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'ticket_sources'").rows;
-  if (n3 > 0) ticketSourcesHeldDbs.add(dbPath);
-  return n3 > 0;
+  return hasTable(dbPath, "ticket_sources");
 }
 function oneLine(value, field, max) {
   if (typeof value !== "string" || value.trim() === "" || /[\r\n]/.test(value) || value.trim().length > max) {
@@ -91910,14 +91826,14 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = today()) {
   const idList = proceedingIds.map(() => "?").join(",");
   const deleted = fetchDeletedTickets(dbPath, proceedingId);
   const deletedIds = new Set(deleted.map((d3) => d3.id));
-  const blocks2 = (proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT * FROM ticket_blocks WHERE blocker_id IN (${idList}) OR blocked_id IN (${idList})`, [...proceedingIds, ...proceedingIds])).filter((b3) => !deletedIds.has(b3.blocker_id) && !deletedIds.has(b3.blocked_id));
-  const conflicts = (proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT * FROM ticket_conflicts WHERE a_id IN (${idList}) OR b_id IN (${idList})`, [...proceedingIds, ...proceedingIds])).filter((c3) => !deletedIds.has(c3.a_id) && !deletedIds.has(c3.b_id));
-  const steps = proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT * FROM ticket_steps WHERE ticket_id IN (${idList})`, proceedingIds);
-  const scopeRows = proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT * FROM ticket_scope WHERE ticket_id IN (${idList})`, proceedingIds);
-  const proposalRows = proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT ticket_id, proposal_key, item FROM ticket_proposals WHERE ticket_id IN (${idList})`, proceedingIds);
-  const captures = proceedingIds.length === 0 ? [] : rows12(dbPath, `SELECT origin_ticket_id, created FROM seeds WHERE origin_ticket_id IN (${idList})`, proceedingIds);
-  const answerRows = proceedingIds.length === 0 || !ticketAnswersHeld(dbPath) ? [] : rows12(dbPath, `SELECT ticket_id, file_path, saved_at FROM ticket_answers WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
-  const sourceRows = proceedingIds.length === 0 || !ticketSourcesHeld(dbPath) ? [] : rows12(dbPath, `SELECT ticket_id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
+  const blocks2 = (proceedingIds.length === 0 ? [] : rows(dbPath, `SELECT * FROM ticket_blocks WHERE blocker_id IN (${idList}) OR blocked_id IN (${idList})`, [...proceedingIds, ...proceedingIds])).filter((b3) => !deletedIds.has(b3.blocker_id) && !deletedIds.has(b3.blocked_id));
+  const conflicts = (proceedingIds.length === 0 ? [] : rows(dbPath, `SELECT * FROM ticket_conflicts WHERE a_id IN (${idList}) OR b_id IN (${idList})`, [...proceedingIds, ...proceedingIds])).filter((c3) => !deletedIds.has(c3.a_id) && !deletedIds.has(c3.b_id));
+  const steps = proceedingIds.length === 0 ? [] : rows(dbPath, `SELECT * FROM ticket_steps WHERE ticket_id IN (${idList})`, proceedingIds);
+  const scopeRows = proceedingIds.length === 0 ? [] : rows(dbPath, `SELECT * FROM ticket_scope WHERE ticket_id IN (${idList})`, proceedingIds);
+  const proposalRows = proceedingIds.length === 0 ? [] : rows(dbPath, `SELECT ticket_id, proposal_key, item FROM ticket_proposals WHERE ticket_id IN (${idList})`, proceedingIds);
+  const captures = proceedingIds.length === 0 ? [] : rows(dbPath, `SELECT origin_ticket_id, created FROM seeds WHERE origin_ticket_id IN (${idList})`, proceedingIds);
+  const answerRows = proceedingIds.length === 0 || !ticketAnswersHeld(dbPath) ? [] : rows(dbPath, `SELECT ticket_id, file_path, saved_at FROM ticket_answers WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
+  const sourceRows = proceedingIds.length === 0 || !ticketSourcesHeld(dbPath) ? [] : rows(dbPath, `SELECT ticket_id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
   const blockersOf = /* @__PURE__ */ new Map();
   for (const b3 of blocks2) blockersOf.set(b3.blocked_id, [...blockersOf.get(b3.blocked_id) ?? [], b3.blocker_id]);
   const conflictsOf = /* @__PURE__ */ new Map();
@@ -91932,9 +91848,9 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = today()) {
   const answersByTicket = groupBy2(answerRows, (a3) => a3.ticket_id);
   const sourcesByTicket = groupBy2(sourceRows, (s3) => s3.ticket_id);
   const activeById = new Map(
-    rows12(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r3) => [Number(r3.key.slice("job_active:".length)), r3.value])
+    rows(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r3) => [Number(r3.key.slice("job_active:".length)), r3.value])
   );
-  const retiredOn = new Map(rows12(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.retired_on]));
+  const retiredOn = new Map(rows(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.retired_on]));
   const edge = (id) => {
     const other = ticketById.get(id);
     return { id, status: other?.status ?? null, rejected: other !== void 0 && other.status === "queued" && other.rejected_at !== null };
@@ -92392,7 +92308,7 @@ function readGate(tickets, revision, filed, kind, jobs2) {
 // src/submission/forms/board-proposals.ts
 function proposalsFor(ctx, board) {
   if (ctx.filing.retired_on || ctx.inventory === null) return { proposals: [], lapsed_keys: [], shelved: /* @__PURE__ */ new Set(), current: /* @__PURE__ */ new Set() };
-  const titles = new Map(rows12(ctx.dbPath, "SELECT id, title FROM filings WHERE proceeding_id = ?", [ctx.proceeding.id]).map((f3) => [f3.id, f3.title]));
+  const titles = new Map(rows(ctx.dbPath, "SELECT id, title FROM filings WHERE proceeding_id = ?", [ctx.proceeding.id]).map((f3) => [f3.id, f3.title]));
   const holders = /* @__PURE__ */ new Map();
   for (const [key, h3] of board.holders) {
     const ticketedOn = h3.filing_id === null || h3.filing_id === ctx.filing.id ? null : titles.get(h3.filing_id) ?? null;
@@ -92400,7 +92316,7 @@ function proposalsFor(ctx, board) {
   }
   const deletedIds = new Set(board.deleted.map((d3) => d3.id));
   const rejections = new Map(
-    rows12(ctx.dbPath, "SELECT proposal_key, ticket_id, marker, item FROM proposal_rejections").filter((r3) => r3.ticket_id === null || !deletedIds.has(r3.ticket_id)).map((r3) => [r3.proposal_key, { ticket_id: r3.ticket_id, marker: r3.marker, item: r3.item }])
+    rows(ctx.dbPath, "SELECT proposal_key, ticket_id, marker, item FROM proposal_rejections").filter((r3) => r3.ticket_id === null || !deletedIds.has(r3.ticket_id)).map((r3) => [r3.proposal_key, { ticket_id: r3.ticket_id, marker: r3.marker, item: r3.item }])
   );
   const asDirect = new Map([...rejections].map(([key, r3]) => [key, { ...r3, ticket_id: null }]));
   const every = deriveProposals(ctx.inventory, holders, asDirect).proposals;
@@ -92409,14 +92325,14 @@ function proposalsFor(ctx, board) {
   const derived = deriveProposals(ctx.inventory, holders, rejections);
   if (!ctx.inventory.some((e3) => e3.generating !== false && e3.provision !== void 0)) return { ...derived, shelved, current };
   const kinds = [...LEGISLATION_KINDS];
-  const pinpoints = rows12(
+  const pinpoints = rows(
     ctx.dbPath,
     `SELECT sl.authority_id, sl.pinpoint FROM statements_of_law sl JOIN authorities a ON a.id = sl.authority_id
       WHERE sl.proceeding_id = ? AND a.kind IN (${kinds.map(() => "?").join(", ")}) AND a.killed_on IS NULL AND sl.pinpoint IS NOT NULL
       ORDER BY sl.id`,
     [ctx.proceeding.id, ...kinds]
   );
-  const contentions = rows12(
+  const contentions = rows(
     ctx.dbPath,
     `SELECT s.contention FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
       WHERE fs.filing_id = ? AND s.killed_on IS NULL ORDER BY fs.document, fs.ordinal`,
@@ -92481,7 +92397,7 @@ function unmetAuthorityConfirmedCriterion(filing) {
   };
 }
 function unmetPositionConflictCriterion(dbPath, filing) {
-  const open = rows12(
+  const open = rows(
     dbPath,
     `SELECT id FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip') AND rejected_at IS NULL${liveTicketClause(dbPath)} ORDER BY id`,
     [filing.id, POSITION_CONFLICT_TITLE]
@@ -92675,13 +92591,10 @@ var PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back
 function refused(message, code) {
   return new DataServerError(`${TOOL6}: ${message}`, code);
 }
-function rows13(dbPath, sql, params) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 var RECORD_ACT = { unset: "the Sent write has no recorder", act: "records a Writing as sent", why: "" };
 function signerSnapshot(dbPath, filing, profile) {
   if (filing.signer_party_id !== null) {
-    const [party] = rows13(dbPath, "SELECT id, name, role FROM parties WHERE id = ?", [filing.signer_party_id]);
+    const [party] = rows(dbPath, "SELECT id, name, role FROM parties WHERE id = ?", [filing.signer_party_id]);
     if (party === void 0) throw refused(`"${filing.title}": its signing party is not in the matter's records`, "invalid_signer");
     return { party_id: party.id, name: party.name, role: party.role };
   }
@@ -92709,10 +92622,10 @@ function unmetStep(c3, rev) {
 }
 var liveJobSql = (dbPath) => `SELECT id FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${liveTicketClause(dbPath)} ORDER BY id`;
 function planPreSendGate(dbPath, filing, held, rev) {
-  const live = rows13(dbPath, liveJobSql(dbPath), [filing.id, PRE_SEND_TITLE]);
+  const live = rows(dbPath, liveJobSql(dbPath), [filing.id, PRE_SEND_TITLE]);
   if (live.length === 0) {
     if (held.length === 0) return { live: null, job: null, statements: [] };
-    const [anchor] = rows13(
+    const [anchor] = rows(
       dbPath,
       "SELECT billing_anchor FROM tickets WHERE filing_id = ? AND billing_anchor IS NOT NULL ORDER BY (title = 'Deliver') DESC, id DESC LIMIT 1",
       [filing.id]
@@ -92736,7 +92649,7 @@ function planPreSendGate(dbPath, filing, held, rev) {
     return { live: null, job, statements: statements2 };
   }
   const ticketId = live[0].id;
-  const steps = rows13(dbPath, "SELECT ordinal, text, done_at FROM ticket_steps WHERE ticket_id = ? ORDER BY ordinal", [ticketId]);
+  const steps = rows(dbPath, "SELECT ordinal, text, done_at FROM ticket_steps WHERE ticket_id = ? ORDER BY ordinal", [ticketId]);
   const byId2 = new Map(held.map((c3) => [c3.id, c3]));
   const statements = [];
   const stepped = /* @__PURE__ */ new Set();
@@ -92761,7 +92674,7 @@ function gateChanged(filing) {
 }
 function storedParagraphs(dbPath, filing, stored) {
   const prose = fetchProse(dbPath, filing.id);
-  const clauses = () => rows13(
+  const clauses = () => rows(
     dbPath,
     "SELECT COALESCE(fc.wording_override, c.wording) AS wording FROM filing_clauses fc JOIN clauses c ON c.id = fc.clause_id WHERE fc.filing_id = ? ORDER BY fc.ordinal",
     [filing.id]
@@ -92805,7 +92718,7 @@ function checkArgs(args) {
 }
 async function submissionDataRecordSent(args, env = process.env) {
   checkArgs(args);
-  const [filing] = rows13(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]);
+  const [filing] = rows(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]);
   if (filing === void 0) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
   if (isJobOnlyBoard(filing)) throw refused(`Job Board ${filing.id} has no Writing, so there is nothing to record as sent`, "job_board_only");
   if (filing.retired_on) throw refused(`"${filing.title}" was retired on ${filing.retired_on}`, "writing_retired");
@@ -92836,7 +92749,7 @@ async function submissionDataRecordSent(args, env = process.env) {
   const gate = planPreSendGate(args.db_path, filing, held, revision);
   if (held.length > 0 && args.send_anyway === void 0) {
     if (gate.statements.length > 0 && !(await submissionDataWriteAll(args.db_path, gate.statements, env)).ok) throw gateChanged(filing);
-    const jobId = gate.live ?? rows13(args.db_path, liveJobSql(args.db_path), [filing.id, PRE_SEND_TITLE])[0].id;
+    const jobId = gate.live ?? rows(args.db_path, liveJobSql(args.db_path), [filing.id, PRE_SEND_TITLE])[0].id;
     throw refused(
       `sending is held: ${held.map((c3) => `${c3.id} (${c3.items.join("; ")})`).join(", ")} unmet now. Pre-send gate job ${jobId} names each; meet them and render again, or record it as sent with send_anyway carrying the practitioner's words`,
       "held"
@@ -92884,7 +92797,7 @@ async function submissionDataRecordSent(args, env = process.env) {
       expect_changes: 1
     });
   }
-  const deliverId = rows13(args.db_path, `${liveJobSql(args.db_path).replace("ORDER BY", "AND rejected_at IS NULL ORDER BY")}`, [filing.id, DELIVER_TITLE])[0]?.id ?? null;
+  const deliverId = rows(args.db_path, `${liveJobSql(args.db_path).replace("ORDER BY", "AND rejected_at IS NULL ORDER BY")}`, [filing.id, DELIVER_TITLE])[0]?.id ?? null;
   if (deliverId !== null) {
     const live = "status IN ('queued', 'wip') AND rejected_at IS NULL";
     statements.push(
@@ -92900,9 +92813,9 @@ async function submissionDataRecordSent(args, env = process.env) {
     if (written.failed <= recordedAt) throw refused(`"${filing.title}" was sent or retired while it was being recorded; nothing was written`, "already_sent");
     throw gateChanged(filing);
   }
-  const gateJob = gate.job === null ? null : gate.live ?? rows13(args.db_path, "SELECT id FROM tickets WHERE filing_id = ? AND title = ? ORDER BY id DESC LIMIT 1", [filing.id, PRE_SEND_TITLE])[0].id;
+  const gateJob = gate.job === null ? null : gate.live ?? rows(args.db_path, "SELECT id FROM tickets WHERE filing_id = ? AND title = ? ORDER BY id DESC LIMIT 1", [filing.id, PRE_SEND_TITLE])[0].id;
   const unused = args.send_anyway !== void 0 && waived.length === 0 ? " Nothing held sending, so the send_anyway words were not recorded." : "";
-  const [after] = rows13(args.db_path, "SELECT sent_copy_id FROM filings WHERE id = ?", [filing.id]);
+  const [after] = rows(args.db_path, "SELECT sent_copy_id FROM filings WHERE id = ?", [filing.id]);
   return {
     filing_id: filing.id,
     sent_on: args.sent_on,
@@ -93308,21 +93221,21 @@ function isDir2(path) {
   }
 }
 function writingFolders(dbPath, draft = draftDirOf(dbPath)) {
-  const rows30 = folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3));
+  const rows2 = folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3));
   const taken = /* @__PURE__ */ new Set([RECORDS_FOLDER.toLowerCase()]);
   const result = /* @__PURE__ */ new Map();
   const take = (row2, folder) => {
     result.set(row2.id, folder);
     taken.add(folder.name.toLowerCase());
   };
-  for (const row2 of rows30) {
+  for (const row2 of rows2) {
     const manifest = readManifest(dbPath, row2.id);
     if (manifest !== null && isDir2(join29(draft, manifest.folder)) && !taken.has(manifest.folder.toLowerCase())) {
       take(row2, { name: manifest.folder, legacy: matchOf(manifest.folder, row2) === "legacy" });
     }
   }
   const dirs = readdirSync13(draft, { withFileTypes: true }).filter((e3) => e3.isDirectory()).map((e3) => e3.name);
-  for (const row2 of rows30.filter((r3) => !result.has(r3.id))) {
+  for (const row2 of rows2.filter((r3) => !result.has(r3.id))) {
     const candidates = dirs.filter((d3) => !taken.has(d3.toLowerCase()) && matchOf(d3, row2) !== null);
     if (candidates.length === 1) {
       take(row2, { name: candidates[0], legacy: matchOf(candidates[0], row2) === "legacy" });
@@ -93437,7 +93350,7 @@ function moveCaseDataMockups(dbPath) {
   const records = recordsDir(dbPath);
   mkdirSync12(records, { recursive: true });
   const older = join29(records, OLDER_MOCKUPS);
-  const rows30 = new Map(folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3)).map((r3) => [r3.id, r3]));
+  const rows2 = new Map(folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3)).map((r3) => [r3.id, r3]));
   const moves = [];
   const byFiling = /* @__PURE__ */ new Map();
   for (const entry of readdirSync13(root, { withFileTypes: true })) {
@@ -93450,7 +93363,7 @@ function moveCaseDataMockups(dbPath) {
     }
     const manifest = readLegacyManifest(path);
     const id = manifest?.stamp.filing_id ?? Number(/^Filing (\d+)$/.exec(entry.name)?.[1] ?? NaN);
-    if (!rows30.has(id)) {
+    if (!rows2.has(id)) {
       moves.push({ from: path, to: moveInto(path, older, entry.name) });
       continue;
     }
@@ -93458,7 +93371,7 @@ function moveCaseDataMockups(dbPath) {
   }
   const folders = writingFolders(dbPath, draft);
   for (const [id, found] of byFiling) {
-    const row2 = rows30.get(id);
+    const row2 = rows2.get(id);
     const folder = settled(draft, row2.title, folders.get(id));
     const dir = join29(draft, folder);
     mkdirSync12(dir, { recursive: true });
@@ -94109,15 +94022,6 @@ var view_folder_css_default = '.board{gap:0}\n.tabs{display:flex;align-items:fle
 var view_head_html_default = '<!doctype html>\n<html lang="en" data-view-page>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">';
 
 // src/submission/forms/arguments-page.ts
-function rows14(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-function tableHeld(dbPath, table) {
-  return rows14(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])[0].n > 0;
-}
-function columnHeld2(dbPath, table, column) {
-  return rows14(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
-}
 function buildArgumentsData(dbPath, filing) {
   const filings = Array.isArray(filing) ? filing : [filing];
   const out = { submissions: [], counter_arguments: [] };
@@ -94130,7 +94034,7 @@ function buildArgumentsData(dbPath, filing) {
 }
 function argumentsFor(dbPath, proceedingId, ids, merged) {
   const inIds = `(${ids.map(() => "?").join(", ")})`;
-  const submissions = rows14(
+  const submissions = rows(
     dbPath,
     `SELECT s.id, s.contention FROM submissions s
      LEFT JOIN filing_submissions fs ON fs.submission_id = s.id AND fs.filing_id IN ${inIds}
@@ -94140,7 +94044,7 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
               MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
     [...ids, proceedingId]
   );
-  const deployments = rows14(
+  const deployments = rows(
     dbPath,
     `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
      FROM filing_submissions fs JOIN filings f ON f.id = fs.filing_id
@@ -94148,22 +94052,22 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
      ORDER BY f.id`,
     [proceedingId]
   );
-  const facts = rows14(
+  const facts = rows(
     dbPath,
     `SELECT sf.submission_id, f.postulate FROM submission_facts sf JOIN facts f ON f.id = sf.fact_id
      WHERE f.proceeding_id = ? ORDER BY f.id`,
     [proceedingId]
   );
-  const killedOn = columnHeld2(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
-  const law = rows14(
+  const killedOn = hasColumn(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
+  const law = rows(
     dbPath,
     `SELECT sl.submission_id, la.proposition, ${killedOn}
      FROM submission_law sl JOIN law_assertions la ON la.id = sl.law_assertion_id
      WHERE la.proceeding_id = ? ORDER BY la.id`,
     [proceedingId]
   );
-  const raisedLinks = tableHeld(dbPath, "submission_rebuts_opposing_points") ? rows14(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points") : [];
-  const anticipatedLinks = tableHeld(dbPath, "submission_rebuts_anticipated_points") ? rows14(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points") : [];
+  const raisedLinks = hasTable(dbPath, "submission_rebuts_opposing_points") ? rows(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points") : [];
+  const anticipatedLinks = hasTable(dbPath, "submission_rebuts_anticipated_points") ? rows(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points") : [];
   const links = [
     ...raisedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `raised:${l3.point_id}` })),
     ...anticipatedLinks.map((l3) => ({ submission_id: l3.submission_id, key: `anticipated:${l3.point_id}` }))
@@ -94177,7 +94081,7 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
       source: [p3.component, p3.pinpoint].filter((part) => part !== null && part !== "").join(", "),
       linked: []
     })),
-    ...rows14(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
+    ...rows(dbPath, "SELECT id, point FROM anticipated_points WHERE proceeding_id = ? ORDER BY id", [proceedingId]).map(
       (p3) => ({ key: `anticipated:${p3.id}`, kind: "anticipated", text: p3.point, source: null, linked: [] })
     )
   ];
@@ -94342,11 +94246,8 @@ var material_facts_html_default = '@@include(view-head.html)@@\n<title>Material 
 var procedural_history_html_default = '@@include(view-head.html)@@\n<title>Procedural History</title>\n<style>\n@@include(board.css)@@\n\n@@include(facts.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Procedural History</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(facts.js)@@\n</script>\n</body>\n</html>';
 
 // src/submission/forms/facts-pages.ts
-function rows15(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function factsInFilingOrder(dbPath, filingId) {
-  const found = rows15(
+  const found = rows(
     dbPath,
     `SELECT f.*, cr.label AS court_record_label
      FROM (SELECT fact_id, 0 AS grp, ordinal AS k1, 0 AS k2 FROM filing_facts WHERE filing_id = ? AND document = 'form'
@@ -94370,7 +94271,7 @@ function factsInFilingOrder(dbPath, filingId) {
 }
 function statementsOf(dbPath, factIds) {
   if (factIds.length === 0) return [];
-  return rows15(
+  return rows(
     dbPath,
     `SELECT sof.*, w.name AS witness_name, ins.label AS instrument_label, ex.label AS exhibit_label
      FROM statements_of_fact sof
@@ -94959,25 +94860,14 @@ function rawResearchClass(row2) {
   if (row2.proposition_killed_on !== null || row2.authority_killed_on !== null) return "not_relevant";
   return row2.in_use ? "in_use" : "undecided";
 }
-function rows16(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
-var columnsHeld = /* @__PURE__ */ new Set();
-function columnHeld3(dbPath, table, column) {
-  const key = `${dbPath}\0${table}.${column}`;
-  if (columnsHeld.has(key)) return true;
-  const held = rows16(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = '${column}'`)[0].n > 0;
-  if (held) columnsHeld.add(key);
-  return held;
-}
 function verifiedOnColumn(dbPath) {
-  return columnHeld3(dbPath, "statements_of_law", "verified_on") ? "sl.verified_on" : "NULL AS verified_on";
+  return hasColumn(dbPath, "statements_of_law", "verified_on") ? "sl.verified_on" : "NULL AS verified_on";
 }
 function propositionKilledOnColumn(dbPath) {
-  return columnHeld3(dbPath, "law_assertions", "killed_on") ? "killed_on" : "NULL AS killed_on";
+  return hasColumn(dbPath, "law_assertions", "killed_on") ? "killed_on" : "NULL AS killed_on";
 }
 function fetchStatements(dbPath, proceedingId) {
-  return rows16(
+  return rows(
     dbPath,
     `SELECT sl.id AS statement_id, sl.law_assertion_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification,
             ${settledOnColumn(dbPath)}, ${excerptSpeakerColumn(dbPath)}, ${verifiedOnColumn(dbPath)},
@@ -95018,13 +94908,13 @@ function buildRawResearchData(dbPath, filing) {
 function rawResearchFor(dbPath, proceedingId, ids, merged) {
   const inIds = `(${ids.map(() => "?").join(", ")})`;
   const here = merged ? "this board's Writings" : "this Writing";
-  const propositions = rows16(
+  const propositions = rows(
     dbPath,
     `SELECT id, proposition, dead_end, ${propositionKilledOnColumn(dbPath)} FROM law_assertions WHERE proceeding_id = ? ORDER BY id`,
     [proceedingId]
   );
   const statements = fetchStatements(dbPath, proceedingId);
-  const links = rows16(
+  const links = rows(
     dbPath,
     `SELECT sbl.law_assertion_id, s.id AS submission_id, s.contention, s.killed_on
      FROM submission_law sbl JOIN submissions s ON s.id = sbl.submission_id
@@ -95032,7 +94922,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      ORDER BY s.ordinal, s.id`,
     [proceedingId]
   );
-  const onFiling = rows16(
+  const onFiling = rows(
     dbPath,
     `SELECT s.id, s.contention
      FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
@@ -95040,7 +94930,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      ORDER BY CASE fs.document WHEN 'form' THEN 0 ELSE 1 END, fs.ordinal, fs.id`,
     ids
   );
-  const elsewhere = rows16(
+  const elsewhere = rows(
     dbPath,
     `SELECT s.id, s.contention FROM submissions s
      WHERE s.proceeding_id = ? AND s.killed_on IS NULL
@@ -95048,7 +94938,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      ORDER BY s.ordinal, s.id`,
     [proceedingId, ...ids]
   );
-  const required2 = rows16(
+  const required2 = rows(
     dbPath,
     `SELECT r.law_assertion_id, r.excerpt_id,
             EXISTS (SELECT 1 FROM filing_orders fo WHERE fo.order_sought_id = r.order_sought_id AND fo.filing_id IN ${inIds}) AS on_filing
@@ -95056,7 +94946,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
      WHERE o.proceeding_id = ? AND (r.law_assertion_id IS NOT NULL OR r.excerpt_id IS NOT NULL)`,
     [...ids, proceedingId]
   );
-  const citedHere = new Set(rows16(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r3) => r3.statement_id));
+  const citedHere = new Set(rows(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r3) => r3.statement_id));
   const onFilingIds = new Set(onFiling.map((s3) => s3.id));
   const present3 = (list) => list.filter((id) => id !== null);
   const deployed = /* @__PURE__ */ new Set([
@@ -95441,18 +95331,18 @@ async function submissionDataRecordViewed(args, env = process.env) {
     entry.keys = [t3.key, ...entry.keys.filter((k3) => k3 !== t3.key)];
     lists.set(boardKey(t3.board), entry);
   }
-  const rows30 = [...lists.values()].map(({ board, keys }) => {
+  const rows2 = [...lists.values()].map(({ board, keys }) => {
     const current = new Set(targets.filter((t3) => boardKey(t3.board) === boardKey(board)).map((t3) => t3.key));
     return { key: viewedKey(board), value: JSON.stringify(keys.filter((k3) => current.has(k3))) };
   });
   const written = await submissionDataWriteAll(
     args.db_path,
-    rows30.map((r3) => ({ sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [r3.key, r3.value], expect_changes: 1 })),
+    rows2.map((r3) => ({ sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [r3.key, r3.value], expect_changes: 1 })),
     env
   );
   if (!written.ok) throw new DataServerError(`${TOOL12}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
   return {
-    keys: rows30.map((r3) => r3.key),
+    keys: rows2.map((r3) => r3.key),
     note: "Recorded. The Job Board shows the new order the next time its page is written; this call does not rewrite it.",
     ...written.warning ? { warning: written.warning } : {}
   };
@@ -97264,10 +97154,10 @@ function attachedLines(attached) {
     })
   ];
 }
-function courtFileLines(rows30) {
+function courtFileLines(rows2) {
   return [
-    `## Court File (${rows30.length})`,
-    ...rows30.map((a3) => {
+    `## Court File (${rows2.length})`,
+    ...rows2.map((a3) => {
       const parts = [`- ${a3.label}`, a3.court_file === null ? `court file: none found${a3.note ? ` (${a3.note})` : ""}` : `court file: ${a3.court_file.file_name}`];
       if (a3.mismatch !== null) parts.push(`mismatch: ${a3.mismatch}`);
       return parts.join(" \xB7 ");
@@ -97418,27 +97308,27 @@ function row(cells) {
 function buildLegend(markdown, documentType) {
   const sets = [...scannedText(markdown).matchAll(RUN_RE)].map((m3) => splitGlyphs(m3[0]));
   const present3 = new Set(sets.flat());
-  const rows30 = [];
+  const rows2 = [];
   const notes = [];
   for (const symbol of SYMBOLS) {
     if (!present3.has(symbol.glyph)) continue;
     const work = symbol.work && symbol.actor ? `${symbol.work} (${symbol.actor})` : symbol.work;
-    rows30.push(row([symbol.glyph, symbol.name, symbol.meaning, work]));
+    rows2.push(row([symbol.glyph, symbol.name, symbol.meaning, work]));
     if (symbol.modelNote) notes.push(`${symbol.glyph}: ${symbol.modelNote}`);
     for (const placement of PLACEMENTS) {
       if (placement.glyph !== symbol.glyph || !(placement.documents?.includes(documentType) ?? true)) continue;
-      rows30.push(row([placement.glyph, placement.line ?? "", placement.text, ""]));
+      rows2.push(row([placement.glyph, placement.line ?? "", placement.text, ""]));
       if (placement.modelNote) notes.push(`${placement.glyph} (${placement.line ?? documentType}): ${placement.modelNote}`);
     }
   }
   for (const combination of COMBINATIONS) {
     const glyphs = splitGlyphs(combination.key);
     if (!sets.some((set) => glyphs.every((g3) => set.includes(g3)))) continue;
-    rows30.push(row([combination.key, "", combination.meaning, combination.work]));
+    rows2.push(row([combination.key, "", combination.meaning, combination.work]));
     if (combination.modelNote) notes.push(`${combination.key}: ${combination.modelNote}`);
   }
-  if (rows30.length === 0) return { text: "", notes: [] };
-  return { text: [LEGEND_HEADING, "", row(["Symbol", "Name", "Meaning", "Work"]), "|---|---|---|---|", ...rows30].join("\n") + "\n", notes };
+  if (rows2.length === 0) return { text: "", notes: [] };
+  return { text: [LEGEND_HEADING, "", row(["Symbol", "Name", "Meaning", "Work"]), "|---|---|---|---|", ...rows2].join("\n") + "\n", notes };
 }
 function withLegend(markdown, documentType) {
   const legend = buildLegend(markdown, documentType);
@@ -97672,20 +97562,20 @@ function textHits(filedFace) {
   }
   return hits;
 }
-function tracked(hit, rows30) {
+function tracked(hit, rows2) {
   if (hit.citation !== null) {
     const wanted = normalCitation(hit.citation).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const within = new RegExp(`(^|[^a-z0-9])${wanted}([^a-z0-9]|$)`);
-    if (rows30.some((r3) => r3.citation !== null && within.test(normalCitation(r3.citation)))) return true;
+    if (rows2.some((r3) => r3.citation !== null && within.test(normalCitation(r3.citation)))) return true;
   }
   if (hit.name !== null) {
     const wanted = normalName(hit.name);
-    if (rows30.some((r3) => normalName(r3.style_of_cause_or_title) === wanted)) return true;
+    if (rows2.some((r3) => normalName(r3.style_of_cause_or_title) === wanted)) return true;
   }
   return false;
 }
 function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
-  const rows30 = submissionDataQuery(
+  const rows2 = submissionDataQuery(
     dbPath,
     "SELECT style_of_cause_or_title, citation FROM authorities WHERE proceeding_id = ? AND killed_on IS NULL",
     [proceedingId]
@@ -97698,7 +97588,7 @@ function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
       const repeat = keys.some((k3) => seen.has(k3));
       keys.forEach((k3) => seen.add(k3));
       if (repeat) continue;
-      if (tracked(hit, rows30)) continue;
+      if (tracked(hit, rows2)) continue;
       const item = `cited but not tracked: ${hit.text}`;
       inventory.push({ generating: false, marker: "\u{1F4C7}", table: UNTRACKED_CITATION_TABLE, id: lines2.length + 1, item, doc: doc.documentType });
       lines2.push(mockupMessage("\u{1F4C7}", `Cited but not tracked: ${hit.text}`));
@@ -97708,9 +97598,6 @@ function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
 }
 
 // src/submission/forms/filing-facts.ts
-function rows17(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 var FACTS_PART = /* @__PURE__ */ new Map([
   ["notice_of_application", "part2"],
   ["application_response", "part4"],
@@ -97723,7 +97610,7 @@ function factsPart(kind) {
   return part;
 }
 function fetchFacts(dbPath, filingId, part) {
-  return rows17(
+  return rows(
     dbPath,
     `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
      FROM filing_facts ff
@@ -97737,7 +97624,7 @@ function fetchFacts(dbPath, filingId, part) {
 function fetchStatementsOfFact(dbPath, factIds) {
   if (factIds.length === 0) return [];
   const placeholders = factIds.map(() => "?").join(",");
-  return rows17(
+  return rows(
     dbPath,
     `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
             sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
@@ -97769,18 +97656,15 @@ function filingFrontmatter(proceeding, ctx, documentType) {
 }
 
 // src/submission/forms/render-notice-of-application.ts
-function rows18(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchHearingDetails(dbPath, filingId) {
-  const found = rows18(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  const found = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
   return found[0];
 }
 var ASSOCIATE_JUDGE_UNDETERMINED_LINE = `Associate judge jurisdiction: not yet determined ${gapMarker("unchosen")}`;
 function fetchWitnessBackedFlags(dbPath, factIds) {
   if (factIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = factIds.map(() => "?").join(",");
-  const found = rows18(
+  const found = rows(
     dbPath,
     `SELECT f.id AS fact_id,
             EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
@@ -98023,11 +97907,8 @@ function renderNoticeOfApplication(ctx) {
 }
 
 // src/submission/forms/render-requisition.ts
-function rows19(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchAlternatives(dbPath, chosenId) {
-  return rows19(
+  return rows(
     dbPath,
     `SELECT id, wording, template_key, template_values, crossed_out_on
      FROM order_sought WHERE alternative_to = ?`,
@@ -98036,7 +97917,7 @@ function fetchAlternatives(dbPath, chosenId) {
 }
 function fetchPlacedAlternativeIds(dbPath, filing) {
   if (filing.kind !== "requisition_default_judgment") return [];
-  return rows19(
+  return rows(
     dbPath,
     `SELECT o.id FROM order_sought o
      JOIN filing_orders fo ON fo.order_sought_id = o.alternative_to
@@ -98481,8 +98362,8 @@ function refuseJobOnlyBoard(filing) {
   }
 }
 function readDbMetaValue(dbPath, key) {
-  const rows30 = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
-  return rows30.length > 0 ? rows30[0].value : null;
+  const rows2 = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
+  return rows2.length > 0 ? rows2[0].value : null;
 }
 function readSchemaVersion(dbPath) {
   const value = readDbMetaValue(dbPath, "schema_version");
@@ -98603,11 +98484,8 @@ function draftDirOfCaller(dbPath, draftDir, param2 = "drafting_forms__render.dra
 import { readFileSync as readFileSync29 } from "node:fs";
 
 // src/submission/forms/render-application-response.ts
-function rows20(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchHearingDetails2(dbPath, filingId) {
-  const found = rows20(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  const found = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
   return found[0];
 }
 function hearingDateSentence(hearing) {
@@ -98624,7 +98502,7 @@ function hearingDateSentence(hearing) {
   }
 }
 function fetchFilingPositions(dbPath, filingId) {
-  return rows20(
+  return rows(
     dbPath,
     `SELECT oo.id AS opposing_order_id, oo.paragraph_number, oo.wording, oo.document_id,
             fp.position, fp.proposed_terms
@@ -98641,7 +98519,7 @@ function resolveRespondedToDocument(dbPath, proceedingId, positions) {
   if (positionedIds.size === 1) {
     documentId = [...positionedIds][0];
   } else if (positionedIds.size === 0) {
-    const candidates = rows20(
+    const candidates = rows(
       dbPath,
       `SELECT DISTINCT document_id FROM opposing_orders WHERE proceeding_id = ?`,
       [proceedingId]
@@ -98649,11 +98527,11 @@ function resolveRespondedToDocument(dbPath, proceedingId, positions) {
     if (candidates.length === 1) documentId = candidates[0].document_id;
   }
   if (documentId === void 0) return void 0;
-  const found = rows20(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
+  const found = rows(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
   return found[0];
 }
 function fetchUnpositionedOrders(dbPath, filingId, documentId) {
-  return rows20(
+  return rows(
     dbPath,
     `SELECT oo.id, oo.paragraph_number, oo.wording
      FROM opposing_orders oo
@@ -98664,7 +98542,7 @@ function fetchUnpositionedOrders(dbPath, filingId, documentId) {
   );
 }
 function fetchPartSixProvenance(dbPath, filingId) {
-  const found = rows20(
+  const found = rows(
     dbPath,
     `SELECT document_id, provenance FROM filing_documents WHERE filing_id = ? AND role != 'witness_statement'`,
     [filingId]
@@ -98679,7 +98557,7 @@ function provenanceLabel(p3) {
 function witnessBackedFlags(dbPath, factIds) {
   if (factIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = factIds.map(() => "?").join(",");
-  const found = rows20(
+  const found = rows(
     dbPath,
     `SELECT f.id AS fact_id, EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
      FROM facts f WHERE f.id IN (${placeholders})`,
@@ -98939,9 +98817,6 @@ function renderApplicationResponse(ctx) {
 }
 
 // src/submission/forms/render-bcca-stay-response.ts
-function rows21(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, inventory, review) {
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const stmt of fetchStatementsOfFact(dbPath, facts.map((f3) => f3.id))) {
@@ -99030,7 +98905,7 @@ function renderFactParagraphsWithRhetoric(ctx, facts, rhetoric, startPara, copyM
 function fetchAffidavitDetails(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = documentIds.map(() => "?").join(",");
-  const found = rows21(
+  const found = rows(
     dbPath,
     `SELECT d.id AS document_id, w.name AS deponent_name, d.affidavit_number
      FROM documents d
@@ -99041,7 +98916,7 @@ function fetchAffidavitDetails(dbPath, documentIds) {
   return new Map(found.map((r3) => [r3.document_id, r3]));
 }
 function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
-  return rows21(
+  return rows(
     dbPath,
     `SELECT MIN(a.id) AS id, a.style_of_cause_or_title, a.citation
      FROM filing_submissions fs
@@ -99056,11 +98931,11 @@ function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
   );
 }
 function fetchOpposingAuthoritiesCount(dbPath, proceedingId) {
-  const found = rows21(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
+  const found = rows(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
   return found[0]?.n ?? 0;
 }
 function fetchAttachedExhibits(dbPath, affidavitDocumentId) {
-  return rows21(
+  return rows(
     dbPath,
     `SELECT DISTINCT d.id AS document_id, d.label, d.document_date
      FROM statements_of_fact sof
@@ -99113,12 +98988,12 @@ function buildToc(inv, docs, affidavitDetails, exhibitMap, dbPath, hasAuthoritie
   out.push("");
   out.push("| Item | Page |");
   out.push("| :--- | ---: |");
-  const { rows: rows30 } = buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, (_what, gap2) => {
+  const { rows: rows2 } = buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, (_what, gap2) => {
     const marker = gapMarker("gap");
     recordCriterionGlyphs(inv, marker, ["\u{1F9E9}"], gap2);
     return marker;
   });
-  rows30.forEach((r3) => out.push(`| ${"&nbsp;&nbsp;".repeat(r3.indent)}${r3.text} | TBD |`));
+  rows2.forEach((r3) => out.push(`| ${"&nbsp;&nbsp;".repeat(r3.indent)}${r3.text} | TBD |`));
   out.push("");
   return out;
 }
@@ -99136,7 +99011,7 @@ function renderBccaStayResponse(ctx) {
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
   const client = ctx.parties.find((p3) => p3.is_client === 1);
   const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
-  const hearingDate = rows21(
+  const hearingDate = rows(
     ctx.dbPath,
     "SELECT hearing_date, hearing_time FROM hearing_details WHERE filing_id = ?",
     [ctx.filing.id]
@@ -99395,9 +99270,6 @@ function renderBccaStayResponse(ctx) {
 }
 
 // src/submission/forms/render-bcca-factum.ts
-function rows22(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function pushGap(ctx, lines2, line, field, item) {
   recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "form_fields", id: field, item });
   lines2.push(line);
@@ -99412,10 +99284,10 @@ function longDate(iso2) {
   return `${MONTHS2[Number(m3[2]) - 1]} ${Number(m3[3])}, ${m3[1]}`;
 }
 function fetchChronology(dbPath, filingId) {
-  return rows22(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
+  return rows(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
 }
 function fetchProseParagraphs(dbPath, filingId) {
-  const found = rows22(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
+  const found = rows(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
   return new Map(
     found.map((r3) => [
       r3.slot,
@@ -99426,7 +99298,7 @@ function fetchProseParagraphs(dbPath, filingId) {
 function fetchCitedStatements(dbPath, lawAssertionIds) {
   if (lawAssertionIds.length === 0) return [];
   const placeholders = lawAssertionIds.map(() => "?").join(",");
-  return rows22(
+  return rows(
     dbPath,
     `SELECT sl.law_assertion_id, a.id AS authority_id, a.style_of_cause_or_title AS title, a.citation, a.kind, sl.pinpoint, sl.excerpt
      FROM statements_of_law sl
@@ -99785,9 +99657,6 @@ function renderBccaFactum(ctx) {
 }
 
 // src/submission/forms/render-bcsc-affidavit.ts
-function rows23(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 var EXHIBIT_TOKEN = /\{exhibit:(\d+)\}/g;
 function placedDocumentIds(text5) {
   return [...text5.matchAll(EXHIBIT_TOKEN)].map((m3) => Number(m3[1]));
@@ -99808,7 +99677,7 @@ function withExhibitLetters(text5, letters) {
   return text5.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
 }
 function fetchAffidavits(dbPath, filingId) {
-  return rows23(
+  return rows(
     dbPath,
     `SELECT d.id, d.deponent AS witness_id, w.name AS deponent_name, d.execution, d.signed_at, d.label, d.affidavit_number
      FROM filing_documents fd
@@ -99825,7 +99694,7 @@ function affidavitFileName(a3) {
 function fetchParagraphLinks(dbPath, paragraphIds) {
   if (paragraphIds.length === 0) return [];
   const placeholders = paragraphIds.map(() => "?").join(",");
-  return rows23(
+  return rows(
     dbPath,
     `SELECT psof.statement_paragraph_id, psof.statement_of_fact_id, sof.fact_id, sof.exhibit_id
      FROM paragraph_statements_of_fact psof
@@ -99836,7 +99705,7 @@ function fetchParagraphLinks(dbPath, paragraphIds) {
   );
 }
 function fetchPlacedInProceeding(dbPath, proceedingId) {
-  const texts = rows23(
+  const texts = rows(
     dbPath,
     `SELECT sp.text FROM statement_paragraphs sp
      JOIN documents d ON d.id = sp.document_id
@@ -99862,7 +99731,7 @@ function frontmatterFor3(ctx) {
   return frontmatterHeader(fields);
 }
 function renderAffidavit(ctx, a3) {
-  const paragraphs = rows23(ctx.dbPath, `SELECT id, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
+  const paragraphs = rows(ctx.dbPath, `SELECT id, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
   const links = fetchParagraphLinks(
     ctx.dbPath,
     paragraphs.map((p3) => p3.id)
@@ -99933,9 +99802,6 @@ function renderAffidavit(ctx, a3) {
 }
 
 // src/submission/forms/render-companions.ts
-function rows24(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 var WRITTEN_ARGUMENTS_VENUES = /* @__PURE__ */ new Map([
   ["CAN/BC/Vancouver-International-Arbitration-Centre", { tribunal: "the Arbitral Tribunal", awardCap: true, interestAndCosts: true }],
   ["CAN/BC/BCSC", { tribunal: "the Court", awardCap: false, interestAndCosts: false }]
@@ -99993,7 +99859,7 @@ function renderWrittenArguments(ctx, documentKey) {
   const includedRelief = relief.filter((r3) => r3.crossed_out_on === null);
   const crossedOutRelief = relief.filter((r3) => r3.crossed_out_on !== null);
   const total = includedRelief.reduce((sum, r3) => sum + (r3.amount ?? 0), 0);
-  const servedRows = submissionIds.length === 0 ? [] : rows24(
+  const servedRows = submissionIds.length === 0 ? [] : rows(
     ctx.dbPath,
     `SELECT sb.submission_id, sb.order_sought_id, o.crossed_out_on, o.wording
            FROM order_sought_served_by sb
@@ -100118,7 +99984,7 @@ function renderWrittenArguments(ctx, documentKey) {
   return lines2.join("\n").trimEnd() + "\n";
 }
 function fetchProceedingOrders(dbPath, proceedingId) {
-  const orders = rows24(
+  const orders = rows(
     dbPath,
     `SELECT o.id, o.wording, o.crossed_out_on,
             EXISTS(
@@ -100133,7 +99999,7 @@ function fetchProceedingOrders(dbPath, proceedingId) {
   return orders.map((o3) => ({ ...o3, hasServedBy: o3.has_served_by === 1, requires: edgesByOrder.get(o3.id) ?? [] }));
 }
 function fetchOtherFilingDeployments(dbPath, proceedingId, filingId) {
-  const filings = rows24(
+  const filings = rows(
     dbPath,
     // A Job Board with no Writing deploys nothing.
     `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
@@ -100142,18 +100008,18 @@ function fetchOtherFilingDeployments(dbPath, proceedingId, filingId) {
   const orders = /* @__PURE__ */ new Set();
   const submissions = /* @__PURE__ */ new Set();
   for (const f3 of filings) {
-    for (const r3 of rows24(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f3.id])) {
+    for (const r3 of rows(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f3.id])) {
       orders.add(r3.order_sought_id);
     }
     for (const id of fetchPlacedAlternativeIds(dbPath, f3)) orders.add(id);
-    for (const r3 of rows24(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f3.id])) {
+    for (const r3 of rows(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f3.id])) {
       submissions.add(r3.submission_id);
     }
   }
   return { orders, submissions };
 }
 function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
-  const relied = rows24(
+  const relied = rows(
     dbPath,
     `SELECT sl.law_assertion_id FROM submission_law sl
        JOIN filing_submissions fs ON fs.submission_id = sl.submission_id
@@ -100170,14 +100036,14 @@ function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
   return new Set(relied.map((r3) => r3.law_assertion_id));
 }
 function fetchProceedingSubmissions(dbPath, proceedingId) {
-  return rows24(
+  return rows(
     dbPath,
     `SELECT s.id, s.contention, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()} FROM submissions s WHERE s.proceeding_id = ? AND s.killed_on IS NULL ORDER BY s.ordinal, s.id`,
     [proceedingId]
   );
 }
 function fetchStruckSubmissionIds(dbPath, proceedingId) {
-  const served = rows24(
+  const served = rows(
     dbPath,
     `SELECT sb.submission_id, o.crossed_out_on
      FROM order_sought_served_by sb
@@ -100362,14 +100228,14 @@ function resolveTypeFile(venue, kind, seams = {}) {
     if (err instanceof DataServerError) throw err;
     throw new DataServerError(`${indexPath}: not valid JSON: ${err.message}`, "invalid_index");
   }
-  const rows30 = mergeKinds({ doc, file: indexPath }, null, noVenue).kinds.filter((row2) => row2.aliases.some((alias) => alias.name === kind));
-  if (rows30.length !== 1) {
+  const rows2 = mergeKinds({ doc, file: indexPath }, null, noVenue).kinds.filter((row2) => row2.aliases.some((alias) => alias.name === kind));
+  if (rows2.length !== 1) {
     throw new DataServerError(
-      `${indexPath}: ${rows30.length === 0 ? "no row lists" : `${rows30.length} rows list`} kind "${kind}" as an alias${rows30.length === 0 ? "" : ` (${rows30.map((row2) => row2.file).join(", ")})`}; a stored kind names exactly one type file`,
+      `${indexPath}: ${rows2.length === 0 ? "no row lists" : `${rows2.length} rows list`} kind "${kind}" as an alias${rows2.length === 0 ? "" : ` (${rows2.map((row2) => row2.file).join(", ")})`}; a stored kind names exactly one type file`,
       "kind_unresolved"
     );
   }
-  const file = `${documents}/${rows30[0].file}.md`;
+  const file = `${documents}/${rows2[0].file}.md`;
   const block2 = extractJsonBlock(readShipped(file, seams), file, true);
   validateTypeBlock(block2, file, { noVenue });
   return { file, block: block2 };
@@ -100727,11 +100593,8 @@ function submissionFormsRenderProceedingBoard(dbPath, proceedingId, client = {},
 }
 
 // src/submission/forms/render-form32-filed-face.ts
-function rows25(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function fetchHearingDetails3(dbPath, filingId) {
-  return rows25(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId])[0];
+  return rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId])[0];
 }
 function lawStatementCitationLine2(row2) {
   if (row2.authority_title === null) return row2.pinpoint ? `>> ${row2.pinpoint}` : null;
@@ -100755,7 +100618,7 @@ var ITALIC_SPAN = /(?<!\*)\*[^*\n]+\*(?!\*)/g;
 function authorityNamePattern(dbPath, proceedingId) {
   const names = [
     ...new Set(
-      rows25(dbPath, "SELECT style_of_cause_or_title AS name FROM authorities WHERE proceeding_id = ?", [proceedingId]).map(
+      rows(dbPath, "SELECT style_of_cause_or_title AS name FROM authorities WHERE proceeding_id = ?", [proceedingId]).map(
         (r3) => r3.name.trim()
       )
     )
@@ -100770,7 +100633,7 @@ function italicizeNames(line, names) {
 }
 function fetchAffidavitFields(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
-  const found = rows25(
+  const found = rows(
     dbPath,
     `SELECT d.id, d.instrument, d.affidavit_number, d.execution, w.name AS deponent_name
      FROM documents d
@@ -100997,9 +100860,6 @@ function renderForm32FiledFace(ctx, warnings) {
 }
 
 // src/submission/forms/render-form33-filed-face.ts
-function rows26(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 var NOTICE_DATE_PLACEHOLDER = "[notice date]";
 var HEARING_DATE_PLACEHOLDER = "[agree, or propose other hearing date(s)]";
 var TIME_ESTIMATE_PLACEHOLDER = "[time estimate]";
@@ -101016,7 +100876,7 @@ function lawStatementCitationLine3(row2) {
 function struckSubmissionIds(dbPath, submissionIds) {
   if (submissionIds.length === 0) return /* @__PURE__ */ new Set();
   const placeholders = submissionIds.map(() => "?").join(",");
-  const served = rows26(
+  const served = rows(
     dbPath,
     `SELECT sb.submission_id, o.crossed_out_on
      FROM order_sought_served_by sb
@@ -101419,9 +101279,6 @@ function submissionFormsEmitForm33(dbPath, filingId, caseDataFolder2, seams = {}
 }
 
 // src/submission/forms/emit-affidavit.ts
-function rows27(dbPath, sql, params = []) {
-  return submissionDataQuery(dbPath, sql, params).rows;
-}
 function renderAffidavitFiledFace(ctx, a3) {
   const gaps = renderAffidavit(ctx, a3).split("\n").filter((l3) => l3.includes("\u{1F9E9}")).map((l3) => l3.replace(/<!--.*?-->/g, "").trim());
   if (gaps.length > 0) {
@@ -101434,14 +101291,14 @@ Resolve each through /drafting-data, re-render the mockup, then emit again.`
   if (a3.affidavit_number === null) {
     throw new ValidationError(`${a3.label}: its affidavit number is not recorded. Record it, then make the affidavit again.`);
   }
-  const paragraphs = rows27(ctx.dbPath, `SELECT text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
+  const paragraphs = rows(ctx.dbPath, `SELECT text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
   if (paragraphs.length === 0) {
     throw new ValidationError(`Affidavit ${a3.id} (${a3.label}): no paragraphs are stored, so there is no text to emit.`);
   }
   const letters = exhibitLetters(paragraphs.map((p3) => p3.text));
   const ids = [...letters.keys()];
   const docs = new Map(
-    ids.length === 0 ? [] : rows27(
+    ids.length === 0 ? [] : rows(
       ctx.dbPath,
       `SELECT id, label, file_path FROM documents WHERE id IN (${ids.map(() => "?").join(",")})`,
       ids
@@ -102179,18 +102036,18 @@ function runPreFilingChecks(dbPath, filingId, packageDir) {
     `SELECT p.id, p.file_number, f.kind FROM filings f JOIN proceedings p ON p.id = f.proceeding_id WHERE f.id = ?`,
     [filingId]
   );
-  const rows30 = fetchFilingDocuments(dbPath, filingId);
+  const rows2 = fetchFilingDocuments(dbPath, filingId);
   const filing = { kind: proceeding?.kind, proceeding_id: proceeding?.id ?? -1 };
-  const numbers = exhibitNumbersForFiling(dbPath, filing, rows30.map((r3) => r3.document_id));
+  const numbers = exhibitNumbersForFiling(dbPath, filing, rows2.map((r3) => r3.document_id));
   const proceedingNumbers = filing.kind === "submissions_package" ? numbers : /* @__PURE__ */ new Map();
-  const index = rows30.map((r3) => ({
+  const index = rows2.map((r3) => ({
     exhibit_number: numbers.get(r3.document_id),
     document_id: r3.document_id,
     label: r3.label,
     file_path: r3.file_path,
     already_delivered: r3.provenance === "already_in_court_file"
   }));
-  const dates = rows30.filter((r3) => /^\d{4}-\d{2}-\d{2}$/.test(r3.document_date ?? "")).map((r3) => ({ exhibit_number: numbers.get(r3.document_id), label: r3.label, document_date: r3.document_date }));
+  const dates = rows2.filter((r3) => /^\d{4}-\d{2}-\d{2}$/.test(r3.document_date ?? "")).map((r3) => ({ exhibit_number: numbers.get(r3.document_id), label: r3.label, document_date: r3.document_date }));
   const amounts = queryRows(
     dbPath,
     `SELECT DISTINCT os.id AS order_sought_id, os.wording, os.amount
@@ -102908,14 +102765,14 @@ function readIngestCoverage(caseDataDir, matterRoot, folderGlobs, correspondence
 var text3 = (value) => value === null || value === void 0 ? null : String(value);
 async function readMatterTodos(practiceDb2, matterNo) {
   if (matterNo === void 0) return { note: "No matter number was given, so this matter's to-dos were not read." };
-  let rows30;
+  let rows2;
   try {
-    rows30 = (await open_tasks(practiceDb2, { matt_num: matterNo })).rows;
+    rows2 = (await open_tasks(practiceDb2, { matt_num: matterNo })).rows;
   } catch (err) {
     return { note: `This matter's to-dos could not be read (${matterNo}): ${err.message}` };
   }
   return {
-    rows: rows30.map((row2) => ({
+    rows: rows2.map((row2) => ({
       id: String(row2.id),
       description: text3(row2.description) ?? "",
       bf_date: text3(row2.next_nudge_date),
@@ -103034,17 +102891,17 @@ async function lookUpMatter(root, practiceDb2, client) {
       client
     };
   }
-  let rows30;
+  let rows2;
   try {
-    rows30 = (await matter_lookup(practiceDb2, { matt_num: token })).rows;
+    rows2 = (await matter_lookup(practiceDb2, { matt_num: token })).rows;
   } catch (err) {
     return { lookup: { matt_num: token, found: false, note: `Matter lookup for ${token} failed: ${err.message}` }, client };
   }
-  if (rows30.length !== 1) {
-    const why = rows30.length === 0 ? "found no matter" : `found ${rows30.length} matters`;
+  if (rows2.length !== 1) {
+    const why = rows2.length === 0 ? "found no matter" : `found ${rows2.length} matters`;
     return { lookup: { matt_num: token, found: false, note: `Matter lookup for ${token} ${why}; client identity not filled in.` }, client };
   }
-  const row2 = rows30[0];
+  const row2 = rows2[0];
   const text5 = (v3) => v3 === null || v3 === void 0 || v3 === "" ? void 0 : String(v3);
   const resolved = {
     clientName: client.clientName ?? text5(row2.client_name),
@@ -103616,7 +103473,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
     for (const r3 of recipients) lists.recipient(r3);
   } else {
     const proceedings = source.proceeding_id === void 0 ? fetchAllProceedings(dbPath) : [fetchProceeding(dbPath, source.proceeding_id)];
-    const rows30 = [];
+    const rows2 = [];
     const drifted = /* @__PURE__ */ new Map();
     for (const proceeding of proceedings) {
       const { parties: parties2, drift } = draftingParties(dirname28(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
@@ -103625,9 +103482,9 @@ function emailRecipients(dbPath, source, senderKey, env) {
         const why = d3.kind === "unlinked" ? `${d3.name} is not linked to a party in case data, so its counsel cannot be read` : d3.kind === "not_of_record" ? `${d3.name} is linked to a party case data does not hold for this proceeding` : `counsel were not read from case data: ${d3.reason}`;
         for (const r3 of counsel) if (r3.party_id === d3.party_id) drifted.set(r3.id, why);
       }
-      rows30.push(...counsel);
+      rows2.push(...counsel);
     }
-    for (const r3 of mergeSharedRecipients(rows30)) lists.recipient(r3, drifted.get(r3.id));
+    for (const r3 of mergeSharedRecipients(rows2)) lists.recipient(r3, drifted.get(r3.id));
     if (source.proceeding_id === void 0 && proceedings.length > 1) {
       note = `No proceeding was named, so this addresses counsel on the service lists of all ${proceedings.length} proceedings, each once.`;
     }
@@ -106048,11 +105905,11 @@ function parseFile(path, content, sha2563, isSkill) {
   });
   return { path, sha256: sha2563, linesTotal: lines2.length, unmapped, atoms, vocab: isSkill ? vocab : null };
 }
-function parseVocabulary(rows30) {
+function parseVocabulary(rows2) {
   const ops = [];
   const facts = /* @__PURE__ */ new Map();
   let mode = null;
-  for (const { where, line } of rows30) {
+  for (const { where, line } of rows2) {
     const trimmed = line.trim();
     if (!trimmed.startsWith("|")) continue;
     const cells = trimmed.replace(/^\|/, "").replace(/\|$/, "").split("|").map((c3) => c3.trim());
@@ -106208,16 +106065,16 @@ function skillRulesApplicable(skill, operation, facts) {
   for (const atom of loaded2.atoms) {
     if (!atom.ops.includes(operation)) continue;
     const conditional = [];
-    let holds = true;
+    let holds2 = true;
     for (const { fact, values } of atom.when) {
       const value = known.get(fact);
       if (value === void 0) {
         if (!conditional.includes(fact)) conditional.push(fact);
       } else if (!values.includes(value)) {
-        holds = false;
+        holds2 = false;
       }
     }
-    if (holds) picked.push({ atom, conditional });
+    if (holds2) picked.push({ atom, conditional });
   }
   const defeated = /* @__PURE__ */ new Set();
   for (const { atom, conditional } of picked) {
@@ -106270,9 +106127,8 @@ function checkArgs2(tool, dbPath, token) {
     throw new ValidationError(`${tool}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
 }
-var rows28 = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
 function assertSchema(tool, dbPath) {
-  const [row2] = rows28(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'");
+  const [row2] = rows(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'");
   const version2 = row2 === void 0 ? 0 : Number(row2.value);
   if (version2 < POSITION_SCHEMA_VERSION) {
     throw new DataServerError(
@@ -106282,7 +106138,7 @@ function assertSchema(tool, dbPath) {
   }
 }
 function readPositions(dbPath, token) {
-  const found = rows28(
+  const found = rows(
     dbPath,
     "SELECT branch, path, session_facts, in_force FROM session_position WHERE session_token = ? ORDER BY branch",
     [token]
@@ -106295,14 +106151,14 @@ function readPositions(dbPath, token) {
   );
 }
 function heldJob(dbPath, token) {
-  const [row2] = rows28(dbPath, "SELECT id FROM tickets WHERE locked_by = ? AND status = 'wip' ORDER BY id LIMIT 1", [token]);
+  const [row2] = rows(dbPath, "SELECT id FROM tickets WHERE locked_by = ? AND status = 'wip' ORDER BY id LIMIT 1", [token]);
   return row2 === void 0 ? null : row2.id;
 }
 function databaseFacts(dag, dbPath, job) {
   const facts = {};
   if (dag.facts.has("job_held")) facts.job_held = job === null ? "false" : "true";
   if (job !== null && dag.facts.has("job_steps")) {
-    const [{ n: n3 }] = rows28(dbPath, "SELECT COUNT(*) AS n FROM ticket_steps WHERE ticket_id = ?", [job]);
+    const [{ n: n3 }] = rows(dbPath, "SELECT COUNT(*) AS n FROM ticket_steps WHERE ticket_id = ?", [job]);
     if (n3 === 1) facts.job_steps = "one";
     else if (n3 > 1) facts.job_steps = "many";
   }
@@ -106418,7 +106274,7 @@ async function rulesMove(args, env = process.env) {
     if (job === null) {
       throw new ValidationError(`${tool}: this session holds no job to take over; assign it first (drafting_data__assign_job with takeover: true)`);
     }
-    const [row2] = rows28(
+    const [row2] = rows(
       dbPath,
       "SELECT last_in_bounds_path, went_out_of_bounds_to FROM job_position WHERE job_id = ?",
       [job]
@@ -106428,7 +106284,7 @@ async function rulesMove(args, env = process.env) {
     }
     let note = null;
     if (row2.went_out_of_bounds_to !== null) {
-      const [visit] = rows28(dbPath, "SELECT from_path, visited_at FROM out_of_bounds_visit WHERE id = ?", [row2.went_out_of_bounds_to]);
+      const [visit] = rows(dbPath, "SELECT from_path, visited_at FROM out_of_bounds_visit WHERE id = ?", [row2.went_out_of_bounds_to]);
       note = `The previous holder went out of bounds from ${visit.from_path} at ${visit.visited_at}; the rules it improvised there are not served.`;
     }
     takeover = { path: row2.last_in_bounds_path.split(" "), note };
@@ -106493,7 +106349,7 @@ async function rulesMove(args, env = process.env) {
     head.push(`  <takeover job="${job}"${takeover.note === null ? "" : ` note="${xmlAttr(takeover.note)}"`}/>`);
   }
   if (entersOutOfBounds) {
-    const [visit] = rows28(
+    const [visit] = rows(
       dbPath,
       "SELECT id, from_path FROM out_of_bounds_visit WHERE session_token = ? ORDER BY id DESC LIMIT 1",
       [token]
@@ -106552,7 +106408,7 @@ async function rulesProvisional(args, env = process.env) {
   if (main === void 0 || at !== `${main.path[0]}/out-of-bounds`) {
     throw new ValidationError(`${tool}: this session's position is ${at ?? "not set"}, not out of bounds; rules__move to out_of_bounds first`);
   }
-  const [visit] = rows28(
+  const [visit] = rows(
     dbPath,
     "SELECT id, provisional_rules FROM out_of_bounds_visit WHERE session_token = ? ORDER BY id DESC LIMIT 1",
     [token]
@@ -106643,7 +106499,6 @@ async function rulesBranch(args, env = process.env) {
 
 // src/files/rules-lifecycle.ts
 var DATE_RE2 = /^\d{4}-\d\d-\d\d$/;
-var rows29 = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
 var skillOf = (id) => id.split(/[/ ]/)[0];
 var counts = (r3) => ` sessions="${r3.sessions}" served="${r3.served}" first_served="${xmlAttr(r3.first_served)}" last_served="${xmlAttr(r3.last_served)}"`;
 function rulesLifecycle(dbPath, since) {
@@ -106651,11 +106506,11 @@ function rulesLifecycle(dbPath, since) {
   if (typeof dbPath !== "string" || dbPath.trim() === "") throw new ValidationError(`${tool}.db_path must be the matter's drafting database`);
   if (since !== void 0 && (!DATE_RE2.test(since) || Number.isNaN(Date.parse(since)))) throw new ValidationError(`${tool}.since must be a date, YYYY-MM-DD, not ${JSON.stringify(since)}`);
   assertSchema(tool, dbPath);
-  const served = rows29(
+  const served = rows(
     dbPath,
     "SELECT rule_id, node, COUNT(DISTINCT session_token) AS sessions, COUNT(*) AS served, MIN(served_at) AS first_served, MAX(served_at) AS last_served FROM rule_served GROUP BY rule_id, node ORDER BY rule_id, node"
   );
-  const visits = rows29(
+  const visits = rows(
     dbPath,
     "SELECT id, from_path, turn_summary, provisional_rules, visited_at FROM out_of_bounds_visit WHERE visited_at >= ? ORDER BY id",
     [since ?? ""]
@@ -114608,13 +114463,13 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
         }
       }
       const images = [];
-      for (const [i3, [top, rows30]] of tiles.entries()) {
+      for (const [i3, [top, rows2]] of tiles.entries()) {
         await nextTurn();
-        const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows30));
+        const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows2));
         const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
         const file = join48(renderDir, `${name}.png`);
         writeFileSync13(file, png);
-        const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows30 };
+        const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows2 };
         if (tiles.length > 1) image.tile = i3 + 1;
         images.push(image);
       }
@@ -114654,11 +114509,11 @@ function pageSize(lib, page2, n3, dpi) {
     height: Math.max(1, Math.round(hPt * scale))
   };
 }
-function tileRows(width, top, rows30) {
+function tileRows(width, top, rows2) {
   const maxRows = Math.min(MAX_SIDE, Math.floor(MAX_PIXELS / width));
-  const each = Math.ceil(rows30 / Math.ceil(rows30 / maxRows));
+  const each = Math.ceil(rows2 / Math.ceil(rows2 / maxRows));
   const tiles = [];
-  for (let t3 = top; t3 < top + rows30; t3 += each) tiles.push([t3, Math.min(each, top + rows30 - t3)]);
+  for (let t3 = top; t3 < top + rows2; t3 += each) tiles.push([t3, Math.min(each, top + rows2 - t3)]);
   return tiles;
 }
 function overlappingHalves(width, height) {
@@ -114733,21 +114588,21 @@ function coverage(rects, [left, bottom, right, top]) {
   }
   return grid.reduce((sum, v3) => sum + v3, 0) / (N3 * N3);
 }
-function renderPng(lib, page2, n3, width, height, top, rows30) {
-  return encodePng(renderRgb(lib, page2, n3, width, height, top, rows30), width, rows30);
+function renderPng(lib, page2, n3, width, height, top, rows2) {
+  return encodePng(renderRgb(lib, page2, n3, width, height, top, rows2), width, rows2);
 }
-function renderRgb(lib, page2, n3, width, height, top, rows30, flags = 0, form = 0) {
-  const bitmap = lib.FPDFBitmap_CreateEx(width, rows30, BITMAP_BGR, 0, 0);
-  if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows30} bitmap for page ${n3}`, "page_too_large");
+function renderRgb(lib, page2, n3, width, height, top, rows2, flags = 0, form = 0) {
+  const bitmap = lib.FPDFBitmap_CreateEx(width, rows2, BITMAP_BGR, 0, 0);
+  if (!bitmap) throw new DataServerError(`PDFium could not allocate a ${width}x${rows2} bitmap for page ${n3}`, "page_too_large");
   try {
-    lib.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows30, 4294967295);
+    lib.FPDFBitmap_FillRect(bitmap, 0, 0, width, rows2, 4294967295);
     lib.FPDF_RenderPageBitmap(bitmap, page2, 0, -top, width, height, 0, flags);
     if (form) lib.FPDF_FFLDraw(form, bitmap, page2, 0, -top, width, height, 0, flags);
     const buffer = lib.FPDFBitmap_GetBuffer(bitmap);
     const stride = lib.FPDFBitmap_GetStride(bitmap);
     const heap = heapU8(lib);
-    const rgb = Buffer.alloc(width * 3 * rows30);
-    for (let y3 = 0; y3 < rows30; y3++) {
+    const rgb = Buffer.alloc(width * 3 * rows2);
+    for (let y3 = 0; y3 < rows2; y3++) {
       const src = buffer + y3 * stride;
       const dst = y3 * width * 3;
       for (let x3 = 0; x3 < width; x3++) {
@@ -114761,13 +114616,13 @@ function renderRgb(lib, page2, n3, width, height, top, rows30, flags = 0, form =
     lib.FPDFBitmap_Destroy(bitmap);
   }
 }
-function encodePng(rgb, width, rows30) {
+function encodePng(rgb, width, rows2) {
   const line = width * 3 + 1;
-  const raw = Buffer.alloc(line * rows30);
-  for (let y3 = 0; y3 < rows30; y3++) rgb.copy(raw, y3 * line + 1, y3 * width * 3, (y3 + 1) * width * 3);
+  const raw = Buffer.alloc(line * rows2);
+  for (let y3 = 0; y3 < rows2; y3++) rgb.copy(raw, y3 * line + 1, y3 * width * 3, (y3 + 1) * width * 3);
   const header = Buffer.alloc(13);
   header.writeUInt32BE(width, 0);
-  header.writeUInt32BE(rows30, 4);
+  header.writeUInt32BE(rows2, 4);
   header[8] = 8;
   header[9] = 2;
   return Buffer.concat([PNG_SIGNATURE, chunk("IHDR", header), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
@@ -115246,19 +115101,19 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
     mkdirSync24(outDir, { recursive: true });
     assertUnprotected(canonicalRoot(outDir, `law-text folder does not resolve: ${outDir}`, "not_found"));
   }
-  const rows30 = [];
+  const rows2 = [];
   for (const file of files) {
     const read3 = await cachedExtract(pathWin3230.join(law, file));
     if (read3.status === "unread") {
-      rows30.push({ file, text_path: null, bytes: 0, status: "unread", reason: read3.reason });
+      rows2.push({ file, text_path: null, bytes: 0, status: "unread", reason: read3.reason });
       continue;
     }
     const textPath = pathWin3230.join(outDir, `${file}.txt`);
     const body = Buffer.from(read3.text, "utf-8");
     writeFileSync14(textPath, body);
-    rows30.push({ file, text_path: textPath, bytes: body.length, method: read3.method, status: "ok" });
+    rows2.push({ file, text_path: textPath, bytes: body.length, method: read3.method, status: "ok" });
   }
-  return { out_dir: outDir, files: rows30 };
+  return { out_dir: outDir, files: rows2 };
 }
 function assertUnprotected(realDir) {
   if (zoneProblem("write", realDir)) {
@@ -115837,11 +115692,11 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
           const dir = join50(workDir, side);
           mkdirSync25(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
-          return tiles.map(([top, rows30], i3) => {
+          return tiles.map(([top, rows2], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
             const file = join50(dir, `${name}.png`);
-            const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows30) * facts.width * 3);
-            writeFileSync15(file, encodePng(rgb, facts.width, rows30));
+            const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows2) * facts.width * 3);
+            writeFileSync15(file, encodePng(rgb, facts.width, rows2));
             return file;
           });
         };
