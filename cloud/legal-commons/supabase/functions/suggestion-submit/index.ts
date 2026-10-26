@@ -1,5 +1,5 @@
-// suggestion-submit: saves one suggestion about the plugin, for the research
-// plugin's suggestion_box__submit tool. It saves the suggestion and its items
+// suggestion-submit: saves one suggestion about the plugin, for the lawyer
+// plugin's data server, which sends what the practitioner submitted. It saves the suggestion and its items
 // through suggestions.submit (cloud/suggestions/suggestions.sql) over a direct
 // connection (db.ts) and never reads a suggestion back, so a caller can add a
 // suggestion but never see, change or delete one here. suggestion-status reads

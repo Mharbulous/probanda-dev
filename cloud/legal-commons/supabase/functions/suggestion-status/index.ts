@@ -1,4 +1,4 @@
-// suggestion-status: what became of suggestions, for the research plugin's
+// suggestion-status: what became of suggestions, for the lawyer plugin's
 // suggestion_box__status tool (cloud/suggestions/suggestions.sql). It returns a
 // suggestion only to the install key that sent it: an ID another key sent is
 // omitted, as an unknown ID is. A suggestion saved before senders were recorded

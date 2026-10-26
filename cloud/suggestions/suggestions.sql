@@ -2,8 +2,8 @@
 -- Probanda's Cloud: the Suggestion Box
 -- =============================================================================
 -- Suggestions about the plugin that a practitioner expressly submits, through
--- /lawyer:suggestion or /draft's Suggestion Box, from the research plugin's
--- suggestion_box__submit tool. The design is
+-- /lawyer:suggestion or /draft's Suggestion Box, from the lawyer plugin's data
+-- server (decision 5 of the lifecycle plan). The design is
 -- docs/Plans/2026-10-25_suggestion-design.md (decisions cited by number) and
 -- its lifecycle plan docs/Plans/2026-10-25_suggestion-implementation-lifecycle.md.
 --
@@ -56,8 +56,8 @@ create table if not exists suggestions.suggestion (
   created_at     timestamptz not null default now()
 );
 
--- Triage fields (docs/Specs/2026-10-18_suggestion-triage-spec.md). The commons
--- server fills plugin_version from its own plugin.json; skill is the model's,
+-- Triage fields (docs/Specs/2026-10-18_suggestion-triage-spec.md). The sending
+-- server fills plugin_version from its own plugin.json, as "<plugin> <version>"; skill is the model's,
 -- optional. Rows saved before plugin_version existed read 'unrecorded'.
 alter table suggestions.suggestion add column if not exists plugin_version text;
 update suggestions.suggestion set plugin_version = 'unrecorded' where plugin_version is null and title is not null;
