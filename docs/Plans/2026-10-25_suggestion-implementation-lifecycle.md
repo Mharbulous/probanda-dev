@@ -233,6 +233,8 @@ Each phase ends with a commit to `main` and a release where a plugin changes. Ph
    - **(a)** a daily scheduled task on the maintainer's computer, in its own clone (recommended, because it needs no pasted command);
    - **(b)** a `/loop` session left running;
    - **(c)** do nothing, and the maintainer keeps running `/implement`.
+
+   **Decided (2026-10-26): (a).** A daily Windows scheduled task under the maintainer's own account runs the local implementer in its own clone, never the shared checkout.
 5. **Which plugin sends.** Decisions 13 and 14 have the local server send and show the status, and Phase 4 has Submit work after the agent stops waiting. The card is in `lawyer`, but the submit tool is in `researcher`, and one plugin's server can't call another's tool. Options:
    - **(a)** `lawyer`'s server posts to `suggestion-submit` itself, and `suggestion_box__submit` leaves `researcher` (recommended, because it is the only option that meets decisions 13 and 14; minor bumps of both plugins);
    - **(b)** the click returns to the agent, which calls `researcher`'s tool. Submit then fails when no agent is waiting, and decisions 13 and 14 change.
