@@ -204,8 +204,8 @@
       ],
       "agents": [
         "black-hat",
+        "fix-planner",
         "suggestion-oracle",
-        "suggestion-planner",
         "white-hat"
       ],
       "hooks": {},

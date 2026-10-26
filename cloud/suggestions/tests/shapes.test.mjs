@@ -164,16 +164,37 @@ describe("suggestion-set-status", () => {
     refused(checkSetStatus({ suggestion_id: ID, status: "under review", reason: "x" }));
   });
 
-  test("the old whole-suggestion form is still accepted", () => {
-    assert.deepEqual(ok(checkSetStatus({ suggestion_id: ID, status: "approved", issue_number: 9 })),
-      { form: "legacy", suggestion_id: ID, status: "approved", issue_number: 9, reason: null, category: null });
-    assert.equal(ok(checkSetStatus({ suggestion_id: ID, status: "approved in part" })).status, "approved in part");
-    assert.deepEqual(ok(checkSetStatus({ suggestion_id: ID, status: "rejected", reason: "Asked before", category: "already suggested" })),
-      { form: "legacy", suggestion_id: ID, status: "rejected", issue_number: null, reason: "Asked before", category: "already suggested" });
+  test("the old whole-suggestion form is retired: a decision naming no item is refused, reason or not", () => {
     for (const bad of [
-      { status: "approved", issue_number: 0 }, { status: "approved", reason: "" }, { status: "approved", category: "already suggested" },
-      { status: "rejected", category: "not recorded" }, { status: "new" }, { status: "declined" }, { status: "approved", item_number: 1 },
-    ]) refused(checkSetStatus({ suggestion_id: ID, ...bad }));
+      { status: "approved" }, { status: "approved", issue_number: 9 }, { status: "approved in part" },
+      { status: "rejected" }, { status: "rejected", reason: "Asked before", category: "already suggested" },
+      { status: "approved", reason: "Worth doing" }, { status: "declined", reason: "No", category: "already suggested" },
+      { status: "new" }, { status: "approved", item_number: 1 },
+    ]) assert.match(refused(checkSetStatus({ suggestion_id: ID, ...bad })), /item/);
+  });
+
+  test("no form changes an item's status without a reason", () => {
+    // Every write that moves an item: approved and declined need their reason,
+    // implemented needs the release its fixed reason is made from.
+    for (const status of ["approved", "declined"]) {
+      for (const reason of [undefined, "", " ", "\n", "a\nb", null, 0, "x".repeat(201)]) {
+        const body = { suggestion_id: ID, item: 1, status, category: status === "declined" ? "already works as asked" : undefined };
+        if (reason !== undefined) body.reason = reason;
+        if (body.category === undefined) delete body.category;
+        refused(checkSetStatus(body));
+      }
+    }
+    refused(checkSetStatus({ suggestion_id: ID, item: 1, status: "implemented" }));
+    // The two writes that move no item take no reason at all.
+    refused(checkSetStatus({ suggestion_id: ID, status: "under review", reason: "Opened" }));
+    refused(checkSetStatus({ suggestion_id: ID, issue_number: 3, reason: "Filed" }));
+  });
+
+  test("the two reasons triage recommends are declines in their own categories", () => {
+    for (const [reason, category] of [["Already works as asked", "already works as asked"], ["Already suggested", "already suggested"]]) {
+      assert.deepEqual(ok(checkSetStatus({ suggestion_id: ID, item: 2, status: "declined", reason, category })),
+        { form: "item", suggestion_id: ID, item: 2, status: "declined", reason, category });
+    }
   });
 
   test("a bad id or status is refused", () => {

@@ -491,50 +491,11 @@ begin
 end
 $$;
 
--- The old whole-suggestion decision, kept until the triage skill decides per
--- item (lifecycle plan Phase 7): 'approved' and 'approved in part' approve every
--- item, and 'rejected' declines every item. Only a suggestion whose items are
--- all undecided moves, so an outcome is never overwritten. The reason defaults
--- to the one migrated rows carry, and a decline's category to 'not recorded'.
--- It opens the suggestion for review, with the issue when given.
-create or replace function suggestions.set_all_items(p_suggestion_id uuid, p_legacy_status text,
-  p_issue integer default null, p_reason text default null, p_category text default null)
-returns jsonb
-language plpgsql
-as $$
-declare
-  s suggestions.suggestion%rowtype;
-  v_status text := case when p_legacy_status in ('approved', 'approved in part') then 'approved'
-                        when p_legacy_status = 'rejected' then 'declined' end;
-  v_reason text := suggestions.clean_reason(coalesce(p_reason, 'Decided before reasons were recorded'));
-begin
-  if v_status is null then return suggestions.refused('status'); end if;
-  if v_reason is null then return suggestions.refused('reason'); end if;
-  if p_category is not null and (v_status = 'approved' or not p_category = any (suggestions.decline_categories())) then
-    return suggestions.refused('category');
-  end if;
-  if p_issue is not null and p_issue < 1 then return suggestions.refused('issue'); end if;
-  select * into s from suggestions.suggestion where suggestion_id = p_suggestion_id for update;
-  if not found then return suggestions.refused('unknown'); end if;
-  if s.status = 'withdrawn' then return suggestions.refused('withdrawn'); end if;
-  if exists (select 1 from suggestions.item where suggestion_id = p_suggestion_id and status <> 'undecided')
-     or not exists (select 1 from suggestions.item where suggestion_id = p_suggestion_id) then
-    return suggestions.refused('decided');
-  end if;
-  if p_issue is not null and s.issue_number is not null and s.issue_number <> p_issue then
-    return suggestions.refused('issue');
-  end if;
-  update suggestions.item
-    set status = v_status, reason = v_reason,
-        category = case when v_status = 'declined' then coalesce(p_category, 'not recorded') end
-    where suggestion_id = p_suggestion_id;
-  update suggestions.suggestion
-    set status = 'under review', issue_number = coalesce(p_issue, issue_number), triaged_at = coalesce(triaged_at, now())
-    where suggestion_id = p_suggestion_id;
-  return jsonb_build_object('saved', true, 'suggestion_id', p_suggestion_id, 'status', 'under review',
-    'badge', suggestions.badge(p_suggestion_id));
-end
-$$;
+-- The old whole-suggestion decision, which applied one status to every item,
+-- is retired (lifecycle plan Phase 7): every decision names its item and has a
+-- reason. The migration above never used it, so a database it was applied to
+-- loses it here.
+drop function if exists suggestions.set_all_items(uuid, text, integer, text, text);
 
 -- Probanda's automation marks an approved item implemented in the release that
 -- shipped it, '<plugin> <version>', with the reason "Fixed in <plugin>

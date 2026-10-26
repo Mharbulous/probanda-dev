@@ -82,7 +82,7 @@ The design refines the diagram in five places:
 | Suggestion Box: save, then start intake | `cloud/legal-commons/supabase/functions/suggestion-submit/`. Table: `cloud/suggestions/suggestions.sql` |
 | Status read and the outcome check at session start | `suggestion-status` function, and the outcome check in `/suggestion` |
 | Intake: file each suggestion as an issue with its lane label | `.claude/commands/intake-suggestions.md` |
-| Triage: repeat check, plan, red tests, decide, write | `.claude/commands/triage-issue.md` steps 2 to 6. The planner is `source/developer/agents/suggestion-planner.md` |
+| Triage: repeat check, plan, red tests, decide, write | `.claude/commands/triage-issue.md` steps 2 to 6. The planner is `source/developer/agents/fix-planner.md` (Phase 7; its dry run is `docs/Plans/2026-10-26_fix-planner-dry-run.md`) |
 | One implement queue, claims, implementer lock, label trigger | `.claude/commands/implement-suggestions.md` and `docs/agents/issue-tracker.md` |
 | Status writes | `suggestion-set-status`, which accepts only `approved`, `approved in part` and `rejected`, and only from `new` |
 

@@ -26,6 +26,9 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, "..", "..", "..");
 const BIN = "/usr/lib/postgresql/16/bin";
 const PREVIOUS_COMMIT = "bf91f66117f2045a37d9233bfe11bbaa4bb128e8";
+// The file as Phase 1 left it, with the old whole-suggestion form that Phase 7
+// retires (lifecycle plan), so the drop is proved over a database that had it.
+const PER_ITEM_COMMIT = "6d2db68e5247c5d9ec26db1d17ae55bdf7945b7d";
 const KEY_A = "a".repeat(64);
 const KEY_B = "b".repeat(64);
 const LEGACY_REASON = "Decided before reasons were recorded";
@@ -64,8 +67,9 @@ const items = (id) => j(`select suggestions.items_of('${id}', true)`);
 const submit = (key, p) => q(`select suggestions.submit(${lit(key)}, ${json(p)})`);
 const setItem = (id, item, status, reason, category = null) =>
   j(`select suggestions.set_item_status('${id}', ${item}, ${lit(status)}, ${lit(reason)}, ${lit(category)})`);
-const setAll = (id, status, issue = null, reason = null, category = null) =>
-  j(`select suggestions.set_all_items('${id}', ${lit(status)}, ${issue ?? "null"}, ${lit(reason)}, ${lit(category)})`);
+const SET_ALL_ITEMS = "suggestions.set_all_items(uuid, text, integer, text, text)";
+const hasSetAll = (db = "postgres") =>
+  psql(["-f", "-"], `select to_regprocedure('${SET_ALL_ITEMS}') is not null`, db);
 const recordIssue = (id, issue) => j(`select suggestions.record_issue('${id}', ${issue ?? "null"})`);
 const open = (id, issue = null) => j(`select suggestions.open_for_review('${id}', ${issue ?? "null"})`);
 const implemented = (id, item, release) => j(`select suggestions.mark_implemented('${id}', ${item}, ${lit(release)})`);
@@ -148,8 +152,9 @@ describe("the migration from the previous schema", () => {
     q(`delete from suggestions.suggestion where suggestion_id = '${id}'`);
   });
 
-  test("a legacy decided suggestion refuses the old whole-suggestion form again", () => {
-    assert.deepEqual(setAll(legacy.approved, "rejected"), refused("decided"));
+  test("a legacy decided suggestion refuses a second decision", () => {
+    assert.deepEqual(setItem(legacy.approved, 1, "declined", "Changed my mind", "cost outweighs benefit"), refused("decided"));
+    assert.deepEqual(setItem(legacy.rejected, 1, "approved", "Changed my mind"), refused("decided"));
   });
 
   test("the decline categories agree with the shape module's", () => {
@@ -343,43 +348,27 @@ describe("marking implemented", () => {
   });
 });
 
-describe("the old whole-suggestion form", () => {
-  test("approved, approved in part and rejected apply to every item", () => {
-    const a = newSuggestion(["One", "Two"]);
-    assert.deepEqual(setAll(a, "approved", 21), { saved: true, suggestion_id: a, status: "under review", badge: "Approved" });
-    assert.deepEqual(items(a).map((i) => [i.status, i.reason, i.category]),
-      [["approved", LEGACY_REASON, null], ["approved", LEGACY_REASON, null]]);
-    assert.equal(row(a).issue_number, 21);
-    assert.ok(row(a).triaged_at);
-
-    const part = newSuggestion(["One"]);
-    assert.equal(setAll(part, "approved in part", null, "Partly useful").badge, "Approved");
-    assert.equal(items(part)[0].reason, "Partly useful");
-
-    const r = newSuggestion(["One", "Two"]);
-    assert.equal(setAll(r, "rejected").badge, "Declined");
-    assert.deepEqual(items(r).map((i) => i.category), ["not recorded", "not recorded"]);
-    const rc = newSuggestion(["One"]);
-    setAll(rc, "rejected", null, "Asked before", "already suggested");
-    assert.equal(items(rc)[0].category, "already suggested");
+describe("no status write without a reason", () => {
+  test("the old whole-suggestion form is gone, and every remaining write that moves an item needs its reason", () => {
+    assert.equal(hasSetAll(), "f");
+    const id = newSuggestion(["One", "Two"]);
+    fails(`select suggestions.set_all_items('${id}', 'approved', null, null, null)`, /does not exist/);
+    for (const status of ["approved", "declined"]) {
+      for (const reason of [null, "", "  ", "a\nb", "x".repeat(201)]) {
+        assert.deepEqual(setItem(id, 1, status, reason, status === "declined" ? "already works as asked" : null), refused("reason"));
+      }
+    }
+    setItem(id, 2, "approved", "Worth doing");
+    assert.deepEqual(implemented(id, 2, null), refused("release"), "implemented takes its reason from the release");
+    assert.equal(implemented(id, 2, "lawyer 0.9.3").saved, true);
+    assert.deepEqual(items(id).map((i) => [i.status, i.reason]),
+      [["undecided", null], ["implemented", "Fixed in lawyer 0.9.3"]], "no refused write moved an item");
   });
 
-  test("it is refused once any item is decided, or for a bad status, reason or category", () => {
+  test("triage's recommended declines save as their categories", () => {
     const id = newSuggestion(["One", "Two"]);
-    setItem(id, 1, "approved", "Yes");
-    assert.deepEqual(setAll(id, "rejected"), refused("decided"));
-    assert.equal(items(id)[1].status, "undecided", "nothing changed");
-    const fresh = newSuggestion(["One"]);
-    assert.deepEqual(setAll(fresh, "new"), refused("status"));
-    assert.deepEqual(setAll(fresh, "declined"), refused("status"));
-    assert.deepEqual(setAll(fresh, "approved", null, "  "), refused("reason"));
-    assert.deepEqual(setAll(fresh, "approved", null, null, "already suggested"), refused("category"));
-    assert.deepEqual(setAll(fresh, "rejected", null, null, "not recorded"), refused("category"));
-    assert.deepEqual(setAll(fresh, "approved", 0), refused("issue"));
-    open(fresh, 3);
-    assert.deepEqual(setAll(fresh, "approved", 4), refused("issue"));
-    assert.equal(setAll(fresh, "approved", 3).saved, true);
-    assert.deepEqual(setAll("00000000-0000-0000-0000-000000000000", "approved"), refused("unknown"));
+    assert.equal(setItem(id, 1, "declined", "Already works as asked", "already works as asked").saved, true);
+    assert.equal(setItem(id, 2, "declined", "Already suggested", "already suggested").badge, "Declined");
   });
 });
 
@@ -455,7 +444,7 @@ describe("withdrawal", () => {
     assert.deepEqual(statusFor(KEY_A, [id]), [], "a tombstone names no sender");
     assert.deepEqual(open(id, 44), refused("withdrawn"));
     assert.deepEqual(setItem(id, 2, "approved", "Yes"), refused("withdrawn"));
-    assert.deepEqual(setAll(id, "approved"), refused("withdrawn"));
+    assert.deepEqual(recordIssue(id, 44), refused("withdrawn"));
     assert.deepEqual(implemented(id, 1, "lawyer 0.4.2"), refused("withdrawn"));
     fails(`update suggestions.suggestion set title = 'back' where suggestion_id = '${id}'`, /suggestion_tombstone_check/);
   });
@@ -508,6 +497,20 @@ describe("a fresh apply", () => {
     const id = psql(["-f", "-"], `select suggestions.submit(null, ${json(BASIC)})`, "fresh");
     assert.equal(psql(["-f", "-"], `select suggestions.badge('${id}')`, "fresh"), "Submitted");
     assert.equal(psql(["-f", "-"], `select count(*) from suggestions.item where suggestion_id = '${id}'`, "fresh"), "1");
+  });
+
+  test("over the per-item schema as first deployed, the new file drops the old whole-suggestion form", () => {
+    q("create database phase1");
+    fs.writeFileSync(path.join(dir, "phase1.sql"),
+      execFileSync("git", ["-C", REPO, "show", `${PER_ITEM_COMMIT}:cloud/suggestions/suggestions.sql`]));
+    fs.chmodSync(path.join(dir, "phase1.sql"), 0o644);
+    psql(["-f", path.join(REPO, "cloud", "access", "access.sql")], "", "phase1");
+    psql(["-f", path.join(dir, "phase1.sql")], "", "phase1");
+    assert.equal(hasSetAll("phase1"), "t");
+    psql(["-f", NEW_SQL], "", "phase1");
+    assert.equal(hasSetAll("phase1"), "f");
+    psql(["-f", NEW_SQL], "", "phase1");
+    assert.equal(hasSetAll("phase1"), "f");
   });
 });
 

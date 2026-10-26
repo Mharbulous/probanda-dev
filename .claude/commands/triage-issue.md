@@ -1,5 +1,5 @@
 ---
-description: Cloud or local. Triage one probanda-dev issue unattended, including a Suggestion Box entry filed by /intake-suggestions - verify it, write its work order, and label its category, state and location (cloud or local).
+description: Cloud or local. Triage one probanda-dev issue unattended, including a Suggestion Box entry filed by /intake-suggestions - verify it, write its work order, and label its category, state and location (cloud or local). A suggestion issue always ends ready-for-human, one open decision per item.
 argument-hint: <issue number>
 ---
 
@@ -9,8 +9,9 @@ Triages one issue: the number in the arguments, or, when a GitHub event started 
 
 The cloud does not load Brahm's own global rules, so these hold for the whole run:
 
-- Triage commits and pushes nothing, and deletes any test file it wrote to run in step 4. Its only writes are to the issue (one comment and its labels) and, for a suggestion issue, the suggestion's status. A command the session runs after triage, such as the implementer, follows its own rules.
+- Triage commits and pushes nothing, and deletes any test file it wrote to run in step 4. Its only writes are to the issue (one comment and its labels, and for a merged suggestion one comment on the issue it merges into) and, for a suggestion issue, the suggestion's `under review` status. Triage never approves or declines an item: only the maintainer does (design decisions 17 and 20). A command the session runs after triage, such as the implementer, follows its own rules.
 - Never mention Claude or Anthropic in the comment, and never name a person, entity, matter or account in it.
+- **Paraphrase, never quote** (design decision 16). Nothing triage writes to GitHub, and no red test, holds the practitioner's text: describe each item and the pain in your own words and refer to items by number. Before posting any comment, run the verbatim guard over it (step 6).
 - Nobody answers a permission prompt, so never cause one. Read and search files with the Read, Grep and Glob tools, not shell commands. Never name `approve_public.py` or `public-approved.json` in a shell command: a hook stops the run for a person whenever a command names either and it cannot tell the command only reads.
 
 ## GitHub calls
@@ -19,12 +20,20 @@ Locally, use `gh`. In the cloud, `gh issue` is refused: use REST with `curl` thr
 
 ## Suggestion Box calls
 
-In the cloud, use `curl` only: Node's `fetch` ignores the sandbox proxy. Both calls are `curl -sS -X POST -H Content-Type:application/json https://nbzkuhgiqscjkypedqff.supabase.co/functions/v1/<function> -d '<body>'`, and the cloud environment's network secret adds the key, so send none and never look for one:
+In the cloud, use `curl` only: Node's `fetch` ignores the sandbox proxy. Each call is `curl -sS -X POST -H Content-Type:application/json https://nbzkuhgiqscjkypedqff.supabase.co/functions/v1/<function> -d '<body>'`, and the cloud environment's network secret adds the key, so send none and never look for one:
 
-- **List new:** function `suggestion-list`, body `{"status":"new"}`. The reply's `suggestions` holds the rows, oldest first.
-- **Set status:** function `suggestion-set-status`, body `{"suggestion_id":"<id>","status":"<approved|approved in part|rejected>"}`, adding `"issue_number":<n>`. It refuses a second call on the same row.
+- **List submitted:** function `suggestion-list`, body `{"status":"submitted"}`. The reply's `suggestions` holds the rows, oldest first.
+- **Read one:** function `suggestion-list`, body `{}`, then keep the row whose `suggestion_id` is the one wanted. This row is the **cloud record**: the pain point (`body`), the items in order (`item_list`, each with its `item` number and `text`), `context_lines`, `comment`, `origin`, `fingerprint`, `raw_observation`, `environment_facts`, `specification` and `backstop_result`. Save it as JSON to a file outside the checkout (for example under `/tmp`) for the verbatim guard.
+- **Record the issue:** function `suggestion-set-status`, body `{"suggestion_id":"<id>","issue_number":<n>}`. It changes no status, and refuses a different issue once one is recorded.
+- **Open for review:** function `suggestion-set-status`, body `{"suggestion_id":"<id>","status":"under review","issue_number":<n>}`.
 
-Locally, run `node cloud/suggestions/tools/triage.mjs set-status <suggestion_id> <status> --issue <n>` instead, with `POOL_SECRET_KEY` set.
+Locally, with `POOL_SECRET_KEY` set, run `node cloud/suggestions/tools/triage.mjs` instead: `list`, `show <suggestion_id>`, `set-issue <suggestion_id> <n>` and `set-review <suggestion_id> <n>`.
+
+Item decisions are not triage's: the maintainer records them through `/suggestion-triage`, which calls `triage.mjs set-item`.
+
+## The verbatim guard
+
+`python scripts/check_verbatim.py --suggestion <record.json> [--suggestion <record.json> ...] <file> [<file> ...]` fails (exit 1) when any checked file holds a sentence of a record's submitted text word for word, ignoring case, spacing, line breaks and punctuation, and prints only where. Write each comment, issue body and red test to a file outside the checkout and run the guard over it with the record of every suggestion it concerns. On a failure, reword the located passage in your own words and run it again. Never post or hand on a file the guard fails.
 
 ## 1. Read
 
@@ -34,59 +43,57 @@ Locally, run `node cloud/suggestions/tools/triage.mjs set-status <suggestion_id>
 - carries any `wayfinder:*` label, or its parent carries `wayfinder:map` (the wayfinder skill owns those);
 - already carries a state label (`ready-for-agent`, `ready-for-human`, `needs-info`, `wontfix`) and was not named in the arguments.
 
-A **suggestion issue** is one labelled `suggestion` whose body ends with a `Suggestion <suggestion_id>` line. It holds a practitioner's words, not a plan, so step 2 checks it is not a repeat and step 3 plans it.
+A **suggestion issue** is one labelled `suggestion` whose body ends with a `Suggestion <suggestion_id>` line. Its body is intake's paraphrase. Read the cloud record by its id (**Read one**): the record, not the issue body, is what step 3 plans. If the Suggestion Box holds no such row, or its status is `withdrawn`, stop and report it, writing nothing. Otherwise open it for review now (**Open for review**, with this issue's number). A refusal because another issue is recorded means the suggestion is filed under that issue: stop and report both numbers.
 
-## 2. Check a suggestion issue for a repeat
+## 2. Check a suggestion issue for a repeat or a merge
 
 Skip this step for any other issue.
 
-List every `suggestion` issue, open and closed: `GET /issues?labels=suggestion&state=all&per_page=100&page=<k>`, from `k=1` until a page returns fewer than 100, dropping this issue and pull requests. Compare this suggestion's request with each by meaning, not wording, and read the body and latest Agent Brief of each likely match. Take the first that fits, where `#m` is the earlier issue:
+List every `suggestion` issue, open and closed: `GET /issues?labels=suggestion&state=all&per_page=100&page=<k>`, from `k=1` until a page returns fewer than 100, dropping this issue and pull requests. Compare this suggestion's items with each by meaning, not wording, and read the body and latest Agent Brief of each likely match. Then:
 
-1. **Same request as an open issue:** status `approved` with issue number `m`, and the state is `wontfix`, the comment saying `Duplicate of #m`.
-2. **Same request as an issue closed as built** (closed without `wontfix`): status `approved` with issue number `m`, and the state is `wontfix`, the comment saying `Already implemented in #m`.
-3. **Same request as an issue closed `wontfix`,** with no new evidence (a pain point, failure or setup the earlier one lacked): status `rejected` with issue number `m`, and the state is `wontfix`, the comment quoting `#m`'s reason.
-
-For any of these, go to step 6, write only the outcome and set that status. Otherwise, including a match that brings new evidence, go on to step 3, and name each related issue under **Verification**.
+- **Merged by fingerprint.** When this record has a `fingerprint` (Probanda noticed it) and an open issue `#m` still labelled `ready-for-human` covers a suggestion whose record has the same fingerprint (plugin, version, skill and kind; read that record by its id), and each of this suggestion's items asks for what one item of `#m` asks for, this issue is merged into `#m` (design decision 3: a triage view over separate records, never one merged record). Post one comment on `#m`, guarded with both records, that opens with `> *This was generated by AI during triage.*` and then `### Also covers`, the line `Suggestion <this suggestion_id>, issue #<n>`, and one line per item, `item <j> = item <k> of Suggestion <#m's suggestion_id>`. Then go to step 6 and write this issue's brief as a merged brief. When any item has no match, it is not merged: treat it as below.
+- **Repeat.** Each item that asks for what an earlier issue `#m` already asked for, open or closed, gets the recommendation `decline: already suggested` with the reason "Already suggested", and names `#m` under **Verification**, unless it brings new evidence (a pain point, failure or setup `#m` lacked). Item recommendations from this step stand: step 3 plans only the other items, and when every item is a repeat, skip to step 6.
 
 ## 3. Plan a suggestion issue
 
 Skip this step for any other issue.
 
-Dispatch one Agent with model `fable` and only the Read, Glob and Grep tools. Its prompt is the body of `source/developer/agents/suggestion-planner.md` (below its frontmatter), followed by the issue's Suggestion section and its `suggestion_id`. From the planner's TLDR, take the first that fits:
+Dispatch one Agent with model `opus`, effort `high`, and only the Read, Glob and Grep tools. Its prompt is the body of `source/developer/agents/fix-planner.md` (below its frontmatter), followed by the suggestion's id, the issue number, the related issues from step 2 with the items each repeats, and the cloud record as JSON, with `mockup_html` left out. The planner takes the items exactly as the record gives them, and returns, per item, a recommendation, a reason, a check, the check's expected result and, for what it recommends, a plan, and it checks the record's `specification` against the code when there is one.
 
-1. "Approve with your adjustments" is marked `(Recommended)`: the work order is the planner's main issue, and the status is `approved` for `Verdict: all` or `approved in part` for `Verdict: some`.
-2. "Approve as proposed" is marked `(Recommended)`: the work order is the As proposed issue (the main issue when As proposed is `same as above`), and the status is `approved`.
-3. Otherwise, including when doing nothing is marked: the state is `wontfix`, with the planner's reasons, and the status is `rejected`. Go to step 6.
+Run the guard over its return. Check it is complete: every item of the record has its section, in order, none merged or split, each with a check that names a file and a command (or, for `decline: not enough detail` only, the missing detail). When a section is missing or the guard fails, resume the planner once with what is missing; if it still fails, the items left without a check are recorded under **Open decisions** as having none, and why.
 
-Note that status, but do not set it yet: step 6 sets it once, after the state is decided. Steps 4 to 6 then treat the planner's Plan, Scope and Done when as the issue's own: verify them as written, and decide state and location for them. The planner never decides those, and an open choice its TLDR leaves is an open decision.
+Steps 4 to 6 then treat the planner's per-item Plan, Scope and checks as the issue's own: verify them as written, and decide location for them. The planner never decides those.
 
 ## 4. Verify
 
-Start with the red tests, so no one plans or builds a change that changes nothing. For each Done-when check in the work order:
+Start with the red tests, so no one plans or builds a change that changes nothing. For a suggestion issue, the checks are the planner's, one per item. For any other issue, they are the work order's Done-when checks. For each:
 
-- **Write** the narrowest test that states it, with invented data, at the path where the repo's runner finds it (for example `source/lawyer/mcp/test/<name>.test.mjs`, or a skill's `tests/test_<name>.py`), or as one command. Take the facts from the code, not from the issue's wording. Install only what that test needs, as in `.claude/commands/implement-suggestions.md` step 5, including its SQLite note.
+- **Write** the narrowest test that states it, with invented data and none of the record's text, at the path where the repo's runner finds it (for example `source/lawyer/mcp/test/<name>.test.mjs`, or a skill's `tests/test_<name>.py`), or as one command. Take the facts from the code, not from the issue's wording. Install only what that test needs, as in `.claude/commands/implement-suggestions.md` step 5, including its SQLite note. Run the guard over a suggestion's red test before running it: the file is posted in step 6 and later committed by the implementer.
 - **Run** it against current `main`, and record one result:
   - **Red:** it fails on an assertion that states the check. An import error, a failed build or a missing tool is not red: fix the test, or record it as not run.
-  - **Green:** it passes on `main`, so that part needs no change. Drop it from the Plan.
-  - **Not run:** it needs Windows, the practitioner's data, a secret, or a person. Say which. A problem that shows only on the practitioner's data is `needs-info`, asking for a reproduction with invented data.
+  - **Green:** it passes on `main`, so that part needs no change. For a suggestion item, its recommendation becomes `decline: already works as asked`, with the reason "Already works as asked", whatever the planner recommended. For any other issue, drop it from the Plan.
+  - **Not run:** it needs Windows, the practitioner's data, a secret, or a person. Say which. For an issue other than a suggestion, a problem that shows only on the practitioner's data is `needs-info`, asking for a reproduction with invented data.
 
-Then read the code, docs and ADRs the issue names, and the project's `GLOSSARY.md` for its terms. Check every factual claim in the issue against the source: counts, paths, line numbers, and what the code does. For a bug, reproduce it where the sandbox can. Search for an existing implementation of the request by its domain concept, not only its wording. Record what held, what was wrong, and the corrected facts.
+Then read the code, docs and ADRs the issue names, and the project's `GLOSSARY.md` for its terms. Check every factual claim in the issue and the planner's return against the source: counts, paths, line numbers, and what the code does. For a bug, reproduce it where the sandbox can. Search for an existing implementation of the request by its domain concept, not only its wording. Record what held, what was wrong, and the corrected facts.
 
 ## 5. Decide
 
 State each decision with a one-line reason.
 
 - **Category:** `bug` or `enhancement`.
-- **State:**
+- **State**, for a suggestion issue: always `ready-for-human`, with one open decision per item, whatever the recommendations. A suggestion whose red tests all pass, or which repeats an earlier one, is recommended for decline, and the maintainer confirms it; triage never closes a suggestion issue.
+- **State**, for any other issue:
   - `wontfix`: already implemented, or the verification shows the problem does not exist, including when every red test came out green.
   - `needs-info`: facts only the reporter holds are missing.
   - `ready-for-human`: the work needs a design decision, a judgement call, or a check by a person. The issue's own open questions count, as does any proposal the issue itself calls risky, and any Done-when check not run because it needs a person.
   - `ready-for-agent`: an agent can finish it from the work order alone and check its own result: every remaining Done-when check came out red, or was not run only for want of Windows, data or a secret.
-- **Location**, for `ready-for-agent` and `ready-for-human` only: `local` when any step or check of the work needs an item in the cloud gate of `.claude/commands/implement-suggestions.md` (step 4) other than "a decision or check by a person". Otherwise `cloud`.
+- **Location**, for `ready-for-agent` and `ready-for-human` only: `local` when any step or check of the work needs an item in the cloud gate of `.claude/commands/implement-suggestions.md` (step 4) other than "a decision or check by a person". Otherwise `cloud`. For a suggestion issue, judge it over the items recommended for approval, or over every item when none is.
 
 ## 6. Write
 
-Post one comment that opens with `> *This was generated by AI during triage.*` and then:
+Post one comment that opens with `> *This was generated by AI during triage.*` and then the brief below. For a suggestion issue, write it to a file first and run the guard over it with the record (and every record it concerns); post it only once the guard passes.
+
+For an issue other than a suggestion:
 
 ```markdown
 ## Agent Brief
@@ -110,10 +117,43 @@ For each red test: its path (inside Scope), the file verbatim in a fenced block,
 
 For `ready-for-human`, add `### Open decisions`, each a concrete question with its options. For `needs-info`, write the established facts and the questions in place of the brief. For `wontfix`, write why, quoting any green test command, then close the issue.
 
-For a suggestion issue, set its status now, once, with this issue's number, or with `#m`'s for a repeat from step 2. Take the status step 2 or step 3 noted, except that a `wontfix` from step 4 or 5 is `approved` when the work is already implemented and `rejected` when the problem does not exist. A `needs-info` issue gets no status yet.
+For a suggestion issue, the brief is grouped by item, so that the maintainer decides each item and `/suggestion-triage` can keep only the approved items' sections for the build:
+
+```markdown
+## Agent Brief
+
+Suggestion <suggestion_id>
+
+**Category:** … **State:** ready-for-human **Location:** …, each with its reason.
+
+**Verification:** what held, each corrected fact, the specification's check, and each related issue from step 2.
+
+### Item 1
+**Item:** the planner's one-line paraphrase.
+**Recommendation:** approve | approve part: … | decline: <category>, and **Reason:** the one plain line to record.
+**Check:** the test's path and command, and its result on `main` (red, with the one failing assertion line; green; or not run, and why).
+**Plan:** for approve and approve part only, numbered steps by behaviour and interface.
+**Red test:** for a red result, the file verbatim in a fenced block.
+
+### Item 2
+…
+
+### Scope
+What may change for the items recommended for approval, and what is out of bounds.
+
+### Done when
+Each red item's check as a command, by item number, then the plugin's own checks.
+
+### Open decisions
+One per item, in order: `Item <k>: approve or decline? Recommended: <recommendation>, reason "<reason>".`
+```
+
+A **merged brief** (step 2) is `## Agent Brief`, the `Suggestion <suggestion_id>` line, `**State:** ready-for-human`, the line `Merged by fingerprint into #m: each item is decided with #m's matching item.`, the item mapping, and one open decision per item naming `#m`. It needs no plan, check or red test of its own.
+
+Set no item status: the maintainer decides each item through `/suggestion-triage`. For any other issue, nothing is recorded on the Suggestion Box.
 
 Then set the labels: add the category, the state and, where it applies, the location label, and remove `needs-triage`. Create a missing label with `POST /labels` first: `cloud` (`{"name":"cloud","color":"0E8A16","description":"Work an unattended cloud session can do"}`) or `local` (`{"name":"local","color":"B60205","description":"Work that needs Brahm's machine, data or credentials"}`).
 
 ## 7. Report
 
-End with the issue number, the labels applied, the one-line reason for each decision and, for a suggestion issue, the status recorded.
+End with the issue number, the labels applied, the one-line reason for each decision and, for a suggestion issue, each item's recommendation and check result, and that the suggestion is under review.

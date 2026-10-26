@@ -12,15 +12,13 @@
 //   { "suggestion_id", "item": n, "status": "implemented", "implemented_in": "<plugin> <version>" }
 //       Probanda's automation marks an approved item shipped
 //   { "suggestion_id", "status": "under review", "issue_number"?: integer }
-//       Probanda's automation opens the suggestion for review
-//   { "suggestion_id", "status": "approved" | "approved in part" | "rejected",
-//     "issue_number"?: integer, "reason"?: text, "category"?: text }
-//       the old whole-suggestion decision, applied to every item, until the
-//       triage skill decides per item (lifecycle plan Phase 7)
+//       Probanda's automation (triage step 1) opens the suggestion for review
+// The old whole-suggestion decision, naming no item, is retired (lifecycle plan
+// Phase 7) and refused with a question.
 // Reply:    { "suggestion_id", "status", "badge", "item"? }
 //
 // The rules are the SQL functions' (suggestions.record_issue, set_item_status,
-// mark_implemented, open_for_review, set_all_items): a decision is never
+// mark_implemented, open_for_review): a decision is never
 // overwritten, a reason is required, and a withdrawn suggestion takes no write.
 // A refused write is a 409 that says it was not saved and asks about the item
 // (COMMANDMENTS.md, Commandment 6). A fault logs its SQLSTATE only.
@@ -56,11 +54,8 @@ serve(async (_key, body) => {
     } else if (w.form === "implemented") {
       [{ r: result }] = await sql`select suggestions.mark_implemented(${w.suggestion_id}::uuid, ${w.item}::int,
         ${w.implemented_in}) as r`;
-    } else if (w.form === "review") {
-      [{ r: result }] = await sql`select suggestions.open_for_review(${w.suggestion_id}::uuid, ${w.issue_number}::int) as r`;
     } else {
-      [{ r: result }] = await sql`select suggestions.set_all_items(${w.suggestion_id}::uuid, ${w.status},
-        ${w.issue_number}::int, ${w.reason}, ${w.category}) as r`;
+      [{ r: result }] = await sql`select suggestions.open_for_review(${w.suggestion_id}::uuid, ${w.issue_number}::int) as r`;
     }
     if (result.saved !== true) {
       return reply(409, { error: REFUSALS[String(result.refusal)] ?? "Not saved. Is this the suggestion and item meant?" });

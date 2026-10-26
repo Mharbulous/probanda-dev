@@ -1,6 +1,6 @@
 ---
 name: suggestion-triage
-description: Use only when Brahm invokes /suggestion-triage in a Claude Code session in the probanda-dev repo. Triages one suggestion from Probanda's Suggestion Box in a single pass - one Fable planner decomposes it, keeps only the parts worth implementing and writes the implementation plan - then files the plan as a probanda-dev issue and records the outcome on the suggestion. Then offers to implement a filed issue at once through an Opus subagent instead of waiting for the nightly cloud run. The debate version is /adversarial-triage.
+description: Use only when Brahm invokes /suggestion-triage in a Claude Code session in the probanda-dev repo. Takes one suggestion issue that /triage-issue left ready-for-human, shows Brahm each item with fix-planner's recommendation and check, and records his decision, reason and (for a decline) category on each item in Probanda's Suggestion Box; then relabels the issue ready-for-agent, or closes it when every item is declined. Offers to implement it at once through an Opus subagent instead of waiting for the cloud run. The debate version is /adversarial-triage.
 ---
 
 <!-- developer v0.1.29 -->
@@ -11,39 +11,39 @@ description: Use only when Brahm invokes /suggestion-triage in a Claude Code ses
 
 Maintainer-only. It ships in the `developer` plugin, which is never public and installs only on Brahm's machines, and runs in a Claude Code session opened in the probanda-dev checkout, often driven from Brahm's iPhone through Remote Control. Every path below is relative to that checkout's root.
 
-Preconditions: the session's working directory is the probanda-dev checkout (`git remote get-url origin` names `Mharbulous/probanda-dev`; otherwise say this skill runs only there, and stop), `POOL_SECRET_KEY` is set in the environment (`node cloud/suggestions/tools/triage.mjs list` prints `set POOL_SECRET_KEY first` when it is not: tell Brahm and stop), and `env -u GH_TOKEN gh auth status` succeeds.
+Preconditions: the session's working directory is the probanda-dev checkout (`git remote get-url origin` names `Mharbulous/probanda-dev`; otherwise say this skill runs only there, and stop), `POOL_SECRET_KEY` is set in the environment (`node cloud/suggestions/tools/triage.mjs list` prints `set POOL_SECRET_KEY first` when it is not: tell Brahm and stop), and `env -u GH_TOKEN gh auth status` succeeds. Run every `gh` call as `env -u GH_TOKEN gh`.
 
-You relay. You read no source and give no opinion on the suggestion. Nothing you file or send names a person, entity, matter or account.
+You relay. You read no source and give no opinion on the suggestion. Only Brahm approves or declines an item (design decisions 17 and 20). Nothing you file or send names a person, entity, matter or account.
 
-**The suggestion** means its title and body and, when the row has them, its `items` verbatim and its previews' labels, `chosen` flags and reasons. Each change in `items` is at least one part. A preview's `html` goes to Brahm as a file card, never to an agent.
+**Paraphrase, never quote** (design decision 16). Brahm sees the submitted text in this session, but nothing written to GitHub or recorded as a reason quotes it. Before any comment, issue edit or reason is written, put it in a file outside the checkout and run the verbatim guard, `python scripts/check_verbatim.py --suggestion <record.json> [--suggestion <record.json> ...] <file>`, with the record of every suggestion it concerns. On a failure, reword the located line and run it again; never write what the guard fails.
 
 ## Steps
 
-1. **Pick.** Run `node cloud/suggestions/tools/triage.mjs list`. Take the oldest row unless Brahm named a `suggestion_id`. If none is `new`, say so and stop.
-2. **Plan.** Dispatch `developer:suggestion-planner` with the row's `suggestion_id`, `skill`, `plugin_version`, `source`, and its full title and body.
-3. **Show.** Write the planner's return in full to a temporary file. In one message, show Brahm the suggestion's title and body verbatim, its `skill`, `plugin_version` and `source`, and then the planner's TLDR verbatim, and send the file as a file card. Then ask one question with these choices, each with the gain and `(Recommended)` mark the TLDR gives it:
-   1. Approve as originally proposed. Leave it out when the planner says it cannot be built as proposed.
-   2. Approve with the planner's adjustments. Leave it out with `Verdict: none`.
-   3. Dismiss unimplemented.
-   4. Something else, or do nothing.
-4. **Record.** Filing an issue means: write its body to a temporary file, then `env -u GH_TOKEN gh issue create -R Mharbulous/probanda-dev --title "<its title>" --body-file <file> --label suggestion,ready-for-agent,cloud`, and immediately after it returns the issue number, run `node cloud/suggestions/tools/triage.mjs set-status <suggestion_id> <status> --issue <n>`.
-   1. As proposed: file the planner's As proposed issue, or its main issue when As proposed is `same as above`, with status `approved`.
-   2. With adjustments: file the planner's main issue, with status `approved` for `Verdict: all` and `"approved in part"` for `Verdict: some`.
-   3. Dismiss: `node cloud/suggestions/tools/triage.mjs set-status <suggestion_id> rejected`.
-   4. Something else: do what Brahm writes, using only the actions above. When he wants a different version, dispatch the planner again with his direction and return to step 3. Doing nothing records nothing, and the suggestion stays `new`.
-5. Say the triage is done, with the issue link if one was filed.
-6. **Implement now?** Only when step 4 filed an issue, ask in the same message as step 5 one question with these choices:
-   1. Implement it now (Recommended: it lands today instead of waiting up to a day for the nightly cloud run, whose gate may also relabel it `local`).
-   2. Do nothing. The nightly run (`.claude/commands/implement-suggestions.md`) takes it.
+1. **Pick.** Take the issue or `suggestion_id` Brahm names. Otherwise run `gh issue list -R Mharbulous/probanda-dev --label suggestion --label ready-for-human --state open --json number,title,createdAt` and take the oldest. When Brahm names a suggestion whose issue still carries `needs-triage`, run `/triage-issue <n>` in this session first, then carry on. When it has no issue yet, say intake has not filed it, and stop. If none is waiting, say so and stop.
+2. **Read.** Read the issue and its latest `## Agent Brief` comment (`gh issue view <n> -R Mharbulous/probanda-dev --json body,labels,comments`). The suggestions it covers are its `Suggestion <id>` line and each `Suggestion <id>` line of an `### Also covers` comment, each with its item mapping. For each, run `node cloud/suggestions/tools/triage.mjs show <suggestion_id>` and save its output to a file outside the checkout: this cloud record, not the issue, holds the submitted text. Any item already decided in the record is shown with its decision and is not asked again. A brief that says `Merged by fingerprint into #m`: say the suggestion is decided with `#m`, and pick `#m` instead.
+3. **Decide, one item per message.** Each message is self-contained, because Brahm often answers from an iPhone, where a question card shows without the earlier context. In this order: the suggestion's pain point and this item's text from the record, verbatim, its `skill`, `plugin_version` and `source`; the brief's sections for this item (Item, Recommendation, Reason, Check and its result, Plan); for a merged issue, the matching item of each other suggestion. Send the mockup, when the record has one, to Brahm as a file card with the first item, never to an agent. Then ask one question with these choices, the brief's recommendation marked `(Recommended)`:
+   1. Approve, with the brief's reason or Brahm's own.
+   2. Decline, with the brief's category and reason or Brahm's own. The category is one of `not enough detail`, `already works as asked`, `already suggested`, `outside what Probanda does`, `cost outweighs benefit` or `conflicts with how Probanda must work`.
+   3. Something else, or leave it undecided.
+
+   A reason is one line of plain words, at most 200 characters, that any practitioner who sent this problem can read, quoting none of the submitted text. Run the guard over it before step 4.
+4. **Record each decision** as Brahm gives it: `node cloud/suggestions/tools/triage.mjs set-item <suggestion_id> <item> approved --reason "<reason>"`, or `... set-item <suggestion_id> <item> declined --reason "<reason>" --category "<category>"`. For an issue that covers several suggestions merged by fingerprint, record the same decision and reason on the matching item of each. A refusal is a question: relay it, and record nothing else for that item until Brahm answers. An item left undecided keeps the issue at `ready-for-human`: finish the other items, then stop at step 5 without relabelling.
+5. **The issue.** Once every item is decided:
+   - **Every item declined:** comment with each item's number and reason (guarded), then `gh issue close <n> -R Mharbulous/probanda-dev --reason "not planned"`, and close each issue merged into it the same way.
+   - **Any item approved:** post one comment, guarded, that opens with `> *Decisions recorded by /suggestion-triage.*` and holds a new `## Agent Brief`: the triage brief with only the approved items' Item, Plan, Check and Red test sections, its Verification, a Scope and Done when cut to those items, and a `### Decisions` list giving every item's number, decision and reason. The latest brief governs the build (`.claude/commands/implement-suggestions.md`), so declined items are not built. Then ask one question: relabel now, `gh issue edit <n> -R Mharbulous/probanda-dev --remove-label ready-for-human --add-label ready-for-agent` (Recommended: the label trigger starts the cloud build at once when the issue carries `cloud`), or leave it. Close each issue merged into it, with a comment `Decided with #<n>`.
+6. **Implement now?** Only when step 5 relabelled the issue, ask in the same message as the triage summary one question with these choices:
+   1. Implement it now (Recommended: it lands today instead of waiting for the cloud run, whose gate may also relabel it `local`).
+   2. Do nothing. The cloud run (`.claude/commands/implement-suggestions.md`) takes it.
 
    On 1, dispatch Agent with `subagent_type: general-purpose`, `model: opus` and `effort: medium`, in the background, with the brief below and the issue number in place of `<n>`. When it returns, relay its report in full, including any check it left for Brahm.
 
    ```text
-   Implement probanda-dev issue #<n> in this checkout and land it on main. The issue is a work order with Plan, Scope and Done when sections. Run every gh call as `env -u GH_TOKEN gh`.
+   Implement probanda-dev issue #<n> in this checkout and land it on main. Its work order is its latest `## Agent Brief` comment, with Plan, Scope and Done when sections, and it builds only the items that brief's Decisions list approves. Run every gh call as `env -u GH_TOKEN gh`.
 
    Rules for the whole run:
    - Other sessions work in this checkout and leave uncommitted files. Never run git checkout, reset, stash, clean or rebase. Never edit, commit or revert a file outside the issue's Scope.
-   - Commit by explicit pathspec (`git commit -F <msg file> -- <paths>`), never `git add -A`. The message says what changed and why, and never mentions Claude or Anthropic.
+   - Commit by explicit pathspec (`git commit -F <msg file> -- <paths>`), never `git add -A`. The message says what changed and why, never quotes the suggestion, and never mentions Claude or Anthropic.
+   - Before each commit, save the suggestion's record (`node cloud/suggestions/tools/triage.mjs show <id>`) to a file outside the checkout and run `python scripts/check_verbatim.py --suggestion <that file> <msg file> <each committed red test and new file>`. A failure: reword the located line and run it again.
    - Push only to main. If `git pull --ff-only` is refused, merge origin/main by the git rules in Brahm's global CLAUDE.md, never by rebase.
 
    1. Claim the issue by docs/agents/issue-tracker.md **Claim** steps 1 to 4 before any edit, and record the claim id. If it is claimed or blocked, stop and report that.
