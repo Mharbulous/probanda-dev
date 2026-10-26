@@ -85,7 +85,7 @@ import { checkSources } from "./sources/check.js";
 import { sourcesFetch } from "./sources/fetch.js";
 import { knowledgeList, knowledgeRead, knowledgeRetire, knowledgeWrite } from "./knowledge/tools.js";
 import { preferencesRead, preferencesWrite } from "./preferences/tools.js";
-import { callSuggestionTool, isSuggestionToolName } from "./suggestions/tools.js";
+import { callSuggestionCardTool, callSuggestionTool, isSuggestionCardToolName, isSuggestionToolName } from "./suggestions/tools.js";
 import { repoDocsRead, repoDocsWrite } from "./files/repo-docs.js";
 import { pagesPreview, pagesTemplate, type PreviewArgs } from "./pages/preview.js";
 import {
@@ -573,6 +573,10 @@ export async function callTool(
 
   if (name === "preferences__write") {
     return preferencesWrite(args);
+  }
+
+  if (isSuggestionCardToolName(name)) {
+    return callSuggestionCardTool(context.practiceDb, name, args);
   }
 
   if (isSuggestionToolName(name)) {

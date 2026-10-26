@@ -1,4 +1,4 @@
-// build-stamp: 923df2d9a415
+// build-stamp: 71c9350bb0fc
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -16001,7 +16001,7 @@ function pluginManifest(installRoot) {
   }
 }
 var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper"];
-function siblingInstalls(installRoot = INSTALL_ROOT) {
+function siblingInstalls(installRoot = INSTALL_ROOT, names = SIBLING_PLUGINS) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve(installRoot);
   const parent = dirname(own);
@@ -16015,7 +16015,7 @@ function siblingInstalls(installRoot = INSTALL_ROOT) {
   const winners = /* @__PURE__ */ new Map();
   for (const dir of candidates2) {
     const manifest = pluginManifest(dir);
-    if (manifest.name === null || !SIBLING_PLUGINS.includes(manifest.name)) continue;
+    if (manifest.name === null || !names.includes(manifest.name)) continue;
     const skills = installSkillsRoot(dir);
     if (skills === void 0) continue;
     const rank = [
@@ -16028,7 +16028,7 @@ function siblingInstalls(installRoot = INSTALL_ROOT) {
       winners.set(manifest.name, { sibling: { name: manifest.name, version: manifest.version, installRoot: dir, skills }, rank });
     }
   }
-  return SIBLING_PLUGINS.flatMap((name) => {
+  return names.flatMap((name) => {
     const held = winners.get(name);
     return held ? [held.sibling] : [];
   });
