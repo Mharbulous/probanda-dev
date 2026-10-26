@@ -179,8 +179,7 @@ leaves a usable record:
 {"citation": "...", "status": "failed", "reason": "..."}
 ```
 
-- `source` (`westlaw` | `canlii`) — required on `downloaded`. Lines that
-  `legislation-fetcher` appends to the same manifest carry `source: official-publisher`.
+- `source` (`westlaw` | `canlii`) — required on `downloaded`.
 - `westlaw` / `canlii` — why a source was passed over, present only when that
   source was tried and did not produce the file: `out-of-plan` |
   `not-found`, plus `blocked` for CanLII.

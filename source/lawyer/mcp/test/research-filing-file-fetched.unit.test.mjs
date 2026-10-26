@@ -20,12 +20,16 @@ const PAGE =
   "<p>1 This Act may be cited as the <i>Fixture Act</i>.</p></body></html>";
 const BIG = `<html><body><p>${"Section text. ".repeat(Math.ceil((FETCH_TEXT_LIMIT_BYTES + 1024) / 14))}</p><p>Last section.</p></body></html>`;
 const PDF = Buffer.from("%PDF-1.4\n% fixture act\n%%EOF\n");
+const RELEASE =
+  "<html><body><h1>Fixture rules consultation</h1><p>Effective October 1, 2026; updated October 2026</p>" +
+  "<p>The committee invites comment.</p></body></html>";
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
 const server = http.createServer((req, res) => {
   if (req.url === "/act") res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(PAGE);
   else if (req.url === "/big") res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(BIG);
   else if (req.url === "/act.pdf") res.writeHead(200, { "Content-Type": "application/pdf" }).end(PDF);
+  else if (req.url === "/release") res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(RELEASE);
   else res.writeHead(404).end();
 });
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -149,6 +153,29 @@ test("the manifest line carries the caller's fields and the runtime's", async (t
 
   const { citation: _citation, ...untitled } = RECORD;
   assert.equal(s.file("https://fixture.test/act", s.law, "Fixture Act.md", untitled).record.citation, null);
+});
+
+test("a secondary page is filed with its date line verbatim and labelled secondary, not official-publisher", async (t) => {
+  const s = setup(t);
+  await s.fetch("https://fixture.test/release");
+  const record = { title: "Fixture rules consultation", kind: "secondary", jurisdiction: "BC", official: false, currency_marker: "Effective October 1, 2026; updated October 2026" };
+  const filed = s.file("https://fixture.test/release", s.law, "Fixture rules consultation.md", record);
+  assert.ok(readFileSync(filed.path, "utf-8").includes('currency_marker: "Effective October 1, 2026; updated October 2026"'));
+  const line = JSON.parse(readFileSync(filed.manifest.path, "utf-8").trim());
+  assert.equal(line.kind, "secondary");
+  assert.equal(line.source, "secondary");
+  assert.equal(line.official, false);
+  assert.equal(line.currency_marker, "Effective October 1, 2026; updated October 2026");
+});
+
+test("a secondary PDF is filed byte for byte, labelled secondary, with its date not read", async (t) => {
+  const s = setup(t);
+  await s.fetch("https://fixture.test/act.pdf");
+  const record = { title: "Fixture consultation paper", kind: "secondary", jurisdiction: "BC", official: false, currency_marker: "PDF: date not read" };
+  const filed = s.file("https://fixture.test/act.pdf", s.law, "Fixture consultation paper.pdf", record);
+  assert.deepEqual(readFileSync(filed.path), PDF);
+  assert.equal(filed.record.source, "secondary");
+  assert.equal(filed.record.currency_marker, "PDF: date not read");
 });
 
 test("a folder outside 6. LAW and a privileged folder are refused, writing nothing", async (t) => {

@@ -613,7 +613,7 @@ export function fileFetched(
     kind: fields.kind,
     jurisdiction: fields.jurisdiction,
     status: "downloaded",
-    source: "official-publisher",
+    source: fields.kind === "secondary" ? "secondary" : "official-publisher",
     official: fields.official,
     publisher_host: new URL(fetched.final_url).hostname,
     url: fetched.url,

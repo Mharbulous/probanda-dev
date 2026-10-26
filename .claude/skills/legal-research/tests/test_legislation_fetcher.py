@@ -179,6 +179,43 @@ class AcceptanceFollowUpTests(unittest.TestCase):
                 self.assertIn("matter's " + self.FILE_NUMBER, text)
                 self.assertIn(self.NEVER_NAME, text)
 
+class SecondaryTests(unittest.TestCase):
+    """A published secondary document is filed without a "current to" marker; legislation still stops."""
+
+    def section(self, heading, end=None):
+        text = read(PLAYBOOK)
+        start = text.index(heading)
+        return flat(text[start:text.index(end, start) if end else len(text)])
+
+    def test_legislation_with_no_marker_still_stops(self):
+        stops = self.section("## 6. Stops", "## 7.")
+        self.assertIn("The matched text has the title but no line matching `currency_marker_pattern` | `stopped`, `no_currency_marker`", stops)
+        self.assertIn("(the URL served a PDF) | `stopped`, `no_currency_marker`", stops)
+        self.assertIn("With no such landing page, a PDF has no readable date: `stopped`, `no_currency_marker`.", self.section("## 9. A PDF", "## 10."))
+
+    def test_secondary_section_files_html_and_pdf_without_a_marker_stop(self):
+        text = self.section("## 11. A secondary document")
+        self.assertIn("`kind: secondary`", text)
+        self.assertIn("`no date printed`", text)
+        self.assertIn("`PDF: date not read`", text)
+        self.assertIn("Neither is a stop", text)
+        self.assertIn("`official` is `false`", text)
+
+    def test_spawn_template_labels_secondary_sources(self):
+        text = read(SHARED / "legal-research.md")
+        template = text[text.index("**Spawn the agent from this template.**"):
+                        text.index("**A `needs_download` or hand-off-packet return")]
+        self.assertIn("Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not retrieved: <reason> / none", template)
+        self.assertIn("never a statement of law", template)
+        self.assertIn("attributed to its author", template)
+
+    def test_agent_points_to_the_playbook_for_its_dispatch(self):
+        text = read(FETCHER)
+        self.assertNotIn("## Dispatch", text)
+        self.assertNotIn("## Return", text)
+        self.assertIn("secondary", text)
+
+
 class NotesTests(unittest.TestCase):
     def test_no_touched_file_uses_a_federal_folder_alias(self):
         for path in TOUCHED:

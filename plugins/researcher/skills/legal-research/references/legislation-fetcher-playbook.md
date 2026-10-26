@@ -20,7 +20,7 @@ The dispatch is one JSON object:
 
 - `citation` (optional): the instrument's citation as the caller has it, such as `SBC 2012, c 13`, `RSC 1985, c F-7` or `SOR/98-106`.
 - `title`: the instrument's title, such as `Limitation Act`.
-- `kind`: `statute`, `regulation` or `bylaw`.
+- `kind`: `statute`, `regulation`, `bylaw`, or `secondary` (section 11).
 - `country`: `CAN`.
 - `jurisdiction`: `BC`, `FED`, or another province's two-letter code.
 - `locality`: for a bylaw, the municipality as a knowledge-tree folder name: letters, digits, `.`, `_` and `-` only, each space a hyphen, as `North-Vancouver`.
@@ -132,7 +132,7 @@ Name the filed file `<title>, <citation>`, or `<title>` with no citation, then `
 
 `sources__fetch` returns `{refused: "host_not_allowed", host, url, redirect_from?, hosts_fetched}` as a result, not an error. Return `refused`, reason `host_not_allowed`, with `publisher_host` the refused host. The gate asks the practitioner once.
 
-On a re-dispatch whose `allow_host` equals the host you are about to fetch or were refused on, write the entry first: `knowledge__write` with `operation: "create"`, `path: "_hosts.json"`, `matter`, and `row: {host, category: "statute", page_url}`, `page_url` being the URL you are about to fetch. `status: "exists"` counts as written. The runtime re-reads the file on the next fetch. Then fetch once more. An `allow_host` naming any other host writes nothing. A second refusal is final (section 6).
+On a re-dispatch whose `allow_host` equals the host you are about to fetch or were refused on, write the entry first: `knowledge__write` with `operation: "create"`, `path: "_hosts.json"`, `matter`, and `row: {host, category, page_url}`, `category` being `"secondary"` for `kind: secondary` and `"statute"` otherwise, `page_url` being the URL you are about to fetch. `status: "exists"` counts as written. The runtime re-reads the file on the next fetch. Then fetch once more. An `allow_host` naming any other host writes nothing. A second refusal is final (section 6).
 
 ## 8. Procedure
 
@@ -175,3 +175,7 @@ Not filed, by design:
 - **A consolidation part.** Never guess a part id (step 4): a regulation published in parts stops at step 6.
 
 `companions` in the return is `{pit, bulletin}`, each as above.
+
+## 11. A secondary document
+
+`kind: secondary` is a published document that is not legislation, such as a news release, consultation paper, committee page, bar notice or article. Its dispatch adds `url`, the address the caller was given; with none, return `stopped`, reason `invalid_dispatch`. Fetch only that `url`, on any host `sources__fetch` allows, in place of section 1's official-publisher rule. Run section 8 without steps 3, 4, 8 and 9. In step 6, fetch with no `match`, and on `truncated: true` again with `match` the title. An HTML page must hold a line containing the title. `currency_marker` is the page's own date line nearest the title, copied as printed, or `no date printed`; for a PDF it is `PDF: date not read`. Neither is a stop. In step 7, `official` is `false`.

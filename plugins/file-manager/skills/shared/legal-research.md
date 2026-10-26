@@ -164,7 +164,10 @@ other question runs the duties in their numbered order.
    statutory-text question), so that its
    `legislation_skipped` titles are known, dispatch the `researcher:legislation-fetcher` agent
    once for each statute, regulation or bylaw cited in the question, known on the
-   issue, or listed in `legislation_skipped`. Skip an instrument whose `downloaded`
+   issue, or listed in `legislation_skipped`. Dispatch it too, with `kind: secondary` and
+   its `url`, for each published document that is not legislation, such as a news release
+   or consultation paper, that the question, the matter, a memo or an audit return names
+   by URL: it gets a `Secondary:` line, never a currency call. Skip an instrument whose `downloaded`
    record is already in the issue folder's `case-download-manifest.json`. The dispatch
    is `{citation?, title, kind, country, jurisdiction, locality?, destination_dir,
    matter, allow_host?}`: `destination_dir` is the issue's existing `6. LAW\<issue>\`
@@ -173,7 +176,7 @@ other question runs the duties in their numbered order.
    at a time. It may run beside `research-paralegal`, because it uses no Chrome, no
    Downloads folder and no Westlaw.
    - `refused` (`host_not_allowed`): ask the practitioner once whether to allow
-     fetching statutes from that host. On a yes, re-dispatch the same instrument with
+     fetching from that host. On a yes, re-dispatch the same instrument with
      `allow_host` set to it. A no, or a second refusal, ends that instrument.
    - `stopped`: a hard stop for that one instrument. Report its reason verbatim, mark
      the instrument unread, and carry on with the question.
@@ -246,11 +249,13 @@ Pooled-layer results: <results> / not installed / NOT AUDITED: <reason>
 Preflight: all ok / <row>: <state>[; <row>: <state>]
 Westlaw: <issue>: run, memo(s): <paths>; decisions: <paths> / not run: tiers 1–3 held pinpointable text: <file> para <n>[; <file> para <n>] / not run: practitioner declined
 Legislation: <citation>: filed <path>, current to <marker>, currency <value> / already on disk <path>, currency <value> / not retrieved: <reason>, currency <value> / on disk from case data <path>[, pp. <X–Y>], official: false, currency <value>
+Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not retrieved: <reason> / none
 6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted or staged>
 Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
 Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal: <its status line, or practitioner declined>
 Decision text is on disk at the paths above.
 Legislation text is on disk at the paths above.
+A file on a Secondary line is its author's words, never a statement of law: cite it as secondary, attributed to its author.
 Note-up records are at the paths on the Note-up line.
 If you need a decision that is not on disk, return needs_download, unless Re-invocation is yes: then offer it as research instead.
 If you rely on a decision with no note-up record, return needs_note_up, unless Re-invocation is yes: then it is NOT NOTED UP.
@@ -277,6 +282,7 @@ caller writes `Job question: none`.
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
 is in issue.
+Write one `Secondary:` line per document, and `Secondary: none` when there is none.
 Write one `Note-up:` line per decision `citation-checker` was dispatched for, and
 `Note-up: none` when none was.
 
