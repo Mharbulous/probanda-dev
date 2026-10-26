@@ -222,6 +222,8 @@ Each phase ends with a commit to `main` and a release where a plugin changes. Ph
 2. **Which plugin ships `technical-writer`.** Options:
    - **(a)** `researcher`, next to the submit tool;
    - **(b)** `lawyer`, next to the card, the local record and `skill_source__read` (recommended, because `/suggestion` is in `lawyer` and starts the writer, so (a) would need an upward reference).
+
+   **Decided (2026-10-26): (b).** `technical-writer` and its backstop ship in `lawyer`.
 3. **Which release counts as "Implemented".** Options:
    - **(a)** the public publication through `publish-public` (recommended, because that is when practitioners receive the fix);
    - **(b)** the push to probanda-dev's `main`, which reaches only the maintainer's machines.
