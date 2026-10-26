@@ -1,7 +1,9 @@
 // The Job Board's loose threads: their shapes, their shared order and labels, and their reads.
 
-import { fetchDeletedTickets, rows, type FilingTitleRow } from "./work-board-reads.js";
+import { fetchDeletedTickets, type FilingTitleRow } from "./work-board-reads.js";
 import { liveSeedClause, liveTicketClause, seedClosedColumns } from "./query.js";
+import { rows } from "../query-rows.js";
+import { hasColumn } from "../schema-capabilities.js";
 
 /** A loose thread that left the board without being outlined (schema v75): discarded, or else suggested. */
 export interface DiscardedSeed {
@@ -81,10 +83,6 @@ export function seedOrigin(s: Pick<WorkBoardSeed, "origin_ticket_id" | "from_fil
   return s.from_filing === null ? null : `from ${s.from_filing}`;
 }
 
-function columnHeld(dbPath: string, table: string, column: string): boolean {
-  return rows<{ n: number }>(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
-}
-
 /** What makes a loose thread open, given its proceeding's deleted job ids: never outlined, or outlined
  * into a deleted job, and neither discarded nor suggested (schema v75; a database below it holds none
  * of either). fetchOpenSeeds reads with it and the Loose Threads page's Defer write guards with it. */
@@ -148,11 +146,11 @@ export function fetchOpenSeeds(
 ): Omit<WorkBoardSeed, "from_filing">[] {
   const open = openSeedCondition(dbPath, deletedIds);
   // The ranking (schema v66); a database below it holds every loose thread unranked.
-  const ranking = columnHeld(dbPath, "seeds", "rank") ? "rank, rank_group, rank_reason" : "NULL AS rank, NULL AS rank_group, NULL AS rank_reason";
+  const ranking = hasColumn(dbPath, "seeds", "rank") ? "rank, rank_group, rank_reason" : "NULL AS rank, NULL AS rank_group, NULL AS rank_reason";
   // The job description (schema v70); a database below it holds none.
-  const job = columnHeld(dbPath, "seeds", "rank_job") ? "rank_job" : "NULL AS rank_job";
+  const job = hasColumn(dbPath, "seeds", "rank_job") ? "rank_job" : "NULL AS rank_job";
   // The deferral (schema v68); a database below it holds no loose thread deferred.
-  const deferral = columnHeld(dbPath, "seeds", "deferred_at") ? "deferred_at" : "NULL AS deferred_at";
+  const deferral = hasColumn(dbPath, "seeds", "deferred_at") ? "deferred_at" : "NULL AS deferred_at";
   return rows<SeedRow>(
     dbPath,
     `SELECT id, filing_id, origin_ticket_id, created, surfaced_by, idea, ${ranking}, ${job}, ${deferral} FROM seeds WHERE ${open.sql} AND proceeding_id = ? ORDER BY id`,

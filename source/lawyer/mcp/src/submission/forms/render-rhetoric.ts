@@ -12,13 +12,9 @@
 //
 // A database held below v71 has none of these tables, so every read here returns nothing there.
 
-import { submissionDataQuery } from "../backend.js";
 import { rhetoricHeld } from "./query.js";
 import { pushStatementLines, reviewMarkerFor, type PointerDocument, type RenderContext } from "./render-vaniac-submissions.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 /** The host part a filing_rhetoric row places a paragraph in. */
 export type RhetoricPart = "facts" | "submissions" | "orders";

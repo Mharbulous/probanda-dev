@@ -9,7 +9,6 @@
 // crossed_out_on model; these renderers only ever read document='form' rows
 // (fetchOrdersSought), so the deployment filter is the join itself.
 
-import { submissionDataQuery } from "../backend.js";
 import {
   BLANK_UNDERLINE,
   frontmatterHeader,
@@ -23,10 +22,7 @@ import { gapMarker } from "./markers.js";
 import { recordCriterionGlyphs, recordGlyphs, type MarkerInventory } from "./proposal-inventory.js";
 import { captionHeadingFor } from "./query.js";
 import { fetchFilingDocuments, fetchOrdersSought, orderReviewMarkerFor, reviewMarkerFor, type RenderContext } from "./render-vaniac-submissions.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 interface AlternativeRow {
   id: number;

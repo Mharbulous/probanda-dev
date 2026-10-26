@@ -7,7 +7,6 @@
 // The Written Arguments companion renders generically via
 // forms.ts's documentsForFiling wrapper -- nothing here builds them.
 
-import { submissionDataQuery } from "../backend.js";
 import {
   formatTimeEstimate,
   checkboxOrderBlock,
@@ -56,10 +55,7 @@ import {
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
 import { factsPart, fetchFacts, fetchStatementsOfFact, type StatementOfFactRow } from "./filing-facts.js";
 import { filingFrontmatter } from "./filing-frontmatter.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 export interface HearingDetailsRow {
   time_estimate_minutes: number | null;

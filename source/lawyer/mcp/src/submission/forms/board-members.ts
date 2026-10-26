@@ -8,8 +8,8 @@
 // proceeding's first Writing takes its place: a row absorbing the proceeding absorbs that Writing,
 // and a row naming the proceeding as survivor names that Writing.
 
-import { submissionDataQuery } from "../backend.js";
 import { isJobOnlyBoard, type FilingRow } from "./query.js";
+import { rows } from "../query-rows.js";
 
 /** A board: a filing's (a Writing or a Job Board with no Writing), or a pre-filing proceeding's (filing_id null). */
 export interface BoardRef {
@@ -31,10 +31,6 @@ export function sameBoard(a: BoardRef, b: BoardRef): boolean {
 /** The page key of a board, the same for every board drawn on one page. */
 export function boardKey(board: BoardRef): string {
   return board.filing_id === null ? `proceeding:${board.proceeding_id}` : `filing:${board.filing_id}`;
-}
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
 }
 
 /** Every board's survivor, read once: the membership rows and every filing's id, proceeding and kind. */

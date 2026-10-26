@@ -27,7 +27,6 @@
 // complete part content for manual assembly (phase-2 ticket #439); table of
 // contents page numbers render "TBD" until that assembly happens.
 
-import { submissionDataQuery } from "../backend.js";
 import { BRIEF_ONLY_CAP_SQL } from "./brief-only-cap.js";
 import {
   bccaCoverPage,
@@ -88,10 +87,7 @@ import {
 import { fetchRhetoric, interleave, renderRhetoricLine, type RhetoricRow } from "./render-rhetoric.js";
 import { factsPart, fetchFacts, fetchStatementsOfFact, type FactRow, type StatementOfFactRow } from "./filing-facts.js";
 import { filingFrontmatter } from "./filing-frontmatter.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 /** Statement-of-Facts paragraphs for part2-slot facts, numbered from startPara + 1, each with its
  * court-record citation line and fact-side markers. Exported: the BCCA factum's Part 1

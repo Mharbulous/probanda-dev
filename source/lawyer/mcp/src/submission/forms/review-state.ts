@@ -1,14 +1,10 @@
 // The 🧐 review snapshot a render reads, and the marker printed from it.
 
-import { submissionDataQuery } from "../backend.js";
 import { counselReviewMarker, REVIEW_SNAPSHOT_FIELDS, reviewKey, reviewSnapshotSql, type ReviewedTable } from "./markers.js";
 import type { OrderSoughtRow } from "./orders-sought.js";
 import { recordCriterionGlyphs, type MarkerInventory } from "./proposal-inventory.js";
 import { rhetoricHeld, treatmentNoteHeld } from "./query.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 /** Every reviewed object's current snapshot and its latest approval (review.md). Keyed `${table}:${id}`. */
 export interface ReviewState {

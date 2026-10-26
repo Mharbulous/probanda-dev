@@ -6,13 +6,9 @@
 // render-form32-filed-face.ts: it emits no marker and no comment.
 
 import { ValidationError } from "../../errors.js";
-import { submissionDataQuery } from "../backend.js";
 import { exhibitLetters, renderAffidavit, withExhibitLetters, type AffidavitRow } from "./render-bcsc-affidavit.js";
 import type { RenderContext } from "./render-vaniac-submissions.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 /** One affidavit's filed face. Throws ValidationError on anything the practitioner must still settle. */
 export function renderAffidavitFiledFace(ctx: RenderContext, a: AffidavitRow): string {

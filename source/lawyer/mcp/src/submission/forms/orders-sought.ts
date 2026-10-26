@@ -1,12 +1,8 @@
 // The order_sought rows a filing document deploys, with their jurisdictional-basis edges.
 
-import { submissionDataQuery } from "../backend.js";
 import type { JurisdictionRequiresEdge } from "./markers.js";
 import type { PointerDocument } from "./submission-reads.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 /** One order_sought row deployed by one filing document, its jurisdictional-basis edges
  * (order_sought_requires, 0..N -- schema v10 #380 replaced the old single jurisdiction_slot_state

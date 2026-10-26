@@ -1,12 +1,8 @@
 // The facts a filing's form holds in its facts Part, and the statements of fact behind them:
 // the reads every filing renderer shares, with each kind's facts Part in one table.
 
-import { submissionDataQuery } from "../backend.js";
 import { courtRecordDocumentColumns } from "./query.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 /** Each kind's facts Part, as its form's filing_facts rows record it: the BCSC Notice of
  * Application's Part 2, the Application Response's Part 4 (#372), the BCCA stay response's

@@ -26,10 +26,11 @@ import argumentsJs from "../../templates/view-pages/arguments.js.js";
 import sharedJs from "../../templates/view-pages/shared.js.js";
 import viewFolderCss from "../../templates/view-pages/view-folder.css.js";
 import viewHeadHtml from "../../templates/view-pages/view-head.html.js";
-import { submissionDataQuery } from "../backend.js";
 import type { ViewPage } from "../view-pages.js";
 import type { FilingRow } from "./query.js";
 import { fetchOpposingPoints } from "./render-vaniac-submissions.js";
+import { rows } from "../query-rows.js";
+import { hasColumn, hasTable } from "../schema-capabilities.js";
 
 export type SubmissionKind = "submission" | "rebuttal";
 
@@ -65,18 +66,6 @@ export interface CounterArgument {
 export interface ArgumentsData {
   submissions: PageSubmission[];
   counter_arguments: CounterArgument[];
-}
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
-
-function tableHeld(dbPath: string, table: string): boolean {
-  return rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])[0].n > 0;
-}
-
-function columnHeld(dbPath: string, table: string, column: string): boolean {
-  return rows<{ n: number }>(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = ?`, [column])[0].n > 0;
 }
 
 /** The page's data for one filing, from the drafting database alone. */
@@ -118,7 +107,7 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
      WHERE f.proceeding_id = ? ORDER BY f.id`,
     [proceedingId]
   );
-  const killedOn = columnHeld(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
+  const killedOn = hasColumn(dbPath, "law_assertions", "killed_on") ? "la.killed_on" : "NULL AS killed_on";
   const law = rows<{ submission_id: number; proposition: string; killed_on: string | null }>(
     dbPath,
     `SELECT sl.submission_id, la.proposition, ${killedOn}
@@ -127,10 +116,10 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
     [proceedingId]
   );
   // The rebuts links (schema v65); a database below it has none.
-  const raisedLinks = tableHeld(dbPath, "submission_rebuts_opposing_points")
+  const raisedLinks = hasTable(dbPath, "submission_rebuts_opposing_points")
     ? rows<{ submission_id: number; point_id: number }>(dbPath, "SELECT submission_id, opposing_point_id AS point_id FROM submission_rebuts_opposing_points")
     : [];
-  const anticipatedLinks = tableHeld(dbPath, "submission_rebuts_anticipated_points")
+  const anticipatedLinks = hasTable(dbPath, "submission_rebuts_anticipated_points")
     ? rows<{ submission_id: number; point_id: number }>(dbPath, "SELECT submission_id, anticipated_point_id AS point_id FROM submission_rebuts_anticipated_points")
     : [];
   const links = [

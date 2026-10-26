@@ -1,12 +1,8 @@
 // Document reads and "Ex. N" exhibit numbering.
 
-import { submissionDataQuery } from "../backend.js";
 import { notBestCopyMarkers, type DocumentCopyRow } from "./markers.js";
 import type { FilingRow } from "./query.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 export function fetchDocumentLabels(dbPath: string, documentIds: number[]): Map<number, string> {
   if (documentIds.length === 0) return new Map();

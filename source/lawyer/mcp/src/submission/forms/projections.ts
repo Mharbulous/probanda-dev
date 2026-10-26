@@ -41,6 +41,7 @@ import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric
 import { captionHeadingFor, clientParty, opposingPartyIds } from "./query.js";
 import { BLANK_UNDERLINE, pluralizeRole, styleOfProceedingCaption } from "./components.js";
 import { formatFlag, proseFormatRules, REFUSED_FORMAT_RULES } from "./prose-format.js";
+import { hasTable } from "../schema-capabilities.js";
 
 /** One entry of a general type's `parts` (shared/declared-layout.md section 3). */
 export interface LayoutPart {
@@ -310,18 +311,11 @@ interface ClauseLine extends ClauseRow {
   provision_currency: string | null; // provision_currency.currency_status for the cited pinpoint
 }
 
-/** Databases known to hold `provision_currency` (schema v53). Only a present table is remembered, as
- * for `recipients_snapshot`. */
-const provisionCurrencyHeld = new Set<string>();
-
 /** Whether the database holds `provision_currency`. A database held below v53 has no provision
  * result, so its cited provision reads unchecked. It keeps v42 readable (forms.ts
  * MIN_READABLE_SCHEMA_VERSION). */
 function hasProvisionCurrency(dbPath: string): boolean {
-  if (provisionCurrencyHeld.has(dbPath)) return true;
-  const [row] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'provision_currency'").rows as unknown as { n: number }[];
-  if (row.n > 0) provisionCurrencyHeld.add(dbPath);
-  return row.n > 0;
+  return hasTable(dbPath, "provision_currency");
 }
 
 function fetchClauses(dbPath: string, filingId: number): ClauseLine[] {

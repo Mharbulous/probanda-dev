@@ -4,16 +4,12 @@
 // the Form 109 style guide (publish-bcsc-form/forms/109-AFF/style-guide.md): numbered paragraphs,
 // no headings, bold exhibit references. Exhibit letters are derived here and never stored.
 
-import { submissionDataQuery } from "../backend.js";
 import { BLANK_UNDERLINE, frontmatterHeader, styleOfProceedingCaption, type CaptionParty, type FrontmatterFields } from "./components.js";
 import { gapMarker, mockupMessage } from "./markers.js";
 import { recordCriterionGlyphs, recordGlyphs } from "./proposal-inventory.js";
 import { captionHeadingFor } from "./query.js";
 import { fetchDocumentLabels, type RenderContext } from "./render-vaniac-submissions.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 /** Where a paragraph attaches an exhibit: `{exhibit:<document_id>}` in its stored text. */
 const EXHIBIT_TOKEN = /\{exhibit:(\d+)\}/g;

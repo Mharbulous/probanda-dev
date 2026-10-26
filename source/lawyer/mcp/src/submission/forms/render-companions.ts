@@ -10,7 +10,6 @@
 // venue face prints.
 
 import { DataServerError } from "../../errors.js";
-import { submissionDataQuery } from "../backend.js";
 import { BLANK_UNDERLINE, frontmatterHeader, styleOfProceedingCaption, type CaptionParty, type FrontmatterFields } from "./components.js";
 import {
   dedupeLineMarkers,
@@ -45,10 +44,7 @@ import { recordCriterionGlyphs, recordGlyphs, recordJurisdictionLadder } from ".
 import { fetchPlacedAlternativeIds } from "./render-requisition.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
 import { captionHeadingFor, JOB_BOARD_KIND, noFactsNeededColumn, noLawNeededColumn, opposingPartyIds, servedOrderWordingsColumn, venueHeadingFor, type ProceedingRow } from "./query.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 /** What the Written Arguments prints differently by venue, keyed by the proceeding's tree key: who
  * is asked for the relief, whether the Rule 24(j) award-cap paragraph prints, and whether the relief

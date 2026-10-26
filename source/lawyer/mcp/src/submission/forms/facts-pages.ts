@@ -36,17 +36,13 @@ import materialFactsHtml from "../../templates/view-pages/material-facts.html.js
 import proceduralHistoryHtml from "../../templates/view-pages/procedural-history.html.js";
 import sharedJs from "../../templates/view-pages/shared.js.js";
 import viewHeadHtml from "../../templates/view-pages/view-head.html.js";
-import { submissionDataQuery } from "../backend.js";
 import { readManifest } from "../render-manifest.js";
 import type { ViewPage, ViewPageContext } from "../view-pages.js";
 import type { InventoryEntry } from "./proposal-inventory.js";
 import { fetchParties } from "./query.js";
 import { factStatementCitationLine, fetchFactAdmissionCoverage } from "./render-vaniac-submissions.js";
 import { isEvidenceWork } from "./render-work-board.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 interface FactRow {
   id: number;

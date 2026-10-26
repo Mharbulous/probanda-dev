@@ -1,11 +1,7 @@
 // The submission-side rows a render reads: submissions, their law and facts, and fact statements.
 
-import { submissionDataQuery } from "../backend.js";
 import { courtRecordDocumentColumns, excerptSpeakerColumn, linkedProvisionsColumn, noFactsNeededColumn, noLawNeededColumn, servedOrderWordingsColumn, settledOnColumn, treatmentNoteColumn } from "./query.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 export interface SubmissionRow {
   id: number;

@@ -1,11 +1,7 @@
 // The Job Board's SQL row shapes and its plain ticket and attachment reads.
 
-import { submissionDataQuery } from "../backend.js";
 import { boardAttachmentsHeld, deletedAtHeld, JOB_BOARD_KIND, liveTicketClause } from "./query.js";
-
-export function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 export type TicketStatus = "queued" | "wip" | "completed" | "superseded";
 

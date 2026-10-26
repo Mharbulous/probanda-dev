@@ -4,7 +4,6 @@
 // renamed relief_items -> order_sought and moved the jurisdiction slot onto
 // order_sought_requires edges).
 
-import { submissionDataQuery } from "../backend.js";
 import {
   formatTimeEstimate,
   checkboxOrderBlock,
@@ -41,10 +40,7 @@ import {
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
 import { factsPart, fetchFacts, fetchStatementsOfFact, type StatementOfFactRow } from "./filing-facts.js";
 import { filingFrontmatter } from "./filing-frontmatter.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 interface HearingDetailsRow {
   /** Undefined on a database held below v62 (read with SELECT *), which prints the blank. */

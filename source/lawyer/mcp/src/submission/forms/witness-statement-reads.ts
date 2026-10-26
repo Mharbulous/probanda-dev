@@ -1,10 +1,7 @@
 // The reads behind each VanIAC Witness Statement.
 
-import { submissionDataQuery } from "../backend.js";
+import { rows } from "../query-rows.js";
 
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
 
 /** Witness statement folded into documents (schema v3 #328/#327): the witness statement itself is a documents row (instrument='witness_statement'), reached through filing_documents(role='witness_statement') rather than a dedicated table. */
 export interface WitnessStatementRow {

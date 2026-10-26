@@ -18,7 +18,6 @@
 // mockup reads (#458).
 
 import { ValidationError } from "../../errors.js";
-import { submissionDataQuery } from "../backend.js";
 import type { PublishWarning } from "../publish-sidecar.js";
 import { passesBriefOnlyCap } from "./brief-only-cap.js";
 import { formatTimeEstimate, pushExcerptBlockquote, STANDARD_MATERIAL_LINES } from "./components.js";
@@ -42,10 +41,7 @@ import { longDate } from "./render-bcca-factum.js";
 import type { FilingDocumentRow } from "./render-vaniac-submissions.js";
 import { factsPart, fetchFacts } from "./filing-facts.js";
 import { factStatementCitationLine } from "./statement-lines.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 interface HearingDetailsRow {
   /** Undefined on a database held below v62, so the key is omitted and asm32 refuses its absence. */

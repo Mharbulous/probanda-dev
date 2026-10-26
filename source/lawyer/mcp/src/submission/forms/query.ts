@@ -10,7 +10,8 @@ import { readFileSync } from "node:fs";
 import { DataServerError } from "../../errors.js";
 import { extractJsonBlock, validateVenueBlock } from "../../knowledge/declared-layout.js";
 import { parseKnowledgePath, shippedLayer } from "../../knowledge/tree.js";
-import { submissionDataQuery } from "../backend.js";
+import { rows } from "../query-rows.js";
+import { hasColumn, hasTable } from "../schema-capabilities.js";
 import type { CaptionHeading } from "./components.js";
 import type { StoredLayout } from "./layout-snapshot.js";
 
@@ -110,10 +111,6 @@ export interface PartyRow {
   /** The /matter-data party this row stands for (schema v41, party/counsel SSOT); NULL until a session
    * links it, and on a sent Writing's snapshot rows, which are never compared. */
   case_party_id: number | null;
-}
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
 }
 
 export function fetchFiling(dbPath: string, filingId: number): FilingRow {
@@ -293,15 +290,8 @@ export interface FilingRecipientRow {
   unrecorded?: true;
 }
 
-/** Databases known to hold `recipients_snapshot` (schema v44). Only a present table is remembered:
- * no hop drops it, while a database below v44 can be migrated mid-session. */
-const recipientsSnapshotHeld = new Set<string>();
-
 function hasRecipientsSnapshot(dbPath: string): boolean {
-  if (recipientsSnapshotHeld.has(dbPath)) return true;
-  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'recipients_snapshot'")[0].n > 0;
-  if (held) recipientsSnapshotHeld.add(dbPath);
-  return held;
+  return hasTable(dbPath, "recipients_snapshot");
 }
 
 /**
@@ -458,34 +448,18 @@ export interface FilingLawRow {
   linked_provisions: string | null; // linkedProvisionsColumn, read by 🕰️
 }
 
-/** Databases known to hold `statements_of_law.settled_on` (schema v47). Only a present column is
- * remembered, as for `recipients_snapshot`. */
-const settledOnHeld = new Set<string>();
-
 /** The select expression for a statement's `settled_on`: the column, or NULL on a database held below
  * v47, where no statement can be 'settled', so the settled tag never prints. It keeps v42 readable
  * (forms.ts MIN_READABLE_SCHEMA_VERSION): a matter whose 42 -> 43 hop is refused stays there (#1460). */
 export function settledOnColumn(dbPath: string): string {
-  if (!settledOnHeld.has(dbPath)) {
-    const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('statements_of_law') WHERE name = 'settled_on'")[0].n > 0;
-    if (!held) return "NULL AS settled_on";
-    settledOnHeld.add(dbPath);
-  }
-  return "sl.settled_on";
+  return hasColumn(dbPath, "statements_of_law", "settled_on") ? "sl.settled_on" : "NULL AS settled_on";
 }
-
-/** Databases known to hold the v61 fit columns (`statements_of_law.excerpt_speaker`,
- * `provision_currency.in_force_on`). Only a present column is remembered, as for `settled_on`. */
-const authorityFitHeldDbs = new Set<string>();
 
 /** Whether the database holds the v61 fit columns. A database held below v61 has no recorded speaker
  * and no in-force date, so the quoting tag never prints there and 🕰️ reads citation years alone. It
  * keeps v42 readable, as `settledOnColumn` does. */
 function authorityFitHeld(dbPath: string): boolean {
-  if (authorityFitHeldDbs.has(dbPath)) return true;
-  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('statements_of_law') WHERE name = 'excerpt_speaker'")[0].n > 0;
-  if (held) authorityFitHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "statements_of_law", "excerpt_speaker");
 }
 
 /** The select expression for a statement's `excerpt_speaker` (alias `sl`): the column, or NULL on a
@@ -508,52 +482,26 @@ export function linkedProvisionsColumn(dbPath: string): string {
                AND oa.kind IN ('statute', 'regulation', 'rule') AND oa.killed_on IS NULL) AS linked_provisions`;
 }
 
-/** Databases known to hold `submissions.no_facts_needed_on` (schema v48). Only a present column is
- * remembered, as for `settled_on`. */
-const noFactsNeededHeld = new Set<string>();
-
 /** The select expression for a submission's `no_facts_needed_on` (table alias `s`): the column, or
  * NULL on a database held below v48, where counsel can have recorded no such decision, so 🧾 reads the
  * linked facts alone. It keeps v42 readable, as `settledOnColumn` does. */
 export function noFactsNeededColumn(dbPath: string): string {
-  if (!noFactsNeededHeld.has(dbPath)) {
-    const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('submissions') WHERE name = 'no_facts_needed_on'")[0].n > 0;
-    if (!held) return "NULL AS no_facts_needed_on";
-    noFactsNeededHeld.add(dbPath);
-  }
-  return "s.no_facts_needed_on";
+  return hasColumn(dbPath, "submissions", "no_facts_needed_on") ? "s.no_facts_needed_on" : "NULL AS no_facts_needed_on";
 }
-
-/** Databases known to hold `submissions.no_law_needed_on` (schema v60). Only a present column is
- * remembered, as for `settled_on`. */
-const noLawNeededHeld = new Set<string>();
 
 /** The select expression for a submission's `no_law_needed_on` (table alias `s`): the column, or NULL
  * on a database held below v60, where counsel can have recorded no such decision, so 📚 reads the
  * linked propositions alone. It keeps v42 readable, as `noFactsNeededColumn` does. */
 export function noLawNeededColumn(dbPath: string): string {
-  if (!noLawNeededHeld.has(dbPath)) {
-    const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('submissions') WHERE name = 'no_law_needed_on'")[0].n > 0;
-    if (!held) return "NULL AS no_law_needed_on";
-    noLawNeededHeld.add(dbPath);
-  }
-  return "s.no_law_needed_on";
+  return hasColumn(dbPath, "submissions", "no_law_needed_on") ? "s.no_law_needed_on" : "NULL AS no_law_needed_on";
 }
-
-/** Databases known to hold `marker_suppressions` (schema v69). Only a present table is remembered,
- * as for `no_facts_needed_on`. */
-const markerSuppressionsHeld = new Set<string>();
 
 /** The facts among `factIds` whose 👤 counsel has suppressed (schema v69): empty on a database held
  * below v69, where counsel can have suppressed nothing. The database deletes a suppression when the
  * fact's postulate changes, so a row read here holds for the line as printed. */
 export function suppressedWitnessFactIds(dbPath: string, factIds: readonly number[]): Set<number> {
   if (factIds.length === 0) return new Set();
-  if (!markerSuppressionsHeld.has(dbPath)) {
-    const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'marker_suppressions'")[0].n > 0;
-    if (!held) return new Set();
-    markerSuppressionsHeld.add(dbPath);
-  }
+  if (!hasTable(dbPath, "marker_suppressions")) return new Set();
   const placeholders = factIds.map(() => "?").join(",");
   return new Set(
     rows<{ keyed_id: number }>(
@@ -577,18 +525,11 @@ export function servedOrderWordingsColumn(): string {
            WHERE sb.submission_id = s.id AND o.crossed_out_on IS NULL AND w.value IS NOT NULL) AS served_order_wordings`;
 }
 
-/** Databases known to hold `authorities.treatment_note` (schema v51). Only a present column is
- * remembered, as for `settled_on`. */
-const treatmentNoteHeldDbs = new Set<string>();
-
 /** Whether the database holds `authorities.treatment_note` (schema v51). A database held below v51
  * has no note-up note, so the note-up tag never prints there and the review snapshot reads its
  * pre-v51 keys (markers.ts reviewSnapshotSql). It keeps v42 readable, as `settledOnColumn` does. */
 export function treatmentNoteHeld(dbPath: string): boolean {
-  if (treatmentNoteHeldDbs.has(dbPath)) return true;
-  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('authorities') WHERE name = 'treatment_note'")[0].n > 0;
-  if (held) treatmentNoteHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "authorities", "treatment_note");
 }
 
 /** The select expression for an authority's `treatment_note` (table alias `auth`): the column, or
@@ -597,109 +538,53 @@ export function treatmentNoteColumn(dbPath: string): string {
   return treatmentNoteHeld(dbPath) ? "auth.treatment_note" : "NULL AS treatment_note";
 }
 
-/** Databases known to hold `ticket_answers` (schema v52). Only a present table is remembered, as for
- * `recipients_snapshot`. */
-const ticketAnswersHeldDbs = new Set<string>();
-
 /** Whether the database holds `ticket_answers` (schema v52). A database held below v52 has no answer
  * saved for any job, so a job's card lists none there. It keeps v42 readable, as `settledOnColumn` does. */
 export function ticketAnswersHeld(dbPath: string): boolean {
-  if (ticketAnswersHeldDbs.has(dbPath)) return true;
-  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'ticket_answers'")[0].n > 0;
-  if (held) ticketAnswersHeldDbs.add(dbPath);
-  return held;
+  return hasTable(dbPath, "ticket_answers");
 }
-
-/** Databases known to hold `board_attachments` (schema v67). Only a present table is remembered, as
- * for `ticket_answers`. */
-const boardAttachmentsHeldDbs = new Set<string>();
 
 /** Whether the database holds `board_attachments` (schema v67, ADR 0042). A database held below v67
  * has no draft attached to any board, and SQL naming the table fails there. */
 export function boardAttachmentsHeld(dbPath: string): boolean {
-  if (boardAttachmentsHeldDbs.has(dbPath)) return true;
-  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'board_attachments'")[0].n > 0;
-  if (held) boardAttachmentsHeldDbs.add(dbPath);
-  return held;
+  return hasTable(dbPath, "board_attachments");
 }
-
-/** Databases known to hold `rhetorical_paragraphs` (schema v71). Only a present table is remembered,
- * as for `board_attachments`. */
-const rhetoricHeldDbs = new Set<string>();
 
 /** Whether the database holds `rhetorical_paragraphs` and its placement and link tables (schema v71).
  * A database held below v71 has no rhetorical paragraph, and SQL naming the tables fails there. */
 export function rhetoricHeld(dbPath: string): boolean {
-  if (rhetoricHeldDbs.has(dbPath)) return true;
-  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'rhetorical_paragraphs'")[0].n > 0;
-  if (held) rhetoricHeldDbs.add(dbPath);
-  return held;
+  return hasTable(dbPath, "rhetorical_paragraphs");
 }
-
-/** Databases known to hold `tickets.deleted_at` (schema v54). Only a present column is remembered,
- * as for `treatment_note`. */
-const deletedAtHeldDbs = new Set<string>();
 
 /** Whether the database holds `tickets.deleted_at` (schema v54). A database held below v54 has no
  * deleted job, and SQL naming the column fails there, so every live-job clause is left off. It keeps
  * v42 readable, as `settledOnColumn` does. */
 export function deletedAtHeld(dbPath: string): boolean {
-  if (deletedAtHeldDbs.has(dbPath)) return true;
-  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('tickets') WHERE name = 'deleted_at'")[0].n > 0;
-  if (held) deletedAtHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "tickets", "deleted_at");
 }
-
-/** Databases known to hold `tickets.created_by` (schema v72). Only a present column is remembered,
- * as for `deleted_at`. */
-const createdByHeldDbs = new Set<string>();
 
 /** Whether `tickets.created_by` exists. Before v72 no job records its creating session, so the
  * creator guard on assigning a job is left off. */
 export function createdByHeld(dbPath: string): boolean {
-  if (createdByHeldDbs.has(dbPath)) return true;
-  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('tickets') WHERE name = 'created_by'")[0].n > 0;
-  if (held) createdByHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "tickets", "created_by");
 }
-
-/** Databases known to hold `tickets.bf_on` (schema v74). Only a present column is remembered, as
- * for `deleted_at`. */
-const bfOnHeldDbs = new Set<string>();
 
 /** Whether `tickets.bf_on` exists. Before v74 no job carries a bring-forward date, so the date
  * guard on assigning a job is left off. */
 export function bfOnHeld(dbPath: string): boolean {
-  if (bfOnHeldDbs.has(dbPath)) return true;
-  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('tickets') WHERE name = 'bf_on'")[0].n > 0;
-  if (held) bfOnHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "tickets", "bf_on");
 }
-
-/** Databases known to hold `ticket_steps.status` (schema v78). Only a present column is remembered,
- * as for `deleted_at`. */
-const stepStatusHeldDbs = new Set<string>();
 
 /** Whether `ticket_steps.status` exists (with `wait_until` and `status_note`). Before v78 a step is
  * open or done and nothing else. */
 export function stepStatusHeld(dbPath: string): boolean {
-  if (stepStatusHeldDbs.has(dbPath)) return true;
-  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('ticket_steps') WHERE name = 'status'")[0].n > 0;
-  if (held) stepStatusHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "ticket_steps", "status");
 }
-
-/** Databases known to hold `documents.exhibit_letters` (schema v56). Only a present column is
- * remembered, as for `deleted_at`. */
-const exhibitLettersHeldDbs = new Set<string>();
 
 /** Whether the database holds `documents.exhibit_letters` (schema v56). It keeps v42 readable, as
  * `settledOnColumn` does. */
 export function exhibitLettersHeld(dbPath: string): boolean {
-  if (exhibitLettersHeldDbs.has(dbPath)) return true;
-  const held = rows<{ n: number }>(dbPath, "SELECT COUNT(*) AS n FROM pragma_table_info('documents') WHERE name = 'exhibit_letters'")[0].n > 0;
-  if (held) exhibitLettersHeldDbs.add(dbPath);
-  return held;
+  return hasColumn(dbPath, "documents", "exhibit_letters");
 }
 
 /** The court-record document's `execution` and `exhibit_letters`, as `court_record_execution` and
@@ -718,7 +603,7 @@ export function liveTicketClause(dbPath: string, alias?: string): string {
 /** The `seeds` columns that take a loose thread off the board (schema v75), as this database holds
  * them: `discarded_at` and `suggested_at`, or none on a database held below v75. */
 export function seedClosedColumns(dbPath: string): string[] {
-  return rows<{ name: string }>(dbPath, "SELECT name FROM pragma_table_info('seeds') WHERE name IN ('discarded_at', 'suggested_at') ORDER BY name").map((c) => c.name);
+  return ["discarded_at", "suggested_at"].filter((column) => hasColumn(dbPath, "seeds", column));
 }
 
 /** ` AND discarded_at IS NULL AND suggested_at IS NULL`, so a query sees only loose threads that were

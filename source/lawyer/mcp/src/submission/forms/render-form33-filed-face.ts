@@ -10,7 +10,6 @@
 // itself: forms.ts's submissionFormsEmitForm33 returns this markdown for
 // /draft to write verbatim and hand to `asm33`.
 
-import { submissionDataQuery } from "../backend.js";
 import type { PublishWarning } from "../publish-sidecar.js";
 import { ValidationError } from "../../errors.js";
 import { passesBriefOnlyCap } from "./brief-only-cap.js";
@@ -39,10 +38,7 @@ import {
 import { fetchRhetoric, interleave, renderRhetoricFiled } from "./render-rhetoric.js";
 import { factsPart, fetchFacts } from "./filing-facts.js";
 import { factStatementCitationLine } from "./statement-lines.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 /** Lenient emit placeholders: the template's own blanks (templates/form-33.dotx). */
 const NOTICE_DATE_PLACEHOLDER = "[notice date]";

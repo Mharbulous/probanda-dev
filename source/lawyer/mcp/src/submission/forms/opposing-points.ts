@@ -1,10 +1,7 @@
 // The opposing points of a proceeding.
 
-import { submissionDataQuery } from "../backend.js";
+import { rows } from "../query-rows.js";
 
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
 
 export interface OpposingPointRow {
   id: number;

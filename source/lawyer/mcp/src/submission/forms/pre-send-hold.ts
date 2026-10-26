@@ -5,13 +5,13 @@ import { currencyLabel, currencyWithheldClauses, type LayoutPart } from "./proje
 import type { MarkerInventory } from "./proposal-inventory.js";
 import { liveTicketClause, type FilingRow } from "./query.js";
 import { authorityUnconfirmed } from "./render-general.js";
-import { rows } from "./work-board-reads.js";
 import type { WorkBoardTicket } from "./work-board-ticket.js";
 import type { CriterionId, GoalCriterion, GoalState, WorkBoardContext } from "./work-board-data.js";
 import { buildProceedingBoard } from "./build-proceeding-board.js";
 import { proposalsFor } from "./board-proposals.js";
 import { declaredCriteria, inventoryCriterion, NEVER_DELIVERED_DOCS } from "./goal-criteria.js";
 import { POSITION_CONFLICT_TITLE, PRE_SEND, PRE_SEND_TITLE, readGate, type GateReading } from "./goal-gate.js";
+import { rows } from "../query-rows.js";
 
 /** The criteria the pre-send hold reads (#951 note; `recipients`, #1234). Counsel's review never
  * holds sending. */

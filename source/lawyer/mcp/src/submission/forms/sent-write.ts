@@ -25,7 +25,7 @@ import { rosterLawyer, type LawyerAct } from "../../knowledge/tools.js";
 import { runPythonDriver } from "../../python-spawn.js";
 import { submissionDataMigrateScriptsDir } from "../../repo-root.js";
 import { readFirmProfile, type FirmProfile } from "../../tools/practice/firm-profile.js";
-import { pythonTimeoutMs, READ_TIMEOUT_MS, submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
+import { pythonTimeoutMs, READ_TIMEOUT_MS, submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { readManifest } from "../render-manifest.js";
 import { storedLayout, type StoredLayout } from "./layout-snapshot.js";
 import type { LayoutPart } from "./projections.js";
@@ -33,6 +33,7 @@ import { partiesSnapshotStatements } from "./parties-snapshot.js";
 import type { MarkerInventory } from "./proposal-inventory.js";
 import { fetchProse, fetchRevision, isJobOnlyBoard, liveTicketClause, type FilingRow } from "./query.js";
 import { PRE_SEND_TITLE, unmetAuthorityConfirmedCriterion, unmetCurrencyCriterion, unmetHeldCriteria, unmetPositionConflictCriterion, type GoalCriterion } from "./render-work-board.js";
+import { rows } from "../query-rows.js";
 
 const TOOL = "drafting_data__record_sent";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -78,10 +79,6 @@ export interface RecordSentResult {
 
 function refused(message: string, code: string): DataServerError {
   return new DataServerError(`${TOOL}: ${message}`, code);
-}
-
-function rows<T>(dbPath: string, sql: string, params: unknown[]): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
 }
 
 /** Who records a Writing as sent: an active roster lawyer, checked as a confirmation's author is. */

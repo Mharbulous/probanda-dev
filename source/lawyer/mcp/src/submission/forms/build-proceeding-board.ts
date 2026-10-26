@@ -1,12 +1,12 @@
 // One proceeding's tickets, each classified, with its open loose threads and its Proposal holders.
 
 import { today as localToday } from "../../knowledge/common.js";
+import { rows } from "../query-rows.js";
 import { ticketAnswersHeld } from "./query.js";
 import { ticketSourcesHeld } from "./track-source.js";
 import {
   fetchDeletedTickets,
   fetchProceedingTickets,
-  rows,
   type AnswerRow,
   type BlockRow,
   type ConflictRow,

@@ -8,9 +8,9 @@
 // that is not on that node in the map now is listed under `<off_map>`, never dropped. Read-only.
 
 import { ValidationError } from "../errors.js";
-import { submissionDataQuery } from "../submission/backend.js";
 import { loadRulesDag, xmlAttr } from "./rules-dag.js";
 import { assertSchema } from "./rules-position.js";
+import { rows } from "../submission/query-rows.js";
 
 const DATE_RE = /^\d{4}-\d\d-\d\d$/;
 
@@ -31,7 +31,6 @@ interface VisitRow {
   visited_at: string;
 }
 
-const rows = <T>(dbPath: string, sql: string, params: unknown[] = []): T[] => submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
 const skillOf = (id: string): string => id.split(/[/ ]/)[0];
 const counts = (r: ServedRow): string =>
   ` sessions="${r.sessions}" served="${r.served}" first_served="${xmlAttr(r.first_served)}" last_served="${xmlAttr(r.last_served)}"`;

@@ -2,8 +2,9 @@
 
 import { LEGISLATION_KINDS } from "./markers.js";
 import { deriveProposals, withNoteUpSteps, type MarkerInventory, type Proposal, type ProposalHolder, type ProposalRejection } from "./proposal-inventory.js";
-import { rows, type FilingTitleRow, type RejectionRow } from "./work-board-reads.js";
+import type { FilingTitleRow, RejectionRow } from "./work-board-reads.js";
 import type { ProceedingBoard } from "./build-proceeding-board.js";
+import { rows } from "../query-rows.js";
 
 /** What proposalsFor reads of a render context, so the Sent write's hold can derive the same sets. */
 interface ProposalScope {

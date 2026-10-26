@@ -1,12 +1,8 @@
 // Admission-ladder state per admission, and per-fact admission coverage.
 
-import { submissionDataQuery } from "../backend.js";
 import { admissionLadderState, admissionRole, admissionRungMarker, admittedAgainstAllOpposing, dedupeLineMarkers, type AdmissionLadderInput } from "./markers.js";
 import { suppressedWitnessFactIds } from "./query.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 export interface AdmissionStateRow {
   id: number;

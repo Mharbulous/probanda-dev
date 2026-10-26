@@ -9,6 +9,7 @@
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
+import { hasTable } from "../schema-capabilities.js";
 
 const TOOL = "drafting_data__track_source";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -57,16 +58,10 @@ interface HolderRow {
   locked_by: string | null;
 }
 
-/** Databases known to hold `ticket_sources` (schema v76). Only a present table is remembered. */
-const ticketSourcesHeldDbs = new Set<string>();
-
 /** Whether the database holds `ticket_sources` (schema v76). A database held below v76 has no source
  * to get on any job, so a job's card lists none there. */
 export function ticketSourcesHeld(dbPath: string): boolean {
-  if (ticketSourcesHeldDbs.has(dbPath)) return true;
-  const [{ n }] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'ticket_sources'").rows as unknown as { n: number }[];
-  if (n > 0) ticketSourcesHeldDbs.add(dbPath);
-  return n > 0;
+  return hasTable(dbPath, "ticket_sources");
 }
 
 function oneLine(value: unknown, field: string, max: number): string {

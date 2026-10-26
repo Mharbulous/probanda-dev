@@ -28,10 +28,11 @@ import rawResearchHtml from "../../templates/view-pages/raw-research.html.js";
 import rawResearchJs from "../../templates/view-pages/raw-research.js.js";
 import sharedJs from "../../templates/view-pages/shared.js.js";
 import viewHeadHtml from "../../templates/view-pages/view-head.html.js";
-import { submissionDataQuery } from "../backend.js";
 import type { ViewPage } from "../view-pages.js";
 import { lawStatementCitationLine, type LawStatementLine } from "./law-statement-line.js";
 import { excerptSpeakerColumn, type FilingRow, settledOnColumn, treatmentNoteColumn } from "./query.js";
+import { rows } from "../query-rows.js";
+import { hasColumn } from "../schema-capabilities.js";
 
 export type RawResearchClass = "in_use" | "undecided" | "not_relevant";
 
@@ -89,30 +90,14 @@ export interface RawResearchData {
   groups: RawResearchGroup[];
 }
 
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
-
-/** Columns known to be held, by database and `table.column`. Only a present column is remembered,
- * as query.ts does: no hop drops one, while a database can be migrated mid-session. */
-const columnsHeld = new Set<string>();
-
-function columnHeld(dbPath: string, table: string, column: string): boolean {
-  const key = `${dbPath}\u0000${table}.${column}`;
-  if (columnsHeld.has(key)) return true;
-  const held = rows<{ n: number }>(dbPath, `SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = '${column}'`)[0].n > 0;
-  if (held) columnsHeld.add(key);
-  return held;
-}
-
 /** The select expression for a statement's `verified_on` (alias `sl`, schema v61), or NULL below it. */
 function verifiedOnColumn(dbPath: string): string {
-  return columnHeld(dbPath, "statements_of_law", "verified_on") ? "sl.verified_on" : "NULL AS verified_on";
+  return hasColumn(dbPath, "statements_of_law", "verified_on") ? "sl.verified_on" : "NULL AS verified_on";
 }
 
 /** The select expression for a proposition's `killed_on` (schema v64), or NULL below it. */
 function propositionKilledOnColumn(dbPath: string): string {
-  return columnHeld(dbPath, "law_assertions", "killed_on") ? "killed_on" : "NULL AS killed_on";
+  return hasColumn(dbPath, "law_assertions", "killed_on") ? "killed_on" : "NULL AS killed_on";
 }
 
 type StatementRow = Omit<LawStatementLine, "linked_provisions"> & {

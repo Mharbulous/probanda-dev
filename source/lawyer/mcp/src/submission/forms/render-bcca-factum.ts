@@ -13,7 +13,6 @@
 // "The respondent seeks an Order:" and "All of which is respectfully submitted." too, but not
 // the order wording between them), so para # references agree.
 
-import { submissionDataQuery } from "../backend.js";
 import { BRIEF_ONLY_CAP_SQL } from "./brief-only-cap.js";
 import {
   bccaCoverPage,
@@ -50,10 +49,7 @@ import { recordContactGaps, renderFactParagraphsWithRhetoric } from "./render-bc
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
 import { factsPart, fetchFacts } from "./filing-facts.js";
 import { filingFrontmatter } from "./filing-frontmatter.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 /** Prints a section's whole 🧩 line and records it as an open item keyed on its field (#1226). */
 function pushGap(ctx: RenderContext, lines: string[], line: string, field: number, item: string): void {

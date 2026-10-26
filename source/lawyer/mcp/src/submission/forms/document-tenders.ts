@@ -1,6 +1,5 @@
 // Who tenders each exhibit: the Evidence Index's Tendered-by cell and its 👤 inputs.
 
-import { submissionDataQuery } from "../backend.js";
 import { fetchAdmissionStates, type AdmissionStateRow } from "./admission-annotations.js";
 import { fetchDocumentLabels } from "./exhibit-documents.js";
 import {
@@ -14,10 +13,7 @@ import {
   type AdmissionRole,
 } from "./markers.js";
 import { recordGlyphs, type MarkerInventory } from "./proposal-inventory.js";
-
-function rows<T>(dbPath: string, sql: string, params: unknown[] = []): T[] {
-  return submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
-}
+import { rows } from "../query-rows.js";
 
 interface ExhibitTenderRow {
   exhibit_id: number;

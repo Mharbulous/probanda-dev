@@ -23,9 +23,10 @@
 // there comes back as `<log_error>`, never thrown, so the log never blocks serving rules.
 
 import { DataServerError, ValidationError } from "../errors.js";
-import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../submission/backend.js";
+import { submissionDataWriteAll, type WriteStatement } from "../submission/backend.js";
 import { composeRules, loadRulesDag, renderRules, xmlAttr, xmlText, type ComposedRule, type Composition, type RulesDag } from "./rules-dag.js";
 import { normalizeFacts } from "./skill-rules.js";
+import { rows } from "../submission/query-rows.js";
 
 const POSITION_SCHEMA_VERSION = 73;
 const NOW = "strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')";
@@ -80,8 +81,6 @@ function checkArgs(tool: string, dbPath: unknown, token: unknown): void {
     throw new ValidationError(`${tool}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
 }
-
-const rows = <T>(dbPath: string, sql: string, params: unknown[] = []): T[] => submissionDataQuery(dbPath, sql, params).rows as unknown as T[];
 
 export function assertSchema(tool: string, dbPath: string): void {
   const [row] = rows<{ value: string }>(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'");
