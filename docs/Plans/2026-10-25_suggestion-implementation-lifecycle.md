@@ -217,6 +217,8 @@ Each phase ends with a commit to `main` and a release where a plugin changes. Ph
    - **(a)** limit its input to Probanda's own output;
    - **(b)** retire it, and have `/draft` and `/work` report what they notice through one `lawyer` tool that records an observation and fingerprint in the local store, so one store enforces the cap and suppression (recommended, because Q6 found the two origins differ only by cue, cap and suppression, and a second detector adds what Q6 ruled out);
    - **(c)** do nothing.
+
+   **Decided (2026-10-26): (b).** The evaluator retires. `/draft` and `/work` record what they notice through one `lawyer` tool into the local store, which enforces the cap and suppression for every AI-noticed suggestion.
 2. **Which plugin ships `technical-writer`.** Options:
    - **(a)** `researcher`, next to the submit tool;
    - **(b)** `lawyer`, next to the card, the local record and `skill_source__read` (recommended, because `/suggestion` is in `lawyer` and starts the writer, so (a) would need an upward reference).
