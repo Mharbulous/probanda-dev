@@ -1,0 +1,61 @@
+name: leak-scan
+
+# Started by hand from the Actions tab. gitleaks scans every commit on every branch for
+# leaked credentials, then Claude, paid from the ANTHROPIC_API_KEY secret, sorts each hit
+# into a real credential, a test value or a false positive. A clean scan never calls Claude.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      # A credential deleted in a later commit is still in history, so the whole history is fetched.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: scan
+        env:
+          GITLEAKS_VERSION: 8.30.1
+        run: |
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz -C "$RUNNER_TEMP" gitleaks
+          # --redact keeps every credential value out of the log and the report.
+          "$RUNNER_TEMP/gitleaks" git --redact --exit-code 0 --report-format json --report-path gitleaks.json
+          echo "count=$(jq length gitleaks.json)" >> "$GITHUB_OUTPUT"
+      - if: steps.scan.outputs.count != '0'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: --model claude-sonnet-5-5 --allowedTools "Read,Grep,Glob,Write,Bash(git show:*),Bash(git log:*)"
+          prompt: |
+            gitleaks.json lists every credential gitleaks found in this repository's git history,
+            with each value redacted. For each entry, read its commit and file with git show and decide:
+            - real: a live credential (API key, token, password, private key) for a real service
+            - test: a placeholder, example, fixture or published test value
+            - false positive: not a credential at all
+            Also say whether the value is still in the current tree.
+
+            Write leak-scan.md: one sentence giving the totals, then a table with columns
+            Verdict, Commit (short hash), File, Line, Rule, Still present, Reason. Put real rows first.
+
+            Never write a credential value anywhere, in the file or your messages. Where you must
+            identify one, give only its first 4 characters followed by "...".
+      - if: always()
+        run: |
+          if [ -f leak-scan.md ]; then
+            cat leak-scan.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "gitleaks found ${{ steps.scan.outputs.count }} hits in $(git rev-list --all --count) commits." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: leak-scan
+          path: |
+            gitleaks.json
+            leak-scan.md
+          if-no-files-found: ignore
