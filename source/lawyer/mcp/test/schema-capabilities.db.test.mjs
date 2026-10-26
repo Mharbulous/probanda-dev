@@ -1,9 +1,10 @@
 // The schema-capability snapshot (#184): a present table or column is answered from one snapshot per
 // database, a miss re-reads it so a column a migrate adds in the same process is seen at once, and
-// resetSchemaCapabilities forgets a snapshot.
+// resetSchemaCapabilities forgets a snapshot. A v46 database lacks statements_of_law.settled_on (v47)
+// and ticket_sources (v76).
 
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
@@ -12,38 +13,37 @@ const dir = mkdtempSync(join(tmpdir(), "coclerk-schema-capabilities-"));
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = join(dir, "locks");
 after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
 
-const { submissionDataExecute } = await import("../build/submission/backend.js");
+const { submissionDataMigrate } = await import("../build/submission/migrate.js");
 const { hasColumn, hasTable, resetSchemaCapabilities } = await import("../build/submission/schema-capabilities.js");
+const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
 
-async function freshDb(name) {
-  const dbPath = join(dir, name);
-  writeFileSync(dbPath, "");
-  await submissionDataExecute(dbPath, "CREATE TABLE tickets (id INTEGER PRIMARY KEY, title TEXT);");
-  return dbPath;
-}
-
-test("answers present and absent tables and columns", async () => {
-  const dbPath = await freshDb("answers.db");
-  assert.equal(hasTable(dbPath, "tickets"), true);
-  assert.equal(hasColumn(dbPath, "tickets", "title"), true);
+test("answers present and absent tables and columns", () => {
+  const dbPath = join(dir, "answers.sqlite");
+  submissionDbAt(dbPath, 46);
+  assert.equal(hasTable(dbPath, "filings"), true);
+  assert.equal(hasColumn(dbPath, "filings", "title"), true);
   assert.equal(hasTable(dbPath, "ticket_sources"), false);
-  assert.equal(hasColumn(dbPath, "tickets", "deleted_at"), false);
+  assert.equal(hasColumn(dbPath, "statements_of_law", "settled_on"), false);
 });
 
 test("a miss after a migrate in the same process sees the new table and column", async () => {
-  const dbPath = await freshDb("migrated.db");
-  assert.equal(hasColumn(dbPath, "tickets", "deleted_at"), false);
+  const dbPath = join(dir, "migrated.sqlite");
+  submissionDbAt(dbPath, 46);
+  assert.equal(hasColumn(dbPath, "statements_of_law", "settled_on"), false);
   assert.equal(hasTable(dbPath, "ticket_sources"), false);
-  await submissionDataExecute(dbPath, "ALTER TABLE tickets ADD COLUMN deleted_at TEXT; CREATE TABLE ticket_sources (id INTEGER PRIMARY KEY);");
-  assert.equal(hasColumn(dbPath, "tickets", "deleted_at"), true);
+  await submissionDataMigrate(dbPath);
+  assert.equal(hasColumn(dbPath, "statements_of_law", "settled_on"), true);
   assert.equal(hasTable(dbPath, "ticket_sources"), true);
 });
 
 test("resetSchemaCapabilities forgets a remembered table", async () => {
-  const dbPath = await freshDb("reset.db");
-  assert.equal(hasTable(dbPath, "tickets"), true);
-  await submissionDataExecute(dbPath, "DROP TABLE tickets;");
-  assert.equal(hasTable(dbPath, "tickets"), true, "a present table is answered from the snapshot");
+  const dbPath = join(dir, "reset.sqlite");
+  const older = join(dir, "older.sqlite");
+  await freshSubmissionDb(dbPath);
+  submissionDbAt(older, 46);
+  assert.equal(hasTable(dbPath, "ticket_sources"), true);
+  copyFileSync(older, dbPath);
+  assert.equal(hasTable(dbPath, "ticket_sources"), true, "a present table is answered from the snapshot");
   resetSchemaCapabilities(dbPath);
-  assert.equal(hasTable(dbPath, "tickets"), false);
+  assert.equal(hasTable(dbPath, "ticket_sources"), false);
 });
