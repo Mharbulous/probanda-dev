@@ -1,6 +1,6 @@
 ---
 name: suggestion
-description: "Turns a practitioner's experience of Probanda into a suggestion to its maintainers, and saves a fix that worked as their own preference. Use at three moments: (1) a task is finished, the practitioner is satisfied, and getting there took corrections, rejections, repeated instructions or workarounds; (2) Probanda has stopped because it cannot do what the practitioner needs (a missing capability or a refusal), after ruling out a setup or configuration fault; (3) the practitioner asks to suggest, request, report a bug or regression, or give feedback on how Probanda works (\"Probanda should…\", \"tell the developers…\", \"from now on, always…\"), even mid-task. Not for corrections to the practitioner's own document or draft, not mid-task unless the practitioner raises it, not when the only sign is an irritated tone, not for a setup or configuration fault, and not for loose threads, which have their own route into the Suggestion Box."
+description: "Turns a practitioner's experience of Probanda into a suggestion to its maintainers, and saves a fix that worked as their own preference. Use at three moments: (1) a task is finished, the practitioner is satisfied, and getting there took corrections, rejections, repeated instructions or workarounds; (2) Probanda has stopped because it cannot do what the practitioner needs (a missing capability or a refusal), after ruling out a setup or configuration fault; (3) the practitioner asks to suggest, request, report a bug or regression, or give feedback on how Probanda works (\"Probanda should…\", \"tell the developers…\", \"from now on, always…\"), even mid-task. Not for corrections to the practitioner's own document or draft, not mid-task unless the practitioner raises it, not when the only sign is an irritated tone, not for a setup or configuration fault, and not for loose threads, which other skills report themselves. Also runs when an end-of-reply reminder names it with a session id."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
@@ -18,8 +18,9 @@ The installed plugin is a read-only synced copy. Never look for, clone or edit i
 | **Solved**: a solution was found, the practitioner is satisfied, and the session held corrections, rejections, repeated instructions or workarounds on the way | After the result is delivered and accepted, and only when the practitioner is not in the middle of a task | `assisted` |
 | **Gap**: Probanda cannot do what was needed, because a capability is missing or a rule refuses it | After ruling out a fault that setup or configuration fixes now (those go to troubleshooting, not here). A bug or a regression the practitioner cannot fix is reported here, as a Gap. Then stop honestly and give any workaround outside Probanda | `assisted` |
 | **Practitioner-initiated**: they offer a suggestion, or invoke this skill | At once, even mid-task. Afterwards, resume the task where it stopped | `user` |
+| **Probanda noticed**: the reminder at the end of a reply names this skill and this session's id | At that reply, in place of waiting for the practitioner. Section 9 only | `llm` |
 
-**Cap.** At most one Solved or Gap offer per session, and never two for the same pain. A practitioner-initiated suggestion is never capped. A smooth session gets no offer and no mention of this skill.
+**Cap.** At most one Solved or Gap offer per session, and never two for the same pain. A practitioner-initiated suggestion is never capped. A smooth session gets no offer and no mention of this skill. A card Probanda noticed is capped by the plugin itself: at most one a day, and never again for one the practitioner dismissed, sent or left unanswered.
 
 ## 1. Before starting
 
@@ -106,3 +107,17 @@ Nothing here is the session's to do or to say. On Submit Suggestion the card sav
 ## 8. Resume
 
 Go back to the work the suggestion interrupted, at the point it stopped and with its plan unchanged.
+
+## 9. A card Probanda noticed
+
+Probanda records what it notices about its own work as an observation: a skill that notices a failing Probanda tool, such as one triaging loose threads, reports it through `suggestion_observation__record`, holding only Probanda's own output (the tool's name, the error's class or code, counts and the plugin's fixed texts), never anyone's words. The lawyer plugin decides by itself when one may be shown, and then its reminder at the end of a reply names this skill and gives this session's id. Only then does this section run, and it replaces sections 1 to 8: no outcome check, no pains extracted, no question, and nothing in chat before, during or after it.
+
+1. **Ask.** Call `suggestion_observation__next({session_id})` with the session id the reminder gave. With `observation: null`, end the reply with nothing more.
+2. **Draft the blocks from the observation alone:** its `raw_observation` lines and its `fingerprint` (the plugin, its version, the skill and the kind), never the conversation, a document, a tool's arguments or the practitioner's words.
+   - **The pain point:** your best guess at its effect on the practitioner, felt or not: time lost, cost, reliability, accuracy, or a near miss on confidentiality. Always `guess: true`: the card labels it "our guess, edit if wrong".
+   - **The items:** one or two changes a maintainer could accept or decline, each `guess: true`, and `visual: true` only for one that changes how something looks.
+   - **No context lines:** the raw observation is on the card already. Name no client, matter, person, document or file.
+3. **Build** with `suggestion_card__build({origin: "probanda", source: "llm", observation_id, session_id, pain_point, items, tool_names})`: the observation's id from step 1 and the same session id, with no `skill` and no `raw_observation`, which the card takes from the observation itself. The card opens "Probanda noticed:". The raw observation is checked against this computer's records before the card is shown, and a line that matches is dropped without asking.
+   - `built: false` with `reason: "not_raised"`: the plugin's cap or suppression does not allow it now. End the reply with nothing more.
+   - `built: false` with `hits`: reword the block named, without any word that matched, and build once more. If it is refused again, or returns `reason: "records_unreadable"`, end the reply with nothing more: the practitioner never asked for this card.
+4. **Show it** as a file card (`shared/present-files.md`), with no text, and end the reply. Do not wait on it: Submit Suggestion and Dismiss work by themselves (section 7). A card left unanswered when the session ends counts as dismissed. If the practitioner asks in this session to see it again or for its mockup, it is among `suggestion_log__read`'s `open_cards` (section 1).

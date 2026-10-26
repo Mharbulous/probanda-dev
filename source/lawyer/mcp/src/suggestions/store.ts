@@ -1,7 +1,9 @@
 // The local suggestion store (docs/Plans/2026-10-25_suggestion-design.md, decision 14): one JSON file,
 // `<CLAUDE_PLUGIN_DATA>/suggestions/suggestions.json`, holding every suggestion this device sent or
 // tried to send, every suggestion an earlier version held unposted, every suggestion card (kind
-// "card", card.ts) and every dismissal of one (kind "dismissal"), and (from Phase 5) every observation.
+// "card", card.ts), every dismissal of one (kind "dismissal") and every observation (kind
+// "observation", observation.ts). Its `ai_noticed` field holds the last answer observation.ts reached
+// about raising an AI-noticed card, which the lawyer plugin's Stop hook reads.
 //
 // One store, one list of records, each record naming its `kind` (Commandment 5: no table, column or
 // file per kind). A kind this code does not know is kept as it is, so a later version's records
@@ -111,6 +113,14 @@ export interface SuggestionStore {
   version: 1;
   migrated_log: { from: string; on: string } | null;
   records: StoreRecord[];
+  /** observation.ts's last answer about raising an AI-noticed card (its AiNoticedAnswer); absent until one was reached. */
+  ai_noticed?: {
+    checked_at: string;
+    session_id: string;
+    next: string | null;
+    latest_observation: string | null;
+    recheck_at: string | null;
+  };
 }
 
 /** The folder the store, its lock and the Past suggestions page live in: `<CLAUDE_PLUGIN_DATA>/suggestions`. */
@@ -170,7 +180,12 @@ function readStoreFile(file: string): SuggestionStore {
   if (!existsSync(file)) return { version: 1, migrated_log: null, records: [] };
   const raw = readJson(file);
   if (!Array.isArray(raw.records)) throw new DataServerError(`${file} has no "records" list`, "invalid_file");
-  return { version: 1, migrated_log: (raw.migrated_log as SuggestionStore["migrated_log"]) ?? null, records: raw.records as StoreRecord[] };
+  return {
+    version: 1,
+    migrated_log: (raw.migrated_log as SuggestionStore["migrated_log"]) ?? null,
+    records: raw.records as StoreRecord[],
+    ...(raw.ai_noticed && typeof raw.ai_noticed === "object" ? { ai_noticed: raw.ai_noticed as SuggestionStore["ai_noticed"] } : {}),
+  };
 }
 
 // The old log's statuses as decision 17's badges. "approved in part" is no longer a status: the

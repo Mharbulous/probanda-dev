@@ -32,7 +32,7 @@ export const PROBANDA_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor
 export type ProbandaPlugin = (typeof PROBANDA_PLUGINS)[number];
 
 /** Each plugin's MCP server keys (CLAUDE.md, Permanent names). */
-const SERVERS: Record<ProbandaPlugin, readonly string[]> = {
+export const SERVERS: Record<ProbandaPlugin, readonly string[]> = {
   lawyer: ["data", "contacts-calendars-email"],
   researcher: ["canlii", "commons"],
   litigator: [],
@@ -43,7 +43,7 @@ const SERVERS: Record<ProbandaPlugin, readonly string[]> = {
 };
 
 /** The tools of each server this package builds. A server built elsewhere (researcher's) is unknown here. */
-function expectedTools(plugin: ProbandaPlugin, server: string): string[] | null {
+export function expectedTools(plugin: ProbandaPlugin, server: string): string[] | null {
   const names = (defs: { name: string }[]) => defs.map((d) => d.name).sort();
   if (plugin === "lawyer" && server === "data") return names(buildToolDefinitions());
   if (plugin === "lawyer" && server === "contacts-calendars-email") return names(buildContactsCalendarsEmailToolDefinitions());

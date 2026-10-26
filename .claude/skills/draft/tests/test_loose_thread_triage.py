@@ -118,11 +118,16 @@ class LooseThreadTriageTest(unittest.TestCase):
         self.assertNotIn("the ids gone", self.triage)
         self.assertEqual(self.triage.count("confirm-read the lane (the ids discarded, the count)"), 2)
 
-    def test_tooling_threads_go_to_the_suggestion_box(self):
-        box = paragraph(self.triage, "**Tooling threads go to the Suggestion Box.**")
+    def test_tooling_threads_are_reported_as_observations_never_posted(self):
+        box = paragraph(self.triage, "**Tooling threads are reported to Probanda.**")
         self.assertIn("run `references/suggestion-box.md` over every open `tooling` thread that is not deferred", box)
-        self.assertIn("no thread is discarded or sent without the practitioner's answer", box)
-        self.assertTrue((WORK / "references" / "suggestion-box.md").is_file())
+        self.assertIn("an observation holding only Probanda's own output, never the thread's words", box)
+        self.assertIn("No thread is posted as a suggestion, and none is discarded without the practitioner's answer", box)
+        self.assertNotIn("evaluator", self.triage)
+        reference = (WORK / "references" / "suggestion-box.md").read_text(encoding="utf-8")
+        self.assertIn("suggestion_observation__record", reference)
+        self.assertNotIn("suggestion-evaluator", reference)
+        self.assertNotIn("suggestion_card__build", reference)
 
 
 if __name__ == "__main__":
