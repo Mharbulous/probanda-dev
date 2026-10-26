@@ -60,4 +60,4 @@ Items, mockups and wording
 Q6 left nothing new: practitioner-started and AI-noticed suggestions differ only by origin cue, raw observation and fingerprint, daily cap and suppression (decisions 2 to 4, 9, 10 and 18).
 
 ## Open
-- `GLOSSARY.md`: already defines Suggestion, Pain point, Done-test and Preview for the current design. Update at "now compare".
+- ~~`GLOSSARY.md`: already defines Suggestion, Pain point, Done-test and Preview for the current design. Update at "now compare".~~ Done (2026-10-26, lifecycle plan Phase 12): Preview is renamed Mockup (suggestion), Suggestion, Pain point and Done-test follow decisions 1 to 28, and Item, Constraint line, Evidence line, Origin, Fingerprint and Badge are added.

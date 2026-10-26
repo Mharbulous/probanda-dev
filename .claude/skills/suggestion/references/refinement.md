@@ -25,11 +25,11 @@ Behaviour the session already proved is stronger evidence than anything asked fo
 
 ## How to show "done", by type of pain
 
-Every Preview is a before and after of what the practitioner experiences, in that experience's own medium.
+Each way of showing "done" is a before and after of what the practitioner experiences, in that experience's own medium.
 
 | Type of pain | Shown locally | Posted |
 |---|---|---|
-| UI (a page, a card, a layout) | A Preview. For a board, only a deterministic preview of the page. A model never writes the page's HTML (`shared/html-pages.md`). Where no such preview exists, a markdown sketch of the layout. | The visual items, each marked visual on the card, and the rejection reasons as constraint lines. A mockup travels only when the practitioner asks for one on the card (SKILL.md section 6), built from placeholder text alone. |
+| UI (a page, a card, a layout) | For a board, only a deterministic preview of the page. A model never writes the page's HTML (`shared/html-pages.md`). Where no such preview exists, a markdown sketch of the layout. | The visual items, each marked visual on the card, and the rejection reasons as constraint lines. A mockup travels only when the practitioner asks for one on the card (SKILL.md section 6), built from placeholder text alone. |
 | Output (a draft, letter, document) | A redraft beside the original | The change described generically, plus the constraints |
 | Workflow, behaviour, trust, discoverability | A replay of the relevant turns as they would go once fixed | A numbered list of generic steps, drafted fresh |
 | Accuracy (a wrong date, value, filing) | The worked case from the session | A test case with invented facts that keeps the logic that went wrong |
@@ -37,6 +37,6 @@ Every Preview is a before and after of what the practitioner experiences, in tha
 | Reliability (a tool fails) | The steps and the error | Steps that reproduce it, plus the expected result, with paths and names removed |
 | Speed or cost | The measured time or turn count | The measurement now and the target the practitioner confirmed |
 
-**Real content stays local.** What is shown on the practitioner's machine may use their real matter content. What is posted is drafted fresh from placeholders. It is never made by swapping names out of the transcript, because pattern screening cannot catch a client's name, a file number or an amount. A Preview is shown through the file-card tool `shared/present-files.md` names. What is posted is only what the card shows, and the practitioner sees all of it there before they submit.
+**Real content stays local.** What is shown on the practitioner's machine may use their real matter content. What is posted is drafted fresh from placeholders. It is never made by swapping names out of the transcript, because pattern screening cannot catch a client's name, a file number or an amount. Anything shown as a file goes through the file-card tool `shared/present-files.md` names. What is posted is only what the card shows, and the practitioner sees all of it there before they submit.
 
 **Preferences hold no client content.** A preference is an instruction to a named skill, in generic terms: "Show the deadline summary before the full list". It never names the matter it came from.
