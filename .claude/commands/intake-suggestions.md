@@ -11,7 +11,7 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 - Before step 4, change no file in the repo and push nothing. The writes are issues, their labels, and each suggestion's status. Step 4 follows the implementer's own rules.
 - Nothing filed names a person, entity, matter or account. Never mention Claude or Anthropic in an issue.
 - Nobody answers a permission prompt, so never cause one. Read and search files with the Read, Grep and Glob tools, not shell commands.
-- Never print `POOL_SECRET_KEY`.
+- Run every `cloud/suggestions/tools/triage.mjs` command as `POOL_KEY_FROM_PROXY=1 node cloud/suggestions/tools/triage.mjs ...`. The cloud environment's network secret adds the key to requests for the Suggestion Box host, so the session never holds it.
 
 ## GitHub calls
 
@@ -19,7 +19,7 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 
 ## 1. List
 
-Take the intake lock (**Intake lock**, Take). If it is held, stop and report `Intake lock held`: the holder takes every new row. Then `node cloud/suggestions/tools/triage.mjs list`. If it prints `set POOL_SECRET_KEY first`, or the request is refused for its host, stop and report that the cloud environment lacks the key or network access. If no row is `new`, stop and report that.
+Take the intake lock (**Intake lock**, Take). If it is held, stop and report `Intake lock held`: the holder takes every new row. Then `node cloud/suggestions/tools/triage.mjs list`. If the request is refused (a 401 or 403, or a blocked host), stop and report that the cloud environment lacks the Suggestion Box network secret or network access. If no row is `new`, stop and report that.
 
 ## 2. Plan
 
