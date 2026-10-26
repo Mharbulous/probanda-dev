@@ -227,6 +227,8 @@ Each phase ends with a commit to `main` and a release where a plugin changes. Ph
 3. **Which release counts as "Implemented".** Options:
    - **(a)** the public publication through `publish-public` (recommended, because that is when practitioners receive the fix);
    - **(b)** the push to probanda-dev's `main`, which reaches only the maintainer's machines.
+
+   **Decided (2026-10-26): (a).** Both repositories get the fix by the route that already exists: the fix commit lands on probanda-dev's `main`, and when it changes a file under `public/`, it reaches `Probanda-app/Legal` at the next publication, which a person approves (`approve_public.py`) and starts (`publish-public`). Nothing pushes to the public repository directly. A fix to a skill that is not yet under `public/` stays Approved until that skill moves there and is published.
 4. **How the local implementer starts.** Options:
    - **(a)** a daily scheduled task on the maintainer's computer, in its own clone (recommended, because it needs no pasted command);
    - **(b)** a `/loop` session left running;
