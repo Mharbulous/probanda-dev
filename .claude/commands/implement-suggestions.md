@@ -52,13 +52,14 @@ Read the issue's Plan, Scope and Done when in full, from its latest `## Agent Br
 - a change to `COMMANDMENTS.md`;
 - a decision or check by a person.
 
-A single narrow test file named in Done when (for example one `pytest` file) is not a Windows-only suite: try it.
+A single narrow test file named in Done when (for example one `pytest` file) is not a Windows-only suite: try it. Any Done-when check this run cannot perform itself, such as a manual or live-session check, is "a decision or check by a person": an issue is never closed with a Done-when check not run.
 
 When the issue is unsuitable, mark it (step 7, "Mark local") and go back to step 2.
 
 ## 5. Implement
 
-- Follow the Plan inside the Scope. Change nothing outside the Scope.
+- First, the red tests, when the work order has a `### Red tests` section with at least one test. Write each test it lists at its path, and run it in the `/tmp/base` worktree. Each must fail on the assertion the brief quotes. If every one now passes, the problem was fixed on `main` after triage: comment naming the passing tests, add the `wontfix` label, close the issue, delete your claim comment, and go back to step 2. If only some pass, drop the Plan parts they cover and say so in the step 6 comment.
+- Follow the Plan inside the Scope. Change nothing outside the Scope. The red tests stay, committed with the change, and every one must pass when you finish.
 - Install only what the checks need: `npm ci` in `source/lawyer/mcp` for a Node build or test, `pip install` of `pytest` and the packages a named Python test imports.
 - The sandbox's SQLite (3.45) is too old for the drafting-data migrations (`near "||": syntax error`). Before any test that migrates a database, `pip install pysqlite3-binary`, write a `sitecustomize.py` holding `import sys, pysqlite3; sys.modules["sqlite3"] = pysqlite3` into a scratch folder outside the repo, and run pytest with `PYTHONPATH=<that folder>`.
 - A Done-when check that runs a whole test folder or suite fails partly on Linux for reasons unrelated to the issue, because those suites run on Windows in CI. Run it on the base too (in the `/tmp/base` worktree), and count only failures that the base does not have. Give each test command a timeout of 10 minutes.
@@ -70,7 +71,7 @@ When the issue is unsuitable, mark it (step 7, "Mark local") and go back to step
 
 - Push: `git pull --ff-only`, then `git push origin HEAD:main`. If `main` moved on, merge `origin/main` (`git merge --no-edit origin/main`), re-run the step 5 checks, then push. A merge conflict you cannot resolve keeping both sides' intent: `git merge --abort`, discard the local commits as above, and step 7, "Mark local".
 - Check: `git rev-parse HEAD` equals `git rev-parse origin/main` after a fresh `git fetch`.
-- Comment on the issue: the commit SHA, each check run and its result, and anything in the Plan not done.
+- Comment on the issue: the commit SHA, each check run and its result, and any Plan part dropped because its red test already passed.
 - Close it: `PATCH /issues/<n>` with `{"state":"closed"}`.
 - Delete your claim comment (`docs/agents/issue-tracker.md` **Release**, delete only).
 - Go back to step 2.

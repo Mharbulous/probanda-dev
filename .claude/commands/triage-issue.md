@@ -9,7 +9,7 @@ Triages one issue: the number in the arguments, or, when a GitHub event started 
 
 The cloud does not load Brahm's own global rules, so these hold for the whole run:
 
-- Triage changes no file in the repo and pushes nothing. Its only writes are to the issue (one comment and its labels) and, for a suggestion issue, the suggestion's status. A command the session runs after triage, such as the implementer, follows its own rules.
+- Triage commits and pushes nothing, and deletes any test file it wrote to run in step 4. Its only writes are to the issue (one comment and its labels) and, for a suggestion issue, the suggestion's status. A command the session runs after triage, such as the implementer, follows its own rules.
 - Never mention Claude or Anthropic in the comment, and never name a person, entity, matter or account in it.
 - Nobody answers a permission prompt, so never cause one. Read and search files with the Read, Grep and Glob tools, not shell commands. Never name `approve_public.py` or `public-approved.json` in a shell command: a hook stops the run for a person whenever a command names either and it cannot tell the command only reads.
 
@@ -46,7 +46,7 @@ List every `suggestion` issue, open and closed: `GET /issues?labels=suggestion&s
 2. **Same request as an issue closed as built** (closed without `wontfix`): status `approved` with issue number `m`, and the state is `wontfix`, the comment saying `Already implemented in #m`.
 3. **Same request as an issue closed `wontfix`,** with no new evidence (a pain point, failure or setup the earlier one lacked): status `rejected` with issue number `m`, and the state is `wontfix`, the comment quoting `#m`'s reason.
 
-For any of these, set the status, then go to step 6 and write only the outcome. Otherwise, including a match that brings new evidence, go on to step 3, and name each related issue under **Verification**.
+For any of these, go to step 6, write only the outcome and set that status. Otherwise, including a match that brings new evidence, go on to step 3, and name each related issue under **Verification**.
 
 ## 3. Plan a suggestion issue
 
@@ -56,13 +56,21 @@ Dispatch one Agent with model `fable` and only the Read, Glob and Grep tools. It
 
 1. "Approve with your adjustments" is marked `(Recommended)`: the work order is the planner's main issue, and the status is `approved` for `Verdict: all` or `approved in part` for `Verdict: some`.
 2. "Approve as proposed" is marked `(Recommended)`: the work order is the As proposed issue (the main issue when As proposed is `same as above`), and the status is `approved`.
-3. Otherwise, including when doing nothing is marked: the state is `wontfix`, with the planner's reasons, and the status is `rejected`.
+3. Otherwise, including when doing nothing is marked: the state is `wontfix`, with the planner's reasons, and the status is `rejected`. Go to step 6.
 
-Set the suggestion's status at once, with this issue's number. Steps 4 to 6 then treat the planner's Plan, Scope and Done when as the issue's own: verify them as written, and decide state and location for them. The planner never decides those, and an open choice its TLDR leaves is an open decision.
+Note that status, but do not set it yet: step 6 sets it once, after the state is decided. Steps 4 to 6 then treat the planner's Plan, Scope and Done when as the issue's own: verify them as written, and decide state and location for them. The planner never decides those, and an open choice its TLDR leaves is an open decision.
 
 ## 4. Verify
 
-Read the code, docs and ADRs the issue names, and the project's `GLOSSARY.md` for its terms. Check every factual claim in the issue against the source: counts, paths, line numbers, and what the code does. For a bug, reproduce it where the sandbox can. Search for an existing implementation of the request by its domain concept, not only its wording. Record what held, what was wrong, and the corrected facts.
+Start with the red tests, so no one plans or builds a change that changes nothing. For each Done-when check in the work order:
+
+- **Write** the narrowest test that states it, with invented data, at the path where the repo's runner finds it (for example `source/lawyer/mcp/test/<name>.test.mjs`, or a skill's `tests/test_<name>.py`), or as one command. Take the facts from the code, not from the issue's wording. Install only what that test needs, as in `.claude/commands/implement-suggestions.md` step 5, including its SQLite note.
+- **Run** it against current `main`, and record one result:
+  - **Red:** it fails on an assertion that states the check. An import error, a failed build or a missing tool is not red: fix the test, or record it as not run.
+  - **Green:** it passes on `main`, so that part needs no change. Drop it from the Plan.
+  - **Not run:** it needs Windows, the practitioner's data, a secret, or a person. Say which. A problem that shows only on the practitioner's data is `needs-info`, asking for a reproduction with invented data.
+
+Then read the code, docs and ADRs the issue names, and the project's `GLOSSARY.md` for its terms. Check every factual claim in the issue against the source: counts, paths, line numbers, and what the code does. For a bug, reproduce it where the sandbox can. Search for an existing implementation of the request by its domain concept, not only its wording. Record what held, what was wrong, and the corrected facts.
 
 ## 5. Decide
 
@@ -70,10 +78,10 @@ State each decision with a one-line reason.
 
 - **Category:** `bug` or `enhancement`.
 - **State:**
-  - `wontfix`: already implemented, or the verification shows the problem does not exist.
+  - `wontfix`: already implemented, or the verification shows the problem does not exist, including when every red test came out green.
   - `needs-info`: facts only the reporter holds are missing.
-  - `ready-for-human`: the work needs a design decision, a judgement call, or a check by a person. The issue's own open questions count, as does any proposal the issue itself calls risky.
-  - `ready-for-agent`: an agent can finish it from the work order alone and check its own result.
+  - `ready-for-human`: the work needs a design decision, a judgement call, or a check by a person. The issue's own open questions count, as does any proposal the issue itself calls risky, and any Done-when check not run because it needs a person.
+  - `ready-for-agent`: an agent can finish it from the work order alone and check its own result: every remaining Done-when check came out red, or was not run only for want of Windows, data or a secret.
 - **Location**, for `ready-for-agent` and `ready-for-human` only: `local` when any step or check of the work needs an item in the cloud gate of `.claude/commands/implement-suggestions.md` (step 4) other than "a decision or check by a person". Otherwise `cloud`.
 
 ## 6. Write
@@ -95,9 +103,14 @@ What may change, and what is out of bounds.
 
 ### Done when
 Each check, runnable as a command where possible. Name narrow test files, not whole suites.
+
+### Red tests
+For each red test: its path (inside Scope), the file verbatim in a fenced block, the command, and the one failing assertion line from `main`. For each check not run: why.
 ```
 
-For `ready-for-human`, add `### Open decisions`, each a concrete question with its options. For `needs-info`, write the established facts and the questions in place of the brief. For `wontfix`, write why, then close the issue.
+For `ready-for-human`, add `### Open decisions`, each a concrete question with its options. For `needs-info`, write the established facts and the questions in place of the brief. For `wontfix`, write why, quoting any green test command, then close the issue.
+
+For a suggestion issue, set its status now, once, with this issue's number, or with `#m`'s for a repeat from step 2. Take the status step 2 or step 3 noted, except that a `wontfix` from step 4 or 5 is `approved` when the work is already implemented and `rejected` when the problem does not exist. A `needs-info` issue gets no status yet.
 
 Then set the labels: add the category, the state and, where it applies, the location label, and remove `needs-triage`. Create a missing label with `POST /labels` first: `cloud` (`{"name":"cloud","color":"0E8A16","description":"Work an unattended cloud session can do"}`) or `local` (`{"name":"local","color":"B60205","description":"Work that needs Brahm's machine, data or credentials"}`).
 
