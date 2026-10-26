@@ -1,10 +1,10 @@
 # Plan: Suggestion Implementation Lifecycle
 
-**Status (2026-10-25).** Approved by Brahm for execution. The design is settled in `docs/Plans/2026-10-25_suggestion-design.md`, decisions 1 to 28, which is the source of truth: this plan cites decisions by number and does not restate them. Open decisions 1 to 5 below were settled by Brahm on 2026-10-26. The parts marked **Built** run today. Nothing else in this plan is built.
+**Status (2026-10-26).** Built. Approved by Brahm for execution. The design is settled in `docs/Plans/2026-10-25_suggestion-design.md`, decisions 1 to 28, which is the source of truth: this plan cites decisions by number and does not restate them. Open decisions 1 to 5 below were settled by Brahm on 2026-10-26. Phases 1 to 11 are built and on `main`, and Phase 12 is done but for updating #193, which Brahm does. **Already built** lists where each part lives and the steps left to Brahm by hand: the repository secret `SUGGESTIONS_SECRET_KEY` (Phase 9) and registering the local implementer's scheduled task (Phase 10). The cloud deploy of Phases 1 and 7 is done.
 
 ## The lifecycle
 
-The dashed boxes are still to build. Teal runs automatically, violet is the practitioner, amber is the maintainer, and 🤖 marks a step that uses a custom agent rather than only a skill. The live page, with a table of what runs at each step, is https://claude.ai/artifact/5paaXhEcnD4Mn2cuqCzeZg.
+Every box is built. Teal runs automatically, violet is the practitioner, amber is the maintainer, and 🤖 marks a step that uses a custom agent rather than only a skill. The live page, with a table of what runs at each step, is https://claude.ai/artifact/5paaXhEcnD4Mn2cuqCzeZg.
 
 ```mermaid
 flowchart TB
@@ -12,7 +12,6 @@ flowchart TB
   classDef person fill:#c4841d26,stroke:#c4841d,stroke-width:2px
   classDef user fill:#6a5fc126,stroke:#6a5fc1,stroke-width:2px
   classDef stop fill:#7a858014,stroke:#7a8580,stroke-width:1px
-  classDef todo fill:#7a858014,stroke:#7a8580,stroke-width:2px,stroke-dasharray:6 4
 
   subgraph PC["Practitioner's computer (Cowork)"]
     PU["Practitioner proposes <br/>a feature or enhancement"]:::user
@@ -20,15 +19,15 @@ flowchart TB
     W["Practitioner's AI <br/>drafts the proposal"]:::auto
     R{"Practitioner <br/>reviews it"}:::user
     X(["Nothing sent"]):::stop
-    TW["🤖 Technical-writer <br/>drafts specification"]:::todo
+    TW["🤖 Technical-writer <br/>drafts specification"]:::auto
   end
   subgraph MC["Maintainer's computer"]
     MI["Maintainer makes <br/>a proposal"]:::person
-    LR["Local implementer <br/>builds, unattended"]:::todo
+    LR["Local implementer <br/>builds, unattended"]:::auto
   end
   subgraph GH["probanda-dev repo (GitHub)"]
     F["Filed as <br/>an issue"]:::auto
-    P["🤖 Plan made <br/>against the code"]:::todo
+    P["🤖 Plan made <br/>against the code"]:::auto
     RT["Red tests written <br/>and run on main"]:::auto
     D["Maintainer <br/>decides each item"]:::person
     C(["Closed, <br/>every item declined"]):::stop
@@ -39,7 +38,7 @@ flowchart TB
   end
   subgraph SBZ["Probanda's Cloud (Supabase)"]
     SB[("Suggestion Box")]:::auto
-    N["Items marked <br/>implemented"]:::todo
+    N["Items marked <br/>implemented"]:::auto
   end
 
   PU --> W
@@ -74,19 +73,25 @@ The design refines the diagram in five places:
 
 ## Already built
 
-| Step | Where |
-|---|---|
-| Suggestion drafting and the Yes / No / Modify review | `.claude/skills/suggestion/SKILL.md` sections 1 and 6, and `.claude/skills/work/references/suggestion-box.md` step 6 |
-| Loose-thread suggestions from `/draft` and `/work` | `litigator:suggestion-evaluator`, through `suggestion-box.md` |
-| Submit tool | `suggestion_box__submit` in `source/researcher/commons-mcp/src/suggestion-box/tools.ts` |
-| Suggestion Box: save, then start intake | `cloud/legal-commons/supabase/functions/suggestion-submit/`. Table: `cloud/suggestions/suggestions.sql` |
-| Status read and the outcome check at session start | `suggestion-status` function, and the outcome check in `/suggestion` |
-| Intake: file each suggestion as an issue with its lane label | `.claude/commands/intake-suggestions.md` |
-| Triage: repeat check, plan, red tests, decide, write | `.claude/commands/triage-issue.md` steps 2 to 6. The planner is `source/developer/agents/fix-planner.md` (Phase 7; its dry run is `docs/Plans/2026-10-26_fix-planner-dry-run.md`) |
-| One implement queue, claims, implementer lock, label trigger | `.claude/commands/implement-suggestions.md` and `docs/agents/issue-tracker.md` |
-| Building approved items with `fix-maker`, one commit per item named `Suggestion <id> item <n>` | `source/developer/agents/fix-maker.md`, dispatched by `.claude/commands/implement-suggestions.md` step 5 and `.claude/skills/suggestion-triage/SKILL.md` step 6 (Phase 8). The approved set is `scripts/select_approved_items.py`; the commit check is `scripts/check_fix_commit.py` |
-| Local implementer: the `local` lane of the queue, under its own lock, in its own clone, started by a daily scheduled task (Phase 10) | `.claude/commands/implement-suggestions.md` **Local lane**. The lane chooser and both locks are `scripts/choose_issue.py`; the clone guard is `scripts/local_implementer_guard.py`; the task is `scripts/local-implementer/` |
-| Status writes | `suggestion-set-status`, which accepts only `approved`, `approved in part` and `rejected`, and only from `new` |
+Phases 1 to 11 are built. The last column is what Brahm still does by hand.
+
+| Step | Where | By hand |
+|---|---|---|
+| Suggestion Box: per-item records, the badge, the sending key, withdrawal and specifications (Phase 1) | `cloud/suggestions/suggestions.sql`, and the functions `suggestion-submit`, `suggestion-status`, `suggestion-set-status`, `suggestion-list`, `suggestion-attach-specification` and `suggestion-withdraw` under `cloud/legal-commons/supabase/functions/`. Applied and deployed by `cloud/suggestions/tools/deploy-suggestions.ps1`; the maintainer's tool is `cloud/suggestions/tools/triage.mjs` | Nothing: deployed |
+| Local record, sending and Past suggestions (Phase 2) | `source/lawyer/mcp/src/suggestions/store.ts`, `send.ts` and `page.ts`. `lawyer`'s server posts to `suggestion-submit` itself, and `suggestion_box__submit` has left `researcher` (open decision 5) | |
+| Cross-check and environment facts (Phase 3) | `source/lawyer/mcp/src/suggestions/crosscheck.ts`, `records.ts` and `environment.ts`; the stop lists under `.claude/skills/suggestion/references/stop-words/` | |
+| The card, its scrub and its mockup, in place of Yes / No / Modify (Phase 4) | `.claude/skills/suggestion/SKILL.md` sections 5 to 7; `source/lawyer/mcp/src/suggestions/card.ts`, `card-page.ts` and `mockup.ts`, served through `source/lawyer/mcp/src/page-api/server.ts`; the placeholders under `.claude/skills/suggestion/references/mockup/` | |
+| AI-noticed suggestions; the evaluator retired (Phase 5) | `source/lawyer/mcp/src/suggestions/observation.ts`, the Stop hook `source/lawyer/hooks/ai-noticed-card.py` and `/suggestion` section 9. `/draft` and `/work` report through `suggestion_observation__record` (`.claude/skills/work/references/suggestion-box.md`), and `litigator:suggestion-evaluator` is gone (open decision 1) | |
+| `technical-writer` and its backstop (Phase 6) | `source/lawyer/agents/technical-writer.md` and `spec-backstop.md`, `source/lawyer/mcp/src/suggestions/specification.ts` and `/suggestion` section 10. The tool check is `scripts/check_plugin_agents.py` | |
+| Status read and the outcome check at session start | `suggestion_box__status` in `lawyer`'s data server, and the outcome check in `/suggestion` section 1 | |
+| Intake: file each suggestion as an issue with its lane label | `.claude/commands/intake-suggestions.md` | |
+| Triage with `fix-planner`, per-item decisions (Phase 7) | `.claude/commands/triage-issue.md` steps 1 to 6, with `source/developer/agents/fix-planner.md` (its dry run is `docs/Plans/2026-10-26_fix-planner-dry-run.md`). Each item is decided through `.claude/skills/suggestion-triage/SKILL.md` or `/adversarial-triage`, by `triage.mjs set-item`. The verbatim guard is `scripts/check_verbatim.py` | Nothing: deployed |
+| One implement queue, claims, implementer lock, label trigger | `.claude/commands/implement-suggestions.md` and `docs/agents/issue-tracker.md` | |
+| Building approved items with `fix-maker`, one commit per item named `Suggestion <id> item <n>` (Phase 8) | `source/developer/agents/fix-maker.md`, dispatched by `.claude/commands/implement-suggestions.md` step 5 and `.claude/skills/suggestion-triage/SKILL.md` step 6. The approved set is `scripts/select_approved_items.py`; the commit check is `scripts/check_fix_commit.py` | |
+| Items marked implemented when their fix is published (Phase 9) | The scan step of `.github/workflows/publish-public.yml`, which runs `scripts/implemented_scan.py` | Add the repository secret `SUGGESTIONS_SECRET_KEY` |
+| Local implementer: the `local` lane of the queue, under its own lock, in its own clone, started by a daily scheduled task (Phase 10) | `.claude/commands/implement-suggestions.md` **Local lane**. The lane chooser and both locks are `scripts/choose_issue.py`; the clone guard is `scripts/local_implementer_guard.py`; the task is `scripts/local-implementer/` | Register the task with `scripts/local-implementer/register-local-implementer.ps1` |
+| Withdrawal: the issue labelled `withdrawn`, closed and dropped from every queue (Phase 11) | `suggestion-withdraw` and the Withdraw button on Past suggestions; `.claude/commands/intake-suggestions.md` step 3 with `scripts/withdrawals.py`; `scripts/choose_issue.py` | |
+| Words and docs (Phase 12) | `GLOSSARY.md` and `docs/agents/issue-tracker.md` | Update #193 |
 
 ## Constraints
 

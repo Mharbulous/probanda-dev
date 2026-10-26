@@ -10,6 +10,7 @@ terms:
   - Assign
   - Attachment
   - Authority
+  - Badge
   - Bare Row
   - Basis
   - Bundle (application)
@@ -22,6 +23,7 @@ terms:
   - Component
   - Consequence
   - Consolidation part
+  - Constraint line
   - Contact
   - Contention
   - Copy (file)
@@ -43,6 +45,7 @@ terms:
   - Element
   - Eligible
   - Evidence
+  - Evidence line
   - Exception
   - Exhibit
   - Fact
@@ -52,12 +55,14 @@ terms:
   - Filing
   - Filing-ready declaration
   - Final review
+  - Fingerprint
   - Form-bound writing
   - Free-form writing
   - General Job
   - Hunch
   - Instrument
   - Issue
+  - Item
   - Job
   - Job Board
   - Lawyer account
@@ -79,11 +84,13 @@ terms:
   - Merge (Job Boards)
   - Merge (jobs)
   - Mockup
+  - Mockup (suggestion)
   - Move (file)
   - Non-billable entry
   - Note up
   - Obiter dictum
   - Oral reasons
+  - Origin
   - Outlining
   - Pain point
   - Participant
@@ -91,7 +98,6 @@ terms:
   - Postulate
   - Pre-filing proceeding
   - Preference
-  - Preview
   - Principle
   - Privileged Source
   - Proceeding
@@ -193,6 +199,17 @@ _Avoid_: annexure, appendix (fine in a specific document's own vocabulary, not a
 **Authority**:
 Reusable legal material with zero client data: case law, legislation, regulations, treatises. Authorities live outside any matter and are shared across matters.
 
+**Badge**:
+The status a practitioner sees for a **Suggestion** they sent, under Past suggestions. Probanda's Cloud computes it from the suggestion's own status (submitted, under review or withdrawn) and each **Item**'s (undecided, approved, declined or implemented), and nothing else computes it. There are six:
+- **Submitted**: sent, and triage has not opened it yet.
+- **Under Review**: triage has opened it, and at least one item is still undecided.
+- **Approved**: at least one item is approved, and not every approved item has shipped. It reads **Approved (n of m)** when some items were declined: n items approved of m in all.
+- **Declined**: every item is declined.
+- **Implemented in <plugin> <version>**: every approved item has shipped, naming each plugin's release. An item ships when a public publication includes a fix commit that names it; a fix published only to the maintainer's machines leaves it Approved.
+- **Withdrawn**: the sender withdrew it.
+Past suggestions also shows each item's status and reason, and a declined item's category. Only Approved and Declined, each with its reason, are set by a person; the rest are set by Probanda's automation or, for Withdrawn, by the sender's own computer.
+_Avoid_: status for the badge (the stored values it is computed from); badge for a **Work marker**.
+
 **Bare Row**:
 The `main.facts` row for a Fact known **only through privileged sources**: an ID and nothing else (`description = ''`, no category, date, source, notes, informant or basis). Privilege attaches to a Statement of Fact by its source and never to a Fact, and any summary, paraphrase or abridgement of a privileged statement is itself privileged, so the non-privileged store holds no wording for such a Fact. The Statement of Fact stays in `privileged.fact_provenance.source_note`, and only a privileged-side read (`@query_10`, `@query_22`) shows what the ID means. Nothing links to a bare row, and drafting, list and verification reads skip it. It becomes an ordinary fact only when a non-privileged source states the same Fact and the row takes that source's own Statement of Fact. See `.claude/skills/matter-data/references/design-decisions.md` #67 and `.claude/skills/matter-data/operations/bare-privileged-facts.md`.
 
@@ -237,6 +254,10 @@ The legal outcome a proposition produces: what may, must or does follow. In the 
 **Consolidation part**:
 One of the separate pages on which an official publisher issues a single instrument, such as a **Rule Set** whose parts and appendices each have their own page. An instrument is held whole only when every part is held.
 _Avoid_: section, chapter (both name divisions within the text).
+
+**Constraint line**:
+A line on a **Suggestion** card saying what must stay true, or what the practitioner rejected and why. It has no status: it is never approved or declined, and it binds every **Item** it bears on, so the plan for an item says which constraints it honours. A reason typed into a mockup's "Not like this, because..." box becomes one. Like every block on the card, it can be edited in place, and emptying it removes it.
+_Avoid_: item (a constraint is not decided on); requirement.
 
 **Contact**:
 One person or organization the firm deals with, or acts for or against, held once, firm-wide, in practice data as a `contact` item tagged `person` or `organization`. It is the source of truth for email, phone and address. The practitioner's address book only pre-fills it. Tied to organizations by **Affiliation** and to matters by **Matter role** (`docs/ADRs/0009-firm-wide-contacts-in-practice-data.md`).
@@ -292,7 +313,7 @@ The evidence-side object a statement of fact or an admission points at — the *
 _Avoid_: document as a Writing member (say mockup or draft); file (the disk artifact, not the thing); paper.
 
 **Done-test**:
-The test, carried by each pain in a **Suggestion**, that tells a maintainer when the change is finished, checkable without asking the sender. On a solved problem it is what the practitioner accepted in the session; on a gap it is the end result they wanted.
+What "fixed" looks like for a **Suggestion**, said so that a maintainer can check it without asking the sender. It is not a field of its own: the card says it in an **Item**'s wording or a **Constraint line**. On a solved problem it is what the practitioner accepted in the session; on a gap it is the end result they wanted. At triage, `fix-planner` turns it into each item's check: one runnable test, on invented data, that fails while the pain remains and passes once it is gone.
 _Avoid_: acceptance criteria, completion criteria (the Job Board card).
 
 **Doubt**:
@@ -317,6 +338,10 @@ _Avoid_: one-step (necessary, not sufficient); ripe (every Ready job is ripe).
 
 **Evidence**:
 Non-privileged material linked to a fact as support (or contradiction) for it.
+
+**Evidence line**:
+A line on a **Suggestion** card saying what happened: what was tried, and where it hit the wall. It has no status: it is never approved or declined. On a suggestion Probanda noticed, the raw observation shows among the evidence lines but is kept apart from them, and holds only Probanda's own output (tool names, error classes or codes, counts and the plugin's own fixed text), never anyone's words.
+_Avoid_: **Evidence** (material supporting a fact in a matter); item.
 
 **Exception**:
 A circumstance that takes a case out of a proposition: when it is present, the consequence does not follow even though every element is met. In the pool it is a clause linked to a proposition with the type exception, or, in place of a clause, a pointer to another proposition whose conditions set the exception out. It attaches to a proposition and never to one element, exception or factor. The party resisting the proposition raises it.
@@ -353,6 +378,10 @@ _Avoid_: approval to file; ready to file; approval to serve; ready to serve; sig
 The practitioner's own reading of the content in context, whoever wrote it, done holistically and last, one Writing at a time. Until it is done, every statement of law, statement of fact, proposition, postulate, submission, order sought, clause, prose slot and rhetorical paragraph on a Writing for delivery (a Filing, or a Writing that is sent) carries 🧐 on its line once no other work marker on that line does (on a merged Notice of Application fact line, every object's markers count), and the Goal card cannot read ready. An approval is a `review_approvals` row holding a snapshot of the object's stored fields (text, excerpt, pinpoint, never rendered wording); 🧐 fires again whenever the stored fields differ from the latest snapshot, computed at render, never stored. Rendered for the human on every mockup of a Writing for delivery, never on a filed or sent face. A client letter is not a Writing and carries no 🧐: it is kept out of this database as solicitor-client material, not exempted from review. Rules: `.claude/skills/drafting-data/references/work-markers.md` row 🧐; storage: `references/review.md`. Internal names: `review_approvals`, `review_points`, criterion id `counsel-review`, `counselReviewMarker`.
 _Avoid_: approval (the record, not the act); sign-off; verification (🔬, the research lawyer's act); review to-do (the void job/to-do split).
 
+**Fingerprint**:
+What identifies a **Suggestion** Probanda noticed: the plugin, its version, the skill, and the kind of observation (a tool error, a refusal, a missing tool, repeated calls, or one step using many tokens). On the practitioner's computer it keeps a card from being raised again for the same plugin, skill and kind for 30 days after one was dismissed, sent or left unanswered, and for as long as the plugin is still at the version that card was built under. At triage, an issue whose suggestion has the same fingerprint and matching items as one awaiting the maintainer is decided with it: a view over separate records, which are never merged. A suggestion the practitioner started has none.
+_Avoid_: hash; signature; merge (the records stay separate).
+
 **Form-bound writing**:
 Legal writing for which the venue publishes the form document itself, with fixed fields and wording: a BCSC Form 32, a Small Claims Form 2, the BCCA respondent's factum. A venue that prescribes only structure (parts, headings, numbering, caption, page limit, required statements) does not make a writing form-bound. Drafting it takes a specialist skill for that form; when none exists, the gap is reported, and the writing is drafted as an Unstructured Writing, its fixed wording copied from a saved copy of the published form.
 _Avoid_: court form (names the filed artifact, not the kind of writing); template (also means a firm precedent); bespoke (the rendering path, not the kind of writing).
@@ -375,6 +404,10 @@ _Avoid_: vehicle (generic, used only in design prose); document (too wide); affi
 
 **Issue**:
 A question in dispute, typed as **factual** (a question of fact), **legal** (a question of law), or **mixed** (a question of mixed fact and law). Issues connect facts and legal criteria to the practitioner's strategic view of what is contested.
+
+**Item**:
+One change in a **Suggestion** that the maintainer approves or declines on its own, listed under the suggestion's one **Pain point**. Each decision carries a reason of one plain line that any practitioner who sent the problem can read, and a decline also carries one fixed category: not enough detail, already works as asked, already suggested, outside what Probanda does, cost outweighs benefit, or conflicts with how Probanda must work. An item's status is undecided, approved, declined or implemented, and the **Badge** sums them up. An item keeps its number from the card to the build: triage never merges, splits or reorders items, only approved ones are built, and each fix commit names one as `Suggestion <id> item <n>`. An item that changes how something looks (its layout, colour, typography or page structure) is visual, and only visual items appear in a **Mockup (suggestion)**. Emptying an item on the card removes it.
+_Avoid_: pain (a suggestion has one pain point and its items); ticket; change request.
 
 **Job**:
 One unit of session work for `/draft`, shown on the Job Board as a job card — either drafting/research work scoped to a Writing, a **Standalone Job Board** or a proceeding (`kind = 'work'`), or the work of outlining further jobs (`kind = 'charting'`). Every card is a job: there is no job/to-do split. Stored, and always rendered on the Job Board — never on any advocacy document. Always belongs to a proceeding, never to the matter alone, including a pre-filing proceeding. A session refers to one as "Job #6", never bare "#6". File names and prose say job (`drafting-data/references/jobs.md`, `draft/references/job-session.md`). Database and code identifiers are unchanged: the `tickets` table and every `ticket_*` table and `ticket_id` column, the `#ticket-N` anchors on the board, the `board_data` key `tickets` and the Goal card's `tickets` criterion id.
@@ -421,7 +454,7 @@ _Avoid_: To Do List (a to-do list is the **To-dos** themselves); Matter Board; J
 
 **Loose thread**:
 Two senses, told apart by where each appears:
-- on the Job Board, an item in the "Ideas for later" lane: an idea captured mid-job without deciding anything about it — verbatim, at most five sentences, no options or recommendations. Never ripe, never a blocker; consumed only when an outlining session turns it into a real job (`seeds.charted_into`). A discarded thread stays stored, shows struck through, and can be restored. A resolved thread is one that is not open: discarded, else suggested to Probanda, else outlined into a job that is not deleted; a deferred thread is never resolved. It never counts toward a completion criterion.
+- on the Job Board, an item in the "Ideas for later" lane: an idea captured mid-job without deciding anything about it — verbatim, at most five sentences, no options or recommendations. Never ripe, never a blocker; consumed only when an outlining session turns it into a real job (`seeds.charted_into`). A discarded thread stays stored, shows struck through, and can be restored. A resolved thread is one that is not open: discarded, else marked suggested to Probanda by an earlier version (no route marks one now: a `tooling` thread is only reported as an observation, which marks nothing), else outlined into a job that is not deleted; a deferred thread is never resolved. It never counts toward a completion criterion.
 - on a mockup, the 🧵 work marker, defined in `.claude/skills/drafting-data/references/work-markers.md`, which counts toward the open-items criterion.
 The Job Board's own "Ideas for later" section already renders the first sense in the lawyer-facing word — the deferred vocabulary pass (design doc §11) covers only widget labels and prompts elsewhere, not the board's own headings, which were lawyer-facing from the start (that is the point of a rendered surface). Internal names are unchanged: the `seeds` table, `review_points.seed_id`, `seeds.charted_into`, the `seed` CSS class, element ids and data key.
 _Avoid_: note (a different, unstored concept this schema deliberately excludes); seed.
@@ -460,8 +493,12 @@ The practitioner's act that folds a duplicate job into another job on the same W
 _Avoid_: combine; consolidate; dedupe.
 
 **Mockup**:
-A Draft in markdown format — the word is reserved exclusively for markdown. A filtered, compressed markdown rendering of the submission database for one member of a Writing, read by the practitioner and by every agent session alike — the sole review surface and the session's starting picture. It shows everything the practitioner must decide about, reserved material included. Regenerated, never hand-edited; stamped with the database revision it was rendered from. Its format is strict: a YAML header, then only wording that will be printed, work markers and `<!-- comments -->`, then the symbol Legend, which is generated and never written. A gap prints as a marker and a blank underline, with its description in a comment (`🧩 ________ <!-- signer not chosen -->`), never as a description. No commentary, suggestions or loose ideas.
+A Draft in markdown format — for a Writing, the word is reserved exclusively for markdown; its one other sense is **Mockup (suggestion)**. A filtered, compressed markdown rendering of the submission database for one member of a Writing, read by the practitioner and by every agent session alike — the sole review surface and the session's starting picture. It shows everything the practitioner must decide about, reserved material included. Regenerated, never hand-edited; stamped with the database revision it was rendered from. Its format is strict: a YAML header, then only wording that will be printed, work markers and `<!-- comments -->`, then the symbol Legend, which is generated and never written. A gap prints as a marker and a blank underline, with its description in a comment (`🧩 ________ <!-- signer not chosen -->`), never as a description. No commentary, suggestions or loose ideas.
 _Avoid_: report; readiness report; document.
+
+**Mockup (suggestion)**:
+The one page a **Suggestion** card can show of its visual **Items** together, built only when the practitioner clicks "Show a mockup of this". Its visible text is only Probanda's fixed placeholder text, and it is one self-contained HTML file: inline styles, no script, no link, nothing loaded from outside, under 1 MB. Its "Not like this, because..." box turns a rejection into a **Constraint line**, deletes that mockup and brings the link back, up to three times. Only the mockup on the card at the click is sent. Not a **Mockup** of a Writing.
+_Avoid_: Preview (the retired term: the card never sends a before and after, and the Suggestion Box's `previews` field holds only suggestions sent before the card); a mockup showing real matter content; mockup alone where a Writing's mockup could be meant.
 
 **Move (file)**:
 Taking one existing file out of the folder it is in and putting it in another, so that afterwards exactly one file exists, in the new place. Probanda moves a file only with the operating system's own move on one drive (a rename), never by copying and then deleting, and never over an existing file. Only the file-manager plugin moves a file Probanda did not create.
@@ -482,6 +519,10 @@ A proposition stated but not necessary to the decision, and so persuasive only. 
 A decision pronounced orally with no transcript, recorded in matter-data as an authority of type `oral_reasons` whose citation names court, file number, judge and date — never a style of cause — and pooled as treatment notes only: which cited authorities the court followed, distinguished, declined to follow, or did not consider, from the practitioner's own account. No text, excerpt, or note crosses. A later transcript upgrades the same authority.
 _Avoid_: unreported decision (a reported-elsewhere question, not a transcript question); judgment (implies written reasons).
 
+**Origin**:
+Who started a **Suggestion**: the practitioner, whose card opens "You suggested:", or Probanda noticing something about its own work, whose card opens "Probanda noticed:". It is the only practitioner-facing difference between the two: the word is Suggestion either way. A suggestion Probanda noticed also carries its raw observation and a **Fingerprint**, and is held to at most one card a day. Stored as `origin` (`practitioner` or `probanda`) beside the older `source` (`user`, `assisted` or `llm`), which still decides the implement queue's lane.
+_Avoid_: source (the older field, which also tells the practitioner's own words from a draft Probanda wrote for them); AI suggestion.
+
 **Outlining**:
 A session (an outlining interview) whose deliverable is one or more `tickets` rows — new, outlined afresh, or outlined from Proposals — and their dependencies, blockers, conflicts, and priorities — never substance. The practitioner supplies the work, conflicts and priorities, recorded in their words; the session divides the work into jobs and records what waits on what. A session either outlines or executes one assigned job, never both.
 Outlining writes jobs on the practitioner's word:
@@ -497,8 +538,8 @@ Jobs written by rule with no pick are not outlining:
 _Avoid_: planning (a different, DB-agnostic Coclerk concept elsewhere); charting (also wayfinder's verb).
 
 **Pain point**:
-Friction with Probanda that actually happened in a session and shows in behaviour: a correction, a rejection, a workaround, a repeated instruction, a refusal or abandonment. An irritated tone alone is never one. Pain points are taken from the work, never asked for.
-_Avoid_: complaint (the practitioner's words, which may name no pain); bug (a fault, which goes to troubleshooting).
+What a friction with Probanda costs the practitioner, described by its effect on them, whether they felt it or not. A felt one shows in behaviour that actually happened in a session: a correction, a rejection, a workaround, a repeated instruction, a refusal or abandonment. One never felt counts too, such as cost, unreliability, inaccuracy or a confidentiality near miss that Probanda noticed in its own output. Every **Suggestion** has exactly one, shared by its **Items**; two unrelated pain points make two cards. When the practitioner never stated it, the card shows Probanda's best guess, labelled "our guess, edit if wrong", and nothing is asked in chat. An irritated tone alone is never one. Pain points are taken from the work, never asked for.
+_Avoid_: complaint (the practitioner's words, which may name no pain); bug for a setup or configuration fault (that goes to troubleshooting).
 
 **Participant**:
 Anyone a matter's documents name in a role: a party, a party's counsel, a witness (an expert is a witness), or a tribunal member. Every party is a participant; not every participant is a party.
@@ -518,10 +559,6 @@ _Avoid_: pre-litigation matter (the matter exists either way); undecided forum a
 **Preference**:
 One person's saved instruction to a named skill, in generic terms, made when a fix worked for them ("Show the deadline summary before the full list"). It takes effect for that person only, from the moment it is saved, and holds no client content. Stored per person in the firm's `0. CASE DATA` folder.
 _Avoid_: personal memory (the design's working name); memory (Claude's own feature); practice quirk (a device's environment note).
-
-**Preview**:
-What a **Suggestion** shows the practitioner to stand for "done": a before and after in the medium of the pain (a page variant, a redraft, a replayed exchange, a worked case). A page Preview is a deterministic render, never HTML a model wrote. Only Previews rendered from placeholder data may be posted.
-_Avoid_: mockup (reserved for the markdown Draft of a Writing).
 
 **Principle**:
 A statement of law in the words an authority uses. In the pool it is a record holding that prose, kept as stated and matter-free, and linked to each **Authority** that supports it. That link carries the pinpoint: where in the authority the prose is found. Propositions are decomposed from a principle, and each records each principle that states it. One principle may state several propositions, and one proposition may be stated by several principles.
@@ -678,7 +715,7 @@ One contention with its argument. A Written Argument's *Submissions*, or Form 32
 _Avoid_: argument (the support, not the whole).
 
 **Suggestion**:
-Feedback about Probanda that a practitioner expressly submits to its maintainers through the Suggestion Box: a summary plus one item per **Pain point**, each with its **Done-test**, its constraints and changes that are accepted or declined one by one. Stripped of anything that identifies a person, entity or matter. Its source is `user` (their own), `assisted` (drafted by Probanda, confirmed by them) or `llm` (a vetted loose thread).
+Feedback about Probanda that reaches its maintainers through the Suggestion Box, shown first to the practitioner as one card, `Suggestion-<id>.html`, and only as a file card: one **Pain point**, the **Items** that would ease it, then its **Constraint lines** and **Evidence lines**, an optional comment, and at most one **Mockup (suggestion)**. The word is the same whoever started it; its **Origin** says who, and one Probanda noticed carries a **Fingerprint**. Every name and indirect identifier on the card is replaced by a bracket naming only its category: [client], [matter], [person], [document], [file], [date] or [amount]. Nothing is sent until the practitioner clicks Submit Suggestion, which approves everything on the card; Dismiss sends nothing. A technical write-up of it may follow, written on the practitioner's computer from the card alone. Its status is its **Badge**, and the practitioner can see exactly what was sent, and withdraw it, under Past suggestions.
 _Avoid_: Proposal (a work marker's remaining work); ticket; feature request.
 
 **Tender (adduce)**:

@@ -68,7 +68,7 @@ Probanda drafts no fix for a gap. The suggestion carries:
 - what was tried
 - where each attempt hit the wall
 
-A fix the practitioner volunteers is recorded as their idea (`origin: "lawyer"`).
+A fix the practitioner volunteers goes on the card as an item in their own words, with no guess label.
 
 ## 5. Refine
 
