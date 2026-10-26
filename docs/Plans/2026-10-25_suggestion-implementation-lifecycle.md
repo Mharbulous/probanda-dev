@@ -1,6 +1,6 @@
 # Plan: Suggestion Implementation Lifecycle
 
-**Status (2026-10-25).** Draft for Brahm's approval. Decisions 1 to 22 below were settled in the suggestion design discussion of 2026-10-25, and reviewed twice. Design questions Q3 to Q6 are still open, and each phase says which of them it waits for. The parts marked **Built** run today. Nothing else in this plan is built.
+**Status (2026-10-25).** Approved by Brahm for execution. The design is settled in `docs/Plans/2026-10-25_suggestion-design.md`, decisions 1 to 28, which is the source of truth: this plan cites decisions by number and does not restate them. Open decisions 1 to 5 below are still Brahm's. The parts marked **Built** run today. Nothing else in this plan is built.
 
 ## The lifecycle
 
@@ -30,9 +30,8 @@ flowchart TB
     F["Filed as <br/>an issue"]:::auto
     P["🤖 Plan made <br/>against the code"]:::todo
     RT["Red tests written <br/>and run on main"]:::auto
-    C(["Closed, <br/>nothing to change"]):::stop
-    T["Triaged"]:::auto
-    D["Maintainer <br/>decides and relabels"]:::person
+    D["Maintainer <br/>decides each item"]:::person
+    C(["Closed, <br/>every item declined"]):::stop
     Q[("Implement queue <br/>maintainer → user → AI")]:::auto
     CB["Cloud implementer <br/>builds"]:::auto
     TS["Tested: red tests pass, <br/>checks run"]:::auto
@@ -40,22 +39,21 @@ flowchart TB
   end
   subgraph SBZ["Probanda's Cloud (Supabase)"]
     SB[("Suggestion Box")]:::auto
-    N["Suggestion marked <br/>implemented"]:::todo
+    N["Items marked <br/>implemented"]:::todo
   end
 
   PU --> W
   PA --> W
   W --> R
-  R -- "declines" --> X
+  R -- "dismisses" --> X
+  R -- "submits" --> SB
   R -- "submits" --> TW
-  TW --> SB
+  TW -- "specification follows" --> SB
   SB -- "intake" --> F
   MI --> F
   F --> P --> RT
-  RT -- "all pass already" --> C
-  RT -- "red" --> T
-  T -- "ready" --> Q
-  T -- "needs a decision" --> D
+  RT -- "red, or all pass already: <br/>recommend decline" --> D
+  D -- "every item declined" --> C
   D -- "relabels ready" --> Q
   Q -- "first cloud issue" --> CB
   Q -- "first local issue" --> LR
@@ -66,101 +64,13 @@ flowchart TB
   REL --> N
 ```
 
-The decisions refine the diagram in five places:
+The design refines the diagram in five places:
 
-- "Practitioner reviews it" is the suggestion card (decisions 5 to 11). Its buttons are **Submit Suggestion** and **Dismiss**.
-- "Technical-writer drafts specification" includes a second agent that checks the specification as a backstop (decision 18).
+- "Practitioner reviews it" is the suggestion card (decisions 5 to 11 and 23 to 28). Its buttons are **Submit Suggestion** and **Dismiss**.
+- The suggestion is sent at the click. "Technical-writer drafts specification" runs after it, with a backstop agent, and its specification follows (decision 18).
 - "Plan made against the code" is the `fix-planner` agent, and both implementer boxes run the `fix-maker` agent (decisions 20 and 21).
-- Every item of a suggestion reaches "Maintainer decides and relabels", because only a person approves or declines (decisions 17 and 20).
+- Every item of a suggestion reaches "Maintainer decides each item", because only a person approves or declines (decisions 17 and 20). A suggestion that already works, or repeats an earlier one, also goes there, with a recommended decline.
 - The diagram leaves out the status badges, the Past suggestions page and withdrawal (decisions 13 to 17).
-
-## Goal
-
-A suggestion exists so that a pain point, stated or not and felt or not, reaches the people who change Probanda with enough detail that they can fix it, or decide not to, without going back to the practitioner. It passes when:
-
-- **(a)** a maintainer can accept or decline each item without asking the practitioner anything, measured as the share of items declined for lack of detail; and
-- **(b)** someone who knows the firm's clients can't tell which client, matter, person, document or file it came from. The scrub works to this standard. Its automatic check is a cross-check that the payload holds no token found in the local client, matter, contact or folder-name records.
-
-The practitioner can later see exactly what was sent, withdraw it, and see what happened to it.
-
-## Decisions
-
-### Audiences and scope
-
-1. The audiences are the practitioner, the maintainer (whoever changes Probanda's source), and whoever triages many suggestions together.
-2. Every suggestion has a pain point. When the practitioner leaves it unstated, the card shows a best guess labelled "our guess, edit if wrong", first on the card. Nothing is asked in chat.
-3. Pain the practitioner never felt counts: cost, reliability, accuracy, confidentiality near-misses.
-   - **When it appears:** an AI-noticed card appears when the session next pauses for the practitioner after the observation. At most one appears per day, across sessions. None appears for a fingerprint the practitioner dismissed or sent within 30 days, or for the same plugin version.
-   - **What it carries:** the raw observation, taken only from Probanda's own output (token counts, tool errors, plugin text), never from client documents or the practitioner's words. It also carries a fingerprint: plugin, version, skill and kind.
-   - **Merging:** merging by fingerprint is a triage view over separate records, never one merged record.
-
-### Terms
-
-4. Practitioners see one term, **Suggestion**, whoever started it. The card opens with "Probanda noticed:" or "You suggested:". The origin is also a field for triage.
-
-### The card
-
-The card is `Suggestion-<id>.html`, shown as a file card and served by Probanda's local server.
-
-5. The chat shows no suggestion talk at all. The file card is its only sign.
-6. The card shows, in this order:
-   1. the origin cue;
-   2. the pain point, described by how it affected the practitioner;
-   3. the suggestion;
-   4. an optional comment box with the grey placeholder "Please don't name clients, matters or people.";
-   5. the line "Probanda receives only what you see here, plus technical details about the Probanda software on this computer.", with a "Show technical details" link to the environment facts;
-   6. the line "You can see this later, with its status, under Past suggestions.";
-   7. **Submit Suggestion** and **Dismiss**.
-7. The pain point and the suggestion text can be edited in place before sending.
-8. On the click, the edited and typed text runs through the local cross-check and through patterns for paths, emails, dates and amounts. On a match, a one-line prompt offers Remove and Send anyway.
-9. Dismiss sends nothing, is recorded locally for the suppression in decision 3, and closes the card. If the card can't be closed, Dismiss greys it out and replaces it with one button, "Restore Suggestion". Every button gives visible feedback.
-10. The click is the practitioner's approval of the product idea, the content and the confidentiality alike. Nobody tells them they are reviewing, and they are never asked to review technical detail.
-11. Card order, labels and fixed strings are built into the page, not left to agent instructions.
-
-### Confidentiality
-
-12. Three layers protect client information:
-    1. Before the card is shown, the scrub removes names and indirect identifiers (unique facts, exact dates, amounts, folder names) to the standard of goal test (b), and the local cross-check runs.
-    2. The click is the final human gate.
-    3. The cloud side treats any identifying content found at triage as a leak to purge.
-
-    The practitioner's withdrawal is a fourth. Nothing is sent that contains a client fact the practitioner didn't see on the card.
-
-### Sending and status
-
-13. Status feedback appears on the card only: "Sending...", then "Delivered ✓" or "Not sent, will retry". Errors are in plain language and never offer technical details. The raw cause is kept in the local record.
-14. At the click, the local server saves the exact payload locally first, then sends it. A failed send shows "Not sent" and retries at the next session.
-15. Probanda's Cloud knows which Lawyer account sent each suggestion. This is Account Information.
-16. The Past suggestions page shows the local copy word for word, mainly so the practitioner can check that nothing confidential was sent. The technical-writer's specification can be viewed there on request.
-    - **Withdrawal:** withdrawing deletes the cloud record. If triage has begun, it also notifies the maintainer to purge derived records.
-    - **Badge:** "Withdrawn before review" or "Withdrawn; copies being removed".
-17. The status badges are Submitted, Under Review, Approved or Declined, and Implemented in `<plugin> <version>`.
-    - **Reasons:** Approved, Declined and Implemented show a reason as visible text, extremely short and readable by a non-technical person. Submitted needs none. A reason is written for every sender of a merged problem and never quotes submitted text.
-    - **When each is set:** Submitted on write. Under Review when triage opens the record. Implemented when the release that includes a fix commit naming the suggestion id is published.
-    - **Set by a person:** only Approved and Declined, each with its reason.
-
-### Agents
-
-18. **`technical-writer`** runs on Opus 5.5, on the practitioner's machine and their Claude plan. It starts after the click and writes a specification.
-    - **Who pays:** practitioners pay for planning from day 1, because changing that later would cost trust. They are told once, at setup or in the terms, that sending a suggestion uses their Claude plan.
-    - **What it reads:** only the card, the environment facts and Probanda's own installed material. Never the conversation, documents or tool arguments.
-    - **Backstop:** a second agent checks the specification. The specification and the suggestion both go to the Suggestion Box.
-19. **Environment facts** are:
-    - Probanda's own tools, both the visible ones and the expected ones that are missing;
-    - other tools, as a count only;
-    - plugin names and versions;
-    - the host (Cowork or Code) and the OS.
-
-    Code, not instructions, excludes usernames, hostnames and paths. The plan is carried out in Claude Code, which must not assume Cowork's tools.
-20. **`fix-planner`** runs on Opus 5.5 at high effort and high freedom, and is read-only on probanda-dev. It replaces `/specification-planning`. It runs first and returns, for each item, a recommendation with a check that would fail if the pain remained, plus the plan for the items it recommends. The maintainer approves or declines each item.
-21. **`fix-maker`** runs on Opus 5.5 at medium effort and low freedom. It carries out only approved items.
-22. Briefs are goal-style, with a done-when for each agent:
-    - card building and scrubbing: done when the local cross-check passes and the card is shown;
-    - `technical-writer`: done when every fact in the specification traces to the card or to Probanda's own material, and the backstop passes;
-    - `fix-planner`: done when each item has a runnable check;
-    - `fix-maker`: done when those checks and the plugin's own checks pass.
-
-    The list "where / the pain / what happened / the changes / what counts as wrong / done when" is a reminder line, not a form.
 
 ## Already built
 
@@ -178,13 +88,14 @@ The card is `Suggestion-<id>.html`, shown as a file card and served by Probanda'
 
 ## Constraints
 
-- **Commandment 3:** client information stays on the practitioner's machine. The card, the scrub, the cross-check, the local record and the `technical-writer` all run there. What leaves is only what the card shows, plus the environment facts and the specification.
+- **Commandment 3:** client information stays on the practitioner's machine. The card, the scrub, the cross-check, the local record and `technical-writer` all run there. What leaves is only what the card shows, plus the environment facts, the specification and the backstop result.
 - **Commandment 2:** decision 15 adds Account Information to the cloud. The table comment "nothing here names who sent it" in `suggestions.sql` changes with it.
-- **Commandment 4:** `technical-writer` and its backstop read only Probanda's installed material, never probanda-dev. `fix-planner` and `fix-maker` run in Probanda's Cloud or on the maintainer's machine.
-- **Commandment 7:** the card, the local record and the Past suggestions page are files Probanda creates.
-- **Layering:** `lawyer` names nothing in another plugin. The submit tool ships in `researcher`, so `lawyer` keeps posting only when `researcher` is installed.
-- **Old copies:** a copy of the plugin that sends none of the new fields keeps working. Each cloud change is additive.
-- **Version:** decide each release by the version rule in `CLAUDE.md`.
+- **Commandment 4:** `technical-writer` and its backstop read only the plugins' shipped files, never probanda-dev. `fix-planner` and `fix-maker` run in Probanda's Cloud or on the maintainer's machine.
+- **Commandment 5:** the local store has no table or column per kind (decision 14), and it is not one of the legacy stores.
+- **Commandment 7:** the card, the mockup, the local record and the Past suggestions page are files Probanda creates.
+- **Layering:** `lawyer` names nothing in another plugin. Open decision 5 settles which plugin sends.
+- **Withdrawal and git history:** pushed history is never rewritten, so derived records never quote submitted text (decision 16).
+- **Version:** decide each release by the version rule in `CLAUDE.md`. Phase 1 renames the statuses that an old copy's session-start check reads, so the releases that ship Phases 1 and 2 are minor bumps.
 
 ## Phases
 
@@ -192,112 +103,137 @@ Each phase ends with a commit to `main` and a release where a plugin changes. Ph
 
 ### Phase 1. Cloud records
 
-- Replace the status set with `submitted`, `under review`, `approved`, `declined`, `implemented` and `withdrawn`. Existing rows map `new` to `submitted`, `approved` to `approved` and `rejected` to `declined`. `approved in part` stays until Q3 is answered.
-- Add columns: `reason`, `implemented_in` (for example `lawyer 0.10.2`), `specification`, `comments`, and the sending install key (decision 15).
-- `suggestion-set-status` accepts the new transitions. It requires a reason for `approved`, `declined` and `implemented`. Only `under review` may be set without a person.
-- `suggestion-status` returns the badge, the reason and `implemented_in` to the key that sent the suggestion.
-- Add a `suggestion-withdraw` function for the sending key. Before triage, it deletes the row. After triage, it deletes the content and keeps a tombstone holding only the id and the issue number.
-- **Done when:** each function's tests cover every transition, including a refused one. A submit with none of the new fields still saves.
+- Add the whole additive schema at once, because each later column would cost another manual step (see Risks):
+  - per suggestion: `origin`, `fingerprint`, `raw_observation`, `environment_facts`, `comment`, the sending install key (decision 15), `issue_number` (written by intake), `specification`, `backstop_result`;
+  - per item, in order: text, status, reason, decline category, `implemented_in`, plus the suggestion's one optional mockup HTML.
+- Statuses: the suggestion holds `submitted`, `under review` and `withdrawn`. Each item holds `undecided`, `approved`, `declined` and `implemented`. The badge is computed from them by decision 17's rule.
+- `approved in part` is dropped. Each existing row gets one item holding its body. `new` maps to `submitted`, `approved` and `approved in part` map to that item approved, and `rejected` maps to declined, each with the reason "Decided before reasons were recorded".
+- Who writes what: `under review` and `implemented` are written by Probanda's automation keys, `approved` and `declined` by the maintainer with a reason (and a category for `declined`), and `withdrawn` by the sending install key.
+- `suggestion-set-status` gains a per-item form, `(id, item, status, reason, category)`. Until Phase 7 changes the triage skill, the old whole-suggestion write is still accepted and applied to every item.
+- `suggestion-status` returns the badge, the per-item statuses, reasons and releases to the key that sent the suggestion.
+- Add `suggestion-attach-specification`, keyed to the sending install key, so the specification and backstop result follow the suggestion (decision 18).
+- Add `suggestion-withdraw` for the sending key. Before triage, it deletes the row. After triage, it deletes the content and keeps a tombstone holding only the id and the issue number.
+- **Done when:** each function's tests cover every transition, including a refused one. A submit with none of the new fields still saves, and a legacy row reads back as one item.
 
 ### Phase 2. Local record, sending and Past suggestions
 
-- At the click, the `lawyer` local server saves the exact payload, then sends it. A failed send retries at the next session (decisions 13 and 14).
-- The Past suggestions page shows each local copy word for word, with its badge and reason, the specification on request, and a Withdraw button (decision 16).
-- The session-start outcome check reads the new badges.
-- **Done when:** a test sends with the network down, then retries and delivers. The page shows a sent payload byte for byte.
+- The local store is one store under `${CLAUDE_PLUGIN_DATA}` (decision 14). Each suggestion keeps the exact bytes sent, with the mockup embedded as sent.
+- At the click, the local server saves the exact payload, then sends it, and the card shows decision 13's statuses. A failed send retries when the server next starts, and stops after seven failed sessions (decision 14). Which plugin's server sends is open decision 5.
+- The Past suggestions page shows, for each sent suggestion: the pain point; each item with its status, reason and release; the brackets as shown on the card; the comment; the raw observation; the environment facts; and the mockup, inside a sandboxed iframe (no permissions, `srcdoc` from the stored bytes). The specification and backstop result show on request. Each entry has a Withdraw button (decision 16). Dismissed cards do not appear (decision 9).
+- A withdrawal is stored locally with its badge, and the page never asks the cloud about a withdrawn suggestion.
+- The session-start outcome check reads the new badges. When one changed, it shows the Past suggestions page as a file card, with no chat talk (decision 5).
+- **Done when:** a test sends with the network down, then retries and delivers. The page shows a sent payload and its mockup byte for byte against the stored record.
 
-### Phase 3. The card
+### Phase 3. Cross-check and environment facts
 
-- Build `Suggestion-<id>.html` on the local server (`source/lawyer/mcp/src/page-api/`), with the order and fixed strings of decisions 6 and 11 built into the page.
-- The click-time check is decision 8, and Dismiss and Restore Suggestion are decision 9.
+- The cross-check tool, with decision 8's token rule, reads the client, contact, matter, folder-name, document-title and file-name records through `lawyer`'s data server. The stop lists ship with the plugin.
+- The environment-facts tool returns only decision 19's facts. Code drops usernames, hostnames and paths.
+- **Done when:**
+  - a test with invented records finds a planted client token in each field;
+  - a card holding only Probanda's template words and common English passes;
+  - the environment-facts test finds no username, hostname or path, and runs with Cowork's tools absent, reporting host Code.
+
+### Phase 4. Scrub and the card
+
+- Before the card is shown, scrub to goal test (b) (decision 12, layer 1). A removed identifier becomes its bracket (decision 27).
+- Build `Suggestion-<id>.html` on the local server (`source/lawyer/mcp/src/page-api/`), with decision 6's order and decision 11's fixed strings built into the page. It shows the items under the shared pain point, the context lines after them, the per-block "our guess, edit if wrong" label (decisions 2 and 27), and one "Show a mockup of this" link when any item is visual (decision 24). The tool decides which items are visual.
+- Mechanism: the skill calls a wait tool that blocks until Submit, Dismiss or Show a mockup. The server completes Submit and Dismiss alone (save, send, record), so they work after the agent has stopped waiting. Show a mockup returns to the agent, which writes the mockup through an attach tool and waits again. When no agent is waiting, the mockup link is greyed and reads "Open this suggestion again to see a mockup".
+- The mockup follows decisions 25 and 26. Its "Not like this, because..." text becomes a constraint line, the rejected file is deleted, and the link comes back up to three times (decision 24).
+- The click-time check is decisions 8 and 28. Dismiss and Restore Suggestion are decision 9.
 - Replace Yes / No / Modify in `/suggestion` sections 1 and 6 and in `suggestion-box.md` step 6. The chat shows only the file card (decision 5).
-- **Waits for:** Q3 (one card with items, or one card per item) and Q5 (how far the practitioner's words are restructured).
-- **Done when:** a page test finds every fixed string in order. A planted email, path, date or amount triggers Remove / Send anyway.
-
-### Phase 4. Scrub and cross-check
-
-- Before the card is shown, scrub to goal test (b), then cross-check against the local client, matter, contact and folder-name records (decision 12, layer 1).
-- **Done when:** a test with invented records finds a planted client token in each card field and blocks the card.
+- **Done when:**
+  - the full decision 8 check over a shown card finds nothing (decision 22);
+  - a page test finds every fixed string in order, including "Show a mockup of this", "our guess, edit if wrong" and the bracket labels;
+  - a planted record token, email or path in the pain point, an item or the comment offers Remove only, and a planted date or amount offers Remove and Send anyway; Remove deletes it from the stored payload;
+  - a planted match in the environment facts, raw observation or mockup is dropped without a prompt and logged as a defect;
+  - a mockup test fails on any `<script>`, `<a href`, `<link`, `src=` or `http` in the file, or on any text outside the placeholder set;
+  - a rejection turns its reason into a constraint line;
+  - Submit on a card whose session has ended still saves and sends.
 
 ### Phase 5. AI-noticed suggestions
 
-- Raise a card from Probanda's own output only, with a fingerprint, at most one per day, and the 30-day and same-version suppression (decision 3).
-- **Waits for:** Q6, and the evaluator decision below.
-- **Done when:** a test raises one card, suppresses a second on the same day, and suppresses a dismissed fingerprint for 30 days.
+- Raise a card from Probanda's own output only, with a fingerprint, at most one per day, and decision 3's suppression. The observation, its fingerprint, the daily cap and the dismissed fingerprints live in the local store.
+- A Stop hook in `lawyer` raises the card at the next pause when the store holds an undisplayed observation and the cap and suppression allow it.
+- The raw observation holds only what decision 3 allows. The scrub runs over it before the card.
+- How observations are reported depends on open decision 1.
+- **Done when:** a test raises one card, suppresses a second on the same day, suppresses a dismissed fingerprint for 30 days and while the version is unchanged, and the hook raises the card in Claude Code without Cowork's tools.
 
 ### Phase 6. `technical-writer` and its backstop
 
-- Ship both agents with Opus 5.5.
-  - **Writer's tools:** a read of Probanda's installed material (`skill_source__read`) and nothing that reaches files, mail or matter data.
+- Ship both agents with Opus 5.5, in the plugin open decision 2 names.
+  - **Writer's tools:** a read of the plugins' shipped files (`skill_source__read`) and nothing that reaches files, mail or matter data.
   - **Writer's goal:** forbids reading identifying client or matter data. The goal removes the inclination, and the tool list removes the ability.
-- Add an environment-facts tool that returns only the facts in decision 19. Code drops usernames, hostnames and paths.
-- `suggestion_box__submit` and `suggestion-submit` carry `specification` and `comments`, under the same redaction check as the body.
-- When a practitioner asks, show the specification in full and explain both safeguards in the present tense.
+- The writer starts after the suggestion is sent. The specification passes the backstop, then decision 8's check with automatic removal, then goes up through `suggestion-attach-specification` (decision 18).
+- When a practitioner asks, open the Past suggestions page at that suggestion with the specification shown, and explain both safeguards there in the present tense.
 - Tell the practitioner once, at setup or in the terms, that sending uses their Claude plan.
+- The writer's dispatch is visible in Claude Code's transcript. The skill writes no text around it.
 - **Done when:**
   - a check fails if either agent's `tools` gains a file, shell, web or client-data tool;
-  - the environment-facts test finds no username, hostname or path;
-  - the backstop rejects a specification holding a fact that isn't on the card or in Probanda's material.
+  - the backstop rejects a specification holding a fact that isn't on the card, in the environment facts or in a shipped file;
+  - a planted client token in a specification is removed without a prompt, and a failed backstop sends nothing after the suggestion.
 
 ### Phase 7. Triage with `fix-planner`
 
 - Triage step 1 sets `under review`.
-- `fix-planner` replaces `developer:suggestion-planner` in triage step 3. For each item it returns a recommendation, a check that would fail if the pain remained, and the plan for what it recommends. When the suggestion carries a specification, it checks it against the code instead of writing one.
+- `fix-planner` replaces `developer:suggestion-planner` in triage step 3. It takes the card's items as given and returns, per item, a recommendation, a check that would fail if the pain remained, and the plan for what it recommends. It never merges or splits items (decision 20). When the suggestion carries a specification, it checks it against the code instead of writing one.
+- Plans, red tests and issue bodies paraphrase and never quote submitted text (decision 16). Intake's issue body changes with them.
 - The built red tests (triage step 4) run `fix-planner`'s checks.
-- A suggestion issue always ends `ready-for-human`, with one open decision per item.
-- The maintainer approves or declines each item with its short reason, through the developer plugin's triage skill, which calls `suggestion-set-status`. The maintainer then relabels the issue `ready-for-agent`, and the label trigger starts the build.
-- **Done when:** a dry run on a past suggestion issue gives every item a runnable check and ends `ready-for-human`. A status write without a reason is refused.
+- A suggestion issue always ends `ready-for-human`, with one open decision per item. When every red test already passes, or the suggestion repeats an earlier one, triage recommends a decline with the reason "Already works as asked" or "Already suggested", and the maintainer confirms. This replaces today's automatic closes.
+- The maintainer writes each item's decision, reason and (for a decline) category through the developer plugin's triage skill, which calls the per-item `suggestion-set-status`. When the issue covers several suggestions merged by fingerprint, the same decision and reason go to the matching item of each. The maintainer then relabels the issue `ready-for-agent`, and the label trigger starts the build. When every item is declined, the triage skill closes the issue instead.
+- The old whole-suggestion status write is retired.
+- **Done when:** a dry run on a past suggestion issue gives every item a runnable check and ends `ready-for-human`. A status write without a reason is refused. A check fails if a plan, red test or issue body holds a sentence of the suggestion verbatim.
 
 ### Phase 8. Building with `fix-maker`
 
 - Both implementers dispatch `fix-maker` for approved items only.
-- Each fix commit names the suggestion id as `Suggestion <id>`.
-- **Done when:** a run on a test issue with one approved and one declined item builds only the approved one, and its commit names the id.
+- Each fix commit names the item as `Suggestion <id> item <n>`.
+- **Done when:** a run on a test issue with one approved and one declined item builds only the approved one, and its commit names the id and item.
 
 ### Phase 9. Implemented status
 
-- When a release that includes a fix commit naming a suggestion id is published, set `implemented` with `implemented_in` and a reason. See open decision 7 for which release counts.
-- **Done when:** a test release with one such commit sets that suggestion's status, and the session-start check reports it.
+- The release that counts is open decision 3. Under its recommended option, `publish-public` records the probanda-dev commit it published from. The next run scans the commits since then for `Suggestion <id> item <n>` and sets each named item to `implemented`, with `implemented_in` and the fixed reason "Fixed in <plugin> <version>". The badge becomes Implemented only when every approved item is implemented. Fixes never published stay Approved.
+- **Done when:** a unit test of the scan, over a fixture commit range with the status function stubbed, sets the right items. The first real publication is checked by hand, and the session-start check reports it.
 
 ### Phase 10. Local implementer, unattended
 
-- Works the same queue as the cloud implementer. It takes the first `ready-for-agent` + `local` issue and uses the same claim comments, under its own lock so it never blocks cloud runs. See open decision 8 for how it starts.
-- **Done when:** with one cloud and one local issue queued, each implementer takes only its own.
+- Works the same queue as the cloud implementer. It takes the first `ready-for-agent` + `local` issue and uses the same claim comments, under its own lock so it never blocks cloud runs. How it starts is open decision 4.
+- It runs in its own clone, never the shared checkout, pulls `main`, builds, commits by pathspec and pushes to `main`.
+- **Done when:** with one cloud and one local issue queued, each implementer takes only its own, and the local implementer's clone path is not the shared checkout.
 
-### Phase 11. Withdrawal and purge
+### Phase 11. Withdrawal
 
-- A tombstone left by `suggestion-withdraw` is picked up by the next intake run, which labels the issue `withdrawn`, removes the suggestion text from the issue body, closes it, and drops it from the queue. The maintainer purges any other copy.
-- **Done when:** a test tombstone closes its issue, and no submitted text remains in the issue body.
+- A tombstone left by `suggestion-withdraw` is picked up by the next intake run, which labels the issue `withdrawn`, closes it and drops it from the queue. Because derived records paraphrase (Phase 7), nothing else needs purging.
+- **Done when:** a test tombstone closes its issue and removes it from the queue.
 
 ### Phase 12. Words and docs
 
-- Update `GLOSSARY.md` (Suggestion, Pain point, Done-test, Preview) and add the badges.
+- Update `GLOSSARY.md`: rename Preview to Mockup, revise Suggestion, Pain point and Done-test, and add Item, Constraint line, Evidence line, Origin, Fingerprint and the badges.
 - Update `docs/agents/issue-tracker.md` for per-item approval, the `withdrawn` label and the local implementer.
 - Update #193 to point here: this plan supersedes its Agent Brief where they differ.
 
 ## Open decisions
 
-1. **Q3. One card with items, or separate suggestions?** Do pain points, changes, constraints and rejected alternatives, and evidence go on one card with atomic items, or as separate suggestions? One badge can't show mixed statuses across items that are approved one by one. This blocks Phases 1 (the fate of `approved in part`), 3 and 7.
-2. **Q4. Mockups.** When does Probanda volunteer a mockup, how is it kept free of client data, and how does it travel? This blocks part of Phase 3.
-3. **Q5. Restructuring.** How much may the practitioner's words be restructured, and what approval protects their meaning? This blocks Phase 3.
-4. **Q6. Who starts a suggestion.** How do suggestions started by the practitioner and by the AI differ? Decisions 2 to 4, 10 and 18 largely settle this. It blocks Phase 5.
-5. **The evaluator route.** `litigator:suggestion-evaluator` builds loose threads from the session, which decision 3 excludes. Options:
-   - **(a)** limit its input to Probanda's own output (recommended, because it keeps the `/draft` and `/work` route);
-   - **(b)** retire it in favour of Phase 5;
+1. **The evaluator route.** `litigator:suggestion-evaluator` builds loose threads from the session, which decision 3 excludes. Options:
+   - **(a)** limit its input to Probanda's own output;
+   - **(b)** retire it, and have `/draft` and `/work` report what they notice through one `lawyer` tool that records an observation and fingerprint in the local store, so one store enforces the cap and suppression (recommended, because Q6 found the two origins differ only by cue, cap and suppression, and a second detector adds what Q6 ruled out);
    - **(c)** do nothing.
-6. **Which plugin ships `technical-writer`.** Options:
-   - **(a)** `researcher`, next to the submit tool (recommended, because only `researcher` can send);
-   - **(b)** `lawyer`.
-7. **Which release counts as "Implemented".** Options:
+2. **Which plugin ships `technical-writer`.** Options:
+   - **(a)** `researcher`, next to the submit tool;
+   - **(b)** `lawyer`, next to the card, the local record and `skill_source__read` (recommended, because `/suggestion` is in `lawyer` and starts the writer, so (a) would need an upward reference).
+3. **Which release counts as "Implemented".** Options:
    - **(a)** the public publication through `publish-public` (recommended, because that is when practitioners receive the fix);
    - **(b)** the push to probanda-dev's `main`, which reaches only the maintainer's machines.
-8. **How the local implementer starts.** Options:
-   - **(a)** a daily scheduled task on the maintainer's computer (recommended, because it needs no pasted command);
+4. **How the local implementer starts.** Options:
+   - **(a)** a daily scheduled task on the maintainer's computer, in its own clone (recommended, because it needs no pasted command);
    - **(b)** a `/loop` session left running;
    - **(c)** do nothing, and the maintainer keeps running `/implement`.
+5. **Which plugin sends.** Decisions 13 and 14 have the local server send and show the status, and Phase 4 has Submit work after the agent stops waiting. The card is in `lawyer`, but the submit tool is in `researcher`, and one plugin's server can't call another's tool. Options:
+   - **(a)** `lawyer`'s server posts to `suggestion-submit` itself, and `suggestion_box__submit` leaves `researcher` (recommended, because it is the only option that meets decisions 13 and 14; minor bumps of both plugins);
+   - **(b)** the click returns to the agent, which calls `researcher`'s tool. Submit then fails when no agent is waiting, and decisions 13 and 14 change.
 
 ## Risks
 
 - **Linux shims:** a red test run in the cloud sandbox on Linux can fail because of a shim rather than the code. The implementer re-runs each red test on the base before building, which narrows this but doesn't remove it.
 - **Per-item approval changes intake:** triage now always needs the maintainer for a suggestion issue, so the time from suggestion to build depends on the maintainer's response time. Today, triage queues an approved plan without the maintainer.
 - **Cloud schema:** `suggestions.sql` is applied by hand to the Supabase project, which needs credentials the cloud sandbox lacks. Phase 1 is a local issue.
+- **Git history:** pushed history can't be rewritten, so any submitted text that reaches a commit stays there. Phase 7's verbatim check is the guard.
