@@ -11,9 +11,29 @@
 // the repo, so the realpath/open TOCTOU race is out of scope.
 
 import { realpathSync } from "node:fs";
-import { win32 as pathWin32 } from "node:path";
+import { posix as pathPosix, win32 as pathWin32 } from "node:path";
 
 import { DataServerError } from "../errors.js";
+
+/**
+ * The grammar for real host paths (a root, and what realpath returns). On Windows it
+ * is `path.win32`, as it always was. On a POSIX host a win32 join turns `/home/x`
+ * into `\home\x`, which no file has, so host paths there take `path.posix`.
+ * Caller-supplied relative paths keep the win32 grammar everywhere; hostRelative()
+ * turns their separators into the host's before a join.
+ */
+const WINDOWS = process.platform === "win32";
+export const hostPath = WINDOWS ? pathWin32 : pathPosix;
+
+/** A win32-grammar relative path in host form: unchanged on Windows, `\` read as `/` on POSIX. */
+export function hostRelative(relative: string): string {
+  return WINDOWS ? relative : relative.split(/[\\/]+/).join("/");
+}
+
+/** Join a host root and a caller-relative path. */
+export function joinWithin(root: string, relative: string): string {
+  return hostPath.join(root, hostRelative(relative));
+}
 
 export class PathOutOfScopeError extends DataServerError {
   constructor(message: string) {
@@ -89,7 +109,7 @@ export function resolveWithin(
   label: string,
   mustExist = true
 ): string {
-  const joined = pathWin32.join(canonRoot, relative);
+  const joined = joinWithin(canonRoot, relative);
 
   let resolved: string;
   if (mustExist) {
@@ -114,14 +134,14 @@ function resolveDeepestExisting(target: string): string {
   for (;;) {
     try {
       const base = realpathSync.native(cursor);
-      return tail.length ? pathWin32.join(base, ...tail.reverse()) : base;
+      return tail.length ? hostPath.join(base, ...tail.reverse()) : base;
     } catch {
-      const parent = pathWin32.dirname(cursor);
+      const parent = hostPath.dirname(cursor);
       if (parent === cursor) {
         // Walked to the drive root without finding anything that exists.
-        return pathWin32.normalize(target);
+        return hostPath.normalize(target);
       }
-      tail.push(pathWin32.basename(cursor));
+      tail.push(hostPath.basename(cursor));
       cursor = parent;
     }
   }
@@ -133,11 +153,12 @@ export function assertContained(
   label: string,
   original: string
 ): void {
-  const needle = resolved.toLowerCase();
-  const prefix = (canonRoot.endsWith(pathWin32.sep) ? canonRoot : canonRoot + pathWin32.sep)
-    .toLowerCase();
+  // Case-folded on Windows only: a POSIX file system is case-sensitive.
+  const fold = (p: string) => (WINDOWS ? p.toLowerCase() : p);
+  const needle = fold(resolved);
+  const prefix = fold(canonRoot.endsWith(hostPath.sep) ? canonRoot : canonRoot + hostPath.sep);
 
-  if (needle !== canonRoot.toLowerCase() && !needle.startsWith(prefix)) {
+  if (needle !== fold(canonRoot) && !needle.startsWith(prefix)) {
     throw new PathOutOfScopeError(
       `${label} resolves outside its permitted root (${original} -> ${resolved})`
     );
@@ -146,5 +167,5 @@ export function assertContained(
 
 /** Normalize a caller path to forward slashes for stable return values. */
 export function toPosixRelative(canonRoot: string, resolved: string): string {
-  return pathWin32.relative(canonRoot, resolved).split(pathWin32.sep).join("/");
+  return hostPath.relative(canonRoot, resolved).split(hostPath.sep).join("/");
 }

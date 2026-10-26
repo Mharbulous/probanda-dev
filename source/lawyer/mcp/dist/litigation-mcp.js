@@ -1,4 +1,4 @@
-// build-stamp: 4d8754bf3336
+// build-stamp: 594cf547660e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -79773,7 +79773,7 @@ import { join as join9 } from "node:path";
 // src/repo-root.ts
 import { existsSync as existsSync4, readFileSync as readFileSync2, readdirSync as readdirSync3, statSync } from "node:fs";
 import { homedir as homedir4 } from "node:os";
-import { basename, dirname as dirname3, join as join8, resolve, win32 as pathWin32 } from "node:path";
+import { basename, dirname as dirname3, join as join8, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 var SKILLS_MARKER = join8(".claude", "skills");
 var CHECKOUT_MARKERS = [join8("source", "lawyer", "mcp"), join8(".claude", "skills", "plugin-packager")];
@@ -79995,8 +79995,8 @@ function migrateScriptsDir(skill, env, installRoot) {
     plugin: MIGRATE_SKILL_PLUGIN[skill],
     installRoot
   });
-  const dir = pathWin32.join(shipped.root, skill, "references", "scripts");
-  if (!existsSync4(pathWin32.join(dir, "migrate_engine.py"))) {
+  const dir = join8(shipped.root, skill, "references", "scripts");
+  if (!existsSync4(join8(dir, "migrate_engine.py"))) {
     throw new DataServerError(
       `migrate_engine.py not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -80025,11 +80025,11 @@ function missingMessage(subject, env, tried) {
 import { createHash as createHash2, randomUUID as randomUUID4 } from "node:crypto";
 import { closeSync as closeSync2, existsSync as existsSync5, mkdirSync as mkdirSync2, openSync as openSync2, readFileSync as readFileSync4, statSync as statSync2, writeSync as writeSync2 } from "node:fs";
 import { homedir as homedir5 } from "node:os";
-import { win32 as pathWin323 } from "node:path";
+import { win32 as pathWin322 } from "node:path";
 
 // src/lock-claim.ts
 import { closeSync, openSync, readdirSync as readdirSync4, readFileSync as readFileSync3, unlinkSync as unlinkSync2, writeSync } from "node:fs";
-import { win32 as pathWin322 } from "node:path";
+import { win32 as pathWin32 } from "node:path";
 var UUID2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function readLockKey(lock, field) {
   let text8;
@@ -80087,8 +80087,8 @@ function unlinkClaim(claim) {
   console.error(`[lock] could not remove the removal claim ${claim}: ${code}`);
 }
 function orphanClaims(lock) {
-  const dir = pathWin322.dirname(lock);
-  const prefix = `${pathWin322.basename(lock)}.`;
+  const dir = pathWin32.dirname(lock);
+  const prefix = `${pathWin32.basename(lock)}.`;
   try {
     const found = readdirSync4(dir).filter((name) => name.startsWith(prefix) && name.endsWith(".break"));
     return found.length ? `; removal claim left behind (delete it if no process is mid-takeover): ${found.join(", ")}` : "";
@@ -80105,13 +80105,13 @@ var LOCK_ATTEMPTS = 5;
 var LOCK_RETRY_MS = 400;
 var LOCK_STALE_MS = 9e5;
 function lockDir(env) {
-  const base = env.COCLERK_CASE_LOCK_ROOT || pathWin323.join(env.LOCALAPPDATA || homedir5(), "Coclerk", "case-locks");
+  const base = env.COCLERK_CASE_LOCK_ROOT || pathWin322.join(env.LOCALAPPDATA || homedir5(), "Coclerk", "case-locks");
   mkdirSync2(base, { recursive: true });
   return base;
 }
 function lockPath(matterRoot, env) {
-  const key = createHash2("sha256").update(pathWin323.normalize(matterRoot).toLowerCase()).digest("hex").slice(0, 16);
-  return pathWin323.join(lockDir(env), `${key}.lock`);
+  const key = createHash2("sha256").update(pathWin322.normalize(matterRoot).toLowerCase()).digest("hex").slice(0, 16);
+  return pathWin322.join(lockDir(env), `${key}.lock`);
 }
 async function acquireCaseLock(matterRoot, env = process.env) {
   const lock = lockPath(matterRoot, env);
@@ -80817,7 +80817,7 @@ function listCaseParties(caseDataDir, env = process.env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync6 } from "node:fs";
 import { join as join10 } from "node:path";
-var BUILD_STAMP = false ? null : "4d8754bf3336";
+var BUILD_STAMP = false ? null : "594cf547660e";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80862,11 +80862,19 @@ function buildStampStatus(env = process.env) {
 
 // src/knowledge/tree.ts
 import { readFileSync as readFileSync7, readdirSync as readdirSync5, realpathSync as realpathSync2, statSync as statSync3 } from "node:fs";
-import { win32 as pathWin325 } from "node:path";
+import { win32 as pathWin324 } from "node:path";
 
 // src/files/scope.ts
 import { realpathSync } from "node:fs";
-import { win32 as pathWin324 } from "node:path";
+import { posix as pathPosix, win32 as pathWin323 } from "node:path";
+var WINDOWS = process.platform === "win32";
+var hostPath = WINDOWS ? pathWin323 : pathPosix;
+function hostRelative(relative5) {
+  return WINDOWS ? relative5 : relative5.split(/[\\/]+/).join("/");
+}
+function joinWithin(root, relative5) {
+  return hostPath.join(root, hostRelative(relative5));
+}
 var PathOutOfScopeError = class extends DataServerError {
   constructor(message) {
     super(message, "path_out_of_scope");
@@ -80902,7 +80910,7 @@ function canonicalRoot(root, missingMessage2, code = "skills_root_missing") {
   }
 }
 function resolveWithin(canonRoot, relative5, label2, mustExist = true) {
-  const joined = pathWin324.join(canonRoot, relative5);
+  const joined = joinWithin(canonRoot, relative5);
   let resolved;
   if (mustExist) {
     try {
@@ -80922,28 +80930,29 @@ function resolveDeepestExisting(target) {
   for (; ; ) {
     try {
       const base = realpathSync.native(cursor);
-      return tail.length ? pathWin324.join(base, ...tail.reverse()) : base;
+      return tail.length ? hostPath.join(base, ...tail.reverse()) : base;
     } catch {
-      const parent = pathWin324.dirname(cursor);
+      const parent = hostPath.dirname(cursor);
       if (parent === cursor) {
-        return pathWin324.normalize(target);
+        return hostPath.normalize(target);
       }
-      tail.push(pathWin324.basename(cursor));
+      tail.push(hostPath.basename(cursor));
       cursor = parent;
     }
   }
 }
 function assertContained(canonRoot, resolved, label2, original) {
-  const needle = resolved.toLowerCase();
-  const prefix = (canonRoot.endsWith(pathWin324.sep) ? canonRoot : canonRoot + pathWin324.sep).toLowerCase();
-  if (needle !== canonRoot.toLowerCase() && !needle.startsWith(prefix)) {
+  const fold = (p3) => WINDOWS ? p3.toLowerCase() : p3;
+  const needle = fold(resolved);
+  const prefix = fold(canonRoot.endsWith(hostPath.sep) ? canonRoot : canonRoot + hostPath.sep);
+  if (needle !== fold(canonRoot) && !needle.startsWith(prefix)) {
     throw new PathOutOfScopeError(
       `${label2} resolves outside its permitted root (${original} -> ${resolved})`
     );
   }
 }
 function toPosixRelative(canonRoot, resolved) {
-  return pathWin324.relative(canonRoot, resolved).split(pathWin324.sep).join("/");
+  return hostPath.relative(canonRoot, resolved).split(hostPath.sep).join("/");
 }
 
 // src/knowledge/tree.ts
@@ -80991,7 +81000,7 @@ function parseKnowledgePath(raw, label2, allowRoot = false) {
 function joinRelative(fromPath, relative5) {
   const slash = fromPath.lastIndexOf("/");
   const dir = slash === -1 ? "" : fromPath.slice(0, slash);
-  return pathWin325.normalize(dir ? `${dir}\\${relative5}` : relative5).split("\\").join("/");
+  return pathWin324.normalize(dir ? `${dir}\\${relative5}` : relative5).split("\\").join("/");
 }
 var COUNTRY = /^[A-Z]{3}$/;
 var JURISDICTION = /^[A-Z]{2,3}$/;
@@ -81097,7 +81106,7 @@ function shippedLayer(skill, rest, seams) {
     shipped.shipped_from === "install" ? `bundled skill source not found at ${shipped.root}; reinstall the plugin and fully restart` : `skills tree not found at ${shipped.root}; the repo has moved or COCLERK_REPO_ROOT is wrong`,
     "skills_root_missing"
   );
-  const references = pathWin325.join(skillsRoot, ...dir.split("/"), "references");
+  const references = pathWin324.join(skillsRoot, ...dir.split("/"), "references");
   let canon = null;
   try {
     canon = realpathSync2.native(references);
@@ -81105,11 +81114,11 @@ function shippedLayer(skill, rest, seams) {
     canon = null;
   }
   if (canon !== null) assertContained(skillsRoot, canon, `${skill}/references`, references);
-  return { layer: { canon, abs: pathWin325.join(canon ?? references, ...rest) }, shipped_from: shipped.shipped_from };
+  return { layer: { canon, abs: pathWin324.join(canon ?? references, ...rest) }, shipped_from: shipped.shipped_from };
 }
 function overlayLayer(segments, seams, label2) {
   const configured = resolveCaseDataRoot(seams.env ?? process.env, seams.caseDataRoot);
-  const shown = pathWin325.join(configured, "_practice", "knowledge", ...segments);
+  const shown = pathWin324.join(configured, "_practice", "knowledge", ...segments);
   if (shown.length > MAX_PATH_CHARS) {
     throw new DataServerError(
       `${label2}: the overlay path is ${shown.length} characters, over the Windows limit of ${MAX_PATH_CHARS}: ${shown}`,
@@ -81117,7 +81126,7 @@ function overlayLayer(segments, seams, label2) {
     );
   }
   const caseRoot = canonicalRoot(configured, `case_data_root not found: ${configured}`, "case_data_root_missing");
-  const knowledgeDir = pathWin325.join(caseRoot, "_practice", "knowledge");
+  const knowledgeDir = pathWin324.join(caseRoot, "_practice", "knowledge");
   let canon = null;
   try {
     canon = realpathSync2.native(knowledgeDir);
@@ -81125,7 +81134,7 @@ function overlayLayer(segments, seams, label2) {
     canon = null;
   }
   if (canon !== null) assertContained(caseRoot, canon, label2, knowledgeDir);
-  return { canon, abs: pathWin325.join(canon ?? knowledgeDir, ...segments) };
+  return { canon, abs: pathWin324.join(canon ?? knowledgeDir, ...segments) };
 }
 function locate(kp, seams, label2 = "path") {
   const local = overlayLayer(kp.segments, seams, label2);
@@ -81193,7 +81202,7 @@ function readLayerDir(root, label2, original) {
   if (type === null) return null;
   if (type === "file") throw new DataServerError(`${label2} is a file, not a folder: ${original} (use knowledge__read)`, "not_a_folder");
   return readdirSync5(root.abs).map((name) => {
-    const child = entryType({ canon: root.canon, abs: pathWin325.join(root.abs, name) }, label2, `${original}/${name}`);
+    const child = entryType({ canon: root.canon, abs: pathWin324.join(root.abs, name) }, label2, `${original}/${name}`);
     return { name, type: child ?? "file" };
   });
 }
@@ -82099,7 +82108,7 @@ import { inflateRawSync } from "node:zlib";
 // src/knowledge/sidecar.ts
 import { createHash as createHash4, randomUUID as randomUUID7 } from "node:crypto";
 import { closeSync as closeSync5, existsSync as existsSync10, mkdirSync as mkdirSync4, openSync as openSync5, statSync as statSync6, writeSync as writeSync5 } from "node:fs";
-import { win32 as pathWin327 } from "node:path";
+import { win32 as pathWin326 } from "node:path";
 
 // src/submission/render-job.ts
 import { randomUUID as randomUUID6 } from "node:crypto";
@@ -82110,18 +82119,18 @@ import { join as join12 } from "node:path";
 import { createHash as createHash3, randomUUID as randomUUID5 } from "node:crypto";
 import { closeSync as closeSync3, existsSync as existsSync8, mkdirSync as mkdirSync3, openSync as openSync3, readFileSync as readFileSync8, statSync as statSync4, writeSync as writeSync3 } from "node:fs";
 import { homedir as homedir6 } from "node:os";
-import { win32 as pathWin326 } from "node:path";
+import { win32 as pathWin325 } from "node:path";
 var LOCK_ATTEMPTS2 = 25;
 var LOCK_RETRY_MS2 = 400;
 var LOCK_STALE_MS2 = 9e5;
 function lockDir2(env) {
-  const base = env.COCLERK_SUBMISSION_LOCK_ROOT || pathWin326.join(env.LOCALAPPDATA || homedir6(), "Coclerk", "submission-locks");
+  const base = env.COCLERK_SUBMISSION_LOCK_ROOT || pathWin325.join(env.LOCALAPPDATA || homedir6(), "Coclerk", "submission-locks");
   mkdirSync3(base, { recursive: true });
   return base;
 }
 function hostLocalPath(dbPath, suffix, env = process.env) {
-  const key = createHash3("sha256").update(pathWin326.normalize(dbPath).toLowerCase()).digest("hex").slice(0, 16);
-  return pathWin326.join(lockDir2(env), `${key}.${suffix}`);
+  const key = createHash3("sha256").update(pathWin325.normalize(dbPath).toLowerCase()).digest("hex").slice(0, 16);
+  return pathWin325.join(lockDir2(env), `${key}.${suffix}`);
 }
 function lockPath2(dbPath, env) {
   return hostLocalPath(dbPath, "lock", env);
@@ -82597,7 +82606,7 @@ async function acquireLock(lock) {
   );
 }
 async function withFileLock(target, fn2) {
-  mkdirSync4(pathWin327.dirname(target), { recursive: true });
+  mkdirSync4(pathWin326.dirname(target), { recursive: true });
   const lock = `${target}.lock`;
   const token = await acquireLock(lock);
   try {
@@ -82926,7 +82935,7 @@ async function upsert_firm_profile(args, env = process.env) {
 
 // src/tools/practice/folder-map.ts
 import { existsSync as existsSync12, mkdirSync as mkdirSync6, readdirSync as readdirSync7, readFileSync as readFileSync11, writeFileSync as writeFileSync4 } from "node:fs";
-import { dirname as dirname6, join as join14, win32 as pathWin328 } from "node:path";
+import { dirname as dirname6, join as join14, win32 as pathWin327 } from "node:path";
 var FLAGS = ["never_ingest", "privileged_by_default", "authority"];
 var GLOSSARY = "shared/document-types.md";
 var ROW = /^\| `([a-z_]+)` \| ([^|]+?) \| ([^|]+?) \|([^|]*)\|$/;
@@ -82970,7 +82979,7 @@ function splitGlob(glob) {
 }
 function checkGlob(glob, where) {
   if (typeof glob !== "string" || glob.trim() === "") throw new ValidationError(`${where}: a folder must be a non-empty string`);
-  if (pathWin328.isAbsolute(glob) || /^[a-z]:/i.test(glob) || /^[\\/]/.test(glob)) {
+  if (pathWin327.isAbsolute(glob) || /^[a-z]:/i.test(glob) || /^[\\/]/.test(glob)) {
     throw new ValidationError(`${where}: "${glob}" must be relative to the matter folder`);
   }
   if (splitGlob(glob).some((s3) => s3 === "" || s3 === "." || s3 === "..")) {
@@ -83086,7 +83095,7 @@ import { dirname as dirname8, isAbsolute as isAbsolute3, join as join16 } from "
 
 // src/files/matter-root.ts
 import { existsSync as existsSync13, readdirSync as readdirSync8, readFileSync as readFileSync12, statSync as statSync7 } from "node:fs";
-import { basename as basename2, dirname as dirname7, isAbsolute as isAbsolute2, join as join15, normalize, resolve as resolve2, win32 as pathWin329 } from "node:path";
+import { basename as basename2, dirname as dirname7, isAbsolute as isAbsolute2, join as join15, normalize, resolve as resolve2, win32 as pathWin328 } from "node:path";
 var POINTER_FILES = ["probanda.json", "coclerk.json"];
 var POINTER_SCHEMA_VERSION = 5;
 var LEGACY_ARTIFACTS_DIR = "9. AI";
@@ -83099,7 +83108,7 @@ function validateMatterRoot(matterRoot) {
   if (typeof matterRoot !== "string" || matterRoot.length === 0) {
     throw new DataServerError("matter_root is required", "invalid_root");
   }
-  if (!pathWin329.isAbsolute(matterRoot)) {
+  if (!pathWin328.isAbsolute(matterRoot)) {
     throw new DataServerError(`matter_root must be an absolute path: ${matterRoot}`, "invalid_root");
   }
   const canon = canonicalRoot(matterRoot, `matter_root not found: ${matterRoot}`, "invalid_root");
@@ -84441,18 +84450,18 @@ import { join as join21 } from "node:path";
 import { createHash as createHash5, randomUUID as randomUUID8 } from "node:crypto";
 import { closeSync as closeSync6, existsSync as existsSync17, mkdirSync as mkdirSync8, openSync as openSync6, readFileSync as readFileSync16, statSync as statSync9, writeSync as writeSync6 } from "node:fs";
 import { homedir as homedir8 } from "node:os";
-import { win32 as pathWin3210 } from "node:path";
+import { win32 as pathWin329 } from "node:path";
 var LOCK_ATTEMPTS4 = 5;
 var LOCK_RETRY_MS4 = 400;
 var LOCK_STALE_MS4 = 9e5;
 function lockDir3(env) {
-  const base = env.COCLERK_TIMECAMPING_LOCK_ROOT || pathWin3210.join(env.LOCALAPPDATA || homedir8(), "Coclerk", "timecamping-locks");
+  const base = env.COCLERK_TIMECAMPING_LOCK_ROOT || pathWin329.join(env.LOCALAPPDATA || homedir8(), "Coclerk", "timecamping-locks");
   mkdirSync8(base, { recursive: true });
   return base;
 }
 function lockPath3(dbPath, env) {
-  const key = createHash5("sha256").update(pathWin3210.normalize(dbPath).toLowerCase()).digest("hex").slice(0, 16);
-  return pathWin3210.join(lockDir3(env), `${key}.lock`);
+  const key = createHash5("sha256").update(pathWin329.normalize(dbPath).toLowerCase()).digest("hex").slice(0, 16);
+  return pathWin329.join(lockDir3(env), `${key}.lock`);
 }
 async function acquireDataLock2(dbPath, env = process.env) {
   const lock = lockPath3(dbPath, env);
@@ -87454,7 +87463,7 @@ function runDriver4(label2, driver, payload, env, defaultTimeoutMs) {
 // src/files/skill-source.ts
 import { createHash as createHash6 } from "node:crypto";
 import { existsSync as existsSync21, readFileSync as readFileSync18, readdirSync as readdirSync11, statSync as statSync11 } from "node:fs";
-import { win32 as pathWin3211 } from "node:path";
+import { win32 as pathWin3210 } from "node:path";
 var rootCache = /* @__PURE__ */ new Map();
 function servedRoot(shipped) {
   const cached3 = rootCache.get(shipped.root);
@@ -87489,18 +87498,18 @@ var SKILLS_PREFIX = /^.*[.](?:agents|claude)[\\/]+skills[\\/]+/i;
 function normalizeSkillPath(relative5) {
   if (typeof relative5 !== "string" || relative5 === "") return relative5;
   const stripped = relative5.replace(SKILLS_PREFIX, "");
-  return stripped === "" ? "" : pathWin3211.normalize(stripped);
+  return stripped === "" ? "" : pathWin3210.normalize(stripped);
 }
 function resolveReference(relative5, env, installRoot, from) {
   const normalized2 = normalizeSkillPath(relative5);
   if (!from || typeof relative5 !== "string" || relative5 === "") return normalized2;
   const stripped = relative5.replace(SKILLS_PREFIX, "");
   if (stripped !== relative5) return normalized2;
-  const anchor = normalizeSkillPath(from).split(pathWin3211.sep).join("/");
+  const anchor = normalizeSkillPath(from).split(pathWin3210.sep).join("/");
   const slash = anchor.lastIndexOf("/");
   const bases = [.../* @__PURE__ */ new Set([slash === -1 ? "" : anchor.slice(0, slash), anchor.split("/")[0], ""])];
   for (const base of bases) {
-    const candidate = pathWin3211.normalize(pathWin3211.join(base, stripped));
+    const candidate = pathWin3210.normalize(pathWin3210.join(base, stripped));
     if (candidate.split(/[\\/]/)[0] === "..") continue;
     let root;
     try {
@@ -87509,7 +87518,7 @@ function resolveReference(relative5, env, installRoot, from) {
       if (err instanceof DataServerError) continue;
       throw err;
     }
-    if (existsSync21(pathWin3211.join(root, candidate))) return candidate;
+    if (existsSync21(joinWithin(root, candidate))) return candidate;
   }
   return normalized2;
 }
@@ -87634,7 +87643,7 @@ function listTreeRoot(recursive, env, installRoot, out) {
 }
 function walk(dirPath, root, recursive, shipped, out) {
   for (const entry2 of readdirSync11(dirPath, { withFileTypes: true })) {
-    const full = pathWin3211.join(dirPath, entry2.name);
+    const full = hostPath.join(dirPath, entry2.name);
     const isDir3 = entry2.isDirectory();
     out.push({
       path: toPosixRelative(root, full),
@@ -88725,7 +88734,7 @@ function resolveAt(kp, given, recipient, seams) {
 
 // src/knowledge/overlay.ts
 import { existsSync as existsSync23, mkdirSync as mkdirSync10, realpathSync as realpathSync3 } from "node:fs";
-import { win32 as pathWin3212 } from "node:path";
+import { win32 as pathWin3211 } from "node:path";
 var REPO_RUN_MARKER = "repo-run";
 function matterOf(raw, tool) {
   if (typeof raw !== "string" || raw.trim() === "" || /[\r\n]/.test(raw)) {
@@ -88761,7 +88770,7 @@ function grammarCheck(kp, type, label2) {
 function mkdirInside(root, dir, label2, original) {
   let existing = dir;
   while (!existsSync23(existing)) {
-    const parent = pathWin3212.dirname(existing);
+    const parent = pathWin3211.dirname(existing);
     if (parent === existing) break;
     existing = parent;
   }
@@ -88780,9 +88789,9 @@ function overlayCanon(seams, label2) {
 function writableOverlayPath(kp, seams, label2) {
   locate(kp, seams, label2);
   const canon = overlayCanon(seams, label2);
-  const abs = pathWin3212.join(canon, ...kp.segments);
-  mkdirInside(canon, pathWin3212.dirname(abs), label2, kp.path);
-  assertContained(canon, realpathSync3.native(pathWin3212.dirname(abs)), label2, kp.path);
+  const abs = pathWin3211.join(canon, ...kp.segments);
+  mkdirInside(canon, pathWin3211.dirname(abs), label2, kp.path);
+  assertContained(canon, realpathSync3.native(pathWin3211.dirname(abs)), label2, kp.path);
   entryType({ canon, abs }, label2, kp.path);
   return { canon, abs };
 }
@@ -88798,7 +88807,7 @@ import { readFileSync as readFileSync21 } from "node:fs";
 // src/knowledge/fetched.ts
 import { createHash as createHash8 } from "node:crypto";
 import { copyFileSync as copyFileSync2, existsSync as existsSync24, readdirSync as readdirSync12, readFileSync as readFileSync20, realpathSync as realpathSync4, unlinkSync as unlinkSync5 } from "node:fs";
-import { win32 as pathWin3213 } from "node:path";
+import { win32 as pathWin3212 } from "node:path";
 function savedCopyOf(raw, record2, front, seams) {
   const label2 = "knowledge__write.saved_copy";
   if (typeof raw !== "string") throw new ValidationError(`${label2} must be the knowledge path of a file under _inbox`);
@@ -88812,8 +88821,8 @@ function savedCopyOf(raw, record2, front, seams) {
   }
   const url = typeof front.pdf_url === "string" ? front.pdf_url : front.page_url;
   const canon = overlayCanon(seams, label2);
-  const inboxAbs = pathWin3213.join(canon, "_inbox");
-  const abs = pathWin3213.join(inboxAbs, ...kp.rest);
+  const inboxAbs = pathWin3212.join(canon, "_inbox");
+  const abs = pathWin3212.join(inboxAbs, ...kp.rest);
   const inboxCanon = existsSync24(inboxAbs) ? realpathSync4.native(inboxAbs) : null;
   if (inboxCanon !== null) assertContained(canon, inboxCanon, label2, kp.path);
   const type = entryType({ canon: inboxCanon, abs }, label2, kp.path);
@@ -88856,18 +88865,18 @@ function liveKnowledgeTexts(canon, seams) {
   const texts = [];
   const walk4 = (dir) => {
     for (const entry2 of readdirSync12(dir, { withFileTypes: true })) {
-      const abs = pathWin3213.join(dir, entry2.name);
+      const abs = pathWin3212.join(dir, entry2.name);
       if (entry2.isDirectory()) walk4(abs);
       else if (entry2.isFile() && entry2.name.endsWith(".md")) texts.push(readFileSync20(abs, "utf-8").toLowerCase());
     }
   };
   for (const skill of KNOWLEDGE_SKILLS) {
-    const dir = pathWin3213.join(canon, skill);
+    const dir = pathWin3212.join(canon, skill);
     if (existsSync24(dir)) walk4(dir);
     const shipped = shippedLayer(skill, [], seams).layer.canon;
     if (shipped === null) continue;
     for (const entry2 of readdirSync12(shipped, { withFileTypes: true })) {
-      if (entry2.isDirectory() && inTree([entry2.name])) walk4(pathWin3213.join(shipped, entry2.name));
+      if (entry2.isDirectory() && inTree([entry2.name])) walk4(pathWin3212.join(shipped, entry2.name));
     }
   }
   return texts;
@@ -88875,7 +88884,7 @@ function liveKnowledgeTexts(canon, seams) {
 function deleteUnreferencedPdfs(hashes, seams, label2) {
   if (hashes.length === 0) return [];
   const canon = overlayCanon(seams, label2);
-  const fetched = pathWin3213.join(canon, "_fetched");
+  const fetched = pathWin3212.join(canon, "_fetched");
   if (!existsSync24(fetched)) return [];
   const live = liveKnowledgeTexts(canon, seams);
   const deleted = [];
@@ -88884,7 +88893,7 @@ function deleteUnreferencedPdfs(hashes, seams, label2) {
     for (const host of readdirSync12(fetched, { withFileTypes: true })) {
       if (!host.isDirectory()) continue;
       const name = `${hash.slice(0, 12)}.pdf`;
-      const pdf = pathWin3213.join(fetched, host.name, name);
+      const pdf = pathWin3212.join(fetched, host.name, name);
       if (!existsSync24(pdf)) continue;
       try {
         unlinkSync5(pdf);
@@ -89301,7 +89310,7 @@ async function knowledgeWrite(args, seams = {}) {
 
 // src/knowledge/retire.ts
 import { existsSync as existsSync25, readFileSync as readFileSync23, renameSync as renameSync4 } from "node:fs";
-import { win32 as pathWin3214 } from "node:path";
+import { win32 as pathWin3213 } from "node:path";
 async function retireOne(kp, seams, label2) {
   if (entryType(locate(kp, seams, label2).local, label2, kp.path) === null) {
     throw new DataServerError(`${kp.path} is not in the overlay (a second retire getting not_found counts as done)`, "not_found");
@@ -89317,7 +89326,7 @@ async function retireOne(kp, seams, label2) {
       if (type === null) throw new DataServerError(`${kp.path} is not in the overlay (a second retire getting not_found counts as done)`, "not_found");
       if (type === "dir") throw new DataServerError(`${label2}: ${kp.path} is a folder; retire moves one file and its sidecar`, "not_a_file");
       const hasSidecar = existsSync25(sidecar2);
-      const to2 = pathWin3214.join(source.canon, ...dest.segments);
+      const to2 = pathWin3213.join(source.canon, ...dest.segments);
       for (const abs of [to2, ...hasSidecar ? [`${to2}${SIDECAR_SUFFIX}`] : []]) {
         if (existsSync25(abs)) {
           throw new DataServerError(`${abs} already holds a retired copy, which is never overwritten; nothing was moved`, "superseded_exists");
@@ -92024,7 +92033,7 @@ import { existsSync as existsSync26, mkdirSync as mkdirSync11, readFileSync as r
 import { basename as basename4, dirname as dirname13, isAbsolute as isAbsolute4, join as join27, resolve as resolve4 } from "node:path";
 
 // src/files/zones.ts
-import { win32 as pathWin3215 } from "node:path";
+import { win32 as pathWin3214 } from "node:path";
 var FIREWALL = /^(privileged|disclosed)$/i;
 var TRASH = /^trash$/i;
 var CASE_DATA = /^0\. case data$/i;
@@ -92042,7 +92051,7 @@ function zoneProblem(purpose, path, root, draftUnchanged = false) {
   const zone = ZONES[purpose];
   const segments = path.split(/[\\/]+/);
   if (segments.some((s3) => FIREWALL.test(s3))) return `a privileged or disclosed folder is ${zone.phrase}`;
-  const below = root === void 0 ? [] : pathWin3215.relative(root, path).split(pathWin3215.sep).filter(Boolean);
+  const below = root === void 0 ? [] : pathWin3214.relative(root, path).split(pathWin3214.sep).filter(Boolean);
   if (purpose === "move-to" && draftUnchanged) {
     return below.length === 1 && DRAFT_FOLDER.test(below[0]) ? null : "Move to 0. DRAFT unchanged moves only into the matter's 0. DRAFT folder";
   }
@@ -94199,49 +94208,49 @@ import {
   renameSync as renameSync6,
   statSync as statSync13
 } from "node:fs";
-import { win32 as pathWin3216 } from "node:path";
+import { win32 as pathWin3215 } from "node:path";
 var TRASH2 = "TRASH";
 var TRASH_LOG = ".trash-log.jsonl";
 function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
-  if (typeof path !== "string" || !pathWin3216.isAbsolute(path)) {
+  if (typeof path !== "string" || !pathWin3215.isAbsolute(path)) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
   let target;
   try {
-    target = pathWin3216.join(realpathSync6.native(pathWin3216.dirname(path)), pathWin3216.basename(path));
+    target = pathWin3215.join(realpathSync6.native(pathWin3215.dirname(path)), pathWin3215.basename(path));
     lstatSync(target);
   } catch {
     throw new DataServerError(`path does not exist: ${path}`, "not_found");
   }
   const stat = lstatSync(target);
   const ancestors = [target];
-  for (let dir = pathWin3216.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin3216.dirname(dir)) {
+  for (let dir = pathWin3215.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin3215.dirname(dir)) {
     ancestors.push(dir);
   }
-  if (ancestors.some((dir) => existsSync30(pathWin3216.join(dir, ".git")))) {
+  if (ancestors.some((dir) => existsSync30(pathWin3215.join(dir, ".git")))) {
     throw new DataServerError(
       `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
       "git_worktree"
     );
   }
-  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile2(pathWin3216.join(dir, marker))));
+  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile2(pathWin3215.join(dir, marker))));
   if (root === void 0) {
     throw new DataServerError(
       `no ${POINTER_FILES.join(" or ")} at or above the path; not a client-matter file: ${target}`,
       "not_a_matter_file"
     );
   }
-  const rel = pathWin3216.relative(root, target);
+  const rel = pathWin3215.relative(root, target);
   if (zoneProblem("move-from", target, root)) {
     throw new DataServerError(
       `path is protected (the workspace root, the matter pointer, ${TRASH2}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
       "protected"
     );
   }
-  let dest = pathWin3216.join(root, TRASH2, rel);
+  let dest = pathWin3215.join(root, TRASH2, rel);
   if (present2(dest)) {
     const suffix = ` (trashed ${stamp(now)})`;
-    const ext = stat.isDirectory() ? "" : pathWin3216.extname(dest);
+    const ext = stat.isDirectory() ? "" : pathWin3215.extname(dest);
     dest = dest.slice(0, dest.length - ext.length) + suffix + ext;
     if (present2(dest)) {
       throw new DataServerError(`destination already exists: ${dest}`, "dest_exists");
@@ -94249,7 +94258,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   }
   if (dryRun) return { would_move_from: target, would_move_to: dest };
   const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync14(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
-  mkdirSync13(pathWin3216.dirname(dest), { recursive: true });
+  mkdirSync13(pathWin3215.dirname(dest), { recursive: true });
   try {
     renameSync6(target, dest);
   } catch (err) {
@@ -94263,7 +94272,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
   }
   try {
     const line = JSON.stringify({ when: now.toISOString(), from: target, to: dest });
-    appendFileSync(pathWin3216.join(root, TRASH2, TRASH_LOG), line + "\n", "utf-8");
+    appendFileSync(pathWin3215.join(root, TRASH2, TRASH_LOG), line + "\n", "utf-8");
   } catch (err) {
     result.log_error = err instanceof Error ? err.message : String(err);
   }
@@ -101886,14 +101895,14 @@ function publishSidecar(ctx, emitterWarnings, coverNotes) {
 
 // src/submission/substance-file.ts
 import { existsSync as existsSync36, mkdirSync as mkdirSync18, realpathSync as realpathSync9, writeFileSync as writeFileSync9 } from "node:fs";
-import { win32 as pathWin3217 } from "node:path";
+import { win32 as pathWin3216 } from "node:path";
 var BCSC_SUBSTANCE_FOLDER = "bcsc-form-substance";
 function confineCaseDataFolder(dbPath, caseDataFolder2) {
-  if (!pathWin3217.isAbsolute(caseDataFolder2)) {
+  if (!pathWin3216.isAbsolute(caseDataFolder2)) {
     throw new PathOutOfScopeError(`case_data_folder must be an absolute path: ${caseDataFolder2}`);
   }
   const folder = canonicalRoot(caseDataFolder2, `case_data_folder not found: ${caseDataFolder2}. Run /matter-data initialize on this matter first.`, "case_data_missing");
-  const dbFolder = canonicalRoot(pathWin3217.dirname(dbPath), `db_path's folder not found: ${dbPath}`, "not_found");
+  const dbFolder = canonicalRoot(pathWin3216.dirname(dbPath), `db_path's folder not found: ${dbPath}`, "not_found");
   if (folder.toLowerCase() !== dbFolder.toLowerCase()) {
     throw new PathOutOfScopeError(
       `case_data_folder must be the matter's matter-data folder, the one holding db_path (${dbFolder}); got ${caseDataFolder2} (${folder})`
@@ -101902,8 +101911,8 @@ function confineCaseDataFolder(dbPath, caseDataFolder2) {
   return folder;
 }
 function writeSubstanceFile(caseData, fileName, markdown, folders2 = [BCSC_SUBSTANCE_FOLDER]) {
-  const dirs = folders2.map((_3, i3) => pathWin3217.join(caseData, ...folders2.slice(0, i3 + 1)));
-  const path = pathWin3217.join(dirs[dirs.length - 1], fileName);
+  const dirs = folders2.map((_3, i3) => pathWin3216.join(caseData, ...folders2.slice(0, i3 + 1)));
+  const path = pathWin3216.join(dirs[dirs.length - 1], fileName);
   for (const p3 of [...dirs, path]) {
     if (existsSync36(p3) && realpathSync9.native(p3).toLowerCase() !== p3.toLowerCase()) {
       throw new PathOutOfScopeError(`${p3} resolves elsewhere (${realpathSync9.native(p3)})`);
@@ -103744,7 +103753,7 @@ async function submissionFormsOpenSession(matterRoot, practiceDb2, client = {}, 
 
 // src/submission/bcsc-form-harness.ts
 import { existsSync as existsSync41, readdirSync as readdirSync20, readFileSync as readFileSync30, realpathSync as realpathSync11, statSync as statSync16 } from "node:fs";
-import { win32 as pathWin3218 } from "node:path";
+import { win32 as pathWin3217 } from "node:path";
 var DRIVER6 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
 sys.argv = [payload["harness"], *payload["argv"]]
@@ -103778,7 +103787,7 @@ function bcscFormHarnessPath(env = process.env, installRoot) {
     subject: "the publish-bcsc-form harness",
     installRoot
   });
-  const path = pathWin3218.join(shipped.root, ...rel);
+  const path = pathWin3217.join(shipped.root, ...rel);
   if (!existsSync41(path)) {
     throw new DataServerError(
       `harness.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
@@ -103843,7 +103852,7 @@ function assertSegment(value, label2) {
   }
 }
 function confinedSessionsDir(caseData) {
-  const dir = pathWin3218.join(caseData, "form-sessions");
+  const dir = pathWin3217.join(caseData, "form-sessions");
   if (existsSync41(dir) && realpathSync11.native(dir).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`${dir} resolves elsewhere (${realpathSync11.native(dir)})`);
   }
@@ -103851,7 +103860,7 @@ function confinedSessionsDir(caseData) {
 }
 function confineSessionDir(sessions, sessionId) {
   assertSegment(sessionId, "harness_session");
-  const dir = pathWin3218.join(sessions, sessionId);
+  const dir = pathWin3217.join(sessions, sessionId);
   if (existsSync41(dir) && realpathSync11.native(dir).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`session ${sessionId} resolves elsewhere (${realpathSync11.native(dir)})`);
   }
@@ -103862,12 +103871,12 @@ function confineWritingFolder(root, writingFolder) {
   const candidates = [];
   for (const entry2 of readdirSync20(root, { withFileTypes: true })) {
     if (!/^0\. DRAFT/i.test(entry2.name)) continue;
-    candidates.push(resolveWithin(root, pathWin3218.join(entry2.name, writingFolder), "writing_folder", false));
+    candidates.push(resolveWithin(root, pathWin3217.join(entry2.name, writingFolder), "writing_folder", false));
   }
   return candidates;
 }
 function checkSession(root, caseData, sessions, sessionId) {
-  const ctxPath = pathWin3218.join(confineSessionDir(sessions, sessionId), "ctx.json");
+  const ctxPath = pathWin3217.join(confineSessionDir(sessions, sessionId), "ctx.json");
   if (!existsSync41(ctxPath)) {
     throw new DataServerError(`no session ${sessionId} under ${sessions}. Call this tool with command list to see the sessions.`, "session_not_found");
   }
@@ -103902,10 +103911,10 @@ function confineLocatePaths(caseData, resultJson) {
     const value = data[key];
     if (value === void 0) continue;
     const label2 = `result_json data.${key}`;
-    if (typeof value !== "string" || !pathWin3218.isAbsolute(value)) {
+    if (typeof value !== "string" || !pathWin3217.isAbsolute(value)) {
       throw new PathOutOfScopeError(`${label2} must be an absolute path inside the matter-data folder ${caseData}: ${JSON.stringify(value)}`);
     }
-    const resolved = existsSync41(value) ? realpathSync11.native(value) : pathWin3218.resolve(value);
+    const resolved = existsSync41(value) ? realpathSync11.native(value) : pathWin3217.resolve(value);
     assertContained(caseData, resolved, label2, value);
   }
 }
@@ -103928,11 +103937,11 @@ function timeoutAdvice(command, sessionId) {
 
 // src/submission/publish-tools.ts
 import { existsSync as existsSync43, readdirSync as readdirSync22 } from "node:fs";
-import { win32 as pathWin3220 } from "node:path";
+import { win32 as pathWin3219 } from "node:path";
 
 // src/submission/publish-host.ts
 import { existsSync as existsSync42, readdirSync as readdirSync21 } from "node:fs";
-import { win32 as pathWin3219 } from "node:path";
+import { win32 as pathWin3218 } from "node:path";
 var DRIVER7 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
 code, last = 0, None
@@ -103996,7 +104005,7 @@ function subskillScriptPath(skill, subskill, script, env = process.env, installR
     subject: `the ${subskill} script`,
     installRoot
   });
-  const path = pathWin3219.join(shipped.root, ...rel);
+  const path = pathWin3218.join(shipped.root, ...rel);
   if (!existsSync42(path)) {
     throw new DataServerError(
       `${script} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
@@ -104103,14 +104112,14 @@ function publishVaniacPackage(args, env = process.env, installRoot) {
     const witness = WITNESS_SOURCE.exec(doc.file_name);
     if (witness) witnesses.push(witness[1]);
   }
-  const data = pathWin3220.join(target.caseData, ...dataFolders);
-  const argv = [data, pkg, "--round", args.round, "--index-json", pathWin3220.join(data, "Package index.json")];
+  const data = pathWin3219.join(target.caseData, ...dataFolders);
+  const argv = [data, pkg, "--round", args.round, "--index-json", pathWin3219.join(data, "Package index.json")];
   for (const name of witnesses) argv.push("--witness", name);
   return runPublishFill("publish-vaniac-package", "fill_vaniac.py", [argv], env, installRoot);
 }
 
 // src/submission/assemble-tools.ts
-import { win32 as pathWin3221 } from "node:path";
+import { win32 as pathWin3220 } from "node:path";
 function draftFile(target, name, label2, suffix) {
   assertSegment(name, label2);
   if (!name.toLowerCase().endsWith(suffix)) throw new ValidationError(`${label2} must be a file name ending ${suffix}: ${name}`);
@@ -104124,7 +104133,7 @@ function assembleGeneral(args, env = process.env, installRoot) {
   const target = bindDraftTarget(args.matter_root, env);
   const docx = draftFile(target, args.docx_name, "docx_name", ".docx");
   const output = args.pdf_name === void 0 ? null : draftFile(target, args.pdf_name, "pdf_name", ".pdf");
-  const enclosures = args.enclosures.map(({ label: label2, path, pages }) => ({ label: label2, path: path && pathWin3221.resolve(target.root, path), ...pages === void 0 ? {} : { pages } }));
+  const enclosures = args.enclosures.map(({ label: label2, path, pages }) => ({ label: label2, path: path && pathWin3220.resolve(target.root, path), ...pages === void 0 ? {} : { pages } }));
   const manifest = writeWorkingFile(target, ["assemble-general"], "enclosures.json", JSON.stringify({ docx, output, enclosures }, null, 2));
   return runSubskillScript(
     {
@@ -104144,7 +104153,7 @@ function assembleGeneral(args, env = process.env, installRoot) {
 
 // src/submission/draft-harness.ts
 import { existsSync as existsSync45, mkdirSync as mkdirSync20, readdirSync as readdirSync24, realpathSync as realpathSync13 } from "node:fs";
-import { win32 as pathWin3224 } from "node:path";
+import { win32 as pathWin3223 } from "node:path";
 
 // src/submission/email-recipients.ts
 import { dirname as dirname28 } from "node:path";
@@ -104231,11 +104240,11 @@ function emailRecipients(dbPath, source, senderKey, env) {
 // src/submission/scrutiny-review.ts
 import { copyFileSync as copyFileSync3, existsSync as existsSync44, mkdirSync as mkdirSync19, mkdtempSync, readdirSync as readdirSync23, readFileSync as readFileSync31, realpathSync as realpathSync12, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync9, writeFileSync as writeFileSync10 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
-import { win32 as pathWin3223 } from "node:path";
+import { win32 as pathWin3222 } from "node:path";
 
 // src/case/authority-source.ts
 import { homedir as homedir9 } from "node:os";
-import { win32 as pathWin3222 } from "node:path";
+import { win32 as pathWin3221 } from "node:path";
 var DRIVER8 = String.raw`
 import json, sys
 
@@ -104275,7 +104284,7 @@ function resolveAuthoritySource(request2, env = process.env, installRoot) {
   return parsed.result;
 }
 function authorityPdfCacheDir(env) {
-  return pathWin3222.join(env.LOCALAPPDATA || homedir9(), "Coclerk", "scrutiny-review");
+  return pathWin3221.join(env.LOCALAPPDATA || homedir9(), "Coclerk", "scrutiny-review");
 }
 
 // src/submission/scrutiny-review.ts
@@ -104308,7 +104317,7 @@ function scrutinyReview(args, env = process.env, installRoot) {
   const started = Date.now();
   const input = validated(args);
   const target = publishDraftTarget(args.matter_root, input.dbPath, env);
-  const folder = resolveWithin(target.draft, pathWin3223.join(PRESENTATION_FOLDER, `statement ${input.statementId}`), "the scrutiny review folder", false);
+  const folder = resolveWithin(target.draft, pathWin3222.join(PRESENTATION_FOLDER, `statement ${input.statementId}`), "the scrutiny review folder", false);
   const foreign = foreignEntries(folder);
   const sourcePath = input.sourcePath === void 0 ? void 0 : confineMatterFile(target.root, input.sourcePath, "source_path");
   const scripts = {
@@ -104332,9 +104341,9 @@ function scrutinyReview(args, env = process.env, installRoot) {
   const statement = { ...read3.statement, pinpoint_paragraph: paragraphOf(read3.statement.pinpoint) };
   const finding = { text: read3.finding, answer_file: answerFile(target.root, read3.answer_file_named) };
   const derived = input.contextParas === void 0 ? findingParas(read3.finding, statement.pinpoint_paragraph) : void 0;
-  const scratch = mkdtempSync(pathWin3223.join(tmpdir3(), "coclerk-scrutiny-"));
+  const scratch = mkdtempSync(pathWin3222.join(tmpdir3(), "coclerk-scrutiny-"));
   try {
-    const excerptFile = pathWin3223.join(scratch, "excerpt.txt");
+    const excerptFile = pathWin3222.join(scratch, "excerpt.txt");
     writeFileSync10(excerptFile, read3.excerpt ?? "", "utf-8");
     const ctx = {
       env,
@@ -104355,11 +104364,11 @@ function scrutinyReview(args, env = process.env, installRoot) {
     if ("success" in current) return current;
     let findingFile;
     if (finding.answer_file === null && finding.text !== null) {
-      const name = `${pathWin3223.basename(current.cited.pdf, ".pdf").replace(/^1 cited/, "3 finding")}.txt`;
-      const from = pathWin3223.join(scratch, "finding.txt");
+      const name = `${pathWin3222.basename(current.cited.pdf, ".pdf").replace(/^1 cited/, "3 finding")}.txt`;
+      const from = pathWin3222.join(scratch, "finding.txt");
       writeFileSync10(from, finding.text, "utf-8");
       current.files.push({ from, name });
-      findingFile = pathWin3223.join(folder, name);
+      findingFile = pathWin3222.join(folder, name);
     }
     let proposal;
     if (input.proposed) {
@@ -104454,15 +104463,15 @@ function foreignEntries(folder) {
   return readdirSync23(folder, { withFileTypes: true }).filter((entry2) => !(entry2.isFile() && OWN_FILE.test(entry2.name))).map((entry2) => entry2.name);
 }
 function confineMatterFile(root, given, label2) {
-  const absolute = pathWin3223.isAbsolute(given) ? given : pathWin3223.join(root, given);
+  const absolute = pathWin3222.isAbsolute(given) ? given : pathWin3222.join(root, given);
   let canonical;
   try {
     canonical = realpathSync12.native(absolute);
   } catch {
-    canonical = pathWin3223.normalize(absolute);
+    canonical = pathWin3222.normalize(absolute);
   }
-  const relative5 = pathWin3223.relative(root, canonical);
-  if (relative5 === "" || relative5.split(pathWin3223.sep)[0] === ".." || pathWin3223.isAbsolute(relative5)) {
+  const relative5 = pathWin3222.relative(root, canonical);
+  if (relative5 === "" || relative5.split(pathWin3222.sep)[0] === ".." || pathWin3222.isAbsolute(relative5)) {
     throw new PathOutOfScopeError(`${label2} must lie inside the matter folder ${root}: ${given}`);
   }
   const resolved = resolveWithin(root, relative5, label2, false);
@@ -104478,7 +104487,7 @@ function answerFile(root, named2) {
 }
 function skillScript(rel, env, installRoot) {
   const shipped = resolveShippedRoot(rel.join("/"), env, { code: "repo_root_missing", subject: `the ${rel[0]} scripts`, installRoot });
-  const path = pathWin3223.join(shipped.root, ...rel);
+  const path = pathWin3222.join(shipped.root, ...rel);
   if (!existsSync44(path)) {
     throw new DataServerError(
       `${rel[rel.length - 1]} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this step, or the repo has moved; reinstall the plugin and fully restart"),
@@ -104489,7 +104498,7 @@ function skillScript(rel, env, installRoot) {
 }
 function runCli(ctx, script, args, countPages) {
   return runPythonDriver({
-    label: `scrutiny review ${pathWin3223.basename(script)}`,
+    label: `scrutiny review ${pathWin3222.basename(script)}`,
     driver: pythonDriverFile("scrutiny-review-cli-driver", CLI_DRIVER),
     payload: JSON.stringify({ script, args, count_pages: countPages ?? null, timeout_s: (CLI_TIMEOUT_MS - 2e3) / 1e3 }),
     env: ctx.env,
@@ -104501,7 +104510,7 @@ function buildPackage(ctx, spec) {
   const resolved = spec.resolved ?? resolve9(ctx, spec.authority);
   if ("success" in resolved) return resolved;
   const { source, pdf } = resolved;
-  const proposedFile = pathWin3223.join(ctx.scratch, "proposed.txt");
+  const proposedFile = pathWin3222.join(ctx.scratch, "proposed.txt");
   let verbatim = spec.span ? void 0 : resolved.verbatim ?? verbatimCheck(ctx, spec.excerptFile, pdf);
   const cited2 = citedExtract(ctx, spec, pdf, proposedFile);
   if ("success" in cited2) return cited2;
@@ -104568,8 +104577,8 @@ function withheld(opcodes, all) {
   });
 }
 function citedExtract(ctx, spec, pdf, proposedFile) {
-  const dir = pathWin3223.join(ctx.scratch, `${spec.prefix}cited`);
-  const base = [pdf, "--out", pathWin3223.join(dir, "extract.pdf"), "--preview", dir];
+  const dir = pathWin3222.join(ctx.scratch, `${spec.prefix}cited`);
+  const base = [pdf, "--out", pathWin3222.join(dir, "extract.pdf"), "--preview", dir];
   const excerpt = ["--excerpt", spec.excerptFile];
   const para2 = spec.paragraph === null ? [] : ["--para", String(spec.paragraph), "yellow"];
   const span = spec.span ? ["--span", spec.span.start, spec.span.end, "yellow", "--excerpt-out", proposedFile] : [];
@@ -104607,13 +104616,13 @@ function citedExtract(ctx, spec, pdf, proposedFile) {
   };
 }
 function contextExtract(ctx, spec, pdf, cited2, excerptFile) {
-  const dir = pathWin3223.join(ctx.scratch, `${spec.prefix}context`);
+  const dir = pathWin3222.join(ctx.scratch, `${spec.prefix}context`);
   const first = Math.max(1, cited2.firstPage - 1);
   const last = Math.min(cited2.pageCount || cited2.lastPage, cited2.lastPage + 1);
   const fallback = spec.paragraph === null ? [] : [spec.paragraph];
   const out = (paras) => [
     "--out",
-    pathWin3223.join(dir, "extract.pdf"),
+    pathWin3222.join(dir, "extract.pdf"),
     "--preview",
     dir,
     ...paras.length > 0 ? paras.flatMap((n3) => ["--para", String(n3), "yellow"]) : ["--excerpt", excerptFile]
@@ -104659,11 +104668,11 @@ function contextExtract(ctx, spec, pdf, cited2, excerptFile) {
   };
 }
 function extractFiles(ctx, dir, stem3, stdout, pages, painted) {
-  const files = [{ from: pathWin3223.join(dir, "extract.pdf"), name: `${stem3}.pdf` }];
+  const files = [{ from: pathWin3222.join(dir, "extract.pdf"), name: `${stem3}.pdf` }];
   for (const match of stdout.matchAll(/^preview: (.*-p(\d+)\.png)$/gm)) {
     files.push({ from: match[1], name: `${stem3}-p${match[2]}.png` });
   }
-  const at = (name) => pathWin3223.join(ctx.folder, name);
+  const at = (name) => pathWin3222.join(ctx.folder, name);
   return { extract: { pdf: at(files[0].name), pngs: files.slice(1).map((f3) => at(f3.name)), pages, painted }, files };
 }
 function failedSpecs(stdout) {
@@ -104703,10 +104712,10 @@ function pathSafe(name) {
 function publish2(folder, files) {
   mkdirSync19(folder, { recursive: true });
   for (const entry2 of readdirSync23(folder)) {
-    if (OWN_FILE.test(entry2)) unlinkSync9(pathWin3223.join(folder, entry2));
+    if (OWN_FILE.test(entry2)) unlinkSync9(pathWin3222.join(folder, entry2));
   }
   for (const file of files) {
-    const final = pathWin3223.join(folder, file.name);
+    const final = pathWin3222.join(folder, file.name);
     copyFileSync3(file.from, `${final}.tmp`);
     renameSync8(`${final}.tmp`, final);
   }
@@ -104738,13 +104747,13 @@ function writeEmail(args, env, installRoot) {
   let root;
   let outDir;
   if (args.matter_root === void 0) {
-    const relative5 = attachments.filter((path) => !pathWin3224.isAbsolute(path));
+    const relative5 = attachments.filter((path) => !pathWin3223.isAbsolute(path));
     if (relative5.length) {
       throw new ValidationError(`drafting_forms__draft_harness.attachments must be absolute paths when no matter_root is given: ${relative5.join(", ")}`);
     }
     root = realpathSync13.native(resolveCaseDataRoot(env));
-    const drafts = pathWin3224.join("_practice", "drafts");
-    outDir = resolveWithin(root, args.folder === void 0 ? drafts : pathWin3224.join(drafts, args.folder), "the firm drafts folder", false);
+    const drafts = pathWin3223.join("_practice", "drafts");
+    outDir = resolveWithin(root, args.folder === void 0 ? drafts : pathWin3223.join(drafts, args.folder), "the firm drafts folder", false);
   } else {
     root = validateMatterRoot(args.matter_root);
     outDir = args.folder === void 0 ? oneDraftFolder2(root, draftFolders(root)) : oneDraftFolder2(root, confineWritingFolder(root, args.folder));
@@ -104764,7 +104773,7 @@ function writeEmail(args, env, installRoot) {
       };
     }
   }
-  if (args.matter_root === void 0) mkdirSync20(pathWin3224.join(root, "_practice", "drafts"), { recursive: true });
+  if (args.matter_root === void 0) mkdirSync20(pathWin3223.join(root, "_practice", "drafts"), { recursive: true });
   const result = runPythonDriver({
     label: "draft write_email (write_eml.py)",
     driver: writeEmlPath(env, installRoot),
@@ -104778,7 +104787,7 @@ function writeEmail(args, env, installRoot) {
       subject,
       body,
       // A relative attachment is read against the matter folder; every path goes in absolute.
-      attachments: attachments.map((path) => pathWin3224.resolve(root, path)),
+      attachments: attachments.map((path) => pathWin3223.resolve(root, path)),
       out_dir: outDir,
       out_name: outputName
     }),
@@ -104875,7 +104884,7 @@ function writeEmlPath(env = process.env, installRoot) {
     subject: "the draft write_eml script",
     installRoot
   });
-  const path = pathWin3224.join(shipped.root, ...rel);
+  const path = pathWin3223.join(shipped.root, ...rel);
   if (!existsSync45(path)) {
     throw new DataServerError(
       `write_eml.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
@@ -104887,7 +104896,7 @@ function writeEmlPath(env = process.env, installRoot) {
 
 // src/correspondence/message.ts
 import { readdirSync as readdirSync25, readFileSync as readFileSync32, realpathSync as realpathSync14, statSync as statSync17 } from "node:fs";
-import { extname as extname4, win32 as pathWin3225 } from "node:path";
+import { extname as extname4, win32 as pathWin3224 } from "node:path";
 
 // src/correspondence/cfb.ts
 var MAGIC = Buffer.from([208, 207, 17, 224, 161, 177, 26, 225]);
@@ -105771,7 +105780,7 @@ function scanMessageHeaders(root) {
       return true;
     }
     for (const entry2 of entries) {
-      const full = pathWin3225.join(dir, entry2.name);
+      const full = pathWin3224.join(dir, entry2.name);
       const relPath = rel ? `${rel}\\${entry2.name}` : entry2.name;
       if (entry2.isDirectory() || entry2.isSymbolicLink()) {
         if (zoneProblem("scan", full)) continue;
@@ -105801,7 +105810,7 @@ function scanMessageHeaders(root) {
   return { messages, truncated: !complete };
 }
 function rejectFirewall(relative5) {
-  if (zoneProblem("read", pathWin3225.dirname(relative5))) {
+  if (zoneProblem("read", pathWin3224.dirname(relative5))) {
     throw new PathOutOfScopeError(`path lies in a folder this tool never reads (TRASH, 0. CASE DATA, privileged, disclosed): ${relative5}`);
   }
 }
@@ -105815,7 +105824,7 @@ function readMessage(args) {
   if (hasPath) {
     const given = args.path;
     let full2;
-    if (pathWin3225.isAbsolute(given)) {
+    if (pathWin3224.isAbsolute(given)) {
       try {
         full2 = realpathSync14.native(given);
       } catch {
@@ -105825,7 +105834,7 @@ function readMessage(args) {
     } else {
       full2 = resolveWithin(root, given, "path");
     }
-    const relative5 = pathWin3225.relative(root, full2);
+    const relative5 = pathWin3224.relative(root, full2);
     rejectFirewall(relative5);
     const ext = extname4(full2).toLowerCase();
     if (!MESSAGE_EXTENSIONS.has(ext)) {
@@ -105843,7 +105852,7 @@ function readMessage(args) {
     );
   }
   const newest2 = matches[0];
-  const full = pathWin3225.join(root, newest2.path);
+  const full = pathWin3224.join(root, newest2.path);
   return {
     path: newest2.path,
     ...parseMessage(readFileSync32(full), extname4(full)),
@@ -105854,7 +105863,7 @@ function readMessage(args) {
 
 // src/correspondence/reply-draft.ts
 import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync26, readFileSync as readFileSync33, realpathSync as realpathSync15, writeSync as writeSync7 } from "node:fs";
-import { basename as basename12, extname as extname5, win32 as pathWin3226 } from "node:path";
+import { basename as basename12, extname as extname5, win32 as pathWin3225 } from "node:path";
 
 // src/correspondence/zip.ts
 import { deflateRawSync } from "node:zlib";
@@ -106060,7 +106069,7 @@ function writeNextFree(dir, stem3, ext, data) {
   const candidates = [[stem3, own]];
   for (let v3 = Math.max(2, own + 1); v3 < 1e3; v3 += 1) candidates.push([`${base} v${v3}`, v3]);
   for (const [name, version2] of candidates) {
-    const path = pathWin3226.join(dir, `${name}${ext}`);
+    const path = pathWin3225.join(dir, `${name}${ext}`);
     let fd;
     try {
       fd = openSync8(path, "wx");
@@ -106103,17 +106112,17 @@ function exportDocx(args, root) {
   const given = args.path;
   if (typeof given !== "string" || given === "") throw new ValidationError("drafting_forms__reply_draft.path is required for step export_docx");
   const dir = draftFolder2(root);
-  if (!pathWin3226.isAbsolute(given)) assertSegment(given, "path");
-  const source = pathWin3226.isAbsolute(given) ? realpathOrMissing(given) : resolveWithin(dir, given, "path");
+  if (!pathWin3225.isAbsolute(given)) assertSegment(given, "path");
+  const source = pathWin3225.isAbsolute(given) ? realpathOrMissing(given) : resolveWithin(dir, given, "path");
   assertContained(dir, source, "path", given);
-  if (pathWin3226.dirname(source).toLowerCase() !== dir.toLowerCase()) {
+  if (pathWin3225.dirname(source).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`path must be a .md at the top of the 0. DRAFT folder: ${given}`);
   }
   if (extname5(source).toLowerCase() !== ".md") throw new ValidationError(`path must be a saved .md draft: ${given}`);
   const stem3 = basename12(source, extname5(source));
   const docx = markdownToDocx(readFileSync33(source, "utf-8"));
   const written = writeNextFree(dir, stem3, ".docx", docx);
-  const wanted = pathWin3226.join(dir, `${stem3}.docx`);
+  const wanted = pathWin3225.join(dir, `${stem3}.docx`);
   return {
     success: true,
     path: written.path,
@@ -108106,7 +108115,7 @@ def main():
 
 main()
 `.trim();
-function listCaseRecordNames(caseDataDirs, env = process.env, scriptsDir) {
+function listCaseRecordNames(caseDataDirs, env = process.env) {
   if (caseDataDirs.length === 0) return [];
   const unavailable = caseDataDirs.map(() => ({ status: "unavailable" }));
   try {
@@ -108116,7 +108125,7 @@ function listCaseRecordNames(caseDataDirs, env = process.env, scriptsDir) {
       payload: JSON.stringify({ case_data_dirs: caseDataDirs }),
       env,
       timeoutMs: pythonTimeoutMs(env, READ_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS"),
-      extraEnv: { PYTHONPATH: scriptsDir ?? caseDataMigrateScriptsDir(env) }
+      extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env) }
     });
     const results = parsed.ok ? parsed.result?.results : void 0;
     if (!Array.isArray(results) || results.length !== caseDataDirs.length) return unavailable;
@@ -110584,13 +110593,13 @@ async function suggestionLogWrite(args, env = process.env) {
 
 // src/files/repo-docs.ts
 import { existsSync as existsSync52, mkdirSync as mkdirSync21, readFileSync as readFileSync39, statSync as statSync18, writeFileSync as writeFileSync11 } from "node:fs";
-import { win32 as pathWin3227 } from "node:path";
+import { win32 as pathWin3226 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
   const repoRoot = resolveRepoRoot(env, { code: "docs_root_missing", subject: "the docs tree" });
   const cached3 = rootCache2.get(repoRoot);
   if (cached3) return cached3;
-  const target = pathWin3227.join(repoRoot, "docs");
+  const target = pathWin3226.join(repoRoot, "docs");
   const canon = canonicalRoot(
     target,
     `docs tree not found at ${target} (repo root ${repoRoot}); the repo has moved or COCLERK_REPO_ROOT is wrong`,
@@ -110619,7 +110628,7 @@ function repoDocsWrite(relative5, content, overwrite = false, env) {
       "exists"
     );
   }
-  mkdirSync21(pathWin3227.dirname(resolved), { recursive: true });
+  mkdirSync21(pathWin3226.dirname(resolved), { recursive: true });
   writeFileSync11(resolved, content, "utf-8");
   return {
     path: toPosixRelative(root, resolved),
@@ -112201,7 +112210,7 @@ import {
   statSync as statSync21,
   writeFileSync as writeFileSync14
 } from "node:fs";
-import { win32 as pathWin3230 } from "node:path";
+import { win32 as pathWin3229 } from "node:path";
 
 // src/files/coverage-line.ts
 var REASON = "\\S.*";
@@ -112258,10 +112267,10 @@ function checkCoverageLine(text8) {
 // src/files/downloads.ts
 import { statSync as statSync19 } from "node:fs";
 import { homedir as homedir11 } from "node:os";
-import { win32 as pathWin3228 } from "node:path";
+import { win32 as pathWin3227 } from "node:path";
 var IN_PROGRESS_EXTENSIONS = /* @__PURE__ */ new Set([".crdownload", ".tmp", ".partial"]);
 function downloadsDir(env = process.env) {
-  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3228.join(homedir11(), "Downloads");
+  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3227.join(homedir11(), "Downloads");
   const dir = canonicalRoot(probe2, `Downloads folder not found at ${probe2}`, "downloads_missing");
   if (!statSync19(dir).isDirectory()) {
     throw new DataServerError(`Downloads path is not a folder: ${probe2}`, "downloads_missing");
@@ -112271,7 +112280,7 @@ function downloadsDir(env = process.env) {
 
 // src/files/text-extract.ts
 import { readFileSync as readFileSync44 } from "node:fs";
-import { win32 as pathWin3229 } from "node:path";
+import { win32 as pathWin3228 } from "node:path";
 
 // src/files/extract/doc.ts
 import { readFileSync as readFileSync40 } from "node:fs";
@@ -118546,7 +118555,7 @@ var SCANNED_BYTES_PER_PAGE = 500;
 var COPIED_EXTENSIONS = /* @__PURE__ */ new Set([".txt", ".md", ".json", ".htm", ".html"]);
 var unread = (reason) => ({ status: "unread", reason });
 async function extractText(path) {
-  const ext = pathWin3229.extname(path).toLowerCase();
+  const ext = pathWin3228.extname(path).toLowerCase();
   let result;
   try {
     if (COPIED_EXTENSIONS.has(ext)) {
@@ -118610,14 +118619,14 @@ function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE
   const entries = [];
   for (const name of readdirSync29(dir)) {
     if (filename !== void 0 && name !== filename) continue;
-    const stat = statSync21(pathWin3230.join(dir, name));
+    const stat = statSync21(pathWin3229.join(dir, name));
     if (!stat.isFile()) continue;
     if (since !== void 0 && stat.mtimeMs < since) continue;
     entries.push({
       filename: name,
       mtime: stat.mtime.toISOString(),
       bytes: stat.size,
-      in_progress: IN_PROGRESS_EXTENSIONS.has(pathWin3230.extname(name).toLowerCase())
+      in_progress: IN_PROGRESS_EXTENSIONS.has(pathWin3229.extname(name).toLowerCase())
     });
   }
   entries.sort((a3, b3) => a3.mtime < b3.mtime ? 1 : a3.mtime > b3.mtime ? -1 : 0);
@@ -118625,7 +118634,7 @@ function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE
 }
 function listLawFolder(destinationDir) {
   const dir = resolveLawDir(destinationDir);
-  const entries = readdirSync29(dir).map((name) => ({ name, stat: statSync21(pathWin3230.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
+  const entries = readdirSync29(dir).map((name) => ({ name, stat: statSync21(pathWin3229.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
   return { entries };
 }
 function fileDownload(destinationDir, sourceFilename, destinationFilename, env = process.env) {
@@ -118633,14 +118642,14 @@ function fileDownload(destinationDir, sourceFilename, destinationFilename, env =
   assertBareFilename(sourceFilename, "source_filename");
   const destName = destinationFilename ?? sourceFilename;
   assertBareFilename(destName, "destination_filename");
-  const source = pathWin3230.join(downloadsDir(env), sourceFilename);
+  const source = pathWin3229.join(downloadsDir(env), sourceFilename);
   if (!existsSync54(source) || !statSync21(source).isFile()) {
     throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
   }
-  if (IN_PROGRESS_EXTENSIONS.has(pathWin3230.extname(sourceFilename).toLowerCase())) {
+  if (IN_PROGRESS_EXTENSIONS.has(pathWin3229.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
-  const dest = pathWin3230.join(dir, destName);
+  const dest = pathWin3229.join(dir, destName);
   if (existsSync54(dest)) {
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
@@ -118653,14 +118662,14 @@ function appendManifest(destinationDir, record2) {
   if (record2 === null || typeof record2 !== "object" || Array.isArray(record2)) {
     throw new DataServerError("record must be a JSON object", "invalid_argument");
   }
-  const path = pathWin3230.join(dir, MANIFEST);
+  const path = pathWin3229.join(dir, MANIFEST);
   appendFileSync2(path, JSON.stringify(record2) + "\n", "utf-8");
   const records = readFileSync45(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
   return { path, records };
 }
 function saveAnswer(destinationDir, filename, text8, fromScratch) {
   assertBareFilename(filename, "filename");
-  const ext = pathWin3230.extname(filename);
+  const ext = pathWin3229.extname(filename);
   if (ext.toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
@@ -118682,21 +118691,21 @@ function saveAnswer(destinationDir, filename, text8, fromScratch) {
   return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created, sha256: sha2563 };
 }
 function scratchBytes(destinationDir, fromScratch) {
-  if (typeof fromScratch !== "string" || !pathWin3230.isAbsolute(fromScratch)) {
+  if (typeof fromScratch !== "string" || !pathWin3229.isAbsolute(fromScratch)) {
     throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
   }
-  let law = existsSync54(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3230.dirname(destinationDir));
-  while (pathWin3230.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3230.dirname(law);
-  const root = validateMatterRoot(pathWin3230.dirname(law));
+  let law = existsSync54(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3229.dirname(destinationDir));
+  while (pathWin3229.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3229.dirname(law);
+  const root = validateMatterRoot(pathWin3229.dirname(law));
   const draft = findDraftDir(root);
   if (draft === void 0) {
     throw new DataServerError(`${root} has no 0. DRAFT folder, so it has no scratchpad`, "draft_dir_missing");
   }
-  const scratchDir = pathWin3230.join(draft, ...SCRATCH_SUBFOLDERS);
+  const scratchDir = pathWin3229.join(draft, ...SCRATCH_SUBFOLDERS);
   const realScratchDir = canonicalRoot(scratchDir, `the matter has no scratchpad folder: ${scratchDir}`, "not_scratch");
   assertUnprotected(realScratchDir);
   const source = canonicalRoot(fromScratch, `from_scratch not found: ${fromScratch}`, "not_found");
-  if (pathWin3230.dirname(source).toLowerCase() !== realScratchDir.toLowerCase()) {
+  if (pathWin3229.dirname(source).toLowerCase() !== realScratchDir.toLowerCase()) {
     throw new DataServerError(`from_scratch is not in this matter's scratchpad ${realScratchDir}: ${source}`, "not_scratch");
   }
   if (!statSync21(source).isFile()) {
@@ -118710,7 +118719,7 @@ function scratchBytes(destinationDir, fromScratch) {
 }
 function writeScratch(matterRoot, filename, text8, kind) {
   assertBareFilename(filename, "filename");
-  if (pathWin3230.extname(filename).toLowerCase() !== ".md") {
+  if (pathWin3229.extname(filename).toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
   if (typeof text8 !== "string" || text8.length === 0) {
@@ -118735,7 +118744,7 @@ function researchScratchDir(root) {
   let dir = draft;
   let created = false;
   for (const name of SCRATCH_SUBFOLDERS) {
-    dir = pathWin3230.join(dir, name);
+    dir = pathWin3229.join(dir, name);
     try {
       mkdirSync24(dir);
       created = true;
@@ -118776,11 +118785,11 @@ function pickLawFile(files, wanted) {
   const picked = /* @__PURE__ */ new Set();
   const htmlOnly = [];
   for (const name of named2) {
-    if (!HTML_EXTENSIONS.has(pathWin3230.extname(name).toLowerCase())) {
+    if (!HTML_EXTENSIONS.has(pathWin3229.extname(name).toLowerCase())) {
       picked.add(name);
       continue;
     }
-    const stem3 = name.slice(0, -pathWin3230.extname(name).length).toLowerCase();
+    const stem3 = name.slice(0, -pathWin3229.extname(name).length).toLowerCase();
     const sibling = files.find(
       (other) => TEXT_SIBLING_EXTENSIONS.some((ext) => other.toLowerCase() === stem3 + ext)
     );
@@ -118809,7 +118818,7 @@ function nonNegativeInt(value, label2, fallback, min) {
   return value;
 }
 function manifestMarker(law, file) {
-  const path = pathWin3230.join(law, MANIFEST);
+  const path = pathWin3229.join(law, MANIFEST);
   if (!existsSync54(path)) return null;
   let marker = null;
   for (const line of readFileSync45(path, "utf-8").split("\n")) {
@@ -118873,7 +118882,7 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
   if (options.pattern === void 0 && (options.context !== void 0 || options.max_matches !== void 0)) {
     throw new DataServerError("context and max_matches need a pattern", "invalid_argument");
   }
-  const listed = readdirSync29(law).filter((name) => statSync21(pathWin3230.join(law, name)).isFile()).sort();
+  const listed = readdirSync29(law).filter((name) => statSync21(pathWin3229.join(law, name)).isFile()).sort();
   const files = options.file === void 0 ? listed : [pickLawFile(listed, options.file)];
   if (options.pattern !== void 0) {
     const context = nonNegativeInt(options.context, "context", DEFAULT_CONTEXT, 0);
@@ -118890,12 +118899,12 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
     let truncated = false;
     for (const file of files) {
       if (truncated) break;
-      if (HTML_EXTENSIONS.has(pathWin3230.extname(file).toLowerCase())) {
+      if (HTML_EXTENSIONS.has(pathWin3229.extname(file).toLowerCase())) {
         searched.push({ file, status: "unread", reason: "html_page: an HTML page is never read; search its text sibling" });
         continue;
       }
       if (file === MANIFEST) continue;
-      const read3 = await cachedExtract(pathWin3230.join(law, file));
+      const read3 = await cachedExtract(pathWin3229.join(law, file));
       if (read3.status === "unread") {
         searched.push({ file, status: "unread", reason: read3.reason });
         continue;
@@ -118913,18 +118922,18 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
   const below = segments.slice(segments.findIndex((s3) => s3.toLowerCase() === LAW_SEGMENT) + 1);
   let outDir = researchScratchDir(root).dir;
   for (const name of [LAW_TEXT_SUBFOLDER, ...below]) {
-    outDir = pathWin3230.join(outDir, name);
+    outDir = pathWin3229.join(outDir, name);
     mkdirSync24(outDir, { recursive: true });
     assertUnprotected(canonicalRoot(outDir, `law-text folder does not resolve: ${outDir}`, "not_found"));
   }
   const rows2 = [];
   for (const file of files) {
-    const read3 = await cachedExtract(pathWin3230.join(law, file));
+    const read3 = await cachedExtract(pathWin3229.join(law, file));
     if (read3.status === "unread") {
       rows2.push({ file, text_path: null, bytes: 0, status: "unread", reason: read3.reason });
       continue;
     }
-    const textPath = pathWin3230.join(outDir, `${file}.txt`);
+    const textPath = pathWin3229.join(outDir, `${file}.txt`);
     const body = Buffer.from(read3.text, "utf-8");
     writeFileSync14(textPath, body);
     rows2.push({ file, text_path: textPath, bytes: body.length, method: read3.method, status: "ok" });
@@ -118951,7 +118960,7 @@ function fileFetched(url, destinationDir, filename, record2, seams = {}, now = /
   }
   const pdf = fetched.bytes.subarray(0, 5).toString("latin1") === "%PDF-";
   const ext = pdf ? ".pdf" : ".md";
-  if (pathWin3230.extname(filename).toLowerCase() !== ext) {
+  if (pathWin3229.extname(filename).toLowerCase() !== ext) {
     throw new DataServerError(
       `filename must end in ${ext}, because ${fetched.final_url} returned ${pdf ? "a PDF" : "an HTML page"}: ${filename}`,
       "invalid_filename"
@@ -119027,11 +119036,11 @@ function filledString(value) {
   return typeof value === "string" && value.trim() !== "";
 }
 function writeNewVersion(dir, filename, body) {
-  const ext = pathWin3230.extname(filename);
+  const ext = pathWin3229.extname(filename);
   const stem3 = filename.slice(0, -ext.length);
   for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt++) {
     const name = nextVersionName(dir, stem3, ext);
-    const path = pathWin3230.join(dir, name);
+    const path = pathWin3229.join(dir, name);
     try {
       writeFileSync14(path, body, { flag: "wx" });
     } catch (err) {
@@ -119051,13 +119060,13 @@ function resolveOrCreateLawDir(destinationDir) {
   } catch (err) {
     if (err.code !== "not_found" || existsSync54(destinationDir)) throw err;
   }
-  const parent = resolveLawDir(pathWin3230.dirname(destinationDir));
-  if (zoneProblem("write", pathWin3230.join(parent, pathWin3230.basename(destinationDir)))) {
+  const parent = resolveLawDir(pathWin3229.dirname(destinationDir));
+  if (zoneProblem("write", pathWin3229.join(parent, pathWin3229.basename(destinationDir)))) {
     throw new DataServerError(`destination_dir is inside a privileged/disclosed tree, TRASH or 0. CASE DATA: ${destinationDir}`, "protected");
   }
   let created = true;
   try {
-    mkdirSync24(pathWin3230.join(parent, pathWin3230.basename(destinationDir)));
+    mkdirSync24(pathWin3229.join(parent, pathWin3229.basename(destinationDir)));
   } catch (err) {
     if (err.code !== "EEXIST") throw err;
     created = false;
@@ -119065,7 +119074,7 @@ function resolveOrCreateLawDir(destinationDir) {
   return { dir: resolveLawDir(destinationDir), created };
 }
 function resolveLawDir(destinationDir) {
-  if (typeof destinationDir !== "string" || !pathWin3230.isAbsolute(destinationDir)) {
+  if (typeof destinationDir !== "string" || !pathWin3229.isAbsolute(destinationDir)) {
     throw new DataServerError(`destination_dir must be an absolute host path: ${destinationDir}`, "invalid_path");
   }
   const dir = canonicalRoot(destinationDir, `destination folder not found: ${destinationDir}`, "not_found");
@@ -119137,7 +119146,7 @@ function researchPreflight(seams = {}) {
 // src/files/legislation-search.ts
 import { createHash as createHash12 } from "node:crypto";
 import { readFileSync as readFileSync46, statSync as statSync22 } from "node:fs";
-import { win32 as pathWin3231 } from "node:path";
+import { win32 as pathWin3230 } from "node:path";
 var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".txt"]);
 var HTML_EXTENSIONS2 = /* @__PURE__ */ new Set([".htm", ".html"]);
 var EXTRACTED_EXTENSIONS = /* @__PURE__ */ new Set([".pdf", ".docx"]);
@@ -119169,7 +119178,7 @@ function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}, p
   if (termList.length === 0 && pattern === null && pin === null) {
     throw new DataServerError("give terms, a regex, or both, or a pinpoint", "invalid_argument");
   }
-  const ext = pathWin3231.extname(file).toLowerCase();
+  const ext = pathWin3230.extname(file).toLowerCase();
   const range = checkPages(pages, ext);
   const bytes = readFileSync46(file);
   const { lines: lines2, source, marker } = textLines(file, ext, bytes, range, seams);
@@ -119242,7 +119251,7 @@ function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}, p
 }
 function resolveMatterFile(matterRoot, path) {
   const root = validateMatterRoot(matterRoot);
-  if (typeof path !== "string" || !pathWin3231.isAbsolute(path)) {
+  if (typeof path !== "string" || !pathWin3230.isAbsolute(path)) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
   const file = canonicalRoot(path, `file not found: ${path}`, "not_found");

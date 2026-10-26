@@ -144,7 +144,7 @@ test("the citation verifier passes a specification whose every sentence traces, 
   assert.throws(() => spec.parseSpecification({ sentences: [] }), /not_a_specification/);
 });
 
-test("a shipped file counts only when it is an installed plugin's own file", { skip: process.platform !== "win32" && "the plugin's file read resolves paths the Windows way" }, async (t) => {
+test("a shipped file counts only when it is an installed plugin's own file", async (t) => {
   const { f } = await device(t);
   const reader = spec.shippedReader(f.env, f.seams.installRoot);
   assert.equal(reader(SHIPPED), SHIPPED_TEXT);

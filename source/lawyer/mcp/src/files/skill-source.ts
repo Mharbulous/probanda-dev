@@ -34,6 +34,8 @@ import { DataServerError } from "../errors.js";
 import {
   assertRelativeSyntax,
   canonicalRoot,
+  hostPath,
+  joinWithin,
   resolveWithin,
   toPosixRelative,
 } from "./scope.js";
@@ -169,7 +171,7 @@ function resolveReference(
       if (err instanceof DataServerError) continue;
       throw err;
     }
-    if (existsSync(pathWin32.join(root, candidate))) return candidate;
+    if (existsSync(joinWithin(root, candidate))) return candidate;
   }
   return normalized;   // nothing existed — resolve as written, so the error names it
 }
@@ -398,7 +400,7 @@ function listTreeRoot(
 
 function walk(dirPath: string, root: string, recursive: boolean, shipped: ShippedRoot, out: SkillSourceEntry[]): void {
   for (const entry of readdirSync(dirPath, { withFileTypes: true })) {
-    const full = pathWin32.join(dirPath, entry.name);
+    const full = hostPath.join(dirPath, entry.name);
     const isDir = entry.isDirectory();
     out.push({
       path: toPosixRelative(root, full),
