@@ -9,6 +9,13 @@ name: publish-public
 #
 # Needs the repository secret PUBLIC_REPO_DEPLOY_KEY: the private half of a deploy key that
 # has write access to Probanda-app/Legal and to nothing else.
+#
+# After the push, marks implemented each approved suggestion item whose fix commit this
+# publication shipped (scripts/implemented_scan.py; lifecycle plan Phase 9). The public commit
+# message ends with `Published-from: <sha>`, the commit of this repository it was published
+# from, so the next run knows where its scan starts. The scan reads the repository secret
+# SUGGESTIONS_SECRET_KEY, a Supabase project secret key, in its own step only. A failed scan
+# leaves the publication as it is, shows as a failed step, and prints the command to run again.
 on:
   workflow_dispatch:
 
@@ -23,6 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The implemented scan reads every commit since the last publication.
+          fetch-depth: 0
       - name: Check that public/ is clean and approved
         run: python3 scripts/export_public.py --plan
       - name: Clone the public repository
@@ -37,9 +47,16 @@ jobs:
           git clone -c core.sshCommand="ssh -i $HOME/.ssh/public_repo -o IdentitiesOnly=yes" \
             git@github.com:Probanda-app/Legal.git "$RUNNER_TEMP/litigation"
           git -C "$RUNNER_TEMP/litigation" checkout -B main
+      - name: Find the commit the public repository was last published from
+        # Never stops the publication: without it, the scan step says what to run by hand.
+        continue-on-error: true
+        run: |
+          python3 scripts/implemented_scan.py previous --public "$RUNNER_TEMP/litigation" \
+            --to "$(git rev-parse HEAD)" > "$RUNNER_TEMP/previous"
       - name: Export public/
         run: python3 scripts/export_public.py "$RUNNER_TEMP/litigation"
       - name: Commit and push
+        id: push
         run: |
           TARGET="$RUNNER_TEMP/litigation"
           git -C "$TARGET" add -A
@@ -48,11 +65,25 @@ jobs:
             exit 0
           fi
           python3 scripts/export_public.py --message > "$RUNNER_TEMP/message"
-          if [ "$(git -C "$TARGET" log -1 --format=%B)" = "$(cat "$RUNNER_TEMP/message")" ]; then
+          LAST="$(python3 scripts/implemented_scan.py unstamped --public "$TARGET")"
+          if [ "$LAST" = "$(cat "$RUNNER_TEMP/message")" ]; then
             echo "The top entry of public/CHANGELOG.md is already the public repository's last commit message. Add a new entry and approve it." >&2
             exit 1
           fi
+          python3 scripts/implemented_scan.py stamp --message "$RUNNER_TEMP/message" \
+            --sha "$(git rev-parse HEAD)" > "$RUNNER_TEMP/stamped"
           git -C "$TARGET" -c user.name="github-actions[bot]" \
             -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-            commit -F "$RUNNER_TEMP/message"
+            commit -F "$RUNNER_TEMP/stamped"
           git -C "$TARGET" push origin main
+          echo "published=true" >> "$GITHUB_OUTPUT"
+      - name: Mark the suggestion items this publication shipped as implemented
+        if: steps.push.outputs.published == 'true'
+        # The publication is already pushed and stays. A failure here shows as a failed step
+        # with ::error:: lines and the command to run again; the scan is safe to repeat.
+        continue-on-error: true
+        env:
+          SUGGESTIONS_SECRET_KEY: ${{ secrets.SUGGESTIONS_SECRET_KEY }}
+        run: |
+          python3 scripts/implemented_scan.py scan --from "$(cat "$RUNNER_TEMP/previous" 2>/dev/null)" \
+            --to "$(git rev-parse HEAD)"
