@@ -22,7 +22,7 @@ You relay. You read no source and give no opinion on the suggestion. Nothing you
    2. Approve with the planner's adjustments. Leave it out with `Verdict: none`.
    3. Dismiss unimplemented.
    4. Something else, or do nothing.
-4. **Record.** Filing an issue means: write its body to a temporary file, then `env -u GH_TOKEN gh issue create -R Mharbulous/probanda-dev --title "<its title>" --body-file <file> --label suggestion`, and immediately after it returns the issue number, run `node cloud/suggestions/tools/triage.mjs set-status <suggestion_id> <status> --issue <n>`.
+4. **Record.** Filing an issue means: write its body to a temporary file, then `env -u GH_TOKEN gh issue create -R Mharbulous/probanda-dev --title "<its title>" --body-file <file> --label suggestion,ready-for-agent,cloud`, and immediately after it returns the issue number, run `node cloud/suggestions/tools/triage.mjs set-status <suggestion_id> <status> --issue <n>`.
    1. As proposed: file the planner's As proposed issue, or its main issue when As proposed is `same as above`, with status `approved`.
    2. With adjustments: file the planner's main issue, with status `approved` for `Verdict: all` and `"approved in part"` for `Verdict: some`.
    3. Dismiss: `node cloud/suggestions/tools/triage.mjs set-status <suggestion_id> rejected`.

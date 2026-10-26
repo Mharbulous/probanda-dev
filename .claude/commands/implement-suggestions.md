@@ -1,11 +1,11 @@
 ---
-description: Cloud only. Under the implementer lock, work the implement queue (open `suggestion` issues and triaged `ready-for-agent` + `cloud` issues), lowest issue number first, relabel any that cannot be done in the cloud `local`, and push each finished one to main.
+description: Cloud only. Under the implementer lock, work the implement queue (every open `ready-for-agent` + `cloud` issue), lowest issue number first, relabel any that cannot be done in the cloud `local`, and push each finished one to main.
 argument-hint: [issue number]
 ---
 
 # /implement-suggestions
 
-Run unattended in the cloud: by the session that just queued an issue (triage or Suggestion Box intake), by the daily backstop routine, or by a session started by hand, optionally with one issue number to take first. Only one run works at a time, under the implementer lock (`docs/agents/issue-tracker.md`, **Implementer lock**). Nobody answers questions during the run: where a step would need a person, the issue is unsuitable (step 4). Each issue filed by `/suggestion-triage` is a complete work order with the sections Plan, Scope and Done when, and ends with a `Suggestion <id>` line. An issue triaged by `/triage-issue` carries the same three sections in its latest `## Agent Brief` comment, which governs over the issue body.
+Run unattended in the cloud: by the session that just queued an issue (triage or Suggestion Box intake), by the daily backstop routine, or by a session started by hand, optionally with one issue number to take first. Only one run works at a time, under the implementer lock (`docs/agents/issue-tracker.md`, **Implementer lock**). Nobody answers questions during the run: where a step would need a person, the issue is unsuitable (step 4). An issue triaged by `/triage-issue`, Suggestion Box entries included, carries its work order (Plan, Scope and Done when) in its latest `## Agent Brief` comment, which governs over the issue body. An issue filed by `/suggestion-triage` or `/adversarial-triage` after Brahm's approval carries those sections in its body, and ends with a `Suggestion <id>` line.
 
 The cloud does not load Brahm's own global rules, so these hold for the whole run:
 
@@ -31,7 +31,7 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 
 ## 2. Pick
 
-Refresh the implementer lock (**Implementer lock**, Refresh). With an issue number in the arguments that this run has not handled yet, take that issue. Otherwise list `GET /issues?labels=suggestion&state=open&per_page=100` and `GET /issues?labels=ready-for-agent,cloud&state=open&per_page=100`. Drop entries with a `pull_request` field, issues labelled `local`, issues this run already handled, and issues with a live claim (the claim-comment read under **Claim** in `docs/agents/issue-tracker.md`). Take the lowest issue number left.
+Refresh the implementer lock (**Implementer lock**, Refresh). With an issue number in the arguments that this run has not handled yet, take that issue. Otherwise list `GET /issues?labels=ready-for-agent,cloud&state=open&per_page=100`. Drop entries with a `pull_request` field, issues labelled `local`, issues this run already handled, and issues with a live claim (the claim-comment read under **Claim** in `docs/agents/issue-tracker.md`). Take the lowest issue number left.
 
 Go to step 8 when none is left.
 

@@ -1,24 +1,17 @@
 ---
-description: Cloud only. Plan every new Suggestion Box entry, apply the planner's recommended choice with nobody asked, file each approved plan as a `suggestion` issue, then run the implementer on the queue.
+description: Cloud only. File every new Suggestion Box entry as a `suggestion` + `needs-triage` issue, once each; opening the issue starts /triage-issue, which judges it.
 ---
 
 # /intake-suggestions
 
-Run unattended by the "Suggestion Box intake" cloud task, which the Suggestion Box's save function starts each time a suggestion is saved, and which also runs daily as a backstop. Only one run works at a time, under the intake lock (`docs/agents/issue-tracker.md`, **Intake lock**). It is `/suggestion-triage` (`.claude/skills/suggestion-triage/SKILL.md`) with Brahm's choice at its step 3 made by the rule in step 3 below: Brahm chose to have suggestions built without his review.
+Run unattended by the "Suggestion Box intake" cloud task, which the Suggestion Box's save function starts each time a suggestion is saved, and which also runs daily as a backstop. Only one run works at a time, under the intake lock (`docs/agents/issue-tracker.md`, **Intake lock**). Intake only detects and files: it makes no judgement. Opening the issue fires the "Triage new issues" task, and `/triage-issue` (`.claude/commands/triage-issue.md`) plans and judges it like any other issue.
 
 The cloud does not load Brahm's own global rules, so these hold for the whole run:
 
-- Before step 4, change no file in the repo and push nothing. The writes are issues, their labels, and each suggestion's status. Step 4 follows the implementer's own rules.
-- Nothing filed names a person, entity, matter or account. Never mention Claude or Anthropic in an issue.
+- Change no file in the repo and push nothing. The only writes are new issues.
+- Nothing filed names a person, entity, matter or account: replace any such name with its role, such as `[client]` or `[opposing counsel]`. Never mention Claude or Anthropic in an issue.
 - Nobody answers a permission prompt, so never cause one. Read and search files with the Read, Grep and Glob tools, not shell commands.
-- Reach the Suggestion Box with `curl` only, as below. Node's `fetch` ignores the sandbox proxy, so `cloud/suggestions/tools/triage.mjs` cannot run here. The cloud environment's network secret adds the key to these requests, so send none and never look for one.
-
-## Suggestion Box calls
-
-Both are `curl -sS -X POST -H Content-Type:application/json https://nbzkuhgiqscjkypedqff.supabase.co/functions/v1/<function> -d '<body>'`:
-
-- **List new:** function `suggestion-list`, body `{"status":"new"}`. The reply's `suggestions` holds the rows, oldest first.
-- **Set status:** function `suggestion-set-status`, body `{"suggestion_id":"<id>","status":"<status>"}`, adding `"issue_number":<n>` when an issue was filed. It refuses a second call on the same row.
+- Reach the Suggestion Box only by the calls in `.claude/commands/triage-issue.md` ("Suggestion Box calls").
 
 ## GitHub calls
 
@@ -26,28 +19,34 @@ Both are `curl -sS -X POST -H Content-Type:application/json https://nbzkuhgiqscj
 
 ## 1. List
 
-Take the intake lock (**Intake lock**, Take). If it is held, stop and report `Intake lock held`: the holder takes every new row. Then list new suggestions. If the request is refused (a 401 or 403, or a blocked host), stop and report that the cloud environment lacks the Suggestion Box network secret or network access. If no row is `new`, stop and report that.
+Take the intake lock (**Intake lock**, Take). If it is held, stop and report `Intake lock held`: the holder takes every new row. Then list new suggestions. If the request is refused (a 401 or 403, or a blocked host), stop and report that the cloud environment lacks the Suggestion Box network secret or network access.
 
-## 2. Plan
+## 2. File
 
-For each `new` row, oldest first, refresh the intake lock, then dispatch one Agent with model `fable` and only the Read, Glob and Grep tools. Its prompt is the body of `source/developer/agents/suggestion-planner.md` (below its frontmatter), followed by the row's `suggestion_id`, `skill`, `plugin_version`, `source`, and its full title and body.
+List every issue labelled `suggestion`, open and closed (`GET /issues?labels=suggestion&state=all&per_page=100`, every page). For each `new` row, oldest first, whose `Suggestion <suggestion_id>` line no listed issue body holds, refresh the intake lock and `POST /issues` with the labels `["suggestion","needs-triage"]`, the title `Suggestion: <its title>`, and this body:
 
-## 3. Decide
+```markdown
+## Suggestion
 
-Apply the first rule that fits the planner's TLDR:
+**Title:** <title>
 
-1. "Approve with your adjustments" is marked `(Recommended)`: file the planner's main issue, with status `approved` for `Verdict: all` and `"approved in part"` for `Verdict: some`.
-2. "Approve as proposed" is marked `(Recommended)`: file the As proposed issue, or the main issue when As proposed is `same as above`, with status `approved`.
-3. Otherwise, including when doing nothing is marked: set its status to `rejected`, and file nothing.
+**Body:** <body>
 
-Filing an issue means `POST /issues` with its title, its body and `"labels":["suggestion"]`, then at once set the suggestion's status, with that issue number. If the set-status call fails, comment its output on the issue and carry on.
+**Skill:** <skill or "none named"> · **Plugin version:** <plugin_version> · **Source:** <source>
 
-## 4. Implement
+<its items verbatim, and each preview's label, chosen flag and reason, when the row has them>
 
-Release the intake lock (**Intake lock**, Release). Then list new suggestions once more. If any is left, take the lock again and go back to step 2 for it; if the lock is now held, another run has it.
+Suggestion <suggestion_id>
+```
 
-When any issue was filed, run `/implement-suggestions` with no issue number (read `.claude/commands/implement-suggestions.md` if it is not offered). It works the queue under the implementer lock, or stops at once when another run holds it.
+A row that already has an issue is left alone: its suggestion stays `new` until triage records its outcome.
 
-## 5. Report
+## 3. Release and catch up
 
-Each suggestion with the choice applied and its issue number, then the implementer's report.
+Release the intake lock (**Intake lock**, Release). Then list new suggestions once more. If an unfiled one is left, take the lock again and go back to step 2.
+
+Then, for each open issue labelled both `suggestion` and `needs-triage` that was opened more than an hour ago, run `/triage-issue <n>`, then `/implement-suggestions` once if any of them left an issue `ready-for-agent` + `cloud`. This catches a suggestion whose triage never started.
+
+## 4. Report
+
+Each suggestion filed with its issue number, each one skipped as already filed, and what the catch-up triaged.
