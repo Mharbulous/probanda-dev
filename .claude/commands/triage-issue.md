@@ -23,6 +23,7 @@ Locally, use `gh`. In the cloud, `gh issue` is refused: use REST with `curl` thr
 In the cloud, use `curl` only: Node's `fetch` ignores the sandbox proxy. Each call is `curl -sS -X POST -H Content-Type:application/json https://nbzkuhgiqscjkypedqff.supabase.co/functions/v1/<function> -d '<body>'`, and the cloud environment's network secret adds the key, so send none and never look for one:
 
 - **List submitted:** function `suggestion-list`, body `{"status":"submitted"}`. The reply's `suggestions` holds the rows, oldest first.
+- **List withdrawn:** function `suggestion-list`, body `{"status":"withdrawn"}`. The reply's `suggestions` holds the tombstones: each only its `suggestion_id`, its `issue_number` and the status `withdrawn`. `/intake-suggestions` step 3 closes their issues.
 - **Read one:** function `suggestion-list`, body `{}`, then keep the row whose `suggestion_id` is the one wanted. This row is the **cloud record**: the pain point (`body`), the items in order (`item_list`, each with its `item` number and `text`), `context_lines`, `comment`, `origin`, `fingerprint`, `raw_observation`, `environment_facts`, `specification` and `backstop_result`. Save it as JSON to a file outside the checkout (for example under `/tmp`) for the verbatim guard.
 - **Record the issue:** function `suggestion-set-status`, body `{"suggestion_id":"<id>","issue_number":<n>}`. It changes no status, and refuses a different issue once one is recorded.
 - **Open for review:** function `suggestion-set-status`, body `{"suggestion_id":"<id>","status":"under review","issue_number":<n>}`.
@@ -41,6 +42,7 @@ Item decisions are not triage's: the maintainer records them through `/suggestio
 
 - is closed or is a pull request;
 - carries any `wayfinder:*` label, or its parent carries `wayfinder:map` (the wayfinder skill owns those);
+- carries `withdrawn`: its sender withdrew the suggestion, and `/intake-suggestions` closes it. This holds even when the issue is named in the arguments;
 - already carries a state label (`ready-for-agent`, `ready-for-human`, `needs-info`, `wontfix`) and was not named in the arguments.
 
 A **suggestion issue** is one labelled `suggestion` whose body ends with a `Suggestion <suggestion_id>` line. Its body is intake's paraphrase. Read the cloud record by its id (**Read one**): the record, not the issue body, is what step 3 plans. If the Suggestion Box holds no such row, or its status is `withdrawn`, stop and report it, writing nothing. Otherwise open it for review now (**Open for review**, with this issue's number). A refusal because another issue is recorded means the suggestion is filed under that issue: stop and report both numbers.

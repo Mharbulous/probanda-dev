@@ -71,6 +71,15 @@ class Lanes(unittest.TestCase):
         issues = [issue(4, "local"), issue(4, "local"), issue(6, "local")]
         self.assertEqual(ci.queue(issues, "local", handled={4}), [6])
 
+    def test_withdrawn_issue_never_picked_in_either_lane(self):
+        issues = [issue(3, "cloud", "withdrawn"), issue(4, "local", "withdrawn"),
+                  issue(5, "cloud", "local", "withdrawn")]
+        claims = {n: [] for n in (3, 4, 5)}
+        for lane in ("cloud", "local"):
+            self.assertEqual(ci.queue(issues, lane), [])
+            self.assertIsNone(ci.pick(issues, lane, claims, now=NOW)["issue"])
+        self.assertEqual(ci.pick(issues + [issue(9, "cloud")], "cloud", {**claims, 9: []}, now=NOW)["issue"], 9)
+
     def test_closed_issue_dropped(self):
         closed = issue(4, "local")
         closed["state"] = "closed"
