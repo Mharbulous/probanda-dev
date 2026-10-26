@@ -1,4 +1,4 @@
-// build-stamp: 71c9350bb0fc
+// build-stamp: 11a118d35bf1
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15554,7 +15554,7 @@ function housekeepingToolDefinitions() {
     },
     {
       name: "housekeeping__candidates",
-      description: "Build a /housekeeping run's work list in one read-only call (Steps 6-7): list the candidates, hash them, run the name gate and its mechanical second pass, read ingest status and the review log, admit, order and cap at 50. Nothing per file goes in. `swept_folders` are the folders the folder map matches, by their on-disk names (matter-root-relative), each {path, folder_type, flag_tokens?, second_pass?}: `folder_type` the folder type's name (`Law`, `Discovery`, `Court File`, ...), `flag_tokens` the Law folder's, `second_pass: true` on Law and Discovery. `skip_folders` are the root folders the profile always skips (neither swept nor listed). `subfolder` (sweep only that folder, no root files) or `files` (only those stored-form paths) apply the run's argument; `finished` lists the stored paths Step 5's recovery finished, which are left out; `force` drops the settled-verdict condition from the name arm only. Listing: root files except `~`/`.` names, probanda.json, CLAUDE.md, AGENTS.md, ProceduralHistory.md, `.cm*`, desktop.ini and `.lnk`; a root file with a `~$` sibling is open in Word and only named in `header.open_in_word`; files with `.pdf .docx .doc .eml .msg .xls` anywhere inside a swept folder; root folders other than TRASH, `Claude outputs`, skipped and swept ones are named in `header.folders_not_looked_inside`. Admission: a root file always; a subfolder file when (its name does not conform AND no settled verdict matches) OR (it is not ingested AND no `not_ingested` row matches its hash). Order: fresh root, fresh subfolder, rotated root, rotated subfolder (rotated = offered and not approved on the previous run's page, by hash). Returns {run_id, previous_run, header, errors: [{path, error}] (unreadable files, left out of the run), admitted (at most 50, this run's rows in this order, each {path, hash, rotated, location, folder_type, admitted_by, name: {verdict conforms|fails|second_pass_required, reason, flags} or null at the root, ingest: the ingest-status entry, review: {reviewed, outcome, reviewed_at, matched_on, not_ingested, ingest_failure}}), deferred: [{path, hash}] (past the cap, for proposal.json's deferred rows)}. A file not admitted is not returned. `second_pass_required`: the name failed the gate in a Law or Discovery folder and matches neither mechanical form; judge it against the folder's notes. Fails whole past its time budget, never with a partial list. Fails `approval_corrupt` when the previous run's approval.json is unreadable.",
+      description: "Build a /housekeeping run's work list in one read-only call (Steps 6-7): list the candidates, hash them, run the name gate and its mechanical second pass, read ingest status and the review log, admit, order and cap at 50. Nothing per file goes in. `swept_folders` are the folders the folder map matches, by their on-disk names (matter-root-relative), each {path, folder_type, flag_tokens?, second_pass?}: `folder_type` the folder type's name (`Law`, `Discovery`, `Court File`, ...), `flag_tokens` the Law folder's, `second_pass: true` on Law and Discovery. `skip_folders` are the root folders the profile always skips (neither swept nor listed). `subfolder` (sweep only that folder, no root files) or `files` (only those stored-form paths) apply the run's argument; `finished` lists the stored paths Step 5's recovery finished, which are left out; `force` drops the settled-verdict condition from the name arm only. Listing: root files except `~`/`.` names, probanda.json, coclerk.json, their backups `<name>.bak-<YYYYMMDDTHHMMSSZ>`, CLAUDE.md, AGENTS.md, ProceduralHistory.md, `.cm*`, desktop.ini and `.lnk`; a root file with a `~$` sibling is open in Word and only named in `header.open_in_word`; files with `.pdf .docx .doc .eml .msg .xls` anywhere inside a swept folder; root folders other than TRASH, `Claude outputs`, skipped and swept ones are named in `header.folders_not_looked_inside`. Admission: a root file always; a subfolder file when (its name does not conform AND no settled verdict matches) OR (it is not ingested AND no `not_ingested` row matches its hash). Order: fresh root, fresh subfolder, rotated root, rotated subfolder (rotated = offered and not approved on the previous run's page, by hash). Returns {run_id, previous_run, header, errors: [{path, error}] (unreadable files, left out of the run), admitted (at most 50, this run's rows in this order, each {path, hash, location, folder_type, admitted_by, name: {verdict conforms|fails|second_pass_required, reason, flags} or null at the root, ingest: the ingest-status entry less path, hash, stored_path and merged_into, its metadata only the stored date, category and parties except on a duplicate, ingest_failure?: the review log's remembered failure}), deferred: [{path, hash}] (past the cap, for proposal.json's deferred rows)}, as unindented JSON. A null, false or empty field in ingest is left out. A file not admitted is not returned. `second_pass_required`: the name failed the gate in a Law or Discovery folder and matches neither mechanical form; judge it against the folder's notes. Fails whole past its time budget, never with a partial list. Fails `approval_corrupt` when the previous run's approval.json is unreadable.",
       inputSchema: {
         type: "object",
         properties: {
@@ -18181,6 +18181,7 @@ async function hashAt(path) {
 var CANDIDATES_TIMEOUT_MS = 12e4;
 var WHITELIST = /* @__PURE__ */ new Set([".pdf", ".docx", ".doc", ".eml", ".msg", ".xls"]);
 var NEVER_ROOT_FILES = /* @__PURE__ */ new Set(["probanda.json", "coclerk.json", "claude.md", "agents.md", "proceduralhistory.md", "desktop.ini"]);
+var POINTER_BACKUP = /^(?:probanda|coclerk)\.json\.bak-\d{8}t\d{6}z$/;
 var NEVER_ROOT_FOLDERS = /* @__PURE__ */ new Set(["trash", "claude outputs"]);
 var NUMBERED_0_OR_1 = /^[01](?!\d)/;
 var HASH_CONCURRENCY = 8;
@@ -18240,17 +18241,15 @@ async function candidates(args, deps = {}) {
       admittedBy = nameArm && ingestArm ? "both" : nameArm ? "name" : ingestArm ? "ingest" : null;
     }
     if (admittedBy === null) return;
-    const { path: _p, hash: _h, ...entry } = ingest;
     rows.set(samePath(c.path), {
       path: c.path,
       hash: c.hash,
-      rotated: false,
       location: c.folder === null ? "root" : "subfolder",
       folder_type: c.folder?.folder_type ?? null,
       admitted_by: admittedBy,
       name,
-      ingest: entry,
-      review
+      ingest: slimIngest(ingest),
+      ...review.ingest_failure ? { ingest_failure: review.ingest_failure } : {}
     });
   });
   const ordered = orderCandidates(args.matter_root, args.run_id, [...rows.values()].map(({ path, hash }) => ({ path, hash })));
@@ -18259,9 +18258,20 @@ async function candidates(args, deps = {}) {
     previous_run: ordered.previous_run,
     header,
     errors,
-    admitted: ordered.admitted.map((c) => ({ ...rows.get(samePath(c.path)), rotated: c.rotated })),
+    admitted: ordered.admitted.map((c) => rows.get(samePath(c.path))),
     deferred: ordered.deferred.map((c) => ({ path: c.path, hash: c.hash }))
   };
+}
+var CROSS_CHECK = ["date", "category", "filed_by", "author", "recipient"];
+function slimIngest(entry) {
+  const { path: _p, hash: _h, stored_path: _s, merged_into: _m, metadata, ...rest } = entry;
+  const kept = metadata && typeof metadata === "object" ? metadata : {};
+  const picked = entry.duplicate_of ? kept : Object.fromEntries(CROSS_CHECK.map((k) => [k, kept[k]]));
+  return present3({ ...rest, metadata: present3(picked) });
+}
+function present3(fields) {
+  const empty = (v) => v === null || v === void 0 || v === false || (Array.isArray(v) ? v.length === 0 : typeof v === "object" && Object.keys(v).length === 0);
+  return Object.fromEntries(Object.entries(fields).filter(([, v]) => !empty(v)));
 }
 function checkSwept(root, swept) {
   if (!Array.isArray(swept)) throw new DataServerError("swept_folders must be an array", "invalid_argument");
@@ -18295,7 +18305,7 @@ function list(root, swept, skip) {
     }
     if (!e.isFile()) continue;
     const ext = pathWin3214.extname(lower);
-    if (NEVER_ROOT_FILES.has(lower) || /^\.cm/.test(ext) || ext === ".lnk") continue;
+    if (NEVER_ROOT_FILES.has(lower) || POINTER_BACKUP.test(lower) || /^\.cm/.test(ext) || ext === ".lnk") continue;
     if (isOpenInWord(lower, lockFiles)) {
       header.open_in_word.push(name);
       continue;
@@ -19143,7 +19153,7 @@ function toolDefinition(name) {
 }
 async function dispatchFileManagerTool(name, rawArgs) {
   try {
-    return textResult(await callFileManagerTool(name, rawArgs));
+    return { content: [{ type: "text", text: replyText(name, await callFileManagerTool(name, rawArgs)) }] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const payload = err instanceof DataServerError ? { error: { code: err.code, message } } : { error: { code: "data_error", message } };
@@ -19210,6 +19220,9 @@ async function callFileManagerTool(name, rawArgs) {
     );
   }
   throw new ValidationError(`Unknown tool "${name}"`);
+}
+function replyText(name, result) {
+  return name === "housekeeping__candidates" ? JSON.stringify(result) : JSON.stringify(result, null, 2);
 }
 function textResult(result) {
   return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };

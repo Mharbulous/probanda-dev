@@ -11,6 +11,7 @@ import test from "node:test";
 import { matterFixture, proposalFor, runDir } from "./helpers/housekeeping-fixture.mjs";
 
 const { candidates } = await import("../build/housekeeping/candidates.js");
+const { replyText } = await import("../build/file-manager-dispatch.js");
 
 const RUN_A = "20261025-100000000-aaaa";
 const RUN_B = "20261025-110000000-bbbb";
@@ -70,6 +71,7 @@ function setup(files) {
 
 const args = (m, extra = {}) => ({ matter_root: m.root, run_id: RUN_B, swept_folders: SWEPT, skip_folders: ["0. DRAFT"], ...extra });
 const paths = (rows) => rows.map((r) => r.path);
+const toolText = (out) => replyText("housekeeping__candidates", out);
 
 test("listing: never-candidates, open in Word, skipped and unswept folders, the whitelist, `~` and `.` names at every level", async () => {
   const m = setup({
@@ -79,6 +81,9 @@ test("listing: never-candidates, open in Word, skipped and unswept folders, the 
     "Case.cm12": "x",
     "desktop.ini": "x",
     "Shortcut.lnk": "x",
+    "probanda.json.bak-20261020T181500Z": "x",
+    "coclerk.json.bak-20261020T181500Z": "x",
+    "probanda.json.bak-old": "hand copy",
     "~scratch.txt": "x",
     ".hidden": "x",
     "Letter to client.docx": "open",
@@ -99,10 +104,12 @@ test("listing: never-candidates, open in Word, skipped and unswept folders, the 
   try {
     const out = await candidates(args(m), { gate: fakeGate(), lookup: fakeLookup() });
     assert.deepEqual(out.header, { open_in_word: ["Letter to client.docx"], folders_not_looked_inside: ["1. ADMIN", "8. MISC"] });
-    // Root files always (the fixture's legacy coclerk.json pointer is never one); the subfolder
-    // files fail the fake gate and carry no settled verdict.
+    // Root files always (the fixture's legacy coclerk.json pointer and the relocate's stamped pointer
+    // backups are never one; a hand-labelled copy is); the subfolder files fail the fake gate and
+    // carry no settled verdict.
     assert.deepEqual(paths(out.admitted), [
       "Loose note.txt",
+      "probanda.json.bak-old",
       "Scan.pdf",
       "3. CORRESPONDENCE\\letter.pdf",
       "3. CORRESPONDENCE\\OC\\2026\\inner.MSG",
@@ -115,7 +122,7 @@ test("listing: never-candidates, open in Word, skipped and unswept folders, the 
     assert.equal(root.name, null);
     assert.equal(root.folder_type, null);
     assert.equal(root.hash, h("loose"));
-    const sub = out.admitted[2];
+    const sub = out.admitted[3];
     assert.deepEqual([sub.location, sub.folder_type, sub.admitted_by, sub.name.verdict], ["subfolder", "Correspondence", "name", "fails"]);
     assert.equal(sub.ingest.verdict, "ingested");
     assert.equal(sub.ingest.path, undefined);
@@ -198,7 +205,6 @@ test("admission: the name arm yields to a settled verdict unless forced; the ing
         ["3. CORRESPONDENCE\\settled.pdf", "name"],
       ]
     );
-    assert.deepEqual(forced.admitted[2].review.outcome, "renamed");
   } finally {
     m.cleanup();
   }
@@ -253,7 +259,6 @@ test("order and cap: a file the previous page offered and did not approve rotate
       { path: "Root 54.pdf", hash: h("root 54") },
       { path: "Root 00.pdf", hash: h("root 0") },
     ]);
-    assert.ok(out.admitted.every((r) => r.rotated === false));
   } finally {
     m.cleanup();
   }
@@ -269,6 +274,86 @@ test("no hash of a file that is not admitted appears anywhere in the output", as
     const out = await candidates(args(m), { gate: fakeGate(), lookup: fakeLookup() });
     assert.deepEqual(paths(out.admitted), ["Root.pdf", "3. CORRESPONDENCE\\odd name.pdf"]);
     assert.ok(!JSON.stringify(out).includes(h("kept")));
+  } finally {
+    m.cleanup();
+  }
+});
+
+test("a 50-admitted, 80-deferred reply, as the tool sends it, stays well under Cowork's tool-output limit", async () => {
+  // Long real-world names and every field the real lookup returns, most of them at their defaults.
+  const name = (i) => `3. CORRESPONDENCE/OC/2025/Letter from opposing counsel to our office regarding the payout statement ${String(i).padStart(3, "0")}.pdf`;
+  const m = setup(Object.fromEntries(Array.from({ length: 130 }, (_, i) => [name(i), `file ${i}`])));
+  const lookup = (request) => ({
+    ingest: request.files.map((f) => ({
+      path: f.path,
+      hash: f.hash,
+      verdict: "ingested",
+      store: "main",
+      source_ids: [1234],
+      stored_path: f.path,
+      moved: false,
+      duplicate_of: null,
+      twin_ingested: null,
+      pending: [],
+      metadata: {
+        title: "Letter from opposing counsel regarding the payout statement",
+        description: "Opposing counsel encloses the lender's payout statement and asks for confirmation of the figures.",
+        category: "correspondence",
+        date: "2025-03-18",
+        execution_status: null,
+        filed_by: null,
+        file_number: "S-123456",
+        court: "Supreme Court of British Columbia",
+        registry: "Vancouver",
+      },
+      merged_into: null,
+      superseded_by: null,
+      move_pending: false,
+      anomaly: null,
+      possible_version_of: null,
+    })),
+    reviews: request.files.map(() => ({ reviewed: false, outcome: null, reviewed_at: null, matched_on: null, not_ingested: false, ingest_failure: null })),
+  });
+  try {
+    const out = await candidates(args(m), { gate: fakeGate(), lookup });
+    assert.equal(out.admitted.length, 50);
+    assert.equal(out.deferred.length, 80);
+    // Only what Steps 8-13 read; null, false and empty fields left out; metadata cut to the cross-check's fields.
+    assert.deepEqual(out.admitted[0], {
+      path: name(0).replaceAll("/", "\\"),
+      hash: h("file 0"),
+      location: "subfolder",
+      folder_type: "Correspondence",
+      admitted_by: "name",
+      name: { verdict: "fails", reason: "no date and code", flags: [] },
+      ingest: { verdict: "ingested", store: "main", source_ids: [1234], metadata: { date: "2025-03-18", category: "correspondence" } },
+    });
+    const sent = toolText(out).length;
+    assert.ok(sent < 40_000, `the reply is ${sent} characters`);
+  } finally {
+    m.cleanup();
+  }
+});
+
+test("a duplicate keeps its twin's whole record, and a remembered ingest failure comes through", async () => {
+  const m = setup({ "3. CORRESPONDENCE/copy.pdf": "c" });
+  const failure = { reason: "no text layer", failure_class: "deterministic", retry_next_run: false, reviewed_at: "2026-10-01" };
+  const metadata = { title: "Letter", description: "A letter.", category: "correspondence", date: "2025-01-02", filed_by: null };
+  const lookup = (request) => ({
+    ingest: request.files.map((f) => ({ ...f, verdict: "none", store: "main", source_ids: [7], stored_path: "3. CORRESPONDENCE\\orig.pdf", duplicate_of: "3. CORRESPONDENCE\\orig.pdf", twin_ingested: true, metadata })),
+    reviews: request.files.map(() => ({ reviewed: false, not_ingested: false, ingest_failure: failure })),
+  });
+  try {
+    const out = await candidates(args(m), { gate: fakeGate(), lookup });
+    assert.deepEqual(out.admitted[0].ingest, {
+      verdict: "none",
+      store: "main",
+      source_ids: [7],
+      duplicate_of: "3. CORRESPONDENCE\\orig.pdf",
+      twin_ingested: true,
+      metadata: { title: "Letter", description: "A letter.", category: "correspondence", date: "2025-01-02" },
+    });
+    assert.deepEqual(out.admitted[0].ingest_failure, failure);
   } finally {
     m.cleanup();
   }

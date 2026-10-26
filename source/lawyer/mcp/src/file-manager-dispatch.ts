@@ -35,7 +35,7 @@ export async function dispatchFileManagerTool(
   rawArgs: unknown
 ): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
   try {
-    return textResult(await callFileManagerTool(name, rawArgs));
+    return { content: [{ type: "text", text: replyText(name, await callFileManagerTool(name, rawArgs)) }] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const payload = err instanceof DataServerError
@@ -119,6 +119,11 @@ export async function callFileManagerTool(name: string, rawArgs: unknown): Promi
   }
 
   throw new ValidationError(`Unknown tool "${name}"`);
+}
+
+/** A tool's reply text. The work list goes out unindented: indentation alone adds a third to a reply near Cowork's tool-output limit. */
+export function replyText(name: string, result: unknown): string {
+  return name === "housekeeping__candidates" ? JSON.stringify(result) : JSON.stringify(result, null, 2);
 }
 
 function textResult(result: unknown): { content: Array<{ type: "text"; text: string }> } {

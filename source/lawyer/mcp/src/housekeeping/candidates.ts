@@ -29,6 +29,8 @@ export const CANDIDATES_TIMEOUT_MS = 120_000;
 
 const WHITELIST = new Set([".pdf", ".docx", ".doc", ".eml", ".msg", ".xls"]);
 const NEVER_ROOT_FILES = new Set(["probanda.json", "coclerk.json", "claude.md", "agents.md", "proceduralhistory.md", "desktop.ini"]);
+// The pointer copies matter-data's relocate writes before it changes the pointer (relocate_case_data.py).
+const POINTER_BACKUP = /^(?:probanda|coclerk)\.json\.bak-\d{8}t\d{6}z$/;
 const NEVER_ROOT_FOLDERS = new Set(["trash", "claude outputs"]);
 const NUMBERED_0_OR_1 = /^[01](?!\d)/;
 const HASH_CONCURRENCY = 8;
@@ -114,16 +116,16 @@ export interface CandidatesDeps {
   env?: NodeJS.ProcessEnv;
 }
 
+/** An admitted row carries only what Steps 8-13 read, so 50 rows fit a tool reply (Cowork saved a 78,615-character one to a file). */
 export interface AdmittedRow {
   path: string;
   hash: string;
-  rotated: boolean;
   location: "root" | "subfolder";
   folder_type: string | null;
   admitted_by: "root" | "name" | "ingest" | "both";
   name: NameResult | null;
   ingest: Record<string, unknown>;
-  review: ReviewEntry;
+  ingest_failure?: unknown;
 }
 
 export interface CandidatesResult {
@@ -183,17 +185,15 @@ export async function candidates(args: CandidatesArgs, deps: CandidatesDeps = {}
       admittedBy = nameArm && ingestArm ? "both" : nameArm ? "name" : ingestArm ? "ingest" : null;
     }
     if (admittedBy === null) return;
-    const { path: _p, hash: _h, ...entry } = ingest;
     rows.set(samePath(c.path), {
       path: c.path,
       hash: c.hash,
-      rotated: false,
       location: c.folder === null ? "root" : "subfolder",
       folder_type: c.folder?.folder_type ?? null,
       admitted_by: admittedBy,
       name,
-      ingest: entry,
-      review,
+      ingest: slimIngest(ingest),
+      ...(review.ingest_failure ? { ingest_failure: review.ingest_failure } : {}),
     });
   });
 
@@ -203,9 +203,30 @@ export async function candidates(args: CandidatesArgs, deps: CandidatesDeps = {}
     previous_run: ordered.previous_run,
     header,
     errors,
-    admitted: ordered.admitted.map((c) => ({ ...(rows.get(samePath(c.path)) as AdmittedRow), rotated: c.rotated })),
+    admitted: ordered.admitted.map((c) => rows.get(samePath(c.path)) as AdmittedRow),
     deferred: ordered.deferred.map((c) => ({ path: c.path, hash: c.hash })),
   };
+}
+
+// The stored fields Step 12's cross-check compares: date, category and parties.
+const CROSS_CHECK = ["date", "category", "filed_by", "author", "recipient"];
+
+/**
+ * The ingest-status entry less what no later step reads (the echoed path and hash, `stored_path`,
+ * `merged_into`) and less every null, false or empty field. `metadata` keeps the cross-check's
+ * fields, or the whole record on a duplicate, whose name is composed from its twin's record.
+ */
+function slimIngest(entry: IngestEntry): Record<string, unknown> {
+  const { path: _p, hash: _h, stored_path: _s, merged_into: _m, metadata, ...rest } = entry;
+  const kept = metadata && typeof metadata === "object" ? (metadata as Record<string, unknown>) : {};
+  const picked = entry.duplicate_of ? kept : Object.fromEntries(CROSS_CHECK.map((k) => [k, kept[k]]));
+  return present({ ...rest, metadata: present(picked) });
+}
+
+function present(fields: Record<string, unknown>): Record<string, unknown> {
+  const empty = (v: unknown) =>
+    v === null || v === undefined || v === false || (Array.isArray(v) ? v.length === 0 : typeof v === "object" && Object.keys(v as object).length === 0);
+  return Object.fromEntries(Object.entries(fields).filter(([, v]) => !empty(v)));
 }
 
 function checkSwept(root: string, swept: unknown): SweptFolder[] {
@@ -243,7 +264,7 @@ function list(root: string, swept: SweptFolder[], skip: string[]): { listed: Lis
     }
     if (!e.isFile()) continue;
     const ext = pathWin32.extname(lower);
-    if (NEVER_ROOT_FILES.has(lower) || /^\.cm/.test(ext) || ext === ".lnk") continue;
+    if (NEVER_ROOT_FILES.has(lower) || POINTER_BACKUP.test(lower) || /^\.cm/.test(ext) || ext === ".lnk") continue;
     if (isOpenInWord(lower, lockFiles)) {
       header.open_in_word.push(name);
       continue;
