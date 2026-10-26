@@ -204,6 +204,7 @@
       ],
       "agents": [
         "black-hat",
+        "fix-maker",
         "fix-planner",
         "suggestion-oracle",
         "white-hat"
