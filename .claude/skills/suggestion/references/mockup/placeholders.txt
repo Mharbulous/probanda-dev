@@ -1,0 +1,82 @@
+# The placeholder text a suggestion mockup may show (docs/Plans/2026-10-25_suggestion-design.md,
+# decisions 25 and 26). Every piece of visible text in a mockup is one of these lines, used whole.
+# None of them matches the date, amount, email or path patterns, and none names anyone.
+# One line per placeholder; a line starting with # is a comment.
+Heading
+Subheading
+Section heading
+Page title
+Label
+Value
+Button
+Note
+Item
+First item
+Second item
+Third item
+Fourth item
+Fifth item
+A short line of placeholder text.
+A longer line of placeholder text that runs on, to show how the words wrap across the width of the page.
+Lorem ipsum dolor sit amet.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+Duis aute irure dolor in reprehenderit in voluptate velit esse.
+Excepteur sint occaecat cupidatat non proident.
+or alternatively
+in the further alternative
+and
+or
+Placeholder name
+Placeholder party
+Placeholder court
+Placeholder document
+Placeholder file
+Placeholder date
+Placeholder amount
+Column one
+Column two
+Column three
+Row one
+Row two
+Row three
+Yes
+No
+Open
+Done
+Next
+Back
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+1.
+2.
+3.
+4.
+5.
+6.
+7.
+8.
+9.
+10.
+(a)
+(b)
+(c)
+(d)
+(e)
+(f)
+(i)
+(ii)
+(iii)
+(iv)
+•
+–
+—

@@ -29,8 +29,9 @@ The installed plugin is a read-only synced copy. Never look for, clone or edit i
 
 - **Outcome check.** Call `suggestion_box__status` with no arguments. It asks Probanda's Cloud about every suggestion this computer sent and has not withdrawn, and asks nothing when there is none. When its `changed` list is not empty, present the Past suggestions page at its `past_suggestions_path` as a file card (`shared/present-files.md`), with no chat talk about it at all, then call `suggestion_log__write({op: "seen", suggestion_ids: changed})`. If the call fails or this computer has no key, skip this silently: the cloud may not answer yet.
 - **Past suggestions.** When the practitioner asks to see what they sent, or to withdraw a suggestion, call `suggestion_box__past_suggestions` and present the page at its `past_suggestions_path` as a file card. Each suggestion on it has its own Withdraw button. Never read the page.
-- **Posting needs Probanda's key.** If `practice_data__config_status` reports `cloud_credential: missing`, the suggestion is drafted as usual and held on this computer instead of posted (section 6). Unless this session has already said so, say in one line that sending it needs Probanda's key, and offer the route in the practice-data skill, Configuration, "Probanda's key".
-- **Held suggestions.** When this computer holds Probanda's key and `suggestion_log__read` lists `held` drafts, show each draft exactly as held, then ask section 6's question. On Yes, post that exact text, then remove the draft with `suggestion_log__write({op: "release", held_id})`. On Modify, show their text again for a yes. On No, release the draft and post nothing.
+- **Without Probanda's key.** A suggestion is drafted and shown on its card as usual. When the practitioner submits it, the card keeps it on this computer, reads "Not sent, will retry", and sends it by itself once the key is set. Say nothing about the key here: the session-start note covers it.
+- **Held suggestions.** An earlier version kept some suggestions on this computer, unposted, for want of a key. When `suggestion_log__read` lists `held` drafts, offer each once as a card (section 6): reshape its body and items into a pain point and items, marking as a guess any block whose words the draft did not hold, and pass its `held_id` to the build, which takes the draft out of the store. Nothing is sent unless the practitioner submits that card.
+- **Open cards.** When the practitioner asks to see a suggestion again, or the card says "Open this suggestion again to see a mockup", present the `card_path` of that entry in `suggestion_log__read`'s `open_cards` as a file card and wait on it (section 6).
 
 ## 2. Extract the pains
 
@@ -74,35 +75,35 @@ Follow `references/refinement.md`. In short, show, then let them react:
 - The practitioner confirms, corrects, picks or rejects, answering closed questions only.
 - Contrasting variants draw out the constraints.
 
-## 6. Show the exact text, then ask
+## 6. The card
 
-The draft is:
-- **a title** of at most eight words
-- **a body:** one short paragraph that summarizes the whole suggestion
-- **one item per pain:** `{pain, where, done_test, constraints, changes: [{change, origin}]}`
-- **UI Previews,** for a UI pain only, when a deterministic preview of the page exists
+The suggestion is shown to the practitioner as a card, `Suggestion-<id>.html`, and only as a file card. The chat says nothing about it at all, before or after: no summary of it, no question, no "please review". The practitioner's click on the card is their approval of everything on it; nobody tells them they are reviewing. The card's order, labels, buttons and status lines are built in; the session supplies only the text.
 
-Remove every person, entity, matter, document and path, and name the plugin's part generically.
+**Draft the blocks.** One card is one pain point with the changes that would ease it. Two unrelated pain points make two cards, built and shown one after the other.
+- **The pain point:** its effect on the practitioner, felt or not, in their own phrases where they gave them. When they never stated it, write your best guess and mark it `guess: true`.
+- **The items:** each change a maintainer could accept or decline on its own, generalized so it helps other practitioners. Mark an item `visual: true` when it changes how something looks: its layout, colour, typography or page structure.
+- **The context lines:** `constraint` lines for what must stay true or what they rejected and why, and `evidence` lines for what happened (what was tried and where it hit the wall). As a reminder of what a maintainer needs, not a form to fill: where, the pain, what happened, the changes, what counts as wrong, and what done looks like.
+- Reshape their words into this structure but keep their phrases. Mark each block `guess: true` when it holds words the practitioner did not use.
 
-Show the title, the body and every item exactly as they will be posted. Then ask in plain text, under `/show-me`: "Would you like to submit this suggestion?" Yes | No | Modify. Under Yes, state the mechanism: `sent to the Probanda team · saved in Probanda's Cloud · free`.
+**Scrub before building.** Someone who knows the firm's clients must not be able to tell which client, matter, person, document or file it came from. Remove every name and every indirect identifier (a unique fact, an exact date, an amount, a folder or file name) and put its bracket in its place, one of `[client]`, `[matter]`, `[person]`, `[document]`, `[file]`, `[date]`, `[amount]`. Never fill a bracket with anything else. Name Probanda's own parts generically.
 
-- **Yes.** Only after an explicit yes, call `suggestion_box__submit({title, body, source, items, skill})` with exactly the text shown.
-  - Add `previews` only for Previews the practitioner saw rendered. Pass each as `{label, chosen, reason, path}`, with the path a board preview tool returned for a fixture preview. Never read the preview to pass its HTML.
-  - Add `skill` when the suggestion is about one skill.
-  - `source` is `assisted` for Solved and Gap, and `user` when the practitioner initiated it.
-- **No.** Post nothing.
-- **Modify.** Take their new text and show it again for a yes. Their edited text goes to the tool exactly as typed, because they are its author.
+**Build it.** Call `suggestion_card__build({origin, source, skill, pain_point, items, context_lines, tool_names})`:
+- `origin` is `practitioner` and `source` `user` when the practitioner started it; `origin` is `probanda` and `source` `assisted` for Solved and Gap.
+- `skill` names the one skill it is about, when there is one.
+- `tool_names` is every tool name this session sees, exactly as written.
+- `held_id` only when the card offers a held draft (section 1).
 
-**With no key** (section 1), ask instead: "Would you like me to keep this suggestion on this computer and send it once Probanda's key is set?" Yes | No | Modify. On Yes, call `suggestion_log__write({op: "hold", draft: {title, body, source, items, skill}})` with exactly the text shown, and say it is held on this computer, not sent. Never say a held suggestion was sent.
+The build runs the full check against this computer's records first. When it returns `built: false`, each hit says which block holds a match and where; put its bracket there or reword the block, and build again. Never quote what matched, in chat or anywhere else. Building is done when the check passes and the card is shown.
 
-## 7. Report
+**Show it and wait.** Present `card_path` as a file card (`shared/present-files.md`), with no text. Then call `suggestion_card__wait({card_id})`:
+- `pending`: call it again.
+- `mockup`: the practitioner asked to see the visual items. Write one self-contained HTML page that shows all of `items` together, honouring every one of `constraints`, whose visible text is only lines from `placeholders`, each used whole, with inline styles only (named colours or short hex, never a list of numbers) and nothing that loads or runs. Call `suggestion_card__attach_mockup({card_id, html})`; on a refusal, fix the rule it names and attach again. Present its `mockup_path` as a second file card, with no text, and wait again. The practitioner may turn a mockup down with a reason on its page: the reason becomes a constraint line on the card, and the link comes back.
+- `submitted` or `dismissed`: the card has done its work. Go to section 8.
+- When the practitioner writes in chat while you wait, stop waiting and answer them. Submit and Dismiss on the card keep working with no one waiting; only the mockup link needs a waiting session, and the card says so.
 
-The tool saves the exact text on this computer before it sends it, and keeps the record itself.
+## 7. What the card does by itself
 
-- **`status` "Submitted ✓".** Say the suggestion was received, with the id the tool returns.
-- **`status` "Not sent, will retry".** Say in one line that the suggestion is saved on this computer and will be sent by itself the next time Probanda starts and can reach the Probanda team. Never say it was sent, and don't resend.
-- **If a sent reply lacks `items_saved: true`,** say in one line that only the summary reached Probanda. Don't resend.
-- **A refused post** (a redaction hit) is reported in one line with the kind of hit, never the text. Nothing was saved. Then offer to redraft once, or leave it.
+Nothing here is the session's to do or to say. On Submit Suggestion the card saves the edits, checks everything it would send, and asks the practitioner on the card itself about anything that might name someone, which they can remove or retype. It then saves the exact text on this computer and sends it, showing "Sending...", then "Submitted ✓" or "Not sent, will retry", and a suggestion not sent is sent by itself the next time Probanda starts. Dismiss sends nothing. The practitioner sees what was sent, and its status, under Past suggestions (section 1). Never resend, and never say in chat that a suggestion was sent or not sent.
 
 ## 8. Resume
 

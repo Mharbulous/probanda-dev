@@ -83,3 +83,16 @@ export function pageApiSuggestionTokenValid(token: string, recordId: string, env
   const given = Buffer.from(token, "utf-8");
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
+
+/** The token a suggestion card (suggestions/card.ts) and its mockup page carry for that card's buttons:
+ * HMAC-SHA256(secret, "card\n" + card id), hex. Its prefix keeps it apart from a withdraw token. */
+export function pageApiCardToken(cardId: string, env: NodeJS.ProcessEnv = process.env): string {
+  return createHmac("sha256", pageApiSecret(env)).update(`card\n${cardId}`).digest("hex");
+}
+
+/** Whether `token` is the one pageApiCardToken gives, compared in constant time. */
+export function pageApiCardTokenValid(token: string, cardId: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  const expected = Buffer.from(pageApiCardToken(cardId, env), "utf-8");
+  const given = Buffer.from(token, "utf-8");
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}

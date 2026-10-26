@@ -56,7 +56,7 @@ test("an existing suggestions.local.json is migrated once on first read, with no
 test("a log written before held suggestions existed still migrates", async (t) => {
   const f = suggestionDevice(t);
   writeFileSync(f.legacyLog, JSON.stringify({ suggestions: [] }));
-  assert.deepEqual(await suggestionLogRead(f.env), { suggestions: [], held: [] });
+  assert.deepEqual(await suggestionLogRead(f.env), { suggestions: [], held: [], open_cards: [] });
   assert.equal(JSON.parse(readFileSync(f.store, "utf-8")).migrated_log.from, "suggestions.local.json");
 });
 
@@ -67,23 +67,22 @@ test("an old log that cannot be read stops the read, and nothing is written", as
   assert.throws(() => readFileSync(f.store), /ENOENT/);
 });
 
-test("hold, seen and release over the store; a kind this version does not know is kept", async (t) => {
+test("seen and release over the store; nothing new is held; a kind this version does not know is kept", async (t) => {
   const f = suggestionDevice(t);
+  const draft = { title: "Shorter letters", body: "Letters run long.", source: "user" };
   await withStore(f.env, (store) => {
     store.records.push({ kind: "dismissal", record_id: "d-1", fingerprint: { plugin: "lawyer", version: "0.9.14", kind: "slow" } });
+    store.records.push({ kind: "held", record_id: "h-9", created_at: "2026-10-04T00:00:00.000Z", draft });
   });
-  const draft = { title: "Shorter letters", body: "Letters run long.", source: "user" };
-  const { status, held_id } = await suggestionLogWrite({ op: "hold", draft }, f.env);
-  assert.equal(status, "held");
+  const held_id = "h-9";
   assert.deepEqual((await suggestionLogRead(f.env)).held.map((h) => h.draft), [draft]);
   assert.equal((await suggestionLogWrite({ op: "release", held_id }, f.env)).status, "released");
   assert.deepEqual((await suggestionLogRead(f.env)).held, []);
   await assert.rejects(suggestionLogWrite({ op: "release", held_id }, f.env), (e) => e.code === "not_found");
   await assert.rejects(suggestionLogWrite({ op: "seen", suggestion_ids: ["nope"] }, f.env), (e) => e.code === "not_found");
   await assert.rejects(suggestionLogWrite({ op: "add", suggestion_id: "x", title: "y" }, f.env), /op must be/);
-  for (const bad of [undefined, "text", { title: "No body" }, { body: "No title" }]) {
-    await assert.rejects(suggestionLogWrite({ op: "hold", draft: bad }, f.env), (e) => e.name === "ValidationError");
-  }
+  // A suggestion with no key is sent from its card and retried; nothing is held any more.
+  await assert.rejects(suggestionLogWrite({ op: "hold", draft }, f.env), /op must be "seen" or "release"/);
   const stored = JSON.parse(readFileSync(f.store, "utf-8"));
   assert.deepEqual(stored.records.map((r) => r.kind), ["dismissal"]);
   assert.deepEqual((await suggestionLogRead(f.env)).suggestions, [], "a dismissal is not a sent suggestion");

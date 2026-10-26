@@ -1,8 +1,11 @@
 // The page API: a node:http listener on 127.0.0.1 at a fixed port (token.ts pageApiPort, 47615 by
-// default) through which a page opened from file:// writes. Two writes: the Loose Threads page's Defer
-// button (POST /seeds/<id>/defer, and /undefer), to the drafting database; and the Past suggestions
-// page's Withdraw button (POST /suggestions/<record id>/withdraw), which withdraws one suggestion this
-// computer sent (../suggestions/send.ts).
+// default) through which a page opened from file:// writes. Three kinds of write: the Loose Threads
+// page's Defer button (POST /seeds/<id>/defer, and /undefer), to the drafting database; the Past
+// suggestions page's Withdraw button (POST /suggestions/<record id>/withdraw), which withdraws one
+// suggestion this computer sent (../suggestions/send.ts); and a suggestion card's buttons and its
+// mockup page's "Not like this" (POST /cards/<card id>/<state|submit|resolve|dismiss|restore|mockup|
+// reject>, ../suggestions/card.ts), each completed here with no agent needed, so Submit and Dismiss
+// work after the session that showed the card has ended.
 //
 // index.ts starts it once the MCP transport is connected, and nothing it does reaches start():
 // every listener error is logged to stderr and the MCP server carries on. The listener and every
@@ -23,13 +26,27 @@ import { existsSync } from "node:fs";
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
 import { isAbsolute } from "node:path";
 
+import { ValidationError } from "../errors.js";
 import { pluginVersion } from "../repo-root.js";
 import { setSeedDeferral, type SeedDeferralResult } from "../submission/forms/seed-deferral.js";
+import {
+  type CardDeps,
+  cardEdits,
+  dismissCard,
+  readCardState,
+  rejectMockup,
+  requestMockup,
+  resolvePrompt,
+  restoreCard,
+  submitCard,
+} from "../suggestions/card.js";
 import { writePastSuggestionsPage } from "../suggestions/page.js";
 import { type WithdrawOutcome, withdrawSuggestion } from "../suggestions/send.js";
-import { pageApiPort, pageApiSuggestionTokenValid, pageApiTokenValid } from "./token.js";
+import { pageApiCardTokenValid, pageApiPort, pageApiSuggestionTokenValid, pageApiTokenValid } from "./token.js";
 
 const MAX_BODY = 4 * 1024;
+/** A card's click carries the card's edited text. */
+const MAX_CARD_BODY = 256 * 1024;
 const RETRY_MS = 15_000;
 
 const STATUS: Record<SeedDeferralResult["outcome"], number> = {
@@ -46,6 +63,8 @@ export interface PageApiOptions {
   retryMs?: number;
   /** Test seam: where the listener's stderr lines go. */
   log?: (line: string) => void;
+  /** Test seam: what the card routes read records, stop words and placeholders from, and send through. */
+  card?: Omit<CardDeps, "env">;
 }
 
 export interface PageApi {
@@ -69,7 +88,7 @@ export async function startPageApi(env: NodeJS.ProcessEnv = process.env, options
   let retry: NodeJS.Timeout | undefined;
 
   const server: Server = createServer((req, res) => {
-    handle(req, res, env, startedAt).catch((err) => {
+    handle(req, res, env, startedAt, options).catch((err) => {
       if (!res.headersSent) json(req, res, 500, { error: err instanceof Error ? err.message : String(err) });
       else res.destroy();
     });
@@ -113,7 +132,7 @@ export async function startPageApi(env: NodeJS.ProcessEnv = process.env, options
   };
 }
 
-async function handle(req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv, startedAt: string): Promise<void> {
+async function handle(req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv, startedAt: string, options: PageApiOptions): Promise<void> {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
   if (req.method === "OPTIONS") {
     res.writeHead(204, {
@@ -130,6 +149,8 @@ async function handle(req: IncomingMessage, res: ServerResponse, env: NodeJS.Pro
   }
   const w = /^\/suggestions\/([0-9a-f-]{36})\/withdraw$/.exec(url.pathname);
   if (w) return withdraw(req, res, env, w[1]);
+  const c = /^\/cards\/([0-9a-f-]{36})\/(state|submit|resolve|dismiss|restore|mockup|reject)$/.exec(url.pathname);
+  if (c) return cardClick(req, res, { ...options.card, env }, c[1], c[2] as CardRoute);
   const m = /^\/seeds\/([1-9]\d*)\/(defer|undefer)$/.exec(url.pathname);
   if (!m) return json(req, res, 404, { error: "Not found" });
   if (req.method !== "POST") return json(req, res, 405, { error: "Method not allowed" });
@@ -191,6 +212,48 @@ async function withdraw(req: IncomingMessage, res: ServerResponse, env: NodeJS.P
   json(req, res, WITHDRAW_STATUS[result.outcome], result);
 }
 
+type CardRoute = "state" | "submit" | "resolve" | "dismiss" | "restore" | "mockup" | "reject";
+
+/** A suggestion card's buttons, and its mockup page's "Not like this" (../suggestions/card.ts). Each is
+ * completed here, whether or not an agent is waiting on the card. A reply carries only an outcome, the
+ * card's status and the card's own text, which the page already shows; a raw cause stays in the store. */
+async function cardClick(req: IncomingMessage, res: ServerResponse, deps: CardDeps, cardId: string, route: CardRoute): Promise<void> {
+  if (req.method !== "POST") return json(req, res, 405, { error: "Method not allowed" });
+  let body: Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(await readBody(req, MAX_CARD_BODY));
+    body = typeof parsed === "object" && parsed !== null && !Array.isArray(parsed) ? parsed : {};
+  } catch (err) {
+    return json(req, res, 400, { error: `The request could not be read: ${(err as Error).message}` });
+  }
+  if (typeof body.token !== "string" || !pageApiCardTokenValid(body.token, cardId, deps.env)) {
+    return json(req, res, 403, { error: "This page's token does not match this suggestion. Ask a Claude session to show it again." });
+  }
+  try {
+    switch (route) {
+      case "state":
+        return json(req, res, 200, await readCardState(cardId, deps));
+      case "submit":
+        return json(req, res, 200, await submitCard(cardId, cardEdits(body.edits), deps));
+      case "resolve":
+        return json(req, res, 200, await resolvePrompt(cardId, body as Parameters<typeof resolvePrompt>[1], deps));
+      case "dismiss":
+        return json(req, res, 200, await dismissCard(cardId, deps));
+      case "restore":
+        return json(req, res, 200, await restoreCard(cardId, deps));
+      case "mockup":
+        return json(req, res, 200, await requestMockup(cardId, cardEdits(body.edits), deps));
+      case "reject":
+        return json(req, res, 200, await rejectMockup(cardId, body.mockup, body.reason, deps));
+    }
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (code === "not_found") return json(req, res, 404, { error: "Not found" });
+    if (err instanceof ValidationError) return json(req, res, 400, { error: err.message });
+    throw err;
+  }
+}
+
 /** `Origin: null` (a page opened from file://) is echoed; every response answers Private Network Access. */
 function corsHeaders(req: IncomingMessage): Record<string, string> {
   return {
@@ -200,14 +263,14 @@ function corsHeaders(req: IncomingMessage): Record<string, string> {
   };
 }
 
-function readBody(req: IncomingMessage): Promise<string> {
+function readBody(req: IncomingMessage, max: number = MAX_BODY): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
     req.on("data", (chunk: Buffer) => {
       size += chunk.length;
-      if (size > MAX_BODY) {
-        reject(new Error("the request is larger than 4 KB"));
+      if (size > max) {
+        reject(new Error(`the request is larger than ${Math.round(max / 1024)} KB`));
         req.destroy();
         return;
       }
