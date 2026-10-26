@@ -119,3 +119,29 @@ def test_outside_windows_the_session_is_pointed_to_config_status(monkeypatch):
     assert "practice_data__config_status" in text
     assert "cloud_credential: missing" in text
     assert "key_request__submit" in text
+
+
+def load_hook():
+    spec = importlib.util.spec_from_file_location("missing_key_note", HOOK)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_held_suggestions_are_counted_from_the_store_and_the_unread_old_log(tmp_path, monkeypatch):
+    module = load_hook()
+    monkeypatch.setenv("COCLERK_CONFIG_PATH", str(tmp_path / "device" / "probanda.json"))
+    (tmp_path / "device").mkdir()
+    (tmp_path / "device" / "probanda.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(tmp_path / "data"))
+    hold(tmp_path, 2)
+    assert module.held_count() == 2, "an old log the store has not read yet still counts"
+    store = tmp_path / "data" / "suggestions" / "suggestions.json"
+    store.parent.mkdir(parents=True)
+    records = [{"kind": "held", "record_id": "a", "draft": {}}, {"kind": "suggestion", "record_id": "b"},
+               {"kind": "held", "record_id": "c", "draft": {}}, {"kind": "held", "record_id": "d", "draft": {}}]
+    store.write_text(json.dumps({"version": 1, "migrated_log": None, "records": records}), encoding="utf-8")
+    assert module.held_count() == 5
+    store.write_text(json.dumps({"version": 1, "migrated_log": {"from": "suggestions.local.json", "on": "x"}, "records": records}),
+                     encoding="utf-8")
+    assert module.held_count() == 3, "once read into the store, the old log is not counted again"

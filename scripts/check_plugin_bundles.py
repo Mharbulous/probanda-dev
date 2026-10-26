@@ -26,13 +26,18 @@ DATA_BUNDLE = ("dist", "litigation-mcp.js")
 # 'supabase' nor 'legal_commons__'. data may carry 'supabase', because its practice writes
 # go to Probanda's Cloud, but only through the three items functions and the two
 # key-request functions that let a practitioner ask for Probanda's key (Brahm,
-# 2026-10-20): every 'functions/v1/' path in it must be items-write, items-sync,
-# items-seed, key-request-submit or key-request-status, and it must carry no other
-# functions path, no '/rest/v1/' and no 'legal_commons__'. So the data
+# 2026-10-20), and the four suggestion functions through which it sends what a
+# practitioner submits on a suggestion card (Brahm, 2026-10-26; lifecycle plan open
+# decision 5): every 'functions/v1/' path in it must be items-write, items-sync,
+# items-seed, key-request-submit, key-request-status, suggestion-submit,
+# suggestion-status, suggestion-withdraw or suggestion-attach-specification, and it
+# must carry no other functions path, no '/rest/v1/' and no 'legal_commons__'. So the data
 # bundle is not checked for any other Supabase use, such as a Supabase client library.
 PURITY_SERVERS = ("data", "canlii", "files", "timecamp", "contacts-calendars-email")
 DATA_FUNCTION_PATHS = ("functions/v1/items-write", "functions/v1/items-sync", "functions/v1/items-seed",
-                       "functions/v1/key-request-submit", "functions/v1/key-request-status")
+                       "functions/v1/key-request-submit", "functions/v1/key-request-status",
+                       "functions/v1/suggestion-submit", "functions/v1/suggestion-status",
+                       "functions/v1/suggestion-withdraw", "functions/v1/suggestion-attach-specification")
 _FUNCTIONS_PATH = re.compile(r"functions/v1/[a-z0-9_-]*")
 HOST_PATH_SERVERS = ("data", "canlii", "commons", "files", "timecamp", "contacts-calendars-email")
 

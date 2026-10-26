@@ -343,36 +343,6 @@ export function fileToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: false, openWorldHint: false },
     },
     {
-      name: "suggestion_log__read",
-      description:
-        "Read this device's log of suggestions it posted to the Probanda team, and of suggestions it holds unposted. Returns {suggestions: [{suggestion_id, title, posted_on, last_status, last_shown_status}], held: [{held_id, held_on, draft}]}; each list is empty when there is nothing in it. `last_status` is the last status known (\"new\", \"approved\", \"approved in part\" or \"rejected\"), and `last_shown_status` is the last one shown to the person, null until one is shown. A held `draft` is a suggestion drafted while this device had no Probanda key, exactly as it was shown to the person.",
-      inputSchema: {
-        type: "object",
-        properties: {},
-        additionalProperties: false,
-      },
-      annotations: { readOnlyHint: true, openWorldHint: false },
-    },
-    {
-      name: "suggestion_log__write",
-      description:
-        "Update this device's log of suggestions. `op: \"add\"` takes `suggestion_id` and `title` after a suggestion is posted, recorded with status \"new\" (an id already logged returns `exists`). `op: \"seen\"` takes `suggestion_id` and `status` (\"new\", \"approved\", \"approved in part\" or \"rejected\") once that status has been shown to the person, and sets both `last_status` and `last_shown_status` to it. `op: \"hold\"` takes `draft`, the suggestion exactly as shown to the person ({title, body, source, items, skill}), when it cannot be posted because this device has no Probanda key, and returns its `held_id`. Nothing held is ever posted unseen: once the key is set, show the held draft again and post only on the person's yes. `op: \"release\"` takes `held_id` and removes that held draft, after it is posted or when the person drops it. An id not in the log is `not_found`.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          op: { type: "string", enum: ["add", "seen", "hold", "release"] },
-          suggestion_id: { type: "string" },
-          title: { type: "string" },
-          status: { type: "string", enum: ["new", "approved", "approved in part", "rejected"] },
-          draft: { type: "object" },
-          held_id: { type: "string" },
-        },
-        required: ["op"],
-        additionalProperties: false,
-      },
-      annotations: { destructiveHint: false, openWorldHint: false },
-    },
-    {
       name: "pages__template",
       description:
         "Return one page's template files, the source its HTML is generated from: {page, entry, files: {<file name>: <text>}}. `entry` is the file composing starts from: it pulls in the others with @@include(<name>)@@ and marks the data line with @@data@@. Reads no file and no page. Change a copy of any file's text and pass it to pages__preview (the Housekeeping approval page's to housekeeping__preview) as an override.",

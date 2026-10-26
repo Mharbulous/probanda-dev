@@ -19,9 +19,8 @@ export { callTool, dispatchTool } from "./dispatch.js";
 // static-credential Supabase project: the layer-3 `legal_commons__*` pool and
 // the `troubleshoot__*` store of generic tooling fixes. Both are matter-free
 // with no per-session login/unlock gate, so the context holds one client per
-// project. A third namespace, `suggestion_box__*`, saves an expressly submitted
-// suggestion about the plugin in Probanda's Cloud with the pool's client and
-// key. Local practice/case data lives in the Probanda plugin's runtime.
+// project. Local practice/case data, and the Suggestion Box, live in the lawyer
+// plugin's data server.
 export async function createDispatchContext(env: NodeJS.ProcessEnv = process.env): Promise<DispatchContext> {
   const poolConfig = await loadLegalCommonsConfig(env);
   const legalCommons = new LegalCommonsClient(poolConfig, () => loadLegalCommonsConfig(env));

@@ -84,7 +84,8 @@ import { rulesLifecycle } from "./files/rules-lifecycle.js";
 import { checkSources } from "./sources/check.js";
 import { sourcesFetch } from "./sources/fetch.js";
 import { knowledgeList, knowledgeRead, knowledgeRetire, knowledgeWrite } from "./knowledge/tools.js";
-import { preferencesRead, preferencesWrite, suggestionLogRead, suggestionLogWrite } from "./preferences/tools.js";
+import { preferencesRead, preferencesWrite } from "./preferences/tools.js";
+import { callSuggestionTool, isSuggestionToolName } from "./suggestions/tools.js";
 import { repoDocsRead, repoDocsWrite } from "./files/repo-docs.js";
 import { pagesPreview, pagesTemplate, type PreviewArgs } from "./pages/preview.js";
 import {
@@ -574,12 +575,8 @@ export async function callTool(
     return preferencesWrite(args);
   }
 
-  if (name === "suggestion_log__read") {
-    return suggestionLogRead();
-  }
-
-  if (name === "suggestion_log__write") {
-    return suggestionLogWrite(args);
+  if (isSuggestionToolName(name)) {
+    return callSuggestionTool(name, args);
   }
 
   if (name === "pages__template") {

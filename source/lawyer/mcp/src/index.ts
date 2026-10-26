@@ -10,6 +10,7 @@ import { PracticeStore } from "./practice/store.js";
 import { dispatchTool, type DispatchContext } from "./dispatch.js";
 import { startPageApi } from "./page-api/server.js";
 import { buildToolDefinitions } from "./schema-gen.js";
+import { retryUnsent } from "./suggestions/send.js";
 
 export { buildToolDefinitions } from "./schema-gen.js";
 export { callTool, dispatchTool } from "./dispatch.js";
@@ -47,6 +48,10 @@ export async function start(): Promise<void> {
 
   // The matter pages' localhost write path (page-api/server.ts). Never fatal: the tools work without it.
   startPageApi().catch((err) => console.error(`[page-api] listener off: ${err instanceof Error ? err.message : String(err)}`));
+
+  // Suggestions not yet sent are sent again once per server start (suggestions/send.ts), in the
+  // background, so a slow or unreachable cloud never holds up the tools. Never fatal.
+  retryUnsent().catch((err) => console.error(`[suggestions] retry skipped: ${err instanceof Error ? err.message : String(err)}`));
 }
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;

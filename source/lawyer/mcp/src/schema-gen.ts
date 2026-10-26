@@ -11,6 +11,7 @@ import { mailToolDefinitions } from "./schema/mail.js";
 import { calendarToolDefinitions } from "./schema/calendar.js";
 import { contactsToolDefinitions } from "./schema/contacts.js";
 import { cloudKeyToolDefinitions } from "./schema/cloud-key.js";
+import { suggestionToolDefinitions } from "./schema/suggestions.js";
 import type { ToolDefinition } from "./schema/shared.js";
 
 export type { ToolDefinition } from "./schema/shared.js";
@@ -46,6 +47,7 @@ export function buildToolDefinitions(): ToolDefinition[] {
     ...submissionFormsToolDefinitions(),
     ...fileToolDefinitions(),
     ...cloudKeyToolDefinitions(),
+    ...suggestionToolDefinitions(),
   ];
 }
 

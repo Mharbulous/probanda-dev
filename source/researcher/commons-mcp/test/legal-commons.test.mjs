@@ -327,6 +327,11 @@ test("a pool client with no key picks up a key saved since it started", async ()
   assert.equal(reads, 1, "a client that holds a key reads nothing again");
 });
 
+test("the commons server no longer serves the Suggestion Box: the lawyer plugin's data server sends suggestions", () => {
+  const names = schemaGen.buildToolDefinitions().map((t) => t.name);
+  assert.deepEqual(names.filter((name) => name.startsWith("suggestion_box__")), []);
+});
+
 test("the commons server no longer serves the key tools", () => {
   const names = schemaGen.buildToolDefinitions().map((t) => t.name);
   for (const name of ["legal_commons__configure_credential", "key_request__submit", "key_request__status"]) {

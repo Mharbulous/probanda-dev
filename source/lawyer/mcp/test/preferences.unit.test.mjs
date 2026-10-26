@@ -1,6 +1,6 @@
-// preferences__read/write and suggestion_log__read/write: a person's preferences in
+// preferences__read/write: a person's preferences in
 // `<case_data_root>\_practice\preferences\<person>.json`, retired in place, screened for
-// identifying detail; and the device-local suggestion log beside probanda.json.
+// identifying detail. The suggestion log moved to the suggestion store: suggestion-store.unit.test.mjs.
 
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-const { preferencesRead, preferencesWrite, suggestionLogRead, suggestionLogWrite } = await import("../build/preferences/tools.js");
+const { preferencesRead, preferencesWrite } = await import("../build/preferences/tools.js");
 
 function fixture(t, person = "bd") {
   const scratch = mkdtempSync(join(tmpdir(), "probanda-preferences-"));
@@ -25,7 +25,6 @@ function fixture(t, person = "bd") {
     env: { COCLERK_CONFIG_PATH: config },
     seams: { installRoot },
     prefsFile: join(root, "_practice", "preferences", `${person}.json`),
-    logFile: join(scratch, "device", "suggestions.local.json"),
   };
 }
 
@@ -118,50 +117,4 @@ test("person unset is a hard error naming the key and the tool that sets it", as
     assert.match(err.message, /"person"/);
     assert.match(err.message, /practice_data__upsert_firm_profile/);
   }
-});
-
-test("the suggestion log sits beside probanda.json: add, then seen sets both statuses", async (t) => {
-  const f = fixture(t);
-  assert.deepEqual(suggestionLogRead(f.env).suggestions, []);
-  assert.equal((await suggestionLogWrite({ op: "add", suggestion_id: "s-1", title: "Shorter letters" }, f.env)).status, "added");
-  assert.equal((await suggestionLogWrite({ op: "add", suggestion_id: "s-1", title: "Shorter letters" }, f.env)).status, "exists");
-  let [entry] = suggestionLogRead(f.env).suggestions;
-  assert.equal(entry.last_status, "new");
-  assert.equal(entry.last_shown_status, null);
-  assert.match(entry.posted_on, /^\d{4}-\d{2}-\d{2}$/);
-  await suggestionLogWrite({ op: "seen", suggestion_id: "s-1", status: "approved in part" }, f.env);
-  [entry] = suggestionLogRead(f.env).suggestions;
-  assert.equal(entry.last_status, "approved in part");
-  assert.equal(entry.last_shown_status, "approved in part");
-  assert.equal(JSON.parse(readFileSync(f.logFile, "utf-8")).suggestions.length, 1);
-  assert.equal((await rejection(() => suggestionLogWrite({ op: "seen", suggestion_id: "s-2", status: "new" }, f.env))).code, "not_found");
-  assert.equal((await rejection(() => suggestionLogWrite({ op: "seen", suggestion_id: "s-1", status: "done" }, f.env))).name, "ValidationError");
-});
-
-test("a suggestion drafted with no key is held verbatim beside the posted log, then released", async (t) => {
-  const f = fixture(t);
-  assert.deepEqual(suggestionLogRead(f.env).held, []);
-  const draft = { title: "Shorter letters", body: "Letters run long.", source: "user", items: [{ pain: "Too long", where: "draft", done_test: "One page", constraints: [], changes: [] }] };
-  const { status, held_id } = await suggestionLogWrite({ op: "hold", draft }, f.env);
-  assert.equal(status, "held");
-  await suggestionLogWrite({ op: "add", suggestion_id: "s-1", title: "Another" }, f.env);
-  const log = suggestionLogRead(f.env);
-  assert.equal(log.suggestions.length, 1);
-  assert.equal(log.held.length, 1);
-  assert.deepEqual(log.held[0].draft, draft);
-  assert.equal(log.held[0].held_id, held_id);
-  assert.match(log.held[0].held_on, /^\d{4}-\d{2}-\d{2}$/);
-  assert.equal((await suggestionLogWrite({ op: "release", held_id }, f.env)).status, "released");
-  assert.deepEqual(suggestionLogRead(f.env).held, []);
-  assert.equal(suggestionLogRead(f.env).suggestions.length, 1);
-  assert.equal((await rejection(() => suggestionLogWrite({ op: "release", held_id }, f.env))).code, "not_found");
-  for (const bad of [undefined, "text", { title: "No body" }, { body: "No title" }]) {
-    assert.equal((await rejection(() => suggestionLogWrite({ op: "hold", draft: bad }, f.env))).name, "ValidationError");
-  }
-});
-
-test("a log written before held suggestions existed still reads", async (t) => {
-  const f = fixture(t);
-  writeFileSync(f.logFile, JSON.stringify({ suggestions: [] }));
-  assert.deepEqual(suggestionLogRead(f.env), { suggestions: [], held: [] });
 });

@@ -1,5 +1,5 @@
-// The page API's port and its per-page token, shared by the listener (server.ts) and the render
-// that writes the Loose Threads page.
+// The page API's port and its per-page token, shared by the listener (server.ts) and the renders
+// that write the Loose Threads page and the Past suggestions page (suggestions/page.ts).
 //
 // The port is `page_api_port` in the per-device probanda.json (config-path.ts), 47615 when unset.
 // The render embeds the same port it reads here.
@@ -67,6 +67,19 @@ export function pageApiToken(dbPath: string, proceedingId: number, env: NodeJS.P
 /** Whether `token` is the one pageApiToken gives, compared in constant time. */
 export function pageApiTokenValid(token: string, dbPath: string, proceedingId: number, env: NodeJS.ProcessEnv = process.env): boolean {
   const expected = Buffer.from(pageApiToken(dbPath, proceedingId, env), "utf-8");
+  const given = Buffer.from(token, "utf-8");
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}
+
+/** The token the Past suggestions page carries for one suggestion's Withdraw button:
+ * HMAC-SHA256(secret, "suggestion\n" + record id), hex. A db_path is absolute, so it never collides. */
+export function pageApiSuggestionToken(recordId: string, env: NodeJS.ProcessEnv = process.env): string {
+  return createHmac("sha256", pageApiSecret(env)).update(`suggestion\n${recordId}`).digest("hex");
+}
+
+/** Whether `token` is the one pageApiSuggestionToken gives, compared in constant time. */
+export function pageApiSuggestionTokenValid(token: string, recordId: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  const expected = Buffer.from(pageApiSuggestionToken(recordId, env), "utf-8");
   const given = Buffer.from(token, "utf-8");
   return given.length === expected.length && timingSafeEqual(given, expected);
 }

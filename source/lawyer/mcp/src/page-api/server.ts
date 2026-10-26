@@ -1,6 +1,8 @@
 // The page API: a node:http listener on 127.0.0.1 at a fixed port (token.ts pageApiPort, 47615 by
-// default) through which a matter page opened from file:// writes to the drafting database. Today
-// one write: the Loose Threads page's Defer button (POST /seeds/<id>/defer, and /undefer).
+// default) through which a page opened from file:// writes. Two writes: the Loose Threads page's Defer
+// button (POST /seeds/<id>/defer, and /undefer), to the drafting database; and the Past suggestions
+// page's Withdraw button (POST /suggestions/<record id>/withdraw), which withdraws one suggestion this
+// computer sent (../suggestions/send.ts).
 //
 // index.ts starts it once the MCP transport is connected, and nothing it does reaches start():
 // every listener error is logged to stderr and the MCP server carries on. The listener and every
@@ -10,8 +12,9 @@
 // 15 s, so a surviving session's process takes the port over when the owner exits. Any other
 // listen error is logged and the listener stays off.
 //
-// A write is accepted only with the token the render embedded for that db_path and proceeding
-// (token.ts), so the listener never writes a database a render did not name. A page opened from
+// A write is accepted only with the token the render embedded for that db_path and proceeding, or for
+// that suggestion (token.ts), so the listener never writes a database, or withdraws a suggestion, that a
+// render did not name. A page opened from
 // file:// sends `Origin: null`; responses echo it, and answer Chrome's Private Network Access
 // preflight. Unlike housekeeping/server.ts, which starts lazily on port 0 and keeps tokens in
 // memory, this listener holds no state of its own.
@@ -22,7 +25,9 @@ import { isAbsolute } from "node:path";
 
 import { pluginVersion } from "../repo-root.js";
 import { setSeedDeferral, type SeedDeferralResult } from "../submission/forms/seed-deferral.js";
-import { pageApiPort, pageApiTokenValid } from "./token.js";
+import { writePastSuggestionsPage } from "../suggestions/page.js";
+import { type WithdrawOutcome, withdrawSuggestion } from "../suggestions/send.js";
+import { pageApiPort, pageApiSuggestionTokenValid, pageApiTokenValid } from "./token.js";
 
 const MAX_BODY = 4 * 1024;
 const RETRY_MS = 15_000;
@@ -123,6 +128,8 @@ async function handle(req: IncomingMessage, res: ServerResponse, env: NodeJS.Pro
     if (req.method !== "GET") return json(req, res, 405, { error: "Method not allowed" });
     return json(req, res, 200, { ok: true, pid: process.pid, started_at: startedAt, plugin_version: pluginVersion() });
   }
+  const w = /^\/suggestions\/([0-9a-f-]{36})\/withdraw$/.exec(url.pathname);
+  if (w) return withdraw(req, res, env, w[1]);
   const m = /^\/seeds\/([1-9]\d*)\/(defer|undefer)$/.exec(url.pathname);
   if (!m) return json(req, res, 404, { error: "Not found" });
   if (req.method !== "POST") return json(req, res, 405, { error: "Method not allowed" });
@@ -146,6 +153,42 @@ async function handle(req: IncomingMessage, res: ServerResponse, env: NodeJS.Pro
   }
   const result = await setSeedDeferral({ db_path: dbPath, proceeding_id: proceedingId, seed_id: Number(m[1]), action: m[2] as "defer" | "undefer" }, env);
   json(req, res, STATUS[result.outcome], result);
+}
+
+const WITHDRAW_STATUS: Record<WithdrawOutcome, number> = {
+  withdrawn: 200,
+  refused: 409,
+  busy: 409,
+  no_key: 503,
+  unreachable: 502,
+};
+
+/** The Past suggestions page's Withdraw button. The reply carries only the outcome and the badge;
+ * the page says the outcome in its own words, and the raw cause stays in the store. */
+async function withdraw(req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv, recordId: string): Promise<void> {
+  if (req.method !== "POST") return json(req, res, 405, { error: "Method not allowed" });
+  let body: unknown;
+  try {
+    body = JSON.parse(await readBody(req));
+  } catch (err) {
+    return json(req, res, 400, { error: `The request could not be read: ${(err as Error).message}` });
+  }
+  const token = (typeof body === "object" && body !== null ? body : {}) as { token?: unknown };
+  if (typeof token.token !== "string" || !pageApiSuggestionTokenValid(token.token, recordId, env)) {
+    return json(req, res, 403, { error: "This page's token does not match this suggestion. Ask a Claude session for the page again." });
+  }
+  let result: { outcome: WithdrawOutcome; badge: string | null };
+  try {
+    result = await withdrawSuggestion(recordId, env);
+  } catch (err) {
+    if ((err as { code?: string }).code === "not_found") return json(req, res, 404, { error: "Not found" });
+    throw err;
+  }
+  if (result.outcome === "withdrawn") {
+    // The page file itself now shows the withdrawal too. Never fails the withdrawal.
+    await writePastSuggestionsPage(env).catch(() => undefined);
+  }
+  json(req, res, WITHDRAW_STATUS[result.outcome], result);
 }
 
 /** `Origin: null` (a page opened from file://) is echoed; every response answers Private Network Access. */

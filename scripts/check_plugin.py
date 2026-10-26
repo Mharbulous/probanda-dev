@@ -207,7 +207,8 @@ CHECKS = (
      "ships in a built plugin", check_shipped_path_registry),
     ("bundle-purity: no canlii or files dist bundle carries 'supabase' or 'legal_commons__'; the data "
      "bundle carries no 'legal_commons__', no '/rest/v1/' and no 'functions/v1/' path but items-write, "
-     "items-sync, items-seed, key-request-submit and key-request-status", check_bundle_purity),
+     "items-sync, items-seed, key-request-submit, key-request-status, suggestion-submit, suggestion-status, "
+     "suggestion-withdraw and suggestion-attach-specification", check_bundle_purity),
     ("sources-host-guard: the data server's sources module fetches only over https from allowed "
      "hosts, SOURCES_ALLOWED_HOSTS as expected, guarded before every request", check_sources_host_guard),
     ("fetch-grant-allowlist: only allowlisted agents grant sources__fetch, each present one under "

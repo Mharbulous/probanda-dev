@@ -3,7 +3,10 @@
     "command": "node",
     "args": [
       "${CLAUDE_PLUGIN_ROOT}/mcp/dist/litigation-mcp.js"
-    ]
+    ],
+    "env": {
+      "CLAUDE_PLUGIN_DATA": "${CLAUDE_PLUGIN_DATA}"
+    }
   },
   "contacts-calendars-email": {
     "command": "node",

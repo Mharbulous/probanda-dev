@@ -2979,7 +2979,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve2.call(this, root, ref);
+      let _sch = resolve.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a3 = root.localRefs) === null || _a3 === void 0 ? void 0 : _a3[ref];
         const { schemaId } = this.opts;
@@ -3006,7 +3006,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve2(root, ref) {
+    function resolve(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3637,55 +3637,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve2(baseURI, relativeURI, options) {
+    function resolve(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative2, options, skipNormalization) {
+    function resolveComponent(base, relative, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse3(serialize(base, options), options);
-        relative2 = parse3(serialize(relative2, options), options);
+        relative = parse3(serialize(relative, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative2.scheme) {
-        target.scheme = relative2.scheme;
-        target.userinfo = relative2.userinfo;
-        target.host = relative2.host;
-        target.port = relative2.port;
-        target.path = removeDotSegments(relative2.path || "");
-        target.query = relative2.query;
+      if (!options.tolerant && relative.scheme) {
+        target.scheme = relative.scheme;
+        target.userinfo = relative.userinfo;
+        target.host = relative.host;
+        target.port = relative.port;
+        target.path = removeDotSegments(relative.path || "");
+        target.query = relative.query;
       } else {
-        if (relative2.userinfo !== void 0 || relative2.host !== void 0 || relative2.port !== void 0) {
-          target.userinfo = relative2.userinfo;
-          target.host = relative2.host;
-          target.port = relative2.port;
-          target.path = removeDotSegments(relative2.path || "");
-          target.query = relative2.query;
+        if (relative.userinfo !== void 0 || relative.host !== void 0 || relative.port !== void 0) {
+          target.userinfo = relative.userinfo;
+          target.host = relative.host;
+          target.port = relative.port;
+          target.path = removeDotSegments(relative.path || "");
+          target.query = relative.query;
         } else {
-          if (!relative2.path) {
+          if (!relative.path) {
             target.path = base.path;
-            if (relative2.query !== void 0) {
-              target.query = relative2.query;
+            if (relative.query !== void 0) {
+              target.query = relative.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative2.path[0] === "/") {
-              target.path = removeDotSegments(relative2.path);
+            if (relative.path[0] === "/") {
+              target.path = removeDotSegments(relative.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative2.path;
+                target.path = "/" + relative.path;
               } else if (!base.path) {
-                target.path = relative2.path;
+                target.path = relative.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative2.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative2.query;
+            target.query = relative.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3693,7 +3693,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative2.fragment;
+      target.fragment = relative.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3895,7 +3895,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve2,
+      resolve,
       resolveComponent,
       equal,
       serialize,
@@ -8939,13 +8939,13 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     }
     return propValues;
   });
-  const isObject3 = isObject;
+  const isObject2 = isObject;
   const catchall = def.catchall;
   let value;
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject3(input)) {
+    if (!isObject2(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -9072,7 +9072,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     return (payload, ctx) => fn(shape, payload, ctx);
   };
   let fastpass;
-  const isObject3 = isObject;
+  const isObject2 = isObject;
   const jit = !globalConfig.jitless;
   const allowsEval2 = allowsEval;
   const fastEnabled = jit && allowsEval2.value;
@@ -9081,7 +9081,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject3(input)) {
+    if (!isObject2(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -13674,8 +13674,8 @@ var UrlElicitationRequiredError = class extends McpError {
 };
 
 // node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
-function isTerminal(status2) {
-  return status2 === "completed" || status2 === "failed" || status2 === "cancelled";
+function isTerminal(status) {
+  return status === "completed" || status === "failed" || status === "cancelled";
 }
 
 // node_modules/zod-to-json-schema/dist/esm/parsers/string.js
@@ -14202,7 +14202,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve2) => setTimeout(resolve2, pollInterval));
+        await new Promise((resolve) => setTimeout(resolve, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -14219,7 +14219,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve2, reject) => {
+    return new Promise((resolve, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -14297,7 +14297,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve2(parseResult.data);
+            resolve(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -14558,12 +14558,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve2, reject) => {
+    return new Promise((resolve, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve2, interval);
+      const timeoutId = setTimeout(resolve, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -14592,8 +14592,8 @@ var Protocol = class {
         }
         return task;
       },
-      storeTaskResult: async (taskId, status2, result) => {
-        await taskStore.storeTaskResult(taskId, status2, result, sessionId);
+      storeTaskResult: async (taskId, status, result) => {
+        await taskStore.storeTaskResult(taskId, status, result, sessionId);
         const task = await taskStore.getTask(taskId, sessionId);
         if (task) {
           const notification = TaskStatusNotificationSchema.parse({
@@ -14609,15 +14609,15 @@ var Protocol = class {
       getTaskResult: (taskId) => {
         return taskStore.getTaskResult(taskId, sessionId);
       },
-      updateTaskStatus: async (taskId, status2, statusMessage) => {
+      updateTaskStatus: async (taskId, status, statusMessage) => {
         const task = await taskStore.getTask(taskId, sessionId);
         if (!task) {
           throw new McpError(ErrorCode.InvalidParams, `Task "${taskId}" not found - it may have been cleaned up`);
         }
         if (isTerminal(task.status)) {
-          throw new McpError(ErrorCode.InvalidParams, `Cannot update task "${taskId}" from terminal status "${task.status}" to "${status2}". Terminal states (completed, failed, cancelled) cannot transition to other states.`);
+          throw new McpError(ErrorCode.InvalidParams, `Cannot update task "${taskId}" from terminal status "${task.status}" to "${status}". Terminal states (completed, failed, cancelled) cannot transition to other states.`);
         }
-        await taskStore.updateTaskStatus(taskId, status2, statusMessage, sessionId);
+        await taskStore.updateTaskStatus(taskId, status, statusMessage, sessionId);
         const updatedTask = await taskStore.getTask(taskId, sessionId);
         if (updatedTask) {
           const notification = TaskStatusNotificationSchema.parse({
@@ -15433,12 +15433,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve2) => {
+    return new Promise((resolve) => {
       const json = serializeMessage(message);
       if (this._stdout.write(json)) {
-        resolve2();
+        resolve();
       } else {
-        this._stdout.once("drain", resolve2);
+        this._stdout.once("drain", resolve);
       }
     });
   }
@@ -15460,9 +15460,9 @@ var ValidationError = class extends DataServerError {
 };
 var TransportError = class extends DataServerError {
   status;
-  constructor(message, status2) {
+  constructor(message, status) {
     super(message);
-    this.status = status2;
+    this.status = status;
   }
 };
 
@@ -15527,10 +15527,10 @@ async function runPowerShell(label, script, stdin = "") {
   const stderr = [];
   child.stdout.on("data", (chunk) => stdout.push(chunk));
   child.stderr.on("data", (chunk) => stderr.push(chunk));
-  const done = new Promise((resolve2, reject) => {
+  const done = new Promise((resolve, reject) => {
     child.on("error", reject);
     child.on("exit", (code) => {
-      if (code === 0) resolve2();
+      if (code === 0) resolve();
       else reject(new Error(`${label} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
     });
   });
@@ -16369,89 +16369,10 @@ function troubleshootToolDefinitions() {
     }
   ];
 }
-function suggestionBoxPrefixed(name) {
-  return `suggestion_box__${name}`;
-}
-function suggestionBoxToolDefinitions() {
-  return [
-    {
-      name: suggestionBoxPrefixed("submit"),
-      description: "Save one suggestion about the plugin, which the practitioner has expressly said to submit, in Probanda's Cloud, using the key cloud_key__configure_credential stores (a practitioner with none asks for one with key_request__submit). title and body are a complete summary of the post, even when items are sent: they must name no person, entity, matter, document or path. source is user for the practitioner's own words (through /lawyer:suggestion), assisted for a suggestion Probanda drafted and the person confirmed, or llm for a vetted loose thread (through /draft's Suggestion Box). skill, optional, is the name of the one skill the suggestion is about (draft for /draft's Suggestion Box); omit it when the suggestion is about no single skill. items, optional, at most 10: one per pain, each with where it arises, its done_test, its constraints and its changes, each change decidable on its own and marked origin probanda (Probanda's idea) or lawyer (the person's idea). previews, optional, at most 4, for UI Previews only: each a label, whether it is the chosen one, an optional reason, and exactly one of its html built from placeholder data, never from the matter, or the path of a fixture preview that a board preview tool returned, whose text the server reads and sends as its html; a path outside the fixture preview folder, or to a file that does not end with the fixture marker line, such as a real-data preview, is refused. The server adds the researcher plugin's version itself. Every string, including every one nested in items and previews, is screened before any network call: refused when it holds a personal email address, a user-profile path naming a real user, or a matter folder name; when a string other than a Preview's html is over 2,000 characters; when the items together are over 50,000 characters; or when a Preview's html is over 200,000 characters. The refusal names the kind of hit, never the text. Refused when this computer has no key. Returns {suggestion_id, items_saved, previews_saved}; items_saved and previews_saved are true only when Probanda's Cloud confirms it saved them.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          title: { type: "string" },
-          body: { type: "string" },
-          source: { type: "string", enum: ["user", "llm", "assisted"] },
-          skill: { type: "string" },
-          items: {
-            type: "array",
-            maxItems: 10,
-            items: {
-              type: "object",
-              properties: {
-                pain: { type: "string" },
-                where: { type: "string" },
-                done_test: { type: "string" },
-                constraints: { type: "array", items: { type: "string" } },
-                changes: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      change: { type: "string" },
-                      origin: { type: "string", enum: ["probanda", "lawyer"] }
-                    },
-                    required: ["change", "origin"],
-                    additionalProperties: false
-                  }
-                }
-              },
-              required: ["pain", "where", "done_test", "constraints", "changes"],
-              additionalProperties: false
-            }
-          },
-          previews: {
-            type: "array",
-            maxItems: 4,
-            items: {
-              type: "object",
-              properties: {
-                label: { type: "string" },
-                chosen: { type: "boolean" },
-                reason: { type: "string" },
-                html: { type: "string" },
-                path: { type: "string" }
-              },
-              required: ["label", "chosen"],
-              additionalProperties: false
-            }
-          }
-        },
-        required: ["title", "body", "source"],
-        additionalProperties: false
-      }
-    },
-    {
-      name: suggestionBoxPrefixed("status"),
-      description: "Read the status of suggestions this device submitted, by the suggestion_id values suggestion_box__submit returned (1 to 50). Returns {statuses: [{suggestion_id, status, triaged_at}]} and nothing else of a suggestion; an ID Probanda's Cloud does not hold is omitted. status is new, approved, approved in part or rejected; triaged_at is null until triage. Refused when this computer has no key.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          suggestion_ids: { type: "array", maxItems: 50, items: { type: "string" } }
-        },
-        required: ["suggestion_ids"],
-        additionalProperties: false
-      },
-      annotations: { readOnlyHint: true }
-    }
-  ];
-}
 function buildToolDefinitions() {
   return [
     ...legalCommonsToolDefinitions(),
-    ...troubleshootToolDefinitions(),
-    ...suggestionBoxToolDefinitions()
+    ...troubleshootToolDefinitions()
   ];
 }
 
@@ -16825,27 +16746,6 @@ function findRedactionHits(fields) {
   }
   return REDACTION_RULES.filter(([, hits]) => strings2.some((text) => hits(text))).map(([kind]) => kind);
 }
-var MAX_ITEMS_JSON_LENGTH = 5e4;
-var MAX_PREVIEW_HTML_LENGTH = 2e5;
-function leafStrings(value, into) {
-  if (typeof value === "string") into.push(value);
-  else if (Array.isArray(value)) for (const item of value) leafStrings(item, into);
-  else if (value !== null && typeof value === "object") for (const item of Object.values(value)) leafStrings(item, into);
-  return into;
-}
-function findSuggestionHits(fields) {
-  const html = (fields.previews ?? []).map((preview) => preview.html);
-  const strings2 = leafStrings([fields.title, fields.body, fields.items ?? []], []);
-  for (const preview of fields.previews ?? []) {
-    leafStrings(Object.entries(preview).filter(([key]) => key !== "html").map(([, value]) => value), strings2);
-  }
-  const hits = REDACTION_RULES.filter(
-    ([kind, hit]) => strings2.some(hit) || kind !== "too_long" && html.some(hit)
-  ).map(([kind]) => kind);
-  if (fields.items && JSON.stringify(fields.items).length > MAX_ITEMS_JSON_LENGTH) hits.push("items_too_long");
-  if (html.some((text) => text.length > MAX_PREVIEW_HTML_LENGTH)) hits.push("preview_too_long");
-  return hits;
-}
 
 // src/troubleshoot/tools.ts
 function isTroubleshootToolName(name) {
@@ -16967,187 +16867,6 @@ async function configureStatus2(client) {
   };
 }
 
-// src/suggestion-box/tools.ts
-import { readFileSync, realpathSync, statSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { isAbsolute, join as join5, relative, resolve, sep } from "node:path";
-var NOT_CONFIGURED_HINT2 = "the Suggestion Box has no key on this computer: call cloud_key__configure_credential once and have the practitioner paste the key Probanda gave them on the page it serves, or, if they have none, call key_request__submit so they can ask Probanda for one";
-var SOURCES = /* @__PURE__ */ new Set(["user", "llm", "assisted"]);
-var ORIGINS = /* @__PURE__ */ new Set(["probanda", "lawyer"]);
-var MAX_ITEMS = 10;
-var MAX_PREVIEWS = 4;
-var MAX_STATUS_IDS = 50;
-var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
-var FIXTURE_PREVIEW_LAST_LINE = "<!-- probanda-fixture-preview -->\n";
-var MANIFEST = new URL("../../.claude-plugin/plugin.json", import.meta.url);
-function pluginVersion() {
-  let version2;
-  try {
-    version2 = JSON.parse(readFileSync(MANIFEST, "utf-8")).version;
-  } catch {
-    throw new ValidationError("submit could not read the researcher plugin's version from its plugin.json, so nothing was sent");
-  }
-  if (typeof version2 !== "string" || !version2) {
-    throw new ValidationError("the researcher plugin's plugin.json names no version, so nothing was sent");
-  }
-  return version2;
-}
-function isSuggestionBoxToolName(name) {
-  return name.startsWith("suggestion_box__");
-}
-function callSuggestionBoxTool(client, name, args) {
-  switch (name) {
-    case "suggestion_box__submit":
-      return submit(client, args);
-    case "suggestion_box__status":
-      return status(client, args);
-    default:
-      throw new ValidationError(`Unknown suggestion_box tool "${name}"`);
-  }
-}
-async function submit(client, args) {
-  if (!client.hasStaticKey()) throw new ValidationError(NOT_CONFIGURED_HINT2);
-  const title = String(args.title ?? "").trim();
-  const body = String(args.body ?? "").trim();
-  if (!title) throw new ValidationError("submit requires a title");
-  if (!body) throw new ValidationError("submit requires a body");
-  const source = String(args.source ?? "");
-  if (!SOURCES.has(source)) throw new ValidationError("submit requires source: user, llm or assisted");
-  const skill = args.skill === void 0 ? void 0 : String(args.skill).trim();
-  if (skill === "") throw new ValidationError("submit's skill, when given, must name a skill");
-  const items = args.items === void 0 ? void 0 : checkItems(args.items);
-  const previews = args.previews === void 0 ? void 0 : checkPreviews(args.previews);
-  const hits = findSuggestionHits({ title, body, items, previews });
-  if (hits.length > 0) {
-    throw new ValidationError(`submit refused: ${hits.join(", ")}; rewrite the suggestion generically and resubmit`);
-  }
-  const post = {
-    title,
-    body,
-    source,
-    plugin_version: pluginVersion(),
-    ...skill ? { skill } : {},
-    ...items ? { items } : {},
-    ...previews ? { previews } : {}
-  };
-  const saved = await client.callFunction("suggestion-submit", post);
-  if (typeof saved?.suggestion_id !== "string") {
-    throw new ValidationError("Probanda's Cloud did not confirm the suggestion, so it may not have been saved");
-  }
-  return {
-    suggestion_id: saved.suggestion_id,
-    items_saved: saved.items_saved === true,
-    previews_saved: saved.previews_saved === true
-  };
-}
-function isObject2(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-function onlyKeys(label, value, keys) {
-  const extra = Object.keys(value).find((key) => !keys.includes(key));
-  if (extra) throw new ValidationError(`${label} has an unknown field "${extra}"`);
-}
-function nonEmpty(label, value) {
-  if (typeof value !== "string" || !value.trim()) throw new ValidationError(`${label} must be non-empty text`);
-  return value.trim();
-}
-function checkItems(value) {
-  if (!Array.isArray(value) || value.length < 1 || value.length > MAX_ITEMS) {
-    throw new ValidationError(`submit's items, when given, must be a list of 1 to ${MAX_ITEMS} items`);
-  }
-  return value.map((item, i) => {
-    const label = `items[${i}]`;
-    if (!isObject2(item)) throw new ValidationError(`${label} must be an object`);
-    onlyKeys(label, item, ["pain", "where", "done_test", "constraints", "changes"]);
-    if (!Array.isArray(item.constraints)) throw new ValidationError(`${label}.constraints must be a list`);
-    if (!Array.isArray(item.changes)) throw new ValidationError(`${label}.changes must be a list`);
-    return {
-      pain: nonEmpty(`${label}.pain`, item.pain),
-      where: nonEmpty(`${label}.where`, item.where),
-      done_test: nonEmpty(`${label}.done_test`, item.done_test),
-      constraints: item.constraints.map((c, j) => nonEmpty(`${label}.constraints[${j}]`, c)),
-      changes: item.changes.map((change, j) => {
-        const at = `${label}.changes[${j}]`;
-        if (!isObject2(change)) throw new ValidationError(`${at} must be an object`);
-        onlyKeys(at, change, ["change", "origin"]);
-        if (typeof change.origin !== "string" || !ORIGINS.has(change.origin)) {
-          throw new ValidationError(`${at}.origin must be probanda or lawyer`);
-        }
-        return { change: nonEmpty(`${at}.change`, change.change), origin: change.origin };
-      })
-    };
-  });
-}
-function checkPreviews(value) {
-  if (!Array.isArray(value) || value.length < 1 || value.length > MAX_PREVIEWS) {
-    throw new ValidationError(`submit's previews, when given, must be a list of 1 to ${MAX_PREVIEWS} Previews`);
-  }
-  return value.map((preview, i) => {
-    const label = `previews[${i}]`;
-    if (!isObject2(preview)) throw new ValidationError(`${label} must be an object`);
-    onlyKeys(label, preview, ["label", "chosen", "reason", "html", "path"]);
-    if (typeof preview.chosen !== "boolean") throw new ValidationError(`${label}.chosen must be true or false`);
-    if (preview.html === void 0 === (preview.path === void 0)) {
-      throw new ValidationError(`${label} must give exactly one of html or path`);
-    }
-    let html;
-    if (preview.path !== void 0) {
-      html = readFixturePreview(label, preview.path);
-    } else {
-      if (typeof preview.html !== "string" || !preview.html.trim()) throw new ValidationError(`${label}.html must be non-empty HTML`);
-      html = preview.html;
-    }
-    return {
-      label: nonEmpty(`${label}.label`, preview.label),
-      chosen: preview.chosen,
-      ...preview.reason === void 0 ? {} : { reason: nonEmpty(`${label}.reason`, preview.reason) },
-      html
-    };
-  });
-}
-function readFixturePreview(label, path) {
-  const refused = new ValidationError(
-    `${label}.path must be a preview that a board preview tool wrote from fixtures, in the fixture preview folder and ending with the fixture marker line`
-  );
-  if (typeof path !== "string" || !path.trim()) throw refused;
-  let folder;
-  let file;
-  try {
-    folder = realpathSync(join5(tmpdir(), FIXTURE_PREVIEW_FOLDER));
-    file = realpathSync(resolve(path));
-  } catch {
-    throw refused;
-  }
-  const inside = relative(folder, file);
-  if (!inside || inside === ".." || inside.startsWith(`..${sep}`) || isAbsolute(inside)) throw refused;
-  if (!statSync(file).isFile()) throw refused;
-  const text = readFileSync(file, "utf-8");
-  if (!text.endsWith(FIXTURE_PREVIEW_LAST_LINE)) throw refused;
-  return text;
-}
-async function status(client, args) {
-  if (!client.hasStaticKey()) throw new ValidationError(NOT_CONFIGURED_HINT2);
-  const ids = args.suggestion_ids;
-  if (!Array.isArray(ids) || ids.length < 1 || ids.length > MAX_STATUS_IDS) {
-    throw new ValidationError(`status requires suggestion_ids: a list of 1 to ${MAX_STATUS_IDS} IDs`);
-  }
-  if (!ids.every((id) => typeof id === "string" && UUID.test(id))) {
-    throw new ValidationError("status's suggestion_ids must each be a suggestion_id that submit returned");
-  }
-  const asked = new Set(ids.map((id) => id.toLowerCase()));
-  const found = await client.callFunction("suggestion-status", { suggestion_ids: [...asked] });
-  if (!Array.isArray(found?.statuses)) {
-    throw new ValidationError("Probanda's Cloud did not return the statuses");
-  }
-  const statuses = found.statuses.filter((row) => isObject2(row) && typeof row.suggestion_id === "string" && asked.has(row.suggestion_id.toLowerCase())).map((row) => ({
-    suggestion_id: row.suggestion_id,
-    status: typeof row.status === "string" ? row.status : null,
-    triaged_at: typeof row.triaged_at === "string" ? row.triaged_at : null
-  }));
-  return { statuses };
-}
-
 // src/dispatch.ts
 var definitions;
 async function dispatchTool(context, name, rawArgs) {
@@ -17163,17 +16882,12 @@ async function dispatchTool(context, name, rawArgs) {
 async function callTool(context, name, rawArgs) {
   const definition = toolDefinition(name);
   const args = validateToolInput(definition, rawArgs);
-  if (isLegalCommonsToolName(name) || isSuggestionBoxToolName(name)) {
-    await context.legalCommons.reloadKeyIfUnset?.();
-  }
   if (isLegalCommonsToolName(name)) {
+    await context.legalCommons.reloadKeyIfUnset?.();
     return callLegalCommonsTool(context.legalCommons, name, args);
   }
   if (isTroubleshootToolName(name)) {
     return callTroubleshootTool(context, name, args);
-  }
-  if (isSuggestionBoxToolName(name)) {
-    return callSuggestionBoxTool(context.legalCommons, name, args);
   }
   throw new ValidationError(`Unknown tool "${name}"`);
 }

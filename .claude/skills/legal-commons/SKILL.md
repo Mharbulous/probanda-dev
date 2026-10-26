@@ -203,8 +203,8 @@ or retires them; this section states the rules every caller keeps.
 ## Configuration
 
 The runtime holds a single static credential: the key Probanda gave this machine
-(the project secret on a maintainer's machine). The same key serves
-`suggestion_box__submit`. There is no login, unlock, or session step, and no
+(the project secret on a maintainer's machine). The same key serves the
+lawyer plugin's Suggestion Box. There is no login, unlock, or session step, and no
 embedding/model API key (retrieval runs entirely in Postgres).
 
 The credential is supplied once per machine through the lawyer plugin's

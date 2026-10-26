@@ -84,35 +84,3 @@ export function findRedactionHits(fields: Record<string, unknown>): string[] {
   }
   return REDACTION_RULES.filter(([, hits]) => strings.some((text) => hits(text))).map(([kind]) => kind);
 }
-
-// The Suggestion Box's screen. Title, body and every leaf string of `items`,
-// however deeply nested, get every rule. A Preview's `html` gets every rule but
-// too_long and its own cap; its other strings get every rule.
-export const MAX_ITEMS_JSON_LENGTH = 50_000;
-export const MAX_PREVIEW_HTML_LENGTH = 200_000;
-
-function leafStrings(value: unknown, into: string[]): string[] {
-  if (typeof value === "string") into.push(value);
-  else if (Array.isArray(value)) for (const item of value) leafStrings(item, into);
-  else if (value !== null && typeof value === "object") for (const item of Object.values(value)) leafStrings(item, into);
-  return into;
-}
-
-export function findSuggestionHits(fields: {
-  title: string;
-  body: string;
-  items?: unknown[];
-  previews?: Array<{ html: string } & Record<string, unknown>>;
-}): string[] {
-  const html = (fields.previews ?? []).map((preview) => preview.html);
-  const strings = leafStrings([fields.title, fields.body, fields.items ?? []], []);
-  for (const preview of fields.previews ?? []) {
-    leafStrings(Object.entries(preview).filter(([key]) => key !== "html").map(([, value]) => value), strings);
-  }
-  const hits = REDACTION_RULES.filter(([kind, hit]) =>
-    strings.some(hit) || (kind !== "too_long" && html.some(hit))
-  ).map(([kind]) => kind);
-  if (fields.items && JSON.stringify(fields.items).length > MAX_ITEMS_JSON_LENGTH) hits.push("items_too_long");
-  if (html.some((text) => text.length > MAX_PREVIEW_HTML_LENGTH)) hits.push("preview_too_long");
-  return hits;
-}

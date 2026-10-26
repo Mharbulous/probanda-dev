@@ -16,9 +16,12 @@ server read, so before that read the hook may still say the key is missing.
 Outside Windows (Cowork's VM) the store is out of reach, so the hook tells the
 session to ask practice_data__config_status instead.
 
-With the key present, the hook names any suggestions held unposted in
-suggestions.local.json beside probanda.json (resolved as inject-preferences.py does),
-so they are shown to the practitioner and posted. Never blocks: always exits 0.
+With the key present, the hook names any suggestions held unposted, so they are
+shown to the practitioner and posted. They are the held records of the lawyer data
+server's suggestion store, ${CLAUDE_PLUGIN_DATA}/suggestions/suggestions.json
+(source/lawyer/mcp/src/suggestions/store.ts), plus, until that store has read it,
+those of the old suggestions.local.json beside probanda.json (resolved as
+inject-preferences.py does). Never blocks: always exits 0.
 """
 from __future__ import annotations
 
@@ -78,10 +81,20 @@ def key_present() -> bool | None:
 
 
 def held_count() -> int:
-    log = hook_io.config_path().parent / "suggestions.local.json"
-    if not log.is_file():
-        return 0
-    return len(json.loads(log.read_text(encoding="utf-8")).get("held", []))
+    count = 0
+    migrated = False
+    data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
+    if data and "${" not in data:
+        store = Path(data) / "suggestions" / "suggestions.json"
+        if store.is_file():
+            stored = json.loads(store.read_text(encoding="utf-8"))
+            count += sum(1 for record in stored.get("records", []) if record.get("kind") == "held")
+            migrated = bool(stored.get("migrated_log"))
+    if not migrated:
+        log = hook_io.config_path().parent / "suggestions.local.json"
+        if log.is_file():
+            count += len(json.loads(log.read_text(encoding="utf-8")).get("held", []))
+    return count
 
 
 def context() -> str | None:
