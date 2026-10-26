@@ -17,14 +17,22 @@ A skill is found at .claude/skills/<name>/ or at public/plugins/*/skills/<name>/
 never both. The skill selection and the SKILL.md stamp are ported from CoClerk's
 plugin-packager build_plugin.py (native-tree path).
 
+A file ships executable (mode 755) when it begins with "#!", and otherwise
+not (644), so the mode follows the bytes and is the same on every platform.
+--check compares each file's mode with the mode git records for it, in plugins/
+and in its source, because a Windows checkout cannot record the executable bit
+on disk: there `git update-index --chmod=+x <file>` sets it.
+
 Exit codes: 0 built or identical, 1 --check found differences, 2 a gate stopped
 the build before anything was written, or another build was running. Standard
 library only.
 """
 import argparse
 import json
+import os
 import re
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -57,6 +65,8 @@ OLD_IDENTIFIERS = (rb"plugin_litigation_", rb"plugin_legal-commons_", rb"plugin_
 REPLACE_RETRY_SECONDS = 30  # a file watcher or sync client locks a folder for seconds
 # A path a hook runs from the installed plugin's folder.
 HOOK_PATH = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\s\"']+)")
+# A file that starts with a shebang is run directly, so it ships executable.
+EXECUTABLE, NOT_EXECUTABLE = 0o755, 0o644
 
 # Cowork silently renames an installed skill whose name has the segment "claude".
 RESERVED = re.compile(r"(?:^|[-_.])claude(?:[-_.]|$)", re.IGNORECASE)
@@ -81,6 +91,35 @@ ARCHIVE_PATH = re.compile(r"^[A-Za-z0-9._/-]+$")
 
 
 stop = plugin_layout.stop
+
+
+def file_mode(data):
+    return EXECUTABLE if data.startswith(b"#!") else NOT_EXECUTABLE
+
+
+def git_modes(repo):
+    """{repo-relative posix path: 0o755 or 0o644} as git's index records them, or {}
+    when `repo` is not a git work tree."""
+    if not (repo / ".git").exists():
+        return {}
+    out = subprocess.run(["git", "-C", str(repo), "ls-files", "-s", "-z"],
+                         capture_output=True, check=True).stdout
+    modes = {}
+    for entry in out.split(b"\0"):
+        if entry:
+            meta, path = entry.split(b"\t", 1)
+            modes[path.decode("utf-8")] = EXECUTABLE if meta.startswith(b"100755") else NOT_EXECUTABLE
+    return modes
+
+
+def recorded_mode(path, rel, modes):
+    """The mode git records for `path` (`rel` from the repo root), else its mode on disk where
+    the disk can hold one, else None: Windows has no executable bit to read."""
+    if rel in modes:
+        return modes[rel]
+    if os.name == "nt":
+        return None
+    return EXECUTABLE if path.stat().st_mode & 0o111 else NOT_EXECUTABLE
 
 
 def preamble_lines(plugin, version):
@@ -213,9 +252,9 @@ def check_skills(skill_dirs):
         stop("\n  ".join(problems))
 
 
-def collect_tree(skills_root, top, declared_dirs, stamp):
+def collect_tree(skills_root, top, declared_dirs, stamp, origins):
     """One private skill tree. `stamp` is the (plugin name, version) its SKILL.md is
-    stamped with, or None for a tree that ships unstamped."""
+    stamped with, or None for a tree that ships unstamped. Records each file's source in `origins`."""
     top_dir = skills_root / top
     if not top_dir.is_dir():
         stop(f"no source directory {top_dir} to ship")
@@ -238,6 +277,7 @@ def collect_tree(skills_root, top, declared_dirs, stamp):
             except ValueError:
                 stop(f"{path}: no frontmatter fence to stamp after")
         files[f"skills/{arc}"] = data
+        origins[f"skills/{arc}"] = path
     return files
 
 
@@ -253,7 +293,8 @@ def public_skill_dirs(repo):
 
 
 def collect(repo, spec):
-    """Every output file of one plugin as {relative path: bytes}. Stops on a gate failure."""
+    """Every output file of one plugin as {relative path: bytes}, and {relative path: source
+    file} for each one copied from a source file. Stops on a gate failure."""
     name = spec["name"]
     src = repo / spec["source"]
     skills_root = repo / ".claude" / "skills"
@@ -293,22 +334,24 @@ def collect(repo, spec):
     check_skills(public)
 
     files = {".claude-plugin/plugin.json": (json.dumps(manifest, indent=2) + "\n").encode("utf-8")}
+    origins = {}
     for fname in (".mcp.json", "README.md", "VISION.md"):
         if (src / fname).is_file():
-            files[fname] = (src / fname).read_bytes()
+            origins[fname] = src / fname
     for sub in ("agents", "hooks"):
         if (src / sub).is_dir():
             for path in sorted((src / sub).iterdir()):
                 if path.is_file() and path.suffix != ".pyc":
-                    files[f"{sub}/{path.name}"] = path.read_bytes()
-    for top in sorted(roster):
-        files.update(collect_tree(skills_root, top, roster[top], stamp=(name, version)))
-    for top in extra:
-        files.update(collect_tree(skills_root, top, (), stamp=None))
+                    origins[f"{sub}/{path.name}"] = path
     for top, folder in public.items():
         for path in sorted(folder.rglob("*")):
             if path.is_file():
-                files[f"skills/{top}/{path.relative_to(folder).as_posix()}"] = path.read_bytes()
+                origins[f"skills/{top}/{path.relative_to(folder).as_posix()}"] = path
+    files.update({rel: path.read_bytes() for rel, path in origins.items()})
+    for top in sorted(roster):
+        files.update(collect_tree(skills_root, top, roster[top], stamp=(name, version), origins=origins))
+    for top in extra:
+        files.update(collect_tree(skills_root, top, (), stamp=None, origins=origins))
     for text_path in [p for p in files if Path(p).suffix.lower() in TEXT_SUFFIXES]:
         files[text_path] = files[text_path].replace(b"\r\n", b"\n")
     # The bundles are built elsewhere and ship byte-for-byte.
@@ -320,6 +363,7 @@ def collect(repo, spec):
         for path in sorted(dist.rglob("*")):
             if path.is_file():
                 files[f"{folder}/dist/{path.relative_to(dist).as_posix()}"] = path.read_bytes()
+                origins[f"{folder}/dist/{path.relative_to(dist).as_posix()}"] = path
 
     private = [p for p in files if PRIVATE_TEMPLATE_ASSET.match(p) and not PUBLIC_TEMPLATE_ASSET.match(p)]
     if private:
@@ -337,7 +381,7 @@ def collect(repo, spec):
                  for needle in OLD_IDENTIFIERS if re.search(needle, data)]
     if leftovers:
         stop(f"old plugin identifiers in the output of '{name}':\n  " + "\n  ".join(leftovers))
-    return files
+    return files, origins
 
 
 def rename(src, dst):
@@ -372,8 +416,7 @@ def write(files, out):
             path = building / rel
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(data)
-            if path.suffix == ".py":
-                path.chmod(0o755)
+            path.chmod(file_mode(data))
         if replaced.exists():
             shutil.rmtree(replaced)
         if out.exists():
@@ -391,21 +434,36 @@ def write(files, out):
         shutil.rmtree(replaced)
 
 
-def check(files, target):
+def check(files, origins, target, repo, modes):
+    """Compare a fresh build of one plugin with `target`, bytes and modes. A mode is compared
+    with the one git records in plugins/ and in the source, so Windows, whose disk has no
+    executable bit, gets the same answer as Linux."""
     try:
         on_disk = {p.relative_to(target).as_posix(): p for p in target.rglob("*") if p.is_file()} \
             if target.is_dir() else {}
         changed = sorted(p for p in set(files) & set(on_disk) if on_disk[p].read_bytes() != files[p])
+        mode_changed = []
+        for p in sorted(set(files) & set(on_disk)):
+            want = file_mode(files[p])
+            for label, path in (("built", on_disk[p]), ("source", origins.get(p))):
+                if path is None:
+                    continue
+                rel = path.relative_to(repo).as_posix() if path.is_relative_to(repo) else None
+                have = recorded_mode(path, rel, modes)
+                if have is not None and have != want:
+                    mode_changed.append(f"{p}: {label} file {rel or path} is {have:o}, the build gives {want:o}")
     except FileNotFoundError as e:
         stop(f"{e.filename} disappeared while {target} was being read: a build appears to be "
              "running. Run --check again once it has finished.")
     added = sorted(set(files) - set(on_disk))
     removed = sorted(set(on_disk) - set(files))
-    for label, paths in (("added", added), ("removed", removed), ("changed", changed)):
+    for label, paths in (("added", added), ("removed", removed), ("changed", changed), ("mode", mode_changed)):
         for p in paths:
             print(f"{label}: {p}")
-    if added or removed or changed:
-        print(f"{target} is stale: {len(added)} added, {len(removed)} removed, {len(changed)} changed")
+    if added or removed or changed or mode_changed:
+        print(f"{target} is stale: {len(added)} added, {len(removed)} removed, {len(changed)} changed, "
+              f"{len(mode_changed)} with the wrong mode (a file that starts with #! is 755, any other 644; "
+              "set a source mode with git update-index --chmod=+x or -x, then build)")
         return 1
     print(f"{target} is current")
     return 0
@@ -424,11 +482,13 @@ def main():
     stale = sorted(p for p in plugins_dir.iterdir() if p.is_dir() and p.name not in built
                    and not p.name.startswith(".")) if plugins_dir.is_dir() else []
     if args.check:
-        code = max([check(files, plugins_dir / name) for name, files in built.items()], default=0)
+        modes = git_modes(repo)
+        code = max([check(files, origins, plugins_dir / name, repo, modes)
+                    for name, (files, origins) in built.items()], default=0)
         for folder in stale:
             print(f"{folder} is stale: no plugin in source/assignment.json builds it")
         return 1 if stale else code
-    for name, files in built.items():
+    for name, (files, _) in built.items():
         out = (args.out.resolve() if args.out else plugins_dir) / name
         write(files, out)
         print(f"{out}: {len(files)} files")

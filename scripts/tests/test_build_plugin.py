@@ -1,5 +1,6 @@
 """Tests for scripts/build_plugin.py. Every build goes to a temp folder."""
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -263,6 +264,49 @@ class CutoverBuildTest(unittest.TestCase):
     def test_server_the_plugin_does_not_declare_stops_the_build(self):
         self.put("source/practice/.mcp.json", "{}")
         self.assert_stops("declares the servers [], but 'practice' ships ['data']")
+
+    def git(self, *args):
+        subprocess.run(["git", "-C", str(self.repo), *args], check=True, capture_output=True)
+
+    def test_a_file_ships_executable_only_when_it_starts_with_a_shebang(self):
+        if os.name == "nt":
+            self.skipTest("Windows has no executable bit on disk")
+        self.put(".claude/skills/shared/hooks/run.py", "#!/usr/bin/env python3\nprint('run')\n")
+        self.assertEqual(self.build().returncode, 0)
+        hooks = self.repo / "plugins" / "practice" / "skills" / "shared" / "hooks"
+        self.assertEqual((hooks / "run.py").stat().st_mode & 0o777, 0o755)
+        self.assertEqual((hooks / "guard.py").stat().st_mode & 0o777, 0o644)
+
+    def test_check_fails_when_git_records_the_wrong_mode_in_plugins_or_in_the_source(self):
+        script = ".claude/skills/shared/hooks/run.py"
+        self.put(script, "#!/usr/bin/env python3\nprint('run')\n")
+        self.assertEqual(self.build().returncode, 0)
+        # As on Windows: git records each file's mode, whatever the disk holds.
+        self.git("init", "-q")
+        self.git("add", "-A")
+        self.git("update-index", "--chmod=+x", script, "plugins/practice/skills/shared/hooks/run.py",
+                 "plugins/research/skills/shared/hooks/run.py")
+        result = self.build("--check")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.git("update-index", "--chmod=-x", "plugins/practice/skills/shared/hooks/run.py")
+        result = self.build("--check")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("mode: skills/shared/hooks/run.py: built file "
+                      "plugins/practice/skills/shared/hooks/run.py is 644, the build gives 755", result.stdout)
+        self.git("update-index", "--chmod=+x", "plugins/practice/skills/shared/hooks/run.py")
+        self.git("update-index", "--chmod=-x", script)
+        result = self.build("--check")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(f"source file {script} is 644, the build gives 755", result.stdout)
+
+    def test_windows_disk_mode_is_never_read(self):
+        sys.path.insert(0, str(REPO / "scripts"))
+        import build_plugin
+        path = self.repo / "source" / "practice" / "README.md"
+        with mock.patch.object(build_plugin.os, "name", "nt"):
+            self.assertIsNone(build_plugin.recorded_mode(path, "source/practice/README.md", {}))
+            self.assertEqual(build_plugin.recorded_mode(path, "source/practice/README.md",
+                                                        {"source/practice/README.md": 0o644}), 0o644)
 
 
 class LockedFolderTest(unittest.TestCase):
