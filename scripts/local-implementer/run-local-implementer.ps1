@@ -13,8 +13,9 @@ under the current user. Needs no administrator rights.
    diverged from origin/main is left for Brahm, and the run stops.
 3. Runs scripts/local_implementer_guard.py in the clone, which refuses any other folder.
 4. Runs Claude Code headless there: claude -p "/implement-suggestions local".
-   It passes no permission flag: the run gets only the permissions the repo's
-   .claude/settings.json and the user's own Claude Code settings already grant.
+   It passes no permission flag: the run gets the permissions the repo's
+   .claude/settings.json, the clone's own .claude/settings.local.json (written by
+   register-local-implementer.ps1) and the user's Claude Code settings grant.
 
 Each run logs to $env:LOCALAPPDATA\probanda-local-implementer\logs\run-<time>.log.
 The log holds what git, the guard and Claude Code print, and never the environment.

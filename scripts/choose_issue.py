@@ -21,7 +21,8 @@ JSON array, or several back to back as `gh api --paginate` prints them.
 
 The rule:
 - An issue is in a lane's queue when it is open, is not a pull request, carries
-  `ready-for-agent`, and has not been handled by this run. The cloud lane takes
+  `ready-for-agent` and not `withdrawn` (its sender withdrew the suggestion, so
+  intake closes it), and has not been handled by this run. The cloud lane takes
   an issue labelled `cloud` and not `local`; the local lane takes an issue
   labelled `local`, with or without `cloud`.
 - Queue order: the maintainer lane (no `lane:user` or `lane:ai` label) first,
@@ -91,7 +92,7 @@ def in_lane(issue, lane):
     names = labels(issue)
     if issue.get("pull_request") is not None or issue.get("state", "open") != "open":
         return False
-    if "ready-for-agent" not in names:
+    if "ready-for-agent" not in names or "withdrawn" in names:
         return False
     if lane == "cloud":
         return "cloud" in names and "local" not in names
