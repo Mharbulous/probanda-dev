@@ -49,9 +49,10 @@ Call `practice_data__firm_profile`.
 
 ## Step 5 — Privacy briefing
 
-Cover both points conversationally:
+Cover the first two points conversationally, and say the third once, in these words:
 1. **Local storage.** The practice database stays on this computer. Claude reads it only in answer to the practitioner's requests in a session.
 2. **Training opt-out.** Recommend turning off model training on their conversations: *Settings > Privacy > "Improve Claude"*.
+3. **Suggestions.** "When you send the Probanda team a suggestion, Probanda writes a technical write-up of it for them, and that uses your Claude plan."
 
 Whether to store client names is asked by retainer-tracking's First Import, and the accounting system by practice-data's Accounting System Resolution, each when first needed. Setup asks neither.
 

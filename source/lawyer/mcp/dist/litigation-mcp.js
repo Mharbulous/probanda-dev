@@ -1,4 +1,4 @@
-// build-stamp: 3edcd8ca4d50
+// build-stamp: 4d8754bf3336
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -68408,13 +68408,13 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     }
     return propValues;
   });
-  const isObject9 = isObject;
+  const isObject10 = isObject;
   const catchall = def.catchall;
   let value;
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject9(input)) {
+    if (!isObject10(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -68541,7 +68541,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     return (payload, ctx) => fn2(shape, payload, ctx);
   };
   let fastpass;
-  const isObject9 = isObject;
+  const isObject10 = isObject;
   const jit = !globalConfig.jitless;
   const allowsEval2 = allowsEval;
   const fastEnabled = jit && allowsEval2.value;
@@ -68550,7 +68550,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject9(input)) {
+    if (!isObject10(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -69878,13 +69878,13 @@ function _array(Class2, element, params) {
 }
 // @__NO_SIDE_EFFECTS__
 function _custom(Class2, fn2, _params) {
-  const norm2 = normalizeParams(_params);
-  norm2.abort ?? (norm2.abort = true);
+  const norm3 = normalizeParams(_params);
+  norm3.abort ?? (norm3.abort = true);
   const schema = new Class2({
     type: "custom",
     check: "custom",
     fn: fn2,
-    ...norm2
+    ...norm3
   });
   return schema;
 }
@@ -79187,8 +79187,8 @@ function suggestionToolDefinitions() {
     },
     {
       name: "suggestion_box__past_suggestions",
-      description: "Write the Past suggestions page from this computer's copy of every suggestion it sent, word for word, with each one's status, and a Withdraw button on each, and return {past_suggestions_path}. Present it as a file card and never read it. Asks Probanda's Cloud nothing.",
-      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      description: "Write the Past suggestions page from this computer's copy of every suggestion it sent, word for word, with each one's status, and a Withdraw button on each, and return {past_suggestions_path}. record_id, optional (from suggestion_log__read): the page opens at that suggestion with its technical write-up shown, and the page explains how the write-up is kept safe. Present it as a file card and never read it. Asks Probanda's Cloud nothing.",
+      inputSchema: { type: "object", properties: { record_id: { type: "string" } }, additionalProperties: false },
       annotations: { readOnlyHint: false, openWorldHint: false }
     },
     {
@@ -79240,7 +79240,7 @@ function suggestionToolDefinitions() {
     },
     {
       name: "suggestion_card__wait",
-      description: `Wait on a shown suggestion card for the practitioner's click. While this waits, the card's mockup link works. Returns as soon as one happens: {event: "submitted"} (the card sent it and shows its status) or {event: "dismissed"} (nothing was sent): say nothing about it in chat and carry on with the work. {event: "mockup", items, constraints, placeholders}: the practitioner asked for a mockup of the visual items; write one self-contained HTML page that shows all of them together, honouring every constraint, whose visible text is only lines from placeholders, each used whole, with inline styles and nothing that loads or runs (no script, link, image, address or url()), then call suggestion_card__attach_mockup and wait again. After about 45 s it returns {event: "pending"}, not an error: call again. Submit and Dismiss work without anyone waiting, so a practitioner who speaks in chat is answered and the card keeps working.`,
+      description: `Wait on a shown suggestion card for the practitioner's click. While this waits, the card's mockup link works. Returns as soon as one happens: {event: "submitted", write_up} (the card sent it and shows its status) or {event: "dismissed"} (nothing was sent): say nothing about it in chat. When write_up is true, start the technical write-up with suggestion_card__write_up_brief as the suggestion skill says; otherwise carry on with the work. {event: "mockup", items, constraints, placeholders}: the practitioner asked for a mockup of the visual items; write one self-contained HTML page that shows all of them together, honouring every constraint, whose visible text is only lines from placeholders, each used whole, with inline styles and nothing that loads or runs (no script, link, image, address or url()), then call suggestion_card__attach_mockup and wait again. After about 45 s it returns {event: "pending"}, not an error: call again. Submit and Dismiss work without anyone waiting, so a practitioner who speaks in chat is answered and the card keeps working.`,
       inputSchema: {
         type: "object",
         properties: { card_id: { type: "string" } },
@@ -79259,6 +79259,39 @@ function suggestionToolDefinitions() {
         additionalProperties: false
       },
       annotations: { readOnlyHint: false, openWorldHint: false }
+    },
+    {
+      name: "suggestion_card__write_up_brief",
+      description: `After suggestion_card__wait returned {event: "submitted", write_up: true}: the whole input of the lawyer:technical-writer agent, from this computer's copy of what was sent. Returns {write: true, card_id, brief: {card_lines: [{id, kind, text}], environment_facts: [{key, value}]}}: pass brief to the writer exactly as returned, with nothing else from this session. Returns {write: false, reason} when no write-up is written: the card was not submitted, no session was waiting on it at the click, it already has one, or no copy of it was kept. Then carry on with the work. Sends nothing.`,
+      inputSchema: {
+        type: "object",
+        properties: { card_id: { type: "string" } },
+        required: ["card_id"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false }
+    },
+    {
+      name: "suggestion_card__write_up_check",
+      description: "The first half of the backstop: checks the technical-writer agent's specification, exactly as it returned it, against the brief. The specification is {sentences: [{text, item?, cites: [{card | fact | file, quote}]}]}: every sentence must cite at least one card line id, environment-fact key or shipped plugin file path, each existing, with a quote found verbatim in it (a fact's quote is its whole value). Returns {verified: true, card_id, backstop_input}: pass backstop_input to the lawyer:spec-backstop agent exactly as returned, with nothing else. Returns {verified: false, card_id}: the write-up stands alone, nothing more is sent after the suggestion, and this computer's record says why; carry on with the work. Sends nothing.",
+      inputSchema: {
+        type: "object",
+        properties: { card_id: { type: "string" }, specification: { type: "object" } },
+        required: ["card_id", "specification"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false }
+    },
+    {
+      name: "suggestion_card__write_up_send",
+      description: "The second half: takes the lawyer:spec-backstop agent's judgement exactly as it returned it, {sentences: [{n, supported}]}. The write-up passes only when the citations passed and every sentence is supported. Then it is checked against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts: a sentence holding a match is removed without asking anyone and the removal is recorded on this computer. When a removal falls in a quoted span, or more than a quarter of the sentences are removed, it stands alone. Otherwise it is stored with the backstop result and sent after the suggestion (or once the suggestion is sent). Returns {card_id, outcome: sent | waiting | stands_alone}. Say nothing about any outcome in chat; carry on with the work.",
+      inputSchema: {
+        type: "object",
+        properties: { card_id: { type: "string" }, judgement: { type: "object" } },
+        required: ["card_id", "judgement"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: false, openWorldHint: true }
     },
     {
       name: "suggestion_card__check",
@@ -80784,7 +80817,7 @@ function listCaseParties(caseDataDir, env = process.env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync6 } from "node:fs";
 import { join as join10 } from "node:path";
-var BUILD_STAMP = false ? null : "3edcd8ca4d50";
+var BUILD_STAMP = false ? null : "4d8754bf3336";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -81470,7 +81503,7 @@ async function merge_contact(store, args) {
     }
   }];
   let moved = 0;
-  let combined = 0;
+  let combined2 = 0;
   const linked = (kind, roles) => [...items2].filter(([, item]) => item.kind === kind && roles.some((role) => item.links[role] === spareId));
   const shift = (kind, keyLinks, keyData, fields2) => {
     for (const [spareItemId, item] of linked(kind, keyLinks)) {
@@ -81484,7 +81517,7 @@ async function merge_contact(store, args) {
       const filled2 = fill(twin[0], twin[1].data, item.data, fields2, conflicts);
       if (Object.keys(filled2).length) ops.push({ op: "update", id: twin[0], kind, data: filled2 });
       ops.push({ op: "delete", id: spareItemId, kind });
-      combined++;
+      combined2++;
     }
   };
   shift(
@@ -81497,7 +81530,7 @@ async function merge_contact(store, args) {
   if (conflicts.length) return { merged: false, conflicts };
   ops.push({ op: "delete", id: spareId, kind: "contact" });
   await store.write("merge_contact", {}, ops);
-  return { merged: true, contact_id: keepId, moved, combined };
+  return { merged: true, contact_id: keepId, moved, combined: combined2 };
 }
 
 // src/tools/practice/writes.ts
@@ -82906,8 +82939,8 @@ function documentTypes(env = process.env) {
     const m3 = ROW.exec(line.trim());
     if (!m3) continue;
     const flags = [...m3[4].matchAll(/`([a-z_]+)`/g)].map((f3) => f3[1]);
-    const bad = flags.filter((f3) => !FLAGS.includes(f3));
-    if (bad.length) throw new DataServerError(`${path}: type ${m3[1]} has unknown flag(s) ${bad.join(", ")}`, "invalid_glossary");
+    const bad2 = flags.filter((f3) => !FLAGS.includes(f3));
+    if (bad2.length) throw new DataServerError(`${path}: type ${m3[1]} has unknown flag(s) ${bad2.join(", ")}`, "invalid_glossary");
     types.push({ id: m3[1], name: m3[2], definition: m3[3], flags });
   }
   if (types.length === 0) throw new DataServerError(`${path} lists no document types`, "invalid_glossary");
@@ -86786,20 +86819,20 @@ function scalarValue(raw) {
   return isObject3(raw) && Object.hasOwn(raw, "value") && Object.hasOwn(raw, "rule_ref") ? raw.value : raw;
 }
 function storedLayout(filing) {
-  const bad = (why) => {
+  const bad2 = (why) => {
     throw new DataServerError(`"${filing.title}": its stored layout ${why}`, "invalid_layout_snapshot");
   };
-  if (filing.layout_snapshot === null) return bad("is missing");
+  if (filing.layout_snapshot === null) return bad2("is missing");
   let parsed;
   try {
     parsed = JSON.parse(filing.layout_snapshot);
   } catch (err) {
-    return bad(`is not valid JSON: ${err.message}`);
+    return bad2(`is not valid JSON: ${err.message}`);
   }
-  if (!isObject3(parsed)) return bad("is not a layout record");
-  if (!isObject3(parsed.layout)) bad("has no layout");
-  if (parsed.venue !== null && !isObject3(parsed.venue)) bad("has a court or tribunal part that cannot be read");
-  if (!isObject3(parsed.passage_hashes)) bad("has no record of the source passages it was made from");
+  if (!isObject3(parsed)) return bad2("is not a layout record");
+  if (!isObject3(parsed.layout)) bad2("has no layout");
+  if (parsed.venue !== null && !isObject3(parsed.venue)) bad2("has a court or tribunal part that cannot be read");
+  if (!isObject3(parsed.passage_hashes)) bad2("has no record of the source passages it was made from");
   return {
     layout: parsed.layout,
     venue: parsed.venue,
@@ -88076,42 +88109,42 @@ function optionalString(front, key, where) {
   return value;
 }
 function toSourceRecord(path, front) {
-  const bad = (why) => {
+  const bad2 = (why) => {
     throw new DataServerError(`${path}: ${why}`, "invalid_source_record");
   };
   const page_url = optionalString(front, "page_url", path);
-  if (!page_url) bad("`page_url` is empty");
+  if (!page_url) bad2("`page_url` is empty");
   const pdf_url = optionalString(front, "pdf_url", path);
   const pdf_sha256 = optionalString(front, "pdf_sha256", path);
-  if (pdf_url && !pdf_sha256) bad("`pdf_url` needs the PDF's `pdf_sha256`");
+  if (pdf_url && !pdf_sha256) bad2("`pdf_url` needs the PDF's `pdf_sha256`");
   const pattern = optionalString(front, "currency_marker_pattern", path);
   const marker = optionalString(front, "currency_marker", path);
-  if (pattern === null !== (marker === null)) bad("`currency_marker_pattern` and `currency_marker` come together");
+  if (pattern === null !== (marker === null)) bad2("`currency_marker_pattern` and `currency_marker` come together");
   let marker_pattern = null;
   if (pattern !== null) {
     try {
       marker_pattern = new RegExp(pattern, "g");
     } catch (err) {
-      bad(`\`currency_marker_pattern\` is not a valid regular expression: ${err.message}`);
+      bad2(`\`currency_marker_pattern\` is not a valid regular expression: ${err.message}`);
     }
   }
   return { path, page_url, pdf_url, pdf_sha256, marker_pattern, marker, items: parseItems(front, path) };
 }
 function parseItems(front, path) {
-  const bad = (why) => {
+  const bad2 = (why) => {
     throw new DataServerError(`${path}: ${why}`, "invalid_source_record");
   };
   const rawItems = front.items ?? [];
-  if (!Array.isArray(rawItems)) bad("`items` must be a list");
+  if (!Array.isArray(rawItems)) bad2("`items` must be a list");
   const items2 = [];
   for (const [n3, raw] of rawItems.entries()) {
-    if (typeof raw !== "object" || raw === null) bad(`items[${n3}] must be a map with \`rule_ref\` and \`passage\``);
+    if (typeof raw !== "object" || raw === null) bad2(`items[${n3}] must be a map with \`rule_ref\` and \`passage\``);
     const item = raw;
-    if (!item.rule_ref) bad(`items[${n3}] has no \`rule_ref\``);
-    if (items2.some((seen) => seen.rule_ref === item.rule_ref)) bad(`rule_ref ${JSON.stringify(item.rule_ref)} appears twice`);
-    if (!item.passage) bad(`items[${n3}] (${item.rule_ref}) has no \`passage\``);
+    if (!item.rule_ref) bad2(`items[${n3}] has no \`rule_ref\``);
+    if (items2.some((seen) => seen.rule_ref === item.rule_ref)) bad2(`rule_ref ${JSON.stringify(item.rule_ref)} appears twice`);
+    if (!item.passage) bad2(`items[${n3}] (${item.rule_ref}) has no \`passage\``);
     const checkedBy = item.checked_by ?? null;
-    if (checkedBy !== null && checkedBy !== "file_sha256") bad(`items[${n3}] (${item.rule_ref}): unknown \`checked_by\` ${JSON.stringify(checkedBy)}`);
+    if (checkedBy !== null && checkedBy !== "file_sha256") bad2(`items[${n3}] (${item.rule_ref}): unknown \`checked_by\` ${JSON.stringify(checkedBy)}`);
     items2.push({
       rule_ref: item.rule_ref,
       passage: item.passage,
@@ -92877,12 +92910,12 @@ function declaredCriteria(filing) {
   if (filing.layout_snapshot === null) return [];
   const raw = storedLayout(filing).layout.goal_criteria;
   if (raw === void 0) return [];
-  const bad = (why) => {
+  const bad2 = (why) => {
     throw new DataServerError(`"${filing.title}": its stored completion criteria ${why}`, "invalid_layout_snapshot");
   };
-  if (!Array.isArray(raw) || !raw.every((name) => typeof name === "string")) return bad("is not an array of names");
+  if (!Array.isArray(raw) || !raw.every((name) => typeof name === "string")) return bad2("is not an array of names");
   const declared = raw;
-  return declared.filter((name) => name !== "hearing-date").map((name) => name === "open-items" ? openItems(declared) : DECLARABLE.get(name) ?? bad(`names "${name}", which is not a goal criterion`));
+  return declared.filter((name) => name !== "hearing-date").map((name) => name === "open-items" ? openItems(declared) : DECLARABLE.get(name) ?? bad2(`names "${name}", which is not a goal criterion`));
 }
 var RESERVE_INVENTORY_DOC = "Counsel_brief";
 var NEVER_DELIVERED_DOCS = /* @__PURE__ */ new Set([RESERVE_INVENTORY_DOC, "Work_board"]);
@@ -96072,7 +96105,7 @@ function leastAdvanced(sections) {
   const states = sections.map((s3) => s3.meta.state).filter((x3) => x3 !== null && x3 !== void 0);
   return states.length === 0 ? null : order[Math.min(...states.map((x3) => order.indexOf(x3)))];
 }
-function pageItems(held, combined) {
+function pageItems(held, combined2) {
   const seen = /* @__PURE__ */ new Set();
   const keep = [];
   for (const { c: c3 } of held) {
@@ -96080,14 +96113,14 @@ function pageItems(held, combined) {
     c3.items.forEach((item) => seen.add(item));
     keep.push(...own);
   }
-  if (keep.every(Boolean)) return combined;
+  if (keep.every(Boolean)) return combined2;
   const pick2 = (list) => list.filter((_3, i3) => keep[i3]);
   return {
-    ...combined,
-    items: pick2(combined.items),
-    ...combined.replaces ? { replaces: pick2(combined.replaces) } : {},
-    ...combined.locators ? { locators: pick2(combined.locators) } : {},
-    counts: { items: combined.items.length, suppressed: (combined.replaces ?? []).filter((r3) => r3 !== null).length }
+    ...combined2,
+    items: pick2(combined2.items),
+    ...combined2.replaces ? { replaces: pick2(combined2.replaces) } : {},
+    ...combined2.locators ? { locators: pick2(combined2.locators) } : {},
+    counts: { items: combined2.items.length, suppressed: (combined2.replaces ?? []).filter((r3) => r3 !== null).length }
   };
 }
 function combinedCriteria(goaled, deadlineIds, page2) {
@@ -96123,7 +96156,7 @@ function combinedCriteria(goaled, deadlineIds, page2) {
     const withReplaces = held.some((h3) => h3.c.replaces !== void 0);
     const withLocators = held.some((h3) => h3.c.locators !== void 0);
     const pageText2 = id === "gate" ? GATE_TEXT : [...texts].join("; ");
-    const combined = {
+    const combined2 = {
       ...first.c,
       text: texts.size === 1 ? first.c.text : page2 ? pageText2 : held.map((h3) => tag(h3.section, h3.c.text)).join("; "),
       state: worst(held.map((h3) => h3.c.state)),
@@ -96132,7 +96165,7 @@ function combinedCriteria(goaled, deadlineIds, page2) {
       ...withReplaces ? { replaces: held.flatMap((h3) => h3.c.replaces ?? h3.c.items.map(() => null)) } : {},
       ...withLocators ? { locators: held.flatMap((h3) => h3.c.locators ?? h3.c.items.map(() => null)) } : {}
     };
-    return page2 ? pageItems(held, combined) : combined;
+    return page2 ? pageItems(held, combined2) : combined2;
   });
 }
 function writingTags(dbPath, ids) {
@@ -97408,16 +97441,16 @@ function boardSectionOf(dbPath, own, client, now, revision, dates) {
   });
   return combineSections(dbPath, sections);
 }
-function combinedPageDates(dates, sections, combined) {
+function combinedPageDates(dates, sections, combined2) {
   const result = pageDates(dates, sections);
-  if (sections.length < 2 || combined.meta.filing_id === null) return result;
+  if (sections.length < 2 || combined2.meta.filing_id === null) return result;
   const goaled = sections.filter((s3) => s3.goal !== void 0);
   const ids = combinedDeadlineIds(goaled);
   const merged = {};
   goaled.forEach((s3, i3) => {
     for (const [id, when] of Object.entries(result.criteria[String(s3.meta.filing_id)] ?? {})) merged[ids[i3].get(id) ?? id] = when;
   });
-  return { ...result, criteria: { ...result.criteria, [String(combined.meta.filing_id)]: merged } };
+  return { ...result, criteria: { ...result.criteria, [String(combined2.meta.filing_id)]: merged } };
 }
 
 // src/submission/matter-pages-build.ts
@@ -107564,7 +107597,8 @@ function findSuggestion(store, recordId) {
 var PATHS2 = {
   submit: "functions/v1/suggestion-submit",
   status: "functions/v1/suggestion-status",
-  withdraw: "functions/v1/suggestion-withdraw"
+  withdraw: "functions/v1/suggestion-withdraw",
+  attach: "functions/v1/suggestion-attach-specification"
 };
 var TIMEOUT_MS2 = 6e4;
 var MAX_STATUS_IDS = 50;
@@ -107702,7 +107736,48 @@ async function retryUnsent(env = process.env, seams = {}) {
     });
     if (claimed2) results.push(await sendRecord(recordId, "start", env, seams));
   }
+  await retryWriteUps(env, seams);
   return results;
+}
+async function attachWriteUp(recordId, env = process.env, seams = {}) {
+  const record2 = findSuggestion(await loadStore(env), recordId);
+  const w3 = record2.write_up;
+  if (!w3 || w3.state !== "waiting_to_send" || record2.specification === null || record2.backstop_result === null) {
+    return w3?.state === "sent" ? "sent" : w3?.state === "stands_alone" ? "stands_alone" : "waiting";
+  }
+  const finish3 = (outcome, error2) => withStore(env, (s3) => {
+    const r3 = findSuggestion(s3, recordId);
+    const ww = r3.write_up;
+    if (!ww || ww.state !== "waiting_to_send") return ww?.state === "sent" ? "sent" : "stands_alone";
+    ww.updated_at = nowIso3(seams);
+    if (error2 !== null) ww.last_error = error2;
+    if (outcome === "sent") {
+      ww.state = "sent";
+      ww.last_error = null;
+    } else if (outcome === "stands_alone") {
+      ww.state = "stands_alone";
+      ww.reason = r3.withdrawn_at !== null ? "withdrawn" : "refused";
+    }
+    return outcome;
+  });
+  if (record2.withdrawn_at !== null) return finish3("stands_alone", null);
+  if (record2.state !== "sent" || record2.suggestion_id === null) return "waiting";
+  const key = await loadCloudKey(env, seams.keyStore);
+  if (!key.configured) return "waiting";
+  const body = JSON.stringify({ suggestion_id: record2.suggestion_id, specification: record2.specification, backstop_result: record2.backstop_result });
+  const posted = await post(key.supabaseUrl, key.staticKey, PATHS2.attach, body);
+  await withStore(env, (s3) => {
+    const ww = findSuggestion(s3, recordId).write_up;
+    if (ww) ww.attempts = (ww.attempts ?? 0) + 1;
+  });
+  if (posted.ok && posted.json.saved === true) return finish3("sent", null);
+  const cause = posted.ok ? `HTTP ${posted.status}: a reply that does not say it was saved` : posted.cause;
+  const refused4 = !posted.ok && posted.status !== null && posted.status >= 400 && posted.status < 500 && posted.status !== 408 && posted.status !== 429;
+  return finish3(refused4 ? "stands_alone" : "waiting", cause);
+}
+async function retryWriteUps(env, seams) {
+  const waiting2 = (await loadStore(env)).records.filter(isSuggestion).filter((r3) => r3.write_up?.state === "waiting_to_send").map((r3) => r3.record_id);
+  for (const recordId of waiting2) await attachWriteUp(recordId, env, seams);
 }
 var NOT_CONFIGURED = "this computer has no Probanda key, so no status can be read: call cloud_key__configure_credential once and have the practitioner paste the key on the page it serves, or, if they have none, call key_request__submit";
 function cloudItems(value) {
@@ -107855,7 +107930,49 @@ function badgeOf(record2) {
   if (record2.withdrawn_at !== null) return "Withdrawn";
   return record2.state === "sent" ? record2.badge ?? "Submitted" : cardStatus(record2);
 }
-function entry(record2, token) {
+var WRITE_UP_SAFEGUARDS = [
+  "Probanda writes this from what your card shows, the technical details and Probanda's own files. It does not read your documents, your conversations or your records about clients and matters.",
+  "Before it is sent, a second check traces every sentence to your card, the technical details or Probanda's own files, and anything found in your records is taken out. If a sentence cannot be traced, or taking something out would leave the write-up incomplete, nothing is sent after your suggestion."
+];
+var WRITE_UP_NOTES = {
+  none: "No technical write-up was written for this suggestion.",
+  writing: "The technical write-up was not finished, so none was sent with this suggestion.",
+  waiting_to_send: "The technical write-up is kept on this computer and is sent after your suggestion.",
+  sent: "This technical write-up was sent after your suggestion.",
+  backstop_failed: "No technical write-up was sent with this suggestion: not every sentence of it could be traced to your card, the technical details or Probanda's own files.",
+  incoherent: "No technical write-up was sent with this suggestion: words found in your records had to be taken out of it, and what was left was incomplete.",
+  records_unreadable: "No technical write-up was sent with this suggestion: it could not be checked against your records.",
+  refused: "No technical write-up was sent with this suggestion: Probanda did not accept it.",
+  withdrawn: "No technical write-up was sent: this suggestion was withdrawn."
+};
+var SOURCE_LABEL = { card: "From your card", fact: "From the technical details", file: "From Probanda's own files" };
+function writeUpSentences(spec) {
+  let parsed;
+  try {
+    parsed = JSON.parse(spec);
+  } catch {
+    return `<p class="text">${text5(spec)}</p>`;
+  }
+  const sentences = parsed !== null && typeof parsed === "object" && Array.isArray(parsed.sentences) ? parsed.sentences : [];
+  return `<ol class="spec">${sentences.map((s3) => {
+    const cites = Array.isArray(s3.cites) ? s3.cites : [];
+    const kinds = [...new Set(cites.map((c3) => c3.card !== void 0 ? "card" : c3.fact !== void 0 ? "fact" : "file"))];
+    return `<li><p class="text">${text5(String(s3.text ?? ""))}</p><p class="note">${escapeHtml2(kinds.map((k3) => SOURCE_LABEL[k3]).join(" \xB7 "))}</p></li>`;
+  }).join("")}</ol>`;
+}
+function writeUpSection(record2) {
+  const w3 = record2.write_up;
+  const safeguards = `<h4>How the technical write-up is kept safe</h4><ul class="safeguards">${WRITE_UP_SAFEGUARDS.map((s3) => `<li>${escapeHtml2(s3)}</li>`).join("")}</ul>`;
+  let note;
+  let body = "";
+  if (!w3) note = WRITE_UP_NOTES.none;
+  else if (w3.state === "stands_alone") note = WRITE_UP_NOTES[w3.reason ?? "backstop_failed"];
+  else if (w3.state === "sent" || w3.state === "waiting_to_send") note = WRITE_UP_NOTES[w3.state];
+  else note = WRITE_UP_NOTES.writing;
+  if (w3 && (w3.state === "sent" || w3.state === "waiting_to_send") && record2.specification !== null) body = writeUpSentences(record2.specification);
+  return `<p class="note">${escapeHtml2(note)}</p>${body}${safeguards}`;
+}
+function entry(record2, token, focused = false) {
   const payload = parsePayload(record2);
   const date3 = record2.created_at.slice(0, 10);
   let body;
@@ -107864,16 +107981,20 @@ function entry(record2, token) {
   } else {
     const previews = Array.isArray(payload.previews) ? payload.previews.filter((p3) => typeof p3 === "object" && p3 !== null && typeof p3.html === "string").map((p3) => `<h4>${text5(String(p3.label ?? ""))}${p3.chosen ? " (chosen)" : ""}</h4>${para(p3.reason)}${frame(p3.html, String(p3.label ?? "Preview"))}`).join("") : "";
     const facts = payload.environment_facts !== void 0 ? `<pre class="facts">${escapeHtml2(JSON.stringify(payload.environment_facts, null, 2))}</pre>` : "";
-    const writeUp = record2.specification !== null ? `<p class="text">${text5(record2.specification)}</p>` + (record2.backstop_result !== null ? `<h4>How the write-up was checked</h4><pre class="facts">${escapeHtml2(JSON.stringify(record2.backstop_result, null, 2))}</pre>` : "") : '<p class="note">No technical write-up was sent with this suggestion.</p>';
-    body = section2(payload.origin === "probanda" ? "Probanda noticed" : "You suggested", para(payload.pain_point ?? payload.body)) + section2("Items", items(record2, payload)) + section2("Constraints and evidence", contextLines(payload)) + section2("Your comment", para(payload.comment)) + section2("What Probanda observed", para(payload.raw_observation)) + section2("Technical details about Probanda on this computer", facts) + section2("Mockup", typeof payload.mockup === "string" ? frame(payload.mockup, "Mockup") : "") + section2("Previews", previews) + `<details class="write-up"><summary>Show the technical write-up</summary>${writeUp}</details>`;
+    const writeUp = writeUpSection(record2);
+    body = section2(payload.origin === "probanda" ? "Probanda noticed" : "You suggested", para(payload.pain_point ?? payload.body)) + section2("Items", items(record2, payload)) + section2("Constraints and evidence", contextLines(payload)) + section2("Your comment", para(payload.comment)) + section2("What Probanda observed", para(payload.raw_observation)) + section2("Technical details about Probanda on this computer", facts) + section2("Mockup", typeof payload.mockup === "string" ? frame(payload.mockup, "Mockup") : "") + section2("Previews", previews) + `<details class="write-up"${focused ? " open" : ""}><summary>Show the technical write-up</summary>${writeUp}</details>`;
   }
   const withdraw2 = record2.withdrawn_at === null ? `<button type="button" class="withdraw" data-token="${escapeHtml2(token)}">Withdraw</button>` : "";
-  return `<section class="entry" data-record="${escapeHtml2(record2.record_id)}"><h2>${text5(record2.title)}</h2><p class="meta">Sent ${escapeHtml2(date3)} \xB7 <span class="badge">${escapeHtml2(badgeOf(record2))}</span></p>` + body + `<div class="actions">${withdraw2}<p class="feedback" role="status"></p></div></section>`;
+  return `<section class="entry" id="s-${escapeHtml2(record2.record_id)}" data-record="${escapeHtml2(record2.record_id)}"><h2>${text5(record2.title)}</h2><p class="meta">Sent ${escapeHtml2(date3)} \xB7 <span class="badge">${escapeHtml2(badgeOf(record2))}</span></p>` + body + `<div class="actions">${withdraw2}<p class="feedback" role="status"></p></div></section>`;
 }
 var STYLE = ":root{--bg:#fafafa;--fg:#222;--muted:#555;--line:#ddd;--accent:#2f5f8a;--warn:#a00}@media (prefers-color-scheme: dark){:root{--bg:#1e1e1e;--fg:#eee;--muted:#aaa;--line:#444;--accent:#8fb8e0;--warn:#f88}}body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:var(--bg);color:var(--fg)}main{max-width:48rem;margin:1rem auto}h1{font-size:1.5rem}h2{font-size:1.2rem;margin:0 0 .25rem}h3{font-size:1rem;margin:1rem 0 .25rem}h4{font-size:.95rem;margin:.75rem 0 .25rem}.entry{border-top:1px solid var(--line);padding:1rem 0}.meta,.note,.item-status{color:var(--muted);font-size:.9rem}.badge{font-weight:600;color:var(--accent)}.item-status .label{font-weight:600}.bracket{border:1px solid var(--line);border-radius:3px;padding:0 .2em;font-family:ui-monospace,monospace;font-size:.9em}.text{white-space:pre-wrap}.kind{font-weight:600}.facts{white-space:pre-wrap;font-size:.8rem;border:1px solid var(--line);padding:.5rem;overflow-x:auto}.mockup{width:100%;height:24rem;border:1px solid var(--line);background:#fff}button{padding:.4rem 1rem;font-size:1rem}.feedback{min-height:1.2em;font-size:.9rem}.feedback.error{color:var(--warn)}";
 var SCRIPT = `
 (function () {
   var api = JSON.parse(document.getElementById("api").textContent);
+  if (api.focus) {
+    var focused = document.getElementById(api.focus);
+    if (focused) focused.scrollIntoView();
+  }
   var base = "http://127.0.0.1:" + api.port;
   var SAY = {
     withdrawn: "Withdrawn. Probanda no longer holds this suggestion.",
@@ -107940,19 +108061,23 @@ var SCRIPT = `
   });
 })();
 `;
-function renderPastSuggestionsHtml(store, port, tokenFor) {
+function renderPastSuggestionsHtml(store, port, tokenFor, focus = null) {
   const records = store.records.filter(isSuggestion).sort((a3, b3) => a3.created_at < b3.created_at ? 1 : a3.created_at > b3.created_at ? -1 : 0);
-  const body = records.length ? records.map((r3) => entry(r3, r3.withdrawn_at === null ? tokenFor(r3.record_id) : "")).join("") : '<p class="note">No suggestions have been sent from this computer yet.</p>';
-  const api = JSON.stringify({ port }).replace(/</g, "\\u003c");
+  const body = records.length ? records.map((r3) => entry(r3, r3.withdrawn_at === null ? tokenFor(r3.record_id) : "", r3.record_id === focus)).join("") : '<p class="note">No suggestions have been sent from this computer yet.</p>';
+  const target = focus !== null && records.some((r3) => r3.record_id === focus) ? `s-${focus}` : null;
+  const api = JSON.stringify({ port, focus: target }).replace(/</g, "\\u003c");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src http://127.0.0.1:${port}; object-src 'none'; base-uri 'none'; form-action 'none'"><title>Past suggestions</title><style>${STYLE}</style></head><body><main><h1>Past suggestions</h1><p class="note">What this computer sent to the Probanda team, word for word, and what has happened to each suggestion.</p>` + body + `</main><script type="application/json" id="api">${api}</script><script>${SCRIPT}</script></body></html>`;
 }
 function pastSuggestionsPath(env = process.env) {
   return join47(storeDir(env), PAST_SUGGESTIONS_FILE);
 }
-async function writePastSuggestionsPage(env = process.env) {
+async function writePastSuggestionsPage(env = process.env, options = {}) {
   const store = await loadStore(env);
   const path = pastSuggestionsPath(env);
-  writeTextAtomic(path, renderPastSuggestionsHtml(store, pageApiPort(env), (id) => pageApiSuggestionToken(id, env)));
+  if (options.focus !== void 0 && !store.records.some((r3) => isSuggestion(r3) && r3.record_id === options.focus)) {
+    throw new NotFoundError(`no suggestion ${options.focus} on this computer`, "not_found");
+  }
+  writeTextAtomic(path, renderPastSuggestionsHtml(store, pageApiPort(env), (id) => pageApiSuggestionToken(id, env), options.focus ?? null));
   return path;
 }
 
@@ -109032,8 +109157,8 @@ function safe(read3) {
   }
 }
 function scrubFacts(facts, forbidden) {
-  const bad = (value) => /[\\/]/.test(value) || forbidden.some((f3) => value.toLowerCase().includes(f3));
-  const keep = (value) => value !== null && bad(value) ? null : value;
+  const bad2 = (value) => /[\\/]/.test(value) || forbidden.some((f3) => value.toLowerCase().includes(f3));
+  const keep = (value) => value !== null && bad2(value) ? null : value;
   return {
     plugins: facts.plugins.map((p3) => ({
       ...p3,
@@ -109042,7 +109167,7 @@ function scrubFacts(facts, forbidden) {
         servers: p3.servers.map((s3) => ({
           server: s3.server,
           // A tool this package ships is a fixed name; only another name is screened.
-          visible: s3.visible.filter((t3) => s3.known.includes(t3) || !bad(t3)),
+          visible: s3.visible.filter((t3) => s3.known.includes(t3) || !bad2(t3)),
           missing: s3.missing
         }))
       } : {}
@@ -109784,6 +109909,7 @@ function checkAndClaim(card, records, stopWords, at) {
   dropGenerated(card, check.hits, "click", at);
   const prompts = promptsOf(card, check.hits);
   if (prompts.length) return { prompts };
+  card.waited_at_submit = waiting(card, new Date(at));
   card.state = "sending";
   card.state_since = at;
   card.mockup_request = null;
@@ -109994,7 +110120,13 @@ async function waitForCard(cardId, deps) {
       const event = await withStore(deps.env, (s3) => {
         const c3 = findCard(s3, cardId);
         const st3 = effectiveState(c3, now);
-        if (st3 === "submitted" || st3 === "dismissed") {
+        if (st3 === "submitted") {
+          c3.waiter_until = null;
+          const record2 = s3.records.find((r3) => r3.record_id === c3.suggestion_record_id);
+          const fresh = record2 !== void 0 && isSuggestion(record2) && record2.write_up === void 0 && record2.payload !== null;
+          return { event: st3, card_id: cardId, write_up: c3.waited_at_submit === true && fresh };
+        }
+        if (st3 === "dismissed") {
           c3.waiter_until = null;
           return { event: st3, card_id: cardId };
         }
@@ -110024,6 +110156,323 @@ async function openCards(env) {
   return store.records.filter(isCard).map((r3) => r3).filter((c3) => effectiveState(c3, now) === "open").map((c3) => ({ card_id: c3.record_id, created_at: c3.created_at, card_path: cardPath(c3.record_id, env) }));
 }
 
+// src/suggestions/specification.ts
+var SPEC_FORMAT = "probanda-spec/1";
+var BACKSTOP_FORMAT = "probanda-backstop/1";
+var MAX_SENTENCES = 80;
+var MAX_SENTENCE = 600;
+var MAX_CITES = 4;
+var MAX_QUOTE = 300;
+var MIN_QUOTE = 8;
+var REMOVED_SHARE_LIMIT = 0.25;
+function isObject9(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function payloadOf(record2) {
+  if (record2.payload === null) throw new ValidationError("this suggestion was sent before this computer kept a copy, so it gets no technical write-up");
+  const value = JSON.parse(record2.payload);
+  if (!isObject9(value)) throw new ValidationError("this suggestion's stored copy is not readable");
+  return value;
+}
+function cardLines(payload) {
+  const lines2 = [];
+  const pain = payload.pain_point ?? payload.body;
+  if (typeof pain === "string" && pain.trim()) lines2.push({ id: "p", kind: "pain point", text: pain });
+  if (Array.isArray(payload.items)) {
+    payload.items.forEach((item, i3) => {
+      if (typeof item === "string") lines2.push({ id: `i${i3 + 1}`, kind: "item", text: item });
+    });
+  }
+  if (Array.isArray(payload.context_lines)) {
+    payload.context_lines.filter(isObject9).forEach((line, i3) => {
+      if (typeof line.text === "string") lines2.push({ id: `c${i3 + 1}`, kind: line.kind === "constraint" ? "constraint" : "evidence", text: line.text });
+    });
+  }
+  if (typeof payload.raw_observation === "string") {
+    payload.raw_observation.split("\n").forEach((line, i3) => {
+      if (line.trim()) lines2.push({ id: `o${i3 + 1}`, kind: "observation", text: line });
+    });
+  }
+  if (typeof payload.comment === "string" && payload.comment.trim()) lines2.push({ id: "comment", kind: "comment", text: payload.comment });
+  if (typeof payload.skill === "string" && payload.skill.trim()) lines2.push({ id: "skill", kind: "skill", text: payload.skill });
+  return lines2;
+}
+function factEntries(facts, path = "", into = []) {
+  if (typeof facts === "string" || typeof facts === "boolean" || typeof facts === "number" && Number.isFinite(facts)) {
+    into.push({ key: path, value: String(facts) });
+  } else if (Array.isArray(facts)) {
+    facts.forEach((item, i3) => factEntries(item, `${path}[${i3}]`, into));
+  } else if (isObject9(facts)) {
+    for (const [key, item] of Object.entries(facts)) factEntries(item, path ? `${path}.${key}` : key, into);
+  }
+  return into;
+}
+function briefOf(record2) {
+  const payload = payloadOf(record2);
+  return { card_lines: cardLines(payload), environment_facts: factEntries(payload.environment_facts) };
+}
+function bad() {
+  throw new ValidationError("not_a_specification");
+}
+function parseSpecification(raw) {
+  let value = raw;
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      bad();
+    }
+  }
+  if (!isObject9(value) || !Array.isArray(value.sentences)) bad();
+  const list = value.sentences;
+  if (list.length < 1 || list.length > MAX_SENTENCES) bad();
+  const sentences = list.map((entry2, i3) => {
+    if (!isObject9(entry2) || typeof entry2.text !== "string" || !entry2.text.trim() || entry2.text.length > MAX_SENTENCE) bad();
+    if (entry2.item !== void 0 && !(Number.isInteger(entry2.item) && entry2.item >= 1)) bad();
+    const cites = entry2.cites ?? [];
+    if (!Array.isArray(cites) || cites.length > MAX_CITES) bad();
+    return {
+      n: i3 + 1,
+      text: entry2.text.trim(),
+      ...entry2.item !== void 0 ? { item: entry2.item } : {},
+      cites: cites.map((c3) => {
+        if (!isObject9(c3)) return { quote: "" };
+        const out = { quote: typeof c3.quote === "string" ? c3.quote : "" };
+        for (const k3 of ["card", "fact", "file"]) if (typeof c3[k3] === "string") out[k3] = c3[k3];
+        return out;
+      })
+    };
+  });
+  return { format: SPEC_FORMAT, sentences };
+}
+var norm2 = (text8) => text8.replace(/\s+/g, " ").trim();
+function shippedReader(env, installRoot) {
+  return (path) => {
+    try {
+      const read3 = skillSourceRead(path, env, void 0, void 0, installRoot);
+      return read3.shipped_from === "install" ? read3.content : null;
+    } catch {
+      return null;
+    }
+  };
+}
+function verifyCitations(spec, brief, readShipped2) {
+  const lines2 = new Map(brief.card_lines.map((l3) => [l3.id, l3.text]));
+  const facts = new Map(brief.environment_facts.map((f3) => [f3.key, f3.value]));
+  const files = /* @__PURE__ */ new Map();
+  const failures = [];
+  for (const sentence of spec.sentences) {
+    if (sentence.cites.length === 0) {
+      failures.push({ sentence: sentence.n, problem: "no_citation" });
+      continue;
+    }
+    sentence.cites.forEach((cite, i3) => {
+      const fail3 = (problem) => failures.push({ sentence: sentence.n, cite: i3 + 1, problem });
+      const named2 = ["card", "fact", "file"].filter((k3) => cite[k3] !== void 0);
+      const quote = norm2(cite.quote);
+      if (named2.length !== 1 || !quote || cite.quote.length > MAX_QUOTE) return fail3("citation_shape");
+      if (cite.fact !== void 0) {
+        const value = facts.get(cite.fact);
+        if (value === void 0) return fail3("unknown_fact");
+        if (norm2(value) !== quote) return fail3("quote_not_found");
+        return;
+      }
+      let source;
+      if (cite.card !== void 0) {
+        source = lines2.get(cite.card);
+        if (source === void 0) return fail3("unknown_card_line");
+      } else {
+        const path = cite.file;
+        if (!files.has(path)) files.set(path, readShipped2(path));
+        source = files.get(path);
+        if (source === null || source === void 0) return fail3("unknown_file");
+      }
+      const whole = norm2(source);
+      if (quote.length < MIN_QUOTE && quote !== whole) return fail3("quote_too_short");
+      if (!whole.includes(quote)) return fail3("quote_not_found");
+    });
+  }
+  return { passed: failures.length === 0, failures };
+}
+function backstopInput(spec, brief) {
+  const lines2 = new Map(brief.card_lines.map((l3) => [l3.id, l3]));
+  const facts = new Map(brief.environment_facts.map((f3) => [f3.key, f3.value]));
+  return {
+    sentences: spec.sentences.map((s3) => ({
+      n: s3.n,
+      text: s3.text,
+      cites: s3.cites.map(
+        (c3) => c3.card !== void 0 ? { card: c3.card, line_kind: lines2.get(c3.card)?.kind, line: lines2.get(c3.card)?.text, quote: c3.quote } : c3.fact !== void 0 ? { fact: c3.fact, value: facts.get(c3.fact), quote: c3.quote } : { file: c3.file, quote: c3.quote }
+      )
+    }))
+  };
+}
+function readJudgement(raw, spec) {
+  let value = raw;
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      value = null;
+    }
+  }
+  const said = /* @__PURE__ */ new Map();
+  if (isObject9(value) && Array.isArray(value.sentences)) {
+    for (const entry2 of value.sentences) {
+      if (isObject9(entry2) && Number.isInteger(entry2.n) && typeof entry2.supported === "boolean" && !said.has(entry2.n)) {
+        said.set(entry2.n, entry2.supported);
+      }
+    }
+  }
+  const unsupported = spec.sentences.filter((s3) => said.get(s3.n) !== true).map((s3) => s3.n);
+  return { passed: unsupported.length === 0, unsupported };
+}
+function removeMatches(spec, records, stopWords) {
+  const texts = spec.sentences.map((s3) => s3.text);
+  const quotes = [];
+  const quoteTexts = [];
+  for (const s3 of spec.sentences) {
+    s3.cites.forEach((c3, i3) => {
+      quotes.push({ sentence: s3.n, cite: i3 + 1 });
+      quoteTexts.push(c3.quote);
+    });
+  }
+  const inText = runCrossCheck({ raw_observation: texts }, records, stopWords);
+  const inQuotes = runCrossCheck({ raw_observation: quoteTexts }, records, stopWords);
+  if (!inText.complete || !inQuotes.complete) return { spec, removals: [], incoherent: "records_unreadable" };
+  const removals = [];
+  for (const hit of inText.hits) {
+    removals.push({ sentence: spec.sentences[hit.index].n, in: "sentence", kind: hit.kind, ...hit.sources ? { sources: hit.sources } : {} });
+  }
+  for (const hit of inQuotes.hits) {
+    const at = quotes[hit.index];
+    removals.push({ sentence: at.sentence, in: "quote", cite: at.cite, kind: hit.kind, ...hit.sources ? { sources: hit.sources } : {} });
+  }
+  const removed = new Set(removals.map((r3) => r3.sentence));
+  const kept = { format: SPEC_FORMAT, sentences: spec.sentences.filter((s3) => !removed.has(s3.n)) };
+  let incoherent = null;
+  if (removals.some((r3) => r3.in === "quote")) incoherent = "removal_in_cited_span";
+  else if (removed.size > spec.sentences.length * REMOVED_SHARE_LIMIT) incoherent = "too_much_removed";
+  return { spec: kept, removals, incoherent };
+}
+var nowIso4 = (deps) => (deps.now ? deps.now() : /* @__PURE__ */ new Date()).toISOString();
+function sentRecord(store, cardId) {
+  const card = findCard(store, cardId);
+  if (card.state !== "submitted" || card.suggestion_record_id === null) return null;
+  return { record: findSuggestion(store, card.suggestion_record_id), waited: card.waited_at_submit === true };
+}
+function standAlone(w3, reason, at) {
+  w3.state = "stands_alone";
+  w3.reason = reason;
+  w3.updated_at = at;
+  delete w3.draft;
+}
+async function writeUpBrief(cardId, deps) {
+  const at = nowIso4(deps);
+  return withStore(deps.env, (store) => {
+    const sent2 = sentRecord(store, cardId);
+    if (sent2 === null) return { write: false, reason: "not_submitted" };
+    if (!sent2.waited) return { write: false, reason: "not_waited_on" };
+    if (sent2.record.write_up) return { write: false, reason: "already_written" };
+    if (sent2.record.payload === null) return { write: false, reason: "no_copy" };
+    const brief = briefOf(sent2.record);
+    sent2.record.write_up = { state: "writing", started_at: at, updated_at: at, reason: null, removals: [] };
+    return { write: true, card_id: cardId, brief };
+  });
+}
+function writeUpOf(record2, want) {
+  const w3 = record2.write_up;
+  if (!w3 || w3.state !== want) {
+    throw new ValidationError(`this suggestion's technical write-up is not at that step (${w3 ? w3.state : "not started"}); nothing was changed`);
+  }
+  return w3;
+}
+async function checkWriteUp(cardId, raw, deps) {
+  const store = await loadStore(deps.env);
+  const sent2 = sentRecord(store, cardId);
+  if (sent2 === null) throw new ValidationError("this card was not submitted, so it has no technical write-up");
+  writeUpOf(sent2.record, "writing");
+  const brief = briefOf(sent2.record);
+  let spec = null;
+  try {
+    spec = parseSpecification(raw);
+  } catch {
+    spec = null;
+  }
+  const reader = deps.readShipped ?? shippedReader(deps.env, deps.seams?.installRoot);
+  const citations = spec === null ? { passed: false, failures: [{ sentence: null, problem: "not_a_specification" }] } : verifyCitations(spec, brief, reader);
+  const at = nowIso4(deps);
+  await withStore(deps.env, (s3) => {
+    const record2 = findSuggestion(s3, sent2.record.record_id);
+    const w3 = writeUpOf(record2, "writing");
+    w3.citations = citations;
+    if (!citations.passed || spec === null) {
+      record2.backstop_result = combined(spec?.sentences.length ?? 0, citations, null, null);
+      standAlone(w3, "backstop_failed", at);
+      return;
+    }
+    w3.state = "checked";
+    w3.updated_at = at;
+    w3.draft = spec;
+  });
+  if (!citations.passed || spec === null) return { verified: false, card_id: cardId };
+  return { verified: true, card_id: cardId, backstop_input: backstopInput(spec, brief) };
+}
+function combined(sentences, citations, judgement, check) {
+  const passed = citations.passed && judgement !== null && judgement.passed && check !== null && check.incoherent === null;
+  return {
+    format: BACKSTOP_FORMAT,
+    passed,
+    sentences,
+    citations,
+    judgement: judgement === null ? { judged: false } : { judged: true, ...judgement },
+    record_check: check === null ? { ran: false } : { ran: true, removed: [...new Set(check.removals.map((r3) => r3.sentence))], incoherent: check.incoherent }
+  };
+}
+async function sendWriteUp(cardId, rawJudgement, deps) {
+  const store = await loadStore(deps.env);
+  const sent2 = sentRecord(store, cardId);
+  if (sent2 === null) throw new ValidationError("this card was not submitted, so it has no technical write-up");
+  const w0 = writeUpOf(sent2.record, "checked");
+  const spec = w0.draft;
+  const judgement = readJudgement(rawJudgement, spec);
+  let check = null;
+  if (judgement.passed) {
+    const stopWords = deps.stopWords ? deps.stopWords() : loadStopWords(deps.env);
+    const records = deps.records ? await deps.records() : await readRecordTexts(new PracticeStore(deps.env), deps.env);
+    check = removeMatches(spec, records, stopWords);
+  }
+  const at = nowIso4(deps);
+  const recordId = sent2.record.record_id;
+  const outcome = await withStore(deps.env, (s3) => {
+    const record2 = findSuggestion(s3, recordId);
+    const w3 = writeUpOf(record2, "checked");
+    const result = combined(spec.sentences.length, w3.citations, judgement, check);
+    record2.backstop_result = result;
+    if (check) w3.removals = check.removals;
+    if (!judgement.passed) {
+      standAlone(w3, "backstop_failed", at);
+      return "stands_alone";
+    }
+    if (check === null || check.incoherent !== null) {
+      standAlone(w3, check?.incoherent === "records_unreadable" ? "records_unreadable" : "incoherent", at);
+      return "stands_alone";
+    }
+    if (record2.withdrawn_at !== null) {
+      standAlone(w3, "withdrawn", at);
+      return "stands_alone";
+    }
+    record2.specification = JSON.stringify(check.spec);
+    w3.state = "waiting_to_send";
+    w3.updated_at = at;
+    delete w3.draft;
+    return "send";
+  });
+  if (outcome === "stands_alone") return { card_id: cardId, outcome };
+  const posted = await attachWriteUp(recordId, deps.env, deps.seams ?? {});
+  return { card_id: cardId, outcome: posted === "sent" ? "sent" : posted === "stands_alone" ? "stands_alone" : "waiting" };
+}
+
 // src/suggestions/tools.ts
 function isSuggestionToolName(name) {
   return name.startsWith("suggestion_box__") || name.startsWith("suggestion_log__") || name.startsWith("suggestion_observation__");
@@ -110049,6 +110498,12 @@ async function callSuggestionCardTool(store, name, args, env = store.env) {
       return waitForCard(text7(args.card_id, "card_id"), deps);
     case "suggestion_card__attach_mockup":
       return attachMockup(text7(args.card_id, "card_id"), args.html, deps);
+    case "suggestion_card__write_up_brief":
+      return writeUpBrief(text7(args.card_id, "card_id"), deps);
+    case "suggestion_card__write_up_check":
+      return checkWriteUp(text7(args.card_id, "card_id"), args.specification, deps);
+    case "suggestion_card__write_up_send":
+      return sendWriteUp(text7(args.card_id, "card_id"), args.judgement, deps);
     default:
       throw new ValidationError(`Unknown suggestion tool "${name}"`);
   }
@@ -110062,7 +110517,7 @@ function callSuggestionTool(name, args, env = process.env, seams = {}) {
     case "suggestion_box__status":
       return status(args, env, seams);
     case "suggestion_box__past_suggestions":
-      return writePastSuggestionsPage(env).then((path) => ({ past_suggestions_path: path }));
+      return writePastSuggestionsPage(env, args.record_id === void 0 ? {} : { focus: text7(args.record_id, "record_id") }).then((path) => ({ past_suggestions_path: path }));
     case "suggestion_log__read":
       return suggestionLogRead(env);
     case "suggestion_log__write":

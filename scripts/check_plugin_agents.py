@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import plugin_layout  # noqa: E402
 from check_plugin_sources import SHARED_TREE, NotApplicable, ships_skill, ships_agent, agents_dir  # noqa: E402
 from check_plugin_skill_md import read_frontmatter_lines  # noqa: E402
 
@@ -112,6 +113,61 @@ def agent_bridged_grant_violations(agents_dir):
     if not checked:
         hits.append("no agent declares a plugin MCP tool; the parser is likely broken")
     return hits
+
+
+# --- write-up-agent-tools --------------------------------------------------------------------------
+# The agents that write and check a sent suggestion's technical write-up on the practitioner's
+# machine (docs/Plans/2026-10-25_suggestion-design.md, decision 18) read only the card, the
+# environment facts in their prompt and Probanda's shipped files. Their tool lists are the guard:
+# each may grant only the shipped-file reads below, under both names, and must grant the read. Any
+# other tool (a file read, a shell, the web, mail, matter or practice data) fails, as does a missing
+# `tools:` list, since an agent without one is given every tool, and an `mcpServers:` entry.
+WRITE_UP_AGENTS = ("technical-writer", "spec-backstop")
+WRITE_UP_TOOLS = ("skill_source__read", "skill_source__list")
+WRITE_UP_REQUIRED = ("skill_source__read",)
+
+
+def write_up_tool_names(data_plugin, tools):
+    """The plain and bridged names of `tools` on the data server of `data_plugin`."""
+    return [f"{prefix}plugin_{data_plugin}_data__{t}" for t in tools for prefix in ("mcp__", BRIDGE_PREFIX)]
+
+
+def write_up_agent_violations(agents_dir, data_plugin, agents=WRITE_UP_AGENTS):
+    """Every grant of a write-up agent beyond the shipped-file reads, and every agent missing or
+    lacking its read."""
+    allowed = set(write_up_tool_names(data_plugin, WRITE_UP_TOOLS))
+    required = write_up_tool_names(data_plugin, WRITE_UP_REQUIRED)
+    hits = []
+    for agent in agents:
+        path = os.path.join(agents_dir, f"{agent}.md")
+        if not os.path.isfile(path):
+            hits.append(f"{agent}.md is missing")
+            continue
+        lines = [line.rstrip("\r") for line in read_frontmatter_lines(path)]
+        if not any(line.startswith("tools:") for line in lines):
+            hits.append(f"{agent}.md has no tools list, so it would be given every tool")
+            continue
+        if any(line.startswith("mcpServers:") for line in lines):
+            hits.append(f"{agent}.md declares its own MCP servers")
+        tools = agent_tools(path)
+        if not tools:
+            hits.append(f"{agent}.md lists its tools in a form this check cannot read; use a `- ` list")
+            continue
+        hits += [f"{agent}.md grants {t}, which reaches beyond Probanda's shipped files" for t in tools if t not in allowed]
+        hits += [f"{agent}.md does not grant {t}" for t in required if t not in tools]
+    return hits
+
+
+def check_write_up_agent_tools(repo, plugin):
+    owner = plugin_layout.server_owner(repo, "data")["name"]
+    shipped = [a for a in WRITE_UP_AGENTS if ships_agent(plugin, a)]
+    if plugin["name"] != owner and not shipped:
+        raise NotApplicable(f"{plugin['name']} ships neither write-up agent")
+    hits = [f"{a} ships in {plugin['name']}, not in {owner}" for a in shipped if plugin["name"] != owner]
+    if plugin["name"] == owner:
+        hits += [f"{owner} does not ship {a} (source/assignment.json)" for a in WRITE_UP_AGENTS if a not in shipped]
+        hits += write_up_agent_violations(agents_dir(repo, plugin), owner)
+    return not hits, "; ".join(hits)
 
 
 # --- recital-rule-mirror -------------------------------------------------------------------------

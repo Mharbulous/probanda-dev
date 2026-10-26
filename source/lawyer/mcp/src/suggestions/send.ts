@@ -37,6 +37,7 @@ const PATHS = {
   submit: "functions/v1/suggestion-submit",
   status: "functions/v1/suggestion-status",
   withdraw: "functions/v1/suggestion-withdraw",
+  attach: "functions/v1/suggestion-attach-specification",
 } as const;
 
 const TIMEOUT_MS = 60_000;
@@ -239,7 +240,59 @@ export async function retryUnsent(env: NodeJS.ProcessEnv = process.env, seams: S
     });
     if (claimed) results.push(await sendRecord(recordId, "start", env, seams));
   }
+  await retryWriteUps(env, seams);
   return results;
+}
+
+// ------------------------------------------------------- technical write-up --
+
+export type AttachOutcome = "sent" | "waiting" | "stands_alone";
+
+/** Posts a stored technical write-up (specification.ts) to follow its suggestion, once the suggestion
+ * is sent. A suggestion not yet sent, no key, or a post that failed leaves it waiting, retried at the
+ * next server start; a refusal, or a withdrawn suggestion, leaves it standing alone. */
+export async function attachWriteUp(recordId: string, env: NodeJS.ProcessEnv = process.env, seams: SendSeams = {}): Promise<AttachOutcome> {
+  const record = findSuggestion(await loadStore(env), recordId);
+  const w = record.write_up;
+  if (!w || w.state !== "waiting_to_send" || record.specification === null || record.backstop_result === null) {
+    return w?.state === "sent" ? "sent" : w?.state === "stands_alone" ? "stands_alone" : "waiting";
+  }
+  const finish = (outcome: AttachOutcome, error: string | null) =>
+    withStore(env, (s) => {
+      const r = findSuggestion(s, recordId);
+      const ww = r.write_up;
+      if (!ww || ww.state !== "waiting_to_send") return ww?.state === "sent" ? "sent" as const : "stands_alone" as const;
+      ww.updated_at = nowIso(seams);
+      if (error !== null) ww.last_error = error;
+      if (outcome === "sent") {
+        ww.state = "sent";
+        ww.last_error = null;
+      } else if (outcome === "stands_alone") {
+        ww.state = "stands_alone";
+        ww.reason = r.withdrawn_at !== null ? "withdrawn" : "refused";
+      }
+      return outcome;
+    });
+  if (record.withdrawn_at !== null) return finish("stands_alone", null);
+  if (record.state !== "sent" || record.suggestion_id === null) return "waiting";
+  const key = await loadCloudKey(env, seams.keyStore);
+  if (!key.configured) return "waiting";
+  const body = JSON.stringify({ suggestion_id: record.suggestion_id, specification: record.specification, backstop_result: record.backstop_result });
+  const posted = await post(key.supabaseUrl, key.staticKey, PATHS.attach, body);
+  await withStore(env, (s) => {
+    const ww = findSuggestion(s, recordId).write_up;
+    if (ww) ww.attempts = (ww.attempts ?? 0) + 1;
+  });
+  if (posted.ok && posted.json.saved === true) return finish("sent", null);
+  const cause = posted.ok ? `HTTP ${posted.status}: a reply that does not say it was saved` : posted.cause;
+  const refused = !posted.ok && posted.status !== null && posted.status >= 400 && posted.status < 500 && posted.status !== 408 && posted.status !== 429;
+  return finish(refused ? "stands_alone" : "waiting", cause);
+}
+
+/** At a server start: posts every stored write-up whose suggestion is now sent. */
+async function retryWriteUps(env: NodeJS.ProcessEnv, seams: SendSeams): Promise<void> {
+  const waiting = (await loadStore(env)).records.filter(isSuggestion).filter((r) => r.write_up?.state === "waiting_to_send").map((r) => r.record_id);
+  for (const recordId of waiting) await attachWriteUp(recordId, env, seams);
 }
 
 // ----------------------------------------------------------------- statuses --

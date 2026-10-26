@@ -94,9 +94,35 @@ export interface SuggestionRecord {
   withdrawn_at: string | null;
   /** The raw cause of the last refused or failed withdrawal, kept here only. */
   withdraw_error: string | null;
-  /** technical-writer's specification and its backstop's result (Phase 6); null until then. */
+  /** technical-writer's specification as stored after the record check, and the combined backstop
+   * result (specification.ts); null until then. The specification stays null when the write-up stood alone. */
   specification: string | null;
   backstop_result: Record<string, unknown> | null;
+  /** The technical write-up's progress and, when it stood alone, why (specification.ts). Absent when
+   * none was written: the card was submitted with no session waiting on it, or before Phase 6. */
+  write_up?: WriteUp;
+}
+
+/** Where a suggestion's technical write-up stands. */
+export interface WriteUp {
+  /** writing: the writer has its brief; checked: its citations passed and the backstop is judging;
+   * waiting_to_send: stored, to be sent once the suggestion is (or once Probanda is reached);
+   * sent: Probanda's Cloud saved it; stands_alone: nothing is sent after the suggestion. */
+  state: "writing" | "checked" | "waiting_to_send" | "sent" | "stands_alone";
+  started_at: string;
+  updated_at: string;
+  /** Why it stands alone: the backstop failed; the record check's removal left it incoherent; the check
+   * could not read every record source; Probanda's Cloud refused it; the suggestion was withdrawn. */
+  reason: "backstop_failed" | "incoherent" | "records_unreadable" | "refused" | "withdrawn" | null;
+  /** The citation check's result, held between the check and the backstop's judgement. */
+  citations?: unknown;
+  /** The specification between the citation check and the backstop's judgement; removed after. */
+  draft?: unknown;
+  /** Each removal the record check made: sentence number, kind and record source, never the text. */
+  removals: unknown[];
+  /** The raw cause of the last failed post, kept here only. */
+  last_error?: string | null;
+  attempts?: number;
 }
 
 /** A suggestion drafted while this device had no Probanda key, kept to be shown again and posted once it has one. */

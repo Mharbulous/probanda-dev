@@ -40,7 +40,7 @@ from check_plugin_bundles import (  # noqa: E402
     check_bundle_purity, check_sources_host_guard, check_bundle_no_host_path, check_bundle_schema_ceiling)
 from check_plugin_agents import (  # noqa: E402
     FETCH_GRANT_AGENTS, fetch_grants, fetch_grant_allowlist_violations, hook_matcher_violations,
-    check_recital_rule_mirror, check_agent_bridged_grants)
+    check_recital_rule_mirror, check_agent_bridged_grants, check_write_up_agent_tools)
 from check_plugin_tree import (  # noqa: E402
     SKILL_SOURCE_BASELINE, skill_source_expected, skill_source_hit_counts, check_shipped_tree_purity)
 
@@ -235,6 +235,9 @@ CHECKS = (
      "over baseline", check_shipped_tree_purity),
     ("agent-bridged-grants: every plugin MCP grant in an agent has its bridged twin and nothing more",
      check_agent_bridged_grants),
+    ("write-up-agent-tools: technical-writer and spec-backstop ship in the data server's plugin and grant "
+     "only skill_source__read and skill_source__list, under both names: no file, shell, web, mail or "
+     "client-data tool", check_write_up_agent_tools),
     ("commons-encapsulation: the legal-commons gatekeeper skill names no local DB file",
      check_commons_encapsulation),
     ("hook-matchers: every hook matcher that names a plugin tool or a plugin agent names one that "

@@ -26,6 +26,7 @@ The installed plugin is a read-only synced copy. Never look for, clone or edit i
 
 - **Outcome check.** Call `suggestion_box__status` with no arguments. It asks Probanda's Cloud about every suggestion this computer sent and has not withdrawn, and asks nothing when there is none. When its `changed` list is not empty, present the Past suggestions page at its `past_suggestions_path` as a file card (`shared/present-files.md`), with no chat talk about it at all, then call `suggestion_log__write({op: "seen", suggestion_ids: changed})`. If the call fails or this computer has no key, skip this silently: the cloud may not answer yet.
 - **Past suggestions.** When the practitioner asks to see what they sent, or to withdraw a suggestion, call `suggestion_box__past_suggestions` and present the page at its `past_suggestions_path` as a file card. Each suggestion on it has its own Withdraw button. Never read the page.
+- **A suggestion's technical write-up.** When the practitioner asks to see the technical write-up of a suggestion, or how it is kept safe, find that suggestion's `record_id` in `suggestion_log__read` by its title and date, then call `suggestion_box__past_suggestions({record_id})` and present the page as a file card, with no chat talk. The page opens at that suggestion with its write-up shown, and explains the safeguards itself. If you cannot tell which suggestion they mean, present the page without `record_id`.
 - **Without Probanda's key.** A suggestion is drafted and shown on its card as usual. When the practitioner submits it, the card keeps it on this computer, reads "Not sent, will retry", and sends it by itself once the key is set. Say nothing about the key here: the session-start note covers it.
 - **Held suggestions.** An earlier version kept some suggestions on this computer, unposted, for want of a key. When `suggestion_log__read` lists `held` drafts, offer each once as a card (section 6): reshape its body and items into a pain point and items, marking as a guess any block whose words the draft did not hold, and pass its `held_id` to the build, which takes the draft out of the store. Nothing is sent unless the practitioner submits that card.
 - **Open cards.** When the practitioner asks to see a suggestion again, or the card says "Open this suggestion again to see a mockup", present the `card_path` of that entry in `suggestion_log__read`'s `open_cards` as a file card and wait on it (section 6).
@@ -97,7 +98,8 @@ When it returns `built: false` with `reason: "records_unreadable"`, the suggesti
 **Show it and wait.** Present `card_path` as a file card (`shared/present-files.md`), with no text. Then call `suggestion_card__wait({card_id})`:
 - `pending`: call it again.
 - `mockup`: the practitioner asked to see the visual items. Write one self-contained HTML page that shows all of `items` together, honouring every one of `constraints`, whose visible text is only lines from `placeholders`, each used whole, with inline styles only (named colours or short hex, never a list of numbers) and nothing that loads or runs. Call `suggestion_card__attach_mockup({card_id, html})`; on a refusal, fix the rule it names and attach again. Present its `mockup_path` as a second file card, with no text, and wait again. The practitioner may turn a mockup down with a reason on its page: the reason becomes a constraint line on the card, and the link comes back.
-- `submitted` or `dismissed`: the card has done its work. Go to section 8.
+- `submitted` with `write_up: true`: the suggestion is sent. Go to section 10, then section 8.
+- `submitted` with `write_up: false`, or `dismissed`: the card has done its work. Go to section 8.
 - When the practitioner writes in chat while you wait, stop waiting and answer them. Submit and Dismiss on the card keep working with no one waiting; only the mockup link needs a waiting session, and the card says so.
 
 ## 7. What the card does by itself
@@ -121,3 +123,13 @@ Probanda records what it notices about its own work as an observation: a skill t
    - `built: false` with `reason: "not_raised"`: the plugin's cap or suppression does not allow it now. End the reply with nothing more.
    - `built: false` with `hits`: reword the block named, without any word that matched, and build once more. If it is refused again, or returns `reason: "records_unreadable"`, end the reply with nothing more: the practitioner never asked for this card.
 4. **Show it** as a file card (`shared/present-files.md`), with no text, and end the reply. Do not wait on it: Submit Suggestion and Dismiss work by themselves (section 7). A card left unanswered when the session ends counts as dismissed. If the practitioner asks in this session to see it again or for its mockup, it is among `suggestion_log__read`'s `open_cards` (section 1).
+
+## 10. The technical write-up
+
+Only when `suggestion_card__wait` returned `submitted` with `write_up: true`. The suggestion is already sent; this writes a specification of it for the maintainers, which follows it. It uses the practitioner's Claude plan. Write no text in chat before, between or after these steps, whatever their outcome: the agents' dispatches show in the transcript by themselves.
+
+1. Call `suggestion_card__write_up_brief({card_id})`. With `write: false`, go to section 8.
+2. Dispatch the `lawyer:technical-writer` agent with the returned `brief` as its whole prompt, as JSON exactly as returned. Add nothing from this session: no summary of the conversation, no document, no tool result, no word of the practitioner's beyond what the brief holds.
+3. Call `suggestion_card__write_up_check({card_id, specification})` with the writer's JSON exactly as it returned it. With `verified: false`, go to section 8: nothing follows the suggestion, and this computer's record says why.
+4. Dispatch the `lawyer:spec-backstop` agent with the returned `backstop_input` as its whole prompt, as JSON exactly as returned, and nothing else.
+5. Call `suggestion_card__write_up_send({card_id, judgement})` with the backstop's JSON exactly as it returned it. Whatever its `outcome`, go to section 8. Never retry a step, never edit the writer's or the backstop's output, and never dispatch either agent again for the same card.

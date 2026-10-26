@@ -27,8 +27,9 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
       name: "suggestion_box__past_suggestions",
       description:
         "Write the Past suggestions page from this computer's copy of every suggestion it sent, word for word, with each one's status, and a Withdraw button on each, and return {past_suggestions_path}. " +
+        "record_id, optional (from suggestion_log__read): the page opens at that suggestion with its technical write-up shown, and the page explains how the write-up is kept safe. " +
         "Present it as a file card and never read it. Asks Probanda's Cloud nothing.",
-      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      inputSchema: { type: "object", properties: { record_id: { type: "string" } }, additionalProperties: false },
       annotations: { readOnlyHint: false, openWorldHint: false },
     },
     {
@@ -97,7 +98,8 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
       name: "suggestion_card__wait",
       description:
         "Wait on a shown suggestion card for the practitioner's click. While this waits, the card's mockup link works. Returns as soon as one happens: " +
-        "{event: \"submitted\"} (the card sent it and shows its status) or {event: \"dismissed\"} (nothing was sent): say nothing about it in chat and carry on with the work. " +
+        "{event: \"submitted\", write_up} (the card sent it and shows its status) or {event: \"dismissed\"} (nothing was sent): say nothing about it in chat. " +
+        "When write_up is true, start the technical write-up with suggestion_card__write_up_brief as the suggestion skill says; otherwise carry on with the work. " +
         "{event: \"mockup\", items, constraints, placeholders}: the practitioner asked for a mockup of the visual items; write one self-contained HTML page that shows all of them together, " +
         "honouring every constraint, whose visible text is only lines from placeholders, each used whole, with inline styles and nothing that loads or runs (no script, link, image, address or url()), " +
         "then call suggestion_card__attach_mockup and wait again. After about 45 s it returns {event: \"pending\"}, not an error: call again. " +
@@ -124,6 +126,50 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false, openWorldHint: false },
+    },
+    {
+      name: "suggestion_card__write_up_brief",
+      description:
+        "After suggestion_card__wait returned {event: \"submitted\", write_up: true}: the whole input of the lawyer:technical-writer agent, from this computer's copy of what was sent. " +
+        "Returns {write: true, card_id, brief: {card_lines: [{id, kind, text}], environment_facts: [{key, value}]}}: pass brief to the writer exactly as returned, with nothing else from this session. " +
+        "Returns {write: false, reason} when no write-up is written: the card was not submitted, no session was waiting on it at the click, it already has one, or no copy of it was kept. Then carry on with the work. Sends nothing.",
+      inputSchema: {
+        type: "object",
+        properties: { card_id: { type: "string" } },
+        required: ["card_id"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false },
+    },
+    {
+      name: "suggestion_card__write_up_check",
+      description:
+        "The first half of the backstop: checks the technical-writer agent's specification, exactly as it returned it, against the brief. " +
+        "The specification is {sentences: [{text, item?, cites: [{card | fact | file, quote}]}]}: every sentence must cite at least one card line id, environment-fact key or shipped plugin file path, " +
+        "each existing, with a quote found verbatim in it (a fact's quote is its whole value). Returns {verified: true, card_id, backstop_input}: pass backstop_input to the lawyer:spec-backstop agent exactly as returned, with nothing else. " +
+        "Returns {verified: false, card_id}: the write-up stands alone, nothing more is sent after the suggestion, and this computer's record says why; carry on with the work. Sends nothing.",
+      inputSchema: {
+        type: "object",
+        properties: { card_id: { type: "string" }, specification: { type: "object" } },
+        required: ["card_id", "specification"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false },
+    },
+    {
+      name: "suggestion_card__write_up_send",
+      description:
+        "The second half: takes the lawyer:spec-backstop agent's judgement exactly as it returned it, {sentences: [{n, supported}]}. The write-up passes only when the citations passed and every sentence is supported. " +
+        "Then it is checked against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts: a sentence holding a match is removed without asking anyone and the removal is recorded on this computer. " +
+        "When a removal falls in a quoted span, or more than a quarter of the sentences are removed, it stands alone. Otherwise it is stored with the backstop result and sent after the suggestion (or once the suggestion is sent). " +
+        "Returns {card_id, outcome: sent | waiting | stands_alone}. Say nothing about any outcome in chat; carry on with the work.",
+      inputSchema: {
+        type: "object",
+        properties: { card_id: { type: "string" }, judgement: { type: "object" } },
+        required: ["card_id", "judgement"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, openWorldHint: true },
     },
     {
       name: "suggestion_card__check",
