@@ -79,6 +79,9 @@ test("listing: never-candidates, open in Word, skipped and unswept folders, the 
     "Case.cm12": "x",
     "desktop.ini": "x",
     "Shortcut.lnk": "x",
+    "probanda.json.bak-20261020T181500Z": "x",
+    "coclerk.json.bak-20261020T181500Z": "x",
+    "probanda.json.bak-old": "hand copy",
     "~scratch.txt": "x",
     ".hidden": "x",
     "Letter to client.docx": "open",
@@ -99,10 +102,12 @@ test("listing: never-candidates, open in Word, skipped and unswept folders, the 
   try {
     const out = await candidates(args(m), { gate: fakeGate(), lookup: fakeLookup() });
     assert.deepEqual(out.header, { open_in_word: ["Letter to client.docx"], folders_not_looked_inside: ["1. ADMIN", "8. MISC"] });
-    // Root files always (the fixture's legacy coclerk.json pointer is never one); the subfolder
-    // files fail the fake gate and carry no settled verdict.
+    // Root files always (the fixture's legacy coclerk.json pointer and the relocate's stamped pointer
+    // backups are never one; a hand-labelled copy is); the subfolder files fail the fake gate and
+    // carry no settled verdict.
     assert.deepEqual(paths(out.admitted), [
       "Loose note.txt",
+      "probanda.json.bak-old",
       "Scan.pdf",
       "3. CORRESPONDENCE\\letter.pdf",
       "3. CORRESPONDENCE\\OC\\2026\\inner.MSG",
@@ -115,7 +120,7 @@ test("listing: never-candidates, open in Word, skipped and unswept folders, the 
     assert.equal(root.name, null);
     assert.equal(root.folder_type, null);
     assert.equal(root.hash, h("loose"));
-    const sub = out.admitted[2];
+    const sub = out.admitted[3];
     assert.deepEqual([sub.location, sub.folder_type, sub.admitted_by, sub.name.verdict], ["subfolder", "Correspondence", "name", "fails"]);
     assert.equal(sub.ingest.verdict, "ingested");
     assert.equal(sub.ingest.path, undefined);

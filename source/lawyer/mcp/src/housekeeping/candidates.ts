@@ -29,6 +29,8 @@ export const CANDIDATES_TIMEOUT_MS = 120_000;
 
 const WHITELIST = new Set([".pdf", ".docx", ".doc", ".eml", ".msg", ".xls"]);
 const NEVER_ROOT_FILES = new Set(["probanda.json", "coclerk.json", "claude.md", "agents.md", "proceduralhistory.md", "desktop.ini"]);
+// The pointer copies matter-data's relocate writes before it changes the pointer (relocate_case_data.py).
+const POINTER_BACKUP = /^(?:probanda|coclerk)\.json\.bak-\d{8}t\d{6}z$/;
 const NEVER_ROOT_FOLDERS = new Set(["trash", "claude outputs"]);
 const NUMBERED_0_OR_1 = /^[01](?!\d)/;
 const HASH_CONCURRENCY = 8;
@@ -243,7 +245,7 @@ function list(root: string, swept: SweptFolder[], skip: string[]): { listed: Lis
     }
     if (!e.isFile()) continue;
     const ext = pathWin32.extname(lower);
-    if (NEVER_ROOT_FILES.has(lower) || /^\.cm/.test(ext) || ext === ".lnk") continue;
+    if (NEVER_ROOT_FILES.has(lower) || POINTER_BACKUP.test(lower) || /^\.cm/.test(ext) || ext === ".lnk") continue;
     if (isOpenInWord(lower, lockFiles)) {
       header.open_in_word.push(name);
       continue;
