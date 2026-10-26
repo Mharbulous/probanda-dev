@@ -23,7 +23,7 @@ Take the intake lock (**Intake lock**, Take). If it is held, stop and report `In
 
 ## 2. File
 
-List every issue labelled `suggestion`, open and closed (`GET /issues?labels=suggestion&state=all&per_page=100`, every page). For each `new` row, oldest first, whose `Suggestion <suggestion_id>` line no listed issue body holds, refresh the intake lock and `POST /issues` with the labels `["suggestion","needs-triage"]`, the title `Suggestion: <its title>`, and this body:
+List every issue labelled `suggestion`, open and closed (`GET /issues?labels=suggestion&state=all&per_page=100`, every page). For each `new` row, oldest first, whose `Suggestion <suggestion_id>` line no listed issue body holds, refresh the intake lock and `POST /issues` with the labels `["suggestion","needs-triage","<lane>"]`, where the lane is `lane:user` for source `user` or `assisted` and `lane:ai` for source `llm` (`docs/agents/issue-tracker.md`, **Implementer lock**, on lanes), the title `Suggestion: <its title>`, and this body:
 
 ```markdown
 ## Suggestion

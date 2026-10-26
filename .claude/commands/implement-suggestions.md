@@ -1,5 +1,5 @@
 ---
-description: Cloud only. Under the implementer lock, work the implement queue (every open `ready-for-agent` + `cloud` issue), lowest issue number first, relabel any that cannot be done in the cloud `local`, and push each finished one to main.
+description: Cloud only. Under the implementer lock, work the implement queue (every open `ready-for-agent` + `cloud` issue), maintainer lane first, then user, then AI, oldest first within each, relabel any that cannot be done in the cloud `local`, and push each finished one to main.
 argument-hint: [issue number]
 ---
 
@@ -31,7 +31,7 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 
 ## 2. Pick
 
-Refresh the implementer lock (**Implementer lock**, Refresh). With an issue number in the arguments that this run has not handled yet, take that issue. Otherwise list `GET /issues?labels=ready-for-agent,cloud&state=open&per_page=100`. Drop entries with a `pull_request` field, issues labelled `local`, issues this run already handled, and issues with a live claim (the claim-comment read under **Claim** in `docs/agents/issue-tracker.md`). Take the lowest issue number left.
+Refresh the implementer lock (**Implementer lock**, Refresh). With an issue number in the arguments that this run has not handled yet, take that issue. Otherwise list `GET /issues?labels=ready-for-agent,cloud&state=open&per_page=100`. Drop entries with a `pull_request` field, issues labelled `local`, issues this run already handled, and issues with a live claim (the claim-comment read under **Claim** in `docs/agents/issue-tracker.md`). Take the first left in lane order: issues with no lane label (maintainer lane) first, then `lane:user`, then `lane:ai`, and the lowest issue number within a lane.
 
 Go to step 8 when none is left.
 
