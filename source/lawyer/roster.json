@@ -32,7 +32,8 @@
   ],
   "suggestion": [
     "references/stop-words",
-    "references/mockup"
+    "references/mockup",
+    "references/observations"
   ],
   "task-prioritization": [],
   "verify-bc-lawyer": [

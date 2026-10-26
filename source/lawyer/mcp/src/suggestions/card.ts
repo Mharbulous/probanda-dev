@@ -19,8 +19,12 @@
 //     amount offers Remove and Send anyway (resolvePrompt). Remove deletes the text from the stored card
 //     and puts its bracket in its place. A match in the environment facts, the raw observation or the
 //     mockup is removed unasked and recorded as a defect.
-//   - Dismiss (dismissCard) sends nothing, records a "dismissal" record (for Phase 5's suppression),
+//   - Dismiss (dismissCard) sends nothing, records a "dismissal" record (for decision 3's suppression),
 //     and Restore Suggestion (restoreCard) takes it back (decision 9).
+// An AI-noticed card (decisions 2 to 4) is built for one observation (observation.ts): its raw
+// observation comes from that record, never from the session, its fingerprint is that record's, and
+// it is built only while the daily cap and suppression allow it, in the same write that marks the
+// observation shown.
 //   - Show a mockup (requestMockup) only marks a request in the store. The agent's wait tool
 //     (waitForCard), polling the store from its own process, takes it and returns; the agent writes the
 //     mockup through attachMockup and waits again. While no agent is waiting, the page greys the link.
@@ -41,7 +45,8 @@ import { type CardPart, type CardText, type CrossCheckResult, type Hit, type Hit
 import { renderCardHtml } from "./card-page.js";
 import { checkMockup, loadPlaceholders, renderMockupPage } from "./mockup.js";
 import { RECORD_SOURCES, type RecordSource, type RecordTexts, readRecordTexts } from "./records.js";
-import { type SendSeams, type SuggestionFields, pluginRelease, submitSuggestion } from "./send.js";
+import { type SuggestionFields, pluginRelease, submitSuggestion } from "./send.js";
+import { type Fingerprint, type ObservationSeams, claimObservation, observationForCard, pluginsOf, sessionIdOf } from "./observation.js";
 import { type StoreRecord, type SuggestionStore, CARD_STATUS, cardStatus, isHeld, isSuggestion, loadStore, storeDir, withStore } from "./store.js";
 
 export const CARD_KIND = "card";
@@ -129,6 +134,12 @@ export interface CardRecord {
   /** The sent suggestion's record (store.ts), once Submit saved it. */
   suggestion_record_id: string | null;
   next_line: number;
+  /** An AI-noticed card's fingerprint, its observation and the session it was raised in; absent on any other card. */
+  fingerprint?: Fingerprint;
+  observation_id?: string;
+  session_id?: string;
+  /** True when it was left unanswered at the end of its session, which counts as dismissed (decision 3). */
+  unanswered?: boolean;
 }
 
 export interface DismissalRecord {
@@ -137,9 +148,11 @@ export interface DismissalRecord {
   created_at: string;
   card_id: string;
   origin: CardRecord["origin"];
-  /** Phase 5 sets a fingerprint on AI-noticed cards; null until then. */
+  /** An AI-noticed card's fingerprint (observation.ts); null on any other card. */
   fingerprint: Record<string, unknown> | null;
   plugin_version: string | null;
+  /** True when the card was left unanswered at the end of its session rather than dismissed by a click. */
+  unanswered?: boolean;
 }
 
 export function isCard(record: StoreRecord): record is CardRecord & StoreRecord {
@@ -168,7 +181,7 @@ export interface CardDeps {
   records?: () => Promise<RecordTexts>;
   stopWords?: () => Set<string>;
   placeholders?: () => string[];
-  seams?: SendSeams;
+  seams?: ObservationSeams;
   now?: () => Date;
 }
 
@@ -229,11 +242,14 @@ export interface CardInput {
   raw_observation: string[];
   tool_names: string[] | undefined;
   held_id: string | null;
+  /** For an AI-noticed card: the observation it shows and the session the reminder named. */
+  observation_id: string | null;
+  session_id: string | null;
 }
 
 /** suggestion_card__build's arguments, checked. */
 export function cardInput(args: Record<string, unknown>): CardInput {
-  onlyKeys("the card", args, ["origin", "source", "skill", "pain_point", "items", "context_lines", "raw_observation", "tool_names", "held_id"]);
+  onlyKeys("the card", args, ["origin", "source", "skill", "pain_point", "items", "context_lines", "raw_observation", "tool_names", "held_id", "observation_id", "session_id"]);
   if (args.origin !== "practitioner" && args.origin !== "probanda") throw new ValidationError("origin must be practitioner or probanda");
   if (args.source !== "user" && args.source !== "assisted" && args.source !== "llm") throw new ValidationError("source must be user, assisted or llm");
   const skill = args.skill === undefined ? null : text("skill", args.skill);
@@ -274,7 +290,23 @@ export function cardInput(args: Record<string, unknown>): CardInput {
     toolNames = args.tool_names as string[];
   }
   const heldId = args.held_id === undefined ? null : text("held_id", args.held_id);
-  return { origin: args.origin, source: args.source, skill, pain_point: pain, items, context_lines: contextLines, raw_observation: rawObservation, tool_names: toolNames, held_id: heldId };
+  let observationId: string | null = null;
+  let sessionId: string | null = null;
+  if (args.observation_id !== undefined) {
+    // An AI-noticed card: its raw observation and skill come from the observation's record alone.
+    observationId = text("observation_id", args.observation_id);
+    sessionId = sessionIdOf(args.session_id);
+    if (args.origin !== "probanda" || args.source !== "llm") throw new ValidationError("a card for an observation has origin probanda and source llm");
+    if (args.raw_observation !== undefined) throw new ValidationError("a card for an observation takes its raw observation from the observation, so raw_observation is not given");
+    if (args.skill !== undefined) throw new ValidationError("a card for an observation takes its skill from the observation, so skill is not given");
+    if (heldId !== null) throw new ValidationError("a card for an observation offers no held draft");
+  } else if (args.session_id !== undefined) {
+    throw new ValidationError("session_id goes only with observation_id");
+  }
+  return {
+    origin: args.origin, source: args.source, skill, pain_point: pain, items, context_lines: contextLines, raw_observation: rawObservation,
+    tool_names: toolNames, held_id: heldId, observation_id: observationId, session_id: sessionId,
+  };
 }
 
 // ------------------------------------------------------------- the check --
@@ -411,14 +443,22 @@ export function unreadSources(states: CrossCheckResult["records"]): string[] {
 export type BuildResult =
   | { built: true; card_id: string; card_path: string }
   | { built: false; hits: Array<Omit<CardPrompt, "text"> & { index?: number }> }
-  | { built: false; reason: "records_unreadable"; unreadable: string[] };
+  | { built: false; reason: "records_unreadable"; unreadable: string[] }
+  /** An AI-noticed card the daily cap or suppression does not allow now, or whose observation was already shown. */
+  | { built: false; reason: "not_raised" };
 
 /** Builds a card from the session's scrubbed draft. Refused, with nothing saved, when the full check
  * could not read every record source (decision 22: building is done only when the full check passes),
  * or while it finds a match in text the practitioner would read; a match in generated text is dropped
  * and recorded. A held draft named by held_id leaves the store in the same write, so it is offered once. */
 export async function buildCard(input: CardInput, facts: Record<string, unknown>, deps: CardDeps): Promise<BuildResult> {
-  const at = nowOf(deps).toISOString();
+  const now = nowOf(deps);
+  const at = now.toISOString();
+  if (input.observation_id !== null) {
+    const observation = await observationForCard(input.observation_id, deps.env);
+    if (observation.displayed_at !== null) return { built: false, reason: "not_raised" };
+    input = { ...input, raw_observation: [...observation.raw_observation], skill: observation.fingerprint.skill ?? null };
+  }
   const card = newCard(input, structuredClone(facts), at);
   const { records, stopWords } = await recordsOf(deps);
   const check = runCrossCheck(cardText(card), records, stopWords);
@@ -432,14 +472,25 @@ export async function buildCard(input: CardInput, facts: Record<string, unknown>
     };
   }
   dropGenerated(card, check.hits, "build", at);
-  await withStore(deps.env, (store) => {
+  const plugins = input.observation_id !== null ? pluginsOf(deps.seams ?? {}) : [];
+  const saved = await withStore(deps.env, (store) => {
+    if (input.observation_id !== null) {
+      // The cap and suppression are checked again here, in the write that marks the observation shown.
+      const claim = claimObservation(store, input.observation_id, card.record_id, input.session_id as string, plugins, now);
+      if (!claim.claimed) return false;
+      card.fingerprint = claim.fingerprint;
+      card.observation_id = input.observation_id;
+      card.session_id = input.session_id as string;
+    }
     if (input.held_id !== null) {
       const index = store.records.findIndex((r) => isHeld(r) && r.record_id === input.held_id);
       if (index < 0) throw new ValidationError(`no held suggestion ${input.held_id} on this computer`, "not_found");
       store.records.splice(index, 1);
     }
     store.records.push(card as unknown as StoreRecord);
+    return true;
   });
+  if (!saved) return { built: false, reason: "not_raised" };
   const path = writeCardPage(card, deps.env);
   return { built: true, card_id: card.record_id, card_path: path };
 }
@@ -604,6 +655,7 @@ export function cardFields(card: CardRecord): SuggestionFields {
     ...(card.skill ? { skill: card.skill } : {}),
     ...(card.items.length ? { items: card.items.map((i) => i.text) } : {}),
     origin: card.origin,
+    ...(card.fingerprint ? { fingerprint: { ...card.fingerprint } as unknown as Record<string, unknown> } : {}),
     ...(card.raw_observation.length ? { raw_observation: card.raw_observation.join("\n") } : {}),
     environment_facts: card.environment_facts,
     ...(card.comment ? { comment: card.comment } : {}),
@@ -760,7 +812,9 @@ export async function dismissCard(cardId: string, deps: CardDeps): Promise<{ out
     card.mockup_request = null;
     const dismissal: DismissalRecord = {
       kind: "dismissal", record_id: randomUUID(), created_at: now.toISOString(), card_id: cardId,
-      origin: card.origin, fingerprint: null, plugin_version: release,
+      origin: card.origin,
+      fingerprint: card.fingerprint ? ({ ...card.fingerprint } as unknown as Record<string, unknown>) : null,
+      plugin_version: card.fingerprint?.version ?? release,
     };
     store.records.push(dismissal as unknown as StoreRecord);
     return { outcome: "dismissed" as const };

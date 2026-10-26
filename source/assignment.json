@@ -52,6 +52,7 @@
         "verify-source"
       ],
       "hooks": {
+        "ai-noticed-card": "source/lawyer/hooks/ai-noticed-card.py",
         "hidden-skills-note": "source/lawyer/hooks/hidden-skills-note.py",
         "inject-practice-quirks": ".claude/skills/practice-data/hooks/inject-practice-quirks.py",
         "inject-preferences": "source/lawyer/hooks/inject-preferences.py",
@@ -129,8 +130,7 @@
         "marshal-facts",
         "rules-improviser",
         "rules-reorienter",
-        "source-tracer",
-        "suggestion-evaluator"
+        "source-tracer"
       ],
       "hooks": {
         "correspondence-note": "source/litigator/hooks/correspondence-note.py",

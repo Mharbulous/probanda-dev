@@ -14,8 +14,12 @@
 // changed since it was last shown, writes the Past suggestions page (page.ts) for the session to show
 // as a file card. suggestion_box__past_suggestions writes that page on request. suggestion_log__read
 // lists what the store holds, and suggestion_log__write records a badge as shown and releases a held
-// draft, a suggestion an earlier version kept unposted for want of a key. Tool definitions live in
-// schema/suggestions.ts.
+// draft, a suggestion an earlier version kept unposted for want of a key.
+//
+// suggestion_observation__record records what Probanda noticed about its own work as a structured
+// observation (observation.ts), and suggestion_observation__next answers, under the daily cap and
+// suppression, which observation this session may raise as its AI-noticed card now. Tool definitions
+// live in schema/suggestions.ts.
 
 import { DataServerError, ValidationError } from "../errors.js";
 import { type SendSeams, readStatuses } from "./send.js";
@@ -24,13 +28,14 @@ import type { PracticeStore } from "../practice/store.js";
 import { attachMockup, buildCard, cardInput, openCards, waitForCard } from "./card.js";
 import { loadStopWords, runCrossCheck, type CardText } from "./crosscheck.js";
 import { environmentFacts } from "./environment.js";
+import { type ObservationSeams, nextObservation, recordObservation } from "./observation.js";
 import { readRecordTexts } from "./records.js";
 import { cardStatus, isHeld, isSuggestion, loadStore, withStore } from "./store.js";
 
 type Args = Record<string, unknown>;
 
 export function isSuggestionToolName(name: string): boolean {
-  return name.startsWith("suggestion_box__") || name.startsWith("suggestion_log__");
+  return name.startsWith("suggestion_box__") || name.startsWith("suggestion_log__") || name.startsWith("suggestion_observation__");
 }
 
 export function isSuggestionCardToolName(name: string): boolean {
@@ -61,8 +66,12 @@ export async function callSuggestionCardTool(store: PracticeStore, name: string,
   }
 }
 
-export function callSuggestionTool(name: string, args: Args, env: NodeJS.ProcessEnv = process.env, seams: SendSeams = {}): Promise<unknown> {
+export function callSuggestionTool(name: string, args: Args, env: NodeJS.ProcessEnv = process.env, seams: ObservationSeams = {}): Promise<unknown> {
   switch (name) {
+    case "suggestion_observation__record":
+      return recordObservation(args, env, seams);
+    case "suggestion_observation__next":
+      return nextObservation(args, env, seams);
     case "suggestion_box__status":
       return status(args, env, seams);
     case "suggestion_box__past_suggestions":

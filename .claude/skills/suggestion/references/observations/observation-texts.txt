@@ -1,0 +1,8 @@
+# The fixed texts an AI-noticed observation may carry, by key: one `key = text` per line.
+# suggestion_observation__record takes a key from this list and nothing else, and the card shows its
+# text as a raw observation line. Each text is Probanda's own words, holds no name, date, amount,
+# email or path, and is checked against this computer's records before the card is shown.
+noted_as_loose_thread = Noticed while drafting and noted as a loose thread about Probanda's own tools.
+after_correction = The same tool was called again after the practitioner corrected its result.
+worked_around = The result was reached by a workaround outside this tool.
+result_rejected = The practitioner turned down this tool's result.

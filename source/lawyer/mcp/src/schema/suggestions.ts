@@ -42,6 +42,8 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
         "guess: true marks a block that holds words the practitioner did not use; the card labels it for them to edit. visual: true marks an item that changes how something looks (layout, colour, typography or page structure). " +
         "source is user for the practitioner's own suggestion, assisted for one Probanda offered and they accepted, llm for a loose thread. skill, optional, names the one skill it is about. " +
         "tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. " +
+        "observation_id and session_id, together: the AI-noticed card for the observation suggestion_observation__next returned, with origin probanda and source llm and no skill or raw_observation, which come from the observation itself; " +
+        "it is built only while the daily cap and suppression allow it, and otherwise returns {built: false, reason: \"not_raised\"}: then say nothing and end the reply. " +
         "The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. " +
         "While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; " +
         "replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. " +
@@ -83,6 +85,8 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
           raw_observation: { type: "array", maxItems: 50, items: { type: "string" } },
           tool_names: { type: "array", maxItems: 5000, items: { type: "string", maxLength: 300 } },
           held_id: { type: "string" },
+          observation_id: { type: "string" },
+          session_id: { type: "string", maxLength: 128 },
         },
         required: ["origin", "source", "pain_point", "items"],
         additionalProperties: false,
@@ -164,6 +168,49 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
         additionalProperties: false,
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    {
+      name: "suggestion_observation__record",
+      description:
+        "Record, on this computer only, something Probanda noticed about its own work, as one structured observation; nothing is shown or sent now. " +
+        "Probanda raises it later by itself as a suggestion card that opens \"Probanda noticed:\", at most one a day, and never again for one the practitioner dismissed, sent or left unanswered. " +
+        "It holds only Probanda's own output, never free text: kind (tool_error, tool_refused, tool_missing, repeated_calls or token_use); tool, the Probanda tool's name exactly as this session sees it (needed for every kind but token_use); " +
+        "error_code, the error's class or code only (not_found, ValidationError, ECONNREFUSED, HTTP 500), never its message; counts, whole numbers under calls, retries, failures, turns, input_tokens, output_tokens " +
+        "(repeated_calls needs calls, token_use a token count); text_key, one of the plugin's fixed texts (noted_as_loose_thread, after_correction, worked_around, result_rejected); and skill, the one Probanda skill it happened in. " +
+        "Never pass an argument value, an error message, a document's words or the practitioner's words: any other field or value is refused. " +
+        "The plugin and its version come from the installed plugin itself. Returns {recorded: true, observation_id}, or {recorded: false, reason: \"already_held\", observation_id} for one already held under this version, which is not added again. Say nothing about it in chat.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          kind: { type: "string", enum: ["tool_error", "tool_refused", "tool_missing", "repeated_calls", "token_use"] },
+          skill: { type: "string", maxLength: 49, pattern: "^[a-z][a-z0-9-]{1,48}$" },
+          tool: { type: "string", maxLength: 300 },
+          error_code: { type: "string", maxLength: 64 },
+          counts: {
+            type: "object",
+            properties: Object.fromEntries(["calls", "retries", "failures", "turns", "input_tokens", "output_tokens"].map((k) => [k, { type: "integer", minimum: 0, maximum: 1_000_000_000 }])),
+            additionalProperties: false,
+          },
+          text_key: { type: "string", maxLength: 49 },
+        },
+        required: ["kind"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false },
+    },
+    {
+      name: "suggestion_observation__next",
+      description:
+        "Only when the reminder at the end of a reply names this session's id: which observation, if any, this session may show now as its AI-noticed suggestion card, under the daily cap (one a day across sessions) and the suppression " +
+        "(never for one dismissed, sent or left unanswered in the last 30 days, or while the plugin version is the one it was dismissed, sent or left unanswered under). A card from an earlier session still unanswered counts as dismissed. " +
+        "Returns {observation: {observation_id, fingerprint: {plugin, version, skill?, kind}, raw_observation: [lines]}} or {observation: null}. With null, say nothing and end the reply. Sends nothing.",
+      inputSchema: {
+        type: "object",
+        properties: { session_id: { type: "string", maxLength: 128 } },
+        required: ["session_id"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false },
     },
     {
       name: "suggestion_log__read",

@@ -120,7 +120,7 @@ class LooseThreadDiscardTests(unittest.TestCase):
         self.assertIn("it stamps `discarded_at`, the minute dropped, `YYYY-MM-DDTHH:MM` in local time, and deletes no row", text)
         self.assertIn("On a database held below v75 the write fails with `no such column`.", text)
         self.assertIn("never delete the row instead", text)
-        self.assertIn("Written only after the Suggestion Box's post has returned an issue number", text)
+        self.assertIn("No route writes it any more: a `tooling` thread is no longer sent as a suggestion", text)
         self.assertNotIn("DELETE FROM seeds", text)
 
 

@@ -1,4 +1,4 @@
-// build-stamp: 79da6dfe6a5a
+// build-stamp: 3edcd8ca4d50
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -68408,13 +68408,13 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     }
     return propValues;
   });
-  const isObject8 = isObject;
+  const isObject9 = isObject;
   const catchall = def.catchall;
   let value;
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject8(input)) {
+    if (!isObject9(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -68541,7 +68541,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     return (payload, ctx) => fn2(shape, payload, ctx);
   };
   let fastpass;
-  const isObject8 = isObject;
+  const isObject9 = isObject;
   const jit = !globalConfig.jitless;
   const allowsEval2 = allowsEval;
   const fastEnabled = jit && allowsEval2.value;
@@ -68550,7 +68550,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject8(input)) {
+    if (!isObject9(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -79193,7 +79193,7 @@ function suggestionToolDefinitions() {
     },
     {
       name: "suggestion_card__build",
-      description: `Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path}. Nothing is sent: the practitioner's Submit Suggestion on the card sends it, and Dismiss sends nothing. Present card_path as a file card with no chat text at all, then call suggestion_card__wait. The card shows, in its own fixed order and words, the origin cue (origin practitioner: "You suggested:"; probanda: "Probanda noticed:"), the pain_point, the items, a mockup link when any item is visual, the context_lines (constraint and evidence lines) and the raw_observation lines, a comment box, and Submit Suggestion and Dismiss. Each block's text is the practitioner's own phrases reshaped, with every name and indirect identifier replaced by one of the brackets [client], [matter], [person], [document], [file], [date], [amount]; any other bracketed word is refused. guess: true marks a block that holds words the practitioner did not use; the card labels it for them to edit. visual: true marks an item that changes how something looks (layout, colour, typography or page structure). source is user for the practitioner's own suggestion, assisted for one Probanda offered and they accepted, llm for a loose thread. skill, optional, names the one skill it is about. tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. When some of this computer's records could not be read, the check is not complete and no card is built: it returns {built: false, reason: "records_unreadable", unreadable: [...]}, naming each unread kind of record (client, matter, contact, folder name, document title, file name). Nothing is saved; do not build again in this session.`,
+      description: `Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path}. Nothing is sent: the practitioner's Submit Suggestion on the card sends it, and Dismiss sends nothing. Present card_path as a file card with no chat text at all, then call suggestion_card__wait. The card shows, in its own fixed order and words, the origin cue (origin practitioner: "You suggested:"; probanda: "Probanda noticed:"), the pain_point, the items, a mockup link when any item is visual, the context_lines (constraint and evidence lines) and the raw_observation lines, a comment box, and Submit Suggestion and Dismiss. Each block's text is the practitioner's own phrases reshaped, with every name and indirect identifier replaced by one of the brackets [client], [matter], [person], [document], [file], [date], [amount]; any other bracketed word is refused. guess: true marks a block that holds words the practitioner did not use; the card labels it for them to edit. visual: true marks an item that changes how something looks (layout, colour, typography or page structure). source is user for the practitioner's own suggestion, assisted for one Probanda offered and they accepted, llm for a loose thread. skill, optional, names the one skill it is about. tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. observation_id and session_id, together: the AI-noticed card for the observation suggestion_observation__next returned, with origin probanda and source llm and no skill or raw_observation, which come from the observation itself; it is built only while the daily cap and suppression allow it, and otherwise returns {built: false, reason: "not_raised"}: then say nothing and end the reply. The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. When some of this computer's records could not be read, the check is not complete and no card is built: it returns {built: false, reason: "records_unreadable", unreadable: [...]}, naming each unread kind of record (client, matter, contact, folder name, document title, file name). Nothing is saved; do not build again in this session.`,
       inputSchema: {
         type: "object",
         properties: {
@@ -79229,7 +79229,9 @@ function suggestionToolDefinitions() {
           },
           raw_observation: { type: "array", maxItems: 50, items: { type: "string" } },
           tool_names: { type: "array", maxItems: 5e3, items: { type: "string", maxLength: 300 } },
-          held_id: { type: "string" }
+          held_id: { type: "string" },
+          observation_id: { type: "string" },
+          session_id: { type: "string", maxLength: 128 }
         },
         required: ["origin", "source", "pain_point", "items"],
         additionalProperties: false
@@ -79287,6 +79289,39 @@ function suggestionToolDefinitions() {
         additionalProperties: false
       },
       annotations: { readOnlyHint: true, openWorldHint: false }
+    },
+    {
+      name: "suggestion_observation__record",
+      description: `Record, on this computer only, something Probanda noticed about its own work, as one structured observation; nothing is shown or sent now. Probanda raises it later by itself as a suggestion card that opens "Probanda noticed:", at most one a day, and never again for one the practitioner dismissed, sent or left unanswered. It holds only Probanda's own output, never free text: kind (tool_error, tool_refused, tool_missing, repeated_calls or token_use); tool, the Probanda tool's name exactly as this session sees it (needed for every kind but token_use); error_code, the error's class or code only (not_found, ValidationError, ECONNREFUSED, HTTP 500), never its message; counts, whole numbers under calls, retries, failures, turns, input_tokens, output_tokens (repeated_calls needs calls, token_use a token count); text_key, one of the plugin's fixed texts (noted_as_loose_thread, after_correction, worked_around, result_rejected); and skill, the one Probanda skill it happened in. Never pass an argument value, an error message, a document's words or the practitioner's words: any other field or value is refused. The plugin and its version come from the installed plugin itself. Returns {recorded: true, observation_id}, or {recorded: false, reason: "already_held", observation_id} for one already held under this version, which is not added again. Say nothing about it in chat.`,
+      inputSchema: {
+        type: "object",
+        properties: {
+          kind: { type: "string", enum: ["tool_error", "tool_refused", "tool_missing", "repeated_calls", "token_use"] },
+          skill: { type: "string", maxLength: 49, pattern: "^[a-z][a-z0-9-]{1,48}$" },
+          tool: { type: "string", maxLength: 300 },
+          error_code: { type: "string", maxLength: 64 },
+          counts: {
+            type: "object",
+            properties: Object.fromEntries(["calls", "retries", "failures", "turns", "input_tokens", "output_tokens"].map((k3) => [k3, { type: "integer", minimum: 0, maximum: 1e9 }])),
+            additionalProperties: false
+          },
+          text_key: { type: "string", maxLength: 49 }
+        },
+        required: ["kind"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false }
+    },
+    {
+      name: "suggestion_observation__next",
+      description: "Only when the reminder at the end of a reply names this session's id: which observation, if any, this session may show now as its AI-noticed suggestion card, under the daily cap (one a day across sessions) and the suppression (never for one dismissed, sent or left unanswered in the last 30 days, or while the plugin version is the one it was dismissed, sent or left unanswered under). A card from an earlier session still unanswered counts as dismissed. Returns {observation: {observation_id, fingerprint: {plugin, version, skill?, kind}, raw_observation: [lines]}} or {observation: null}. With null, say nothing and end the reply. Sends nothing.",
+      inputSchema: {
+        type: "object",
+        properties: { session_id: { type: "string", maxLength: 128 } },
+        required: ["session_id"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false }
     },
     {
       name: "suggestion_log__read",
@@ -80749,7 +80784,7 @@ function listCaseParties(caseDataDir, env = process.env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync6 } from "node:fs";
 import { join as join10 } from "node:path";
-var BUILD_STAMP = false ? null : "79da6dfe6a5a";
+var BUILD_STAMP = false ? null : "3edcd8ca4d50";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -81351,20 +81386,20 @@ async function contact_checks(store, args) {
   }));
   const unresolved = [];
   const miss = (matter, reason) => unresolved.push({ matter_id: matter ? String(matter.id) : null, matt_num: matter ? matter.matt_num ?? null : null, reason });
-  const folders = [];
+  const folders2 = [];
   if (one) {
     if (args.matter_root) {
       try {
-        folders.push([one.row, caseDataFolder(String(args.matter_root), store.env)]);
+        folders2.push([one.row, caseDataFolder(String(args.matter_root), store.env)]);
       } catch (err) {
         miss(one.row, `its matter-data folder could not be found from matter_root: ${err.message}`);
       }
     }
   } else if (matters.length) {
-    folders.push(...matterDataFolders(store, matters, miss).map(({ matter, folder }) => [matter, folder]));
+    folders2.push(...matterDataFolders(store, matters, miss).map(({ matter, folder }) => [matter, folder]));
   }
   const parties_without_role = [];
-  for (const [matter, folder] of folders) {
+  for (const [matter, folder] of folders2) {
     const read3 = listCaseParties(folder, store.env);
     if (read3.status === "unavailable") miss(matter, read3.reason);
     if (read3.status !== "ok") continue;
@@ -81758,9 +81793,9 @@ async function delete_anchor(store, args) {
   const items2 = store.items();
   if (items2.get(anchorId)?.kind !== "anchor") throw new NotFoundError(`No anchor ${anchorId}`);
   const linked = (kind) => rowsOf(items2, kind).filter((row2) => row2.anchor_id === anchorId).length;
-  const counts2 = { deleted_sources: linked("anchor_source"), deleted_deadlines: linked("deadline") };
+  const counts3 = { deleted_sources: linked("anchor_source"), deleted_deadlines: linked("deadline") };
   await store.write("delete_anchor", {}, [{ op: "delete", id: anchorId, kind: "anchor" }]);
-  return { deleted_anchor: anchorId, ...counts2 };
+  return { deleted_anchor: anchorId, ...counts3 };
 }
 async function upsert_deadline(store, args) {
   const matterId = args.matt_num || args.matter_id ? requireMatter(store.items(), args).id : void 0;
@@ -82917,13 +82952,13 @@ function checkEntries(raw, types, where) {
   return raw.map((entry2, i3) => {
     const at = `${where}: entries[${i3}]`;
     if (entry2 === null || typeof entry2 !== "object" || Array.isArray(entry2)) throw new ValidationError(`${at} must be an object`);
-    const { type, folders, ...rest } = entry2;
+    const { type, folders: folders2, ...rest } = entry2;
     if (Object.keys(rest).length) throw new ValidationError(`${at} has unknown field(s) ${Object.keys(rest).join(", ")}`);
     if (typeof type !== "string" || !known.has(type)) throw new ValidationError(`${at}: "${String(type)}" is not a document type`);
     if (seen.has(type)) throw new ValidationError(`${at}: type ${type} appears twice`);
     seen.add(type);
-    if (!Array.isArray(folders) || folders.length === 0) throw new ValidationError(`${at}: folders must be a non-empty array`);
-    return { type, folders: folders.map((g3) => checkGlob(g3, at)) };
+    if (!Array.isArray(folders2) || folders2.length === 0) throw new ValidationError(`${at}: folders must be a non-empty array`);
+    return { type, folders: folders2.map((g3) => checkGlob(g3, at)) };
   });
 }
 function readFolderMap(env = process.env, types = documentTypes(env)) {
@@ -84148,12 +84183,12 @@ async function ingestAuthority(request2, env = process.env) {
   if ("problems" in plan) return { ok: false, problems: plan.problems };
   const done = await caseDataExecuteStatements(request2.matter_root, plan.statements, plan.params, env);
   if (!done.ok) return { ok: false, problems: done.refused.map(String) };
-  const counts2 = {};
+  const counts3 = {};
   const named2 = {};
   plan.statements.forEach((statement, i3) => {
     const { rowcount, rows: rows2 } = done.results[i3];
     if (statement.count) {
-      const count = counts2[statement.count.table] ??= { inserted: 0, skipped: 0 };
+      const count = counts3[statement.count.table] ??= { inserted: 0, skipped: 0 };
       count.inserted += rowcount;
       count.skipped += statement.count.of - rowcount;
     }
@@ -84163,7 +84198,7 @@ async function ingestAuthority(request2, env = process.env) {
   return {
     ok: true,
     ...named2,
-    counts: counts2,
+    counts: counts3,
     treats_prior: plan.treats_prior ?? null,
     held_back: plan.held_back ?? [],
     evidence_sql: done.evidence_sql,
@@ -94006,10 +94041,10 @@ function moveCaseDataMockups(dbPath) {
     }
     byFiling.set(id, [...byFiling.get(id) ?? [], { dir: path, manifest }]);
   }
-  const folders = writingFolders(dbPath, draft);
+  const folders2 = writingFolders(dbPath, draft);
   for (const [id, found] of byFiling) {
     const row2 = rows2.get(id);
-    const folder = settled(draft, row2.title, folders.get(id));
+    const folder = settled(draft, row2.title, folders2.get(id));
     const dir = join29(draft, folder);
     mkdirSync12(dir, { recursive: true });
     const [current, ...rest] = [...found].sort((a3, b3) => later(a3, b3, id) ? -1 : 1);
@@ -95551,14 +95586,14 @@ function statusLines(row2) {
 var CLASS_RANK = { in_use: 0, undecided: 1, not_relevant: 2 };
 function buildRawResearchData(dbPath, filing) {
   const filings = Array.isArray(filing) ? filing : [filing];
-  const counts2 = { in_use: 0, undecided: 0, not_relevant: 0 };
+  const counts3 = { in_use: 0, undecided: 0, not_relevant: 0 };
   const groups = [];
   for (const proceedingId of [...new Set(filings.map((f3) => f3.proceeding_id))]) {
     const part = rawResearchFor(dbPath, proceedingId, filings.filter((f3) => f3.proceeding_id === proceedingId).map((f3) => f3.id), filings.length > 1);
-    for (const k3 of Object.keys(counts2)) counts2[k3] += part.counts[k3];
+    for (const k3 of Object.keys(counts3)) counts3[k3] += part.counts[k3];
     groups.push(...part.groups);
   }
-  return { counts: counts2, groups };
+  return { counts: counts3, groups };
 }
 function rawResearchFor(dbPath, proceedingId, ids, merged) {
   const inIds = `(${ids.map(() => "?").join(", ")})`;
@@ -95609,18 +95644,18 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
     ...present3(required2.filter((r3) => r3.on_filing === 1).map((r3) => r3.law_assertion_id))
   ]);
   const usedHere = /* @__PURE__ */ new Set([...citedHere, ...present3(required2.filter((r3) => r3.on_filing === 1).map((r3) => r3.excerpt_id))]);
-  const counts2 = { in_use: 0, undecided: 0, not_relevant: 0 };
+  const counts3 = { in_use: 0, undecided: 0, not_relevant: 0 };
   function statementOf(row2, killedOn) {
     const inUse = row2.law_assertion_id !== null && deployed.has(row2.law_assertion_id) || usedHere.has(row2.statement_id);
     const cls = rawResearchClass({ proposition_killed_on: killedOn, authority_killed_on: row2.authority_killed_on, in_use: inUse });
-    counts2[cls] += 1;
+    counts3[cls] += 1;
     const { title, rest } = citationParts(row2);
     return { statement_id: row2.statement_id, class: cls, citation_title: title, citation_rest: rest, excerpt: row2.excerpt, status: statusLines(row2) };
   }
   function cardClass(own, killedOn, inUse) {
     if (own.length === 0) {
       const cls = rawResearchClass({ proposition_killed_on: killedOn, authority_killed_on: null, in_use: inUse });
-      counts2[cls] += 1;
+      counts3[cls] += 1;
       return cls;
     }
     return own.reduce((best, s3) => CLASS_RANK[s3.class] < CLASS_RANK[best] ? s3.class : best, "not_relevant");
@@ -95689,7 +95724,7 @@ function rawResearchFor(dbPath, proceedingId, ids, merged) {
   for (const s3 of elsewhere) push(s3.contention, `Submission not on ${here}`, take(linkedTo(s3.id)));
   push("Required by an order sought", `Order not on ${here}`, orderGroup(required2.filter((r3) => r3.on_filing !== 1)));
   push("Not linked", null, [...take(cards.keys()), ...takeLoose(loose.keys())]);
-  return { counts: counts2, groups };
+  return { counts: counts3, groups };
 }
 var RAW_RESEARCH_PAGE = {
   name: "Raw Research",
@@ -95735,21 +95770,21 @@ ${page2.tail}`;
 
 // src/submission/matter-page-groups.ts
 var WRITING_JOB_BOARD_FILE = "Job Board.html";
-function boardFolder(board, folders) {
-  return board.filing_id === null ? void 0 : folders.get(board.filing_id)?.name;
+function boardFolder(board, folders2) {
+  return board.filing_id === null ? void 0 : folders2.get(board.filing_id)?.name;
 }
-function boardFile(board, folders) {
-  const folder = boardFolder(board, folders);
+function boardFile(board, folders2) {
+  const folder = boardFolder(board, folders2);
   if (folder !== void 0) return join32(folder, WRITING_JOB_BOARD_FILE);
   return board.filing_id === null ? `Job Board - proceeding ${board.proceeding_id}.html` : `Job Board ${board.filing_id}.html`;
 }
-function pageGroups(index, live, preFiling, folders) {
+function pageGroups(index, live, preFiling, folders2) {
   const groups = /* @__PURE__ */ new Map();
   for (const m3 of [...live.map((l3) => l3), ...preFiling.map((p3) => ({ proceeding: p3, filing: null }))]) {
     const ref = { filing_id: m3.filing?.id ?? null, proceeding_id: m3.proceeding.id };
     const board = index.survivorOf(ref);
     const key = boardKey(board);
-    const group = groups.get(key) ?? { board, file: boardFile(board, folders), members: [] };
+    const group = groups.get(key) ?? { board, file: boardFile(board, folders2), members: [] };
     if (sameBoard(ref, board)) group.members.unshift(m3);
     else group.members.push(m3);
     groups.set(key, group);
@@ -95772,17 +95807,17 @@ function pageTargets(groups) {
 function writingsOf(group) {
   return group.members.filter((m3) => m3.filing !== null && !isJobOnlyBoard(m3.filing));
 }
-function viewTargets(groups, folders) {
-  return groups.map((group) => ({ group, writings: writingsOf(group) })).filter(({ writings }) => writings.length > 0).flatMap(({ group, writings }) => VIEW_PAGES.map((page2) => ({ page: page2, group, writings, file: viewPageFile(page2, group.board, boardFolder(group.board, folders)) })));
+function viewTargets(groups, folders2) {
+  return groups.map((group) => ({ group, writings: writingsOf(group) })).filter(({ writings }) => writings.length > 0).flatMap(({ group, writings }) => VIEW_PAGES.map((page2) => ({ page: page2, group, writings, file: viewPageFile(page2, group.board, boardFolder(group.board, folders2)) })));
 }
 
 // src/submission/matter-page-files.ts
 var JOB_BOARD_MARKER = "data-workboard-shell";
 function refuseForeignMatterPages(draftDir, dbPath) {
   const { live, preFiling } = liveMembers(dbPath);
-  const folders = writingFolders(dbPath, draftDir);
-  const groups = pageGroups(new BoardIndex(dbPath), live, preFiling, folders);
-  refuseForeignPages(draftDir, guardTargets(groups.map((g3) => g3.file), viewTargets(groups, folders)));
+  const folders2 = writingFolders(dbPath, draftDir);
+  const groups = pageGroups(new BoardIndex(dbPath), live, preFiling, folders2);
+  refuseForeignPages(draftDir, guardTargets(groups.map((g3) => g3.file), viewTargets(groups, folders2)));
 }
 function pagePathFor(pages, section3) {
   const { filing_id, proceeding_id } = section3;
@@ -95953,9 +95988,9 @@ function stripTargets(dbPath) {
     for (const doc of manifest.files) targets.push({ board, key: docItemKey(f3.id, doc.file_name), file: doc.file_name, dir });
   }
   const draft = draftDirOf(dbPath);
-  const folders = writingFolders(dbPath, draft);
+  const folders2 = writingFolders(dbPath, draft);
   for (const board of boards.values()) {
-    const folder = board.filing_id === null ? void 0 : folders.get(board.filing_id)?.name;
+    const folder = board.filing_id === null ? void 0 : folders2.get(board.filing_id)?.name;
     for (const page2 of VIEW_PAGES) {
       const file = join35(draft, viewPageFile(page2, board, folder));
       targets.push({ board, key: viewItemKey(page2.name), file: basename5(file), dir: dirname18(file) });
@@ -97394,10 +97429,10 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
   const preFiling = fetchPreFilingProceedings(dbPath);
   const live = ranked.filter((r3) => !r3.filing.retired_on);
   const index = new BoardIndex(dbPath);
-  const folders = writingFolders(dbPath, draftDir);
-  const groups = pageGroups(index, live, preFiling, folders);
+  const folders2 = writingFolders(dbPath, draftDir);
+  const groups = pageGroups(index, live, preFiling, folders2);
   const targets = pageTargets(groups);
-  const views = viewTargets(groups, folders);
+  const views = viewTargets(groups, folders2);
   const meta2 = {
     revision,
     matter: client.matterNo ?? "",
@@ -101020,15 +101055,15 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
   const timings = [];
   const started = performance.now();
   const schemaVersion = timed(timings, "schema_check", () => readSchemaVersion(dbPath));
-  const currentVersion = timed(timings, "schema_target", () => renderableSchemaVersion(currentSchemaVersion()));
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
+  const currentVersion2 = timed(timings, "schema_target", () => renderableSchemaVersion(currentSchemaVersion()));
+  if (schemaVersion !== null && schemaVersion > currentVersion2) {
     return {
       filing_id: filingId,
       documents: [],
       schema_version: schemaVersion,
-      current_schema_version: currentVersion,
+      current_schema_version: currentVersion2,
       bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was rendered -- rendering against a schema newer than the installed bundle can crash inside a renderer or produce wrong output. The installed Probanda plugin bundle is older than this database -- rebuild/reinstall the plugin so it matches, then call drafting_forms__render again.`,
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion2}. Nothing was rendered -- rendering against a schema newer than the installed bundle can crash inside a renderer or produce wrong output. The installed Probanda plugin bundle is older than this database -- rebuild/reinstall the plugin so it matches, then call drafting_forms__render again.`,
       timings: withTotal(timings, started)
     };
   }
@@ -101833,8 +101868,8 @@ function confineCaseDataFolder(dbPath, caseDataFolder2) {
   }
   return folder;
 }
-function writeSubstanceFile(caseData, fileName, markdown, folders = [BCSC_SUBSTANCE_FOLDER]) {
-  const dirs = folders.map((_3, i3) => pathWin3217.join(caseData, ...folders.slice(0, i3 + 1)));
+function writeSubstanceFile(caseData, fileName, markdown, folders2 = [BCSC_SUBSTANCE_FOLDER]) {
+  const dirs = folders2.map((_3, i3) => pathWin3217.join(caseData, ...folders2.slice(0, i3 + 1)));
   const path = pathWin3217.join(dirs[dirs.length - 1], fileName);
   for (const p3 of [...dirs, path]) {
     if (existsSync36(p3) && realpathSync9.native(p3).toLowerCase() !== p3.toLowerCase()) {
@@ -101857,14 +101892,14 @@ function unplacedFactWarnings(dbPath, filing) {
 function submissionFormsEmitForm32(dbPath, filingId, caseDataFolder2, seams = {}, publish3 = {}) {
   const caseData = caseDataFolder2 === void 0 ? void 0 : confineCaseDataFolder(dbPath, caseDataFolder2);
   const schemaVersion = readSchemaVersion(dbPath);
-  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
+  const currentVersion2 = renderableSchemaVersion(currentSchemaVersion());
+  if (schemaVersion !== null && schemaVersion > currentVersion2) {
     return {
       filing_id: filingId,
       schema_version: schemaVersion,
-      current_schema_version: currentVersion,
+      current_schema_version: currentVersion2,
       bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_form32 again.`
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion2}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_form32 again.`
     };
   }
   const filing = fetchFilingById(dbPath, filingId);
@@ -101896,14 +101931,14 @@ function submissionFormsEmitForm32(dbPath, filingId, caseDataFolder2, seams = {}
 function submissionFormsEmitForm33(dbPath, filingId, caseDataFolder2, seams = {}, publish3 = {}) {
   const caseData = caseDataFolder2 === void 0 ? void 0 : confineCaseDataFolder(dbPath, caseDataFolder2);
   const schemaVersion = readSchemaVersion(dbPath);
-  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
+  const currentVersion2 = renderableSchemaVersion(currentSchemaVersion());
+  if (schemaVersion !== null && schemaVersion > currentVersion2) {
     return {
       filing_id: filingId,
       schema_version: schemaVersion,
-      current_schema_version: currentVersion,
+      current_schema_version: currentVersion2,
       bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_form33 again.`
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion2}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_form33 again.`
     };
   }
   const filing = fetchFilingById(dbPath, filingId);
@@ -101975,14 +102010,14 @@ Resolve each through /drafting-data, re-render the mockup, then emit again.`
 function submissionFormsEmitAffidavit(dbPath, filingId, documentId, caseDataFolder2) {
   const caseData = caseDataFolder2 === void 0 ? void 0 : confineCaseDataFolder(dbPath, caseDataFolder2);
   const schemaVersion = readSchemaVersion(dbPath);
-  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
+  const currentVersion2 = renderableSchemaVersion(currentSchemaVersion());
+  if (schemaVersion !== null && schemaVersion > currentVersion2) {
     return {
       filing_id: filingId,
       schema_version: schemaVersion,
-      current_schema_version: currentVersion,
+      current_schema_version: currentVersion2,
       bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_affidavit again.`
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion2}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_affidavit again.`
     };
   }
   const filing = fetchFilingById(dbPath, filingId);
@@ -102340,14 +102375,14 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
 // src/submission/forms/emit-bcca.ts
 function submissionFormsEmitBccaBook(dbPath, filingId) {
   const schemaVersion = readSchemaVersion(dbPath);
-  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
+  const currentVersion2 = renderableSchemaVersion(currentSchemaVersion());
+  if (schemaVersion !== null && schemaVersion > currentVersion2) {
     return {
       filing_id: filingId,
       schema_version: schemaVersion,
-      current_schema_version: currentVersion,
+      current_schema_version: currentVersion2,
       bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_bcca_book again.`
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion2}. Nothing was emitted -- rendering against a schema newer than the installed bundle can crash or produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_bcca_book again.`
     };
   }
   const filing = fetchFilingById(dbPath, filingId);
@@ -102367,14 +102402,14 @@ function submissionFormsEmitBccaBook(dbPath, filingId) {
 }
 function submissionFormsEmitBccaFactum(dbPath, filingId, datedOn) {
   const schemaVersion = readSchemaVersion(dbPath);
-  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
+  const currentVersion2 = renderableSchemaVersion(currentSchemaVersion());
+  if (schemaVersion !== null && schemaVersion > currentVersion2) {
     return {
       filing_id: filingId,
       schema_version: schemaVersion,
-      current_schema_version: currentVersion,
+      current_schema_version: currentVersion2,
       bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was emitted. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_bcca_factum again.`
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion2}. Nothing was emitted. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__emit_bcca_factum again.`
     };
   }
   const filing = fetchFilingById(dbPath, filingId);
@@ -102745,14 +102780,14 @@ function runPreFilingChecks(dbPath, filingId, packageDir) {
 // src/submission/forms/pre-filing-check.ts
 function submissionFormsPreFilingCheck(dbPath, filingId, packageDir) {
   const schemaVersion = readSchemaVersion(dbPath);
-  const currentVersion = renderableSchemaVersion(currentSchemaVersion());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
+  const currentVersion2 = renderableSchemaVersion(currentSchemaVersion());
+  if (schemaVersion !== null && schemaVersion > currentVersion2) {
     return {
       filing_id: filingId,
       schema_version: schemaVersion,
-      current_schema_version: currentVersion,
+      current_schema_version: currentVersion2,
       bundle_outdated: true,
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. Nothing was checked -- reading against a schema newer than the installed bundle can produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__pre_filing_check again.`
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion2}. Nothing was checked -- reading against a schema newer than the installed bundle can produce wrong output. Rebuild/reinstall the Probanda plugin bundle so it matches, then call drafting_forms__pre_filing_check again.`
     };
   }
   const filing = fetchFilingById(dbPath, filingId);
@@ -102932,36 +102967,36 @@ function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDi
   const started = performance.now();
   const schemaVersion = timed(timings, "schema_check", () => readSchemaVersion(dbPath));
   const engineTarget = timed(timings, "schema_target", () => currentSchemaVersion());
-  const currentVersion = renderableSchemaVersion(engineTarget);
+  const currentVersion2 = renderableSchemaVersion(engineTarget);
   const schemaSource = schemaSourceStatus(engineTarget);
   const build = timed(timings, "build_stamp_check", () => buildStampStatus());
-  if (schemaVersion !== null && schemaVersion > currentVersion) {
+  if (schemaVersion !== null && schemaVersion > currentVersion2) {
     return {
       ...build,
       ...schemaSource,
       db_path: dbPath,
       schema_version: schemaVersion,
-      current_schema_version: currentVersion,
+      current_schema_version: currentVersion2,
       migration_required: false,
       bundle_outdated: true,
       filings: [],
-      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion}. No filing was listed and nothing was rendered -- rendering against a schema newer than the installed bundle can crash inside a renderer or produce wrong output. ` + bundleNextStep("database"),
+      note: `This database is on schema version ${schemaVersion}; the installed plugin bundle only supports up to ${currentVersion2}. No filing was listed and nothing was rendered -- rendering against a schema newer than the installed bundle can crash inside a renderer or produce wrong output. ` + bundleNextStep("database"),
       timings: withTotal(timings, started)
     };
   }
   if (schemaVersion === null || schemaVersion < engineTarget) {
-    if (engineTarget > currentVersion) {
+    if (engineTarget > currentVersion2) {
       return {
         ...build,
         ...schemaSource,
         db_path: dbPath,
         schema_version: schemaVersion,
-        current_schema_version: currentVersion,
+        current_schema_version: currentVersion2,
         migration_required: false,
         migration_withheld: true,
         bundle_outdated: false,
         filings: [],
-        note: `This database is on schema version ${schemaVersion ?? "(unstamped)"} and the migration source would take it to ${engineTarget}, but this plugin bundle was built against ${currentVersion} and cannot read ${engineTarget}. The migration was WITHHELD: the database, its recorded schema version and its backups are unchanged, and nothing was copied aside. No filing was listed and nothing was rendered. ` + bundleNextStep("source"),
+        note: `This database is on schema version ${schemaVersion ?? "(unstamped)"} and the migration source would take it to ${engineTarget}, but this plugin bundle was built against ${currentVersion2} and cannot read ${engineTarget}. The migration was WITHHELD: the database, its recorded schema version and its backups are unchanged, and nothing was copied aside. No filing was listed and nothing was rendered. ` + bundleNextStep("source"),
         timings: withTotal(timings, started)
       };
     }
@@ -103351,10 +103386,10 @@ async function submissionDataMergeJobs(args, env = process.env) {
   const changes = (i3) => written.ok ? written.results[i3].changes : 0;
   const [confirm] = submissionDataQuery(args.db_path, "SELECT status, superseded_by FROM tickets WHERE id = ?", [a3]).rows;
   const merged = confirm.status === "superseded" && confirm.superseded_by === s3 && changes(6) === 1;
-  const counts2 = merged ? { steps_added: changes(0), scope_added: changes(1), keys_added: changes(2), blocks_moved: changes(3) } : {};
+  const counts3 = merged ? { steps_added: changes(0), scope_added: changes(1), keys_added: changes(2), blocks_moved: changes(3) } : {};
   return {
     ...empty2,
-    ...counts2,
+    ...counts3,
     outcome: merged ? "merged" : "no_match",
     absorbed_status: confirm.status,
     superseded_by: confirm.superseded_by,
@@ -103915,8 +103950,8 @@ function bindDraftTarget(matterRoot, env) {
   const root = validateMatterRoot(matterRoot);
   return { root, caseData: existingCaseDataFolder(root, env), draft: draftFolder(root) };
 }
-function writeWorkingFile(target, folders, fileName, text8) {
-  return writeSubstanceFile(target.caseData, fileName, text8, folders);
+function writeWorkingFile(target, folders2, fileName, text8) {
+  return writeSubstanceFile(target.caseData, fileName, text8, folders2);
 }
 function writingSubfolder(target, name) {
   return resolveWithin(target.writing, name, `${name} folder`, false);
@@ -104606,13 +104641,13 @@ function failedSpecs(stdout) {
 function paintedSpecs(stdout) {
   const painted = [];
   for (const match of stdout.matchAll(/^(excerpt|para \d+ \w+|span .*?): found, (.*)$/gm)) {
-    const counts2 = match[2];
-    const excerpt = /^(\d+) tokens painted yellow in (\d+) runs, (\d+) tokens painted orange, pages (\S+?)(,|$)/.exec(counts2);
+    const counts3 = match[2];
+    const excerpt = /^(\d+) tokens painted yellow in (\d+) runs, (\d+) tokens painted orange, pages (\S+?)(,|$)/.exec(counts3);
     if (excerpt) {
       painted.push({ spec: match[1], yellow: Number(excerpt[1]), yellow_runs: Number(excerpt[2]), orange: Number(excerpt[3]), pages: excerpt[4] });
       continue;
     }
-    const single = /^(\d+) tokens painted (yellow|orange), pages (\S+?)(,|$)/.exec(counts2);
+    const single = /^(\d+) tokens painted (yellow|orange), pages (\S+?)(,|$)/.exec(counts3);
     if (single) {
       painted.push({ spec: match[1], yellow: single[2] === "yellow" ? Number(single[1]) : 0, orange: single[2] === "orange" ? Number(single[1]) : 0, pages: single[3] });
     }
@@ -107444,7 +107479,12 @@ function readStoreFile(file) {
   if (!existsSync47(file)) return { version: 1, migrated_log: null, records: [] };
   const raw = readJson3(file);
   if (!Array.isArray(raw.records)) throw new DataServerError(`${file} has no "records" list`, "invalid_file");
-  return { version: 1, migrated_log: raw.migrated_log ?? null, records: raw.records };
+  return {
+    version: 1,
+    migrated_log: raw.migrated_log ?? null,
+    records: raw.records,
+    ...raw.ai_noticed && typeof raw.ai_noticed === "object" ? { ai_noticed: raw.ai_noticed } : {}
+  };
 }
 var LEGACY_BADGE = {
   new: "Submitted",
@@ -107917,9 +107957,9 @@ async function writePastSuggestionsPage(env = process.env) {
 }
 
 // src/suggestions/card.ts
-import { randomUUID as randomUUID11 } from "node:crypto";
-import { existsSync as existsSync50, unlinkSync as unlinkSync10 } from "node:fs";
-import { join as join50 } from "node:path";
+import { randomUUID as randomUUID12 } from "node:crypto";
+import { existsSync as existsSync51, unlinkSync as unlinkSync10 } from "node:fs";
+import { join as join51 } from "node:path";
 
 // src/suggestions/crosscheck.ts
 import { existsSync as existsSync48, readFileSync as readFileSync36 } from "node:fs";
@@ -108023,12 +108063,12 @@ async function readRecordTexts(store, env = store.env, seams = {}) {
   const caseSources = ["matter", "contact", "folder_name", "document_title", "file_name"];
   if (matters.length) {
     let missed = false;
-    const folders = (seams.matterFolders ?? ((s3, m3, miss) => matterDataFolders(s3, m3, (matter) => miss(matter))))(store, matters, () => {
+    const folders2 = (seams.matterFolders ?? ((s3, m3, miss) => matterDataFolders(s3, m3, (matter) => miss(matter))))(store, matters, () => {
       missed = true;
     });
     if (missed) for (const source of caseSources) failed.add(source);
-    texts.folder_name.push(...folders.map((folder) => folder.name));
-    const names = (seams.listNames ?? listCaseRecordNames)(folders.map((folder) => folder.folder), env);
+    texts.folder_name.push(...folders2.map((folder) => folder.name));
+    const names = (seams.listNames ?? listCaseRecordNames)(folders2.map((folder) => folder.folder), env);
     for (const result of names) {
       if (result.status === "unavailable") {
         for (const source of caseSources) failed.add(source);
@@ -108738,598 +108778,10 @@ function renderMockupPage(opts) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src http://127.0.0.1:${opts.port}; object-src 'none'; base-uri 'none'; form-action 'none'"><title>Mockup</title><style>${STYLE3}</style></head><body><main><h1>Mockup</h1><p class="note">How the page could look with these changes, shown with placeholder text:</p>` + items2 + `<iframe class="frame" sandbox="" title="Mockup" srcdoc="${escapeHtml4(opts.html)}"></iframe><label for="reason"><p>Not like this, because...</p></label><textarea id="reason" placeholder="Please don't name clients, matters, people or files."></textarea><button type="button" id="reject">Not like this</button><p class="feedback" id="feedback" role="status"></p></main><script type="application/json" id="api">${api}</script><script>${SCRIPT3}</script></body></html>`;
 }
 
-// src/suggestions/card.ts
-var CARD_KIND = "card";
-var DISMISSAL_KIND = "dismissal";
-var BRACKETS = ["client", "matter", "person", "document", "file", "date", "amount"];
-var MAX_MOCKUP_RETURNS = 3;
-var WAITER_TTL_MS = 6e4;
-var STALE_SENDING_MS2 = 10 * 6e4;
-var MAX_ITEMS = 10;
-var MAX_CONTEXT_LINES = 20;
-var MAX_OBSERVATION_LINES = 50;
-var MAX_TEXT = 2e3;
-var MAX_EDIT = 2e4;
-function isCard(record2) {
-  return record2.kind === CARD_KIND;
-}
-function findCard(store, cardId) {
-  const record2 = store.records.find((r3) => r3.record_id === cardId);
-  if (!record2 || !isCard(record2)) throw new NotFoundError(`no suggestion card ${cardId} on this computer`, "not_found");
-  return record2;
-}
-function cardPath(cardId, env = process.env) {
-  return join50(storeDir(env), `Suggestion-${cardId}.html`);
-}
-function mockupPagePath(cardId, n3, env = process.env) {
-  return join50(storeDir(env), `Suggestion-${cardId}-mockup-${n3}.html`);
-}
-function nowOf(deps) {
-  return deps.now ? deps.now() : /* @__PURE__ */ new Date();
-}
-async function recordsOf(deps) {
-  const stopWords = deps.stopWords ? deps.stopWords() : loadStopWords(deps.env);
-  const records = deps.records ? await deps.records() : await readRecordTexts(new PracticeStore(deps.env), deps.env);
-  return { records, stopWords };
-}
-function isObject7(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-function onlyKeys2(label2, value, keys) {
-  const extra = Object.keys(value).find((key) => !keys.includes(key));
-  if (extra) throw new ValidationError(`${label2} has an unknown field "${extra}"`);
-}
-function text6(label2, value, { empty: empty2 = false, max = MAX_TEXT } = {}) {
-  if (typeof value !== "string") throw new ValidationError(`${label2} must be text`);
-  const trimmed = value.trim();
-  if (!empty2 && !trimmed) throw new ValidationError(`${label2} must not be empty`);
-  if (trimmed.length > max) throw new ValidationError(`${label2} is over ${max} characters`);
-  return trimmed;
-}
-function flag(label2, value) {
-  if (value === void 0) return false;
-  if (typeof value !== "boolean") throw new ValidationError(`${label2} must be true or false`);
-  return value;
-}
-var ANY_BRACKET = /\[([A-Za-z][A-Za-z ]{0,30})\]/g;
-function checkBrackets(label2, value) {
-  for (const m3 of value.matchAll(ANY_BRACKET)) {
-    if (!BRACKETS.includes(m3[1])) {
-      throw new ValidationError(`${label2} holds the bracket [${m3[1]}]; a removed identifier leaves only one of ${BRACKETS.map((b3) => `[${b3}]`).join(", ")}`);
-    }
-  }
-}
-function cardInput(args) {
-  onlyKeys2("the card", args, ["origin", "source", "skill", "pain_point", "items", "context_lines", "raw_observation", "tool_names", "held_id"]);
-  if (args.origin !== "practitioner" && args.origin !== "probanda") throw new ValidationError("origin must be practitioner or probanda");
-  if (args.source !== "user" && args.source !== "assisted" && args.source !== "llm") throw new ValidationError("source must be user, assisted or llm");
-  const skill = args.skill === void 0 ? null : text6("skill", args.skill);
-  if (!isObject7(args.pain_point)) throw new ValidationError("pain_point must be {text, guess}");
-  onlyKeys2("pain_point", args.pain_point, ["text", "guess"]);
-  const pain = { text: text6("pain_point.text", args.pain_point.text), guess: flag("pain_point.guess", args.pain_point.guess) };
-  checkBrackets("pain_point.text", pain.text);
-  if (!Array.isArray(args.items) || args.items.length < 1 || args.items.length > MAX_ITEMS) {
-    throw new ValidationError(`items must be a list of 1 to ${MAX_ITEMS} items`);
-  }
-  const items2 = args.items.map((item, i3) => {
-    const label2 = `items[${i3}]`;
-    if (!isObject7(item)) throw new ValidationError(`${label2} must be {text, guess, visual}`);
-    onlyKeys2(label2, item, ["text", "guess", "visual"]);
-    const out = { text: text6(`${label2}.text`, item.text), guess: flag(`${label2}.guess`, item.guess), visual: flag(`${label2}.visual`, item.visual) };
-    checkBrackets(`${label2}.text`, out.text);
-    return out;
-  });
-  const lines2 = args.context_lines ?? [];
-  if (!Array.isArray(lines2) || lines2.length > MAX_CONTEXT_LINES) throw new ValidationError(`context_lines must be a list of at most ${MAX_CONTEXT_LINES} lines`);
-  const contextLines2 = lines2.map((line, i3) => {
-    const label2 = `context_lines[${i3}]`;
-    if (!isObject7(line)) throw new ValidationError(`${label2} must be {kind, text, guess}`);
-    onlyKeys2(label2, line, ["kind", "text", "guess"]);
-    if (line.kind !== "constraint" && line.kind !== "evidence") throw new ValidationError(`${label2}.kind must be constraint or evidence`);
-    const out = { kind: line.kind, text: text6(`${label2}.text`, line.text), guess: flag(`${label2}.guess`, line.guess) };
-    checkBrackets(`${label2}.text`, out.text);
-    return out;
-  });
-  const observation = args.raw_observation ?? [];
-  if (!Array.isArray(observation) || observation.length > MAX_OBSERVATION_LINES) {
-    throw new ValidationError(`raw_observation must be a list of at most ${MAX_OBSERVATION_LINES} lines`);
-  }
-  const rawObservation = observation.map((line, i3) => text6(`raw_observation[${i3}]`, line));
-  let toolNames;
-  if (args.tool_names !== void 0) {
-    if (!Array.isArray(args.tool_names) || !args.tool_names.every((n3) => typeof n3 === "string")) throw new ValidationError("tool_names must be a list of tool names");
-    toolNames = args.tool_names;
-  }
-  const heldId = args.held_id === void 0 ? null : text6("held_id", args.held_id);
-  return { origin: args.origin, source: args.source, skill, pain_point: pain, items: items2, context_lines: contextLines2, raw_observation: rawObservation, tool_names: toolNames, held_id: heldId };
-}
-var READABLE = ["pain_point", "items", "context_lines", "comment"];
-function cardText2(card) {
-  return {
-    pain_point: card.pain_point.text,
-    items: card.items.map((i3) => i3.text),
-    context_lines: card.context_lines.map((l3) => l3.text),
-    ...card.comment ? { comment: card.comment } : {},
-    ...card.raw_observation.length ? { raw_observation: card.raw_observation } : {},
-    ...card.mockup ? { mockup: card.mockup.html } : {},
-    environment_facts: card.environment_facts
-  };
-}
-function blockOf2(card, part, index) {
-  if (part === "pain_point") return { id: null, text: card.pain_point.text };
-  if (part === "comment") return { id: null, text: card.comment };
-  const block2 = (part === "items" ? card.items : card.context_lines)[index ?? -1];
-  return { id: block2.id, text: block2.text };
-}
-function isReadable(part) {
-  return READABLE.includes(part);
-}
-function promptsOf(card, hits) {
-  const prompts = [];
-  for (const hit of hits) {
-    if (!isReadable(hit.part) || hit.offer === null) continue;
-    const block2 = blockOf2(card, hit.part, hit.index);
-    const span = block2.text.slice(hit.start, hit.end);
-    const exempt = (hit.kind === "date" || hit.kind === "amount") && card.send_anyway.some((s3) => s3.part === hit.part && s3.id === block2.id && s3.kind === hit.kind && s3.text === span);
-    if (exempt) continue;
-    prompts.push({ part: hit.part, id: block2.id, start: hit.start, end: hit.end, kind: hit.kind, offer: hit.offer, text: span });
-  }
-  return prompts;
-}
-var DROPPED = /* @__PURE__ */ Symbol("dropped");
-function markFact(facts, field) {
-  const steps = [...field.matchAll(/([^.[\]]+)|\[(\d+)\]/g)].map((m3) => m3[2] !== void 0 ? Number(m3[2]) : m3[1]);
-  let node = facts;
-  for (let i3 = 0; i3 < steps.length - 1; i3++) {
-    node = node?.[steps[i3]];
-    if (node === void 0 || node === null) return;
-  }
-  const last = steps[steps.length - 1];
-  if (node !== null && typeof node === "object" && last !== void 0) node[last] = DROPPED;
-}
-function sweep(value) {
-  if (Array.isArray(value)) return value.filter((v3) => v3 !== DROPPED).map(sweep);
-  if (value !== null && typeof value === "object") {
-    return Object.fromEntries(Object.entries(value).filter(([, v3]) => v3 !== DROPPED).map(([k3, v3]) => [k3, sweep(v3)]));
-  }
-  return value;
-}
-function dropGenerated(card, hits, when, at) {
-  const generated = hits.filter((h3) => !isReadable(h3.part));
-  if (!generated.length) return;
-  const lines2 = /* @__PURE__ */ new Set();
-  for (const hit of generated) {
-    card.defects.push({
-      at,
-      when,
-      part: hit.part,
-      kind: hit.kind,
-      ...hit.index !== void 0 ? { index: hit.index } : {},
-      ...hit.field !== void 0 ? { field: hit.field } : {},
-      ...hit.sources ? { sources: hit.sources } : {}
-    });
-    if (hit.part === "raw_observation" && hit.index !== void 0) lines2.add(hit.index);
-    else if (hit.part === "mockup") card.mockup = null;
-    else if (hit.part === "environment_facts" && hit.field) markFact(card.environment_facts, hit.field);
-  }
-  card.raw_observation = card.raw_observation.filter((_3, i3) => !lines2.has(i3));
-  card.environment_facts = sweep(card.environment_facts);
-}
-function newCard(input, facts, at) {
-  return {
-    kind: "card",
-    record_id: randomUUID11(),
-    created_at: at,
-    state: "open",
-    state_since: at,
-    origin: input.origin,
-    source: input.source,
-    skill: input.skill,
-    pain_point: { id: "p", ...input.pain_point },
-    items: input.items.map((item, i3) => ({ id: `i${i3 + 1}`, ...item })),
-    context_lines: input.context_lines.map((line, i3) => ({ id: `c${i3 + 1}`, ...line })),
-    raw_observation: input.raw_observation,
-    comment: "",
-    environment_facts: facts,
-    mockup: null,
-    mockups_made: 0,
-    mockups_rejected: 0,
-    mockup_request: null,
-    waiter_until: null,
-    send_anyway: [],
-    defects: [],
-    suggestion_record_id: null,
-    next_line: input.context_lines.length + 1
-  };
-}
-var SOURCE_CATEGORY = {
-  client: "client",
-  matter: "matter",
-  contact: "contact",
-  folder_name: "folder name",
-  document_title: "document title",
-  file_name: "file name"
-};
-function unreadSources(states) {
-  return RECORD_SOURCES.filter((s3) => states[s3] === "partial" || states[s3] === "unavailable").map((s3) => SOURCE_CATEGORY[s3]);
-}
-async function buildCard(input, facts, deps) {
-  const at = nowOf(deps).toISOString();
-  const card = newCard(input, structuredClone(facts), at);
-  const { records, stopWords } = await recordsOf(deps);
-  const check = runCrossCheck(cardText2(card), records, stopWords);
-  if (!check.complete) return { built: false, reason: "records_unreadable", unreadable: unreadSources(check.records) };
-  const readable = check.hits.filter((h3) => isReadable(h3.part));
-  if (readable.length) {
-    return {
-      built: false,
-      hits: readable.map((h3) => ({ part: h3.part, id: blockOf2(card, h3.part, h3.index).id, ...h3.index !== void 0 ? { index: h3.index } : {}, start: h3.start, end: h3.end, kind: h3.kind, offer: h3.offer }))
-    };
-  }
-  dropGenerated(card, check.hits, "build", at);
-  await withStore(deps.env, (store) => {
-    if (input.held_id !== null) {
-      const index = store.records.findIndex((r3) => isHeld(r3) && r3.record_id === input.held_id);
-      if (index < 0) throw new ValidationError(`no held suggestion ${input.held_id} on this computer`, "not_found");
-      store.records.splice(index, 1);
-    }
-    store.records.push(card);
-  });
-  const path = writeCardPage(card, deps.env);
-  return { built: true, card_id: card.record_id, card_path: path };
-}
-function writeCardPage(card, env) {
-  const path = cardPath(card.record_id, env);
-  writeTextAtomic(path, renderCardHtml(card, pageApiPort(env), pageApiCardToken(card.record_id, env)));
-  return path;
-}
-function waiting(card, now) {
-  return card.waiter_until !== null && Date.parse(card.waiter_until) > now.getTime();
-}
-function effectiveState(card, now) {
-  if (card.state === "sending" && now.getTime() - Date.parse(card.state_since) > STALE_SENDING_MS2) return "open";
-  return card.state;
-}
-function mockupLink(card, now) {
-  if (effectiveState(card, now) !== "open" || !card.items.some((i3) => i3.visual) || card.mockup !== null) return "hidden";
-  if (card.mockups_rejected > MAX_MOCKUP_RETURNS) return "hidden";
-  if (card.mockup_request !== null) return "requested";
-  return waiting(card, now) ? "available" : "no_waiter";
-}
-function statusOf(card, store) {
-  if (card.state === "sending") return CARD_STATUS.sending;
-  if (card.state !== "submitted") return null;
-  const sent2 = store.records.find((r3) => r3.record_id === card.suggestion_record_id);
-  return sent2 && isSuggestion(sent2) ? cardStatus(sent2) : CARD_STATUS.unsent;
-}
-function pageState(card, store, now) {
-  return {
-    state: effectiveState(card, now),
-    status: statusOf(card, store),
-    mockup_link: mockupLink(card, now),
-    mockup: card.mockup,
-    context_lines: card.context_lines
-  };
-}
-async function readCardState(cardId, deps) {
-  const store = await loadStore(deps.env);
-  return pageState(findCard(store, cardId), store, nowOf(deps));
-}
-function blockList(label2, value) {
-  if (value === void 0) return void 0;
-  if (!Array.isArray(value)) throw new ValidationError(`${label2} must be a list`);
-  return value.map((entry2, i3) => {
-    if (!isObject7(entry2) || typeof entry2.id !== "string") throw new ValidationError(`${label2}[${i3}] must be {id, text}`);
-    return { id: entry2.id, text: text6(`${label2}[${i3}].text`, entry2.text, { empty: true, max: MAX_EDIT }) };
-  });
-}
-function cardEdits(value) {
-  if (value === void 0 || value === null) return {};
-  if (!isObject7(value)) throw new ValidationError("edits must be an object");
-  onlyKeys2("edits", value, ["pain_point", "items", "context_lines", "lines_known", "comment"]);
-  const known = value.lines_known;
-  if (known !== void 0 && (!Array.isArray(known) || !known.every((id) => typeof id === "string"))) throw new ValidationError("lines_known must be a list of ids");
-  return {
-    ...value.pain_point === void 0 ? {} : { pain_point: text6("pain_point", value.pain_point, { empty: true, max: MAX_EDIT }) },
-    ...value.items === void 0 ? {} : { items: blockList("items", value.items) },
-    ...value.context_lines === void 0 ? {} : { context_lines: blockList("context_lines", value.context_lines) },
-    ...known === void 0 ? {} : { lines_known: known },
-    ...value.comment === void 0 ? {} : { comment: text6("comment", value.comment, { empty: true, max: MAX_EDIT }) }
-  };
-}
-function edited(block2, value) {
-  return value === block2.text ? block2 : { ...block2, text: value, guess: false };
-}
-function applyEdits(card, edits) {
-  if (edits.pain_point !== void 0 && edits.pain_point !== "") card.pain_point = edited(card.pain_point, edits.pain_point);
-  if (edits.items) {
-    const byId2 = new Map(edits.items.map((e3) => [e3.id, e3.text]));
-    card.items = card.items.filter((i3) => byId2.has(i3.id) && byId2.get(i3.id) !== "").map((i3) => edited(i3, byId2.get(i3.id)));
-  }
-  if (edits.context_lines) {
-    const byId2 = new Map(edits.context_lines.map((e3) => [e3.id, e3.text]));
-    const known = new Set(edits.lines_known ?? edits.context_lines.map((e3) => e3.id));
-    card.context_lines = card.context_lines.filter((l3) => !known.has(l3.id) || byId2.has(l3.id) && byId2.get(l3.id) !== "").map((l3) => byId2.has(l3.id) ? edited(l3, byId2.get(l3.id)) : l3);
-  }
-  if (edits.comment !== void 0) card.comment = edits.comment;
-}
-function blocksOf(card) {
-  return {
-    pain_point: card.pain_point.text,
-    items: card.items.map(({ id, text: t3 }) => ({ id, text: t3 })),
-    context_lines: card.context_lines.map(({ id, text: t3 }) => ({ id, text: t3 })),
-    comment: card.comment
-  };
-}
-function titleFrom(pain) {
-  const sentence = pain.split(/(?<=[.!?])\s/)[0];
-  const words = sentence.split(/\s+/).filter(Boolean);
-  const title = words.slice(0, 8).join(" ");
-  return title.length > 100 ? `${title.slice(0, 99)}\u2026` : title;
-}
-function cardFields(card) {
-  return {
-    title: titleFrom(card.pain_point.text),
-    pain_point: card.pain_point.text,
-    source: card.source,
-    ...card.skill ? { skill: card.skill } : {},
-    ...card.items.length ? { items: card.items.map((i3) => i3.text) } : {},
-    origin: card.origin,
-    ...card.raw_observation.length ? { raw_observation: card.raw_observation.join("\n") } : {},
-    environment_facts: card.environment_facts,
-    ...card.comment ? { comment: card.comment } : {},
-    ...card.context_lines.length ? { context_lines: card.context_lines.map((l3) => ({ kind: l3.kind, text: l3.text })) } : {},
-    ...card.mockup ? { mockup: card.mockup.html } : {}
-  };
-}
-function checkAndClaim(card, records, stopWords, at) {
-  const check = runCrossCheck(cardText2(card), records, stopWords);
-  if (!check.complete) {
-    card.check_failures = [...card.check_failures ?? [], { at, records: check.records }];
-    return { unchecked: true };
-  }
-  dropGenerated(card, check.hits, "click", at);
-  const prompts = promptsOf(card, check.hits);
-  if (prompts.length) return { prompts };
-  card.state = "sending";
-  card.state_since = at;
-  card.mockup_request = null;
-  return { fields: cardFields(card) };
-}
-function claimed(card, next) {
-  if ("fields" in next) return { fields: next.fields };
-  if ("unchecked" in next) return { done: { outcome: "unchecked", blocks: blocksOf(card) } };
-  return { done: { outcome: "check", prompts: next.prompts, blocks: blocksOf(card) } };
-}
-async function send(cardId, fields2, deps) {
-  let result;
-  try {
-    result = await submitSuggestion(fields2, deps.env, deps.seams ?? {});
-  } catch (err) {
-    const reopened = await withStore(deps.env, (store) => {
-      const card = findCard(store, cardId);
-      card.state = "open";
-      card.state_since = nowOf(deps).toISOString();
-      return blocksOf(card);
-    });
-    if (err instanceof ValidationError) return { outcome: "refused", blocks: reopened };
-    throw err;
-  }
-  await withStore(deps.env, (store) => {
-    const card = findCard(store, cardId);
-    card.state = "submitted";
-    card.state_since = nowOf(deps).toISOString();
-    card.suggestion_record_id = result.record_id;
-    card.waiter_until = null;
-  });
-  return { outcome: result.status === CARD_STATUS.sent ? "sent" : "unsent", status: result.status };
-}
-function closed(card, store, now) {
-  const state = effectiveState(card, now);
-  return state === "open" ? null : { outcome: "closed", state, status: statusOf(card, store) };
-}
-async function submitCard(cardId, edits, deps) {
-  const { records, stopWords } = await recordsOf(deps);
-  const now = nowOf(deps);
-  const step2 = await withStore(deps.env, (store) => {
-    const card = findCard(store, cardId);
-    const done = closed(card, store, now);
-    if (done) return { done };
-    applyEdits(card, edits);
-    if (!card.pain_point.text.trim()) return { done: { outcome: "empty" } };
-    return claimed(card, checkAndClaim(card, records, stopWords, now.toISOString()));
-  });
-  if ("done" in step2) return step2.done;
-  return send(cardId, step2.fields, deps);
-}
-function bracketFor(kind, sources) {
-  if (kind === "email") return "person";
-  if (kind === "path") return "file";
-  if (kind === "date" || kind === "amount") return kind;
-  const source = sources?.[0];
-  if (source === "client" || source === "matter") return source;
-  if (source === "contact") return "person";
-  if (source === "document_title") return "document";
-  return "file";
-}
-async function resolvePrompt(cardId, answer, deps) {
-  if (!isReadable(String(answer.part))) throw new ValidationError("part must be pain_point, items, context_lines or comment");
-  if (answer.action !== "remove" && answer.action !== "send_anyway") throw new ValidationError("action must be remove or send_anyway");
-  if (!Number.isInteger(answer.start) || !Number.isInteger(answer.end)) throw new ValidationError("start and end must be whole numbers");
-  const part = answer.part;
-  const id = answer.id === null || answer.id === void 0 ? null : String(answer.id);
-  const { records, stopWords } = await recordsOf(deps);
-  const now = nowOf(deps);
-  const step2 = await withStore(deps.env, (store) => {
-    const card = findCard(store, cardId);
-    const done = closed(card, store, now);
-    if (done) return { done };
-    const check = runCrossCheck(cardText2(card), records, stopWords);
-    const hit = check.hits.find((h3) => h3.part === part && h3.start === answer.start && h3.end === answer.end && isReadable(h3.part) && blockOf2(card, part, h3.index).id === id);
-    if (!hit || answer.action === "send_anyway" && hit.kind !== "date" && hit.kind !== "amount") {
-      return { done: { outcome: "stale", prompts: promptsOf(card, check.hits), blocks: blocksOf(card) } };
-    }
-    const block2 = blockOf2(card, part, hit.index);
-    const span = block2.text.slice(hit.start, hit.end);
-    if (answer.action === "send_anyway") {
-      card.send_anyway.push({ part, id: block2.id, kind: hit.kind, text: span });
-    } else {
-      const replaced = `${block2.text.slice(0, hit.start)}[${bracketFor(hit.kind, hit.sources)}]${block2.text.slice(hit.end)}`;
-      if (part === "pain_point") card.pain_point = { ...card.pain_point, text: replaced };
-      else if (part === "comment") card.comment = replaced;
-      else {
-        const list = part === "items" ? card.items : card.context_lines;
-        const at = list.findIndex((b3) => b3.id === block2.id);
-        list[at] = { ...list[at], text: replaced };
-      }
-    }
-    return claimed(card, checkAndClaim(card, records, stopWords, now.toISOString()));
-  });
-  if ("done" in step2) return step2.done;
-  return send(cardId, step2.fields, deps);
-}
-async function dismissCard(cardId, deps) {
-  let release = null;
-  try {
-    release = pluginRelease(deps.seams?.installRoot);
-  } catch {
-    release = null;
-  }
-  const now = nowOf(deps);
-  return withStore(deps.env, (store) => {
-    const card = findCard(store, cardId);
-    const done = closed(card, store, now);
-    if (done) return done.outcome === "closed" && done.state === "dismissed" ? { outcome: "dismissed" } : done;
-    card.state = "dismissed";
-    card.state_since = now.toISOString();
-    card.mockup_request = null;
-    const dismissal = {
-      kind: "dismissal",
-      record_id: randomUUID11(),
-      created_at: now.toISOString(),
-      card_id: cardId,
-      origin: card.origin,
-      fingerprint: null,
-      plugin_version: release
-    };
-    store.records.push(dismissal);
-    return { outcome: "dismissed" };
-  });
-}
-async function restoreCard(cardId, deps) {
-  const now = nowOf(deps);
-  return withStore(deps.env, (store) => {
-    const card = findCard(store, cardId);
-    if (card.state !== "dismissed") return closed(card, store, now) ?? { outcome: "restored" };
-    card.state = "open";
-    card.state_since = now.toISOString();
-    store.records = store.records.filter((r3) => !(r3.kind === DISMISSAL_KIND && r3.card_id === cardId));
-    return { outcome: "restored" };
-  });
-}
-async function requestMockup(cardId, edits, deps) {
-  const now = nowOf(deps);
-  return withStore(deps.env, (store) => {
-    const card = findCard(store, cardId);
-    if (effectiveState(card, now) !== "open") return { outcome: "closed" };
-    applyEdits(card, edits);
-    const link = mockupLink(card, now);
-    if (link !== "available") return { outcome: link };
-    card.mockup_request = { at: now.toISOString(), taken_at: null };
-    return { outcome: "requested" };
-  });
-}
-async function attachMockup(cardId, html, deps) {
-  const placeholders = deps.placeholders ? deps.placeholders() : loadPlaceholders(deps.env);
-  const problem = checkMockup(html, placeholders);
-  if (problem) throw new ValidationError(`mockup refused: ${problem.problem}. Build it again from the placeholder text alone, with inline styles.`);
-  const { records, stopWords } = await recordsOf(deps);
-  const check = runCrossCheck({ mockup: html }, records, stopWords);
-  if (!check.complete) {
-    throw new ValidationError(`mockup refused: it could not be checked against this computer's records (${unreadSources(check.records).join(", ")} records unreadable)`);
-  }
-  if (!check.passed) {
-    throw new ValidationError("mockup refused: a word in it is found in this computer's records. Use other placeholder text or other style names.");
-  }
-  const now = nowOf(deps);
-  const { n: n3, items: items2 } = await withStore(deps.env, (store) => {
-    const card = findCard(store, cardId);
-    if (effectiveState(card, now) !== "open") throw new ValidationError("this suggestion was already submitted or dismissed, so no mockup is added");
-    if (card.mockup_request === null) throw new ValidationError("no mockup was asked for on this card: wait for the practitioner's click");
-    card.mockups_made += 1;
-    card.mockup = { n: card.mockups_made, html };
-    card.mockup_request = null;
-    return { n: card.mockups_made, items: card.items.filter((i3) => i3.visual).map((i3) => i3.text) };
-  });
-  const path = mockupPagePath(cardId, n3, deps.env);
-  writeTextAtomic(path, renderMockupPage({ cardId, n: n3, html, items: items2, port: pageApiPort(deps.env), token: pageApiCardToken(cardId, deps.env) }));
-  return { card_id: cardId, mockup_path: path };
-}
-async function rejectMockup(cardId, n3, reason, deps) {
-  const why = text6("reason", reason);
-  const now = nowOf(deps);
-  const result = await withStore(deps.env, (store) => {
-    const card = findCard(store, cardId);
-    if (effectiveState(card, now) !== "open" || card.mockup === null || card.mockup.n !== n3) return { outcome: "gone" };
-    card.context_lines.push({ id: `c${card.next_line}`, kind: "constraint", text: why, guess: false });
-    card.next_line += 1;
-    card.mockup = null;
-    card.mockups_rejected += 1;
-    return { outcome: "rejected", mockup_available: card.mockups_rejected <= MAX_MOCKUP_RETURNS };
-  });
-  if (result.outcome === "rejected") {
-    const path = mockupPagePath(cardId, n3, deps.env);
-    if (existsSync50(path)) unlinkSync10(path);
-  }
-  return result;
-}
-var sleep4 = (ms2) => new Promise((resolve10) => setTimeout(resolve10, ms2));
-async function waitForCard(cardId, deps) {
-  const timeoutMs = deps.timeoutMs ?? 45e3;
-  const pollMs = deps.pollMs ?? 500;
-  const heartbeatMs = deps.heartbeatMs ?? 1e4;
-  const started = Date.now();
-  let beat = -Infinity;
-  findCard(await loadStore(deps.env), cardId);
-  for (; ; ) {
-    const now = nowOf(deps);
-    const store = await loadStore(deps.env);
-    const card = findCard(store, cardId);
-    const state = effectiveState(card, now);
-    const pendingMockup = card.mockup_request !== null && card.mockup_request.taken_at === null;
-    if (state === "submitted" || state === "dismissed" || pendingMockup || Date.now() - beat >= heartbeatMs) {
-      const event = await withStore(deps.env, (s3) => {
-        const c3 = findCard(s3, cardId);
-        const st3 = effectiveState(c3, now);
-        if (st3 === "submitted" || st3 === "dismissed") {
-          c3.waiter_until = null;
-          return { event: st3, card_id: cardId };
-        }
-        c3.waiter_until = new Date(now.getTime() + WAITER_TTL_MS).toISOString();
-        if (c3.mockup_request !== null && c3.mockup_request.taken_at === null) {
-          c3.mockup_request.taken_at = now.toISOString();
-          return {
-            event: "mockup",
-            card_id: cardId,
-            items: c3.items.filter((i3) => i3.visual).map((i3) => i3.text),
-            constraints: c3.context_lines.filter((l3) => l3.kind === "constraint").map((l3) => l3.text),
-            placeholders: deps.placeholders ? deps.placeholders() : loadPlaceholders(deps.env)
-          };
-        }
-        return null;
-      });
-      beat = Date.now();
-      if (event) return event;
-    }
-    if (Date.now() - started >= timeoutMs) return { event: "pending", card_id: cardId };
-    await sleep4(pollMs);
-  }
-}
-async function openCards(env) {
-  const store = await loadStore(env);
-  const now = /* @__PURE__ */ new Date();
-  return store.records.filter(isCard).map((r3) => r3).filter((c3) => effectiveState(c3, now) === "open").map((c3) => ({ card_id: c3.record_id, created_at: c3.created_at, card_path: cardPath(c3.record_id, env) }));
-}
+// src/suggestions/observation.ts
+import { randomUUID as randomUUID11 } from "node:crypto";
+import { existsSync as existsSync50, readdirSync as readdirSync27, readFileSync as readFileSync38 } from "node:fs";
+import { join as join50 } from "node:path";
 
 // src/suggestions/environment.ts
 import { arch as osArch, homedir as homedir10, hostname as osHostname, platform as osPlatform, release as osRelease, userInfo } from "node:os";
@@ -109637,9 +109089,944 @@ function environmentFacts(toolNames, seams = {}) {
   return scrubFacts(facts, forbiddenValues(seams, env));
 }
 
+// src/suggestions/observation.ts
+var OBSERVATION_KIND = "observation";
+var OBSERVATION_TEXTS_PATH = "suggestion/references/observations/observation-texts.txt";
+var SUPPRESSION_MS = 30 * 24 * 60 * 6e4;
+var OBSERVATION_KINDS = {
+  tool_error: { line: "A Probanda tool returned an error.", needsTool: true },
+  tool_refused: { line: "A Probanda tool refused the request it was given.", needsTool: true },
+  tool_missing: { line: "A Probanda tool the work needed was not available.", needsTool: true },
+  repeated_calls: { line: "A Probanda tool was called again and again for one result.", needsTool: true },
+  token_use: { line: "One step used many tokens.", needsTool: false }
+};
+var COUNT_LABELS = {
+  calls: "Calls",
+  retries: "Retries",
+  failures: "Failures",
+  turns: "Turns",
+  input_tokens: "Input tokens",
+  output_tokens: "Output tokens"
+};
+var MAX_COUNT = 1e9;
+var ERROR_WORDS = /* @__PURE__ */ new Set(["timeout", "refused", "unavailable", "forbidden", "unauthorized", "conflict", "invalid", "aborted"]);
+var ERROR_CODE = /^(?:[a-z][a-z0-9]*(?:_[a-z0-9]+){1,5}|[A-Z][A-Za-z]{1,40}(?:Error|Exception)|E[A-Z0-9]{2,20}|HTTP [1-5][0-9]{2})$/;
+var SKILL_NAME = /^[a-z][a-z0-9-]{1,48}$/;
+var TOOL_PART = /^[a-z][a-z0-9_]{0,100}$/;
+var TEXT_KEY = /^[a-z][a-z0-9_]{1,48}$/;
+function isObservation(record2) {
+  return record2.kind === OBSERVATION_KIND;
+}
+var nowOf = (seams) => seams.now ? seams.now() : /* @__PURE__ */ new Date();
+function folders(dir) {
+  try {
+    return readdirSync27(dir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name !== "shared").map((e3) => e3.name);
+  } catch {
+    return [];
+  }
+}
+function installedPlugins(installRoot = INSTALL_ROOT) {
+  const out = [];
+  const own = pluginManifest(installRoot);
+  if (own.name) out.push({ plugin: own.name, version: own.version, skills: bundledSkillFolders(installRoot).filter((s3) => s3 !== "shared") });
+  for (const sibling of siblingInstalls(installRoot, PROBANDA_PLUGINS)) {
+    if (!out.some((p3) => p3.plugin === sibling.name)) out.push({ plugin: sibling.name, version: sibling.version, skills: folders(sibling.skills) });
+  }
+  return out;
+}
+function pluginsOf(seams) {
+  return seams.plugins ? seams.plugins() : installedPlugins(seams.installRoot);
+}
+function currentVersion(plugins, plugin) {
+  return plugins.find((p3) => p3.plugin === plugin)?.version ?? null;
+}
+function parseObservationTexts(text8) {
+  const out = /* @__PURE__ */ new Map();
+  for (const raw of text8.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    const at = line.indexOf("=");
+    if (at < 0) continue;
+    const key = line.slice(0, at).trim();
+    const value = line.slice(at + 1).trim();
+    if (TEXT_KEY.test(key) && value) out.set(key, value);
+  }
+  return out;
+}
+function loadObservationTexts(env = process.env, installRoot) {
+  const root = resolveShippedRoot(OBSERVATION_TEXTS_PATH, env, { subject: "the suggestion observation texts", plugin: "lawyer", installRoot }).root;
+  const path = join50(root, ...OBSERVATION_TEXTS_PATH.split("/"));
+  if (!existsSync50(path)) throw new DataServerError("The suggestion observation texts are missing. Update the lawyer plugin.", "observation_texts_missing");
+  return parseObservationTexts(readFileSync38(path, "utf-8"));
+}
+function isObject7(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+var SERVER_PREFIXES = PROBANDA_PLUGINS.flatMap((plugin) => SERVERS[plugin].map((server) => ({ plugin, server, prefix: `plugin_${plugin}_${server}__` }))).sort((a3, b3) => b3.prefix.length - a3.prefix.length);
+var SESSION_PREFIX = /^mcp__(?:[A-Za-z0-9-]{1,64}__)?(?=plugin_)/;
+function probandaTool(raw) {
+  if (typeof raw !== "string" || raw.length > 300) throw new ValidationError("tool must be one Probanda tool's name");
+  const name = raw.trim();
+  const prefixed = name.replace(SESSION_PREFIX, "");
+  for (const { plugin, server, prefix } of SERVER_PREFIXES) {
+    if (!prefixed.startsWith(prefix)) continue;
+    const tool = prefixed.slice(prefix.length);
+    const known = expectedTools(plugin, server);
+    if (!TOOL_PART.test(tool) || known !== null && !known.includes(tool)) break;
+    return { name: `${prefix}${tool}`, plugin };
+  }
+  if (TOOL_PART.test(name)) {
+    for (const { plugin, server, prefix } of SERVER_PREFIXES) {
+      if (expectedTools(plugin, server)?.includes(name)) return { name: `${prefix}${name}`, plugin };
+    }
+  }
+  throw new ValidationError("tool must be one Probanda tool's name, exactly as the session sees it, with nothing else in it");
+}
+function errorCode(raw) {
+  if (typeof raw !== "string" || raw.length > 64 || !(ERROR_CODE.test(raw) || ERROR_WORDS.has(raw))) {
+    throw new ValidationError("error_code must be the error's class or code only (not_found, ValidationError, ECONNREFUSED, HTTP 500), never its message");
+  }
+  return raw;
+}
+function counts2(raw) {
+  if (!isObject7(raw)) throw new ValidationError("counts must be an object of whole numbers");
+  const out = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!(key in COUNT_LABELS)) throw new ValidationError(`counts has an unknown count "${key}"; the counts are ${Object.keys(COUNT_LABELS).join(", ")}`);
+    if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > MAX_COUNT) throw new ValidationError(`counts.${key} must be a whole number`);
+    out[key] = value;
+  }
+  if (!Object.keys(out).length) throw new ValidationError("counts must hold at least one count");
+  return out;
+}
+var OBSERVATION_FIELDS = ["kind", "skill", "tool", "error_code", "counts", "text_key"];
+function observationInput(args, texts) {
+  const extra = Object.keys(args).find((key) => !OBSERVATION_FIELDS.includes(key));
+  if (extra) throw new ValidationError(`an observation has no field "${extra}": it holds only ${OBSERVATION_FIELDS.join(", ")}, never free text`);
+  const kind = args.kind;
+  if (typeof kind !== "string" || !(kind in OBSERVATION_KINDS)) throw new ValidationError(`kind must be one of ${Object.keys(OBSERVATION_KINDS).join(", ")}`);
+  const spec = OBSERVATION_KINDS[kind];
+  const observation = { kind };
+  let toolPlugin = null;
+  if (args.tool !== void 0) {
+    const tool = probandaTool(args.tool);
+    observation.tool = tool.name;
+    toolPlugin = tool.plugin;
+  } else if (spec.needsTool) {
+    throw new ValidationError(`a ${kind} observation names the tool`);
+  }
+  if (args.error_code !== void 0) observation.error_code = errorCode(args.error_code);
+  if (args.counts !== void 0) observation.counts = counts2(args.counts);
+  if (kind === "repeated_calls" && observation.counts?.calls === void 0) throw new ValidationError("a repeated_calls observation gives counts.calls");
+  if (kind === "token_use" && observation.counts?.input_tokens === void 0 && observation.counts?.output_tokens === void 0) {
+    throw new ValidationError("a token_use observation gives counts.input_tokens or counts.output_tokens");
+  }
+  if (args.text_key !== void 0) {
+    if (typeof args.text_key !== "string" || !texts.has(args.text_key)) {
+      throw new ValidationError(`text_key must be one of the plugin's fixed texts: ${[...texts.keys()].join(", ")}`);
+    }
+    observation.text_key = args.text_key;
+  }
+  let skill = null;
+  if (args.skill !== void 0) {
+    if (typeof args.skill !== "string" || !SKILL_NAME.test(args.skill)) throw new ValidationError("skill must be one Probanda skill's name, such as draft");
+    skill = args.skill;
+  }
+  return { observation, skill, toolPlugin };
+}
+function rawObservationLines(observation, texts) {
+  const lines2 = [OBSERVATION_KINDS[observation.kind].line];
+  if (observation.tool) lines2.push(`Tool: ${observation.tool}`);
+  if (observation.error_code) lines2.push(`Error code: ${observation.error_code}`);
+  for (const name of Object.keys(COUNT_LABELS)) {
+    const value = observation.counts?.[name];
+    if (value !== void 0) lines2.push(`${COUNT_LABELS[name]}: ${value}`);
+  }
+  if (observation.text_key) lines2.push(texts.get(observation.text_key));
+  return lines2;
+}
+function fingerprintOf(input, plugins, installRoot) {
+  let owner;
+  if (input.skill !== null) {
+    owner = plugins.find((p3) => p3.skills.includes(input.skill));
+    if (!owner) throw new ValidationError(`skill must be one Probanda skill installed on this computer; ${input.skill} is not`);
+  } else if (input.toolPlugin !== null) {
+    owner = plugins.find((p3) => p3.plugin === input.toolPlugin);
+    if (!owner) throw new ValidationError("the tool's plugin is not installed on this computer");
+  } else {
+    const own = pluginManifest(installRoot ?? INSTALL_ROOT).name;
+    owner = plugins.find((p3) => p3.plugin === own);
+  }
+  if (!owner || !owner.version) {
+    throw new ValidationError("the plugin's manifest could not be read for its name and version, so nothing was recorded");
+  }
+  return { plugin: owner.plugin, version: owner.version, ...input.skill !== null ? { skill: input.skill } : {}, kind: input.observation.kind };
+}
+function sameFingerprint(a3, b3) {
+  return a3.plugin === b3.plugin && (a3.skill ?? null) === (b3.skill ?? null) && a3.kind === b3.kind;
+}
+async function recordObservation(args, env, seams = {}) {
+  const texts = seams.texts ? seams.texts() : loadObservationTexts(env, seams.installRoot);
+  const input = observationInput(args, texts);
+  const fingerprint = fingerprintOf(input, pluginsOf(seams), seams.installRoot);
+  const raw = rawObservationLines(input.observation, texts);
+  const at = nowOf(seams).toISOString();
+  return withStore(env, (store) => {
+    const held = store.records.filter(isObservation).find((r3) => sameFingerprint(r3.fingerprint, fingerprint) && r3.fingerprint.version === fingerprint.version && JSON.stringify(r3.raw_observation) === JSON.stringify(raw));
+    if (held) return { recorded: false, reason: "already_held", observation_id: held.record_id };
+    const record2 = {
+      kind: "observation",
+      record_id: randomUUID11(),
+      created_at: at,
+      fingerprint,
+      observation: input.observation,
+      raw_observation: raw,
+      displayed_at: null,
+      card_id: null
+    };
+    store.records.push(record2);
+    return { recorded: true, observation_id: record2.record_id };
+  });
+}
+function localDay(d3) {
+  return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+}
+function nextMidnight(d3) {
+  return new Date(d3.getFullYear(), d3.getMonth(), d3.getDate() + 1);
+}
+function aiCards(store) {
+  return store.records.filter((r3) => r3.kind === "card").map((r3) => r3).filter((c3) => c3.fingerprint);
+}
+function waitedOn(card, now) {
+  return card.waiter_until !== null && Date.parse(card.waiter_until) > now.getTime();
+}
+function dismissUnanswered(store, sessionId, now) {
+  for (const card of aiCards(store)) {
+    if (card.state !== "open" || card.session_id === sessionId || waitedOn(card, now)) continue;
+    card.state = "dismissed";
+    card.unanswered = true;
+    card.mockup_request = null;
+    const dismissal = {
+      kind: "dismissal",
+      record_id: randomUUID11(),
+      created_at: now.toISOString(),
+      card_id: card.record_id,
+      origin: card.origin,
+      fingerprint: card.fingerprint,
+      plugin_version: card.fingerprint?.version ?? null,
+      unanswered: true
+    };
+    store.records.push(dismissal);
+  }
+}
+function blockedBecause(store, observation, plugins, now) {
+  if (observation.displayed_at !== null) return "shown";
+  const today2 = localDay(now);
+  const cards = aiCards(store);
+  if (cards.some((c3) => localDay(new Date(c3.created_at)) === today2)) return "daily_cap";
+  const installed = currentVersion(plugins, observation.fingerprint.plugin);
+  if (installed !== observation.fingerprint.version) return "version_gone";
+  for (const card of cards) {
+    const fp = card.fingerprint;
+    if (!sameFingerprint(fp, observation.fingerprint)) continue;
+    const at = Date.parse(card.state === "open" ? card.created_at : card.state_since);
+    if (now.getTime() - at < SUPPRESSION_MS || fp.version === installed) return "suppressed";
+  }
+  return null;
+}
+function latestObservation(store) {
+  const all = store.records.filter(isObservation);
+  return all.length ? all[all.length - 1].record_id : null;
+}
+function decide(store, sessionId, plugins, now) {
+  dismissUnanswered(store, sessionId, now);
+  const next = store.records.filter(isObservation).find((o3) => blockedBecause(store, o3, plugins, now) === null) ?? null;
+  store.ai_noticed = {
+    checked_at: now.toISOString(),
+    session_id: sessionId,
+    next: next ? next.record_id : null,
+    latest_observation: latestObservation(store),
+    recheck_at: next ? null : nextMidnight(now).toISOString()
+  };
+  return next;
+}
+function sessionIdOf(raw) {
+  if (typeof raw !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(raw)) throw new ValidationError("session_id must be the session id the reminder named");
+  return raw;
+}
+async function nextObservation(args, env, seams = {}) {
+  const sessionId = sessionIdOf(args.session_id);
+  const plugins = pluginsOf(seams);
+  const now = nowOf(seams);
+  return withStore(env, (store) => {
+    const next = decide(store, sessionId, plugins, now);
+    return next ? { observation: { observation_id: next.record_id, fingerprint: next.fingerprint, raw_observation: next.raw_observation } } : { observation: null };
+  });
+}
+async function observationForCard(observationId, env) {
+  const store = await loadStore(env);
+  const record2 = store.records.find((r3) => r3.record_id === observationId);
+  if (!record2 || !isObservation(record2)) throw new ValidationError(`no observation ${observationId} on this computer`, "not_found");
+  return record2;
+}
+function claimObservation(store, observationId, cardId, sessionId, plugins, now) {
+  dismissUnanswered(store, sessionId, now);
+  const record2 = store.records.find((r3) => r3.record_id === observationId);
+  if (!record2 || !isObservation(record2)) return { claimed: false, reason: "not_found" };
+  const blocked = blockedBecause(store, record2, plugins, now);
+  if (blocked !== null) {
+    decide(store, sessionId, plugins, now);
+    return { claimed: false, reason: blocked };
+  }
+  record2.displayed_at = now.toISOString();
+  record2.card_id = cardId;
+  store.ai_noticed = {
+    checked_at: now.toISOString(),
+    session_id: sessionId,
+    next: null,
+    latest_observation: latestObservation(store),
+    recheck_at: nextMidnight(now).toISOString()
+  };
+  return { claimed: true, fingerprint: record2.fingerprint };
+}
+
+// src/suggestions/card.ts
+var CARD_KIND = "card";
+var DISMISSAL_KIND = "dismissal";
+var BRACKETS = ["client", "matter", "person", "document", "file", "date", "amount"];
+var MAX_MOCKUP_RETURNS = 3;
+var WAITER_TTL_MS = 6e4;
+var STALE_SENDING_MS2 = 10 * 6e4;
+var MAX_ITEMS = 10;
+var MAX_CONTEXT_LINES = 20;
+var MAX_OBSERVATION_LINES = 50;
+var MAX_TEXT = 2e3;
+var MAX_EDIT = 2e4;
+function isCard(record2) {
+  return record2.kind === CARD_KIND;
+}
+function findCard(store, cardId) {
+  const record2 = store.records.find((r3) => r3.record_id === cardId);
+  if (!record2 || !isCard(record2)) throw new NotFoundError(`no suggestion card ${cardId} on this computer`, "not_found");
+  return record2;
+}
+function cardPath(cardId, env = process.env) {
+  return join51(storeDir(env), `Suggestion-${cardId}.html`);
+}
+function mockupPagePath(cardId, n3, env = process.env) {
+  return join51(storeDir(env), `Suggestion-${cardId}-mockup-${n3}.html`);
+}
+function nowOf2(deps) {
+  return deps.now ? deps.now() : /* @__PURE__ */ new Date();
+}
+async function recordsOf(deps) {
+  const stopWords = deps.stopWords ? deps.stopWords() : loadStopWords(deps.env);
+  const records = deps.records ? await deps.records() : await readRecordTexts(new PracticeStore(deps.env), deps.env);
+  return { records, stopWords };
+}
+function isObject8(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function onlyKeys2(label2, value, keys) {
+  const extra = Object.keys(value).find((key) => !keys.includes(key));
+  if (extra) throw new ValidationError(`${label2} has an unknown field "${extra}"`);
+}
+function text6(label2, value, { empty: empty2 = false, max = MAX_TEXT } = {}) {
+  if (typeof value !== "string") throw new ValidationError(`${label2} must be text`);
+  const trimmed = value.trim();
+  if (!empty2 && !trimmed) throw new ValidationError(`${label2} must not be empty`);
+  if (trimmed.length > max) throw new ValidationError(`${label2} is over ${max} characters`);
+  return trimmed;
+}
+function flag(label2, value) {
+  if (value === void 0) return false;
+  if (typeof value !== "boolean") throw new ValidationError(`${label2} must be true or false`);
+  return value;
+}
+var ANY_BRACKET = /\[([A-Za-z][A-Za-z ]{0,30})\]/g;
+function checkBrackets(label2, value) {
+  for (const m3 of value.matchAll(ANY_BRACKET)) {
+    if (!BRACKETS.includes(m3[1])) {
+      throw new ValidationError(`${label2} holds the bracket [${m3[1]}]; a removed identifier leaves only one of ${BRACKETS.map((b3) => `[${b3}]`).join(", ")}`);
+    }
+  }
+}
+function cardInput(args) {
+  onlyKeys2("the card", args, ["origin", "source", "skill", "pain_point", "items", "context_lines", "raw_observation", "tool_names", "held_id", "observation_id", "session_id"]);
+  if (args.origin !== "practitioner" && args.origin !== "probanda") throw new ValidationError("origin must be practitioner or probanda");
+  if (args.source !== "user" && args.source !== "assisted" && args.source !== "llm") throw new ValidationError("source must be user, assisted or llm");
+  const skill = args.skill === void 0 ? null : text6("skill", args.skill);
+  if (!isObject8(args.pain_point)) throw new ValidationError("pain_point must be {text, guess}");
+  onlyKeys2("pain_point", args.pain_point, ["text", "guess"]);
+  const pain = { text: text6("pain_point.text", args.pain_point.text), guess: flag("pain_point.guess", args.pain_point.guess) };
+  checkBrackets("pain_point.text", pain.text);
+  if (!Array.isArray(args.items) || args.items.length < 1 || args.items.length > MAX_ITEMS) {
+    throw new ValidationError(`items must be a list of 1 to ${MAX_ITEMS} items`);
+  }
+  const items2 = args.items.map((item, i3) => {
+    const label2 = `items[${i3}]`;
+    if (!isObject8(item)) throw new ValidationError(`${label2} must be {text, guess, visual}`);
+    onlyKeys2(label2, item, ["text", "guess", "visual"]);
+    const out = { text: text6(`${label2}.text`, item.text), guess: flag(`${label2}.guess`, item.guess), visual: flag(`${label2}.visual`, item.visual) };
+    checkBrackets(`${label2}.text`, out.text);
+    return out;
+  });
+  const lines2 = args.context_lines ?? [];
+  if (!Array.isArray(lines2) || lines2.length > MAX_CONTEXT_LINES) throw new ValidationError(`context_lines must be a list of at most ${MAX_CONTEXT_LINES} lines`);
+  const contextLines2 = lines2.map((line, i3) => {
+    const label2 = `context_lines[${i3}]`;
+    if (!isObject8(line)) throw new ValidationError(`${label2} must be {kind, text, guess}`);
+    onlyKeys2(label2, line, ["kind", "text", "guess"]);
+    if (line.kind !== "constraint" && line.kind !== "evidence") throw new ValidationError(`${label2}.kind must be constraint or evidence`);
+    const out = { kind: line.kind, text: text6(`${label2}.text`, line.text), guess: flag(`${label2}.guess`, line.guess) };
+    checkBrackets(`${label2}.text`, out.text);
+    return out;
+  });
+  const observation = args.raw_observation ?? [];
+  if (!Array.isArray(observation) || observation.length > MAX_OBSERVATION_LINES) {
+    throw new ValidationError(`raw_observation must be a list of at most ${MAX_OBSERVATION_LINES} lines`);
+  }
+  const rawObservation = observation.map((line, i3) => text6(`raw_observation[${i3}]`, line));
+  let toolNames;
+  if (args.tool_names !== void 0) {
+    if (!Array.isArray(args.tool_names) || !args.tool_names.every((n3) => typeof n3 === "string")) throw new ValidationError("tool_names must be a list of tool names");
+    toolNames = args.tool_names;
+  }
+  const heldId = args.held_id === void 0 ? null : text6("held_id", args.held_id);
+  let observationId = null;
+  let sessionId = null;
+  if (args.observation_id !== void 0) {
+    observationId = text6("observation_id", args.observation_id);
+    sessionId = sessionIdOf(args.session_id);
+    if (args.origin !== "probanda" || args.source !== "llm") throw new ValidationError("a card for an observation has origin probanda and source llm");
+    if (args.raw_observation !== void 0) throw new ValidationError("a card for an observation takes its raw observation from the observation, so raw_observation is not given");
+    if (args.skill !== void 0) throw new ValidationError("a card for an observation takes its skill from the observation, so skill is not given");
+    if (heldId !== null) throw new ValidationError("a card for an observation offers no held draft");
+  } else if (args.session_id !== void 0) {
+    throw new ValidationError("session_id goes only with observation_id");
+  }
+  return {
+    origin: args.origin,
+    source: args.source,
+    skill,
+    pain_point: pain,
+    items: items2,
+    context_lines: contextLines2,
+    raw_observation: rawObservation,
+    tool_names: toolNames,
+    held_id: heldId,
+    observation_id: observationId,
+    session_id: sessionId
+  };
+}
+var READABLE = ["pain_point", "items", "context_lines", "comment"];
+function cardText2(card) {
+  return {
+    pain_point: card.pain_point.text,
+    items: card.items.map((i3) => i3.text),
+    context_lines: card.context_lines.map((l3) => l3.text),
+    ...card.comment ? { comment: card.comment } : {},
+    ...card.raw_observation.length ? { raw_observation: card.raw_observation } : {},
+    ...card.mockup ? { mockup: card.mockup.html } : {},
+    environment_facts: card.environment_facts
+  };
+}
+function blockOf2(card, part, index) {
+  if (part === "pain_point") return { id: null, text: card.pain_point.text };
+  if (part === "comment") return { id: null, text: card.comment };
+  const block2 = (part === "items" ? card.items : card.context_lines)[index ?? -1];
+  return { id: block2.id, text: block2.text };
+}
+function isReadable(part) {
+  return READABLE.includes(part);
+}
+function promptsOf(card, hits) {
+  const prompts = [];
+  for (const hit of hits) {
+    if (!isReadable(hit.part) || hit.offer === null) continue;
+    const block2 = blockOf2(card, hit.part, hit.index);
+    const span = block2.text.slice(hit.start, hit.end);
+    const exempt = (hit.kind === "date" || hit.kind === "amount") && card.send_anyway.some((s3) => s3.part === hit.part && s3.id === block2.id && s3.kind === hit.kind && s3.text === span);
+    if (exempt) continue;
+    prompts.push({ part: hit.part, id: block2.id, start: hit.start, end: hit.end, kind: hit.kind, offer: hit.offer, text: span });
+  }
+  return prompts;
+}
+var DROPPED = /* @__PURE__ */ Symbol("dropped");
+function markFact(facts, field) {
+  const steps = [...field.matchAll(/([^.[\]]+)|\[(\d+)\]/g)].map((m3) => m3[2] !== void 0 ? Number(m3[2]) : m3[1]);
+  let node = facts;
+  for (let i3 = 0; i3 < steps.length - 1; i3++) {
+    node = node?.[steps[i3]];
+    if (node === void 0 || node === null) return;
+  }
+  const last = steps[steps.length - 1];
+  if (node !== null && typeof node === "object" && last !== void 0) node[last] = DROPPED;
+}
+function sweep(value) {
+  if (Array.isArray(value)) return value.filter((v3) => v3 !== DROPPED).map(sweep);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).filter(([, v3]) => v3 !== DROPPED).map(([k3, v3]) => [k3, sweep(v3)]));
+  }
+  return value;
+}
+function dropGenerated(card, hits, when, at) {
+  const generated = hits.filter((h3) => !isReadable(h3.part));
+  if (!generated.length) return;
+  const lines2 = /* @__PURE__ */ new Set();
+  for (const hit of generated) {
+    card.defects.push({
+      at,
+      when,
+      part: hit.part,
+      kind: hit.kind,
+      ...hit.index !== void 0 ? { index: hit.index } : {},
+      ...hit.field !== void 0 ? { field: hit.field } : {},
+      ...hit.sources ? { sources: hit.sources } : {}
+    });
+    if (hit.part === "raw_observation" && hit.index !== void 0) lines2.add(hit.index);
+    else if (hit.part === "mockup") card.mockup = null;
+    else if (hit.part === "environment_facts" && hit.field) markFact(card.environment_facts, hit.field);
+  }
+  card.raw_observation = card.raw_observation.filter((_3, i3) => !lines2.has(i3));
+  card.environment_facts = sweep(card.environment_facts);
+}
+function newCard(input, facts, at) {
+  return {
+    kind: "card",
+    record_id: randomUUID12(),
+    created_at: at,
+    state: "open",
+    state_since: at,
+    origin: input.origin,
+    source: input.source,
+    skill: input.skill,
+    pain_point: { id: "p", ...input.pain_point },
+    items: input.items.map((item, i3) => ({ id: `i${i3 + 1}`, ...item })),
+    context_lines: input.context_lines.map((line, i3) => ({ id: `c${i3 + 1}`, ...line })),
+    raw_observation: input.raw_observation,
+    comment: "",
+    environment_facts: facts,
+    mockup: null,
+    mockups_made: 0,
+    mockups_rejected: 0,
+    mockup_request: null,
+    waiter_until: null,
+    send_anyway: [],
+    defects: [],
+    suggestion_record_id: null,
+    next_line: input.context_lines.length + 1
+  };
+}
+var SOURCE_CATEGORY = {
+  client: "client",
+  matter: "matter",
+  contact: "contact",
+  folder_name: "folder name",
+  document_title: "document title",
+  file_name: "file name"
+};
+function unreadSources(states) {
+  return RECORD_SOURCES.filter((s3) => states[s3] === "partial" || states[s3] === "unavailable").map((s3) => SOURCE_CATEGORY[s3]);
+}
+async function buildCard(input, facts, deps) {
+  const now = nowOf2(deps);
+  const at = now.toISOString();
+  if (input.observation_id !== null) {
+    const observation = await observationForCard(input.observation_id, deps.env);
+    if (observation.displayed_at !== null) return { built: false, reason: "not_raised" };
+    input = { ...input, raw_observation: [...observation.raw_observation], skill: observation.fingerprint.skill ?? null };
+  }
+  const card = newCard(input, structuredClone(facts), at);
+  const { records, stopWords } = await recordsOf(deps);
+  const check = runCrossCheck(cardText2(card), records, stopWords);
+  if (!check.complete) return { built: false, reason: "records_unreadable", unreadable: unreadSources(check.records) };
+  const readable = check.hits.filter((h3) => isReadable(h3.part));
+  if (readable.length) {
+    return {
+      built: false,
+      hits: readable.map((h3) => ({ part: h3.part, id: blockOf2(card, h3.part, h3.index).id, ...h3.index !== void 0 ? { index: h3.index } : {}, start: h3.start, end: h3.end, kind: h3.kind, offer: h3.offer }))
+    };
+  }
+  dropGenerated(card, check.hits, "build", at);
+  const plugins = input.observation_id !== null ? pluginsOf(deps.seams ?? {}) : [];
+  const saved = await withStore(deps.env, (store) => {
+    if (input.observation_id !== null) {
+      const claim = claimObservation(store, input.observation_id, card.record_id, input.session_id, plugins, now);
+      if (!claim.claimed) return false;
+      card.fingerprint = claim.fingerprint;
+      card.observation_id = input.observation_id;
+      card.session_id = input.session_id;
+    }
+    if (input.held_id !== null) {
+      const index = store.records.findIndex((r3) => isHeld(r3) && r3.record_id === input.held_id);
+      if (index < 0) throw new ValidationError(`no held suggestion ${input.held_id} on this computer`, "not_found");
+      store.records.splice(index, 1);
+    }
+    store.records.push(card);
+    return true;
+  });
+  if (!saved) return { built: false, reason: "not_raised" };
+  const path = writeCardPage(card, deps.env);
+  return { built: true, card_id: card.record_id, card_path: path };
+}
+function writeCardPage(card, env) {
+  const path = cardPath(card.record_id, env);
+  writeTextAtomic(path, renderCardHtml(card, pageApiPort(env), pageApiCardToken(card.record_id, env)));
+  return path;
+}
+function waiting(card, now) {
+  return card.waiter_until !== null && Date.parse(card.waiter_until) > now.getTime();
+}
+function effectiveState(card, now) {
+  if (card.state === "sending" && now.getTime() - Date.parse(card.state_since) > STALE_SENDING_MS2) return "open";
+  return card.state;
+}
+function mockupLink(card, now) {
+  if (effectiveState(card, now) !== "open" || !card.items.some((i3) => i3.visual) || card.mockup !== null) return "hidden";
+  if (card.mockups_rejected > MAX_MOCKUP_RETURNS) return "hidden";
+  if (card.mockup_request !== null) return "requested";
+  return waiting(card, now) ? "available" : "no_waiter";
+}
+function statusOf(card, store) {
+  if (card.state === "sending") return CARD_STATUS.sending;
+  if (card.state !== "submitted") return null;
+  const sent2 = store.records.find((r3) => r3.record_id === card.suggestion_record_id);
+  return sent2 && isSuggestion(sent2) ? cardStatus(sent2) : CARD_STATUS.unsent;
+}
+function pageState(card, store, now) {
+  return {
+    state: effectiveState(card, now),
+    status: statusOf(card, store),
+    mockup_link: mockupLink(card, now),
+    mockup: card.mockup,
+    context_lines: card.context_lines
+  };
+}
+async function readCardState(cardId, deps) {
+  const store = await loadStore(deps.env);
+  return pageState(findCard(store, cardId), store, nowOf2(deps));
+}
+function blockList(label2, value) {
+  if (value === void 0) return void 0;
+  if (!Array.isArray(value)) throw new ValidationError(`${label2} must be a list`);
+  return value.map((entry2, i3) => {
+    if (!isObject8(entry2) || typeof entry2.id !== "string") throw new ValidationError(`${label2}[${i3}] must be {id, text}`);
+    return { id: entry2.id, text: text6(`${label2}[${i3}].text`, entry2.text, { empty: true, max: MAX_EDIT }) };
+  });
+}
+function cardEdits(value) {
+  if (value === void 0 || value === null) return {};
+  if (!isObject8(value)) throw new ValidationError("edits must be an object");
+  onlyKeys2("edits", value, ["pain_point", "items", "context_lines", "lines_known", "comment"]);
+  const known = value.lines_known;
+  if (known !== void 0 && (!Array.isArray(known) || !known.every((id) => typeof id === "string"))) throw new ValidationError("lines_known must be a list of ids");
+  return {
+    ...value.pain_point === void 0 ? {} : { pain_point: text6("pain_point", value.pain_point, { empty: true, max: MAX_EDIT }) },
+    ...value.items === void 0 ? {} : { items: blockList("items", value.items) },
+    ...value.context_lines === void 0 ? {} : { context_lines: blockList("context_lines", value.context_lines) },
+    ...known === void 0 ? {} : { lines_known: known },
+    ...value.comment === void 0 ? {} : { comment: text6("comment", value.comment, { empty: true, max: MAX_EDIT }) }
+  };
+}
+function edited(block2, value) {
+  return value === block2.text ? block2 : { ...block2, text: value, guess: false };
+}
+function applyEdits(card, edits) {
+  if (edits.pain_point !== void 0 && edits.pain_point !== "") card.pain_point = edited(card.pain_point, edits.pain_point);
+  if (edits.items) {
+    const byId2 = new Map(edits.items.map((e3) => [e3.id, e3.text]));
+    card.items = card.items.filter((i3) => byId2.has(i3.id) && byId2.get(i3.id) !== "").map((i3) => edited(i3, byId2.get(i3.id)));
+  }
+  if (edits.context_lines) {
+    const byId2 = new Map(edits.context_lines.map((e3) => [e3.id, e3.text]));
+    const known = new Set(edits.lines_known ?? edits.context_lines.map((e3) => e3.id));
+    card.context_lines = card.context_lines.filter((l3) => !known.has(l3.id) || byId2.has(l3.id) && byId2.get(l3.id) !== "").map((l3) => byId2.has(l3.id) ? edited(l3, byId2.get(l3.id)) : l3);
+  }
+  if (edits.comment !== void 0) card.comment = edits.comment;
+}
+function blocksOf(card) {
+  return {
+    pain_point: card.pain_point.text,
+    items: card.items.map(({ id, text: t3 }) => ({ id, text: t3 })),
+    context_lines: card.context_lines.map(({ id, text: t3 }) => ({ id, text: t3 })),
+    comment: card.comment
+  };
+}
+function titleFrom(pain) {
+  const sentence = pain.split(/(?<=[.!?])\s/)[0];
+  const words = sentence.split(/\s+/).filter(Boolean);
+  const title = words.slice(0, 8).join(" ");
+  return title.length > 100 ? `${title.slice(0, 99)}\u2026` : title;
+}
+function cardFields(card) {
+  return {
+    title: titleFrom(card.pain_point.text),
+    pain_point: card.pain_point.text,
+    source: card.source,
+    ...card.skill ? { skill: card.skill } : {},
+    ...card.items.length ? { items: card.items.map((i3) => i3.text) } : {},
+    origin: card.origin,
+    ...card.fingerprint ? { fingerprint: { ...card.fingerprint } } : {},
+    ...card.raw_observation.length ? { raw_observation: card.raw_observation.join("\n") } : {},
+    environment_facts: card.environment_facts,
+    ...card.comment ? { comment: card.comment } : {},
+    ...card.context_lines.length ? { context_lines: card.context_lines.map((l3) => ({ kind: l3.kind, text: l3.text })) } : {},
+    ...card.mockup ? { mockup: card.mockup.html } : {}
+  };
+}
+function checkAndClaim(card, records, stopWords, at) {
+  const check = runCrossCheck(cardText2(card), records, stopWords);
+  if (!check.complete) {
+    card.check_failures = [...card.check_failures ?? [], { at, records: check.records }];
+    return { unchecked: true };
+  }
+  dropGenerated(card, check.hits, "click", at);
+  const prompts = promptsOf(card, check.hits);
+  if (prompts.length) return { prompts };
+  card.state = "sending";
+  card.state_since = at;
+  card.mockup_request = null;
+  return { fields: cardFields(card) };
+}
+function claimed(card, next) {
+  if ("fields" in next) return { fields: next.fields };
+  if ("unchecked" in next) return { done: { outcome: "unchecked", blocks: blocksOf(card) } };
+  return { done: { outcome: "check", prompts: next.prompts, blocks: blocksOf(card) } };
+}
+async function send(cardId, fields2, deps) {
+  let result;
+  try {
+    result = await submitSuggestion(fields2, deps.env, deps.seams ?? {});
+  } catch (err) {
+    const reopened = await withStore(deps.env, (store) => {
+      const card = findCard(store, cardId);
+      card.state = "open";
+      card.state_since = nowOf2(deps).toISOString();
+      return blocksOf(card);
+    });
+    if (err instanceof ValidationError) return { outcome: "refused", blocks: reopened };
+    throw err;
+  }
+  await withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    card.state = "submitted";
+    card.state_since = nowOf2(deps).toISOString();
+    card.suggestion_record_id = result.record_id;
+    card.waiter_until = null;
+  });
+  return { outcome: result.status === CARD_STATUS.sent ? "sent" : "unsent", status: result.status };
+}
+function closed(card, store, now) {
+  const state = effectiveState(card, now);
+  return state === "open" ? null : { outcome: "closed", state, status: statusOf(card, store) };
+}
+async function submitCard(cardId, edits, deps) {
+  const { records, stopWords } = await recordsOf(deps);
+  const now = nowOf2(deps);
+  const step2 = await withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    const done = closed(card, store, now);
+    if (done) return { done };
+    applyEdits(card, edits);
+    if (!card.pain_point.text.trim()) return { done: { outcome: "empty" } };
+    return claimed(card, checkAndClaim(card, records, stopWords, now.toISOString()));
+  });
+  if ("done" in step2) return step2.done;
+  return send(cardId, step2.fields, deps);
+}
+function bracketFor(kind, sources) {
+  if (kind === "email") return "person";
+  if (kind === "path") return "file";
+  if (kind === "date" || kind === "amount") return kind;
+  const source = sources?.[0];
+  if (source === "client" || source === "matter") return source;
+  if (source === "contact") return "person";
+  if (source === "document_title") return "document";
+  return "file";
+}
+async function resolvePrompt(cardId, answer, deps) {
+  if (!isReadable(String(answer.part))) throw new ValidationError("part must be pain_point, items, context_lines or comment");
+  if (answer.action !== "remove" && answer.action !== "send_anyway") throw new ValidationError("action must be remove or send_anyway");
+  if (!Number.isInteger(answer.start) || !Number.isInteger(answer.end)) throw new ValidationError("start and end must be whole numbers");
+  const part = answer.part;
+  const id = answer.id === null || answer.id === void 0 ? null : String(answer.id);
+  const { records, stopWords } = await recordsOf(deps);
+  const now = nowOf2(deps);
+  const step2 = await withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    const done = closed(card, store, now);
+    if (done) return { done };
+    const check = runCrossCheck(cardText2(card), records, stopWords);
+    const hit = check.hits.find((h3) => h3.part === part && h3.start === answer.start && h3.end === answer.end && isReadable(h3.part) && blockOf2(card, part, h3.index).id === id);
+    if (!hit || answer.action === "send_anyway" && hit.kind !== "date" && hit.kind !== "amount") {
+      return { done: { outcome: "stale", prompts: promptsOf(card, check.hits), blocks: blocksOf(card) } };
+    }
+    const block2 = blockOf2(card, part, hit.index);
+    const span = block2.text.slice(hit.start, hit.end);
+    if (answer.action === "send_anyway") {
+      card.send_anyway.push({ part, id: block2.id, kind: hit.kind, text: span });
+    } else {
+      const replaced = `${block2.text.slice(0, hit.start)}[${bracketFor(hit.kind, hit.sources)}]${block2.text.slice(hit.end)}`;
+      if (part === "pain_point") card.pain_point = { ...card.pain_point, text: replaced };
+      else if (part === "comment") card.comment = replaced;
+      else {
+        const list = part === "items" ? card.items : card.context_lines;
+        const at = list.findIndex((b3) => b3.id === block2.id);
+        list[at] = { ...list[at], text: replaced };
+      }
+    }
+    return claimed(card, checkAndClaim(card, records, stopWords, now.toISOString()));
+  });
+  if ("done" in step2) return step2.done;
+  return send(cardId, step2.fields, deps);
+}
+async function dismissCard(cardId, deps) {
+  let release = null;
+  try {
+    release = pluginRelease(deps.seams?.installRoot);
+  } catch {
+    release = null;
+  }
+  const now = nowOf2(deps);
+  return withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    const done = closed(card, store, now);
+    if (done) return done.outcome === "closed" && done.state === "dismissed" ? { outcome: "dismissed" } : done;
+    card.state = "dismissed";
+    card.state_since = now.toISOString();
+    card.mockup_request = null;
+    const dismissal = {
+      kind: "dismissal",
+      record_id: randomUUID12(),
+      created_at: now.toISOString(),
+      card_id: cardId,
+      origin: card.origin,
+      fingerprint: card.fingerprint ? { ...card.fingerprint } : null,
+      plugin_version: card.fingerprint?.version ?? release
+    };
+    store.records.push(dismissal);
+    return { outcome: "dismissed" };
+  });
+}
+async function restoreCard(cardId, deps) {
+  const now = nowOf2(deps);
+  return withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    if (card.state !== "dismissed") return closed(card, store, now) ?? { outcome: "restored" };
+    card.state = "open";
+    card.state_since = now.toISOString();
+    store.records = store.records.filter((r3) => !(r3.kind === DISMISSAL_KIND && r3.card_id === cardId));
+    return { outcome: "restored" };
+  });
+}
+async function requestMockup(cardId, edits, deps) {
+  const now = nowOf2(deps);
+  return withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    if (effectiveState(card, now) !== "open") return { outcome: "closed" };
+    applyEdits(card, edits);
+    const link = mockupLink(card, now);
+    if (link !== "available") return { outcome: link };
+    card.mockup_request = { at: now.toISOString(), taken_at: null };
+    return { outcome: "requested" };
+  });
+}
+async function attachMockup(cardId, html, deps) {
+  const placeholders = deps.placeholders ? deps.placeholders() : loadPlaceholders(deps.env);
+  const problem = checkMockup(html, placeholders);
+  if (problem) throw new ValidationError(`mockup refused: ${problem.problem}. Build it again from the placeholder text alone, with inline styles.`);
+  const { records, stopWords } = await recordsOf(deps);
+  const check = runCrossCheck({ mockup: html }, records, stopWords);
+  if (!check.complete) {
+    throw new ValidationError(`mockup refused: it could not be checked against this computer's records (${unreadSources(check.records).join(", ")} records unreadable)`);
+  }
+  if (!check.passed) {
+    throw new ValidationError("mockup refused: a word in it is found in this computer's records. Use other placeholder text or other style names.");
+  }
+  const now = nowOf2(deps);
+  const { n: n3, items: items2 } = await withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    if (effectiveState(card, now) !== "open") throw new ValidationError("this suggestion was already submitted or dismissed, so no mockup is added");
+    if (card.mockup_request === null) throw new ValidationError("no mockup was asked for on this card: wait for the practitioner's click");
+    card.mockups_made += 1;
+    card.mockup = { n: card.mockups_made, html };
+    card.mockup_request = null;
+    return { n: card.mockups_made, items: card.items.filter((i3) => i3.visual).map((i3) => i3.text) };
+  });
+  const path = mockupPagePath(cardId, n3, deps.env);
+  writeTextAtomic(path, renderMockupPage({ cardId, n: n3, html, items: items2, port: pageApiPort(deps.env), token: pageApiCardToken(cardId, deps.env) }));
+  return { card_id: cardId, mockup_path: path };
+}
+async function rejectMockup(cardId, n3, reason, deps) {
+  const why = text6("reason", reason);
+  const now = nowOf2(deps);
+  const result = await withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    if (effectiveState(card, now) !== "open" || card.mockup === null || card.mockup.n !== n3) return { outcome: "gone" };
+    card.context_lines.push({ id: `c${card.next_line}`, kind: "constraint", text: why, guess: false });
+    card.next_line += 1;
+    card.mockup = null;
+    card.mockups_rejected += 1;
+    return { outcome: "rejected", mockup_available: card.mockups_rejected <= MAX_MOCKUP_RETURNS };
+  });
+  if (result.outcome === "rejected") {
+    const path = mockupPagePath(cardId, n3, deps.env);
+    if (existsSync51(path)) unlinkSync10(path);
+  }
+  return result;
+}
+var sleep4 = (ms2) => new Promise((resolve10) => setTimeout(resolve10, ms2));
+async function waitForCard(cardId, deps) {
+  const timeoutMs = deps.timeoutMs ?? 45e3;
+  const pollMs = deps.pollMs ?? 500;
+  const heartbeatMs = deps.heartbeatMs ?? 1e4;
+  const started = Date.now();
+  let beat = -Infinity;
+  findCard(await loadStore(deps.env), cardId);
+  for (; ; ) {
+    const now = nowOf2(deps);
+    const store = await loadStore(deps.env);
+    const card = findCard(store, cardId);
+    const state = effectiveState(card, now);
+    const pendingMockup = card.mockup_request !== null && card.mockup_request.taken_at === null;
+    if (state === "submitted" || state === "dismissed" || pendingMockup || Date.now() - beat >= heartbeatMs) {
+      const event = await withStore(deps.env, (s3) => {
+        const c3 = findCard(s3, cardId);
+        const st3 = effectiveState(c3, now);
+        if (st3 === "submitted" || st3 === "dismissed") {
+          c3.waiter_until = null;
+          return { event: st3, card_id: cardId };
+        }
+        c3.waiter_until = new Date(now.getTime() + WAITER_TTL_MS).toISOString();
+        if (c3.mockup_request !== null && c3.mockup_request.taken_at === null) {
+          c3.mockup_request.taken_at = now.toISOString();
+          return {
+            event: "mockup",
+            card_id: cardId,
+            items: c3.items.filter((i3) => i3.visual).map((i3) => i3.text),
+            constraints: c3.context_lines.filter((l3) => l3.kind === "constraint").map((l3) => l3.text),
+            placeholders: deps.placeholders ? deps.placeholders() : loadPlaceholders(deps.env)
+          };
+        }
+        return null;
+      });
+      beat = Date.now();
+      if (event) return event;
+    }
+    if (Date.now() - started >= timeoutMs) return { event: "pending", card_id: cardId };
+    await sleep4(pollMs);
+  }
+}
+async function openCards(env) {
+  const store = await loadStore(env);
+  const now = /* @__PURE__ */ new Date();
+  return store.records.filter(isCard).map((r3) => r3).filter((c3) => effectiveState(c3, now) === "open").map((c3) => ({ card_id: c3.record_id, created_at: c3.created_at, card_path: cardPath(c3.record_id, env) }));
+}
+
 // src/suggestions/tools.ts
 function isSuggestionToolName(name) {
-  return name.startsWith("suggestion_box__") || name.startsWith("suggestion_log__");
+  return name.startsWith("suggestion_box__") || name.startsWith("suggestion_log__") || name.startsWith("suggestion_observation__");
 }
 function isSuggestionCardToolName(name) {
   return name.startsWith("suggestion_card__");
@@ -109668,6 +110055,10 @@ async function callSuggestionCardTool(store, name, args, env = store.env) {
 }
 function callSuggestionTool(name, args, env = process.env, seams = {}) {
   switch (name) {
+    case "suggestion_observation__record":
+      return recordObservation(args, env, seams);
+    case "suggestion_observation__next":
+      return nextObservation(args, env, seams);
     case "suggestion_box__status":
       return status(args, env, seams);
     case "suggestion_box__past_suggestions":
@@ -109737,7 +110128,7 @@ async function suggestionLogWrite(args, env = process.env) {
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync51, mkdirSync as mkdirSync21, readFileSync as readFileSync38, statSync as statSync18, writeFileSync as writeFileSync11 } from "node:fs";
+import { existsSync as existsSync52, mkdirSync as mkdirSync21, readFileSync as readFileSync39, statSync as statSync18, writeFileSync as writeFileSync11 } from "node:fs";
 import { win32 as pathWin3227 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
@@ -109760,7 +110151,7 @@ function repoDocsWrite(relative5, content, overwrite = false, env) {
   const root = docsRoot(env);
   assertRelativeSyntax(relative5, "path");
   const resolved = resolveWithin(root, relative5, "path", false);
-  const exists = existsSync51(resolved);
+  const exists = existsSync52(resolved);
   if (exists && statSync18(resolved).isDirectory()) {
     throw new DataServerError(
       `path is a directory, not a file: ${relative5}`,
@@ -109793,12 +110184,12 @@ function repoDocsRead(relative5, env) {
   }
   return {
     path: toPosixRelative(root, resolved),
-    content: readFileSync38(resolved, "utf-8")
+    content: readFileSync39(resolved, "utf-8")
   };
 }
 
 // src/pages/preview.ts
-import { basename as basename14, dirname as dirname30, join as join52, relative as relative4 } from "node:path";
+import { basename as basename14, dirname as dirname30, join as join53, relative as relative4 } from "node:path";
 
 // src/housekeeping/templates/approval.css.ts
 var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
@@ -111212,10 +111603,10 @@ var RAW_RESEARCH_FIXTURE = {
 // src/pages/preview-file.ts
 import { mkdirSync as mkdirSync22, writeFileSync as writeFileSync12 } from "node:fs";
 import { tmpdir as tmpdir4 } from "node:os";
-import { join as join51 } from "node:path";
+import { join as join52 } from "node:path";
 var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
 function fixturePreviewDir() {
-  return join51(tmpdir4(), FIXTURE_PREVIEW_FOLDER);
+  return join52(tmpdir4(), FIXTURE_PREVIEW_FOLDER);
 }
 var FIXTURE_PREVIEW_MARKER = "<!-- probanda-fixture-preview -->";
 function composeWithOverrides(set, overrides = {}) {
@@ -111232,7 +111623,7 @@ function writePreview(dir, base, html, fixture) {
   const text8 = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
 ` : html;
   for (let n3 = 1; ; n3++) {
-    const path = join51(dir, `${base} preview ${n3}.html`);
+    const path = join52(dir, `${base} preview ${n3}.html`);
     try {
       writeFileSync12(path, text8, { flag: "wx" });
       return path;
@@ -111322,7 +111713,7 @@ async function pagesPreview(args, store) {
     ids.filing_id === void 0 ? {} : { only: ids.filing_id },
     viewPage ? { views: { [page2]: page2 === LOOSE_THREADS_PAGE_NAME ? withoutListener(viewPage) : viewPage } } : page2 === "Job Board" ? { jobBoard: composed } : { matterBoard: composed }
   );
-  const target = page2 === "Litigation Strategy" ? join52(draftDir, MATTER_BOARD_FILE) : page2 === "Job Board" ? built.paths.job_board_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
+  const target = page2 === "Litigation Strategy" ? join53(draftDir, MATTER_BOARD_FILE) : page2 === "Job Board" ? built.paths.job_board_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
   const pageFile = target === void 0 ? void 0 : relative4(draftDir, target);
   const html = built.pages.find((p3) => p3.name === pageFile)?.html;
   if (target === void 0 || html === void 0) {
@@ -111348,10 +111739,10 @@ import {
   appendFileSync as appendFileSync2,
   constants,
   copyFileSync as copyFileSync4,
-  existsSync as existsSync53,
+  existsSync as existsSync54,
   mkdirSync as mkdirSync24,
-  readdirSync as readdirSync28,
-  readFileSync as readFileSync44,
+  readdirSync as readdirSync29,
+  readFileSync as readFileSync45,
   statSync as statSync21,
   writeFileSync as writeFileSync14
 } from "node:fs";
@@ -111424,11 +111815,11 @@ function downloadsDir(env = process.env) {
 }
 
 // src/files/text-extract.ts
-import { readFileSync as readFileSync43 } from "node:fs";
+import { readFileSync as readFileSync44 } from "node:fs";
 import { win32 as pathWin3229 } from "node:path";
 
 // src/files/extract/doc.ts
-import { readFileSync as readFileSync39 } from "node:fs";
+import { readFileSync as readFileSync40 } from "node:fs";
 var CFB_SIGNATURE = Buffer.from([208, 207, 17, 224, 161, 177, 26, 225]);
 var END_OF_CHAIN2 = 4294967294;
 var FREE_SECT = 4294967295;
@@ -111569,7 +111960,7 @@ function plain(raw) {
   return out;
 }
 function docText(path) {
-  const streams = cfbStreams(readFileSync39(path));
+  const streams = cfbStreams(readFileSync40(path));
   const wd = streams.get("WordDocument");
   if (!wd || wd.length < 154) throw new Error("not a Word document (no WordDocument stream)");
   if (wd.readUInt16LE(0) !== WORD_IDENT) throw new Error("not a Word document (bad FIB identifier)");
@@ -111617,7 +112008,7 @@ ${notes.join("\n\n")}
 }
 
 // src/files/extract/docx.ts
-import { readFileSync as readFileSync40 } from "node:fs";
+import { readFileSync as readFileSync41 } from "node:fs";
 import { inflateRawSync as inflateRawSync2 } from "node:zlib";
 var EOCD_SIG = 101010256;
 var CENTRAL_SIG = 33639248;
@@ -111654,15 +112045,15 @@ function zipEntry(zip, name) {
   throw new Error(`no ${name} in the archive`);
 }
 function docxText(path) {
-  const xml = zipEntry(readFileSync40(path), "word/document.xml").toString("utf-8");
+  const xml = zipEntry(readFileSync41(path), "word/document.xml").toString("utf-8");
   return xml.replace(/<w:tab\/>/g, "	").replace(/<\/w:p>/g, "\n").replace(/<w:br[^>]*\/>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
 }
 
 // src/files/extract/page-images.ts
 import { createHash as createHash10 } from "node:crypto";
-import { existsSync as existsSync52, mkdirSync as mkdirSync23, mkdtempSync as mkdtempSync2, readFileSync as readFileSync41, statSync as statSync20, writeFileSync as writeFileSync13 } from "node:fs";
+import { existsSync as existsSync53, mkdirSync as mkdirSync23, mkdtempSync as mkdtempSync2, readFileSync as readFileSync42, statSync as statSync20, writeFileSync as writeFileSync13 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
-import { extname as extname6, isAbsolute as isAbsolute9, join as join53 } from "node:path";
+import { extname as extname6, isAbsolute as isAbsolute9, join as join54 } from "node:path";
 import { deflateSync } from "node:zlib";
 
 // node_modules/@embedpdf/pdfium/dist/index.js
@@ -117332,7 +117723,7 @@ function loadPdfium(wasm) {
   let lib = loaded.get(wasm.href);
   if (!lib) {
     lib = (async () => {
-      const module = await init({ wasmBinary: readFileSync41(wasm), print: console.error, printErr: console.error });
+      const module = await init({ wasmBinary: readFileSync42(wasm), print: console.error, printErr: console.error });
       module.PDFiumExt_Init();
       return module;
     })();
@@ -117351,9 +117742,9 @@ function malloc(lib, bytes) {
 }
 async function withPdf(path, wasm, work) {
   if (!isAbsolute9(path)) throw new ValidationError(`path must be absolute: ${path}`);
-  if (!existsSync52(path) || !statSync20(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
+  if (!existsSync53(path) || !statSync20(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname6(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
-  const data = readFileSync41(path);
+  const data = readFileSync42(path);
   const pending3 = loadPdfium(wasm);
   let lib;
   try {
@@ -117426,9 +117817,9 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
       }
       const { width, height, tiles } = plan;
       if (renderDir === null) {
-        if (args.destination_dir === void 0) renderDir = mkdtempSync2(join53(tmpdir5(), "probanda-pages-"));
+        if (args.destination_dir === void 0) renderDir = mkdtempSync2(join54(tmpdir5(), "probanda-pages-"));
         else {
-          renderDir = join53(args.destination_dir, sourceSha256.slice(0, 16));
+          renderDir = join54(args.destination_dir, sourceSha256.slice(0, 16));
           mkdirSync23(renderDir, { recursive: true });
         }
       }
@@ -117437,7 +117828,7 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
         await nextTurn();
         const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows2));
         const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-        const file = join53(renderDir, `${name}.png`);
+        const file = join54(renderDir, `${name}.png`);
         writeFileSync13(file, png);
         const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows2 };
         if (tiles.length > 1) image.tile = i3 + 1;
@@ -117618,7 +118009,7 @@ function chunk(type, data) {
 }
 
 // src/files/extract/pdf.ts
-import { readFileSync as readFileSync42 } from "node:fs";
+import { readFileSync as readFileSync43 } from "node:fs";
 var pdfjs;
 var quietDepth = 0;
 var savedLog = console.log;
@@ -117651,7 +118042,7 @@ function loadPdfJs() {
 var PdfExtractorUnavailable = class extends Error {
 };
 async function pdfPages(path) {
-  const data = new Uint8Array(readFileSync42(path));
+  const data = new Uint8Array(readFileSync43(path));
   if (data.length === 0) throw new Error("file is empty (0 bytes)");
   return quietStdout(async () => {
     let lib;
@@ -117704,7 +118095,7 @@ async function extractText(path) {
   let result;
   try {
     if (COPIED_EXTENSIONS.has(ext)) {
-      result = { status: "ok", kind: "text", method: "copy", text: readFileSync43(path, "utf-8"), pages: null };
+      result = { status: "ok", kind: "text", method: "copy", text: readFileSync44(path, "utf-8"), pages: null };
     } else if (ext === ".pdf") {
       const scanned = (await classifyPdfPages(path)).indexOf("scanned");
       if (scanned >= 0) {
@@ -117737,12 +118128,12 @@ async function extractText(path) {
 }
 
 // src/files/version-name.ts
-import { readdirSync as readdirSync27 } from "node:fs";
+import { readdirSync as readdirSync28 } from "node:fs";
 function nextVersionName(dir, stem3, ext) {
   const escape3 = (text8) => text8.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const version2 = new RegExp(`^${escape3(stem3)}(?: v(\\d+))?${escape3(ext)}$`, "i");
   let highest = 0;
-  for (const name of readdirSync27(dir)) {
+  for (const name of readdirSync28(dir)) {
     const match = version2.exec(name);
     if (match) highest = Math.max(highest, match[1] === void 0 ? 1 : Number(match[1]));
   }
@@ -117762,7 +118153,7 @@ function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE
     throw new DataServerError(`since_mtime is not an ISO timestamp: ${sinceMtime}`, "invalid_argument");
   }
   const entries = [];
-  for (const name of readdirSync28(dir)) {
+  for (const name of readdirSync29(dir)) {
     if (filename !== void 0 && name !== filename) continue;
     const stat = statSync21(pathWin3230.join(dir, name));
     if (!stat.isFile()) continue;
@@ -117779,7 +118170,7 @@ function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE
 }
 function listLawFolder(destinationDir) {
   const dir = resolveLawDir(destinationDir);
-  const entries = readdirSync28(dir).map((name) => ({ name, stat: statSync21(pathWin3230.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
+  const entries = readdirSync29(dir).map((name) => ({ name, stat: statSync21(pathWin3230.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
   return { entries };
 }
 function fileDownload(destinationDir, sourceFilename, destinationFilename, env = process.env) {
@@ -117788,14 +118179,14 @@ function fileDownload(destinationDir, sourceFilename, destinationFilename, env =
   const destName = destinationFilename ?? sourceFilename;
   assertBareFilename(destName, "destination_filename");
   const source = pathWin3230.join(downloadsDir(env), sourceFilename);
-  if (!existsSync53(source) || !statSync21(source).isFile()) {
+  if (!existsSync54(source) || !statSync21(source).isFile()) {
     throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
   }
   if (IN_PROGRESS_EXTENSIONS.has(pathWin3230.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
   const dest = pathWin3230.join(dir, destName);
-  if (existsSync53(dest)) {
+  if (existsSync54(dest)) {
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
   const bytes = statSync21(source).size;
@@ -117809,7 +118200,7 @@ function appendManifest(destinationDir, record2) {
   }
   const path = pathWin3230.join(dir, MANIFEST);
   appendFileSync2(path, JSON.stringify(record2) + "\n", "utf-8");
-  const records = readFileSync44(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
+  const records = readFileSync45(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
   return { path, records };
 }
 function saveAnswer(destinationDir, filename, text8, fromScratch) {
@@ -117839,7 +118230,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (typeof fromScratch !== "string" || !pathWin3230.isAbsolute(fromScratch)) {
     throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
   }
-  let law = existsSync53(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3230.dirname(destinationDir));
+  let law = existsSync54(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3230.dirname(destinationDir));
   while (pathWin3230.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3230.dirname(law);
   const root = validateMatterRoot(pathWin3230.dirname(law));
   const draft = findDraftDir(root);
@@ -117856,7 +118247,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (!statSync21(source).isFile()) {
     throw new DataServerError(`from_scratch is not a file: ${source}`, "not_found");
   }
-  const body = readFileSync44(source);
+  const body = readFileSync45(source);
   if (body.length === 0) {
     throw new DataServerError(`from_scratch is empty: ${source}`, "invalid_argument");
   }
@@ -117964,9 +118355,9 @@ function nonNegativeInt(value, label2, fallback, min) {
 }
 function manifestMarker(law, file) {
   const path = pathWin3230.join(law, MANIFEST);
-  if (!existsSync53(path)) return null;
+  if (!existsSync54(path)) return null;
   let marker = null;
-  for (const line of readFileSync44(path, "utf-8").split("\n")) {
+  for (const line of readFileSync45(path, "utf-8").split("\n")) {
     if (line.trim() === "") continue;
     let record2;
     try {
@@ -118027,7 +118418,7 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
   if (options.pattern === void 0 && (options.context !== void 0 || options.max_matches !== void 0)) {
     throw new DataServerError("context and max_matches need a pattern", "invalid_argument");
   }
-  const listed = readdirSync28(law).filter((name) => statSync21(pathWin3230.join(law, name)).isFile()).sort();
+  const listed = readdirSync29(law).filter((name) => statSync21(pathWin3230.join(law, name)).isFile()).sort();
   const files = options.file === void 0 ? listed : [pickLawFile(listed, options.file)];
   if (options.pattern !== void 0) {
     const context = nonNegativeInt(options.context, "context", DEFAULT_CONTEXT, 0);
@@ -118203,7 +118594,7 @@ function resolveOrCreateLawDir(destinationDir) {
   try {
     return { dir: resolveLawDir(destinationDir), created: false };
   } catch (err) {
-    if (err.code !== "not_found" || existsSync53(destinationDir)) throw err;
+    if (err.code !== "not_found" || existsSync54(destinationDir)) throw err;
   }
   const parent = resolveLawDir(pathWin3230.dirname(destinationDir));
   if (zoneProblem("write", pathWin3230.join(parent, pathWin3230.basename(destinationDir)))) {
@@ -118243,8 +118634,8 @@ function assertBareFilename(name, label2) {
 
 // src/research/preflight.ts
 import { tmpdir as tmpdir6 } from "node:os";
-import { join as join54 } from "node:path";
-var PROBE_STEM = join54(tmpdir6(), "coclerk-research-preflight-probe-absent");
+import { join as join55 } from "node:path";
+var PROBE_STEM = join55(tmpdir6(), "coclerk-research-preflight-probe-absent");
 var CAPS = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
@@ -118290,7 +118681,7 @@ function researchPreflight(seams = {}) {
 
 // src/files/legislation-search.ts
 import { createHash as createHash12 } from "node:crypto";
-import { readFileSync as readFileSync45, statSync as statSync22 } from "node:fs";
+import { readFileSync as readFileSync46, statSync as statSync22 } from "node:fs";
 import { win32 as pathWin3231 } from "node:path";
 var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".txt"]);
 var HTML_EXTENSIONS2 = /* @__PURE__ */ new Set([".htm", ".html"]);
@@ -118325,7 +118716,7 @@ function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}, p
   }
   const ext = pathWin3231.extname(file).toLowerCase();
   const range = checkPages(pages, ext);
-  const bytes = readFileSync45(file);
+  const bytes = readFileSync46(file);
   const { lines: lines2, source, marker } = textLines(file, ext, bytes, range, seams);
   const currency = marker ?? lines2.find((l3) => /\bcurrent to\b/i.test(l3.text))?.text ?? null;
   const chunks = fixedChunks(sectionChunks(lines2));
@@ -118632,7 +119023,7 @@ function sectionBlocks(chunks) {
 import { createHash as createHash13 } from "node:crypto";
 import { mkdirSync as mkdirSync25, mkdtempSync as mkdtempSync3, writeFileSync as writeFileSync15 } from "node:fs";
 import { tmpdir as tmpdir7 } from "node:os";
-import { join as join55 } from "node:path";
+import { join as join56 } from "node:path";
 var FPDF_ANNOT = 1;
 var GROUP_MAX = 5;
 var VISUAL = /* @__PURE__ */ new Set(["only_in_a", "only_in_b", "size", "rotation", "render"]);
@@ -118658,13 +119049,13 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         const flagged = [];
         let workDir = null;
         const write = (side, n3, facts) => {
-          workDir ??= mkdtempSync3(join55(tmpdir7(), "probanda-compare-"));
-          const dir = join55(workDir, side);
+          workDir ??= mkdtempSync3(join56(tmpdir7(), "probanda-compare-"));
+          const dir = join56(workDir, side);
           mkdirSync25(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
           return tiles.map(([top, rows2], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-            const file = join55(dir, `${name}.png`);
+            const file = join56(dir, `${name}.png`);
             const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows2) * facts.width * 3);
             writeFileSync15(file, encodePng(rgb, facts.width, rows2));
             return file;
@@ -118877,7 +119268,7 @@ async function saveAnswerTool(args, env = process.env) {
 
 // src/key-request/tools.ts
 import { createHash as createHash14, randomBytes as randomBytes6 } from "node:crypto";
-import { join as join56 } from "node:path";
+import { join as join57 } from "node:path";
 
 // src/key-request/save-key.ts
 var TIMEOUT_MS3 = 6e4;
@@ -118935,7 +119326,7 @@ var pending2;
 var listening2;
 var sent;
 function requestPath(env = process.env) {
-  return join56(defaultStateDir(env), "key-request.json.dpapi");
+  return join57(defaultStateDir(env), "key-request.json.dpapi");
 }
 function isKeyRequestToolName(name) {
   return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
@@ -119625,7 +120016,7 @@ function textResult(result) {
 }
 
 // src/page-api/server.ts
-import { existsSync as existsSync54 } from "node:fs";
+import { existsSync as existsSync55 } from "node:fs";
 import { createServer as createServer2 } from "node:http";
 import { isAbsolute as isAbsolute10 } from "node:path";
 
@@ -119749,7 +120140,7 @@ async function handle3(req, res, env, startedAt, options) {
   if (typeof token !== "string" || !pageApiTokenValid(token, dbPath, proceedingId, env)) {
     return json2(req, res, 403, { error: "This page's token does not match its database. Ask a Claude session to render the page again." });
   }
-  if (!isAbsolute10(dbPath) || !existsSync54(dbPath)) {
+  if (!isAbsolute10(dbPath) || !existsSync55(dbPath)) {
     return json2(req, res, 400, { error: `There is no drafting database at ${dbPath}.` });
   }
   const result = await setSeedDeferral({ db_path: dbPath, proceeding_id: proceedingId, seed_id: Number(m3[1]), action: m3[2] }, env);

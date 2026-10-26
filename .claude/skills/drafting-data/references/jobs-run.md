@@ -264,7 +264,7 @@ UPDATE seeds SET discarded_at = NULL WHERE id = 7 AND discarded_at IS NOT NULL;
 SELECT id, discarded_at FROM seeds WHERE id = 7;
 ```
 
-**Marking a thread suggested** (v75): `suggested_at` is the minute the thread was sent to Probanda as a suggestion about the plugin, and NULL when it was not. Written only after the Suggestion Box's post has returned an issue number (`work/references/suggestion-box.md`), never before and never without one. A suggested thread is kept, is no longer open, and shows on the Loose Threads page as a plain line. Then the confirm-read, expected the one row with `suggested_at` set:
+**Marking a thread suggested** (v75): `suggested_at` is the minute the thread was sent to Probanda as a suggestion about the plugin, and NULL when it was not. No route writes it any more: a `tooling` thread is no longer sent as a suggestion, only reported to Probanda as an observation, which stamps nothing (`work/references/suggestion-box.md`). A thread an earlier version marked keeps its stamp. A suggested thread is kept, is no longer open, and shows on the Loose Threads page as a plain line. Then the confirm-read, expected the one row with `suggested_at` set:
 
 ```sql
 UPDATE seeds SET suggested_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') WHERE id = 7 AND suggested_at IS NULL AND discarded_at IS NULL;

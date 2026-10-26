@@ -107,8 +107,8 @@ class TriageRouteTest(unittest.TestCase):
     def test_it_takes_the_top_thread_that_is_neither_deferred_nor_tooling(self):
         top = self.bullet("- **Take the top thread:**")
         self.assertIn("the best-ranked open thread that is neither deferred nor in the `tooling` group", top)
-        self.assertIn("`tooling` threads stay for the Suggestion Box", top)
-        self.assertIn("are not run through `references/suggestion-box.md` from here", top)
+        self.assertIn("`tooling` threads stay on the board for the practitioner's word", top)
+        self.assertIn("are not reported through `references/suggestion-box.md` from here", top)
 
     def test_it_works_the_thread_inside_the_held_job(self):
         work = self.bullet("- **Work it inside the held job**")
@@ -123,7 +123,7 @@ class TriageRouteTest(unittest.TestCase):
 
     def test_it_reports_in_one_paragraph_or_less(self):
         report = self.bullet("- **Report in one paragraph or less:**")
-        self.assertIn("the count of `tooling` threads left for the Suggestion Box", report)
+        self.assertIn("the count of `tooling` threads left on the board", report)
 
     def test_discards_still_need_the_practitioners_yes(self):
         self.assertIn("Never infer a discard from a low rank.", self.triage)
