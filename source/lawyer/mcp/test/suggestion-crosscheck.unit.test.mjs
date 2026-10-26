@@ -146,7 +146,7 @@ test("an email, a path, a date and an amount are each found and classified", () 
   const index = buildTokenIndex(RECORDS, STOP);
   const cases = [
     ["Write to jane.doe@example.com today", "email", "jane.doe@example.com", "remove_only"],
-    ["It opened C:\\Users\\Someone\\Desktop\\x.pdf here", "path", "C:\\Users\\Someone\\Desktop\\x.pdf", "remove_only"],
+    ["It opened D:\\Data\\Someone\\Desktop\\x.pdf here", "path", "D:\\Data\\Someone\\Desktop\\x.pdf", "remove_only"],
     ["It opened /home/someone/cases/x.pdf.", "path", "/home/someone/cases/x.pdf", "remove_only"],
     ["It opened \\\\server\\share\\x here", "path", "\\\\server\\share\\x", "remove_only"],
     ["See Folder\\Sub\\x.pdf now", "path", "Folder\\Sub\\x.pdf", "remove_only"],
