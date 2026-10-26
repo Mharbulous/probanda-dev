@@ -21,7 +21,7 @@ REASON = (
     "Refused: that file is part of the installed Probanda plugin, a read-only synced copy, "
     "so an edit there does not persist. Do not look for or edit the plugin's source either. "
     "For a change the practitioner wants, offer /lawyer:suggestion, which files it in "
-    "Probanda's Suggestion Box (it needs the researcher plugin), then carry on with the work at hand."
+    "Probanda's Suggestion Box, then carry on with the work at hand."
 )
 
 
