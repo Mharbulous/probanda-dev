@@ -1,0 +1,44 @@
+Copyright (c) 2025-2026 Probanda Legal. All rights reserved.
+
+PROPRIETARY AND CONFIDENTIAL. NO LICENSE IS GRANTED.
+
+This repository and everything in it, including its source code, skills,
+prompts, agents, schemas, data, documentation and commit history (the
+"Software"), is the proprietary and confidential property of Probanda Legal.
+
+That the Software can be viewed, or was published in a publicly visible
+repository, grants no right or licence of any kind. The only rights anyone has
+are those GitHub's Terms of Service require for a public repository: to view
+the Software on GitHub and to fork it within GitHub. Those rights cover nothing
+else, and a fork carries this notice and these restrictions in full. Without
+the prior written permission of Probanda Legal, no one may:
+
+  1. use, run, install or execute the Software;
+  2. copy, clone, mirror, download, archive, scrape or reproduce it, in whole or
+     in part, outside the viewing and forking GitHub's Terms of Service allow;
+  3. modify, translate, adapt, or create derivative works from it;
+  4. distribute, publish, sublicense, sell, lease, lend or otherwise make it
+     available to anyone;
+  5. use it, or any part of it, to train, fine-tune, evaluate or prompt a
+     machine-learning model or AI system, or include it in a dataset;
+  6. reverse engineer, decompile or disassemble any part of it; or
+  7. remove or alter this notice or any other proprietary notice.
+
+The Software contains trade secrets and confidential information of Probanda
+Legal. Anyone who has seen it must keep it confidential, must not disclose it,
+and must delete every copy they hold on request.
+
+Any use not expressly permitted in writing by Probanda Legal infringes its
+rights, which it reserves in full, including the right to seek injunctive
+relief.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL PROBANDA LEGAL BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY ARISING FROM OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+Third-party components keep their own licences. A file or folder that carries
+its own licence (for example source/researcher/canlii-mcp/LICENSE), and the
+third-party code bundled into a built file, are governed by that licence, not
+by this notice.
+
+To request permission, contact Probanda Legal at https://github.com/Probanda-app.
