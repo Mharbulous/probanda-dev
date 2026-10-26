@@ -278,8 +278,11 @@ export interface SiblingInstall {
  *
  * Never cached: a host replaces these folders when it syncs, and the scan is a few
  * `readdir` calls and small JSON reads.
+ *
+ * `names` narrows or widens the plugins looked for, in that order: the suggestion environment
+ * facts (suggestions/environment.ts) also look for `developer`, which never serves skill source.
  */
-export function siblingInstalls(installRoot: string = INSTALL_ROOT): SiblingInstall[] {
+export function siblingInstalls(installRoot: string = INSTALL_ROOT, names: readonly string[] = SIBLING_PLUGINS): SiblingInstall[] {
   if (installSkillsRoot(installRoot) === undefined) return [];
   const own = resolve(installRoot);
   const parent = dirname(own);
@@ -294,7 +297,7 @@ export function siblingInstalls(installRoot: string = INSTALL_ROOT): SiblingInst
   const winners = new Map<string, { sibling: SiblingInstall; rank: number[][] }>();
   for (const dir of candidates) {
     const manifest = pluginManifest(dir);
-    if (manifest.name === null || !SIBLING_PLUGINS.includes(manifest.name)) continue;
+    if (manifest.name === null || !names.includes(manifest.name)) continue;
     const skills = installSkillsRoot(dir);
     if (skills === undefined) continue;
     const rank = [
@@ -307,7 +310,7 @@ export function siblingInstalls(installRoot: string = INSTALL_ROOT): SiblingInst
       winners.set(manifest.name, { sibling: { name: manifest.name, version: manifest.version, installRoot: dir, skills }, rank });
     }
   }
-  return SIBLING_PLUGINS.flatMap((name) => {
+  return names.flatMap((name) => {
     const held = winners.get(name);
     return held ? [held.sibling] : [];
   });

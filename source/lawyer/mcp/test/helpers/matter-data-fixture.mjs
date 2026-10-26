@@ -30,11 +30,12 @@ function python(args) {
 }
 
 /** Writes `<caseDataDir>/main.sqlite` from the canonical schema at the current version plus `seed`
- * (SQL), replacing any database already there. */
-export function writeCaseData(caseDataDir, seed) {
+ * (SQL), replacing any database already there. `scriptsDir` names /matter-data's scripts folder on a
+ * host whose paths the runtime's resolver does not handle (it resolves Windows paths only). */
+export function writeCaseData(caseDataDir, seed, scriptsDir = caseDataMigrateScriptsDir(process.env)) {
   const main = join(caseDataDir, "main.sqlite");
   rmSync(main, { force: true });
-  python(["-c", BUILD_CASE_DATA, caseDataMigrateScriptsDir(process.env), main, seed]);
+  python(["-c", BUILD_CASE_DATA, scriptsDir, main, seed]);
 }
 
 const BUILD_SIDE_STORES = `

@@ -1272,6 +1272,12 @@ A housekeeping run on a matter of about 330 files passed every candidate's path 
 
 **Its read discipline is #60's:** temp copies of all three databases in a `staging_prefix` folder, no lock, version-guarded through `resolve_paths.EXPECTED_USER_VERSION`, three statuses each with its reason, and no model-facing tool. The session keeps `ingest-status` for Step 9's second call and `housekeeping-log` for every write.
 
+## 74. The suggestion cross-check reads names through one script (2026-10-26)
+
+Before a suggestion leaves the computer, the data server checks its text against the words in the firm's own records (docs/Plans/2026-10-25_suggestion-design.md, decision 8). From case data it needs each document's title and file name, each proceeding's file number and style of cause, and each party's name with its counsel and firm. `references/scripts/list_record_names.py` returns them, for many folders in one spawn, over `PYTHONPATH` as #56's script is, so the SQL stays here.
+
+**Its read discipline is #56's:** a temp copy of `main.sqlite` only (through `list_parties.read_staged`, the same staging), no lock, version-guarded through `_behind`, three statuses per folder, and no model-facing tool. It never reads `housekeeping_reviews` (#26 (d)). What it returns is never logged or sent: the data server matches against it in memory and returns only where a match lies.
+
 ---
 
 **Closing principle:** schemas encode categorical invariants; prose + verifier backlog encode judgment. Do not swap them.

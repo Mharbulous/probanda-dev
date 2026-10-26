@@ -49,27 +49,32 @@ def _read(con):
     return {"status": "ok", "parties": list(parties.values())}
 
 
-def run(request):
-    """One JSON request in, one JSON-serializable result out.
-
-    request = {"case_data_dir": str}
-    """
-    case_data_dir = request.get("case_data_dir")
+def read_staged(case_data_dir, kind, read):
+    """`read(con)` over a temp copy of the folder's main.sqlite, or `not_applicable` when it has
+    none. The copy's folder is removed when the read ends. list_record_names.py reads through it too."""
     main = os.path.join(case_data_dir, 'main.sqlite')
     if not os.path.isfile(main):
         return {"status": "not_applicable",
                 "reason": f"no matter-data database in {case_data_dir}"}
-    tmp = tempfile.mkdtemp(prefix=resolve_paths.staging_prefix('parties'))
+    tmp = tempfile.mkdtemp(prefix=resolve_paths.staging_prefix(kind))
     try:
         staged = os.path.join(tmp, 'main.sqlite')
         shutil.copy2(main, staged)
         con = sqlite3.connect(staged)
         try:
-            return _read(con)
+            return read(con)
         finally:
             con.close()
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+def run(request):
+    """One JSON request in, one JSON-serializable result out.
+
+    request = {"case_data_dir": str}
+    """
+    return read_staged(request.get("case_data_dir"), 'parties', _read)
 
 
 if __name__ == "__main__":

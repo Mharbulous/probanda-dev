@@ -7,18 +7,42 @@
 // suggestion_log__read lists what the store holds, and suggestion_log__write records a badge as shown
 // and holds or releases a suggestion drafted while this computer had no Probanda key. Tool definitions
 // live in schema/suggestions.ts.
+//
+// suggestion_card__check runs the click-time cross-check (crosscheck.ts) over a card's parts against
+// this computer's own records (records.ts), and suggestion_card__environment_facts returns the
+// environment facts (environment.ts). Neither sends, stores or logs anything.
 
 import { randomUUID } from "node:crypto";
 
 import { DataServerError, ValidationError } from "../errors.js";
 import { type SendSeams, fieldsFromToolArgs, readStatuses, submitSuggestion } from "./send.js";
 import { writePastSuggestionsPage } from "./page.js";
+import type { PracticeStore } from "../practice/store.js";
+import { loadStopWords, runCrossCheck, type CardText, type CrossCheckResult } from "./crosscheck.js";
+import { environmentFacts, type EnvironmentFacts } from "./environment.js";
+import { readRecordTexts } from "./records.js";
 import { type HeldRecord, cardStatus, isHeld, isSuggestion, loadStore, withStore } from "./store.js";
 
 type Args = Record<string, unknown>;
 
 export function isSuggestionToolName(name: string): boolean {
   return name.startsWith("suggestion_box__") || name.startsWith("suggestion_log__");
+}
+
+export function isSuggestionCardToolName(name: string): boolean {
+  return name.startsWith("suggestion_card__");
+}
+
+export async function callSuggestionCardTool(store: PracticeStore, name: string, args: Args, env: NodeJS.ProcessEnv = store.env): Promise<CrossCheckResult | EnvironmentFacts> {
+  if (name === "suggestion_card__check") {
+    // The lists first: a check that cannot run says so before any record is read.
+    const stopWords = loadStopWords(env);
+    return runCrossCheck(args as CardText, await readRecordTexts(store, env), stopWords);
+  }
+  if (name === "suggestion_card__environment_facts") {
+    return environmentFacts(args.tool_names as string[] | undefined, { env });
+  }
+  throw new ValidationError(`Unknown suggestion tool "${name}"`);
 }
 
 export function callSuggestionTool(name: string, args: Args, env: NodeJS.ProcessEnv = process.env, seams: SendSeams = {}): Promise<unknown> {

@@ -56,6 +56,13 @@ SHIPPED_PATH_REGISTRY = (
      "source": "src/case/backend.ts", "server": "data"},
     {"path": "file-naming/scripts/name_gate.py", "literal": '"file-naming/scripts/name_gate.py"',
      "source": "src/housekeeping/name-gate.ts", "server": "data"},
+    # The suggestion cross-check's stop lists; STOP_WORD_FILES names the files inside.
+    {"path": "suggestion/references/stop-words/common-english.txt",
+     "literal": '"suggestion/references/stop-words"', "source": "src/suggestions/crosscheck.ts", "server": "data"},
+    {"path": "suggestion/references/stop-words/legal-and-folder.txt",
+     "literal": '"suggestion/references/stop-words"', "source": "src/suggestions/crosscheck.ts", "server": "data"},
+    {"path": "matter-data/references/scripts/list_record_names.py",
+     "literal": '"case-list-record-names-driver"', "source": "src/case/list-record-names.ts", "server": "data"},
     # migrateScriptsDir builds `${skill}/references/scripts/migrate_engine.py` from these names.
     {"path": "matter-data/references/scripts/migrate_engine.py", "literal": 'migrateScriptsDir("matter-data"',
      "source": "src/repo-root.ts", "server": "data"},

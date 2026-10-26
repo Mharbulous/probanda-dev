@@ -196,6 +196,54 @@ interface Unresolved {
   reason: string;
 }
 
+export interface MatterDataFolder {
+  matter: Row;
+  /** The folder holding the matter's main.sqlite. */
+  folder: string;
+  /** That folder's name, or the matter folder's name for a matter's own `0. CASE DATA`. */
+  name: string;
+}
+
+/**
+ * The matter-data folder of each of `matters` that has one, found by its matter number. A matter's
+ * own `0. CASE DATA` folder (ADR 0013) comes first, as /matter-data resolves it; a matter not yet
+ * relocated keeps its folder under the firm root. A matter that cannot be placed is passed to `miss`
+ * with its reason (with no matter when the case data root itself cannot be found); a matter with no
+ * matter-data folder is simply absent. Also read by the suggestion cross-check (suggestions/records.ts).
+ */
+export function matterDataFolders(
+  store: PracticeStore,
+  matters: Row[],
+  miss: (matter: Row | null, reason: string) => void
+): MatterDataFolder[] {
+  let caseDataRoot: string;
+  try {
+    caseDataRoot = store.env.COCLERK_CASE_DATA_ROOT || resolveCaseDataRoot(store.env);
+  } catch (err) {
+    miss(null, `the case data root could not be found: ${(err as Error).message}`);
+    return [];
+  }
+  const holding = (parent: string, sub: string) => readdirSync(parent, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && existsSync(join(parent, entry.name, sub, "main.sqlite")))
+    .map((entry) => ({ name: entry.name, folder: join(parent, entry.name, sub) }));
+  const library = dirname(caseDataRoot);
+  const inMatter = holding(library, "0. CASE DATA");
+  const children = holding(caseDataRoot, "");
+  const found: MatterDataFolder[] = [];
+  for (const matter of matters) {
+    if (!matter.matt_num) {
+      miss(matter, "it has no matter number to find its matter-data folder by");
+      continue;
+    }
+    const wanted = normalizeMattNum(matter.matt_num).toLowerCase();
+    const own = inMatter.filter((entry) => folderMatterNum(entry.name) === wanted);
+    const named = own.length ? own : children.filter((entry) => folderMatterNum(entry.name) === wanted);
+    if (named.length > 1) miss(matter, `more than one matter-data folder starts with its matter number: ${named.map((entry) => entry.folder).join(", ")}`);
+    else if (named.length === 1) found.push({ matter, folder: named[0].folder, name: named[0].name });
+  }
+  return found;
+}
+
 export async function contact_checks(
   store: PracticeStore,
   args: Record<string, unknown>
@@ -231,34 +279,7 @@ export async function contact_checks(
       }
     }
   } else if (matters.length) {
-    let root: string | null = null;
-    try {
-      root = store.env.COCLERK_CASE_DATA_ROOT || resolveCaseDataRoot(store.env);
-    } catch (err) {
-      miss(null, `the case data root could not be found: ${(err as Error).message}`);
-    }
-    if (root !== null) {
-      const caseDataRoot = root;
-      const holding = (parent: string, sub: string) => readdirSync(parent, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory() && existsSync(join(parent, entry.name, sub, "main.sqlite")))
-        .map((entry) => ({ name: entry.name, folder: join(parent, entry.name, sub) }));
-      // A matter's own `0. CASE DATA` folder (ADR 0013) comes first, as /matter-data resolves it;
-      // a matter not yet relocated keeps its folder under the firm root.
-      const library = dirname(caseDataRoot);
-      const inMatter = holding(library, "0. CASE DATA");
-      const children = holding(caseDataRoot, "");
-      for (const matter of matters) {
-        if (!matter.matt_num) {
-          miss(matter, "it has no matter number to find its matter-data folder by");
-          continue;
-        }
-        const wanted = normalizeMattNum(matter.matt_num).toLowerCase();
-        const own = inMatter.filter((entry) => folderMatterNum(entry.name) === wanted);
-        const named = own.length ? own : children.filter((entry) => folderMatterNum(entry.name) === wanted);
-        if (named.length > 1) miss(matter, `more than one matter-data folder starts with its matter number: ${named.map((entry) => entry.folder).join(", ")}`);
-        else if (named.length === 1) folders.push([matter, named[0].folder]);
-      }
-    }
+    folders.push(...matterDataFolders(store, matters, miss).map(({ matter, folder }) => [matter, folder] as [Row, string]));
   }
 
   const parties_without_role: Row[] = [];

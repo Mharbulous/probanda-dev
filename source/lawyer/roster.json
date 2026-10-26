@@ -30,7 +30,9 @@
     "hooks",
     "scripts"
   ],
-  "suggestion": [],
+  "suggestion": [
+    "references/stop-words"
+  ],
   "task-prioritization": [],
   "verify-bc-lawyer": [
     "scripts"

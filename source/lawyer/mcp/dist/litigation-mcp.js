@@ -1,4 +1,4 @@
-// build-stamp: 01268d5f1666
+// build-stamp: ef9d1e8c9022
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -6648,10 +6648,10 @@ var require_formats = __commonJS({
     function isLeapYear(year) {
       return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
     }
-    var DATE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
+    var DATE2 = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
     var DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     function date3(str) {
-      const matches = DATE.exec(str);
+      const matches = DATE2.exec(str);
       if (!matches)
         return false;
       const year = +matches[1];
@@ -76095,8 +76095,8 @@ async function upsert_rule_overlay(store, args) {
   if (given !== void 0 && given !== null && (typeof given !== "string" || !UUID.test(given))) {
     throw new ValidationError("record.record_id must be a UUID, or omitted on a first write");
   }
-  const { record_id: _given, ...fields } = input;
-  const record2 = { record_id: typeof given === "string" ? given.toLowerCase() : randomUUID2(), ...fields };
+  const { record_id: _given, ...fields2 } = input;
+  const record2 = { record_id: typeof given === "string" ? given.toLowerCase() : randomUUID2(), ...fields2 };
   const id = String(record2.record_id);
   const instrument = record2.amending_instrument;
   const { items: items2 } = await store.write("upsert_rule_overlay", {}, [{
@@ -76130,10 +76130,10 @@ function schemaFor(field) {
   }
   return schema;
 }
-function objectSchema(fields, required2 = []) {
+function objectSchema(fields2, required2 = []) {
   return {
     type: "object",
-    properties: Object.fromEntries(fields.map((field) => [field.name, schemaFor(field)])),
+    properties: Object.fromEntries(fields2.map((field) => [field.name, schemaFor(field)])),
     required: required2.length > 0 ? required2 : void 0,
     additionalProperties: false
   };
@@ -78641,6 +78641,512 @@ function submissionFormsToolDefinitions() {
   ];
 }
 
+// src/schema/file-ops.ts
+function fileOpsToolDefinitions() {
+  return [
+    {
+      name: "file_ops__trash",
+      description: "Soft-delete one file or folder in a client-matter workspace: move it to `<matter root>/TRASH/<same relative path>`. Use this instead of rm, unlink or any other delete -- one call, no shell, and it works while the device mount is down. `path` is the absolute host path (the Windows path from get_device_info connectedFolders). Refuses with an error `code`, touching nothing: `not_found`; `git_worktree` (ordinary repository rules apply); `not_a_matter_file` (no probanda.json at or above the path); `protected` (the workspace root, probanda.json, TRASH or anything in it, the 0. CASE DATA folder, or a privileged/disclosed tree); `cross_device`. A taken destination gets a ` (trashed YYYY-MM-DD HHMMSS)` suffix. `dry_run: true` returns the planned move only. Every move is logged to TRASH/.trash-log.jsonl.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          path: { type: "string" },
+          dry_run: { type: "boolean" }
+        },
+        required: ["path"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "file_ops__move",
+      description: "Move one file within a client matter, for an approved /housekeeping row: rename it, file it into a folder, or both. All paths are absolute host paths. `source` must be a file under `matter_root` (not probanda.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree). `destination` is the full new file path, inside a matter folder outside folders 0 and 1, TRASH and any privileged/disclosed tree; the exceptions are `draft_unchanged: true`, which moves into the matter's `0. DRAFT*` folder under the current name only, and `superseded: true` (matter-data's supersede-draft), which moves into the `Superseded` subfolder of the matter's one `0. DRAFT*` folder only, under any name, with `create_folders` naming only that subfolder; a matter with no `0. DRAFT*` folder or two refuses that move with `invalid_argument`, as does passing both flags. Missing destination folders are created only when each is listed in `create_folders` (pass housekeeping__resolve's `folders_to_create`). Never overwrites, even under a race (the destination is claimed by an exclusive create first), and never adds a suffix. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `not_a_file`, `path_out_of_scope`, `protected`, `invalid_filename` (also a folder in `create_folders` whose name ends in a dot or a space or is otherwise not a valid Windows name), `invalid_argument`, `draft_name_changed` (draft_unchanged with a different name), `folder_not_approved`, `dest_exists`, `cross_device`; `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, created_folders}; `moved_to` is the path as it now reads on disk -- check it equals the expected path and halt on a mismatch.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          source: { type: "string" },
+          destination: { type: "string" },
+          create_folders: { type: "array", items: { type: "string" } },
+          draft_unchanged: { type: "boolean" },
+          superseded: { type: "boolean" }
+        },
+        required: ["matter_root", "source", "destination"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "file_ops__move_from_downloads",
+      description: "Move one file from the practitioner's Downloads folder into a client matter folder, such as a court registry's receipt, submission sheet or filed document. A move, not a copy: one rename on the same drive, so the file leaves Downloads and no duplicate is left. Use it whenever the practitioner asks to move a download into a matter; never copy the file and call that a move. `source_filename` is the bare file name in Downloads (the server finds the folder itself). `matter_root` and `destination` are absolute host paths; `destination` is the full new file path, in an existing folder inside the matter outside folders 0 and 1, TRASH and any privileged/disclosed tree. No folder is created. Never overwrites: a taken name gets the next ` v2`, ` v3` before the extension, even under a race (the name is claimed by an exclusive create first). Refuses with an error `code`, touching nothing: `invalid_filename`, `downloads_missing`, `not_found` (no such download, or the destination folder does not exist), `not_a_file`, `in_progress`, `invalid_path`, `path_out_of_scope`, `protected`, `cross_device` (Downloads and the matter are on different drives), `dest_exists` (no free version name); `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, versioned}; `moved_to` is the path as it now reads on disk, and `versioned` is true when a ` vN` name was used, so tell the practitioner the name it got. Every move is logged to `<matter-data folder>\\file-manager\\move-log.jsonl`; `log_error` is present when that line could not be written.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          source_filename: { type: "string" },
+          destination: { type: "string" }
+        },
+        required: ["matter_root", "source_filename", "destination"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false, openWorldHint: false }
+    }
+  ];
+}
+
+// src/schema/housekeeping.ts
+function housekeepingToolDefinitions() {
+  const matterRun = {
+    matter_root: { type: "string" },
+    run_id: { type: "string" }
+  };
+  return [
+    {
+      name: "housekeeping__preflight",
+      description: "Read-only checks for a /housekeeping run that a Cowork session cannot make itself. `matter_root` is the absolute matter folder; one without probanda.json (or with only a legacy `9. AI` pointer) is not an error and returns {half_commit: [], case_data_found: false}. Returns {half_commit, case_data_found, template_folders?}. `half_commit` lists the absolute path of every `.coclerk_execute_*` folder in the matter's matter-data folder (found as matter_data__query and matter_data__execute find it): a non-empty list means a matter_data__execute was killed inside its commit to disk, so write nothing and follow that tool's timeout advice. `case_data_found` is false when the matter-data folder does not exist. With `include_template: true`, `template_folders` lists every folder of the firm's template matter (`ADMIN\\0. TEMPLATE\\L### Litigation`), every level, template-relative with backslash separators; fails `template_missing` when the template matter is not found.",
+      inputSchema: {
+        type: "object",
+        properties: { matter_root: { type: "string" }, include_template: { type: "boolean" } },
+        required: ["matter_root"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false }
+    },
+    {
+      name: "housekeeping__new_run",
+      description: "Start a /housekeeping run for a client matter: create `<matter-data folder>\\housekeeping\\<run-id>\\` under a server-minted run id to the millisecond (e.g. `20260924-204013123-a1b2`), the matter-data folder being the one probanda.json's `case_data_dir` names; `housekeeping` is created beneath it when missing. `matter_root` is the absolute matter folder (it must hold the matter pointer probanda.json, or the legacy coclerk.json). Call it before building the candidate list: the new directory stops every earlier run's page from approving, which fixes the previous run that housekeeping__candidates rotates against. Returns {run_id, run_dir}. Fails `case_data_missing` when the matter-data folder does not exist (run /matter-data initialize first).",
+      inputSchema: {
+        type: "object",
+        properties: { matter_root: { type: "string" } },
+        required: ["matter_root"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "housekeeping__candidates",
+      description: "Build a /housekeeping run's work list in one read-only call (Steps 6-7): list the candidates, hash them, run the name gate and its mechanical second pass, read ingest status and the review log, admit, order and cap at 50. Nothing per file goes in. `swept_folders` are the folders the folder map matches, by their on-disk names (matter-root-relative), each {path, folder_type, flag_tokens?, second_pass?}: `folder_type` the folder type's name (`Law`, `Discovery`, `Court File`, ...), `flag_tokens` the Law folder's, `second_pass: true` on Law and Discovery. `skip_folders` are the root folders the profile always skips (neither swept nor listed). `subfolder` (sweep only that folder, no root files) or `files` (only those stored-form paths) apply the run's argument; `finished` lists the stored paths Step 5's recovery finished, which are left out; `force` drops the settled-verdict condition from the name arm only. Listing: root files except `~`/`.` names, probanda.json, CLAUDE.md, AGENTS.md, ProceduralHistory.md, `.cm*`, desktop.ini and `.lnk`; a root file with a `~$` sibling is open in Word and only named in `header.open_in_word`; files with `.pdf .docx .doc .eml .msg .xls` anywhere inside a swept folder; root folders other than TRASH, `Claude outputs`, skipped and swept ones are named in `header.folders_not_looked_inside`. Admission: a root file always; a subfolder file when (its name does not conform AND no settled verdict matches) OR (it is not ingested AND no `not_ingested` row matches its hash). Order: fresh root, fresh subfolder, rotated root, rotated subfolder (rotated = offered and not approved on the previous run's page, by hash). Returns {run_id, previous_run, header, errors: [{path, error}] (unreadable files, left out of the run), admitted (at most 50, this run's rows in this order, each {path, hash, rotated, location, folder_type, admitted_by, name: {verdict conforms|fails|second_pass_required, reason, flags} or null at the root, ingest: the ingest-status entry, review: {reviewed, outcome, reviewed_at, matched_on, not_ingested, ingest_failure}}), deferred: [{path, hash}] (past the cap, for proposal.json's deferred rows)}. A file not admitted is not returned. `second_pass_required`: the name failed the gate in a Law or Discovery folder and matches neither mechanical form; judge it against the folder's notes. Fails whole past its time budget, never with a partial list. Fails `approval_corrupt` when the previous run's approval.json is unreadable.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          ...matterRun,
+          swept_folders: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                path: { type: "string" },
+                folder_type: { type: "string" },
+                flag_tokens: { type: "array", items: { type: "string" } },
+                second_pass: { type: "boolean" }
+              },
+              required: ["path", "folder_type"],
+              additionalProperties: false
+            }
+          },
+          skip_folders: { type: "array", items: { type: "string" } },
+          subfolder: { type: "string" },
+          files: { type: "array", items: { type: "string" } },
+          finished: { type: "array", items: { type: "string" } },
+          force: { type: "boolean" }
+        },
+        required: ["matter_root", "run_id", "swept_folders", "skip_folders"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false }
+    },
+    {
+      name: "housekeeping__write_run_file",
+      description: "Write one file into a /housekeeping run directory. `file_name` is `proposal.json`, `questions.json` or `rule_gaps.json`; any other name is refused (`invalid_filename`), and approval.json and applied.jsonl are refused (`reserved_file`) because only the page and housekeeping__journal_append write them. `proposal.json` is the approval page's whole model: it must parse and validate (`invalid_proposal`, naming every problem), its `run_id` and `matter_root` must be this run's, its rows must be in housekeeping__candidates' order with only the rows past the first 50 `deferred` (else `proposal_out_of_order`, naming the first row out of place; the check sees only the rows written, so it cannot tell that an admitted file was left off; `approval_corrupt` when the previous run's approval.json is unreadable), and it is write-once -- the same content again is a no-op, other content is refused `proposal_exists` (start a new run instead). Written temp-then-rename. Returns {run_id, path, bytes}.",
+      inputSchema: {
+        type: "object",
+        properties: { ...matterRun, file_name: { type: "string" }, content: { type: "string" } },
+        required: ["matter_root", "run_id", "file_name", "content"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true, openWorldHint: false }
+    },
+    {
+      name: "housekeeping__serve_page",
+      description: "Serve a run's approval page on 127.0.0.1 and return its `url` for the practitioner (Ctrl+click opens it). The run must be the matter's newest run with a valid proposal.json (else `stale_run` or `invalid_proposal`). Serving invalidates every earlier page link for the matter in this session, so an old tab cannot approve. The link stops working when a newer run is served or the session ends. The page's Submit writes approval.json. Returns {url, run_id, rows, approved}. Then call housekeeping__wait_approval.",
+      inputSchema: {
+        type: "object",
+        properties: matterRun,
+        required: ["matter_root", "run_id"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "housekeeping__preview",
+      description: 'Render the approval page with `overrides` (template file name to replacement text, from pages__template with page "Housekeeping approval") in place of its own template files, write it as `Housekeeping approval preview <n>.html`, and return {path}, never the HTML: present the file to the practitioner as a file card and never read it. An override naming no file of the page is refused. `data: "fixture"` draws placeholder data, before approval or, with `approved: true`, after, and writes into the fixture preview folder (`<OS temp folder>\\Probanda fixture previews`), the only preview the Suggestion Box takes. `data: "real"` draws one run\'s proposal and recorded approval (`matter_root` and `run_id`), stays on this machine, and is written in that run\'s folder; its Submit approves nothing.',
+      inputSchema: {
+        type: "object",
+        properties: {
+          overrides: { type: "object", additionalProperties: { type: "string" } },
+          data: { type: "string", enum: ["fixture", "real"] },
+          approved: { type: "boolean" },
+          ...matterRun
+        },
+        required: ["data"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "housekeeping__wait_approval",
+      description: `Wait for the practitioner to press Submit on a run's page. Returns as soon as approval.json exists: {status: "approved", approved_at, rows}. After about 45 s returns {status: "pending"} -- not an error; call again. Returns {status: "invalidated", newer_run} as soon as a newer run directory exists for the matter, proposal or not. Returns {status: "corrupt", file, problem} when approval.json is there but unreadable: tell the practitioner and apply nothing. If the practitioner says "done", call once more; if they say stop, end the run without applying.`,
+      inputSchema: {
+        type: "object",
+        properties: matterRun,
+        required: ["matter_root", "run_id"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false }
+    },
+    {
+      name: "housekeeping__resolve",
+      description: "Resolve every approved row of a run from proposal.json and approval.json on disk (never from memory): per row its `kind` (rename_and_file, rename_in_place, answered_question, final, file_no_ingest, draft_unchanged, ingested_by_reference, retry, trash, invalid), taken from the row's one proposed action, `move`, `old_path`, `new_path`, `name`, `folder`, `folders_to_create`, `answer`, the apply-time `checks` (name gate via /file-naming's name_gate.py, destination clash, folder present or creatable from the template), `ok`, `failure` (e.g. \"name check failed: ...\"), and any `journal` line already written. A `checks.name.verdict` of `second_pass_required` means the name failed the mechanical gate in a folder with alternate formats: run that folder's prose second pass before applying. Only approved rows are returned: approval.json holds one `approve` entry per approved row, and a row left as is has none, so it is not returned and nothing is done with it (an approval with no rows resolves none). An entry on a `stuck` or `misfiled` row, which the page shows for information only, is `invalid`. Apply only rows with ok (or a passed second pass); every row with move, kind trash, or kind invalid gets one journal line. Fails `not_approved` without approval.json, and `approval_corrupt` (naming the file) when it is there but unreadable: apply nothing.",
+      inputSchema: {
+        type: "object",
+        properties: matterRun,
+        required: ["matter_root", "run_id"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false }
+    },
+    {
+      name: "housekeeping__reconcile",
+      description: "Recovery for approved /housekeeping rows. Omit `run_id` to list every interrupted run of the matter (approval.json present, some move row without a journal line); pass it for the live run after a compaction, and immediately before each trash row of a live apply. Hashes each open row's old and new paths (SHA-256) and returns per row `state` (not_moved, moved, changed, missing, clash, duplicate_at_destination, trashed, unresolvable) and `action`: `apply` (checks in `resolution`, then steps 4-8), `needs_ingest_status` (answered-question or It's-final row not moved: call /matter-data ingest-status first), `post_move_steps` (steps 5-8), `trash` (copy and twin both check out: call file_ops__trash), `journal_done`, or `journal_failed` with `reason`. A run whose move rows all have journal lines is closed, whatever retry entries it holds. Fails `approval_corrupt` (naming the file) when a run's approval.json is there but unreadable, with or without `run_id`: apply nothing. Moves and journals nothing itself.",
+      inputSchema: {
+        type: "object",
+        properties: matterRun,
+        required: ["matter_root"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false }
+    },
+    {
+      name: "housekeeping__journal_append",
+      description: "Append one line {row_id, outcome, reason?} to a run's applied.jsonl, after a move row's last step (`done`) or its reported failure (`failed`, with the reason). Refuses a row id not in proposal.json (`unknown_row`), a run without approval.json (`not_approved`) or with an unreadable one (`approval_corrupt`), and a second line for a row (`already_journalled`). Nothing is journalled before a move.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          ...matterRun,
+          row_id: { type: "string" },
+          outcome: { type: "string", enum: ["done", "failed"] },
+          reason: { type: "string" }
+        },
+        required: ["matter_root", "run_id", "row_id", "outcome"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true, openWorldHint: false }
+    }
+  ];
+}
+
+// src/schema/mail.ts
+function mailToolDefinitions() {
+  const errors = " Errors: `mail_not_configured` (call mail__configure_credential), `mail_auth` (the server refused the sign-in), `mail_timeout` (no answer within 30 s; the connection was closed, so retry once), `mail_error`.";
+  const readOnly = " Read-only: every folder is opened read-only, so nothing is marked read.";
+  const organizes = " Writes to the mailbox. No Probanda tool deletes mail or a folder.";
+  const folder = { type: "string", description: "Exact folder name from mail__list_folders. Default INBOX." };
+  const uid = { type: "integer", minimum: 1, description: "The message's UID in that folder, from a list or search." };
+  const bodyOptions = {
+    include_body: { type: "boolean", description: "Also return each body. At most the newest 25 messages are returned when true." },
+    body_format: { type: "string", enum: ["text", "html"], description: "Default text." },
+    body_max_length: { type: "integer", minimum: 1, description: "Per-message body character cap. Default 10000." },
+    strip_quoted: { type: "boolean", description: "Cut the quoted earlier messages of a reply (text format only)." },
+    strip_inline_images: { type: "boolean", description: "Remove inline data-URI images." }
+  };
+  const messageShape = "Each message is {uid, folder, date (ISO 8601 UTC), from, to, cc?, subject, messageId, seen, flagged?, answered?, size}; with `include_body` it also carries `body`, `bodyFormat` and `bodyTruncated?`.";
+  return [
+    {
+      name: "mail__configure_credential",
+      description: "One-time setup of this machine's Probanda mail connector: `host` (the IMAP server), `port` (default 993), `secure` (TLS, default true), `username`, and optionally `from_address`, kept for reference only. To read the calendar and contacts with the same password, also give `caldav_url` with `timezone` (an IANA time zone such as America/Vancouver), `carddav_url`, and `dav_username` when the calendar and contacts sign-in name differs from the mail username (it is tried first, then `username`). For iCloud: imap.mail.me.com, https://caldav.icloud.com, https://contacts.icloud.com, and the Apple ID (an @icloud.com, @me.com or @mac.com address) as `username` and `dav_username`, even for a custom-domain address, which goes in `from_address`. Run again without `dav_username`, `caldav_url`, `carddav_url` or `timezone` and the saved value of each is kept; give an empty string to clear one. Takes no password: an email password never passes through the chat. Returns {status: \"awaiting_password\", url, host, username, next}: send the practitioner the `url`, a page on this computer where they type the password (for iCloud and most hosted mail an app-specific password, never the account password). The page signs in to mail and reads INBOX's counts, and signs in to the calendar and contacts servers when their URLs are given, before saving; it shows each result and lets them retry. A mail sign-in that fails saves nothing and the previous credential stays. A calendar or contacts sign-in that fails is shown as failed on the page and in mail__configure_status, and that service is saved as not configured while mail is saved. The password is saved on this computer, encrypted at rest, and never logged or returned. When they say it is done, call mail__configure_status. Only the newest link works. Writes only the credential file; nothing in the mailbox, calendar or contacts changes." + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          host: { type: "string" },
+          port: { type: "integer", minimum: 1, maximum: 65535 },
+          secure: { type: "boolean" },
+          username: { type: "string" },
+          from_address: { type: "string" },
+          dav_username: { type: "string" },
+          caldav_url: { type: "string", description: "https URL of the CalDAV server. Needs timezone." },
+          carddav_url: { type: "string", description: "https URL of the CardDAV server." },
+          timezone: { type: "string", description: "IANA time zone the calendar tools read and show times in." }
+        },
+        required: ["host", "username"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true }
+    },
+    {
+      name: "mail__configure_status",
+      description: "Report whether this machine has a Probanda mail connector credential: {configured, host, port, username, from_address, password_set, dav_username, caldav_url, carddav_url, timezone, calendar_configured, contacts_configured, dav_sign_in?, credential_error?}. `dav_sign_in` gives, for the last save in this session, why a calendar or contacts sign-in failed. Never returns the password or any hint of it. Call it before asking the practitioner for the credential, so a configured machine is not asked again. Read-only.",
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      annotations: { readOnlyHint: true }
+    },
+    {
+      name: "mail__list_folders",
+      description: "List the mailbox's folders: {folders: [{name, specialUse, selectable}], total, returned}. `name` is the exact folder name the other mail tools take; `specialUse` marks the Sent, Drafts, Trash, Junk and Archive roles. On a large mailbox pass `prefix`, the case-insensitive start of a folder path, to return only that tree; `total` still counts every folder." + readOnly + errors,
+      inputSchema: {
+        type: "object",
+        properties: { prefix: { type: "string" } },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
+    },
+    {
+      name: "mail__folder_status",
+      description: "Count one folder's messages: {folder, total, unread, recent, uidNext, uidValidity}. `folder` defaults to INBOX." + readOnly + errors,
+      inputSchema: {
+        type: "object",
+        properties: { folder },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
+    },
+    {
+      name: "mail__get_latest_emails",
+      description: "The newest `count` messages of a folder (1-200, default 10), newest first: {folder, messages}. " + messageShape + readOnly + errors,
+      inputSchema: {
+        type: "object",
+        properties: { folder, count: { type: "integer", minimum: 1, maximum: 200 }, ...bodyOptions },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
+    },
+    {
+      name: "mail__search_emails",
+      description: "Search one folder by `from`, `to`, `subject` or `body` (each matches when it is contained), `since` (on or after, YYYY-MM-DD), `before` (before, YYYY-MM-DD), `seen` and `flagged`; newest first, at most `limit` (1-500, default 50). A search does not include the folder's subfolders: search each folder separately. Returns {totalFound, returned, messages}; when `returned` is less than `totalFound`, more messages matched than were returned. " + messageShape + readOnly + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder,
+          from: { type: "string" },
+          to: { type: "string" },
+          subject: { type: "string" },
+          body: { type: "string" },
+          since: { type: "string", description: "YYYY-MM-DD" },
+          before: { type: "string", description: "YYYY-MM-DD" },
+          seen: { type: "boolean" },
+          flagged: { type: "boolean" },
+          limit: { type: "integer", minimum: 1, maximum: 500 },
+          ...bodyOptions
+        },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
+    },
+    {
+      name: "mail__get_email",
+      description: "Read one message in full: {uid, folder, messageId, inReplyTo, date, from, to, cc, replyTo, subject, flags, body, bodyFormat, bodyTruncated?, strippedQuoted?, strippedInlineImages?, attachments: [{index, part, filename, contentType, size, contentId, inline?}], headers?}. `body_format` text (default) or html; `max_length` caps the body (default 20000); `strip_quoted` returns only the newest message of a reply chain and works on the text format only, so use text when both are wanted; `strip_inline_images` removes data-URI images; `include_headers` adds the raw headers. Fails `mail_not_found` when the UID is not in the folder (UIDs change when mail is moved)." + readOnly + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder,
+          uid,
+          body_format: { type: "string", enum: ["text", "html"] },
+          max_length: { type: "integer", minimum: 1 },
+          include_headers: { type: "boolean" },
+          strip_quoted: { type: "boolean" },
+          strip_inline_images: { type: "boolean" }
+        },
+        required: ["uid"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
+    },
+    {
+      name: "mail__download_attachment",
+      description: 'Save one attachment of a message to a folder the caller names, choosing it by `index` or `filename` as mail__get_email lists them. `save_dir` must be the absolute path of an existing folder; the file is saved there under the attachment\'s name and never overwrites (a taken name gets " (1)", " (2)" and so on). For a PDF, `extract_text` (default true) adds `text`, pages separated by a form feed, and `pages`; there is no OCR. Returns {saved, path, filename, contentType, size, text?, pages?, textError?}. Writes only that one new file; the mailbox is opened read-only, so nothing is marked read.' + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder,
+          uid,
+          filename: { type: "string" },
+          index: { type: "integer", minimum: 0 },
+          save_dir: { type: "string" },
+          extract_text: { type: "boolean" }
+        },
+        required: ["uid", "save_dir"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false }
+    },
+    {
+      name: "mail__save_message",
+      description: 'Save one message as the server stores it, byte for byte, as a .eml file in a folder the caller names, so its hash matches any other exact copy and nothing (inline images, headers) is lost to a rebuild from fields. `save_dir` must be the absolute path of an existing folder; the file is named from the subject (`message-<uid>.eml` when there is none) and never overwrites (a taken name gets " (1)", " (2)" and so on). Returns {saved, path, filename, size, sha256, messageId}. Fails `mail_not_found` when the UID is not in the folder. Writes only that one new file; the mailbox is opened read-only, so nothing is marked read.' + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder,
+          uid,
+          save_dir: { type: "string" }
+        },
+        required: ["uid", "save_dir"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false }
+    },
+    {
+      name: "mail__find_email_by_message_id",
+      description: "Find where a message is now from its Message-ID (angle brackets optional), across every selectable folder: {found: [messages]}, each in mail__search_emails' message shape. A mailbox with many folders can exceed the 30 s limit." + readOnly + errors,
+      inputSchema: {
+        type: "object",
+        properties: { message_id: { type: "string" } },
+        required: ["message_id"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
+    },
+    {
+      name: "mail__find_thread_messages",
+      description: "The messages of the conversation one message belongs to, matched by Message-ID, In-Reply-To and References, oldest first: {threadIds, count, messages}. Searches `search_folders` when given, else INBOX, the Sent folder, Archive and `folder`. " + messageShape + readOnly + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder,
+          uid,
+          search_folders: { type: "array", items: { type: "string" } },
+          ...bodyOptions
+        },
+        required: ["uid"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
+    },
+    {
+      name: "mail__save_draft",
+      description: "Save an unsent message as a draft: appends the .eml at `eml_path` (an absolute path, such as the file drafting_forms__draft_harness's write_email step writes) to `folder`, by default the mailbox's Drafts folder, flagged \\Draft and \\Seen. Nothing is sent and nothing else in the mailbox changes; the file is only read. Refuses a file that is not a readable message (`not_a_message`) or is larger than 25 MB (`too_large`). Returns {saved, folder, uid, messageId}." + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          eml_path: { type: "string" },
+          folder: { type: "string", description: "Default: the Drafts folder." }
+        },
+        required: ["eml_path"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true }
+    },
+    {
+      name: "mail__create_folder",
+      description: "Create a folder: `name`, inside `parent` when given (an exact folder name from mail__list_folders), else at the top level. Returns {created, path}. Refuses a missing parent (`mail_not_found`) and a folder that already exists (`mail_folder_exists`)." + organizes + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "The new folder's own name, without its parent's path." },
+          parent: { type: "string", description: "Exact folder name from mail__list_folders. Default: the top level." }
+        },
+        required: ["name"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false }
+    },
+    {
+      name: "mail__rename_folder",
+      description: "Rename a folder, or move it under another folder: `folder` and `new_name` are full folder paths as mail__list_folders shows them. Its messages and subfolders go with it. Returns {renamed, from, to}. Refuses INBOX and the special-use folders, such as Sent, Drafts, Trash, Junk and Archive (`mail_protected_folder`), a missing folder (`mail_not_found`) and a `new_name` already taken (`mail_folder_exists`)." + organizes + errors,
+      inputSchema: {
+        type: "object",
+        properties: { folder, new_name: { type: "string" } },
+        required: ["folder", "new_name"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true }
+    },
+    {
+      name: "mail__move_messages",
+      description: "Move messages from `folder` to `destination` (exact folder names from mail__list_folders) by their `uids` in `folder` (1-500, from a list or search). Only those messages leave `folder`. Uses only the server's MOVE; a server without MOVE is refused (`mail_move_unsupported`) and nothing changes. The tool deletes nothing. Moving to the Trash folder is a move; the mail server may empty its Trash on its own schedule. Returns {folder, destination, moved: [{uid, newUid?}], notFound, notMoved}; `newUid` is the message's UID in `destination`, and the old UID no longer works, so use `newUid` afterwards." + organizes + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          folder: { type: "string", description: "Exact folder name from mail__list_folders." },
+          uids: { type: "array", items: { type: "integer", minimum: 1 }, minItems: 1, maxItems: 500 },
+          destination: { type: "string", description: "Exact folder name from mail__list_folders." }
+        },
+        required: ["folder", "uids", "destination"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true }
+    }
+  ];
+}
+
+// src/schema/calendar.ts
+function calendarToolDefinitions() {
+  const errors = " Errors: `dav_not_configured` (run mail__configure_credential with the calendar fields), `dav_auth` (the server refused the sign-in), `dav_timeout` (no answer within 30 s; retry once), `dav_error`.";
+  return [
+    {
+      name: "calendar__list_calendars",
+      description: "List the calendars of the Probanda mail connector's account that hold events: {calendars: [{name, url, color}]}. Use the names with calendar__list_events. Read-only." + errors,
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      annotations: { readOnlyHint: true }
+    },
+    {
+      name: "calendar__list_events",
+      description: "List calendar events in a date range, with repeating events expanded into individual occurrences (an occurrence moved on the phone shows at its new time; cancelled ones are left out). Times are shown in the configured timezone. Returns {timezone, count, warnings?, events: [{calendar, title, start, end, allDay, location?, notes?, status?, busy, recurrence?, alerts?, attendees?, uid, recurring?, occurrenceId?, modifiedOccurrence?, url, etag}]}. A timed event's start and end are ISO 8601 with the offset; an all-day event's are bare dates with an exclusive end. `notes` comes only with `includeNotes`, trimmed to 500 characters. An item that cannot be read is skipped and named in `warnings`. Read-only." + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          start: { type: "string", description: 'Range start: a date "2026-09-28" or local time "2026-09-28T09:00".' },
+          end: { type: "string", description: "Range end: a date (inclusive, whole day) or local time (exclusive)." },
+          calendars: { type: "array", items: { type: "string" }, description: "Calendar names to include. Default: all." },
+          includeNotes: { type: "boolean", description: "Include each event's notes (trimmed to 500 characters). Default false." }
+        },
+        required: ["start", "end"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
+    },
+    {
+      name: "calendar__get_event",
+      description: "Get the full details of one event (the whole series, for a repeating event) by the url from calendar__list_events: {url, etag, title, start, end, allDay, location?, notes?, status?, busy, recurrence?, alerts, attendees?, uid, modifiedOccurrences?, excludedDates?}. Only an https url on the configured calendar server, or on a server it moved the account to during this session's sign-in, is accepted; any other url is refused, so the password is never sent elsewhere. Read-only." + errors,
+      inputSchema: {
+        type: "object",
+        properties: { url: { type: "string", description: "Event url from calendar__list_events" } },
+        required: ["url"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
+    }
+  ];
+}
+
+// src/schema/contacts.ts
+function contactsToolDefinitions() {
+  const errors = " Errors: `dav_not_configured` (run mail__configure_credential with the contacts fields), `dav_auth` (the server refused the sign-in), `dav_timeout` (no answer within 30 s; retry once), `dav_error`.";
+  return [
+    {
+      name: "contacts__search",
+      description: "Search the Probanda mail connector's contacts by name, organization, email or phone number (case-insensitive, partial match; phone digits are compared ignoring spaces and punctuation, from 3 digits). With no query, lists contacts alphabetically. Returns {total, returned, contacts: [{url, name, organization?, emails, phones}]}. Read-only." + errors,
+      inputSchema: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Text to look for. Omit to list all." },
+          limit: { type: "integer", minimum: 1, description: "Default 50." }
+        },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
+    },
+    {
+      name: "contacts__get",
+      description: "Get full details of one contact by the url from contacts__search: {url, etag, uid, name, prefix?, firstName?, middleName?, lastName?, suffix?, organization?, department?, jobTitle?, emails: [{label?, value, preferred?}], phones: [same], addresses: [{label?, preferred?, poBox?, extended?, street, city, region, postalCode, country}], birthday?, notes?}. Only an https url on the configured contacts server, or on a server it moved the account to during this session's sign-in, is accepted; any other url is refused, so the password is never sent elsewhere. Read-only." + errors,
+      inputSchema: {
+        type: "object",
+        properties: { url: { type: "string", description: "Contact url from contacts__search" } },
+        required: ["url"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true }
+    }
+  ];
+}
+
 // src/schema/cloud-key.ts
 function cloudKeyToolDefinitions() {
   return [
@@ -78745,6 +79251,36 @@ function suggestionToolDefinitions() {
       annotations: { readOnlyHint: false, openWorldHint: false }
     },
     {
+      name: "suggestion_card__check",
+      description: "Check a suggestion card's text, before it is sent, against this computer's own records: the words of three or more letters and the numbers of four or more digits in its client, matter, contact, folder-name, document-title and file-name records (less the plugin's lists of generic legal, folder and common English words and the firm's own name), matched whole-word and ignoring case; and for email addresses, paths, dates and amounts. Pass every part that would be sent: pain_point, items, context_lines (the constraint and evidence lines), comment, raw_observation (its lines), mockup (its HTML) and environment_facts (as suggestion_card__environment_facts returned them). Nothing is sent, stored or logged, and no record's text is returned. Returns {passed, hits, records, complete}. Each hit gives part, index (the item or line, from 0) or field (the environment fact), start and end (where the match lies in that text, end exclusive), kind (record, email, path, date or amount), sources (for a record token, which records hold it), text (readable on the card, or generated by the tool), offer (for readable text: remove_only for a record token, email or path; remove_or_send_anyway for a date or amount; null for generated text), action (prompt for readable text; remove_line for a raw-observation line or an environment fact; remove_mockup for the mockup) and defect (true for generated text). records gives each record source as read, none, partial or unavailable; complete is false when any is partial or unavailable. Never quote a matched span back in chat.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          pain_point: { type: "string" },
+          items: { type: "array", maxItems: 50, items: { type: "string" } },
+          context_lines: { type: "array", maxItems: 50, items: { type: "string" } },
+          comment: { type: "string" },
+          raw_observation: { type: "array", maxItems: 50, items: { type: "string" } },
+          mockup: { type: "string" },
+          environment_facts: { type: "object" }
+        },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false }
+    },
+    {
+      name: "suggestion_card__environment_facts",
+      description: "The technical details about Probanda on this computer that a suggestion carries: each Probanda plugin (lawyer, researcher, litigator, solicitor, file-manager, timekeeper, developer), installed or not, with its version; for each installed one, when tool_names is given, which of its tools this session sees and which expected ones are missing (missing is null for a server whose tools this plugin does not know); every other tool as a count only; the host (Cowork or Code, read from how this session's Probanda tool names are written; unknown when none is given); and the operating system. Pass tool_names: every tool name this session sees, exactly as written, Probanda's and every other. It holds no user name, host name or path. Returns {plugins: [{plugin, installed, version, servers?: [{server, visible, missing}]}], other_tools, host, os: {platform, release, arch}}.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          tool_names: { type: "array", maxItems: 5e3, items: { type: "string", maxLength: 300 } }
+        },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false }
+    },
+    {
       name: "suggestion_log__read",
       description: 'Read this computer\'s suggestion store: the suggestions it sent or is sending to the Probanda team, and those it holds unposted. Returns {suggestions: [{record_id, suggestion_id, title, sent_on, status, badge, shown_badge, withdrawn}], held: [{held_id, held_on, draft}]}; each list is empty when there is nothing in it. status is "Sending...", "Submitted \u2713", "Not sent, will retry", "Not sent; Probanda could not be reached" or "Withdrawn"; suggestion_id is null until Probanda\'s Cloud confirmed it. A held `draft` is a suggestion drafted while this computer had no Probanda key, exactly as it was shown to the person.',
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
@@ -78781,6 +79317,19 @@ function buildToolDefinitions() {
     ...fileToolDefinitions(),
     ...cloudKeyToolDefinitions(),
     ...suggestionToolDefinitions()
+  ];
+}
+function buildContactsCalendarsEmailToolDefinitions() {
+  return [
+    ...mailToolDefinitions(),
+    ...calendarToolDefinitions(),
+    ...contactsToolDefinitions()
+  ];
+}
+function buildFileManagerToolDefinitions() {
+  return [
+    ...fileOpsToolDefinitions(),
+    ...housekeepingToolDefinitions()
   ];
 }
 
@@ -79249,7 +79798,7 @@ function pluginManifest(installRoot) {
   }
 }
 var SIBLING_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper"];
-function siblingInstalls(installRoot = INSTALL_ROOT) {
+function siblingInstalls(installRoot = INSTALL_ROOT, names = SIBLING_PLUGINS) {
   if (installSkillsRoot(installRoot) === void 0) return [];
   const own = resolve(installRoot);
   const parent = dirname3(own);
@@ -79263,7 +79812,7 @@ function siblingInstalls(installRoot = INSTALL_ROOT) {
   const winners = /* @__PURE__ */ new Map();
   for (const dir of candidates) {
     const manifest = pluginManifest(dir);
-    if (manifest.name === null || !SIBLING_PLUGINS.includes(manifest.name)) continue;
+    if (manifest.name === null || !names.includes(manifest.name)) continue;
     const skills = installSkillsRoot(dir);
     if (skills === void 0) continue;
     const rank = [
@@ -79276,7 +79825,7 @@ function siblingInstalls(installRoot = INSTALL_ROOT) {
       winners.set(manifest.name, { sibling: { name: manifest.name, version: manifest.version, installRoot: dir, skills }, rank });
     }
   }
-  return SIBLING_PLUGINS.flatMap((name) => {
+  return names.flatMap((name) => {
     const held = winners.get(name);
     return held ? [held.sibling] : [];
   });
@@ -80193,7 +80742,7 @@ function listCaseParties(caseDataDir, env = process.env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync6 } from "node:fs";
 import { join as join10 } from "node:path";
-var BUILD_STAMP = false ? null : "01268d5f1666";
+var BUILD_STAMP = false ? null : "ef9d1e8c9022";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80635,21 +81184,21 @@ function addressList(value, label2) {
   }
   return value;
 }
-function contactOp(fields, id, creating, label2) {
+function contactOp(fields2, id, creating, label2) {
   const list = (value) => value ?? (creating ? [] : void 0);
   return {
     op: creating ? "create" : "update",
     id,
     kind: "contact",
-    tags: { entity: fields.entity },
+    tags: { entity: fields2.entity },
     data: {
-      name: fields.name,
-      emails: list(stringList(fields.emails, `${label2}.emails`)),
-      phones: list(stringList(fields.phones, `${label2}.phones`)),
-      addresses: list(addressList(fields.addresses, `${label2}.addresses`)),
-      other_names: list(stringList(fields.other_names, `${label2}.other_names`)),
-      carddav_url: fields.carddav_url,
-      note: fields.note
+      name: fields2.name,
+      emails: list(stringList(fields2.emails, `${label2}.emails`)),
+      phones: list(stringList(fields2.phones, `${label2}.phones`)),
+      addresses: list(addressList(fields2.addresses, `${label2}.addresses`)),
+      other_names: list(stringList(fields2.other_names, `${label2}.other_names`)),
+      carddav_url: fields2.carddav_url,
+      note: fields2.note
     }
   };
 }
@@ -80755,6 +81304,32 @@ function folderMatterNum(name) {
   const match = /^\s*((?:\d+\.)?[A-Za-z]?\d+[A-Za-z0-9.\-]*)\s+/.exec(name);
   return match ? normalizeMattNum(match[1]).replace(/[-.]+$/, "").toLowerCase() : null;
 }
+function matterDataFolders(store, matters, miss) {
+  let caseDataRoot;
+  try {
+    caseDataRoot = store.env.COCLERK_CASE_DATA_ROOT || resolveCaseDataRoot(store.env);
+  } catch (err) {
+    miss(null, `the case data root could not be found: ${err.message}`);
+    return [];
+  }
+  const holding = (parent, sub) => readdirSync6(parent, { withFileTypes: true }).filter((entry2) => entry2.isDirectory() && existsSync7(join11(parent, entry2.name, sub, "main.sqlite"))).map((entry2) => ({ name: entry2.name, folder: join11(parent, entry2.name, sub) }));
+  const library = dirname4(caseDataRoot);
+  const inMatter = holding(library, "0. CASE DATA");
+  const children2 = holding(caseDataRoot, "");
+  const found = [];
+  for (const matter of matters) {
+    if (!matter.matt_num) {
+      miss(matter, "it has no matter number to find its matter-data folder by");
+      continue;
+    }
+    const wanted = normalizeMattNum(matter.matt_num).toLowerCase();
+    const own = inMatter.filter((entry2) => folderMatterNum(entry2.name) === wanted);
+    const named2 = own.length ? own : children2.filter((entry2) => folderMatterNum(entry2.name) === wanted);
+    if (named2.length > 1) miss(matter, `more than one matter-data folder starts with its matter number: ${named2.map((entry2) => entry2.folder).join(", ")}`);
+    else if (named2.length === 1) found.push({ matter, folder: named2[0].folder, name: named2[0].name });
+  }
+  return found;
+}
 async function contact_checks(store, args) {
   const items2 = store.items();
   const clients = loadClientsById(items2);
@@ -80779,30 +81354,7 @@ async function contact_checks(store, args) {
       }
     }
   } else if (matters.length) {
-    let root = null;
-    try {
-      root = store.env.COCLERK_CASE_DATA_ROOT || resolveCaseDataRoot(store.env);
-    } catch (err) {
-      miss(null, `the case data root could not be found: ${err.message}`);
-    }
-    if (root !== null) {
-      const caseDataRoot = root;
-      const holding = (parent, sub) => readdirSync6(parent, { withFileTypes: true }).filter((entry2) => entry2.isDirectory() && existsSync7(join11(parent, entry2.name, sub, "main.sqlite"))).map((entry2) => ({ name: entry2.name, folder: join11(parent, entry2.name, sub) }));
-      const library = dirname4(caseDataRoot);
-      const inMatter = holding(library, "0. CASE DATA");
-      const children2 = holding(caseDataRoot, "");
-      for (const matter of matters) {
-        if (!matter.matt_num) {
-          miss(matter, "it has no matter number to find its matter-data folder by");
-          continue;
-        }
-        const wanted = normalizeMattNum(matter.matt_num).toLowerCase();
-        const own = inMatter.filter((entry2) => folderMatterNum(entry2.name) === wanted);
-        const named2 = own.length ? own : children2.filter((entry2) => folderMatterNum(entry2.name) === wanted);
-        if (named2.length > 1) miss(matter, `more than one matter-data folder starts with its matter number: ${named2.map((entry2) => entry2.folder).join(", ")}`);
-        else if (named2.length === 1) folders.push([matter, named2[0].folder]);
-      }
-    }
+    folders.push(...matterDataFolders(store, matters, miss).map(({ matter, folder }) => [matter, folder]));
   }
   const parties_without_role = [];
   for (const [matter, folder] of folders) {
@@ -80838,9 +81390,9 @@ function union2(...lists) {
   }
   return [...seen.values()];
 }
-function fill(keepId, keep, spare, fields, conflicts) {
+function fill(keepId, keep, spare, fields2, conflicts) {
   const filled2 = {};
-  for (const field of fields) {
+  for (const field of fields2) {
     if (present(keep[field]) && present(spare[field]) && !same(keep[field], spare[field])) {
       conflicts.push({ item: keepId, field, keep: keep[field], spare: spare[field] });
     } else if (!present(keep[field]) && present(spare[field])) {
@@ -80878,7 +81430,7 @@ async function merge_contact(store, args) {
   let moved = 0;
   let combined = 0;
   const linked = (kind, roles) => [...items2].filter(([, item]) => item.kind === kind && roles.some((role) => item.links[role] === spareId));
-  const shift = (kind, keyLinks, keyData, fields) => {
+  const shift = (kind, keyLinks, keyData, fields2) => {
     for (const [spareItemId, item] of linked(kind, keyLinks)) {
       const role = keyLinks.find((name) => item.links[name] === spareId);
       const twin = [...items2].find(([, other]) => other.kind === kind && other.links[role] === keepId && same(other.tags, item.tags) && keyLinks.every((name) => name === role || other.links[name] === item.links[name]) && keyData.every((name) => same(other.data[name], item.data[name])));
@@ -80887,7 +81439,7 @@ async function merge_contact(store, args) {
         moved++;
         continue;
       }
-      const filled2 = fill(twin[0], twin[1].data, item.data, fields, conflicts);
+      const filled2 = fill(twin[0], twin[1].data, item.data, fields2, conflicts);
       if (Object.keys(filled2).length) ops.push({ op: "update", id: twin[0], kind, data: filled2 });
       ops.push({ op: "delete", id: spareItemId, kind });
       combined++;
@@ -81024,13 +81576,13 @@ function clientRoleOps(store, args, matterOp, mattNum) {
   args.client_contacts.forEach((element, index) => {
     const label2 = `client_contacts[${index}]`;
     if (element === null || typeof element !== "object" || Array.isArray(element)) throw new ValidationError(`${label2} must be an object`);
-    const fields = element;
+    const fields2 = element;
     let contactId;
-    if (fields.contact_id) {
-      contactId = String(fields.contact_id);
+    if (fields2.contact_id) {
+      contactId = String(fields2.contact_id);
     } else {
       contactId = newId();
-      contactOps.push(contactOp(fields, contactId, true, label2));
+      contactOps.push(contactOp(fields2, contactId, true, label2));
     }
     const held = existing !== null && rowsOf(items2, "matter_role").some((role) => role.matter_id === existing.id && role.contact_id === contactId && role.role === "client" && role.case_proceeding_id == null);
     roleOps.push({
@@ -82271,8 +82823,8 @@ async function upsert_firm_profile(args, env = process.env) {
   const after = firm ?? current;
   const roster = after ? rosterOf(after, paths.firm) : [];
   const signers = roster.flatMap((entry2) => {
-    const fields = SIGNER_FIELDS.filter((field) => !entry2[field]);
-    return entry2.role === "lawyer" && entry2.active !== false && fields.length > 0 ? [{ key: entry2.key, fields }] : [];
+    const fields2 = SIGNER_FIELDS.filter((field) => !entry2[field]);
+    return entry2.role === "lawyer" && entry2.active !== false && fields2.length > 0 ? [{ key: entry2.key, fields: fields2 }] : [];
   });
   if (signers.length > 0) result.signer_fields_missing = signers;
   const person2 = (config2 ?? readConfig(env)).person;
@@ -85389,10 +85941,10 @@ function clauseMarkers(row2) {
   if (row2.treatment === "overruled") return treatmentMarker(row2.treatment);
   return dedupeLineMarkers([authorityPinpointMarker(row2.statement_pinpoint), scrutinizeMarker(row2.verification, row2.authority_killed_on)]);
 }
-function dedupeLineMarkers(tokens) {
+function dedupeLineMarkers(tokens2) {
   const seen = /* @__PURE__ */ new Set();
   const out = [];
-  for (const token of tokens) {
+  for (const token of tokens2) {
     if (!token) continue;
     for (const glyph2 of token.split(" ")) {
       if (!glyph2 || seen.has(glyph2)) continue;
@@ -86093,8 +86645,8 @@ function citedItems(block2, kind, file) {
     if (seen) fail(file, field, `rule_ref "${ref}" is already cited by ${seen.field}; a rule_ref is unique within the file`);
     out.push({ rule_ref: ref, field, ...part === void 0 ? {} : { part } });
   };
-  const fields = kind === "type" ? CITABLE_TYPE_FIELDS : VENUE_FIELDS;
-  for (const field of fields) {
+  const fields2 = kind === "type" ? CITABLE_TYPE_FIELDS : VENUE_FIELDS;
+  for (const field of fields2) {
     if (cited(block2[field])) add(block2[field].rule_ref, field);
   }
   if (kind === "type" && Array.isArray(block2.parts)) {
@@ -86230,12 +86782,12 @@ function venueHeadingFor(filing, proceeding) {
   const block2 = filing.layout_snapshot !== null ? storedLayout(filing).venue : proceeding.forum === null ? null : shippedVenueBlock(filing, proceeding.forum);
   if (block2 === null) return null;
   validateVenueBlock(block2, `"${filing.title}"'s court or tribunal part`);
-  const fields = block2;
+  const fields2 = block2;
   return {
-    caption_lines: scalarValue(fields.caption_lines),
-    file_number_label: scalarValue(fields.file_number_label),
-    registry_label: scalarValue(fields.registry_label),
-    display_label: scalarValue(fields.display_label)
+    caption_lines: scalarValue(fields2.caption_lines),
+    file_number_label: scalarValue(fields2.file_number_label),
+    registry_label: scalarValue(fields2.registry_label),
+    display_label: scalarValue(fields2.display_label)
   };
 }
 function captionHeadingFor(filing, proceeding) {
@@ -89485,19 +90037,19 @@ function contactCells(c3, gapMarker2) {
   const texts = [c3.counselFirm ?? gapMarker2, `Attn: ${c3.counselName ?? gapMarker2}`, c3.addressForService ?? gapMarker2, `Tel: ${c3.counselPhone ?? gapMarker2}`, c3.counselEmail ?? gapMarker2];
   return CONTACT_COLUMNS.map((col, i3) => ({ ...col, text: texts[i3] }));
 }
-function bccaCoverPage(parties2, fields) {
+function bccaCoverPage(parties2, fields2) {
   const lines2 = [];
   lines2.push("| | | |");
   lines2.push("| :--- | :---: | ---: |");
-  if (fields.heading.registry_label !== null) {
-    lines2.push(`| | | ${fields.registry ?? ""} ${fields.heading.registry_label} |`);
-    lines2.push(`| | | ${fields.heading.file_number_label} ${fields.fileNumber ?? ""} |`);
+  if (fields2.heading.registry_label !== null) {
+    lines2.push(`| | | ${fields2.registry ?? ""} ${fields2.heading.registry_label} |`);
+    lines2.push(`| | | ${fields2.heading.file_number_label} ${fields2.fileNumber ?? ""} |`);
   }
-  lines2.push(`| | | ${fields.recordLabel} |`);
+  lines2.push(`| | | ${fields2.recordLabel} |`);
   lines2.push("| | **COURT OF APPEAL** | |");
-  if (fields.onAppealFrom && fields.onAppealFrom.judge && fields.onAppealFrom.court && fields.onAppealFrom.pronounced) {
+  if (fields2.onAppealFrom && fields2.onAppealFrom.judge && fields2.onAppealFrom.court && fields2.onAppealFrom.pronounced) {
     lines2.push(
-      `| | ON APPEAL FROM the order of ${fields.onAppealFrom.judge} of the ${fields.onAppealFrom.court} pronounced on ${fields.onAppealFrom.pronounced} | |`
+      `| | ON APPEAL FROM the order of ${fields2.onAppealFrom.judge} of the ${fields2.onAppealFrom.court} pronounced on ${fields2.onAppealFrom.pronounced} | |`
     );
   }
   const groups = groupPartiesByRole(parties2);
@@ -89505,20 +90057,20 @@ function bccaCoverPage(parties2, fields) {
     lines2.push(`| ${i3 === 0 ? "BETWEEN:" : "AND:"} | | |`);
     lines2.push(`| | ${group.names.map((n3) => n3.toUpperCase()).join(" and ")} | |`);
     lines2.push(`| | | *${pluralizeRole(group.role, group.names.length)}* |`);
-    const lowerCourtRole = fields.lowerCourtRoleByRole?.[group.role];
+    const lowerCourtRole = fields2.lowerCourtRoleByRole?.[group.role];
     if (lowerCourtRole) lines2.push(`| | | *${lowerCourtRole}* |`);
   });
-  if (fields.accessRestrictions) {
-    for (const line of fields.accessRestrictions.split("\n")) lines2.push(`| | ${line} | |`);
+  if (fields2.accessRestrictions) {
+    for (const line of fields2.accessRestrictions.split("\n")) lines2.push(`| | ${line} | |`);
   }
-  lines2.push(`| | **${fields.titleLine}** | |`);
-  if (fields.filingPartyPhrase) lines2.push(`| | ${fields.filingPartyPhrase} | |`);
+  lines2.push(`| | **${fields2.titleLine}** | |`);
+  if (fields2.filingPartyPhrase) lines2.push(`| | ${fields2.filingPartyPhrase} | |`);
   lines2.push("");
-  lines2.push(`| ${fields.contacts.map((c3) => formatNameList(c3.names.map((n3) => n3.toUpperCase()))).join(" | ")} |`);
-  lines2.push(`| ${fields.contacts.map(() => ":---").join(" | ")} |`);
-  const cells = fields.contacts.map((c3) => contactCells(c3, fields.gapMarker));
+  lines2.push(`| ${fields2.contacts.map((c3) => formatNameList(c3.names.map((n3) => n3.toUpperCase()))).join(" | ")} |`);
+  lines2.push(`| ${fields2.contacts.map(() => ":---").join(" | ")} |`);
+  const cells = fields2.contacts.map((c3) => contactCells(c3, fields2.gapMarker));
   for (let row2 = 0; row2 < CONTACT_COLUMNS.length; row2++) lines2.push(`| ${cells.map((c3) => c3[row2].text).join(" | ")} |`);
-  lines2.push(`| ${fields.contacts.map((c3) => `Counsel for the ${pluralizeRole(c3.role, c3.names.length)}`).join(" | ")} |`);
+  lines2.push(`| ${fields2.contacts.map((c3) => `Counsel for the ${pluralizeRole(c3.role, c3.names.length)}`).join(" | ")} |`);
   return lines2.join("\n");
 }
 function formatTimeEstimate(minutes) {
@@ -89540,7 +90092,7 @@ function pushExcerptBlockquote(lines2, excerpt, citationLine) {
 
 // src/submission/forms/vaniac-frontmatter.ts
 function frontmatterFor(documentType, proceeding, filing, revision, rendered, clientName, clientNo, matterNo, matterDescription) {
-  const fields = {
+  const fields2 = {
     matterNo,
     matterDescription,
     clientName,
@@ -89553,7 +90105,7 @@ function frontmatterFor(documentType, proceeding, filing, revision, rendered, cl
     revision,
     rendered
   };
-  return frontmatterHeader(fields);
+  return frontmatterHeader(fields2);
 }
 
 // src/submission/forms/witness-statement-reads.ts
@@ -96983,8 +97535,8 @@ function recordPagesState(dbPath, todos, section3, sessionToken) {
     if (sessionToken) {
       const sessions = state.sessions ?? {};
       sessions[sessionToken] = { sections: { ...own, [id]: recorded } };
-      const tokens = Object.keys(sessions);
-      for (const token of tokens.slice(0, Math.max(0, tokens.length - MAX_SESSIONS))) delete sessions[token];
+      const tokens2 = Object.keys(sessions);
+      for (const token of tokens2.slice(0, Math.max(0, tokens2.length - MAX_SESSIONS))) delete sessions[token];
       state.sessions = sessions;
     }
   }
@@ -97726,7 +98278,7 @@ function fetchStatementsOfFact(dbPath, factIds) {
 
 // src/submission/forms/filing-frontmatter.ts
 function filingFrontmatter(proceeding, ctx, documentType) {
-  const fields = {
+  const fields2 = {
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
     matterNo: ctx.matterNo,
@@ -97739,7 +98291,7 @@ function filingFrontmatter(proceeding, ctx, documentType) {
     revision: ctx.revision,
     rendered: ctx.rendered
   };
-  return frontmatterHeader(fields);
+  return frontmatterHeader(fields2);
 }
 
 // src/submission/forms/render-notice-of-application.ts
@@ -97890,7 +98442,7 @@ function renderNoticeOfApplication(ctx) {
     recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
     recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
     recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
-    const tokens = [witnessMarker, courtRecordPin, looseThread];
+    const tokens2 = [witnessMarker, courtRecordPin, looseThread];
     const statementSets = [];
     const guarded = isAdmittedGuard(courtRecordLinked, admitted);
     for (const s3 of stmts) {
@@ -97912,7 +98464,7 @@ function renderNoticeOfApplication(ctx) {
       );
       statementTokens.push(doubtMarker(s3.doubt));
       if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
-      tokens.push(...statementTokens);
+      tokens2.push(...statementTokens);
       recordFactStatementGlyphs(
         ctx.inventory,
         dedupeLineMarkers(statementTokens),
@@ -97920,7 +98472,7 @@ function renderNoticeOfApplication(ctx) {
         f3.postulate
       );
     }
-    const lineGlyphs = dedupeLineMarkers(tokens);
+    const lineGlyphs = dedupeLineMarkers(tokens2);
     const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
     stmts.forEach((s3, i3) => {
       if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
@@ -98013,7 +98565,7 @@ function fetchPlacedAlternativeIds(dbPath, filing) {
   ).map((r3) => r3.id);
 }
 function frontmatterFor2(ctx, documentType) {
-  const fields = {
+  const fields2 = {
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
     matterNo: ctx.matterNo,
@@ -98026,7 +98578,7 @@ function frontmatterFor2(ctx, documentType) {
     revision: ctx.revision,
     rendered: ctx.rendered
   };
-  return frontmatterHeader(fields);
+  return frontmatterHeader(fields2);
 }
 function captionParties(ctx) {
   return ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
@@ -98804,7 +99356,7 @@ function renderApplicationResponse(ctx) {
     recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
     recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
     recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
-    const tokens = [witnessMarker, courtRecordPin, looseThread];
+    const tokens2 = [witnessMarker, courtRecordPin, looseThread];
     const statementSets = [];
     const guarded = isAdmittedGuard(courtRecordLinked, admitted);
     for (const s3 of stmts) {
@@ -98826,7 +99378,7 @@ function renderApplicationResponse(ctx) {
       );
       statementTokens.push(doubtMarker(s3.doubt));
       if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
-      tokens.push(...statementTokens);
+      tokens2.push(...statementTokens);
       recordFactStatementGlyphs(
         ctx.inventory,
         dedupeLineMarkers(statementTokens),
@@ -98834,7 +99386,7 @@ function renderApplicationResponse(ctx) {
         f3.postulate
       );
     }
-    const lineGlyphs = dedupeLineMarkers(tokens);
+    const lineGlyphs = dedupeLineMarkers(tokens2);
     const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
     stmts.forEach((s3, i3) => {
       if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
@@ -98925,7 +99477,7 @@ function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFac
       suppressMarker(noWitnessMarker(courtRecordLinked, stmts.length > 0, admitted, spentGlyphByFact.get(f3.id) ?? ""), suppressedFactIds.has(f3.id)),
       courtRecordPin
     ];
-    const tokens = [...factTokens];
+    const tokens2 = [...factTokens];
     const statementSets = [];
     const guarded = isAdmittedGuard(courtRecordLinked, admitted);
     for (const s3 of stmts) {
@@ -98944,7 +99496,7 @@ function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFac
           fact_admitted_by_all_opposing: admitted
         })
       );
-      tokens.push(...statementTokens);
+      tokens2.push(...statementTokens);
       recordFactStatementGlyphs(
         inventory,
         dedupeLineMarkers(statementTokens),
@@ -98952,10 +99504,10 @@ function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFac
         f3.postulate
       );
       const doubtAndCopy = [doubtMarker(s3.doubt), s3.instrument_id !== null ? copyMarkers.get(s3.instrument_id) ?? "" : ""];
-      tokens.push(...doubtAndCopy);
+      tokens2.push(...doubtAndCopy);
       statementSets.push([...statementTokens, ...doubtAndCopy]);
     }
-    const lineGlyphs = dedupeLineMarkers(tokens);
+    const lineGlyphs = dedupeLineMarkers(tokens2);
     factTokens.push(reviewMarkerFor(review, inventory, lineGlyphs, "facts", f3.id, f3.postulate));
     stmts.forEach((s3, i3) => {
       if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(review, inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
@@ -99802,7 +100354,7 @@ function fetchPlacedInProceeding(dbPath, proceedingId) {
   return new Set(texts.flatMap((t3) => placedDocumentIds(t3.text)));
 }
 function frontmatterFor3(ctx) {
-  const fields = {
+  const fields2 = {
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
     matterNo: ctx.matterNo,
@@ -99815,7 +100367,7 @@ function frontmatterFor3(ctx) {
     revision: ctx.revision,
     rendered: ctx.rendered
   };
-  return frontmatterHeader(fields);
+  return frontmatterHeader(fields2);
 }
 function renderAffidavit(ctx, a3) {
   const paragraphs = rows(ctx.dbPath, `SELECT id, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
@@ -99904,7 +100456,7 @@ function writtenArgumentsVenue(proceeding) {
   return venue;
 }
 function frontmatterFor4(ctx, documentType) {
-  const fields = {
+  const fields2 = {
     clientName: ctx.clientName,
     clientNo: ctx.clientNo,
     matterNo: ctx.matterNo,
@@ -99917,7 +100469,7 @@ function frontmatterFor4(ctx, documentType) {
     revision: ctx.revision,
     rendered: ctx.rendered
   };
-  return frontmatterHeader(fields);
+  return frontmatterHeader(fields2);
 }
 function renderWrittenArguments(ctx, documentKey) {
   const venue = writtenArgumentsVenue(ctx.proceeding);
@@ -106692,15 +107244,15 @@ function leafStrings(value, into) {
   else if (value !== null && typeof value === "object") for (const item of Object.values(value)) leafStrings(item, into);
   return into;
 }
-function findSuggestionHits(fields) {
-  const strings = leafStrings(fields.text, []);
-  const html = [...fields.previews ?? [], ...fields.mockup === void 0 ? [] : [fields.mockup]];
+function findSuggestionHits(fields2) {
+  const strings = leafStrings(fields2.text, []);
+  const html = [...fields2.previews ?? [], ...fields2.mockup === void 0 ? [] : [fields2.mockup]];
   const hits = REDACTION_RULES.filter(
     ([kind, hit]) => strings.some(hit) || kind !== "too_long" && html.some(hit)
   ).map(([kind]) => kind);
-  if (fields.items && JSON.stringify(fields.items).length > MAX_ITEMS_JSON_LENGTH) hits.push("items_too_long");
-  if ((fields.previews ?? []).some((text7) => text7.length > MAX_PREVIEW_HTML_LENGTH)) hits.push("preview_too_long");
-  if (fields.mockup !== void 0 && Buffer.byteLength(fields.mockup, "utf-8") > MAX_MOCKUP_HTML_BYTES) hits.push("mockup_too_long");
+  if (fields2.items && JSON.stringify(fields2.items).length > MAX_ITEMS_JSON_LENGTH) hits.push("items_too_long");
+  if ((fields2.previews ?? []).some((text7) => text7.length > MAX_PREVIEW_HTML_LENGTH)) hits.push("preview_too_long");
+  if (fields2.mockup !== void 0 && Buffer.byteLength(fields2.mockup, "utf-8") > MAX_MOCKUP_HTML_BYTES) hits.push("mockup_too_long");
   return hits;
 }
 
@@ -107149,12 +107701,12 @@ function fieldsFromToolArgs(args) {
     ...args.previews === void 0 ? {} : { previews: checkPreviews(args.previews) }
   };
 }
-function screen(fields) {
-  const { previews, mockup, ...rest } = fields;
+function screen(fields2) {
+  const { previews, mockup, ...rest } = fields2;
   const previewText = (previews ?? []).map(({ html: _html, ...other }) => other);
   const hits = findSuggestionHits({
     text: [rest, previewText],
-    items: fields.items,
+    items: fields2.items,
     previews: (previews ?? []).map((p3) => p3.html),
     ...mockup === void 0 ? {} : { mockup }
   });
@@ -107162,10 +107714,10 @@ function screen(fields) {
     throw new ValidationError(`submit refused: ${hits.join(", ")}; rewrite the suggestion generically and resubmit. Nothing was saved or sent.`);
   }
 }
-async function submitSuggestion(fields, env = process.env, seams = {}) {
-  screen(fields);
-  const payload = JSON.stringify({ ...fields, plugin_version: pluginRelease(seams.installRoot) });
-  const record2 = newSuggestionRecord(payload, fields.title, nowIso3(seams));
+async function submitSuggestion(fields2, env = process.env, seams = {}) {
+  screen(fields2);
+  const payload = JSON.stringify({ ...fields2, plugin_version: pluginRelease(seams.installRoot) });
+  const record2 = newSuggestionRecord(payload, fields2.title, nowIso3(seams));
   await withStore(env, (store) => {
     store.records.push(record2);
   });
@@ -107492,9 +108044,642 @@ async function writePastSuggestionsPage(env = process.env) {
   return path;
 }
 
+// src/suggestions/crosscheck.ts
+import { existsSync as existsSync48, readFileSync as readFileSync37 } from "node:fs";
+import { join as join49 } from "node:path";
+
+// src/case/list-record-names.ts
+var DRIVER9 = String.raw`
+import json, sys
+
+
+def main():
+    request = json.loads(sys.stdin.read())
+    try:
+        from list_record_names import run
+        sys.stdout.write(json.dumps({"ok": True, "result": run(request)}))
+    except BaseException as exc:
+        sys.stdout.write(json.dumps({"ok": False, "error": type(exc).__name__}))
+
+
+main()
+`.trim();
+function listCaseRecordNames(caseDataDirs, env = process.env, scriptsDir) {
+  if (caseDataDirs.length === 0) return [];
+  const unavailable = caseDataDirs.map(() => ({ status: "unavailable" }));
+  try {
+    const parsed = runPythonDriver({
+      label: "matter-data name list",
+      driver: pythonDriverFile("case-list-record-names-driver", DRIVER9),
+      payload: JSON.stringify({ case_data_dirs: caseDataDirs }),
+      env,
+      timeoutMs: pythonTimeoutMs(env, READ_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS"),
+      extraEnv: { PYTHONPATH: scriptsDir ?? caseDataMigrateScriptsDir(env) }
+    });
+    const results = parsed.ok ? parsed.result?.results : void 0;
+    if (!Array.isArray(results) || results.length !== caseDataDirs.length) return unavailable;
+    return results.map((raw) => {
+      const r3 = raw;
+      if (r3?.status === "not_applicable") return { status: "not_applicable" };
+      if (r3?.status !== "ok") return { status: "unavailable" };
+      const list = (value) => Array.isArray(value) ? value.filter((v3) => typeof v3 === "string") : [];
+      return { status: "ok", titles: list(r3.titles), file_names: list(r3.file_names), matter: list(r3.matter), parties: list(r3.parties) };
+    });
+  } catch {
+    return unavailable;
+  }
+}
+
+// src/suggestions/records.ts
+var RECORD_SOURCES = ["client", "matter", "contact", "folder_name", "document_title", "file_name"];
+function leaves(value, into) {
+  if (typeof value === "string") {
+    if (value.trim()) into.push(value);
+  } else if (typeof value === "number" && Number.isFinite(value)) {
+    into.push(String(value));
+  } else if (Array.isArray(value)) {
+    for (const item of value) leaves(item, into);
+  } else if (value !== null && typeof value === "object") {
+    for (const item of Object.values(value)) leaves(item, into);
+  }
+  return into;
+}
+function fields(rows2, names) {
+  const out = [];
+  for (const row2 of rows2) for (const name of names) leaves(row2[name], out);
+  return out;
+}
+function defaultFirmName(env) {
+  try {
+    return readFirmProfile(env).firm_name;
+  } catch {
+    return null;
+  }
+}
+function defaultFolderMapFolders(env) {
+  try {
+    const map = readFolderMap(env);
+    return map.status === "ok" ? map.entries.flatMap((entry2) => entry2.folders) : [];
+  } catch {
+    return null;
+  }
+}
+async function readRecordTexts(store, env = store.env, seams = {}) {
+  const texts = Object.fromEntries(RECORD_SOURCES.map((s3) => [s3, []]));
+  const failed = /* @__PURE__ */ new Set();
+  let matters = [];
+  try {
+    const items2 = store.items();
+    const clients = rowsOf(items2, "client");
+    matters = rowsOf(items2, "matter");
+    const contacts = rowsOf(items2, "contact");
+    texts.client.push(...fields(clients, ["name", "client_num"]));
+    texts.matter.push(...fields(matters, ["description", "file_number", "matt_num"]));
+    texts.contact.push(...fields(contacts, ["name", "other_names", "emails", "phones", "addresses"]));
+    texts.folder_name.push(...fields(matters, ["folder"]));
+  } catch {
+    for (const source of RECORD_SOURCES) failed.add(source);
+  }
+  const mapFolders = (seams.folderMapFolders ?? defaultFolderMapFolders)(env);
+  if (mapFolders === null) failed.add("folder_name");
+  else texts.folder_name.push(...mapFolders);
+  const caseSources = ["matter", "contact", "folder_name", "document_title", "file_name"];
+  if (matters.length) {
+    let missed = false;
+    const folders = (seams.matterFolders ?? ((s3, m3, miss) => matterDataFolders(s3, m3, (matter) => miss(matter))))(store, matters, () => {
+      missed = true;
+    });
+    if (missed) for (const source of caseSources) failed.add(source);
+    texts.folder_name.push(...folders.map((folder) => folder.name));
+    const names = (seams.listNames ?? listCaseRecordNames)(folders.map((folder) => folder.folder), env);
+    for (const result of names) {
+      if (result.status === "unavailable") {
+        for (const source of caseSources) failed.add(source);
+      } else if (result.status === "ok") {
+        texts.document_title.push(...result.titles);
+        texts.file_name.push(...result.file_names);
+        texts.matter.push(...result.matter);
+        texts.contact.push(...result.parties);
+      }
+    }
+  }
+  const states = Object.fromEntries(RECORD_SOURCES.map((source) => {
+    const state = failed.has(source) ? texts[source].length ? "partial" : "unavailable" : texts[source].length ? "read" : "none";
+    return [source, state];
+  }));
+  return { texts, states, firmName: (seams.firmName ?? defaultFirmName)(env) };
+}
+
+// src/suggestions/crosscheck.ts
+var STOP_WORDS_DIR = "suggestion/references/stop-words";
+var STOP_WORD_FILES = ["legal-and-folder.txt", "common-english.txt"];
+var TOKEN = new RegExp("(\\p{L}+(?:['\\u2019]\\p{L}+)*)|(\\p{Nd}+)", "gu");
+function keyOf(word) {
+  return word.replace(/\u2019/g, "'").toLowerCase();
+}
+function tokens(text7) {
+  const out = [];
+  for (const m3 of text7.matchAll(TOKEN)) {
+    const start2 = m3.index ?? 0;
+    if (m3[1] !== void 0) {
+      if (m3[1].replace(/['\u2019]/g, "").length >= 3) out.push({ key: keyOf(m3[1]), start: start2, end: start2 + m3[1].length });
+    } else if (m3[2].length >= 4) {
+      out.push({ key: m3[2], start: start2, end: start2 + m3[2].length });
+    }
+  }
+  return out;
+}
+function parseStopWords(text7) {
+  return text7.split(/\r?\n/).map((line) => line.trim()).filter((line) => line !== "" && !line.startsWith("#")).map(keyOf);
+}
+function loadStopWords(env = process.env, installRoot) {
+  const root = resolveShippedRoot(STOP_WORDS_DIR, env, { subject: "the suggestion word lists", plugin: "lawyer", installRoot }).root;
+  const words = /* @__PURE__ */ new Set();
+  for (const file of STOP_WORD_FILES) {
+    const path = join49(root, ...STOP_WORDS_DIR.split("/"), file);
+    if (!existsSync48(path)) throw new DataServerError("The suggestion check is missing its word lists. Update the lawyer plugin.", "stop_words_missing");
+    for (const word of parseStopWords(readFileSync37(path, "utf-8"))) words.add(word);
+  }
+  return words;
+}
+function buildTokenIndex(records, stopWords) {
+  const stop = new Set(stopWords);
+  if (records.firmName) for (const t3 of tokens(records.firmName)) stop.add(t3.key);
+  const index = /* @__PURE__ */ new Map();
+  for (const source of RECORD_SOURCES) {
+    for (const text7 of records.texts[source]) {
+      for (const t3 of tokens(text7)) {
+        if (stop.has(t3.key)) continue;
+        const held = index.get(t3.key) ?? /* @__PURE__ */ new Set();
+        held.add(source);
+        index.set(t3.key, held);
+      }
+    }
+  }
+  return index;
+}
+var EMAIL2 = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+var SERVICE_LOCAL_PARTS2 = /* @__PURE__ */ new Set(["git", "noreply", "no-reply"]);
+var PATH_CHARS = String.raw`[^\s"'<>|*?]`;
+var PATHS3 = [
+  // A drive path: a drive letter, a colon, then a slash or a backslash.
+  new RegExp(String.raw`(?<![A-Za-z0-9])[A-Za-z]:[\\/]${PATH_CHARS}*`, "g"),
+  // A UNC path: \\server\share...
+  new RegExp(String.raw`\\\\[\w.$-]+\\${PATH_CHARS}*`, "g"),
+  // An environment-variable or home root: %USERPROFILE%\..., $HOME/..., ${VAR}/..., ~/...
+  new RegExp(String.raw`(?:%\w+%|\$\{?\w+\}?|~)[\\/]${PATH_CHARS}*`, "g"),
+  // An absolute POSIX path of two or more segments, not part of a URL, a closing tag or a word.
+  new RegExp(String.raw`(?<![\w:/.<>~%}])/[\w.-]+(?:/[\w.-]+)+/?`, "g"),
+  // A relative path with a backslash: Folder\Sub, Folder\file.pdf.
+  new RegExp(String.raw`(?<![\w\\])[\w.-]+(?:\\[\w.-]+)+`, "g"),
+  // A relative forward-slash path of three or more segments, or of two ending in a file extension.
+  new RegExp(String.raw`(?<![\w/:.<])[\w.-]+(?:/[\w.-]+){2,}`, "g"),
+  new RegExp(String.raw`(?<![\w/:.<])[\w.-]+/[\w-]+\.[A-Za-z][A-Za-z0-9]{0,4}\b`, "g")
+];
+var MONTH2 = String.raw`(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?`;
+var DAY = String.raw`\d{1,2}(?:st|nd|rd|th)?`;
+var DATES = [
+  /(?<![\d.])\d{4}[-/.]\d{1,2}[-/.]\d{1,2}(?![\d.])/g,
+  /(?<![\d.])\d{1,2}([-/])\d{1,2}\1(?:\d{4}|\d{2})(?![\d.])/g,
+  // With dots only a four-digit year: 0.9.14 is a version, not a date.
+  /(?<![\d.])\d{1,2}\.\d{1,2}\.\d{4}(?![\d.])/g,
+  new RegExp(String.raw`\b${MONTH2}\s+${DAY}(?:,?\s+\d{4})?\b`, "g"),
+  new RegExp(String.raw`\b${DAY}\s+(?:of\s+)?${MONTH2}(?:,?\s+\d{4})?\b`, "g"),
+  new RegExp(String.raw`\b${MONTH2}\s+\d{4}\b`, "g")
+];
+var NUMBER = String.raw`\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?`;
+var SCALE = String.raw`(?:\s?(?:k|m|million|thousand|billion)\b)?`;
+var AMOUNTS = [
+  // A currency sign or code before the number: $1,200, CAD 300, US$ 45.10.
+  new RegExp(String.raw`(?:[A-Z]{0,3}\$|[€£¥]|\b(?:CAD|USD|EUR|GBP)\s?)\s?(?:${NUMBER})${SCALE}`, "g"),
+  // A currency word or code after the number: 300 dollars, 1,200.00 CAD.
+  new RegExp(String.raw`(?<![\d.,])(?:${NUMBER})${SCALE}\s?(?:dollars?|cents?|CAD|USD|EUR|GBP)\b`, "gi"),
+  // A number with thousands separators: 12,500 or 12,500.00.
+  /(?<![\d.,])\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?(?![\d,])/g
+];
+function matchAll(text7, patterns, kind, keep = () => true) {
+  const hits = [];
+  for (const pattern of patterns) {
+    for (const m3 of text7.matchAll(pattern)) {
+      let value = m3[0];
+      if (kind === "path") value = value.replace(/[.,;:)\]]+$/, "");
+      if (value === "" || !keep(value)) continue;
+      const start2 = m3.index ?? 0;
+      hits.push({ kind, start: start2, end: start2 + value.length });
+    }
+  }
+  return hits;
+}
+function findPatterns(text7) {
+  const emails = matchAll(text7, [EMAIL2], "email", (value) => !SERVICE_LOCAL_PARTS2.has(value.split("@")[0].toLowerCase()));
+  const within = (hit, others) => others.some((o3) => o3 !== hit && o3.start <= hit.start && hit.end <= o3.end && o3.end - o3.start > hit.end - hit.start);
+  const paths = matchAll(text7, PATHS3, "path", (value) => new RegExp("\\p{L}", "u").test(value)).filter((hit) => !emails.some((e3) => e3.start <= hit.start && hit.end <= e3.end));
+  const dates = matchAll(text7, DATES, "date");
+  const amounts = matchAll(text7, AMOUNTS, "amount");
+  const all = [...emails, ...paths, ...dates, ...amounts];
+  const seen = /* @__PURE__ */ new Set();
+  return all.filter((hit) => !within(hit, all.filter((o3) => o3.kind === hit.kind))).filter((hit) => {
+    const key = `${hit.kind}:${hit.start}:${hit.end}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((a3, b3) => a3.start - b3.start || a3.end - b3.end);
+}
+var READABLE_PARTS = ["pain_point", "items", "context_lines", "comment"];
+function factLeaves(value, path, into) {
+  if (typeof value === "string" || typeof value === "number" && Number.isFinite(value)) {
+    into.push({ part: "environment_facts", field: path || "(facts)", text: String(value) });
+  } else if (Array.isArray(value)) {
+    value.forEach((item, i3) => factLeaves(item, `${path}[${i3}]`, into));
+  } else if (value !== null && typeof value === "object") {
+    for (const [key, item] of Object.entries(value)) factLeaves(item, path ? `${path}.${key}` : key, into);
+  }
+}
+function locate2(card) {
+  const out = [];
+  const one = (part, text7) => {
+    if (text7 === void 0 || text7 === null) return;
+    if (typeof text7 !== "string") throw new ValidationError(`${part} must be a string`);
+    out.push({ part, text: text7 });
+  };
+  const many = (part, list) => {
+    if (list === void 0 || list === null) return;
+    if (!Array.isArray(list) || !list.every((entry2) => typeof entry2 === "string")) throw new ValidationError(`${part} must be a list of strings`);
+    list.forEach((text7, index) => out.push({ part, index, text: text7 }));
+  };
+  one("pain_point", card.pain_point);
+  many("items", card.items);
+  many("context_lines", card.context_lines);
+  one("comment", card.comment);
+  many("raw_observation", card.raw_observation);
+  one("mockup", card.mockup);
+  if (card.environment_facts !== void 0) factLeaves(card.environment_facts, "", out);
+  return out;
+}
+var OFFER = {
+  record: "remove_only",
+  email: "remove_only",
+  path: "remove_only",
+  date: "remove_or_send_anyway",
+  amount: "remove_or_send_anyway"
+};
+function crossCheck(card, index) {
+  const hits = [];
+  for (const where of locate2(card)) {
+    const readable = READABLE_PARTS.includes(where.part);
+    const found = [];
+    for (const t3 of tokens(where.text)) {
+      const sources = index.get(t3.key);
+      if (sources) found.push({ kind: "record", start: t3.start, end: t3.end, sources: RECORD_SOURCES.filter((s3) => sources.has(s3)) });
+    }
+    found.push(...findPatterns(where.text));
+    found.sort((a3, b3) => a3.start - b3.start || a3.end - b3.end);
+    for (const f3 of found) {
+      hits.push({
+        part: where.part,
+        ...where.index !== void 0 ? { index: where.index } : {},
+        ...where.field !== void 0 ? { field: where.field } : {},
+        start: f3.start,
+        end: f3.end,
+        kind: f3.kind,
+        ...f3.sources ? { sources: f3.sources } : {},
+        text: readable ? "readable" : "generated",
+        offer: readable ? OFFER[f3.kind] : null,
+        action: readable ? "prompt" : where.part === "mockup" ? "remove_mockup" : "remove_line",
+        defect: !readable
+      });
+    }
+  }
+  return hits;
+}
+function runCrossCheck(card, records, stopWords) {
+  const hits = crossCheck(card, buildTokenIndex(records, stopWords));
+  const complete = RECORD_SOURCES.every((s3) => records.states[s3] === "read" || records.states[s3] === "none");
+  return { passed: hits.length === 0, hits, records: records.states, complete };
+}
+
+// src/suggestions/environment.ts
+import { arch as osArch, homedir as homedir10, hostname as osHostname, platform as osPlatform, release as osRelease, userInfo } from "node:os";
+import { basename as basename13 } from "node:path";
+
+// src/key-request/page.ts
+import { randomBytes as randomBytes5 } from "node:crypto";
+import { createServer } from "node:http";
+var MAX_BODY = 4 * 1024;
+var TITLE2 = "Probanda's Cloud key";
+var pending;
+var listening;
+async function serveKeyPage(save2) {
+  const link = randomBytes5(24).toString("hex");
+  pending = { link, save: save2 };
+  listening ??= listen(handle, () => {
+    listening = void 0;
+  });
+  return `http://127.0.0.1:${await listening}/cloud-key/${link}`;
+}
+function listen(handle4, onError) {
+  const server = createServer((req, res) => {
+    handle4(req, res).catch(() => {
+      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
+      else res.destroy();
+    });
+  });
+  server.on("connection", (socket) => socket.unref());
+  return new Promise((resolve11, reject) => {
+    server.once("error", (err) => {
+      onError();
+      reject(err);
+    });
+    server.listen(0, "127.0.0.1", () => {
+      server.unref();
+      resolve11(server.address().port);
+    });
+  });
+}
+async function handle(req, res) {
+  const m3 = /^\/cloud-key\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
+  const current = pending;
+  if (!m3 || !current || m3[1] !== current.link) {
+    return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
+  }
+  if (req.method === "GET") return page(res, 200, TITLE2, FORM);
+  if (req.method !== "POST") return page(res, 405, "Not allowed", "");
+  const typed = (new URLSearchParams(await readBody(req)).get("secret") ?? "").trim();
+  try {
+    await current.save(typed);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return page(res, 200, TITLE2, `<p class="error">Not saved: ${escape2(message)}</p>${FORM}`);
+  }
+  if (pending === current) pending = void 0;
+  page(
+    res,
+    200,
+    "Connected",
+    "<p>Connected to Probanda's Cloud. The key is saved on this computer, encrypted, and will be used after a restart.</p><p>You can close this tab and return to Claude.</p>"
+  );
+}
+var FORM = `<p>Paste the key Probanda gave you for this computer. It lets this computer save practice records, send suggestions about the plugin and use the legal commons.</p><form method="post"><label>Probanda's Cloud key<br><input type="password" name="secret" autocomplete="off" required autofocus></label><button type="submit">Check and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p><p class="note">No key yet? Return to Claude and ask to request Probanda's key.</p>`;
+function page(res, status3, title, body) {
+  res.writeHead(status3, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff"
+  });
+  res.end(
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape2(title)}</title><style>${STYLE2}</style></head><body><main><h1>${escape2(title)}</h1>${body}</main></body></html>`
+  );
+}
+var STYLE2 = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note{color:#aaa}}";
+function escape2(text7) {
+  return text7.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
+}
+function readBody(req) {
+  return new Promise((resolve11, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on("data", (chunk2) => {
+      size += chunk2.length;
+      if (size > MAX_BODY) {
+        reject(new Error("the form is larger than 4 KB"));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk2);
+    });
+    req.on("end", () => resolve11(Buffer.concat(chunks).toString("utf-8")));
+    req.on("error", reject);
+  });
+}
+
+// src/timecamp/tools.ts
+var DATE = "^\\d{4}-\\d{2}-\\d{2}$";
+var STOP_RULE = "If status reports usable: false, stop and tell the practitioner its reason. Never open the TimeCamp web app instead.";
+function timecampToolDefinitions() {
+  return [
+    {
+      name: "configure_credential",
+      description: "Start setting the TimeCamp API token on this computer. Takes no token: returns a link to a local page where the practitioner pastes it, so it never passes through the chat. The page checks the token with TimeCamp and saves it encrypted. When they say it is done, call status.",
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "status",
+      description: "Whether the TimeCamp API is usable from this computer: a token is set, TimeCamp is reachable and accepts it. Returns usable, the authenticated user, and a reason when not usable (no token, token unreadable, auth refused, network). Call it before any other TimeCamp tool. " + STOP_RULE,
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      annotations: { readOnlyHint: true, openWorldHint: true }
+    },
+    {
+      name: "tasks",
+      description: "TimeCamp's active (not archived) projects and tasks, each as TimeCamp returns it plus `path`, its full name path from the top-level project. With `query`, only those whose name or path contains it (case-insensitive), such as a matter number. Read-only. " + STOP_RULE,
+      inputSchema: {
+        type: "object",
+        properties: { query: { type: "string", description: "Text to find in a task's name or path, e.g. L8166." } },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: true }
+    },
+    {
+      name: "entries",
+      description: "TimeCamp time entries from `from` to `to` (local dates, inclusive), every user's unless filtered. task_ids also takes in every active descendant of each task. Returns the rows as TimeCamp gives them and totals by user and by day in TimeCamp's own seconds, with hours as seconds / 3600, never rounded. With out_file, writes the rows as a JSON array to that new file instead and returns only the count and totals. Read-only. " + STOP_RULE,
+      inputSchema: {
+        type: "object",
+        properties: {
+          from: { type: "string", pattern: DATE, description: "First date, YYYY-MM-DD." },
+          to: { type: "string", pattern: DATE, description: "Last date, YYYY-MM-DD." },
+          task_ids: { type: "array", items: { type: "string" }, description: "Keep only entries on these tasks or their active descendants." },
+          user_ids: { type: "array", items: { type: "string" }, description: "Keep only entries of these TimeCamp user ids." },
+          billable: { type: "boolean", description: "true keeps billable entries only, false non-billable only." },
+          out_file: { type: "string", description: "Absolute path of a file that does not exist yet." }
+        },
+        required: ["from", "to"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
+    },
+    {
+      name: "activities",
+      description: "TimeCamp computer activities (applications and window titles tracked by the desktop app) for 1 to 20 dates, with application and window_title resolved to names. Returns the rows as TimeCamp gives them. Read-only. " + STOP_RULE,
+      inputSchema: {
+        type: "object",
+        properties: {
+          dates: { type: "array", items: { type: "string", pattern: DATE }, description: "1 to 20 dates, YYYY-MM-DD." }
+        },
+        required: ["dates"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: true }
+    },
+    {
+      name: "update_entry",
+      description: "Move one TimeCamp time entry to another task and set its note (read back as `description`). The entry's billable flag follows the new task. Changes TimeCamp. Call it only after the practitioner has explicitly approved this one entry's exact change; approval of one entry never covers the next. The answer is not the check: re-read the entry's date with entries and compare task_id and description. " + STOP_RULE,
+      inputSchema: {
+        type: "object",
+        properties: {
+          entry_id: { type: "string", description: "The entry's id." },
+          task_id: { type: "string", description: "The TimeCamp task to move it to." },
+          note: { type: "string", description: "The entry's whole new note, replacing the old one." }
+        },
+        required: ["entry_id", "task_id", "note"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
+    }
+  ];
+}
+
+// src/suggestions/environment.ts
+var PROBANDA_PLUGINS = ["lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper", "developer"];
+var SERVERS = {
+  lawyer: ["data", "contacts-calendars-email"],
+  researcher: ["canlii", "commons"],
+  litigator: [],
+  solicitor: [],
+  "file-manager": ["files"],
+  timekeeper: ["timecamp"],
+  developer: []
+};
+function expectedTools(plugin, server) {
+  const names = (defs) => defs.map((d3) => d3.name).sort();
+  if (plugin === "lawyer" && server === "data") return names(buildToolDefinitions());
+  if (plugin === "lawyer" && server === "contacts-calendars-email") return names(buildContactsCalendarsEmailToolDefinitions());
+  if (plugin === "file-manager" && server === "files") return names(buildFileManagerToolDefinitions());
+  if (plugin === "timekeeper" && server === "timecamp") return names(timecampToolDefinitions());
+  return null;
+}
+var PROBANDA_TOOL = new RegExp(`^mcp__(?:(.+)__)?plugin_(${PROBANDA_PLUGINS.join("|")})_([a-z0-9-]+)__([a-z0-9_]+)$`);
+var VERSION = /^\d{1,4}(?:\.\d{1,6}){0,3}(?:[-+][0-9A-Za-z.-]{1,40})?$/;
+var RELEASE = /^[0-9A-Za-z._+-]{1,60}$/;
+var PLATFORMS = { win32: "Windows", darwin: "macOS", linux: "Linux" };
+function reduceToolNames(toolNames) {
+  const probanda = [];
+  let others = 0;
+  for (const name of new Set(toolNames)) {
+    const m3 = typeof name === "string" ? PROBANDA_TOOL.exec(name) : null;
+    const plugin = m3?.[2];
+    if (!m3 || plugin === void 0 || !SERVERS[plugin].includes(m3[3])) {
+      others += 1;
+      continue;
+    }
+    probanda.push({ plugin, server: m3[3], tool: m3[4], bridged: m3[1] !== void 0 });
+  }
+  return { probanda, others };
+}
+function cleanVersion(version2) {
+  return version2 !== null && VERSION.test(version2) ? version2 : null;
+}
+function installedVersions(installRoot) {
+  const found = /* @__PURE__ */ new Map();
+  const own = pluginManifest(installRoot);
+  found.set("lawyer", own.name === "lawyer" ? cleanVersion(own.version) : null);
+  for (const sibling of siblingInstalls(installRoot, PROBANDA_PLUGINS.filter((p3) => p3 !== "lawyer"))) {
+    found.set(sibling.name, cleanVersion(sibling.version));
+  }
+  return found;
+}
+function hostOf(seen, env) {
+  if (seen && seen.length) return seen.some((t3) => t3.bridged) ? "Cowork" : "Code";
+  return env.CLAUDECODE === "1" ? "Code" : "unknown";
+}
+function forbiddenValues(seams, env) {
+  const values = [
+    seams.hostname ?? safe(() => osHostname()),
+    seams.username ?? safe(() => userInfo().username),
+    env.USER,
+    env.USERNAME,
+    env.LOGNAME,
+    env.COMPUTERNAME,
+    env.HOSTNAME,
+    env.HOME,
+    env.USERPROFILE,
+    safe(() => homedir10())
+  ];
+  for (const home of [env.HOME, env.USERPROFILE, safe(() => homedir10())]) if (home) values.push(basename13(home));
+  return [...new Set(values.filter((v3) => typeof v3 === "string" && v3.trim().length >= 3).map((v3) => v3.toLowerCase()))];
+}
+function safe(read3) {
+  try {
+    return read3();
+  } catch {
+    return void 0;
+  }
+}
+function scrubFacts(facts, forbidden) {
+  const bad = (value) => /[\\/]/.test(value) || forbidden.some((f3) => value.toLowerCase().includes(f3));
+  const keep = (value) => value !== null && bad(value) ? null : value;
+  return {
+    plugins: facts.plugins.map((p3) => ({
+      ...p3,
+      version: keep(p3.version),
+      ...p3.servers ? {
+        servers: p3.servers.map((s3) => ({
+          server: s3.server,
+          // A tool this package ships is a fixed name; only another name is screened.
+          visible: s3.visible.filter((t3) => s3.known.includes(t3) || !bad(t3)),
+          missing: s3.missing
+        }))
+      } : {}
+    })),
+    other_tools: facts.other_tools,
+    host: facts.host,
+    os: { platform: facts.os.platform, release: keep(facts.os.release), arch: keep(facts.os.arch) }
+  };
+}
+function environmentFacts(toolNames, seams = {}) {
+  if (toolNames !== void 0 && (!Array.isArray(toolNames) || !toolNames.every((t3) => typeof t3 === "string"))) {
+    throw new ValidationError("tool_names must be a list of the tool names this session sees");
+  }
+  const env = seams.env ?? process.env;
+  const installRoot = seams.installRoot ?? INSTALL_ROOT;
+  const installed = installedVersions(installRoot);
+  const reduced = toolNames === void 0 ? null : reduceToolNames(toolNames);
+  const plugins = PROBANDA_PLUGINS.map((plugin) => {
+    const seen = reduced?.probanda.filter((t3) => t3.plugin === plugin) ?? [];
+    const isInstalled = installed.has(plugin) || seen.length > 0;
+    const facts2 = { plugin, installed: isInstalled, version: installed.get(plugin) ?? null };
+    if (isInstalled && reduced) {
+      facts2.servers = SERVERS[plugin].map((server) => {
+        const visible = [...new Set(seen.filter((t3) => t3.server === server).map((t3) => t3.tool))].sort();
+        const expected = expectedTools(plugin, server);
+        return { server, visible, missing: expected === null ? null : expected.filter((t3) => !visible.includes(t3)), known: expected ?? [] };
+      });
+    }
+    return facts2;
+  });
+  const platform = seams.platform ?? osPlatform();
+  const release = seams.release ?? safe(() => osRelease()) ?? null;
+  const arch = seams.arch ?? osArch();
+  const facts = {
+    plugins,
+    other_tools: reduced ? reduced.others : null,
+    host: hostOf(reduced ? reduced.probanda : null, env),
+    os: {
+      platform: PLATFORMS[platform] ?? "other",
+      release: release !== null && RELEASE.test(release) ? release : null,
+      arch: /^[a-z0-9_]{1,16}$/.test(arch) ? arch : null
+    }
+  };
+  return scrubFacts(facts, forbiddenValues(seams, env));
+}
+
 // src/suggestions/tools.ts
 function isSuggestionToolName(name) {
   return name.startsWith("suggestion_box__") || name.startsWith("suggestion_log__");
+}
+function isSuggestionCardToolName(name) {
+  return name.startsWith("suggestion_card__");
+}
+async function callSuggestionCardTool(store, name, args, env = store.env) {
+  if (name === "suggestion_card__check") {
+    const stopWords = loadStopWords(env);
+    return runCrossCheck(args, await readRecordTexts(store, env), stopWords);
+  }
+  if (name === "suggestion_card__environment_facts") {
+    return environmentFacts(args.tool_names, { env });
+  }
+  throw new ValidationError(`Unknown suggestion tool "${name}"`);
 }
 function callSuggestionTool(name, args, env = process.env, seams = {}) {
   switch (name) {
@@ -107581,7 +108766,7 @@ async function suggestionLogWrite(args, env = process.env) {
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync48, mkdirSync as mkdirSync22, readFileSync as readFileSync37, statSync as statSync19, writeFileSync as writeFileSync12 } from "node:fs";
+import { existsSync as existsSync49, mkdirSync as mkdirSync22, readFileSync as readFileSync38, statSync as statSync19, writeFileSync as writeFileSync12 } from "node:fs";
 import { win32 as pathWin3227 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
@@ -107604,7 +108789,7 @@ function repoDocsWrite(relative6, content, overwrite = false, env) {
   const root = docsRoot(env);
   assertRelativeSyntax(relative6, "path");
   const resolved = resolveWithin(root, relative6, "path", false);
-  const exists = existsSync48(resolved);
+  const exists = existsSync49(resolved);
   if (exists && statSync19(resolved).isDirectory()) {
     throw new DataServerError(
       `path is a directory, not a file: ${relative6}`,
@@ -107637,12 +108822,12 @@ function repoDocsRead(relative6, env) {
   }
   return {
     path: toPosixRelative(root, resolved),
-    content: readFileSync37(resolved, "utf-8")
+    content: readFileSync38(resolved, "utf-8")
   };
 }
 
 // src/pages/preview.ts
-import { basename as basename13, dirname as dirname30, join as join49, relative as relative5 } from "node:path";
+import { basename as basename14, dirname as dirname30, join as join50, relative as relative5 } from "node:path";
 
 // src/housekeeping/templates/approval.css.ts
 var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
@@ -109133,14 +110318,14 @@ async function pagesPreview(args, store) {
     ids.filing_id === void 0 ? {} : { only: ids.filing_id },
     viewPage ? { views: { [page2]: page2 === LOOSE_THREADS_PAGE_NAME ? withoutListener(viewPage) : viewPage } } : page2 === "Job Board" ? { jobBoard: composed } : { matterBoard: composed }
   );
-  const target = page2 === "Litigation Strategy" ? join49(draftDir, MATTER_BOARD_FILE) : page2 === "Job Board" ? built.paths.job_board_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
+  const target = page2 === "Litigation Strategy" ? join50(draftDir, MATTER_BOARD_FILE) : page2 === "Job Board" ? built.paths.job_board_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
   const pageFile = target === void 0 ? void 0 : relative5(draftDir, target);
   const html = built.pages.find((p3) => p3.name === pageFile)?.html;
   if (target === void 0 || html === void 0) {
     const which = ids.filing_id !== void 0 ? `Job Board ${ids.filing_id}` : "that proceeding's board";
     throw new ValidationError(`this matter has no ${page2} page for ${which}: it is retired, merged into a board with no such page, or not in this matter`);
   }
-  return { path: writePreview(dirname30(target), stem2(basename13(target)), html, false) };
+  return { path: writePreview(dirname30(target), stem2(basename14(target)), html, false) };
 }
 function withoutListener(page2) {
   return {
@@ -109159,10 +110344,10 @@ import {
   appendFileSync as appendFileSync2,
   constants,
   copyFileSync as copyFileSync4,
-  existsSync as existsSync50,
+  existsSync as existsSync51,
   mkdirSync as mkdirSync24,
   readdirSync as readdirSync28,
-  readFileSync as readFileSync43,
+  readFileSync as readFileSync44,
   statSync as statSync22,
   writeFileSync as writeFileSync14
 } from "node:fs";
@@ -109222,11 +110407,11 @@ function checkCoverageLine(text7) {
 
 // src/files/downloads.ts
 import { statSync as statSync20 } from "node:fs";
-import { homedir as homedir10 } from "node:os";
+import { homedir as homedir11 } from "node:os";
 import { win32 as pathWin3228 } from "node:path";
 var IN_PROGRESS_EXTENSIONS = /* @__PURE__ */ new Set([".crdownload", ".tmp", ".partial"]);
 function downloadsDir(env = process.env) {
-  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3228.join(homedir10(), "Downloads");
+  const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3228.join(homedir11(), "Downloads");
   const dir = canonicalRoot(probe2, `Downloads folder not found at ${probe2}`, "downloads_missing");
   if (!statSync20(dir).isDirectory()) {
     throw new DataServerError(`Downloads path is not a folder: ${probe2}`, "downloads_missing");
@@ -109235,11 +110420,11 @@ function downloadsDir(env = process.env) {
 }
 
 // src/files/text-extract.ts
-import { readFileSync as readFileSync42 } from "node:fs";
+import { readFileSync as readFileSync43 } from "node:fs";
 import { win32 as pathWin3229 } from "node:path";
 
 // src/files/extract/doc.ts
-import { readFileSync as readFileSync38 } from "node:fs";
+import { readFileSync as readFileSync39 } from "node:fs";
 var CFB_SIGNATURE = Buffer.from([208, 207, 17, 224, 161, 177, 26, 225]);
 var END_OF_CHAIN2 = 4294967294;
 var FREE_SECT = 4294967295;
@@ -109356,22 +110541,22 @@ function cp1252(bytes) {
 }
 function plain(raw) {
   let out = "";
-  const fields = [];
+  const fields2 = [];
   for (const ch2 of raw) {
     const c3 = ch2.charCodeAt(0);
     if (c3 === 19) {
-      fields.push("code");
+      fields2.push("code");
       continue;
     }
     if (c3 === 20) {
-      if (fields.length) fields[fields.length - 1] = "result";
+      if (fields2.length) fields2[fields2.length - 1] = "result";
       continue;
     }
     if (c3 === 21) {
-      fields.pop();
+      fields2.pop();
       continue;
     }
-    if (fields.includes("code")) continue;
+    if (fields2.includes("code")) continue;
     if (c3 === 13 || c3 === 11 || c3 === 12) out += "\n";
     else if (c3 === 7) out += "	";
     else if (c3 === 30) out += "-";
@@ -109380,7 +110565,7 @@ function plain(raw) {
   return out;
 }
 function docText(path) {
-  const streams = cfbStreams(readFileSync38(path));
+  const streams = cfbStreams(readFileSync39(path));
   const wd = streams.get("WordDocument");
   if (!wd || wd.length < 154) throw new Error("not a Word document (no WordDocument stream)");
   if (wd.readUInt16LE(0) !== WORD_IDENT) throw new Error("not a Word document (bad FIB identifier)");
@@ -109428,7 +110613,7 @@ ${notes.join("\n\n")}
 }
 
 // src/files/extract/docx.ts
-import { readFileSync as readFileSync39 } from "node:fs";
+import { readFileSync as readFileSync40 } from "node:fs";
 import { inflateRawSync as inflateRawSync2 } from "node:zlib";
 var EOCD_SIG = 101010256;
 var CENTRAL_SIG = 33639248;
@@ -109465,15 +110650,15 @@ function zipEntry(zip, name) {
   throw new Error(`no ${name} in the archive`);
 }
 function docxText(path) {
-  const xml = zipEntry(readFileSync39(path), "word/document.xml").toString("utf-8");
+  const xml = zipEntry(readFileSync40(path), "word/document.xml").toString("utf-8");
   return xml.replace(/<w:tab\/>/g, "	").replace(/<\/w:p>/g, "\n").replace(/<w:br[^>]*\/>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
 }
 
 // src/files/extract/page-images.ts
 import { createHash as createHash10 } from "node:crypto";
-import { existsSync as existsSync49, mkdirSync as mkdirSync23, mkdtempSync as mkdtempSync2, readFileSync as readFileSync40, statSync as statSync21, writeFileSync as writeFileSync13 } from "node:fs";
+import { existsSync as existsSync50, mkdirSync as mkdirSync23, mkdtempSync as mkdtempSync2, readFileSync as readFileSync41, statSync as statSync21, writeFileSync as writeFileSync13 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
-import { extname as extname6, isAbsolute as isAbsolute10, join as join50 } from "node:path";
+import { extname as extname6, isAbsolute as isAbsolute10, join as join51 } from "node:path";
 import { deflateSync } from "node:zlib";
 
 // node_modules/@embedpdf/pdfium/dist/index.js
@@ -115143,7 +116328,7 @@ function loadPdfium(wasm) {
   let lib = loaded.get(wasm.href);
   if (!lib) {
     lib = (async () => {
-      const module = await init({ wasmBinary: readFileSync40(wasm), print: console.error, printErr: console.error });
+      const module = await init({ wasmBinary: readFileSync41(wasm), print: console.error, printErr: console.error });
       module.PDFiumExt_Init();
       return module;
     })();
@@ -115162,9 +116347,9 @@ function malloc(lib, bytes) {
 }
 async function withPdf(path, wasm, work) {
   if (!isAbsolute10(path)) throw new ValidationError(`path must be absolute: ${path}`);
-  if (!existsSync49(path) || !statSync21(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
+  if (!existsSync50(path) || !statSync21(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname6(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
-  const data = readFileSync40(path);
+  const data = readFileSync41(path);
   const pending3 = loadPdfium(wasm);
   let lib;
   try {
@@ -115237,9 +116422,9 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
       }
       const { width, height, tiles } = plan;
       if (renderDir === null) {
-        if (args.destination_dir === void 0) renderDir = mkdtempSync2(join50(tmpdir5(), "probanda-pages-"));
+        if (args.destination_dir === void 0) renderDir = mkdtempSync2(join51(tmpdir5(), "probanda-pages-"));
         else {
-          renderDir = join50(args.destination_dir, sourceSha256.slice(0, 16));
+          renderDir = join51(args.destination_dir, sourceSha256.slice(0, 16));
           mkdirSync23(renderDir, { recursive: true });
         }
       }
@@ -115248,7 +116433,7 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
         await nextTurn();
         const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows2));
         const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-        const file = join50(renderDir, `${name}.png`);
+        const file = join51(renderDir, `${name}.png`);
         writeFileSync13(file, png);
         const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows2 };
         if (tiles.length > 1) image.tile = i3 + 1;
@@ -115429,7 +116614,7 @@ function chunk(type, data) {
 }
 
 // src/files/extract/pdf.ts
-import { readFileSync as readFileSync41 } from "node:fs";
+import { readFileSync as readFileSync42 } from "node:fs";
 var pdfjs;
 var quietDepth = 0;
 var savedLog = console.log;
@@ -115462,7 +116647,7 @@ function loadPdfJs() {
 var PdfExtractorUnavailable = class extends Error {
 };
 async function pdfPages(path) {
-  const data = new Uint8Array(readFileSync41(path));
+  const data = new Uint8Array(readFileSync42(path));
   if (data.length === 0) throw new Error("file is empty (0 bytes)");
   return quietStdout(async () => {
     let lib;
@@ -115515,7 +116700,7 @@ async function extractText(path) {
   let result;
   try {
     if (COPIED_EXTENSIONS.has(ext)) {
-      result = { status: "ok", kind: "text", method: "copy", text: readFileSync42(path, "utf-8"), pages: null };
+      result = { status: "ok", kind: "text", method: "copy", text: readFileSync43(path, "utf-8"), pages: null };
     } else if (ext === ".pdf") {
       const scanned = (await classifyPdfPages(path)).indexOf("scanned");
       if (scanned >= 0) {
@@ -115599,14 +116784,14 @@ function fileDownload(destinationDir, sourceFilename, destinationFilename, env =
   const destName = destinationFilename ?? sourceFilename;
   assertBareFilename(destName, "destination_filename");
   const source = pathWin3230.join(downloadsDir(env), sourceFilename);
-  if (!existsSync50(source) || !statSync22(source).isFile()) {
+  if (!existsSync51(source) || !statSync22(source).isFile()) {
     throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
   }
   if (IN_PROGRESS_EXTENSIONS.has(pathWin3230.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
   const dest = pathWin3230.join(dir, destName);
-  if (existsSync50(dest)) {
+  if (existsSync51(dest)) {
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
   const bytes = statSync22(source).size;
@@ -115620,7 +116805,7 @@ function appendManifest(destinationDir, record2) {
   }
   const path = pathWin3230.join(dir, MANIFEST);
   appendFileSync2(path, JSON.stringify(record2) + "\n", "utf-8");
-  const records = readFileSync43(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
+  const records = readFileSync44(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
   return { path, records };
 }
 function saveAnswer(destinationDir, filename, text7, fromScratch) {
@@ -115650,7 +116835,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (typeof fromScratch !== "string" || !pathWin3230.isAbsolute(fromScratch)) {
     throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
   }
-  let law = existsSync50(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3230.dirname(destinationDir));
+  let law = existsSync51(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3230.dirname(destinationDir));
   while (pathWin3230.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3230.dirname(law);
   const root = validateMatterRoot(pathWin3230.dirname(law));
   const draft = findDraftDir(root);
@@ -115667,7 +116852,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (!statSync22(source).isFile()) {
     throw new DataServerError(`from_scratch is not a file: ${source}`, "not_found");
   }
-  const body = readFileSync43(source);
+  const body = readFileSync44(source);
   if (body.length === 0) {
     throw new DataServerError(`from_scratch is empty: ${source}`, "invalid_argument");
   }
@@ -115775,9 +116960,9 @@ function nonNegativeInt(value, label2, fallback, min) {
 }
 function manifestMarker(law, file) {
   const path = pathWin3230.join(law, MANIFEST);
-  if (!existsSync50(path)) return null;
+  if (!existsSync51(path)) return null;
   let marker = null;
-  for (const line of readFileSync43(path, "utf-8").split("\n")) {
+  for (const line of readFileSync44(path, "utf-8").split("\n")) {
     if (line.trim() === "") continue;
     let record2;
     try {
@@ -115907,7 +117092,7 @@ function fileFetched(url, destinationDir, filename, record2, seams = {}, now = /
     throw new DataServerError("url must be the non-empty URL passed to sources__fetch", "invalid_argument");
   }
   assertBareFilename(filename, "filename");
-  const fields = fetchedRecordFields(record2);
+  const fields2 = fetchedRecordFields(record2);
   const dir = resolveLawDir(destinationDir);
   const fetched = (seams.fetcher ?? sourcesFetcher).memoized(url);
   if (fetched === null || fetched === "expired") {
@@ -115931,7 +117116,7 @@ function fileFetched(url, destinationDir, filename, record2, seams = {}, now = /
       `final_url: ${JSON.stringify(fetched.final_url)}`,
       `sha256: ${JSON.stringify(fetched.sha256)}`,
       `fetched_at: ${JSON.stringify(fetchedAt)}`,
-      `currency_marker: ${JSON.stringify(fields.currency_marker)}`,
+      `currency_marker: ${JSON.stringify(fields2.currency_marker)}`,
       "---",
       ""
     ].join("\n");
@@ -115939,13 +117124,13 @@ function fileFetched(url, destinationDir, filename, record2, seams = {}, now = /
   }
   const saved = writeNewVersion(dir, filename, body);
   const manifestRecord = {
-    citation: fields.citation,
-    title: fields.title,
-    kind: fields.kind,
-    jurisdiction: fields.jurisdiction,
+    citation: fields2.citation,
+    title: fields2.title,
+    kind: fields2.kind,
+    jurisdiction: fields2.jurisdiction,
     status: "downloaded",
     source: "official-publisher",
-    official: fields.official,
+    official: fields2.official,
     publisher_host: new URL(fetched.final_url).hostname,
     url: fetched.url,
     final_url: fetched.final_url,
@@ -115953,7 +117138,7 @@ function fileFetched(url, destinationDir, filename, record2, seams = {}, now = /
     filename: saved.filename,
     path: saved.path,
     fetched_at: fetchedAt,
-    currency_marker: fields.currency_marker
+    currency_marker: fields2.currency_marker
   };
   const manifest = appendManifest(dir, manifestRecord);
   return { path: saved.path, filename: saved.filename, bytes: body.length, record: manifestRecord, manifest };
@@ -116014,7 +117199,7 @@ function resolveOrCreateLawDir(destinationDir) {
   try {
     return { dir: resolveLawDir(destinationDir), created: false };
   } catch (err) {
-    if (err.code !== "not_found" || existsSync50(destinationDir)) throw err;
+    if (err.code !== "not_found" || existsSync51(destinationDir)) throw err;
   }
   const parent = resolveLawDir(pathWin3230.dirname(destinationDir));
   if (zoneProblem("write", pathWin3230.join(parent, pathWin3230.basename(destinationDir)))) {
@@ -116054,8 +117239,8 @@ function assertBareFilename(name, label2) {
 
 // src/research/preflight.ts
 import { tmpdir as tmpdir6 } from "node:os";
-import { join as join51 } from "node:path";
-var PROBE_STEM = join51(tmpdir6(), "coclerk-research-preflight-probe-absent");
+import { join as join52 } from "node:path";
+var PROBE_STEM = join52(tmpdir6(), "coclerk-research-preflight-probe-absent");
 var CAPS = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
@@ -116101,7 +117286,7 @@ function researchPreflight(seams = {}) {
 
 // src/files/legislation-search.ts
 import { createHash as createHash12 } from "node:crypto";
-import { readFileSync as readFileSync44, statSync as statSync23 } from "node:fs";
+import { readFileSync as readFileSync45, statSync as statSync23 } from "node:fs";
 import { win32 as pathWin3231 } from "node:path";
 var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".txt"]);
 var HTML_EXTENSIONS2 = /* @__PURE__ */ new Set([".htm", ".html"]);
@@ -116136,7 +117321,7 @@ function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}, p
   }
   const ext = pathWin3231.extname(file).toLowerCase();
   const range = checkPages(pages, ext);
-  const bytes = readFileSync44(file);
+  const bytes = readFileSync45(file);
   const { lines: lines2, source, marker } = textLines(file, ext, bytes, range, seams);
   const currency = marker ?? lines2.find((l3) => /\bcurrent to\b/i.test(l3.text))?.text ?? null;
   const chunks = fixedChunks(sectionChunks(lines2));
@@ -116443,7 +117628,7 @@ function sectionBlocks(chunks) {
 import { createHash as createHash13 } from "node:crypto";
 import { mkdirSync as mkdirSync25, mkdtempSync as mkdtempSync3, writeFileSync as writeFileSync15 } from "node:fs";
 import { tmpdir as tmpdir7 } from "node:os";
-import { join as join52 } from "node:path";
+import { join as join53 } from "node:path";
 var FPDF_ANNOT = 1;
 var GROUP_MAX = 5;
 var VISUAL = /* @__PURE__ */ new Set(["only_in_a", "only_in_b", "size", "rotation", "render"]);
@@ -116469,13 +117654,13 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         const flagged = [];
         let workDir = null;
         const write = (side, n3, facts) => {
-          workDir ??= mkdtempSync3(join52(tmpdir7(), "probanda-compare-"));
-          const dir = join52(workDir, side);
+          workDir ??= mkdtempSync3(join53(tmpdir7(), "probanda-compare-"));
+          const dir = join53(workDir, side);
           mkdirSync25(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
           return tiles.map(([top, rows2], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-            const file = join52(dir, `${name}.png`);
+            const file = join53(dir, `${name}.png`);
             const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows2) * facts.width * 3);
             writeFileSync15(file, encodePng(rgb, facts.width, rows2));
             return file;
@@ -116688,99 +117873,7 @@ async function saveAnswerTool(args, env = process.env) {
 
 // src/key-request/tools.ts
 import { createHash as createHash14, randomBytes as randomBytes6 } from "node:crypto";
-import { join as join53 } from "node:path";
-
-// src/key-request/page.ts
-import { randomBytes as randomBytes5 } from "node:crypto";
-import { createServer } from "node:http";
-var MAX_BODY = 4 * 1024;
-var TITLE2 = "Probanda's Cloud key";
-var pending;
-var listening;
-async function serveKeyPage(save2) {
-  const link = randomBytes5(24).toString("hex");
-  pending = { link, save: save2 };
-  listening ??= listen(handle, () => {
-    listening = void 0;
-  });
-  return `http://127.0.0.1:${await listening}/cloud-key/${link}`;
-}
-function listen(handle4, onError) {
-  const server = createServer((req, res) => {
-    handle4(req, res).catch(() => {
-      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
-      else res.destroy();
-    });
-  });
-  server.on("connection", (socket) => socket.unref());
-  return new Promise((resolve11, reject) => {
-    server.once("error", (err) => {
-      onError();
-      reject(err);
-    });
-    server.listen(0, "127.0.0.1", () => {
-      server.unref();
-      resolve11(server.address().port);
-    });
-  });
-}
-async function handle(req, res) {
-  const m3 = /^\/cloud-key\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
-  const current = pending;
-  if (!m3 || !current || m3[1] !== current.link) {
-    return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new link.</p>");
-  }
-  if (req.method === "GET") return page(res, 200, TITLE2, FORM);
-  if (req.method !== "POST") return page(res, 405, "Not allowed", "");
-  const typed = (new URLSearchParams(await readBody(req)).get("secret") ?? "").trim();
-  try {
-    await current.save(typed);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return page(res, 200, TITLE2, `<p class="error">Not saved: ${escape2(message)}</p>${FORM}`);
-  }
-  if (pending === current) pending = void 0;
-  page(
-    res,
-    200,
-    "Connected",
-    "<p>Connected to Probanda's Cloud. The key is saved on this computer, encrypted, and will be used after a restart.</p><p>You can close this tab and return to Claude.</p>"
-  );
-}
-var FORM = `<p>Paste the key Probanda gave you for this computer. It lets this computer save practice records, send suggestions about the plugin and use the legal commons.</p><form method="post"><label>Probanda's Cloud key<br><input type="password" name="secret" autocomplete="off" required autofocus></label><button type="submit">Check and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p><p class="note">No key yet? Return to Claude and ask to request Probanda's key.</p>`;
-function page(res, status3, title, body) {
-  res.writeHead(status3, {
-    "Content-Type": "text/html; charset=utf-8",
-    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
-    "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer",
-    "X-Content-Type-Options": "nosniff"
-  });
-  res.end(
-    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape2(title)}</title><style>${STYLE2}</style></head><body><main><h1>${escape2(title)}</h1>${body}</main></body></html>`
-  );
-}
-var STYLE2 = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note{color:#aaa}}";
-function escape2(text7) {
-  return text7.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
-}
-function readBody(req) {
-  return new Promise((resolve11, reject) => {
-    const chunks = [];
-    let size = 0;
-    req.on("data", (chunk2) => {
-      size += chunk2.length;
-      if (size > MAX_BODY) {
-        reject(new Error("the form is larger than 4 KB"));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk2);
-    });
-    req.on("end", () => resolve11(Buffer.concat(chunks).toString("utf-8")));
-    req.on("error", reject);
-  });
-}
+import { join as join54 } from "node:path";
 
 // src/key-request/save-key.ts
 var TIMEOUT_MS3 = 6e4;
@@ -116838,7 +117931,7 @@ var pending2;
 var listening2;
 var sent;
 function requestPath(env = process.env) {
-  return join53(defaultStateDir(env), "key-request.json.dpapi");
+  return join54(defaultStateDir(env), "key-request.json.dpapi");
 }
 function isKeyRequestToolName(name) {
   return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
@@ -117375,6 +118468,9 @@ async function callTool(context, name, rawArgs) {
   if (name === "preferences__write") {
     return preferencesWrite(args);
   }
+  if (isSuggestionCardToolName(name)) {
+    return callSuggestionCardTool(context.practiceDb, name, args);
+  }
   if (isSuggestionToolName(name)) {
     return callSuggestionTool(name, args);
   }
@@ -117525,7 +118621,7 @@ function textResult(result) {
 }
 
 // src/page-api/server.ts
-import { existsSync as existsSync51 } from "node:fs";
+import { existsSync as existsSync52 } from "node:fs";
 import { createServer as createServer2 } from "node:http";
 import { isAbsolute as isAbsolute11 } from "node:path";
 
@@ -117646,7 +118742,7 @@ async function handle3(req, res, env, startedAt) {
   if (typeof token !== "string" || !pageApiTokenValid(token, dbPath, proceedingId, env)) {
     return json2(req, res, 403, { error: "This page's token does not match its database. Ask a Claude session to render the page again." });
   }
-  if (!isAbsolute11(dbPath) || !existsSync51(dbPath)) {
+  if (!isAbsolute11(dbPath) || !existsSync52(dbPath)) {
     return json2(req, res, 400, { error: `There is no drafting database at ${dbPath}.` });
   }
   const result = await setSeedDeferral({ db_path: dbPath, proceeding_id: proceedingId, seed_id: Number(m3[1]), action: m3[2] }, env);
