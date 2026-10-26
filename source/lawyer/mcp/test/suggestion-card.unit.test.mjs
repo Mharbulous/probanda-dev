@@ -98,6 +98,38 @@ test("a card is built only when the full check finds nothing, and a built card p
   assert.throws(() => card.cardInput({ ...INPUT, pain_point: { text: "As [Smith] said." } }), /\[Smith\]/);
 });
 
+const UNREAD = { ...RECORDS, states: { ...RECORDS.states, matter: "unavailable", file_name: "partial" } };
+
+test("a build whose check could not read every record source is refused, naming only the categories, and nothing is saved", async (t) => {
+  const { f, deps } = await device(t);
+  const result = await card.buildCard(card.cardInput(structuredClone(INPUT)), FACTS, { ...deps, records: async () => UNREAD });
+  assert.deepEqual(result, { built: false, reason: "records_unreadable", unreadable: ["matter", "file name"] });
+  assert.throws(() => readFileSync(f.store), /ENOENT/, "nothing is stored");
+  const { readdirSync, existsSync: exists } = await import("node:fs");
+  const folder = `${f.data}/suggestions`;
+  assert.ok(!exists(folder) || !readdirSync(folder).some((n) => n.startsWith("Suggestion-")), "no card page is written");
+});
+
+test("a Submit whose check could not read every record source sends nothing, keeps the cause locally, and can be tried again", async (t) => {
+  const { f, deps, cloud } = await device(t);
+  const { card_id, card_path } = await built(deps);
+  assert.ok(readFileSync(card_path, "utf-8").includes("Not sent: Probanda could not check this against your records."), "the line is built into the page");
+  const unread = { ...deps, records: async () => UNREAD };
+  const result = await card.submitCard(card_id, { comment: "Most mornings." }, unread);
+  assert.equal(result.outcome, "unchecked");
+  assert.equal(cloud.calls.length, 0, "nothing reaches the cloud");
+  const record = stored(f, card_id);
+  assert.equal(record.state, "open", "the card stays open");
+  assert.equal(record.check_failures.length, 1);
+  assert.equal(record.check_failures[0].records.matter, "unavailable", "the raw cause is in the local record");
+  assert.equal(record.suggestion_record_id, null);
+  assert.equal(read(f).records.filter((r) => r.kind === "suggestion").length, 0, "nothing is saved for sending");
+  assert.equal((await card.readCardState(card_id, deps)).status, null);
+  const again = await card.submitCard(card_id, {}, deps);
+  assert.equal(again.outcome, "sent", "Submit works once every source can be read");
+  assert.equal(cloud.calls[0].body.comment, "Most mornings.");
+});
+
 test("the page holds every fixed string in decision 6's order, the guess label and the brackets", async (t) => {
   const { f, deps } = await device(t);
   const { card_path } = await built(deps);

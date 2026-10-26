@@ -1,4 +1,4 @@
-// build-stamp: 9eacedea7f39
+// build-stamp: 79da6dfe6a5a
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -79193,7 +79193,7 @@ function suggestionToolDefinitions() {
     },
     {
       name: "suggestion_card__build",
-      description: `Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path, check_complete}. Nothing is sent: the practitioner's Submit Suggestion on the card sends it, and Dismiss sends nothing. Present card_path as a file card with no chat text at all, then call suggestion_card__wait. The card shows, in its own fixed order and words, the origin cue (origin practitioner: "You suggested:"; probanda: "Probanda noticed:"), the pain_point, the items, a mockup link when any item is visual, the context_lines (constraint and evidence lines) and the raw_observation lines, a comment box, and Submit Suggestion and Dismiss. Each block's text is the practitioner's own phrases reshaped, with every name and indirect identifier replaced by one of the brackets [client], [matter], [person], [document], [file], [date], [amount]; any other bracketed word is refused. guess: true marks a block that holds words the practitioner did not use; the card labels it for them to edit. visual: true marks an item that changes how something looks (layout, colour, typography or page structure). source is user for the practitioner's own suggestion, assisted for one Probanda offered and they accepted, llm for a loose thread. skill, optional, names the one skill it is about. tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. check_complete is false when some records could not be read.`,
+      description: `Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path}. Nothing is sent: the practitioner's Submit Suggestion on the card sends it, and Dismiss sends nothing. Present card_path as a file card with no chat text at all, then call suggestion_card__wait. The card shows, in its own fixed order and words, the origin cue (origin practitioner: "You suggested:"; probanda: "Probanda noticed:"), the pain_point, the items, a mockup link when any item is visual, the context_lines (constraint and evidence lines) and the raw_observation lines, a comment box, and Submit Suggestion and Dismiss. Each block's text is the practitioner's own phrases reshaped, with every name and indirect identifier replaced by one of the brackets [client], [matter], [person], [document], [file], [date], [amount]; any other bracketed word is refused. guess: true marks a block that holds words the practitioner did not use; the card labels it for them to edit. visual: true marks an item that changes how something looks (layout, colour, typography or page structure). source is user for the practitioner's own suggestion, assisted for one Probanda offered and they accepted, llm for a loose thread. skill, optional, names the one skill it is about. tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. When some of this computer's records could not be read, the check is not complete and no card is built: it returns {built: false, reason: "records_unreadable", unreadable: [...]}, naming each unread kind of record (client, matter, contact, folder name, document title, file name). Nothing is saved; do not build again in this session.`,
       inputSchema: {
         type: "object",
         properties: {
@@ -80749,7 +80749,7 @@ function listCaseParties(caseDataDir, env = process.env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync6 } from "node:fs";
 import { join as join10 } from "node:path";
-var BUILD_STAMP = false ? null : "9eacedea7f39";
+var BUILD_STAMP = false ? null : "79da6dfe6a5a";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -107653,14 +107653,14 @@ async function retryUnsent(env = process.env, seams = {}) {
   const candidates = (await loadStore(env)).records.filter(isSuggestion).filter((r3) => retryable(r3, now)).map((r3) => r3.record_id);
   const results = [];
   for (const recordId of candidates) {
-    const claimed = await withStore(env, (s3) => {
+    const claimed2 = await withStore(env, (s3) => {
       const r3 = findSuggestion(s3, recordId);
       if (!retryable(r3, now)) return false;
       r3.state = "sending";
       r3.sending_since = nowIso3(seams);
       return true;
     });
-    if (claimed) results.push(await sendRecord(recordId, "start", env, seams));
+    if (claimed2) results.push(await sendRecord(recordId, "start", env, seams));
   }
   return results;
 }
@@ -108247,6 +108247,7 @@ var LATER_LINE = "You can see this later, with its status, under Past suggestion
 var SUBMIT = "Submit Suggestion";
 var DISMISS = "Dismiss";
 var RESTORE = "Restore Suggestion";
+var NOT_CHECKED = "Not sent: Probanda could not check this against your records. Try again in a moment.";
 var BRACKET2 = /\[(client|matter|person|document|file|date|amount)\]/g;
 function escapeHtml3(text8) {
   return text8.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
@@ -108288,6 +108289,7 @@ var SCRIPT2 = `
     check: "Before this is sent, look at the marked text below.",
     refused: "Not sent: part of this suggestion is too long, or names someone or somewhere. Shorten it or take that out, then try again.",
     empty: "Say what the problem is before submitting.",
+    unchecked: ${JSON.stringify(NOT_CHECKED)},
     dismissed: "Dismissed. Nothing was sent.",
     making: "Making a mockup..."
   };
@@ -108392,6 +108394,7 @@ var SCRIPT2 = `
     setButtons(true);
     if (o === "check" || o === "stale") { redraw(reply.blocks); showPrompts(reply.prompts); return say(SAY.check, true); }
     if (o === "refused") { redraw(reply.blocks); return say(SAY.refused, true); }
+    if (o === "unchecked") { redraw(reply.blocks); return say(SAY.unchecked, true); }
     if (o === "empty") return say(SAY.empty, true);
     say(SAY.failed, true);
   }
@@ -108939,11 +108942,23 @@ function newCard(input, facts, at) {
     next_line: input.context_lines.length + 1
   };
 }
+var SOURCE_CATEGORY = {
+  client: "client",
+  matter: "matter",
+  contact: "contact",
+  folder_name: "folder name",
+  document_title: "document title",
+  file_name: "file name"
+};
+function unreadSources(states) {
+  return RECORD_SOURCES.filter((s3) => states[s3] === "partial" || states[s3] === "unavailable").map((s3) => SOURCE_CATEGORY[s3]);
+}
 async function buildCard(input, facts, deps) {
   const at = nowOf(deps).toISOString();
   const card = newCard(input, structuredClone(facts), at);
   const { records, stopWords } = await recordsOf(deps);
   const check = runCrossCheck(cardText2(card), records, stopWords);
+  if (!check.complete) return { built: false, reason: "records_unreadable", unreadable: unreadSources(check.records) };
   const readable = check.hits.filter((h3) => isReadable(h3.part));
   if (readable.length) {
     return {
@@ -108961,7 +108976,7 @@ async function buildCard(input, facts, deps) {
     store.records.push(card);
   });
   const path = writeCardPage(card, deps.env);
-  return { built: true, card_id: card.record_id, card_path: path, check_complete: check.complete };
+  return { built: true, card_id: card.record_id, card_path: path };
 }
 function writeCardPage(card, env) {
   const path = cardPath(card.record_id, env);
@@ -109069,6 +109084,10 @@ function cardFields(card) {
 }
 function checkAndClaim(card, records, stopWords, at) {
   const check = runCrossCheck(cardText2(card), records, stopWords);
+  if (!check.complete) {
+    card.check_failures = [...card.check_failures ?? [], { at, records: check.records }];
+    return { unchecked: true };
+  }
   dropGenerated(card, check.hits, "click", at);
   const prompts = promptsOf(card, check.hits);
   if (prompts.length) return { prompts };
@@ -109076,6 +109095,11 @@ function checkAndClaim(card, records, stopWords, at) {
   card.state_since = at;
   card.mockup_request = null;
   return { fields: cardFields(card) };
+}
+function claimed(card, next) {
+  if ("fields" in next) return { fields: next.fields };
+  if ("unchecked" in next) return { done: { outcome: "unchecked", blocks: blocksOf(card) } };
+  return { done: { outcome: "check", prompts: next.prompts, blocks: blocksOf(card) } };
 }
 async function send(cardId, fields2, deps) {
   let result;
@@ -109113,8 +109137,7 @@ async function submitCard(cardId, edits, deps) {
     if (done) return { done };
     applyEdits(card, edits);
     if (!card.pain_point.text.trim()) return { done: { outcome: "empty" } };
-    const next = checkAndClaim(card, records, stopWords, now.toISOString());
-    return "prompts" in next ? { done: { outcome: "check", prompts: next.prompts, blocks: blocksOf(card) } } : { fields: next.fields };
+    return claimed(card, checkAndClaim(card, records, stopWords, now.toISOString()));
   });
   if ("done" in step2) return step2.done;
   return send(cardId, step2.fields, deps);
@@ -109160,8 +109183,7 @@ async function resolvePrompt(cardId, answer, deps) {
         list[at] = { ...list[at], text: replaced };
       }
     }
-    const next = checkAndClaim(card, records, stopWords, now.toISOString());
-    return "prompts" in next ? { done: { outcome: "check", prompts: next.prompts, blocks: blocksOf(card) } } : { fields: next.fields };
+    return claimed(card, checkAndClaim(card, records, stopWords, now.toISOString()));
   });
   if ("done" in step2) return step2.done;
   return send(cardId, step2.fields, deps);
@@ -109222,7 +109244,11 @@ async function attachMockup(cardId, html, deps) {
   const problem = checkMockup(html, placeholders);
   if (problem) throw new ValidationError(`mockup refused: ${problem.problem}. Build it again from the placeholder text alone, with inline styles.`);
   const { records, stopWords } = await recordsOf(deps);
-  if (!runCrossCheck({ mockup: html }, records, stopWords).passed) {
+  const check = runCrossCheck({ mockup: html }, records, stopWords);
+  if (!check.complete) {
+    throw new ValidationError(`mockup refused: it could not be checked against this computer's records (${unreadSources(check.records).join(", ")} records unreadable)`);
+  }
+  if (!check.passed) {
     throw new ValidationError("mockup refused: a word in it is found in this computer's records. Use other placeholder text or other style names.");
   }
   const now = nowOf(deps);

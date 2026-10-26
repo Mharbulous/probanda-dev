@@ -34,7 +34,7 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
     {
       name: "suggestion_card__build",
       description:
-        "Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path, check_complete}. " +
+        "Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path}. " +
         "Nothing is sent: the practitioner's Submit Suggestion on the card sends it, and Dismiss sends nothing. Present card_path as a file card with no chat text at all, then call suggestion_card__wait. " +
         "The card shows, in its own fixed order and words, the origin cue (origin practitioner: \"You suggested:\"; probanda: \"Probanda noticed:\"), the pain_point, the items, a mockup link when any item is visual, " +
         "the context_lines (constraint and evidence lines) and the raw_observation lines, a comment box, and Submit Suggestion and Dismiss. " +
@@ -44,7 +44,9 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
         "tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. " +
         "The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. " +
         "While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; " +
-        "replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. check_complete is false when some records could not be read.",
+        "replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. " +
+        "When some of this computer's records could not be read, the check is not complete and no card is built: it returns {built: false, reason: \"records_unreadable\", unreadable: [...]}, " +
+        "naming each unread kind of record (client, matter, contact, folder name, document title, file name). Nothing is saved; do not build again in this session.",
       inputSchema: {
         type: "object",
         properties: {

@@ -93,7 +93,9 @@ The suggestion is shown to the practitioner as a card, `Suggestion-<id>.html`, a
 - `tool_names` is every tool name this session sees, exactly as written.
 - `held_id` only when the card offers a held draft (section 1).
 
-The build runs the full check against this computer's records first. When it returns `built: false`, each hit says which block holds a match and where; put its bracket there or reword the block, and build again. Never quote what matched, in chat or anywhere else. Building is done when the check passes and the card is shown.
+The build runs the full check against this computer's records first. When it returns `built: false` with `hits`, each hit says which block holds a match and where; put its bracket there or reword the block, and build again. Never quote what matched, in chat or anywhere else. Building is done when the check passes and the card is shown.
+
+When it returns `built: false` with `reason: "records_unreadable"`, the suggestion could not be checked, so it is not shown. Tell the practitioner once, in one plain sentence that names nothing inside Probanda: "I couldn't check this suggestion against your records, so I haven't shown it to you or sent it." Then stop: do not build it again in this session, and nothing is kept to send. Go to section 8.
 
 **Show it and wait.** Present `card_path` as a file card (`shared/present-files.md`), with no text. Then call `suggestion_card__wait({card_id})`:
 - `pending`: call it again.
@@ -103,7 +105,7 @@ The build runs the full check against this computer's records first. When it ret
 
 ## 7. What the card does by itself
 
-Nothing here is the session's to do or to say. On Submit Suggestion the card saves the edits, checks everything it would send, and asks the practitioner on the card itself about anything that might name someone, which they can remove or retype. It then saves the exact text on this computer and sends it, showing "Sending...", then "Submitted ✓" or "Not sent, will retry", and a suggestion not sent is sent by itself the next time Probanda starts. Dismiss sends nothing. The practitioner sees what was sent, and its status, under Past suggestions (section 1). Never resend, and never say in chat that a suggestion was sent or not sent.
+Nothing here is the session's to do or to say. On Submit Suggestion the card saves the edits, checks everything it would send, and asks the practitioner on the card itself about anything that might name someone, which they can remove or retype. It then saves the exact text on this computer and sends it, showing "Sending...", then "Submitted ✓" or "Not sent, will retry", and a suggestion not sent is sent by itself the next time Probanda starts. When the check cannot read every kind of record, the card sends nothing, says so, and stays open for another try. Dismiss sends nothing. The practitioner sees what was sent, and its status, under Past suggestions (section 1). Never resend, and never say in chat that a suggestion was sent or not sent.
 
 ## 8. Resume
 

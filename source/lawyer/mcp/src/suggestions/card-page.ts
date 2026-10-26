@@ -34,6 +34,8 @@ export const LATER_LINE = "You can see this later, with its status, under Past s
 export const SUBMIT = "Submit Suggestion";
 export const DISMISS = "Dismiss";
 export const RESTORE = "Restore Suggestion";
+/** Decision 13's family: the check could not read every record source, so nothing was sent. */
+export const NOT_CHECKED = "Not sent: Probanda could not check this against your records. Try again in a moment.";
 
 const BRACKET = /\[(client|matter|person|document|file|date|amount)\]/g;
 
@@ -116,6 +118,7 @@ const SCRIPT = `
     check: "Before this is sent, look at the marked text below.",
     refused: "Not sent: part of this suggestion is too long, or names someone or somewhere. Shorten it or take that out, then try again.",
     empty: "Say what the problem is before submitting.",
+    unchecked: ${JSON.stringify(NOT_CHECKED)},
     dismissed: "Dismissed. Nothing was sent.",
     making: "Making a mockup..."
   };
@@ -220,6 +223,7 @@ const SCRIPT = `
     setButtons(true);
     if (o === "check" || o === "stale") { redraw(reply.blocks); showPrompts(reply.prompts); return say(SAY.check, true); }
     if (o === "refused") { redraw(reply.blocks); return say(SAY.refused, true); }
+    if (o === "unchecked") { redraw(reply.blocks); return say(SAY.unchecked, true); }
     if (o === "empty") return say(SAY.empty, true);
     say(SAY.failed, true);
   }

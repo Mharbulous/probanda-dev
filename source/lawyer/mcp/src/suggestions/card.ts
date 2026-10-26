@@ -37,10 +37,10 @@ import { NotFoundError, ValidationError } from "../errors.js";
 import { writeTextAtomic } from "../knowledge/sidecar.js";
 import { pageApiCardToken, pageApiPort } from "../page-api/token.js";
 import { PracticeStore } from "../practice/store.js";
-import { type CardPart, type CardText, type Hit, type HitKind, loadStopWords, runCrossCheck } from "./crosscheck.js";
+import { type CardPart, type CardText, type CrossCheckResult, type Hit, type HitKind, loadStopWords, runCrossCheck } from "./crosscheck.js";
 import { renderCardHtml } from "./card-page.js";
 import { checkMockup, loadPlaceholders, renderMockupPage } from "./mockup.js";
-import { type RecordSource, type RecordTexts, readRecordTexts } from "./records.js";
+import { RECORD_SOURCES, type RecordSource, type RecordTexts, readRecordTexts } from "./records.js";
 import { type SendSeams, type SuggestionFields, pluginRelease, submitSuggestion } from "./send.js";
 import { type StoreRecord, type SuggestionStore, CARD_STATUS, cardStatus, isHeld, isSuggestion, loadStore, storeDir, withStore } from "./store.js";
 
@@ -123,6 +123,9 @@ export interface CardRecord {
   waiter_until: string | null;
   send_anyway: SendAnyway[];
   defects: CardDefect[];
+  /** Each Submit whose check could not read every record source, with each source's state: the raw
+   * cause, kept here only. Absent on a card that never had one. */
+  check_failures?: Array<{ at: string; records: CrossCheckResult["records"] }>;
   /** The sent suggestion's record (store.ts), once Submit saved it. */
   suggestion_record_id: string | null;
   next_line: number;
@@ -390,18 +393,36 @@ function newCard(input: CardInput, facts: Record<string, unknown>, at: string): 
   };
 }
 
-export type BuildResult =
-  | { built: true; card_id: string; card_path: string; check_complete: boolean }
-  | { built: false; hits: Array<Omit<CardPrompt, "text"> & { index?: number }> };
+/** Each record source by the plain category name a refusal may give, never a path or an error. */
+export const SOURCE_CATEGORY: Record<RecordSource, string> = {
+  client: "client",
+  matter: "matter",
+  contact: "contact",
+  folder_name: "folder name",
+  document_title: "document title",
+  file_name: "file name",
+};
 
-/** Builds a card from the session's scrubbed draft: refused while the full check finds a match in text
- * the practitioner would read; a match in generated text is dropped and recorded. A held draft named
- * by held_id leaves the store in the same write, so it is offered once. */
+/** The categories of the record sources a check could not read in full; empty when it read them all. */
+export function unreadSources(states: CrossCheckResult["records"]): string[] {
+  return RECORD_SOURCES.filter((s) => states[s] === "partial" || states[s] === "unavailable").map((s) => SOURCE_CATEGORY[s]);
+}
+
+export type BuildResult =
+  | { built: true; card_id: string; card_path: string }
+  | { built: false; hits: Array<Omit<CardPrompt, "text"> & { index?: number }> }
+  | { built: false; reason: "records_unreadable"; unreadable: string[] };
+
+/** Builds a card from the session's scrubbed draft. Refused, with nothing saved, when the full check
+ * could not read every record source (decision 22: building is done only when the full check passes),
+ * or while it finds a match in text the practitioner would read; a match in generated text is dropped
+ * and recorded. A held draft named by held_id leaves the store in the same write, so it is offered once. */
 export async function buildCard(input: CardInput, facts: Record<string, unknown>, deps: CardDeps): Promise<BuildResult> {
   const at = nowOf(deps).toISOString();
   const card = newCard(input, structuredClone(facts), at);
   const { records, stopWords } = await recordsOf(deps);
   const check = runCrossCheck(cardText(card), records, stopWords);
+  if (!check.complete) return { built: false, reason: "records_unreadable", unreadable: unreadSources(check.records) };
   const readable = check.hits.filter((h) => isReadable(h.part));
   if (readable.length) {
     // The session wrote this text: it is told where each match lies, never what it matched.
@@ -420,7 +441,7 @@ export async function buildCard(input: CardInput, facts: Record<string, unknown>
     store.records.push(card as unknown as StoreRecord);
   });
   const path = writeCardPage(card, deps.env);
-  return { built: true, card_id: card.record_id, card_path: path, check_complete: check.complete };
+  return { built: true, card_id: card.record_id, card_path: path };
 }
 
 /** Writes the card's page from the record as it is and returns its path. */
@@ -544,6 +565,8 @@ export type SubmitOutcome =
   | { outcome: "check"; prompts: CardPrompt[]; blocks: CardBlocks }
   | { outcome: "sent" | "unsent"; status: string }
   | { outcome: "refused"; blocks: CardBlocks }
+  /** The check could not read every record source: nothing was sent, and Submit can be tried again. */
+  | { outcome: "unchecked"; blocks: CardBlocks }
   | { outcome: "empty" }
   | { outcome: "closed"; state: CardState; status: string | null };
 
@@ -589,9 +612,17 @@ export function cardFields(card: CardRecord): SuggestionFields {
   };
 }
 
-/** Under the store's lock: the check over the card as it now is. Returns the prompts left, or the fields to send. */
-function checkAndClaim(card: CardRecord, records: RecordTexts, stopWords: Set<string>, at: string): { prompts: CardPrompt[] } | { fields: SuggestionFields } {
+type Claim = { prompts: CardPrompt[] } | { unchecked: true } | { fields: SuggestionFields };
+
+/** Under the store's lock: the check over the card as it now is. Returns the prompts left, or the fields
+ * to send. A check that could not read every record source sends nothing (decision 22): the card stays
+ * open, and the raw cause, each source's state, is kept in this card's record only. */
+function checkAndClaim(card: CardRecord, records: RecordTexts, stopWords: Set<string>, at: string): Claim {
   const check = runCrossCheck(cardText(card), records, stopWords);
+  if (!check.complete) {
+    card.check_failures = [...(card.check_failures ?? []), { at, records: check.records }];
+    return { unchecked: true };
+  }
   dropGenerated(card, check.hits, "click", at);
   const prompts = promptsOf(card, check.hits);
   if (prompts.length) return { prompts };
@@ -599,6 +630,12 @@ function checkAndClaim(card: CardRecord, records: RecordTexts, stopWords: Set<st
   card.state_since = at;
   card.mockup_request = null;
   return { fields: cardFields(card) };
+}
+
+function claimed(card: CardRecord, next: Claim): { done: SubmitOutcome } | { fields: SuggestionFields } {
+  if ("fields" in next) return { fields: next.fields };
+  if ("unchecked" in next) return { done: { outcome: "unchecked", blocks: blocksOf(card) } };
+  return { done: { outcome: "check", prompts: next.prompts, blocks: blocksOf(card) } };
 }
 
 async function send(cardId: string, fields: SuggestionFields, deps: CardDeps): Promise<SubmitOutcome> {
@@ -640,8 +677,7 @@ export async function submitCard(cardId: string, edits: CardEdits, deps: CardDep
     if (done) return { done };
     applyEdits(card, edits);
     if (!card.pain_point.text.trim()) return { done: { outcome: "empty" } as SubmitOutcome };
-    const next = checkAndClaim(card, records, stopWords, now.toISOString());
-    return "prompts" in next ? { done: { outcome: "check", prompts: next.prompts, blocks: blocksOf(card) } as SubmitOutcome } : { fields: next.fields };
+    return claimed(card, checkAndClaim(card, records, stopWords, now.toISOString()));
   });
   if ("done" in step) return step.done as SubmitOutcome;
   return send(cardId, step.fields, deps);
@@ -698,8 +734,7 @@ export async function resolvePrompt(
         list[at] = { ...list[at], text: replaced };
       }
     }
-    const next = checkAndClaim(card, records, stopWords, now.toISOString());
-    return "prompts" in next ? { done: { outcome: "check", prompts: next.prompts, blocks: blocksOf(card) } } : { fields: next.fields };
+    return claimed(card, checkAndClaim(card, records, stopWords, now.toISOString()));
   });
   if ("done" in step) return step.done as SubmitOutcome;
   return send(cardId, step.fields, deps);
@@ -767,7 +802,11 @@ export async function attachMockup(cardId: string, html: unknown, deps: CardDeps
   const problem = checkMockup(html, placeholders);
   if (problem) throw new ValidationError(`mockup refused: ${problem.problem}. Build it again from the placeholder text alone, with inline styles.`);
   const { records, stopWords } = await recordsOf(deps);
-  if (!runCrossCheck({ mockup: html as string }, records, stopWords).passed) {
+  const check = runCrossCheck({ mockup: html as string }, records, stopWords);
+  if (!check.complete) {
+    throw new ValidationError(`mockup refused: it could not be checked against this computer's records (${unreadSources(check.records).join(", ")} records unreadable)`);
+  }
+  if (!check.passed) {
     throw new ValidationError("mockup refused: a word in it is found in this computer's records. Use other placeholder text or other style names.");
   }
   const now = nowOf(deps);
