@@ -15,7 +15,7 @@ Before registering, it runs run-local-implementer.ps1 -PrepareOnly, which create
 the dedicated clone ($env:LOCALAPPDATA\probanda-local-implementer\probanda-dev)
 when it is missing and checks it with the guard. The task runs the copy of
 run-local-implementer.ps1 inside that clone, so each run uses the version on main.
-It also writes the clone's .claude/settings.local.json, which allows git, gh, python,
+It also writes the clone's .claude/settings.local.json, which allows git, gh, npm, python,
 node and file edits in that clone only, so the unattended run can act; -Unregister
 leaves that file, the clone and the logs in place.
 
@@ -74,7 +74,7 @@ if (-not (Test-Path -LiteralPath $CloneRun)) {
 # .claude/settings.local.json, so they hold in this folder only. The repo's hooks still apply. The
 # file is excluded in the clone's .git/info/exclude, so it never makes the clone dirty.
 $localSettings = Join-Path $Clone '.claude\settings.local.json'
-$allow = '{"permissions":{"allow":["Bash(git:*)","Bash(gh:*)","Bash(env -u GH_TOKEN gh:*)","Bash(python:*)","Bash(py:*)","Bash(node:*)","Edit","Write"]}}'
+$allow = '{"permissions":{"allow":["Bash(git:*)","Bash(gh:*)","Bash(env -u GH_TOKEN gh:*)","Bash(env -u GH_TOKEN git:*)","Bash(npm:*)","Bash(python:*)","Bash(py:*)","Bash(node:*)","Edit","Write"]}}'
 [IO.File]::WriteAllText($localSettings, $allow + "`n", (New-Object Text.UTF8Encoding $false))
 $exclude = Join-Path $Clone '.git\info\exclude'
 if (-not (Select-String -LiteralPath $exclude -SimpleMatch '/.claude/settings.local.json' -Quiet -ErrorAction SilentlyContinue)) {
