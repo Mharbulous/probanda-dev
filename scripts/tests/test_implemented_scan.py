@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 implemented_scan: a publication marks implemented exactly the approved items
-whose fix commits reached a public plugin, and the publish marker is written
-and read back.
+whose fix commits reached a public plugin, and the scan starts at the newest
+commit whose public/ files are the public repository's.
 
 Run: python -m pytest -q scripts/tests/test_implemented_scan.py
 
@@ -225,7 +225,21 @@ class ScanTest(unittest.TestCase):
             scan_mod.plan(self.repo.root, self.cur, self.prev)
 
 
-class MarkerTest(unittest.TestCase):
+APPROVED_ENTRY = "Better prompts for dyu\n\n- dyu restates the request more briefly."
+
+
+def mirror(repo, public, commit):
+    """Write public/ at `commit` into a fresh public checkout and commit it, as an export does."""
+    for path in repo.git("ls-tree", "-r", "--name-only", commit, "public/").splitlines():
+        dest = public.root / path[len("public/"):]
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(subprocess.run(["git", "-C", str(repo.root), "show", f"{commit}:{path}"],
+                                        check=True, capture_output=True).stdout)
+    public.git("add", "-A")
+    return public.commit(APPROVED_ENTRY + "\n")
+
+
+class PreviousTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.repo, self.prev, self.cur = build_range(Path(self.tmp.name) / "dev")
@@ -234,48 +248,55 @@ class MarkerTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    MESSAGE = "Better prompts for dyu\n\n- dyu restates the request more briefly.\n"
-
-    def test_the_marker_is_written_and_read_back(self):
-        stamped = scan_mod.stamp(self.MESSAGE, self.prev)
-        self.assertTrue(stamped.endswith(f"\n\nPublished-from: {self.prev}\n"))
-        self.public.commit("Earlier publication, before markers")
-        self.public.git("commit", "-q", "--allow-empty", "-m", stamped)
-        self.public.commit("A later commit without a marker")
-        self.assertEqual(scan_mod.previous(self.public.root, self.repo.root, self.cur)[0], self.prev)
-
-    def test_unstamped_is_the_approved_message_for_the_repeat_check(self):
-        self.public.git("commit", "-q", "--allow-empty", "-m", scan_mod.stamp(self.MESSAGE, self.prev))
-        self.assertEqual(scan_mod.unstamped(scan_mod.last_message(self.public.root)).strip(), self.MESSAGE.strip())
-        self.assertEqual(scan_mod.unstamped(self.MESSAGE), self.MESSAGE)
-
-    def test_a_changelog_entry_cannot_plant_a_marker(self):
-        planted = self.MESSAGE + f"\nPublished-from: {self.prev}\n"
-        with self.assertRaises(scan_mod.ScanError):
-            scan_mod.stamp(planted, self.cur)
-        self.assertIsNone(scan_mod.marker_of(f"Subject\n\nPublished-from: {self.prev}\n\n- a bullet\n"))
-
-    def test_a_marker_outside_the_history_is_refused(self):
-        self.public.git("commit", "-q", "--allow-empty", "-m", scan_mod.stamp(self.MESSAGE, "0" * 40))
-        with self.assertRaises(scan_mod.ScanError):
-            scan_mod.previous(self.public.root, self.repo.root, self.cur)
-
-    def test_with_no_marker_the_commit_whose_public_files_match_is_found(self):
+    def test_the_commit_whose_public_files_match_is_found(self):
         target = self.repo.git("rev-parse", "HEAD~1")  # the readme reworded, before the release commit
-        for path in self.repo.git("ls-tree", "-r", "--name-only", target, "public/").splitlines():
-            rel = path[len("public/"):]
-            dest = self.public.root / rel
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_bytes(subprocess.run(["git", "-C", str(self.repo.root), "show", f"{target}:{path}"],
-                                            check=True, capture_output=True).stdout)
-        self.public.git("add", "-A")
-        self.public.commit("Publication before markers")
-        self.assertEqual(scan_mod.previous(self.public.root, self.repo.root, self.cur)[0], target)
+        mirror(self.repo, self.public, target)
+        self.assertEqual(scan_mod.previous(self.public.root, self.repo.root, self.cur), target)
 
-    def test_with_no_marker_and_no_matching_commit_it_fails(self):
+    def test_the_public_commit_message_is_only_the_approved_entry(self):
+        mirror(self.repo, self.public, self.cur)
+        self.assertEqual(self.public.git("log", "-1", "--format=%B"), APPROVED_ENTRY)
+        self.assertFalse(hasattr(scan_mod, "stamp"))
+
+    def test_with_no_matching_commit_it_fails(self):
         self.public.commit("Not from this repository", {"README.md": "something else\n"})
         with self.assertRaises(scan_mod.ScanError):
             scan_mod.previous(self.public.root, self.repo.root, self.cur)
+
+    def test_with_an_empty_public_repository_it_fails(self):
+        with self.assertRaises(scan_mod.ScanError):
+            scan_mod.previous(self.public.root, self.repo.root, self.cur)
+
+    def test_an_item_named_while_public_was_unchanged_after_the_publication_gets_no_call(self):
+        published = self.cur
+        mirror(self.repo, self.public, published)
+        # After the real publication: several commits that leave public/ as it was, one naming an item.
+        self.repo.commit("Notes", {"docs/after.md": "after\n"})
+        self.repo.commit(fix("Fix the draft skill again", E, 2), {DEV_SKILL: "draft v3\n"})
+        self.repo.commit("More notes", {"docs/after.md": "after, again\n"})
+        newest_unchanged = self.repo.git("rev-parse", "HEAD")
+        # Then a fix that does reach lawyer, and its release.
+        self.repo.commit(fix("Fix dyu again", A, 3), {LAWYER_SKILL: "dyu v4\n"})
+        self.repo.commit("Release", {
+            "public/plugins/lawyer/.claude-plugin/plugin.json": plugin_json("lawyer", "0.0.3")})
+        head = self.repo.git("rev-parse", "HEAD")
+        start = scan_mod.previous(self.public.root, self.repo.root, head)
+        self.assertEqual(start, newest_unchanged)
+        stub = Stub()
+        lines = []
+        try:
+            with mock.patch.dict(os.environ, ENV):
+                code = scan_mod.scan(self.repo.root, start, head,
+                                     post=functools.partial(scan_mod.post_status, endpoint=stub.url),
+                                     out=lines.append)
+        finally:
+            stub.close()
+        self.assertEqual(code, 0, lines)
+        self.assertEqual(stub.calls, [{"suggestion_id": A, "item": 3, "status": "implemented",
+                                       "implemented_in": "lawyer 0.0.3"}])
+        # Started from the real publication point instead, that item still reaches nothing.
+        self.assertEqual([(s[0], s[1]) for s in scan_mod.plan(self.repo.root, published, head)["skipped"]],
+                         [(E, 2)])
 
 
 if __name__ == "__main__":

@@ -11,9 +11,9 @@ name: publish-public
 # has write access to Probanda-app/Legal and to nothing else.
 #
 # After the push, marks implemented each approved suggestion item whose fix commit this
-# publication shipped (scripts/implemented_scan.py; lifecycle plan Phase 9). The public commit
-# message ends with `Published-from: <sha>`, the commit of this repository it was published
-# from, so the next run knows where its scan starts. The scan reads the repository secret
+# publication shipped (scripts/implemented_scan.py; lifecycle plan Phase 9). The scan starts
+# at the newest commit whose public/ files match the public repository before this push; nothing
+# about this repository is written into the public one. The scan reads the repository secret
 # SUGGESTIONS_SECRET_KEY, a Supabase project secret key, in its own step only. A failed scan
 # leaves the publication as it is, shows as a failed step, and prints the command to run again.
 on:
@@ -65,16 +65,13 @@ jobs:
             exit 0
           fi
           python3 scripts/export_public.py --message > "$RUNNER_TEMP/message"
-          LAST="$(python3 scripts/implemented_scan.py unstamped --public "$TARGET")"
-          if [ "$LAST" = "$(cat "$RUNNER_TEMP/message")" ]; then
+          if [ "$(git -C "$TARGET" log -1 --format=%B)" = "$(cat "$RUNNER_TEMP/message")" ]; then
             echo "The top entry of public/CHANGELOG.md is already the public repository's last commit message. Add a new entry and approve it." >&2
             exit 1
           fi
-          python3 scripts/implemented_scan.py stamp --message "$RUNNER_TEMP/message" \
-            --sha "$(git rev-parse HEAD)" > "$RUNNER_TEMP/stamped"
           git -C "$TARGET" -c user.name="github-actions[bot]" \
             -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-            commit -F "$RUNNER_TEMP/stamped"
+            commit -F "$RUNNER_TEMP/message"
           git -C "$TARGET" push origin main
           echo "published=true" >> "$GITHUB_OUTPUT"
       - name: Mark the suggestion items this publication shipped as implemented

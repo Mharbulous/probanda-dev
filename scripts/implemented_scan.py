@@ -3,33 +3,25 @@
 implemented_scan: mark each suggestion item a publication shipped as implemented.
 
   python scripts/implemented_scan.py previous --public <public checkout> [--repo <path>] [--to <sha>]
-  python scripts/implemented_scan.py stamp --message <file> --sha <sha>
-  python scripts/implemented_scan.py unstamped --public <public checkout>
   python scripts/implemented_scan.py scan --from <sha> --to <sha> [--repo <path>] [--dry-run]
 
 An item becomes Implemented when the public publication that includes the fix
 commit naming it is published (design decision 17; lifecycle plan Phase 9 and
 open decision 3 (a)). publish-public (.github/workflows/publish-public.yml)
-runs these four commands.
+runs both commands.
 
-The publish marker. publish-public has read access only to this repository, so
-it records the commit it published from in the public repository itself: the
-public commit message is the approved top entry of public/CHANGELOG.md
-(export_public.py --message) followed by one more paragraph, a trailer line
-`Published-from: <40-hex sha of this repository>`. The marker is derived, not
-authored: nothing a person approves changes, and no file is added to the public
-repository.
-- `stamp` prints the message with its marker. It refuses a message that already
-  holds a `Published-from:` line, so a changelog entry cannot plant one.
-- `unstamped` prints the public repository's last commit message without its
-  marker, for the workflow's check that the top changelog entry is new.
-- `previous` prints the commit the public repository was last published from:
-  the marker of its newest commit on the first-parent line that has one, which
-  must be an ancestor of --to. When no commit has a marker (the publications
-  before this one), it is the newest commit on --to's first-parent line whose
-  public/ files are, path for path and byte for byte, the public repository's
-  files: the published state, and so the same scan range. It fails when neither
-  is found, and names the command to run by hand.
+Where the scan starts. Nothing about this repository is written into the public
+repository: its commit message stays exactly the approved top entry of
+public/CHANGELOG.md, and no identifier of this private repository enters public
+history (COMMANDMENTS.md, Commandments 2 and 4). `previous`, run on a clone of
+the public repository before the new commit, prints the newest commit on --to's
+first-parent line whose public/ files are, path for path and byte for byte, the
+public repository's files (file modes are ignored: the export writes plain
+files). That is the state last published. It may be later than the commit the
+publication actually ran from, but every commit between the two left public/
+as it was, so under the rule below none of them reaches a public plugin, and
+starting from the newest match drops no fix. It fails when no commit matches,
+and names the command to run by hand.
 
 The scan, over the range --from..--to (--from the previous publication's commit,
 --to the one just published):
@@ -95,10 +87,6 @@ check_fix_commit = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(check_fix_commit)
 
 PUBLIC_PLUGINS = export_public.PUBLIC_PLUGINS
-MARKER = "Published-from"
-MARKER_LINE = re.compile(rf"^{MARKER}: ([0-9a-f]{{40}})$")
-ANY_MARKER = re.compile(rf"^\s*{MARKER}\s*:", re.IGNORECASE | re.MULTILINE)
-SHA = re.compile(r"^[0-9a-f]{40}$")
 VERSION = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 ENDPOINT = "https://nbzkuhgiqscjkypedqff.supabase.co/functions/v1/suggestion-set-status"
 KEY_ENV = "SUGGESTIONS_SECRET_KEY"
@@ -126,41 +114,11 @@ def is_ancestor(repo, older, newer):
                           capture_output=True).returncode == 0
 
 
-# --- The publish marker -------------------------------------------------------------------
-
-def stamp(message, sha):
-    """The public commit message: the approved entry, then the marker paragraph."""
-    if not SHA.match(sha or ""):
-        raise ScanError(f"--sha must be a full 40-character commit id, not {sha!r}")
-    if ANY_MARKER.search(message):
-        raise ScanError(f"the commit message already holds a `{MARKER}:` line; the marker is added at "
-                        "publication only, so take that line out of the top entry of public/CHANGELOG.md")
-    return message.rstrip("\n") + f"\n\n{MARKER}: {sha}\n"
-
-
-def marker_of(message):
-    """The sha a commit message's marker names, or None. Only its own last paragraph counts."""
-    paragraphs = message.strip("\n").split("\n\n")
-    if len(paragraphs) < 2:
-        return None
-    m = MARKER_LINE.match(paragraphs[-1].strip())
-    return m.group(1) if m else None
-
-
-def unstamped(message):
-    """The message without its marker paragraph."""
-    if marker_of(message) is None:
-        return message
-    return "\n\n".join(message.strip("\n").split("\n\n")[:-1]) + "\n"
-
+# --- Where the scan starts ----------------------------------------------------------------
 
 def has_commits(public):
     return subprocess.run(["git", "-C", str(public), "rev-parse", "--verify", "--quiet", "HEAD"],
                           capture_output=True).returncode == 0
-
-
-def last_message(public):
-    return git(public, "log", "-1", "--format=%B") if has_commits(public) else ""
 
 
 def files_at(repo, tree):
@@ -177,21 +135,10 @@ def files_at(repo, tree):
 
 
 def previous(public, repo, to):
-    """(the commit the public repository was last published from, how it was found)."""
+    """The newest commit on `to`'s first-parent line whose public/ files are the public repository's."""
     to = commit_of(repo, to)
     if not has_commits(public):
         raise ScanError(f"{public} has no commits, so no earlier publication")
-    for record in git(public, "log", "--first-parent", "--format=%H%x00%B%x1e", "HEAD").split("\x1e"):
-        if not record.strip():
-            continue
-        public_sha, _, message = record.strip("\n").partition("\0")
-        sha = marker_of(message)
-        if sha is None:
-            continue
-        if not is_ancestor(repo, sha, to):
-            raise ScanError(f"the public commit {public_sha[:12]} was published from {sha}, which is not an "
-                            f"ancestor of {to} in {repo}")
-        return sha, f"marker in public commit {public_sha[:12]}"
     published = files_at(public, "HEAD")
     commits = git(repo, "rev-list", "--first-parent", to).split()
     lookup = "".join(f"{c}:{export_public.public_tree.PUBLIC}\n" for c in commits).encode()
@@ -204,9 +151,8 @@ def previous(public, repo, to):
         if tree not in seen:
             seen[tree] = files_at(repo, tree) == published
         if seen[tree]:
-            return commit, "no marker yet; the newest commit whose public/ matches the public repository"
-    raise ScanError("no public commit has a marker, and no commit on the first-parent line holds the public "
-                    "repository's files under public/")
+            return commit
+    raise ScanError("no commit on the first-parent line holds the public repository's files under public/")
 
 
 # --- The scan -----------------------------------------------------------------------------
@@ -335,11 +281,6 @@ def main(argv):
     p.add_argument("--public", type=Path, required=True)
     p.add_argument("--repo", type=Path, default=REPO)
     p.add_argument("--to", default="HEAD")
-    s = sub.add_parser("stamp")
-    s.add_argument("--message", type=Path, required=True)
-    s.add_argument("--sha", required=True)
-    u = sub.add_parser("unstamped")
-    u.add_argument("--public", type=Path, required=True)
     c = sub.add_parser("scan")
     c.add_argument("--from", dest="frm", default="")
     c.add_argument("--to", required=True)
@@ -347,19 +288,16 @@ def main(argv):
     c.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
     try:
-        if args.command == "stamp":
-            sys.stdout.write(stamp(args.message.read_text(encoding="utf-8"), args.sha))
-        elif args.command == "unstamped":
-            sys.stdout.write(unstamped(last_message(args.public)))
-        elif args.command == "previous":
+        if args.command == "previous":
             try:
-                sha, how = previous(args.public, args.repo, args.to)
+                sha = previous(args.public, args.repo, args.to)
             except ScanError as err:
                 print(f"::error::implemented_scan previous: {err}. The publication goes ahead; mark its items "
                       "by hand with: python3 scripts/implemented_scan.py scan --from <the commit last published> "
                       "--to <the commit published now>", file=sys.stderr)
                 return 1
-            print(f"implemented_scan previous: {sha} ({how})", file=sys.stderr)
+            print(f"implemented_scan previous: {sha} (the newest commit whose public/ matches the public "
+                  "repository)", file=sys.stderr)
             print(sha)
         else:
             if not args.frm:
