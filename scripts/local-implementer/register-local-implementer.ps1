@@ -5,9 +5,11 @@ Registers, or unregisters, the daily scheduled task that runs the local implemen
 .DESCRIPTION
 Registers the task "Probanda local implementer" for the current user only, with
 no administrator rights: it runs as you, only while you are logged on, at limited
-rights, and starts a missed run once you next log on. It runs once a day in the
-morning, at a time picked at random between 07:01 and 07:59 when registered
-(or the time given with -At), plus up to 10 minutes of random delay each day.
+rights, and starts a missed run once you next log on. It runs once a day
+overnight, outside Claude's weekday peak hours (05:00 to 11:00 Pacific), at a
+time picked at random between 02:01 and 02:59 when registered (or the time given
+with -At), plus up to 10 minutes of random delay each day. It wakes the PC from
+sleep to run, but cannot run while you are signed out or the PC is shut down.
 
 Before registering, it runs run-local-implementer.ps1 -PrepareOnly, which creates
 the dedicated clone ($env:LOCALAPPDATA\probanda-local-implementer\probanda-dev)
@@ -20,7 +22,7 @@ leaves that file, the clone and the logs in place.
 Run it again to change the time; -Force replaces the old task.
 
 .PARAMETER At
-The daily start time, as HH:mm. Default: a random minute from 07:01 to 07:59.
+The daily start time, as HH:mm. Default: a random minute from 02:01 to 02:59.
 
 .PARAMETER Unregister
 Remove the task instead. The clone and its logs are left in place.
@@ -55,7 +57,7 @@ $CloneRun = Join-Path $Clone 'scripts\local-implementer\run-local-implementer.ps
 if ($At) {
     $time = [datetime]::ParseExact($At, 'HH:mm', [Globalization.CultureInfo]::InvariantCulture)
 } else {
-    $time = [datetime]::Today.AddHours(7).AddMinutes((Get-Random -Minimum 1 -Maximum 60))
+    $time = [datetime]::Today.AddHours(2).AddMinutes((Get-Random -Minimum 1 -Maximum 60))
 }
 
 # Create or update the clone, and check it with the guard, before pointing the task at it.
@@ -83,7 +85,7 @@ $argLine = '-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidd
 $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $argLine -WorkingDirectory $Clone
 $trigger = New-ScheduledTaskTrigger -Daily -At $time -RandomDelay (New-TimeSpan -Minutes 10)
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew `
-    -ExecutionTimeLimit (New-TimeSpan -Hours 4) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+    -ExecutionTimeLimit (New-TimeSpan -Hours 4) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun
 $user = [Security.Principal.WindowsIdentity]::GetCurrent().Name
 $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Limited
 
