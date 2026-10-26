@@ -73,7 +73,7 @@ The design refines the diagram in five places:
 
 ## Already built
 
-Phases 1 to 11 are built. The last column is what Brahm still does by hand.
+Phases 1 to 12 are built. The last column is what Brahm did by hand.
 
 | Step | Where | By hand |
 |---|---|---|
