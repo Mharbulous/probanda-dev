@@ -1,6 +1,6 @@
 # Suggestion mechanism: first-principles design discussion
 
-Status: Q1 and Q2 settled; reviewed twice by Fable (2026-10-25). Q3 to Q6 not started. Existing /lawyer:suggestion not read (until "now compare").
+Status: Q1 to Q6 settled (2026-10-25). Q1 and Q2 reviewed twice by Fable. Existing /lawyer:suggestion not read (until "now compare").
 
 ## Given (from the brief)
 - Practitioners are busy and non-technical. They won't know what the tool can do unless it offers.
@@ -27,7 +27,7 @@ The card (`Suggestion-<id>.html`, shown as a file card, served by Probanda's loc
 5. The chat shows no suggestion talk at all. Its only sign is the file card.
 6. The card, in order: the origin cue; the pain point described by how it affected the practitioner; the suggestion; an optional comment box with the grey placeholder "Please don't name clients, matters or people."; the line "Probanda receives only what you see here, plus technical details about the Probanda software on this computer." with a "Show technical details" link (environment facts); the line "You can see this later, with its status, under Past suggestions."; then **Submit Suggestion** and **Dismiss**.
 7. The pain point and suggestion text are editable in place before sending.
-8. On click, the edited and typed text is checked by the local cross-check plus patterns for paths, emails, dates and amounts. If something matches, a one-line prompt offers Remove and Send anyway.
+8. On click, everything sent (decision 28) is checked by the local cross-check plus patterns for paths, emails, dates and amounts. If something matches, a one-line prompt offers Remove and Send anyway.
 9. Dismiss sends nothing, is recorded locally (for the suppression in decision 3), and closes the card. If the card cannot be closed, Dismiss greys it out and replaces it with one button, "Restore Suggestion". Every button gives visible feedback.
 10. The click is the practitioner's approval of the product idea, content and confidentiality alike. Nobody tells them they are reviewing. They are never asked to review technical detail.
 11. Card order, labels and fixed strings are built into the page, not left to agent instructions.
@@ -40,7 +40,7 @@ Sending and status
 14. At the click, the local server saves the exact payload locally first, then sends. A failed send shows "Not sent" and retries at the next session.
 15. Probanda's Cloud knows which Lawyer account sent each suggestion (Account Information).
 16. The past-suggestions page shows the local copy word for word, mainly so the practitioner can check nothing confidential was sent. The technical-writer specification is viewable there on request. Withdrawal deletes the cloud record and, if triage has begun, notifies the maintainer to purge derived records. The badge reads "Withdrawn before review" or "Withdrawn; copies being removed".
-17. Status badges: Submitted, Under Review, Approved or Declined, and Implemented in <plugin> <version>. Approved, Declined and Implemented show a reason as visible text, extremely short and readable by a non-technical person; Submitted needs none. Submitted changes on write, Under Review when triage opens the record, and Implemented when the release that includes a fix commit naming the suggestion id is published. Only Approved and Declined, with the reason, are set by a person. A reason is written for every sender of a merged problem and never quotes submitted text.
+17. Status badges: Submitted, Under Review, Approved or Declined, and Implemented in <plugin> <version>. Approved, Declined and Implemented show a reason as visible text, extremely short and readable by a non-technical person; Submitted needs none. Submitted changes on write, Under Review when triage opens the record, and Implemented when the release that includes a fix commit naming the suggestion id is published. Only Approved and Declined, with the reason, are set by a person. A reason is written for every sender of a merged problem and never quotes submitted text. The badge is a summary over the per-item statuses (decision 23). The card expands to show each item's status and reason.
 
 Agents
 18. `technical-writer` (Opus 5.5, on the practitioner's machine and Claude plan) starts after the click and writes a specification. Practitioners pay for planning from day 1, because changing that later would cost trust. They are told once, at setup or in the terms, that sending a suggestion uses their Claude plan. It reads only the card, the environment facts and Probanda's own installed material, never the conversation, documents or tool arguments. A second agent checks the specification as a backstop. Both go to the Supabase suggestion box.
@@ -49,12 +49,15 @@ Agents
 21. `fix-maker` (Opus 5.5, medium effort, low freedom) carries out only approved items.
 22. Briefs are goal-style, with a done-when per agent: card building and scrubbing are done when the local cross-check passes and the card is shown; `technical-writer` when every fact in the specification traces to the card or Probanda's own material and the backstop passes; `fix-planner` when each item has a runnable check; `fix-maker` when those checks and the plugin's own checks pass. The Q2 list (where / the pain / what happened / the changes / what counts as wrong / done when) is a reminder line, not a form.
 
-## Open
-- Q3: one badge can't show mixed statuses across separate items in one suggestion (now sharper, since decision 20 approves per item).
-- `GLOSSARY.md`: already defines Suggestion, Pain point, Done-test and Preview for the current design. Update at "now compare".
+Items, mockups and wording
+23. One Suggestion is one card: one shared pain point plus a list of separately approvable change items. Constraints and evidence are context lines with no status.
+24. The card offers "Show a mockup of this" under an item that changes how something looks. Nothing is built until it is clicked. A rejection reason becomes a constraint line (decision 23).
+25. The mockup uses only fixed Probanda placeholder text. The click-time checks run over it.
+26. The mockup travels as one self-contained HTML file (inline styles, no scripts, no links): the page the practitioner saw.
+27. The tool reshapes the practitioner's words into the card's structure but keeps their phrases. Removed identifiers show as visible brackets. Anything the tool writes itself keeps the "our guess, edit if wrong" label.
+28. The click-time check (decision 8) covers everything sent: pain point, items, comment, raw observation, mockup and environment facts. Remove and Send anyway apply to all of it.
 
-## Remaining questions
-3. Pain points, changes, constraints/rejected alternatives, evidence: one card with atomic items, or separate suggestions
-4. When to volunteer a mockup, keeping it free of client data, how it travels
-5. How much to restructure the practitioner's words, and what approval protects meaning
-6. Suggestions started by the practitioner vs by the AI (largely settled by decisions 2 to 4, 10 and 18)
+Q6 left nothing new: practitioner-started and AI-noticed suggestions differ only by origin cue, daily cap and suppression (decisions 2 to 4, 9, 10 and 18).
+
+## Open
+- `GLOSSARY.md`: already defines Suggestion, Pain point, Done-test and Preview for the current design. Update at "now compare".
