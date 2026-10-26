@@ -5,7 +5,7 @@
 // for the functions in cloud/suggestions/suggestions.sql, which hold the rules;
 // this checks only the shape.
 //
-// The five writes:
+// The four writes:
 //   issue        { suggestion_id, issue_number }
 //                Probanda's automation (intake) records the issue the suggestion
 //                is filed under, without changing its status
@@ -14,11 +14,13 @@
 //   implemented  { suggestion_id, item, status: "implemented", implemented_in: "<plugin> <version>" }
 //                Probanda's automation marks one approved item shipped
 //   review       { suggestion_id, status: "under review", issue_number? }
-//                Probanda's automation opens the suggestion for review
-//   legacy       { suggestion_id, status: "approved" | "approved in part" | "rejected",
-//                  issue_number?, reason?, category? }
-//                the old whole-suggestion decision, applied to every item, kept
-//                until the triage skill decides per item
+//                Probanda's automation (triage step 1) opens the suggestion for review
+//
+// The old whole-suggestion decision ("approved", "approved in part" or
+// "rejected" with no item) is retired (lifecycle plan Phase 7) and refused with
+// a question. No item's status changes without a reason: "item" requires one,
+// and "implemented" requires the release that its fixed reason, "Fixed in
+// <plugin> <version>", is made from. "issue" and "review" change no item.
 
 export const MAX_REASON = 200;
 export const MAX_ITEM = 50;
@@ -36,7 +38,6 @@ export const DECLINE_CATEGORIES = [
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const RELEASE = /^[a-z][a-z-]* [0-9]+\.[0-9]+\.[0-9]+$/;
-const LEGACY = new Set(["approved", "approved in part", "rejected"]);
 
 export type Checked<T> = { ok: T } | { question: string };
 
@@ -44,8 +45,7 @@ export type SetStatus =
   | { form: "item"; suggestion_id: string; item: number; status: "approved" | "declined"; reason: string; category: string | null }
   | { form: "implemented"; suggestion_id: string; item: number; implemented_in: string }
   | { form: "issue"; suggestion_id: string; issue_number: number }
-  | { form: "review"; suggestion_id: string; issue_number: number | null }
-  | { form: "legacy"; suggestion_id: string; status: string; issue_number: number | null; reason: string | null; category: string | null };
+  | { form: "review"; suggestion_id: string; issue_number: number | null };
 
 type Obj = Record<string, unknown>;
 
@@ -54,7 +54,6 @@ const FORM_KEYS: Record<SetStatus["form"], string[]> = {
   implemented: ["suggestion_id", "item", "status", "implemented_in"],
   issue: ["suggestion_id", "issue_number"],
   review: ["suggestion_id", "status", "issue_number"],
-  legacy: ["suggestion_id", "status", "issue_number", "reason", "category"],
 };
 
 /** A reason as saved: trimmed, one line, 1 to MAX_REASON characters; or null. */
@@ -98,8 +97,6 @@ export function checkSetStatus(body: Obj): Checked<SetStatus> {
     else return { question: "Not saved. Is this item approved, declined or implemented?" };
   } else if (status === "under review") {
     form = "review";
-  } else if (LEGACY.has(status)) {
-    form = "legacy";
   } else {
     return { question: "Not saved. Which item, by its number, is this decision about?" };
   }
@@ -135,13 +132,5 @@ export function checkSetStatus(body: Obj): Checked<SetStatus> {
     }
     case "review":
       return { ok: { form, suggestion_id: id, issue_number: issueNumber } };
-    case "legacy": {
-      const reason = body.reason === undefined ? null : cleanReason(body.reason);
-      if (body.reason !== undefined && !reason) return { question: REASON_QUESTION };
-      if (category !== undefined && status !== "rejected") {
-        return { question: "Not saved. Is this suggestion approved, or rejected for that reason?" };
-      }
-      return { ok: { form, suggestion_id: id, status, issue_number: issueNumber, reason, category: (category as string | undefined) ?? null } };
-    }
   }
 }

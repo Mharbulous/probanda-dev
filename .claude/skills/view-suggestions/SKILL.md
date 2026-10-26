@@ -9,7 +9,7 @@ Maintainer-only. It ships in the `developer` plugin, which is never public and i
 
 Preconditions: the session's working directory is the probanda-dev checkout (`git remote get-url origin` names `Mharbulous/probanda-dev`; otherwise say this skill runs only there, and stop), and `POOL_SECRET_KEY` is set in the environment (`node cloud/suggestions/tools/triage.mjs list --all` prints `set POOL_SECRET_KEY first` when it is not: tell Brahm and stop).
 
-Read-only. You never run `set-status` and never change a suggestion. Triage stays in /suggestion-triage and /adversarial-triage.
+Read-only. You never run `set-review`, `set-item` or `set-issue`, and never change a suggestion. Triage stays in /suggestion-triage and /adversarial-triage.
 
 ## Steps
 
