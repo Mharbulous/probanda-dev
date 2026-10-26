@@ -11,7 +11,14 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 - Before step 4, change no file in the repo and push nothing. The writes are issues, their labels, and each suggestion's status. Step 4 follows the implementer's own rules.
 - Nothing filed names a person, entity, matter or account. Never mention Claude or Anthropic in an issue.
 - Nobody answers a permission prompt, so never cause one. Read and search files with the Read, Grep and Glob tools, not shell commands.
-- Run every `cloud/suggestions/tools/triage.mjs` command as `POOL_KEY_FROM_PROXY=1 node cloud/suggestions/tools/triage.mjs ...`. The cloud environment's network secret adds the key to requests for the Suggestion Box host, so the session never holds it.
+- Reach the Suggestion Box with `curl` only, as below. Node's `fetch` ignores the sandbox proxy, so `cloud/suggestions/tools/triage.mjs` cannot run here. The cloud environment's network secret adds the key to these requests, so send none and never look for one.
+
+## Suggestion Box calls
+
+Both are `curl -sS -X POST -H Content-Type:application/json https://nbzkuhgiqscjkypedqff.supabase.co/functions/v1/<function> -d '<body>'`:
+
+- **List new:** function `suggestion-list`, body `{"status":"new"}`. The reply's `suggestions` holds the rows, oldest first.
+- **Set status:** function `suggestion-set-status`, body `{"suggestion_id":"<id>","status":"<status>"}`, adding `"issue_number":<n>` when an issue was filed. It refuses a second call on the same row.
 
 ## GitHub calls
 
@@ -19,7 +26,7 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 
 ## 1. List
 
-Take the intake lock (**Intake lock**, Take). If it is held, stop and report `Intake lock held`: the holder takes every new row. Then `node cloud/suggestions/tools/triage.mjs list`. If the request is refused (a 401 or 403, or a blocked host), stop and report that the cloud environment lacks the Suggestion Box network secret or network access. If no row is `new`, stop and report that.
+Take the intake lock (**Intake lock**, Take). If it is held, stop and report `Intake lock held`: the holder takes every new row. Then list new suggestions. If the request is refused (a 401 or 403, or a blocked host), stop and report that the cloud environment lacks the Suggestion Box network secret or network access. If no row is `new`, stop and report that.
 
 ## 2. Plan
 
@@ -31,9 +38,9 @@ Apply the first rule that fits the planner's TLDR:
 
 1. "Approve with your adjustments" is marked `(Recommended)`: file the planner's main issue, with status `approved` for `Verdict: all` and `"approved in part"` for `Verdict: some`.
 2. "Approve as proposed" is marked `(Recommended)`: file the As proposed issue, or the main issue when As proposed is `same as above`, with status `approved`.
-3. Otherwise, including when doing nothing is marked: `node cloud/suggestions/tools/triage.mjs set-status <suggestion_id> rejected`, and file nothing.
+3. Otherwise, including when doing nothing is marked: set its status to `rejected`, and file nothing.
 
-Filing an issue means `POST /issues` with its title, its body and `"labels":["suggestion"]`, then at once `node cloud/suggestions/tools/triage.mjs set-status <suggestion_id> <status> --issue <n>`. If the set-status call fails, comment its output on the issue and carry on.
+Filing an issue means `POST /issues` with its title, its body and `"labels":["suggestion"]`, then at once set the suggestion's status, with that issue number. If the set-status call fails, comment its output on the issue and carry on.
 
 ## 4. Implement
 

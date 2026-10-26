@@ -10,19 +10,17 @@
 // records a triage outcome once; the function refuses a second call on the
 // same row. The secret key comes from the environment variable POOL_SECRET_KEY,
 // set by the person running this in their own terminal. This script prints no
-// key. In a cloud session, POOL_KEY_FROM_PROXY=1 sends no key: the cloud
-// environment's network secret for the project host adds it outside the session.
+// key.
 
 const BASE = "https://nbzkuhgiqscjkypedqff.supabase.co/functions/v1/";
 const key = process.env.POOL_SECRET_KEY;
-const keyFromProxy = process.env.POOL_KEY_FROM_PROXY === "1";
-if (!key && !keyFromProxy) throw new Error("set POOL_SECRET_KEY first");
+if (!key) throw new Error("set POOL_SECRET_KEY first");
 const USAGE = 'usage: node triage.mjs list [--all] | set-status <suggestion_id> <status> [--issue <n>]';
 
 async function call(fn, body) {
   const res = await fetch(BASE + fn, {
     method: "POST",
-    headers: key ? { apikey: key, "Content-Type": "application/json" } : { "Content-Type": "application/json" },
+    headers: { apikey: key, "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   const reply = JSON.parse(await res.text());
