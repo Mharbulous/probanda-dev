@@ -1,6 +1,6 @@
 # Plan: Suggestion Implementation Lifecycle
 
-**Status (2026-10-25).** Approved by Brahm for execution. The design is settled in `docs/Plans/2026-10-25_suggestion-design.md`, decisions 1 to 28, which is the source of truth: this plan cites decisions by number and does not restate them. Open decisions 1 to 5 below are still Brahm's. The parts marked **Built** run today. Nothing else in this plan is built.
+**Status (2026-10-25).** Approved by Brahm for execution. The design is settled in `docs/Plans/2026-10-25_suggestion-design.md`, decisions 1 to 28, which is the source of truth: this plan cites decisions by number and does not restate them. Open decisions 1 to 5 below were settled by Brahm on 2026-10-26. The parts marked **Built** run today. Nothing else in this plan is built.
 
 ## The lifecycle
 
@@ -238,6 +238,8 @@ Each phase ends with a commit to `main` and a release where a plugin changes. Ph
 5. **Which plugin sends.** Decisions 13 and 14 have the local server send and show the status, and Phase 4 has Submit work after the agent stops waiting. The card is in `lawyer`, but the submit tool is in `researcher`, and one plugin's server can't call another's tool. Options:
    - **(a)** `lawyer`'s server posts to `suggestion-submit` itself, and `suggestion_box__submit` leaves `researcher` (recommended, because it is the only option that meets decisions 13 and 14; minor bumps of both plugins);
    - **(b)** the click returns to the agent, which calls `researcher`'s tool. Submit then fails when no agent is waiting, and decisions 13 and 14 change.
+
+   **Decided (2026-10-26): (a).** `lawyer`'s local server saves and posts to `suggestion-submit` itself, and `suggestion_box__submit` leaves `researcher`. Both plugins take a minor bump.
 
 ## Risks
 
