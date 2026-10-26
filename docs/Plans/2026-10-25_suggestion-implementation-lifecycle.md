@@ -85,6 +85,7 @@ The design refines the diagram in five places:
 | Triage: repeat check, plan, red tests, decide, write | `.claude/commands/triage-issue.md` steps 2 to 6. The planner is `source/developer/agents/fix-planner.md` (Phase 7; its dry run is `docs/Plans/2026-10-26_fix-planner-dry-run.md`) |
 | One implement queue, claims, implementer lock, label trigger | `.claude/commands/implement-suggestions.md` and `docs/agents/issue-tracker.md` |
 | Building approved items with `fix-maker`, one commit per item named `Suggestion <id> item <n>` | `source/developer/agents/fix-maker.md`, dispatched by `.claude/commands/implement-suggestions.md` step 5 and `.claude/skills/suggestion-triage/SKILL.md` step 6 (Phase 8). The approved set is `scripts/select_approved_items.py`; the commit check is `scripts/check_fix_commit.py` |
+| Local implementer: the `local` lane of the queue, under its own lock, in its own clone, started by a daily scheduled task (Phase 10) | `.claude/commands/implement-suggestions.md` **Local lane**. The lane chooser and both locks are `scripts/choose_issue.py`; the clone guard is `scripts/local_implementer_guard.py`; the task is `scripts/local-implementer/` |
 | Status writes | `suggestion-set-status`, which accepts only `approved`, `approved in part` and `rejected`, and only from `new` |
 
 ## Constraints
