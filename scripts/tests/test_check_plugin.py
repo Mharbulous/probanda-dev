@@ -103,7 +103,8 @@ CHECK_NAMES = [
     "roster-sanity", "reserved-name", "description-no-xml-tags", "description-length",
     "no-absolute-repo-paths", "reference-resolution", "entry-point-registry", "shipped-path-registry", "bundle-purity",
     "sources-host-guard", "fetch-grant-allowlist", "recital-rule-mirror", "bundle-no-host-path",
-    "bundle-schema-ceiling", "inverse-reference", "shipped-tree-purity", "agent-bridged-grants", "commons-encapsulation",
+    "bundle-schema-ceiling", "inverse-reference", "shipped-tree-purity", "agent-bridged-grants", "write-up-agent-tools",
+    "commons-encapsulation",
     "hook-matchers", "dependencies", "unique-names", "layering", "file-ops", "internals",
 ]
 # The real registry pins the real repo's skills, so the fixture pins a file alpha ships.
@@ -158,6 +159,9 @@ class Fixture:
                        agent([PLAIN + "skill_source__read", BRIDGED + "skill_source__read"], RECITAL_BLOCK + "\n"))
         for name in check_plugin_sources.COMMONS_AGENTS:
             self.write(f"{src}agents/{name}.md", agent([], f"# {name}\n"))
+        # The plugin that ships the data server ships the suggestion write-up agents.
+        for name in check_plugin_agents.WRITE_UP_AGENTS:
+            self.write(f"{src}agents/{name}.md", agent(check_plugin_agents.write_up_tool_names("litigator", ("skill_source__read",))))
         self.write(src + "mcp/dist/litigation-mcp.js", DATA_BUNDLE)
         self.write(src + "canlii-mcp/dist/canlii-mcp.js", "// src/index.ts\nvar canlii = 1;\n")
         self.write(src + "commons-mcp/dist/legal-commons-mcp.js",
@@ -753,6 +757,7 @@ class TestSecondPlugin(FixtureTest):
         "bundle-no-host-path": "solicitor ships no server",
         "bundle-schema-ceiling": "solicitor does not ship the data server",
         "agent-bridged-grants": "solicitor ships no agent",
+        "write-up-agent-tools": "solicitor ships neither write-up agent",
         "commons-encapsulation": "solicitor does not ship the legal-commons skill",
         "hook-matchers": "solicitor declares no hook matcher",
     }

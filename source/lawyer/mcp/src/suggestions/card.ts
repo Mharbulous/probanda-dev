@@ -133,6 +133,9 @@ export interface CardRecord {
   check_failures?: Array<{ at: string; records: CrossCheckResult["records"] }>;
   /** The sent suggestion's record (store.ts), once Submit saved it. */
   suggestion_record_id: string | null;
+  /** Whether a session was waiting on the card when Submit claimed it: only then is a technical
+   * write-up written (specification.ts; decision 18). Absent on a card never submitted. */
+  waited_at_submit?: boolean;
   next_line: number;
   /** An AI-noticed card's fingerprint, its observation and the session it was raised in; absent on any other card. */
   fingerprint?: Fingerprint;
@@ -678,6 +681,7 @@ function checkAndClaim(card: CardRecord, records: RecordTexts, stopWords: Set<st
   dropGenerated(card, check.hits, "click", at);
   const prompts = promptsOf(card, check.hits);
   if (prompts.length) return { prompts };
+  card.waited_at_submit = waiting(card, new Date(at));
   card.state = "sending";
   card.state_since = at;
   card.mockup_request = null;
@@ -904,7 +908,8 @@ export async function rejectMockup(cardId: string, n: unknown, reason: unknown, 
 
 export type WaitEvent =
   | { event: "mockup"; card_id: string; items: string[]; constraints: string[]; placeholders: string[] }
-  | { event: "submitted"; card_id: string }
+  /** write_up: true when this session was waiting at the click, so the technical write-up is its to start. */
+  | { event: "submitted"; card_id: string; write_up: boolean }
   | { event: "dismissed"; card_id: string }
   | { event: "pending"; card_id: string };
 
@@ -932,7 +937,13 @@ export async function waitForCard(
       const event = await withStore(deps.env, (s): WaitEvent | null => {
         const c = findCard(s, cardId);
         const st = effectiveState(c, now);
-        if (st === "submitted" || st === "dismissed") {
+        if (st === "submitted") {
+          c.waiter_until = null;
+          const record = s.records.find((r) => r.record_id === c.suggestion_record_id);
+          const fresh = record !== undefined && isSuggestion(record) && record.write_up === undefined && record.payload !== null;
+          return { event: st, card_id: cardId, write_up: c.waited_at_submit === true && fresh };
+        }
+        if (st === "dismissed") {
           c.waiter_until = null;
           return { event: st, card_id: cardId };
         }

@@ -47,6 +47,8 @@
         "localize-helper",
         "migration-runner",
         "scrivener",
+        "spec-backstop",
+        "technical-writer",
         "verify-caselaw",
         "verify-edges",
         "verify-source"

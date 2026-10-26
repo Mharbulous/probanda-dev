@@ -7,7 +7,10 @@
 // its status, reason and release as Probanda's Cloud last returned them; the brackets as they were on
 // the card, in the text as stored; the constraint and evidence lines; the comment; the raw
 // observation; the environment facts; and the mockup inside an iframe sandboxed with no permissions,
-// its srcdoc the stored bytes. The technical write-up and its check show on request, in a <details>.
+// its srcdoc the stored bytes. The technical write-up (specification.ts) shows on request, in a
+// <details> that also explains its two safeguards in fixed words; a page written for one suggestion
+// opens at that entry with the write-up shown. Each sentence shows with the kind of source it rests
+// on, never a file path.
 // Held drafts were never sent, and dismissed cards never appear (decision 9). Every label and fixed
 // string is built in here (decision 11), and none names how Probanda works inside
 // (shared/internals-confidentiality.md).
@@ -21,6 +24,7 @@
 
 import { join } from "node:path";
 
+import { NotFoundError } from "../errors.js";
 import { writeTextAtomic } from "../knowledge/sidecar.js";
 import { pageApiPort, pageApiSuggestionToken } from "../page-api/token.js";
 import { type SuggestionRecord, type SuggestionStore, cardStatus, isSuggestion, loadStore, storeDir } from "./store.js";
@@ -116,7 +120,56 @@ function badgeOf(record: SuggestionRecord): string {
   return record.state === "sent" ? (record.badge ?? "Submitted") : cardStatus(record);
 }
 
-function entry(record: SuggestionRecord, token: string): string {
+// The technical write-up's fixed strings (decision 11): the two safeguards, in the present tense, and
+// why a write-up is not there. None names how Probanda works inside.
+export const WRITE_UP_SAFEGUARDS = [
+  "Probanda writes this from what your card shows, the technical details and Probanda's own files. It does not read your documents, your conversations or your records about clients and matters.",
+  "Before it is sent, a second check traces every sentence to your card, the technical details or Probanda's own files, and anything found in your records is taken out. If a sentence cannot be traced, or taking something out would leave the write-up incomplete, nothing is sent after your suggestion.",
+] as const;
+
+export const WRITE_UP_NOTES = {
+  none: "No technical write-up was written for this suggestion.",
+  writing: "The technical write-up was not finished, so none was sent with this suggestion.",
+  waiting_to_send: "The technical write-up is kept on this computer and is sent after your suggestion.",
+  sent: "This technical write-up was sent after your suggestion.",
+  backstop_failed: "No technical write-up was sent with this suggestion: not every sentence of it could be traced to your card, the technical details or Probanda's own files.",
+  incoherent: "No technical write-up was sent with this suggestion: words found in your records had to be taken out of it, and what was left was incomplete.",
+  records_unreadable: "No technical write-up was sent with this suggestion: it could not be checked against your records.",
+  refused: "No technical write-up was sent with this suggestion: Probanda did not accept it.",
+  withdrawn: "No technical write-up was sent: this suggestion was withdrawn.",
+} as const;
+
+const SOURCE_LABEL = { card: "From your card", fact: "From the technical details", file: "From Probanda's own files" } as const;
+
+function writeUpSentences(spec: string): string {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(spec);
+  } catch {
+    return `<p class="text">${text(spec)}</p>`;
+  }
+  const sentences = parsed !== null && typeof parsed === "object" && Array.isArray((parsed as Payload).sentences) ? ((parsed as Payload).sentences as Payload[]) : [];
+  return `<ol class="spec">${sentences.map((s) => {
+    const cites = Array.isArray(s.cites) ? (s.cites as Payload[]) : [];
+    const kinds = [...new Set(cites.map((c) => (c.card !== undefined ? "card" : c.fact !== undefined ? "fact" : "file") as keyof typeof SOURCE_LABEL))];
+    return `<li><p class="text">${text(String(s.text ?? ""))}</p><p class="note">${escapeHtml(kinds.map((k) => SOURCE_LABEL[k]).join(" · "))}</p></li>`;
+  }).join("")}</ol>`;
+}
+
+function writeUpSection(record: SuggestionRecord): string {
+  const w = record.write_up;
+  const safeguards = `<h4>How the technical write-up is kept safe</h4><ul class="safeguards">${WRITE_UP_SAFEGUARDS.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>`;
+  let note: string;
+  let body = "";
+  if (!w) note = WRITE_UP_NOTES.none;
+  else if (w.state === "stands_alone") note = WRITE_UP_NOTES[w.reason ?? "backstop_failed"];
+  else if (w.state === "sent" || w.state === "waiting_to_send") note = WRITE_UP_NOTES[w.state];
+  else note = WRITE_UP_NOTES.writing;
+  if (w && (w.state === "sent" || w.state === "waiting_to_send") && record.specification !== null) body = writeUpSentences(record.specification);
+  return `<p class="note">${escapeHtml(note)}</p>${body}${safeguards}`;
+}
+
+function entry(record: SuggestionRecord, token: string, focused = false): string {
   const payload = parsePayload(record);
   const date = record.created_at.slice(0, 10);
   let body: string;
@@ -130,10 +183,7 @@ function entry(record: SuggestionRecord, token: string): string {
     const facts = payload.environment_facts !== undefined
       ? `<pre class="facts">${escapeHtml(JSON.stringify(payload.environment_facts, null, 2))}</pre>`
       : "";
-    const writeUp = record.specification !== null
-      ? `<p class="text">${text(record.specification)}</p>` +
-        (record.backstop_result !== null ? `<h4>How the write-up was checked</h4><pre class="facts">${escapeHtml(JSON.stringify(record.backstop_result, null, 2))}</pre>` : "")
-      : '<p class="note">No technical write-up was sent with this suggestion.</p>';
+    const writeUp = writeUpSection(record);
     body =
       section(payload.origin === "probanda" ? "Probanda noticed" : "You suggested", para(payload.pain_point ?? payload.body)) +
       section("Items", items(record, payload)) +
@@ -143,13 +193,13 @@ function entry(record: SuggestionRecord, token: string): string {
       section("Technical details about Probanda on this computer", facts) +
       section("Mockup", typeof payload.mockup === "string" ? frame(payload.mockup, "Mockup") : "") +
       section("Previews", previews) +
-      `<details class="write-up"><summary>Show the technical write-up</summary>${writeUp}</details>`;
+      `<details class="write-up"${focused ? " open" : ""}><summary>Show the technical write-up</summary>${writeUp}</details>`;
   }
   const withdraw = record.withdrawn_at === null
     ? `<button type="button" class="withdraw" data-token="${escapeHtml(token)}">Withdraw</button>`
     : "";
   return (
-    `<section class="entry" data-record="${escapeHtml(record.record_id)}">` +
+    `<section class="entry" id="s-${escapeHtml(record.record_id)}" data-record="${escapeHtml(record.record_id)}">` +
     `<h2>${text(record.title)}</h2>` +
     `<p class="meta">Sent ${escapeHtml(date)} · <span class="badge">${escapeHtml(badgeOf(record))}</span></p>` +
     body +
@@ -176,6 +226,10 @@ const STYLE =
 const SCRIPT = `
 (function () {
   var api = JSON.parse(document.getElementById("api").textContent);
+  if (api.focus) {
+    var focused = document.getElementById(api.focus);
+    if (focused) focused.scrollIntoView();
+  }
   var base = "http://127.0.0.1:" + api.port;
   var SAY = {
     withdrawn: "Withdrawn. Probanda no longer holds this suggestion.",
@@ -244,12 +298,13 @@ const SCRIPT = `
 `;
 
 /** The page's HTML for `store`, with the listener's port and each entry's token. */
-export function renderPastSuggestionsHtml(store: SuggestionStore, port: number, tokenFor: (recordId: string) => string): string {
+export function renderPastSuggestionsHtml(store: SuggestionStore, port: number, tokenFor: (recordId: string) => string, focus: string | null = null): string {
   const records = store.records.filter(isSuggestion).sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0));
   const body = records.length
-    ? records.map((r) => entry(r, r.withdrawn_at === null ? tokenFor(r.record_id) : "")).join("")
+    ? records.map((r) => entry(r, r.withdrawn_at === null ? tokenFor(r.record_id) : "", r.record_id === focus)).join("")
     : '<p class="note">No suggestions have been sent from this computer yet.</p>';
-  const api = JSON.stringify({ port }).replace(/</g, "\\u003c");
+  const target = focus !== null && records.some((r) => r.record_id === focus) ? `s-${focus}` : null;
+  const api = JSON.stringify({ port, focus: target }).replace(/</g, "\\u003c");
   return (
     '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
     `<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src http://127.0.0.1:${port}; object-src 'none'; base-uri 'none'; form-action 'none'">` +
@@ -265,9 +320,13 @@ export function pastSuggestionsPath(env: NodeJS.ProcessEnv = process.env): strin
 }
 
 /** Writes the page from the store as it is now and returns its path. */
-export async function writePastSuggestionsPage(env: NodeJS.ProcessEnv = process.env): Promise<string> {
+export async function writePastSuggestionsPage(env: NodeJS.ProcessEnv = process.env, options: { focus?: string } = {}): Promise<string> {
   const store = await loadStore(env);
   const path = pastSuggestionsPath(env);
-  writeTextAtomic(path, renderPastSuggestionsHtml(store, pageApiPort(env), (id) => pageApiSuggestionToken(id, env)));
+  // A suggestion asked for by its record id opens at its entry, with its technical write-up shown.
+  if (options.focus !== undefined && !store.records.some((r) => isSuggestion(r) && r.record_id === options.focus)) {
+    throw new NotFoundError(`no suggestion ${options.focus} on this computer`, "not_found");
+  }
+  writeTextAtomic(path, renderPastSuggestionsHtml(store, pageApiPort(env), (id) => pageApiSuggestionToken(id, env), options.focus ?? null));
   return path;
 }

@@ -16,6 +16,11 @@
 // lists what the store holds, and suggestion_log__write records a badge as shown and releases a held
 // draft, a suggestion an earlier version kept unposted for want of a key.
 //
+// suggestion_card__write_up_brief, suggestion_card__write_up_check and suggestion_card__write_up_send
+// are the technical write-up's three steps after a waited-on card is submitted (specification.ts):
+// the writer's brief, the citation check, and the backstop's judgement with the record check, the
+// local record and the post.
+//
 // suggestion_observation__record records what Probanda noticed about its own work as a structured
 // observation (observation.ts), and suggestion_observation__next answers, under the daily cap and
 // suppression, which observation this session may raise as its AI-noticed card now. Tool definitions
@@ -30,6 +35,7 @@ import { loadStopWords, runCrossCheck, type CardText } from "./crosscheck.js";
 import { environmentFacts } from "./environment.js";
 import { type ObservationSeams, nextObservation, recordObservation } from "./observation.js";
 import { readRecordTexts } from "./records.js";
+import { checkWriteUp, sendWriteUp, writeUpBrief } from "./specification.js";
 import { cardStatus, isHeld, isSuggestion, loadStore, withStore } from "./store.js";
 
 type Args = Record<string, unknown>;
@@ -61,6 +67,12 @@ export async function callSuggestionCardTool(store: PracticeStore, name: string,
       return waitForCard(text(args.card_id, "card_id"), deps);
     case "suggestion_card__attach_mockup":
       return attachMockup(text(args.card_id, "card_id"), args.html, deps);
+    case "suggestion_card__write_up_brief":
+      return writeUpBrief(text(args.card_id, "card_id"), deps);
+    case "suggestion_card__write_up_check":
+      return checkWriteUp(text(args.card_id, "card_id"), args.specification, deps);
+    case "suggestion_card__write_up_send":
+      return sendWriteUp(text(args.card_id, "card_id"), args.judgement, deps);
     default:
       throw new ValidationError(`Unknown suggestion tool "${name}"`);
   }
@@ -75,7 +87,8 @@ export function callSuggestionTool(name: string, args: Args, env: NodeJS.Process
     case "suggestion_box__status":
       return status(args, env, seams);
     case "suggestion_box__past_suggestions":
-      return writePastSuggestionsPage(env).then((path) => ({ past_suggestions_path: path }));
+      return writePastSuggestionsPage(env, args.record_id === undefined ? {} : { focus: text(args.record_id, "record_id") })
+        .then((path) => ({ past_suggestions_path: path }));
     case "suggestion_log__read":
       return suggestionLogRead(env);
     case "suggestion_log__write":
