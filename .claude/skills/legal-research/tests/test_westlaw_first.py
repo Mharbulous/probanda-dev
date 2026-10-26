@@ -31,7 +31,7 @@ CITATION_CHECKER = LITIGATION / "agents" / "citation-checker.md"
 CHROME_AGENTS = PARALEGAL_COPIES + (CITATION_CHECKER,)
 NOTE_UP_PLAYBOOK = SHARED / "citation-checker" / "note-up.md"
 HOOK = SKILL_ROOT / "hooks" / "block-main-session-canlii.py"
-CANLII_SRC = LITIGATION / "canlii-mcp" / "src" / "index.ts"
+CANLII_SRC = LITIGATION / "canlii-mcp" / "src" / "tools.ts"
 CANLII_DIST = LITIGATION / "canlii-mcp" / "dist" / "canlii-mcp.js"
 
 CANLII_TOOL_RE = re.compile(r"^mcp__(?:.+__)?plugin_researcher_canlii__(.+)$")
