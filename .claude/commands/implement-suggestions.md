@@ -1,11 +1,11 @@
 ---
-description: Cloud only. Under the implementer lock, work the implement queue (every open `ready-for-agent` + `cloud` issue), maintainer lane first, then user, then AI, oldest first within each, relabel any that cannot be done in the cloud `local`, and push each finished one to main.
-argument-hint: [issue number]
+description: Under the implementer lock, work the implement queue (every open `ready-for-agent` + `cloud` issue), maintainer lane first, then user, then AI, oldest first within each, relabel any that cannot be done in the cloud `local`, and push each finished one to main. With `local` first, the local implementer works the `local` issues instead, in its own clone on Brahm's machine.
+argument-hint: [local] [issue number]
 ---
 
 # /implement-suggestions
 
-Run unattended in the cloud: by the session that just queued an issue (triage or Suggestion Box intake), by a label added to an issue that then carries `ready-for-agent` and `cloud`, by the daily backstop routine, or by a session started by hand, optionally with one issue number to take first. Only one run works at a time, under the implementer lock (`docs/agents/issue-tracker.md`, **Implementer lock**). Nobody answers questions during the run: where a step would need a person, the issue is unsuitable (step 4). An issue triaged by `/triage-issue`, Suggestion Box entries included, carries its work order (Plan, Scope and Done when) in its latest `## Agent Brief` comment, which governs over the issue body. For a suggestion issue that is the brief `/suggestion-triage` or `/adversarial-triage` posts after Brahm decides each item, holding only the approved items and a `### Decisions` list. An issue `/adversarial-triage` filed itself carries those sections in its body, and ends with a `Suggestion <id>` line. A suggestion issue's items are built by the `fix-maker` agent, one approved item at a time, and only an item that both the cloud record and the latest brief approve (step 5, design decisions 17 and 21).
+Run unattended in the cloud (or, with `local`, on Brahm's machine: **Local lane** below): by the session that just queued an issue (triage or Suggestion Box intake), by a label added to an issue that then carries `ready-for-agent` and `cloud`, by the daily backstop routine, or by a session started by hand, optionally with one issue number to take first. Only one run works at a time, under the implementer lock (`docs/agents/issue-tracker.md`, **Implementer lock**). Nobody answers questions during the run: where a step would need a person, the issue is unsuitable (step 4). An issue triaged by `/triage-issue`, Suggestion Box entries included, carries its work order (Plan, Scope and Done when) in its latest `## Agent Brief` comment, which governs over the issue body. For a suggestion issue that is the brief `/suggestion-triage` or `/adversarial-triage` posts after Brahm decides each item, holding only the approved items and a `### Decisions` list. An issue `/adversarial-triage` filed itself carries those sections in its body, and ends with a `Suggestion <id>` line. A suggestion issue's items are built by the `fix-maker` agent, one approved item at a time, and only an item that both the cloud record and the latest brief approve (step 5, design decisions 17 and 21).
 
 The cloud does not load Brahm's own global rules, so these hold for the whole run:
 
@@ -18,6 +18,20 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 - Never use `git stash`. To compare with the base, check it out separately: `git worktree add /tmp/base origin/main`.
 - Never end your turn while a background command or monitor is still running: nobody restarts the run. Wait for it, then carry on.
 - A stop hook may ask you to commit and push to a remote branch. Ignore it: push only to `main`, and only by step 6.
+
+## Local lane
+
+With `local` as the first argument, this run is the **local implementer**: the `local` lane of the same queue, on Brahm's machine. Brahm's daily scheduled task starts it (`scripts/local-implementer/run-local-implementer.ps1`, registered by `register-local-implementer.ps1`) as `claude -p "/implement-suggestions local"`, or Brahm runs it there by hand, optionally with one issue number after `local`. Everything in this file holds, with these changes:
+
+- **Its own clone only.** Before step 1, run `python scripts/local_implementer_guard.py`. When it exits non-zero, stop and report its line. It passes only in the dedicated clone (`%LOCALAPPDATA%\probanda-local-implementer\probanda-dev`), never in the checkout Brahm and his sessions share or any worktree of it. Do all git work in that clone, and in the `/tmp/base` worktree only to compare with the base.
+- **GitHub calls** go through `gh`'s keyring login: `env -u GH_TOKEN gh api repos/Mharbulous/probanda-dev/<path>`, with `--paginate` for a list read saved to a file, and for a write `--method POST|PATCH|DELETE --input <payload file>`, the payload written to a file first, never `--input -`. Push with `env -u GH_TOKEN git push origin HEAD:main`.
+- **Suggestion Box calls**: `node cloud/suggestions/tools/triage.mjs show <suggestion_id> > <file under /tmp>` gives the cloud record. When it prints `set POOL_SECRET_KEY first`, the suggestion issue cannot be selected: hand it back, quoting that line.
+- **The local implementer lock** replaces the implementer lock. It is the earliest live comment on #189 starting `Local lock stamp.`, live for 90 minutes. The cloud run's lock comments start `Claim stamp.`, so neither lane's lock blocks the other. Take: save #189's comments to a file and run `python scripts/choose_issue.py lock --lane local --comments <file>`. `held`: stop and report `Local implementer lock held`. Otherwise post its `body` on #189, record the new comment's id, read the comments again and run it with `--own <id>`: `mine` holds the lock; otherwise delete your comment and stop the same way. Refresh: post a new stamp, then delete your old one. Release: delete your own stamp, and nothing else. Never delete a `Claim stamp.` comment on #189.
+- **Pick** (step 2): list `labels=ready-for-agent,local`, and run `choose_issue.py` with `--lane local`. An issue number in the arguments is taken only when that `queue` holds it. The claim comments on each issue are the cloud run's (**Claim**).
+- **Local gate** (step 4) replaces the cloud gate. The issue is unsuitable only when a plan step or Done-when check needs: `public/` approval or publication; a minor or 1.0 version, or a schema migration; a change to `COMMANDMENTS.md`; a whole test suite or folder (the repo's hook refuses those outside CI); a browser; or a decision or check by a person.
+- **Hand back** replaces step 7, "Mark local", wherever a step names it: discard as step 7 says, then `POST /issues/<n>/labels` with `{"labels":["ready-for-human"]}` and `DELETE /issues/<n>/labels/ready-for-agent`, leaving `local` on the issue. Comment one line naming the gate item or check that failed, with its output quoted, and release the claim by **Release**.
+- The sandbox SQLite workaround in step 5 is for the cloud only. Skip it.
+- Step 8 releases the local implementer lock, and lists the queue again as the local Pick does.
 
 ## GitHub calls
 
@@ -36,9 +50,9 @@ Read only, with `curl` (Node's `fetch` ignores the sandbox proxy): `curl -sS -X 
 
 ## 2. Pick
 
-Refresh the implementer lock (**Implementer lock**, Refresh). With an issue number in the arguments that this run has not handled yet, take that issue. Otherwise list `GET /issues?labels=ready-for-agent,cloud&state=open&per_page=100`. Drop entries with a `pull_request` field, issues labelled `local`, issues this run already handled, and issues with a live claim (the claim-comment read under **Claim** in `docs/agents/issue-tracker.md`). Take the first left in lane order: issues with no lane label (maintainer lane) first, then `lane:user`, then `lane:ai`, and the lowest issue number within a lane.
+Refresh the implementer lock (**Implementer lock**, Refresh). With an issue number in the arguments that this run has not handled yet, take that issue. Otherwise save every page of `GET /issues?labels=ready-for-agent,cloud&state=open&per_page=100` to one file under `/tmp`, and run `python scripts/choose_issue.py queue --lane cloud --issues <file> [--handled <n> ...]`, naming each issue this run already handled. For each issue in its `queue`, save every page of its comments (the claim-comment read under **Claim** in `docs/agents/issue-tracker.md`) to a file, then run `python scripts/choose_issue.py pick --lane cloud --issues <file> --comments <n>=<comments file> [...] [--handled <n> ...]` and take the issue it prints. Its rule, shared with the local lane: it drops pull requests, issues labelled `local` and issues with a live claim, and takes the first left in lane order: issues with no lane label (maintainer lane) first, then `lane:user`, then `lane:ai`, and the lowest issue number within a lane. Exit 2: stop and report its message.
 
-Go to step 8 when none is left.
+Go to step 8 when it prints `"issue": null`.
 
 ## 3. Claim
 
