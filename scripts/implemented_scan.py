@@ -50,7 +50,7 @@ The scan, over the range --from..--to (--from the previous publication's commit,
   No call is made for it.
 - Each other item is set once, through suggestion-set-status's implemented form
   (cloud/legal-commons/supabase/functions/suggestion-set-status/), with the
-  project secret key from the environment variable SUGGESTIONS_SECRET_KEY. The
+  project secret key from the environment variable SUPABASE_SUGGESTIONS_SECRET_KEY. The
   function refuses an item that is not approved (declined, undecided, or
   already implemented in another release) with a 409; that is reported and not
   retried. The same item with the same release is saved again, so the scan can
@@ -89,7 +89,7 @@ _spec.loader.exec_module(check_fix_commit)
 PUBLIC_PLUGINS = export_public.PUBLIC_PLUGINS
 VERSION = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 ENDPOINT = "https://nbzkuhgiqscjkypedqff.supabase.co/functions/v1/suggestion-set-status"
-KEY_ENV = "SUGGESTIONS_SECRET_KEY"
+KEY_ENV = "SUPABASE_SUGGESTIONS_SECRET_KEY"
 
 
 class ScanError(Exception):
