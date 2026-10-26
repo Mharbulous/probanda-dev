@@ -24,7 +24,7 @@ export type Scope = "commons:read" | "items:write" | "suggestions:write";
 /** The caller a request's key names. */
 export type Caller =
   | { kind: "project" }
-  | { kind: "install"; tenant: string | null; scopes: Scope[] };
+  | { kind: "install"; tenant: string | null; scopes: Scope[]; keyHash: string };
 
 const INSTALL_PREFIX = "pb_install_";
 
@@ -50,11 +50,17 @@ async function sha256Hex(text: string): Promise<string> {
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** The live install key the caller sent, or null when it names no key or a revoked one. */
+/**
+ * The live install key the caller sent, or null when it names no key or a revoked one.
+ * keyHash is the key's SHA-256 as access.install_key holds it: the Suggestion Box
+ * records it as the account that sent a suggestion (Account Information), and
+ * nothing here logs or returns it.
+ */
 async function callerInstallKey(sent: string): Promise<Caller | null> {
-  const [row] = await sql`select access.resolve_key(${await sha256Hex(sent)}) as k`;
+  const keyHash = await sha256Hex(sent);
+  const [row] = await sql`select access.resolve_key(${keyHash}) as k`;
   const k = row?.k as { tenant: string | null; scopes: Scope[] } | null;
-  return k ? { kind: "install", tenant: k.tenant, scopes: k.scopes } : null;
+  return k ? { kind: "install", tenant: k.tenant, scopes: k.scopes, keyHash } : null;
 }
 
 export function reply(status: number, body: unknown): Response {

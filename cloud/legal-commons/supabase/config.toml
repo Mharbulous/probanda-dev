@@ -1,5 +1,5 @@
 # The project's Edge Functions: the pool's five (commons-*), the practice
-# items' three (items-*) and the Suggestion Box's four (suggestion-*). JWT verification is off for each because neither the
+# items' three (items-*) and the Suggestion Box's six (suggestion-*). JWT verification is off for each because neither the
 # project's secret keys nor install keys are JWTs: each function checks the
 # caller's `apikey` header itself (functions/_shared/caller.ts) before it reads
 # the request body.
@@ -40,6 +40,12 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.suggestion-status]
+verify_jwt = false
+
+[functions.suggestion-attach-specification]
+verify_jwt = false
+
+[functions.suggestion-withdraw]
 verify_jwt = false
 
 # The key-request queue's four (key-request-*). submit and status take no key
