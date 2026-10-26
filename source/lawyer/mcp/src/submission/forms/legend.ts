@@ -71,15 +71,22 @@ export function buildLegend(markdown: string, documentType: string): Legend {
   return { text: [LEGEND_HEADING, "", row(["Symbol", "Name", "Meaning", "Work"]), "|---|---|---|---|", ...rows].join("\n") + "\n", notes };
 }
 
-/** The mockup with its legend appended as the last section, and the legend's model notes. */
+/** The text with any legend at its end cut off. */
+function withoutLegend(markdown: string): string {
+  const at = markdown.lastIndexOf(`\n${LEGEND_HEADING}\n`);
+  return at === -1 ? markdown : markdown.slice(0, at);
+}
+
+/** The mockup, or a saved answer, with any legend at its end replaced by the generated one as the
+ * last section, and the legend's model notes. */
 export function withLegend(markdown: string, documentType: string): { markdown: string; symbolNotes: string[] } {
-  const legend = buildLegend(markdown, documentType);
-  return { markdown: legend.text ? `${markdown.trimEnd()}\n\n${legend.text}` : markdown, symbolNotes: legend.notes };
+  const body = withoutLegend(markdown);
+  const legend = buildLegend(body, documentType);
+  return { markdown: legend.text ? `${body.trimEnd()}\n\n${legend.text}` : body, symbolNotes: legend.notes };
 }
 
 /** The model notes for a mockup read back from disk: the scan reads it with its legend cut off,
  * as the render that wrote it did. */
 export function legendNotes(mockup: string, documentType: string): string[] {
-  const at = mockup.lastIndexOf(`\n${LEGEND_HEADING}\n`);
-  return buildLegend(at === -1 ? mockup : mockup.slice(0, at), documentType).notes;
+  return buildLegend(withoutLegend(mockup), documentType).notes;
 }

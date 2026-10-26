@@ -6,8 +6,8 @@
 // reads a downloaded file's content, and `fileDownload` is structurally not a generic mover:
 // the source is a bare filename inside Downloads, the destination a realpath-resolved folder
 // carrying a `6. LAW` segment. The fifth, `saveAnswer` (#1406), writes caller-supplied text, or the
-// bytes of a file in the same matter's research-agent scratchpad, as a new `.md` file in such a
-// folder and never overwrites. The sixth, `fileFetched`, files the bytes
+// bytes of a file in the same matter's research-agent scratchpad, with the generated Legend, as a
+// new `.md` file in such a folder and never overwrites. The sixth, `fileFetched`, files the bytes
 // of a page `sources__fetch` already fetched (read back from the fetch memo, never re-requested)
 // into such a folder, never overwriting, and appends its manifest record in the same call. The
 // seventh, `writeScratch`, writes the research agent's internal notes as a new `.md` file in the
@@ -34,6 +34,7 @@ import { DataServerError } from "../errors.js";
 import { checkCoverageLine } from "./coverage-line.js";
 import { downloadsDir, IN_PROGRESS_EXTENSIONS } from "./downloads.js";
 import { htmlBlocks, sourcesFetcher, type SourceFetcher } from "../sources/fetch.js";
+import { withLegend } from "../submission/forms/legend.js";
 import { findDraftDir, validateMatterRoot } from "./matter-root.js";
 import { canonicalRoot } from "./scope.js";
 import { extractText } from "./text-extract.js";
@@ -140,7 +141,8 @@ export function appendManifest(destinationDir: string, record: unknown): { path:
 }
 
 /**
- * Save `text` byte-for-byte as a new file named `filename` in a `6. LAW` folder. If that name is
+ * Save `text` byte-for-byte as a new file named `filename` in a `6. LAW` folder, its legend at the end
+ * replaced by the one legend.ts generates for the symbols it prints (none when it prints none). If that name is
  * taken, the file is `<stem> vN.md`, N one above the highest version present (the bare name counts
  * as v1). The exclusive create (`wx`) is what makes this race-safe: a name another session took
  * between the scan and the write fails EEXIST and the next attempt re-scans. A missing destination
@@ -148,7 +150,7 @@ export function appendManifest(destinationDir: string, record: unknown): { path:
  *
  * Exactly one of `text` and `fromScratch` is given. `fromScratch` is a file `writeScratch` wrote: its
  * real path must sit directly in the research-agent scratchpad of the matter that owns the
- * destination's `6. LAW` tree, and its bytes are copied unchanged. The scratch file is kept.
+ * destination's `6. LAW` tree, and its bytes are copied as `text` is. The scratch file is kept.
  */
 export function saveAnswer(
   destinationDir: string,
@@ -164,15 +166,17 @@ export function saveAnswer(
   if ((text === undefined) === (fromScratch === undefined)) {
     throw new DataServerError("pass exactly one of text and from_scratch", "invalid_argument");
   }
-  let body: Buffer;
+  let source: Buffer;
   if (fromScratch !== undefined) {
-    body = scratchBytes(destinationDir, fromScratch);
+    source = scratchBytes(destinationDir, fromScratch);
   } else {
     if (typeof text !== "string" || text.length === 0) {
       throw new DataServerError("text must be a non-empty string", "invalid_argument");
     }
-    body = Buffer.from(text, "utf-8");
+    source = Buffer.from(text, "utf-8");
   }
+  const { markdown } = withLegend(source.toString("utf-8"), "");
+  const body = Buffer.from(markdown, "utf-8");
   const { dir, created } = resolveOrCreateLawDir(destinationDir);
   const saved = writeNewVersion(dir, filename, body);
   const sha256 = createHash("sha256").update(body).digest("hex");

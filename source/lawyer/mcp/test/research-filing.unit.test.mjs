@@ -20,6 +20,8 @@ import { Worker } from "node:worker_threads";
 const { listDownloads, listLawFolder, fileDownload, appendManifest, resolveLawDir, saveAnswer, writeScratch } =
   await import("../build/files/research-filing.js");
 const { checkCoverageLine } = await import("../build/files/coverage-line.js");
+const { withLegend } = await import("../build/submission/forms/legend.js");
+const { SYMBOLS } = await import("../build/submission/forms/symbol-table.js");
 
 /** A throwaway Downloads folder plus an initialized matter with a 0. DRAFT folder, a 6. LAW tree, a
  * look-alike, and a firewall zone. */
@@ -370,6 +372,24 @@ test("save_answer from_scratch copies the memo byte for byte, keeps the scratch 
     // A missing final folder is created from a scratch source as from text.
     const fresh = join(f.matter, "6. LAW", "New issue");
     assert.equal(saveAnswer(fresh, "answer.md", undefined, scratch.path).created_dir, true);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("save_answer replaces a hand-written legend with the generated one, from text and from scratch alike", () => {
+  const f = fixture();
+  try {
+    const typed = "## Open items\n\n- Note up both authorities 📇\n\n## Legend\n\n| 📇 | noted up, but not read and classified |\n";
+    const generated = withLegend(typed, "").markdown;
+    assert.ok(generated.includes(`| 📇 | note up | ${SYMBOLS.find((s) => s.glyph === "📇").meaning} |`));
+    assert.ok(!generated.includes("not read and classified"));
+    const scratch = writeScratch(f.matter, "memo.md", typed);
+    for (const r of [saveAnswer(f.law, "memo.md", typed), saveAnswer(f.law, "memo.md", undefined, scratch.path)]) {
+      assert.equal(readFileSync(r.path, "utf-8"), generated);
+      assert.equal(r.bytes, Buffer.byteLength(generated, "utf-8"));
+      assert.equal(r.sha256, createHash("sha256").update(generated, "utf-8").digest("hex"));
+    }
   } finally {
     f.cleanup();
   }

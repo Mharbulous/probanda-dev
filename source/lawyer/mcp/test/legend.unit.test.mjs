@@ -79,6 +79,16 @@ test("no symbol on the mockup gives no legend, and withLegend leaves the text as
   assert.deepEqual(withLegend("# Title\n\nPlain prose.\n", "Written_arguments"), { markdown: "# Title\n\nPlain prose.\n", symbolNotes: [] });
 });
 
+test("withLegend replaces a legend already at the end, so a hand-written definition never survives and none is duplicated", () => {
+  const body = "# Memo\n\nAn authority. 📇\n";
+  const stale = `${body}\n## Legend\n\n| 📇 | noted up, but not read and classified |\n`;
+  const { markdown } = withLegend(stale, "");
+  assert.equal(markdown, withLegend(body, "").markdown);
+  assert.equal(markdown.split("## Legend").length, 2, "one legend");
+  assert.ok(markdown.includes(`| 📇 | ${symbol("📇").name} | ${symbol("📇").meaning} |`));
+  assert.equal(withLegend(markdown, "").markdown, markdown, "a second run changes nothing");
+});
+
 test("the notes of the selected rows come back beside the legend and never print in it", () => {
   const legend = buildLegend("A statement. 🔬 🏅\nA fact. 👤\nAn authority. 📇\n", "Written_arguments");
   assert.deepEqual(legend.notes, ["🔬", "👤", "🏅"].map((g) => `${g}: ${symbol(g).modelNote}`), "table order, noted rows only");

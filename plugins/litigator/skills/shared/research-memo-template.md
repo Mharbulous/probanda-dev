@@ -41,6 +41,8 @@ closes with the authorities relied on:
 - <full citation>, <each pinpoint relied on>
 ```
 
+Write no legend: the save appends one, generated from the approved meaning of each symbol printed.
+
 **CRAC**, the default:
 
 ```

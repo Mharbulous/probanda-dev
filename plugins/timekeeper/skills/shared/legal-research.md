@@ -365,7 +365,7 @@ complete before the session ends: never leave a session with a cited decision un
 
 1. Save it verbatim: the memo, from its `---` header line to the end of the return,
    with only the trailing `Files:` list and "Nothing new to remember" note omitted,
-   nothing added and nothing else of it removed, as `<File stem>.md` (the spawn
+   nothing added but the Legend the save generates and nothing else of it removed, as `<File stem>.md` (the spawn
    prompt's `File stem:`) in the research folder under the matter. The internal notes
    above the memo are already in the scratchpad and are not saved here.
    The research folder is set by the question you put to the audit agent. The issues
@@ -383,7 +383,8 @@ complete before the session ends: never leave a session with a cited decision un
    `/draft` job also passes the job's `db_path`, `ticket_id` and its own
    `session_token`, so the job's card lists the answer. A result reading
    `job.recorded: false` means the job is no longer the caller's: the answer is
-   saved, so stop and report.
+   saved, so stop and report. The generated Legend is the only definition of a symbol in
+   the memo: where a line of it says otherwise, save the corrected memo again.
 2. For every court decision the answer cites (in support, distinguished, or
    rejected) that case data does not already hold and that is not already on disk
    under the matter's `6. LAW\` (the pre-spawn Westlaw retrieval usually filed it),
