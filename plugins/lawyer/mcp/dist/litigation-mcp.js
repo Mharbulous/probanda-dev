@@ -1,4 +1,4 @@
-// build-stamp: ef9d1e8c9022
+// build-stamp: 79da6dfe6a5a
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -2985,7 +2985,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve11.call(this, root, ref);
+      let _sch = resolve10.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a4 = root.localRefs) === null || _a4 === void 0 ? void 0 : _a4[ref];
         const { schemaId } = this.opts;
@@ -3012,7 +3012,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s22) {
       return s1.schema === s22.schema && s1.root === s22.root && s1.baseId === s22.baseId;
     }
-    function resolve11(root, ref) {
+    function resolve10(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3643,55 +3643,55 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve11(baseURI, relativeURI, options) {
+    function resolve10(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse4(baseURI, schemelessOptions), parse4(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
       return serialize2(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative6, options, skipNormalization) {
+    function resolveComponent(base, relative5, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse4(serialize2(base, options), options);
-        relative6 = parse4(serialize2(relative6, options), options);
+        relative5 = parse4(serialize2(relative5, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative6.scheme) {
-        target.scheme = relative6.scheme;
-        target.userinfo = relative6.userinfo;
-        target.host = relative6.host;
-        target.port = relative6.port;
-        target.path = removeDotSegments(relative6.path || "");
-        target.query = relative6.query;
+      if (!options.tolerant && relative5.scheme) {
+        target.scheme = relative5.scheme;
+        target.userinfo = relative5.userinfo;
+        target.host = relative5.host;
+        target.port = relative5.port;
+        target.path = removeDotSegments(relative5.path || "");
+        target.query = relative5.query;
       } else {
-        if (relative6.userinfo !== void 0 || relative6.host !== void 0 || relative6.port !== void 0) {
-          target.userinfo = relative6.userinfo;
-          target.host = relative6.host;
-          target.port = relative6.port;
-          target.path = removeDotSegments(relative6.path || "");
-          target.query = relative6.query;
+        if (relative5.userinfo !== void 0 || relative5.host !== void 0 || relative5.port !== void 0) {
+          target.userinfo = relative5.userinfo;
+          target.host = relative5.host;
+          target.port = relative5.port;
+          target.path = removeDotSegments(relative5.path || "");
+          target.query = relative5.query;
         } else {
-          if (!relative6.path) {
+          if (!relative5.path) {
             target.path = base.path;
-            if (relative6.query !== void 0) {
-              target.query = relative6.query;
+            if (relative5.query !== void 0) {
+              target.query = relative5.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative6.path[0] === "/") {
-              target.path = removeDotSegments(relative6.path);
+            if (relative5.path[0] === "/") {
+              target.path = removeDotSegments(relative5.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative6.path;
+                target.path = "/" + relative5.path;
               } else if (!base.path) {
-                target.path = relative6.path;
+                target.path = relative5.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative6.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative5.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative6.query;
+            target.query = relative5.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3699,7 +3699,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative6.fragment;
+      target.fragment = relative5.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3901,7 +3901,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize: normalize2,
-      resolve: resolve11,
+      resolve: resolve10,
       resolveComponent,
       equal,
       serialize: serialize2,
@@ -4316,7 +4316,7 @@ var require_core = __commonJS({
       errorsText(errors = this.errors, { separator = ", ", dataVar = "data" } = {}) {
         if (!errors || errors.length === 0)
           return "No errors";
-        return errors.map((e3) => `${dataVar}${e3.instancePath} ${e3.message}`).reduce((text7, msg) => text7 + separator + msg);
+        return errors.map((e3) => `${dataVar}${e3.instancePath} ${e3.message}`).reduce((text8, msg) => text8 + separator + msg);
       }
       $dataMetaSchema(metaSchema, keywordsJsonPointers) {
         const rules = this.RULES.all;
@@ -68408,13 +68408,13 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     }
     return propValues;
   });
-  const isObject7 = isObject;
+  const isObject8 = isObject;
   const catchall = def.catchall;
   let value;
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject7(input)) {
+    if (!isObject8(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -68541,7 +68541,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     return (payload, ctx) => fn2(shape, payload, ctx);
   };
   let fastpass;
-  const isObject7 = isObject;
+  const isObject8 = isObject;
   const jit = !globalConfig.jitless;
   const allowsEval2 = allowsEval;
   const fastEnabled = jit && allowsEval2.value;
@@ -68550,7 +68550,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject7(input)) {
+    if (!isObject8(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -73671,7 +73671,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve11) => setTimeout(resolve11, pollInterval));
+        await new Promise((resolve10) => setTimeout(resolve10, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -73688,7 +73688,7 @@ var Protocol = class {
    */
   request(request2, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve11, reject) => {
+    return new Promise((resolve10, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -73766,7 +73766,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve11(parseResult.data);
+            resolve10(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -74027,12 +74027,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve11, reject) => {
+    return new Promise((resolve10, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve11, interval);
+      const timeoutId = setTimeout(resolve10, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -74902,12 +74902,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve11) => {
+    return new Promise((resolve10) => {
       const json3 = serializeMessage(message);
       if (this._stdout.write(json3)) {
-        resolve11();
+        resolve10();
       } else {
-        this._stdout.once("drain", resolve11);
+        this._stdout.once("drain", resolve10);
       }
     });
   }
@@ -74998,10 +74998,10 @@ async function runPowerShell(label2, script, stdin = "") {
   const stderr = [];
   child.stdout.on("data", (chunk2) => stdout.push(chunk2));
   child.stderr.on("data", (chunk2) => stderr.push(chunk2));
-  const done = new Promise((resolve11, reject) => {
+  const done = new Promise((resolve10, reject) => {
     child.on("error", reject);
     child.on("exit", (code) => {
-      if (code === 0) resolve11();
+      if (code === 0) resolve10();
       else reject(new Error(`${label2} failed: ${Buffer.concat(stderr).toString("utf8").trim()}`));
     });
   });
@@ -75280,15 +75280,15 @@ async function callItems(env, fn2, body) {
     throw reset ? new CloudResetError(detail) : new CloudUnreachableError(detail);
   }
   if (!res.ok) throw new CloudUnreachableError(`HTTP ${res.status}`);
-  let text7;
+  let text8;
   try {
-    text7 = await res.text();
+    text8 = await res.text();
   } catch (err) {
     throw new CloudResetError(failure(err).detail);
   }
   let json3;
   try {
-    json3 = JSON.parse(text7);
+    json3 = JSON.parse(text8);
   } catch {
     throw new CloudUnreachableError("a reply that is not JSON");
   }
@@ -75957,7 +75957,7 @@ var PracticeStore = class {
     ensure("sync_seq", "0");
     const hashKey = Buffer.from(meta2.hash_key, "base64");
     guardRaw(tool, "the tool name");
-    for (const [flag, value] of Object.entries(intent)) guardRaw(value, `the ${flag} flag`);
+    for (const [flag2, value] of Object.entries(intent)) guardRaw(value, `the ${flag2} flag`);
     const ops = specs.map((spec) => buildOp(spec, hashKey));
     const local = {};
     for (const spec of specs) {
@@ -76145,7 +76145,7 @@ function practicePrefixed(name) {
   return `practice_data__${name}`;
 }
 function ruleOverlayRecordSchema() {
-  const text7 = { type: "string" };
+  const text8 = { type: "string" };
   const isoDate = { type: "string", description: "ISO date, YYYY-MM-DD" };
   const orNull = (schema) => ({ anyOf: [schema, { type: "null" }] });
   const object3 = (properties2) => ({
@@ -76157,12 +76157,12 @@ function ruleOverlayRecordSchema() {
   const properties = {
     record_id: { type: "string", description: "UUID; omit on a first write" },
     jurisdiction: { type: "string", enum: ["CA-BC"] },
-    enactment: object3({ name: text7, citation: text7, civix_id: text7 }),
-    amending_instrument: object3({ reg: text7, oic: orNull(text7), commencement: isoDate }),
+    enactment: object3({ name: text8, citation: text8, civix_id: text8 }),
+    amending_instrument: object3({ reg: text8, oic: orNull(text8), commencement: isoDate }),
     deadline_type: { type: "string", description: "snake_case" },
     anchor_type: { type: "string", description: "snake_case" },
     base: orNull({ type: "string", description: "snake_case anchor or deadline type counted from; null in a repeal record" }),
-    rule_ref: text7,
+    rule_ref: text8,
     offset: orNull({
       ...object3({
         value: { type: "integer", minimum: 0 },
@@ -76174,9 +76174,9 @@ function ruleOverlayRecordSchema() {
     }),
     counting: orNull({ type: "string", enum: COUNTING_METHODS }),
     semantics: orNull({ type: "string", enum: SEMANTICS }),
-    description: text7,
+    description: text8,
     verbatim: { type: "string", description: "the enacting text, also for a repeal record" },
-    source: object3({ url: text7, fetched_at: isoDate, kind: { type: "string", enum: SOURCE_KINDS } }),
+    source: object3({ url: text8, fetched_at: isoDate, kind: { type: "string", enum: SOURCE_KINDS } }),
     effective_from: isoDate,
     effective_to: orNull(isoDate),
     supersedes: { type: "array", items: { type: "string" }, description: "shipped:<deadline_type> or another record's record_id" },
@@ -77192,13 +77192,13 @@ function normalizeName(name) {
   if (words.length > 1 && words[0] === "the") words.shift();
   return words.join("");
 }
-function wordsOf(text7) {
-  return text7.normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+function wordsOf(text8) {
+  return text8.normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
 }
 var VENUE_STOPWORDS = [["court"], ["tribunal"], ["of"], ["the"], ["british", "columbia"]];
 var KIND_STOPWORDS = [["of"], ["the"], ["form"]];
-function tokensOf(text7, stopwords) {
-  const words = wordsOf(text7);
+function tokensOf(text8, stopwords) {
+  const words = wordsOf(text8);
   const out = [];
   for (let i3 = 0; i3 < words.length; ) {
     const stop = stopwords.find((phrase) => phrase.every((word, k3) => words[i3 + k3] === word));
@@ -77261,9 +77261,9 @@ function resolveAmong(given, entities, jurisdiction, stopwords) {
     const initials = initialsOf(entity.name);
     if (initials !== "" && [initials, j3 + initials, initials + j3, ...withoutAffix(initials, j3)].includes(n3)) add(entity, "acronym");
     if (givenTokens.length > 0) {
-      for (const { text: text7, via } of entity.names) {
+      for (const { text: text8, via } of entity.names) {
         if (via === "code") continue;
-        const other = tokensOf(text7, stopwords);
+        const other = tokensOf(text8, stopwords);
         if (other.length === 0) continue;
         const theirs = new Set(other);
         if (givenTokens.every((t3) => theirs.has(t3)) || other.every((t3) => ours2.has(t3))) {
@@ -77295,7 +77295,7 @@ function resolveVenue(view, given, jurisdiction) {
     entities.push({
       code: NO_VENUE,
       name: nv.name,
-      names: [nv.name, ...nv.aliases.map((alias) => alias.name)].map((text7) => ({ text: text7, via: "not_venue" })),
+      names: [nv.name, ...nv.aliases.map((alias) => alias.name)].map((text8) => ({ text: text8, via: "not_venue" })),
       row: NO_VENUE_ROW,
       not_venue: nv,
       affix: false
@@ -79174,65 +79174,6 @@ function cloudKeyToolDefinitions() {
 function suggestionToolDefinitions() {
   return [
     {
-      name: "suggestion_box__submit",
-      description: `Send one suggestion about the plugin, which the practitioner has expressly said to submit, to Probanda's Cloud, using the key cloud_key__configure_credential stores. The exact text is first saved on this computer, then sent; when it cannot be sent now it is sent again each time Probanda starts, until it arrives (after seven starts that cannot reach Probanda, it stops). title and body are a complete summary of the post, even when items are sent: they must name no person, entity, matter, document or path. source is user for the practitioner's own words (through /lawyer:suggestion), assisted for a suggestion Probanda drafted and the person confirmed, or llm for a vetted loose thread (through /draft's Suggestion Box). skill, optional, is the name of the one skill the suggestion is about; omit it when the suggestion is about no single skill. items, optional, at most 10: one per pain, each with where it arises, its done_test, its constraints and its changes, each change decidable on its own and marked origin probanda (Probanda's idea) or lawyer (the person's idea). previews, optional, at most 4, for UI Previews only: each a label, whether it is the chosen one, an optional reason, and exactly one of its html built from placeholder data, never from the matter, or the path of a fixture preview that a board preview tool returned, whose text the server reads and sends as its html; a path outside the fixture preview folder, or to a file that does not end with the fixture marker line, such as a real-data preview, is refused. The server adds the lawyer plugin's name and version itself. Every string, including every one nested in items and previews, is screened before anything is saved or sent: refused when it holds a personal email address, a user-profile path naming a real user, or a matter folder name; when a string other than a Preview's html is over 2,000 characters; when the items together are over 50,000 characters; or when a Preview's html is over 200,000 characters. The refusal names the kind of hit, never the text, and nothing is saved. Returns {record_id, status, suggestion_id, items_saved, previews_saved, mockup_saved, not_sent_because}: status is "Submitted \u2713" when Probanda's Cloud confirmed it, or "Not sent, will retry", with not_sent_because no_key (this computer has no Probanda key yet; it is sent once one is set) or not_reached. items_saved and previews_saved are true only when Probanda's Cloud confirms it saved them.`,
-      inputSchema: {
-        type: "object",
-        properties: {
-          title: { type: "string" },
-          body: { type: "string" },
-          source: { type: "string", enum: ["user", "llm", "assisted"] },
-          skill: { type: "string" },
-          items: {
-            type: "array",
-            maxItems: 10,
-            items: {
-              type: "object",
-              properties: {
-                pain: { type: "string" },
-                where: { type: "string" },
-                done_test: { type: "string" },
-                constraints: { type: "array", items: { type: "string" } },
-                changes: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      change: { type: "string" },
-                      origin: { type: "string", enum: ["probanda", "lawyer"] }
-                    },
-                    required: ["change", "origin"],
-                    additionalProperties: false
-                  }
-                }
-              },
-              required: ["pain", "where", "done_test", "constraints", "changes"],
-              additionalProperties: false
-            }
-          },
-          previews: {
-            type: "array",
-            maxItems: 4,
-            items: {
-              type: "object",
-              properties: {
-                label: { type: "string" },
-                chosen: { type: "boolean" },
-                reason: { type: "string" },
-                html: { type: "string" },
-                path: { type: "string" }
-              },
-              required: ["label", "chosen"],
-              additionalProperties: false
-            }
-          }
-        },
-        required: ["title", "body", "source"],
-        additionalProperties: false
-      },
-      annotations: { destructiveHint: false, openWorldHint: true }
-    },
-    {
       name: "suggestion_box__status",
       description: `Read from Probanda's Cloud the badge of every suggestion this computer sent that is not withdrawn (or of the suggestion_ids given, 1 to 50), and keep it on this computer. A withdrawn suggestion is never asked about. Returns {suggestions: [{suggestion_id, title, badge, shown_badge}], changed: [suggestion_id], past_suggestions_path}. badge is Submitted, Under Review, Approved, Approved (n of m), Declined, Implemented in <plugin> <version> or Withdrawn; shown_badge is the one last shown to the practitioner. When changed is not empty, past_suggestions_path is the Past suggestions page, written from this computer's copy: present it as a file card, say nothing about it in chat, then call suggestion_log__write({op: "seen", suggestion_ids: changed}). With nothing sent it returns empty lists and calls nothing. Refused when this computer has no key.`,
       inputSchema: {
@@ -79248,6 +79189,73 @@ function suggestionToolDefinitions() {
       name: "suggestion_box__past_suggestions",
       description: "Write the Past suggestions page from this computer's copy of every suggestion it sent, word for word, with each one's status, and a Withdraw button on each, and return {past_suggestions_path}. Present it as a file card and never read it. Asks Probanda's Cloud nothing.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      annotations: { readOnlyHint: false, openWorldHint: false }
+    },
+    {
+      name: "suggestion_card__build",
+      description: `Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path}. Nothing is sent: the practitioner's Submit Suggestion on the card sends it, and Dismiss sends nothing. Present card_path as a file card with no chat text at all, then call suggestion_card__wait. The card shows, in its own fixed order and words, the origin cue (origin practitioner: "You suggested:"; probanda: "Probanda noticed:"), the pain_point, the items, a mockup link when any item is visual, the context_lines (constraint and evidence lines) and the raw_observation lines, a comment box, and Submit Suggestion and Dismiss. Each block's text is the practitioner's own phrases reshaped, with every name and indirect identifier replaced by one of the brackets [client], [matter], [person], [document], [file], [date], [amount]; any other bracketed word is refused. guess: true marks a block that holds words the practitioner did not use; the card labels it for them to edit. visual: true marks an item that changes how something looks (layout, colour, typography or page structure). source is user for the practitioner's own suggestion, assisted for one Probanda offered and they accepted, llm for a loose thread. skill, optional, names the one skill it is about. tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. When some of this computer's records could not be read, the check is not complete and no card is built: it returns {built: false, reason: "records_unreadable", unreadable: [...]}, naming each unread kind of record (client, matter, contact, folder name, document title, file name). Nothing is saved; do not build again in this session.`,
+      inputSchema: {
+        type: "object",
+        properties: {
+          origin: { type: "string", enum: ["practitioner", "probanda"] },
+          source: { type: "string", enum: ["user", "assisted", "llm"] },
+          skill: { type: "string" },
+          pain_point: {
+            type: "object",
+            properties: { text: { type: "string" }, guess: { type: "boolean" } },
+            required: ["text"],
+            additionalProperties: false
+          },
+          items: {
+            type: "array",
+            minItems: 1,
+            maxItems: 10,
+            items: {
+              type: "object",
+              properties: { text: { type: "string" }, guess: { type: "boolean" }, visual: { type: "boolean" } },
+              required: ["text"],
+              additionalProperties: false
+            }
+          },
+          context_lines: {
+            type: "array",
+            maxItems: 20,
+            items: {
+              type: "object",
+              properties: { kind: { type: "string", enum: ["constraint", "evidence"] }, text: { type: "string" }, guess: { type: "boolean" } },
+              required: ["kind", "text"],
+              additionalProperties: false
+            }
+          },
+          raw_observation: { type: "array", maxItems: 50, items: { type: "string" } },
+          tool_names: { type: "array", maxItems: 5e3, items: { type: "string", maxLength: 300 } },
+          held_id: { type: "string" }
+        },
+        required: ["origin", "source", "pain_point", "items"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false }
+    },
+    {
+      name: "suggestion_card__wait",
+      description: `Wait on a shown suggestion card for the practitioner's click. While this waits, the card's mockup link works. Returns as soon as one happens: {event: "submitted"} (the card sent it and shows its status) or {event: "dismissed"} (nothing was sent): say nothing about it in chat and carry on with the work. {event: "mockup", items, constraints, placeholders}: the practitioner asked for a mockup of the visual items; write one self-contained HTML page that shows all of them together, honouring every constraint, whose visible text is only lines from placeholders, each used whole, with inline styles and nothing that loads or runs (no script, link, image, address or url()), then call suggestion_card__attach_mockup and wait again. After about 45 s it returns {event: "pending"}, not an error: call again. Submit and Dismiss work without anyone waiting, so a practitioner who speaks in chat is answered and the card keeps working.`,
+      inputSchema: {
+        type: "object",
+        properties: { card_id: { type: "string" } },
+        required: ["card_id"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: false, openWorldHint: false }
+    },
+    {
+      name: "suggestion_card__attach_mockup",
+      description: "Put a mockup on a card after suggestion_card__wait returned event mockup, and return {card_id, mockup_path}. Present mockup_path as a second file card, with no chat text, then call suggestion_card__wait again. html is one self-contained page under 1 MB: elements for text and layout only (no script, link, a href, img, iframe, form or svg), only style, class, colspan and rowspan attributes, no url() or address, no style that adds text, and visible text only from the placeholders the wait returned, each used whole, with nothing that reads as a date, amount, email or path. A mockup that breaks a rule, or holds a word found in this computer's records, is refused with the rule broken; build it again.",
+      inputSchema: {
+        type: "object",
+        properties: { card_id: { type: "string" }, html: { type: "string" } },
+        required: ["card_id", "html"],
+        additionalProperties: false
+      },
       annotations: { readOnlyHint: false, openWorldHint: false }
     },
     {
@@ -79282,19 +79290,18 @@ function suggestionToolDefinitions() {
     },
     {
       name: "suggestion_log__read",
-      description: 'Read this computer\'s suggestion store: the suggestions it sent or is sending to the Probanda team, and those it holds unposted. Returns {suggestions: [{record_id, suggestion_id, title, sent_on, status, badge, shown_badge, withdrawn}], held: [{held_id, held_on, draft}]}; each list is empty when there is nothing in it. status is "Sending...", "Submitted \u2713", "Not sent, will retry", "Not sent; Probanda could not be reached" or "Withdrawn"; suggestion_id is null until Probanda\'s Cloud confirmed it. A held `draft` is a suggestion drafted while this computer had no Probanda key, exactly as it was shown to the person.',
+      description: 'Read this computer\'s suggestion store: the suggestions it sent or is sending to the Probanda team, the held drafts an earlier version kept unposted, and the cards still open. Returns {suggestions: [{record_id, suggestion_id, title, sent_on, status, badge, shown_badge, withdrawn}], held: [{held_id, held_on, draft}], open_cards: [{card_id, created_at, card_path}]}; each list is empty when there is nothing in it. status is "Sending...", "Submitted \u2713", "Not sent, will retry", "Not sent; Probanda could not be reached" or "Withdrawn"; suggestion_id is null until Probanda\'s Cloud confirmed it. A held `draft` is a suggestion drafted, before suggestions were shown as cards, while this computer had no Probanda key: offer each once, as a card built with its held_id. An open card is one neither submitted nor dismissed: to show it again, present its card_path and call suggestion_card__wait.',
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: true, openWorldHint: false }
     },
     {
       name: "suggestion_log__write",
-      description: 'Update this computer\'s suggestion store. `op: "seen"` takes `suggestion_ids`, after the Past suggestions page showing their new badges was presented, and records each badge as shown. `op: "hold"` takes `draft`, the suggestion exactly as shown to the person ({title, body, source, items, skill}), when it cannot be posted because this computer has no Probanda key, and returns its `held_id`. Nothing held is ever posted unseen: once the key is set, show the held draft again and post only on the person\'s yes. `op: "release"` takes `held_id` and removes that held draft, after it is posted or when the person drops it. An id not in the store is `not_found`.',
+      description: 'Update this computer\'s suggestion store. `op: "seen"` takes `suggestion_ids`, after the Past suggestions page showing their new badges was presented, and records each badge as shown. `op: "release"` takes `held_id` and removes that held draft without offering it. An id not in the store is `not_found`.',
       inputSchema: {
         type: "object",
         properties: {
-          op: { type: "string", enum: ["seen", "hold", "release"] },
+          op: { type: "string", enum: ["seen", "release"] },
           suggestion_ids: { type: "array", items: { type: "string" } },
-          draft: { type: "object" },
           held_id: { type: "string" }
         },
         required: ["op"],
@@ -79718,9 +79725,9 @@ function resolveRepoRoot(env = process.env, request2) {
 var cache = /* @__PURE__ */ new Map();
 function autoDetect(env, startDir) {
   const tried = [];
-  const flag = env.COCLERK_REPO_ROOT_AUTODETECT;
-  if (typeof flag === "string" && AUTODETECT_OFF.has(flag.trim().toLowerCase())) {
-    tried.push(`auto-detection disabled by COCLERK_REPO_ROOT_AUTODETECT=${flag}`);
+  const flag2 = env.COCLERK_REPO_ROOT_AUTODETECT;
+  if (typeof flag2 === "string" && AUTODETECT_OFF.has(flag2.trim().toLowerCase())) {
+    tried.push(`auto-detection disabled by COCLERK_REPO_ROOT_AUTODETECT=${flag2}`);
     return { tried };
   }
   const cacheKey = `${startDir}\0${env.APPDATA ?? ""}\0${env.USERPROFILE ?? ""}\0${env.HOME ?? ""}\0${env.COCLERK_CONFIG_PATH ?? ""}`;
@@ -79957,14 +79964,14 @@ import { closeSync, openSync, readdirSync as readdirSync4, readFileSync as readF
 import { win32 as pathWin322 } from "node:path";
 var UUID2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function readLockKey(lock, field) {
-  let text7;
+  let text8;
   try {
-    text7 = readFileSync3(lock, "utf-8");
+    text8 = readFileSync3(lock, "utf-8");
   } catch {
     return null;
   }
   try {
-    const key = JSON.parse(text7)[field];
+    const key = JSON.parse(text8)[field];
     return typeof key === "string" && UUID2.test(key) ? key : "none";
   } catch {
     return "none";
@@ -80090,7 +80097,7 @@ function holderOf(lock) {
   }
 }
 function sleep(ms2) {
-  return new Promise((resolve11) => setTimeout(resolve11, ms2));
+  return new Promise((resolve10) => setTimeout(resolve10, ms2));
 }
 
 // src/case/backend.ts
@@ -80742,7 +80749,7 @@ function listCaseParties(caseDataDir, env = process.env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync6 } from "node:fs";
 import { join as join10 } from "node:path";
-var BUILD_STAMP = false ? null : "ef9d1e8c9022";
+var BUILD_STAMP = false ? null : "79da6dfe6a5a";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80798,25 +80805,25 @@ var PathOutOfScopeError = class extends DataServerError {
   }
 };
 var DRIVE_PREFIX = /^[A-Za-z]:/;
-function assertRelativeSyntax(relative6, label2) {
-  if (typeof relative6 !== "string" || relative6.length === 0) {
+function assertRelativeSyntax(relative5, label2) {
+  if (typeof relative5 !== "string" || relative5.length === 0) {
     throw new PathOutOfScopeError(`${label2} must be a non-empty relative path`);
   }
-  if (relative6.includes("\0")) {
+  if (relative5.includes("\0")) {
     throw new PathOutOfScopeError(`${label2} contains a NUL byte`);
   }
-  if (DRIVE_PREFIX.test(relative6)) {
-    throw new PathOutOfScopeError(`${label2} must be relative, not a drive-qualified path: ${relative6}`);
+  if (DRIVE_PREFIX.test(relative5)) {
+    throw new PathOutOfScopeError(`${label2} must be relative, not a drive-qualified path: ${relative5}`);
   }
-  if (relative6.startsWith("\\\\") || relative6.startsWith("//")) {
-    throw new PathOutOfScopeError(`${label2} must be relative, not a UNC path: ${relative6}`);
+  if (relative5.startsWith("\\\\") || relative5.startsWith("//")) {
+    throw new PathOutOfScopeError(`${label2} must be relative, not a UNC path: ${relative5}`);
   }
-  if (relative6.startsWith("/") || relative6.startsWith("\\")) {
-    throw new PathOutOfScopeError(`${label2} must be relative, not rooted: ${relative6}`);
+  if (relative5.startsWith("/") || relative5.startsWith("\\")) {
+    throw new PathOutOfScopeError(`${label2} must be relative, not rooted: ${relative5}`);
   }
-  const segments = relative6.split(/[\\/]+/);
+  const segments = relative5.split(/[\\/]+/);
   if (segments.some((s3) => s3 === "..")) {
-    throw new PathOutOfScopeError(`${label2} must not contain a '..' segment: ${relative6}`);
+    throw new PathOutOfScopeError(`${label2} must not contain a '..' segment: ${relative5}`);
   }
 }
 function canonicalRoot(root, missingMessage2, code = "skills_root_missing") {
@@ -80826,19 +80833,19 @@ function canonicalRoot(root, missingMessage2, code = "skills_root_missing") {
     throw new DataServerError(missingMessage2, code);
   }
 }
-function resolveWithin(canonRoot, relative6, label2, mustExist = true) {
-  const joined = pathWin324.join(canonRoot, relative6);
+function resolveWithin(canonRoot, relative5, label2, mustExist = true) {
+  const joined = pathWin324.join(canonRoot, relative5);
   let resolved;
   if (mustExist) {
     try {
       resolved = realpathSync.native(joined);
     } catch {
-      throw new DataServerError(`${label2} not found: ${relative6}`, "not_found");
+      throw new DataServerError(`${label2} not found: ${relative5}`, "not_found");
     }
   } else {
     resolved = resolveDeepestExisting(joined);
   }
-  assertContained(canonRoot, resolved, label2, relative6);
+  assertContained(canonRoot, resolved, label2, relative5);
   return resolved;
 }
 function resolveDeepestExisting(target) {
@@ -80913,10 +80920,10 @@ function parseKnowledgePath(raw, label2, allowRoot = false) {
   }
   return { path: segments.join("/"), segments, head, skill: isSkill ? head : null, rest: segments.slice(1) };
 }
-function joinRelative(fromPath, relative6) {
+function joinRelative(fromPath, relative5) {
   const slash = fromPath.lastIndexOf("/");
   const dir = slash === -1 ? "" : fromPath.slice(0, slash);
-  return pathWin325.normalize(dir ? `${dir}\\${relative6}` : relative6).split("\\").join("/");
+  return pathWin325.normalize(dir ? `${dir}\\${relative5}` : relative5).split("\\").join("/");
 }
 var COUNTRY = /^[A-Z]{3}$/;
 var JURISDICTION = /^[A-Z]{2,3}$/;
@@ -81091,13 +81098,13 @@ function readLayerFiles(loc, label2) {
     if (type === null) return null;
     if (type === "dir") throw new DataServerError(`${label2} is a folder, not a file: ${loc.kp.path} (use knowledge__list)`, "not_a_file");
     const bytes = readLayerBytes(root.abs, label2);
-    const text7 = bytes.toString("utf-8");
-    return { layer, abs: root.abs, bytes, text: text7.startsWith("\uFEFF") ? text7.slice(1) : text7 };
+    const text8 = bytes.toString("utf-8");
+    return { layer, abs: root.abs, bytes, text: text8.startsWith("\uFEFF") ? text8.slice(1) : text8 };
   };
   return { shipped: read3("shipped", loc.shipped), local: read3("local", loc.local) };
 }
 function identicalText(a3, b3) {
-  const lf = (text7) => text7.replace(/\r\n?/g, "\n");
+  const lf = (text8) => text8.replace(/\r\n?/g, "\n");
   return lf(a3) === lf(b3);
 }
 function assertTreeFile(kp, label2) {
@@ -81708,10 +81715,10 @@ async function upsert_anchor(store, args) {
   const anchorType = asString(args.anchor_type, "anchor_type");
   const anchorDate = asString(args.anchor_date, "anchor_date");
   const statedDate = asString(args.stated_date, "stated_date");
-  const resolve11 = args.resolve === true;
+  const resolve10 = args.resolve === true;
   const amend = args.amend === true;
   const occurred = args.occurred === true;
-  if ((resolve11 ? 1 : 0) + (amend ? 1 : 0) + (occurred ? 1 : 0) > 1) {
+  if ((resolve10 ? 1 : 0) + (amend ? 1 : 0) + (occurred ? 1 : 0) > 1) {
     throw new ValidationError("upsert_anchor resolve, amend, and occurred are mutually exclusive");
   }
   const filingRef = args.filing_ref;
@@ -81720,7 +81727,7 @@ async function upsert_anchor(store, args) {
   }
   const anchorOp = newId();
   const sourceOp = newId();
-  const { ops, items: items2 } = await store.write("upsert_anchor", { resolve: resolve11, amend, occurred }, [
+  const { ops, items: items2 } = await store.write("upsert_anchor", { resolve: resolve10, amend, occurred }, [
     {
       op: "upsert",
       id: anchorOp,
@@ -82103,7 +82110,7 @@ function holderOf2(lock) {
   }
 }
 function sleep2(ms2) {
-  return new Promise((resolve11) => setTimeout(resolve11, ms2));
+  return new Promise((resolve10) => setTimeout(resolve10, ms2));
 }
 
 // src/submission/render-job.ts
@@ -82174,10 +82181,10 @@ function acquire(lockFile, dbPath, stall) {
 function sleepSync2(ms2) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms2);
 }
-function writeStatusFile(target, text7, { attempts = 10, delayMs = 50 } = {}) {
+function writeStatusFile(target, text8, { attempts = 10, delayMs = 50 } = {}) {
   const temp = `${target}.${process.pid}.tmp`;
   try {
-    writeFileSync2(temp, text7, "utf-8");
+    writeFileSync2(temp, text8, "utf-8");
   } catch (err) {
     return err.code ?? "UNKNOWN";
   }
@@ -82321,8 +82328,8 @@ function startRenderJob(options) {
     }
     return { state: "running", job_id: result.holder?.job_id ?? null, started_at: result.holder?.started_at ?? null, joined: true };
   }
-  let resolve11;
-  const promise = new Promise((r3) => resolve11 = r3);
+  let resolve10;
+  const promise = new Promise((r3) => resolve10 = r3);
   const [current = null, ...queued] = options.queue;
   const job = {
     lockFile,
@@ -82346,7 +82353,7 @@ function startRenderJob(options) {
     isFresh: options.isFresh,
     ...options.settle ? { settle: options.settle } : {},
     promise,
-    resolve: resolve11
+    resolve: resolve10
   };
   jobs.set(lockFile, job);
   installExitHandler();
@@ -82377,10 +82384,10 @@ function passageHash(passage) {
 function invalid2(file, where, rule) {
   throw new DataServerError(`${file}: ${where}: ${rule}`, "invalid_sidecar");
 }
-function parseSidecar(text7, file, knowledgePath) {
+function parseSidecar(text8, file, knowledgePath) {
   let doc;
   try {
-    doc = JSON.parse(text7);
+    doc = JSON.parse(text8);
   } catch (err) {
     return invalid2(file, "the sidecar", `is not valid JSON: ${err.message}`);
   }
@@ -82513,7 +82520,7 @@ async function acquireLock(lock) {
       const key = readLockKey(lock, "token");
       if (key === null) continue;
       if (lockIsStale(lock) && removeLockIfKey(lock, "token", key, () => lockIsStale(lock))) continue;
-      if (attempt < LOCK_ATTEMPTS3 - 1) await new Promise((resolve11) => setTimeout(resolve11, LOCK_RETRY_MS3));
+      if (attempt < LOCK_ATTEMPTS3 - 1) await new Promise((resolve10) => setTimeout(resolve10, LOCK_RETRY_MS3));
     }
   }
   throw new DataServerError(
@@ -82534,8 +82541,8 @@ async function withFileLock(target, fn2) {
     }
   }
 }
-function writeTextAtomic(target, text7) {
-  const code = writeStatusFile(target, text7);
+function writeTextAtomic(target, text8) {
+  const code = writeStatusFile(target, text8);
   if (code) throw new DataServerError(`could not write ${target}: ${code}`, "write_failed");
 }
 function writeBytesAtomic(target, bytes) {
@@ -82543,8 +82550,8 @@ function writeBytesAtomic(target, bytes) {
 }
 function readRows(sidecarAbs, knowledgePath) {
   if (!existsSync10(sidecarAbs)) return [];
-  const text7 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
-  return parseSidecar(text7.startsWith("\uFEFF") ? text7.slice(1) : text7, sidecarAbs, knowledgePath);
+  const text8 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
+  return parseSidecar(text8.startsWith("\uFEFF") ? text8.slice(1) : text8, sidecarAbs, knowledgePath);
 }
 async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check) {
   return withFileLock(sidecarAbs, () => {
@@ -82695,15 +82702,15 @@ function readZipParts(zip, source, wanted) {
   return parts;
 }
 var PART_TEXT = /<w:p(?:\s[^>]*?)?(\/?)>|<\/w:p>|<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/g;
-function occurrences(text7, token) {
-  return text7.split(token).length - 1;
+function occurrences(text8, token) {
+  return text8.split(token).length - 1;
 }
 function splitTokens(xml) {
   const split = /* @__PURE__ */ new Set();
   const paragraphs = [];
-  for (const [tag, selfClosing, text7] of xml.matchAll(PART_TEXT)) {
-    if (text7 !== void 0) {
-      paragraphs.at(-1)?.push(text7);
+  for (const [tag, selfClosing, text8] of xml.matchAll(PART_TEXT)) {
+    if (text8 !== void 0) {
+      paragraphs.at(-1)?.push(text8);
     } else if (tag === "</w:p>") {
       const texts = paragraphs.pop() ?? [];
       for (const token of TOKENS) {
@@ -82958,7 +82965,7 @@ function expandGlob(root, glob) {
 function classifyPaths(entries, types, paths) {
   return paths.map((path) => {
     const held = types.filter((t3) => entries.some((e3) => e3.type === t3.id && e3.folders.some((g3) => inFolder(g3, path))));
-    const all = (flag) => held.length > 0 && held.every((t3) => t3.flags.includes(flag));
+    const all = (flag2) => held.length > 0 && held.every((t3) => t3.flags.includes(flag2));
     return {
       path,
       types: held.map((t3) => t3.id),
@@ -83091,9 +83098,9 @@ function resolveDbPath(root) {
   return dbPath;
 }
 function caseDataRootFromCaseDataDir(dir, env) {
-  const normal = normalize(dir);
-  const inMatter = basename2(normal).toLowerCase() === CASE_DATA_FOLDER.toLowerCase();
-  const parent = inMatter ? join15(dirname7(dirname7(normal)), CASE_DATA_FOLDER) : dirname7(normal);
+  const normal2 = normalize(dir);
+  const inMatter = basename2(normal2).toLowerCase() === CASE_DATA_FOLDER.toLowerCase();
+  const parent = inMatter ? join15(dirname7(dirname7(normal2)), CASE_DATA_FOLDER) : dirname7(normal2);
   const override2 = env.COCLERK_CASE_DATA_ROOT;
   const named2 = inMatter || basename2(parent).toLowerCase() === CASE_DATA_FOLDER.toLowerCase() || !!override2 && normalize(override2).toLowerCase() === parent.toLowerCase();
   if (!named2) return null;
@@ -83310,11 +83317,11 @@ var INCLUDE = /@@include\(([^)]*)\)@@/g;
 var DATA = "@@data@@";
 function expand(name, files, chain) {
   if (chain.includes(name)) throw new Error(`template include cycle: ${[...chain, name].join(" -> ")}`);
-  const text7 = files[name];
-  if (text7 === void 0) {
+  const text8 = files[name];
+  if (text8 === void 0) {
     throw new Error(`template "${name}" is missing${chain.length ? ` (included by "${chain.at(-1)}")` : ""}`);
   }
-  return text7.replace(INCLUDE, (_3, inner) => expand(inner, files, [...chain, name]));
+  return text8.replace(INCLUDE, (_3, inner) => expand(inner, files, [...chain, name]));
 }
 function composeTemplate(entry2, files) {
   const page2 = expand(entry2, files, []);
@@ -84186,23 +84193,23 @@ function checkIsoDate(value, field) {
     throw new ValidationError(`matter_data__procedural_history_append.${field} must be a real date, YYYY-MM-DD: ${value}`, "invalid_date");
   }
 }
-function datesIn(text7) {
+function datesIn(text8) {
   const found = [];
   const iso2 = (y3, m3, d3) => `${y3}-${String(m3).padStart(2, "0")}-${String(d3).padStart(2, "0")}`;
   const month = (name) => MONTHS.findIndex((full) => full.startsWith(name.toLowerCase().replace(/\.$/, ""))) + 1;
-  for (const m3 of text7.matchAll(/\b(\d{4})-(\d{2})-(\d{2})\b/g)) found.push(iso2(+m3[1], +m3[2], +m3[3]));
-  for (const m3 of text7.matchAll(/\b([A-Za-z]{3,9}\.?)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/g)) {
+  for (const m3 of text8.matchAll(/\b(\d{4})-(\d{2})-(\d{2})\b/g)) found.push(iso2(+m3[1], +m3[2], +m3[3]));
+  for (const m3 of text8.matchAll(/\b([A-Za-z]{3,9}\.?)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/g)) {
     const mo2 = month(m3[1]);
     if (mo2 > 0) found.push(iso2(+m3[3], mo2, +m3[2]));
   }
-  for (const m3 of text7.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9}\.?),?\s+(\d{4})\b/g)) {
+  for (const m3 of text8.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9}\.?),?\s+(\d{4})\b/g)) {
     const mo2 = month(m3[2]);
     if (mo2 > 0) found.push(iso2(+m3[3], mo2, +m3[1]));
   }
   return found;
 }
-function parse3(text7) {
-  const lines2 = text7.split(/\r?\n/);
+function parse3(text8) {
+  const lines2 = text8.split(/\r?\n/);
   let i3 = 0;
   if (lines2[0] === "---") {
     const end = lines2.indexOf("---", 1);
@@ -84431,7 +84438,7 @@ function holderOf3(lock) {
   }
 }
 function sleep3(ms2) {
-  return new Promise((resolve11) => setTimeout(resolve11, ms2));
+  return new Promise((resolve10) => setTimeout(resolve10, ms2));
 }
 
 // src/timecamping/backend.ts
@@ -85796,8 +85803,8 @@ function gapMarker(wrapper) {
   }
 }
 var MOCKUP_ONLY_TAG = "<!-- mockup-only -->";
-function mockupMessage(glyph2, text7) {
-  return `${glyph2} ${text7} ${MOCKUP_ONLY_TAG}`;
+function mockupMessage(glyph2, text8) {
+  return `${glyph2} ${text8} ${MOCKUP_ONLY_TAG}`;
 }
 function jurisdictionSlotMarker(state) {
   if (state === "needed") return "\u{1F3DB}\uFE0F";
@@ -86255,8 +86262,8 @@ function ordinaryCostsOrder(wording) {
   return words.includes("costs") && words.every((w3) => ORDINARY_COSTS_WORDS.has(w3));
 }
 function ordinaryCostsSubmission(contention, servedOrderWordings) {
-  const text7 = contention.toLowerCase();
-  return servedOrderWordings.length > 0 && servedOrderWordings.every(ordinaryCostsOrder) && text7.includes("cost") && !UNUSUAL_COSTS_MODIFIERS.some((m3) => text7.includes(m3));
+  const text8 = contention.toLowerCase();
+  return servedOrderWordings.length > 0 && servedOrderWordings.every(ordinaryCostsOrder) && text8.includes("cost") && !UNUSUAL_COSTS_MODIFIERS.some((m3) => text8.includes(m3));
 }
 function doubtMarker(doubt) {
   return doubt ? "\u{1F443}" : "";
@@ -87392,13 +87399,13 @@ function servedRoot(shipped) {
   rootCache.set(shipped.root, canon);
   return canon;
 }
-function resolveServed(shipped, root, relative6, label2, original) {
+function resolveServed(shipped, root, relative5, label2, original) {
   try {
-    return resolveWithin(root, relative6, label2);
+    return resolveWithin(root, relative5, label2);
   } catch (err) {
     if (shipped.shipped_from !== "install" || !(err instanceof DataServerError) || err.code !== "not_found") throw err;
     throw new DataServerError(
-      `${label2} not found: ${original} -- "${relative6.split(/[\\/]/)[0]}" is served from ${installedPluginLabel(shipped)}'s bundled skill source (${shipped.root}), which has no such file`,
+      `${label2} not found: ${original} -- "${relative5.split(/[\\/]/)[0]}" is served from ${installedPluginLabel(shipped)}'s bundled skill source (${shipped.root}), which has no such file`,
       "not_found"
     );
   }
@@ -87411,16 +87418,16 @@ function provenance3(shipped, installRoot) {
   };
 }
 var SKILLS_PREFIX = /^.*[.](?:agents|claude)[\\/]+skills[\\/]+/i;
-function normalizeSkillPath(relative6) {
-  if (typeof relative6 !== "string" || relative6 === "") return relative6;
-  const stripped = relative6.replace(SKILLS_PREFIX, "");
+function normalizeSkillPath(relative5) {
+  if (typeof relative5 !== "string" || relative5 === "") return relative5;
+  const stripped = relative5.replace(SKILLS_PREFIX, "");
   return stripped === "" ? "" : pathWin3211.normalize(stripped);
 }
-function resolveReference(relative6, env, installRoot, from) {
-  const normalized2 = normalizeSkillPath(relative6);
-  if (!from || typeof relative6 !== "string" || relative6 === "") return normalized2;
-  const stripped = relative6.replace(SKILLS_PREFIX, "");
-  if (stripped !== relative6) return normalized2;
+function resolveReference(relative5, env, installRoot, from) {
+  const normalized2 = normalizeSkillPath(relative5);
+  if (!from || typeof relative5 !== "string" || relative5 === "") return normalized2;
+  const stripped = relative5.replace(SKILLS_PREFIX, "");
+  if (stripped !== relative5) return normalized2;
   const anchor = normalizeSkillPath(from).split(pathWin3211.sep).join("/");
   const slash = anchor.lastIndexOf("/");
   const bases = [.../* @__PURE__ */ new Set([slash === -1 ? "" : anchor.slice(0, slash), anchor.split("/")[0], ""])];
@@ -87452,17 +87459,17 @@ function splitBlocks(content) {
   if (current.length) blocks2.push(current.join("\n"));
   return blocks2;
 }
-function skillSourceRead(relative6, env, from, match, installRoot) {
+function skillSourceRead(relative5, env, from, match, installRoot) {
   const e3 = env || process.env;
-  const normalizedInput = resolveReference(relative6, e3, installRoot, from);
+  const normalizedInput = resolveReference(relative5, e3, installRoot, from);
   assertRelativeSyntax(normalizedInput, "path");
   const shipped = resolveShippedRoot(normalizedInput, e3, { installRoot });
   const root = servedRoot(shipped);
-  const resolved = resolveServed(shipped, root, normalizedInput, "path", relative6);
+  const resolved = resolveServed(shipped, root, normalizedInput, "path", relative5);
   const stats = statSync11(resolved);
   if (stats.isDirectory()) {
     throw new DataServerError(
-      `path is a directory, not a file: ${relative6} (use skill_source__list)`,
+      `path is a directory, not a file: ${relative5} (use skill_source__list)`,
       "not_found"
     );
   }
@@ -87597,16 +87604,16 @@ function admittedHost(entry2) {
   return host.toLowerCase();
 }
 function readHostEntries(path) {
-  let text7;
+  let text8;
   try {
-    text7 = readFileSync19(path, "utf-8");
+    text8 = readFileSync19(path, "utf-8");
   } catch (err) {
     if (err.code === "ENOENT") return [];
     throw err;
   }
   let entries;
   try {
-    entries = JSON.parse(text7.startsWith("\uFEFF") ? text7.slice(1) : text7);
+    entries = JSON.parse(text8.startsWith("\uFEFF") ? text8.slice(1) : text8);
   } catch (err) {
     throw new DataServerError(`${path} is not valid JSON: ${err.message}`, "invalid_hosts_file");
   }
@@ -87665,7 +87672,7 @@ function assertSourcesHost(url, allowed) {
 }
 function requestSource(url, allowed, transport) {
   assertSourcesHost(url, allowed);
-  return new Promise((resolve11, reject) => {
+  return new Promise((resolve10, reject) => {
     const req = transport.request(
       url,
       { method: "GET", headers: { "User-Agent": BROWSER_USER_AGENT, Accept: "*/*" }, timeout: REQUEST_TIMEOUT_MS },
@@ -87675,7 +87682,7 @@ function requestSource(url, allowed, transport) {
         response.on("error", reject);
         response.on(
           "end",
-          () => resolve11({
+          () => resolve10({
             status: response.statusCode ?? 0,
             location: firstHeader(response.headers.location),
             contentType: firstHeader(response.headers["content-type"]),
@@ -87782,7 +87789,7 @@ function createSourceFetcher(allowedHosts, transport, firmHosts = () => [], retr
       }
       let outcome = await followRedirects(start2, allowed, transport);
       if (isTransient(outcome)) {
-        await new Promise((resolve11) => setTimeout(resolve11, retryDelayMs));
+        await new Promise((resolve10) => setTimeout(resolve10, retryDelayMs));
         outcome = await followRedirects(start2, allowed, transport);
         if (!outcome.ok && outcome.reason === "fetch_failed") outcome = { ...outcome, retried: true };
       }
@@ -87812,8 +87819,8 @@ var NAMED_ENTITIES = {
   sect: "\xA7",
   para: "\xB6"
 };
-function decodeEntities(text7) {
-  return text7.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z][a-z0-9]*);/gi, (whole, body) => {
+function decodeEntities(text8) {
+  return text8.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z][a-z0-9]*);/gi, (whole, body) => {
     if (body[0] === "#") {
       const code = body[1] === "x" || body[1] === "X" ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
       return code > 0 && code <= 1114111 ? String.fromCodePoint(code) : whole;
@@ -87822,11 +87829,11 @@ function decodeEntities(text7) {
   });
 }
 function htmlBlocks(html) {
-  const text7 = html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "").replace(BLOCK_TAG, "\0").replace(/<[^>]*>/g, "");
-  return text7.split("\0").map((block2) => decodeEntities(block2).replace(/\s+/g, " ").trim()).filter((block2) => block2 !== "");
+  const text8 = html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "").replace(BLOCK_TAG, "\0").replace(/<[^>]*>/g, "");
+  return text8.split("\0").map((block2) => decodeEntities(block2).replace(/\s+/g, " ").trim()).filter((block2) => block2 !== "");
 }
-function foldApostrophe(text7) {
-  return text7.replace(/\u2019/g, "'");
+function foldApostrophe(text8) {
+  return text8.replace(/\u2019/g, "'");
 }
 function passagePresent(joinedBlocks, passage) {
   const needle = foldApostrophe(passage.replace(/\s+/g, " ").trim());
@@ -87883,7 +87890,7 @@ async function sourcesFetch(args, seams = {}) {
   if (terms2 && kept.length === 0) {
     throw new DataServerError(`no block of ${outcome.final_url} contains any of ${JSON.stringify(args.match)}`, "no_match");
   }
-  const text7 = kept.join("\n");
+  const text8 = kept.join("\n");
   return {
     kind: "html",
     url: outcome.url,
@@ -87893,7 +87900,7 @@ async function sourcesFetch(args, seams = {}) {
     sha256: outcome.sha256,
     blocks_total: blocks2.length,
     ...terms2 ? { blocks_matched: kept.length } : {},
-    ...Buffer.byteLength(text7, "utf-8") > FETCH_TEXT_LIMIT_BYTES ? { truncated: true } : { text: text7 }
+    ...Buffer.byteLength(text8, "utf-8") > FETCH_TEXT_LIMIT_BYTES ? { truncated: true } : { text: text8 }
   };
 }
 
@@ -87914,8 +87921,8 @@ function readFrontMatter(content, where) {
   const fail3 = (index, why) => {
     throw new DataServerError(`${where}, front matter line ${index + 2}: ${why}`, "invalid_front_matter");
   };
-  const scalar2 = (text7, index) => {
-    const value2 = text7.trim();
+  const scalar2 = (text8, index) => {
+    const value2 = text8.trim();
     if (value2 === "" || value2 === "null" || value2 === "~") return null;
     if (value2.startsWith('"')) {
       if (!value2.endsWith('"') || value2.length < 2) fail3(index, "unterminated double-quoted value");
@@ -87943,23 +87950,23 @@ function readFrontMatter(content, where) {
     if (raw.length === 0) return ["", i4];
     const depth = Math.min(...raw.filter((line) => line.trim() !== "").map(indentOf));
     const content2 = raw.map((line) => line.slice(Math.min(depth, indentOf(line))));
-    let text7;
+    let text8;
     if (header[0] === "|") {
-      text7 = content2.join("\n");
+      text8 = content2.join("\n");
     } else {
-      text7 = content2.reduce((acc, line) => {
+      text8 = content2.reduce((acc, line) => {
         if (line === "") return `${acc}
 `;
         return acc === "" || acc.endsWith("\n") ? acc + line : `${acc} ${line}`;
       }, "");
     }
-    return [header.endsWith("-") ? text7 : `${text7}
+    return [header.endsWith("-") ? text8 : `${text8}
 `, i4];
   };
   const value = (rest, index, parent) => {
-    const text7 = (rest ?? "").trim();
-    if (text7.startsWith("|") || text7.startsWith(">")) return blockScalar(text7, index + 1, parent);
-    return [scalar2(text7, index), index + 1];
+    const text8 = (rest ?? "").trim();
+    if (text8.startsWith("|") || text8.startsWith(">")) return blockScalar(text8, index + 1, parent);
+    return [scalar2(text8, index), index + 1];
   };
   const out = {};
   let i3 = 0;
@@ -88095,8 +88102,8 @@ function sourceRecordsOf(file, readInTree) {
   const front = readFrontMatter(file.content, file.path);
   const records = [];
   if (front && front.page_url !== void 0) records.push(toSourceRecord(file.path, front));
-  for (const relative6 of sourcesListOf(front, file.path)) {
-    const record2 = readInTree(file.dir ? `${file.dir}/${relative6}` : relative6);
+  for (const relative5 of sourcesListOf(front, file.path)) {
+    const record2 = readInTree(file.dir ? `${file.dir}/${relative5}` : relative5);
     const recordFront = readFrontMatter(record2.content, record2.path);
     if (!recordFront || recordFront.page_url === void 0) {
       throw new DataServerError(
@@ -88122,9 +88129,9 @@ function gapOf(outcome) {
   const { ok: _ok, hosts: _hosts, ...gap2 } = outcome;
   return gap2;
 }
-function markersFound(text7, pattern) {
+function markersFound(text8, pattern) {
   const found = /* @__PURE__ */ new Set();
-  for (const match of text7.matchAll(new RegExp(pattern.source, pattern.flags))) {
+  for (const match of text8.matchAll(new RegExp(pattern.source, pattern.flags))) {
     found.add(match.length > 1 ? match[1] ?? "" : match[0]);
   }
   return [...found].sort();
@@ -88215,9 +88222,9 @@ async function checkAll(records, fetcher) {
   for (const record2 of records) sources.push(await checkRecord(record2, fetcher));
   return sources;
 }
-function knowledgeTreeFile(path, text7) {
+function knowledgeTreeFile(path, text8) {
   const slash = path.lastIndexOf("/");
-  return { path, dir: slash === -1 ? "" : path.slice(0, slash), content: text7 };
+  return { path, dir: slash === -1 ? "" : path.slice(0, slash), content: text8 };
 }
 async function checkKnowledgeFile(path, label2, seams, fetcher) {
   const kp = parseKnowledgePath(path, label2);
@@ -88386,9 +88393,9 @@ function itemsOf(kp, front, seams, label2) {
     }
   };
   if (front) take(kp.path, front);
-  for (const relative6 of sourcesListOf(front, kp.path)) {
-    const entryLabel = `${label2}: ${kp.path}'s "sources:" entry ${relative6}`;
-    const recordKp = parseKnowledgePath(joinRelative(kp.path, relative6), entryLabel);
+  for (const relative5 of sourcesListOf(front, kp.path)) {
+    const entryLabel = `${label2}: ${kp.path}'s "sources:" entry ${relative5}`;
+    const recordKp = parseKnowledgePath(joinRelative(kp.path, relative5), entryLabel);
     const record2 = readServed(recordKp, seams, entryLabel);
     const recordFront = readFrontMatter(record2.served.text, recordKp.path);
     if (!recordFront) throw new DataServerError(`${recordKp.path}, named in ${kp.path}'s "sources:" list, has no front matter`, "invalid_source_record");
@@ -88451,8 +88458,8 @@ function sidecarRows(kp, seams, label2) {
   const type = entryType(loc.local, label2, sidecarKp.path);
   if (type === null) return [];
   if (type === "dir") throw new DataServerError(`${label2}: ${sidecarKp.path} is a folder, not a sidecar`, "invalid_sidecar");
-  const text7 = readLayerBytes(loc.local.abs, label2).toString("utf-8");
-  const rows2 = parseSidecar(text7.startsWith("\uFEFF") ? text7.slice(1) : text7, loc.local.abs, kp.path);
+  const text8 = readLayerBytes(loc.local.abs, label2).toString("utf-8");
+  const rows2 = parseSidecar(text8.startsWith("\uFEFF") ? text8.slice(1) : text8, loc.local.abs, kp.path);
   if (kp.rest.length === 5 && kp.rest[3] === "Sources") {
     const i3 = rows2.findIndex((row2) => row2.status === "corrected");
     if (i3 !== -1) {
@@ -88774,8 +88781,8 @@ function copySavedCopy(saved, seams, label2) {
   return { path: saved.path, copied: true, to: saved.pdf.to.path, sha256: saved.pdf.sha256 };
 }
 var PDF_SHA_LINE = /^\s*pdf_sha256:\s*["']?([0-9a-fA-F]{64})["']?\s*$/gm;
-function pdfHashesIn(text7) {
-  return [...new Set([...text7.matchAll(PDF_SHA_LINE)].map((m3) => m3[1].toLowerCase()))];
+function pdfHashesIn(text8) {
+  return [...new Set([...text8.matchAll(PDF_SHA_LINE)].map((m3) => m3[1].toLowerCase()))];
 }
 function liveKnowledgeTexts(canon, seams) {
   const texts = [];
@@ -88805,7 +88812,7 @@ function deleteUnreferencedPdfs(hashes, seams, label2) {
   const live = liveKnowledgeTexts(canon, seams);
   const deleted = [];
   for (const hash of hashes) {
-    if (live.some((text7) => text7.includes(hash))) continue;
+    if (live.some((text8) => text8.includes(hash))) continue;
     for (const host of readdirSync12(fetched, { withFileTypes: true })) {
       if (!host.isDirectory()) continue;
       const name = `${hash.slice(0, 12)}.pdf`;
@@ -88927,7 +88934,7 @@ async function writeDocument(kp, args, matter, seams, label2) {
   checkExcerpts(kp.path, front, fetcher);
   const saved = args.saved_copy === void 0 ? null : savedCopyOf(args.saved_copy, kp.path, front, seams);
   const stamp2 = { learned_by: "agent", matter: mattNum, plugin_version: pluginVersion(seams.installRoot), shipped_from: loc.shipped_from };
-  const text7 = stampHeader(content, saved?.pdf ? { ...stamp2, pdf_sha256: saved.pdf.sha256 } : stamp2);
+  const text8 = stampHeader(content, saved?.pdf ? { ...stamp2, pdf_sha256: saved.pdf.sha256 } : stamp2);
   const target = writableOverlayPath(kp, seams, label2);
   const previous = await withFileLock(target.abs, () => {
     const existing = entryType(target, label2, kp.path);
@@ -88940,14 +88947,14 @@ async function writeDocument(kp, args, matter, seams, label2) {
     }
     const old = existing === "file" ? readFileSync21(target.abs, "utf-8") : null;
     const stale_check = old === null ? null : checkStaleBody(kp.path, target.abs, old, front, fetcher);
-    writeTextAtomic(target.abs, text7);
+    writeTextAtomic(target.abs, text8);
     return { old, stale_check };
   });
   return {
     path: kp.path,
     layer: "local",
     status: previous.old === null ? "created" : "overwritten",
-    size: Buffer.byteLength(text7, "utf-8"),
+    size: Buffer.byteLength(text8, "utf-8"),
     header: stamp2,
     ...previous.stale_check ? { stale_check: previous.stale_check } : {},
     ...saved ? { saved_copy: copySavedCopy(saved, seams, label2) } : {},
@@ -89175,9 +89182,9 @@ async function writeIndexRow(kp, index, args, seams, label2) {
     const existing = entryType(target, label2, kp.path);
     let doc = {};
     if (existing === "file") {
-      const text7 = readFileSync22(target.abs, "utf-8");
+      const text8 = readFileSync22(target.abs, "utf-8");
       try {
-        doc = JSON.parse(text7.startsWith("\uFEFF") ? text7.slice(1) : text7);
+        doc = JSON.parse(text8.startsWith("\uFEFF") ? text8.slice(1) : text8);
       } catch (err) {
         throw new DataServerError(`${label2}: ${target.abs} is not valid JSON: ${err.message}`, "invalid_index");
       }
@@ -89249,14 +89256,14 @@ async function retireOne(kp, seams, label2) {
         }
       }
       const target = writableOverlayPath(dest, seams, label2);
-      const text7 = readFileSync23(source.abs, "utf-8");
+      const text8 = readFileSync23(source.abs, "utf-8");
       renameSync4(source.abs, target.abs);
       if (hasSidecar) renameSync4(sidecar2, `${target.abs}${SIDECAR_SUFFIX}`);
       return {
         path: kp.path,
         to: dest.path,
         ...hasSidecar ? { sidecar_to: `${dest.path}${SIDECAR_SUFFIX}` } : {},
-        pdf_hashes: pdfHashesIn(text7)
+        pdf_hashes: pdfHashesIn(text8)
       };
     })
   );
@@ -90641,8 +90648,8 @@ function noteUpDue(proposals) {
   return proposals.filter((p3) => p3.slug === "note-up" && p3.lane === "proposed").map((p3) => p3.key);
 }
 var PROVISION = /(?<![\w'’])((?:sub)?(?:rule|section)s?\s+|(?:rr?|ss?)(?:\.\s*|\s+))(\d+(?:[-.]\d+)*(?:\([0-9a-z.]+\))*)/gi;
-function provisionsIn(text7) {
-  return [...text7.matchAll(PROVISION)].map((m3) => {
+function provisionsIn(text8) {
+  return [...text8.matchAll(PROVISION)].map((m3) => {
     const word = /^(?:sub)?r/i.test(m3[1]) ? "r" : "s";
     return { text: m3[0], identity: `${word}:${m3[2].toLowerCase()}`, signature: `${word}:${m3[2].replace(/\(.*$/, "").replace(/\d+/g, "N")}` };
   });
@@ -90759,17 +90766,17 @@ var EXHIBIT_REF_RE = /((?:the[ \t]+)?(?:claimant|respondent|applicant|petitioner
 function sortFindings(findings) {
   return findings.sort((a3, b3) => a3.document.localeCompare(b3.document) || a3.page - b3.page || a3.quote.localeCompare(b3.quote));
 }
-function lineAround(text7, offset) {
-  const start2 = text7.lastIndexOf("\n", offset - 1) + 1;
-  const endIdx = text7.indexOf("\n", offset);
-  const end = endIdx === -1 ? text7.length : endIdx;
-  return text7.slice(start2, end).replace(/\s+/g, " ").trim();
+function lineAround(text8, offset) {
+  const start2 = text8.lastIndexOf("\n", offset - 1) + 1;
+  const endIdx = text8.indexOf("\n", offset);
+  const end = endIdx === -1 ? text8.length : endIdx;
+  return text8.slice(start2, end).replace(/\s+/g, " ").trim();
 }
 function extractExhibitReferences(doc) {
   const refs = [];
-  (doc.text_by_page ?? []).forEach((text7, i3) => {
-    for (const m3 of text7.matchAll(EXHIBIT_REF_RE)) {
-      const quote = lineAround(text7, m3.index ?? 0);
+  (doc.text_by_page ?? []).forEach((text8, i3) => {
+    for (const m3 of text8.matchAll(EXHIBIT_REF_RE)) {
+      const quote = lineAround(text8, m3.index ?? 0);
       const qualified = Boolean(m3[1]);
       const first = Number(m3[2]);
       const numbers = [first];
@@ -90902,8 +90909,8 @@ function isPlaceholder(bracket, preceded) {
 var BRACKET_RE = /\[[^\[\]]{0,200}\]/g;
 function looksSigned(doc) {
   if (/\bsigned\b/i.test(doc.file_name)) return true;
-  const text7 = (doc.text_by_page ?? []).join("\n");
-  return /Final Audit Report|Status:[ \t]*Signed|Document e-signed by|Agreement completed|Signature Certificate|DocuSign/i.test(text7);
+  const text8 = (doc.text_by_page ?? []).join("\n");
+  return /Final Audit Report|Status:[ \t]*Signed|Document e-signed by|Agreement completed|Signature Certificate|DocuSign/i.test(text8);
 }
 function checkPlaceholders(docs) {
   const findings = [];
@@ -90912,13 +90919,13 @@ function checkPlaceholders(docs) {
     if (!doc.text_by_page || EXHIBIT_FILE_RE.test(doc.file_name)) continue;
     scanned++;
     const signed = looksSigned(doc);
-    doc.text_by_page.forEach((text7, i3) => {
+    doc.text_by_page.forEach((text8, i3) => {
       const seen = /* @__PURE__ */ new Set();
-      for (const m3 of text7.matchAll(BRACKET_RE)) {
-        const preceded = text7.slice(Math.max(0, (m3.index ?? 0) - 1), m3.index ?? 0);
+      for (const m3 of text8.matchAll(BRACKET_RE)) {
+        const preceded = text8.slice(Math.max(0, (m3.index ?? 0) - 1), m3.index ?? 0);
         const bracket = m3[0].replace(/\s+/g, " ");
         if (!isPlaceholder(bracket, preceded)) continue;
-        const quote = lineAround(text7, m3.index ?? 0);
+        const quote = lineAround(text8, m3.index ?? 0);
         const key = `${quote}|${bracket}`;
         if (seen.has(key)) continue;
         seen.add(key);
@@ -91017,11 +91024,11 @@ function checkFormat(ctx, name, id, lines2, state) {
   return lines2.map((line) => {
     const rules = proseFormatRules(line);
     if (rules.length === 0) return line;
-    const flag = formatFlag(rules);
-    recordCriterionGlyphs(ctx.inventory, flag, ["\u{1F9E9}"], { table: "filing_prose", id, item: `${name} format: ${rules.join(", ")}` });
+    const flag2 = formatFlag(rules);
+    recordCriterionGlyphs(ctx.inventory, flag2, ["\u{1F9E9}"], { table: "filing_prose", id, item: `${name} format: ${rules.join(", ")}` });
     const refused4 = rules.filter((r3) => REFUSED_FORMAT_RULES.has(r3));
     if (refused4.length > 0) state.prose_format.push({ slot: name, rules: refused4, line: line.trim() });
-    return `${line}${flag}`;
+    return `${line}${flag2}`;
   });
 }
 function ownLines(slot2) {
@@ -91152,10 +91159,10 @@ function fetchClauses(dbPath, filingId) {
   ).rows;
 }
 var ENACTMENT_KINDS = /* @__PURE__ */ new Set(["statute", "regulation", "rule"]);
-var normalized = (text7) => text7.toLowerCase().replace(/\s+/g, " ").trim();
+var normalized = (text8) => text8.toLowerCase().replace(/\s+/g, " ").trim();
 function namesEnactment(printed, c3) {
-  const text7 = normalized(printed);
-  return [c3.authority_citation, c3.authority_title].some((name) => name !== null && normalized(name) !== "" && text7.includes(normalized(name)));
+  const text8 = normalized(printed);
+  return [c3.authority_citation, c3.authority_title].some((name) => name !== null && normalized(name) !== "" && text8.includes(normalized(name)));
 }
 function currencyWithheld(c3, printed) {
   if (c3.basis !== "implied" || c3.authority_kind === null || !ENACTMENT_KINDS.has(c3.authority_kind) || !namesEnactment(printed, c3)) return null;
@@ -91265,7 +91272,7 @@ function composeLayoutSnapshot(key, seams = {}) {
   }
   const typeFile = rows2[0].file;
   const passage_hashes = {};
-  const blockOf2 = (path, kind) => {
+  const blockOf3 = (path, kind) => {
     const read3 = knowledgeRead(path, seams);
     const block2 = read3.layout;
     for (const { rule_ref } of citedItems(block2, kind, path)) {
@@ -91278,7 +91285,7 @@ function composeLayoutSnapshot(key, seams = {}) {
     return read3;
   };
   const typePath = `${folder}/Documents/${typeFile}.md`;
-  const typeRead = blockOf2(typePath, "type");
+  const typeRead = blockOf3(typePath, "type");
   const layout = typeRead.layout;
   (Array.isArray(layout.parts) ? layout.parts : []).forEach((part, i3) => {
     const held = UNBUILT_PROJECTIONS.get(part.source);
@@ -91299,7 +91306,7 @@ function composeLayoutSnapshot(key, seams = {}) {
     }
   });
   const venuePath = key.venue === NO_VENUE ? null : `${folder}/venue.md`;
-  const venue = venuePath === null ? null : blockOf2(venuePath, "venue").layout;
+  const venue = venuePath === null ? null : blockOf3(venuePath, "venue").layout;
   const stored = { layout, venue, passage_hashes, type_file: typePath, venue_file: venuePath };
   return {
     needs_forum_parts: layout.needs_forum_parts ? 1 : 0,
@@ -91985,8 +91992,8 @@ function zoneProblem(purpose, path, root, draftUnchanged = false) {
 var RECORDS_FOLDER = "Drafting records";
 var CASE_DATA_FOLDER2 = "0. CASE DATA";
 var LEGACY_MANIFEST_FILE = "render-manifest.json";
-function sha256(text7) {
-  return createHash9("sha256").update(text7, "utf-8").digest("hex");
+function sha256(text8) {
+  return createHash9("sha256").update(text8, "utf-8").digest("hex");
 }
 function manifestPath(dbPath, filingId) {
   return join27(recordsDir(dbPath), `render-manifest-${filingId}.json`);
@@ -92048,14 +92055,14 @@ function freshManifest(dbPath, filingId, stamp2, partiesDrift) {
   for (const f3 of manifest.files) {
     const file = join27(dir, f3.file_name);
     if (!existsSync26(file)) return null;
-    let text7;
+    let text8;
     try {
-      text7 = readFileSync24(file, "utf-8");
+      text8 = readFileSync24(file, "utf-8");
     } catch {
       return null;
     }
-    if (sha256(text7) !== f3.sha256) return null;
-    contents.set(f3.file_name, text7);
+    if (sha256(text8) !== f3.sha256) return null;
+    contents.set(f3.file_name, text8);
   }
   return { manifest, dir, contents };
 }
@@ -92159,9 +92166,9 @@ function fetchDiscardedSeeds(dbPath, proceedingId) {
   );
 }
 function fetchResolvedSeeds(dbPath, proceedingId) {
-  const closed = seedClosedColumns(dbPath);
-  const column = (name) => closed.includes(name) ? `s.${name}` : `NULL AS ${name}`;
-  const resolved = [...closed.map((name) => `s.${name} IS NOT NULL`), "t.id IS NOT NULL"].join(" OR ");
+  const closed2 = seedClosedColumns(dbPath);
+  const column = (name) => closed2.includes(name) ? `s.${name}` : `NULL AS ${name}`;
+  const resolved = [...closed2.map((name) => `s.${name} IS NOT NULL`), "t.id IS NOT NULL"].join(" OR ");
   return rows(
     dbPath,
     `SELECT s.id, s.idea, ${column("discarded_at")}, ${column("suggested_at")}, t.id AS job_id, t.title AS job_title, t.created AS job_created
@@ -92431,7 +92438,7 @@ function ineligibleReasons(ticket, filed, printed, titles, inProgress2) {
     not_one_step: ticket.steps.length !== 1,
     no_proposal_keys: ticket.proposal_keys.length === 0,
     dead_key: printed !== null && ticket.proposal_keys.some((key) => !printed.has(key)),
-    reworded: printed !== null && ticket.proposal_keys.some((key) => printed.has(key) && texts.some((text7) => text7 !== titles.get(key))),
+    reworded: printed !== null && ticket.proposal_keys.some((key) => printed.has(key) && texts.some((text8) => text8 !== titles.get(key))),
     marker_not_eligible: ticket.proposal_keys.some((key) => !eligibleKey(key)),
     live_partner: ticket.conflicts.some(livePartner),
     shared_material: inProgress2.some((held) => held.id !== ticket.id && held.scope.some((h3) => ticket.scope.some((s3) => scopesShare(h3, s3))))
@@ -92905,8 +92912,8 @@ function openJobs(tickets) {
   );
 }
 var WAIVER = " \u2014 WAIVED: ";
-function recordedRevision(text7) {
-  const m3 = text7.split(WAIVER)[0].match(/\[rev (\d+)\]$/);
+function recordedRevision(text8) {
+  const m3 = text8.split(WAIVER)[0].match(/\[rev (\d+)\]$/);
   return m3 ? Number(m3[1]) : null;
 }
 var PRE_FILING = {
@@ -93115,17 +93122,17 @@ function hearingDateCriterion(dbPath, filing) {
   const met = fetchHearingDate(dbPath, filing.id) !== null;
   return { id: "hearing-date", text: "The hearing date is recorded", state: met ? "met" : "unmet", outstanding: 0, items: [], source: "sqlite" };
 }
-function cardText(drafting, gate, hearing, deadlines, send, serve2) {
+function cardText(drafting, gate, hearing, deadlines, send2, serve2) {
   if (gate.jobs > 0) return null;
   if (drafting.every((c3) => c3.state === "met")) {
     if (gate.criterion.state === "met") {
       if (hearing?.state === "unmet" && !serve2) return "Only the hearing date remains to be recorded.";
       const partial2 = deadlines.some((c3) => c3.state !== "met") || hearing?.state === "unmet";
-      return `Every ${partial2 ? "drafting " : ""}condition holds. Awaiting your approval to ${send ? "send" : serve2 ? "serve" : "file"}.`;
+      return `Every ${partial2 ? "drafting " : ""}condition holds. Awaiting your approval to ${send2 ? "send" : serve2 ? "serve" : "file"}.`;
     }
-    if (gate.present && gate.open === 0) return `Drafting conditions hold. ${(send ? PRE_SEND : PRE_FILING).stale}`;
-    if (gate.current) return `Drafting conditions hold. ${send ? "Pre-send" : "Pre-filing"} checks: ${gate.open} open.`;
-    return send ? "Every drafting condition holds. Recording it as sent runs the pre-send checks again." : "Every drafting condition holds. The next session assembles the package and runs the pre-filing checks.";
+    if (gate.present && gate.open === 0) return `Drafting conditions hold. ${(send2 ? PRE_SEND : PRE_FILING).stale}`;
+    if (gate.current) return `Drafting conditions hold. ${send2 ? "Pre-send" : "Pre-filing"} checks: ${gate.open} open.`;
+    return send2 ? "Every drafting condition holds. Recording it as sent runs the pre-send checks again." : "Every drafting condition holds. The next session assembles the package and runs the pre-filing checks.";
   }
   const reviewOnly = drafting.every((c3) => c3.state === "met" || c3.id === "counsel-review" && c3.state === "unmet");
   return reviewOnly ? "Only your review remains. Every other drafting condition holds." : null;
@@ -93137,7 +93144,7 @@ function goalFor(ctx, tickets, shelved, current, deadlines) {
     const reason = ctx.filing.retirement_reason;
     return { goal: { sentence, state: "pending", text: `Retired on ${ctx.lifecycle.since}` + (reason ? ` \u2014 ${reason.replace(/_/g, " ")}` : "") }, criteria: [] };
   }
-  const send = holdsBeforeSend(ctx.filing);
+  const send2 = holdsBeforeSend(ctx.filing);
   const serve2 = SERVED_KINDS.has(ctx.filing.kind);
   const verb = ctx.filing.needs_forum_parts === 0 ? "Sent" : serve2 && ctx.filing.sent_copy_id !== null ? "Served" : "Filed";
   const filed = ctx.filing.filed_on === null ? null : `${verb} on ${ctx.filing.filed_on}`;
@@ -93146,11 +93153,11 @@ function goalFor(ctx, tickets, shelved, current, deadlines) {
   const forum = ctx.inventory === null ? null : ctx.inventory.filter((e3) => !NEVER_DELIVERED_DOCS.has(e3.doc));
   const drafting = declared.map((c3) => inventoryCriterion(c3, forum, shelved, current));
   const jobs2 = openJobs(tickets);
-  const gate = send ? readPreSendGate(ctx, tickets, filed !== null, drafting, jobs2) : readGate(tickets, ctx.revision, filed !== null, PRE_FILING, jobs2);
+  const gate = send2 ? readPreSendGate(ctx, tickets, filed !== null, drafting, jobs2) : readGate(tickets, ctx.revision, filed !== null, PRE_FILING, jobs2);
   const hearing = storedLayout(ctx.filing).layout.goal_criteria.includes("hearing-date") ? hearingDateCriterion(ctx.dbPath, ctx.filing) : null;
   const criteria = [...drafting, gate.criterion, ...hearing === null ? [] : [hearing], ...deadlines];
   const state = forum === null ? "pending" : criteria.every((c3) => c3.state === "met") ? "met" : "unmet";
-  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines, send, serve2) }, criteria };
+  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines, send2, serve2) }, criteria };
 }
 
 // src/submission/forms/build-work-board.ts
@@ -93322,8 +93329,8 @@ function compareSentCopy(paragraphs, args, env) {
     timeoutMs: pythonTimeoutMs2(env, READ_TIMEOUT_MS)
   });
 }
-function isCalendarDate(text7) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text7);
+function isCalendarDate(text8) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text8);
   if (match === null) return false;
   const [year, month, day] = match.slice(1).map(Number);
   const date3 = new Date(Date.UTC(year, month - 1, day));
@@ -93809,8 +93816,8 @@ function sanitizeForPath(name) {
 }
 function readExistingRevision(filePath) {
   if (!existsSync29(filePath)) return void 0;
-  const text7 = readFileSync25(filePath, "utf-8");
-  const match = text7.match(/^Revision:[ \t]*(\d+)/m) ?? text7.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text7.match(/data-k="Rev">(\d+)</);
+  const text8 = readFileSync25(filePath, "utf-8");
+  const match = text8.match(/^Revision:[ \t]*(\d+)/m) ?? text8.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text8.match(/data-k="Rev">(\d+)</);
   return match ? Number(match[1]) : void 0;
 }
 function folderRows(dbPath) {
@@ -95053,6 +95060,15 @@ function pageApiSuggestionTokenValid(token, recordId, env = process.env) {
   const given = Buffer.from(token, "utf-8");
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
+function pageApiCardToken(cardId, env = process.env) {
+  return createHmac2("sha256", pageApiSecret(env)).update(`card
+${cardId}`).digest("hex");
+}
+function pageApiCardTokenValid(token, cardId, env = process.env) {
+  const expected = Buffer.from(pageApiCardToken(cardId, env), "utf-8");
+  const given = Buffer.from(token, "utf-8");
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}
 
 // src/templates/view-pages/loose-threads.css.ts
 var loose_threads_css_default = 'header h1{color:#1d5e4a}\nheader h1::after{height:3px;background:#a8691c}\nheader .meta span::before{color:#c49a6c}\n\n@@include(view-folder.css)@@\n\n.folder section>p.note{margin:-6px 0 12px;font-size:12.5px;color:var(--muted)}\narticle.idea{position:relative;background:#fff;border:2px solid #1d5e4a;border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.idea>.text{font-weight:600;margin:0;white-space:pre-wrap;padding-right:64px;cursor:pointer}\n.idea>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:#1d5e4a;transition:transform .15s}\n.idea[data-open=true]>.text::before{transform:rotate(90deg)}\n.idea>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.idea .tags{white-space:nowrap}\n.idea .tag{display:inline-block;margin-left:6px;padding:0 8px;border:1.5px solid #1d5e4a;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;line-height:1.6;vertical-align:2px}\n.idea .tag.group{background:#fff;border-color:var(--g);color:var(--g)}\n.idea>.body{display:flex;flex-direction:column;gap:4px}\n.idea>.body>p{margin:0;font-size:12.5px;color:var(--muted)}\n.idea>.body>p.thought{white-space:pre-wrap}\n.idea>button.status{position:absolute;top:8px;right:10px;font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}\n.idea>button.status:disabled{cursor:default;opacity:.5}\n.idea>.error{margin:0;font-size:12.5px;color:#b3261e}\n.stack>p>span.status{margin-left:8px;padding:0 8px;border:1px solid var(--line-strong);border-radius:999px;font-size:11px;color:var(--muted)}\n.api-off{margin:6px 0 0;font-size:12.5px;color:var(--muted)}\n.switch{margin-left:auto;position:relative;z-index:2;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13px;font-weight:700;padding:4px 8px 4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;cursor:pointer}\n.switch .label{color:#b9c9c0;transition:color .18s}\n.switch[aria-checked=true] .label{color:#1d5e4a}\n.switch .track{position:relative;width:30px;height:17px;border-radius:999px;background:#b9c9c0;transition:background .18s}\n.switch[aria-checked=true] .track{background:#1d5e4a}\n.switch .knob{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s}\n.switch[aria-checked=true] .knob{transform:translateX(13px)}\n.switch:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.resolved-toggle{margin-left:auto;position:relative;z-index:2;font:inherit;font-size:13px;font-weight:700;padding:4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;color:#1d5e4a;cursor:pointer}\n.resolved-toggle:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.resolved-toggle:not([hidden]) + .switch{margin-left:0}\n.chips{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}\n.chip{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;padding:3px 11px;border:1.5px solid #c9d3ce;border-radius:999px;background:#fff;color:#8a948f;cursor:pointer}\n.chip[aria-pressed=true]{border-color:var(--g);background:color-mix(in srgb,var(--g) 10%,#fff);color:var(--g)}\n.chip[aria-pressed=true]::before{content:"\u2713";font-weight:800}\n.chip .n{font-family:var(--mono);font-size:11px;opacity:.8}\n.chip:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.folder section>p.empty{margin:0 0 12px}\n@media (prefers-reduced-motion:reduce){.switch .label,.switch .track,.switch .knob,.idea>.text::before{transition:none}}';
@@ -95704,8 +95720,8 @@ function viewPageFile(page2, board, folder) {
   if (folder !== void 0) return join31(folder, `${page2.name}.html`);
   return board.filing_id === null ? `${page2.name} - Job Board - proceeding ${board.proceeding_id}.html` : `${page2.name} - Job Board ${board.filing_id}.html`;
 }
-function escapeRegExp(text7) {
-  return text7.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRegExp(text8) {
+  return text8.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 function isViewPageFile(fileName) {
   return VIEW_PAGES.some((page2) => new RegExp(`^${escapeRegExp(page2.name)}(?: - Job Board (?:- proceeding )?\\d+)?\\.html$`, "i").test(fileName));
@@ -95795,8 +95811,8 @@ function writePage(file, html) {
 var OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
 var PREVIEW_FILE = / preview \d+\.html$/i;
 function generatorWrote(file) {
-  const text7 = readFileSync27(file, "utf-8");
-  return text7.includes(JOB_BOARD_MARKER) || text7.includes(MATTER_BOARD_MARKER) || text7.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
+  const text8 = readFileSync27(file, "utf-8");
+  return text8.includes(JOB_BOARD_MARKER) || text8.includes(MATTER_BOARD_MARKER) || text8.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
 }
 function sweepOldPages(draftDir, names) {
   const moved = [];
@@ -96041,7 +96057,7 @@ function pageItems(held, combined) {
 }
 function combinedCriteria(goaled, deadlineIds, page2) {
   const several = goaled.length > 1 && !page2;
-  const tag = (s3, text7) => several ? `${writingOf(s3)}: ${text7}` : text7;
+  const tag = (s3, text8) => several ? `${writingOf(s3)}: ${text8}` : text8;
   const order = [];
   const byId2 = /* @__PURE__ */ new Map();
   goaled.forEach((s3, i3) => {
@@ -98537,7 +98553,7 @@ function renderNoticeOfApplication(ctx) {
     const printed = printMarkerSets([markers]);
     lines2.push(`${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${printed ? ` ${printed}` : ""} <!-- document ${i3 + 1} -->`);
   });
-  STANDARD_MATERIAL_LINES.forEach((text7, i3) => lines2.push(`${docs.length + i3 + 1}. ${text7}`));
+  STANDARD_MATERIAL_LINES.forEach((text8, i3) => lines2.push(`${docs.length + i3 + 1}. ${text8}`));
   lines2.push("");
   lines2.push(checkboxOrderBlock([]));
   lines2.push("");
@@ -99442,7 +99458,7 @@ function renderApplicationResponse(ctx) {
       `${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${provenancePart}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
     );
   });
-  STANDARD_MATERIAL_LINES.forEach((text7, i3) => lines2.push(`${docs.length + i3 + 1}. ${text7}`));
+  STANDARD_MATERIAL_LINES.forEach((text8, i3) => lines2.push(`${docs.length + i3 + 1}. ${text8}`));
   lines2.push("");
   lines2.push("**Address for service filed:**");
   const afs = afsCheckbox(client);
@@ -99586,9 +99602,9 @@ function fetchAttachedExhibits(dbPath, affidavitDocumentId) {
 function buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, onMissing) {
   const out = [];
   const parts = [];
-  const newPart = (text7, indent) => {
-    out.push({ text: text7, indent, part: parts.length });
-    parts.push({ bookmark: text7 });
+  const newPart = (text8, indent) => {
+    out.push({ text: text8, indent, part: parts.length });
+    parts.push({ bookmark: text8 });
   };
   out.push({ text: "Cover Page", indent: 0, part: "cover" });
   out.push({ text: "Table of Contents", indent: 0, part: "toc" });
@@ -100297,8 +100313,8 @@ function renderBccaFactum(ctx) {
 
 // src/submission/forms/render-bcsc-affidavit.ts
 var EXHIBIT_TOKEN = /\{exhibit:(\d+)\}/g;
-function placedDocumentIds(text7) {
-  return [...text7.matchAll(EXHIBIT_TOKEN)].map((m3) => Number(m3[1]));
+function placedDocumentIds(text8) {
+  return [...text8.matchAll(EXHIBIT_TOKEN)].map((m3) => Number(m3[1]));
 }
 function letterFor(index) {
   let out = "";
@@ -100307,13 +100323,13 @@ function letterFor(index) {
 }
 function exhibitLetters(paragraphTexts) {
   const letters = /* @__PURE__ */ new Map();
-  for (const text7 of paragraphTexts) {
-    for (const id of placedDocumentIds(text7)) if (!letters.has(id)) letters.set(id, letterFor(letters.size));
+  for (const text8 of paragraphTexts) {
+    for (const id of placedDocumentIds(text8)) if (!letters.has(id)) letters.set(id, letterFor(letters.size));
   }
   return letters;
 }
-function withExhibitLetters(text7, letters) {
-  return text7.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
+function withExhibitLetters(text8, letters) {
+  return text8.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
 }
 function fetchAffidavits(dbPath, filingId) {
   return rows(
@@ -101267,8 +101283,8 @@ function authorityNamePattern(dbPath, proceedingId) {
   return new RegExp(`(?<![\\p{L}\\p{N}*])(?:${alternatives})(?![\\p{L}\\p{N}*])`, "gu");
 }
 function italicizeNames(line, names) {
-  const marked = [...line.matchAll(ITALIC_SPAN)].map((m3) => [m3.index, m3.index + m3[0].length]);
-  return line.replace(names, (name, offset) => marked.some(([start2, end]) => offset >= start2 && offset < end) ? name : `*${name}*`);
+  const marked2 = [...line.matchAll(ITALIC_SPAN)].map((m3) => [m3.index, m3.index + m3[0].length]);
+  return line.replace(names, (name, offset) => marked2.some(([start2, end]) => offset >= start2 && offset < end) ? name : `*${name}*`);
 }
 function fetchAffidavitFields(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
@@ -101741,7 +101757,7 @@ function renderForm33FiledFace(ctx, warnings) {
   for (const d3 of docs) {
     body.push(`- ${d3.label}${d3.document_date ? `, dated ${d3.document_date}` : ""}`);
   }
-  for (const text7 of STANDARD_MATERIAL_LINES) body.push(`- ${text7}`);
+  for (const text8 of STANDARD_MATERIAL_LINES) body.push(`- ${text8}`);
   return front.join("\n") + "\n" + body.join("\n").trimEnd() + "\n";
 }
 
@@ -102126,8 +102142,8 @@ function renderBccaBookFiledFace(ctx) {
 
 // src/submission/forms/emit-bcca-factum.ts
 var ISO_DATE2 = /^\d{4}-\d{2}-\d{2}$/;
-function oneLine2(text7) {
-  return text7.replace(/\s*\n\s*/g, " ").trim();
+function oneLine2(text8) {
+  return text8.replace(/\s*\n\s*/g, " ").trim();
 }
 function pushExcerpt(lines2, excerpt, cite) {
   if (excerpt) {
@@ -102385,8 +102401,8 @@ import { basename as basename10, dirname as dirname25, isAbsolute as isAbsolute7
 function authored(docs) {
   return docs.filter((d3) => d3.text_by_page && !EXHIBIT_FILE_RE.test(d3.file_name));
 }
-function lines(text7) {
-  return text7.split(/\r?\n/).map((l3) => l3.replace(/\s+/g, " ").trim()).filter(Boolean);
+function lines(text8) {
+  return text8.split(/\r?\n/).map((l3) => l3.replace(/\s+/g, " ").trim()).filter(Boolean);
 }
 var norm = (s3) => s3.replace(/\s+/g, " ").trim().toLowerCase();
 var esc2 = (s3) => s3.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -102425,8 +102441,8 @@ function checkFigureConsistency(docs, dates, amounts) {
   const scanned = authored(docs);
   for (const doc of scanned) {
     const severity = looksSigned(doc) ? "high" : "normal";
-    doc.text_by_page.forEach((text7, i3) => {
-      for (const line of new Set(lines(text7))) {
+    doc.text_by_page.forEach((text8, i3) => {
+      for (const line of new Set(lines(text8))) {
         for (const m3 of line.matchAll(MONEY_RE)) {
           const c3 = cents(m3[1], m3[2]);
           if (amountCents.some((a3) => a3.cents === c3)) continue;
@@ -102493,8 +102509,8 @@ function checkPartyNames(docs, anchors) {
   const fileRe = anchors.file_number ? fileNumberSearch(anchors.file_number) : null;
   for (const doc of scanned) {
     const severity = looksSigned(doc) ? "high" : "normal";
-    doc.text_by_page.forEach((text7, i3) => {
-      for (const line of new Set(lines(text7))) {
+    doc.text_by_page.forEach((text8, i3) => {
+      for (const line of new Set(lines(text8))) {
         for (const { name, re: re3 } of names) {
           for (const m3 of line.matchAll(re3)) {
             if (nameKey(m3[0]) === nameKey(name)) continue;
@@ -102548,7 +102564,7 @@ function checkExecution(docs, instruments) {
       push(1, doc.file_name, `could not be read: ${doc.error ?? "not a PDF or DOCX"}`);
       continue;
     }
-    const pages = doc.text_by_page.map((text7, i3) => ({ text: text7, page: i3 + 1 }));
+    const pages = doc.text_by_page.map((text8, i3) => ({ text: text8, page: i3 + 1 }));
     const audit = pages.filter((x3) => AUDIT_PAGE_RE.test(x3.text));
     const statuses = audit.flatMap((p3) => [...p3.text.matchAll(AUDIT_STATUS_RE)].map((m3) => ({ page: p3.page, quote: m3[0].replace(/\s+/g, " "), value: m3[1] })));
     for (const s3 of statuses.filter((x3) => !/^(completed|signed)$/i.test(x3.value))) {
@@ -103541,12 +103557,12 @@ async function lookUpMatter(root, practiceDb2, client) {
     return { lookup: { matt_num: token, found: false, note: `Matter lookup for ${token} ${why}; client identity not filled in.` }, client };
   }
   const row2 = rows2[0];
-  const text7 = (v3) => v3 === null || v3 === void 0 || v3 === "" ? void 0 : String(v3);
+  const text8 = (v3) => v3 === null || v3 === void 0 || v3 === "" ? void 0 : String(v3);
   const resolved = {
-    clientName: client.clientName ?? text7(row2.client_name),
-    clientNo: client.clientNo ?? text7(row2.client_num),
-    matterNo: client.matterNo ?? text7(row2.matt_num),
-    matterDescription: client.matterDescription ?? text7(row2.description)
+    clientName: client.clientName ?? text8(row2.client_name),
+    clientNo: client.clientNo ?? text8(row2.client_num),
+    matterNo: client.matterNo ?? text8(row2.matt_num),
+    matterDescription: client.matterDescription ?? text8(row2.description)
   };
   return {
     lookup: {
@@ -103730,8 +103746,8 @@ function bcscFormHarness(args, env = process.env, installRoot) {
     if (args.command === "abandon") confineSessionDir(sessions, sessionId);
     else ctx = checkSession(root, caseData, sessions, sessionId);
     argv.push("--", sessionId);
-    const text7 = TEXT_ARG[args.command];
-    if (text7) argv.push(requireArg(args, text7));
+    const text8 = TEXT_ARG[args.command];
+    if (text8) argv.push(requireArg(args, text8));
     if (args.command === "step" && LOCATE_STEPS.has(ctx?.current_step)) confineLocatePaths(caseData, argv[argv.length - 1]);
   }
   const action = runPythonDriver({
@@ -103899,8 +103915,8 @@ function bindDraftTarget(matterRoot, env) {
   const root = validateMatterRoot(matterRoot);
   return { root, caseData: existingCaseDataFolder(root, env), draft: draftFolder(root) };
 }
-function writeWorkingFile(target, folders, fileName, text7) {
-  return writeSubstanceFile(target.caseData, fileName, text7, folders);
+function writeWorkingFile(target, folders, fileName, text8) {
+  return writeSubstanceFile(target.caseData, fileName, text8, folders);
 }
 function writingSubfolder(target, name) {
   return resolveWithin(target.writing, name, `${name} folder`, false);
@@ -103948,8 +103964,8 @@ function runPublishFill(subskill, script, runs, env, installRoot) {
 // src/submission/publish-tools.ts
 function renderRefusal(render) {
   const refusal2 = (key) => key === "bundle_outdated" || key === "filing_retired" || key.endsWith("_gate_failed");
-  const flag = Object.entries(render).find(([key, value]) => value === true && refusal2(key));
-  return flag ? { success: false, error: flag[0], detail: render.note, render } : null;
+  const flag2 = Object.entries(render).find(([key, value]) => value === true && refusal2(key));
+  return flag2 ? { success: false, error: flag2[0], detail: render.note, render } : null;
 }
 var json = (value) => JSON.stringify(value, null, 2);
 function publishGeneral(args, env = process.env, installRoot) {
@@ -104377,11 +104393,11 @@ function confineMatterFile(root, given, label2) {
   } catch {
     canonical = pathWin3223.normalize(absolute);
   }
-  const relative6 = pathWin3223.relative(root, canonical);
-  if (relative6 === "" || relative6.split(pathWin3223.sep)[0] === ".." || pathWin3223.isAbsolute(relative6)) {
+  const relative5 = pathWin3223.relative(root, canonical);
+  if (relative5 === "" || relative5.split(pathWin3223.sep)[0] === ".." || pathWin3223.isAbsolute(relative5)) {
     throw new PathOutOfScopeError(`${label2} must lie inside the matter folder ${root}: ${given}`);
   }
-  const resolved = resolveWithin(root, relative6, label2, false);
+  const resolved = resolveWithin(root, relative5, label2, false);
   if (zoneProblem("write", resolved)) {
     throw new PathOutOfScopeError(`${label2} lies in TRASH, 0. CASE DATA or a privileged or disclosed folder: ${given}`);
   }
@@ -104654,9 +104670,9 @@ function writeEmail(args, env, installRoot) {
   let root;
   let outDir;
   if (args.matter_root === void 0) {
-    const relative6 = attachments.filter((path) => !pathWin3224.isAbsolute(path));
-    if (relative6.length) {
-      throw new ValidationError(`drafting_forms__draft_harness.attachments must be absolute paths when no matter_root is given: ${relative6.join(", ")}`);
+    const relative5 = attachments.filter((path) => !pathWin3224.isAbsolute(path));
+    if (relative5.length) {
+      throw new ValidationError(`drafting_forms__draft_harness.attachments must be absolute paths when no matter_root is given: ${relative5.join(", ")}`);
     }
     root = realpathSync13.native(resolveCaseDataRoot(env));
     const drafts = pathWin3224.join("_practice", "drafts");
@@ -104927,10 +104943,10 @@ function dirEntry(raw) {
 
 // src/correspondence/eml.ts
 function splitHead(raw) {
-  const text7 = raw.toString("latin1");
-  const m3 = /\r?\n\r?\n/.exec(text7);
-  if (!m3) return { head: text7, body: Buffer.alloc(0) };
-  return { head: text7.slice(0, m3.index), body: raw.subarray(m3.index + m3[0].length) };
+  const text8 = raw.toString("latin1");
+  const m3 = /\r?\n\r?\n/.exec(text8);
+  if (!m3) return { head: text8, body: Buffer.alloc(0) };
+  return { head: text8.slice(0, m3.index), body: raw.subarray(m3.index + m3[0].length) };
 }
 function parseHeaders(head) {
   const headers = /* @__PURE__ */ new Map();
@@ -104950,8 +104966,8 @@ function decodeCharset(bytes, charset) {
     return new TextDecoder("windows-1252").decode(bytes);
   }
 }
-function quotedPrintable(text7) {
-  const soft = text7.replace(/=\r?\n/g, "");
+function quotedPrintable(text8) {
+  const soft = text8.replace(/=\r?\n/g, "");
   const out = [];
   for (let i3 = 0; i3 < soft.length; i3 += 1) {
     if (soft[i3] === "=" && /^[0-9A-Fa-f]{2}$/.test(soft.slice(i3 + 1, i3 + 3))) {
@@ -105003,8 +105019,8 @@ function walk3(raw, out, depth) {
     const delimiter = `--${boundary}`;
     const whole = body.toString("latin1");
     const close = whole.indexOf(`${delimiter}--`);
-    const text7 = close >= 0 ? whole.slice(0, close) : whole;
-    const pieces = text7.split(new RegExp(`\\r?\\n?${escapeRegex2(delimiter)}[ \\t]*\\r?\\n`));
+    const text8 = close >= 0 ? whole.slice(0, close) : whole;
+    const pieces = text8.split(new RegExp(`\\r?\\n?${escapeRegex2(delimiter)}[ \\t]*\\r?\\n`));
     for (const piece of pieces.slice(1)) {
       if (piece.trim() === "") continue;
       walk3(Buffer.from(piece, "latin1"), out, depth + 1);
@@ -105021,8 +105037,8 @@ function walk3(raw, out, depth) {
   else if (mediaType === "text/html" && out.html === void 0) out.html = decodeCharset(decoded, charset);
   else if ((mediaType === "text/rtf" || mediaType === "application/rtf") && out.rtf === void 0) out.rtf = decoded;
 }
-function escapeRegex2(text7) {
-  return text7.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRegex2(text8) {
+  return text8.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // src/correspondence/highlight.ts
@@ -105117,8 +105133,8 @@ var ENTITIES = {
   agrave: "\xE0",
   ccedil: "\xE7"
 };
-function decodeEntities2(text7) {
-  return text7.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, body) => {
+function decodeEntities2(text8) {
+  return text8.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, body) => {
     if (body[0] === "#") {
       const code = body[1] === "x" || body[1] === "X" ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
       return Number.isFinite(code) ? String.fromCodePoint(code) : whole;
@@ -105147,8 +105163,8 @@ function readHtml(html) {
     }
     return "";
   };
-  const push = (text8) => {
-    if (hidden === 0 && text8) runs.push({ text: text8, colour: current() });
+  const push = (text9) => {
+    if (hidden === 0 && text9) runs.push({ text: text9, colour: current() });
   };
   const token = /<!--[\s\S]*?-->|<!\[[\s\S]*?\]>|<!(?:[^>]*)>|<\/?([a-zA-Z][\w:-]*)([^>]*)>|([^<]+)|</g;
   let m3;
@@ -105178,8 +105194,8 @@ function readHtml(html) {
     }
     stack.push({ name, colour: INLINE.has(name) ? highlightOf(name, m3[2]) : void 0 });
   }
-  const text7 = runs.map((r3) => r3.text).join("").replace(/\u00a0/g, " ").replace(/[ \t]*\n[ \t]*/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
-  return { text: text7, highlights: mergeRuns(runs) };
+  const text8 = runs.map((r3) => r3.text).join("").replace(/\u00a0/g, " ").replace(/[ \t]*\n[ \t]*/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return { text: text8, highlights: mergeRuns(runs) };
 }
 
 // src/correspondence/lzfu.ts
@@ -105276,20 +105292,20 @@ function readRtf(rtf) {
     const rgb = colours[idx];
     return rgb ? colourName(rgb) : null;
   };
-  const emitText = (text8) => {
-    if (!text8 || st3.skip) return;
+  const emitText = (text9) => {
+    if (!text9 || st3.skip) return;
     if (fromHtml) {
       if (st3.htmlRtf && !st3.htmlTag) return;
-      html += st3.htmlTag ? text8 : escapeHtml(text8);
+      html += st3.htmlTag ? text9 : escapeHtml(text9);
       return;
     }
-    runs.push({ text: text8, colour: colourOf() ?? "" });
+    runs.push({ text: text9, colour: colourOf() ?? "" });
   };
   const flushBytes = () => {
     if (pendingBytes.length === 0) return;
-    const text8 = decoder.decode(Buffer.from(pendingBytes));
+    const text9 = decoder.decode(Buffer.from(pendingBytes));
     pendingBytes = [];
-    emitText(text8);
+    emitText(text9);
   };
   let i3 = 0;
   while (i3 < src.length) {
@@ -105458,23 +105474,23 @@ function readRtf(rtf) {
     for (const c3 of chunk2) pendingBytes.push(c3.charCodeAt(0));
   }
   flushBytes();
-  function emitLiteral(text8) {
+  function emitLiteral(text9) {
     flushBytes();
     if (skipChars > 0) {
       skipChars -= 1;
       return;
     }
-    emitText(text8);
+    emitText(text9);
   }
   if (fromHtml) return { html, text: "", highlights: [] };
-  const text7 = runs.map((r3) => r3.text).join("");
-  return { text: text7, highlights: mergeRuns(runs) };
+  const text8 = runs.map((r3) => r3.text).join("");
+  return { text: text8, highlights: mergeRuns(runs) };
 }
 function hex(n3) {
   return Math.max(0, Math.min(255, n3)).toString(16).padStart(2, "0");
 }
-function escapeHtml(text7) {
-  return text7.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function escapeHtml(text8) {
+  return text8.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 function textDecoder(codepage) {
   const label2 = codepage === 65001 ? "utf-8" : codepage === 1200 ? "utf-16le" : `windows-${codepage}`;
@@ -105528,8 +105544,8 @@ var MsgNode = class {
     return this.cfb.read(`${this.prefix}/__substg1.0_${tag}0102`);
   }
 };
-function collapse(text7) {
-  return (text7 ?? "").replace(/\s+/g, " ").trim();
+function collapse(text8) {
+  return (text8 ?? "").replace(/\s+/g, " ").trim();
 }
 function address(node, nameProp, smtpProp, addrProp) {
   const name = collapse(node.text(nameProp));
@@ -105560,12 +105576,12 @@ function msgHeaders(cfb, msg) {
     sent: isoOrNull(dateHeader) ?? msg.time(57) ?? msg.time(3590)
   };
 }
-function splitList(text7) {
-  return (text7 ?? "").split(";").map(collapse).filter(Boolean);
+function splitList(text8) {
+  return (text8 ?? "").split(";").map(collapse).filter(Boolean);
 }
-function isoOrNull(text7) {
-  if (!text7) return null;
-  const t3 = Date.parse(text7);
+function isoOrNull(text8) {
+  if (!text8) return null;
+  const t3 = Date.parse(text8);
   return Number.isNaN(t3) ? null : new Date(t3).toISOString();
 }
 function openMsg(bytes) {
@@ -105618,12 +105634,12 @@ function emlHeaders(headers) {
     sent: isoOrNull(headers.get("date"))
   };
 }
-function splitAddresses(text7) {
+function splitAddresses(text8) {
   const out = [];
   let depth = 0;
   let quoted = false;
   let current = "";
-  for (const c3 of text7) {
+  for (const c3 of text8) {
     if (c3 === '"') quoted = !quoted;
     else if (c3 === "<" && !quoted) depth += 1;
     else if (c3 === ">" && !quoted) depth = Math.max(0, depth - 1);
@@ -105716,9 +105732,9 @@ function scanMessageHeaders(root) {
   const complete = walk4(root, "");
   return { messages, truncated: !complete };
 }
-function rejectFirewall(relative6) {
-  if (zoneProblem("read", pathWin3225.dirname(relative6))) {
-    throw new PathOutOfScopeError(`path lies in a folder this tool never reads (TRASH, 0. CASE DATA, privileged, disclosed): ${relative6}`);
+function rejectFirewall(relative5) {
+  if (zoneProblem("read", pathWin3225.dirname(relative5))) {
+    throw new PathOutOfScopeError(`path lies in a folder this tool never reads (TRASH, 0. CASE DATA, privileged, disclosed): ${relative5}`);
   }
 }
 function readMessage(args) {
@@ -105741,13 +105757,13 @@ function readMessage(args) {
     } else {
       full2 = resolveWithin(root, given, "path");
     }
-    const relative6 = pathWin3225.relative(root, full2);
-    rejectFirewall(relative6);
+    const relative5 = pathWin3225.relative(root, full2);
+    rejectFirewall(relative5);
     const ext = extname4(full2).toLowerCase();
     if (!MESSAGE_EXTENSIONS.has(ext)) {
-      throw new DataServerError(`not a message file: ${relative6} (only .msg and .eml)`, "unsupported_extension");
+      throw new DataServerError(`not a message file: ${relative5} (only .msg and .eml)`, "unsupported_extension");
     }
-    return { path: relative6, ...parseMessage(readFileSync32(full2), ext) };
+    return { path: relative5, ...parseMessage(readFileSync32(full2), ext) };
   }
   const needle = args.from.trim().toLowerCase();
   const scan = scanMessageHeaders(root);
@@ -105838,11 +105854,11 @@ function zipParts(parts) {
 var W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 var QUOTE_INDENT = 720;
 var LIST_INDENT = 360;
-function escapeXml(text7) {
-  return text7.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+function escapeXml(text8) {
+  return text8.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 var WORD = /[\p{L}\p{N}]/u;
-function inlineRuns(text7) {
+function inlineRuns(text8) {
   const runs = [];
   let bold = false;
   let italic = false;
@@ -105851,22 +105867,22 @@ function inlineRuns(text7) {
     if (buf) runs.push({ text: buf, bold, italic });
     buf = "";
   };
-  for (let i3 = 0; i3 < text7.length; i3 += 1) {
-    const c3 = text7[i3];
-    if (c3 === "\\" && i3 + 1 < text7.length && "\\*_`#>-".includes(text7[i3 + 1])) {
-      buf += text7[i3 + 1];
+  for (let i3 = 0; i3 < text8.length; i3 += 1) {
+    const c3 = text8[i3];
+    if (c3 === "\\" && i3 + 1 < text8.length && "\\*_`#>-".includes(text8[i3 + 1])) {
+      buf += text8[i3 + 1];
       i3 += 1;
       continue;
     }
-    if (c3 === "*" && text7[i3 + 1] === "*") {
+    if (c3 === "*" && text8[i3 + 1] === "*") {
       flush();
       bold = !bold;
       i3 += 1;
       continue;
     }
     if (c3 === "*" || c3 === "_") {
-      const prev = text7[i3 - 1] ?? " ";
-      const next = text7[i3 + 1] ?? " ";
+      const prev = text8[i3 - 1] ?? " ";
+      const next = text8[i3 + 1] ?? " ";
       const opens = !italic && !/\s/.test(next) && (c3 === "*" || !WORD.test(prev));
       const closes = italic && !/\s/.test(prev) && (c3 === "*" || !WORD.test(next));
       if (opens || closes) {
@@ -106002,9 +106018,9 @@ function realpathOrMissing(path) {
 }
 function save(args, root) {
   const name = args.name;
-  const text7 = args.text;
+  const text8 = args.text;
   if (typeof name !== "string" || name === "") throw new ValidationError("drafting_forms__reply_draft.name is required for step save");
-  if (typeof text7 !== "string" || text7.trim() === "") throw new ValidationError("drafting_forms__reply_draft.text is required for step save");
+  if (typeof text8 !== "string" || text8.trim() === "") throw new ValidationError("drafting_forms__reply_draft.text is required for step save");
   assertSegment(name, "name");
   if (/\.[a-z0-9]{1,5}$/i.test(name)) throw new ValidationError(`name is a bare file name stem, without an extension: ${name}`);
   if (VERSION_SUFFIX.test(name)) throw new ValidationError(`name is the stem without " vN"; the server picks the version: ${name}`);
@@ -106012,7 +106028,7 @@ function save(args, root) {
     throw new ValidationError(`name must follow the firm's grammar, "YYYY-MM-DD CODE Recipient re Subject" (e.g. an ET or LET code): ${name}`);
   }
   const dir = draftFolder2(root);
-  const written = writeNextFree(dir, name, ".md", text7);
+  const written = writeNextFree(dir, name, ".md", text8);
   return { success: true, path: written.path, version: written.version };
 }
 function exportDocx(args, root) {
@@ -107205,15 +107221,15 @@ var CASE_DATA_ROOT = /0\. CASE DATA[\\/]+/gi;
 var DOCUMENTS_ROOT = /Litigation - Documents[\\/]+/gi;
 var SEGMENT_END = /^(?:$|[\\/\s"'`.,;:)\]}>])/;
 var MAX_STRING_LENGTH = 2e3;
-function namesPerson(text7) {
-  for (const match of text7.matchAll(EMAIL)) {
+function namesPerson(text8) {
+  for (const match of text8.matchAll(EMAIL)) {
     if (!SERVICE_LOCAL_PARTS.has(match[1].toLowerCase())) return true;
   }
   return false;
 }
-function namesSegment(text7, root, allowed) {
-  for (const match of text7.matchAll(root)) {
-    const rest = text7.slice(match.index + match[0].length);
+function namesSegment(text8, root, allowed) {
+  for (const match of text8.matchAll(root)) {
+    const rest = text8.slice(match.index + match[0].length);
     if (SEGMENT_END.test(rest)) continue;
     const lower = rest.toLowerCase();
     const isAllowed = allowed.some(
@@ -107225,15 +107241,15 @@ function namesSegment(text7, root, allowed) {
 }
 var REDACTION_RULES = [
   ["email", namesPerson],
-  ["user_path", (text7) => USER_ROOTS.some((root) => namesSegment(text7, root, USER_SEGMENTS))],
+  ["user_path", (text8) => USER_ROOTS.some((root) => namesSegment(text8, root, USER_SEGMENTS))],
   [
     "matter_folder",
-    (text7) => namesSegment(text7, CASE_DATA_ROOT, PLACEHOLDERS) || namesSegment(text7, DOCUMENTS_ROOT, DOCUMENTS_SEGMENTS)
+    (text8) => namesSegment(text8, CASE_DATA_ROOT, PLACEHOLDERS) || namesSegment(text8, DOCUMENTS_ROOT, DOCUMENTS_SEGMENTS)
   ],
-  ["too_long", (text7) => text7.length > MAX_STRING_LENGTH]
+  ["too_long", (text8) => text8.length > MAX_STRING_LENGTH]
 ];
-function findRedactionHits(text7) {
-  return REDACTION_RULES.filter(([, hits]) => hits(text7)).map(([kind]) => kind);
+function findRedactionHits(text8) {
+  return REDACTION_RULES.filter(([, hits]) => hits(text8)).map(([kind]) => kind);
 }
 var MAX_ITEMS_JSON_LENGTH = 5e4;
 var MAX_PREVIEW_HTML_LENGTH = 2e5;
@@ -107251,7 +107267,7 @@ function findSuggestionHits(fields2) {
     ([kind, hit]) => strings.some(hit) || kind !== "too_long" && html.some(hit)
   ).map(([kind]) => kind);
   if (fields2.items && JSON.stringify(fields2.items).length > MAX_ITEMS_JSON_LENGTH) hits.push("items_too_long");
-  if ((fields2.previews ?? []).some((text7) => text7.length > MAX_PREVIEW_HTML_LENGTH)) hits.push("preview_too_long");
+  if ((fields2.previews ?? []).some((text8) => text8.length > MAX_PREVIEW_HTML_LENGTH)) hits.push("preview_too_long");
   if (fields2.mockup !== void 0 && Buffer.byteLength(fields2.mockup, "utf-8") > MAX_MOCKUP_HTML_BYTES) hits.push("mockup_too_long");
   return hits;
 }
@@ -107351,50 +107367,10 @@ async function preferencesWrite(args, env = process.env, seams = {}) {
   throw new ValidationError(`op must be "add" or "retire"`);
 }
 
-// src/suggestions/tools.ts
-import { randomUUID as randomUUID11 } from "node:crypto";
-
-// src/suggestions/send.ts
-import { readFileSync as readFileSync36, realpathSync as realpathSync16, statSync as statSync18 } from "node:fs";
-import { isAbsolute as isAbsolute9, relative as relative4, resolve as resolve10, sep as sep2 } from "node:path";
-
-// src/pages/preview-file.ts
-import { mkdirSync as mkdirSync21, writeFileSync as writeFileSync11 } from "node:fs";
-import { tmpdir as tmpdir4 } from "node:os";
-import { join as join46 } from "node:path";
-var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
-function fixturePreviewDir() {
-  return join46(tmpdir4(), FIXTURE_PREVIEW_FOLDER);
-}
-var FIXTURE_PREVIEW_MARKER = "<!-- probanda-fixture-preview -->";
-function composeWithOverrides(set, overrides = {}) {
-  const unknown2 = Object.keys(overrides).filter((name) => !Object.hasOwn(set.files, name));
-  if (unknown2.length > 0) {
-    throw new ValidationError(`overrides name no template file of this page: ${unknown2.join(", ")}. Its files are ${Object.keys(set.files).join(", ")}.`);
-  }
-  const notText = Object.keys(overrides).filter((name) => typeof overrides[name] !== "string");
-  if (notText.length > 0) throw new ValidationError(`each override is a file's whole text, a string: ${notText.join(", ")} is not`);
-  return composeTemplate(set.entry, { ...set.files, ...overrides });
-}
-function writePreview(dir, base, html, fixture) {
-  mkdirSync21(dir, { recursive: true });
-  const text7 = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
-` : html;
-  for (let n3 = 1; ; n3++) {
-    const path = join46(dir, `${base} preview ${n3}.html`);
-    try {
-      writeFileSync11(path, text7, { flag: "wx" });
-      return path;
-    } catch (err) {
-      if (err.code !== "EEXIST") throw err;
-    }
-  }
-}
-
 // src/suggestions/store.ts
 import { randomUUID as randomUUID10 } from "node:crypto";
 import { existsSync as existsSync47, readFileSync as readFileSync35 } from "node:fs";
-import { dirname as dirname29, isAbsolute as isAbsolute8, join as join47 } from "node:path";
+import { dirname as dirname29, isAbsolute as isAbsolute8, join as join46 } from "node:path";
 var STORE_FOLDER = "suggestions";
 var STORE_FILE = "suggestions.json";
 var LEGACY_LOG_FILE = "suggestions.local.json";
@@ -107414,13 +107390,13 @@ function storeDir(env = process.env) {
       "plugin_data_unset"
     );
   }
-  return join47(data, STORE_FOLDER);
+  return join46(data, STORE_FOLDER);
 }
 function storePath(env = process.env) {
-  return join47(storeDir(env), STORE_FILE);
+  return join46(storeDir(env), STORE_FILE);
 }
 function legacyLogPath(env = process.env) {
-  return join47(dirname29(configPath(env)), LEGACY_LOG_FILE);
+  return join46(dirname29(configPath(env)), LEGACY_LOG_FILE);
 }
 function cardStatus(record2) {
   return CARD_STATUS[record2.state];
@@ -107574,132 +107550,28 @@ async function post(supabaseUrl, staticKey, path, body) {
     const cause = err.cause;
     return { ok: false, status: null, cause: [err.message, cause?.code ?? cause?.message].filter(Boolean).join(": ") };
   }
-  let text7 = "";
+  let text8 = "";
   try {
-    text7 = await res.text();
+    text8 = await res.text();
   } catch (err) {
     return { ok: false, status: res.status, cause: `HTTP ${res.status}, reply cut off: ${err.message}` };
   }
   let json3;
   try {
-    json3 = text7 ? JSON.parse(text7) : {};
+    json3 = text8 ? JSON.parse(text8) : {};
   } catch {
     json3 = null;
   }
   const obj = json3 !== null && typeof json3 === "object" && !Array.isArray(json3) ? json3 : null;
   if (!res.ok) {
-    const error2 = typeof obj?.error === "string" ? obj.error : text7.slice(0, 500);
+    const error2 = typeof obj?.error === "string" ? obj.error : text8.slice(0, 500);
     return { ok: false, status: res.status, cause: `HTTP ${res.status}: ${error2}` };
   }
   if (!obj) return { ok: false, status: res.status, cause: `HTTP ${res.status}: a reply that is not a JSON object` };
   return { ok: true, status: res.status, json: obj };
 }
-var SOURCES2 = /* @__PURE__ */ new Set(["user", "llm", "assisted"]);
-var ORIGINS = /* @__PURE__ */ new Set(["probanda", "lawyer"]);
-var MAX_ITEMS = 10;
-var MAX_PREVIEWS = 4;
 function isObject6(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-function onlyKeys2(label2, value, keys) {
-  const extra = Object.keys(value).find((key) => !keys.includes(key));
-  if (extra) throw new ValidationError(`${label2} has an unknown field "${extra}"`);
-}
-function nonEmpty2(label2, value) {
-  if (typeof value !== "string" || !value.trim()) throw new ValidationError(`${label2} must be non-empty text`);
-  return value.trim();
-}
-function checkItems(value) {
-  if (!Array.isArray(value) || value.length < 1 || value.length > MAX_ITEMS) {
-    throw new ValidationError(`submit's items, when given, must be a list of 1 to ${MAX_ITEMS} items`);
-  }
-  if (value.every((item) => typeof item === "string")) return value.map((item, i3) => nonEmpty2(`items[${i3}]`, item));
-  return value.map((item, i3) => {
-    const label2 = `items[${i3}]`;
-    if (!isObject6(item)) throw new ValidationError(`${label2} must be an object, or every item a text`);
-    onlyKeys2(label2, item, ["pain", "where", "done_test", "constraints", "changes"]);
-    if (!Array.isArray(item.constraints)) throw new ValidationError(`${label2}.constraints must be a list`);
-    if (!Array.isArray(item.changes)) throw new ValidationError(`${label2}.changes must be a list`);
-    return {
-      pain: nonEmpty2(`${label2}.pain`, item.pain),
-      where: nonEmpty2(`${label2}.where`, item.where),
-      done_test: nonEmpty2(`${label2}.done_test`, item.done_test),
-      constraints: item.constraints.map((c3, j3) => nonEmpty2(`${label2}.constraints[${j3}]`, c3)),
-      changes: item.changes.map((change, j3) => {
-        const at = `${label2}.changes[${j3}]`;
-        if (!isObject6(change)) throw new ValidationError(`${at} must be an object`);
-        onlyKeys2(at, change, ["change", "origin"]);
-        if (typeof change.origin !== "string" || !ORIGINS.has(change.origin)) {
-          throw new ValidationError(`${at}.origin must be probanda or lawyer`);
-        }
-        return { change: nonEmpty2(`${at}.change`, change.change), origin: change.origin };
-      })
-    };
-  });
-}
-function checkPreviews(value) {
-  if (!Array.isArray(value) || value.length < 1 || value.length > MAX_PREVIEWS) {
-    throw new ValidationError(`submit's previews, when given, must be a list of 1 to ${MAX_PREVIEWS} Previews`);
-  }
-  return value.map((preview, i3) => {
-    const label2 = `previews[${i3}]`;
-    if (!isObject6(preview)) throw new ValidationError(`${label2} must be an object`);
-    onlyKeys2(label2, preview, ["label", "chosen", "reason", "html", "path"]);
-    if (typeof preview.chosen !== "boolean") throw new ValidationError(`${label2}.chosen must be true or false`);
-    if (preview.html === void 0 === (preview.path === void 0)) {
-      throw new ValidationError(`${label2} must give exactly one of html or path`);
-    }
-    let html;
-    if (preview.path !== void 0) {
-      html = readFixturePreview(label2, preview.path);
-    } else {
-      if (typeof preview.html !== "string" || !preview.html.trim()) throw new ValidationError(`${label2}.html must be non-empty HTML`);
-      html = preview.html;
-    }
-    return {
-      label: nonEmpty2(`${label2}.label`, preview.label),
-      chosen: preview.chosen,
-      ...preview.reason === void 0 ? {} : { reason: nonEmpty2(`${label2}.reason`, preview.reason) },
-      html
-    };
-  });
-}
-function readFixturePreview(label2, path) {
-  const refused4 = new ValidationError(
-    `${label2}.path must be a preview that a board preview tool wrote from fixtures, in the fixture preview folder and ending with the fixture marker line`
-  );
-  if (typeof path !== "string" || !path.trim()) throw refused4;
-  let folder;
-  let file;
-  try {
-    folder = realpathSync16(fixturePreviewDir());
-    file = realpathSync16(resolve10(path));
-  } catch {
-    throw refused4;
-  }
-  const inside = relative4(folder, file);
-  if (!inside || inside === ".." || inside.startsWith(`..${sep2}`) || isAbsolute9(inside)) throw refused4;
-  if (!statSync18(file).isFile()) throw refused4;
-  const text7 = readFileSync36(file, "utf-8");
-  if (!text7.endsWith(`${FIXTURE_PREVIEW_MARKER}
-`)) throw refused4;
-  return text7;
-}
-function fieldsFromToolArgs(args) {
-  const title = nonEmpty2("submit's title", args.title);
-  const body = nonEmpty2("submit's body", args.body);
-  const source = String(args.source ?? "");
-  if (!SOURCES2.has(source)) throw new ValidationError("submit requires source: user, llm or assisted");
-  const skill = args.skill === void 0 ? void 0 : String(args.skill).trim();
-  if (skill === "") throw new ValidationError("submit's skill, when given, must name a skill");
-  return {
-    title,
-    body,
-    source,
-    ...skill ? { skill } : {},
-    ...args.items === void 0 ? {} : { items: checkItems(args.items) },
-    ...args.previews === void 0 ? {} : { previews: checkPreviews(args.previews) }
-  };
 }
 function screen(fields2) {
   const { previews, mockup, ...rest } = fields2;
@@ -107781,27 +107653,27 @@ async function retryUnsent(env = process.env, seams = {}) {
   const candidates = (await loadStore(env)).records.filter(isSuggestion).filter((r3) => retryable(r3, now)).map((r3) => r3.record_id);
   const results = [];
   for (const recordId of candidates) {
-    const claimed = await withStore(env, (s3) => {
+    const claimed2 = await withStore(env, (s3) => {
       const r3 = findSuggestion(s3, recordId);
       if (!retryable(r3, now)) return false;
       r3.state = "sending";
       r3.sending_since = nowIso3(seams);
       return true;
     });
-    if (claimed) results.push(await sendRecord(recordId, "start", env, seams));
+    if (claimed2) results.push(await sendRecord(recordId, "start", env, seams));
   }
   return results;
 }
 var NOT_CONFIGURED = "this computer has no Probanda key, so no status can be read: call cloud_key__configure_credential once and have the practitioner paste the key on the page it serves, or, if they have none, call key_request__submit";
 function cloudItems(value) {
   if (!Array.isArray(value)) return null;
-  const text7 = (v3) => typeof v3 === "string" ? v3 : null;
+  const text8 = (v3) => typeof v3 === "string" ? v3 : null;
   return value.filter(isObject6).map((row2) => ({
     item: typeof row2.item === "number" ? row2.item : 0,
-    status: text7(row2.status),
-    reason: text7(row2.reason),
-    category: text7(row2.category),
-    implemented_in: text7(row2.implemented_in)
+    status: text8(row2.status),
+    reason: text8(row2.reason),
+    category: text8(row2.category),
+    implemented_in: text8(row2.implemented_in)
   }));
 }
 async function readStatuses(ids, env = process.env, seams = {}) {
@@ -107882,7 +107754,7 @@ async function withdrawSuggestion(recordId, env = process.env, seams = {}) {
 }
 
 // src/suggestions/page.ts
-import { join as join48 } from "node:path";
+import { join as join47 } from "node:path";
 var PAST_SUGGESTIONS_FILE = "Past suggestions.html";
 var BRACKET = /\[(client|matter|person|document|file|date|amount)\]/g;
 var ITEM_STATUS = {
@@ -107891,8 +107763,8 @@ var ITEM_STATUS = {
   declined: "Declined",
   implemented: "Implemented"
 };
-function escapeHtml2(text7) {
-  return text7.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
+function escapeHtml2(text8) {
+  return text8.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
 }
 function text5(value) {
   return escapeHtml2(value).replace(BRACKET, '<span class="bracket">[$1]</span>');
@@ -108035,7 +107907,7 @@ function renderPastSuggestionsHtml(store, port, tokenFor) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src http://127.0.0.1:${port}; object-src 'none'; base-uri 'none'; form-action 'none'"><title>Past suggestions</title><style>${STYLE}</style></head><body><main><h1>Past suggestions</h1><p class="note">What this computer sent to the Probanda team, word for word, and what has happened to each suggestion.</p>` + body + `</main><script type="application/json" id="api">${api}</script><script>${SCRIPT}</script></body></html>`;
 }
 function pastSuggestionsPath(env = process.env) {
-  return join48(storeDir(env), PAST_SUGGESTIONS_FILE);
+  return join47(storeDir(env), PAST_SUGGESTIONS_FILE);
 }
 async function writePastSuggestionsPage(env = process.env) {
   const store = await loadStore(env);
@@ -108044,9 +107916,14 @@ async function writePastSuggestionsPage(env = process.env) {
   return path;
 }
 
+// src/suggestions/card.ts
+import { randomUUID as randomUUID11 } from "node:crypto";
+import { existsSync as existsSync50, unlinkSync as unlinkSync10 } from "node:fs";
+import { join as join50 } from "node:path";
+
 // src/suggestions/crosscheck.ts
-import { existsSync as existsSync48, readFileSync as readFileSync37 } from "node:fs";
-import { join as join49 } from "node:path";
+import { existsSync as existsSync48, readFileSync as readFileSync36 } from "node:fs";
+import { join as join48 } from "node:path";
 
 // src/case/list-record-names.ts
 var DRIVER9 = String.raw`
@@ -108177,9 +108054,9 @@ var TOKEN = new RegExp("(\\p{L}+(?:['\\u2019]\\p{L}+)*)|(\\p{Nd}+)", "gu");
 function keyOf(word) {
   return word.replace(/\u2019/g, "'").toLowerCase();
 }
-function tokens(text7) {
+function tokens(text8) {
   const out = [];
-  for (const m3 of text7.matchAll(TOKEN)) {
+  for (const m3 of text8.matchAll(TOKEN)) {
     const start2 = m3.index ?? 0;
     if (m3[1] !== void 0) {
       if (m3[1].replace(/['\u2019]/g, "").length >= 3) out.push({ key: keyOf(m3[1]), start: start2, end: start2 + m3[1].length });
@@ -108189,16 +108066,16 @@ function tokens(text7) {
   }
   return out;
 }
-function parseStopWords(text7) {
-  return text7.split(/\r?\n/).map((line) => line.trim()).filter((line) => line !== "" && !line.startsWith("#")).map(keyOf);
+function parseStopWords(text8) {
+  return text8.split(/\r?\n/).map((line) => line.trim()).filter((line) => line !== "" && !line.startsWith("#")).map(keyOf);
 }
 function loadStopWords(env = process.env, installRoot) {
   const root = resolveShippedRoot(STOP_WORDS_DIR, env, { subject: "the suggestion word lists", plugin: "lawyer", installRoot }).root;
   const words = /* @__PURE__ */ new Set();
   for (const file of STOP_WORD_FILES) {
-    const path = join49(root, ...STOP_WORDS_DIR.split("/"), file);
+    const path = join48(root, ...STOP_WORDS_DIR.split("/"), file);
     if (!existsSync48(path)) throw new DataServerError("The suggestion check is missing its word lists. Update the lawyer plugin.", "stop_words_missing");
-    for (const word of parseStopWords(readFileSync37(path, "utf-8"))) words.add(word);
+    for (const word of parseStopWords(readFileSync36(path, "utf-8"))) words.add(word);
   }
   return words;
 }
@@ -108207,8 +108084,8 @@ function buildTokenIndex(records, stopWords) {
   if (records.firmName) for (const t3 of tokens(records.firmName)) stop.add(t3.key);
   const index = /* @__PURE__ */ new Map();
   for (const source of RECORD_SOURCES) {
-    for (const text7 of records.texts[source]) {
-      for (const t3 of tokens(text7)) {
+    for (const text8 of records.texts[source]) {
+      for (const t3 of tokens(text8)) {
         if (stop.has(t3.key)) continue;
         const held = index.get(t3.key) ?? /* @__PURE__ */ new Set();
         held.add(source);
@@ -108257,10 +108134,10 @@ var AMOUNTS = [
   // A number with thousands separators: 12,500 or 12,500.00.
   /(?<![\d.,])\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?(?![\d,])/g
 ];
-function matchAll(text7, patterns, kind, keep = () => true) {
+function matchAll(text8, patterns, kind, keep = () => true) {
   const hits = [];
   for (const pattern of patterns) {
-    for (const m3 of text7.matchAll(pattern)) {
+    for (const m3 of text8.matchAll(pattern)) {
       let value = m3[0];
       if (kind === "path") value = value.replace(/[.,;:)\]]+$/, "");
       if (value === "" || !keep(value)) continue;
@@ -108270,12 +108147,12 @@ function matchAll(text7, patterns, kind, keep = () => true) {
   }
   return hits;
 }
-function findPatterns(text7) {
-  const emails = matchAll(text7, [EMAIL2], "email", (value) => !SERVICE_LOCAL_PARTS2.has(value.split("@")[0].toLowerCase()));
+function findPatterns(text8) {
+  const emails = matchAll(text8, [EMAIL2], "email", (value) => !SERVICE_LOCAL_PARTS2.has(value.split("@")[0].toLowerCase()));
   const within = (hit, others) => others.some((o3) => o3 !== hit && o3.start <= hit.start && hit.end <= o3.end && o3.end - o3.start > hit.end - hit.start);
-  const paths = matchAll(text7, PATHS3, "path", (value) => new RegExp("\\p{L}", "u").test(value)).filter((hit) => !emails.some((e3) => e3.start <= hit.start && hit.end <= e3.end));
-  const dates = matchAll(text7, DATES, "date");
-  const amounts = matchAll(text7, AMOUNTS, "amount");
+  const paths = matchAll(text8, PATHS3, "path", (value) => new RegExp("\\p{L}", "u").test(value)).filter((hit) => !emails.some((e3) => e3.start <= hit.start && hit.end <= e3.end));
+  const dates = matchAll(text8, DATES, "date");
+  const amounts = matchAll(text8, AMOUNTS, "amount");
   const all = [...emails, ...paths, ...dates, ...amounts];
   const seen = /* @__PURE__ */ new Set();
   return all.filter((hit) => !within(hit, all.filter((o3) => o3.kind === hit.kind))).filter((hit) => {
@@ -108297,15 +108174,15 @@ function factLeaves(value, path, into) {
 }
 function locate2(card) {
   const out = [];
-  const one = (part, text7) => {
-    if (text7 === void 0 || text7 === null) return;
-    if (typeof text7 !== "string") throw new ValidationError(`${part} must be a string`);
-    out.push({ part, text: text7 });
+  const one = (part, text8) => {
+    if (text8 === void 0 || text8 === null) return;
+    if (typeof text8 !== "string") throw new ValidationError(`${part} must be a string`);
+    out.push({ part, text: text8 });
   };
   const many = (part, list) => {
     if (list === void 0 || list === null) return;
     if (!Array.isArray(list) || !list.every((entry2) => typeof entry2 === "string")) throw new ValidationError(`${part} must be a list of strings`);
-    list.forEach((text7, index) => out.push({ part, index, text: text7 }));
+    list.forEach((text8, index) => out.push({ part, index, text: text8 }));
   };
   one("pain_point", card.pain_point);
   many("items", card.items);
@@ -108358,6 +108235,1102 @@ function runCrossCheck(card, records, stopWords) {
   return { passed: hits.length === 0, hits, records: records.states, complete };
 }
 
+// src/suggestions/card-page.ts
+var ORIGIN_CUE = { practitioner: "You suggested:", probanda: "Probanda noticed:" };
+var GUESS_LABEL = "our guess, edit if wrong";
+var MOCKUP_LINK = "Show a mockup of this";
+var MOCKUP_LINK_NO_WAITER = "Open this suggestion again to see a mockup";
+var COMMENT_PLACEHOLDER = "Please don't name clients, matters, people or files.";
+var RECEIVES_LINE = "Probanda receives this from your account: what you see here, a technical write-up of it, and technical details about the Probanda software on this computer.";
+var SHOW_TECHNICAL = "Show technical details";
+var LATER_LINE = "You can see this later, with its status, under Past suggestions.";
+var SUBMIT = "Submit Suggestion";
+var DISMISS = "Dismiss";
+var RESTORE = "Restore Suggestion";
+var NOT_CHECKED = "Not sent: Probanda could not check this against your records. Try again in a moment.";
+var BRACKET2 = /\[(client|matter|person|document|file|date|amount)\]/g;
+function escapeHtml3(text8) {
+  return text8.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
+}
+function marked(text8) {
+  return escapeHtml3(text8).replace(BRACKET2, '<span class="bracket">[$1]</span>');
+}
+function guess(on2) {
+  return on2 ? `<p class="guess">${GUESS_LABEL}</p>` : "";
+}
+function editable(text8) {
+  return `<div class="text" contenteditable="true" spellcheck="true">${marked(text8)}</div>`;
+}
+var KIND_LABEL = { constraint: "Constraint", evidence: "Evidence" };
+function contextLine(line) {
+  return `<li class="block line" data-part="context_lines" data-id="${escapeHtml3(line.id)}"><span class="kind">${KIND_LABEL[line.kind]}</span>${editable(line.text)}${guess(line.guess)}<div class="prompts"></div></li>`;
+}
+var STYLE2 = ":root{--bg:#fafafa;--fg:#222;--muted:#666;--line:#ccc;--accent:#2f5f8a;--warn:#a00;--card:#fff}@media (prefers-color-scheme: dark){:root{--bg:#1e1e1e;--fg:#eee;--muted:#aaa;--line:#555;--accent:#8fb8e0;--warn:#f88;--card:#262626}}body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:var(--bg);color:var(--fg);line-height:1.45}main{max-width:44rem;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1rem 1.25rem}.origin{font-weight:600;margin:0 0 .5rem}.text{white-space:pre-wrap;padding:.15rem .3rem;border-radius:3px;outline:none;border:1px dashed transparent}.text:hover,.text:focus{border-color:var(--line)}.pain .text{font-size:1.05rem}.guess{margin:.1rem .3rem;color:var(--muted);font-size:.8rem;font-style:italic}.items{padding-left:1.5rem}.items li{margin:.35rem 0}.context{list-style:none;padding:0;margin:.75rem 0}.context li{margin:.3rem 0}.kind{font-weight:600;font-size:.85rem;color:var(--muted);margin-right:.4rem}.line .text{display:inline}.bracket{border:1px solid var(--line);border-radius:3px;padding:0 .2em;font-family:ui-monospace,monospace;font-size:.9em;color:var(--accent)}.link{background:none;border:none;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit}.link:disabled{color:var(--muted);text-decoration:none;cursor:default}.mockup-frame{width:100%;height:20rem;border:1px solid var(--line);background:#fff;margin:.5rem 0}textarea{width:100%;min-height:4rem;font:inherit;box-sizing:border-box;margin:.5rem 0}.receives,.later{font-size:.9rem;color:var(--muted)}.tech pre{white-space:pre-wrap;font-size:.8rem;border:1px solid var(--line);padding:.5rem}.actions button{padding:.45rem 1.1rem;font-size:1rem;margin-right:.5rem}.status{min-height:1.3em;font-weight:600}.status.error{color:var(--warn)}.prompt{font-size:.9rem;margin:.2rem .3rem;color:var(--warn)}.prompt button{margin-left:.4rem;font-size:.85rem}.prompt q{font-weight:600}main.dismissed{opacity:.45}main.dismissed .text{pointer-events:none}main.done .text{border-color:transparent}";
+var SCRIPT2 = `
+(function () {
+  var api = JSON.parse(document.getElementById("api").textContent);
+  var base = "http://127.0.0.1:" + api.port + "/cards/" + encodeURIComponent(api.card);
+  var main = document.querySelector("main");
+  var statusLine = document.getElementById("status");
+  var submit = document.getElementById("submit");
+  var dismiss = document.getElementById("dismiss");
+  var restore = document.getElementById("restore");
+  var link = document.getElementById("mockup-link");
+  var linkNote = document.getElementById("mockup-note");
+  var frameBox = document.getElementById("mockup-box");
+  var comment = document.getElementById("comment");
+  var known = {};
+  var shownMockup = null;
+  var busy = false;
+  var SAY = {
+    sending: "Sending...",
+    off: "This works while Claude is open on this computer. Open Claude, ask to see this suggestion again, and use it here.",
+    failed: "That did not work. Try again, or ask Claude to show this suggestion again.",
+    check: "Before this is sent, look at the marked text below.",
+    refused: "Not sent: part of this suggestion is too long, or names someone or somewhere. Shorten it or take that out, then try again.",
+    empty: "Say what the problem is before submitting.",
+    unchecked: ${JSON.stringify(NOT_CHECKED)},
+    dismissed: "Dismissed. Nothing was sent.",
+    making: "Making a mockup..."
+  };
+  var KIND = {
+    record: "This may name a client, matter, person or file:",
+    email: "This is an email address:",
+    path: "This names a file or folder:",
+    date: "This is a date:",
+    amount: "This is an amount:"
+  };
+  var LABEL = { constraint: "Constraint", evidence: "Evidence" };
+
+  function say(text, error) { statusLine.textContent = text || ""; statusLine.className = error ? "status error" : "status"; }
+  function post(path, body) {
+    body = body || {};
+    body.token = api.token;
+    return fetch(base + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); });
+  }
+  function textOf(el) { return (typeof el.innerText === "string" ? el.innerText : el.textContent).replace(/\\u00a0/g, " ").trim(); }
+  function fill(el, text) {
+    while (el.firstChild) el.removeChild(el.firstChild);
+    var re = /\\[(client|matter|person|document|file|date|amount)\\]/g, last = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) el.appendChild(document.createTextNode(text.slice(last, m.index)));
+      var span = document.createElement("span");
+      span.className = "bracket";
+      span.textContent = m[0];
+      el.appendChild(span);
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) el.appendChild(document.createTextNode(text.slice(last)));
+  }
+  function blocks() { return Array.prototype.slice.call(document.querySelectorAll(".block")); }
+  function blockFor(part, id) {
+    if (part === "comment") return document.getElementById("comment-block");
+    return blocks().filter(function (b) { return b.getAttribute("data-part") === part && (part === "pain_point" || b.getAttribute("data-id") === id); })[0];
+  }
+  function edits() {
+    var out = { items: [], context_lines: [], lines_known: Object.keys(known), comment: comment.value.trim() };
+    blocks().forEach(function (b) {
+      var t = textOf(b.querySelector(".text"));
+      var part = b.getAttribute("data-part");
+      if (part === "pain_point") out.pain_point = t;
+      else out[part].push({ id: b.getAttribute("data-id"), text: t });
+    });
+    return out;
+  }
+  function clearPrompts() { Array.prototype.forEach.call(document.querySelectorAll(".prompts"), function (p) { while (p.firstChild) p.removeChild(p.firstChild); }); }
+  function redraw(b) {
+    if (!b) return;
+    var put = function (el, text) { if (el && textOf(el) !== text) fill(el, text); };
+    put(document.querySelector('.block[data-part="pain_point"] .text'), b.pain_point);
+    b.items.concat(b.context_lines).forEach(function (x) {
+      var el = document.querySelector('.block[data-id="' + x.id + '"] .text');
+      put(el, x.text);
+    });
+    if (comment.value.trim() !== b.comment) comment.value = b.comment;
+  }
+  function setButtons(on) { submit.disabled = !on; dismiss.disabled = !on; }
+  function finish(status) {
+    main.className = "done";
+    submit.hidden = true;
+    dismiss.hidden = true;
+    Array.prototype.forEach.call(document.querySelectorAll(".text"), function (el) { el.setAttribute("contenteditable", "false"); });
+    comment.disabled = true;
+    if (link) link.hidden = true;
+    if (linkNote) linkNote.textContent = "";
+    clearPrompts();
+    say(status, status !== "Submitted \\u2713");
+  }
+  function showPrompts(prompts) {
+    clearPrompts();
+    prompts.forEach(function (p) {
+      var block = blockFor(p.part, p.id);
+      if (!block) return;
+      var line = document.createElement("p");
+      line.className = "prompt";
+      line.appendChild(document.createTextNode((KIND[p.kind] || KIND.record) + " "));
+      var q = document.createElement("q");
+      q.textContent = p.text;
+      line.appendChild(q);
+      var actions = p.offer === "remove_or_send_anyway" ? [["remove", "Remove"], ["send_anyway", "Send anyway"]] : [["remove", "Remove"]];
+      actions.forEach(function (a) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.textContent = a[1];
+        b.addEventListener("click", function () { answer(p, a[0], b); });
+        line.appendChild(b);
+      });
+      block.querySelector(".prompts").appendChild(line);
+    });
+  }
+  function handle(reply) {
+    busy = false;
+    var o = reply && reply.outcome;
+    if (o === "sent" || o === "unsent") return finish(reply.status);
+    if (o === "closed") {
+      if (reply.state === "dismissed") return greyOut();
+      if (reply.status) return finish(reply.status);
+    }
+    setButtons(true);
+    if (o === "check" || o === "stale") { redraw(reply.blocks); showPrompts(reply.prompts); return say(SAY.check, true); }
+    if (o === "refused") { redraw(reply.blocks); return say(SAY.refused, true); }
+    if (o === "unchecked") { redraw(reply.blocks); return say(SAY.unchecked, true); }
+    if (o === "empty") return say(SAY.empty, true);
+    say(SAY.failed, true);
+  }
+  function failed() { busy = false; setButtons(true); say(SAY.failed, true); }
+  function answer(p, action, button) {
+    if (busy) return;
+    busy = true;
+    button.disabled = true;
+    button.textContent = action === "remove" ? "Removing..." : "Sending...";
+    setButtons(false);
+    say(SAY.sending, false);
+    post("/resolve", { part: p.part, id: p.id, start: p.start, end: p.end, action: action }).then(function (reply) {
+      if (reply && reply.outcome !== "check" && reply.outcome !== "stale") clearPrompts();
+      if (reply && reply.blocks) redraw(reply.blocks);
+      handle(reply);
+    }).catch(failed);
+  }
+
+  submit.addEventListener("click", function () {
+    if (busy) return;
+    busy = true;
+    setButtons(false);
+    clearPrompts();
+    say(SAY.sending, false);
+    post("/submit", { edits: edits() }).then(handle).catch(failed);
+  });
+  function greyOut() {
+    main.className = "dismissed";
+    submit.hidden = true;
+    dismiss.hidden = true;
+    restore.hidden = false;
+    restore.disabled = false;
+    say(SAY.dismissed, false);
+  }
+  dismiss.addEventListener("click", function () {
+    if (busy) return;
+    busy = true;
+    setButtons(false);
+    dismiss.textContent = "Dismissing...";
+    post("/dismiss").then(function (reply) {
+      busy = false;
+      dismiss.textContent = ${JSON.stringify(DISMISS)};
+      if (!reply || reply.outcome !== "dismissed") return handle(reply);
+      try { window.close(); } catch (e) {}
+      setTimeout(greyOut, 300);
+    }).catch(function () { dismiss.textContent = ${JSON.stringify(DISMISS)}; failed(); });
+  });
+  restore.addEventListener("click", function () {
+    restore.disabled = true;
+    restore.textContent = "Restoring...";
+    post("/restore").then(function (reply) {
+      restore.textContent = ${JSON.stringify(RESTORE)};
+      if (!reply || reply.outcome !== "restored") { restore.disabled = false; return handle(reply); }
+      main.className = "";
+      restore.hidden = true;
+      submit.hidden = false;
+      dismiss.hidden = false;
+      setButtons(true);
+      say("", false);
+    }).catch(function () { restore.disabled = false; restore.textContent = ${JSON.stringify(RESTORE)}; say(SAY.failed, true); });
+  });
+  if (link) link.addEventListener("click", function () {
+    link.disabled = true;
+    linkNote.textContent = SAY.making;
+    post("/mockup", { edits: edits() }).then(function (reply) { apply({ mockup_link: reply && reply.outcome }); }).catch(function () { link.disabled = false; linkNote.textContent = SAY.failed; });
+  });
+
+  function watch(b) {
+    var t = b.querySelector(".text");
+    t.addEventListener("input", function () {
+      var g = b.querySelector(".guess");
+      if (g) g.remove();
+      var p = b.querySelector(".prompts");
+      while (p.firstChild) p.removeChild(p.firstChild);
+    });
+    t.addEventListener("blur", function () {
+      if (b.getAttribute("data-part") !== "pain_point" && textOf(t) === "") b.remove();
+    });
+  }
+  blocks().forEach(function (b) { if (b.getAttribute("data-part") === "context_lines") known[b.getAttribute("data-id")] = true; watch(b); });
+  comment.addEventListener("input", function () {
+    var p = document.querySelector("#comment-block .prompts");
+    while (p.firstChild) p.removeChild(p.firstChild);
+  });
+
+  function addLine(line) {
+    known[line.id] = true;
+    var li = document.createElement("li");
+    li.className = "block line";
+    li.setAttribute("data-part", "context_lines");
+    li.setAttribute("data-id", line.id);
+    var k = document.createElement("span");
+    k.className = "kind";
+    k.textContent = LABEL[line.kind];
+    var t = document.createElement("div");
+    t.className = "text";
+    t.setAttribute("contenteditable", "true");
+    fill(t, line.text);
+    var p = document.createElement("div");
+    p.className = "prompts";
+    li.appendChild(k); li.appendChild(t); li.appendChild(p);
+    document.getElementById("context").appendChild(li);
+    watch(li);
+  }
+  function apply(state) {
+    if (link) {
+      var l = state.mockup_link;
+      link.hidden = l === "hidden";
+      link.disabled = l !== "available";
+      link.textContent = l === "no_waiter" ? ${JSON.stringify(MOCKUP_LINK_NO_WAITER)} : ${JSON.stringify(MOCKUP_LINK)};
+      linkNote.textContent = l === "requested" ? SAY.making : "";
+    }
+    if (state.context_lines) state.context_lines.forEach(function (line) { if (!known[line.id]) addLine(line); });
+    if (state.mockup === undefined) return;
+    var n = state.mockup ? state.mockup.n : null;
+    if (n === shownMockup) return;
+    shownMockup = n;
+    while (frameBox.firstChild) frameBox.removeChild(frameBox.firstChild);
+    if (state.mockup) {
+      var f = document.createElement("iframe");
+      f.className = "mockup-frame";
+      f.setAttribute("sandbox", "");
+      f.setAttribute("title", "Mockup");
+      f.setAttribute("srcdoc", state.mockup.html);
+      frameBox.appendChild(f);
+    }
+  }
+  var first = true;
+  function poll() {
+    post("/state").then(function (state) {
+      if (first) {
+        first = false;
+        if (state.state === "dismissed") greyOut();
+        else if (state.state === "submitted" || state.state === "sending") finish(state.status || SAY.sending);
+        else setButtons(true);
+      } else if (state.state === "submitted" && !submit.hidden) {
+        finish(state.status);
+      } else if (state.state === "submitted" && state.status && statusLine.textContent !== state.status) {
+        say(state.status, state.status !== "Submitted \\u2713");
+      }
+      apply(state);
+    }).catch(function () {
+      if (first) { first = false; say(SAY.off, true); if (link) link.disabled = true; }
+    }).then(function () { setTimeout(poll, 3000); });
+  }
+  setButtons(false);
+  if (link) link.disabled = true;
+  poll();
+})();
+`;
+function renderCardHtml(card, port, token) {
+  const visual = card.items.some((i3) => i3.visual);
+  const pain = `<div class="block pain" data-part="pain_point" data-id="p">${editable(card.pain_point.text)}${guess(card.pain_point.guess)}<div class="prompts"></div></div>`;
+  const items2 = `<ol class="items">${card.items.map(
+    (item) => `<li class="block item" data-part="items" data-id="${escapeHtml3(item.id)}">${editable(item.text)}${guess(item.guess)}<div class="prompts"></div></li>`
+  ).join("")}</ol>`;
+  const mockup = visual ? `<p class="mockup"><button type="button" class="link" id="mockup-link">${MOCKUP_LINK}</button> <span class="note" id="mockup-note"></span></p><div id="mockup-box"></div>` : '<div id="mockup-box"></div>';
+  const observed = card.raw_observation.map((line) => `<li class="observed"><span class="kind">Observed</span><span class="fixed">${marked(line)}</span></li>`).join("");
+  const context = `<ul class="context" id="context">${card.context_lines.map(contextLine).join("")}${observed}</ul>`;
+  const commentBox = `<div id="comment-block"><textarea id="comment" aria-label="Comment" placeholder="${escapeHtml3(COMMENT_PLACEHOLDER)}">${escapeHtml3(card.comment)}</textarea><div class="prompts"></div></div>`;
+  const tech = `<p class="receives">${escapeHtml3(RECEIVES_LINE)}</p><details class="tech"><summary class="link">${SHOW_TECHNICAL}</summary><pre>${escapeHtml3(JSON.stringify(card.environment_facts, null, 2))}</pre></details>`;
+  const actions = `<p class="later">${escapeHtml3(LATER_LINE)}</p><div class="actions"><button type="button" id="submit">${SUBMIT}</button><button type="button" id="dismiss">${DISMISS}</button><button type="button" id="restore" hidden>${RESTORE}</button></div><p class="status" id="status" role="status"></p>`;
+  const api = JSON.stringify({ port, card: card.record_id, token }).replace(/</g, "\\u003c");
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src http://127.0.0.1:${port}; object-src 'none'; base-uri 'none'; form-action 'none'"><title>Suggestion</title><style>${STYLE2}</style></head><body><main><p class="origin">${ORIGIN_CUE[card.origin]}</p>` + pain + items2 + mockup + context + commentBox + tech + actions + `</main><script type="application/json" id="api">${api}</script><script>${SCRIPT2}</script></body></html>`;
+}
+
+// src/suggestions/mockup.ts
+import { existsSync as existsSync49, readFileSync as readFileSync37 } from "node:fs";
+import { join as join49 } from "node:path";
+var PLACEHOLDERS_DIR = "suggestion/references/mockup";
+var PLACEHOLDERS_FILE = "placeholders.txt";
+var MAX_MOCKUP_BYTES = 1e6;
+var normal = (text8) => text8.replace(/\s+/g, " ").trim();
+function parsePlaceholders(text8) {
+  return text8.split(/\r?\n/).map(normal).filter((line) => line !== "" && !line.startsWith("#"));
+}
+function loadPlaceholders(env = process.env, installRoot) {
+  const root = resolveShippedRoot(PLACEHOLDERS_DIR, env, { subject: "the suggestion mockup placeholders", plugin: "lawyer", installRoot }).root;
+  const path = join49(root, ...PLACEHOLDERS_DIR.split("/"), PLACEHOLDERS_FILE);
+  if (!existsSync49(path)) throw new DataServerError("The suggestion mockup is missing its placeholder text. Update the lawyer plugin.", "placeholders_missing");
+  return parsePlaceholders(readFileSync37(path, "utf-8"));
+}
+var REFUSED = [
+  [/<script/i, "a script"],
+  [/<link/i, "a link element"],
+  [/<a[\s>][^>]*\bhref/i, "a link"],
+  [/<(?:iframe|frame|object|embed|form|base|img|video|audio|source|svg|math)\b/i, "an embedded or loading element"],
+  [/\bsrc\s*=/i, "a src attribute"],
+  [/\bhref\s*=/i, "an href attribute"],
+  [/\bon[a-z]+\s*=/i, "an event handler"],
+  [/@import/i, "a stylesheet import"],
+  [/url\s*\(/i, "a url()"],
+  [/javascript:/i, "a script address"],
+  [/http/i, "an address"]
+];
+var ALLOWED_TAGS = /* @__PURE__ */ new Set([
+  "html",
+  "head",
+  "body",
+  "meta",
+  "title",
+  "style",
+  "main",
+  "header",
+  "footer",
+  "section",
+  "article",
+  "aside",
+  "nav",
+  "div",
+  "span",
+  "p",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "ul",
+  "ol",
+  "li",
+  "dl",
+  "dt",
+  "dd",
+  "table",
+  "thead",
+  "tbody",
+  "tfoot",
+  "tr",
+  "th",
+  "td",
+  "caption",
+  "colgroup",
+  "col",
+  "strong",
+  "em",
+  "b",
+  "i",
+  "u",
+  "s",
+  "small",
+  "sup",
+  "sub",
+  "mark",
+  "blockquote",
+  "br",
+  "hr",
+  "button",
+  "label"
+]);
+var ALLOWED_ATTRIBUTES = {
+  style: /^[^<>]*$/,
+  class: /^[a-z][a-z0-9 _-]*$/i,
+  colspan: /^\d{1,2}$/,
+  rowspan: /^\d{1,2}$/,
+  charset: /^utf-8$/i,
+  lang: /^[a-z]{2}(?:-[a-z]{2})?$/i
+};
+var ENTITIES2 = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ndash: "\u2013", mdash: "\u2014", bull: "\u2022" };
+function decode3(text8) {
+  return text8.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, name) => {
+    if (name[0] === "#") {
+      const code = name[1] === "x" || name[1] === "X" ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : whole;
+    }
+    return ENTITIES2[name.toLowerCase()] ?? whole;
+  });
+}
+function visibleTexts(html) {
+  const stripped = html.replace(/<!--[\s\S]*?-->/g, " ").replace(/<!doctype[^>]*>/gi, " ").replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, " ");
+  return stripped.split(/<[^>]*>/).map((piece) => normal(decode3(piece))).filter((piece) => piece !== "");
+}
+function checkMockup(html, placeholders) {
+  if (typeof html !== "string" || !html.trim()) return { problem: "the mockup is empty" };
+  if (Buffer.byteLength(html, "utf-8") > MAX_MOCKUP_BYTES) return { problem: "the mockup is over 1 MB" };
+  for (const [pattern, what] of REFUSED) if (pattern.test(html)) return { problem: `the mockup holds ${what}` };
+  const withoutComments = html.replace(/<!--[\s\S]*?-->/g, " ").replace(/<!doctype[^>]*>/gi, " ");
+  for (const tag of withoutComments.matchAll(/<\/?([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g)) {
+    const name = tag[1].toLowerCase();
+    if (!ALLOWED_TAGS.has(name)) return { problem: `the mockup holds a <${name}> element, which a mockup may not use` };
+    if (tag[0].startsWith("</")) continue;
+    for (const attr of tag[2].matchAll(/([^\s=/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g)) {
+      const attrName = attr[1].toLowerCase();
+      const value = attr[2] ?? attr[3] ?? attr[4] ?? "";
+      const allowed2 = ALLOWED_ATTRIBUTES[attrName];
+      if (!allowed2 || !allowed2.test(value)) return { problem: `the mockup holds a ${attrName} attribute, which a mockup may not use` };
+    }
+  }
+  if (/(?<![\w-])content\s*:/i.test(html)) return { problem: "the mockup's styles add text of their own" };
+  const allowed = new Set(placeholders.map(normal));
+  if (visibleTexts(html).some((piece) => !allowed.has(piece))) {
+    return { problem: "the mockup holds text that is not Probanda's placeholder text" };
+  }
+  const patterns = findPatterns(html);
+  if (patterns.length) return { problem: `the mockup holds what reads as ${patterns[0].kind === "amount" ? "an amount" : `a ${patterns[0].kind}`}` };
+  return null;
+}
+function escapeHtml4(text8) {
+  return text8.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
+}
+var STYLE3 = ":root{--bg:#fafafa;--fg:#222;--muted:#555;--line:#ccc;--accent:#2f5f8a;--warn:#a00}@media (prefers-color-scheme: dark){:root{--bg:#1e1e1e;--fg:#eee;--muted:#aaa;--line:#555;--accent:#8fb8e0;--warn:#f88}}body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:var(--bg);color:var(--fg)}main{max-width:60rem;margin:0 auto}h1{font-size:1.3rem}.note{color:var(--muted);font-size:.9rem}.frame{width:100%;height:36rem;border:1px solid var(--line);background:#fff}textarea{width:100%;min-height:4rem;font:inherit;box-sizing:border-box}button{padding:.4rem 1rem;font-size:1rem;margin-top:.5rem}.feedback{min-height:1.2em;font-size:.9rem}.feedback.error{color:var(--warn)}.done{opacity:.55}";
+var SCRIPT3 = `
+(function () {
+  var api = JSON.parse(document.getElementById("api").textContent);
+  var base = "http://127.0.0.1:" + api.port;
+  var box = document.getElementById("reason");
+  var button = document.getElementById("reject");
+  var feedback = document.getElementById("feedback");
+  function say(text, error) { feedback.textContent = text; feedback.className = error ? "feedback error" : "feedback"; }
+  button.addEventListener("click", function () {
+    var reason = box.value.trim();
+    if (!reason) { say("Say what is wrong with this mockup first.", true); box.focus(); return; }
+    button.disabled = true;
+    button.textContent = "Sending to your suggestion...";
+    fetch(base + "/cards/" + encodeURIComponent(api.card) + "/reject", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: api.token, mockup: api.mockup, reason: reason })
+    }).then(function (r) { return r.json(); }).then(function (reply) {
+      if (reply && reply.outcome === "rejected") {
+        document.querySelector("main").className = "done";
+        box.disabled = true;
+        button.textContent = "Added to your suggestion";
+        say("Your reason is now a line on your suggestion." + (reply.mockup_available ? " You can ask for another mockup there." : ""), false);
+        return;
+      }
+      button.disabled = false;
+      button.textContent = "Not like this";
+      say(reply && reply.outcome === "gone" ? "This mockup is no longer on your suggestion." : "That did not work. Open your suggestion and try again.", true);
+    }).catch(function () {
+      button.disabled = false;
+      button.textContent = "Not like this";
+      say("This works while Claude is open on this computer. Open Claude and try again.", true);
+    });
+  });
+})();
+`;
+function renderMockupPage(opts) {
+  const api = JSON.stringify({ port: opts.port, card: opts.cardId, mockup: opts.n, token: opts.token }).replace(/</g, "\\u003c");
+  const items2 = opts.items.length ? `<ul class="items">${opts.items.map((t3) => `<li>${escapeHtml4(t3)}</li>`).join("")}</ul>` : "";
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src http://127.0.0.1:${opts.port}; object-src 'none'; base-uri 'none'; form-action 'none'"><title>Mockup</title><style>${STYLE3}</style></head><body><main><h1>Mockup</h1><p class="note">How the page could look with these changes, shown with placeholder text:</p>` + items2 + `<iframe class="frame" sandbox="" title="Mockup" srcdoc="${escapeHtml4(opts.html)}"></iframe><label for="reason"><p>Not like this, because...</p></label><textarea id="reason" placeholder="Please don't name clients, matters, people or files."></textarea><button type="button" id="reject">Not like this</button><p class="feedback" id="feedback" role="status"></p></main><script type="application/json" id="api">${api}</script><script>${SCRIPT3}</script></body></html>`;
+}
+
+// src/suggestions/card.ts
+var CARD_KIND = "card";
+var DISMISSAL_KIND = "dismissal";
+var BRACKETS = ["client", "matter", "person", "document", "file", "date", "amount"];
+var MAX_MOCKUP_RETURNS = 3;
+var WAITER_TTL_MS = 6e4;
+var STALE_SENDING_MS2 = 10 * 6e4;
+var MAX_ITEMS = 10;
+var MAX_CONTEXT_LINES = 20;
+var MAX_OBSERVATION_LINES = 50;
+var MAX_TEXT = 2e3;
+var MAX_EDIT = 2e4;
+function isCard(record2) {
+  return record2.kind === CARD_KIND;
+}
+function findCard(store, cardId) {
+  const record2 = store.records.find((r3) => r3.record_id === cardId);
+  if (!record2 || !isCard(record2)) throw new NotFoundError(`no suggestion card ${cardId} on this computer`, "not_found");
+  return record2;
+}
+function cardPath(cardId, env = process.env) {
+  return join50(storeDir(env), `Suggestion-${cardId}.html`);
+}
+function mockupPagePath(cardId, n3, env = process.env) {
+  return join50(storeDir(env), `Suggestion-${cardId}-mockup-${n3}.html`);
+}
+function nowOf(deps) {
+  return deps.now ? deps.now() : /* @__PURE__ */ new Date();
+}
+async function recordsOf(deps) {
+  const stopWords = deps.stopWords ? deps.stopWords() : loadStopWords(deps.env);
+  const records = deps.records ? await deps.records() : await readRecordTexts(new PracticeStore(deps.env), deps.env);
+  return { records, stopWords };
+}
+function isObject7(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function onlyKeys2(label2, value, keys) {
+  const extra = Object.keys(value).find((key) => !keys.includes(key));
+  if (extra) throw new ValidationError(`${label2} has an unknown field "${extra}"`);
+}
+function text6(label2, value, { empty: empty2 = false, max = MAX_TEXT } = {}) {
+  if (typeof value !== "string") throw new ValidationError(`${label2} must be text`);
+  const trimmed = value.trim();
+  if (!empty2 && !trimmed) throw new ValidationError(`${label2} must not be empty`);
+  if (trimmed.length > max) throw new ValidationError(`${label2} is over ${max} characters`);
+  return trimmed;
+}
+function flag(label2, value) {
+  if (value === void 0) return false;
+  if (typeof value !== "boolean") throw new ValidationError(`${label2} must be true or false`);
+  return value;
+}
+var ANY_BRACKET = /\[([A-Za-z][A-Za-z ]{0,30})\]/g;
+function checkBrackets(label2, value) {
+  for (const m3 of value.matchAll(ANY_BRACKET)) {
+    if (!BRACKETS.includes(m3[1])) {
+      throw new ValidationError(`${label2} holds the bracket [${m3[1]}]; a removed identifier leaves only one of ${BRACKETS.map((b3) => `[${b3}]`).join(", ")}`);
+    }
+  }
+}
+function cardInput(args) {
+  onlyKeys2("the card", args, ["origin", "source", "skill", "pain_point", "items", "context_lines", "raw_observation", "tool_names", "held_id"]);
+  if (args.origin !== "practitioner" && args.origin !== "probanda") throw new ValidationError("origin must be practitioner or probanda");
+  if (args.source !== "user" && args.source !== "assisted" && args.source !== "llm") throw new ValidationError("source must be user, assisted or llm");
+  const skill = args.skill === void 0 ? null : text6("skill", args.skill);
+  if (!isObject7(args.pain_point)) throw new ValidationError("pain_point must be {text, guess}");
+  onlyKeys2("pain_point", args.pain_point, ["text", "guess"]);
+  const pain = { text: text6("pain_point.text", args.pain_point.text), guess: flag("pain_point.guess", args.pain_point.guess) };
+  checkBrackets("pain_point.text", pain.text);
+  if (!Array.isArray(args.items) || args.items.length < 1 || args.items.length > MAX_ITEMS) {
+    throw new ValidationError(`items must be a list of 1 to ${MAX_ITEMS} items`);
+  }
+  const items2 = args.items.map((item, i3) => {
+    const label2 = `items[${i3}]`;
+    if (!isObject7(item)) throw new ValidationError(`${label2} must be {text, guess, visual}`);
+    onlyKeys2(label2, item, ["text", "guess", "visual"]);
+    const out = { text: text6(`${label2}.text`, item.text), guess: flag(`${label2}.guess`, item.guess), visual: flag(`${label2}.visual`, item.visual) };
+    checkBrackets(`${label2}.text`, out.text);
+    return out;
+  });
+  const lines2 = args.context_lines ?? [];
+  if (!Array.isArray(lines2) || lines2.length > MAX_CONTEXT_LINES) throw new ValidationError(`context_lines must be a list of at most ${MAX_CONTEXT_LINES} lines`);
+  const contextLines2 = lines2.map((line, i3) => {
+    const label2 = `context_lines[${i3}]`;
+    if (!isObject7(line)) throw new ValidationError(`${label2} must be {kind, text, guess}`);
+    onlyKeys2(label2, line, ["kind", "text", "guess"]);
+    if (line.kind !== "constraint" && line.kind !== "evidence") throw new ValidationError(`${label2}.kind must be constraint or evidence`);
+    const out = { kind: line.kind, text: text6(`${label2}.text`, line.text), guess: flag(`${label2}.guess`, line.guess) };
+    checkBrackets(`${label2}.text`, out.text);
+    return out;
+  });
+  const observation = args.raw_observation ?? [];
+  if (!Array.isArray(observation) || observation.length > MAX_OBSERVATION_LINES) {
+    throw new ValidationError(`raw_observation must be a list of at most ${MAX_OBSERVATION_LINES} lines`);
+  }
+  const rawObservation = observation.map((line, i3) => text6(`raw_observation[${i3}]`, line));
+  let toolNames;
+  if (args.tool_names !== void 0) {
+    if (!Array.isArray(args.tool_names) || !args.tool_names.every((n3) => typeof n3 === "string")) throw new ValidationError("tool_names must be a list of tool names");
+    toolNames = args.tool_names;
+  }
+  const heldId = args.held_id === void 0 ? null : text6("held_id", args.held_id);
+  return { origin: args.origin, source: args.source, skill, pain_point: pain, items: items2, context_lines: contextLines2, raw_observation: rawObservation, tool_names: toolNames, held_id: heldId };
+}
+var READABLE = ["pain_point", "items", "context_lines", "comment"];
+function cardText2(card) {
+  return {
+    pain_point: card.pain_point.text,
+    items: card.items.map((i3) => i3.text),
+    context_lines: card.context_lines.map((l3) => l3.text),
+    ...card.comment ? { comment: card.comment } : {},
+    ...card.raw_observation.length ? { raw_observation: card.raw_observation } : {},
+    ...card.mockup ? { mockup: card.mockup.html } : {},
+    environment_facts: card.environment_facts
+  };
+}
+function blockOf2(card, part, index) {
+  if (part === "pain_point") return { id: null, text: card.pain_point.text };
+  if (part === "comment") return { id: null, text: card.comment };
+  const block2 = (part === "items" ? card.items : card.context_lines)[index ?? -1];
+  return { id: block2.id, text: block2.text };
+}
+function isReadable(part) {
+  return READABLE.includes(part);
+}
+function promptsOf(card, hits) {
+  const prompts = [];
+  for (const hit of hits) {
+    if (!isReadable(hit.part) || hit.offer === null) continue;
+    const block2 = blockOf2(card, hit.part, hit.index);
+    const span = block2.text.slice(hit.start, hit.end);
+    const exempt = (hit.kind === "date" || hit.kind === "amount") && card.send_anyway.some((s3) => s3.part === hit.part && s3.id === block2.id && s3.kind === hit.kind && s3.text === span);
+    if (exempt) continue;
+    prompts.push({ part: hit.part, id: block2.id, start: hit.start, end: hit.end, kind: hit.kind, offer: hit.offer, text: span });
+  }
+  return prompts;
+}
+var DROPPED = /* @__PURE__ */ Symbol("dropped");
+function markFact(facts, field) {
+  const steps = [...field.matchAll(/([^.[\]]+)|\[(\d+)\]/g)].map((m3) => m3[2] !== void 0 ? Number(m3[2]) : m3[1]);
+  let node = facts;
+  for (let i3 = 0; i3 < steps.length - 1; i3++) {
+    node = node?.[steps[i3]];
+    if (node === void 0 || node === null) return;
+  }
+  const last = steps[steps.length - 1];
+  if (node !== null && typeof node === "object" && last !== void 0) node[last] = DROPPED;
+}
+function sweep(value) {
+  if (Array.isArray(value)) return value.filter((v3) => v3 !== DROPPED).map(sweep);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).filter(([, v3]) => v3 !== DROPPED).map(([k3, v3]) => [k3, sweep(v3)]));
+  }
+  return value;
+}
+function dropGenerated(card, hits, when, at) {
+  const generated = hits.filter((h3) => !isReadable(h3.part));
+  if (!generated.length) return;
+  const lines2 = /* @__PURE__ */ new Set();
+  for (const hit of generated) {
+    card.defects.push({
+      at,
+      when,
+      part: hit.part,
+      kind: hit.kind,
+      ...hit.index !== void 0 ? { index: hit.index } : {},
+      ...hit.field !== void 0 ? { field: hit.field } : {},
+      ...hit.sources ? { sources: hit.sources } : {}
+    });
+    if (hit.part === "raw_observation" && hit.index !== void 0) lines2.add(hit.index);
+    else if (hit.part === "mockup") card.mockup = null;
+    else if (hit.part === "environment_facts" && hit.field) markFact(card.environment_facts, hit.field);
+  }
+  card.raw_observation = card.raw_observation.filter((_3, i3) => !lines2.has(i3));
+  card.environment_facts = sweep(card.environment_facts);
+}
+function newCard(input, facts, at) {
+  return {
+    kind: "card",
+    record_id: randomUUID11(),
+    created_at: at,
+    state: "open",
+    state_since: at,
+    origin: input.origin,
+    source: input.source,
+    skill: input.skill,
+    pain_point: { id: "p", ...input.pain_point },
+    items: input.items.map((item, i3) => ({ id: `i${i3 + 1}`, ...item })),
+    context_lines: input.context_lines.map((line, i3) => ({ id: `c${i3 + 1}`, ...line })),
+    raw_observation: input.raw_observation,
+    comment: "",
+    environment_facts: facts,
+    mockup: null,
+    mockups_made: 0,
+    mockups_rejected: 0,
+    mockup_request: null,
+    waiter_until: null,
+    send_anyway: [],
+    defects: [],
+    suggestion_record_id: null,
+    next_line: input.context_lines.length + 1
+  };
+}
+var SOURCE_CATEGORY = {
+  client: "client",
+  matter: "matter",
+  contact: "contact",
+  folder_name: "folder name",
+  document_title: "document title",
+  file_name: "file name"
+};
+function unreadSources(states) {
+  return RECORD_SOURCES.filter((s3) => states[s3] === "partial" || states[s3] === "unavailable").map((s3) => SOURCE_CATEGORY[s3]);
+}
+async function buildCard(input, facts, deps) {
+  const at = nowOf(deps).toISOString();
+  const card = newCard(input, structuredClone(facts), at);
+  const { records, stopWords } = await recordsOf(deps);
+  const check = runCrossCheck(cardText2(card), records, stopWords);
+  if (!check.complete) return { built: false, reason: "records_unreadable", unreadable: unreadSources(check.records) };
+  const readable = check.hits.filter((h3) => isReadable(h3.part));
+  if (readable.length) {
+    return {
+      built: false,
+      hits: readable.map((h3) => ({ part: h3.part, id: blockOf2(card, h3.part, h3.index).id, ...h3.index !== void 0 ? { index: h3.index } : {}, start: h3.start, end: h3.end, kind: h3.kind, offer: h3.offer }))
+    };
+  }
+  dropGenerated(card, check.hits, "build", at);
+  await withStore(deps.env, (store) => {
+    if (input.held_id !== null) {
+      const index = store.records.findIndex((r3) => isHeld(r3) && r3.record_id === input.held_id);
+      if (index < 0) throw new ValidationError(`no held suggestion ${input.held_id} on this computer`, "not_found");
+      store.records.splice(index, 1);
+    }
+    store.records.push(card);
+  });
+  const path = writeCardPage(card, deps.env);
+  return { built: true, card_id: card.record_id, card_path: path };
+}
+function writeCardPage(card, env) {
+  const path = cardPath(card.record_id, env);
+  writeTextAtomic(path, renderCardHtml(card, pageApiPort(env), pageApiCardToken(card.record_id, env)));
+  return path;
+}
+function waiting(card, now) {
+  return card.waiter_until !== null && Date.parse(card.waiter_until) > now.getTime();
+}
+function effectiveState(card, now) {
+  if (card.state === "sending" && now.getTime() - Date.parse(card.state_since) > STALE_SENDING_MS2) return "open";
+  return card.state;
+}
+function mockupLink(card, now) {
+  if (effectiveState(card, now) !== "open" || !card.items.some((i3) => i3.visual) || card.mockup !== null) return "hidden";
+  if (card.mockups_rejected > MAX_MOCKUP_RETURNS) return "hidden";
+  if (card.mockup_request !== null) return "requested";
+  return waiting(card, now) ? "available" : "no_waiter";
+}
+function statusOf(card, store) {
+  if (card.state === "sending") return CARD_STATUS.sending;
+  if (card.state !== "submitted") return null;
+  const sent2 = store.records.find((r3) => r3.record_id === card.suggestion_record_id);
+  return sent2 && isSuggestion(sent2) ? cardStatus(sent2) : CARD_STATUS.unsent;
+}
+function pageState(card, store, now) {
+  return {
+    state: effectiveState(card, now),
+    status: statusOf(card, store),
+    mockup_link: mockupLink(card, now),
+    mockup: card.mockup,
+    context_lines: card.context_lines
+  };
+}
+async function readCardState(cardId, deps) {
+  const store = await loadStore(deps.env);
+  return pageState(findCard(store, cardId), store, nowOf(deps));
+}
+function blockList(label2, value) {
+  if (value === void 0) return void 0;
+  if (!Array.isArray(value)) throw new ValidationError(`${label2} must be a list`);
+  return value.map((entry2, i3) => {
+    if (!isObject7(entry2) || typeof entry2.id !== "string") throw new ValidationError(`${label2}[${i3}] must be {id, text}`);
+    return { id: entry2.id, text: text6(`${label2}[${i3}].text`, entry2.text, { empty: true, max: MAX_EDIT }) };
+  });
+}
+function cardEdits(value) {
+  if (value === void 0 || value === null) return {};
+  if (!isObject7(value)) throw new ValidationError("edits must be an object");
+  onlyKeys2("edits", value, ["pain_point", "items", "context_lines", "lines_known", "comment"]);
+  const known = value.lines_known;
+  if (known !== void 0 && (!Array.isArray(known) || !known.every((id) => typeof id === "string"))) throw new ValidationError("lines_known must be a list of ids");
+  return {
+    ...value.pain_point === void 0 ? {} : { pain_point: text6("pain_point", value.pain_point, { empty: true, max: MAX_EDIT }) },
+    ...value.items === void 0 ? {} : { items: blockList("items", value.items) },
+    ...value.context_lines === void 0 ? {} : { context_lines: blockList("context_lines", value.context_lines) },
+    ...known === void 0 ? {} : { lines_known: known },
+    ...value.comment === void 0 ? {} : { comment: text6("comment", value.comment, { empty: true, max: MAX_EDIT }) }
+  };
+}
+function edited(block2, value) {
+  return value === block2.text ? block2 : { ...block2, text: value, guess: false };
+}
+function applyEdits(card, edits) {
+  if (edits.pain_point !== void 0 && edits.pain_point !== "") card.pain_point = edited(card.pain_point, edits.pain_point);
+  if (edits.items) {
+    const byId2 = new Map(edits.items.map((e3) => [e3.id, e3.text]));
+    card.items = card.items.filter((i3) => byId2.has(i3.id) && byId2.get(i3.id) !== "").map((i3) => edited(i3, byId2.get(i3.id)));
+  }
+  if (edits.context_lines) {
+    const byId2 = new Map(edits.context_lines.map((e3) => [e3.id, e3.text]));
+    const known = new Set(edits.lines_known ?? edits.context_lines.map((e3) => e3.id));
+    card.context_lines = card.context_lines.filter((l3) => !known.has(l3.id) || byId2.has(l3.id) && byId2.get(l3.id) !== "").map((l3) => byId2.has(l3.id) ? edited(l3, byId2.get(l3.id)) : l3);
+  }
+  if (edits.comment !== void 0) card.comment = edits.comment;
+}
+function blocksOf(card) {
+  return {
+    pain_point: card.pain_point.text,
+    items: card.items.map(({ id, text: t3 }) => ({ id, text: t3 })),
+    context_lines: card.context_lines.map(({ id, text: t3 }) => ({ id, text: t3 })),
+    comment: card.comment
+  };
+}
+function titleFrom(pain) {
+  const sentence = pain.split(/(?<=[.!?])\s/)[0];
+  const words = sentence.split(/\s+/).filter(Boolean);
+  const title = words.slice(0, 8).join(" ");
+  return title.length > 100 ? `${title.slice(0, 99)}\u2026` : title;
+}
+function cardFields(card) {
+  return {
+    title: titleFrom(card.pain_point.text),
+    pain_point: card.pain_point.text,
+    source: card.source,
+    ...card.skill ? { skill: card.skill } : {},
+    ...card.items.length ? { items: card.items.map((i3) => i3.text) } : {},
+    origin: card.origin,
+    ...card.raw_observation.length ? { raw_observation: card.raw_observation.join("\n") } : {},
+    environment_facts: card.environment_facts,
+    ...card.comment ? { comment: card.comment } : {},
+    ...card.context_lines.length ? { context_lines: card.context_lines.map((l3) => ({ kind: l3.kind, text: l3.text })) } : {},
+    ...card.mockup ? { mockup: card.mockup.html } : {}
+  };
+}
+function checkAndClaim(card, records, stopWords, at) {
+  const check = runCrossCheck(cardText2(card), records, stopWords);
+  if (!check.complete) {
+    card.check_failures = [...card.check_failures ?? [], { at, records: check.records }];
+    return { unchecked: true };
+  }
+  dropGenerated(card, check.hits, "click", at);
+  const prompts = promptsOf(card, check.hits);
+  if (prompts.length) return { prompts };
+  card.state = "sending";
+  card.state_since = at;
+  card.mockup_request = null;
+  return { fields: cardFields(card) };
+}
+function claimed(card, next) {
+  if ("fields" in next) return { fields: next.fields };
+  if ("unchecked" in next) return { done: { outcome: "unchecked", blocks: blocksOf(card) } };
+  return { done: { outcome: "check", prompts: next.prompts, blocks: blocksOf(card) } };
+}
+async function send(cardId, fields2, deps) {
+  let result;
+  try {
+    result = await submitSuggestion(fields2, deps.env, deps.seams ?? {});
+  } catch (err) {
+    const reopened = await withStore(deps.env, (store) => {
+      const card = findCard(store, cardId);
+      card.state = "open";
+      card.state_since = nowOf(deps).toISOString();
+      return blocksOf(card);
+    });
+    if (err instanceof ValidationError) return { outcome: "refused", blocks: reopened };
+    throw err;
+  }
+  await withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    card.state = "submitted";
+    card.state_since = nowOf(deps).toISOString();
+    card.suggestion_record_id = result.record_id;
+    card.waiter_until = null;
+  });
+  return { outcome: result.status === CARD_STATUS.sent ? "sent" : "unsent", status: result.status };
+}
+function closed(card, store, now) {
+  const state = effectiveState(card, now);
+  return state === "open" ? null : { outcome: "closed", state, status: statusOf(card, store) };
+}
+async function submitCard(cardId, edits, deps) {
+  const { records, stopWords } = await recordsOf(deps);
+  const now = nowOf(deps);
+  const step2 = await withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    const done = closed(card, store, now);
+    if (done) return { done };
+    applyEdits(card, edits);
+    if (!card.pain_point.text.trim()) return { done: { outcome: "empty" } };
+    return claimed(card, checkAndClaim(card, records, stopWords, now.toISOString()));
+  });
+  if ("done" in step2) return step2.done;
+  return send(cardId, step2.fields, deps);
+}
+function bracketFor(kind, sources) {
+  if (kind === "email") return "person";
+  if (kind === "path") return "file";
+  if (kind === "date" || kind === "amount") return kind;
+  const source = sources?.[0];
+  if (source === "client" || source === "matter") return source;
+  if (source === "contact") return "person";
+  if (source === "document_title") return "document";
+  return "file";
+}
+async function resolvePrompt(cardId, answer, deps) {
+  if (!isReadable(String(answer.part))) throw new ValidationError("part must be pain_point, items, context_lines or comment");
+  if (answer.action !== "remove" && answer.action !== "send_anyway") throw new ValidationError("action must be remove or send_anyway");
+  if (!Number.isInteger(answer.start) || !Number.isInteger(answer.end)) throw new ValidationError("start and end must be whole numbers");
+  const part = answer.part;
+  const id = answer.id === null || answer.id === void 0 ? null : String(answer.id);
+  const { records, stopWords } = await recordsOf(deps);
+  const now = nowOf(deps);
+  const step2 = await withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    const done = closed(card, store, now);
+    if (done) return { done };
+    const check = runCrossCheck(cardText2(card), records, stopWords);
+    const hit = check.hits.find((h3) => h3.part === part && h3.start === answer.start && h3.end === answer.end && isReadable(h3.part) && blockOf2(card, part, h3.index).id === id);
+    if (!hit || answer.action === "send_anyway" && hit.kind !== "date" && hit.kind !== "amount") {
+      return { done: { outcome: "stale", prompts: promptsOf(card, check.hits), blocks: blocksOf(card) } };
+    }
+    const block2 = blockOf2(card, part, hit.index);
+    const span = block2.text.slice(hit.start, hit.end);
+    if (answer.action === "send_anyway") {
+      card.send_anyway.push({ part, id: block2.id, kind: hit.kind, text: span });
+    } else {
+      const replaced = `${block2.text.slice(0, hit.start)}[${bracketFor(hit.kind, hit.sources)}]${block2.text.slice(hit.end)}`;
+      if (part === "pain_point") card.pain_point = { ...card.pain_point, text: replaced };
+      else if (part === "comment") card.comment = replaced;
+      else {
+        const list = part === "items" ? card.items : card.context_lines;
+        const at = list.findIndex((b3) => b3.id === block2.id);
+        list[at] = { ...list[at], text: replaced };
+      }
+    }
+    return claimed(card, checkAndClaim(card, records, stopWords, now.toISOString()));
+  });
+  if ("done" in step2) return step2.done;
+  return send(cardId, step2.fields, deps);
+}
+async function dismissCard(cardId, deps) {
+  let release = null;
+  try {
+    release = pluginRelease(deps.seams?.installRoot);
+  } catch {
+    release = null;
+  }
+  const now = nowOf(deps);
+  return withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    const done = closed(card, store, now);
+    if (done) return done.outcome === "closed" && done.state === "dismissed" ? { outcome: "dismissed" } : done;
+    card.state = "dismissed";
+    card.state_since = now.toISOString();
+    card.mockup_request = null;
+    const dismissal = {
+      kind: "dismissal",
+      record_id: randomUUID11(),
+      created_at: now.toISOString(),
+      card_id: cardId,
+      origin: card.origin,
+      fingerprint: null,
+      plugin_version: release
+    };
+    store.records.push(dismissal);
+    return { outcome: "dismissed" };
+  });
+}
+async function restoreCard(cardId, deps) {
+  const now = nowOf(deps);
+  return withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    if (card.state !== "dismissed") return closed(card, store, now) ?? { outcome: "restored" };
+    card.state = "open";
+    card.state_since = now.toISOString();
+    store.records = store.records.filter((r3) => !(r3.kind === DISMISSAL_KIND && r3.card_id === cardId));
+    return { outcome: "restored" };
+  });
+}
+async function requestMockup(cardId, edits, deps) {
+  const now = nowOf(deps);
+  return withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    if (effectiveState(card, now) !== "open") return { outcome: "closed" };
+    applyEdits(card, edits);
+    const link = mockupLink(card, now);
+    if (link !== "available") return { outcome: link };
+    card.mockup_request = { at: now.toISOString(), taken_at: null };
+    return { outcome: "requested" };
+  });
+}
+async function attachMockup(cardId, html, deps) {
+  const placeholders = deps.placeholders ? deps.placeholders() : loadPlaceholders(deps.env);
+  const problem = checkMockup(html, placeholders);
+  if (problem) throw new ValidationError(`mockup refused: ${problem.problem}. Build it again from the placeholder text alone, with inline styles.`);
+  const { records, stopWords } = await recordsOf(deps);
+  const check = runCrossCheck({ mockup: html }, records, stopWords);
+  if (!check.complete) {
+    throw new ValidationError(`mockup refused: it could not be checked against this computer's records (${unreadSources(check.records).join(", ")} records unreadable)`);
+  }
+  if (!check.passed) {
+    throw new ValidationError("mockup refused: a word in it is found in this computer's records. Use other placeholder text or other style names.");
+  }
+  const now = nowOf(deps);
+  const { n: n3, items: items2 } = await withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    if (effectiveState(card, now) !== "open") throw new ValidationError("this suggestion was already submitted or dismissed, so no mockup is added");
+    if (card.mockup_request === null) throw new ValidationError("no mockup was asked for on this card: wait for the practitioner's click");
+    card.mockups_made += 1;
+    card.mockup = { n: card.mockups_made, html };
+    card.mockup_request = null;
+    return { n: card.mockups_made, items: card.items.filter((i3) => i3.visual).map((i3) => i3.text) };
+  });
+  const path = mockupPagePath(cardId, n3, deps.env);
+  writeTextAtomic(path, renderMockupPage({ cardId, n: n3, html, items: items2, port: pageApiPort(deps.env), token: pageApiCardToken(cardId, deps.env) }));
+  return { card_id: cardId, mockup_path: path };
+}
+async function rejectMockup(cardId, n3, reason, deps) {
+  const why = text6("reason", reason);
+  const now = nowOf(deps);
+  const result = await withStore(deps.env, (store) => {
+    const card = findCard(store, cardId);
+    if (effectiveState(card, now) !== "open" || card.mockup === null || card.mockup.n !== n3) return { outcome: "gone" };
+    card.context_lines.push({ id: `c${card.next_line}`, kind: "constraint", text: why, guess: false });
+    card.next_line += 1;
+    card.mockup = null;
+    card.mockups_rejected += 1;
+    return { outcome: "rejected", mockup_available: card.mockups_rejected <= MAX_MOCKUP_RETURNS };
+  });
+  if (result.outcome === "rejected") {
+    const path = mockupPagePath(cardId, n3, deps.env);
+    if (existsSync50(path)) unlinkSync10(path);
+  }
+  return result;
+}
+var sleep4 = (ms2) => new Promise((resolve10) => setTimeout(resolve10, ms2));
+async function waitForCard(cardId, deps) {
+  const timeoutMs = deps.timeoutMs ?? 45e3;
+  const pollMs = deps.pollMs ?? 500;
+  const heartbeatMs = deps.heartbeatMs ?? 1e4;
+  const started = Date.now();
+  let beat = -Infinity;
+  findCard(await loadStore(deps.env), cardId);
+  for (; ; ) {
+    const now = nowOf(deps);
+    const store = await loadStore(deps.env);
+    const card = findCard(store, cardId);
+    const state = effectiveState(card, now);
+    const pendingMockup = card.mockup_request !== null && card.mockup_request.taken_at === null;
+    if (state === "submitted" || state === "dismissed" || pendingMockup || Date.now() - beat >= heartbeatMs) {
+      const event = await withStore(deps.env, (s3) => {
+        const c3 = findCard(s3, cardId);
+        const st3 = effectiveState(c3, now);
+        if (st3 === "submitted" || st3 === "dismissed") {
+          c3.waiter_until = null;
+          return { event: st3, card_id: cardId };
+        }
+        c3.waiter_until = new Date(now.getTime() + WAITER_TTL_MS).toISOString();
+        if (c3.mockup_request !== null && c3.mockup_request.taken_at === null) {
+          c3.mockup_request.taken_at = now.toISOString();
+          return {
+            event: "mockup",
+            card_id: cardId,
+            items: c3.items.filter((i3) => i3.visual).map((i3) => i3.text),
+            constraints: c3.context_lines.filter((l3) => l3.kind === "constraint").map((l3) => l3.text),
+            placeholders: deps.placeholders ? deps.placeholders() : loadPlaceholders(deps.env)
+          };
+        }
+        return null;
+      });
+      beat = Date.now();
+      if (event) return event;
+    }
+    if (Date.now() - started >= timeoutMs) return { event: "pending", card_id: cardId };
+    await sleep4(pollMs);
+  }
+}
+async function openCards(env) {
+  const store = await loadStore(env);
+  const now = /* @__PURE__ */ new Date();
+  return store.records.filter(isCard).map((r3) => r3).filter((c3) => effectiveState(c3, now) === "open").map((c3) => ({ card_id: c3.record_id, created_at: c3.created_at, card_path: cardPath(c3.record_id, env) }));
+}
+
 // src/suggestions/environment.ts
 import { arch as osArch, homedir as homedir10, hostname as osHostname, platform as osPlatform, release as osRelease, userInfo } from "node:os";
 import { basename as basename13 } from "node:path";
@@ -108385,14 +109358,14 @@ function listen(handle4, onError) {
     });
   });
   server.on("connection", (socket) => socket.unref());
-  return new Promise((resolve11, reject) => {
+  return new Promise((resolve10, reject) => {
     server.once("error", (err) => {
       onError();
       reject(err);
     });
     server.listen(0, "127.0.0.1", () => {
       server.unref();
-      resolve11(server.address().port);
+      resolve10(server.address().port);
     });
   });
 }
@@ -108429,15 +109402,15 @@ function page(res, status3, title, body) {
     "X-Content-Type-Options": "nosniff"
   });
   res.end(
-    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape2(title)}</title><style>${STYLE2}</style></head><body><main><h1>${escape2(title)}</h1>${body}</main></body></html>`
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape2(title)}</title><style>${STYLE4}</style></head><body><main><h1>${escape2(title)}</h1>${body}</main></body></html>`
   );
 }
-var STYLE2 = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note{color:#aaa}}";
-function escape2(text7) {
-  return text7.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
+var STYLE4 = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note{color:#aaa}}";
+function escape2(text8) {
+  return text8.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
 }
 function readBody(req) {
-  return new Promise((resolve11, reject) => {
+  return new Promise((resolve10, reject) => {
     const chunks = [];
     let size = 0;
     req.on("data", (chunk2) => {
@@ -108449,7 +109422,7 @@ function readBody(req) {
       }
       chunks.push(chunk2);
     });
-    req.on("end", () => resolve11(Buffer.concat(chunks).toString("utf-8")));
+    req.on("end", () => resolve10(Buffer.concat(chunks).toString("utf-8")));
     req.on("error", reject);
   });
 }
@@ -108672,19 +109645,29 @@ function isSuggestionCardToolName(name) {
   return name.startsWith("suggestion_card__");
 }
 async function callSuggestionCardTool(store, name, args, env = store.env) {
-  if (name === "suggestion_card__check") {
-    const stopWords = loadStopWords(env);
-    return runCrossCheck(args, await readRecordTexts(store, env), stopWords);
+  const deps = { env, records: () => readRecordTexts(store, env) };
+  switch (name) {
+    case "suggestion_card__check": {
+      const stopWords = loadStopWords(env);
+      return runCrossCheck(args, await readRecordTexts(store, env), stopWords);
+    }
+    case "suggestion_card__environment_facts":
+      return environmentFacts(args.tool_names, { env });
+    case "suggestion_card__build": {
+      const input = cardInput(args);
+      const facts = environmentFacts(input.tool_names, { env });
+      return buildCard(input, facts, deps);
+    }
+    case "suggestion_card__wait":
+      return waitForCard(text7(args.card_id, "card_id"), deps);
+    case "suggestion_card__attach_mockup":
+      return attachMockup(text7(args.card_id, "card_id"), args.html, deps);
+    default:
+      throw new ValidationError(`Unknown suggestion tool "${name}"`);
   }
-  if (name === "suggestion_card__environment_facts") {
-    return environmentFacts(args.tool_names, { env });
-  }
-  throw new ValidationError(`Unknown suggestion tool "${name}"`);
 }
 function callSuggestionTool(name, args, env = process.env, seams = {}) {
   switch (name) {
-    case "suggestion_box__submit":
-      return submitSuggestion(fieldsFromToolArgs(args), env, seams);
     case "suggestion_box__status":
       return status(args, env, seams);
     case "suggestion_box__past_suggestions":
@@ -108705,7 +109688,7 @@ async function status(args, env, seams) {
     past_suggestions_path: result.changed.length ? await writePastSuggestionsPage(env) : null
   };
 }
-function text6(raw, name) {
+function text7(raw, name) {
   if (typeof raw !== "string" || raw.trim() === "") throw new ValidationError(`${name} must be a non-empty string`);
   return raw.trim();
 }
@@ -108722,7 +109705,8 @@ async function suggestionLogRead(env = process.env) {
       shown_badge: r3.shown_badge,
       withdrawn: r3.withdrawn_at !== null
     })),
-    held: store.records.filter(isHeld).map((r3) => ({ held_id: r3.record_id, held_on: r3.created_at.slice(0, 10), draft: r3.draft }))
+    held: store.records.filter(isHeld).map((r3) => ({ held_id: r3.record_id, held_on: r3.created_at.slice(0, 10), draft: r3.draft })),
+    open_cards: await openCards(env)
   };
 }
 async function suggestionLogWrite(args, env = process.env) {
@@ -108740,21 +109724,8 @@ async function suggestionLogWrite(args, env = process.env) {
       return { status: "updated", suggestions: records.map((r3) => ({ suggestion_id: r3.suggestion_id, shown_badge: r3.shown_badge })) };
     });
   }
-  if (args.op === "hold") {
-    const draft = args.draft;
-    if (typeof draft !== "object" || draft === null || Array.isArray(draft)) {
-      throw new ValidationError("draft must be the suggestion as drafted: an object with title and body");
-    }
-    text6(draft.title, "draft.title");
-    text6(draft.body, "draft.body");
-    const record2 = { kind: "held", record_id: randomUUID11(), created_at: (/* @__PURE__ */ new Date()).toISOString(), draft };
-    return withStore(env, (store) => {
-      store.records.push(record2);
-      return { status: "held", held_id: record2.record_id };
-    });
-  }
   if (args.op === "release") {
-    const heldId = text6(args.held_id, "held_id");
+    const heldId = text7(args.held_id, "held_id");
     return withStore(env, (store) => {
       const index = store.records.findIndex((r3) => isHeld(r3) && r3.record_id === heldId);
       if (index < 0) throw new DataServerError(`no held suggestion ${heldId} on this computer`, "not_found");
@@ -108762,11 +109733,11 @@ async function suggestionLogWrite(args, env = process.env) {
       return { status: "released", held_id: heldId };
     });
   }
-  throw new ValidationError(`op must be "seen", "hold" or "release"`);
+  throw new ValidationError(`op must be "seen" or "release"`);
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync49, mkdirSync as mkdirSync22, readFileSync as readFileSync38, statSync as statSync19, writeFileSync as writeFileSync12 } from "node:fs";
+import { existsSync as existsSync51, mkdirSync as mkdirSync21, readFileSync as readFileSync38, statSync as statSync18, writeFileSync as writeFileSync11 } from "node:fs";
 import { win32 as pathWin3227 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
@@ -108782,17 +109753,17 @@ function docsRoot(env = process.env) {
   rootCache2.set(repoRoot, canon);
   return canon;
 }
-function repoDocsWrite(relative6, content, overwrite = false, env) {
+function repoDocsWrite(relative5, content, overwrite = false, env) {
   if (typeof content !== "string") {
     throw new DataServerError("content must be a string", "invalid_content");
   }
   const root = docsRoot(env);
-  assertRelativeSyntax(relative6, "path");
-  const resolved = resolveWithin(root, relative6, "path", false);
-  const exists = existsSync49(resolved);
-  if (exists && statSync19(resolved).isDirectory()) {
+  assertRelativeSyntax(relative5, "path");
+  const resolved = resolveWithin(root, relative5, "path", false);
+  const exists = existsSync51(resolved);
+  if (exists && statSync18(resolved).isDirectory()) {
     throw new DataServerError(
-      `path is a directory, not a file: ${relative6}`,
+      `path is a directory, not a file: ${relative5}`,
       "invalid_path"
     );
   }
@@ -108802,21 +109773,21 @@ function repoDocsWrite(relative6, content, overwrite = false, env) {
       "exists"
     );
   }
-  mkdirSync22(pathWin3227.dirname(resolved), { recursive: true });
-  writeFileSync12(resolved, content, "utf-8");
+  mkdirSync21(pathWin3227.dirname(resolved), { recursive: true });
+  writeFileSync11(resolved, content, "utf-8");
   return {
     path: toPosixRelative(root, resolved),
     bytes: Buffer.byteLength(content, "utf-8"),
     created: !exists
   };
 }
-function repoDocsRead(relative6, env) {
+function repoDocsRead(relative5, env) {
   const root = docsRoot(env);
-  assertRelativeSyntax(relative6, "path");
-  const resolved = resolveWithin(root, relative6, "path");
-  if (statSync19(resolved).isDirectory()) {
+  assertRelativeSyntax(relative5, "path");
+  const resolved = resolveWithin(root, relative5, "path");
+  if (statSync18(resolved).isDirectory()) {
     throw new DataServerError(
-      `path is a directory, not a file: ${relative6}`,
+      `path is a directory, not a file: ${relative5}`,
       "invalid_path"
     );
   }
@@ -108827,7 +109798,7 @@ function repoDocsRead(relative6, env) {
 }
 
 // src/pages/preview.ts
-import { basename as basename14, dirname as dirname30, join as join50, relative as relative5 } from "node:path";
+import { basename as basename14, dirname as dirname30, join as join52, relative as relative4 } from "node:path";
 
 // src/housekeeping/templates/approval.css.ts
 var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
@@ -110238,6 +111209,39 @@ var RAW_RESEARCH_FIXTURE = {
   }
 };
 
+// src/pages/preview-file.ts
+import { mkdirSync as mkdirSync22, writeFileSync as writeFileSync12 } from "node:fs";
+import { tmpdir as tmpdir4 } from "node:os";
+import { join as join51 } from "node:path";
+var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
+function fixturePreviewDir() {
+  return join51(tmpdir4(), FIXTURE_PREVIEW_FOLDER);
+}
+var FIXTURE_PREVIEW_MARKER = "<!-- probanda-fixture-preview -->";
+function composeWithOverrides(set, overrides = {}) {
+  const unknown2 = Object.keys(overrides).filter((name) => !Object.hasOwn(set.files, name));
+  if (unknown2.length > 0) {
+    throw new ValidationError(`overrides name no template file of this page: ${unknown2.join(", ")}. Its files are ${Object.keys(set.files).join(", ")}.`);
+  }
+  const notText = Object.keys(overrides).filter((name) => typeof overrides[name] !== "string");
+  if (notText.length > 0) throw new ValidationError(`each override is a file's whole text, a string: ${notText.join(", ")} is not`);
+  return composeTemplate(set.entry, { ...set.files, ...overrides });
+}
+function writePreview(dir, base, html, fixture) {
+  mkdirSync22(dir, { recursive: true });
+  const text8 = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
+` : html;
+  for (let n3 = 1; ; n3++) {
+    const path = join51(dir, `${base} preview ${n3}.html`);
+    try {
+      writeFileSync12(path, text8, { flag: "wx" });
+      return path;
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+    }
+  }
+}
+
 // src/pages/preview.ts
 var HOUSEKEEPING_PAGE = "Housekeeping approval";
 var PAGE_TEMPLATES = {
@@ -110318,8 +111322,8 @@ async function pagesPreview(args, store) {
     ids.filing_id === void 0 ? {} : { only: ids.filing_id },
     viewPage ? { views: { [page2]: page2 === LOOSE_THREADS_PAGE_NAME ? withoutListener(viewPage) : viewPage } } : page2 === "Job Board" ? { jobBoard: composed } : { matterBoard: composed }
   );
-  const target = page2 === "Litigation Strategy" ? join50(draftDir, MATTER_BOARD_FILE) : page2 === "Job Board" ? built.paths.job_board_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
-  const pageFile = target === void 0 ? void 0 : relative5(draftDir, target);
+  const target = page2 === "Litigation Strategy" ? join52(draftDir, MATTER_BOARD_FILE) : page2 === "Job Board" ? built.paths.job_board_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
+  const pageFile = target === void 0 ? void 0 : relative4(draftDir, target);
   const html = built.pages.find((p3) => p3.name === pageFile)?.html;
   if (target === void 0 || html === void 0) {
     const which = ids.filing_id !== void 0 ? `Job Board ${ids.filing_id}` : "that proceeding's board";
@@ -110344,11 +111348,11 @@ import {
   appendFileSync as appendFileSync2,
   constants,
   copyFileSync as copyFileSync4,
-  existsSync as existsSync51,
+  existsSync as existsSync53,
   mkdirSync as mkdirSync24,
   readdirSync as readdirSync28,
   readFileSync as readFileSync44,
-  statSync as statSync22,
+  statSync as statSync21,
   writeFileSync as writeFileSync14
 } from "node:fs";
 import { win32 as pathWin3230 } from "node:path";
@@ -110379,8 +111383,8 @@ var TIERS = [
 var PREFIX2 = "**Coverage:**";
 var SHAPE = TIERS.map((t3) => `${t3.label}: ${t3.expected}`).join(" | ");
 var FIX = `Expected one line: ${SHAPE}. Any tier may instead read NOT AUDITED or NOT AUDITED: <reason>. Nothing in parentheses after a segment and nothing after the Legislation segment; detail goes in the notes below the line.`;
-function checkCoverageLine(text7) {
-  const line = text7.split(/\r?\n/).map((l3) => l3.trim()).find((l3) => l3.startsWith(PREFIX2) || l3.startsWith("case data:"));
+function checkCoverageLine(text8) {
+  const line = text8.split(/\r?\n/).map((l3) => l3.trim()).find((l3) => l3.startsWith(PREFIX2) || l3.startsWith("case data:"));
   if (line === void 0) {
     throw new DataServerError(`no coverage line: no line starts "${PREFIX2}" or "case data:". ${FIX}`, "coverage_line_malformed");
   }
@@ -110406,14 +111410,14 @@ function checkCoverageLine(text7) {
 }
 
 // src/files/downloads.ts
-import { statSync as statSync20 } from "node:fs";
+import { statSync as statSync19 } from "node:fs";
 import { homedir as homedir11 } from "node:os";
 import { win32 as pathWin3228 } from "node:path";
 var IN_PROGRESS_EXTENSIONS = /* @__PURE__ */ new Set([".crdownload", ".tmp", ".partial"]);
 function downloadsDir(env = process.env) {
   const probe2 = env.COCLERK_DOWNLOADS_DIR || pathWin3228.join(homedir11(), "Downloads");
   const dir = canonicalRoot(probe2, `Downloads folder not found at ${probe2}`, "downloads_missing");
-  if (!statSync20(dir).isDirectory()) {
+  if (!statSync19(dir).isDirectory()) {
     throw new DataServerError(`Downloads path is not a folder: ${probe2}`, "downloads_missing");
   }
   return dir;
@@ -110593,20 +111597,20 @@ function docText(path) {
   const n3 = (lcb - 4) / 12;
   if (!Number.isInteger(n3) || n3 < 1) throw new Error("the document's piece table is malformed");
   const total = ccpText + ccpFtn + ccpHdd + ccpAtn + ccpEdn;
-  let text7 = "";
-  for (let i3 = 0; i3 < n3 && text7.length < total; i3++) {
+  let text8 = "";
+  for (let i3 = 0; i3 < n3 && text8.length < total; i3++) {
     const cpStart = plc.readUInt32LE(4 * i3);
     const chars = plc.readUInt32LE(4 * (i3 + 1)) - cpStart;
     const fc2 = plc.readUInt32LE(4 * (n3 + 1) + 8 * i3 + 2);
     if (fc2 & 1073741824) {
       const off = (fc2 & 1073741823) / 2;
-      text7 += cp1252(wd.subarray(off, off + chars));
+      text8 += cp1252(wd.subarray(off, off + chars));
     } else {
-      text7 += wd.toString("utf16le", fc2, fc2 + 2 * chars);
+      text8 += wd.toString("utf16le", fc2, fc2 + 2 * chars);
     }
   }
-  const main = plain(text7.slice(0, ccpText));
-  const notes = [text7.slice(ccpText, ccpText + ccpFtn), text7.slice(total - ccpEdn, total)].map((story) => plain(story).trim()).filter((story) => story !== "");
+  const main = plain(text8.slice(0, ccpText));
+  const notes = [text8.slice(ccpText, ccpText + ccpFtn), text8.slice(total - ccpEdn, total)].map((story) => plain(story).trim()).filter((story) => story !== "");
   return notes.length ? `${main}
 ${notes.join("\n\n")}
 ` : main;
@@ -110656,9 +111660,9 @@ function docxText(path) {
 
 // src/files/extract/page-images.ts
 import { createHash as createHash10 } from "node:crypto";
-import { existsSync as existsSync50, mkdirSync as mkdirSync23, mkdtempSync as mkdtempSync2, readFileSync as readFileSync41, statSync as statSync21, writeFileSync as writeFileSync13 } from "node:fs";
+import { existsSync as existsSync52, mkdirSync as mkdirSync23, mkdtempSync as mkdtempSync2, readFileSync as readFileSync41, statSync as statSync20, writeFileSync as writeFileSync13 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
-import { extname as extname6, isAbsolute as isAbsolute10, join as join51 } from "node:path";
+import { extname as extname6, isAbsolute as isAbsolute9, join as join53 } from "node:path";
 import { deflateSync } from "node:zlib";
 
 // node_modules/@embedpdf/pdfium/dist/index.js
@@ -110668,8 +111672,8 @@ var createPdfium = (() => {
     var moduleRtn;
     var Module = moduleArg;
     var readyPromiseResolve, readyPromiseReject;
-    var readyPromise = new Promise((resolve11, reject) => {
-      readyPromiseResolve = resolve11;
+    var readyPromise = new Promise((resolve10, reject) => {
+      readyPromiseResolve = resolve10;
       readyPromiseReject = reject;
     });
     ["_EPDF_GetMetaKeyCount", "_EPDF_GetMetaKeyName", "_EPDF_GetMetaTrapped", "_EPDF_GetPageRotationByIndex", "_EPDF_GetPageSizeByIndexNormalized", "_EPDF_HasMetaText", "_EPDF_IsEncrypted", "_EPDF_IsOwnerUnlocked", "_EPDF_LoadPageNormalized", "_EPDF_PNG_EncodeRGBA", "_EPDF_RemoveEncryption", "_EPDF_RenderAnnotBitmap", "_EPDF_RenderAnnotBitmapUnrotated", "_EPDF_SetEncryption", "_EPDF_SetMetaText", "_EPDF_SetMetaTrapped", "_EPDF_UnlockOwnerPermissions", "_EPDFAction_CreateGoTo", "_EPDFAction_CreateGoToNamed", "_EPDFAction_CreateLaunch", "_EPDFAction_CreateRemoteGoToByName", "_EPDFAction_CreateRemoteGoToDest", "_EPDFAction_CreateURI", "_EPDFAnnot_ApplyRedaction", "_EPDFAnnot_ClearBorderEffect", "_EPDFAnnot_ClearColor", "_EPDFAnnot_ClearMKColor", "_EPDFAnnot_ClearRectangleDifferences", "_EPDFAnnot_ExportAppearanceAsDocument", "_EPDFAnnot_ExportMultipleAppearancesAsDocument", "_EPDFAnnot_Flatten", "_EPDFAnnot_GenerateAppearance", "_EPDFAnnot_GenerateAppearanceWithBlend", "_EPDFAnnot_GenerateFormFieldAP", "_EPDFAnnot_GetAPMatrix", "_EPDFAnnot_GetAvailableAppearanceModes", "_EPDFAnnot_GetBlendMode", "_EPDFAnnot_GetBorderDashPattern", "_EPDFAnnot_GetBorderDashPatternCount", "_EPDFAnnot_GetBorderEffect", "_EPDFAnnot_GetBorderStyle", "_EPDFAnnot_GetButtonExportValue", "_EPDFAnnot_GetCalloutLine", "_EPDFAnnot_GetCalloutLineCount", "_EPDFAnnot_GetColor", "_EPDFAnnot_GetDefaultAppearance", "_EPDFAnnot_GetExtendedRotation", "_EPDFAnnot_GetFormFieldObjectNumber", "_EPDFAnnot_GetFormFieldRawValue", "_EPDFAnnot_GetIntent", "_EPDFAnnot_GetLineEndings", "_EPDFAnnot_GetMKColor", "_EPDFAnnot_GetName", "_EPDFAnnot_GetObjectNumber", "_EPDFAnnot_GetOpacity", "_EPDFAnnot_GetOverlayText", "_EPDFAnnot_GetOverlayTextRepeat", "_EPDFAnnot_GetRect", "_EPDFAnnot_GetRectangleDifferences", "_EPDFAnnot_GetReplyType", "_EPDFAnnot_GetRichContent", "_EPDFAnnot_GetRotate", "_EPDFAnnot_GetTextAlignment", "_EPDFAnnot_GetUnrotatedRect", "_EPDFAnnot_GetVerticalAlignment", "_EPDFAnnot_HasAppearanceStream", "_EPDFAnnot_SetAction", "_EPDFAnnot_SetAPMatrix", "_EPDFAnnot_SetAppearanceFromPage", "_EPDFAnnot_SetBorderDashPattern", "_EPDFAnnot_SetBorderEffect", "_EPDFAnnot_SetBorderStyle", "_EPDFAnnot_SetCalloutLine", "_EPDFAnnot_SetColor", "_EPDFAnnot_SetDefaultAppearance", "_EPDFAnnot_SetExtendedRotation", "_EPDFAnnot_SetFormFieldName", "_EPDFAnnot_SetFormFieldOptions", "_EPDFAnnot_SetFormFieldValue", "_EPDFAnnot_SetIntent", "_EPDFAnnot_SetLine", "_EPDFAnnot_SetLineEndings", "_EPDFAnnot_SetLinkedAnnot", "_EPDFAnnot_SetMKColor", "_EPDFAnnot_SetName", "_EPDFAnnot_SetNumberValue", "_EPDFAnnot_SetOpacity", "_EPDFAnnot_SetOverlayText", "_EPDFAnnot_SetOverlayTextRepeat", "_EPDFAnnot_SetRectangleDifferences", "_EPDFAnnot_SetReplyType", "_EPDFAnnot_SetRotate", "_EPDFAnnot_SetTextAlignment", "_EPDFAnnot_SetUnrotatedRect", "_EPDFAnnot_SetVerticalAlignment", "_EPDFAnnot_SetVertices", "_EPDFAnnot_ShareFormField", "_EPDFAnnot_UpdateAppearanceToRect", "_EPDFAttachment_GetDescription", "_EPDFAttachment_GetIntegerValue", "_EPDFAttachment_SetDescription", "_EPDFAttachment_SetSubtype", "_EPDFBookmark_AppendChild", "_EPDFBookmark_Clear", "_EPDFBookmark_ClearTarget", "_EPDFBookmark_Create", "_EPDFBookmark_Delete", "_EPDFBookmark_InsertAfter", "_EPDFBookmark_SetAction", "_EPDFBookmark_SetDest", "_EPDFBookmark_SetTitle", "_EPDFCatalog_GetLanguage", "_EPDFDest_CreateRemoteView", "_EPDFDest_CreateRemoteXYZ", "_EPDFDest_CreateView", "_EPDFDest_CreateXYZ", "_EPDFDoc_GetPageObjectNumberByIndex", "_EPDFDoc_LoadPageByObjectNumber", "_EPDFImageObj_SetJpeg", "_EPDFImageObj_SetPng", "_EPDFNamedDest_Remove", "_EPDFNamedDest_SetDest", "_EPDFPage_ApplyRedactions", "_EPDFPage_CreateAnnot", "_EPDFPage_CreateFormField", "_EPDFPage_GetAnnotByName", "_EPDFPage_GetAnnotByObjectNumber", "_EPDFPage_GetAnnotCountRaw", "_EPDFPage_GetAnnotRaw", "_EPDFPage_GetObjectNumber", "_EPDFPage_MoveAnnots", "_EPDFPage_RemoveAnnot", "_EPDFPage_RemoveAnnotByName", "_EPDFPage_RemoveAnnotByObjectNumber", "_EPDFPage_RemoveAnnotRaw", "_EPDFText_RedactInQuads", "_EPDFText_RedactInRect", "_FORM_CanRedo", "_FORM_CanUndo", "_FORM_DoDocumentAAction", "_FORM_DoDocumentJSAction", "_FORM_DoDocumentOpenAction", "_FORM_DoPageAAction", "_FORM_ForceToKillFocus", "_FORM_GetFocusedAnnot", "_FORM_GetFocusedText", "_FORM_GetSelectedText", "_FORM_IsIndexSelected", "_FORM_OnAfterLoadPage", "_FORM_OnBeforeClosePage", "_FORM_OnChar", "_FORM_OnFocus", "_FORM_OnKeyDown", "_FORM_OnKeyUp", "_FORM_OnLButtonDoubleClick", "_FORM_OnLButtonDown", "_FORM_OnLButtonUp", "_FORM_OnMouseMove", "_FORM_OnMouseWheel", "_FORM_OnRButtonDown", "_FORM_OnRButtonUp", "_FORM_Redo", "_FORM_ReplaceAndKeepSelection", "_FORM_ReplaceSelection", "_FORM_SelectAllText", "_FORM_SetFocusedAnnot", "_FORM_SetIndexSelected", "_FORM_Undo", "_FPDF_AddInstalledFont", "_FPDF_CloseDocument", "_FPDF_ClosePage", "_FPDF_CloseXObject", "_FPDF_CopyViewerPreferences", "_FPDF_CountNamedDests", "_FPDF_CreateClipPath", "_FPDF_CreateNewDocument", "_FPDF_DestroyClipPath", "_FPDF_DestroyLibrary", "_FPDF_DeviceToPage", "_FPDF_DocumentHasValidCrossReferenceTable", "_FPDF_FFLDraw", "_FPDF_FreeDefaultSystemFontInfo", "_FPDF_GetDefaultSystemFontInfo", "_FPDF_GetDefaultTTFMap", "_FPDF_GetDefaultTTFMapCount", "_FPDF_GetDefaultTTFMapEntry", "_FPDF_GetDocPermissions", "_FPDF_GetDocUserPermissions", "_FPDF_GetFileIdentifier", "_FPDF_GetFileVersion", "_FPDF_GetFormType", "_FPDF_GetLastError", "_FPDF_GetMetaText", "_FPDF_GetNamedDest", "_FPDF_GetNamedDestByName", "_FPDF_GetPageAAction", "_FPDF_GetPageBoundingBox", "_FPDF_GetPageCount", "_FPDF_GetPageHeight", "_FPDF_GetPageHeightF", "_FPDF_GetPageLabel", "_FPDF_GetPageSizeByIndex", "_FPDF_GetPageSizeByIndexF", "_FPDF_GetPageWidth", "_FPDF_GetPageWidthF", "_FPDF_GetSecurityHandlerRevision", "_FPDF_GetSignatureCount", "_FPDF_GetSignatureObject", "_FPDF_GetTrailerEnds", "_FPDF_GetXFAPacketContent", "_FPDF_GetXFAPacketCount", "_FPDF_GetXFAPacketName", "_FPDF_ImportNPagesToOne", "_FPDF_ImportPages", "_FPDF_ImportPagesByIndex", "_FPDF_InitLibrary", "_FPDF_InitLibraryWithConfig", "_FPDF_LoadCustomDocument", "_FPDF_LoadDocument", "_FPDF_LoadMemDocument", "_FPDF_LoadMemDocument64", "_FPDF_LoadPage", "_FPDF_LoadXFA", "_FPDF_MovePages", "_FPDF_NewFormObjectFromXObject", "_FPDF_NewXObjectFromPage", "_FPDF_PageToDevice", "_FPDF_RemoveFormFieldHighlight", "_FPDF_RenderPage_Close", "_FPDF_RenderPage_Continue", "_FPDF_RenderPageBitmap", "_FPDF_RenderPageBitmap_Start", "_FPDF_RenderPageBitmapWithColorScheme_Start", "_FPDF_RenderPageBitmapWithMatrix", "_FPDF_SaveAsCopy", "_FPDF_SaveWithVersion", "_FPDF_SetFormFieldHighlightAlpha", "_FPDF_SetFormFieldHighlightColor", "_FPDF_SetSandBoxPolicy", "_FPDF_SetSystemFontInfo", "_FPDF_StructElement_Attr_CountChildren", "_FPDF_StructElement_Attr_GetBlobValue", "_FPDF_StructElement_Attr_GetBooleanValue", "_FPDF_StructElement_Attr_GetChildAtIndex", "_FPDF_StructElement_Attr_GetCount", "_FPDF_StructElement_Attr_GetName", "_FPDF_StructElement_Attr_GetNumberValue", "_FPDF_StructElement_Attr_GetStringValue", "_FPDF_StructElement_Attr_GetType", "_FPDF_StructElement_Attr_GetValue", "_FPDF_StructElement_CountChildren", "_FPDF_StructElement_GetActualText", "_FPDF_StructElement_GetAltText", "_FPDF_StructElement_GetAttributeAtIndex", "_FPDF_StructElement_GetAttributeCount", "_FPDF_StructElement_GetChildAtIndex", "_FPDF_StructElement_GetChildMarkedContentID", "_FPDF_StructElement_GetID", "_FPDF_StructElement_GetLang", "_FPDF_StructElement_GetMarkedContentID", "_FPDF_StructElement_GetMarkedContentIdAtIndex", "_FPDF_StructElement_GetMarkedContentIdCount", "_FPDF_StructElement_GetObjType", "_FPDF_StructElement_GetParent", "_FPDF_StructElement_GetStringAttribute", "_FPDF_StructElement_GetTitle", "_FPDF_StructElement_GetType", "_FPDF_StructTree_Close", "_FPDF_StructTree_CountChildren", "_FPDF_StructTree_GetChildAtIndex", "_FPDF_StructTree_GetForPage", "_FPDF_VIEWERREF_GetDuplex", "_FPDF_VIEWERREF_GetName", "_FPDF_VIEWERREF_GetNumCopies", "_FPDF_VIEWERREF_GetPrintPageRange", "_FPDF_VIEWERREF_GetPrintPageRangeCount", "_FPDF_VIEWERREF_GetPrintPageRangeElement", "_FPDF_VIEWERREF_GetPrintScaling", "_FPDFAction_GetDest", "_FPDFAction_GetFilePath", "_FPDFAction_GetType", "_FPDFAction_GetURIPath", "_FPDFAnnot_AddFileAttachment", "_FPDFAnnot_AddInkStroke", "_FPDFAnnot_AppendAttachmentPoints", "_FPDFAnnot_AppendObject", "_FPDFAnnot_CountAttachmentPoints", "_FPDFAnnot_GetAP", "_FPDFAnnot_GetAttachmentPoints", "_FPDFAnnot_GetBorder", "_FPDFAnnot_GetColor", "_FPDFAnnot_GetFileAttachment", "_FPDFAnnot_GetFlags", "_FPDFAnnot_GetFocusableSubtypes", "_FPDFAnnot_GetFocusableSubtypesCount", "_FPDFAnnot_GetFontColor", "_FPDFAnnot_GetFontSize", "_FPDFAnnot_GetFormAdditionalActionJavaScript", "_FPDFAnnot_GetFormControlCount", "_FPDFAnnot_GetFormControlIndex", "_FPDFAnnot_GetFormFieldAlternateName", "_FPDFAnnot_GetFormFieldAtPoint", "_FPDFAnnot_GetFormFieldExportValue", "_FPDFAnnot_GetFormFieldFlags", "_FPDFAnnot_GetFormFieldName", "_FPDFAnnot_GetFormFieldType", "_FPDFAnnot_GetFormFieldValue", "_FPDFAnnot_GetInkListCount", "_FPDFAnnot_GetInkListPath", "_FPDFAnnot_GetLine", "_FPDFAnnot_GetLink", "_FPDFAnnot_GetLinkedAnnot", "_FPDFAnnot_GetNumberValue", "_FPDFAnnot_GetObject", "_FPDFAnnot_GetObjectCount", "_FPDFAnnot_GetOptionCount", "_FPDFAnnot_GetOptionLabel", "_FPDFAnnot_GetRect", "_FPDFAnnot_GetStringValue", "_FPDFAnnot_GetSubtype", "_FPDFAnnot_GetValueType", "_FPDFAnnot_GetVertices", "_FPDFAnnot_HasAttachmentPoints", "_FPDFAnnot_HasKey", "_FPDFAnnot_IsChecked", "_FPDFAnnot_IsObjectSupportedSubtype", "_FPDFAnnot_IsOptionSelected", "_FPDFAnnot_IsSupportedSubtype", "_FPDFAnnot_RemoveInkList", "_FPDFAnnot_RemoveObject", "_FPDFAnnot_SetAP", "_FPDFAnnot_SetAttachmentPoints", "_FPDFAnnot_SetBorder", "_FPDFAnnot_SetColor", "_FPDFAnnot_SetFlags", "_FPDFAnnot_SetFocusableSubtypes", "_FPDFAnnot_SetFontColor", "_FPDFAnnot_SetFormFieldFlags", "_FPDFAnnot_SetRect", "_FPDFAnnot_SetStringValue", "_FPDFAnnot_SetURI", "_FPDFAnnot_UpdateObject", "_FPDFAttachment_GetFile", "_FPDFAttachment_GetName", "_FPDFAttachment_GetStringValue", "_FPDFAttachment_GetSubtype", "_FPDFAttachment_GetValueType", "_FPDFAttachment_HasKey", "_FPDFAttachment_SetFile", "_FPDFAttachment_SetStringValue", "_FPDFAvail_Create", "_FPDFAvail_Destroy", "_FPDFAvail_GetDocument", "_FPDFAvail_GetFirstPageNum", "_FPDFAvail_IsDocAvail", "_FPDFAvail_IsFormAvail", "_FPDFAvail_IsLinearized", "_FPDFAvail_IsPageAvail", "_FPDFBitmap_Create", "_FPDFBitmap_CreateEx", "_FPDFBitmap_Destroy", "_FPDFBitmap_FillRect", "_FPDFBitmap_GetBuffer", "_FPDFBitmap_GetFormat", "_FPDFBitmap_GetHeight", "_FPDFBitmap_GetStride", "_FPDFBitmap_GetWidth", "_FPDFBookmark_Find", "_FPDFBookmark_GetAction", "_FPDFBookmark_GetCount", "_FPDFBookmark_GetDest", "_FPDFBookmark_GetFirstChild", "_FPDFBookmark_GetNextSibling", "_FPDFBookmark_GetTitle", "_FPDFCatalog_GetLanguage", "_FPDFCatalog_IsTagged", "_FPDFCatalog_SetLanguage", "_FPDFClipPath_CountPaths", "_FPDFClipPath_CountPathSegments", "_FPDFClipPath_GetPathSegment", "_FPDFDest_GetDestPageIndex", "_FPDFDest_GetLocationInPage", "_FPDFDest_GetView", "_FPDFDoc_AddAttachment", "_FPDFDoc_CloseJavaScriptAction", "_FPDFDoc_DeleteAttachment", "_FPDFDOC_ExitFormFillEnvironment", "_FPDFDoc_GetAttachment", "_FPDFDoc_GetAttachmentCount", "_FPDFDoc_GetJavaScriptAction", "_FPDFDoc_GetJavaScriptActionCount", "_FPDFDoc_GetPageMode", "_FPDFDOC_InitFormFillEnvironment", "_FPDFFont_Close", "_FPDFFont_GetAscent", "_FPDFFont_GetBaseFontName", "_FPDFFont_GetDescent", "_FPDFFont_GetFamilyName", "_FPDFFont_GetFlags", "_FPDFFont_GetFontData", "_FPDFFont_GetGlyphPath", "_FPDFFont_GetGlyphWidth", "_FPDFFont_GetIsEmbedded", "_FPDFFont_GetItalicAngle", "_FPDFFont_GetWeight", "_FPDFFormObj_CountObjects", "_FPDFFormObj_GetObject", "_FPDFFormObj_RemoveObject", "_FPDFGlyphPath_CountGlyphSegments", "_FPDFGlyphPath_GetGlyphPathSegment", "_FPDFImageObj_GetBitmap", "_FPDFImageObj_GetIccProfileDataDecoded", "_FPDFImageObj_GetImageDataDecoded", "_FPDFImageObj_GetImageDataRaw", "_FPDFImageObj_GetImageFilter", "_FPDFImageObj_GetImageFilterCount", "_FPDFImageObj_GetImageMetadata", "_FPDFImageObj_GetImagePixelSize", "_FPDFImageObj_GetRenderedBitmap", "_FPDFImageObj_LoadJpegFile", "_FPDFImageObj_LoadJpegFileInline", "_FPDFImageObj_SetBitmap", "_FPDFImageObj_SetMatrix", "_FPDFJavaScriptAction_GetName", "_FPDFJavaScriptAction_GetScript", "_FPDFLink_CloseWebLinks", "_FPDFLink_CountQuadPoints", "_FPDFLink_CountRects", "_FPDFLink_CountWebLinks", "_FPDFLink_Enumerate", "_FPDFLink_GetAction", "_FPDFLink_GetAnnot", "_FPDFLink_GetAnnotRect", "_FPDFLink_GetDest", "_FPDFLink_GetLinkAtPoint", "_FPDFLink_GetLinkZOrderAtPoint", "_FPDFLink_GetQuadPoints", "_FPDFLink_GetRect", "_FPDFLink_GetTextRange", "_FPDFLink_GetURL", "_FPDFLink_LoadWebLinks", "_FPDFPage_CloseAnnot", "_FPDFPage_CountObjects", "_FPDFPage_CreateAnnot", "_FPDFPage_Delete", "_FPDFPage_Flatten", "_FPDFPage_FormFieldZOrderAtPoint", "_FPDFPage_GenerateContent", "_FPDFPage_GetAnnot", "_FPDFPage_GetAnnotCount", "_FPDFPage_GetAnnotIndex", "_FPDFPage_GetArtBox", "_FPDFPage_GetBleedBox", "_FPDFPage_GetCropBox", "_FPDFPage_GetDecodedThumbnailData", "_FPDFPage_GetMediaBox", "_FPDFPage_GetObject", "_FPDFPage_GetRawThumbnailData", "_FPDFPage_GetRotation", "_FPDFPage_GetThumbnailAsBitmap", "_FPDFPage_GetTrimBox", "_FPDFPage_HasFormFieldAtPoint", "_FPDFPage_HasTransparency", "_FPDFPage_InsertClipPath", "_FPDFPage_InsertObject", "_FPDFPage_InsertObjectAtIndex", "_FPDFPage_New", "_FPDFPage_RemoveAnnot", "_FPDFPage_RemoveObject", "_FPDFPage_SetArtBox", "_FPDFPage_SetBleedBox", "_FPDFPage_SetCropBox", "_FPDFPage_SetMediaBox", "_FPDFPage_SetRotation", "_FPDFPage_SetTrimBox", "_FPDFPage_TransformAnnots", "_FPDFPage_TransFormWithClip", "_FPDFPageObj_AddMark", "_FPDFPageObj_CountMarks", "_FPDFPageObj_CreateNewPath", "_FPDFPageObj_CreateNewRect", "_FPDFPageObj_CreateTextObj", "_FPDFPageObj_Destroy", "_FPDFPageObj_GetBounds", "_FPDFPageObj_GetClipPath", "_FPDFPageObj_GetDashArray", "_FPDFPageObj_GetDashCount", "_FPDFPageObj_GetDashPhase", "_FPDFPageObj_GetFillColor", "_FPDFPageObj_GetIsActive", "_FPDFPageObj_GetLineCap", "_FPDFPageObj_GetLineJoin", "_FPDFPageObj_GetMark", "_FPDFPageObj_GetMarkedContentID", "_FPDFPageObj_GetMatrix", "_FPDFPageObj_GetRotatedBounds", "_FPDFPageObj_GetStrokeColor", "_FPDFPageObj_GetStrokeWidth", "_FPDFPageObj_GetType", "_FPDFPageObj_HasTransparency", "_FPDFPageObj_NewImageObj", "_FPDFPageObj_NewTextObj", "_FPDFPageObj_RemoveMark", "_FPDFPageObj_SetBlendMode", "_FPDFPageObj_SetDashArray", "_FPDFPageObj_SetDashPhase", "_FPDFPageObj_SetFillColor", "_FPDFPageObj_SetIsActive", "_FPDFPageObj_SetLineCap", "_FPDFPageObj_SetLineJoin", "_FPDFPageObj_SetMatrix", "_FPDFPageObj_SetStrokeColor", "_FPDFPageObj_SetStrokeWidth", "_FPDFPageObj_Transform", "_FPDFPageObj_TransformClipPath", "_FPDFPageObj_TransformF", "_FPDFPageObjMark_CountParams", "_FPDFPageObjMark_GetName", "_FPDFPageObjMark_GetParamBlobValue", "_FPDFPageObjMark_GetParamFloatValue", "_FPDFPageObjMark_GetParamIntValue", "_FPDFPageObjMark_GetParamKey", "_FPDFPageObjMark_GetParamStringValue", "_FPDFPageObjMark_GetParamValueType", "_FPDFPageObjMark_RemoveParam", "_FPDFPageObjMark_SetBlobParam", "_FPDFPageObjMark_SetFloatParam", "_FPDFPageObjMark_SetIntParam", "_FPDFPageObjMark_SetStringParam", "_FPDFPath_BezierTo", "_FPDFPath_Close", "_FPDFPath_CountSegments", "_FPDFPath_GetDrawMode", "_FPDFPath_GetPathSegment", "_FPDFPath_LineTo", "_FPDFPath_MoveTo", "_FPDFPath_SetDrawMode", "_FPDFPathSegment_GetClose", "_FPDFPathSegment_GetPoint", "_FPDFPathSegment_GetType", "_FPDFSignatureObj_GetByteRange", "_FPDFSignatureObj_GetContents", "_FPDFSignatureObj_GetDocMDPPermission", "_FPDFSignatureObj_GetReason", "_FPDFSignatureObj_GetSubFilter", "_FPDFSignatureObj_GetTime", "_FPDFText_ClosePage", "_FPDFText_CountChars", "_FPDFText_CountRects", "_FPDFText_FindClose", "_FPDFText_FindNext", "_FPDFText_FindPrev", "_FPDFText_FindStart", "_FPDFText_GetBoundedText", "_FPDFText_GetCharAngle", "_FPDFText_GetCharBox", "_FPDFText_GetCharIndexAtPos", "_FPDFText_GetCharIndexFromTextIndex", "_FPDFText_GetCharOrigin", "_FPDFText_GetFillColor", "_FPDFText_GetFontInfo", "_FPDFText_GetFontSize", "_FPDFText_GetFontWeight", "_FPDFText_GetLooseCharBox", "_FPDFText_GetMatrix", "_FPDFText_GetRect", "_FPDFText_GetSchCount", "_FPDFText_GetSchResultIndex", "_FPDFText_GetStrokeColor", "_FPDFText_GetText", "_FPDFText_GetTextIndexFromCharIndex", "_FPDFText_GetTextObject", "_FPDFText_GetUnicode", "_FPDFText_HasUnicodeMapError", "_FPDFText_IsGenerated", "_FPDFText_IsHyphen", "_FPDFText_LoadCidType2Font", "_FPDFText_LoadFont", "_FPDFText_LoadPage", "_FPDFText_LoadStandardFont", "_FPDFText_SetCharcodes", "_FPDFText_SetText", "_FPDFTextObj_GetFont", "_FPDFTextObj_GetFontSize", "_FPDFTextObj_GetRenderedBitmap", "_FPDFTextObj_GetText", "_FPDFTextObj_GetTextRenderMode", "_FPDFTextObj_SetTextRenderMode", "_PDFiumExt_CloseFileWriter", "_PDFiumExt_CloseFormFillInfo", "_PDFiumExt_ExitFormFillEnvironment", "_PDFiumExt_GetFileWriterData", "_PDFiumExt_GetFileWriterSize", "_PDFiumExt_Init", "_PDFiumExt_InitFormFillEnvironment", "_PDFiumExt_OpenFileWriter", "_PDFiumExt_OpenFormFillInfo", "_PDFiumExt_SaveAsCopy", "_malloc", "_free", "_memory", "___indirect_function_table", "onRuntimeInitialized"].forEach((prop) => {
@@ -110723,10 +111727,10 @@ var createPdfium = (() => {
       };
       readAsync = (filename, binary = true) => {
         filename = isFileURI(filename) ? new URL(filename) : nodePath.normalize(filename);
-        return new Promise((resolve11, reject) => {
+        return new Promise((resolve10, reject) => {
           fs2.readFile(filename, binary ? void 0 : "utf8", (err2, data) => {
             if (err2) reject(err2);
-            else resolve11(binary ? data.buffer : data);
+            else resolve10(binary ? data.buffer : data);
           });
         });
       };
@@ -110745,8 +111749,8 @@ var createPdfium = (() => {
         return data;
       };
       readAsync = (f3) => {
-        return new Promise((resolve11, reject) => {
-          setTimeout(() => resolve11(readBinary(f3)));
+        return new Promise((resolve10, reject) => {
+          setTimeout(() => resolve10(readBinary(f3)));
         });
       };
       globalThis.clearTimeout ??= (id) => {
@@ -110830,9 +111834,9 @@ var createPdfium = (() => {
     }
     var wasmMemory;
     var ABORT = false;
-    function assert4(condition, text7) {
+    function assert4(condition, text8) {
       if (!condition) {
-        abort("Assertion failed" + (text7 ? ": " + text7 : ""));
+        abort("Assertion failed" + (text8 ? ": " + text8 : ""));
       }
     }
     var HEAP8, HEAPU8, HEAP16, HEAPU16, HEAP32, HEAPU32, HEAPF32, HEAPF64;
@@ -111254,12 +112258,12 @@ var createPdfium = (() => {
     }
     var stackRestore = (val) => __emscripten_stack_restore(val);
     var stackSave = () => _emscripten_stack_get_current();
-    var warnOnce = (text7) => {
+    var warnOnce = (text8) => {
       warnOnce.shown ||= {};
-      if (!warnOnce.shown[text7]) {
-        warnOnce.shown[text7] = 1;
-        if (ENVIRONMENT_IS_NODE) text7 = "warning: " + text7;
-        err(text7);
+      if (!warnOnce.shown[text8]) {
+        warnOnce.shown[text8] = 1;
+        if (ENVIRONMENT_IS_NODE) text8 = "warning: " + text8;
+        err(text8);
       }
     };
     var UTF8Decoder = typeof TextDecoder != "undefined" ? new TextDecoder() : void 0;
@@ -111340,15 +112344,15 @@ var createPdfium = (() => {
         return parts;
       },
       normalize: (path) => {
-        var isAbsolute12 = PATH.isAbs(path), trailingSlash = path.substr(-1) === "/";
-        path = PATH.normalizeArray(path.split("/").filter((p3) => !!p3), !isAbsolute12).join("/");
-        if (!path && !isAbsolute12) {
+        var isAbsolute11 = PATH.isAbs(path), trailingSlash = path.substr(-1) === "/";
+        path = PATH.normalizeArray(path.split("/").filter((p3) => !!p3), !isAbsolute11).join("/");
+        if (!path && !isAbsolute11) {
           path = ".";
         }
         if (path && trailingSlash) {
           path += "/";
         }
-        return (isAbsolute12 ? "/" : "") + path;
+        return (isAbsolute11 ? "/" : "") + path;
       },
       dirname: (path) => {
         var result = PATH.splitPath(path), root = result[0], dir = result[1];
@@ -112442,9 +113446,9 @@ var createPdfium = (() => {
       isSocket(mode) {
         return (mode & 49152) === 49152;
       },
-      flagsToPermissionString(flag) {
-        var perms = ["r", "w", "rw"][flag & 3];
-        if (flag & 512) {
+      flagsToPermissionString(flag2) {
+        var perms = ["r", "w", "rw"][flag2 & 3];
+        if (flag2 & 512) {
           perms += "w";
         }
         return perms;
@@ -112761,12 +113765,12 @@ var createPdfium = (() => {
           throw new FS.ErrnoError(75);
         }
         var old_node = FS.lookupNode(old_dir, old_name);
-        var relative6 = PATH_FS.relative(old_path, new_dirname);
-        if (relative6.charAt(0) !== ".") {
+        var relative5 = PATH_FS.relative(old_path, new_dirname);
+        if (relative5.charAt(0) !== ".") {
           throw new FS.ErrnoError(28);
         }
-        relative6 = PATH_FS.relative(new_path, old_dirname);
-        if (relative6.charAt(0) !== ".") {
+        relative5 = PATH_FS.relative(new_path, old_dirname);
+        if (relative5.charAt(0) !== ".") {
           throw new FS.ErrnoError(55);
         }
         var new_node;
@@ -116346,8 +117350,8 @@ function malloc(lib, bytes) {
   return ptr;
 }
 async function withPdf(path, wasm, work) {
-  if (!isAbsolute10(path)) throw new ValidationError(`path must be absolute: ${path}`);
-  if (!existsSync50(path) || !statSync21(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
+  if (!isAbsolute9(path)) throw new ValidationError(`path must be absolute: ${path}`);
+  if (!existsSync52(path) || !statSync20(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname6(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
   const data = readFileSync41(path);
   const pending3 = loadPdfium(wasm);
@@ -116387,7 +117391,7 @@ function withPage(lib, doc, n3, use) {
     lib.FPDF_ClosePage(page2);
   }
 }
-var nextTurn = () => new Promise((resolve11) => setImmediate(resolve11));
+var nextTurn = () => new Promise((resolve10) => setImmediate(resolve10));
 async function classifyPdfPages(path, wasm = DEFAULT_WASM) {
   return withPdf(path, wasm, async (lib, doc) => {
     const kinds = [];
@@ -116400,7 +117404,7 @@ async function classifyPdfPages(path, wasm = DEFAULT_WASM) {
   });
 }
 async function pdfPageImages(args, wasm = DEFAULT_WASM) {
-  if (args.destination_dir !== void 0 && !isAbsolute10(args.destination_dir)) {
+  if (args.destination_dir !== void 0 && !isAbsolute9(args.destination_dir)) {
     throw new ValidationError(`destination_dir must be absolute: ${args.destination_dir}`);
   }
   return withPdf(args.path, wasm, async (lib, doc, data) => {
@@ -116422,9 +117426,9 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
       }
       const { width, height, tiles } = plan;
       if (renderDir === null) {
-        if (args.destination_dir === void 0) renderDir = mkdtempSync2(join51(tmpdir5(), "probanda-pages-"));
+        if (args.destination_dir === void 0) renderDir = mkdtempSync2(join53(tmpdir5(), "probanda-pages-"));
         else {
-          renderDir = join51(args.destination_dir, sourceSha256.slice(0, 16));
+          renderDir = join53(args.destination_dir, sourceSha256.slice(0, 16));
           mkdirSync23(renderDir, { recursive: true });
         }
       }
@@ -116433,7 +117437,7 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
         await nextTurn();
         const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows2));
         const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-        const file = join51(renderDir, `${name}.png`);
+        const file = join53(renderDir, `${name}.png`);
         writeFileSync13(file, png);
         const image = { path: file, sha256: createHash10("sha256").update(png).digest("hex"), width, height: rows2 };
         if (tiles.length > 1) image.tile = i3 + 1;
@@ -116675,13 +117679,13 @@ async function pdfPages(path) {
       for (let n3 = 1; n3 <= doc.numPages; n3++) {
         const page2 = await doc.getPage(n3);
         const content = await page2.getTextContent();
-        let text7 = "";
+        let text8 = "";
         for (const item of content.items) {
           if (!("str" in item)) continue;
-          text7 += item.str;
-          if (item.hasEOL) text7 += "\n";
+          text8 += item.str;
+          if (item.hasEOL) text8 += "\n";
         }
-        pages.push(text7);
+        pages.push(text8);
         page2.cleanup();
       }
       return pages;
@@ -116707,14 +117711,14 @@ async function extractText(path) {
         return unread(`ocr_unavailable: page ${scanned + 1} is a scanned or OCR'd page, whose text layer is never read`);
       }
       const pages = await pdfPages(path);
-      const text7 = pages.join("\n\f\n");
-      const bytes = Buffer.byteLength(text7.trim(), "utf-8");
+      const text8 = pages.join("\n\f\n");
+      const bytes = Buffer.byteLength(text8.trim(), "utf-8");
       if (bytes < SCANNED_BYTES_PER_PAGE * Math.max(pages.length, 1)) {
         return unread(
           `ocr_unavailable: ${bytes} bytes of text over ${pages.length} page(s), under ${SCANNED_BYTES_PER_PAGE} per page, so likely scanned`
         );
       }
-      result = { status: "ok", kind: "pdf", method: "text", text: text7, pages: pages.length };
+      result = { status: "ok", kind: "pdf", method: "text", text: text8, pages: pages.length };
     } else if (ext === ".docx") {
       result = { status: "ok", kind: "docx", method: "text", text: docxText(path), pages: null };
     } else if (ext === ".doc") {
@@ -116735,7 +117739,7 @@ async function extractText(path) {
 // src/files/version-name.ts
 import { readdirSync as readdirSync27 } from "node:fs";
 function nextVersionName(dir, stem3, ext) {
-  const escape3 = (text7) => text7.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escape3 = (text8) => text8.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const version2 = new RegExp(`^${escape3(stem3)}(?: v(\\d+))?${escape3(ext)}$`, "i");
   let highest = 0;
   for (const name of readdirSync27(dir)) {
@@ -116760,7 +117764,7 @@ function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE
   const entries = [];
   for (const name of readdirSync28(dir)) {
     if (filename !== void 0 && name !== filename) continue;
-    const stat = statSync22(pathWin3230.join(dir, name));
+    const stat = statSync21(pathWin3230.join(dir, name));
     if (!stat.isFile()) continue;
     if (since !== void 0 && stat.mtimeMs < since) continue;
     entries.push({
@@ -116775,7 +117779,7 @@ function listDownloads(sinceMtime, filename, env = process.env, now = /* @__PURE
 }
 function listLawFolder(destinationDir) {
   const dir = resolveLawDir(destinationDir);
-  const entries = readdirSync28(dir).map((name) => ({ name, stat: statSync22(pathWin3230.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
+  const entries = readdirSync28(dir).map((name) => ({ name, stat: statSync21(pathWin3230.join(dir, name)) })).filter(({ stat }) => stat.isFile()).map(({ name, stat }) => ({ filename: name, bytes: stat.size }));
   return { entries };
 }
 function fileDownload(destinationDir, sourceFilename, destinationFilename, env = process.env) {
@@ -116784,17 +117788,17 @@ function fileDownload(destinationDir, sourceFilename, destinationFilename, env =
   const destName = destinationFilename ?? sourceFilename;
   assertBareFilename(destName, "destination_filename");
   const source = pathWin3230.join(downloadsDir(env), sourceFilename);
-  if (!existsSync51(source) || !statSync22(source).isFile()) {
+  if (!existsSync53(source) || !statSync21(source).isFile()) {
     throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
   }
   if (IN_PROGRESS_EXTENSIONS.has(pathWin3230.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
   const dest = pathWin3230.join(dir, destName);
-  if (existsSync51(dest)) {
+  if (existsSync53(dest)) {
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
-  const bytes = statSync22(source).size;
+  const bytes = statSync21(source).size;
   copyFileSync4(source, dest, constants.COPYFILE_EXCL);
   return { path: dest, bytes };
 }
@@ -116808,23 +117812,23 @@ function appendManifest(destinationDir, record2) {
   const records = readFileSync44(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
   return { path, records };
 }
-function saveAnswer(destinationDir, filename, text7, fromScratch) {
+function saveAnswer(destinationDir, filename, text8, fromScratch) {
   assertBareFilename(filename, "filename");
   const ext = pathWin3230.extname(filename);
   if (ext.toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
-  if (text7 === void 0 === (fromScratch === void 0)) {
+  if (text8 === void 0 === (fromScratch === void 0)) {
     throw new DataServerError("pass exactly one of text and from_scratch", "invalid_argument");
   }
   let body;
   if (fromScratch !== void 0) {
     body = scratchBytes(destinationDir, fromScratch);
   } else {
-    if (typeof text7 !== "string" || text7.length === 0) {
+    if (typeof text8 !== "string" || text8.length === 0) {
       throw new DataServerError("text must be a non-empty string", "invalid_argument");
     }
-    body = Buffer.from(text7, "utf-8");
+    body = Buffer.from(text8, "utf-8");
   }
   const { dir, created } = resolveOrCreateLawDir(destinationDir);
   const saved = writeNewVersion(dir, filename, body);
@@ -116835,7 +117839,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (typeof fromScratch !== "string" || !pathWin3230.isAbsolute(fromScratch)) {
     throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
   }
-  let law = existsSync51(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3230.dirname(destinationDir));
+  let law = existsSync53(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3230.dirname(destinationDir));
   while (pathWin3230.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3230.dirname(law);
   const root = validateMatterRoot(pathWin3230.dirname(law));
   const draft = findDraftDir(root);
@@ -116849,7 +117853,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (pathWin3230.dirname(source).toLowerCase() !== realScratchDir.toLowerCase()) {
     throw new DataServerError(`from_scratch is not in this matter's scratchpad ${realScratchDir}: ${source}`, "not_scratch");
   }
-  if (!statSync22(source).isFile()) {
+  if (!statSync21(source).isFile()) {
     throw new DataServerError(`from_scratch is not a file: ${source}`, "not_found");
   }
   const body = readFileSync44(source);
@@ -116858,20 +117862,20 @@ function scratchBytes(destinationDir, fromScratch) {
   }
   return body;
 }
-function writeScratch(matterRoot, filename, text7, kind) {
+function writeScratch(matterRoot, filename, text8, kind) {
   assertBareFilename(filename, "filename");
   if (pathWin3230.extname(filename).toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
-  if (typeof text7 !== "string" || text7.length === 0) {
+  if (typeof text8 !== "string" || text8.length === 0) {
     throw new DataServerError("text must be a non-empty string", "invalid_argument");
   }
   if (kind !== void 0 && kind !== "research-notes") {
     throw new DataServerError(`kind must be "research-notes" when given: ${kind}`, "invalid_argument");
   }
-  if (kind === "research-notes") checkCoverageLine(text7);
+  if (kind === "research-notes") checkCoverageLine(text8);
   const { dir, created } = researchScratchDir(validateMatterRoot(matterRoot));
-  const body = Buffer.from(text7, "utf-8");
+  const body = Buffer.from(text8, "utf-8");
   const saved = writeNewVersion(dir, filename, body);
   return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created };
 }
@@ -116904,7 +117908,7 @@ var HEAD_LINES = 5;
 var EXTRACT_CACHE = /* @__PURE__ */ new Map();
 var EXTRACT_CACHE_LIMIT = 64;
 async function cachedExtract(path) {
-  const stat = statSync22(path);
+  const stat = statSync21(path);
   const key = `${stat.size}:${stat.mtimeMs}`;
   const hit = EXTRACT_CACHE.get(path);
   if (hit !== void 0 && hit.key === key) return hit.read;
@@ -116960,7 +117964,7 @@ function nonNegativeInt(value, label2, fallback, min) {
 }
 function manifestMarker(law, file) {
   const path = pathWin3230.join(law, MANIFEST);
-  if (!existsSync51(path)) return null;
+  if (!existsSync53(path)) return null;
   let marker = null;
   for (const line of readFileSync44(path, "utf-8").split("\n")) {
     if (line.trim() === "") continue;
@@ -116975,8 +117979,8 @@ function manifestMarker(law, file) {
   }
   return marker;
 }
-function matchBlocks(file, text7, regex, context, budget) {
-  const lines2 = text7.split(/\r?\n/);
+function matchBlocks(file, text8, regex, context, budget) {
+  const lines2 = text8.split(/\r?\n/);
   const hits = [];
   let truncated = false;
   for (let i3 = 0; i3 < lines2.length; i3++) {
@@ -117023,7 +118027,7 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
   if (options.pattern === void 0 && (options.context !== void 0 || options.max_matches !== void 0)) {
     throw new DataServerError("context and max_matches need a pattern", "invalid_argument");
   }
-  const listed = readdirSync28(law).filter((name) => statSync22(pathWin3230.join(law, name)).isFile()).sort();
+  const listed = readdirSync28(law).filter((name) => statSync21(pathWin3230.join(law, name)).isFile()).sort();
   const files = options.file === void 0 ? listed : [pickLawFile(listed, options.file)];
   if (options.pattern !== void 0) {
     const context = nonNegativeInt(options.context, "context", DEFAULT_CONTEXT, 0);
@@ -117199,7 +118203,7 @@ function resolveOrCreateLawDir(destinationDir) {
   try {
     return { dir: resolveLawDir(destinationDir), created: false };
   } catch (err) {
-    if (err.code !== "not_found" || existsSync51(destinationDir)) throw err;
+    if (err.code !== "not_found" || existsSync53(destinationDir)) throw err;
   }
   const parent = resolveLawDir(pathWin3230.dirname(destinationDir));
   if (zoneProblem("write", pathWin3230.join(parent, pathWin3230.basename(destinationDir)))) {
@@ -117219,7 +118223,7 @@ function resolveLawDir(destinationDir) {
     throw new DataServerError(`destination_dir must be an absolute host path: ${destinationDir}`, "invalid_path");
   }
   const dir = canonicalRoot(destinationDir, `destination folder not found: ${destinationDir}`, "not_found");
-  if (!statSync22(dir).isDirectory()) {
+  if (!statSync21(dir).isDirectory()) {
     throw new DataServerError(`destination is not a folder: ${destinationDir}`, "not_found");
   }
   const segments = dir.split(/[\\/]+/).map((s3) => s3.toLowerCase());
@@ -117239,8 +118243,8 @@ function assertBareFilename(name, label2) {
 
 // src/research/preflight.ts
 import { tmpdir as tmpdir6 } from "node:os";
-import { join as join52 } from "node:path";
-var PROBE_STEM = join52(tmpdir6(), "coclerk-research-preflight-probe-absent");
+import { join as join54 } from "node:path";
+var PROBE_STEM = join54(tmpdir6(), "coclerk-research-preflight-probe-absent");
 var CAPS = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
@@ -117286,7 +118290,7 @@ function researchPreflight(seams = {}) {
 
 // src/files/legislation-search.ts
 import { createHash as createHash12 } from "node:crypto";
-import { readFileSync as readFileSync45, statSync as statSync23 } from "node:fs";
+import { readFileSync as readFileSync45, statSync as statSync22 } from "node:fs";
 import { win32 as pathWin3231 } from "node:path";
 var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".txt"]);
 var HTML_EXTENSIONS2 = /* @__PURE__ */ new Set([".htm", ".html"]);
@@ -117396,7 +118400,7 @@ function resolveMatterFile(matterRoot, path) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
   const file = canonicalRoot(path, `file not found: ${path}`, "not_found");
-  if (!statSync23(file).isFile()) throw new DataServerError(`path is not a file: ${path}`, "not_found");
+  if (!statSync22(file).isFile()) throw new DataServerError(`path is not a file: ${path}`, "not_found");
   if (!file.toLowerCase().startsWith(root.toLowerCase() + "\\")) {
     throw new DataServerError(`path is not in this matter: ${file}`, "not_in_matter");
   }
@@ -117446,11 +118450,11 @@ function checkPages(pages, ext) {
   if (first < 1 || last < first) throw new DataServerError(`pages is not a range: ${pages}`, "invalid_argument");
   return { first, last };
 }
-function plainText(text7) {
-  return text7.replace(/^#{1,6}\s+/, "").replace(/\*\*|__/g, "").trim();
+function plainText(text8) {
+  return text8.replace(/^#{1,6}\s+/, "").replace(/\*\*|__/g, "").trim();
 }
 function textLines(file, ext, bytes, range, seams) {
-  const split = (text7, page2, base) => text7.split(/\r?\n|\f/).map((t3, i3) => ({ text: t3.trim(), plain: plainText(t3), page: page2, line: base + i3 + 1 })).filter((l3) => l3.text !== "");
+  const split = (text8, page2, base) => text8.split(/\r?\n|\f/).map((t3, i3) => ({ text: t3.trim(), plain: plainText(t3), page: page2, line: base + i3 + 1 })).filter((l3) => l3.text !== "");
   let lines2;
   let marker = null;
   let source;
@@ -117465,9 +118469,9 @@ function textLines(file, ext, bytes, range, seams) {
   } else if (EXTRACTED_EXTENSIONS.has(ext)) {
     source = ext === ".pdf" ? "pdf" : "docx";
     let base = 0;
-    let pageTexts = (seams.extractPages ?? noPageExtractor)(file).map((text7, i3) => {
-      const page2 = { text: text7, page: i3 + 1, base };
-      base += text7.split(/\r?\n|\f/).length;
+    let pageTexts = (seams.extractPages ?? noPageExtractor)(file).map((text8, i3) => {
+      const page2 = { text: text8, page: i3 + 1, base };
+      base += text8.split(/\r?\n|\f/).length;
       return page2;
     });
     if (range !== null) {
@@ -117490,9 +118494,9 @@ function textLines(file, ext, bytes, range, seams) {
   if (lines2.length === 0) throw new DataServerError("the file holds no text", "no_text");
   return { lines: lines2, source, marker };
 }
-function frontMatter(text7) {
-  const m3 = /^---\r?\n[\s\S]*?\r?\n---\r?\n/.exec(text7);
-  if (m3 === null) return { body: text7, lines: 0, marker: null };
+function frontMatter(text8) {
+  const m3 = /^---\r?\n[\s\S]*?\r?\n---\r?\n/.exec(text8);
+  if (m3 === null) return { body: text8, lines: 0, marker: null };
   const raw = /^currency_marker:[ \t]*(.*?)\s*$/m.exec(m3[0])?.[1] ?? "";
   let marker = raw === "" || raw === "null" ? null : raw;
   if (marker !== null && marker.startsWith('"')) {
@@ -117501,7 +118505,7 @@ function frontMatter(text7) {
     } catch {
     }
   }
-  return { body: text7.slice(m3[0].length), lines: m3[0].split("\n").length - 1, marker };
+  return { body: text8.slice(m3[0].length), lines: m3[0].split("\n").length - 1, marker };
 }
 function sectionKey(num) {
   return num.split(/[-.]/).map(Number);
@@ -117513,8 +118517,8 @@ function compareKeys(a3, b3) {
   }
   return 0;
 }
-function isHeading(text7) {
-  return text7.length <= MAX_HEADING_CHARS && !/[.;:,\]]$/.test(text7) && !SECTION_LINE.test(text7) && !/^[([]/.test(text7);
+function isHeading(text8) {
+  return text8.length <= MAX_HEADING_CHARS && !/[.;:,\]]$/.test(text8) && !SECTION_LINE.test(text8) && !/^[([]/.test(text8);
 }
 function ruleHeading(line) {
   return isHeading(line.plain) ? RULE_HEADING.exec(line.plain)?.[1] ?? null : null;
@@ -117628,7 +118632,7 @@ function sectionBlocks(chunks) {
 import { createHash as createHash13 } from "node:crypto";
 import { mkdirSync as mkdirSync25, mkdtempSync as mkdtempSync3, writeFileSync as writeFileSync15 } from "node:fs";
 import { tmpdir as tmpdir7 } from "node:os";
-import { join as join53 } from "node:path";
+import { join as join55 } from "node:path";
 var FPDF_ANNOT = 1;
 var GROUP_MAX = 5;
 var VISUAL = /* @__PURE__ */ new Set(["only_in_a", "only_in_b", "size", "rotation", "render"]);
@@ -117654,13 +118658,13 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         const flagged = [];
         let workDir = null;
         const write = (side, n3, facts) => {
-          workDir ??= mkdtempSync3(join53(tmpdir7(), "probanda-compare-"));
-          const dir = join53(workDir, side);
+          workDir ??= mkdtempSync3(join55(tmpdir7(), "probanda-compare-"));
+          const dir = join55(workDir, side);
           mkdirSync25(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
           return tiles.map(([top, rows2], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-            const file = join53(dir, `${name}.png`);
+            const file = join55(dir, `${name}.png`);
             const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows2) * facts.width * 3);
             writeFileSync15(file, encodePng(rgb, facts.width, rows2));
             return file;
@@ -117873,7 +118877,7 @@ async function saveAnswerTool(args, env = process.env) {
 
 // src/key-request/tools.ts
 import { createHash as createHash14, randomBytes as randomBytes6 } from "node:crypto";
-import { join as join54 } from "node:path";
+import { join as join56 } from "node:path";
 
 // src/key-request/save-key.ts
 var TIMEOUT_MS3 = 6e4;
@@ -117931,7 +118935,7 @@ var pending2;
 var listening2;
 var sent;
 function requestPath(env = process.env) {
-  return join54(defaultStateDir(env), "key-request.json.dpapi");
+  return join56(defaultStateDir(env), "key-request.json.dpapi");
 }
 function isKeyRequestToolName(name) {
   return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
@@ -118007,10 +119011,10 @@ async function post2(projectUrl, path, body, what) {
     const detail = err instanceof Error ? err.message : String(err);
     throw new ValidationError(`Probanda's Cloud did not answer, so it is not known whether it got this request (${detail})`);
   }
-  const text7 = await res.text();
+  const text8 = await res.text();
   let reply = {};
   try {
-    reply = text7 ? JSON.parse(text7) : {};
+    reply = text8 ? JSON.parse(text8) : {};
   } catch {
   }
   if (!res.ok) {
@@ -118621,9 +119625,9 @@ function textResult(result) {
 }
 
 // src/page-api/server.ts
-import { existsSync as existsSync52 } from "node:fs";
+import { existsSync as existsSync54 } from "node:fs";
 import { createServer as createServer2 } from "node:http";
-import { isAbsolute as isAbsolute11 } from "node:path";
+import { isAbsolute as isAbsolute10 } from "node:path";
 
 // src/submission/forms/seed-deferral.ts
 async function setSeedDeferral(args, env = process.env) {
@@ -118649,6 +119653,7 @@ async function setSeedDeferral(args, env = process.env) {
 
 // src/page-api/server.ts
 var MAX_BODY2 = 4 * 1024;
+var MAX_CARD_BODY = 256 * 1024;
 var RETRY_MS = 15e3;
 var STATUS = {
   deferred: 200,
@@ -118668,7 +119673,7 @@ async function startPageApi(env = process.env, options = {}) {
   let warnedBusy = false;
   let retry;
   const server = createServer2((req, res) => {
-    handle3(req, res, env, startedAt).catch((err) => {
+    handle3(req, res, env, startedAt, options).catch((err) => {
       if (!res.headersSent) json2(req, res, 500, { error: err instanceof Error ? err.message : String(err) });
       else res.destroy();
     });
@@ -118691,9 +119696,9 @@ async function startPageApi(env = process.env, options = {}) {
     }
     log(`[page-api] listener off: ${err.message}`);
   });
-  await new Promise((resolve11) => {
-    server.once("listening", () => resolve11());
-    server.once("error", () => resolve11());
+  await new Promise((resolve10) => {
+    server.once("listening", () => resolve10());
+    server.once("error", () => resolve10());
     server.listen(port, "127.0.0.1");
   });
   return {
@@ -118704,11 +119709,11 @@ async function startPageApi(env = process.env, options = {}) {
       if (retry) clearTimeout(retry);
       if (!server.listening) return Promise.resolve();
       server.closeAllConnections();
-      return new Promise((resolve11) => server.close(() => resolve11()));
+      return new Promise((resolve10) => server.close(() => resolve10()));
     }
   };
 }
-async function handle3(req, res, env, startedAt) {
+async function handle3(req, res, env, startedAt, options) {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
   if (req.method === "OPTIONS") {
     res.writeHead(204, {
@@ -118725,6 +119730,8 @@ async function handle3(req, res, env, startedAt) {
   }
   const w3 = /^\/suggestions\/([0-9a-f-]{36})\/withdraw$/.exec(url.pathname);
   if (w3) return withdraw(req, res, env, w3[1]);
+  const c3 = /^\/cards\/([0-9a-f-]{36})\/(state|submit|resolve|dismiss|restore|mockup|reject)$/.exec(url.pathname);
+  if (c3) return cardClick(req, res, { ...options.card, env }, c3[1], c3[2]);
   const m3 = /^\/seeds\/([1-9]\d*)\/(defer|undefer)$/.exec(url.pathname);
   if (!m3) return json2(req, res, 404, { error: "Not found" });
   if (req.method !== "POST") return json2(req, res, 405, { error: "Method not allowed" });
@@ -118742,7 +119749,7 @@ async function handle3(req, res, env, startedAt) {
   if (typeof token !== "string" || !pageApiTokenValid(token, dbPath, proceedingId, env)) {
     return json2(req, res, 403, { error: "This page's token does not match its database. Ask a Claude session to render the page again." });
   }
-  if (!isAbsolute11(dbPath) || !existsSync52(dbPath)) {
+  if (!isAbsolute10(dbPath) || !existsSync54(dbPath)) {
     return json2(req, res, 400, { error: `There is no drafting database at ${dbPath}.` });
   }
   const result = await setSeedDeferral({ db_path: dbPath, proceeding_id: proceedingId, seed_id: Number(m3[1]), action: m3[2] }, env);
@@ -118779,6 +119786,42 @@ async function withdraw(req, res, env, recordId) {
   }
   json2(req, res, WITHDRAW_STATUS[result.outcome], result);
 }
+async function cardClick(req, res, deps, cardId, route3) {
+  if (req.method !== "POST") return json2(req, res, 405, { error: "Method not allowed" });
+  let body;
+  try {
+    const parsed = JSON.parse(await readBody2(req, MAX_CARD_BODY));
+    body = typeof parsed === "object" && parsed !== null && !Array.isArray(parsed) ? parsed : {};
+  } catch (err) {
+    return json2(req, res, 400, { error: `The request could not be read: ${err.message}` });
+  }
+  if (typeof body.token !== "string" || !pageApiCardTokenValid(body.token, cardId, deps.env)) {
+    return json2(req, res, 403, { error: "This page's token does not match this suggestion. Ask a Claude session to show it again." });
+  }
+  try {
+    switch (route3) {
+      case "state":
+        return json2(req, res, 200, await readCardState(cardId, deps));
+      case "submit":
+        return json2(req, res, 200, await submitCard(cardId, cardEdits(body.edits), deps));
+      case "resolve":
+        return json2(req, res, 200, await resolvePrompt(cardId, body, deps));
+      case "dismiss":
+        return json2(req, res, 200, await dismissCard(cardId, deps));
+      case "restore":
+        return json2(req, res, 200, await restoreCard(cardId, deps));
+      case "mockup":
+        return json2(req, res, 200, await requestMockup(cardId, cardEdits(body.edits), deps));
+      case "reject":
+        return json2(req, res, 200, await rejectMockup(cardId, body.mockup, body.reason, deps));
+    }
+  } catch (err) {
+    const code = err.code;
+    if (code === "not_found") return json2(req, res, 404, { error: "Not found" });
+    if (err instanceof ValidationError) return json2(req, res, 400, { error: err.message });
+    throw err;
+  }
+}
 function corsHeaders(req) {
   return {
     ...req.headers.origin === "null" ? { "Access-Control-Allow-Origin": "null" } : {},
@@ -118786,20 +119829,20 @@ function corsHeaders(req) {
     Vary: "Origin"
   };
 }
-function readBody2(req) {
-  return new Promise((resolve11, reject) => {
+function readBody2(req, max = MAX_BODY2) {
+  return new Promise((resolve10, reject) => {
     const chunks = [];
     let size = 0;
     req.on("data", (chunk2) => {
       size += chunk2.length;
-      if (size > MAX_BODY2) {
-        reject(new Error("the request is larger than 4 KB"));
+      if (size > max) {
+        reject(new Error(`the request is larger than ${Math.round(max / 1024)} KB`));
         req.destroy();
         return;
       }
       chunks.push(chunk2);
     });
-    req.on("end", () => resolve11(Buffer.concat(chunks).toString("utf-8")));
+    req.on("end", () => resolve10(Buffer.concat(chunks).toString("utf-8")));
     req.on("error", reject);
   });
 }

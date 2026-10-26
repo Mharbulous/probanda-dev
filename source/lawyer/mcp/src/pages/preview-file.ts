@@ -6,8 +6,8 @@
 // overwritten. A tool returns its path, never its HTML: no session reads a preview (shared/html-pages.md).
 //
 // A fixture preview (placeholder data only) goes in the fixture preview folder and ends with the
-// fixture marker line. suggestion_box__submit (#146) accepts a preview only from that folder and only
-// with that last line, so the folder is one fixed path every Probanda server on the machine computes
+// fixture marker line. suggestion_box__submit (#146, since retired: the suggestion card sends) accepted
+// a preview only from that folder and only with that last line, so the folder is one fixed path every Probanda server on the machine computes
 // alike, in the OS temp folder, rather than a plugin's own data folder.
 
 import { mkdirSync, writeFileSync } from "node:fs";

@@ -90,7 +90,7 @@ def test_held_suggestions_are_named_once_the_key_is_stored(tmp_path, target):
     hold(tmp_path, 2)
     text = context(run(tmp_path, target))
     assert "holds 2 suggestion(s)" in text
-    assert "exactly as drafted" in text
+    assert "once as a card" in text
     assert SECRET not in text
 
 

@@ -1,27 +1,31 @@
-// The suggestion_box__* and suggestion_log__* tools, over the local suggestion store (store.ts).
+// The suggestion_box__*, suggestion_card__* and suggestion_log__* tools, over the local suggestion
+// store (store.ts).
 //
-// suggestion_box__submit saves the suggestion the practitioner said yes to, exactly, then sends it
-// (send.ts). suggestion_box__status reads the badges of the suggestions this computer sent and, when
-// one changed since it was last shown, writes the Past suggestions page (page.ts) for the session to
-// show as a file card. suggestion_box__past_suggestions writes that page on request.
-// suggestion_log__read lists what the store holds, and suggestion_log__write records a badge as shown
-// and holds or releases a suggestion drafted while this computer had no Probanda key. Tool definitions
-// live in schema/suggestions.ts.
-//
+// Nothing is sent by a tool: a suggestion is sent only by the practitioner's Submit Suggestion on its
+// card (card.ts, through the page API), which is their approval (decision 10).
+// suggestion_card__build builds the card from the session's scrubbed draft, refusing while the full
+// check finds a match; suggestion_card__wait blocks until the practitioner submits, dismisses or asks
+// for a mockup; suggestion_card__attach_mockup puts the session's mockup on the card.
 // suggestion_card__check runs the click-time cross-check (crosscheck.ts) over a card's parts against
 // this computer's own records (records.ts), and suggestion_card__environment_facts returns the
-// environment facts (environment.ts). Neither sends, stores or logs anything.
-
-import { randomUUID } from "node:crypto";
+// environment facts (environment.ts); neither sends, stores or logs anything.
+//
+// suggestion_box__status reads the badges of the suggestions this computer sent and, when one
+// changed since it was last shown, writes the Past suggestions page (page.ts) for the session to show
+// as a file card. suggestion_box__past_suggestions writes that page on request. suggestion_log__read
+// lists what the store holds, and suggestion_log__write records a badge as shown and releases a held
+// draft, a suggestion an earlier version kept unposted for want of a key. Tool definitions live in
+// schema/suggestions.ts.
 
 import { DataServerError, ValidationError } from "../errors.js";
-import { type SendSeams, fieldsFromToolArgs, readStatuses, submitSuggestion } from "./send.js";
+import { type SendSeams, readStatuses } from "./send.js";
 import { writePastSuggestionsPage } from "./page.js";
 import type { PracticeStore } from "../practice/store.js";
-import { loadStopWords, runCrossCheck, type CardText, type CrossCheckResult } from "./crosscheck.js";
-import { environmentFacts, type EnvironmentFacts } from "./environment.js";
+import { attachMockup, buildCard, cardInput, openCards, waitForCard } from "./card.js";
+import { loadStopWords, runCrossCheck, type CardText } from "./crosscheck.js";
+import { environmentFacts } from "./environment.js";
 import { readRecordTexts } from "./records.js";
-import { type HeldRecord, cardStatus, isHeld, isSuggestion, loadStore, withStore } from "./store.js";
+import { cardStatus, isHeld, isSuggestion, loadStore, withStore } from "./store.js";
 
 type Args = Record<string, unknown>;
 
@@ -33,22 +37,32 @@ export function isSuggestionCardToolName(name: string): boolean {
   return name.startsWith("suggestion_card__");
 }
 
-export async function callSuggestionCardTool(store: PracticeStore, name: string, args: Args, env: NodeJS.ProcessEnv = store.env): Promise<CrossCheckResult | EnvironmentFacts> {
-  if (name === "suggestion_card__check") {
-    // The lists first: a check that cannot run says so before any record is read.
-    const stopWords = loadStopWords(env);
-    return runCrossCheck(args as CardText, await readRecordTexts(store, env), stopWords);
+export async function callSuggestionCardTool(store: PracticeStore, name: string, args: Args, env: NodeJS.ProcessEnv = store.env): Promise<unknown> {
+  const deps = { env, records: () => readRecordTexts(store, env) };
+  switch (name) {
+    case "suggestion_card__check": {
+      // The lists first: a check that cannot run says so before any record is read.
+      const stopWords = loadStopWords(env);
+      return runCrossCheck(args as CardText, await readRecordTexts(store, env), stopWords);
+    }
+    case "suggestion_card__environment_facts":
+      return environmentFacts(args.tool_names as string[] | undefined, { env });
+    case "suggestion_card__build": {
+      const input = cardInput(args);
+      const facts = environmentFacts(input.tool_names, { env }) as unknown as Record<string, unknown>;
+      return buildCard(input, facts, deps);
+    }
+    case "suggestion_card__wait":
+      return waitForCard(text(args.card_id, "card_id"), deps);
+    case "suggestion_card__attach_mockup":
+      return attachMockup(text(args.card_id, "card_id"), args.html, deps);
+    default:
+      throw new ValidationError(`Unknown suggestion tool "${name}"`);
   }
-  if (name === "suggestion_card__environment_facts") {
-    return environmentFacts(args.tool_names as string[] | undefined, { env });
-  }
-  throw new ValidationError(`Unknown suggestion tool "${name}"`);
 }
 
 export function callSuggestionTool(name: string, args: Args, env: NodeJS.ProcessEnv = process.env, seams: SendSeams = {}): Promise<unknown> {
   switch (name) {
-    case "suggestion_box__submit":
-      return submitSuggestion(fieldsFromToolArgs(args), env, seams);
     case "suggestion_box__status":
       return status(args, env, seams);
     case "suggestion_box__past_suggestions":
@@ -90,6 +104,7 @@ export async function suggestionLogRead(env: NodeJS.ProcessEnv = process.env): P
       withdrawn: r.withdrawn_at !== null,
     })),
     held: store.records.filter(isHeld).map((r) => ({ held_id: r.record_id, held_on: r.created_at.slice(0, 10), draft: r.draft })),
+    open_cards: await openCards(env),
   };
 }
 
@@ -108,19 +123,6 @@ export async function suggestionLogWrite(args: Args, env: NodeJS.ProcessEnv = pr
       return { status: "updated", suggestions: records.map((r) => ({ suggestion_id: r.suggestion_id, shown_badge: r.shown_badge })) };
     });
   }
-  if (args.op === "hold") {
-    const draft = args.draft as Record<string, unknown> | undefined;
-    if (typeof draft !== "object" || draft === null || Array.isArray(draft)) {
-      throw new ValidationError("draft must be the suggestion as drafted: an object with title and body");
-    }
-    text(draft.title, "draft.title");
-    text(draft.body, "draft.body");
-    const record: HeldRecord = { kind: "held", record_id: randomUUID(), created_at: new Date().toISOString(), draft };
-    return withStore(env, (store) => {
-      store.records.push(record);
-      return { status: "held", held_id: record.record_id };
-    });
-  }
   if (args.op === "release") {
     const heldId = text(args.held_id, "held_id");
     return withStore(env, (store) => {
@@ -130,5 +132,5 @@ export async function suggestionLogWrite(args: Args, env: NodeJS.ProcessEnv = pr
       return { status: "released", held_id: heldId };
     });
   }
-  throw new ValidationError(`op must be "seen", "hold" or "release"`);
+  throw new ValidationError(`op must be "seen" or "release"`);
 }

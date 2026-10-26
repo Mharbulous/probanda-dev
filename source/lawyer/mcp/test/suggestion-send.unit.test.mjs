@@ -59,11 +59,12 @@ test("a suggestion is saved before it is sent, and the plugin and version come f
     return submitted(call);
   });
   f.env.SUPABASE_URL = cloud.url;
-  // A version the model passes is never sent: the server's own plugin.json names it.
-  const sent = await callSuggestionTool("suggestion_box__submit", { ...FIELDS, plugin_version: "9.9.9" }, f.env, f.seams);
+  // A version in the fields is never sent: the server's own plugin.json names it.
+  const sent = await submitSuggestion({ ...FIELDS, plugin_version: "9.9.9" }, f.env, f.seams);
   assert.equal(sent.status, "Submitted ✓");
   assert.equal(sent.items_saved, true);
   assert.equal(cloud.calls[0].body.plugin_version, "lawyer 0.9.14");
+  await assert.rejects(callSuggestionTool("suggestion_box__submit", FIELDS, f.env, f.seams), /Unknown suggestion tool/, "no tool sends: only the card's Submit does");
 });
 
 test("the screen refuses before anything is saved or sent", async (t) => {

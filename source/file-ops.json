@@ -108,6 +108,7 @@
     {"file": "source/lawyer/mcp/src/submission/scrutiny-review.ts", "op": "fs.rename", "count": 1, "why": "own-output", "note": "Puts its own .tmp copy in place in the statement folder."},
     {"file": "source/lawyer/mcp/src/submission/scrutiny-review.ts", "op": "fs.rm", "count": 1, "why": "temp", "note": "Its scratch folder from mkdtempSync in the OS temp folder."},
     {"file": "source/lawyer/mcp/src/submission/scrutiny-review.ts", "op": "fs.unlink", "count": 1, "why": "own-output", "note": "Deletes only files matching OWN_FILE, the names this step writes."},
+    {"file": "source/lawyer/mcp/src/suggestions/card.ts", "op": "fs.unlink", "count": 1, "why": "own-output", "note": "rejectMockup deletes the rejected mockup's page, Suggestion-<card id>-mockup-<n>.html in the suggestion store's folder under CLAUDE_PLUGIN_DATA, which attachMockup wrote; the path is built from mockupPagePath, never taken from the page."},
     {"file": "source/lawyer/mcp/src/tools/practice/config.ts", "op": "fs.rename", "count": 1, "why": "own-database", "note": "Writes Probanda's own config file through its own temp file."}
   ]
 }

@@ -11,7 +11,6 @@ import { closedPort, stubCloud, suggestionDevice } from "./helpers/suggestion-fi
 
 const { submitSuggestion, readStatuses } = await import("../build/suggestions/send.js");
 const { writePastSuggestionsPage } = await import("../build/suggestions/page.js");
-const { suggestionLogWrite } = await import("../build/suggestions/tools.js");
 const { withStore } = await import("../build/suggestions/store.js");
 const { startPageApi } = await import("../build/page-api/server.js");
 const { pageApiSuggestionToken } = await import("../build/page-api/token.js");
@@ -69,7 +68,7 @@ async function sentCard(t, extra = {}) {
 test("the page shows the sent payload's fields as stored and the mockup's srcdoc byte for byte, sandboxed with no permissions", async (t) => {
   const { f, recordId } = await sentCard(t);
   // Held drafts and dismissed cards never appear.
-  await suggestionLogWrite({ op: "hold", draft: { title: "HELD-SENTINEL", body: "Not sent." } }, f.env);
+  await withStore(f.env, (s) => { s.records.push({ kind: "held", record_id: "h-1", created_at: "2026-10-04T00:00:00.000Z", draft: { title: "HELD-SENTINEL", body: "Not sent." } }); });
   await withStore(f.env, (s) => { s.records.push({ kind: "dismissal", record_id: "d-1", title: "DISMISSED-SENTINEL" }); });
 
   const path = await writePastSuggestionsPage(f.env);

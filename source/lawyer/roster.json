@@ -31,7 +31,8 @@
     "scripts"
   ],
   "suggestion": [
-    "references/stop-words"
+    "references/stop-words",
+    "references/mockup"
   ],
   "task-prioritization": [],
   "verify-bc-lawyer": [

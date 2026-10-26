@@ -16,8 +16,10 @@ server read, so before that read the hook may still say the key is missing.
 Outside Windows (Cowork's VM) the store is out of reach, so the hook tells the
 session to ask practice_data__config_status instead.
 
-With the key present, the hook names any suggestions held unposted, so they are
-shown to the practitioner and posted. They are the held records of the lawyer data
+With the key present, the hook names any suggestions held unposted, so each is
+offered once as a suggestion card. Nothing is held any more: a suggestion submitted
+from its card with no key is kept unsent and sent by the data server once the key is
+stored. The held drafts are the held records of the lawyer data
 server's suggestion store, ${CLAUDE_PLUGIN_DATA}/suggestions/suggestions.json
 (source/lawyer/mcp/src/suggestions/store.ts), plus, until that store has read it,
 those of the old suggestions.local.json beside probanda.json (resolved as
@@ -38,13 +40,13 @@ import hook_io  # noqa: E402
 
 TELL = (
     "Early in this session, before other Probanda work, tell the practitioner once, in this one "
-    "sentence: \"This computer has no Probanda key yet, so suggestions to the Probanda team and "
-    "changes to practice records cannot be saved; I can ask Probanda for one now.\" Do not repeat it "
+    "sentence: \"This computer has no Probanda key yet, so suggestions to the Probanda team cannot be "
+    "sent and changes to practice records cannot be saved; I can ask Probanda for one now.\" Do not repeat it "
     "later in the session. On their yes, follow the key-request route in the practice-data skill, "
     "Configuration, \"Probanda's key\" (key_request__submit). Never ask for the key in chat. A complaint "
-    "about Probanda raised before the key is stored goes to /lawyer:suggestion, which holds it on this "
-    "computer. Once the key is stored, invoke /lawyer:suggestion to show each held suggestion before "
-    "posting it."
+    "about Probanda raised before the key is stored still goes to /lawyer:suggestion: once the "
+    "practitioner submits its card, the suggestion is kept on this computer and sent by itself after "
+    "the key is stored."
 )
 MISSING = "This computer holds no Probanda key. " + TELL
 UNSEEN = (
@@ -53,8 +55,8 @@ UNSEEN = (
 )
 HELD = (
     "This computer holds {count} suggestion(s) to the Probanda team, drafted while it had no Probanda "
-    "key. Invoke /lawyer:suggestion to show each to the practitioner exactly as drafted, and post one "
-    "only on their yes."
+    "key, before suggestions were shown as cards. Invoke /lawyer:suggestion to offer each once as a "
+    "card; one is sent only if the practitioner submits its card."
 )
 
 

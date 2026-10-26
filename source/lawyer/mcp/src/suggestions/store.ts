@@ -1,6 +1,7 @@
 // The local suggestion store (docs/Plans/2026-10-25_suggestion-design.md, decision 14): one JSON file,
 // `<CLAUDE_PLUGIN_DATA>/suggestions/suggestions.json`, holding every suggestion this device sent or
-// tried to send, every suggestion it holds unposted, and (from Phase 5) every dismissal and observation.
+// tried to send, every suggestion an earlier version held unposted, every suggestion card (kind
+// "card", card.ts) and every dismissal of one (kind "dismissal"), and (from Phase 5) every observation.
 //
 // One store, one list of records, each record naming its `kind` (Commandment 5: no table, column or
 // file per kind). A kind this code does not know is kept as it is, so a later version's records

@@ -61,6 +61,9 @@ SHIPPED_PATH_REGISTRY = (
      "literal": '"suggestion/references/stop-words"', "source": "src/suggestions/crosscheck.ts", "server": "data"},
     {"path": "suggestion/references/stop-words/legal-and-folder.txt",
      "literal": '"suggestion/references/stop-words"', "source": "src/suggestions/crosscheck.ts", "server": "data"},
+    # The suggestion mockup's placeholder set; PLACEHOLDERS_FILE names the file inside.
+    {"path": "suggestion/references/mockup/placeholders.txt",
+     "literal": '"suggestion/references/mockup"', "source": "src/suggestions/mockup.ts", "server": "data"},
     {"path": "matter-data/references/scripts/list_record_names.py",
      "literal": '"case-list-record-names-driver"', "source": "src/case/list-record-names.ts", "server": "data"},
     # migrateScriptsDir builds `${skill}/references/scripts/migrate_engine.py` from these names.

@@ -14,13 +14,9 @@
 // Nothing here is done under the store's lock while a request is out: a record is claimed (state
 // "sending") under the lock, posted, then updated under the lock again.
 
-import { readFileSync, realpathSync, statSync } from "node:fs";
-import { isAbsolute, relative, resolve, sep } from "node:path";
-
 import type { CloudKeyStore } from "../../../../mcp-shared/commons-key.js";
 import { loadCloudKey } from "../cloud-key.js";
 import { ValidationError } from "../errors.js";
-import { FIXTURE_PREVIEW_MARKER, fixturePreviewDir } from "../pages/preview-file.js";
 import { findSuggestionHits } from "../preferences/redact.js";
 import { INSTALL_ROOT, pluginManifest } from "../repo-root.js";
 import {
@@ -106,113 +102,13 @@ async function post(supabaseUrl: string, staticKey: string, path: string, body: 
 
 // --------------------------------------------------------------- the payload --
 
-const SOURCES = new Set(["user", "llm", "assisted"]);
-const ORIGINS = new Set(["probanda", "lawyer"]);
-const MAX_ITEMS = 10;
-const MAX_PREVIEWS = 4;
-
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function onlyKeys(label: string, value: Record<string, unknown>, keys: string[]): void {
-  const extra = Object.keys(value).find((key) => !keys.includes(key));
-  if (extra) throw new ValidationError(`${label} has an unknown field "${extra}"`);
-}
-
-function nonEmpty(label: string, value: unknown): string {
-  if (typeof value !== "string" || !value.trim()) throw new ValidationError(`${label} must be non-empty text`);
-  return value.trim();
-}
-
-// items: the card's items as texts, or, as /lawyer:suggestion drafts them today, one entry per pain,
-// each with its done-test, its constraints and the changes that can each be decided on their own.
-function checkItems(value: unknown): unknown[] {
-  if (!Array.isArray(value) || value.length < 1 || value.length > MAX_ITEMS) {
-    throw new ValidationError(`submit's items, when given, must be a list of 1 to ${MAX_ITEMS} items`);
-  }
-  if (value.every((item) => typeof item === "string")) return value.map((item, i) => nonEmpty(`items[${i}]`, item));
-  return value.map((item, i) => {
-    const label = `items[${i}]`;
-    if (!isObject(item)) throw new ValidationError(`${label} must be an object, or every item a text`);
-    onlyKeys(label, item, ["pain", "where", "done_test", "constraints", "changes"]);
-    if (!Array.isArray(item.constraints)) throw new ValidationError(`${label}.constraints must be a list`);
-    if (!Array.isArray(item.changes)) throw new ValidationError(`${label}.changes must be a list`);
-    return {
-      pain: nonEmpty(`${label}.pain`, item.pain),
-      where: nonEmpty(`${label}.where`, item.where),
-      done_test: nonEmpty(`${label}.done_test`, item.done_test),
-      constraints: item.constraints.map((c, j) => nonEmpty(`${label}.constraints[${j}]`, c)),
-      changes: item.changes.map((change, j) => {
-        const at = `${label}.changes[${j}]`;
-        if (!isObject(change)) throw new ValidationError(`${at} must be an object`);
-        onlyKeys(at, change, ["change", "origin"]);
-        if (typeof change.origin !== "string" || !ORIGINS.has(change.origin)) {
-          throw new ValidationError(`${at}.origin must be probanda or lawyer`);
-        }
-        return { change: nonEmpty(`${at}.change`, change.change), origin: change.origin };
-      }),
-    };
-  });
-}
-
-// previews: UI Previews only, built from placeholder data. Each gives its html inline or the path of a
-// fixture preview, whose text is then posted as its html.
-function checkPreviews(value: unknown): Array<{ label: string; chosen: boolean; reason?: string; html: string }> {
-  if (!Array.isArray(value) || value.length < 1 || value.length > MAX_PREVIEWS) {
-    throw new ValidationError(`submit's previews, when given, must be a list of 1 to ${MAX_PREVIEWS} Previews`);
-  }
-  return value.map((preview, i) => {
-    const label = `previews[${i}]`;
-    if (!isObject(preview)) throw new ValidationError(`${label} must be an object`);
-    onlyKeys(label, preview, ["label", "chosen", "reason", "html", "path"]);
-    if (typeof preview.chosen !== "boolean") throw new ValidationError(`${label}.chosen must be true or false`);
-    if ((preview.html === undefined) === (preview.path === undefined)) {
-      throw new ValidationError(`${label} must give exactly one of html or path`);
-    }
-    let html: string;
-    if (preview.path !== undefined) {
-      html = readFixturePreview(label, preview.path);
-    } else {
-      if (typeof preview.html !== "string" || !preview.html.trim()) throw new ValidationError(`${label}.html must be non-empty HTML`);
-      html = preview.html;
-    }
-    return {
-      label: nonEmpty(`${label}.label`, preview.label),
-      chosen: preview.chosen,
-      ...(preview.reason === undefined ? {} : { reason: nonEmpty(`${label}.reason`, preview.reason) }),
-      html,
-    };
-  });
-}
-
-// The text of a fixture preview: a file inside the fixture preview folder once every symlink is
-// resolved, whose last line is the fixture marker. Anything else, a real-data preview included, is
-// refused without echoing the path.
-function readFixturePreview(label: string, path: unknown): string {
-  const refused = new ValidationError(
-    `${label}.path must be a preview that a board preview tool wrote from fixtures, ` +
-    `in the fixture preview folder and ending with the fixture marker line`
-  );
-  if (typeof path !== "string" || !path.trim()) throw refused;
-  let folder: string;
-  let file: string;
-  try {
-    folder = realpathSync(fixturePreviewDir());
-    file = realpathSync(resolve(path));
-  } catch {
-    throw refused;
-  }
-  const inside = relative(folder, file);
-  if (!inside || inside === ".." || inside.startsWith(`..${sep}`) || isAbsolute(inside)) throw refused;
-  if (!statSync(file).isFile()) throw refused;
-  const text = readFileSync(file, "utf-8");
-  if (!text.endsWith(`${FIXTURE_PREVIEW_MARKER}\n`)) throw refused;
-  return text;
-}
-
-/** The fields a suggestion carries besides plugin_version, which this server adds. The card's fields
- * (Phase 4) are passed through as given; suggestion-submit checks their shape. */
+/** The fields a suggestion carries besides plugin_version, which this server adds: the card's fields
+ * (card.ts cardFields), which suggestion-submit checks the shape of. previews are only ever on a record
+ * an earlier version sent, which the Past suggestions page still shows. */
 export interface SuggestionFields {
   title: string;
   body?: string;
@@ -228,22 +124,6 @@ export interface SuggestionFields {
   comment?: string;
   context_lines?: Array<{ kind: string; text: string }>;
   mockup?: string;
-}
-
-/** suggestion_box__submit's arguments as the fields to send: today's /lawyer:suggestion draft. */
-export function fieldsFromToolArgs(args: Record<string, unknown>): SuggestionFields {
-  const title = nonEmpty("submit's title", args.title);
-  const body = nonEmpty("submit's body", args.body);
-  const source = String(args.source ?? "");
-  if (!SOURCES.has(source)) throw new ValidationError("submit requires source: user, llm or assisted");
-  const skill = args.skill === undefined ? undefined : String(args.skill).trim();
-  if (skill === "") throw new ValidationError("submit's skill, when given, must name a skill");
-  return {
-    title, body, source,
-    ...(skill ? { skill } : {}),
-    ...(args.items === undefined ? {} : { items: checkItems(args.items) }),
-    ...(args.previews === undefined ? {} : { previews: checkPreviews(args.previews) }),
-  };
 }
 
 /** The screen over every field; throws naming the kinds hit, never the text. */
