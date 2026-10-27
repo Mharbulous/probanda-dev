@@ -5,11 +5,11 @@ from pathlib import Path
 
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
-SKILL = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+SKILL = (SKILL_ROOT / "operations" / "practice-quirks.md").read_text(encoding="utf-8")
 
 
 def section():
-    match = re.search(r"### Practice quirks\n(.*?)(?=\n## |\Z)", SKILL, re.S)
+    match = re.search(r"# Practice quirks\n(.*?)(?=\n## |\Z)", SKILL, re.S)
     assert match, "Practice quirks"
     return match.group(1)
 

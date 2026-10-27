@@ -247,7 +247,7 @@ Rules:
 - **Deleting completed to-dos** — set `status='completed'`; keep the row for billing and estimate calibration
 - **Completing a to-do to remove it** — a to-do entered in error or merged into another is withdrawn ([workflow 8](#8-withdraw-a-to-do)). Completing it pollutes the actual-hours and estimate data
 - **Writing a deadline into a to-do's description** — it goes in `deadline_date`, which the Litigation Strategy page never shows; a description is shown to drafting sessions
-- **Creating a `scheduled-tasks` entry for a per-item reminder** — cadence lives on the to-do's row as `next_nudge_date` + `nudge_interval_days` (see ``practice-data``'s Consumer Contract); the scheduler is a clock tick, not a record of what is due
+- **Creating a `scheduled-tasks` entry for a per-item reminder** — cadence lives on the to-do's row as `next_nudge_date` + `nudge_interval_days` (see ``practice-data``'s operations/consumer-contract.md); the scheduler is a clock tick, not a record of what is due
 - **Advancing `next_nudge_date` outside briefing mode, or from the stale stored date instead of from today**
 - **Feeding nudge-due items into the ranking model** — they are a separate surfaced list, not a tier input or tie-breaker
 - **Calculating or storing deadlines** — read `deadline_date` from the to-do (manual entry) or from `lawyer:docket-clerk`; never recalculate

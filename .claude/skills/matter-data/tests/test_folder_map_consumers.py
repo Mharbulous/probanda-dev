@@ -22,6 +22,7 @@ CONSUMERS = sorted(
      SKILLS / "file-sorting" / "SKILL.md",
      SKILLS / "file-sorting" / "profiles" / "litigation-matter" / "profile.md",
      SKILLS / "housekeeping" / "SKILL.md",
+     *(SKILLS / "housekeeping" / "references").glob("*.md"),
      SKILLS / "probanda-setup" / "references" / "folder-layout.md",
      SKILLS / "shared" / "declared-layout.md",
      REPO / "source" / "file-manager" / "agents" / "housekeeping-namer.md",

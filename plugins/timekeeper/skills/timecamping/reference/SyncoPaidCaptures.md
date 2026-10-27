@@ -22,7 +22,7 @@ Both checks from `SyncoPaid.md` apply unchanged here:
 
 1. **Registry `enabled`** — same registry entry build-timeline already
    reads (`probanda.json → time_tracking.sources`); `/timecamping` reuses it
-   rather than maintaining a second config surface (see `SKILL.md`'s
+   rather than maintaining a second config surface (see `sources.md`'s
    source-integration table).
 2. **Live `evidence status`** — check `SyncoPaid.Diagnostics evidence status`
    before every fetch, same three-outcome discipline as build-timeline's:

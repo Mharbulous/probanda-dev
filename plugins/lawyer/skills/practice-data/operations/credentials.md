@@ -1,0 +1,19 @@
+Read when: a mail tool returns `mail_not_configured`, a practice write fails for want of Probanda's key, or the practitioner asks about their key or whether Probanda verified them.
+
+# Credentials
+
+## Mail
+
+The `mail__*` tools hold one IMAP credential per machine: host, port, username and password. It is set once through `mail__configure_credential`. The tool takes the host, port and username, never the password, and returns a link to a page on this computer. The practitioner types the password on that page. The page signs in before saving and stores the credential encrypted on the host, where it survives restarts. The password never passes through the chat: never ask for it there, and never use one typed there. It is never written to `probanda.json`. It cannot arrive as an environment variable in Cowork.
+
+On a `mail_not_configured` error, call `mail__configure_status` first. It reports whether this machine holds a credential and for which host and username, never the password. If none is configured, ask the practitioner for the host, port and username rather than guessing. For iCloud Mail (`imap.mail.me.com`) the username is the Apple ID, an @icloud.com, @me.com or @mac.com address, even when the mailbox uses a custom-domain address: ask for the Apple ID, and put the custom-domain address in `from_address`. Then send the link and, once they say it's done, call `mail__configure_status` again.
+
+## Probanda's key
+
+Probanda's key is the one credential for every access to Probanda's Cloud: practice writes, the Suggestion Box and the legal commons. `practice_data__config_status` reports it as `cloud_credential`. It is set once per machine through `cloud_key__configure_credential`, which returns a link to a page on this computer. The practitioner pastes the key on that page, never in chat. The page checks the key against Probanda's Cloud and stores it in Windows Credential Manager as the generic credential `Probanda/cloud-key`: the same store inside and outside the Claude app, kept through a reinstall. A key an earlier version saved as a file is moved there the first time a session reads it. To forget the key on this computer, the practitioner removes that entry under Control Panel, Credential Manager, Windows Credentials. Never ask for the key in chat, and never echo it back.
+
+A practitioner who has no key asks Probanda for one. Call `key_request__submit` and send the practitioner the link it returns. On that page they type only what verifying a practising lawyer requires (full name, year of call, an optional call date and firm name) and an email and optional phone for contact, never in chat. Probanda verifies them and sends the key to the email address their firm's website or the directory lists for them. Call `key_request__status` to report where the request stands. When it reports `issued`, call `cloud_key__configure_credential` so they can paste the key they received.
+
+A practitioner who asks whether Probanda has verified them as a lawyer, or how and when, gets the answer from `key_request__status` alone. Probanda's Cloud holds no verification record for a key itself, so a present key, or a key the page accepted, proves nothing about verification. If the status is `issued`, say that Probanda checked the details sent from this computer against the Law Society of British Columbia's directory and issued a key on `decided_at`. If `requested` is false and `cloud_credential` is present, say that there is no verification record linked to this computer's key. Never call them verified from the key's presence, never repeat the details they typed, and never offer `key_request__submit` while a key is present, because it refuses.
+
+If `key_request__submit` or `cloud_key__configure_credential` is not in your tool list, the plugin was updated after this session's tools loaded. Tell the practitioner to fully restart the app (quit it, not just close the window), and nothing else.

@@ -19,7 +19,7 @@ import { caseDataRootFromMatterRoot } from "../../files/matter-root.js";
 import { resolvePracticeDbPath } from "../../practice/backend.js";
 import { PracticeStore } from "../../practice/store.js";
 
-// The top-level keys practice-data/SKILL.md § Configuration documents.
+// The top-level keys practice-data/operations/configuration.md documents.
 export const DOCUMENTED_KEYS = [
   "version",
   "case_data_root",

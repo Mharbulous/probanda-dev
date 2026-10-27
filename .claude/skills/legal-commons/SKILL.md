@@ -210,7 +210,7 @@ embedding/model API key (retrieval runs entirely in Postgres).
 The credential is supplied once per machine through the lawyer plugin's
 `cloud_key__configure_credential`, which returns a link to a page on this computer. The
 practitioner pastes the key on that page, never in chat; the page validates it and stores it
-in Windows Credential Manager (practice-data, "Probanda's key"). It cannot arrive as an environment variable in Cowork: Cowork
+in Windows Credential Manager (practice-data's operations/credentials.md, "Probanda's key"). It cannot arrive as an environment variable in Cowork: Cowork
 does not inject a plugin's configured secret into that plugin's MCP server process
 (see `plugins/legal-commons/docs/ADR-002-key-delivery.md`). An environment variable
 still wins where one is genuinely set, which is the Claude Code CLI / developer path.
@@ -223,4 +223,4 @@ differently from an absent one); do not work around it. If none is configured, c
 `cloud_key__configure_credential` and send the practitioner the link it returns.
 Never ask for the key in chat, and never echo it back into the transcript.
 
-A practitioner who has no key asks Probanda for one: lawyer's practice-data, Configuration (Probanda's key).
+A practitioner who has no key asks Probanda for one: lawyer's practice-data, operations/credentials.md (Probanda's key).

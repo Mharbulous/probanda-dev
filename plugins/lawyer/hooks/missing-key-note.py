@@ -43,7 +43,7 @@ TELL = (
     "sentence: \"This computer has no Probanda key yet, so suggestions to the Probanda team cannot be "
     "sent and changes to practice records cannot be saved; I can ask Probanda for one now.\" Do not repeat it "
     "later in the session. On their yes, follow the key-request route in the practice-data skill, "
-    "Configuration, \"Probanda's key\" (key_request__submit). Never ask for the key in chat. A complaint "
+    "operations/credentials.md, \"Probanda's key\" (key_request__submit). Never ask for the key in chat. A complaint "
     "about Probanda raised before the key is stored still goes to /lawyer:suggestion: once the "
     "practitioner submits its card, the suggestion is kept on this computer and sent by itself after "
     "the key is stored."

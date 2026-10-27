@@ -9,7 +9,7 @@ computer-*activity* fetch: that file covers the desktop app's raw
 application/window-title tracking (`/third_party/api/activity`); this one
 covers the practitioner's actual **timesheet entries** — the rows with a
 project/task assignment and a colour, shown in TimeCamp's own timesheet view.
-`/timecamping` fetches both (see `SKILL.md`'s source-integration table).
+`/timecamping` fetches both (see `sources.md`'s source-integration table).
 
 ## The TimeCamp connector
 
@@ -78,7 +78,7 @@ Each entry in the JSON array contains, **confirmed against a real response**
   correctly assigned in TimeCamp's own view — not part of the work queue
   unless the practitioner explicitly asks for a recheck.
 - **`Switching File`** (task id `80544222`) — also in the default queue,
-  reviewed like amber under `SKILL.md`'s P10. Identify it by task, never by
+  reviewed like amber under `inference.md`'s P10. Identify it by task, never by
   its brown `#8B6A49`, which `Write-off` and `MS Teams Write off` share.
 - **`Write-off`** — reviewed on request only, never in the default queue
   (practitioner decision, #856). A write-off may be deliberate, and

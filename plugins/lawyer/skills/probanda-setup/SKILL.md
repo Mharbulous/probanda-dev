@@ -54,7 +54,7 @@ Cover the first two points conversationally, and say the third once, in these wo
 2. **Training opt-out.** Recommend turning off model training on their conversations: *Settings > Privacy > "Improve Claude"*.
 3. **Suggestions.** "When you send the Probanda team a suggestion, Probanda writes a technical write-up of it for them, and that uses your Claude plan."
 
-Whether to store client names is asked by retainer-tracking's First Import, and the accounting system by practice-data's Accounting System Resolution, each when first needed. Setup asks neither.
+Whether to store client names is asked by retainer-tracking's First Import, and the accounting system by invoice-tracking's and retainer-tracking's First Import, each when first needed. Setup asks neither.
 
 ## Step 6 — Record the folder map
 
@@ -64,6 +64,6 @@ Follow `references/folder-layout.md`. It proposes, from one of the practitioner'
 
 1. Call `practice_data__matter_lookup` with any matter reference. An empty result is fine on a new install. A path-resolution error is not, and means step 3 did not take.
 2. Call `practice_data__config_status` again and confirm `exists: true` and `practice_db_exists: true`.
-3. If `cloud_credential` is `missing`, tell the practitioner that every practice write will fail until Probanda's key is set. If they have the key, call `cloud_key__configure_credential` and send them the link it returns. If they have none, call `key_request__submit` and send them the link it returns, so they can ask Probanda for one. practice-data's Configuration (Probanda's key) says what follows, and what to do when either tool is not in your tool list.
-4. Tell the practitioner which `keys_missing` remain. Each is left to the skill that needs it (practice-data's Configuration).
+3. If `cloud_credential` is `missing`, tell the practitioner that every practice write will fail until Probanda's key is set. If they have the key, call `cloud_key__configure_credential` and send them the link it returns. If they have none, call `key_request__submit` and send them the link it returns, so they can ask Probanda for one. practice-data's operations/credentials.md (Probanda's key) says what follows, and what to do when either tool is not in your tool list.
+4. Tell the practitioner which `keys_missing` remain. Each is left to the skill that needs it (practice-data's operations/configuration.md).
 5. Return to the task that was interrupted.
