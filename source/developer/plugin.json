@@ -1,7 +1,7 @@
 {
   "name": "developer",
   "displayName": "Developer",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Maintainer-only Probanda plugin for developing Probanda: viewing and triaging the Suggestion Box. It is never public, and its skills run only in a Claude Code session opened in the probanda-dev checkout. Requires the lawyer plugin: install lawyer first.",
   "author": {
     "name": "Probanda Legal",
