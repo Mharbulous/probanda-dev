@@ -26,6 +26,10 @@ asks to draft, optimize or sharpen a research question for Westlaw AI Deep Resea
 drafts a query and states no law. Every other request, and any doubt about which one this
 is, goes through the gate below.
 
+**Several research jobs on one board.** When the practitioner asks to research a board's
+research jobs together, read `references/research-board.md` and follow it. It runs the gate
+below once per job.
+
 ## The gate
 
 **Main session only.** The gate spawns agents. If the Agent tool is not in your tool

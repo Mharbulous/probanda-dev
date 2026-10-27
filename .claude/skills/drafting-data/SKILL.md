@@ -84,6 +84,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Create the conversion job | Conversion offer accepted | `references/jobs-stock.md` §3h |
 | Create a research offer job | A research offer named to add | `references/jobs-stock.md` §3i |
 | Create research plan issue jobs | Research plan issues approved | `references/jobs-stock.md` §3l |
+| Research board writes | `/legal-research` board mode | `references/jobs-stock.md` §3m |
 | Create a scrutiny review job | A scrutiny return recorded `'failed'` | `references/jobs-stock.md` §3d |
 | Assign a job | A Ready job picked, or a take-over | `references/jobs-run.md` §4 |
 | Approve a plan | A plan announced or changed | `references/jobs-run.md` §5 |

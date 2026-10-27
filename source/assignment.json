@@ -92,6 +92,7 @@
         "legislation-fetcher",
         "research-agent",
         "research-paralegal",
+        "research-triage",
         "troubleshooter",
         "verify-claim"
       ],
