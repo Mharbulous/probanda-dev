@@ -4,7 +4,7 @@ Read when: the practitioner asks to research a board's research jobs together, o
 
 One session, the main session, works every research job on one Job Board. The `researcher:research-triage` agent decides which jobs wait on which, and how a later question should be reworded. This session follows its blockers mechanically and runs each job's research through the gate's steps 2a to 5. Subagents cannot spawn agents, so every agent a job needs is spawned here.
 
-A research job is a queued, unshelved job whose work is a question about what the law is. Every write below is `/drafting-data`'s (`references/jobs-stock.md` §3m, and the sections it names).
+A research job is a queued, unshelved job whose work is a question about what the law is. Every write below is `/drafting-data`'s (§3m, and the sections it names).
 
 ## Jobs held
 

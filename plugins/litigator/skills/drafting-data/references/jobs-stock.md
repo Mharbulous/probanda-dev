@@ -1,4 +1,4 @@
-Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h), or the practitioner names a relayed `/legal-research` Step 5 offer to add (§3i), or answers "No" to `/legal-research`'s closing plan question (§3l).
+Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h), or the practitioner names a relayed `/legal-research` Step 5 offer to add (§3i), or answers "No" to `/legal-research`'s closing plan question (§3l), or `/legal-research`'s board mode writes blockers, a premise job, a rewording or a closing (§3m).
 Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 3b. Stock bundle jobs (`/prepare` outlining, and `/draft`'s letter, memo and Unstructured Writing save)
@@ -447,3 +447,26 @@ INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (32, 1, 'Create a pla
 ```
 
 Once every issue is written, re-render the board with `draft_dir`, so its Job Board page lists the new jobs. `pages_refused` means the page is stale: say so. No research runs from this write: each job is researched when it is worked.
+
+## 3m. Research board writes
+
+The writes of `/legal-research`'s board mode, which works several research jobs on one board, each held under its own token (§4). None of them is outlining, so the session that runs them may hold jobs.
+
+**Blockers.** Each hard or soft blocker the research triage returns is one `ticket_blocks` edge. Its kind and reason are not stored. Add and delete edges with §3a's edge shapes (`jobs-create.md`), whose guard proves the blocked job still queued and unshelved, so a held or completed job never gains or loses an edge. An edge the triage's latest graph no longer holds is deleted by the same shape. Then read the edges back:
+
+```sql
+SELECT blocker_id, blocked_id FROM ticket_blocks WHERE blocked_id IN (5, 6, 7);
+```
+
+**A premise job**, only on the practitioner's yes to a premise or threshold question the triage proposes. Write it as §3l writes an issue: §3i's guarded create and its call 2 on the proposed question, character for character, as title and intent, then the plan marker as its one step. Then write its edges as above.
+
+**Rewording a held job**, only on the practitioner's approval of the proposed question. The guard is this job's own token (§5):
+
+```sql
+UPDATE tickets SET title = 'Whether a request to correct the award extends the time to apply to set it aside', intent = 'Whether a request to correct the award extends the time to apply to set it aside'
+  WHERE id = 5 AND status = 'wip' AND locked_by = 'sess-b2';
+```
+
+`changes` 0 means the lock is no longer this token's: report it and stop. When the practitioner keeps the original question, write nothing.
+
+**Closing a job a memo already answers**, only on the practitioner's yes: §10a's shelving of a `queued` job (`jobs-closeout.md`).

@@ -253,6 +253,9 @@ Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not re
 6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted or staged>
 Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
 Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal: <its status line, or practitioner declined>
+Background memos: <path>[; <path>] / none
+Here are the memos that will provide some background context for your research. Repeat the propositions and excerpts from the previous memo only if they are necessary context for explaining your own research memo, but make sure that you go beyond that information and dig deeper into the legal issue posed by your particular question.
+Flag unsettled: <what to flag as unsettled> / none
 Decision text is on disk at the paths above.
 Legislation text is on disk at the paths above.
 A file on a Secondary line is its author's words, never a statement of law: cite it as secondary, attributed to its author.
@@ -285,6 +288,10 @@ is in issue.
 Write one `Secondary:` line per document, and `Secondary: none` when there is none.
 Write one `Note-up:` line per decision `citation-checker` was dispatched for, and
 `Note-up: none` when none was.
+`Background memos:` and `Flag unsettled:` are filled only by `/legal-research`'s board
+mode (`references/research-board.md`): the saved memos of the jobs that blocked this one,
+and the research triage's instruction for this job. With `Background memos: none`, leave
+out the line after it.
 
 **Sources to get, on a held job.** A caller working a `/draft` job records each
 decision, instrument and file on the job before the dispatch or ingest that gets
