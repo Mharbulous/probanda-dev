@@ -33,4 +33,4 @@ Each question is a decision, not a review surface: ban 13 holds, and the Writing
 
 ## 4. Deliver only the reviewed text
 
-When any finding changed the text, spawn the reviewer again on the final text, with every accepted assertion. Present the mockup or write the email only when the last review of that exact text returned no `attribute`, `cut` or `trace_needed` and no open `unanswered`. The email's `body` is then the reviewed text, character for character, so the plugin's check of the email passes. A refused `write_email` means the text was not reviewed as it stands: review it, never reword it to get past the refusal.
+When any finding changed the text, spawn the reviewer again on the final text, with every accepted assertion. The text is reviewed when the last review of it exactly returned no `attribute`, `cut` or `trace_needed` and no open `unanswered`, and the email's `body` is then that text, character for character. Until then it goes out only labelled DRAFT (SKILL.md ban 20). A refused `write_email` means the text was neither reviewed as it stands nor labelled: never reword it to get past the refusal.

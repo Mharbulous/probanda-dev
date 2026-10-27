@@ -10,7 +10,8 @@ holds the delivery end of that rule:
 - draft_harness step write_email passes only when the session itself (not a
   subagent) has spawned source-tracer with a prompt holding the call's body,
   whitespace aside, and that agent has returned. An empty or whitespace-only body
-  states nothing and passes. Other steps pass.
+  states nothing and passes, and so does a subject carrying the word DRAFT in
+  capitals, which marks an unchecked draft. Other steps pass.
 - mail__save_draft passes only for an .eml a write_email call in this session wrote.
 - Write, Edit or MultiEdit of an .eml is refused: shared/email.md's route is the only
   author of one.
@@ -25,6 +26,7 @@ Refuses by a JSON permissionDecision on stdout, exit 0; allows by exiting 0
 silently. Fails CLOSED on a missing transcript or its own error, as
 practitioner-words-gate does.
 """
+import re
 import sys
 from pathlib import Path
 
@@ -43,8 +45,8 @@ REVIEWER = "source-tracer"
 
 EMAIL_MESSAGE = (
     "Refused: an email is written only after every fact it states has been checked against its own "
-    "source. Have the facts in this exact text checked, settle what the check finds, then write the "
-    "email again with the same text."
+    "source, unless its subject carries the word DRAFT in capitals. Have the facts in this exact text "
+    "checked and settle what the check finds, or put DRAFT in the subject, then write the email again."
 )
 SAVE_MESSAGE = (
     "Refused: only an email written and checked in this session can be put in the Drafts folder. "
@@ -93,8 +95,8 @@ def main():
     if is_write and tool_input.get("step") != "write_email":
         return 0
     body = norm(str(tool_input.get("body") or ""))
-    if is_write and not body:
-        return 0  # an empty body states nothing to trace
+    if is_write and (not body or re.search(r"\bDRAFT\b", str(tool_input.get("subject") or ""))):
+        return 0  # an empty body states nothing to trace; a DRAFT subject marks it unchecked
     transcript = payload.get("transcript_path") or ""
     if not transcript:
         return hook_io.deny(EMAIL_MESSAGE if is_write else SAVE_MESSAGE)

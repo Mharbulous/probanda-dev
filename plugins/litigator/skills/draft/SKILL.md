@@ -62,7 +62,7 @@ Never: assemble a deliverable package (hand off to the assembly skills), state l
 <!-- atom id=draft.ban.19 ops=always -->
 19. Never ask the practitioner whether a letter was sent, delivered or received until the `lawyer:delivery-checker` agent has checked it. Read `references/delivery-check.md` first, at the opening of a letter whose `Deliver` job is open and before any such question. After the check, ask only about what it could not determine, naming what was checked.
 <!-- atom id=draft.ban.20 ops=always -->
-20. Never present a letter, email or memo mockup, or write any `.eml`, before `references/source-trace.md`'s review has returned on that exact text and each finding is resolved or accepted by the practitioner. Every letter can be used as evidence of what it states (`shared/scrivener/references/core.md`).
+20. Never present a letter, email or memo mockup, or write any `.eml`, before `references/source-trace.md`'s review has returned on that exact text and each finding is resolved or accepted by the practitioner, unless it is labelled a draft: `**DRAFT**` in its RE: line, or `DRAFT` in an email's subject, exactly that word in capitals. The label comes off only at the practitioner's word, and the text is then reviewed first. Every letter can be used as evidence of what it states (`shared/scrivener/references/core.md`).
 
 ## 3. Doctrine bindings
 

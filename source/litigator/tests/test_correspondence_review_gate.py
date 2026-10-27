@@ -1,7 +1,7 @@
 """Locks for the correspondence review gate.
 
 An outgoing email is written only after the source-trace reviewer has read the
-exact text it carries (draft/references/source-trace.md). The gate reads that
+exact text it carries, or with DRAFT in its subject (draft SKILL.md ban 20). The gate reads that
 from the harness transcript, which the session being checked cannot write.
 """
 import json
@@ -63,9 +63,20 @@ class GateTests(unittest.TestCase):
         decision = json.loads(result.stdout)["hookSpecificOutput"]
         return decision["permissionDecision"], decision["permissionDecisionReason"]
 
-    def write_email(self, records, body=BODY):
+    def write_email(self, records, body=BODY, subject="Status"):
         return self.run_hook(HARNESS, {"step": "write_email", "matter_root": "M", "to": ["a@b.c"],
-                                       "subject": "Status", "body": body}, records)
+                                       "subject": subject, "body": body}, records)
+
+    def test_a_draft_labelled_subject_needs_no_review(self):
+        self.assertEqual(self.write_email([], subject="DRAFT - Status")[0], "allow")
+
+    def test_only_the_capitalised_word_draft_is_a_label(self):
+        for subject in ("Draft - Status", "draft status", "DRAFTS of the order"):
+            with self.subTest(subject=subject):
+                self.assertEqual(self.write_email([], subject=subject)[0], "deny")
+
+    def test_the_refusal_names_the_draft_route(self):
+        self.assertIn("DRAFT", self.write_email([])[1])
 
     def test_allows_an_email_the_reviewer_read(self):
         self.assertEqual(self.write_email(review(BODY))[0], "allow")
