@@ -1,4 +1,4 @@
-// build-stamp: 248cd6fc6eda
+// build-stamp: da969cf96be5
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77765,7 +77765,7 @@ function fileToolDefinitions() {
     },
     {
       name: "research_filing__save_answer",
-      description: "Save `text` byte-for-byte as a new `.md` file in a matter `6. LAW` folder; never overwrites. `filename` is a bare `.md` name; if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `destination_dir` is an absolute host path inside a `6. LAW` tree; if missing, it is created when its parent is already in that tree (the final folder only). Returns {path, filename, bytes, created_dir, sha256}, `sha256` being the hex digest of the bytes written. Pass `from_scratch` instead of `text` to copy a file `research_filing__write_scratch` wrote: the absolute path it returned. Its bytes are written unchanged and the scratch file is kept. It must sit directly in the research-agent scratchpad of the matter whose `6. LAW` tree holds `destination_dir`; anywhere else is refused `not_scratch`, nothing written. Exactly one of `text` and `from_scratch`; both or neither is refused `invalid_argument`. When the answer serves a job this session holds, also pass `db_path`, `ticket_id` and `session_token` (all three or none): the save is then recorded against the job, so its card lists the answer and its idle clock restarts, and the result carries `job: {ticket_id, recorded, note}`. The record is written only while the job's lock is this session's; `recorded: false` means the job is no longer this session's: the file is saved, so report it and stop. Refused before anything is written: `invalid_job`, `invalid_ticket_id`, `invalid_session_token`, `not_found` (no such job) and `schema_below_v52`. `record_failed` means the file was saved but the record was not: never save it again.",
+      description: "Save `text` as a new `.md` file in a matter `6. LAW` folder, ending in a generated `## Legend` of the work markers it prints, which replaces any `## Legend` at its end; never overwrites. `filename` is a bare `.md` name; if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `destination_dir` is an absolute host path inside a `6. LAW` tree; if missing, it is created when its parent is already in that tree (the final folder only). Returns {path, filename, bytes, created_dir, sha256}, `sha256` being the hex digest of the bytes written. Pass `from_scratch` instead of `text` to copy a file `research_filing__write_scratch` wrote: the absolute path it returned. Its bytes are saved as `text` is and the scratch file is kept. It must sit directly in the research-agent scratchpad of the matter whose `6. LAW` tree holds `destination_dir`; anywhere else is refused `not_scratch`, nothing written. Exactly one of `text` and `from_scratch`; both or neither is refused `invalid_argument`. When the answer serves a job this session holds, also pass `db_path`, `ticket_id` and `session_token` (all three or none): the save is then recorded against the job, so its card lists the answer and its idle clock restarts, and the result carries `job: {ticket_id, recorded, note}`. The record is written only while the job's lock is this session's; `recorded: false` means the job is no longer this session's: the file is saved, so report it and stop. Refused before anything is written: `invalid_job`, `invalid_ticket_id`, `invalid_session_token`, `not_found` (no such job) and `schema_below_v52`. `record_failed` means the file was saved but the record was not: never save it again.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77836,7 +77836,7 @@ function fileToolDefinitions() {
     },
     {
       name: "research_filing__file_fetched",
-      description: 'File the official text `sources__fetch` already fetched into an existing matter `6. LAW` subfolder, and append its manifest line in the same call. `url` is the exact string you passed to `sources__fetch`: the bytes come from that call\'s memo in this server process, nothing is requested again, and no memo (or one over 24 hours old) is refused `not_fetched`. An HTML page is written as a `.md` file: a front matter header {url, final_url, sha256, fetched_at, currency_marker}, then the whole page text one block per line (never cut at 200 KB). A PDF is written as its own bytes. `filename` is a bare name ending in `.md` for an HTML page or `.pdf` for a PDF (otherwise `invalid_filename`). It never overwrites: a taken name becomes `<stem> vN<ext>`. `record` carries only {citation?, title, kind, jurisdiction, official, currency_marker}; the runtime adds status "downloaded", source "official-publisher", publisher_host, url, final_url, sha256 (of the fetched bytes), filename, path and fetched_at (the time of this call) to the line it appends to `case-download-manifest.json`. `destination_dir` must already exist inside a `6. LAW` tree (`not_found`, `not_law_folder`, `protected`). Returns {path, filename, bytes, record, manifest: {path, records}}.',
+      description: 'File the text `sources__fetch` already fetched into an existing matter `6. LAW` subfolder, and append its manifest line in the same call. `url` is the exact string you passed to `sources__fetch`: the bytes come from that call\'s memo in this server process, nothing is requested again, and no memo (or one over 24 hours old) is refused `not_fetched`. An HTML page is written as a `.md` file: a front matter header {url, final_url, sha256, fetched_at, currency_marker}, then the whole page text one block per line (never cut at 200 KB). A PDF is written as its own bytes. `filename` is a bare name ending in `.md` for an HTML page or `.pdf` for a PDF (otherwise `invalid_filename`). It never overwrites: a taken name becomes `<stem> vN<ext>`. `record` carries only {citation?, title, kind, jurisdiction, official, currency_marker}; the runtime adds status "downloaded", source "official-publisher" ("secondary" for kind "secondary"), publisher_host, url, final_url, sha256 (of the fetched bytes), filename, path and fetched_at (the time of this call) to the line it appends to `case-download-manifest.json`. `destination_dir` must already exist inside a `6. LAW` tree (`not_found`, `not_law_folder`, `protected`). Returns {path, filename, bytes, record, manifest: {path, records}}.',
       inputSchema: {
         type: "object",
         properties: {
@@ -80817,7 +80817,7 @@ function listCaseParties(caseDataDir, env = process.env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync6 } from "node:fs";
 import { join as join10 } from "node:path";
-var BUILD_STAMP = false ? null : "248cd6fc6eda";
+var BUILD_STAMP = false ? null : "da969cf96be5";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -98053,17 +98053,21 @@ function buildLegend(markdown, documentType) {
   if (rows2.length === 0) return { text: "", notes: [] };
   return { text: [LEGEND_HEADING, "", row(["Symbol", "Name", "Meaning", "Work"]), "|---|---|---|---|", ...rows2].join("\n") + "\n", notes };
 }
-function withLegend(markdown, documentType) {
-  const legend = buildLegend(markdown, documentType);
-  return { markdown: legend.text ? `${markdown.trimEnd()}
-
-${legend.text}` : markdown, symbolNotes: legend.notes };
-}
-function legendNotes(mockup, documentType) {
-  const at = mockup.lastIndexOf(`
+function withoutLegend(markdown) {
+  const at = markdown.lastIndexOf(`
 ${LEGEND_HEADING}
 `);
-  return buildLegend(at === -1 ? mockup : mockup.slice(0, at), documentType).notes;
+  return at === -1 ? markdown : markdown.slice(0, at);
+}
+function withLegend(markdown, documentType) {
+  const body = withoutLegend(markdown);
+  const legend = buildLegend(body, documentType);
+  return { markdown: legend.text ? `${body.trimEnd()}
+
+${legend.text}` : body, symbolNotes: legend.notes };
+}
+function legendNotes(mockup, documentType) {
+  return buildLegend(withoutLegend(mockup), documentType).notes;
 }
 
 // src/submission/form-currency.ts
@@ -118667,15 +118671,17 @@ function saveAnswer(destinationDir, filename, text8, fromScratch) {
   if (text8 === void 0 === (fromScratch === void 0)) {
     throw new DataServerError("pass exactly one of text and from_scratch", "invalid_argument");
   }
-  let body;
+  let source;
   if (fromScratch !== void 0) {
-    body = scratchBytes(destinationDir, fromScratch);
+    source = scratchBytes(destinationDir, fromScratch);
   } else {
     if (typeof text8 !== "string" || text8.length === 0) {
       throw new DataServerError("text must be a non-empty string", "invalid_argument");
     }
-    body = Buffer.from(text8, "utf-8");
+    source = Buffer.from(text8, "utf-8");
   }
+  const { markdown } = withLegend(source.toString("utf-8"), "");
+  const body = Buffer.from(markdown, "utf-8");
   const { dir, created } = resolveOrCreateLawDir(destinationDir);
   const saved = writeNewVersion(dir, filename, body);
   const sha2563 = createHash11("sha256").update(body).digest("hex");
@@ -118979,7 +118985,7 @@ function fileFetched(url, destinationDir, filename, record2, seams = {}, now = /
     kind: fields2.kind,
     jurisdiction: fields2.jurisdiction,
     status: "downloaded",
-    source: "official-publisher",
+    source: fields2.kind === "secondary" ? "secondary" : "official-publisher",
     official: fields2.official,
     publisher_host: new URL(fetched.final_url).hostname,
     url: fetched.url,
