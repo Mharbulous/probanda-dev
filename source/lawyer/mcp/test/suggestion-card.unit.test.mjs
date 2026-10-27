@@ -8,6 +8,7 @@
 
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import test from "node:test";
 
 import { stubCloud, suggestionDevice } from "./helpers/suggestion-fixture.mjs";
@@ -89,7 +90,7 @@ test("a card is built only when the full check finds nothing, and a built card p
   assert.throws(() => readFileSync(f.store), /ENOENT/, "nothing is stored for a refused card");
 
   const { card_id, card_path } = await built(deps);
-  assert.equal(card_path, `${f.data}/suggestions/Suggestion-${card_id}.html`);
+  assert.equal(card_path, join(f.device, "suggestions", `Suggestion-${card_id}.html`));
   const record = stored(f, card_id);
   assert.equal(record.kind, "card");
   const check = runCrossCheck(card.cardText(record), RECORDS, STOP);
@@ -106,7 +107,7 @@ test("a build whose check could not read every record source is refused, naming 
   assert.deepEqual(result, { built: false, reason: "records_unreadable", unreadable: ["matter", "file name"] });
   assert.throws(() => readFileSync(f.store), /ENOENT/, "nothing is stored");
   const { readdirSync, existsSync: exists } = await import("node:fs");
-  const folder = `${f.data}/suggestions`;
+  const folder = join(f.device, "suggestions");
   assert.ok(!exists(folder) || !readdirSync(folder).some((n) => n.startsWith("Suggestion-")), "no card page is written");
 });
 
@@ -363,7 +364,7 @@ test("a rejected mockup's reason becomes a constraint line, its page is deleted,
     assert.deepEqual(await card.requestMockup(card_id, {}, deps), { outcome: "requested" }, `round ${n}`);
     assert.equal((await waiting.done).event, "mockup");
     const { mockup_path } = await card.attachMockup(card_id, MOCKUP, deps);
-    assert.equal(mockup_path, `${f.data}/suggestions/Suggestion-${card_id}-mockup-${n}.html`);
+    assert.equal(mockup_path, join(f.device, "suggestions", `Suggestion-${card_id}-mockup-${n}.html`));
     const page = readFileSync(mockup_path, "utf-8");
     assert.ok(page.includes("Not like this, because..."));
     assert.equal((await card.readCardState(card_id, deps)).mockup_link, "hidden", "no link while a mockup is on the card");

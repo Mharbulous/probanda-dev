@@ -149,7 +149,7 @@ test("a shipped file counts only when it is an installed plugin's own file", { s
   const reader = spec.shippedReader(f.env, f.seams.installRoot);
   assert.equal(reader(SHIPPED), SHIPPED_TEXT);
   assert.equal(reader("matter-data/SKILL.md"), null, "a folder the install does not ship is not a shipped file");
-  assert.equal(reader("../../plugin-data/suggestions/suggestions.json"), null, "the data folder is never a shipped file");
+  assert.equal(reader("../../device/suggestions/suggestions.json"), null, "the data folder is never a shipped file");
 });
 
 // ------------------------------------------------------------- the flow --

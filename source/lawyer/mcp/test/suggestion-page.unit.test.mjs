@@ -5,6 +5,7 @@
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import test from "node:test";
 
 import { closedPort, stubCloud, suggestionDevice } from "./helpers/suggestion-fixture.mjs";
@@ -72,7 +73,7 @@ test("the page shows the sent payload's fields as stored and the mockup's srcdoc
   await withStore(f.env, (s) => { s.records.push({ kind: "dismissal", record_id: "d-1", title: "DISMISSED-SENTINEL" }); });
 
   const path = await writePastSuggestionsPage(f.env);
-  assert.equal(path, `${f.data}/suggestions/Past suggestions.html`);
+  assert.equal(path, join(f.device, "suggestions", `Past suggestions.html`));
   const html = readFileSync(path, "utf-8");
   const record = JSON.parse(readFileSync(f.store, "utf-8")).records.find((r) => r.record_id === recordId);
   const stored = JSON.parse(record.payload);
@@ -134,6 +135,6 @@ test("the Withdraw button withdraws through the page API with its token only, an
   assert.equal(right.status, 200);
   assert.equal(right.headers.get("access-control-allow-origin"), "null");
   assert.deepEqual(await right.json(), { outcome: "withdrawn", badge: "Withdrawn" });
-  const html = readFileSync(`${f.data}/suggestions/Past suggestions.html`, "utf-8");
+  const html = readFileSync(join(f.device, "suggestions", `Past suggestions.html`), "utf-8");
   assert.ok(!html.includes('class="withdraw"'));
 });

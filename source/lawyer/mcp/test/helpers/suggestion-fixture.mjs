@@ -1,5 +1,5 @@
-// A scratch device for the suggestion store tests: a plugin data folder (CLAUDE_PLUGIN_DATA), a
-// probanda.json read through COCLERK_CONFIG_PATH (beside which the old suggestion log sat), an install
+// A scratch device for the suggestion store tests: a probanda.json read through COCLERK_CONFIG_PATH
+// (beside which the store and the old suggestion log sit), an install
 // root whose plugin.json names the plugin and version, and a stand-in for Probanda's Cloud on
 // 127.0.0.1 that records every request and answers from a handler the test sets.
 
@@ -16,10 +16,8 @@ export const KEY = "sb_secret_TEST_KEY";
 export function suggestionDevice(t, { key = true, port } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "probanda-suggestions-"));
   t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
-  const data = join(dir, "plugin-data");
   const device = join(dir, "device");
   const install = join(dir, "install");
-  mkdirSync(data, { recursive: true });
   mkdirSync(device, { recursive: true });
   mkdirSync(join(install, ".claude-plugin"), { recursive: true });
   writeFileSync(join(install, ".claude-plugin", "plugin.json"), JSON.stringify({ name: "lawyer", version: "0.9.14" }));
@@ -27,13 +25,12 @@ export function suggestionDevice(t, { key = true, port } = {}) {
   writeFileSync(config, JSON.stringify(port ? { page_api_port: port } : {}));
   const env = {
     PATH: process.env.PATH,
-    CLAUDE_PLUGIN_DATA: data,
     COCLERK_CONFIG_PATH: config,
     SUPABASE_URL: "http://127.0.0.1:9",
     ...(key ? { LEGAL_COMMONS_SUPABASE_KEY: KEY } : {}),
   };
   const seams = { installRoot: install, keyStore: fakeCloudKeyStore(null) };
-  return { dir, data, device, env, seams, store: join(data, "suggestions", "suggestions.json"), legacyLog: join(device, "suggestions.local.json") };
+  return { dir, device, env, seams, store: join(device, "suggestions", "suggestions.json"), legacyLog: join(device, "suggestions.local.json") };
 }
 
 /** A port nothing listens on: taken from the OS, then let go. */

@@ -133,10 +133,9 @@ def test_held_suggestions_are_counted_from_the_store_and_the_unread_old_log(tmp_
     monkeypatch.setenv("COCLERK_CONFIG_PATH", str(tmp_path / "device" / "probanda.json"))
     (tmp_path / "device").mkdir()
     (tmp_path / "device" / "probanda.json").write_text("{}", encoding="utf-8")
-    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(tmp_path / "data"))
     hold(tmp_path, 2)
     assert module.held_count() == 2, "an old log the store has not read yet still counts"
-    store = tmp_path / "data" / "suggestions" / "suggestions.json"
+    store = tmp_path / "device" / "suggestions" / "suggestions.json"
     store.parent.mkdir(parents=True)
     records = [{"kind": "held", "record_id": "a", "draft": {}}, {"kind": "suggestion", "record_id": "b"},
                {"kind": "held", "record_id": "c", "draft": {}}, {"kind": "held", "record_id": "d", "draft": {}}]

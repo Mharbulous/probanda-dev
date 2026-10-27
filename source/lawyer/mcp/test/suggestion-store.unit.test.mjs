@@ -1,4 +1,4 @@
-// The local suggestion store (suggestions/store.ts): one file under CLAUDE_PLUGIN_DATA, one list of
+// The local suggestion store (suggestions/store.ts): one file beside probanda.json, one list of
 // records each naming its kind, the old suggestions.local.json beside probanda.json read into it once
 // with no entry lost, and the suggestion_log__* tools over it.
 
@@ -20,11 +20,10 @@ const OLD_LOG = {
   held: [{ held_id: "h-1", held_on: "2026-10-04", draft: { title: "Held one", body: "Drafted with no key.", source: "user" } }],
 };
 
-test("the store lives under CLAUDE_PLUGIN_DATA, and a host that gives no data folder is refused by name", async (t) => {
+test("the store lives beside probanda.json, whatever the host passes in CLAUDE_PLUGIN_DATA", async (t) => {
   const f = suggestionDevice(t);
   assert.equal(storePath(f.env), f.store);
-  await assert.rejects(loadStore({ ...f.env, CLAUDE_PLUGIN_DATA: "" }), (e) => e.code === "plugin_data_unset");
-  await assert.rejects(loadStore({ ...f.env, CLAUDE_PLUGIN_DATA: "${CLAUDE_PLUGIN_DATA}" }), (e) => e.code === "plugin_data_unset");
+  assert.equal(storePath({ ...f.env, CLAUDE_PLUGIN_DATA: "${CLAUDE_PLUGIN_DATA}" }), f.store);
 });
 
 test("an existing suggestions.local.json is migrated once on first read, with no entry lost", async (t) => {

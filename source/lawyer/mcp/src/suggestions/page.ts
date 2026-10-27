@@ -1,5 +1,5 @@
 // The Past suggestions page (docs/Plans/2026-10-25_suggestion-design.md, decisions 9, 11, 16 and 17;
-// lifecycle plan Phase 2): `<CLAUDE_PLUGIN_DATA>/suggestions/Past suggestions.html`, a file Probanda
+// lifecycle plan Phase 2): `suggestions/Past suggestions.html` beside probanda.json, a file Probanda
 // creates (Commandment 7) and the session shows only as a file card.
 //
 // For each suggestion this computer sent or tried to send, newest first, it shows the local copy

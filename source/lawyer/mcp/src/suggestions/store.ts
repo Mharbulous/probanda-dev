@@ -1,5 +1,5 @@
 // The local suggestion store (docs/Plans/2026-10-25_suggestion-design.md, decision 14): one JSON file,
-// `<CLAUDE_PLUGIN_DATA>/suggestions/suggestions.json`, holding every suggestion this device sent or
+// `suggestions/suggestions.json` beside probanda.json, holding every suggestion this device sent or
 // tried to send, every suggestion an earlier version held unposted, every suggestion card (kind
 // "card", card.ts), every dismissal of one (kind "dismissal") and every observation (kind
 // "observation", observation.ts). Its `ai_noticed` field holds the last answer observation.ts reached
@@ -25,7 +25,7 @@
 
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, isAbsolute, join } from "node:path";
+import { dirname, join } from "node:path";
 
 import { configPath } from "../config-path.js";
 import { DataServerError } from "../errors.js";
@@ -149,17 +149,9 @@ export interface SuggestionStore {
   };
 }
 
-/** The folder the store, its lock and the Past suggestions page live in: `<CLAUDE_PLUGIN_DATA>/suggestions`. */
+/** The folder the store, its lock and the Past suggestions page live in: `suggestions` beside probanda.json. */
 export function storeDir(env: NodeJS.ProcessEnv = process.env): string {
-  const data = env.CLAUDE_PLUGIN_DATA;
-  // An unsubstituted "${CLAUDE_PLUGIN_DATA}" from a host that does not know the variable is unset too.
-  if (!data || data.includes("${") || !isAbsolute(data)) {
-    throw new DataServerError(
-      "this host gives the lawyer plugin no data folder (CLAUDE_PLUGIN_DATA is unset), so suggestions cannot be kept on this computer",
-      "plugin_data_unset"
-    );
-  }
-  return join(data, STORE_FOLDER);
+  return join(dirname(configPath(env)), STORE_FOLDER);
 }
 
 export function storePath(env: NodeJS.ProcessEnv = process.env): string {

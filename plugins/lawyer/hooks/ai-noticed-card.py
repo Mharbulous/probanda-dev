@@ -3,7 +3,7 @@
 for the practitioner (docs/Plans/2026-10-25_suggestion-design.md, decisions 2 to 5; lifecycle plan
 Phase 5).
 
-Hook event: Stop. The suggestion store, ${CLAUDE_PLUGIN_DATA}/suggestions/suggestions.json, holds the
+Hook event: Stop. The suggestion store, suggestions/suggestions.json beside probanda.json, holds the
 observations Probanda recorded about its own work (records of kind "observation") and, in its
 `ai_noticed` field, the last answer the lawyer data server reached about raising one
 (source/lawyer/mcp/src/suggestions/observation.ts). The daily cap and the suppression are decided
@@ -26,7 +26,6 @@ stderr, so a bug here never traps a session.
 from __future__ import annotations
 
 import json
-import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -49,12 +48,8 @@ RAISE = (
 )
 
 
-def store_path() -> Path | None:
-    data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
-    # An unsubstituted "${CLAUDE_PLUGIN_DATA}" from a host that does not know the variable is unset too.
-    if not data or "${" in data or not Path(data).is_absolute():
-        return None
-    return Path(data) / "suggestions" / "suggestions.json"
+def store_path() -> Path:
+    return hook_io.config_path().parent / "suggestions" / "suggestions.json"
 
 
 def parse_time(value) -> datetime | None:
@@ -93,7 +88,7 @@ def stop(payload: dict, now: datetime | None = None) -> int:
     if not isinstance(session_id, str) or not SESSION_ID.fullmatch(session_id):
         return 0
     path = store_path()
-    if path is None or not path.is_file():
+    if not path.is_file():
         return 0
     store = json.loads(path.read_text(encoding="utf-8"))
     if should_raise(store, session_id, now or datetime.now(timezone.utc)):

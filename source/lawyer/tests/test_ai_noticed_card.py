@@ -39,9 +39,10 @@ def iso(when: datetime) -> str:
 class AiNoticedCardHook(unittest.TestCase):
     def setUp(self):
         self.dir = Path(tempfile.mkdtemp(prefix="ai-noticed-"))
-        self.data = self.dir / "plugin-data"
-        self.store = self.data / "suggestions" / "suggestions.json"
+        self.config = self.dir / "device" / "probanda.json"
+        self.store = self.config.parent / "suggestions" / "suggestions.json"
         self.store.parent.mkdir(parents=True)
+        self.config.write_text("{}", encoding="utf-8")
 
     def tearDown(self):
         shutil.rmtree(self.dir, ignore_errors=True)
@@ -52,13 +53,12 @@ class AiNoticedCardHook(unittest.TestCase):
             store["ai_noticed"] = answer
         self.store.write_text(json.dumps(store), encoding="utf-8")
 
-    def run_hook(self, payload=None, data=None):
+    def run_hook(self, payload=None):
         # Claude Code's Stop payload: no Cowork tool or bridge is named anywhere.
         body = {"session_id": SESSION, "transcript_path": str(self.dir / "transcript.jsonl"), "cwd": str(self.dir),
                 "permission_mode": "default", "hook_event_name": "Stop", "stop_hook_active": False}
         body.update(payload or {})
-        env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PLUGIN_DATA"}
-        env["CLAUDE_PLUGIN_DATA"] = str(self.data) if data is None else data
+        env = dict(os.environ, COCLERK_CONFIG_PATH=str(self.config))
         result = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(body), env=env,
                                 capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -119,10 +119,8 @@ class AiNoticedCardHook(unittest.TestCase):
         self.write([observation("o1")], answer)
         self.assert_raised(self.run_hook())
 
-    def test_no_plugin_data_folder_raises_nothing(self):
+    def test_a_payload_with_no_valid_session_id_raises_nothing(self):
         self.write([observation("o1")])
-        self.assertEqual(self.run_hook(data=""), "")
-        self.assertEqual(self.run_hook(data="${CLAUDE_PLUGIN_DATA}"), "")
         self.assertEqual(self.run_hook({"session_id": "not a session id"}), "")
 
     @unittest.skipUnless(shutil.which("node") and (MCP / "build" / "suggestions" / "observation.js").is_file(),
@@ -138,7 +136,7 @@ class AiNoticedCardHook(unittest.TestCase):
             "  ? await obs.recordObservation({ kind: 'tool_error', skill: 'draft', tool: 'drafting_data__query', error_code: 'not_found' }, process.env, seams)\n"
             "  : await obs.nextObservation({ session_id: session }, process.env, seams);\n"
             "process.stdout.write(JSON.stringify(out));\n", encoding="utf-8")
-        env = dict(os.environ, CLAUDE_PLUGIN_DATA=str(self.data))
+        env = dict(os.environ, COCLERK_CONFIG_PATH=str(self.config))
 
         def node(*args):
             done = subprocess.run(["node", str(script), *args], env=env, capture_output=True, text=True, timeout=60)

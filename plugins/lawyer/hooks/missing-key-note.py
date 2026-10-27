@@ -20,7 +20,7 @@ With the key present, the hook names any suggestions held unposted, so each is
 offered once as a suggestion card. Nothing is held any more: a suggestion submitted
 from its card with no key is kept unsent and sent by the data server once the key is
 stored. The held drafts are the held records of the lawyer data
-server's suggestion store, ${CLAUDE_PLUGIN_DATA}/suggestions/suggestions.json
+server's suggestion store, suggestions/suggestions.json beside probanda.json
 (source/lawyer/mcp/src/suggestions/store.ts), plus, until that store has read it,
 those of the old suggestions.local.json beside probanda.json (resolved as
 inject-preferences.py does). Never blocks: always exits 0.
@@ -85,13 +85,11 @@ def key_present() -> bool | None:
 def held_count() -> int:
     count = 0
     migrated = False
-    data = os.environ.get("CLAUDE_PLUGIN_DATA", "")
-    if data and "${" not in data:
-        store = Path(data) / "suggestions" / "suggestions.json"
-        if store.is_file():
-            stored = json.loads(store.read_text(encoding="utf-8"))
-            count += sum(1 for record in stored.get("records", []) if record.get("kind") == "held")
-            migrated = bool(stored.get("migrated_log"))
+    store = hook_io.config_path().parent / "suggestions" / "suggestions.json"
+    if store.is_file():
+        stored = json.loads(store.read_text(encoding="utf-8"))
+        count += sum(1 for record in stored.get("records", []) if record.get("kind") == "held")
+        migrated = bool(stored.get("migrated_log"))
     if not migrated:
         log = hook_io.config_path().parent / "suggestions.local.json"
         if log.is_file():
