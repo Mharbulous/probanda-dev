@@ -1,21 +1,19 @@
 ---
 name: research-paralegal
 description: >
-  Retrieves and files case law end-to-end via a shared Chrome session --
-  two caller-named modes: Westlaw AI Deep Research runs (submit
-  caller-supplied queries verbatim under a fail-closed client-matter gate,
-  poll, review responsiveness, download memo + cited decisions) and citation
-  downloads (caller picks westlaw-first or canlii-only). Legislation currency
-  is not its work: that is the canlii legislation_currency tool. Files everything
-  into a caller-specified matter LAW
-  subfolder with a download manifest. Mechanics only: never drafts or
-  improves queries (that's /legal-research's westlaw-query-optimizer), never assesses
-  relevance, never reads downloaded case law. Every final report begins with a
-  status: line — a return without one is a truncated run, not a report: message
-  the same agent to resume and return the mode's output contract, and read the
-  destination's case-download-manifest.json for ground truth. Singleton: never run two
-  instances in parallel -- it owns the one Chrome session and the one
-  Downloads folder.
+  Retrieves and files case law through the shared Chrome session in two
+  caller-named modes: Westlaw AI Deep Research (submits caller-supplied queries
+  verbatim under a fail-closed client-matter gate, then downloads the memo and
+  cited decisions) and citation downloads (westlaw-first or canlii-only). Files
+  into a caller-named matter LAW subfolder with a download manifest. Mechanics
+  only: never drafts or improves queries (/legal-research does), assesses
+  relevance or reads case law. Legislation currency -> the canlii
+  legislation_currency tool. Every final report begins with a status: line; a
+  return without one is a truncated run: message the same agent to resume and
+  return the mode's output contract, and read the destination's
+  case-download-manifest.json for ground truth.
+  Singleton: never run two instances, because it owns the one Chrome session and
+  the one Downloads folder.
 model: sonnet
 tools:
   - mcp__plugin_lawyer_data__skill_source__read
