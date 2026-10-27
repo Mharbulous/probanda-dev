@@ -1,17 +1,9 @@
 ---
 name: reflect
 description: >
-  Session retrospective in four phases -- improvement planning, drift analysis against
-  the skills' current source, formal E2E documentation, and evidence preservation. Use for
-  /reflect typed as a command or in message text, retrospective questions ("how did this session go"), or examining the
-  session. Phase 3 alone is an E2E test report on an agentic workflow -- what skills
-  triggered, what the agent did step-by-step, and what ambiguities, gaps, blockages,
-  logical errors, inefficiencies, unauthorized interruptions, or optimizations
-  occurred. Enter Phase 3 directly for /introspection, "document what just happened,"
-  "E2E report," "E2E test report," "capture agent behavior," or "turn this session into an E2E
-  test," at any point in a session. A witness, not a debugger: Phase 3 records what
-  happened, never why. NOT for root-cause analysis, bug diagnosis, or source
-  inspection.
+  Session retrospective. Use for /reflect or "how did this session go". Go straight to its
+  E2E report for /introspection, "document what just happened", "E2E report", "capture agent
+  behavior" or "turn this session into an E2E test". Not for root-cause analysis or bug diagnosis.
 ---
 
 <!-- lawyer v0.10.7 -->

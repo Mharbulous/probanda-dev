@@ -1,6 +1,6 @@
 ---
 name: suggestion
-description: "Turns a practitioner's experience of Probanda into a suggestion to its maintainers, and saves a fix that worked as their own preference. Use at three moments: (1) a task is finished, the practitioner is satisfied, and getting there took corrections, rejections, repeated instructions or workarounds; (2) Probanda has stopped because it cannot do what the practitioner needs (a missing capability or a refusal), after ruling out a setup or configuration fault; (3) the practitioner asks to suggest, request, report a bug or regression, or give feedback on how Probanda works (\"Probanda should…\", \"tell the developers…\", \"from now on, always…\"), even mid-task. Not for corrections to the practitioner's own document or draft, not mid-task unless the practitioner raises it, not when the only sign is an irritated tone, not for a setup or configuration fault, and not for loose threads, which other skills report themselves. Also runs when an end-of-reply reminder names it with a session id."
+description: "Use when the practitioner gives feedback on Probanda or reports a bug (\"Probanda should…\", \"tell the developers…\", \"from now on, always…\"), when a finished task took corrections, when Probanda cannot do what is needed, or when a reminder names it. Not for edits to their own draft, or loose threads."
 ---
 
 <!-- lawyer v0.10.7 -->
