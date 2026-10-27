@@ -12,6 +12,9 @@ import { caseDataRelocate, type RelocateMode } from "./case/relocate.js";
 import { resolveParticipant } from "./case/resolve-participant.js";
 import { ingestAuthority, type AuthorityIngestRequest } from "./case/ingest-authority.js";
 import { proceduralHistoryAppend, type ProceduralHistoryAppendArgs } from "./case/procedural-history.js";
+import { relocateSource, type RelocateSourceRequest } from "./case/relocate-source.js";
+import { housekeepingLog, type HousekeepingLogRequest } from "./case/housekeeping-log.js";
+import { repointDocuments, type RepointDocumentsRequest } from "./submission/repoint-documents.js";
 import {
   timePipelineGet,
   timePipelineSet,
@@ -171,6 +174,14 @@ export async function callTool(
     return ingestAuthority(args as unknown as AuthorityIngestRequest);
   }
 
+  if (name === "matter_data__relocate_source") {
+    return relocateSource(args as unknown as RelocateSourceRequest);
+  }
+
+  if (name === "matter_data__housekeeping_log") {
+    return housekeepingLog(args as unknown as HousekeepingLogRequest);
+  }
+
   if (name === "matter_data__procedural_history_append") {
     return proceduralHistoryAppend(args as unknown as ProceduralHistoryAppendArgs);
   }
@@ -245,6 +256,10 @@ export async function callTool(
 
   if (name === "drafting_data__execute") {
     return submissionDataExecute(args.db_path as string, args.sql_script as string);
+  }
+
+  if (name === "drafting_data__repoint_documents") {
+    return repointDocuments(args as unknown as RepointDocumentsRequest);
   }
 
   if (name === "drafting_data__create_writing") {

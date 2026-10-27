@@ -69,6 +69,47 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: caseDataPrefixed("relocate_source"),
+      description:
+        "After a file was moved or renamed, re-point every stored record of it (all three stores, found by its hash) so it names where the file now is: /matter-data's operations/relocate-source.md as one call. hash is the lowercase hex SHA-256 of the file's bytes; store is the store ingest-status reported for it (main, privileged or law); old_path and new_path are where the file was and is, in stored form (relative to the matter root, backslash separators). The matter folder it checks for a twin copy is matter_root on this host. Moves no file. " +
+        "Returns {outcome, stored_path, rows, reason}: outcome relocated (written, then confirmed by a fresh read), already_current (nothing to write), or failed with reason no_rows, twin_at_stored_path (both write nothing) or write_not_confirmed (with rows_now, as read after the write). rows are {store, id, was, action}, action moved, already or left. Running it twice is safe. " +
+        "/housekeeping's apply step calls it directly with an approved row's values. Any other caller goes through the /matter-data skill -- invoke it (Skill: lawyer:matter-data) and follow its operations/relocate-source.md, which directs you to call this tool yourself, whatever skill you started in.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          hash: { type: "string" },
+          store: { type: "string", enum: ["main", "privileged", "law"] },
+          old_path: { type: "string" },
+          new_path: { type: "string" },
+        },
+        required: ["matter_root", "hash", "store", "old_path", "new_path"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
+      name: caseDataPrefixed("housekeeping_log"),
+      description:
+        "Write the /housekeeping review log: /matter-data's operations/housekeeping-log.md modes record and retry, one call and one transaction per batch, then regenerate evidence.sql. " +
+        "mode record takes entries, each {file_name, file_hash, folder_type, outcome}: outcome renamed, manual_review or not_ingested records a settled verdict (folder_type required); outcome ingest_failed records a failed ingest and also takes reason (one sentence) and failure_class (deterministic or extractor), folder_type null for a root file, and sets whether the next run retries it by the operation's counting rule. Returns {ok, mode, recorded}. " +
+        "mode retry takes hashes, the failed files to try reading again next run. Returns {ok, mode, updated, unmatched}, unmatched naming each hash with no remembered failure. " +
+        "Entries that break those rules return {ok: false, problems} and write nothing. A non-success result other than ok false does not prove nothing committed: re-read before any retry, as for matter_data__execute. " +
+        "/housekeeping's apply step calls it directly with an approved row's values. Any other caller goes through the /matter-data skill -- invoke it (Skill: lawyer:matter-data) and follow its operations/housekeeping-log.md, which directs you to call this tool yourself, whatever skill you started in.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          mode: { type: "string", enum: ["record", "retry"] },
+          entries: { type: "array", items: { type: "object" } },
+          hashes: { type: "array", items: { type: "string" } },
+        },
+        required: ["matter_root", "mode"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
       name: caseDataPrefixed("migrate"),
       description:
         "Upgrade a matter's case databases to the current schema. Two-phase and gated: " +

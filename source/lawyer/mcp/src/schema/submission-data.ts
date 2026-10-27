@@ -63,6 +63,28 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("repoint_documents"),
+      description:
+        "After a file was moved or renamed, point every stored document row still naming its old place at the new one: " +
+        "/drafting-data's references/document-paths.md \"Re-point after a move\" as one call. old_path and new_path are " +
+        "in the stored form (relative to the matter root, backslash separators); a row matches the old place in the stored " +
+        "or the absolute form, ignoring case. The drafting database is found from matter_root's pointer. Returns " +
+        "{database, repointed}: repointed lists the ids re-pointed, and an empty list is the normal result; database false " +
+        "means the matter has no drafting database, so nothing was read or written. Running it twice is safe. " +
+        "A non-success result does not prove nothing committed: call it again, which re-reads first.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          old_path: { type: "string" },
+          new_path: { type: "string" },
+        },
+        required: ["matter_root", "old_path", "new_path"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("create_writing"),
       description:
         "Create one Writing (a filings row) on a proceeding: the one door for a new Writing, because only this tool writes " +

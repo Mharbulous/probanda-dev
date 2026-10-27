@@ -14,6 +14,8 @@ Three modes. The caller names one.
 
 [`../references/scripts/housekeeping_lookup.py`](../references/scripts/housekeeping_lookup.py) runs mode `lookup` host-side for `/housekeeping`'s work list, executing this file's own fenced query and the join rules below; it is not a model-facing tool.
 
+Modes `record` and `retry` are one `matter_data__housekeeping_log` call each, with `mode` and the batch below (`entries` for `record`, `hashes` for `retry`). The tool checks every entry against the rules below and runs this file's own fenced statements, one per entry, each entry's values bound, in one transaction ([`../references/scripts/housekeeping_log.py`](../references/scripts/housekeeping_log.py), design decision #75). An entry that breaks a rule returns `ok: false` with its `problems`, and nothing is written.
+
 **The caller never sees a table name, a column name, or SQL.** It hands over files as `{file_name, file_hash}` and gets back verdicts, or hands over closed outcomes and gets back a count. Everything below the interface is this file's.
 
 ## Outcomes
@@ -68,11 +70,11 @@ If the log is empty — a matter housekeeping has never run against — the quer
 
 ## Mode `record`
 
-`matter_data__execute` takes no bind parameters: each named value below reaches the script as a SQL literal (a text value quoted with every `'` doubled, NULL unquoted). One `matter_data__execute` call for the whole batch, per conventions §2.3; one statement per row.
+One `matter_data__housekeeping_log` call for the whole batch, `mode: "record"`, with `entries`: settled verdicts and ingest failures may share one call. It returns `recorded`, the number of rows written. Per conventions §2.3, a tool error other than `ok: false` does not prove nothing committed: re-read with mode `lookup` before any retry.
 
 ### Settled verdicts
 
-**Input:** a list of `{file_name, file_hash, folder_type, outcome}`, `outcome` one of `renamed`, `manual_review`, `not_ingested`.
+**Input:** a list of `{file_name, file_hash, folder_type, outcome}`, `outcome` one of `renamed`, `manual_review`, `not_ingested`. `folder_type` is required.
 
 | Field | Meaning |
 |---|---|
@@ -101,7 +103,7 @@ Record only what was applied. A row the practitioner left unticked writes nothin
 
 ### Ingest failures
 
-**Input:** a list of `{file_name, file_hash, folder_type, reason, failure_class}`: `folder_type` of the folder holding the file, or NULL for a file at the matter root; `reason` one sentence saying what failed; `failure_class` `deterministic` (the file cannot be read this way at all: a render failure, an RTF `.doc` included) or `extractor` (the reader failed: unavailable, malformed output, a validation abort).
+**Input:** a list of `{file_name, file_hash, folder_type, outcome, reason, failure_class}`, `outcome` `ingest_failed`: `folder_type` of the folder holding the file, or NULL for a file at the matter root; `reason` one sentence saying what failed; `failure_class` `deterministic` (the file cannot be read this way at all: a render failure, an RTF `.doc` included) or `extractor` (the reader failed: unavailable, malformed output, a validation abort).
 
 ```sql
 -- housekeeping-log record: ingest failure
@@ -130,7 +132,7 @@ The upsert on `(file_hash, file_name)` means a later verdict on an unchanged fil
 
 ## Mode `retry`
 
-**Input:** a list of `file_hash` values: the practitioner ticked "try reading again next run" on these failed files. One `matter_data__execute` call, one statement per hash:
+**Input:** a list of `file_hash` values: the practitioner ticked "try reading again next run" on these failed files. One `matter_data__housekeeping_log` call, `mode: "retry"`, with `hashes`; one statement per hash. It returns `updated`, the rows changed, and `unmatched`, each hash with no remembered failure, for which nothing changed:
 
 ```sql
 -- housekeeping-log retry
@@ -140,7 +142,7 @@ WHERE file_hash = :file_hash AND outcome = 'ingest_failed';
 
 It buys one attempt: a failure on that attempt records `retry_next_run = 0` again. Nothing else changes, and nothing moves.
 
-`matter_data__execute` regenerates `evidence.sql` as a side effect, so the log survives into the durable text dump like every other table. Do not dump separately.
+`matter_data__housekeeping_log` regenerates `evidence.sql` as a side effect, as `matter_data__execute` does, so the log survives into the durable text dump like every other table. Do not dump separately.
 
 ## What this operation does not do
 
