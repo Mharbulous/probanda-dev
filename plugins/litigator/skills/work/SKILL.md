@@ -30,6 +30,12 @@ These rules moved from `/draft` verbatim. A file, section or part of SKILL.md th
 | A step at a registry, such as e-filing | `/e-file` |
 | Human-only work, such as a deponent swearing | the practitioner: listed for them, never dispatched |
 
+<!-- atom id=work.from-memory ops=always -->
+**A question answerable from memory.** Answer it before any tool call, and look nothing up unless asked. Frame it as a hunch ("My hunch is ...") and hedge each recalled section, rule or time limit where it appears ("I believe", "if memory serves"), never in a caveat paragraph up front. A date for a matter still goes to the `lawyer:docket-clerk` agent. End with one sentence offering to verify it.
+
+<!-- atom id=work.start-planning ops=always -->
+**"Shall we start planning?"** End the reply with that question when there is no clear instruction on what work to do next and the discussion relates to no Job Board, or to one with no completed job.
+
 ## Rules for each step
 
 <!-- atom id=work.each-step ops=always -->
