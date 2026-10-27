@@ -528,10 +528,10 @@ INSERT INTO filing_law (filing_id, statement_id) VALUES (7, last_insert_rowid())
 
 ## 14. Board attachments (schema v67)
 
-A client letter (`draft/references/letters.md` section 10) and a reply on the reply route (`draft/references/reply.md`, ADR 0040) are not Writings: no `filings` row, no job, no mockup. Each is attached to one Job Board by one `board_attachments` row (ADR 0042), a client letter by its folder, which holds its review draft and its send copy, and a reply by its file. The row holds the board and the path and nothing else. Never write a title, a status or any of the draft's text into this database: the Job Board reads a client letter's counsel's-review status from its review draft's first line each time it renders, and prints no other line of it.
+A client letter (`draft/references/letters.md` section 10) and a reply on the reply route (`draft/references/reply.md`, ADR 0040) are not Writings: no `filings` row, no mockup. Each is attached to one Job Board by its file, with one `board_attachments` row (ADR 0042). The row holds the board and the path and nothing else. Never write a title, a status or any of the draft's text into this database: the Job Board reads a client letter's counsel's-review status from its first line each time it renders, and prints no other line of it. A job may be linked to an attached draft (**Link**, below): the board counts the draft's pending jobs on its card.
 
 - **`proceeding_id`** and **`filing_id`**: the board. `filing_id` names a live Writing's board, or an open Job Board with no Writing by its id. NULL names the proceeding's own board, which a proceeding has only while it has no Writing, live or retired (ADR 0018). When the proceeding gets its first Writing, `drafting_data__create_writing` sets `filing_id` on every such row to the new Writing in the same transaction and reports them as `attachments_moved`: the proceeding's board becomes that Writing's, so each draft stays on one board. A row with NULL in a proceeding that has a live Writing can only come from a hand-written insert; it shows on the proceeding's lowest-id live Writing's board alone, never on two, until it is moved to a Writing.
-- **`path`**: the folder or file, in `documents.file_path`'s stored form, relative to the matter root with backslash separators (`document-paths.md`, whose `stored_form` helper converts it, with `matter_root` from `drafting_forms__open_session`): `0. DRAFT\CL Advice re costs`, `0. DRAFT\2026-10-08 ET Smith re hearing.md`. `UNIQUE`: a draft is on one board at a time.
+- **`path`**: the file, in `documents.file_path`'s stored form, relative to the matter root with backslash separators (`document-paths.md`, whose `stored_form` helper converts it, with `matter_root` from `drafting_forms__open_session`): `0. DRAFT\2026-10-08 ET Client re costs.md`, `0. DRAFT\2026-10-08 ET Smith re hearing.md`. `UNIQUE`: a draft is on one board at a time.
 - **`kind`**: `'client_letter'` or `'reply'`.
 - **`attached_on`**: the date attached, `YYYY-MM-DD`.
 
@@ -551,7 +551,7 @@ Ask the practitioner which board, naming a Writing's board by its title and a pr
 
 ```sql
 INSERT INTO board_attachments (proceeding_id, filing_id, path, kind, attached_on)
-  VALUES (1, 7, '0. DRAFT\CL Advice re costs', 'client_letter', '2026-10-08');
+  VALUES (1, 7, '0. DRAFT\2026-10-08 ET Client re costs.md', 'client_letter', '2026-10-08');
 ```
 
 A `UNIQUE` refusal on `path` means the draft is already attached: read its row and say which board holds it. Never attach it twice.
@@ -562,12 +562,21 @@ A `UNIQUE` refusal on `path` means the draft is already attached: read its row a
 UPDATE board_attachments SET proceeding_id = 1, filing_id = 8 WHERE id = 3;
 ```
 
-When the folder or file itself is renamed or moved on disk, or a reply is saved as a new ` vN` version, the same kind of update sets `path` to the new stored form, the board unchanged: `UPDATE board_attachments SET path = '0. DRAFT\2026-10-08 ET Smith re hearing v2.md' WHERE id = 4;`.
+When the file itself is renamed or moved on disk, or a reply is saved as a new ` vN` version, the same kind of update sets `path` to the new stored form, the board unchanged: `UPDATE board_attachments SET path = '0. DRAFT\2026-10-08 ET Smith re hearing v2.md' WHERE id = 4;`.
 
-**Detach**, only when the practitioner asks. The files stay in `0. DRAFT`:
+**Detach**, only when the practitioner asks. The file stays in `0. DRAFT`, and its job links go with the row:
 
 ```sql
+DELETE FROM ticket_scope WHERE entity = 'board_attachments' AND entity_id = 3;
 DELETE FROM board_attachments WHERE id = 3;
+```
+
+**Link** a job to an attached draft, when the practitioner names it or the job is about that draft; **unlink** when they ask. A link is a `ticket_scope` row naming the attachment, so the job may also move or re-path that row. A job on any board of the proceeding may link, and a draft may have several:
+
+```sql
+INSERT INTO ticket_scope (ticket_id, entity, entity_id) SELECT 42, 'board_attachments', 3
+  WHERE NOT EXISTS (SELECT 1 FROM ticket_scope WHERE ticket_id = 42 AND entity = 'board_attachments' AND entity_id = 3);
+DELETE FROM ticket_scope WHERE ticket_id = 42 AND entity = 'board_attachments' AND entity_id = 3;
 ```
 
 **Read a board's attachments**: a Writing's board shows the rows naming it and, only when it is the proceeding's lowest-id live Writing, the rows of its proceeding with no Writing; a pre-filing proceeding's board shows every row of the proceeding:
@@ -579,7 +588,7 @@ SELECT id, filing_id, path, kind, attached_on FROM board_attachments
   ORDER BY id;
 ```
 
-`drafting_forms__board_card`'s `attached` lane prints the same rows with each one's state on disk.
+`drafting_forms__board_card`'s `attached` lane prints the same rows with each one's state on disk and its pending jobs.
 
 **Guards** (v67). Each refusal writes nothing; quote it in one line and ask the practitioner for another board:
 

@@ -35,5 +35,12 @@ class RevisionSuffixTest(unittest.TestCase):
             self.assertEqual(verdict(stem), "conforms", stem)
 
 
+class CodeTest(unittest.TestCase):
+    def test_code_as_written_only_when_conforming(self):
+        self.assertEqual(check_name("2026-10-01 LT LiL re costs", CODES, [])[3], "LT")
+        self.assertIsNone(check_name("2026-10-01 CL LiL re costs", CODES, [])[3])
+        self.assertIsNone(check_name("LT LiL re costs", CODES, [])[3])
+
+
 if __name__ == "__main__":
     unittest.main()

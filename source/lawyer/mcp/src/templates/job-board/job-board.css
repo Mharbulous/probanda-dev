@@ -76,6 +76,12 @@ main>.writing-title{margin:28px 0 8px;font-family:var(--sans-heading);font-weigh
 .writing .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .writing.view.unviewed{border-style:dashed}
 .writing.view .badge{display:block;margin-bottom:4px;font-family:var(--mono);font-size:11px;color:var(--accent)}
+.writing.attachment summary{display:block;list-style:none;cursor:pointer}
+.writing.attachment summary::-webkit-details-marker{display:none}
+.writing.attachment .date{display:block;margin-bottom:6px;font-family:var(--mono);font-size:11px}
+.writing.attachment .badge.pending{position:absolute;top:4px;right:4px;min-width:18px;padding:0 5px;border-radius:9px;background:#c62828;color:#fff;font-size:11px;font-weight:600;line-height:18px}
+.writing.attachment:has(details[open]){flex:0 0 100%;aspect-ratio:auto;text-align:left;padding:10px 14px}
+.writing.attachment details[open] .badge.pending{position:static;display:inline-block;margin-left:8px}
 .tip{position:fixed;z-index:10;pointer-events:none;max-width:32ch;background:var(--ink);color:var(--paper);font-family:var(--sans-heading);font-weight:600;font-size:13px;line-height:1.3;padding:6px 10px;border-radius:6px;overflow-wrap:anywhere}
 .tip[hidden]{display:none}
 @media print{.tip{display:none}}

@@ -658,7 +658,7 @@ One instrument of **Court Rules**, whole, as its publisher issues it: every **Co
 _Avoid_: bare "rules"; an instrument's short name (SCCR) used as a general term.
 
 **Scope**:
-The set of database rows an assigned job's writes may touch (`ticket_scope`), checked before every `drafting_data__execute` call the job makes. Expandable by the practitioner at any time; the expansion is itself in scope.
+The set of database rows an assigned job's writes may touch (`ticket_scope`), checked before every `drafting_data__execute` call the job makes. Expandable by the practitioner at any time; the expansion is itself in scope. A scope row on `board_attachments` also links the job to that attached draft, whose card on the Job Board counts it while it is pending.
 _Avoid_: permission (this is a work boundary, not an access-control concept).
 
 **Severance**:

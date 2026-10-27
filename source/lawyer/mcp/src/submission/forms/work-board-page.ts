@@ -36,7 +36,7 @@ export interface MatterJobBoardData {
    * name and its sibling file's name, and is never a link. Empty on a pre-filing page. */
   strip: StripItem[];
   /** The section's attachments as found on disk when the page was written (../board-attachments.ts),
-   * drawn in the Attached lane as plain text, never a link (shared/html-pages.md, "Cards only, no link"). */
+   * drawn as cards after the strip's thumbnails, never a link (shared/html-pages.md, "Cards only, no link"). */
   attached: AttachedDraft[];
   /** The filing's relied-on affidavits whose court-file name disagrees with drafting data when the page
    * was written (../court-file-affidavits.ts): one card each, in a Court File lane drawn only when
@@ -55,9 +55,18 @@ export interface AttachedDraft {
   kind: AttachmentKind;
   /** The stored path, relative to the matter root. */
   path: string;
-  /** The folder's or file's own name, the path's last segment. */
+  /** The file's own name, the path's last segment. */
   name: string;
   attached_on: string;
+  /** The file's last-modified local date (YYYY-MM-DD); null unless `state` is `present`. */
+  modified: string | null;
+  /** The name's file-naming registry code, as /file-naming's name gate read it; null when the name
+   * does not conform, and `code_error` says why when the gate could not run. */
+  code: string | null;
+  code_error?: string;
+  /** The proceeding's pending jobs (Ready, In Progress, Bring Forward, Blocked) whose scope names
+   * this attachment, in board order, each with its Writing's title (null for a General Job). */
+  jobs: { id: number; title: string; category: string; writing: string | null }[];
   /** A row of the proceeding with no Writing, on a Writing's board: it shows only on the proceeding's
    * lowest-id live Writing's board, until it is moved to a Writing. False on a pre-filing board,
    * whose own row it is. */
@@ -68,8 +77,8 @@ export interface AttachedDraft {
   state: "present" | "missing" | "outside" | "unreadable";
   /** The error code of a failed read; present only when `state` is `unreadable`. */
   error?: string;
-  /** A present client letter's review drafts: each `.md` at the top of its folder whose first line is
-   * a counsel's-review line, with the rest of that line (`pending`, `approved by …`). Only that line
-   * is read and drawn, never the body. Empty for a reply. */
-  review: { file: string; status: string }[];
+  /** A present client letter's counsel's-review status: the rest of its first line when that line is
+   * a counsel's-review line (`pending`, `approved by …`), else null. Only that line is read and
+   * drawn, never the body. Null for a reply. */
+  review: string | null;
 }

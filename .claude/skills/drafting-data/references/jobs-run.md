@@ -232,7 +232,7 @@ INSERT INTO seeds (proceeding_id, filing_id, origin_ticket_id, created, surfaced
 1. **Session entry.** `drafting_forms__open_session` with the matter root gives `db_path` and `draft_dir`. A refusal, or no drafting database for the matter, means there is no board: capture nothing and report that.
 2. **Resolve the board from the origin.**
    - A Writing id: the Writing and its proceeding, `SELECT proceeding_id, retired_on FROM filings WHERE id = ?`. A retired Writing has no Job Board page, so its threads go on the proceeding with `filing_id` NULL, which shows them on every live Writing's board in it. No row: there is no board.
-   - A plain draft file attached to a board (a reply's file, or a file in a client letter's folder; `filing-checklists.md` §14): that board, `SELECT proceeding_id, filing_id FROM board_attachments WHERE lower(path) IN (lower(?), lower(?))`, the file's stored path and its folder's.
+   - A plain draft file attached to a board (a client letter's or a reply's file; `filing-checklists.md` §14): that board, `SELECT proceeding_id, filing_id FROM board_attachments WHERE lower(path) = lower(?)`, the file's stored path.
    - Any other plain draft file: the proceeding it serves. `SELECT id, forum, file_number, style_of_cause FROM proceedings ORDER BY id`. One row is the board, with `filing_id` NULL. Several: ask the practitioner once which proceeding the draft serves, naming each by its forum and file number, and capture every thread of the return on the one they name. None: there is no board.
 3. **Write every thread in one script**, one `INSERT` per thread:
 

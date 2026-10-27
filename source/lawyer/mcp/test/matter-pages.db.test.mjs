@@ -965,7 +965,7 @@ test("the live lane prints Ready, In Progress, Bring Forward, Blocked, Completed
     const { draft } = draftFolder(f);
     const board = renderInto(f, 1, draft, FIRST, ["Work_board"]).documents.find((d) => d.document_type === "Work_board");
     const sections = drawPage(board.path).main.all().filter((n) => n.tag === "section").map((n) => n.id);
-    assert.deepEqual(sections, ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas", "attached"]);
+    assert.deepEqual(sections, ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas"]);
     assert.equal(readFileSync(board.path, "utf-8").includes('<section id="proposed">'), false);
   } finally {
     f.cleanup();

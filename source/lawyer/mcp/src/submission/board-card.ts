@@ -4,7 +4,7 @@
 import { dirname } from "node:path";
 
 import { ValidationError } from "../errors.js";
-import { attachedDrafts } from "./board-attachments.js";
+import { attachedDrafts, withCodes } from "./board-attachments.js";
 import { type CardLane, CARD_LANES, renderBoardCard } from "./board-card-render.js";
 import { BoardIndex, type BoardRef } from "./forms/board-members.js";
 import { courtFileAffidavits } from "./court-file-affidavits.js";
@@ -125,7 +125,7 @@ export function submissionFormsBoardCard(
       lanes,
       args.key,
       args.loose_threads_from_jobs,
-      lanes.includes("attached") && draftDir !== undefined ? attachedDrafts(draftDir, section) : [],
+      lanes.includes("attached") && draftDir !== undefined ? withCodes(attachedDrafts(args.db_path, draftDir, section)) : [],
       lanes.includes("court_file") && draftDir !== undefined && args.filing_id !== undefined
         ? (section.meta.writing_states?.map((w) => w.filing_id) ?? [args.filing_id])
             .filter((id): id is number => id !== null)

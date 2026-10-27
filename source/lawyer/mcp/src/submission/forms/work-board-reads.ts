@@ -106,7 +106,7 @@ export interface FilingRetiredRow {
   retired_on: string | null;
 }
 
-/** A draft that is not a Writing (schema v67, ADR 0042): a client letter's folder or a reply's file. */
+/** A draft that is not a Writing (schema v67, ADR 0042): a client letter's or a reply's file. */
 export type AttachmentKind = "client_letter" | "reply";
 
 /** One board_attachments row: the board and the path, nothing else. `path` is in documents.file_path's

@@ -35,6 +35,8 @@ export interface GateResult {
   verdict: "conforms" | "fails";
   reason: string;
   flags: string[];
+  /** The CODE token as written, only when the name conforms. */
+  code: string | null;
 }
 
 export interface GateGroup {

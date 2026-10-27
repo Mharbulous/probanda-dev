@@ -326,38 +326,48 @@
       return card;
     }
 
-    // A draft that is not a Writing, attached to this board (ADR 0042): a client letter's folder or a
-    // reply's file, drawn as plain text with no link (shared/html-pages.md, "Cards only, no link"). A
-    // client letter's counsel's-review status is its review draft's first line, read at this write and
-    // drawn as given; a path with nothing at it, or one that could not be read, says so, never dropped.
+    // An attached draft's card. Closed: its last-modified date, its code (the kind when its name has
+    // none) and the pending-job badge. Open: its name, its folder, the last-modified date only when it
+    // differs from the name's own date, a client letter's review line (read from its first line at
+    // this write), then its pending jobs. A path with nothing at it, or one that could not be read,
+    // says so, never dropped.
     var ATTACHED_KINDS = { client_letter: "Client letter", reply: "Reply" };
-    var ATTACHED_CUE = "To open, move or detach an attached draft, tell a session.";
+    var PENDING_EMOJI = { ready: "🟢 Ready", wip: "🔵 In Progress", bring_forward: "📅 Bring Forward", waiting: "⛔ Blocked" };
     function attachedCard(a) {
-      var card = el("details", "seed attachment");
+      var tile = el("li", "writing attachment");
+      tile.setAttribute("data-long", a.name);
+      tile.id = "attachment-" + a.id;
+      var card = el("details");
       card.setAttribute("name", "board");
-      card.id = "attachment-" + a.id;
       var summary = el("summary");
-      summary.appendChild(el("span", "title", a.name));
-      var status = "";
-      if (a.state === "missing") status = "Missing: nothing is at this path";
-      else if (a.state === "outside") status = "Not in the draft folder";
-      else if (a.state === "unreadable") status = "Unreadable: " + (a.error || "error");
-      else if (a.kind === "client_letter") {
-        status = a.review.length === 0 ? "No review draft found"
-          : a.review.length === 1 ? "Counsel's review: " + a.review[0].status
-          : "Counsel's review: " + a.review.length + " review drafts";
-      }
-      summary.appendChild(el("span", "subtitle", ATTACHED_KINDS[a.kind] + (status ? " · " + status : "")));
+      summary.appendChild(el("span", "date", a.modified || "—"));
+      summary.appendChild(el("span", "label", a.code || ATTACHED_KINDS[a.kind]));
+      if (a.jobs.length > 0) summary.appendChild(el("span", "badge pending", String(a.jobs.length)));
       card.appendChild(summary);
       var body = el("div", "body");
-      var dl = el("dl");
-      row(dl, "Path", a.path, true);
-      row(dl, "Attached", a.attached_on, true);
-      if (a.proceeding_wide) row(dl, "Board", "No Writing: shown on this proceeding's first live Writing's board until it is moved to a Writing");
-      a.review.forEach(function (r) { row(dl, "Review draft", r.file + " — " + r.status); });
-      body.appendChild(dl);
+      body.appendChild(el("h3", "title", a.name));
+      body.appendChild(el("p", "subtitle", a.path.replace(/[\\/][^\\/]*$/, "")));
+      var named = /^\d{4}-\d{2}-\d{2}/.exec(a.name);
+      if (a.modified && (!named || named[0] !== a.modified)) body.appendChild(el("p", "note", "Modified " + a.modified));
+      if (a.state === "missing") body.appendChild(el("p", "note", "Missing: nothing is at this path"));
+      else if (a.state === "outside") body.appendChild(el("p", "note", "Not in the draft folder"));
+      else if (a.state === "unreadable") body.appendChild(el("p", "note", "Unreadable: " + (a.error || "error")));
+      else if (a.kind === "client_letter") body.appendChild(el("p", "note", a.review === null ? "No counsel's-review line" : "Counsel's review: " + a.review));
+      if (a.code_error) body.appendChild(el("p", "note", "Code check failed: " + a.code_error));
+      if (a.proceeding_wide) body.appendChild(el("p", "note", "No Writing: shown on this proceeding's first live Writing's board until it is moved to a Writing"));
+      body.appendChild(el("h4", "", "Jobs pending"));
+      if (a.jobs.length === 0) body.appendChild(el("p", "empty", "None."));
+      else {
+        var list = el("ul", "jobs");
+        a.jobs.forEach(function (j) {
+          list.appendChild(el("li", "", "#" + j.id + " " + j.title + (j.writing ? " (" + j.writing + ")" : "") + " " + PENDING_EMOJI[j.category]));
+        });
+        body.appendChild(list);
+      }
+      body.appendChild(el("p", "cue", "To open, move or detach an attached draft, tell a session."));
       card.appendChild(body);
-      return card;
+      tile.appendChild(card);
+      return tile;
     }
 
     // A relied-on affidavit whose court-file name disagrees with drafting data: one card each, drawn as
@@ -640,9 +650,11 @@
     // the viewed ones first, most recently viewed first, then the never-viewed ones, the Writings'
     // documents before the view pages. A Writing's tile shows its short label, and a screen reader
     // reads the fuller one instead. On hover the fuller one shows in a single tooltip on the body. A
-    // view page's tile is the same size and badged; it is dashed until it is first viewed. No tile is
-    // a control.
-    if (items.length > 0) {
+    // view page's tile is the same size and badged; it is dashed until it is first viewed. Neither is
+    // a control. Each attached draft (ADR 0042) follows as a card, drawn as plain text with no link
+    // (shared/html-pages.md, "Cards only, no link"): its date and registry code, and a red badge
+    // counting its pending jobs. One click opens it to the board's width; a click outside it closes it.
+    if (items.length > 0 || attached.length > 0) {
       var strip = el("ol", "writings");
       strip.setAttribute("aria-label", "Writings");
       items.forEach(function (item) {
@@ -668,7 +680,15 @@
         tile.appendChild(el("span", "sr", long));
         strip.appendChild(tile);
       });
+      attached.forEach(function (a) { strip.appendChild(attachedCard(a)); });
       board.appendChild(strip);
+      if (attached.length > 0) {
+        document.addEventListener("click", function (event) {
+          strip.querySelectorAll(".attachment > details[open]").forEach(function (open) {
+            if (!open.contains(event.target)) open.removeAttribute("open");
+          });
+        });
+      }
 
       var tip = el("div", "tip");
       tip.setAttribute("role", "tooltip");
@@ -728,7 +748,6 @@
     } else {
       section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard).concat(data.discardedSeeds.map(discardedSeedLine)), undefined, data.seeds.length);
     }
-    section("attached", "Attached", "Nothing attached.", attached.map(attachedCard), attached.length > 0 ? ATTACHED_CUE : undefined);
     if (courtFile.length > 0) section("court-file", "Court File", "", courtFile.map(courtFileCard), COURT_FILE_CUE);
   }
 })();

@@ -229,12 +229,14 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; " +
         "from …])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each " +
         "ending ` · rank <N> · <group label>[ · job: \"<job description>\"] · <reason>` or ` · unranked`; attached, `## Attached (n)` and each draft " +
-        "attached to the board (a client letter's folder or a reply's file, ADR 0042) as `- attachment <id> · <client " +
-        "letter|reply> · <stored path> · attached <date>`, then ` · no Writing: shown on this proceeding's lowest-id " +
+        "attached to the board (a client letter's or a reply's file, ADR 0042) as `- attachment <id> · <registry code, " +
+        "else client letter|reply> · <stored path>`, then ` · code check failed (<why>)` when the name gate could not run, " +
+        "then ` · no Writing: shown on this proceeding's lowest-id " +
         "live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` · missing`, " +
-        "` · not in the draft folder`, ` · unreadable (<error code>)`, or on a client letter " +
-        "` · review: <its review draft's first line after \"Counsel's review: \">` (`no review draft` when none; each " +
-        "file named when several), the rest of that file never read; court_file, `## Court File (n)` and each affidavit " +
+        "` · not in the draft folder`, ` · unreadable (<error code>)`, or ` · modified <YYYY-MM-DD>` and on a client letter " +
+        "` · review: <its first line after \"Counsel's review: \">` (`no review line` when none), the rest of that file " +
+        "never read, then ` · pending: #<id>, …` (the proceeding's Ready, In Progress, Bring Forward and Blocked jobs whose " +
+        "scope names `board_attachments:<id>`) or ` · pending: none`; court_file, `## Court File (n)` and each affidavit " +
         "the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE " +
         "folder (with several, the one naming the proceeding's file number), as `- <label> · court file: <file name>` or " +
         "` · court file: none found[ (<note>)]`, then ` · mismatch: court file shows <status> <date>; drafting data shows " +

@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 
 import { buildStampStatus } from "../build-stamp.js";
 import type { ComposedTemplate } from "../compose-template.js";
-import { attachedDrafts } from "./board-attachments.js";
+import { attachedDrafts, withCodes } from "./board-attachments.js";
 import { BoardIndex, sameBoard } from "./forms/board-members.js";
 import { docItemKey, orderStrip, readViewed, viewItemKey } from "./forms/board-viewed.js";
 import { combineSections } from "./forms/combined-board.js";
@@ -142,7 +142,7 @@ export function buildMatterPages(
         ],
         readViewed(dbPath, group.board)
       ),
-      attached: sections.flatMap((s) => attachedDrafts(draftDir, s)),
+      attached: withCodes(sections.flatMap((s) => attachedDrafts(dbPath, draftDir, s))),
       court_file: raw.flatMap((s) =>
         s.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, s.meta.filing_id, dirname(draftDir)).filter((a) => a.mismatch !== null)
       ),

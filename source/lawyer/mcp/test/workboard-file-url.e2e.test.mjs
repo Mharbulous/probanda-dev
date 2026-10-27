@@ -486,16 +486,16 @@ for (const [name, executable] of BROWSERS) {
         assert.deepEqual(seen.problems, [], "expected no console error, uncaught exception, failed load or network request");
         assert.deepEqual(
           board.sections,
-          ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas", "attached"],
-          "the nine lists, in order"
+          ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas"],
+          "the eight lists, in order"
         );
         assert.equal(board.controls, 0, "no line carries a checkbox, a red X, a Go button or any other control");
         // Goal card design §2.9: the card sits above the first lane. The fixture's card string is
         // null, so the sentence is drawn alone, with no placeholder in its place.
         assert.deepEqual(
           board.blocks,
-          ["goals", "goal", "ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas", "attached"],
-          "the statement of goals' card first, then the Completion Criteria card, then the nine lists"
+          ["goals", "goal", "ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas"],
+          "the statement of goals' card first, then the Completion Criteria card, then the eight lists"
         );
         assert.deepEqual(board.goalsHead, [["sentence", FIXTURE_BOARD.goals.description], ["label", "Goal"]], "closed: the description, labelled Goal");
         assert.deepEqual(board.goalsBody, [["none", "No statement of goals yet"]], "the golden carries no statement");

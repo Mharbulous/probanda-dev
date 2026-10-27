@@ -7,7 +7,8 @@ Usage:
 
 Prints one JSON object to stdout:
     {"results": [{"name": "<basename>", "verdict": "conforms" | "fails",
-                  "reason": "...", "flags": ["Ltd", ...]}, ...]}
+                  "reason": "...", "flags": ["Ltd", ...],
+                  "code": "<CODE token as written>" | null}, ...]}
 
 This checks only the standard `YYYY-MM-DD CODE ...` grammar
 (general-conventions.md): a leading date token, then a CODE token matched
@@ -65,24 +66,25 @@ def parse_registry_codes(text):
 
 
 def check_name(stem, registry_codes, flag_tokens):
+    """(verdict, reason, flags, code): code is the CODE token as written, only when the name conforms."""
     flags = [t for t in flag_tokens if re.search(r'\b' + re.escape(t) + r'\b', stem)]
 
     date_match = DATE_RE.match(stem)
     if not date_match:
-        return "fails", "no leading YYYY-MM-DD date token", flags
+        return "fails", "no leading YYYY-MM-DD date token", flags, None
 
     rest = stem[date_match.end():].strip()
     if not rest:
-        return "fails", "no CODE token after the date", flags
+        return "fails", "no CODE token after the date", flags, None
 
     code_token = rest.split(' ', 1)[0]
     if code_stem(code_token) not in registry_codes:
-        return "fails", f"'{code_token}' is not a registered code", flags
+        return "fails", f"'{code_token}' is not a registered code", flags, None
 
     if PAREN_V_RE.search(stem):
-        return "fails", "revision suffix must be ' vN'", flags
+        return "fails", "revision suffix must be ' vN'", flags, None
 
-    return "conforms", f"date + code '{code_token}' parse against the registry", flags
+    return "conforms", f"date + code '{code_token}' parse against the registry", flags, code_token
 
 
 def main(argv=None):
@@ -104,8 +106,8 @@ def main(argv=None):
     for path in args.files:
         name = path.replace('\\', '/').rsplit('/', 1)[-1]
         stem = name.rsplit('.', 1)[0] if '.' in name else name
-        verdict, reason, flags = check_name(stem, registry_codes, flag_tokens)
-        results.append({"name": name, "verdict": verdict, "reason": reason, "flags": flags})
+        verdict, reason, flags, code = check_name(stem, registry_codes, flag_tokens)
+        results.append({"name": name, "verdict": verdict, "reason": reason, "flags": flags, "code": code})
 
     json.dump({"results": results}, sys.stdout, indent=2)
     sys.stdout.write("\n")

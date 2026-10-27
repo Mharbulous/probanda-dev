@@ -47,26 +47,27 @@ export const CARD_LANES: readonly CardLane[] = ["goals", "criteria", "live", "pr
 
 const ATTACHMENT_KIND_LABELS: Record<AttachedDraft["kind"], string> = { client_letter: "client letter", reply: "reply" };
 
-/** The attached lane (schema v67, ADR 0042): each draft attached to the board, in id order, as
- * `- attachment <id> · <kind> · <stored path> · attached <date>`, then ` · no Writing: shown on this
- * proceeding's lowest-id live Writing's board` on a row of the proceeding shown on a Writing's board,
- * then its state: ` · missing`, ` · not in the draft folder`, ` · unreadable (<code>)`, or on a client
- * letter ` · review: <status>` (each review draft's file named when there are several, `no review
- * draft` when there is none). */
+/** The attached lane (schema v67, ADR 0042), the same fields as the page's cards: each draft attached
+ * to the board, in id order, as `- attachment <id> · <code, or kind> · <stored path>`, then
+ * ` · no Writing: shown on this proceeding's lowest-id live Writing's board` on a row of the
+ * proceeding shown on a Writing's board, then its state: ` · missing`, ` · not in the draft folder`,
+ * ` · unreadable (<code>)`, or ` · modified <date>` and on a client letter ` · review: <status>`
+ * (`no review line` when its first line is none), then ` · pending: #<id>, …` or ` · pending: none`. */
 function attachedLines(attached: AttachedDraft[]): string[] {
   return [
     `## Attached (${attached.length})`,
     ...attached.map((a) => {
-      const parts = [`- attachment ${a.id}`, ATTACHMENT_KIND_LABELS[a.kind], a.path, `attached ${a.attached_on}`];
+      const parts = [`- attachment ${a.id}`, a.code ?? ATTACHMENT_KIND_LABELS[a.kind], a.path];
+      if (a.code_error !== undefined) parts.push(`code check failed (${a.code_error})`);
       if (a.proceeding_wide) parts.push("no Writing: shown on this proceeding's lowest-id live Writing's board");
       if (a.state === "missing") parts.push("missing");
       else if (a.state === "outside") parts.push("not in the draft folder");
       else if (a.state === "unreadable") parts.push(`unreadable (${a.error ?? "error"})`);
-      else if (a.kind === "client_letter") {
-        const review =
-          a.review.length === 0 ? "no review draft" : a.review.length === 1 ? a.review[0].status : a.review.map((r) => `${r.status} (${r.file})`).join("; ");
-        parts.push(`review: ${review}`);
+      else {
+        parts.push(`modified ${a.modified}`);
+        if (a.kind === "client_letter") parts.push(`review: ${a.review ?? "no review line"}`);
       }
+      parts.push(`pending: ${a.jobs.length === 0 ? "none" : a.jobs.map((j) => `#${j.id}`).join(", ")}`);
       return parts.join(" · ");
     }),
   ];
