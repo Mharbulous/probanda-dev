@@ -1278,6 +1278,18 @@ Before a suggestion leaves the computer, the data server checks its text against
 
 **Its read discipline is #56's:** a temp copy of `main.sqlite` only (through `list_parties.read_staged`, the same staging), no lock, version-guarded through `_behind`, three statuses per folder, and no model-facing tool. It never reads `housekeeping_reviews` (#26 (d)). What it returns is never logged or sent: the data server matches against it in memory and returns only where a match lies.
 
+## 75. `/housekeeping`'s apply writes are fixed tool calls that execute the operations' own fenced code (2026-10-27)
+
+`/housekeeping`'s Step 15 had the session carry out `relocate-source` and `housekeeping-log` modes `record` and `retry` by hand: read the probe, run `relocate_plan`, compose SQL literals, execute, re-read. A later approval UI is to apply an approved row with no model in the loop, so each became one tool call whose arguments come straight from the approved row: `matter_data__relocate_source` and `matter_data__housekeeping_log`, with `/drafting-data`'s re-point as `drafting_data__repoint_documents`. Neither procedure needed a judgment, so nothing was left for a model.
+
+**The markdown stays the single source.** `references/scripts/relocate_source.py` and `housekeeping_log.py` execute the operation files' own fenced probe, `relocate_plan` and statements, as #60's and #73's scripts do, so the operation text and the tool cannot disagree. The fenced blocks' marker lines and function names are therefore the scripts' interface. Neither script opens a database: the probe runs through `matter_data__query`'s path and every write through `matter_data__execute`'s (#28's lock, #12's triggers, one transaction, the dump), as #68's tool does, so #27's separation holds and the runtime holds no table or column name.
+
+**Values are bound, not spliced.** `housekeeping_log.py` renames each entry's `:name` to `:r<i>_name` so a whole batch shares one set of params and runs as one transaction, the operation's "one call for the whole batch". This is not #52's rejected batch tool: one call is still one transaction.
+
+**The gatekeeper rule gains one named direct caller.** Both tools are still called through their operations by every other skill. `/housekeeping` calls them directly, because its arguments are fixed by the approved row and it needs no operation text to call them. #26 (d) holds: the review log is still written only by its own operation's statements.
+
+**Not changed:** mode `lookup` stays with `housekeeping_lookup.py` (#73), and `relocate-source`'s rules, outcomes and confirmation are as before. The host runs the tool, so its matter folder is `matter_root`.
+
 ---
 
 **Closing principle:** schemas encode categorical invariants; prose + verifier backlog encode judgment. Do not swap them.

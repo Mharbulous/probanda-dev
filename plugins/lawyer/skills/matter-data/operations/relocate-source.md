@@ -4,6 +4,8 @@ Read [`../shared/conventions.md`](../shared/conventions.md) first; derive the li
 
 Writes. After a file is moved or renamed, re-points every stored record of it so its `file_path` names where the file now is, in the stored form (conventions §2.4). The file is found by its hash, which a move does not change. The old path is a check, not the key. The operation moves no file: the caller has already moved it.
 
+**The caller makes one `matter_data__relocate_source` call** with the Input below and reports its Output. The tool runs Steps 1 to 4 on the host, executing this file's own fenced probe and `relocate_plan` (`../references/scripts/relocate_source.py`, design decision #75), so the steps below say what it does, not what the caller does.
+
 Running it twice is safe: the second call finds every record already at the new path.
 
 ---
@@ -12,8 +14,7 @@ Running it twice is safe: the second call finds every record already at the new 
 
 | Field | Meaning |
 |---|---|
-| `matter_root` | the live host path of the matter folder (conventions §2.2) |
-| `matter_folder` | the same folder as this session's filesystem sees it (the mounted folder in a Cowork session, `matter_root` locally). Used only in Step 2 |
+| `matter_root` | the live host path of the matter folder (conventions §2.2). The tool runs on the host, so this is also the folder Step 2 reads |
 | `hash` | the lowercase hex SHA-256 of the file's bytes |
 | `store` | `main`, `privileged` or `law`: the store [`ingest-status.md`](ingest-status.md) reported for the file |
 | `old_path` | where the file was, in stored form |
@@ -27,6 +28,7 @@ Running it twice is safe: the second call finds every record already at the new 
 | `stored_path` | `new_path`, as the records now store it |
 | `rows` | every record of the file: `{store, id, was, action}`, where `action` is `moved`, `already` or `left` |
 | `reason` | with `failed`: `no_rows` (the named store holds no record with this hash), `twin_at_stored_path` (the records name another copy of the file that is still on disk, so this file is a copy and is never re-pointed), or `write_not_confirmed` (Step 4) |
+| `rows_now` | with `write_not_confirmed`: every record as read after the write |
 
 `already_current` is success: every record already stores `new_path` exactly.
 
@@ -34,7 +36,7 @@ Running it twice is safe: the second call finds every record already at the new 
 
 ## Step 1 — Read every record of the file
 
-One `matter_data__query` call. Its one parameter is `hash`:
+One read through `matter_data__query`'s path. Its one parameter is `hash`:
 
 ```sql
 -- relocate-source probe
@@ -55,7 +57,7 @@ Every store is read, not only the named one, and every record moves with the fil
 
 ## Step 2 — Decide which records move
 
-Run `relocate_plan` below over the query's rows. It reads files under `matter_folder` only when a record names a third place, neither the old path nor the new one. Its rules:
+`relocate_plan` below runs over the probe's rows, with `matter_root` as its `matter_folder`. It reads files there only when a record names a third place, neither the old path nor the new one. Its rules:
 
 - The named `store` holds no record → `failed`, `no_rows`. Write nothing.
 - A record that stores `new_path` exactly is `already`.
@@ -126,11 +128,11 @@ def relocate_plan(rows, store, file_hash, old_path, new_path, matter_root, matte
 
 ## Step 3 — Write in one call
 
-For `relocated`, run `plan['sql']` as the `sql_script` of **one** `matter_data__execute` call, per conventions §2.3. Each statement keeps the hash in its `WHERE`, so an id that no longer belongs to this file is never moved.
+For `relocated`, `plan['sql']` runs as **one** script through `matter_data__execute`'s path (one transaction, the trigger layer, the `evidence.sql` dump). Each statement keeps the hash in its `WHERE`, so an id that no longer belongs to this file is never moved.
 
 ## Step 4 — Confirm
 
-Re-run the Step 1 probe. Every record the plan `moved` must now store `new_path`. If one does not, report `failed`, `write_not_confirmed`, with the records as read now. Do not retry blindly: conventions §2.3's verify-before-retry rule applies.
+The Step 1 probe runs again. Every record the plan `moved` must now store `new_path`. If one does not, the result is `failed`, `write_not_confirmed`, with the records as read now in `rows_now`. Do not retry it blindly: conventions §2.3's verify-before-retry rule applies. A tool error (a timeout included) proves nothing about the write either way, and because the operation is safe to run twice, making the same call again is the verification.
 
 ## Report
 

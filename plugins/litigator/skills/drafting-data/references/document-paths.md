@@ -23,9 +23,7 @@ def stored_form(path, root):
 
 A file was moved or renamed on disk. Every `documents` row still naming its old place is pointed at the new one, in the stored form. A row names the old place when its path equals the old path ignoring case, as Windows paths do. Most moved files are not documents in any Writing, so **zero rows is the normal result**, not an error. Running it twice is safe: the second run finds zero rows.
 
-**Input:** `db_path` and `matter_root`, both from `drafting_forms__open_session`; `old_path` and `new_path`, in the stored form.
-
-**Values.** `drafting_data__query` and `drafting_data__execute` take the values below as quoted SQL literals composed into the statement, with every `'` doubled. `:old_absolute` is `matter_root`, a backslash, and `old_path`: the form an older row may hold.
+**One `drafting_data__repoint_documents` call does it**, with `matter_root` (the matter folder's host path) and `old_path` and `new_path` in the stored form. The tool finds the matter's drafting database from its pointer, as `drafting_forms__open_session` does, and runs the two statements below, with the values bound. `:old_absolute` is `matter_root`, a backslash, and `old_path`: the form an older row may hold. It returns `repointed`, the ids of the rows it re-pointed, and `database: false` when the matter has no drafting database, which leaves nothing to re-point. A path not in the stored form is refused.
 
 1. Read the rows that will move:
 
@@ -38,7 +36,7 @@ A file was moved or renamed on disk. Every `documents` row still naming its old 
 
    No rows: stop and report zero rows.
 
-2. Re-point them in one `drafting_data__execute` call:
+2. Re-point them in one write, under `drafting_data__execute`'s lock and staged copy:
 
    ```sql
    -- document paths: re-point
@@ -48,4 +46,4 @@ A file was moved or renamed on disk. Every `documents` row still naming its old 
 
    Each row re-pointed moves `db_meta.revision` by trigger (`filing-checklists.md` §8), which is right: the rendered exhibit list prints the path.
 
-3. Report the ids from step 1 as re-pointed. On a non-success result, re-run step 1 before anything else: rows it still returns did not move (the `SKILL.md` rule for `drafting_data__execute`).
+3. Report the ids from step 1 as re-pointed. On a non-success result, make the same call again before anything else: it re-runs step 1 first, and the rows it then re-points are the ones that did not move (the `SKILL.md` rule for `drafting_data__execute`).
