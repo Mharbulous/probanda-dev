@@ -66,7 +66,7 @@ class ProcedureTests(unittest.TestCase):
 
     def test_the_filed_return_carries_companions(self):
         self.assertIn("for a BC Laws instrument `companions` (section 10)", flat(read(PLAYBOOK)))
-        self.assertIn("companions?", read(FETCHER))
+        self.assertIn("Return the single JSON object the playbook's section 2 names", read(FETCHER))
 
 
 class PagesTests(unittest.TestCase):
