@@ -97,26 +97,7 @@
   if (first && !first.goal) venueRow.appendChild(el("span", "chip", stateText(first.meta)));
   if (venueRow.children.length > 0) header.appendChild(venueRow);
 
-  // The page's dates (ADR 0013, 2026-10-04 amendments): this Writing's row, every anchor linked to a
-  // filing on this page with each deadline no Goal card carries, absent when there is none; then the
-  // matter's row, holding the other anchors the same way. A note says why none were read, or that
-  // the matter has none; when every date is this Writing's, the matter's row is not drawn.
   var pageDates = data.dates;
-  if (pageDates) {
-    var writing = pageDates.writing || [];
-    if (writing.length > 0) header.appendChild(dateRow("meta writing", writing));
-    if (pageDates.note !== undefined) {
-      var noteRow = el("div", "meta dates");
-      noteRow.appendChild(el("span", "note", pageDates.note));
-      header.appendChild(noteRow);
-    } else if (pageDates.header.length > 0) {
-      header.appendChild(dateRow("meta dates", pageDates.header));
-    } else if (writing.length === 0) {
-      var noneRow = el("div", "meta dates");
-      noneRow.appendChild(el("span", "note", "No date is recorded for this matter."));
-      header.appendChild(noneRow);
-    }
-  }
 
   // The page's section, named by the page heading, with its own Goal card and lanes drawn as a
   // filing's board always drew them.
@@ -623,6 +604,37 @@
     if (firstSection) board.appendChild(goalsCard(data.goals));
 
     if (data.goal) board.appendChild(goalCard(data.goal, data.criteria));
+
+    // The page's dates (ADR 0013, 2026-10-04 amendments) in a Key dates card, closed until clicked:
+    // this Writing's row, every anchor linked to a filing on this page with each deadline no Goal card
+    // carries, absent when there is none; then the matter's row, holding the other anchors the same
+    // way. A note says why none were read, or that the matter has none; when every date is this
+    // Writing's, the matter's row is not drawn.
+    if (firstSection && pageDates) {
+      var writing = pageDates.writing || [];
+      var dates = el("details", "goal goals dates");
+      dates.id = "dates";
+      var datesHead = el("summary", "head");
+      datesHead.appendChild(el("span", "sentence", "Key dates"));
+      datesHead.appendChild(document.createTextNode(" "));
+      datesHead.appendChild(el("span", "label", String(writing.length + pageDates.header.length)));
+      dates.appendChild(datesHead);
+      var datesBody = el("div", "goals-body");
+      if (writing.length > 0) datesBody.appendChild(dateRow("meta writing", writing));
+      if (pageDates.note !== undefined) {
+        var noteRow = el("div", "meta dates");
+        noteRow.appendChild(el("span", "note", pageDates.note));
+        datesBody.appendChild(noteRow);
+      } else if (pageDates.header.length > 0) {
+        datesBody.appendChild(dateRow("meta dates", pageDates.header));
+      } else if (writing.length === 0) {
+        var noneRow = el("div", "meta dates");
+        noneRow.appendChild(el("span", "note", "No date is recorded for this matter."));
+        datesBody.appendChild(noneRow);
+      }
+      dates.appendChild(datesBody);
+      board.appendChild(dates);
+    }
 
     // The board's thumbnails in one row between the Goal card and Ready, in the order the server gave:
     // the viewed ones first, most recently viewed first, then the never-viewed ones, the Writings'

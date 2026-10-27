@@ -4,8 +4,8 @@
 // row becomes page data, built field by field. A deadline whose anchor is linked to a filing becomes
 // a criterion on that filing's Goal card, which carries its name, state and order within its anchor
 // and never its date; every date goes only into the Job Board's HTML file: never into a board
-// section, the state file, a log line or a tool response. The page's header draws the anchors linked
-// to its own Writing on one row and the matter's other anchors on the next.
+// section, the state file, a log line or a tool response. The page's Key dates card draws the anchors
+// linked to its own Writing on one row and the matter's other anchors on the next.
 
 import type { PracticeStore } from "../practice/store.js";
 import { active_deadlines } from "../tools/practice/reads.js";
@@ -39,7 +39,7 @@ export interface MatterAnchor {
 /** The matter's anchors, or why none were read. A page that could not read them says so. */
 export type MatterDates = { anchors: MatterAnchor[] } | { note: string };
 
-/** One plain date in the page header: a label, the date as stored, and a flag drawn after it. */
+/** One plain date in the page's Key dates card: a label, the date as stored, and a flag drawn after it. */
 export interface PageDate {
   label: string;
   date: string;
@@ -54,7 +54,7 @@ export interface PageDates {
   /** Every other anchor, each with its deadlines no card carries. */
   header: PageDate[];
   criteria: Record<string, Record<string, { date: string; flag: string | null }>>;
-  /** Why no date was read; drawn in the header row. */
+  /** Why no date was read; drawn in the Key dates card. */
   note?: string;
 }
 
@@ -169,7 +169,7 @@ export function deadlineCriteria(dates: MatterDates, filingId: number): GoalCrit
  * The page's dates, once its sections are built: each deadline a section's Goal card carries as a
  * criterion goes to `criteria` under its filing; every anchor, and every deadline no card carries
  * (the other side's, an unlinked anchor's, or one whose filing has no Goal card on this page), goes
- * to a header row, each anchor followed by its own: `writing` when the anchor is linked to a filing
+ * to a date row, each anchor followed by its own: `writing` when the anchor is linked to a filing
  * on this page, `header` otherwise.
  */
 export function pageDates(dates: MatterDates, sections: readonly WorkBoardData[]): PageDates {
@@ -182,18 +182,19 @@ export function pageDates(dates: MatterDates, sections: readonly WorkBoardData[]
     const filingId = linkedFiling(anchor);
     const onPage = filingId !== null && sections.some((s) => s.meta.filing_id === filingId);
     const row = onPage ? writing : header;
-    row.push({ label: [humanise(anchor.anchor_type), ...labels].join(" — "), date: anchor.anchor_date, flag: anchor.status === "conflicted" ? "conflicted" : null });
+    row.push({ label: [humanise(anchor.anchor_type), ...labels].join(" — "), date: anchor.anchor_date, flag: anchor.status === "conflicted" ? "Conflicted" : null });
     const card = filingId === null ? undefined : sections.find((s) => s.meta.filing_id === filingId)?.criteria;
     const carried = new Set(cardDeadlines(anchor));
     for (const d of anchor.deadlines) {
       const id = criterionId(d);
+      const flag = d.review_flag === null ? null : humanise(d.review_flag);
       if (carried.has(d) && card?.some((c) => c.id === id)) {
-        (criteria[String(filingId)] ??= {})[id] = { date: d.deadline_date, flag: d.review_flag };
+        (criteria[String(filingId)] ??= {})[id] = { date: d.deadline_date, flag };
         continue;
       }
       const scenario = d.scenario_label ? ` — ${d.scenario_label}` : "";
       const whose = d.status === "not_applicable" ? " (other side)" : d.status === "met" ? " (met)" : "";
-      row.push({ label: deadlineText(d) + scenario + whose, date: d.deadline_date, flag: d.review_flag });
+      row.push({ label: deadlineText(d) + scenario + whose, date: d.deadline_date, flag });
     }
   }
   return { writing, header, criteria };

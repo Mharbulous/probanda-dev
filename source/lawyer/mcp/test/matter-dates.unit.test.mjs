@@ -44,10 +44,10 @@ test("a deadline's alternatives make one Goal criterion, ordered by the earliest
 test("the page dates the Goal criterion by the earliest alternative, flagged, and puts the others on the date row by scenario", () => {
   const section = { meta: { filing_id: 1 }, criteria: deadlineCriteria(dates, 1) };
   const page = pageDates(dates, [section]);
-  assert.deepEqual(page.criteria["1"]["deadline:application_response"], { date: "2031-03-05", flag: "practitioner_choice" });
+  assert.deepEqual(page.criteria["1"]["deadline:application_response"], { date: "2031-03-05", flag: "Practitioner choice" });
   assert.deepEqual(page.writing, [
     { label: "Application hearing date", date: "2031-03-17", flag: null },
-    { label: "Application response — Ordinary notice", date: "2031-03-09", flag: "practitioner_choice" },
+    { label: "Application response — Ordinary notice", date: "2031-03-09", flag: "Practitioner choice" },
   ]);
 });
 
@@ -55,7 +55,7 @@ test("an unlinked anchor's alternatives each go to the header row under their sc
   const unlinked = { anchors: [{ ...dates.anchors[0], filing_ref: null, deadlines: [alternative("2031-03-05", "Short notice"), alternative("2031-03-09", "Ordinary notice")] }] };
   const page = pageDates(unlinked, []);
   assert.deepEqual(page.header.slice(1).map((d) => [d.label, d.date, d.flag]), [
-    ["Application response — Short notice", "2031-03-05", "practitioner_choice"],
-    ["Application response — Ordinary notice", "2031-03-09", "practitioner_choice"],
+    ["Application response — Short notice", "2031-03-05", "Practitioner choice"],
+    ["Application response — Ordinary notice", "2031-03-09", "Practitioner choice"],
   ]);
 });

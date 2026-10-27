@@ -570,7 +570,15 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   absent(readFileSync(join(m.draft, "Drafting records", "matter-pages-state.json"), "utf-8"), "matter-pages-state.json");
 
   const { header, main } = drawPage(jobBoard);
-  const rowOf = (className) => header.children.find((n) => n.className === className);
+  assert.equal(readFileSync(jobBoard, "utf-8").includes("limited_day"), false, "no review flag is printed as stored");
+  assert.deepEqual(header.children.map((n) => n.className), ["", "writing-title", "meta", "meta proceeding"], "no date is drawn above the Goal cards");
+  const nodes = main.all();
+  const dates = nodes.find((n) => n.id === "dates");
+  assert.equal(dates.tag, "details", "the Key dates card folds");
+  assert.equal(dates.attrs.open, undefined, "the Key dates card is closed until clicked");
+  assert.ok(nodes.indexOf(dates) > nodes.findIndex((n) => n.className === "goal"), "the Key dates card follows the Completion Criteria card");
+  assert.equal(dates.children[0].children.map((n) => n.textContent).join(""), "Key dates 4", "its head names the card and counts its dates");
+  const rowOf = (className) => [...header.children, ...dates.all()].find((n) => n.className === className);
   const labelled = (row) => row.children.map((n) => `${n.attrs["data-k"]}: ${n.textContent}`);
   assert.deepEqual(
     header.children.slice(0, 2).map((n) => [n.tag, n.className, n.textContent]),
@@ -600,14 +608,14 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   );
   assert.deepEqual(
     head.children.filter((n) => n.className === "deadline").map((n) => n.children.map((c) => c.textContent).join(" ")),
-    [`Application response ${RESPONSE} limited_day`, `Application record ${RECORD}`],
+    [`Application response ${RESPONSE} Limited day`, `Application record ${RECORD}`],
     "each unmet deadline is in the Goal card's head with its date"
   );
   assert.equal(head.textContent.includes(SERVICE), false, "the met deadline is not in the head");
   const rows = Object.fromEntries(goal.all().filter((n) => n.attrs["data-criterion"]?.startsWith("deadline:")).map((n) => [n.attrs["data-criterion"], n.textContent]));
   assert.deepEqual(rows, {
     "deadline:notice_of_application_service": `Notice of application service${SERVICE}Met`,
-    "deadline:application_response": `Application response${RESPONSE}limited_dayUnmet`,
+    "deadline:application_response": `Application response${RESPONSE}Limited dayUnmet`,
     "deadline:application_record": `Application record${RECORD}Unmet`,
   });
 });
@@ -627,20 +635,19 @@ test("a pre-filing Job Board's header names its proceeding, draws its state as a
       renderWorkBoardHtml({ meta: { revision: 1, matter: "L1", client: "C", rendered: "2026-10-05 09:00", client_no: "", forum: "", registry: "", file_number: "", style_of_cause: "" }, sections: [section], dates }),
       "utf-8"
     );
-    return drawPage(file).header;
+    const { header, main } = drawPage(file);
+    return { header, dates: main.all().find((n) => n.id === "dates").children[1] };
   };
 
-  const none = draw("none.html", { writing: [], header: [], criteria: {} });
+  const { header: none, dates: noDates } = draw("none.html", { writing: [], header: [], criteria: {} });
   assert.equal(none.children[0].textContent, "Job Board: Proceeding 1", "a page with no filing is named by its proceeding");
-  assert.deepEqual(none.children.map((n) => n.className), ["", "meta", "meta proceeding", "meta dates"], "a proceeding row for the state chip, and no Writing row");
+  assert.deepEqual(none.children.map((n) => n.className), ["", "meta", "meta proceeding"], "a proceeding row for the state chip, and no date row");
   assert.deepEqual(none.children[1].children.map((n) => `${n.attrs["data-k"]}: ${n.textContent}`), ["Matter: L1", "Client: C"], "no brackets without a client number");
   assert.deepEqual(none.children[2].children.map((n) => [n.className, n.textContent]), [["chip", "No filing yet"]], "a blank proceeding line holds the state chip alone, with no dot");
-  const matterRow = none.children[3];
-  assert.equal(matterRow.children.length, 1);
-  assert.equal(matterRow.children[0].textContent, "No date is recorded for this matter.");
+  assert.deepEqual(noDates.children.map((n) => [n.className, n.textContent]), [["meta dates", "No date is recorded for this matter."]], "the Key dates card says the matter has none");
 
-  const writingOnly = draw("writing.html", { writing: [{ label: "Trial date", date: "2027-03-01", flag: null }], header: [], criteria: {} });
-  assert.deepEqual(writingOnly.children.map((n) => n.className), ["", "meta", "meta proceeding", "meta writing"], "every date is this Writing's, so no matter row");
+  const { dates: writingOnly } = draw("writing.html", { writing: [{ label: "Trial date", date: "2027-03-01", flag: null }], header: [], criteria: {} });
+  assert.deepEqual(writingOnly.children.map((n) => n.className), ["meta writing"], "every date is this Writing's, so no matter row");
 });
 
 test("a filing's Job Board page draws its Writings in the render's order between the Goal card and Ready; a page given none draws no strip", async (t) => {
