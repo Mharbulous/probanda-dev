@@ -4,12 +4,12 @@ description: >
   Notes up case law: for each named decision, records what each citator shows
   (Westlaw KeyCite Canada, then the CanLII citator), word for word and
   attributed, and files one note-up record per citation in the issue's 6. LAW
-  folder. Never reads a citing decision, classifies treatment or states law
-  (research-agent does that from the records). Every final report begins with a
-  status: line. Singleton: never in flight beside research-paralegal,
-  browser-driver or another citation-checker, because they share one Chrome
-  session. Dispatched by the /legal-research gate. Not for statutes, regulations
-  or rules (their note-up is the statute-currency check).
+  folder. Never reads a citing decision, never classifies treatment and never
+  states law (research-agent does that from the records). Every final report
+  begins with a status: line. Singleton: never in flight beside
+  research-paralegal, browser-driver or another citation-checker, because they
+  share one Chrome session. Dispatched by the /legal-research gate. Not for
+  statutes, regulations or rules (their note-up is the statute-currency check).
 model: opus
 tools:
   - mcp__plugin_lawyer_data__skill_source__read
