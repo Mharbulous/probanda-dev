@@ -38,15 +38,24 @@ export interface HeldLock {
   brokeStale: boolean;
 }
 
-/** A host-local file for `target` in the site's lock folder, keyed on its normalised path. */
-export function hostLocalFile(site: LockSite, target: string, suffix: string, env: NodeJS.ProcessEnv): string {
-  const base = env[site.envVar] || pathWin32.join(env.LOCALAPPDATA || homedir(), "Coclerk", site.dirName);
-  mkdirSync(base, { recursive: true });
-  const key = createHash("sha256")
+/** The 16-hex key of `target`'s normalised path, which names its host-local files. */
+export function lockKey(target: string): string {
+  return createHash("sha256")
     .update(pathWin32.normalize(target).toLowerCase())
     .digest("hex")
     .slice(0, 16);
-  return pathWin32.join(base, `${key}.${suffix}`);
+}
+
+/** The site's lock folder, created when missing. */
+export function hostLocalDir(site: LockSite, env: NodeJS.ProcessEnv): string {
+  const base = env[site.envVar] || pathWin32.join(env.LOCALAPPDATA || homedir(), "Coclerk", site.dirName);
+  mkdirSync(base, { recursive: true });
+  return base;
+}
+
+/** A host-local file for `target` in the site's lock folder, keyed on its normalised path. */
+export function hostLocalFile(site: LockSite, target: string, suffix: string, env: NodeJS.ProcessEnv): string {
+  return pathWin32.join(hostLocalDir(site, env), `${lockKey(target)}.${suffix}`);
 }
 
 /**

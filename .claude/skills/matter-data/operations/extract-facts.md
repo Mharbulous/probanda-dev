@@ -12,6 +12,8 @@ Prompt the user to choose a folder to scan, **every run**. Do not read or write 
 
 Resolve the chosen folder relative to the matter root.
 
+Then start the ingest run: `matter_data__ingest_run` with `matter_root`, `action: "begin"` and `mode: "attended"`. Only one ingestion of a matter runs at a time. A refusal (`ok: false`) ends the scan: tell the practitioner its `say`, never its code, and write nothing. Otherwise pass the returned `run_id` on every `matter_data__execute` call of §2–§7. A call refused `lease_lost` means another session took this run over: stop at once, write nothing more, and tell the practitioner its message. After the §7 report, end the run: `matter_data__ingest_run` with `action: "end"` and the `run_id`. §8's report-only mode writes nothing and starts no run.
+
 ## 2. Recursive walk
 
 Walk the chosen folder recursively. Collect files matching `.pdf`, `.docx`, `.eml`, `.msg`, or `.doc` case-insensitively. Exclude any file or directory component whose name starts with `~` or `.` (editor lock files, hidden/system directories). Track every other file's extension too, for the summary report — this operation ingests `.pdf`/`.docx`/`.eml`/`.msg`, and a `.doc` only when it is RTF and read as an authority (§4); every other extension is named, not silently dropped.

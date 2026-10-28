@@ -35,12 +35,37 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
       description:
         "Run a write SQL script against a matter's attached main+law+privileged databases in a single transaction, then regenerate evidence.sql. The tool loads the cross-database FK layer itself from the /matter-data skill's references/triggers.sql on every call and refuses to write without it -- do not send it. " +
         "A non-success result (error, rejection, timeout, no response) does not prove the script did not commit: the transaction commits and the databases are committed to storage before evidence.sql is regenerated, and a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with matter_data__query before any further write or retry -- see /matter-data's shared/conventions.md section 2.3. " +
+        "run_id, given only inside an ingest run, must be the matter's live run (matter_data__ingest_run): otherwise the call is refused lease_lost and writes nothing; a write that carries it renews the run's heartbeat. Without run_id the call is unchanged. " +
         "Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: objectSchema([
         { name: "matter_root", type: "str" },
         { name: "sql_script", type: "str" },
+        { name: "run_id", type: "str" },
       ], ["matter_root", "sql_script"]),
       annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
+      name: caseDataPrefixed("ingest_run"),
+      description:
+        "One ingestion per matter at a time: the run lease and journal, kept on this computer outside the matter. " +
+        "action begin (mode attended or unattended) starts a run and returns {ok, run_id, resumed, next}; pass run_id on every matter_data__execute of the run. While another run's heartbeat is under 60 minutes old it returns {ok: false, refused: run_active, run_id, say} naming that run. " +
+        "begin with resume (an unfinished run's run_id) takes that run over at once with a new run_id; after 60 minutes without a heartbeat a plain begin takes over too. The displaced holder's next call is refused lease_lost. resume naming no unfinished run is refused unknown_run. " +
+        "action status returns the matter's run {active, run_id, started, heartbeat, mode, ended, next}; with run_id it also renews the heartbeat. actions next and staged (run_id) return {ok, items}. action end (run_id) finishes the run. " +
+        "Every call carrying run_id renews the heartbeat. A refusal writes nothing; relay its say to the practitioner, never the code. " +
+        "Only the /matter-data skill may call this tool -- invoke it (Skill: lawyer:matter-data) and follow its operations/ingest.md, ingest-unattended.md or extract-facts.md, which direct you to call this tool yourself, whatever skill you started in.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          action: { type: "string", enum: ["begin", "next", "staged", "status", "end"] },
+          run_id: { type: "string" },
+          resume: { type: "string" },
+          mode: { type: "string", enum: ["attended", "unattended"] },
+        },
+        required: ["matter_root", "action"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
     },
     {
       name: caseDataPrefixed("resolve_participant"),

@@ -218,7 +218,7 @@ Today the main thread applies these while composing SQL. The converters implemen
   - **With the `run_id` of an unfinished run:** takes that lease over at once, logs `takeover`, and returns the run's unfinished work. Resuming after a crash or a new session is therefore one call, with no wait.
   - **Over 60 minutes without a heartbeat:** a plain `begin` takes over too.
   - The displaced holder's next call is refused `lease_lost`.
-- **Heartbeat:** every `ingest_run`, `ingest_result` and `triage` call that carries the `run_id` renews it.
+- **Heartbeat:** every `ingest_run`, `ingest_result` and `triage` call that carries the `run_id` renews it. So does every `matter_data__execute` call that carries it (Brahm, 2026-10-28), because D1's ingest paths write only through `execute` between `begin` and `end`.
 - **Enforcement:**
   - `ingest_result` refuses without the live `run_id`.
   - `matter_data__execute` gains an optional `run_id`. When one is given, it is checked against the lease.

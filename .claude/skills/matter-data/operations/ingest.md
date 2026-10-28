@@ -20,6 +20,8 @@ If a call in Step 3 fails with the **schema-version guard** message (the databas
 
 If a call instead fails with "stale pointer — re-run initialize" (schema_version isn't 5), halt and direct the user to `../operations/initialize.md` — do not attempt migrate for this error, it is unrelated to the user_version guard.
 
+Then start the ingest run: `matter_data__ingest_run` with `matter_root`, `action: "begin"` and `mode: "attended"`. Only one ingestion of a matter runs at a time. A refusal (`ok: false`) ends the gate: tell the practitioner its `say`, never its code, and write nothing. Otherwise carry the returned `run_id`: every `matter_data__execute` call the routed operation makes passes it, and a call refused `lease_lost` means another session took this run over, so stop at once, write nothing more, and tell the practitioner its message. The run's record lives on this computer, not in the matter, so the gate still writes nothing to case data.
+
 ---
 
 ## Step 2 — Check the kind, then compute the SHA-256 of the raw bytes
@@ -105,3 +107,5 @@ When the presented file is a legal authority (case law / statute / regulation / 
 ## Step 5 — Hand off
 
 State the chosen route and the reason (hash match + status, or no match), then hand control to the identified operation. A copy of an email attachment read through, and a superseded version, have no route: the Step 3 report is the whole result, apart from a superseded version's offered move. **The gate writes nothing and runs no dump** — the downstream operation resolves the pointer again, performs the work in a single transaction, and dumps on completion.
+
+When the routed operation finishes or stops, or the gate ends without a route, end the run: `matter_data__ingest_run` with `matter_root`, `action: "end"` and the `run_id`. A run left unended blocks the next ingestion of this matter for 60 minutes.
