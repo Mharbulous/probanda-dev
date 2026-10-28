@@ -93,6 +93,20 @@ test("practice: every definition pairs with one list entry, and a definition wit
   assert.throws(() => pairTools(practiceToolDefinitions(), rest), (err) => err.code === "internal_error" && err.message.includes(`no handler for ${dropped.name}`));
 });
 
+test("dispatch.ts: the matter, time-pipeline, timecamping and drafting data tools pair with their definitions, complete_job aside", async () => {
+  const { dataTools, dataToolDefinitions } = await import("../build/dispatch.js");
+  const { pairTools } = await import("../build/tool-list.js");
+  const definitions = dataToolDefinitions();
+  assert.equal(pairTools(definitions, dataTools).size, definitions.length);
+  assert.ok(definitions.some((tool) => tool.name === "matter_data__query"));
+  assert.ok(!dataTools.some((tool) => tool.name === "drafting_data__complete_job"));
+});
+
+test("dispatch.ts: a listed tool's handler gets the validated args", async () => {
+  const { callTool } = await import("../build/dispatch.js");
+  await assert.rejects(callTool({}, "matter_data__migrate", { matter_root: "x", mode: "nope" }), /matter_data__migrate: unknown mode "nope"/);
+});
+
 test("practice: a file tool skips replay, a read tool runs after a failed replay, a write tool does not", async () => {
   const { callPracticeTool } = await import("../build/tools/practice/index.js");
   const store = () => ({

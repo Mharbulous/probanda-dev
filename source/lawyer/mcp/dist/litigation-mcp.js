@@ -1,4 +1,4 @@
-// build-stamp: 4d281f3a4e97
+// build-stamp: e5e83b5195a6
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -81184,7 +81184,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "4d281f3a4e97";
+var BUILD_STAMP = false ? null : "e5e83b5195a6";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -120123,6 +120123,85 @@ var FORM2 = `<p>Probanda's key lets this computer use Probanda's shared services
 
 // src/dispatch.ts
 var toolDefinition = definitionLookup(buildToolDefinitions);
+var dataTools = [
+  defineTool("matter_data__query", (args) => caseDataQuery(args.matter_root, args.sql, args.params)),
+  defineTool("matter_data__execute", (args) => caseDataExecute(args.matter_root, args.sql_script)),
+  defineTool("matter_data__resolve_participant", (args) => resolveParticipant(args.matter_root, args.name)),
+  defineTool("matter_data__stage_result", (args) => stageResult(args.result)),
+  defineTool("matter_data__ingest_authority", (args) => ingestAuthority(args)),
+  defineTool("matter_data__relocate_source", (args) => relocateSource(args)),
+  defineTool("matter_data__housekeeping_log", (args) => housekeepingLog(args)),
+  defineTool("matter_data__procedural_history_append", (args) => proceduralHistoryAppend(args)),
+  defineTool(
+    "matter_data__migrate",
+    (args) => {
+      const mode = args.mode;
+      if (!["plan", "apply", "restore", "backups"].includes(mode)) {
+        throw new ValidationError(
+          `matter_data__migrate: unknown mode ${JSON.stringify(mode)}; expected plan, apply, restore, or backups`
+        );
+      }
+      return caseDataMigrate(args.matter_root, mode, {
+        planToken: args.plan_token,
+        userConfirmation: args.user_confirmation,
+        backupId: args.backup_id
+      });
+    }
+  ),
+  defineTool("matter_data__relocate", (args) => {
+    const mode = args.mode;
+    if (!["plan", "apply"].includes(mode)) {
+      throw new ValidationError(
+        `matter_data__relocate: unknown mode ${JSON.stringify(mode)}; expected plan or apply`
+      );
+    }
+    return caseDataRelocate(args.matter_root, mode);
+  }),
+  defineTool("time_pipeline__get", (args) => timePipelineGet(args.namespace, args.key)),
+  defineTool("time_pipeline__set", (args) => timePipelineSet(args.namespace, args.key, args.value)),
+  defineTool("time_pipeline__list", (args) => timePipelineList(args.namespace, args.prefix)),
+  defineTool("time_pipeline__delete", (args) => timePipelineDelete(args.namespace, args.key)),
+  defineTool("time_pipeline__bulk_apply", (args) => timePipelineBulkApply(args.namespace, args.path)),
+  defineTool("time_pipeline__export", (args) => timePipelineExport(args.namespace, args.prefix, args.path)),
+  defineTool("timecamping_data__query", (args) => timecampingDataQuery(args.sql, args.params)),
+  defineTool("timecamping_data__execute", (args) => timecampingDataExecute(args.sql_script)),
+  defineTool("timecamping_data__bulk_upsert", (args) => timecampingDataBulkUpsert(args.path)),
+  defineTool("timecamping_data__migrate", () => timecampingDataMigrate()),
+  defineTool("drafting_data__query", (args) => submissionDataQuery(args.db_path, args.sql, args.params)),
+  defineTool("drafting_data__execute", (args) => submissionDataExecute(args.db_path, args.sql_script)),
+  defineTool("drafting_data__repoint_documents", (args) => repointDocuments(args)),
+  defineTool("drafting_data__create_writing", (args) => submissionDataCreateWriting(args, {
+    caseDataRoot: once(() => caseDataRootFromDbPath(args.db_path, process.env))
+  })),
+  defineTool("drafting_data__create_job_board", (args) => submissionDataCreateJobBoard(args)),
+  defineTool("drafting_data__merge_job_boards", (args) => submissionDataMergeJobBoards(args)),
+  defineTool("drafting_data__record_sent", (args) => submissionDataRecordSent(args)),
+  defineTool("drafting_data__record_filed", (args) => submissionDataRecordFiled(args)),
+  defineTool("drafting_data__record_served", (args) => submissionDataRecordServed(args)),
+  defineTool("drafting_data__assign_job", (args) => submissionDataAssignJob(args)),
+  defineTool("drafting_data__approve_plan", (args) => submissionDataApprovePlan(args)),
+  defineTool("drafting_data__track_source", (args) => submissionDataTrackSource(args)),
+  defineTool("drafting_data__set_step", (args) => submissionDataSetStep(args)),
+  defineTool("drafting_data__release_job", (args) => submissionDataReleaseJob(args)),
+  defineTool("drafting_data__set_board_goal", (args) => submissionDataSetBoardGoal(args)),
+  defineTool("drafting_data__record_viewed", (args) => submissionDataRecordViewed(args)),
+  defineTool("drafting_data__delete_job", (args) => submissionDataDeleteJob(args)),
+  defineTool("drafting_data__merge_jobs", (args) => submissionDataMergeJobs(args)),
+  defineTool(
+    "drafting_data__resnapshot_writing",
+    (args) => resnapshotWriting(args.db_path, args.filing_id, { jurisdiction: args.jurisdiction })
+  ),
+  defineTool("drafting_data__migrate", (args) => submissionDataMigrate(args.db_path))
+];
+function dataToolDefinitions() {
+  return [
+    ...caseDataToolDefinitions(),
+    ...timePipelineToolDefinitions(),
+    ...timecampingToolDefinitions(),
+    ...submissionDataToolDefinitions().filter((tool) => tool.name !== "drafting_data__complete_job")
+  ];
+}
+var dataTable;
 function dispatchTool(context, name, rawArgs) {
   return toolReply(name, () => callTool(context, name, rawArgs), replyText);
 }
@@ -120137,161 +120216,12 @@ async function callTool(context, name, rawArgs) {
   if (name.startsWith("practice_data__")) {
     return callPracticeTool(context.practiceDb, name, args);
   }
-  if (name === "matter_data__query") {
-    return caseDataQuery(
-      args.matter_root,
-      args.sql,
-      args.params
-    );
-  }
-  if (name === "matter_data__execute") {
-    return caseDataExecute(
-      args.matter_root,
-      args.sql_script
-    );
-  }
-  if (name === "matter_data__resolve_participant") {
-    return resolveParticipant(args.matter_root, args.name);
-  }
-  if (name === "matter_data__stage_result") {
-    return stageResult(args.result);
-  }
-  if (name === "matter_data__ingest_authority") {
-    return ingestAuthority(args);
-  }
-  if (name === "matter_data__relocate_source") {
-    return relocateSource(args);
-  }
-  if (name === "matter_data__housekeeping_log") {
-    return housekeepingLog(args);
-  }
-  if (name === "matter_data__procedural_history_append") {
-    return proceduralHistoryAppend(args);
-  }
-  if (name === "matter_data__migrate") {
-    const mode = args.mode;
-    if (!["plan", "apply", "restore", "backups"].includes(mode)) {
-      throw new ValidationError(
-        `matter_data__migrate: unknown mode ${JSON.stringify(mode)}; expected plan, apply, restore, or backups`
-      );
-    }
-    return caseDataMigrate(args.matter_root, mode, {
-      planToken: args.plan_token,
-      userConfirmation: args.user_confirmation,
-      backupId: args.backup_id
-    });
-  }
-  if (name === "matter_data__relocate") {
-    const mode = args.mode;
-    if (!["plan", "apply"].includes(mode)) {
-      throw new ValidationError(
-        `matter_data__relocate: unknown mode ${JSON.stringify(mode)}; expected plan or apply`
-      );
-    }
-    return caseDataRelocate(args.matter_root, mode);
-  }
-  if (name.startsWith("time_pipeline__")) {
-    const operation = name.slice("time_pipeline__".length);
-    switch (operation) {
-      case "get":
-        return timePipelineGet(args.namespace, args.key);
-      case "set":
-        return timePipelineSet(args.namespace, args.key, args.value);
-      case "list":
-        return timePipelineList(args.namespace, args.prefix);
-      case "delete":
-        return timePipelineDelete(args.namespace, args.key);
-      case "bulk_apply":
-        return timePipelineBulkApply(args.namespace, args.path);
-      case "export":
-        return timePipelineExport(args.namespace, args.prefix, args.path);
-      default:
-        throw new ValidationError(`Unknown tool "${name}"`);
-    }
-  }
-  if (name === "timecamping_data__query") {
-    return timecampingDataQuery(args.sql, args.params);
-  }
-  if (name === "timecamping_data__execute") {
-    return timecampingDataExecute(args.sql_script);
-  }
-  if (name === "timecamping_data__bulk_upsert") {
-    return timecampingDataBulkUpsert(args.path);
-  }
-  if (name === "timecamping_data__migrate") {
-    return timecampingDataMigrate();
-  }
-  if (name === "drafting_data__query") {
-    return submissionDataQuery(
-      args.db_path,
-      args.sql,
-      args.params
-    );
-  }
-  if (name === "drafting_data__execute") {
-    return submissionDataExecute(args.db_path, args.sql_script);
-  }
-  if (name === "drafting_data__repoint_documents") {
-    return repointDocuments(args);
-  }
-  if (name === "drafting_data__create_writing") {
-    return submissionDataCreateWriting(args, {
-      caseDataRoot: once(() => caseDataRootFromDbPath(args.db_path, process.env))
-    });
-  }
-  if (name === "drafting_data__create_job_board") {
-    return submissionDataCreateJobBoard(args);
-  }
-  if (name === "drafting_data__merge_job_boards") {
-    return submissionDataMergeJobBoards(args);
-  }
-  if (name === "drafting_data__record_sent") {
-    return submissionDataRecordSent(args);
-  }
-  if (name === "drafting_data__record_filed") {
-    return submissionDataRecordFiled(args);
-  }
-  if (name === "drafting_data__record_served") {
-    return submissionDataRecordServed(args);
-  }
-  if (name === "drafting_data__assign_job") {
-    return submissionDataAssignJob(args);
-  }
-  if (name === "drafting_data__approve_plan") {
-    return submissionDataApprovePlan(args);
-  }
-  if (name === "drafting_data__track_source") {
-    return submissionDataTrackSource(args);
-  }
-  if (name === "drafting_data__set_step") {
-    return submissionDataSetStep(args);
-  }
-  if (name === "drafting_data__release_job") {
-    return submissionDataReleaseJob(args);
-  }
-  if (name === "drafting_data__set_board_goal") {
-    return submissionDataSetBoardGoal(args);
-  }
-  if (name === "drafting_data__record_viewed") {
-    return submissionDataRecordViewed(args);
-  }
-  if (name === "drafting_data__delete_job") {
-    return submissionDataDeleteJob(args);
-  }
-  if (name === "drafting_data__merge_jobs") {
-    return submissionDataMergeJobs(args);
-  }
+  dataTable ??= pairTools(dataToolDefinitions(), dataTools);
+  const dataTool = dataTable.get(name);
+  if (dataTool) return dataTool.handler(args, context);
   if (name === "drafting_data__complete_job") {
     const { client, todos, dates } = await pageContext(context, args, true);
     return submissionDataCompleteJob(args, client, todos?.todos, dates);
-  }
-  if (name === "drafting_data__resnapshot_writing") {
-    return resnapshotWriting(args.db_path, args.filing_id, {
-      jurisdiction: args.jurisdiction
-    });
-  }
-  if (name === "drafting_data__migrate") {
-    return submissionDataMigrate(args.db_path);
   }
   if (name === "drafting_forms__board_card") {
     const { client, dates } = await pageContext(context, args, false);
