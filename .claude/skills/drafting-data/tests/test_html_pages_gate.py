@@ -51,7 +51,9 @@ PAGE_PATHS = [
     DRAFT + r"\workboard-status.js",
     "/mnt/<matter>/0. DRAFT/Litigation Strategy.html",
     "/mnt/<matter>/0. DRAFT/To Do List.html",
-] + [DRAFT + "\\" + name for name in PREVIEW_NAMES] + [
+    DRAFT + r"\Job Board 1.html",
+    DRAFT + r"\Provable Facts - Job Board 1.html",
+] +[DRAFT + "\\" + name for name in PREVIEW_NAMES] + [
     r"<data>\previews\Provable Facts - Milestone 1 preview 1.html",
     DRAFT + r"\Provable Facts - filing 1 preview 1.html",
     DRAFT + r"\Notice of Hearing of Application\Milestone.html",

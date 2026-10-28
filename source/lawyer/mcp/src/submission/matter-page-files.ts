@@ -88,8 +88,9 @@ export function writePage(file: string, html: string): void {
 
 /** A page file's name in any layout or copy this generator ever wrote (D3), matched case-insensitively:
  * a view page's `<page name> - filing <id>.html` is its name before 2026-10-09, and
- * `Provable Facts - Milestone <id>.html` the Material Facts page's before 2026-10-20 (docs/ADRs/0011). */
-const OLD_PAGE = /^(?:Milestone.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - Milestone(?: - proceeding)? \d+)\.html$/i;
+ * `Provable Facts - Milestone <id>.html` the Material Facts page's before 2026-10-20 (docs/ADRs/0011), and
+ * `Job Board …` the Milestone's name before 2026-10-28. */
+const OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
 
 /** A preview pages__preview wrote beside the pages (src/pages/preview.ts): never an old page, so the sweep leaves it. */
 const PREVIEW_FILE = / preview \d+\.html$/i;

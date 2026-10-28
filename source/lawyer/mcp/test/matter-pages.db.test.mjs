@@ -194,7 +194,7 @@ test("a retired filing's Milestone page goes to TRASH", async (t) => {
   assert.deepEqual(jobBoardPages(m.draft), [OPENING_PAGE]);
   assert.deepEqual(
     retired.moved_to_trash.map((x) => x.from.toLowerCase()),
-    ["Arguments", "Milestone", "Loose Threads", "Material Facts", "Procedural History", "Raw Research"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
+    ["Arguments", "Loose Threads", "Material Facts", "Milestone", "Procedural History", "Raw Research"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
   );
   assert.ok(existsSync(join(m.matterRoot, "TRASH", "0. DRAFT", REPLY_PAGE)), "the retired filing's page is in TRASH");
 });
@@ -234,7 +234,7 @@ test("a pre-filing proceeding has a Milestone page of its own until it gains a f
   const board = submissionFormsRenderProceedingBoard(m.dbPath, 1, ASHBOURNE, FIRST, "tok", m.draft);
   assert.equal(board.job_board_path, join(m.draft, proceedingPage));
   assert.deepEqual(board.job_board_paths, [{ filing_id: null, proceeding_id: 1, path: join(m.draft, proceedingPage) }]);
-  assert.deepEqual(readdirSync(m.draft), ["Drafting records", proceedingPage, "Litigation Strategy.html"]);
+  assert.deepEqual(readdirSync(m.draft), ["Drafting records", "Litigation Strategy.html", proceedingPage]);
   assert.deepEqual(readBoardData(join(m.draft, proceedingPage)).sections.map((s) => [s.meta.filing_id, s.meta.proceeding_id]), [[null, 1]]);
 
   await submissionDataExecute(m.dbPath, "INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (1, 1, 'submissions_package', 'opening', 'Opening Submissions Package');");
@@ -1346,6 +1346,13 @@ test("a page write moves every old page file the generator wrote into TRASH and 
     [join(m.draft, "To Do List.html")]: todoList,
     [join(m.draft, "To Do List-2.html")]: todoList,
     [join(m.draft, "Matter Board.html")]: todoList,
+    // The Milestone's name before 2026-10-28.
+    [join(m.draft, "Job Board.html")]: board,
+    [join(m.draft, "Job Board 12.html")]: board,
+    [join(m.draft, "Job Board - filing 1.html")]: board,
+    [join(m.draft, "Job Board - proceeding 3.html")]: board,
+    [join(m.draft, "Provable Facts - Job Board 7.html")]: view,
+    [join(m.draft, "Raw Research - Job Board 7.html")]: view,
   };
   const unmarked = {
     [join(m.draft, "Work Board.html")]: "the practitioner's own board\n",

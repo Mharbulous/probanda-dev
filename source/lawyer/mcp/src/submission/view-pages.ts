@@ -92,9 +92,10 @@ function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** Whether a file name is a registered view page's, for any board, case aside. */
+/** Whether a file name is a registered view page's, for any board, case aside. `- Job Board <id>` is
+ * the board suffix before 2026-10-28. */
 export function isViewPageFile(fileName: string): boolean {
-  return VIEW_PAGES.some((page) => new RegExp(`^${escapeRegExp(page.name)}(?: - Milestone (?:- proceeding )?\\d+)?\\.html$`, "i").test(fileName));
+  return VIEW_PAGES.some((page) => new RegExp(`^${escapeRegExp(page.name)}(?: - (?:Milestone|Job Board) (?:- proceeding )?\\d+)?\\.html$`, "i").test(fileName));
 }
 
 /** The header every view page prints: the page, the filing, the matter, the revision and the render stamp. */
