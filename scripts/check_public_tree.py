@@ -271,7 +271,7 @@ def plugin_problems(repo, files):
     specs = plugin_layout.plugins(repo)
     developer = specs.get(DEVELOPER) or {}
     skills, agents = set(developer.get("skills") or ()), set(developer.get("agents") or ())
-    owner = {s: p for p, spec in specs.items() for s in spec["skills"]}
+    owner = plugin_layout.skill_owners(specs)
     found, misplaced = [], set()
     for rel, data in files.items():
         parts = rel.split("/")

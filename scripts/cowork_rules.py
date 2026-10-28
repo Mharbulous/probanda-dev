@@ -1,5 +1,6 @@
 """What Cowork refuses or silently changes in a skill, shared by build_plugin.py and
-check_plugin.py. Standard library only."""
+check_plugin.py's helpers check_plugin_skill_md.py and check_plugin_sources.py.
+Standard library only."""
 import re
 
 # Cowork silently renames an installed skill whose name has the segment "claude".

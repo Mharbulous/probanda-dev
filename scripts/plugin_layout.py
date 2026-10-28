@@ -106,11 +106,16 @@ def skill_dir(repo, skill):
     return public_skill_dirs(repo).get(skill) or Path(repo) / ".claude" / "skills" / skill
 
 
+def skill_owners(plugins):
+    """{skill name: the plugin it is given to}. `plugins` is plugins(repo)."""
+    return {s: p for p, spec in plugins.items() for s in spec["skills"]}
+
+
 def skill_folders(repo, plugins):
     """(skills root, skill folder, owning plugin) for every folder under SKILL_ROOTS.
     shared/ is owned by the plugin "shared". `plugins` is plugins(repo)."""
     repo = Path(repo)
-    owner = {s: p for p, spec in plugins.items() for s in spec["skills"]}
+    owner = skill_owners(plugins)
     for root in sorted(r for pattern in SKILL_ROOTS for r in repo.glob(pattern)):
         if not root.is_dir():
             continue

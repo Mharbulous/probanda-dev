@@ -146,7 +146,7 @@ def scan(repo, plugins):
                     findings.append({"file": rel, "line": number, "text": line.strip()[:160], "kind": kind,
                                      "target": name, "target_plugin": owner, "plugin": plugin, "unit": unit})
     # A hook's script must sit in a folder its own plugin ships.
-    skill_owner = {s: p for p, spec in plugins.items() for s in spec["skills"]}
+    skill_owner = plugin_layout.skill_owners(plugins)
     for plugin, spec in plugins.items():
         for hook, script in spec["hooks"].items():
             parts = Path(script).parts
