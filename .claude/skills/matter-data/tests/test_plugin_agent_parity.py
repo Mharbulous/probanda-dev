@@ -4,8 +4,8 @@ Each agent body is its template verbatim plus the `**Lane:**` line plugins/CLAUD
 requires after the H1. Each grant is `Read` alone — the "file-read tool only" the
 templates' binding constraints assert — so a caller dispatching one of these
 templates gets that guarantee at runtime instead of on paper. The one exception is
-`extract-caselaw`, which also holds `Write` for the single scratch file its caller
-names; its template limits it to that file.
+`extract-caselaw`, which also holds the data server's `matter_data__stage_result`
+(both name forms) to hand its result to the host (design decision #76); it writes no file.
 
 The model column started as the #558 split: the verifiers are pinned so a weak session
 model cannot produce weak extraction *and* an equally weak check of it. Design decision
@@ -39,7 +39,13 @@ AGENTS = {
 }
 
 # agent name -> its grant, where that is not `Read` alone
-GRANTS = {"extract-caselaw": ["Read", "Write"]}
+GRANTS = {
+    "extract-caselaw": [
+        "Read",
+        "mcp__plugin_lawyer_data__matter_data__stage_result",
+        "mcp__remote-devices__plugin_lawyer_data__matter_data__stage_result",
+    ]
+}
 
 # agent name -> pinned effort (#70); every other agent carries no effort line
 EFFORTS = {

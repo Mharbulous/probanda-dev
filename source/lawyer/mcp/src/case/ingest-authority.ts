@@ -1,5 +1,5 @@
 // matter_data__ingest_authority: the Path D writes for one extracted authority, from the extractor's
-// result file (/matter-data design-decisions.md #68). /matter-data's operations/ingest-extract.md
+// staged result (/matter-data design-decisions.md #68, #76). /matter-data's operations/ingest-extract.md
 // Path D is its only caller.
 //
 // Spawns /matter-data's references/scripts/ingest_authority.py the way case/resolve-participant.ts
@@ -15,6 +15,7 @@ import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs, READ_TIMEOUT_MS } from "../python-timeout.js";
 import { caseDataMigrateScriptsDir } from "../repo-root.js";
 import { caseDataExecuteStatements, type CaseStatement } from "./backend.js";
+import { stagedResultPath } from "./stage-result.js";
 
 // Pure plumbing: one JSON request in on stdin, one JSON response out on stdout.
 const DRIVER = String.raw`
@@ -35,8 +36,8 @@ main()
 
 export interface AuthorityIngestRequest {
   matter_root: string;
-  /** The extractor's scratch file: exactly the JSON object of its output contract. */
-  result_path: string;
+  /** What matter_data__stage_result returned for the extractor's JSON object (#76). */
+  result_id: string;
   /** The authority's file, relative to the matter root, and the SHA-256 of its bytes. */
   file_path: string;
   file_hash: string;
@@ -75,10 +76,11 @@ export type AuthorityIngest =
   | { ok: false; problems: string[] };
 
 export async function ingestAuthority(request: AuthorityIngestRequest, env: NodeJS.ProcessEnv = process.env): Promise<AuthorityIngest> {
+  const { result_id, ...rest } = request;
   const parsed = runPythonDriver({
     label: "matter-data authority ingest planner",
     driver: pythonDriverFile("case-ingest-authority-driver", DRIVER),
-    payload: JSON.stringify(request),
+    payload: JSON.stringify({ ...rest, result_path: stagedResultPath(result_id, env) }),
     env,
     timeoutMs: pythonTimeoutMs(env, READ_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS"),
     extraEnv: { PYTHONPATH: caseDataMigrateScriptsDir(env) },

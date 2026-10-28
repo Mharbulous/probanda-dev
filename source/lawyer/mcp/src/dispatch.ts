@@ -11,6 +11,7 @@ import { caseDataMigrate, type MigrateMode } from "./case/migrate.js";
 import { caseDataRelocate, type RelocateMode } from "./case/relocate.js";
 import { resolveParticipant } from "./case/resolve-participant.js";
 import { ingestAuthority, type AuthorityIngestRequest } from "./case/ingest-authority.js";
+import { stageResult } from "./case/stage-result.js";
 import { proceduralHistoryAppend, type ProceduralHistoryAppendArgs } from "./case/procedural-history.js";
 import { relocateSource, type RelocateSourceRequest } from "./case/relocate-source.js";
 import { housekeepingLog, type HousekeepingLogRequest } from "./case/housekeeping-log.js";
@@ -168,6 +169,10 @@ export async function callTool(
 
   if (name === "matter_data__resolve_participant") {
     return resolveParticipant(args.matter_root as string, args.name as string);
+  }
+
+  if (name === "matter_data__stage_result") {
+    return stageResult(args.result);
   }
 
   if (name === "matter_data__ingest_authority") {

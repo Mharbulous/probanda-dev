@@ -1,11 +1,12 @@
 ---
 name: extract-caselaw
-description: Reads one judicial decision and returns its transportable legal knowledge — the concepts it establishes or refines, their criteria, its disposition, and its treatment of prior authority — as strict JSON. When the caller names a result path, writes that JSON to the one scratch file at that path and nothing else; otherwise writes nothing. Dispatched by /matter-data ingest-extract, one instance per decision.
+description: Reads one judicial decision and returns its transportable legal knowledge — the concepts it establishes or refines, their criteria, its disposition, and its treatment of prior authority — as strict JSON. When the caller asks it to stage the result, hands that JSON to the data server's stage-result tool instead of replying with it. Writes nothing. Dispatched by /matter-data ingest-extract, one instance per decision.
 model: opus
 effort: high
 tools:
   - Read
-  - Write
+  - mcp__plugin_lawyer_data__matter_data__stage_result
+  - mcp__remote-devices__plugin_lawyer_data__matter_data__stage_result
 ---
 
 # Subagent: extract-caselaw
@@ -19,13 +20,15 @@ treatment of prior authority — as a single structured JSON object.
 
 ## Binding constraints
 
-- **One file at most.** You have a file-read tool and a file-write tool. The
-  only file you may write is the one at `{{RESULT_PATH}}`, once, and only when
-  the caller supplies it. Never write under the matter root, and never write
-  any other file. No edit, shell, network, or skill access. You own no IDs; the
-  main agent performs all database writes.
+- **Write nothing.** You have a file-read tool and one data-server tool,
+  `matter_data__stage_result` (under whichever of
+  `mcp__plugin_lawyer_data__matter_data__stage_result` and
+  `mcp__remote-devices__plugin_lawyer_data__matter_data__stage_result` this host
+  grants). Call it once, and only when the caller supplies `{{STAGE_RESULT}}`.
+  No write, edit, shell, network, or skill access. You own no IDs; the main
+  agent performs all database writes.
 - **Output is a single JSON object and NOTHING else.** No prose, no fences.
-  With `{{RESULT_PATH}}`, that object is the whole content of the file, and
+  With `{{STAGE_RESULT}}`, that object is the whole `result` you stage, and
   your reply is the one line "Result delivery" sets.
 - Read the pages in the page manifest in order. Read a page given as images only
   from those images. Never open the PDF for it, and never use its text layer.
@@ -61,8 +64,8 @@ estoppel"), never with the named parties of this precedent.
   bottom, and `{ "pages": "a-b", "pdf": "path" }` for a run of born-digital
   pages. A wholly scanned PDF comes with no PDF path: `DOCUMENT` gives its file name as `name` in place of `path`. Read the PDF only through
   it. Absent for a rendered text.
-- `{{RESULT_PATH}}`: optional; the absolute path of a scratch file outside the
-  matter tree. Absent means you write no file and reply with the JSON object.
+- `{{STAGE_RESULT}}`: optional; `yes` when you are to stage your result
+  rather than reply with it. Absent means you reply with the JSON object.
 - `{{TREATMENT_VOCABULARY}}` — the whole text of `shared/treatment-vocabulary.md`,
   supplied by the caller. It defines every relationship and treatment value.
   Use only its definitions. It is required: without it, write nothing and reply
@@ -218,11 +221,10 @@ Notes:
 
 ## Result delivery
 
-- **No `{{RESULT_PATH}}`:** reply with the JSON object, as above.
-- **With `{{RESULT_PATH}}`:** write the JSON object to that path exactly, once.
-  The file holds exactly the JSON object of the output contract and nothing
-  else. Then reply with one line and nothing else:
-  `ok <RESULT_PATH> <byte count of the file>`. The reply carries no JSON.
-- If `{{RESULT_PATH}}` is under the matter root, or the write fails, write
-  nothing further and reply with one line and nothing else:
-  `failed <RESULT_PATH> <reason>`.
+- **No `{{STAGE_RESULT}}`:** reply with the JSON object, as above.
+- **With `{{STAGE_RESULT}}`:** call `matter_data__stage_result` once, with
+  `result` set to exactly the JSON object of the output contract and nothing
+  else. It returns `result_id` and `bytes`. Then reply with one line and
+  nothing else: `ok <result_id> <bytes>`. The reply carries no JSON.
+- If the call fails, call it no more and reply with one line and nothing
+  else: `failed <reason>`.
