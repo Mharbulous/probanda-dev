@@ -341,7 +341,7 @@ and returns its outcome:
 - **`not_held`** — another session's token is on the row: a take-over (§4). **`shelved`** — `locked_by` NULL with `rejected_at` stamped: a §10a shelving. **`no_match`** — neither statement matched, and the returned row shows why. On any of these neither statement landed: report which one it was and stop.
 - **`steps_open`** — before either statement, the tool read a step not resolved (§6b): ☐, ↻ or ⏳, a ⏳ whose minute has passed included, and wrote nothing. `open_steps` names each one. Finish each, or, on the practitioner's own words, set it ☒ or ⏸ with `drafting_data__set_step`, then complete. On a database held below v78 every unstamped step is open.
 
-Only when `changes` is 1 does the call rewrite the matter's pages, by the render a session runs with `draft_dir`, and it returns `pages_written`, `job_board_path`, `board_changed` and `board_moves`, so no separate render is needed after it. When the result says `pages_written: false` after a completion this call made, say the Milestone was not refreshed and quote `pages_refused` verbatim. The completion stands either way.
+Only when `changes` is 1 does the call rewrite the matter's pages, by the render a session runs with `draft_dir`, and it returns `pages_written`, `milestone_path`, `board_changed` and `board_moves`, so no separate render is needed after it. When the result says `pages_written: false` after a completion this call made, say the Milestone was not refreshed and quote `pages_refused` verbatim. The completion stands either way.
 
 ## 10. Unfinished
 

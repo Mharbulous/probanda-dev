@@ -1,4 +1,4 @@
-Read when: session entry reported a hosted board or a plugin-predates condition (it opened a board but `opened` has no `board_summary`, or it returns no `job_board_paths` field at all), or a re-entered Writing shows loose-thread markers.
+Read when: session entry reported a hosted board or a plugin-predates condition (it opened a board but `opened` has no `board_summary`, or it returns no `milestone_paths` field at all), or a re-entered Writing shows loose-thread markers.
 Assumes SKILL.md is loaded. Rules are not restated here.
 
 ## Hosted Work Board cleanup
@@ -9,7 +9,7 @@ The board is a local file only; matter data never leaves the matter folder. Say 
 
 The response offers a presentation-folder concept without a per-document path: the installed plugin predates that feature. Say so and ask for a reinstall. Never parse an overflow file as a workaround.
 
-Session entry opened a board but `opened` carries no `board_summary`, or it returns no `job_board_paths` field at all: the installed plugin predates the fixed pages. A render that did not name `Work_board` carries no `board_summary` by design, and is not this case. Say so in one line, ask for a reinstall, and carry on. Never read a page file or an overflow file as a workaround (`shared/html-pages.md`).
+Session entry opened a board but `opened` carries no `board_summary`, or it returns no `milestone_paths` field at all: the installed plugin predates the fixed pages. A render that did not name `Work_board` carries no `board_summary` by design, and is not this case. Say so in one line, ask for a reinstall, and carry on. Never read a page file or an overflow file as a workaround (`shared/html-pages.md`).
 
 ## Loose-thread marker
 

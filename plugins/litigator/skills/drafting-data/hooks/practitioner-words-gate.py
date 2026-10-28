@@ -2,7 +2,7 @@
 """Refuse a paragraph revision, a confirmed statement of goals, or a merge of Milestones or of jobs the practitioner did not approve (#784).
 
 Hook event: PreToolUse on drafting_data__execute, drafting_data__set_board_goal,
-drafting_data__merge_job_boards and drafting_data__merge_jobs (a merge passes only when the last
+drafting_data__merge_milestones and drafting_data__merge_jobs (a merge passes only when the last
 practitioner turn is a bare yes).
 A job's title, intent and steps, and a marker suppression's note, are not read: their wording
 needs no practitioner approval (docs/Specs/2026-10-20_approved-research-issues-pass-job-words-gate-spec.md).
@@ -115,7 +115,7 @@ REVISION_CLOSING = ("An on-the-fly revision writes one paragraph the practitione
                     "yes typed as that turn. One approval admits one write. The revised text recorded is exactly the "
                     "text written into the paragraph, and keeping the current wording records the old text unchanged.")
 GOAL_TOOL = "drafting_data__set_board_goal"  # a Milestone's statement of goals
-MERGE_TOOL = "drafting_data__merge_job_boards"  # two Milestones joined on the practitioner's yes
+MERGE_TOOL = "drafting_data__merge_milestones"  # two Milestones joined on the practitioner's yes
 MERGE_JOBS_TOOL = "drafting_data__merge_jobs"  # a duplicate job merged into another on the practitioner's yes
 GOAL_FIELD = "the statement of goals"
 MERGE_GOAL_FIELD = "the merged board's statement of goals"
