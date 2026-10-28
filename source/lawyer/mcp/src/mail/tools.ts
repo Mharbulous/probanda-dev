@@ -40,6 +40,7 @@ import {
 import { servePasswordPage, type CredentialFields, type DavResult, type SaveOutcome } from "./page.js";
 import { probeDav, type DavContext } from "../dav/session.js";
 import { isValidTimeZone } from "../dav/tz.js";
+import type { Tool } from "../tool-list.js";
 
 /** The part of the dispatch context the mail tools read. */
 export interface MailContext extends DavContext {
@@ -58,43 +59,26 @@ const DRAFT_MAX_BYTES = 25 * 1024 * 1024;
 const FETCH_FIELDS = { uid: true, envelope: true, flags: true, size: true, internalDate: true };
 const PRINTABLE = /^[^\x00-\x1F\x7F]+$/;
 
-export function callMailTool(context: MailContext, name: string, args: Args): Promise<unknown> {
-  const run = <T>(what: string, fn: (client: ImapClientLike) => Promise<T>): Promise<T> =>
-    withImap(context.mail, context.imapFactory ?? defaultImapFactory, what, fn, context.mailTimeoutMs);
-  switch (name) {
-    case "mail__configure_credential":
-      return configureCredential(context, args);
-    case "mail__configure_status":
-      return configureStatus(context.mail);
-    case "mail__list_folders":
-      return listFolders(run, args);
-    case "mail__folder_status":
-      return folderStatus(run, args);
-    case "mail__get_latest_emails":
-      return getLatestEmails(run, args);
-    case "mail__search_emails":
-      return searchEmails(run, args);
-    case "mail__get_email":
-      return getEmail(run, args);
-    case "mail__download_attachment":
-      return downloadAttachment(run, args);
-    case "mail__save_message":
-      return saveMessage(run, args);
-    case "mail__find_email_by_message_id":
-      return findByMessageId(run, args);
-    case "mail__find_thread_messages":
-      return findThreadMessages(run, args);
-    case "mail__save_draft":
-      return saveDraft(run, args);
-    case "mail__create_folder":
-      return createFolder(run, args);
-    case "mail__rename_folder":
-      return renameFolder(run, args);
-    case "mail__move_messages":
-      return moveMessages(run, args);
-    default:
-      throw new ValidationError(`Unknown tool "${name}"`);
-  }
+export const mailTools: Tool<MailContext>[] = [
+  { name: "mail__configure_credential", handler: (args, context) => configureCredential(context, args) },
+  { name: "mail__configure_status", handler: (_args, context) => configureStatus(context.mail) },
+  { name: "mail__list_folders", handler: (args, context) => listFolders(runFor(context), args) },
+  { name: "mail__folder_status", handler: (args, context) => folderStatus(runFor(context), args) },
+  { name: "mail__get_latest_emails", handler: (args, context) => getLatestEmails(runFor(context), args) },
+  { name: "mail__search_emails", handler: (args, context) => searchEmails(runFor(context), args) },
+  { name: "mail__get_email", handler: (args, context) => getEmail(runFor(context), args) },
+  { name: "mail__download_attachment", handler: (args, context) => downloadAttachment(runFor(context), args) },
+  { name: "mail__save_message", handler: (args, context) => saveMessage(runFor(context), args) },
+  { name: "mail__find_email_by_message_id", handler: (args, context) => findByMessageId(runFor(context), args) },
+  { name: "mail__find_thread_messages", handler: (args, context) => findThreadMessages(runFor(context), args) },
+  { name: "mail__save_draft", handler: (args, context) => saveDraft(runFor(context), args) },
+  { name: "mail__create_folder", handler: (args, context) => createFolder(runFor(context), args) },
+  { name: "mail__rename_folder", handler: (args, context) => renameFolder(runFor(context), args) },
+  { name: "mail__move_messages", handler: (args, context) => moveMessages(runFor(context), args) },
+];
+
+function runFor(context: MailContext): Run {
+  return (what, fn) => withImap(context.mail, context.imapFactory ?? defaultImapFactory, what, fn, context.mailTimeoutMs);
 }
 
 type Run = <T>(what: string, fn: (client: ImapClientLike) => Promise<T>) => Promise<T>;

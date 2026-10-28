@@ -1,4 +1,4 @@
-// build-stamp: fd47307a7658
+// build-stamp: ae71821e895e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -4254,8 +4254,8 @@ var require_core = __commonJS({
         }
       }
       // add "vocabulary" - a collection of keywords
-      addVocabulary(definitions2) {
-        for (const def of definitions2)
+      addVocabulary(definitions) {
+        for (const def of definitions)
           this.addKeyword(def);
         return this;
       }
@@ -79519,6 +79519,29 @@ function isPlainObject3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+// src/tool-list.ts
+function definitionLookup(buildDefinitions) {
+  let definitions;
+  return (name) => {
+    definitions ??= new Map(buildDefinitions().map((tool) => [tool.name, tool]));
+    const definition = definitions.get(name);
+    if (!definition) throw new ValidationError(`Unknown tool "${name}"`);
+    return definition;
+  };
+}
+async function toolReply(name, run, replyText2 = jsonText) {
+  try {
+    return { content: [{ type: "text", text: replyText2(name, await run()) }] };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const payload = err instanceof DataServerError ? { error: { code: err.code, message } } : { error: { code: "data_error", message } };
+    return { content: [{ type: "text", text: jsonText(name, payload) }], isError: true };
+  }
+}
+function jsonText(_name, result) {
+  return JSON.stringify(result, null, 2);
+}
+
 // src/tools/practice/reads.ts
 import { join as join7 } from "node:path";
 
@@ -81133,7 +81156,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "fd47307a7658";
+var BUILD_STAMP = false ? null : "ae71821e895e";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -120132,20 +120155,14 @@ async function handle2(req, res) {
 var FORM2 = `<p>Probanda's key lets this computer use Probanda's shared services: the legal commons, the Suggestion Box and the saving of practice records. Probanda gives one to each practising lawyer it has verified.</p><form method="post"><label>Full name, as the Law Society's directory shows it<br><input name="full_name" maxlength="200" autocomplete="name" required autofocus></label><p>Jurisdiction: British Columbia</p><label>Year of call<br><input name="year_of_call" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></label><label>Call date (optional)<br><input type="date" name="call_date"></label><label>Firm name, as the directory shows it under "Primary location"<br><input name="firm_name" maxlength="200" autocomplete="organization" required></label><label>Email, so Probanda can contact you about this request<br><input type="email" name="email" maxlength="254" autocomplete="email" required></label><label>Phone (optional)<br><input type="tel" name="phone" maxlength="40" autocomplete="tel"></label><button type="submit">Send request</button></form><p class="note">These details go only to Probanda, which uses them only to check in the Law Society of British Columbia's public directory that you are a practising lawyer, and to contact you about this request. Your key is sent only to the email address your firm's website or the directory lists for you, never to the one you type here. They are never sent to Claude. Do not include any client or matter information. Sending the request is your consent.</p>`;
 
 // src/dispatch.ts
-var definitions;
-async function dispatchTool(context, name, rawArgs) {
-  try {
-    const result = await callTool(context, name, rawArgs);
-    if (name.startsWith("rules__")) {
-      if (typeof result !== "string") throw new DataServerError(`${name} returned a ${typeof result}, not its XML`, "internal_error");
-      return { content: [{ type: "text", text: result }] };
-    }
-    return textResult(result);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const payload = err instanceof DataServerError ? { error: { code: err.code, message } } : { error: { code: "data_error", message } };
-    return { ...textResult(payload), isError: true };
-  }
+var toolDefinition = definitionLookup(buildToolDefinitions);
+function dispatchTool(context, name, rawArgs) {
+  return toolReply(name, () => callTool(context, name, rawArgs), replyText);
+}
+function replyText(name, result) {
+  if (!name.startsWith("rules__")) return jsonText(name, result);
+  if (typeof result !== "string") throw new DataServerError(`${name} returned a ${typeof result}, not its XML`, "internal_error");
+  return result;
 }
 async function callTool(context, name, rawArgs) {
   const definition = toolDefinition(name);
@@ -120652,24 +120669,6 @@ function once(fn2) {
     }
     if ("error" in outcome) throw outcome.error;
     return outcome.value;
-  };
-}
-function toolDefinition(name) {
-  if (!definitions) {
-    definitions = new Map(buildToolDefinitions().map((tool) => [tool.name, tool]));
-  }
-  const definition = definitions.get(name);
-  if (!definition) throw new ValidationError(`Unknown tool "${name}"`);
-  return definition;
-}
-function textResult(result) {
-  return {
-    content: [
-      {
-        type: "text",
-        text: JSON.stringify(result, null, 2)
-      }
-    ]
   };
 }
 

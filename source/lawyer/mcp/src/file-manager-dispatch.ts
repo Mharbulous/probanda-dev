@@ -4,9 +4,9 @@
 // file-manager removes every tool that renames, moves or deletes a user's file
 // (docs/Plans/2026-10-14_file-admin-plugin.md). Kept apart from dispatch.ts so
 // the `files` bundle holds only the modules these tools use.
-import { DataServerError, ValidationError } from "./errors.js";
-import { buildFileManagerToolDefinitions, type ToolDefinition } from "./schema-gen.js";
-import { validateToolInput } from "./validate.js";
+import { ValidationError } from "./errors.js";
+import { buildFileManagerToolDefinitions } from "./schema-gen.js";
+import { defineTool, dispatchFrom, type ToolReply } from "./tool-list.js";
 import { fileOpsTrash } from "./file_ops/trash.js";
 import { fileOpsMove } from "./file_ops/move.js";
 import { fileOpsMoveFromDownloads } from "./file_ops/move-from-downloads.js";
@@ -19,113 +19,64 @@ import { housekeepingPreview, type HousekeepingPreviewArgs } from "./housekeepin
 import { servePage } from "./housekeeping/server.js";
 import { waitApproval } from "./housekeeping/wait.js";
 
-let definitions: Map<string, ToolDefinition> | undefined;
+type Run = { matter_root: string; run_id: string };
 
-function toolDefinition(name: string): ToolDefinition {
-  if (!definitions) {
-    definitions = new Map(buildFileManagerToolDefinitions().map((tool) => [tool.name, tool]));
-  }
-  const definition = definitions.get(name);
-  if (!definition) throw new ValidationError(`Unknown tool "${name}"`);
-  return definition;
-}
-
-export async function dispatchFileManagerTool(
-  name: string,
-  rawArgs: unknown
-): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
-  try {
-    return { content: [{ type: "text", text: replyText(name, await callFileManagerTool(name, rawArgs)) }] };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const payload = err instanceof DataServerError
-      ? { error: { code: err.code, message } }
-      : { error: { code: "data_error", message } };
-    return { ...textResult(payload), isError: true };
-  }
-}
-
-export async function callFileManagerTool(name: string, rawArgs: unknown): Promise<unknown> {
-  const definition = toolDefinition(name);
-  const args = validateToolInput(definition, rawArgs);
-
-  if (name === "file_ops__trash") {
-    return fileOpsTrash(args.path as string, (args.dry_run as boolean | undefined) ?? false);
-  }
-
-  if (name === "file_ops__move") {
+const tools = [
+  defineTool<{ path: string; dry_run?: boolean }>("file_ops__trash", ({ path, dry_run }) => fileOpsTrash(path, dry_run ?? false)),
+  defineTool<{
+    matter_root: string;
+    source: string;
+    destination: string;
+    create_folders?: unknown;
+    draft_unchanged?: boolean;
+    superseded?: boolean;
+  }>("file_ops__move", (args) => {
     const createFolders = args.create_folders ?? [];
     if (!Array.isArray(createFolders) || createFolders.some((f) => typeof f !== "string")) {
       throw new ValidationError("file_ops__move.create_folders must be an array of strings");
     }
     return fileOpsMove(
-      args.matter_root as string,
-      args.source as string,
-      args.destination as string,
+      args.matter_root,
+      args.source,
+      args.destination,
       createFolders as string[],
-      (args.draft_unchanged as boolean | undefined) ?? false,
-      (args.superseded as boolean | undefined) ?? false
+      args.draft_unchanged ?? false,
+      args.superseded ?? false
     );
-  }
-
-  if (name === "file_ops__move_from_downloads") {
-    return fileOpsMoveFromDownloads(args.matter_root as string, args.source_filename as string, args.destination as string);
-  }
-
-  if (name === "housekeeping__preflight") {
-    return preflight(args.matter_root as string, (args.include_template as boolean | undefined) ?? false);
-  }
-
-  if (name === "housekeeping__new_run") {
-    return newRun(args.matter_root as string);
-  }
-
-  if (name === "housekeeping__candidates") {
-    return candidates(args as unknown as CandidatesArgs);
-  }
-
-  if (name === "housekeeping__write_run_file") {
-    return writeRunFile(args.matter_root as string, args.run_id as string, args.file_name as string, args.content as string);
-  }
-
-  if (name === "housekeeping__serve_page") {
-    return servePage(args.matter_root as string, args.run_id as string);
-  }
-
-  if (name === "housekeeping__preview") {
-    return housekeepingPreview(args as unknown as HousekeepingPreviewArgs);
-  }
-
-  if (name === "housekeeping__wait_approval") {
-    return waitApproval(args.matter_root as string, args.run_id as string);
-  }
-
-  if (name === "housekeeping__resolve") {
-    return resolveRun(args.matter_root as string, args.run_id as string);
-  }
-
-  if (name === "housekeeping__reconcile") {
-    return reconcile(args.matter_root as string, args.run_id as string | undefined);
-  }
-
-  if (name === "housekeeping__journal_append") {
-    return journalAppend(
-      args.matter_root as string,
-      args.run_id as string,
-      args.row_id as string,
-      args.outcome as string,
-      args.reason as string | undefined
-    );
-  }
-
-  throw new ValidationError(`Unknown tool "${name}"`);
-}
+  }),
+  defineTool<{ matter_root: string; source_filename: string; destination: string }>(
+    "file_ops__move_from_downloads",
+    (args) => fileOpsMoveFromDownloads(args.matter_root, args.source_filename, args.destination)
+  ),
+  defineTool<{ matter_root: string; include_template?: boolean }>("housekeeping__preflight", (args) =>
+    preflight(args.matter_root, args.include_template ?? false)
+  ),
+  defineTool<{ matter_root: string }>("housekeeping__new_run", (args) => newRun(args.matter_root)),
+  defineTool<CandidatesArgs>("housekeeping__candidates", (args) => candidates(args)),
+  defineTool<Run & { file_name: string; content: string }>("housekeeping__write_run_file", (args) =>
+    writeRunFile(args.matter_root, args.run_id, args.file_name, args.content)
+  ),
+  defineTool<Run>("housekeeping__serve_page", (args) => servePage(args.matter_root, args.run_id)),
+  defineTool<HousekeepingPreviewArgs>("housekeeping__preview", (args) => housekeepingPreview(args)),
+  defineTool<Run>("housekeeping__wait_approval", (args) => waitApproval(args.matter_root, args.run_id)),
+  defineTool<Run>("housekeeping__resolve", (args) => resolveRun(args.matter_root, args.run_id)),
+  defineTool<{ matter_root: string; run_id?: string }>("housekeeping__reconcile", (args) => reconcile(args.matter_root, args.run_id)),
+  defineTool<Run & { row_id: string; outcome: string; reason?: string }>("housekeeping__journal_append", (args) =>
+    journalAppend(args.matter_root, args.run_id, args.row_id, args.outcome, args.reason)
+  ),
+];
 
 /** A tool's reply text. The work list goes out unindented: indentation alone adds a third to a reply near Cowork's tool-output limit. */
 export function replyText(name: string, result: unknown): string {
   return name === "housekeeping__candidates" ? JSON.stringify(result) : JSON.stringify(result, null, 2);
 }
 
-function textResult(result: unknown): { content: Array<{ type: "text"; text: string }> } {
-  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+const server = dispatchFrom(buildFileManagerToolDefinitions, tools, replyText);
+
+export function dispatchFileManagerTool(name: string, rawArgs: unknown): Promise<ToolReply> {
+  return server.dispatch(undefined, name, rawArgs);
+}
+
+export function callFileManagerTool(name: string, rawArgs: unknown): Promise<unknown> {
+  return server.call(undefined, name, rawArgs);
 }

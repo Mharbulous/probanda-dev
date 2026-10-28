@@ -7,19 +7,14 @@
 import { DataServerError, ValidationError } from "../errors.js";
 import { absolute, getObject, requireDav, runDav, type DavContext } from "../dav/session.js";
 import { parseContact, type Contact } from "./vcard.js";
+import type { Tool } from "../tool-list.js";
 
 type Args = Record<string, unknown>;
 
-export function callContactsTool(context: DavContext, name: string, args: Args): Promise<unknown> {
-  switch (name) {
-    case "contacts__search":
-      return search(context, args);
-    case "contacts__get":
-      return get(context, args);
-    default:
-      throw new ValidationError(`Unknown tool "${name}"`);
-  }
-}
+export const contactsTools: Tool<DavContext>[] = [
+  { name: "contacts__search", handler: (args, context) => search(context, args) },
+  { name: "contacts__get", handler: (args, context) => get(context, args) },
+];
 
 type Listed = Omit<Contact, "isGroup"> & { url: string; etag?: string };
 

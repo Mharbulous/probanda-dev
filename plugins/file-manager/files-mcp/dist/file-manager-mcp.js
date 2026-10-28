@@ -1,4 +1,4 @@
-// build-stamp: dff207288069
+// build-stamp: 0b08aecdfb5a
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -4249,8 +4249,8 @@ var require_core = __commonJS({
         }
       }
       // add "vocabulary" - a collection of keywords
-      addVocabulary(definitions2) {
-        for (const def of definitions2)
+      addVocabulary(definitions) {
+        for (const def of definitions)
           this.addKeyword(def);
         return this;
       }
@@ -15734,6 +15734,52 @@ function isPlainObject3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+// src/tool-list.ts
+function defineTool(name, handler) {
+  return { name, handler: (args, context) => handler(args, context) };
+}
+function dispatchFrom(buildDefinitions, tools2, replyText2 = jsonText) {
+  let table;
+  const call = async (context, name, rawArgs) => {
+    table ??= pair(buildDefinitions(), tools2);
+    const entry = table.get(name);
+    if (!entry) throw new ValidationError(`Unknown tool "${name}"`);
+    return entry.handler(validateToolInput(entry.definition, rawArgs), context);
+  };
+  return { call, dispatch: (context, name, rawArgs) => toolReply(name, () => call(context, name, rawArgs), replyText2) };
+}
+function pair(definitions, tools2) {
+  const handlers = /* @__PURE__ */ new Map();
+  const problems = [];
+  for (const tool of tools2) {
+    if (handlers.has(tool.name)) problems.push(`${tool.name} is listed twice`);
+    handlers.set(tool.name, tool.handler);
+  }
+  const table = /* @__PURE__ */ new Map();
+  for (const definition of definitions) {
+    const handler = handlers.get(definition.name);
+    if (handler) table.set(definition.name, { definition, handler });
+    else problems.push(`no handler for ${definition.name}`);
+  }
+  for (const name of handlers.keys()) {
+    if (!table.has(name)) problems.push(`no definition for ${name}`);
+  }
+  if (problems.length) throw new DataServerError(`The tool list and its definitions differ: ${problems.join("; ")}`, "internal_error");
+  return table;
+}
+async function toolReply(name, run, replyText2 = jsonText) {
+  try {
+    return { content: [{ type: "text", text: replyText2(name, await run()) }] };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const payload = err instanceof DataServerError ? { error: { code: err.code, message } } : { error: { code: "data_error", message } };
+    return { content: [{ type: "text", text: jsonText(name, payload) }], isError: true };
+  }
+}
+function jsonText(_name, result) {
+  return JSON.stringify(result, null, 2);
+}
+
 // src/file_ops/trash.ts
 import {
   appendFileSync,
@@ -19008,21 +19054,21 @@ async function servePage(matterRoot, runId) {
 }
 function ensureListening() {
   listening ??= new Promise((resolve3, reject) => {
-    const server = createServer((req, res) => {
+    const server2 = createServer((req, res) => {
       handle(req, res).catch((err) => {
         if (!res.headersSent) send(res, 500, "application/json", JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
         else res.destroy();
       });
     });
-    server.on("connection", (socket) => socket.unref());
-    server.keepAliveTimeout = 0;
-    server.once("error", (err) => {
+    server2.on("connection", (socket) => socket.unref());
+    server2.keepAliveTimeout = 0;
+    server2.once("error", (err) => {
       listening = void 0;
       reject(err);
     });
-    server.listen(0, "127.0.0.1", () => {
-      server.unref();
-      resolve3({ server, port: server.address().port });
+    server2.listen(0, "127.0.0.1", () => {
+      server2.unref();
+      resolve3({ server: server2, port: server2.address().port });
     });
   });
   return listening;
@@ -19202,31 +19248,9 @@ async function waitApproval(matterRoot, runId, env = process.env) {
 }
 
 // src/file-manager-dispatch.ts
-var definitions;
-function toolDefinition(name) {
-  if (!definitions) {
-    definitions = new Map(buildFileManagerToolDefinitions().map((tool) => [tool.name, tool]));
-  }
-  const definition = definitions.get(name);
-  if (!definition) throw new ValidationError(`Unknown tool "${name}"`);
-  return definition;
-}
-async function dispatchFileManagerTool(name, rawArgs) {
-  try {
-    return { content: [{ type: "text", text: replyText(name, await callFileManagerTool(name, rawArgs)) }] };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const payload = err instanceof DataServerError ? { error: { code: err.code, message } } : { error: { code: "data_error", message } };
-    return { ...textResult(payload), isError: true };
-  }
-}
-async function callFileManagerTool(name, rawArgs) {
-  const definition = toolDefinition(name);
-  const args = validateToolInput(definition, rawArgs);
-  if (name === "file_ops__trash") {
-    return fileOpsTrash(args.path, args.dry_run ?? false);
-  }
-  if (name === "file_ops__move") {
+var tools = [
+  defineTool("file_ops__trash", ({ path, dry_run }) => fileOpsTrash(path, dry_run ?? false)),
+  defineTool("file_ops__move", (args) => {
     const createFolders = args.create_folders ?? [];
     if (!Array.isArray(createFolders) || createFolders.some((f) => typeof f !== "string")) {
       throw new ValidationError("file_ops__move.create_folders must be an array of strings");
@@ -19239,69 +19263,53 @@ async function callFileManagerTool(name, rawArgs) {
       args.draft_unchanged ?? false,
       args.superseded ?? false
     );
-  }
-  if (name === "file_ops__move_from_downloads") {
-    return fileOpsMoveFromDownloads(args.matter_root, args.source_filename, args.destination);
-  }
-  if (name === "housekeeping__preflight") {
-    return preflight(args.matter_root, args.include_template ?? false);
-  }
-  if (name === "housekeeping__new_run") {
-    return newRun(args.matter_root);
-  }
-  if (name === "housekeeping__candidates") {
-    return candidates(args);
-  }
-  if (name === "housekeeping__write_run_file") {
-    return writeRunFile(args.matter_root, args.run_id, args.file_name, args.content);
-  }
-  if (name === "housekeeping__serve_page") {
-    return servePage(args.matter_root, args.run_id);
-  }
-  if (name === "housekeeping__preview") {
-    return housekeepingPreview(args);
-  }
-  if (name === "housekeeping__wait_approval") {
-    return waitApproval(args.matter_root, args.run_id);
-  }
-  if (name === "housekeeping__resolve") {
-    return resolveRun(args.matter_root, args.run_id);
-  }
-  if (name === "housekeeping__reconcile") {
-    return reconcile(args.matter_root, args.run_id);
-  }
-  if (name === "housekeeping__journal_append") {
-    return journalAppend(
-      args.matter_root,
-      args.run_id,
-      args.row_id,
-      args.outcome,
-      args.reason
-    );
-  }
-  throw new ValidationError(`Unknown tool "${name}"`);
-}
+  }),
+  defineTool(
+    "file_ops__move_from_downloads",
+    (args) => fileOpsMoveFromDownloads(args.matter_root, args.source_filename, args.destination)
+  ),
+  defineTool(
+    "housekeeping__preflight",
+    (args) => preflight(args.matter_root, args.include_template ?? false)
+  ),
+  defineTool("housekeeping__new_run", (args) => newRun(args.matter_root)),
+  defineTool("housekeeping__candidates", (args) => candidates(args)),
+  defineTool(
+    "housekeeping__write_run_file",
+    (args) => writeRunFile(args.matter_root, args.run_id, args.file_name, args.content)
+  ),
+  defineTool("housekeeping__serve_page", (args) => servePage(args.matter_root, args.run_id)),
+  defineTool("housekeeping__preview", (args) => housekeepingPreview(args)),
+  defineTool("housekeeping__wait_approval", (args) => waitApproval(args.matter_root, args.run_id)),
+  defineTool("housekeeping__resolve", (args) => resolveRun(args.matter_root, args.run_id)),
+  defineTool("housekeeping__reconcile", (args) => reconcile(args.matter_root, args.run_id)),
+  defineTool(
+    "housekeeping__journal_append",
+    (args) => journalAppend(args.matter_root, args.run_id, args.row_id, args.outcome, args.reason)
+  )
+];
 function replyText(name, result) {
   return name === "housekeeping__candidates" ? JSON.stringify(result) : JSON.stringify(result, null, 2);
 }
-function textResult(result) {
-  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+var server = dispatchFrom(buildFileManagerToolDefinitions, tools, replyText);
+function dispatchFileManagerTool(name, rawArgs) {
+  return server.dispatch(void 0, name, rawArgs);
 }
 
 // src/file-manager-index.ts
 async function start() {
-  const server = new Server(
+  const server2 = new Server(
     { name: "file-manager-mcp", version: "1.0.0" },
     { capabilities: { tools: {} } }
   );
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  server2.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: buildFileManagerToolDefinitions()
   }));
-  server.setRequestHandler(
+  server2.setRequestHandler(
     CallToolRequestSchema,
     async (request) => dispatchFileManagerTool(request.params.name, request.params.arguments ?? {})
   );
-  await server.connect(new StdioServerTransport());
+  await server2.connect(new StdioServerTransport());
 }
 var isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {

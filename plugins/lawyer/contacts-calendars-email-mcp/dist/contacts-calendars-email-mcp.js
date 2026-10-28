@@ -1,4 +1,4 @@
-// build-stamp: 0f70cffe5ae6
+// build-stamp: b3b06cdaa58a
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -4260,8 +4260,8 @@ var require_core = __commonJS({
         }
       }
       // add "vocabulary" - a collection of keywords
-      addVocabulary(definitions2) {
-        for (const def of definitions2)
+      addVocabulary(definitions) {
+        for (const def of definitions)
           this.addKeyword(def);
         return this;
       }
@@ -108018,6 +108018,49 @@ function isPlainObject3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+// src/tool-list.ts
+function dispatchFrom(buildDefinitions, tools2, replyText = jsonText) {
+  let table;
+  const call = async (context, name2, rawArgs) => {
+    table ??= pair(buildDefinitions(), tools2);
+    const entry = table.get(name2);
+    if (!entry) throw new ValidationError(`Unknown tool "${name2}"`);
+    return entry.handler(validateToolInput(entry.definition, rawArgs), context);
+  };
+  return { call, dispatch: (context, name2, rawArgs) => toolReply(name2, () => call(context, name2, rawArgs), replyText) };
+}
+function pair(definitions, tools2) {
+  const handlers = /* @__PURE__ */ new Map();
+  const problems = [];
+  for (const tool of tools2) {
+    if (handlers.has(tool.name)) problems.push(`${tool.name} is listed twice`);
+    handlers.set(tool.name, tool.handler);
+  }
+  const table = /* @__PURE__ */ new Map();
+  for (const definition of definitions) {
+    const handler = handlers.get(definition.name);
+    if (handler) table.set(definition.name, { definition, handler });
+    else problems.push(`no handler for ${definition.name}`);
+  }
+  for (const name2 of handlers.keys()) {
+    if (!table.has(name2)) problems.push(`no definition for ${name2}`);
+  }
+  if (problems.length) throw new DataServerError(`The tool list and its definitions differ: ${problems.join("; ")}`, "internal_error");
+  return table;
+}
+async function toolReply(name2, run, replyText = jsonText) {
+  try {
+    return { content: [{ type: "text", text: replyText(name2, await run()) }] };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const payload = err instanceof DataServerError ? { error: { code: err.code, message } } : { error: { code: "data_error", message } };
+    return { content: [{ type: "text", text: jsonText(name2, payload) }], isError: true };
+  }
+}
+function jsonText(_name, result) {
+  return JSON.stringify(result, null, 2);
+}
+
 // src/mail/tools.ts
 import { createHash as createHash2 } from "node:crypto";
 import { readFileSync as readFileSync2, statSync, writeFileSync } from "node:fs";
@@ -111963,12 +112006,12 @@ function getNamsepaceInfo(attribute) {
     return false;
   }
   return attribute.filter((entry) => {
-    let pair = entry;
-    return pair.length >= 2 && pair[0] && typeof pair[0].value === "string" && (pair[1] === null || pair[1] && typeof pair[1].value === "string");
+    let pair2 = entry;
+    return pair2.length >= 2 && pair2[0] && typeof pair2[0].value === "string" && (pair2[1] === null || pair2[1] && typeof pair2[1].value === "string");
   }).map((entry) => {
-    let pair = entry;
-    let prefix = pair[0].value;
-    let delimiter = pair[1] === null ? null : pair[1].value;
+    let pair2 = entry;
+    let prefix = pair2[0].value;
+    let delimiter = pair2[1] === null ? null : pair2[1].value;
     if (delimiter && prefix && prefix.charAt(prefix.length - 1) !== delimiter) {
       prefix += delimiter;
     }
@@ -118434,21 +118477,21 @@ import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 var MAX_BODY = 4 * 1024;
 function listen(handle2, onError, failure = "<p>Return to Claude and ask for a new link.</p>", style = STYLE) {
-  const server = createServer((req, res) => {
+  const server2 = createServer((req, res) => {
     handle2(req, res).catch(() => {
       if (!res.headersSent) page(res, 500, "Something went wrong", failure, style);
       else res.destroy();
     });
   });
-  server.on("connection", (socket) => socket.unref());
+  server2.on("connection", (socket) => socket.unref());
   return new Promise((resolve, reject) => {
-    server.once("error", (err) => {
+    server2.once("error", (err) => {
       onError();
       reject(err);
     });
-    server.listen(0, "127.0.0.1", () => {
-      server.unref();
-      resolve(server.address().port);
+    server2.listen(0, "127.0.0.1", () => {
+      server2.unref();
+      resolve(server2.address().port);
     });
   });
 }
@@ -120669,42 +120712,25 @@ var BODY_CAP = 25;
 var DRAFT_MAX_BYTES = 25 * 1024 * 1024;
 var FETCH_FIELDS = { uid: true, envelope: true, flags: true, size: true, internalDate: true };
 var PRINTABLE = /^[^\x00-\x1F\x7F]+$/;
-function callMailTool(context, name2, args) {
-  const run = (what, fn2) => withImap(context.mail, context.imapFactory ?? defaultImapFactory, what, fn2, context.mailTimeoutMs);
-  switch (name2) {
-    case "mail__configure_credential":
-      return configureCredential(context, args);
-    case "mail__configure_status":
-      return configureStatus(context.mail);
-    case "mail__list_folders":
-      return listFolders(run, args);
-    case "mail__folder_status":
-      return folderStatus(run, args);
-    case "mail__get_latest_emails":
-      return getLatestEmails(run, args);
-    case "mail__search_emails":
-      return searchEmails(run, args);
-    case "mail__get_email":
-      return getEmail(run, args);
-    case "mail__download_attachment":
-      return downloadAttachment(run, args);
-    case "mail__save_message":
-      return saveMessage(run, args);
-    case "mail__find_email_by_message_id":
-      return findByMessageId(run, args);
-    case "mail__find_thread_messages":
-      return findThreadMessages(run, args);
-    case "mail__save_draft":
-      return saveDraft(run, args);
-    case "mail__create_folder":
-      return createFolder(run, args);
-    case "mail__rename_folder":
-      return renameFolder(run, args);
-    case "mail__move_messages":
-      return moveMessages(run, args);
-    default:
-      throw new ValidationError(`Unknown tool "${name2}"`);
-  }
+var mailTools = [
+  { name: "mail__configure_credential", handler: (args, context) => configureCredential(context, args) },
+  { name: "mail__configure_status", handler: (_args, context) => configureStatus(context.mail) },
+  { name: "mail__list_folders", handler: (args, context) => listFolders(runFor(context), args) },
+  { name: "mail__folder_status", handler: (args, context) => folderStatus(runFor(context), args) },
+  { name: "mail__get_latest_emails", handler: (args, context) => getLatestEmails(runFor(context), args) },
+  { name: "mail__search_emails", handler: (args, context) => searchEmails(runFor(context), args) },
+  { name: "mail__get_email", handler: (args, context) => getEmail(runFor(context), args) },
+  { name: "mail__download_attachment", handler: (args, context) => downloadAttachment(runFor(context), args) },
+  { name: "mail__save_message", handler: (args, context) => saveMessage(runFor(context), args) },
+  { name: "mail__find_email_by_message_id", handler: (args, context) => findByMessageId(runFor(context), args) },
+  { name: "mail__find_thread_messages", handler: (args, context) => findThreadMessages(runFor(context), args) },
+  { name: "mail__save_draft", handler: (args, context) => saveDraft(runFor(context), args) },
+  { name: "mail__create_folder", handler: (args, context) => createFolder(runFor(context), args) },
+  { name: "mail__rename_folder", handler: (args, context) => renameFolder(runFor(context), args) },
+  { name: "mail__move_messages", handler: (args, context) => moveMessages(runFor(context), args) }
+];
+function runFor(context) {
+  return (what, fn2) => withImap(context.mail, context.imapFactory ?? defaultImapFactory, what, fn2, context.mailTimeoutMs);
 }
 function intArg(label, value, fallback, min, max = Infinity) {
   if (value === void 0) {
@@ -128736,18 +128762,11 @@ function describeMaster(vcal, tz) {
 }
 
 // src/calendar/tools.ts
-function callCalendarTool(context, name2, args) {
-  switch (name2) {
-    case "calendar__list_calendars":
-      return listCalendars(context);
-    case "calendar__list_events":
-      return listEvents(context, args);
-    case "calendar__get_event":
-      return getEvent(context, args);
-    default:
-      throw new ValidationError(`Unknown tool "${name2}"`);
-  }
-}
+var calendarTools = [
+  { name: "calendar__list_calendars", handler: (_args, context) => listCalendars(context) },
+  { name: "calendar__list_events", handler: (args, context) => listEvents(context, args) },
+  { name: "calendar__get_event", handler: (args, context) => getEvent(context, args) }
+];
 var nameOf = (c3) => (typeof c3.displayName === "string" ? c3.displayName : "") || decodeURIComponent(c3.url.split("/").filter(Boolean).pop() ?? "");
 async function eventCalendars(client) {
   const all = await client.fetchCalendars();
@@ -128969,16 +128988,10 @@ function parseContact(text2) {
 }
 
 // src/contacts/tools.ts
-function callContactsTool(context, name2, args) {
-  switch (name2) {
-    case "contacts__search":
-      return search2(context, args);
-    case "contacts__get":
-      return get(context, args);
-    default:
-      throw new ValidationError(`Unknown tool "${name2}"`);
-  }
-}
+var contactsTools = [
+  { name: "contacts__search", handler: (args, context) => search2(context, args) },
+  { name: "contacts__get", handler: (args, context) => get(context, args) }
+];
 var summary = (c3) => ({
   url: c3.url,
   name: c3.name,
@@ -129019,49 +129032,27 @@ async function get(context, args) {
 }
 
 // src/contacts-calendars-email-dispatch.ts
-var definitions;
-function toolDefinition(name2) {
-  if (!definitions) {
-    definitions = new Map(buildContactsCalendarsEmailToolDefinitions().map((tool) => [tool.name, tool]));
-  }
-  const definition = definitions.get(name2);
-  if (!definition) throw new ValidationError(`Unknown tool "${name2}"`);
-  return definition;
-}
-async function dispatchContactsCalendarsEmailTool(context, name2, rawArgs) {
-  try {
-    return textResult(await callContactsCalendarsEmailTool(context, name2, rawArgs));
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const payload = err instanceof DataServerError ? { error: { code: err.code, message } } : { error: { code: "data_error", message } };
-    return { ...textResult(payload), isError: true };
-  }
-}
-async function callContactsCalendarsEmailTool(context, name2, rawArgs) {
-  const args = validateToolInput(toolDefinition(name2), rawArgs);
-  if (name2.startsWith("mail__")) return callMailTool(context, name2, args);
-  if (name2.startsWith("calendar__")) return callCalendarTool(context, name2, args);
-  return callContactsTool(context, name2, args);
-}
-function textResult(result) {
-  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+var tools = [...mailTools, ...calendarTools, ...contactsTools];
+var server = dispatchFrom(buildContactsCalendarsEmailToolDefinitions, tools);
+function dispatchContactsCalendarsEmailTool(context, name2, rawArgs) {
+  return server.dispatch(context, name2, rawArgs);
 }
 
 // src/contacts-calendars-email-index.ts
 async function start() {
   const context = { mail: await loadMailConfig() };
-  const server = new Server(
+  const server2 = new Server(
     { name: "Contacts, Calendars & Email", title: "Contacts, Calendars & Email", version: "1.0.0" },
     { capabilities: { tools: {} } }
   );
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  server2.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: buildContactsCalendarsEmailToolDefinitions()
   }));
-  server.setRequestHandler(
+  server2.setRequestHandler(
     CallToolRequestSchema,
     async (request) => dispatchContactsCalendarsEmailTool(context, request.params.name, request.params.arguments ?? {})
   );
-  await server.connect(new StdioServerTransport());
+  await server2.connect(new StdioServerTransport());
 }
 var isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {

@@ -1,7 +1,8 @@
 import { dirname } from "node:path";
 
 import { DataServerError, ValidationError } from "./errors.js";
-import { buildToolDefinitions, type ToolDefinition } from "./schema-gen.js";
+import { buildToolDefinitions } from "./schema-gen.js";
+import { definitionLookup, jsonText, toolReply, type ToolReply } from "./tool-list.js";
 import { validateToolInput } from "./validate.js";
 import type { PracticeStore } from "./practice/store.js";
 import { callPracticeTool } from "./tools/practice/index.js";
@@ -116,28 +117,17 @@ export interface DispatchContext {
   practiceDb: PracticeStore;
 }
 
-let definitions: Map<string, ToolDefinition> | undefined;
+const toolDefinition = definitionLookup(buildToolDefinitions);
 
-export async function dispatchTool(
-  context: DispatchContext,
-  name: string,
-  rawArgs: unknown
-): Promise<{ content: Array<{ type: "text"; text: string }>; isError?: boolean }> {
-  try {
-    const result = await callTool(context, name, rawArgs);
-    // The rules tools answer in XML for the model to read (rules-DAG spec §4.4), not JSON-encoded.
-    if (name.startsWith("rules__")) {
-      if (typeof result !== "string") throw new DataServerError(`${name} returned a ${typeof result}, not its XML`, "internal_error");
-      return { content: [{ type: "text", text: result }] };
-    }
-    return textResult(result);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const payload = err instanceof DataServerError
-      ? { error: { code: err.code, message } }
-      : { error: { code: "data_error", message } };
-    return { ...textResult(payload), isError: true };
-  }
+export function dispatchTool(context: DispatchContext, name: string, rawArgs: unknown): Promise<ToolReply> {
+  return toolReply(name, () => callTool(context, name, rawArgs), replyText);
+}
+
+function replyText(name: string, result: unknown): string {
+  if (!name.startsWith("rules__")) return jsonText(name, result);
+  // The rules tools answer in XML for the model to read (rules-DAG spec §4.4), not JSON-encoded.
+  if (typeof result !== "string") throw new DataServerError(`${name} returned a ${typeof result}, not its XML`, "internal_error");
+  return result;
 }
 
 export async function callTool(
@@ -776,25 +766,5 @@ function once<T>(fn: () => T): () => T {
     }
     if ("error" in outcome) throw outcome.error;
     return outcome.value;
-  };
-}
-
-function toolDefinition(name: string): ToolDefinition {
-  if (!definitions) {
-    definitions = new Map(buildToolDefinitions().map((tool) => [tool.name, tool]));
-  }
-  const definition = definitions.get(name);
-  if (!definition) throw new ValidationError(`Unknown tool "${name}"`);
-  return definition;
-}
-
-function textResult(result: unknown): { content: Array<{ type: "text"; text: string }> } {
-  return {
-    content: [
-      {
-        type: "text",
-        text: JSON.stringify(result, null, 2),
-      },
-    ],
   };
 }

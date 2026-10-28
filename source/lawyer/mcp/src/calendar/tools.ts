@@ -9,21 +9,15 @@ import { DataServerError, ValidationError } from "../errors.js";
 import { absolute, getObject, requireDav, runDav, type DavClientLike, type DavCollection, type DavContext } from "../dav/session.js";
 import { parseDateOnly, parseToUtc, wallToUtc } from "../dav/tz.js";
 import { describeObject, expandObject, type Occurrence } from "./ical.js";
+import type { Tool } from "../tool-list.js";
 
 type Args = Record<string, unknown>;
 
-export function callCalendarTool(context: DavContext, name: string, args: Args): Promise<unknown> {
-  switch (name) {
-    case "calendar__list_calendars":
-      return listCalendars(context);
-    case "calendar__list_events":
-      return listEvents(context, args);
-    case "calendar__get_event":
-      return getEvent(context, args);
-    default:
-      throw new ValidationError(`Unknown tool "${name}"`);
-  }
-}
+export const calendarTools: Tool<DavContext>[] = [
+  { name: "calendar__list_calendars", handler: (_args, context) => listCalendars(context) },
+  { name: "calendar__list_events", handler: (args, context) => listEvents(context, args) },
+  { name: "calendar__get_event", handler: (args, context) => getEvent(context, args) },
+];
 
 const nameOf = (c: DavCollection): string =>
   (typeof c.displayName === "string" ? c.displayName : "") || decodeURIComponent(c.url.split("/").filter(Boolean).pop() ?? "");
