@@ -3,6 +3,7 @@ import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
+import { generateResolver } from "./resolver.mjs";
 import { generate } from "./templates.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -54,6 +55,8 @@ const submissionSchemaVersion = Number(schemaMatch[1]);
 // The board templates' generated modules (scripts/templates.mjs) are gitignored, so write them
 // before bundling: a bundle run alone, without `npm run build`, still finds them.
 generate();
+// Likewise the case-data resolver's generated module (scripts/resolver.mjs).
+generateResolver();
 
 // imapflow's CommonJS dependencies (libmime and others) require Node built-ins when imported,
 // which esbuild's ESM output refuses without a real `require` in scope. The bundles that hold it get one;

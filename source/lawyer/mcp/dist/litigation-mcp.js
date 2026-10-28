@@ -1,4 +1,4 @@
-// build-stamp: 010ba3867903
+// build-stamp: a3a66750643c
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -79808,11 +79808,11 @@ async function read_signals(store, args) {
 }
 
 // src/tools/practice/writes.ts
-import { isAbsolute, relative } from "node:path";
+import { isAbsolute as isAbsolute2, relative } from "node:path";
 
 // src/tools/practice/contacts.ts
-import { existsSync as existsSync7, readdirSync as readdirSync6 } from "node:fs";
-import { dirname as dirname4, join as join11 } from "node:path";
+import { existsSync as existsSync8, readdirSync as readdirSync7 } from "node:fs";
+import { dirname as dirname5, join as join12 } from "node:path";
 
 // src/case/backend.ts
 import { existsSync as existsSync6, readFileSync as readFileSync5 } from "node:fs";
@@ -80216,50 +80216,84 @@ function sleep(ms2) {
   return new Promise((resolve10) => setTimeout(resolve10, ms2));
 }
 
-// src/case/backend.ts
-var HALF_COMMIT_PREFIX = ".coclerk_execute_";
-var PY_HELPER2 = String.raw`
-import json, os, re, shutil, sqlite3, sys, tempfile
+// src/case/case-data-resolver.py.ts
+var case_data_resolver_py_default = `"""case_data_resolver.py \u2014 where a matter's case data lives (MODULE).
 
-CASE_DATA_FOLDER = '0. CASE DATA'
-LEGACY_ARTIFACTS_DIR = '9. AI'
-ENV_ROOT_OVERRIDE = 'COCLERK_CASE_DATA_ROOT'
-EXPECTED_USER_VERSION = 90
-EXPECTED_SCHEMA_VERSION = 5
-POINTER_NAMES = ('probanda.json', 'coclerk.json')
-DBS = ('main', 'law', 'privileged')
-DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
+The one resolver of a matter's matter-data folder (ADR 0013). Two readers take it:
+resolve_paths.py imports it, and the data server's build pastes this file's text
+into the backend's embedded helper (source/lawyer/mcp/scripts/resolver.mjs), so the
+server still imports nothing from the skill tree at run time.
+
+BYPASS-FREE BY DESIGN: this file holds no pointer write-back, no legacy migration and
+no schema-version guard, so it has nothing a migrate_only flag could skip. The guard
+bypass stays in resolve_paths.resolve_pointer, reached only from migrate_engine.py
+(design-decisions.md #27). Never add resolve_pointer, or anything that imports
+resolve_paths, here: the backend embeds this file whole.
+
+E1-ONLY, as resolve_paths.py: it stages temp copies of main.sqlite. See ../scripts.md.
+
+Standard library only.
+"""
+
+import os
+import re
+import shutil
+import sqlite3
+import tempfile
+
+CASE_DATA_FOLDER = '0. CASE DATA'                       # the matter's case-data folder, and the firm root's name
+ENV_ROOT_OVERRIDE = 'COCLERK_CASE_DATA_ROOT'            # replaces computed root when set
+
+
+def staging_prefix(kind):
+    """Temp-folder prefix \`coclerk_<kind>_<tag>_\`, tagged with the data runtime's per-call
+    COCLERK_STAGING_TAG so a call killed on timeout has its folders removed by tag (#1060).
+    Run by hand there is no tag, and the prefix is the untagged \`coclerk_<kind>_\`."""
+    tag = os.environ.get('COCLERK_STAGING_TAG')
+    return 'coclerk_%s_%s_' % (kind, tag) if tag else 'coclerk_%s_' % kind
 
 
 def is_absolute(p):
+    """True for a Windows drive-letter path, a UNC path, or a POSIX absolute path."""
     if not p:
         return False
-    if re.match(r'^[A-Za-z]:[\\/]', p):
+    if re.match(r'^[A-Za-z]:[\\\\/]', p):
         return True
-    if p.startswith('\\\\') or p.startswith('//'):
+    if p.startswith('\\\\\\\\') or p.startswith('//'):
         return True
     return p.startswith('/')
 
 
 def norm_join(base, *parts):
+    """Path join tolerant of both separators; normalized to native form."""
     joined = os.path.join(base, *parts)
-    return os.path.normpath(joined.replace('\\', os.sep).replace('/', os.sep))
+    return os.path.normpath(joined.replace('\\\\', os.sep).replace('/', os.sep))
 
 
 def sanitize_short_name(name):
-    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '', name or '').strip()
+    """Strip illegal filename characters and trim to 60 chars."""
+    cleaned = re.sub(r'[<>:"/\\\\|?*\\x00-\\x1f]', '', name or '').strip()
     return cleaned[:60].strip()
 
 
 def parse_folder_name(matter_folder):
+    """Fallback identity from the matter folder name.
+
+    Patterns like "<client>.<matter> Short Name" or "<matter> Short Name": the
+    leading token (client.matter or matter-only) is the matter reference,
+    stored under the \`matter_id\` metadata key; the remainder is the short
+    name. Returns (matter_id, short_name).
+    """
     base = os.path.basename(os.path.normpath(matter_folder))
-    m = re.match(r'^\s*((?:\d+\.)?[A-Za-z]?\d+[A-Za-z0-9.\-]*)\s+(.*)$', base)
+    m = re.match(r'^\\s*((?:\\d+\\.)?[A-Za-z]?\\d+[A-Za-z0-9.\\-]*)\\s+(.*)$', base)
     if m:
         return m.group(1).strip(), sanitize_short_name(m.group(2))
     return sanitize_short_name(base), ''
 
 
 def case_data_root(matter_root):
+    """The firm-level case data root: env override, else the library's '0. CASE DATA'.
+    A matter not yet relocated keeps its folder here (ADR 0013)."""
     override = os.environ.get(ENV_ROOT_OVERRIDE)
     if override:
         return override
@@ -80267,36 +80301,18 @@ def case_data_root(matter_root):
 
 
 def matter_case_data_dir(matter_root):
-    """The matter's own case-data folder, MATTER_ROOT/0. CASE DATA (ADR 0013)."""
+    """The matter's own case-data folder: MATTER_ROOT/0. CASE DATA (ADR 0013)."""
     return norm_join(matter_root, CASE_DATA_FOLDER)
 
 
-def pointer_case_data_dir(matter_root, case_data_dir):
-    """The pointer's case_data_dir value: relative to the matter root when the folder is
-    inside it, absolute otherwise, as evidence_sql_path is stored."""
-    try:
-        rel = os.path.relpath(case_data_dir, matter_root)
-    except ValueError:
-        return case_data_dir
-    if rel in (os.curdir, os.pardir) or rel.startswith(os.pardir + os.sep):
-        return case_data_dir
-    return rel
-
-
-def default_evidence_sql(matter_root, case_data_dir):
-    """The text dump beside the databases, relative to the matter root so the pointer survives
-    a change of user profile; absolute when the two are on different drives."""
-    path = norm_join(case_data_dir, 'evidence.sql')
-    try:
-        return os.path.relpath(path, matter_root)
-    except ValueError:
-        return path
-
-
 def identity_from_metadata(main_sqlite_path):
+    """Return (matter_id, short_name) from main.matter_metadata, or (None, None).
+
+    Probes a temp copy so the native binary is never opened in place.
+    """
     if not os.path.exists(main_sqlite_path):
         return None, None
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_probe_{os.environ["COCLERK_STAGING_TAG"]}_')
+    tmp = tempfile.mkdtemp(prefix=staging_prefix('probe'))
     dst = os.path.join(tmp, 'main.sqlite')
     try:
         shutil.copy2(main_sqlite_path, dst)
@@ -80316,35 +80332,30 @@ def identity_from_metadata(main_sqlite_path):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-def read_user_version(sqlite_path):
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_guard_{os.environ["COCLERK_STAGING_TAG"]}_')
-    probe = os.path.join(tmp, os.path.basename(sqlite_path))
-    try:
-        shutil.copy2(sqlite_path, probe)
-        con = sqlite3.connect(probe)
-        try:
-            return con.execute("PRAGMA user_version").fetchone()[0]
-        finally:
-            con.close()
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
-
-
 def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
-    def resolved_nominee(value):
-        if not value:
-            return None
-        return os.path.normpath(value) if is_absolute(value) else norm_join(matter_root, value)
+    """Select a usable stored nominee, else the matter's own 0. CASE DATA folder
+    holding main.sqlite, else a not-yet-relocated folder under the firm root, else
+    the matter's own folder as the default (ADR 0013).
 
-    nominee = resolved_nominee(stored)
-    if nominee != legacy_dir and nominee and os.path.exists(norm_join(nominee, 'main.sqlite')):
+    Returns \`\`(case_data_dir, rejected_nominee)\`\`. A stored path is only a
+    nomination: absolute and relative custom locations remain supported when
+    they contain \`\`main.sqlite\`\`.
+    """
+    if stored:
+        nominee = os.path.normpath(stored) if is_absolute(stored) \\
+            else norm_join(matter_root, stored)
+    else:
+        nominee = None
+
+    if nominee != legacy_dir and nominee \\
+            and os.path.exists(norm_join(nominee, 'main.sqlite')):
         return nominee, False
 
-    # The matter's own folder (ADR 0013), then a not-yet-relocated folder under the firm root.
     in_matter = matter_case_data_dir(matter_root)
     if os.path.exists(norm_join(in_matter, 'main.sqlite')):
         return in_matter, bool(stored)
 
+    # A matter not yet relocated keeps its folder under the firm root.
     # A matter folder can be renamed independently of its database folder.
     # Search only direct live-root children with the same matter reference,
     # then prove identity from main.sqlite before selecting one.
@@ -80385,6 +80396,55 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
     rejected = bool(stored and nominee != legacy_dir
                     and os.path.normcase(nominee) != os.path.normcase(derived))
     return derived, rejected
+`;
+
+// src/case/backend.ts
+var HALF_COMMIT_PREFIX = ".coclerk_execute_";
+var PY_HELPER2 = case_data_resolver_py_default + String.raw`
+import json, os, re, shutil, sqlite3, sys, tempfile
+
+LEGACY_ARTIFACTS_DIR = '9. AI'
+EXPECTED_USER_VERSION = 90
+EXPECTED_SCHEMA_VERSION = 5
+POINTER_NAMES = ('probanda.json', 'coclerk.json')
+DBS = ('main', 'law', 'privileged')
+DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
+
+
+def pointer_case_data_dir(matter_root, case_data_dir):
+    """The pointer's case_data_dir value: relative to the matter root when the folder is
+    inside it, absolute otherwise, as evidence_sql_path is stored."""
+    try:
+        rel = os.path.relpath(case_data_dir, matter_root)
+    except ValueError:
+        return case_data_dir
+    if rel in (os.curdir, os.pardir) or rel.startswith(os.pardir + os.sep):
+        return case_data_dir
+    return rel
+
+
+def default_evidence_sql(matter_root, case_data_dir):
+    """The text dump beside the databases, relative to the matter root so the pointer survives
+    a change of user profile; absolute when the two are on different drives."""
+    path = norm_join(case_data_dir, 'evidence.sql')
+    try:
+        return os.path.relpath(path, matter_root)
+    except ValueError:
+        return path
+
+
+def read_user_version(sqlite_path):
+    tmp = tempfile.mkdtemp(prefix=f'coclerk_guard_{os.environ["COCLERK_STAGING_TAG"]}_')
+    probe = os.path.join(tmp, os.path.basename(sqlite_path))
+    try:
+        shutil.copy2(sqlite_path, probe)
+        con = sqlite3.connect(probe)
+        try:
+            return con.execute("PRAGMA user_version").fetchone()[0]
+        finally:
+            con.close()
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def read_pointer(matter_root):
@@ -80862,55 +80922,9 @@ function listCaseParties(caseDataDir, env = process.env) {
   }
 }
 
-// src/build-stamp.ts
-import { readFileSync as readFileSync6 } from "node:fs";
-import { join as join10 } from "node:path";
-var BUILD_STAMP = false ? null : "010ba3867903";
-var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
-function noComparison(build_note) {
-  return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
-}
-function buildNote(running, current, installed) {
-  const action = installed === current ? "Start a new session; the installed copy is current." : "Reinstall the lawyer plugin, then restart the app fully.";
-  return `This server is running build ${running}; the repo's current build is ${current}. ${action}`;
-}
-function installedStamp() {
-  try {
-    return STAMP_LINE.exec(readFileSync6(join10(INSTALL_ROOT, "mcp", "dist", "litigation-mcp.js"), "utf-8"))?.[1] ?? null;
-  } catch {
-    return null;
-  }
-}
-function buildStampStatus(env = process.env) {
-  if (BUILD_STAMP === null) {
-    return noComparison("This server runs unbundled code, which carries no build stamp -- no build comparison was made.");
-  }
-  let current;
-  try {
-    const repoRoot = resolveRepoRoot(env, { code: "repo_root_missing", subject: "the tracked litigation bundle" });
-    const tracked2 = join10(repoRoot, "source", "lawyer", "mcp", "dist", "litigation-mcp.js");
-    current = STAMP_LINE.exec(readFileSync6(tracked2, "utf-8"))?.[1] ?? null;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return noComparison(`No build comparison was made -- the repo's tracked litigation bundle could not be read: ${message}`);
-  }
-  if (current === null) {
-    return noComparison("No build comparison was made -- the repo's tracked litigation bundle carries no build-stamp line.");
-  }
-  if (current === BUILD_STAMP) {
-    return { build_stamp: BUILD_STAMP, current_build_stamp: current, server_outdated: false };
-  }
-  return {
-    build_stamp: BUILD_STAMP,
-    current_build_stamp: current,
-    server_outdated: true,
-    build_note: buildNote(BUILD_STAMP, current, installedStamp())
-  };
-}
-
-// src/knowledge/tree.ts
-import { readFileSync as readFileSync7, readdirSync as readdirSync5, realpathSync as realpathSync2, statSync as statSync3 } from "node:fs";
-import { win32 as pathWin325 } from "node:path";
+// src/files/matter-root.ts
+import { existsSync as existsSync7, readdirSync as readdirSync5, readFileSync as readFileSync6, statSync as statSync3 } from "node:fs";
+import { basename as basename2, dirname as dirname4, isAbsolute, join as join10, normalize, resolve as resolve2, win32 as pathWin325 } from "node:path";
 
 // src/files/scope.ts
 import { realpathSync } from "node:fs";
@@ -80994,7 +81008,157 @@ function toPosixRelative(canonRoot, resolved) {
   return pathWin324.relative(canonRoot, resolved).split(pathWin324.sep).join("/");
 }
 
+// src/files/matter-root.ts
+var POINTER_FILES = ["probanda.json", "coclerk.json"];
+var POINTER_SCHEMA_VERSION = 5;
+var LEGACY_ARTIFACTS_DIR = "9. AI";
+var SUBMISSION_DB_FILE = "submission.sqlite";
+var CASE_DATA_FOLDER = "0. CASE DATA";
+function findPointer(root) {
+  return POINTER_FILES.map((name) => join10(root, name)).find((path) => existsSync7(path));
+}
+function validateMatterRoot(matterRoot) {
+  if (typeof matterRoot !== "string" || matterRoot.length === 0) {
+    throw new DataServerError("matter_root is required", "invalid_root");
+  }
+  if (!pathWin325.isAbsolute(matterRoot)) {
+    throw new DataServerError(`matter_root must be an absolute path: ${matterRoot}`, "invalid_root");
+  }
+  const canon = canonicalRoot(matterRoot, `matter_root not found: ${matterRoot}`, "invalid_root");
+  if (!statSync3(canon).isDirectory()) {
+    throw new DataServerError(`matter_root is not a directory: ${matterRoot}`, "invalid_root");
+  }
+  if (findPointer(canon) === void 0) {
+    throw new DataServerError(
+      `matter_root has no probanda.json or coclerk.json \u2014 not an initialized matter: ${matterRoot}`,
+      "invalid_root"
+    );
+  }
+  return canon;
+}
+function findDraftDir(root) {
+  const matches = readdirSync5(root, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && /^0\. DRAFT/i.test(e3.name)).map((e3) => e3.name).sort();
+  if (matches.length > 1) {
+    throw new DataServerError(
+      `${root} has ${matches.length} 0. DRAFT folders (${matches.map((m3) => `"${m3}"`).join(", ")}); keep one so the Litigation Strategy has a single home.`,
+      "draft_dir_ambiguous"
+    );
+  }
+  return matches.length === 1 ? join10(root, matches[0]) : void 0;
+}
+function existingCaseDataFolder(root, env = process.env) {
+  const dir = caseDataFolder(root, env);
+  const missing = `the matter's matter-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
+  const canon = canonicalRoot(dir, missing, "case_data_missing");
+  if (!statSync3(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
+  return canon;
+}
+function pointerRefusal(root, why) {
+  return new DataServerError(
+    `${findPointer(root) ?? join10(root, POINTER_FILES[0])} ${why}. Run /matter-data on this matter to initialize or repair its pointer; drafting_forms__open_session never rewrites it.`,
+    "pointer_unusable"
+  );
+}
+function resolveCaseDataDir(root) {
+  let pointer;
+  try {
+    pointer = JSON.parse(readFileSync6(findPointer(root) ?? join10(root, POINTER_FILES[0]), "utf-8").replace(/\0/g, ""));
+  } catch (err) {
+    throw pointerRefusal(root, `is not readable JSON (${err.message})`);
+  }
+  if (pointer.schema_version !== POINTER_SCHEMA_VERSION) {
+    throw pointerRefusal(root, `is schema_version ${JSON.stringify(pointer.schema_version)}, expected ${POINTER_SCHEMA_VERSION}`);
+  }
+  const stored = pointer.case_data_dir;
+  if (typeof stored !== "string" || stored === "") {
+    throw pointerRefusal(root, "has no case_data_dir");
+  }
+  const caseDataDir = normalize(isAbsolute(stored) ? stored : resolve2(root, stored));
+  if (caseDataDir.toLowerCase() === normalize(join10(root, LEGACY_ARTIFACTS_DIR)).toLowerCase()) {
+    throw pointerRefusal(root, `still points at the legacy "${LEGACY_ARTIFACTS_DIR}" folder`);
+  }
+  return caseDataDir;
+}
+function resolveDbPath(root) {
+  const caseDataDir = resolveCaseDataDir(root);
+  const dbPath = join10(caseDataDir, SUBMISSION_DB_FILE);
+  if (!existsSync7(dbPath) && !existsSync7(dirname4(caseDataDir))) {
+    throw pointerRefusal(root, `names ${caseDataDir}, whose parent folder does not exist on this device`);
+  }
+  return dbPath;
+}
+function caseDataRootFromCaseDataDir(dir, env) {
+  const normal2 = normalize(dir);
+  const inMatter = basename2(normal2).toLowerCase() === CASE_DATA_FOLDER.toLowerCase();
+  const parent = inMatter ? join10(dirname4(dirname4(normal2)), CASE_DATA_FOLDER) : dirname4(normal2);
+  const override2 = env.COCLERK_CASE_DATA_ROOT;
+  const named2 = inMatter || basename2(parent).toLowerCase() === CASE_DATA_FOLDER.toLowerCase() || !!override2 && normalize(override2).toLowerCase() === parent.toLowerCase();
+  if (!named2) return null;
+  let canon;
+  try {
+    canon = canonicalRoot(parent, `case data root not found: ${parent}`);
+  } catch {
+    return null;
+  }
+  return statSync3(canon).isDirectory() ? canon : null;
+}
+function caseDataRootFromMatterRoot(matterRoot, env) {
+  const root = validateMatterRoot(matterRoot);
+  return caseDataRootFromCaseDataDir(resolveCaseDataDir(root), env);
+}
+function caseDataRootFromDbPath(dbPath, env) {
+  return caseDataRootFromCaseDataDir(dirname4(dbPath), env);
+}
+
+// src/build-stamp.ts
+import { readFileSync as readFileSync7 } from "node:fs";
+import { join as join11 } from "node:path";
+var BUILD_STAMP = false ? null : "a3a66750643c";
+var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
+function noComparison(build_note) {
+  return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
+}
+function buildNote(running, current, installed) {
+  const action = installed === current ? "Start a new session; the installed copy is current." : "Reinstall the lawyer plugin, then restart the app fully.";
+  return `This server is running build ${running}; the repo's current build is ${current}. ${action}`;
+}
+function installedStamp() {
+  try {
+    return STAMP_LINE.exec(readFileSync7(join11(INSTALL_ROOT, "mcp", "dist", "litigation-mcp.js"), "utf-8"))?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+function buildStampStatus(env = process.env) {
+  if (BUILD_STAMP === null) {
+    return noComparison("This server runs unbundled code, which carries no build stamp -- no build comparison was made.");
+  }
+  let current;
+  try {
+    const repoRoot = resolveRepoRoot(env, { code: "repo_root_missing", subject: "the tracked litigation bundle" });
+    const tracked2 = join11(repoRoot, "source", "lawyer", "mcp", "dist", "litigation-mcp.js");
+    current = STAMP_LINE.exec(readFileSync7(tracked2, "utf-8"))?.[1] ?? null;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return noComparison(`No build comparison was made -- the repo's tracked litigation bundle could not be read: ${message}`);
+  }
+  if (current === null) {
+    return noComparison("No build comparison was made -- the repo's tracked litigation bundle carries no build-stamp line.");
+  }
+  if (current === BUILD_STAMP) {
+    return { build_stamp: BUILD_STAMP, current_build_stamp: current, server_outdated: false };
+  }
+  return {
+    build_stamp: BUILD_STAMP,
+    current_build_stamp: current,
+    server_outdated: true,
+    build_note: buildNote(BUILD_STAMP, current, installedStamp())
+  };
+}
+
 // src/knowledge/tree.ts
+import { readFileSync as readFileSync8, readdirSync as readdirSync6, realpathSync as realpathSync2, statSync as statSync4 } from "node:fs";
+import { win32 as pathWin326 } from "node:path";
 var KNOWLEDGE_SKILLS = ["draft", "publish", "assemble", "legal-research", "docket-clerk"];
 var SHIPPED_DIR = { "docket-clerk": "shared/docket-clerk" };
 var OVERLAY_RESERVED = ["_superseded", "_fetched", "_inbox", "_hosts.json"];
@@ -81039,7 +81203,7 @@ function parseKnowledgePath(raw, label2, allowRoot = false) {
 function joinRelative(fromPath, relative5) {
   const slash = fromPath.lastIndexOf("/");
   const dir = slash === -1 ? "" : fromPath.slice(0, slash);
-  return pathWin325.normalize(dir ? `${dir}\\${relative5}` : relative5).split("\\").join("/");
+  return pathWin326.normalize(dir ? `${dir}\\${relative5}` : relative5).split("\\").join("/");
 }
 var COUNTRY = /^[A-Z]{3}$/;
 var JURISDICTION = /^[A-Z]{2,3}$/;
@@ -81145,7 +81309,7 @@ function shippedLayer(skill, rest, seams) {
     shipped.shipped_from === "install" ? `bundled skill source not found at ${shipped.root}; reinstall the plugin and fully restart` : `skills tree not found at ${shipped.root}; the repo has moved or COCLERK_REPO_ROOT is wrong`,
     "skills_root_missing"
   );
-  const references = pathWin325.join(skillsRoot, ...dir.split("/"), "references");
+  const references = pathWin326.join(skillsRoot, ...dir.split("/"), "references");
   let canon = null;
   try {
     canon = realpathSync2.native(references);
@@ -81153,11 +81317,11 @@ function shippedLayer(skill, rest, seams) {
     canon = null;
   }
   if (canon !== null) assertContained(skillsRoot, canon, `${skill}/references`, references);
-  return { layer: { canon, abs: pathWin325.join(canon ?? references, ...rest) }, shipped_from: shipped.shipped_from };
+  return { layer: { canon, abs: pathWin326.join(canon ?? references, ...rest) }, shipped_from: shipped.shipped_from };
 }
 function overlayLayer(segments, seams, label2) {
   const configured = resolveCaseDataRoot(seams.env ?? process.env, seams.caseDataRoot);
-  const shown = pathWin325.join(configured, "_practice", "knowledge", ...segments);
+  const shown = pathWin326.join(configured, "_practice", "knowledge", ...segments);
   if (shown.length > MAX_PATH_CHARS) {
     throw new DataServerError(
       `${label2}: the overlay path is ${shown.length} characters, over the Windows limit of ${MAX_PATH_CHARS}: ${shown}`,
@@ -81165,7 +81329,7 @@ function overlayLayer(segments, seams, label2) {
     );
   }
   const caseRoot = canonicalRoot(configured, `case_data_root not found: ${configured}`, "case_data_root_missing");
-  const knowledgeDir = pathWin325.join(caseRoot, "_practice", "knowledge");
+  const knowledgeDir = pathWin326.join(caseRoot, "_practice", "knowledge");
   let canon = null;
   try {
     canon = realpathSync2.native(knowledgeDir);
@@ -81173,7 +81337,7 @@ function overlayLayer(segments, seams, label2) {
     canon = null;
   }
   if (canon !== null) assertContained(caseRoot, canon, label2, knowledgeDir);
-  return { canon, abs: pathWin325.join(canon ?? knowledgeDir, ...segments) };
+  return { canon, abs: pathWin326.join(canon ?? knowledgeDir, ...segments) };
 }
 function locate(kp, seams, label2 = "path") {
   const local = overlayLayer(kp.segments, seams, label2);
@@ -81190,11 +81354,11 @@ function entryType(root, label2, original) {
     return null;
   }
   assertContained(root.canon, real, label2, original);
-  return statSync3(real).isDirectory() ? "dir" : "file";
+  return statSync4(real).isDirectory() ? "dir" : "file";
 }
 function readLayerBytes(abs, label2) {
   try {
-    return readFileSync7(abs);
+    return readFileSync8(abs);
   } catch (err) {
     const code = err.code;
     if (code === "ENOENT") throw new DataServerError(`${label2} not found: ${abs}`, "not_found");
@@ -81240,8 +81404,8 @@ function readLayerDir(root, label2, original) {
   const type = entryType(root, label2, original);
   if (type === null) return null;
   if (type === "file") throw new DataServerError(`${label2} is a file, not a folder: ${original} (use knowledge__read)`, "not_a_folder");
-  return readdirSync5(root.abs).map((name) => {
-    const child = entryType({ canon: root.canon, abs: pathWin325.join(root.abs, name) }, label2, `${original}/${name}`);
+  return readdirSync6(root.abs).map((name) => {
+    const child = entryType({ canon: root.canon, abs: pathWin326.join(root.abs, name) }, label2, `${original}/${name}`);
     return { name, type: child ?? "file" };
   });
 }
@@ -81435,9 +81599,9 @@ function matterDataFolders(store, matters, miss) {
     miss(null, `the case data root could not be found: ${err.message}`);
     return [];
   }
-  const holding = (parent, sub) => readdirSync6(parent, { withFileTypes: true }).filter((entry2) => entry2.isDirectory() && existsSync7(join11(parent, entry2.name, sub, "main.sqlite"))).map((entry2) => ({ name: entry2.name, folder: join11(parent, entry2.name, sub) }));
-  const library = dirname4(caseDataRoot);
-  const inMatter = holding(library, "0. CASE DATA");
+  const holding = (parent, sub) => readdirSync7(parent, { withFileTypes: true }).filter((entry2) => entry2.isDirectory() && existsSync8(join12(parent, entry2.name, sub, "main.sqlite"))).map((entry2) => ({ name: entry2.name, folder: join12(parent, entry2.name, sub) }));
+  const library = dirname5(caseDataRoot);
+  const inMatter = holding(library, CASE_DATA_FOLDER);
   const children2 = holding(caseDataRoot, "");
   const found = [];
   for (const matter of matters) {
@@ -81679,10 +81843,10 @@ async function link_matter(store, args) {
   return rowOf2(after, id);
 }
 function libraryRelative(matterRoot, env) {
-  if (!isAbsolute(matterRoot)) throw new ValidationError("matter_root must be the matter folder's absolute path");
+  if (!isAbsolute2(matterRoot)) throw new ValidationError("matter_root must be the matter folder's absolute path");
   const library = litigationLibrary(env);
   const folder = relative(library, matterRoot);
-  if (folder === "" || folder.startsWith("..") || isAbsolute(folder)) {
+  if (folder === "" || folder.startsWith("..") || isAbsolute2(folder)) {
     throw new ValidationError(
       `Refused: ${matterRoot} is not a folder inside the litigation library ${library} (the folder holding "0. CASE DATA"). Nothing was saved.`
     );
@@ -82140,36 +82304,36 @@ async function invoices_query(store, args) {
 }
 
 // src/tools/practice/firm-profile.ts
-import { existsSync as existsSync11, mkdirSync as mkdirSync5, readFileSync as readFileSync10, writeFileSync as writeFileSync3 } from "node:fs";
-import { dirname as dirname5, join as join13 } from "node:path";
+import { existsSync as existsSync12, mkdirSync as mkdirSync5, readFileSync as readFileSync11, writeFileSync as writeFileSync3 } from "node:fs";
+import { dirname as dirname6, join as join14 } from "node:path";
 import { inflateRawSync } from "node:zlib";
 
 // src/knowledge/sidecar.ts
 import { createHash as createHash4, randomUUID as randomUUID7 } from "node:crypto";
-import { closeSync as closeSync5, existsSync as existsSync10, mkdirSync as mkdirSync4, openSync as openSync5, statSync as statSync6, writeSync as writeSync5 } from "node:fs";
-import { win32 as pathWin327 } from "node:path";
+import { closeSync as closeSync5, existsSync as existsSync11, mkdirSync as mkdirSync4, openSync as openSync5, statSync as statSync7, writeSync as writeSync5 } from "node:fs";
+import { win32 as pathWin328 } from "node:path";
 
 // src/submission/render-job.ts
 import { randomUUID as randomUUID6 } from "node:crypto";
-import { closeSync as closeSync4, existsSync as existsSync9, openSync as openSync4, readFileSync as readFileSync9, renameSync, statSync as statSync5, unlinkSync as unlinkSync3, utimesSync, writeFileSync as writeFileSync2, writeSync as writeSync4 } from "node:fs";
-import { join as join12 } from "node:path";
+import { closeSync as closeSync4, existsSync as existsSync10, openSync as openSync4, readFileSync as readFileSync10, renameSync, statSync as statSync6, unlinkSync as unlinkSync3, utimesSync, writeFileSync as writeFileSync2, writeSync as writeSync4 } from "node:fs";
+import { join as join13 } from "node:path";
 
 // src/submission/lock.ts
 import { createHash as createHash3, randomUUID as randomUUID5 } from "node:crypto";
-import { closeSync as closeSync3, existsSync as existsSync8, mkdirSync as mkdirSync3, openSync as openSync3, readFileSync as readFileSync8, statSync as statSync4, writeSync as writeSync3 } from "node:fs";
+import { closeSync as closeSync3, existsSync as existsSync9, mkdirSync as mkdirSync3, openSync as openSync3, readFileSync as readFileSync9, statSync as statSync5, writeSync as writeSync3 } from "node:fs";
 import { homedir as homedir6 } from "node:os";
-import { win32 as pathWin326 } from "node:path";
+import { win32 as pathWin327 } from "node:path";
 var LOCK_ATTEMPTS2 = 25;
 var LOCK_RETRY_MS2 = 400;
 var LOCK_STALE_MS2 = 9e5;
 function lockDir2(env) {
-  const base = env.COCLERK_SUBMISSION_LOCK_ROOT || pathWin326.join(env.LOCALAPPDATA || homedir6(), "Coclerk", "submission-locks");
+  const base = env.COCLERK_SUBMISSION_LOCK_ROOT || pathWin327.join(env.LOCALAPPDATA || homedir6(), "Coclerk", "submission-locks");
   mkdirSync3(base, { recursive: true });
   return base;
 }
 function hostLocalPath(dbPath, suffix, env = process.env) {
-  const key = createHash3("sha256").update(pathWin326.normalize(dbPath).toLowerCase()).digest("hex").slice(0, 16);
-  return pathWin326.join(lockDir2(env), `${key}.${suffix}`);
+  const key = createHash3("sha256").update(pathWin327.normalize(dbPath).toLowerCase()).digest("hex").slice(0, 16);
+  return pathWin327.join(lockDir2(env), `${key}.${suffix}`);
 }
 function lockPath2(dbPath, env) {
   return hostLocalPath(dbPath, "lock", env);
@@ -82213,14 +82377,14 @@ function releaseIfOurs2(lock, token) {
 }
 function isStale2(lock) {
   try {
-    return Date.now() - statSync4(lock).mtimeMs > LOCK_STALE_MS2;
+    return Date.now() - statSync5(lock).mtimeMs > LOCK_STALE_MS2;
   } catch {
     return false;
   }
 }
 function holderOf2(lock) {
   try {
-    return (existsSync8(lock) ? readFileSync8(lock, "utf-8").trim() : "released") + orphanClaims(lock);
+    return (existsSync9(lock) ? readFileSync9(lock, "utf-8").trim() : "released") + orphanClaims(lock);
   } catch {
     return "unreadable";
   }
@@ -82243,7 +82407,7 @@ function stallMs(env) {
 }
 function readLock(lockFile) {
   try {
-    return JSON.parse(readFileSync9(lockFile, "utf-8"));
+    return JSON.parse(readFileSync10(lockFile, "utf-8"));
   } catch {
     return null;
   }
@@ -82259,7 +82423,7 @@ function pidAlive(pid) {
 function holderIsStale(lockFile, holder, stall) {
   let mtimeMs;
   try {
-    mtimeMs = statSync5(lockFile).mtimeMs;
+    mtimeMs = statSync6(lockFile).mtimeMs;
   } catch {
     return null;
   }
@@ -82354,7 +82518,7 @@ function schedule(job) {
 function step(job) {
   try {
     if (!ours(job)) return finish(job, false);
-    if (!existsSync9(job.dbPath)) {
+    if (!existsSync10(job.dbPath)) {
       job.status.state = "aborted";
       job.status.current = null;
       publish(job);
@@ -82419,13 +82583,13 @@ function mirrorStatus(dbPath, env) {
     status3 = job.status;
   } else {
     try {
-      status3 = JSON.parse(readFileSync9(hostLocalPath(dbPath, "render-job.status.json", env), "utf-8"));
+      status3 = JSON.parse(readFileSync10(hostLocalPath(dbPath, "render-job.status.json", env), "utf-8"));
     } catch {
       return { state: "idle" };
     }
   }
   if (status3.state !== "running") return { ...status3 };
-  if (!job && !existsSync9(lockFile)) return { ...status3, state: "aborted" };
+  if (!job && !existsSync10(lockFile)) return { ...status3, state: "aborted" };
   if (Date.now() - Date.parse(status3.updated_at) > status3.stall_after_ms) return { ...status3, state: "stalled" };
   return { ...status3 };
 }
@@ -82450,7 +82614,7 @@ function startRenderJob(options) {
   const job = {
     lockFile,
     mirrorFile: hostLocalPath(options.dbPath, "render-job.status.json", env),
-    ...options.draftDir ? { pageFile: join12(options.draftDir, STATUS_FILE) } : {},
+    ...options.draftDir ? { pageFile: join13(options.draftDir, STATUS_FILE) } : {},
     dbPath: options.dbPath,
     status: {
       job_id: result.acquired.job_id,
@@ -82618,7 +82782,7 @@ var LOCK_RETRY_MS3 = 400;
 var LOCK_STALE_MS3 = 6e4;
 function lockIsStale(lock) {
   try {
-    return Date.now() - statSync6(lock).mtimeMs > LOCK_STALE_MS3;
+    return Date.now() - statSync7(lock).mtimeMs > LOCK_STALE_MS3;
   } catch {
     return false;
   }
@@ -82645,7 +82809,7 @@ async function acquireLock(lock) {
   );
 }
 async function withFileLock(target, fn2) {
-  mkdirSync4(pathWin327.dirname(target), { recursive: true });
+  mkdirSync4(pathWin328.dirname(target), { recursive: true });
   const lock = `${target}.lock`;
   const token = await acquireLock(lock);
   try {
@@ -82665,7 +82829,7 @@ function writeBytesAtomic(target, bytes) {
   writeTextAtomic(target, bytes);
 }
 function readRows(sidecarAbs, knowledgePath) {
-  if (!existsSync10(sidecarAbs)) return [];
+  if (!existsSync11(sidecarAbs)) return [];
   const text8 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
   return parseSidecar(text8.startsWith("\uFEFF") ? text8.slice(1) : text8, sidecarAbs, knowledgePath);
 }
@@ -82689,22 +82853,22 @@ var TOKENS = ["{{AUTHOR_NAME}}", "{{AUTHOR_EMAIL}}", "{{DIRECT_LINE}}", "{{FILE_
 var HEADER_FOOTER_PART = /^word\/(header|footer)\d*\.xml$/;
 var THEME_PART = "word/theme/theme1.xml";
 function firmPaths(env, fallback) {
-  const dir = join13(resolveCaseDataRoot(env, fallback), "_practice", "firm");
-  return { firm: join13(dir, "firm.json"), letterhead: join13(dir, "letterhead.docx") };
+  const dir = join14(resolveCaseDataRoot(env, fallback), "_practice", "firm");
+  return { firm: join14(dir, "firm.json"), letterhead: join14(dir, "letterhead.docx") };
 }
 function emailSignaturePath(env, key) {
-  return join13(dirname5(firmPaths(env).firm), "email-signatures", `${key}.htm`);
+  return join14(dirname6(firmPaths(env).firm), "email-signatures", `${key}.htm`);
 }
 function readJson(path) {
   try {
-    return JSON.parse(readFileSync10(path, "utf-8"));
+    return JSON.parse(readFileSync11(path, "utf-8"));
   } catch (err) {
     throw new ValidationError(`${path} is not valid JSON: ${err.message}`);
   }
 }
 function readConfig(env) {
   const path = configPath(env);
-  return existsSync11(path) ? readJson(path) : { version: 1 };
+  return existsSync12(path) ? readJson(path) : { version: 1 };
 }
 function writeJson(path, value) {
   writeTextAtomic(path, JSON.stringify(value, null, 2) + "\n");
@@ -82722,7 +82886,7 @@ function isPositiveHours(value) {
 }
 function idleFlagHours(env = process.env) {
   try {
-    const hours = JSON.parse(readFileSync10(firmPaths(env).firm, "utf-8"))?.idle_flag_hours;
+    const hours = JSON.parse(readFileSync11(firmPaths(env).firm, "utf-8"))?.idle_flag_hours;
     return isPositiveHours(hours) ? hours : null;
   } catch {
     return null;
@@ -82733,7 +82897,7 @@ async function firm_profile(env = process.env) {
 }
 function readFirmProfile(env = process.env, fallback) {
   const paths = firmPaths(env, fallback);
-  const firm = existsSync11(paths.firm) ? readJson(paths.firm) : void 0;
+  const firm = existsSync12(paths.firm) ? readJson(paths.firm) : void 0;
   const firmName = typeof firm?.firm_name === "string" ? firm.firm_name : "";
   if (!firm || firmName === "") {
     const missing = firm ? `firm_name in ${paths.firm}` : `firm.json (${paths.firm})`;
@@ -82743,7 +82907,7 @@ function readFirmProfile(env = process.env, fallback) {
   }
   const roster = rosterOf(firm, paths.firm);
   const config2 = configPath(env);
-  const machine = existsSync11(config2) ? readJson(config2) : void 0;
+  const machine = existsSync12(config2) ? readJson(config2) : void 0;
   const raw = machine?.person;
   const person2 = raw === void 0 || raw === null || raw === "" ? null : raw;
   const quirks = machine?.practice_quirks;
@@ -82761,7 +82925,7 @@ function readFirmProfile(env = process.env, fallback) {
   return {
     firm_name: firmName,
     roster,
-    letterhead: existsSync11(paths.letterhead) ? paths.letterhead : null,
+    letterhead: existsSync12(paths.letterhead) ? paths.letterhead : null,
     person: person2,
     practice_quirks: typeof quirks === "string" && quirks !== "" ? quirks : null,
     ...isPositiveHours(firm.idle_flag_hours) ? { idle_flag_hours: firm.idle_flag_hours } : {},
@@ -82872,7 +83036,7 @@ async function upsert_firm_profile(args, env = process.env) {
   }
   const paths = resolved;
   const result = { changed: [], written: [] };
-  const current = resolved && existsSync11(paths.firm) ? readJson(paths.firm) : void 0;
+  const current = resolved && existsSync12(paths.firm) ? readJson(paths.firm) : void 0;
   let firm;
   if (args.firm_name !== void 0 || args.roster_entry !== void 0 || args.idle_flag_hours !== void 0 || args.cc_on_counsel_email !== void 0) {
     firm = { firm_name: void 0, roster: [], ...current };
@@ -82918,7 +83082,7 @@ async function upsert_firm_profile(args, env = process.env) {
   }
   if (config2 && args.signature !== void 0) {
     const signature = asString(args.signature, "signature");
-    if (!existsSync11(signature)) throw new NotFoundError(`signature file not found: ${signature}`);
+    if (!existsSync12(signature)) throw new NotFoundError(`signature file not found: ${signature}`);
     config2.signature = signature;
     result.changed.push("signature");
   }
@@ -82937,8 +83101,8 @@ async function upsert_firm_profile(args, env = process.env) {
   let letterhead;
   if (args.letterhead !== void 0) {
     const source = asString(args.letterhead, "letterhead");
-    if (!existsSync11(source)) throw new NotFoundError(`letterhead source not found: ${source}`);
-    letterhead = readFileSync10(source);
+    if (!existsSync12(source)) throw new NotFoundError(`letterhead source not found: ${source}`);
+    letterhead = readFileSync11(source);
     const { major, minor } = checkLetterhead(letterhead, source);
     if (major !== void 0 && minor !== void 0 && major !== minor) result.theme_faces_differ = { major, minor };
     result.changed.push("letterhead");
@@ -82953,7 +83117,7 @@ async function upsert_firm_profile(args, env = process.env) {
   const person2 = (config2 ?? readConfig(env)).person;
   const preparer = roster.find((entry2) => typeof person2 === "string" && entry2.key === person2);
   if (preparer && !preparer.initials) result.preparer_initials_missing = person2;
-  if (firm || letterhead) mkdirSync5(dirname5(paths.firm), { recursive: true });
+  if (firm || letterhead) mkdirSync5(dirname6(paths.firm), { recursive: true });
   if (firm) {
     writeJson(paths.firm, firm);
     result.written.push(paths.firm);
@@ -82964,7 +83128,7 @@ async function upsert_firm_profile(args, env = process.env) {
   }
   if (config2) {
     for (const target of configWritePaths(env)) {
-      mkdirSync5(dirname5(target), { recursive: true });
+      mkdirSync5(dirname6(target), { recursive: true });
       writeJson(target, config2);
       result.written.push(target);
     }
@@ -82973,17 +83137,17 @@ async function upsert_firm_profile(args, env = process.env) {
 }
 
 // src/tools/practice/folder-map.ts
-import { existsSync as existsSync12, mkdirSync as mkdirSync6, readdirSync as readdirSync7, readFileSync as readFileSync11, writeFileSync as writeFileSync4 } from "node:fs";
-import { dirname as dirname6, join as join14, win32 as pathWin328 } from "node:path";
+import { existsSync as existsSync13, mkdirSync as mkdirSync6, readdirSync as readdirSync8, readFileSync as readFileSync12, writeFileSync as writeFileSync4 } from "node:fs";
+import { dirname as dirname7, join as join15, win32 as pathWin329 } from "node:path";
 var FLAGS = ["never_ingest", "privileged_by_default", "authority"];
 var GLOSSARY = "shared/document-types.md";
 var ROW = /^\| `([a-z_]+)` \| ([^|]+?) \| ([^|]+?) \|([^|]*)\|$/;
 function documentTypes(env = process.env) {
   const root = resolveShippedRoot(GLOSSARY, env, { subject: "the document-type glossary", plugin: "lawyer" }).root;
-  const path = join14(root, ...GLOSSARY.split("/"));
-  if (!existsSync12(path)) throw new DataServerError(`the document-type glossary is missing: ${path}`, "skills_root_missing");
+  const path = join15(root, ...GLOSSARY.split("/"));
+  if (!existsSync13(path)) throw new DataServerError(`the document-type glossary is missing: ${path}`, "skills_root_missing");
   const types = [];
-  for (const line of readFileSync11(path, "utf-8").split(/\r?\n/)) {
+  for (const line of readFileSync12(path, "utf-8").split(/\r?\n/)) {
     const m3 = ROW.exec(line.trim());
     if (!m3) continue;
     const flags = [...m3[4].matchAll(/`([a-z_]+)`/g)].map((f3) => f3[1]);
@@ -82995,17 +83159,17 @@ function documentTypes(env = process.env) {
   return types;
 }
 function folderMapsDir(env) {
-  return join14(resolveCaseDataRoot(env), "_practice", "firm", "folder-maps");
+  return join15(resolveCaseDataRoot(env), "_practice", "firm", "folder-maps");
 }
 function folderMapPath(env, key) {
-  return join14(folderMapsDir(env), `${key}.json`);
+  return join15(folderMapsDir(env), `${key}.json`);
 }
 function machinePerson(env) {
   const config2 = configPath(env);
-  if (!existsSync12(config2)) return null;
+  if (!existsSync13(config2)) return null;
   let person2;
   try {
-    person2 = JSON.parse(readFileSync11(config2, "utf-8"))?.person;
+    person2 = JSON.parse(readFileSync12(config2, "utf-8"))?.person;
   } catch (err) {
     throw new ValidationError(`${config2} is not valid JSON: ${err.message}`);
   }
@@ -83018,7 +83182,7 @@ function splitGlob(glob) {
 }
 function checkGlob(glob, where) {
   if (typeof glob !== "string" || glob.trim() === "") throw new ValidationError(`${where}: a folder must be a non-empty string`);
-  if (pathWin328.isAbsolute(glob) || /^[a-z]:/i.test(glob) || /^[\\/]/.test(glob)) {
+  if (pathWin329.isAbsolute(glob) || /^[a-z]:/i.test(glob) || /^[\\/]/.test(glob)) {
     throw new ValidationError(`${where}: "${glob}" must be relative to the matter folder`);
   }
   if (splitGlob(glob).some((s3) => s3 === "" || s3 === "." || s3 === "..")) {
@@ -83048,12 +83212,12 @@ function readFolderMap(env = process.env, types = documentTypes(env)) {
     return { status: "no_map", person: null, map_path: null, reason: "this machine names no person, so no folder map applies" };
   }
   const path = folderMapPath(env, person2);
-  if (!existsSync12(path)) {
+  if (!existsSync13(path)) {
     return { status: "no_map", person: person2, map_path: path, reason: `no folder map is recorded for ${person2}` };
   }
   let parsed;
   try {
-    parsed = JSON.parse(readFileSync11(path, "utf-8"));
+    parsed = JSON.parse(readFileSync12(path, "utf-8"));
   } catch (err) {
     throw new ValidationError(`${path} is not valid JSON: ${err.message}`);
   }
@@ -83073,7 +83237,7 @@ function expandGlob(root, glob) {
   let dirs = [root];
   for (const segment of splitGlob(glob)) {
     dirs = dirs.flatMap(
-      (dir) => readdirSync7(dir, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && segmentMatches(segment, e3.name)).map((e3) => join14(dir, e3.name)).sort()
+      (dir) => readdirSync8(dir, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && segmentMatches(segment, e3.name)).map((e3) => join15(dir, e3.name)).sort()
     );
   }
   return dirs;
@@ -83122,7 +83286,7 @@ async function set_folder_map(args, env = process.env) {
     throw new ValidationError("this machine names no person, so there is no one to record a folder map for. Set person with practice_data__upsert_firm_profile first. Nothing was written.");
   }
   const path = folderMapPath(env, person2);
-  mkdirSync6(dirname6(path), { recursive: true });
+  mkdirSync6(dirname7(path), { recursive: true });
   writeFileSync4(path, JSON.stringify({ entries }, null, 2) + "\n", "utf-8");
   return { person: person2, written: path, entries };
 }
@@ -83131,112 +83295,6 @@ async function set_folder_map(args, env = process.env) {
 import { existsSync as existsSync14, mkdirSync as mkdirSync7, readdirSync as readdirSync9, readFileSync as readFileSync13, renameSync as renameSync2, statSync as statSync8, writeFileSync as writeFileSync5 } from "node:fs";
 import { homedir as homedir7 } from "node:os";
 import { dirname as dirname8, isAbsolute as isAbsolute3, join as join16 } from "node:path";
-
-// src/files/matter-root.ts
-import { existsSync as existsSync13, readdirSync as readdirSync8, readFileSync as readFileSync12, statSync as statSync7 } from "node:fs";
-import { basename as basename2, dirname as dirname7, isAbsolute as isAbsolute2, join as join15, normalize, resolve as resolve2, win32 as pathWin329 } from "node:path";
-var POINTER_FILES = ["probanda.json", "coclerk.json"];
-var POINTER_SCHEMA_VERSION = 5;
-var LEGACY_ARTIFACTS_DIR = "9. AI";
-var SUBMISSION_DB_FILE = "submission.sqlite";
-var CASE_DATA_FOLDER = "0. CASE DATA";
-function findPointer(root) {
-  return POINTER_FILES.map((name) => join15(root, name)).find((path) => existsSync13(path));
-}
-function validateMatterRoot(matterRoot) {
-  if (typeof matterRoot !== "string" || matterRoot.length === 0) {
-    throw new DataServerError("matter_root is required", "invalid_root");
-  }
-  if (!pathWin329.isAbsolute(matterRoot)) {
-    throw new DataServerError(`matter_root must be an absolute path: ${matterRoot}`, "invalid_root");
-  }
-  const canon = canonicalRoot(matterRoot, `matter_root not found: ${matterRoot}`, "invalid_root");
-  if (!statSync7(canon).isDirectory()) {
-    throw new DataServerError(`matter_root is not a directory: ${matterRoot}`, "invalid_root");
-  }
-  if (findPointer(canon) === void 0) {
-    throw new DataServerError(
-      `matter_root has no probanda.json or coclerk.json \u2014 not an initialized matter: ${matterRoot}`,
-      "invalid_root"
-    );
-  }
-  return canon;
-}
-function findDraftDir(root) {
-  const matches = readdirSync8(root, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && /^0\. DRAFT/i.test(e3.name)).map((e3) => e3.name).sort();
-  if (matches.length > 1) {
-    throw new DataServerError(
-      `${root} has ${matches.length} 0. DRAFT folders (${matches.map((m3) => `"${m3}"`).join(", ")}); keep one so the Litigation Strategy has a single home.`,
-      "draft_dir_ambiguous"
-    );
-  }
-  return matches.length === 1 ? join15(root, matches[0]) : void 0;
-}
-function existingCaseDataFolder(root, env = process.env) {
-  const dir = caseDataFolder(root, env);
-  const missing = `the matter's matter-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
-  const canon = canonicalRoot(dir, missing, "case_data_missing");
-  if (!statSync7(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
-  return canon;
-}
-function pointerRefusal(root, why) {
-  return new DataServerError(
-    `${findPointer(root) ?? join15(root, POINTER_FILES[0])} ${why}. Run /matter-data on this matter to initialize or repair its pointer; drafting_forms__open_session never rewrites it.`,
-    "pointer_unusable"
-  );
-}
-function resolveCaseDataDir(root) {
-  let pointer;
-  try {
-    pointer = JSON.parse(readFileSync12(findPointer(root) ?? join15(root, POINTER_FILES[0]), "utf-8").replace(/\0/g, ""));
-  } catch (err) {
-    throw pointerRefusal(root, `is not readable JSON (${err.message})`);
-  }
-  if (pointer.schema_version !== POINTER_SCHEMA_VERSION) {
-    throw pointerRefusal(root, `is schema_version ${JSON.stringify(pointer.schema_version)}, expected ${POINTER_SCHEMA_VERSION}`);
-  }
-  const stored = pointer.case_data_dir;
-  if (typeof stored !== "string" || stored === "") {
-    throw pointerRefusal(root, "has no case_data_dir");
-  }
-  const caseDataDir = normalize(isAbsolute2(stored) ? stored : resolve2(root, stored));
-  if (caseDataDir.toLowerCase() === normalize(join15(root, LEGACY_ARTIFACTS_DIR)).toLowerCase()) {
-    throw pointerRefusal(root, `still points at the legacy "${LEGACY_ARTIFACTS_DIR}" folder`);
-  }
-  return caseDataDir;
-}
-function resolveDbPath(root) {
-  const caseDataDir = resolveCaseDataDir(root);
-  const dbPath = join15(caseDataDir, SUBMISSION_DB_FILE);
-  if (!existsSync13(dbPath) && !existsSync13(dirname7(caseDataDir))) {
-    throw pointerRefusal(root, `names ${caseDataDir}, whose parent folder does not exist on this device`);
-  }
-  return dbPath;
-}
-function caseDataRootFromCaseDataDir(dir, env) {
-  const normal2 = normalize(dir);
-  const inMatter = basename2(normal2).toLowerCase() === CASE_DATA_FOLDER.toLowerCase();
-  const parent = inMatter ? join15(dirname7(dirname7(normal2)), CASE_DATA_FOLDER) : dirname7(normal2);
-  const override2 = env.COCLERK_CASE_DATA_ROOT;
-  const named2 = inMatter || basename2(parent).toLowerCase() === CASE_DATA_FOLDER.toLowerCase() || !!override2 && normalize(override2).toLowerCase() === parent.toLowerCase();
-  if (!named2) return null;
-  let canon;
-  try {
-    canon = canonicalRoot(parent, `case data root not found: ${parent}`);
-  } catch {
-    return null;
-  }
-  return statSync7(canon).isDirectory() ? canon : null;
-}
-function caseDataRootFromMatterRoot(matterRoot, env) {
-  const root = validateMatterRoot(matterRoot);
-  return caseDataRootFromCaseDataDir(resolveCaseDataDir(root), env);
-}
-function caseDataRootFromDbPath(dbPath, env) {
-  return caseDataRootFromCaseDataDir(dirname7(dbPath), env);
-}
-
-// src/tools/practice/config.ts
 var DOCUMENTED_KEYS = [
   "version",
   "case_data_root",
@@ -92229,7 +92287,6 @@ function zoneProblem(purpose, path, root, draftUnchanged = false) {
 
 // src/submission/render-manifest.ts
 var RECORDS_FOLDER = "Drafting records";
-var CASE_DATA_FOLDER2 = "0. CASE DATA";
 var LEGACY_MANIFEST_FILE = "render-manifest.json";
 function sha256(text8) {
   return createHash9("sha256").update(text8, "utf-8").digest("hex");
@@ -92323,7 +92380,7 @@ function draftDirOf(dbPath) {
   const caseData = dirname13(resolve4(dbPath));
   const matter = dirname13(caseData);
   let found;
-  if (basename4(caseData).toLowerCase() === CASE_DATA_FOLDER2.toLowerCase()) {
+  if (basename4(caseData).toLowerCase() === CASE_DATA_FOLDER.toLowerCase()) {
     try {
       found = findDraftDir(matter);
     } catch (err) {

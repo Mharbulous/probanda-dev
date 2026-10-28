@@ -16,8 +16,9 @@ export const POINTER_FILES: readonly string[] = ["probanda.json", "coclerk.json"
 const POINTER_SCHEMA_VERSION = 5;
 const LEGACY_ARTIFACTS_DIR = "9. AI";
 const SUBMISSION_DB_FILE = "submission.sqlite";
-/** /matter-data's folder for every matter's matter-data folder (case/backend.ts CASE_DATA_FOLDER). */
-const CASE_DATA_FOLDER = "0. CASE DATA";
+/** /matter-data's name for a matter's own matter-data folder and for the firm root
+ * (CASE_DATA_FOLDER in the matter-data skill's case_data_resolver.py). */
+export const CASE_DATA_FOLDER = "0. CASE DATA";
 
 /** root's pointer file: probanda.json when it exists, else coclerk.json when it exists, else undefined. */
 export function findPointer(root: string): string | undefined {

@@ -28,7 +28,7 @@ import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 
 import { DataServerError, ValidationError } from "../errors.js";
-import { findDraftDir } from "../files/matter-root.js";
+import { CASE_DATA_FOLDER, findDraftDir } from "../files/matter-root.js";
 import { zoneProblem } from "../files/zones.js";
 import { isInventoryEntry, type InventoryEntry } from "./forms/proposal-inventory.js";
 import type { WritingLabel } from "./forms/writing-label.js";
@@ -36,9 +36,6 @@ import type { WritingLabel } from "./forms/writing-label.js";
 /** The one folder in the matter's `0. DRAFT` that holds the drafting bookkeeping: each filing's render
  * manifest and the pages' state file (spec 2026-10-22 §9). */
 export const RECORDS_FOLDER = "Drafting records";
-
-/** A matter's own case-data folder (ADR 0013), whose sibling 0. DRAFT holds its mockups. */
-const CASE_DATA_FOLDER = "0. CASE DATA";
 
 /** The manifest an older build wrote inside each `<case data>\mockups\Filing <id>\` folder; read only
  * by the move into `0. DRAFT` (writing-folder.ts). */

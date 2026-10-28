@@ -1,4 +1,4 @@
-// build-stamp: 11a118d35bf1
+// build-stamp: dff207288069
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -16143,50 +16143,84 @@ function missingMessage(subject, env, tried) {
   ].join("\n");
 }
 
-// src/case/backend.ts
-var HALF_COMMIT_PREFIX = ".coclerk_execute_";
-var PY_HELPER = String.raw`
-import json, os, re, shutil, sqlite3, sys, tempfile
+// src/case/case-data-resolver.py.ts
+var case_data_resolver_py_default = `"""case_data_resolver.py \u2014 where a matter's case data lives (MODULE).
 
-CASE_DATA_FOLDER = '0. CASE DATA'
-LEGACY_ARTIFACTS_DIR = '9. AI'
-ENV_ROOT_OVERRIDE = 'COCLERK_CASE_DATA_ROOT'
-EXPECTED_USER_VERSION = 90
-EXPECTED_SCHEMA_VERSION = 5
-POINTER_NAMES = ('probanda.json', 'coclerk.json')
-DBS = ('main', 'law', 'privileged')
-DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
+The one resolver of a matter's matter-data folder (ADR 0013). Two readers take it:
+resolve_paths.py imports it, and the data server's build pastes this file's text
+into the backend's embedded helper (source/lawyer/mcp/scripts/resolver.mjs), so the
+server still imports nothing from the skill tree at run time.
+
+BYPASS-FREE BY DESIGN: this file holds no pointer write-back, no legacy migration and
+no schema-version guard, so it has nothing a migrate_only flag could skip. The guard
+bypass stays in resolve_paths.resolve_pointer, reached only from migrate_engine.py
+(design-decisions.md #27). Never add resolve_pointer, or anything that imports
+resolve_paths, here: the backend embeds this file whole.
+
+E1-ONLY, as resolve_paths.py: it stages temp copies of main.sqlite. See ../scripts.md.
+
+Standard library only.
+"""
+
+import os
+import re
+import shutil
+import sqlite3
+import tempfile
+
+CASE_DATA_FOLDER = '0. CASE DATA'                       # the matter's case-data folder, and the firm root's name
+ENV_ROOT_OVERRIDE = 'COCLERK_CASE_DATA_ROOT'            # replaces computed root when set
+
+
+def staging_prefix(kind):
+    """Temp-folder prefix \`coclerk_<kind>_<tag>_\`, tagged with the data runtime's per-call
+    COCLERK_STAGING_TAG so a call killed on timeout has its folders removed by tag (#1060).
+    Run by hand there is no tag, and the prefix is the untagged \`coclerk_<kind>_\`."""
+    tag = os.environ.get('COCLERK_STAGING_TAG')
+    return 'coclerk_%s_%s_' % (kind, tag) if tag else 'coclerk_%s_' % kind
 
 
 def is_absolute(p):
+    """True for a Windows drive-letter path, a UNC path, or a POSIX absolute path."""
     if not p:
         return False
-    if re.match(r'^[A-Za-z]:[\\/]', p):
+    if re.match(r'^[A-Za-z]:[\\\\/]', p):
         return True
-    if p.startswith('\\\\') or p.startswith('//'):
+    if p.startswith('\\\\\\\\') or p.startswith('//'):
         return True
     return p.startswith('/')
 
 
 def norm_join(base, *parts):
+    """Path join tolerant of both separators; normalized to native form."""
     joined = os.path.join(base, *parts)
-    return os.path.normpath(joined.replace('\\', os.sep).replace('/', os.sep))
+    return os.path.normpath(joined.replace('\\\\', os.sep).replace('/', os.sep))
 
 
 def sanitize_short_name(name):
-    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '', name or '').strip()
+    """Strip illegal filename characters and trim to 60 chars."""
+    cleaned = re.sub(r'[<>:"/\\\\|?*\\x00-\\x1f]', '', name or '').strip()
     return cleaned[:60].strip()
 
 
 def parse_folder_name(matter_folder):
+    """Fallback identity from the matter folder name.
+
+    Patterns like "<client>.<matter> Short Name" or "<matter> Short Name": the
+    leading token (client.matter or matter-only) is the matter reference,
+    stored under the \`matter_id\` metadata key; the remainder is the short
+    name. Returns (matter_id, short_name).
+    """
     base = os.path.basename(os.path.normpath(matter_folder))
-    m = re.match(r'^\s*((?:\d+\.)?[A-Za-z]?\d+[A-Za-z0-9.\-]*)\s+(.*)$', base)
+    m = re.match(r'^\\s*((?:\\d+\\.)?[A-Za-z]?\\d+[A-Za-z0-9.\\-]*)\\s+(.*)$', base)
     if m:
         return m.group(1).strip(), sanitize_short_name(m.group(2))
     return sanitize_short_name(base), ''
 
 
 def case_data_root(matter_root):
+    """The firm-level case data root: env override, else the library's '0. CASE DATA'.
+    A matter not yet relocated keeps its folder here (ADR 0013)."""
     override = os.environ.get(ENV_ROOT_OVERRIDE)
     if override:
         return override
@@ -16194,36 +16228,18 @@ def case_data_root(matter_root):
 
 
 def matter_case_data_dir(matter_root):
-    """The matter's own case-data folder, MATTER_ROOT/0. CASE DATA (ADR 0013)."""
+    """The matter's own case-data folder: MATTER_ROOT/0. CASE DATA (ADR 0013)."""
     return norm_join(matter_root, CASE_DATA_FOLDER)
 
 
-def pointer_case_data_dir(matter_root, case_data_dir):
-    """The pointer's case_data_dir value: relative to the matter root when the folder is
-    inside it, absolute otherwise, as evidence_sql_path is stored."""
-    try:
-        rel = os.path.relpath(case_data_dir, matter_root)
-    except ValueError:
-        return case_data_dir
-    if rel in (os.curdir, os.pardir) or rel.startswith(os.pardir + os.sep):
-        return case_data_dir
-    return rel
-
-
-def default_evidence_sql(matter_root, case_data_dir):
-    """The text dump beside the databases, relative to the matter root so the pointer survives
-    a change of user profile; absolute when the two are on different drives."""
-    path = norm_join(case_data_dir, 'evidence.sql')
-    try:
-        return os.path.relpath(path, matter_root)
-    except ValueError:
-        return path
-
-
 def identity_from_metadata(main_sqlite_path):
+    """Return (matter_id, short_name) from main.matter_metadata, or (None, None).
+
+    Probes a temp copy so the native binary is never opened in place.
+    """
     if not os.path.exists(main_sqlite_path):
         return None, None
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_probe_{os.environ["COCLERK_STAGING_TAG"]}_')
+    tmp = tempfile.mkdtemp(prefix=staging_prefix('probe'))
     dst = os.path.join(tmp, 'main.sqlite')
     try:
         shutil.copy2(main_sqlite_path, dst)
@@ -16243,35 +16259,30 @@ def identity_from_metadata(main_sqlite_path):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-def read_user_version(sqlite_path):
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_guard_{os.environ["COCLERK_STAGING_TAG"]}_')
-    probe = os.path.join(tmp, os.path.basename(sqlite_path))
-    try:
-        shutil.copy2(sqlite_path, probe)
-        con = sqlite3.connect(probe)
-        try:
-            return con.execute("PRAGMA user_version").fetchone()[0]
-        finally:
-            con.close()
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
-
-
 def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
-    def resolved_nominee(value):
-        if not value:
-            return None
-        return os.path.normpath(value) if is_absolute(value) else norm_join(matter_root, value)
+    """Select a usable stored nominee, else the matter's own 0. CASE DATA folder
+    holding main.sqlite, else a not-yet-relocated folder under the firm root, else
+    the matter's own folder as the default (ADR 0013).
 
-    nominee = resolved_nominee(stored)
-    if nominee != legacy_dir and nominee and os.path.exists(norm_join(nominee, 'main.sqlite')):
+    Returns \`\`(case_data_dir, rejected_nominee)\`\`. A stored path is only a
+    nomination: absolute and relative custom locations remain supported when
+    they contain \`\`main.sqlite\`\`.
+    """
+    if stored:
+        nominee = os.path.normpath(stored) if is_absolute(stored) \\
+            else norm_join(matter_root, stored)
+    else:
+        nominee = None
+
+    if nominee != legacy_dir and nominee \\
+            and os.path.exists(norm_join(nominee, 'main.sqlite')):
         return nominee, False
 
-    # The matter's own folder (ADR 0013), then a not-yet-relocated folder under the firm root.
     in_matter = matter_case_data_dir(matter_root)
     if os.path.exists(norm_join(in_matter, 'main.sqlite')):
         return in_matter, bool(stored)
 
+    # A matter not yet relocated keeps its folder under the firm root.
     # A matter folder can be renamed independently of its database folder.
     # Search only direct live-root children with the same matter reference,
     # then prove identity from main.sqlite before selecting one.
@@ -16312,6 +16323,55 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
     rejected = bool(stored and nominee != legacy_dir
                     and os.path.normcase(nominee) != os.path.normcase(derived))
     return derived, rejected
+`;
+
+// src/case/backend.ts
+var HALF_COMMIT_PREFIX = ".coclerk_execute_";
+var PY_HELPER = case_data_resolver_py_default + String.raw`
+import json, os, re, shutil, sqlite3, sys, tempfile
+
+LEGACY_ARTIFACTS_DIR = '9. AI'
+EXPECTED_USER_VERSION = 90
+EXPECTED_SCHEMA_VERSION = 5
+POINTER_NAMES = ('probanda.json', 'coclerk.json')
+DBS = ('main', 'law', 'privileged')
+DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
+
+
+def pointer_case_data_dir(matter_root, case_data_dir):
+    """The pointer's case_data_dir value: relative to the matter root when the folder is
+    inside it, absolute otherwise, as evidence_sql_path is stored."""
+    try:
+        rel = os.path.relpath(case_data_dir, matter_root)
+    except ValueError:
+        return case_data_dir
+    if rel in (os.curdir, os.pardir) or rel.startswith(os.pardir + os.sep):
+        return case_data_dir
+    return rel
+
+
+def default_evidence_sql(matter_root, case_data_dir):
+    """The text dump beside the databases, relative to the matter root so the pointer survives
+    a change of user profile; absolute when the two are on different drives."""
+    path = norm_join(case_data_dir, 'evidence.sql')
+    try:
+        return os.path.relpath(path, matter_root)
+    except ValueError:
+        return path
+
+
+def read_user_version(sqlite_path):
+    tmp = tempfile.mkdtemp(prefix=f'coclerk_guard_{os.environ["COCLERK_STAGING_TAG"]}_')
+    probe = os.path.join(tmp, os.path.basename(sqlite_path))
+    try:
+        shutil.copy2(sqlite_path, probe)
+        con = sqlite3.connect(probe)
+        try:
+            return con.execute("PRAGMA user_version").fetchone()[0]
+        finally:
+            con.close()
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def read_pointer(matter_root):

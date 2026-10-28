@@ -10,6 +10,7 @@ import { dirname, join } from "node:path";
 import { caseDataFolder } from "../../case/backend.js";
 import { listCaseParties } from "../../case/list-parties.js";
 import { NotFoundError, ValidationError } from "../../errors.js";
+import { CASE_DATA_FOLDER } from "../../files/matter-root.js";
 import { today } from "../../knowledge/common.js";
 import { resolveCaseDataRoot } from "../../practice/matter-data-root.js";
 import { flatten, rowsOf, type Item, type Row } from "../../practice/items.js";
@@ -227,7 +228,7 @@ export function matterDataFolders(
     .filter((entry) => entry.isDirectory() && existsSync(join(parent, entry.name, sub, "main.sqlite")))
     .map((entry) => ({ name: entry.name, folder: join(parent, entry.name, sub) }));
   const library = dirname(caseDataRoot);
-  const inMatter = holding(library, "0. CASE DATA");
+  const inMatter = holding(library, CASE_DATA_FOLDER);
   const children = holding(caseDataRoot, "");
   const found: MatterDataFolder[] = [];
   for (const matter of matters) {

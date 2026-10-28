@@ -239,5 +239,15 @@ class StagingTagTests(unittest.TestCase):
         self.assertEqual(self.prefixes(None), ["coclerk_probe_", "coclerk_guard_"])
 
 
+class SingleResolverTests(unittest.TestCase):
+    """#177: resolve_paths takes the resolver from case_data_resolver, the file the data server's
+    build embeds, so the two readers cannot drift."""
+
+    def test_the_resolver_is_the_shared_module(self):
+        for name in ("resolve_case_data_dir", "identity_from_metadata", "parse_folder_name",
+                     "case_data_root", "matter_case_data_dir", "is_absolute", "norm_join"):
+            self.assertEqual(getattr(resolve_paths, name).__module__, "case_data_resolver", name)
+
+
 if __name__ == "__main__":
     unittest.main()

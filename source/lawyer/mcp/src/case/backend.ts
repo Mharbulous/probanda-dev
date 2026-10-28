@@ -36,61 +36,22 @@ import { runPythonDriver } from "../python-spawn.js";
 import { EXECUTE_TIMEOUT_MS, pythonTimeoutMs, READ_TIMEOUT_MS } from "../python-timeout.js";
 import { resolveShippedRoot } from "../repo-root.js";
 import { acquireCaseLock } from "./case-lock.js";
+import CASE_DATA_RESOLVER from "./case-data-resolver.py.js";
 
 /** The prefix of the sidecar folder execute commits through; one left behind is a half-commit (#612). */
 export const HALF_COMMIT_PREFIX = ".coclerk_execute_";
 
-const PY_HELPER = String.raw`
+// The resolver itself comes first: the matter-data skill's bypass-free case_data_resolver.py,
+// pasted in at build time (scripts/resolver.mjs), so this helper imports nothing at run time.
+const PY_HELPER = CASE_DATA_RESOLVER + String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile
 
-CASE_DATA_FOLDER = '0. CASE DATA'
 LEGACY_ARTIFACTS_DIR = '9. AI'
-ENV_ROOT_OVERRIDE = 'COCLERK_CASE_DATA_ROOT'
 EXPECTED_USER_VERSION = 90
 EXPECTED_SCHEMA_VERSION = 5
 POINTER_NAMES = ('probanda.json', 'coclerk.json')
 DBS = ('main', 'law', 'privileged')
 DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
-
-
-def is_absolute(p):
-    if not p:
-        return False
-    if re.match(r'^[A-Za-z]:[\\/]', p):
-        return True
-    if p.startswith('\\\\') or p.startswith('//'):
-        return True
-    return p.startswith('/')
-
-
-def norm_join(base, *parts):
-    joined = os.path.join(base, *parts)
-    return os.path.normpath(joined.replace('\\', os.sep).replace('/', os.sep))
-
-
-def sanitize_short_name(name):
-    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '', name or '').strip()
-    return cleaned[:60].strip()
-
-
-def parse_folder_name(matter_folder):
-    base = os.path.basename(os.path.normpath(matter_folder))
-    m = re.match(r'^\s*((?:\d+\.)?[A-Za-z]?\d+[A-Za-z0-9.\-]*)\s+(.*)$', base)
-    if m:
-        return m.group(1).strip(), sanitize_short_name(m.group(2))
-    return sanitize_short_name(base), ''
-
-
-def case_data_root(matter_root):
-    override = os.environ.get(ENV_ROOT_OVERRIDE)
-    if override:
-        return override
-    return norm_join(os.path.dirname(os.path.normpath(matter_root)), CASE_DATA_FOLDER)
-
-
-def matter_case_data_dir(matter_root):
-    """The matter's own case-data folder, MATTER_ROOT/0. CASE DATA (ADR 0013)."""
-    return norm_join(matter_root, CASE_DATA_FOLDER)
 
 
 def pointer_case_data_dir(matter_root, case_data_dir):
@@ -115,29 +76,6 @@ def default_evidence_sql(matter_root, case_data_dir):
         return path
 
 
-def identity_from_metadata(main_sqlite_path):
-    if not os.path.exists(main_sqlite_path):
-        return None, None
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_probe_{os.environ["COCLERK_STAGING_TAG"]}_')
-    dst = os.path.join(tmp, 'main.sqlite')
-    try:
-        shutil.copy2(main_sqlite_path, dst)
-        con = sqlite3.connect(dst)
-        try:
-            rows = dict(con.execute(
-                "SELECT key, value FROM matter_metadata "
-                "WHERE key IN ('matter_id', 'short_name')").fetchall())
-        finally:
-            con.close()
-        mid = rows.get('matter_id')
-        sn = sanitize_short_name(rows.get('short_name', '') or '')
-        return (mid, sn) if mid else (None, None)
-    except Exception:
-        return None, None
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
-
-
 def read_user_version(sqlite_path):
     tmp = tempfile.mkdtemp(prefix=f'coclerk_guard_{os.environ["COCLERK_STAGING_TAG"]}_')
     probe = os.path.join(tmp, os.path.basename(sqlite_path))
@@ -150,63 +88,6 @@ def read_user_version(sqlite_path):
             con.close()
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-
-
-def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
-    def resolved_nominee(value):
-        if not value:
-            return None
-        return os.path.normpath(value) if is_absolute(value) else norm_join(matter_root, value)
-
-    nominee = resolved_nominee(stored)
-    if nominee != legacy_dir and nominee and os.path.exists(norm_join(nominee, 'main.sqlite')):
-        return nominee, False
-
-    # The matter's own folder (ADR 0013), then a not-yet-relocated folder under the firm root.
-    in_matter = matter_case_data_dir(matter_root)
-    if os.path.exists(norm_join(in_matter, 'main.sqlite')):
-        return in_matter, bool(stored)
-
-    # A matter folder can be renamed independently of its database folder.
-    # Search only direct live-root children with the same matter reference,
-    # then prove identity from main.sqlite before selecting one.
-    matter_id, _ = parse_folder_name(matter_root)
-    if matter_id and os.path.isdir(root):
-        try:
-            names = sorted(os.listdir(root))
-        except OSError:
-            names = []
-        for name in names:
-            candidate = norm_join(root, name)
-            candidate_id, _ = parse_folder_name(candidate)
-            if candidate_id.casefold() != matter_id.casefold():
-                continue
-            main_sqlite = norm_join(candidate, 'main.sqlite')
-            if not os.path.isfile(main_sqlite):
-                continue
-            metadata_id, _ = identity_from_metadata(main_sqlite)
-            if metadata_id and metadata_id.casefold() == matter_id.casefold():
-                return candidate, bool(stored)
-
-    # The firm-root folder named for the matter, as it was derived before ADR 0013. It wins
-    # while it exists, even without main.sqlite, so a matter not yet relocated is rebuilt in place.
-    mid, sn = None, None
-    for cand in (nominee, legacy_dir):
-        if cand:
-            mid, sn = identity_from_metadata(norm_join(cand, 'main.sqlite'))
-            if mid:
-                break
-    if not mid:
-        mid, sn = parse_folder_name(matter_root)
-    firm_folder = norm_join(root, f"{mid} {sn}".strip())
-    if os.path.isdir(firm_folder):
-        return firm_folder, bool(stored and nominee != legacy_dir
-                                 and os.path.normcase(nominee) != os.path.normcase(firm_folder))
-
-    derived = in_matter
-    rejected = bool(stored and nominee != legacy_dir
-                    and os.path.normcase(nominee) != os.path.normcase(derived))
-    return derived, rejected
 
 
 def read_pointer(matter_root):
