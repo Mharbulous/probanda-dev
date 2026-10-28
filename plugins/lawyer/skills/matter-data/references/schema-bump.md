@@ -107,7 +107,9 @@ current one.
 ## 5. The duplicate guard in the MCP runtime — the one that gets missed
 
 `source/lawyer/mcp/src/case/backend.ts` carries a **hand-ported copy** of
-the resolver as an embedded Python string. It is duplicated on purpose — the
+the pointer read and the schema guard as an embedded Python string. Only the
+location search, `case_data_resolver.py`, is shared, pasted in at build time.
+The guard is duplicated on purpose — the
 schema-guard bypass has to live in a different process from the read/write path
 (`design-decisions.md` #27, #28) — so it never picks up a change to `resolve_paths.py`.
 Bump, in that file:

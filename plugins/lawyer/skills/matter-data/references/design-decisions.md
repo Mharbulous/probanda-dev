@@ -267,14 +267,21 @@ was the stated reason migrate could not be a tool at all, and it ran E1-only. It
 
 - The bypass is a hardcoded literal at exactly one call site (`references/scripts/migrate_engine.py`,
   `resolve()`), never derived from tool input. No argument to `matter_data__migrate` can flip it.
-- `matter_data__query`/`matter_data__execute` run in a **separate spawn** whose pointer resolver is a
-  hand-ported copy in `source/lawyer/mcp/src/case/backend.ts` taking one positional argument.
+- `matter_data__query`/`matter_data__execute` run in a **separate spawn** whose pointer resolver is
+  embedded in `source/lawyer/mcp/src/case/backend.ts` and takes one positional argument.
   There is no `migrate_only` parameter to pass — not a guarded one, none.
 
 **Never "simplify" that backend into importing `resolve_paths`.** The duplication looks like debt
 and is the safety property: it puts the bypass in a different process from the read/write path
 rather than one keyword argument away from it. If the two resolvers must ever converge, the
 convergence has to preserve that separation or replace it with something at least as strong.
+
+**The location search converged that way (2026-10-27, #177).** `references/scripts/case_data_resolver.py`
+holds `resolve_case_data_dir` and its helpers, and nothing else: no pointer write, no schema guard, no
+bypass. `resolve_paths.py` imports it, and the data server's build pastes its text into the backend's
+embedded helper (`source/lawyer/mcp/scripts/resolver.mjs`), which refuses a file that defines
+`resolve_pointer`, takes `migrate_only` or imports `resolve_paths`. The backend still imports nothing
+from the skill tree at run time, and its pointer read and schema guard stay hand-ported.
 
 **The E1-only rule that preceded this was stale reasoning, and it is worth saying why.** It read as
 a FUSE-staleness rule, but `operations/migrate.md` never actually claimed that — it cited two
@@ -339,7 +346,7 @@ means a crashed migrate — both writers say so in a warning rather than proceed
 
 ## 29. A schema bump touches a dozen files across two languages — work the checklist
 
-The version is not derived anywhere; it is restated in `schema.sql`, `migrations.sql`, four operation docs, five Python scripts, a test file's name and class, and a hand-ported duplicate guard inside the MCP runtime's TypeScript. `references/schema-bump.md` is the complete surface, in dependency order. Work it whole and in one commit — every guard is `version < EXPECTED_USER_VERSION` → reject, so the moment a new guard ships, every matter still on the old version fails closed until it migrates. The two most-missed surfaces are `source/lawyer/mcp/src/case/backend.ts` (a deliberate duplicate — see #27 — which therefore never inherits a change to `resolve_paths.py`) and the `source/lawyer/mcp/test/case-tools.db.test.mjs` boundary pins that go with it.
+The version is not derived anywhere; it is restated in `schema.sql`, `migrations.sql`, four operation docs, five Python scripts, a test file's name and class, and a hand-ported duplicate guard inside the MCP runtime's TypeScript. `references/schema-bump.md` is the complete surface, in dependency order. Work it whole and in one commit — every guard is `version < EXPECTED_USER_VERSION` → reject, so the moment a new guard ships, every matter still on the old version fails closed until it migrates. The two most-missed surfaces are `source/lawyer/mcp/src/case/backend.ts` (its guard is a deliberate duplicate — see #27 — which therefore never inherits a change to `resolve_paths.py`) and the `source/lawyer/mcp/test/case-tools.db.test.mjs` boundary pins that go with it.
 
 **The same rule governs the separate application schema (`application_state.SCHEMA_VERSION`), plus one of its own: a bump adds its own predecessor to `MIGRATION_SOURCE_SCHEMA_VERSIONS` as an explicit literal.** That set was `{1, 2, SCHEMA_VERSION}` until 2026-07-29, so the 8 → 9 bump silently turned it into `{1, 2, 9}` — dropping the schema-8 source path before anyone wrote one, and it would have done the same to 9 on the next bump. Never put `SCHEMA_VERSION` in that set.
 

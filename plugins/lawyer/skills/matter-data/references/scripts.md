@@ -97,7 +97,8 @@ reasons stated at their own entry below):
 
 | Module | Purpose |
 |---|---|
-| `resolve_paths.py` | Path-resolution helpers: absolute detection (drive-letter / UNC / POSIX), both-separator joins, folder-name parsing, matter-data root + `COCLERK_CASE_DATA_ROOT` override, legacy `9. AI` migration, and the full `resolve_pointer()` preamble (mirrors [`../shared/conventions.md`](../shared/conventions.md) §2.3). |
+| `case_data_resolver.py` | The one search for a matter's matter-data folder (`resolve_case_data_dir`, ADR 0013 order) and its helpers: absolute detection (drive-letter / UNC / POSIX), both-separator joins, folder-name parsing, matter-data root + `COCLERK_CASE_DATA_ROOT` override, identity from `main.sqlite`. Bypass-free: no pointer write, no guard. Also pasted into the data server's backend at build time (`design-decisions.md` #27). |
+| `resolve_paths.py` | Re-exports `case_data_resolver.py`'s names, and adds legacy `9. AI` migration and the full `resolve_pointer()` preamble (mirrors [`../shared/conventions.md`](../shared/conventions.md) §2.3). |
 | `fuse_safe_io.py` | Temp-copy staging helpers: `stage_copies` / `copy_back` / `cleanup` / `open_attached` / `staged`. Enforces `PRAGMA journal_mode = DELETE`. |
 
 ## Command-line tools
@@ -133,9 +134,10 @@ reasons stated at their own entry below):
 - `resolve_paths.resolve_pointer(..., migrate_only=True)` is the schema-version
   guard's escape hatch. Its callers are `migrate_engine.py` (the operative one),
   `rebuild.py --migrate`, and `resolve_pointer.py --migrate-only`. The `matter_data__query`/`matter_data__execute` backend
-  (`source/lawyer/mcp/src/case/backend.ts`) carries its own hand-ported
-  resolver with **no such parameter**, which is what keeps the bypass off the
-  read path — never "simplify" that backend into importing this module.
+  (`source/lawyer/mcp/src/case/backend.ts`) carries its own pointer resolver
+  with **no such parameter**, built on a pasted copy of `case_data_resolver.py`,
+  which is what keeps the bypass off the read path — never "simplify" that
+  backend into importing this module.
 - After a bare `rebuild.py`, run `dump.py` so
   `evidence.sql` carries the fresh `schema v9.0` header. `matter_data__migrate`
   writes the dump itself and needs no follow-up.
