@@ -5,6 +5,7 @@ import {
   buildToolDefinitions,
   caseDataToolDefinitions,
   submissionDataToolDefinitions,
+  submissionFormsToolDefinitions,
   timecampingToolDefinitions,
   timePipelineToolDefinitions,
   type ToolDefinition,
@@ -207,15 +208,92 @@ export const dataTools: Tool<DispatchContext>[] = [
       resnapshotWriting(args.db_path, args.filing_id, { jurisdiction: args.jurisdiction })
   ),
   defineTool("drafting_data__migrate", (args: { db_path: string }) => submissionDataMigrate(args.db_path)),
+  defineTool("drafting_data__complete_job", async (args: CompleteJobArgs & PageArgs, context: DispatchContext) => {
+    const { client, todos, dates } = await pageContext(context, args, true);
+    return submissionDataCompleteJob(args, client, todos?.todos, dates);
+  }),
+
+  defineTool("drafting_forms__board_card", async (args: BoardCardArgs & PageArgs, context: DispatchContext) => {
+    const { client, dates } = await pageContext(context, args, false);
+    return submissionFormsBoardCard(args, client, undefined, dates);
+  }),
+  defineTool("drafting_forms__render", (args: RenderArgs, context: DispatchContext) =>
+    args.proceeding_id !== undefined ? renderProceedingBoard(args, args.proceeding_id, context) : renderFiling(args, context)),
+  defineTool("drafting_forms__bootstrap", async (args: PageArgs & { db_path: string; unattended?: boolean }, context: DispatchContext) => {
+    const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== undefined);
+    const result = submissionFormsBootstrap(
+      args.db_path,
+      client,
+      undefined, // `now` is test-only -- dispatch never pins the clock.
+      args.draft_dir,
+      todos?.todos,
+      args.unattended === true,
+      dates
+    );
+    if (todos) insertPhase(result.timings, "todos", todos.ms);
+    const started = performance.now();
+    const background_job = startBootstrapJob(result, client, dates);
+    addJobPhase(result.timings, started);
+    logTimings("drafting_forms__bootstrap", result.timings);
+    return { ...result, background_job };
+  }),
+  defineTool(
+    "drafting_forms__open_session",
+    async (args: PageArgs & { matter_root: string; unattended?: boolean; filing_id?: number }, context: DispatchContext) => {
+      const { result, dates, matterDescription } = await submissionFormsOpenSession(
+        args.matter_root,
+        context.practiceDb,
+        clientContext(args),
+        args.unattended === true,
+        args.filing_id
+      );
+      // #589: matter_lookup's client fields are the identity bootstrap used, so the job renders with it.
+      const { client_name, client_no, matter_no } = result.matter_lookup;
+      const started = performance.now();
+      const background_job = startBootstrapJob(result, { clientName: client_name, clientNo: client_no, matterNo: matter_no, matterDescription }, dates);
+      addJobPhase(result.timings, started);
+      logTimings("drafting_forms__open_session", result.timings);
+      return { ...result, background_job };
+    }
+  ),
+  defineTool("drafting_forms__form_currency", (args: { form_key: string }) => formCurrency(args.form_key, nowStamp().slice(0, 10))),
+  defineTool("drafting_forms__emit_form32", (args: EmitBcscFormArgs) =>
+    submissionFormsEmitForm32(args.db_path, args.filing_id, args.case_data_folder, {}, {
+      lenient: args.lenient,
+      cover_notes: args.cover_notes,
+    })),
+  defineTool("drafting_forms__emit_bcca_book", (args: { db_path: string; filing_id: number }) =>
+    submissionFormsEmitBccaBook(args.db_path, args.filing_id)),
+  defineTool("drafting_forms__emit_bcca_factum", (args: { db_path: string; filing_id: number; dated_on: string }) =>
+    submissionFormsEmitBccaFactum(args.db_path, args.filing_id, args.dated_on)),
+  defineTool("drafting_forms__emit_form33", (args: EmitBcscFormArgs) =>
+    submissionFormsEmitForm33(args.db_path, args.filing_id, args.case_data_folder, {}, {
+      lenient: args.lenient,
+      cover_notes: args.cover_notes,
+    })),
+  defineTool("drafting_forms__emit_affidavit", (args: { db_path: string; filing_id: number; document_id: number; case_data_folder?: string }) =>
+    submissionFormsEmitAffidavit(args.db_path, args.filing_id, args.document_id, args.case_data_folder)),
+  // Each of these takes `env` second, so the context is never passed through to it.
+  defineTool("drafting_forms__bcsc_form_harness", (args: HarnessArgs) => bcscFormHarness(args)),
+  defineTool("drafting_forms__publish_general", (args: PublishGeneralArgs) => publishGeneral(args)),
+  defineTool("drafting_forms__draft_harness", (args: DraftHarnessArgs) => draftHarness(args)),
+  defineTool("drafting_forms__read_message", (args: ReadMessageArgs) => readMessage(args)),
+  defineTool("drafting_forms__reply_draft", (args: ReplyDraftArgs) => replyDraft(args)),
+  defineTool("drafting_forms__publish_bcca_factum", (args: PublishBccaFactumArgs) => publishBccaFactum(args)),
+  defineTool("drafting_forms__publish_vaniac_package", (args: PublishVaniacArgs) => publishVaniacPackage(args)),
+  defineTool("drafting_forms__assemble_general", (args: AssembleGeneralArgs) => assembleGeneral(args)),
+  defineTool("drafting_forms__pre_filing_check", (args: { db_path: string; filing_id: number; package_dir: string }) =>
+    submissionFormsPreFilingCheck(args.db_path, args.filing_id, args.package_dir)),
 ];
 
-/** The definitions `dataTools` covers: drafting_data__complete_job stays in the `if` chain for now. */
+/** The definitions `dataTools` covers. */
 export function dataToolDefinitions(): ToolDefinition[] {
   return [
     ...caseDataToolDefinitions(),
     ...timePipelineToolDefinitions(),
     ...timecampingToolDefinitions(),
-    ...submissionDataToolDefinitions().filter((tool) => tool.name !== "drafting_data__complete_job"),
+    ...submissionDataToolDefinitions(),
+    ...submissionFormsToolDefinitions(),
   ];
 }
 
@@ -247,167 +325,6 @@ export async function callTool(
   dataTable ??= pairTools(dataToolDefinitions(), dataTools);
   const dataTool = dataTable.get(name);
   if (dataTool) return dataTool.handler(args, context);
-
-  if (name === "drafting_data__complete_job") {
-    const { client, todos, dates } = await pageContext(context, args, true);
-    return submissionDataCompleteJob(args as unknown as CompleteJobArgs, client, todos?.todos, dates);
-  }
-
-  if (name === "drafting_forms__board_card") {
-    const { client, dates } = await pageContext(context, args, false);
-    return submissionFormsBoardCard(args as unknown as BoardCardArgs, client, undefined, dates);
-  }
-
-  if (name === "drafting_forms__render" && args.proceeding_id !== undefined) {
-    // ADR 0018: a proceeding with no filing has a Job Board of its own and nothing else to render.
-    const filingOnly = ["filing_id", "render_mode", "documents", "appeal_deadline", "presentation_dir"].filter((k) => args[k] !== undefined);
-    if (filingOnly.length > 0) {
-      throw new ValidationError(`drafting_forms__render.proceeding_id takes no ${filingOnly.join(", ")} -- those are a filing's`);
-    }
-    const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== undefined);
-    const result = submissionFormsRenderProceedingBoard(
-      args.db_path as string,
-      args.proceeding_id as number,
-      client,
-      undefined, // `now` is test-only -- dispatch never pins the clock.
-      args.session_token as string | undefined,
-      args.draft_dir as string | undefined,
-      todos?.todos,
-      dates
-    );
-    if (todos) insertPhase(result.timings, "todos", todos.ms);
-    logTimings(name, result.timings);
-    return result;
-  }
-
-  if (name === "drafting_forms__render") {
-    if (args.filing_id === undefined) throw new ValidationError("drafting_forms__render needs filing_id, or proceeding_id for a proceeding with no filing");
-    // Only a render under draft_dir or presentation_dir rewrites the Litigation Strategy, so only it reads the registry.
-    const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== undefined || args.presentation_dir !== undefined);
-    const result = submissionFormsRender(
-      args.db_path as string,
-      args.filing_id as number,
-      client,
-      (args.render_mode as RenderMode | undefined) ?? "mockup",
-      args.documents as string[] | undefined,
-      args.appeal_deadline as string | undefined,
-      args.presentation_dir as string | undefined,
-      undefined, // `now` is test-only -- dispatch never pins the clock.
-      args.session_token as string | undefined,
-      args.draft_dir as string | undefined,
-      todos?.todos,
-      dates
-    );
-    if (todos) insertPhase(result.timings, "todos", todos.ms);
-    logTimings(name, result.timings);
-    // #589: a successful mockup render (rendered_at is set only then) tells the background job this
-    // filing is done, and reports the job's status.
-    if (result.rendered_at === undefined) return result;
-    markRenderedInForeground(args.db_path as string, args.filing_id as number);
-    return { ...result, background_job: backgroundJobStatus(args.db_path as string) };
-  }
-
-  if (name === "drafting_forms__bootstrap") {
-    const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== undefined);
-    const result = submissionFormsBootstrap(
-      args.db_path as string,
-      client,
-      undefined, // `now` is test-only -- dispatch never pins the clock.
-      args.draft_dir as string | undefined,
-      todos?.todos,
-      args.unattended === true,
-      dates
-    );
-    if (todos) insertPhase(result.timings, "todos", todos.ms);
-    const started = performance.now();
-    const background_job = startBootstrapJob(result, client, dates);
-    addJobPhase(result.timings, started);
-    logTimings(name, result.timings);
-    return { ...result, background_job };
-  }
-
-  if (name === "drafting_forms__open_session") {
-    const { result, dates, matterDescription } = await submissionFormsOpenSession(
-      args.matter_root as string,
-      context.practiceDb,
-      clientContext(args),
-      args.unattended === true,
-      args.filing_id as number | undefined
-    );
-    // #589: matter_lookup's client fields are the identity bootstrap used, so the job renders with it.
-    const { client_name, client_no, matter_no } = result.matter_lookup;
-    const started = performance.now();
-    const background_job = startBootstrapJob(result, { clientName: client_name, clientNo: client_no, matterNo: matter_no, matterDescription }, dates);
-    addJobPhase(result.timings, started);
-    logTimings(name, result.timings);
-    return { ...result, background_job };
-  }
-
-  if (name === "drafting_forms__form_currency") {
-    return formCurrency(args.form_key as string, nowStamp().slice(0, 10));
-  }
-
-  if (name === "drafting_forms__emit_form32") {
-    return submissionFormsEmitForm32(args.db_path as string, args.filing_id as number, args.case_data_folder as string | undefined, {}, {
-      lenient: args.lenient as boolean | undefined,
-      cover_notes: args.cover_notes as string[] | undefined,
-    });
-  }
-
-  if (name === "drafting_forms__emit_bcca_book") {
-    return submissionFormsEmitBccaBook(args.db_path as string, args.filing_id as number);
-  }
-
-  if (name === "drafting_forms__emit_bcca_factum") {
-    return submissionFormsEmitBccaFactum(args.db_path as string, args.filing_id as number, args.dated_on as string);
-  }
-
-  if (name === "drafting_forms__emit_form33") {
-    return submissionFormsEmitForm33(args.db_path as string, args.filing_id as number, args.case_data_folder as string | undefined, {}, {
-      lenient: args.lenient as boolean | undefined,
-      cover_notes: args.cover_notes as string[] | undefined,
-    });
-  }
-
-  if (name === "drafting_forms__emit_affidavit") {
-    return submissionFormsEmitAffidavit(args.db_path as string, args.filing_id as number, args.document_id as number, args.case_data_folder as string | undefined);
-  }
-
-  if (name === "drafting_forms__bcsc_form_harness") {
-    return bcscFormHarness(args as unknown as HarnessArgs);
-  }
-
-  if (name === "drafting_forms__publish_general") {
-    return publishGeneral(args as unknown as PublishGeneralArgs);
-  }
-
-  if (name === "drafting_forms__draft_harness") {
-    return draftHarness(args as unknown as DraftHarnessArgs);
-  }
-
-  if (name === "drafting_forms__read_message") {
-    return readMessage(args as unknown as ReadMessageArgs);
-  }
-
-  if (name === "drafting_forms__reply_draft") {
-    return replyDraft(args as unknown as ReplyDraftArgs);
-  }
-
-  if (name === "drafting_forms__publish_bcca_factum") {
-    return publishBccaFactum(args as unknown as PublishBccaFactumArgs);
-  }
-
-  if (name === "drafting_forms__publish_vaniac_package") {
-    return publishVaniacPackage(args as unknown as PublishVaniacArgs);
-  }
-
-  if (name === "drafting_forms__assemble_general") {
-    return assembleGeneral(args as unknown as AssembleGeneralArgs);
-  }
-
-  if (name === "drafting_forms__pre_filing_check") {
-    return submissionFormsPreFilingCheck(args.db_path as string, args.filing_id as number, args.package_dir as string);
-  }
 
   if (name === "skill_source__read") {
     return skillSourceRead(
@@ -628,6 +545,70 @@ function insertPhase(timings: PhaseTimings, phase: string, ms: number): void {
   if (total) timings.push({ phase: "total", ms: Math.round((total.ms + ms) * 10) / 10 });
 }
 
+type PageArgs = { client_name?: string; client_no?: string; matter_no?: string; draft_dir?: string; presentation_dir?: string };
+
+type RenderArgs = PageArgs & {
+  db_path: string;
+  filing_id?: number;
+  proceeding_id?: number;
+  render_mode?: RenderMode;
+  documents?: string[];
+  appeal_deadline?: string;
+  session_token?: string;
+};
+
+type EmitBcscFormArgs = { db_path: string; filing_id: number; case_data_folder?: string; lenient?: boolean; cover_notes?: string[] };
+
+async function renderProceedingBoard(args: RenderArgs, proceedingId: number, context: DispatchContext): Promise<unknown> {
+  // ADR 0018: a proceeding with no filing has a Job Board of its own and nothing else to render.
+  const filingOnly = (["filing_id", "render_mode", "documents", "appeal_deadline", "presentation_dir"] as const).filter((k) => args[k] !== undefined);
+  if (filingOnly.length > 0) {
+    throw new ValidationError(`drafting_forms__render.proceeding_id takes no ${filingOnly.join(", ")} -- those are a filing's`);
+  }
+  const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== undefined);
+  const result = submissionFormsRenderProceedingBoard(
+    args.db_path,
+    proceedingId,
+    client,
+    undefined, // `now` is test-only -- dispatch never pins the clock.
+    args.session_token,
+    args.draft_dir,
+    todos?.todos,
+    dates
+  );
+  if (todos) insertPhase(result.timings, "todos", todos.ms);
+  logTimings("drafting_forms__render", result.timings);
+  return result;
+}
+
+async function renderFiling(args: RenderArgs, context: DispatchContext): Promise<unknown> {
+  const filingId = args.filing_id;
+  if (filingId === undefined) throw new ValidationError("drafting_forms__render needs filing_id, or proceeding_id for a proceeding with no filing");
+  // Only a render under draft_dir or presentation_dir rewrites the Litigation Strategy, so only it reads the registry.
+  const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== undefined || args.presentation_dir !== undefined);
+  const result = submissionFormsRender(
+    args.db_path,
+    filingId,
+    client,
+    args.render_mode ?? "mockup",
+    args.documents,
+    args.appeal_deadline,
+    args.presentation_dir,
+    undefined, // `now` is test-only -- dispatch never pins the clock.
+    args.session_token,
+    args.draft_dir,
+    todos?.todos,
+    dates
+  );
+  if (todos) insertPhase(result.timings, "todos", todos.ms);
+  logTimings("drafting_forms__render", result.timings);
+  // #589: a successful mockup render (rendered_at is set only then) tells the background job this
+  // filing is done, and reports the job's status.
+  if (result.rendered_at === undefined) return result;
+  markRenderedInForeground(args.db_path, filingId);
+  return { ...result, background_job: backgroundJobStatus(args.db_path) };
+}
+
 /** ADR 0021 D1: the matter's open to-dos for the Litigation Strategy, read only when the call writes the
  * page, and timed as its own phase. #883: a call that does not restate matter_no reads the matter
  * named by the folder the page sits in, as open_session did, so it never wipes a populated list.
@@ -635,7 +616,7 @@ function insertPhase(timings: PhaseTimings, phase: string, ms: number): void {
  * identity is the call's client, so the page's header and its to-dos name the same matter. */
 async function pageContext(
   context: DispatchContext,
-  args: ReturnType<typeof validateToolInput>,
+  args: PageArgs,
   writesPage: boolean
 ): Promise<{ client: ClientContext; todos?: { todos: MatterTodos; ms: number }; dates?: MatterDates }> {
   const client = clientContext(args);
@@ -645,7 +626,7 @@ async function pageContext(
   if (!writesPage) return { client, dates: await readMatterDates(context.practiceDb, client.matterNo) };
   const started = performance.now();
   // The page sits in <matter>/0. DRAFT, and a Writing's folder is always that folder's child.
-  const draftDir = (args.draft_dir as string | undefined) ?? dirname(args.presentation_dir as string);
+  const draftDir = args.draft_dir ?? dirname(args.presentation_dir as string);
   const resolved = (await lookUpMatter(dirname(draftDir), context.practiceDb, client)).client;
   // A folder the lookup could not match still reads its own token, as #883 did.
   const matterNo = resolved.matterNo ?? matterToken(dirname(draftDir)) ?? undefined;
@@ -657,12 +638,8 @@ async function pageContext(
   return { client: resolved, todos: { todos, ms: Math.round((performance.now() - started) * 10) / 10 }, dates };
 }
 
-function clientContext(args: ReturnType<typeof validateToolInput>): ClientContext {
-  return {
-    clientName: args.client_name as string | undefined,
-    clientNo: args.client_no as string | undefined,
-    matterNo: args.matter_no as string | undefined,
-  };
+function clientContext(args: PageArgs): ClientContext {
+  return { clientName: args.client_name, clientNo: args.client_no, matterNo: args.matter_no };
 }
 
 /** A knowledge read's seams: with `matter_root`, the case data root derived from that matter's

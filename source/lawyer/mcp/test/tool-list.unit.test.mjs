@@ -93,13 +93,23 @@ test("practice: every definition pairs with one list entry, and a definition wit
   assert.throws(() => pairTools(practiceToolDefinitions(), rest), (err) => err.code === "internal_error" && err.message.includes(`no handler for ${dropped.name}`));
 });
 
-test("dispatch.ts: the matter, time-pipeline, timecamping and drafting data tools pair with their definitions, complete_job aside", async () => {
+test("dispatch.ts: the matter, time-pipeline, timecamping, drafting data and drafting forms tools pair with their definitions", async () => {
   const { dataTools, dataToolDefinitions } = await import("../build/dispatch.js");
   const { pairTools } = await import("../build/tool-list.js");
   const definitions = dataToolDefinitions();
   assert.equal(pairTools(definitions, dataTools).size, definitions.length);
-  assert.ok(definitions.some((tool) => tool.name === "matter_data__query"));
-  assert.ok(!dataTools.some((tool) => tool.name === "drafting_data__complete_job"));
+  for (const name of ["matter_data__query", "drafting_data__complete_job", "drafting_forms__render", "drafting_forms__open_session"]) {
+    assert.ok(definitions.some((tool) => tool.name === name), name);
+  }
+});
+
+test("dispatch.ts: render refuses a filing's fields on a proceeding, and needs filing_id or proceeding_id", async () => {
+  const { callTool } = await import("../build/dispatch.js");
+  await assert.rejects(
+    callTool({}, "drafting_forms__render", { db_path: "x", proceeding_id: 1, filing_id: 2 }),
+    /drafting_forms__render\.proceeding_id takes no filing_id -- those are a filing's/
+  );
+  await assert.rejects(callTool({}, "drafting_forms__render", { db_path: "x" }), /drafting_forms__render needs filing_id, or proceeding_id/);
 });
 
 test("dispatch.ts: a listed tool's handler gets the validated args", async () => {
