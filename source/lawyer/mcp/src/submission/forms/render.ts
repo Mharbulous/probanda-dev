@@ -267,8 +267,8 @@ export function submissionFormsRender(
   // Memoisation by stamp (#582, brief §1). A render is a pure function of the stamp's
   // inputs (#581 §1), so when none has moved and every file the manifest lists is still
   // byte-for-byte what it recorded, the advocacy documents are neither rendered nor
-  // written: their paths, and their text when it is asked for, come off disk. The Job
-  // Board's section is rebuilt either way -- it sits outside the stamp (#581 §2),
+  // written: their paths, and their text when it is asked for, come off disk. The Milestone's
+  // section is rebuilt either way -- it sits outside the stamp (#581 §2),
   // since its data reads the ticket tables, whose writes are exempt from the revision bump.
   // The Writing's own folder (writing-folder.ts): the one its manifest records, so a retitle never
   // moves it, or presentation_dir. Only a mockup render writes into it, so only it is resolved here.

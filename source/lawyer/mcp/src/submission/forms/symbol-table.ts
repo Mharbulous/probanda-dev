@@ -5,8 +5,8 @@
 // (.claude/skills/drafting-data/references/work-markers.md tables 1a to 1c and the emoji legend of
 // terms-and-symbols.md), with schema detail removed; those rows now live only here. Nothing here is read at runtime from a
 // file. markers.ts's print step imports it (splitGlyphs), legend.ts builds the legend from it, and
-// proposal-inventory.ts derives GLYPH_SLUGS and WORK_NAMES from its slugs and titles, so a Job
-// Board title is written only here. test/symbol-table.unit.test.mjs pins it to ALL_MARKER_GLYPHS
+// proposal-inventory.ts derives GLYPH_SLUGS and WORK_NAMES from its slugs and titles, so a Milestone
+// title is written only here. test/symbol-table.unit.test.mjs pins it to ALL_MARKER_GLYPHS
 // and WORK_MARKER_GLYPHS.
 //
 // Every text field but `modelNote`, `condition` and `history` is written for the lawyer reading the

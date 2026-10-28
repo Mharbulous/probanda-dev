@@ -548,8 +548,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing), steps_open. Only when this " +
         "call completed the job (changes 1) are the matter's Milestone pages and Litigation Strategy rewritten, by the render a " +
         "session runs with draft_dir: the job's filing's, or for a job with no filing_id the first live filing's in its " +
-        "proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Job " +
-        "Board pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals " +
+        "proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Milestone " +
+        "pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals " +
         "write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, " +
         "changes, status, completed_at, locked_by, rejected_at, pages_written, milestone_path (the rendered filing's or " +
         "proceeding's Milestone page), board_changed, board_moves, pages_refused, open_steps on steps_open, and a note.",
@@ -620,8 +620,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       description:
         "Record that the practitioner was just shown pages, so the Milestone's thumbnails put the most recently " +
         "viewed first and a view page's tile stops being dashed. Call it right after presenting a view page or a " +
-        "Writing's mockup as a file card, with the exact paths presented, in the order presented; never for a Job " +
-        "Board or Litigation Strategy page. Each path is matched by its file name to a thumbnail: a board's view " +
+        "Writing's mockup as a file card, with the exact paths presented, in the order presented; never for a Milestone " +
+        "or Litigation Strategy page. Each path is matched by its file name to a thumbnail: a board's view " +
         "page (view_page_paths), or a live Writing's document by its mockup, by its folder too " +
         "when several thumbnails share the name. Each moves to the front of its board's order, so the last " +
         "path ends up first. One db_meta row per board, key `board_viewed:filing:<id>` or " +

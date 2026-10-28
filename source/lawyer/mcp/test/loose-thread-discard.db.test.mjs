@@ -1,7 +1,7 @@
 // A loose thread that left the board without being outlined (schema v75): seeds.discarded_at and
 // seeds.suggested_at. A discarded or suggested thread is not open, so it is out of fetchOpenSeeds,
-// the Defer write and the latest-activity read, and is listed by fetchDiscardedSeeds, which the Job
-// Board draws: a discarded thread as a struck line with a Restore link, a suggested one as a plain
+// the Defer write and the latest-activity read, and is listed by fetchDiscardedSeeds, which the Milestone
+// draws: a discarded thread as a struck line with a Restore link, a suggested one as a plain
 // line, neither in the Loose Threads count. A database held at v74 has neither column and still
 // reads and draws, with none of either.
 

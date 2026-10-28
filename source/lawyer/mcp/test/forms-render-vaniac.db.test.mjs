@@ -724,8 +724,8 @@ test("bootstrap lists a seeded matter's filings and reports the schema version, 
     assert.equal(rendered.documents.length, 7);
 
     const after = submissionFormsBootstrap(f.dbPath, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
-    // Written Arguments (venue) + 4 witness statements + evidence index; the Job
-    // Board is no file of the filing's since #1365.
+    // Written Arguments (venue) + 4 witness statements + evidence index; the Milestone
+    // is no file of the filing's since #1365.
     assert.equal(after.filings[0].paths.length, 6);
     for (const p of after.filings[0].paths) assert.ok(existsSync(p), `expected ${p} to exist`);
     assert.equal(after.filings[0].render_state, "fresh");

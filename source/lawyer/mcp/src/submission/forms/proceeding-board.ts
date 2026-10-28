@@ -47,8 +47,8 @@ export interface ProceedingBoardResult {
 /**
  * drafting_forms__render with proceeding_id (ADR 0018): the Milestone section of a proceeding with
  * no filing, whose tickets and loose threads no filing's section can show. Nothing is written beside the
- * database; given draft_dir, the matter's pages are rewritten, this proceeding's section on a Job
- * Board page of its own (#1365, ADR 0033's 2026-10-05 amendment). A proceeding that has a filing is
+ * database; given draft_dir, the matter's pages are rewritten, this proceeding's section on a Milestone
+ * page of its own (#1365, ADR 0033's 2026-10-05 amendment). A proceeding that has a filing is
  * refused: its tickets are on each filing's section.
  */
 export function submissionFormsRenderProceedingBoard(

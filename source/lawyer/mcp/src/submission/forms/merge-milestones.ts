@@ -1,5 +1,5 @@
-// drafting_data__merge_milestones (docs/ADRs/0010-milestones-organized-by-goals.md): joins two Job
-// Boards whose goals the practitioner has confirmed overlap or cohere. The survivor is a Writing's
+// drafting_data__merge_milestones (docs/ADRs/0010-milestones-organized-by-goals.md): joins two Milestones
+// whose goals the practitioner has confirmed overlap or cohere. The survivor is a Writing's
 // board over a Milestone with no Writing over a pre-filing board, and within a kind the lower id
 // (BoardIndex.rank). The absorbed board gets one membership row naming the survivor, and every board
 // it had absorbed is re-pointed to the survivor. The merged board holds one goal (ADR 0010, 2026-10-22

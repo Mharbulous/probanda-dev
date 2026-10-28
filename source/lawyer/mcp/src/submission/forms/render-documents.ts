@@ -102,8 +102,8 @@ function venueDocumentsForFiling(
  * every type that declares `written-arguments` among its `companions` (shared/declared-layout.md
  * section 6); a type whose venue document is itself the written argument (VanIAC's submissions
  * package, the BCCA response book and factum) declares none. The reserve inventory is then
- * recorded for every filing, with no document. The Job
- * Board is no document of the filing's (#1365): the render builds its section from this render's
+ * recorded for every filing, with no document. The Milestone
+ * is no document of the filing's (#1365): the render builds its section from this render's
  * inventory, after these documents, and the filing's own Milestone page carries it. */
 export function documentsForFiling(ctx: RenderContext, timings: PhaseTimings, general: StoredLayout | null, cited: CitedState[]): DocumentOutput[] {
   // ORDER IS LOAD-BEARING: recordReserveInventory reads ctx.paragraphLedger, which the venue

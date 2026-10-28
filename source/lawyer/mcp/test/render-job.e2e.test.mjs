@@ -110,8 +110,8 @@ test("bootstrap's job renders each stale filing once, skips fresh and retired on
     assert.equal(readMirror(m).state, "done");
     assert.equal(readPage(join(m.draftDir, STATUS_FILE)).state, "done");
 
-    // #1365 A7: after each filing the job rewrote the matter's pages from database state -- a Job
-    // Board page per live filing (ADR 0033, 2026-10-05 amendment), and the Litigation Strategy with the to-dos
+    // #1365 A7: after each filing the job rewrote the matter's pages from database state -- a Milestone
+    // page per live filing (ADR 0033, 2026-10-05 amendment), and the Litigation Strategy with the to-dos
     // bootstrap read, which the job cannot read itself; its lines now show the filings the job
     // rendered as fresh.
     assert.deepEqual(first.milestone_paths.map((p) => p.filing_id).sort(), [1, 2, 3], "every live filing has a page; the retired one none");
