@@ -1223,7 +1223,7 @@ Path D described its writes in prose, so every session rebuilt the same SQL and 
 
 **Case law only, for now.** The provision extractor's result has the same shape with fewer keys and the tool accepts it, but that extractor writes no result file, so the statute path still writes through `matter_data__execute`.
 
-No agent is granted the tool. `matter_data__execute` is granted to none either, and the session that runs Path D calls both.
+No agent is granted the tool. `matter_data__execute` is granted to none either, and the session that runs Path D calls both. The extractor hands its result over through `matter_data__stage_result`, not a file (#76).
 
 ## 69. Contacts and their matter roles are practice data (ADR 0009, 2026-10-16)
 
@@ -1300,3 +1300,11 @@ Before a suggestion leaves the computer, the data server checks its text against
 ---
 
 **Closing principle:** schemas encode categorical invariants; prose + verifier backlog encode judgment. Do not swap them.
+
+## 76. An extractor stages its result on the host through `matter_data__stage_result` (2026-10-28, #194)
+
+#68's handover was a file: the session named a scratch `RESULT_PATH` outside the matter tree, `extract-caselaw` wrote its result there with `Write`, and `matter_data__ingest_authority` read the path. In Cowork the agent's `Write` lands in the session's Linux sandbox, which the data server on the Windows host cannot see, so the ingest found no file and wrote nothing (#194). No scratch folder works for both sides: the only folders they share are connected ones, a path into the matter folder names the matter to an agent that must never learn it (#10), and case data need not sit inside the connected matter folder.
+
+So the agent hands the result to the host itself. `matter_data__stage_result` takes the output-contract object as its one argument, stores it in `%LOCALAPPDATA%\Coclerk\extract-results\<uuid>.json` and returns `{result_id, bytes}`. The agent replies `ok <result_id> <bytes>`, the byte count now being the server's, and `ingest_authority` takes `result_id` in place of `result_path` and reads only from that folder. The tool takes no path and no matter, so `extract-caselaw` drops `Write` and can write nowhere. The result costs the agent the same tokens as a `Write` did, and still never enters the session.
+
+A staged result is kept for 7 days, and each new stage deletes the older ones. It is not deleted on a successful ingest, because Path D's rerun and conventions §2.3's verify-before-retry both call the tool on the same result again. The folder is on the User's Machine (Commandment 3). The tool stores any JSON object, so the extract-facts route (#191) can stage through it too.
