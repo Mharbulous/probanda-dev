@@ -11,7 +11,7 @@ On a merged board's page, the Completion Criteria card's state badge reads `<Wri
 - Practitioner's screenshot of the page: badge text "<Writing 1 title>: Drafting · <Writing 2 title>: Drafting", clipped at the card's right edge.
 - `board_card` criteria lane, same board: criterion texts end "(<Writing 1 title>)"; gate criterion reads "<Writing 1 title>: The pre-filing checks are passed or waived; <Writing 2 title>: The pre-send checks are passed or waived (10 open)"; every item is prefixed "<Writing title>: ".
 - The same item text appears once under each Writing in the gate criterion (one job-title item, counted twice).
-- Prior spec 2026-10-21_merged-job-board-one-board-spec.md §11 records HEAD's choice: "Criteria combine by id, each text naming its Writing where they differ (ADR 0010, 2026-10-21 amendment)". This spec reverses that choice for the HTML page only, on the practitioner's instruction.
+- Prior spec 2026-10-21_merged-milestone-one-board-spec.md §11 records HEAD's choice: "Criteria combine by id, each text naming its Writing where they differ (ADR 0010, 2026-10-21 amendment)". This spec reverses that choice for the HTML page only, on the practitioner's instruction.
 
 ## 3. Goal and non-goals
 Goal: the page's Completion Criteria card shows one state badge and no Writing titles.
@@ -61,7 +61,7 @@ Confirm where the badge and criterion texts are built for the page versus board_
 
 | Claim | Result | At HEAD |
 |---|---|---|
-| The page's renderer is in `combined-board.ts` / `matter-pages.ts` | matches, with paths | `source/lawyer/mcp/src/submission/forms/combined-board.ts` (`combineSections`, `combinedCriteria`) builds the merged section; `source/lawyer/mcp/src/submission/matter-pages.ts` `buildMatterPages` passes it to the page; `source/lawyer/mcp/src/templates/job-board/job-board.js` `goalCard` draws the card. |
+| The page's renderer is in `combined-board.ts` / `matter-pages.ts` | matches, with paths | `source/lawyer/mcp/src/submission/forms/combined-board.ts` (`combineSections`, `combinedCriteria`) builds the merged section; `source/lawyer/mcp/src/submission/matter-pages.ts` `buildMatterPages` passes it to the page; `source/lawyer/mcp/src/templates/milestone/milestone.js` `goalCard` draws the card. |
 | The badge reads `<Writing 1 title>: Drafting · <Writing 2 title>: Drafting` | matches | `combineSections` sets `meta.state_label` to each section's `<title>: <state>` joined by ` · `; `goalCard` draws it in the `lifecycle` span. |
 | Badge and criterion texts are shared between the page and board_card | matches | One `combineSections` serves both: `buildMatterPages` for the page, and `boardSectionOf` for board_summary and board_card. board_summary prints the same `meta.state_label` as its State line. A page-only change therefore needs a page-only variant of the combined section. |
 | Criterion texts end `(<Writing title>)`, the gate joins each Writing's wording named by its Writing, items are prefixed `<Writing title>: ` | matches | `combinedCriteria`: a criterion one of several Writings holds, and every deadline criterion, gets the suffix; differing texts join as `<title>: <text>` with `; `; every item of a combined criterion is tagged. |

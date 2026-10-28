@@ -92,7 +92,7 @@ export function rankFilings(
             lifecycle: lifecycle.state,
             ...(filing.retired_on ? { retired_on: filing.retired_on } : {}),
             ...(filing.retired_on && filing.retirement_reason ? { retirement_reason: filing.retirement_reason } : {}),
-            job_board_only: true as const,
+            milestone_only: true as const,
           },
         };
       }

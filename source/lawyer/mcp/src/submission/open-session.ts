@@ -89,7 +89,7 @@ export interface OpenSessionResult extends BootstrapResult {
   /** With a draft folder: the Milestone page of the filing or proceeding opened, or the one the
    * refused opening tried to open; null when there was nothing to open (ADR 0033, 2026-10-05
    * amendment). Absent when the opened filing is retired, which has no page. */
-  job_board_path?: string | null;
+  milestone_path?: string | null;
   /** Party/counsel drift across every proceeding (party/counsel SSOT): each party row that is
    * unlinked from case data, linked to a party not of record, or whose counsel and address for
    * service could not be read from case data. The session presents each for the practitioner to
@@ -149,7 +149,7 @@ export interface OpenSessionResult extends BootstrapResult {
 
 type Opening = Pick<
   OpenSessionResult,
-  "opened" | "open_refused" | "matter_board_path" | "job_board_path" | "job_board_paths" | "view_page_paths" | "moved_to_trash" | "trash_skipped"
+  "opened" | "open_refused" | "matter_board_path" | "milestone_path" | "milestone_paths" | "view_page_paths" | "moved_to_trash" | "trash_skipped"
 >;
 
 function trashReport(written: Pick<PagesWritten, "moved_to_trash" | "trash_skipped">): Pick<Opening, "moved_to_trash" | "trash_skipped"> {
@@ -176,7 +176,7 @@ function openBoard(
   timings: PhaseTimings
 ): Opening {
   // A Milestone with no Writing is never the default: it opens only when filing_id names it.
-  const target = filingId ?? listed.filings.find((f) => f.retired_on === undefined && !f.job_board_only)?.filing_id;
+  const target = filingId ?? listed.filings.find((f) => f.retired_on === undefined && !f.milestone_only)?.filing_id;
   const proceedingId = target === undefined ? listed.pre_filing_proceedings?.[0]?.proceeding_id : undefined;
   const phases = (rendered: PhaseTimings) => {
     for (const t of rendered) timings.push({ phase: `open: ${t.phase}`, ms: t.ms });
@@ -202,8 +202,8 @@ function openBoard(
           ...(board.ingest_inputs ? { ingest_inputs: board.ingest_inputs } : {}),
         },
         matter_board_path: join(draftDir, MATTER_BOARD_FILE),
-        job_board_path: board.path,
-        ...(written.pages ? { job_board_paths: written.pages.job_board_paths, view_page_paths: written.pages.view_page_paths } : {}),
+        milestone_path: board.path,
+        ...(written.pages ? { milestone_paths: written.pages.milestone_paths, view_page_paths: written.pages.view_page_paths } : {}),
         ...trashReport(rendered),
       };
     }
@@ -213,8 +213,8 @@ function openBoard(
       return {
         opened: { proceeding_id: proceedingId, revision: rendered.revision, rendered_at: rendered.rendered_at, board_summary: rendered.board_summary },
         matter_board_path: rendered.matter_board_path,
-        job_board_path: rendered.job_board_path,
-        job_board_paths: rendered.job_board_paths,
+        milestone_path: rendered.milestone_path,
+        milestone_paths: rendered.milestone_paths,
         view_page_paths: rendered.view_page_paths,
         ...trashReport(rendered),
       };
@@ -229,8 +229,8 @@ function openBoard(
     ...(refused ? { open_refused: refused } : {}),
     matter_board_path: pages.matter_board_path,
     // The page of the filing or proceeding the refused opening tried to open; null with nothing to open.
-    job_board_path: pagePathFor(pages, { filing_id: target ?? null, proceeding_id: proceedingId }) ?? null,
-    job_board_paths: pages.job_board_paths,
+    milestone_path: pagePathFor(pages, { filing_id: target ?? null, proceeding_id: proceedingId }) ?? null,
+    milestone_paths: pages.milestone_paths,
     view_page_paths: pages.view_page_paths,
     ...trashReport(pages),
   };

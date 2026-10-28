@@ -194,7 +194,7 @@ test("a view on one board leaves another board's thumbnails never viewed", async
 
 test("on a merged board a record by the absorbed Writing's paths lands on the survivor's row", async (t) => {
   const m = await fixture(t);
-  await callTool({}, "drafting_data__merge_job_boards", { db_path: m.dbPath, boards: [{ filing_id: 1 }, { filing_id: 2 }], confirmed: true, session_token: TOKEN });
+  await callTool({}, "drafting_data__merge_milestones", { db_path: m.dbPath, boards: [{ filing_id: 1 }, { filing_id: 2 }], confirmed: true, session_token: TOKEN });
   render(m, 1);
   const absorbed = render(m, 2);
   const [doc] = docPaths(absorbed);

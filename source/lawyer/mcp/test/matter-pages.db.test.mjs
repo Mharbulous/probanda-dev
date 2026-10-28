@@ -48,7 +48,7 @@ function renderInto(f, filingId, draft, now, documents) {
 }
 
 /** Every Milestone page in the draft folder, at its top or in a Writing's folder, relative to it, sorted. */
-function jobBoardPages(draft) {
+function milestonePages(draft) {
   return namesUnder(draft)
     .map(String)
     .filter((name) => /^Milestone( .*)?\.html$/.test(name.split(/[\\/]/).pop()))
@@ -57,7 +57,7 @@ function jobBoardPages(draft) {
 
 /** The section of the Milestone page whose one section is filing `filingId`'s. */
 function sectionOf(draft, filingId) {
-  const page = jobBoardPages(draft)
+  const page = milestonePages(draft)
     .map((name) => readBoardData(join(draft, name)))
     .find((data) => data.sections[0]?.meta.filing_id === filingId);
   assert.ok(page, `expected a Milestone page for filing ${filingId} in ${draft}`);
@@ -116,8 +116,8 @@ test("two live filings in one proceeding get a Milestone page each, each with on
     const { draft, result } = await twoFilingBoard(f);
 
     // seedTickets' proceeding 2 has no filing, so it has a page of its own.
-    assert.deepEqual(jobBoardPages(draft), ["Milestone - proceeding 2.html", OPENING_PAGE, REPLY_PAGE]);
-    for (const name of jobBoardPages(draft)) {
+    assert.deepEqual(milestonePages(draft), ["Milestone - proceeding 2.html", OPENING_PAGE, REPLY_PAGE]);
+    for (const name of milestonePages(draft)) {
       const { sections } = readBoardData(join(draft, name));
       assert.equal(sections.length, 1, `${name} holds one section`);
       assert.ok(sections.filter((s) => s.goal !== undefined).length <= 1, `${name} holds at most one Goal`);
@@ -169,12 +169,12 @@ test("a retitle leaves the filing's Milestone page at its path and moves nothing
   await seedOneFiling(m.dbPath);
   const render = (now) => submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, undefined, now, undefined, m.draft);
   render(FIRST);
-  assert.deepEqual(jobBoardPages(m.draft), [OPENING_PAGE]);
+  assert.deepEqual(milestonePages(m.draft), [OPENING_PAGE]);
 
   await submissionDataExecute(m.dbPath, "UPDATE filings SET title = 'Amended Opening Submissions' WHERE id = 1;");
   const retitled = render(SECOND);
 
-  assert.deepEqual(jobBoardPages(m.draft), [OPENING_PAGE]);
+  assert.deepEqual(milestonePages(m.draft), [OPENING_PAGE]);
   assert.equal(retitled.documents.find((d) => d.document_type === "Work_board").path, join(m.draft, OPENING_PAGE));
   assert.equal(sectionOf(m.draft, 1).meta.filing, "Amended Opening Submissions");
   assert.equal(retitled.moved_to_trash, undefined, "nothing moved to TRASH");
@@ -187,11 +187,11 @@ test("a retired filing's Milestone page goes to TRASH", async (t) => {
   await submissionDataExecute(m.dbPath, "INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (2, 1, 'submissions_package', 'reply', 'Reply Submissions Package');");
   const render = (now) => submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, undefined, now, undefined, m.draft);
   render(FIRST);
-  assert.deepEqual(jobBoardPages(m.draft), [OPENING_PAGE, REPLY_PAGE]);
+  assert.deepEqual(milestonePages(m.draft), [OPENING_PAGE, REPLY_PAGE]);
 
   await submissionDataExecute(m.dbPath, "UPDATE filings SET decided_on = '2026-09-02', retired_on = '2026-09-10', retirement_reason = 'decided' WHERE id = 2;");
   const retired = render(SECOND);
-  assert.deepEqual(jobBoardPages(m.draft), [OPENING_PAGE]);
+  assert.deepEqual(milestonePages(m.draft), [OPENING_PAGE]);
   assert.deepEqual(
     retired.moved_to_trash.map((x) => x.from.toLowerCase()),
     ["Arguments", "Loose Threads", "Material Facts", "Milestone", "Procedural History", "Raw Research"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
@@ -232,14 +232,14 @@ test("a pre-filing proceeding has a Milestone page of its own until it gains a f
   const proceedingPage = "Milestone - proceeding 1.html";
 
   const board = submissionFormsRenderProceedingBoard(m.dbPath, 1, ASHBOURNE, FIRST, "tok", m.draft);
-  assert.equal(board.job_board_path, join(m.draft, proceedingPage));
-  assert.deepEqual(board.job_board_paths, [{ filing_id: null, proceeding_id: 1, path: join(m.draft, proceedingPage) }]);
+  assert.equal(board.milestone_path, join(m.draft, proceedingPage));
+  assert.deepEqual(board.milestone_paths, [{ filing_id: null, proceeding_id: 1, path: join(m.draft, proceedingPage) }]);
   assert.deepEqual(readdirSync(m.draft), ["Drafting records", "Litigation Strategy.html", proceedingPage]);
   assert.deepEqual(readBoardData(join(m.draft, proceedingPage)).sections.map((s) => [s.meta.filing_id, s.meta.proceeding_id]), [[null, 1]]);
 
   await submissionDataExecute(m.dbPath, "INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (1, 1, 'submissions_package', 'opening', 'Opening Submissions Package');");
   const rendered = submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, undefined, SECOND, undefined, m.draft);
-  assert.deepEqual(jobBoardPages(m.draft), [OPENING_PAGE]);
+  assert.deepEqual(milestonePages(m.draft), [OPENING_PAGE]);
   assert.deepEqual(rendered.moved_to_trash.map((x) => x.from.toLowerCase()), [join(m.draft, proceedingPage).toLowerCase()]);
 });
 
@@ -310,9 +310,9 @@ test("session entry and render report board_changed against the state sidecar, w
   const boardOf = (rendered) => rendered.documents.find((d) => d.document_type === "Work_board");
 
   const first = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
-  assert.equal(first.job_board_path.toLowerCase(), join(m.draft, OPENING_PAGE).toLowerCase());
+  assert.equal(first.milestone_path.toLowerCase(), join(m.draft, OPENING_PAGE).toLowerCase());
   assert.deepEqual(
-    first.job_board_paths.map((p) => ({ ...p, path: p.path.toLowerCase() })),
+    first.milestone_paths.map((p) => ({ ...p, path: p.path.toLowerCase() })),
     [{ filing_id: 1, proceeding_id: 1, path: join(m.draft, OPENING_PAGE).toLowerCase() }],
     "session entry returns every page it wrote"
   );
@@ -325,11 +325,11 @@ test("session entry and render report board_changed against the state sidecar, w
   assert.deepEqual(Object.keys(state.sections), ["filing:1"]);
   assert.ok(Array.isArray(state.todos.rows), "the to-dos open_session read are recorded");
 
-  unlinkSync(first.job_board_path);
+  unlinkSync(first.milestone_path);
   const second = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
   assert.equal(second.opened.board_changed, false, "same section apart from meta.rendered, though the page was gone");
   assert.deepEqual(second.opened.board_moves, []);
-  assert.ok(existsSync(second.job_board_path), "the opening wrote the page again");
+  assert.ok(existsSync(second.milestone_path), "the opening wrote the page again");
 
   await submissionDataExecute(
     m.dbPath,
@@ -520,11 +520,11 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
       review_flag,
     });
   }
-  const jobBoard = join(m.draft, "Notice of Application", "Milestone.html");
+  const milestone = join(m.draft, "Notice of Application", "Milestone.html");
   const onPage = (when) => {
-    const page = readFileSync(jobBoard, "utf-8");
+    const page = readFileSync(milestone, "utf-8");
     for (const date of DATES) assert.ok(page.includes(date), `${when}: ${date} is on the Milestone`);
-    assert.equal(JSON.stringify(readBoardData(jobBoard).sections).match(/\d{4}-\d{2}-\d{2}/g)?.some((d) => DATES.includes(d)) ?? false, false, `${when}: no section carries a date`);
+    assert.equal(JSON.stringify(readBoardData(milestone).sections).match(/\d{4}-\d{2}-\d{2}/g)?.some((d) => DATES.includes(d)) ?? false, false, `${when}: no section carries a date`);
   };
   const absent = (text, what) => {
     for (const leak of [...DATES, "Fixture rule", "limited_day"]) assert.equal(text.includes(leak), false, `${what} carries ${leak}`);
@@ -548,7 +548,7 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   summaryDeadlines(opened.opened.board_summary);
 
   // Taken off the page before the background job's first turn, so only the job's rewrite can put them back.
-  writeFileSync(jobBoard, DATES.reduce((page, date) => page.replaceAll(date, "withheld"), readFileSync(jobBoard, "utf-8")), "utf-8");
+  writeFileSync(milestone, DATES.reduce((page, date) => page.replaceAll(date, "withheld"), readFileSync(milestone, "utf-8")), "utf-8");
   const jobs = await awaitBackgroundJobs();
   assert.ok(jobs.some((job) => job.rendered.includes(2)), `the job rendered filing 2: ${JSON.stringify(jobs)}`);
   onPage("after the background job");
@@ -569,8 +569,8 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   absent(readFileSync(join(m.draft, "Litigation Strategy.html"), "utf-8"), "the Litigation Strategy");
   absent(readFileSync(join(m.draft, "Drafting records", "matter-pages-state.json"), "utf-8"), "matter-pages-state.json");
 
-  const { header, main } = drawPage(jobBoard);
-  assert.equal(readFileSync(jobBoard, "utf-8").includes("limited_day"), false, "no review flag is printed as stored");
+  const { header, main } = drawPage(milestone);
+  assert.equal(readFileSync(milestone, "utf-8").includes("limited_day"), false, "no review flag is printed as stored");
   assert.deepEqual(header.children.map((n) => n.className), ["", "writing-title", "meta", "meta proceeding"], "no date is drawn above the Goal cards");
   const nodes = main.all();
   const dates = nodes.find((n) => n.id === "dates");
@@ -621,7 +621,7 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
 });
 
 test("a pre-filing Milestone's header names its proceeding, draws its state as a chip on a blank proceeding line, and omits an empty Writing-dates row", (t) => {
-  const dir = mkdtempSync(join(tmpdir(), "coclerk-job-board-header-"));
+  const dir = mkdtempSync(join(tmpdir(), "coclerk-milestone-header-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const section = {
     meta: { revision: 1, matter: "", client: "", file: "", filing: "", filing_id: null, proceeding_id: 1, rendered: "2026-10-05 09:00", state: null, state_label: "No filing yet", state_since: null, ready_to_retire: false },
@@ -1143,7 +1143,7 @@ test("the live lane's idle tag on an In progress job", () => {
 // seeds captured from it and the answers saved for it, and its card lists those seeds and answers.
 // Saving an answer with the job's id restarts its idle clock; the save is recorded only under the
 // saving session's own lock, and a refused record leaves the file saved.
-async function heldJobBoard(t) {
+async function heldMilestone(t) {
   const f = seededDbFixture();
   t.after(() => f.cleanup());
   await freshSubmissionDb(f.dbPath);
@@ -1169,7 +1169,7 @@ const headline = (f) =>
   );
 
 test("a job's last activity counts the seeds captured from it, and its card lists them", async (t) => {
-  const { f } = await heldJobBoard(t);
+  const { f } = await heldMilestone(t);
 
   assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 0/1 · idle 2 h 40 min, about 0%", "the seed at 09:20, not the lock at 09:00");
   assert.equal(
@@ -1206,7 +1206,7 @@ function firmIdleThreshold(t, hours) {
 // D6: past the firm's idle_flag_hours an In progress job carries `idle past <N> h`, naming the
 // threshold, on the live lane after the idle tag and on the page's card; within it, or unset, nothing.
 test("the idle flag past the firm's idle_flag_hours, on the live lane and the page", async (t) => {
-  const { f } = await heldJobBoard(t);
+  const { f } = await heldMilestone(t);
   firmIdleThreshold(t, 2);
   const { draft } = draftFolder(f);
 
@@ -1220,21 +1220,21 @@ test("the idle flag past the firm's idle_flag_hours, on the live lane and the pa
 });
 
 test("no idle flag within the firm's idle_flag_hours", async (t) => {
-  const { f } = await heldJobBoard(t);
+  const { f } = await heldMilestone(t);
   firmIdleThreshold(t, 3);
   assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 0/1 · idle 2 h 40 min, about 0%");
   assert.equal(buildPreFilingBoardData(f.dbPath, fetchProceeding(f.dbPath, 1), { revision: 1, matter: "", client: "", rendered: NOON }).tickets[0].idle_flag, undefined);
 });
 
 test("no idle flag, and the board data as before, with idle_flag_hours unset", async (t) => {
-  const { f } = await heldJobBoard(t);
+  const { f } = await heldMilestone(t);
   firmIdleThreshold(t, undefined);
   assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 0/1 · idle 2 h 40 min, about 0%");
   assert.equal("idle_flag" in buildPreFilingBoardData(f.dbPath, fetchProceeding(f.dbPath, 1), { revision: 1, matter: "", client: "", rendered: NOON }).tickets[0], false);
 });
 
 test("save_answer with the job's id lists the answer on its card and restarts its idle clock", async (t) => {
-  const { f, law } = await heldJobBoard(t);
+  const { f, law } = await heldMilestone(t);
   const before = fetchRevision(f.dbPath);
 
   const saved = await callTool({}, "research_filing__save_answer", {
@@ -1261,7 +1261,7 @@ test("save_answer with the job's id lists the answer on its card and restarts it
 });
 
 test("save_answer records nothing against a job this session no longer holds, and still saves the file", async (t) => {
-  const { f, law } = await heldJobBoard(t);
+  const { f, law } = await heldMilestone(t);
   const args = { destination_dir: join(law, "Limitation"), filename: "answer.md", text: "Late answer.\n", db_path: f.dbPath, ticket_id: 1 };
 
   const stale = await callTool({}, "research_filing__save_answer", { ...args, session_token: "sess-before-takeover" });
@@ -1420,7 +1420,7 @@ test("an old page file outside any matter with a coclerk.json is reported as ski
 // a waiting step with the plain minute it is next checked, and one whose minute has passed as open;
 // the Milestone page draws the same states as classes, with `until HH:MM` beside a waiting step.
 async function stepStatesBoard(t) {
-  const { f } = await heldJobBoard(t);
+  const { f } = await heldMilestone(t);
   await submissionDataExecute(
     f.dbPath,
     `DELETE FROM ticket_steps WHERE ticket_id = 1;

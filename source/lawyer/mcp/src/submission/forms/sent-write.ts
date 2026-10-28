@@ -278,7 +278,7 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
   checkArgs(args);
   const [filing] = rows<FilingRow>(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]);
   if (filing === undefined) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
-  if (isJobOnlyBoard(filing)) throw refused(`Milestone ${filing.id} has no Writing, so there is nothing to record as sent`, "job_board_only");
+  if (isJobOnlyBoard(filing)) throw refused(`Milestone ${filing.id} has no Writing, so there is nothing to record as sent`, "milestone_only");
   if (filing.retired_on) throw refused(`"${filing.title}" was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on) throw refused(`"${filing.title}" was already recorded as sent or filed on ${filing.filed_on}`, "already_sent");
   const stored = filing.layout_snapshot === null ? null : storedLayout(filing);

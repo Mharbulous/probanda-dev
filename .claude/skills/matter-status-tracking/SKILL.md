@@ -33,7 +33,7 @@ never advanced on absence alone, never advanced on stale data.
 
 This skill tracks the client engagement lifecycle — intake, active representation, and offboarding
 — using signals that apply universally to every matter regardless of practice area. It does not
-track litigation milestones, filing deadlines, or matter-specific planning. See vision.md for the
+track litigation events, filing deadlines, or matter-specific planning. See vision.md for the
 full litmus test.
 
 ## Schema

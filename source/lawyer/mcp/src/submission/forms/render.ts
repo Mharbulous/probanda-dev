@@ -138,7 +138,7 @@ export function submissionFormsRender(
     throw new ValidationError(
       `Milestone ${filingId} has no Writing, so it has no ${renderMode !== "mockup" ? "filed document" : "Writing folder"}; ` +
         "render only its board and the matter's pages",
-      "job_board_only"
+      "milestone_only"
     );
   }
   // Both checked before anything is written. presentation_dir names the Writing's folder itself.
@@ -206,7 +206,7 @@ export function submissionFormsRender(
     return {
       filing_id: filingId,
       revision,
-      job_board_only: true,
+      milestone_only: true,
       documents: [boardDocument(section, written, true)],
       ...(written ? { view_page_paths: written.pages.view_page_paths } : {}),
       ...trashReport(written),

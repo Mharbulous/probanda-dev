@@ -136,11 +136,11 @@
   }
   var writings = data.filings.filter(function (f) { return !f.job_only; });
   var live = writings.filter(function (f) { return !f.retired_on && !onBoard.filing[f.filing_id]; });
-  var jobBoards = data.filings.filter(function (f) { return f.job_only && !f.retired_on && !onBoard.filing[f.filing_id]; });
+  var milestones = data.filings.filter(function (f) { return f.job_only && !f.retired_on && !onBoard.filing[f.filing_id]; });
   var preFiling = data.pre_filing.filter(function (p) { return !onBoard.proceeding[p.proceeding_id]; });
   var retired = data.filings.filter(function (f) { return f.retired_on; });
   section("filings", "Writings", live.length, stack(live.map(filingLine), writings.length === 0 ? "No Writings in this matter." : boards.length > 0 ? "Every live Writing is on a merged Milestone." : "No live Writings."));
-  if (jobBoards.length > 0) section("job-boards", "Milestones", jobBoards.length, stack(jobBoards.map(filingLine), ""));
+  if (milestones.length > 0) section("milestones", "Milestones", milestones.length, stack(milestones.map(filingLine), ""));
   if (preFiling.length > 0) section("pre-filing", "Before filing", preFiling.length, stack(preFiling.map(preFilingLine), ""));
   if (retired.length > 0) section("retired", "Retired", retired.length, stack(retired.map(retiredCard), ""));
 

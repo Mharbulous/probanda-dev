@@ -94,7 +94,7 @@ test("completing a held job supersedes its queued partner, leaves its wip partne
   assert.equal(result.changes, 1);
   assert.equal(result.superseded, 1);
   assert.equal(result.pages_written, true);
-  assert.equal(result.job_board_path.toLowerCase(), page.toLowerCase());
+  assert.equal(result.milestone_path.toLowerCase(), page.toLowerCase());
   assert.equal(result.board_summary, undefined, "a completion returns no board summary");
   assert.equal(result.board_changed, true);
   assert.ok(
@@ -160,7 +160,7 @@ test("a pre-filing proceeding's job rewrites the Milestone through the proceedin
 
   assert.equal(result.outcome, "completed");
   assert.equal(result.pages_written, true);
-  assert.equal(result.job_board_path.toLowerCase(), join(m.draft, "Milestone - proceeding 1.html").toLowerCase());
+  assert.equal(result.milestone_path.toLowerCase(), join(m.draft, "Milestone - proceeding 1.html").toLowerCase());
   assert.equal(typeof result.board_changed, "boolean");
 });
 

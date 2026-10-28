@@ -838,7 +838,7 @@ export function boardDataOf(dbPath, filingId, client = {}, now = nowStamp()) {
 
 /** The Milestone page files in the draft folder, relative to it, sorted: a Writing's `Milestone.html`
  * in its own folder, and a board with no Writing's `Milestone <id>.html` at the top. */
-export function jobBoardPages(draftDir) {
+export function milestonePages(draftDir) {
   const top = readdirSync(draftDir, { withFileTypes: true });
   return [
     ...top.filter((e) => e.isFile() && /^Milestone .*\.html$/.test(e.name)).map((e) => e.name),
@@ -848,7 +848,7 @@ export function jobBoardPages(draftDir) {
 
 /** The section of the Milestone page whose one section is filing `filingId`'s. */
 export function sectionOf(draftDir, filingId) {
-  const page = jobBoardPages(draftDir)
+  const page = milestonePages(draftDir)
     .map((name) => readBoardData(join(draftDir, name)))
     .find((data) => data.sections[0]?.meta.filing_id === filingId);
   assert.ok(page, `expected a Milestone page for filing ${filingId} in ${draftDir}`);

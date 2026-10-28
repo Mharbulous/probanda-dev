@@ -45,7 +45,7 @@ export interface MatterPagesBuilt {
   /** Every current Milestone and view page's file name, built by this call or not: what the sweep keeps. */
   keep: string[];
   /** Every current page's path, built by this call or not. */
-  paths: Pick<PagesWritten, "job_board_paths" | "matter_board_path" | "view_page_paths">;
+  paths: Pick<PagesWritten, "milestone_paths" | "matter_board_path" | "view_page_paths">;
 }
 
 /**
@@ -74,7 +74,7 @@ export function buildMatterPages(
   reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number } = {},
   /** A preview's pages in place of the boards' own (src/pages/preview.ts): the composed Litigation
    * Strategy and Milestone templates, and whole view pages by name. Omitted, every page is the board's. */
-  templates: { matterBoard?: ComposedTemplate; jobBoard?: ComposedTemplate; views?: Readonly<Record<string, ViewPage>> } = {}
+  templates: { matterBoard?: ComposedTemplate; milestone?: ComposedTemplate; views?: Readonly<Record<string, ViewPage>> } = {}
 ): MatterPagesBuilt {
   const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
   const preFiling = fetchPreFilingProceedings(dbPath);
@@ -120,7 +120,7 @@ export function buildMatterPages(
     };
   };
   const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta, preFiling, todos), templates.matterBoard);
-  const jobBoards = groupsWritten.map((group) => {
+  const milestones = groupsWritten.map((group) => {
     const built = group.members.map(sectionOf);
     const raw = built.map((b) => b.section);
     // A merged board is drawn as one board, its Completion Criteria card naming no Writing (docs/ADRs/0010, 2026-10-21 and 2026-10-22 amendments).
@@ -146,7 +146,7 @@ export function buildMatterPages(
       court_file: raw.flatMap((s) =>
         s.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, s.meta.filing_id, dirname(draftDir)).filter((a) => a.mismatch !== null)
       ),
-    }, templates.jobBoard);
+    }, templates.milestone);
   });
   const viewPages = viewsWritten.map((v) => {
     const [first] = v.writings;
@@ -157,12 +157,12 @@ export function buildMatterPages(
       page.data({ dbPath, filing: first.filing, proceeding: first.proceeding, writings: v.writings, now, revision })
     );
   });
-  const html = [matterBoard, ...jobBoards, ...viewPages];
+  const html = [matterBoard, ...milestones, ...viewPages];
   return {
     pages: guardTargets(groupsWritten.map((g) => g.file), viewsWritten).map((t, i) => ({ ...t, html: html[i] })),
     keep: [...groups.map((g) => g.file), ...views.map((v) => v.file)],
     paths: {
-      job_board_paths: targets.map((t) => ({ filing_id: t.filing_id, proceeding_id: t.proceeding_id, path: join(draftDir, t.file) })),
+      milestone_paths: targets.map((t) => ({ filing_id: t.filing_id, proceeding_id: t.proceeding_id, path: join(draftDir, t.file) })),
       matter_board_path: join(draftDir, MATTER_BOARD_FILE),
       view_page_paths: views.flatMap((v) => v.writings.map((w) => ({ name: v.page.name, filing_id: w.filing.id, path: join(draftDir, v.file) }))),
     },

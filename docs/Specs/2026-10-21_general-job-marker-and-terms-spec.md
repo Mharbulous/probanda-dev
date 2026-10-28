@@ -2,7 +2,7 @@
 
 Status: proposed, 2026-10-21. Written in a matter session; implementation is handed to Claude Code.
 Plugin: `lawyer` (data server; installed copy seen at v0.5.6) and `litigator` (installed copy seen at v0.7.6). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
-Related specs, same date: 2026-10-21_merged-job-board-one-board-spec.md
+Related specs, same date: 2026-10-21_merged-milestone-one-board-spec.md
 
 ## 1. Problem
 A job with no Writing (`tickets.filing_id` NULL) is drawn on every Writing's board in its proceeding with nothing marking it as shared. On a second board the practitioner read it as a duplicate. The concept also had no name they recognized. The practitioner approved these terms: **Writing Job** (tied to one Writing) and **General Job** (tied to no Writing: shared-substance work done once for every Writing).
@@ -56,7 +56,7 @@ Confirm that jobs with `filing_id` NULL still render on every Writing's board un
 | Claim | Where checked | Result |
 |---|---|---|
 | A job with `filing_id` NULL renders on every Writing's board in its proceeding | `source/lawyer/mcp/src/submission/forms/render-work-board.ts` `onFilingBoard` (`rowFilingId === filingId \|\| rowFilingId === null`), used by the Writing board's ticket filter | matches |
-| It renders untagged | `collapsedText`, `renderLiveLanes` and `jobCardLines` in `source/lawyer/mcp/src/submission/matter-pages.ts`, and the card summary in `source/lawyer/mcp/src/templates/job-board/job-board.js`: no General marker. On a merged board (`forms/combined-board.ts`) such a job carries only its `Proceeding <id>` Writing tag | matches |
+| It renders untagged | `collapsedText`, `renderLiveLanes` and `jobCardLines` in `source/lawyer/mcp/src/submission/matter-pages.ts`, and the card summary in `source/lawyer/mcp/src/templates/milestone/milestone.js`: no General marker. On a merged board (`forms/combined-board.ts`) such a job carries only its `Proceeding <id>` Writing tag | matches |
 | "A job with no filing is on every filing's page in its proceeding" | `.claude/skills/shared/html-pages.md` | matches |
 | "Proceeding scope (`filing_id` NULL)" in jobs-closeout.md §10c | `.claude/skills/drafting-data/references/jobs-closeout.md` §10c | matches |
-| Paths given as seen in the installed copy | source lives under `source/lawyer/mcp/src/` (the template at `src/templates/job-board/job-board.js`) | differs in prefix only |
+| Paths given as seen in the installed copy | source lives under `source/lawyer/mcp/src/` (the template at `src/templates/milestone/milestone.js`) | differs in prefix only |

@@ -42,7 +42,7 @@ Every tool below except `drafting_forms__open_session` takes an already-resolved
 |---|---|---|
 | Read-only SQL against the schema | `drafting_data__query` | `{db_path, sql, params?}` — exactly one `SELECT`/`WITH`/`PRAGMA` statement per call (split multi-statement SQL into separate calls); no schema-guard bypass; fails clearly if `db_path` doesn't exist yet — run `migrate` first; read `references/schema.sql` first — never query from a guessed column name |
 | Create a Writing | `drafting_data__create_writing` | Resolve the practitioner's phrase to one kinds-index row first. Then write the recipients and prose rows (`references/filing-checklists.md` §13) through `execute`, which never inserts a `filings` row |
-| Open a Milestone with no Writing | `drafting_data__create_job_board` | `title` is the practitioner's own words. `references/filing-checklists.md` §11 |
+| Open a Milestone with no Writing | `drafting_data__create_milestone` | `title` is the practitioner's own words. `references/filing-checklists.md` §11 |
 | Record a board's statement of goals | `drafting_data__set_board_goal` † | `confirmed` only on the practitioner's bare yes to the exact wording |
 | Record pages just shown | `drafting_data__record_viewed` † | Right after presenting a view page or a mockup copy; never a Milestone or the Litigation Strategy page |
 | Record a general Writing as sent | `drafting_data__record_sent` | `send_anyway` only in the practitioner's own words, recorded verbatim. `references/filing-checklists.md` §13 "Sent write" |
@@ -103,7 +103,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Shelve or restore | Shelve, restore or delete a job or Proposal | `references/jobs-closeout.md` §10a |
 | Bring forward or clear | A hold date named; never offered | `references/jobs-closeout.md` §10b |
 | Move to another board | Asked; never offered | `references/jobs-closeout.md` §10c |
-| Merge two boards (`drafting_data__merge_job_boards`) | Asked; never offered | `references/jobs-closeout.md` §10d |
+| Merge two boards (`drafting_data__merge_milestones`) | Asked; never offered | `references/jobs-closeout.md` §10d |
 | Clear retired Work Board keys | A non-null `legacy_workboard_artifact_url` | `references/jobs-closeout.md` §13 |
 | Gate job check | §9 reads `completed`, or the gate runs | `references/jobs-gate.md` §14 |
 | Pre-send gate job | `record_sent` refuses `held` | `references/jobs-gate.md` §14a |

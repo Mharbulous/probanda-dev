@@ -269,7 +269,7 @@ const readStatusScript = (file) => JSON.parse(readFileSync(file, "utf-8").replac
 
 // Goal card design §4.7: the server sends the retirement text finished, so the shell composes none.
 test("the Milestone's shell composes no retirement text of its own", () => {
-  const source = readFileSync(new URL("../src/templates/job-board/job-board.js", import.meta.url), "utf-8");
+  const source = readFileSync(new URL("../src/templates/milestone/milestone.js", import.meta.url), "utf-8");
   assert.equal(source.includes("retirement of this Writing"), false);
 });
 

@@ -27,8 +27,8 @@ export interface ProceedingBoardResult {
   board_summary: string;
   /** Present only with draft_dir, which rewrites the matter's pages: this proceeding's Milestone page,
    * every Milestone page in page order, and the Litigation Strategy. */
-  job_board_path?: string;
-  job_board_paths?: PagesWritten["job_board_paths"];
+  milestone_path?: string;
+  milestone_paths?: PagesWritten["milestone_paths"];
   matter_board_path?: string;
   /** With draft_dir, every view page written: each live filing's (ADR 0033, 2026-10-07 amendment). */
   view_page_paths?: PagesWritten["view_page_paths"];
@@ -93,7 +93,7 @@ export function submissionFormsRenderProceedingBoard(
     revision,
     board_summary: renderBoardSummary(boardSectionOf(dbPath, section, client, now, revision, dates), client, todos),
     ...(pages ?? {}),
-    ...(pages !== undefined ? { job_board_path: pagePathFor(pages, section.meta) } : {}),
+    ...(pages !== undefined ? { milestone_path: pagePathFor(pages, section.meta) } : {}),
     pages_written: pages !== undefined,
     ...(change ?? {}),
     ...(sessionToken ? { session_token: sessionToken } : {}),

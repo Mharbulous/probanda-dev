@@ -16,7 +16,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "mcp__(.+__)?plugin_lawyer_data__drafting_data__(execute|set_board_goal|merge_job_boards|merge_jobs)",
+        "matcher": "mcp__(.+__)?plugin_lawyer_data__drafting_data__(execute|set_board_goal|merge_milestones|merge_jobs)",
         "hooks": [
           {
             "type": "command",
@@ -81,7 +81,7 @@
             "type": "command",
             "command": "python3",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/job-board-card-gate.py"
+              "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/milestone-card-gate.py"
             ],
             "timeout": 10,
             "statusMessage": "Milestone card gate"
@@ -96,7 +96,7 @@
             "type": "command",
             "command": "python3",
             "args": [
-              "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/job-board-card-gate.py"
+              "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/milestone-card-gate.py"
             ],
             "timeout": 10,
             "statusMessage": "Milestone card gate"

@@ -64,7 +64,6 @@ terms:
   - Issue
   - Item
   - Job
-  - Milestone
   - Lawyer account
   - Leading document
   - Legal Citation
@@ -83,6 +82,7 @@ terms:
   - Matter zone
   - Merge (Milestones)
   - Merge (jobs)
+  - Milestone
   - Mockup
   - Mockup (suggestion)
   - Move (file)
@@ -413,10 +413,6 @@ _Avoid_: pain (a suggestion has one pain point and its items); ticket; change re
 One unit of session work for `/draft`, shown on the Milestone as a job card — either drafting/research work scoped to a Writing, a **Standalone Milestone** or a proceeding (`kind = 'work'`), or the work of outlining further jobs (`kind = 'charting'`). Every card is a job: there is no job/to-do split. Stored, and always rendered on the Milestone — never on any advocacy document. Always belongs to a proceeding, never to the matter alone, including a pre-filing proceeding. A session refers to one as "Job #6", never bare "#6". File names and prose say job (`drafting-data/references/jobs.md`, `draft/references/job-session.md`). Database and code identifiers are unchanged: the `tickets` table and every `ticket_*` table and `ticket_id` column, the `#ticket-N` anchors on the board, the `board_data` key `tickets` and the Goal card's `tickets` criterion id.
 _Avoid_: ticket (reserved for development tasks such as GitHub issues and Wayfinder tickets, and for database identifiers); task (collides with software usage — the design's own deliberate choice); assignment (it implies a transfer of responsibility); to-do (a practice-registry row, see **To-do**).
 
-**Milestone**:
-The page (`Milestone <id>.html` at the top of the draft folder) that tracks the work toward one statement of goals. Every Writing linked to it serves those goals as a whole. A board starts with at most one Writing and gains more only by a **Merge (Milestones)**. It renders its Writings' **Proposals**, its jobs — ready / in progress / waiting / needing a fresh outline / superseded / completed / shelved — and its proceedings' loose threads not yet outlined. Each lane is a **Job list**, the general word, and keeps its own name (Proposed, Ready, Shelved angles, …). A Mockup like any other (never delivered to the filed face), read-only: nothing is written back from it. It prints marker glyphs only in its Proposed and Shelved angles lists, taken from the render's marker inventory, and holds no marker predicate of its own. A **pre-filing proceeding** has a Milestone of its own, with its jobs and loose threads and no Proposals, lifecycle or mockups. When the proceeding gets its first Writing, with or without a forum, that board is no longer drawn: each live Writing's board in the proceeding shows the jobs that name no Writing and every loose thread not yet outlined. A **Standalone Milestone** is a Milestone with no Writing, whose page takes the same name and holds only its own jobs and loose threads. A folder holding the older `Work Board.html` has it retired at the next write of the Milestone pages, which sit at the top of the draft folder, so no folder holds both. Internal names are unchanged: `document_type` `Work_board`, `render-work-board.ts`, `workboard-*.ts`, and the board's CSS classes, element ids and data keys.
-_Avoid_: Work Board (the practice-wide page, see **Work Board**); document (a Mockup, not a Writing member).
-
 **Lawyer account**:
 One currently practising lawyer's identity with Probanda, matched to that lawyer's law-society directory record. It is **provisional** from the match until the lawyer proves they are the person in that record, then **verified**, and **suspended** while the directory shows them not practising. It owns the lawyer's keys, one for each device, and every shared service (the legal commons, the Suggestion Box, the troubleshooting store) accepts only a key that belongs to a live account. A firm's lawyers each have their own account, and all of them work in their practice's one tenant.
 _Avoid_: user (also means anyone using the plugin, including staff); install key (one device's key, owned by the account); tenant (the practice, not the person).
@@ -491,6 +487,10 @@ _Avoid_: combine; consolidate.
 **Merge (jobs)**:
 The practitioner's act that folds a duplicate job into another job on the same Writing after `/draft` names them as likely the same work. The survivor keeps its own steps and their stamps and takes the other job's undone steps, scope and Proposal keys. The other job is superseded by the survivor, never deleted.
 _Avoid_: combine; consolidate; dedupe.
+
+**Milestone**:
+The page (`Milestone <id>.html` at the top of the draft folder) that tracks the work toward one statement of goals. Every Writing linked to it serves those goals as a whole. A board starts with at most one Writing and gains more only by a **Merge (Milestones)**. It renders its Writings' **Proposals**, its jobs — ready / in progress / waiting / needing a fresh outline / superseded / completed / shelved — and its proceedings' loose threads not yet outlined. Each lane is a **Job list**, the general word, and keeps its own name (Proposed, Ready, Shelved angles, …). A Mockup like any other (never delivered to the filed face), read-only: nothing is written back from it. It prints marker glyphs only in its Proposed and Shelved angles lists, taken from the render's marker inventory, and holds no marker predicate of its own. A **pre-filing proceeding** has a Milestone of its own, with its jobs and loose threads and no Proposals, lifecycle or mockups. When the proceeding gets its first Writing, with or without a forum, that board is no longer drawn: each live Writing's board in the proceeding shows the jobs that name no Writing and every loose thread not yet outlined. A **Standalone Milestone** is a Milestone with no Writing, whose page takes the same name and holds only its own jobs and loose threads. A folder holding the older `Work Board.html` has it retired at the next write of the Milestone pages, which sit at the top of the draft folder, so no folder holds both. Internal names are unchanged: `document_type` `Work_board`, `render-work-board.ts`, `workboard-*.ts`, and the board's CSS classes, element ids and data keys.
+_Avoid_: Job Board (its name before 2026-10-28); Work Board (the practice-wide page, see **Work Board**); document (a Mockup, not a Writing member).
 
 **Mockup**:
 A Draft in markdown format — for a Writing, the word is reserved exclusively for markdown; its one other sense is **Mockup (suggestion)**. A filtered, compressed markdown rendering of the submission database for one member of a Writing, read by the practitioner and by every agent session alike — the sole review surface and the session's starting picture. It shows everything the practitioner must decide about, reserved material included. Regenerated, never hand-edited; stamped with the database revision it was rendered from. Its format is strict: a YAML header, then only wording that will be printed, work markers and `<!-- comments -->`, then the symbol Legend, which is generated and never written. A gap prints as a marker and a blank underline, with its description in a comment (`🧩 ________ <!-- signer not chosen -->`), never as a description. No commentary, suggestions or loose ideas.

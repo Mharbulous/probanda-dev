@@ -37,7 +37,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       description:
         "Run a write SQL script against one matter's submission database in a single transaction, with no " +
         "compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, " +
-        "a Milestone with no Writing is created through drafting_data__create_job_board, never here, a general " +
+        "a Milestone with no Writing is created through drafting_data__create_milestone, never here, a general " +
         "Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through " +
         "drafting_data__record_filed, a drafting Writing's stored layout is " +
         "re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, " +
@@ -102,7 +102,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "board's place, so each stays on one board. Returns filing_id, needs_forum_parts, the stored layout and venue " +
         "blocks, the signer, type_file, venue_file, learned and attachments_moved (how many drafts it moved; 0 on a " +
         "database below schema v67). A Milestone with no Writing is never created here: its kind is refused with " +
-        "reserved_kind, and drafting_data__create_job_board creates it.",
+        "reserved_kind, and drafting_data__create_milestone creates it.",
       inputSchema: {
         type: "object",
         properties: {
@@ -132,7 +132,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
-      name: submissionDataPrefixed("create_job_board"),
+      name: submissionDataPrefixed("create_milestone"),
       description:
         "Create one Milestone with no Writing on a proceeding: the one door for a board that holds work no Writing " +
         "carries, such as finding, stamping or scanning a paper original. It is not a Writing and is never called one. " +
@@ -158,7 +158,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
-      name: submissionDataPrefixed("merge_job_boards"),
+      name: submissionDataPrefixed("merge_milestones"),
       description:
         "Merge two Milestones whose goals the practitioner has confirmed overlap or cohere (docs/ADRs/0010). First " +
         "show the practitioner both boards' statements of goals (drafting_forms__board_card's goals lane) side by side, " +
@@ -280,7 +280,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "served and moves the revision. Its lifecycle then reads Served until Heard; the later registry filing is a step " +
         "of the Set down for hearing or File the served response job, never a write here. Anyone may record it. Refusals " +
         "write nothing: invalid_served_on, invalid_served_copy (served_copy_path is not on disk), not_found, " +
-        "job_board_only, writing_retired, already_filed, not_served_kind (any other kind: record_filed or record_sent), " +
+        "milestone_only, writing_retired, already_filed, not_served_kind (any other kind: record_filed or record_sent), " +
         "parties_drift, revision_moved. Returns filing_id, served_on, sent_copy_id, parties_snapshot_rows, the new " +
         "revision and a note.",
       inputSchema: {
@@ -551,7 +551,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Job " +
         "Board pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals " +
         "write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, " +
-        "changes, status, completed_at, locked_by, rejected_at, pages_written, job_board_path (the rendered filing's or " +
+        "changes, status, completed_at, locked_by, rejected_at, pages_written, milestone_path (the rendered filing's or " +
         "proceeding's Milestone page), board_changed, board_moves, pages_refused, open_steps on steps_open, and a note.",
       inputSchema: {
         type: "object",
@@ -588,7 +588,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "db_meta row per board, key `board_goal:filing:<id>` or `board_goal:proceeding:<id>`, value JSON " +
         "{description, statement, status, approved_at, session_token, updated_at}, approved_at set only for " +
         "confirmed. The write replaces the board's row and removes the rows of boards that no longer exist " +
-        "(stale_keys_removed). It moves no revision. Re-render to show it. A merged board (drafting_data__merge_job_boards) " +
+        "(stale_keys_removed). It moves no revision. Re-render to show it. A merged board (drafting_data__merge_milestones) " +
         "holds one goal, its own; each earlier statement of the boards merged into it is kept, with its own status, " +
         "under `merged` as history only. A merged board left needs_consolidation (merged without a goal, or before " +
         "2026-10-22) reads that status until this tool writes its own statement, which makes it hold one goal again. " +

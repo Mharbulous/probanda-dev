@@ -6,7 +6,7 @@ Lifecycle plan Phase 7, done-when: "a dry run on a past suggestion issue gives e
 
 - **Issue:** #123, the goals-card suggestion (closed 2026-10-19, built as `lawyer` 0.2.2). Read with the GitHub tools, read-only. It is the motivating example in the design's "Given" section.
 - **Record:** the Suggestion Box was not reached (no `POOL_SECRET_KEY` in the session), so the cloud record was a fixture: suggestion id `7905138b`, three items and two context lines rebuilt from the design's "Given" section, worded as a practitioner might. The fixture stayed in the session's scratch folder and is not committed.
-- **Planner:** the session had no tool to dispatch a subagent, so the orchestrator followed `source/developer/agents/fix-planner.md` itself, on `main` at `a3b5189`, reading only `source/lawyer/mcp/src/templates/job-board/job-board.js`, `job-board.css` and `workboard.css`, and issue #123.
+- **Planner:** the session had no tool to dispatch a subagent, so the orchestrator followed `source/developer/agents/fix-planner.md` itself, on `main` at `a3b5189`, reading only `source/lawyer/mcp/src/templates/milestone/milestone.js`, `milestone.css` and `workboard.css`, and issue #123.
 - **Step 2:** the titles of every other `suggestion` issue (#150 to #192) were compared by meaning; none concerns the goals card. #123 itself is the issue under triage, so it is not a repeat of itself.
 - **Step 4:** the three checks were written as one scratch test file (invented data, reading the shipped template source) and run against `main` with `node --test`: 2 pass, 1 fails.
 - **Guard:** `python scripts/check_verbatim.py --suggestion <fixture> docs/Plans/2026-10-26_fix-planner-dry-run.md` passes on this file.
@@ -15,7 +15,7 @@ Lifecycle plan Phase 7, done-when: "a dry run on a past suggestion issue gives e
 
 **Category:** enhancement: a display change. **State:** ready-for-human: a suggestion issue always waits for the maintainer, one decision per item. **Location:** cloud: no approved-for-build item needs Windows, a browser or a secret.
 
-**Verification:** the goals card's rows (label cell, text cell, an indent step per level) and its italic connector rows are in `job-board.js` (`statementRows`) and `job-board.css`, as #123 built them. The card is light text (`--paper`, `#F4FAF7`) on a dark ground (`--ink`, `#025056`), a contrast of 8.7:1, above the 7:1 of WCAG AAA. The card shares its look with the Completion Criteria card (`.goal`). No specification was attached.
+**Verification:** the goals card's rows (label cell, text cell, an indent step per level) and its italic connector rows are in `milestone.js` (`statementRows`) and `milestone.css`, as #123 built them. The card is light text (`--paper`, `#F4FAF7`) on a dark ground (`--ink`, `#025056`), a contrast of 8.7:1, above the 7:1 of WCAG AAA. The card shares its look with the Completion Criteria card (`.goal`). No specification was attached.
 
 ### Item 1
 **Item:** give each goal's label a column of its own, so a wrapped line returns to the text's left edge, with one indent step per level.
@@ -34,7 +34,7 @@ Lifecycle plan Phase 7, done-when: "a dry run on a past suggestion issue gives e
 **Why:** a preference with no measurable defect: 8.7:1 passes. Approving it would recolour the Completion Criteria card too, or split two cards that match by design. The constraint against nested boxes is met either way.
 
 ### Scope
-None is recommended for building. Were item 3 approved: `source/lawyer/mcp/src/templates/job-board/job-board.css` (`.goal` and `.goals`), the pinned hashes in `source/lawyer/mcp/test/job-board.unit.test.mjs`, and a `lawyer` patch release; nothing outside the Milestone.
+None is recommended for building. Were item 3 approved: `source/lawyer/mcp/src/templates/milestone/milestone.css` (`.goal` and `.goals`), the pinned hashes in `source/lawyer/mcp/test/milestone.unit.test.mjs`, and a `lawyer` patch release; nothing outside the Milestone.
 
 ### Done when
 Item 3, were it approved: the item 3 check passes, then `python scripts/build_plugin.py --check` and `python scripts/check_plugin.py`.

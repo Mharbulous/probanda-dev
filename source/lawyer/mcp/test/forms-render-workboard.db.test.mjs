@@ -2095,7 +2095,7 @@ test("tickets: a wip job with every step done stays In Progress, and shares no m
 // its page is the template set in src/templates/matter-board/ (map #125).
 test("the Milestone's page shows no Work Board, Matter Board, Rejected angles or claim wording", () => {
   const pages = [
-    [["templates/job-board/job-board.html", "templates/job-board/job-board.css", "templates/job-board/job-board.js"], (literals, htmlText) => literals.includes("Shelved") && htmlText.includes("Milestone")],
+    [["templates/milestone/milestone.html", "templates/milestone/milestone.css", "templates/milestone/milestone.js"], (literals, htmlText) => literals.includes("Shelved") && htmlText.includes("Milestone")],
     [["templates/matter-board/matter-board.html", "templates/matter-board/matter-board.js"], (literals, htmlText) => literals.includes(" jobs in progress") && htmlText.includes("Litigation Strategy")],
   ];
   for (const [files, sawOwnStrings] of pages) {

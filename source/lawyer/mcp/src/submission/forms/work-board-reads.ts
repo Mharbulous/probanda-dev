@@ -1,6 +1,6 @@
 // The Milestone's SQL row shapes and its plain ticket and attachment reads.
 
-import { boardAttachmentsHeld, deletedAtHeld, JOB_BOARD_KIND, liveTicketClause } from "./query.js";
+import { boardAttachmentsHeld, deletedAtHeld, MILESTONE_KIND, liveTicketClause } from "./query.js";
 import { rows } from "../query-rows.js";
 
 export type TicketStatus = "queued" | "wip" | "completed" | "superseded";
@@ -142,6 +142,6 @@ export function fetchAttachments(dbPath: string, proceedingId: number, filingId:
     dbPath,
     "SELECT id, filing_id, path, kind, attached_on FROM board_attachments WHERE proceeding_id = ? AND (? IS NULL OR filing_id = ? " +
       "OR (filing_id IS NULL AND ? = (SELECT MIN(id) FROM filings WHERE proceeding_id = ? AND retired_on IS NULL AND kind <> ?))) ORDER BY id",
-    [proceedingId, filingId, filingId, filingId, proceedingId, JOB_BOARD_KIND]
+    [proceedingId, filingId, filingId, filingId, proceedingId, MILESTONE_KIND]
   );
 }

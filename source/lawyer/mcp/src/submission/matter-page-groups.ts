@@ -29,7 +29,7 @@ export interface PageGroup {
 }
 
 /** A Writing's Milestone page, in the Writing's own folder (spec 2026-10-22 §9). */
-export const WRITING_JOB_BOARD_FILE = "Milestone.html";
+export const WRITING_MILESTONE_FILE = "Milestone.html";
 
 /** The draft folder's subfolder a board's pages go in: its survivor Writing's own folder, or none for
  * a board whose survivor is a pre-filing proceeding or a Milestone with no Writing. */
@@ -41,7 +41,7 @@ function boardFolder(board: BoardRef, folders: ReadonlyMap<number, WritingFolder
  * else at the top, named by its survivor's id. */
 function boardFile(board: BoardRef, folders: ReadonlyMap<number, WritingFolder>): string {
   const folder = boardFolder(board, folders);
-  if (folder !== undefined) return join(folder, WRITING_JOB_BOARD_FILE);
+  if (folder !== undefined) return join(folder, WRITING_MILESTONE_FILE);
   return board.filing_id === null ? `Milestone - proceeding ${board.proceeding_id}.html` : `Milestone ${board.filing_id}.html`;
 }
 

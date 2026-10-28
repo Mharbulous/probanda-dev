@@ -8,7 +8,7 @@
 // lane print it. A key whose board no longer exists is never read, since no section is built for it,
 // and the next write removes it.
 //
-// A merged board (docs/ADRs/0010-job-boards-organized-by-goals.md, 2026-10-22 goals amendment) holds
+// A merged board (docs/ADRs/0010-milestones-organized-by-goals.md, 2026-10-22 goals amendment) holds
 // one goal, in the fields above. Each earlier statement, the survivor's own and each absorbed board's,
 // is kept under `merged`, with its own status and the key it came from, as history only: it is never
 // drawn once the board holds one goal. A merge given the practitioner's combined goal writes it as

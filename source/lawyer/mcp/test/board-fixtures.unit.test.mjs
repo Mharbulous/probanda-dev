@@ -12,7 +12,7 @@ const { VIEW_PAGES, renderViewPageHtml } = await import("../build/submission/vie
 const { renderApprovalPage } = await import("../build/housekeeping/page.js");
 const { WORK_BOARD_FIXTURE } = await import("../build/board-fixtures/work-board.js");
 const { LITIGATION_STRATEGY_FIXTURE } = await import("../build/board-fixtures/litigation-strategy.js");
-const { JOB_BOARD_FIXTURE } = await import("../build/board-fixtures/job-board.js");
+const { MILESTONE_FIXTURE } = await import("../build/board-fixtures/milestone.js");
 const { PROCEDURAL_HISTORY_FIXTURE } = await import("../build/board-fixtures/procedural-history.js");
 const { MATERIAL_FACTS_FIXTURE } = await import("../build/board-fixtures/material-facts.js");
 const { RAW_RESEARCH_FIXTURE } = await import("../build/board-fixtures/raw-research.js");
@@ -31,12 +31,12 @@ const VIEWS = [
   ["Loose Threads", LOOSE_THREADS_FIXTURE],
 ];
 
-const ALL = [WORK_BOARD_FIXTURE, LITIGATION_STRATEGY_FIXTURE, JOB_BOARD_FIXTURE, ...VIEWS.map(([, f]) => f), HOUSEKEEPING_FIXTURE];
+const ALL = [WORK_BOARD_FIXTURE, LITIGATION_STRATEGY_FIXTURE, MILESTONE_FIXTURE, ...VIEWS.map(([, f]) => f), HOUSEKEEPING_FIXTURE];
 
 test("each board renders its fixture with the fixture's data line", () => {
   assert.ok(renderPracticeBoardHtml(WORK_BOARD_FIXTURE).includes(`window.PRACTICE_BOARD = ${line(WORK_BOARD_FIXTURE)};\n`));
   assert.ok(renderMatterBoardHtml(LITIGATION_STRATEGY_FIXTURE).includes(`window.MATTER_BOARD = ${line(LITIGATION_STRATEGY_FIXTURE)};\n`));
-  assert.ok(renderWorkBoardHtml(JOB_BOARD_FIXTURE).includes(`window.WORKBOARD = ${line(JOB_BOARD_FIXTURE)};\n`));
+  assert.ok(renderWorkBoardHtml(MILESTONE_FIXTURE).includes(`window.WORKBOARD = ${line(MILESTONE_FIXTURE)};\n`));
   for (const [name, fixture] of VIEWS) {
     assert.ok(page(name), `${name} is a view page`);
     assert.ok(renderViewPageHtml(page(name), fixture.meta, fixture.data).includes(`"data":${line(fixture.data)}`), name);

@@ -15,10 +15,10 @@ import { isViewPageFile, VIEW_PAGE_MARKER, type ViewPage, type ViewPagePath } fr
 import { writingFolders } from "./writing-folder.js";
 
 /** On every Milestone page's root element: the overwrite guard recognises this server's own page by it. */
-const JOB_BOARD_MARKER = "data-workboard-shell";
+const MILESTONE_MARKER = "data-workboard-shell";
 
 /** A Milestone page: a live filing's (filing_id set) or a pre-filing proceeding's (filing_id null). */
-export interface JobBoardPage {
+export interface MilestonePage {
   filing_id: number | null;
   proceeding_id: number;
   path: string;
@@ -26,7 +26,7 @@ export interface JobBoardPage {
 
 export interface PagesWritten {
   /** Every Milestone page this write put in the draft folder, in page order. */
-  job_board_paths: JobBoardPage[];
+  milestone_paths: MilestonePage[];
   matter_board_path: string;
   /** Every view page this write put in the draft folder (ADR 0033, 2026-10-07 amendment): each
    * live filing's, in page order, in registry order within a filing. */
@@ -51,7 +51,7 @@ export function refuseForeignMatterPages(draftDir: string, dbPath: string): void
  * id is null; undefined when it has none, as a retired filing has none. */
 export function pagePathFor(pages: PagesWritten, section: { filing_id: number | null; proceeding_id?: number }): string | undefined {
   const { filing_id, proceeding_id } = section;
-  return pages.job_board_paths.find((p) => (filing_id !== null ? p.filing_id === filing_id : p.filing_id === null && p.proceeding_id === proceeding_id))?.path;
+  return pages.milestone_paths.find((p) => (filing_id !== null ? p.filing_id === filing_id : p.filing_id === null && p.proceeding_id === proceeding_id))?.path;
 }
 
 /** A page file, relative to the draft folder, with the marker the overwrite guard checks it by and the page's name. */
@@ -65,7 +65,7 @@ export interface GuardTarget {
 export function guardTargets(names: string[], views: { page: ViewPage; file: string }[]): GuardTarget[] {
   return [
     { name: MATTER_BOARD_FILE, marker: MATTER_BOARD_MARKER, page: "Litigation Strategy" },
-    ...names.map((name) => ({ name, marker: JOB_BOARD_MARKER, page: "Milestone" })),
+    ...names.map((name) => ({ name, marker: MILESTONE_MARKER, page: "Milestone" })),
     ...views.map((v) => ({ name: v.file, marker: VIEW_PAGE_MARKER, page: v.page.name })),
   ];
 }
@@ -98,7 +98,7 @@ const PREVIEW_FILE = / preview \d+\.html$/i;
 /** Whether this generator wrote the file: a page marker, or a revision the Milestone's older layouts carried. */
 function generatorWrote(file: string): boolean {
   const text = readFileSync(file, "utf-8");
-  return text.includes(JOB_BOARD_MARKER) || text.includes(MATTER_BOARD_MARKER) || text.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== undefined;
+  return text.includes(MILESTONE_MARKER) || text.includes(MATTER_BOARD_MARKER) || text.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== undefined;
 }
 
 /**

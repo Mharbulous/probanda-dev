@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "job-board-card-gate.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "milestone-card-gate.py"
 PAGE = r"<matter>\0. DRAFT\Milestone 3.html"
 OPEN = "mcp__remote-devices__plugin_lawyer_data__drafting_forms__open_session"
 RENDER = "mcp__plugin_lawyer_data__drafting_forms__render"
@@ -53,28 +53,28 @@ class StopTest(unittest.TestCase):
         return json.loads(result.stdout) if result.stdout.strip() else None
 
     def test_pages_written_and_no_card_blocks(self):
-        out = self.stop([(OPEN, {"matter_root": "<matter>"}, {"job_board_path": PAGE, "job_board_paths": []})])
+        out = self.stop([(OPEN, {"matter_root": "<matter>"}, {"milestone_path": PAGE, "milestone_paths": []})])
         self.assertEqual(out["decision"], "block")
         self.assertIn(PAGE, out["reason"])
 
     def test_present_files_card_allows(self):
-        self.assertIsNone(self.stop([(OPEN, {}, {"job_board_path": PAGE}),
+        self.assertIsNone(self.stop([(OPEN, {}, {"milestone_path": PAGE}),
                                      ("mcp__cowork__present_files", {"files": [{"file_path": PAGE}]}, None)]))
 
     def test_staged_send_user_file_allows(self):
         staged = "/mnt/user-data/uploads/Milestone 3.html"
-        self.assertIsNone(self.stop([(OPEN, {}, {"job_board_path": PAGE}),
+        self.assertIsNone(self.stop([(OPEN, {}, {"milestone_path": PAGE}),
                                      ("mcp__remote-devices__device_stage_files", {"paths": [PAGE]}, {"staged": [staged]}),
                                      ("SendUserFile", {"file_path": staged}, None)]))
 
     def test_card_for_another_page_still_blocks(self):
-        out = self.stop([(OPEN, {}, {"job_board_path": PAGE}),
+        out = self.stop([(OPEN, {}, {"milestone_path": PAGE}),
                          ("mcp__cowork__present_files", {"files": [{"file_path": r"<matter>\0. DRAFT\Milestone 4.html"}]}, None)])
         self.assertEqual(out["decision"], "block")
 
     def test_card_before_the_result_does_not_count(self):
         out = self.stop([("mcp__cowork__present_files", {"files": [{"file_path": PAGE}]}, None),
-                         (COMPLETE, {"job_id": 7}, {"pages_written": True, "board_changed": True, "job_board_path": PAGE})])
+                         (COMPLETE, {"job_id": 7}, {"pages_written": True, "board_changed": True, "milestone_path": PAGE})])
         self.assertEqual(out["decision"], "block")
 
     def test_render_with_board_unchanged_does_not_block(self):
@@ -86,19 +86,19 @@ class StopTest(unittest.TestCase):
         self.assertEqual(out["decision"], "block")
 
     def test_proceeding_render_with_board_changed_blocks(self):
-        out = self.stop([(RENDER, {"proceeding_id": 2}, {"pages_written": True, "board_changed": True, "job_board_path": PAGE})])
+        out = self.stop([(RENDER, {"proceeding_id": 2}, {"pages_written": True, "board_changed": True, "milestone_path": PAGE})])
         self.assertEqual(out["decision"], "block")
 
     def test_bootstrap_is_never_due(self):
         bootstrap = "mcp__plugin_lawyer_data__drafting_forms__bootstrap"
-        self.assertIsNone(self.stop([(bootstrap, {"draft_dir": "<matter>"}, {"job_board_paths": [{"path": PAGE}]})]))
+        self.assertIsNone(self.stop([(bootstrap, {"draft_dir": "<matter>"}, {"milestone_paths": [{"path": PAGE}]})]))
 
     def test_never_blocks_twice_in_a_row(self):
-        self.assertIsNone(self.stop([(OPEN, {}, {"job_board_path": PAGE})], stop_hook_active=True))
+        self.assertIsNone(self.stop([(OPEN, {}, {"milestone_path": PAGE})], stop_hook_active=True))
 
     def test_an_earlier_turn_is_not_judged(self):
         with tempfile.TemporaryDirectory() as folder:
-            transcript = Transcript([(OPEN, {}, {"job_board_path": PAGE})])
+            transcript = Transcript([(OPEN, {}, {"milestone_path": PAGE})])
             transcript.lines.append({"type": "user", "message": {"role": "user", "content": "Thanks"}})
             result = run({"hook_event_name": "Stop", "transcript_path": transcript.write(folder)})
         self.assertEqual(result.stdout.strip(), "")
@@ -111,29 +111,29 @@ class PostToolUseTest(unittest.TestCase):
         return json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"] if result.stdout.strip() else None
 
     def test_open_session_names_the_page(self):
-        context = self.post(OPEN, mcp_text({"job_board_path": PAGE}))
+        context = self.post(OPEN, mcp_text({"milestone_path": PAGE}))
         self.assertIn(PAGE, context)
         self.assertIn("present_files", context)
         self.assertIn("SendUserFile", context)
 
     def test_staging_route_checks_the_folder_grant_first(self):
-        context = self.post(OPEN, mcp_text({"job_board_path": PAGE}))
+        context = self.post(OPEN, mcp_text({"milestone_path": PAGE}))
         self.assertIn("tool list", context)
         self.assertLess(context.index("connectedFolders"), context.index("device_stage_files"))
 
     def test_staging_route_reloads_the_stage_tool_and_never_sends_the_pc_path(self):
-        context = self.post(OPEN, mcp_text({"job_board_path": PAGE}))
+        context = self.post(OPEN, mcp_text({"milestone_path": PAGE}))
         self.assertIn("never the PC path", context)
         self.assertIn("select: ToolSearch", context)
 
     def test_response_given_as_object_or_content_dict(self):
-        self.assertIn(PAGE, self.post(COMPLETE, {"pages_written": True, "board_changed": True, "job_board_path": PAGE}))
+        self.assertIn(PAGE, self.post(COMPLETE, {"pages_written": True, "board_changed": True, "milestone_path": PAGE}))
         self.assertIn(PAGE, self.post(RENDER, {"content": mcp_text(filing_render(True, True))}))
 
     def test_nothing_written_says_nothing(self):
         self.assertIsNone(self.post(RENDER, mcp_text(filing_render(False, False))))
         self.assertIsNone(self.post(COMPLETE, mcp_text({"pages_written": False})))
-        self.assertIsNone(self.post(OPEN, mcp_text({"job_board_path": None})))
+        self.assertIsNone(self.post(OPEN, mcp_text({"milestone_path": None})))
 
     def test_error_text_says_nothing(self):
         self.assertIsNone(self.post(OPEN, "Error: no such matter"))

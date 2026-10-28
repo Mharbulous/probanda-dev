@@ -27,7 +27,7 @@ import { parseKnowledgePath, type KnowledgeSeams } from "../../knowledge/tree.js
 import { readFirmProfile, type FirmProfile } from "../../tools/practice/firm-profile.js";
 import { submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { composeLayoutSnapshot } from "../writing-snapshot.js";
-import { boardAttachmentsHeld, fetchParties, fetchProceeding, JOB_BOARD_KIND, type FilingRow, type ProceedingRow } from "./query.js";
+import { boardAttachmentsHeld, fetchParties, fetchProceeding, MILESTONE_KIND, type FilingRow, type ProceedingRow } from "./query.js";
 
 type Json = Record<string, unknown>;
 
@@ -267,8 +267,8 @@ export interface CreateWritingResult {
  */
 export async function submissionDataCreateWriting(args: CreateWritingArgs, seams: KnowledgeSeams = {}): Promise<CreateWritingResult> {
   const env = seams.env ?? process.env;
-  if (args.kind === JOB_BOARD_KIND) {
-    throw new ValidationError(`${TOOL}.kind "${JOB_BOARD_KIND}" is reserved for a Milestone with no Writing; create one through drafting_data__create_job_board`, "reserved_kind");
+  if (args.kind === MILESTONE_KIND) {
+    throw new ValidationError(`${TOOL}.kind "${MILESTONE_KIND}" is reserved for a Milestone with no Writing; create one through drafting_data__create_milestone`, "reserved_kind");
   }
   const proceeding = fetchProceeding(args.db_path, args.proceeding_id);
   // A title names the Writing only. The style of proceeding is the proceeding's own record, and the

@@ -24,7 +24,7 @@ import { APPROVAL_TEMPLATE } from "../housekeeping/page.js";
 import { resolvePracticeDbPath } from "../practice/backend.js";
 import type { PracticeStore } from "../practice/store.js";
 import { buildPracticeBoardData } from "../tools/practice/practice-board.js";
-import { JOB_BOARD_FIXTURE } from "../board-fixtures/job-board.js";
+import { MILESTONE_FIXTURE } from "../board-fixtures/milestone.js";
 import { LITIGATION_STRATEGY_FIXTURE } from "../board-fixtures/litigation-strategy.js";
 import { WORK_BOARD_FIXTURE } from "../board-fixtures/work-board.js";
 import { ARGUMENTS_FIXTURE } from "../board-fixtures/arguments.js";
@@ -37,7 +37,7 @@ import { LOOSE_THREADS_PAGE_NAME, type LooseIdeasData } from "../submission/form
 import { LITIGATION_STRATEGY_TEMPLATE, MATTER_BOARD_FILE, renderMatterBoardHtml } from "../submission/forms/matter-board-shell.js";
 import { PRACTICE_BOARD_FILE, renderPracticeBoardHtml, WORK_BOARD_TEMPLATE } from "../submission/forms/practice-board-shell.js";
 import { fetchRevision } from "../submission/forms/query.js";
-import { JOB_BOARD_TEMPLATE, renderWorkBoardHtml } from "../submission/forms/workboard-shell.js";
+import { MILESTONE_TEMPLATE, renderWorkBoardHtml } from "../submission/forms/workboard-shell.js";
 import { readMatterDates } from "../submission/matter-dates.js";
 import { buildMatterPages } from "../submission/matter-pages.js";
 import { readMatterTodos } from "../submission/matter-todos.js";
@@ -51,7 +51,7 @@ export const HOUSEKEEPING_PAGE = "Housekeeping approval";
 export const PAGE_TEMPLATES: Readonly<Record<string, TemplateSet>> = {
   "Work Board": WORK_BOARD_TEMPLATE,
   "Litigation Strategy": LITIGATION_STRATEGY_TEMPLATE,
-  "Milestone": JOB_BOARD_TEMPLATE,
+  "Milestone": MILESTONE_TEMPLATE,
   ...Object.fromEntries(VIEW_PAGES.map((p) => [p.name, p.template])),
   [HOUSEKEEPING_PAGE]: APPROVAL_TEMPLATE,
 };
@@ -106,7 +106,7 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
     }
     if (page === "Work Board") return { path: writePreview(dir, stem(PRACTICE_BOARD_FILE), renderPracticeBoardHtml(WORK_BOARD_FIXTURE, composed), true) };
     if (page === "Litigation Strategy") return { path: writePreview(dir, stem(MATTER_BOARD_FILE), renderMatterBoardHtml(LITIGATION_STRATEGY_FIXTURE, composed), true) };
-    return { path: writePreview(dir, `Milestone ${FIXTURE_BOARD.filing_id}`, renderWorkBoardHtml(JOB_BOARD_FIXTURE, composed), true) };
+    return { path: writePreview(dir, `Milestone ${FIXTURE_BOARD.filing_id}`, renderWorkBoardHtml(MILESTONE_FIXTURE, composed), true) };
   }
 
   if (page === "Work Board") {
@@ -145,13 +145,13 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
     await readMatterTodos(store, matterNo),
     await readMatterDates(store, matterNo),
     ids.filing_id === undefined ? {} : { only: ids.filing_id },
-    viewPage ? { views: { [page]: page === LOOSE_THREADS_PAGE_NAME ? withoutListener(viewPage) : viewPage } } : page === "Milestone" ? { jobBoard: composed } : { matterBoard: composed }
+    viewPage ? { views: { [page]: page === LOOSE_THREADS_PAGE_NAME ? withoutListener(viewPage) : viewPage } } : page === "Milestone" ? { milestone: composed } : { matterBoard: composed }
   );
   const target =
     page === "Litigation Strategy"
       ? join(draftDir, MATTER_BOARD_FILE)
       : page === "Milestone"
-        ? built.paths.job_board_paths.find((t) => (ids.filing_id !== undefined ? t.filing_id === ids.filing_id : t.filing_id === null && t.proceeding_id === ids.proceeding_id))?.path
+        ? built.paths.milestone_paths.find((t) => (ids.filing_id !== undefined ? t.filing_id === ids.filing_id : t.filing_id === null && t.proceeding_id === ids.proceeding_id))?.path
         : built.paths.view_page_paths.find((v) => v.name === page && v.filing_id === ids.filing_id)?.path;
   const pageFile = target === undefined ? undefined : relative(draftDir, target);
   const html = built.pages.find((p) => p.name === pageFile)?.html;

@@ -529,7 +529,7 @@ class FactMoveTest(GateTestCase):
                            "cannot read the paragraph revision", "the fact a move names")
 
 
-class MergeJobBoardsGateTest(unittest.TestCase):
+class MergeMilestonesGateTest(unittest.TestCase):
     """docs/ADRs/0010: a merge of two Milestones passes only on the practitioner's bare yes."""
 
     def setUp(self):
@@ -542,7 +542,7 @@ class MergeJobBoardsGateTest(unittest.TestCase):
     def run_merge(self, *lines, **extra):
         self.transcript.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
         payload = {"hook_event_name": "PreToolUse", "session_id": "s-1",
-                   "tool_name": "mcp__plugin_lawyer_data__drafting_data__merge_job_boards",
+                   "tool_name": "mcp__plugin_lawyer_data__drafting_data__merge_milestones",
                    "tool_input": {"db_path": "C:/matter/submission.sqlite", "boards": [{"filing_id": 1}, {"filing_id": 3}],
                                   "confirmed": True, "session_token": "tok", **extra},
                    "transcript_path": str(self.transcript)}
@@ -629,7 +629,7 @@ class PluginRegistrationTests(unittest.TestCase):
         self.assertEqual(len(entries), 1)
         matcher = re.compile(entries[0]["matcher"])
         for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
-            for tool in ("execute", "set_board_goal", "merge_job_boards", "merge_jobs"):
+            for tool in ("execute", "set_board_goal", "merge_milestones", "merge_jobs"):
                 self.assertTrue(matcher.fullmatch(prefix + "drafting_data__" + tool), prefix + tool)
         self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__drafting_data__query"))
         self.assertFalse(matcher.fullmatch("mcp__plugin_other_data__drafting_data__execute"))

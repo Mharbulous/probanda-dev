@@ -38,8 +38,8 @@ import { timecampingDataMigrate } from "./timecamping/migrate.js";
 import { submissionDataQuery, submissionDataExecute } from "./submission/backend.js";
 import { submissionDataMigrate } from "./submission/migrate.js";
 import { submissionDataCreateWriting, type CreateWritingArgs } from "./submission/forms/layout-snapshot.js";
-import { submissionDataCreateJobBoard, type CreateJobBoardArgs } from "./submission/forms/create-job-board.js";
-import { submissionDataMergeJobBoards, type MergeJobBoardsArgs } from "./submission/forms/merge-job-boards.js";
+import { submissionDataCreateMilestone, type CreateMilestoneArgs } from "./submission/forms/create-milestone.js";
+import { submissionDataMergeMilestones, type MergeMilestonesArgs } from "./submission/forms/merge-milestones.js";
 import { submissionDataRecordFiled, type RecordFiledArgs } from "./submission/forms/filed-write.js";
 import { submissionDataRecordServed, type RecordServedArgs } from "./submission/forms/served-write.js";
 import { submissionDataAssignJob, type AssignJobArgs } from "./submission/forms/assign-job.js";
@@ -188,8 +188,8 @@ export const dataTools: Tool<DispatchContext>[] = [
     submissionDataCreateWriting(args, {
       caseDataRoot: once(() => caseDataRootFromDbPath(args.db_path, process.env)),
     })),
-  defineTool("drafting_data__create_job_board", (args: CreateJobBoardArgs) => submissionDataCreateJobBoard(args)),
-  defineTool("drafting_data__merge_job_boards", (args: MergeJobBoardsArgs) => submissionDataMergeJobBoards(args)),
+  defineTool("drafting_data__create_milestone", (args: CreateMilestoneArgs) => submissionDataCreateMilestone(args)),
+  defineTool("drafting_data__merge_milestones", (args: MergeMilestonesArgs) => submissionDataMergeMilestones(args)),
   defineTool("drafting_data__record_sent", (args: RecordSentArgs) => submissionDataRecordSent(args)),
   defineTool("drafting_data__record_filed", (args: RecordFiledArgs) => submissionDataRecordFiled(args)),
   defineTool("drafting_data__record_served", (args: RecordServedArgs) => submissionDataRecordServed(args)),

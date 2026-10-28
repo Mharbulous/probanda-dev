@@ -89,7 +89,7 @@ export function submissionFormsBootstrap(
    * tool input -- dispatch never passes it. */
   now: string = nowStamp(),
   /** The matter's 0. DRAFT folder (#585). Given, the Litigation Strategy and the Milestone pages are written
-   * there; omitted, nothing is written, and matter_board_path and job_board_paths are null. Confined
+   * there; omitted, nothing is written, and matter_board_path and milestone_paths are null. Confined
    * before any other work. */
   draftDir?: string,
   /** The matter's open to-dos for the Litigation Strategy (ADR 0021 D1), read by the tool entry point
@@ -208,7 +208,7 @@ export function submissionFormsBootstrap(
     filings,
     pre_filing_proceedings: timed(timings, "pre_filing_list", () => fetchPreFilingProceedings(dbPath).map((p) => ({ proceeding_id: p.id, forum: p.forum }))),
     matter_board_path: pages?.matter_board_path ?? null,
-    job_board_paths: pages?.job_board_paths ?? null,
+    milestone_paths: pages?.milestone_paths ?? null,
     view_page_paths: pages?.view_page_paths ?? null,
     ...(pages?.moved_to_trash ? { moved_to_trash: pages.moved_to_trash } : {}),
     ...(pages?.trash_skipped ? { trash_skipped: pages.trash_skipped } : {}),

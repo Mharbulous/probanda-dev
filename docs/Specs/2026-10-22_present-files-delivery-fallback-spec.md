@@ -27,7 +27,7 @@ Non-goals: changing Claude Code or SendUserFile; letting an agent read the page 
 
 ## 5. Constraints that must still hold
 - html-pages rule: an agent never reads, greps, parses or stages-to-read a Milestone page; it only presents it.
-- The page presented is session entry's `job_board_path` and nothing else; the Opening's one-line rule is unchanged.
+- The page presented is session entry's `milestone_path` and nothing else; the Opening's one-line rule is unchanged.
 - One access request, minimal folder set, never a request for computer control.
 
 ## 6. Options considered
@@ -60,11 +60,11 @@ Confirm each path, quote and root cause above in the repo at HEAD; mark any that
 
 | # | Spec claim | At HEAD | Status |
 |---|---|---|---|
-| 1 | The PostToolUse hook text after `drafting_forms__open_session` (§2, first bullet) | Verbatim in `how_to_present()` of `.claude/skills/drafting-data/hooks/job-board-card-gate.py`, used by its PostToolUse output and its Stop block. The hook is plugin source, assigned to `litigator` in `source/assignment.json`, not to the lawyer data server. §9 Q1: fixable here | Confirmed, owner differs |
+| 1 | The PostToolUse hook text after `drafting_forms__open_session` (§2, first bullet) | Verbatim in `how_to_present()` of `.claude/skills/drafting-data/hooks/milestone-card-gate.py`, used by its PostToolUse output and its Stop block. The hook is plugin source, assigned to `litigator` in `source/assignment.json`, not to the lawyer data server. §9 Q1: fixable here | Confirmed, owner differs |
 | 2 | /draft rule `draft.open.step-1` quote (§2, second bullet) | Verbatim in atom `draft.open.step-1` of `.claude/skills/draft/references/procedure.md`. The same route is also in `shared/html-pages.md` "Present each page by its path" and in atom `draft.render.view-pages` | Confirmed |
 | 3 | "The skill never consulted `get_device_info.connectedFolders` before staging" | Differs. Atom `draft.enter.matter-folder` (op `enter`) already says: on a remote-device host call `get_device_info` once, and where `connectedFolders` is empty, call `device_request_folder_access` once for `matter_root` in the round trip right after session entry, before staging, with a reason that names no page file. Gaps: it fires only when `connectedFolders` is empty, not when the connected folders do not cover the matter folder, and the rule that directs the staging (`draft.open.step-1`, html-pages, and the hook text the session gets right after session entry) never names the check | Root cause revised |
 | 4 | `shared/present-files.md` says "use present_files first" | It already says to check the tool list before choosing (spec 2026-10-15), but its rule opens with "call `mcp__cowork__present_files`", and `draft.open.step-1`, html-pages, `draft.render.view-pages`, `draft/references/present-files.md` and `draft/references/authorities.md` call `SendUserFile` "only its fallback" or name present_files alone. `show-me/SKILL.md` repeats the rule verbatim | Partly confirmed |
 | 5 | §4 (b): request access for the draft folder only, with a reason that names the page | Differs from atom `draft.enter.matter-folder`, which requests `matter_root` (never a parent or the firm root) with a reason that names no page file. The implementation keeps that existing rule and extends it to the not-covered case | Differs, existing rule kept |
 | 6 | Installed paths (`shared/present-files.md`, `shared/html-pages.md`, `references/procedure.md`) | Same paths under `.claude/skills/` | Confirmed |
 | 7 | Public-source research (§2, fifth bullet) | Not checkable in the repo | Not verified |
-| 8 | Tests pinning the wording | `drafting-data/tests/test_job_board_card_gate.py` asserts the hook text names `present_files` and `SendUserFile`. No test pins the skill text | Confirmed |
+| 8 | Tests pinning the wording | `drafting-data/tests/test_milestone_card_gate.py` asserts the hook text names `present_files` and `SendUserFile`. No test pins the skill text | Confirmed |

@@ -10,7 +10,7 @@ import type { WorkBoardData } from "./work-board-data.js";
  * live filing's or a pre-filing proceeding's. `meta.revision` stays the data line's first key, so
  * readExistingRevision still reads it. The client number and the section's proceeding's forum,
  * registry, file number and style of proceeding are "" when unknown. */
-export interface MatterJobBoardData {
+export interface MatterMilestoneData {
   meta: {
     revision: number;
     matter: string;

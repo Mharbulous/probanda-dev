@@ -1,4 +1,4 @@
-// The board sections with no Writing: a Milestone of JOB_BOARD_KIND and a pre-filing proceeding's.
+// The board sections with no Writing: a Milestone of MILESTONE_KIND and a pre-filing proceeding's.
 
 import { idleFlagHours } from "../../tools/practice/firm-profile.js";
 import { fetchBoardGoals } from "./board-goals.js";
@@ -19,11 +19,11 @@ export function preFilingLabel(proceeding: ProceedingRow): string {
 }
 
 /** The State row of a Milestone with no Writing, shared with its Litigation Strategy line. */
-export function jobBoardLabel(filing: Pick<FilingRow, "retired_on">): string {
+export function milestoneLabel(filing: Pick<FilingRow, "retired_on">): string {
   return filing.retired_on ? "Closed" : "Open";
 }
 
-/** A Milestone with no Writing (JOB_BOARD_KIND): only the jobs, deleted jobs, open loose threads and
+/** A Milestone with no Writing (MILESTONE_KIND): only the jobs, deleted jobs, open loose threads and
  * attachments whose filing_id is its own, so a proceeding-wide row (filing_id NULL) stays on the
  * Writings' boards. No stored layout is read: it has no lifecycle, Goal card, criteria, Proposals or
  * ingest inputs. */
@@ -42,7 +42,7 @@ export function buildJobOnlyBoardData(ctx: WorkBoardContext): WorkBoardData {
       proceeding_id: ctx.proceeding.id,
       rendered: ctx.rendered,
       state: null,
-      state_label: jobBoardLabel(ctx.filing),
+      state_label: milestoneLabel(ctx.filing),
       state_since: ctx.filing.retired_on,
       ready_to_retire: false,
       job_only: true,

@@ -6,8 +6,8 @@
 // starts no background render, so nothing else would refresh the Milestone pages. A job with no
 // filing_id (a scrutiny review job) shows on every filing's page in its proceeding, so when its
 // proceeding has a filing, that filing's render is used: any render rewrites every page, and
-// job_board_path is the rendered filing's page. Only a proceeding with no filing at all goes through
-// the proceeding's render, and job_board_path is then the proceeding's page.
+// milestone_path is the rendered filing's page. Only a proceeding with no filing at all goes through
+// the proceeding's render, and milestone_path is then the proceeding's page.
 //
 // Before either statement, a job this session holds is read for its steps: while any step is open,
 // waiting or to be retried (step-state.ts, schema v78) nothing is written and the outcome is
@@ -49,7 +49,7 @@ export interface CompleteJobResult {
   rejected_at: string | null;
   /** True when this call rewrote the matter's pages. */
   pages_written: boolean;
-  job_board_path?: string;
+  milestone_path?: string;
   board_changed?: boolean;
   board_moves?: BoardMove[];
   /** On steps_open: each step not yet resolved, in plan order. Nothing was written. */
@@ -69,7 +69,7 @@ interface ConfirmRow {
   filing_id: number | null;
 }
 
-type Pages = Pick<CompleteJobResult, "pages_written" | "job_board_path" | "board_changed" | "board_moves" | "pages_refused">;
+type Pages = Pick<CompleteJobResult, "pages_written" | "milestone_path" | "board_changed" | "board_moves" | "pages_refused">;
 
 /** The render a session runs with draft_dir, as open_session's openBoard runs it. */
 function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientContext, todos: MatterTodos | undefined, dates: MatterDates | undefined): Pages {
@@ -90,7 +90,7 @@ function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientCon
       }
       return {
         pages_written: board.pages_written === true,
-        ...(board.path !== undefined ? { job_board_path: board.path } : {}),
+        ...(board.path !== undefined ? { milestone_path: board.path } : {}),
         ...(board.board_changed !== undefined ? { board_changed: board.board_changed } : {}),
         ...(board.board_moves !== undefined ? { board_moves: board.board_moves } : {}),
       };
@@ -98,7 +98,7 @@ function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientCon
     const rendered = submissionFormsRenderProceedingBoard(args.db_path, read.proceeding_id, client, undefined, args.session_token, args.draft_dir, todos, dates);
     return {
       pages_written: rendered.pages_written,
-      ...(rendered.job_board_path !== undefined ? { job_board_path: rendered.job_board_path } : {}),
+      ...(rendered.milestone_path !== undefined ? { milestone_path: rendered.milestone_path } : {}),
       ...(rendered.board_changed !== undefined ? { board_changed: rendered.board_changed } : {}),
       ...(rendered.board_moves !== undefined ? { board_moves: rendered.board_moves } : {}),
     };

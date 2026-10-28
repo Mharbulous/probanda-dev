@@ -18,7 +18,7 @@ export type { DiscardedSeed, WorkBoardSeed, RankGroup, ResolvedSeed } from "./wo
 export { RANK_GROUP_LABELS, inRankOrder, seedOrigin, openSeedCondition, fetchDiscardedSeeds, fetchResolvedSeeds, fetchOpenSeeds, withFromFiling } from "./work-board-seeds.js";
 export type { GoalState, CriterionId, GoalCriterion, Goal, WorkBoardData } from "./work-board-data.js";
 export { WORKBOARD_DATA_FILE } from "./work-board-data.js";
-export type { MatterJobBoardData, StripItem, AttachedDraft } from "./work-board-page.js";
+export type { MatterMilestoneData, StripItem, AttachedDraft } from "./work-board-page.js";
 export { localMinutes } from "./ticket-category.js";
 export type { ProceedingBoard } from "./build-proceeding-board.js";
 export { buildProceedingBoard, onFilingBoard } from "./build-proceeding-board.js";
@@ -26,5 +26,5 @@ export { UNATTENDED_TOKEN_PREFIX, UNATTENDED_ELIGIBLE } from "./unattended-eligi
 export { RESERVE_INVENTORY_DOC, NEVER_DELIVERED_DOCS, isEvidenceWork } from "./goal-criteria.js";
 export { POSITION_CONFLICT_TITLE, PRE_SEND_TITLE, STOCK_TITLES } from "./goal-gate.js";
 export { holdsBeforeSend, unmetHeldCriteria, unmetCurrencyCriterion, unmetAuthorityConfirmedCriterion, unmetPositionConflictCriterion } from "./pre-send-hold.js";
-export { preFilingLabel, jobBoardLabel, buildPreFilingBoardData } from "./no-writing-boards.js";
+export { preFilingLabel, milestoneLabel, buildPreFilingBoardData } from "./no-writing-boards.js";
 export { buildWorkBoardData } from "./build-work-board.js";

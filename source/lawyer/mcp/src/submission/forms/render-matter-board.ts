@@ -18,7 +18,7 @@ import type { MatterTodos } from "../matter-todos.js";
 import { BoardIndex, boardKey, type BoardRef, sameBoard } from "./board-members.js";
 import { LIFECYCLE_LABELS, type Lifecycle, type LifecycleState } from "./lifecycle.js";
 import { isJobOnlyBoard, type FilingRow, type ProceedingRow } from "./query.js";
-import { buildProceedingBoard, jobBoardLabel, onFilingBoard, preFilingLabel, type ProceedingBoard, type WorkBoardTicket } from "./render-work-board.js";
+import { buildProceedingBoard, milestoneLabel, onFilingBoard, preFilingLabel, type ProceedingBoard, type WorkBoardTicket } from "./render-work-board.js";
 import type { RenderState } from "../render-manifest.js";
 
 /** One filing as the caller has already ranked it. */
@@ -98,7 +98,7 @@ function liveLine(entry: RankedFiling, board: ProceedingBoard): MatterBoardFilin
     filing_id: entry.filing.id,
     title: entry.filing.title,
     state: entry.lifecycle.state,
-    state_label: jobOnly ? jobBoardLabel(entry.filing) : LIFECYCLE_LABELS[entry.lifecycle.state],
+    state_label: jobOnly ? milestoneLabel(entry.filing) : LIFECYCLE_LABELS[entry.lifecycle.state],
     state_since: entry.lifecycle.since,
     render_state: entry.render_state,
     in_progress: inProgress(board.tickets.filter((t) => onBoard(t.filing_id)).map((t) => t.ticket)),
@@ -112,7 +112,7 @@ function retiredLine(entry: RankedFiling): MatterBoardFiling {
     filing_id: entry.filing.id,
     title: entry.filing.title,
     state: entry.lifecycle.state,
-    state_label: jobOnly ? jobBoardLabel(entry.filing) : LIFECYCLE_LABELS[entry.lifecycle.state],
+    state_label: jobOnly ? milestoneLabel(entry.filing) : LIFECYCLE_LABELS[entry.lifecycle.state],
     state_since: entry.lifecycle.since,
     render_state: null,
     retired_on: entry.filing.retired_on as string,

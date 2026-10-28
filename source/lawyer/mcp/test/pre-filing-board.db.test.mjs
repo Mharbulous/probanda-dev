@@ -91,10 +91,10 @@ test("a proceeding's Milestone page carries its tickets and seeds, and no filing
     assert.match(result.board_summary, /^# Milestone — Matter L8470 · Client Larchmont \(1\) · Rev \d+\nTo Do: This matter's to-dos were not read\.\nGoal: Goal not set \(none\)\nState: Forum not yet chosen$/);
     assert.equal(result.board_summary.includes("🎯"), false, "a pre-filing section has no completion criteria");
     assert.equal(result.board_summary.includes("## Proposed"), false, "and no Proposals");
-    assert.equal(result.job_board_path, join(f.draft, "Milestone - proceeding 1.html"));
+    assert.equal(result.milestone_path, join(f.draft, "Milestone - proceeding 1.html"));
     assert.equal(result.matter_board_path, join(f.draft, "Litigation Strategy.html"));
     assert.deepEqual(
-      result.job_board_paths.map((p) => [p.filing_id, p.proceeding_id, p.path]),
+      result.milestone_paths.map((p) => [p.filing_id, p.proceeding_id, p.path]),
       [
         [1, 2, join(f.draft, "Consent Order Requisition", "Milestone.html")],
         [null, 1, join(f.draft, "Milestone - proceeding 1.html")],
@@ -104,17 +104,17 @@ test("a proceeding's Milestone page carries its tickets and seeds, and no filing
     );
     assert.deepEqual(
       readdirSync(f.draft),
-      ["Consent Order Requisition", "Drafting records", "Milestone - proceeding 1.html", "Milestone - proceeding 3.html", "Litigation Strategy.html"],
+      ["Consent Order Requisition", "Drafting records", "Litigation Strategy.html", "Milestone - proceeding 1.html", "Milestone - proceeding 3.html"],
       "no Pre-filing proceeding folder, only the matter's pages, the filing's Writing folder and the records folder"
     );
     assert.deepEqual(
       readdirSync(join(f.draft, "Consent Order Requisition")),
-      ["Arguments.html", "Milestone.html", "Loose Threads.html", "Material Facts.html", "Procedural History.html", "Raw Research.html"],
+      ["Arguments.html", "Loose Threads.html", "Material Facts.html", "Milestone.html", "Procedural History.html", "Raw Research.html"],
       "the filing's pages are in its Writing's folder"
     );
     assert.equal(existsSync(join(dirname(f.dbPath), "mockups", "Pre-filing proceeding 1")), false, "nothing beside the database");
 
-    const page = readBoardData(result.job_board_path);
+    const page = readBoardData(result.milestone_path);
     assert.deepEqual(page.sections.map((s) => [s.meta.filing_id, s.meta.proceeding_id]), [[null, 1]], "the proceeding's own section alone");
     const section = page.sections[0];
     const { meta, tickets, seeds } = section;
@@ -146,8 +146,8 @@ test("without draft_dir the proceeding render writes nothing and returns its sum
     const result = submissionFormsRenderProceedingBoard(f.dbPath, 3, CLIENT, PINNED);
     assert.match(result.board_summary, /^State: No filing yet$/m);
     assert.equal(result.board_summary.includes("🎯"), false);
-    assert.equal(result.job_board_path, undefined);
-    assert.equal(result.job_board_paths, undefined);
+    assert.equal(result.milestone_path, undefined);
+    assert.equal(result.milestone_paths, undefined);
     assert.equal(result.matter_board_path, undefined);
     assert.deepEqual(readdirSync(f.draft), []);
     assert.equal(existsSync(join(dirname(f.dbPath), "mockups")), false, "nothing beside the database");

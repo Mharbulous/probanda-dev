@@ -76,12 +76,12 @@ export interface FilingRow {
 }
 
 /** The reserved kind of a Milestone with no Writing: a `filings` row that only
- * drafting_data__create_job_board writes, with no stored layout. It has a Milestone page and jobs,
+ * drafting_data__create_milestone writes, with no stored layout. It has a Milestone page and jobs,
  * and never a mockup, a view page, completion criteria or Proposals. */
-export const JOB_BOARD_KIND = "task-board";
+export const MILESTONE_KIND = "task-board";
 
 export function isJobOnlyBoard(filing: Pick<FilingRow, "kind">): boolean {
-  return filing.kind === JOB_BOARD_KIND;
+  return filing.kind === MILESTONE_KIND;
 }
 
 export interface PartyRow {

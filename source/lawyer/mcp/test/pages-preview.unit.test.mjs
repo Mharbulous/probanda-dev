@@ -28,7 +28,7 @@ const { VIEW_PAGES, renderViewPageHtml } = await import("../build/submission/vie
 const { renderApprovalPage } = await import("../build/housekeeping/page.js");
 const { WORK_BOARD_FIXTURE } = await import("../build/board-fixtures/work-board.js");
 const { LITIGATION_STRATEGY_FIXTURE } = await import("../build/board-fixtures/litigation-strategy.js");
-const { JOB_BOARD_FIXTURE } = await import("../build/board-fixtures/job-board.js");
+const { MILESTONE_FIXTURE } = await import("../build/board-fixtures/milestone.js");
 const { PROCEDURAL_HISTORY_FIXTURE } = await import("../build/board-fixtures/procedural-history.js");
 const { MATERIAL_FACTS_FIXTURE } = await import("../build/board-fixtures/material-facts.js");
 const { RAW_RESEARCH_FIXTURE } = await import("../build/board-fixtures/raw-research.js");
@@ -44,7 +44,7 @@ const viewPage = (name) => VIEW_PAGES.find((p) => p.name === name);
 const PAGES = [
   ["Work Board", "Work Board", (page) => renderPracticeBoardHtml(WORK_BOARD_FIXTURE, page)],
   ["Litigation Strategy", "Litigation Strategy", (page) => renderMatterBoardHtml(LITIGATION_STRATEGY_FIXTURE, page)],
-  ["Milestone", "Milestone 1", (page) => renderWorkBoardHtml(JOB_BOARD_FIXTURE, page)],
+  ["Milestone", "Milestone 1", (page) => renderWorkBoardHtml(MILESTONE_FIXTURE, page)],
   ...[
     ["Procedural History", PROCEDURAL_HISTORY_FIXTURE],
     ["Material Facts", MATERIAL_FACTS_FIXTURE],
@@ -110,7 +110,7 @@ test("the housekeeping preview draws the fixture before or after approval, with 
 
 test("a preview refuses an override naming no file, a non-text override, and inputs its data does not take", async () => {
   await assert.rejects(pagesPreview({ page: "Milestone", data: "fixture", overrides: { "nope.css": "" } }, undefined), /overrides name no template file of this page: nope\.css/);
-  await assert.rejects(pagesPreview({ page: "Milestone", data: "fixture", overrides: { "job-board.css": 1 } }, undefined), /job-board\.css is not/);
+  await assert.rejects(pagesPreview({ page: "Milestone", data: "fixture", overrides: { "milestone.css": 1 } }, undefined), /milestone\.css is not/);
   await assert.rejects(pagesPreview({ page: "Milestone", data: "fixture", filing_id: 1 }, undefined), /fixture data takes no matter_root, filing_id or proceeding_id/);
   await assert.rejects(pagesPreview({ page: "Housekeeping approval", data: "fixture" }, undefined), /housekeeping__preview/);
   await assert.rejects(pagesPreview({ page: "Milestone", data: "real", matter_root: TEMP }, undefined), /exactly one of filing_id or proceeding_id/);

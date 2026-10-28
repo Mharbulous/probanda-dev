@@ -79,7 +79,7 @@ New file `source/lawyer/mcp/src/submission/forms/served-write.ts`, modelled on `
 - **Refusals,** each writing nothing:
   - `invalid_served_on`
   - `not_found`
-  - `job_board_only`
+  - `milestone_only`
   - `writing_retired`
   - `already_filed`
   - `not_served_kind`
@@ -106,7 +106,7 @@ New file `source/lawyer/mcp/src/submission/forms/served-write.ts`, modelled on `
   - the lifecycle reading `served`;
   - exhibits frozen;
   - every refusal writing nothing.
-- Add `record_served` to the call list in `job-board-only.db.test.mjs`.
+- Add `record_served` to the call list in `milestone-only.db.test.mjs`.
 
 ## Step 3. Milestone text and stock titles. Release: lawyer
 

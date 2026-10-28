@@ -483,12 +483,12 @@ test("one 0. DRAFT folder: the Litigation Strategy and the Milestone page are wr
 
   assert.equal(result.matter_board_path.toLowerCase(), join(draftDir, "Litigation Strategy.html").toLowerCase());
   assert.ok(existsSync(join(draftDir, "Litigation Strategy.html")));
-  assert.equal(result.job_board_path.toLowerCase(), join(draftDir, OPENING_PAGE).toLowerCase());
+  assert.equal(result.milestone_path.toLowerCase(), join(draftDir, OPENING_PAGE).toLowerCase());
   assert.ok(existsSync(join(draftDir, OPENING_PAGE)));
-  assert.deepEqual(result.job_board_paths.map((p) => p.path), [result.job_board_path], "every page the opening wrote");
+  assert.deepEqual(result.milestone_paths.map((p) => p.path), [result.milestone_path], "every page the opening wrote");
   assert.equal(result.matter_board_note, undefined);
   assert.equal(result.draft_dir.toLowerCase(), draftDir.toLowerCase(), "#689: returned for every later render");
-  assert.equal(result.job_board_url, undefined, "2026-10-03: a session never holds a link to either page");
+  assert.equal(result.milestone_url, undefined, "2026-10-03: a session never holds a link to either page");
   assert.equal(result.matter_board_url, undefined);
 
   // The only work added is the one directory listing (draft_dir) and the opening, whose render writes the pages once.
@@ -528,9 +528,9 @@ test("one live filing: session entry opens it and returns its board as opened", 
   assert.equal(result.open_refused, undefined);
   assert.equal(result.timings.filter((p) => p.phase === "todos").length, 1, "the to-dos are read once");
   assert.ok(existsSync(result.matter_board_path));
-  assert.ok(existsSync(result.job_board_path));
+  assert.ok(existsSync(result.milestone_path));
   assert.equal(result.matter_board_path.toLowerCase(), join(draftDir, "Litigation Strategy.html").toLowerCase());
-  assert.equal(result.job_board_path.toLowerCase(), join(draftDir, OPENING_PAGE).toLowerCase());
+  assert.equal(result.milestone_path.toLowerCase(), join(draftDir, OPENING_PAGE).toLowerCase());
   assert.ok(result.background_job);
 });
 
@@ -602,9 +602,9 @@ test("filing_id naming no filing is reported as open_refused, and the matter's p
   assert.equal(result.open_refused.code, "data_error");
   assert.equal(result.opened, undefined);
   assert.ok(existsSync(result.matter_board_path));
-  assert.equal(result.job_board_path, null, "filing 99 has no page");
-  assert.deepEqual(result.job_board_paths.map((p) => p.filing_id), [1]);
-  assert.ok(existsSync(result.job_board_paths[0].path));
+  assert.equal(result.milestone_path, null, "filing 99 has no page");
+  assert.deepEqual(result.milestone_paths.map((p) => p.filing_id), [1]);
+  assert.ok(existsSync(result.milestone_paths[0].path));
 });
 
 test("a refused opening of a live filing returns that filing's page", async (t) => {
@@ -620,13 +620,13 @@ test("a refused opening of a live filing returns that filing's page", async (t) 
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
   assert.equal(result.open_refused.code, "presentation_dir_ambiguous");
-  assert.equal(result.job_board_path.toLowerCase(), join(draftDir, OPENING_PAGE).toLowerCase());
-  assert.ok(existsSync(result.job_board_path));
+  assert.equal(result.milestone_path.toLowerCase(), join(draftDir, OPENING_PAGE).toLowerCase());
+  assert.ok(existsSync(result.milestone_path));
 });
 
-// A Milestone with no Writing (drafting_data__create_job_board) is listed, and is never the default opening.
-async function seedJobBoard(context, m) {
-  const board = await callTool(context, "drafting_data__create_job_board", { db_path: m.dbPath, proceeding_id: 1, title: "Paper originals" });
+// A Milestone with no Writing (drafting_data__create_milestone) is listed, and is never the default opening.
+async function seedMilestone(context, m) {
+  const board = await callTool(context, "drafting_data__create_milestone", { db_path: m.dbPath, proceeding_id: 1, title: "Paper originals" });
   // Its job is the matter's latest activity, so the board leads bootstrap's list.
   await submissionDataExecute(
     m.dbPath,
@@ -642,18 +642,18 @@ test("a Milestone with no Writing leads the list and is not opened by default", 
   const draftDir = join(m.matterRoot, "0. DRAFT");
   mkdirSync(draftDir);
   const context = await practiceContext(t);
-  const boardId = await seedJobBoard(context, m);
+  const boardId = await seedMilestone(context, m);
   const boardPage = join(draftDir, `Milestone ${boardId}.html`);
 
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
   assert.deepEqual(result.filings.map((f) => f.filing_id), [boardId, 1], "the board is first in the list");
-  assert.equal(result.filings[0].job_board_only, true);
+  assert.equal(result.filings[0].milestone_only, true);
   assert.deepEqual(result.filings[0].paths, []);
   assert.equal("render_state" in result.filings[0], false);
   assert.equal(result.opened.filing_id, 1, "the first live Writing opens, not the board ahead of it");
-  assert.equal(result.job_board_path.toLowerCase(), join(draftDir, OPENING_PAGE).toLowerCase());
-  assert.deepEqual(result.job_board_paths.map((p) => p.filing_id).sort(), [1, boardId].sort(), "both pages are written");
+  assert.equal(result.milestone_path.toLowerCase(), join(draftDir, OPENING_PAGE).toLowerCase());
+  assert.deepEqual(result.milestone_paths.map((p) => p.filing_id).sort(), [1, boardId].sort(), "both pages are written");
   assert.ok(existsSync(boardPage));
   const job = result.background_job;
   assert.equal([job.current, ...job.queued, ...job.done].includes(boardId), false, "the background job never queues the board");
@@ -665,7 +665,7 @@ test("filing_id naming a Milestone with no Writing opens its board, with no fold
   const draftDir = join(m.matterRoot, "0. DRAFT");
   mkdirSync(draftDir);
   const context = await practiceContext(t);
-  const boardId = await seedJobBoard(context, m);
+  const boardId = await seedMilestone(context, m);
   const boardPage = join(draftDir, `Milestone ${boardId}.html`);
 
   const named = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot, filing_id: boardId });
@@ -674,7 +674,7 @@ test("filing_id naming a Milestone with no Writing opens its board, with no fold
   assert.equal(named.opened.filing_id, boardId);
   assert.match(named.opened.board_summary, /^State: Open$/m);
   assert.equal(named.opened.filing_retired, undefined);
-  assert.equal(named.job_board_path.toLowerCase(), boardPage.toLowerCase());
+  assert.equal(named.milestone_path.toLowerCase(), boardPage.toLowerCase());
   assert.equal(named.ingest_coverage.status, "not_applicable");
   assert.equal(named.form_currency, undefined);
   const folders = () => readdirSync(draftDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
@@ -682,7 +682,7 @@ test("filing_id naming a Milestone with no Writing opens its board, with no fold
 
   // The render a session then calls for it, through the dispatch.
   const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: boardId, draft_dir: named.draft_dir, session_token: named.session_token });
-  assert.equal(rendered.job_board_only, true);
+  assert.equal(rendered.milestone_only, true);
   assert.deepEqual(rendered.documents.map((d) => d.document_type), ["Work_board"]);
   assert.equal(rendered.documents[0].path.toLowerCase(), boardPage.toLowerCase());
   assert.equal(rendered.documents[0].board_changed, false);
@@ -694,15 +694,15 @@ test("a live Milestone with no Writing beside a retired Writing: nothing is open
   await seedOneFiling(m.dbPath);
   mkdirSync(join(m.matterRoot, "0. DRAFT"));
   const context = await practiceContext(t);
-  const boardId = await seedJobBoard(context, m);
+  const boardId = await seedMilestone(context, m);
   await submissionDataExecute(m.dbPath, "UPDATE filings SET retired_on = '2026-09-30', retirement_reason = 'abandoned' WHERE id = 1;");
 
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
   assert.equal(result.opened, undefined);
   assert.equal(result.open_refused, undefined);
-  assert.equal(result.job_board_path, null);
-  assert.deepEqual(result.job_board_paths.map((p) => p.filing_id), [boardId], "the board's page is still written");
+  assert.equal(result.milestone_path, null);
+  assert.deepEqual(result.milestone_paths.map((p) => p.filing_id), [boardId], "the board's page is still written");
   assert.ok(existsSync(result.matter_board_path));
 });
 
@@ -718,9 +718,9 @@ test("a pre-filing proceeding alone: session entry opens its board", async (t) =
   assert.equal(result.opened.proceeding_id, 1);
   assert.equal(result.opened.filing_id, undefined);
   assert.ok(existsSync(result.matter_board_path));
-  assert.equal(result.job_board_path.toLowerCase(), join(m.matterRoot, "0. DRAFT", "Milestone - proceeding 1.html").toLowerCase());
-  assert.ok(existsSync(result.job_board_path));
-  assert.deepEqual(result.job_board_paths.map((p) => p.path), [result.job_board_path]);
+  assert.equal(result.milestone_path.toLowerCase(), join(m.matterRoot, "0. DRAFT", "Milestone - proceeding 1.html").toLowerCase());
+  assert.ok(existsSync(result.milestone_path));
+  assert.deepEqual(result.milestone_paths.map((p) => p.path), [result.milestone_path]);
 });
 
 test("no filing and no proceeding: the Litigation Strategy is written, no Milestone page, and nothing is opened", async (t) => {
@@ -734,8 +734,8 @@ test("no filing and no proceeding: the Litigation Strategy is written, no Milest
   assert.equal(result.opened, undefined);
   assert.equal(result.open_refused, undefined);
   assert.ok(existsSync(result.matter_board_path));
-  assert.equal(result.job_board_path, null);
-  assert.deepEqual(result.job_board_paths, []);
+  assert.equal(result.milestone_path, null);
+  assert.deepEqual(result.milestone_paths, []);
   assert.deepEqual(readdirSync(join(m.matterRoot, "0. DRAFT")).filter((name) => name.endsWith(".html")), ["Litigation Strategy.html"]);
 });
 
@@ -787,11 +787,11 @@ test("no 0. DRAFT folder: matter_board_path is null with a note, and the session
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
   assert.equal(result.matter_board_path, null);
-  assert.equal(result.job_board_paths, null);
-  assert.equal(result.job_board_path, undefined);
+  assert.equal(result.milestone_paths, null);
+  assert.equal(result.milestone_path, undefined);
   assert.match(result.matter_board_note, /no 0\. DRAFT folder/);
   assert.equal(result.draft_dir, undefined);
-  assert.equal(result.job_board_url, undefined);
+  assert.equal(result.milestone_url, undefined);
   assert.equal(result.matter_board_url, undefined);
   assert.equal(result.filings.length, 1);
   assert.equal(result.opened, undefined);
@@ -898,27 +898,27 @@ test("a render without matter_no keeps the Litigation Strategy's to-dos", async 
 
   const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token });
   assert.ok(
-    rendered.documents.some((d) => d.document_type === "Work_board" && d.path === opened.job_board_path),
+    rendered.documents.some((d) => d.document_type === "Work_board" && d.path === opened.milestone_path),
     "the render that rewrote the pages returns the filing's Milestone page"
   );
-  assert.equal(rendered.job_board_url, undefined, "and no link to it");
+  assert.equal(rendered.milestone_url, undefined, "and no link to it");
   assert.equal(rendered.matter_board_url, undefined);
   const afterRender = boardData(opened.matter_board_path);
   assert.deepEqual(afterRender.todos.map((todo) => todo.description), ["Settle the submissions"]);
   assert.equal(afterRender.todos_note, undefined);
 
   const bootstrapped = await callTool(context, "drafting_forms__bootstrap", { db_path: m.dbPath, draft_dir: opened.draft_dir });
-  assert.deepEqual(bootstrapped.job_board_paths, opened.job_board_paths, "bootstrap returns every page");
-  assert.equal(bootstrapped.job_board_path, undefined, "bootstrap opens no section");
+  assert.deepEqual(bootstrapped.milestone_paths, opened.milestone_paths, "bootstrap returns every page");
+  assert.equal(bootstrapped.milestone_path, undefined, "bootstrap opens no section");
   assert.equal(bootstrapped.matter_board_path, opened.matter_board_path);
-  assert.equal(bootstrapped.job_board_url, undefined);
+  assert.equal(bootstrapped.milestone_url, undefined);
   assert.equal(bootstrapped.matter_board_url, undefined);
   assert.deepEqual(boardData(opened.matter_board_path).todos.map((todo) => todo.description), ["Settle the submissions"]);
 
   // The Writing's folder the draft_dir render wrote into: its parent is the 0. DRAFT folder.
   const presentation = OPENING_FOLDER;
   const presented = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, presentation_dir: join(opened.draft_dir, presentation), session_token: opened.session_token });
-  assert.equal(presented.job_board_url, undefined);
+  assert.equal(presented.milestone_url, undefined);
   assert.equal(presented.matter_board_url, undefined);
   assert.deepEqual(boardData(opened.matter_board_path).todos.map((todo) => todo.description), ["Settle the submissions"]);
 });

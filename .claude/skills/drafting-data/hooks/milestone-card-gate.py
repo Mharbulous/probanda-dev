@@ -4,10 +4,10 @@
 
 A page is due when a result shows it was written for the practitioner to see:
 
-- drafting_forms__open_session: its job_board_path, the opened filing's or proceeding's page;
-- drafting_forms__render: the Work_board document's path on a filing's render, or job_board_path on
+- drafting_forms__open_session: its milestone_path, the opened filing's or proceeding's page;
+- drafting_forms__render: the Work_board document's path on a filing's render, or milestone_path on
   a proceeding's, when pages_written and board_changed are both true;
-- drafting_data__complete_job: its job_board_path, when pages_written and board_changed are true.
+- drafting_data__complete_job: its milestone_path, when pages_written and board_changed are true.
 
 bootstrap opens no board, and view pages and the Litigation Strategy are presented only on request,
 so none of those is ever due.
@@ -66,15 +66,15 @@ def due_pages(tool, response):
     if result is None:
         return []
     if OPEN.fullmatch(tool):
-        path = result.get("job_board_path")
+        path = result.get("milestone_path")
     elif RENDER.fullmatch(tool):
         board = next((d for d in result.get("documents") or [] if isinstance(d, dict) and d.get("document_type") == "Work_board"), None)
         if board is not None:
             path = board.get("path") if changed(board) else None
         else:
-            path = result.get("job_board_path") if changed(result) else None
+            path = result.get("milestone_path") if changed(result) else None
     elif COMPLETE.fullmatch(tool):
-        path = result.get("job_board_path") if changed(result) else None
+        path = result.get("milestone_path") if changed(result) else None
     else:
         return []
     return [path] if isinstance(path, str) and path else []
@@ -163,4 +163,4 @@ def main():
 
 
 if __name__ == "__main__":
-    hook_io.run(main, "job-board-card-gate")
+    hook_io.run(main, "milestone-card-gate")

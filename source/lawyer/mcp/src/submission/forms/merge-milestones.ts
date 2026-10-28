@@ -1,4 +1,4 @@
-// drafting_data__merge_job_boards (docs/ADRs/0010-job-boards-organized-by-goals.md): joins two Job
+// drafting_data__merge_milestones (docs/ADRs/0010-milestones-organized-by-goals.md): joins two Job
 // Boards whose goals the practitioner has confirmed overlap or cohere. The survivor is a Writing's
 // board over a Milestone with no Writing over a pre-filing board, and within a kind the lower id
 // (BoardIndex.rank). The absorbed board gets one membership row naming the survivor, and every board
@@ -14,9 +14,9 @@ import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { framingWarning, type MergedGoal, NEEDS_CONSOLIDATION, readStored, type StoredGoals, survivorGoalsKey } from "./board-goals.js";
 import { BoardIndex, type BoardRef, memberKey, sameBoard } from "./board-members.js";
 
-const TOOL = "drafting_data__merge_job_boards";
+const TOOL = "drafting_data__merge_milestones";
 
-export interface MergeJobBoardsArgs {
+export interface MergeMilestonesArgs {
   db_path: string;
   /** The two boards, each by exactly one of filing_id and proceeding_id. */
   boards: { filing_id?: number; proceeding_id?: number }[];
@@ -31,7 +31,7 @@ export interface MergeJobBoardsArgs {
   goal_description?: string;
 }
 
-export interface MergeJobBoardsResult {
+export interface MergeMilestonesResult {
   survivor: BoardRef;
   absorbed: BoardRef;
   /** The merged board's goal: confirmed when goal_statement was given, else needs_consolidation. */
@@ -64,8 +64,8 @@ function resolve(dbPath: string, arg: { filing_id?: number; proceeding_id?: numb
   return { filing_id: null, proceeding_id: id };
 }
 
-/** drafting_data__merge_job_boards. Every refusal writes nothing. */
-export async function submissionDataMergeJobBoards(args: MergeJobBoardsArgs, env: NodeJS.ProcessEnv = process.env): Promise<MergeJobBoardsResult> {
+/** drafting_data__merge_milestones. Every refusal writes nothing. */
+export async function submissionDataMergeMilestones(args: MergeMilestonesArgs, env: NodeJS.ProcessEnv = process.env): Promise<MergeMilestonesResult> {
   if (!Array.isArray(args.boards) || args.boards.length !== 2) throw new ValidationError(`${TOOL}.boards must name exactly two boards`, "invalid_boards");
   if (args.confirmed !== true) {
     throw new ValidationError(

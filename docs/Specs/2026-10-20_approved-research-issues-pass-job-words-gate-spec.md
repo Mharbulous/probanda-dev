@@ -98,10 +98,10 @@ Re-read the gate's approval logic and the quoted `jobs-create.md` passage. Check
 | Claim | Where checked | Result |
 |---|---|---|
 | The gate refuses a job title or intent that is not a run of one practitioner turn, unless a bare yes approved a shown proposal written with `session_proposed = 1` | `.claude/skills/drafting-data/hooks/practitioner-words-gate.py`, `main()` and `APPROVALS` | Confirmed. "No more issues." is not in `APPROVALS`, so the observed refusal matches HEAD. |
-| The gate also checks `ticket_steps.text` (on a replace), `marker_suppressions.note`, `paragraph_revisions`, `set_board_goal` and `merge_job_boards` | Same file, `ticket_writes()`, `revision_failures()`, `board_goal()`, `merge_boards()` | Confirmed. |
+| The gate also checks `ticket_steps.text` (on a replace), `marker_suppressions.note`, `paragraph_revisions`, `set_board_goal` and `merge_milestones` | Same file, `ticket_writes()`, `revision_failures()`, `board_goal()`, `merge_boards()` | Confirmed. |
 | The quoted `jobs-create.md` §3 passage | `.claude/skills/drafting-data/references/jobs-create.md` l.47 | Confirmed, word for word. Also restated at l.10, l.12, l.43, l.49, l.55, l.371, l.373. |
 | The bare-yes rule is also stated in `shared/paralegal-posture.md` §3 | l.28 (widget reason) and l.32 (adoption ceremony, "A bare yes does not adopt it") | Confirmed. §8 (l.96) restates "approved word for word". |
 | The rule is also stated in `draft/references/job-session.md` | l.72, l.99, l.102, l.105, l.108, l.137 | Confirmed, as the adoption ceremony and the gate's run-of-a-turn test. |
-| The matcher | `source/litigator/plugin.json` l.19, `drafting_data__(execute|set_board_goal|merge_job_boards)` | Confirmed. `execute` stays needed for `paragraph_revisions`. |
+| The matcher | `source/litigator/plugin.json` l.19, `drafting_data__(execute|set_board_goal|merge_milestones)` | Confirmed. `execute` stays needed for `paragraph_revisions`. |
 | `session_proposed` is read anywhere outside the gate | `source/` and `.claude/skills/` | Only the gate reads it. The schema column (DEFAULT 0) and migrations stay. |
 | The rule store | `source/lawyer/mcp/src/preferences/tools.ts`, `source/lawyer/hooks/inject-preferences.py` | Confirmed: `preferences__write` op add/retire, entries `{id, skill, instruction, created_on, retired_on, plugin_version}`. |

@@ -1,4 +1,4 @@
-// A merged Milestone as one board (docs/ADRs/0010-job-boards-organized-by-goals.md, 2026-10-21
+// A merged Milestone as one board (docs/ADRs/0010-milestones-organized-by-goals.md, 2026-10-21
 // amendment): the sections drawn on one page pooled into one section, so the page, board_summary and
 // board_card all show one Completion Criteria card and one set of lanes. Each job is tagged with the
 // Writing it serves. Criteria combine by id and read unmet while any Writing's is unmet; each

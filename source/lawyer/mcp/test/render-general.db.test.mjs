@@ -483,7 +483,7 @@ test("the Writing's folder is named by its title with no folder_code, though the
 
   const boot = submissionFormsBootstrap(g.dbPath, CLIENT, NOW, draft);
   assert.ok(boot.filings.some((f) => f.filing_id === id));
-  const page = boot.job_board_paths.find((p) => p.filing_id === id);
+  const page = boot.milestone_paths.find((p) => p.filing_id === id);
   assert.equal(page.path, join(draft, "Letter to Cara", "Milestone.html"), "the Writing's page is in its own folder, with no filing id");
   assert.ok(existsSync(page.path));
   assert.deepEqual(boot.pre_filing_proceedings.map((p) => p.proceeding_id), [2, 3]);

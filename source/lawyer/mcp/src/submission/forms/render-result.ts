@@ -67,11 +67,11 @@ export interface RenderResult {
    * cleared) before it renders again -- rendering one would archive the mockups of a filing
    * whose work is over. */
   filing_retired?: boolean;
-  /** True only on a Milestone with no Writing (forms/query.ts JOB_BOARD_KIND): mockup mode builds its
+  /** True only on a Milestone with no Writing (forms/query.ts MILESTONE_KIND): mockup mode builds its
    * board and nothing else, so no mockup or manifest is written.
    * `documents` carries the Milestone alone, with its board_summary. A closed one also carries
    * filing_retired and a note. */
-  job_board_only?: true;
+  milestone_only?: true;
   /** Each folder of an older build's `<case data>\mockups\` tree this call moved into 0. DRAFT
    * (writing-folder.ts moveCaseDataMockups), once per matter. */
   mockups_moved?: MockupMove[];

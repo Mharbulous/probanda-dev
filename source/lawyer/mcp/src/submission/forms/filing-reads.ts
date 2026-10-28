@@ -14,7 +14,7 @@ export function fetchFilingById(dbPath: string, filingId: number): FilingRow {
  * pre-filing check refuse it by name, before anything is read for it. */
 export function refuseJobOnlyBoard(filing: FilingRow): void {
   if (isJobOnlyBoard(filing)) {
-    throw new ValidationError(`Milestone ${filing.id} has no Writing, so it has no document`, "job_board_only");
+    throw new ValidationError(`Milestone ${filing.id} has no Writing, so it has no document`, "milestone_only");
   }
 }
 

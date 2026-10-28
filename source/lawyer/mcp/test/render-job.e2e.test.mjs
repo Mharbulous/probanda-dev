@@ -114,8 +114,8 @@ test("bootstrap's job renders each stale filing once, skips fresh and retired on
     // Board page per live filing (ADR 0033, 2026-10-05 amendment), and the Litigation Strategy with the to-dos
     // bootstrap read, which the job cannot read itself; its lines now show the filings the job
     // rendered as fresh.
-    assert.deepEqual(first.job_board_paths.map((p) => p.filing_id).sort(), [1, 2, 3], "every live filing has a page; the retired one none");
-    for (const { filing_id, path } of first.job_board_paths) {
+    assert.deepEqual(first.milestone_paths.map((p) => p.filing_id).sort(), [1, 2, 3], "every live filing has a page; the retired one none");
+    for (const { filing_id, path } of first.milestone_paths) {
       assert.deepEqual(readBoardData(path).sections.map((s) => s.meta.filing_id), [filing_id], `${path} holds its filing's section alone`);
     }
     const todoList = readTodoList(first.matter_board_path);

@@ -74,7 +74,7 @@ def make_repo(root, reason="Refused: that page is for the practitioner to view."
         "source/lawyer/hooks/gate.py": GATE.replace("{reason}", reason.replace('"', '\\"')),
         "source/lawyer/hooks/note.py": NOTE,
         "source/developer/hooks/dev.py": 'REASON = "Refused: use suggestion_box__submit to file it."\n',
-        "source/lawyer/mcp/src/templates/job-board/job-board.html": PAGE.format(text=text),
+        "source/lawyer/mcp/src/templates/milestone/milestone.html": PAGE.format(text=text),
         "source/lawyer/mcp/src/submission/names.ts": SERVER.format(name=name, leaf=leaf, err=err, mockup=mockup),
         "source/lawyer/mcp/src/submission/names.test.ts": 'const p = join(dir, "Unstructured.md");\n',
     }
@@ -110,7 +110,7 @@ class CheckInternalsTest(unittest.TestCase):
         found = self.found(text="Open the Unstructured Writing by its filing id.")
         self.assertEqual(sorted(f.split(" holds ")[1] for f in found),
                          ["filing id `filing id`", "stock type name `Unstructured`"])
-        self.assertTrue(all("job-board.html:3: page text" in f for f in found), found)
+        self.assertTrue(all("milestone.html:3: page text" in f for f in found), found)
 
     def test_a_seeded_term_in_a_file_name_builder_is_flagged(self):
         found = self.found(name='`Filing ${id}`')

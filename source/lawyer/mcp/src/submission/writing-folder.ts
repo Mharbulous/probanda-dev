@@ -46,7 +46,7 @@ export const GENERAL_DOCUMENT_TYPE = "General_writing";
 /** The board files an older render wrote beside its mockups or presentation copies: the page under
  * both its names, the support files it was split into before 2026-09-15, and the Markdown board.
  * `Job Board.html` is the page's name before 2026-10-28. */
-const OLD_BOARD_FILES = ["Job Board.html", "Milestone.html","Work Board.html", "Work Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
+const OLD_BOARD_FILES = ["Job Board.html", "Milestone.html", "Work Board.html", "Work Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
 
 /** The folder the move puts anything of an older mockups tree that belongs to no Writing. */
 const OLDER_MOCKUPS = "Older mockups";
@@ -198,7 +198,7 @@ function settled(draft: string, title: string, folder: WritingFolder): string {
 export function writingFolderForRender(dbPath: string, filingId: number, title: string): { dir: string; rename?: MockupMove } {
   const draft = draftDirOf(dbPath);
   const folder = writingFolders(dbPath, draft).get(filingId);
-  if (folder === undefined) throw new DataServerError(`Milestone ${filingId} has no Writing, so it has no folder`, "job_board_only");
+  if (folder === undefined) throw new DataServerError(`Milestone ${filingId} has no Writing, so it has no folder`, "milestone_only");
   if (folder.ambiguous !== undefined) {
     throw new DataServerError(
       `${folder.ambiguous.length} folders in ${draft} could each be "${title}"'s: ${folder.ambiguous.map((n) => `"${join(draft, n)}"`).join(", ")}. ` +

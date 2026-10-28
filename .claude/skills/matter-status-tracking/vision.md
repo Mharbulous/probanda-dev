@@ -72,7 +72,7 @@ This skill tracks signals and derives labels. It never recommends what to do abo
 
 ## 4. Non-Goals
 
-- **Litigation milestones and process tracking** — filing deadlines, discovery completion, trial preparation. These belong in a `litigation-planning` skill where each matter has its own plan.
+- **Litigation events and process tracking** — filing deadlines, discovery completion, trial preparation. These belong in a `litigation-planning` skill where each matter has its own plan.
 - **Legal research or document drafting** — the skill tracks whether a retainer agreement exists; it does not draft one.
 - **Client-facing output** — no status portals, no client notifications. All output is for the practitioner.
 - **Trust accounting or compliance reporting** — retainer balance data comes from `retainer-tracking`; this skill reads that signal but does not own the accounting layer.

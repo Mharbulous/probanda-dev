@@ -43,7 +43,7 @@ import {
 import { recordCriterionGlyphs, recordGlyphs, recordJurisdictionLadder } from "./proposal-inventory.js";
 import { fetchPlacedAlternativeIds } from "./render-requisition.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
-import { captionHeadingFor, JOB_BOARD_KIND, noFactsNeededColumn, noLawNeededColumn, opposingPartyIds, servedOrderWordingsColumn, venueHeadingFor, type ProceedingRow } from "./query.js";
+import { captionHeadingFor, MILESTONE_KIND, noFactsNeededColumn, noLawNeededColumn, opposingPartyIds, servedOrderWordingsColumn, venueHeadingFor, type ProceedingRow } from "./query.js";
 import { rows } from "../query-rows.js";
 
 /** What the Written Arguments prints differently by venue, keyed by the proceeding's tree key: who
@@ -323,7 +323,7 @@ function fetchOtherFilingDeployments(dbPath: string, proceedingId: number, filin
     dbPath,
     // A Milestone with no Writing deploys nothing.
     `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
-    [proceedingId, filingId, JOB_BOARD_KIND]
+    [proceedingId, filingId, MILESTONE_KIND]
   );
   const orders = new Set<number>();
   const submissions = new Set<number>();

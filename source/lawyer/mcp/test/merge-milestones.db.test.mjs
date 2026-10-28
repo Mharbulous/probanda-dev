@@ -1,4 +1,4 @@
-// Merged Milestones (docs/ADRs/0010-job-boards-organized-by-goals.md): drafting_data__merge_job_boards
+// Merged Milestones (docs/ADRs/0010-milestones-organized-by-goals.md): drafting_data__merge_milestones
 // joins two boards on the practitioner's yes. The survivor is a Writing's board over a Milestone with
 // no Writing over a pre-filing board, then the lower id. One page per survivor draws every board on
 // it as one board, one set of view pages spans its Writings, the absorbed pages go to TRASH, the board holds
@@ -32,7 +32,7 @@ const code = (expected, message) => (err) => err.code === expected && (message =
 const query = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
 const metaRows = (dbPath, glob) => query(dbPath, "SELECT key, value FROM db_meta WHERE key GLOB ? ORDER BY key", [glob]);
 const merge = (dbPath, boards, confirmed = true, extra = {}) =>
-  callTool({}, "drafting_data__merge_job_boards", { db_path: dbPath, boards, confirmed, session_token: TOKEN, ...extra });
+  callTool({}, "drafting_data__merge_milestones", { db_path: dbPath, boards, confirmed, session_token: TOKEN, ...extra });
 const setGoal = (dbPath, board, statement, extra = {}) =>
   callTool({}, "drafting_data__set_board_goal", { db_path: dbPath, ...board, statement, status: "inferred", session_token: TOKEN, ...extra });
 const render = (m, filingId) => submissionFormsRender(m.dbPath, filingId, ASHBOURNE, "mockup", undefined, undefined, undefined, NOW, TOKEN, m.draft);
@@ -46,7 +46,7 @@ const PAGE = {
 const pageOf = (m, filingId) => join(m.draft, PAGE[filingId]);
 
 /** Every Milestone page in the draft folder, relative to it: a Writing's in its folder, a board with no Writing's at the top. */
-const jobBoardPages = (m) =>
+const milestonePages = (m) =>
   readdirSync(m.draft, { recursive: true })
     .map(String)
     .filter((p) => /^Milestone .*\.html$/.test(p) || basename(p) === "Milestone.html")
@@ -230,7 +230,7 @@ test("a Writing's board survives a Milestone with no Writing of lower id, and a 
 test("one page draws the merged boards as one board, each job once, with one set of view pages; the absorbed pages go to TRASH", async (t) => {
   const m = await fixture(t);
   render(m, 1);
-  assert.deepEqual(jobBoardPages(m), ["Milestone - proceeding 3.html", PAGE[1], PAGE[2], PAGE[3]].sort());
+  assert.deepEqual(milestonePages(m), ["Milestone - proceeding 3.html", PAGE[1], PAGE[2], PAGE[3]].sort());
   const rowsOf = () => ["tickets", "seeds", "board_attachments"].map((table) => JSON.stringify(query(m.dbPath, `SELECT * FROM ${table} ORDER BY id`)));
   const rowsBefore = rowsOf();
 
@@ -238,7 +238,7 @@ test("one page draws the merged boards as one board, each job once, with one set
   const result = render(m, 3);
 
   assert.deepEqual(rowsOf(), rowsBefore, "no merge or render writes a job, loose thread or attachment row");
-  assert.deepEqual(jobBoardPages(m), ["Milestone - proceeding 3.html", PAGE[1], PAGE[2]].sort());
+  assert.deepEqual(milestonePages(m), ["Milestone - proceeding 3.html", PAGE[1], PAGE[2]].sort());
   const absorbed = join(m.draft, "Counterclaim Submissions");
   assert.ok(result.view_page_paths.every((p) => dirname(p.path) !== absorbed), "no view page path is in the absorbed Writing's folder");
   const moved = result.moved_to_trash.map((x) => x.from.toLowerCase()).sort();
@@ -292,8 +292,8 @@ test("a merged pre-filing board's first Writing joins the survivor, and later Wr
   );
   render(m, 2);
   assert.deepEqual(members(readBoardData(pageOf(m, 2))).map((w) => w.filing_id), [2, 6]);
-  assert.ok(jobBoardPages(m).includes(join("Third Reply", "Milestone.html")));
-  assert.equal(jobBoardPages(m).includes(join("Third Opening", "Milestone.html")), false);
+  assert.ok(milestonePages(m).includes(join("Third Reply", "Milestone.html")));
+  assert.equal(milestonePages(m).includes(join("Third Opening", "Milestone.html")), false);
 });
 
 test("two pre-filing boards merge onto the lower proceeding's page", async (t) => {
@@ -302,7 +302,7 @@ test("two pre-filing boards merge onto the lower proceeding's page", async (t) =
   assert.deepEqual((await merge(m.dbPath, [{ proceeding_id: 4 }, { proceeding_id: 3 }])).survivor, { filing_id: null, proceeding_id: 3 });
   render(m, 1);
   assert.deepEqual(members(readBoardData(join(m.draft, "Milestone - proceeding 3.html"))).map((w) => w.proceeding_id), [3, 4]);
-  assert.equal(jobBoardPages(m).includes("Milestone - proceeding 4.html"), false);
+  assert.equal(milestonePages(m).includes("Milestone - proceeding 4.html"), false);
   const card = (proceedingId) => submissionFormsBoardCard({ db_path: m.dbPath, proceeding_id: proceedingId, lanes: ["live"] }, ASHBOURNE, NOW).card;
   assert.throws(() => card(4), code("board_merged", /proceeding 4's board is merged into proceeding 3's board; read the card on proceeding 3's board/));
   assert.match(card(3), /Job #4 /);

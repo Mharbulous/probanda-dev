@@ -3,9 +3,9 @@
 // forms-render-workboard.db.test.mjs), copied once with its render stamp set; the page around it is
 // hand-written. No real person, entity or matter, and no machine path (#140).
 
-import type { MatterJobBoardData } from "../submission/forms/render-work-board.js";
+import type { MatterMilestoneData } from "../submission/forms/render-work-board.js";
 
-export const JOB_BOARD_FIXTURE: MatterJobBoardData = {
+export const MILESTONE_FIXTURE: MatterMilestoneData = {
   "meta": {
     "revision": 12,
     "matter": "L4801",

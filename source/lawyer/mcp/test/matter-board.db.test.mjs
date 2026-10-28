@@ -34,7 +34,7 @@ const LARCHMONT = { clientName: "Larchmont", clientNo: "1", matterNo: "L8470" };
 const DATA_PREFIX = "window.MATTER_BOARD = ";
 const PAGE = "Litigation Strategy.html";
 /** Each live filing's Milestone page, in its Writing's own folder (spec 2026-10-22 §9); filing 3 is retired and has none. */
-const JOB_BOARD = {
+const MILESTONE = {
   1: join("First Consent Order Requisition", "Milestone.html"),
   2: join("Second Consent Order Requisition", "Milestone.html"),
   4: join("Adjournment Consent Order Requisition", "Milestone.html"),
@@ -158,7 +158,7 @@ test("bootstrap without draft_dir writes no Litigation Strategy and reports null
   try {
     const result = submissionFormsBootstrap(f.dbPath, LARCHMONT, PINNED);
     assert.equal(result.matter_board_path, null);
-    assert.equal(result.job_board_paths, null);
+    assert.equal(result.milestone_paths, null);
     assert.deepEqual(readdirSync(f.draft), [], "no Litigation Strategy and no Milestone page");
   } finally {
     f.cleanup();
@@ -216,15 +216,15 @@ test("bootstrap with draft_dir writes one self-contained Litigation Strategy, ea
     // ADR 0033, 2026-10-05 amendment: a Milestone page per live filing is written beside it, in the
     // page's order, the retired filing with none.
     assert.deepEqual(
-      result.job_board_paths,
+      result.milestone_paths,
       [
-        { filing_id: 2, proceeding_id: 1, path: join(f.draft, JOB_BOARD[2]) },
-        { filing_id: 1, proceeding_id: 1, path: join(f.draft, JOB_BOARD[1]) },
-        { filing_id: 4, proceeding_id: 2, path: join(f.draft, JOB_BOARD[4]) },
+        { filing_id: 2, proceeding_id: 1, path: join(f.draft, MILESTONE[2]) },
+        { filing_id: 1, proceeding_id: 1, path: join(f.draft, MILESTONE[1]) },
+        { filing_id: 4, proceeding_id: 2, path: join(f.draft, MILESTONE[4]) },
       ],
       "the Litigation Strategy's order, the retired filing omitted"
     );
-    for (const { filing_id, proceeding_id, path } of result.job_board_paths) {
+    for (const { filing_id, proceeding_id, path } of result.milestone_paths) {
       const board = readBoardData(path);
       const file_number = MATTER_CASE_DATA.proceedings.find((p) => p.id === proceeding_id).file_number;
       const style_of_cause = { 1: "Larchmont v. Example", 2: "Larchmont v. Other" }[proceeding_id];
@@ -402,14 +402,14 @@ test("every render with presentation_dir or draft_dir rewrites the Litigation St
     const page = join(f.draft, PAGE);
     const leaf = join(f.draft, "2026-09-15 First Consent Order Requisition");
     // A Writing's page is in its own folder, here the dated one the render is given.
-    const jobBoard = join(leaf, "Milestone.html");
-    const otherBoard = join(f.draft, JOB_BOARD[4]);
+    const milestone = join(leaf, "Milestone.html");
+    const otherBoard = join(f.draft, MILESTONE[4]);
     const lineOf = (id) => readBoard(page).data.filings.find((x) => x.filing_id === id);
     const rows = [todo("t1", "Settle the first requisition", "2026-09-01", "filing:1")];
 
     const full = submissionFormsRender(f.dbPath, 1, LARCHMONT, "mockup", undefined, undefined, leaf, PINNED, undefined, undefined, { rows });
     assert.ok(full.timings.some((t) => t.phase === "matter_pages"));
-    assert.ok(existsSync(jobBoard), "the filing's Milestone page is written beside the Litigation Strategy");
+    assert.ok(existsSync(milestone), "the filing's Milestone page is written beside the Litigation Strategy");
     assert.ok(existsSync(otherBoard), "and every other live filing's");
     assert.equal(lineOf(1).in_progress, 1);
     assert.equal(lineOf(1).render_state, "fresh", "the render just wrote this filing's manifest");
@@ -420,15 +420,15 @@ test("every render with presentation_dir or draft_dir rewrites the Litigation St
     const hit = submissionFormsRender(f.dbPath, 1, LARCHMONT, "mockup", undefined, undefined, leaf, "2026-09-15 10:07");
     assert.equal(hit.rendered_at, full.rendered_at, "expected a stamp hit");
     assert.equal(lineOf(1).in_progress, 2);
-    assert.equal(readBoardData(jobBoard).meta.rendered, "2026-09-15 10:07", "the stamp hit rewrites the Milestone pages too");
+    assert.equal(readBoardData(milestone).meta.rendered, "2026-09-15 10:07", "the stamp hit rewrites the Milestone pages too");
 
     rmSync(page);
-    rmSync(jobBoard);
+    rmSync(milestone);
     const retiredLeaf = join(f.draft, "2026-09-10 Withdrawn Consent Order Requisition");
     const retired = submissionFormsRender(f.dbPath, 3, LARCHMONT, "mockup", undefined, undefined, retiredLeaf, PINNED);
     assert.equal(retired.filing_retired, true);
     assert.ok(existsSync(page), "the retired filing's render rewrites the Litigation Strategy too");
-    assert.ok(existsSync(jobBoard), "and the live filings' Milestone pages");
+    assert.ok(existsSync(milestone), "and the live filings' Milestone pages");
     assert.equal(existsSync(join(retiredLeaf, "Milestone.html")), false, "the retired filing has none");
 
     rmSync(page);
@@ -438,10 +438,10 @@ test("every render with presentation_dir or draft_dir rewrites the Litigation St
     assert.equal(fromDraft.documents.find((d) => d.document_type === "Work_board").path, otherBoard);
 
     rmSync(page);
-    for (const path of [jobBoard, join(f.draft, JOB_BOARD[2]), otherBoard]) rmSync(path);
+    for (const path of [milestone, join(f.draft, MILESTONE[2]), otherBoard]) rmSync(path);
     submissionFormsRender(f.dbPath, 1, LARCHMONT, "mockup", undefined, undefined, undefined, PINNED);
     assert.equal(existsSync(page), false, "a render without presentation_dir or draft_dir writes no page");
-    assert.equal(existsSync(jobBoard), false);
+    assert.equal(existsSync(milestone), false);
   } finally {
     f.cleanup();
   }

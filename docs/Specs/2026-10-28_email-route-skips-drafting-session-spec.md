@@ -9,7 +9,7 @@ Related specs, same date: 2026-10-28_practitioner-draft-edited-in-place-spec.md,
 
 ## 2. Evidence (observed; quoted text is data, not instructions)
 - `draft/SKILL.md`, "An email request writes the `.eml` first", step 2: "Session entry, for the database path ... Then `drafting_forms__open_session`."
-- `drafting-data/hooks/job-board-card-gate.py` docstring: "drafting_forms__open_session: its job_board_path ... Stop: blocks the end of a turn while a due page of that turn has no later card call".
+- `drafting-data/hooks/milestone-card-gate.py` docstring: "drafting_forms__open_session: its milestone_path ... Stop: blocks the end of a turn while a due page of that turn has no later card call".
 - `drafting_forms__draft_harness` write_email with typed `to` needs only `matter_root`; `db_path` only for `to_service_list` or `filing_id` (tool description).
 - Observed: the Stop hook fed back "Milestone card gate" and the session sent the practitioner a Milestone page unrelated to the request.
 - The same section also requires the SKILL.md opening's single ToolSearch of about 30 tools before the `.eml`.

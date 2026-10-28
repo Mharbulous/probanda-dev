@@ -1,4 +1,4 @@
-// Merged Milestones (docs/ADRs/0010-job-boards-organized-by-goals.md): which board each board's
+// Merged Milestones (docs/ADRs/0010-milestones-organized-by-goals.md): which board each board's
 // section is drawn on. A merge writes one db_meta row per absorbed board, never a table of its own:
 // key `board_member:filing:<id>` or `board_member:proceeding:<id>`, value JSON {filing_id,
 // proceeding_id} naming the survivor (filing_id null for a pre-filing proceeding's board). Jobs keep

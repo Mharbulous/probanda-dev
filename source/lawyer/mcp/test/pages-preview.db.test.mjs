@@ -83,14 +83,14 @@ test("a real-data preview of a matter page is the page as the write builds it, o
   const preview = (args) => callTool(context, "pages__preview", { data: "real", matter_root: m.matterRoot, ...args });
 
   const strategy = await preview({ page: "Litigation Strategy", overrides: cssOverride("Litigation Strategy") });
-  const jobBoard = await preview({ page: "Milestone", filing_id: 1, overrides: cssOverride("Milestone") });
+  const milestone = await preview({ page: "Milestone", filing_id: 1, overrides: cssOverride("Milestone") });
   const threads = await preview({ page: "Loose Threads", filing_id: 1, overrides: cssOverride("Loose Threads") });
   const again = await preview({ page: "Milestone", filing_id: 1 });
   assert.deepEqual(Object.keys(strategy), ["path"], "the path only, never the HTML");
   // The Writing's pages are in its own folder (spec 2026-10-22 §9), so its previews are written there.
   const writing = join(m.draft, "Opening Submissions Package");
   assert.deepEqual(
-    [strategy, jobBoard, threads, again].map((r) => [dirname(r.path).toLowerCase(), basename(r.path)]),
+    [strategy, milestone, threads, again].map((r) => [dirname(r.path).toLowerCase(), basename(r.path)]),
     [
       [m.draft.toLowerCase(), "Litigation Strategy preview 1.html"],
       [writing.toLowerCase(), "Milestone preview 1.html"],
@@ -99,12 +99,12 @@ test("a real-data preview of a matter page is the page as the write builds it, o
     ]
   );
   assert.deepEqual(readdirSync(m.draft).sort(), [basename(strategy.path), basename(writing)].sort(), "no page and no other file was written");
-  assert.deepEqual(readdirSync(writing).sort(), [jobBoard, threads, again].map((r) => basename(r.path)).sort(), "no page and no other file was written");
+  assert.deepEqual(readdirSync(writing).sort(), [milestone, threads, again].map((r) => basename(r.path)).sort(), "no page and no other file was written");
 
   const html = (r) => readFileSync(r.path, "utf-8");
   assert.equal(dataLine(html(strategy), "MATTER_BOARD").meta.matter, "L9999", "the matter's own data, looked up as session entry looks it up");
-  assert.deepEqual(dataLine(html(jobBoard), "WORKBOARD").sections.map((s) => s.meta.filing_id), [1]);
-  for (const r of [strategy, jobBoard, threads]) assert.ok(html(r).includes(MARK), `${basename(r.path)} carries its override`);
+  assert.deepEqual(dataLine(html(milestone), "WORKBOARD").sections.map((s) => s.meta.filing_id), [1]);
+  for (const r of [strategy, milestone, threads]) assert.ok(html(r).includes(MARK), `${basename(r.path)} carries its override`);
   assert.equal(html(again).includes(MARK), false, "no override: the board's own template");
   const { api } = dataLine(html(threads), "VIEW_PAGE").data;
   assert.equal(api.port, 0, "the buttons reach no listener");
@@ -113,7 +113,7 @@ test("a real-data preview of a matter page is the page as the write builds it, o
 
   // The page write's sweep moves old page files to TRASH; a preview is not one.
   await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
-  for (const r of [strategy, jobBoard, threads, again]) assert.ok(readdirSync(dirname(r.path)).includes(basename(r.path)), `${basename(r.path)} stays after a page write`);
+  for (const r of [strategy, milestone, threads, again]) assert.ok(readdirSync(dirname(r.path)).includes(basename(r.path)), `${basename(r.path)} stays after a page write`);
 
   await assert.rejects(preview({ page: "Arguments", filing_id: 9 }), /no Arguments page for Milestone 9/);
 });

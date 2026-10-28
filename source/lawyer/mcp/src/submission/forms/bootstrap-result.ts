@@ -42,9 +42,9 @@ export interface BootstrapResult extends BuildStampStatus, SchemaSourceStatus {
     render_state?: RenderState;
     retired_on?: string;
     retirement_reason?: string;
-    /** True only on a Milestone with no Writing (forms/query.ts JOB_BOARD_KIND): listed so a session
+    /** True only on a Milestone with no Writing (forms/query.ts MILESTONE_KIND): listed so a session
      * can find it, never a Writing, with no paths and no render_state, since it has no mockup. */
-    job_board_only?: true;
+    milestone_only?: true;
   }[];
   /** Present only on success (ADR 0018): every proceeding with no filing, in id order, with its forum
    * (null while not yet chosen). Each is a section of the Milestone, rendered from proceeding_id. */
@@ -55,7 +55,7 @@ export interface BootstrapResult extends BuildStampStatus, SchemaSourceStatus {
   /** Present only on success (#1365, ADR 0033's 2026-10-05 amendment): every Milestone page written
    * beside the Litigation Strategy, one per live filing then one per pre-filing proceeding, in page order;
    * null on the same terms. */
-  job_board_paths?: PagesWritten["job_board_paths"] | null;
+  milestone_paths?: PagesWritten["milestone_paths"] | null;
   /** Present only on success: every view page written beside them, each live filing's (ADR 0033,
    * 2026-10-07 amendment), [{name, filing_id, path}]; null on the same terms. */
   view_page_paths?: PagesWritten["view_page_paths"] | null;
