@@ -18,7 +18,7 @@ Run commands from the repo root. Call git as `git -C <repo root>`.
 
 - `rebuild:` lines name each bundle whose `src/`, `scripts/`, `source/mcp-shared/` or the drafting-data `migrate_engine.py` changed since the bump. Step 3 rebuilds it, then run `--check` again. Trust `--check` only after that.
 - `released:` lines name each plugin whose `plugins/P/` changed since its bump. That plugin is released even when `--check` exits 0.
-- Both exit 0: report "nothing to release" and stop. Either exits 2: stop and report its output.
+- Both exit 0: report "nothing to release" and stop. Exit 1 means something is listed: continue. Either exits 2: stop and report its output.
 - Otherwise the released plugins are those `--check` lists, those the script lists, and those whose bundle step 3 rebuilds.
 
 For each such plugin P, its change set is everything since its last release: `git log -1 --format=%H -- source/P/plugin.json` gives the last bump, and `git diff <that commit>..HEAD` over P's inputs (its skills in `source/assignment.json`, `.claude/skills/shared/`, `source/P/`, and the servers it ships) gives the change.
