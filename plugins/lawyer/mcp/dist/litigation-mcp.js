@@ -1,4 +1,4 @@
-// build-stamp: e5e83b5195a6
+// build-stamp: 7d91657917a2
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -78749,6 +78749,30 @@ function fileOpsToolDefinitions() {
         additionalProperties: false
       },
       annotations: { destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "file_ops__comment_pdf",
+      description: "Add sticky-note comments to one PDF in a client matter, for matter-data's supersede-draft: one note per entry of `comments`, on its `page` (from 1), stacked down from the page's top-left. `matter_root` and `path` are absolute host paths; `path` must be under `matter_root` and outside probanda.json, TRASH, 0. CASE DATA and any privileged/disclosed tree. `expect_sha256` is the SHA-256 the matter's records hold for the file: when the file no longer has it, nothing is written. The notes are an incremental save, so the original bytes are kept unchanged and the new objects appended; the file is replaced in one rename. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `path_out_of_scope`, `protected`, `not_pdf`, `password_protected`, `hash_mismatch`, `bad_pages`, `save_failed`. Returns {path, old_sha256, new_sha256, comments}: the file's bytes changed, so re-point every stored record of `old_sha256` at this path to `new_sha256` at once.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          path: { type: "string" },
+          expect_sha256: { type: "string" },
+          comments: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { page: { type: "integer" }, text: { type: "string" } },
+              required: ["page", "text"],
+              additionalProperties: false
+            }
+          }
+        },
+        required: ["matter_root", "path", "expect_sha256", "comments"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: false, openWorldHint: false }
     }
   ];
 }
@@ -81184,7 +81208,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "e5e83b5195a6";
+var BUILD_STAMP = false ? null : "7d91657917a2";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -120191,14 +120215,83 @@ var dataTools = [
     "drafting_data__resnapshot_writing",
     (args) => resnapshotWriting(args.db_path, args.filing_id, { jurisdiction: args.jurisdiction })
   ),
-  defineTool("drafting_data__migrate", (args) => submissionDataMigrate(args.db_path))
+  defineTool("drafting_data__migrate", (args) => submissionDataMigrate(args.db_path)),
+  defineTool("drafting_data__complete_job", async (args, context) => {
+    const { client, todos, dates } = await pageContext(context, args, true);
+    return submissionDataCompleteJob(args, client, todos?.todos, dates);
+  }),
+  defineTool("drafting_forms__board_card", async (args, context) => {
+    const { client, dates } = await pageContext(context, args, false);
+    return submissionFormsBoardCard(args, client, void 0, dates);
+  }),
+  defineTool("drafting_forms__render", (args, context) => args.proceeding_id !== void 0 ? renderProceedingBoard(args, args.proceeding_id, context) : renderFiling(args, context)),
+  defineTool("drafting_forms__bootstrap", async (args, context) => {
+    const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== void 0);
+    const result = submissionFormsBootstrap(
+      args.db_path,
+      client,
+      void 0,
+      // `now` is test-only -- dispatch never pins the clock.
+      args.draft_dir,
+      todos?.todos,
+      args.unattended === true,
+      dates
+    );
+    if (todos) insertPhase(result.timings, "todos", todos.ms);
+    const started = performance.now();
+    const background_job = startBootstrapJob(result, client, dates);
+    addJobPhase(result.timings, started);
+    logTimings("drafting_forms__bootstrap", result.timings);
+    return { ...result, background_job };
+  }),
+  defineTool(
+    "drafting_forms__open_session",
+    async (args, context) => {
+      const { result, dates, matterDescription } = await submissionFormsOpenSession(
+        args.matter_root,
+        context.practiceDb,
+        clientContext2(args),
+        args.unattended === true,
+        args.filing_id
+      );
+      const { client_name, client_no, matter_no } = result.matter_lookup;
+      const started = performance.now();
+      const background_job = startBootstrapJob(result, { clientName: client_name, clientNo: client_no, matterNo: matter_no, matterDescription }, dates);
+      addJobPhase(result.timings, started);
+      logTimings("drafting_forms__open_session", result.timings);
+      return { ...result, background_job };
+    }
+  ),
+  defineTool("drafting_forms__form_currency", (args) => formCurrency(args.form_key, nowStamp().slice(0, 10))),
+  defineTool("drafting_forms__emit_form32", (args) => submissionFormsEmitForm32(args.db_path, args.filing_id, args.case_data_folder, {}, {
+    lenient: args.lenient,
+    cover_notes: args.cover_notes
+  })),
+  defineTool("drafting_forms__emit_bcca_book", (args) => submissionFormsEmitBccaBook(args.db_path, args.filing_id)),
+  defineTool("drafting_forms__emit_bcca_factum", (args) => submissionFormsEmitBccaFactum(args.db_path, args.filing_id, args.dated_on)),
+  defineTool("drafting_forms__emit_form33", (args) => submissionFormsEmitForm33(args.db_path, args.filing_id, args.case_data_folder, {}, {
+    lenient: args.lenient,
+    cover_notes: args.cover_notes
+  })),
+  defineTool("drafting_forms__emit_affidavit", (args) => submissionFormsEmitAffidavit(args.db_path, args.filing_id, args.document_id, args.case_data_folder)),
+  // Each of these takes `env` second, so the context is never passed through to it.
+  defineTool("drafting_forms__bcsc_form_harness", (args) => bcscFormHarness(args)),
+  defineTool("drafting_forms__publish_general", (args) => publishGeneral(args)),
+  defineTool("drafting_forms__draft_harness", (args) => draftHarness(args)),
+  defineTool("drafting_forms__read_message", (args) => readMessage(args)),
+  defineTool("drafting_forms__reply_draft", (args) => replyDraft(args)),
+  defineTool("drafting_forms__publish_bcca_factum", (args) => publishBccaFactum(args)),
+  defineTool("drafting_forms__publish_vaniac_package", (args) => publishVaniacPackage(args)),
+  defineTool("drafting_forms__assemble_general", (args) => assembleGeneral(args)),
+  defineTool("drafting_forms__pre_filing_check", (args) => submissionFormsPreFilingCheck(args.db_path, args.filing_id, args.package_dir))
 ];
 function dataToolDefinitions() {
   return [
     ...caseDataToolDefinitions(),
     ...timePipelineToolDefinitions(),
     ...timecampingToolDefinitions(),
-    ...submissionDataToolDefinitions().filter((tool) => tool.name !== "drafting_data__complete_job")
+    ...submissionDataToolDefinitions(),
+    ...submissionFormsToolDefinitions()
   ];
 }
 var dataTable;
@@ -120219,144 +120312,6 @@ async function callTool(context, name, rawArgs) {
   dataTable ??= pairTools(dataToolDefinitions(), dataTools);
   const dataTool = dataTable.get(name);
   if (dataTool) return dataTool.handler(args, context);
-  if (name === "drafting_data__complete_job") {
-    const { client, todos, dates } = await pageContext(context, args, true);
-    return submissionDataCompleteJob(args, client, todos?.todos, dates);
-  }
-  if (name === "drafting_forms__board_card") {
-    const { client, dates } = await pageContext(context, args, false);
-    return submissionFormsBoardCard(args, client, void 0, dates);
-  }
-  if (name === "drafting_forms__render" && args.proceeding_id !== void 0) {
-    const filingOnly = ["filing_id", "render_mode", "documents", "appeal_deadline", "presentation_dir"].filter((k3) => args[k3] !== void 0);
-    if (filingOnly.length > 0) {
-      throw new ValidationError(`drafting_forms__render.proceeding_id takes no ${filingOnly.join(", ")} -- those are a filing's`);
-    }
-    const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== void 0);
-    const result = submissionFormsRenderProceedingBoard(
-      args.db_path,
-      args.proceeding_id,
-      client,
-      void 0,
-      // `now` is test-only -- dispatch never pins the clock.
-      args.session_token,
-      args.draft_dir,
-      todos?.todos,
-      dates
-    );
-    if (todos) insertPhase(result.timings, "todos", todos.ms);
-    logTimings(name, result.timings);
-    return result;
-  }
-  if (name === "drafting_forms__render") {
-    if (args.filing_id === void 0) throw new ValidationError("drafting_forms__render needs filing_id, or proceeding_id for a proceeding with no filing");
-    const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== void 0 || args.presentation_dir !== void 0);
-    const result = submissionFormsRender(
-      args.db_path,
-      args.filing_id,
-      client,
-      args.render_mode ?? "mockup",
-      args.documents,
-      args.appeal_deadline,
-      args.presentation_dir,
-      void 0,
-      // `now` is test-only -- dispatch never pins the clock.
-      args.session_token,
-      args.draft_dir,
-      todos?.todos,
-      dates
-    );
-    if (todos) insertPhase(result.timings, "todos", todos.ms);
-    logTimings(name, result.timings);
-    if (result.rendered_at === void 0) return result;
-    markRenderedInForeground(args.db_path, args.filing_id);
-    return { ...result, background_job: backgroundJobStatus(args.db_path) };
-  }
-  if (name === "drafting_forms__bootstrap") {
-    const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== void 0);
-    const result = submissionFormsBootstrap(
-      args.db_path,
-      client,
-      void 0,
-      // `now` is test-only -- dispatch never pins the clock.
-      args.draft_dir,
-      todos?.todos,
-      args.unattended === true,
-      dates
-    );
-    if (todos) insertPhase(result.timings, "todos", todos.ms);
-    const started = performance.now();
-    const background_job = startBootstrapJob(result, client, dates);
-    addJobPhase(result.timings, started);
-    logTimings(name, result.timings);
-    return { ...result, background_job };
-  }
-  if (name === "drafting_forms__open_session") {
-    const { result, dates, matterDescription } = await submissionFormsOpenSession(
-      args.matter_root,
-      context.practiceDb,
-      clientContext2(args),
-      args.unattended === true,
-      args.filing_id
-    );
-    const { client_name, client_no, matter_no } = result.matter_lookup;
-    const started = performance.now();
-    const background_job = startBootstrapJob(result, { clientName: client_name, clientNo: client_no, matterNo: matter_no, matterDescription }, dates);
-    addJobPhase(result.timings, started);
-    logTimings(name, result.timings);
-    return { ...result, background_job };
-  }
-  if (name === "drafting_forms__form_currency") {
-    return formCurrency(args.form_key, nowStamp().slice(0, 10));
-  }
-  if (name === "drafting_forms__emit_form32") {
-    return submissionFormsEmitForm32(args.db_path, args.filing_id, args.case_data_folder, {}, {
-      lenient: args.lenient,
-      cover_notes: args.cover_notes
-    });
-  }
-  if (name === "drafting_forms__emit_bcca_book") {
-    return submissionFormsEmitBccaBook(args.db_path, args.filing_id);
-  }
-  if (name === "drafting_forms__emit_bcca_factum") {
-    return submissionFormsEmitBccaFactum(args.db_path, args.filing_id, args.dated_on);
-  }
-  if (name === "drafting_forms__emit_form33") {
-    return submissionFormsEmitForm33(args.db_path, args.filing_id, args.case_data_folder, {}, {
-      lenient: args.lenient,
-      cover_notes: args.cover_notes
-    });
-  }
-  if (name === "drafting_forms__emit_affidavit") {
-    return submissionFormsEmitAffidavit(args.db_path, args.filing_id, args.document_id, args.case_data_folder);
-  }
-  if (name === "drafting_forms__bcsc_form_harness") {
-    return bcscFormHarness(args);
-  }
-  if (name === "drafting_forms__publish_general") {
-    return publishGeneral(args);
-  }
-  if (name === "drafting_forms__draft_harness") {
-    return draftHarness(args);
-  }
-  if (name === "drafting_forms__read_message") {
-    return readMessage(args);
-  }
-  if (name === "drafting_forms__reply_draft") {
-    return replyDraft(args);
-  }
-  if (name === "drafting_forms__publish_bcca_factum") {
-    return publishBccaFactum(args);
-  }
-  if (name === "drafting_forms__publish_vaniac_package") {
-    return publishVaniacPackage(args);
-  }
-  if (name === "drafting_forms__assemble_general") {
-    return assembleGeneral(args);
-  }
-  if (name === "drafting_forms__pre_filing_check") {
-    return submissionFormsPreFilingCheck(args.db_path, args.filing_id, args.package_dir);
-  }
   if (name === "skill_source__read") {
     return skillSourceRead(
       args.path,
@@ -120531,6 +120486,52 @@ function insertPhase(timings, phase, ms2) {
   timings.push({ phase, ms: ms2 });
   if (total) timings.push({ phase: "total", ms: Math.round((total.ms + ms2) * 10) / 10 });
 }
+async function renderProceedingBoard(args, proceedingId, context) {
+  const filingOnly = ["filing_id", "render_mode", "documents", "appeal_deadline", "presentation_dir"].filter((k3) => args[k3] !== void 0);
+  if (filingOnly.length > 0) {
+    throw new ValidationError(`drafting_forms__render.proceeding_id takes no ${filingOnly.join(", ")} -- those are a filing's`);
+  }
+  const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== void 0);
+  const result = submissionFormsRenderProceedingBoard(
+    args.db_path,
+    proceedingId,
+    client,
+    void 0,
+    // `now` is test-only -- dispatch never pins the clock.
+    args.session_token,
+    args.draft_dir,
+    todos?.todos,
+    dates
+  );
+  if (todos) insertPhase(result.timings, "todos", todos.ms);
+  logTimings("drafting_forms__render", result.timings);
+  return result;
+}
+async function renderFiling(args, context) {
+  const filingId = args.filing_id;
+  if (filingId === void 0) throw new ValidationError("drafting_forms__render needs filing_id, or proceeding_id for a proceeding with no filing");
+  const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== void 0 || args.presentation_dir !== void 0);
+  const result = submissionFormsRender(
+    args.db_path,
+    filingId,
+    client,
+    args.render_mode ?? "mockup",
+    args.documents,
+    args.appeal_deadline,
+    args.presentation_dir,
+    void 0,
+    // `now` is test-only -- dispatch never pins the clock.
+    args.session_token,
+    args.draft_dir,
+    todos?.todos,
+    dates
+  );
+  if (todos) insertPhase(result.timings, "todos", todos.ms);
+  logTimings("drafting_forms__render", result.timings);
+  if (result.rendered_at === void 0) return result;
+  markRenderedInForeground(args.db_path, filingId);
+  return { ...result, background_job: backgroundJobStatus(args.db_path) };
+}
 async function pageContext(context, args, writesPage) {
   const client = clientContext2(args);
   if (!writesPage) return { client, dates: await readMatterDates(context.practiceDb, client.matterNo) };
@@ -120543,11 +120544,7 @@ async function pageContext(context, args, writesPage) {
   return { client: resolved, todos: { todos, ms: Math.round((performance.now() - started) * 10) / 10 }, dates };
 }
 function clientContext2(args) {
-  return {
-    clientName: args.client_name,
-    clientNo: args.client_no,
-    matterNo: args.matter_no
-  };
+  return { clientName: args.client_name, clientNo: args.client_no, matterNo: args.matter_no };
 }
 function matterRootSeams(name, matterRoot) {
   if (matterRoot === void 0) return void 0;
