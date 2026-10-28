@@ -1,4 +1,4 @@
-// build-stamp: ae71821e895e
+// build-stamp: 3b0de41e86f3
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -79520,6 +79520,28 @@ function isPlainObject3(value) {
 }
 
 // src/tool-list.ts
+function defineTool(name, handler, flags) {
+  return { name, handler: (args, context) => handler(args, context), flags };
+}
+function pairTools(definitions, tools) {
+  const entries = /* @__PURE__ */ new Map();
+  const problems = [];
+  for (const tool of tools) {
+    if (entries.has(tool.name)) problems.push(`${tool.name} is listed twice`);
+    entries.set(tool.name, tool);
+  }
+  const table2 = /* @__PURE__ */ new Map();
+  for (const definition of definitions) {
+    const tool = entries.get(definition.name);
+    if (tool) table2.set(definition.name, { definition, handler: tool.handler, flags: tool.flags });
+    else problems.push(`no handler for ${definition.name}`);
+  }
+  for (const name of entries.keys()) {
+    if (!table2.has(name)) problems.push(`no definition for ${name}`);
+  }
+  if (problems.length) throw new DataServerError(`The tool list and its definitions differ: ${problems.join("; ")}`, "internal_error");
+  return table2;
+}
 function definitionLookup(buildDefinitions) {
   let definitions;
   return (name) => {
@@ -81156,7 +81178,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "ae71821e895e";
+var BUILD_STAMP = false ? null : "3b0de41e86f3";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -83957,44 +83979,71 @@ async function render_practice_board(store) {
 }
 
 // src/tools/practice/index.ts
-var FILE_TOOLS = /* @__PURE__ */ new Set([
-  "practice_data__firm_profile",
-  "practice_data__upsert_firm_profile",
-  "practice_data__folder_map",
-  "practice_data__set_folder_map",
-  "practice_data__config_status",
-  "practice_data__config_set_root"
-]);
-var READ_TOOLS = /* @__PURE__ */ new Set([
-  "practice_data__matter_lookup",
-  "practice_data__trust_summary",
-  "practice_data__wip_hours",
-  "practice_data__open_tasks",
-  "practice_data__active_deadlines",
-  "practice_data__ar_data",
-  "practice_data__read_signals",
-  "practice_data__time_entries_query",
-  "practice_data__court_calendar_coverage",
-  "practice_data__court_calendar_days",
-  "practice_data__invoices_query",
-  "practice_data__rule_overlay",
-  "practice_data__render_practice_board",
-  "practice_data__contact_lookup",
-  "practice_data__contact_checks"
-]);
+var practiceTool = defineTool;
+var practiceTools = [
+  practiceTool("practice_data__matter_lookup", (args, store) => matter_lookup(store, args), { read: true }),
+  practiceTool("practice_data__trust_summary", (args, store) => trust_summary(store, args), { read: true }),
+  practiceTool("practice_data__wip_hours", (args, store) => wip_hours(store, args), { read: true }),
+  practiceTool("practice_data__open_tasks", (args, store) => open_tasks(store, args), { read: true }),
+  practiceTool("practice_data__active_deadlines", (args, store) => active_deadlines(store, args), { read: true }),
+  practiceTool("practice_data__ar_data", (_args, store) => ar_data(store), { read: true }),
+  practiceTool("practice_data__read_signals", (args, store) => read_signals(store, args), { read: true }),
+  practiceTool("practice_data__time_entries_query", (args, store) => time_entries_query(store, args), { read: true }),
+  practiceTool("practice_data__upsert_client_matter", (args, store) => upsert_client_matter(store, args)),
+  practiceTool("practice_data__link_matter", (args, store) => link_matter(store, args)),
+  practiceTool("practice_data__insert_time_entry", (args, store) => insert_time_entry(store, args)),
+  practiceTool("practice_data__set_time_entries_billable", (args, store) => set_time_entries_billable(store, args)),
+  practiceTool("practice_data__upsert_task", (args, store) => upsert_task(store, args)),
+  practiceTool("practice_data__firm_profile", () => firm_profile(), { file: true }),
+  practiceTool("practice_data__upsert_firm_profile", (args) => upsert_firm_profile(args), { file: true }),
+  practiceTool("practice_data__folder_map", (args, store) => folder_map(args, store.env), { file: true }),
+  practiceTool("practice_data__set_folder_map", (args, store) => set_folder_map(args, store.env), { file: true }),
+  practiceTool("practice_data__config_status", (args, store) => config_status(args, store.env), { file: true }),
+  practiceTool("practice_data__config_set_root", (args) => config_set_root(args), { file: true }),
+  practiceTool("practice_data__complete_task", (args, store) => complete_task(store, args)),
+  practiceTool("practice_data__record_retainer_notice", (args, store) => record_retainer_notice(store, args)),
+  practiceTool("practice_data__upsert_anchor", (args, store) => upsert_anchor(store, args)),
+  practiceTool("practice_data__delete_anchor", (args, store) => delete_anchor(store, args)),
+  practiceTool("practice_data__upsert_deadline", (args, store) => upsert_deadline(store, args)),
+  practiceTool("practice_data__manage_payment_in_flight", (args, store) => manage_payment_in_flight(store, args)),
+  practiceTool("practice_data__upsert_signal", (args, store) => upsert_signal(store, args)),
+  practiceTool("practice_data__set_status", (args, store) => set_status(store, args)),
+  practiceTool("practice_data__ingest_court_calendar_year", (args, store) => ingest_court_calendar_year(store, args)),
+  practiceTool("practice_data__court_calendar_coverage", (args, store) => court_calendar_coverage(store, args), { read: true }),
+  practiceTool("practice_data__court_calendar_days", (args, store) => court_calendar_days(store, args), { read: true }),
+  practiceTool("practice_data__import_invoices", (args, store) => import_invoices(store, args)),
+  practiceTool("practice_data__invoices_query", (args, store) => invoices_query(store, args), { read: true }),
+  practiceTool("practice_data__upsert_rule_overlay", (args, store) => upsert_rule_overlay(store, args)),
+  practiceTool("practice_data__rule_overlay", (args, store) => rule_overlay(store, args), { read: true }),
+  practiceTool("practice_data__render_practice_board", (_args, store) => render_practice_board(store), { read: true }),
+  practiceTool("practice_data__upsert_contact", (args, store) => upsert_contact(store, args)),
+  practiceTool("practice_data__upsert_affiliation", (args, store) => upsert_affiliation(store, args)),
+  practiceTool("practice_data__upsert_matter_role", (args, store) => upsert_matter_role(store, args)),
+  practiceTool("practice_data__contact_lookup", (args, store) => contact_lookup(store, args), { read: true }),
+  practiceTool("practice_data__contact_checks", (args, store) => contact_checks(store, args), { read: true }),
+  practiceTool("practice_data__merge_contact", (args, store) => merge_contact(store, args))
+];
+var table;
+function practiceEntry(name) {
+  table ??= pairTools(practiceToolDefinitions(), practiceTools);
+  const entry2 = table.get(name);
+  if (!entry2) throw new ValidationError(`Unknown practice tool "${name}"`);
+  return entry2;
+}
 async function callPracticeTool(store, name, args) {
-  if (FILE_TOOLS.has(name)) return route(store, name, args);
+  const { handler, flags } = practiceEntry(name);
+  if (flags?.file) return handler(args, store);
   let replayed = [];
   if (store.pendingCount() > 0) {
     try {
       replayed = await store.replayPending();
     } catch (err) {
-      if (!READ_TOOLS.has(name)) throw err;
+      if (!flags?.read) throw err;
     }
   }
   let result;
   try {
-    result = await route(store, name, args);
+    result = await handler(args, store);
   } catch (err) {
     const refused4 = replayed.filter((r3) => !r3.saved);
     if (refused4.length && err instanceof Error) {
@@ -84006,94 +84055,6 @@ async function callPracticeTool(store, name, args) {
     return { ...result, replayed_writes: replayed };
   }
   return result;
-}
-function route(store, name, args) {
-  switch (name) {
-    case "practice_data__matter_lookup":
-      return matter_lookup(store, args);
-    case "practice_data__trust_summary":
-      return trust_summary(store, args);
-    case "practice_data__wip_hours":
-      return wip_hours(store, args);
-    case "practice_data__open_tasks":
-      return open_tasks(store, args);
-    case "practice_data__active_deadlines":
-      return active_deadlines(store, args);
-    case "practice_data__ar_data":
-      return ar_data(store);
-    case "practice_data__read_signals":
-      return read_signals(store, args);
-    case "practice_data__time_entries_query":
-      return time_entries_query(store, args);
-    case "practice_data__upsert_client_matter":
-      return upsert_client_matter(store, args);
-    case "practice_data__link_matter":
-      return link_matter(store, args);
-    case "practice_data__insert_time_entry":
-      return insert_time_entry(store, args);
-    case "practice_data__set_time_entries_billable":
-      return set_time_entries_billable(store, args);
-    case "practice_data__upsert_task":
-      return upsert_task(store, args);
-    case "practice_data__firm_profile":
-      return firm_profile();
-    case "practice_data__upsert_firm_profile":
-      return upsert_firm_profile(args);
-    case "practice_data__folder_map":
-      return folder_map(args, store.env);
-    case "practice_data__set_folder_map":
-      return set_folder_map(args, store.env);
-    case "practice_data__config_status":
-      return config_status(args, store.env);
-    case "practice_data__config_set_root":
-      return config_set_root(args);
-    case "practice_data__complete_task":
-      return complete_task(store, args);
-    case "practice_data__record_retainer_notice":
-      return record_retainer_notice(store, args);
-    case "practice_data__upsert_anchor":
-      return upsert_anchor(store, args);
-    case "practice_data__delete_anchor":
-      return delete_anchor(store, args);
-    case "practice_data__upsert_deadline":
-      return upsert_deadline(store, args);
-    case "practice_data__manage_payment_in_flight":
-      return manage_payment_in_flight(store, args);
-    case "practice_data__upsert_signal":
-      return upsert_signal(store, args);
-    case "practice_data__set_status":
-      return set_status(store, args);
-    case "practice_data__ingest_court_calendar_year":
-      return ingest_court_calendar_year(store, args);
-    case "practice_data__court_calendar_coverage":
-      return court_calendar_coverage(store, args);
-    case "practice_data__court_calendar_days":
-      return court_calendar_days(store, args);
-    case "practice_data__import_invoices":
-      return import_invoices(store, args);
-    case "practice_data__invoices_query":
-      return invoices_query(store, args);
-    case "practice_data__upsert_rule_overlay":
-      return upsert_rule_overlay(store, args);
-    case "practice_data__rule_overlay":
-      return rule_overlay(store, args);
-    case "practice_data__render_practice_board":
-      return render_practice_board(store);
-    case "practice_data__upsert_contact":
-      return upsert_contact(store, args);
-    case "practice_data__upsert_affiliation":
-      return upsert_affiliation(store, args);
-    case "practice_data__upsert_matter_role":
-      return upsert_matter_role(store, args);
-    case "practice_data__contact_lookup":
-      return contact_lookup(store, args);
-    case "practice_data__contact_checks":
-      return contact_checks(store, args);
-    case "practice_data__merge_contact":
-      return merge_contact(store, args);
-    default:
-      throw new ValidationError(`Unknown practice tool "${name}"`);
-  }
 }
 
 // src/migrate-driver.ts
@@ -86325,12 +86286,12 @@ var PRE_V51_SNAPSHOT_KEYS = {
   treatment: "(SELECT a.treatment FROM authorities a WHERE a.id = statements_of_law.authority_id)",
   basis_statements: "(SELECT group_concat(concat(r.excerpt_id, ':', a.treatment) ORDER BY r.id) FROM order_sought_requires r JOIN statements_of_law s ON s.id = r.excerpt_id JOIN authorities a ON a.id = s.authority_id WHERE r.order_sought_id = order_sought.id AND r.basis_state = 'filled')"
 };
-function reviewSnapshotSql(table, treatmentNoteHeld2 = true) {
+function reviewSnapshotSql(table2, treatmentNoteHeld2 = true) {
   const derived = treatmentNoteHeld2 ? DERIVED_SNAPSHOT_KEYS : PRE_V51_SNAPSHOT_KEYS;
-  return `json_object(${REVIEW_SNAPSHOT_FIELDS[table].map((c3) => `'${c3}', ${derived[c3] ?? c3}`).join(", ")})`;
+  return `json_object(${REVIEW_SNAPSHOT_FIELDS[table2].map((c3) => `'${c3}', ${derived[c3] ?? c3}`).join(", ")})`;
 }
-function reviewKey(table, id) {
-  return `${table}:${id}`;
+function reviewKey(table2, id) {
+  return `${table2}:${id}`;
 }
 function treatmentMarker(treatment) {
   switch (treatment) {
@@ -86899,11 +86860,11 @@ function holds(dbPath, key) {
   if (snapshots.get(dbPath)?.has(key)) return true;
   return readSnapshot(dbPath).has(key);
 }
-function hasTable(dbPath, table) {
-  return holds(dbPath, table);
+function hasTable(dbPath, table2) {
+  return holds(dbPath, table2);
 }
-function hasColumn(dbPath, table, column) {
-  return holds(dbPath, `${table}.${column}`);
+function hasColumn(dbPath, table2, column) {
+  return holds(dbPath, `${table2}.${column}`);
 }
 
 // src/submission/forms/query.ts
@@ -89729,14 +89690,14 @@ function fetchReviewState(dbPath, proceedingId) {
     approved: new Map(approved.map((r3) => [reviewKey(r3.entity, r3.entity_id), r3.snapshot]))
   };
 }
-function reviewMarkerFor(review, inv, lineGlyphs, table, id, item) {
+function reviewMarkerFor(review, inv, lineGlyphs, table2, id, item) {
   if (review === void 0) return "";
-  const key = reviewKey(table, id);
+  const key = reviewKey(table2, id);
   const current = review.current.get(key);
   if (current === void 0) return "";
   const approved = review.approved.get(key) ?? null;
   const glyph2 = counselReviewMarker(lineGlyphs, current, approved);
-  if (glyph2 && inv) recordCriterionGlyphs(inv, glyph2, ["\u{1F9D0}"], { table, id, item, ...approved === null ? {} : { changed: true } });
+  if (glyph2 && inv) recordCriterionGlyphs(inv, glyph2, ["\u{1F9D0}"], { table: table2, id, item, ...approved === null ? {} : { changed: true } });
   return glyph2;
 }
 function orderReviewMarkerFor(review, inv, lineGlyphs, order) {
@@ -90750,9 +90711,9 @@ var RECORD_NOUNS = {
   admissions: "admission",
   clauses: "clause"
 };
-function itemLabel(table, id, qualifier, item) {
+function itemLabel(table2, id, qualifier, item) {
   if (item.length <= 80 && !/[\r\n]/.test(item)) return item;
-  const noun = Object.hasOwn(RECORD_NOUNS, table) ? RECORD_NOUNS[table] : table.replaceAll("_", " ");
+  const noun = Object.hasOwn(RECORD_NOUNS, table2) ? RECORD_NOUNS[table2] : table2.replaceAll("_", " ");
   const words = item.trim().split(/\s+/).slice(0, 8).join(" ");
   return `${noun} ${id}${qualifier === void 0 ? "" : `, ${qualifier}`}, "${words}\u2026"`;
 }
@@ -90789,7 +90750,7 @@ function deriveProposals(inventory, holders, rejections) {
     if (list === void 0) groups.set(proposalKey(e3), [e3]);
     else list.push(e3);
   }
-  const has = (slug, table, id) => id !== void 0 && groups.has(`${slug}:${table}:${id}`);
+  const has = (slug, table2, id) => id !== void 0 && groups.has(`${slug}:${table2}:${id}`);
   const proposals = [];
   const lapsed_keys = [];
   for (const [key, entries] of groups) {
@@ -92607,8 +92568,8 @@ var UNATTENDED_ELIGIBLE = /* @__PURE__ */ new Map([
   ["\u{1F9D0}", []]
 ]);
 function eligibleKey(key) {
-  const [slug, table] = key.split(":");
-  return [...GLYPH_SLUGS].some(([glyph2, s3]) => s3 === slug && (UNATTENDED_ELIGIBLE.get(glyph2) ?? []).includes(table));
+  const [slug, table2] = key.split(":");
+  return [...GLYPH_SLUGS].some(([glyph2, s3]) => s3 === slug && (UNATTENDED_ELIGIBLE.get(glyph2) ?? []).includes(table2));
 }
 var livePartner = (p3) => p3.status === null || (p3.status === "queued" || p3.status === "wip") && !p3.rejected;
 function ineligibleReasons(ticket, filed, printed, titles, inProgress2) {
@@ -106078,13 +106039,13 @@ import { basename as basename12, extname as extname5, win32 as pathWin3225 } fro
 // src/correspondence/zip.ts
 import { deflateRawSync } from "node:zlib";
 var CRC_TABLE = (() => {
-  const table = new Uint32Array(256);
+  const table2 = new Uint32Array(256);
   for (let n3 = 0; n3 < 256; n3 += 1) {
     let c3 = n3;
     for (let k3 = 0; k3 < 8; k3 += 1) c3 = c3 & 1 ? 3988292384 ^ c3 >>> 1 : c3 >>> 1;
-    table[n3] = c3 >>> 0;
+    table2[n3] = c3 >>> 0;
   }
-  return table;
+  return table2;
 })();
 function crc32(data) {
   let c3 = 4294967295;
@@ -107128,7 +107089,7 @@ function livePrefix(dag, path) {
 function children(dag, id) {
   return [...dag.byId.get(id).edges].sort((a3, b3) => b3.weight - a3.weight).map((e3) => e3.to);
 }
-function route2(dag, from, to2) {
+function route(dag, from, to2) {
   if (from === to2) return [];
   const parent = /* @__PURE__ */ new Map();
   const queue = [from];
@@ -107149,10 +107110,10 @@ function route2(dag, from, to2) {
 }
 function pathTo(dag, current, to2) {
   for (let i3 = current.length - 1; i3 > 0; i3--) {
-    const down = route2(dag, current[i3], to2);
+    const down = route(dag, current[i3], to2);
     if (down !== null) return [...current.slice(0, i3 + 1), ...down];
   }
-  return [current[0], ...route2(dag, current[0], to2)];
+  return [current[0], ...route(dag, current[0], to2)];
 }
 var isPrefix = (a3, b3) => a3.length <= b3.length && a3.every((id, i3) => b3[i3] === id);
 function serve(composed, skill, prior) {
@@ -112521,10 +112482,10 @@ function cfbStreams(file) {
     const s3 = sector(n3);
     for (let i3 = 0; i3 < sectorSize / 4; i3++) fat.push(s3.readUInt32LE(4 * i3));
   }
-  const chain = (start2, table) => {
+  const chain = (start2, table2) => {
     const out = [];
-    for (let n3 = start2; n3 !== END_OF_CHAIN2; n3 = table[n3]) {
-      if (n3 === void 0 || n3 >= table.length || out.length > table.length) throw new Error("compound file chain is broken");
+    for (let n3 = start2; n3 !== END_OF_CHAIN2; n3 = table2[n3]) {
+      if (n3 === void 0 || n3 >= table2.length || out.length > table2.length) throw new Error("compound file chain is broken");
       out.push(n3);
     }
     return out;
@@ -112635,8 +112596,8 @@ function docText(path) {
   if (nFib < NFIB_WORD97) throw new DocUnsupported(`.doc (Word 6/95 format, nFib ${nFib})`);
   const flags = wd.readUInt16LE(10);
   if (flags & 256) throw new Error("password-protected");
-  const table = streams.get(flags & 512 ? "1Table" : "0Table");
-  if (!table) throw new Error("the document's table stream is missing");
+  const table2 = streams.get(flags & 512 ? "1Table" : "0Table");
+  if (!table2) throw new Error("the document's table stream is missing");
   const csw = wd.readUInt16LE(32);
   const rgLw = 34 + 2 * csw + 2;
   const cslw = wd.readUInt16LE(rgLw - 2);
@@ -112645,8 +112606,8 @@ function docText(path) {
   const rgFcLcb = rgLw + 4 * cslw + 2;
   const fcClx = wd.readUInt32LE(rgFcLcb + 33 * 8);
   const lcbClx = wd.readUInt32LE(rgFcLcb + 33 * 8 + 4);
-  if (fcClx + lcbClx > table.length || lcbClx === 0) throw new Error("the document's piece table is out of range");
-  const clx = table.subarray(fcClx, fcClx + lcbClx);
+  if (fcClx + lcbClx > table2.length || lcbClx === 0) throw new Error("the document's piece table is out of range");
+  const clx = table2.subarray(fcClx, fcClx + lcbClx);
   let at = 0;
   while (at < clx.length && clx[at] === 1) at += 3 + clx.readInt16LE(at + 1);
   if (clx[at] !== 2) throw new Error("the document's piece table is malformed");
@@ -120834,7 +120795,7 @@ async function withdraw(req, res, env, recordId) {
   }
   json2(req, res, WITHDRAW_STATUS[result.outcome], result);
 }
-async function cardClick(req, res, deps, cardId, route3) {
+async function cardClick(req, res, deps, cardId, route2) {
   if (req.method !== "POST") return json2(req, res, 405, { error: "Method not allowed" });
   let body;
   try {
@@ -120847,7 +120808,7 @@ async function cardClick(req, res, deps, cardId, route3) {
     return json2(req, res, 403, { error: "This page's token does not match this suggestion. Ask a Claude session to show it again." });
   }
   try {
-    switch (route3) {
+    switch (route2) {
       case "state":
         return json2(req, res, 200, await readCardState(cardId, deps));
       case "submit":

@@ -1,4 +1,4 @@
-// build-stamp: b3b06cdaa58a
+// build-stamp: e1f133f74df8
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108022,27 +108022,27 @@ function isPlainObject3(value) {
 function dispatchFrom(buildDefinitions, tools2, replyText = jsonText) {
   let table;
   const call = async (context, name2, rawArgs) => {
-    table ??= pair(buildDefinitions(), tools2);
+    table ??= pairTools(buildDefinitions(), tools2);
     const entry = table.get(name2);
     if (!entry) throw new ValidationError(`Unknown tool "${name2}"`);
     return entry.handler(validateToolInput(entry.definition, rawArgs), context);
   };
   return { call, dispatch: (context, name2, rawArgs) => toolReply(name2, () => call(context, name2, rawArgs), replyText) };
 }
-function pair(definitions, tools2) {
-  const handlers = /* @__PURE__ */ new Map();
+function pairTools(definitions, tools2) {
+  const entries = /* @__PURE__ */ new Map();
   const problems = [];
   for (const tool of tools2) {
-    if (handlers.has(tool.name)) problems.push(`${tool.name} is listed twice`);
-    handlers.set(tool.name, tool.handler);
+    if (entries.has(tool.name)) problems.push(`${tool.name} is listed twice`);
+    entries.set(tool.name, tool);
   }
   const table = /* @__PURE__ */ new Map();
   for (const definition of definitions) {
-    const handler = handlers.get(definition.name);
-    if (handler) table.set(definition.name, { definition, handler });
+    const tool = entries.get(definition.name);
+    if (tool) table.set(definition.name, { definition, handler: tool.handler, flags: tool.flags });
     else problems.push(`no handler for ${definition.name}`);
   }
-  for (const name2 of handlers.keys()) {
+  for (const name2 of entries.keys()) {
     if (!table.has(name2)) problems.push(`no definition for ${name2}`);
   }
   if (problems.length) throw new DataServerError(`The tool list and its definitions differ: ${problems.join("; ")}`, "internal_error");
@@ -112006,12 +112006,12 @@ function getNamsepaceInfo(attribute) {
     return false;
   }
   return attribute.filter((entry) => {
-    let pair2 = entry;
-    return pair2.length >= 2 && pair2[0] && typeof pair2[0].value === "string" && (pair2[1] === null || pair2[1] && typeof pair2[1].value === "string");
+    let pair = entry;
+    return pair.length >= 2 && pair[0] && typeof pair[0].value === "string" && (pair[1] === null || pair[1] && typeof pair[1].value === "string");
   }).map((entry) => {
-    let pair2 = entry;
-    let prefix = pair2[0].value;
-    let delimiter = pair2[1] === null ? null : pair2[1].value;
+    let pair = entry;
+    let prefix = pair[0].value;
+    let delimiter = pair[1] === null ? null : pair[1].value;
     if (delimiter && prefix && prefix.charAt(prefix.length - 1) !== delimiter) {
       prefix += delimiter;
     }

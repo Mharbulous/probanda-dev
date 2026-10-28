@@ -8,15 +8,21 @@ import { validateToolInput, type ToolInput } from "./validate.js";
 
 export type ToolReply = { content: Array<{ type: "text"; text: string }>; isError?: boolean };
 
-export interface Tool<C> {
+export interface Tool<C, F = undefined> {
   name: string;
   handler: (args: ToolInput, context: C) => unknown;
+  /** What a server needs to know about the tool before it runs it, such as practice's file and read tools. */
+  flags?: F;
 }
 
 /** A tool whose handler takes typed arguments. validateToolInput has checked them against the
  * tool's inputSchema, but nothing ties `Args` to that schema at compile time: this is the one cast. */
-export function defineTool<Args, C = void>(name: string, handler: (args: Args, context: C) => unknown): Tool<C> {
-  return { name, handler: (args, context) => handler(args as unknown as Args, context) };
+export function defineTool<Args, C = void, F = undefined>(
+  name: string,
+  handler: (args: Args, context: C) => unknown,
+  flags?: F
+): Tool<C, F> {
+  return { name, handler: (args, context) => handler(args as unknown as Args, context), flags };
 }
 
 /** A server's `call` (validate, then run the handler) and `dispatch` (`call` as an MCP reply). On
@@ -29,9 +35,9 @@ export function dispatchFrom<C>(
   call: (context: C, name: string, rawArgs: unknown) => Promise<unknown>;
   dispatch: (context: C, name: string, rawArgs: unknown) => Promise<ToolReply>;
 } {
-  let table: Map<string, { definition: ToolDefinition; handler: Tool<C>["handler"] }> | undefined;
+  let table: Map<string, PairedTool<C>> | undefined;
   const call = async (context: C, name: string, rawArgs: unknown): Promise<unknown> => {
-    table ??= pair(buildDefinitions(), tools);
+    table ??= pairTools(buildDefinitions(), tools);
     const entry = table.get(name);
     if (!entry) throw new ValidationError(`Unknown tool "${name}"`);
     return entry.handler(validateToolInput(entry.definition, rawArgs), context);
@@ -39,20 +45,23 @@ export function dispatchFrom<C>(
   return { call, dispatch: (context, name, rawArgs) => toolReply(name, () => call(context, name, rawArgs), replyText) };
 }
 
-function pair<C>(definitions: ToolDefinition[], tools: Tool<C>[]): Map<string, { definition: ToolDefinition; handler: Tool<C>["handler"] }> {
-  const handlers = new Map<string, Tool<C>["handler"]>();
+export type PairedTool<C, F = undefined> = { definition: ToolDefinition; handler: Tool<C, F>["handler"]; flags?: F };
+
+/** Each definition with its one list entry, by name. Throws if any definition, entry or name is unpaired. */
+export function pairTools<C, F = undefined>(definitions: ToolDefinition[], tools: Tool<C, F>[]): Map<string, PairedTool<C, F>> {
+  const entries = new Map<string, Tool<C, F>>();
   const problems: string[] = [];
   for (const tool of tools) {
-    if (handlers.has(tool.name)) problems.push(`${tool.name} is listed twice`);
-    handlers.set(tool.name, tool.handler);
+    if (entries.has(tool.name)) problems.push(`${tool.name} is listed twice`);
+    entries.set(tool.name, tool);
   }
-  const table = new Map<string, { definition: ToolDefinition; handler: Tool<C>["handler"] }>();
+  const table = new Map<string, PairedTool<C, F>>();
   for (const definition of definitions) {
-    const handler = handlers.get(definition.name);
-    if (handler) table.set(definition.name, { definition, handler });
+    const tool = entries.get(definition.name);
+    if (tool) table.set(definition.name, { definition, handler: tool.handler, flags: tool.flags });
     else problems.push(`no handler for ${definition.name}`);
   }
-  for (const name of handlers.keys()) {
+  for (const name of entries.keys()) {
     if (!table.has(name)) problems.push(`no definition for ${name}`);
   }
   if (problems.length) throw new DataServerError(`The tool list and its definitions differ: ${problems.join("; ")}`, "internal_error");

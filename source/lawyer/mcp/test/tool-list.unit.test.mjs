@@ -83,3 +83,39 @@ test("a server's replyText shapes the success reply, and an error it throws beco
   assert.equal(r.isError, true);
   assert.deepEqual(reply(r), { error: { code: "internal_error", message: "not text" } });
 });
+
+test("practice: every definition pairs with one list entry, and a definition with none fails loudly", async () => {
+  const { practiceTools } = await import("../build/tools/practice/index.js");
+  const { practiceToolDefinitions } = await import("../build/schema/practice.js");
+  const { pairTools } = await import("../build/tool-list.js");
+  assert.equal(pairTools(practiceToolDefinitions(), practiceTools).size, practiceToolDefinitions().length);
+  const [dropped, ...rest] = practiceTools;
+  assert.throws(() => pairTools(practiceToolDefinitions(), rest), (err) => err.code === "internal_error" && err.message.includes(`no handler for ${dropped.name}`));
+});
+
+test("practice: a file tool skips replay, a read tool runs after a failed replay, a write tool does not", async () => {
+  const { callPracticeTool } = await import("../build/tools/practice/index.js");
+  const store = () => ({
+    replays: 0,
+    env: {},
+    items: () => [],
+    pendingCount: () => 1,
+    async replayPending() {
+      this.replays++;
+      throw new Error("cloud unreachable");
+    },
+  });
+  const notReplay = (err) => !/cloud unreachable/.test(err.message);
+
+  const file = store();
+  await callPracticeTool(file, "practice_data__folder_map", {}).catch((err) => assert.ok(notReplay(err), err.message));
+  assert.equal(file.replays, 0);
+
+  const read = store();
+  assert.deepEqual(await callPracticeTool(read, "practice_data__ar_data", {}), { rows: [] });
+  assert.equal(read.replays, 1);
+
+  const write = store();
+  await assert.rejects(callPracticeTool(write, "practice_data__upsert_task", {}), /cloud unreachable/);
+  assert.equal(write.replays, 1);
+});

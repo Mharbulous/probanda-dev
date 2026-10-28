@@ -1,4 +1,4 @@
-// build-stamp: 0b08aecdfb5a
+// build-stamp: 5580ccd78187
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15735,33 +15735,33 @@ function isPlainObject3(value) {
 }
 
 // src/tool-list.ts
-function defineTool(name, handler) {
-  return { name, handler: (args, context) => handler(args, context) };
+function defineTool(name, handler, flags) {
+  return { name, handler: (args, context) => handler(args, context), flags };
 }
 function dispatchFrom(buildDefinitions, tools2, replyText2 = jsonText) {
   let table;
   const call = async (context, name, rawArgs) => {
-    table ??= pair(buildDefinitions(), tools2);
+    table ??= pairTools(buildDefinitions(), tools2);
     const entry = table.get(name);
     if (!entry) throw new ValidationError(`Unknown tool "${name}"`);
     return entry.handler(validateToolInput(entry.definition, rawArgs), context);
   };
   return { call, dispatch: (context, name, rawArgs) => toolReply(name, () => call(context, name, rawArgs), replyText2) };
 }
-function pair(definitions, tools2) {
-  const handlers = /* @__PURE__ */ new Map();
+function pairTools(definitions, tools2) {
+  const entries = /* @__PURE__ */ new Map();
   const problems = [];
   for (const tool of tools2) {
-    if (handlers.has(tool.name)) problems.push(`${tool.name} is listed twice`);
-    handlers.set(tool.name, tool.handler);
+    if (entries.has(tool.name)) problems.push(`${tool.name} is listed twice`);
+    entries.set(tool.name, tool);
   }
   const table = /* @__PURE__ */ new Map();
   for (const definition of definitions) {
-    const handler = handlers.get(definition.name);
-    if (handler) table.set(definition.name, { definition, handler });
+    const tool = entries.get(definition.name);
+    if (tool) table.set(definition.name, { definition, handler: tool.handler, flags: tool.flags });
     else problems.push(`no handler for ${definition.name}`);
   }
-  for (const name of handlers.keys()) {
+  for (const name of entries.keys()) {
     if (!table.has(name)) problems.push(`no definition for ${name}`);
   }
   if (problems.length) throw new DataServerError(`The tool list and its definitions differ: ${problems.join("; ")}`, "internal_error");
