@@ -1,7 +1,7 @@
 ---
 name: show-me
 user-invocable: false
-description: "Use before any approval ask or sign-off, including a draft presented for sign-off, before any question to the practitioner about a specific document, even one asked again, and when the practitioner asks to be shown a Job or Jobs."
+description: "Use before any approval ask or sign-off, including a draft presented for sign-off, before any question to the practitioner about a specific document, even one asked again, and when the practitioner asks to see a Job Board or any job on it."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
@@ -10,10 +10,9 @@ description: "Use before any approval ask or sign-off, including a draft present
 
 | Section | Read when |
 |---|---|
-| Scope | Checking whether an approval, a choice, an authorization or a question about a document falls under this skill |
+| Scope | Checking whether an approval, a choice, an authorization or a question about a document falls under this skill, or a request to see a Job Board |
 | The rules | Composing any approval ask: one decision, source file, full text, absences, the fixed order |
 | Marking conventions | Highlighting a source file or writing its caption legend |
-| Showing a Job | The practitioner asks to be shown a Job or Jobs |
 | Mechanics | Building the page extract and sending the files, text and question in order |
 | Presenting a file saved on the PC (fallback route) | Only when `mcp__cowork__present_files` is not in the session's tool list: sending a card for a file saved on the PC from a cloud session linked to it (remote-device-only host) |
 | Example | A bad and a good presentation are needed side by side |
@@ -33,7 +32,7 @@ Applies inside any live exchange where an agent asks a human to approve, choose,
 
 It does not decide *whether* a candidate question needs a human at all — that call belongs to the calling skill's own judgment about what's consequential enough to interrupt the human for. This skill starts once the answer is yes; it governs only how that question gets presented.
 
-Showing a Job the practitioner asks to see is governed here too, by "Showing a Job" below. Rules 1 to 9 do not apply to it unless a decision about the Job is asked.
+When the practitioner asks to see a Job Board, or any job on it, render that board and present its page as `shared/html-pages.md` ("Present each page by its path") says. Never write its lanes, jobs, steps, goal or loose threads into chat.
 
 ## The rules
 
@@ -131,31 +130,6 @@ The file's text goes to the gatekeeper write as read from the file, never retype
 - Orange marks omitted text, discrepant text, or the exact word or words at issue.
 - Every caption states the legend.
 - Use no more than two colours.
-
-## Showing a Job
-
-Whenever the practitioner asks to be shown a Job or Jobs, display each one in this layout and no other. Read each Job with `drafting_forms__board_card` with `jobs: [N, …]`, never from the Job Board page (`shared/html-pages.md`).
-
-```markdown
-### Job <N>: <title>
-> Intent: <intent>
-
-✅ <done step text> (done <HH:MM>)  
-⬜ <open step text>  
-<status line>
-
-*<Kind> job, priority <p>, scope `<scope>` (<what that scope is, in a lawyer's words>). It waits on <nothing | Job #M>, and has <no either-or partner | either-or partner Job #K>.*
-```
-
-- The heading is `### Job N: title`.
-- The intent is one blockquote line beginning `Intent:`.
-- Each step is on its own line, starting with ✅ (U+2705) when done or ⬜ when open. A step the card prints with another status keeps the card's glyph: ↻ to be retried, ☒ cancelled, ⏸ deferred, each followed by the practitioner's words in parentheses where the card gives them, and ⏳ waiting, followed by `until HH:MM` as the card gives it, a plain time to check the process and never a countdown. A step the card prints ☐ is ⬜. The emoji replaces the bullet: never a markdown bullet and an emoji together (`- ✅`), and never ☑️ or ☐.
-- Steps are tight: end each step line with two trailing spaces (a hard line break), with no blank line between steps.
-- A done step ends with its done time in parentheses, `(done HH:MM)`, with the date before the time when it was not done today.
-- After the steps comes the status line: `Job completed.` for a Completed job, otherwise the card's lane label (Ready, In Progress, Blocked, Bring Forward, Shelved or Superseded).
-- Then a blank line and one closing italic line giving the card's kind, priority, scope, waits-on and either-or.
-- Never append a separate "Work completed." line after a Job display.
-- For several Jobs, repeat the layout for each, in the order asked.
 
 ## Mechanics
 

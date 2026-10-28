@@ -378,7 +378,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "open), so no " +
         "separate render is needed to open a session; with nothing to open, or when that render refused (open_refused " +
         "with its code and message), the matter's pages are still written, job_board_path is the page of the filing " +
-        "or proceeding the refused render tried to open, or null with nothing to open (job_board_paths then []). It " +
+        "or proceeding the refused render tried to open, or null with nothing to open. It" +
         "returns the folder as draft_dir (issue 689) for " +
         "every later drafting_forms__render; with no such folder nothing is opened, matter_board_path and " +
         "job_board_paths are null and " +
