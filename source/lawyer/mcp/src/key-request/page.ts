@@ -1,7 +1,7 @@
 // The Probanda's Cloud key page: where the practitioner pastes Probanda's key, so
 // it is never a tool argument and never passes through the chat or the model.
 // cloud_key__configure_credential serves it (credential.ts), and the key request
-// page (tools.ts) uses its page helpers. The shape of the mail and TimeCamp
+// page (tools.ts), the TimeCamp page and the mail page use its page helpers. The shape of the mail and TimeCamp
 // pages: node:http on 127.0.0.1, port 0, started lazily and unref'd, one random
 // path token per link, only the newest link works, and a successful save spends
 // it. The key is never logged, echoed into a page or put in an error.
@@ -27,11 +27,19 @@ export async function serveKeyPage(save: SaveKey): Promise<string> {
   return `http://127.0.0.1:${await listening}/cloud-key/${link}`;
 }
 
-/** Starts a page listener on 127.0.0.1 for `handle`; `onError` runs before the returned promise rejects. */
-export function listen(handle: (req: IncomingMessage, res: ServerResponse) => Promise<void>, onError: () => void): Promise<number> {
+/**
+ * Starts a page listener on 127.0.0.1 for `handle`; `onError` runs before the returned promise rejects.
+ * `failure` is the 500 page's body, rendered with `style`.
+ */
+export function listen(
+  handle: (req: IncomingMessage, res: ServerResponse) => Promise<void>,
+  onError: () => void,
+  failure = "<p>Return to Claude and ask for a new link.</p>",
+  style = STYLE
+): Promise<number> {
   const server: Server = createServer((req, res) => {
     handle(req, res).catch(() => {
-      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
+      if (!res.headersSent) page(res, 500, "Something went wrong", failure, style);
       else res.destroy();
     });
   });
@@ -79,7 +87,7 @@ const FORM =
   '<p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>' +
   "<p class=\"note\">No key yet? Return to Claude and ask to request Probanda's key.</p>";
 
-export function page(res: ServerResponse, status: number, title: string, body: string): void {
+export function page(res: ServerResponse, status: number, title: string, body: string, style = STYLE): void {
   res.writeHead(status, {
     "Content-Type": "text/html; charset=utf-8",
     "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
@@ -89,7 +97,7 @@ export function page(res: ServerResponse, status: number, title: string, body: s
   });
   res.end(
     `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">` +
-    `<title>${escape(title)}</title><style>${STYLE}</style></head><body><main><h1>${escape(title)}</h1>${body}</main></body></html>`
+    `<title>${escape(title)}</title><style>${style}</style></head><body><main><h1>${escape(title)}</h1>${body}</main></body></html>`
   );
 }
 

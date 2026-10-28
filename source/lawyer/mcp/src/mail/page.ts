@@ -11,10 +11,9 @@
 // the page. The password is never logged, echoed into a page or put in an error.
 
 import { randomBytes } from "node:crypto";
-import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
-import type { AddressInfo } from "node:net";
+import type { IncomingMessage, ServerResponse } from "node:http";
 
-import { escape, readBody } from "../key-request/page.js";
+import { escape, listen, page as sharedPage, readBody } from "../key-request/page.js";
 import type { MailCredential } from "./config.js";
 
 export type CredentialFields = Omit<MailCredential, "password">;
@@ -94,28 +93,8 @@ let listening: Promise<number> | undefined;
 export async function servePasswordPage(fields: CredentialFields, save: SaveSecret): Promise<string> {
   const token = randomBytes(24).toString("hex");
   pending = { token, fields, save };
-  listening ??= listen();
+  listening ??= listen(handle, () => { listening = undefined; }, "<p>Return to Claude and ask for a new sign-in link.</p>", STYLE);
   return `http://127.0.0.1:${await listening}/mail/${token}`;
-}
-
-function listen(): Promise<number> {
-  const server: Server = createServer((req, res) => {
-    handle(req, res).catch(() => {
-      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new sign-in link.</p>");
-      else res.destroy();
-    });
-  });
-  server.on("connection", (socket) => socket.unref());
-  return new Promise((resolve, reject) => {
-    server.once("error", (err) => {
-      listening = undefined;
-      reject(err);
-    });
-    server.listen(0, "127.0.0.1", () => {
-      server.unref();
-      resolve((server.address() as AddressInfo).port);
-    });
-  });
 }
 
 async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -167,19 +146,7 @@ function form(fields: CredentialFields): string {
   );
 }
 
-function page(res: ServerResponse, status: number, title: string, body: string): void {
-  res.writeHead(status, {
-    "Content-Type": "text/html; charset=utf-8",
-    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
-    "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer",
-    "X-Content-Type-Options": "nosniff",
-  });
-  res.end(
-    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">` +
-    `<title>${escape(title)}</title><style>${STYLE}</style></head><body><main><h1>${escape(title)}</h1>${body}</main></body></html>`
-  );
-}
+const page = (res: ServerResponse, status: number, title: string, body: string): void => sharedPage(res, status, title, body, STYLE);
 
 const STYLE =
   "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}" +
