@@ -226,9 +226,9 @@ class RankTests(unittest.TestCase):
         self.assertEqual(rank("affirmed", "draft"), {"keep": "a", "basis": "affirmed over draft"})
         self.assertEqual(rank("filed", "affirmed")["keep"], "a")
 
-    def test_a_tie_or_an_unclear_status_asks(self):
+    def test_a_tie_goes_to_quality_and_an_unclear_status_asks(self):
         rank = FN["rank"]
-        self.assertEqual(rank("filed", "filed"), {"keep": "ask", "basis": "tie: both filed"})
+        self.assertEqual(rank("filed", "filed"), {"keep": "quality", "basis": "tie: both filed"})
         self.assertEqual(rank(None, "draft")["keep"], "ask")
 
 
@@ -660,7 +660,7 @@ class SupersedeSqlTests(CourtFile):
 
 
 class NotVersionSqlTests(CourtFile):
-    """Two filed copies #32 and #33 whose pages differ beyond execution marks."""
+    """Two filed copies #32 and #33 whose pages differ in meaning."""
 
     PENDING = "SUPERSEDE-PENDING: possible other version of source #33."
 
@@ -672,7 +672,7 @@ class NotVersionSqlTests(CourtFile):
                     notes="DISCREPANCY: possible duplicate of source #32; registry rejected the filing", verified=2)
         self.con.commit()
 
-    def not_version(self, approver="strict-test"):
+    def not_version(self, approver="comparison"):
         notes = {str(r["id"]): r["notes"] for r in self.rows([32, 33]) if r["kind"] == "source" and r["id"] in (32, 33)}
         return FN["emit_sql"]({"outcome": "not_version", "pair": [32, 33], "notes": notes,
                                "date": DATE, "approver": approver})
@@ -680,9 +680,9 @@ class NotVersionSqlTests(CourtFile):
     def test_both_rows_are_marked_and_verified_returns_only_without_a_prefix(self):
         self.execute(self.not_version())
         rows = {r[0]: r[1:] for r in self.con.execute("SELECT source_id, notes, verified FROM main.sources WHERE source_id IN (32, 33)")}
-        self.assertEqual(rows[32], (f"[NOT-VERSION-OF:#33 {DATE} strict-test]", 0))
+        self.assertEqual(rows[32], (f"[NOT-VERSION-OF:#33 {DATE} comparison]", 0))
         self.assertEqual(rows[33], ("DISCREPANCY: registry rejected the filing\n"
-                                    f"[NOT-VERSION-OF:#32 {DATE} strict-test]", 2))
+                                    f"[NOT-VERSION-OF:#32 {DATE} comparison]", 2))
 
     def test_a_clause_that_cannot_be_isolated_is_left_and_reported(self):
         mixed = "DISCREPANCY: possible duplicate of #32 and the registry rejected the filing"
@@ -692,7 +692,7 @@ class NotVersionSqlTests(CourtFile):
         self.assertIn("-- REPORT: #33", sql)
         self.execute(sql)
         self.assertEqual(self.one("SELECT notes, verified FROM main.sources WHERE source_id = 33")[:],
-                         (mixed + f"\n[NOT-VERSION-OF:#32 {DATE} strict-test]", 2))
+                         (mixed + f"\n[NOT-VERSION-OF:#32 {DATE} comparison]", 2))
 
     def test_the_marker_refuses_a_second_run_and_ends_the_pair_as_a_candidate(self):
         sql = self.not_version("practitioner")
@@ -707,6 +707,38 @@ class NotVersionSqlTests(CourtFile):
     def test_an_approver_other_than_the_two_is_refused(self):
         with self.assertRaises(ValueError):
             self.not_version("BD")
+
+
+class RehashTests(CourtFile):
+    """A comment added to the filed affidavit's file (§6b) changed its bytes from K_HASH to NEW."""
+
+    NEW = "e" * 64
+
+    def seed(self):
+        super().seed()
+        self.con.execute("UPDATE privileged.privileged_sources SET file_path = ?, file_hash = ? WHERE source_id = 1",
+                         (K_PATH, K_HASH))
+        self.con.execute("INSERT INTO privileged.privileged_sources (source_id, category, title, file_path, file_hash) "
+                         "VALUES (2, 'solicitor_client', 'Copy sent to the client', ?, ?)",
+                         (r"2. SOLICITOR CLIENT\copy.pdf", K_HASH))
+        self.con.commit()
+
+    def test_every_record_of_the_file_takes_the_new_hash_and_a_twin_elsewhere_keeps_its_own(self):
+        sql = FN["rehash_sql"](K_HASH, self.NEW, K_PATH)
+        self.execute(sql)
+        hashes = dict(self.con.execute("SELECT source_id, file_hash FROM main.sources WHERE source_id IN (34, 40, 41)"))
+        self.assertEqual(hashes, {34: self.NEW, 40: self.NEW, 41: self.NEW})
+        self.assertEqual(dict(self.con.execute("SELECT source_id, file_hash FROM privileged.privileged_sources")),
+                         {1: self.NEW, 2: K_HASH})
+        self.execute(sql)  # a second run is the recovery after an unclear result: it changes nothing
+
+    def test_a_path_no_record_holds_is_refused(self):
+        with self.assertRaisesRegex(sqlite3.IntegrityError, refusal("no record of the file holds the new hash")):
+            self.execute(FN["rehash_sql"](K_HASH, self.NEW, FOLDER + r"\other.pdf"))
+
+    def test_a_malformed_hash_is_refused_before_any_sql(self):
+        with self.assertRaises(ValueError):
+            FN["rehash_sql"](K_HASH, "E" * 64, K_PATH)
 
 
 class UnmovedTests(CourtFile):
@@ -739,6 +771,11 @@ class CommandLineTests(unittest.TestCase):
     def test_the_cli_runs_the_operation_functions(self):
         out = self.run_cli("rank", {"a": "draft", "b": "filed"})
         self.assertEqual((out.returncode, json.loads(out.stdout)["keep"]), (0, "b"))
+
+    def test_the_cli_emits_the_rehash_script(self):
+        out = self.run_cli("rehash-sql", {"old": "a" * 64, "new": "b" * 64, "file_path": S_PATH})
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIn("UPDATE main.sources SET file_hash", out.stdout)
 
     def test_a_refused_decision_exits_2(self):
         out = self.run_cli("emit-sql", {"outcome": "superseded", "date": "today", "approver": APPROVER})

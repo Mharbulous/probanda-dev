@@ -7,8 +7,8 @@
 // is inlined by esbuild and scripts/bundle.mjs copies pdfium.wasm, with THIRD-PARTY-NOTICES.txt, next
 // to the bundle, so nothing is installed at run time and no host renderer is needed. The PNG encoder
 // is the few lines below, on node:zlib, so the same page gives the same bytes with the same server
-// build. Imported only by the data server's dispatch, text and page-compare tools, which keeps the
-// renderer out of the contacts, files and timecamp bundles.
+// build. Imported only by the data server's dispatch, text and page-compare tools and the files
+// server's file_ops__comment_pdf, which keeps the renderer out of the contacts and timecamp bundles.
 
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";

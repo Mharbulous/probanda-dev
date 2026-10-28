@@ -1,8 +1,8 @@
 import type { ToolDefinition } from "./shared.js";
 
 // The file-manager plugin's tools: the soft delete into a matter's TRASH folder
-// (ADR 0014), the confined move /housekeeping files approved rows with, and the
-// move of a download into a matter folder.
+// (ADR 0014), the confined move /housekeeping files approved rows with, the
+// move of a download into a matter folder, and a comment on a matter PDF.
 // Served only by the `files` server (src/file-manager-index.ts), never by the
 // lawyer plugin's `data` server, so disabling file-manager removes them.
 export function fileOpsToolDefinitions(): ToolDefinition[] {
@@ -53,6 +53,31 @@ export function fileOpsToolDefinitions(): ToolDefinition[] {
           destination: { type: "string" },
         },
         required: ["matter_root", "source_filename", "destination"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
+      name: "file_ops__comment_pdf",
+      description:
+        "Add sticky-note comments to one PDF in a client matter, for matter-data's supersede-draft: one note per entry of `comments`, on its `page` (from 1), stacked down from the page's top-left. `matter_root` and `path` are absolute host paths; `path` must be under `matter_root` and outside probanda.json, TRASH, 0. CASE DATA and any privileged/disclosed tree. `expect_sha256` is the SHA-256 the matter's records hold for the file: when the file no longer has it, nothing is written. The notes are an incremental save, so the original bytes are kept unchanged and the new objects appended; the file is replaced in one rename. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `path_out_of_scope`, `protected`, `not_pdf`, `password_protected`, `hash_mismatch`, `bad_pages`, `save_failed`. Returns {path, old_sha256, new_sha256, comments}: the file's bytes changed, so re-point every stored record of `old_sha256` at this path to `new_sha256` at once.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          path: { type: "string" },
+          expect_sha256: { type: "string" },
+          comments: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { page: { type: "integer" }, text: { type: "string" } },
+              required: ["page", "text"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["matter_root", "path", "expect_sha256", "comments"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: false, openWorldHint: false },

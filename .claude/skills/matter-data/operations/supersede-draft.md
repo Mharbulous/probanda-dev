@@ -32,7 +32,7 @@ The deterministic steps are the fenced functions below. [`../references/scripts/
 |---|---|
 | `outcome` | `superseded` (applied), `not_version` (`[NOT-VERSION-OF:]` written), `pending` (unattended: marker written), `declined` (the practitioner gave no answer) |
 | `kept`, `superseded` | the two `source_id`s, after any insert |
-| `basis` | the rank basis (§3), or for `not_version` the differences the strict comparison found (§2) |
+| `basis` | the rank basis (§3), or for `not_version` the semantic differences the comparison found (§2) |
 | `counts` | facts moved and folded; children re-parented and matched; rows retired as duplicates |
 | `moved_to` | the superseded file's new stored path, or the move tool's refusal word for word |
 
@@ -184,37 +184,38 @@ def candidates(newcomers, registered, pages, scan_folder, matter_root):
 
 `stored_form` is conventions §2.4's helper. `pages` maps a stored path to its page count, or to `None` when unknown. A `newcomers` pair is two files with neither yet read (§6, "Two newcomers"). No pair: the operation ends, and the caller routes the file as before.
 
-**One pair at a time.** A file can pair with several others: several registered rows, another newcomer, or, from the gate, the rows named by several `SUPERSEDE-PENDING:` markers on its own row. Take its pairs one at a time: in the order `candidates` returns them, or for markers in ascending order of the id each names. Each pair gets its own §2 comparison and, attended, its own §5 question, never one question covering two pairs. Re-read the pair's rows (§4's probe) before each one. When an earlier pair superseded one copy of a later pair, the later pair is taken with that copy's kept copy in its place, unless a marker already decides that pair or it is the pair just decided. The superseded row keeps none of its `SUPERSEDE-PENDING:` markers: §6's script clears them all, because a superseded row is never assessed again.
+**One pair at a time.** A file can pair with several others: several registered rows, another newcomer, or, from the gate, the rows named by several `SUPERSEDE-PENDING:` markers on its own row. Take its pairs one at a time: in the order `candidates` returns them, or for markers in ascending order of the id each names. Each pair gets its own §2 comparison and, attended, any §5 question of its own, never one question covering two pairs. Re-read the pair's rows (§4's probe) before each one. When an earlier pair superseded one copy of a later pair, the later pair is taken with that copy's kept copy in its place, unless a marker already decides that pair or it is the pair just decided. The superseded row keeps none of its `SUPERSEDE-PENDING:` markers: §6's script clears them all, because a superseded row is never assessed again.
 
 In `unattended` mode go straight to §5.
 
-## §2 Strict comparison
+## §2 Comparison
 
-Model work, for each pair. Read both files page by page, and each exhibit against its counterpart one by one. Call `pdf_pages__images` for each PDF first: read a scanned page only from its PNG, and a born-digital page natively (design decision #71). A copy registered with children shows them as rows; read their pages in the file.
+Model work, for each pair, always: no pair is treated as a duplicate unread. Read both files page by page, and each exhibit against its counterpart one by one. Call `pdf_pages__images` for each PDF first: read a scanned page only from its PNG, and a born-digital page natively (design decision #71). A copy registered with children shows them as rows; read their pages in the file.
 
-The two files are versions of one document only when every difference is an execution mark: a signature, a completed jurat or commissioning block, a registry filing stamp and its date, a `DRAFT` watermark or header, and up to two added stamp or backing pages. Anything else fails the strict test: a changed, added or missing word, figure or paragraph, a different exhibit, or a handwritten notation beyond those marks.
+Each difference is **semantic** when it changes what the document says: a different word, figure, sentence or paragraph, any different date, a different exhibit, or a page of content added or missing. It is **cosmetic** otherwise: a signature (another signature by the same named person included), a completed jurat or commissioning block, a registry stamp and its date, a `DRAFT` watermark or header, up to two added stamp or backing pages, a different font or font size, blur, alignment, a stain, ink colour, or a scan against a digital copy.
 
 Record, for the pair:
 
-- `verdict`: `pass` or `fail`, and for `fail` each difference found, by page;
-- each copy's execution status as the pages show it: `filed` (a registry stamp), `affirmed` (executed or signed), `draft` (neither), or unclear.
+- `verdict`: `semantic` when any difference is, else `cosmetic`; each difference by page in each file;
+- each copy's execution status as the pages show it: `filed` (a registry stamp), `affirmed` (executed or signed), `draft` (neither), or unclear;
+- for `cosmetic`, which copy looks better, if one clearly does: sharper, better aligned, unstained, larger font.
 
-A `fail` goes to §6b with approver `strict-test`. No question is asked.
+A `semantic` verdict goes to §6b with approver `comparison`. No question is asked, unless you cannot tell whether a difference changes meaning: then §5 asks.
 
 ## §3 Rank
 
-The operative copy ranks highest: `filed` over `affirmed` over `draft`. A tie, or an unclear status, is `ask`: the question in §5 then carries no proposal.
+For a `cosmetic` pair the operative copy ranks highest: `filed` over `affirmed` over `draft`. A tie is `quality`: keep the copy §2 found better looking, or, when neither clearly is, `ask`. An unclear status is `ask`. An `ask` question in §5 carries no proposal.
 
 ```python
 VERSION_RANK = ('draft', 'affirmed', 'filed')
 
 
 def rank(a, b):
-    """Which copy to keep: 'a', 'b', or 'ask' on a tie or an unclear status."""
+    """Which copy to keep: 'a', 'b', 'quality' on a tie, or 'ask' on an unclear status."""
     if a not in VERSION_RANK or b not in VERSION_RANK:
         return {'keep': 'ask', 'basis': f'rank unclear: {a} against {b}'}
     if a == b:
-        return {'keep': 'ask', 'basis': f'tie: both {a}'}
+        return {'keep': 'quality', 'basis': f'tie: both {a}'}
     keep = 'a' if VERSION_RANK.index(a) > VERSION_RANK.index(b) else 'b'
     high, low = (a, b) if keep == 'a' else (b, a)
     return {'keep': keep, 'basis': f'{high} over {low}'}
@@ -297,14 +298,13 @@ Relief items and sought orders need no plan. A `relief_items` row on S with the 
 
 **Unattended.** Write nothing but the marker. [`ingest-unattended.md`](ingest-unattended.md) has already ingested the newcomer. Append `SUPERSEDE-PENDING: possible other version of source #<id>.` to its row, `<id>` the paired row, with conventions §11's append statement, one `matter_data__execute` call per marker. A pair of two newcomers gets a marker on each row, naming the other, once both have rows; when either ends with no row, the pair gets none. Outcome `pending`. The attended gate and the folder scan take the pair up later, from the marker.
 
-**Attended.** Follow `/show-me`:
+**Attended.** The practitioner's standing rule decides the pair with no question when §2 placed every difference and §3 names a copy: a `semantic` pair goes to §6b, and a `cosmetic` pair to §6, keeping the copy §3 names by rank or, on a tie, by looks. Otherwise (a difference §2 could not place, an unclear status, or a tie with no better-looking copy) follow `/show-me`:
 
 1. Present both files as file cards (`../../shared/present-files.md`).
-2. Name each difference §2 found, and give the rank basis from §3.
-3. Show a table: each current fact of S, with its locator and description, and what happens to it: *move to #K at the same locator*, or *fold into #<kept fact>* with that fact's locator and description. Then the children matched and re-parented, and the duplicate relief items and sought orders that will be retired.
-4. Ask one plain-text question with three answers: **keep the proposed copy**, **keep the other copy**, **they are different documents**. On `ask` from §3 the question carries no proposal: keep A, keep B, or they are different documents.
+2. Name each difference §2 found, and why it is unclear.
+3. Ask one plain-text question with three answers: **keep A**, **keep B**, **they are different documents**, naming §3's proposal when it has one.
 
-Nothing is written before the answer. When the answer keeps a copy whose table was not shown (on `ask`, or "keep the other copy"), re-run §4 in that direction, show its table, and have the practitioner confirm it before §6. "They are different documents" goes to §6b with approver `practitioner`. No answer is `declined`, with nothing written. A pair of two newcomers has no rows, so step 3 shows nothing and the question is asked before either file is read.
+Nothing is written before the answer. When it keeps a copy, run §4 in that direction, show its table (each current fact of S with its locator and description, and whether it moves to #K at the same locator or folds into #<kept fact>, shown with that fact's locator and description; then the children matched and re-parented, and the duplicate relief items and sought orders to be retired), and have the practitioner confirm it before §6. "They are different documents" goes to §6b with approver `practitioner`. No answer is `declined`, with nothing written. A pair of two newcomers has no rows and no table, so its question, or the rule, settles it before either file is extracted.
 
 ## §6 Execute
 
@@ -318,7 +318,7 @@ Read the date through `matter_data__query` (`SELECT date('now','localtime') AS t
 | `execution_status` | `{superseded, kept}` from §2; each is written only where the row's value is NULL |
 | `children_into` | §4's matched children, `{S child: K child}` |
 | `facts` | every current fact of S and of its matched children, once: `{fact_id, fold_into}` for a fold, `{fact_id}` for a move; and each fold of a re-parented child's fact (§4) |
-| `date`, `approver` | the date read above, and `practitioner` |
+| `date`, `approver` | the date read above, and `practitioner`, or `rule` when §5's standing rule decided |
 
 Then:
 
@@ -338,13 +338,15 @@ WHERE source_id IN (SELECT value FROM json_each(?));
 
 S must carry `[SUPERSEDED-BY:#<K>` with no current fact, and its `file_path` must name the `Superseded` folder when the move ran.
 
-**Two newcomers.** The answer for a `newcomers` pair is taken before either file is read, and its writes wait for the kept copy's row. The kept newcomer stays with its caller and is extracted once, through [`ingest-extract.md`](ingest-extract.md). Once that document's transaction has committed, run steps 1 to 4 with the other newcomer as the superseded copy with no row and the new `source_id` as K: the script inserts it marker-only, carrying `[SUPERSEDED-BY:#<K>` and nothing else. When several newcomers of one folder pair with each other (a draft, a signed and a filed copy arriving together), settle the pairs one at a time (§1); every newcomer superseded is then inserted against the one newcomer finally kept, which alone is extracted. "They are different documents" leaves both to be extracted, then §6b runs with their new ids. A declined pair leaves both to be extracted.
+**Two newcomers.** A `newcomers` pair is decided (§5) before either file is extracted, and its writes wait for the kept copy's row. The kept newcomer stays with its caller and is extracted once, through [`ingest-extract.md`](ingest-extract.md). Once that document's transaction has committed, run steps 1 to 4 with the other newcomer as the superseded copy with no row and the new `source_id` as K: the script inserts it marker-only, carrying `[SUPERSEDED-BY:#<K>` and nothing else. When several newcomers of one folder pair with each other (a draft, a signed and a filed copy arriving together), settle the pairs one at a time (§1); every newcomer superseded is then inserted against the one newcomer finally kept, which alone is extracted. A `semantic` pair, or "they are different documents", leaves both to be extracted, then §6b runs with their new ids. A declined pair leaves both to be extracted.
 
 ### §6b Not versions of one document
 
-The decision is `{outcome: 'not_version', pair: [A, B], notes, date, approver}`, `approver` `strict-test` (§2) or `practitioner` (§5). The script appends `[NOT-VERSION-OF:#<other> <date> <approver>]` to both rows and clears any `SUPERSEDE-PENDING:` marker naming the other. A newcomer has no row to carry the marker: hand it on to [`ingest-extract.md`](ingest-extract.md) first, then run this step with its new `source_id`.
+The decision is `{outcome: 'not_version', pair: [A, B], notes, date, approver}`, `approver` `comparison` (§2) or `practitioner` (§5). The script appends `[NOT-VERSION-OF:#<other> <date> <approver>]` to both rows and clears any `SUPERSEDE-PENDING:` marker naming the other. A newcomer has no row to carry the marker: hand it on to [`ingest-extract.md`](ingest-extract.md) first, then run this step with its new `source_id`.
 
 Both paths also remove a "possible duplicate" clause from a `DISCREPANCY:` note on either row, and nothing else on that note. A clause that says only that (`possible duplicate`, optionally `of #<id>` or `of source #<id>` and a bracketed remark) is cut out. A clause that also says something else cannot be cut out without losing it: the whole note is left as it was, and the script's head carries a `-- REPORT:` line naming the row, for §7. A row at `verified = 2` returns to `0` only when no conventions §5 prefix remains on its note. No fact note is edited.
+
+**Comments.** Once both rows carry the marker, mark each semantic difference §2 found in both files. For each file, call `file_ops__comment_pdf` with `expect_sha256` its row's `file_hash` and one comment per difference on its page in that file: `Differs from <other file name> p.<n>: "<this text>" / "<that text>"`. The comment changes the file's bytes, so then send `rehash_sql(old_sha256, new_sha256, <the row's file_path>)` as one `matter_data__execute` call: every record of the file takes the new hash, and ingest still recognises it. Report a refused `rehash_sql` call's condition and both hashes word for word: the same call again is the recovery. A tool refusal (`hash_mismatch` included) is reported word for word, and that file gets no comment. If `file_ops__comment_pdf` is not available, the `file-manager` plugin is not enabled: add no comment, and tell the practitioner that marking the discrepancy on the files needs `file-manager`. Never write the file any other way.
 
 ```python
 import re
@@ -461,8 +463,8 @@ def _note_writes(sid, old, new_sql, restore):
 
 
 def _not_version_sql(decision, notes, date, approver):
-    if approver not in ('practitioner', 'strict-test'):
-        raise ValueError(f"a NOT-VERSION-OF approver is 'practitioner' or 'strict-test', got {approver!r}")
+    if approver not in ('practitioner', 'comparison'):
+        raise ValueError(f"a NOT-VERSION-OF approver is 'practitioner' or 'comparison', got {approver!r}")
     pair = [_positive(x, 'pair') for x in decision.get('pair') or []]
     if len(pair) != 2 or pair[0] == pair[1]:
         raise ValueError(f'pair must name two different sources, got {pair!r}')
@@ -486,6 +488,24 @@ def _not_version_sql(decision, notes, date, approver):
         new = marker if base is None else base + '\n' + marker
         out += _note_writes(sid, notes[sid], _lit(new), cleared and not new.startswith(_PREFIXES))
     return _guarded(head, reports, out)
+
+
+def rehash_sql(old, new, file_path):
+    """One guarded script re-pointing every record of the file at `file_path` from hash `old` to `new`.
+    A record of another copy, at another path, keeps its hash. Safe to run twice."""
+    for name, value in (('old', old), ('new', new)):
+        if not isinstance(value, str) or not _HASH.match(value):
+            raise ValueError(f'{name} must be a lowercase SHA-256, got {value!r}')
+    if not isinstance(file_path, str) or not file_path.strip():
+        raise ValueError('file_path is required')
+    path = _lit(file_path)
+    tables = ('main.sources', 'privileged.privileged_sources')
+    out = [f'UPDATE {t} SET file_hash = {_lit(new)} WHERE file_hash = {_lit(old)} AND file_path = {path};'
+           for t in tables]
+    out.append("INSERT INTO _assert SELECT 'no record of the file holds the new hash', 1 - min(1, "
+               + ' + '.join(f'(SELECT count(*) FROM {t} WHERE file_hash = {_lit(new)} AND file_path = {path})'
+                            for t in tables) + ');')
+    return _guarded(f'-- ===== {file_path}: hash {old[:12]}... to {new[:12]}... =====', [], out)
 
 
 def _copy(side, name):
@@ -892,4 +912,4 @@ Report each row returned by name, with the source that superseded it, and offer 
 
 ## §7 Report
 
-Per pair: the outcome; the kept and superseded ids and file names; the rank basis, or for `not_version` each difference the strict test found, so the practitioner can see why two similar files were judged different documents; facts moved and folded, children re-parented and matched, duplicate rows retired; the move's destination, or the tool's refusal word for word; and the relocate outcome. A refused script's named condition, word for word. Each `-- REPORT:` line: the row whose possible-duplicate wording was left in its note, so the practitioner can settle it. For `pending`, the marker written and the row it names. For §6c, each row offered, and whether it moved.
+Per pair: the outcome; the kept and superseded ids and file names; the rank basis and, when the rule decided, the cosmetic differences and §5's table; or for `not_version` each semantic difference, so the practitioner can see why two similar files were judged different documents, with each file's comments added, or why not, and its new hash; facts moved and folded, children re-parented and matched, duplicate rows retired; the move's destination, or the tool's refusal word for word; and the relocate outcome. A refused script's named condition, word for word. Each `-- REPORT:` line: the row whose possible-duplicate wording was left in its note, so the practitioner can settle it. For `pending`, the marker written and the row it names. For §6c, each row offered, and whether it moved.

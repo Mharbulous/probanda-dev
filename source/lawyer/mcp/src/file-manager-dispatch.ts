@@ -1,7 +1,7 @@
 // Dispatch for the file-manager plugin's `files` server (src/file-manager-index.ts):
 // the file_ops__* and housekeeping__* tools, and nothing else. The practice
 // plugin's `data` server (dispatch.ts) does not know these names, so disabling
-// file-manager removes every tool that renames, moves or deletes a user's file
+// file-manager removes every tool that renames, moves, changes or deletes a user's file
 // (docs/Plans/2026-10-14_file-admin-plugin.md). Kept apart from dispatch.ts so
 // the `files` bundle holds only the modules these tools use.
 import { ValidationError } from "./errors.js";
@@ -10,6 +10,7 @@ import { defineTool, dispatchFrom, type ToolReply } from "./tool-list.js";
 import { fileOpsTrash } from "./file_ops/trash.js";
 import { fileOpsMove } from "./file_ops/move.js";
 import { fileOpsMoveFromDownloads } from "./file_ops/move-from-downloads.js";
+import { fileOpsCommentPdf } from "./file_ops/comment-pdf.js";
 import { type CandidatesArgs, candidates } from "./housekeeping/candidates.js";
 import { journalAppend, newRun, writeRunFile } from "./housekeeping/run-files.js";
 import { preflight } from "./housekeeping/preflight.js";
@@ -47,6 +48,10 @@ const tools = [
   defineTool<{ matter_root: string; source_filename: string; destination: string }>(
     "file_ops__move_from_downloads",
     (args) => fileOpsMoveFromDownloads(args.matter_root, args.source_filename, args.destination)
+  ),
+  defineTool<{ matter_root: string; path: string; expect_sha256: string; comments: Array<{ page: number; text: string }> }>(
+    "file_ops__comment_pdf",
+    (args) => fileOpsCommentPdf(args.matter_root, args.path, args.expect_sha256, args.comments)
   ),
   defineTool<{ matter_root: string; include_template?: boolean }>("housekeeping__preflight", (args) =>
     preflight(args.matter_root, args.include_template ?? false)

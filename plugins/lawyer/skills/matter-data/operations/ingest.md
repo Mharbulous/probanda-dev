@@ -82,7 +82,7 @@ Decide the destination from the probe result. Route to exactly one operation and
 
 | Probe result | Route |
 |---|---|
-| Main-store match carrying `SUPERSEDE-PENDING:` | `../operations/supersede-draft.md` first, for the pair each marker names. A row carrying several markers has its pairs settled one at a time, in ascending order of the named ids, each with its own comparison and its own question (`supersede-draft.md` §1, "One pair at a time"). When the match itself ends superseded, nothing more; otherwise the row below for the match's status |
+| Main-store match carrying `SUPERSEDE-PENDING:` | `../operations/supersede-draft.md` first, for the pair each marker names. A row carrying several markers has its pairs settled one at a time, in ascending order of the named ids, each with its own comparison and any question its own (`supersede-draft.md` §1, "One pair at a time"). When the match itself ends superseded, nothing more; otherwise the row below for the match's status |
 | Match, `ingestion_status = 'complete'` | `../operations/ingest-verify.md` |
 | Match, `ingestion_status = 'partial'` | `../operations/ingest-verify.md` on the completed portions, **and** offer the user re-extraction of the missing exhibits/segments |
 | Match, `ingestion_status = 'failed'` | `../operations/ingest-extract.md` (re-extract from scratch — the prior attempt produced nothing trustworthy) |
@@ -92,7 +92,7 @@ Decide the destination from the probe result. Route to exactly one operation and
 | A match carrying `[SUPERSEDED-BY:#`, or no match under `0. DRAFT*\Superseded\` (Step 3) | none: report and stop. A superseded row whose stored path lies outside `0. DRAFT*\Superseded\` is offered its move: `../operations/supersede-draft.md` §6c on yes |
 | **No hash match** | `../operations/supersede-draft.md` first, with this file as its one newcomer and its first path segment as `scan_folder`, keeping only the pairs that name this file. When no supersession results, `../operations/ingest-extract.md` |
 
-The gate itself still writes nothing: `supersede-draft.md` writes only after the practitioner's answer.
+The gate itself still writes nothing: `supersede-draft.md` writes only by the practitioner's standing rule or after their answer (its §5).
 
 `supersede-draft.md` §1 pairs copies by name and page count, so it can find no candidate for a file that is in fact another copy of a registered court source. The file then goes to `ingest-extract.md` and is registered and read through as a new document. When the session concludes later, during or after that read, that the file is another copy of registered source N, the conclusion is never left in a note: `ingest-extract.md`'s "Another copy of a registered source" step hands the two sources to `supersede-draft.md` as its `pair`, and writes the `SUPERSEDE-PENDING:` marker when the practitioner gives no answer.
 

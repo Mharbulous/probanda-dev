@@ -109,13 +109,15 @@ async function bundle(entry, out, extraBanner = "") {
 }
 
 await bundle("index.ts", outfile, REQUIRE_SHIM);
-// pdf_pages__images (src/files/extract/page-images.ts) loads PDFium's WebAssembly from beside the
-// data bundle, which esbuild cannot inline. PDFium's licence ships with it, and THIRD-PARTY-NOTICES.txt:
+await bundle("file-manager-index.ts", fileManagerOutfile);
+// pdf_pages__images and file_ops__comment_pdf load PDFium's WebAssembly from beside the data and files
+// bundles, which esbuild cannot inline. PDFium's licence ships with it, and THIRD-PARTY-NOTICES.txt:
 // the licences of @embedpdf/pdfium, PDFium and the libraries compiled into the wasm, copied from upstream.
 const pdfium = resolve(root, "node_modules", "@embedpdf", "pdfium");
-await copyFile(resolve(pdfium, "dist", "pdfium.wasm"), resolve(dirname(outfile), "pdfium.wasm"));
-await copyFile(resolve(pdfium, "LICENSE.pdfium"), resolve(dirname(outfile), "PDFIUM-LICENSE.txt"));
-await copyFile(resolve(root, "THIRD-PARTY-NOTICES.txt"), resolve(dirname(outfile), "THIRD-PARTY-NOTICES.txt"));
-await bundle("file-manager-index.ts", fileManagerOutfile);
+for (const out of [outfile, fileManagerOutfile]) {
+  await copyFile(resolve(pdfium, "dist", "pdfium.wasm"), resolve(dirname(out), "pdfium.wasm"));
+  await copyFile(resolve(pdfium, "LICENSE.pdfium"), resolve(dirname(out), "PDFIUM-LICENSE.txt"));
+  await copyFile(resolve(root, "THIRD-PARTY-NOTICES.txt"), resolve(dirname(out), "THIRD-PARTY-NOTICES.txt"));
+}
 await bundle("timecamp-index.ts", timecampOutfile);
 await bundle("contacts-calendars-email-index.ts", contactsCalendarsEmailOutfile, REQUIRE_SHIM);

@@ -15,6 +15,8 @@ the caller's, read through matter_data__query (conventions §10).
         {"rows": [...], "superseded": id or null, "kept": id or null}  ->  JSON plan
     python supersede_draft.py emit-sql < decision.json
         the §6 decision  ->  the SQL script for matter_data__execute
+    python supersede_draft.py rehash-sql < request.json
+        {"old": sha256, "new": sha256, "file_path": "..."}  ->  the §6b SQL script
 
 A refused request prints "REFUSED: <reason>" on stderr and exits 2. Standard
 library only.
@@ -59,12 +61,14 @@ def run(command, request):
         return fn['fold_plan'](request['rows'], request.get('superseded'), request.get('kept'))
     if command == 'emit-sql':
         return fn['emit_sql'](request)
+    if command == 'rehash-sql':
+        return fn['rehash_sql'](request.get('old'), request.get('new'), request.get('file_path'))
     raise ValueError(f'unknown command {command!r}')
 
 
 def main(argv):
     if len(argv) != 2:
-        print('usage: supersede_draft.py candidates|rank|fold-plan|emit-sql < request.json', file=sys.stderr)
+        print('usage: supersede_draft.py candidates|rank|fold-plan|emit-sql|rehash-sql < request.json', file=sys.stderr)
         return 1
     try:
         result = run(argv[1], json.load(sys.stdin))
