@@ -41,7 +41,6 @@ REPO = Path(__file__).resolve().parent.parent
 
 SCAN_EXTS = (".md", ".py", ".json", ".sql")
 EXCLUDE_DIRS = ("__pycache__", "sessions", "tests", "determinizing-tests", "evals", ".pytest_cache")
-SKILL_ROOTS = plugin_layout.SKILL_ROOTS
 # The data server ships in lawyer, but these tool families belong to litigator's
 # skills: a file outside litigator that names one leans on litigator's data.
 LITIGATOR_TOOL_FAMILIES = ("drafting_data__", "drafting_forms__", "rules__")
@@ -55,23 +54,22 @@ SERVER_TOOL_FAMILIES = {"commons": ("legal_commons__", "troubleshoot__"),
 FAMILY_START = r"(?:(?<![a-z_])|(?<=__))"
 
 
-def agent_files(repo):
+def agent_files(repo, plugins):
     """Every agent file, under each plugin's source/<plugin>/agents/."""
-    owners = plugin_layout.load(repo)["plugins"]
-    return sorted(path for owner in owners for path in (repo / "source" / owner / "agents").glob("*.md"))
+    return sorted(path for owner in plugins for path in plugin_layout.agent_files(repo, owner))
 
 
 def load(repo):
-    assignment = plugin_layout.load(repo)
+    plugins = plugin_layout.plugins(repo)
     rulings_path = repo / "source" / "layering.json"
     rulings = json.loads(rulings_path.read_text(encoding="utf-8")) if rulings_path.is_file() \
         else {"allowed": [], "todo": []}
-    placed = {a for spec in assignment["plugins"].values() for a in spec["agents"]}
-    placed |= set(assignment.get("unplaced", {}).get("agents", []))
-    missing = sorted(p.stem for p in agent_files(repo) if p.stem not in placed)
+    placed = {a for spec in plugins.values() for a in spec["agents"]}
+    placed |= set(plugin_layout.load(repo).get("unplaced", {}).get("agents", []))
+    missing = sorted(p.stem for p in agent_files(repo, plugins) if p.stem not in placed)
     if missing:
         raise SystemExit("STOP: agent with no plugin in source/assignment.json: " + ", ".join(missing))
-    return assignment["plugins"], rulings
+    return plugins, rulings
 
 
 def reachable(plugins, name):
@@ -118,22 +116,15 @@ def targets(plugins):
 
 def unit_files(repo, plugins):
     """[(plugin, unit label, path)] for every shipped text file of every unit."""
-    owner = {s: p for p, spec in plugins.items() for s in spec["skills"]}
     files = []
-    for root in sorted(root for pattern in SKILL_ROOTS for root in repo.glob(pattern)):
-        if not root.is_dir():
-            continue
-        for top in sorted(p for p in root.iterdir() if p.is_dir()):
-            plugin = "shared" if top.name == "shared" else owner.get(top.name)
-            if plugin is None:
-                raise SystemExit(f"STOP: skill folder {top} has no plugin in source/assignment.json")
-            for path in sorted(top.rglob("*")):
-                rel = path.relative_to(root)
-                if path.is_file() and path.suffix.lower() in SCAN_EXTS \
-                        and not any(part in EXCLUDE_DIRS for part in rel.parts[:-1]):
-                    files.append((plugin, f"skill {top.name}", path))
+    for root, top, plugin in plugin_layout.skill_folders(repo, plugins):
+        for path in sorted(top.rglob("*")):
+            rel = path.relative_to(root)
+            if path.is_file() and path.suffix.lower() in SCAN_EXTS \
+                    and not any(part in EXCLUDE_DIRS for part in rel.parts[:-1]):
+                files.append((plugin, f"skill {top.name}", path))
     agent_owner = {a: p for p, spec in plugins.items() for a in spec["agents"]}
-    for path in agent_files(repo):
+    for path in agent_files(repo, plugins):
         if path.stem in agent_owner:
             files.append((agent_owner[path.stem], f"agent {path.stem}", path))
     return files

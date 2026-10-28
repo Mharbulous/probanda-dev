@@ -1,15 +1,11 @@
 """SKILL.md frontmatter, description limits and the installed-copy preamble, for check_plugin.py."""
 import os
-import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from check_plugin_sources import skill_names, skill_md  # noqa: E402
+from cowork_rules import DESCRIPTION_MAX_CHARS, XML_TAG, field, scalar_value  # noqa: E402
 
-# Cowork's plugin validator rejects a SKILL.md whose description contains an XML
-# tag, or runs past 1024 characters, failing the whole upload.
-XML_TAG = re.compile(r"<[/!a-zA-Z][^>]*>")
-DESCRIPTION_MAX_CHARS = 1024
 DESCRIPTION_WARN_CHARS = 950
 
 
@@ -27,68 +23,9 @@ def read_frontmatter_lines(skill_md_path):
     raise ValueError(f"{skill_md_path}: unterminated frontmatter")
 
 
-def extract_field(fm_lines, key):
-    """A frontmatter field's raw block: the `key:` line plus any indented continuation
-    lines. Returns the list of raw lines, or None if absent."""
-    out = None
-    for idx, line in enumerate(fm_lines):
-        if line.startswith(key + ":"):
-            out = [line]
-            for cont in fm_lines[idx + 1:]:
-                if cont.strip() == "":
-                    out.append(cont)
-                    continue
-                if cont[0] in (" ", "\t"):
-                    out.append(cont)
-                else:
-                    break
-            while out and out[-1].strip() == "":
-                out.pop()
-            return out
-    return None
-
-
-def scalar_value(block_lines):
-    """Reconstruct a frontmatter field's YAML scalar value from its raw block, so that
-    len() of the result is the character count Cowork's validator applies. Handles
-    plain scalars, `>` folded and `|` literal blocks, and the `-`/`+`/bare chomping
-    indicators; anything rarer errs toward over-counting, never a false pass."""
-    first = block_lines[0].split(":", 1)[1].strip()
-    cont = block_lines[1:]
-
-    if not first or first[0] not in "|>":
-        parts = [first] + [c.strip() for c in cont]
-        return " ".join(p for p in parts if p)
-
-    style = first[0]
-    chomp = "".join(c for c in first[1:] if c in "-+")
-    indent = min((len(c) - len(c.lstrip(" ")) for c in cont if c.strip()), default=0)
-    body = [c[indent:] for c in cont]
-
-    if style == "|":
-        text = "\n".join(body)
-    else:
-        out, after_blank = [], False
-        for line in body:
-            if not line.strip():
-                out.append("\n")
-                after_blank = True
-            else:
-                if out and not after_blank:
-                    out.append(" ")
-                out.append(line)
-                after_blank = False
-        text = "".join(out)
-
-    text = text.rstrip("\n")
-    if chomp != "-":
-        text += "\n"
-    return text
-
-
 def description_length(skill_md_path):
     """Folded character count of a SKILL.md's description, or None if it has none."""
-    block = extract_field(read_frontmatter_lines(skill_md_path), "description")
+    block = field(read_frontmatter_lines(skill_md_path), "description")
     return len(scalar_value(block)) if block else None
 
 
@@ -146,7 +83,7 @@ def check_description_no_xml_tags(repo, plugin):
     for s in skill_names(repo, plugin):
         if not os.path.isfile(skill_md(repo, s)):
             continue
-        desc = extract_field(read_frontmatter_lines(skill_md(repo, s)), "description") or []
+        desc = field(read_frontmatter_lines(skill_md(repo, s)), "description") or []
         found = XML_TAG.findall("\n".join(desc))
         if found:
             xml_hits.append(f"{s}: {', '.join(sorted(set(found)))}")

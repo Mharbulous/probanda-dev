@@ -98,10 +98,9 @@ def wired_beyond_session_start(repo):
 
 
 def hook_scripts(repo):
-    assignment = plugin_layout.load(repo)
     wired = wired_beyond_session_start(repo)
-    return sorted({repo / path for plugin, spec in assignment["plugins"].items() if plugin not in NOT_CHECKED
-                   for path in spec.get("hooks", {}).values() if Path(path).name in wired})
+    return sorted({path for plugin, spec in plugin_layout.plugins(repo).items() if plugin not in NOT_CHECKED
+                   for path in plugin_layout.hook_scripts(repo, spec) if path.name in wired})
 
 
 def docstring_ids(tree):

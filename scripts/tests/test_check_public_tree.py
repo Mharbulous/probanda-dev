@@ -152,12 +152,37 @@ class TreeProblemsTest(unittest.TestCase):
     def test_developer_skill_or_agent_under_a_public_plugin_is_reported(self):
         spec = {"requires": [], "skills": [], "agents": [], "hooks": {}, "servers": []}
         (self.repo / "source" / "assignment.json").write_text(json.dumps({"status": "cutover", "plugins": {
-            "lawyer": spec, "developer": {**spec, "skills": ["view-suggestions"], "agents": ["black-hat"]}}}),
+            "lawyer": {**spec, "skills": ["other"]},
+            "developer": {**spec, "skills": ["view-suggestions"], "agents": ["black-hat"]}}}),
             encoding="utf-8")
         (self.repo / "source" / "developer").mkdir()
         self.assert_reports({"plugins/lawyer/skills/view-suggestions/SKILL.md": "x\n"}, "developer-only, never public")
         self.assert_reports({"plugins/lawyer/agents/black-hat.md": "x\n"}, "developer-only, never public")
         self.assertEqual(self.messages({"plugins/lawyer/skills/other/SKILL.md": "x\n"}), [])
+
+    def write_assignment(self, plugins):
+        spec = {"requires": [], "skills": [], "agents": [], "hooks": {}, "servers": []}
+        (self.repo / "source" / "assignment.json").write_text(json.dumps({"status": "cutover", "plugins": {
+            name: {**spec, "skills": skills} for name, skills in plugins.items()}}), encoding="utf-8")
+        for name in plugins:
+            (self.repo / "source" / name).mkdir(exist_ok=True)
+
+    def test_public_skill_under_another_plugins_folder_is_reported_once(self):
+        self.write_assignment({"lawyer": ["dyu"], "researcher": ["legal-citation"]})
+        found = self.messages({"plugins/lawyer/skills/legal-citation/SKILL.md": "x\n",
+                               "plugins/lawyer/skills/legal-citation/references/a.md": "x\n"})
+        self.assertEqual(found, [("plugins/lawyer/skills/legal-citation", 1,
+                                  "legal-citation is assigned to researcher, not lawyer")])
+
+    def test_public_skill_in_no_plugin_is_reported(self):
+        self.write_assignment({"lawyer": ["dyu"]})
+        self.assert_reports({"plugins/lawyer/skills/stray/SKILL.md": "x\n"},
+                            "stray is not in source/assignment.json")
+
+    def test_public_skill_under_its_own_plugin_passes(self):
+        self.write_assignment({"lawyer": ["dyu"], "researcher": ["legal-citation"]})
+        self.assertEqual(self.messages({"plugins/lawyer/skills/dyu/SKILL.md": "x\n",
+                                        "plugins/researcher/skills/legal-citation/SKILL.md": "x\n"}), [])
 
     def test_missing_private_folder_stops_the_check(self):
         (self.repo / "cloud" / "pool" / "schema.sql").unlink()

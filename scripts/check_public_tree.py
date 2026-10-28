@@ -18,8 +18,9 @@ Secret and no Client Information (COMMANDMENTS.md). Each file is checked two way
     one, a matter code, a file type off the short allowlist, and CRLF endings.
 
 The tree is also checked for a plugin it may not ship: a plugins/<name>/ folder or a
-marketplace entry outside export_public.PUBLIC_PLUGINS, and any skill or agent that
-source/assignment.json gives the developer plugin, which is never public.
+marketplace entry outside export_public.PUBLIC_PLUGINS, any skill or agent that
+source/assignment.json gives the developer plugin, which is never public, and a skill
+under plugins/<name>/skills/ that source/assignment.json does not give to <name>.
 
 Do not restrict generic names (SQL built-ins, column names any schema uses, legal terms of
 art) or lines of a standard licence such as MIT, anywhere: neither reveals Probanda's
@@ -262,12 +263,16 @@ def commit_message(text):
 
 def plugin_problems(repo, files):
     """[(path, line, message)] for a plugin public/ may not ship: a folder or marketplace
-    entry outside export_public.PUBLIC_PLUGINS, or a skill or agent of the developer plugin."""
+    entry outside export_public.PUBLIC_PLUGINS, a skill or agent of the developer plugin,
+    or a skill folder under a plugin source/assignment.json does not give it to (reported
+    once per folder)."""
     import export_public  # here, not at the top: export_public imports this module
     public = export_public.PUBLIC_PLUGINS
-    developer = plugin_layout.plugins(repo).get(DEVELOPER) or {}
+    specs = plugin_layout.plugins(repo)
+    developer = specs.get(DEVELOPER) or {}
     skills, agents = set(developer.get("skills") or ()), set(developer.get("agents") or ())
-    found = []
+    owner = {s: p for p, spec in specs.items() for s in spec["skills"]}
+    found, misplaced = [], set()
     for rel, data in files.items():
         parts = rel.split("/")
         if parts[0] == "plugins" and len(parts) > 2:
@@ -276,6 +281,8 @@ def plugin_problems(repo, files):
             if len(parts) > 3 and ((parts[2] == "skills" and parts[3] in skills)
                                    or (parts[2] == "agents" and parts[3].removesuffix(".md") in agents)):
                 found.append((rel, 1, f"{parts[3]} belongs to the {DEVELOPER} plugin: developer-only, never public"))
+            if len(parts) > 4 and parts[2] == "skills" and owner.get(parts[3]) != parts[1]:
+                misplaced.add((parts[1], parts[3]))
         if rel == MARKETPLACE:
             try:
                 entries = json.loads(text_of(data) or "").get("plugins") or []
@@ -285,6 +292,10 @@ def plugin_problems(repo, files):
                 name = entry.get("name") if isinstance(entry, dict) else None
                 if name not in public:
                     found.append((rel, 1, f"lists a plugin that is not public: {name}"))
+    for plugin, skill in sorted(misplaced):
+        message = (f"{skill} is assigned to {owner[skill]}, not {plugin}" if skill in owner
+                   else f"{skill} is not in source/assignment.json")
+        found.append((f"plugins/{plugin}/skills/{skill}", 1, message))
     return found
 
 

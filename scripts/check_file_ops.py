@@ -57,18 +57,9 @@ RULINGS = Path("source") / "file-ops.json"
 WHYS = ("own-output", "temp", "own-database", "own-overlay", "own-run", "conditional", "mention")
 EXEMPT_PLUGIN = "file-manager"
 
-SKILL_ROOTS = plugin_layout.SKILL_ROOTS
 SKIP_DIRS = {"__pycache__", "tests", "test", "determinizing-tests", "evals", ".pytest_cache",
              "node_modules", "dist", "sessions"}
 SKILL_EXTS = {".md", ".py", ".sh", ".ps1", ".bat", ".cmd", ".js", ".mjs", ".ts"}
-# The entry point of each MCP server, by its key in a plugin's .mcp.json.
-SERVER_ENTRIES = {
-    "data": "source/lawyer/mcp/src/index.ts",
-    "canlii": "source/researcher/canlii-mcp/src/index.ts",
-    "commons": "source/researcher/commons-mcp/src/index.ts",
-    "timecamp": "source/lawyer/mcp/src/timecamp-index.ts",
-    "contacts-calendars-email": "source/lawyer/mcp/src/contacts-calendars-email-index.ts",
-}
 
 PY_OPS = [(f"os.{op}", re.compile(rf"\bos\.{op}\s*\(")) for op in ("rename", "replace", "remove", "unlink", "rmdir")]
 PY_OPS += [(f"shutil.{op}", re.compile(rf"\bshutil\.{op}\s*\(")) for op in ("move", "rmtree")]
@@ -121,34 +112,24 @@ def import_closure(repo, entry):
 def shipped_files(repo):
     """[(plugin, path)] for every file shipped by a plugin other than file-manager.
     shared/ is listed under the plugin "shared"."""
-    assignment = plugin_layout.load(repo)
-    plugins = assignment["plugins"]
-    owner = {s: p for p, spec in plugins.items() for s in spec["skills"]}
+    plugins = plugin_layout.plugins(repo)
     files = []
-    for root in sorted(r for pattern in SKILL_ROOTS for r in repo.glob(pattern)):
-        if not root.is_dir():
+    for root, top, plugin in plugin_layout.skill_folders(repo, plugins):
+        if plugin == EXEMPT_PLUGIN:
             continue
-        for top in sorted(p for p in root.iterdir() if p.is_dir()):
-            plugin = "shared" if top.name == "shared" else owner.get(top.name)
-            if plugin is None:
-                raise SystemExit(f"STOP: skill folder {top} has no plugin in source/assignment.json")
-            if plugin == EXEMPT_PLUGIN:
-                continue
-            for path in sorted(top.rglob("*")):
-                if path.is_file() and path.suffix.lower() in SKILL_EXTS \
-                        and not skipped(path.relative_to(root).parts[:-1]):
-                    files.append((plugin, path))
+        for path in sorted(top.rglob("*")):
+            if path.is_file() and path.suffix.lower() in SKILL_EXTS \
+                    and not skipped(path.relative_to(root).parts[:-1]):
+                files.append((plugin, path))
     for plugin, spec in plugins.items():
         if plugin == EXEMPT_PLUGIN:
             continue
         for sub in ("agents", "hooks"):
-            for path in sorted((repo / "source" / plugin / sub).glob("*")):
-                if path.is_file() and path.suffix.lower() in SKILL_EXTS:
+            for path in plugin_layout.source_files(repo, plugin, sub):
+                if path.suffix.lower() in SKILL_EXTS:
                     files.append((plugin, path))
         for server in spec["servers"]:
-            if server not in SERVER_ENTRIES:
-                raise SystemExit(f"STOP: server {server} of {plugin} has no entry point in check_file_ops.py")
-            for path in import_closure(repo, SERVER_ENTRIES[server]):
+            for path in import_closure(repo, plugin_layout.SERVERS[server]["entry"]):
                 files.append((plugin, path))
     seen, out = set(), []
     for plugin, path in files:

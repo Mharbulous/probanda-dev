@@ -20,7 +20,8 @@ _TOP_LEVEL_FUNCTION = re.compile(r"^(?:async )?function (\w+)\([^)]*\)\s*\{", re
 
 # The data server's bundle, inside that server's folder.
 DATA_BUNDLE = ("dist", "litigation-mcp.js")
-# Servers whose bundles are checked for Supabase and the commons tool namespace. commons
+# Servers whose bundles are checked for Supabase and the commons tool namespace are those
+# with `purity` in plugin_layout.SERVERS. commons
 # is exempt: it is the plugins' Supabase surface. canlii, files, timecamp and
 # contacts-calendars-email must carry neither
 # 'supabase' nor 'legal_commons__'. data may carry 'supabase', because its practice writes
@@ -33,13 +34,11 @@ DATA_BUNDLE = ("dist", "litigation-mcp.js")
 # suggestion-status, suggestion-withdraw or suggestion-attach-specification, and it
 # must carry no other functions path, no '/rest/v1/' and no 'legal_commons__'. So the data
 # bundle is not checked for any other Supabase use, such as a Supabase client library.
-PURITY_SERVERS = ("data", "canlii", "files", "timecamp", "contacts-calendars-email")
 DATA_FUNCTION_PATHS = ("functions/v1/items-write", "functions/v1/items-sync", "functions/v1/items-seed",
                        "functions/v1/key-request-submit", "functions/v1/key-request-status",
                        "functions/v1/suggestion-submit", "functions/v1/suggestion-status",
                        "functions/v1/suggestion-withdraw", "functions/v1/suggestion-attach-specification")
 _FUNCTIONS_PATH = re.compile(r"functions/v1/[a-z0-9_-]*")
-HOST_PATH_SERVERS = ("data", "canlii", "commons", "files", "timecamp", "contacts-calendars-email")
 
 
 # --- sources-host-guard --------------------------------------------------------------------
@@ -104,7 +103,7 @@ def sources_host_guard_violations(bundle):
 
 
 def bundle_purity_hits(server, text):
-    """The purity tokens one server's bundle text carries (see PURITY_SERVERS)."""
+    """The purity tokens one server's bundle text carries (see DATA_FUNCTION_PATHS)."""
     lowered = text.lower()
     if server != "data":
         return [token for token in ("supabase", "legal_commons__") if token in lowered]
@@ -114,7 +113,7 @@ def bundle_purity_hits(server, text):
 
 
 def check_bundle_purity(repo, plugin):
-    servers = [s for s in PURITY_SERVERS if s in plugin["servers"]]
+    servers = [s for s in plugin_layout.SERVERS if plugin_layout.SERVERS[s]["purity"] and s in plugin["servers"]]
     if not servers:
         raise NotApplicable(f"{plugin['name']} ships neither the data nor the canlii server")
     purity_hits = []
@@ -148,7 +147,7 @@ def check_sources_host_guard(repo, plugin):
 
 
 def check_bundle_no_host_path(repo, plugin):
-    servers = [s for s in HOST_PATH_SERVERS if s in plugin["servers"]]
+    servers = [s for s in plugin_layout.SERVERS if plugin_layout.SERVERS[s]["host_path"] and s in plugin["servers"]]
     if not servers:
         raise NotApplicable(f"{plugin['name']} ships no server")
     host_hits = []

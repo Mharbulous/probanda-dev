@@ -31,6 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import plugin_layout  # noqa: E402
+from cowork_rules import DESCRIPTION_MAX_CHARS, RESERVED, XML_TAG, field, scalar_value  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -39,11 +40,8 @@ REPO = Path(__file__).resolve().parent.parent
 # every plugin, legal-commons in the plugin the assignment gives it to.
 SHARED_TREE = "shared"
 EXTRA_TREES = (SHARED_TREE, "legal-commons")
-# Skills already free of Trade Secrets live under public/, the source of the public
-# repository, one skills folder per public plugin. They ship as they are, unstamped
-# and whole, so the development plugin runs the published bytes. A skill lives here
-# or under .claude/skills/, never both.
-PUBLIC_SKILLS = "public/plugins/*/skills"
+# Public skills (plugin_layout.PUBLIC_SKILLS) ship as they are, unstamped and whole,
+# so the development plugin runs the published bytes.
 TREE_EXCLUDE_DIRS = ("__pycache__", "sessions", "tests", "determinizing-tests", "evals", ".pytest_cache")
 # Text ships by extension; anything else ships only inside a roster-declared
 # asset dir. Office lock files (~$*) are never wanted, even there.
@@ -58,12 +56,6 @@ REPLACE_RETRY_SECONDS = 30  # a file watcher or sync client locks a folder for s
 # A path a hook runs from the installed plugin's folder.
 HOOK_PATH = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\s\"']+)")
 
-# Cowork silently renames an installed skill whose name has the segment "claude".
-RESERVED = re.compile(r"(?:^|[-_.])claude(?:[-_.]|$)", re.IGNORECASE)
-# Cowork rejects the whole upload when one description runs past 1024 characters
-# or contains an XML tag.
-DESCRIPTION_MAX_CHARS = 1024
-XML_TAG = re.compile(r"<[/!a-zA-Z][^>]*>")
 # No Word template or image may ship beside the letterhead renderer (CoClerk #1003:
 # a firm letterhead and a scanned signature once shipped to every install), except
 # the public court templates.
@@ -122,12 +114,15 @@ def frontmatter_end(lines):
 
 
 def stamp_skill_md(text, plugin, version):
-    """Insert the preamble after the closing frontmatter fence, behind one blank line."""
+    """Insert the preamble after the closing frontmatter fence, behind one blank line.
+    Inserted lines take the fence line's ending."""
     lines = text.split("\n")
     end = frontmatter_end(lines)
     if end is None:
         raise ValueError("no frontmatter fence to stamp after")
-    return "\n".join(lines[:end + 1] + [""] + preamble_lines(plugin, version) + lines[end + 1:])
+    cr = "\r" if lines[0].endswith("\r") else ""
+    inserted = [line + cr for line in [""] + preamble_lines(plugin, version)]
+    return "\n".join(lines[:end + 1] + inserted + lines[end + 1:])
 
 
 def frontmatter_field(text, key):
@@ -136,52 +131,7 @@ def frontmatter_field(text, key):
     end = frontmatter_end(lines)
     if end is None:
         return None
-    fm = lines[1:end]
-    for idx, line in enumerate(fm):
-        if line.startswith(key + ":"):
-            out = [line]
-            for cont in fm[idx + 1:]:
-                if cont.strip() == "" or cont[0] in (" ", "\t"):
-                    out.append(cont)
-                else:
-                    break
-            while out and out[-1].strip() == "":
-                out.pop()
-            return out
-    return None
-
-
-def scalar_value(block_lines):
-    """The YAML scalar value of a frontmatter field, so len() is the count Cowork
-    applies. Handles plain scalars and `>`/`|` blocks with chomping indicators;
-    anything rarer errs toward over-counting."""
-    first = block_lines[0].split(":", 1)[1].strip()
-    cont = block_lines[1:]
-    if not first or first[0] not in "|>":
-        parts = [first] + [c.strip() for c in cont]
-        return " ".join(p for p in parts if p)
-    style = first[0]
-    chomp = "".join(c for c in first[1:] if c in "-+")
-    indent = min((len(c) - len(c.lstrip(" ")) for c in cont if c.strip()), default=0)
-    body = [c[indent:] for c in cont]
-    if style == "|":
-        text = "\n".join(body)
-    else:
-        out, after_blank = [], False
-        for line in body:
-            if not line.strip():
-                out.append("\n")
-                after_blank = True
-            else:
-                if out and not after_blank:
-                    out.append(" ")
-                out.append(line)
-                after_blank = False
-        text = "".join(out)
-    text = text.rstrip("\n")
-    if chomp != "-":
-        text += "\n"
-    return text
+    return field(lines[1:end], key)
 
 
 def check_skills(skill_dirs):
@@ -241,17 +191,6 @@ def collect_tree(skills_root, top, declared_dirs, stamp):
     return files
 
 
-def public_skill_dirs(repo):
-    """{skill name: its folder} for every skill under a public plugin."""
-    found = {}
-    for path in sorted(repo.glob(PUBLIC_SKILLS + "/*")):
-        if path.is_dir():
-            if path.name in found:
-                stop(f"skill '{path.name}' is under two public plugins: {found[path.name]} and {path}")
-            found[path.name] = path
-    return found
-
-
 def collect(repo, spec):
     """Every output file of one plugin as {relative path: bytes}. Stops on a gate failure."""
     name = spec["name"]
@@ -268,7 +207,7 @@ def collect(repo, spec):
     if RESERVED.search(name):
         stop(f"reserved word 'claude' in plugin name '{name}'")
 
-    public = public_skill_dirs(repo)
+    public = plugin_layout.public_skill_dirs(repo)
     both = [t for t in public if t in roster or t in EXTRA_TREES or (skills_root / t).exists()]
     if both:
         stop("skill in both public/ and .claude/skills/ (a skill lives in one): " + ", ".join(both))
@@ -281,7 +220,7 @@ def collect(repo, spec):
     if private != set(roster):
         stop(f"{src / 'roster.json'} and source/assignment.json disagree on the private skills of '{name}': "
              + ", ".join(sorted(private ^ set(roster))))
-    agents = {p.stem for p in (src / "agents").glob("*.md")}
+    agents = {p.stem for p in plugin_layout.agent_files(repo, name)}
     if agents != set(spec["agents"]):
         stop(f"{src / 'agents'} and source/assignment.json disagree on the agents of '{name}': "
              + ", ".join(sorted(agents ^ set(spec["agents"]))))
@@ -297,10 +236,8 @@ def collect(repo, spec):
         if (src / fname).is_file():
             files[fname] = (src / fname).read_bytes()
     for sub in ("agents", "hooks"):
-        if (src / sub).is_dir():
-            for path in sorted((src / sub).iterdir()):
-                if path.is_file() and path.suffix != ".pyc":
-                    files[f"{sub}/{path.name}"] = path.read_bytes()
+        for path in plugin_layout.source_files(repo, name, sub):
+            files[f"{sub}/{path.name}"] = path.read_bytes()
     for top in sorted(roster):
         files.update(collect_tree(skills_root, top, roster[top], stamp=(name, version)))
     for top in extra:

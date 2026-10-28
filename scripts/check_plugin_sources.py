@@ -1,5 +1,4 @@
 """Repo layout, roster and skill lookup, and whole-tree text scans, for check_plugin.py."""
-import glob
 import json
 import os
 import re
@@ -7,6 +6,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import plugin_layout  # noqa: E402
+from cowork_rules import RESERVED  # noqa: E402
 
 BASELINES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "check_plugin_baselines")
 
@@ -15,20 +15,12 @@ COMMONS_SKILL = "legal-commons"
 # plugin, legal-commons in the plugin the assignment gives it to.
 SHARED_TREE = "shared"
 EXTRA_TREES = (SHARED_TREE, COMMONS_SKILL)
-# Skills already free of Trade Secrets live here, the source of the public repository,
-# one skills folder per public plugin, and ship whole and unstamped. A skill lives
-# here or under .claude/skills/, never both.
-PUBLIC_SKILLS = ("public", "plugins", "*", "skills")
 # The agent merged in from legal-commons' read side.
 COMMONS_AGENTS = ("troubleshooter",)
 
 # Forbidden database-particular tokens in the legal-commons gatekeeper skill:
 # matter data is reached only through /matter-data, never by naming a local DB file.
 COMMONS_FORBIDDEN = ["sqlite3", "law.sqlite", "main.sqlite", "privileged.sqlite", "practice.db"]
-
-# Cowork treats "claude" as a reserved word in installed skill names and silently
-# renames on install. Segment match only, so prose is never scanned.
-RESERVED_NAME = re.compile(r"(?:^|[-_.])claude(?:[-_.]|$)", re.IGNORECASE)
 
 # An absolute host path baked into a bundle or shipped text. Backslash-only for the
 # drive form, so "p:/" inside "http://" is not a hit; the drive letter must stand alone.
@@ -92,8 +84,7 @@ def extra_trees(plugin):
 
 def public_skill_dirs(repo):
     """{skill name: its folder} for every skill under a public plugin."""
-    return {os.path.basename(d): d for d in sorted(glob.glob(os.path.join(repo, *PUBLIC_SKILLS, "*")))
-            if os.path.isdir(d)}
+    return {s: str(d) for s, d in plugin_layout.public_skill_dirs(repo).items()}
 
 
 def public_skills(repo, plugin):
@@ -108,7 +99,7 @@ def skill_names(repo, plugin):
 
 
 def skill_md(repo, skill):
-    return os.path.join(public_skill_dirs(repo).get(skill) or os.path.join(skills_root(repo), skill), "SKILL.md")
+    return os.path.join(str(plugin_layout.skill_dir(repo, skill)), "SKILL.md")
 
 
 # --- scanning --------------------------------------------------------------------------
@@ -178,7 +169,7 @@ def check_roster_sanity(repo, plugin):
 
 
 def check_reserved_name(repo, plugin):
-    reserved = [s for s in skill_names(repo, plugin) if RESERVED_NAME.search(s)]
+    reserved = [s for s in skill_names(repo, plugin) if RESERVED.search(s)]
     return not reserved, ("rename: " + ", ".join(reserved)) if reserved else ""
 
 
