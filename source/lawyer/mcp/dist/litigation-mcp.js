@@ -1,4 +1,4 @@
-// build-stamp: a3a66750643c
+// build-stamp: 9b06e4affcfd
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -81113,7 +81113,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "a3a66750643c";
+var BUILD_STAMP = false ? null : "9b06e4affcfd";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -109253,10 +109253,10 @@ async function serveKeyPage(save2) {
   });
   return `http://127.0.0.1:${await listening}/cloud-key/${link}`;
 }
-function listen(handle4, onError) {
+function listen(handle4, onError, failure2 = "<p>Return to Claude and ask for a new link.</p>", style = STYLE4) {
   const server = createServer((req, res) => {
     handle4(req, res).catch(() => {
-      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
+      if (!res.headersSent) page(res, 500, "Something went wrong", failure2, style);
       else res.destroy();
     });
   });
@@ -109296,7 +109296,7 @@ async function handle(req, res) {
   );
 }
 var FORM = `<p>Paste the key Probanda gave you for this computer. It lets this computer save practice records, send suggestions about the plugin and use the legal commons.</p><form method="post"><label>Probanda's Cloud key<br><input type="password" name="secret" autocomplete="off" required autofocus></label><button type="submit">Check and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p><p class="note">No key yet? Return to Claude and ask to request Probanda's key.</p>`;
-function page(res, status3, title, body) {
+function page(res, status3, title, body, style = STYLE4) {
   res.writeHead(status3, {
     "Content-Type": "text/html; charset=utf-8",
     "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
@@ -109305,7 +109305,7 @@ function page(res, status3, title, body) {
     "X-Content-Type-Options": "nosniff"
   });
   res.end(
-    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape2(title)}</title><style>${STYLE4}</style></head><body><main><h1>${escape2(title)}</h1>${body}</main></body></html>`
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape2(title)}</title><style>${style}</style></head><body><main><h1>${escape2(title)}</h1>${body}</main></body></html>`
   );
 }
 var STYLE4 = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note{color:#aaa}}";

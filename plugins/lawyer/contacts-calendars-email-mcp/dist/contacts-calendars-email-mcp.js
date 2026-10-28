@@ -1,4 +1,4 @@
-// build-stamp: a2d669b0c5ec
+// build-stamp: 0f70cffe5ae6
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108183,8 +108183,8 @@ async function pdfPages(path) {
     try {
       const pages = [];
       for (let n3 = 1; n3 <= doc.numPages; n3++) {
-        const page2 = await doc.getPage(n3);
-        const content = await page2.getTextContent();
+        const page3 = await doc.getPage(n3);
+        const content = await page3.getTextContent();
         let text2 = "";
         for (const item of content.items) {
           if (!("str" in item)) continue;
@@ -108192,7 +108192,7 @@ async function pdfPages(path) {
           if (item.hasEOL) text2 += "\n";
         }
         pages.push(text2);
-        page2.cleanup();
+        page3.cleanup();
       }
       return pages;
     } finally {
@@ -118429,10 +118429,42 @@ var draftsFolder = (client) => specialFolder(client, "\\Drafts", ["Drafts"]);
 
 // src/mail/page.ts
 import { randomBytes } from "node:crypto";
-import { createServer } from "node:http";
 
 // src/key-request/page.ts
+import { createServer } from "node:http";
 var MAX_BODY = 4 * 1024;
+function listen(handle2, onError, failure = "<p>Return to Claude and ask for a new link.</p>", style = STYLE) {
+  const server = createServer((req, res) => {
+    handle2(req, res).catch(() => {
+      if (!res.headersSent) page(res, 500, "Something went wrong", failure, style);
+      else res.destroy();
+    });
+  });
+  server.on("connection", (socket) => socket.unref());
+  return new Promise((resolve, reject) => {
+    server.once("error", (err) => {
+      onError();
+      reject(err);
+    });
+    server.listen(0, "127.0.0.1", () => {
+      server.unref();
+      resolve(server.address().port);
+    });
+  });
+}
+function page(res, status2, title, body, style = STYLE) {
+  res.writeHead(status2, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff"
+  });
+  res.end(
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape2(title)}</title><style>${style}</style></head><body><main><h1>${escape2(title)}</h1>${body}</main></body></html>`
+  );
+}
+var STYLE = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note{color:#aaa}}";
 function escape2(text2) {
   return text2.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
 }
@@ -118477,47 +118509,30 @@ var listening;
 async function servePasswordPage(fields, save) {
   const token = randomBytes(24).toString("hex");
   pending = { token, fields, save };
-  listening ??= listen();
+  listening ??= listen(handle, () => {
+    listening = void 0;
+  }, "<p>Return to Claude and ask for a new sign-in link.</p>", STYLE2);
   return `http://127.0.0.1:${await listening}/mail/${token}`;
-}
-function listen() {
-  const server = createServer((req, res) => {
-    handle(req, res).catch(() => {
-      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new sign-in link.</p>");
-      else res.destroy();
-    });
-  });
-  server.on("connection", (socket) => socket.unref());
-  return new Promise((resolve, reject) => {
-    server.once("error", (err) => {
-      listening = void 0;
-      reject(err);
-    });
-    server.listen(0, "127.0.0.1", () => {
-      server.unref();
-      resolve(server.address().port);
-    });
-  });
 }
 async function handle(req, res) {
   const m3 = /^\/mail\/([0-9a-f]{48})$/.exec(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
   const current = pending;
   if (!m3 || !current || m3[1] !== current.token) {
-    return page(res, 404, "This link has expired", "<p>Return to Claude and ask for a new sign-in link.</p>");
+    return page2(res, 404, "This link has expired", "<p>Return to Claude and ask for a new sign-in link.</p>");
   }
-  if (req.method === "GET") return page(res, 200, TITLE, form(current.fields));
-  if (req.method !== "POST") return page(res, 405, "Not allowed", "");
+  if (req.method === "GET") return page2(res, 200, TITLE, form(current.fields));
+  if (req.method !== "POST") return page2(res, 405, "Not allowed", "");
   const secret = (new URLSearchParams(await readBody(req)).get("secret") ?? "").trim();
   let outcome;
   try {
     outcome = await current.save(secret);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return page(res, 200, TITLE, `<p class="error">Not saved: ${escape2(message)}</p>${form(current.fields)}`);
+    return page2(res, 200, TITLE, `<p class="error">Not saved: ${escape2(message)}</p>${form(current.fields)}`);
   }
   if (pending === current) pending = void 0;
   const saved = outcome.persisted ? "<p>It is saved on this computer, encrypted, and will be used after a restart.</p>" : `<p class="error">It works for this session only and could not be saved: ${escape2(outcome.warning ?? "")}</p>`;
-  page(res, 200, "Signed in", `<p>Signed in. ${escape2(String(outcome.inbox.messages))} messages in the inbox.</p>${davLines(outcome)}${saved}<p>You can close this tab and return to Claude.</p>`);
+  page2(res, 200, "Signed in", `<p>Signed in. ${escape2(String(outcome.inbox.messages))} messages in the inbox.</p>${davLines(outcome)}${saved}<p>You can close this tab and return to Claude.</p>`);
 }
 function davLines(outcome) {
   const line = (label, r3) => !r3 ? "" : r3.ok ? `<p>${label}: signed in.</p>` : `<p class="error">${label}: sign-in failed, so it was not saved: ${escape2(r3.detail ?? "")}</p>`;
@@ -118527,19 +118542,8 @@ function form(fields) {
   const row = (label, value) => value ? `<dt>${label}</dt><dd>${escape2(value)}</dd>` : "";
   return `<dl><dt>Server</dt><dd>${escape2(fields.host)}:${fields.port}</dd><dt>Username</dt><dd>${escape2(fields.username)}</dd>` + row("Calendar and contacts username", fields.davUsername) + row("Calendar server", fields.caldavUrl) + row("Time zone", fields.timezone) + row("Contacts server", fields.carddavUrl) + "</dl>" + (needsAppleIdHint(fields) ? "<p>" + APPLE_ID_HINT + "</p>" : "") + "<p>" + SENT_TO + escape2(recipients(fields)) + '</p><form method="post"><label>' + SECRET_HINT + "<br>" + SECRET_INPUT + '</label><button type="submit">Sign in and save</button></form><p class="note">What you type here goes only to Probanda on this computer. It is never sent to Claude.</p>' + FLOW + DISCLAIMER;
 }
-function page(res, status2, title, body) {
-  res.writeHead(status2, {
-    "Content-Type": "text/html; charset=utf-8",
-    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
-    "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer",
-    "X-Content-Type-Options": "nosniff"
-  });
-  res.end(
-    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape2(title)}</title><style>${STYLE}</style></head><body><main><h1>${escape2(title)}</h1>${body}</main></body></html>`
-  );
-}
-var STYLE = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}dt{font-weight:600}dd{margin:0 0 .5rem}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}h2{font-size:1.1rem;margin-top:2rem}li{margin-bottom:.5rem}.disclaimer{font-style:italic;margin-top:4rem;color:#555;font-size:.85rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note,.disclaimer{color:#aaa}}";
+var page2 = (res, status2, title, body) => page(res, status2, title, body, STYLE2);
+var STYLE2 = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}dt{font-weight:600}dd{margin:0 0 .5rem}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}h2{font-size:1.1rem;margin-top:2rem}li{margin-bottom:.5rem}.disclaimer{font-style:italic;margin-top:4rem;color:#555;font-size:.85rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note,.disclaimer{color:#aaa}}";
 
 // node_modules/tsdav/dist/tsdav.mjs
 var import_debug = __toESM(require_src2(), 1);

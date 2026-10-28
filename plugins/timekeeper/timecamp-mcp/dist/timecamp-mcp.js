@@ -1,4 +1,4 @@
-// build-stamp: 675a6831c66e
+// build-stamp: 11c76ae205a4
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15678,10 +15678,10 @@ import { randomBytes } from "node:crypto";
 // src/key-request/page.ts
 import { createServer } from "node:http";
 var MAX_BODY = 4 * 1024;
-function listen(handle2, onError) {
+function listen(handle2, onError, failure = "<p>Return to Claude and ask for a new link.</p>", style = STYLE) {
   const server = createServer((req, res) => {
     handle2(req, res).catch(() => {
-      if (!res.headersSent) page(res, 500, "Something went wrong", "<p>Return to Claude and ask for a new link.</p>");
+      if (!res.headersSent) page(res, 500, "Something went wrong", failure, style);
       else res.destroy();
     });
   });
@@ -15697,7 +15697,7 @@ function listen(handle2, onError) {
     });
   });
 }
-function page(res, status2, title, body) {
+function page(res, status2, title, body, style = STYLE) {
   res.writeHead(status2, {
     "Content-Type": "text/html; charset=utf-8",
     "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
@@ -15706,7 +15706,7 @@ function page(res, status2, title, body) {
     "X-Content-Type-Options": "nosniff"
   });
   res.end(
-    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape2(title)}</title><style>${STYLE}</style></head><body><main><h1>${escape2(title)}</h1>${body}</main></body></html>`
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape2(title)}</title><style>${style}</style></head><body><main><h1>${escape2(title)}</h1>${body}</main></body></html>`
   );
 }
 var STYLE = "body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#fafafa;color:#222}main{max-width:32rem;margin:2rem auto}input{display:block;width:100%;box-sizing:border-box;margin:.5rem 0 1rem;padding:.5rem;font-size:1rem}button{padding:.5rem 1rem;font-size:1rem}.error{color:#a00}.note{color:#555;font-size:.9rem}@media (prefers-color-scheme: dark){body{background:#1e1e1e;color:#eee}.error{color:#f88}.note{color:#aaa}}";
