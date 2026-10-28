@@ -31,6 +31,7 @@ import { resolveCaseDataRoot } from "../practice/backend.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { EXECUTE_TIMEOUT_MS, pythonTimeoutMs, READ_TIMEOUT_MS, WRITE_TIMEOUT_MS } from "../python-timeout.js";
+import { stagedStorePython } from "../staged-store.js";
 import { acquireDataLock } from "./lock.js";
 
 // COCLERK_TIMECAMPING_DB_PATH is a full-path test override, mirroring
@@ -79,56 +80,19 @@ def do_query(req):
     return {"rows": rows}
 
 
-def copy_fsync(src, dst):
-    """copy2 then flush to disk, so a later rename cannot expose a torn file."""
-    shutil.copy2(src, dst)
-    with open(dst, 'rb+') as fh:
-        os.fsync(fh.fileno())
-    return dst
-
-
-def replace_live(staged, db_path):
-    # Stage the finished file beside db_path (same volume), flush it, then rename it over the
-    # live file, so a kill at any point leaves db_path whole: old or new, never torn.
-    sibling = os.path.join(os.path.dirname(db_path), f'coclerk_timecamping_replace_{os.environ["COCLERK_STAGING_TAG"]}.db')
-    try:
-        copy_fsync(staged, sibling)
-        os.replace(sibling, db_path)
-    finally:
-        if os.path.exists(sibling):
-            os.remove(sibling)
+${stagedStorePython({ store: "timecamping", ext: ".db", migrateTool: "timecamping_data__migrate" })}
 
 
 def do_execute(req):
-    db_path = req['db_path']
-    if not os.path.exists(db_path):
-        raise SystemExit(
-            f"No timecamping database found at {db_path}. Run timecamping_data__migrate first.")
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_timecamping_execute_{os.environ["COCLERK_STAGING_TAG"]}_')
-    try:
-        staged = os.path.join(tmp, os.path.basename(db_path))
-        shutil.copy2(db_path, staged)
-        con = sqlite3.connect(staged)
+    def mutate(con):
         try:
-            con.execute("PRAGMA journal_mode = DELETE")
-            con.execute("PRAGMA foreign_keys = ON")
-            mode = con.execute("PRAGMA journal_mode").fetchone()[0]
-            if str(mode).lower() != 'delete':
-                raise SystemExit(f"Refusing to operate: journal_mode is '{mode}', expected 'delete'.")
-            try:
-                con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
-            except Exception:
-                if con.in_transaction:
-                    con.execute("ROLLBACK")
-                raise
-        finally:
-            con.close()
-        # Replace the live file only after a successful commit and a closed
-        # connection -- never mutate the live (possibly synced) file in place.
-        replace_live(staged, db_path)
-        return {"ok": True}
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+            con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
+        except Exception:
+            if con.in_transaction:
+                con.execute("ROLLBACK")
+            raise
+        return {"ok": True}, True
+    return staged_write(req, 'execute', mutate)
 
 
 _IDENT = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*$')
@@ -174,57 +138,38 @@ def _upsert_statement(entry, line_no):
 
 
 def do_bulk_upsert(req):
-    db_path = req['db_path']
     path = req['path']
     if not os.path.isfile(path):
         raise SystemExit(f"file not found: {path}")
-    if not os.path.exists(db_path):
-        raise SystemExit(
-            f"No timecamping database found at {db_path}. Run timecamping_data__migrate first.")
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_timecamping_bulk_upsert_{os.environ["COCLERK_STAGING_TAG"]}_')
-    try:
-        staged = os.path.join(tmp, os.path.basename(db_path))
-        shutil.copy2(db_path, staged)
-        con = sqlite3.connect(staged, isolation_level=None)
+
+    def mutate(con):
+        lines = 0
+        rows = {}
+        con.execute("BEGIN")
         try:
-            con.execute("PRAGMA journal_mode = DELETE")
-            con.execute("PRAGMA foreign_keys = ON")
-            mode = con.execute("PRAGMA journal_mode").fetchone()[0]
-            if str(mode).lower() != 'delete':
-                raise SystemExit(f"Refusing to operate: journal_mode is '{mode}', expected 'delete'.")
-            lines = 0
-            rows = {}
-            con.execute("BEGIN")
-            try:
-                with open(path, 'r', encoding='utf-8') as fh:
-                    for line_no, raw in enumerate(fh, 1):
-                        raw = raw.strip()
-                        if not raw:
-                            continue
-                        try:
-                            entry = json.loads(raw)
-                        except ValueError as exc:
-                            raise SystemExit(f"line {line_no} is not valid JSON: {exc}")
-                        table, sql, values = _upsert_statement(entry, line_no)
-                        try:
-                            con.execute(sql, values)
-                        except sqlite3.Error as exc:
-                            raise SystemExit(f"line {line_no}: {exc}")
-                        lines += 1
-                        rows[table] = rows.get(table, 0) + 1
-                con.execute("COMMIT")
-            except BaseException:
-                if con.in_transaction:
-                    con.execute("ROLLBACK")
-                raise
-        finally:
-            con.close()
-        # Same copy-back discipline as execute: only after a clean commit and
-        # a closed connection, never mutating the live file in place.
-        replace_live(staged, db_path)
-        return {"lines": lines, "rows": rows}
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+            with open(path, 'r', encoding='utf-8') as fh:
+                for line_no, raw in enumerate(fh, 1):
+                    raw = raw.strip()
+                    if not raw:
+                        continue
+                    try:
+                        entry = json.loads(raw)
+                    except ValueError as exc:
+                        raise SystemExit(f"line {line_no} is not valid JSON: {exc}")
+                    table, sql, values = _upsert_statement(entry, line_no)
+                    try:
+                        con.execute(sql, values)
+                    except sqlite3.Error as exc:
+                        raise SystemExit(f"line {line_no}: {exc}")
+                    lines += 1
+                    rows[table] = rows.get(table, 0) + 1
+            con.execute("COMMIT")
+        except BaseException:
+            if con.in_transaction:
+                con.execute("ROLLBACK")
+            raise
+        return {"lines": lines, "rows": rows}, True
+    return staged_write(req, 'bulk_upsert', mutate, isolation_level=None)
 
 
 def main():

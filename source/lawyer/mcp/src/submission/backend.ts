@@ -41,6 +41,7 @@ import { DataServerError, PythonTimeoutError, ValidationError } from "../errors.
 import { pythonDriverFile } from "../python-driver.js";
 import { pythonStarts, runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs as namespaceTimeoutMs, READ_TIMEOUT_MS, WRITE_TIMEOUT_MS } from "../python-timeout.js";
+import { stagedStorePython } from "../staged-store.js";
 import { acquireDataLock } from "./lock.js";
 
 const PY_HELPER = String.raw`
@@ -74,134 +75,60 @@ def do_query(req):
     return {"rows": rows}
 
 
-def copy_fsync(src, dst):
-    """copy2 then flush to disk, so a later rename cannot expose a torn file."""
-    shutil.copy2(src, dst)
-    with open(dst, 'rb+') as fh:
-        os.fsync(fh.fileno())
-    return dst
-
-
-def replace_live(staged, db_path):
-    # Stage the finished file beside db_path (same volume), flush it, then rename it over the
-    # live file, so a kill at any point leaves db_path whole: old or new, never torn.
-    sibling = os.path.join(os.path.dirname(db_path), f'coclerk_submission_replace_{os.environ["COCLERK_STAGING_TAG"]}.sqlite')
-    try:
-        copy_fsync(staged, sibling)
-        os.replace(sibling, db_path)
-    finally:
-        if os.path.exists(sibling):
-            os.remove(sibling)
+${stagedStorePython({ store: "submission", ext: ".sqlite", migrateTool: "drafting_data__migrate" })}
 
 
 def do_execute(req):
-    db_path = req['db_path']
-    if not os.path.exists(db_path):
-        raise SystemExit(
-            f"No submission database found at {db_path}. Run drafting_data__migrate first.")
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_submission_execute_{os.environ["COCLERK_STAGING_TAG"]}_')
-    try:
-        staged = os.path.join(tmp, os.path.basename(db_path))
-        shutil.copy2(db_path, staged)
-        con = sqlite3.connect(staged)
+    def mutate(con):
         try:
-            con.execute("PRAGMA journal_mode = DELETE")
-            con.execute("PRAGMA foreign_keys = ON")
-            mode = con.execute("PRAGMA journal_mode").fetchone()[0]
-            if str(mode).lower() != 'delete':
-                raise SystemExit(f"Refusing to operate: journal_mode is '{mode}', expected 'delete'.")
-            try:
-                con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
-            except Exception:
-                if con.in_transaction:
-                    con.execute("ROLLBACK")
-                raise
-            changes = con.total_changes
-        finally:
-            con.close()
-        # Replace the live file only after a successful commit and a closed
-        # connection -- never mutate the live (possibly synced) file in place.
-        replace_live(staged, db_path)
-        return {"ok": True, "changes": changes}
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+            con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
+        except Exception:
+            if con.in_transaction:
+                con.execute("ROLLBACK")
+            raise
+        return {"ok": True, "changes": con.total_changes}, True
+    return staged_write(req, 'execute', mutate)
 
 
 def do_write(req):
     # One parameterized statement, staged exactly as do_execute stages a script, so a value
     # (a JSON snapshot full of quotes) is bound rather than spliced into SQL text.
-    db_path = req['db_path']
-    if not os.path.exists(db_path):
-        raise SystemExit(
-            f"No submission database found at {db_path}. Run drafting_data__migrate first.")
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_submission_write_{os.environ["COCLERK_STAGING_TAG"]}_')
-    try:
-        staged = os.path.join(tmp, os.path.basename(db_path))
-        shutil.copy2(db_path, staged)
-        con = sqlite3.connect(staged, isolation_level=None)
+    def mutate(con):
+        con.execute("BEGIN")
         try:
-            con.execute("PRAGMA journal_mode = DELETE")
-            con.execute("PRAGMA foreign_keys = ON")
-            mode = con.execute("PRAGMA journal_mode").fetchone()[0]
-            if str(mode).lower() != 'delete':
-                raise SystemExit(f"Refusing to operate: journal_mode is '{mode}', expected 'delete'.")
-            con.execute("BEGIN")
-            try:
-                cur = con.execute(req['sql'], req.get('params') or [])
-                out = {"ok": True, "rowid": cur.lastrowid, "changes": cur.rowcount}
-                con.execute("COMMIT")
-            except Exception:
-                if con.in_transaction:
-                    con.execute("ROLLBACK")
-                raise
-        finally:
-            con.close()
-        replace_live(staged, db_path)
-        return out
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+            cur = con.execute(req['sql'], req.get('params') or [])
+            out = {"ok": True, "rowid": cur.lastrowid, "changes": cur.rowcount}
+            con.execute("COMMIT")
+        except Exception:
+            if con.in_transaction:
+                con.execute("ROLLBACK")
+            raise
+        return out, True
+    return staged_write(req, 'write', mutate, isolation_level=None)
 
 
 def do_write_all(req):
     # Several parameterized statements in one transaction, staged as do_write stages one. A
     # statement carrying expect_changes that changes another number of rows rolls the whole
     # transaction back, and the live file is never touched.
-    db_path = req['db_path']
-    if not os.path.exists(db_path):
-        raise SystemExit(
-            f"No submission database found at {db_path}. Run drafting_data__migrate first.")
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_submission_write_{os.environ["COCLERK_STAGING_TAG"]}_')
-    try:
-        staged = os.path.join(tmp, os.path.basename(db_path))
-        shutil.copy2(db_path, staged)
-        con = sqlite3.connect(staged, isolation_level=None)
+    def mutate(con):
+        con.execute("BEGIN")
+        results = []
         try:
-            con.execute("PRAGMA journal_mode = DELETE")
-            con.execute("PRAGMA foreign_keys = ON")
-            mode = con.execute("PRAGMA journal_mode").fetchone()[0]
-            if str(mode).lower() != 'delete':
-                raise SystemExit(f"Refusing to operate: journal_mode is '{mode}', expected 'delete'.")
-            con.execute("BEGIN")
-            results = []
-            try:
-                for i, st in enumerate(req['statements']):
-                    cur = con.execute(st['sql'], st.get('params') or [])
-                    results.append({"rowid": cur.lastrowid, "changes": cur.rowcount})
-                    expected = st.get('expect_changes')
-                    if expected is not None and cur.rowcount != expected:
-                        con.execute("ROLLBACK")
-                        return {"ok": False, "failed": i, "changes": cur.rowcount}
-                con.execute("COMMIT")
-            except Exception:
-                if con.in_transaction:
+            for i, st in enumerate(req['statements']):
+                cur = con.execute(st['sql'], st.get('params') or [])
+                results.append({"rowid": cur.lastrowid, "changes": cur.rowcount})
+                expected = st.get('expect_changes')
+                if expected is not None and cur.rowcount != expected:
                     con.execute("ROLLBACK")
-                raise
-        finally:
-            con.close()
-        replace_live(staged, db_path)
-        return {"ok": True, "results": results}
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+                    return {"ok": False, "failed": i, "changes": cur.rowcount}, False
+            con.execute("COMMIT")
+        except Exception:
+            if con.in_transaction:
+                con.execute("ROLLBACK")
+            raise
+        return {"ok": True, "results": results}, True
+    return staged_write(req, 'write', mutate, isolation_level=None)
 
 
 def main():

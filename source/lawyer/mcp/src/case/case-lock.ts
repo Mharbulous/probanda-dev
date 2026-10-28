@@ -25,115 +25,24 @@
 // BEFORE pointer resolution, which itself rewrites probanda.json and may move
 // binaries out of the legacy `9. AI` folder.
 
-import { createHash, randomUUID } from "node:crypto";
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, writeSync } from "node:fs";
-import { homedir } from "node:os";
-import { win32 as pathWin32 } from "node:path";
+import { acquireLock, type HeldLock, type LockSite } from "../data-lock.js";
 
-import { DataServerError } from "../errors.js";
-import { orphanClaims, readLockKey, removeLockIfKey } from "../lock-claim.js";
+const SITE: LockSite = {
+  envVar: "COCLERK_CASE_LOCK_ROOT",
+  dirName: "case-locks",
+  attempts: 5,
+  recordField: "matterRoot",
+  label: "matter-data",
+  subject: "matter",
+};
 
-const LOCK_ATTEMPTS = 5;
-const LOCK_RETRY_MS = 400;
-
-// 15 minutes, not knowledge/sidecar.ts's 60s: a migration on a large matter legitimately
-// runs for minutes, and breaking a live holder's lock mid-chain would be far
-// worse than waiting. An execute finishes in seconds but shares the threshold --
-// it is set by the longest legitimate holder, not the shortest.
-const LOCK_STALE_MS = 900_000;
-
-export interface CaseLock {
-  release(): void;
-  brokeStale: boolean;
-}
-
-function lockDir(env: NodeJS.ProcessEnv): string {
-  const base = env.COCLERK_CASE_LOCK_ROOT
-    || pathWin32.join(env.LOCALAPPDATA || homedir(), "Coclerk", "case-locks");
-  mkdirSync(base, { recursive: true });
-  return base;
-}
-
-function lockPath(matterRoot: string, env: NodeJS.ProcessEnv): string {
-  const key = createHash("sha256")
-    .update(pathWin32.normalize(matterRoot).toLowerCase())
-    .digest("hex")
-    .slice(0, 16);
-  return pathWin32.join(lockDir(env), `${key}.lock`);
-}
+export type CaseLock = HeldLock;
 
 /**
  * Take the write lock for one matter. Always release in a `finally` -- a lock
  * held in TS survives a crashed or killed Python child, which is why it lives
  * here rather than inside migrate_engine.py or the backend helper.
  */
-export async function acquireCaseLock(
-  matterRoot: string,
-  env: NodeJS.ProcessEnv = process.env
-): Promise<CaseLock> {
-  const lock = lockPath(matterRoot, env);
-  let brokeStale = false;
-
-  for (let attempt = 0; attempt < LOCK_ATTEMPTS; attempt++) {
-    try {
-      const token = randomUUID();
-      const fd = openSync(lock, "wx");
-      writeSync(fd, JSON.stringify({ pid: process.pid, ts: new Date().toISOString(), matterRoot, token }));
-      closeSync(fd);
-      return {
-        brokeStale,
-        release() {
-          releaseIfOurs(lock, token);
-        },
-      };
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
-
-      const key = readLockKey(lock, "token");
-      if (key === null) continue; // vanished — retry immediately
-      if (isStale(lock) && removeLockIfKey(lock, "token", key, () => isStale(lock))) {
-        brokeStale = true;
-        continue;
-      }
-
-      if (attempt < LOCK_ATTEMPTS - 1) await sleep(LOCK_RETRY_MS);
-    }
-  }
-
-  throw new DataServerError(
-    `could not acquire the matter-data write lock within ${
-      (LOCK_ATTEMPTS * LOCK_RETRY_MS) / 1000
-    }s (${lock}: ${holderOf(lock)}); another session is writing to or migrating this matter`,
-    "lock_unavailable"
-  );
-}
-
-// Unlink only while the file still carries this holder's token: after a stale
-// takeover it is another holder's lock.
-function releaseIfOurs(lock: string, token: string): void {
-  try {
-    removeLockIfKey(lock, "token", token, undefined, 500);
-  } catch {
-    // Nothing to undo; a leaked lock surfaces as lock_unavailable once it ages.
-  }
-}
-
-function isStale(lock: string): boolean {
-  try {
-    return Date.now() - statSync(lock).mtimeMs > LOCK_STALE_MS;
-  } catch {
-    return false;
-  }
-}
-
-function holderOf(lock: string): string {
-  try {
-    return (existsSync(lock) ? readFileSync(lock, "utf-8").trim() : "released") + orphanClaims(lock);
-  } catch {
-    return "unreadable";
-  }
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+export function acquireCaseLock(matterRoot: string, env: NodeJS.ProcessEnv = process.env): Promise<CaseLock> {
+  return acquireLock(SITE, matterRoot, env);
 }
