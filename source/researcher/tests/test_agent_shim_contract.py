@@ -41,14 +41,15 @@ def _bridged(tool):
 # Sentences the `description:` field must keep verbatim: skills route to the agent by
 # them, and nothing else pins them.
 DESCRIPTION_CLAUSES = [
-    "Notes up every authority relied on, compares each authority's facts to the "
-    "situation asked about, and gates disclosure behind a confidence summary.",
+    "Audits the legal-commons pool, the matter's 6. LAW folders and case database, "
+    "and citation-checker's note-up records before speaking, and gates disclosure "
+    "behind a confidence summary.",
     "Every statement of law carries a pinpoint citation; anything uncited is offered "
     "as research, never asserted.",
-    "Also takes a scoped `mode: inventory` / `report: brief` dispatch — a cheap "
-    "holdings check over named criteria that states no law.",
-    "Hands external research off to /legal-research (westlaw-query-optimizer) + "
-    "research-paralegal — never browses itself.",
+    "Also takes `mode: inventory` / `report: brief` (a holdings check over named "
+    "criteria) and `mode: plan` (a question's issues, sources in order and completion "
+    "test, before any search); neither states law.",
+    "Never browses: external research goes to /legal-research and research-paralegal.",
     "Not for procedural mechanics, deadline arithmetic, or restating a party's own "
     "pleaded positions.",
 ]
