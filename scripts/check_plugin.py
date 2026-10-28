@@ -3,6 +3,7 @@
 
 Usage:
   python scripts/check_plugin.py                         run every check; exit 1 on any FAIL
+  python scripts/check_plugin.py --verbose               the same, listing every check
   python scripts/check_plugin.py skill-source-baseline   rewrite the shipped-tree-purity ratchet baseline
 
 Ported from CoClerk's plugin-packager `direct_mode.py check litigation`, with
@@ -12,9 +13,9 @@ legal-commons/), plugin sources under source/<plugin>/, and the built plugin
 under plugins/<plugin>/.
 
 The checks run once for each plugin the repo builds (plugin_layout.py: every
-plugin in source/assignment.json), then the checks across plugins run once. Each check prints one
-`[PASS]` or `[FAIL]` line, or an `[N/A]` line saying why it does not apply to a
-plugin that does not ship the skill, agent or server it guards; there are no
+plugin in source/assignment.json), then the checks across plugins run once. Each
+plugin prints a count of its PASS, FAIL and N/A results and every FAIL in full;
+--verbose prints every check, each N/A with why it does not apply. There are no
 silent skips. The baselines live in check_plugin_baselines/ beside this file.
 """
 import glob
@@ -285,19 +286,23 @@ def main(argv):
             print(f"{scan}: {sum(counts[scan].values())} hits in {len(counts[scan])} files")
         print("wrote", SKILL_SOURCE_BASELINE)
         return 0
-    if argv[1:]:
+    verbose = argv[1:] == ["--verbose"]
+    if argv[1:] and not verbose:
         print(__doc__)
         return 2
     plugins = plugin_layout.plugins(REPO)
     results = run_checks(REPO)
     marks = {True: "PASS", False: "FAIL", None: "N/A"}
     for name in [*plugins, None]:
-        if name is None:
-            print("Checks across the plugins built:")
+        mine = [(label, ok, detail) for owner, label, ok, detail in results if owner == name]
+        if verbose:
+            print("Checks across the plugins built:" if name is None else
+                  f"Invariant checks for '{name}' ({len(skill_names(REPO, plugins[name]))} skills):")
         else:
-            print(f"Invariant checks for '{name}' ({len(skill_names(REPO, plugins[name]))} skills):")
-        for owner, label, ok, detail in results:
-            if owner == name:
+            counts = [f"{n} {m}" for m in marks.values() if (n := sum(marks[ok] == m for _, ok, _ in mine))]
+            print(f"{name or 'across plugins'}: {', '.join(counts)}")
+        for label, ok, detail in mine:
+            if verbose or ok is False:
                 print(f"  [{marks[ok]}] {label}" + (f" — {detail}" if detail else ""))
     failures = [label for _owner, label, ok, _ in results if ok is False]
     if failures:

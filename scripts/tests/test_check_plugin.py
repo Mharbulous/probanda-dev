@@ -282,22 +282,26 @@ class TestCleanFixture(FixtureTest):
         self.assertIn(b"supabase", read(self.fixture.root, "source/litigator/commons-mcp/dist/legal-commons-mcp.js"))
         self.assertTrue(self.fixture.results()["bundle-purity"][0])
 
-    def test_main_prints_one_line_per_check_and_exits_by_verdict(self):
-        def run_main():
+    def test_main_prints_counts_and_failures_and_exits_by_verdict(self):
+        def run_main(*args):
             out = io.TextIOWrapper(io.BytesIO(), encoding="utf-8")   # main() reconfigures stdout
             with mock.patch.object(check_plugin, "REPO", self.fixture.root), contextlib.redirect_stdout(out):
-                code = check_plugin.main(["check_plugin.py"])
+                code = check_plugin.main(["check_plugin.py", *args])
             out.flush()
             return code, out.buffer.getvalue().decode("utf-8")
 
         code, out = run_main()
         self.assertEqual(code, 0, out)
+        self.assertEqual(out.splitlines(),
+                         [f"litigator: {len(CHECK_NAMES) - 4} PASS", "across plugins: 4 PASS", "", "ALL CHECKS PASSED"])
+        code, out = run_main("--verbose")
+        self.assertEqual(code, 0, out)
         self.assertEqual(out.count("  [PASS] "), len(CHECK_NAMES))
-        self.assertIn("ALL CHECKS PASSED", out)
 
         self.fixture.write("source/litigator/canlii-mcp/dist/canlii-mcp.js", "var x = 'supabase';\n")
         code, out = run_main()
         self.assertEqual(code, 1)
+        self.assertIn("litigator: 20 PASS, 1 FAIL", out)
         self.assertIn("  [FAIL] bundle-purity: ", out)
         self.assertIn(" — found: canlii-mcp/dist: supabase", out)
         self.assertIn("CHECK FAILED — 1 invariant(s) violated.", out)
@@ -773,7 +777,7 @@ class TestSecondPlugin(FixtureTest):
         for rel in check_plugin_tree.skill_source_expected(skills, [], {}, ("shared",)):
             self.fixture.write("plugins/solicitor/skills/" + rel, read(skills, rel))
         solicitor = {"name": "solicitor", "source": "source/solicitor", "requires": ["litigator"],
-                     "servers": [], "skills": [], "agents": []}
+                     "servers": [], "skills": [], "agents": [], "hooks": {}}
         patcher = mock.patch.object(plugin_layout, "plugins",
                                     return_value={"litigator": self.fixture.plugin, "solicitor": solicitor})
         patcher.start()
@@ -814,7 +818,7 @@ class TestSecondPlugin(FixtureTest):
     def test_main_prints_a_section_for_each_plugin_and_one_across_them(self):
         out = io.TextIOWrapper(io.BytesIO(), encoding="utf-8")   # main() reconfigures stdout
         with mock.patch.object(check_plugin, "REPO", self.fixture.root), contextlib.redirect_stdout(out):
-            code = check_plugin.main(["check_plugin.py"])
+            code = check_plugin.main(["check_plugin.py", "--verbose"])
         out.flush()
         text = out.buffer.getvalue().decode("utf-8")
         self.assertEqual(code, 0, text)
