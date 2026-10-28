@@ -11,7 +11,8 @@ The extractor families get their own later specs (§12). This spec defines only 
 - `docs/Plans/2026-10-19_token-efficiency-findings.md` holds the measured model, batching and return-format findings this spec relies on (E1, E3, E7, #147).
 - `docs/Specs/2026-10-19_token-efficient-ingest-and-housekeeping-spec.md` §4.6 is implemented here, as §2 (an extract-facts result file and a loader).
 - `docs/Specs/2026-10-24_ingest-model-routing-by-document-type-spec.md` is proposed and not built. §5 of this spec replaces its routing table, for the reason given in §5.1. When this spec is accepted, that spec gets a one-line header pointing here.
-- Issue #191 asks for one short line per file and no raw extraction output or SQL in the main session. Its done-test is acceptance criterion A2. #191 dropped the idea of a dedicated ingest *agent* because a subagent cannot spawn agents. This spec keeps the orchestrator on the main thread for the same reason.
+- Issue #191 asks for one short line per file and no raw extraction output or SQL in the main session. Its done-test is acceptance criterion A2. #191 dropped the idea of a dedicated ingest *agent* because a subagent cannot spawn agents. This spec keeps the orchestrator on the main thread for the same reason. #191's planned `matter_data__ingest_facts` tool is replaced by `ingest_result` (§2.1, stage D2).
+- `operations/supersede-draft.md` as rewritten on 2026-10-28 (commit `f1bf02e1`, #64 "Meaning decides") is the source for comparison semantics. §7 adds a script pre-screen in front of it and changes nothing it decides.
 - Design decision #76 (`.claude/skills/matter-data/references/design-decisions.md`) made `matter_data__stage_result` the hand-back route. This spec extends it to every extractor.
 
 ---
@@ -56,12 +57,13 @@ Paths below are relative to `.claude/skills/matter-data/` unless they start with
 ### 1.1 Shape
 - `/lawyer:ingest-orchestrator` is a lawyer skill that runs on the main thread. It must stay on the main thread because only the main thread can dispatch agents and ask the practitioner questions (#191).
 - Its `SKILL.md` holds the spine of §8.
-- The routing table (§5) and the failure table (§9) live in one reference, `references/routing.md`. The skill reads it once per run.
+- The routing table (§5) and the failure table (§9) live in one reference, `.claude/skills/ingest-orchestrator/references/routing.md`. The skill reads it once per run.
+- The build session adds the skill (and the `locate-stamps` and `compare-versions` agents, §5.4, §7.2) to `lawyer` in `source/assignment.json`.
 - `/ingest` hands a run to it according to the answer to open question Q2.
 
 ### 1.2 What the main thread does
 1. Opens the run with `matter_data__ingest_run {action: "begin"}` and closes it with `{action: "end"}` (§2.4).
-2. Calls `matter_data__triage` once for the run's files (§3).
+2. Calls `matter_data__triage` for the run's files (§3): once per file, plus one re-call per low-confidence file (§3.4), paginated (§1.5).
 3. Dispatches extractors from the dispatch list that `matter_data__ingest_run {action: "next"}` returns (§8).
    - Each entry is `{dispatch_id, agent, model, effort}`.
    - The Agent prompt is the one line `DISPATCH <dispatch_id>`.
@@ -76,9 +78,9 @@ Paths below are relative to `.claude/skills/matter-data/` unless they start with
 ### 1.3 What the main thread never does
 - It never reads an extractor's result, a page image, a PDF page or a text layer. The only exception is Path B (§1.4).
 - It never writes SQL for an extracted document. Rows come from `ingest_result`. Supersession and relocation SQL comes from generators the server runs (§2.3).
-- It never compares two copies of a document. That is `pdf_pages__compare` (§7).
+- It never compares two copies of a document. That is `pdf_pages__compare` and `compare-versions` (§7).
 - It never chooses a model, an effort or a batch. That is the routing table, applied by `ingest_run next`.
-- It never loads `operations/ingest-extract.md`, `shared/extraction-protocol.md` or an extractor's guidance. The rules those files give the writer move into the loader scripts (§2.2). The rules they give the extractor stay with the extractors.
+- It never loads `operations/ingest-extract.md`, `shared/extraction-protocol.md` or an extractor's guidance. The rules those files give the writer move into the converter scripts (§2.2). The rules they give the extractor stay with the extractors. The after-completion passes those files define keep running, by §1.6.
 
 ### 1.4 Path B stays inline
 - Path B reads internal documents inline, deliberately: "these may be privileged, and a read-only extractor subagent has no need to see them" (`operations/ingest-extract.md` "Path B"). G4 keeps that.
@@ -88,12 +90,30 @@ Paths below are relative to `.claude/skills/matter-data/` unless they start with
   - The cap is to be confirmed by A2's measurement.
 
 ### 1.5 Context ceiling (measurable)
-- **Ceiling:** the main thread's peak per-turn input, counted as input plus cache-read plus cache-creation tokens, is **≤ 100k tokens** (est.). There is no auto-compaction. The baseline compacted at 386k. The 100k leaves room for about 25k of skill text, up to about 150 document lines and Path B.
-- **Loaded text budget:** `SKILL.md` plus `references/routing.md` is ≤ 80,000 characters (est.), about 20k tokens. A unit test in the skill's `tests/` enforces this.
+- **Ceiling:** the main thread's peak per-turn input, counted as input plus cache-read plus cache-creation tokens, is **≤ 100k tokens** (est.) for a run started by `/ingest` or typed directly. There is no auto-compaction. The baseline compacted at 386k. The 100k leaves room for about 20k of skill text, about 150 (est.) document lines and Path B.
+- When `/housekeeping` hands an unattended run to the orchestrator (Q2), the orchestrator's own increment over housekeeping's context at hand-off is ≤ 100k (est.). A2 is measured on a standalone run.
+- **Loaded text budget:** `SKILL.md` plus the routing reference (§1.1) is ≤ 80,000 characters (est.), about 20k tokens. A unit test in the skill's `tests/` enforces this.
 - **Output caps** that keep tool results small:
-  - `ingest_result`: ≤ 600 bytes per document (est.).
+  - `ingest_result`: ≤ 600 bytes per document (est.), §2.1.
   - `ingest_run next` and `triage`: ≤ 200 bytes per file or dispatch line (est.), paginated at 50 lines (est.).
   - Each tool's schema in `source/lawyer/mcp/src/schema/case-data.ts` states its cap, and a test pins it.
+
+### 1.6 After-completion passes
+`operations/ingest-extract.md` runs these after a document's write (L326–399). The orchestrator keeps every one; none is dropped. `ingest_result` returns a `post[]` list of the passes whose detection rule fired for the document, each as `{pass, ref}` (≤ 60 bytes each, est.). Detection runs in the converter, using the rule each section states, from the written row's category and path and from the extractor's flags (§6.2) for what only a reading of the document shows: `date_setting`, `other_copy` and `outgoing_letter`.
+
+| Pass (ingest-extract.md section) | Attended run | Unattended run (`ingest-unattended.md` Substitution) |
+|---|---|---|
+| Proceeding linkage check | the orchestrator runs `proceedings-profile.md` §6 for the source when its `post[]` entry arrives, at the next §8.4 pause | 1f marker, written by `ingest_result` |
+| Order-effects pass | the orchestrator runs `order-effects.md` after linkage, one document at a time | 1g marker, written by `ingest_result` |
+| Date-setting correspondence | `ingest_result` adds the report line the section fixes, from the contract's `date_setting` flag | 1h marker, written by `ingest_result` |
+| Procedural history entry | `ingest_result` calls the `procedural_history_append` logic itself | same |
+| Another copy of a registered source | the extractor's `other_copy` flag names the other source's title, `ingest_result` resolves it to a source id, and the orchestrator runs §7 on the pair after the write | 1j marker, written by `ingest_result` |
+| Outgoing correspondence delivery check | the orchestrator dispatches `lawyer:delivery-checker` as today, once per matching letter, and relays its one report line | not run, as today (the section applies "in an attended ingest") |
+| Name check | steps 1–2 run in `ingest_result` from the written metadata; the offers of step 3 are collected and made as one list at the end of the run, through `/show-me` | 1a: steps 1–2 only, result reported, no rename |
+| Transcript contradictions (Path A step 7) | `ingest_result` returns them as `ask` items | Substitution 1k stop |
+
+- Linkage and order-effects run in the main thread because each may ask the practitioner. They are the main remaining context cost after extraction. A2 measures them in.
+- Their order is fixed: linkage, order effects, date anchor, procedural history, other copy, delivery check, name check (`ingest-extract.md` and `ingest-unattended.md` "The marker writes … run after the document's transaction commits").
 
 ---
 
@@ -105,7 +125,7 @@ Paths below are relative to `.claude/skills/matter-data/` unless they start with
 ```
 { matter_root, run_id,
   document: { file_path, file_hash, store: "main"|"privileged" },
-  contract: "facts"|"affidavit_body"|"affidavit_exhibits"|"sought_orders"|"caselaw"|"provision"|"efiling_statement"|"privileged",
+  contract: "facts"|"affidavit_body"|"affidavit_exhibits"|"sought_orders"|"caselaw"|"provision"|"efiling_statement"|"register_only"|"privileged",
   result_ids: [string],           // from matter_data__stage_result (#76)
   answers?: { privilege?, category?, proceeding_id?, participants?: {<name as extracted>: party_id} } }
 ```
@@ -114,7 +134,11 @@ Paths below are relative to `.claude/skills/matter-data/` unless they start with
 - It generalizes `matter_data__ingest_authority` (`source/lawyer/mcp/src/case/ingest-authority.ts`, #68).
   - `caselaw` reuses `references/scripts/ingest_authority.py` unchanged.
   - Each other contract gets one converter script in `references/scripts/`, for example `ingest_facts.py` and `ingest_affidavit.py`.
-  - The `privileged` converter writes Path B's rows: the privileged source, bare `main.facts` rows, provenance with `source_note`, and client instructions. It follows `operations/bare-privileged-facts.md` and `ingest-extract.md` "Path B".
+  - The `privileged` converter writes all three of Path B's branches (`ingest-extract.md` "Path B", L240–252), chosen by `answers.privilege`:
+    - *Yes*: the privileged source, bare `main.facts` rows, provenance with `source_note`, and client instructions, by `operations/bare-privileged-facts.md`;
+    - *No*: the main-store source as `work_product` (or cleared) and the Path A-style rows;
+    - *Unclear*: the source with `privilege_status = 'pending'` and facts only.
+  - Once a `privileged` result is written, `ingest_result` deletes its staged file at once rather than keeping it 7 days (#76), so privileged wording does not sit in the staging folder (G4).
   - Each converter validates its result against its contract (§6.2), then returns fixed statements. The checked result is bound as one JSON parameter and read through `json_each`.
 - The SQL stays in the skill and the runtime holds no table name (#56, #66, #68).
 - Execution uses the statement helper `caseDataExecuteStatements` in `source/lawyer/mcp/src/case/backend.ts`. That gives it the same lock (#28), staging, triggers, single transaction and dump.
@@ -127,13 +151,14 @@ Paths below are relative to `.claude/skills/matter-data/` unless they start with
   - a `result_id` that does not exist;
   - a contract mismatch;
   - a `run_id` that is not the live lease (§2.4);
-  - a running bundle whose plugin version differs from the version recorded at run begin (§9, row R7).
+  - a running bundle whose build stamp differs from the one recorded at run begin (§9, row R7).
 - **Output** (≤ 600 bytes):
   ```
   { outcome: "written"|"already_written"|"refused",
     source_id, counts: {facts, positions, relief, links, exhibits},
     items: [{ref, outcome, reason?}],
     ask:   [{kind, ref, say}],
+    post:  [{pass, ref}],          // §1.6
     report: [string] }
   ```
   - `items` covers exhibits and is listed only when an item did not succeed.
@@ -141,10 +166,12 @@ Paths below are relative to `.claude/skills/matter-data/` unless they start with
   - `already_written` makes a retry safe. The tool checks the existing dedup keys before writing, so the verify-before-retry rule of `shared/conventions.md` §2.3 (L74) runs inside the tool.
 
 ### 2.2 Writer rules that move into the converters
-Today the main thread applies these while composing SQL. Each one becomes converter logic and is tested in `tests/`:
+Today the main thread applies these while composing SQL. The converters implement **every** writer rule in `ingest-extract.md` "Universal rules" (L17–39) and in the write steps of Paths A, B, C and E, each with a test in `tests/`. That includes: `verified = 2` for a prefixed note (L17), honest status (L18), fact idempotence (L19–21), bitemporal positions (L22–27), local-time dates (L28), no row for silence (L29–31), relief and references kept out of facts (L32–34), re-extraction reusing the top-level row and stopping on a store change (L36–37), and the same-hash race recovery (L38, returned as `refused` with reason `race`, after which the orchestrator re-runs the gate lookup). The rules below need particular care:
 
 | Rule | Source today |
 |---|---|
+| Deponent upserted as a fact witness, and witness and expert upserts on Path A | `ingest-extract.md` Pass 1 step 4 (L267), L229–236 |
+| `execution_status` on the body and on a court document | `ingest-extract.md` "Execution status" (L96), Pass 1 (L266) |
 | Routing category → source category, 1:1 | `shared/extraction-protocol.md` L189–210 |
 | Pleading-position validation | Path A, `references/scripts/pleading_positions.py` (already a script) |
 | Exhibit dedup by `(parent_source_id, letter)`, fact dedup by `(source_id, locator, description)` | `operations/ingest-extract.md` L19–21, L283 |
@@ -155,7 +182,8 @@ Today the main thread applies these while composing SQL. Each one becomes conver
 
 **Participant matching.**
 - Converters open no database (#68). So the tool runs the existing `matter_data__resolve_participant` logic on the result's names before it calls the converter, and passes the resolved ids in.
-- A name that does not resolve becomes an `ask`. Its answer comes back in `answers.participants` on the repeated call. It is never guessed.
+- Only these names are resolved: the party of each position and relief item, a fact's `informant`, the deponent, and the filing or responding party. Any other person named in a fact stays text and raises no question.
+- A resolved field whose name does not resolve becomes an `ask`. Its answer comes back in `answers.participants` on the repeated call. It is never guessed.
 
 ### 2.3 Transactions, savepoints and dumps
 **This replaces** "one `matter_data__execute` call per exhibit … never batch multiple exhibits into one `sql_script`" (`operations/ingest-extract.md` Pass 3 step 3).
@@ -178,12 +206,12 @@ Today the main thread applies these while composing SQL. Each one becomes conver
   - Dumps fall from about 40 to the number of write calls: about one per document plus one per affidavit wave. That is an estimate of about 12 for the baseline folder.
 
 ### 2.4 Run lease and journal: `matter_data__ingest_run` (new tool)
-- **Actions:** `begin | next | status | end`.
+- **Actions:** `begin | next | staged | status | end` (`staged`: §6.5).
 - **State:** host-local, beside the case locks: `%LOCALAPPDATA%\Coclerk\ingest-runs\<same 16-hex key as case-lock.ts>\`, overridable with `COCLERK_INGEST_RUN_ROOT`.
-  - `lease.json` holds `{run_id, started, heartbeat, plugin_version, mode}`.
+  - `lease.json` holds `{run_id, started, heartbeat, build_stamp, mode}`. `build_stamp` is `BUILD_STAMP` from `source/lawyer/mcp/src/build-stamp.ts`, which changes with the code, unlike the plugin version. `begin {resume}` re-records it.
   - The owner is whoever holds the `run_id`, not a pid. Cowork shares one server process across sessions (`case-lock.ts` L7–9).
   - `journal.jsonl` is append-only and has one line per event: begin, triage, dispatch, ack, write, ask, answer, end, takeover.
-  - A run's folder is deleted 30 days (est.) after its `end`.
+  - A run's folder is deleted 30 days (est.) after its `end`. This delete, and §3.3's rename of a bad `triage.json`, touch only files Probanda created, and each needs a ruling in `source/file-ops.json` (`scripts/check_file_ops.py`), added in the stage that builds it.
   - The check-and-set on `begin` takes `acquireLock` from `source/lawyer/mcp/src/data-lock.ts` (#185) with its own LockSite.
 - **`begin {resume?: run_id}`:**
   - **Without `resume`:** refuses `run_active` while another lease's heartbeat is less than 60 minutes old (est.). The refusal names the unfinished run's `run_id`.
@@ -200,7 +228,8 @@ Today the main thread applies these while composing SQL. Each one becomes conver
 
 ### 2.5 `matter_data__execute` changes
 - **New optional input `generator: {script, args}`.** The server runs an allowlisted SQL-emitting script from `references/scripts/` and executes its output in the same call, so the SQL never reaches the model.
-  - The first allowlist entry is `supersede_draft.py` (`references/scripts.md` L125–131). The server runs its §4 probe and then `emit-sql` in sequence, so the plan's notes are available to `emit-sql`.
+  - The allowlist is `supersede_draft.py`'s `emit-sql` and `rehash-sql` commands (`references/scripts.md` L125–131, `supersede_draft.py` L53–66). For `emit-sql` the server runs the §4 probe and `fold_plan` first, so the plan's notes reach `emit-sql`.
+  - The generator runs only when one side of the pair has no row. Then no fact needs a model's judgment: a kept copy with no row has no facts, so every fact of S moves to it, and a superseded copy with no row has no facts to place (`supersede-draft.md` §4, paragraph after `fold_plan`). The generator refuses any other pair. This always holds in the ingest flow. A pair of two registered rows (a `SUPERSEDE-PENDING:` marker) is settled by `supersede-draft.md` as today, outside the orchestrator.
   - Relocation is not on the list, because `matter_data__relocate_source` already does it (#75).
   - Why the server runs it: a file the session writes is invisible to the host in Cowork (#76). So a session-written "staged SQL file" cannot work, and the server must produce the SQL itself.
 - **Size cap:** an inline `sql_script` over 8 KB (est.) is refused with "too long to send inline: use a generator or ingest_result", but **only on a call that carries a `run_id`**.
@@ -214,9 +243,9 @@ Today the main thread applies these while composing SQL. Each one becomes conver
 ### 3.1 Tool
 - `matter_data__triage {matter_root, run_id?, paths[] | folder, hints?}` is new and deterministic, with no model. It lives in the data server and reuses:
   - the page classification in `source/lawyer/mcp/src/files/extract/page-images.ts` (`scanned` / `born_digital`, #71);
-  - the text extraction in `files/text-extract.ts` (pdf.js);
+  - `pdfPages` in `files/extract/pdf.ts` (pdf.js), called directly. `extractText` in `files/text-extract.ts` refuses any PDF with a scanned page (`ocr_unavailable`, L46–50), and that refusal stays for every caller that hands text to a model;
   - `references/scripts/extract_outline.py` for bookmarks (`shared/bookmark-segmentation.md`).
-- **This amends #71.** The build session records it as a note under #71.
+- **This amends #71**, which the practitioner decided on 2026-10-21. Brahm accepted the amendment on 2026-10-28 (Q4). The build session records it as a note under #71.
   - #71 forbids a *model* reading a scanned page's text layer, because that text is often garbled and can carry instructions no human sees.
   - Under this spec, a *script* reads the text layer, and only to locate pages, classify them and compare them.
   - The only things that leave the script are page numbers, labels that match the stamp pattern, counts, feature names, verdicts and hashes. No model ever receives text-layer text.
@@ -227,23 +256,25 @@ Today the main thread applies these while composing SQL. Each one becomes conver
 | `page_count`, `kind` | pdf / docx / eml / msg / doc-rtf (#62's list) |
 | `pages` | ranges of `scanned` and `born_digital` |
 | `text_layer` | `none` / `ocr_hidden` / `native` |
-| `text_quality` | `good` / `poor` / `none`. `good` means at least 500 bytes per page (the `text-extract.ts` threshold) and at least 80% of tokens (est.) being words of 2 or more letters. |
+| `text_quality` | per page: `good` / `poor` / `none`. `good` means at least 500 bytes on the page (est.; `text-extract.ts` applies 500 bytes per page as a whole-document average) and at least 80% of tokens (est.) being words of 2 or more (est.) letters. |
 | `type` | an id from §4, with `type_basis` (feature names matched) and `type_confidence` `high` or `low` |
-| `execution` | `draft` / `affirmed` / `filed` / `unknown`, from filename words and the registry-stamp or jurat features |
+| `execution` | `filed` when a registry-stamp text match is found; otherwise `unknown`. A script cannot see a signature, and a draft also prints its jurat, so `affirmed` and `draft` are set only by a model (§7.2) |
 | `pairs[]` | `{other_hash, basis: "name"/"content"/"both", page_delta}` |
-| `segments[]` | `{kind: "body"/"exhibit"/"entry", label, start, end, by: "text_layer"/"ocr"/"vision"/"bookmark", uncertain, type}`. Covers affidavit bodies and exhibits, and the entries of a bookmarked book. `type` is the segment's own §4 type: an exhibit is `record_document` by default and `correspondence` when its first content page has letter or email header features (From/To/Subject/Sent lines, or a letterhead with a "Dear" salutation). A scanned exhibit with no usable text is reclassified when Pass 1 is acknowledged: its inventory description containing "email", "letter" or "correspondence" makes it `correspondence`. |
+| `segments[]` | `{kind: "body"/"exhibit"/"entry", label, start, end, by: "text_layer"/"ocr"/"vision"/"bookmark", uncertain, type}`. Covers affidavit bodies and exhibits, and the entries of a bookmarked book. `type` is the segment's own §4 type: an exhibit is `record_document` by default and `correspondence` when its first content page has letter or email header features (From/To/Subject/Sent lines, or a letterhead with a "Dear" salutation). A scanned exhibit with no usable text on its first content page has `type` `undecided`. It is not dispatched until Pass 1 is acknowledged (§8.2): then its inventory description containing "email", "letter" or "correspondence" makes it `correspondence`, and anything else `record_document`. |
 | `sequence_ok` | true when the exhibit labels form an unbroken sequence (below) |
 | `by`, `at` | `housekeeping` or `ingest`, and a timestamp |
 
 **Pairing:**
 - **By name:** the `same_title` rule of `operations/supersede-draft.md` §1, unchanged.
 - **By content:** this is new. It catches the missed "NOH Application" vs "NOHA" pair (C6). Two files form a content pair when all of these hold:
-  - their page counts differ by 2 or less;
+  - their page counts differ by 2 or less (the two stamp or backing pages `supersede-draft.md` §2 allows);
   - the 64-bit difference hashes of page 1 and the last page are each within 10 bits (est.);
   - for born-digital files, page-1 token Jaccard is at least 0.6 (est.).
 
 **Affidavit boundaries by script:**
-- **Jurat.** It is the first page matching `(SWORN|AFFIRMED)\b.{0,80}\bBEFORE ME`, case-insensitive. `body_end` is that page.
+- **Normalisation first.** Each page's text has every run of whitespace, line breaks included, collapsed to one space, and a hyphen at a line end joined, before any pattern below is applied.
+- **Jurat.** It is the first page matching `(SWORN|AFFIRMED)\b.{0,80}\bBEFORE ME` (80 est.), case-insensitive. `body_end` is that page.
+- **No jurat found** (a scanned body with no usable text): `body_end` is unknown, the stamp search runs over pages 2 to the end, `sequence_ok` is false, and the affidavit takes the uncertain-boundaries route of §8.2.
 - **Stamp.** A stamp page is a page after `body_end` that matches the pattern below. It is case-insensitive, and the quotes may be straight or curly or absent:
   ```
   this\s+is\s+exhibit\s+["“”']?([A-Z]{1,2}|\d{1,3})["“”']?
@@ -264,6 +295,7 @@ Today the main thread applies these while composing SQL. Each one becomes conver
   - The build session records this as a new design-decisions entry that cites #26.
 - It holds no per-type table or column (Commandment 5). `type` is a generic string, and `segments[]` is generic, not affidavit-specific.
 - It stays on the User's Machine (Commandment 3).
+- **Commandments.** `triage.json` and the run journal (§2.4) are derived caches that can be rebuilt from the files. They are not databases and are not added to the Exception's list of legacy stores, so they do not widen the development plugin's reliance on the Exception. The type features (§4.2), the routing table (§5) and the converters are plugin content shipped to every user. They are Shared Information under Commandment 2: they are needed for the plugin to work and reveal no Trade Secret beyond what the current skill text already ships.
 - An entry is reused while its hash matches and is recomputed otherwise.
 - The type is advisory. It never decides privilege and never causes a document to be skipped. Privilege stays with Path B and #2, and `never_ingest` stays with the folder map.
 
@@ -299,32 +331,34 @@ Today the main thread applies these while composing SQL. Each one becomes conver
 ### 4.2 Types
 Each type maps to a glossary id in `.claude/skills/shared/document-types.md` "Types". Types that share a contract differ only by *module*, a guidance file the agent reads (§6.1). A later spec specializes a module, not an agent.
 
-| Type id | Glossary id | Distinguishing features (any one with `high`; see §3.2) | Contract | Module |
+**Detection is ordered.** Triage tests the types in the table's row order, and the first type with a matching feature wins, with `type_confidence` `high`. A folder-map glossary answer (`never_ingest`, `authority`, `privileged_by_default`, `work_product`) is tested before any text feature. No match gives `other` with `low`.
+
+| Type id | Glossary id | Distinguishing features | Contract | Module |
 |---|---|---|---|---|
-| `affidavit` | court_filings / documents_exchanged | jurat pattern; "AFFIDAVIT" title on p1; `I, <name>, of` opening; AFF code in filename | A | affidavit |
-| `affidavit_book` | court_filings | ≥2 jurats or bookmark classes per `bookmark-segmentation.md` §3 | A per affidavit (Path E) | affidavit |
-| `pleading` | court_filings | "NOTICE OF CIVIL CLAIM", "RESPONSE TO CIVIL CLAIM", "COUNTERCLAIM", "PETITION", "RESPONSE TO PETITION"; `Form \d+` | F | pleading |
+| `never_ingest` | drafts, raw_intake | glossary flag `never_ingest` | none | — |
+| `authority` | authorities | glossary flag `authority` | L / P | — |
+| `client_or_internal` | client_communications, retainer_and_billing, work_product | glossary flag `privileged_by_default`, or the folder-map answer `work_product` (it carries no flag, `document-types.md` L30); solicitor-client folder. Path B's own privilege question applies unchanged, including for work product | Path B inline (§1.4) | — |
+| `affidavit_book` | court_filings | 2 or more jurats, or bookmark classes per `bookmark-segmentation.md` §3 | A per affidavit (Path E) | affidavit |
+| `affidavit` | court_filings / documents_exchanged | jurat pattern; "AFFIDAVIT" title on p1; `I, <name>, of` opening; AFF code in filename (`ingest-extract.md` L87) | A | affidavit |
 | `notice_of_application` | court_filings | the two structural signals of `ingest-extract.md` L122–131 | F + SO | court_document |
 | `application_response` | court_filings | "APPLICATION RESPONSE" title | F | court_document |
-| `order_or_reasons` | court_filings | "THIS COURT ORDERS"; "ORDER MADE AFTER APPLICATION"; "Reasons for Judgment" in the matter's own proceeding (extract-facts §4) | F (then the order-effects leg) | court_document |
+| `order_or_reasons` | court_filings | "THIS COURT ORDERS"; "ORDER MADE AFTER APPLICATION"; "Reasons for Judgment" in the matter's own proceeding (extract-facts §4) | F (then the order-effects pass, §1.6) | court_document |
 | `efiling_statement` | court_filings | Court Services Online e-filing statement or filing-receipt layout on born-digital pages | E (script); F at tier O if scanned or not parsed | — |
+| `pleading` | court_filings | "NOTICE OF CIVIL CLAIM", "RESPONSE TO CIVIL CLAIM", "COUNTERCLAIM", "PETITION", "RESPONSE TO PETITION" title. A form number alone is not a feature | F | pleading |
 | `other_court_document` | court_filings | requisition, notice of hearing, notice of change of lawyer, appointment | F | court_document |
-| `correspondence` | the six `correspondence_*` ids | letter or email header fields; `.eml` / `.msg` | F | correspondence (audience from glossary id) |
-| `client_or_internal` | client_communications, retainer_and_billing, work_product | glossary flag `privileged_by_default`; solicitor-client folder | Path B inline (§1.4) | — |
-| `record_document` | documents_exchanged, searches | a list of documents, a produced document or a search result; also an affidavit exhibit by default (§3.2 `segments[].type`) | F | record |
 | `transcript` | trial_materials / documents_exchanged | Q/A line numbering; "examination for discovery" | F | transcript |
 | `witness_or_expert` | documents_exchanged | as `ingest-extract.md` L229–236 | F | record |
+| `correspondence` | the six `correspondence_*` ids | letter or email header fields; `.eml` / `.msg` | F | correspondence (audience from glossary id) |
 | `financial_record` | documents_exchanged | bank statement or trace layout; ledger tables; an agreement with schedules of amounts | F | financial |
 | `disbursement_record` | disbursement_records | invoice or receipt for a cost paid on the matter | R (§4.3) | — |
-| `authority` | authorities | glossary flag `authority` | L / P | — |
-| `never_ingest` | drafts, raw_intake | glossary flag `never_ingest` | none | — |
+| `record_document` | documents_exchanged, searches | a list of documents, a produced document or a search result; also an affidavit exhibit by default (§3.2 `segments[].type`) | F | record |
 | `other` | — | nothing matched | asks the practitioner (`extraction-protocol.md` L189–210) | — |
 
 **Modules that share contract F:** correspondence, record (discovery documents and exhibits share it), pleading, court_document, transcript and financial. Client, counsel and internal correspondence share the correspondence module's contract; client and internal correspondence differ only in being routed to Path B.
 
 ### 4.3 Disbursement records go to practice data
 - A disbursement record is a firm billing record: a cost paid on the matter. It is not evidence of what happened between the parties. The bill-of-costs workspace already takes disbursements from a disbursement CSV export, "not from case data" (`.claude/skills/calculate/references/bill-of-costs-workspace.md` L107).
-- **This changes** `extraction-protocol.md` L205, which maps `disbursements` to a case-data source category. Ingest now registers the file for coverage only (contract R) and extracts no facts.
+- **This changes** what ingest does with the `disbursements` category (`extraction-protocol.md` L205). The mapping stays. Contract R writes one `main.sources` row with category `disbursements`, `ingestion_status = 'complete'` and no facts, so the file is recorded as seen and is not offered again. No amount, payee or other content is read into case data.
 - The amounts belong in a practice-data store that the financial-and-disbursement spec (§12) defines. None exists today: `.claude/skills/practice-data` has no disbursement store.
   - Practice-data writes are checked by Probanda's Cloud (`.claude/skills/practice-data/SKILL.md`).
   - So that spec must keep the amounts and payees on the User's Machine (Commandment 3) and add no store per tag type (Commandment 5).
@@ -346,7 +380,7 @@ The 2026-10-19 findings (E7) measured fact recall on whole documents:
 
 - The 2026-10-24 routing spec's Haiku-for-correspondence and Sonnet-for-exhibits table contradicts that measurement. It is replaced here.
 - This design must not lose extraction quality. So **every output that is a fact, position, relief item or legal statement stays on Opus high**.
-- C3's over-specified items are handled by moving work that is not fact extraction off Opus: boundary location, stamp letters, e-filing fields, and comparison.
+- C3's over-specified items are handled by moving work that is not fact extraction off Opus: boundary location, stamp letters and e-filing fields. Comparison keeps its Opus judgment but reads only the pages a script could not settle (§7.2).
 - Short exhibits can drop a tier only through the trial in §5.3.
 
 ### 5.2 Tiers (mechanical criteria)
@@ -359,9 +393,9 @@ The 2026-10-19 findings (E7) measured fact recall on whole documents:
 
 **Escalation (applied by `ingest_run next`, never chosen by the orchestrator):**
 - S fails or is uncertain → OCR on the §3.2 candidate pages, if Q1 builds it → H on the pages still unresolved.
-- H uncertain → one tiled retry at 200 dpi (#71 "Small print") → O on only the unresolved pages.
+- H uncertain → one tiled retry at 200 dpi (#71 "Small print"), still at H → O on only the unresolved pages.
 - O fails → the existing `verified = 2` or `failed` status.
-- No task escalates twice at the same tier.
+- No task escalates twice at the same tier. A crash re-dispatch (§9 R4) and the tiled retry are retries, not escalations.
 - *Uncertain* means any of: `ocr_uncertain`; `sequence_ok = false`; Pass 1's inventory count ≠ the stamp count; or a `failed` acknowledgement.
 
 ### 5.3 Trial gate for tier M
@@ -376,26 +410,27 @@ The 2026-10-19 findings (E7) measured fact recall on whole documents:
 | Type or task | Handler | Tier | Batching |
 |---|---|---|---|
 | Triage, pairing and boundaries for every file | `matter_data__triage` | S | the whole run in one call |
-| Low-confidence type | page-1 reader (Q3) | H | one file per dispatch, as `housekeeping-reader.md` runs today |
-| Stamp letters when S is uncertain, or a scan with no usable text layer | new agent `lawyer:locate-stamps` (Read, `stage_result`) | H | ≤40 pages per dispatch, the existing Pass 2 batch |
+| Low-confidence type | page-1 reader (Q3) | H | one file per dispatch |
+| Stamp letters when S is uncertain, or a scan with no usable text layer | new agent `lawyer:locate-stamps`, tools per §6.2 | H | ≤40 pages per dispatch, the existing Pass 2 batch |
 | Pass 2 escalation | `extract-affidavit` PASS 2 on only the unresolved pages | O | one per affidavit |
 | Affidavit body (Pass 1) | `extract-affidavit` PASS 1 over pages 1 to `body_end` when triage found the jurat, otherwise pages 1 to 20 as today (`ingest-extract.md` "Pass 1") | O | one per affidavit, 20 pages per read (#70) |
 | Exhibit (Pass 3) | `extract-affidavit` PASS 3, module from the exhibit's type | O (M only via §5.3) | one per exhibit; §6.4 governs small exhibits |
 | Pleading, court document, correspondence, record, transcript, financial, witness or expert | `extract-facts` with module | O | one per document (#70) |
 | Notice of application | `extract-facts` and `extract-sought-orders`, dispatched together | O | one each |
-| E-filing statement | converter `ingest_efiling.py` | S; escalates to O on a scanned page or a parse failure | in the triage call |
-| Re-scan or version comparison | `pdf_pages__compare mode:"rescan"` | S; `unread` and `review` pages go to H `compare-pages` (advisory only, §7.3) | ≤5 pages per group (existing) |
+| E-filing statement | converter `ingest_efiling.py`, through `ingest_result` contract `efiling_statement` | S; escalates to O on a scanned page or a parse failure | one `ingest_result` call per file, right after triage |
+| Re-scan or version comparison | `pdf_pages__compare mode:"rescan"`, then `compare-versions` on the pages it could not settle (§7.2) | S, then O | one pair per call and per dispatch |
 | Authority | `extract-caselaw` / `extract-provision` | O (unchanged) | one per decision |
 | Client or internal | Path B inline | main thread | last in the run |
-| Disbursement record | register only | S | in the triage call |
+| Disbursement record | `ingest_result` contract `register_only` | S | one `ingest_result` call per file, right after triage |
 
 ### 5.5 How #70 is amended
 The build session replaces #70's first paragraph with the following:
 - The fact extractors (`extract-facts`, `extract-affidavit` Passes 1 and 3, `extract-sought-orders`, `extract-caselaw`, `extract-provision`) stay pinned to Opus high, in frontmatter and on every dispatch.
-- Locate-only work (boundaries, stamp letters, page-1 type) runs at tier S or H under `references/routing.md`.
-- Pass 2 runs only as the O escalation of §5.2. Its condition "Only if Pass 1's `exhibit_inventory` lacked exhibit page starts" (`ingest-extract.md` "Pass 2") is deleted, because C2 showed it is always true.
+- Locate-only work (boundaries, stamp letters, page-1 type) runs at tier S or H under the routing reference (§1.1).
+- Pass 2 runs only as the O step of §5.2. Its condition "Only if Pass 1's `exhibit_inventory` lacked exhibit page starts" (`ingest-extract.md` "Pass 2") is deleted, because C2 showed it is always true.
 - #70's "one document per extractor" and "fresh extractor per document" stand, except as narrowed by §6.4.
-- The parity test that pins the law extractors (`tests/test_plugin_agent_parity.py`, commit `6975959d`) stays, and gains `locate-stamps` at Haiku high.
+- The parity test that pins the law extractors (`tests/test_plugin_agent_parity.py`, commit `6975959d`) stays, and gains `locate-stamps` at Haiku high and `compare-versions` at Opus high.
+- #70's waves of 10 become a rolling window of 10 (§8.1).
 
 ---
 
@@ -405,7 +440,8 @@ The build session replaces #70's first paragraph with the following:
 **How inputs arrive.**
 - The prompt is the one line `DISPATCH <dispatch_id>`.
 - The agent's first call is `matter_data__dispatch_inputs {dispatch_id}`, a new read-only tool. It returns the inputs that `ingest_run next` stored for that dispatch.
-- The tool serves `LEGAL_CONTEXT` without parties to legal extractors (#10). It never returns the matter root.
+- The tool serves `LEGAL_CONTEXT` without parties to legal extractors (#10), and their paths are given without the matter folder's name. Fact extractors receive absolute file and image paths, as today (`ingest-extract.md` L14).
+- This replaces the prompt-borne inputs in each extractor's own "Inputs" section (`source/lawyer/agents/extract-facts.md`, `extract-affidavit.md`, `extract-sought-orders.md`), and their "Output" sections are replaced by §6.2–§6.3.
 
 | Input | Content |
 |---|---|
@@ -422,7 +458,7 @@ The build session replaces #70's first paragraph with the following:
 ### 6.2 Every extractor returns
 - It calls `matter_data__stage_result` once per item, with an object containing:
   - `{contract, contract_version, ref, ...the contract's fields...}`, plus
-  - `flags[]` of `{kind: "needs_human"|"ocr_uncertain"|"privilege_signal"|"unresolved_reference", ref, page?}`.
+  - `flags[]` of `{kind: "needs_human"|"ocr_uncertain"|"privilege_signal"|"unresolved_reference"|"date_setting"|"other_copy"|"outgoing_letter", ref, page?, detail?}`. These last three carry what §1.6 needs: the event and date as written; the other source's title; that the face shows the firm writing to someone outside it.
 - **Tools allowlist**, in each agent's frontmatter `tools:`:
   - `Read`, `matter_data__dispatch_inputs` and `matter_data__stage_result`, plus `skill_source__read` for an agent that takes a `MODULE`;
   - each MCP tool is listed under both the `mcp__plugin_lawyer_data__` and the `mcp__remote-devices__plugin_lawyer_data__` prefix;
@@ -445,79 +481,78 @@ The build session replaces #70's first paragraph with the following:
 - **Gate:** default off. It is switched on only if an A/B run on at least 20 small exhibits shows cost per item at least 15% lower, recall within 2 points (all est.), and no cross-item fact (a fact staged under the wrong `ref`).
 - The ≤10 wave cap (C4) is solved by §8.1's rolling window, not by batching.
 
+### 6.5 Bridged sessions
+- A session is bridged when the data tools are listed as `mcp__remote-devices__plugin_lawyer_data__*` (`operations/verify-law.md` L58). A subagent there cannot see host files, so today the main thread stages each file and PNG with `device_stage_files` (`ingest-extract.md` L13–14).
+- In a bridged run, `ingest_run next` renders PNGs into `<matter_root>\0. CASE DATA\Page images` (verify-law.md L58, because the temp folder cannot be staged) and returns, per dispatch, a `stage[]` list of host paths.
+- The main thread passes that list to `device_stage_files`, then sends the returned session paths back with `ingest_run {action: "staged", dispatch_id, paths}`. `dispatch_inputs` then serves the session paths.
+- Only path lists enter the main context: about 120 bytes per staged file (est.). A2 counts them.
+
 ---
 
 ## 7. Supersession and duplicates
 
+`operations/supersede-draft.md` (as of commit `f1bf02e1`) stays the source for what a difference means (§2), rank (§3), the fold (§4), the standing rule (§5), the writes (§6) and the not-a-version record with its file comments (§6b). This section changes only *when* pairing happens, *who* reads the pages, and which pages are read.
+
 ### 7.1 Pairs are formed before any extraction
-- `triage` returns `pairs[]` (§3.2). `ingest_run next` sends each pair to comparison before it dispatches either file.
-- What follows applies on a `pass` verdict (§7.3). Any other verdict follows §7.3.
-- **Both copies are new.** Only the operative copy is extracted. The other copy is registered as superseded by the existing markers (`[SUPERSEDED-BY:#K]`, #64), with no facts of its own. G3's "keeps the same linked facts" holds because the facts exist once, on the operative copy.
-- **One copy is already held.** The new copy is not extracted. On a passing verdict, the existing fold (`operations/supersede-draft.md` §4, `supersede_draft.py emit-sql`, run through `execute generator`, §2.5) moves the held copy's facts and links to the operative copy.
-- **Rank** is unchanged: filed beats affirmed beats draft (`supersede-draft.md` §3). A tie or an unclear rank goes into `ask` with no proposal, as today.
+- `triage` returns `pairs[]` (§3.2). This replaces the `candidates` call of `supersede-draft.md` §1 made from `ingest.md` Step 4 and `ingest-unattended.md` Substitution 1j. Name pairing keeps §1's `same_title` rule, and content pairing is new.
+- A paired file is not dispatched until its pair is decided. An unpaired file is not held (§8.2).
+- Outcomes follow `supersede-draft.md` §6:
+  - **Both copies new** ("Two newcomers"): the kept copy is extracted once. The other is inserted marker-only, carrying `[SUPERSEDED-BY:#<K>`, after the kept copy's write. G3's "keeps the same linked facts" holds because the facts exist once, on the kept copy.
+  - **One copy already held**: the new copy is not extracted when it ranks lower. When it ranks higher, the held copy's facts and links move to it by the fold, run as `execute generator` (§2.5) after the new copy's row exists.
+- A pair the session finds only during extraction (the `other_copy` flag) follows `ingest-extract.md` "Another copy of a registered source", run by the orchestrator after the write (§1.6).
 
-### 7.2 `pdf_pages__compare` gains `mode: "rescan"`
+### 7.2 Who reads the pages
+**Step 1, script: `pdf_pages__compare` gains `mode: "rescan"`.**
 - **Input:** `{a, b, mode: "rescan", destination_dir}`. The existing hash/pixel mode (`files/extract/page-compare.ts`) stays the default.
-**Page alignment.**
-- Try offsets of 0, 1 and 2 pages on each side, and keep the offset with the most `same` pages.
-- Unmatched pages are allowed only at the start or end, at most 2 in total, and only when each one is a stamp or backing page.
-- A stamp or backing page is one that matches the stamp pattern (§3.2), has "E-FILING STATEMENT" or "FILED" with a registry name, or is a backing sheet. A backing sheet is a page under 80 tokens (est.) that holds the style of cause and a law-firm address block.
+- **Alignment.** Offsets of 0, 1 and 2 pages on each side are tried, and the offset with the most `same` pages is kept. Unmatched pages are allowed only at the start or end, at most 2 in total (§2's "up to two added stamp or backing pages"), and only when each is a stamp or backing page: a page that matches the stamp pattern (§3.2), has "E-FILING STATEMENT" or "FILED" with a registry name, or is under 80 tokens (est.) and holds the style of cause and a law-firm address block.
+- **Normalisation.** Whitespace collapsed, line-end hyphens joined, case folded. Then the tokens of §2's cosmetic marks that have a text form are removed: signature lines (`per`, `signature`, `/s/`, and the name under a signature rule), the jurat block from `(SWORN|AFFIRMED)` to the commissioner line, registry stamp tokens (`FILED`, `ENTERED`, the registry name, a date in a stamp position, the file number), and `DRAFT`.
+- **Per-page verdict.** The script only ever clears a page. It never decides that a difference changes meaning.
+  - `same`: both pages native text (`text_layer = native`, `text_quality = good`), and the token sequences are identical after normalisation; or `marks_only` when the only removed tokens differ.
+  - `same` for OCR text (`ocr_hidden`, a mixed pair where one side is native and the other OCR, or OCR if Q1 builds it): every remaining difference is an aligned token pair within edit distance 2 (est.) with identical digits, at most 5 such pairs per page (est.).
+  - `open`: anything else, including a page with no usable text.
+- **Output:** `{pages: [{a, b, verdict, marks[]}], open: [page pairs], work_dir}`, ≤ 600 bytes plus 40 bytes per page (est.).
+- **PNGs** go to `destination_dir`, the folder the session already uses for `pdf_pages__images` manifests, never `os.tmpdir()`. This fixes C6's out-of-reach images and can ship alone (D6a).
 
-**Allowed-mark tokens**, removed before comparing. These are the marks named in `supersede-draft.md` §2:
-- signature lines: `per`, `signature`, `/s/`, and the deponent's or signer's name on the line under a signature rule;
-- the jurat block, from `(SWORN|AFFIRMED)` to the commissioner line;
-- registry stamp tokens: `FILED`, `ENTERED`, the registry name, a date in a stamp position, the file number;
-- `DRAFT`.
+**Step 2, model: new agent `lawyer:compare-versions`, Opus high, tools per §6.2.**
+- It applies `supersede-draft.md` §2 exactly (it reads that section with `skill_source__read`) to the `open` page pairs only, from their page manifests. Today that judgment is made by the main thread reading every page of both copies (C5, C6).
+- It is dispatched when any of these is true:
+  - any page is `open`;
+  - a copy's execution status is not settled by triage (`execution` is `filed` only from a registry-stamp match, §3.2);
+  - both copies are `filed`, so §3 needs a looks judgment.
+- For status it reads each unsettled copy's jurat page and signature pages (≤ 4 pages per copy, est.) and returns `filed`, `affirmed`, `draft` or unclear, by §2's definitions.
+- On a rank tie (§3 `quality`) it reads page 1 of each copy and says which looks better, if one clearly does.
+- It stages `{verdict: semantic|cosmetic|unplaced, differences[], status: {a, b}, better_looking?}` and replies by §6.3.
+- `source/lawyer/agents/compare-pages.md` is unchanged. It compares a flattened copy with its original and already returns `VERDICT: NO CHANGE | CHANGED`, so it would call every page of a re-scan `CHANGED`.
 
-**Per-page verdict.** This is strict and fails closed, following `supersede-draft.md` §2 ("a changed … word, figure … fails") and #64.
-- **Native text** (`text_layer = native`, `text_quality = good`):
-  - `same` when the token sequences are identical after mark removal;
-  - `marks_only` when the only differences are allowed-mark tokens;
-  - any other differing token makes the page `different`.
-- **OCR text** (`ocr_hidden`, or OCR if Q1 builds it):
-  - `same` when every remaining difference is an aligned token pair within edit distance 2 (est.) with identical digits, and there are at most 5 such pairs per page (est.);
-  - any token whose digits differ, or more pairs than that, makes the page `review`.
-- **No usable text:** the page is `unread`.
+**What the script saves.** A pair whose pages are all `same` or `marks_only` is `cosmetic` without any reading for meaning. `compare-versions` then reads at most the status and looks pages (about 5 per copy, est.), never every page. Content is read only on `open` pages. The baseline read every page of both copies in the main thread (C5, C6).
 
-**`review` and `unread` pages.**
-- They go to the H `compare-pages` agent (`source/lawyer/agents/compare-pages.md`) in groups of 5 or fewer.
-- That agent needs a new verdict mode (D6b): `looks_same` / `differs`, plus what differs. Today it only describes what a reader would notice.
-- Its answer is advisory and never yields a `pass`.
-
-**Pair verdict.**
-- `pass` only when every page is `same` or `marks_only` by script.
-- `fail` when any page is `different`, or when `compare-pages` reports `differs`.
-- Otherwise `undecided`.
-- **Output:** `{verdict, pages:[{a, b, verdict, marks[]}], work_dir}`, ≤ 600 bytes plus 40 bytes per page (est.).
-- **PNGs** go to `destination_dir`, the folder the session already uses for `pdf_pages__images` manifests, never `os.tmpdir()`. This fixes C6's out-of-reach images and can ship alone.
-
-### 7.3 Decision rule (no question asked)
-- **`pass`** → supersede by rank, automatically, in attended and unattended runs alike.
-  - The marker's approver is `auto-rescan`, where today's markers hold `practitioner` (`supersede-draft.md` §6).
-  - **This changes** `operations/supersede-draft.md` §5, which asks in attended runs, and `ingest-unattended.md`, which only writes a `SUPERSEDE-PENDING:` marker.
-  - The `report` line tells the practitioner which copy was kept and why, in plain words.
-  - In an unattended run the file move stays pending, because unattended runs never move files (`ingest-unattended.md` L52). It is offered at the next attended run, by `supersede-draft.md` §6c.
-- **A tie or an unclear rank:** in an attended run, an `ask`. In an unattended run, `SUPERSEDE-PENDING:` on both, and only the first copy in path order is extracted.
-- **`fail`** → record `[NOT-VERSION-OF:]` on both and ingest both as different documents. This is unchanged in effect from `supersede-draft.md` §2's fail-closed rule.
-- **`undecided`, or a tool error**, is not a passing verdict:
-  - in an attended run, ask the practitioner with the page list: same document or different;
-  - in an unattended run, ingest the higher-ranked copy, mark the other `SUPERSEDE-PENDING:` and extract nothing from it. supersede-draft settles it later.
-- The superseded file's move into `0. DRAFT*\Superseded\` stays conditional on file-manager, as today (`supersede-draft.md` §6, `source/layering.json` "conditional" ruling). Without file-manager, the step stops and tells the practitioner. It never falls back to a shell move (Commandment 7).
+### 7.3 Decision rule
+The rule is `supersede-draft.md` §5's standing rule, applied with no question:
+- **`cosmetic` and §3 names a copy** (by rank, or on a tie by looks): supersede, approver `rule` (§6). The `report` line says in plain words which copy was kept and why.
+- **`semantic`**: both copies are extracted as different documents. §6b then runs with approver `comparison`, including its comment on each file at each difference (`file_ops__comment_pdf`) and the `rehash-sql` write (as `execute generator`, §2.5). Without file-manager the comments are skipped and the practitioner is told, as §6b says.
+- **Anything else** (an `unplaced` difference, an unclear status, a tie with no better-looking copy, or a tool or agent failure):
+  - attended: the §5 question through `/show-me`, asked with the run's other questions (§8.4); nothing for the pair is extracted before the answer;
+  - unattended: both copies are extracted, and each row gets `SUPERSEDE-PENDING:` naming the other, as today (§5 "Unattended", Substitution 1j).
+- **Unattended runs change in one way.** Today an unattended run decides nothing and only marks the pair (§5 "Unattended"). Under this spec it also applies the standing rule to a `cosmetic` or `semantic` pair, because that rule asks nothing. The file move still waits for an attended run, because unattended runs never move files (`ingest-unattended.md` L52); `supersede-draft.md` §6c offers it then.
+- The superseded file's move into `0. DRAFT*\Superseded\` stays conditional on file-manager, as today (`supersede-draft.md` §6 step 2, `source/layering.json` "conditional" ruling). Without file-manager, the step stops and tells the practitioner. It never falls back to a shell move (Commandment 7).
 
 ---
 
 ## 8. Scheduling
 
 ### 8.1 Rolling window
-- `ingest_run next` keeps up to 10 extractors running. That cap is #70's wave size, kept as a concurrency limit. It returns the next dispatches whenever a slot frees up.
-- **Waves are gone.** This replaces #70's "the next starts as soon as the previous one has returned".
+- `ingest_run next` keeps up to 10 extractors running. That cap is #70's wave size, kept as a concurrency limit.
+- **Mechanism.** The orchestrator dispatches each extractor as a background agent (the Agent tool's background mode). Each finished agent arrives as a completion notification carrying its one-line reply. On each notification the orchestrator passes the line on (§6.3), writes (§8.3), and calls `next`, which returns the dispatches that fill the freed slots. Between notifications it does nothing and spends no tokens.
+- **Waves are gone** where background agents are available. This replaces #70's "the next starts as soon as the previous one has returned".
+- **Fallback.** The skill uses background dispatch when the host's Agent tool offers a background option. Where it does not (a host that runs agents only in the foreground), `next` returns waves of up to 10, dispatched in one message as today. Largest-first ordering and the concurrent passes of §8.2 still apply. The acceptance run (§10) uses Claude Code, where background agents exist.
 - **Order:** largest first, by pages to read, so the longest Opus jobs start first and the tail is short (C5).
 
 ### 8.2 What runs at once
-- **t₀:** `begin`, then `triage` on every file, which also does the script boundaries, pairing and e-filing fields.
-- Next, comparisons for every pair, run by the tool.
-- Then at once: every affidavit's Pass 1, every Pass 3 whose range came from `sequence_ok` boundaries, and every other document's extractor. All of this fills the window largest first.
-  - Pass 3 no longer waits for Pass 1, because its ranges come from the script. That is C5's 9-minute stagger and 55-minute start, removed.
+- **t₀:** `begin`, then `triage` on every file, which also does the script boundaries and pairing; then the e-filing and register-only writes (§5.4).
+- Then at once, filling the window largest first: every unpaired file's work (every affidavit's Pass 1, every Pass 3 whose range came from `sequence_ok` boundaries and whose type is decided, and every other document's extractor), and the comparison of every pair (§7.2).
+  - A paired file's extraction joins the window when its pair is decided (§7.1).
+  - Pass 3 no longer waits for Pass 1, because its ranges come from the script. That is C5's 9-minute stagger and 55-minute start, removed. This changes Path C's "do all three passes in order" (`ingest-extract.md` L256).
+  - An exhibit with `type` `undecided` (§3.2) joins when Pass 1 is acknowledged.
 - **Cross-check:** Pass 1's `exhibit_inventory` letters are compared with the script's letters when Pass 1 is acknowledged.
   - A mismatch holds that affidavit's exhibit writes. `next` then schedules the §5.2 escalation for the affected range, and the held results are written once it resolves.
 - **Uncertain boundaries:** an affidavit whose boundaries were uncertain at t₀ dispatches Pass 1 and `locate-stamps` together, and its Pass 3 items join the window when they resolve.
@@ -543,12 +578,12 @@ The build session replaces #70's first paragraph with the following:
 |---|---|---|
 | R1 | Script finds no stamps, or `sequence_ok = false`, or Pass 1 count ≠ stamp count | §5.2 escalation on the unresolved range: H `locate-stamps`, then a tiled retry, then O Pass 2 on those pages. If it is still unresolved, use Pass 1's `page_start` values if it gave them. Otherwise the body stays `partial`, the exhibits are deferred, and the `report` says which exhibits could not be located. |
 | R2 | OCR or a vision letter is uncertain | The same chain from the step after the one that failed. A doubt that remains takes the existing `OCR:` / `verified = 2` route (#71). |
-| R3 | Comparison tool error or `undecided` | §7.3: ask (attended), or ingest the higher-ranked copy and mark the other `SUPERSEDE-PENDING:` (unattended). |
+| R3 | Comparison tool error, `compare-versions` failure, or a pair §7.3 cannot decide | §7.3 "Anything else": ask (attended), or extract both and mark each `SUPERSEDE-PENDING:` (unattended). |
 | R4 | Extractor crash, no acknowledgement, a malformed acknowledgement, or `failed` | Journal the event. Re-dispatch once with a fresh agent (#70) at the same tier. On a second failure: locate tasks escalate per §5.2, and fact tasks give the item `verified = 2` (exhibit) or the document `failed` status. |
 | R5 | `ingest_result` refuses a result as invalid against its contract | The same as R4. The `reason` names the first invalid field (internal; it is never shown to the practitioner). |
 | R6 | Partial write or an execute timeout (#28's warning that a write may have committed) | Repeat the same `ingest_result` call. The tool returns `already_written` or completes. It never double-writes (§2.1). |
-| R7 | Plugin re-sync mid-run (a new bundle, skill text or agent) | `begin` recorded `plugin_version`. Any call whose running bundle differs is refused `plugin_changed`. The orchestrator ends the run and tells the practitioner the ingest will resume after a restart. On the next `begin {resume}`, staged results are reused only where `contract_version` still matches, and the other items are re-dispatched. **Limit:** while the old server process keeps running, a changed agent or skill file is caught only by `ingest_result` refusing a result whose `contract_version` does not match. |
-| R8 | Lease lost (a takeover) | The old holder's next call is refused `lease_lost`, and it stops without writing. |
+| R7 | Plugin re-sync mid-run (a new bundle, skill text or agent) | `begin` recorded `build_stamp` (§2.4). Any call whose running bundle's stamp differs is refused `plugin_changed`. The orchestrator ends the run and tells the practitioner the ingest will resume after a restart. On the next `begin {resume}`, staged results are reused only where `contract_version` still matches, and the other items are re-dispatched. **Limit:** while the old server process keeps running, a changed agent or skill file is caught only by `ingest_result` refusing a result whose `contract_version` does not match. |
+| R8 | Lease lost (a takeover, §2.4) | The old holder stops without writing. |
 | R9 | The orchestrator compacts or the session ends | State is in the journal. `begin {resume: run_id}` or `status` returns the next actions, so nothing depends on memory. |
 | R10 | The staged result has expired (more than 7 days) | `next` re-dispatches that item. |
 
@@ -563,12 +598,11 @@ The build session replaces #70's first paragraph with the following:
 
 ### 10.1 Test setup
 - Make a test matter (for example `L4443-T1`) on Brahm's machine.
-  - Its profile (parties, proceedings, counsel) is copied from L4443 through `operations/initialize.md`.
-  - It holds no sources.
+  - It is created empty by `operations/initialize.md`, which copies nothing from another matter. A developer script, `scripts/copy_matter_profile.py` (not shipped), then copies L4443's profile rows (parties, proceedings, counsel, witnesses) and no source, fact or link.
   - It contains a copy of `5. COURT FILE#S-256622\`.
 - Run `/lawyer:ingest-orchestrator` attended on Sonnet. Answer privilege questions the same way as on 2026-10-27.
 - Run it **twice** (Opus run-to-run spread, findings report Q17), and judge each criterion on the mean.
-- **Baseline copy.** Before the test, copy L4443's case data into a second test matter, `L4443-B`. All baseline queries and verifications run on that copy, so verify-source corrections never touch the live matter.
+- **Baseline copy.** Before the test, copy L4443's case data into a second test matter, `L4443-B`, together with a copy of `5. COURT FILE#S-256622\` at the same relative path, because stored paths are matter-relative (#50). All baseline queries and verifications run on that copy, so verify-source corrections never touch the live matter.
   - Baseline rows are those of sources whose file is in the folder and whose ingestion ran on 2026-10-27.
 - The baseline's wall time is read from the 2026-10-27 session transcript, measured from its first message to its last write.
 - A developer script, `scripts/measure_ingest_run.py` (not shipped), computes A1–A5 from the session's transcript JSONL and the run journal.
@@ -577,7 +611,7 @@ The build session replaces #70's first paragraph with the following:
 | # | Metric | Baseline | Target |
 |---|---|---|---|
 | A1 | Orchestrator share of total cost | 68% | ≤ 30% |
-| A2 | Orchestrator peak per-turn input (§1.5); compactions | ~386k; 1 | ≤ 100k; 0. Also #191's done-test: no extraction output or SQL in the main transcript, checked by grepping it for `"facts":` and `INSERT INTO` |
+| A2 | Orchestrator peak per-turn input (§1.5); compactions | ~386k; 1 | ≤ 100k; 0. Also #191's done-test: no extraction output or SQL in the main transcript, checked by grepping its tool results, outside Path B's turns, for `"facts":` and `INSERT INTO` |
 | A3 | Time from first message to first extractor dispatch | 55 min | ≤ 10 min |
 | A4 | Page-image reads per source page: rendered page images in all dispatched manifests ÷ source pages ingested, from the journal | > 1 (Pass 2 re-read 70 pages) | ≤ 1.05 where triage set `sequence_ok`; ≤ 1.3 overall |
 | A5 | Total cost; wall time | $33.07; transcript | ≤ $14; ≤ 50% of baseline |
@@ -595,7 +629,7 @@ The build session replaces #70's first paragraph with the following:
    - chosen by a fixed seed over `fact_id` order.
    - Run them through `lawyer:verify-source` (`operations/ingest-verify.md`), on `L4443-T1` and `L4443-B`. The test matter's correction rate must not exceed the baseline's by more than 2 points (est.).
    - The count thresholds in step 1 (95% and 85%) are estimates too.
-3. **Supersession.** Every pair the baseline superseded is superseded the same way, with linked-fact counts on the kept copy equal to the baseline.
+3. **Supersession.** Every pair the baseline superseded is superseded the same way, with linked-fact counts on the kept copy equal to the baseline. A pair the baseline settled by asking may now be settled by the standing rule, but to the same outcome.
    - The "NOH Application" / "NOHA" pair is compared and gets a verdict.
 4. **Locks.** A second `begin` on the same matter during the run returns `run_active`. A killed and restarted orchestrator resumes without re-dispatching any acknowledged item, per the journal.
 
@@ -610,12 +644,12 @@ Each stage is a separate release by the CLAUDE.md version rule. **Minor** marks 
 | Stage | Content | Ships alone? | Removes | Version |
 |---|---|---|---|---|
 | D1 | `ingest_run` lease and journal; optional `run_id` on `execute`; every existing ingest path calls `begin` (§2.4) | Yes | G1 gap | patch |
-| D2 | `ingest_result` for contracts F, A, SO and privileged; the helper's statement groups (§2.1); `dispatch_inputs`; `extract-facts`, `extract-affidavit` and `extract-sought-orders` fetch inputs by id, stage through `stage_result` and reply by §6.3; the converters of §2.2; the `ingest-orchestrator` skill v1, using **today's** passes and models. **Interim classifier:** `ingest_run next` routes by today's rules (folder-map type, the affidavit gate, Notice of Application detection, `ingest-extract.md` L83–131), carried into the server as code, until D4 replaces them with `triage`. | Needs D1 | C1 (most of the orchestrator cost) | minor (agent reply contract) |
+| D2 | `ingest_result` for contracts F, A, SO and privileged; the helper's statement groups (§2.1); `dispatch_inputs`; `extract-facts`, `extract-affidavit` and `extract-sought-orders` fetch inputs by id, stage through `stage_result` and reply by §6.3; the converters of §2.2; the `ingest-orchestrator` skill v1, using **today's** passes and models. **Interim classifier:** until D4, the orchestrator runs today's gate itself (folder-map type, the affidavit gate and Notice of Application detection, `ingest-extract.md` L83–131), including its page-1 reads, because a scanned page 1 can only be read from its image by a model. It passes each result to `ingest_run next` as the file's route. D2 also builds §1.6 and §6.5. | Needs D1 | C1 (most of the orchestrator cost) | minor (agent reply contract) |
 | D3 | `execute generator` (supersede); the 8 KB inline cap on calls with a `run_id` | Needs D1 | C1 remainder | patch (the cap applies only to new `run_id` calls) |
 | D4 | `triage` (script half): page classes, segments, text-layer boundaries and candidate pages, name and content pairs, type candidate, e-filing converter; `triage.json`; Pass 2 becomes escalation only; Pass 1 reads only to `body_end` | Needs D2 | C2, C7 (ingest half) | patch |
-| D5 | `locate-stamps` (H) and the §5.2 chain; the #70 amendment of §5.5 | Needs D4 | C3 (locating) | patch |
+| D5 | `locate-stamps` (H) and the §5.2 chain; the #70 amendment of §5.5; `locate-stamps` added to `source/assignment.json` | Needs D4 | C3 (locating) | patch |
 | D6a | `compare` writes to `destination_dir` | Yes | C6 (out-of-reach images) | patch |
-| D6b | `compare mode:"rescan"`, pairs before extraction, the §7.3 automatic rule | Needs D4 and D6a | C6 | patch |
+| D6b | `compare mode:"rescan"`, `compare-versions` (added to `source/assignment.json`), pairs before extraction, §7.3 | Needs D4 and D6a | C5 (comparison time), C6 | patch |
 | D7 | Rolling window, largest-first, Pass 1 and Pass 3 concurrent | Needs D2 and D4 | C4 (wave delay), C5 | patch |
 | D8 | Tier-M trials (§5.3), per module | After A1–A3 pass | C3 (short items), if a trial passes | patch per module |
 | D9 | Batching experiment (§6.4) | After D7 | C4 (fixed cost), if it passes | patch |
@@ -652,7 +686,7 @@ If a question is still open when its stage is built, the builder takes the recom
   - Cowork needs a self-contained bundle, so OCR would mean bundling a WebAssembly engine and its language data into the data server.
   - That reverses #63, which rested on a "no external binaries" rule.
   - The C2 and C6 evidence came from text layers and from tesseract on Brahm's host, not from a bundled engine.
-- **Recommended: measure first.** Across three matters, count the stamp pages and re-scan pages with no usable text layer. Build OCR (D11) only if the H `locate-stamps` and `compare-pages` work on those pages costs more than $1 a run (est.).
+- **Recommended: measure first.** Across three matters, count the stamp pages and re-scan pages with no usable text layer. Build OCR (D11) only if the H `locate-stamps` and O `compare-versions` work on those pages costs more than $1 a run (est.).
 - **Alternatives:** build OCR now (D11 moves after D4), or never build it.
 
 **Q2. Entry point.**
@@ -663,4 +697,11 @@ If a question is still open when its stage is built, the builder takes the recom
 **Q3. Page-1 reader for the fallback classifier.**
 - Lawyer may not name `file-manager:housekeeping-reader` (layering).
 - **Recommended:** move the reader to lawyer under a new name such as `lawyer:page-reader`, and have housekeeping call that. One reader then serves both. This renames an agent, which is acceptable while no other users exist.
+  - Interface change: today `housekeeping-reader` takes a housekeeping brief (page manifest, kind, head path), holds only `Read` and runs Haiku at **medium** (`source/file-manager/agents/housekeeping-reader.md` L1–8). As `page-reader` it also accepts `DISPATCH <id>` with `dispatch_inputs` and `stage_result` (§6), and keeps Haiku medium, so tier H for this task means Haiku medium.
 - **Alternatives:** a second Haiku reader in lawyer, or no fallback reader (a `low` type goes straight to `other` and asks).
+
+**Q4. Let a script read a scanned page's text layer, to locate, classify and compare only.**
+- #71 records that the practitioner decided on 2026-10-21 that a scanned page is read only from its image, because a text layer is often garbled and can carry instructions no human sees.
+- §3.1 and §7.2 have a *script* read the text layer, and no model ever receives that text: only page numbers, stamp labels, counts, feature names, verdicts and hashes leave the script. Both reasons for #71 concern a model reading the text.
+- C2 is the evidence: a text-layer grep found all 12 stamp pages that Opus vision read 70 page images to find.
+- **Decided 2026-10-28: yes.** Brahm accepted it on the condition that no model ever reads the text. Record it as a note under #71.
