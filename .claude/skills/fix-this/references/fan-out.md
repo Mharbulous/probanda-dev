@@ -50,9 +50,9 @@ Sections, in this order and numbering. Cross-reference them as §N.
 3. Goal and non-goals
 4. Design
 5. Constraints that must still hold
-6. Options considered, removal first (one marked recommended)
-7. Implementation plan. Step 1 is always "Verify against HEAD (§10) and append a verification table to this spec". The last step is always "Commit on `main` by explicit pathspec and push. Finish with the line `Implementation of <title> complete!`, then what you verified and what you assumed without verifying."
-8. Implementation criteria (a numbered list, each checkable in the source by the implementing session), then this scope rule, verbatim, which overrides any standing instruction in the implementing session: "Scope: edit the source files the fix needs (skill text, mcp/src, docs), and write, update and run the tests the fix needs. Fix by deleting before adding: anything added must be shorter than the text it makes unnecessary, and that text is deleted in the same change. Out of scope, because the orchestrating session runs them once after every spec lands: `build_plugin.py` and `check_plugin.py`. Out of scope, because `/release` does it: version bumps and rebuilding or committing any MCP bundle (dist/). Never build a `.plugin` archive."
+6. Options considered, streamline and deburr first, additions last (one marked recommended)
+7. Implementation plan. Step 1 is always "Verify against HEAD (§10) and append a verification table to this spec". The last step is always "Commit on `main` by explicit pathspec and push. Finish with the line `Implementation of <title> complete!`, then what streamlining and deburring you tried, what you verified and what you assumed without verifying."
+8. Implementation criteria (a numbered list, each checkable in the source by the implementing session), then this scope rule, verbatim, which overrides any standing instruction in the implementing session: "Scope: edit the source files the fix needs (skill text, mcp/src, docs), and write, update and run the tests the fix needs. Streamline and deburr first: solve the problem by removing, merging or simplifying what already exists, and consider an addition only once those ideas are exhausted. Anything added must be shorter than the text it makes unnecessary, and that text is deleted in the same change. Out of scope, because the orchestrating session runs them once after every spec lands: `build_plugin.py` and `check_plugin.py`. Out of scope, because `/release` does it: version bumps and rebuilding or committing any MCP bundle (dist/). Never build a `.plugin` archive."
 9. Open questions
 10. Verify against HEAD before building
 
@@ -73,7 +73,7 @@ Sections, in this order and numbering. Cross-reference them as §N.
     4. Implement the spec, within its scope rule (§8): source edits and the tests the fix needs. No bundle rebuild, no version bump and no `.plugin` archive.
     5. Commit your own files on `main` by explicit pathspec (`git commit -F <msg> -- <paths>`), then `git pull --ff-only` and `git push origin main`.
     6. Do not run /release.
-    7. Return to the orchestrating session the line "Implementation of <spec title> complete!", then what you verified and what you assumed without verifying, or else the open question that stopped you.
+    7. Return to the orchestrating session the line "Implementation of <spec title> complete!", then what streamlining and deburring you tried, what you verified and what you assumed without verifying, or else the open question that stopped you.
 
     COORDINATION
     - shared files and which spec owns which change

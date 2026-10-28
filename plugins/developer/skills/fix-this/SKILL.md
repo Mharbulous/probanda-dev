@@ -50,13 +50,13 @@ Use an outer fence longer than any fence inside it (four backticks or `~~~~`). F
 
     FIX: <one-line title naming the defect(s) in this block>
 
-    TASK: Investigate and fix the plugin defect(s) below. Confirm each cause in the source before changing anything. Do not alter unrelated behaviour.
+    TASK: Investigate and resolve the plugin defect(s) below. Confirm each cause in the source before changing anything. Do not alter unrelated behaviour.
 
     SCOPE (overrides any standing instruction in this session)
     - In scope: confirm each cause in the source, edit the source files the fix needs (skill text, mcp/src, docs), write, update and run the tests the fix needs, run `python scripts/build_plugin.py` and `python scripts/check_plugin.py`, commit the source and `plugins/` by pathspec, and push to `main`.
     - Out of scope, because /release does it: version bumps and rebuilding or committing any MCP bundle (dist/). Never build a `.plugin` archive.
-    - Fix by deleting before adding. Anything added must be shorter than the text it makes unnecessary, and that text is deleted in the same change.
-    - Only when the fix is finished: write the line "Implementation of <one-line description of the fix> complete!", then a short recap of what you verified (checks run, files read in full), what you assumed without verifying, what you deleted (with line counts), and what you added and why deletion alone could not do it. If an open question blocked the work, ask it instead, with no completion line and no recap.
+    - Streamline and deburr first: solve the problem by removing, merging or simplifying what already exists, and consider an addition only once those ideas are exhausted. Anything added must be shorter than the text it makes unnecessary, and that text is deleted in the same change.
+    - Only when the fix is finished: write the line "Implementation of <one-line description of the fix> complete!", then a short recap of what you verified (checks run, files read in full), what you assumed without verifying, what streamlining and deburring you tried, what you deleted (with line counts), and what you added and why those could not do it. If an open question blocked the work, ask it instead, with no completion line and no recap.
 
     FILES EXPECTED TO EDIT (UNVERIFIED unless stated)
     - skill-source paths or tool names as this session saw them, one per line, covering every defect in this block
@@ -77,8 +77,8 @@ Use an outer fence longer than any fence inside it (four backticks or `~~~~`). F
     CONSTRAINTS THAT MUST STILL HOLD
     - safety gates, invariants, data-integrity rules the fix must not weaken
 
-    OPTIONS (every rule costs reading on every run: list what to remove before what to add)
-    1. remove <text> - trade-off  (recommended)
+    OPTIONS (every rule costs reading on every run: streamline and deburr first, additions last)
+    1. remove or simplify <text> - trade-off  (recommended)
     2. option - trade-off
     3. option - trade-off
 
