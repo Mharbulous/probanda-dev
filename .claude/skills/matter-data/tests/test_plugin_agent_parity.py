@@ -10,8 +10,8 @@ names; its template limits it to that file.
 The model column started as the #558 split: the verifiers are pinned so a weak session
 model cannot produce weak extraction *and* an equally weak check of it. Design decision
 #70 reverses its extractor half for `extract-facts` and `extract-affidavit`, which are
-pinned to Opus at high effort, the configuration the token-efficiency report chose. The
-other extractors carry no `model:` line and inherit the session model.
+pinned to Opus at high effort, the configuration the token-efficiency report chose.
+`extract-caselaw`, `extract-provision` and `extract-sought-orders` carry the same pin.
 
 Run: python -m unittest discover -s .claude/skills/matter-data/tests
 """
@@ -32,17 +32,23 @@ AGENTS = {
     "verify-caselaw": ("matter-data", "opus"),
     "verify-claim": ("verify-law", "opus"),
     "extract-affidavit": ("matter-data", "opus"),
-    "extract-caselaw": ("matter-data", None),
+    "extract-caselaw": ("matter-data", "opus"),
     "extract-facts": ("matter-data", "opus"),
-    "extract-provision": ("matter-data", None),
-    "extract-sought-orders": ("matter-data", None),
+    "extract-provision": ("matter-data", "opus"),
+    "extract-sought-orders": ("matter-data", "opus"),
 }
 
 # agent name -> its grant, where that is not `Read` alone
 GRANTS = {"extract-caselaw": ["Read", "Write"]}
 
 # agent name -> pinned effort (#70); every other agent carries no effort line
-EFFORTS = {"extract-affidavit": "high", "extract-facts": "high"}
+EFFORTS = {
+    "extract-affidavit": "high",
+    "extract-caselaw": "high",
+    "extract-facts": "high",
+    "extract-provision": "high",
+    "extract-sought-orders": "high",
+}
 
 
 def _template(name):
