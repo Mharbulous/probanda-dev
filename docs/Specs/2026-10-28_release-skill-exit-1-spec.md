@@ -49,3 +49,13 @@ None.
 - `release.md` line 21 still reads as quoted in §2.
 - `release_changes.py` still documents and returns exit 0, 1 and 2 as in §2.
 - `build_plugin.py --check`'s exit code on a stale plugin, and whether step 2 already says what to do then.
+
+## 11. Verification against HEAD (3589197d, 2026-10-28)
+
+| Claim | Result |
+|---|---|
+| `release.md` line 21 reads as quoted in §2 | Confirmed, verbatim. |
+| `release_changes.py` documents exit 0, 1 and 2 (line 16) | Confirmed. |
+| `release_changes.py` returns `1 if listed else 0` (line 66), and exit 2 comes from `plugin_layout.stop` (line 33) | Confirmed. |
+| `build_plugin.py --check` exit on a stale plugin | Exits 1 (`check()` returns 1 at line 346, and `main()` returns 1 for a folder no plugin builds at line 367). It exits 2 only through `stop`. |
+| Step 2 already says what to do on `--check` exit 1 | Yes. Line 22, "Otherwise the released plugins are those `--check` lists", covers it, so the new line need not name `--check`'s exit 1 separately. Option 1's "Exit 1 means something is listed: continue." holds for both commands. |
