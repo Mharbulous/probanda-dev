@@ -1,4 +1,4 @@
-/* Job Board stylesheet (design doc §7, 2026-09-08). System fonts only: no
+/* Milestone stylesheet (design doc §7, 2026-09-08). System fonts only: no
    network fetch, so the board reads offline and inside a sandboxed pane. One
    accent, used three times: the Ready heading, the in-progress chip, links.
    Palette and heading font evoke the Logica Law brand sheet (2026-09-18)

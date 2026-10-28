@@ -1211,11 +1211,11 @@ CREATE TABLE board_attachments (
 
 CREATE TRIGGER guard_board_attachments_live_ins BEFORE INSERT ON board_attachments
 WHEN NEW.filing_id IS NOT NULL AND (SELECT retired_on FROM filings WHERE id = NEW.filing_id) IS NOT NULL
-BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Job Board: attach the draft to a live Writing''s board (ADR 0042)'); END;
+BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Milestone: attach the draft to a live Writing''s board (ADR 0042)'); END;
 
 CREATE TRIGGER guard_board_attachments_live_upd BEFORE UPDATE OF proceeding_id, filing_id ON board_attachments
 WHEN NEW.filing_id IS NOT NULL AND (SELECT retired_on FROM filings WHERE id = NEW.filing_id) IS NOT NULL
-BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Job Board: attach the draft to a live Writing''s board (ADR 0042)'); END;
+BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Milestone: attach the draft to a live Writing''s board (ADR 0042)'); END;
 
 CREATE TRIGGER guard_board_attachments_proceeding_ins BEFORE INSERT ON board_attachments
 WHEN NEW.filing_id IS NOT NULL AND (SELECT proceeding_id FROM filings WHERE id = NEW.filing_id) IS NOT NEW.proceeding_id
@@ -1238,7 +1238,7 @@ WHEN OLD.retired_on IS NULL AND NEW.retired_on IS NOT NULL
  AND (EXISTS (SELECT 1 FROM board_attachments WHERE filing_id = NEW.id)
       OR (EXISTS (SELECT 1 FROM board_attachments WHERE filing_id IS NULL AND proceeding_id = NEW.proceeding_id)
           AND NOT EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id AND id <> NEW.id AND retired_on IS NULL)))
-BEGIN SELECT RAISE(ABORT, 'a draft is attached to this Writing''s Job Board: move or detach each attachment before retiring it (ADR 0042)'); END;
+BEGIN SELECT RAISE(ABORT, 'a draft is attached to this Writing''s Milestone: move or detach each attachment before retiring it (ADR 0042)'); END;
 
 CREATE TABLE marker_suppressions (
     marker        TEXT NOT NULL CHECK (marker IN ('👤')),

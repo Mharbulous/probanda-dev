@@ -1,7 +1,7 @@
 ---
 name: show-me
 user-invocable: false
-description: "Use before any approval ask or sign-off, including a draft presented for sign-off, before any question to the practitioner about a specific document, even one asked again, and when the practitioner asks to see a Job Board or any job on it."
+description: "Use before any approval ask or sign-off, including a draft presented for sign-off, before any question to the practitioner about a specific document, even one asked again, and when the practitioner asks to see a Milestone or any job on it."
 ---
 
 <!-- lawyer v0.11.5 -->
@@ -14,7 +14,7 @@ description: "Use before any approval ask or sign-off, including a draft present
 
 | Section | Read when |
 |---|---|
-| Scope | Checking whether an approval, a choice, an authorization or a question about a document falls under this skill, or a request to see a Job Board |
+| Scope | Checking whether an approval, a choice, an authorization or a question about a document falls under this skill, or a request to see a Milestone |
 | The rules | Composing any approval ask: one decision, source file, full text, absences, the fixed order |
 | Marking conventions | Highlighting a source file or writing its caption legend |
 | Mechanics | Building the page extract and sending the files, text and question in order |
@@ -36,7 +36,7 @@ Applies inside any live exchange where an agent asks a human to approve, choose,
 
 It does not decide *whether* a candidate question needs a human at all — that call belongs to the calling skill's own judgment about what's consequential enough to interrupt the human for. This skill starts once the answer is yes; it governs only how that question gets presented.
 
-When the practitioner asks to see a Job Board, or any job on it, render that board and present its page as `shared/html-pages.md` ("Present each page by its path") says. Never write its lanes, jobs, steps, goal or loose threads into chat.
+When the practitioner asks to see a Milestone, or any job on it, render that board and present its page as `shared/html-pages.md` ("Present each page by its path") says. Never write its lanes, jobs, steps, goal or loose threads into chat.
 
 ## The rules
 

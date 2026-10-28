@@ -14,10 +14,10 @@ import { writeStatusFile } from "./render-job.js";
 import { isViewPageFile, VIEW_PAGE_MARKER, type ViewPage, type ViewPagePath } from "./view-pages.js";
 import { writingFolders } from "./writing-folder.js";
 
-/** On every Job Board page's root element: the overwrite guard recognises this server's own page by it. */
+/** On every Milestone page's root element: the overwrite guard recognises this server's own page by it. */
 const JOB_BOARD_MARKER = "data-workboard-shell";
 
-/** A Job Board page: a live filing's (filing_id set) or a pre-filing proceeding's (filing_id null). */
+/** A Milestone page: a live filing's (filing_id set) or a pre-filing proceeding's (filing_id null). */
 export interface JobBoardPage {
   filing_id: number | null;
   proceeding_id: number;
@@ -25,7 +25,7 @@ export interface JobBoardPage {
 }
 
 export interface PagesWritten {
-  /** Every Job Board page this write put in the draft folder, in page order. */
+  /** Every Milestone page this write put in the draft folder, in page order. */
   job_board_paths: JobBoardPage[];
   matter_board_path: string;
   /** Every view page this write put in the draft folder (ADR 0033, 2026-10-07 amendment): each
@@ -61,11 +61,11 @@ export interface GuardTarget {
   page: string;
 }
 
-/** The Litigation Strategy, then the Job Board pages named in `names`, then the view pages in `views`. */
+/** The Litigation Strategy, then the Milestone pages named in `names`, then the view pages in `views`. */
 export function guardTargets(names: string[], views: { page: ViewPage; file: string }[]): GuardTarget[] {
   return [
     { name: MATTER_BOARD_FILE, marker: MATTER_BOARD_MARKER, page: "Litigation Strategy" },
-    ...names.map((name) => ({ name, marker: JOB_BOARD_MARKER, page: "Job Board" })),
+    ...names.map((name) => ({ name, marker: JOB_BOARD_MARKER, page: "Milestone" })),
     ...views.map((v) => ({ name: v.file, marker: VIEW_PAGE_MARKER, page: v.page.name })),
   ];
 }
@@ -88,13 +88,13 @@ export function writePage(file: string, html: string): void {
 
 /** A page file's name in any layout or copy this generator ever wrote (D3), matched case-insensitively:
  * a view page's `<page name> - filing <id>.html` is its name before 2026-10-09, and
- * `Provable Facts - Job Board <id>.html` the Material Facts page's before 2026-10-20 (docs/ADRs/0011). */
-const OLD_PAGE = /^(?:job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
+ * `Provable Facts - Milestone <id>.html` the Material Facts page's before 2026-10-20 (docs/ADRs/0011). */
+const OLD_PAGE = /^(?:Milestone.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - Milestone(?: - proceeding)? \d+)\.html$/i;
 
 /** A preview pages__preview wrote beside the pages (src/pages/preview.ts): never an old page, so the sweep leaves it. */
 const PREVIEW_FILE = / preview \d+\.html$/i;
 
-/** Whether this generator wrote the file: a page marker, or a revision the Job Board's older layouts carried. */
+/** Whether this generator wrote the file: a page marker, or a revision the Milestone's older layouts carried. */
 function generatorWrote(file: string): boolean {
   const text = readFileSync(file, "utf-8");
   return text.includes(JOB_BOARD_MARKER) || text.includes(MATTER_BOARD_MARKER) || text.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== undefined;

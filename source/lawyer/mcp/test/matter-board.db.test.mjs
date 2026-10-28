@@ -33,11 +33,11 @@ const PINNED = "2026-09-15 10:00";
 const LARCHMONT = { clientName: "Larchmont", clientNo: "1", matterNo: "L8470" };
 const DATA_PREFIX = "window.MATTER_BOARD = ";
 const PAGE = "Litigation Strategy.html";
-/** Each live filing's Job Board page, in its Writing's own folder (spec 2026-10-22 §9); filing 3 is retired and has none. */
+/** Each live filing's Milestone page, in its Writing's own folder (spec 2026-10-22 §9); filing 3 is retired and has none. */
 const JOB_BOARD = {
-  1: join("First Consent Order Requisition", "Job Board.html"),
-  2: join("Second Consent Order Requisition", "Job Board.html"),
-  4: join("Adjournment Consent Order Requisition", "Job Board.html"),
+  1: join("First Consent Order Requisition", "Milestone.html"),
+  2: join("Second Consent Order Requisition", "Milestone.html"),
+  4: join("Adjournment Consent Order Requisition", "Milestone.html"),
 };
 
 async function fixture({ seed = true } = {}) {
@@ -159,7 +159,7 @@ test("bootstrap without draft_dir writes no Litigation Strategy and reports null
     const result = submissionFormsBootstrap(f.dbPath, LARCHMONT, PINNED);
     assert.equal(result.matter_board_path, null);
     assert.equal(result.job_board_paths, null);
-    assert.deepEqual(readdirSync(f.draft), [], "no Litigation Strategy and no Job Board page");
+    assert.deepEqual(readdirSync(f.draft), [], "no Litigation Strategy and no Milestone page");
   } finally {
     f.cleanup();
   }
@@ -213,7 +213,7 @@ test("bootstrap with draft_dir writes one self-contained Litigation Strategy, ea
     assert.equal(retired.in_progress, undefined, "a retired filing carries no job count");
     assert.equal(retired.render_state, null);
 
-    // ADR 0033, 2026-10-05 amendment: a Job Board page per live filing is written beside it, in the
+    // ADR 0033, 2026-10-05 amendment: a Milestone page per live filing is written beside it, in the
     // page's order, the retired filing with none.
     assert.deepEqual(
       result.job_board_paths,
@@ -396,20 +396,20 @@ test("the page write is its own bootstrap phase, and still renders nothing", asy
 // #583 §4: a page rewritten only at bootstrap would miss a job this session was just assigned.
 // Every render that writes presentation copies rewrites the matter's pages -- the full render, the
 // stamp hit, the retired filing's render, and a render given draft_dir.
-test("every render with presentation_dir or draft_dir rewrites the Litigation Strategy and the Job Board pages beside the copies", async () => {
+test("every render with presentation_dir or draft_dir rewrites the Litigation Strategy and the Milestone pages beside the copies", async () => {
   const f = await fixture();
   try {
     const page = join(f.draft, PAGE);
     const leaf = join(f.draft, "2026-09-15 First Consent Order Requisition");
     // A Writing's page is in its own folder, here the dated one the render is given.
-    const jobBoard = join(leaf, "Job Board.html");
+    const jobBoard = join(leaf, "Milestone.html");
     const otherBoard = join(f.draft, JOB_BOARD[4]);
     const lineOf = (id) => readBoard(page).data.filings.find((x) => x.filing_id === id);
     const rows = [todo("t1", "Settle the first requisition", "2026-09-01", "filing:1")];
 
     const full = submissionFormsRender(f.dbPath, 1, LARCHMONT, "mockup", undefined, undefined, leaf, PINNED, undefined, undefined, { rows });
     assert.ok(full.timings.some((t) => t.phase === "matter_pages"));
-    assert.ok(existsSync(jobBoard), "the filing's Job Board page is written beside the Litigation Strategy");
+    assert.ok(existsSync(jobBoard), "the filing's Milestone page is written beside the Litigation Strategy");
     assert.ok(existsSync(otherBoard), "and every other live filing's");
     assert.equal(lineOf(1).in_progress, 1);
     assert.equal(lineOf(1).render_state, "fresh", "the render just wrote this filing's manifest");
@@ -420,7 +420,7 @@ test("every render with presentation_dir or draft_dir rewrites the Litigation St
     const hit = submissionFormsRender(f.dbPath, 1, LARCHMONT, "mockup", undefined, undefined, leaf, "2026-09-15 10:07");
     assert.equal(hit.rendered_at, full.rendered_at, "expected a stamp hit");
     assert.equal(lineOf(1).in_progress, 2);
-    assert.equal(readBoardData(jobBoard).meta.rendered, "2026-09-15 10:07", "the stamp hit rewrites the Job Board pages too");
+    assert.equal(readBoardData(jobBoard).meta.rendered, "2026-09-15 10:07", "the stamp hit rewrites the Milestone pages too");
 
     rmSync(page);
     rmSync(jobBoard);
@@ -428,8 +428,8 @@ test("every render with presentation_dir or draft_dir rewrites the Litigation St
     const retired = submissionFormsRender(f.dbPath, 3, LARCHMONT, "mockup", undefined, undefined, retiredLeaf, PINNED);
     assert.equal(retired.filing_retired, true);
     assert.ok(existsSync(page), "the retired filing's render rewrites the Litigation Strategy too");
-    assert.ok(existsSync(jobBoard), "and the live filings' Job Board pages");
-    assert.equal(existsSync(join(retiredLeaf, "Job Board.html")), false, "the retired filing has none");
+    assert.ok(existsSync(jobBoard), "and the live filings' Milestone pages");
+    assert.equal(existsSync(join(retiredLeaf, "Milestone.html")), false, "the retired filing has none");
 
     rmSync(page);
     rmSync(otherBoard);

@@ -8,7 +8,7 @@ General method
 - Read the code path end to end: storage, the gate on writes, the renderer, the CSS and the tests. Cite exact lines.
 
 Repo facts worth reusing (re-verify before citing)
-- The Job Board shell and its CSS live in `source/lawyer/mcp/src/submission/forms/workboard-shell.ts`. The goals card is `goalsCard()`. The statement goes into one `<p class="statement">` with `pre-wrap`.
+- The Milestone shell and its CSS live in `source/lawyer/mcp/src/submission/forms/workboard-shell.ts`. The goals card is `goalsCard()`. The statement goes into one `<p class="statement">` with `pre-wrap`.
 - The statement of goals is stored as one `db_meta` JSON string (`board-goals.ts`). A change to display only is a patch under the version rule.
 - `drafting-data/hooks/practitioner-words-gate.py` admits a confirmed statement only as the practitioner's own turn or an approved fenced block.
 - E2E harness: `source/lawyer/mcp/test/workboard-file-url.e2e.test.mjs`.

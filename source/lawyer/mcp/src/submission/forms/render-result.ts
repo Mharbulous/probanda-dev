@@ -13,32 +13,32 @@ export interface RenderedDocument {
   document_type: string;
   /** Absent in 'filed' mode -- filed-face rendering writes nothing to disk (build #359); the caller decides where the returned markdown lands.
    * In mockup mode: the mockup in the Writing's own folder in 0. DRAFT, the only copy.
-   * On the Job Board: this filing's Job Board page, present only when this render wrote the pages
+   * On the Milestone: this filing's Milestone page, present only when this render wrote the pages
    * and the filing is live (a retired filing has no page). */
   path?: string;
   /** The renderer's own file name (e.g. "Written Argument.md") -- present in every mode, since 'filed' mode has no path for a caller to derive it from. */
   file_name: string;
-  /** Absent under draft_dir or presentation_dir unless this document was named in `documents` (#466). Never on the Job Board. */
+  /** Absent under draft_dir or presentation_dir unless this document was named in `documents` (#466). Never on the Milestone. */
   markdown?: string;
   /** Mockup mode, beside `markdown`, only when a row of the mockup's legend has a note written for
    * the model (forms/legend.ts): one string per note. Never written to any file. */
   symbol_notes?: string[];
-  /** The Job Board only (#1365): this filing's section's short summary as fixed-grammar text.
+  /** The Milestone only (#1365): this filing's section's short summary as fixed-grammar text.
    * Present only when the board was named in `documents`, and on a retired filing's refusal. */
   board_summary?: string;
-  /** Present only under draft_dir or presentation_dir, on every document but the Job Board: the document's length, so a
+  /** Present only under draft_dir or presentation_dir, on every document but the Milestone: the document's length, so a
    * caller can tell before asking for it inline whether it alone would overflow the host's tool-result cap (#466). */
   markdown_chars?: number;
-  /** The Job Board only, when this render wrote the pages: false when the section this filing last
+  /** The Milestone only, when this render wrote the pages: false when the section this filing last
    * reported (matter-pages-state.json) matches apart from meta.rendered, true otherwise. Revision
    * cannot say this, since a job or shelving write moves no revision. */
   board_changed?: boolean;
   /** Beside board_changed whenever a section was recorded (#1035): each job added (from null),
    * removed (to null) or moved to another board column since it. Empty when no job moved. */
   board_moves?: BoardMove[];
-  /** The Job Board only: true when this render wrote the matter's pages. */
+  /** The Milestone only: true when this render wrote the matter's pages. */
   pages_written?: boolean;
-  /** The Job Board only, when the filing's stored layout declares `ingest_inputs`: those document types and
+  /** The Milestone only, when the filing's stored layout declares `ingest_inputs`: those document types and
    * the ids of the filing's own Ready jobs, which take /draft's input check before a claim. */
   ingest_inputs?: { types: string[]; ready_jobs: number[] };
 }
@@ -62,14 +62,14 @@ export interface RenderResult {
   bundle_outdated?: boolean;
   /** True only on the retired-filing refusal (schema v17): mockup mode on a filing with
    * retired_on set renders no mockup and writes nothing beside the database. `documents` carries
-   * the Job Board alone, with its board_summary, so the retire flow can read the state Retired,
+   * the Milestone alone, with its board_summary, so the retire flow can read the state Retired,
    * and note explains what happened. A retired filing is recovered (retired_on
    * cleared) before it renders again -- rendering one would archive the mockups of a filing
    * whose work is over. */
   filing_retired?: boolean;
-  /** True only on a Job Board with no Writing (forms/query.ts JOB_BOARD_KIND): mockup mode builds its
+  /** True only on a Milestone with no Writing (forms/query.ts JOB_BOARD_KIND): mockup mode builds its
    * board and nothing else, so no mockup or manifest is written.
-   * `documents` carries the Job Board alone, with its board_summary. A closed one also carries
+   * `documents` carries the Milestone alone, with its board_summary. A closed one also carries
    * filing_retired and a note. */
   job_board_only?: true;
   /** Each folder of an older build's `<case data>\mockups\` tree this call moved into 0. DRAFT

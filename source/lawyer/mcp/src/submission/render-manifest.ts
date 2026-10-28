@@ -8,7 +8,7 @@
 // filed face is untouched by memoisation. It names the Writing's own folder in `0. DRAFT`,
 // where the mockups it lists are.
 //
-// The Job Board is deliberately absent from `files` (#581 §2). It is rebuilt from
+// The Milestone is deliberately absent from `files` (#581 §2). It is rebuilt from
 // SQLite on every render and bootstrap, it carries session lock tokens, and its
 // data reads the ticket tables, whose writes are exempt from the revision bump.
 // Hashing it would mismatch on every call and defeat the mechanism. Its marker
@@ -45,7 +45,7 @@ export const LEGACY_MANIFEST_FILE = "render-manifest.json";
  * Every input an advocacy document's bytes depend on (#581 §1).
  *
  * `appeal_deadline` is deliberately absent: it reaches only deriveLifecycle, and
- * lifecycle is read only by the Job Board, which sits outside the stamp. The
+ * lifecycle is read only by the Milestone, which sits outside the stamp. The
  * local `date` is present because today drives the admission ladder's
  * waiting -> deemed switch and the Consent Order bench line, so every live filing
  * goes stale once per local day -- the accepted cost of stamping the input rather
@@ -74,7 +74,7 @@ export interface ManifestFile {
   document_type: string;
   file_name: string;
   sha256: string;
-  /** The Job Board's Writings strip label (short text and `title` text). Absent on a manifest written
+  /** The Milestone's Writings strip label (short text and `title` text). Absent on a manifest written
    * before 2026-10-07; the page then shows the file name until the next render that misses. */
   label?: WritingLabel;
 }
@@ -258,7 +258,7 @@ export function resolveDraftDir(draftDir: string, param = "drafting_forms__boots
 /**
  * The matter's `0. DRAFT` folder for a drafting database (spec 2026-10-22 §9): the one `0. DRAFT*`
  * folder of the matter folder whose `0. CASE DATA` holds the database (ADR 0013), confined as
- * resolveDraftDir confines it. Every Writing's mockups, its Job Board page and the records folder
+ * resolveDraftDir confines it. Every Writing's mockups, its Milestone page and the records folder
  * are in it, so a database with none is refused, never given a folder elsewhere.
  */
 export function draftDirOf(dbPath: string): string {

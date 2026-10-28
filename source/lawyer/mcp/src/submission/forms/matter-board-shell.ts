@@ -1,5 +1,5 @@
 // The Litigation Strategy (ADR 0021; the Matter Board of #583, #585): Litigation Strategy.html, one self-contained
-// file at the top of a matter's 0. DRAFT folder. Like the Job Board (workboard-shell.ts) its
+// file at the top of a matter's 0. DRAFT folder. Like the Milestone (workboard-shell.ts) its
 // stylesheet, its data and its script are all inline, so it draws completely as a lone chat file
 // card (#551, ADR 0015's 2026-09-15 amendment). The page's code is identical for every matter; only
 // the data line differs.

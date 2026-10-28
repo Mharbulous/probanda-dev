@@ -1,4 +1,4 @@
-// One Job Board section's data, its Goal card and criteria types, and the render context it reads.
+// One Milestone section's data, its Goal card and criteria types, and the render context it reads.
 
 import type { BoardGoals } from "./board-goals.js";
 import type { LifecycleState } from "./lifecycle.js";
@@ -75,7 +75,7 @@ export interface WorkBoardData {
     /** Present only when the filing's stored layout declares `ingest_inputs`: those document types, and the
      * ids of this filing's own Ready jobs (never a proceeding-wide job's). Absent on a pre-filing board. */
     ingest_inputs?: { types: string[]; ready_jobs: number[] };
-    /** True only on a Job Board with no Writing (JOB_BOARD_KIND): `state` is null, `state_label` reads
+    /** True only on a Milestone with no Writing (JOB_BOARD_KIND): `state` is null, `state_label` reads
      * Open or Closed, and the section has no Goal card, criteria or Proposals. */
     job_only?: true;
     /** A merged board only (combined-board.ts): each section's own state, the survivor's first.

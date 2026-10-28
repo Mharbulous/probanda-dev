@@ -223,7 +223,7 @@ export function renderGeneral(
   const sent = recipients.filter((r) => r.role !== "bcc");
   // #1234: a Writing whose layout declares `recipients` and has no 'to' row, a cc-only one included,
   // prints a mockup-only gap line where its To lines go. It never joins `unwritten`, so the filed
-  // render is not refused on it: the Job Board and the pre-send hold carry it.
+  // render is not refused on it: the Milestone and the pre-send hold carry it.
   const declaresRecipients = Array.isArray(layout.goal_criteria) && layout.goal_criteria.includes("recipients");
   const noTo =
     declaresRecipients && !sent.some((r) => r.role === "to") ? [gap(ctx, state, "no To recipient", { table: NO_TO_RECIPIENT_TABLE, id: ctx.filing.id })] : [];

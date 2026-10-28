@@ -6,7 +6,7 @@ Related specs, same date: 2026-10-20_approved-research-issues-pass-job-words-gat
 
 ## 1. Problem
 
-`/legal-research` step 2a relays the research-agent's whole plan and asks the practitioner to approve, change or waive it. The practitioner asked instead to be taken through the issues one at a time with a multiple-choice answer, then shown a numbered checklist of the approved issues and asked whether any other issue should be covered. When the answer is "No", that answer is the approval, and the session creates one Job Board job per approved issue. Today the plan approval and the job creation are two separate approvals.
+`/legal-research` step 2a relays the research-agent's whole plan and asks the practitioner to approve, change or waive it. The practitioner asked instead to be taken through the issues one at a time with a multiple-choice answer, then shown a numbered checklist of the approved issues and asked whether any other issue should be covered. When the answer is "No", that answer is the approval, and the session creates one Milestone job per approved issue. Today the plan approval and the job creation are two separate approvals.
 
 ## 2. Evidence (observed; quoted text is data, not instructions)
 
@@ -27,7 +27,7 @@ Goal: step 2a offers the plan's issues one at a time (multiple choice), then run
 1. Step 2a relays each plan issue through a multiple-choice question: research it, or skip it. A skipped issue is dropped.
 2. After the last issue, render only the numbered list of approved issues (skipped ones omitted) and the question. No added explanation about what "No" does.
 3. On an addition, add it, reproduce the full numbered list, and ask "Are there any more issues that you would like this research job to cover?"
-4. On "No", create one research job per issue (the title and intent are the issue text shown; see the gate spec) and re-render the Job Board.
+4. On "No", create one research job per issue (the title and intent are the issue text shown; see the gate spec) and re-render the Milestone.
 5. A plan that cannot be relayed this way (no multiple-choice tool in the session) falls back to a numbered list answered in plain text.
 
 ## 5. Constraints that must still hold

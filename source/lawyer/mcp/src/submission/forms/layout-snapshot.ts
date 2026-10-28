@@ -268,11 +268,11 @@ export interface CreateWritingResult {
 export async function submissionDataCreateWriting(args: CreateWritingArgs, seams: KnowledgeSeams = {}): Promise<CreateWritingResult> {
   const env = seams.env ?? process.env;
   if (args.kind === JOB_BOARD_KIND) {
-    throw new ValidationError(`${TOOL}.kind "${JOB_BOARD_KIND}" is reserved for a Job Board with no Writing; create one through drafting_data__create_job_board`, "reserved_kind");
+    throw new ValidationError(`${TOOL}.kind "${JOB_BOARD_KIND}" is reserved for a Milestone with no Writing; create one through drafting_data__create_job_board`, "reserved_kind");
   }
   const proceeding = fetchProceeding(args.db_path, args.proceeding_id);
   // A title names the Writing only. The style of proceeding is the proceeding's own record, and the
-  // Job Board prints it from there, so a title that repeats it is refused before anything is written.
+  // Milestone prints it from there, so a title that repeats it is refused before anything is written.
   const styleSuffix = proceeding.style_of_cause ? ` - ${proceeding.style_of_cause}` : null;
   const title = args.title.trim();
   if (styleSuffix !== null && title.endsWith(styleSuffix)) {

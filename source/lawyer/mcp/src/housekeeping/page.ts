@@ -10,7 +10,7 @@
 // approval. After approval it renders read-only.
 //
 // The page, its stylesheet and its script are template files under ./templates (map #125, #137).
-// The stylesheet is the mockup's: the Job Board / Litigation Strategy palette and system font
+// The stylesheet is the mockup's: the Milestone / Litigation Strategy palette and system font
 // stack, dark mode through prefers-color-scheme, a sticky footer tally. The script keeps plain
 // ES5-style strings: no backticks.
 

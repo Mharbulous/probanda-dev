@@ -1,4 +1,4 @@
-// The matter's pages (#1365, ADR 0033's 2026-10-05 amendment): one Litigation Strategy.html and one Job Board
+// The matter's pages (#1365, ADR 0033's 2026-10-05 amendment): one Litigation Strategy.html and one Milestone
 // page per live filing (in its Writing's own folder) and per pre-filing proceeding in the matter's 0. DRAFT folder,
 // rewritten by rename-replace and only over a file carrying their marker;
 // the state sidecar board_changed and board_moves compare against, never a page; the old page files
@@ -37,9 +37,9 @@ const writes = await import("../build/tools/practice/writes.js");
 
 const FIRST = "2026-10-02 09:00";
 const SECOND = "2026-10-02 09:05";
-// A Writing's Job Board page is in its own folder (spec 2026-10-22 §9); a pre-filing proceeding's stays at the top.
-const OPENING_PAGE = join("Opening Submissions Package", "Job Board.html");
-const REPLY_PAGE = join("Reply Submissions Package", "Job Board.html");
+// A Writing's Milestone page is in its own folder (spec 2026-10-22 §9); a pre-filing proceeding's stays at the top.
+const OPENING_PAGE = join("Opening Submissions Package", "Milestone.html");
+const REPLY_PAGE = join("Reply Submissions Package", "Milestone.html");
 const PAGES = [OPENING_PAGE, "Litigation Strategy.html"];
 
 /** A mockup render of one filing with draft_dir, at a pinned minute. */
@@ -47,21 +47,21 @@ function renderInto(f, filingId, draft, now, documents) {
   return submissionFormsRender(f.dbPath, filingId, ASHBOURNE, "mockup", documents, undefined, undefined, now, "tok", draft);
 }
 
-/** Every Job Board page in the draft folder, at its top or in a Writing's folder, relative to it, sorted. */
+/** Every Milestone page in the draft folder, at its top or in a Writing's folder, relative to it, sorted. */
 function jobBoardPages(draft) {
   return namesUnder(draft)
     .map(String)
-    .filter((name) => /^Job Board( .*)?\.html$/.test(name.split(/[\\/]/).pop()))
+    .filter((name) => /^Milestone( .*)?\.html$/.test(name.split(/[\\/]/).pop()))
     .sort();
 }
 
-/** The section of the Job Board page whose one section is filing `filingId`'s. */
+/** The section of the Milestone page whose one section is filing `filingId`'s. */
 function sectionOf(draft, filingId) {
   const page = jobBoardPages(draft)
     .map((name) => readBoardData(join(draft, name)))
     .find((data) => data.sections[0]?.meta.filing_id === filingId);
-  assert.ok(page, `expected a Job Board page for filing ${filingId} in ${draft}`);
-  assert.equal(page.sections.length, 1, `filing ${filingId}'s Job Board page holds one section`);
+  assert.ok(page, `expected a Milestone page for filing ${filingId} in ${draft}`);
+  assert.equal(page.sections.length, 1, `filing ${filingId}'s Milestone page holds one section`);
   return page.sections[0];
 }
 
@@ -70,7 +70,7 @@ function namesUnder(dir) {
   return readdirSync(dir, { recursive: true });
 }
 
-test("two renders of one matter leave one Job Board page per live filing and one Litigation Strategy at their fixed paths, holding the later render", async () => {
+test("two renders of one matter leave one Milestone page per live filing and one Litigation Strategy at their fixed paths, holding the later render", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -91,7 +91,7 @@ test("two renders of one matter leave one Job Board page per live filing and one
     assert.deepEqual(namesUnder(draft).filter((name) => /\.tmp$|-\d+\.html$/.test(name)), [], "no temp file and no numbered copy");
     for (const leaf of ["Opening Submissions Package", "Reply Submissions Package"]) {
       const pages = readdirSync(join(draft, leaf)).filter((name) => name.endsWith(".html")).sort();
-      assert.deepEqual(pages, ["Job Board.html", ...VIEW_PAGES.map((p) => `${p.name}.html`)].sort(), `the board and its view pages in the Writing's folder ${leaf}`);
+      assert.deepEqual(pages, ["Milestone.html", ...VIEW_PAGES.map((p) => `${p.name}.html`)].sort(), `the board and its view pages in the Writing's folder ${leaf}`);
     }
     assert.equal(readdirSync(dirname(f.dbPath)).some((name) => /mockups|\.html$/.test(name)), false, "no board beside the database");
   } finally {
@@ -99,7 +99,7 @@ test("two renders of one matter leave one Job Board page per live filing and one
   }
 });
 
-// ADR 0033, 2026-10-05 amendment: a Job Board page never holds more than one filing.
+// ADR 0033, 2026-10-05 amendment: a Milestone page never holds more than one filing.
 async function twoFilingBoard(f) {
   await freshSubmissionDb(f.dbPath);
   await seedVaniacProceeding(f.dbPath);
@@ -110,13 +110,13 @@ async function twoFilingBoard(f) {
   return { draft, result };
 }
 
-test("two live filings in one proceeding get a Job Board page each, each with one section and at most one Goal", async () => {
+test("two live filings in one proceeding get a Milestone page each, each with one section and at most one Goal", async () => {
   const f = seededDbFixture();
   try {
     const { draft, result } = await twoFilingBoard(f);
 
     // seedTickets' proceeding 2 has no filing, so it has a page of its own.
-    assert.deepEqual(jobBoardPages(draft), ["Job Board - proceeding 2.html", OPENING_PAGE, REPLY_PAGE]);
+    assert.deepEqual(jobBoardPages(draft), ["Milestone - proceeding 2.html", OPENING_PAGE, REPLY_PAGE]);
     for (const name of jobBoardPages(draft)) {
       const { sections } = readBoardData(join(draft, name));
       assert.equal(sections.length, 1, `${name} holds one section`);
@@ -126,13 +126,13 @@ test("two live filings in one proceeding get a Job Board page each, each with on
     assert.equal(sectionOf(draft, 2).meta.filing_id, 2);
     const board = result.documents.find((d) => d.document_type === "Work_board");
     assert.equal(board.path, join(draft, OPENING_PAGE), "the render returns its own filing's page");
-    assert.equal(board.file_name, "Job Board.html");
+    assert.equal(board.file_name, "Milestone.html");
   } finally {
     f.cleanup();
   }
 });
 
-test("a proceeding-scoped job shows on every filing's Job Board page in its proceeding", async () => {
+test("a proceeding-scoped job shows on every filing's Milestone page in its proceeding", async () => {
   const f = seededDbFixture();
   try {
     const { draft } = await twoFilingBoard(f);
@@ -145,7 +145,7 @@ test("a proceeding-scoped job shows on every filing's Job Board page in its proc
   }
 });
 
-test("a matter with one live filing has that filing's Job Board page, the Litigation Strategy and the presentation folder, and the section a render builds", async () => {
+test("a matter with one live filing has that filing's Milestone page, the Litigation Strategy and the presentation folder, and the section a render builds", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -164,7 +164,7 @@ test("a matter with one live filing has that filing's Job Board page, the Litiga
   }
 });
 
-test("a retitle leaves the filing's Job Board page at its path and moves nothing to TRASH", async (t) => {
+test("a retitle leaves the filing's Milestone page at its path and moves nothing to TRASH", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);
   const render = (now) => submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, undefined, now, undefined, m.draft);
@@ -181,7 +181,7 @@ test("a retitle leaves the filing's Job Board page at its path and moves nothing
   assert.equal(existsSync(join(m.matterRoot, "TRASH")), false, "no TRASH folder");
 });
 
-test("a retired filing's Job Board page goes to TRASH", async (t) => {
+test("a retired filing's Milestone page goes to TRASH", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);
   await submissionDataExecute(m.dbPath, "INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (2, 1, 'submissions_package', 'reply', 'Reply Submissions Package');");
@@ -194,7 +194,7 @@ test("a retired filing's Job Board page goes to TRASH", async (t) => {
   assert.deepEqual(jobBoardPages(m.draft), [OPENING_PAGE]);
   assert.deepEqual(
     retired.moved_to_trash.map((x) => x.from.toLowerCase()),
-    ["Arguments", "Job Board", "Loose Threads", "Material Facts", "Procedural History", "Raw Research"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
+    ["Arguments", "Milestone", "Loose Threads", "Material Facts", "Procedural History", "Raw Research"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
   );
   assert.ok(existsSync(join(m.matterRoot, "TRASH", "0. DRAFT", REPLY_PAGE)), "the retired filing's page is in TRASH");
 });
@@ -202,7 +202,7 @@ test("a retired filing's Job Board page goes to TRASH", async (t) => {
 test("a file without the page marker at another filing's or proceeding's page name refuses filing 1's render before any presentation copy is written", async (t) => {
   for (const [other, seed] of [
     [REPLY_PAGE, "INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (2, 1, 'submissions_package', 'reply', 'Reply Submissions Package');"],
-    ["Job Board - proceeding 2.html", "INSERT INTO proceedings (id, matter_reference, forum) VALUES (2, 'L9999 - Other', 'CAN/BC/Vancouver-International-Arbitration-Centre');"],
+    ["Milestone - proceeding 2.html", "INSERT INTO proceedings (id, matter_reference, forum) VALUES (2, 'L9999 - Other', 'CAN/BC/Vancouver-International-Arbitration-Centre');"],
   ]) {
     const m = matterFixture(t);
     await seedOneFiling(m.dbPath);
@@ -214,7 +214,7 @@ test("a file without the page marker at another filing's or proceeding's page na
 
     assert.throws(
       () => submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, undefined, FIRST, undefined, m.draft),
-      (err) => err.message.includes(page) && /does not carry the Job Board's marker, so this renderer did not write it/.test(err.message),
+      (err) => err.message.includes(page) && /does not carry the Milestone's marker, so this renderer did not write it/.test(err.message),
       other
     );
 
@@ -225,11 +225,11 @@ test("a file without the page marker at another filing's or proceeding's page na
   }
 });
 
-test("a pre-filing proceeding has a Job Board page of its own until it gains a filing, which moves that page to TRASH", async (t) => {
+test("a pre-filing proceeding has a Milestone page of its own until it gains a filing, which moves that page to TRASH", async (t) => {
   const m = matterFixture(t);
   await freshSubmissionDb(m.dbPath);
   await submissionDataExecute(m.dbPath, "INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L9999 - Test', 'CAN/BC/Vancouver-International-Arbitration-Centre');");
-  const proceedingPage = "Job Board - proceeding 1.html";
+  const proceedingPage = "Milestone - proceeding 1.html";
 
   const board = submissionFormsRenderProceedingBoard(m.dbPath, 1, ASHBOURNE, FIRST, "tok", m.draft);
   assert.equal(board.job_board_path, join(m.draft, proceedingPage));
@@ -243,7 +243,7 @@ test("a pre-filing proceeding has a Job Board page of its own until it gains a f
   assert.deepEqual(rendered.moved_to_trash.map((x) => x.from.toLowerCase()), [join(m.draft, proceedingPage).toLowerCase()]);
 });
 
-test("a Job Board page without the page's marker refuses the render before any page or presentation copy is written", async () => {
+test("a Milestone page without the page's marker refuses the render before any page or presentation copy is written", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -256,7 +256,7 @@ test("a Job Board page without the page's marker refuses the render before any p
 
     assert.throws(
       () => renderInto(f, 1, draft, FIRST),
-      (err) => err.message.includes(page) && /does not carry the Job Board's marker, so this renderer did not write it/.test(err.message)
+      (err) => err.message.includes(page) && /does not carry the Milestone's marker, so this renderer did not write it/.test(err.message)
     );
 
     assert.equal(readFileSync(page, "utf-8"), own, "the practitioner's file is untouched");
@@ -301,7 +301,7 @@ async function practiceContext(t) {
 
 // R4: a ticket write moves no revision, so only board_changed can tell the session the board it
 // already read is out of date. It compares against the state sidecar, which a deleted page leaves standing.
-test("session entry and render report board_changed against the state sidecar, with the Job Board page never read", async (t) => {
+test("session entry and render report board_changed against the state sidecar, with the Milestone page never read", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);
   const context = await practiceContext(t);
@@ -428,7 +428,7 @@ async function seedNoticeAndRequisition(dbPath) {
   await submissionDataWrite(dbPath, "UPDATE filings SET layout_snapshot = ? WHERE id = 1", [JSON.stringify(stored)]);
 }
 
-/** Runs the Job Board page's drawing script against stand-in elements and returns its header and main. */
+/** Runs the Milestone page's drawing script against stand-in elements and returns its header and main. */
 function drawPage(file) {
   class Node {
     constructor(tag) {
@@ -481,11 +481,11 @@ function drawPage(file) {
 
 // ADR 0013, both 2026-10-04 amendments. A hearing anchor linked to filing 1 makes its deadlines that
 // filing's Goal criteria: board_summary and board_card carry each one's name, state and order within
-// the anchor, and no date, rule or review flag. Every date is drawn on the Job Board page alone, by
+// the anchor, and no date, rule or review flag. Every date is drawn on the Milestone page alone, by
 // every path that writes it: an unmet deadline in the Goal card's head, every deadline criterion on
 // its row, and the anchors and the deadlines no card carries in the header's date rows. No response,
 // Litigation Strategy or state file carries a date.
-test("linked deadlines are dateless Goal criteria to a session; every date is on the Job Board page alone", async (t) => {
+test("linked deadlines are dateless Goal criteria to a session; every date is on the Milestone page alone", async (t) => {
   const m = matterFixture(t);
   await seedNoticeAndRequisition(m.dbPath);
   const context = await practiceContext(t);
@@ -520,10 +520,10 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
       review_flag,
     });
   }
-  const jobBoard = join(m.draft, "Notice of Application", "Job Board.html");
+  const jobBoard = join(m.draft, "Notice of Application", "Milestone.html");
   const onPage = (when) => {
     const page = readFileSync(jobBoard, "utf-8");
-    for (const date of DATES) assert.ok(page.includes(date), `${when}: ${date} is on the Job Board`);
+    for (const date of DATES) assert.ok(page.includes(date), `${when}: ${date} is on the Milestone`);
     assert.equal(JSON.stringify(readBoardData(jobBoard).sections).match(/\d{4}-\d{2}-\d{2}/g)?.some((d) => DATES.includes(d)) ?? false, false, `${when}: no section carries a date`);
   };
   const absent = (text, what) => {
@@ -582,7 +582,7 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   const labelled = (row) => row.children.map((n) => `${n.attrs["data-k"]}: ${n.textContent}`);
   assert.deepEqual(
     header.children.slice(0, 2).map((n) => [n.tag, n.className, n.textContent]),
-    [["h1", "", "Job Board 1"], ["p", "writing-title", "Notice of Application"]],
+    [["h1", "", "Milestone 1"], ["p", "writing-title", "Notice of Application"]],
     "the heading names the page's number, and the Writing's title is drawn directly after it"
   );
   const metaRow = rowOf("meta");
@@ -620,7 +620,7 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   });
 });
 
-test("a pre-filing Job Board's header names its proceeding, draws its state as a chip on a blank proceeding line, and omits an empty Writing-dates row", (t) => {
+test("a pre-filing Milestone's header names its proceeding, draws its state as a chip on a blank proceeding line, and omits an empty Writing-dates row", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-job-board-header-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const section = {
@@ -640,7 +640,7 @@ test("a pre-filing Job Board's header names its proceeding, draws its state as a
   };
 
   const { header: none, dates: noDates } = draw("none.html", { writing: [], header: [], criteria: {} });
-  assert.equal(none.children[0].textContent, "Job Board: Proceeding 1", "a page with no filing is named by its proceeding");
+  assert.equal(none.children[0].textContent, "Milestone: Proceeding 1", "a page with no filing is named by its proceeding");
   assert.deepEqual(none.children.map((n) => n.className), ["", "meta", "meta proceeding"], "a proceeding row for the state chip, and no date row");
   assert.deepEqual(none.children[1].children.map((n) => `${n.attrs["data-k"]}: ${n.textContent}`), ["Matter: L1", "Client: C"], "no brackets without a client number");
   assert.deepEqual(none.children[2].children.map((n) => [n.className, n.textContent]), [["chip", "No filing yet"]], "a blank proceeding line holds the state chip alone, with no dot");
@@ -650,7 +650,7 @@ test("a pre-filing Job Board's header names its proceeding, draws its state as a
   assert.deepEqual(writingOnly.children.map((n) => n.className), ["meta writing"], "every date is this Writing's, so no matter row");
 });
 
-test("a filing's Job Board page draws its Writings in the render's order between the Goal card and Ready; a page given none draws no strip", async (t) => {
+test("a filing's Milestone page draws its Writings in the render's order between the Goal card and Ready; a page given none draws no strip", async (t) => {
   const f = seededDbFixture();
   t.after(() => f.cleanup());
   await seedNoticeAndRequisition(f.dbPath);
@@ -661,7 +661,7 @@ test("a filing's Job Board page draws its Writings in the render's order between
   const stem = (name) => name.replace(/\.[^.]+$/, "");
   const expected = readManifest(f.dbPath, 1).files.map((file) => file.label ?? { short: stem(file.file_name), long: stem(file.file_name) });
   assert.ok(expected.length > 0, "the render's manifest lists its Writings");
-  const noticePage = join(draft, "Notice of Application", "Job Board.html");
+  const noticePage = join(draft, "Notice of Application", "Milestone.html");
   const { main } = drawPage(noticePage);
   const nodes = main.all();
   const strip = nodes.find((n) => n.tag === "ol" && n.className === "writings");
@@ -723,7 +723,7 @@ test("the fast-open render returns the short board_summary, and no lane, board d
     assert.equal(board.path, join(draft, OPENING_PAGE));
     assertMatchesGolden("board-summary.md", board.board_summary + "\n");
     assert.deepEqual(board.board_summary.split("\n"), [
-      "# Job Board — Matter L4801 · Client Ashbourne (2417) · Rev 1",
+      "# Milestone — Matter L4801 · Client Ashbourne (2417) · Rev 1",
       "To Do: This matter's to-dos were not read.",
       "Goal: Goal not set (none)",
       "State: Drafting — No completion criteria are declared for this type of Writing.",
@@ -753,7 +753,7 @@ test("board_summary's header prints no bare Matter or Client part when the matte
 
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "", clientNo: "", matterNo: "" }, "mockup", ["Work_board"], undefined, undefined, FIRST, "tok", draft);
     const board = result.documents.find((d) => d.document_type === "Work_board");
-    assert.equal(board.board_summary.split("\n")[0], "# Job Board — Rev 1");
+    assert.equal(board.board_summary.split("\n")[0], "# Milestone — Rev 1");
   } finally {
     f.cleanup();
   }
@@ -864,9 +864,9 @@ test("board_card(jobs) prints a completed job's plan and stamped steps, then whe
   }
 });
 
-// A job's plan is its steps (schema v55): its card on the Job Board page draws the title, the status
+// A job's plan is its steps (schema v55): its card on the Milestone page draws the title, the status
 // chip and the step checklist, with no intent paragraph and no Plan row.
-test("a job's card on the Job Board page draws its steps as its plan, with no intent paragraph and no Plan row", async () => {
+test("a job's card on the Milestone page draws its steps as its plan, with no intent paragraph and no Plan row", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -1214,9 +1214,9 @@ test("the idle flag past the firm's idle_flag_hours, on the live lane and the pa
   const live = submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, lanes: ["live"] }, {}, NOON).card;
   const line = live.split("\n").find((l) => l.startsWith("- Job #1 "));
   assert.equal(line, "- Job #1 Research the limitation point · In Progress 0/1 · idle 2 h 40 min, about 0% · idle past 2 h");
-  const ticket = readBoardData(join(draft, "Job Board - proceeding 1.html")).sections[0].tickets.find((x) => x.id === 1);
+  const ticket = readBoardData(join(draft, "Milestone - proceeding 1.html")).sections[0].tickets.find((x) => x.id === 1);
   assert.equal(ticket.idle_flag, "idle past 2 h");
-  assert.ok(drawPage(join(draft, "Job Board - proceeding 1.html")).main.all().some((n) => n.className === "subtitle" && n.textContent === "idle past 2 h"), "the card draws it as a subtitle");
+  assert.ok(drawPage(join(draft, "Milestone - proceeding 1.html")).main.all().some((n) => n.className === "subtitle" && n.textContent === "idle past 2 h"), "the card draws it as a subtitle");
 });
 
 test("no idle flag within the firm's idle_flag_hours", async (t) => {
@@ -1326,7 +1326,7 @@ test("the live lane of a board shaped like the measured one is 3 KB or less, and
 });
 
 // D3: the old page files -- per-filing boards, numbered copies, the pages' older names, the single
-// Job Board.html among them -- go to the matter's TRASH on the first page write, through
+// Milestone.html among them -- go to the matter's TRASH on the first page write, through
 // file_ops__trash's mover. A file without a generator marker is the practitioner's and stays.
 test("a page write moves every old page file the generator wrote into TRASH and leaves the rest", async (t) => {
   const m = matterFixture(t);
@@ -1335,13 +1335,13 @@ test("a page write moves every old page file the generator wrote into TRASH and 
   const todoList = '<!doctype html>\n<html lang="en" data-matter-board-shell>\n';
   const view = '<!doctype html>\n<html lang="en" data-view-page>\n';
   const marked = {
-    [join(m.draft, "Provable Facts - Job Board 1.html")]: view,
-    [join(m.draft, "Provable Facts - Job Board - proceeding 3.html")]: view,
-    [join(m.draft, "Job Board.html")]: board,
-    [join(m.draft, "Job Board-1.html")]: board,
-    [join(m.draft, "Job Board - SUB Opening Submissions Package.html")]: board,
-    [join(m.draft, "SUB Opening Submissions Package", "Job Board.html")]: board,
-    [join(m.draft, "Pre-filing proceeding 3", "Job Board.html")]: board,
+    [join(m.draft, "Provable Facts - Milestone 1.html")]: view,
+    [join(m.draft, "Provable Facts - Milestone - proceeding 3.html")]: view,
+    [join(m.draft, "Milestone.html")]: board,
+    [join(m.draft, "Milestone-1.html")]: board,
+    [join(m.draft, "Milestone - SUB Opening Submissions Package.html")]: board,
+    [join(m.draft, "SUB Opening Submissions Package", "Milestone.html")]: board,
+    [join(m.draft, "Pre-filing proceeding 3", "Milestone.html")]: board,
     [join(m.draft, "Litigation Strategy-2.html")]: todoList,
     [join(m.draft, "To Do List.html")]: todoList,
     [join(m.draft, "To Do List-2.html")]: todoList,
@@ -1350,7 +1350,7 @@ test("a page write moves every old page file the generator wrote into TRASH and 
   const unmarked = {
     [join(m.draft, "Work Board.html")]: "the practitioner's own board\n",
     [join(m.draft, "notes.html")]: "<p>notes</p>\n",
-    [join(m.caseDataDir, "Job Board.html")]: board,
+    [join(m.caseDataDir, "Milestone.html")]: board,
   };
   for (const [file, text] of Object.entries({ ...marked, ...unmarked })) {
     mkdirSync(dirname(file), { recursive: true });
@@ -1395,7 +1395,7 @@ test("an old page file outside any matter with a coclerk.json is reported as ski
     await freshSubmissionDb(f.dbPath);
     await seedVaniacProceeding(f.dbPath);
     const { draft } = draftFolder(f);
-    const old = join(draft, "Job Board-1.html");
+    const old = join(draft, "Milestone-1.html");
     writeFileSync(old, '<!doctype html>\n<html lang="en" data-workboard-shell>\n', "utf-8");
 
     const result = renderInto(f, 1, draft, FIRST);
@@ -1411,7 +1411,7 @@ test("an old page file outside any matter with a coclerk.json is reported as ski
 
 // Step states (schema v78): board_card prints each step's glyph at the section's Rendered minute,
 // a waiting step with the plain minute it is next checked, and one whose minute has passed as open;
-// the Job Board page draws the same states as classes, with `until HH:MM` beside a waiting step.
+// the Milestone page draws the same states as classes, with `until HH:MM` beside a waiting step.
 async function stepStatesBoard(t) {
   const { f } = await heldJobBoard(t);
   await submissionDataExecute(
@@ -1453,11 +1453,11 @@ test("board_card prints each step state's glyph, the minute beside a waiting ste
   assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 1/7 · idle 2 h 40 min, about 14%", "progress counts done steps only");
 });
 
-test("the Job Board page draws each step state as a class, with until HH:MM beside a waiting step, and a passed wait as open", async (t) => {
+test("the Milestone page draws each step state as a class, with until HH:MM beside a waiting step, and a passed wait as open", async (t) => {
   const f = await stepStatesBoard(t);
   const { draft } = draftFolder(f);
   submissionFormsRenderProceedingBoard(f.dbPath, 1, {}, NOON, "tok", draft);
-  const page = join(draft, "Job Board - proceeding 1.html");
+  const page = join(draft, "Milestone - proceeding 1.html");
   const ticket = readBoardData(page).sections[0].tickets.find((x) => x.id === 1);
   assert.deepEqual(ticket.steps[4], { ordinal: 5, text: "Run the Westlaw query", done_at: null, status: "waiting", wait_until: "2099-01-16T12:30", status_note: null });
   const card = drawPage(page).main.all().find((n) => n.tag === "details" && n.id === "ticket-1").all();

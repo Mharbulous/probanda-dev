@@ -110,7 +110,7 @@ export function buildContext(
     // reads it back. See the field's own doc comment on RenderContext.
     paragraphLedger: new Map(),
     // Fresh per filing: every emit site that prints a generating glyph appends to it, and the
-    // Job Board reads it back last. See the field's own doc comment on RenderContext. The
+    // Milestone reads it back last. See the field's own doc comment on RenderContext. The
     // filed-face emitters and the pre-filing check build a context through here too and simply
     // carry the empty array -- neither renders the board.
     inventory: [],

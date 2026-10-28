@@ -1,4 +1,4 @@
-// The Job Board's thumbnails, most recently viewed first (forms/board-viewed.ts): drafting_data__record_viewed
+// The Milestone's thumbnails, most recently viewed first (forms/board-viewed.ts): drafting_data__record_viewed
 // records the pages a session presented, one db_meta row per board, and the next page write draws the
 // viewed thumbnails first and a view page's tile dashed only while it has never been viewed. The write
 // moves no revision and touches no job, page or state file.
@@ -61,9 +61,9 @@ async function fixture(t) {
   return m;
 }
 
-/** A Writing's Job Board page, in its own folder (spec 2026-10-22 §9). */
-const page1 = (m) => join(m.draft, "Opening Submissions Package", "Job Board.html");
-const page2 = (m) => join(m.draft, "Counterclaim Submissions", "Job Board.html");
+/** A Writing's Milestone page, in its own folder (spec 2026-10-22 §9). */
+const page1 = (m) => join(m.draft, "Opening Submissions Package", "Milestone.html");
+const page2 = (m) => join(m.draft, "Counterclaim Submissions", "Milestone.html");
 
 /** The strip as the page draws it: each tile's class and label. */
 function drawnStrip(file) {

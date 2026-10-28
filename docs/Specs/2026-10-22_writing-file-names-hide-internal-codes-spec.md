@@ -59,7 +59,7 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ### §9 Resolved 2026-10-22 (Brahm)
 - Drop every `folder_code` from presentation folder names, structured types included (NOA too).
-- Saving into `case data/` was a workaround for a Cowork FUSE-mount bug (#324) that no longer exists. Every mockup moves into the matter's `0. DRAFT` folder: one folder per Writing named after the document, e.g. `0. DRAFT/Notice of Hearing of Application/Notice of Hearing of Application.md`. That one file replaces both the canonical case-data mockup and the separate presentation copy. Revisions go to an `archive` subfolder there. The Writing's Job Board page goes in its folder, and the matter board at the `0. DRAFT` root. Bookkeeping files (render manifest, page-state file) go in one plainly named subfolder. No `Filing <id>` folder name remains. Only the databases stay in case data. Existing case-data `mockups/` trees migrate on the next render or bootstrap with no orphan left. This is in scope for this spec.
+- Saving into `case data/` was a workaround for a Cowork FUSE-mount bug (#324) that no longer exists. Every mockup moves into the matter's `0. DRAFT` folder: one folder per Writing named after the document, e.g. `0. DRAFT/Notice of Hearing of Application/Notice of Hearing of Application.md`. That one file replaces both the canonical case-data mockup and the separate presentation copy. Revisions go to an `archive` subfolder there. The Writing's Milestone page goes in its folder, and the matter board at the `0. DRAFT` root. Bookkeeping files (render manifest, page-state file) go in one plainly named subfolder. No `Filing <id>` folder name remains. Only the databases stay in case data. Existing case-data `mockups/` trees migrate on the next render or bootstrap with no orphan left. This is in scope for this spec.
 
 ## 10. Verify against HEAD before building
 Confirm each path, quote and root cause above in the repo at HEAD; mark any that differ, and append the table to this spec before changing code.
@@ -76,12 +76,12 @@ Confirm each path, quote and root cause above in the repo at HEAD; mark any that
 | Structured types are named after the document | Confirmed (`Notice of Application.md`, `Written Arguments.md`, `Affidavit #N of <deponent>.md`). | `forms/filler-registry.ts`, `forms.ts` |
 | The stock type file carries `"folder_code": "UNS", "title": "Unstructured"` | Confirmed in all 17 stock type files (`unstructured.md` at each venue, `unstructured-<recipient>.md` under `_NoVenue`). | `.claude/skills/draft/references/CAN/BC/**/Documents/unstructured*.md` |
 | `render` names the document type `General_writing` | Confirmed. It is the `documents` filter's name and the response's `document_type`, which are tool parameters, not file names. | `forms.ts` `venueDocumentsForFiling`, `selectDocuments` |
-| `folder_code` is read in `declared-layout.ts` | Confirmed, as a required field. Its only other readers are the presentation folder name and the Job Board strip label. | `src/knowledge/declared-layout.ts`, `forms.ts` |
+| `folder_code` is read in `declared-layout.ts` | Confirmed, as a required field. Its only other readers are the presentation folder name and the Milestone strip label. | `src/knowledge/declared-layout.ts`, `forms.ts` |
 | The case-data location rests on the FUSE bug (#324) | Confirmed in the code comments and tool descriptions. ADR 0013 already records that the location never protected against it. | `forms.ts` header, `schema-gen.ts`, `docs/ADRs/0013-...md` |
 
 Found beyond the spec, all user-visible and all fixed under §4 (e) and §9:
 
-- The Job Board's Writings strip labels a general Writing's thumbnail with its `folder_code` (`UNS`). (`forms.ts`)
+- The Milestone's Writings strip labels a general Writing's thumbnail with its `folder_code` (`UNS`). (`forms.ts`)
 - Archived copies are named by the document type: `archive\General_writing @rev<N> <time>.md`. (`forms.ts` `archiveFile`)
-- Each Writing's Job Board page and view pages sit at the top of `0. DRAFT` named by its filing id: `Job Board <id>.html`, `<page> - Job Board <id>.html`. (`matter-pages.ts`, `view-pages.ts`)
+- Each Writing's Milestone page and view pages sit at the top of `0. DRAFT` named by its filing id: `Milestone <id>.html`, `<page> - Milestone <id>.html`. (`matter-pages.ts`, `view-pages.ts`)
 - `publish_vaniac_package` requires the Writing folder to be named `SUB <filing folder>`. (`publish-tools.ts` `vaniacFilingFolder`)

@@ -40,5 +40,5 @@ Date: ________________
 
 | Symbol | Name | Meaning | Work |
 |---|---|---|---|
-| 🧩 | gap | a legally significant fact, or its evidence, is missing, or a required piece of the Writing is not yet supplied | supply it; the Job Board and the source view name what is asked (drafter or investigator; practitioner for a signer or a To recipient) |
+| 🧩 | gap | a legally significant fact, or its evidence, is missing, or a required piece of the Writing is not yet supplied | supply it; the Milestone and the source view name what is asked (drafter or investigator; practitioner for a signer or a To recipient) |
 | 🧩 | | as a whole line, no facts are attributed to this witness; after a paragraph, no fact is linked to it | |

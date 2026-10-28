@@ -33,7 +33,7 @@ The model never sends email (shared/email.md). Internals stay confidential. No d
 ## 6. Options considered
 1. Email-first, with the save after it in the same turn (recommended). First output arrives fastest; tracking is kept.
 2. Keep save-first but drop the purpose question. Smaller change; first output is still slow.
-3. Skip the saved draft for bare emails. Fastest, but loses Job Board tracking and the pre-send hold.
+3. Skip the saved draft for bare emails. Fastest, but loses Milestone tracking and the pre-send hold.
 
 ## 7. Implementation plan
 1. Verify before building (§10) and append the verification table to this spec.

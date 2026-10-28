@@ -72,7 +72,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          # The Job Board browser test uses the global WebSocket, which arrived in Node 22.
+          # The Milestone browser test uses the global WebSocket, which arrived in Node 22.
           node-version: 22
 
       - uses: actions/setup-python@v5

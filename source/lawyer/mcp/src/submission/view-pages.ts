@@ -1,11 +1,11 @@
 // View pages (ADR 0033, 2026-10-07 amendment): read-only HTML views of one live filing's data,
-// written beside their board's Job Board page in the matter's 0. DRAFT folder,
+// written beside their board's Milestone page in the matter's 0. DRAFT folder,
 // by the same page write (matter-pages.ts), at the same times and in the same way: atomically, only
 // over a file carrying VIEW_PAGE_MARKER, and a retired filing's page moved to the matter's TRASH.
 //
 // A Writing's board's view page is `<name>.html` in the Writing's own folder (spec 2026-10-22 §9). A
-// board whose survivor is not a Writing has them at the folder's top as `<name> - Job Board <id>.html`
-// or `<name> - Job Board - proceeding <id>.html`, the names every view page had from 2026-10-09 (before
+// board whose survivor is not a Writing has them at the folder's top as `<name> - Milestone <id>.html`
+// or `<name> - Milestone - proceeding <id>.html`, the names every view page had from 2026-10-09 (before
 // then `<name> - filing <id>.html`, which the page write's old-page sweep trashes).
 // The html-pages gate knows each view page by its name in the hook's VIEW_NAMES, refuses every read
 // of it and lets a remote-device-only host stage it, so a page added here also adds its lowercased
@@ -19,7 +19,7 @@
 // literally, sharing view-head.html and shared.js; its page file composes it.
 //
 // Provable Facts became Procedural History and Material Facts on 2026-10-20 (docs/ADRs/0011). A
-// `Provable Facts - Job Board <id>.html` left from before is an old page file (matter-page-files.ts OLD_PAGE).
+// `Provable Facts - Milestone <id>.html` left from before is an old page file (matter-page-files.ts OLD_PAGE).
 
 import { join } from "node:path";
 
@@ -81,11 +81,11 @@ export interface ViewPagePath {
 }
 
 /** A view page's file for one board, relative to the draft folder: `<name>.html` in `folder`, the
- * board's survivor Writing's own folder, else at the top by its survivor's id: a Job Board with no
+ * board's survivor Writing's own folder, else at the top by its survivor's id: a Milestone with no
  * Writing's, or a pre-filing proceeding's that holds a Writing through a merge (ADR 0010). */
 export function viewPageFile(page: ViewPage, board: { filing_id: number | null; proceeding_id: number }, folder?: string): string {
   if (folder !== undefined) return join(folder, `${page.name}.html`);
-  return board.filing_id === null ? `${page.name} - Job Board - proceeding ${board.proceeding_id}.html` : `${page.name} - Job Board ${board.filing_id}.html`;
+  return board.filing_id === null ? `${page.name} - Milestone - proceeding ${board.proceeding_id}.html` : `${page.name} - Milestone ${board.filing_id}.html`;
 }
 
 function escapeRegExp(text: string): string {
@@ -94,7 +94,7 @@ function escapeRegExp(text: string): string {
 
 /** Whether a file name is a registered view page's, for any board, case aside. */
 export function isViewPageFile(fileName: string): boolean {
-  return VIEW_PAGES.some((page) => new RegExp(`^${escapeRegExp(page.name)}(?: - Job Board (?:- proceeding )?\\d+)?\\.html$`, "i").test(fileName));
+  return VIEW_PAGES.some((page) => new RegExp(`^${escapeRegExp(page.name)}(?: - Milestone (?:- proceeding )?\\d+)?\\.html$`, "i").test(fileName));
 }
 
 /** The header every view page prints: the page, the filing, the matter, the revision and the render stamp. */

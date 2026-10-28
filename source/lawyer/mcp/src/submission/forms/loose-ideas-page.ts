@@ -1,4 +1,4 @@
-// The Loose Threads view page: one `Loose Threads - Job Board <id>.html` per live Writing, written by the
+// The Loose Threads view page: one `Loose Threads - Milestone <id>.html` per live Writing, written by the
 // view-page registry (../view-pages.ts), listing the open loose threads of the filing's proceeding --
 // the same set board_card's loose_threads lane prints, read by the same loader (fetchOpenSeeds), in
 // the same order (inRankOrder):
@@ -162,7 +162,7 @@ function looseIdeasMeta(data: LooseIdeasData): [string, string][] {
   ];
 }
 
-/** The page's name. A filing's Job Board names it, in plain text, in its Loose Threads section (workboard-shell.ts).
+/** The page's name. A filing's Milestone names it, in plain text, in its Loose Threads section (workboard-shell.ts).
  * Before 2026-10-08 it was "Loose Ideas"; the page write moves an old file to TRASH (matter-page-files.ts OLD_PAGE). */
 export const LOOSE_THREADS_PAGE_NAME = "Loose Threads";
 

@@ -530,7 +530,7 @@ class FactMoveTest(GateTestCase):
 
 
 class MergeJobBoardsGateTest(unittest.TestCase):
-    """docs/ADRs/0010: a merge of two Job Boards passes only on the practitioner's bare yes."""
+    """docs/ADRs/0010: a merge of two Milestones passes only on the practitioner's bare yes."""
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

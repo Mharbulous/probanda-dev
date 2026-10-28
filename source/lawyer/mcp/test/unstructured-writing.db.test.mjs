@@ -4,7 +4,7 @@
 // no title heading, and the `form-source` projection, a gap until the saved form copy is linked. It
 // publishes through the venue's generic template. The conversion's `/localize create` with a
 // practitioner layout writes a type file the next lookup resolves. The Sent write records one, and
-// the accepted conversion job sits on its Job Board. /draft's and /publish's shipped
+// the accepted conversion job sits on its Milestone. /draft's and /publish's shipped
 // trees under CAN/BC; the firm overlay, matter and databases are temporary. Never a live matter.
 
 import assert from "node:assert/strict";
@@ -300,7 +300,7 @@ test("a practitioner layout's create writes the form's source record, a learned 
 // /drafting-data's jobs-stock.md §3h gives, as an accepted offer writes it.
 const JOBS_STOCK = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", ".claude", "skills", "drafting-data", "references", "jobs-stock.md");
 
-test("the Sent write records a written Unstructured Writing from a pasted copy, closes Deliver and offers no retirement at a venue; the accepted conversion job sits on its Job Board", async (t) => {
+test("the Sent write records a written Unstructured Writing from a pasted copy, closes Deliver and offers no retirement at a venue; the accepted conversion job sits on its Milestone", async (t) => {
   const g = await generalWritingFixture(t);
   const id = await unstructured(g);
   await g.prose(id, "body", BODY);

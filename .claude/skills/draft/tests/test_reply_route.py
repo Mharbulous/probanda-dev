@@ -54,9 +54,9 @@ class ReplyRouteTest(unittest.TestCase):
         self.assertIn("`drafting_forms__read_message`", self.route)
         self.assertIn("`drafting_forms__reply_draft`", self.route)
         self.assertIn("takes no intake and no session entry's opening", self.route)
-        self.assertIn("It opens the drafting database only to attach the file to one Job Board", self.route)
+        self.assertIn("It opens the drafting database only to attach the file to one Milestone", self.route)
         attach = next(line for line in self.route.splitlines()
-                      if line.startswith("5. **Attach it to a Job Board at its first save**"))
+                      if line.startswith("5. **Attach it to a Milestone at its first save**"))
         before = self.route[:self.route.index(attach)]
         self.assertNotIn("Call `drafting_forms__open_session`", before)
 

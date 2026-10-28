@@ -164,7 +164,7 @@ function planPreSendGate(dbPath: string, filing: FilingRow, held: GoalCriterion[
       [filing.id]
     );
     if (anchor === undefined) {
-      throw refused(`no job on "${filing.title}"'s Job Board says what to bill the Pre-send gate job to; a letter's Deliver job, written when it is saved, says it`, "no_billing_anchor");
+      throw refused(`no job on "${filing.title}"'s Milestone says what to bill the Pre-send gate job to; a letter's Deliver job, written when it is saved, says it`, "no_billing_anchor");
     }
     const notDeleted = liveTicketClause(dbPath);
     const job: JobRef = { sql: `(SELECT id FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`, params: [filing.id, PRE_SEND_TITLE] };
@@ -278,7 +278,7 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
   checkArgs(args);
   const [filing] = rows<FilingRow>(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]);
   if (filing === undefined) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
-  if (isJobOnlyBoard(filing)) throw refused(`Job Board ${filing.id} has no Writing, so there is nothing to record as sent`, "job_board_only");
+  if (isJobOnlyBoard(filing)) throw refused(`Milestone ${filing.id} has no Writing, so there is nothing to record as sent`, "job_board_only");
   if (filing.retired_on) throw refused(`"${filing.title}" was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on) throw refused(`"${filing.title}" was already recorded as sent or filed on ${filing.filed_on}`, "already_sent");
   const stored = filing.layout_snapshot === null ? null : storedLayout(filing);

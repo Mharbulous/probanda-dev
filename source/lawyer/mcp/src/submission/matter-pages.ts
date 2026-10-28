@@ -1,10 +1,10 @@
 // The matter's pages (#1365, ADR 0033's 2026-10-05 amendment) in its 0. DRAFT folder: one Litigation
-// Strategy.html at the top, and one Job Board page per board: a board's own section, or, on a
+// Strategy.html at the top, and one Milestone page per board: a board's own section, or, on a
 // merged board (docs/ADRs/0010), every section merged into it pooled into one board (combined-board.ts).
-// A board whose survivor is a Writing has its page in that Writing's own folder as `Job Board.html`
+// A board whose survivor is a Writing has its page in that Writing's own folder as `Milestone.html`
 // (spec 2026-10-22 §9; writing-folder.ts), its view pages beside it. A pre-filing proceeding's page,
-// and a Job Board with no Writing's, is at the top, named by its id: `Job Board - proceeding <id>.html`,
-// `Job Board <id>.html`. Every
+// and a Milestone with no Writing's, is at the top, named by its id: `Milestone - proceeding <id>.html`,
+// `Milestone <id>.html`. Every
 // page is a human interface generated from the databases, and no session reads one: a session reads a
 // section through a render's board_summary.
 //
@@ -15,7 +15,7 @@
 // in-place write is left for a sync client to fork into a numbered copy. A target that does not
 // carry its page's marker is refused before any page is written, and no numbered copy is ever made.
 // Old page files this generator wrote -- a retired filing's page, a proceeding's once it has a
-// filing, a page under an older name, the old single Job Board.html, To Do List.html (the
+// filing, a page under an older name, the old single Milestone.html, To Do List.html (the
 // Litigation Strategy page's name before 2026-10-08), the `... - filing <id>.html` names used
 // before 2026-10-09 -- are moved into the matter's TRASH (D3), never deleted.
 //
@@ -23,7 +23,7 @@
 // against a page: the last section a foreground render reported for each filing or proceeding, kept
 // also per session so a session compares against its own last report, and the last to-dos read. The
 // background job cannot read practice data, so it is handed the to-dos from that file and the matter's dates from the closure it was started with. The dates are never
-// persisted (ADR 0013, 2026-10-04 amendments): they reach the Job Board's HTML file and nothing else.
+// persisted (ADR 0013, 2026-10-04 amendments): they reach the Milestone's HTML file and nothing else.
 // A deadline linked to a filing reaches its section as a dateless Goal criterion.
 //
 // A session receives each page's path and never a link to it (practitioner's decision, 2026-10-03).

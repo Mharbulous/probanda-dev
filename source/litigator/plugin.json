@@ -84,7 +84,7 @@
               "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/job-board-card-gate.py"
             ],
             "timeout": 10,
-            "statusMessage": "Job Board card gate"
+            "statusMessage": "Milestone card gate"
           }
         ]
       }
@@ -99,7 +99,7 @@
               "${CLAUDE_PLUGIN_ROOT}/skills/drafting-data/hooks/job-board-card-gate.py"
             ],
             "timeout": 10,
-            "statusMessage": "Job Board card gate"
+            "statusMessage": "Milestone card gate"
           }
         ]
       }

@@ -1,15 +1,15 @@
-Read when: a render or a job presents any file as a card other than the Litigation Strategy page and a Job Board page (a mockup copy, an enclosure, a blackline, a drafted email) (SKILL.md section 11, item 4), or a presented mockup carries an `[unverified: …]` or `[source changed: …]` tag, or the practitioner accepts or asks to re-snapshot a layout item (section 11, item 5).
+Read when: a render or a job presents any file as a card other than the Litigation Strategy page and a Milestone page (a mockup copy, an enclosure, a blackline, a drafted email) (SKILL.md section 11, item 4), or a presented mockup carries an `[unverified: …]` or `[source changed: …]` tag, or the practitioner accepts or asks to re-snapshot a layout item (section 11, item 5).
 Assumes SKILL.md is loaded. Rules are not restated here.
 
 ## Section 11, item 4: Present
 
 Send every mockup at its `path`, only the one named when the practitioner named one, then what the Writing calls attached or enclosed, a drafted email's `.eml` followed by each of its attachments (`shared/email.md`), as file cards in one call (`shared/present-files.md`: `mcp__cowork__present_files` when the tool list holds it, else `SendUserFile` when the list holds that; ToolSearch if deferred). Find each in the matter and read it once in full: its text governs any paraphrase. If one is not found, name it and ask, never draft around it. On the `SendUserFile` route, on a remote-device-only host, where `SendUserFile` takes container paths only, stage first with one `device_stage_files` call, then call `SendUserFile` on the returned `/mnt/user-data/uploads/...` paths. Staging alone presents nothing. `display: "render"` opens the first card in the side panel. No tool refreshes a preview already open: presenting the card again is the only refresh.
 
-Right after the cards go out, call `drafting_data__record_viewed` once with `db_path` and the mockups just presented, by their paths (never a staged path), in the order presented, so the Job Board puts them first. An enclosure, a blackline or an email is no thumbnail and is never passed. The call may share its round trip with any call that does not depend on it. A refusal writes nothing: quote it in one line and carry on.
+Right after the cards go out, call `drafting_data__record_viewed` once with `db_path` and the mockups just presented, by their paths (never a staged path), in the order presented, so the Milestone puts them first. An enclosure, a blackline or an email is no thumbnail and is never passed. The call may share its round trip with any call that does not depend on it. A refusal writes nothing: quote it in one line and carry on.
 
 Skip a mockup already presented this session at the same revision and client identity. That skip is for a mockup presented on its own; a document the session is asking a question about is re-sent with the question (SKILL.md, "A question about a document carries its file card"). A new revision presents every mockup even if unchanged. A file written but not presented is not delivered; a chat mention is not delivery either. If presenting fails, say so in one line naming the folder.
 
-A pass finding is never a card, and no findings list, table or report is written to present: findings live on the Job Board (`references/letters.md` section 4, `references/overstatement.md` "Findings").
+A pass finding is never a card, and no findings list, table or report is written to present: findings live on the Milestone (`references/letters.md` section 4, `references/overstatement.md` "Findings").
 
 ## Section 11, item 5: Layout confirmation
 

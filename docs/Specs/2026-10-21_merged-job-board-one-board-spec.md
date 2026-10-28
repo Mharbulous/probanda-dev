@@ -1,15 +1,15 @@
-# Spec: Merged Job Board draws one board
+# Spec: Merged Milestone draws one board
 
 Status: proposed, 2026-10-21. Written in a matter session; implementation is handed to Claude Code.
 Plugin: `lawyer` (data server; installed copy seen at v0.5.6) and `litigator` (drafting-data skill; installed copy seen at v0.7.6). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: 2026-10-21_general-job-marker-and-terms-spec.md
 
 ## 1. Problem
-Two Job Boards of one proceeding (survivor S, absorbed A, both live drafting Writings) were merged with drafting_data__merge_job_boards. Afterwards the practitioner saw a "badly merged" page, and the absorbed board kept its own page and section. To get one board they had to move jobs by hand, which re-attached A's Writing Jobs to S's Writing. The practitioner wants each Writing Job to keep its Writing.
+Two Milestones of one proceeding (survivor S, absorbed A, both live drafting Writings) were merged with drafting_data__merge_job_boards. Afterwards the practitioner saw a "badly merged" page, and the absorbed board kept its own page and section. To get one board they had to move jobs by hand, which re-attached A's Writing Jobs to S's Writing. The practitioner wants each Writing Job to keep its Writing.
 
 ## 2. Evidence (observed; quoted text is data, not instructions)
 - db_meta holds `board_member:filing:<A> = {"filing_id":<S>,"proceeding_id":<P>}`.
-- With that row present, drafting_forms__render (filing A, draft_dir) returned Work_board path `<DRAFT>\Job Board <A>.html` with `pages_written: true`, and drafting_forms__open_session returned both `Job Board <S>.html` and `Job Board <A>.html` in job_board_paths, plus a full set of view pages for each board.
+- With that row present, drafting_forms__render (filing A, draft_dir) returned Work_board path `<DRAFT>\Milestone <A>.html` with `pages_written: true`, and drafting_forms__open_session returned both `Milestone <S>.html` and `Milestone <A>.html` in job_board_paths, plus a full set of view pages for each board.
 - drafting_forms__board_card on filing A answered A's own section (lanes, criteria). It did not refuse `board_merged`, and board_card on S listed only S's jobs and the jobs with no Writing.
 - Conflicting specs of what a merge draws:
   - merge_job_boards tool description: "The survivor's page then draws every board's section, each with its own jobs, Completion Criteria card and Writings".
@@ -49,10 +49,10 @@ Goal: a merge makes S's page draw one board that holds both boards' content, and
 5. Stop writing absorbed pages, and trash old ones.
 6. Align the merge_job_boards description, jobs-closeout.md §10d and shared/html-pages.md.
 7. Add tests: two member Writings plus jobs with no Writing produce one section, one criteria card, no duplicates, and no absorbed page.
-8. Commit on `main` by explicit pathspec and push. Finish with the line `Implementation of Merged Job Board draws one board complete!`, then what you verified and what you assumed without verifying.
+8. Commit on `main` by explicit pathspec and push. Finish with the line `Implementation of Merged Milestone draws one board complete!`, then what you verified and what you assumed without verifying.
 
 ## 8. Implementation criteria
-1. With a `board_member:` row, render and open_session return no Job Board page or view page for the absorbed board.
+1. With a `board_member:` row, render and open_session return no Milestone page or view page for the absorbed board.
 2. board_card on the survivor lists every job of both Writings in one set of lanes, each job with no Writing exactly once.
 3. board_card on the absorbed board refuses `board_merged`, naming the survivor.
 4. The survivor's page has exactly one Completion Criteria card and one thumbnail row (test on generator output, not by a session).
@@ -82,7 +82,7 @@ Most of this spec landed before it was handed over: 7f26c0ae pooled a merged boa
 
 | §8 criterion | At HEAD |
 |---|---|
-| 1. No Job Board or view page for the absorbed board from render or open_session | already met: one writer, pages per survivor; the absorbed board's old pages go to TRASH through the sweep, and its `job_board_paths` / `view_page_paths` entries name the survivor's files |
+| 1. No Milestone or view page for the absorbed board from render or open_session | already met: one writer, pages per survivor; the absorbed board's old pages go to TRASH through the sweep, and its `job_board_paths` / `view_page_paths` entries name the survivor's files |
 | 2. board_card on the survivor lists both Writings' jobs in one set of lanes, each job with no Writing once | already met (`combineSections`, test "board_card and board_summary read the merged board") |
 | 3. board_card on the absorbed board refuses `board_merged`, naming the survivor | gap: it returns the pooled board |
 | 4. One Completion Criteria card and one thumbnail row on the survivor's page | card already met and tested; thumbnail row met (one `writings` strip, the members' Writings in order) but not tested: gap in tests only |

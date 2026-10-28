@@ -1,8 +1,8 @@
-// Job Board data (ADR 0009; a local file only since 2026-09-14, docs/design/2026-09-14
+// Milestone data (ADR 0009; a local file only since 2026-09-14, docs/design/2026-09-14
 // work-board-local-only-design.md): one filing's stored ticket process state -- tickets sorted
 // into ready / in progress / blocked / completed / shelved / superseded, plus
 // loose threads not yet outlined -- as one JSON object. workboard-shell.ts inlines it as the one section of
-// that filing's self-contained Job Board page, and matter-pages.ts prints the same object
+// that filing's self-contained Milestone page, and matter-pages.ts prints the same object
 // as the render response's board_summary, which is what a session orients from. Never an advocacy document, and never part of
 // renderMode:'filed'. The board
 // now prints marker glyphs, in its Shelved lane and board_card's proposed lane only (design §13). It holds

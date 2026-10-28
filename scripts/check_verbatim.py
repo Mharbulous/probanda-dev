@@ -29,7 +29,7 @@ The rule:
   punctuation, Markdown marks, quote marks) is one word break. A word is a run
   of letters and digits, with an apostrophe allowed inside it.
 - Only a sentence of at least MIN_WORDS words counts, so short common phrases
-  ("Already works as asked", "the job board") never trip it.
+  ("Already works as asked", "the Milestone") never trip it.
 - A file fails when the words of any counted sentence appear in it in order,
   one after another, whatever the line breaks, case or punctuation between them.
 

@@ -1,5 +1,5 @@
-// Merged Job Boards (docs/ADRs/0010-job-boards-organized-by-goals.md): drafting_data__merge_job_boards
-// joins two boards on the practitioner's yes. The survivor is a Writing's board over a Job Board with
+// Merged Milestones (docs/ADRs/0010-job-boards-organized-by-goals.md): drafting_data__merge_job_boards
+// joins two boards on the practitioner's yes. The survivor is a Writing's board over a Milestone with
 // no Writing over a pre-filing board, then the lower id. One page per survivor draws every board on
 // it as one board, one set of view pages spans its Writings, the absorbed pages go to TRASH, the board holds
 // one goal with the earlier statements kept as history only, and the Litigation Strategy groups the merged
@@ -37,19 +37,19 @@ const setGoal = (dbPath, board, statement, extra = {}) =>
   callTool({}, "drafting_data__set_board_goal", { db_path: dbPath, ...board, statement, status: "inferred", session_token: TOKEN, ...extra });
 const render = (m, filingId) => submissionFormsRender(m.dbPath, filingId, ASHBOURNE, "mockup", undefined, undefined, undefined, NOW, TOKEN, m.draft);
 
-/** Each Writing's Job Board page, in its own folder (spec 2026-10-22 §9). */
+/** Each Writing's Milestone page, in its own folder (spec 2026-10-22 §9). */
 const PAGE = {
-  1: join("Opening Submissions Package", "Job Board.html"),
-  2: join("Reply Submissions Package", "Job Board.html"),
-  3: join("Counterclaim Submissions", "Job Board.html"),
+  1: join("Opening Submissions Package", "Milestone.html"),
+  2: join("Reply Submissions Package", "Milestone.html"),
+  3: join("Counterclaim Submissions", "Milestone.html"),
 };
 const pageOf = (m, filingId) => join(m.draft, PAGE[filingId]);
 
-/** Every Job Board page in the draft folder, relative to it: a Writing's in its folder, a board with no Writing's at the top. */
+/** Every Milestone page in the draft folder, relative to it: a Writing's in its folder, a board with no Writing's at the top. */
 const jobBoardPages = (m) =>
   readdirSync(m.draft, { recursive: true })
     .map(String)
-    .filter((p) => /^Job Board .*\.html$/.test(p) || basename(p) === "Job Board.html")
+    .filter((p) => /^Milestone .*\.html$/.test(p) || basename(p) === "Milestone.html")
     .sort();
 
 /** The boards drawn on a page's one section: each merged one's state, or the section's own. */
@@ -205,20 +205,20 @@ test("a merge needs the practitioner's confirmation and refuses a merged, retire
   assert.equal(JSON.stringify(metaRows(m.dbPath, "*")), before);
 
   await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
-  await assert.rejects(merge(m.dbPath, [{ filing_id: 2 }, { filing_id: 3 }]), code("board_merged", /Job Board 3 is already merged into Job Board 1/));
+  await assert.rejects(merge(m.dbPath, [{ filing_id: 2 }, { filing_id: 3 }]), code("board_merged", /Milestone 3 is already merged into Milestone 1/));
   await assert.rejects(merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]), code("board_merged"));
   await submissionDataExecute(m.dbPath, "UPDATE filings SET retired_on = '2026-10-19', retirement_reason = 'abandoned' WHERE id = 2;");
   await assert.rejects(merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 2 }]), code("board_retired"));
 });
 
-test("a Writing's board survives a Job Board with no Writing of lower id, and a pre-filing board; a board's absorbed boards follow it", async (t) => {
+test("a Writing's board survives a Milestone with no Writing of lower id, and a pre-filing board; a board's absorbed boards follow it", async (t) => {
   const m = await fixture(t);
   await submissionDataExecute(
     m.dbPath,
     `INSERT INTO filings (id, proceeding_id, kind, title, needs_forum_parts) VALUES (4, 1, 'task-board', 'Paper originals', 0);
      INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (5, 2, 'submissions_package', 'reply', 'Counterclaim Reply');`
   );
-  // The Job Board with no Writing absorbs the pre-filing board, then Writing 5's board, of higher id, absorbs both.
+  // The Milestone with no Writing absorbs the pre-filing board, then Writing 5's board, of higher id, absorbs both.
   assert.deepEqual((await merge(m.dbPath, [{ proceeding_id: 3 }, { filing_id: 4 }])).survivor, { filing_id: 4, proceeding_id: 1 });
   assert.deepEqual((await merge(m.dbPath, [{ filing_id: 4 }, { filing_id: 5 }])).survivor, { filing_id: 5, proceeding_id: 2 });
   assert.deepEqual(
@@ -230,7 +230,7 @@ test("a Writing's board survives a Job Board with no Writing of lower id, and a 
 test("one page draws the merged boards as one board, each job once, with one set of view pages; the absorbed pages go to TRASH", async (t) => {
   const m = await fixture(t);
   render(m, 1);
-  assert.deepEqual(jobBoardPages(m), ["Job Board - proceeding 3.html", PAGE[1], PAGE[2], PAGE[3]].sort());
+  assert.deepEqual(jobBoardPages(m), ["Milestone - proceeding 3.html", PAGE[1], PAGE[2], PAGE[3]].sort());
   const rowsOf = () => ["tickets", "seeds", "board_attachments"].map((table) => JSON.stringify(query(m.dbPath, `SELECT * FROM ${table} ORDER BY id`)));
   const rowsBefore = rowsOf();
 
@@ -238,11 +238,11 @@ test("one page draws the merged boards as one board, each job once, with one set
   const result = render(m, 3);
 
   assert.deepEqual(rowsOf(), rowsBefore, "no merge or render writes a job, loose thread or attachment row");
-  assert.deepEqual(jobBoardPages(m), ["Job Board - proceeding 3.html", PAGE[1], PAGE[2]].sort());
+  assert.deepEqual(jobBoardPages(m), ["Milestone - proceeding 3.html", PAGE[1], PAGE[2]].sort());
   const absorbed = join(m.draft, "Counterclaim Submissions");
   assert.ok(result.view_page_paths.every((p) => dirname(p.path) !== absorbed), "no view page path is in the absorbed Writing's folder");
   const moved = result.moved_to_trash.map((x) => x.from.toLowerCase()).sort();
-  assert.deepEqual(moved, ["Arguments", "Job Board", "Loose Threads", "Material Facts", "Procedural History", "Raw Research"].map((n) => join(absorbed, `${n}.html`).toLowerCase()).sort());
+  assert.deepEqual(moved, ["Arguments", "Milestone", "Loose Threads", "Material Facts", "Procedural History", "Raw Research"].map((n) => join(absorbed, `${n}.html`).toLowerCase()).sort());
   const board = result.documents.find((d) => d.document_type === "Work_board");
   assert.equal(board.path, pageOf(m, 1), "the absorbed Writing's render returns its survivor's page");
 
@@ -292,8 +292,8 @@ test("a merged pre-filing board's first Writing joins the survivor, and later Wr
   );
   render(m, 2);
   assert.deepEqual(members(readBoardData(pageOf(m, 2))).map((w) => w.filing_id), [2, 6]);
-  assert.ok(jobBoardPages(m).includes(join("Third Reply", "Job Board.html")));
-  assert.equal(jobBoardPages(m).includes(join("Third Opening", "Job Board.html")), false);
+  assert.ok(jobBoardPages(m).includes(join("Third Reply", "Milestone.html")));
+  assert.equal(jobBoardPages(m).includes(join("Third Opening", "Milestone.html")), false);
 });
 
 test("two pre-filing boards merge onto the lower proceeding's page", async (t) => {
@@ -301,8 +301,8 @@ test("two pre-filing boards merge onto the lower proceeding's page", async (t) =
   await submissionDataExecute(m.dbPath, "INSERT INTO proceedings (id, matter_reference, forum) VALUES (4, 'L9999 - Test', NULL);");
   assert.deepEqual((await merge(m.dbPath, [{ proceeding_id: 4 }, { proceeding_id: 3 }])).survivor, { filing_id: null, proceeding_id: 3 });
   render(m, 1);
-  assert.deepEqual(members(readBoardData(join(m.draft, "Job Board - proceeding 3.html"))).map((w) => w.proceeding_id), [3, 4]);
-  assert.equal(jobBoardPages(m).includes("Job Board - proceeding 4.html"), false);
+  assert.deepEqual(members(readBoardData(join(m.draft, "Milestone - proceeding 3.html"))).map((w) => w.proceeding_id), [3, 4]);
+  assert.equal(jobBoardPages(m).includes("Milestone - proceeding 4.html"), false);
   const card = (proceedingId) => submissionFormsBoardCard({ db_path: m.dbPath, proceeding_id: proceedingId, lanes: ["live"] }, ASHBOURNE, NOW).card;
   assert.throws(() => card(4), code("board_merged", /proceeding 4's board is merged into proceeding 3's board; read the card on proceeding 3's board/));
   assert.match(card(3), /Job #4 /);
@@ -313,7 +313,7 @@ test("set_board_goal refuses an absorbed board, writes a merged statement by ind
   await setGoal(m.dbPath, { filing_id: 3 }, "Goal: defeat the counterclaim.");
   await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
 
-  await assert.rejects(setGoal(m.dbPath, { filing_id: 3 }, "Goal: anything."), code("board_merged", /merged into Job Board 1/));
+  await assert.rejects(setGoal(m.dbPath, { filing_id: 3 }, "Goal: anything."), code("board_merged", /merged into Milestone 1/));
   await assert.rejects(setGoal(m.dbPath, { filing_id: 1 }, "Goal: x.", { merged_index: 2 }), code("invalid_merged_index"));
 
   const written = await setGoal(m.dbPath, { filing_id: 1 }, "Goal: defeat the counterclaim in full.", { merged_index: 1 });
@@ -353,13 +353,13 @@ test("the Litigation Strategy draws a merged board as one heading over its secti
   await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
   render(m, 1);
   const data = matterBoard(join(m.draft, "Litigation Strategy.html"));
-  assert.deepEqual(data.boards, [{ name: "Job Board 1", filing_ids: [1, 3], proceeding_ids: [] }]);
-  assert.ok(readFileSync(join(m.draft, "Litigation Strategy.html"), "utf-8").includes('"Merged Job Boards"'));
+  assert.deepEqual(data.boards, [{ name: "Milestone 1", filing_ids: [1, 3], proceeding_ids: [] }]);
+  assert.ok(readFileSync(join(m.draft, "Litigation Strategy.html"), "utf-8").includes('"Merged Milestones"'));
 });
 
 // docs/ADRs/0010, 2026-10-21 amendment: a merged board is one board, not a section per merged board.
 
-/** Runs the Job Board page's drawing script against stand-in elements and returns every node drawn. */
+/** Runs the Milestone page's drawing script against stand-in elements and returns every node drawn. */
 function drawPage(file) {
   class Node {
     constructor(tag) {
@@ -527,7 +527,7 @@ test("board_card reads the merged board by its survivor and refuses the absorbed
   const m = await fixture(t);
   await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
   const card = (filingId) => submissionFormsBoardCard({ db_path: m.dbPath, filing_id: filingId, lanes: ["live", "criteria"] }, ASHBOURNE, NOW).card;
-  assert.throws(() => card(3), code("board_merged", /Job Board 3 is merged into Job Board 1; read the card on Job Board 1/));
+  assert.throws(() => card(3), code("board_merged", /Milestone 3 is merged into Milestone 1; read the card on Milestone 1/));
   const jobs = card(1).split("\n").filter((l) => l.startsWith("- Job #"));
   assert.deepEqual(
     jobs.map((l) => /^- Job #(\d+) [^·]+ · ([^·]+) ·/.exec(l).slice(1, 3).map((s) => s.trim())),

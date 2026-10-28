@@ -74,11 +74,11 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "caller's own session identity, issued by drafting_forms__bootstrap: pass it on every mockup render of a " +
         "job-driven session and the response ECHOES it back, so the session keeps one identity for " +
         "tickets.locked_by across bootstrap and every render. This tool mints nothing and compares nothing -- omit " +
-        "it and the response simply carries no session_token. The Job Board (document_type Work_board) is no file " +
+        "it and the response simply carries no session_token. The Milestone (document_type Work_board) is no file " +
         "of the filing's: only when documents names Work_board does its entry carry board_summary in place of " +
-        "markdown (a retired filing's entry always carries it), the board on this filing's Job Board page (on a merged " +
+        "markdown (a retired filing's entry always carries it), the board on this filing's Milestone page (on a merged " +
         "board, the whole board, whichever of its Writings rendered) as " +
-        "a short fixed-grammar summary: `# Job Board — Matter <matter no> <matter description> · Client <client " +
+        "a short fixed-grammar summary: `# Milestone — Matter <matter no> <matter description> · Client <client " +
         "name> (<client no>) · Rev <n>`, `To Do: <the description of the open to-do linked to this filing>` (or " +
         "`none linked`, or why the to-dos were not read), `Goal: <description> (<status>)` (the board's statement of " +
         "goals, drafting_data__set_board_goal: its description and confirmed, inferred, declined, none or " +
@@ -95,7 +95,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "still written to disk, so this trims only what crosses the token cap; an unrecognised name is an error " +
         "naming the types this filing has. Optional appeal_deadline (YYYY-MM-DD, schema v17) is the caller's own " +
         "docket-clerk lookup for this proceeding -- no deadline is ever stored in the submission database. " +
-        "Supplying it is what lets the Job Board derive the appeal-period-expired state and show the ready-to-" +
+        "Supplying it is what lets the Milestone derive the appeal-period-expired state and show the ready-to-" +
         "retire notice; omitting it simply leaves that state underived. A filing already retired refuses mockup " +
         "mode outright: filing_retired true, nothing rendered, nothing written, and a note naming the recovery " +
         "remedy. Optional draft_dir (issue 689, mockup mode only, never with presentation_dir) is the matter's 0. DRAFT " +
@@ -104,10 +104,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "names which documents ALSO return markdown (the board: board_summary) inline, rather than narrowing the list. " +
         "Under draft_dir the server also rewrites the matter's pages in that folder: Litigation Strategy.html (issue 585) " +
         "at its top, with the matter's open to-dos read from " +
-        "practice data by matter_no (ADR 0021), and one Job Board page per board section (ADR 0033, 2026-10-05 " +
+        "practice data by matter_no (ADR 0021), and one Milestone page per board section (ADR 0033, 2026-10-05 " +
         "amendments), a merged board's page drawing every board merged into it as one board (drafting_data__merge_job_boards): " +
-        "`Job Board.html` in the Writing's own folder for a board of a Writing, and at the folder's top " +
-        "`Job Board - proceeding <id>.html` per pre-filing proceeding and `Job Board <id>.html` per Job Board with no Writing; " +
+        "`Milestone.html` in the Writing's own folder for a board of a Writing, and at the folder's top " +
+        "`Milestone - proceeding <id>.html` per pre-filing proceeding and `Milestone <id>.html` per Milestone with no Writing; " +
         "a job with no filing_id is on every Writing's " +
         "page in its proceeding. The same write puts each view page (ADR 0033, 2026-10-07 amendment) beside its board's " +
         "page, `<page name>.html` in a Writing's folder, and the response carries view_page_paths " +
@@ -115,7 +115,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "name; a retired filing has no page and its entry no path. Each page is written atomically " +
         "(temp file, then rename) and only over a file carrying its page's marker: one without it is refused before " +
         "any page is written. A page write moves the old page files this server wrote (a " +
-        "retired filing's page, a proceeding's once it has a filing, the old single Job Board.html, " +
+        "retired filing's page, a proceeding's once it has a filing, the old single Milestone.html, " +
         "per-filing boards, numbered copies, older names) into the matter's TRASH, reported as moved_to_trash " +
         "[{from, to}], and any it could not move as trash_skipped [{path, error}]. The board's entry also carries board_changed: false when " +
         "this filing's section matches, apart from its Rendered minute, the one the last such render recorded in " +
@@ -136,17 +136,17 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "A successful mockup render also carries background_job, the background render job's status (see " +
         "drafting_forms__bootstrap). " +
         "Pass proceeding_id instead of filing_id (ADR 0018) for a proceeding with no filing, as bootstrap lists in " +
-        "pre_filing_proceedings: only that proceeding's Job Board section is built, from its jobs and loose threads, with no " +
+        "pre_filing_proceedings: only that proceeding's Milestone section is built, from its jobs and loose threads, with no " +
         "filing, lifecycle or Proposals, and returned as board_summary, its State saying why there is no filing. " +
         "No mockup is written; given draft_dir the matter's pages are rewritten, the proceeding's " +
-        "section on its own Job Board - proceeding <id>.html, and job_board_path (that page), job_board_paths " +
-        "(every Job Board page, [{filing_id, proceeding_id, path}] in page order) and matter_board_path returned. " +
+        "section on its own Milestone - proceeding <id>.html, and job_board_path (that page), job_board_paths " +
+        "(every Milestone page, [{filing_id, proceeding_id, path}] in page order) and matter_board_path returned. " +
         "It takes only client fields, " +
         "session_token and draft_dir, and refuses a proceeding that has a filing. " +
-        "A filing_id that names a Job Board with no Writing (drafting_data__create_job_board) renders its board alone: " +
+        "A filing_id that names a Milestone with no Writing (drafting_data__create_job_board) renders its board alone: " +
         "job_board_only true and one Work_board entry carrying board_summary, whose State reads Open or Closed, with " +
         "no mockup written; draft_dir rewrites the matter's pages, its own " +
-        "`Job Board <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is " +
+        "`Milestone <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is " +
         "refused with job_board_only. " +
         "Every response also carries timings: per-phase durations in ms, for profiling only.",
       inputSchema: {
@@ -173,7 +173,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
     {
       name: formsPrefixed("board_card"),
       description:
-        "Read-only: what one Job Board section holds beyond the short board_summary, and what its cards hold when " +
+        "Read-only: what one Milestone section holds beyond the short board_summary, and what its cards hold when " +
         "opened. On a merged board (drafting_data__merge_job_boards) the card reads the whole board as its page draws " +
         "it, by its survivor's id, each job line naming its Writing after its title; a board merged into another is " +
         "refused (board_merged, naming the survivor), unless that survivor is retired. " +
@@ -242,7 +242,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "` · court file: none found[ (<note>)]`, then ` · mismatch: court file shows <status> <date>; drafting data shows " +
         "<unsworn|made <date>>` when they disagree; only file names are read. Then key: the live " +
         "job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else " +
-        "`(no job or Proposal carries <key>)`. On a Job Board with no Writing (drafting_data__create_job_board) the " +
+        "`(no job or Proposal carries <key>)`. On a Milestone with no Writing (drafting_data__create_job_board) the " +
         "criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. " +
         "Writes nothing, moves no revision and writes no page.",
       inputSchema: {
@@ -275,8 +275,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "as given. render_state is 'fresh' (the mockups on disk are what a render now would produce), 'stale' (they " +
         "are not) or 'never' (none have been rendered yet); it is absent on a retired filing, which is listed with " +
         "no paths. Before listing it moves an older build's mockups folder beside the database into the matter's " +
-        "0. DRAFT, as drafting_forms__render describes (mockups_moved). A Job Board with no Writing (drafting_data__create_job_board) is listed among filings with " +
-        "job_board_only true, no paths and no render_state: it is not a Writing, has a Job Board page and no view " +
+        "0. DRAFT, as drafting_forms__render describes (mockups_moved). A Milestone with no Writing (drafting_data__create_job_board) is listed among filings with " +
+        "job_board_only true, no paths and no render_state: it is not a Writing, has a Milestone page and no view " +
         "page, and the background job never renders it. Every response reports both schema_version and current_schema_version; if the database is behind " +
         "schema version 42, the oldest this runtime reads, migration_required is true and the response carries no " +
         "filings at all (issue 351) -- call " +
@@ -297,7 +297,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "from the server process: under Cowork one server is shared by every session on the machine, so a " +
         "process-derived token could not tell two sessions apart. Optional unattended true (an unattended /draft run, " +
         "which the practitioner launched and left) mints the token as sess-unattended-<hex> instead of sess-<hex>, so " +
-        "the Job Board shows a job that run holds as in progress with nobody present. Also on success: bootstrapped_at, this session's " +
+        "the Milestone shows a job that run holds as in progress with nobody present. Also on success: bootstrapped_at, this session's " +
         "own start stamp (YYYY-MM-DD HH:mm, the same wall clock tickets.locked_at uses) -- a wip job whose " +
         "locked_at precedes it was locked before this session existed and belongs to another session whatever its " +
         "locked_by says (see /drafting-data's jobs.md section 1). And " +
@@ -306,10 +306,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "of the matter's 0. DRAFT folder itself: bootstrap then also writes the matter's pages at its top and " +
         "returns their paths -- Litigation Strategy.html (matter_board_path), one self-contained page leading with the " +
         "matter's open to-dos, read from practice data by matter_no (ADR 0021), then one line per filing and per " +
-        "proceeding with no filing (ADR 0018), and one Job Board page per live Writing and per proceeding with no " +
+        "proceeding with no filing (ADR 0018), and one Milestone page per live Writing and per proceeding with no " +
         "Writing, a merged board's page drawing every board merged into it as one board (ADR 0033, 2026-10-05 amendments; " +
-        "drafting_data__merge_job_boards): `Job Board.html` in the Writing's own folder for a board of a Writing, " +
-        "and at the folder's top `Job Board - proceeding <id>.html` and `Job Board <id>.html` (a Job Board with no " +
+        "drafting_data__merge_job_boards): `Milestone.html` in the Writing's own folder for a board of a Writing, " +
+        "and at the folder's top `Milestone - proceeding <id>.html` and `Milestone <id>.html` (a Milestone with no " +
         "Writing); a job with no filing_id is on every Writing's " +
         "page in its proceeding. job_board_paths lists them, [{filing_id, proceeding_id, path}] in page order, " +
         "filing_id null on a proceeding's page; bootstrap returns no job_board_path. Beside them it writes each view " +
@@ -320,10 +320,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "chosen -- render one with drafting_forms__render's proceeding_id. " +
         "Without draft_dir no page is written and matter_board_path and job_board_paths are null. A draft_dir " +
         "that is not the 0. DRAFT folder beside db_path's case data, or lies in a privileged or disclosed tree, is refused, and so is " +
-        "an existing Litigation Strategy.html or Job Board page that does not carry its page's marker, before any page is " +
+        "an existing Litigation Strategy.html or Milestone page that does not carry its page's marker, before any page is " +
         "written. Each page is written atomically (temp file, then rename); a page write moves the old page files " +
         "this server wrote (a retired filing's page, a proceeding's once it has a filing, the old " +
-        "single Job Board.html, per-filing boards, numbered copies, older names such as Matter Board.html) into the " +
+        "single Milestone.html, per-filing boards, numbered copies, older names such as Matter Board.html) into the " +
         "matter's TRASH, reported as moved_to_trash [{from, to}], and any it could not move as trash_skipped " +
         "[{path, error}]. On success bootstrap also starts a background job " +
         "(issue 589) that renders every listed filing whose render_state is not fresh, one at a time, and rewrites " +
@@ -368,12 +368,12 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, " +
         "and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is " +
         "drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder " +
-        "it opens filing_id, or the first live filing that is not a Job Board with no Writing (one opens only when " +
+        "it opens filing_id, or the first live filing that is not a Milestone with no Writing (one opens only when " +
         "filing_id names it), or the first pre-filing proceeding, as drafting_forms__render " +
         "with draft_dir would (mockups and the matter's pages written once), returning that board as opened " +
         "(board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, " +
-        "filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Job Board " +
-        "page; absent for a retired filing, which has none), job_board_paths (every Job Board page, as bootstrap " +
+        "filing_retired) with matter_board_path, job_board_path (the opened filing's or proceeding's own Milestone " +
+        "page; absent for a retired filing, which has none), job_board_paths (every Milestone page, as bootstrap " +
         "describes) and view_page_paths (every view page, as bootstrap describes; none is presented at the fast " +
         "open), so no " +
         "separate render is needed to open a session; with nothing to open, or when that render refused (open_refused " +

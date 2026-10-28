@@ -35,7 +35,7 @@ export interface SymbolRow {
   /** A procedure the model must follow, from the docs. Never printed in the legend. */
   modelNote?: string;
   /** Generating glyphs only: the Proposal slug the glyph carries (GLYPH_SLUGS is derived from this)
-   * and the Job Board title for it (WORK_NAMES is derived from this). */
+   * and the Milestone title for it (WORK_NAMES is derived from this). */
   slug?: ProposalSlug;
   title?: string;
   /** Developer only: when the marker prints, verbatim from work-markers.md (the Predicate cell of
@@ -64,7 +64,7 @@ export interface PlacementRow {
   text: string;
   modelNote?: string;
   /** A sense of the glyph that generates its own Proposal, apart from the symbol row's: the slug and
-   * its Job Board title. Never put into GLYPH_SLUGS, which maps the glyph's symbol-row slug. */
+   * its Milestone title. Never put into GLYPH_SLUGS, which maps the glyph's symbol-row slug. */
   slug?: ProposalSlug;
   title?: string;
 }
@@ -74,7 +74,7 @@ export const SYMBOLS: readonly SymbolRow[] = [
   {
     glyph: "🧩", name: "gap", group: "work",
     meaning: "a legally significant fact, or its evidence, is missing, or a required piece of the Writing is not yet supplied",
-    work: "supply it; the Job Board and the source view name what is asked",
+    work: "supply it; the Milestone and the source view name what is asked",
     actor: "drafter or investigator; practitioner for a signer or a To recipient",
     condition:
       "`gaps.kind='gap'`; derived — no rendered instance reads a `gaps` row (the stored row is admitted, not " +
@@ -326,7 +326,7 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "data does not confirm: `parties.case_party_id` ∅, or linked to a matter-data party not of record in the " +
       "proceeding, or whose counsel of record (name, firm, email, telephone) or address for service differs " +
       "from case data's, or unchecked because case data could not be read — one mockup-only line per party at " +
-      "the head of the venue document, no Job Board entry; `render_mode 'filed'` refuses while any holds. Never " +
+      "the head of the venue document, no Milestone entry; `render_mode 'filed'` refuses while any holds. Never " +
       "on a sent Writing (it prints from `parties_snapshot`), and never on a proceeding with no file number or " +
       "a matter with no matter-data database (party/counsel SSOT, schema v41)",
     history:
@@ -909,7 +909,7 @@ export const PLACEMENTS: readonly PlacementRow[] = [
   { glyph: "🧩", documents: ["General_writing"], text: "a part not written, a section with nothing in it yet, no signer chosen, or no To recipient" },
 ];
 
-/** A job step's glyph on the Job Board and its card (schema v78), in step context only: these are not
+/** A job step's glyph on the Milestone and its card (schema v78), in step context only: these are not
  * mockup markers and never print on a mockup. ⏳ here is a step waiting on an external process the
  * session will check again; the admission ladder's ⏳ and the criterion's ⏳ keep their own senses.
  * step-state.ts picks one per step. */

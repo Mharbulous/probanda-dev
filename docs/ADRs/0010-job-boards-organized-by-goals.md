@@ -2,9 +2,9 @@
 status: accepted
 ---
 
-# A Job Board is organized by its goals and may hold several Writings, joined only by the practitioner's merge
+# A Milestone is organized by its goals and may hold several Writings, joined only by the practitioner's merge
 
-ADR 0033 (CoClerk, 2026-10-05 amendment) drew one Job Board page per live Writing, never more than one Writing on a page. Related work then sits on separate boards: a Notice of Application and the affidavit that proves its facts each have their own jobs, goals and four view pages, and the practitioner cross-references them by hand. This ADR replaces that rule.
+ADR 0033 (CoClerk, 2026-10-05 amendment) drew one Milestone page per live Writing, never more than one Writing on a page. Related work then sits on separate boards: a Notice of Application and the affidavit that proves its facts each have their own jobs, goals and four view pages, and the practitioner cross-references them by hand. This ADR replaces that rule.
 
 - **A board tracks the work toward one statement of goals.** The statement is a list of self-contained goals, each confirmed, inferred or declined on its own. Every Writing on a board serves its goals as a whole: which goal a Writing serves is not recorded.
 - **A board gains a Writing only by a merge.** The practitioner sees both boards' goals side by side and confirms that they overlap or cohere. The tool refuses without that confirmation. Boards in different proceedings may merge, and a Standalone or pre-filing board may merge. Each Writing and job still belongs to its own one proceeding.

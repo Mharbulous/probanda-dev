@@ -71,7 +71,7 @@ When the user asks to see the work board, or all work across the practice as a p
 ### 2. Add a to-do
 
 A to-do is one outcome the practitioner would cross off, such as "Re-file default judgment
-application". Work toward it (research, checks, attaching evidence) is jobs on the Job Board of the
+application". Work toward it (research, checks, attaching evidence) is jobs on the Milestone of the
 filing it points to, never another to-do. Research that serves a filing is always a job on that
 filing. Apart from the follow-up and rule-change diary to-dos `lawyer:docket-clerk` writes, this
 skill is the only one that creates a to-do, and a drafting session hands its to-do requests here
@@ -92,7 +92,7 @@ skill is the only one that creates a to-do, and a drafting session hands its to-
    filing" is never a reason to add its to-do without the pointer (ADR 0024 D13).
 4. Invoke ``practice-data`` `upsert-task` to create the to-do. If it refuses because the filing
    already has an open to-do, name that to-do from the refusal and offer to fold the new work into it
-   as jobs on the filing's Job Board.
+   as jobs on the filing's Milestone.
 5. Confirm: "Added to-do: [description] — [matter name if applicable]". Never echo the returned row.
 6. Ask if they want to see the updated ranked list
 
@@ -149,7 +149,7 @@ The recurring-reminder loop. The caller (normally `executive-assistant`) states 
 A to-do may point to one filing, or one pre-filing proceeding, of its own matter. The matter's To
 Do List then shows that filing's one-line status under the to-do, and the filing stays in the
 list of filings below (ADR 0021 D5). The pointer holds no jobs and no plan: a filing's jobs stay on
-its own Job Board.
+its own Milestone.
 
 1. Identify the to-do. It must belong to a matter: an admin or professional to-do with no matter
    points nowhere.

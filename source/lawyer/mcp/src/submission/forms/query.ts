@@ -75,8 +75,8 @@ export interface FilingRow {
   pure_law_note?: string | null;
 }
 
-/** The reserved kind of a Job Board with no Writing: a `filings` row that only
- * drafting_data__create_job_board writes, with no stored layout. It has a Job Board page and jobs,
+/** The reserved kind of a Milestone with no Writing: a `filings` row that only
+ * drafting_data__create_job_board writes, with no stored layout. It has a Milestone page and jobs,
  * and never a mockup, a view page, completion criteria or Proposals. */
 export const JOB_BOARD_KIND = "task-board";
 

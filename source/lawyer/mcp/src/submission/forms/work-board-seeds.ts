@@ -1,4 +1,4 @@
-// The Job Board's loose threads: their shapes, their shared order and labels, and their reads.
+// The Milestone's loose threads: their shapes, their shared order and labels, and their reads.
 
 import { fetchDeletedTickets, type FilingTitleRow } from "./work-board-reads.js";
 import { liveSeedClause, liveTicketClause, seedClosedColumns } from "./query.js";
@@ -71,7 +71,7 @@ export const RANK_GROUP_LABELS: Readonly<Record<RankGroup, string>> = {
 };
 
 /** The loose threads' shared order: the ranked by rank (ties by id), then the unranked by id. The
- * Loose Threads page and board_card's loose_threads lane both print in it; the Job Board page keeps id order. */
+ * Loose Threads page and board_card's loose_threads lane both print in it; the Milestone page keeps id order. */
 export function inRankOrder<T extends { id: number; rank: number | null }>(seeds: readonly T[]): T[] {
   return [...seeds].sort((a, b) => (a.rank === null ? 1 : 0) - (b.rank === null ? 1 : 0) || (a.rank ?? 0) - (b.rank ?? 0) || a.id - b.id);
 }

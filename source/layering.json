@@ -35,7 +35,7 @@
     {"file": ".claude/skills/show-me/SKILL.md", "target": "verify-law", "why": "invitation", "note": "Rule 9 runs /verify-law's verbatim check. Without researcher it says the check needs the researcher plugin, and a proposed excerpt stays unproposed."},
     {"file": ".claude/skills/task-prioritization/SKILL.md", "target": "drafting-data", "why": "conditional", "note": "Without litigator: the filing-pointer workflow says so and stops."},
     {"file": ".claude/skills/legal-research/SKILL.md", "target": "draft", "why": "caller", "note": "Says who composes the provenance line of a stored statement."},
-    {"file": ".claude/skills/legal-research/references/research-board.md", "target": "drafting-data", "why": "conditional", "note": "Board mode works research jobs on a Job Board, which exist only where litigator's /draft made them."},
+    {"file": ".claude/skills/legal-research/references/research-board.md", "target": "drafting-data", "why": "conditional", "note": "Board mode works research jobs on a Milestone, which exist only where litigator's /draft made them."},
     {"file": ".claude/skills/legal-research/references/research-board.md", "target": "drafting_data__*", "why": "conditional", "note": "The same board mode."},
     {"file": ".claude/skills/legal-research/references/research-board.md", "target": "drafting_forms__*", "why": "conditional", "note": "The same board mode."},
     {"file": ".claude/skills/legal-research/references/research-board.md", "target": "draft", "why": "mention", "note": "A board job counts as a held /draft job for the gate's rules."},

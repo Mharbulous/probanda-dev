@@ -53,7 +53,7 @@ holding no job, where a board resolves, write one research job per listed issue 
 `/drafting-data` §3l: its title and intent are the issue's text as the list showed it,
 and its one step is the plan marker (`/drafting-data`'s `jobs-create.md` §3, "The plan
 marker"). A skipped issue gets no job, and the jobs need no further approval: the "No"
-is the request. Then re-render the Job Board and stop. Writing the jobs dispatches
+is the request. Then re-render the Milestone and stop. Writing the jobs dispatches
 nothing: each job's research runs through the gate when the job is worked. A session
 holding a `/draft` job asks no approval and writes no job. Approving the job approved
 every sub-issue its question needs, so the plan's `scope: in` issues are the issues steps

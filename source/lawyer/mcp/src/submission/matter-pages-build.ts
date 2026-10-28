@@ -40,23 +40,23 @@ export interface MatterPage {
 
 export interface MatterPagesBuilt {
   /** The pages a write puts in the draft folder, in write order: the Litigation Strategy, the
-   * Job Board pages, then the view pages. */
+   * Milestone pages, then the view pages. */
   pages: MatterPage[];
-  /** Every current Job Board and view page's file name, built by this call or not: what the sweep keeps. */
+  /** Every current Milestone and view page's file name, built by this call or not: what the sweep keeps. */
   keep: string[];
   /** Every current page's path, built by this call or not. */
   paths: Pick<PagesWritten, "job_board_paths" | "matter_board_path" | "view_page_paths">;
 }
 
 /**
- * Builds `<draftDir>\Litigation Strategy.html` and one Job Board page per live filing and per
+ * Builds `<draftDir>\Litigation Strategy.html` and one Milestone page per live filing and per
  * pre-filing proceeding, each holding that one section (ADR 0033, 2026-10-05 amendment), and each live
  * filing's view pages (2026-10-07 amendment), from database state. Writes nothing: writeMatterPages
  * guards, sweeps and writes, and a preview renders the same pages without them.
  * `draftDir` is already confined (resolveDraftDir, or the parent of a confined Writing folder).
  * `reuse` hands over what the caller already built: bootstrap's ranked filings, and the section a
  * render just built for its own filing or proceeding, which then stands in for that section.
- * `reuse.only` names the one filing whose Job Board page and view pages are built, with the
+ * `reuse.only` names the one filing whose Milestone page and view pages are built, with the
  * Litigation Strategy: the background render job passes the filing it just rendered, and writes
  * every page once after its last, because building them all after every filing costs the square of
  * the filing count.
@@ -68,12 +68,12 @@ export function buildMatterPages(
   now: string,
   revision: number,
   todos: MatterTodos,
-  /** The matter's dates, for the Job Board pages' HTML files only: never a section, the state file or
+  /** The matter's dates, for the Milestone pages' HTML files only: never a section, the state file or
    * the return value. A linked deadline reaches its filing's section as a dateless criterion. */
   dates: MatterDates,
   reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number } = {},
   /** A preview's pages in place of the boards' own (src/pages/preview.ts): the composed Litigation
-   * Strategy and Job Board templates, and whole view pages by name. Omitted, every page is the board's. */
+   * Strategy and Milestone templates, and whole view pages by name. Omitted, every page is the board's. */
   templates: { matterBoard?: ComposedTemplate; jobBoard?: ComposedTemplate; views?: Readonly<Record<string, ViewPage>> } = {}
 ): MatterPagesBuilt {
   const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
@@ -106,7 +106,7 @@ export function buildMatterPages(
         writings: [],
       };
     }
-    // A Job Board with no Writing has no mockup folder, so none is looked up for it.
+    // A Milestone with no Writing has no mockup folder, so none is looked up for it.
     const manifest = isJobOnlyBoard(m.filing) ? null : readManifest(dbPath, m.filing.id);
     const filingId = m.filing.id;
     return {

@@ -1,10 +1,10 @@
-// Which of a Job Board's thumbnails the practitioner has seen, most recently first: one db_meta row per
+// Which of a Milestone's thumbnails the practitioner has seen, most recently first: one db_meta row per
 // board, never a table of its own. Key `board_viewed:filing:<id>` or `board_viewed:proceeding:<id>`,
 // by the board's survivor (board-members.ts). Value: a JSON array of strip item keys, most recently
 // viewed first: `view:<page name>` for a view page, `doc:<filing id>:<file name>` for one of a Writing's
 // documents, by its render manifest's file name. It holds an order and no time. A view is a session
 // presenting the view page or the mockup as a file card, which drafting_data__record_viewed records.
-// db_meta carries no revision trigger, so a write here moves no revision. The Job Board page draws the
+// db_meta carries no revision trigger, so a write here moves no revision. The Milestone page draws the
 // viewed items first, in this order, then the rest in their own order (matter-pages.ts).
 //
 // A retitle that renames a document's file drops its key, so its tile reverts to never viewed. On a
@@ -137,7 +137,7 @@ export async function submissionDataRecordViewed(args: RecordViewedArgs, env: No
       throw new ValidationError(`${TOOL}: several thumbnails are named ${name} and its folder holds none of them; pass the path in its Writing's own folder. Nothing was written.`, "ambiguous_path");
     }
     if (hits.length === 0) {
-      throw new ValidationError(`${TOOL}: ${path} is no thumbnail on a Job Board: neither a view page nor a Writing's mockup. Nothing was written.`, "not_a_strip_item");
+      throw new ValidationError(`${TOOL}: ${path} is no thumbnail on a Milestone: neither a view page nor a Writing's mockup. Nothing was written.`, "not_a_strip_item");
     }
     return hits[0];
   });
@@ -161,7 +161,7 @@ export async function submissionDataRecordViewed(args: RecordViewedArgs, env: No
   if (!written.ok) throw new DataServerError(`${TOOL}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
   return {
     keys: rows.map((r) => r.key),
-    note: "Recorded. The Job Board shows the new order the next time its page is written; this call does not rewrite it.",
+    note: "Recorded. The Milestone shows the new order the next time its page is written; this call does not rewrite it.",
     ...(written.warning ? { warning: written.warning } : {}),
   };
 }

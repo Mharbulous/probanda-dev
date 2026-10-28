@@ -43,7 +43,7 @@ const SENDER = "Fixture Law LLP\n2 Bay Street";
 const CHANGED_BODY = "A lawyer's correspondence with other counsel is courteous, candid and made in good faith.";
 
 // #1365: a render returns its board as board_summary; the board's data is this filing's section of
-// the matter's Job Board page, read the way the page builds it, right after the render.
+// the matter's Milestone page, read the way the page builds it, right after the render.
 function render(g, filingId, mode = "mockup", draftDir) {
   const result = submissionFormsRender(g.dbPath, filingId, CLIENT, mode, undefined, undefined, undefined, NOW, undefined, draftDir);
   return mode === "mockup" ? { ...result, board: boardDataOf(g.dbPath, filingId, CLIENT, NOW) } : result;
@@ -484,7 +484,7 @@ test("the Writing's folder is named by its title with no folder_code, though the
   const boot = submissionFormsBootstrap(g.dbPath, CLIENT, NOW, draft);
   assert.ok(boot.filings.some((f) => f.filing_id === id));
   const page = boot.job_board_paths.find((p) => p.filing_id === id);
-  assert.equal(page.path, join(draft, "Letter to Cara", "Job Board.html"), "the Writing's page is in its own folder, with no filing id");
+  assert.equal(page.path, join(draft, "Letter to Cara", "Milestone.html"), "the Writing's page is in its own folder, with no filing id");
   assert.ok(existsSync(page.path));
   assert.deepEqual(boot.pre_filing_proceedings.map((p) => p.proceeding_id), [2, 3]);
 });

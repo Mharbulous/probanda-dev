@@ -6,7 +6,7 @@ import { type RenderedDocument } from "./render-result.js";
 
 /** Response-only filter. Every document is still rendered, and in mockup mode still written to
  * its canonical path beside the database -- only what crosses the tool boundary shrinks, because
- * a caller checking one thing (the Job Board's ticket state, the frontmatter) otherwise pulls a
+ * a caller checking one thing (the Milestone's ticket state, the frontmatter) otherwise pulls a
  * ~79K-character four-document payload through the token cap. Filtering the render itself would
  * leave the other canonical mockups stale at an old revision, and filtering before the filed-face
  * citation gate below would let an uncited statement through -- so this runs last, on the response

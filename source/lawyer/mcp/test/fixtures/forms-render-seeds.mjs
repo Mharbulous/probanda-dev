@@ -601,7 +601,7 @@ export function findFile(dir, fileName) {
 }
 
 // ADR 0009 (ticket-driven /draft sessions): seeds one ticket per
-// Job Board category, plus a mutual-block pair (circular) and one uncharted
+// Milestone category, plus a mutual-block pair (circular) and one uncharted
 // / one already-charted seed. Deliberately no revision bump in this script --
 // that omission is itself the exemption under test (filing-checklists.md §8:
 // ticket, step, scope, block, conflict, seed and lock writes are exempt).
@@ -687,7 +687,7 @@ export async function seedTickets(dbPath) {
   );
 }
 
-// Phase D step 4 (Work Board Proposals design §7, §8): the Proposal cases the Job Board's data
+// Phase D step 4 (Work Board Proposals design §7, §8): the Proposal cases the Milestone's data
 // test asserts on -- the authority and testimony ladders seedVaniacProceeding leaves bare, a
 // Proposal held by a ticket on another filing, a direct rejection, a lapsed rejection, a rejected
 // ticket and the ticket it blocks. Runs AFTER seedVaniacProceeding and seedTickets, and only in
@@ -821,7 +821,7 @@ export async function seedFusedRungCases(dbPath) {
 
 // The board's content is its data (2026-09-14 local-only design, amended 2026-09-15). Since #1365 a
 // render returns only board_summary, and since ADR 0033's 2026-10-05 amendment the data is the one
-// section of the filing's own Job Board page: boardDataOf builds a filing's section exactly as the
+// section of the filing's own Milestone page: boardDataOf builds a filing's section exactly as the
 // page and the summary build it, from the inventory its last render saved, and sectionOf reads it
 // off the page.
 function nowStamp() {
@@ -836,23 +836,23 @@ export function boardDataOf(dbPath, filingId, client = {}, now = nowStamp()) {
   return filingBoardData(dbPath, filing, fetchProceeding(dbPath, filing.proceeding_id), client, now, fetchRevision(dbPath));
 }
 
-/** The Job Board page files in the draft folder, relative to it, sorted: a Writing's `Job Board.html`
- * in its own folder, and a board with no Writing's `Job Board <id>.html` at the top. */
+/** The Milestone page files in the draft folder, relative to it, sorted: a Writing's `Milestone.html`
+ * in its own folder, and a board with no Writing's `Milestone <id>.html` at the top. */
 export function jobBoardPages(draftDir) {
   const top = readdirSync(draftDir, { withFileTypes: true });
   return [
-    ...top.filter((e) => e.isFile() && /^Job Board .*\.html$/.test(e.name)).map((e) => e.name),
-    ...top.filter((e) => e.isDirectory() && existsSync(join(draftDir, e.name, "Job Board.html"))).map((e) => join(e.name, "Job Board.html")),
+    ...top.filter((e) => e.isFile() && /^Milestone .*\.html$/.test(e.name)).map((e) => e.name),
+    ...top.filter((e) => e.isDirectory() && existsSync(join(draftDir, e.name, "Milestone.html"))).map((e) => join(e.name, "Milestone.html")),
   ].sort();
 }
 
-/** The section of the Job Board page whose one section is filing `filingId`'s. */
+/** The section of the Milestone page whose one section is filing `filingId`'s. */
 export function sectionOf(draftDir, filingId) {
   const page = jobBoardPages(draftDir)
     .map((name) => readBoardData(join(draftDir, name)))
     .find((data) => data.sections[0]?.meta.filing_id === filingId);
-  assert.ok(page, `expected a Job Board page for filing ${filingId} in ${draftDir}`);
-  assert.equal(page.sections.length, 1, `filing ${filingId}'s Job Board page holds one section`);
+  assert.ok(page, `expected a Milestone page for filing ${filingId} in ${draftDir}`);
+  assert.equal(page.sections.length, 1, `filing ${filingId}'s Milestone page holds one section`);
   return page.sections[0];
 }
 

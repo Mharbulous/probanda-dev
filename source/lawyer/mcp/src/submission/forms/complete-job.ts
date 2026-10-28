@@ -3,7 +3,7 @@
 // session's token, then the confirm-read, as the /drafting-data gatekeeper documents them in
 // jobs-run.md §9. When this call's completion landed, the matter's pages are rewritten by the
 // render a session would run itself with draft_dir, because a job write moves no revision and
-// starts no background render, so nothing else would refresh the Job Board pages. A job with no
+// starts no background render, so nothing else would refresh the Milestone pages. A job with no
 // filing_id (a scrutiny review job) shows on every filing's page in its proceeding, so when its
 // proceeding has a filing, that filing's render is used: any render rewrites every page, and
 // job_board_path is the rendered filing's page. Only a proceeding with no filing at all goes through
@@ -54,7 +54,7 @@ export interface CompleteJobResult {
   board_moves?: BoardMove[];
   /** On steps_open: each step not yet resolved, in plan order. Nothing was written. */
   open_steps?: { ordinal: number; text: string; state: string }[];
-  /** Present when the page rewrite refused: the Job Board is stale. The completion stands. */
+  /** Present when the page rewrite refused: the Milestone is stale. The completion stands. */
   pages_refused?: { code: string; message: string };
   note: string;
   warning?: string;
@@ -78,7 +78,7 @@ function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientCon
     if (filingId === null) {
       // The proceeding's first filing by id that is not retired, else its first filing. This picks by
       // id, not by bootstrap's ranked order, so it can differ from open_session's openBoard. Never a
-      // Job Board with no Writing, which shows no job without a filing_id.
+      // Milestone with no Writing, which shows no job without a filing_id.
       const filings = fetchAllFilingsForProceeding(args.db_path, read.proceeding_id).filter((f) => !isJobOnlyBoard(f));
       filingId = (filings.find((f) => f.retired_on === null) ?? filings[0])?.id ?? null;
     }
@@ -86,7 +86,7 @@ function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientCon
       const rendered = submissionFormsRender(args.db_path, filingId, client, "mockup", ["Work_board"], undefined, undefined, undefined, args.session_token, args.draft_dir, todos, dates);
       const board = rendered.documents.find((d) => d.document_type === "Work_board") as RenderedDocument | undefined;
       if (board === undefined) {
-        return { pages_written: false, pages_refused: { code: "render_refused", message: rendered.note ?? "the render returned no Job Board page" } };
+        return { pages_written: false, pages_refused: { code: "render_refused", message: rendered.note ?? "the render returned no Milestone page" } };
       }
       return {
         pages_written: board.pages_written === true,

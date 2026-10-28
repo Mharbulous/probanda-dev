@@ -83,9 +83,9 @@ test("a real-data preview of a matter page is the page as the write builds it, o
   const preview = (args) => callTool(context, "pages__preview", { data: "real", matter_root: m.matterRoot, ...args });
 
   const strategy = await preview({ page: "Litigation Strategy", overrides: cssOverride("Litigation Strategy") });
-  const jobBoard = await preview({ page: "Job Board", filing_id: 1, overrides: cssOverride("Job Board") });
+  const jobBoard = await preview({ page: "Milestone", filing_id: 1, overrides: cssOverride("Milestone") });
   const threads = await preview({ page: "Loose Threads", filing_id: 1, overrides: cssOverride("Loose Threads") });
-  const again = await preview({ page: "Job Board", filing_id: 1 });
+  const again = await preview({ page: "Milestone", filing_id: 1 });
   assert.deepEqual(Object.keys(strategy), ["path"], "the path only, never the HTML");
   // The Writing's pages are in its own folder (spec 2026-10-22 §9), so its previews are written there.
   const writing = join(m.draft, "Opening Submissions Package");
@@ -93,9 +93,9 @@ test("a real-data preview of a matter page is the page as the write builds it, o
     [strategy, jobBoard, threads, again].map((r) => [dirname(r.path).toLowerCase(), basename(r.path)]),
     [
       [m.draft.toLowerCase(), "Litigation Strategy preview 1.html"],
-      [writing.toLowerCase(), "Job Board preview 1.html"],
+      [writing.toLowerCase(), "Milestone preview 1.html"],
       [writing.toLowerCase(), "Loose Threads preview 1.html"],
-      [writing.toLowerCase(), "Job Board preview 2.html"],
+      [writing.toLowerCase(), "Milestone preview 2.html"],
     ]
   );
   assert.deepEqual(readdirSync(m.draft).sort(), [basename(strategy.path), basename(writing)].sort(), "no page and no other file was written");
@@ -115,7 +115,7 @@ test("a real-data preview of a matter page is the page as the write builds it, o
   await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
   for (const r of [strategy, jobBoard, threads, again]) assert.ok(readdirSync(dirname(r.path)).includes(basename(r.path)), `${basename(r.path)} stays after a page write`);
 
-  await assert.rejects(preview({ page: "Arguments", filing_id: 9 }), /no Arguments page for Job Board 9/);
+  await assert.rejects(preview({ page: "Arguments", filing_id: 9 }), /no Arguments page for Milestone 9/);
 });
 
 test("a real-data Work Board preview is written beside practice.db", async (t) => {

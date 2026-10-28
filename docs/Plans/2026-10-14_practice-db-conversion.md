@@ -55,7 +55,7 @@ practice.db holds one table, the existing generic `kv_store`, and no other. The 
 
 ### How each current table maps
 
-Every row keeps its UUID as the item ID, so IDs held by skills, Job Board pages and `filing_ref` values stay valid. `owner_id` is dropped (it is always `local`).
+Every row keeps its UUID as the item ID, so IDs held by skills, Milestone pages and `filing_ref` values stay valid. `owner_id` is dropped (it is always `local`).
 
 | Table | `kind` | `links` | `tags` and `state` | `data` (local only) |
 |---|---|---|---|---|

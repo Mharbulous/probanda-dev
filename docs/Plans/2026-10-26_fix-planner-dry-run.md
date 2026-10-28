@@ -34,7 +34,7 @@ Lifecycle plan Phase 7, done-when: "a dry run on a past suggestion issue gives e
 **Why:** a preference with no measurable defect: 8.7:1 passes. Approving it would recolour the Completion Criteria card too, or split two cards that match by design. The constraint against nested boxes is met either way.
 
 ### Scope
-None is recommended for building. Were item 3 approved: `source/lawyer/mcp/src/templates/job-board/job-board.css` (`.goal` and `.goals`), the pinned hashes in `source/lawyer/mcp/test/job-board.unit.test.mjs`, and a `lawyer` patch release; nothing outside the job board.
+None is recommended for building. Were item 3 approved: `source/lawyer/mcp/src/templates/job-board/job-board.css` (`.goal` and `.goals`), the pinned hashes in `source/lawyer/mcp/test/job-board.unit.test.mjs`, and a `lawyer` patch release; nothing outside the Milestone.
 
 ### Done when
 Item 3, were it approved: the item 3 check passes, then `python scripts/build_plugin.py --check` and `python scripts/check_plugin.py`.

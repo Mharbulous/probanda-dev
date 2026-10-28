@@ -1,6 +1,6 @@
 """Tests for references/jobs-run.md §8a: a loose thread captured with no job held.
 
-The documented insert lands with no origin job, is listed by the Job Board's uncharted-thread
+The documented insert lands with no origin job, is listed by the Milestone's uncharted-thread
 read for its proceeding, and cannot be written without a proceeding.
 
 Run: python -m pytest .claude/skills/drafting-data/tests/test_no_job_capture.py -q
@@ -20,7 +20,7 @@ import migrate_engine as engine  # noqa: E402
 
 JOBS_RUN = Path(__file__).resolve().parents[1] / "references" / "jobs-run.md"
 
-# The Job Board's read of a proceeding's uncharted threads (render-work-board.ts), no deletions.
+# The Milestone's read of a proceeding's uncharted threads (render-work-board.ts), no deletions.
 BOARD_READ = (
     "SELECT id, filing_id, origin_ticket_id, created, surfaced_by, idea FROM seeds "
     "WHERE (charted_into IS NULL) AND discarded_at IS NULL AND suggested_at IS NULL "

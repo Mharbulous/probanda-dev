@@ -48,16 +48,16 @@ Built for the BCSC **Notice of Application** and **Application Response** only. 
 Enter exactly as `/draft` enters (`.claude/skills/draft/SKILL.md` §6): the same single session-entry call, the same refusals and response handling, and the same values kept for the whole session, including the session identity token. Then find the lead Writing:
 
 - **No proceeding exists, or a proceeding has no Writing:** start the proceeding or Writing as `/draft` §7 allows ("section 8 also runs when the practitioner asks to start a proceeding or Writing") and run `/draft` §8's proceeding-identification step as written (ADR 0018). Nothing is restated here.
-- **The lead Writing already exists:** open it by name, as `/draft` §7 does, and render its Job Board (`/draft` §11). Where the Writing session entry opens first is not the lead Writing, use the named-Writing path or the Writing picker of `/draft` §7 to reach it.
+- **The lead Writing already exists:** open it by name, as `/draft` §7 does, and render its Milestone (`/draft` §11). Where the Writing session entry opens first is not the lead Writing, use the named-Writing path or the Writing picker of `/draft` §7 to reach it.
 - **No Notice of Application or Application Response is in view, and the practitioner is not starting one:** stop, as the introduction says.
-- **The practitioner asks for a Job Board with no Writing** (work that is not a document, on a proceeding that has a Writing): `/prepare` opens none. Say in one line that `/draft` opens it (`/draft` §8), and stop.
+- **The practitioner asks for a Milestone with no Writing** (work that is not a document, on a proceeding that has a Writing): `/prepare` opens none. Say in one line that `/draft` opens it (`/draft` §8), and stop.
 
 ## 3. What it writes, in this order
 
 Structure only, each written through `/drafting-data`:
 
 1. **The forum, when the proceeding has none.** A type that needs forum parts needs a forum, and both Writing kinds `/prepare` handles need forum parts, so neither can be created until the forum is chosen. It is set by updating the same proceeding, per `/draft` §8 "Before the forum is chosen".
-2. **The lead Writing,** with `/draft` §8's recovery check first. On recover, no Writing is created: continue at stage 1 on the recovered Writing, from its rendered Job Board. `/draft` §8's response seam captures substance, so `/prepare` does not run it. Where the practitioner wants it done, it is work to outline as a job. §8's kind-specific specifics apply to no kind `/prepare` handles.
+2. **The lead Writing,** with `/draft` §8's recovery check first. On recover, no Writing is created: continue at stage 1 on the recovered Writing, from its rendered Milestone. `/draft` §8's response seam captures substance, so `/prepare` does not run it. Where the practitioner wants it done, it is work to outline as a job. §8's kind-specific specifics apply to no kind `/prepare` handles.
 3. **The jobs,** through `/drafting-data` §3's create idiom, only after the closing read-back.
 
 Anything else the practitioner raises is a job to outline, or an idea to capture, never a write.
@@ -69,9 +69,9 @@ Post-gate work cannot sit on the board from the start. A waits-on link to a gate
 | Stage | Triggered when | Notice of Application | Application Response |
 |---|---|---|---|
 | 1. Opening | The bundle is being opened: no lead Writing yet, or the practitioner opens the bundle on an existing one | Forum when unset, the Writing, its drafting jobs, `Availability letter` | Forum when unset, the Writing, its drafting jobs |
-| 2. After the gate | The lead Writing's Job Board shows its pre-filing consistency gate job completed (`drafting_forms__board_card` with `lanes: ["completed"]`) | `Serve the application` | `Serve the response` |
+| 2. After the gate | The lead Writing's Milestone shows its pre-filing consistency gate job completed (`drafting_forms__board_card` with `lanes: ["completed"]`) | `Serve the application` | `Serve the response` |
 | 3. Responses in | The practitioner says each response is in, or its time has run. Never inferred | `Set down for hearing`, and `Reply affidavits` if the practitioner wants it | `File the served response`, once the practitioner says the notice of hearing was filed or served |
-| 4. After set-down | The lead Writing's Job Board shows `Set down for hearing` completed | `Application book` | None. The record is applicant-only |
+| 4. After set-down | The lead Writing's Milestone shows `Set down for hearing` completed | `Application book` | None. The record is applicant-only |
 | 5. Adjourned generally | The practitioner says the application was adjourned generally. Never inferred | `Reset for hearing` | None |
 
 A notice of application adjourned generally stays live and is never retired. An application without notice takes no service job. `File and serve` is offered at stage 2 in place of the service job only where the practitioner says the Writing was filed under Rule 8-1 as it stood before B.C. Reg. 105/2026.
@@ -87,7 +87,7 @@ Run `/draft`'s outlining branch (`.claude/skills/work/references/job-session.md`
 - **Order** is never asked, as Branch B never asks it. Jobs that depend on each other take their order from the dependency, the rest are worked in parallel, and each job's place in the Ready order is set by `/drafting-data` §3's rule against what is already queued on the lead Writing, never computed from time remaining. An order the practitioner volunteers is recorded.
 - **Billing anchor:** each job carries the live issue it serves, by the live-issue test, asked once only when it cannot be inferred from the Writing in hand (`/drafting-data` §3).
 
-**Scope: every bundle-level job is scoped to the lead Writing** (the Notice of Application or the Application Response), never proceeding-wide. The lead Writing's Job Board and its completion criteria are the completeness tracker. There is no stored bundle record. A proceeding-wide bundle job would show on every later Writing's board and survive this Writing's retirement. A second Writing in the bundle, such as a requisition, has its own Job Board, and a waits-on link ties the two where they move in step.
+**Scope: every bundle-level job is scoped to the lead Writing** (the Notice of Application or the Application Response), never proceeding-wide. The lead Writing's Milestone and its completion criteria are the completeness tracker. There is no stored bundle record. A proceeding-wide bundle job would show on every later Writing's board and survive this Writing's retirement. A second Writing in the bundle, such as a requisition, has its own Milestone, and a waits-on link ties the two where they move in step.
 
 ## 6. Stock bundle jobs
 
@@ -113,7 +113,7 @@ If the practitioner states a deadline anyway, acknowledge it once in one sentenc
 
 ## 8. Close
 
-Write the chosen jobs in dependency order, blocker before blocked, per Branch B's closing read-back. Then render the lead Writing (`/draft` §11); the lead Writing's own Job Board page updates. Close with one line, never a chat summary.
+Write the chosen jobs in dependency order, blocker before blocked, per Branch B's closing read-back. Then render the lead Writing (`/draft` §11); the lead Writing's own Milestone page updates. Close with one line, never a chat summary.
 
 ## 9. Doctrine bindings
 
@@ -128,6 +128,6 @@ The same shared doctrines `/draft` binds (`.claude/skills/draft/SKILL.md` §3), 
 | The live-issue test | `shared/live-issue-test.md` | Each job's billing anchor. |
 | Job planning | `shared/job-planning.md` | The steps of each job written at the closing read-back. A stock bundle job keeps `/drafting-data` §3b's fixed text. |
 | HTML pages | `shared/html-pages.md` | Every turn. The lead Writing's board is read from `board_summary` and `drafting_forms__board_card`, never from a page, and no page is presented, staged or asked for as a screenshot. |
-| Internals confidentiality | `shared/internals-confidentiality.md` | Every turn and everything the practitioner sees: chat, questions, file and folder names, pages and document text. Job Board, Writing and Loose Threads are product words and stay. No tool, table, field, stock type, folder code, filing id, rule or map name reaches the practitioner, and no explanation of how Probanda works inside. Hides mechanism, never an outcome or an error. |
+| Internals confidentiality | `shared/internals-confidentiality.md` | Every turn and everything the practitioner sees: chat, questions, file and folder names, pages and document text. Milestone, Writing and Loose Threads are product words and stay. No tool, table, field, stock type, folder code, filing id, rule or map name reaches the practitioner, and no explanation of how Probanda works inside. Hides mechanism, never an outcome or an error. |
 
 **No-blocking-checkpoint rule,** as `/draft` §3 states it: writing and rendering never pause for approval. The closing read-back is itself the confirmation, with no separate approve step after it.

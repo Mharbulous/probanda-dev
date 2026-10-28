@@ -91,7 +91,7 @@
     var card = el("details", "retired");
     card.setAttribute("data-filing-id", String(f.filing_id));
     card.appendChild(el("summary", "", f.title));
-    // A Job Board with no Writing is closed, never retired, and prints no reason.
+    // A Milestone with no Writing is closed, never retired, and prints no reason.
     card.appendChild(el("p", "", f.job_only ? "Closed " + f.retired_on : "Retired " + f.retired_on + (f.retirement_reason ? " — " + f.retirement_reason.replace(/_/g, " ") : "")));
     return card;
   }
@@ -116,8 +116,8 @@
   data.todos.forEach(function (t) { todos.appendChild(todoItem(t)); });
   section("todos", "To-dos", data.todos.length, data.todos.length > 0 ? todos : el("p", "empty", data.todos_note || "No open to-dos for this matter."));
 
-  // A Job Board with no Writing is no Writing: it is counted and drawn in a section of its own.
-  // A merged Job Board (docs/ADRs/0010) is one heading with its sections' lines beneath it, and those
+  // A Milestone with no Writing is no Writing: it is counted and drawn in a section of its own.
+  // A merged Milestone (docs/ADRs/0010) is one heading with its sections' lines beneath it, and those
   // sections are left out of the lists below.
   var boards = data.boards || [];
   var onBoard = { filing: {}, proceeding: {} };
@@ -126,7 +126,7 @@
     b.proceeding_ids.forEach(function (id) { onBoard.proceeding[id] = true; });
   });
   if (boards.length > 0) {
-    section("merged-boards", "Merged Job Boards", boards.length, stack(boards.map(function (b) {
+    section("merged-boards", "Merged Milestones", boards.length, stack(boards.map(function (b) {
       var card = el("article", "merged-board");
       card.appendChild(el("h3", "", b.name));
       data.filings.filter(function (f) { return b.filing_ids.indexOf(f.filing_id) >= 0; }).forEach(function (f) { card.appendChild(filingLine(f)); });
@@ -139,8 +139,8 @@
   var jobBoards = data.filings.filter(function (f) { return f.job_only && !f.retired_on && !onBoard.filing[f.filing_id]; });
   var preFiling = data.pre_filing.filter(function (p) { return !onBoard.proceeding[p.proceeding_id]; });
   var retired = data.filings.filter(function (f) { return f.retired_on; });
-  section("filings", "Writings", live.length, stack(live.map(filingLine), writings.length === 0 ? "No Writings in this matter." : boards.length > 0 ? "Every live Writing is on a merged Job Board." : "No live Writings."));
-  if (jobBoards.length > 0) section("job-boards", "Job Boards", jobBoards.length, stack(jobBoards.map(filingLine), ""));
+  section("filings", "Writings", live.length, stack(live.map(filingLine), writings.length === 0 ? "No Writings in this matter." : boards.length > 0 ? "Every live Writing is on a merged Milestone." : "No live Writings."));
+  if (jobBoards.length > 0) section("job-boards", "Milestones", jobBoards.length, stack(jobBoards.map(filingLine), ""));
   if (preFiling.length > 0) section("pre-filing", "Before filing", preFiling.length, stack(preFiling.map(preFilingLine), ""));
   if (retired.length > 0) section("retired", "Retired", retired.length, stack(retired.map(retiredCard), ""));
 

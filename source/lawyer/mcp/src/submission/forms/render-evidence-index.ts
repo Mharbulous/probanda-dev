@@ -41,7 +41,7 @@ import { frontmatterFor } from "./vaniac-frontmatter.js";
  *
  * Known limit, not fixed (Work Board Proposals plan, Phase C defect 5; #777): 🎾, 🕹️, live-admission
  * capture (📑 📌 / 💬 🧷 on an admission) and 🏷️ print only here, on the VanIAC Evidence Index. The NoA
- * Part 4, Application Response Part 6 and BCCA material lists emit none of them, so a Job Board for
+ * Part 4, Application Response Part 6 and BCCA material lists emit none of them, so a Milestone for
  * those filing kinds never proposes that work (design §4: Proposals come only from emitted markers).
  * Record it as a loose thread on the first filing that needs it; do not add the emissions here without that
  * ticket.

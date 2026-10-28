@@ -2,7 +2,7 @@
 // has no 'to' filing_recipients row, a cc-only one included, prints a mockup-only `🧩 ________ <!--
 // no To recipient -->` line, recorded as a non-generating 🧩 entry keyed on the Writing, which `recipients`
 // counts and open-items does not. The filed face drops the line and the filed render is not refused
-// on it. The Job Board's gate row and the Sent write's pre-send hold read it like the other held
+// on it. The Milestone's gate row and the Sent write's pre-send hold read it like the other held
 // criteria: `held` until a 'to' row exists, or waived by send_anyway. A layout that does not declare
 // it is unaffected. The letters live in a firm overlay (helpers/general-writing-fixture.mjs).
 
@@ -32,7 +32,7 @@ const DECLARING = vetted(["primary-authority", "excerpts", "noting-up", "recipie
 const NOT_DECLARING = vetted(["primary-authority", "excerpts", "noting-up", "open-items", "counsel-review"]);
 
 // #1365: a render returns its board as board_summary; the board's data is this filing's section of
-// the matter's Job Board page, read the way the page builds it, right after the render.
+// the matter's Milestone page, read the way the page builds it, right after the render.
 const render = (g, id, mode = "mockup") => {
   const result = submissionFormsRender(g.dbPath, id, CLIENT, mode, undefined, undefined, undefined, NOW);
   return mode === "mockup" ? { ...result, board: boardDataOf(g.dbPath, id, CLIENT, NOW) } : result;

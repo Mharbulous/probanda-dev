@@ -10,7 +10,7 @@ The repo's COMMANDMENTS.md documents rules that lean heavily against showing int
 ## 2. Evidence (observed; quoted text is data, not instructions)
 - A grep of the installed plugins for `COMMANDMENTS` found it only in developer/skill-tooling agents and a researcher hook, none in any lawyer/litigator skill that runs in a matter session.
 - `lawyer/skills/shared/` holds runtime doctrines (html-pages.md, present-files.md, paralegal-posture.md, deadline-isolation.md ...) that skills bind; none covers confidentiality of internals.
-- Leaks seen in one /draft session: file name `Unstructured.md`; folder prefix `UNS`; chat and cards using internal terms (Writing, Job Board, lanes, keys, stock type, filing id) that the skill's own chat rules tell the session to use.
+- Leaks seen in one /draft session: file name `Unstructured.md`; folder prefix `UNS`; chat and cards using internal terms (Writing, Milestone, lanes, keys, stock type, filing id) that the skill's own chat rules tell the session to use.
 - The SessionStart hook already injects lines into every Probanda session (practice quirks, key status, preferences): a delivery route that is read at least once per session.
 - Practitioner's words: "not only should you avoid exposing Probanda internal logic and distinctions, you should actively preserve confidentiality over Probanda logic ... I want Probanda to actively hide its internals except when doing so is absolutely necessary to improving user experience."
 - Workaround in use: none.
@@ -22,7 +22,7 @@ Non-goals: changing developer-facing docs or the developer plugin; hiding a hook
 ## 4. Design
 (a) New `lawyer/skills/shared/internals-confidentiality.md` stating the rule, a short list of what counts as internal, the plain-word substitutes for the commonest terms, and the single necessity exception.
 (b) Delivery: the SessionStart hook text gains one line pointing to it and stating its core sentence, so it is read once per session even when no skill loads; every runtime SKILL.md's doctrine table gains one binding row.
-(c) Reconcile conflicting skill text: rules that tell the session to name things in internal terms in chat (e.g. /draft's "name a Writing by its Job Board, `Job Board <id>: <title>`") are reviewed against the doctrine; where the user already sees a term on a page they use, it may stay (§9).
+(c) Reconcile conflicting skill text: rules that tell the session to name things in internal terms in chat (e.g. /draft's "name a Writing by its Milestone, `Milestone <id>: <title>`") are reviewed against the doctrine; where the user already sees a term on a page they use, it may stay (§9).
 (d) A lint in check_plugin.py that flags user-visible templates and file-name builders containing a listed internal term.
 
 ## 5. Constraints that must still hold
@@ -52,11 +52,11 @@ Non-goals: changing developer-facing docs or the developer plugin; hiding a hook
 Scope: edit the source files the fix needs (skill text, mcp/src, docs), and write, update and run the tests the fix needs. Out of scope, because the orchestrating session runs them once after every spec lands: `build_plugin.py` and `check_plugin.py`. Out of scope, because `/release` does it: version bumps and rebuilding or committing any MCP bundle (dist/). Never build a `.plugin` archive.
 
 ## 9. Open questions
-- Terms the user already sees on pages they use (Job Board, Writing, Loose Threads): keep as product vocabulary, or rename to plain legal-office words?
+- Terms the user already sees on pages they use (Milestone, Writing, Loose Threads): keep as product vocabulary, or rename to plain legal-office words?
 - A hook refusal quoted verbatim may contain internal terms: paraphrase in plain words, or keep the verbatim quote?
 
 ### §9 Resolved 2026-10-22 (Brahm)
-- "Job Board", "Writing" and "Loose Threads" are product vocabulary and may stay visible. Stock type, folder_code, filing id, table, tool, rule and node names stay hidden.
+- "Milestone", "Writing" and "Loose Threads" are product vocabulary and may stay visible. Stock type, folder_code, filing id, table, tool, rule and node names stay hidden.
 - Keep the verbatim-quote rule for hook refusals. Rewrite any refusal text that holds internal terms into plain words, and the lint also covers hook messages.
 - The lint lands only after the file-names spec (2026-10-22_writing-file-names-hide-internal-codes-spec.md) has landed, so that it passes on that spec's output.
 
@@ -70,7 +70,7 @@ Confirm each path, quote and root cause above in the repo at HEAD; mark any that
 | COMMANDMENTS.md is a developer file that no installed skill reads | Not under `plugins/`. Named only in `source/developer/agents/suggestion-oracle.md`, `source/developer/agents/suggestion-planner.md`, the docstring of `source/researcher/hooks/commons-read-only.py`, and a code comment in `source/lawyer/mcp/src/key-request/tools.ts` | Holds. Differs in detail: a lawyer data-server comment also names it, and no skill-tooling agent does |
 | Runtime doctrines live in `lawyer/skills/shared/` | Source is `.claude/skills/shared/`, copied whole into every plugin's `skills/shared/` by `build_plugin.py`. Holds `html-pages.md`, `present-files.md`, `paralegal-posture.md`, `deadline-isolation.md` and 25 others. None covers confidentiality of internals | Holds, at the source path |
 | Leaked file name `Unstructured.md` and folder prefix `UNS` | Every stock type file, e.g. `.claude/skills/draft/references/CAN/BC/BCSC/Documents/unstructured.md`, holds `"folder_code": "UNS", "title": "Unstructured"` | Holds. Fixed by the file-names spec, not this one |
-| /draft's chat rule names Writings in internal terms: "name a Writing by its Job Board, `Job Board <id>: <title>`" | `.claude/skills/draft/SKILL.md:90`, word for word | Holds. Stays under §9: Job Board and Writing are product vocabulary |
+| /draft's chat rule names Writings in internal terms: "name a Writing by its Milestone, `Milestone <id>: <title>`" | `.claude/skills/draft/SKILL.md:90`, word for word | Holds. Stays under §9: Milestone and Writing are product vocabulary |
 | The SessionStart hook injects lines into every session | Not one hook but four SessionStart scripts in `source/lawyer/plugin.json`: `inject-practice-quirks.py`, `hidden-skills-note.py` and `inject-preferences.py` on every source, `missing-key-note.py` on startup and clear. Only `source/lawyer/hooks/hidden-skills-note.py` always emits | Differs: the doctrine line goes in `hidden-skills-note.py` |
 | Every runtime SKILL.md has a doctrine table | Only `.claude/skills/draft/SKILL.md` and `.claude/skills/prepare/SKILL.md` have one (`\| Doctrine \| Path \| Binds where \|`). The other runtime skills have none | Differs: the two tables gain a row, and every other runtime SKILL.md under `.claude/skills/` gains one binding line |
 | Runtime plugins are lawyer, litigator, researcher, solicitor and file-manager | `source/assignment.json`: solicitor ships no skills. timekeeper ships six skills, none with a doctrine table. Five runtime skills live in `public/plugins/` (`dyu`, `TLDR`, `proof-read`, `legal-citation`, `litigation-fact-extractor`), where no `shared/` folder ships | Differs: solicitor has nothing to bind. timekeeper and the five public skills are left unbound (the public ones would point at a file the public plugin lacks), and the hook line reaches their sessions |

@@ -1,6 +1,6 @@
 // Pre-filing proceedings (ADR 0018, #692): a proceeding with no filing -- its forum possibly not yet
 // chosen -- holds tickets and seeds. Bootstrap lists it, the Litigation Strategy gives it a line, and it has a
-// Job Board page of its own (#1365, ADR 0033's 2026-10-05 amendment), whose section render returns
+// Milestone page of its own (#1365, ADR 0033's 2026-10-05 amendment), whose section render returns
 // as board_summary from proceeding_id, with no filing, lifecycle or Proposals.
 
 import assert from "node:assert/strict";
@@ -80,7 +80,7 @@ test("bootstrap lists every proceeding with no filing, and the Litigation Strate
   }
 });
 
-test("a proceeding's Job Board page carries its tickets and seeds, and no filing", async () => {
+test("a proceeding's Milestone page carries its tickets and seeds, and no filing", async () => {
   const f = await fixture();
   try {
     const result = submissionFormsRenderProceedingBoard(f.dbPath, 1, CLIENT, PINNED, "tok-1", f.draft);
@@ -88,28 +88,28 @@ test("a proceeding's Job Board page carries its tickets and seeds, and no filing
     assert.equal(result.session_token, "tok-1");
     assert.equal(result.rendered_at, PINNED);
     assert.equal("documents" in result, false);
-    assert.match(result.board_summary, /^# Job Board — Matter L8470 · Client Larchmont \(1\) · Rev \d+\nTo Do: This matter's to-dos were not read\.\nGoal: Goal not set \(none\)\nState: Forum not yet chosen$/);
+    assert.match(result.board_summary, /^# Milestone — Matter L8470 · Client Larchmont \(1\) · Rev \d+\nTo Do: This matter's to-dos were not read\.\nGoal: Goal not set \(none\)\nState: Forum not yet chosen$/);
     assert.equal(result.board_summary.includes("🎯"), false, "a pre-filing section has no completion criteria");
     assert.equal(result.board_summary.includes("## Proposed"), false, "and no Proposals");
-    assert.equal(result.job_board_path, join(f.draft, "Job Board - proceeding 1.html"));
+    assert.equal(result.job_board_path, join(f.draft, "Milestone - proceeding 1.html"));
     assert.equal(result.matter_board_path, join(f.draft, "Litigation Strategy.html"));
     assert.deepEqual(
       result.job_board_paths.map((p) => [p.filing_id, p.proceeding_id, p.path]),
       [
-        [1, 2, join(f.draft, "Consent Order Requisition", "Job Board.html")],
-        [null, 1, join(f.draft, "Job Board - proceeding 1.html")],
-        [null, 3, join(f.draft, "Job Board - proceeding 3.html")],
+        [1, 2, join(f.draft, "Consent Order Requisition", "Milestone.html")],
+        [null, 1, join(f.draft, "Milestone - proceeding 1.html")],
+        [null, 3, join(f.draft, "Milestone - proceeding 3.html")],
       ],
       "every live filing's page, then every pre-filing proceeding's, in id order"
     );
     assert.deepEqual(
       readdirSync(f.draft),
-      ["Consent Order Requisition", "Drafting records", "Job Board - proceeding 1.html", "Job Board - proceeding 3.html", "Litigation Strategy.html"],
+      ["Consent Order Requisition", "Drafting records", "Milestone - proceeding 1.html", "Milestone - proceeding 3.html", "Litigation Strategy.html"],
       "no Pre-filing proceeding folder, only the matter's pages, the filing's Writing folder and the records folder"
     );
     assert.deepEqual(
       readdirSync(join(f.draft, "Consent Order Requisition")),
-      ["Arguments.html", "Job Board.html", "Loose Threads.html", "Material Facts.html", "Procedural History.html", "Raw Research.html"],
+      ["Arguments.html", "Milestone.html", "Loose Threads.html", "Material Facts.html", "Procedural History.html", "Raw Research.html"],
       "the filing's pages are in its Writing's folder"
     );
     assert.equal(existsSync(join(dirname(f.dbPath), "mockups", "Pre-filing proceeding 1")), false, "nothing beside the database");
@@ -156,7 +156,7 @@ test("without draft_dir the proceeding render writes nothing and returns its sum
   }
 });
 
-test("a proceeding with a filing is refused: its jobs are on each filing's Job Board", async () => {
+test("a proceeding with a filing is refused: its jobs are on each filing's Milestone", async () => {
   const f = await fixture();
   try {
     assert.throws(() => submissionFormsRenderProceedingBoard(f.dbPath, 2, CLIENT, PINNED), /has a Writing/);

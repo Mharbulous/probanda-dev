@@ -10,11 +10,11 @@ export function fetchFilingById(dbPath: string, filingId: number): FilingRow {
   return found[0];
 }
 
-/** A Job Board with no Writing has no document to emit or gate: the filed-face emitters and the
+/** A Milestone with no Writing has no document to emit or gate: the filed-face emitters and the
  * pre-filing check refuse it by name, before anything is read for it. */
 export function refuseJobOnlyBoard(filing: FilingRow): void {
   if (isJobOnlyBoard(filing)) {
-    throw new ValidationError(`Job Board ${filing.id} has no Writing, so it has no document`, "job_board_only");
+    throw new ValidationError(`Milestone ${filing.id} has no Writing, so it has no document`, "job_board_only");
   }
 }
 

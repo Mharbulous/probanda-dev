@@ -560,7 +560,7 @@ type RenderArgs = PageArgs & {
 type EmitBcscFormArgs = { db_path: string; filing_id: number; case_data_folder?: string; lenient?: boolean; cover_notes?: string[] };
 
 async function renderProceedingBoard(args: RenderArgs, proceedingId: number, context: DispatchContext): Promise<unknown> {
-  // ADR 0018: a proceeding with no filing has a Job Board of its own and nothing else to render.
+  // ADR 0018: a proceeding with no filing has a Milestone of its own and nothing else to render.
   const filingOnly = (["filing_id", "render_mode", "documents", "appeal_deadline", "presentation_dir"] as const).filter((k) => args[k] !== undefined);
   if (filingOnly.length > 0) {
     throw new ValidationError(`drafting_forms__render.proceeding_id takes no ${filingOnly.join(", ")} -- those are a filing's`);
@@ -631,7 +631,7 @@ async function pageContext(
   // A folder the lookup could not match still reads its own token, as #883 did.
   const matterNo = resolved.matterNo ?? matterToken(dirname(draftDir)) ?? undefined;
   const todos = await readMatterTodos(context.practiceDb, matterNo);
-  // ADR 0013, 2026-10-04 amendments: the Job Board's dates, timed with the to-dos. They go to the
+  // ADR 0013, 2026-10-04 amendments: the Milestone's dates, timed with the to-dos. They go to the
   // page write alone, never into a response or a log line; a linked deadline goes to its filing's
   // section as a dateless criterion.
   const dates = await readMatterDates(context.practiceDb, matterNo);

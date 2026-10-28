@@ -1,5 +1,5 @@
 // The Raw Research view page (planning/1. Design/2026-10-07_raw-research-page-spec.md): one
-// `Raw Research - Job Board <id>.html` per live Writing, written by the view-page registry
+// `Raw Research - Milestone <id>.html` per live Writing, written by the view-page registry
 // (../view-pages.ts), listing every proposition of law the drafting database records for the
 // filing's proceeding, each with its statements of law: citation, pinpoint, excerpt, verification
 // and note-up status, and the submissions it is linked to. The page itself is the template set in

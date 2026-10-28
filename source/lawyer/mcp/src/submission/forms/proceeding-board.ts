@@ -1,4 +1,4 @@
-// drafting_forms__render with proceeding_id: a proceeding's Job Board.
+// drafting_forms__render with proceeding_id: a proceeding's Milestone.
 
 import { fetchAllFilingsForProceeding, fetchProceeding, fetchRevision } from "./query.js";
 import { type MatterDates } from "../matter-dates.js";
@@ -23,10 +23,10 @@ import { type PhaseTimings, timed, withTotal, nowStamp } from "./timings.js";
 export interface ProceedingBoardResult {
   proceeding_id: number;
   revision: number;
-  /** The proceeding's section of the Job Board as fixed-grammar text, as on a filing's render. */
+  /** The proceeding's section of the Milestone as fixed-grammar text, as on a filing's render. */
   board_summary: string;
-  /** Present only with draft_dir, which rewrites the matter's pages: this proceeding's Job Board page,
-   * every Job Board page in page order, and the Litigation Strategy. */
+  /** Present only with draft_dir, which rewrites the matter's pages: this proceeding's Milestone page,
+   * every Milestone page in page order, and the Litigation Strategy. */
   job_board_path?: string;
   job_board_paths?: PagesWritten["job_board_paths"];
   matter_board_path?: string;
@@ -36,7 +36,7 @@ export interface ProceedingBoardResult {
   trash_skipped?: PagesWritten["trash_skipped"];
   /** True when this call wrote the matter's pages (draft_dir given). */
   pages_written: boolean;
-  /** With draft_dir, as on a filing's Job Board document. */
+  /** With draft_dir, as on a filing's Milestone document. */
   board_changed?: boolean;
   board_moves?: BoardMove[];
   session_token?: string;
@@ -45,7 +45,7 @@ export interface ProceedingBoardResult {
 }
 
 /**
- * drafting_forms__render with proceeding_id (ADR 0018): the Job Board section of a proceeding with
+ * drafting_forms__render with proceeding_id (ADR 0018): the Milestone section of a proceeding with
  * no filing, whose tickets and loose threads no filing's section can show. Nothing is written beside the
  * database; given draft_dir, the matter's pages are rewritten, this proceeding's section on a Job
  * Board page of its own (#1365, ADR 0033's 2026-10-05 amendment). A proceeding that has a filing is
@@ -61,7 +61,7 @@ export function submissionFormsRenderProceedingBoard(
   draftDir?: string,
   /** The matter's open to-dos, for the Litigation Strategy a render under draft_dir rewrites. */
   todos: MatterTodos = TODOS_NOT_READ,
-  /** The matter's hearing dates, for the Job Board page alone (ADR 0013, 2026-10-04 amendment). */
+  /** The matter's hearing dates, for the Milestone page alone (ADR 0013, 2026-10-04 amendment). */
   dates: MatterDates = DATES_NOT_READ
 ): ProceedingBoardResult {
   const timings: PhaseTimings = [];
@@ -70,7 +70,7 @@ export function submissionFormsRenderProceedingBoard(
   const proceeding = fetchProceeding(dbPath, proceedingId);
   if (fetchAllFilingsForProceeding(dbPath, proceedingId).length > 0) {
     throw new ValidationError(
-      "This proceeding has a Writing, so its jobs are on each Writing's Job Board -- render a Writing instead"
+      "This proceeding has a Writing, so its jobs are on each Writing's Milestone -- render a Writing instead"
     );
   }
   const revision = fetchRevision(dbPath);

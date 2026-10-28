@@ -123,7 +123,7 @@ export function renderBoardSummary(section: WorkBoardData, client: ClientContext
   const m = section.meta;
   const matter = [m.matter, client.matterDescription].filter((part) => part).join(" ");
   const header = [matter && `Matter ${matter}`, m.client && `Client ${m.client}${client.clientNo ? ` (${client.clientNo})` : ""}`, `Rev ${m.revision}`];
-  const lines = [`# Job Board — ${header.filter((part) => part).join(" · ")}`, `To Do: ${todoText(section, todos)}`, goalsHead(section)];
+  const lines = [`# Milestone — ${header.filter((part) => part).join(" · ")}`, `To Do: ${todoText(section, todos)}`, goalsHead(section)];
   const criteria = section.criteria ?? [];
   if (section.goal === undefined || criteria.length === 0) {
     const state = m.state_since === null ? m.state_label : `${m.state_label} ${m.state_since}`;

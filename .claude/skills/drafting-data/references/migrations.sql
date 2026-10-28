@@ -3961,7 +3961,7 @@ UPDATE db_meta SET value = '53' WHERE key = 'schema_version';
 
 -- MIGRATE 53 -> 54
 -- A deleted job is kept, not removed. Until v54 deleting a mistaken job deleted its tickets row and
--- every row pointing at it, so its number left an unexplained gap on the Job Board, nothing could
+-- every row pointing at it, so its number left an unexplained gap on the Milestone, nothing could
 -- bring it back, and a job carrying a review comment or a saved answer could not be deleted at all.
 --
 -- 1. tickets gains deleted_at, nullable text: the minute the job was deleted, host local time, set
@@ -3978,7 +3978,7 @@ UPDATE db_meta SET value = '54' WHERE key = 'schema_version';
 -- MIGRATE 54 -> 55
 -- A job's plan is its steps. Until v55 tickets.plan held the approved steps again, joined into one
 -- sentence, and the CHECK ((plan IS NULL) = (plan_approved_at IS NULL)) forced that copy on every
--- approval, so a Job Board card showed one plan three times: the intent, the step checklist and a
+-- approval, so a Milestone card showed one plan three times: the intent, the step checklist and a
 -- Plan row.
 --
 -- 1. tickets drops plan and that CHECK. plan_approved_at alone is the approval stamp, and the job's
@@ -4505,7 +4505,7 @@ ALTER TABLE seeds ADD COLUMN rank_reason TEXT CHECK ((rank IS NULL) = (rank_grou
 UPDATE db_meta SET value = '66' WHERE key = 'schema_version';
 
 -- MIGRATE 66 -> 67
--- A draft that is not a Writing attaches to one Job Board (ADR 0042; Brahm, 2026-10-08). A client
+-- A draft that is not a Writing attaches to one Milestone (ADR 0042; Brahm, 2026-10-08). A client
 -- letter (/draft letters.md section 10) and a reply on the reply route (ADR 0040) have no Writing
 -- row, so until v67 neither was on any board. board_attachments points one at a board: a client
 -- letter by its folder, a reply by its file. `path` is in documents.file_path's stored form,
@@ -4536,7 +4536,7 @@ UPDATE db_meta SET value = '66' WHERE key = 'schema_version';
 --     future `filings` rebuild drops and recreates it with the other triggers that name `filings`.
 --
 -- Like the job tables (ADR 0009), board_attachments carries no revision triggers: attaching
--- changes no mockup, only the Job Board pages, which every page write reads afresh.
+-- changes no mockup, only the Milestone pages, which every page write reads afresh.
 --
 -- Additive: one table and seven triggers, no rebuild. The hop moves no revision: it writes no row.
 CREATE TABLE board_attachments (
@@ -4550,11 +4550,11 @@ CREATE TABLE board_attachments (
 
 CREATE TRIGGER guard_board_attachments_live_ins BEFORE INSERT ON board_attachments
 WHEN NEW.filing_id IS NOT NULL AND (SELECT retired_on FROM filings WHERE id = NEW.filing_id) IS NOT NULL
-BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Job Board: attach the draft to a live Writing''s board (ADR 0042)'); END;
+BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Milestone: attach the draft to a live Writing''s board (ADR 0042)'); END;
 
 CREATE TRIGGER guard_board_attachments_live_upd BEFORE UPDATE OF proceeding_id, filing_id ON board_attachments
 WHEN NEW.filing_id IS NOT NULL AND (SELECT retired_on FROM filings WHERE id = NEW.filing_id) IS NOT NULL
-BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Job Board: attach the draft to a live Writing''s board (ADR 0042)'); END;
+BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Milestone: attach the draft to a live Writing''s board (ADR 0042)'); END;
 
 CREATE TRIGGER guard_board_attachments_proceeding_ins BEFORE INSERT ON board_attachments
 WHEN NEW.filing_id IS NOT NULL AND (SELECT proceeding_id FROM filings WHERE id = NEW.filing_id) IS NOT NEW.proceeding_id
@@ -4577,7 +4577,7 @@ WHEN OLD.retired_on IS NULL AND NEW.retired_on IS NOT NULL
  AND (EXISTS (SELECT 1 FROM board_attachments WHERE filing_id = NEW.id)
       OR (EXISTS (SELECT 1 FROM board_attachments WHERE filing_id IS NULL AND proceeding_id = NEW.proceeding_id)
           AND NOT EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id AND id <> NEW.id AND retired_on IS NULL)))
-BEGIN SELECT RAISE(ABORT, 'a draft is attached to this Writing''s Job Board: move or detach each attachment before retiring it (ADR 0042)'); END;
+BEGIN SELECT RAISE(ABORT, 'a draft is attached to this Writing''s Milestone: move or detach each attachment before retiring it (ADR 0042)'); END;
 
 UPDATE db_meta SET value = '67' WHERE key = 'schema_version';
 
@@ -4898,7 +4898,7 @@ UPDATE db_meta SET value = '73' WHERE key = 'schema_version';
 
 -- MIGRATE 73 -> 74
 -- A job can be held until a bring-forward (BF) date (Brahm, 2026-10-12). Until that date the job
--- shows in the Job Board's Bring Forward lane and is not assigned.
+-- shows in the Milestone's Bring Forward lane and is not assigned.
 --
 -- 1. tickets gains bf_on, nullable: the first day the job may be worked, a YYYY-MM-DD by a CHECK of
 --    its own, like filings.pure_law_on. It is a start date, never a deadline. Written only on the
@@ -4971,7 +4971,7 @@ CREATE TABLE ticket_sources (
 UPDATE db_meta SET value = '76' WHERE key = 'schema_version';
 
 -- MIGRATE 76 -> 77
--- The Job Board's Provable Facts page splits in two (Brahm, 2026-10-20, docs/ADRs/0011): Procedural
+-- The Milestone's Provable Facts page splits in two (Brahm, 2026-10-20, docs/ADRs/0011): Procedural
 -- History, the facts that speak to the litigation process itself (a filing, a service, procedural
 -- correspondence), each on the date it happened, and Material Facts, every other fact. Both keep how
 -- each fact is proven.

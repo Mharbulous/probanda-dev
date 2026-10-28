@@ -364,9 +364,9 @@ test("two processes bootstrapping one matter at once render each stale filing ex
     assert.ok(joined.length <= 1);
     assert.equal(readPage(join(m.draftDir, STATUS_FILE)).state, "done");
     const names = readdirSync(m.draftDir, { recursive: true }).map(String);
-    const boards = Array.from({ length: 40 }, (_, i) => join(`Notice of Application ${i + 1}`, "Job Board.html"));
+    const boards = Array.from({ length: 40 }, (_, i) => join(`Notice of Application ${i + 1}`, "Milestone.html"));
     const views = Array.from({ length: 40 }, (_, i) => VIEW_PAGES.map((page) => join(`Notice of Application ${i + 1}`, `${page.name}.html`))).flat();
-    assert.deepEqual(names.filter((name) => name.endsWith(".html")).sort(), [...boards, ...views, "Litigation Strategy.html"].sort(), "a Job Board page and the view pages per filing and the Litigation Strategy, and no other page file");
+    assert.deepEqual(names.filter((name) => name.endsWith(".html")).sort(), [...boards, ...views, "Litigation Strategy.html"].sort(), "a Milestone page and the view pages per filing and the Litigation Strategy, and no other page file");
     assert.deepEqual(names.filter((name) => name.endsWith(".tmp")), [], "no temp file left behind");
     for (const [i, name] of boards.entries()) {
       assert.deepEqual(readBoardData(join(m.draftDir, name)).sections.map((s) => s.meta.filing_id), [i + 1], `${name} parses, its filing's section alone`);

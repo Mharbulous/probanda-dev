@@ -103,7 +103,7 @@ export type Projection = (ctx: RenderContext, part: LayoutPart, state: Projectio
 export const SIGNING_SPACE = "________________________________";
 /** A whole mockup-only 🧩 line, the marker and a blank underline with `what` in a comment (plan
  * 2026-10-07, Q2: `🧩 ________ <!-- signer not chosen -->`), which filed-face.ts drops whole. It is
- * recorded as an open-items entry (#1213) whose item is `what`, so the Job Board still names the gap.
+ * recorded as an open-items entry (#1213) whose item is `what`, so the Milestone still names the gap.
  * Keyed on the part, not the filing: the Work Board merges entries sharing a marker, table and id,
  * and a part prints at most one gap line, so each gap stays its own item. A gap printed outside
  * every part passes its own `row` (render-general.ts's `recipients` gap, #1234). */
@@ -362,7 +362,7 @@ function currencyWithheld(c: ClauseLine, printed: string): CurrencyWithheld | nu
 
 /** The Writing's selected clauses the currency rule withholds, read live, in `filing_clauses` order,
  * each with its printed wording. Empty when no stored layout part is `terms`: a clause no part
- * prints never trips the filed render's currency gate. The Sent write's hold and the Job Board's
+ * prints never trips the filed render's currency gate. The Sent write's hold and the Milestone's
  * pre-send gate row read this (jobs.md §14a). */
 export function currencyWithheldClauses(
   dbPath: string,

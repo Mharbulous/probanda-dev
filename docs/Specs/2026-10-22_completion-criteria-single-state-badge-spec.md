@@ -1,7 +1,7 @@
 # Spec: Completion Criteria card shows one state and no Writing names
 
 Status: proposed, 2026-10-22. Written in a matter session; implementation is handed to Claude Code.
-Plugin: `lawyer` data server (Job Board page writer, Completion Criteria card) (installed copy version not seen). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
+Plugin: `lawyer` data server (Milestone page writer, Completion Criteria card) (installed copy version not seen). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: 2026-10-22_merged-board-one-goal-spec.md; 2026-10-22_board-goal-default-title-and-framing-spec.md
 
 ## 1. Problem

@@ -27,5 +27,5 @@ drafting-data is a legacy store under Exception 2 of COMMANDMENTS.md, which bars
 ## Consequences
 
 - Existing matters' procedural facts sit on Material Facts until a session sorts them, on the practitioner's request or as it records facts.
-- An old `Provable Facts - Job Board <id>.html` is moved to the matter's `TRASH` by the next page write, and the html-pages gate still refuses it until then.
+- An old `Provable Facts - Milestone <id>.html` is moved to the matter's `TRASH` by the next page write, and the html-pages gate still refuses it until then.
 - A database held below v77 reads every fact as material.

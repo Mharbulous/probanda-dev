@@ -1,4 +1,4 @@
-// Merged Job Boards (docs/ADRs/0010-job-boards-organized-by-goals.md): which board each board's
+// Merged Milestones (docs/ADRs/0010-job-boards-organized-by-goals.md): which board each board's
 // section is drawn on. A merge writes one db_meta row per absorbed board, never a table of its own:
 // key `board_member:filing:<id>` or `board_member:proceeding:<id>`, value JSON {filing_id,
 // proceeding_id} naming the survivor (filing_id null for a pre-filing proceeding's board). Jobs keep
@@ -11,7 +11,7 @@
 import { isJobOnlyBoard, type FilingRow } from "./query.js";
 import { rows } from "../query-rows.js";
 
-/** A board: a filing's (a Writing or a Job Board with no Writing), or a pre-filing proceeding's (filing_id null). */
+/** A board: a filing's (a Writing or a Milestone with no Writing), or a pre-filing proceeding's (filing_id null). */
 export interface BoardRef {
   filing_id: number | null;
   proceeding_id: number;
@@ -90,7 +90,7 @@ export class BoardIndex {
     return board.filing_id !== null && this.firstFiling.get(board.proceeding_id)?.id === board.filing_id && this.proceedingSurvives(board.proceeding_id);
   }
 
-  /** The survivor rank of a board (ADR 0010): a Writing's board first, then a Job Board with no
+  /** The survivor rank of a board (ADR 0010): a Writing's board first, then a Milestone with no
    * Writing, then a pre-filing board; within a kind, the lower id. */
   rank(board: BoardRef): [number, number] {
     const b = this.current(board);

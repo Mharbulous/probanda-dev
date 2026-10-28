@@ -50,7 +50,7 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 - **4a. Check each thread against the installed plugin.** Read-only helpers, each taking three or four threads grouped by area, each returning only `DONE | PARTLY | NOT DONE`, one to three `file:line` evidence lines, and what is missing. How the threads divide among helpers is a mechanical choice stated in one line, as Branch A's fan-out is.
 - **4b. Spot-check every evidence line that drives a decision** before reporting it.
 - **4c. Report one table:** built (with where), partly built (with what is missing), not built.
-- **4d. Disposition.** The practitioner says what happens to each row. A drop is applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read the lane (the ids discarded, the count), re-render, and present the Job Board page again.
+- **4d. Disposition.** The practitioner says what happens to each row. A drop is applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read the lane (the ids discarded, the count), re-render, and present the Milestone page again.
 
 **Tooling threads are reported to Probanda.** Once the practitioner has said what to pursue and what to discard, and before Step 5, run `references/suggestion-box.md` over every open `tooling` thread that is not deferred. What a thread noticed about a Probanda tool goes to the lawyer plugin as an observation holding only Probanda's own output, never the thread's words. No thread is posted as a suggestion, and none is discarded without the practitioner's answer. A plugin-related thread seen in another group is named to the practitioner in one line and stays where it is.
 

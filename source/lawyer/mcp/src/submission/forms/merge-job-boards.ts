@@ -1,6 +1,6 @@
 // drafting_data__merge_job_boards (docs/ADRs/0010-job-boards-organized-by-goals.md): joins two Job
 // Boards whose goals the practitioner has confirmed overlap or cohere. The survivor is a Writing's
-// board over a Job Board with no Writing over a pre-filing board, and within a kind the lower id
+// board over a Milestone with no Writing over a pre-filing board, and within a kind the lower id
 // (BoardIndex.rank). The absorbed board gets one membership row naming the survivor, and every board
 // it had absorbed is re-pointed to the survivor. The merged board holds one goal (ADR 0010, 2026-10-22
 // goals amendment): the practitioner's combined goal_statement, written as confirmed, or with none,
@@ -41,7 +41,7 @@ export interface MergeJobBoardsResult {
 }
 
 function label(b: BoardRef): string {
-  return b.filing_id === null ? `proceeding ${b.proceeding_id}'s board` : `Job Board ${b.filing_id}`;
+  return b.filing_id === null ? `proceeding ${b.proceeding_id}'s board` : `Milestone ${b.filing_id}`;
 }
 
 /** One named board, refused when it is not live: a filing that is retired, or a proceeding that has a Writing. */
@@ -53,14 +53,14 @@ function resolve(dbPath: string, arg: { filing_id?: number; proceeding_id?: numb
   if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL}.boards[${i}]: the board id must be a positive integer`, "invalid_board");
   if (arg.filing_id !== undefined) {
     const [f] = submissionDataQuery(dbPath, "SELECT proceeding_id, retired_on FROM filings WHERE id = ?", [id]).rows as unknown as { proceeding_id: number; retired_on: string | null }[];
-    if (f === undefined) throw new NotFoundError(`${TOOL}: no Writing or Job Board ${id} in ${dbPath}`, "not_found");
-    if (f.retired_on !== null) throw new ValidationError(`${TOOL}: Job Board ${id} is retired or closed, so it has no board to merge`, "board_retired");
+    if (f === undefined) throw new NotFoundError(`${TOOL}: no Writing or Milestone ${id} in ${dbPath}`, "not_found");
+    if (f.retired_on !== null) throw new ValidationError(`${TOOL}: Milestone ${id} is retired or closed, so it has no board to merge`, "board_retired");
     return { filing_id: id, proceeding_id: f.proceeding_id };
   }
   const [p] = submissionDataQuery(dbPath, "SELECT (SELECT COUNT(*) FROM filings WHERE proceeding_id = proceedings.id) AS filings FROM proceedings WHERE id = ?", [id])
     .rows as unknown as { filings: number }[];
   if (p === undefined) throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
-  if (p.filings > 0) throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- name a Writing's Job Board", "proceeding_has_writing");
+  if (p.filings > 0) throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- name a Writing's Milestone", "proceeding_has_writing");
   return { filing_id: null, proceeding_id: id };
 }
 

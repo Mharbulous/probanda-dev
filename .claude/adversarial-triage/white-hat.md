@@ -1,7 +1,7 @@
 Read the code path before arguing. Find the renderer, the CSS, the stored shape and any skill that defines the input format. The strongest point is usually a published syntax or contract in a skill under `.claude/skills/` that the code ignores. Grep the suggestion's literal phrases (such as "or alternatively") across `.claude/skills` first.
 
-Rendering and Job Board facts:
-- The Job Board shell is `source/lawyer/mcp/src/submission/forms/workboard-shell.ts`. Its tokens are in `workboard-assets.ts`. Its e2e harness is `source/lawyer/mcp/test/workboard-file-url.e2e.test.mjs`.
+Rendering and Milestone facts:
+- The Milestone shell is `source/lawyer/mcp/src/submission/forms/workboard-shell.ts`. Its tokens are in `workboard-assets.ts`. Its e2e harness is `source/lawyer/mcp/test/workboard-file-url.e2e.test.mjs`.
 - The rule for display-only changes is that a change to storage, schema or tool inputs is a minor release. Anything else is a patch. Say which one applies, with the file that shows it.
 - Check Commandments 5 and 7 briefly, and say so when they do not apply.
 

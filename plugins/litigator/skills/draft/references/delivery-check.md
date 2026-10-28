@@ -41,7 +41,7 @@ Do these in order. Nothing in this section asks the practitioner anything.
    3. Replace the letter's stored text with the text of the file at `draft.sent_text_source` (a PDF read through its page manifest, a scanned page only from its PNGs), paragraph for paragraph and changing no word, through `/drafting-data`'s write for a general Writing's prose rows and clauses.
    4. Render the mockup (SKILL.md section 11).
 6. **Record the letter as sent**, when a stated method is confirmed sent: `/drafting-data`'s Sent write, with the date of the earliest confirmed send as `sent_on` and `draft.sent_text_source` as the copy. A refusal is handled as `references/letters.md` section 8 says, except that `sent_copy_mismatch` after step 5 is quoted in one line and stops: never ask which text is right, and never retry. On a staff machine, name the signing lawyer and stop.
-7. **After a sync, show both versions and say so.** Present two file cards in one call (`references/present-files.md`): the draft as it stood (step 5.2's file) and the letter as sent. Then one line: the Job Board draft was updated to match the letter as sent, and whether it is now recorded as sent. Show both cards every time a draft is updated this way.
+7. **After a sync, show both versions and say so.** Present two file cards in one call (`references/present-files.md`): the draft as it stood (step 5.2's file) and the letter as sent. Then one line: the Milestone draft was updated to match the letter as sent, and whether it is now recorded as sent. Show both cards every time a draft is updated this way.
 8. **Keep nothing.** Write the result to no database, file, job, idea or note. It is done with once this section has run.
 
 ## 5. The question, when one is still needed

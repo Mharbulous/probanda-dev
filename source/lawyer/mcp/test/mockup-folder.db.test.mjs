@@ -1,5 +1,5 @@
 // Each Writing's own folder in the matter's 0. DRAFT (spec 2026-10-22, writing file and folder names):
-// named after the document, holding its one mockup file, its archive and its Job Board page, with the
+// named after the document, holding its one mockup file, its archive and its Milestone page, with the
 // render manifests in `0. DRAFT\Drafting records\`. No user-visible path carries a stock type's name,
 // a type's code or a filing id. A retitle keeps the folder, a second Writing with the same title gets
 // ` (2)`, and an older build's case-data mockups tree moves into 0. DRAFT on the next bootstrap or
@@ -57,7 +57,7 @@ test("an Unstructured Writing renders into a folder named after the document, on
   assert.ok(doc.markdown.includes(`Document Type: ${HEARING}`), "the header names the document, not the stock type");
   assert.doesNotMatch(doc.markdown, /Unstructured/);
   assert.equal(manifestOf(g, id).folder, HEARING);
-  assert.equal(manifestOf(g, id).files[0].label.short, HEARING, "the Job Board thumbnail prints the document's name");
+  assert.equal(manifestOf(g, id).files[0].label.short, HEARING, "the Milestone thumbnail prints the document's name");
   assert.equal(existsSync(join(dirname(g.dbPath), "mockups")), false, "nothing is written beside the database");
   for (const path of tree(g.draft)) assert.doesNotMatch(path, INTERNAL, path);
   assert.equal(renderState(g, id), "fresh");
@@ -159,7 +159,7 @@ function asOlderBuild(g, id) {
   const text = readFileSync(join(folder, file.file_name), "utf-8");
   writeFileSync(join(old, "Unstructured.md"), text, "utf-8");
   writeFileSync(join(old, "archive", "General_writing @rev1 2026-10-01-09-00.md"), "Revision: 1\n", "utf-8");
-  writeFileSync(join(old, "Job Board.html"), '<html data-workboard-shell data-k="Rev">1<', "utf-8");
+  writeFileSync(join(old, "Milestone.html"), '<html data-workboard-shell data-k="Rev">1<', "utf-8");
   const { folder: _folder, ...rest } = manifest;
   writeFileSync(
     join(old, "render-manifest.json"),
@@ -234,7 +234,7 @@ test("a render moves the older tree too, and keeps an older coded folder holding
   assert.equal(again.writing_folder_rename, undefined);
 });
 
-test("a letter's mockup is named after its type and its folder after the Writing, with the Job Board page in that folder", async (t) => {
+test("a letter's mockup is named after its type and its folder after the Writing, with the Milestone page in that folder", async (t) => {
   const g = await generalWritingFixture(t, { front: null, block: UNCITED_LETTER });
   const { filing_id: id } = await g.createLetter();
   await g.prose(id, "addressee", "Cara Counsel");
@@ -244,8 +244,8 @@ test("a letter's mockup is named after its type and its folder after the Writing
   assert.equal(docOf(result).path, join(g.draft, "Letter to Cara", "Letter to opposing counsel.md"));
   assert.equal(docOf(result).markdown, undefined, "under draft_dir only named documents carry markdown");
   const board = result.documents.find((d) => d.document_type === "Work_board");
-  assert.equal(board.path, join(g.draft, "Letter to Cara", "Job Board.html"));
+  assert.equal(board.path, join(g.draft, "Letter to Cara", "Milestone.html"));
   for (const view of result.view_page_paths) assert.equal(dirname(view.path), join(g.draft, "Letter to Cara"), view.path);
   assert.ok(existsSync(join(g.draft, "Litigation Strategy.html")));
-  for (const path of tree(g.draft)) assert.doesNotMatch(path, /Job Board \d|LTR /, path);
+  for (const path of tree(g.draft)) assert.doesNotMatch(path, /Milestone \d|LTR /, path);
 });

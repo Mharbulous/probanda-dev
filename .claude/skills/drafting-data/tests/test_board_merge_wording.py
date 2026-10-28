@@ -33,7 +33,7 @@ class BoardMergeWordingTest(unittest.TestCase):
         self.assertRegex(ask, r"each writing stays a separate filing")
         for kept in ("documents", "numbering"):
             self.assertIn(kept, ask)
-        for combined in ("job board page", "view pages", "goal"):
+        for combined in ("Milestone page", "view pages", "goal"):
             self.assertIn(combined, ask)
 
     def test_move_section_does_not_claim_merges(self):

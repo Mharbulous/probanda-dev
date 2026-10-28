@@ -67,7 +67,7 @@ export interface FirmProfile {
   person: string | null;
   /** This practitioner's environment notes from probanda.json, or null when unset. */
   practice_quirks: string | null;
-  /** The Job Board's idle flag threshold in hours; present only when firm.json sets one. */
+  /** The Milestone's idle flag threshold in hours; present only when firm.json sets one. */
   idle_flag_hours?: number;
   /** Roster keys copied on every email write_email addresses from case data; present only when firm.json sets some. */
   cc_on_counsel_email?: string[];
@@ -82,7 +82,7 @@ function isPositiveHours(value: unknown): value is number {
 }
 
 /**
- * The firm's idle_flag_hours for the Job Board's idle flag, or null when firm.json is absent or
+ * The firm's idle_flag_hours for the Milestone's idle flag, or null when firm.json is absent or
  * unreadable, sets none, or the matter-data root is unconfigured (the background render job has no
  * practice context). Never throws: a bad value is refused at upsert, never at render.
  */

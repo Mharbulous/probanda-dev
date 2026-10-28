@@ -26,7 +26,7 @@ Non-goals: changing Claude Code or SendUserFile; letting an agent read the page 
 (c) When the delivery tool gives no confirmation the user saw the page, say in one plain-words line what was presented.
 
 ## 5. Constraints that must still hold
-- html-pages rule: an agent never reads, greps, parses or stages-to-read a Job Board page; it only presents it.
+- html-pages rule: an agent never reads, greps, parses or stages-to-read a Milestone page; it only presents it.
 - The page presented is session entry's `job_board_path` and nothing else; the Opening's one-line rule is unchanged.
 - One access request, minimal folder set, never a request for computer control.
 

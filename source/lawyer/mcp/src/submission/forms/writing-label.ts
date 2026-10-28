@@ -1,4 +1,4 @@
-// The Job Board's Writings strip labels: a short label drawn on each Writing's thumbnail and a
+// The Milestone's Writings strip labels: a short label drawn on each Writing's thumbnail and a
 // fuller description for its title. Computed at render time and stored on the render manifest's
 // file entries (render-manifest.ts ManifestFile.label).
 //

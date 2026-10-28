@@ -1,4 +1,4 @@
-// A draft attached to a Job Board (ADR 0042) is a card in the board's strip, not a lane: its
+// A draft attached to a Milestone (ADR 0042) is a card in the board's strip, not a lane: its
 // last-modified date, its file-naming registry code read through /file-naming's own name gate, and a
 // badge counting its pending jobs, which a ticket_scope row naming `board_attachments:<id>` links to
 // it. Opened, it shows the date only when the name's own date differs. board_card's attached lane
@@ -82,7 +82,7 @@ function inCheckout(f, fn) {
   }
 }
 
-/** Runs the Job Board page's drawing script against stand-in elements and returns its main element. */
+/** Runs the Milestone page's drawing script against stand-in elements and returns its main element. */
 function drawBoard(html) {
   class Node {
     constructor(tag) {

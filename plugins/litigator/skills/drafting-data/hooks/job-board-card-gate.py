@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Make sure the Job Board page a result names is presented as a file card (shared/html-pages.md,
+"""Make sure the Milestone page a result names is presented as a file card (shared/html-pages.md,
 "Present each page by its path").
 
 A page is due when a result shows it was written for the practitioner to see:
@@ -61,7 +61,7 @@ def changed(result):
 
 
 def due_pages(tool, response):
-    """The Job Board page paths this result requires presented."""
+    """The Milestone page paths this result requires presented."""
     result = result_json(response)
     if result is None:
         return []
@@ -148,7 +148,7 @@ def stop(payload):
     missing = unpresented(turn_blocks(path))
     if missing:
         sys.stdout.write(json.dumps({"decision": "block", "reason": (
-            "A Job Board page written this turn was not presented. " + how_to_present(missing))}) + "\n")
+            "A Milestone page written this turn was not presented. " + how_to_present(missing))}) + "\n")
     return 0
 
 

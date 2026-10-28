@@ -1,4 +1,4 @@
-// /work's pilot atoms: the Job Board's entry, moved off /draft. They lint, serve session entry and
+// /work's pilot atoms: the Milestone's entry, moved off /draft. They lint, serve session entry and
 // dispatch by operation, leave no tagged line unmapped, and load in a checkout that holds no /draft
 // at all, so /work reads no /draft file.
 

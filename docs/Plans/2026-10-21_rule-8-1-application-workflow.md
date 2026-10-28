@@ -108,7 +108,7 @@ New file `source/lawyer/mcp/src/submission/forms/served-write.ts`, modelled on `
   - every refusal writing nothing.
 - Add `record_served` to the call list in `job-board-only.db.test.mjs`.
 
-## Step 3. Job Board text and stock titles. Release: lawyer
+## Step 3. Milestone text and stock titles. Release: lawyer
 
 Changes in `render-work-board.ts`:
 - **One constant.** Export one `STOCK_TITLES` set, built from the existing titles plus the new ones in Step 4.

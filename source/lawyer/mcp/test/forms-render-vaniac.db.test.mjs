@@ -50,7 +50,7 @@ test("renders the VanIAC submissions package (written argument, witness statemen
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
     assert.equal(result.filing_id, 1);
     assert.equal(result.revision, 1);
-    // Written Arguments (venue) + 4 witness statements + evidence index + Job Board (ADR 0009).
+    // Written Arguments (venue) + 4 witness statements + evidence index + Milestone (ADR 0009).
     assert.equal(result.documents.length, 7);
 
     const baseDir = dirname(result.documents[0].path);
@@ -250,13 +250,13 @@ test("render_mode 'filed' strips every human-side element and writes nothing to 
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "filed");
     assert.equal(result.filing_id, 1);
     // Written Arguments (venue) + 4 witness statements + evidence index --
-    // the Job Board is genuinely absent here, not merely stripped (ADR 0009).
+    // the Milestone is genuinely absent here, not merely stripped (ADR 0009).
     assert.equal(result.documents.length, 6);
 
     // No disk write at all in filed mode -- not even the mockups root.
     assert.deepEqual(readdirSync(f.draft), [], "expected render_mode 'filed' to write nothing to disk");
 
-    assert.ok(!result.documents.some((d) => d.document_type === "Work_board"), "expected the Job Board genuinely absent from filed-mode output, not merely stripped");
+    assert.ok(!result.documents.some((d) => d.document_type === "Work_board"), "expected the Milestone genuinely absent from filed-mode output, not merely stripped");
 
     assertFiledFaceDocumentsClean(result.documents);
 
@@ -754,7 +754,7 @@ test("render returns each document's markdown, byte-identical to the file it wro
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
 
     // Written Arguments (venue) + 4 witness statements + evidence index, then the
-    // Job Board's entry (#1365), with no file of the filing's, no page without a draft folder, and no
+    // Milestone's entry (#1365), with no file of the filing's, no page without a draft folder, and no
     // summary unless the board is named in documents.
     assert.equal(result.documents.length, 7);
     for (const doc of result.documents) {

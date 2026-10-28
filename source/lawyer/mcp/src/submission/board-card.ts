@@ -37,7 +37,7 @@ export interface BoardCardResult {
 
 /** A board as board_card's refusal names it. */
 function boardLabel(board: BoardRef): string {
-  return board.filing_id === null ? `proceeding ${board.proceeding_id}'s board` : `Job Board ${board.filing_id}`;
+  return board.filing_id === null ? `proceeding ${board.proceeding_id}'s board` : `Milestone ${board.filing_id}`;
 }
 
 /** Refuses a card on a board a merge absorbed (docs/ADRs/0010): its jobs are read on its survivor's
@@ -96,7 +96,7 @@ export function submissionFormsBoardCard(
   } else {
     const proceeding = fetchProceeding(args.db_path, args.proceeding_id as number);
     if (fetchAllFilingsForProceeding(args.db_path, proceeding.id).length > 0) {
-      throw new ValidationError("This proceeding has a Writing, so its jobs are on each Writing's Job Board -- read the card there");
+      throw new ValidationError("This proceeding has a Writing, so its jobs are on each Writing's Milestone -- read the card there");
     }
     refuseAbsorbedCard(args.db_path, { filing_id: null, proceeding_id: proceeding.id });
     if (lanes.includes("criteria") || lanes.includes("proposed")) {

@@ -105,6 +105,6 @@ Run the scripts from the repo root. The draft folder is the matter's one
    - a filing's list of affidavits, such as a Notice of Application's Part 4
      entry: the filing's own drafting route;
    - case data's record of the affidavit: `/matter-data`;
-   - the Job Board's affidavit number: `/drafting-data`.
+   - the Milestone's affidavit number: `/drafting-data`.
 
    Change none of these here.

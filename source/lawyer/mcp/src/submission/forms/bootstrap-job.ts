@@ -42,7 +42,7 @@ export function startBootstrapJob(result: BootstrapResult, client: ClientContext
   const dbPath = result.db_path;
   if (result.migration_required || result.bundle_outdated) return backgroundJobStatus(dbPath);
   const complete = client.clientName !== undefined && client.clientNo !== undefined && client.matterNo !== undefined;
-  // A Job Board with no Writing has no mockup to render.
+  // A Milestone with no Writing has no mockup to render.
   const queue = complete ? result.filings.filter((f) => !f.retired_on && !f.job_board_only && f.render_state !== "fresh").map((f) => f.filing_id) : [];
   const pages = (only?: number) =>
     writeMatterPages(dbPath, dirname(result.matter_board_path as string), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, [], only === undefined ? {} : { only });

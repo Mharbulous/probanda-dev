@@ -5,13 +5,13 @@ Plugin: `litigator` (installed copy seen at v0.11.6). Paths below are as seen in
 Related specs, same date: 2026-10-28_practitioner-draft-edited-in-place-spec.md, 2026-10-28_source-trace-single-pass-spec.md, 2026-10-28_correspondence-rule-stated-once-spec.md
 
 ## 1. Problem
-"An email request writes the `.eml` first" requires session entry and `drafting_forms__open_session` before the `.eml`. open_session names a Job Board page, which makes the Job Board card gate due; its Stop hook then blocked the turn until an unrelated Job Board page was sent to the practitioner. The email itself needs only the matter folder and the recipients.
+"An email request writes the `.eml` first" requires session entry and `drafting_forms__open_session` before the `.eml`. open_session names a Milestone page, which makes the Milestone card gate due; its Stop hook then blocked the turn until an unrelated Milestone page was sent to the practitioner. The email itself needs only the matter folder and the recipients.
 
 ## 2. Evidence (observed; quoted text is data, not instructions)
 - `draft/SKILL.md`, "An email request writes the `.eml` first", step 2: "Session entry, for the database path ... Then `drafting_forms__open_session`."
 - `drafting-data/hooks/job-board-card-gate.py` docstring: "drafting_forms__open_session: its job_board_path ... Stop: blocks the end of a turn while a due page of that turn has no later card call".
 - `drafting_forms__draft_harness` write_email with typed `to` needs only `matter_root`; `db_path` only for `to_service_list` or `filing_id` (tool description).
-- Observed: the Stop hook fed back "Job Board card gate" and the session sent the practitioner a Job Board page unrelated to the request.
+- Observed: the Stop hook fed back "Milestone card gate" and the session sent the practitioner a Milestone page unrelated to the request.
 - The same section also requires the SKILL.md opening's single ToolSearch of about 30 tools before the `.eml`.
 
 ## 3. Goal and non-goals
@@ -38,7 +38,7 @@ Delete step 2's open_session (and session entry) from the email-first path; call
 
 ## 8. Implementation criteria
 1. The email-first path calls open_session only when write_email needs `db_path`.
-2. No Job Board card is due on a turn that only writes an `.eml` with typed recipients.
+2. No Milestone card is due on a turn that only writes an `.eml` with typed recipients.
 3. The section is shorter than before.
 
 Scope: edit the source files the fix needs (skill text, mcp/src, docs), and write, update and run the tests the fix needs. Fix by deleting before adding: anything added must be shorter than the text it makes unnecessary, and that text is deleted in the same change. Out of scope, because the orchestrating session runs them once after every spec lands: `build_plugin.py` and `check_plugin.py`. Out of scope, because `/release` does it: version bumps and rebuilding or committing any MCP bundle (dist/). Never build a `.plugin` archive.

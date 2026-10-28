@@ -42,7 +42,7 @@ const TO_LINE = "To: Cara Counsel — counsel for Bert Other (cara@counsel.test)
 const AS_SENT = SLOTS.map(([, text]) => text).join("\n\n");
 
 // #1365: a render returns its board as board_summary; the board's data is this filing's section of
-// the matter's Job Board page, read the way the page builds it, right after the render.
+// the matter's Milestone page, read the way the page builds it, right after the render.
 const render = (g, id, mode = "mockup") => {
   const result = submissionFormsRender(g.dbPath, id, CLIENT, mode, undefined, undefined, undefined, NOW);
   return mode === "mockup" ? { ...result, board: boardDataOf(g.dbPath, id, CLIENT, NOW) } : result;
@@ -89,7 +89,7 @@ async function drafted(t, { cite = true, unconfirmed = false } = {}) {
   return { g, id };
 }
 
-test("a lead cited in a letter's prose prints in the header's Authorities cited with 📜 📍 🔬 📇 🏅, the Legend lists them, and the Job Board reads excerpts and primary authority unmet", async (t) => {
+test("a lead cited in a letter's prose prints in the header's Authorities cited with 📜 📍 🔬 📇 🏅, the Legend lists them, and the Milestone reads excerpts and primary authority unmet", async (t) => {
   const { g, id } = await drafted(t);
   const [link] = g.query("SELECT fl.statement_id, sl.law_assertion_id, sl.verification FROM filing_law fl JOIN statements_of_law sl ON sl.id = fl.statement_id WHERE fl.filing_id = ?", [id]);
   assert.deepEqual([link.law_assertion_id, link.verification], [null, "lead"], "the script wrote the statement and its link together");

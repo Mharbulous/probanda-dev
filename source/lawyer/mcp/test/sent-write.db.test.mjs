@@ -41,7 +41,7 @@ const unquoted = { generating: false, marker: "👃", instance: "law", table: "s
 const unreviewed = { generating: false, marker: "🧐", table: "filings", id: 1, item: "Letter to Cara", doc: "General_writing" };
 
 // #1365: a render returns its board as board_summary; the board's data is this filing's section of
-// the matter's Job Board page, read the way the page builds it, right after the render.
+// the matter's Milestone page, read the way the page builds it, right after the render.
 const render = (g, id, mode = "mockup") => {
   const result = submissionFormsRender(g.dbPath, id, CLIENT, mode, undefined, undefined, undefined, NOW);
   return mode === "mockup" ? { ...result, board: boardDataOf(g.dbPath, id, CLIENT, NOW) } : result;

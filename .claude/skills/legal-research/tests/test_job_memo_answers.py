@@ -124,7 +124,7 @@ class StepStatusTextTest(unittest.TestCase):
 
     def test_the_wait_is_never_a_deadline(self):
         isolation = flat(read("shared", "deadline-isolation.md"))
-        rule = between(isolation, "**A step's wait is a time to check a process, not a deadline.**", "**Hearing dates on the Job Board page**")
+        rule = between(isolation, "**A step's wait is a time to check a process, not a deadline.**", "**Hearing dates on the Milestone page**")
         self.assertIn("never as time remaining or a countdown", rule)
         self.assertIn("It is never a deadline, and it never goes into a handover or a captured idea.", rule)
 

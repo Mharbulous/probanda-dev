@@ -1,9 +1,9 @@
-// The Job Board's dates (ADR 0013, both 2026-10-04 amendments): the matter's anchors and the
+// The Milestone's dates (ADR 0013, both 2026-10-04 amendments): the matter's anchors and the
 // deadlines that run from them, read through the practice gatekeeper's own tool,
 // practice_data__active_deadlines, at each page write. This is the one place an anchor or deadline
 // row becomes page data, built field by field. A deadline whose anchor is linked to a filing becomes
 // a criterion on that filing's Goal card, which carries its name, state and order within its anchor
-// and never its date; every date goes only into the Job Board's HTML file: never into a board
+// and never its date; every date goes only into the Milestone's HTML file: never into a board
 // section, the state file, a log line or a tool response. The page's Key dates card draws the anchors
 // linked to its own Writing on one row and the matter's other anchors on the next.
 
@@ -11,7 +11,7 @@ import type { PracticeStore } from "../practice/store.js";
 import { active_deadlines } from "../tools/practice/reads.js";
 import type { GoalCriterion, WorkBoardData } from "./forms/render-work-board.js";
 
-/** One deadline that runs from an anchor, as much of it as the Job Board draws. */
+/** One deadline that runs from an anchor, as much of it as the Milestone draws. */
 export interface MatterDeadline {
   deadline_type: string;
   deadline_date: string;
@@ -46,7 +46,7 @@ export interface PageDate {
   flag: string | null;
 }
 
-/** The Job Board page's dates: the Writing's row, the matter's row, and each deadline criterion's
+/** The Milestone page's dates: the Writing's row, the matter's row, and each deadline criterion's
  * date by filing id, then criterion id, which the page joins to the criterion at draw time. */
 export interface PageDates {
   /** Anchors linked to a filing on this page, each with its deadlines no card carries. */

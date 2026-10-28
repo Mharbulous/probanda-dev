@@ -10,37 +10,37 @@ SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "html-pages-gate.py"
 DRAFT = r"<matter>\0. DRAFT"
 
 # A remote-device-only host may stage these (ADR 0033, 2026-10-05 amendments), and no other page.
-STAGEABLE_NAMES = ["Job Board 1.html", "Job Board - proceeding 2.html", "JOB BOARD 1.HTML",
+STAGEABLE_NAMES = ["Milestone 1.html", "Milestone - proceeding 2.html", "Milestone 1.HTML",
                    "Litigation Strategy.html", "To Do List.html", "Work Board.html",
                    # A merged pre-filing board's view page (docs/ADRs/0010).
-                   "Provable Facts - Job Board - proceeding 3.html",
+                   "Provable Facts - Milestone - proceeding 3.html",
                    # The pages Provable Facts split into (docs/ADRs/0011).
-                   "Procedural History - Job Board 1.html", "Material Facts - Job Board 2.html",
-                   "Material Facts - Job Board - proceeding 3.html",
+                   "Procedural History - Milestone 1.html", "Material Facts - Milestone 2.html",
+                   "Material Facts - Milestone - proceeding 3.html",
                    # A Writing's own folder's pages (spec 2026-10-22).
-                   "Job Board.html", "Procedural History.html", "Arguments.html", "LOOSE THREADS.HTML"]
+                   "Milestone.html", "Procedural History.html", "Arguments.html", "LOOSE THREADS.HTML"]
 # A preview of each current page (#139), stageable like its page.
-PREVIEW_NAMES = ["Work Board preview 1.html", "Litigation Strategy preview 2.html", "Job Board 1 preview 1.html",
-                 "Job Board - proceeding 2 preview 3.html", "Provable Facts - Job Board 1 preview 1.html",
-                 "Raw Research - Job Board 4 preview 2.html", "Arguments - Job Board 1 preview 10.html",
-                 "Loose Threads - Job Board 1 preview 1.html", "WORK BOARD PREVIEW 1.HTML",
-                 "Procedural History - Job Board 1 preview 1.html", "Material Facts - Job Board 1 preview 2.html",
-                 "Job Board preview 1.html", "Raw Research preview 2.html"]
+PREVIEW_NAMES = ["Work Board preview 1.html", "Litigation Strategy preview 2.html", "Milestone 1 preview 1.html",
+                 "Milestone - proceeding 2 preview 3.html", "Provable Facts - Milestone 1 preview 1.html",
+                 "Raw Research - Milestone 4 preview 2.html", "Arguments - Milestone 1 preview 10.html",
+                 "Loose Threads - Milestone 1 preview 1.html", "WORK BOARD PREVIEW 1.HTML",
+                 "Procedural History - Milestone 1 preview 1.html", "Material Facts - Milestone 1 preview 2.html",
+                 "Milestone preview 1.html", "Raw Research preview 2.html"]
 STAGEABLE_NAMES += PREVIEW_NAMES
-UNSTAGEABLE_NAMES = ["Job Board - SUB Opening.html", "Job Board 1-1.html",
-                     "Job Board-1.html", "Job Board .html", "Job Board 1 (2).html",
-                     "Work Board preview.html", "Job Board 1 preview 1 (2).html",
-                     "Matter Board preview 1.html", "To Do List preview 1.html", "Job Board - filing 1 preview 1.html"]
+UNSTAGEABLE_NAMES = ["Milestone - SUB Opening.html", "Milestone 1-1.html",
+                     "Milestone-1.html", "Milestone .html", "Milestone 1 (2).html",
+                     "Work Board preview.html", "Milestone 1 preview 1 (2).html",
+                     "Matter Board preview 1.html", "To Do List preview 1.html", "Milestone - filing 1 preview 1.html"]
 
 PAGE_PATHS = [
-    DRAFT + r"\Job Board.html",
-    DRAFT + r"\Job Board 1.html",
-    DRAFT + r"\Job Board - proceeding 3.html",
-    DRAFT + r"\JOB BOARD 1.HTML",
-    DRAFT + r"\Job Board - SUB Opening.html",
-    DRAFT + r"\Job Board 1-1.html",
-    DRAFT + r"\Job Board-1.html",
-    DRAFT + r"\job board-1.HTML",
+    DRAFT + r"\Milestone.html",
+    DRAFT + r"\Milestone 1.html",
+    DRAFT + r"\Milestone - proceeding 3.html",
+    DRAFT + r"\Milestone 1.HTML",
+    DRAFT + r"\Milestone - SUB Opening.html",
+    DRAFT + r"\Milestone 1-1.html",
+    DRAFT + r"\Milestone-1.html",
+    DRAFT + r"\Milestone-1.HTML",
     DRAFT + r"\Litigation Strategy.html",
     DRAFT + r"\Litigation Strategy-2.html",
     DRAFT + r"\To Do List.html",
@@ -52,9 +52,9 @@ PAGE_PATHS = [
     "/mnt/<matter>/0. DRAFT/Litigation Strategy.html",
     "/mnt/<matter>/0. DRAFT/To Do List.html",
 ] + [DRAFT + "\\" + name for name in PREVIEW_NAMES] + [
-    r"<data>\previews\Provable Facts - Job Board 1 preview 1.html",
+    r"<data>\previews\Provable Facts - Milestone 1 preview 1.html",
     DRAFT + r"\Provable Facts - filing 1 preview 1.html",
-    DRAFT + r"\Notice of Hearing of Application\Job Board.html",
+    DRAFT + r"\Notice of Hearing of Application\Milestone.html",
     DRAFT + r"\Notice of Hearing of Application\Material Facts.html",
     DRAFT + r"\Notice of Hearing of Application\Arguments preview 1.html",
 ]
@@ -65,7 +65,7 @@ OTHER_PATHS = [
     DRAFT + r"\Notice of Hearing of Application\Notice of Hearing of Application.md",
     DRAFT + r"\SUB <filing title>\Evidence Index.md",
     DRAFT + r"\SUB <filing title>\Work Board.md",
-    DRAFT + r"\Job Board notes.txt",
+    DRAFT + r"\Milestone notes.txt",
 ]
 
 
@@ -120,8 +120,8 @@ class GateTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as matter:
             draft = Path(matter, "0. DRAFT")
             draft.mkdir()
-            (draft / "Job Board.html").write_text("<html></html>", encoding="utf-8")
-            for glob in ["Job Board*.html", "*.html", "*.HTML"]:
+            (draft / "Milestone.html").write_text("<html></html>", encoding="utf-8")
+            for glob in ["Milestone*.html", "*.html", "*.HTML"]:
                 with self.subTest(glob=glob):
                     self.assertDenied(call("Grep", {"pattern": "x", "path": str(draft), "glob": glob}))
             self.assertDenied(call("Grep", {"pattern": "x", "path": matter, "glob": "*.html"}))
@@ -134,7 +134,7 @@ class GateTest(unittest.TestCase):
 
     def test_grep_reaching_a_view_page_preview_is_refused(self):
         with tempfile.TemporaryDirectory() as folder:
-            Path(folder, "Provable Facts - Job Board 1 preview 1.html").write_text("<html></html>", encoding="utf-8")
+            Path(folder, "Provable Facts - Milestone 1 preview 1.html").write_text("<html></html>", encoding="utf-8")
             for glob in ["*.html", "*preview*.html"]:
                 with self.subTest(glob=glob):
                     self.assertDenied(call("Grep", {"pattern": "x", "path": folder, "glob": glob}))
@@ -142,13 +142,13 @@ class GateTest(unittest.TestCase):
 
     def test_grep_whose_glob_names_a_page_is_refused_even_where_the_hook_sees_no_folder(self):
         unseen = "/mnt/<matter>/0. DRAFT"
-        for glob in ["Job Board*.html", "litigation strategy.html", "to do list.html", "**/Work_board @rev*.html"]:
+        for glob in ["Milestone*.html", "litigation strategy.html", "to do list.html", "**/Work_board @rev*.html"]:
             with self.subTest(glob=glob):
                 self.assertDenied(call("Grep", {"pattern": "x", "path": unseen, "glob": glob}))
         self.assertAllowed(call("Grep", {"pattern": "x", "path": unseen, "glob": "*.md"}))
 
     def test_glob_is_never_refused(self):
-        self.assertAllowed(call("Glob", {"pattern": "**/Job Board*.html"}))
+        self.assertAllowed(call("Glob", {"pattern": "**/Milestone*.html"}))
 
     def test_shell_tools_refuse_a_command_naming_a_page(self):
         for tool in ["Bash", "PowerShell", "mcp__remote-devices__device_bash", "mcp__cowork__workspace__bash",
@@ -156,7 +156,7 @@ class GateTest(unittest.TestCase):
             with self.subTest(tool=tool):
                 reason = self.assertDenied(call(tool, {"command": f'cat "{DRAFT}\\Litigation Strategy.html"'}))
                 self.assertIn("command text", reason)
-        self.assertDenied(call("Bash", {"command": "grep -o 'window.WORKBOARD' '/mnt/x/0. DRAFT/Job Board.html'"}))
+        self.assertDenied(call("Bash", {"command": "grep -o 'window.WORKBOARD' '/mnt/x/0. DRAFT/Milestone.html'"}))
         self.assertDenied(call("PowerShell", {"command": 'Get-Content "$d\\workboard-status.js"'}))
         for name in PREVIEW_NAMES:
             with self.subTest(name=name):
@@ -171,7 +171,7 @@ class GateTest(unittest.TestCase):
         for tool in ["mcp__remote-devices__device_commit_files", "mcp__remote-devices__device_read_file",
                      "mcp__remote-devices__device_list_dir", "mcp__remote-devices__device_stage_files_extra"]:
             with self.subTest(tool=tool):
-                self.assertDenied(call(tool, {"paths": ["/mnt/<matter>/0. DRAFT/Job Board.html"]}))
+                self.assertDenied(call(tool, {"paths": ["/mnt/<matter>/0. DRAFT/Milestone.html"]}))
         self.assertAllowed(call("mcp__remote-devices__device_stage_files",
                                 {"paths": ["/mnt/<matter>/0. DRAFT/SUB <filing title>/Evidence Index.md"]}))
 
@@ -179,8 +179,8 @@ class GateTest(unittest.TestCase):
         for tool in ["mcp__remote-devices__device_request_folder_access", "mcp__device_request_folder_access"]:
             with self.subTest(tool=tool):
                 self.assertAllowed(call(tool, {"path": "/mnt/<matter>",
-                                               "reason": "to show Job Board 1.html and write drafts"}))
-                self.assertDenied(call(tool, {"path": "/mnt/<matter>/0. DRAFT/Job Board 1.html", "reason": "x"}))
+                                               "reason": "to show Milestone 1.html and write drafts"}))
+                self.assertDenied(call(tool, {"path": "/mnt/<matter>/0. DRAFT/Milestone 1.html", "reason": "x"}))
 
     def test_staging_the_current_pages_is_allowed(self):
         for tool in ["mcp__remote-devices__device_stage_files", "mcp__device_stage_files"]:
@@ -188,8 +188,8 @@ class GateTest(unittest.TestCase):
                 for path in ["/mnt/<matter>/0. DRAFT/" + name, DRAFT + "\\" + name]:
                     with self.subTest(tool=tool, path=path):
                         self.assertAllowed(call(tool, {"paths": [path]}))
-            for paths in [["/mnt/<matter>/0. DRAFT/Litigation Strategy.html", "/mnt/<matter>/0. DRAFT/Job Board 1.html"],
-                          [DRAFT + r"\Litigation Strategy.html", DRAFT + r"\Job Board - proceeding 2.html"]]:
+            for paths in [["/mnt/<matter>/0. DRAFT/Litigation Strategy.html", "/mnt/<matter>/0. DRAFT/Milestone 1.html"],
+                          [DRAFT + r"\Litigation Strategy.html", DRAFT + r"\Milestone - proceeding 2.html"]]:
                 with self.subTest(tool=tool, paths=paths):
                     self.assertAllowed(call(tool, {"paths": paths}))
 
@@ -206,11 +206,11 @@ class GateTest(unittest.TestCase):
                 self.assertDenied(call("mcp__remote-devices__device_stage_files",
                                        {"paths": ["/mnt/<matter>/0. DRAFT/" + name]}))
         self.assertDenied(call("mcp__remote-devices__device_stage_files",
-                               {"paths": ["/mnt/<matter>/0. DRAFT/Job Board 1.html",
-                                          "/mnt/<matter>/0. DRAFT/Job Board-1.html"]}))
+                               {"paths": ["/mnt/<matter>/0. DRAFT/Milestone 1.html",
+                                          "/mnt/<matter>/0. DRAFT/Milestone-1.html"]}))
 
     def test_a_staged_copy_is_still_a_page(self):
-        for staged in ["/mnt/user-data/uploads/Job Board.html", "/mnt/user-data/uploads/Job Board 1.html",
+        for staged in ["/mnt/user-data/uploads/Milestone.html", "/mnt/user-data/uploads/Milestone 1.html",
                        "/mnt/user-data/uploads/Litigation Strategy.html", "/mnt/user-data/uploads/To Do List.html"]:
             with self.subTest(staged=staged):
                 self.assertDenied(call("Read", {"file_path": staged}))
@@ -218,15 +218,15 @@ class GateTest(unittest.TestCase):
                 for tool in ["Bash", "mcp__cowork__workspace__bash"]:
                     self.assertDenied(call(tool, {"command": f"cat '{staged}'"}))
                     self.assertDenied(call(tool, {"command": f"grep -o 'window.WORKBOARD' '{staged}'"}))
-        self.assertDenied(call("Grep", {"pattern": "x", "path": "/mnt/user-data/uploads", "glob": "Job Board*.html"}))
+        self.assertDenied(call("Grep", {"pattern": "x", "path": "/mnt/user-data/uploads", "glob": "Milestone*.html"}))
 
     def test_other_tools_are_not_examined(self):
         self.assertAllowed(call("mcp__cowork__present_files", {"files": [PAGE_PATHS[0]]}))
-        self.assertAllowed(call("WebFetch", {"url": "https://example.com/Job Board.html"}))
+        self.assertAllowed(call("WebFetch", {"url": "https://example.com/Milestone.html"}))
 
     def test_the_exemption_allows_every_refused_case(self):
         self.assertAllowed(call("Read", {"file_path": PAGE_PATHS[0]}, dev=True))
-        self.assertAllowed(call("Bash", {"command": f'cat "{DRAFT}\\Job Board.html"'}, dev=True))
+        self.assertAllowed(call("Bash", {"command": f'cat "{DRAFT}\\Milestone.html"'}, dev=True))
         self.assertAllowed(call("mcp__remote-devices__device_stage_files", {"paths": [PAGE_PATHS[2]]}, dev=True))
         self.assertAllowed(call("Grep", {"pattern": "x", "path": PAGE_PATHS[0]}, dev=True))
 

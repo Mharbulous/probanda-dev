@@ -70,7 +70,7 @@ async function heldAt74(t) {
 
 const seedRow = (dbPath, id) => submissionDataQuery(dbPath, "SELECT * FROM seeds WHERE id = ?", [id]).rows[0];
 
-/** Runs a Job Board page's drawing script against stand-in elements and returns its main element. */
+/** Runs a Milestone page's drawing script against stand-in elements and returns its main element. */
 function drawBoard(html) {
   class Node {
     constructor(tag) {
@@ -275,7 +275,7 @@ test("a filing's board carries them and points at the Loose Threads page, even w
   mkdirSync(draft, { recursive: true });
   const result = submissionFormsRender(dbPath, 1, CLIENT, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
   const board = result.documents.find((d) => d.document_type === "Work_board");
-  assert.equal(board.path, join(draft, "Notice of Application", "Job Board.html"));
+  assert.equal(board.path, join(draft, "Notice of Application", "Milestone.html"));
   const page = readBoardData(board.path);
   assert.equal(page.sections.length, 1);
   const section = page.sections[0];

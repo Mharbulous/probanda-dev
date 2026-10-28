@@ -29,7 +29,7 @@ STEP = ("Rank the open loose threads if any is unranked, "
         "then work the top thread that is not deferred and not tooling")
 TITLE = "work on loose threads"
 
-# The Job Board's read of a proceeding's open threads (test_no_job_capture.py's BOARD_READ).
+# The Milestone's read of a proceeding's open threads (test_no_job_capture.py's BOARD_READ).
 BOARD_READ = ("SELECT id FROM seeds WHERE (charted_into IS NULL) AND discarded_at IS NULL "
               "AND suggested_at IS NULL AND proceeding_id = 1 ORDER BY id")
 

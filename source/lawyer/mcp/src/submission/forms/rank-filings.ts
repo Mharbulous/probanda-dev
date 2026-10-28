@@ -72,7 +72,7 @@ export function rankFilings(
   });
   const ranked: Ranked[] = timed(timings, "filing_entries", () =>
     listed.map(({ proceeding, filing }) => {
-      // A Job Board with no Writing has no mockup, so no folder is looked up and it answers no
+      // A Milestone with no Writing has no mockup, so no folder is looked up and it answers no
       // render question. A closed one is listed as a retired filing is.
       if (isJobOnlyBoard(filing)) {
         const lifecycle = deriveLifecycle(filing, null, now.slice(0, 10));

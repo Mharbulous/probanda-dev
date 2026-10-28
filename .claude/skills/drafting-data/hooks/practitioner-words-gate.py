@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refuse a paragraph revision, a confirmed statement of goals, or a merge of Job Boards or of jobs the practitioner did not approve (#784).
+"""Refuse a paragraph revision, a confirmed statement of goals, or a merge of Milestones or of jobs the practitioner did not approve (#784).
 
 Hook event: PreToolUse on drafting_data__execute, drafting_data__set_board_goal,
 drafting_data__merge_job_boards and drafting_data__merge_jobs (a merge passes only when the last
@@ -66,15 +66,15 @@ practitioner must have written, and a job session writes filing_facts ungated al
 transcript check applies, a keyword test on the last turn would prove nothing, and a script whose
 only checked write is a passing move needs no transcript.
 
-The gate also runs on drafting_data__set_board_goal, which records a Job Board's statement of
-goals (2026-10-14 Job Board goal card spec). A confirmed statement is the practitioner's: it passes
+The gate also runs on drafting_data__set_board_goal, which records a Milestone's statement of
+goals (2026-10-14 Milestone goal card spec). A confirmed statement is the practitioner's: it passes
 when it is an unbroken run of one practitioner turn, or when it is, character for character, the one
 fenced code block in the session's visible reply before the practitioner's last turn and that turn
 is a bare yes (APPROVALS, the whole turn), as an on-the-fly revision is approved. An inferred or
 declined write passes unchecked: the tool records an inferred statement as the session's wording,
 never as confirmed, and a declined one carries no statement.
 
-A merge of two Job Boards with a goal_statement, the merged board's one goal written as confirmed
+A merge of two Milestones with a goal_statement, the merged board's one goal written as confirmed
 (docs/ADRs/0010, 2026-10-22 goals amendment), passes when the practitioner's last turn holds that
 statement as an unbroken run: they typed their own goal in answer to the merge question. Otherwise
 the statement must pass the check a confirmed statement of goals passes, and the last turn must be
@@ -114,8 +114,8 @@ REVISION_CLOSING = ("An on-the-fly revision writes one paragraph the practitione
                     "fenced code block in the reply before their last turn, exactly as saved, and approved by a bare "
                     "yes typed as that turn. One approval admits one write. The revised text recorded is exactly the "
                     "text written into the paragraph, and keeping the current wording records the old text unchanged.")
-GOAL_TOOL = "drafting_data__set_board_goal"  # a Job Board's statement of goals
-MERGE_TOOL = "drafting_data__merge_job_boards"  # two Job Boards joined on the practitioner's yes
+GOAL_TOOL = "drafting_data__set_board_goal"  # a Milestone's statement of goals
+MERGE_TOOL = "drafting_data__merge_job_boards"  # two Milestones joined on the practitioner's yes
 MERGE_JOBS_TOOL = "drafting_data__merge_jobs"  # a duplicate job merged into another on the practitioner's yes
 GOAL_FIELD = "the statement of goals"
 MERGE_GOAL_FIELD = "the merged board's statement of goals"
@@ -497,7 +497,7 @@ def bare_yes(payload, needs, how):
 
 
 def merge_boards(payload):
-    """A merge of two Job Boards (docs/ADRs/0010), after the session showed both boards' statements
+    """A merge of two Milestones (docs/ADRs/0010), after the session showed both boards' statements
     of goals and asked whether they cohere. A goal_statement held by the last turn passes; any other
     passes goal_failure and then needs the bare yes."""
     statement = (payload.get("tool_input") or {}).get("goal_statement")
@@ -512,7 +512,7 @@ def merge_boards(payload):
         failure = goal_failure(statement, MERGE_GOAL_FIELD, turns, last_raw, last_fences)
         if failure is not None:
             return refuse(failure + " Or merge with no statement of goals, which leaves the board needing one.")
-    return bare_yes(payload, "a merge of two Job Boards needs the practitioner's confirmation that their goals overlap "
+    return bare_yes(payload, "a merge of two Milestones needs the practitioner's confirmation that their goals overlap "
                     "or cohere", "Show both boards' statements of goals side by side, ask whether to merge them")
 
 

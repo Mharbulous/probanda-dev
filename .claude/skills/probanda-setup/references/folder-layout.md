@@ -6,7 +6,7 @@ Two folders are not part of the map, because Probanda files its own work there:
 
 | Folder | Used for |
 |---|---|
-| one folder in each matter whose name starts with `0. DRAFT` | drafts, Job Boards, published court documents and superseded versions |
+| one folder in each matter whose name starts with `0. DRAFT` | drafts, Milestones, published court documents and superseded versions |
 | `6. LAW\<issue>\` in each matter | filing legal research and downloaded authorities |
 
 When the practitioner's matters lack either, say what it is used for and advise adding it to each matter or to their matter template. A practitioner who keeps drafts or authorities there maps those types to them like any other folder.

@@ -45,7 +45,7 @@ test("the work rows are WORK_MARKER_GLYPHS, and the groups count 31 work, 14 eve
 
 test("WORK_NAMES and GLYPH_SLUGS, derived from the table, equal the hand-written constants they replaced", () => {
   // Literal copies of proposal-inventory.ts's WORK_NAMES and GLYPH_SLUGS as they stood before stage 4
-  // derived them, in their key order: WORK_NAMES's key order is the Job Board's card order.
+  // derived them, in their key order: WORK_NAMES's key order is the Milestone's card order.
   const workNames = [
     ["doctrinal-basis", "Find doctrinal authority"],
     ["primary-authority", "Find primary authority"],

@@ -31,7 +31,7 @@ class PlanIssueJobsTest(unittest.TestCase):
         self.assertIn("title and intent are the issue's text as the list showed it", rule)
         self.assertIn('"The plan\nmarker"', rule)
         self.assertIn("A skipped issue gets no job", rule)
-        self.assertIn("Then re-render the Job Board and stop.", rule)
+        self.assertIn("Then re-render the Milestone and stop.", rule)
         self.assertIn("Writing the jobs dispatches\nnothing", rule)
 
     def test_stock_section_writes_the_marker(self):

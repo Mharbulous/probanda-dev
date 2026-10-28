@@ -48,7 +48,7 @@ function cardText(
   return reviewOnly ? "Only your review remains. Every other drafting condition holds." : null;
 }
 
-/** The card string of a type that declares no goal criteria (spec §5 "Job Board"). It never fires
+/** The card string of a type that declares no goal criteria (spec §5 "Milestone"). It never fires
  * the filing-ready declaration: its goal stays pending. */
 const NO_CRITERIA_TEXT = "No completion criteria are declared for this type of Writing.";
 

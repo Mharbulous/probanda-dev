@@ -1,4 +1,4 @@
-// The Job Board's SQL row shapes and its plain ticket and attachment reads.
+// The Milestone's SQL row shapes and its plain ticket and attachment reads.
 
 import { boardAttachmentsHeld, deletedAtHeld, JOB_BOARD_KIND, liveTicketClause } from "./query.js";
 import { rows } from "../query-rows.js";
@@ -135,7 +135,7 @@ export function fetchDeletedTickets(dbPath: string, proceedingId: number): Delet
  * board (`filingId` null) holds every row of its proceeding. A Writing's board holds its own rows and,
  * only when it is the proceeding's lowest-id live Writing, the proceeding's rows with no Writing (rows
  * written by hand after the proceeding's first Writing, which create_writing does not re-point), so no
- * draft is ever on two boards. A Job Board with no Writing holds its own rows only and is never that Writing. */
+ * draft is ever on two boards. A Milestone with no Writing holds its own rows only and is never that Writing. */
 export function fetchAttachments(dbPath: string, proceedingId: number, filingId: number | null): WorkBoardAttachment[] {
   if (!boardAttachmentsHeld(dbPath)) return [];
   return rows<WorkBoardAttachment>(

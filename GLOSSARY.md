@@ -64,7 +64,7 @@ terms:
   - Issue
   - Item
   - Job
-  - Job Board
+  - Milestone
   - Lawyer account
   - Leading document
   - Legal Citation
@@ -81,7 +81,7 @@ terms:
   - Matter role
   - Matter row key
   - Matter zone
-  - Merge (Job Boards)
+  - Merge (Milestones)
   - Merge (jobs)
   - Mockup
   - Mockup (suggestion)
@@ -129,9 +129,9 @@ terms:
   - Shelve
   - Source
   - Source Citation
-  - Split (Job Boards)
+  - Split (Milestones)
   - Stage
-  - Standalone Job Board
+  - Standalone Milestone
   - Statement of fact
   - Step
   - Stock bundle job
@@ -218,7 +218,7 @@ A distinct legal footing for an order sought, or for opposing one: **jurisdictio
 _Avoid_: ground, grounds; issue (the question a basis answers); point; defence.
 
 **Bundle (application)**:
-An application as a whole: the lead Writing, its supporting documents, and the surrounding work of the availability letter, filing and service, and the application book. No stored record. Every bundle-level job is scoped to the lead Writing, whose Job Board and completion-criteria card are the tracker. Not **Bundle (ingest)**.
+An application as a whole: the lead Writing, its supporting documents, and the surrounding work of the availability letter, filing and service, and the application book. No stored record. Every bundle-level job is scoped to the lead Writing, whose Milestone and completion-criteria card are the tracker. Not **Bundle (ingest)**.
 _Avoid_: package (the assembled files the gate reads); application book (one product within it).
 
 **Bundle (ingest)**:
@@ -241,7 +241,7 @@ The practitioner's bookkeeping instruction that supersedes a queued job all of w
 _Avoid_: shelve (an angle not pursued); complete (no work was done); auto-close.
 
 **Completion criteria**:
-The one card at the top of a Writing's Job Board: headed `Completion Criteria`, with the Writing kind's criteria beneath it. It is complete only when every criterion reads met at once. Derived at every render, never stored, and it makes no readiness claim of its own.
+The one card at the top of a Writing's Milestone: headed `Completion Criteria`, with the Writing kind's criteria beneath it. It is complete only when every criterion reads met at once. Derived at every render, never stored, and it makes no readiness claim of its own.
 _Avoid_: Goal; Goal card; objective; milestone; "ready to file" or "ready to serve" (the card never says either while a gate step is open).
 
 **Component**:
@@ -314,7 +314,7 @@ _Avoid_: document as a Writing member (say mockup or draft); file (the disk arti
 
 **Done-test**:
 What "fixed" looks like for a **Suggestion**, said so that a maintainer can check it without asking the sender. It is not a field of its own: the card says it in an **Item**'s wording or a **Constraint line**. On a solved problem it is what the practitioner accepted in the session; on a gap it is the end result they wanted. At triage, `fix-planner` turns it into each item's check: one runnable test, on invented data, that fails while the pain remains and passes once it is gone.
-_Avoid_: acceptance criteria, completion criteria (the Job Board card).
+_Avoid_: acceptance criteria, completion criteria (the Milestone card).
 
 **Doubt**:
 A reason to distrust one statement — seated on the statement, never the postulate or proposition. One marker 👃, named per domain: *suspicious* (doubtful facts) on a statement of fact, *dubious* (doubtful legal basis) on a statement of law. Modes: withdrawn, wrong at the source, outweighed, misread, misattributed, out of time.
@@ -391,7 +391,7 @@ Legal writing for which no venue publishes the form document, even where it pres
 _Avoid_: informal (the tone is often formal); correspondence (narrower; a memo to file is free-form but addressed to no one).
 
 **General Job**:
-A job tied to no Writing (`tickets.filing_id` NULL): shared-substance work done once for every Writing in its proceeding. It is drawn on every live Writing's Job Board in that proceeding, tagged "General" on its card and ending ` · general` on its `drafting_forms__board_card` line, so a second board's copy never reads as a duplicate. Before the proceeding has a Writing it is on the proceeding's own board, untagged because every job there has no Writing, and it is never on a **Standalone Job Board**. Also called a **job with no Writing**. Not a **Writing Job**.
+A job tied to no Writing (`tickets.filing_id` NULL): shared-substance work done once for every Writing in its proceeding. It is drawn on every live Writing's Milestone in that proceeding, tagged "General" on its card and ending ` · general` on its `drafting_forms__board_card` line, so a second board's copy never reads as a duplicate. Before the proceeding has a Writing it is on the proceeding's own board, untagged because every job there has no Writing, and it is never on a **Standalone Milestone**. Also called a **job with no Writing**. Not a **Writing Job**.
 _Avoid_: proceeding-scoped job, proceeding-wide job (design prose only); shared job; duplicate.
 
 **Hunch**:
@@ -410,11 +410,11 @@ One change in a **Suggestion** that the maintainer approves or declines on its o
 _Avoid_: pain (a suggestion has one pain point and its items); ticket; change request.
 
 **Job**:
-One unit of session work for `/draft`, shown on the Job Board as a job card — either drafting/research work scoped to a Writing, a **Standalone Job Board** or a proceeding (`kind = 'work'`), or the work of outlining further jobs (`kind = 'charting'`). Every card is a job: there is no job/to-do split. Stored, and always rendered on the Job Board — never on any advocacy document. Always belongs to a proceeding, never to the matter alone, including a pre-filing proceeding. A session refers to one as "Job #6", never bare "#6". File names and prose say job (`drafting-data/references/jobs.md`, `draft/references/job-session.md`). Database and code identifiers are unchanged: the `tickets` table and every `ticket_*` table and `ticket_id` column, the `#ticket-N` anchors on the board, the `board_data` key `tickets` and the Goal card's `tickets` criterion id.
+One unit of session work for `/draft`, shown on the Milestone as a job card — either drafting/research work scoped to a Writing, a **Standalone Milestone** or a proceeding (`kind = 'work'`), or the work of outlining further jobs (`kind = 'charting'`). Every card is a job: there is no job/to-do split. Stored, and always rendered on the Milestone — never on any advocacy document. Always belongs to a proceeding, never to the matter alone, including a pre-filing proceeding. A session refers to one as "Job #6", never bare "#6". File names and prose say job (`drafting-data/references/jobs.md`, `draft/references/job-session.md`). Database and code identifiers are unchanged: the `tickets` table and every `ticket_*` table and `ticket_id` column, the `#ticket-N` anchors on the board, the `board_data` key `tickets` and the Goal card's `tickets` criterion id.
 _Avoid_: ticket (reserved for development tasks such as GitHub issues and Wayfinder tickets, and for database identifiers); task (collides with software usage — the design's own deliberate choice); assignment (it implies a transfer of responsibility); to-do (a practice-registry row, see **To-do**).
 
-**Job Board**:
-The page (`Job Board <id>.html` at the top of the draft folder) that tracks the work toward one statement of goals. Every Writing linked to it serves those goals as a whole. A board starts with at most one Writing and gains more only by a **Merge (Job Boards)**. It renders its Writings' **Proposals**, its jobs — ready / in progress / waiting / needing a fresh outline / superseded / completed / shelved — and its proceedings' loose threads not yet outlined. Each lane is a **Job list**, the general word, and keeps its own name (Proposed, Ready, Shelved angles, …). A Mockup like any other (never delivered to the filed face), read-only: nothing is written back from it. It prints marker glyphs only in its Proposed and Shelved angles lists, taken from the render's marker inventory, and holds no marker predicate of its own. A **pre-filing proceeding** has a Job Board of its own, with its jobs and loose threads and no Proposals, lifecycle or mockups. When the proceeding gets its first Writing, with or without a forum, that board is no longer drawn: each live Writing's board in the proceeding shows the jobs that name no Writing and every loose thread not yet outlined. A **Standalone Job Board** is a Job Board with no Writing, whose page takes the same name and holds only its own jobs and loose threads. A folder holding the older `Work Board.html` has it retired at the next write of the Job Board pages, which sit at the top of the draft folder, so no folder holds both. Internal names are unchanged: `document_type` `Work_board`, `render-work-board.ts`, `workboard-*.ts`, and the board's CSS classes, element ids and data keys.
+**Milestone**:
+The page (`Milestone <id>.html` at the top of the draft folder) that tracks the work toward one statement of goals. Every Writing linked to it serves those goals as a whole. A board starts with at most one Writing and gains more only by a **Merge (Milestones)**. It renders its Writings' **Proposals**, its jobs — ready / in progress / waiting / needing a fresh outline / superseded / completed / shelved — and its proceedings' loose threads not yet outlined. Each lane is a **Job list**, the general word, and keeps its own name (Proposed, Ready, Shelved angles, …). A Mockup like any other (never delivered to the filed face), read-only: nothing is written back from it. It prints marker glyphs only in its Proposed and Shelved angles lists, taken from the render's marker inventory, and holds no marker predicate of its own. A **pre-filing proceeding** has a Milestone of its own, with its jobs and loose threads and no Proposals, lifecycle or mockups. When the proceeding gets its first Writing, with or without a forum, that board is no longer drawn: each live Writing's board in the proceeding shows the jobs that name no Writing and every loose thread not yet outlined. A **Standalone Milestone** is a Milestone with no Writing, whose page takes the same name and holds only its own jobs and loose threads. A folder holding the older `Work Board.html` has it retired at the next write of the Milestone pages, which sit at the top of the draft folder, so no folder holds both. Internal names are unchanged: `document_type` `Work_board`, `render-work-board.ts`, `workboard-*.ts`, and the board's CSS classes, element ids and data keys.
 _Avoid_: Work Board (the practice-wide page, see **Work Board**); document (a Mockup, not a Writing member).
 
 **Lawyer account**:
@@ -441,7 +441,7 @@ A Writing that is a letter or email to the forum or to another party in a procee
 _Avoid_: correspondence (broader: it includes client letters, which are never Letters); email as a separate kind (the delivery, not the thing); transmittal (a covering email is its Writing's delivery, not a Letter).
 
 **Lifecycle state**:
-Derived, never stored: drafting → filed → heard → decided → appeal expired → retired, read off `filed_on`, the hearing date, `decided_on`, the appeal deadline the `docket-clerk` agent reports, and `retired_on`. A reply is a sibling Writing, not a state of the Writing it answers. The Job Board prints the derived state as its `State` row.
+Derived, never stored: drafting → filed → heard → decided → appeal expired → retired, read off `filed_on`, the hearing date, `decided_on`, the appeal deadline the `docket-clerk` agent reports, and `retired_on`. A reply is a sibling Writing, not a state of the Writing it answers. The Milestone prints the derived state as its `State` row.
 _Avoid_: status (an enum stored beside the dates — the thing this design refuses); archived (the renderer's word for revision-archive copies of a mockup).
 
 **Limit**:
@@ -449,14 +449,14 @@ A boundary on a rule's scope. Outside it, the rule never applied, where an excep
 _Avoid_: limitation (reserved for limitation periods and the Limitation Act).
 
 **Litigation Strategy**:
-One page for a matter, `Litigation Strategy.html` at the top of its `0. DRAFT` folder, which `/draft` presents when the practitioner asks for it. The matter's open **To-dos** lead it, each with its BF date as a plain date and, when it points to a Writing, that Writing's line beneath it. Below them each Writing, and each **pre-filing proceeding**, is one line: name, lifecycle state, mockup status and jobs in progress. Each open **Standalone Job Board** is one line under "Job Boards", and a closed one is listed with the retired Writings as "Closed <date>". Each Writing's own jobs, steps and Proposals stay on its Job Board. A folder holding the older `Matter Board.html` or `To Do List.html` has it retired once `Litigation Strategy.html` is written there. Internal names are unchanged: `matter_board_path`, `render-matter-board.ts`, `matter-board-shell.ts` and the page's data key.
-_Avoid_: To Do List (a to-do list is the **To-dos** themselves); Matter Board; Job Board (one board's page); dashboard.
+One page for a matter, `Litigation Strategy.html` at the top of its `0. DRAFT` folder, which `/draft` presents when the practitioner asks for it. The matter's open **To-dos** lead it, each with its BF date as a plain date and, when it points to a Writing, that Writing's line beneath it. Below them each Writing, and each **pre-filing proceeding**, is one line: name, lifecycle state, mockup status and jobs in progress. Each open **Standalone Milestone** is one line under "Milestones", and a closed one is listed with the retired Writings as "Closed <date>". Each Writing's own jobs, steps and Proposals stay on its Milestone. A folder holding the older `Matter Board.html` or `To Do List.html` has it retired once `Litigation Strategy.html` is written there. Internal names are unchanged: `matter_board_path`, `render-matter-board.ts`, `matter-board-shell.ts` and the page's data key.
+_Avoid_: To Do List (a to-do list is the **To-dos** themselves); Matter Board; Milestone (one board's page); dashboard.
 
 **Loose thread**:
 Two senses, told apart by where each appears:
-- on the Job Board, an item in the "Ideas for later" lane: an idea captured mid-job without deciding anything about it — verbatim, at most five sentences, no options or recommendations. Never ripe, never a blocker; consumed only when an outlining session turns it into a real job (`seeds.charted_into`). A discarded thread stays stored, shows struck through, and can be restored. A resolved thread is one that is not open: discarded, else marked suggested to Probanda by an earlier version (no route marks one now: a `tooling` thread is only reported as an observation, which marks nothing), else outlined into a job that is not deleted; a deferred thread is never resolved. It never counts toward a completion criterion.
+- on the Milestone, an item in the "Ideas for later" lane: an idea captured mid-job without deciding anything about it — verbatim, at most five sentences, no options or recommendations. Never ripe, never a blocker; consumed only when an outlining session turns it into a real job (`seeds.charted_into`). A discarded thread stays stored, shows struck through, and can be restored. A resolved thread is one that is not open: discarded, else marked suggested to Probanda by an earlier version (no route marks one now: a `tooling` thread is only reported as an observation, which marks nothing), else outlined into a job that is not deleted; a deferred thread is never resolved. It never counts toward a completion criterion.
 - on a mockup, the 🧵 work marker, defined in `.claude/skills/drafting-data/references/work-markers.md`, which counts toward the open-items criterion.
-The Job Board's own "Ideas for later" section already renders the first sense in the lawyer-facing word — the deferred vocabulary pass (design doc §11) covers only widget labels and prompts elsewhere, not the board's own headings, which were lawyer-facing from the start (that is the point of a rendered surface). Internal names are unchanged: the `seeds` table, `review_points.seed_id`, `seeds.charted_into`, the `seed` CSS class, element ids and data key.
+The Milestone's own "Ideas for later" section already renders the first sense in the lawyer-facing word — the deferred vocabulary pass (design doc §11) covers only widget labels and prompts elsewhere, not the board's own headings, which were lawyer-facing from the start (that is the point of a rendered surface). Internal names are unchanged: the `seeds` table, `review_points.seed_id`, `seeds.charted_into`, the `seed` CSS class, element ids and data key.
 _Avoid_: note (a different, unstored concept this schema deliberately excludes); seed.
 
 **Matter**:
@@ -484,8 +484,8 @@ _Avoid_: writing "matter ID" in any prose a practitioner reads, for any of the t
 A folder in a matter that a given act may not touch. The privileged and disclosed trees are off-limits to every act. TRASH and 0. CASE DATA are never read, scanned or written into, a scan also skips the 0. DRAFT folder, and a move never puts a file into folders 0 and 1 or TRASH. One module decides, by the act's purpose (`source/lawyer/mcp/src/files/zones.ts`).
 _Avoid_: protected segments, excluded folders; firewall for anything beyond the privileged and disclosed trees.
 
-**Merge (Job Boards)**:
-The practitioner's act that joins one Job Board into another after confirming that their goals overlap or cohere. The survivor takes every Writing, job and loose thread of both and keeps every goal of both. A board with a Writing survives over one without, otherwise the older one.
+**Merge (Milestones)**:
+The practitioner's act that joins one Milestone into another after confirming that their goals overlap or cohere. The survivor takes every Writing, job and loose thread of both and keeps every goal of both. A board with a Writing survives over one without, otherwise the older one.
 _Avoid_: combine; consolidate.
 
 **Merge (jobs)**:
@@ -553,7 +553,7 @@ A fact-domain assertion in the lawyer's own words — what we say happened. Its 
 _Avoid_: claim (used loosely for either domain); contention (a submission's assertion — law applied to fact — never a bare postulate); allegation (a postulate anchored in a pleading, advanced formally, proof not yet marshalled); fact (the stored row, not the wording).
 
 **Pre-filing proceeding**:
-A proceeding with no Writing yet. Its forum may not yet be chosen (`forum` NULL). A Writing that needs no forum parts, such as a demand letter, may be created before the forum is chosen, and one that needs forum parts only after. It holds jobs and loose threads, for example the work of choosing the forum, on a Job Board of its own. Its first Writing ends it, with or without a forum: see **Job Board**. Choosing the forum updates the same proceeding. A second forum is a new proceeding, and no job moves between them.
+A proceeding with no Writing yet. Its forum may not yet be chosen (`forum` NULL). A Writing that needs no forum parts, such as a demand letter, may be created before the forum is chosen, and one that needs forum parts only after. It holds jobs and loose threads, for example the work of choosing the forum, on a Milestone of its own. Its first Writing ends it, with or without a forum: see **Milestone**. Choosing the forum updates the same proceeding. A second forum is a new proceeding, and no job moves between them.
 _Avoid_: pre-litigation matter (the matter exists either way); undecided forum as a stored value (it is NULL, not a sentinel); pre-filing for a proceeding whose only Writing is a demand letter (nothing has gone to a forum, but it has a Writing, so it is not one).
 
 **Preference**:
@@ -578,7 +578,7 @@ _Avoid_: render, output (the act / the bytes, not the thing).
 The litigation conclusion that a fact is established: through evidence, through an admission, through an agreed statement of facts, or otherwise. Proof is a legal/strategic judgment, not a database flag.
 
 **Proposal**:
-One work marker's remaining work, on the database row that work is done on, listed by the render engine in the Job Board's Proposed lane. At the next attended Opening a Proposal no job has ever held becomes a **fast-path job** by intake. The rest stay for the practitioner to pick. It carries no intent or steps of its own. Its label, the marker's work name and the row's item, is fixed text from the record, which the practitioner keeps or changes as the job's title in the outlining session that turns it into a job. A Proposal picked and left unedited becomes a **fast-path job**. It is rebuilt by every render and shown while its marker is the current rung of its ladder and its key is held by no queued or in-progress job and no shelving, and it is never stored. Unlike a **Loose thread** (a person's idea, stored verbatim until outlined), it needs no capture, because marker state regenerates it.
+One work marker's remaining work, on the database row that work is done on, listed by the render engine in the Milestone's Proposed lane. At the next attended Opening a Proposal no job has ever held becomes a **fast-path job** by intake. The rest stay for the practitioner to pick. It carries no intent or steps of its own. Its label, the marker's work name and the row's item, is fixed text from the record, which the practitioner keeps or changes as the job's title in the outlining session that turns it into a job. A Proposal picked and left unedited becomes a **fast-path job**. It is rebuilt by every render and shown while its marker is the current rung of its ladder and its key is held by no queued or in-progress job and no shelving, and it is never stored. Unlike a **Loose thread** (a person's idea, stored verbatim until outlined), it needs no capture, because marker state regenerates it.
 _Avoid_: seed; offer; suggestion; candidate; draft job.
 
 **Proposition**:
@@ -635,14 +635,14 @@ The practitioner's explicit act that ends a Writing: sets `retired_on` and a rea
 _Avoid_: archive (taken); close, finalize (both already name other steps); delete (nothing is removed).
 
 **Revision stamp**:
-The global monotonic database revision plus a human-readable timestamp printed on every Mockup (the Job Board carries it in its data line and does not draw it); a Mockup is stale exactly when its stamp differs from the current revision. Never a file mtime.
+The global monotonic database revision plus a human-readable timestamp printed on every Mockup (the Milestone carries it in its data line and does not draw it); a Mockup is stale exactly when its stamp differs from the current revision. Never a file mtime.
 
 **Rhetorical paragraph**:
 A numbered paragraph of persuasion from the record that fits no other type, for example a characterisation of the other side's pleading. It is the deliberate outlet for what the design did not anticipate. It is never refused: every link is optional (a submission, an opposing point, the record by document, pinpoint and excerpt, facts, law, or none), and it can be placed in any part of any advocacy document. Counsel reviews it (🧐) and the overstatement review reads it. Its mockup line carries the plain-text tags `(rhetorical)`, `(states law, no authority linked)` and `(states fact beyond its record)`. The last two depend on the drafter's own record of whether the wording states law or fact. All three are advisory, never block anything and are stripped from the filed face. Its links are never coverage: it never answers an opposing point (↩️) and never supplies a submission's factual (🧾) or legal (📚) basis. Undeployed, it is held in reserve 🂡, as a submission is. Rules: `.claude/skills/drafting-data/references/terms-and-symbols.md` → Consumers. Internal names: `rhetorical_paragraphs`, `filing_rhetoric`.
 _Avoid_: persuasive paragraph (*persuasive* is an authority's weight); submission (a contention with its argument); fact (a postulate the record must prove).
 
 **Ripe**:
-A job that is `queued`, unlocked, every blocker completed, and (if it has one) no conflicting job currently `wip` — ready to assign, by the practitioner naming it or by an attended session's own choice. The Job Board's own "## Ready" heading already uses the lawyer-facing word for this state; see **Loose thread**'s note on why the board's headings are exempt from the deferred pass.
+A job that is `queued`, unlocked, every blocker completed, and (if it has one) no conflicting job currently `wip` — ready to assign, by the practitioner naming it or by an attended session's own choice. The Milestone's own "## Ready" heading already uses the lawyer-facing word for this state; see **Loose thread**'s note on why the board's headings are exempt from the deferred pass.
 _Avoid_: available (generic English — "ready" here means specifically classified so by the renderer, per the CHECK-and-conflict logic above).
 
 **Rule**:
@@ -658,14 +658,14 @@ One instrument of **Court Rules**, whole, as its publisher issues it: every **Co
 _Avoid_: bare "rules"; an instrument's short name (SCCR) used as a general term.
 
 **Scope**:
-The set of database rows an assigned job's writes may touch (`ticket_scope`), checked before every `drafting_data__execute` call the job makes. Expandable by the practitioner at any time; the expansion is itself in scope. A scope row on `board_attachments` also links the job to that attached draft, whose card on the Job Board counts it while it is pending.
+The set of database rows an assigned job's writes may touch (`ticket_scope`), checked before every `drafting_data__execute` call the job makes. Expandable by the practitioner at any time; the expansion is itself in scope. A scope row on `board_attachments` also links the job to that attached draft, whose card on the Milestone counts it while it is pending.
 _Avoid_: permission (this is a work boundary, not an access-control concept).
 
 **Severance**:
 The push-time act of stripping everything matter-identifying from a principle before it leaves the privileged working layer for the shared pool. Up goes the generalized text, public citation, and doctrinal metadata; no column, relation, or free-text in the pool may point back to a matter.
 
 **Shelve**:
-The practitioner's instruction, given in a session, that moves a Proposal, or a queued or in-progress job, to the Job Board's Shelved angles list until the practitioner restores it ("shelved by you"). A shelved Proposal comes back to Proposed if its marker or its item changes from what it read when shelved. A shelved job keeps its place in the work history and is never assigned. Internal names are unchanged: `tickets.rejected_at`, the `proposal_rejections` table, the `rejected` category and lane values, and the `rejected-angles` section id.
+The practitioner's instruction, given in a session, that moves a Proposal, or a queued or in-progress job, to the Milestone's Shelved angles list until the practitioner restores it ("shelved by you"). A shelved Proposal comes back to Proposed if its marker or its item changes from what it read when shelved. A shelved job keeps its place in the work history and is never assigned. Internal names are unchanged: `tickets.rejected_at`, the `proposal_rejections` table, the `rejected` category and lane values, and the `rejected-angles` section id.
 _Avoid_: reject, rejection; dismissal; drop (a loose thread's discard, or `dropped_on` on substance); supersession.
 
 **Source**:
@@ -678,16 +678,16 @@ A computed reference of the form `<file_path>#<locator>`, used to pinpoint where
 A court decision, an enactment or a file that a job's work has named and is about to retrieve or read, recorded on the job before the work that gets it. It is open until it is closed as got or as not retrieved. It is the job's own record beside its **Steps** and never one of them: the steps are the practitioner's plan, and a source to get is found by the work. Its label is a citation, an instrument or a file name, never what an authority holds. Not a **Source**: that is the matter's own evidentiary record. Internal name: the `ticket_sources` table.
 _Avoid_: discovered item; sub-step; download (it also covers legislation and files to read); source (alone).
 
-**Split (Job Boards)**:
-The practitioner's act that divides a Job Board with more than one goal, by naming the goals on each side. Each Writing, with the facts, law and arguments it uses, goes to the side whose goals it serves. A Writing is never divided, so goals it serves together stay on one board. Which goals a Writing serves is worked out only at a split.
+**Split (Milestones)**:
+The practitioner's act that divides a Milestone with more than one goal, by naming the goals on each side. Each Writing, with the facts, law and arguments it uses, goes to the side whose goals it serves. A Writing is never divided, so goals it serves together stay on one board. Which goals a Writing serves is worked out only at a split.
 _Avoid_: unmerge.
 
 **Stage**:
 One of the outlining sessions in which `/prepare` is re-run: opening the bundle, after the gate job completes, and after responses arrive.
 _Avoid_: phase; step (a job's unit).
 
-**Standalone Job Board**:
-A Job Board with no Writing, for work in a proceeding that is not a document: finding a paper original, stamping it, re-scanning it. It exists only on a proceeding that already has a Writing, and its title is the practitioner's own words. It shows only the jobs and loose threads that name it, never the proceeding-wide ones, and lists its loose threads on its page. It has no mockup, view pages, completion criteria, Proposals or stock jobs. Its state is Open or Closed: closing it is a retirement with the reason `other`, after which it has no page, and reopening it clears that retirement. In chat it is `Job Board <id>: <title>`. Internal names: it is stored as a `filings` row of the reserved kind `task-board`, written only by `/drafting-data`'s Job Board creation write.
+**Standalone Milestone**:
+A Milestone with no Writing, for work in a proceeding that is not a document: finding a paper original, stamping it, re-scanning it. It exists only on a proceeding that already has a Writing, and its title is the practitioner's own words. It shows only the jobs and loose threads that name it, never the proceeding-wide ones, and lists its loose threads on its page. It has no mockup, view pages, completion criteria, Proposals or stock jobs. Its state is Open or Closed: closing it is a retirement with the reason `other`, after which it has no page, and reopening it clears that retirement. In chat it is `Milestone <id>: <title>`. Internal names: it is stored as a `filings` row of the reserved kind `task-board`, written only by `/drafting-data`'s Milestone creation write.
 _Avoid_: task board; Writing (it is stored beside the Writings and is not one).
 
 **Statement of fact**:
@@ -695,7 +695,7 @@ One witness's account supporting a postulate: the witness, the **Instrument** ca
 _Avoid_: evidence use (schema legacy); excerpt (the words, not the link); testimony (a statement of fact with no exhibit — the witness's own words alone).
 
 **Statement of goals**:
-What the practitioner is trying to achieve on one Job Board, written as a list of self-contained goals, one list per board. Each goal is confirmed, inferred or declined on its own: confirmed when the practitioner approved its wording, inferred when the session wrote it after the practitioner declined, or declined with nothing inferred yet. It shows in its own card at the top of every Job Board, labelled Goal, above the **Completion criteria**: closed, the card shows a short description, such as "Default Judgment Requisition Drafting"; open, it shows the statement as stored, an inferred one in italics with the caption "Inferred, not confirmed". A session reads it only as `board_summary`'s `Goal:` line and `drafting_forms__board_card`'s `goals` lane. Nothing relies on an inferred one as confirmed. Internal names: the `db_meta` key `board_goal:<filing or proceeding>:<id>`, the tool `drafting_data__set_board_goal`, and the page data key `goals` (never `goal`, which is the Completion criteria card's).
+What the practitioner is trying to achieve on one Milestone, written as a list of self-contained goals, one list per board. Each goal is confirmed, inferred or declined on its own: confirmed when the practitioner approved its wording, inferred when the session wrote it after the practitioner declined, or declined with nothing inferred yet. It shows in its own card at the top of every Milestone, labelled Goal, above the **Completion criteria**: closed, the card shows a short description, such as "Default Judgment Requisition Drafting"; open, it shows the statement as stored, an inferred one in italics with the caption "Inferred, not confirmed". A session reads it only as `board_summary`'s `Goal:` line and `drafting_forms__board_card`'s `goals` lane. Nothing relies on an inferred one as confirmed. Internal names: the `db_meta` key `board_goal:<filing or proceeding>:<id>`, the tool `drafting_data__set_board_goal`, and the page data key `goals` (never `goal`, which is the Completion criteria card's).
 _Avoid_: Goal card (the Completion criteria card's code name); objective; Goal (alone, except as the card's label).
 
 **Step**:
@@ -730,8 +730,8 @@ _Avoid_: limb (an alternative limb is a test of its own; a cumulative limb is an
 A fact **theorized for the purpose of investigation** — a fact the case theory needs but that no source yet evidences. It cannot be derived from anything (theorizing is an act, not an inference), so it is recorded; but it is **not a party position** (no stance is on any record) and **not a posture** (nothing exists to derive one from). What it *is* is **provenance**: the fact's source is the case theory itself, modelled as a well-known placeholder source (one *Theory of the case* work-product source per application, created lazily). A theorized fact is precisely a fact whose only provenance is that theory placeholder and whose evidence is empty — the trial-prep gap described under **Provenance**, at the earliest stage, where "not yet evidenced" is the expected pre-affidavit state, not a defect. It is privileged work product, so its `main.facts` row is a **Bare Row**: the wording lives on the privileged side only. It graduates when a non-privileged source states the same Fact, so the row takes that source's own Statement of Fact, and real evidence then lands: an ordinary evidence link makes it an ordinary evidenced fact, and it stops being theorized **by construction** — no "evidenced" marker exists or is needed. The theory provenance stays as the history of how the fact entered. The only other exit is **Dismissed**.
 
 **To-do**:
-One row of the practitioner's task registry (`/task-prioritization`), client, admin or professional work, larger than a job. A to-do is one outcome the practitioner would cross off. The work toward it is jobs on its Writing's Job Board, never further to-dos. "To-do" is its visible name everywhere. It may carry a BF (bring-forward) date, the date its work should start and never time remaining, and a deadline, which drafting sessions never see. It may point to one Writing or pre-filing proceeding of its own matter, and it holds no jobs. A Writing has at most one open to-do within its matter. A to-do entered in error or merged into another is `withdrawn`: kept, never open and never completed. Internal names are unchanged: the `practice_tasks` table, the `/task-prioritization` skill and the task tools.
-_Avoid_: task (internal names only); job (one unit of session work on a Job Board).
+One row of the practitioner's task registry (`/task-prioritization`), client, admin or professional work, larger than a job. A to-do is one outcome the practitioner would cross off. The work toward it is jobs on its Writing's Milestone, never further to-dos. "To-do" is its visible name everywhere. It may carry a BF (bring-forward) date, the date its work should start and never time remaining, and a deadline, which drafting sessions never see. It may point to one Writing or pre-filing proceeding of its own matter, and it holds no jobs. A Writing has at most one open to-do within its matter. A to-do entered in error or merged into another is `withdrawn`: kept, never open and never completed. Internal names are unchanged: the `practice_tasks` table, the `/task-prioritization` skill and the task tools.
+_Avoid_: task (internal names only); job (one unit of session work on a Milestone).
 
 **Treatment**:
 What one authority does to a **Principle** or to another authority: follows, applies, distinguishes, overrules and the rest. Probanda records treatment per principle, on the link between an authority and a principle, so one case can follow one principle of a precedent and distinguish another. Citators record it per case. Every value and its definition are in `.claude/skills/shared/treatment-vocabulary.md` and nowhere else. Why Probanda departs from the citator norm: `docs/Specs/2026-10-15_per-principle-treatment-vocabulary-spec.md`.
@@ -749,7 +749,7 @@ Two branches silence the evidence-side work for a postulate. An admission silenc
 _Avoid_: admitted = proven (true for one party, not the fact).
 
 **Unstructured Writing**:
-A Writing whose type has no declared layout yet. Its printed wording is drafted freely, and the practitioner gets the same review, revisions, Job Board and Word handoff as for any Writing. Once it is sent, it can be converted into a type with a declared layout, so the next Writing of that type is Structured. A form-bound writing with no specialist skill is drafted this way, its fixed wording copied from a saved copy of the published form.
+A Writing whose type has no declared layout yet. Its printed wording is drafted freely, and the practitioner gets the same review, revisions, Milestone and Word handoff as for any Writing. Once it is sent, it can be converted into a type with a declared layout, so the next Writing of that type is Structured. A form-bound writing with no specialist skill is drafted this way, its fixed wording copied from a saved copy of the published form.
 _Avoid_: free-form (a different axis: a court form with no generator is Unstructured and form-bound); hand-written mockup (its mockup is still generated).
 
 **Up-pointer**:
@@ -772,18 +772,18 @@ _Avoid_: verified as a synonym for "proven" or "true" anywhere in prose.
 
 **Work Board**:
 The practice-wide page (`Work Board.html` beside practice.db) showing the open work of every matter, billable or not, in four panels: Overdue, Due today, Coming up and Other open work. Its cards are deadlines, events and to-dos, each naming its matter and client. Written only by `practice_data__render_practice_board` (`shared/html-pages.md`, The Work Board). Its internal name is `practice_board`.
-_Avoid_: Job Board (one board's page); `Work_board` (the Job Board's internal document type); Litigation Strategy (one matter's page).
+_Avoid_: Milestone (one board's page); `Work_board` (the Milestone's internal document type); Litigation Strategy (one matter's page).
 
 **Work marker**:
 One emoji from a closed set, printed on a Mockup where a predicate over the database is true (an open jurisdictional-basis slot, an excerpt with no pinpoint, a fact with no witness…), each naming the work that finishes it. The compressed to-do list of a Writing. Deferred work counts (a reserved row awaits its deployment decision); only ⬜ means nothing started; an emoji that names no work is not a marker. Three types: **work** (we act), **event** (they or the world acted — reports that outcome and renders as prefix of the work it routed; several events may route the same work), **hold** (our posture — renders only in Held in reserve). Rules, tables and mis-readings: `.claude/skills/drafting-data/references/work-markers.md` (SSOT).
 _Avoid_: badge (one marker); glyph; readiness decoration; checklist; status label (of our work — an event marker reports their outcome, never our progress).
 
 **Writing**:
-Any legal writing `/draft` drafts in a proceeding: a Filing, a demand letter, a letter to opposing counsel, a memo to file. It carries its own metadata, its selection and order of the proceeding's shared substance, and its mockups. Every Writing belongs to exactly one proceeding, which may have no forum. Every Writing is either **Form-bound writing** or **Free-form writing**. On a separate axis, every Writing is either a **Structured Writing** or an **Unstructured Writing**. A client letter is not a Writing: it is solicitor-client material, drafted from guidance only, with no Job Board or Goal card. Internal names are unchanged: a Writing is stored as a `filings` row, with its `kind` values, except that a `filings` row of the reserved kind `task-board` is a **Standalone Job Board** and never a Writing. Lowercase "filing" in this glossary means only the act of delivering a Writing to a registry or forum, never the Writing itself.
+Any legal writing `/draft` drafts in a proceeding: a Filing, a demand letter, a letter to opposing counsel, a memo to file. It carries its own metadata, its selection and order of the proceeding's shared substance, and its mockups. Every Writing belongs to exactly one proceeding, which may have no forum. Every Writing is either **Form-bound writing** or **Free-form writing**. On a separate axis, every Writing is either a **Structured Writing** or an **Unstructured Writing**. A client letter is not a Writing: it is solicitor-client material, drafted from guidance only, with no Milestone or Goal card. Internal names are unchanged: a Writing is stored as a `filings` row, with its `kind` values, except that a `filings` row of the reserved kind `task-board` is a **Standalone Milestone** and never a Writing. Lowercase "filing" in this glossary means only the act of delivering a Writing to a registry or forum, never the Writing itself.
 _Avoid_: filing for a Writing (filing is the act of delivery to a registry or forum); document (reserved for the evidence-side **Document**); draft (a rendered-for-review file of a Writing).
 
 **Writing Job**:
-A job tied to one Writing (`tickets.filing_id` that Writing's id), drawn only on that Writing's Job Board and untagged. A job on a **Standalone Job Board** names that board's id and is neither a Writing Job nor a **General Job**.
+A job tied to one Writing (`tickets.filing_id` that Writing's id), drawn only on that Writing's Milestone and untagged. A job on a **Standalone Milestone** names that board's id and is neither a Writing Job nor a **General Job**.
 _Avoid_: filing job; Writing-scoped ticket.
 
 **Written Argument**:

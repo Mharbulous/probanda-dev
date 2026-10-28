@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "job-board-card-gate.py"
-PAGE = r"<matter>\0. DRAFT\Job Board 3.html"
+PAGE = r"<matter>\0. DRAFT\Milestone 3.html"
 OPEN = "mcp__remote-devices__plugin_lawyer_data__drafting_forms__open_session"
 RENDER = "mcp__plugin_lawyer_data__drafting_forms__render"
 COMPLETE = "mcp__plugin_lawyer_data__drafting_data__complete_job"
@@ -22,14 +22,14 @@ def mcp_text(result):
 
 
 def filing_render(pages_written, board_changed):
-    return {"filing_id": 3, "documents": [{"document_type": "Work_board", "path": PAGE, "file_name": "Job Board 3.html",
+    return {"filing_id": 3, "documents": [{"document_type": "Work_board", "path": PAGE, "file_name": "Milestone 3.html",
                                            "pages_written": pages_written, "board_changed": board_changed}]}
 
 
 class Transcript:
     """A session transcript: one practitioner prompt, then the given tool calls and their results."""
 
-    def __init__(self, calls, prompt="Show me all the Job Boards"):
+    def __init__(self, calls, prompt="Show me all the Milestones"):
         self.lines = [{"type": "user", "message": {"role": "user", "content": prompt}}]
         for n, (name, tool_input, result) in enumerate(calls):
             self.lines.append({"type": "assistant", "message": {"role": "assistant", "content": [
@@ -44,7 +44,7 @@ class Transcript:
 
 
 class StopTest(unittest.TestCase):
-    def stop(self, calls, stop_hook_active=False, prompt="Show me all the Job Boards"):
+    def stop(self, calls, stop_hook_active=False, prompt="Show me all the Milestones"):
         with tempfile.TemporaryDirectory() as folder:
             result = run({"hook_event_name": "Stop", "stop_hook_active": stop_hook_active,
                           "transcript_path": Transcript(calls, prompt).write(folder)})
@@ -62,14 +62,14 @@ class StopTest(unittest.TestCase):
                                      ("mcp__cowork__present_files", {"files": [{"file_path": PAGE}]}, None)]))
 
     def test_staged_send_user_file_allows(self):
-        staged = "/mnt/user-data/uploads/Job Board 3.html"
+        staged = "/mnt/user-data/uploads/Milestone 3.html"
         self.assertIsNone(self.stop([(OPEN, {}, {"job_board_path": PAGE}),
                                      ("mcp__remote-devices__device_stage_files", {"paths": [PAGE]}, {"staged": [staged]}),
                                      ("SendUserFile", {"file_path": staged}, None)]))
 
     def test_card_for_another_page_still_blocks(self):
         out = self.stop([(OPEN, {}, {"job_board_path": PAGE}),
-                         ("mcp__cowork__present_files", {"files": [{"file_path": r"<matter>\0. DRAFT\Job Board 4.html"}]}, None)])
+                         ("mcp__cowork__present_files", {"files": [{"file_path": r"<matter>\0. DRAFT\Milestone 4.html"}]}, None)])
         self.assertEqual(out["decision"], "block")
 
     def test_card_before_the_result_does_not_count(self):

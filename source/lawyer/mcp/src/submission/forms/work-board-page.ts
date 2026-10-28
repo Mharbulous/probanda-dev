@@ -1,4 +1,4 @@
-// One Job Board page's data: the matter's meta, its sections, its strip and its attached drafts.
+// One Milestone page's data: the matter's meta, its sections, its strip and its attached drafts.
 
 import type { CourtFileAffidavit } from "../court-file-affidavits.js";
 import type { PageDates } from "../matter-dates.js";
@@ -6,7 +6,7 @@ import type { WritingLabel } from "./writing-label.js";
 import type { AttachmentKind } from "./work-board-reads.js";
 import type { WorkBoardData } from "./work-board-data.js";
 
-/** One Job Board page (#1365, ADR 0033's 2026-10-05 amendment): the matter's meta and one section, a
+/** One Milestone page (#1365, ADR 0033's 2026-10-05 amendment): the matter's meta and one section, a
  * live filing's or a pre-filing proceeding's. `meta.revision` stays the data line's first key, so
  * readExistingRevision still reads it. The client number and the section's proceeding's forum,
  * registry, file number and style of proceeding are "" when unknown. */
@@ -44,7 +44,7 @@ export interface MatterJobBoardData {
   court_file?: CourtFileAffidavit[];
 }
 
-/** One thumbnail on a Job Board's strip: `key` is its board-viewed.ts item key, `viewed` whether it was ever viewed. */
+/** One thumbnail on a Milestone's strip: `key` is its board-viewed.ts item key, `viewed` whether it was ever viewed. */
 export type StripItem =
   | ({ kind: "writing"; key: string; viewed: boolean } & WritingLabel)
   | { kind: "view"; key: string; viewed: boolean; name: string; file: string };

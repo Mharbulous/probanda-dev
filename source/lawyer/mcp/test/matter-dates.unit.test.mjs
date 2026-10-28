@@ -1,4 +1,4 @@
-// The Job Board's handling of provisional alternative dates
+// The Milestone's handling of provisional alternative dates
 // (planning/1. Design/2026-10-06_provisional-alternative-dates-spec.md, §11 answer 3): of a
 // deadline's unresolved alternatives, the Goal card carries one condition, dated by the earliest and
 // flagged; every other alternative goes to the date row under its scenario label.

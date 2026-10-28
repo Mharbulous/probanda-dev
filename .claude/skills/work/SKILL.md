@@ -1,13 +1,13 @@
 ---
 name: work
 description: >
-  Open a matter's Job Board and take, take over, release, shelve, restore or bring forward its jobs: drafting, research, delivery, filing and other work. Use when the practitioner asks to work the Job Board, take the next job, pick up or hand back a job, outline new jobs, or rank the loose threads. Hands each job to the skill that works it. Drafting a letter, email, memo or filing -> /draft.
+  Open a matter's Milestone and take, take over, release, shelve, restore or bring forward its jobs: drafting, research, delivery, filing and other work. Use when the practitioner asks to work the Milestone, take the next job, pick up or hand back a job, outline new jobs, or rank the loose threads. Hands each job to the skill that works it. Drafting a letter, email, memo or filing -> /draft.
 ---
 
 ## 1. What this skill is
 
 <!-- atom id=work.what ops=always -->
-The Job Board's entry. It enters the session, opens the matter's Job Board, chooses or takes a job, runs the checks before the assigning write, assigns it, and hands it to the skill that works it. It also outlines new jobs and applies the board's bookkeeping: shelve, restore, release, delete, bring forward, the statement of goals and the loose threads. It drafts nothing and works no job's steps itself. It never calls the `lawyer:scrivener` agent either, because the words of a letter or email reach a job only through `/draft` (`shared/correspondence-isolation.md`).
+The Milestone's entry. It enters the session, opens the matter's Milestone, chooses or takes a job, runs the checks before the assigning write, assigns it, and hands it to the skill that works it. It also outlines new jobs and applies the board's bookkeeping: shelve, restore, release, delete, bring forward, the statement of goals and the loose threads. It drafts nothing and works no job's steps itself. It never calls the `lawyer:scrivener` agent either, because the words of a letter or email reach a job only through `/draft` (`shared/correspondence-isolation.md`).
 
 These rules moved from `/draft` verbatim. A file, section or part of SKILL.md they name that this skill does not hold is `/draft`'s, in its file of the same name: section 14 is this skill's `references/dispatch.md`, sections 6 and 7 its `references/procedure.md`, and every other section number is `/draft`'s.
 
@@ -30,7 +30,7 @@ These rules moved from `/draft` verbatim. A file, section or part of SKILL.md th
 **A question answerable from memory.** Answer it before any tool call, and look nothing up unless asked. Frame it as a hunch ("My hunch is ...") and hedge each recalled section, rule or time limit where it appears ("I believe", "if memory serves"), never in a caveat paragraph up front. A date for a matter still goes to the `lawyer:docket-clerk` agent. End with one sentence offering to verify it.
 
 <!-- atom id=work.start-planning ops=always -->
-**"Shall we start planning?"** End the reply with that question when there is no clear instruction on what work to do next and the discussion relates to no Job Board, or to one with no completed job.
+**"Shall we start planning?"** End the reply with that question when there is no clear instruction on what work to do next and the discussion relates to no Milestone, or to one with no completed job.
 
 ## Rules for each step
 

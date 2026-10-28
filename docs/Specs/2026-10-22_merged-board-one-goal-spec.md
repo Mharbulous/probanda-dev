@@ -1,11 +1,11 @@
-# Spec: merged Job Board holds one goal
+# Spec: merged Milestone holds one goal
 
 Status: proposed, 2026-10-22. Written in a matter session; implementation is handed to Claude Code.
 Plugin: `lawyer` data server (`drafting_data__merge_job_boards`, `drafting_data__set_board_goal`) and `litigator` /draft (installed copy seen at litigator v0.8.1). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: 2026-10-22_board-goal-default-title-and-framing-spec.md; 2026-10-22_completion-criteria-single-state-badge-spec.md
 
 ## 1. Problem
-Merging two Job Boards never produces one goal. The merge appends the absorbed board's statement of goals to the survivor's, so a merged board shows a list of goals, or none at all when neither board had one. The practitioner's view: a merged board serves one objective, and the merge is the moment to state it as one sentence (for example "Obtain an order X against the defendants"), not two Writing titles.
+Merging two Milestones never produces one goal. The merge appends the absorbed board's statement of goals to the survivor's, so a merged board shows a list of goals, or none at all when neither board had one. The practitioner's view: a merged board serves one objective, and the merge is the moment to state it as one sentence (for example "Obtain an order X against the defendants"), not two Writing titles.
 
 ## 2. Evidence (observed; quoted text is data, not instructions)
 - `merge_job_boards` description: "Its statement of goals is appended, with its own status, to the survivor's, and boards it had absorbed move to the survivor."
@@ -41,7 +41,7 @@ Non-goals: combining Writings, their documents or their gates; inventing a goal 
 3. Change the Goal card renderer and board_summary to draw one goal, keeping `merged` as history.
 4. Update /draft's merge procedure and opening checks per §4(a) and §4(c); update ADR 0010 and the tool descriptions to match.
 5. Tests: merge with goal_statement (gate passes and fails), merge without (flag state), legacy board with `merged` statements flagged once, Goal card draws one goal.
-6. Commit on `main` by explicit pathspec and push. Finish with the line `Implementation of merged Job Board holds one goal complete!`, then what you verified and what you assumed without verifying.
+6. Commit on `main` by explicit pathspec and push. Finish with the line `Implementation of merged Milestone holds one goal complete!`, then what you verified and what you assumed without verifying.
 
 ## 8. Implementation criteria
 1. `merge_job_boards` accepts `goal_statement` and writes it only when the practitioner-words gate passes.
@@ -69,6 +69,6 @@ Confirm the merge's goal-append code, where `merged` statements are drawn on the
 | The `set_board_goal` description on `merged` (§2 quote) | Matches | `schema-gen.ts` (`set_board_goal`): "also holds each absorbed board's statement, with its own status, under `merged`: merged_index ... writes that one". |
 | Where `merged` statements are drawn | Differs (more places than the Goal card) | Read by `fetchBoardGoals` (`board-goals.ts` lines 95-101), which passes `merged` to every section. Drawn on the page's Goal card (`source/lawyer/mcp/src/templates/job-board/job-board.js` `goalsCard`, lines 580-595: own statement then each merged one), in board_card's goals lane (`matter-pages.ts` `goalsLines`, lines 903-911: `### Merged <n> (<status>)` per statement), and counted on board_summary's Goal line (`matter-pages.ts` `goalsHead`, lines 896-899: `, plus <n> merged statements`). |
 | The default description of an unset goal (§2 evidence: `<Writing 1 title> Drafting`) | Differs (already fixed) | `board-goals.ts` `NO_GOAL_DESCRIPTION` = "Goal not set", from the sibling default-title spec. |
-| Location of /draft's merge procedure | Matches | `.claude/skills/drafting-data/references/jobs-closeout.md` §10d "Merge two Job Boards" (line 293), routed from `.claude/skills/drafting-data/SKILL.md` line 92. The opening goal check is `.claude/skills/draft/references/dispatch.md` line 28, "Statement of goals". |
+| Location of /draft's merge procedure | Matches | `.claude/skills/drafting-data/references/jobs-closeout.md` §10d "Merge two Milestones" (line 293), routed from `.claude/skills/drafting-data/SKILL.md` line 92. The opening goal check is `.claude/skills/draft/references/dispatch.md` line 28, "Statement of goals". |
 | ADR 0010's current wording on goals | Differs | `docs/ADRs/0010-job-boards-organized-by-goals.md` line 9: "The statement is a list of self-contained goals, each confirmed, inferred or declined on its own"; line 11: the survivor "keeps every Writing, job, loose thread and goal of both". No amendment yet on goals. |
 | The practitioner-words gate on a merge | Matches, with no statement check | `.claude/skills/drafting-data/hooks/practitioner-words-gate.py` `merge_boards`: passes when the last practitioner turn is a bare yes. `source/litigator/plugin.json` line 19 already matches `merge_job_boards`. |

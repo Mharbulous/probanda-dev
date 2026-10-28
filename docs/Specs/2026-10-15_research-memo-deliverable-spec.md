@@ -26,7 +26,7 @@ Goal: (a) the main session sees only the memo's file card and a one-line status,
 
 1. **Delegation.** Because a subagent cannot spawn agents, keep the gate's dispatches in the main session but make each return compact: agents write their outputs to files and return only status lines; the main session relays nothing but status and the final card. Alternative: a background orchestrator (§6 option 2).
 2. **Memo format.** One template file (e.g. `research/skills/shared/research-memo-template.md`) defining the YAML keys and the CRAC/IRAC/CREAC section skeletons. The research-agent writes the memo to the file stem path in `6. LAW`; `save_answer` (or its replacement) writes the YAML header.
-3. **Confidence summary and follow-up offers.** The confidence gate stays; its summary goes into the memo (a short "Confidence" line in the header or an appendix) and the chat relay is one line pointing to the card. Follow-up offers and case-data flags go to an appendix or the job board, not the memo body.
+3. **Confidence summary and follow-up offers.** The confidence gate stays; its summary goes into the memo (a short "Confidence" line in the header or an appendix) and the chat relay is one line pointing to the card. Follow-up offers and case-data flags go to an appendix or the Milestone, not the memo body.
 4. Change the spawn template's default to CRAC (pending §9 Q1).
 
 ## 5. Constraints that must still hold

@@ -321,7 +321,7 @@ function fetchProceedingOrders(dbPath: string, proceedingId: number): PoolOrderR
 function fetchOtherFilingDeployments(dbPath: string, proceedingId: number, filingId: number): { orders: Set<number>; submissions: Set<number> } {
   const filings = rows<{ id: number; kind: string; title: string; filed_on: string | null; decided_on: string | null; entered_on: string | null; retired_on: string | null; needs_forum_parts: 0 | 1 }>(
     dbPath,
-    // A Job Board with no Writing deploys nothing.
+    // A Milestone with no Writing deploys nothing.
     `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
     [proceedingId, filingId, JOB_BOARD_KIND]
   );
@@ -409,7 +409,7 @@ function fetchStruckSubmissionIds(dbPath: string, proceedingId: number): Set<num
  * reserved orders (the 🏛️ ladder and 🦵), held-in-reserve submission bodies (🧾, 📚, the rungs, 📌
  * and 👤), and lead, failed, killed and overruled statements of law (`includeLeadStatements`),
  * with their 🔬, 📇 and 🏅. An order or submission deployed only on another filing records
- * nothing here (#959). The entries are what the Job Board's Proposals, job eligibility, dead_key,
+ * nothing here (#959). The entries are what the Milestone's Proposals, job eligibility, dead_key,
  * board_card and note_up_due read; forms.ts tags them with a never-delivered doc, so they reach no
  * completion criterion.
  *
