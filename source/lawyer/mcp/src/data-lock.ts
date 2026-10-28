@@ -4,7 +4,7 @@
 // older bundle and one on a newer bundle would take different locks and both write at once (#185).
 
 import { createHash, randomUUID } from "node:crypto";
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, writeSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, unlinkSync, writeSync } from "node:fs";
 import { homedir } from "node:os";
 import { win32 as pathWin32 } from "node:path";
 
@@ -57,11 +57,19 @@ export async function acquireLock(site: LockSite, target: string, env: NodeJS.Pr
   const lock = hostLocalFile(site, target, "lock", env);
   let brokeStale = false;
 
-  for (let attempt = 0; attempt < site.attempts; attempt++) {
+  // A broken stale lock earns one extra attempt, so breaking it on the last attempt still takes it.
+  for (let attempt = 0; attempt < site.attempts + (brokeStale ? 1 : 0); attempt++) {
     try {
       const token = randomUUID();
       const fd = openSync(lock, "wx");
-      writeSync(fd, JSON.stringify({ pid: process.pid, ts: new Date().toISOString(), [site.recordField]: target, token }));
+      try {
+        writeSync(fd, JSON.stringify({ pid: process.pid, ts: new Date().toISOString(), [site.recordField]: target, token }));
+      } catch (writeErr) {
+        // The file is ours (created with "wx" above); left in place it would wedge the store.
+        closeSync(fd);
+        unlinkSync(lock);
+        throw writeErr;
+      }
       closeSync(fd);
       return {
         brokeStale,

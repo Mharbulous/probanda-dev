@@ -1,4 +1,4 @@
-// build-stamp: 3b0de41e86f3
+// build-stamp: 4d281f3a4e97
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -80127,7 +80127,7 @@ function missingMessage(subject, env, tried) {
 
 // src/data-lock.ts
 import { createHash as createHash2, randomUUID as randomUUID4 } from "node:crypto";
-import { closeSync as closeSync2, existsSync as existsSync5, mkdirSync as mkdirSync2, openSync as openSync2, readFileSync as readFileSync4, statSync as statSync2, writeSync as writeSync2 } from "node:fs";
+import { closeSync as closeSync2, existsSync as existsSync5, mkdirSync as mkdirSync2, openSync as openSync2, readFileSync as readFileSync4, statSync as statSync2, unlinkSync as unlinkSync3, writeSync as writeSync2 } from "node:fs";
 import { homedir as homedir5 } from "node:os";
 import { win32 as pathWin323 } from "node:path";
 
@@ -80216,11 +80216,17 @@ function hostLocalFile(site, target, suffix, env) {
 async function acquireLock(site, target, env) {
   const lock = hostLocalFile(site, target, "lock", env);
   let brokeStale = false;
-  for (let attempt = 0; attempt < site.attempts; attempt++) {
+  for (let attempt = 0; attempt < site.attempts + (brokeStale ? 1 : 0); attempt++) {
     try {
       const token = randomUUID4();
       const fd = openSync2(lock, "wx");
-      writeSync2(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), [site.recordField]: target, token }));
+      try {
+        writeSync2(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), [site.recordField]: target, token }));
+      } catch (writeErr) {
+        closeSync2(fd);
+        unlinkSync3(lock);
+        throw writeErr;
+      }
       closeSync2(fd);
       return {
         brokeStale,
@@ -81178,7 +81184,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "3b0de41e86f3";
+var BUILD_STAMP = false ? null : "4d281f3a4e97";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -82380,7 +82386,7 @@ import { win32 as pathWin327 } from "node:path";
 
 // src/submission/render-job.ts
 import { randomUUID as randomUUID5 } from "node:crypto";
-import { closeSync as closeSync3, existsSync as existsSync9, openSync as openSync3, readFileSync as readFileSync9, renameSync, statSync as statSync5, unlinkSync as unlinkSync3, utimesSync, writeFileSync as writeFileSync2, writeSync as writeSync3 } from "node:fs";
+import { closeSync as closeSync3, existsSync as existsSync9, openSync as openSync3, readFileSync as readFileSync9, renameSync, statSync as statSync5, unlinkSync as unlinkSync4, utimesSync, writeFileSync as writeFileSync2, writeSync as writeSync3 } from "node:fs";
 import { join as join13 } from "node:path";
 
 // src/submission/lock.ts
@@ -82487,7 +82493,7 @@ function writeStatusFile(target, text8, { attempts = 10, delayMs = 50 } = {}) {
     }
   }
   try {
-    unlinkSync3(temp);
+    unlinkSync4(temp);
   } catch {
   }
   return code;
@@ -84239,7 +84245,7 @@ function resolveParticipant(matterRoot, name, env = process.env) {
 
 // src/case/stage-result.ts
 import { randomUUID as randomUUID7 } from "node:crypto";
-import { mkdirSync as mkdirSync7, readdirSync as readdirSync10, statSync as statSync8, unlinkSync as unlinkSync4, writeFileSync as writeFileSync6 } from "node:fs";
+import { mkdirSync as mkdirSync7, readdirSync as readdirSync10, statSync as statSync8, unlinkSync as unlinkSync5, writeFileSync as writeFileSync6 } from "node:fs";
 import { homedir as homedir7 } from "node:os";
 import { join as join19 } from "node:path";
 var KEEP_MS = 7 * 24 * 60 * 60 * 1e3;
@@ -84262,7 +84268,7 @@ function stageResult(result, env = process.env) {
   const now = Date.now();
   for (const name of readdirSync10(dir)) {
     const file = join19(dir, name);
-    if (name.endsWith(".json") && now - statSync8(file).mtimeMs > KEEP_MS) unlinkSync4(file);
+    if (name.endsWith(".json") && now - statSync8(file).mtimeMs > KEEP_MS) unlinkSync5(file);
   }
   const resultId = randomUUID7();
   const text8 = JSON.stringify(result);
@@ -85225,7 +85231,7 @@ async function timecampingDataBulkUpsert(path, env = process.env) {
 }
 
 // src/migrate-backups.ts
-import { existsSync as existsSync17, readdirSync as readdirSync11, unlinkSync as unlinkSync5 } from "node:fs";
+import { existsSync as existsSync17, readdirSync as readdirSync11, unlinkSync as unlinkSync6 } from "node:fs";
 import { basename as basename3, dirname as dirname10, join as join24 } from "node:path";
 var STAMP = /^\.bak-\d{8}T\d{6}Z(-\d+)?$/;
 function timestampedBackups(dbPath) {
@@ -85241,7 +85247,7 @@ function pruneBackups(dbPath, before) {
   for (const f3 of all) {
     if (f3 === kept) continue;
     try {
-      unlinkSync5(join24(dirname10(dbPath), f3));
+      unlinkSync6(join24(dirname10(dbPath), f3));
     } catch (err) {
       warnings.push(`could not remove the older migration backup ${f3} (${err.message}); the migrate succeeded and ${kept} is the backup to keep`);
     }
@@ -88873,7 +88879,7 @@ import { readFileSync as readFileSync20 } from "node:fs";
 
 // src/knowledge/fetched.ts
 import { createHash as createHash6 } from "node:crypto";
-import { copyFileSync as copyFileSync2, existsSync as existsSync23, readdirSync as readdirSync13, readFileSync as readFileSync19, realpathSync as realpathSync4, unlinkSync as unlinkSync6 } from "node:fs";
+import { copyFileSync as copyFileSync2, existsSync as existsSync23, readdirSync as readdirSync13, readFileSync as readFileSync19, realpathSync as realpathSync4, unlinkSync as unlinkSync7 } from "node:fs";
 import { win32 as pathWin3211 } from "node:path";
 function savedCopyOf(raw, record2, front, seams) {
   const label2 = "knowledge__write.saved_copy";
@@ -88963,7 +88969,7 @@ function deleteUnreferencedPdfs(hashes, seams, label2) {
       const pdf = pathWin3211.join(fetched, host.name, name);
       if (!existsSync23(pdf)) continue;
       try {
-        unlinkSync6(pdf);
+        unlinkSync7(pdf);
       } catch (err) {
         if (err.code === "ENOENT") continue;
         throw err;
@@ -93949,7 +93955,7 @@ async function submissionDataSetStep(args, env = process.env) {
 }
 
 // src/submission/writing-folder.ts
-import { existsSync as existsSync28, mkdirSync as mkdirSync11, readdirSync as readdirSync14, readFileSync as readFileSync24, renameSync as renameSync5, rmdirSync, statSync as statSync11, unlinkSync as unlinkSync7 } from "node:fs";
+import { existsSync as existsSync28, mkdirSync as mkdirSync11, readdirSync as readdirSync14, readFileSync as readFileSync24, renameSync as renameSync5, rmdirSync, statSync as statSync11, unlinkSync as unlinkSync8 } from "node:fs";
 import { dirname as dirname14, extname as extname2, join as join31 } from "node:path";
 var GENERAL_DOCUMENT_TYPE = "General_writing";
 var OLD_BOARD_FILES = ["Job Board.html", "Work Board.html", "Work Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
@@ -94094,7 +94100,7 @@ function emptyLegacyFolder(legacy, dir, row2, current) {
     }
     for (const copy of /* @__PURE__ */ new Set([f3.file_name, name])) {
       const path = join31(dir, copy);
-      if (existsSync28(path) && readExistingRevision(path) !== void 0) unlinkSync7(path);
+      if (existsSync28(path) && readExistingRevision(path) !== void 0) unlinkSync8(path);
     }
     if (existsSync28(join31(dir, name))) {
       moveInto(src, archive, `${labels.get(f3.document_type)} @rev${legacy.manifest?.stamp.revision} ${nowLabel()}${extname2(f3.file_name)}`);
@@ -94110,7 +94116,7 @@ function emptyLegacyFolder(legacy, dir, row2, current) {
   }
   for (const e3 of readdirSync14(legacy.dir)) {
     const path = join31(legacy.dir, e3);
-    if (e3 === LEGACY_MANIFEST_FILE || OLD_BOARD_FILES.includes(e3)) unlinkSync7(path);
+    if (e3 === LEGACY_MANIFEST_FILE || OLD_BOARD_FILES.includes(e3)) unlinkSync8(path);
     else moveInto(path, archive, e3);
   }
   rmdirSync(legacy.dir);
@@ -94137,7 +94143,7 @@ function moveCaseDataMockups(dbPath) {
     const path = join31(root, entry2.name);
     if (!entry2.isDirectory()) {
       if (entry2.name === "matter-pages-state.json") moveInto(path, records, entry2.name);
-      else if (OLD_BOARD_FILES.includes(entry2.name)) unlinkSync7(path);
+      else if (OLD_BOARD_FILES.includes(entry2.name)) unlinkSync8(path);
       else moveInto(path, older, entry2.name);
       continue;
     }
@@ -95149,7 +95155,7 @@ var MATERIAL_FACTS = {
 
 // src/page-api/token.ts
 import { createHmac as createHmac2, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
-import { existsSync as existsSync30, linkSync as linkSync2, mkdirSync as mkdirSync13, readFileSync as readFileSync25, unlinkSync as unlinkSync8, writeFileSync as writeFileSync9 } from "node:fs";
+import { existsSync as existsSync30, linkSync as linkSync2, mkdirSync as mkdirSync13, readFileSync as readFileSync25, unlinkSync as unlinkSync9, writeFileSync as writeFileSync9 } from "node:fs";
 import { dirname as dirname15, join as join32 } from "node:path";
 var DEFAULT_PAGE_API_PORT = 47615;
 var SECRET_FILE = "page-api.secret";
@@ -95178,7 +95184,7 @@ function pageApiSecret(env) {
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
     } finally {
-      unlinkSync8(temp);
+      unlinkSync9(temp);
     }
   }
   const secret = readFileSync25(path);
@@ -99274,7 +99280,7 @@ function readSchemaVersion(dbPath) {
 }
 
 // src/submission/forms/mockup-files.ts
-import { existsSync as existsSync34, mkdirSync as mkdirSync16, renameSync as renameSync7, unlinkSync as unlinkSync9 } from "node:fs";
+import { existsSync as existsSync34, mkdirSync as mkdirSync16, renameSync as renameSync7, unlinkSync as unlinkSync10 } from "node:fs";
 import { basename as basename7, dirname as dirname21, extname as extname3, join as join41 } from "node:path";
 function existingMockupPaths(dbPath, filingId) {
   const manifest = readManifest(dbPath, filingId);
@@ -99326,7 +99332,7 @@ function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
   for (const name of names) {
     const file = join41(dir, name);
     try {
-      if (existsSync34(file)) unlinkSync9(file);
+      if (existsSync34(file)) unlinkSync10(file);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
     }
@@ -104409,7 +104415,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
 }
 
 // src/submission/scrutiny-review.ts
-import { copyFileSync as copyFileSync3, existsSync as existsSync44, mkdirSync as mkdirSync18, mkdtempSync, readdirSync as readdirSync23, readFileSync as readFileSync30, realpathSync as realpathSync12, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync10, writeFileSync as writeFileSync11 } from "node:fs";
+import { copyFileSync as copyFileSync3, existsSync as existsSync44, mkdirSync as mkdirSync18, mkdtempSync, readdirSync as readdirSync23, readFileSync as readFileSync30, realpathSync as realpathSync12, renameSync as renameSync8, rmSync as rmSync2, unlinkSync as unlinkSync11, writeFileSync as writeFileSync11 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
 import { win32 as pathWin3222 } from "node:path";
 
@@ -104883,7 +104889,7 @@ function pathSafe(name) {
 function publish2(folder, files) {
   mkdirSync18(folder, { recursive: true });
   for (const entry2 of readdirSync23(folder)) {
-    if (OWN_FILE.test(entry2)) unlinkSync10(pathWin3222.join(folder, entry2));
+    if (OWN_FILE.test(entry2)) unlinkSync11(pathWin3222.join(folder, entry2));
   }
   for (const file of files) {
     const final = pathWin3222.join(folder, file.name);
@@ -108256,7 +108262,7 @@ async function writePastSuggestionsPage(env = process.env, options = {}) {
 
 // src/suggestions/card.ts
 import { randomUUID as randomUUID11 } from "node:crypto";
-import { existsSync as existsSync51, unlinkSync as unlinkSync11 } from "node:fs";
+import { existsSync as existsSync51, unlinkSync as unlinkSync12 } from "node:fs";
 import { join as join52 } from "node:path";
 
 // src/suggestions/crosscheck.ts
@@ -110271,7 +110277,7 @@ async function rejectMockup(cardId, n3, reason, deps) {
   });
   if (result.outcome === "rejected") {
     const path = mockupPagePath(cardId, n3, deps.env);
-    if (existsSync51(path)) unlinkSync11(path);
+    if (existsSync51(path)) unlinkSync12(path);
   }
   return result;
 }
