@@ -4,13 +4,13 @@
 // are held to the same behaviour (ADR 0013's order).
 
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, normalize } from "node:path";
 import test, { after } from "node:test";
 
 import { resolverText } from "../scripts/resolver.mjs";
+import { writeCaseData } from "./helpers/matter-data-fixture.mjs";
 
 const { caseDataFolder } = await import("../build/case/backend.js");
 
@@ -21,16 +21,13 @@ after(() => scratches.forEach((dir) => rmSync(dir, { recursive: true, force: tru
 const env = { ...process.env };
 delete env.COCLERK_CASE_DATA_ROOT;
 
-function writeDb(folder, metadata) {
+/** A real main.sqlite from /matter-data's canonical schema, holding `metadata` as matter_metadata rows. */
+function writeDb(folder, metadata = {}) {
   mkdirSync(folder, { recursive: true });
-  const python = process.env.COCLERK_PYTHON || "python";
-  const result = spawnSync(
-    python,
-    ["-c", "import json,sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('PRAGMA user_version = 90'); m=json.loads(sys.argv[2]); c.execute('CREATE TABLE matter_metadata(key TEXT PRIMARY KEY, value TEXT)') if m else None; c.executemany('INSERT INTO matter_metadata VALUES (?, ?)', m.items()) if m else None; c.commit(); c.close()",
-      join(folder, "main.sqlite"), JSON.stringify(metadata ?? {})],
-    { encoding: "utf-8" },
-  );
-  if (result.status !== 0) throw new Error(`fixture Python failed: ${result.stderr}`);
+  const quote = (value) => `'${String(value).replace(/'/g, "''")}'`;
+  writeCaseData(folder, Object.entries(metadata)
+    .map(([key, value]) => `INSERT INTO matter_metadata (key, value) VALUES (${quote(key)}, ${quote(value)});`)
+    .join("\n"));
 }
 
 /** A litigation library holding one matter folder whose pointer stores `stored`. */
