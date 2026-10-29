@@ -116,6 +116,8 @@ From Brahm's rulings of 2026-10-28. The plan is `docs/Plans/2026-10-29_tokenecon
 - **Tool pruning off.** The Probanda copy turns tool pruning off, so it never writes a user's settings file.
 - **The red tests under this design.** R5 is restated: a new Cowork session's `te status --json` reports `loopguard.envelope` 38 at its first prompt. R6 no longer applies, since nothing is folded across sessions. R7 stays FAIL: hooks do not call tools, and this design needs none. Done also needs a staged loop in Cowork to get a redirect.
 
+**Green run, 2026-10-29: PASS** on 0.2.0, in one new Cowork session in `te-cowork-test`. R1 to R4, R5 as restated and R10 passed, and the staged loop got a redirect at tool call 22, logged with `envelope` 38.0 and `shadow` false. R8 and R9 were not rerun: they tested Cowork with a probe hook that no longer ships, and the redirect reaching the model shows R9 again. The evidence is in the fork's `docs/PLUGIN.md` §3, "Claude Cowork, 2026-10-29". For step e: a Cowork session is never folded, so the ledger's `nudges` stays 0 there; count redirects from `events.jsonl`.
+
 Open question:
 
 - The measured gain. Cowork already defers tools, so the saving may be small, and every judge wake in Cowork is now paid (26k to 148k effective tokens each on the PC). The green stage measures it before the refactor.
