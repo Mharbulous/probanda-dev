@@ -17,6 +17,12 @@ the caller's, read through matter_data__query (conventions §10).
         the §6 decision  ->  the SQL script for matter_data__execute
     python supersede_draft.py rehash-sql < request.json
         {"old": sha256, "new": sha256, "file_path": "..."}  ->  the §6b SQL script
+    python supersede_draft.py probe < {}
+        ->  §4's pair probe SQL
+
+`matter_data__execute`'s generator imports `generate` and runs `emit-sql` (after
+the probe and `fold-plan`) or `rehash-sql` on the host, so their SQL never
+reaches the model (ingest orchestrator spec 2.5).
 
 A refused request prints "REFUSED: <reason>" on stderr and exits 2. Standard
 library only.
@@ -63,16 +69,24 @@ def run(command, request):
         return fn['emit_sql'](request)
     if command == 'rehash-sql':
         return fn['rehash_sql'](request.get('old'), request.get('new'), request.get('file_path'))
+    if command == 'probe':
+        return _fenced(_OPERATION, 'sql', '-- supersede-draft pair probe')
     raise ValueError(f'unknown command {command!r}')
+
+
+def generate(request):
+    """matter_data__execute's generator (ingest orchestrator spec 2.5): `run` for the command the
+    request names, imported by the data server over PYTHONPATH."""
+    return run(request['command'], request)
 
 
 def main(argv):
     if len(argv) != 2:
-        print('usage: supersede_draft.py candidates|rank|fold-plan|emit-sql|rehash-sql < request.json', file=sys.stderr)
+        print('usage: supersede_draft.py candidates|rank|fold-plan|emit-sql|rehash-sql|probe < request.json', file=sys.stderr)
         return 1
     try:
         result = run(argv[1], json.load(sys.stdin))
-    except (ValueError, KeyError) as exc:
+    except (ValueError, KeyError, LookupError) as exc:
         print(f'REFUSED: {exc}', file=sys.stderr)
         return 2
     print(result if isinstance(result, str) else json.dumps(result, indent=2))
