@@ -18,5 +18,57 @@
         "content_sha256": "a0b1b80fea406c1e647987e3408fc731a8db950156fe46a873194a592038327e"
       }
     ]
+  },
+  {
+    "store": "drafting-data",
+    "hop": "80 -> 81",
+    "date": "2026-10-29",
+    "ruling": "Brahm, 2026-10-29: \"I rule that the drafting-data hop 80 -> 81 may stand. It rebuilds board_attachments only to widen the existing CHECK on kind by one value, 'opposing_filing', for another party's filed document attached to a Milestone. It adds no table, column or file per tag type or link role, and the drafting-data store relies on the Exception no more than it already did. Record the 11 problems that check_publishable.py --propose-ruling lists for this hop.\"",
+    "problems": [
+      {
+        "message": "forbidden file type",
+        "content_sha256": "3e0cb43655d35109f004066290a121b9e95525b2b462d3c035588dd6b7beb9da"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "d4d7aafd4ae3891cc91b46fac7fab7c9bce42f0312a52ebf7b2f2045072813bf"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "d41295f90479f693dc9a24b7f6fda5b90592f502af064be9d9548cc15ac37e9d"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "99b35a911ccc88a0af7b6e032acc3740bd86fbd66833fd07ebc2928000e5bd1b"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "c0e7b9094123a1298aa3cbb940dd2dd6fe17b974a8b14e37c36be719fea8634a"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "909f5a49f580d7b4f4522310834c43d5b83e856ce0bfc66e8f2cbebd7532133a"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "fa158a944a4bba6f8f3dcf861320ecae4eb66747f077abfc9a9d16e03eb54f9b"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "659ec1725d4704750e1d48f033e9b017346b6aff379849b2418aadf69b1cc639"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "87fe890b77de9ccab1b8438ac80ac3a583c2c6fc9811537d021bac59126aa80b"
+      },
+      {
+        "message": "contains schema DDL",
+        "content_sha256": "269efdf445a4051be44ad2f016948812ea43b9cc67dfc257694bae35e5c2aa42"
+      },
+      {
+        "message": "forbidden file type",
+        "content_sha256": "b81ae95f8ca996a12de3c6d2cd3d49b275ddce8faa4e7a28fec1ee55bce2055b"
+      }
+    ]
   }
 ]
