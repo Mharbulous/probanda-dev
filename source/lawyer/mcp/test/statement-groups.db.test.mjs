@@ -62,6 +62,7 @@ test("a good group commits, a failing group rolls back alone with its reason, an
   assert.match(out.failed[0].reason, /CHECK constraint/);
   assert.equal(out.failed[1].reason, "C is refused");
   assert.equal(out.results.length, 8, "one result per statement, a rolled-back group's included");
+  assert.deepEqual(out.results.slice(3, 7), Array(4).fill({ rowcount: 0, rows: [] }), "a rolled-back group's results read zero");
 });
 
 test("a failing statement outside any group rolls back everything", async (t) => {

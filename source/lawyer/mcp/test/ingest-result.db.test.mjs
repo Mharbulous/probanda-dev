@@ -214,11 +214,12 @@ test("an affidavit: Pass 1 writes the body partial, its exhibits are dispatched,
 
   const body = await stage({
     contract: "affidavit_body", contract_version: 1, ref: "f1",
-    flags: [{ kind: "privilege_signal", ref: "para. 3" }],
+    flags: [],
     deponent: { name: "Ada Quill", role: "plaintiff", basis_statement: "I am the plaintiff." },
+    sworn_date: "2026-03-01",
     body_facts: [
       { source_locator: "para. 2", description: "Ada Quill met the director on 1 March 2025.", category: "background", date_of_fact: "2025-03-01", basis_of_knowledge: "personal", informant: null },
-      { source_locator: "para. 3", description: "The loan was never repaid.", category: "breach", date_of_fact: null, basis_of_knowledge: "information_and_belief", informant: "Her lawyer" },
+      { source_locator: "para. 3", description: "The loan was never repaid.", category: "breach", date_of_fact: null, basis_of_knowledge: "information_and_belief", informant: "Her lawyer", informant_privileged: true },
     ],
     exhibit_inventory: [
       { letter: "A", description: "Loan agreement", referencing_locator: "para. 2", page_start: 3, page_end: 4 },

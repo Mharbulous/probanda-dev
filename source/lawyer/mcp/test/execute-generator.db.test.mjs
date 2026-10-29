@@ -89,7 +89,22 @@ test("the generator refuses a pair of two registered rows, another script and an
   await assert.rejects(execute(matterRoot, { generator: { script: "merge_authorities.py", args: { command: "emit-sql" } } }), /allowlisted/);
   await assert.rejects(execute(matterRoot, { generator: { script: "supersede_draft.py", args: { command: "candidates" } } }), /allowlisted/);
   await assert.rejects(execute(matterRoot, { sql_script: "SELECT 1", generator: emit({ superseded: 1, kept: 2 }) }), /sql_script or generator/);
+  await assert.rejects(execute(matterRoot, {}), /sql_script or generator/, "neither is refused too");
+  await assert.rejects(execute(matterRoot, { generator: { script: "constructor", args: { command: "emit-sql" } } }), /allowlisted/, "a name on Object's prototype is not on the list");
   assert.equal(sql(caseDataDir, "SELECT count(*) AS n FROM sources")[0].n, 2);
+});
+
+test("a generator on a run's call checks the lease, and an inline script of exactly 8 KB passes", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const { run_id } = await callTool({}, "matter_data__ingest_run", { matter_root: matterRoot, action: "begin", mode: "attended" });
+  const pair = { superseded: { file_path: "5. COURT FILE\\RCC draft.pdf", file_hash: H("d") }, kept: 2 };
+  await assert.rejects(execute(matterRoot, { generator: emit(pair), run_id: "00000000-0000-4000-8000-000000000000" }), (err) => err.code === "lease_lost");
+  assert.equal((await execute(matterRoot, { generator: emit(pair), run_id })).ok, true);
+  const head = "INSERT INTO sources (category, title) VALUES ('court', 'edge'); -- ";
+  const exact = head + "x".repeat(8192 - Buffer.byteLength(head));
+  assert.equal(Buffer.byteLength(exact), 8192);
+  assert.equal((await execute(matterRoot, { sql_script: exact, run_id })).ok, true, "the cap refuses only what is over 8 KB");
+  assert.equal(sql(caseDataDir, "SELECT count(*) AS n FROM sources WHERE title = 'edge'")[0].n, 1);
 });
 
 test("rehash-sql re-points the file's records to its new hash", async (t) => {
