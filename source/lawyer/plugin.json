@@ -55,7 +55,7 @@
         ]
       },
       {
-        "matcher": "mcp__.+mail_(send_email|forward_email|reply_to_email)",
+        "matcher": "mcp__.+_(send_email|forward_email|reply_to_email)$",
         "hooks": [
           {
             "type": "command",

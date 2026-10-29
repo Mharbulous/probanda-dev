@@ -43,6 +43,18 @@ def test_a_dry_run_must_be_true_itself():
     assert send(subject="Hi", dryRun="true").stdout != b""
 
 
+def test_the_matcher_catches_the_imap_send_and_reply_tools():
+    import re
+    plugin = json.loads((HOOK.parent.parent / "plugin.json").read_text(encoding="utf-8"))
+    matchers = [entry["matcher"] for entry in plugin["hooks"]["PreToolUse"]
+                if any("mail-send-gate.py" in " ".join(hook["args"]) for hook in entry["hooks"])]
+    assert len(matchers) == 1
+    for name in ("mcp__imap__imap_send_email", "mcp__imap__imap_reply_to_email", TOOL):
+        assert re.search(matchers[0], name), name
+    for name in ("mcp__imap__imap_save_draft", "mcp__imap__imap_send_email_preview"):
+        assert not re.search(matchers[0], name), name
+
+
 def test_its_own_error_allows_the_call_loudly():
     result = run("not json")
     assert result.returncode == 0
