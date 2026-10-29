@@ -10,7 +10,7 @@
 // the acknowledged results still to be written. `staged` records a bridged session's copies (§6.5).
 
 import { createHash, randomUUID } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, rmSync, truncateSync, unlinkSync, writeFileSync } from "node:fs";
+import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, readSync, renameSync, rmdirSync, rmSync, statSync, truncateSync, unlinkSync, writeFileSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
 
 import { BUILD_STAMP } from "../build-stamp.js";
@@ -116,10 +116,12 @@ const IMAGES_LEFT = "Some page images made for an ingest could not be deleted ye
 const RECORDS_LEFT = "Some working files an ingest keeps on this computer could not be checked or deleted, so they were left as they are. They will be tried again after a later ingest.";
 /** A report line when a plain begin displaces a run that still had results to record (m-6). */
 const DISPLACED = "An earlier ingest of this matter stopped before it finished. What it read but had not yet recorded was set aside, and those documents will be read again when they are next ingested.";
-/** A report line when a crash cut short the last step an earlier run saved (round 5, 1). */
-const STEP_LOST = "An earlier ingest of this matter was cut off while saving its progress. Its last step was not kept and may be done again.";
-/** A report line when begin cannot read an earlier run's record and takes the run over (round 5, 1). */
-const RUN_UNREADABLE = "The record of an earlier ingest of this matter could not be read, so that ingest was set aside. Anything it read but had not yet recorded will be read again when those documents are next ingested.";
+/** A report line when a crash cut short a step a run saved, this run's own included, or an older build
+ *  joined that step to the next (round 5, 1; round 6, N4, N7). */
+const STEP_LOST = "An ingest of this matter was cut off while saving its progress. One step it saved could not be read and may be done again.";
+/** A report line when begin cannot read an earlier run's record: a plain begin takes the run over, a
+ *  resume is refused (round 5, 1; round 6, N7). */
+const RUN_UNREADABLE = "The record of an earlier ingest of this matter could not be read. Anything it read but had not yet recorded will be read again when those documents are next ingested.";
 /** Report lines when end deletes, or cannot yet delete, what was read for a privilege question still open (round 5, 7). */
 const PRIVILEGED_DROPPED = "What was read from documents whose privilege question is still open was deleted as this ingest ended. They will be read again when they are next ingested.";
 const PRIVILEGED_LEFT = "Some of what was read from documents whose privilege question is still open could not be deleted yet. It is deleted within 7 days.";
@@ -149,15 +151,12 @@ function readLease(dir: string): Lease | null {
  *  indexer, another server's sweep) holds the file for a moment. */
 const HELD = ["EPERM", "EACCES", "EBUSY"];
 
-/** Written whole or not at all: a temp file in the same folder, then renamed over lease.json (M-1).
- *  A rename another program holds up is tried again for about a second, as graceful-fs does (round 5, 2). */
-function writeLease(dir: string, lease: Lease): void {
-  mkdirSync(dir, { recursive: true });
-  const temp = pathWin32.join(dir, "lease.tmp");
-  writeFileSync(temp, JSON.stringify(lease), "utf-8");
+/** Runs `op`, trying it again for about a second while another program holds its file up, as
+ *  graceful-fs does (round 5, 2; round 6, N5). */
+function whileHeld(op: () => void): void {
   for (let attempt = 1; ; attempt++) {
     try {
-      renameSync(temp, leasePath(dir));
+      op();
       return;
     } catch (err) {
       if (attempt >= 10 || !HELD.includes(String((err as NodeJS.ErrnoException).code))) throw err;
@@ -166,23 +165,47 @@ function writeLease(dir: string, lease: Lease): void {
   }
 }
 
+/** Written whole or not at all: a temp file in the same folder, then renamed over lease.json (M-1). */
+function writeLease(dir: string, lease: Lease): void {
+  mkdirSync(dir, { recursive: true });
+  const temp = pathWin32.join(dir, "lease.tmp");
+  writeFileSync(temp, JSON.stringify(lease), "utf-8");
+  whileHeld(() => renameSync(temp, leasePath(dir)));
+}
+
 const journalPath = (dir: string) => pathWin32.join(dir, "journal.jsonl");
-/** Run folders whose journal's last line a crash cut short mid-append, said at the next begin or end (round 5, 1). */
+/** Run folders whose journal's last line a crash cut short mid-append, or holds a line that cannot be
+ *  read, said at the next begin or end (round 5, 1; round 6, N4). */
 const torn = new Set<string>();
+/** Each unreadable journal line already put in `torn`, by folder and line number, so it is said once (N4). */
+const unreadableLines = new Set<string>();
+
+/** The journal's last byte, read through a handle rather than reading the whole journal (round 6, N6). */
+function lastByte(path: string): number | null {
+  const size = statSync(path).size;
+  if (size === 0) return null;
+  const fd = openSync(path, "r");
+  try {
+    const byte = Buffer.alloc(1);
+    readSync(fd, byte, 0, 1, size - 1);
+    return byte[0];
+  } finally {
+    closeSync(fd);
+  }
+}
 
 function journal(dir: string, event: string, runId: string, extra: Record<string, unknown> = {}): void {
   const line = JSON.stringify({ ts: new Date().toISOString(), event, run_id: runId, ...extra });
   const path = journalPath(dir);
   // A line a crash cut short is dropped before the next is added, so no line is ever joined to it.
-  if (existsSync(path)) {
+  if (existsSync(path) && ![null, 0x0a].includes(lastByte(path))) {
     const bytes = readFileSync(path);
-    const whole = bytes.lastIndexOf(0x0a) + 1;
-    if (whole < bytes.length) {
-      truncateSync(path, whole);
-      torn.add(dir);
-    }
+    truncateSync(path, bytes.lastIndexOf(0x0a) + 1);
+    torn.add(dir);
   }
-  appendFileSync(path, line + "\n", "utf-8");
+  // An append another program holds up is tried again, so a begin never leaves a lease it has just
+  // written with no journal line behind it (round 6, N5).
+  whileHeld(() => appendFileSync(path, line + "\n", "utf-8"));
 }
 
 function readJournal(dir: string): Event[] {
@@ -191,7 +214,23 @@ function readJournal(dir: string): Event[] {
   const lines = readFileSync(path, "utf-8").split("\n");
   // What follows the last newline is a line a crash cut short mid-append, never a whole event.
   if (lines.pop() !== "") torn.add(dir);
-  return lines.filter((l) => l.trim() !== "").map((l) => JSON.parse(l) as Event);
+  // A whole line that cannot be read (one an older build joined to a cut-short line) is skipped, and
+  // said once at the next begin or end, rather than block the matter for good (round 6, N4).
+  const events: Event[] = [];
+  lines.forEach((l, i) => {
+    if (l.trim() === "") return;
+    try {
+      events.push(JSON.parse(l) as Event);
+    } catch (err) {
+      if (!(err instanceof SyntaxError)) throw err;
+      const key = `${dir}\n${i}`;
+      if (!unreadableLines.has(key)) {
+        unreadableLines.add(key);
+        torn.add(dir);
+      }
+    }
+  });
+  return events;
 }
 
 /** The events of the run in the lease: from its last begin, through every takeover since. Records
@@ -918,6 +957,9 @@ export interface WriteRun {
   dispatched: string[];
   /** The call's results the run has already written (R6, N-11). */
   written: string[];
+  /** The call's results whose item failed after their ok reply was journaled: a repeat of the call
+   *  takes them as settled, as it does a result already written (round 6, N1). */
+  settled: string[];
 }
 
 /** ingest_result's run check and its record: renews the heartbeat, refuses lease_lost or
@@ -937,6 +979,10 @@ export async function runForWrite(matterRoot: string, runId: string, document: {
     const itemRef = document.ref !== undefined && dispatched.includes(document.ref) ? document.ref : null;
     const written = resultIds.filter((id) => events.some((e) => e.event === "write" && (e.outcome === "written" || e.outcome === "already_written")
       && ((e.result_ids as string[] | undefined) ?? []).includes(id)));
+    const settled = resultIds.filter((id) => {
+      const at = events.findIndex((e) => e.event === "ack" && e.ok === true && e.result_id === id);
+      return at >= 0 && events.slice(at + 1).some((e) => e.event === "ack" && e.ok === false && e.ref === events[at].ref);
+    });
     // A line's ref (f3, f3:so, f3:B) names its file by the part before the first colon.
     const route = document.ref !== undefined
       ? routes.find((r) => r.ref === document.ref?.split(":")[0]) ?? null
@@ -949,7 +995,7 @@ export async function runForWrite(matterRoot: string, runId: string, document: {
       answered.facts = ((inputs.ANSWERED_FACTS ?? []) as Array<{ fact_key: string }>).map((f) => f.fact_key);
       answered.relief = ((inputs.ANSWERED_RELIEF ?? []) as Array<{ relief_key: string }>).map((r) => r.relief_key);
     }
-    return { ok: true as const, mode: held.mode, route, answered, acked, itemRef, dispatched, written };
+    return { ok: true as const, mode: held.mode, route, answered, acked, itemRef, dispatched, written, settled };
   });
 }
 
@@ -1138,13 +1184,16 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
         }
         writeLease(dir, { ...lease, ended: lease.heartbeat });
         journal(dir, "end", runId, imagesLeft.length > 0 ? { images_left: true } : {});
-        // Privileged wording staged for a question still open, by this run or one it displaced, is
-        // not needed once the run has ended, so it never waits out the 7-day window (G4, round 5, 7).
-        const privileged = readJournal(dir).filter((e) => e.event === "write" && e.contract === "privileged")
-          .flatMap((e) => (e.result_ids as string[] | undefined) ?? []);
-        const dropped = dropStagedResults(privileged, env);
+        // Privileged wording staged for a question still open, by any run this folder's journal
+        // records, is not needed once the run has ended, so it never waits out the 7-day window (G4,
+        // round 5, 7). Nor is an exhibit's reading, one the reply's cap held back with its privilege
+        // question included (round 6, N2); one this computer cannot delete now waits out that window.
+        const writes = readJournal(dir).filter((e) => e.event === "write");
+        const idsOf = (contract: string) => writes.filter((e) => e.contract === contract).flatMap((e) => (e.result_ids as string[] | undefined) ?? []);
+        const dropped = dropStagedResults(idsOf("privileged"), env);
         if (dropped.deleted > 0) report.push(PRIVILEGED_DROPPED);
         if (dropped.left > 0) report.push(PRIVILEGED_LEFT);
+        dropStagedResults(idsOf("affidavit_exhibits"), env);
         if (torn.has(dir)) report.push(STEP_LOST);
         return { keys, reply: { ok: true, run_id: runId, ...reportLines(report) } };
       });

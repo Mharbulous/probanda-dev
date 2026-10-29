@@ -971,7 +971,7 @@ test("privilege questions the reply's cap left out are asked when the write is r
 test("end deletes the privileged wording staged for a question still open, and says so (round 5, 7)", async (t) => {
   const { matterRoot } = fixture(t);
   const { run_id } = await run(matterRoot, { action: "begin", mode: "attended", orchestrator: true });
-  const memo = { file_path: "3. CLIENT\memo.pdf", file_hash: "d".repeat(64) };
+  const memo = { file_path: "3. CLIENT\\memo.pdf", file_hash: "d".repeat(64) };
   const asking = await stage({ contract: "privileged", contract_version: 2, ref: "memo", document: { title: "Memo", category: "solicitor_client" }, facts: [],
     client_instructions: [{ party_name: "Someone Unknown", instructed_by: "Ada Quill", date: "2026-01-02", description: "Settle.", source_locator: "p1", status: "open" }] });
   const out = await callTool({}, "matter_data__ingest_result", { matter_root: matterRoot, run_id, document: { ...memo, store: "privileged" }, contract: "privileged",
@@ -982,4 +982,78 @@ test("end deletes the privileged wording staged for a question still open, and s
   assert.equal(ended.ok, true, JSON.stringify(ended));
   assert.equal(existsSync(stagedPath(asking.result_id)), false, "no privileged wording waits out the 7-day window");
   assert.equal(ended.report?.length, 1, JSON.stringify(ended));
+});
+
+// ---------------------------------------------------------------- sixth review (N1, N2, N3)
+
+const failedAcks = (runRoot, ref) => journalOf(runRoot).filter((e) => e.event === "ack" && e.ref === ref && e.ok === false).length;
+
+for (const [label, make, signalled] of [["rolled back with a privilege signal", SIGNALLED, true], ["failing its contract", (letter) => ({ ...EXHIBIT(letter), exhibit_letter: "C" }), false]]) {
+  test(`a repeated exhibit call settles an exhibit that failed in it, ${label}, rather than fail it again (round 6, N1)`, async (t) => {
+    const { matterRoot, caseDataDir, runRoot } = fixture(t);
+    const run_id = await exhibitsDispatched(matterRoot);
+    if (signalled) holdListed(caseDataDir, "B");
+    const a = await stage(EXHIBIT("A"));
+    const b = await stage(make("B"));
+    await run(matterRoot, { action: "status", run_id, ack: `ok f1:A ${a.result_id} 10` });
+    await run(matterRoot, { action: "status", run_id, ack: `ok f1:B ${b.result_id} 10` });
+    const ids = [a.result_id, b.result_id];
+    const first = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", ids);
+    assert.equal(first.outcome, "written", JSON.stringify(first));
+    assert.equal(existsSync(stagedPath(b.result_id)), !signalled);
+    const repeat = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", ids);
+    assert.notEqual(repeat.outcome, "refused", JSON.stringify(repeat));
+    assert.equal(failedAcks(runRoot, "f1:B"), 1, "one extraction, one failure");
+    const next = await run(matterRoot, { action: "next", run_id });
+    assert.deepEqual([next.dispatch.map((d) => d.ref), next.close], [["f1:B"], []], "read once more, not closed");
+    const alone = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [b.result_id]);
+    assert.deepEqual([alone.outcome, alone.report], ["refused", []], "a call of nothing but settled results writes nothing and says nothing again");
+    assert.equal(failedAcks(runRoot, "f1:B"), 1);
+  });
+}
+
+/** An affidavit with exhibits A to D dispatched, each read by `make` and acknowledged. Returns the run and the ids. */
+async function fourExhibits(matterRoot, make) {
+  const pages = ["Affidavit", "Body 2", ...["A", "B", "C", "D"].flatMap((x) => [`Exhibit ${x} stamp`, `${x} content`])];
+  const doc = file(matterRoot, "2026-03-01 AFF Quill.pdf", pdfBytes(pages));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "affidavit" }] });
+  const inventory = ["A", "B", "C", "D"].map((letter, i) => ({ letter, description: letter, referencing_locator: "para. 2", page_start: 3 + 2 * i, page_end: 4 + 2 * i }));
+  await byRef(matterRoot, run_id, "f1", "affidavit_body", [(await stage(BODY({ exhibit_inventory: inventory }))).result_id]);
+  assert.deepEqual((await run(matterRoot, { action: "next", run_id })).dispatch.map((d) => d.ref), ["f1:A", "f1:B", "f1:C", "f1:D"]);
+  const ids = [];
+  for (const letter of ["A", "B", "C", "D"]) {
+    const { result_id } = await stage(make(letter));
+    await run(matterRoot, { action: "status", run_id, ack: `ok f1:${letter} ${result_id} 10` });
+    ids.push(result_id);
+  }
+  return { run_id, ids };
+}
+
+test("end deletes an exhibit reading the reply's cap held back with its question (round 6, N2)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const { run_id, ids } = await fourExhibits(matterRoot, SIGNALLED);
+  const first = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", ids);
+  assert.ok(first.dropped > 0, JSON.stringify(first));
+  assert.ok(ids.some((id) => existsSync(stagedPath(id))), "the cap held a reading back");
+  assert.equal((await run(matterRoot, { action: "end", run_id })).ok, true);
+  assert.deepEqual(ids.map((id) => existsSync(stagedPath(id))), [false, false, false, false]);
+});
+
+test("report lines the reply's cap left out are counted, and each result alone shows its own (round 6, N3)", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const { run_id, ids } = await fourExhibits(matterRoot, SIGNALLED);
+  // Each exhibit already on file with no privilege hold: each signalled reading gets a report line, not an ask.
+  for (const letter of ["A", "B", "C", "D"]) {
+    sql(caseDataDir, `INSERT INTO sources (category, title, parent_source_id, ingestion_status, verified)
+      SELECT category, 'Exhibit ${letter}', source_id, 'complete', 0 FROM sources WHERE parent_source_id IS NULL AND title NOT LIKE 'Exhibit %'`);
+  }
+  const first = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", ids);
+  assert.equal(first.outcome, "written", JSON.stringify(first));
+  assert.deepEqual(first.ask, []);
+  assert.ok(Buffer.byteLength(JSON.stringify(first)) <= 600);
+  assert.ok(first.dropped > 0 && first.report.length + first.dropped === 4, JSON.stringify(first));
+  const lines = [];
+  for (const id of ids) lines.push(...(await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [id])).report);
+  assert.deepEqual(lines.map((l) => /^Exhibit (\w) may be privileged/.exec(l)?.[1]), ["A", "B", "C", "D"], JSON.stringify(lines));
 });

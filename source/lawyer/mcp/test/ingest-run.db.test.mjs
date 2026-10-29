@@ -300,3 +300,81 @@ test("a plain begin that cannot write its lease journals no takeover (round 5, 2
   }
   assert.deepEqual(journal(runRoot).map((e) => e.event), ["begin"]);
 });
+
+// ---------------------------------------------------------------- sixth review (N4, N5, N7)
+
+/** A line an older build joined to a cut-short one: whole, but not JSON. */
+const joinLine = (runRoot) => appendFileSync(join(runDir(runRoot), "journal.jsonl"),
+  '{"ts":"2026-10-29T00:00:00.000Z","event":"wri{"ts":"2026-10-29T00:00:01.000Z","event":"status","run_id":"x"}\n', "utf-8");
+const events = (runRoot) => readFileSync(join(runDir(runRoot), "journal.jsonl"), "utf-8").trim().split("\n")
+  .flatMap((l) => { try { return [JSON.parse(l).event]; } catch { return ["unreadable"]; } });
+
+test("a journal line that cannot be read is skipped, and the run's own end says so once (round 6, N4, N7)", async (t) => {
+  const { matterRoot, runRoot } = matterFixture(t);
+  const { run_id } = await begin(matterRoot);
+  joinLine(runRoot);
+  assert.equal((await run(matterRoot, { action: "status" })).active, true);
+  assert.equal((await run(matterRoot, { action: "next", run_id })).ok, true);
+  const ended = await run(matterRoot, { action: "end", run_id });
+  assert.equal(ended.ok, true, JSON.stringify(ended));
+  assert.equal(ended.report?.length, 1, JSON.stringify(ended));
+  assert.doesNotMatch(ended.report[0], DENY);
+  assert.doesNotMatch(ended.report[0], /earlier/, "the line was this run's own");
+  const again = await begin(matterRoot);
+  assert.equal(again.ok, true, JSON.stringify(again));
+  assert.equal(again.report, undefined, "said once");
+  assert.equal((await run(matterRoot, { action: "end", run_id: again.run_id })).report, undefined);
+  assert.deepEqual(events(runRoot), ["begin", "unreadable", "end", "begin", "end"]);
+});
+
+test("a plain begin over an unfinished run whose journal holds a line that cannot be read takes over and says so (round 6, N4)", async (t) => {
+  const { matterRoot, runRoot } = matterFixture(t);
+  await begin(matterRoot);
+  joinLine(runRoot);
+  ageHeartbeat(runRoot, 61);
+  const out = await begin(matterRoot, { orchestrator: true });
+  assert.equal(out.ok, true, JSON.stringify(out));
+  assert.equal(out.report?.length, 1, JSON.stringify(out));
+  assert.deepEqual(events(runRoot), ["begin", "unreadable", "takeover", "begin"]);
+});
+
+/** appendFileSync onto journal.jsonl fails `code` for the first `times` calls. Returns the undo. */
+function journalHeld(code, times) {
+  const saved = fs.appendFileSync;
+  let seen = 0;
+  fs.appendFileSync = (path, ...rest) => {
+    if (String(path).endsWith("journal.jsonl") && seen++ < times) throw Object.assign(new Error(`${code}: made by the test`), { code });
+    return saved(path, ...rest);
+  };
+  syncBuiltinESMExports();
+  return () => {
+    fs.appendFileSync = saved;
+    syncBuiltinESMExports();
+  };
+}
+
+test("a journal append another program holds up for a moment is tried again, so a begin leaves no lease unheld (round 6, N5)", async (t) => {
+  const { matterRoot, runRoot } = matterFixture(t);
+  await begin(matterRoot);
+  ageHeartbeat(runRoot, 61);
+  const undo = journalHeld("EBUSY", 2);
+  let out;
+  try {
+    out = await begin(matterRoot);
+  } finally {
+    undo();
+  }
+  assert.equal(out.ok, true, JSON.stringify(out));
+  assert.equal(lease(runRoot).run_id, out.run_id);
+  assert.deepEqual(journal(runRoot).map((e) => e.event), ["begin", "takeover", "begin"]);
+});
+
+test("a resume whose lease cannot be read says nothing was set aside (round 6, N7)", async (t) => {
+  const { matterRoot, runRoot } = matterFixture(t);
+  const first = await begin(matterRoot);
+  writeFileSync(join(runDir(runRoot), "lease.json"), '{"run_id": "x", "sta');
+  const out = await begin(matterRoot, { resume: first.run_id });
+  assert.equal(out.refused, "unknown_run", JSON.stringify(out));
+  assert.equal(out.report?.length, 1, JSON.stringify(out));
+  assert.doesNotMatch(out.report[0], /set aside/);
+});

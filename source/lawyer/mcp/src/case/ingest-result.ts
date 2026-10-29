@@ -90,7 +90,7 @@ export interface IngestResultOutput {
   ask: Ask[];
   post?: Array<{ pass: string; ref: string }>;
   report: string[];
-  /** How many ask or items entries were left out to keep the cap; a repeated call lists them. */
+  /** How many report lines, ask or items entries were left out to keep the cap (round 6, N3). */
   dropped?: number;
 }
 
@@ -100,6 +100,7 @@ const SAY_REFUSED: Record<string, string> = {
   store_change: "This document is already recorded in a different place, so it was not recorded again. It will be checked on its own once the run ends.",
   race: "Another copy of this document was recorded at the same moment, so this reading was not recorded. It will be checked on its own once the run ends.",
   invalid: "The reading of this document could not be used and will be read again.",
+  unknown_result: "The reading of this document could not be found and will be read again.",
   path_b: "This document may be privileged, so nothing was recorded from its reading. It will be read here instead, once its privilege is decided.",
   set_aside: "This document is a legal authority, so it was not recorded in this run. It will be ingested on its own once the run ends.",
   refused: "This document could not be recorded, so nothing from its reading was kept.",
@@ -173,11 +174,16 @@ function firmName(env: NodeJS.ProcessEnv): string | null {
 const flagged = (doc: Record<string, unknown>, kind: string) =>
   Array.isArray(doc.flags) && (doc.flags as Array<{ kind?: unknown } | null>).some((f) => f?.kind === kind);
 
-/** Keeps the reply within its cap (S-m4): report lines go first, then ask items, then items. */
+/** Keeps the reply within its cap (S-m4): report lines go first, then ask items, then items, each
+ *  counted, so the reply says something was left out (round 6, N3). */
 function fit(out: IngestResultOutput): IngestResultOutput {
   const size = () => Buffer.byteLength(JSON.stringify(out));
   let dropped = 0;
-  while (size() > RESULT_CAP && out.report.length > 1) out.report.pop();
+  while (size() > RESULT_CAP && out.report.length > 1) {
+    out.report.pop();
+    dropped += 1;
+    out.dropped = dropped;
+  }
   while (size() > RESULT_CAP && out.ask.length > 1) {
     out.ask.pop();
     dropped += 1;
@@ -283,6 +289,9 @@ async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dro
   // Each bad result with its own reason (N-9); the call is refused with the first.
   const bad: Array<{ id: string; reason: string }> = [];
   for (const id of args.result_ids) {
+    // A repeat of the call: a result whose item failed in an earlier call, its reading already
+    // dropped or to be read again, is settled there, never failed twice (round 6, N1).
+    if (run.settled.includes(id)) continue;
     const replyRef = run.acked[id] ?? (args.result_ids.length === 1 ? run.itemRef : null) ?? undefined;
     const path = stagedResultPath(id, env);
     const doc = readStaged(path);
@@ -316,7 +325,12 @@ async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dro
     return refused(bad[0].reason);
   }
   // Every result already written, and its staged copy gone: the repeat finds the write (R6, N-11).
-  if (args.result_ids.length > 0 && results.length === 0) return { outcome: "already_written", ask: [], report: [] };
+  // One whose every result failed earlier was said then (round 6, N1).
+  if (args.result_ids.length > 0 && results.length === 0) {
+    return args.result_ids.some((id) => run.written.includes(id))
+      ? { outcome: "already_written", ask: [], report: [] }
+      : { outcome: "refused", refused: "invalid", ask: [], report: [] };
+  }
   return write(args, env, run, filePath, fileHash, results, dropAlso);
 }
 
@@ -445,7 +459,7 @@ async function write(
   // The write has landed. A journal that misses it surfaces as an error (N14): the repeated call
   // finds the write already there (R6) and journals it then.
   const closedNow = await record({
-    result_ids: args.result_ids.filter((id) => !failedIds.has(id)), outcome,
+    result_ids: args.result_ids.filter((id) => !failedIds.has(id) && !run.settled.includes(id)), outcome,
     ...(args.result_ids.length === 0 ? { closed: true } : {}),
     ...(args.contract === "affidavit_exhibits" ? { closing: exhibits?.closing === true && failures.length === 0 } : {}),
     // Pass 1's exhibit list, so the exhibits are planned from the journal alone (N9).

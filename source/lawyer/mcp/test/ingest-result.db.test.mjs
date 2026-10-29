@@ -175,7 +175,10 @@ test("refusals: an unknown result, another contract, another file's result and a
   const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
   await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "facts" }, { ...other, kind: "facts" }] });
   const { result_id } = await stage(FACTS("f1"));
-  assert.equal((await write(matterRoot, run_id, { ref: "f1" }, "facts", ["00000000-0000-4000-8000-000000000000"])).refused, "unknown_result");
+  const unknown = await write(matterRoot, run_id, { ref: "f1" }, "facts", ["00000000-0000-4000-8000-000000000000"]);
+  assert.equal(unknown.refused, "unknown_result");
+  assert.equal(unknown.report.length, 1, "an unknown result is said in plain words (round 6, N1)");
+  assert.doesNotMatch(unknown.report[0], DENY);
   const body = await stage({ ...FACTS("f1"), contract: "affidavit_body" });
   assert.equal((await write(matterRoot, run_id, { ref: "f1" }, "facts", [body.result_id])).refused, "contract_mismatch");
   assert.equal((await write(matterRoot, run_id, { ref: "f2" }, "facts", [result_id])).refused, "contract_mismatch");
