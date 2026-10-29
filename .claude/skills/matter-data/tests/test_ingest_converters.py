@@ -41,7 +41,7 @@ def section(db):
 def run_plan(con, plan):
     """The data server's run_statements: guards refuse the whole call, a group rolls back alone."""
     params = plan["params"]
-    refused, failed, named, counts = [], [], {}, {}
+    refused, failed, named, counts, asks = [], [], {}, {}, []
     con.isolation_level = None
     con.execute("BEGIN")
     for n, st in enumerate(plan["statements"]):
@@ -51,17 +51,20 @@ def run_plan(con, plan):
             merged = {**params, **(st.get("params") or {})}
             con.execute(f"SAVEPOINT g_{n}")
             try:
-                done = []
+                done, asked = [], []
                 for s in st["statements"]:
                     cur = con.execute(s["sql"], merged)
                     rows = cur.fetchall()
                     if s.get("refuse") and rows:
                         raise LookupError(rows[0][0])
                     done.append((s.get("count"), cur.rowcount))
+                    if s.get("ask"):
+                        asked += [dict(zip([d[0] for d in cur.description], r)) for r in rows]
                 con.execute(f"RELEASE g_{n}")
                 for key, n_rows in done:
                     if key:
                         counts[key] = counts.get(key, 0) + max(n_rows, 0)
+                asks += asked
             except Exception as exc:  # noqa: BLE001 -- the helper's own rule
                 con.execute(f"ROLLBACK TO g_{n}")
                 con.execute(f"RELEASE g_{n}")
@@ -75,8 +78,10 @@ def run_plan(con, plan):
             refused += [r[0] for r in rows]
         if st.get("value_as"):
             named[st["value_as"]] = rows[0][0] if rows else None
+        if st.get("ask"):
+            asks += [dict(zip([d[0] for d in cur.description], r)) for r in rows]
     con.execute("ROLLBACK" if refused else "COMMIT")
-    return {"refused": refused, "failed": failed, "named": named, "counts": counts}
+    return {"refused": refused, "failed": failed, "named": named, "counts": counts, "asks": asks}
 
 
 class Converters(unittest.TestCase):
@@ -371,7 +376,7 @@ class Converters(unittest.TestCase):
         a = self.exhibit("A", flags=[{"kind": "privilege_signal", "ref": "p4"}])
         b = self.exhibit("B", flags=[{"kind": "privilege_signal", "ref": "p6"}])
         plan, out = self.write(ingest_affidavit, self.exhibits([a, b], expected=("A", "B", "C")))
-        self.assertEqual(plan["pending"], ["A", "B"])
+        self.assertEqual([(a["kind"], a["ref"]) for a in out["asks"]], [("privilege", "A")], "B's group rolled back")
         self.assertEqual([ref for ref, _ in out["failed"]], ["B"])
         self.assertEqual(self.q("SELECT title, privilege_status, ingestion_status, verified FROM sources WHERE parent_source_id IS NOT NULL ORDER BY source_id"),
                          [("Exhibit B", None, "failed", 0), ("Exhibit A — Doc A", "pending", "complete", 0)])
@@ -423,6 +428,24 @@ class Converters(unittest.TestCase):
         self.assertEqual(self.q("SELECT title, ingestion_status, privilege_status FROM sources WHERE parent_source_id IS NOT NULL"),
                          [("Exhibit A — Doc A", "complete", "pending")], "a re-read never changes privilege_status")
         self.assertEqual(self.q("SELECT count(*) FROM evidence_links"), [(0,)])
+
+    def test_a_cleared_exhibit_re_read_with_a_privilege_signal_stays_cleared_takes_links_and_is_not_asked(self):
+        self.write_body()
+        self.con.execute("INSERT INTO sources (category, title, parent_source_id, ingestion_status, verified, privilege_status) "
+                         "VALUES ('court', 'Exhibit A', 1, 'failed', 2, 'cleared')")
+        a = self.exhibit("A", flags=[{"kind": "privilege_signal", "ref": "p4"}])
+        _, out = self.write(ingest_affidavit, self.exhibits([a], expected=("A",)))
+        self.assertEqual(self.q("SELECT ingestion_status, privilege_status FROM sources WHERE parent_source_id IS NOT NULL"),
+                         [("complete", "cleared")])
+        self.assertEqual(self.q("SELECT count(*) FROM evidence_links"), [(1,)], "the stored status decides the links")
+        self.assertEqual(out["asks"], [], "a privilege already decided is not asked again")
+
+    def test_a_failed_exhibit_held_pending_re_read_without_a_signal_is_asked_as_pending(self):
+        self.write_body()
+        self.con.execute("INSERT INTO sources (category, title, parent_source_id, ingestion_status, verified, privilege_status) "
+                         "VALUES ('court', 'Exhibit A', 1, 'failed', 2, 'pending')")
+        _, out = self.write(ingest_affidavit, self.exhibits([self.exhibit("A")], expected=("A",)))
+        self.assertEqual([(a["kind"], a["ref"]) for a in out["asks"]], [("privilege", "A")])
 
     def test_a_group_that_rolls_back_leaves_its_fallback_row_which_the_next_reading_reuses(self):
         self.write_body()

@@ -24,7 +24,9 @@ naming no expected letter fails that exhibit alone. An
 exhibit is deduplicated by (parent, letter in its title); a row registered
 `failed` is reused and refreshed. `needs_human` or an uncertain stamp letter
 writes it `verified = 2`; a privilege signal writes it as Path B's Unclear
-branch (facts only, `privilege_status = 'pending'`) and asks. Each exhibit's
+branch (facts only, `privilege_status = 'pending'`). The links and the
+privilege ask follow the row's status as stored: a row already cleared keeps
+it and takes its links, and a row pending takes none and is asked. Each exhibit's
 group is followed by a fallback group that, when the exhibit's own group rolled
 back, records it `failed` at `verified = 2` with an `UNCONFIRMED:` note; an
 exhibit failing its contract is recorded the same way. Either is returned in
@@ -147,12 +149,20 @@ FROM (SELECT (SELECT min(x.fact_id) FROM main.facts x WHERE x.source_id = {_EXHI
              json_extract(f.value, '$.evidence.notes') AS notes, f.key AS seq
       FROM json_each(:ex, '$.facts') f
       WHERE json_type(f.value, '$.evidence') = 'object'
-        AND json_extract(:ex, '$.privilege_status') IS NULL
         AND (SELECT privilege_status FROM main.sources WHERE source_id = {_EXHIBIT}) IS NOT 'pending') n
 WHERE NOT EXISTS (SELECT 1 FROM main.evidence_links x
                   WHERE x.source_id = {_EXHIBIT} AND x.fact_id = n.fact_id AND x.valid_to IS NULL)
 ORDER BY n.seq
 """
+
+# The privilege ask follows the row as stored after the refresh, not the reading (m-7): a row already
+# cleared is not asked again, and a row held pending is asked whether or not this reading signals it.
+EXHIBIT_PRIVILEGE_ASK = {'sql': f"""
+SELECT 'privilege' AS kind, json_extract(:ex, '$.letter') AS ref,
+       'Exhibit ' || json_extract(:ex, '$.letter') || ' may be privileged. Is it privileged, not privileged, '
+       || 'or unclear for now? Its facts are held back until you decide.' AS say
+WHERE (SELECT privilege_status FROM main.sources WHERE source_id = {_EXHIBIT}) = 'pending'
+""", 'ask': True}
 
 FINAL_STATUS = f"""
 UPDATE main.sources
@@ -287,7 +297,7 @@ def _exhibits_plan(request, read):
     if request.get('results') and not expected:
         # No exhibit list: writing one would complete the body on the first exhibit (S-M6).
         return {'problems': ['no exhibit list is known for this affidavit']}
-    groups, written, asks, invalid, pending = [], [], [], [], []
+    groups, written, invalid = [], [], []
     for entry in request.get('results') or []:
         letter = (entry.get('ref') or '').rsplit(':', 1)[-1]
         if not LETTER.match(letter) or letter not in expected:
@@ -301,11 +311,6 @@ def _exhibits_plan(request, read):
             # A result that fails its contract is recorded for review and read once more (spec 2.3, R5).
             ex = _failed_exhibit(letter, NOTE_FAILED)
             invalid.append(letter)
-        if ex['privilege_status']:
-            pending.append(letter)
-            asks.append({'kind': 'privilege', 'ref': letter,
-                         'say': f'Exhibit {letter} may be privileged. Is it privileged, not privileged, '
-                                'or unclear for now? Its facts are held back until you decide.'})
         groups.append(_group(ex))
         # Recorded for review when the group above rolled back (a constraint, spec 2.3).
         groups.append(_group(_failed_exhibit(letter, NOTE_FAILED), 'fallback ' + letter, register_only=True))
@@ -326,8 +331,8 @@ def _exhibits_plan(request, read):
         report.append('Exhibits ' + ', '.join(twice)[:120] + ' could not be read after two attempts and are '
                       'marked for review.')
     return {'params': {'doc': json.dumps(payload, ensure_ascii=False)}, 'statements': statements,
-            'post': [], 'markers': [], 'asks': asks, 'report': report, 'title': None, 'date': None,
-            'invalid': invalid, 'pending': pending}
+            'post': [], 'markers': [], 'asks': [], 'report': report, 'title': None, 'date': None,
+            'invalid': invalid}
 
 
 def _group(ex, ref=None, register_only=False):
@@ -335,7 +340,7 @@ def _group(ex, ref=None, register_only=False):
     if not register_only:
         statements += [{'sql': REFRESH_FAILED_EXHIBIT},
                        {'sql': EXHIBIT_FACTS, 'count': 'facts'},
-                       {'sql': EXHIBIT_LINKS, 'count': 'links'}]
+                       {'sql': EXHIBIT_LINKS, 'count': 'links'}, EXHIBIT_PRIVILEGE_ASK]
     return {'ref': ref or ex['letter'], 'params': {'ex': json.dumps(ex, ensure_ascii=False)},
             'statements': statements}
 

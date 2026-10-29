@@ -129,7 +129,7 @@ test("a routed pleading is dispatched by id, its inputs served, and its staged r
   assert.equal(again.running, 1);
 
   const { result_id } = await stage(FACTS("f1"));
-  const out = await write(matterRoot, run_id, doc, "facts", [result_id]);
+  const out = await write(matterRoot, run_id, { ref: "f1" }, "facts", [result_id]);
   assert.equal(out.outcome, "written", JSON.stringify(out));
   assert.deepEqual(out.counts, { facts: 2, positions: 2, relief: 1, links: 0, exhibits: 0 });
   assert.ok(Buffer.byteLength(JSON.stringify(out)) <= 600, "the reply keeps its cap");
@@ -156,7 +156,7 @@ test("a party name that does not resolve is asked, never guessed, and the answer
   const result = FACTS("f1");
   result.fact_positions[0].party_name = "Plum Holdings";
   const { result_id } = await stage(result);
-  const asked = await write(matterRoot, run_id, doc, "facts", [result_id]);
+  const asked = await write(matterRoot, run_id, { ref: "f1" }, "facts", [result_id]);
   assert.equal(asked.outcome, "refused");
   assert.equal(asked.refused, "needs_answer");
   assert.deepEqual(asked.ask.map((a) => [a.kind, a.ref]), [["participant", "Plum Holdings"]]);
@@ -175,12 +175,13 @@ test("refusals: an unknown result, another contract, another file's result and a
   const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
   await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "facts" }, { ...other, kind: "facts" }] });
   const { result_id } = await stage(FACTS("f1"));
-  assert.equal((await write(matterRoot, run_id, doc, "facts", ["00000000-0000-4000-8000-000000000000"])).refused, "unknown_result");
-  assert.equal((await write(matterRoot, run_id, doc, "affidavit_body", [result_id])).refused, "contract_mismatch");
-  assert.equal((await write(matterRoot, run_id, other, "facts", [result_id])).refused, "contract_mismatch");
+  assert.equal((await write(matterRoot, run_id, { ref: "f1" }, "facts", ["00000000-0000-4000-8000-000000000000"])).refused, "unknown_result");
+  const body = await stage({ ...FACTS("f1"), contract: "affidavit_body" });
+  assert.equal((await write(matterRoot, run_id, { ref: "f1" }, "facts", [body.result_id])).refused, "contract_mismatch");
+  assert.equal((await write(matterRoot, run_id, { ref: "f2" }, "facts", [result_id])).refused, "contract_mismatch");
   assert.equal((await write(matterRoot, "00000000-0000-4000-8000-000000000000", doc, "facts", [result_id])).refused, "lease_lost");
   const old = await stage({ ...FACTS("f1"), contract_version: 0 });
-  assert.equal((await write(matterRoot, run_id, doc, "facts", [old.result_id])).refused, "contract_version");
+  assert.equal((await write(matterRoot, run_id, { ref: "f1" }, "facts", [old.result_id])).refused, "contract_version");
   assert.deepEqual(sql(caseDataDir, "SELECT * FROM sources"), []);
 });
 
@@ -190,7 +191,7 @@ test("an invalid result counts as a failed extraction; a second failure closes t
   const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
   await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "facts", category: "correspondence" }] });
   const bad = await stage(FACTS("f1", { fact_positions: [{ target_fact_key: "new:9", party_name: "Ada Quill", value: "claim", position_basis: null, qualification: null, source_locator: "para. 9" }] }));
-  const out = await write(matterRoot, run_id, doc, "facts", [bad.result_id]);
+  const out = await write(matterRoot, run_id, { ref: "f1" }, "facts", [bad.result_id]);
   assert.equal(out.refused, "invalid");
   const retry = await run(matterRoot, { action: "next", run_id });
   assert.equal(retry.dispatch.length, 1, "re-dispatched once (R4, R5)");
@@ -227,7 +228,7 @@ test("an affidavit: Pass 1 writes the body partial, its exhibits are dispatched,
     ],
     body_page_count: 2, total_pages_read: 2, scanned: false,
   });
-  const bodyOut = await write(matterRoot, run_id, doc, "affidavit_body", [body.result_id]);
+  const bodyOut = await write(matterRoot, run_id, { ref: "f1" }, "affidavit_body", [body.result_id]);
   assert.equal(bodyOut.outcome, "written", JSON.stringify(bodyOut));
   assert.deepEqual(bodyOut.ask.map((a) => a.kind), ["privileged_informant"]);
   assert.deepEqual(sql(caseDataDir, "SELECT ingestion_status, execution_status FROM sources"), [{ ingestion_status: "partial", execution_status: "affirmed" }]);
@@ -247,12 +248,12 @@ test("an affidavit: Pass 1 writes the body partial, its exhibits are dispatched,
     ...extra,
   });
   const a = await exhibit("A");
-  const partial = await write(matterRoot, run_id, doc, "affidavit_exhibits", [a.result_id]);
+  const partial = await write(matterRoot, run_id, { ref: "f1:A" }, "affidavit_exhibits", [a.result_id]);
   assert.deepEqual(partial.counts, { facts: 1, positions: 0, relief: 0, links: 1, exhibits: 1 });
   assert.equal(sql(caseDataDir, "SELECT ingestion_status FROM sources WHERE parent_source_id IS NULL")[0].ingestion_status, "partial");
 
   const b = await exhibit("B", { needs_human: true });
-  const done = await write(matterRoot, run_id, doc, "affidavit_exhibits", [b.result_id]);
+  const done = await write(matterRoot, run_id, { ref: "f1:B" }, "affidavit_exhibits", [b.result_id]);
   assert.equal(done.outcome, "written");
   assert.deepEqual(sql(caseDataDir, "SELECT title, verified, file_hash FROM sources WHERE parent_source_id IS NOT NULL ORDER BY source_id"),
     [{ title: "Exhibit A — Document A", verified: 0, file_hash: doc.file_hash }, { title: "Exhibit B — Document B", verified: 2, file_hash: doc.file_hash }]);
@@ -270,10 +271,10 @@ test("sought orders wait for their document, then write with the unnumbered mark
     [["lawyer:extract-facts", "f1", "facts"], ["lawyer:extract-sought-orders", "f1:so", "sought_orders"]]);
   const so = await stage({ contract: "sought_orders", contract_version: 2, ref: "f1:so", flags: [], numbering_absent: true, not_a_notice_of_application: false,
     sought_orders: [{ order_number: "1", order_text: "An order for production.", ocr_uncertain: false }] });
-  const early = await write(matterRoot, run_id, doc, "sought_orders", [so.result_id]);
+  const early = await write(matterRoot, run_id, { ref: "f1:so" }, "sought_orders", [so.result_id]);
   assert.equal(early.refused, "waiting");
   const facts = await stage(FACTS("f1"));
-  assert.equal((await write(matterRoot, run_id, doc, "facts", [facts.result_id])).outcome, "written");
+  assert.equal((await write(matterRoot, run_id, { ref: "f1" }, "facts", [facts.result_id])).outcome, "written");
   assert.deepEqual((await run(matterRoot, { action: "next", run_id })).write, [{ ref: "f1:so", contract: "sought_orders", result_ids: [so.result_id] }]);
   assert.equal((await write(matterRoot, run_id, doc, "sought_orders", [so.result_id])).outcome, "written");
   assert.deepEqual(sql(caseDataDir, "SELECT order_number, verified, notes FROM sought_orders"),
@@ -286,7 +287,7 @@ test("an unattended run writes the pending markers in place of the attended pass
   const { run_id } = await run(matterRoot, { action: "begin", mode: "unattended" });
   await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "facts" }] });
   const { result_id } = await stage(FACTS("f1", { document: { title: "Order made after application", description: "An order", category: "court", date: "2026-05-01", author_or_filing_party: null, proceeding_file_number: "S-000001" }, flags: [{ kind: "date_setting", ref: "f1", detail: "trial on 2026-09-01" }] }));
-  const out = await write(matterRoot, run_id, doc, "facts", [result_id]);
+  const out = await write(matterRoot, run_id, { ref: "f1" }, "facts", [result_id]);
   assert.equal(out.outcome, "written", JSON.stringify(out));
   assert.deepEqual(out.post.map((p) => p.pass), ["name_check"]);
   assert.equal(sql(caseDataDir, "SELECT notes FROM sources")[0].notes,

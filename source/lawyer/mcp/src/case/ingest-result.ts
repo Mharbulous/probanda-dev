@@ -77,8 +77,6 @@ type Plan =
       other_title?: string | null;
       /** Exhibit letters whose result failed its contract: recorded for review, read once more. */
       invalid?: string[];
-      /** Exhibit letters written pending a privilege decision. */
-      pending?: string[];
     };
 
 export interface IngestResultOutput {
@@ -157,14 +155,15 @@ function resolveParties(matterRoot: string, names: string[], answered: Record<st
 
 /** The firm's own name, so the delivery check fires only on a letter the firm sent (K-M9): firm_name
  *  alone, from the firm profile's firm.json (firm-profile.ts), so no other part of the profile can
- *  fail the write (N-2). With no case data root, no firm.json or no readable name it is null, and the
- *  converter says once that the delivery check could not run (N14). */
+ *  fail the write (N-2). With no case data root, no firm.json, one this computer cannot open now, or
+ *  no readable name it is null, and the converter says once that the delivery check could not run (N14). */
 function firmName(env: NodeJS.ProcessEnv): string | null {
   try {
     const firm = JSON.parse(readFileSync(join(resolveCaseDataRoot(env), "_practice", "firm", "firm.json"), "utf-8")) as { firm_name?: unknown } | null;
     return typeof firm?.firm_name === "string" && firm.firm_name !== "" ? firm.firm_name : null;
   } catch (err) {
-    if (err instanceof ValidationError || err instanceof SyntaxError || (err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    if (err instanceof ValidationError || err instanceof SyntaxError) return null;
+    if (["ENOENT", "EACCES", "EPERM", "EBUSY"].includes(String((err as NodeJS.ErrnoException).code))) return null;
     throw err;
   }
 }
@@ -245,7 +244,12 @@ async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dro
   if (args.result_ids.length === 0 && !CLOSABLE.includes(args.contract)) throw new ValidationError(`contract ${args.contract} needs result_ids`);
   const document = args.document ?? ({} as IngestResultArgs["document"]);
   const privileged = args.contract === "privileged";
-  const privilegedStore = privileged && args.answers?.privilege === "yes";
+  // A privileged call's shape is checked before anything else, as an error the session corrects,
+  // so the wording stays staged for the corrected call (m-1). The converter reads the answer alike.
+  const privilege = String(args.answers?.privilege ?? "").trim().toLowerCase();
+  if (privileged && args.result_ids.length !== 1) throw new ValidationError("contract privileged takes one result");
+  if (privileged && !["yes", "no", "unclear"].includes(privilege)) throw new ValidationError("answers.privilege must be yes, no or unclear");
+  const privilegedStore = privileged && privilege === "yes";
   if (document.store !== (privilegedStore ? "privileged" : "main")) {
     throw new ValidationError(`document.store must be ${privilegedStore ? "privileged" : "main"} for this contract and answer`);
   }
@@ -258,15 +262,26 @@ async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dro
   if (filePath === "" || outsideMatter(filePath)) throw new ValidationError("document.file_path must be a file inside the matter folder");
   if (!/^[0-9a-f]{64}$/.test(fileHash)) throw new ValidationError("document.file_hash must be the file's SHA-256");
 
+  // The item a result answers is the reply's: the ok line journaled for it, or the call's own ref
+  // when that names an item dispatched under this contract (N-4). A routed file's result with
+  // neither is a call to correct, never one that trusts the staged ref (m-2): a call of several
+  // takes only acknowledged results, and a lone result names its dispatch line's ref. A Path B
+  // object (privileged) names no dispatched item, and takes its staged ref.
+  if (!privileged && run.route) {
+    for (const id of args.result_ids) {
+      if (run.acked[id] !== undefined) continue;
+      if (args.result_ids.length > 1) {
+        throw new ValidationError("a call with several result_ids takes only results already acknowledged: pass each other result alone, with its dispatch line's ref as document.ref");
+      }
+      if (run.itemRef === null) throw new ValidationError("document.ref must be the ref of the dispatch line whose reply gave this result");
+    }
+  }
   const results: Staged[] = [];
   // Each reply, journaled under its item before any check below (S-M4).
   const acks: Array<{ ref: string; result_id: string }> = [];
-  const bad: string[] = [];
-  let reason: string | null = null;
+  // Each bad result with its own reason (N-9); the call is refused with the first.
+  const bad: Array<{ id: string; reason: string }> = [];
   for (const id of args.result_ids) {
-    // The item a result answers is the reply's: the ok line journaled for it, or the call's own ref
-    // when that names an item dispatched under this contract (N-4). A call with neither (a Path B
-    // object, or a caller that names the file by its path and hash) takes the staged ref.
     const replyRef = run.acked[id] ?? (args.result_ids.length === 1 ? run.itemRef : null) ?? undefined;
     const path = stagedResultPath(id, env);
     const doc = readStaged(path);
@@ -274,31 +289,30 @@ async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dro
       // A repeat of a write that landed and then let its staged result go (R6, N-11).
       if (run.written.includes(id)) continue;
       if (!privileged && replyRef !== undefined) acks.push({ ref: replyRef, result_id: id });
-      bad.push(id);
-      reason ??= "unknown_result"; // expired (R10), never staged, or unreadable
+      bad.push({ id, reason: "unknown_result" }); // expired (R10), never staged, or unreadable
       continue;
     }
     const stagedRef = typeof doc.ref === "string" ? doc.ref : "";
     const ref = privileged ? stagedRef : replyRef ?? stagedRef;
     // A routed file's results carry its refs (f3, f3:so, f3:B): one of another file's is a mismatch,
-    // and so is a staged ref other than the reply's item. A Path B object names its file only by its
-    // path and hash, a routed file's included (N1).
+    // and so is a staged ref other than the reply's item, and a reply naming an item dispatched under
+    // another contract (m-2). A Path B object names its file only by its path and hash, a routed
+    // file's included (N1).
     const sameFile = run.route === null || ref.split(":")[0] === run.route.ref;
+    const thisContract = replyRef === undefined || run.dispatched.includes(replyRef);
     if (!privileged && run.route && sameFile) acks.push({ ref, result_id: id });
-    if ((!privileged && (!sameFile || ref !== stagedRef)) || doc.contract !== args.contract) {
-      bad.push(id);
-      reason ??= "contract_mismatch";
+    if ((!privileged && (!sameFile || ref !== stagedRef || !thisContract)) || doc.contract !== args.contract) {
+      bad.push({ id, reason: "contract_mismatch" });
     } else if (doc.contract_version !== CONTRACT_VERSION) {
-      bad.push(id);
-      reason ??= "contract_version";
+      bad.push({ id, reason: "contract_version" });
     }
     results.push({ result_id: id, path, ref, doc });
   }
-  if (reason !== null) {
+  if (bad.length > 0) {
     // Each bad result's item is read once more (R4), never left acknowledged and unwritten; the
     // call's other results stay acknowledged and are listed to write again (N-9).
-    if (!privileged) await recordRefusal(args.matter_root, args.run_id, acks, bad, reason, env);
-    return refused(reason);
+    if (!privileged) await recordRefusal(args.matter_root, args.run_id, acks, bad, env);
+    return refused(bad[0].reason);
   }
   // Every result already written, and its staged copy gone: the repeat finds the write (R6, N-11).
   if (args.result_ids.length > 0 && results.length === 0) return { outcome: "already_written", ask: [], report: [] };
@@ -473,7 +487,12 @@ async function write(
     report.unshift(`${plan.title.slice(0, 60)}: ${counts.facts} facts, ${counts.positions} positions, ${counts.relief} relief items, ${counts.links} evidence links${counts.exhibits ? `, ${counts.exhibits} exhibits` : ""}.`);
   }
   if (plan.failed) report.unshift(`${(plan.title ?? "This document").slice(0, 60)} could not be read and is recorded as not read.`);
-  dropAlso.push(...results.filter((r) => (plan.pending ?? []).includes(letterOf(r.ref))).map((r) => r.path));
+  // An exhibit rolled back is read again, so its question waits for that reading.
+  const asked = asks.filter((a) => !(args.contract === "affidavit_exhibits" && badLetters.includes(a.ref)));
+  // An exhibit held pending, as its row stands after the write (m-7), is asked its privilege; its
+  // reading leaves staging now rather than wait out the 7-day window (G4).
+  const pending = args.contract === "affidavit_exhibits" ? asked.filter((a) => a.kind === "privilege").map((a) => a.ref) : [];
+  dropAlso.push(...results.filter((r) => pending.includes(letterOf(r.ref))).map((r) => r.path));
 
   return fit({
     outcome,
@@ -483,8 +502,7 @@ async function write(
       ...done.failed.filter((f) => !f.ref.startsWith("fallback ")).map((f) => ({ ref: f.ref, outcome: "failed" as const, reason: f.reason.slice(0, 120) })),
       ...(plan.invalid ?? []).map((ref) => ({ ref, outcome: "failed" as const, reason: "invalid" })),
     ],
-    // An exhibit rolled back is read again, so its question waits for that reading.
-    ask: asks.filter((a) => !(args.contract === "affidavit_exhibits" && badLetters.includes(a.ref))),
+    ask: asked,
     post,
     report,
   });

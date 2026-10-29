@@ -117,7 +117,7 @@ def _note(fact):
 def plan(request):
     if len(request.get('results') or []) != 1:
         return {'problems': ['contract privileged takes one result']}
-    answer = ((request.get('answers') or {}).get('privilege') or '').lower()
+    answer = str((request.get('answers') or {}).get('privilege') or '').strip().lower()
     if answer not in ('yes', 'no', 'unclear'):
         return {'problems': ['answers.privilege must be yes, no or unclear']}
     doc = c.load(request['results'][0])
