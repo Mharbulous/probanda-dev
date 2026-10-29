@@ -50,7 +50,7 @@ SELECT id, entity, entity_id, created, comment FROM review_points WHERE ticket_i
 
 ## Writes
 
-Every write here is made by the session holding the review job (`/drafting-data` §3c), under that job's lock, and every statement carries `/drafting-data` §5's guard: the job's `locked_by` is still this session's own `session_token`. Values are literals composed into the script, since `drafting_data__execute` takes no bind parameters. The examples use review job `10` and token `'sess-a1'`.
+Every write here is made by the session holding the review job (`/drafting-data` §3c), under that job's lock, and every statement carries `/drafting-data` §5's guard: the job's `locked_by` is still this session's own `session_token`. Values are literals composed into the script, since `drafting_data__execute` takes no bind parameters. The examples use review job `10` and token `'sess-a1'`. One approval is written outside a review job: a letter's prose slots once `/draft`'s delivery check has set them to the letter as sent and the Sent write has recorded it, guarded on the Writing being sent instead of on a lock (`filing-checklists.md` §13, "Counsel's review carried forward").
 
 **The approval.** One row per object whose 🧐 is on the line of a unit the practitioner approves, written by `INSERT … SELECT` from the object's own row, so the snapshot is the stored fields as they stand at the write:
 
