@@ -14,10 +14,15 @@ HOOKS = {plugin: REPO / "source" / plugin / "hooks" / "one-way-gate.py"
          for plugin in ("lawyer", "litigator", "timekeeper", "file-manager", "researcher")}
 TOOL = "mcp__plugin_lawyer_data__practice_data__delete_anchor"
 ARGS = {"anchor_id": 7}
-FIRST_LINE = ("By cutting and pasting this message I approve the process described above with full "
-              "understanding that the process described above is one-way and irreversible.")
+FIRST_LINE = ("By cutting and pasting this message I approve this step: delete anchor 7 and its sources and "
+              "derived deadlines. I understand it is one-way and irreversible.")
 BLOCK = FIRST_LINE + "\nModifications: NONE"
 MARKER = re.compile(r"\[approval-gate act=([0-9a-f]{64})\]")
+
+
+def block_of(reason):
+    """The block a practitioner copies out of a refusal."""
+    return re.search(r"```text\n(.*?)\n```", reason, re.S).group(1)
 
 
 class Session:
@@ -70,15 +75,76 @@ def test_no_approval_is_refused_with_the_warning_and_block(tmp_path):
     assert MARKER.search(reason)
     assert "**This step is a one-way door: easy to pass through and costly to reverse.**" in reason
     assert "```text\n" + BLOCK + "\n```" in reason
+    assert "process described above" not in reason
 
 
 def test_the_block_unchanged_passes(tmp_path):
     s = Session(tmp_path)
     s.say("Delete that anchor.")
     assert s.gate()
-    s.say("  by cutting AND pasting this message I approve the process described above with full\n"
-          "understanding that the process described above is one-way and irreversible.\nModifications: NONE")
+    s.say("  by cutting AND pasting this message I approve this step: delete anchor 7 and its\n"
+          "sources and derived deadlines. I understand it is one-way and irreversible.\nModifications: NONE")
     assert s.gate() is None
+
+
+def test_a_filed_record_names_the_writing_and_date(tmp_path):
+    s = Session(tmp_path)
+    call = {"db_path": "matter.db", "filing_id": 12, "filed_on": "2026-10-29", "expect_revision": 2}
+    s.say("Record it as filed.")
+    reason = s.gate(name=GATED["litigator"][1], tool_input=call, plugin="litigator")
+    assert "record Writing 12 as filed on 2026-10-29, in the database matter.db." in reason
+    assert "process described above" not in reason
+    s.say(block_of(reason))
+    assert s.gate(name=GATED["litigator"][1], tool_input=call, plugin="litigator") is None
+
+
+def test_a_block_that_describes_another_step_is_refused(tmp_path):
+    s = Session(tmp_path)
+    s.say("Delete that anchor.")
+    s.gate()
+    s.say(BLOCK.replace("anchor 7", "anchor 8"))
+    assert s.gate()
+    s.say("By cutting and pasting this message I approve the process described above with full understanding "
+          "that the process described above is one-way and irreversible.\nModifications: NONE")
+    assert s.gate()
+
+
+SAMPLES = {
+    "mcp__plugin_lawyer_data__drafting_data__record_sent": ("litigator", {
+        "db_path": "m.db", "filing_id": 4, "sent_on": "2026-10-28", "expect_revision": 3}, "record Writing 4 as sent on 2026-10-28"),
+    "mcp__plugin_lawyer_data__drafting_data__record_filed": ("litigator", {
+        "db_path": "m.db", "filing_id": 4, "filed_on": "2026-10-28", "expect_revision": 3}, "record Writing 4 as filed on 2026-10-28"),
+    "mcp__plugin_lawyer_data__drafting_data__record_served": ("litigator", {
+        "db_path": "m.db", "filing_id": 4, "served_on": "2026-10-27", "expect_revision": 3}, "record Writing 4 as served on 2026-10-27"),
+    "mcp__plugin_lawyer_data__practice_data__delete_anchor": ("lawyer", {"anchor_id": "a9"}, "delete anchor a9"),
+    "mcp__plugin_lawyer_data__practice_data__merge_contact": ("lawyer", {"keep_id": "c1", "spare_id": "c2"},
+                                                              "merge contact c2 into contact c1"),
+    "mcp__plugin_lawyer_data__time_pipeline__delete": ("timekeeper", {"namespace": "timeline", "key": "k1"},
+                                                       "delete the key k1 from the time-pipeline namespace timeline"),
+    "mcp__plugin_lawyer_data__time_pipeline__bulk_apply": ("timekeeper", {"namespace": "timeline", "path": "/x/gone.jsonl"},
+                                                           "apply the writes in /x/gone.jsonl, which include deletes"),
+    "mcp__plugin_timekeeper_timecamp__update_entry": ("timekeeper", {"entry_id": "e5", "task_id": "t6", "note": "Call  re motion"},
+                                                      'move TimeCamp entry e5 to task t6 and replace its note with "Call re motion"'),
+    "mcp__plugin_file-manager_files__file_ops__comment_pdf": ("file-manager", {
+        "matter_root": "/m", "path": "/m/a.pdf", "comments": [{"page": 3, "text": "x"}, {"page": 1, "text": "y"}]},
+        "write 2 comment(s) on page(s) 1, 3 into the PDF /m/a.pdf"),
+    "mcp__plugin_researcher_commons__troubleshoot__record": ("researcher", {"symptom": "s1", "cause": "c1", "fix": "f1"},
+                                                             'symptom "s1", cause "c1", fix "f1"'),
+    "mcp__remote-devices__plugin_researcher_commons__troubleshoot__record": ("researcher", {
+        "symptom": "s1", "cause": "c1", "fix": "f1"}, 'symptom "s1", cause "c1", fix "f1"'),
+}
+
+
+def test_every_gated_tool_names_its_act_in_the_block(tmp_path):
+    assert {n for names in GATED.values() for n in names} <= set(SAMPLES)
+    for name, (plugin, call, act) in SAMPLES.items():
+        s = Session(tmp_path)
+        s.say("Go ahead.")
+        reason = s.gate(name=name, tool_input=call, plugin=plugin)
+        assert act in block_of(reason), name
+        assert "process described above" not in reason, name
+        s.say(block_of(reason))
+        assert s.gate(name=name, tool_input=call, plugin=plugin) is None, name
 
 
 def test_none_then_a_changed_call_is_refused(tmp_path):
@@ -179,8 +245,7 @@ def test_a_file_an_argument_names_is_part_of_the_act(tmp_path):
     call = {"path": str(pdf), "comments": []}
     name = "mcp__plugin_file-manager_files__file_ops__comment_pdf"
     s.say("Comment the letter.")
-    s.gate(name=name, tool_input=call, plugin="file-manager")
-    s.say(BLOCK)
+    s.say(block_of(s.gate(name=name, tool_input=call, plugin="file-manager")))
     pdf.write_bytes(b"%PDF-1.4 two")
     assert s.gate(name=name, tool_input=call, plugin="file-manager")
 
@@ -201,8 +266,7 @@ def test_a_troubleshooting_entry_goes_to_the_store_only_on_the_pasted_block(tmp_
     name = "mcp__plugin_researcher_commons__troubleshoot__record"
     entry = {"symptom": "mail tools fail", "cause": "username is not the Apple ID", "fix": "re-enter the Apple ID"}
     s.say("That fixed it.")
-    assert s.gate(name=name, tool_input=entry, plugin="researcher")
-    s.say(BLOCK)
+    s.say(block_of(s.gate(name=name, tool_input=entry, plugin="researcher")))
     assert s.gate(name=name, tool_input={**entry, "fix": "something else"}, plugin="researcher")
     assert s.gate(name=name, tool_input=entry, plugin="researcher") is None
 

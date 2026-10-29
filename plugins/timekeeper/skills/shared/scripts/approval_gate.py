@@ -6,12 +6,13 @@ A one-way call (sending, filing, deleting or merging records, changing a time en
 into a PDF) passes only on the practitioner's pasted approval. With none, the gate refuses and
 its refusal carries the call's hash: sha256 of the tool name, its canonical-JSON arguments and
 the sha256 of every file an argument names (never a database file, whose unrelated writes would
-void the approval). The refusal tells the model to show a bold one-way-door warning and BLOCK.
+void the approval). The refusal tells the model to show a bold one-way-door warning and a block
+whose first line names the act in plain words (first_line, from ACTS and the call's arguments).
 
 A retry passes only when all of these hold, read from the harness transcript, which the session
 cannot write:
-- the latest practitioner turn (transcript.turn_of) holds BLOCK's first line, compared case- and
-  whitespace-insensitively;
+- the latest practitioner turn (transcript.turn_of) holds the first line for the refused call,
+  compared case- and whitespace-insensitively;
 - that turn follows the refusal, and no compact_boundary lies after the refusal;
 - exactly one act was refused between the previous practitioner turn and that one;
 - no successful call of the refused tool follows that turn (an approval is used once);
@@ -32,9 +33,21 @@ from pathlib import Path
 import hook_io
 import transcript
 
-FIRST_LINE = ("By cutting and pasting this message I approve the process described above with full "
-              "understanding that the process described above is one-way and irreversible.")
-BLOCK = FIRST_LINE + "\nModifications: NONE"
+PREFIX = "By cutting and pasting this message I approve"
+# One plain sentence per gated tool, keyed by the end of its name, filled from the call's arguments.
+ACTS = {
+    "record_filed": "record Writing {filing_id} as filed on {filed_on}, in the database {db_path}",
+    "record_sent": "record Writing {filing_id} as sent on {sent_on}, in the database {db_path}{sent_copy}{waiver}",
+    "record_served": "record Writing {filing_id} as served on {served_on}, in the database {db_path}",
+    "delete_anchor": "delete anchor {anchor_id} and its sources and derived deadlines",
+    "merge_contact": "merge contact {spare_id} into contact {keep_id}, deleting contact {spare_id}",
+    "time_pipeline__delete": "delete the key {key} from the time-pipeline namespace {namespace}",
+    "time_pipeline__bulk_apply": "apply the writes in {path}, which include deletes, to the time-pipeline namespace {namespace}",
+    "update_entry": "move TimeCamp entry {entry_id} to task {task_id} and replace its note with \"{note}\"",
+    "comment_pdf": "write {count} comment(s) on page(s) {pages} into the PDF {path}",
+    "troubleshoot__record": "add this entry to Probanda's shared store, where other Probanda users can read it: "
+                            "symptom \"{symptom}\", cause \"{cause}\", fix \"{fix}\"",
+}
 MARKER = re.compile(r"\[approval-gate act=([0-9a-f]{64})\]")
 MODIFICATIONS = re.compile(r"modifications:(.*)", re.I | re.S)
 DATABASE_SUFFIXES = {".db", ".sqlite", ".sqlite3"}
@@ -61,14 +74,32 @@ def call_hash(name, tool_input):
     return digest.hexdigest()
 
 
-def refusal(name, act, why):
+def first_line(name, tool_input):
+    """The approval's first line, naming the act this call performs. Raises for a gated tool with no
+    sentence or a call missing a field, which the hook turns into a refusal."""
+    key = next((k for k in ACTS if name.endswith("__" + k)), None)
+    if key is None:
+        raise ValueError(f"no act sentence for {name}")
+    comments = tool_input.get("comments") or []
+    fields = {
+        **{k: " ".join(v.split()) if isinstance(v, str) else v for k, v in tool_input.items()},
+        "sent_copy": (f", with the sent copy {tool_input['sent_copy_path']}" if tool_input.get("sent_copy_path") else
+                      ", with pasted text as the sent copy" if tool_input.get("sent_copy_text") else ""),
+        "waiver": ", waiving the pre-send hold" if tool_input.get("send_anyway") else "",
+        "count": len(comments),
+        "pages": ", ".join(str(page) for page in sorted({c["page"] for c in comments})),
+    }
+    return f"{PREFIX} this step: {ACTS[key].format_map(fields)}. I understand it is one-way and irreversible."
+
+
+def refusal(name, tool_input, act, why):
     return (
         f"Approval needed [approval-gate act={act}]. {why} The call {name} is a one-way step and waits for "
-        "the practitioner's approval. Do not retry it yet, and do not try another way to do it. First say "
-        "plainly what the call will do. Then show this warning in bold: **This step is a one-way door: easy "
-        "to pass through and costly to reverse.** Then show the block below in a fenced text code block and "
-        "ask the practitioner to copy and paste it back as their reply, replacing NONE with any change they "
-        "want in their own words. Retry only after that reply.\n\n```text\n" + BLOCK + "\n```"
+        "the practitioner's approval. Do not retry it yet, and do not try another way to do it. Show this "
+        "warning in bold: **This step is a one-way door: easy to pass through and costly to reverse.** Then "
+        "show the block below in a fenced text code block and ask the practitioner to copy and paste it back "
+        "as their reply, replacing NONE with any change they want in their own words. Retry only after that "
+        "reply.\n\n```text\n" + first_line(name, tool_input) + "\nModifications: NONE\n```"
     )
 
 
@@ -106,7 +137,7 @@ def why_not(path, name, act):
     """None when the transcript approves this call, else the reason it does not."""
     found = events(path)
     turns = [i for i, event in enumerate(found) if event[0] == "turn"]
-    if not turns or transcript.norm(FIRST_LINE) not in transcript.norm(found[turns[-1]][1]):
+    if not turns or transcript.norm(PREFIX) not in transcript.norm(found[turns[-1]][1]):
         return "The practitioner's latest message is not the pasted approval."
     last = turns[-1]
     previous = turns[-2] if len(turns) > 1 else -1
@@ -115,11 +146,13 @@ def why_not(path, name, act):
         if found[i][0] == "call" and found[i][1]["result"]:
             match = MARKER.search(found[i][1]["result"])
             if match:
-                refused[match.group(1)] = (i, found[i][1]["name"])
+                refused[match.group(1)] = (i, found[i][1]["name"], found[i][1]["input"])
     if len(refused) != 1:
         return ("The pasted approval follows no refusal." if not refused else
                 "More than one step was waiting for approval, so the pasted approval cannot say which.")
-    refused_act, (at, refused_name) = next(iter(refused.items()))
+    refused_act, (at, refused_name, refused_input) = next(iter(refused.items()))
+    if transcript.norm(first_line(refused_name, refused_input)) not in transcript.norm(found[last][1]):
+        return "The pasted approval does not describe the step that was refused."
     if any(event[0] == "boundary" for event in found[at + 1:]):
         return "The conversation was compacted after the step was refused."
     if any(event[0] == "call" and event[1]["name"] == refused_name and event[1]["result"] is not None
@@ -139,7 +172,7 @@ def check(payload):
     act = call_hash(name, payload.get("tool_input") or {})
     path = payload.get("transcript_path") or ""
     why = why_not(path, name, act) if path else "No record of this conversation could be read."
-    return 0 if why is None else hook_io.deny(refusal(name, act, why))
+    return 0 if why is None else hook_io.deny(refusal(name, payload.get("tool_input") or {}, act, why))
 
 
 def failed(exc):
