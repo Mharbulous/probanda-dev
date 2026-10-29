@@ -99,7 +99,9 @@ Brahm's ruling of 2026-10-28, after an independent review: nothing in the green 
 
 **S1 result, 2026-10-28: PASS.** In a Claude Code session in probanda-dev, 20 pairs of an edit to one scratch file and a run of a script that always failed the same way. The guard's gate opened at the segment's 19th call (8 repeats of the same failure), its first judge call returned stuck at confidence 0.80, and the guard logged a `nudge` with `shadow: true` at the turn's 26th tool call. That judge call, with the redirect it wrote, cost 148,007 effective tokens. The digest tagged the `Write` of a file containing `assert` as an error output, which shows that a file's own text can count as a failure.
 
-S2 has not run. The green build is then planned from their results.
+**S2 result, 2026-10-28: PASS.** A new Cowork session in `te-cowork-test` on plugin 0.1.5, with the probe asking at every prompt for one `practice_data__config_status` call (a 176-character note). Of ten ordinary prompts, five needing no tool and five needing the shell or a file tool, the model made the call at all ten, and as its first tool call at nine. At the first it loaded the deferred tool with `ToolSearch` first. It also made the call at the eleventh prompt, which printed the log. Each response was 1,276 characters, so the ask and the call add about 400 tokens of context per prompt, plus one model step. The green design's envelope read returns up to 500 integers, which would be larger.
+
+The green build is then planned from their results.
 
 One point for planning: the loop guard learns one envelope for all sessions, and a one-shot lookup and a long housekeeping run differ widely in length. On 2026-10-28 the probanda-dev envelope held 18 turns with a median of 6.5 tool calls and a 90th percentile of 27.
 

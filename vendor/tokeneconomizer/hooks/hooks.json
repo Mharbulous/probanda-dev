@@ -19,11 +19,6 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 20
-          },
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-probe\"",
-            "timeout": 10
           }
         ]
       }
@@ -35,11 +30,6 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 60
-          },
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-probe\"",
-            "timeout": 10
           }
         ]
       }
@@ -51,11 +41,6 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 60
-          },
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-probe\"",
-            "timeout": 10
           }
         ]
       }
