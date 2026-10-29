@@ -1,4 +1,4 @@
-// build-stamp: 4f0dbdebd20b
+// build-stamp: 6a6c547a2ac0
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -1871,8 +1871,8 @@ var require_keyword = __commonJS({
       var _a4;
       const { gen, keyword, schema, parentSchema, $data, it: it3 } = cxt;
       checkAsyncKeyword(it3, def);
-      const validate = !$data && def.compile ? def.compile.call(it3.self, schema, parentSchema, it3) : def.validate;
-      const validateRef = useKeyword(gen, keyword, validate);
+      const validate2 = !$data && def.compile ? def.compile.call(it3.self, schema, parentSchema, it3) : def.validate;
+      const validateRef = useKeyword(gen, keyword, validate2);
       const valid = gen.let("valid");
       cxt.block$data(valid, validateKeyword);
       cxt.ok((_a4 = def.valid) !== null && _a4 !== void 0 ? _a4 : valid);
@@ -2945,28 +2945,28 @@ var require_compile = __commonJS({
         if (this.opts.code.process)
           sourceCode = this.opts.code.process(sourceCode, sch);
         const makeValidate = new Function(`${names_1.default.self}`, `${names_1.default.scope}`, sourceCode);
-        const validate = makeValidate(this, this.scope.get());
-        this.scope.value(validateName, { ref: validate });
-        validate.errors = null;
-        validate.schema = sch.schema;
-        validate.schemaEnv = sch;
+        const validate2 = makeValidate(this, this.scope.get());
+        this.scope.value(validateName, { ref: validate2 });
+        validate2.errors = null;
+        validate2.schema = sch.schema;
+        validate2.schemaEnv = sch;
         if (sch.$async)
-          validate.$async = true;
+          validate2.$async = true;
         if (this.opts.code.source === true) {
-          validate.source = { validateName, validateCode, scopeValues: gen._values };
+          validate2.source = { validateName, validateCode, scopeValues: gen._values };
         }
         if (this.opts.unevaluated) {
           const { props, items: items2 } = schemaCxt;
-          validate.evaluated = {
+          validate2.evaluated = {
             props: props instanceof codegen_1.Name ? void 0 : props,
             items: items2 instanceof codegen_1.Name ? void 0 : items2,
             dynamicProps: props instanceof codegen_1.Name,
             dynamicItems: items2 instanceof codegen_1.Name
           };
-          if (validate.source)
-            validate.source.evaluated = (0, codegen_1.stringify)(validate.evaluated);
+          if (validate2.source)
+            validate2.source.evaluated = (0, codegen_1.stringify)(validate2.evaluated);
         }
-        sch.validate = validate;
+        sch.validate = validate2;
         return sch;
       } catch (e3) {
         delete sch.validate;
@@ -6579,8 +6579,8 @@ var require_formats = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.formatNames = exports.fastFormats = exports.fullFormats = void 0;
-    function fmtDef(validate, compare3) {
-      return { validate, compare: compare3 };
+    function fmtDef(validate2, compare3) {
+      return { validate: validate2, compare: compare3 };
     }
     exports.fullFormats = {
       // date: http://tools.ietf.org/html/rfc3339#section-5.6
@@ -12048,10 +12048,10 @@ var init_pdf_worker_min = __esm({
         return e4.length = t4;
       };
     }, 4576: function(e3) {
-      var check = function(e4) {
+      var check2 = function(e4) {
         return e4 && e4.Math === Math && e4;
       };
-      e3.exports = check("object" == typeof globalThis && globalThis) || check("object" == typeof window && window) || check("object" == typeof self && self) || check("object" == typeof global && global) || check("object" == typeof this && this) || /* @__PURE__ */ (function() {
+      e3.exports = check2("object" == typeof globalThis && globalThis) || check2("object" == typeof window && window) || check2("object" == typeof self && self) || check2("object" == typeof global && global) || check2("object" == typeof this && this) || /* @__PURE__ */ (function() {
         return this;
       })() || Function("return this")();
     }, 4603: (e3, t3, r3) => {
@@ -48812,14 +48812,14 @@ var init_pdf_worker_min = __esm({
       }
       get fingerprints() {
         const e3 = "\0".repeat(16);
-        function validate(t4) {
+        function validate2(t4) {
           return "string" == typeof t4 && 16 === t4.length && t4 !== e3;
         }
         const t3 = this.xref.trailer.get("ID");
         let r3, a3;
-        if (Array.isArray(t3) && validate(t3[0])) {
+        if (Array.isArray(t3) && validate2(t3[0])) {
           r3 = stringToBytes(t3[0]);
-          t3[1] !== t3[0] && validate(t3[1]) && (a3 = stringToBytes(t3[1]));
+          t3[1] !== t3[0] && validate2(t3[1]) && (a3 = stringToBytes(t3[1]));
         } else r3 = calculateMD5(this.stream.getByteRange(0, 1024), 0, 1024);
         return shadow(this, "fingerprints", [toHexUtil(r3), a3 ? toHexUtil(a3) : null]);
       }
@@ -51224,10 +51224,10 @@ var init_pdf_min = __esm({
         return t4.length = e4;
       };
     }, 4576: function(t3) {
-      var check = function(t4) {
+      var check2 = function(t4) {
         return t4 && t4.Math === Math && t4;
       };
-      t3.exports = check("object" == typeof globalThis && globalThis) || check("object" == typeof window && window) || check("object" == typeof self && self) || check("object" == typeof global && global) || check("object" == typeof this && this) || /* @__PURE__ */ (function() {
+      t3.exports = check2("object" == typeof globalThis && globalThis) || check2("object" == typeof window && window) || check2("object" == typeof self && self) || check2("object" == typeof global && global) || check2("object" == typeof this && this) || /* @__PURE__ */ (function() {
         return this;
       })() || Function("return this")();
     }, 4603: (t3, e3, i3) => {
@@ -70864,8 +70864,8 @@ var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
       reg.add(this, meta2);
       return this;
     },
-    refine(check, params) {
-      return this.check(refine(check, params));
+    refine(check2, params) {
+      return this.check(refine(check2, params));
     },
     superRefine(refinement, params) {
       return this.check(superRefine(refinement, params));
@@ -77977,7 +77977,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("execute"),
-      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Milestone with no Writing is created through drafting_data__create_milestone, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, and a Writing is recorded as served through drafting_data__record_served: a script that leaves a filing's filed_on or sent_copy_id holding a value it did not hold is refused whole, writing nothing (clearing filed_on stays an update). A drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, a job's unchanged plan is approved through drafting_data__approve_plan, a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, a job step's status is set through drafting_data__set_step, a job is deleted through drafting_data__delete_job, and a duplicate job is merged into another through drafting_data__merge_jobs. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
+      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Milestone with no Writing is created through drafting_data__create_milestone, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, and a Writing is recorded as served through drafting_data__record_served: a script that leaves a filing's filed_on or sent_copy_id holding a value it did not hold is refused whole, writing nothing (clearing filed_on stays an update). A drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, a job is created through drafting_data__create_job, a job is assigned through drafting_data__assign_job, a job's unchanged plan is approved through drafting_data__approve_plan, a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, a job step's status is set through drafting_data__set_step, a job is deleted through drafting_data__delete_job, and a duplicate job is merged into another through drafting_data__merge_jobs. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78121,6 +78121,79 @@ function submissionDataToolDefinitions() {
           expect_revision: { type: "number" }
         },
         required: ["db_path", "filing_id", "served_on", "expect_revision"],
+        additionalProperties: false
+      },
+      annotations: { destructiveHint: true, openWorldHint: false }
+    },
+    {
+      name: submissionDataPrefixed("create_job"),
+      description: "Create a job (a tickets row) in one call and one transaction: the row, its steps (ordinal 1, 2, 3... in order, at least one), scope rows, the edges from existing jobs it waits on (blocks), its conflict pairs, its conversion records (proposal_keys, copied from the card) and the loose thread it consumes (seed_id), under the duplicate guard its kind takes. Each guard is /drafting-data's documented condition, tested before the row exists, so it never matches the job it guards: none (an unguarded create); live_key (a queued or wip, unshelved job holds one of proposal_keys: the fast path and a job outlined from Proposals, jobs-create.md \xA73); never_held_key (any job not deleted ever held one of proposal_keys: intake, \xA73e); title_live_with_step (a queued or wip, unshelved job on the Writing with one of this call's titles already holds a step: counsel's review, jobs-stock.md \xA73c, whose second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this title and one of these step texts: a pass finding, \xA73g); scrutiny_statement (a queued or wip, unshelved 'Review scrutiny finding: ' job is scoped to the statement in scope: \xA73d); holder_lock (held_ticket_id no longer carries session_token: a spin-off blocker, \xA73f, which copies the held job's scope). filing_id is the Writing's or Milestone's id, or null for a proceeding-scoped job, and is never left out. priority is an integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Milestone's job, the Milestone's alone; on a proceeding-scoped job, every queued job in the proceeding. created_by is this session's session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is the job that fired the guard, when one is still there). It moves no revision. Refusals write nothing: invalid_<field>, and an error from the database (a missing blocker, a work job with no billing_anchor). Returns outcome, ticket_id, companion_ids, priority, holder_id and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          proceeding_id: { type: "number" },
+          filing_id: { anyOf: [{ type: "number" }, { type: "null" }] },
+          title: { type: "string" },
+          intent: { type: "string" },
+          kind: { type: "string", enum: ["work", "charting"] },
+          priority: { anyOf: [{ type: "number" }, { type: "string", enum: ["top", "bottom"] }] },
+          billing_anchor: { type: "string" },
+          steps: { type: "array", items: { type: "string" } },
+          scope: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { entity: { type: "string" }, entity_id: { anyOf: [{ type: "number" }, { type: "null" }] } },
+              required: ["entity", "entity_id"],
+              additionalProperties: false
+            }
+          },
+          blocks: { type: "array", items: { type: "number" }, description: "Existing jobs this job waits on (ticket_blocks.blocker_id)" },
+          conflicts: { type: "array", items: { type: "number" } },
+          proposal_keys: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { key: { type: "string" }, item: { type: "string" } },
+              required: ["key", "item"],
+              additionalProperties: false
+            }
+          },
+          seed_id: { type: "number" },
+          created_by: { type: "string" },
+          guard: {
+            type: "string",
+            enum: ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "holder_lock"]
+          },
+          session_token: { type: "string", description: "holder_lock only" },
+          held_ticket_id: { type: "number", description: "holder_lock only" },
+          companions: {
+            type: "array",
+            description: "title_live_with_step only: further jobs written after this one, sharing its fields but title, intent, steps and scope",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                intent: { type: "string" },
+                steps: { type: "array", items: { type: "string" } },
+                scope: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: { entity: { type: "string" }, entity_id: { anyOf: [{ type: "number" }, { type: "null" }] } },
+                    required: ["entity", "entity_id"],
+                    additionalProperties: false
+                  }
+                },
+                blocked_by_lead: { type: "boolean" }
+              },
+              required: ["title", "intent", "steps"],
+              additionalProperties: false
+            }
+          }
+        },
+        required: ["db_path", "proceeding_id", "title", "intent", "kind", "priority", "steps", "guard"],
         additionalProperties: false
       },
       annotations: { destructiveHint: true, openWorldHint: false }
@@ -81265,7 +81338,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "4f0dbdebd20b";
+var BUILD_STAMP = false ? null : "6a6c547a2ac0";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -81410,12 +81483,12 @@ function treeProblem(skill, rest, type, layer) {
 function mdOnly(folder) {
   return (base) => base.endsWith(".md") ? null : `${folder}\\ holds .md files only; "${base}" is not one`;
 }
-function fileProblem(name, layer, check) {
-  if (!name.endsWith(SIDECAR_SUFFIX)) return check(name);
+function fileProblem(name, layer, check2) {
+  if (!name.endsWith(SIDECAR_SUFFIX)) return check2(name);
   if (layer === "shipped") return "a confirmation sidecar never ships";
   const base = name.slice(0, -SIDECAR_SUFFIX.length);
   if (!base.endsWith(".md")) return "a confirmation sidecar sits only beside a .md knowledge file";
-  return check(base);
+  return check2(base);
 }
 function indexNameProblem(name, shippedName, localName, layer) {
   if (name === (layer === "shipped" ? shippedName : localName)) return null;
@@ -81754,7 +81827,7 @@ function matterDataFolders(store, matters, miss) {
   const holding = (parent, sub) => readdirSync7(parent, { withFileTypes: true }).filter((entry2) => entry2.isDirectory() && existsSync8(join12(parent, entry2.name, sub, "main.sqlite"))).map((entry2) => ({ name: entry2.name, folder: join12(parent, entry2.name, sub) }));
   const library = dirname5(caseDataRoot);
   const inMatter = holding(library, CASE_DATA_FOLDER);
-  const children2 = holding(caseDataRoot, "");
+  const children3 = holding(caseDataRoot, "");
   const found = [];
   for (const matter of matters) {
     if (!matter.matt_num) {
@@ -81763,7 +81836,7 @@ function matterDataFolders(store, matters, miss) {
     }
     const wanted = normalizeMattNum(matter.matt_num).toLowerCase();
     const own = inMatter.filter((entry2) => folderMatterNum(entry2.name) === wanted);
-    const named2 = own.length ? own : children2.filter((entry2) => folderMatterNum(entry2.name) === wanted);
+    const named2 = own.length ? own : children3.filter((entry2) => folderMatterNum(entry2.name) === wanted);
     if (named2.length > 1) miss(matter, `more than one matter-data folder starts with its matter number: ${named2.map((entry2) => entry2.folder).join(", ")}`);
     else if (named2.length === 1) found.push({ matter, folder: named2[0].folder, name: named2[0].name });
   }
@@ -82927,13 +83000,13 @@ function readRows(sidecarAbs, knowledgePath) {
   const text8 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
   return parseSidecar(text8.startsWith("\uFEFF") ? text8.slice(1) : text8, sidecarAbs, knowledgePath);
 }
-async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check) {
+async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check2) {
   return withFileLock(sidecarAbs, () => {
     const rows2 = readRows(sidecarAbs, knowledgePath);
     const at = rows2.findIndex((known) => known.rule_ref === row2.rule_ref);
     if (at === -1) rows2.push(row2);
     else rows2[at] = row2;
-    check(rows2);
+    check2(rows2);
     writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows2 }, null, 2) + "\n");
     return rows2;
   });
@@ -84919,13 +84992,15 @@ def do_write(req):
 def do_write_all(req):
     # Several parameterized statements in one transaction, staged as do_write stages one. A
     # statement carrying expect_changes that changes another number of rows rolls the whole
-    # transaction back, and the live file is never touched.
+    # transaction back, and the live file is never touched. A parameter {"$rowid": n} binds the
+    # rowid statement n inserted, so a later statement can name a row this transaction created.
     def mutate(con):
         con.execute("BEGIN")
         results = []
         try:
             for i, st in enumerate(req['statements']):
-                cur = con.execute(st['sql'], st.get('params') or [])
+                params = [results[p['$rowid']]['rowid'] if isinstance(p, dict) else p for p in (st.get('params') or [])]
+                cur = con.execute(st['sql'], params)
                 results.append({"rowid": cur.lastrowid, "changes": cur.rowcount})
                 expected = st.get('expect_changes')
                 if expected is not None and cur.rowcount != expected:
@@ -94071,14 +94146,210 @@ function createdAny(dbPath, sessionToken) {
   return submissionDataQuery(dbPath, "SELECT 1 FROM tickets WHERE created_by = ? LIMIT 1", [sessionToken]).rows.length > 0;
 }
 
-// src/submission/forms/approve-plan.ts
-var TOOL10 = "drafting_data__approve_plan";
+// src/submission/forms/create-job.ts
+var TOOL10 = "drafting_data__create_job";
 var NOW5 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var isId = (v3) => Number.isInteger(v3) && v3 > 0;
+var isText = (v3) => typeof v3 === "string" && v3.trim() !== "";
+function check(ok, field, why) {
+  if (!ok) throw new ValidationError(`${TOOL10}.${field} ${why}`, `invalid_${field.replace(/[.[].*$/, "")}`);
+}
+function checkSteps(steps, field) {
+  check(Array.isArray(steps) && steps.every(isText), field, "must be a list of non-empty step texts");
+  check(steps.length > 0, field, "must hold at least one step");
+}
+function checkScope(scope, field) {
+  check(
+    scope === void 0 || Array.isArray(scope) && scope.every((r3) => isText(r3?.entity) && (r3.entity_id === null || isId(r3.entity_id))),
+    field,
+    "must be a list of {entity, entity_id}, entity_id a row id or null"
+  );
+}
+function validate(args) {
+  const guard2 = args.guard;
+  check(isId(args.proceeding_id), "proceeding_id", "must be a positive integer");
+  check(args.filing_id === null || isId(args.filing_id), "filing_id", "must be the Writing's or Milestone's id, or null for a proceeding-scoped job");
+  check(isText(args.title), "title", "must be a non-empty string");
+  check(isText(args.intent), "intent", "must be a non-empty string");
+  check(args.kind === "work" || args.kind === "charting", "kind", "must be work or charting");
+  check(Number.isInteger(args.priority) || args.priority === "top" || args.priority === "bottom", "priority", "must be an integer, top or bottom");
+  check(
+    ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "holder_lock"].includes(guard2),
+    "guard",
+    "must be one of none, live_key, never_held_key, title_live_with_step, title_and_step_any_status, scrutiny_statement, holder_lock"
+  );
+  checkSteps(args.steps, "steps");
+  checkScope(args.scope, "scope");
+  check(args.blocks === void 0 || Array.isArray(args.blocks) && args.blocks.every(isId), "blocks", "must be a list of job ids");
+  check(args.conflicts === void 0 || Array.isArray(args.conflicts) && args.conflicts.every(isId), "conflicts", "must be a list of job ids");
+  check(args.seed_id === void 0 || isId(args.seed_id), "seed_id", "must be a loose thread's id");
+  check(args.created_by === void 0 || isText(args.created_by), "created_by", "must be the session_token open_session or bootstrap returned");
+  const keys = args.proposal_keys ?? [];
+  check(Array.isArray(keys) && keys.every((k3) => isText(k3?.key) && isText(k3?.item)), "proposal_keys", "must be a list of {key, item}, each copied from the card");
+  const keyed = guard2 === "live_key" || guard2 === "never_held_key";
+  check(keyed === keys.length > 0, "proposal_keys", keyed ? `must name the job's keys under guard ${guard2}` : "are written only under guard live_key or never_held_key");
+  const locked = guard2 === "holder_lock";
+  check(locked === isText(args.session_token), "session_token", locked ? "is required under guard holder_lock" : "is passed only under guard holder_lock");
+  check(locked === isId(args.held_ticket_id), "held_ticket_id", locked ? "is required under guard holder_lock" : "is passed only under guard holder_lock");
+  check(!locked || args.scope === void 0, "scope", "is not passed under guard holder_lock: the job copies the held job's scope");
+  if (guard2 === "title_live_with_step" || guard2 === "title_and_step_any_status") {
+    check(args.filing_id !== null, "filing_id", `must be the Writing's id under guard ${guard2}`);
+  }
+  if (guard2 === "scrutiny_statement") {
+    const statements = (args.scope ?? []).filter((r3) => r3.entity === "statements_of_law" && r3.entity_id !== null);
+    check(statements.length === 1, "scope", "must hold exactly one ('statements_of_law', <statement id>) row under guard scrutiny_statement");
+  }
+  const companions = args.companions ?? [];
+  check(Array.isArray(companions), "companions", "must be a list");
+  check(companions.length === 0 || guard2 === "title_live_with_step", "companions", "are written only under guard title_live_with_step (\xA73c's pair)");
+  companions.forEach((c3, i3) => {
+    check(isText(c3?.title) && isText(c3?.intent), `companions[${i3}]`, "needs a title and an intent");
+    checkSteps(c3.steps, `companions[${i3}].steps`);
+    checkScope(c3.scope, `companions[${i3}].scope`);
+  });
+}
+function holderQuery(args, titles) {
+  const live = liveTicketClause(args.db_path, "t");
+  const liveStatus = `t.status IN ('queued', 'wip') AND t.rejected_at IS NULL${live}`;
+  const keys = JSON.stringify((args.proposal_keys ?? []).map((k3) => k3.key));
+  switch (args.guard) {
+    case "live_key":
+      return {
+        sql: `SELECT t.id FROM ticket_proposals p JOIN tickets t ON t.id = p.ticket_id WHERE p.proposal_key IN (SELECT value FROM json_each(?)) AND ${liveStatus}`,
+        params: [keys]
+      };
+    case "never_held_key":
+      return {
+        sql: `SELECT t.id FROM ticket_proposals p JOIN tickets t ON t.id = p.ticket_id WHERE p.proposal_key IN (SELECT value FROM json_each(?))${live}`,
+        params: [keys]
+      };
+    case "title_live_with_step":
+      return {
+        sql: `SELECT t.id FROM tickets t WHERE t.filing_id = ? AND ${liveStatus} AND t.title IN (SELECT value FROM json_each(?)) AND EXISTS (SELECT 1 FROM ticket_steps s WHERE s.ticket_id = t.id)`,
+        params: [args.filing_id, JSON.stringify(titles)]
+      };
+    case "title_and_step_any_status":
+      return {
+        sql: `SELECT t.id FROM tickets t JOIN ticket_steps s ON s.ticket_id = t.id WHERE t.filing_id = ?${live} AND t.title = ? AND s.text IN (SELECT value FROM json_each(?))`,
+        params: [args.filing_id, args.title, JSON.stringify(args.steps)]
+      };
+    case "scrutiny_statement": {
+      const statement = (args.scope ?? []).find((r3) => r3.entity === "statements_of_law" && r3.entity_id !== null);
+      return {
+        sql: `SELECT t.id FROM tickets t JOIN ticket_scope sc ON sc.ticket_id = t.id WHERE ${liveStatus} AND t.title LIKE 'Review scrutiny finding: %' AND sc.entity = 'statements_of_law' AND sc.entity_id = ?`,
+        params: [statement.entity_id]
+      };
+    }
+    default:
+      return null;
+  }
+}
+function priorityExpr(args) {
+  if (typeof args.priority === "number") return { sql: "?", params: [args.priority] };
+  const queue = `proceeding_id = ? AND status = 'queued' AND rejected_at IS NULL${liveTicketClause(args.db_path)}`;
+  const board = args.filing_id === null ? { sql: queue, params: [args.proceeding_id] } : {
+    sql: `${queue} AND (filing_id = ? OR (filing_id IS NULL AND NOT EXISTS (SELECT 1 FROM filings WHERE id = ? AND kind = ?)))`,
+    params: [args.proceeding_id, args.filing_id, args.filing_id, MILESTONE_KIND]
+  };
+  const pick2 = args.priority === "top" ? "MAX(priority) + 1" : "MIN(priority) - 1";
+  return { sql: `(SELECT COALESCE(${pick2}, 0) FROM tickets WHERE ${board.sql})`, params: board.params };
+}
+function children(job, at) {
+  const id = { $rowid: at };
+  return [
+    ...job.steps.map((text8, i3) => ({ sql: "INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (?, ?, ?)", params: [id, i3 + 1, text8] })),
+    ...(job.scope ?? []).map((r3) => ({ sql: "INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (?, ?, ?)", params: [id, r3.entity, r3.entity_id] }))
+  ];
+}
+async function submissionDataCreateJob(args, env = process.env) {
+  if (!("filing_id" in args)) {
+    throw new ValidationError(`${TOOL10}.filing_id is required: the Writing's or Milestone's id, or null for a proceeding-scoped job`, "invalid_filing_id");
+  }
+  validate(args);
+  const companions = args.companions ?? [];
+  const holder = holderQuery(args, [args.title, ...companions.map((c3) => c3.title)]);
+  const priority = priorityExpr(args);
+  const writer = args.created_by !== void 0 && createdByHeld(args.db_path);
+  const cols = `proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created${writer ? ", created_by" : ""}`;
+  const tail = writer ? ", ?" : "";
+  const tailParams = writer ? [args.created_by] : [];
+  const where = args.guard === "holder_lock" ? { sql: " WHERE EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)", params: [args.held_ticket_id, args.session_token] } : holder === null ? { sql: "", params: [] } : { sql: ` WHERE NOT EXISTS (${holder.sql})`, params: holder.params };
+  const anchor = args.billing_anchor ?? null;
+  const statements = [
+    {
+      sql: `INSERT INTO tickets (${cols}) SELECT ?, ?, ?, ?, ?, ${priority.sql}, ?, ${NOW5}${tail}${where.sql}`,
+      params: [args.proceeding_id, args.filing_id, args.title, args.intent, args.kind, ...priority.params, anchor, ...tailParams, ...where.params],
+      expect_changes: 1
+    },
+    ...children(args, 0)
+  ];
+  const lead = { $rowid: 0 };
+  if (args.guard === "holder_lock") {
+    statements.push({ sql: "INSERT INTO ticket_scope (ticket_id, entity, entity_id) SELECT ?, entity, entity_id FROM ticket_scope WHERE ticket_id = ?", params: [lead, args.held_ticket_id] });
+  }
+  for (const blocker of args.blocks ?? []) statements.push({ sql: "INSERT INTO ticket_blocks (blocker_id, blocked_id) VALUES (?, ?)", params: [blocker, lead] });
+  for (const other of args.conflicts ?? []) statements.push({ sql: "INSERT INTO ticket_conflicts (a_id, b_id) VALUES (MIN(?, ?), MAX(?, ?))", params: [other, lead, other, lead] });
+  for (const k3 of args.proposal_keys ?? []) statements.push({ sql: "INSERT INTO ticket_proposals (ticket_id, proposal_key, item) VALUES (?, ?, ?)", params: [lead, k3.key, k3.item] });
+  const seedAt = args.seed_id === void 0 ? -1 : statements.length;
+  if (args.seed_id !== void 0) statements.push({ sql: "UPDATE seeds SET charted_into = ? WHERE id = ?", params: [lead, args.seed_id], expect_changes: 1 });
+  const companionAt = [];
+  for (const c3 of companions) {
+    const at = statements.length;
+    companionAt.push(at);
+    statements.push({
+      sql: `INSERT INTO tickets (${cols}) SELECT ?, ?, ?, ?, ?, (SELECT priority FROM tickets WHERE id = ?), ?, ${NOW5}${tail}`,
+      params: [args.proceeding_id, args.filing_id, c3.title, c3.intent, args.kind, lead, anchor, ...tailParams],
+      expect_changes: 1
+    });
+    statements.push(...children(c3, at));
+    if (c3.blocked_by_lead) statements.push({ sql: "INSERT INTO ticket_blocks (blocker_id, blocked_id) VALUES (?, ?)", params: [lead, { $rowid: at }] });
+  }
+  const written = await submissionDataWriteAll(args.db_path, statements, env);
+  const warning = written.warning ? { warning: written.warning } : {};
+  if (!written.ok) {
+    if (written.failed === seedAt) throw new ValidationError(`${TOOL10}.seed_id ${args.seed_id} names no loose thread; nothing was written`, "invalid_seed_id");
+    if (written.failed !== 0) throw new DataServerError(`${TOOL10}: statement ${written.failed} changed ${written.changes} rows; nothing was written`);
+    return { outcome: "guarded", ...guardedReport(args, holder), ...warning };
+  }
+  const ticketId = written.results[0].rowid;
+  const companionIds = companionAt.map((at) => written.results[at].rowid);
+  const [row2] = submissionDataQuery(args.db_path, "SELECT priority FROM tickets WHERE id = ?", [ticketId]).rows;
+  const all = [ticketId, ...companionIds].map((id) => `Job ${id}`).join(" and ");
+  return {
+    outcome: "created",
+    ticket_id: ticketId,
+    ...companionIds.length > 0 ? { companion_ids: companionIds } : {},
+    priority: row2.priority,
+    note: `${all} created with steps, scope and links in one transaction${writer ? ", created_by this session" : ""}. Re-render.`,
+    ...warning
+  };
+}
+function guardedReport(args, holder) {
+  if (holder === null) {
+    return {
+      note: `Job ${args.held_ticket_id} no longer carries this session's token, so the lock was lost and nothing was written. Stop, run the confirm-read after a release on job ${args.held_ticket_id} (jobs-create.md \xA73f), name any blocker already written, and report; never re-run.`
+    };
+  }
+  const [found] = submissionDataQuery(args.db_path, `${holder.sql} ORDER BY t.id DESC LIMIT 1`, holder.params).rows;
+  const job = found === void 0 ? "a job that has since changed (re-render to see it)" : `Job #${found.id}`;
+  const notes = {
+    live_key: `A live job already holds one of these keys: ${job}. Nothing was written; say "already a job: ${job}" in one line and go on.`,
+    never_held_key: `One of these keys was already held, by ${job}, so intake writes nothing for it. Skip it and go on.`,
+    title_live_with_step: `A live job with one of these titles already holds a step: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
+    title_and_step_any_status: `This finding is already on the board, or was settled there: ${job}. Nothing was written; say "already on the board" in one line.`,
+    scrutiny_statement: `A live scrutiny review job already covers this statement: ${job}. Nothing was written; say "already a job: ${job}" in one line.`
+  };
+  return { ...found === void 0 ? {} : { holder_id: found.id }, note: notes[args.guard] };
+}
+
+// src/submission/forms/approve-plan.ts
+var TOOL11 = "drafting_data__approve_plan";
+var NOW6 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var PLAN_MARKER = "Create a plan for how to complete this job.";
 async function submissionDataApprovePlan(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL10}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL11}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL10}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL11}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const [job] = submissionDataQuery(
@@ -94086,19 +94357,19 @@ async function submissionDataApprovePlan(args, env = process.env) {
     "SELECT (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id) AS steps, (SELECT COUNT(*) FROM ticket_steps WHERE ticket_id = tickets.id AND text = ?) AS markers FROM tickets WHERE id = ?",
     [PLAN_MARKER, id]
   ).rows;
-  if (job === void 0) throw new NotFoundError(`${TOOL10}: no job ${id} in ${args.db_path}`, "not_found");
-  if (job.steps === 0) throw new DataServerError(`${TOOL10}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
+  if (job === void 0) throw new NotFoundError(`${TOOL11}: no job ${id} in ${args.db_path}`, "not_found");
+  if (job.steps === 0) throw new DataServerError(`${TOOL11}: job ${id} has no steps, so there is no plan to approve; nothing was written`, "no_steps");
   if (job.steps === 1 && job.markers === 1) {
-    throw new DataServerError(`${TOOL10}: job ${id}'s only step is "${PLAN_MARKER}" and nothing was written. What steps will complete this job?`, "plan_marker_only");
+    throw new DataServerError(`${TOOL11}: job ${id}'s only step is "${PLAN_MARKER}" and nothing was written. What steps will complete this job?`, "plan_marker_only");
   }
   const written = await submissionDataWriteAll(
     args.db_path,
-    [{ sql: `UPDATE tickets SET plan_approved_at = ${NOW5} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NULL`, params: [id, args.session_token] }],
+    [{ sql: `UPDATE tickets SET plan_approved_at = ${NOW6} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NULL`, params: [id, args.session_token] }],
     env
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
   const [read3] = submissionDataQuery(args.db_path, "SELECT id, status, rejected_at, locked_by, plan_approved_at FROM tickets WHERE id = ?", [id]).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL10}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read3 === void 0) throw new NotFoundError(`${TOOL11}: no job ${id} in ${args.db_path}`, "not_found");
   let outcome;
   let note;
   if (changes === 1) {
@@ -94134,44 +94405,44 @@ async function submissionDataApprovePlan(args, env = process.env) {
 }
 
 // src/submission/forms/set-step.ts
-var TOOL11 = "drafting_data__set_step";
+var TOOL12 = "drafting_data__set_step";
 var STATUSES2 = ["open", "retry", "cancelled", "deferred", "waiting"];
 var DEFAULT_WAIT_MINUTES = 5;
 var WAIT_MINUTES_MAX = 1440;
 var WORDS_MAX = 500;
 async function submissionDataSetStep(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL11}.ticket_id must be a positive integer`, "invalid_ticket_id");
-  if (!Number.isInteger(args.ordinal) || args.ordinal <= 0) throw new ValidationError(`${TOOL11}.ordinal must be a positive integer`, "invalid_ordinal");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL12}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ordinal) || args.ordinal <= 0) throw new ValidationError(`${TOOL12}.ordinal must be a positive integer`, "invalid_ordinal");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL11}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL12}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (typeof args.status !== "string" || !STATUSES2.includes(args.status)) {
-    throw new ValidationError(`${TOOL11}.status must be one of ${STATUSES2.join(", ")}; nothing was written`, "invalid_status");
+    throw new ValidationError(`${TOOL12}.status must be one of ${STATUSES2.join(", ")}; nothing was written`, "invalid_status");
   }
   const status3 = args.status;
   if (args.wait_minutes !== void 0 && (status3 !== "waiting" || !Number.isInteger(args.wait_minutes) || args.wait_minutes < 1 || args.wait_minutes > WAIT_MINUTES_MAX)) {
-    throw new ValidationError(`${TOOL11}.wait_minutes is a whole number of minutes from 1 to ${WAIT_MINUTES_MAX}, and only with status waiting; nothing was written`, "invalid_wait_minutes");
+    throw new ValidationError(`${TOOL12}.wait_minutes is a whole number of minutes from 1 to ${WAIT_MINUTES_MAX}, and only with status waiting; nothing was written`, "invalid_wait_minutes");
   }
   const owesWords = status3 === "cancelled" || status3 === "deferred";
   const words = typeof args.practitioner_words === "string" ? args.practitioner_words.trim() : "";
   if (owesWords && (words === "" || words.length > WORDS_MAX)) {
     throw new ValidationError(
-      `${TOOL11}: a step is set ${status3} only on the practitioner's own words, passed verbatim as practitioner_words (1 to ${WORDS_MAX} characters); nothing was written`,
+      `${TOOL12}: a step is set ${status3} only on the practitioner's own words, passed verbatim as practitioner_words (1 to ${WORDS_MAX} characters); nothing was written`,
       "practitioner_words_required"
     );
   }
   if (!owesWords && args.practitioner_words !== void 0) {
-    throw new ValidationError(`${TOOL11}.practitioner_words is taken only with status cancelled or deferred; nothing was written`, "invalid_practitioner_words");
+    throw new ValidationError(`${TOOL12}.practitioner_words is taken only with status cancelled or deferred; nothing was written`, "invalid_practitioner_words");
   }
   const id = args.ticket_id;
   const ordinal = args.ordinal;
   const token = args.session_token;
   if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
-    throw new NotFoundError(`${TOOL11}: no job ${id} in ${args.db_path}`, "not_found");
+    throw new NotFoundError(`${TOOL12}: no job ${id} in ${args.db_path}`, "not_found");
   }
   if (!stepStatusHeld(args.db_path)) {
     throw new ValidationError(
-      `${TOOL11}: ${args.db_path} is held below schema v78, so no step of job ${id} can take a status; nothing was written. Say once that the matter's database needs the v78 migration, and leave the step open.`,
+      `${TOOL12}: ${args.db_path} is held below schema v78, so no step of job ${id} can take a status; nothing was written. Say once that the matter's database needs the v78 migration, and leave the step open.`,
       "schema_below_v78"
     );
   }
@@ -94679,11 +94950,11 @@ function validateRow(v3, value, label2, ids, draftFolder3) {
     r3.name_checks.forEach((c3, i3) => {
       const l3 = `${label2}.name_checks[${i3}]`;
       if (!v3.object(c3, l3)) return;
-      const check = c3;
-      v3.name(check.name, `${l3}.name`);
-      v3.path(check.folder, `${l3}.folder`);
-      v3.boolean(check.ok, `${l3}.ok`);
-      v3.optionalString(check.reason, `${l3}.reason`);
+      const check2 = c3;
+      v3.name(check2.name, `${l3}.name`);
+      v3.path(check2.folder, `${l3}.folder`);
+      v3.boolean(check2.ok, `${l3}.ok`);
+      v3.optionalString(check2.reason, `${l3}.reason`);
     });
   }
   v3.oneOf(r3.section, SECTIONS, `${label2}.section`);
@@ -96784,7 +97055,7 @@ function withCodes(drafts) {
 
 // src/submission/forms/board-viewed.ts
 import { basename as basename5, dirname as dirname18, join as join36, resolve as resolve6 } from "node:path";
-var TOOL12 = "drafting_data__record_viewed";
+var TOOL13 = "drafting_data__record_viewed";
 function viewedKey(board) {
   return `board_viewed:${boardKey(board)}`;
 }
@@ -96845,7 +97116,7 @@ function stripTargets(dbPath) {
 }
 async function submissionDataRecordViewed(args, env = process.env) {
   if (!Array.isArray(args.paths) || args.paths.length === 0 || !args.paths.every((p3) => typeof p3 === "string" && p3.trim() !== "")) {
-    throw new ValidationError(`${TOOL12}.paths must list the presented paths, none blank`, "invalid_paths");
+    throw new ValidationError(`${TOOL13}.paths must list the presented paths, none blank`, "invalid_paths");
   }
   const targets = stripTargets(args.db_path);
   const matched = args.paths.map((path) => {
@@ -96853,10 +97124,10 @@ async function submissionDataRecordViewed(args, env = process.env) {
     let hits = targets.filter((t3) => t3.file.toLowerCase() === name);
     if (hits.length > 1) hits = hits.filter((t3) => inFolderOf(t3, path));
     if (hits.length !== 1 && targets.some((t3) => t3.file.toLowerCase() === name)) {
-      throw new ValidationError(`${TOOL12}: several thumbnails are named ${name} and its folder holds none of them; pass the path in its Writing's own folder. Nothing was written.`, "ambiguous_path");
+      throw new ValidationError(`${TOOL13}: several thumbnails are named ${name} and its folder holds none of them; pass the path in its Writing's own folder. Nothing was written.`, "ambiguous_path");
     }
     if (hits.length === 0) {
-      throw new ValidationError(`${TOOL12}: ${path} is no thumbnail on a Milestone: neither a view page nor a Writing's mockup. Nothing was written.`, "not_a_strip_item");
+      throw new ValidationError(`${TOOL13}: ${path} is no thumbnail on a Milestone: neither a view page nor a Writing's mockup. Nothing was written.`, "not_a_strip_item");
     }
     return hits[0];
   });
@@ -96875,7 +97146,7 @@ async function submissionDataRecordViewed(args, env = process.env) {
     rows2.map((r3) => ({ sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [r3.key, r3.value], expect_changes: 1 })),
     env
   );
-  if (!written.ok) throw new DataServerError(`${TOOL12}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
+  if (!written.ok) throw new DataServerError(`${TOOL13}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
   return {
     keys: rows2.map((r3) => r3.key),
     note: "Recorded. The Milestone shows the new order the next time its page is written; this call does not rewrite it.",
@@ -103968,8 +104239,8 @@ function startBootstrapJob(result, client, dates = DATES_NOT_READ) {
 }
 
 // src/submission/forms/complete-job.ts
-var TOOL13 = "drafting_data__complete_job";
-var NOW6 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL14 = "drafting_data__complete_job";
+var NOW7 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function rewritePages(args, read3, client, todos, dates) {
   try {
     let filingId = read3.filing_id;
@@ -104024,9 +104295,9 @@ function openSteps(dbPath, id, token) {
   };
 }
 async function submissionDataCompleteJob(args, client = {}, todos, dates, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL13}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL14}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL13}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL14}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const id = args.ticket_id;
   const token = args.session_token;
@@ -104041,7 +104312,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
         params: [id, id, id, id, token]
       },
       {
-        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW6}, locked_by = NULL, locked_at = NULL WHERE id = ? AND locked_by = ?`,
+        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW7}, locked_by = NULL, locked_at = NULL WHERE id = ? AND locked_by = ?`,
         params: [id, token]
       }
     ],
@@ -104054,7 +104325,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
     "SELECT status, completed_at, locked_by, rejected_at, proceeding_id, filing_id FROM tickets WHERE id = ?",
     [id]
   ).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL13}: no job ${id} in ${args.db_path}`, "not_found");
+  if (read3 === void 0) throw new NotFoundError(`${TOOL14}: no job ${id} in ${args.db_path}`, "not_found");
   let outcome;
   let note;
   if (read3.status === "completed" && read3.locked_by === null) {
@@ -104087,14 +104358,14 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
 }
 
 // src/submission/forms/release-job.ts
-var TOOL14 = "drafting_data__release_job";
+var TOOL15 = "drafting_data__release_job";
 async function submissionDataReleaseJob(args, env = process.env) {
-  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL14}.ticket_id must be a positive integer`, "invalid_ticket_id");
+  if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL15}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL14}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL15}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   if (args.expected_holder !== void 0 && (typeof args.expected_holder !== "string" || args.expected_holder.trim().length !== 8)) {
-    throw new ValidationError(`${TOOL14}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
+    throw new ValidationError(`${TOOL15}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   const holder = args.expected_holder === void 0 ? null : args.expected_holder.trim();
   const guard2 = holder === null ? "locked_by = ?" : "substr(locked_by, -8) = ? AND rejected_at IS NULL";
@@ -104105,7 +104376,7 @@ async function submissionDataReleaseJob(args, env = process.env) {
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
   const [read3] = submissionDataQuery(args.db_path, "SELECT locked_by, locked_at, status, rejected_at FROM tickets WHERE id = ?", [args.ticket_id]).rows;
-  if (read3 === void 0) throw new NotFoundError(`${TOOL14}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
+  if (read3 === void 0) throw new NotFoundError(`${TOOL15}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
   const stillExpected = read3.locked_by !== null && (holder === null ? read3.locked_by === args.session_token : read3.locked_by.endsWith(holder));
   let outcome;
@@ -104140,15 +104411,15 @@ async function submissionDataReleaseJob(args, env = process.env) {
 }
 
 // src/submission/forms/delete-job.ts
-var TOOL15 = "drafting_data__delete_job";
+var TOOL16 = "drafting_data__delete_job";
 var STAMP2 = "UPDATE tickets SET deleted_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = ? AND deleted_at IS NULL AND (status = 'queued' OR (status = 'wip' AND locked_by = ?))";
 async function submissionDataDeleteJob(args, env = process.env) {
   const ids = args.ticket_ids;
   if (!Array.isArray(ids) || ids.length === 0 || !ids.every((id) => Number.isInteger(id) && id > 0) || new Set(ids).size !== ids.length) {
-    throw new ValidationError(`${TOOL15}.ticket_ids must be a non-empty list of distinct positive integers`, "invalid_ticket_ids");
+    throw new ValidationError(`${TOOL16}.ticket_ids must be a non-empty list of distinct positive integers`, "invalid_ticket_ids");
   }
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
-    throw new ValidationError(`${TOOL15}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL16}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const written = await submissionDataWriteAll(
     args.db_path,
@@ -104182,7 +104453,7 @@ async function submissionDataDeleteJob(args, env = process.env) {
 }
 
 // src/submission/forms/merge-jobs.ts
-var TOOL16 = "drafting_data__merge_jobs";
+var TOOL17 = "drafting_data__merge_jobs";
 var WAITS_OUTSIDE = "SELECT 1 FROM ticket_blocks b JOIN tickets bt ON bt.id = b.blocker_id WHERE bt.status <> 'completed' AND";
 function guard(dbPath) {
   const live = deletedAtHeld(dbPath) ? " AND s.deleted_at IS NULL AND a.deleted_at IS NULL" : "";
@@ -104213,18 +104484,18 @@ async function submissionDataMergeJobs(args, env = process.env) {
   const s3 = args.survivor_id;
   const a3 = args.absorbed_id;
   if (![s3, a3].every((id) => Number.isInteger(id) && id > 0)) {
-    throw new ValidationError(`${TOOL16}.survivor_id and absorbed_id must be positive integers`, "invalid_ticket_id");
+    throw new ValidationError(`${TOOL17}.survivor_id and absorbed_id must be positive integers`, "invalid_ticket_id");
   }
-  if (s3 === a3) throw new ValidationError(`${TOOL16}: survivor_id and absorbed_id name the same job`, "same_job");
+  if (s3 === a3) throw new ValidationError(`${TOOL17}: survivor_id and absorbed_id name the same job`, "same_job");
   const token = args.session_token;
   if (typeof token !== "string" || token.trim() === "") {
-    throw new ValidationError(`${TOOL16}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
+    throw new ValidationError(`${TOOL17}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const read3 = (id) => submissionDataQuery(args.db_path, "SELECT * FROM tickets WHERE id = ?", [id]).rows[0];
   const survivor = read3(s3);
   const absorbed = read3(a3);
   if (survivor === void 0 || absorbed === void 0) {
-    throw new NotFoundError(`${TOOL16}: no job ${survivor === void 0 ? s3 : a3} in ${args.db_path}`, "not_found");
+    throw new NotFoundError(`${TOOL17}: no job ${survivor === void 0 ? s3 : a3} in ${args.db_path}`, "not_found");
   }
   const empty2 = { survivor_id: s3, absorbed_id: a3, steps_added: 0, scope_added: 0, keys_added: 0, blocks_moved: 0 };
   const refuse2 = (outcome, role) => ({
@@ -107701,7 +107972,7 @@ function skillRulesCoverage(skill) {
 
 // src/files/rules-position.ts
 var POSITION_SCHEMA_VERSION = 73;
-var NOW7 = "strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')";
+var NOW8 = "strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')";
 var MAIN = "main";
 var DB_FACTS = ["job_held", "job_steps"];
 var SESSION_FACTS = ["unattended", "host"];
@@ -107767,7 +108038,7 @@ function livePrefix(dag, path) {
   while (i3 < path.length && dag.byId.get(path[i3 - 1]).edges.some((e3) => e3.to === path[i3])) i3++;
   return path.slice(0, i3);
 }
-function children(dag, id) {
+function children2(dag, id) {
   return [...dag.byId.get(id).edges].sort((a3, b3) => b3.weight - a3.weight).map((e3) => e3.to);
 }
 function route(dag, from, to2) {
@@ -107776,7 +108047,7 @@ function route(dag, from, to2) {
   const queue = [from];
   while (queue.length > 0) {
     const at = queue.shift();
-    for (const child of children(dag, at)) {
+    for (const child of children2(dag, at)) {
       if (parent.has(child)) continue;
       parent.set(child, at);
       if (child === to2) {
@@ -107814,7 +108085,7 @@ function serve(composed, skill, prior) {
 async function logServed(dbPath, token, path, sent2, env) {
   if (sent2.length === 0) return null;
   const statements = sent2.map(({ rule }) => ({
-    sql: `INSERT INTO rule_served (rule_id, node, path, session_token, served_at) VALUES (?, ?, ?, ?, ${NOW7})`,
+    sql: `INSERT INTO rule_served (rule_id, node, path, session_token, served_at) VALUES (?, ?, ?, ?, ${NOW8})`,
     params: [rule.id, rule.node, path.join(" "), token]
   }));
   try {
@@ -107836,9 +108107,9 @@ function block(dag, composed, served, options) {
   if (options.logError !== null) extra.push(`  <log_error message="${xmlAttr(options.logError)}"/>`);
   return renderRules(dag, { ...composed, rules: served.sent }, { attrs, left: options.left, head, extra });
 }
-var UPSERT_POSITION = `INSERT INTO session_position (session_token, branch, path, session_facts, in_force, updated_at) VALUES (?, ?, ?, ?, ?, ${NOW7}) ON CONFLICT (session_token, branch) DO UPDATE SET path = excluded.path, session_facts = excluded.session_facts, in_force = excluded.in_force, updated_at = excluded.updated_at`;
-var OUT_OF_BOUNDS_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, last_insert_rowid(), ${NOW7}) ON CONFLICT (job_id) DO UPDATE SET went_out_of_bounds_to = excluded.went_out_of_bounds_to, updated_at = excluded.updated_at`;
-var UPSERT_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, NULL, ${NOW7}) ON CONFLICT (job_id) DO UPDATE SET last_in_bounds_path = excluded.last_in_bounds_path, went_out_of_bounds_to = NULL, updated_at = excluded.updated_at`;
+var UPSERT_POSITION = `INSERT INTO session_position (session_token, branch, path, session_facts, in_force, updated_at) VALUES (?, ?, ?, ?, ?, ${NOW8}) ON CONFLICT (session_token, branch) DO UPDATE SET path = excluded.path, session_facts = excluded.session_facts, in_force = excluded.in_force, updated_at = excluded.updated_at`;
+var OUT_OF_BOUNDS_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, last_insert_rowid(), ${NOW8}) ON CONFLICT (job_id) DO UPDATE SET went_out_of_bounds_to = excluded.went_out_of_bounds_to, updated_at = excluded.updated_at`;
+var UPSERT_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, NULL, ${NOW8}) ON CONFLICT (job_id) DO UPDATE SET last_in_bounds_path = excluded.last_in_bounds_path, went_out_of_bounds_to = NULL, updated_at = excluded.updated_at`;
 async function rulesMove(args, env = process.env) {
   const tool = "rules__move";
   checkArgs2(tool, args.db_path, args.session_token);
@@ -107896,7 +108167,7 @@ async function rulesMove(args, env = process.env) {
     if (!dag.byId.has(target)) {
       const at = current === null ? skill : current[current.length - 1];
       const what = to2 === "out_of_bounds" ? `the ${skill} map has no out-of-bounds node '${target}'` : `unknown node '${target}'`;
-      throw new ValidationError(`${tool}: ${what}; the children of ${at} are: ${children(dag, at).join(", ") || "none"}`);
+      throw new ValidationError(`${tool}: ${what}; the children of ${at} are: ${children2(dag, at).join(", ") || "none"}`);
     }
     path = pathTo(dag, current ?? [skill], target);
   }
@@ -107918,7 +108189,7 @@ async function rulesMove(args, env = process.env) {
   ];
   if (entersOutOfBounds) {
     statements.push({
-      sql: `INSERT INTO out_of_bounds_visit (session_token, from_path, visited_at) VALUES (?, ?, ${NOW7})`,
+      sql: `INSERT INTO out_of_bounds_visit (session_token, from_path, visited_at) VALUES (?, ?, ${NOW8})`,
       params: [token, (stored ?? [skill]).join(" ")]
     });
   }
@@ -108065,7 +108336,7 @@ async function rulesBranch(args, env = process.env) {
     statements = [
       { sql: "DELETE FROM session_position WHERE session_token = ? AND branch = ?", params: [token, label2] },
       {
-        sql: `UPDATE session_position SET in_force = ?, updated_at = ${NOW7} WHERE session_token = ? AND branch = ?`,
+        sql: `UPDATE session_position SET in_force = ?, updated_at = ${NOW8} WHERE session_token = ? AND branch = ?`,
         params: [JSON.stringify(served.inForce), token, MAIN]
       }
     ];
@@ -110618,16 +110889,16 @@ async function buildCard(input, facts, deps) {
   }
   const card = newCard(input, structuredClone(facts), at);
   const { records, stopWords } = await recordsOf(deps);
-  const check = runCrossCheck(cardText2(card), records, stopWords);
-  if (!check.complete) return { built: false, reason: "records_unreadable", unreadable: unreadSources(check.records) };
-  const readable = check.hits.filter((h3) => isReadable(h3.part));
+  const check2 = runCrossCheck(cardText2(card), records, stopWords);
+  if (!check2.complete) return { built: false, reason: "records_unreadable", unreadable: unreadSources(check2.records) };
+  const readable = check2.hits.filter((h3) => isReadable(h3.part));
   if (readable.length) {
     return {
       built: false,
       hits: readable.map((h3) => ({ part: h3.part, id: blockOf2(card, h3.part, h3.index).id, ...h3.index !== void 0 ? { index: h3.index } : {}, start: h3.start, end: h3.end, kind: h3.kind, offer: h3.offer }))
     };
   }
-  dropGenerated(card, check.hits, "build", at);
+  dropGenerated(card, check2.hits, "build", at);
   const plugins = input.observation_id !== null ? pluginsOf(deps.seams ?? {}) : [];
   const saved = await withStore(deps.env, (store) => {
     if (input.observation_id !== null) {
@@ -110755,13 +111026,13 @@ function cardFields(card) {
   };
 }
 function checkAndClaim(card, records, stopWords, at) {
-  const check = runCrossCheck(cardText2(card), records, stopWords);
-  if (!check.complete) {
-    card.check_failures = [...card.check_failures ?? [], { at, records: check.records }];
+  const check2 = runCrossCheck(cardText2(card), records, stopWords);
+  if (!check2.complete) {
+    card.check_failures = [...card.check_failures ?? [], { at, records: check2.records }];
     return { unchecked: true };
   }
-  dropGenerated(card, check.hits, "click", at);
-  const prompts = promptsOf(card, check.hits);
+  dropGenerated(card, check2.hits, "click", at);
+  const prompts = promptsOf(card, check2.hits);
   if (prompts.length) return { prompts };
   card.waited_at_submit = waiting(card, new Date(at));
   card.state = "sending";
@@ -110837,10 +111108,10 @@ async function resolvePrompt(cardId, answer, deps) {
     const card = findCard(store, cardId);
     const done = closed(card, store, now);
     if (done) return { done };
-    const check = runCrossCheck(cardText2(card), records, stopWords);
-    const hit = check.hits.find((h3) => h3.part === part && h3.start === answer.start && h3.end === answer.end && isReadable(h3.part) && blockOf2(card, part, h3.index).id === id);
+    const check2 = runCrossCheck(cardText2(card), records, stopWords);
+    const hit = check2.hits.find((h3) => h3.part === part && h3.start === answer.start && h3.end === answer.end && isReadable(h3.part) && blockOf2(card, part, h3.index).id === id);
     if (!hit || answer.action === "send_anyway" && hit.kind !== "date" && hit.kind !== "amount") {
-      return { done: { outcome: "stale", prompts: promptsOf(card, check.hits), blocks: blocksOf(card) } };
+      return { done: { outcome: "stale", prompts: promptsOf(card, check2.hits), blocks: blocksOf(card) } };
     }
     const block2 = blockOf2(card, part, hit.index);
     const span = block2.text.slice(hit.start, hit.end);
@@ -110917,11 +111188,11 @@ async function attachMockup(cardId, html, deps) {
   const problem = checkMockup(html, placeholders);
   if (problem) throw new ValidationError(`mockup refused: ${problem.problem}. Build it again from the placeholder text alone, with inline styles.`);
   const { records, stopWords } = await recordsOf(deps);
-  const check = runCrossCheck({ mockup: html }, records, stopWords);
-  if (!check.complete) {
-    throw new ValidationError(`mockup refused: it could not be checked against this computer's records (${unreadSources(check.records).join(", ")} records unreadable)`);
+  const check2 = runCrossCheck({ mockup: html }, records, stopWords);
+  if (!check2.complete) {
+    throw new ValidationError(`mockup refused: it could not be checked against this computer's records (${unreadSources(check2.records).join(", ")} records unreadable)`);
   }
-  if (!check.passed) {
+  if (!check2.passed) {
     throw new ValidationError("mockup refused: a word in it is found in this computer's records. Use other placeholder text or other style names.");
   }
   const now = nowOf2(deps);
@@ -111272,15 +111543,15 @@ async function checkWriteUp(cardId, raw, deps) {
   if (!citations.passed || spec === null) return { verified: false, card_id: cardId };
   return { verified: true, card_id: cardId, backstop_input: backstopInput(spec, brief) };
 }
-function combined(sentences, citations, judgement, check) {
-  const passed = citations.passed && judgement !== null && judgement.passed && check !== null && check.incoherent === null;
+function combined(sentences, citations, judgement, check2) {
+  const passed = citations.passed && judgement !== null && judgement.passed && check2 !== null && check2.incoherent === null;
   return {
     format: BACKSTOP_FORMAT,
     passed,
     sentences,
     citations,
     judgement: judgement === null ? { judged: false } : { judged: true, ...judgement },
-    record_check: check === null ? { ran: false } : { ran: true, removed: [...new Set(check.removals.map((r3) => r3.sentence))], incoherent: check.incoherent }
+    record_check: check2 === null ? { ran: false } : { ran: true, removed: [...new Set(check2.removals.map((r3) => r3.sentence))], incoherent: check2.incoherent }
   };
 }
 async function sendWriteUp(cardId, rawJudgement, deps) {
@@ -111290,33 +111561,33 @@ async function sendWriteUp(cardId, rawJudgement, deps) {
   const w0 = writeUpOf(sent2.record, "checked");
   const spec = w0.draft;
   const judgement = readJudgement(rawJudgement, spec);
-  let check = null;
+  let check2 = null;
   if (judgement.passed) {
     const stopWords = deps.stopWords ? deps.stopWords() : loadStopWords(deps.env);
     const records = deps.records ? await deps.records() : await readRecordTexts(new PracticeStore(deps.env), deps.env);
-    check = removeMatches(spec, records, stopWords);
+    check2 = removeMatches(spec, records, stopWords);
   }
   const at = nowIso4(deps);
   const recordId = sent2.record.record_id;
   const outcome = await withStore(deps.env, (s3) => {
     const record2 = findSuggestion(s3, recordId);
     const w3 = writeUpOf(record2, "checked");
-    const result = combined(spec.sentences.length, w3.citations, judgement, check);
+    const result = combined(spec.sentences.length, w3.citations, judgement, check2);
     record2.backstop_result = result;
-    if (check) w3.removals = check.removals;
+    if (check2) w3.removals = check2.removals;
     if (!judgement.passed) {
       standAlone(w3, "backstop_failed", at);
       return "stands_alone";
     }
-    if (check === null || check.incoherent !== null) {
-      standAlone(w3, check?.incoherent === "records_unreadable" ? "records_unreadable" : "incoherent", at);
+    if (check2 === null || check2.incoherent !== null) {
+      standAlone(w3, check2?.incoherent === "records_unreadable" ? "records_unreadable" : "incoherent", at);
       return "stands_alone";
     }
     if (record2.withdrawn_at !== null) {
       standAlone(w3, "withdrawn", at);
       return "stands_alone";
     }
-    record2.specification = JSON.stringify(check.spec);
+    record2.specification = JSON.stringify(check2.spec);
     w3.state = "waiting_to_send";
     w3.updated_at = at;
     delete w3.draft;
@@ -115274,11 +115545,11 @@ var createPdfium = (() => {
       getDevice: (dev) => FS.devices[dev],
       getMounts(mount) {
         var mounts = [];
-        var check = [mount];
-        while (check.length) {
-          var m3 = check.pop();
+        var check2 = [mount];
+        while (check2.length) {
+          var m3 = check2.pop();
           mounts.push(m3);
-          check.push(...m3.mounts);
+          check2.push(...m3.mounts);
         }
         return mounts;
       },
@@ -120526,8 +120797,8 @@ function closeForm(lib, { info: info3, handle: handle4 }) {
 }
 
 // src/submission/forms/save-job-answer.ts
-var TOOL17 = "research_filing__save_answer";
-var NOW8 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+var TOOL18 = "research_filing__save_answer";
+var NOW9 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function lawRelativePath(path) {
   const segments = path.split(/[\\/]+/);
   return segments.slice(segments.findIndex((s3) => s3.toLowerCase() === "6. law")).join("\\");
@@ -120535,20 +120806,20 @@ function lawRelativePath(path) {
 async function saveAnswerTool(args, env = process.env) {
   const named2 = [args.db_path, args.ticket_id, args.session_token].filter((v3) => v3 !== void 0).length;
   if (named2 === 0) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
-  if (named2 < 3) throw new ValidationError(`${TOOL17} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
+  if (named2 < 3) throw new ValidationError(`${TOOL18} takes db_path, ticket_id and session_token together, or none of them; nothing was saved`, "invalid_job");
   const dbPath = args.db_path;
   const id = args.ticket_id;
   const token = args.session_token;
-  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL17}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
+  if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL18}.ticket_id must be a positive integer; nothing was saved`, "invalid_ticket_id");
   if (typeof token !== "string" || token.trim() === "") {
-    throw new ValidationError(`${TOOL17}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
+    throw new ValidationError(`${TOOL18}.session_token must be the session_token open_session or bootstrap returned; nothing was saved`, "invalid_session_token");
   }
   if (submissionDataQuery(dbPath, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
-    throw new NotFoundError(`${TOOL17}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
+    throw new NotFoundError(`${TOOL18}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
   }
   if (!ticketAnswersHeld(dbPath)) {
     throw new ValidationError(
-      `${TOOL17}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
+      `${TOOL18}: ${dbPath} is held below schema v52, so no answer can be recorded against job ${id}; nothing was saved. Save it without db_path, ticket_id and session_token.`,
       "schema_below_v52"
     );
   }
@@ -120557,7 +120828,7 @@ async function saveAnswerTool(args, env = process.env) {
   try {
     written = await submissionDataWrite(
       dbPath,
-      `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW8} FROM tickets WHERE id = ? AND locked_by = ?`,
+      `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW9} FROM tickets WHERE id = ? AND locked_by = ?`,
       [lawRelativePath(saved.path), id, token],
       env
     );
@@ -120859,6 +121130,7 @@ var dataTools = [
   defineTool("drafting_data__record_sent", (args) => submissionDataRecordSent(args)),
   defineTool("drafting_data__record_filed", (args) => submissionDataRecordFiled(args)),
   defineTool("drafting_data__record_served", (args) => submissionDataRecordServed(args)),
+  defineTool("drafting_data__create_job", (args) => submissionDataCreateJob(args)),
   defineTool("drafting_data__assign_job", (args) => submissionDataAssignJob(args)),
   defineTool("drafting_data__approve_plan", (args) => submissionDataApprovePlan(args)),
   defineTool("drafting_data__track_source", (args) => submissionDataTrackSource(args)),

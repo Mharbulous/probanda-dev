@@ -14,7 +14,7 @@ Fixed-text jobs `/prepare` may offer per Writing kind (the 2026-09-21 design §6
 | `unstructured` (a venue's stock type for a document type with no type file of its own), or `unstructured-<recipient>` (a `_NoVenue` recipient's) other than `unstructured-internal` | `Draft the Writing` and `Deliver`, both at the Writing's save |
 | `unstructured-internal` (the `_NoVenue` stock type for a Writing for counsel only, which is never sent) | `Draft the Writing` alone, at the Writing's save: no `Deliver` |
 
-Each is written through §3's two-call idiom as `kind = 'work'`, with `billing_anchor` by §3's rule and `priority` from §3's priority read. **`filing_id` is always the lead Writing's id** — the Notice of Application, the Application Response, or the letter — and never NULL: a proceeding-scoped stock job would show on every later Writing's board and survive this Writing's retirement.
+Each is written by one `drafting_data__create_job` call (`jobs-create.md` §3, `guard: "none"`, no `created_by`) as `kind = 'work'`, with `billing_anchor` by §3's rule and `priority` from §3's priority read. This section's text supplies the call's `title`, `intent`, `steps` and `scope`. **`filing_id` is always the lead Writing's id** — the Notice of Application, the Application Response, or the letter — and never NULL: a proceeding-scoped stock job would show on every later Writing's board and survive this Writing's retirement.
 
 Opening a Milestone with no Writing (`drafting_data__create_milestone`) writes no stock job.
 
@@ -139,17 +139,17 @@ The memo's save follows the letter save idiom below with this text in place of t
 - Step 1: `Send the Writing to its recipients`
 - Step 2: `Record the Writing as sent`
 
-The Writing's save writes `Draft the Writing` and this `Deliver` through §3's two-call idiom: call 1 for each job, then call 3 for `Draft the Writing`'s step and its four scope rows, this `Deliver`'s two steps with the letter's scope rows as in the letter save idiom below, and one `ticket_blocks` row from `Draft the Writing` to `Deliver`. A `Deliver` an earlier save wrote with the letter's text keeps it.
+The Writing's save writes `Draft the Writing` and this `Deliver` by two `drafting_data__create_job` calls, `Draft the Writing` first, then `Deliver` with `blocks` naming the `ticket_id` the first call returned. By hand: call 1 for each job, then call 3 for `Draft the Writing`'s step and its four scope rows, this `Deliver`'s two steps with the letter's scope rows as in the letter save idiom below, and one `ticket_blocks` row from `Draft the Writing` to `Deliver`. A `Deliver` an earlier save wrote with the letter's text keeps it.
 
-An `unstructured-internal` Writing's save writes `Draft the Writing` alone: call 1 inserts that one row, call 2 recovers its id, and call 3 writes its step and its four scope rows. No `Deliver` row and no `ticket_blocks` edge are written. Its stored layout declares no `recipients`, and its Milestone has no `gate` row, because it is never sent.
+An `unstructured-internal` Writing's save writes `Draft the Writing` alone, by one `drafting_data__create_job` call; by hand, call 1 inserts that one row, call 2 recovers its id, and call 3 writes its step and its four scope rows. No `Deliver` row and no `ticket_blocks` edge are written. Its stored layout declares no `recipients`, and its Milestone has no `gate` row, because it is never sent.
 
 **These twelve jobs sit outside §14's nothing-open test**, read by these titles, so a queued stock job never holds the gate job back. That is their only exception in the job checklist: every other script treats them as ordinary `work` jobs. (The `gate` completion criterion, which reads unmet while a job is open, leaves out all twelve by the same titles, and §14a's `Pre-send gate` job too.)
 
 ### Letter save idiom
 
-The letter's `Deliver` job is written through §3's two-call idiom, `kind = 'work'`, `billing_anchor` by §3's rule, and `filing_id` the letter's own id. Its `title` and `intent` here are this section's fixed text. The example's ids are literals: proceeding `1`, the letter Writing `8`, an `Availability letter` job `19`, and the new job `20`, which in practice §3's call 2 recovers. A new letter has nothing queued on it, so the job takes §3's starting priority, `0`. A memo's save runs the same statements with the memo's intents and step text (above) in place of the letter's, and an Unstructured Writing's `Deliver` with its own (above), never the letter's.
+The letter's `Deliver` job is written by one `drafting_data__create_job` call, `guard: "none"`, `kind = 'work'`, `billing_anchor` by §3's rule, and `filing_id` the letter's own id. The statements below are that call's contract. Its `title` and `intent` here are this section's fixed text. The example's ids are literals: proceeding `1`, the letter Writing `8`, an `Availability letter` job `19`, and the new job `20`, which in practice the tool returns. A new letter has nothing queued on it, so the job takes §3's starting priority, `0`. A memo's save runs the same statements with the memo's intents and step text (above) in place of the letter's, and an Unstructured Writing's `Deliver` with its own (above), never the letter's.
 
-The plain save writes `Deliver` alone, blocked by nothing. Its first statement is call 1; run call 2 for its id, `20` here, then the rest as call 3:
+The plain save writes `Deliver` alone, blocked by nothing. Its first statement is call 1; by hand, run call 2 for its id, `20` here, then the rest as call 3:
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
@@ -160,7 +160,7 @@ INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (20, 'filings', 8
 INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (20, 'documents', NULL);
 ```
 
-A save under the `Availability letter` job writes the same `Deliver`, blocked by that job:
+A save under the `Availability letter` job writes the same `Deliver`, blocked by that job: the same call with `blocks` naming the `Availability letter` job. By hand:
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
@@ -193,7 +193,7 @@ Both are written as `kind = 'work'`, with `billing_anchor` by §3's rule, `prior
 
 Creating this pair, like §14's gate job, is a fixed-text create and not outlining: it writes no `created_by`, so §4's rule for a session that created jobs does not bind the creating session when it then assigns a job.
 
-**Guarded create.** Neither job is inserted while a `queued` or `wip` job, unshelved, carrying either title already exists on the Writing. The pair lands whole or not at all, so a review still waiting on the practitioner never gains a second `Prepare the review pages`. Call 1 inserts both rows by §3's `INSERT ... VALUES` and then deletes both, in the same script, when a live job with either title already holds a step. Every job holds at least one step once its call 3 has run, and the two rows just inserted hold none yet, so the guard can never match its own rows:
+**Guarded create.** Neither job is inserted while a `queued` or `wip` job, unshelved, carrying either title already exists on the Writing. The pair lands whole or not at all, so a review still waiting on the practitioner never gains a second `Prepare the review pages`. **One `drafting_data__create_job` call writes the pair:** `Prepare the review pages` as the job, `guard: "title_live_with_step"`, `priority: "top"`, `filing_id` the Writing's id, no `created_by`, and the review job in `companions`, with its step, its scope rows and `blocked_by_lead: true`. The guard covers both titles of the call and is tested before either row exists, so it can never match the pair it guards. `outcome: "guarded"` stands for call 2's no row below, and its `holder_id` is the live job's number. `outcome: "created"` returns `ticket_id` (`Prepare the review pages`) and `companion_ids` (the review job). The statements below are the call's contract. By hand, call 1 inserts both rows by §3's `INSERT ... VALUES` and then deletes both, in the same script, when a live job with either title already holds a step. Every job holds at least one step once its call 3 has run, and the two rows just inserted hold none yet, so the guard can never match its own rows:
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
@@ -217,7 +217,7 @@ SELECT id, title FROM tickets t WHERE filing_id = 7 AND status = 'queued' AND de
   AND NOT EXISTS (SELECT 1 FROM ticket_steps s WHERE s.ticket_id = t.id);
 ```
 
-No row means the guard fired: take the live review job's number from `drafting_forms__board_card` with `lanes: ["live"]`, read after the re-render, and say "already a job: Job #N" in one line. One row per title is the new pair. Anything else: stop and ask.
+No row means the guard fired: take the live review job's number from the result's `holder_id` (with none, from `drafting_forms__board_card` with `lanes: ["live"]`, read after the re-render), and say "already a job: Job #N" in one line. One row per title is the new pair. Anything else: stop and ask.
 
 **Call 3 writes the children**, on the recovered literal ids (here `9` and `10`):
 
@@ -267,7 +267,7 @@ The text below is the whole record of the job's title, intent and step; it lives
 
 `kind = 'work'`, `billing_anchor` by §3's rule, `priority` one above the highest §3's priority read returns, and `filing_id` NULL: the keyed row is proceeding-scoped substance (§3's rule for a job outlined from a Proposal).
 
-**Guarded create**, on §3c's shape. Call 1 inserts the row by §3's `INSERT ... VALUES` and deletes it again, in the same script, when a `queued` or `wip` unshelved job carrying the title prefix already has a `ticket_scope` row naming this statement. The row just inserted has no scope rows yet, so it can never match its own guard:
+**Guarded create**, on §3c's shape: **one `drafting_data__create_job` call**, `guard: "scrutiny_statement"`, `priority: "top"`, `filing_id: null`, no `created_by`, the step, and the scope rows above, among them the one `('statements_of_law', <id>)` row the guard reads. The tool tests the guard before the row exists. `outcome: "guarded"` stands for call 2's no row below, and its `holder_id` is the live job's number. The statements below are the call's contract. By hand, call 1 inserts the row by §3's `INSERT ... VALUES` and deletes it again, in the same script, when a `queued` or `wip` unshelved job carrying the title prefix already has a `ticket_scope` row naming this statement. The row just inserted has no scope rows yet, so it can never match its own guard:
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
@@ -286,7 +286,7 @@ SELECT id FROM tickets t WHERE proceeding_id = 1 AND title = 'Review scrutiny fi
   AND NOT EXISTS (SELECT 1 FROM ticket_steps s WHERE s.ticket_id = t.id);
 ```
 
-No row means the guard fired: take the live job's number from `drafting_forms__board_card` with `key`, after a re-render (the live job it prints, or the `held by #N` on that key's Proposed line) and say "already a job: Job #N" in one line. One row is the new job. More than one: stop and ask.
+No row means the guard fired: take the live job's number from the result's `holder_id` (with none, from `drafting_forms__board_card` with `key`, after a re-render: the live job it prints, or the `held by #N` on that key's Proposed line) and say "already a job: Job #N" in one line. One row is the new job. More than one: stop and ask.
 
 **Call 3 writes the children** on the recovered literal id (here `14`):
 
@@ -322,7 +322,7 @@ The text below is the whole record of each job's title and intent; it lives here
 
 `kind = 'work'`, `billing_anchor` by §3's rule, `priority` from §3's priority read, and `filing_id` the Writing's own id: a finding is about this Writing's text.
 
-**Guarded create**, on §3c's shape, one finding per call 1. Call 1 inserts the row and deletes it again, in the same script, when any job on the Writing, of any status, shelved included, and not deleted, carries the same title and a step with the same text. The row just inserted has no step yet, so it can never match its own guard. This is the dedup intake gives a Proposal key: a finding re-detected on a later render, or one a completed job already settled, is never written again.
+**Guarded create**, on §3c's shape, one finding per call: **one `drafting_data__create_job` call**, `guard: "title_and_step_any_status"`, `filing_id` the Writing's id, no `created_by`, the finding as its one step and the scope. The tool tests the guard before the row exists. `outcome: "guarded"` stands for call 2's no row below. The statements below are the call's contract. By hand, call 1 inserts the row and deletes it again, in the same script, when any job on the Writing, of any status, shelved included, and not deleted, carries the same title and a step with the same text. The row just inserted has no step yet, so it can never match its own guard. This is the dedup intake gives a Proposal key: a finding re-detected on a later render, or one a completed job already settled, is never written again.
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
@@ -366,7 +366,7 @@ One fixed-text job, written when the practitioner accepts `/draft`'s conversion 
 - Step 2: `Run /localize create with the practitioner layout and, for a court form, the saved copy of the linked form`
 - No scope rows: `/localize` writes the knowledge tree, never this database. No step offers retirement: recording a Writing as sent never leads to a retirement offer (ADR 0042 D8).
 
-`kind = 'work'`, `billing_anchor` `<matter>|unbilled firm infrastructure`, `priority` from §3's priority read, and `filing_id` the Writing's own id, so the job sits on its own Milestone. Written through §3's two-call idiom with no guard: the offer is made once, when the Writing is recorded as sent. Call 1, for a Writing titled `Notice of discontinuance`:
+`kind = 'work'`, `billing_anchor` `<matter>|unbilled firm infrastructure`, `priority` from §3's priority read, and `filing_id` the Writing's own id, so the job sits on its own Milestone. Written by one `drafting_data__create_job` call with `guard: "none"` and no `created_by`: the offer is made once, when the Writing is recorded as sent. The statements below are the call's contract. Call 1, for a Writing titled `Notice of discontinuance`:
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)

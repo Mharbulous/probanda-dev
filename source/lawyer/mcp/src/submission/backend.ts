@@ -129,13 +129,15 @@ def do_write(req):
 def do_write_all(req):
     # Several parameterized statements in one transaction, staged as do_write stages one. A
     # statement carrying expect_changes that changes another number of rows rolls the whole
-    # transaction back, and the live file is never touched.
+    # transaction back, and the live file is never touched. A parameter {"$rowid": n} binds the
+    # rowid statement n inserted, so a later statement can name a row this transaction created.
     def mutate(con):
         con.execute("BEGIN")
         results = []
         try:
             for i, st in enumerate(req['statements']):
-                cur = con.execute(st['sql'], st.get('params') or [])
+                params = [results[p['$rowid']]['rowid'] if isinstance(p, dict) else p for p in (st.get('params') or [])]
+                cur = con.execute(st['sql'], params)
                 results.append({"rowid": cur.lastrowid, "changes": cur.rowcount})
                 expected = st.get('expect_changes')
                 if expected is not None and cur.rowcount != expected:
@@ -286,7 +288,7 @@ interface WriteRequest {
 }
 
 /** One statement of a `write_all` transaction. With `expect_changes`, any other row count rolls
- * the whole transaction back. */
+ * the whole transaction back. A `{ $rowid: n }` parameter binds the rowid statement n inserted. */
 export interface WriteStatement {
   sql: string;
   params: unknown[];
