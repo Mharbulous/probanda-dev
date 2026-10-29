@@ -57,3 +57,15 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 - Locate the mcp/src sources of the bundle functions above; confirm the triple drift and triple snapshot.
 - Confirm writeMatterPages's `only` filter and that settle rewrites view pages.
+
+## 11. Verification against HEAD (2026-10-29, at 0cc82b51)
+
+| Claim | Source at HEAD | Finding |
+|---|---|---|
+| `buildMatterPages` / `writeMatterPages` | `source/lawyer/mcp/src/submission/matter-pages-build.ts` `buildMatterPages`; `matter-pages.ts:71` `writeMatterPages` | Confirmed. One call builds the Litigation Strategy, Loose Threads, every Milestone page and every view page. |
+| `writeMatterPages` has an `only` filter | `matter-pages.ts:80`, `matter-pages-build.ts:97` | Partly. `only` names one filing and builds that filing's Milestone page and its view pages. No filter leaves out view pages while keeping every Milestone page, so §4's entry write needs a small option for it. |
+| The background job's settle rewrites view pages | `forms/bootstrap-job.ts:59` `settle: () => pages()`; `render-job.ts:280` | Partly. Settle writes every page, view pages included, but runs only when the job rendered at least one filing. An empty or all-fresh queue never settles, so deferred view pages would never be written. The job must settle whenever entry deferred them. |
+| parties_drift spawns the driver three times | `case/parties-of-record.ts:59` `readPartiesOfRecord`, reached through `parties-drift.ts:93` `draftingParties` | More than three. Per open with one proceeding and a drafting Writing: bootstrap's `rankFilings` (`forms/rank-filings.ts:57`), the opening render's `partiesFor` (`forms/render.ts:165`), that render's page write, whose `buildMatterPages` runs `rankFilings` again because only `section` is reused (not in the timings: it passes `[]`), and open_session's `matterPartiesDrift` (`open-session.ts:422`). `counselOffers` adds one per proceeding whose rows still hold values (below v43), and a migrate adds a second bootstrap. |
+| matter_lookup, todos and dates each take a snapshot | `practice/store.ts:99` `snapshot()`; `tools/practice/reads.ts:44` `matter_lookup`, `:204` `open_tasks`, `:240` `active_deadlines`, each `store.items()` | Confirmed: three snapshots per open. |
+| `openedIngestCoverage` runs the folder-hashing driver | `open-session.ts:246`, `case/ingest-coverage.ts` `readIngestCoverage` | Confirmed. Its only caller is open_session, so removing the entry check leaves `case/ingest-coverage.ts` orphaned. The claim-time input check (`work/references/job-session.md`) asks `/matter-data` itself and only reads session entry's result as a shortcut. |
+| procedure.md reports coverage at entry | `.claude/skills/work/references/procedure.md:44` (response row), `:67` (closing-line clause), `:88` (opening.md trigger) | Confirmed. `opening.md`'s "The ingest-coverage clause" and `job-session.md:40` also read the entry-time field. |
