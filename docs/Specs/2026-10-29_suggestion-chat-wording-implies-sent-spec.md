@@ -49,3 +49,15 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 - Confirm the §6 and §7 sentences quoted in §2 exist in `lawyer/skills/suggestion/SKILL.md` at HEAD.
 - Confirm whether a parallel spec (§1 of the two related specs) touches the same §6 paragraph; if so, coordinate per the orchestrator's COORDINATION note.
+
+## 11. Verification against HEAD (2026-10-29, at 2febfa12)
+
+| Claim | Result |
+|---|---|
+| §6 sentence "The chat says nothing about it at all, before or after: ..." in `lawyer/skills/suggestion/SKILL.md` | Confirmed, at `.claude/skills/suggestion/SKILL.md` line 78 (source path; the plugin path in this spec is the built copy). |
+| §7 sentence "Never resend, and never say in chat that a suggestion was sent or not sent." | Confirmed, line 107. |
+| Skill names no wording for a forced status line | Confirmed: §6 and §9 give silence only. §9 step 4 ("with no text, and end the reply") has the same gap. |
+| Other chat line in the skill using "sent" of the suggestion | Found: §6's `records_unreadable` sentence, "I couldn't check this suggestion against your records, so I haven't shown it to you or sent it." (line 96). |
+| `shared/present-files.md` or other suggestion-skill text telling a session to "send" a card | None found. `present-files.md` speaks of a file "presented, sent or shown" generically and names the `SendUserFile` tool, neither about the suggestion card. |
+| Test pinning §6 wording | None found. `source/lawyer/mcp/test/suggestion-write-up.unit.test.mjs` cites a different, first sentence of §6 as a fixture quote. |
+| Parallel specs touching the same §6 paragraph | The remote-host spec edits §6's "Present `card_path`" instruction and §1, and the buttons spec edits §7 and §6's Submit/Dismiss text. Neither edits the chat-wording sentence, which this spec owns. |
