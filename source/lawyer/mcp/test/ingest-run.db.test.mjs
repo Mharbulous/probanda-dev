@@ -78,7 +78,7 @@ test("the tool is defined with its actions, and execute takes an optional run_id
   assert.deepEqual(def.inputSchema.required, ["matter_root", "action"]);
   const execute = defs.find((d) => d.name === "matter_data__execute");
   assert.ok(execute.inputSchema.properties.run_id, "execute takes run_id");
-  assert.deepEqual(execute.inputSchema.required, ["matter_root", "sql_script"]);
+  assert.deepEqual(execute.inputSchema.required, ["matter_root"], "sql_script or a generator (D3)");
 });
 
 test("a second begin is refused run_active, naming the live run; the first holds the lease", async (t) => {

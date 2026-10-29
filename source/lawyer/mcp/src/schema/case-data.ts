@@ -35,13 +35,28 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
       description:
         "Run a write SQL script against a matter's attached main+law+privileged databases in a single transaction, then regenerate evidence.sql. The tool loads the cross-database FK layer itself from the /matter-data skill's references/triggers.sql on every call and refuses to write without it -- do not send it. " +
         "A non-success result (error, rejection, timeout, no response) does not prove the script did not commit: the transaction commits and the databases are committed to storage before evidence.sql is regenerated, and a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with matter_data__query before any further write or retry -- see /matter-data's shared/conventions.md section 2.3. " +
-        "run_id, given only inside an ingest run, must be the matter's live run (matter_data__ingest_run): otherwise the call is refused lease_lost and writes nothing; a write that carries it renews the run's heartbeat. Without run_id the call is unchanged. " +
+        "run_id, given only inside an ingest run, must be the matter's live run (matter_data__ingest_run): otherwise the call is refused lease_lost and writes nothing; a write that carries it renews the run's heartbeat. On a call with run_id, an inline sql_script over 8 KB is refused, writing nothing: 'too long to send inline: use a generator or ingest_result'. Without run_id the call is unchanged. " +
+        "Give sql_script or generator, never both. generator {script, args} has the server emit the script itself, so no SQL passes through the session: script supersede_draft.py with args.command emit-sql ({superseded, kept, approver, execution_status?}: one side a source_id, the other {file_path, file_hash} for a copy with no row; the server reads the pair and plans the fold itself) or rehash-sql ({old, new, file_path}). Any other script, command or pair is refused. " +
         "Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
-      inputSchema: objectSchema([
-        { name: "matter_root", type: "str" },
-        { name: "sql_script", type: "str" },
-        { name: "run_id", type: "str" },
-      ], ["matter_root", "sql_script"]),
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          sql_script: { type: "string" },
+          generator: {
+            type: "object",
+            properties: {
+              script: { type: "string" },
+              args: { type: "object" },
+            },
+            required: ["script", "args"],
+            additionalProperties: false,
+          },
+          run_id: { type: "string" },
+        },
+        required: ["matter_root"],
+        additionalProperties: false,
+      },
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {

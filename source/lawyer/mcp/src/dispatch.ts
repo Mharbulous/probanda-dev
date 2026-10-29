@@ -23,6 +23,7 @@ import { ingestAuthority, type AuthorityIngestRequest } from "./case/ingest-auth
 import { stageResult } from "./case/stage-result.js";
 import { assertLiveRun, dispatchInputs, ingestRun, type IngestRunArgs } from "./case/ingest-run.js";
 import { ingestResult, type IngestResultArgs } from "./case/ingest-result.js";
+import { generatorSql, type Generator } from "./case/execute-generator.js";
 import { proceduralHistoryAppend, type ProceduralHistoryAppendArgs } from "./case/procedural-history.js";
 import { relocateSource, type RelocateSourceRequest } from "./case/relocate-source.js";
 import { housekeepingLog, type HousekeepingLogRequest } from "./case/housekeeping-log.js";
@@ -131,13 +132,24 @@ const toolDefinition = definitionLookup(buildToolDefinitions);
 
 type MatterArgs = { matter_root: string };
 
+/** An inline sql_script on a run's call is refused above this many bytes (est., spec §2.5). */
+const INLINE_SQL_CAP = 8 * 1024;
+
 // The tools that have left the `if` chain below (#183). The rest follow in later children.
 export const dataTools: Tool<DispatchContext>[] = [
   defineTool("matter_data__query", (args: MatterArgs & { sql: string; params?: unknown[] }) =>
     caseDataQuery(args.matter_root, args.sql, args.params)),
-  defineTool("matter_data__execute", async (args: MatterArgs & { sql_script: string; run_id?: string }) => {
+  defineTool("matter_data__execute", async (args: MatterArgs & { sql_script?: string; generator?: Generator; run_id?: string }) => {
+    if ((args.sql_script === undefined) === (args.generator === undefined)) {
+      throw new ValidationError("matter_data__execute takes sql_script or generator, not both and not neither");
+    }
+    // Spec §2.5: the cap binds only a run's calls, so large callers outside a run are unaffected.
+    if (args.run_id !== undefined && args.sql_script !== undefined && Buffer.byteLength(args.sql_script, "utf-8") > INLINE_SQL_CAP) {
+      throw new ValidationError("too long to send inline: use a generator or ingest_result", "too_long");
+    }
     if (args.run_id !== undefined) await assertLiveRun(args.matter_root, args.run_id);
-    return caseDataExecute(args.matter_root, args.sql_script);
+    const sql = args.generator !== undefined ? generatorSql(args.matter_root, args.generator) : (args.sql_script as string);
+    return caseDataExecute(args.matter_root, sql);
   }),
   defineTool("matter_data__ingest_run", (args: IngestRunArgs) => ingestRun(args)),
   defineTool("matter_data__ingest_result", (args: IngestResultArgs) => ingestResult(args)),
