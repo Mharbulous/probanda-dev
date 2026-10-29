@@ -72,14 +72,14 @@ permitted to make statements of law.
    (`shared/legal-research.md`'s spawn template), the factual context, the matter root,
    the `Preflight:` rows and the issue folders' `6. LAW\` listing
    (`research_filing__list_law_folder`), by file name only.
-   - **A caller holding a `/draft` job asks nothing.** The job's recorded question is
-     already approved, and so is every issue the question needs answered completely: the
-     plan's `scope: in` issues are its internal checklist, and steps 3 to 5 run all of them.
+   - **A caller holding a `/draft` job asks nothing** but the split or rewording proposal
+     at the end of this item. The job's recorded question is already approved: it is the plan's one
+     `scope: in` issue, and steps 3 to 5 run it.
      A `scope: new` issue lies outside the question and is not researched: it is captured
      and offered (`shared/legal-research.md`, "Approved plan issues become jobs"). The
      practitioner may still narrow or waive the job's scope in their own words. A plan with
-     more than one `scope: in` issue is proposed for splitting (the doctrine's "A job holds
-     one question").
+     more than one `scope: in` issue, or a title that needs rewording, is proposed for
+     splitting or rewording before any research (the doctrine's "A job holds one question").
 
    Otherwise take the practitioner through its issues one at a time:
    - Ask each issue as its own multiple-choice question, the issue's text verbatim from
@@ -138,16 +138,16 @@ permitted to make statements of law.
    its provenance line, as the caller supplied it (`/draft` composes it). The line says where
    the statement came from, not what the law is (`shared/legal-research.md`).
 5. A return carrying `needs_download` or a hand-off packet on an issue of the question,
-   whatever its other gaps, is a pipeline step, not a closed gate: download or run it (unless declined) through
+   whatever its other gaps, is a pipeline step, not an answer: download or run it (unless declined) through
    `research-paralegal` (`westlaw-first`), have `citation-checker` note up any
    `needs_note_up` citations, and re-invoke the agent once, without
    stopping, with the template's `Re-invocation: yes` field naming that dispatch's
-   status line and every citation it did not retrieve. Then run each tier its `gap:` lines
-   name and have `researcher:memo-reviewer` check the memo, re-invoking the agent on each
-   send-back, by the doctrine's "On a held job, an open tier is not an answer" and
-   "memo-reviewer checks every memo before it is saved": on a held job each piece of research
-   becomes a step, and without one the same loop runs with no steps. Then save the agent's memo to the matter's `6. LAW\<issue>\` folder
-   (`6. LAW\` itself when the question spans issues), relay its `Confidence:` line and the saved memo as its file card (`shared/present-files.md`),
+   status line and every citation it did not retrieve. Then have `researcher:memo-reviewer`
+   check the memo and run each piece of research it sends back, re-invoking the agent on each
+   send-back, at most three reviews, by the doctrine's "On a held job, an open tier is not an
+   answer" and "memo-reviewer checks every memo before it is saved": on a held job each piece
+   of research becomes a step, and without one the same loop runs with no steps. Then save the
+   memo the loop ends on to the matter's `6. LAW\<issue>\` folder, relay its `Confidence:` line and the saved memo as its file card (`shared/present-files.md`),
    never the finding in any words, and ingest what it cites. End with the reviewer's
    out-of-scope questions as a numbered list and the offer of a further memo on any of them.
    Relay nothing of the dispatches

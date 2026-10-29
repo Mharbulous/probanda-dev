@@ -47,7 +47,7 @@ NOTE_UP_AGENT = "researcher:citation-checker"
 
 BLOCK_MESSAGE = """Blocked: CanLII research runs only inside the step that notes up a case, never in the main session.
 A check that a statute is current is CanLII's legislation currency check, which runs here.
-A question about what the law is goes through /legal-research. If its research ended without an answer, relay its confidence summary and research offers verbatim and stop. A closed gate is never a licence to research or answer the question yourself.
+A question about what the law is goes through /legal-research. If its memo is INCOMPLETE or its research stopped, relay its confidence line and the research it names verbatim and stop. An INCOMPLETE memo is never a licence to research or answer the question yourself.
 If the research is unavailable, report that the Probanda plugin needs a re-import and full app restart, and stop."""
 
 IN_AGENT_BLOCK_MESSAGE = """Blocked: CanLII has no decision text. Its API returns index metadata and citator links only. Do not call CanLII to find, read, or check the content of any decision. If you need a decision that is not on disk, stop and return `needs_download: [citations]`. The caller downloads it from Westlaw and re-invokes you once, with `Re-invocation: yes` in the spawn prompt. On that re-invocation, never return `needs_download`: offer the decision as research instead.

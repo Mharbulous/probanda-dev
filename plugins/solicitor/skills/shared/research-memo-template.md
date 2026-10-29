@@ -15,7 +15,7 @@ From: <the exact model ID your own system prompt states. If it states none, writ
 Date: <the spawn prompt's Date>
 Re: "<the question, one line>"
 Format: <ICRA / IRAC / CREAC, the one the body uses>
-Confidence: "<one line: per issue, its strength and whether its authorities were noted up, and every tier the coverage line reads NOT AUDITED>"
+Confidence: "<one line: for the Issue, its strength and whether its authorities were noted up, and every tier the coverage line reads NOT AUDITED>" / "INCOMPLETE: <the research named>"
 ---
 ```
 
@@ -79,9 +79,9 @@ In every format:
   - **C.** lists alternatives in one place at most. "Is gambling legal in BC or Alberta?" is one
     question, but "Is prostitution or gambling legal in BC or Alberta?" crosses two lists into
     four questions, and so four memos.
-- A Conclusion is one paragraph that answers the Issue as framed. It cites in parentheses and
-  has no block quote. Only where research is required (`shared/legal-audit-protocol.md` Step 4),
-  the last Conclusion ends with the open-issues paragraph.
+- A Conclusion is one paragraph answering the Issue, followed, only where research is required
+  (`shared/legal-audit-protocol.md` Step 4), by the open-issues paragraph, after the last
+  Conclusion. It cites in parentheses and has no block quote.
 - The Rule opens with the rule itself. Each proposition of law in it is one sentence, then its
   source's own words:
 

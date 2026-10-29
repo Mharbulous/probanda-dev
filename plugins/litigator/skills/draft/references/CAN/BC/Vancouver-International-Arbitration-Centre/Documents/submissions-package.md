@@ -57,7 +57,7 @@ Forum: VanIAC arbitration. Assembly route: `/publish` with `publish-vaniac-packa
 ## Non-participation
 
 - The Rules (Parts A and B) contain no provision addressing a party's failure to deliver any R. 25(b)(ii) material. State that silence as fact.
-- What follows from non-participation, whether a further submission is available and what it may contain, and whether one party's delivery alone is "delivery of all written material" under R. 25(c), are **questions of law**. Route them to `/legal-research` and draft nothing on a non-participation round until its return and the practitioner's direction are in hand. If the gate closes, relay the refusal and stop.
+- What follows from non-participation, whether a further submission is available and what it may contain, and whether one party's delivery alone is "delivery of all written material" under R. 25(c), are **questions of law**. Route them to `/legal-research` and draft nothing on a non-participation round until its return and the practitioner's direction are in hand. If its memo is `INCOMPLETE`, relay what it names and stop.
 - Signs the branch may apply (any one): a correspondence record in which the other side says it will not participate; the practitioner says so and no received package contradicts it.
 
 ## Package conventions (firm; `source: practitioner`)

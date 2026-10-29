@@ -55,7 +55,8 @@ and its one step is the plan marker (`/drafting-data`'s `jobs-create.md` §3, "T
 marker"). A skipped issue gets no job, and the jobs need no further approval: the "No"
 is the request. Then re-render the Milestone and stop. Writing the jobs dispatches
 nothing: each job's research runs through the gate when the job is worked. A session
-holding a `/draft` job asks no approval and writes no job. Approving the job approved
+holding a `/draft` job asks no approval and writes no job, except by the split or rewording
+proposal below. Approving the job approved
 its question, so the plan's `scope: in` issue is the issue steps
 3 to 5 run. A `scope: new` issue is not researched: capture it as a loose thread by the
 duplicate test below (`/drafting-data` §8 with a job held), relay it word for word, and
@@ -63,12 +64,16 @@ say in one line that it is researched only if they name it. With no board, write
 jobs to, and run steps 3 to 5 on each approved issue, one memo per issue.
 
 **A job holds one question.** A held job whose plan returns more than one `scope: in` issue
-holds more than one question (`shared/research-memo-template.md`, rules A and C). Research
-nothing on it: propose to the practitioner one job per question, each question in full. On
-their yes, reword the held job to the first question (`/drafting-data` §3m, "Rewording a held
-job") and write each other question as a job as §3m writes a premise job (§3i's guarded create,
-the plan marker as its step). On a no, write nothing and research nothing on it, and say in
-one line that a job is researched one question at a time. An unattended run reports and stops.
+holds more than one question (`shared/research-memo-template.md`, rules A and C). A title
+that does not make sense on its own (rule B), or that names anything of the working matter
+(`shared/legal-audit-protocol.md` Step 6), needs rewording. Research nothing on such a job:
+in one proposal, quoting the title, propose one job per question, each question in full, and
+the rewording. A question that depends on the one before it ("If so, ...") stays with it as
+one question. On their yes, reword the held job to the first question (`/drafting-data` §3m,
+"Rewording a held job") and write each other question as a job as §3m writes a premise job
+(§3i's guarded create, the plan marker as its step), then run steps 3 to 5 on the reworded
+job. On a no, write nothing and research nothing on it, and say in one line that a job is
+researched one question at a time. An unattended run reports and stops.
 
 **A caller working a `/draft` job checks its lock before every dispatch.** Immediately
 before each `research-paralegal` or `citation-checker` dispatch and each audit-agent spawn or re-invocation
@@ -297,7 +302,7 @@ Legislation: <citation>: filed <path>, current to <marker>, currency <value> / a
 Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not retrieved: <reason> / none
 6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted or staged>
 Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
-Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal: <its status line, or practitioner declined>
+Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal: <its status line, or practitioner declined> / yes: review
 Review: <memo-reviewer's last JSON, verbatim> / none
 Background memos: <path>[; <path>] / none
 Here are the memos that will provide some background context for your research. Repeat the propositions and excerpts from the previous memo only if they are necessary context for explaining your own research memo, but make sure that you go beyond that information and dig deeper into the legal issue posed by your particular question.
@@ -327,8 +332,8 @@ carries `Origin: none`.
 A caller working a `/draft` job fills `Job question:` with the job's title character for
 character, as its card shows it, and puts the same words in `Question:`. Every other
 caller writes `Job question: none`.
-`Re-invocation` is `no` on the first spawn and `yes` on every re-invocation below. `Review:`
-is `none` until memo-reviewer has returned on this question.
+`Re-invocation` is `no` on the first spawn and `yes` on every re-invocation below: `yes: review`
+when no paralegal ran for it. `Review:` is `none` until memo-reviewer has returned on this question.
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
 is in issue. For an instrument filed in parts, `<path>` lists every part's path, separated by `; `.
@@ -350,8 +355,8 @@ call is the lock read before each of those dispatches. A deep-research run is no
 a source: its record is the answer saved under the job. A caller holding no job
 records nothing.
 
-**A `needs_download` or hand-off-packet return is a pipeline step, not a closed
-gate.** When the agent returns a `needs_download` list, a `needs_note_up` list or a
+**A `needs_download` or hand-off-packet return is a pipeline step, not an
+answer.** When the agent returns a `needs_download` list, a `needs_note_up` list or a
 hand-off packet on an issue of the question, execute it without asking, whatever its
 other gaps (a declined issue dispatches nothing):
 dispatch `researcher:research-paralegal` in
@@ -375,15 +380,14 @@ names.
 
 **After the answer, the caller persists it.** This rule covers the return of
 the `research-agent` agent, or whichever law-audit agent the gate dispatched.
-Every memo it returns is persisted once memo-reviewer's loop below ends, an `INCOMPLETE`
-one included.
+The memo that memo-reviewer's loop below ends on is persisted, an `INCOMPLETE` one included.
 Verified pinpoints are not a precondition: filing its cited decisions puts on
 disk the full text that verifying them needs.
 
-**On a held job, an open tier is not an answer.** A return to a caller working a `/draft`
-job whose `Gaps` section names a tier not run (`gap: <issue> : tiers not run: <tier>`,
-anything but `none`) is a pipeline step, not an answer: save nothing yet. First
-add one step to the held job for each tier it names, by `/drafting-data`'s partial replace
+**On a held job, an open tier is not an answer.** To a caller working a `/draft` job, the
+`required` items memo-reviewer returns on a memo (below) are a pipeline step, not an answer:
+save nothing yet. A `gap:` line it does not confirm as `required` adds no step. First
+add one step to the held job for each tier they name, by `/drafting-data`'s partial replace
 (`jobs-run.md` §5), appended after the steps already on it, which keep their words and stamps, such as
 `Run the Westlaw query on <issue>`, `Fetch the full text of <citation>` or `Read <file>`,
 then `Put the question to /legal-research again with the new sources`. A tier only the
@@ -392,42 +396,46 @@ name with its fix, listed for them under Movers (`/draft` `references/job-sessio
 work the steps: Westlaw by duty 3 on that issue, legislation by duty 4 for that instrument
 (its whole text), a note-up (`Note up <citation>`) by duty 5 for that decision, and an
 UNREAD file by duty 2 or the `/matter-data` copy. Then re-invoke
-the same agent with `Re-invocation: yes`, naming the new files. Repeat while a gap names a
-tier not yet run for that issue in this question: each tier runs at most once per issue. A
+the same agent with `Re-invocation: yes` and `Review:`, naming the new files. Each tier runs at
+most once per issue: the tier is its kind and object as a `gap:` line names it (Westlaw,
+`Legislation: <citation>`, `6. LAW: <file>`, Commons, `Note-up: <citation>`), never the
+Westlaw query's subject, and the issue is the memo's one Issue. A
 step is stamped done only once its work has run, never while a return still names its tier
 not run. A tier that stops by the rules above (a Westlaw stop, a refusal the practitioner
 keeps, a fetcher stop) stops as they say, and its step stays open: set it ↻
 (`drafting_data__set_step`, `status: retry`) while a missing credential or an unreachable
 source blocks it, never stamped done. A Westlaw step waits as ⏳ while its run is out
-(duty 3). Once no gap names a tier
-this session can run, the last return goes to memo-reviewer below, and the job stays open on
-each step not yet done (`/draft` `references/job-session.md`, Complete).
-A caller holding no job runs the same loop, adding and stamping no steps.
+(duty 3). The job stays open on each step not yet done (`/draft` `references/job-session.md`,
+Complete). A caller holding no job runs the same loop, adding and stamping no steps.
 
 **memo-reviewer checks every memo before it is saved.** Spawn `researcher:memo-reviewer`
-with the spawn prompt's `Question:`, `Job question:`, `Facts:`, `Matter:`, `Asked by:` and
-`Origin:` lines, and the full text of the memo and of the notes, read from the return's
-`Memo scratch:` and `Notes scratch:` paths, or as the return gives them, pasted in. It
-returns JSON:
+on every return that carries a memo, with the spawn prompt's `Question:`, `Job question:`,
+`Facts:`, `Matter:`, `Asked by:` and `Origin:` lines, and the full text of the memo and of
+the notes, read from the return's `Memo scratch:` and `Notes scratch:` paths, or as the return
+gives them, pasted in. It reviews one question at most three times. A return that is not its
+JSON object (`verdict`, `required`, `out_of_scope`, `identifiers`), `rules unavailable`
+included, saves nothing: stop and relay it verbatim. On the object, re-invoke the agent with
+`Review:` the reviewer's JSON:
 
-- `send_back` with `required` items: each is research the Issue cannot be answered without.
-  Treat each as a gap by the rule above: a step on a held job, then its work, then
-  re-invoke the agent with `Re-invocation: yes` and `Review:` the reviewer's JSON. Each tier
-  still runs at most once per issue.
-- `send_back` with `identifiers`: re-invoke the agent with `Review:` to rewrite the memo without
-  them.
-- Spawn memo-reviewer again on each new return. When it sends back only research that has
-  run or that this session cannot run, the loop ends: if the memo does not already name that
-  research in its open-issues paragraph, re-invoke the agent once with `Review:`. Save that
-  last return, its `Confidence:` reading `INCOMPLETE: <the research named>`, and tell the
-  practitioner in one line which research it still needs.
-- `complete`: when the memo still holds an open-issues paragraph or an `out_of_scope` issue,
-  re-invoke the agent once with `Review:` to drop them, and save that return without another
-  review. Never edit the memo yourself: it is saved verbatim.
+- `send_back` with `required` items: each is research the Issue cannot be answered without,
+  run by the rule above first.
+- `send_back` with `identifiers`, or `complete` with `out_of_scope` items or an open-issues
+  paragraph left in the memo: to rewrite the memo without them.
+- `send_back` whose only items are `required` research this session cannot run: to name it
+  in the open-issues paragraph, unless the memo already does.
 
-Capture each `out_of_scope` question as a loose thread with the return's other items below.
-End the report with those questions as a numbered list, then one line inviting the
-practitioner to say which, if any, they want a further memo on.
+Spawn memo-reviewer again on each new return. Save a return only once a review accepts it:
+`complete` with an empty `out_of_scope`, or a `send_back` whose only items are `required`
+research this session cannot run, each named in the memo's open-issues paragraph. When the
+third review accepts nothing, re-invoke the agent once with it to write the memo `INCOMPLETE`,
+naming what that review still asks, and save that return. Only the memo the loop ends on is
+persisted; earlier returns stay in the scratchpad. Never edit the memo yourself: it is saved
+verbatim. On saving an `INCOMPLETE` memo, tell the practitioner in one line which research it
+still needs.
+
+Capture the questions the reviews named as `out_of_scope`, each once, as loose threads with
+the return's other items below. End the report with those questions as a numbered list, then
+one line inviting the practitioner to say which, if any, they want a further memo on.
 
 Persist in this order. Steps 2 and 3 need not interrupt the work in hand, but they
 complete before the session ends: never leave a session with a cited decision unfiled.
@@ -437,12 +445,10 @@ complete before the session ends: never leave a session with a cited decision un
    nothing added but the Legend the save generates and nothing else of it removed, as `<File stem>.md` (the spawn
    prompt's `File stem:`) in the research folder under the matter. The internal notes
    above the memo are already in the scratchpad and are not saved here.
-   The research folder is set by the question you put to the audit agent. The issues
-   it splits that question into get no folders of their own. A question about one
-   legal issue files in `6. LAW\<issue>\`: reuse the existing subfolder named for
+   The research folder is set by the question you put to the audit agent. It
+   files in `6. LAW\<issue>\`: reuse the existing subfolder named for
    that issue, or create one named in the question's own words for it, and name any
-   folder you created in your relay. A question spanning more than one issue files
-   in `6. LAW\` itself.
+   folder you created in your relay.
    Never use the claude.ai Project. Save with `research_filing__save_answer`.
    When the return has a `Memo scratch:` line, pass that path as `from_scratch`
    and no `text`: the runtime copies the agent's own file byte for byte, so the
@@ -503,14 +509,16 @@ A session holding no job captures them through `/drafting-data`'s capture with n
 SKILL.md, "Captured ideas").
 
 **The duplicate test.** Before capturing any item of the return, an `origin-correction:`
-line, a `matter-data:` flag or an offer, read the open loose threads (`/drafting-data` §8's
+line, a `matter-data:` flag, an offer or a memo-reviewer `out_of_scope` question, read the open loose threads (`/drafting-data` §8's
 open set) by one `drafting_data__query` on `seeds`. An item that restates the held job's own
 title or intent, or the idea of an open loose thread, is not captured.
 Say so in one line instead: `already on the board: Loose thread #N`, or `the held job's own
 subject: Job #N`. The test reads what an item is about, never whether it is right, and states
 no law.
 
-Then sort every Step 5 offer, whatever its `live_issue` tag, against the board. Read the
+Then sort every Step 5 offer, whatever its `live_issue` tag, against the board. An offer of
+research the scope test found not required is sorted like any other, so off the application
+it is dropped. Read the
 board without opening a page: `board_summary` (its `To Do:` line, its completion criteria or
 `State:` line, and the board's title), `drafting_forms__board_card` with `lanes: ["live"]`
 for the open jobs' titles, the same tool with `jobs` naming every id that lane lists for
@@ -557,8 +565,9 @@ memo's words as advice on the draft.
 
 When no board resolves,
 capture nothing, add no job, relay the `Confidence:` line and every offer, each word for
-word, with the saved memo as its file card (`shared/present-files.md`), and say in one line that the matter has no
-board to capture to. A return
+word, with the saved memo as its file card (`shared/present-files.md`), then the
+memo-reviewer's `out_of_scope` questions as a numbered list and the invitation line, relayed,
+not captured, and say in one line that the matter has no board to capture to. A return
 with `Origin: none` is sorted against the open board in a `/draft` session. Outside `/draft`
 it is relayed as before this step existed.
 

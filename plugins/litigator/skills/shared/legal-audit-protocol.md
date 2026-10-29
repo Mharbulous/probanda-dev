@@ -259,12 +259,14 @@ paragraph opening `More research is needed on the following issues:` that lists 
 question, and write the header's `Confidence:` as `INCOMPLETE: <the research named>`. Nothing
 else in the memo defers to further research, offers research or names a tier not run. With
 no research required, write no such paragraph. A spawn prompt's `Review:` line is
-memo-reviewer's verdict on your last memo: treat each `required` item as required, and leave
-each `out_of_scope` issue and each `identifiers` item out of the memo.
+memo-reviewer's verdict on your last memo: treat each `required` item as required, leave
+each `out_of_scope` issue and each `identifiers` item out of the memo, and write no Step 5
+offer for an `out_of_scope` issue. With any `Review:` but `none`, return no `needs_download`
+or `needs_note_up`. A `Review:` with no `required` item asks only for a rewrite: rewrite the
+memo from the sources already held, without re-running the audit.
 
 For each issue the paragraph names, write one line under a `Gaps` heading in the
-notes, in exactly this shape: `gap: <issue> : tiers not run: <tier>[; <tier>]`, or
-`gap: <issue> : tiers not run: none` when every tier has run on it. Name each tier as
+notes, in exactly this shape: `gap: <issue> : tiers not run: <tier>[; <tier>]`. Name each tier as
 the coverage line does: `Westlaw: <the query's subject>`, `Legislation: <citation>[,
 <the parts not on disk>]`, `6. LAW: <file> UNREAD`, `Commons: NOT AUDITED: <state>`,
 `Note-up: <citation> NOT NOTED UP`. A tier that ran on part of an
@@ -374,7 +376,7 @@ write the notes and the memo to the scratchpad, in this order, and return only i
      one-line `Confidence:` summary of the Step 3 table is the only confidence text in it.
    - In every format the memo is generic and has no Facts section. The spawn prompt's `Facts:`, `Matter:`, `Asked by:` and `Origin:`
      only choose authorities and route the work: the memo never states, summarises or
-     alludes to them. Its `Re:`, Issue and Conclusion hold no party name, date, amount,
+     alludes to them. No part of the memo holds a party name, date, amount,
      matter number, document name or fact pattern of the working matter.
    - Application describes only the facts of the cited authorities. It may say which
      authority's facts come closest to a stated generic pattern.

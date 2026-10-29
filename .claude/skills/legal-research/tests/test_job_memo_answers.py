@@ -1,7 +1,7 @@
 """Pins that a research memo always answers its question: the audit has no closed gate, its
 Conclusion answers from the sources held and ends with the open-issues paragraph only where the
 scope test leaves research required, the pool and the citator get gap lines, and required research
-gets no offer; the caller adds a step to the held job for each tier a return names as not run,
+gets no offer; the caller adds a step to the held job for each `required` item memo-reviewer names,
 stamps a step only after its work ran, and runs the same loop without steps outside a held job;
 and a job plan's Westlaw step has no approval point.
 
@@ -103,7 +103,7 @@ class JobPlanningTest(unittest.TestCase):
 
     def test_partial_replace_adds_open_tier_steps(self):
         jobs_run = flat(read("drafting-data", "references", "jobs-run.md"))
-        self.assertIn("It is also the write that adds a step for each tier a held research job's return names as not run", jobs_run)
+        self.assertIn("It is also the write that adds a step for each `required` item memo-reviewer names on a held research job", jobs_run)
 
 
 class StepStatusTextTest(unittest.TestCase):

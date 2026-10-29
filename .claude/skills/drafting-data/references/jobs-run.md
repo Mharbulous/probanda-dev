@@ -93,7 +93,7 @@ UPDATE tickets SET plan_approved_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localti
   WHERE id = 2 AND locked_by = 'sess-a1';
 ```
 
-One `INSERT` per new step, in the plan's order. Never use the whole-list replace above for an upgrade: it discards the done steps' stamps. It is also the write that adds a step for each tier a held research job's return names as not run (`shared/legal-research.md`, "On a held job, an open tier is not an answer"): its `INSERT` with no `DELETE`, so every step already on the job keeps its row and its stamp. Then run the confirm-read below and read it as below.
+One `INSERT` per new step, in the plan's order. Never use the whole-list replace above for an upgrade: it discards the done steps' stamps. It is also the write that adds a step for each `required` item memo-reviewer names on a held research job (`shared/legal-research.md`, "On a held job, an open tier is not an answer"): its `INSERT` with no `DELETE`, so every step already on the job keeps its row and its stamp. Then run the confirm-read below and read it as below.
 
 **The pickup rewrite.** `/draft`'s pickup review (`work/references/job-session.md`, The pickup review) shortens a ready job's title and splits its steps, and its restating check ("A step that only restates the request") replaces a ready job's steps with a plan that names the work, before the job is assigned, so the job is not yet locked and the guard is the assigning write's own, plus no inherited plan: no approval stamp and no step done. One script, each statement under that guard, the step list replaced whole and the title set only when it changed:
 

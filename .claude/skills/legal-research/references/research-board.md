@@ -33,7 +33,7 @@ The jobs share the retrieval lanes, which the doctrine sets. One `research-paral
 
 ## 4. A memo lands
 
-1. Once memo-reviewer's loop on it has ended (`shared/legal-research.md`, "memo-reviewer checks every memo before it is saved"), save it under its own job (`research_filing__save_answer` with that job's `db_path`, `ticket_id` and token), relay it as the gate's step 5 says, and complete the job only by `/draft` `references/job-session.md`'s Complete, which refuses an `INCOMPLETE` memo (`drafting_data__complete_job` with that job's token).
+1. Once memo-reviewer's loop on it has ended (`shared/legal-research.md`, "memo-reviewer checks every memo before it is saved"), save it under its own job (`research_filing__save_answer` with that job's `db_path`, `ticket_id` and token), relay it as the gate's step 5 says, and complete the job only by `/draft`'s job-session Complete step, which refuses an `INCOMPLETE` memo (`drafting_data__complete_job` with that job's token).
 2. Spawn `researcher:research-triage` again, with every job's state, `New memo:` this memo, and the saved graph. Save its new JSON over the graph.
 3. Write its `edges`. Put each `new_jobs` and `close` entry to the practitioner, and write it only on their yes (§3m).
 4. For each `reword` entry, assign that job when a slot is free, dispatch nothing for it, and show the practitioner the rewording review below. On approval, write the new question (§3m, Rewording a held job). On "keep the original", write nothing. Either way, then run the job by step 2, with its blockers' memos still passed forward.

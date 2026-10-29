@@ -190,7 +190,7 @@ class GateLoopTest(unittest.TestCase):
         self.assertIn("at most three reviews", front_door)
         board = flat(read("legal-research", "references", "research-board.md"))
         self.assertIn("Once memo-reviewer's loop on it has ended", board)
-        self.assertIn("complete the job only by `/draft` `references/job-session.md`'s Complete, which refuses an "
+        self.assertIn("complete the job only by `/draft`'s job-session Complete step, which refuses an "
                       "`INCOMPLETE` memo", board)
         self.assertIn("the plan asks nothing but the split or rewording proposal", board)
         self.assertIn("After a split writes new jobs, spawn `researcher:research-triage` again", board)

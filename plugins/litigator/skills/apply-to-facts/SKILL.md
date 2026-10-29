@@ -61,10 +61,10 @@ Two things carry over from `shared/legal-research.md` and bind you as the caller
 - **The pre-spawn duties are yours.** Run the tier-2 pooled-layer lookups the agent cannot
   reach, and extract any `6. LAW\` `.docx` memo text it cannot open, and pass both into the
   spawn. Read `shared/research-priority.md` and follow its order.
-- **A closed gate is the answer.** If the agent declines, reports layers unavailable, or
-  offers only a preliminary impression, relay its confidence summary and its research offers
+- **An `INCOMPLETE` memo is the answer.** If the saved memo's `Confidence:` reads
+  `INCOMPLETE`, or the research stopped, relay its confidence line and the research it names
   and stop. You do not have a test to apply, so there is no conclusion to reach. Reasoning on
-  from a preliminary impression, or reasoning "in the alternative" around a closed gate, is
+  from a preliminary impression, or reasoning "in the alternative" around an incomplete memo, is
   the failure this skill exists to prevent.
 
 An ingested primary authority or output of `/verify-law` with `verify-authorities` may be quoted without a fresh spawn,
@@ -76,7 +76,7 @@ Turn the returned test into the criteria the step 3 dispatch needs, one per elem
 in the order the authority states them. Each carries a short `ref`, the criterion `text` as
 returned, whether it is an `element` or a `factor`, its `citation` with pinpoint, and its
 `source`: the research-agent return, or the stored criterion ids it named. If the research
-did not cite every criterion, the test is not verified: that is a closed gate, so stop as
+did not cite every criterion, the test is not verified: stop as for an `INCOMPLETE` memo
 above and dispatch nothing.
 
 ## 3. Dispatch marshal-facts for the facts and the mapping
@@ -98,7 +98,7 @@ each criterion to them, so the facts never pass through this session. Give it:
 - `scope_hints`, optional source titles or categories to start from
 - `mode: map`
 
-A closed gate at step 2 dispatches nothing. Documents read earlier do not replace or add to
+An `INCOMPLETE` memo at step 2 dispatches nothing. Documents read earlier do not replace or add to
 the agent's return. This skill holds no schema, no table or column names, no SQL, and makes
 no `sqlite3` call — the database is opaque to it. The agent returns the fact ids and
 pinpoints, never the database's particulars.

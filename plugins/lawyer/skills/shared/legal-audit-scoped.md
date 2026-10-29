@@ -142,17 +142,21 @@ Issue <n>: <the issue, as a question>
 Completion test: <what the answer must hold: each scope: in issue answered with a pinpoint citation, or named as a gap only once every source tier has run on it>
 ```
 
-`scope: in` marks an issue the question as asked needs answered to be answered
-completely. `scope: new` marks an issue outside it: a different point, not part of the
-question's answer. The tag says which question an issue serves, never what the law is.
-Each issue meets the memo template's rules A to C (`shared/research-memo-template.md`): the
-gate runs one audit, and the agent writes one memo, per issue.
+`scope: in` marks a question the question as asked holds. `scope: new` marks an issue
+outside it: a different point, not part of the question's answer. The tag says which
+question an issue serves, never what the law is. Each issue meets the memo template's rules
+A to C (`shared/research-memo-template.md`): the gate runs one audit, and the agent writes
+one memo, per issue. Split only by rules A and C, never into a question's elements: what
+answering an issue needs is covered inside its one memo by the scope test
+(`shared/legal-audit-protocol.md` Step 4).
 
 When the spawn prompt's `Job question:` is not `none`, the job question is split only at
 its own question marks, each part quoted verbatim as its issue, in the job question's
-order: one question mark, one issue. A part that crosses two lists (rule C) is split
-further, one issue per question, in the part's own words. These are the only `scope: in` issues.
-You add no issue of your own and reword no part: what a part needs checked goes in its
+order: one question mark, one issue. A part that depends on the one before it ("If so,
+...") stays with it as one issue. A part that crosses two lists (rule C) is split
+further, one issue per question, in the part's own words, reworded only as far as
+separating the lists needs, with the part quoted beside it. These are the only `scope: in` issues.
+You add no issue of your own and reword no part beyond that: what a part needs checked goes in its
 `sources, in order` line, and a point outside the job question is a `scope: new` issue.
 
 ## Coverage line (mandatory, every scoped return — inventory and plan alike)

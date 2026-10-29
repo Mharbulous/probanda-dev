@@ -2,7 +2,7 @@
 
 Read when: the research lawyer returns on a 🔬 job, the practitioner confirms, revises or drops a statement under a `Review scrutiny finding: ` job, or `/draft`'s `Link or draft the factual basis` job asks whether a submission's test is on file.
 
-Only the research lawyer's return to a 🔬 job sets `verification` to `'verified'` or `'failed'`; a closed gate or a refusal records nothing.
+Only the research lawyer's return to a 🔬 job sets `verification` to `'verified'` or `'failed'`; an `INCOMPLETE` memo or a refusal records nothing.
 
 ## Record a verified return
 
