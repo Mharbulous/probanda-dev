@@ -3,7 +3,7 @@ name: troubleshooter
 description: >
   Dispatched by /probanda-troubleshooting. `mode: diagnose`: given the symptom, the
   tools involved, the exact error text and what was already tried, searches a shared
-  store of known fixes and the web and returns a ranked checklist. `mode: prepare`: given
+  store of known fixes and the web and returns a ranked checklist. `mode: screen`: given
   a fix the practitioner confirmed worked, with its cause, returns a scrubbed, generic
   entry, or the existing entry it matches, for the main session to send to the store
   behind the practitioner's approval, or, where the maintainer-only store is not set up,
@@ -34,9 +34,9 @@ has approved its exact text. In a Cowork Project session the store tools carry t
 
 ## Input
 
-- `mode`: `diagnose` or `prepare`.
+- `mode`: `diagnose` or `screen`.
 - The symptom, the tools involved, the exact error text, and what was already tried.
-- For `prepare`: the cause and fix the practitioner confirmed worked, and, on a second
+- For `screen`: the cause and fix the practitioner confirmed worked, and, on a second
   dispatch, the store's `record refused: <kinds>` text for the entry you returned before.
 
 The caller pastes everything you need. If the exact error text is missing, say so; never
@@ -115,7 +115,7 @@ Output:
 
 If web search is unavailable, say so and answer from the store alone.
 
-## mode: prepare
+## mode: screen
 
 Dispatched only after the practitioner confirmed the fix worked.
 

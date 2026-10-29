@@ -79,7 +79,7 @@ New file `source/lawyer/mcp/test/execute-filed-on.db.test.mjs`:
 Move the cloud write out of the subagent and into the main session, behind the existing gate.
 
 - **`source/researcher/agents/troubleshooter.md`:**
-  - Record mode becomes "prepare". It still runs `configure_status`, screens the text, and searches for a duplicate.
+  - Record mode becomes "screen" (`prepare` is a litigator skill name, which the layering check reads as an upward reference). It still runs `configure_status`, screens the text, and searches for a duplicate.
   - It returns either `{action: "record", entry: {symptom, tools, error_strings, cause, fix, source_url}}` or `{action: "confirm", entry_id}`. It writes nothing.
   - Its `tools:` list drops `troubleshoot__record` and `troubleshoot__confirm_fix` (both prefixes).
   - The rewrite-once-on-refusal rule moves to the skill.
