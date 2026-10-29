@@ -56,3 +56,16 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 - Confirm the take-over rule text and any yes-checking hook.
 - Confirm `assign_job`'s description source.
+
+## 11. Verification against HEAD (2026-10-29, at dbdb52f6)
+
+| Item | Spec said | HEAD |
+|---|---|---|
+| Take-over rule text | `work/references/take-over.md`, `work.take-over.form` and `work.take-over.choices` | Confirmed at `.claude/skills/work/references/take-over.md`. The form also carries the line "The other session last ended a turn on this job <n> min ago." from the card's `session active` stamp, and the choices name the staleness spec's `recently_active` outcome. "only after the yes" is in the Take over choice. |
+| Other bare-yes duplicates for a take-over | tool description only | Also `.claude/skills/drafting-data/SKILL.md` (the "Assign a job" row: "`takeover: true` only after the practitioner's explicit yes"), `.claude/skills/drafting-data/references/jobs-run.md` §4 ("only after the practitioner has explicitly said yes to the take-over prompt") and the `takeover` field's comment in `source/lawyer/mcp/src/submission/forms/assign-job.ts`. ADR 0014 D4 mentions "the take-over form and its explicit yes" as history and stays. |
+| Yes-checking hook for a take-over | UNVERIFIED that one exists | None. `practitioner-words-gate.py` gates merges, goal statements and revisions, and `rule-gate.py` gates Rules. No hook or test matches `assign_job` or `takeover`. |
+| `assign_job` description source | tool description | `source/lawyer/mcp/src/schema/submission-data.ts`, the `assign_job` entry ("pass it only after the practitioner's explicit yes to the take-over prompt"). |
+| Idle report rule | `work/references/dispatch.md`, `work.opening.idle` | Confirmed. Since the staleness spec it copies `check window: idle past 30 min`, and still ends "never say or imply whether its session is alive or has ended, and never offer a take-over." `.claude/skills/work/references/opening-routes.md` also says "There is no lock timeout; the practitioner is the liveness check" and forbids saying a lock is live, abandoned or ended, which ADR 0015 made stale. |
+| Stale window on the idle report | the report names live, check window and stale | A job idle 60 minutes or more is read as released (Ready) by every board (ADR 0015 D4), so it has no In Progress line and no idle tag. The idle report can name only the live (idle tag, under 30 minutes) and check-window jobs. |
+| Re-read before the assigning write | session re-reads the card and stamp | `assign_job`'s take-over guard already re-checks, inside the write, the holder (`expected_holder`) and that the job has been idle 30 minutes (`recently_active`). A move after the check and less than 30 minutes before the write is refused. A move followed by 30 or more idle minutes before the write is not. |
+| Skill tests pinning take-over wording | grep | None under `.claude/skills/*/tests/`. `source/lawyer/mcp/test/release-job.db.test.mjs` calls a take-over. |
