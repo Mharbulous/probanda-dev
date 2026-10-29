@@ -72,9 +72,16 @@ Write no legend: the save appends one, generated from the approved meaning of ea
 
 In every format:
 
-- The Issue is the question, as one bold sentence.
+- The Issue is the question, as one bold sentence. One memo has one `## Issue` and no
+  sub-issues. The Issue:
+  - **A.** holds one question;
+  - **B.** makes sense on its own;
+  - **C.** lists alternatives in one place at most. "Is gambling legal in BC or Alberta?" is one
+    question, but "Is prostitution or gambling legal in BC or Alberta?" crosses two lists into
+    four questions, and so four memos.
 - A Conclusion is one paragraph that answers the Issue as framed. It cites in parentheses and
-  has no block quote.
+  has no block quote. Only where research is required (`shared/legal-audit-protocol.md` Step 4),
+  the last Conclusion ends with the open-issues paragraph.
 - The Rule opens with the rule itself. Each proposition of law in it is one sentence, then its
   source's own words:
 
@@ -87,15 +94,7 @@ In every format:
 - The Application is prose paragraphs, never bullets. It says how each cited authority applied
   the rule, whether or not its facts resemble another's.
 
-**Several issues.** When the question splits into issues, write the Issue, then one
-`### Sub-issue <n>: <the part>` per part, with the format's other sections under it at `####`.
-`## Sources` stays at the top level, once.
-
 **A job's memo.** When the spawn prompt's `Job question:` is not `none`, the memo answers
-that question and nothing else. The Issue is the spawn prompt's Job question, verbatim.
-The parts are the plan's `scope: in` issues, the job question split only at its own
-question marks, each `Sub-issue` heading quoting its part character for character, never
-paraphrased. With one part, write no sub-issue heading and keep the format's sections at `##`.
-No other issue or topic heading: a finding beyond the job question
-goes in the notes as a Step 5 offer, never in the memo. Each `Conclusion` answers its part from the sources held and never defers to further research
-(`shared/legal-audit-protocol.md` Step 4, "On a job, the memo always answers").
+that question and nothing else. The Issue is the spawn prompt's Job question, verbatim, never
+paraphrased. No other issue or topic heading: a finding beyond the job question
+goes in the notes as a Step 5 offer, never in the memo.

@@ -52,8 +52,9 @@ the records it files.
 
 ### Step 1 — Frame
 
-Restate the legal question(s) and the factual situation asked about. Split compound
-questions into separately-auditable issues.
+Restate the Issue and the factual situation asked about. One memo answers one Issue
+(`shared/research-memo-template.md`, rules A to C): the caller splits a question holding
+more than one at the plan stage, one audit per issue.
 
 ### Step 2 — Audit the authorities (before forming any statement of law)
 
@@ -239,42 +240,36 @@ Rubric:
 
 ### Step 4 — Disclosure gate
 
-Decide per issue whether the audit supports a solid statement of law.
+**The scope test.** Research is required only if the Issue, as framed, cannot be answered
+without it. For each piece of research not done, ask: can the Issue be answered without it?
+No: it is required, and the memo is incomplete: name it in the open-issues paragraph below,
+and on a job it becomes a step on the job. Yes: it is not required. Never call it required
+and never say more research is needed on it. If it may still be worth doing, it is a Step 5
+offer, outside the memo; otherwise say nothing.
 
-- **All issues well supported** → give the statement of law: per issue, the
-  principle(s) with pinpoint citations, the factual comparison, and the
-  distinguishability flags.
-- **No issue adequately supported** → do not disclose a statement of law yet. Say
-  exactly:
+**The memo always answers.** Write the memo whatever the coverage. Its Conclusion answers
+the Issue from the sources held: the principle(s) with pinpoint citations, the factual
+comparison and the distinguishability flags. A part no held authority answers is answered in
+one sentence naming what was searched: `No authority located in <the tiers searched>.` A
+proposition whose authority you located but could not pinpoint never enters the memo: it goes
+to Step 5 as an offer.
 
-  > "More research is needed before I can give a solid opinion. Would you like my
-  > preliminary impression?"
+**Open issues.** When the scope test leaves research required, end the Conclusion with one
+paragraph opening `More research is needed on the following issues:` that lists each as a
+question, and write the header's `Confidence:` as `INCOMPLETE: <the research named>`. Nothing
+else in the memo defers to further research, offers research or names a tier not run. With
+no research required, write no such paragraph. A spawn prompt's `Review:` line is
+memo-reviewer's verdict on your last memo: treat each `required` item as required, and leave
+each `out_of_scope` issue and each `identifiers` item out of the memo.
 
-- **Mixed coverage** → say exactly:
-
-  > "More research is needed on the following issues: X, Y, Z… But the authorities
-  > that I am aware of indicate the following: [summary of law with pinpoint citations]"
-
-  The summary holds only propositions with a pinpoint. A proposition whose authority
-  you located but could not pinpoint never enters it: it goes to Step 5 as an offer.
-
-  For each issue the sentence names, write one line under a `Gaps` heading in the
-  notes, in exactly this shape: `gap: <issue> : tiers not run: <tier>[; <tier>]`, or
-  `gap: <issue> : tiers not run: none` when every tier has run on it. Name each tier as
-  the coverage line does: `Westlaw: <the query's subject>`, `Legislation: <citation>[,
-  <the parts not on disk>]`, `6. LAW: <file> UNREAD`, `Commons: NOT AUDITED: <state>`,
-  `Note-up: <citation> NOT NOTED UP`. A tier that ran on part of an
-  instrument or a subject has not run on the rest. The line says what was not searched,
-  never what the law is.
-
-**On a job, the memo always answers.** When the spawn prompt's `Job question:` is not
-`none`, Step 4 has no closed gate and no mandated sentence: write the memo whatever the
-coverage. Each sub-issue's Conclusion answers the job question from the sources held, each
-proposition with its pinpoint. A sub-issue that no held authority answers is answered in one
-sentence naming what was searched: `No authority located in <the tiers searched>.` The
-Conclusion never defers to further research, offers research or names a tier not run.
-Those stay in the header's `Confidence:` line and in the notes' `Gaps` lines, one for each
-sub-issue in the shape above, so the caller can run them.
+For each issue the paragraph names, write one line under a `Gaps` heading in the
+notes, in exactly this shape: `gap: <issue> : tiers not run: <tier>[; <tier>]`, or
+`gap: <issue> : tiers not run: none` when every tier has run on it. Name each tier as
+the coverage line does: `Westlaw: <the query's subject>`, `Legislation: <citation>[,
+<the parts not on disk>]`, `6. LAW: <file> UNREAD`, `Commons: NOT AUDITED: <state>`,
+`Note-up: <citation> NOT NOTED UP`. A tier that ran on part of an
+instrument or a subject has not run on the rest. The line says what was not searched,
+never what the law is.
 
 A **preliminary impression** (only on request) uses the identical format as a
 statement of law — principles, pinpoint citations, factual comparison — but expressed
@@ -283,19 +278,19 @@ research…"), and repeats which checks are missing (e.g., not noted up). In the
 vocabulary of `shared/answer-grades.md`, a preliminary impression is a recommendation:
 it rests on the sources audited so far, never on research not yet run. It is never advice.
 
-The statement of law, the mixed-coverage summary and the preliminary impression are each
+The statement of law and the preliminary impression are each
 shown, not told: one sentence at most per proposition, then its verbatim passage (in the
 memo, the passages sit in the Rule: Step 6).
 
 ### Step 5 — Offer the research path
 
-Wherever the gate found gaps, or you located an authority you could not pinpoint, end
-with concrete offers: what further research would close each gap, and whether it
+Wherever research the scope test (Step 4) finds not required may still be worth doing, or
+you located an authority you could not pinpoint, end
+with concrete offers: what further research it is, and whether it
 needs a note-up, the commons pool, or a Westlaw Deep Research run (hand-off packet
 below). Each authority you located but could not pinpoint gets its own offer in the shape shown under the non-negotiable rule: citation,
 proposition, and that its text was not read.
-On a job, write no offer for work on the job question: each such gap is its `gap:` line.
-An offer there is only for a point outside the job question.
+Required research gets no offer: it is its `gap:` line.
 
 End every offer with ` live_issue: yes` when it bears on the spawn prompt's `Question:`
 as asked, and ` live_issue: no` when it does not, such as an adjacent point the audit
@@ -335,9 +330,8 @@ Would you like me to read the four other example files and check each for the ex
 
 ### Step 6 — Return shape (opinion mode only)
 
-When Step 4 lets you state law (every issue well supported, mixed coverage, a
-preliminary impression the practitioner asked for, or any job's memo), write the notes and the memo to
-the scratchpad, in this order, and return only item 3:
+For every memo Step 4 writes, and a preliminary impression the practitioner asked for,
+write the notes and the memo to the scratchpad, in this order, and return only item 3:
 
 1. **`# Internal research notes`.** The Step 3 coverage line and confidence table,
    the per-tier notes, Step 4's `Gaps` lines, every `/ingest` flag, every matter-data
@@ -384,8 +378,7 @@ the scratchpad, in this order, and return only item 3:
      matter number, document name or fact pattern of the working matter.
    - Application describes only the facts of the cited authorities. It may say which
      authority's facts come closest to a stated generic pattern.
-   - Mixed coverage with `Job question: none`: the first `## Conclusion` opens with Step 4's mandated sentence,
-     word for word. On a job, each Conclusion answers as Step 4's "On a job" rule says. A preliminary impression uses Step 4's hedged wording and repeats
+   - The Conclusion answers as Step 4 says, its open-issues paragraph last. A preliminary impression uses Step 4's hedged wording and repeats
      which checks are missing.
 
    Before returning, also save the memo, from its `---` line to its last line and
@@ -409,9 +402,8 @@ the scratchpad, in this order, and return only item 3:
    its refusal code, and return that section in full in its place: the notes before
    the memo, and the memo from its `---` line to its end.
 
-A `needs_download` or `needs_note_up` return, a hand-off packet, and a closed gate (Step 4's "More
-research is needed before I can give a solid opinion") carry no memo and write no
-notes file. Their shape is unchanged.
+A `needs_download` or `needs_note_up` return and a hand-off packet carry no memo and
+write no notes file. Their shape is unchanged.
 
 ## Fallback ladder (source unavailable ≠ silence; it caps confidence)
 

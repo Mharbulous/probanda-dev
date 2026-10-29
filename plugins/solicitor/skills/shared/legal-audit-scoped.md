@@ -145,10 +145,13 @@ Completion test: <what the answer must hold: each scope: in issue answered with 
 `scope: in` marks an issue the question as asked needs answered to be answered
 completely. `scope: new` marks an issue outside it: a different point, not part of the
 question's answer. The tag says which question an issue serves, never what the law is.
+Each issue meets the memo template's rules A to C (`shared/research-memo-template.md`): the
+gate runs one audit, and the agent writes one memo, per issue.
 
 When the spawn prompt's `Job question:` is not `none`, the job question is split only at
 its own question marks, each part quoted verbatim as its issue, in the job question's
-order: one question mark, one issue. These are the only `scope: in` issues.
+order: one question mark, one issue. A part that crosses two lists (rule C) is split
+further, one issue per question, in the part's own words. These are the only `scope: in` issues.
 You add no issue of your own and reword no part: what a part needs checked goes in its
 `sources, in order` line, and a point outside the job question is a `scope: new` issue.
 
