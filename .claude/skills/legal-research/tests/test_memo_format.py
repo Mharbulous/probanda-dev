@@ -60,6 +60,13 @@ class ProtocolStepSixTests(unittest.TestCase):
         self.assertIn(IRAC, template)
         self.assertIn(CREAC, template)
 
+    def test_body_closes_with_one_sources_section_in_order(self):
+        template = read("research-memo-template.md")
+        order = [template.index(h) for h in ("## Sources\n\n### Statutes\n", "### Case authority\n",
+                                             "### Secondary sources\n")]
+        self.assertEqual(order, sorted(order))
+        self.assertNotIn("Authorities", template)
+
     def test_irac_and_creac_only_when_asked(self):
         self.assertIn("The body uses CRAC unless the spawn prompt's `Memo template:` names IRAC or CREAC.",
                       flat(step_six()))

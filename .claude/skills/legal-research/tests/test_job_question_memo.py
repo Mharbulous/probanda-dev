@@ -41,7 +41,7 @@ class JobQuestionMemoTest(unittest.TestCase):
         self.assertIn("No other issue or topic heading", template)
         self.assertIn("never paraphrased", template)
         self.assertIn("Confidence:", template)
-        self.assertIn("## Authorities", template)
+        self.assertIn("## Sources", template)
 
 
 if __name__ == "__main__":

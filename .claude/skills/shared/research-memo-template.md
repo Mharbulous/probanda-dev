@@ -27,7 +27,7 @@ A double quote inside a quoted value is written `\"`.
 ## Body
 
 The body opens with the question presented, then runs the format's sections in order, and
-closes with the authorities relied on:
+closes with the sources relied on:
 
 ```
 ## Question presented
@@ -36,10 +36,16 @@ closes with the authorities relied on:
 
 <the format's sections, below>
 
-## Authorities
+## Sources
 
-- <full citation>, <each pinpoint relied on>
+### Statutes
+### Case authority
+### Secondary sources
 ```
+
+Each source is one bullet, `<full citation>, <each pinpoint relied on>`. Statutes also holds
+regulations and rules. Omit a subsection with no entries. Sources are listed here and
+nowhere else. Define an abbreviation in parentheses where the body first uses it.
 
 Write no legend: the save appends one, generated from the approved meaning of each symbol printed.
 
@@ -81,7 +87,7 @@ In every format, each proposition of law is one sentence, then its source's own 
 
 When the question splits into issues, write one sequence under each issue's own heading,
 `## Issue <n>: <the issue in a few words>`, with the format's sections one level down (`###`).
-`## Question presented` and `## Authorities` stay at the top level, once each.
+`## Question presented` and `## Sources` stay at the top level, once each.
 
 **A job's memo.** When the spawn prompt's `Job question:` is not `none`, the memo answers
 that question and nothing else. `## Issue` takes the place of `## Question presented`:
@@ -99,6 +105,6 @@ question marks, quoted character for character and never paraphrased. With more 
 part, write one `### Sub-issue` per part, in order, with the format's sections under it
 at `####`. With one part, write no sub-issue heading and put the format's sections at
 `###` under `## Issue`. No other issue or topic heading: a finding beyond the job question
-goes in the notes as a Step 5 offer, never in the memo. `## Authorities` stays at the
+goes in the notes as a Step 5 offer, never in the memo. `## Sources` stays at the
 top level, once. Each `Conclusion` answers its part from the sources held and never defers to further research
 (`shared/legal-audit-protocol.md` Step 4, "On a job, the memo always answers").
