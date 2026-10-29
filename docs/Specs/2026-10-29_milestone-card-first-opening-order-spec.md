@@ -67,3 +67,25 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - Confirm each quoted sentence and its line in work/SKILL.md, procedure.md, draft/SKILL.md, html-pages.md.
 - Confirm the three hook files and milestone-card-gate.py text and their tests.
 - Confirm open_session returns `filings` titles and `milestone_paths` for every Writing.
+
+## 11. Verification against HEAD (0cc82b51, 2026-10-29)
+
+Source paths are under `.claude/skills/` unless they start with `source/`.
+
+| Claim | At HEAD |
+|---|---|
+| work/SKILL.md "Before each operation below, call it with `skill: \"work\"`" | Confirmed, `work/SKILL.md:38` (not ~41-43) |
+| work/SKILL.md "Before session entry, call `rules__at` ... `[\"draft\", \"draft/enter\"]`" | Confirmed, `work/SKILL.md:40` |
+| work/SKILL.md first ToolSearch loads ~27 tools | Confirmed, `work/SKILL.md:38`: 4 rules-map tools, 15 named data tools and `skill_rules__applicable` under two prefixes, plus the card tool and three device tools |
+| work/SKILL.md "What binds here": read /draft §2-3 "before the first act they bind" | Confirmed, `work/SKILL.md:15` |
+| procedure.md:13 `get_device_info` "once in every case" | Confirmed, `work/references/procedure.md:13` (the line also holds the `matter_lookup` sentence) |
+| procedure.md:54/57 named Writing opens through a re-render / the picker | Confirmed, `work/references/procedure.md:54` (caller-identified Writing opens via `filing_id` at entry) and `:57` (named Writing reads `filing-picker.md`) |
+| html-pages.md:21 a Milestone the practitioner asks to see is rendered first | Confirmed, `shared/html-pages.md:21` ("renders that board with `draft_dir` ... and presents the page path the result returns") |
+| draft/SKILL.md "Rules for each step" one ToolSearch and pre-entry `rules__at` | Confirmed, `draft/SKILL.md:126` and `:130`; `:128` routes a bare `/draft` to `/work` |
+| draft/SKILL.md `.eml` precedent | Confirmed, `draft/SKILL.md:98-101`; `:101` also says "on a remote-device host `get_device_info` once" |
+| inject-preferences.py "Before the first Probanda skill runs, call preferences__read" | Confirmed, `source/lawyer/hooks/inject-preferences.py:38`; test `source/lawyer/tests/test_inject_preferences.py` asserts only `preferences__read` |
+| inject-practice-quirks.py "Before the first mail, calendar or file lookup, call practice_data__config_status" | Confirmed, `practice-data/hooks/inject-practice-quirks.py:34`; test `practice-data/tests/test_inject_practice_quirks.py` asserts `call practice_data__config_status` |
+| missing-key-note.py "Call practice_data__config_status once" | Confirmed, `source/lawyer/hooks/missing-key-note.py:53-54`; also `:42` "Early in this session, before other Probanda work"; test `source/lawyer/tests/test_missing_key_note.py` |
+| milestone-card-gate.py "If only SendUserFile is listed, first check that get_device_info's connectedFolders covers the matter folder" | Confirmed, `drafting-data/hooks/milestone-card-gate.py:86-89`; test `drafting-data/tests/test_milestone_card_gate.py:119-121` asserts `connectedFolders` precedes `device_stage_files` |
+| open_session returns `filings` titles and `milestone_paths` per Writing | Confirmed: `filings[]` carries `filing_id` and `title` (`source/lawyer/mcp/src/submission/forms/bootstrap-result.ts:31-48`); `milestone_paths` is `[{filing_id, proceeding_id, path}]`, one per live filing then per pre-filing proceeding, written at entry (`open-session.ts:206`, `matter-pages-build.ts:169`). A retired filing has no page |
+| Open question: does `/legal-research` open a Milestone at its start | No. `legal-research/SKILL.md` names no `open_session`, `get_device_info` or Milestone, so it needs no change |
