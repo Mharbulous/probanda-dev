@@ -66,3 +66,15 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - Confirm the `last activity` derivation and the `session active` stamp in source.
 - Confirm which research_filing tools already take job identity (`save_answer` does).
 - Confirm the schema version (v79 seen) and the next migration number.
+
+## 11. Verification against HEAD (0cc82b51, 2026-10-29)
+
+| Check | Spec's reading | Found at HEAD |
+|---|---|---|
+| `last activity` derivation | latest of lock, done steps, loose threads, answers, sources | Confirmed. `source/lawyer/mcp/src/submission/forms/build-proceeding-board.ts` computes `last_activity_at` with `latestStamp([...])` over exactly those five. The idle tag (`board-job-text.ts` `idleTag`) and the idle flag (`ticket-category.ts` `withIdleFlag`) both read it. The hand-written list is in `src/schema/submission-forms.ts` (board_card), `work-board-ticket.ts` and `board-job-text.ts`. |
+| `session active` stamp (§9) | UNVERIFIED | Exists, no hook. One `db_meta` row per job, `job_active:<id>`, written by the holding session in raw SQL as the last write of every turn that worked the job (`.claude/skills/drafting-data/references/jobs-run.md` §6a). Read in `build-proceeding-board.ts`, printed as `session active:` on the card. Defined there as "not progress": it never moves last activity. So the turn-end heartbeat needs no new hook. |
+| Step done and loose-thread writes | tool writes | Raw SQL through `drafting_data__execute` (jobs-run.md §6 and §8). Step status (`set_step`), sources (`track_source`), the lock (`assign_job`) and answers (`save_answer`) are server tools. |
+| research_filing job identity | `save_answer` takes it | Confirmed: only `save_answer` takes `db_path`, `ticket_id`, `session_token`. `file_download`, `append_manifest`, `file_fetched` and `write_scratch` take none. |
+| ⏳ step | counts as activity | Not today: the idle tag ignores `wait_until`. |
+| Schema version | v79 seen | `TARGET_SCHEMA_VERSION` is 81 (`.claude/skills/drafting-data/references/scripts/migrate_engine.py`). Hop 79 -> 80 added the generic `kv_store` table so that a new attribute of a row needs no further DDL, under a ruling in `source/exception-rulings.json`; new DDL in this legacy store would need a new human ruling. So the stamp is a `kv_store` value and needs no migration. |
+| Paths | `plugins/...` | Skill text is under `.claude/skills/`; the data server under `source/lawyer/mcp/src/`. |
