@@ -411,17 +411,21 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       name: submissionDataPrefixed("assign_job"),
       description:
         "Assign a job (a tickets row) to this session in one call: the guarded assigning write followed by its confirm-read. " +
-        "By default the write matches only a job that is queued, unlocked and not shelved (rejected_at NULL). takeover: true " +
+        "By default the write matches only a job that is queued, unlocked and not shelved (rejected_at NULL), or a wip job " +
+        "whose lock has lapsed (no activity for 60 minutes, so every board reads it as released): taking a lapsed lock " +
+        "records the lapse in the job's history and needs no take-over. takeover: true " +
         "admits a wip job held by another session; pass it only after the practitioner's explicit yes to the take-over " +
         "prompt. takeover: true needs expected_holder, the `holder:` tag off the job's card (drafting_forms__board_card with " +
-        "jobs), and the write lands only while that holder is still on the row. A shelved, completed or superseded job is " +
+        "jobs), and the write lands only while that holder is still on the row and the job has had no activity for 30 " +
+        "minutes; a job active in the last 30 minutes is never taken over. A shelved, completed or superseded job is " +
         "never assigned. A session that created any job (tickets.created_by, schema v72) is assigned only a job it " +
         "created, by take-over or otherwise. A job is not assigned before its bring-forward date (tickets.bf_on, schema " +
         "v74), a start date and never a deadline; a take-over does not read it. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this " +
         "tool mints none. The outcome is read off the confirm-read: assigned (the row carries this session's token; changes " +
         "is 0 when it already did), lost_race (another session's token is on the row: re-render and say the job was just " +
         "taken), holder_changed (a take-over found another holder than expected_holder: nothing was written; re-render and " +
-        "ask afresh), not_created_here (this session created jobs and this is not one of them: nothing was written; say so " +
+        "ask afresh), recently_active (a take-over of a job active in the last 30 minutes: nothing was written; say so in " +
+        "one line), not_created_here (this session created jobs and this is not one of them: nothing was written; say so " +
         "in one line), before_bf (the job is held until its bring-forward date, the returned bf_on: nothing was written; " +
         "say so in one line, and never propose changing or clearing the date, which only the practitioner does), " +
         "no_match (no token: the guards matched nothing, and the returned status and rejected_at show why). " +

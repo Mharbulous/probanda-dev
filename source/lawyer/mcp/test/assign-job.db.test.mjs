@@ -1,6 +1,8 @@
 // drafting_data__assign_job: a /draft session assigns a Ready job to itself in one call, the
 // guarded assigning write followed by its confirm-read (jobs.md §4), classified as assigned,
 // lost_race, holder_changed or no_match from the confirm-read. It never retries and moves no revision.
+// A lock idle 60 minutes or more has lapsed and is assigned without a take-over; a job active in the
+// last 30 minutes is never taken over (ADR 0015).
 
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -35,6 +37,13 @@ const query = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, par
 const revision = (dbPath) => Number(query(dbPath, "SELECT value FROM db_meta WHERE key = 'revision'")[0].value);
 const row = (dbPath, id) => query(dbPath, "SELECT status, locked_by, locked_at, rejected_at FROM tickets WHERE id = ?", [id])[0];
 const assign = (dbPath, args = {}) => callTool({}, TOOL, { db_path: dbPath, ticket_id: 1, session_token: "sess-a1", ...args });
+/** Sets job `id`'s last activity to `minutes` before SQLite's local now. */
+const stampActivity = (dbPath, id, minutes) =>
+  submissionDataExecute(
+    dbPath,
+    `INSERT OR REPLACE INTO kv_store (namespace, key, value, updated_at) VALUES ('last_activity', 'tickets:${id}', '"' || strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-${minutes} minutes') || '"', '2026-10-01T00:00:00Z')`
+  );
+const lapseRecord = (dbPath, id) => query(dbPath, "SELECT value FROM kv_store WHERE namespace = 'lock_lapsed' AND key = ?", [`tickets:${id}`])[0]?.value;
 const code = (expected) => (err) => {
   assert.equal(err.code, expected, err.message);
   return true;
@@ -56,6 +65,7 @@ test("a queued, unlocked, unshelved job is assigned to the caller's token", asyn
 
 test("a job another session holds is a lost race without takeover, and the row is untouched", async (t) => {
   const dbPath = await jobs(t);
+  await stampActivity(dbPath, 2, 10);
   const before = revision(dbPath);
   const result = await assign(dbPath, { ticket_id: 2 });
   assert.equal(result.outcome, "lost_race");
@@ -173,4 +183,59 @@ test("a missing job, an empty token and a bad id are refused, writing nothing", 
   await assert.rejects(assign(dbPath, { ticket_id: 0 }), code("invalid_ticket_id"));
   assert.deepEqual(row(dbPath, 1), { status: "queued", locked_by: null, locked_at: null, rejected_at: null });
   assert.equal(revision(dbPath), before);
+});
+
+test("a lock idle 61 minutes has lapsed: assigned without takeover, the lapse recorded in the job's history", async (t) => {
+  const dbPath = await jobs(t);
+  await stampActivity(dbPath, 2, 61);
+  const result = await assign(dbPath, { ticket_id: 2 });
+  assert.equal(result.outcome, "assigned");
+  assert.equal(result.changes, 1);
+  assert.match(result.note, /lock had lapsed/);
+  assert.equal(row(dbPath, 2).locked_by, "sess-a1");
+  const record = JSON.parse(lapseRecord(dbPath, 2));
+  assert.equal(record.from, "ss-other");
+  assert.match(record.at, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+});
+
+test("a lock with no stamp lapses from its lock time", async (t) => {
+  const dbPath = await jobs(t);
+  const result = await assign(dbPath, { ticket_id: 2 });
+  assert.equal(result.outcome, "assigned");
+  assert.notEqual(lapseRecord(dbPath, 2), undefined);
+});
+
+test("a lock idle 45 minutes is in the check window: a lost race without takeover, assigned only with takeover", async (t) => {
+  const dbPath = await jobs(t);
+  await stampActivity(dbPath, 2, 45);
+  const plain = await assign(dbPath, { ticket_id: 2 });
+  assert.equal(plain.outcome, "lost_race");
+  assert.equal(plain.changes, 0);
+  assert.equal(row(dbPath, 2).locked_by, "sess-other");
+  const taken = await assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other" });
+  assert.equal(taken.outcome, "assigned");
+  assert.equal(lapseRecord(dbPath, 2), undefined, "a take-over is no lapse");
+});
+
+test("a job active 10 minutes ago is never taken: lost_race without takeover, recently_active with it", async (t) => {
+  const dbPath = await jobs(t);
+  await stampActivity(dbPath, 2, 10);
+  const before = revision(dbPath);
+  assert.equal((await assign(dbPath, { ticket_id: 2 })).outcome, "lost_race");
+  const result = await assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other" });
+  assert.equal(result.outcome, "recently_active");
+  assert.equal(result.changes, 0);
+  assert.deepEqual(row(dbPath, 2), { status: "wip", locked_by: "sess-other", locked_at: "2026-10-01T09:05", rejected_at: null });
+  assert.equal(lapseRecord(dbPath, 2), undefined);
+  assert.equal(revision(dbPath), before);
+});
+
+test("a waiting step's wake-up minute counts as activity until it passes", async (t) => {
+  const dbPath = await jobs(t);
+  await stampActivity(dbPath, 2, 120);
+  await submissionDataExecute(
+    dbPath,
+    "INSERT INTO ticket_steps (ticket_id, ordinal, text, status, wait_until) VALUES (2, 1, 'Wait for the reply.', 'waiting', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-10 minutes'))"
+  );
+  assert.equal((await assign(dbPath, { ticket_id: 2 })).outcome, "lost_race");
 });

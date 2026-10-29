@@ -1,7 +1,6 @@
 // A Writing's board section.
 
 import { DataServerError } from "../../errors.js";
-import { idleFlagHours } from "../../tools/practice/firm-profile.js";
 import { fetchBoardGoals } from "./board-goals.js";
 import { storedLayout } from "./layout-snapshot.js";
 import { LIFECYCLE_LABELS } from "./lifecycle.js";
@@ -35,8 +34,7 @@ function declaredIngestInputs(filing: FilingRow): string[] | undefined {
  * (matter-dates.ts deadlineCriteria); they print after `gate` and `hearing-date`. */
 export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly GoalCriterion[] = []): WorkBoardData {
   if (isJobOnlyBoard(ctx.filing)) return buildJobOnlyBoardData(ctx);
-  const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id, ctx.rendered.slice(0, 10));
-  const idleHours = idleFlagHours(process.env);
+  const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id, ctx.rendered);
   const printed = ctx.inventory === null ? null : new Set(ctx.inventory.flatMap((e) => (e.generating ? [proposalKey(e)] : [])));
   const { proposals, lapsed_keys, shelved, current } = proposalsFor(ctx, board);
   const titles = new Map(proposals.map((p) => [p.key, p.title]));
@@ -48,7 +46,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
     .map((t) => {
       const ineligible_reasons = ineligibleReasons(t.ticket, filed, printed, titles, inProgress);
       const eligible = ineligible_reasons.length === 0;
-      return withIdleFlag({ ...t.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t.ticket, printed), ...(t.filing_id === null ? { general: true } : {}) }, ctx.rendered, idleHours);
+      return withIdleFlag({ ...t.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t.ticket, printed), ...(t.filing_id === null ? { general: true } : {}) }, ctx.rendered);
     });
   const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines, afterGateJobs(board.tickets, ctx.filing.id));
   // Section 14 Dispatch's last skip reasons, read off this render's inventory, this filing's type file and its

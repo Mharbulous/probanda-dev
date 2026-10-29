@@ -1,6 +1,5 @@
 // The board sections with no Writing: a Milestone of MILESTONE_KIND and a pre-filing proceeding's.
 
-import { idleFlagHours } from "../../tools/practice/firm-profile.js";
 import { fetchBoardGoals } from "./board-goals.js";
 import type { FilingRow, ProceedingRow } from "./query.js";
 import { fetchAttachments } from "./work-board-reads.js";
@@ -23,8 +22,7 @@ export function milestoneLabel(filing: Pick<FilingRow, "retired_on">): string {
  * Writings' boards. No stored layout is read: it has no lifecycle, Goal card, criteria, Proposals or
  * ingest inputs. */
 export function buildJobOnlyBoardData(ctx: WorkBoardContext): WorkBoardData {
-  const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id, ctx.rendered.slice(0, 10));
-  const idleHours = idleFlagHours(process.env);
+  const board = buildProceedingBoard(ctx.dbPath, ctx.proceeding.id, ctx.rendered);
   const own = ctx.filing.id;
   return {
     meta: {
@@ -42,7 +40,7 @@ export function buildJobOnlyBoardData(ctx: WorkBoardContext): WorkBoardData {
       ready_to_retire: false,
       job_only: true,
     },
-    tickets: board.tickets.filter((t) => t.filing_id === own).map((t) => withIdleFlag(t.ticket, ctx.rendered, idleHours)),
+    tickets: board.tickets.filter((t) => t.filing_id === own).map((t) => withIdleFlag(t.ticket, ctx.rendered)),
     seeds: board.seeds.filter((s) => s.filing_id === own),
     deleted: board.deleted.filter((d) => d.filing_id === own).map((d) => ({ id: d.id, title: d.title })),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, own),
@@ -59,8 +57,7 @@ export function buildPreFilingBoardData(
   proceeding: ProceedingRow,
   meta: { revision: number; matter: string; client: string; rendered: string }
 ): WorkBoardData {
-  const board = buildProceedingBoard(dbPath, proceeding.id, meta.rendered.slice(0, 10));
-  const idleHours = idleFlagHours(process.env);
+  const board = buildProceedingBoard(dbPath, proceeding.id, meta.rendered);
   return {
     meta: {
       revision: meta.revision,
@@ -76,7 +73,7 @@ export function buildPreFilingBoardData(
       state_since: null,
       ready_to_retire: false,
     },
-    tickets: board.tickets.map((t) => withIdleFlag(t.ticket, meta.rendered, idleHours)),
+    tickets: board.tickets.map((t) => withIdleFlag(t.ticket, meta.rendered)),
     seeds: board.seeds,
     deleted: board.deleted.map((d) => ({ id: d.id, title: d.title })),
     attachments: fetchAttachments(dbPath, proceeding.id, null),

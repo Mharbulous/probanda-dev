@@ -67,32 +67,12 @@ export interface FirmProfile {
   person: string | null;
   /** This practitioner's environment notes from probanda.json, or null when unset. */
   practice_quirks: string | null;
-  /** The Milestone's idle flag threshold in hours; present only when firm.json sets one. */
-  idle_flag_hours?: number;
   /** Roster keys copied on every email write_email addresses from case data; present only when firm.json sets some. */
   cc_on_counsel_email?: string[];
 }
 
 function isKeyList(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((key) => typeof key === "string" && key !== "");
-}
-
-function isPositiveHours(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && value > 0;
-}
-
-/**
- * The firm's idle_flag_hours for the Milestone's idle flag, or null when firm.json is absent or
- * unreadable, sets none, or the matter-data root is unconfigured (the background render job has no
- * practice context). Never throws: a bad value is refused at upsert, never at render.
- */
-export function idleFlagHours(env: NodeJS.ProcessEnv = process.env): number | null {
-  try {
-    const hours = (JSON.parse(readFileSync(firmPaths(env).firm, "utf-8")) as Record<string, unknown> | null)?.idle_flag_hours;
-    return isPositiveHours(hours) ? hours : null;
-  } catch {
-    return null;
-  }
 }
 
 // `letterhead` is null when none is registered: only a letter needs it, and its renderer
@@ -137,7 +117,6 @@ export function readFirmProfile(env: NodeJS.ProcessEnv = process.env, fallback?:
     letterhead: existsSync(paths.letterhead) ? paths.letterhead : null,
     person,
     practice_quirks: typeof quirks === "string" && quirks !== "" ? quirks : null,
-    ...(isPositiveHours(firm.idle_flag_hours) ? { idle_flag_hours: firm.idle_flag_hours } : {}),
     ...(isKeyList(firm.cc_on_counsel_email) && firm.cc_on_counsel_email.length > 0 ? { cc_on_counsel_email: firm.cc_on_counsel_email } : {}),
   };
 }
@@ -266,20 +245,20 @@ export interface UpsertFirmProfileResult {
 // The cap on practice_quirks. A longer note is refused, never truncated.
 export const PRACTICE_QUIRKS_MAX = 1000;
 
-// Any combination of firm_name, roster_entry, person, signature, practice_quirks, letterhead,
-// idle_flag_hours and cc_on_counsel_email, at least one. Every input is checked before any file is written, so a
+// Any combination of firm_name, roster_entry, person, signature, practice_quirks, letterhead
+// and cc_on_counsel_email, at least one. Every input is checked before any file is written, so a
 // refusal leaves firm.json, the letterhead and probanda.json as they were.
 export async function upsert_firm_profile(
   args: Record<string, unknown>,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<UpsertFirmProfileResult> {
-  const inputs = ["firm_name", "roster_entry", "person", "signature", "practice_quirks", "letterhead", "idle_flag_hours", "cc_on_counsel_email"];
+  const inputs = ["firm_name", "roster_entry", "person", "signature", "practice_quirks", "letterhead", "cc_on_counsel_email"];
   if (inputs.every((input) => args[input] === undefined)) {
     throw new ValidationError(`upsert_firm_profile needs at least one of ${inputs.join(", ")}`);
   }
   // A call that sets only this machine's practice_quirks or signature needs no firm folder, so it
   // still writes when probanda.json or its case_data_root is not set up yet.
-  const firmNeeded = ["firm_name", "roster_entry", "person", "letterhead", "idle_flag_hours", "cc_on_counsel_email"].some((input) => args[input] !== undefined);
+  const firmNeeded = ["firm_name", "roster_entry", "person", "letterhead", "cc_on_counsel_email"].some((input) => args[input] !== undefined);
   let resolved: { firm: string; letterhead: string } | undefined;
   try {
     resolved = firmPaths(env);
@@ -291,7 +270,7 @@ export async function upsert_firm_profile(
 
   const current = resolved && existsSync(paths.firm) ? readJson(paths.firm) : undefined;
   let firm: Record<string, unknown> | undefined;
-  if (args.firm_name !== undefined || args.roster_entry !== undefined || args.idle_flag_hours !== undefined || args.cc_on_counsel_email !== undefined) {
+  if (args.firm_name !== undefined || args.roster_entry !== undefined || args.cc_on_counsel_email !== undefined) {
     firm = { firm_name: undefined, roster: [], ...current };
     if (args.firm_name !== undefined) {
       firm.firm_name = asString(args.firm_name, "firm_name");
@@ -301,11 +280,6 @@ export async function upsert_firm_profile(
       firm.roster = [...rosterOf(firm, paths.firm)];
       result.roster_entry = upsertRosterEntry(firm.roster as RosterEntry[], args.roster_entry as Record<string, unknown>);
       result.changed.push("roster_entry");
-    }
-    if (args.idle_flag_hours !== undefined) {
-      if (!isPositiveHours(args.idle_flag_hours)) throw new ValidationError("idle_flag_hours must be a positive number of hours");
-      firm.idle_flag_hours = args.idle_flag_hours;
-      result.changed.push("idle_flag_hours");
     }
     // Replaces the whole list; [] clears it. Each key must be on the roster as this call leaves it.
     if (args.cc_on_counsel_email !== undefined) {

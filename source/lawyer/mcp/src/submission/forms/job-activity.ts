@@ -7,7 +7,14 @@
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWrite, submissionDataWriteAll } from "../backend.js";
-import { hasTable } from "../schema-capabilities.js";
+import { hasColumn, hasTable } from "../schema-capabilities.js";
+
+/** A held job's staleness, measured from its last activity (ticket-category.ts idleSince): live under
+ * CHECK_AFTER_MINUTES; in the check window from there, still held, its take-over only on the
+ * practitioner's instruction; from LAPSE_AFTER_MINUTES its lock has lapsed, so every board reads it as
+ * released and assign_job takes it without a take-over (ADR 0015). Lock-lapse times, never countdowns. */
+export const CHECK_AFTER_MINUTES = 30;
+export const LAPSE_AFTER_MINUTES = 60;
 
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 const NAMESPACE = "last_activity";
@@ -28,6 +35,37 @@ export function fetchJobActivity(dbPath: string): Map<number, string> {
   if (!hasTable(dbPath, "kv_store")) return new Map();
   const found = submissionDataQuery(dbPath, "SELECT key, value FROM kv_store WHERE namespace = ?", [NAMESPACE]).rows as unknown as { key: string; value: string }[];
   return new Map(found.map((r) => [Number(r.key.slice("tickets:".length)), JSON.parse(r.value) as string]));
+}
+
+/** SQL true of the `tickets` row in scope when it has been idle for `minutes` or more by SQLite's
+ * local clock, measured as idleSince measures it; false with nothing to measure from. */
+export function idleClause(dbPath: string, minutes: number): string {
+  const stamp = "replace(substr(tickets.locked_at, 1, 16), ' ', 'T')";
+  const last = hasTable(dbPath, "kv_store")
+    ? `COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = '${NAMESPACE}' AND key = 'tickets:' || tickets.id), ${stamp})`
+    : stamp;
+  const wait = hasColumn(dbPath, "ticket_steps", "wait_until")
+    ? ", COALESCE((SELECT max(wait_until) FROM ticket_steps s WHERE s.ticket_id = tickets.id AND s.done_at IS NULL AND s.status = 'waiting'), '')"
+    : "";
+  return `COALESCE(max(${last}${wait}, '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-${minutes} minutes'), 0)`;
+}
+
+/** SQL true of the `tickets` row in scope when its lock has lapsed: held, not shelved, and idle for
+ * LAPSE_AFTER_MINUTES or more. ticket-category.ts lockLapsed is the same test for the board. */
+export function lapsedClause(dbPath: string): string {
+  return `(tickets.status = 'wip' AND tickets.locked_by IS NOT NULL AND tickets.rejected_at IS NULL AND ${idleClause(dbPath, LAPSE_AFTER_MINUTES)})`;
+}
+
+/** The statement that records a lapse in the job's history, the kv_store value `lock_lapsed` /
+ * `tickets:<id>`: the minute it was taken and the holder tag it was taken from. Its guard is the
+ * assigning write's, so it lands exactly when that write takes a lapsed lock. */
+export function recordLapseSql(guard: string): string {
+  return (
+    "INSERT INTO kv_store (namespace, key, value, updated_at) " +
+    `SELECT 'lock_lapsed', 'tickets:' || id, '{"at":"' || ${NOW} || '","from":"' || substr(locked_by, -8) || '"}', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') ` +
+    `FROM tickets WHERE id = ? AND status = 'wip' AND ${guard} ` +
+    "ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at"
+  );
 }
 
 export interface JobIdentity {

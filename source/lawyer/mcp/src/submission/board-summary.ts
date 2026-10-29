@@ -141,7 +141,7 @@ export function renderBoardSummary(section: WorkBoardData, client: ClientContext
  * board_card's `live` lane: every lane with its count, an empty one its heading alone. A job line is
  * the page's collapsed card text (collapsedText), then its tag tail: `eligible:` and `dispatch:` on a
  * Ready job, `idle` on an In progress job with no recorded activity for more than 15 minutes, measured
- * to the section's Rendered minute, then `idle past <N> h` past the firm's idle_flag_hours, and
+ * to the section's Rendered minute, then `check window: idle past 30 min` from 30 minutes, and
  * `BF <date>` on a Bring Forward job, a lane printed between In Progress and Blocked. Ready
  * closes with `dispatch choice:`. Completed and Shelved print their counts alone between Blocked and
  * Superseded, Proposed its after Superseded, a pre-filing section has no

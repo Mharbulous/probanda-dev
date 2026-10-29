@@ -3,6 +3,7 @@
 // The category rules live here and only here. The board page draws the category it is given and never
 // derives one, so a session and the practitioner always see the same sort.
 
+import { CHECK_AFTER_MINUTES, LAPSE_AFTER_MINUTES } from "./job-activity.js";
 import { type StepStateFields, stepResolved } from "./step-state.js";
 import type { TicketRow, TicketStatus } from "./work-board-reads.js";
 import type { Category, WorkBoardEdge, WorkBoardTicket } from "./work-board-ticket.js";
@@ -81,19 +82,34 @@ export function localMinutes(stamp: string): number | null {
 
 /** The minute a job's idle time runs from: its last activity, or a later wake-up minute of a ⏳ step
  * not yet done, which counts as activity until it passes. Null with nothing to measure from. */
-export function idleSince(t: WorkBoardTicket): number | null {
+export function idleSince(t: Pick<WorkBoardTicket, "last_activity_at" | "steps">): number | null {
   const waits = t.steps.filter((s) => s.done_at === null && s.status === "waiting").map((s) => s.wait_until ?? null);
   const minutes = [t.last_activity_at, ...waits].map((s) => (s == null ? null : localMinutes(s))).filter((m): m is number => m !== null);
   return minutes.length === 0 ? null : Math.max(...minutes);
 }
 
-/** The ticket with its idle flag when it is an In progress job whose idle time runs from more than
- * `hours` (the firm's idle_flag_hours) before the section's Rendered minute. The text names the
- * threshold, not the elapsed time, so it changes once at the crossing and never churns board_changed. */
-export function withIdleFlag(t: WorkBoardTicket, rendered: string, hours: number | null): WorkBoardTicket {
-  if (hours === null || t.category !== "wip") return t;
+/** Whole minutes from a job's idle start to `rendered`, or null with nothing to measure. */
+function idleMinutes(t: Pick<WorkBoardTicket, "last_activity_at" | "steps">, rendered: string): number | null {
   const now = localMinutes(rendered);
   const last = idleSince(t);
-  if (now === null || last === null || now - last <= hours * 60) return t;
-  return { ...t, idle_flag: `idle past ${hours} h` };
+  return now === null || last === null ? null : now - last;
+}
+
+/** Whether a held, unshelved job's lock has lapsed at `rendered` (job-activity.ts, ADR 0015): every
+ * board reads such a job as released. assign_job's lapsedClause is the same test in SQL. */
+export function lockLapsed(t: Pick<WorkBoardTicket, "status" | "locked_by" | "rejected_at" | "last_activity_at" | "steps">, rendered: string): boolean {
+  if (t.status !== "wip" || t.locked_by === null || t.rejected_at !== null) return false;
+  const idle = idleMinutes(t, rendered);
+  return idle !== null && idle >= LAPSE_AFTER_MINUTES;
+}
+
+/** The ticket with its idle flag when it is an In progress job idle for CHECK_AFTER_MINUTES or more
+ * at the section's Rendered minute: the check window, since from LAPSE_AFTER_MINUTES the job reads
+ * as released. The text names the threshold, not the elapsed time, so it changes once at the
+ * crossing and never churns board_changed. */
+export function withIdleFlag(t: WorkBoardTicket, rendered: string): WorkBoardTicket {
+  if (t.category !== "wip") return t;
+  const idle = idleMinutes(t, rendered);
+  if (idle === null || idle < CHECK_AFTER_MINUTES) return t;
+  return { ...t, idle_flag: `check window: idle past ${CHECK_AFTER_MINUTES} min` };
 }

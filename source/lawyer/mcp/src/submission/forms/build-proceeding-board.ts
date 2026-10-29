@@ -1,6 +1,5 @@
 // One proceeding's tickets, each classified, with its open loose threads and its Proposal holders.
 
-import { today as localToday } from "../../knowledge/common.js";
 import { rows } from "../query-rows.js";
 import { ticketAnswersHeld } from "./query.js";
 import { ticketSourcesHeld } from "./track-source.js";
@@ -20,7 +19,8 @@ import {
 import type { WorkBoardEdge, WorkBoardTicket } from "./work-board-ticket.js";
 import { fetchOpenSeeds, type WorkBoardSeed } from "./work-board-seeds.js";
 import { fetchJobActivity } from "./job-activity.js";
-import { activeAt, classify, holdsMaterial, reachesItself, scopesShare, supersededReason } from "./ticket-category.js";
+import { activeAt, classify, holdsMaterial, lockLapsed, reachesItself, scopesShare, supersededReason } from "./ticket-category.js";
+import { nowStamp } from "./timings.js";
 import { UNATTENDED_TOKEN_PREFIX } from "./unattended-eligibility.js";
 
 function groupBy<T>(items: T[], key: (item: T) => number): Map<number, T[]> {
@@ -47,12 +47,12 @@ export interface ProceedingBoard {
   deleted: DeletedTicket[];
 }
 
-/** `today` is the local date the Bring Forward lane reads against: a section builder passes its
- * Rendered minute's date, so the lane agrees with the stamp the section prints. */
-export function buildProceedingBoard(dbPath: string, proceedingId: number, today: string = localToday()): ProceedingBoard {
-  const proceedingTickets = fetchProceedingTickets(dbPath, proceedingId);
-  const ticketById = new Map(proceedingTickets.map((t) => [t.id, t]));
-  const proceedingIds = proceedingTickets.map((t) => t.id);
+/** `rendered` is the local minute the Bring Forward lane (its date) and lapsed locks read against: a
+ * section builder passes its Rendered minute, so the board agrees with the stamp the section prints. */
+export function buildProceedingBoard(dbPath: string, proceedingId: number, rendered: string = nowStamp()): ProceedingBoard {
+  const today = rendered.slice(0, 10);
+  const heldTickets = fetchProceedingTickets(dbPath, proceedingId);
+  const proceedingIds = heldTickets.map((t) => t.id);
   const idList = proceedingIds.map(() => "?").join(",");
   // A deleted job's rows all stay (jobs-closeout.md §10a) and are read as if it were gone: an edge
   // touching it is dropped, so a job that waited on it no longer does and its either/or partner is
@@ -97,6 +97,14 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
   const answersByTicket = groupBy(answerRows, (a) => a.ticket_id);
   const sourcesByTicket = groupBy(sourceRows, (s) => s.ticket_id);
   const activityById = fetchJobActivity(dbPath);
+  // A job locked before its database held the stamp has none yet: its lock is its last activity.
+  const lastActivity = (t: (typeof heldTickets)[number]) => activityById.get(t.id) ?? t.locked_at;
+  // A lapsed lock reads as released everywhere below: Ready, Blocked or Bring Forward, holding no
+  // material and no either/or partner, until assign_job takes it (ADR 0015).
+  const proceedingTickets = heldTickets.map((t) =>
+    lockLapsed({ ...t, last_activity_at: lastActivity(t), steps: stepsByTicket.get(t.id) ?? [] }, rendered) ? { ...t, status: "queued" as const, locked_by: null, locked_at: null } : t
+  );
+  const ticketById = new Map(proceedingTickets.map((t) => [t.id, t]));
   const activeById = new Map(
     rows<{ key: string; value: string }>(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r) => [Number(r.key.slice("job_active:".length)), r.value]),
   );
@@ -159,8 +167,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
       lock_note: category === "wip" && t.locked_by?.startsWith(UNATTENDED_TOKEN_PREFIX) ? "In progress with nobody present" : null,
       answers: (answersByTicket.get(t.id) ?? []).map((a) => ({ file_path: a.file_path, saved_at: a.saved_at })),
       sources: (sourcesByTicket.get(t.id) ?? []).map((s) => ({ kind: s.kind, label: s.label, outcome: s.outcome, reason: s.reason })),
-      // A job locked before its database held the stamp has none yet: its lock is its last activity.
-      last_activity_at: activityById.get(t.id) ?? t.locked_at,
+      last_activity_at: lastActivity(t),
       active_at: activeAt(t, activeById.get(t.id)),
     };
     return { filing_id: t.filing_id, ticket };

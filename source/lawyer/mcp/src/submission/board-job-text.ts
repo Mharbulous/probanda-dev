@@ -92,7 +92,7 @@ function idleTag(t: WorkBoardTicket, rendered: string): string | null {
 }
 
 /** The tags only the model sees after a `live` lane job line: Dispatch's on a Ready job, the idle
- * report's on an In progress one, then its idle flag past the firm's threshold, and `BF <date>` on
+ * report's on an In progress one, then its check-window flag, and `BF <date>` on
  * a Bring Forward one: its start date as a plain date, never a deadline and never a day count. */
 export function tagTail(t: WorkBoardTicket, rendered: string): string {
   if (t.category === "ready") {

@@ -94,9 +94,9 @@ export interface WorkBoardTicket {
    * Null unless the job is In progress and the stamp is no earlier than its lock, so an earlier
    * holder's stamp never shows. */
   active_at: string | null;
-  /** `idle past <N> h` on an In progress job idle longer than the firm's `idle_flag_hours` (N), set by
-   * the section builders; absent, which reads as null, within it, with nothing to measure, or with no
-   * threshold set, so an unset threshold leaves the board data as it was. */
+  /** `check window: idle past 30 min` on an In progress job in the check window (ticket-category.ts
+   * withIdleFlag), set by the section builders; absent, which reads as null, under it or with nothing
+   * to measure. */
   idle_flag?: string | null;
   /** A merged board only (combined-board.ts): the Writing the job serves, its filing's title, or
    * `Proceeding <id>` for a job with no filing. Absent on a board holding one section. */
