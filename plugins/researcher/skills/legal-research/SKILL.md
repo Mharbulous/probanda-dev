@@ -98,7 +98,8 @@ permitted to make statements of law.
    approved in this session.
    Outside a held job, with nobody present to approve, dispatch nothing further: report the plan and stop.
 3. Run Westlaw before the audit, without asking unless the practitioner declined: for each issue no pinpointable
-   text in tiers 1–3 answers (a handoff's say-so is no check), run the
+   text in tiers 1–3 answers (a handoff's say-so is no check) and that is not only a
+   point-in-time legislation question (the doctrine's duty 3 skips those), run the
    `westlaw-query-optimizer` subskill (on a supplied or earlier-session query too),
    then `researcher:research-paralegal` in deep-research mode and in citation mode
    `source: westlaw-first` for every citation already known. If it returns

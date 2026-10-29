@@ -160,6 +160,14 @@ other question runs the duties in their numbered order.
    A skip that names no pinpoint is not a skip: run this duty for that issue. The
    audit agent opens each pinpoint and returns a hand-off packet for any issue it
    does not answer.
+
+   Skip this duty, too, for an issue that asks only what an amendment changed, such
+   as whether amending instrument X changed provision Y or what Y said on a given
+   date. Westlaw AI does not answer point-in-time legislation questions. Record
+   `Westlaw: <issue>: not run: point-in-time legislation question`. The audit agent
+   answers the issue from the legislation text duty 4 files. An issue that also asks
+   how courts have read or applied the provision is not this skip: run this duty for
+   it. The skip sends nothing to CanLII.
 4. **Legislation text, before the audit.** After the Westlaw duty (before it, for a
    statutory-text question), so that its
    `legislation_skipped` titles are known, dispatch the `researcher:legislation-fetcher` agent
@@ -257,7 +265,7 @@ Memo template: CRAC / IRAC / CREAC   (IRAC or CREAC only when the practitioner e
 File stem: YYYY-MM-DD ML re <two to six keywords from the question>
 Pooled-layer results: <results> / not installed / NOT AUDITED: <reason>
 Preflight: all ok / <row>: <state>[; <row>: <state>]
-Westlaw: <issue>: run, memo(s): <paths>; decisions: <paths> / not run: tiers 1–3 held pinpointable text: <file> para <n>[; <file> para <n>] / not run: practitioner declined
+Westlaw: <issue>: run, memo(s): <paths>; decisions: <paths> / not run: tiers 1–3 held pinpointable text: <file> para <n>[; <file> para <n>] / not run: practitioner declined / not run: point-in-time legislation question
 Legislation: <citation>: filed <path>, current to <marker>, currency <value> / already on disk <path>, currency <value> / not retrieved: <reason>, currency <value> / on disk from case data <path>[, pp. <X–Y>], official: false, currency <value>
 Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not retrieved: <reason> / none
 6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted or staged>

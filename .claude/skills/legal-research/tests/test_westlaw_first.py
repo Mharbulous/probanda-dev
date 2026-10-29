@@ -72,6 +72,7 @@ SKIP_PINPOINT_LINE = (
 )
 SKIP_NO_PINPOINT_RULE = "A skip that names no pinpoint is not a skip"
 DECLINED = "not run: practitioner declined"
+POINT_IN_TIME = "not run: point-in-time legislation question"
 AUDIT_SKIP_CHECK = "**A Westlaw skip is checked, not trusted.**"
 NO_TEXT_NOTICE = "No decision text is included in this response or available through this API."
 
@@ -248,6 +249,21 @@ class DoctrineTests(unittest.TestCase):
         front_door = flat(read(SKILL_ROOT / "SKILL.md"))
         self.assertIn("unless the practitioner declined:", front_door)
         self.assertIn("download or run it (unless declined) through", front_door)
+
+    def test_a_point_in_time_legislation_issue_skips_westlaw_and_a_mixed_one_does_not(self):
+        # 2026-10-10 rule-change carve-out spec: Westlaw AI does not answer
+        # point-in-time legislation questions, yet duty 3 ran it on them.
+        text = read(SHARED / "legal-research.md")
+        template = text[text.index("**Spawn the agent from this template.**"):
+                        text.index("**A `needs_download` or hand-off-packet return")]
+        westlaw_lines = [line for line in template.splitlines() if line.startswith("Westlaw:")]
+        self.assertIn(POINT_IN_TIME, westlaw_lines[0])
+        duty_3 = flat(text[text.index("3. **Tier 4, Westlaw"):text.index("4. **Legislation text")])
+        self.assertIn(f"`Westlaw: <issue>: {POINT_IN_TIME}`", duty_3)
+        self.assertIn("An issue that also asks how courts have read or applied the provision "
+                      "is not this skip: run this duty for it.", duty_3)
+        self.assertIn("The skip sends nothing to CanLII.", duty_3)
+        self.assertIn("point-in-time legislation question", flat(read(SKILL_ROOT / "SKILL.md")))
 
     def test_a_packet_beside_other_gaps_still_runs_the_loop(self):
         # #1630: "only gap" left a packet-plus-offers return with neither path taken.
