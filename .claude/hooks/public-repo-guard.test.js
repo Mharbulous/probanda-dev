@@ -33,6 +33,7 @@ const PASS = [
   "sed -n 1,20p public/public-approved.json",
   "echo --- ; cat public/public-approved.json",
   "ls scripts ; grep -n x scripts/approve_public.py | head -5",
+  "cat source/exception-rulings.json",
   // The two commands that stalled the first /triage-issue pilots (2026-10-25).
   'sed -n 60,70p scripts/build_plugin.py; sed -n 278,292p scripts/build_plugin.py; grep -n "is_cutover\|cutover\|None\|SINGLE" scripts/check_layering.py scripts/check_plugin.py scripts/approve_public.py scripts/check_plugin_*.py | sort -u | head -60',
   'grep -rn "is_cutover\|--out" scripts/*.py .github/workflows/* | head -30; echo ---; sed -n 25,110p scripts/check_plugin.py; echo ---; grep -n "def load_script\|spec_from_file_location" scripts/check_public_tree.py scripts/approve_public.py',
@@ -58,6 +59,7 @@ const ASK = [
   "python scripts/approve_public.py public/foo.md",
   "echo {} > public/public-approved.json",
   "cp x public/public-approved.json",
+  "cp x source/exception-rulings.json",
   "jq '.a=1' public/public-approved.json > t && mv t public/public-approved.json",
   "sed -i 's/a/b/' public/public-approved.json",
   "python -c \"open('public/public-approved.json','w').write('{}')\"",
@@ -98,6 +100,7 @@ for (const c of PASS) check(bash(c), "pass", c);
 for (const c of ASK) Array.isArray(c) ? check(bash(c[0], c[1]), "ask", c.join(" @")) : check(bash(c), "ask", c);
 for (const tool_name of ["Edit", "Write"]) {
   check({ tool_name, tool_input: { file_path: "C:\\Users\\Brahm\\Git\\probanda-plugins\\public\\public-approved.json" } }, "ask", `${tool_name} public-approved.json`);
+  check({ tool_name, tool_input: { file_path: "source\\exception-rulings.json" } }, "ask", `${tool_name} exception-rulings.json`);
 }
 console.log(failed ? `${failed} failed` : "all passed");
 process.exit(failed ? 1 : 0);

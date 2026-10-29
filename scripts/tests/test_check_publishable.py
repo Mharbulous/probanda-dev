@@ -67,6 +67,26 @@ class NewProblemsTest(unittest.TestCase):
         self.assertEqual(check_publishable.new_problems(check_publishable.commit_problems(root, "HEAD"), worktree), [])
 
 
+class RulingsTest(unittest.TestCase):
+    RULINGS = [{"store": "s", "hop": "1 -> 2", "date": "2026-10-29", "ruling": "r",
+                "problems": [{"message": "contains schema DDL", "content": DDL_A}]}]
+
+    def new(self, base, head):
+        found = check_publishable.new_problems(problems(base), problems(head))
+        return [(str(p[0]), p[1], p[2]) for p in check_publishable.unruled(found, self.RULINGS)]
+
+    def test_ruled_problem_is_not_new(self):
+        self.assertEqual(self.new({"a.md": "x\n"}, {"a.md": f"x\n{DDL_A}\n"}), [])
+
+    def test_unruled_problem_is_new(self):
+        self.assertEqual(self.new({"a.md": "x\n"}, {"a.md": f"x\n{DDL_B}\n"}),
+                         [("a.md", 2, "contains schema DDL")])
+
+    def test_one_ruling_covers_the_source_and_its_built_copy(self):
+        head = {"src/m.md": f"{DDL_A}\n", "plugins/p/m.md": f"{DDL_A}\n"}
+        self.assertEqual(self.new({}, head), [])
+
+
 class CloudFolderTest(unittest.TestCase):
     def messages(self, name, text, scan):
         return [p[2] for p in scan(PurePosixPath(name), text.encode("utf-8"))]

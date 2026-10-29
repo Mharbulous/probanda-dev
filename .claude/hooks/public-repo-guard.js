@@ -9,7 +9,10 @@
 //     commit, push, pull, fetch, status, diff, log, show, grep, ls-files, ls-tree or blame. Such
 //     commands may be joined by ; when each part would pass alone. Two more single commands pass:
 //     scripts/approve_public.py with no arguments, which shows the changes and writes
-//     nothing without a terminal, and a pytest run of its test file.
+//     nothing without a terminal, and a pytest run of its test file;
+//   - a write to source/exception-rulings.json, under the same rules for shell commands that
+//     name it. A ruling there lets check_publishable.py --new-since pass a problem, so it lets a
+//     legacy store rely on the Commandments' Exception more, which only a person may decide.
 // Reading the public repository (gh repo view, git ls-remote, git clone) passes without asking.
 // Do not restrict: reads of either file neither approve nor publish, so these pass without asking:
 // git ls-files, ls-tree and blame; rg (but not --pre or --pre-glob, which run a program); jq with
@@ -32,7 +35,7 @@ function ask(reason) {
 
 // The old names still reach the public repository: GitHub redirects them after a rename.
 const PUBLIC_REPO = /probanda-app[\\/](?:probanda(?:-legal)?|legal|plugins|litigation)\b/i;
-const APPROVAL = /public-approved\.json|approve_public/i;
+const APPROVAL = /public-approved\.json|approve_public|exception-rulings\.json/i;
 const ALLOWED = /^(?:git(?: -C (?:"[^"\n]*"|'[^'\n]*'|\S+))? (?:add|commit|push|pull|fetch|status|diff|log|show|grep|ls-files|ls-tree|blame)|cat|head|tail|wc|grep|rg|jq|ls|echo)(?: |$)/;
 // sed can write (-i, w) and run commands (e), so it passes only as sed -n N,Mp followed by literal
 // file names: no option, quote, wildcard or $ that could expand into an option such as -i.
@@ -90,11 +93,14 @@ if (typeof input.command === "string") {
   const runsGitOrRg = parts.some((part) => /^(?:git|rg)\b/.test(part));
   const harmless = (parts.every(partHarmless) && !(runsGitOrRg && OPTION_RUNS.test(command))) || SHOW_ONLY.test(command) || TEST_RUN.test(command);
   if (APPROVAL.test(command) && !(harmless && !CHAINING.test(plain))) {
-    ask("This command names public-approved.json or approve_public.py and may approve files for publication.");
+    ask("This command names public-approved.json, approve_public.py or exception-rulings.json and may approve files for publication or add an exception ruling.");
   }
 } else {
   const target = String(input.file_path || input.notebook_path || "").replace(/\\/g, "/");
   if (/(?:^|\/)public-approved\.json$/i.test(target)) {
     ask("This write changes public-approved.json, the list of files approved for publication.");
+  }
+  if (/(?:^|\/)exception-rulings\.json$/i.test(target)) {
+    ask("This write changes exception-rulings.json, the human rulings that let a legacy store add schema problems.");
   }
 }

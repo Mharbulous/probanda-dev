@@ -10,6 +10,14 @@ With --new-since, exits 1 only when the tracked files hold a problem that
 not by where it sits, so a line that moved or a file that was renamed adds
 nothing. A problem line whose text was edited counts as new.
 
+With --new-since, a problem is not new either when a human ruling in
+source/exception-rulings.json lists its message and content, wherever it sits.
+That file is a JSON list of {store, hop, date, ruling, problems: [{message,
+content}]}. An absent file means no rulings. Only a person adds a ruling.
+--propose-ruling (with --new-since) prints the new problems as a `problems`
+list ready to paste into a ruling, writes nothing and exits 0. The full scan
+ignores rulings and reports every problem.
+
 The patterns below are written so that this file does not match them itself
 (for example `\\s+` where a real match would need a space, and `[D]` in a
 literal). Keep it that way: this script is scanned like any other tracked file.
@@ -186,16 +194,43 @@ def new_problems(base, head):
     return head
 
 
+RULINGS = PurePosixPath("source/exception-rulings.json")
+
+
+def ruled_keys(rulings):
+    """The (message, content) pairs that any ruling in `rulings` lists."""
+    return {(p["message"], p["content"]) for r in rulings for p in r["problems"]}
+
+
+def unruled(problems, rulings):
+    """`problems`, less each one whose message and content a ruling lists."""
+    keys = ruled_keys(rulings)
+    return [p for p in problems if (p[2], p[3]) not in keys]
+
+
+def load_rulings(root):
+    path = root / RULINGS
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--new-since", metavar="COMMIT")
+    parser.add_argument("--propose-ruling", action="store_true",
+                        help="print the new problems as a ruling's problems list (needs --new-since)")
     args = parser.parse_args()
+    if args.propose_ruling and not args.new_since:
+        parser.error("--propose-ruling requires --new-since")
 
     root = Path(__file__).resolve().parent.parent
     files, problems = worktree_problems(root)
     found = problems
     if args.new_since:
-        found = new_problems(commit_problems(root, args.new_since), problems)
+        found = unruled(new_problems(commit_problems(root, args.new_since), problems), load_rulings(root))
+    if args.propose_ruling:
+        keys = list(dict.fromkeys((p[2], p[3]) for p in found))
+        print(json.dumps({"problems": [{"message": m, "content": c} for m, c in keys]}, indent=2))
+        return 0
 
     for path, lineno, message, _ in found:
         print(f"{path}:{lineno}: {message}")
