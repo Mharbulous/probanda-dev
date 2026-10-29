@@ -23,6 +23,7 @@ const { awaitBackgroundJobs } = await import("../build/submission/render-job.js"
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const writes = await import("../build/tools/practice/writes.js");
+const reads = await import("../build/tools/practice/reads.js");
 const { submissionDataMigrateScriptsDir } = await import("../build/repo-root.js");
 const { matterToken } = await import("../build/submission/open-session.js");
 const { formCurrency } = await import("../build/submission/form-currency.js");
@@ -997,4 +998,34 @@ test("with no matter number anywhere, the Litigation Strategy still says its to-
   const data = boardData(opened.matter_board_path);
   assert.deepEqual(data.todos, []);
   assert.match(data.todos_note, /not read/);
+});
+
+// Spec 2026-10-29 (matter root from Project): project_id in place of matter_root opens the one matter
+// linked to the claude.ai Project; none or several refuse, naming the rows, so the session never picks.
+test("project_id opens the matter linked to the Project; none or several refuse naming the rows", async (t) => {
+  const m = matterFixture(t);
+  await seedOneFiling(m.dbPath);
+  const appData = join(m.base, "appdata");
+  mkdirSync(join(appData, "Probanda"), { recursive: true });
+  writeFileSync(join(appData, "Probanda", "probanda.json"), JSON.stringify({ case_data_root: join(m.base, "0. CASE DATA") }));
+  const practicePath = join(tmpdir(), `coclerk-open-session-practice-${randomUUID()}.db`);
+  t.after(() => rmSync(practicePath, { recursive: true, force: true }));
+  const context = await createDispatchContext({ ...process.env, ...(await startFakeCloud(t)).env, APPDATA: appData, COCLERK_CONFIG_PATH: "", COCLERK_DB_PATH: practicePath });
+  await writes.upsert_client_matter(context.practiceDb, { client_num: "C-9999", name: "Lookup Client Ltd.", matt_num: "L9999", file_number: "F-9999" });
+  await writes.upsert_client_matter(context.practiceDb, { client_num: "C-8888", name: "Other Client Ltd.", matt_num: "L8888", file_number: "F-8888" });
+  await writes.link_matter(context.practiceDb, { matt_num: "L9999", matter_root: m.matterRoot, project_id: "proj-a" });
+
+  const opened = await callTool(context, "drafting_forms__open_session", { project_id: "proj-a" });
+  assert.equal(opened.matter_root.toLowerCase(), m.matterRoot.toLowerCase());
+  assert.equal(opened.filings.length, 1);
+  assert.equal(opened.matter_lookup.matter_no, "L9999");
+
+  const refused = (rows) => (err) => err.code === "project_unresolved" && /Nothing was opened/.test(err.message) && err.details.rows.length === rows;
+  await assert.rejects(callTool(context, "drafting_forms__open_session", { project_id: "proj-z" }), refused(0));
+  for (const matter of (await reads.matter_lookup(context.practiceDb, { client_name: "Ltd." })).rows) {
+    await context.practiceDb.write("link_matter", {}, [{ op: "update", id: matter.id, kind: "matter", data: { projects: ["proj-b"] } }]);
+  }
+  await assert.rejects(callTool(context, "drafting_forms__open_session", { project_id: "proj-b" }), refused(2));
+  await assert.rejects(callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot, project_id: "proj-a" }), /exactly one of matter_root and project_id/);
+  await assert.rejects(callTool(context, "drafting_forms__open_session", {}), /exactly one of matter_root and project_id/);
 });

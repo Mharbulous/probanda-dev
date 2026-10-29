@@ -280,6 +280,21 @@ export async function lookUpMatter(
   };
 }
 
+/** open_session's matter folder: `matter_root`, or the folder of the one matter linked to the claude.ai
+ * Project `project_id`. No such matter, several, or one with no `matter_root` refuses, naming the rows,
+ * so the session asks and never picks (/work procedure.md). */
+export async function matterRootFor(args: { matter_root?: string; project_id?: string }, practiceDb: PracticeStore): Promise<string> {
+  if ((args.matter_root === undefined) === (args.project_id === undefined)) {
+    throw new ValidationError("open_session takes exactly one of matter_root and project_id");
+  }
+  if (args.matter_root !== undefined) return args.matter_root;
+  const rows = (await matter_lookup(practiceDb, { project_id: args.project_id })).rows;
+  if (rows.length === 1 && typeof rows[0].matter_root === "string") return rows[0].matter_root;
+  const named = rows.map((row) => ({ matt_num: row.matt_num, matter_root: row.matter_root ?? null, ...(row.matter_root_error ? { matter_root_error: row.matter_root_error } : {}) }));
+  const why = rows.length === 0 ? "no matter is linked to it" : rows.length > 1 ? `${rows.length} matters are linked to it` : "its matter has no matter_root";
+  throw new DataServerError(`Project ${args.project_id}: ${why}. Nothing was opened.`, "project_unresolved", { rows: named });
+}
+
 // The one repair path is /practice-data's (spec 2026-10-06_practice-db-config-repair): this names it, never a second one.
 const PRACTICE_CONFIG_REMEDY =
   "Repair through /practice-data: practice_data__config_status (with this matter_root) reports what is missing and any " +

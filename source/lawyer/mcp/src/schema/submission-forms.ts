@@ -467,18 +467,19 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, " +
         "AFFIRMED or SWORN name's date), and mismatch, the one board item's text when the court file and drafting " +
         "data disagree, else null. " +
-        "Every response carries timings.",
+        "Every response carries timings. In place of matter_root, project_id (a claude.ai Project's ID) opens the " +
+        "one matter linked to it; none, several or one with no matter_root refuses project_unresolved, naming the rows.",
       inputSchema: {
         type: "object",
         properties: {
           matter_root: { type: "string" },
+          project_id: { type: "string" },
           client_name: { type: "string" },
           client_no: { type: "string" },
           matter_no: { type: "string" },
           unattended: { type: "boolean" },
           filing_id: { type: "integer" },
         },
-        required: ["matter_root"],
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },

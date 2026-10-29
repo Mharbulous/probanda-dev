@@ -77,7 +77,7 @@ import {
 import { formCurrency } from "./submission/form-currency.js";
 import { submissionFormsApplyEdit, submissionFormsPreviewEdit, type ApplyEditArgs, type PreviewEditArgs } from "./submission/forms/quick-edit.js";
 import { submissionFormsBoardCard, type BoardCardArgs } from "./submission/matter-pages.js";
-import { lookUpMatter, matterToken, submissionFormsOpenSession } from "./submission/open-session.js";
+import { lookUpMatter, matterRootFor, matterToken, submissionFormsOpenSession } from "./submission/open-session.js";
 import { bcscFormHarness, type HarnessArgs } from "./submission/bcsc-form-harness.js";
 import {
   publishBccaFactum,
@@ -275,9 +275,9 @@ export const dataTools: Tool<DispatchContext>[] = [
   }),
   defineTool(
     "drafting_forms__open_session",
-    async (args: PageArgs & { matter_root: string; unattended?: boolean; filing_id?: number }, context: DispatchContext) => {
+    async (args: PageArgs & { matter_root?: string; project_id?: string; unattended?: boolean; filing_id?: number }, context: DispatchContext) => {
       const { result, dates, matterDescription } = await submissionFormsOpenSession(
-        args.matter_root,
+        await matterRootFor(args, context.practiceDb),
         context.practiceDb,
         clientContext(args),
         args.unattended === true,
