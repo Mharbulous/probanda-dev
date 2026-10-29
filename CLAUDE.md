@@ -6,7 +6,7 @@ Seven plugins are developed here: `lawyer`, `researcher`, `litigator`, `solicito
 
 ## Releasing
 
-A push to `main` is the release. claude.ai installs the seven plugins from this repository as the marketplace `Probanda_Legal_experimental` and picks up new commits itself, and each machine then syncs from claude.ai. Each plugin has its own version. Release with `/release`, which bumps every plugin whose built folder changes. A change under `.claude/skills/shared/` changes all seven. Never build a `.plugin` archive and never ask for a manual upload: that was the old "My Uploads" route. No session can trigger either sync. A machine's copy under `~/.claude/plugins/synced/` can be hours behind claude.ai, so check the time on its `.last-complete-round` file before reporting which version is installed.
+A push to `main` is the release. claude.ai installs the seven plugins from this repository as the marketplace `Probanda_Legal_experimental`, which it lists under the repository's name, `probanda-dev`, and picks up new commits itself (its "Check for updates" button fetches them at once), and each machine then syncs from claude.ai. Each plugin has its own version. Release with `/release`, which bumps every plugin whose built folder changes. A change under `.claude/skills/shared/` changes all seven. Never build a `.plugin` archive and never ask for a manual upload: that was the old "My Uploads" route. No session can trigger either sync. A machine's copy under `~/.claude/plugins/synced/` can be hours behind claude.ai, so check the time on its `.last-complete-round` file before reporting which version is installed.
 
 The version rule:
 
@@ -16,7 +16,7 @@ The version rule:
 
 ## Vendored plugin
 
-The marketplace also lists `tokeneconomizer` (Token Economizer), from `vendor/tokeneconomizer/`. It is third-party code under Apache-2.0, not a Probanda plugin, so COMMANDMENTS.md does not govern it (Brahm's ruling, 2026-10-28). Its tool pruning writes `.claude/settings.local.json` in repositories. It is not built by `scripts/build_plugin.py`, not versioned by `/release`, and never goes into `public/`. It is the bundle of `Mharbulous/TokenEconomizer` at commit `a45bf5a9`, byte for byte, plus that repo's `LICENSE`. To refresh it, clone the fork, run its `python scripts/build_plugin.py --out <dir>`, replace `vendor/tokeneconomizer/` with `<dir>/tokeneconomizer/`, copy `LICENSE` back in, update the commit here, and keep `scripts/te` and `scripts/te-hook` executable in git (`git update-index --chmod=+x`).
+The marketplace also lists `tokeneconomizer` (Token Economizer), from `vendor/tokeneconomizer/`. It is third-party code under Apache-2.0, not a Probanda plugin, so COMMANDMENTS.md does not govern it (Brahm's ruling, 2026-10-28). Its tool pruning writes `.claude/settings.local.json` in repositories. It is not built by `scripts/build_plugin.py`, not versioned by `/release`, and never goes into `public/`. It is the bundle of `Mharbulous/TokenEconomizer` at commit `a45bf5a9`, byte for byte, plus that repo's `LICENSE`, except that its `plugin.json` version was raised to 0.1.2 here. To refresh it, clone the fork, run its `python scripts/build_plugin.py --out <dir>`, replace `vendor/tokeneconomizer/` with `<dir>/tokeneconomizer/`, copy `LICENSE` back in, update the commit here, and keep `scripts/te` and `scripts/te-hook` executable in git (`git update-index --chmod=+x`).
 
 ## Two repositories
 

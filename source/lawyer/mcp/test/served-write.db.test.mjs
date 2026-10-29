@@ -10,7 +10,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, seedSql } = await import("./helpers/template-db.mjs");
 const { seedApplicationResponse } = await import("./fixtures/forms-render-seeds.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { deriveLifecycle } = await import("../build/submission/forms/lifecycle.js");
@@ -82,7 +82,7 @@ test("record_filed refuses a served Writing, naming the job that files it", asyn
 
 test("record_served refuses, writing nothing, a bad date or copy, a missing, retired, frozen or other-kind Writing, and party drift", async (t) => {
   const { dir, dbPath } = await response(t);
-  await submissionDataExecute(
+  seedSql(
     dbPath,
     `INSERT INTO filings (id, proceeding_id, kind, subkind, title) VALUES (2, 1, 'requisition_consent', 'consent', 'Requisition');
      INSERT INTO filings (id, proceeding_id, kind, title, retired_on, retirement_reason) VALUES (3, 1, 'notice_of_application', 'Retired', '2026-09-30', 'other');

@@ -78,14 +78,29 @@ def do_query(req):
 ${stagedStorePython({ store: "submission", ext: ".sqlite", migrateTool: "drafting_data__migrate" })}
 
 
+# Recording a Writing as sent, filed or served is one-way and belongs to record_sent, record_filed
+# and record_served, behind the approval gate. So a script that leaves any filing's filed_on or
+# sent_copy_id holding a value it did not hold before is refused whole. It is judged by the state
+# after the script, never by its text, and raised on the staged copy, so even a script that commits
+# itself changes nothing live. Clearing either one stays an update.
+RECORDED = "SELECT id, filed_on, sent_copy_id FROM filings"
+
+
 def do_execute(req):
     def mutate(con):
+        before = {row[0]: row[1:] for row in con.execute(RECORDED)}
         try:
             con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
         except Exception:
             if con.in_transaction:
                 con.execute("ROLLBACK")
             raise
+        for row in con.execute(RECORDED):
+            old = before.get(row[0], (None, None))
+            if any(new is not None and new != was for new, was in zip(row[1:], old)):
+                raise SystemExit(
+                    "filed_on and sent_copy_id are set only by drafting_data__record_sent, record_filed or "
+                    f"record_served; clearing filed_on stays an update. Nothing was written (filing {row[0]}).")
         return {"ok": True, "changes": con.total_changes}, True
     return staged_write(req, 'execute', mutate)
 

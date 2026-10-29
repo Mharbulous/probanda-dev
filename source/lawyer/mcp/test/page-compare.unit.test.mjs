@@ -4,7 +4,8 @@
 // (test/helpers/synthetic-docs.mjs), placeholder text only.
 
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { after } from "node:test";
 import test from "node:test";
@@ -19,9 +20,12 @@ after(() => {
   for (const dir of workDirs) rmSync(dir, { recursive: true, force: true });
 });
 
-/** pdfPagesCompare(args), its work folder removed after the file's tests. */
+const DEST = join(DIR, "Page images");
+
+/** pdfPagesCompare(args), into DEST unless args name another destination_dir, its work folder
+ * removed after the file's tests. */
 async function compare(args) {
-  const result = await pdfPagesCompare(args);
+  const result = await pdfPagesCompare({ destination_dir: DEST, ...args });
   if (result.work_dir) workDirs.push(result.work_dir);
   return result;
 }
@@ -113,16 +117,29 @@ test("a field flattened into the page content draws the same: the page is cleare
   assert.deepEqual((await compare({ a: original, b: flattened })).cleared, ["1"]);
 });
 
-test("the inputs' folder is left as it was: the drawings go to the OS temp folder", async () => {
+test("the drawings go in destination_dir's subfolder named for the pair's hashes, the same on each compare; the inputs' folder is left as it was", async () => {
   const dir = join(DIR, "inputs");
   mkdirSync(dir);
   const a = join(dir, "a.pdf");
   const b = join(dir, "b.pdf");
   writeFileSync(a, imagePdfBytes({ pages: PAGES }));
   writeFileSync(b, imagePdfBytes({ pages: withPage(1, { content: `${textBlock()} ${MARK}` }) }));
-  const got = await compare({ a, b });
-  assert.ok(got.work_dir && !got.work_dir.startsWith(dir));
+  const dest = join(DIR, "Compare images");
+  const got = await compare({ a, b, destination_dir: dest });
+  const sha = (path) => createHash("sha256").update(readFileSync(path)).digest("hex").slice(0, 16);
+  assert.equal(got.work_dir, join(dest, `compare-${sha(a)}-${sha(b)}`));
+  assert.equal(dirname(got.flagged[0].a[0]), join(got.work_dir, "a"));
+  assert.equal((await compare({ a, b, destination_dir: dest })).work_dir, got.work_dir);
   assert.deepEqual(readdirSync(dir).sort(), ["a.pdf", "b.pdf"]);
+});
+
+test("destination_dir is required and absolute, and one that cannot be made is refused, never swapped for a temp folder", async () => {
+  const copy = file("marked-3.pdf", imagePdfBytes({ pages: withPage(1, { content: `${textBlock()} ${MARK}` }) }));
+  await assert.rejects(pdfPagesCompare({ a: ORIGINAL, b: copy }), (err) => err.code === "data_error" && /destination_dir/.test(err.message));
+  await assert.rejects(compare({ a: ORIGINAL, b: copy, destination_dir: "Page images" }), /destination_dir must be absolute/);
+  // A file where the folder should be: the folder cannot be made.
+  const blocked = file("blocked", "placeholder");
+  await assert.rejects(compare({ a: ORIGINAL, b: copy, destination_dir: blocked }), /ENOTDIR|EEXIST/);
 });
 
 test("pages limits the compare, and each refusal has pdf_pages__images' code", async () => {

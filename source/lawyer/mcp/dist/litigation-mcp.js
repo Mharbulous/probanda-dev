@@ -1,4 +1,4 @@
-// build-stamp: 03ec77df94c2
+// build-stamp: f631d9245d8b
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77936,15 +77936,16 @@ function fileToolDefinitions() {
     },
     {
       name: "pdf_pages__compare",
-      description: 'Compare two PDFs page by page, to find what changed between an original (`a`) and a flattened, converted or returned copy (`b`), both absolute paths to `.pdf` files; `pages` (`"X"` or `"X-Y"`) limits the compare to those pages. Pages are paired by number. Each page of both files is drawn at 150 dpi (lowered so it is at most 2000 px wide) with its annotations and form fields, and is cleared only when its size, its rotation, the drawn pixels, its text layer (invisible text included) and the stored data of each embedded image all match. A page that is not cleared is in `flagged` with its `reasons`: `only_in_a` or `only_in_b` (the other file has no such page), `size`, `rotation`, `render` (the drawn pixels differ), `text`, `images`; `changed_share` is the share of pixels that differ when both drawings are the same size. `render`, `rotation`, `size`, `only_in_a` and `only_in_b` are visible differences: for those pages `a` and `b` list the PNGs of each file\'s page (top to bottom, cut into tiles as pdf_pages__images cuts them), and the pages are split in `review_groups`, in order, into as few groups of at most 5 as hold them, of sizes that differ by at most one. A page flagged for `text` or `images` alone looks the same and has no PNGs and no group. Neither PDF is changed: the PNGs go in a new folder in the OS temp directory (`work_dir`, null when no PNG was written), never beside either file. Returns {pages_a, pages_b, cleared: ["X-Y" or "X"], flagged: [{page, reasons, changed_share?, a?, b?}], review_groups: [[page]], work_dir}. Refused as pdf_pages__images refuses (`data_error`, `not_found`, `not_pdf`, `password_protected`, `bad_pages`, `page_too_large`, `renderer_unavailable`), for either file.',
+      description: 'Compare two PDFs page by page, to find what changed between an original (`a`) and a flattened, converted or returned copy (`b`), both absolute paths to `.pdf` files; `destination_dir` is the absolute folder the session uses for pdf_pages__images\' PNGs; `pages` (`"X"` or `"X-Y"`) limits the compare to those pages. Pages are paired by number. Each page of both files is drawn at 150 dpi (lowered so it is at most 2000 px wide) with its annotations and form fields, and is cleared only when its size, its rotation, the drawn pixels, its text layer (invisible text included) and the stored data of each embedded image all match. A page that is not cleared is in `flagged` with its `reasons`: `only_in_a` or `only_in_b` (the other file has no such page), `size`, `rotation`, `render` (the drawn pixels differ), `text`, `images`; `changed_share` is the share of pixels that differ when both drawings are the same size. `render`, `rotation`, `size`, `only_in_a` and `only_in_b` are visible differences: for those pages `a` and `b` list the PNGs of each file\'s page (top to bottom, cut into tiles as pdf_pages__images cuts them), and the pages are split in `review_groups`, in order, into as few groups of at most 5 as hold them, of sizes that differ by at most one. A page flagged for `text` or `images` alone looks the same and has no PNGs and no group. Neither PDF is changed: the PNGs go in `destination_dir`\'s subfolder named for the two PDFs\' hashes (`work_dir`, null when no PNG was written), reused on each compare of the same pair, under `a` and `b`, never beside either file and never in the OS temp directory. Returns {pages_a, pages_b, cleared: ["X-Y" or "X"], flagged: [{page, reasons, changed_share?, a?, b?}], review_groups: [[page]], work_dir}. Refused as pdf_pages__images refuses (`data_error`, also for a missing or relative `destination_dir`, `not_found`, `not_pdf`, `password_protected`, `bad_pages`, `page_too_large`, `renderer_unavailable`), for either file.',
       inputSchema: {
         type: "object",
         properties: {
           a: { type: "string" },
           b: { type: "string" },
-          pages: { type: "string" }
+          pages: { type: "string" },
+          destination_dir: { type: "string" }
         },
-        required: ["a", "b"],
+        required: ["a", "b", "destination_dir"],
         additionalProperties: false
       },
       annotations: { destructiveHint: false, openWorldHint: false }
@@ -81264,7 +81265,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "03ec77df94c2";
+var BUILD_STAMP = false ? null : "f631d9245d8b";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -113985,15 +113986,15 @@ var createPdfium = (() => {
         return parts;
       },
       normalize: (path) => {
-        var isAbsolute10 = PATH.isAbs(path), trailingSlash = path.substr(-1) === "/";
-        path = PATH.normalizeArray(path.split("/").filter((p3) => !!p3), !isAbsolute10).join("/");
-        if (!path && !isAbsolute10) {
+        var isAbsolute11 = PATH.isAbs(path), trailingSlash = path.substr(-1) === "/";
+        path = PATH.normalizeArray(path.split("/").filter((p3) => !!p3), !isAbsolute11).join("/");
+        if (!path && !isAbsolute11) {
           path = ".";
         }
         if (path && trailingSlash) {
           path += "/";
         }
-        return (isAbsolute10 ? "/" : "") + path;
+        return (isAbsolute11 ? "/" : "") + path;
       },
       dirname: (path) => {
         var result = PATH.splitPath(path), root = result[0], dir = result[1];
@@ -120273,18 +120274,20 @@ function sectionBlocks(chunks) {
 
 // src/files/extract/page-compare.ts
 import { createHash as createHash12 } from "node:crypto";
-import { mkdirSync as mkdirSync26, mkdtempSync as mkdtempSync3, writeFileSync as writeFileSync17 } from "node:fs";
-import { tmpdir as tmpdir7 } from "node:os";
-import { join as join57 } from "node:path";
+import { mkdirSync as mkdirSync26, writeFileSync as writeFileSync17 } from "node:fs";
+import { isAbsolute as isAbsolute9, join as join57 } from "node:path";
 var FPDF_ANNOT = 1;
 var GROUP_MAX = 5;
 var VISUAL = /* @__PURE__ */ new Set(["only_in_a", "only_in_b", "size", "rotation", "render"]);
 var sha2562 = (data) => createHash12("sha256").update(data).digest("hex");
 async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
+  if (typeof args.destination_dir !== "string" || !isAbsolute9(args.destination_dir)) {
+    throw new ValidationError(`destination_dir must be absolute: ${args.destination_dir}`);
+  }
   return withPdf(
     args.a,
     wasm,
-    (lib, docA) => withPdf(args.b, wasm, async (_3, docB) => {
+    (lib, docA, dataA) => withPdf(args.b, wasm, async (_3, docB, dataB) => {
       const formA = openForm(lib, docA);
       let formB;
       try {
@@ -120301,7 +120304,7 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         const flagged = [];
         let workDir = null;
         const write = (side, n3, facts) => {
-          workDir ??= mkdtempSync3(join57(tmpdir7(), "probanda-compare-"));
+          workDir ??= join57(args.destination_dir, `compare-${sha2562(dataA).slice(0, 16)}-${sha2562(dataB).slice(0, 16)}`);
           const dir = join57(workDir, side);
           mkdirSync26(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
@@ -121064,7 +121067,12 @@ async function callTool(context, name, rawArgs) {
     });
   }
   if (name === "pdf_pages__compare") {
-    return pdfPagesCompare({ a: args.a, b: args.b, pages: args.pages });
+    return pdfPagesCompare({
+      a: args.a,
+      b: args.b,
+      pages: args.pages,
+      destination_dir: args.destination_dir
+    });
   }
   if (isKeyRequestToolName(name)) {
     return callKeyRequestTool(name);
@@ -121165,7 +121173,7 @@ function once(fn2) {
 // src/page-api/server.ts
 import { existsSync as existsSync57 } from "node:fs";
 import { createServer as createServer2 } from "node:http";
-import { isAbsolute as isAbsolute9 } from "node:path";
+import { isAbsolute as isAbsolute10 } from "node:path";
 
 // src/submission/forms/seed-deferral.ts
 async function setSeedDeferral(args, env = process.env) {
@@ -121287,7 +121295,7 @@ async function handle3(req, res, env, startedAt, options) {
   if (typeof token !== "string" || !pageApiTokenValid(token, dbPath, proceedingId, env)) {
     return json2(req, res, 403, { error: "This page's token does not match its database. Ask a Claude session to render the page again." });
   }
-  if (!isAbsolute9(dbPath) || !existsSync57(dbPath)) {
+  if (!isAbsolute10(dbPath) || !existsSync57(dbPath)) {
     return json2(req, res, 400, { error: `There is no drafting database at ${dbPath}.` });
   }
   const result = await setSeedDeferral({ db_path: dbPath, proceeding_id: proceedingId, seed_id: Number(m3[1]), action: m3[2] }, env);

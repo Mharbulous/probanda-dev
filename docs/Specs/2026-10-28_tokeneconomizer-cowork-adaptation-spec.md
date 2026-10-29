@@ -2,7 +2,7 @@
 
 ## Goal
 
-The marketplace listing says: "The original Microsoft TokenEconomizer was optimized for Claude Code. This version has been adapted and optimized for Claude Cowork." This spec makes that true. Done means every red test below passes in a real Cowork session, and the fork's existing test suite still passes.
+The marketplace listing says: "The original Microsoft TokenEconomizer was optimized for Claude Code. This version is being adapted for Claude Cowork." This spec makes it adapted and optimized for Cowork, and the listing says so once the work is green. Done means every red test below passes in a real Cowork session, and the fork's existing test suite still passes.
 
 The work happens in the fork, `Mharbulous/TokenEconomizer`. The result is vendored into this repository by the steps in CLAUDE.md, "Vendored plugin".
 
@@ -18,13 +18,11 @@ Test-driven, in three stages.
 
 These come from reading the fork's source and from this repository's own Cowork findings (`docs/Plans/2026-10-13_four-plugin-split.md`, Phase 0).
 
-- **Cowork's shell tool has another name.** Probanda's own hooks match Cowork's shell as `mcp__workspace__bash` or `mcp__cowork__workspace__bash` (`.claude/skills/drafting-data/hooks/html-pages-gate.py`). The loop guard maps tool names through `_TOOL_CANON` in `tokeneconomizer/loopguard/state.py`, which knows `Bash` but not those names. An unknown name passes through unchanged, so the loop guard does not read the command text of a Cowork shell call and cannot spot a failing command run again and again. Red test R3 checks this.
-- **Hooks run in Cowork's Linux machine.** Phase 0 found plugins at `/root/.claude/plugins/synced/<account>_<user>/<plugin>`, with `${CLAUDE_PLUGIN_ROOT}` set. TokenEconomizer's state root is `$TOKENECONOMIZER_HOME`, else `~/.tokeneconomizer`, which there is `/root/.tokeneconomizer`. Whether that folder survives to the next session is unknown. Red test R5 checks it.
+- **Cowork has two shell tools.** The loop guard maps tool names through `_TOOL_CANON` in `tokeneconomizer/loopguard/state.py`. It knows `Bash`, Cowork's cloud shell, but not `mcp__remote-devices__device_bash`, the shell on the person's computer. An unknown name passes through unchanged, so the loop guard does not read the command text of that shell's calls.
+- **Hooks run on a cloud machine.** TokenEconomizer's state root is `$TOKENECONOMIZER_HOME`, else `~/.tokeneconomizer`, which there is `/root/.tokeneconomizer`. Red test R5 checks whether it survives to the next session.
 - **The loop guard needs history.** It does nothing in a folder until it has learned enough resolved turns there (`envelope_min_samples` in `tokeneconomizer/loopguard/envelope.py`). If state does not survive between sessions, the loop guard never acts in Cowork.
 - **Model calls go through `claude -p`** (`tokeneconomizer/plugin/sidecall.py`). The loop guard's judge and redirect need it. Whether a `claude` command exists in Cowork's Linux machine is unknown. Red test R4 checks it.
-- **`SessionStart` output arrived late in Cowork.** In Phase 0 (2026-10-13) a hook's output reached the session only after an agent was dispatched, and in one run never. Micro-skills are injected at `SessionStart`, so they may not reach the session when they are needed. This is recorded as a fact, not a red test, because a fresh folder has no micro-skills to inject.
-- **The slash commands name "the Bash tool"** (`slash-commands/*.md`). Cowork has no tool by that name.
-- **Tool pruning writes `.claude/settings.local.json`** in the session's folder and builds its deny list from Claude Code's tool catalog. In Cowork that folder is the person's own folder, and whether Cowork reads that settings file is unknown. The green stage decides whether tool pruning is adapted or turned off in Cowork. It has no red test yet, because it acts only after several sessions.
+- **Tool pruning writes `.claude/settings.local.json`** in the session's working folder and builds its deny list from Claude Code's tool catalog. In Cowork that folder is `/home/claude` on the cloud machine, which is lost with the session. The green stage decides whether tool pruning is adapted or turned off in Cowork.
 
 ## Red tests
 
@@ -38,8 +36,9 @@ Each test runs inside a Cowork session that has the plugin installed and an empt
 | R4 | The loop guard can make its model calls | A side call (`sidecall.claude_call`) asked to reply `OK` returns `OK` |
 | R5 | What was learned survives to the next session | A second Cowork session on the same folder finds the marker that the first session wrote in `S` |
 | R6 | A finished session is folded | `te status` in the second session counts the first session |
+| R7 | A hook can call a tool on `lawyer`'s `data` server | A `UserPromptSubmit` hook of type `mcp_tool` calling `practice_data__config_status` puts that tool's output into the session |
 
-R5 and R6 need a second session. The other four run in the first.
+R5 and R6 need a second session. The other five run in the first.
 
 ## Facts to record
 
@@ -54,4 +53,59 @@ The red run records these, because the green stage's design depends on them.
 
 ## Red run results
 
-Not run yet.
+Run by Brahm on 2026-10-28 in five probes, each a new Cowork session in the project `te-cowork-test` except probe 3, which ran in a matter project. Plugin 0.1.0, except R7 on 0.1.1.
+
+| Id | Result | Evidence |
+|---|---|---|
+| R1 | PASS | `/root/.tokeneconomizer/bin/te` written and state files changed after tool calls |
+| R2 | PASS | `doctor` and `status` exit 0, Python 3.13.18 ok, state root writable, no `errors.log` |
+| R3 | PARTIAL | `Bash`, `Read`, `Edit` and `Write` map correctly. Cowork's second shell, `mcp__remote-devices__device_bash`, is not in `_TOOL_CANON`, so the loop guard cannot read its commands |
+| R4 | PASS | `/opt/node22/bin/claude` 2.1.312 answered `OK`, at 8,067 effective tokens for that one call |
+| R5 | FAIL | No marker survived to the next session in `/root/.tokeneconomizer`, `/root`, `/tmp`, `/home/claude`, `/root/.claude/plugins/data`, `/mnt/user-data` or `/mnt/attach/outputs` |
+| R6 | FAIL | The second session reported "0 folded" |
+| R7 | FAIL | Plugin 0.1.1 carried two such hooks, one with server `plugin:lawyer:data` and one with server `remote-devices` and tool `plugin_lawyer_data__practice_data__config_status`. Neither put any output into the session, and neither reported an error. Removed in 0.1.2 |
+
+Facts recorded:
+
+- Each session runs in a new cloud container (`container_name` holds `remote_cowork`, a new boot id each time). `CLAUDE_CODE_REMOTE_SDK_URL` points at `api.anthropic.com/v1/code/sessions/cse_...`, and `CLAUDE_CODE_SKIP_PLUGIN_MCP_SERVERS=1` is set.
+- The working folder is always `/home/claude`, not a git repository, so every Cowork session shares one state key. That matches Brahm's choice of one shared pattern for all Probanda projects.
+- The linked folder is not visible from the cloud shell. It is visible only from `mcp__remote-devices__device_bash`, at `~/mnt/<folder name>`, as a Linux user named after the session.
+- `/mnt/attach/outputs` is an rclone store named after the session, and it was empty in the next session.
+- `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PLUGIN_DATA` are not set in the shell. `CLAUDECODE=1` is.
+- A `SessionStart` hook's text (Probanda's practitioner notes) was in the session's context when it answered the first prompt. Phase 0 (2026-10-13) saw such text arrive only after an agent was dispatched, so Cowork's behaviour has changed or the two probes saw different things.
+- The session's transcript is kept at `/root/.claude/projects/-home-claude/<id>.jsonl` and is lost with the container. No copy was found on the PC: the files under `%APPDATA%\Claude` that changed during the probes hold no `.jsonl` transcript, and the `claude-code-sessions\...\local_*.json` files changed that day name none of the probe sessions. `vm_bundles\claudevm.bundle\sessiondata.vhdx` was not opened.
+- A post-turn memory pass writes only under `/projects/<project id>/`. It is a per-project store run by a model for facts about the person.
+
+Conclusion: TokenEconomizer runs in Cowork but cannot learn there, because nothing it writes outlasts the session. The loop guard needs learned turns before it acts, so in practice it does nothing. A hook cannot reach the PC itself: only the model's tool calls can.
+
+## Measure first
+
+Brahm's ruling of 2026-10-28, after an independent review: nothing in the green design is built until a measurement shows the loop guard would act. The red run showed the plugin runs in Cowork, not that it saves anything, and the fork's `docs/PLUGIN.md` §5 says the loop guard has never fired on a real stuck turn.
+
+- From 2026-10-28 the PC runs TokenEconomizer with `shadow=true` and `toolprune=propose` (global, in `~/.tokeneconomizer/config.json`). In shadow mode every decision is computed and logged and none is acted on.
+- On or after 2026-11-11, read the would-be redirects in the state's event logs, for Claude Code and desktop sessions, and the `plugin overhead` line of `te status`. On 2026-10-28, before shadow mode, `te status` for probanda-dev showed 3 folded sessions with a plugin overhead of 389.9k of 428.7k effective tokens (47.6%), and 0 redirects.
+- Build the green design only if the guard would have redirected stuck turns often enough to repay that overhead. Otherwise the end state is: in Cowork, everything but the loop guard off, and the listing says what the plugin does there.
+- One open point for the measurement: the loop guard learns one envelope for all sessions, but a one-shot lookup and a long housekeeping run differ widely in length, so a pooled envelope may be too loose to act. The shadow log shows the spread.
+
+Red tests to add before any green build:
+
+- A `PostToolUse` redirect (`additionalContext` and `systemMessage`) reaches the Cowork model.
+- `canon_tool` maps `mcp__remote-devices__device_bash` to `bash` (R3's missing half).
+- Cost per Cowork session: hook time per tool call, judge calls per session, and which account `claude -p` in the container bills.
+- Whether `SessionEnd` fires in the container, and whether the detached fold finishes before the container ends.
+
+## Green design
+
+From Brahm's rulings of 2026-10-28. On hold until "Measure first" says to build.
+
+- **One pattern.** TokenEconomizer keeps one learned pattern for all Probanda projects, not one per folder.
+- **A Probanda plugin.** TokenEconomizer becomes a Probanda plugin, governed by COMMANDMENTS.md. It stays optional and separate from `lawyer`, and has no server of its own. It moves from `vendor/` to `source/tokeneconomizer/` and is built and released like the other plugins. CLAUDE.md's "Vendored plugin" section changes with that move.
+- **Storage on the PC.** The pattern is stored through `lawyer`'s `data` server, in SQLite under the Probanda app data folder, by two tools: one reads the pattern and one saves it. First check whether the `time_pipeline` key-value tools can take a `tokeneconomizer` namespace instead of new tools. The store obeys Commandments 3 and 5.
+- **The model carries the pattern, because R7 failed.** At the first prompt, the hook tells the model to call the read tool. The `PostToolUse` hook receives that tool's response in its input and writes the pattern to the local state root, where the loop guard reads it. At `Stop`, the hook asks the model to call the save tool with the updated pattern. This is the route Probanda's own hooks already use, for example `lawyer`'s note that tells the model to call `practice_data__config_status`.
+
+Open questions:
+
+- Whether Cowork's `PostToolUse` hook receives the response of a tool on the PC (`mcp__remote-devices__plugin_lawyer_data__*`). The red run saw that hook fire only for cloud tools. The green stage's first test checks it.
+- The token cost of the save at `Stop`, since the model writes the whole pattern out as the tool's input. A small pattern keeps it cheap. If it is not small, save only what changed.
+- Whether tool pruning can take effect in Cowork. It writes `.claude/settings.local.json` during a session on a fresh machine, which may be too late to change that session's tools.
+- The measured gain. Cowork already defers tools, so the saving may be small. The green stage measures it before the refactor.

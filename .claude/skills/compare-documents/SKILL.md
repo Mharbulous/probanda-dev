@@ -9,10 +9,10 @@ description: "Compare two PDF copies of one document and say what changed: a cou
 
 Answers one question: did anything change between an original (A) and a copy (B)? An automatic page-by-page check clears the pages that match exactly, and a reviewer looks only at the pages that differ to the eye.
 
-Both files are read-only: never change, move or rename either, and write nothing into a matter folder. The page images go to a temporary folder.
+Both files are read-only: never change, move or rename either, and write nothing into a matter folder but the page images. They go in `<matter_root>\0. CASE DATA\Page images`, the folder page images of the matter's PDFs already use. When the files belong to no matter, ask the practitioner which folder may hold them.
 
 1. **Get the two files.** Take the absolute path of the original and of the copy. Both must be PDFs. For any other format, say plainly that this compares PDFs only and stop. Never convert a file yourself.
-2. **Check.** Call `pdf_pages__compare` with `a` (the original) and `b` (the copy). If it refuses, say so in plain words with its reason, such as "the copy is password-protected", and stop.
+2. **Check.** Call `pdf_pages__compare` with `a` (the original), `b` (the copy) and `destination_dir` (that folder's absolute path). If it refuses, say so in plain words with its reason, such as "the copy is password-protected", and stop.
 3. **No pages to review.** When `review_groups` is empty, answer from the result alone (step 6) and dispatch nothing.
 4. **Bridged session.** When lawyer's data tools are listed as `mcp__remote-devices__plugin_lawyer_data__*`, the reviewer cannot see host files. Stage each PNG of the pages to review first, by the bridged-session rule of `../matter-data/operations/verify-law.md` §2, and use the staged paths. Where staging is impossible, dispatch nothing and report those pages as not reviewed, with the reason in one line.
 5. **Review.** Dispatch one `lawyer:compare-pages` agent per review group. Its brief is one line per page: the page number, its `reasons`, `changed_share` if present, and the A and B image paths, in order. Nothing else goes in the brief.

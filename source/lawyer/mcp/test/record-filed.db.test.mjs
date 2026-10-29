@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, seedSql } = await import("./helpers/template-db.mjs");
 const { updateCaseData } = await import("./helpers/matter-data-fixture.mjs");
 const { seedBcscConsentOrder } = await import("./fixtures/forms-render-seeds.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
@@ -77,7 +77,7 @@ test("record_filed refuses while a party drifts, and writes nothing", async (t) 
 
 test("record_filed refuses a bad date, a missing, retired or filed Writing, and a general Writing, writing nothing", async (t) => {
   const dbPath = await consentOrder(t);
-  await submissionDataExecute(
+  seedSql(
     dbPath,
     `INSERT INTO filings (id, proceeding_id, kind, title, needs_forum_parts, layout_snapshot) VALUES (2, 1, 'letter_to_opposing_counsel', 'Letter', 0, '${GENERAL}');
      INSERT INTO filings (id, proceeding_id, kind, subkind, title, retired_on, retirement_reason) VALUES (3, 1, 'requisition_consent', 'consent', 'Retired', '2026-09-30', 'other');

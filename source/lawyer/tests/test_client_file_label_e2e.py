@@ -36,7 +36,7 @@ def tool_results(transcript: Path):
                     yield "".join(part.get("text", "") for part in inner if isinstance(part, dict))
 
 
-def test_the_model_sees_the_label_on_a_read_client_file(tmp_path):
+def seen(tmp_path: Path, tool: str, prompt) -> list[str]:
     root = tmp_path / "0. CASE DATA"
     matter = root / "L0001 Matter"
     matter.mkdir(parents=True)
@@ -45,10 +45,9 @@ def test_the_model_sees_the_label_on_a_read_client_file(tmp_path):
     config = tmp_path / "probanda.json"
     config.write_text(json.dumps({"case_data_root": str(root), "person": "e2e"}), encoding="utf-8")
 
-    prompt = f"Use the Read tool to read {letter} and then reply with the word done."
     result = subprocess.run(
-        ["claude", "-p", prompt, "--plugin-dir", str(PLUGIN), "--model", "haiku",
-         "--allowedTools", "Read", "--output-format", "json"],
+        ["claude", "-p", prompt(letter, root), "--plugin-dir", str(PLUGIN), "--model", "haiku",
+         "--allowedTools", tool, "--output-format", "json"],
         cwd=tmp_path, env={**os.environ, "COCLERK_CONFIG_PATH": str(config)},
         capture_output=True, text=True, encoding="utf-8", timeout=300)
     assert result.returncode == 0, result.stderr
@@ -56,5 +55,19 @@ def test_the_model_sees_the_label_on_a_read_client_file(tmp_path):
     transcripts = list((Path.home() / ".claude" / "projects").glob(f"*/{session_id}.jsonl"))
     assert len(transcripts) == 1, transcripts
     texts = [text for text in tool_results(transcripts[0]) if "The hearing is set." in text]
-    assert texts, "the Read result is not in the transcript"
+    assert texts, f"the {tool} result is not in the transcript"
+    return texts
+
+
+def test_the_model_sees_the_label_on_a_read_client_file(tmp_path):
+    texts = seen(tmp_path, "Read",
+                 lambda letter, root: f"Use the Read tool to read {letter} and then reply with the word done.")
     assert all(LABEL in text and "</client_file>" in text for text in texts), texts
+
+
+def test_the_model_sees_the_label_on_grep_matches_in_client_files(tmp_path):
+    texts = seen(tmp_path, "Grep",
+                 lambda letter, root: f"Use the Grep tool once with pattern 'hearing', output_mode content, "
+                                      f"path {root}, and then reply with the word done.")
+    assert all('<client_file source="client files: grep matches">' in text and "</client_file>" in text
+               for text in texts), texts

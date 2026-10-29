@@ -27,7 +27,7 @@ Three parts, following plugin design rules (deterministic work in a tool, judgme
 
 (a) **Deterministic MCP tool** in the lawyer data server, e.g. `documents__compare_pages` (name to be chosen). Input: two absolute PDF paths, optional page range. It:
 - checks page counts and per-page size and effective rotation;
-- renders each page of both files once, at one fixed resolution, to a working folder in the OS temp directory (never in the matter); reuse `pdf_pages__images` rendering where it fits, but note it renders scanned pages only (§9);
+- renders each page of both files once, at one fixed resolution, to a working folder in the OS temp directory (never in the matter; replaced by the caller's `destination_dir`, see 2026-10-28_ingest-orchestrator-architecture-spec.md §7.2, D6a); reuse `pdf_pages__images` rendering where it fits, but note it renders scanned pages only (§9);
 - compares per page: render hash / pixel difference, text layer, size and rotation, embedded image data (hash of each image stream);
 - writes per-page detail to the working folder;
 - returns only compact JSON, e.g. `{pages_a, pages_b, cleared:[...ranges], flagged:[{page, reasons:[...]}], work_dir}`. A page is cleared only when every check matches.

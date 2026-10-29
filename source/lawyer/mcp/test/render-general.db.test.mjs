@@ -12,7 +12,7 @@ import test from "node:test";
 import { knowledgeFile, passageHash } from "./helpers/knowledge-fixture.mjs";
 import { assertFiledFaceClean } from "./helpers/filed-face-scan.mjs";
 import { updateCaseData } from "./helpers/matter-data-fixture.mjs";
-import { partiesSnapshotSql } from "./helpers/template-db.mjs";
+import { partiesSnapshotSql, seedSql } from "./helpers/template-db.mjs";
 import {
   BCSC_TREE,
   generalWritingFixture,
@@ -1045,7 +1045,7 @@ test("a sent Writing's filed render prints a clause naming a repealed enactment,
   const g = await generalWritingFixture(t);
   const id = await release(g);
   await seedEnactmentClauses(g, id, "repealed");
-  await g.execute(`${partiesSnapshotSql(g.dbPath, id)} UPDATE filings SET filed_on = '2026-09-28' WHERE id = ${id};`);
+  seedSql(g.dbPath, `${partiesSnapshotSql(g.dbPath, id)} UPDATE filings SET filed_on = '2026-09-28' WHERE id = ${id};`);
 
   const line = "1. The Releasor accepts that the Limitation Act governs every claim. [currency: repealed] 🧐 <!-- clause_id 8 -->";
   assert.equal(clauseLine(docOf(render(g, id), "General_writing").markdown, 8), line);

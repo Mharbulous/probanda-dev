@@ -11,7 +11,7 @@ import test from "node:test";
 
 import { knowledgeFile, knowledgeFixture, passageHash } from "./helpers/knowledge-fixture.mjs";
 
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, seedSql } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { composeLayoutSnapshot, resnapshotWriting } = await import("../build/submission/writing-snapshot.js");
 
@@ -74,7 +74,7 @@ async function db(t, seed) {
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const dbPath = join(dir, "submission.sqlite");
   await freshSubmissionDb(dbPath);
-  await submissionDataExecute(dbPath, seed);
+  seedSql(dbPath, seed);
   return dbPath;
 }
 

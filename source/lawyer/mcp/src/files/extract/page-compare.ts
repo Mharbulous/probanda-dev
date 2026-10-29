@@ -4,15 +4,15 @@
 // same dpi as pdf_pages__images, with its annotations and form fields (a flattened copy carries them
 // in its page content, so drawing them is what makes the two comparable, and a field value lost in
 // flattening shows), and its raw pixels are hashed. PNGs are written only for pages that differ to
-// the eye, in a new folder in the OS temp directory, never beside either PDF.
+// the eye, in the caller's destination_dir (the folder the session uses for pdf_pages__images), in its
+// subfolder named for the two PDFs' hashes, never beside either PDF and never in the OS temp directory.
 
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { isAbsolute, join } from "node:path";
 import type { WrappedPdfiumModule } from "@embedpdf/pdfium";
 
-import { DataServerError } from "../../errors.js";
+import { DataServerError, ValidationError } from "../../errors.js";
 
 import {
   DEFAULT_WASM,
@@ -73,11 +73,14 @@ interface PageFacts {
 const sha256 = (data: Buffer | string) => createHash("sha256").update(data).digest("hex");
 
 export async function pdfPagesCompare(
-  args: { a: string; b: string; pages?: string },
+  args: { a: string; b: string; pages?: string; destination_dir: string },
   wasm: URL = DEFAULT_WASM
 ): Promise<CompareResult> {
-  return withPdf(args.a, wasm, (lib, docA) =>
-    withPdf(args.b, wasm, async (_, docB) => {
+  if (typeof args.destination_dir !== "string" || !isAbsolute(args.destination_dir)) {
+    throw new ValidationError(`destination_dir must be absolute: ${args.destination_dir}`);
+  }
+  return withPdf(args.a, wasm, (lib, docA, dataA) =>
+    withPdf(args.b, wasm, async (_, docB, dataB) => {
       const formA = openForm(lib, docA);
       let formB: FormEnv;
       try {
@@ -94,7 +97,8 @@ export async function pdfPagesCompare(
         const flagged: FlaggedPage[] = [];
         let workDir: string | null = null;
         const write = (side: "a" | "b", n: number, facts: PageFacts): string[] => {
-          workDir ??= mkdtempSync(join(tmpdir(), "probanda-compare-"));
+          // One folder per pair, so a second compare overwrites the same bytes.
+          workDir ??= join(args.destination_dir, `compare-${sha256(dataA).slice(0, 16)}-${sha256(dataB).slice(0, 16)}`);
           const dir = join(workDir, side);
           mkdirSync(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);

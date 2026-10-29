@@ -11,7 +11,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[4]
 HOOKS = {plugin: REPO / "source" / plugin / "hooks" / "one-way-gate.py"
-         for plugin in ("lawyer", "litigator", "timekeeper", "file-manager")}
+         for plugin in ("lawyer", "litigator", "timekeeper", "file-manager", "researcher")}
 TOOL = "mcp__plugin_lawyer_data__practice_data__delete_anchor"
 ARGS = {"anchor_id": 7}
 FIRST_LINE = ("By cutting and pasting this message I approve the process described above with full "
@@ -196,6 +196,17 @@ def test_a_bulk_apply_with_no_delete_passes_and_one_with_a_delete_is_gated(tmp_p
     assert s.gate(name=name, tool_input={"namespace": "timeline", "path": str(deletes)}, plugin="timekeeper")
 
 
+def test_a_troubleshooting_entry_goes_to_the_store_only_on_the_pasted_block(tmp_path):
+    s = Session(tmp_path)
+    name = "mcp__plugin_researcher_commons__troubleshoot__record"
+    entry = {"symptom": "mail tools fail", "cause": "username is not the Apple ID", "fix": "re-enter the Apple ID"}
+    s.say("That fixed it.")
+    assert s.gate(name=name, tool_input=entry, plugin="researcher")
+    s.say(BLOCK)
+    assert s.gate(name=name, tool_input={**entry, "fix": "something else"}, plugin="researcher")
+    assert s.gate(name=name, tool_input=entry, plugin="researcher") is None
+
+
 GATED = {
     "litigator": ["mcp__plugin_lawyer_data__drafting_data__record_sent", "mcp__plugin_lawyer_data__drafting_data__record_filed",
                   "mcp__plugin_lawyer_data__drafting_data__record_served"],
@@ -203,6 +214,8 @@ GATED = {
     "timekeeper": ["mcp__plugin_lawyer_data__time_pipeline__delete", "mcp__plugin_lawyer_data__time_pipeline__bulk_apply",
                    "mcp__plugin_timekeeper_timecamp__update_entry"],
     "file-manager": ["mcp__plugin_file-manager_files__file_ops__comment_pdf"],
+    "researcher": ["mcp__plugin_researcher_commons__troubleshoot__record",
+                   "mcp__remote-devices__plugin_researcher_commons__troubleshoot__record"],
 }
 UNGATED = [
     "mcp__plugin_lawyer_data__drafting_forms__publish_general", "mcp__plugin_lawyer_data__drafting_forms__assemble_general",
@@ -213,7 +226,7 @@ UNGATED = [
     "mcp__plugin_lawyer_data__knowledge__retire", "mcp__plugin_lawyer_data__knowledge__write",
     "mcp__plugin_lawyer_data__matter_data__migrate", "mcp__plugin_lawyer_data__drafting_data__merge_jobs",
     "mcp__plugin_lawyer_data__time_pipeline__set", "mcp__plugin_lawyer_data__time_pipeline__get",
-    "mcp__plugin_lawyer_data__practice_data__upsert_anchor", "mcp__plugin_researcher_commons__troubleshoot__record",
+    "mcp__plugin_lawyer_data__practice_data__upsert_anchor", "mcp__plugin_researcher_commons__troubleshoot__confirm_fix",
     "mcp__plugin_file-manager_files__file_ops__move", "mcp__plugin_lawyer_data__drafting_data__execute",
 ]
 

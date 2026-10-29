@@ -8,7 +8,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { seededDbFixture, seedBcscConsentOrder, seedBcscDefaultJudgment, assertMatchesGolden, findFile, ASHBOURNE, draftFolder, replaceStamp } from "./fixtures/forms-render-seeds.mjs";
 import { knowledgeFixture } from "./helpers/knowledge-fixture.mjs";
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, seedSql } = await import("./helpers/template-db.mjs");
 const { assertFiledFaceDocumentsClean } = await import("./helpers/filed-face-scan.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsEmitForm32, submissionFormsEmitForm33 } = await import("../build/submission/forms.js");
@@ -525,7 +525,7 @@ test("an attached fact missing from PART 2 prints NOT PLACED on the mockup, and 
     assert.throws(() => submissionFormsEmitForm33(f.dbPath, 1), refusal);
 
     // Sent: unchanged on every surface. The mockup prints the fact in full under A, and the filed face renders.
-    await submissionDataExecute(
+    seedSql(
       f.dbPath,
       `INSERT INTO parties_snapshot (filing_id, party_id, name, role, ordinal, is_client, is_applicant, to_be_served, address_for_service_filed)
          VALUES (1, 1, 'Wren Halloway', 'Plaintiff', 1, 1, 1, 0, 'unknown'), (1, 2, 'Corbin Vasey', 'Defendant', 2, 0, 0, 1, 'unknown');
