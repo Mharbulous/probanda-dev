@@ -15,7 +15,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, seedSql } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { fetchProceedingExhibitNumbers } = await import("../build/submission/forms/render-vaniac-submissions.js");
 const { checkExhibitNumbering, extractExhibitReferences } = await import("../build/submission/pre-filing/checks.js");
@@ -23,7 +23,7 @@ const { checkExhibitNumbering, extractExhibitReferences } = await import("../bui
 /** A VanIAC proceeding with a FILED Opening (three exhibits) and a DRAFT Reply that relies on the
  * Opening's second exhibit plus two new documents. Document 2 is the shared one. */
 async function seedOpeningAndReply(dbPath) {
-  await submissionDataExecute(
+  seedSql(
     dbPath,
     `
     INSERT INTO proceedings (id, matter_reference, forum, court_or_centre, file_number, style_of_cause)

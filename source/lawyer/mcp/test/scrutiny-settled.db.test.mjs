@@ -16,7 +16,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, seedSql } = await import("./helpers/template-db.mjs");
 const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
@@ -265,7 +265,7 @@ test("a reserved submission's lead keeps 🔬 while a live-deployed submission s
     const f = fixture();
     try {
       await seeded(f);
-      await submissionDataExecute(f.dbPath, c.sql);
+      seedSql(f.dbPath, c.sql);
       const mockup = submissionFormsRender(f.dbPath, 1, CLIENT);
       const { recorded, proposed } = keysOf(mockup);
       assert.equal(recorded.has("scrutinize:statements_of_law:4"), c.scrutiny, `${c.name}: recorded`);

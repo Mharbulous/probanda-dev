@@ -9,8 +9,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
-const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
+const { freshSubmissionDb, seedSql } = await import("./helpers/template-db.mjs");
+const { submissionDataQuery } = await import("../build/submission/backend.js");
 const { composeLayoutSnapshot } = await import("../build/submission/writing-snapshot.js");
 const { callTool } = await import("../build/dispatch.js");
 
@@ -31,7 +31,7 @@ async function db(t, seed) {
   process.env.APPDATA = scratch;
   const dbPath = join(scratch, "submission.sqlite");
   await freshSubmissionDb(dbPath);
-  await submissionDataExecute(dbPath, seed);
+  seedSql(dbPath, seed);
   return dbPath;
 }
 

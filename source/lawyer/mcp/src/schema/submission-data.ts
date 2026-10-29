@@ -45,7 +45,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, " +
         "a Milestone with no Writing is created through drafting_data__create_milestone, never here, a general " +
         "Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through " +
-        "drafting_data__record_filed, a drafting Writing's stored layout is " +
+        "drafting_data__record_filed, and a Writing is recorded as served through drafting_data__record_served: a script " +
+        "that leaves a filing's filed_on or sent_copy_id holding a value it did not hold is refused whole, writing " +
+        "nothing (clearing filed_on stays an update). A drafting Writing's stored layout is " +
         "re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, " +
         "a job's unchanged plan is approved through drafting_data__approve_plan, " +
         "a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, " +

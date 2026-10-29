@@ -12,7 +12,7 @@ import test from "node:test";
 import { seededDbFixture, seedVaniacProceeding, seedBcscDefaultJudgment, seedApplicationResponse, assertMatchesGolden, goldenPath, seedTickets, seedProposalCases, boardDataOf, DATA_LINE_PREFIX, boardDataLines, readBoardData, ASHBOURNE, draftFolder } from "./fixtures/forms-render-seeds.mjs";
 import { BCSC_TREE, generalWritingFixture, LETTER_BLOCK, MEMO_BLOCK, MEMO_FILE, NO_VENUE_TREE } from "./helpers/general-writing-fixture.mjs";
 import { knowledgeFile } from "./helpers/knowledge-fixture.mjs";
-const { freshSubmissionDb, partiesSnapshotSql } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, partiesSnapshotSql, seedSql } = await import("./helpers/template-db.mjs");
 const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataMigrate } = await import("../build/submission/migrate.js");
 const { hopsFrom } = await import("./helpers/schema-hops.mjs");
@@ -1412,7 +1412,7 @@ for (const c of [
       // parties_snapshot row written before it (schema v42), so on the filed case the steps'
       // [rev 412] sits below the current revision. The hearing date is recorded first, so only the gate
       // decides the card.
-      await submissionDataExecute(
+      seedSql(
         f.dbPath,
         `INSERT INTO hearing_details (filing_id, hearing_date) VALUES (1, '2026-10-15'); UPDATE db_meta SET value = '412' WHERE key = 'revision';` +
           (c.filedOn ? ` ${partiesSnapshotSql(f.dbPath, 1)} UPDATE filings SET filed_on = '${c.filedOn}' WHERE id = 1;` : "")
@@ -1843,7 +1843,7 @@ test("tickets: each eligibility condition alone defeats eligible, and the one me
     assert.equal(ticketIn(data, 2).lock_note, null, "an ordinary session's lock carries no note");
     assert.equal(ticketIn(data, 1).lock_note, null);
 
-    await submissionDataExecute(f.dbPath, `${partiesSnapshotSql(f.dbPath, 1)} UPDATE filings SET filed_on = '2026-09-24' WHERE id = 1;`);
+    seedSql(f.dbPath, `${partiesSnapshotSql(f.dbPath, 1)} UPDATE filings SET filed_on = '2026-09-24' WHERE id = 1;`);
     const filedBoard = boardWithInventory(f.dbPath, inventory);
     const filed = ticketIn(filedBoard, 1);
     assert.equal(filed.category, "ready", "filing moves no lane");
@@ -3083,7 +3083,7 @@ test("goal: a served notice of application reads Served on its service date, and
   try {
     await freshSubmissionDb(f.dbPath);
     await seedNoticeOfApplication(f.dbPath);
-    await submissionDataExecute(
+    seedSql(
       f.dbPath,
       `INSERT INTO documents (id, proceeding_id, label, document_date) VALUES (90, 1, 'Served copy — NOA', '2026-10-05');
        ${partiesSnapshotSql(f.dbPath, 1)} UPDATE filings SET filed_on = '2026-10-05', sent_copy_id = 90 WHERE id = 1;`

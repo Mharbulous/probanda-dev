@@ -19,7 +19,7 @@ import test from "node:test";
 import { updateCaseData } from "./helpers/matter-data-fixture.mjs";
 import { knowledgeFile } from "./helpers/knowledge-fixture.mjs";
 import { BCSC_TREE, generalWritingFixture, LETTER_BLOCK, MEMO_BLOCK, MEMO_FILE, NO_VENUE_TREE } from "./helpers/general-writing-fixture.mjs";
-import { partiesSnapshotSql } from "./helpers/template-db.mjs";
+import { partiesSnapshotSql, seedSql } from "./helpers/template-db.mjs";
 import { boardDataOf } from "./fixtures/forms-render-seeds.mjs";
 
 const { submissionFormsRender } = await import("../build/submission/forms.js");
@@ -374,7 +374,7 @@ test("a sent letter on a database migrated from v43 prints the same recipient li
   await g.recipient(id, 1, "to");
   await g.recipient(id, 3, "cc");
   await g.recipient(id, 2, "bcc");
-  await g.execute(`${partiesSnapshotSql(g.dbPath, id)} UPDATE filings SET filed_on = '2026-09-25' WHERE id = ${id};`);
+  seedSql(g.dbPath, `${partiesSnapshotSql(g.dbPath, id)} UPDATE filings SET filed_on = '2026-09-25' WHERE id = ${id};`);
   await g.execute(
     "INSERT INTO parties (id, proceeding_id, name, role, ordinal, case_party_id) VALUES (5, 1, 'Cy Added', 'Respondent', 3, NULL); " +
       "UPDATE recipients SET party_id = 5 WHERE id = 2;"

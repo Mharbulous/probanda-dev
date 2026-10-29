@@ -68,6 +68,19 @@ export function submissionDbAt(dbPath, version) {
   if (res.status !== 0) throw new Error(`fixture migrate to v${version} failed: ${res.stderr}`);
 }
 
+/** Runs `script` on the submission database at `dbPath` directly, not through drafting_data__execute,
+ * for a test seed that records a Writing as sent or filed, which execute refuses (record_* own that act).
+ * Triggers and foreign keys apply as they do under execute. */
+export function seedSql(dbPath, script) {
+  const res = spawnSync(
+    process.env.COCLERK_PYTHON || "python",
+    ["-c", "import sqlite3, sys; c = sqlite3.connect(sys.argv[1]); c.execute('PRAGMA foreign_keys = ON'); "
+      + "c.executescript('BEGIN;\\n' + sys.stdin.read() + '\\n;\\nCOMMIT;'); c.close()", dbPath],
+    { encoding: "utf-8", input: script }
+  );
+  if (res.status !== 0) throw new Error(`fixture seed failed: ${res.stderr}`);
+}
+
 /** SQL writing filing `filingId`'s parties_snapshot as the runtime's send writes it, from the matter-data
  * read (forms/parties-snapshot.ts), for a test that sets filed_on by a raw update, which the schema v42
  * guard refuses while the filing has no snapshot and its proceeding has a party. */
