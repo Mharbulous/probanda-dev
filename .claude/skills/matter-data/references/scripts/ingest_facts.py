@@ -141,7 +141,7 @@ WHERE NOT EXISTS (SELECT 1 FROM main.source_references x WHERE x.source_id = {c.
 ORDER BY r.key
 """
 
-# Witness statements and expert reports (ingest-extract.md L229-236): upsert by identity and type;
+# Witness statements and expert reports (ingest-extract.md lines 229-236): upsert by identity and type;
 # a repeat fills only NULL attributes and never adds a second witness.
 INSERT_WITNESS = f"""
 INSERT INTO main.witnesses (name, witness_type, report_source_id)

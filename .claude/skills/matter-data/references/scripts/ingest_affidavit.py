@@ -9,7 +9,7 @@ reused) `partial`, with its execution status and its sworn date; the deponent
 is upserted as a fact witness and assigned to the body's proceeding; the body
 facts carry their basis of knowledge and informant. An informant the extractor
 marked `informant_privileged` is written NULL, never into main
-(ingest-extract.md L268), and an ask says so; its answer (`answers.informants`,
+(ingest-extract.md line 268), and an ask says so; its answer (`answers.informants`,
 locator to privileged source id) records the informant in that source's
 `fact_provenance`. An id naming no privileged source is asked again; `0` means
 no document on file (a call, a meeting), and nothing more is written for it. A
