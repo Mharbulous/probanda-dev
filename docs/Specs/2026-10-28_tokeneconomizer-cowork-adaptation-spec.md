@@ -88,20 +88,24 @@ Facts recorded:
 
 Conclusion: TokenEconomizer runs in Cowork but cannot learn there, because nothing it writes outlasts the session. The loop guard needs learned turns before it acts, so in practice it does nothing. A hook cannot reach the PC itself: only the model's tool calls can.
 
-## Measure first
+## Spike tests first
 
-Brahm's ruling of 2026-10-28, after an independent review: nothing in the green design is built until a measurement shows the loop guard would act. The red run showed the plugin runs in Cowork, not that it saves anything, and the fork's `docs/PLUGIN.md` §5 says the loop guard has never fired on a real stuck turn.
+Brahm's ruling of 2026-10-28, after an independent review: nothing in the green design is built until a measurement shows the loop guard would act. The red run showed the plugin runs in Cowork, not that the loop guard ever acts, and the fork's `docs/PLUGIN.md` §5 says the loop guard has never fired on a real stuck turn.
 
-- From 2026-10-28 the PC runs TokenEconomizer with `shadow=true` and `toolprune=propose` (global, in `~/.tokeneconomizer/config.json`). In shadow mode every decision is computed and logged and none is acted on.
-- On or after 2026-11-11, read the would-be redirects in the state's event logs, for Claude Code and desktop sessions, and the `plugin overhead` line of `te status`. On 2026-10-28, before shadow mode, `te status` for probanda-dev showed 3 folded sessions with a plugin overhead of 389.9k of 428.7k effective tokens (47.6%), and 0 redirects.
-- Build the green design only if the guard would have redirected stuck turns often enough to repay that overhead. Otherwise the end state is: in Cowork, everything but the loop guard off, and the listing says what the plugin does there.
-- One open point for the measurement: the loop guard learns one envelope for all sessions, but a one-shot lookup and a long housekeeping run differ widely in length, so a pooled envelope may be too loose to act. The shadow log shows the spread.
+"Would act" means the loop guard can act. It is settled by a few spike tests, not by weeks of logs, and it is not a test of whether the guard pays for itself. That is measured after the build (the plan's step g). Two spike tests come before the green build is planned:
+
+- **S1. The loop guard acts (PC).** In a Claude Code session on the PC, in a repository whose envelope has learned turns, stage a stuck turn: a task that sends the model round a failing loop. S1 passes if the event log records a `nudge` or `abort` for that turn. The PC runs with `shadow=true` (global, in `~/.tokeneconomizer/config.json`), so the event is logged with `shadow: true` and nothing is shown to the model.
+- **S2. The model makes a tool call a hook asks for (Cowork).** One Cowork session with a temporary probe hook, the way R8 to R12 were run in plugin 0.1.3, that at every prompt asks the model to call `practice_data__config_status` before answering. S2 records, per prompt, whether the model made the call and the token cost of the ask and the call. It passes if the model made the call at nine prompts in ten or more.
+
+The green build is then planned from their results.
+
+One point for planning: the loop guard learns one envelope for all sessions, and a one-shot lookup and a long housekeeping run differ widely in length. On 2026-10-28 the probanda-dev envelope held 18 turns with a median of 6.5 tool calls and a 90th percentile of 27.
 
 The red tests the review asked for before any green build are R8 to R12.
 
 ## Green design
 
-From Brahm's rulings of 2026-10-28. On hold until "Measure first" says to build.
+From Brahm's rulings of 2026-10-28. On hold until the spike tests in "Spike tests first" have run and the green build is planned from them.
 
 - **One pattern.** TokenEconomizer keeps one learned pattern for all Probanda projects, not one per folder.
 - **A Probanda plugin.** TokenEconomizer becomes a Probanda plugin, governed by COMMANDMENTS.md. It stays optional and separate from `lawyer`, and has no server of its own. It moves from `vendor/` to `source/tokeneconomizer/` and is built and released like the other plugins. CLAUDE.md's "Vendored plugin" section changes with that move.

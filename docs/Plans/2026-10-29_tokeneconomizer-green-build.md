@@ -1,8 +1,9 @@
-# GATED: do not build — TokenEconomizer green stage (Cowork adaptation)
+# DRAFT: revise after the spike tests — TokenEconomizer green stage (Cowork adaptation)
 
-Plan of 2026-10-29, reviewed and corrected the same day, for the green stage of
-`docs/Specs/2026-10-28_tokeneconomizer-cowork-adaptation-spec.md` (the spec). Plan only: nothing
-here is built until the gate below opens.
+Draft plan of 2026-10-29, reviewed and corrected the same day, for the green stage of
+`docs/Specs/2026-10-28_tokeneconomizer-cowork-adaptation-spec.md` (the spec). It was written before
+the spec's spike tests S1 and S2. Once they have run, this plan is revised from their results, and
+nothing here is built before then.
 
 **The problem in one paragraph.** TokenEconomizer's loop guard watches an agent's tool calls and,
 when a turn looks stuck in a failing loop, tells the model to change course. It only dares to do
@@ -13,88 +14,20 @@ anything. The green stage would keep the envelope on Brahm's PC, in a small SQLi
 through two new tools on `lawyer`'s data server, and have the model carry it in and out of each
 Cowork session, because a hook cannot call a tool itself (red test R7).
 
-## Gate
+## Spike tests first
 
-The spec's "Measure first" ruling allows the build only if the shadow-mode logs show the loop guard
-would have redirected stuck turns often enough to repay its overhead, read on or after 2026-11-11.
+The spec's "Spike tests first" defines the two spike tests that come before this plan is revised:
+S1, whether the loop guard acts on a staged stuck turn on the PC, and S2, whether the Cowork model
+makes a tool call a hook asks for at every prompt. They need no code in either repository. Whether
+the guard saves more than it costs is measured after the build, in step g.
 
-**Result on 2026-10-29: closed.**
-
-- **Date.** Today is before 2026-11-11. Shadow mode began 2026-10-28, so there is at most one day of
-  logs.
-- **Numbers not read.** This plan was written in a cloud session that cannot reach the PC. The
-  `~/.tokeneconomizer` state on the PC, its `events.jsonl` files and `te status` were not read. The
-  only figures on record are the spec's: 3 folded sessions, 428.7k effective tokens of the sessions'
-  own work plus 389.9k of plugin overhead (47.6% of the total), and 0 redirects.
-
-**What the numbers must show on 2026-11-11.** Run these on the PC from the probanda-dev clone, read-only (`te_bootstrap.py cli`
-runs the plugin's command line with whatever follows it):
-
-```bash
-python -I vendor/tokeneconomizer/scripts/te_bootstrap.py cli --host claude --cwd . status
-```
+S1's result is read on the PC, read-only, from the probanda-dev clone. This prints the `nudge`
+events logged with `shadow: true`, the `abort` events, and for each `envelope.json` the count,
+smallest, median, 90th-percentile and largest turn length it has learned:
 
 ```bash
 python -I -c "import glob,json,os,statistics as s;R=os.path.expanduser('~/.tokeneconomizer/repos');ev=[json.loads(l) for f in glob.glob(R+'/*/claude/events.jsonl') for l in open(f,encoding='utf-8') if l.strip()];print('shadow nudges',sum(e.get('kind')=='nudge' and e.get('shadow') is True for e in ev),'aborts',sum(e.get('kind')=='abort' for e in ev));[print(os.path.basename(os.path.dirname(os.path.dirname(f))),len(t),min(t),s.median(t),sorted(t)[int(.9*(len(t)-1))],max(t)) for f in glob.glob(R+'/*/claude/envelope.json') for t in [json.load(open(f,encoding='utf-8')).get('resolved_turns') or [0]]]"
 ```
-
-The second command prints how many times the guard *would have* redirected a turn (`nudge` events
-logged with `shadow: true`), how many times it would have gone on to the "still stuck" notice
-(`abort`), and, for each `envelope.json`, the count, smallest, median, 90th-percentile and largest
-turn length it has learned.
-
-The gate opens only if all three hold:
-
-1. **Redirects.** At least one would-be nudge or abort per ten folded sessions, each on a turn that
-   was in fact stuck when its transcript is read by a person.
-2. **Payback.** For each such turn, take the effective tokens the turn spent after the point where
-   the guard would have spoken. Their sum must be at least the plugin overhead `te status` reports
-   for the same sessions. "Plugin overhead" is the plugin's own model calls (the guard's judge,
-   written redirects, the micro-skills proposer), not hook time. With overhead at 47.6%, the guard
-   has to save about as much as the sessions' own work cost.
-3. **Spread.** One envelope is learned for all sessions. It is tight enough to act on only if the
-   90th-percentile turn length is at most about 5 times the median. If it is wider, one pooled
-   pattern is too loose (the spec's open point), and splitting the envelope by kind of session
-   comes before this build.
-
-If the gate stays closed, the spec's fallback applies: in Cowork, everything but the loop guard is
-off, and the listing says what the plugin does there. Steps a to g are then not built.
-
-## Is this worth building? (sanity check, 2026-10-29)
-
-Compare the build with doing nothing.
-
-**Doing nothing, today, in Cowork.** The plugin's hooks run (about 0.08 s per tool call, R11) and
-cost no model tokens: with no envelope, the guard never wakes its judge (`controller.py`,
-`_judge` returns None when `envelope is None`), micro-skills is off by default, and tool pruning
-writes a settings file that dies with the container. Cost near zero. Benefit zero. The spec's
-fallback, "everything but the loop guard off", is in practice this same state plus the hook time.
-
-**Building.** It adds, per Cowork session, one tool call at the first prompt (the read) and one at
-every later prompt after a turn ended well (the append), each a round trip the model must make
-before its real work. It teaches the guard an envelope, which lets the judge wake: each judge call
-is a `claude -p` call that cost about 8,000 effective tokens in the one R4 probe, paid whether or
-not the judge finds the turn stuck. On the PC, that kind of spending is what made 47.6% of three
-sessions' cost, with 0 redirects to show for it. The fork's own docs say the guard has never
-redirected a real stuck turn in a live session. And a Cowork session of one prompt learns nothing:
-the read happens, the last turn is lost by design, nothing is appended.
-
-**Verdict.** On today's evidence the build has a cost that is certain and a benefit that has never
-been observed. The right course is the gate, unchanged, plus two things that shape what follows:
-
-- **Step 0, a premise test before steps a to g, if the gate opens.** Before any of the fork or
-  server work, one Cowork session with a temporary probe hook (the way R8 to R12 were run in plugin
-  0.1.3) that at every prompt asks the model to call an existing read-only tool
-  (`practice_data__config_status`) before answering, and records whether the model did, and the
-  token cost of the ask and the call per prompt. This tests the one assumption the whole design
-  stands on, that the model reliably obeys a hook's "call this tool first" at every prompt, for
-  about an hour of Brahm's time and no code in either repository. If it obeys in fewer than nine
-  prompts of ten, or the ask and call cost more per prompt than a judge call could plausibly save,
-  the design fails here and nothing else is built.
-- **A question for Brahm, not a change to the ruling.** If the gate stays closed, the fallback
-  ("everything but the loop guard off") leaves a plugin that does nothing in Cowork but spend hook
-  time. The cheaper end state is to say in the listing that the plugin is for Claude Code on the
-  PC, and not to install it in Cowork at all.
 
 ## Context
 
@@ -404,14 +337,16 @@ observable). Brahm's sessions are the only proof: none of this runs offline.
 - **Measure.** Shadow is already off in Cowork (no `config.json` there). On the PC, end shadow mode
   with `te config set shadow false --global`. Run at least ten real Cowork sessions. Compare, per
   session:
-  - effective tokens with the plugin against the 2026-10-28 baseline;
+  - effective tokens with the plugin against the 2026-10-28 baseline (`te status` for
+    probanda-dev: 3 folded sessions, 428.7k effective tokens of the sessions' own work beside
+    389.9k of plugin overhead);
   - redirects that changed the turn, read from the transcript by a person;
   - the token cost of the envelope asks, reads, appends and judge calls.
 
   Record the result in the spec, beside its open question on the measured gain.
-- **Decide.** If the guard still does not repay its cost in Cowork, apply the spec's fallback:
-  everything but the loop guard off in Cowork, and the listing says so (or, if Brahm so rules, no
-  Cowork install at all; see the sanity check).
+- **Decide.** If the guard does not repay its cost in Cowork, Brahm rules what the plugin does
+  there (for example, everything but the loop guard off, or no Cowork install), and the listing
+  says so.
 - **Refactor.** Simplify what steps b to e added, with the fork tests (by path) and the R tests as
   the net. Re-run every test file named above, and rerun one Cowork session pair.
 
@@ -427,7 +362,7 @@ observable). Brahm's sessions are the only proof: none of this runs offline.
 | Tool pruning in the Probanda copy: `propose`-only mode plus ~25 `file-ops.json` rulings and a wider `check_file_ops.py` | Replaced by `TE_TOOLPRUNE=off` and dropping the `toolprune`/`untool` slash commands | Off, the plugin never writes a user's settings file and the rulings have nothing to rule on. `check_file_ops.py` is not extended: its counts would go stale at every fork refresh, for a tree whose remaining writes are under the plugin's own state root. |
 | A shadow-mode exception so envelope notes go out in shadow | Not added | `shadow` means "nothing reaches the agent"; carving an exception breaks that meaning, and Cowork has no config file, so shadow is off there anyway. |
 | Codex, Copilot and Pi parts in the Probanda copy | Left out | Probanda ships to Claude Code and Cowork only. Fewer files, nothing to keep in step. |
-| Re-asking for the read tool at later prompts if the model ignored the first ask | Not added | One ask per session; step 0 measures whether the model complies, which is the right place to learn that. |
+| Re-asking for the read tool at later prompts if the model ignored the first ask | Not added | One ask per session; spike test S2 measures whether the model complies, which is the right place to learn that. |
 | Keeping `vendor/tokeneconomizer/` beside `source/` during a transition | Not done | Two copies of one plugin is the state the move exists to end. |
 
 ## Corrections made in review
@@ -451,9 +386,7 @@ observable). Brahm's sessions are the only proof: none of this runs offline.
   observable is `loopguard.ended_green_turns` in `te status --json` (`cli.py:137-138`). The
   restatement now names it.
 - **"Plugin overhead" means model tokens.** `ledger.OVERHEAD_KEYS` sums the judge, the redirect
-  writer and the micro-skills proposer; hook time is not in it. The gate's payback test and the
-  sanity check now say so, and the spec's "389.9k of 428.7k (47.6%)" is restated: 389.9k overhead
-  beside 428.7k of the sessions' own work.
+  writer and the micro-skills proposer; hook time is not in it. Step g's measure uses that meaning.
 - **Count of file operations.** 27 lines in 12 files (the plan said about 25 in 11 and left out
   `repos.py` with 10, `repomap.py` and `sidecall.py`). Moot now that no rulings are written.
 - **Test fixture for step d.** `time-pipeline-tools.db.test.mjs` writes a `coclerk.json` with a
@@ -470,7 +403,7 @@ observable). Brahm's sessions are the only proof: none of this runs offline.
   `hooks`; the plan's `"hooks": {...}` placeholder is now `{}` and the payload list is named as a
   separate key the build reads.
 - **Doing nothing is free in Cowork.** `_judge` returns None without an envelope, so today's
-  Cowork sessions pay no judge tokens. The sanity check rests on this.
+  Cowork sessions pay no judge tokens.
 - **Line references checked and kept:** `state.py:187`, `envelope.py:148` and `:157`,
   `controller.py:255`, `:256-258`, `:304`, `practice/backend.ts:64`, `schema/time-pipeline.ts:4`,
   `dispatch.ts:295`, `source/lawyer/plugin.json:86`, `check_publishable.py:27`,
