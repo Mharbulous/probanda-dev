@@ -36,7 +36,8 @@ For each relied-on authority of kind statute, regulation, or rule of court:
   source-on-file currency (leg 3), read from the Point in Time page and
   bulletin filed beside the consolidation. The year in a regulation number is
   its deposit year and says nothing about when it took effect. An amending
-  regulation relied on for its own text has no route yet (#1670).
+  regulation relied on for its own text is filed as made, at the exact address a
+  caller supplies, and is still never sent to the check.
 - **Practice directions are out of scope** — they are not on CanLII (the
   aj-ruleset records this for PD-50) and are governed by their own maintained
   rulesets. Skip them with no finding.
@@ -61,8 +62,9 @@ are checked in different places; no implementer may mistake one for the whole:
    the file's header and its manifest line, and files nothing without one. Beside a
    BC Laws consolidation it also files the Point in Time page the consolidation
    links and, for a B.C. Reg. citation, the current year's Cumulative B.C.
-   Regulations Bulletin. It files no amending regulation, no "Amendments Not in
-   Force" page and no order-in-council (`legal-research/references/legislation-fetcher-playbook.md`
+   Regulations Bulletin. It files an amending regulation only as made, at the exact
+   address a caller supplies, with no currency marker (section 12), and files no
+   "Amendments Not in Force" page and no order-in-council (`legal-research/references/legislation-fetcher-playbook.md`
    section 10). A stamp
    newer than the source on file leaves a quote unconfirmed until its amendment
    attribution is checked or the source is refreshed. A quoted text that is

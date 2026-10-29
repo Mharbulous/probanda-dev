@@ -6,7 +6,9 @@ description: >
   notice) from the URL given, and files it, with a manifest line, in the matter's 6. LAW
   issue folder. Dispatched by the /legal-research gate, one document per dispatch.
   Mechanics only: states no law, never uses CanLII or a search engine, and files no
-  legislation whose page hides the text or shows no "current to" date.
+  legislation whose page hides the text or shows no "current to" date, except an amending
+  instrument at the exact publisher URL the caller supplies, which it files as made with
+  no currency marker.
 model: sonnet
 tools:
   - mcp__plugin_lawyer_data__skill_source__read

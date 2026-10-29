@@ -182,11 +182,22 @@ other question runs the duties in their numbered order.
    by URL: it gets a `Secondary:` line, never a currency call. Skip an instrument whose `downloaded`
    record is already in the issue folder's `case-download-manifest.json`. The dispatch
    is `{citation?, title, kind, country, jurisdiction, locality?, destination_dir,
-   matter, allow_host?}`: `destination_dir` is the issue's existing `6. LAW\<issue>\`
+   matter, allow_host?, amending_instrument?, url?}`: `destination_dir` is the issue's existing `6. LAW\<issue>\`
    folder and `matter` the live matter's file number, such as `1234.L####`, never its style of cause or a party's name: the runtime stamps it into an overlay map every matter reads. Pass the citation wherever the question, the
    matter or a memo gives one: a title alone may come back `not_located`. One fetcher
    at a time. It may run beside `research-paralegal`, because it uses no Chrome, no
    Downloads folder and no Westlaw.
+   - **An amending instrument.** When an issue turns on what an amending instrument
+     did, such as whether an amending regulation changed a rule, and you hold the exact
+     address of that instrument's own page on its publisher's host (from the matter,
+     the practitioner or a memo), dispatch it as its own instrument with
+     `amending_instrument: true` and `url` that address, `kind` its own kind. Never
+     build or guess the address, and never set the field without one. Dispatch the
+     consolidation it amends as usual: the consolidation stays the currency source.
+     The fetcher files the page as made, `currency_marker` `none`, and returns
+     `made_on`. Leave it out of the `legislation_currency` call
+     (`shared/statute-currency.md` sends no amending regulation to it): its record's
+     `currency` is `not checked: as made`.
    - `refused` (`host_not_allowed`): ask the practitioner once whether to allow
      fetching from that host. On a yes, re-dispatch the same instrument with
      `allow_host` set to it. A no, or a second refusal, ends that instrument.
@@ -202,14 +213,18 @@ other question runs the duties in their numbered order.
 
    Then, still before the audit, call the canlii `legislation_currency` tool once,
    with the `currency_marker` (as `YYYY-MM-DD`) of each instrument filed with one,
-   and the citation, title and jurisdiction of every instrument in issue,
-   whatever the fetcher returned for it: CanLII's metadata can show a repeal where no
+   and the citation, title and jurisdiction of every instrument in issue, whatever the
+   fetcher returned for it, but an amending instrument dispatched as one: CanLII's metadata can show a repeal where no
    text was filed. It is a tool call, not an agent, so it waits for no Westlaw run.
    Then hold one legislation record per instrument,
    `{citation, title, path, sha256, currency_marker, currency, official}`. `title`,
    `path`, `sha256`, `currency_marker` and `official` come from the instrument's
    `downloaded` record in the issue folder's `case-download-manifest.json`, or from the
    matter-data copy used in its place, and are `none` for an instrument with neither.
+   An instrument the fetcher filed in parts (its return lists `parts`) has one
+   `downloaded` record per part under the same citation and `kind`, and still gets one
+   legislation record: its `path`, `sha256` and `currency_marker` each list the parts'
+   values in the return's part order, separated by `; `.
    `currency` comes from that call, and is `validation_unavailable` when it fails. A
    `blocked (no-api-key)` status gives every instrument `validation_unavailable`;
    relay its two key paths to the practitioner.
@@ -270,7 +285,7 @@ File stem: YYYY-MM-DD ML re <two to six keywords from the question>
 Pooled-layer results: <results> / not installed / NOT AUDITED: <reason>
 Preflight: all ok / <row>: <state>[; <row>: <state>]
 Westlaw: <issue>: run, memo(s): <paths>; decisions: <paths> / not run: tiers 1–3 held pinpointable text: <file> para <n>[; <file> para <n>] / not run: practitioner declined / not run: point-in-time legislation question
-Legislation: <citation>: filed <path>, current to <marker>, currency <value> / already on disk <path>, currency <value> / not retrieved: <reason>, currency <value> / on disk from case data <path>[, pp. <X–Y>], official: false, currency <value>
+Legislation: <citation>: filed <path>, current to <marker>, currency <value> / already on disk <path>, currency <value> / not retrieved: <reason>, currency <value> / filed <path>, as made, not current law, no currency marker, made on <made_on>, currency <value> / on disk from case data <path>[, pp. <X–Y>], official: false, currency <value>
 Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not retrieved: <reason> / none
 6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted or staged>
 Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
@@ -306,7 +321,7 @@ caller writes `Job question: none`.
 `Re-invocation` is `no` on the first spawn and `yes` only on the one re-invocation below.
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
-is in issue.
+is in issue. For an instrument filed in parts, `<path>` lists every part's path, separated by `; `.
 Write one `Secondary:` line per document, and `Secondary: none` when there is none.
 Write one `Note-up:` line per decision `citation-checker` was dispatched for, and
 `Note-up: none` when none was.
