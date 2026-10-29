@@ -1,4 +1,4 @@
-Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h), or the practitioner names a relayed `/legal-research` Step 5 offer to add (§3i), or answers "No" to `/legal-research`'s closing plan question (§3l), or `/legal-research`'s board mode writes blockers, a premise job, a rewording or a closing (§3m).
+Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs, a document setting out an opposing party's arguments is named or its review job reaches Step 4, or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h), or the practitioner names a relayed `/legal-research` Step 5 offer to add (§3i), or answers "No" to `/legal-research`'s closing plan question (§3l), or `/legal-research`'s board mode writes blockers, a premise job, a rewording or a closing (§3m).
 Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 3b. Stock bundle jobs (`/prepare` outlining, and `/draft`'s letter, memo and Unstructured Writing save)
@@ -9,6 +9,7 @@ Fixed-text jobs `/prepare` may offer per Writing kind (the 2026-09-21 design §6
 |---|---|
 | Notice of Application | `Availability letter` (opening stage), `Serve the application` (after the gate job completes), `Set down for hearing` and optionally `Reply affidavits` (once each response is in or its time has run), `Application book` (after set-down), `Reset for hearing` (once adjourned generally). `File and serve` (after the gate job completes) only for a notice filed under the rule before B.C. Reg. 105/2026 |
 | Application Response | `Serve the response` (after the gate job completes), `File the served response` (once the notice of hearing is filed or served). `File and serve` (after the gate job completes) only for a response filed under the rule before B.C. Reg. 105/2026 |
+| Either | `Review the opposing arguments`, one per document setting out an opposing party's arguments, at any stage. Its step 4 writes `Answer opposing point` jobs |
 | A letter kind (any `_NoVenue` letter kind, or a venue's `letter` kind) | `Deliver` alone, at the letter's save (ADR 0024 D10; a letter saved before 2026-10-23 also holds `Draft the letter`) |
 | `internal-memo` | `Deliver` alone, at the memo's save, with the memo's own intent and steps below (#1161: a memo is sent like a letter; a memo saved before 2026-10-23 also holds `Draft the letter`) |
 | `unstructured` (a venue's stock type for a document type with no type file of its own), or `unstructured-<recipient>` (a `_NoVenue` recipient's) other than `unstructured-internal` | `Draft the Writing` and `Deliver`, both at the Writing's save |
@@ -96,6 +97,25 @@ On a contempt application, Step 1 instead reads `Serve the unfiled notice and it
 - Step 3: `Serve the filed notice of hearing on each application respondent`
 - Step 4: `Affidavit of service, or n/a`
 - Scope: `('hearing_details', NULL)` and `('documents', NULL)`
+
+**`Review the opposing arguments in <documents.label> (document <documents.id>)`.** One per document setting out an opposing party's arguments (an application response, an application served on us, a reply, written argument), the document's `label` copied character for character. A reader matches the job by the prefix `Review the opposing arguments in `. No rebuttal is worked under it unless the document makes exactly one argument. Ranking states no law: it follows what the document cites and argues, and the practitioner may reorder.
+
+- Intent: `Record every argument this document makes for the opposing party, ranked, with the authorities it cites, and create one job to answer each.`
+- Step 1: `Record each argument the document makes, in rank order: those citing legal authority first, then strongest to weakest by what the document cites and argues`
+- Step 2: `Record each authority the document cites`
+- Step 3: `Show the practitioner the ranked list and record any reorder they give`
+- Step 4: `Create one Answer opposing point job per argument in rank order, then stop; where the document makes one argument only, answer it under this job instead`
+- Scope: `('documents', <its id>)`, `('opposing_points', NULL)` and `('opposing_authorities', NULL)`. Step 1 writes `opposing_points` rows (`filing-checklists.md` §1, "`opposing_points`"), Step 2 `opposing_authorities` rows with this `document_id`.
+
+**`Answer opposing point <opposing_points.id>: <component> <pinpoint>`.** Written by the review job's Step 4, one per `opposing_points` row, in rank order, `billing_anchor` the review job's, `priority` `bottom` on the first and the returned `priority` on the rest. A reader matches it by the prefix `Answer opposing point `.
+
+- Intent: `Decide and record our answer to this opposing point.`
+- Step 1: `Read the point at its pinpoint and each authority cited for it`
+- Step 2: `Check the record for what the point relies on`
+- Step 3: `Record the practitioner's answer, or their decision to hold or decline the point`
+- Scope: `('opposing_points', <its id>)`, one `('opposing_authorities', <id>)` per authority the document cites for this argument, and `('submissions', NULL)`. The scope rows are the argument's link to its authorities.
+
+Both take `guard: "title_and_step_any_status"` in place of `"none"`, so a document or a point never gets a second job.
 
 **`Draft the letter`.** One step. No longer written: since 2026-10-23 a letter's or a memo's save writes `Deliver` alone. A letter or memo saved before then still holds it, `filing_id` the Writing's own id, worked and completed as an ordinary job, and it keeps its place in every exclusion keyed by title.
 

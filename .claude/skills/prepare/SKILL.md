@@ -64,13 +64,13 @@ Post-gate work cannot sit on the board from the start. A waits-on link to a gate
 
 | Stage | Triggered when | Notice of Application | Application Response |
 |---|---|---|---|
-| 1. Opening | The bundle is being opened: no lead Writing yet, or the practitioner opens the bundle on an existing one | Forum when unset, the Writing, its drafting jobs, `Availability letter` | Forum when unset, the Writing, its drafting jobs |
+| 1. Opening | The bundle is being opened: no lead Writing yet, or the practitioner opens the bundle on an existing one | Forum when unset, the Writing, its drafting jobs, `Availability letter` | Forum when unset, the Writing, its drafting jobs, `Review the opposing arguments` for the served notice |
 | 2. After the gate | The lead Writing's Milestone shows its pre-filing consistency gate job completed (`drafting_forms__board_card` with `lanes: ["completed"]`) | `Serve the application` | `Serve the response` |
-| 3. Responses in | The practitioner says each response is in, or its time has run. Never inferred | `Set down for hearing`, and `Reply affidavits` if the practitioner wants it | `File the served response`, once the practitioner says the notice of hearing was filed or served |
+| 3. Responses in | The practitioner says each response is in, or its time has run. Never inferred | `Review the opposing arguments` for each response, `Set down for hearing`, and `Reply affidavits` if the practitioner wants it | `File the served response`, once the practitioner says the notice of hearing was filed or served |
 | 4. After set-down | The lead Writing's Milestone shows `Set down for hearing` completed | `Application book` | None. The record is applicant-only |
 | 5. Adjourned generally | The practitioner says the application was adjourned generally. Never inferred | `Reset for hearing` | None |
 
-A notice of application adjourned generally stays live and is never retired. An application without notice takes no service job. `File and serve` is offered at stage 2 in place of the service job only where the practitioner says the Writing was filed under Rule 8-1 as it stood before B.C. Reg. 105/2026.
+`Review the opposing arguments` is offered at any stage for any other document the practitioner names as setting out an opposing party's arguments, once per document. A notice of application adjourned generally stays live and is never retired. An application without notice takes no service job. `File and serve` is offered at stage 2 in place of the service job only where the practitioner says the Writing was filed under Rule 8-1 as it stood before B.C. Reg. 105/2026.
 
 Read the stage off `drafting_forms__board_card`, with `lanes: ["live"]` for the live lanes and `lanes: ["completed"]` for completed jobs, and the practitioner's own words, never off a date. A stage whose stock job the lead Writing's board already shows, in any state but superseded, does not offer it again.
 
@@ -87,12 +87,7 @@ Run `/draft`'s outlining branch (`.claude/skills/work/references/job-session.md`
 
 ## 6. Stock bundle jobs
 
-Fixed-text jobs, offered per Writing kind and per stage:
-
-| Writing kind | Stock jobs |
-|---|---|
-| Notice of Application | `Availability letter` (stage 1), `Serve the application` (stage 2), `Set down for hearing` and `Reply affidavits` (stage 3), `Application book` (stage 4), `Reset for hearing` (stage 5). `File and serve` (stage 2) only for a notice filed under the rule before B.C. Reg. 105/2026 |
-| Application Response | `Serve the response` (stage 2), `File the served response` (stage 3). `File and serve` (stage 2) only for a response filed under the rule before B.C. Reg. 105/2026 |
+Fixed-text jobs, offered per Writing kind and per stage (section 4 and `/drafting-data` §3b's table).
 
 - **Their text is `/drafting-data` §3b's**, the whole record of each job's title, intent and steps. Take it from there at the moment of writing, character for character. Never reword, shorten or restate it, and never compose steps of your own for one. A practitioner who wants different words is outlining an ordinary job in their own words, which is not a stock job.
 - **Offered at the closing read-back** as cards beside the practitioner's own jobs, each carrying its fixed title. The practitioner picks or declines each. The pick is the approval, as on the fast path. A declined stock job is not written. No card starts picked.

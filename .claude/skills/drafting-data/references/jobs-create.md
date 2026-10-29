@@ -15,6 +15,7 @@ Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 | §3l research plan issue jobs | The practitioner answers "No" to `/legal-research`'s closing plan question | Practitioner's request | Each approved issue's text as the list showed it |
 | §3m research board premise job | The practitioner says yes to a premise or threshold question the research triage proposes | Practitioner's request | The proposed question as the triage return gives it |
 | §3b stock jobs | `/prepare` offers them, or a letter, memo or Unstructured Writing is saved | Practitioner's pattern: the document type | Fixed text |
+| §3b opposing-argument jobs | A document setting out an opposing party's arguments is named, or its review job reaches Step 4 | Practitioner's pattern: the document type | Fixed text and title prefix |
 | §3c counsel's review pair | The completion criteria above counsel's review hold | Practitioner's pattern: the completion criteria | Fixed text and title prefix |
 | §3d scrutiny review job | A scrutiny return is recorded `'failed'` | Practitioner's pattern: the scrutiny rule | Fixed text and title prefix |
 | §3g pass finding job | A pre-review pass leaves a finding undecided | Practitioner's pattern: the pre-review passes | Fixed text |

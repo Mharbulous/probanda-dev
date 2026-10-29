@@ -57,7 +57,7 @@ An In Progress job, including one with every step resolved, is never chosen and 
 **Unattended run.** Before an unattended run starts, read `draft/references/unattended-run.md`, which holds how one is started, its five steps, what it never does, and its report.
 
 <!-- atom id=work.dispatch.branches ops=new_work -->
-Branch procedures (assigning, announce and proceed, worklist execution, outlining interview, closing read-back, opposing points): `references/job-session.md`.
+Branch procedures (assigning, announce and proceed, worklist execution, outlining interview, closing read-back): `references/job-session.md`. Opposing points: `draft/references/job-session.md`.
 
 <!-- atom id=work.dispatch.shelve ops=shelve,release,restore,suppress -->
 **Shelve, restore, release and suppress.** The rules map serves these rules, not `draft/references/shelve-and-restore.md`. Shelving or releasing the session's own job is applied where the session stands, because `draft/job`'s rules are on its path. If the confirm read shows the job was taken over, `rules__move` to `draft/housekeeping` for its decision form. Before applying any other shelve, restore, release, suppression or unsuppression, or a move of jobs to another board (`/drafting-data` `jobs-closeout.md` §10c), `rules__move` to `draft/housekeeping`, whose rules hold what can be shelved, suppressed or moved, where, matching, confirmation, and the re-render after applying. Once it is applied, move back with `up`.
