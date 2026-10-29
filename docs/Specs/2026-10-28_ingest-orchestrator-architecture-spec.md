@@ -95,7 +95,7 @@ Paths below are relative to `.claude/skills/matter-data/` unless they start with
 - **Loaded text budget:** `SKILL.md` plus the routing reference (§1.1) is ≤ 80,000 characters (est.), about 20k tokens. A unit test in the skill's `tests/` enforces this.
 - **Output caps** that keep tool results small:
   - `ingest_result`: ≤ 600 bytes per document (est.), §2.1.
-  - `ingest_run next` and `triage`: ≤ 200 bytes per file or dispatch line (est.), paginated at 50 lines (est.).
+  - `ingest_run next` and `triage`: ≤ 200 bytes per file or dispatch line (est.), paginated at 50 lines (est.). A dispatch line's §6.5 `stage` list (about 120 bytes per path) and a write line's `result_ids` (about 40 bytes each) are outside that cap.
   - Each tool's schema in `source/lawyer/mcp/src/schema/case-data.ts` states its cap, and a test pins it.
 
 ### 1.6 After-completion passes
@@ -656,7 +656,7 @@ Each stage is a separate release by the CLAUDE.md version rule. **Minor** marks 
 | D10 | Housekeeping writes triage (§3.5), by the housekeeping triage spec | Needs D4 | C7 (housekeeping half) | patch (file-manager) |
 | D11 | OCR, only if Q1 is answered yes | Needs D4 | text-less scans at tier S | minor if it raises bundle requirements |
 
-- **D2 as built (2026-10-28):** the three extractors take both forms, prompt-borne inputs for today's single-document path and `DISPATCH <id>` for the orchestrator. v1 sets authorities, compound books, emails with attachments and already-held files aside for `/ingest`'s single-document path. Only party fields (positions, relief, filing party, a client instruction's party) are resolved to party ids; a deponent and an informant stay text. An informant flagged `privilege_signal` is written NULL and asked about.
+- **D2 as built (2026-10-28):** the three extractors take both forms, prompt-borne inputs for today's single-document path and `DISPATCH <id>` for the orchestrator. v1 sets authorities, compound books, emails with attachments, transcripts (their contradiction check is not built) and already-held files aside for `/ingest`'s single-document path. Only party fields (positions, relief, filing party, a client instruction's party) are resolved to party ids; a deponent and an informant stay text. An informant the extractor marks `informant_privileged` is written NULL and asked about, and the answer records it in that privileged source's provenance.
 - **Main estimated savings:** D1–D3 carry most of it, because C1 is most of the $22.49. D4–D7 carry most of the time saving.
 - **Ordering:** the value order is write path and context, then script boundaries, then tiering, then batching, then triage. The script half of triage moves up to D4, because the script boundaries are computed by it. Only housekeeping's write (D10) stays near the end.
 

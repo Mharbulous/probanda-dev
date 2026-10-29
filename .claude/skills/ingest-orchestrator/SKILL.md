@@ -17,7 +17,7 @@ Every tool named below is lawyer's data server tool `matter_data__<name>`, under
 
 - `matter_root`: the live host path of the matter folder (`/matter-data`'s `shared/conventions.md` §2.2).
 - `files`: the paths to ingest, or a folder whose files are to be ingested, as `/ingest` handed them.
-- `mode`: `attended`, or `unattended` when `/matter-data`'s `operations/ingest-unattended.md` hands over its files, a `run_id` and its routes. Unattended, skip Steps 1 and 2 (that operation has done them) and ask nothing: each ask takes that operation's Substitutions.
+- `mode`: `attended`, or `unattended` when `/matter-data`'s `operations/ingest-unattended.md` hands over its files, a `run_id` and its routes. Unattended, skip Step 1 and Step 2's gate (that operation has done them), make Step 2's one `next` call with the routes it hands over, and ask nothing: each ask takes that operation's Substitutions (Step 6).
 
 ## Step 1. Open the run
 
@@ -25,7 +25,7 @@ Call `ingest_run` with `action: "begin"` and `mode: "attended"`. A refusal (`ok:
 
 ## Step 2. Route each file
 
-Follow `references/routing.md` "The interim gate" for every file, in the order given. It ends with each file either set aside (with its reason for the final report), sent to Path B, or given a route. Then call `ingest_run` `next` with the routes, in one call. Its `routed` list gives each route's ref (`f1`, `f2`, ... in route order). Keep one short line per file: its ref, stored path and hash. That table is the only per-file state this session keeps.
+Follow `references/routing.md` "The interim gate" for every file, in the order given. It ends with each file either set aside (with its reason for the final report), sent to Path B, or given a route. Then call `ingest_run` `next` with the routes, in one call. Its `routed` list gives each route's ref (`f1`, `f2`, ... in route order; a file routed again keeps its first ref). Every later call names a routed file by its ref, so this session keeps no per-file state beyond the files set aside and why.
 
 ## Step 3. Dispatch
 
@@ -37,17 +37,17 @@ In a bridged session (the data tools are listed under `mcp__remote-devices__`), 
 
 An agent's reply is one line. Take it exactly as given:
 
-- `ok <ref> <result_id> <bytes>` for a line whose `contract` is not null: call `ingest_result` with `run_id`, `document` (the file's stored path and hash from your table, `store: "main"`), the line's `contract`, and `result_ids` (that `result_id`). Calls run one at a time.
+- `ok <ref> <result_id> <bytes>` for a line whose `contract` is not null: call `ingest_result` with `run_id`, `document` `{ref: <the file's ref, the line's ref up to its first colon>, store: "main"}`, the dispatch line's `contract`, and `result_ids` (that `result_id`). Calls run one at a time. When the dispatch line is no longer at hand, pass the reply to `status` as below instead: `next` then lists it under `write`.
 - `ok ...` for a line whose `contract` is null (a boundary scan), or `failed <ref> <reason>`: call `ingest_run` `status` with `run_id` and `ack` set to the line. Never interpret the reason.
 - No reply, more than one line, or anything else: pass `failed <ref> no_ack` to `status` the same way, `ref` from the dispatch line.
 
-Then call `next` again. It lists new dispatches for the freed slots, `write` entries (acknowledged results still to write: call `ingest_result` with each entry's `contract` and `result_ids`), and `close` entries (a document whose extraction failed twice: call `ingest_result` with its `contract` and `result_ids: []`, which records its honest status). Between replies, wait. The run is done when `next` lists nothing and nothing is running.
+Then call `next` again. It lists new dispatches for the freed slots, `write` entries (acknowledged results still to write: call `ingest_result` with `document` `{ref: <the entry's ref up to its first colon>, store: "main"}` and the entry's `contract` and `result_ids`), and `close` entries (an item whose extraction failed twice: the same call with its `contract` and `result_ids: []`, which records its honest status). Between replies, wait. The run is done when `next` lists nothing and nothing is running.
 
 ### What `ingest_result` returns
 
 - `report`: relay each line to the practitioner, as written. Relay nothing else from any tool.
-- `ask`: keep each item for Step 6. When the answer comes, call `ingest_result` again for that document with the same `contract` and `result_ids` and `answers` (`participants` maps the asked name to the party the practitioner chose; `category`; `proceeding_id`). An item about privilege or a privileged informant is answered through `/matter-data`'s `operations/resolve-privilege.md` after the run.
-- `outcome` `refused`: with `waiting`, do nothing; `next` lists it again when it can be written. Any other refusal is handled by `next` (a re-dispatch or a close). Never show the code.
+- `ask`: keep each item for Step 6. When the answer comes, call `ingest_result` again for that document with the same `contract` and `result_ids` and `answers`: `participants` maps the asked name to the party the practitioner chose (`0` for a filing party that is none of them); `category`; `proceeding_id`; for a `privileged_informant` item, `informants` maps its `ref` (a locator) to the privileged document the practitioner names, its id found with `matter_data__query` on `privileged.privileged_sources` by title. An exhibit's `privilege` item is answered through `/matter-data`'s `operations/resolve-privilege.md` after the run: the exhibit is already held back as pending. `dropped` means more items wait: call again once these are answered.
+- `outcome` `refused`: with `waiting`, do nothing; `next` lists it again when it can be written. With `path_b`, the document may be privileged: take it through Step 5 with its `privilege` ask as its question. With `set_aside`, add the file to the set-aside list for `/ingest` (an authority). Any other refusal is handled by `next` (a re-dispatch, a close, or nothing more, with its report line). Never show the code.
 - `post`: Step 7's passes for the document.
 
 ## Step 5. Path B, last
@@ -56,7 +56,7 @@ After every other write of the run, read each internal document inline as `refer
 
 ## Step 6. Questions
 
-Collect every `ask` item and Path B's privilege questions, and ask them together when no extractor slot is free and nothing waits to be written, or at the end of the run: one plain-text question per item, through `/show-me` when it is about a specific document. Never guess an answer. Unattended, ask nothing: a privilege question takes Yes, and any other ask stops that document with its question for the caller (`ingest-unattended.md` Substitutions 1b and 1k).
+Collect every `ask` item and Path B's privilege questions, and ask them together when no extractor slot is free and nothing waits to be written, or at the end of the run: one plain-text question per item, through `/show-me` when it is about a specific document. Never guess an answer. Unattended, ask nothing: a Path B document's privilege question takes Yes (`ingest-unattended.md` Substitution 1b); an exhibit held back pending and a privileged informant left out of the record stay as they are, and each goes in the file's `notes` for the attended run that settles it; any other ask stops that document with its question for the caller (Substitution 1k).
 
 ## Step 7. After-completion passes
 
@@ -64,11 +64,11 @@ Run each `post` entry for its source (`ref` is the source's id; for `other_copy`
 
 1. `linkage`: `operations/proceedings-profile.md` §6.
 2. `order_effects`: `operations/order-effects.md`, after linkage.
-3. `other_copy`: `operations/supersede-draft.md` with `mode` `attended` and `pair` the two ids.
+3. `other_copy`: `operations/supersede-draft.md` with `mode` `attended` and `pair` the two ids. A document that ends superseded takes no delivery check and no name check: its file has moved.
 4. `delivery_check`: dispatch `lawyer:delivery-checker` for the letter as `references/routing.md` "Delivery check" says, and relay its report lines.
-5. `name_check`: collect; at the end of the run run `/file-naming`'s test and proposal modes on each file's name and make the rename offers as one list through `/show-me`. A rename goes through `/file-apply`; without it, rename nothing and say so.
+5. `name_check`: collect. At the end of the run, for each file run `/file-naming`'s test mode on its name (`operations/ingest-extract.md` "Name check" step 1). For a name that does not conform, read the written row's `date`, `title`, `description` and `category`, and its filing party's name, with one `matter_data__query` by its `source_id`, and build the proposal from them by proposal mode (step 2); a date or code that cannot be pinned down leaves the name alone. Make the offers as one list through `/show-me`. A rename goes through `/file-apply`; without it, rename nothing and say so.
 
-The tools already wrote the procedural history entries and, unattended, the pending markers.
+Unattended, Step 7 runs no pass: the tools wrote the pending markers, the delivery check is skipped and reported as not checked, and the name check runs steps 1 and 2 only, its result going in the file's `notes`, renaming nothing (Substitution 1a). The tools already wrote the procedural history entries.
 
 ## Step 8. End
 

@@ -1,6 +1,6 @@
 ---
 name: extract-affidavit
-description: Extracts a compound affidavit in three selectable passes — sworn body, exhibit boundary scan, and per-exhibit content — returning only the dispatched pass's strict JSON. Writes nothing but its staged result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH <id>, one instance per pass and one per exhibit on Pass 3.
+description: Extracts a compound affidavit in three selectable passes — sworn body, exhibit boundary scan, and per-exhibit content — returning only the dispatched pass's strict JSON. Read-only, except that a dispatch by id stages its result through stage_result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH <id>, one instance per pass and one per exhibit on Pass 3.
 model: opus
 effort: high
 tools:
@@ -72,9 +72,13 @@ Behavior:
 - Extract the body's factual assertions. For each, record
   `basis_of_knowledge` as `personal` or `information_and_belief`. When it is
   `information_and_belief`, record the `informant` (the person from whom the
-  belief derives). If the informant is a privileged source, still record the name
-  here as read — the main agent handles NULLing it in main and recording it in
-  the privileged provenance.
+  belief derives), and set `informant_privileged`: `true` when the informant is
+  the deponent's lawyer or someone at that lawyer's firm, or the information came
+  from a lawyer-client communication ("I am informed by my lawyer, X"), and
+  `false` otherwise. Record the name as read either way; the writer keeps a
+  privileged informant out of the case record.
+- Record `sworn_date`, the date the jurat gives, as `YYYY-MM-DD`, or `null` when
+  the jurat is undated or unreadable.
 - Inventory every exhibit the body references: its letter, the sworn
   description, and the locator where the body refers to it. Include
   `page_start` / `page_end` only if the body states them.
@@ -95,9 +99,11 @@ Output (Pass 1):
       "category": "background | contract | payment | breach | employment | damages | procedure | liability | credibility",
       "date_of_fact": "YYYY-MM-DD or null",
       "basis_of_knowledge": "personal | information_and_belief",
-      "informant": "string or null — required when information_and_belief"
+      "informant": "string or null — required when information_and_belief",
+      "informant_privileged": false
     }
   ],
+  "sworn_date": "YYYY-MM-DD or null",
   "exhibit_inventory": [
     {
       "letter": "string — e.g. A",
@@ -260,7 +266,7 @@ the prompt, and you reply with one line instead of the JSON object.
 
 - `ocr_uncertain`: a scanned page you could not read with confidence (`page`).
 - `privilege_signal`: the document or a part of it appears to be a communication
-  between a lawyer and their client, or a lawyer's own working note. `ref` is the
+  between a lawyer and their client, or a lawyer's own working note. `detail` is the
   locator it concerns.
 - `date_setting`: the document comes from a court registry, a judge, a tribunal, an
   arbitrator or a case manager, as its sender or signature block shows, and fixes a
@@ -268,6 +274,6 @@ the prompt, and you reply with one line instead of the JSON object.
   `detail` is the event and the date as written.
 - `other_copy`: the document says on its face that it is another copy or version of
   a document it names. `detail` is that document's title as written.
-- `outgoing_letter`: a letter or email whose letterhead or signature block shows a
-  lawyer or law firm writing to someone outside that firm. `detail` is the firm's
-  name as written.
+- `outgoing_letter`: a letter whose letterhead or signature block shows a lawyer or
+  law firm writing to someone outside that firm. `detail` is the firm's name as
+  written. The writer keeps only a letter from the practitioner's own firm.

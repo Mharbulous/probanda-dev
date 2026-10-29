@@ -22,6 +22,7 @@ Take the files one at a time, in the order given, through these checks. "Set asi
 7. **Compound book** (`.pdf` only). Run `references/scripts/extract_outline.py <path>` and apply `shared/bookmark-segmentation.md`. A file it engages (Path E or the book-of-authorities cascade): set aside for `/ingest`. A script error, no outline, a single entry or fewer than two top-level classes: go on.
 8. **Page 1.** For a PDF, call `pdf_pages__images` with `pages: "1"`. A page it returns `scanned` is read only from its PNG, never from the PDF or its text layer (#71); a `born_digital` page is read with `Read` `pages: "1"`. A `.docx` is read from the first 40 `¶` paragraphs of its rendering, an email from the head of its rendering. A refusal from the tool: set aside, with its reason. When page 1 is a backing or caption sheet, read page 2 the same way for the checks below.
 9. **Internal document.** A client email, a lawyer's note or an internal memo: Path B, with its question.
+9a. **Transcript.** Page 1 numbers its lines as questions and answers, or reads "examination for discovery": set aside for `/ingest`. Its Path A step 7 compares each answer with the parties' pleaded positions, and v1's tools do not run that comparison yet, so v1 does not ingest a transcript.
 10. **Affidavit.** A `.pdf` or `.docx` whose file name contains `AFF`, `AFFIDAVIT` or `SWORN`, or whose page 1 holds a jurat: a deponent oath line (`I, <name>, AFFIRM`, `SWEAR` or `MAKE OATH`) or a commissioning line (`sworn before me`, `affirmed before me`) with a commissioner or notary block. Never an email. Route `kind: "affidavit"`.
 11. **Notice of Application.** A `.pdf` or `.docx` showing both: a title line reading exactly `NOTICE OF APPLICATION`, and a heading matching `PART\s*1\s*[:.]?\s*ORDER\(?S?\)?\s*SOUGHT`. The file name only prompts a closer look. Route `kind: "notice_of_application"`.
 12. **Anything else:** route `kind: "facts"`.
@@ -55,12 +56,13 @@ Read the document inline, as a whole, from its pages or rendering (#71 applies).
  "document": {"title", "description", "category", "author", "recipient", "date"},
  "facts": [{"source_locator", "description", "category", "date_of_fact", "notes"}],
  "client_instructions": [{"party_name", "instructed_by", "date", "description",
-                          "source_locator", "status", "proceeding_file_number"}]}
+                          "source_locator", "status", "proceeding_file_number",
+                          "supersedes_instruction_id"?}]}
 ```
 
 - `category` (Yes only): `solicitor_client`, `privileged_correspondence`, `privileged_work_product` or `other`.
 - Each fact is one atomic statement in the document's own words, copied, never drafted or summarised: on a Yes it is privileged wording, and the tool keeps it only on the privileged side.
-- `client_instructions` only for a client-instruction memo (Yes): each discrete instruction, its exact words, with an honest `status` (`open`, `actioned` or `superseded`).
+- `client_instructions` only for a client-instruction memo (Yes): each discrete instruction, its exact words, with an honest `status` (`open`, `actioned` or `superseded`). An instruction that changes a current one carries `supersedes_instruction_id`, that instruction's id from `matter_data__query` on `privileged.client_instructions` (current rows have no `valid_to`): the tool closes it and links the new one to it.
 - Nothing about the privilege call goes into any field, the report or a note.
 
 ## Delivery check
@@ -79,4 +81,6 @@ The tools decide every response below; this session only passes lines and relays
 | R7 | `plugin_changed` | End the run, relay the message, stop. A later `begin` with `resume` continues it. |
 | R8 | `lease_lost` | Stop at once, writing nothing more. |
 | R9 | This session compacts or ends | `status`, then `begin` with `resume`: the journal holds the run. |
-| R10 | A staged result expired (over 7 days) | `next` dispatches the item again. |
+| R10 | A staged result expired (over 7 days), or R7 left it under an old contract version | `next` dispatches the item again. |
+
+**Not built in v1, and what stands in for it.** The transcript contradiction check (Path A step 7): transcripts are set aside (check 9a). The name check's proposal comes from the written row read back by `source_id` (SKILL Step 7), never from the extractor's result.

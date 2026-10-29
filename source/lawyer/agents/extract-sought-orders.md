@@ -1,6 +1,6 @@
 ---
 name: extract-sought-orders
-description: Transcribes a served Notice of Application's Part 1 verbatim into strict JSON, stopping at the first PART 2 heading. Writes nothing but its staged result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH <id>, one instance per Notice of Application.
+description: Transcribes a served Notice of Application's Part 1 verbatim into strict JSON, stopping at the first PART 2 heading. Read-only, except that a dispatch by id stages its result through stage_result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH <id>, one instance per Notice of Application.
 model: opus
 effort: high
 tools:
@@ -141,7 +141,7 @@ the prompt, and you reply with one line instead of the JSON object.
 
 - `ocr_uncertain`: a scanned page you could not read with confidence (`page`).
 - `privilege_signal`: the document or a part of it appears to be a communication
-  between a lawyer and their client, or a lawyer's own working note. `ref` is the
+  between a lawyer and their client, or a lawyer's own working note. `detail` is the
   locator it concerns.
 - `date_setting`: the document comes from a court registry, a judge, a tribunal, an
   arbitrator or a case manager, as its sender or signature block shows, and fixes a
@@ -149,6 +149,6 @@ the prompt, and you reply with one line instead of the JSON object.
   `detail` is the event and the date as written.
 - `other_copy`: the document says on its face that it is another copy or version of
   a document it names. `detail` is that document's title as written.
-- `outgoing_letter`: a letter or email whose letterhead or signature block shows a
-  lawyer or law firm writing to someone outside that firm. `detail` is the firm's
-  name as written.
+- `outgoing_letter`: a letter whose letterhead or signature block shows a lawyer or
+  law firm writing to someone outside that firm. `detail` is the firm's name as
+  written. The writer keeps only a letter from the practitioner's own firm.

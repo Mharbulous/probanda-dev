@@ -126,7 +126,7 @@ the prompt, and you reply with one line instead of the JSON object.
 
 - `ocr_uncertain`: a scanned page you could not read with confidence (`page`).
 - `privilege_signal`: the document or a part of it appears to be a communication
-  between a lawyer and their client, or a lawyer's own working note. `ref` is the
+  between a lawyer and their client, or a lawyer's own working note. `detail` is the
   locator it concerns.
 - `date_setting`: the document comes from a court registry, a judge, a tribunal, an
   arbitrator or a case manager, as its sender or signature block shows, and fixes a
@@ -134,6 +134,6 @@ the prompt, and you reply with one line instead of the JSON object.
   `detail` is the event and the date as written.
 - `other_copy`: the document says on its face that it is another copy or version of
   a document it names. `detail` is that document's title as written.
-- `outgoing_letter`: a letter or email whose letterhead or signature block shows a
-  lawyer or law firm writing to someone outside that firm. `detail` is the firm's
-  name as written.
+- `outgoing_letter`: a letter whose letterhead or signature block shows a lawyer or
+  law firm writing to someone outside that firm. `detail` is the firm's name as
+  written. The writer keeps only a letter from the practitioner's own firm.
