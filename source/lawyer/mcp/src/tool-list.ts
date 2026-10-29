@@ -90,7 +90,7 @@ export async function toolReply(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const payload = err instanceof DataServerError
-      ? { error: { code: err.code, message } }
+      ? { error: { code: err.code, message, ...(err.details ? { details: err.details } : {}) } }
       : { error: { code: "data_error", message } };
     return { content: [{ type: "text", text: jsonText(name, payload) }], isError: true };
   }

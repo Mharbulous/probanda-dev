@@ -1,4 +1,4 @@
-// build-stamp: d7f912b7c1b2
+// build-stamp: 170e7184b1e6
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -74922,10 +74922,13 @@ import { randomBytes as randomBytes2, randomUUID } from "node:crypto";
 // src/errors.ts
 var DataServerError = class extends Error {
   code;
-  constructor(message, code = "data_error") {
+  /** Structured detail the error payload carries beside its message, when the refusal has any. */
+  details;
+  constructor(message, code = "data_error", details) {
     super(message);
     this.name = new.target.name;
     this.code = code;
+    this.details = details;
   }
 };
 var ValidationError = class extends DataServerError {
@@ -78075,7 +78078,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("record_sent"),
-      description: "Record a general Writing as sent (the Sent write): the one door for a general Writing's Sent date. Only an active roster lawyer (this machine's `person`) may record it, and a Writing with no stored text is refused with no_stored_text. It first applies the pre-send hold: it reads the latest render's inventory and never renders (render_first when that render is older than the revision), and while primary-authority, excerpts, noting-up or recipients (as the type declares them) is unmet it writes the Pre-send gate job, one step per unmet criterion, and refuses with held, unless send_anyway carries the practitioner's own words, which it records verbatim as each open step's WAIVED form. It then compares the sent copy (sent_copy_path: a .eml, .pdf or .msg file; or sent_copy_text: pasted text) with the stored text and refuses sent_copy_mismatch naming each paragraph the copy lacks; a .msg is recorded by path and not compared, and the result says so. Then, in one transaction, it writes the sent copy's documents row, sent_copy_id, the signer snapshot and filed_on (sent_on), which freezes the exhibits and moves the revision. It retires nothing and offers no retirement: the Writing stays on its Milestone until the practitioner retires it. Refusals: invalid_sent_on, invalid_sent_copy, invalid_send_anyway, not_found, writing_retired, already_sent, not_a_general_writing, person_unset, not_a_lawyer, not_active, invalid_signer, no_stored_text, parties_drift (a party's counsel or address for service cannot be read from case data; nothing was written), render_first, no_billing_anchor, held, pre_send_gate_changed (the Pre-send gate job changed during the call; nothing was written), sent_copy_mismatch. The same transaction first writes the party rows it was sent with (parties_snapshot), counsel and the address for service read from case data. " + EXPECT_REVISION,
+      description: "Record a general Writing as sent (the Sent write): the one door for a general Writing's Sent date. Only an active roster lawyer (this machine's `person`) may record it, and a Writing with no stored text is refused with no_stored_text. It first applies the pre-send hold: it reads the latest render's inventory and never renders (render_first when that render is older than the revision), and while primary-authority, excerpts, noting-up or recipients (as the type declares them) is unmet it writes the Pre-send gate job, one step per unmet criterion, and refuses with held, unless send_anyway carries the practitioner's own words, which it records verbatim as each open step's WAIVED form. It then compares the sent copy (sent_copy_path: a .eml, .pdf or .msg file; or sent_copy_text: pasted text) with the stored text and refuses sent_copy_mismatch listing, for each paragraph or clause the copy lacks (up to 20, with a count of the rest), its part, its stored text in full and the closest span of the sent copy in full, in the message and in error.details.passages; a .msg is recorded by path and not compared, and the result says so. Then, in one transaction, it writes the sent copy's documents row, sent_copy_id, the signer snapshot and filed_on (sent_on), which freezes the exhibits and moves the revision. It retires nothing and offers no retirement: the Writing stays on its Milestone until the practitioner retires it. Refusals: invalid_sent_on, invalid_sent_copy, invalid_send_anyway, not_found, writing_retired, already_sent, not_a_general_writing, person_unset, not_a_lawyer, not_active, invalid_signer, no_stored_text, parties_drift (a party's counsel or address for service cannot be read from case data; nothing was written), render_first, no_billing_anchor, held, pre_send_gate_changed (the Pre-send gate job changed during the call; nothing was written), sent_copy_mismatch. The same transaction first writes the party rows it was sent with (parties_snapshot), counsel and the address for service read from case data. " + EXPECT_REVISION,
       inputSchema: {
         type: "object",
         properties: {
@@ -79682,7 +79685,7 @@ async function toolReply(name, run, replyText2 = jsonText) {
     return { content: [{ type: "text", text: replyText2(name, await run()) }] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const payload = err instanceof DataServerError ? { error: { code: err.code, message } } : { error: { code: "data_error", message } };
+    const payload = err instanceof DataServerError ? { error: { code: err.code, message, ...err.details ? { details: err.details } : {} } } : { error: { code: "data_error", message } };
     return { content: [{ type: "text", text: jsonText(name, payload) }], isError: true };
   }
 }
@@ -81338,7 +81341,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "d7f912b7c1b2";
+var BUILD_STAMP = false ? null : "170e7184b1e6";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -96066,8 +96069,9 @@ var NOW3 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var DELIVER_TITLE = "Deliver";
 var WAIVER2 = " \u2014 WAIVED: ";
 var PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back from being recorded as sent.";
-function refused(message, code) {
-  return new DataServerError(`${TOOL6}: ${message}`, code);
+var MISMATCH_CAP = 20;
+function refused(message, code, details) {
+  return new DataServerError(`${TOOL6}: ${message}`, code, details);
 }
 function revisionMoved(title, expected, current) {
   return new DataServerError(
@@ -96163,9 +96167,11 @@ function storedParagraphs(dbPath, filing, stored) {
     "SELECT COALESCE(fc.wording_override, c.wording) AS wording FROM filing_clauses fc JOIN clauses c ON c.id = fc.clause_id WHERE fc.filing_id = ? ORDER BY fc.ordinal",
     [filing.id]
   ).map((c3) => c3.wording);
-  return stored.layout.parts.flatMap(
-    (part) => part.source === "terms" ? clauses() : part.source.startsWith("slot:") ? (prose.get(part.source.slice("slot:".length))?.text ?? "").split(/\r?\n\s*\r?\n/) : []
-  ).map((p3) => p3.trim()).filter((p3) => p3 !== "");
+  return stored.layout.parts.flatMap((part) => {
+    const texts = part.source === "terms" ? clauses() : part.source.startsWith("slot:") ? (prose.get(part.source.slice("slot:".length))?.text ?? "").split(/\r?\n\s*\r?\n/) : [];
+    const unit = part.source === "terms" ? "clause" : "paragraph";
+    return texts.map((p3) => p3.trim()).filter((p3) => p3 !== "").map((text8, i3) => ({ part: `${part.source}, ${unit} ${i3 + 1}`, text: text8 }));
+  });
 }
 function compareSentCopy(paragraphs, args, env) {
   return runPythonDriver({
@@ -96240,11 +96246,18 @@ async function submissionDataRecordSent(args, env = process.env) {
       "held"
     );
   }
-  const comparison = compareSentCopy(paragraphs, args, env);
+  const { mismatches, ...comparison } = compareSentCopy(paragraphs.map((p3) => p3.text), args, env);
   if (comparison.missing.length > 0) {
+    const passages = mismatches.slice(0, MISMATCH_CAP).map((m3) => ({ part: paragraphs[m3.index].part, stored: paragraphs[m3.index].text, sent: m3.sent }));
+    const unlisted = comparison.missing.length - passages.length;
     throw refused(
-      `the sent copy does not contain ${comparison.missing.length} paragraph(s) or clause(s) of the stored text:` + comparison.missing.map((p3) => JSON.stringify(p3.length > 80 ? `${p3.slice(0, 80)}\u2026` : p3)).join(", ") + ". Correct the stored text to what was sent, or pass the copy actually sent",
-      "sent_copy_mismatch"
+      `the sent copy does not contain ${comparison.missing.length} paragraph(s) or clause(s) of the stored text:
+` + passages.map((p3, i3) => `${i3 + 1}. ${p3.part}
+   stored: ${JSON.stringify(p3.stored)}
+   closest in the sent copy: ${p3.sent === null ? "none" : JSON.stringify(p3.sent)}`).join("\n") + (unlisted > 0 ? `
+${unlisted} more not listed.` : "") + "\nCorrect the stored text to what was sent, or pass the copy actually sent",
+      "sent_copy_mismatch",
+      { passages, unlisted }
     );
   }
   const describe3 = comparison.method === "msg" ? "sent copy (.msg), recorded by path and not compared" : `sent copy (${comparison.method === "text" ? "pasted text" : `.${comparison.method}`}), compared with the stored text`;

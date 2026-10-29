@@ -230,7 +230,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "writes the Pre-send gate job, one step per unmet criterion, and refuses with held, unless send_anyway carries " +
         "the practitioner's own words, which it records verbatim as each open step's WAIVED form. It then compares the sent " +
         "copy (sent_copy_path: a .eml, .pdf or .msg file; or sent_copy_text: pasted text) with the stored text and refuses " +
-        "sent_copy_mismatch naming each paragraph the copy lacks; a .msg is recorded by path and not compared, and the " +
+        "sent_copy_mismatch listing, for each paragraph or clause the copy lacks (up to 20, with a count of the rest), its part, its " +
+        "stored text in full and the closest span of the sent copy in full, in the message and in error.details.passages; " +
+        "a .msg is recorded by path and not compared, and the " +
         "result says so. Then, in one transaction, it writes the sent copy's documents row, sent_copy_id, the signer " +
         "snapshot and filed_on (sent_on), which freezes the exhibits and moves the revision. It retires nothing and " +
         "offers no retirement: the Writing stays on its Milestone until the practitioner retires it. Refusals: invalid_sent_on, " +

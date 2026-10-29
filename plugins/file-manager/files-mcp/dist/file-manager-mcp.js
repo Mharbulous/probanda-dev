@@ -1,4 +1,4 @@
-// build-stamp: be6488da964e
+// build-stamp: 2df03309e9ac
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15451,10 +15451,13 @@ import { pathToFileURL } from "node:url";
 // src/errors.ts
 var DataServerError = class extends Error {
   code;
-  constructor(message, code = "data_error") {
+  /** Structured detail the error payload carries beside its message, when the refusal has any. */
+  details;
+  constructor(message, code = "data_error", details) {
     super(message);
     this.name = new.target.name;
     this.code = code;
+    this.details = details;
   }
 };
 var ValidationError = class extends DataServerError {
@@ -15802,7 +15805,7 @@ async function toolReply(name, run, replyText2 = jsonText) {
     return { content: [{ type: "text", text: replyText2(name, await run()) }] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const payload = err instanceof DataServerError ? { error: { code: err.code, message } } : { error: { code: "data_error", message } };
+    const payload = err instanceof DataServerError ? { error: { code: err.code, message, ...err.details ? { details: err.details } : {} } } : { error: { code: "data_error", message } };
     return { content: [{ type: "text", text: jsonText(name, payload) }], isError: true };
   }
 }

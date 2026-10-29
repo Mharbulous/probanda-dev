@@ -10,7 +10,13 @@ request = {"paragraphs": [str], "path": str | null, "text": str | null}, exactly
 path and text. A path ends in .eml, .pdf or .msg.
 
 result = {"method": "eml" | "pdf" | "text" | "msg", "compared": bool, "missing": [str],
+          "mismatches": [{"index": int, "sent": str | null}],
           "note": str (only when compared is false)}
+
+Each mismatch names one missing paragraph by its index in the request and gives the span of the
+copy that aligns best with it, in full, or null when no word of it is in the copy. The span is
+found word by word over the whole normalized copy, because normalizing erases the copy's
+paragraph breaks. It only explains a refusal: the check itself is the containment test alone.
 
 A .eml and pasted text are read with the standard library, a .pdf with PyMuPDF (the
 dependency draft/scripts/extract_review_pages.py already carries). A .msg cannot be read
@@ -21,6 +27,8 @@ break or a typographer's quote in the copy does not read as a difference.
 import json
 import re
 import sys
+from collections import Counter
+from difflib import SequenceMatcher
 from email import policy
 from email.parser import BytesParser
 from html.parser import HTMLParser
@@ -72,6 +80,35 @@ def pdf_text(path):
         return "\n".join(page.get_text() for page in doc)
 
 
+def aligned_span(paragraph, words):
+    """The run of the copy's words that best aligns with a stored paragraph, or None.
+
+    A window as long as the paragraph slides over the copy, counting the words it shares with
+    the paragraph. The window sharing most, widened by half its length each side, is aligned
+    with the paragraph word by word, and the span runs from the first word matched to the last."""
+    target = normalize(paragraph).split(" ")
+    n = len(target)
+    need, have = Counter(target), Counter()
+    common = best = best_start = 0
+    for end, word in enumerate(words):
+        if have[word] < need[word]:
+            common += 1
+        have[word] += 1
+        start = end - n + 1
+        if start > 0:
+            gone = words[start - 1]
+            have[gone] -= 1
+            if have[gone] < need[gone]:
+                common -= 1
+        if common > best:
+            best, best_start = common, max(0, start)
+    if best == 0:
+        return None
+    lo, hi = max(0, best_start - n // 2), min(len(words), best_start + n + n // 2)
+    blocks = [b for b in SequenceMatcher(None, words[lo:hi], target, autojunk=False).get_matching_blocks() if b.size]
+    return " ".join(words[lo + blocks[0].a:lo + blocks[-1].a + blocks[-1].size])
+
+
 def run(request):
     paragraphs = request.get("paragraphs") or []
     path, text = request.get("path"), request.get("text")
@@ -87,11 +124,13 @@ def run(request):
             raise ValueError(f"{path}: no such file")
         method = suffix[1:]
         if method == "msg":
-            return {"method": "msg", "compared": False, "missing": [], "note": MSG_NOTE}
+            return {"method": "msg", "compared": False, "missing": [], "mismatches": [], "note": MSG_NOTE}
         copy = eml_text(path) if method == "eml" else pdf_text(path)
     haystack = normalize(copy)
-    missing = [p for p in paragraphs if normalize(p) not in haystack]
-    return {"method": method, "compared": True, "missing": missing}
+    missing = [i for i, p in enumerate(paragraphs) if normalize(p) not in haystack]
+    words = haystack.split(" ")
+    return {"method": method, "compared": True, "missing": [paragraphs[i] for i in missing],
+            "mismatches": [{"index": i, "sent": aligned_span(paragraphs[i], words)} for i in missing]}
 
 
 if __name__ == "__main__":
