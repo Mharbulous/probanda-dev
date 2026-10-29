@@ -31,6 +31,10 @@ A merge appended the absorbed board's statement of goals to the survivor's, so a
 - Every earlier statement of both boards, the survivor's own and the absorbed board's, is kept under the survivor's `merged` as history only. Once the board holds one goal, the history is never drawn on the Goal card, board_summary or board_card's goals lane.
 - A merge given no goal leaves the board's goal status `needs_consolidation`. So does a board merged before this amendment that still holds `merged` statements. Such a board's Goal card draws at most its own statement, board_card lists the history as statements to combine, and `/draft` asks once, at the board's next attended Opening, for one combined goal. Any write of the board's own statement ends the status.
 
+## Amendment 2026-10-29: loose threads belong to the matter
+
+Loose threads are matter-level and belong to no Milestone, amending ADR 0024 D11 (CoClerk), which drew a proceeding's open threads on each of its Writings' boards. No Milestone lists, counts or draws them: they show only on the matter's one Loose Threads page.
+
 ## Considered options
 
 - **Keep one Writing per page and move only jobs**: meets no requirement that the work be seen together, and leaves four view pages per Writing.

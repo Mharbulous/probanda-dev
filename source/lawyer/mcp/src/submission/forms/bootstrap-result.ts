@@ -59,6 +59,8 @@ export interface BootstrapResult extends BuildStampStatus, SchemaSourceStatus {
   /** Present only on success: every view page written beside them, each live filing's (ADR 0033,
    * 2026-10-07 amendment), [{name, filing_id, path}]; null on the same terms. */
   view_page_paths?: PagesWritten["view_page_paths"] | null;
+  /** Present on the same terms: the matter's Loose Threads page. */
+  loose_threads_path?: string | null;
   /** Old page files this call's page write moved into the matter's TRASH (#1365 D3). */
   moved_to_trash?: PagesWritten["moved_to_trash"];
   /** Old page files that page write could not move, and why. */

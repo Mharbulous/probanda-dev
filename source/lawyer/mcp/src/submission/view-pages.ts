@@ -26,7 +26,6 @@ import { join } from "node:path";
 import type { TemplateSet } from "../compose-template.js";
 import { ARGUMENTS_PAGE } from "./forms/arguments-page.js";
 import { MATERIAL_FACTS, PROCEDURAL_HISTORY } from "./forms/facts-pages.js";
-import { LOOSE_IDEAS_PAGE } from "./forms/loose-ideas-page.js";
 import type { FilingRow, ProceedingRow } from "./forms/query.js";
 import { RAW_RESEARCH_PAGE } from "./forms/raw-research-page.js";
 
@@ -48,7 +47,8 @@ export interface ViewPageContext {
   revision: number;
 }
 
-export interface ViewPage {
+/** `C` is what the data reader is given: one board's, or the matter's Loose Threads page's ({ dbPath }). */
+export interface ViewPage<C = ViewPageContext> {
   /** The page's title, and its file `<name>.html` (viewPageFile). Renaming it moves every copy.
    * Its entry template writes the same name literally. */
   name: string;
@@ -59,7 +59,7 @@ export interface ViewPage {
   /** The composed page after its data line: its scripts draw `window.VIEW_PAGE.data` into `.board`. */
   tail: string;
   /** The page's data, JSON-serialisable, read from the databases at each write. */
-  data: (ctx: ViewPageContext) => unknown;
+  data: (ctx: C) => unknown;
   /** Extra keys for the header's meta row, from the page's data, printed before Rendered. */
   metaExtra?: (data: never) => [string, string][];
 }
@@ -70,7 +70,6 @@ export const VIEW_PAGES: readonly ViewPage[] = [
   MATERIAL_FACTS,
   RAW_RESEARCH_PAGE,
   ARGUMENTS_PAGE,
-  LOOSE_IDEAS_PAGE,
 ];
 
 /** A written view page, as open_session and render return it. */

@@ -8,6 +8,7 @@ import { DataServerError, ValidationError } from "../errors.js";
 import { fileOpsTrash, type TrashResult } from "../file_ops/trash.js";
 import { BoardIndex } from "./forms/board-members.js";
 import { readExistingRevision } from "./forms.js";
+import { LOOSE_THREADS_FILE, LOOSE_THREADS_PAGE_NAME } from "./forms/loose-ideas-page.js";
 import { MATTER_BOARD_FILE, MATTER_BOARD_MARKER } from "./forms/matter-board-shell.js";
 import { liveMembers, pageGroups, viewTargets } from "./matter-page-groups.js";
 import { writeStatusFile } from "./render-job.js";
@@ -28,6 +29,8 @@ export interface PagesWritten {
   /** Every Milestone page this write put in the draft folder, in page order. */
   milestone_paths: MilestonePage[];
   matter_board_path: string;
+  /** The matter's one Loose Threads page, beside the Litigation Strategy. */
+  loose_threads_path: string;
   /** Every view page this write put in the draft folder (ADR 0033, 2026-10-07 amendment): each
    * live filing's, in page order, in registry order within a filing. */
   view_page_paths: ViewPagePath[];
@@ -61,10 +64,11 @@ export interface GuardTarget {
   page: string;
 }
 
-/** The Litigation Strategy, then the Milestone pages named in `names`, then the view pages in `views`. */
+/** The Litigation Strategy, the Loose Threads page, then the Milestone pages named in `names`, then the view pages in `views`. */
 export function guardTargets(names: string[], views: { page: ViewPage; file: string }[]): GuardTarget[] {
   return [
     { name: MATTER_BOARD_FILE, marker: MATTER_BOARD_MARKER, page: "Litigation Strategy" },
+    { name: LOOSE_THREADS_FILE, marker: VIEW_PAGE_MARKER, page: LOOSE_THREADS_PAGE_NAME },
     ...names.map((name) => ({ name, marker: MILESTONE_MARKER, page: "Milestone" })),
     ...views.map((v) => ({ name: v.file, marker: VIEW_PAGE_MARKER, page: v.page.name })),
   ];
@@ -89,8 +93,9 @@ export function writePage(file: string, html: string): void {
 /** A page file's name in any layout or copy this generator ever wrote (D3), matched case-insensitively:
  * a view page's `<page name> - filing <id>.html` is its name before 2026-10-09, and
  * `Provable Facts - Milestone <id>.html` the Material Facts page's before 2026-10-20 (docs/ADRs/0011), and
- * `Job Board …` the Milestone's name before 2026-10-28. */
-const OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
+ * `Job Board …` the Milestone's name before 2026-10-28, and each board's Loose Threads page before 2026-10-29
+ * (the matter's own, at the top, is a current target). */
+const OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments) - filing \d+|loose threads(?: - (?:filing|Milestone|job board)(?: - proceeding)? \d+)?|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
 
 /** A preview pages__preview wrote beside the pages (src/pages/preview.ts): never an old page, so the sweep leaves it. */
 const PREVIEW_FILE = / preview \d+\.html$/i;

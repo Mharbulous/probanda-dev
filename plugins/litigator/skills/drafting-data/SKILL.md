@@ -81,7 +81,6 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Outline afresh | Reworking a queued job | `references/jobs-create.md` §3a |
 | Intake | Pulling Proposals onto the board | `references/jobs-create.md` §3e |
 | Spin off blocker jobs | Yes to a spin-off | `references/jobs-create.md` §3f |
-| Create the loose-threads job | The practitioner says to work on the loose threads in a session holding no job; that job then consumes each thread it works | `references/jobs-create.md` §3j |
 | Stock bundle jobs and the Letter save idiom | Stock jobs, or a letter or memo saved | `references/jobs-stock.md` §3b |
 | Counsel's review jobs | Pre-review passes leave nothing open | `references/jobs-stock.md` §3c |
 | Create a pass finding job | A pass leaves a finding undecided | `references/jobs-stock.md` §3g |
@@ -124,7 +123,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 
 `references/schema.sql` is the canonical current schema (its generation, the shape and what is not stored: `references/tool-contracts.md`, "Schema notes"). Never write a deadline here: the appeal deadline is a per-render `appeal_deadline` argument.
 
-**Current version**: `db_meta.schema_version = 80` (`TARGET_SCHEMA_VERSION` in `references/scripts/migrate_engine.py`); each hop's reason is its comment in `references/migrations.sql`. `drafting_forms__open_session` migrates on every entry; below v42 it returns `migration_required`. **v42 stays readable**: a database at v42 lists and renders as current, so a refused v43 hop leaves the matter behind, never unusable. Below a later hop, that hop's feature is absent (v52 saved answers, v67 attachments, v68 deferral, v69 suppression, v74 Bring Forward, v75 discard and suggest, v76 sources to get, v80 the `kv_store` table). The rules for `kv_store` values: `references/kv-store.md`.
+**Current version**: `db_meta.schema_version = 81` (`TARGET_SCHEMA_VERSION` in `references/scripts/migrate_engine.py`); each hop's reason is its comment in `references/migrations.sql`. `drafting_forms__open_session` migrates on every entry; below v42 it returns `migration_required`. **v42 stays readable**: a database at v42 lists and renders as current, so a refused v43 hop leaves the matter behind, never unusable. Below a later hop, that hop's feature is absent (v52 saved answers, v67 attachments, v68 deferral, v69 suppression, v74 Bring Forward, v75 discard and suggest, v76 sources to get, v80 the `kv_store` table). The rules for `kv_store` values: `references/kv-store.md`.
 
 ## CRUD guidance
 

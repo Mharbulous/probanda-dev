@@ -9,7 +9,6 @@ import { proposalKey } from "./proposal-inventory.js";
 import { isJobOnlyBoard, type FilingRow } from "./query.js";
 import { fetchAttachments } from "./work-board-reads.js";
 import type { DispatchSkip, WorkBoardTicket } from "./work-board-ticket.js";
-import { withFromFiling } from "./work-board-seeds.js";
 import type { GoalCriterion, WorkBoardContext, WorkBoardData } from "./work-board-data.js";
 import { holdsMaterial, withIdleFlag } from "./ticket-category.js";
 import { allKeysDead, deadKeySubtitle, ineligibleReasons } from "./unattended-eligibility.js";
@@ -17,7 +16,7 @@ import { buildProceedingBoard, onFilingBoard } from "./build-proceeding-board.js
 import { proposalsFor } from "./board-proposals.js";
 import { afterGateJobs, waitsOnGate } from "./goal-gate.js";
 import { goalFor, isInternalWriting } from "./goal-card.js";
-import { buildJobOnlyBoardData, discardedSeedLines } from "./no-writing-boards.js";
+import { buildJobOnlyBoardData } from "./no-writing-boards.js";
 
 /** The document types the Writing's jobs read: its stored layout's `ingest_inputs`
  * (shared/declared-layout.md section 5). Undefined on a row with no stored layout and on a type
@@ -51,8 +50,6 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
       const eligible = ineligible_reasons.length === 0;
       return withIdleFlag({ ...t.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t.ticket, printed), ...(t.filing_id === null ? { general: true } : {}) }, ctx.rendered, idleHours);
     });
-  // Every open loose thread in the proceeding, so none strands on a sibling filing (ADR 0024 D11).
-  const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);
   const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines, afterGateJobs(board.tickets, ctx.filing.id));
   // Section 14 Dispatch's last skip reasons, read off this render's inventory, this filing's type file and its
   // `recipients` and gate rows: a new array, since dispatch_skips is shared with the proceeding board's ticket.
@@ -88,9 +85,8 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
       ...(inputTypes !== undefined ? { ingest_inputs: { types: inputTypes, ready_jobs: readyJobs } } : {}),
     },
     tickets: gated,
-    seeds,
+    seeds: board.seeds,
     deleted: board.deleted.filter((d) => onFilingBoard(d.filing_id, ctx.filing.id)).map((d) => ({ id: d.id, title: d.title })),
-    discardedSeeds: discardedSeedLines(board.discardedSeeds),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id),
     proposals,
     lapsed_keys,

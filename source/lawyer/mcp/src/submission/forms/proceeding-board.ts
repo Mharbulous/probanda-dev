@@ -30,6 +30,7 @@ export interface ProceedingBoardResult {
   milestone_path?: string;
   milestone_paths?: PagesWritten["milestone_paths"];
   matter_board_path?: string;
+  loose_threads_path?: string;
   /** With draft_dir, every view page written: each live filing's (ADR 0033, 2026-10-07 amendment). */
   view_page_paths?: PagesWritten["view_page_paths"];
   moved_to_trash?: PagesWritten["moved_to_trash"];

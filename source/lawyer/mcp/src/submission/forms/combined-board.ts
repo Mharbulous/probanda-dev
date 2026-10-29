@@ -204,7 +204,6 @@ export function combineSections(dbPath: string, sections: WorkBoardData[], page 
     tickets,
     seeds: distinct(sections.map((s) => s.seeds)),
     deleted: distinct(sections.map((s) => s.deleted)),
-    discardedSeeds: distinct(sections.map((s) => s.discardedSeeds)),
     attachments: distinct(sections.map((s) => s.attachments)),
     proposals,
     lapsed_keys: [...new Set(sections.flatMap((s) => s.lapsed_keys))],

@@ -5,17 +5,6 @@ import { liveSeedClause, liveTicketClause, seedClosedColumns } from "./query.js"
 import { rows } from "../query-rows.js";
 import { hasColumn } from "../schema-capabilities.js";
 
-/** A loose thread that left the board without being outlined (schema v75): discarded, or else suggested. */
-export interface DiscardedSeed {
-  id: number;
-  idea: string;
-  filing_id: number | null;
-  /** The minute the practitioner dropped it; null on a suggested thread. */
-  discarded_at: string | null;
-  /** The minute it was sent to Probanda as a suggestion; null when it was not. */
-  suggested_at: string | null;
-}
-
 interface SeedRow {
   id: number;
   filing_id: number | null;
@@ -40,8 +29,7 @@ export interface WorkBoardSeed {
   created: string;
   filing_id: number | null;
   origin_ticket_id: number | null;
-  /** The title of the sibling filing the loose thread was captured on (ADR 0024 D11); null when it was
-   * captured on this board's own filing or on none. */
+  /** The title of the filing the loose thread was captured on; null when captured on none. */
   from_filing: string | null;
   /** The loose thread's place in the last ranking (schema v66), its group and the one-line reason;
    * all null while unranked, which is every loose thread on a database held below v66. */
@@ -59,24 +47,12 @@ export interface WorkBoardSeed {
 /** A ranked loose thread's group (schema v66), loose-thread triage's content groups. */
 export type RankGroup = "decision" | "tooling" | "housekeeping" | "research" | "authority" | "evidence" | "other";
 
-/** Each group's label, in triage's group order. board_card's loose_threads lane prints these; the Loose Threads page prints its own short names (loose-ideas-page.ts). */
-export const RANK_GROUP_LABELS: Readonly<Record<RankGroup, string>> = {
-  decision: "Practitioner remarks and decisions already made",
-  tooling: "Plugin and tooling feedback",
-  housekeeping: "matter-data and law-folder housekeeping",
-  research: "Research offers and research questions",
-  authority: "Writing doesn't match an authority as cited",
-  evidence: "Writing doesn't match the evidence or pleadings",
-  other: "Miscellaneous",
-};
-
-/** The loose threads' shared order: the ranked by rank (ties by id), then the unranked by id. The
- * Loose Threads page and board_card's loose_threads lane both print in it; the Milestone page keeps id order. */
+/** The Loose Threads page's order: the ranked by rank (ties by id), then the unranked by id. */
 export function inRankOrder<T extends { id: number; rank: number | null }>(seeds: readonly T[]): T[] {
   return [...seeds].sort((a, b) => (a.rank === null ? 1 : 0) - (b.rank === null ? 1 : 0) || (a.rank ?? 0) - (b.rank ?? 0) || a.id - b.id);
 }
 
-/** Where a loose thread came from, as board_card's line and the Loose Threads page print it: its origin
+/** Where a loose thread came from, as the Loose Threads page prints it: its origin
  * job, on a sibling filing when it was captured there, or the sibling filing alone; null for neither. */
 export function seedOrigin(s: Pick<WorkBoardSeed, "origin_ticket_id" | "from_filing">): string | null {
   if (s.origin_ticket_id !== null) return `from Job #${s.origin_ticket_id}${s.from_filing === null ? "" : ` on ${s.from_filing}`}`;
@@ -90,16 +66,6 @@ export function openSeedCondition(dbPath: string, deletedIds: ReadonlySet<number
   const deletedList = [...deletedIds];
   const outlinedIntoDeleted = deletedList.length === 0 ? "" : ` OR charted_into IN (${deletedList.map(() => "?").join(",")})`;
   return { sql: `(charted_into IS NULL${outlinedIntoDeleted})${liveSeedClause(dbPath)}`, params: deletedList };
-}
-
-/** The proceeding's discarded and suggested loose threads, in id order; none on a database held below v75. */
-export function fetchDiscardedSeeds(dbPath: string, proceedingId: number): DiscardedSeed[] {
-  if (seedClosedColumns(dbPath).length < 2) return [];
-  return rows<DiscardedSeed>(
-    dbPath,
-    "SELECT id, idea, filing_id, discarded_at, suggested_at FROM seeds WHERE proceeding_id = ? AND (discarded_at IS NOT NULL OR suggested_at IS NOT NULL) ORDER BY id",
-    [proceedingId]
-  );
 }
 
 /** A loose thread that is not open: discarded, else suggested, else outlined into a job that is not deleted. */
@@ -170,9 +136,8 @@ export function fetchOpenSeeds(
   }));
 }
 
-/** Each loose thread with the title of the sibling filing it was captured on, null when captured on
- * `filingId` itself or on none (ADR 0024 D11). */
-export function withFromFiling(dbPath: string, proceedingId: number, filingId: number, seeds: readonly Omit<WorkBoardSeed, "from_filing">[]): WorkBoardSeed[] {
+/** Each loose thread with the title of the filing it was captured on, null when captured on none. */
+export function withFromFiling(dbPath: string, proceedingId: number, seeds: readonly Omit<WorkBoardSeed, "from_filing">[]): WorkBoardSeed[] {
   const filingTitles = new Map(rows<FilingTitleRow>(dbPath, "SELECT id, title FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f) => [f.id, f.title]));
-  return seeds.map((s) => ({ ...s, from_filing: s.filing_id === null || s.filing_id === filingId ? null : filingTitles.get(s.filing_id) ?? null }));
+  return seeds.map((s) => ({ ...s, from_filing: s.filing_id === null ? null : filingTitles.get(s.filing_id) ?? null }));
 }

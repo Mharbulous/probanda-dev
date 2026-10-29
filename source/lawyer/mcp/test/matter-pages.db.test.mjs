@@ -40,7 +40,7 @@ const SECOND = "2026-10-02 09:05";
 // A Writing's Milestone page is in its own folder (spec 2026-10-22 §9); a pre-filing proceeding's stays at the top.
 const OPENING_PAGE = join("Opening Submissions Package", "Milestone.html");
 const REPLY_PAGE = join("Reply Submissions Package", "Milestone.html");
-const PAGES = [OPENING_PAGE, "Litigation Strategy.html"];
+const PAGES = [OPENING_PAGE, "Litigation Strategy.html", "Loose Threads.html"];
 
 /** A mockup render of one filing with draft_dir, at a pinned minute. */
 function renderInto(f, filingId, draft, now, documents) {
@@ -194,7 +194,7 @@ test("a retired filing's Milestone page goes to TRASH", async (t) => {
   assert.deepEqual(milestonePages(m.draft), [OPENING_PAGE]);
   assert.deepEqual(
     retired.moved_to_trash.map((x) => x.from.toLowerCase()),
-    ["Arguments", "Loose Threads", "Material Facts", "Milestone", "Procedural History", "Raw Research"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
+    ["Arguments", "Material Facts", "Milestone", "Procedural History", "Raw Research"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
   );
   assert.ok(existsSync(join(m.matterRoot, "TRASH", "0. DRAFT", REPLY_PAGE)), "the retired filing's page is in TRASH");
 });
@@ -890,17 +890,16 @@ test("a job's card on the Milestone page draws its steps as its plan, with no in
   }
 });
 
-// The four lanes the headline counts, printed in full. Proposed, Shelved and Loose Threads are
-// the summary's own lines from before the headline; the golden was checked against them line by line.
-// Its loose thread is deferred (schema v68), so its line ends ` · deferred`.
+// The three lanes the headline counts, printed in full. Proposed and Shelved are the summary's own
+// lines from before the headline; the golden was checked against them line by line.
 test("board_card(lanes) prints the counted lanes' members, in card order whatever order they are asked in", async () => {
   const f = seededDbFixture();
   try {
-    await seededBoard(f, "UPDATE seeds SET deferred_at = '2026-09-03T09:00' WHERE id = 1;");
+    await seededBoard(f);
 
-    const card = cardOf(f, { lanes: ["loose_threads", "rejected", "completed", "proposed"] });
+    const card = cardOf(f, { lanes: ["rejected", "completed", "proposed"] });
     assertMatchesGolden("board-card-lanes.md", card + "\n");
-    assert.equal(cardOf(f, { lanes: ["proposed", "completed", "rejected", "loose_threads"] }), card);
+    assert.equal(cardOf(f, { lanes: ["proposed", "completed", "rejected"] }), card);
     assert.equal(cardOf(f, { lanes: ["completed"] }), "## Completed (1)\n- Job #1 Audit the three Westlaw memos · Completed");
   } finally {
     f.cleanup();
@@ -939,7 +938,7 @@ test("board_card(key) prints the live job holding the key, else the Proposal und
 // The eight lists, in order, then board_card's Proposed count: a wip job with every step stamped
 // stays In Progress, a queued job whose blocker was superseded is Blocked, and an unheld Proposal is
 // counted on the card but never drawn on the page.
-test("the live lane prints Ready, In Progress, Bring Forward, Blocked, Completed, Shelved, Superseded, Loose Threads, then Proposed, and the page draws no Proposed section", async () => {
+test("the live lane prints Ready, In Progress, Bring Forward, Blocked, Completed, Shelved, Superseded, then Proposed, and the page draws no Proposed or Loose Threads section", async () => {
   const f = seededDbFixture();
   try {
     await seededBoard(
@@ -951,7 +950,7 @@ test("the live lane prints Ready, In Progress, Bring Forward, Blocked, Completed
 
     const lines = cardOf(f, { lanes: ["live"] }).split("\n");
     const headings = lines.filter((l) => l.startsWith("## ")).map((l) => l.replace(/ \(.*$/, ""));
-    assert.deepEqual(headings, ["## Ready", "## In Progress", "## Bring Forward", "## Blocked", "## Completed", "## Shelved", "## Superseded", "## Loose Threads", "## Proposed"]);
+    assert.deepEqual(headings, ["## Ready", "## In Progress", "## Bring Forward", "## Blocked", "## Completed", "## Shelved", "## Superseded", "## Proposed"]);
     const lane = (heading) => {
       const start = lines.findIndex((l) => l.startsWith(`## ${heading} (`));
       const end = lines.findIndex((l, i) => i > start && l.startsWith("## "));
@@ -965,7 +964,7 @@ test("the live lane prints Ready, In Progress, Bring Forward, Blocked, Completed
     const { draft } = draftFolder(f);
     const board = renderInto(f, 1, draft, FIRST, ["Work_board"]).documents.find((d) => d.document_type === "Work_board");
     const sections = drawPage(board.path).main.all().filter((n) => n.tag === "section").map((n) => n.id);
-    assert.deepEqual(sections, ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas"]);
+    assert.deepEqual(sections, ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded"]);
     assert.equal(readFileSync(board.path, "utf-8").includes('<section id="proposed">'), false);
   } finally {
     f.cleanup();
@@ -978,24 +977,14 @@ test("board_card refuses no selector, an unknown lane, a job not on the section,
     await seededBoard(f);
     const refused = (args, pattern) => assert.throws(() => submissionFormsBoardCard({ db_path: f.dbPath, ...args }, ASHBOURNE, FIRST), (err) => err instanceof ValidationError && pattern.test(err.message));
 
-    refused({ filing_id: 1 }, /needs at least one of jobs, lanes, key and loose_threads_from_jobs/);
-    refused({ filing_id: 1, loose_threads_from_jobs: [] }, /loose_threads_from_jobs: name at least one job id/);
+    refused({ filing_id: 1 }, /needs at least one of jobs, lanes and key/);
     refused({ filing_id: 1, lanes: ["held"] }, /no lane held/);
+    refused({ filing_id: 1, lanes: ["loose_threads"] }, /no lane loose_threads/);
     refused({ filing_id: 1, jobs: [2, 12, 99] }, /no Job #12, Job #99 on this section/);
     refused({ proceeding_id: 1, jobs: [2] }, /This proceeding has a Writing/);
   } finally {
     f.cleanup();
   }
-});
-
-// The parameter's former name is refused by schema validation, whose message lists the new name.
-test("board_card's schema refuses the former seeds_from_jobs, naming loose_threads_from_jobs", async () => {
-  const { validateToolInput } = await import("../build/validate.js");
-  const tool = buildToolDefinitions().find((d) => d.name === "drafting_forms__board_card");
-  assert.throws(
-    () => validateToolInput(tool, { db_path: "x", filing_id: 1, seeds_from_jobs: [1] }),
-    (err) => err instanceof ValidationError && /unknown field "seeds_from_jobs"/.test(err.message) && /loose_threads_from_jobs/.test(err.message)
-  );
 });
 
 test("board_card reads a proceeding with no filing", async () => {
@@ -1006,11 +995,10 @@ test("board_card reads a proceeding with no filing", async () => {
       f.dbPath,
       `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL);
        INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, locked_by, locked_at, created)
-         VALUES (1, 1, NULL, 'Review the arbitration clause', 'Read the contract.', 'wip', 0, 'work', 'L8470', 'sess-a', '2026-09-19 09:30', '2026-09-19 09:05');
-       INSERT INTO seeds (id, proceeding_id, filing_id, created, surfaced_by, idea) VALUES (1, 1, NULL, '2026-09-19 09:20', 'noticed', 'Is the guarantor a party?');`
+         VALUES (1, 1, NULL, 'Review the arbitration clause', 'Read the contract.', 'wip', 0, 'work', 'L8470', 'sess-a', '2026-09-19 09:30', '2026-09-19 09:05');`
     );
 
-    const result = submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, jobs: [1], lanes: ["loose_threads"] }, {}, FIRST);
+    const result = submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, jobs: [1] }, {}, FIRST);
     assert.deepEqual(Object.keys(result), ["proceeding_id", "revision", "rendered_at", "card"]);
     assert.equal(
       result.card,
@@ -1019,8 +1007,6 @@ test("board_card reads a proceeding with no filing", async () => {
         "  kind: work · priority: 0 · taken: 2026-09-19 09:30 · holder: sess-a · last activity: 2026-09-19 09:30",
         "  intent: Read the contract.",
         "  scope: — · waits on: — · either-or: —",
-        "## Loose Threads (1)",
-        '- loose thread 1: "Is the guarantor a party?" (noticed) · unranked',
       ].join("\n")
     );
     assert.match(submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, lanes: ["live"] }, {}, FIRST).card, /^## In Progress \(1\)\n- Job #1 Review the arbitration clause · In Progress · idle /m, "the live lane reads a proceeding with no filing");
@@ -1031,40 +1017,6 @@ test("board_card reads a proceeding with no filing", async () => {
         lane
       );
     }
-  } finally {
-    f.cleanup();
-  }
-});
-
-// A long loose threads lane read for one job's seeds alone: only the seeds whose origin job is asked for.
-test("board_card(loose_threads_from_jobs) prints only the seeds those jobs surfaced", async () => {
-  const f = seededDbFixture();
-  try {
-    await freshSubmissionDb(f.dbPath);
-    await submissionDataExecute(
-      f.dbPath,
-      `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL);
-       INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created)
-         VALUES (1, 1, NULL, 'Review the arbitration clause', 'Read the contract.', 'queued', 0, 'work', 'L8470', '2026-09-19 09:05'),
-                (2, 1, NULL, 'Read the guarantee', 'Read it.', 'queued', 1, 'work', 'L8470', '2026-09-19 09:06');
-       INSERT INTO seeds (id, proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea) VALUES
-         (1, 1, NULL, 1, '2026-09-19 09:20', 'noticed', 'Is the guarantor a party?'),
-         (2, 1, NULL, 2, '2026-09-19 09:21', 'noticed', 'Was the guarantee signed?'),
-         (3, 1, NULL, NULL, '2026-09-19 09:22', 'noticed', 'Check the seat of the arbitration.'),
-         (4, 1, NULL, 1, '2026-09-19 09:23', 'noticed', 'Does the clause survive termination?');`
-    );
-    const card = (args) => submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, ...args }, {}, FIRST).card;
-
-    assert.equal(
-      card({ loose_threads_from_jobs: [1] }),
-      [
-        "## Loose Threads (2 of 4 from Job #1)",
-        '- loose thread 1: "Is the guarantor a party?" (noticed; from Job #1) · unranked',
-        '- loose thread 4: "Does the clause survive termination?" (noticed; from Job #1) · unranked',
-      ].join("\n")
-    );
-    assert.equal(card({ loose_threads_from_jobs: [2, 9], lanes: ["loose_threads"] }), ['## Loose Threads (1 of 4 from Job #2, Job #9)', '- loose thread 2: "Was the guarantee signed?" (noticed; from Job #2) · unranked'].join("\n"), "with the loose_threads lane named too, the lane prints once, filtered");
-    assert.match(card({ lanes: ["loose_threads"] }), /^## Loose Threads \(4\)$/m, "without the filter, every seed");
   } finally {
     f.cleanup();
   }
@@ -1317,7 +1269,7 @@ test("the live lane of a board shaped like the measured one is 3 KB or less, and
     assert.match(live, /^## In Progress \(7\)$/m);
     assert.match(live, /^## Completed \(21\)$/m);
     assert.match(live, /^## Shelved \(7 jobs, 0 proposals\)$/m);
-    assert.match(live, /^## Loose Threads \(44\)$/m);
+    assert.doesNotMatch(live, /Loose Threads/, "no Milestone counts the matter's loose threads");
     assert.ok(live.length <= 3072, `the live lane is ${live.length} chars\n${live}`);
     assert.ok(summary.length < 600, `board_summary is ${summary.length} chars\n${summary}`);
   } finally {
@@ -1353,6 +1305,10 @@ test("a page write moves every old page file the generator wrote into TRASH and 
     [join(m.draft, "Job Board - proceeding 3.html")]: board,
     [join(m.draft, "Provable Facts - Job Board 7.html")]: view,
     [join(m.draft, "Raw Research - Job Board 7.html")]: view,
+    // Each board's Loose Threads page before 2026-10-29; the matter's own is at the top.
+    [join(m.draft, "Opening Submissions Package", "Loose Threads.html")]: view,
+    [join(m.draft, "Loose Threads - Milestone 4.html")]: view,
+    [join(m.draft, "Loose Threads - Milestone - proceeding 3.html")]: view,
   };
   const unmarked = {
     [join(m.draft, "Work Board.html")]: "the practitioner's own board\n",

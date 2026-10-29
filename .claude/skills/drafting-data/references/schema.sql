@@ -3,7 +3,7 @@
 -- via references/scripts/migrate_engine.py. Do not hand-edit: regenerate
 -- after any change to migrations.sql so this file matches the live schema
 -- byte-for-byte (this is the acceptance test for issue 295).
--- Current version: db_meta.schema_version = 80
+-- Current version: db_meta.schema_version = 81
 
 
 CREATE TABLE db_meta (
@@ -1200,46 +1200,6 @@ CREATE TRIGGER rev_submission_rebuts_anticipated_points_upd AFTER UPDATE ON subm
 
 CREATE TRIGGER rev_submission_rebuts_anticipated_points_del AFTER DELETE ON submission_rebuts_anticipated_points BEGIN UPDATE db_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'; END;
 
-CREATE TABLE board_attachments (
-    id            INTEGER PRIMARY KEY,
-    proceeding_id INTEGER NOT NULL REFERENCES proceedings(id),
-    filing_id     INTEGER REFERENCES filings(id),
-    path          TEXT NOT NULL UNIQUE,
-    kind          TEXT NOT NULL CHECK (kind IN ('client_letter','reply')),
-    attached_on   TEXT NOT NULL
-);
-
-CREATE TRIGGER guard_board_attachments_live_ins BEFORE INSERT ON board_attachments
-WHEN NEW.filing_id IS NOT NULL AND (SELECT retired_on FROM filings WHERE id = NEW.filing_id) IS NOT NULL
-BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Milestone: attach the draft to a live Writing''s board (ADR 0042)'); END;
-
-CREATE TRIGGER guard_board_attachments_live_upd BEFORE UPDATE OF proceeding_id, filing_id ON board_attachments
-WHEN NEW.filing_id IS NOT NULL AND (SELECT retired_on FROM filings WHERE id = NEW.filing_id) IS NOT NULL
-BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Milestone: attach the draft to a live Writing''s board (ADR 0042)'); END;
-
-CREATE TRIGGER guard_board_attachments_proceeding_ins BEFORE INSERT ON board_attachments
-WHEN NEW.filing_id IS NOT NULL AND (SELECT proceeding_id FROM filings WHERE id = NEW.filing_id) IS NOT NEW.proceeding_id
-BEGIN SELECT RAISE(ABORT, 'an attachment names a Writing of its own proceeding (ADR 0042)'); END;
-
-CREATE TRIGGER guard_board_attachments_proceeding_upd BEFORE UPDATE OF proceeding_id, filing_id ON board_attachments
-WHEN NEW.filing_id IS NOT NULL AND (SELECT proceeding_id FROM filings WHERE id = NEW.filing_id) IS NOT NEW.proceeding_id
-BEGIN SELECT RAISE(ABORT, 'an attachment names a Writing of its own proceeding (ADR 0042)'); END;
-
-CREATE TRIGGER guard_board_attachments_pre_filing_ins BEFORE INSERT ON board_attachments
-WHEN NEW.filing_id IS NULL AND EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id)
-BEGIN SELECT RAISE(ABORT, 'a proceeding with a Writing has no board of its own: attach the draft to a live Writing''s board (ADR 0042)'); END;
-
-CREATE TRIGGER guard_board_attachments_pre_filing_upd BEFORE UPDATE OF proceeding_id, filing_id ON board_attachments
-WHEN NEW.filing_id IS NULL AND EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id)
-BEGIN SELECT RAISE(ABORT, 'a proceeding with a Writing has no board of its own: attach the draft to a live Writing''s board (ADR 0042)'); END;
-
-CREATE TRIGGER guard_filings_retire_attached BEFORE UPDATE OF retired_on ON filings
-WHEN OLD.retired_on IS NULL AND NEW.retired_on IS NOT NULL
- AND (EXISTS (SELECT 1 FROM board_attachments WHERE filing_id = NEW.id)
-      OR (EXISTS (SELECT 1 FROM board_attachments WHERE filing_id IS NULL AND proceeding_id = NEW.proceeding_id)
-          AND NOT EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id AND id <> NEW.id AND retired_on IS NULL)))
-BEGIN SELECT RAISE(ABORT, 'a draft is attached to this Writing''s Milestone: move or detach each attachment before retiring it (ADR 0042)'); END;
-
 CREATE TABLE marker_suppressions (
     marker        TEXT NOT NULL CHECK (marker IN ('👤')),
     keyed_table   TEXT NOT NULL CHECK (keyed_table IN ('facts')),
@@ -1450,3 +1410,43 @@ CREATE TABLE ticket_sources (
 );
 
 CREATE TABLE kv_store (namespace TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (namespace, key));
+
+CREATE TABLE board_attachments (
+    id            INTEGER PRIMARY KEY,
+    proceeding_id INTEGER NOT NULL REFERENCES proceedings(id),
+    filing_id     INTEGER REFERENCES filings(id),
+    path          TEXT NOT NULL UNIQUE,
+    kind          TEXT NOT NULL CHECK (kind IN ('client_letter','reply','opposing_filing')),
+    attached_on   TEXT NOT NULL
+);
+
+CREATE TRIGGER guard_board_attachments_live_ins BEFORE INSERT ON board_attachments
+WHEN NEW.filing_id IS NOT NULL AND (SELECT retired_on FROM filings WHERE id = NEW.filing_id) IS NOT NULL
+BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Milestone: attach the draft to a live Writing''s board (ADR 0042)'); END;
+
+CREATE TRIGGER guard_board_attachments_live_upd BEFORE UPDATE OF proceeding_id, filing_id ON board_attachments
+WHEN NEW.filing_id IS NOT NULL AND (SELECT retired_on FROM filings WHERE id = NEW.filing_id) IS NOT NULL
+BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Milestone: attach the draft to a live Writing''s board (ADR 0042)'); END;
+
+CREATE TRIGGER guard_board_attachments_proceeding_ins BEFORE INSERT ON board_attachments
+WHEN NEW.filing_id IS NOT NULL AND (SELECT proceeding_id FROM filings WHERE id = NEW.filing_id) IS NOT NEW.proceeding_id
+BEGIN SELECT RAISE(ABORT, 'an attachment names a Writing of its own proceeding (ADR 0042)'); END;
+
+CREATE TRIGGER guard_board_attachments_proceeding_upd BEFORE UPDATE OF proceeding_id, filing_id ON board_attachments
+WHEN NEW.filing_id IS NOT NULL AND (SELECT proceeding_id FROM filings WHERE id = NEW.filing_id) IS NOT NEW.proceeding_id
+BEGIN SELECT RAISE(ABORT, 'an attachment names a Writing of its own proceeding (ADR 0042)'); END;
+
+CREATE TRIGGER guard_board_attachments_pre_filing_ins BEFORE INSERT ON board_attachments
+WHEN NEW.filing_id IS NULL AND EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id)
+BEGIN SELECT RAISE(ABORT, 'a proceeding with a Writing has no board of its own: attach the draft to a live Writing''s board (ADR 0042)'); END;
+
+CREATE TRIGGER guard_board_attachments_pre_filing_upd BEFORE UPDATE OF proceeding_id, filing_id ON board_attachments
+WHEN NEW.filing_id IS NULL AND EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id)
+BEGIN SELECT RAISE(ABORT, 'a proceeding with a Writing has no board of its own: attach the draft to a live Writing''s board (ADR 0042)'); END;
+
+CREATE TRIGGER guard_filings_retire_attached BEFORE UPDATE OF retired_on ON filings
+WHEN OLD.retired_on IS NULL AND NEW.retired_on IS NOT NULL
+ AND (EXISTS (SELECT 1 FROM board_attachments WHERE filing_id = NEW.id)
+      OR (EXISTS (SELECT 1 FROM board_attachments WHERE filing_id IS NULL AND proceeding_id = NEW.proceeding_id)
+          AND NOT EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id AND id <> NEW.id AND retired_on IS NULL)))
+BEGIN SELECT RAISE(ABORT, 'a draft is attached to this Writing''s Milestone: move or detach each attachment before retiring it (ADR 0042)'); END;

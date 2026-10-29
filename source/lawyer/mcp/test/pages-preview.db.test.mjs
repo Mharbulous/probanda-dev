@@ -84,7 +84,7 @@ test("a real-data preview of a matter page is the page as the write builds it, o
 
   const strategy = await preview({ page: "Litigation Strategy", overrides: cssOverride("Litigation Strategy") });
   const milestone = await preview({ page: "Milestone", filing_id: 1, overrides: cssOverride("Milestone") });
-  const threads = await preview({ page: "Loose Threads", filing_id: 1, overrides: cssOverride("Loose Threads") });
+  const threads = await preview({ page: "Loose Threads", overrides: cssOverride("Loose Threads") });
   const again = await preview({ page: "Milestone", filing_id: 1 });
   assert.deepEqual(Object.keys(strategy), ["path"], "the path only, never the HTML");
   // The Writing's pages are in its own folder (spec 2026-10-22 §9), so its previews are written there.
@@ -94,12 +94,12 @@ test("a real-data preview of a matter page is the page as the write builds it, o
     [
       [m.draft.toLowerCase(), "Litigation Strategy preview 1.html"],
       [writing.toLowerCase(), "Milestone preview 1.html"],
-      [writing.toLowerCase(), "Loose Threads preview 1.html"],
+      [m.draft.toLowerCase(), "Loose Threads preview 1.html"],
       [writing.toLowerCase(), "Milestone preview 2.html"],
     ]
   );
-  assert.deepEqual(readdirSync(m.draft).sort(), [basename(strategy.path), basename(writing)].sort(), "no page and no other file was written");
-  assert.deepEqual(readdirSync(writing).sort(), [milestone, threads, again].map((r) => basename(r.path)).sort(), "no page and no other file was written");
+  assert.deepEqual(readdirSync(m.draft).sort(), [basename(strategy.path), basename(threads.path), basename(writing)].sort(), "no page and no other file was written");
+  assert.deepEqual(readdirSync(writing).sort(), [milestone, again].map((r) => basename(r.path)).sort(), "no page and no other file was written");
 
   const html = (r) => readFileSync(r.path, "utf-8");
   assert.equal(dataLine(html(strategy), "MATTER_BOARD").meta.matter, "L9999", "the matter's own data, looked up as session entry looks it up");

@@ -13,4 +13,4 @@ Session entry opened a board but `opened` carries no `board_summary`, or it retu
 
 ## Loose-thread marker
 
-A Writing carried forward from an older data shape can show a "loose thread" marker on every deployed line. This is the 🧵 marker on the mockup, not the Loose Threads list on the Milestone. The form deploys the item but the Written Argument never argues it. On re-entering such a Writing, explain it and offer the checklist's repair, which adds the missing Written Argument deployment and never removes the form's. Drafting proceeds either way.
+A Writing carried forward from an older data shape can show a "loose thread" marker on every deployed line. This is the 🧵 marker on the mockup, not the Loose Threads page. The form deploys the item but the Written Argument never argues it. On re-entering such a Writing, explain it and offer the checklist's repair, which adds the missing Written Argument deployment and never removes the form's. Drafting proceeds either way.

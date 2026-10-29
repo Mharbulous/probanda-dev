@@ -19,7 +19,7 @@ import {
   type StepRow,
 } from "./work-board-reads.js";
 import type { WorkBoardEdge, WorkBoardTicket } from "./work-board-ticket.js";
-import { fetchDiscardedSeeds, fetchOpenSeeds, type DiscardedSeed, type WorkBoardSeed } from "./work-board-seeds.js";
+import { fetchOpenSeeds, type WorkBoardSeed } from "./work-board-seeds.js";
 import { activeAt, classify, holdsMaterial, latestStamp, reachesItself, scopesShare, supersededReason } from "./ticket-category.js";
 import { UNATTENDED_TOKEN_PREFIX } from "./unattended-eligibility.js";
 
@@ -45,8 +45,6 @@ export interface ProceedingBoard {
   holders: Map<string, { ticket_id: number; filing_id: number | null }>;
   /** The proceeding's deleted jobs, in id order. They are on no card, in no count and in no summary. */
   deleted: DeletedTicket[];
-  /** The proceeding's discarded and suggested loose threads, in id order. They are in no count and in no summary. */
-  discardedSeeds: DiscardedSeed[];
 }
 
 /** `today` is the local date the Bring Forward lane reads against: a section builder passes its
@@ -190,7 +188,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
     }
   }
 
-  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted, discardedSeeds: fetchDiscardedSeeds(dbPath, proceedingId) };
+  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted };
 }
 
 /** True when a ticket belongs on `filingId`'s board (loose threads are proceeding-wide, ADR 0024 D11): its own tickets, plus proceeding-scoped ones

@@ -25,6 +25,7 @@ const { renderPracticeBoardHtml } = await import("../build/submission/forms/prac
 const { renderMatterBoardHtml } = await import("../build/submission/forms/matter-board-shell.js");
 const { renderWorkBoardHtml } = await import("../build/submission/forms/workboard-shell.js");
 const { VIEW_PAGES, renderViewPageHtml } = await import("../build/submission/view-pages.js");
+const { LOOSE_IDEAS_PAGE } = await import("../build/submission/forms/loose-ideas-page.js");
 const { renderApprovalPage } = await import("../build/housekeeping/page.js");
 const { WORK_BOARD_FIXTURE } = await import("../build/board-fixtures/work-board.js");
 const { LITIGATION_STRATEGY_FIXTURE } = await import("../build/board-fixtures/litigation-strategy.js");
@@ -38,7 +39,7 @@ const { HOUSEKEEPING_FIXTURE } = await import("../build/housekeeping/fixture.js"
 
 const sha = (text) => createHash("sha256").update(text).digest("hex");
 const fixtureFile = (html) => `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}\n`;
-const viewPage = (name) => VIEW_PAGES.find((p) => p.name === name);
+const viewPage = (name) => [...VIEW_PAGES, LOOSE_IDEAS_PAGE].find((p) => p.name === name);
 
 /** Each lawyer page: its preview name for the fixtures' Writing 1, and its render of its fixture with `page` composed. */
 const PAGES = [
@@ -50,8 +51,8 @@ const PAGES = [
     ["Material Facts", MATERIAL_FACTS_FIXTURE],
     ["Raw Research", RAW_RESEARCH_FIXTURE],
     ["Arguments", ARGUMENTS_FIXTURE],
-    ["Loose Threads", LOOSE_THREADS_FIXTURE],
   ].map(([name, f]) => [name, `${name} - Milestone 1`, (page) => renderViewPageHtml({ ...viewPage(name), ...page }, f.meta, f.data)]),
+  ["Loose Threads", "Loose Threads", (page) => renderViewPageHtml({ ...viewPage("Loose Threads"), ...page }, LOOSE_THREADS_FIXTURE.meta, LOOSE_THREADS_FIXTURE.data)],
 ];
 
 /** The page's template set with the first .css file's text marked, so an override is visible. */
@@ -115,6 +116,7 @@ test("a preview refuses an override naming no file, a non-text override, and inp
   await assert.rejects(pagesPreview({ page: "Housekeeping approval", data: "fixture" }, undefined), /housekeeping__preview/);
   await assert.rejects(pagesPreview({ page: "Milestone", data: "real", matter_root: TEMP }, undefined), /exactly one of filing_id or proceeding_id/);
   await assert.rejects(pagesPreview({ page: "Arguments", data: "real", matter_root: TEMP, proceeding_id: 1 }, undefined), /needs filing_id and takes no proceeding_id/);
+  await assert.rejects(pagesPreview({ page: "Loose Threads", data: "real", matter_root: TEMP, filing_id: 1 }, undefined), /Loose Threads covers the whole matter/);
   await assert.rejects(pagesPreview({ page: "Litigation Strategy", data: "real" }, undefined), /needs matter_root/);
   assert.throws(() => housekeepingPreview({ data: "fixture", run_id: "x" }), /fixture data takes no matter_root or run_id/);
   assert.throws(() => housekeepingPreview({ data: "real" }), /real data needs matter_root and run_id/);

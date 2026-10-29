@@ -296,42 +296,12 @@
       return line;
     }
 
-    // A loose thread that left the board (schema v75), never a card: a discarded one is a struck line
-    // with a Restore link, as a deleted job is, and a suggested one a plain line with no link.
-    function discardedSeedLine(s) {
-      if (!s.discarded_at) return el("p", "suggested", "Loose thread " + s.id + ":  " + s.idea + " *SUGGESTED*");
-      var line = el("p", "deleted");
-      line.appendChild(el("s", "", "Loose thread " + s.id + ":  " + s.idea));
-      line.appendChild(document.createTextNode(" *DISCARDED* "));
-      line.appendChild(restoreLink("restore loose thread #" + s.id));
-      return line;
-    }
-
-    function seedCard(s) {
-      var card = el("details", "seed");
-      card.setAttribute("name", "board");
-      card.id = "seed-" + s.id;
-      var summary = el("summary");
-      summary.appendChild(el("span", "title", s.idea));
-      if (s.from_filing !== null) summary.appendChild(el("span", "subtitle", "from " + s.from_filing));
-      card.appendChild(summary);
-      var body = el("div", "body");
-      var dl = el("dl");
-      row(dl, "Surfaced by", s.surfaced_by);
-      // A sibling filing's job has no card on this board, so it is named, not linked.
-      if (s.origin_ticket_id !== null) row(dl, "From", s.from_filing === null ? link(s.origin_ticket_id) : "Job #" + s.origin_ticket_id + " on " + s.from_filing);
-      row(dl, "Created", stamp(s.created), true);
-      body.appendChild(dl);
-      card.appendChild(body);
-      return card;
-    }
-
     // An attached draft's card. Closed: its last-modified date, its code (the kind when its name has
     // none) and the pending-job badge. Open: its name, its folder, the last-modified date only when it
     // differs from the name's own date, a client letter's review line (read from its first line at
     // this write), then its pending jobs. A path with nothing at it, or one that could not be read,
     // says so, never dropped.
-    var ATTACHED_KINDS = { client_letter: "Client letter", reply: "Reply" };
+    var ATTACHED_KINDS = { client_letter: "Client letter", reply: "Reply", opposing_filing: "Opposing filing" };
     var PENDING_EMOJI = { ready: "🟢 Ready", wip: "🔵 In Progress", bring_forward: "📅 Bring Forward", waiting: "⛔ Blocked" };
     function attachedCard(a) {
       var tile = el("li", "writing attachment");
@@ -737,17 +707,6 @@
       PROPOSAL_CUE
     );
     jobSection("superseded", "superseded", "Superseded", "Nothing superseded.");
-    // A filing's loose threads have their own view page (ADR 0033, 2026-10-08): its board counts them
-    // and, in plain text, says to ask a session for that page: no page links to another. A pre-filing
-    // board has no view page, so it lists them, the discarded and suggested ones after the open ones.
-    // Either way the count is the open threads'.
-    var threadsPage = (window.WORKBOARD.strip || []).filter(function (v) { return v.kind === "view" && v.name === "Loose Threads"; })[0];
-    if (threadsPage && (data.seeds.length > 0 || data.discardedSeeds.length > 0)) {
-      var pointer = el("p", "cue", "To see them, ask a session to show the " + threadsPage.name + " page.");
-      section("ideas", "Loose Threads", "No loose threads.", [pointer], undefined, data.seeds.length);
-    } else {
-      section("ideas", "Loose Threads", "No loose threads.", data.seeds.map(seedCard).concat(data.discardedSeeds.map(discardedSeedLine)), undefined, data.seeds.length);
-    }
     if (courtFile.length > 0) section("court-file", "Court File", "", courtFile.map(courtFileCard), COURT_FILE_CUE);
   }
 })();

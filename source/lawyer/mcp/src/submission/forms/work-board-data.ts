@@ -6,7 +6,7 @@ import type { MarkerInventory, Proposal } from "./proposal-inventory.js";
 import type { RenderContext } from "./render-vaniac-submissions.js";
 import type { WorkBoardAttachment } from "./work-board-reads.js";
 import type { WorkBoardTicket } from "./work-board-ticket.js";
-import type { DiscardedSeed, WorkBoardSeed } from "./work-board-seeds.js";
+import type { WorkBoardSeed } from "./work-board-seeds.js";
 
 /** A criterion's, and the goal's, state (Goal card design §2.1). Pending never counts as met. */
 export type GoalState = "met" | "unmet" | "pending";
@@ -83,14 +83,11 @@ export interface WorkBoardData {
     writing_states?: { filing_id: number | null; proceeding_id: number; title: string; state_label: string; state_since: string | null; ready_to_retire: boolean }[];
   };
   tickets: WorkBoardTicket[];
-  seeds: WorkBoardSeed[];
+  /** The open loose threads its job cards name (`loose threads:`); no page draws them. */
+  seeds: Omit<WorkBoardSeed, "from_filing">[];
   /** The deleted jobs this section's page draws as struck lines in Completed (schema v54), in id
    * order. Nothing else reads them: the summary and board_card name no deleted job. */
   deleted: { id: number; title: string }[];
-  /** The discarded and suggested loose threads this section's pages draw as lines (schema v75), in id
-   * order: a discarded one struck, a suggested one plain. Nothing else reads them: the summary and
-   * board_card name none. Empty on a database held below v75. */
-  discardedSeeds: Omit<DiscardedSeed, "filing_id">[];
   /** The drafts attached to this board (schema v67, ADR 0042), in id order (fetchAttachments): on a
    * filing's board its own rows, plus, on the proceeding's lowest-id live Writing only, the
    * proceeding's rows with no Writing; on a pre-filing board every row of the proceeding. Empty on a

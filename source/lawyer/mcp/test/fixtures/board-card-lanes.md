@@ -51,5 +51,3 @@
 - Job #13 Serve the August notice to admit · Shelved
 - 🦵 Draft a submission for the order: a reserved fallback order
   key: unserved-petitum:order_sought:2 · item: a reserved fallback order · lane: rejected
-## Loose Threads (1)
-- loose thread 1: "Consider a standing exhibit-numbering convention for future filings in this proceeding." (noticed while reconciling the exhibit list; from Job #4) · unranked · deferred

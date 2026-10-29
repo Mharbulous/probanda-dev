@@ -1,5 +1,6 @@
-// A board's attachments as found on disk (ADR 0042): a client letter's or a reply's file, attached
-// to a Milestone by a board_attachments row that holds only the board and the path (schema v67).
+// A board's attachments as found on disk (ADR 0042): a client letter's or a reply's file, or another
+// party's filed document (schema v81), attached to a Milestone by a board_attachments row that holds
+// only the board and the path (schema v67).
 // The Milestone page and board_card's attached lane both read them here, at the moment they are
 // written or read, so nothing about a file is ever stored.
 //
@@ -83,11 +84,13 @@ export function attachedDrafts(dbPath: string, draftDir: string, section: WorkBo
         .map(({ filing_id, ticket }) => ({ id: ticket.id, title: ticket.title, category: ticket.category, writing: filing_id === null ? null : (writings.get(filing_id) ?? null) })),
     };
     const absent = { ...entry, modified: null, review: null };
-    if (leavesDraftFolder(relative(draftDir, abs))) return { ...absent, state: "outside" };
+    // Another party's filed document is in the court-file folder, so it is confined to the matter, not the draft folder.
+    const base = a.kind === "opposing_filing" ? matterRoot : draftDir;
+    if (leavesDraftFolder(relative(base, abs))) return { ...absent, state: "outside" };
     if (!existsSync(abs)) return { ...absent, state: "missing" };
     try {
       const real = realpathSync.native(abs);
-      if (leavesDraftFolder(relative(realpathSync.native(draftDir), real)) || zoneProblem("read", real)) {
+      if (leavesDraftFolder(relative(realpathSync.native(base), real)) || zoneProblem("read", real)) {
         return { ...absent, state: "outside" };
       }
       const modified = localDate(statSync(abs).mtime);

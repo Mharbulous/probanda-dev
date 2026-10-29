@@ -1,7 +1,6 @@
-// The Loose Threads view page: one `Loose Threads - Milestone <id>.html` per live Writing, written by the
-// view-page registry (../view-pages.ts), listing the open loose threads of the filing's proceeding --
-// the same set board_card's loose_threads lane prints, read by the same loader (fetchOpenSeeds), in
-// the same order (inRankOrder):
+// The Loose Threads page: the matter's one `Loose Threads.html` at the top of its 0. DRAFT folder,
+// written with the Litigation Strategy (../matter-pages-build.ts), listing every proceeding's open
+// loose threads (fetchOpenSeeds; no Milestone draws them) in the shared order (inRankOrder):
 //   ranked   -- by rank, ties by id, each with its group and the one-line reason the ranking gave it
 //               (schema v66).
 //   unranked -- by id: the loose threads captured since the last ranking, and every one on a database
@@ -29,8 +28,7 @@
 // one line saying why, when it does not answer.
 //
 // A human interface generated from the database (ADR 0033): no session reads, greps, parses or
-// screenshots it. Sessions read the ranks and the deferrals through board_card's loose_threads lane,
-// which keeps the long group labels (RANK_GROUP_LABELS).
+// screenshots it. Sessions read the ranks and the deferrals from the seeds table.
 //
 // The page itself is the template set in src/templates/view-pages/ (map #125). loose-threads.css
 // includes view-folder.css itself, because the folder look sits between its header rules and the rest.
@@ -45,7 +43,7 @@ import sharedJs from "../../templates/view-pages/shared.js.js";
 import viewFolderCss from "../../templates/view-pages/view-folder.css.js";
 import viewHeadHtml from "../../templates/view-pages/view-head.html.js";
 import type { ViewPage } from "../view-pages.js";
-import type { FilingRow } from "./query.js";
+import { fetchAllProceedings } from "./query.js";
 import { fetchOpenSeeds, fetchResolvedSeeds, inRankOrder, seedOrigin, withFromFiling, type RankGroup, type ResolvedSeed } from "./render-work-board.js";
 
 /** Each group's short name and colour on this page, in triage's group order. */
@@ -104,20 +102,12 @@ export interface LooseIdeasData {
   api: LooseIdeasApi;
 }
 
-/** The page's data for one filing, from the drafting database, with the listener's port and this
- * page's token read from this device's probanda.json and page-api.secret. */
-export function buildLooseIdeasData(dbPath: string, filing: Pick<FilingRow, "id" | "proceeding_id"> | Pick<FilingRow, "id" | "proceeding_id">[], env: NodeJS.ProcessEnv = process.env): LooseIdeasData {
-  // A merged board's page (ADR 0010): every proceeding on the board, each thread posting its own proceeding's token.
-  const filings = Array.isArray(filing) ? filing : [filing];
-  const proceedings = [...new Set(filings.map((f) => f.proceeding_id))];
+/** The page's data for these proceedings, from the drafting database, with the listener's port and
+ * each proceeding's token read from this device's probanda.json and page-api.secret. */
+export function buildLooseIdeasData(dbPath: string, proceedings: number[], env: NodeJS.ProcessEnv = process.env): LooseIdeasData {
+  // Over several proceedings each thread posts its own proceeding's token.
   const merged = proceedings.length > 1;
-  const seeds = inRankOrder(
-    proceedings.flatMap((p) => {
-      const own = filings.filter((f) => f.proceeding_id === p).map((f) => f.id);
-      // A thread captured on one of the board's own Writings names no other filing.
-      return withFromFiling(dbPath, p, own[0], fetchOpenSeeds(dbPath, p)).map((s) => ({ ...s, from_filing: s.filing_id !== null && own.includes(s.filing_id) ? null : s.from_filing, proceeding_id: p }));
-    })
-  );
+  const seeds = inRankOrder(proceedings.flatMap((p) => withFromFiling(dbPath, p, fetchOpenSeeds(dbPath, p)).map((s) => ({ ...s, proceeding_id: p }))));
   const ideas = seeds.map(
     (s): LooseIdea => ({
       ...(merged ? { proceeding_id: s.proceeding_id } : {}),
@@ -162,9 +152,10 @@ function looseIdeasMeta(data: LooseIdeasData): [string, string][] {
   ];
 }
 
-/** The page's name. A filing's Milestone names it, in plain text, in its Loose Threads section (workboard-shell.ts).
- * Before 2026-10-08 it was "Loose Ideas"; the page write moves an old file to TRASH (matter-page-files.ts OLD_PAGE). */
+/** The page's name. Before 2026-10-08 it was "Loose Ideas", and before 2026-10-29 each Writing had a copy;
+ * the page write moves an old file to TRASH (matter-page-files.ts OLD_PAGE). */
 export const LOOSE_THREADS_PAGE_NAME = "Loose Threads";
+export const LOOSE_THREADS_FILE = `${LOOSE_THREADS_PAGE_NAME}.html`;
 
 // The page's script (loose-threads.js) draws window.VIEW_PAGE.data into .board as folder tabs (All, Ranked, Unranked, Deferred, Resolved)
 // over one panel holding four sections, ranked, unranked, deferred, then resolved; a deferred thread
@@ -183,8 +174,8 @@ export const LOOSE_THREADS_PAGE_NAME = "Loose Threads";
 // thread is resolved.
 // Everything drawn at load uses only element creation, attributes, classList.add and plain
 // properties; measuring and animating happen on a click.
-/** The page's view-page registry entry (../view-pages.ts VIEW_PAGES). */
-export const LOOSE_IDEAS_PAGE: ViewPage = {
+/** The page, over every proceeding in the database. */
+export const LOOSE_IDEAS_PAGE: ViewPage<{ dbPath: string }> = {
   name: LOOSE_THREADS_PAGE_NAME,
   ...templated({
     entry: "loose-threads.html",
@@ -198,6 +189,6 @@ export const LOOSE_IDEAS_PAGE: ViewPage = {
       "loose-threads.js": looseThreadsJs,
     },
   }),
-  data: (ctx) => buildLooseIdeasData(ctx.dbPath, ctx.writings.map((w) => w.filing)),
+  data: (ctx) => buildLooseIdeasData(ctx.dbPath, fetchAllProceedings(ctx.dbPath).map((p) => p.id)),
   metaExtra: looseIdeasMeta,
 };

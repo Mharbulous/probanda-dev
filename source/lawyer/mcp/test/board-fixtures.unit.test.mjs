@@ -9,6 +9,7 @@ const { renderPracticeBoardHtml } = await import("../build/submission/forms/prac
 const { renderMatterBoardHtml } = await import("../build/submission/forms/matter-board-shell.js");
 const { renderWorkBoardHtml } = await import("../build/submission/forms/workboard-shell.js");
 const { VIEW_PAGES, renderViewPageHtml } = await import("../build/submission/view-pages.js");
+const { LOOSE_IDEAS_PAGE } = await import("../build/submission/forms/loose-ideas-page.js");
 const { renderApprovalPage } = await import("../build/housekeeping/page.js");
 const { WORK_BOARD_FIXTURE } = await import("../build/board-fixtures/work-board.js");
 const { LITIGATION_STRATEGY_FIXTURE } = await import("../build/board-fixtures/litigation-strategy.js");
@@ -21,7 +22,7 @@ const { LOOSE_THREADS_FIXTURE } = await import("../build/board-fixtures/loose-th
 const { HOUSEKEEPING_FIXTURE } = await import("../build/housekeeping/fixture.js");
 
 const line = (value) => JSON.stringify(value).replace(/</g, "\\u003c");
-const page = (name) => VIEW_PAGES.find((p) => p.name === name);
+const page = (name) => [...VIEW_PAGES, LOOSE_IDEAS_PAGE].find((p) => p.name === name);
 
 const VIEWS = [
   ["Procedural History", PROCEDURAL_HISTORY_FIXTURE],

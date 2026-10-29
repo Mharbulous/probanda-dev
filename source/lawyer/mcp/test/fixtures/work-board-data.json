@@ -581,12 +581,10 @@
       "rank_group": null,
       "rank_reason": null,
       "rank_job": null,
-      "deferred_at": null,
-      "from_filing": null
+      "deferred_at": null
     }
   ],
   "deleted": [],
-  "discardedSeeds": [],
   "attachments": [],
   "proposals": [
     {

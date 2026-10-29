@@ -5276,10 +5276,94 @@ class TestV80KvStore(unittest.TestCase):
 
     def test_a_fresh_database_holds_the_table(self):
         engine.run({"db_path": str(self.db_path)})
-        self.assertEqual(schema_version(self.db_path), 80)
         con = sqlite3.connect(str(self.db_path))
         self.addCleanup(con.close)
         self.assertEqual(con.execute("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'kv_store'").fetchone(), (1,))
+
+
+class TestV81OpposingFiling(unittest.TestCase):
+    """v81: board_attachments.kind gains 'opposing_filing' (Brahm, 2026-10-29), a rebuild. Rows keep
+    their ids, the guards survive the rebuild, and the table stays revision-exempt."""
+
+    OLD_ROWS = [
+        (1, 1, 1, "0. DRAFT\\2026-10-08 ET Client re costs.md", "client_letter", "2026-10-08"),
+        (2, 1, 1, "0. DRAFT\\2026-10-08 ET Smith re hearing.md", "reply", "2026-10-08"),
+        (3, 2, None, "0. DRAFT\\2026-10-09 ET Client re plan.md", "client_letter", "2026-10-09"),
+    ]
+    OPPOSING = [
+        "COURT FILE\\2026-10-20 RESP1 Application Response FILED.pdf",
+        "COURT FILE\\2026-10-21 RESP2 Application Response FILED.pdf",
+        "COURT FILE\\2026-10-20 AFF1 SmithJ AFFIRMED FILED.pdf",
+        "COURT FILE\\2026-10-20 AFF2 JonesK AFFIRMED FILED.pdf",
+        "COURT FILE\\2026-10-21 AFF3 LeeM AFFIRMED FILED.pdf",
+    ]
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.db_path = Path(self._tmp.name) / "submission.sqlite"
+
+    def _hop(self):
+        self.assertEqual(engine.migrate(str(self.db_path), target_version=80)[-1], (79, 80))
+        con = sqlite3.connect(str(self.db_path))
+        con.executescript(
+            """
+            INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L0000', 'CAN/BC/BCSC'), (2, 'L0001', NULL);
+            INSERT INTO filings (id, proceeding_id, kind, title) VALUES (1, 1, 'notice_of_application', 'Notice of Application');
+            """
+        )
+        con.executemany("INSERT INTO board_attachments VALUES (?, ?, ?, ?, ?, ?)", self.OLD_ROWS)
+        con.commit()
+        self.revision = int(con.execute("SELECT value FROM db_meta WHERE key = 'revision'").fetchone()[0])
+        con.close()
+        self.assertEqual(engine.run({"db_path": str(self.db_path), "target_version": 81})["applied"], [{"from": 80, "to": 81}])
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        return con
+
+    def _opposing_rows(self, con):
+        for n, path in enumerate(self.OPPOSING, start=10):
+            con.execute("INSERT INTO board_attachments VALUES (?, 1, 1, ?, 'opposing_filing', '2026-10-29')", (n, path))
+        con.commit()
+
+    def test_hop_keeps_every_row_and_moves_no_revision(self):
+        con = self._hop()
+        self.assertEqual(schema_version(self.db_path), 81)
+        self.assertEqual(con.execute("SELECT * FROM board_attachments ORDER BY id").fetchall(), self.OLD_ROWS)
+        self.assertEqual(int(con.execute("SELECT value FROM db_meta WHERE key = 'revision'").fetchone()[0]), self.revision)
+        self.assertEqual(con.execute("PRAGMA integrity_check").fetchone(), ("ok",))
+
+    def test_one_row_for_each_of_five_opposing_documents_moves_no_revision(self):
+        con = self._hop()
+        self._opposing_rows(con)
+        self.assertEqual(con.execute("SELECT COUNT(*) FROM board_attachments WHERE kind = 'opposing_filing'").fetchone(), (5,))
+        self.assertEqual(int(con.execute("SELECT value FROM db_meta WHERE key = 'revision'").fetchone()[0]), self.revision)
+
+    def test_other_kinds_are_still_refused_and_a_path_stays_unique(self):
+        con = self._hop()
+        with self.assertRaises(sqlite3.IntegrityError):
+            con.execute("INSERT INTO board_attachments VALUES (20, 1, 1, 'x.md', 'memo', '2026-10-29')")
+        with self.assertRaises(sqlite3.IntegrityError):
+            con.execute("INSERT INTO board_attachments VALUES (21, 1, 1, ?, 'opposing_filing', '2026-10-29')", (self.OLD_ROWS[0][3],))
+
+    def test_the_guards_survive_for_the_new_kind(self):
+        con = self._hop()
+        con.execute("INSERT INTO filings (id, proceeding_id, kind, title, retired_on) VALUES (2, 1, 'notice_of_application', 'Old', '2026-10-01')")
+        with self.assertRaises(sqlite3.IntegrityError):  # a retired Writing has no board
+            con.execute("INSERT INTO board_attachments VALUES (20, 1, 2, 'a.pdf', 'opposing_filing', '2026-10-29')")
+        with self.assertRaises(sqlite3.IntegrityError):  # a Writing of another proceeding
+            con.execute("INSERT INTO board_attachments VALUES (21, 2, 1, 'b.pdf', 'opposing_filing', '2026-10-29')")
+        with self.assertRaises(sqlite3.IntegrityError):  # a proceeding with a Writing has no board of its own
+            con.execute("INSERT INTO board_attachments VALUES (22, 1, NULL, 'c.pdf', 'opposing_filing', '2026-10-29')")
+        with self.assertRaises(sqlite3.IntegrityError):  # a Writing holding an attachment is not retired
+            con.execute("UPDATE filings SET retired_on = '2026-10-29' WHERE id = 1")
+
+    def test_a_fresh_database_holds_the_kind(self):
+        engine.run({"db_path": str(self.db_path)})
+        self.assertEqual(schema_version(self.db_path), 81)
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        self.assertIn("'opposing_filing'", con.execute("SELECT sql FROM sqlite_master WHERE name = 'board_attachments'").fetchone()[0])
 
 
 if __name__ == "__main__":

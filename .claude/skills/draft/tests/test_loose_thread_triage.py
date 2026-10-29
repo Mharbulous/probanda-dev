@@ -23,23 +23,13 @@ def section(text, opening, closing):
 
 
 class LooseThreadTriageTest(unittest.TestCase):
-    """Dispatch with no job offers loose-thread triage on a large backlog."""
+    """Loose-thread triage runs when the practitioner asks to rank or review the threads."""
 
     @classmethod
     def setUpClass(cls):
         cls.text = DISPATCH.read_text(encoding="utf-8")
         cls.procedure = PROCEDURE.read_text(encoding="utf-8")
         cls.triage = TRIAGE.read_text(encoding="utf-8")
-
-    def test_dispatch_offers_triage_at_twenty_or_more(self):
-        choose = paragraph(self.text, "1. **Choose.**")
-        self.assertIn(
-            "When the `live` lane's `## Loose Threads (n)` count is 20 or more, "
-            "add one line offering to rank them on the Loose Threads page "
-            "(`references/loose-thread-triage.md`); "
-            "otherwise wait with no prompt.",
-            choose,
-        )
 
     def test_opening_still_waits_with_no_invitation(self):
         opening = paragraph(self.text, "**Opening.**")
@@ -48,8 +38,7 @@ class LooseThreadTriageTest(unittest.TestCase):
     def test_references_table_names_the_triage_file(self):
         table = self.procedure[self.procedure.index("## 15. References"):]
         self.assertIn(
-            "| Dispatch found no job and the Loose Threads count is 20 or more, "
-            "or the practitioner asks to rank or triage the loose threads (section 14, Dispatch) "
+            "| The practitioner asks to rank, review or triage the loose threads "
             "| `references/loose-thread-triage.md` |",
             table,
         )
@@ -118,7 +107,16 @@ class LooseThreadTriageTest(unittest.TestCase):
 
     def test_a_discard_is_confirmed_as_discarded(self):
         self.assertNotIn("the ids gone", self.triage)
-        self.assertEqual(self.triage.count("confirm-read the lane (the ids discarded, the count)"), 2)
+        self.assertEqual(self.triage.count("confirm-read by Step 1's query (the ids discarded, the count)"), 2)
+
+    def test_step_1_reads_the_open_set_by_one_query(self):
+        step1 = section(self.triage, "**Step 1.", "**Step 2.")
+        self.assertIn("One `drafting_data__query`", step1)
+        self.assertIn("WHERE (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL)) "
+                      "AND discarded_at IS NULL AND suggested_at IS NULL ORDER BY rank IS NULL, rank, id", step1)
+        self.assertNotIn("board_card", self.triage)
+        self.assertIn("`loose_threads_path`", self.triage)
+        self.assertNotIn("view_page_paths", self.triage)
 
     def test_tooling_threads_are_reported_as_observations_never_posted(self):
         box = paragraph(self.triage, "**Tooling threads are reported to Probanda.**")

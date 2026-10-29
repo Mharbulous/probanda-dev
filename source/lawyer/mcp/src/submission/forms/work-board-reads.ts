@@ -106,8 +106,9 @@ export interface FilingRetiredRow {
   retired_on: string | null;
 }
 
-/** A draft that is not a Writing (schema v67, ADR 0042): a client letter's or a reply's file. */
-export type AttachmentKind = "client_letter" | "reply";
+/** A file attached to a Milestone that is not a Writing (schema v67, ADR 0042): a client letter's or a
+ * reply's draft, or another party's filed document in the court-file folder (schema v81). */
+export type AttachmentKind = "client_letter" | "reply" | "opposing_filing";
 
 /** One board_attachments row: the board and the path, nothing else. `path` is in documents.file_path's
  * stored form, relative to the matter root with backslash separators. `filing_id` is null on a row

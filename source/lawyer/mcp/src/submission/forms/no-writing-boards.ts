@@ -4,14 +4,9 @@ import { idleFlagHours } from "../../tools/practice/firm-profile.js";
 import { fetchBoardGoals } from "./board-goals.js";
 import type { FilingRow, ProceedingRow } from "./query.js";
 import { fetchAttachments } from "./work-board-reads.js";
-import type { DiscardedSeed } from "./work-board-seeds.js";
 import type { WorkBoardContext, WorkBoardData } from "./work-board-data.js";
 import { withIdleFlag } from "./ticket-category.js";
 import { buildProceedingBoard } from "./build-proceeding-board.js";
-
-/** A section's discarded and suggested loose threads, as its page draws them. */
-export const discardedSeedLines = (seeds: readonly DiscardedSeed[]): WorkBoardData["discardedSeeds"] =>
-  seeds.map((s) => ({ id: s.id, idea: s.idea, discarded_at: s.discarded_at, suggested_at: s.suggested_at }));
 
 /** The State row of a proceeding with no filing (ADR 0018), shared with its Matter Board card. */
 export function preFilingLabel(proceeding: ProceedingRow): string {
@@ -48,9 +43,8 @@ export function buildJobOnlyBoardData(ctx: WorkBoardContext): WorkBoardData {
       job_only: true,
     },
     tickets: board.tickets.filter((t) => t.filing_id === own).map((t) => withIdleFlag(t.ticket, ctx.rendered, idleHours)),
-    seeds: board.seeds.filter((s) => s.filing_id === own).map((s) => ({ ...s, from_filing: null })),
+    seeds: board.seeds.filter((s) => s.filing_id === own),
     deleted: board.deleted.filter((d) => d.filing_id === own).map((d) => ({ id: d.id, title: d.title })),
-    discardedSeeds: discardedSeedLines(board.discardedSeeds.filter((s) => s.filing_id === own)),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, own),
     proposals: [],
     lapsed_keys: [],
@@ -83,9 +77,8 @@ export function buildPreFilingBoardData(
       ready_to_retire: false,
     },
     tickets: board.tickets.map((t) => withIdleFlag(t.ticket, meta.rendered, idleHours)),
-    seeds: board.seeds.map((s) => ({ ...s, from_filing: null })),
+    seeds: board.seeds,
     deleted: board.deleted.map((d) => ({ id: d.id, title: d.title })),
-    discardedSeeds: discardedSeedLines(board.discardedSeeds),
     attachments: fetchAttachments(dbPath, proceeding.id, null),
     proposals: [],
     lapsed_keys: [],

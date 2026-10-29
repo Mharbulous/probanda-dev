@@ -111,7 +111,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "a job with no filing_id is on every Writing's " +
         "page in its proceeding. The same write puts each view page (ADR 0033, 2026-10-07 amendment) beside its board's " +
         "page, `<page name>.html` in a Writing's folder, and the response carries view_page_paths " +
-        "[{name, filing_id, path}]. The board's entry then carries path, this filing's own page, and file_name its " +
+        "[{name, filing_id, path}] and loose_threads_path (the matter's Loose Threads.html). The board's entry then carries path, this filing's own page, and file_name its " +
         "name; a retired filing has no page and its entry no path. Each page is written atomically " +
         "(temp file, then rename) and only over a file carrying its page's marker: one without it is refused before " +
         "any page is written. A page write moves the old page files this server wrote (a " +
@@ -255,12 +255,10 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "neither does any job on a proceeding_id card, where every job has no Writing. " +
         "Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is " +
         "refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), " +
-        "lanes (any of goals, criteria, live, proposed, completed, rejected, loose_threads, attached, court_file; goal is accepted as the criteria " +
+        "lanes (any of goals, criteria, live, proposed, completed, rejected, attached, court_file; goal is accepted as the criteria " +
         "lane's former name; attached needs draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs " +
-        "draft_dir and filing_id), key (a Proposal key) or loose_threads_from_jobs (job " +
-        "ids: the loose_threads lane with only the loose threads those jobs surfaced, under `## Loose Threads (k of n from Job #N)`). " +
-        "A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, an empty " +
-        "loose_threads_from_jobs, or no selector at all is an " +
+        "draft_dir and filing_id) or key (a Proposal key). " +
+        "A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, or no selector at all is an " +
         "error. The section is built as the matter pages build it, from the inventory the filing's last render " +
         "saved and the current job and shelving rows, so it reads what the session's latest render read. " +
         "Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this " +
@@ -294,19 +292,17 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, " +
         "`idle …` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the " +
         "day its work may start and never a deadline), `dispatch choice: …` after Ready, " +
-        "the counts of Completed and Shelved between Blocked and Superseded, then the counts of Loose Threads and " +
+        "the counts of Completed and Shelved between Blocked and Superseded, then the count of " +
         "Proposed (a filing's only), then `🧹 lapsed keys: …` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` " +
         "and `  key: … · item: … · lane: …`, then, on a note-up of a statute, regulation or rule, `  step <n>: " +
         "<text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; " +
         "rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved " +
-        "Proposal's lines; loose_threads, `## Loose Threads (n)` and each `- loose thread <id>: \"<idea>\" (<surfaced_by>[; " +
-        "from …])` line, the ranked by rank then id, then the unranked by id (loose_threads_from_jobs the same), each " +
-        "ending ` · rank <N> · <group label>[ · job: \"<job description>\"] · <reason>` or ` · unranked`; attached, `## Attached (n)` and each draft " +
-        "attached to the board (a client letter's or a reply's file, ADR 0042) as `- attachment <id> · <registry code, " +
-        "else client letter|reply> · <stored path>`, then ` · code check failed (<why>)` when the name gate could not run, " +
+        "Proposal's lines; attached, `## Attached (n)` and each draft " +
+        "attached to the board (a client letter's or a reply's file, ADR 0042, or another party's filed document) as `- attachment <id> · <registry code, " +
+        "else client letter|reply|opposing filing> · <stored path>`, then ` · code check failed (<why>)` when the name gate could not run, " +
         "then ` · no Writing: shown on this proceeding's lowest-id " +
         "live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` · missing`, " +
-        "` · not in the draft folder`, ` · unreadable (<error code>)`, or ` · modified <YYYY-MM-DD>` and on a client letter " +
+        "` · not in the draft folder` (the matter folder, for another party's document), ` · unreadable (<error code>)`, or ` · modified <YYYY-MM-DD>` and on a client letter " +
         "` · review: <its first line after \"Counsel's review: \">` (`no review line` when none), the rest of that file " +
         "never read, then ` · pending: #<id>, …` (the proceeding's Ready, In Progress, Bring Forward and Blocked jobs whose " +
         "scope names `board_attachments:<id>`) or ` · pending: none`; court_file, `## Court File (n)` and each affidavit " +
@@ -328,9 +324,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
           client_no: { type: "string" },
           matter_no: { type: "string" },
           jobs: { type: "array", items: { type: "number" } },
-          lanes: { type: "array", items: { type: "string", enum: ["goals", "criteria", "live", "goal", "proposed", "completed", "rejected", "loose_threads", "attached", "court_file"] } },
+          lanes: { type: "array", items: { type: "string", enum: ["goals", "criteria", "live", "goal", "proposed", "completed", "rejected", "attached", "court_file"] } },
           key: { type: "string" },
-          loose_threads_from_jobs: { type: "array", items: { type: "number" } },
           draft_dir: { type: "string" },
         },
         required: ["db_path"],
@@ -387,7 +382,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "page in its proceeding. milestone_paths lists them, [{filing_id, proceeding_id, path}] in page order, " +
         "filing_id null on a proceeding's page; bootstrap returns no milestone_path. Beside them it writes each view " +
         "page (ADR 0033, 2026-10-07 amendment), `<page name>.html` beside its board's page, and returns " +
-        "view_page_paths [{name, filing_id, path}], null without draft_dir. A session never reads a page " +
+        "view_page_paths [{name, filing_id, path}], and at the folder's top Loose Threads.html, every proceeding's " +
+        "loose threads, as loose_threads_path; both null without draft_dir. A session never reads a page " +
         "(shared/html-pages.md): the board's content comes from a render naming Work_board. On success " +
         "pre_filing_proceedings lists those proceedings, [{ proceeding_id, forum }] with forum null while not yet " +
         "chosen -- render one with drafting_forms__render's proceeding_id. " +
@@ -447,7 +443,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "(board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, " +
         "filing_retired) with matter_board_path, milestone_path (the opened filing's or proceeding's own Milestone " +
         "page; absent for a retired filing, which has none), milestone_paths (every Milestone page, as bootstrap " +
-        "describes) and view_page_paths (every view page, as bootstrap describes; none is presented at the fast " +
+        "describes), view_page_paths and loose_threads_path (as bootstrap describes; no page is presented at the fast " +
         "open), so no " +
         "separate render is needed to open a session; with nothing to open, or when that render refused (open_refused " +
         "with its code and message), the matter's pages are still written, milestone_path is the page of the filing " +

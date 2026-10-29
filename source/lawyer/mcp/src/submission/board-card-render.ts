@@ -1,10 +1,10 @@
-// board_card's lanes as text: the goals, criteria, loose threads, attached and court file lanes, and
+// board_card's lanes as text: the goals, criteria, attached and court file lanes, and
 // the card that joins them with board-summary.ts's live lane (board-card.ts is the entry point).
 
 import { collapsedText, derivedOf, generalTail, jobCardLines, proposalLines } from "./board-job-text.js";
 import { criterionLine, jobsIn, proposedHeading, proposedOf, renderLiveLanes, shelvedHeading, shelvedProposalsOf } from "./board-summary.js";
 import type { CourtFileAffidavit } from "./court-file-affidavits.js";
-import { inRankOrder, RANK_GROUP_LABELS, seedOrigin, type AttachedDraft, type Category, type WorkBoardData } from "./forms/render-work-board.js";
+import { type AttachedDraft, type Category, type WorkBoardData } from "./forms/render-work-board.js";
 
 const LIVE: ReadonlySet<Category> = new Set(["ready", "wip", "bring_forward", "waiting"]);
 
@@ -28,24 +28,13 @@ function goalLines(section: WorkBoardData): string[] {
   return [`🎯 Completion criteria: ${section.goal.state}${section.goal.text === null ? "" : ` — ${section.goal.text}`}`, ...criteria.map((c) => criterionLine(c, criteria, true))];
 }
 
-/** A loose thread's lane line, ending ` · rank N · <group label>[ · job: "<job description>"] · <reason>` when ranked (schema v66;
- * the job description v70, absent on a loose thread ranked before it), ` · unranked` when not, then ` · deferred` when the
- * practitioner deferred it from the Loose Threads page (schema v68). The idea stays verbatim either way. */
-function seedLine(s: WorkBoardData["seeds"][number]): string {
-  const from = seedOrigin(s);
-  const job = s.rank_job === null ? null : `job: ${JSON.stringify(s.rank_job)}`;
-  const ranking = s.rank === null ? ["unranked"] : [`rank ${s.rank}`, s.rank_group === null ? null : RANK_GROUP_LABELS[s.rank_group], job, s.rank_reason];
-  if (s.deferred_at !== null) ranking.push("deferred");
-  return `- loose thread ${s.id}: ${JSON.stringify(s.idea)} (${[s.surfaced_by, ...(from === null ? [] : [from])].join("; ")})${ranking.map((part) => (part === null ? "" : ` · ${part}`)).join("")}`;
-}
-
 /** `goal` is the criteria lane's former name, still accepted for it; `goals` is the statement of goals. */
-export type CardLane = "goals" | "criteria" | "live" | "goal" | "proposed" | "completed" | "rejected" | "loose_threads" | "attached" | "court_file";
+export type CardLane = "goals" | "criteria" | "live" | "goal" | "proposed" | "completed" | "rejected" | "attached" | "court_file";
 
 /** board_card's lanes, in the order a card prints them. */
-export const CARD_LANES: readonly CardLane[] = ["goals", "criteria", "live", "proposed", "completed", "rejected", "loose_threads", "attached", "court_file"];
+export const CARD_LANES: readonly CardLane[] = ["goals", "criteria", "live", "proposed", "completed", "rejected", "attached", "court_file"];
 
-const ATTACHMENT_KIND_LABELS: Record<AttachedDraft["kind"], string> = { client_letter: "client letter", reply: "reply" };
+const ATTACHMENT_KIND_LABELS: Record<AttachedDraft["kind"], string> = { client_letter: "client letter", reply: "reply", opposing_filing: "opposing filing" };
 
 /** The attached lane (schema v67, ADR 0042), the same fields as the page's cards: each draft attached
  * to the board, in id order, as `- attachment <id> · <code, or kind> · <stored path>`, then
@@ -88,16 +77,6 @@ function courtFileLines(rows: CourtFileAffidavit[]): string[] {
   ];
 }
 
-/** The loose threads lane: every loose thread, or with `fromJobs` only those whose origin job is one of them,
- * the heading then giving the matching count of the lane's whole count and the jobs asked for. Both in
- * the shared rank order (inRankOrder). */
-function ideasLines(section: WorkBoardData, fromJobs: number[] | undefined): string[] {
-  const ordered = inRankOrder(section.seeds);
-  if (fromJobs === undefined) return [`## Loose Threads (${section.seeds.length})`, ...ordered.map(seedLine)];
-  const seeds = ordered.filter((s) => s.origin_ticket_id !== null && fromJobs.includes(s.origin_ticket_id));
-  return [`## Loose Threads (${seeds.length} of ${section.seeds.length} from ${fromJobs.map((id) => `Job #${id}`).join(", ")})`, ...seeds.map(seedLine)];
-}
-
 /** The selected parts of a section in a fixed grammar: each job asked for in board order, then each
  * lane asked for in CARD_LANES order, then the key lookup. `attached` is the section's attachments
  * as found on disk, read only when the attached lane is asked for. */
@@ -106,7 +85,6 @@ export function renderBoardCard(
   jobs: number[],
   lanes: CardLane[],
   key: string | undefined,
-  seedsFromJobs: number[] | undefined,
   attached: AttachedDraft[] = [],
   courtFile: CourtFileAffidavit[] = []
 ): string {
@@ -114,7 +92,7 @@ export function renderBoardCard(
   const lines: string[] = [];
   for (const t of section.tickets) if (jobs.includes(t.id)) lines.push(...jobCardLines(t, derived, section.seeds, section.meta.rendered));
   for (const lane of CARD_LANES) {
-    if (!lanes.includes(lane) && !(lane === "loose_threads" && seedsFromJobs !== undefined)) continue;
+    if (!lanes.includes(lane)) continue;
     // A Milestone with no Writing has no Proposals and no court file: those lanes print nothing, as its criteria lane does.
     if (section.meta.job_only && (lane === "proposed" || lane === "court_file")) continue;
     if (lane === "goals") lines.push(...goalsLines(section));
@@ -123,7 +101,6 @@ export function renderBoardCard(
     if (lane === "proposed") lines.push(proposedHeading(section), ...proposedOf(section).flatMap(proposalLines));
     if (lane === "completed") lines.push(`## Completed (${jobsIn(section, "completed").length})`, ...jobsIn(section, "completed").map((t) => collapsedText(t) + generalTail(t)));
     if (lane === "rejected") lines.push(shelvedHeading(section), ...jobsIn(section, "rejected").map((t) => collapsedText(t) + generalTail(t)), ...shelvedProposalsOf(section).flatMap(proposalLines));
-    if (lane === "loose_threads") lines.push(...ideasLines(section, seedsFromJobs));
     if (lane === "attached") lines.push(...attachedLines(attached));
     if (lane === "court_file") lines.push(...courtFileLines(courtFile));
   }

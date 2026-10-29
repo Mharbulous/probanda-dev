@@ -81,14 +81,12 @@ Then the Opening (section 14). An empty board with no job of any status and no c
 <!-- atom id=work.ref.nightly-launch ops=nightly -->
 | The `draft-nightly` scheduled task fires | `references/nightly-launch.md` |
 <!-- atom id=work.ref.legacy ops=legacy -->
-| Session entry reported a hosted board or a plugin-predates condition (it opened a board but `opened` has no `board_summary`, or it returns no `milestone_paths` field at all), or a re-entered Writing shows loose-thread markers (the 🧵 marker on the mockup, not the Milestone's Loose Threads list) | `references/legacy.md` |
+| Session entry reported a hosted board or a plugin-predates condition (it opened a board but `opened` has no `board_summary`, or it returns no `milestone_paths` field at all), or a re-entered Writing shows loose-thread markers (the 🧵 marker on the mockup, not the Loose Threads page) | `references/legacy.md` |
 <!-- atom id=work.ref.opening-routes ops=route_reply -->
 | The practitioner typed an instruction with the invocation or replies after the opening (section 14, Opening) | `references/opening-routes.md` |
 <!-- atom id=work.ref.opening ops=proposals -->
 | An attended Opening runs the lapse cleanup or the intake, a session reads a job's `keys:` line or the Proposed and Shelved lanes, or the fast open's closing line reports `ingest_coverage` (sections 7 and 14) | `references/opening.md` |
 <!-- atom id=work.ref.loose-thread-triage ops=triage -->
-| Dispatch found no job and the Loose Threads count is 20 or more, or the practitioner asks to rank or triage the loose threads (section 14, Dispatch) | `references/loose-thread-triage.md` |
-<!-- atom id=work.ref.loose-threads-work ops=route_reply,execute -->
-| The practitioner says to work on the loose threads, or the held job's intent is to work them ("Working the threads without a pick") | `references/loose-thread-triage.md` |
+| The practitioner asks to rank, review or triage the loose threads | `references/loose-thread-triage.md` |
 <!-- atom id=work.ref.suggestion-box ops=triage -->
 | Loose-thread triage reaches the open `tooling` threads (section 14, Dispatch) | `references/suggestion-box.md` |

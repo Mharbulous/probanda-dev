@@ -10,7 +10,7 @@ import { seededDbFixture, seedBcscConsentOrder, seedBcscDefaultJudgment, assertM
 import { knowledgeFixture } from "./helpers/knowledge-fixture.mjs";
 const { freshSubmissionDb, seedSql } = await import("./helpers/template-db.mjs");
 const { assertFiledFaceDocumentsClean } = await import("./helpers/filed-face-scan.mjs");
-const { submissionDataExecute } = await import("../build/submission/backend.js");
+const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsEmitForm32, submissionFormsEmitForm33 } = await import("../build/submission/forms.js");
 const { MOCKUP_ONLY_TAG } = await import("../build/submission/forms/markers.js");
 
@@ -589,6 +589,43 @@ test("Notice of Application filed face drops a crossed-out order entirely", asyn
     const companion = result.documents.find((d) => d.document_type === "Written_arguments");
     assert.ok(companion, "expected the Written Arguments companion in the filed-mode output");
     assertMatchesGolden("written-argument-companion-filed", replaceStamp(companion.markdown));
+  } finally {
+    f.cleanup();
+  }
+});
+
+// Another party's filed documents are attached to a Milestone as board_attachments rows of kind
+// 'opposing_filing' (schema v81). No renderer reads that table, so such a row reaches no face of our
+// own Notice of Application: Part 4, the material list and the filed face stay byte for byte as they
+// were, and attaching moves no revision.
+test("Notice of Application renders the same, mockup and filed, with another party's filings attached to its Milestone", async () => {
+  const f = seededDbFixture();
+  try {
+    await freshSubmissionDb(f.dbPath);
+    await seedBcscDefaultJudgment(f.dbPath);
+    await submissionDataExecute(
+      f.dbPath,
+      `
+      INSERT INTO hearing_details (filing_id, hearing_date, hearing_time, time_estimate_minutes, associate_judge)
+        VALUES (1, '2026-09-01', '9:45 am', 45, 1);
+      UPDATE filings SET kind = 'notice_of_application', subkind = NULL, title = 'Notice of Application' WHERE id = 1;
+      `.trim()
+    );
+    const client = { clientName: "Halloway", clientNo: "3120", matterNo: "L9002" };
+    const faces = () => ["mockup", "filed"].map((mode) => submissionFormsRender(f.dbPath, 1, client, mode).documents.map((d) => (d.markdown === undefined ? JSON.stringify(d) : replaceStamp(d.markdown))));
+    const revision = () => submissionDataQuery(f.dbPath, "SELECT value FROM db_meta WHERE key = 'revision'", []).rows[0].value;
+    const before = faces();
+    const revisionBefore = revision();
+
+    const names = ["RESP1 Application Response", "RESP2 Application Response", "AFF1 SmithJ", "AFF2 JonesK", "AFF3 LeeM"];
+    await submissionDataExecute(
+      f.dbPath,
+      names.map((n, i) => `INSERT INTO board_attachments (proceeding_id, filing_id, path, kind, attached_on) VALUES (1, 1, 'COURT FILE\\2026-10-2${i} ${n} FILED.pdf', 'opposing_filing', '2026-10-29');`).join("\n")
+    );
+
+    assert.deepEqual(faces(), before, "an attached opposing filing changes no face, Part 4 and the material list included");
+    assert.equal(revision(), revisionBefore, "attaching moves no revision");
+    for (const n of names) assert.ok(!before.flat().join("\n").includes(n), `${n} is on no face`);
   } finally {
     f.cleanup();
   }

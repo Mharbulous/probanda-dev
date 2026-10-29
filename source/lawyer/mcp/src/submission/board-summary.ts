@@ -14,7 +14,7 @@ import type { MatterTodos } from "./matter-todos.js";
 const CRITERION_GLYPH: Record<GoalState, string> = { met: "✅", unmet: "❌", pending: "⏳" };
 
 /** The lanes whose jobs board_card's `live` lane lists, in its order. Completed's and Shelved's
- * counts print before Superseded, and Loose Threads' and Proposed's counts after it. */
+ * counts print before Superseded, and Proposed's count after it. */
 const LANES: [Category, string][] = [
   ["ready", "Ready"],
   ["wip", "In Progress"],
@@ -144,7 +144,7 @@ export function renderBoardSummary(section: WorkBoardData, client: ClientContext
  * to the section's Rendered minute, then `idle past <N> h` past the firm's idle_flag_hours, and
  * `BF <date>` on a Bring Forward job, a lane printed between In Progress and Blocked. Ready
  * closes with `dispatch choice:`. Completed and Shelved print their counts alone between Blocked and
- * Superseded, Loose Threads and Proposed theirs after Superseded, a pre-filing section has no
+ * Superseded, Proposed its after Superseded, a pre-filing section has no
  * Proposed, and `🧹 lapsed keys:` closes the lane when any.
  */
 export function renderLiveLanes(section: WorkBoardData): string[] {
@@ -160,7 +160,6 @@ export function renderLiveLanes(section: WorkBoardData): string[] {
       lines.push(`dispatch choice: ${choice === undefined ? "none" : `#${choice.id} ${choice.title}`}`);
     }
   }
-  lines.push(`## Loose Threads (${section.seeds.length})`);
   if (m.filing_id !== null && !m.job_only) lines.push(proposedHeading(section));
   if (section.lapsed_keys.length > 0) lines.push(`🧹 lapsed keys: ${section.lapsed_keys.join(", ")}`);
   return lines;

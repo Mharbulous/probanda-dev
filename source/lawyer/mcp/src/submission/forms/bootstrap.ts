@@ -210,6 +210,7 @@ export function submissionFormsBootstrap(
     matter_board_path: pages?.matter_board_path ?? null,
     milestone_paths: pages?.milestone_paths ?? null,
     view_page_paths: pages?.view_page_paths ?? null,
+    loose_threads_path: pages?.loose_threads_path ?? null,
     ...(pages?.moved_to_trash ? { moved_to_trash: pages.moved_to_trash } : {}),
     ...(pages?.trash_skipped ? { trash_skipped: pages.trash_skipped } : {}),
     ...(moved.length > 0 ? { mockups_moved: moved } : {}),

@@ -594,12 +594,10 @@ export const MILESTONE_FIXTURE: MatterMilestoneData = {
           "rank_group": null,
           "rank_reason": null,
           "rank_job": null,
-          "deferred_at": null,
-          "from_filing": null
+          "deferred_at": null
         }
       ],
       "deleted": [],
-      "discardedSeeds": [],
       "attachments": [],
       "proposals": [
         {
@@ -978,13 +976,6 @@ export const MILESTONE_FIXTURE: MatterMilestoneData = {
       "viewed": false,
       "name": "Arguments",
       "file": "Arguments - Milestone 1.html"
-    },
-    {
-      "kind": "view",
-      "key": "view:Loose Threads",
-      "viewed": false,
-      "name": "Loose Threads",
-      "file": "Loose Threads - Milestone 1.html"
     }
   ],
   "attached": []

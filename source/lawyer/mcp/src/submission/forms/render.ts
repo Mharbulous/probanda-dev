@@ -192,7 +192,8 @@ export function submissionFormsRender(
       ...(section.meta.ingest_inputs ? { ingest_inputs: section.meta.ingest_inputs } : {}),
     };
   };
-  const trashReport = (written: ReturnType<typeof writePages>) => ({
+  const pagesReport = (written: ReturnType<typeof writePages>) => ({
+    ...(written ? { view_page_paths: written.pages.view_page_paths, loose_threads_path: written.pages.loose_threads_path } : {}),
     ...(written?.pages.moved_to_trash ? { moved_to_trash: written.pages.moved_to_trash } : {}),
     ...(written?.pages.trash_skipped ? { trash_skipped: written.pages.trash_skipped } : {}),
   });
@@ -211,8 +212,7 @@ export function submissionFormsRender(
       revision,
       milestone_only: true,
       documents: [boardDocument(section, written, true)],
-      ...(written ? { view_page_paths: written.pages.view_page_paths } : {}),
-      ...trashReport(written),
+      ...pagesReport(written),
       ...movedReport,
       ...(filing.retired_on
         ? {
@@ -243,8 +243,7 @@ export function submissionFormsRender(
       filing_id: filingId,
       filing_retired: true,
       documents: [boardDocument(section, written, true)],
-      ...(written ? { view_page_paths: written.pages.view_page_paths } : {}),
-      ...trashReport(written),
+      ...pagesReport(written),
       ...movedReport,
       note:
         `"${filing.title}" was retired on ${filing.retired_on}` +
@@ -324,8 +323,7 @@ export function submissionFormsRender(
       const projected = listDocuments(documents, documentTypes);
       const written = writePages(section);
       const board = boardDocument(section, written, documentTypes?.includes("Work_board") ?? false);
-      const views = written ? { view_page_paths: written.pages.view_page_paths } : {};
-      return { filing_id: filingId, revision, documents: [...projected, board].map(withholdHearing), ...views, ...trashReport(written), ...tail, timings: withTotal(timings, started) };
+      return { filing_id: filingId, revision, documents: [...projected, board].map(withholdHearing), ...pagesReport(written), ...tail, timings: withTotal(timings, started) };
     }
     const inline: RenderedDocument[] = [...documents, boardDocument(section, undefined, documentTypes?.includes("Work_board") ?? false)];
     return { filing_id: filingId, revision, documents: selectDocuments(inline, documentTypes).map(withholdHearing), ...tail, timings: withTotal(timings, started) };

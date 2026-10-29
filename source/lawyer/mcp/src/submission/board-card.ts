@@ -21,7 +21,6 @@ export interface BoardCardArgs {
   jobs?: number[];
   lanes?: CardLane[];
   key?: string;
-  loose_threads_from_jobs?: number[];
   /** The matter's `0. DRAFT*` folder, which the attached lane needs to find each attachment on disk,
    * and the court file lane needs for its parent, the matter folder. */
   draft_dir?: string;
@@ -70,11 +69,8 @@ export function submissionFormsBoardCard(
   }
   const jobs = args.jobs ?? [];
   const lanes = (args.lanes ?? []).map((lane) => (lane === "goal" ? "criteria" : lane));
-  if (jobs.length === 0 && lanes.length === 0 && args.key === undefined && args.loose_threads_from_jobs === undefined) {
-    throw new ValidationError("drafting_forms__board_card needs at least one of jobs, lanes, key and loose_threads_from_jobs");
-  }
-  if (args.loose_threads_from_jobs !== undefined && args.loose_threads_from_jobs.length === 0) {
-    throw new ValidationError("drafting_forms__board_card.loose_threads_from_jobs: name at least one job id");
+  if (jobs.length === 0 && lanes.length === 0 && args.key === undefined) {
+    throw new ValidationError("drafting_forms__board_card needs at least one of jobs, lanes and key");
   }
   const unknownLanes = lanes.filter((lane) => !CARD_LANES.includes(lane));
   if (unknownLanes.length > 0) {
@@ -124,7 +120,6 @@ export function submissionFormsBoardCard(
       jobs,
       lanes,
       args.key,
-      args.loose_threads_from_jobs,
       lanes.includes("attached") && draftDir !== undefined ? withCodes(attachedDrafts(args.db_path, draftDir, section)) : [],
       lanes.includes("court_file") && draftDir !== undefined && args.filing_id !== undefined
         ? (section.meta.writing_states?.map((w) => w.filing_id) ?? [args.filing_id])

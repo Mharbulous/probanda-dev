@@ -149,7 +149,7 @@ export interface OpenSessionResult extends BootstrapResult {
 
 type Opening = Pick<
   OpenSessionResult,
-  "opened" | "open_refused" | "matter_board_path" | "milestone_path" | "milestone_paths" | "view_page_paths" | "moved_to_trash" | "trash_skipped"
+  "opened" | "open_refused" | "matter_board_path" | "milestone_path" | "milestone_paths" | "view_page_paths" | "loose_threads_path" | "moved_to_trash" | "trash_skipped"
 >;
 
 function trashReport(written: Pick<PagesWritten, "moved_to_trash" | "trash_skipped">): Pick<Opening, "moved_to_trash" | "trash_skipped"> {
@@ -203,7 +203,7 @@ function openBoard(
         },
         matter_board_path: join(draftDir, MATTER_BOARD_FILE),
         milestone_path: board.path,
-        ...(written.pages ? { milestone_paths: written.pages.milestone_paths, view_page_paths: written.pages.view_page_paths } : {}),
+        ...(written.pages ? { milestone_paths: written.pages.milestone_paths, view_page_paths: written.pages.view_page_paths, loose_threads_path: written.pages.loose_threads_path } : {}),
         ...trashReport(rendered),
       };
     }
@@ -216,6 +216,7 @@ function openBoard(
         milestone_path: rendered.milestone_path,
         milestone_paths: rendered.milestone_paths,
         view_page_paths: rendered.view_page_paths,
+        loose_threads_path: rendered.loose_threads_path,
         ...trashReport(rendered),
       };
     }
@@ -232,6 +233,7 @@ function openBoard(
     milestone_path: pagePathFor(pages, { filing_id: target ?? null, proceeding_id: proceedingId }) ?? null,
     milestone_paths: pages.milestone_paths,
     view_page_paths: pages.view_page_paths,
+    loose_threads_path: pages.loose_threads_path,
     ...trashReport(pages),
   };
 }

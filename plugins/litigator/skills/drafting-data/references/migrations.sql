@@ -5061,3 +5061,59 @@ UPDATE db_meta SET value = '79' WHERE key = 'schema_version';
 CREATE TABLE kv_store (namespace TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (namespace, key));
 
 UPDATE db_meta SET value = '80' WHERE key = 'schema_version';
+
+-- MIGRATE 80 -> 81
+-- A Milestone shows another party's filed material, an application response or an affidavit
+-- it relies on, as an attachment of kind 'opposing_filing' (Brahm, 2026-10-29). The row is
+-- the board and the path in the court-file folder, as for the other kinds, and links nothing
+-- in filing_documents, so it prints on no filed face.
+--
+-- A CHECK cannot be widened in place, so a rebuild. guard_filings_retire_attached names
+-- board_attachments, so it is dropped first and recreated last, or the rename fails. Rows
+-- keep their ids. The table stays revision-exempt: the hop writes no revision.
+DROP TRIGGER guard_filings_retire_attached;
+ALTER TABLE board_attachments RENAME TO board_attachments_v80;
+CREATE TABLE board_attachments (
+    id            INTEGER PRIMARY KEY,
+    proceeding_id INTEGER NOT NULL REFERENCES proceedings(id),
+    filing_id     INTEGER REFERENCES filings(id),
+    path          TEXT NOT NULL UNIQUE,
+    kind          TEXT NOT NULL CHECK (kind IN ('client_letter','reply','opposing_filing')),
+    attached_on   TEXT NOT NULL
+);
+INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on)
+SELECT id, proceeding_id, filing_id, path, kind, attached_on FROM board_attachments_v80;
+DROP TABLE board_attachments_v80;
+
+CREATE TRIGGER guard_board_attachments_live_ins BEFORE INSERT ON board_attachments
+WHEN NEW.filing_id IS NOT NULL AND (SELECT retired_on FROM filings WHERE id = NEW.filing_id) IS NOT NULL
+BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Milestone: attach the draft to a live Writing''s board (ADR 0042)'); END;
+
+CREATE TRIGGER guard_board_attachments_live_upd BEFORE UPDATE OF proceeding_id, filing_id ON board_attachments
+WHEN NEW.filing_id IS NOT NULL AND (SELECT retired_on FROM filings WHERE id = NEW.filing_id) IS NOT NULL
+BEGIN SELECT RAISE(ABORT, 'a retired Writing has no Milestone: attach the draft to a live Writing''s board (ADR 0042)'); END;
+
+CREATE TRIGGER guard_board_attachments_proceeding_ins BEFORE INSERT ON board_attachments
+WHEN NEW.filing_id IS NOT NULL AND (SELECT proceeding_id FROM filings WHERE id = NEW.filing_id) IS NOT NEW.proceeding_id
+BEGIN SELECT RAISE(ABORT, 'an attachment names a Writing of its own proceeding (ADR 0042)'); END;
+
+CREATE TRIGGER guard_board_attachments_proceeding_upd BEFORE UPDATE OF proceeding_id, filing_id ON board_attachments
+WHEN NEW.filing_id IS NOT NULL AND (SELECT proceeding_id FROM filings WHERE id = NEW.filing_id) IS NOT NEW.proceeding_id
+BEGIN SELECT RAISE(ABORT, 'an attachment names a Writing of its own proceeding (ADR 0042)'); END;
+
+CREATE TRIGGER guard_board_attachments_pre_filing_ins BEFORE INSERT ON board_attachments
+WHEN NEW.filing_id IS NULL AND EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id)
+BEGIN SELECT RAISE(ABORT, 'a proceeding with a Writing has no board of its own: attach the draft to a live Writing''s board (ADR 0042)'); END;
+
+CREATE TRIGGER guard_board_attachments_pre_filing_upd BEFORE UPDATE OF proceeding_id, filing_id ON board_attachments
+WHEN NEW.filing_id IS NULL AND EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id)
+BEGIN SELECT RAISE(ABORT, 'a proceeding with a Writing has no board of its own: attach the draft to a live Writing''s board (ADR 0042)'); END;
+
+CREATE TRIGGER guard_filings_retire_attached BEFORE UPDATE OF retired_on ON filings
+WHEN OLD.retired_on IS NULL AND NEW.retired_on IS NOT NULL
+ AND (EXISTS (SELECT 1 FROM board_attachments WHERE filing_id = NEW.id)
+      OR (EXISTS (SELECT 1 FROM board_attachments WHERE filing_id IS NULL AND proceeding_id = NEW.proceeding_id)
+          AND NOT EXISTS (SELECT 1 FROM filings WHERE proceeding_id = NEW.proceeding_id AND id <> NEW.id AND retired_on IS NULL)))
+BEGIN SELECT RAISE(ABORT, 'a draft is attached to this Writing''s Milestone: move or detach each attachment before retiring it (ADR 0042)'); END;
+
+UPDATE db_meta SET value = '81' WHERE key = 'schema_version';

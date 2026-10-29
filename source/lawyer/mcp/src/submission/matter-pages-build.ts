@@ -10,6 +10,7 @@ import { docItemKey, orderStrip, readViewed, viewItemKey } from "./forms/board-v
 import { combineSections } from "./forms/combined-board.js";
 import { courtFileAffidavits } from "./court-file-affidavits.js";
 import { type ClientContext, rankFilings, type Ranked, readSchemaVersion } from "./forms.js";
+import { LOOSE_IDEAS_PAGE, LOOSE_THREADS_FILE } from "./forms/loose-ideas-page.js";
 import { MATTER_BOARD_FILE, renderMatterBoardHtml } from "./forms/matter-board-shell.js";
 import { fetchPreFilingProceedings, isJobOnlyBoard } from "./forms/query.js";
 import { buildMatterBoardData } from "./forms/render-matter-board.js";
@@ -39,17 +40,18 @@ export interface MatterPage {
 }
 
 export interface MatterPagesBuilt {
-  /** The pages a write puts in the draft folder, in write order: the Litigation Strategy, the
-   * Milestone pages, then the view pages. */
+  /** The pages a write puts in the draft folder, in write order: the Litigation Strategy, the Loose
+   * Threads page, the Milestone pages, then the view pages. */
   pages: MatterPage[];
-  /** Every current Milestone and view page's file name, built by this call or not: what the sweep keeps. */
+  /** Every current Loose Threads, Milestone and view page's file name, built by this call or not: what the sweep keeps. */
   keep: string[];
   /** Every current page's path, built by this call or not. */
-  paths: Pick<PagesWritten, "milestone_paths" | "matter_board_path" | "view_page_paths">;
+  paths: Pick<PagesWritten, "milestone_paths" | "matter_board_path" | "loose_threads_path" | "view_page_paths">;
 }
 
 /**
- * Builds `<draftDir>\Litigation Strategy.html` and one Milestone page per live filing and per
+ * Builds `<draftDir>\Litigation Strategy.html`, `<draftDir>\Loose Threads.html` (every proceeding's
+ * open loose threads) and one Milestone page per live filing and per
  * pre-filing proceeding, each holding that one section (ADR 0033, 2026-10-05 amendment), and each live
  * filing's view pages (2026-10-07 amendment), from database state. Writes nothing: writeMatterPages
  * guards, sweeps and writes, and a preview renders the same pages without them.
@@ -73,8 +75,8 @@ export function buildMatterPages(
   dates: MatterDates,
   reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number } = {},
   /** A preview's pages in place of the boards' own (src/pages/preview.ts): the composed Litigation
-   * Strategy and Milestone templates, and whole view pages by name. Omitted, every page is the board's. */
-  templates: { matterBoard?: ComposedTemplate; milestone?: ComposedTemplate; views?: Readonly<Record<string, ViewPage>> } = {}
+   * Strategy and Milestone templates, whole view pages by name, and the Loose Threads page. Omitted, every page is the board's. */
+  templates: { matterBoard?: ComposedTemplate; milestone?: ComposedTemplate; views?: Readonly<Record<string, ViewPage>>; threads?: ViewPage<{ dbPath: string }> } = {}
 ): MatterPagesBuilt {
   const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
   const preFiling = fetchPreFilingProceedings(dbPath);
@@ -157,13 +159,16 @@ export function buildMatterPages(
       page.data({ dbPath, filing: first.filing, proceeding: first.proceeding, writings: v.writings, now, revision })
     );
   });
-  const html = [matterBoard, ...milestones, ...viewPages];
+  const threadsPage = templates.threads ?? LOOSE_IDEAS_PAGE;
+  const threads = renderViewPageHtml(threadsPage, { ...meta, filing: "" }, threadsPage.data({ dbPath }));
+  const html = [matterBoard, threads, ...milestones, ...viewPages];
   return {
     pages: guardTargets(groupsWritten.map((g) => g.file), viewsWritten).map((t, i) => ({ ...t, html: html[i] })),
-    keep: [...groups.map((g) => g.file), ...views.map((v) => v.file)],
+    keep: [LOOSE_THREADS_FILE, ...groups.map((g) => g.file), ...views.map((v) => v.file)],
     paths: {
       milestone_paths: targets.map((t) => ({ filing_id: t.filing_id, proceeding_id: t.proceeding_id, path: join(draftDir, t.file) })),
       matter_board_path: join(draftDir, MATTER_BOARD_FILE),
+      loose_threads_path: join(draftDir, LOOSE_THREADS_FILE),
       view_page_paths: views.flatMap((v) => v.writings.map((w) => ({ name: v.page.name, filing_id: w.filing.id, path: join(draftDir, v.file) }))),
     },
   };

@@ -195,3 +195,40 @@ test("a linked job on another Writing's board of the proceeding still counts", a
   const { card: text } = inCheckout(f, () => submissionFormsBoardCard({ db_path: f.dbPath, filing_id: 1, lanes: ["attached"], draft_dir: f.draft }, CLIENT, META.rendered));
   assert.match(text, /^- attachment 2 · ZZQ · .* · pending: #20$/m);
 });
+
+// Another party's filed documents (schema v81): kind 'opposing_filing', a path in the court-file folder.
+// Each draws as the same card, with its state on disk; none is a client letter, so no review line is read.
+test("another party's five filed documents are cards with their state on disk, in the page and in board_card", async (t) => {
+  const f = await fixture(t);
+  const matter = dirname(f.draft);
+  mkdirSync(join(matter, "3. COURT FILE"), { recursive: true });
+  const names = [
+    "2026-10-20 RESP1 Application Response FILED.pdf",
+    "2026-10-21 RESP2 Application Response FILED.pdf",
+    "2026-10-20 AFF1 SmithJ AFFIRMED FILED.pdf",
+    "2026-10-20 AFF2 JonesK AFFIRMED FILED.pdf",
+    "2026-10-21 AFF3 LeeM AFFIRMED FILED.pdf",
+  ];
+  for (const name of names.slice(0, 4)) writeFileSync(join(matter, "3. COURT FILE", name), "Filed by the other side.\n"); // the fifth is not on disk
+  await submissionDataExecute(
+    f.dbPath,
+    [
+      ...names.map((n, i) => `INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (${3 + i}, 1, NULL, '3. COURT FILE\\${n}', 'opposing_filing', '2026-10-29');`),
+      `INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (8, 1, NULL, '..\\elsewhere.pdf', 'opposing_filing', '2026-10-29');`,
+    ].join("\n")
+  );
+  const { attached, main } = drawn(f);
+  const opposing = attached.filter((a) => a.kind === "opposing_filing");
+  assert.deepEqual(opposing.map((a) => a.state), ["present", "present", "present", "present", "missing", "outside"]);
+  assert.ok(opposing.slice(0, 4).every((a) => /^\d{4}-\d{2}-\d{2}$/.test(a.modified) && a.review === null), "a present one shows its date and reads no review line");
+  for (const a of opposing) assert.equal(card(main, a.id).querySelector(".label").text, a.code ?? "Opposing filing");
+  assert.ok(texts(card(main, 7)).includes("Missing: nothing is at this path"));
+  assert.ok(texts(card(main, 8)).includes("Not in the draft folder"));
+  assert.equal(texts(card(main, 3)).some((s) => /review/i.test(s)), false, "no counsel's-review line on another party's document");
+
+  const { card: text } = inCheckout(f, () => submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, lanes: ["attached"], draft_dir: f.draft }, CLIENT, META.rendered));
+  assert.match(text, /^- attachment 3 · [^·]+ · 3\. COURT FILE\\2026-10-20 RESP1 [^·]* · modified \d{4}-\d{2}-\d{2} · pending: none$/m);
+  assert.match(text, /^- attachment 7 · [^·]+ · 3\. COURT FILE\\2026-10-21 AFF3 [^·]* · missing · pending: none$/m);
+  assert.match(text, /^- attachment 8 · [^·]+ · \.\.\\elsewhere\.pdf · not in the draft folder · pending: none$/m);
+  assert.doesNotMatch(text, /attachment [3-7] .*review:/);
+});

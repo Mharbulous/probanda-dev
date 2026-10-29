@@ -34,7 +34,7 @@ class PlanMarkerStepTest(unittest.TestCase):
 
     def test_spin_off_blocker_takes_the_marker(self):
         create = read("drafting-data", "references", "jobs-create.md")
-        spin_off = create[create.index("## 3f. Spin off blockers"):create.index("## 3j.")]
+        spin_off = create[create.index("## 3f. Spin off blockers"):create.index("## 3k.")]
         self.assertIn("its text the plan marker (§3, \"The plan marker\")", spin_off)
         self.assertIn(f"VALUES (51, 1, '{MARKER}');", spin_off)
         self.assertNotIn("the intent verbatim", spin_off)

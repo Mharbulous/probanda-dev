@@ -82,6 +82,8 @@ export interface RenderResult {
   /** Present only when this render wrote the matter's pages: every view page written (ADR 0033,
    * 2026-10-07 amendment), [{name, filing_id, path}]. */
   view_page_paths?: PagesWritten["view_page_paths"];
+  /** Present on the same terms: the matter's Loose Threads page. */
+  loose_threads_path?: string;
   /** Old page files this render's page write moved into the matter's TRASH (#1365 D3). */
   moved_to_trash?: PagesWritten["moved_to_trash"];
   /** Old page files that page write could not move, and why. */

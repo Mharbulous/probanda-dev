@@ -33,7 +33,7 @@ import { MATERIAL_FACTS_FIXTURE } from "../board-fixtures/material-facts.js";
 import { PROCEDURAL_HISTORY_FIXTURE } from "../board-fixtures/procedural-history.js";
 import { RAW_RESEARCH_FIXTURE } from "../board-fixtures/raw-research.js";
 import { nowStamp, resolveDraftDir } from "../submission/forms.js";
-import { LOOSE_THREADS_PAGE_NAME, type LooseIdeasData } from "../submission/forms/loose-ideas-page.js";
+import { LOOSE_IDEAS_PAGE, LOOSE_THREADS_FILE, LOOSE_THREADS_PAGE_NAME, type LooseIdeasData } from "../submission/forms/loose-ideas-page.js";
 import { LITIGATION_STRATEGY_TEMPLATE, MATTER_BOARD_FILE, renderMatterBoardHtml } from "../submission/forms/matter-board-shell.js";
 import { PRACTICE_BOARD_FILE, renderPracticeBoardHtml, WORK_BOARD_TEMPLATE } from "../submission/forms/practice-board-shell.js";
 import { fetchRevision } from "../submission/forms/query.js";
@@ -52,7 +52,7 @@ export const PAGE_TEMPLATES: Readonly<Record<string, TemplateSet>> = {
   "Work Board": WORK_BOARD_TEMPLATE,
   "Litigation Strategy": LITIGATION_STRATEGY_TEMPLATE,
   "Milestone": MILESTONE_TEMPLATE,
-  ...Object.fromEntries(VIEW_PAGES.map((p) => [p.name, p.template])),
+  ...Object.fromEntries([...VIEW_PAGES, LOOSE_IDEAS_PAGE].map((p) => [p.name, p.template])),
   [HOUSEKEEPING_PAGE]: APPROVAL_TEMPLATE,
 };
 
@@ -62,7 +62,6 @@ const VIEW_FIXTURES: Readonly<Record<string, { meta: ViewPageMeta; data: unknown
   "Material Facts": MATERIAL_FACTS_FIXTURE,
   "Raw Research": RAW_RESEARCH_FIXTURE,
   Arguments: ARGUMENTS_FIXTURE,
-  "Loose Threads": LOOSE_THREADS_FIXTURE,
 };
 
 /** The fixtures' Writing and proceeding: a fixture preview is named as their page. */
@@ -93,6 +92,7 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
   const composed = composeWithOverrides(set, args.overrides);
   const view = VIEW_PAGES.find((p) => p.name === page);
   const viewPage: ViewPage | undefined = view && { ...view, ...composed };
+  const threads = page === LOOSE_THREADS_PAGE_NAME ? { ...LOOSE_IDEAS_PAGE, ...composed } : undefined;
   const ids = { filing_id: args.filing_id, proceeding_id: args.proceeding_id };
 
   if (data === "fixture") {
@@ -104,6 +104,7 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
       const { meta, data: fixture } = VIEW_FIXTURES[page];
       return { path: writePreview(dir, stem(viewPageFile(viewPage, FIXTURE_BOARD)), renderViewPageHtml(viewPage, meta, fixture), true) };
     }
+    if (threads) return { path: writePreview(dir, page, renderViewPageHtml(threads, LOOSE_THREADS_FIXTURE.meta, LOOSE_THREADS_FIXTURE.data), true) };
     if (page === "Work Board") return { path: writePreview(dir, stem(PRACTICE_BOARD_FILE), renderPracticeBoardHtml(WORK_BOARD_FIXTURE, composed), true) };
     if (page === "Litigation Strategy") return { path: writePreview(dir, stem(MATTER_BOARD_FILE), renderMatterBoardHtml(LITIGATION_STRATEGY_FIXTURE, composed), true) };
     return { path: writePreview(dir, `Milestone ${FIXTURE_BOARD.filing_id}`, renderWorkBoardHtml(MILESTONE_FIXTURE, composed), true) };
@@ -118,8 +119,8 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
   }
 
   if (args.matter_root === undefined) throw new ValidationError(`real data for the ${page} page needs matter_root`);
-  if (page === "Litigation Strategy" && (ids.filing_id !== undefined || ids.proceeding_id !== undefined)) {
-    throw new ValidationError("the Litigation Strategy covers the whole matter: it takes no filing_id or proceeding_id");
+  if ((page === "Litigation Strategy" || threads) && (ids.filing_id !== undefined || ids.proceeding_id !== undefined)) {
+    throw new ValidationError(`the ${page} covers the whole matter: it takes no filing_id or proceeding_id`);
   }
   if (page === "Milestone" && (ids.filing_id === undefined) === (ids.proceeding_id === undefined)) {
     throw new ValidationError("the Milestone needs exactly one of filing_id or proceeding_id");
@@ -145,11 +146,11 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
     await readMatterTodos(store, matterNo),
     await readMatterDates(store, matterNo),
     ids.filing_id === undefined ? {} : { only: ids.filing_id },
-    viewPage ? { views: { [page]: page === LOOSE_THREADS_PAGE_NAME ? withoutListener(viewPage) : viewPage } } : page === "Milestone" ? { milestone: composed } : { matterBoard: composed }
+    threads ? { threads: withoutListener(threads) } : viewPage ? { views: { [page]: viewPage } } : page === "Milestone" ? { milestone: composed } : { matterBoard: composed }
   );
   const target =
-    page === "Litigation Strategy"
-      ? join(draftDir, MATTER_BOARD_FILE)
+    threads || page === "Litigation Strategy"
+      ? join(draftDir, threads ? LOOSE_THREADS_FILE : MATTER_BOARD_FILE)
       : page === "Milestone"
         ? built.paths.milestone_paths.find((t) => (ids.filing_id !== undefined ? t.filing_id === ids.filing_id : t.filing_id === null && t.proceeding_id === ids.proceeding_id))?.path
         : built.paths.view_page_paths.find((v) => v.name === page && v.filing_id === ids.filing_id)?.path;
@@ -163,7 +164,7 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
 }
 
 /** The Loose Threads page with its buttons cut off from the listener: port 0, no token (#138). */
-function withoutListener(page: ViewPage): ViewPage {
+function withoutListener(page: typeof LOOSE_IDEAS_PAGE): typeof LOOSE_IDEAS_PAGE {
   return {
     ...page,
     data: (ctx) => {
