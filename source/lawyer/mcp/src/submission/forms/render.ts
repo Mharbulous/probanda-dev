@@ -5,9 +5,9 @@ import { basename, dirname, join } from "node:path";
 import { buildStampStatus } from "../../build-stamp.js";
 import { currentSchemaVersion } from "../migrate.js";
 import { renderableSchemaVersion } from "../schema-ceiling.js";
-import { freshManifest, readManifest, sha256, writeManifest, type RenderStamp } from "../render-manifest.js";
+import { freshManifest, paragraphMapDir, readManifest, sha256, writeManifest, type RenderStamp } from "../render-manifest.js";
 import { moveCaseDataMockups, writingFolderForRender } from "../writing-folder.js";
-import { fetchProceeding, fetchRevision, isJobOnlyBoard } from "./query.js";
+import { fetchParties, fetchProceeding, fetchRevision, fetchSentParties, isJobOnlyBoard, type FilingRow } from "./query.js";
 import { citedStates } from "./layout-snapshot.js";
 import { deadlineCriteria, type MatterDates } from "../matter-dates.js";
 import type { MatterTodos } from "../matter-todos.js";
@@ -23,9 +23,12 @@ import {
   type PagesWritten,
 } from "../matter-pages.js";
 import { buildWorkBoardData, type WorkBoardData } from "./render-work-board.js";
+import type { GoalCriterion } from "./work-board-data.js";
+import type { MarkerInventory } from "./proposal-inventory.js";
+import { buildParagraphMap, hasParagraphMap, mapSources, QUICK_EDIT_MIN_SCHEMA, toStored, writeParagraphMap } from "./paragraph-map.js";
 import { legendNotes, withLegend } from "./legend.js";
 import { MOCKUP_ONLY_TAG } from "./markers.js";
-import { withLeadLines, withPartiesDriftLines, type DraftingParties } from "../parties-drift.js";
+import { draftingParties, withLeadLines, withPartiesDriftLines, type DraftingParties } from "../parties-drift.js";
 import { formCurrency, KIND_FORM_KEYS } from "../form-currency.js";
 import type { KnowledgeSeams } from "../../knowledge/tree.js";
 import { noteUpDue } from "./proposal-inventory.js";
@@ -287,6 +290,18 @@ export function submissionFormsRender(
   const fresh = stamp === null || liveTags ? null : timed(timings, "stamp_check", () => freshManifest(dbPath, filingId, stamp, driftDigest));
   // A hit serves only the folder this render writes into: presentation_dir may name another.
   const hit = fresh !== null && fresh.dir.toLowerCase() === baseDir.toLowerCase() ? fresh : null;
+  // Pinned-revision quick edits (paragraph-revision.md section 8): a mockup render records the paragraph
+  // map of the revision it printed, once per revision, so drafting_forms__preview_edit resolves the
+  // practitioner's printed numbers as they saw them. No map is written when the revision moved during
+  // the render: it would name rows the mockup did not print.
+  const recordParagraphMap = (docs: { documentType: string; fileName: string; markdown: string }[]) => {
+    const mapDir = paragraphMapDir(dbPath, filingId);
+    if (schemaVersion === null || schemaVersion < QUICK_EDIT_MIN_SCHEMA || hasParagraphMap(mapDir, revision)) return;
+    timed(timings, "paragraph_map", () => {
+      const entries = buildParagraphMap(dbPath, filing, mapSources(docs));
+      if (fetchRevision(dbPath) === revision) writeParagraphMap(mapDir, { filing_id: filingId, revision, entries: toStored(entries) });
+    });
+  };
 
   /** The mockup render's response, after the hit or the miss: under draft_dir or presentation_dir the
    * matter's pages are written, each target checked before any is, and markdown comes back only for
@@ -337,6 +352,7 @@ export function submissionFormsRender(
         ...symbolNotes(legendNotes(markdown, f.document_type)),
       };
     });
+    recordParagraphMap(hit.manifest.files.map((f) => ({ documentType: f.document_type, fileName: f.file_name, markdown: hit.contents.get(f.file_name) as string })));
     // rendered_at is the advocacy files' own minute, read back from the manifest: this call
     // wrote none of them, so each keeps the minute it was rendered with. The board's
     // meta.rendered is this call's own minute, from ctx (#581 §3).
@@ -390,7 +406,44 @@ export function submissionFormsRender(
       })
     );
   }
+  recordParagraphMap(finished);
   // Last, from every document's inventory entries (Goal card design §2.2).
   const section = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines));
   return finishMockup(documents, section, ctx.rendered);
+}
+
+export interface InMemoryRender {
+  filing: FilingRow;
+  revision: number;
+  documents: { documentType: string; fileName: string; markdown: string }[];
+  inventory: MarkerInventory;
+  criteria: GoalCriterion[];
+}
+
+/**
+ * Pinned-revision quick edits (paragraph-revision.md section 8): one filing's documents rendered from
+ * `dbPath` in memory, writing nothing, with the marker inventory and Goal criteria that render derives.
+ * drafting_forms__preview_edit renders the live database and its disposable trial copy this way.
+ * `partiesDb` is the live database, whose folder holds case data, so both renders read the same
+ * counsel and differ only by the trial's writes.
+ */
+export function renderFilingInMemory(dbPath: string, filingId: number, now: string, partiesDb: string = dbPath): InMemoryRender {
+  const filing = fetchFilingById(dbPath, filingId);
+  const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
+  const revision = fetchRevision(dbPath);
+  const parties = filing.filed_on
+    ? fetchSentParties(dbPath, filing)
+    : draftingParties(dirname(partiesDb), proceeding, fetchParties(dbPath, proceeding.id)).parties;
+  const ctx = buildContext(dbPath, proceeding, filing, parties, revision, {}, undefined, now);
+  const general = generalLayoutFor(filing);
+  const cited = general === null ? [] : citedStates(general, filing);
+  const built = documentsForFiling(ctx, [], general, cited);
+  const criteria = buildWorkBoardData(ctx).criteria ?? [];
+  return {
+    filing,
+    revision,
+    documents: built.map((doc) => ({ documentType: doc.documentType, fileName: doc.fileName, markdown: doc.markdown })),
+    inventory: ctx.inventory ?? [],
+    criteria,
+  };
 }

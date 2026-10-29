@@ -152,6 +152,68 @@ def do_write_all(req):
     return staged_write(req, 'write', mutate, isolation_level=None)
 
 
+def do_trial(req):
+    # The statements of a write_all run on a disposable copy of the database, with every trigger
+    # and guard firing, and the live file is never opened for writing (pinned-revision quick edits).
+    # The caller's tables are read before and after, by rowid, so the result names every row the
+    # statements and their triggers inserted, updated or deleted. A statement that raises, or whose
+    # expect_changes does not match, rolls the copy back and the copy is removed. Otherwise the copy
+    # is committed and kept, and the caller renders from it and removes its folder.
+    db_path = req['db_path']
+    if not os.path.exists(db_path):
+        raise SystemExit(
+            f"No submission database found at {db_path}. Run drafting_data__migrate first.")
+    tmp = tempfile.mkdtemp(prefix=f'coclerk_submission_trial_{os.environ["COCLERK_STAGING_TAG"]}_')
+    keep = False
+    try:
+        staged = os.path.join(tmp, os.path.basename(db_path))
+        shutil.copy2(db_path, staged)
+        con = sqlite3.connect(staged, isolation_level=None)
+        try:
+            con.execute("PRAGMA journal_mode = DELETE")
+            con.execute("PRAGMA foreign_keys = ON")
+
+            def snapshot():
+                out = {}
+                for table in req['tables']:
+                    cur = con.execute(f'SELECT rowid, * FROM "{table}"')
+                    out[table] = {r[0]: json.dumps(list(r[1:]), default=str) for r in cur.fetchall()}
+                return out
+
+            before = snapshot()
+            con.execute("BEGIN")
+            results = []
+            for i, st in enumerate(req['statements']):
+                params = [results[p['$rowid']]['rowid'] if isinstance(p, dict) else p for p in (st.get('params') or [])]
+                try:
+                    cur = con.execute(st['sql'], params)
+                except sqlite3.Error as exc:
+                    con.execute("ROLLBACK")
+                    return {"ok": False, "failed": i, "error": str(exc)}
+                results.append({"rowid": cur.lastrowid, "changes": cur.rowcount})
+                expected = st.get('expect_changes')
+                if expected is not None and cur.rowcount != expected:
+                    con.execute("ROLLBACK")
+                    return {"ok": False, "failed": i, "changes": cur.rowcount}
+            after = snapshot()
+            changed = {}
+            for table in req['tables']:
+                b, a = before[table], after[table]
+                changed[table] = {
+                    "inserted": sorted(k for k in a if k not in b),
+                    "deleted": sorted(k for k in b if k not in a),
+                    "updated": sorted(k for k in a if k in b and a[k] != b[k]),
+                }
+            con.execute("COMMIT")
+        finally:
+            con.close()
+        keep = True
+        return {"ok": True, "results": results, "changed": changed, "staged_path": staged, "staged_dir": tmp}
+    finally:
+        if not keep:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main():
     req = json.load(sys.stdin)
     op = req['op']
@@ -161,6 +223,8 @@ def main():
         return do_write(req)
     if op == 'write_all':
         return do_write_all(req)
+    if op == 'trial':
+        return do_trial(req)
     raise SystemExit(f"unknown op: {op}")
 
 
@@ -301,6 +365,13 @@ interface WriteAllRequest {
   statements: WriteStatement[];
 }
 
+interface TrialRequest {
+  op: "trial";
+  db_path: string;
+  statements: WriteStatement[];
+  tables: string[];
+}
+
 type SidecarReply =
   | { kind: "result"; py: string; line: string }
   | { kind: "no_python"; lastErr: string }
@@ -401,7 +472,7 @@ function sidecarQuery(request: QueryRequest): Record<string, unknown> {
   throw new DataServerError("drafting-data sqlite sidecar signalled a reply but none arrived");
 }
 
-function runHelper(request: ExecuteRequest | WriteRequest | WriteAllRequest, env: NodeJS.ProcessEnv): Record<string, unknown> {
+function runHelper(request: ExecuteRequest | WriteRequest | WriteAllRequest | TrialRequest, env: NodeJS.ProcessEnv): Record<string, unknown> {
   // The budget stops a hung copy-back from holding the server forever. replace_live renames a
   // flushed sibling over db_path, so a kill at any point leaves db_path whole, old or new.
   return runPythonDriver({
@@ -505,6 +576,45 @@ export async function submissionDataWriteAll(
             "session is still writing to or migrating this database, stop and reconcile",
         }
       : result;
+  } finally {
+    lock.release();
+  }
+}
+
+export interface TrialChanges {
+  inserted: number[];
+  deleted: number[];
+  updated: number[];
+}
+
+export type TrialResult =
+  | {
+      ok: true;
+      results: { rowid: number; changes: number }[];
+      /** Per table named, the rowids the statements and their triggers inserted, deleted or updated. */
+      changed: Record<string, TrialChanges>;
+      /** The committed disposable copy. The caller reads it and removes staged_dir. */
+      staged_path: string;
+      staged_dir: string;
+    }
+  | { ok: false; failed: number; error?: string; changes?: number };
+
+/**
+ * The statements of a write_all, run on a disposable copy with every trigger and guard firing; the
+ * live file is never written (pinned-revision quick edits, drafting_forms__preview_edit). The data
+ * lock is held only so the copy is taken whole, never mid copy-back. `tables` are read before and
+ * after to name every row changed. A statement that raises returns its message verbatim in `error`.
+ * The caller owns the SQL and the table names; this primitive holds none.
+ */
+export async function submissionDataTrial(
+  dbPath: string,
+  statements: WriteStatement[],
+  tables: string[],
+  env: NodeJS.ProcessEnv = process.env
+): Promise<TrialResult> {
+  const lock = await acquireDataLock(dbPath, env);
+  try {
+    return runHelper({ op: "trial", db_path: dbPath, statements, tables }, env) as TrialResult;
   } finally {
     lock.release();
   }

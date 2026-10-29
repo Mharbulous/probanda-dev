@@ -171,6 +171,77 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
     {
+      name: formsPrefixed("preview_edit"),
+      description:
+        "Pinned-revision quick edit, step 1 of 2 (/drafting-data paragraph-revision.md section 8; schema v80). Runs in any " +
+        "session, holding a job or not, and takes no job. Writes nothing to the database. ops is a batch on one filing, each " +
+        "op one of: reword {target, new_text, proposed_text, choice: proposed|alternative, review_flags?, states_law?, " +
+        "states_fact?} (at most one per batch); move {target, anchor, document?}; recast {target, anchor, new_type: " +
+        "fact|submission, document?, detach?}; remove {target, document: form|written_argument|both} (held in reserve); " +
+        "restore {remove_revision_id}; kill {target}. A target is {document: form|written_argument, part?, printed_number, " +
+        "statement?} exactly as the practitioner saw it on the mockup at seen_revision (the revision the last presenting " +
+        "render returned); an anchor adds position: before|after. Each is resolved once, through the paragraph map that " +
+        "render recorded, so a later op in the batch still names the record the practitioner meant after an earlier op " +
+        "renumbers. No map for seen_revision refuses seen_revision_unknown. A named paragraph whose text, ordinal, placement " +
+        "or link moved since seen_revision refuses changed_since_seen, listing each; edits elsewhere do not. Then the " +
+        "foreign-scope read runs over every row named, written or touched by a trigger: a wip job of another session over " +
+        "any refuses foreign_job, naming it. The exact statements drafting_forms__apply_edit will run are run on a " +
+        "disposable copy of the database with every trigger and guard firing, the copy is rendered and then deleted; a " +
+        "guard refusal is returned verbatim in consequences.guard_refusals (refused guard_refused). Returns preview_token " +
+        "(null unless appliable), seen_revision, current_revision, resolved, changed_since_seen, foreign_jobs, diff (one " +
+        "block per affected document: the before and after text of every paragraph whose text, number or Part changes, to " +
+        "print verbatim as its own fenced code block), consequences (guard_refusals, markers added and cleared per " +
+        "paragraph, review_reraised, criteria gained or lost, other_filings printing a changed row, detached), " +
+        "preview_paths (the trial mockups, in the matter's Drafting records folder), recast_menu (the types the anchor's " +
+        "Part takes), rewords, appliable, expires_at (30 minutes) and note. The token is single-use and bound to this " +
+        "session_token.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          filing_id: { type: "number" },
+          session_token: { type: "string" },
+          seen_revision: { type: "number" },
+          ops: { type: "array", items: { type: "object" } },
+        },
+        required: ["db_path", "filing_id", "session_token", "seen_revision", "ops"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    },
+    {
+      name: formsPrefixed("apply_edit"),
+      description:
+        "Pinned-revision quick edit, step 2 of 2: applies one drafting_forms__preview_edit preview. Call it only after " +
+        "the session's visible reply printed that preview's diff blocks, each verbatim as its own fenced code block and " +
+        "no other fenced block, and the practitioner's next turn is a bare yes: the practitioner-words gate refuses the " +
+        "call otherwise. Refuses a preview_token that is unknown, expired, already used or another session's. Re-checks " +
+        "every precondition the preview recorded (each row it names, writes or saw a trigger touch, and the rows of each " +
+        "list it renumbers) and the foreign-scope read: any change refuses stale_preview, naming the rows, and a wip job " +
+        "of another session refuses foreign_job; an unrelated edit elsewhere in the filing does not refuse. Then writes " +
+        "the preview's statements in one transaction with their paragraph_revisions audit rows (one per row changed, " +
+        "carrying preview_token and seen_revision); a guarded statement that matches nothing rolls the whole edit back as " +
+        "stale_preview. The token is spent on the first call, refused or not. On success the filing is re-rendered as " +
+        "drafting_forms__render renders it (draft_dir or presentation_dir, client fields, session_token), and the result " +
+        "carries applied, revision and render: that render's response, whose revision is the new seen_revision.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          preview_token: { type: "string" },
+          session_token: { type: "string" },
+          draft_dir: { type: "string" },
+          presentation_dir: { type: "string" },
+          client_name: { type: "string" },
+          client_no: { type: "string" },
+          matter_no: { type: "string" },
+        },
+        required: ["db_path", "preview_token", "session_token"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
+    },
+    {
       name: formsPrefixed("board_card"),
       description:
         "Read-only: what one Milestone section holds beyond the short board_summary, and what its cards hold when " +

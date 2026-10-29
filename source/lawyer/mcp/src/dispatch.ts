@@ -75,6 +75,7 @@ import {
   type RenderMode,
 } from "./submission/forms.js";
 import { formCurrency } from "./submission/form-currency.js";
+import { submissionFormsApplyEdit, submissionFormsPreviewEdit, type ApplyEditArgs, type PreviewEditArgs } from "./submission/forms/quick-edit.js";
 import { submissionFormsBoardCard, type BoardCardArgs } from "./submission/matter-pages.js";
 import { lookUpMatter, matterToken, submissionFormsOpenSession } from "./submission/open-session.js";
 import { bcscFormHarness, type HarnessArgs } from "./submission/bcsc-form-harness.js";
@@ -246,6 +247,14 @@ export const dataTools: Tool<DispatchContext>[] = [
   }),
   defineTool("drafting_forms__render", (args: RenderArgs, context: DispatchContext) =>
     args.proceeding_id !== undefined ? renderProceedingBoard(args, args.proceeding_id, context) : renderFiling(args, context)),
+  defineTool("drafting_forms__preview_edit", (args: PreviewEditArgs) => submissionFormsPreviewEdit(args)),
+  defineTool("drafting_forms__apply_edit", async (args: ApplyEditArgs & PageArgs, context: DispatchContext) => {
+    const applied = await submissionFormsApplyEdit(args);
+    if (!applied.applied || applied.filing_id === undefined) return applied;
+    // Re-render as drafting_forms__render renders, so the session presents the new revision.
+    const { preview_token: _token, ...renderArgs } = args;
+    return { ...applied, render: await renderFiling({ ...renderArgs, filing_id: applied.filing_id }, context) };
+  }),
   defineTool("drafting_forms__bootstrap", async (args: PageArgs & { db_path: string; unattended?: boolean }, context: DispatchContext) => {
     const { client, todos, dates } = await pageContext(context, args, args.draft_dir !== undefined);
     const result = submissionFormsBootstrap(

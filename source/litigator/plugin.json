@@ -30,7 +30,7 @@
         ]
       },
       {
-        "matcher": "mcp__(.+__)?plugin_lawyer_data__drafting_data__(execute|set_board_goal|merge_milestones|merge_jobs)",
+        "matcher": "mcp__(.+__)?plugin_lawyer_data__(drafting_data__(execute|set_board_goal|merge_milestones|merge_jobs)|drafting_forms__apply_edit)",
         "hooks": [
           {
             "type": "command",

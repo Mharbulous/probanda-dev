@@ -619,6 +619,81 @@ class MergeJobsGateTest(unittest.TestCase):
                 self.assertIn("their last turn is not a bare yes", stderr)
 
 
+# A quick edit (paragraph-revision.md section 8): one preview_edit result, then apply_edit by its token.
+PREVIEW_TOKEN = "0123456789abcdef01234567"
+DIFF = "Notice of Application\nPart 2 ¶3 → Part 2 ¶1\n    The landlord served a notice."
+
+
+def preview_lines(diff=(DIFF,), rewords=(), token=PREVIEW_TOKEN, call_id="p1"):
+    """A drafting_forms__preview_edit call and its JSON result."""
+    result = {"preview_token": token, "diff": [{"document": "form", "title": "Notice of Application", "text": d} for d in diff],
+              "rewords": list(rewords), "appliable": True}
+    return [{"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "id": call_id, "name": "mcp__plugin_lawyer_data__drafting_forms__preview_edit", "input": {}}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": call_id,
+                                                      "content": [{"type": "text", "text": json.dumps(result)}]}]}}]
+
+
+def apply_lines(call_id="a1"):
+    """An earlier drafting_forms__apply_edit call and its result."""
+    return [{"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "id": call_id, "name": "mcp__plugin_lawyer_data__drafting_forms__apply_edit",
+                 "input": {"preview_token": PREVIEW_TOKEN}}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": call_id,
+                                                      "content": [{"type": "text", "text": '{"applied": true}'}]}]}}]
+
+
+def shown_diff(*blocks):
+    return ("The preview:\n\n" + "\n\n".join(f"```\n{b}\n```" for b in blocks)
+            + "\n\n### Reading\n\nNo change of sense.\n\nReply yes to apply it.")
+
+
+class ApplyEditGateTest(GateTestCase):
+    """paragraph-revision.md section 8: apply_edit passes only on the preview's own diff blocks, shown
+    verbatim and alone, and a bare yes typed as the last turn; one approval admits one write."""
+
+    def run_apply(self, token=PREVIEW_TOKEN):
+        payload = {"hook_event_name": "PreToolUse", "session_id": "s-1",
+                   "tool_name": "mcp__plugin_lawyer_data__drafting_forms__apply_edit",
+                   "tool_input": {"db_path": "C:/matter/submission.sqlite", "preview_token": token, "session_token": "sess-a1"},
+                   "transcript_path": str(self.transcript)}
+        return subprocess.run([sys.executable, str(SCRIPT)], input=json.dumps(payload).encode("utf-8"), capture_output=True)
+
+    def test_passes_on_the_diff_shown_and_a_bare_yes(self):
+        self.write_transcript(turn_line("move paragraph 3 to the top"), *preview_lines(), reply_line(shown_diff(DIFF)), turn_line("yes"))
+        self.assertPassed(self.run_apply())
+
+    def test_refuses_without_the_bare_yes(self):
+        self.write_transcript(turn_line("move paragraph 3 to the top"), *preview_lines(), reply_line(shown_diff(DIFF)), turn_line("hmm, not sure"))
+        self.assertRefused(self.run_apply(), "not a bare yes")
+
+    def test_refuses_a_paraphrased_or_extra_block(self):
+        for reply in (shown_diff(DIFF.replace("served", "gave")), shown_diff(DIFF, "something else"), "Fact 3 moves to the top. Apply?"):
+            with self.subTest(reply=reply):
+                self.write_transcript(turn_line("move paragraph 3 to the top"), *preview_lines(), reply_line(reply), turn_line("yes"))
+                self.assertRefused(self.run_apply(), "diff block")
+
+    def test_refuses_a_token_no_preview_issued(self):
+        self.write_transcript(turn_line("move paragraph 3 to the top"), *preview_lines(), reply_line(shown_diff(DIFF)), turn_line("yes"))
+        self.assertRefused(self.run_apply(token="ffffffffffffffffffffffff"), "issued preview_token")
+
+    def test_one_approval_admits_one_write(self):
+        self.write_transcript(turn_line("move paragraph 3 to the top"), *preview_lines(), reply_line(shown_diff(DIFF)), turn_line("yes"),
+                              *apply_lines())
+        self.assertRefused(self.run_apply(), "one approval admits one write")
+
+    def test_a_proposed_reword_must_be_the_practitioners_words(self):
+        reword = {"new_text": REVISED, "choice": "proposed"}
+        self.write_transcript(turn_line("tidy fact 3"), *preview_lines(rewords=[reword]), reply_line(shown_diff(DIFF)), turn_line("yes"))
+        self.assertRefused(self.run_apply(), "practitioner's own wording")
+        self.write_transcript(turn_line(ASK), *preview_lines(rewords=[reword]), reply_line(shown_diff(DIFF)), turn_line("yes"))
+        self.assertPassed(self.run_apply())
+
+    def test_an_execute_wording_revision_after_an_apply_is_refused(self):
+        self.write_transcript(turn_line(ASK), *preview_lines(), reply_line(shown(REVISED)), turn_line("yes"), *apply_lines())
+        self.assertRefused(self.run_hook(revision(REVISED, "proposed", "practitioner")), "one approval admits one paragraph")
+
+
 class PluginRegistrationTests(unittest.TestCase):
     def test_plugin_registers_the_gate_for_both_tool_name_forms(self):
         manifest = json.loads(PLUGIN_JSON.read_text(encoding="utf-8"))
@@ -631,6 +706,8 @@ class PluginRegistrationTests(unittest.TestCase):
         for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
             for tool in ("execute", "set_board_goal", "merge_milestones", "merge_jobs"):
                 self.assertTrue(matcher.fullmatch(prefix + "drafting_data__" + tool), prefix + tool)
+            self.assertTrue(matcher.fullmatch(prefix + "drafting_forms__apply_edit"), prefix + "apply_edit")
+        self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__drafting_forms__preview_edit"))
         self.assertFalse(matcher.fullmatch("mcp__plugin_lawyer_data__drafting_data__query"))
         self.assertFalse(matcher.fullmatch("mcp__plugin_other_data__drafting_data__execute"))
 

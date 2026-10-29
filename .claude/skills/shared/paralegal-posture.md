@@ -33,7 +33,7 @@ A job's title, intent and steps, and a plan upgrade, are the session's to word, 
 
 ## 3a. On-the-fly revision
 
-The one place a session originates wording is the one revised paragraph `draft/references/revise-on-the-fly.md` shows in a single code block, exactly as it will be saved. It is adopted only by the practitioner's typed bare yes, never in a decision form, because the practitioner-words gate reads that typed approval. `/drafting-data` records it as the session's wording unless it is, character for character, wording the practitioner typed.
+The one place a session originates wording is the one reworded paragraph `draft/references/revise-on-the-fly.md` previews, shown in the preview's code-generated diff block exactly as it will be saved. It is adopted only by the practitioner's typed bare yes, never in a decision form, because the practitioner-words gate reads that typed approval. `/drafting-data` records it as the session's wording unless it is, character for character, wording the practitioner typed.
 
 ## 3b. Statement of goals
 

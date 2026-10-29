@@ -288,3 +288,13 @@ export function draftDirOf(dbPath: string): string {
 export function recordsDir(dbPath: string): string {
   return join(draftDirOf(dbPath), RECORDS_FOLDER);
 }
+
+/** A filing's paragraph maps in the records folder, one per rendered revision (pinned-revision quick edits). */
+export function paragraphMapDir(dbPath: string, filingId: number): string {
+  return join(recordsDir(dbPath), "paragraph-maps", String(filingId));
+}
+
+/** The trial mockups drafting_forms__preview_edit writes for a filing, in the records folder. */
+export function previewDir(dbPath: string, filingId: number): string {
+  return join(recordsDir(dbPath), "previews", String(filingId));
+}

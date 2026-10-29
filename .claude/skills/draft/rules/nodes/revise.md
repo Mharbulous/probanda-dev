@@ -1,1 +1,4 @@
-<!-- node id=draft/revise title="Revising on the fly" parents=draft/session,draft/job/work when="One reviewed paragraph reworded, or facts or material to be relied on swapped or moved, with or without a job." -->
+<!-- node id=draft/revise title="Revising on the fly" parents=draft/session,draft/job/work when="A quick edit: one reviewed paragraph reworded, a paragraph moved, recast, removed, restored or killed, or material to be relied on swapped or moved, with or without a job." -->
+
+<!-- rule id=draft.revise.quick-edit-tools provenance="u19 port of CoClerk feat/pinned-revision-quick-edits, 2026-10-29" -->
+A rewording, move, recast, removal, restoration or kill is written only through `drafting_forms__preview_edit` and `drafting_forms__apply_edit`, with each paragraph named by the document, Part and printed number the practitioner saw and the `seen_revision` of that mockup: no SQL is composed. The preview's diff blocks are shown verbatim, each its own fenced code block, and applied only on the practitioner's typed bare yes. A changed or refused preview is never re-aimed at the new numbering: re-render, present and ask again (`references/revise-on-the-fly.md`).
