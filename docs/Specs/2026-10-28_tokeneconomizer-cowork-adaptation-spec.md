@@ -2,7 +2,7 @@
 
 ## Goal
 
-The marketplace listing says: "The original Microsoft TokenEconomizer was optimized for Claude Code. This version has been adapted and optimized for Claude Cowork." This spec makes that true. Done means every red test below passes in a real Cowork session, and the fork's existing test suite still passes.
+The marketplace listing says: "The original Microsoft TokenEconomizer was optimized for Claude Code. This version is being adapted for Claude Cowork." This spec makes it adapted and optimized for Cowork, and the listing says so once the work is green. Done means every red test below passes in a real Cowork session, and the fork's existing test suite still passes.
 
 The work happens in the fork, `Mharbulous/TokenEconomizer`. The result is vendored into this repository by the steps in CLAUDE.md, "Vendored plugin".
 
@@ -59,7 +59,7 @@ Run by Brahm on 2026-10-28 in five probes, each a new Cowork session in the proj
 |---|---|---|
 | R1 | PASS | `/root/.tokeneconomizer/bin/te` written and state files changed after tool calls |
 | R2 | PASS | `doctor` and `status` exit 0, Python 3.13.18 ok, state root writable, no `errors.log` |
-| R3 | PASS for `Bash`, `Read`, `Edit` and `Write` | `mcp__remote-devices__device_bash` was not tested and is not in `_TOOL_CANON` |
+| R3 | PARTIAL | `Bash`, `Read`, `Edit` and `Write` map correctly. Cowork's second shell, `mcp__remote-devices__device_bash`, is not in `_TOOL_CANON`, so the loop guard cannot read its commands |
 | R4 | PASS | `/opt/node22/bin/claude` 2.1.312 answered `OK`, at 8,067 effective tokens for that one call |
 | R5 | FAIL | No marker survived to the next session in `/root/.tokeneconomizer`, `/root`, `/tmp`, `/home/claude`, `/root/.claude/plugins/data`, `/mnt/user-data` or `/mnt/attach/outputs` |
 | R6 | FAIL | The second session reported "0 folded" |
@@ -72,15 +72,31 @@ Facts recorded:
 - The linked folder is not visible from the cloud shell. It is visible only from `mcp__remote-devices__device_bash`, at `~/mnt/<folder name>`, as a Linux user named after the session.
 - `/mnt/attach/outputs` is an rclone store named after the session, and it was empty in the next session.
 - `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PLUGIN_DATA` are not set in the shell. `CLAUDECODE=1` is.
-- A `SessionStart` hook's text (Probanda's practitioner notes) reached the session at its start.
-- The session's transcript is kept at `/root/.claude/projects/-home-claude/<id>.jsonl` and is lost with the container. The desktop app keeps no copy on the PC.
+- A `SessionStart` hook's text (Probanda's practitioner notes) was in the session's context when it answered the first prompt. Phase 0 (2026-10-13) saw such text arrive only after an agent was dispatched, so Cowork's behaviour has changed or the two probes saw different things.
+- The session's transcript is kept at `/root/.claude/projects/-home-claude/<id>.jsonl` and is lost with the container. No copy was found on the PC: the files under `%APPDATA%\Claude` that changed during the probes hold no `.jsonl` transcript, and the `claude-code-sessions\...\local_*.json` files changed that day name none of the probe sessions. `vm_bundles\claudevm.bundle\sessiondata.vhdx` was not opened.
 - A post-turn memory pass writes only under `/projects/<project id>/`. It is a per-project store run by a model for facts about the person.
 
 Conclusion: TokenEconomizer runs in Cowork but cannot learn there, because nothing it writes outlasts the session. The loop guard needs learned turns before it acts, so in practice it does nothing. A hook cannot reach the PC itself: only the model's tool calls can.
 
+## Measure first
+
+Brahm's ruling of 2026-10-28, after an independent review: nothing in the green design is built until a measurement shows the loop guard would act. The red run showed the plugin runs in Cowork, not that it saves anything, and the fork's `docs/PLUGIN.md` §5 says the loop guard has never fired on a real stuck turn.
+
+- From 2026-10-28 the PC runs TokenEconomizer with `shadow=true` and `toolprune=propose` (global, in `~/.tokeneconomizer/config.json`). In shadow mode every decision is computed and logged and none is acted on.
+- On or after 2026-11-11, read the would-be redirects in the state's event logs, for Claude Code and desktop sessions, and the `plugin overhead` line of `te status`. On 2026-10-28, before shadow mode, `te status` for probanda-dev showed 3 folded sessions with a plugin overhead of 389.9k of 428.7k effective tokens (47.6%), and 0 redirects.
+- Build the green design only if the guard would have redirected stuck turns often enough to repay that overhead. Otherwise the end state is: in Cowork, everything but the loop guard off, and the listing says what the plugin does there.
+- One open point for the measurement: the loop guard learns one envelope for all sessions, but a one-shot lookup and a long housekeeping run differ widely in length, so a pooled envelope may be too loose to act. The shadow log shows the spread.
+
+Red tests to add before any green build:
+
+- A `PostToolUse` redirect (`additionalContext` and `systemMessage`) reaches the Cowork model.
+- `canon_tool` maps `mcp__remote-devices__device_bash` to `bash` (R3's missing half).
+- Cost per Cowork session: hook time per tool call, judge calls per session, and which account `claude -p` in the container bills.
+- Whether `SessionEnd` fires in the container, and whether the detached fold finishes before the container ends.
+
 ## Green design
 
-From Brahm's rulings of 2026-10-28.
+From Brahm's rulings of 2026-10-28. On hold until "Measure first" says to build.
 
 - **One pattern.** TokenEconomizer keeps one learned pattern for all Probanda projects, not one per folder.
 - **A Probanda plugin.** TokenEconomizer becomes a Probanda plugin, governed by COMMANDMENTS.md. It stays optional and separate from `lawyer`, and has no server of its own. It moves from `vendor/` to `source/tokeneconomizer/` and is built and released like the other plugins. CLAUDE.md's "Vendored plugin" section changes with that move.
