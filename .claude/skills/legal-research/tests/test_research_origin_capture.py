@@ -185,7 +185,8 @@ class AfterTheAnswerTests(unittest.TestCase):
         self.assertIn(
             "When no board resolves, capture nothing, add no job, relay the `Confidence:` line "
             "and every offer, each word for word, with the saved memo as its file card "
-            "(`shared/present-files.md`), and say "
+            "(`shared/present-files.md`), then the memo-reviewer's `out_of_scope` questions as a "
+            "numbered list and the invitation line, relayed, not captured, and say "
             "in one line that the matter has no board to capture to.",
             self.step,
         )

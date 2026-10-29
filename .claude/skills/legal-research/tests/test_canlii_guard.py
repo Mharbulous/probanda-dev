@@ -30,7 +30,7 @@ def call(tool_name, **extra):
 class MainSessionCanliiGuardTests(unittest.TestCase):
     def assertBlocked(self, result):
         self.assertEqual(result.returncode, 2, result.stderr)
-        self.assertIn("A closed gate is never a licence", result.stderr)
+        self.assertIn("An INCOMPLETE memo is never a licence", result.stderr)
         self.assertIn("/legal-research", result.stderr)
 
     def test_main_session_research_call_is_blocked(self):

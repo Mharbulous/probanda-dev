@@ -35,12 +35,16 @@ class JobQuestionMemoTest(unittest.TestCase):
         self.assertIn("each part quoted verbatim as its issue", plan)
         self.assertIn("You add no issue of your own", plan)
         self.assertIn("A part that crosses two lists (rule C) is split further, one issue per question", plan)
+        self.assertIn("reworded only as far as separating the lists needs, with the part quoted beside it", plan)
+        self.assertIn('A part that depends on the one before it ("If so, ...") stays with it as one issue.', plan)
         self.assertIn("the gate runs one audit, and the agent writes one memo, per issue", plan)
+        self.assertIn("Split only by rules A and C, never into a question's elements", plan)
+        self.assertNotIn("needs answered to be answered completely", plan)
 
     def test_a_job_holding_several_questions_is_proposed_for_splitting(self):
         gate = flat(read("shared", "legal-research.md"))
         rule = gate[gate.index("**A job holds one question.**"):gate.index("**A caller working a `/draft` job checks its lock")]
-        self.assertIn("propose to the practitioner one job per question", rule)
+        self.assertIn("propose one job per question, each question in full, and the rewording", rule)
         self.assertIn("(`/drafting-data` §3m, \"Rewording a held job\")", rule)
         self.assertIn("§3i's guarded create", rule)
 

@@ -61,8 +61,8 @@ class AuditProtocolTest(unittest.TestCase):
 class MemoTemplateTest(unittest.TestCase):
     def test_conclusion_ends_with_open_issues_only_where_research_is_required(self):
         template = flat(read("shared", "research-memo-template.md"))
-        self.assertIn("Only where research is required (`shared/legal-audit-protocol.md` Step 4), "
-                      "the last Conclusion ends with the open-issues paragraph.", template)
+        self.assertIn("followed, only where research is required (`shared/legal-audit-protocol.md` Step 4), "
+                      "by the open-issues paragraph, after the last Conclusion.", template)
 
 
 class GateDoctrineTest(unittest.TestCase):
@@ -71,7 +71,7 @@ class GateDoctrineTest(unittest.TestCase):
 
     def test_open_tiers_become_steps_on_the_job(self):
         rule = between(self.doctrine, "**On a held job, an open tier is not an answer.**", "Persist in this order.")
-        self.assertIn("add one step to the held job for each tier it names, by `/drafting-data`'s partial replace", rule)
+        self.assertIn("add one step to the held job for each tier they name, by `/drafting-data`'s partial replace", rule)
         self.assertIn("in the practitioner's name", rule)
         self.assertIn("A step is stamped done only once its work has run", rule)
         self.assertIn("A caller holding no job runs the same loop, adding and stamping no steps.", rule)
@@ -98,7 +98,7 @@ class JobPlanningTest(unittest.TestCase):
 
     def test_completion_test_needs_an_answer_and_a_step_per_open_tier(self):
         self.assertIn("the memo's Conclusion answers the Issue with pinpoint citations", self.section)
-        self.assertIn("each tier a research return names as not run is a step on the job", self.section)
+        self.assertIn("each tier memo-reviewer finds required is a step on the job", self.section)
         self.assertIn("stamped done only once its work has run", self.section)
 
     def test_partial_replace_adds_open_tier_steps(self):

@@ -89,7 +89,7 @@ re_spawn: <what the caller puts in the re-spawn prompt: the cited answer, the it
 
 **Until it is closed.** Headline the one date compliant under every reading, keep the note's direction-of-harm and one-day-margin rules, and never state the other reading's date.
 
-**Re-spawned with the answer.** When the spawn prompt carries a cited `/legal-research` answer naming an item's id, compute on that answer with no assumption, and cite it beside the date. Copy its holding and pinpoint as given, never your own reading. A closed gate or an answer that leaves the point open is a result too. Then return a [workflow 10](#10-update-a-rule-from-its-primary-source) second-spawn open item carrying the drafted overlay records (`rule-update.md` §3 step 4, "Recording a research answer"), handled by `/rule-update`. Write nothing before approval. For a write-back to `/lawyer:suggestion`, return an open item asking the caller to send it, naming the rule to model and the answer's citation.
+**Re-spawned with the answer.** When the spawn prompt carries a cited `/legal-research` answer naming an item's id, compute on that answer with no assumption, and cite it beside the date. Copy its holding and pinpoint as given, never your own reading. An `INCOMPLETE` answer or one that leaves the point open is a result too. Then return a [workflow 10](#10-update-a-rule-from-its-primary-source) second-spawn open item carrying the drafted overlay records (`rule-update.md` §3 step 4, "Recording a research answer"), handled by `/rule-update`. Write nothing before approval. For a write-back to `/lawyer:suggestion`, return an open item asking the caller to send it, naming the rule to model and the answer's citation.
 
 ## Database
 

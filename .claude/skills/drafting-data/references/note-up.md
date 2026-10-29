@@ -2,7 +2,7 @@
 
 Read when: the research lawyer returns on a 📇 note-up job for an authority of kind `case`, singly or in the noting-up sweep's batch. A statute, regulation or rule records the statute-currency result instead (`filing-checklists.md`, "Recording a statute-currency result").
 
-Only a research-agent return that names exactly one of the four words "good law", "distinguishable", "negative" or "overruled" as its finding writes. A closed gate, a refusal, or a return naming none of the four or more than one records nothing: the note-up job stays open, and the session says so once in chat. The word is never inferred from other wording. No practitioner confirmation comes before the write: counsel reviews the result afterwards through 🧐 (`references/review.md`).
+Only a research-agent return that names exactly one of the four words "good law", "distinguishable", "negative" or "overruled" as its finding writes. An `INCOMPLETE` memo, a refusal, or a return naming none of the four or more than one records nothing: the note-up job stays open, and the session says so once in chat. The word is never inferred from other wording. No practitioner confirmation comes before the write: counsel reviews the result afterwards through 🧐 (`references/review.md`).
 
 | The return's word | `treatment` |
 |---|---|

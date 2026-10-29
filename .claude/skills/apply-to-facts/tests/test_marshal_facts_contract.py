@@ -75,16 +75,17 @@ class MarshalFactsContractTests(unittest.TestCase):
             with self.subTest(table=table):
                 self.assertNotIn(f"`{table}`", text)
 
-    def test_dispatch_follows_the_closed_gate_stop(self):
+    def test_dispatch_follows_the_incomplete_memo_stop(self):
         # The body starts at the H1, after the Contents table that names every step.
         text = _read(SKILL)
         body = text[text.find("\n# "):]
-        gate = body.find("A closed gate is the answer.")
+        gate = body.find("An `INCOMPLETE` memo is the answer.")
         dispatch = body.find("marshal-facts")
-        self.assertNotEqual(gate, -1, "closed-gate sentence missing")
+        self.assertNotEqual(gate, -1, "incomplete-memo sentence missing")
         self.assertNotEqual(dispatch, -1, "marshal-facts not named")
         self.assertGreater(dispatch, gate)
-        self.assertIn("A closed gate at step 2 dispatches nothing.", body)
+        self.assertIn("An `INCOMPLETE` memo at step 2 dispatches nothing.", body)
+        self.assertNotIn("closed gate", body)
 
 
 if __name__ == "__main__":

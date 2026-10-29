@@ -9,11 +9,9 @@ description: >
   /legal-research gate, once per memo it returns.
 model: opus
 tools:
-  - Read
   - mcp__plugin_lawyer_data__skill_source__read
   - mcp__remote-devices__plugin_lawyer_data__skill_source__read
-skills:
-  - researcher:legal-research
+skills: []
 ---
 
 # memo-reviewer
@@ -37,11 +35,11 @@ Before reviewing, read with `skill_source__read` (in a Cowork Project session it
 ## Review
 
 1. Read the memo's Issue.
-2. For each piece of research the memo or the notes leave open (each question in the open-issues paragraph, each `gap:` line, and any part of the memo's body beyond the Issue), apply the scope test: can the Issue, as framed, be answered without it?
-   - No: a `required` item, with the issue, the research that would close it, named as a `gap:` line names its tier, and one line on why the Issue cannot be answered without it.
-   - Yes, and the memo raises it: an `out_of_scope` item, written as a question that makes sense on its own.
-   - Yes, and only the notes raise it: nothing. The gate handles the notes' offers.
-3. Quote from the memo each party, counsel, practitioner, matter number, date, amount or document of the working matter it names, and each fact of the working matter it states: an `identifiers` item each.
+2. For each piece of research the memo or the notes leave open (each question in the open-issues paragraph, each `gap:` line, and any part of the memo's body beyond the Issue), apply the scope test: can the Issue, as framed, be answered without it? Research already run is never `required`: where it found nothing, `No authority located in <the tiers searched>.` is the answer.
+   - No: a `required` item, with the issue, the research that would close it in one of the tier forms of Step 4's `gap:` line, and one line on why the Issue cannot be answered without it.
+   - Yes, and the memo or a `gap:` line raises it: an `out_of_scope` item, written as a question that makes sense on its own, presupposes no answer and names no rule as fact.
+   - Yes, and only a Step 5 offer raises it: nothing. The gate handles the offers.
+3. Quote from the memo each party, counsel, practitioner, matter number, date, amount or document of the working matter it names, and each fact of the working matter it states: an `identifiers` item each. Never flag text equal to the `Job question:`.
 
 The verdict is `send_back` when `required` or `identifiers` holds anything, and `complete` otherwise.
 

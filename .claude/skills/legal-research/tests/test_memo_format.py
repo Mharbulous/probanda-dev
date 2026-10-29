@@ -77,7 +77,8 @@ class ProtocolStepSixTests(unittest.TestCase):
     def test_issue_conclusion_rule_and_application_forms(self):
         template = flat(read("research-memo-template.md"))
         for text in ("The Issue is the question, as one bold sentence.",
-                     "A Conclusion is one paragraph that answers the Issue as framed. It cites in parentheses and has no block quote.",
+                     "A Conclusion is one paragraph answering the Issue,",
+                     "Conclusion. It cites in parentheses and has no block quote.",
                      "The Rule opens with the rule itself.",
                      "The Application is prose paragraphs, never bullets."):
             self.assertIn(text, template)
@@ -94,7 +95,8 @@ class ProtocolStepSixTests(unittest.TestCase):
                         "The Conclusion answers as Step 4 says")
         self.assertIn("The spawn prompt's `Facts:`, `Matter:`, `Asked by:` and `Origin:` only choose authorities "
                       "and route the work: the memo never states, summarises or alludes to them.", rules)
-        self.assertIn("hold no party name, date, amount, matter number, document name or fact pattern", rules)
+        self.assertIn("No part of the memo holds a party name, date, amount, matter number, document name or fact pattern",
+                      rules)
         self.assertIn("Application describes only the facts of the cited authorities.", rules)
         self.assertNotIn("matter's own facts", flat(step_six()))
 
