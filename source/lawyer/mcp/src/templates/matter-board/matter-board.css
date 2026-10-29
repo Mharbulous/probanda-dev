@@ -11,6 +11,14 @@ article.filing{background:var(--card);border:2px solid var(--frame);border-radiu
 details.retired{background:var(--card);border:1px solid var(--line);border-radius:10px;opacity:.7}
 details.retired>summary{cursor:pointer;padding:12px 14px}
 details.retired>p{margin:0;padding:0 14px 12px;font-size:13px;color:var(--muted)}
+details.lane>summary{list-style:none;cursor:pointer}
+details.lane>summary::-webkit-details-marker{display:none}
+details.lane>summary>h2{font-family:var(--sans-heading);font-size:13px;font-weight:600;color:var(--ink);margin:0;padding-bottom:8px;border-bottom:1px solid var(--frame);display:flex;align-items:baseline;gap:8px}
+details.lane>summary>h2::before{content:"\25B8";color:var(--muted)}
+details.lane[open]>summary>h2::before{content:"\25BE"}
+details.lane[open]>summary>h2{margin-bottom:12px}
+details.lane>summary>h2 .count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}
+.addressee,.sent{color:var(--muted)}
 header .job{display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:13px;color:var(--muted)}
 header .job[hidden]{display:none}
 header .job.stalled{color:var(--accent)}

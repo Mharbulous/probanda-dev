@@ -1,4 +1,4 @@
-// build-stamp: 1dbee62b1702
+// build-stamp: d7f912b7c1b2
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -81338,7 +81338,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "1dbee62b1702";
+var BUILD_STAMP = false ? null : "d7f912b7c1b2";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -97668,7 +97668,7 @@ function stamp(d3) {
 }
 
 // src/templates/matter-board/matter-board.css.ts
-var matter_board_css_default = "ul.todos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}\nli.todo{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}\nli.todo .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}\nli.todo .description{font-weight:500}\nli.todo .bf{font-family:var(--mono);font-size:12px;color:var(--muted)}\nli.todo .line{margin:0;font-size:13px;color:var(--muted)}\narticle.filing{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;font-size:13.5px}\n.name{font-weight:600}\n.line .name{font-weight:500}\n.mockups,.jobs{color:var(--muted)}\ndetails.retired{background:var(--card);border:1px solid var(--line);border-radius:10px;opacity:.7}\ndetails.retired>summary{cursor:pointer;padding:12px 14px}\ndetails.retired>p{margin:0;padding:0 14px 12px;font-size:13px;color:var(--muted)}\nheader .job{display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:13px;color:var(--muted)}\nheader .job[hidden]{display:none}\nheader .job.stalled{color:var(--accent)}\nheader .job .spinner{width:10px;height:10px;border:2px solid var(--line);border-top-color:var(--ink);border-radius:50%;animation:job-spin 1s linear infinite}\n@keyframes job-spin{to{transform:rotate(360deg)}}";
+var matter_board_css_default = 'ul.todos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}\nli.todo{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}\nli.todo .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}\nli.todo .description{font-weight:500}\nli.todo .bf{font-family:var(--mono);font-size:12px;color:var(--muted)}\nli.todo .line{margin:0;font-size:13px;color:var(--muted)}\narticle.filing{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;font-size:13.5px}\n.name{font-weight:600}\n.line .name{font-weight:500}\n.mockups,.jobs{color:var(--muted)}\ndetails.retired{background:var(--card);border:1px solid var(--line);border-radius:10px;opacity:.7}\ndetails.retired>summary{cursor:pointer;padding:12px 14px}\ndetails.retired>p{margin:0;padding:0 14px 12px;font-size:13px;color:var(--muted)}\ndetails.lane>summary{list-style:none;cursor:pointer}\ndetails.lane>summary::-webkit-details-marker{display:none}\ndetails.lane>summary>h2{font-family:var(--sans-heading);font-size:13px;font-weight:600;color:var(--ink);margin:0;padding-bottom:8px;border-bottom:1px solid var(--frame);display:flex;align-items:baseline;gap:8px}\ndetails.lane>summary>h2::before{content:"\\25B8";color:var(--muted)}\ndetails.lane[open]>summary>h2::before{content:"\\25BE"}\ndetails.lane[open]>summary>h2{margin-bottom:12px}\ndetails.lane>summary>h2 .count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\n.addressee,.sent{color:var(--muted)}\nheader .job{display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:13px;color:var(--muted)}\nheader .job[hidden]{display:none}\nheader .job.stalled{color:var(--accent)}\nheader .job .spinner{width:10px;height:10px;border:2px solid var(--line);border-top-color:var(--ink);border-radius:50%;animation:job-spin 1s linear infinite}\n@keyframes job-spin{to{transform:rotate(360deg)}}';
 
 // src/templates/matter-board/matter-board.html.ts
 var matter_board_html_default = '<!doctype html>\n<html lang="en" data-matter-board-shell>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Litigation Strategy</title>\n<style>\n@@include(board.css)@@\n\n@@include(matter-board.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Litigation Strategy</h1>\n    <div class="meta"></div>\n    <p class="job" hidden></p>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(matter-board.js)@@\n</script>\n</body>\n</html>\n';
@@ -97732,6 +97732,11 @@ var matter_board_js_default = `(function () {
     var where = proceedingLine(p);
     return [["name", "Proceeding " + p.proceeding_id + (where === "" ? "" : " (" + where + ")")], ["chip", p.state_label], ["jobs", jobs(p.in_progress)]];
   }
+  // A sent letter's row in the "Sent, awaiting response" lane: addressee \xB7 subject \xB7 sent date.
+  function awaitingParts(a) {
+    return [["addressee", a.addressee === null ? "No addressee recorded" : a.addressee], ["name", a.subject], ["sent", "Sent " + a.sent_on]];
+  }
+  var awaiting = data.awaiting_response || [];
 
   function filingLine(f) {
     var line = fill(el("article", "filing"), filingParts(f));
@@ -97743,6 +97748,11 @@ var matter_board_js_default = `(function () {
     line.setAttribute("data-proceeding-id", String(p.proceeding_id));
     return line;
   }
+  function awaitingLine(a) {
+    var line = fill(el("article", "filing"), awaitingParts(a));
+    line.setAttribute("data-filing-id", String(a.filing_id));
+    return line;
+  }
 
   function todoItem(t) {
     var li = el("li", "todo");
@@ -97752,11 +97762,14 @@ var matter_board_js_default = `(function () {
     if (t.bf_date !== null) head.appendChild(el("span", "bf", "BF " + t.bf_date));
     li.appendChild(head);
     var filing = t.filing_id === undefined ? null : data.filings.filter(function (f) { return f.filing_id === t.filing_id; })[0];
+    var sent = t.filing_id === undefined ? null : awaiting.filter(function (a) { return a.filing_id === t.filing_id; })[0];
     var proceeding = t.proceeding_id === undefined ? null : data.pre_filing.filter(function (p) { return p.proceeding_id === t.proceeding_id; })[0];
     if (filing) {
       var line = fill(el("p", "line"), filingParts(filing));
       line.setAttribute("data-filing-id", String(filing.filing_id));
       li.appendChild(line);
+    } else if (sent) {
+      li.appendChild(fill(el("p", "line"), awaitingParts(sent)));
     } else if (proceeding) {
       li.appendChild(fill(el("p", "line"), proceedingParts(proceeding)));
     }
@@ -97815,7 +97828,21 @@ var matter_board_js_default = `(function () {
   var milestones = data.filings.filter(function (f) { return f.job_only && !f.retired_on && !onBoard.filing[f.filing_id]; });
   var preFiling = data.pre_filing.filter(function (p) { return !onBoard.proceeding[p.proceeding_id]; });
   var retired = data.filings.filter(function (f) { return f.retired_on; });
-  section("filings", "Writings", live.length, stack(live.map(filingLine), writings.length === 0 ? "No Writings in this matter." : boards.length > 0 ? "Every live Writing is on a merged Milestone." : "No live Writings."));
+  section("filings", "Writings", live.length, stack(live.map(filingLine), writings.length + awaiting.length === 0 ? "No Writings in this matter." : boards.length > 0 ? "Every live Writing is on a merged Milestone." : "No live Writings."));
+  // Sent letters not yet retired: one lane, collapsed by default, outside the Writings count.
+  if (awaiting.length > 0) {
+    var lane = el("details", "lane");
+    var summary = el("summary");
+    var h2 = el("h2", "", "Sent, awaiting response ");
+    h2.appendChild(el("span", "count", String(awaiting.length)));
+    summary.appendChild(h2);
+    lane.appendChild(summary);
+    lane.appendChild(stack(awaiting.map(awaitingLine), ""));
+    var awaitingSection = el("section");
+    awaitingSection.id = "awaiting";
+    awaitingSection.appendChild(lane);
+    board.appendChild(awaitingSection);
+  }
   if (milestones.length > 0) section("milestones", "Milestones", milestones.length, stack(milestones.map(filingLine), ""));
   if (preFiling.length > 0) section("pre-filing", "Before filing", preFiling.length, stack(preFiling.map(preFilingLine), ""));
   if (retired.length > 0) section("retired", "Retired", retired.length, stack(retired.map(retiredCard), ""));
@@ -99795,6 +99822,22 @@ function retiredLine(entry2) {
     ...jobOnly ? { job_only: true } : {}
   };
 }
+var LETTER_KIND = /(?:^|[^a-z])letter(?:[^a-z]|$)/i;
+function awaitingResponse(filing) {
+  return filing.filed_on !== null && !filing.retired_on && LETTER_KIND.test(filing.kind);
+}
+function firstLine2(text8) {
+  return text8?.split(/\r?\n/).map((line) => line.trim()).find((line) => line !== "") ?? null;
+}
+function sentLetterLine(dbPath, filing) {
+  const prose = fetchProse(dbPath, filing.id);
+  return {
+    filing_id: filing.id,
+    addressee: firstLine2(prose.get("addressee")?.text),
+    subject: firstLine2(prose.get("re")?.text) ?? filing.title,
+    sent_on: filing.filed_on
+  };
+}
 function preFilingLine(proceeding, board) {
   return {
     proceeding_id: proceeding.id,
@@ -99803,9 +99846,9 @@ function preFilingLine(proceeding, board) {
     in_progress: inProgress(board.tickets.map((t3) => t3.ticket))
   };
 }
-function todoLines(todos, filings, preFiling) {
+function todoLines(todos, filings, awaiting, preFiling) {
   if (!("rows" in todos)) return [];
-  const filingIds = new Set(filings.map((f3) => f3.filing_id));
+  const filingIds = new Set([...filings, ...awaiting].map((f3) => f3.filing_id));
   const proceedingIds = new Set(preFiling.map((p3) => p3.proceeding_id));
   const byBfDate = (a3, b3) => a3 === b3 ? 0 : a3 === null ? 1 : b3 === null ? -1 : a3 < b3 ? -1 : 1;
   return [...todos.rows].sort((a3, b3) => byBfDate(a3.bf_date, b3.bf_date)).map((row2) => {
@@ -99830,16 +99873,18 @@ function buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos) {
     }
     return board;
   };
-  const live = ranked.filter((r3) => !r3.filing.retired_on).map((r3) => liveLine(r3, boardFor(r3.proceeding.id)));
+  const live = ranked.filter((r3) => !r3.filing.retired_on && !awaitingResponse(r3.filing)).map((r3) => liveLine(r3, boardFor(r3.proceeding.id)));
   const retired = ranked.filter((r3) => r3.filing.retired_on).map(retiredLine);
   const filings = [...live, ...retired];
+  const awaiting = ranked.filter((r3) => awaitingResponse(r3.filing)).map((r3) => sentLetterLine(dbPath, r3.filing)).sort((a3, b3) => a3.sent_on === b3.sent_on ? a3.filing_id - b3.filing_id : a3.sent_on < b3.sent_on ? -1 : 1);
   const preFilingLines = preFiling.map((p3) => preFilingLine(p3, boardFor(p3.id)));
   const merged = mergedBoards(new BoardIndex(dbPath), ranked, preFiling);
   return {
     meta: meta2,
-    todos: todoLines(todos, filings, preFilingLines),
+    todos: todoLines(todos, filings, awaiting, preFilingLines),
     ..."note" in todos ? { todos_note: todos.note } : {},
     filings,
+    ...awaiting.length > 0 ? { awaiting_response: awaiting } : {},
     pre_filing: preFilingLines,
     ...merged.length > 0 ? { boards: merged } : {}
   };
@@ -99847,7 +99892,7 @@ function buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos) {
 function mergedBoards(index, ranked, preFiling) {
   const groups = /* @__PURE__ */ new Map();
   const refs = [
-    ...ranked.filter((r3) => !r3.filing.retired_on).map((r3) => ({ filing_id: r3.filing.id, proceeding_id: r3.proceeding.id })),
+    ...ranked.filter((r3) => !r3.filing.retired_on && !awaitingResponse(r3.filing)).map((r3) => ({ filing_id: r3.filing.id, proceeding_id: r3.proceeding.id })),
     ...preFiling.map((p3) => ({ filing_id: null, proceeding_id: p3.id }))
   ];
   for (const ref of refs) {

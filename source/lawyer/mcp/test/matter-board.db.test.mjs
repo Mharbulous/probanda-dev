@@ -19,7 +19,7 @@ import { startFakeCloud } from "./helpers/fake-cloud.mjs";
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-todo-list-locks-"));
 after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
 
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, partiesSnapshotSql, seedSql } = await import("./helpers/template-db.mjs");
 const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsBootstrap, submissionFormsRender } = await import("../build/submission/forms.js");
@@ -295,6 +295,45 @@ test("a to-do's filing pointer resolves on the page, and one that no longer reso
       assert.deepEqual(Object.keys(byId[id]), ["id", "description", "bf_date"], `${id} carries no pointer`);
     }
     assert.equal(byId.t4.filing_id, 3, "a retired filing still resolves: it is listed at the foot");
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("a sent, unretired letter leaves the Writings for the Sent, awaiting response lane, oldest first", async () => {
+  const f = await fixture();
+  try {
+    await submissionDataExecute(
+      f.dbPath,
+      `
+      INSERT INTO filings (id, proceeding_id, kind, subkind, round, title, needs_forum_parts)
+        VALUES (5, 1, 'letter-to-opposing-counsel', NULL, NULL, 'Letter re production', 0),
+               (6, 1, 'letter-to-opposing-counsel', NULL, NULL, 'Letter re costs', 0),
+               (7, 1, 'letter-to-opposing-counsel', NULL, NULL, 'Letter not yet sent', 0),
+               (8, 1, 'letter-to-opposing-counsel', NULL, NULL, 'Letter sent and retired', 0);
+      INSERT INTO filing_prose (filing_id, slot, text)
+        VALUES (5, 'addressee', '\nD. Lawyer\nExample LLP'), (5, 're', 'Document production\nS-290002');
+      `.trim()
+    );
+    // A sent Writing's filed_on goes in by a raw update only beside its parties snapshot.
+    seedSql(
+      f.dbPath,
+      [5, 6, 8].map((id) => partiesSnapshotSql(f.dbPath, id)).join(" ") +
+        ` UPDATE filings SET filed_on = '2026-09-12' WHERE id = 5;
+        UPDATE filings SET filed_on = '2026-09-08' WHERE id IN (6, 8);
+        UPDATE filings SET retired_on = '2026-09-13', retirement_reason = 'delivered' WHERE id = 8;`
+    );
+    const rows = [todo("t1", "Chase the reply", "2026-09-20", "filing:5")];
+    const { data } = readBoard(submissionFormsBootstrap(f.dbPath, LARCHMONT, PINNED, f.draft, { rows }).matter_board_path);
+    assert.deepEqual(data.awaiting_response, [
+      { filing_id: 6, addressee: null, subject: "Letter re costs", sent_on: "2026-09-08" },
+      { filing_id: 5, addressee: "D. Lawyer", subject: "Document production", sent_on: "2026-09-12" },
+    ]);
+    const listed = data.filings.map((x) => x.filing_id);
+    assert.ok(!listed.includes(5) && !listed.includes(6), "a sent letter is not among the Writings");
+    assert.ok(listed.includes(7), "an unsent letter stays among the Writings");
+    assert.ok(listed.includes(8), "a retired letter stays under Retired");
+    assert.equal(data.todos[0].filing_id, 5, "a to-do's pointer to a sent letter still resolves");
   } finally {
     f.cleanup();
   }
