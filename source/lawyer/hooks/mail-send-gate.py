@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Refuse a model mail send and name the draft route instead.
 
-Hook event: PreToolUse, matcher mcp__.+mail_(send_email|forward_email|reply_to_email).
+Hook event: PreToolUse, matcher mcp__.+_(send_email|forward_email|reply_to_email)$.
 The model never sends email to anyone: an outgoing email is an unsent .eml the
 practitioner sends from Outlook (docs/adr/0032, skills/shared/email.md, the one
 source for the route; draft/references/letters.md sections 8 and 10). This gate refuses a send, forward or reply and its reason
