@@ -37,6 +37,15 @@ class TechSupportContract(unittest.TestCase):
     def test_preloads_the_troubleshooting_skill(self):
         self.assertEqual(frontmatter_list(self.text, "skills"), ["researcher:probanda-troubleshooting"])
 
+    def test_reads_its_mode_helper_files_from_the_skill(self):
+        tools = frontmatter_list(self.text, "tools")
+        self.assertIn("mcp__plugin_lawyer_data__skill_source__read", tools)
+        self.assertIn("mcp__remote-devices__plugin_lawyer_data__skill_source__read", tools)
+        for mode in ("diagnose", "screen"):
+            name = f"probanda-troubleshooting/references/{mode}.md"
+            self.assertIn(name, self.text)
+            self.assertTrue((REPO_ROOT / ".claude" / "skills" / name).is_file(), name)
+
 
 if __name__ == "__main__":
     unittest.main()

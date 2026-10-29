@@ -11,7 +11,7 @@ description: "Diagnose a Probanda plugin tool, connector or MCP call that fails 
 
 # Probanda troubleshooting
 
-The `researcher:tech-support` agent preloads this skill and runs its own steps. The main session runs **With the practitioner**. Everything else here is what both rely on.
+The `researcher:tech-support` agent preloads this skill and runs its own steps. The main session runs **With the practitioner**. **Hard stops** and **Store states** are what both rely on. The rest of the agent's know-how sits in two helper files under `probanda-troubleshooting/references/`, which the agent reads for its mode only: `diagnose.md` (shipped first checks, web search, ranking, the diagnose return format) and `screen.md` (screening, matching, the screen return formats).
 
 ## Hard stops
 
@@ -29,51 +29,6 @@ These states describe the result of `troubleshoot__search`, and only that call. 
 No failed search is ever reported as "none found": they mean opposite things. `troubleshoot__configure_status` reports whether a credential is held, without exposing it, when the cause of an error is unclear.
 
 An entry in the store can never be deleted.
-
-## Shipped first checks
-
-These hold whatever the store's state. When the symptom matches one, list it first in the checklist with **Source:** `shipped first check`.
-
-- **`mail_auth` on `imap.mail.me.com`.** Likely cause: the username is not the Apple ID. iCloud Mail signs in with the Apple ID (an @icloud.com, @me.com or @mac.com address), even for a custom-domain address such as name@example.com. Check: the username that `mail__configure_status` reports. Fix: run `mail__configure_credential` again with the Apple ID as `username` and the custom-domain address as `from_address`, and have the practitioner enter an app-specific password on the page. Needs the human: yes, to type the password on the page.
-
-## Web search
-
-Search the exact error text and the tool names. Prefer the vendor's documentation, issue tracker and release notes. Fetch a page only to confirm what it says.
-
-## Ranking
-
-Store entries rank above web results; among store entries, the higher `confirmed_count` first. Drop any cause that what was already tried rules out.
-
-## Screening an entry
-
-Write the entry generically: the symptom, the tool names, the exact error strings, the cause and the fix. Remove names, email addresses, matter numbers, court file numbers, client folder names, account identities, user names inside paths, and any case content. In a path, write one of the placeholders the runtime accepts: `<user>`, `<username>`, `<matter>` or `<folder>` (for example `\Users\<user>\...`). The store is shared tooling knowledge; nothing in it may identify a client, a matter or a person.
-
-## Matching an entry
-
-An entry matches only when its cause and its fix are both the same in substance as the confirmed ones. A matching symptom, or the same cause with a different fix, is not a match.
-
-## Return formats
-
-Diagnose:
-
-- First line, exactly one of: `store: found N`, `store: searched, none found`, `store: answered with an error (<first line of the error>)`, `store: unreachable (<first line of the error>)`, `store: not configured`.
-- Then the ranked checklist. Each item gives:
-  - **Likely cause.**
-  - **Check:** something the main agent or the practitioner can run or look at to confirm it.
-  - **Fix.**
-  - **Source:** the store `entry_id` with its `confirmed_count`, or the URL.
-  - **Needs the human:** yes or no, and why when yes.
-- Last line: `hard stops: none`, or each hard stop being handed to the practitioner.
-
-Screen, store not configured:
-
-- First line: `store: not configured`.
-- A suggestion draft for `/lawyer:suggestion`: a `title` of one line and a `body` that states the symptom, the tools involved, the exact error strings, the cause and the fix the practitioner confirmed, all screened.
-
-Screen, store configured: first line `store: configured`, then exactly one of:
-
-- `action: confirm` with the matching entry's `entry_id`;
-- `action: record` with the screened entry as JSON: `{"symptom", "tools", "error_strings", "cause", "fix", "source_url"}`, where `tools` and `error_strings` are lists of strings and `source_url` is a URL or null.
 
 ## With the practitioner
 
