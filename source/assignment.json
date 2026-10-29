@@ -62,6 +62,7 @@
         "mail-send-gate": "source/lawyer/hooks/mail-send-gate.py",
         "missing-key-note": "source/lawyer/hooks/missing-key-note.py",
         "one-way-gate": "source/lawyer/hooks/one-way-gate.py",
+        "pending-approvals-note": "source/lawyer/hooks/pending-approvals-note.py",
         "plugin-cache-guard": "source/lawyer/hooks/plugin-cache-guard.py",
         "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
         "rule-gate": "source/lawyer/hooks/rule-gate.py",

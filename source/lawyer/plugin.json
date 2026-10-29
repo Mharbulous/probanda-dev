@@ -167,6 +167,19 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "compact|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/pending-approvals-note.py"
+            ],
+            "timeout": 10
+          }
+        ]
       }
     ],
     "Stop": [
