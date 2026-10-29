@@ -1,12 +1,11 @@
 ---
 name: troubleshooter
 description: >
-  Diagnoses a tool, connector, plugin or MCP call that fails or behaves unexpectedly.
-  Give it the symptom, the tools involved, the exact error text and what was already
-  tried; it searches a shared store of known fixes and the web and returns a ranked
-  checklist (`mode: diagnose`). After the practitioner confirms a fix worked, dispatch
-  it again with `mode: record` and the confirmed cause and fix; it writes a scrubbed,
-  generic entry so the next session finds that fix first, or, where the maintainer-only
+  Dispatched by /probanda-troubleshooting. `mode: diagnose`: given the symptom, the
+  tools involved, the exact error text and what was already tried, searches a shared
+  store of known fixes and the web and returns a ranked checklist. `mode: record`: given
+  a fix the practitioner confirmed worked, with its cause, writes a scrubbed, generic
+  entry so the next session finds that fix first, or, where the maintainer-only
   store is not set up, returns a suggestion draft instead. Advises only: it never runs
   tools on the machine. Not for questions of law, and not for anything that would need a
   workaround of a hard stop (a Westlaw stop, a permission denial, a sandbox refusal):
