@@ -70,7 +70,7 @@ Run by Brahm on 2026-10-28 in six probes, each a new Cowork session in the proje
 | R6 | FAIL | The second session reported "0 folded" |
 | R7 | FAIL | Plugin 0.1.1 carried two such hooks, one with server `plugin:lawyer:data` and one with server `remote-devices` and tool `plugin_lawyer_data__practice_data__config_status`. Neither put any output into the session, and neither reported an error. Removed in 0.1.2 |
 | R8 | PASS | The hook's input for the PC's `config_status` held the response (1,276 characters). It fired for the PC shell too |
-| R9 | PARTIAL | The `additionalContext` line reached the model, as context added after the call. Whether the `systemMessage` showed on screen was not reported |
+| R9 | PASS | The `additionalContext` line reached the model, as context added after the call. Whether the `systemMessage` showed on screen was not checked, and need not be: on Claude the plugin also sends each notice as `additionalContext` for the model to relay (`relays_notices`, `plugin/hosts.py`) |
 | R10 | FAIL | Cowork sends the PC shell as `mcp__remote-devices__device_bash` with input key `command`. The fork test fails as expected, marked `xfail` until the green build (fork commit `bc804bd`) |
 | R11 | RECORDED | A hook call took 0.082 to 0.089 s (five runs). No judge calls and 0.0 judge tokens, because no envelope exists. No `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` is set. `ANTHROPIC_BASE_URL` and `CLAUDE_SESSION_INGRESS_TOKEN_FILE` are, so `claude -p` appears to bill through the session's own account (inferred, not verified) |
 | R12 | NOT OBSERVABLE | `/clear` does not work in Cowork, and a session ends only when its container does, which leaves nothing to read (R5). The green design does not depend on `SessionEnd` |
