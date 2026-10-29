@@ -67,7 +67,7 @@ class BuildPluginTest(unittest.TestCase):
     def test_each_bundle_ships_in_one_plugin_and_every_plugin_has_a_manifest(self):
         for plugin in PLUGINS:
             self.assertTrue((self.out / plugin / ".claude-plugin" / "plugin.json").is_file(), plugin)
-            self.assertTrue((self.out / plugin / "skills" / "shared").is_dir(), plugin)
+            self.assertEqual((self.out / plugin / "skills" / "shared").is_dir(), plugin != "tokeneconomizer", plugin)
             bundles = sorted(p.relative_to(self.out / plugin).as_posix() for p in (self.out / plugin).glob("*/dist/*.js"))
             self.assertEqual(bundles, sorted(BUNDLES.get(plugin, ())), plugin)
 
@@ -287,6 +287,15 @@ class CutoverBuildTest(unittest.TestCase):
         if os.name == "posix":
             self.assertTrue(os.stat(research / "scripts" / "run").st_mode & 0o111)
         self.assertEqual(self.build("--check").returncode, 0)
+
+    def test_a_plugin_can_leave_out_the_shared_tree(self):
+        assignment = json.loads(json.dumps(ASSIGNMENT))
+        assignment["plugins"]["research"]["shared"] = False
+        self.put("source/assignment.json", json.dumps(assignment))
+        result = self.build()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse((self.repo / "plugins" / "research" / "skills" / "shared").exists())
+        self.assertTrue((self.repo / "plugins" / "practice" / "skills" / "shared").is_dir())
 
     def test_executable_outside_the_payload_stops_the_build(self):
         self.with_payload(["scripts/missing"])

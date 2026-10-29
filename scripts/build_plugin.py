@@ -9,7 +9,7 @@ Usage:
 Every plugin in source/assignment.json is built (see plugin_layout.py). Plugin P
 is built from source/P/ (plugin.json and roster.json, and .mcp.json, README.md,
 VISION.md, agents/ and hooks/ where they exist), the skills the assignment gives
-P, the whole shared/ tree, the bundles of the servers the assignment gives P, and
+P, the whole shared/ tree (unless the assignment's "shared" is false), the bundles of the servers the assignment gives P, and
 the payload the assignment names (files and folders of source/P/, copied whole).
 --out <dir> holds one folder per plugin, <dir>/P/. A folder under plugins/ that
 no plugin builds is reported stale by --check and removed by a build.
@@ -216,7 +216,7 @@ def collect(repo, spec):
     # plugin's source says which folders of a private skill are assets and
     # holds the agent files, so the two must agree.
     public = {t: public[t] for t in sorted(spec["skills"]) if t in public}
-    extra = [t for t in EXTRA_TREES if t == SHARED_TREE or t in spec["skills"]]
+    extra = [t for t in EXTRA_TREES if (t == SHARED_TREE and spec["shared"]) or t in spec["skills"]]
     private = {t for t in spec["skills"] if t not in public and t not in EXTRA_TREES}
     if private != set(roster):
         stop(f"{src / 'roster.json'} and source/assignment.json disagree on the private skills of '{name}': "

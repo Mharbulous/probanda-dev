@@ -51,9 +51,9 @@
     },
     {
       "name": "tokeneconomizer",
-      "source": "./vendor/tokeneconomizer",
+      "source": "./plugins/tokeneconomizer",
       "author": {"name": "TokenEconomizer authors"},
-      "description": "Token Economizer, by Microsoft (https://github.com/microsoft/TokenEconomizer). Third-party, not part of Probanda. The original Microsoft TokenEconomizer was optimized for Claude Code. This version is being adapted for Claude Cowork. Micro-skills learned per repository, tool pruning of tools a repository never uses, and a failure-loop guard. Requires Python 3.10 or newer. Requires no other plugin."
+      "description": "Token Economizer, by Microsoft (https://github.com/microsoft/TokenEconomizer). Third-party, not part of Probanda. The original Microsoft TokenEconomizer was optimized for Claude Code. This version is being adapted for Claude Cowork. Micro-skills learned per repository and a failure-loop guard. Tool pruning is off in this version. Requires Python 3.10 or newer. Requires no other plugin."
     }
   ]
 }

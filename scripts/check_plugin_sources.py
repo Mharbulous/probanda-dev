@@ -12,7 +12,8 @@ BASELINES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "check_plug
 
 COMMONS_SKILL = "legal-commons"
 # Skill trees that ship beside the roster skills, unstamped: shared/ in every
-# plugin, legal-commons in the plugin the assignment gives it to.
+# plugin whose assignment does not say "shared": false, legal-commons in the plugin
+# the assignment gives it to.
 SHARED_TREE = "shared"
 EXTRA_TREES = (SHARED_TREE, COMMONS_SKILL)
 # The agent merged in from legal-commons' read side.
@@ -79,7 +80,7 @@ def packaged_assets(repo, plugin):
 
 
 def extra_trees(plugin):
-    return tuple(t for t in EXTRA_TREES if t == SHARED_TREE or ships_skill(plugin, t))
+    return tuple(t for t in EXTRA_TREES if (t == SHARED_TREE and plugin["shared"]) or ships_skill(plugin, t))
 
 
 def public_skill_dirs(repo):
