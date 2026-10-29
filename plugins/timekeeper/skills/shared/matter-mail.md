@@ -27,7 +27,9 @@ Use every folder path exactly as `mail__list_folders` returns it. Never retype o
 
 ## Reading
 
-Search one folder per call with `mail__search_emails`, by sender and date. A search does not include subfolders. Read a message with `mail__get_email` only when its headers do not answer the question. Never search every folder, so never call `mail__find_email_by_message_id`, which does. `mail__find_thread_messages` and `mail__get_latest_emails` are read tools too. `mail__download_attachment` is used only when the practitioner asks for an attachment, with `save_dir` inside the open matter folder.
+Read metadata first, then one body at a time. Search one folder per call with `mail__search_emails`, by sender and date, without `include_body`. A search does not include subfolders. Read a message with `mail__get_email` only when its headers do not answer the question, one message per call, with a `max_length` and with `strip_quoted` and `strip_inline_images` set, so the body is the new message only. Never search every folder, so never call `mail__find_email_by_message_id`, which does. `mail__find_thread_messages` and `mail__get_latest_emails` are read tools too. `mail__download_attachment` is used only when the practitioner asks for an attachment, with `save_dir` inside the open matter folder.
+
+When a call fails with `mail_timeout`, retry the same call once. When the retry fails too, follow "Never a browser" above: say the mailbox could not be reached and stop reading mail.
 
 Never call a mail tool that changes the mailbox in a read: `mail__save_draft`, `mail__create_folder`, `mail__rename_folder` or `mail__move_messages`, or any send, reply or forward tool. Every read opens the folder read-only, so it marks nothing read.
 
