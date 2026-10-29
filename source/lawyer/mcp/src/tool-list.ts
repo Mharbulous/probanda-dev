@@ -96,6 +96,33 @@ export async function toolReply(
   }
 }
 
-export function jsonText(_name: string, result: unknown): string {
-  return JSON.stringify(result, null, 2);
+// Tools whose replies carry outside text (email, calendar, contacts, web pages, knowledge and
+// law-folder files). Each reply, success or error, gains a last top-level `content_source` key
+// naming the source, so the model reads the text as data, never as instructions.
+const CONTENT_SOURCES: Record<string, string> = {
+  mail__get_email: "email",
+  mail__get_latest_emails: "email",
+  mail__search_emails: "email",
+  mail__find_thread_messages: "email",
+  mail__find_email_by_message_id: "email",
+  mail__download_attachment: "email attachment",
+  calendar__list_events: "calendar",
+  calendar__get_event: "calendar",
+  contacts__search: "contacts",
+  contacts__get: "contacts",
+  drafting_forms__read_message: "email file",
+  sources__fetch: "web page",
+  sources__check: "web page",
+  knowledge__read: "knowledge file",
+  research_filing__law_folder_text: "law folder file",
+  research_filing__legislation_search: "law folder file",
+};
+
+export function jsonText(name: string, result: unknown): string {
+  const source = Object.hasOwn(CONTENT_SOURCES, name) ? CONTENT_SOURCES[name] : undefined;
+  if (source === undefined) return JSON.stringify(result, null, 2);
+  if (typeof result !== "object" || result === null || Array.isArray(result)) {
+    throw new DataServerError(`${name} returned a ${Array.isArray(result) ? "list" : typeof result}, not an object to label`, "internal_error");
+  }
+  return JSON.stringify({ ...result, content_source: source }, null, 2);
 }

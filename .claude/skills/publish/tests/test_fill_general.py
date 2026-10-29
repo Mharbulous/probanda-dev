@@ -202,6 +202,11 @@ class TestConfirmedItem(Base):
         self.assertEqual(result["defaulted"],
                          ["typeface", "font_size", "line_spacing", "footer", "filing_stamp_reservation"])
 
+    def test_a_reply_labelled_with_its_content_source_is_accepted(self):
+        proc, result = self.fill({**format_read(), "content_source": "knowledge file"})
+        self.assertEqual(proc.returncode, 0, result)
+        self.assertEqual(result["deliverable"], str(self.deliverable))
+
     def test_a_corrected_item_with_the_rest_confirmed_writes_the_deliverable(self):
         proc, result = self.fill(format_read(F_margins={"status": "corrected"}))
         self.assertEqual(proc.returncode, 0, result)
