@@ -660,6 +660,29 @@ test("a Milestone with no Writing leads the list and is not opened by default", 
   assert.equal([job.current, ...job.queued, ...job.done].includes(boardId), false, "the background job never queues the board");
 });
 
+// A General Job (no filing) counts for every Writing in its proceeding, so a newer one must not
+// tie them all and hand the opening to the lowest id: the Writing with its own activity opens.
+test("a newer General Job does not outrank a Writing's own older activity, and filing_id still wins", async (t) => {
+  const m = matterFixture(t);
+  await seedOneFiling(m.dbPath);
+  await submissionDataExecute(
+    m.dbPath,
+    `INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (2, 1, 'submissions_package', 'reply', 'Reply Submissions Package');
+     INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created)
+       VALUES (1, 1, 2, 'Draft the reply', 'Draft the reply submission.', 'queued', 0, 'work', 'L9999|reply', '2026-09-10 10:00'),
+              (2, 1, NULL, 'Gather the record', 'Collect the record.', 'queued', 0, 'work', 'L9999|record', '2026-09-20 10:00');`
+  );
+  mkdirSync(join(m.matterRoot, "0. DRAFT"));
+  const context = await practiceContext(t);
+
+  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  assert.deepEqual(result.filings.map((f) => f.filing_id), [2, 1]);
+  assert.equal(result.opened.filing_id, 2);
+
+  const named = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot, filing_id: 1 });
+  assert.equal(named.opened.filing_id, 1);
+});
+
 test("filing_id naming a Milestone with no Writing opens its board, with no folder of its own", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);

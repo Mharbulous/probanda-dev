@@ -12,8 +12,9 @@ const { isImminent, orderByRecency, orderFilings } = await import("../build/subm
 
 const NOW = "2026-09-15 10:00";
 
-function filing(id, { hearing = null, activity = null, retired = false } = {}) {
-  return { filing_id: id, hearing_date: hearing, latest_activity: activity, retired };
+// A filing's activity is its own unless `own` says otherwise: `own: null` makes it General Job activity only.
+function filing(id, { hearing = null, activity = null, own = activity, retired = false } = {}) {
+  return { filing_id: id, hearing_date: hearing, latest_activity: activity, own_activity: own, retired };
 }
 
 const idsOf = (filings) => orderFilings(filings, NOW).map((f) => f.filing_id);
@@ -98,6 +99,23 @@ test("recency order: most recent live first, then untouched, then retired; a hea
   const retired = filing(4, { activity: "2026-09-15 09:00", retired: true });
   const alsoUntouched = filing(5, { hearing: "2026-09-15" });
   assert.deepEqual(orderByRecency([retired, alsoUntouched, untouched, imminentButOlder, recent]).map((f) => f.filing_id), [2, 1, 3, 5, 4]);
+});
+
+// A General Job's activity counts for every filing in its proceeding, so it cannot pick one of them.
+test("recency order: a filing's own activity outranks a newer General Job activity", () => {
+  const shared = "2026-09-15 09:00";
+  const sharedOnly = filing(1, { activity: shared, own: null });
+  const ownOlder = filing(2, { activity: shared, own: "2026-09-10 09:00" });
+  const ownNewer = filing(3, { activity: shared, own: "2026-09-12 09:00" });
+  assert.deepEqual(orderByRecency([sharedOnly, ownOlder, ownNewer]).map((f) => f.filing_id), [3, 2, 1]);
+});
+
+test("recency order: among filings with no own activity, the most recent General Job activity leads, then filing id", () => {
+  const older = filing(1, { activity: "2026-09-10 09:00", own: null });
+  const newer = filing(2, { activity: "2026-09-14 09:00", own: null });
+  const tiedA = filing(4, { activity: "2026-09-10 09:00", own: null });
+  const untouched = filing(3);
+  assert.deepEqual(orderByRecency([untouched, tiedA, older, newer]).map((f) => f.filing_id), [2, 1, 4, 3]);
 });
 
 // The ranking is silent. No text a session loads may describe what produces the order: a

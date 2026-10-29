@@ -37,7 +37,7 @@ export function rankFilings(
   // One activity read per proceeding, not per filing: proceeding-scoped rows count for every
   // filing in the proceeding, so the whole proceeding's answer arrives in one query.
   const activityByProceeding = new Map<number, Map<number | null, string>>();
-  const activityFor = (proceedingId: number, filingId: number): string | null => {
+  const activityFor = (proceedingId: number, filingId: number): Pick<Orderable, "own_activity" | "latest_activity"> => {
     let byFiling = activityByProceeding.get(proceedingId);
     if (byFiling === undefined) {
       byFiling = new Map(fetchLatestActivity(dbPath, proceedingId).map((r) => [r.filing_id, r.latest]));
@@ -45,10 +45,9 @@ export function rankFilings(
     }
     const own = byFiling.get(filingId) ?? null;
     const shared = byFiling.get(null) ?? null;
-    if (own === null) return shared;
-    if (shared === null) return own;
-    return own > shared ? own : shared;
+    return { own_activity: own, latest_activity: own === null || (shared !== null && shared > own) ? shared : own };
   };
+  const noActivity = { own_activity: null, latest_activity: null };
 
   // Read once for the batch, as the caller reads the revision once: an approval moves no revision.
   const approvals = fetchApprovalsMark(dbPath);
@@ -79,7 +78,7 @@ export function rankFilings(
         return {
           filing_id: filing.id,
           hearing_date: null,
-          latest_activity: filing.retired_on ? null : activityFor(filing.proceeding_id, filing.id),
+          ...(filing.retired_on ? noActivity : activityFor(filing.proceeding_id, filing.id)),
           retired: Boolean(filing.retired_on),
           proceeding,
           filing,
@@ -105,7 +104,7 @@ export function rankFilings(
         return {
           filing_id: filing.id,
           hearing_date: hearingDate,
-          latest_activity: null,
+          ...noActivity,
           retired: true,
           proceeding,
           filing,
@@ -130,7 +129,7 @@ export function rankFilings(
       return {
         filing_id: filing.id,
         hearing_date: hearingDate,
-        latest_activity: activityFor(filing.proceeding_id, filing.id),
+        ...activityFor(filing.proceeding_id, filing.id),
         retired: false,
         proceeding,
         filing,

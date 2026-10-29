@@ -15,8 +15,10 @@ export interface Orderable {
   filing_id: number;
   /** The stored hearing date, `YYYY-MM-DD`, or null. `hearing_time` is ignored: it is free text. */
   hearing_date: string | null;
-  /** Newest activity timestamp on this filing, or null when it has none. */
+  /** Newest activity timestamp on this filing or its proceeding's General Jobs, or null when it has none. */
   latest_activity: string | null;
+  /** Newest activity on this filing alone, General Jobs left out, or null when it has none. */
+  own_activity: string | null;
   retired: boolean;
 }
 
@@ -66,18 +68,21 @@ export function orderFilings<T extends Orderable>(filings: T[], now: Stamp): T[]
 }
 
 /**
- * The order bootstrap returns filings in: live filings by latest activity, most recent first;
- * then live filings with no activity; then the retired ones; ties on filing id. No hearing date
- * enters it, so a session reading it learns nothing about hearing proximity. The Matter Board
- * keeps orderFilings, which a session never reads.
+ * The order bootstrap returns filings in: live filings by their own activity, most recent first;
+ * then live filings with only General Job activity, most recent first; then live filings with no
+ * activity; then the retired ones; ties on filing id. A General Job counts for every filing in
+ * its proceeding, so it ranks below any filing's own work. No hearing date enters it, so a
+ * session reading it learns nothing about hearing proximity. The Matter Board keeps
+ * orderFilings, which a session never reads.
  */
 export function orderByRecency<T extends Orderable>(filings: T[]): T[] {
-  const band = (f: T): number => (f.retired ? 2 : f.latest_activity === null ? 1 : 0);
+  const band = (f: T): number => (f.retired ? 3 : f.own_activity !== null ? 0 : f.latest_activity !== null ? 1 : 2);
   return [...filings].sort((a, b) => {
     const bandA = band(a);
     const bandB = band(b);
     if (bandA !== bandB) return bandA - bandB;
-    if (bandA === 0 && a.latest_activity !== b.latest_activity) return (a.latest_activity as string) > (b.latest_activity as string) ? -1 : 1;
+    const [x, y] = bandA === 0 ? [a.own_activity, b.own_activity] : [a.latest_activity, b.latest_activity];
+    if (bandA < 2 && x !== y) return (x as string) > (y as string) ? -1 : 1;
     return a.filing_id - b.filing_id;
   });
 }
