@@ -217,7 +217,7 @@ Today the main thread applies these while composing SQL. The converters implemen
 - **`begin {resume?: run_id}`:**
   - **Without `resume`:** refuses `run_active` while another lease's heartbeat is less than 60 minutes old (est.). The refusal names the unfinished run's `run_id`.
   - **With the `run_id` of an unfinished run:** takes that lease over at once, logs `takeover`, and returns the run's unfinished work. Resuming after a crash or a new session is therefore one call, with no wait.
-  - **Over 60 minutes without a heartbeat:** a plain `begin` takes over too.
+  - **Over 60 minutes without a heartbeat:** a plain `begin` takes over too. A run that still holds results to record, or Path B documents to read, is never dropped silently: the orchestrator's `begin` is refused `run_unfinished`, naming the run to resume, and any other caller takes over and is told in a report line.
   - The displaced holder's next call is refused `lease_lost`.
 - **Heartbeat:** every `ingest_run`, `ingest_result` and `triage` call that carries the `run_id` renews it. So does every `matter_data__execute` call that carries it (Brahm, 2026-10-28), because D1's ingest paths write only through `execute` between `begin` and `end`.
 - **Enforcement:**

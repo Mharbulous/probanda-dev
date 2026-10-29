@@ -20,7 +20,7 @@ If a call in Step 3 fails with the **schema-version guard** message (the databas
 
 If a call instead fails with "stale pointer — re-run initialize" (schema_version isn't 5), halt and direct the user to `../operations/initialize.md` — do not attempt migrate for this error, it is unrelated to the user_version guard.
 
-Then start the ingest run: `matter_data__ingest_run` with `matter_root`, `action: "begin"` and `mode: "attended"`. Only one ingestion of a matter runs at a time. A refusal (`ok: false`) ends the gate: tell the practitioner its `say`, never its code, and write nothing. Otherwise carry the returned `run_id`: every `matter_data__execute` call the routed operation makes passes it, and a call refused `lease_lost` means another session took this run over, so stop at once, write nothing more, and tell the practitioner its message. The run's record lives on this computer, not in the matter, so the gate still writes nothing to case data.
+Then start the ingest run: `matter_data__ingest_run` with `matter_root`, `action: "begin"` and `mode: "attended"`. Only one ingestion of a matter runs at a time. A refusal (`ok: false`) ends the gate: tell the practitioner its `say`, never its code, and write nothing. Relay any `report` lines that `begin` or, later, `end` returns, as written. Otherwise carry the returned `run_id`: every `matter_data__execute` call the routed operation makes passes it, and a call refused `lease_lost` means another session took this run over, so stop at once, write nothing more, and tell the practitioner its message. The run's record lives on this computer, not in the matter, so the gate still writes nothing to case data.
 
 ---
 
