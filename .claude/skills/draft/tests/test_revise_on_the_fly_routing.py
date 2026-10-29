@@ -32,8 +32,8 @@ class ReviseOnTheFlyRoutingTest(unittest.TestCase):
 
     def test_section_15_names_it(self):
         self.assertIn(
-            f"| The practitioner asks to reword one reviewed paragraph, or swap or move facts on a Writing "
-            f"(section 12) | `{ROUTE}` |",
+            f"| The practitioner asks to reword one reviewed paragraph, or swap or move a Writing's facts or its "
+            f"material to be relied on (section 12) | `{ROUTE}` |",
             section(self.text, "## 15. References"),
         )
 
