@@ -10,7 +10,7 @@
 // the acknowledged results still to be written. `staged` records a bridged session's copies (§6.5).
 
 import { createHash, randomUUID } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, rmSync, truncateSync, unlinkSync, writeFileSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
 
 import { BUILD_STAMP } from "../build-stamp.js";
@@ -19,7 +19,7 @@ import { DataServerError, ValidationError } from "../errors.js";
 import { classifyPdfPages, pdfPageImages } from "../files/extract/page-images.js";
 import { caseDataFolder } from "./backend.js";
 import { runCaseScript } from "./case-script.js";
-import { stagedResultPath } from "./stage-result.js";
+import { dropStagedResults, stagedResultPath } from "./stage-result.js";
 
 const SITE: LockSite = {
   envVar: "COCLERK_INGEST_RUN_ROOT",
@@ -116,16 +116,25 @@ const IMAGES_LEFT = "Some page images made for an ingest could not be deleted ye
 const RECORDS_LEFT = "Some working files an ingest keeps on this computer could not be checked or deleted, so they were left as they are. They will be tried again after a later ingest.";
 /** A report line when a plain begin displaces a run that still had results to record (m-6). */
 const DISPLACED = "An earlier ingest of this matter stopped before it finished. What it read but had not yet recorded was set aside, and those documents will be read again when they are next ingested.";
+/** A report line when a crash cut short the last step an earlier run saved (round 5, 1). */
+const STEP_LOST = "An earlier ingest of this matter was cut off while saving its progress. Its last step was not kept and may be done again.";
+/** A report line when begin cannot read an earlier run's record and takes the run over (round 5, 1). */
+const RUN_UNREADABLE = "The record of an earlier ingest of this matter could not be read, so that ingest was set aside. Anything it read but had not yet recorded will be read again when those documents are next ingested.";
+/** Report lines when end deletes, or cannot yet delete, what was read for a privilege question still open (round 5, 7). */
+const PRIVILEGED_DROPPED = "What was read from documents whose privilege question is still open was deleted as this ingest ended. They will be read again when they are next ingested.";
+const PRIVILEGED_LEFT = "Some of what was read from documents whose privilege question is still open could not be deleted yet. It is deleted within 7 days.";
 
 export type Refusal = { ok: false; refused: keyof typeof SAY; say: string };
 const refusal = (code: keyof typeof SAY): Refusal => ({ ok: false, refused: code, say: SAY[code] });
 
 /** Each folder left behind is reported once by this server, not at every begin or end (n-4). */
 const reported = new Set<string>();
-function sayOnce(left: string[], line: string): string[] {
-  const fresh = left.filter((key) => !reported.has(key));
-  fresh.forEach((key) => reported.add(key));
-  return fresh.length > 0 ? [line] : [];
+/** The report line for the folders in `left` not said yet, and those folders, which the caller marks
+ *  as said only once it returns the line, so a refusal or an error loses none (round 5 nit 9). */
+type Said = { lines: string[]; keys: string[] };
+function sayOnce(left: string[], line: string): Said {
+  const keys = left.filter((key) => !reported.has(key));
+  return { lines: keys.length > 0 ? [line] : [], keys };
 }
 const reportLines = (report: string[]) => (report.length > 0 ? { report } : {});
 
@@ -136,23 +145,53 @@ function readLease(dir: string): Lease | null {
   return existsSync(leasePath(dir)) ? (JSON.parse(readFileSync(leasePath(dir), "utf-8")) as Lease) : null;
 }
 
-/** Written whole or not at all: a temp file in the same folder, then renamed over lease.json (M-1). */
+/** The codes a rename over lease.json gives on Windows while another program (an antivirus scan, an
+ *  indexer, another server's sweep) holds the file for a moment. */
+const HELD = ["EPERM", "EACCES", "EBUSY"];
+
+/** Written whole or not at all: a temp file in the same folder, then renamed over lease.json (M-1).
+ *  A rename another program holds up is tried again for about a second, as graceful-fs does (round 5, 2). */
 function writeLease(dir: string, lease: Lease): void {
   mkdirSync(dir, { recursive: true });
   const temp = pathWin32.join(dir, "lease.tmp");
   writeFileSync(temp, JSON.stringify(lease), "utf-8");
-  renameSync(temp, leasePath(dir));
+  for (let attempt = 1; ; attempt++) {
+    try {
+      renameSync(temp, leasePath(dir));
+      return;
+    } catch (err) {
+      if (attempt >= 10 || !HELD.includes(String((err as NodeJS.ErrnoException).code))) throw err;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
+    }
+  }
 }
+
+const journalPath = (dir: string) => pathWin32.join(dir, "journal.jsonl");
+/** Run folders whose journal's last line a crash cut short mid-append, said at the next begin or end (round 5, 1). */
+const torn = new Set<string>();
 
 function journal(dir: string, event: string, runId: string, extra: Record<string, unknown> = {}): void {
   const line = JSON.stringify({ ts: new Date().toISOString(), event, run_id: runId, ...extra });
-  appendFileSync(pathWin32.join(dir, "journal.jsonl"), line + "\n", "utf-8");
+  const path = journalPath(dir);
+  // A line a crash cut short is dropped before the next is added, so no line is ever joined to it.
+  if (existsSync(path)) {
+    const bytes = readFileSync(path);
+    const whole = bytes.lastIndexOf(0x0a) + 1;
+    if (whole < bytes.length) {
+      truncateSync(path, whole);
+      torn.add(dir);
+    }
+  }
+  appendFileSync(path, line + "\n", "utf-8");
 }
 
 function readJournal(dir: string): Event[] {
-  const path = pathWin32.join(dir, "journal.jsonl");
+  const path = journalPath(dir);
   if (!existsSync(path)) return [];
-  return readFileSync(path, "utf-8").split("\n").filter((l) => l.trim() !== "").map((l) => JSON.parse(l) as Event);
+  const lines = readFileSync(path, "utf-8").split("\n");
+  // What follows the last newline is a line a crash cut short mid-append, never a whole event.
+  if (lines.pop() !== "") torn.add(dir);
+  return lines.filter((l) => l.trim() !== "").map((l) => JSON.parse(l) as Event);
 }
 
 /** The events of the run in the lease: from its last begin, through every takeover since. Records
@@ -206,9 +245,11 @@ function hold(dir: string, runId: string): Lease | Refusal {
   return lease;
 }
 
-/** Deletes a host-local folder this server made: a run folder, or a run's dispatches folder. */
+/** Deletes a host-local folder this server made: a run folder, or a run's dispatches folder. A run
+ *  folder's lease.json goes last, so a folder a delete error leaves part-way is swept again (round 5 nit 10). */
 function removeOwn(path: string): void {
-  rmSync(path, { recursive: true, force: true });
+  const rest = existsSync(path) ? readdirSync(path).filter((name) => name !== "lease.json").map((name) => pathWin32.join(path, name)) : [];
+  for (const target of [...rest, path]) rmSync(target, { recursive: true, force: true });
 }
 
 /** The names the page renderer gives its images (page-images.ts pageName, four digits or more), in
@@ -266,8 +307,9 @@ const expired = (lease: Lease | null): boolean => {
  *  is left alone (N13). A lock another session holds now leaves that folder to a later sweep; so
  *  does any error in one folder, its lease's read included, and an image that cannot be deleted
  *  (N-5, M-1): none stops this begin. Returns the report lines for what was left, each folder said
- *  once (n-4). */
-async function sweep(env: NodeJS.ProcessEnv): Promise<string[]> {
+ *  once (n-4). An error in the begin's own run folder (`own`) is left to that begin, which reads it
+ *  again under its lock and says what it finds (round 5, 1). */
+async function sweep(env: NodeJS.ProcessEnv, own: string): Promise<Said> {
   const root = hostLocalDir(SITE, env);
   const imagesLeft: string[] = [];
   const recordsLeft: string[] = [];
@@ -283,6 +325,7 @@ async function sweep(env: NodeJS.ProcessEnv): Promise<string[]> {
         // images), or a lease that names another folder's matter: only the run folder goes (N-17).
         removeOwn(dir);
         reported.delete(dir);
+        torn.delete(dir);
         continue;
       }
       let lock;
@@ -299,16 +342,19 @@ async function sweep(env: NodeJS.ProcessEnv): Promise<string[]> {
           if (left.length === 0) {
             removeOwn(dir);
             reported.delete(dir);
+            torn.delete(dir);
           } else imagesLeft.push(...left);
         }
       } finally {
         lock.release();
       }
     } catch {
-      recordsLeft.push(dir);
+      if (dir !== own) recordsLeft.push(dir);
     }
   }
-  return [...sayOnce(imagesLeft, IMAGES_LEFT), ...sayOnce(recordsLeft, RECORDS_LEFT)];
+  const images = sayOnce(imagesLeft, IMAGES_LEFT);
+  const records = sayOnce(recordsLeft, RECORDS_LEFT);
+  return { lines: [...images.lines, ...records.lines], keys: [...images.keys, ...records.keys] };
 }
 
 function requireRunId(args: { run_id?: string; action?: string }): string {
@@ -813,10 +859,12 @@ async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknow
       });
     } catch (err) {
       if ((err as DataServerError).code !== "lock_unavailable") {
-        // The fault that voided the dispatches stays the error; the journal's own is added to it (n-5).
-        if (fault instanceof Error) {
-          fault.message += ` (and this call's dispatches could not be recorded as void: ${(err as Error).message})`;
-          throw fault;
+        // The fault that voided the dispatches, or the case data's error, stays the error; the
+        // journal's own is added to it (n-5, round 5 nit 15).
+        const first = fault ?? contextError;
+        if (first instanceof Error) {
+          first.message += ` (and this call's dispatches could not be recorded as void: ${(err as Error).message})`;
+          throw first;
         }
         throw err;
       }
@@ -974,39 +1022,57 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
       const mode = args.mode;
       if (mode !== "attended" && mode !== "unattended") throw new ValidationError("begin needs mode attended or unattended");
       // What the sweep left (page images in use, a run folder it could not read) is said once (N-5, M-1, n-4).
-      const report = await sweep(env);
-      return underLock(args.matter_root, env, (dir) => {
-        const current = readLease(dir);
+      const swept = await sweep(env, runDir(args.matter_root, env));
+      const out = await underLock(args.matter_root, env, (dir) => {
+        const report = [...swept.lines];
+        // Every answer, a refusal included, carries the report lines, a cut-short journal's among them (round 5, 1, nit 9).
+        const reply = <T extends object>(body: T) => ({ ...body, ...reportLines([...report, ...(torn.has(dir) ? [STEP_LOST] : [])]) });
+        let current: Lease | null;
+        try {
+          current = readLease(dir);
+        } catch (err) {
+          // A lease.json that cannot be read is taken for an expired run with no work: this begin
+          // takes over and says so (round 5, 1).
+          if (!(err instanceof SyntaxError)) throw err;
+          current = null;
+          report.push(RUN_UNREADABLE);
+        }
         const now = new Date().toISOString();
         const runId = randomUUID();
         if (args.resume !== undefined) {
           // A run left unended by plugin_changed (R7) is resumed here; one that ended is not.
-          if (current === null || current.ended !== null || current.run_id !== args.resume) return refusal("unknown_run");
+          if (current === null || current.ended !== null || current.run_id !== args.resume) return reply(refusal("unknown_run"));
           // A new id for the resuming session, so the displaced one is refused at its next call. The
           // orchestrator resuming a single-document or unattended run makes it its own (n-2).
           writeLease(dir, { ...current, run_id: runId, heartbeat: now, build_stamp: BUILD_STAMP, mode, ...(args.orchestrator === true ? { orchestrator: true } : {}) });
           journal(dir, "takeover", runId, { displaced: current.run_id });
           const p = plan(runEvents(dir), env);
-          return { ok: true, run_id: runId, resumed: true, next: [...p.write, ...p.close], ...(p.asked.length ? { asked: p.asked } : {}), ...pathBLines(p.pathB), ...reportLines(report) };
+          return reply({ ok: true, run_id: runId, resumed: true, next: [...p.write, ...p.close], ...(p.asked.length ? { asked: p.asked } : {}), ...pathBLines(p.pathB) });
         }
-        if (current !== null && isLive(current)) return { ...refusal("run_active"), run_id: current.run_id, ...reportLines(report) };
+        if (current !== null && isLive(current)) return reply({ ...refusal("run_active"), run_id: current.run_id });
+        let displaced: string | null = null;
         if (current !== null && current.ended === null) {
           // A run left unended with results still to record is never dropped silently (m-6): the
           // orchestrator is refused, naming it to resume; any other caller goes on and is told.
           const p = plan(runEvents(dir), env);
           if (p.write.length + p.asked.length + p.pathB.length > 0) {
-            if (args.orchestrator === true) return { ...refusal("run_unfinished"), run_id: current.run_id, ...reportLines(report) };
+            if (args.orchestrator === true) return reply({ ...refusal("run_unfinished"), run_id: current.run_id });
             report.push(DISPLACED);
           }
-          journal(dir, "takeover", runId, { displaced: current.run_id });
+          displaced = current.run_id;
         }
+        // The lease first: a lease that cannot be written leaves the journal as it was (round 5, 2).
         writeLease(dir, {
           run_id: runId, started: now, heartbeat: now, build_stamp: BUILD_STAMP, mode, ended: null,
           orchestrator: args.orchestrator === true, matter_root: args.matter_root,
         });
+        if (displaced !== null) journal(dir, "takeover", runId, { displaced });
         journal(dir, "begin", runId, { mode });
-        return { ok: true, run_id: runId, resumed: false, next: [], ...reportLines(report) };
+        return reply({ ok: true, run_id: runId, resumed: false, next: [] });
       });
+      swept.keys.forEach((key) => reported.add(key));
+      torn.delete(runDir(args.matter_root, env));
+      return out;
     }
     case "status":
       return underLock(args.matter_root, env, (dir) => {
@@ -1052,24 +1118,39 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
     }
     case "end": {
       const runId = requireRunId(args);
-      return underLock(args.matter_root, env, (dir) => {
+      const out = await underLock(args.matter_root, env, (dir) => {
         const lease = renew(dir, runId);
-        if (lease === null) return refusal("lease_lost");
+        if (lease === null) return { keys: [], reply: refusal("lease_lost") };
         // The dispatches' stored inputs (parties, answered facts) and a bridged run's page images,
         // a displaced earlier run's included (N13), are not needed once the run has ended (S-m15).
         // A folder any delete error leaves stays, and the run still ends: the next end or the sweep
         // deletes it (N-12, m-5).
         const imagesLeft = removeImages(dir, args.matter_root);
-        const report = sayOnce(imagesLeft, IMAGES_LEFT);
+        const said = sayOnce(imagesLeft, IMAGES_LEFT);
+        const report = [...said.lines];
+        const keys = [...said.keys];
         try {
           removeOwn(pathWin32.join(dir, "dispatches"));
         } catch {
-          report.push(...sayOnce([pathWin32.join(dir, "dispatches")], RECORDS_LEFT));
+          const left = sayOnce([pathWin32.join(dir, "dispatches")], RECORDS_LEFT);
+          report.push(...left.lines);
+          keys.push(...left.keys);
         }
         writeLease(dir, { ...lease, ended: lease.heartbeat });
         journal(dir, "end", runId, imagesLeft.length > 0 ? { images_left: true } : {});
-        return { ok: true, run_id: runId, ...reportLines(report) };
+        // Privileged wording staged for a question still open, by this run or one it displaced, is
+        // not needed once the run has ended, so it never waits out the 7-day window (G4, round 5, 7).
+        const privileged = readJournal(dir).filter((e) => e.event === "write" && e.contract === "privileged")
+          .flatMap((e) => (e.result_ids as string[] | undefined) ?? []);
+        const dropped = dropStagedResults(privileged, env);
+        if (dropped.deleted > 0) report.push(PRIVILEGED_DROPPED);
+        if (dropped.left > 0) report.push(PRIVILEGED_LEFT);
+        if (torn.has(dir)) report.push(STEP_LOST);
+        return { keys, reply: { ok: true, run_id: runId, ...reportLines(report) } };
       });
+      out.keys.forEach((key) => reported.add(key));
+      if (out.reply.ok) torn.delete(runDir(args.matter_root, env));
+      return out.reply;
     }
     default:
       throw new ValidationError(`unknown action ${JSON.stringify(args.action)}; expected begin, next, staged, status or end`);

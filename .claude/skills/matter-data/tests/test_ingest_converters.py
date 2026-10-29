@@ -41,7 +41,7 @@ def section(db):
 def run_plan(con, plan):
     """The data server's run_statements: guards refuse the whole call, a group rolls back alone."""
     params = plan["params"]
-    refused, failed, named, counts, asks = [], [], {}, {}, []
+    refused, failed, named, counts, asks, reports = [], [], {}, {}, [], []
     con.isolation_level = None
     con.execute("BEGIN")
     for n, st in enumerate(plan["statements"]):
@@ -51,7 +51,7 @@ def run_plan(con, plan):
             merged = {**params, **(st.get("params") or {})}
             con.execute(f"SAVEPOINT g_{n}")
             try:
-                done, asked = [], []
+                done, asked, said = [], [], []
                 for s in st["statements"]:
                     cur = con.execute(s["sql"], merged)
                     rows = cur.fetchall()
@@ -60,11 +60,14 @@ def run_plan(con, plan):
                     done.append((s.get("count"), cur.rowcount))
                     if s.get("ask"):
                         asked += [dict(zip([d[0] for d in cur.description], r)) for r in rows]
+                    if s.get("report"):
+                        said += [r[0] for r in rows]
                 con.execute(f"RELEASE g_{n}")
                 for key, n_rows in done:
                     if key:
                         counts[key] = counts.get(key, 0) + max(n_rows, 0)
                 asks += asked
+                reports += said
             except Exception as exc:  # noqa: BLE001 -- the helper's own rule
                 con.execute(f"ROLLBACK TO g_{n}")
                 con.execute(f"RELEASE g_{n}")
@@ -81,7 +84,7 @@ def run_plan(con, plan):
         if st.get("ask"):
             asks += [dict(zip([d[0] for d in cur.description], r)) for r in rows]
     con.execute("ROLLBACK" if refused else "COMMIT")
-    return {"refused": refused, "failed": failed, "named": named, "counts": counts, "asks": asks}
+    return {"refused": refused, "failed": failed, "named": named, "counts": counts, "asks": asks, "reports": reports}
 
 
 class Converters(unittest.TestCase):
@@ -459,6 +462,27 @@ class Converters(unittest.TestCase):
         self.write(ingest_affidavit, self.exhibits([self.exhibit("B")]))
         self.assertEqual(self.q("SELECT source_id, title, ingestion_status, verified FROM sources WHERE title LIKE 'Exhibit B%'"),
                          [(fallback[0][0], "Exhibit B — Doc B", "complete", 0)])
+
+    def test_a_signalled_re_read_of_an_exhibit_on_file_with_no_privilege_hold_is_reported(self):
+        self.write_body()
+        self.con.execute("INSERT INTO sources (category, title, parent_source_id, ingestion_status, verified) "
+                         "VALUES ('court', 'Exhibit A', 1, 'complete', 0)")
+        a = self.exhibit("A", flags=[{"kind": "privilege_signal", "ref": "p4"}])
+        _, out = self.write(ingest_affidavit, self.exhibits([a], expected=("A",)))
+        self.assertEqual(out["asks"], [])
+        self.assertEqual(len(out["reports"]), 1, out["reports"])
+        self.assertRegex(out["reports"][0], r"^Exhibit A may be privileged.*not decided again")
+        # A signalled reading of a cleared row says nothing more.
+        self.con.execute("UPDATE sources SET privilege_status = 'cleared' WHERE title LIKE 'Exhibit A%'")
+        _, out = self.write(ingest_affidavit, self.exhibits([a], expected=("A",)))
+        self.assertEqual(out["reports"], [])
+
+    def test_a_twice_failed_exhibit_held_pending_is_not_asked_again_on_every_call(self):
+        self.write_body()
+        self.con.execute("INSERT INTO sources (category, title, parent_source_id, ingestion_status, verified, privilege_status) "
+                         "VALUES ('court', 'Exhibit A', 1, 'failed', 2, 'pending')")
+        _, out = self.write(ingest_affidavit, self.exhibits([], expected=("A",), failed=["A"]))
+        self.assertEqual(out["asks"], [])
 
     def test_no_exhibit_list_refuses_an_exhibit_write(self):
         self.write_body()

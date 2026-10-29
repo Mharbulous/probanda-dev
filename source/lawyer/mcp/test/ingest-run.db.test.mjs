@@ -4,7 +4,8 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import fs, { appendFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -206,4 +207,96 @@ test("a run folder ended more than 30 days ago is deleted at the next begin", as
   const names = readdirSync(runRoot);
   assert.ok(!names.includes("0123456789abcdef"), "old run folder deleted");
   assert.ok(names.includes("fedcba9876543210"), "recent run folder kept");
+});
+
+// ---------------------------------------------------------------- fifth review (1, 2, 11)
+
+/** A crash mid-append: the journal's last line is cut short. */
+const tearJournal = (runRoot) => appendFileSync(join(runDir(runRoot), "journal.jsonl"), '{"ts":"2026-10-29T00:00:00.000Z","event":"wri', "utf-8");
+
+for (const orchestrator of [false, true]) {
+  test(`a lease.json that cannot be read is taken over by ${orchestrator ? "an orchestrator" : "a single-document"} begin, which says so (round 5, 1)`, async (t) => {
+    const { matterRoot, runRoot } = matterFixture(t);
+    await begin(matterRoot);
+    writeFileSync(join(runDir(runRoot), "lease.json"), '{"run_id": "x", "sta');
+    const out = await begin(matterRoot, { orchestrator });
+    assert.equal(out.ok, true, JSON.stringify(out));
+    assert.equal(out.report?.length, 1, JSON.stringify(out));
+    assert.doesNotMatch(out.report[0], DENY);
+    assert.equal(lease(runRoot).run_id, out.run_id);
+    assert.equal((await callTool({}, "matter_data__execute", { matter_root: matterRoot, sql_script: insert("after"), run_id: out.run_id })).ok, true);
+  });
+
+  test(`a journal whose last line a crash cut short is read without it by ${orchestrator ? "an orchestrator" : "a single-document"} begin, which says so (round 5, 1)`, async (t) => {
+    const { matterRoot, runRoot } = matterFixture(t);
+    const first = await begin(matterRoot);
+    tearJournal(runRoot);
+    ageHeartbeat(runRoot, 61);
+    const out = await begin(matterRoot, { orchestrator });
+    assert.equal(out.ok, true, JSON.stringify(out));
+    assert.equal(out.report?.length, 1, JSON.stringify(out));
+    assert.doesNotMatch(out.report[0], DENY);
+    assert.deepEqual(journal(runRoot).map((e) => [e.event, e.run_id]), [["begin", first.run_id], ["takeover", out.run_id], ["begin", out.run_id]],
+      "the cut-short line is gone and every later line is whole");
+  });
+}
+
+test("end ends a run whose journal's last line a crash cut short (round 5, 11)", async (t) => {
+  const { matterRoot, runRoot } = matterFixture(t);
+  const { run_id } = await begin(matterRoot);
+  tearJournal(runRoot);
+  const ended = await run(matterRoot, { action: "end", run_id });
+  assert.equal(ended.ok, true, JSON.stringify(ended));
+  assert.equal((await run(matterRoot, { action: "status" })).active, false);
+  assert.deepEqual(journal(runRoot).map((e) => e.event), ["begin", "end"]);
+});
+
+/** renameSync onto lease.json fails `code` for the first `times` calls (every call when Infinity). Returns the undo. */
+function leaseHeld(code, times) {
+  const saved = fs.renameSync;
+  let seen = 0;
+  fs.renameSync = (from, to, ...rest) => {
+    if (String(to).endsWith("lease.json") && seen++ < times) throw Object.assign(new Error(`${code}: made by the test`), { code });
+    return saved(from, to, ...rest);
+  };
+  syncBuiltinESMExports();
+  return () => {
+    fs.renameSync = saved;
+    syncBuiltinESMExports();
+  };
+}
+
+test("a lease write another program holds up for a moment is tried again; one held for good fails (round 5, 2)", async (t) => {
+  const { matterRoot, caseDataDir, runRoot } = matterFixture(t);
+  const { run_id } = await begin(matterRoot);
+  for (const code of ["EPERM", "EACCES", "EBUSY"]) {
+    const undo = leaseHeld(code, 2);
+    try {
+      await callTool({}, "matter_data__execute", { matter_root: matterRoot, sql_script: insert(code), run_id });
+    } finally {
+      undo();
+    }
+  }
+  assert.deepEqual(sourceTitles(caseDataDir), ["EPERM", "EACCES", "EBUSY"]);
+  const undo = leaseHeld("EPERM", Infinity);
+  try {
+    await assert.rejects(run(matterRoot, { action: "end", run_id }), (err) => err.code === "EPERM");
+  } finally {
+    undo();
+  }
+  assert.equal((await run(matterRoot, { action: "end", run_id })).ok, true);
+  assert.equal(lease(runRoot).ended !== null, true);
+});
+
+test("a plain begin that cannot write its lease journals no takeover (round 5, 2)", async (t) => {
+  const { matterRoot, runRoot } = matterFixture(t);
+  await begin(matterRoot);
+  ageHeartbeat(runRoot, 61);
+  const undo = leaseHeld("EPERM", Infinity);
+  try {
+    await assert.rejects(begin(matterRoot), (err) => err.code === "EPERM");
+  } finally {
+    undo();
+  }
+  assert.deepEqual(journal(runRoot).map((e) => e.event), ["begin"]);
 });

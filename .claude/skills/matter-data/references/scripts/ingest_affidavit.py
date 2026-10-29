@@ -26,12 +26,15 @@ exhibit is deduplicated by (parent, letter in its title); a row registered
 writes it `verified = 2`; a privilege signal writes it as Path B's Unclear
 branch (facts only, `privilege_status = 'pending'`). The links and the
 privilege ask follow the row's status as stored: a row already cleared keeps
-it and takes its links, and a row pending takes none and is asked. Each exhibit's
+it and takes its links, and a row pending takes none and is asked. A signalled
+reading of a row on file with no privilege hold is reported, its privilege not
+decided again. Each exhibit's
 group is followed by a fallback group that, when the exhibit's own group rolled
 back, records it `failed` at `verified = 2` with an `UNCONFIRMED:` note; an
 exhibit failing its contract is recorded the same way. Either is returned in
 `invalid` or as a failed group and read once more (R4); an exhibit whose
-extraction failed twice is registered `failed` at `verified = 2`. The call in
+extraction failed twice is registered `failed` at `verified = 2`, and is not
+asked its privilege. The call in
 which every expected letter has a row, none `failed` but those that failed
 twice, sets the body's final status: `complete`, or `partial` when the run
 could not locate some exhibits the body lists (`deferred`).
@@ -163,6 +166,15 @@ SELECT 'privilege' AS kind, json_extract(:ex, '$.letter') AS ref,
        || 'or unclear for now? Its facts are held back until you decide.' AS say
 WHERE (SELECT privilege_status FROM main.sources WHERE source_id = {_EXHIBIT}) = 'pending'
 """, 'ask': True}
+
+# A reading that signals privilege, of a row already on file with no privilege hold and not `failed`
+# (so not refreshed), leaves the row as it stands: the practitioner is told, never left to find it.
+EXHIBIT_PRIVILEGE_UNDECIDED = {'sql': f"""
+SELECT 'Exhibit ' || json_extract(:ex, '$.letter') || ' may be privileged, but it was already on file without '
+       || 'a privilege hold, so its privilege was not decided again. Check whether it should be held back.'
+WHERE json_extract(:ex, '$.privilege_status') = 'pending'
+  AND coalesce((SELECT privilege_status FROM main.sources WHERE source_id = {_EXHIBIT}), '') NOT IN ('pending', 'cleared')
+""", 'report': True}
 
 FINAL_STATUS = f"""
 UPDATE main.sources
@@ -317,7 +329,8 @@ def _exhibits_plan(request, read):
         written.append(letter)
     for letter in run.get('failed') or []:
         if letter not in written:
-            groups.append(_group(_failed_exhibit(letter, NOTE_TWICE)))
+            # Not asked its privilege: a row held pending is asked when it is read, not on every call.
+            groups.append(_group(_failed_exhibit(letter, NOTE_TWICE), ask=False))
     payload = {'source': {'file_hash': request['file_hash']}, 'expected': expected,
                'deferred': run.get('deferred') or [], 'failed': run.get('failed') or []}
     statements = [GUARD_BODY, c.PRIOR_STATUS] + groups + [{'sql': FINAL_STATUS}, SELECT_FINAL, c.SELECT_SOURCE]
@@ -335,12 +348,13 @@ def _exhibits_plan(request, read):
             'invalid': invalid}
 
 
-def _group(ex, ref=None, register_only=False):
+def _group(ex, ref=None, register_only=False, ask=True):
     statements = [{'sql': REGISTER_EXHIBIT, 'count': None if register_only else 'exhibits'}]
     if not register_only:
         statements += [{'sql': REFRESH_FAILED_EXHIBIT},
                        {'sql': EXHIBIT_FACTS, 'count': 'facts'},
-                       {'sql': EXHIBIT_LINKS, 'count': 'links'}, EXHIBIT_PRIVILEGE_ASK]
+                       {'sql': EXHIBIT_LINKS, 'count': 'links'}]
+        statements += [EXHIBIT_PRIVILEGE_ASK, EXHIBIT_PRIVILEGE_UNDECIDED] if ask else []
     return {'ref': ref or ex['letter'], 'params': {'ex': json.dumps(ex, ensure_ascii=False)},
             'statements': statements}
 

@@ -15,9 +15,11 @@ A converter returns
     accepted  {"params": {...}, "statements": [...], "post": [...], "asks": [...],
                "report": [...], "title": str}
 
-A statement is {"sql", "refuse"?, "count"?, "value_as"?}: `count` names the
-output count its rowcount adds to (facts, positions, relief, links, exhibits),
-and `value_as` the result key that takes its first value. A group is
+A statement is {"sql", "refuse"?, "count"?, "value_as"?, "ask"?, "report"?}:
+`count` names the output count its rowcount adds to (facts, positions, relief,
+links, exhibits), `value_as` the result key that takes its first value, `ask`
+makes each row it returns an ask item, and `report` makes each row's first
+value a report line. A group is
 {"ref", "params"?, "statements"}. Standard library only.
 """
 

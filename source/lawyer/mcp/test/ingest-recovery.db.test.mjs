@@ -125,6 +125,7 @@ test("an exhibit that breaks a constraint is recorded for review, not as written
   const out = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [a.result_id, b.result_id]);
   assert.equal(out.outcome, "written", JSON.stringify(out));
   assert.deepEqual(out.items.map((i) => i.ref), ["B"]);
+  assert.equal(existsSync(stagedPath(b.result_id)), false, "a rolled-back reading that signalled privilege leaves staging (round 5, 3)");
   assert.ok(out.report.some((l) => /^Exhibit B could not be recorded/.test(l)), "a fixed line names the exhibit");
   assert.deepEqual(sql(caseDataDir, "SELECT count(*) AS n FROM facts WHERE description = 'Exhibit B says so.'"), [{ n: 0 }], "B's group left nothing");
   assert.deepEqual(sql(caseDataDir, "SELECT title, ingestion_status FROM sources WHERE parent_source_id IS NOT NULL ORDER BY source_id")[1],
@@ -929,4 +930,56 @@ test("a failed exhibit already held pending is handled as pending when read agai
   assert.deepEqual(out.ask.map((x) => [x.kind, x.ref]), [["privilege", "A"]]);
   assert.equal(existsSync(stagedPath(a.result_id)), false, "its wording waits for no 7-day window");
   assert.equal(sql(caseDataDir, "SELECT count(*) AS n FROM evidence_links")[0].n, 0);
+});
+
+// ---------------------------------------------------------------- fifth review (3, 4, 6, 7)
+
+test("a signalled re-reading of an exhibit on file with no privilege hold says its privilege was not decided again (round 5, 4)", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const run_id = await exhibitsDispatched(matterRoot);
+  sql(caseDataDir, `INSERT INTO sources (category, title, parent_source_id, ingestion_status, verified)
+    SELECT category, 'Exhibit A', source_id, 'complete', 0 FROM sources WHERE parent_source_id IS NULL`);
+  const out = await byRef(matterRoot, run_id, "f1:A", "affidavit_exhibits", [(await stage(SIGNALLED("A"))).result_id]);
+  assert.equal(out.outcome, "written", JSON.stringify(out));
+  assert.deepEqual(out.ask, []);
+  assert.ok(out.report.some((l) => /^Exhibit A may be privileged/.test(l) && /not decided again/.test(l)), JSON.stringify(out.report));
+});
+
+test("privilege questions the reply's cap left out are asked when the write is repeated (round 5, 6)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const pages = ["Affidavit", "Body 2", ...["A", "B", "C", "D"].flatMap((x) => [`Exhibit ${x} stamp`, `${x} content`])];
+  const doc = file(matterRoot, "2026-03-01 AFF Quill.pdf", pdfBytes(pages));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "affidavit" }] });
+  const inventory = ["A", "B", "C", "D"].map((letter, i) => ({ letter, description: letter, referencing_locator: "para. 2", page_start: 3 + 2 * i, page_end: 4 + 2 * i }));
+  await byRef(matterRoot, run_id, "f1", "affidavit_body", [(await stage(BODY({ exhibit_inventory: inventory }))).result_id]);
+  assert.deepEqual((await run(matterRoot, { action: "next", run_id })).dispatch.map((d) => d.ref), ["f1:A", "f1:B", "f1:C", "f1:D"]);
+  const ids = [];
+  for (const letter of ["A", "B", "C", "D"]) {
+    const { result_id } = await stage(SIGNALLED(letter));
+    await run(matterRoot, { action: "status", run_id, ack: `ok f1:${letter} ${result_id} 10` });
+    ids.push(result_id);
+  }
+  const first = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", ids);
+  assert.equal(first.outcome, "written", JSON.stringify(first));
+  assert.ok(first.dropped > 0, JSON.stringify(first));
+  const repeat = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", ids);
+  assert.deepEqual([...first.ask, ...repeat.ask].map((a) => [a.kind, a.ref]), ["A", "B", "C", "D"].map((x) => ["privilege", x]), JSON.stringify(repeat));
+  assert.deepEqual(ids.map((id) => existsSync(stagedPath(id))), [false, false, false, false], "each reading leaves once its question is asked");
+});
+
+test("end deletes the privileged wording staged for a question still open, and says so (round 5, 7)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended", orchestrator: true });
+  const memo = { file_path: "3. CLIENT\memo.pdf", file_hash: "d".repeat(64) };
+  const asking = await stage({ contract: "privileged", contract_version: 2, ref: "memo", document: { title: "Memo", category: "solicitor_client" }, facts: [],
+    client_instructions: [{ party_name: "Someone Unknown", instructed_by: "Ada Quill", date: "2026-01-02", description: "Settle.", source_locator: "p1", status: "open" }] });
+  const out = await callTool({}, "matter_data__ingest_result", { matter_root: matterRoot, run_id, document: { ...memo, store: "privileged" }, contract: "privileged",
+    result_ids: [asking.result_id], answers: { privilege: "yes" } });
+  assert.equal(out.refused, "needs_answer");
+  assert.equal(existsSync(stagedPath(asking.result_id)), true);
+  const ended = await run(matterRoot, { action: "end", run_id });
+  assert.equal(ended.ok, true, JSON.stringify(ended));
+  assert.equal(existsSync(stagedPath(asking.result_id)), false, "no privileged wording waits out the 7-day window");
+  assert.equal(ended.report?.length, 1, JSON.stringify(ended));
 });

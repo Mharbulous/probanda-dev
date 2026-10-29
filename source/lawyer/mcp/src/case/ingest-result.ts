@@ -56,8 +56,9 @@ export interface IngestResultArgs {
 }
 
 type Ask = { kind: string; ref: string; say: string };
-/** `ask`: each row the statement returns is an ask item {kind, ref, say} (K-M3). */
-type Single = CaseStatement & { count?: string; value_as?: string; ask?: boolean };
+/** `ask`: each row the statement returns is an ask item {kind, ref, say} (K-M3). `report`: each row's
+ *  first value is a fixed report line (round 5, 4). */
+type Single = CaseStatement & { count?: string; value_as?: string; ask?: boolean; report?: boolean };
 type Planned = Single | (CaseStatementGroup & { statements: Array<CaseStatement & { count?: string }> });
 type Plan =
   | { problems: string[] }
@@ -409,12 +410,14 @@ async function write(
   const counts = Object.fromEntries(COUNTS.map((k) => [k, 0])) as Record<(typeof COUNTS)[number], number>;
   const named: Record<string, unknown> = {};
   const asks = [...plan.asks];
+  const said: string[] = [];
   let i = 0;
   const tally = (s: Single) => {
     const r = done.results[i++];
     if (s.count && s.count in counts) counts[s.count as keyof typeof counts] += r.rowcount;
     if (s.value_as) named[s.value_as] = r.rows[0] ? Object.values(r.rows[0])[0] : null;
     if (s.ask) asks.push(...(r.rows as Ask[]));
+    if (s.report) said.push(...r.rows.map((row) => String(Object.values(row)[0])));
   };
   for (const s of plan.statements) {
     if ("ref" in s && "statements" in s) s.statements.forEach(tally);
@@ -449,7 +452,7 @@ async function write(
     ...(args.contract === "affidavit_body" ? inventoryOf(results[0]?.doc) : {}),
   }, failures);
 
-  const report = plan.report.map((line) => line.replace("{source}", String(sourceId)));
+  const report = [...plan.report.map((line) => line.replace("{source}", String(sourceId))), ...said];
   const post: Array<{ pass: string; ref: string }> = [];
   for (const pass of plan.post) {
     if (pass === "procedural_history") {
@@ -489,12 +492,8 @@ async function write(
   if (plan.failed) report.unshift(`${(plan.title ?? "This document").slice(0, 60)} could not be read and is recorded as not read.`);
   // An exhibit rolled back is read again, so its question waits for that reading.
   const asked = asks.filter((a) => !(args.contract === "affidavit_exhibits" && badLetters.includes(a.ref)));
-  // An exhibit held pending, as its row stands after the write (m-7), is asked its privilege; its
-  // reading leaves staging now rather than wait out the 7-day window (G4).
-  const pending = args.contract === "affidavit_exhibits" ? asked.filter((a) => a.kind === "privilege").map((a) => a.ref) : [];
-  dropAlso.push(...results.filter((r) => pending.includes(letterOf(r.ref))).map((r) => r.path));
 
-  return fit({
+  const out = fit({
     outcome,
     source_id: sourceId,
     counts,
@@ -506,6 +505,16 @@ async function write(
     post,
     report,
   });
+  if (args.contract === "affidavit_exhibits") {
+    // An exhibit held pending, as its row stands after the write (m-7), is asked its privilege; its
+    // reading leaves staging once this reply carries the question, rather than wait out the 7-day
+    // window (G4). One the cap left out stays, so a repeat of the call asks it (round 5, 6). A
+    // reading that signalled privilege and was not recorded leaves too: it is read again (round 5, 3).
+    const pending = out.ask.filter((a) => a.kind === "privilege").map((a) => a.ref);
+    dropAlso.push(...results.filter((r) => pending.includes(letterOf(r.ref))
+      || (badLetters.includes(letterOf(r.ref)) && flagged(r.doc, "privilege_signal"))).map((r) => r.path));
+  }
+  return out;
 }
 
 /** Pass 1's exhibit list as the body write journals it: letters and page ranges only (N9). */
