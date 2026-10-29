@@ -5,6 +5,7 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -67,7 +68,7 @@ const byRef = (matterRoot, run_id, ref, contract, result_ids, answers) =>
   callTool({}, "matter_data__ingest_result", { matter_root: matterRoot, run_id, document: { ref, store: "main" }, contract, result_ids, ...(answers ? { answers } : {}) });
 
 const FACTS = (ref, extra = {}) => ({
-  contract: "facts", contract_version: 1, ref, flags: [],
+  contract: "facts", contract_version: 2, ref, flags: [],
   document: { title: "Notice of Civil Claim", description: "The claim", category: "court", date: "2026-01-05", author_or_filing_party: "Ada Quill", proceeding_file_number: "S-000001" },
   facts: [{ fact_key: "new:1", source_locator: "para. 1", description: "Ada Quill lent Plum Holdings Ltd. $5,000.", category: "contract", date_of_fact: "2025-03-01", evidence: null }],
   fact_positions: [{ target_fact_key: "new:1", party_name: "Ada Quill", value: "claim", position_basis: null, qualification: null, source_locator: "para. 1" }],
@@ -76,7 +77,7 @@ const FACTS = (ref, extra = {}) => ({
 });
 
 const BODY = (extra = {}) => ({
-  contract: "affidavit_body", contract_version: 1, ref: "f1", flags: [],
+  contract: "affidavit_body", contract_version: 2, ref: "f1", flags: [],
   deponent: { name: "Ada Quill", role: "plaintiff", basis_statement: "I am the plaintiff." },
   sworn_date: "2026-03-01",
   body_facts: [{ source_locator: "para. 2", description: "Ada Quill met the director.", category: "background", date_of_fact: null, basis_of_knowledge: "personal", informant: null }],
@@ -89,17 +90,22 @@ const BODY = (extra = {}) => ({
 });
 
 const EXHIBIT = (letter, description = `Exhibit ${letter} says so.`) => ({
-  contract: "affidavit_exhibits", contract_version: 1, ref: `f1:${letter}`, flags: [],
+  contract: "affidavit_exhibits", contract_version: 2, ref: `f1:${letter}`, flags: [],
   exhibit_letter: letter, title: `Document ${letter}`, description: "x", date: null, needs_human: false,
   facts: [{ source_locator: "p4", description, category: "contract", date_of_fact: null, evidence: null }],
 });
 
 const AFF_PAGES = ["Affidavit", "Body 2", "Exhibit A stamp", "A content", "Exhibit B stamp", "B content"];
 
+/** Exhibit `letter` held already, pending a privilege decision: a reading that cites it as proof breaks
+ *  the pending-privilege guard (#49), so its statement group rolls back alone. */
+const holdPending = (caseDataDir, letter) => sql(caseDataDir, `INSERT INTO sources (category, title, parent_source_id, ingestion_status, privilege_status)
+  SELECT category, 'Exhibit ${letter}', source_id, 'complete', 'pending' FROM sources WHERE parent_source_id IS NULL`);
+const PROOF = { is_proof_source: true, strength: 1, notes: null };
+const PROVING = (letter) => ({ ...EXHIBIT(letter), facts: [{ ...EXHIBIT(letter).facts[0], evidence: PROOF }] });
+
 test("an exhibit that breaks a constraint is recorded for review, not as written, and read again", async (t) => {
   const { matterRoot, caseDataDir } = fixture(t);
-  // A trigger standing in for any constraint an exhibit can break.
-  sql(caseDataDir, "CREATE TRIGGER boom BEFORE INSERT ON facts WHEN NEW.description = 'BOOM' BEGIN SELECT RAISE(ABORT, 'boom'); END");
   const doc = file(matterRoot, "2026-03-01 AFF Quill.pdf", pdfBytes(AFF_PAGES));
   const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
   await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "affidavit", execution: "affirmed" }] });
@@ -108,25 +114,24 @@ test("an exhibit that breaks a constraint is recorded for review, not as written
   const exhibits = await run(matterRoot, { action: "next", run_id });
   assert.deepEqual(exhibits.dispatch.map((d) => d.ref), ["f1:A", "f1:B"]);
 
+  holdPending(caseDataDir, "B");
   const a = await stage(EXHIBIT("A"));
-  const b = await stage(EXHIBIT("B", "BOOM"));
+  const b = await stage(PROVING("B"));
   const out = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [a.result_id, b.result_id]);
   assert.equal(out.outcome, "written", JSON.stringify(out));
   assert.deepEqual(out.items.map((i) => i.ref), ["B"]);
   assert.ok(out.report.some((l) => /^Exhibit B could not be recorded/.test(l)), "a fixed line names the exhibit");
-  assert.deepEqual(sql(caseDataDir, "SELECT title, verified, ingestion_status, notes FROM sources WHERE parent_source_id IS NOT NULL ORDER BY source_id"), [
-    { title: "Exhibit A — Document A", verified: 0, ingestion_status: "complete", notes: null },
-    { title: "Exhibit B", verified: 2, ingestion_status: "failed", notes: "UNCONFIRMED: the exhibit could not be read into the record." },
-  ]);
-  assert.equal(sql(caseDataDir, "SELECT ingestion_status FROM sources WHERE parent_source_id IS NULL")[0].ingestion_status, "partial", "the body is not closed over a failed exhibit");
+  assert.deepEqual(sql(caseDataDir, "SELECT count(*) AS n FROM facts WHERE description = 'Exhibit B says so.'"), [{ n: 0 }], "B's group left nothing");
+  assert.deepEqual(sql(caseDataDir, "SELECT title, ingestion_status FROM sources WHERE parent_source_id IS NOT NULL ORDER BY source_id")[1],
+    { title: "Exhibit A — Document A", ingestion_status: "complete" });
 
   const again = await run(matterRoot, { action: "next", run_id });
   assert.deepEqual(again.dispatch.map((d) => d.ref), ["f1:B"], "the failed exhibit is read once more (R4)");
   assert.deepEqual([again.write, again.close], [[], []]);
-  const b2 = await stage(EXHIBIT("B"));
+  sql(caseDataDir, "UPDATE sources SET privilege_status = 'cleared' WHERE title = 'Exhibit B'"); // the practitioner decides it
+  const b2 = await stage(PROVING("B"));
   assert.equal((await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [b2.result_id])).outcome, "written");
-  assert.deepEqual(sql(caseDataDir, "SELECT title, verified, ingestion_status FROM sources WHERE parent_source_id IS NOT NULL ORDER BY source_id")[1],
-    { title: "Exhibit B — Document B", verified: 0, ingestion_status: "complete" }, "the failed row is reused and refreshed");
+  assert.deepEqual(sql(caseDataDir, "SELECT count(*) AS n FROM evidence_links"), [{ n: 1 }]);
   assert.equal(sql(caseDataDir, "SELECT ingestion_status FROM sources WHERE parent_source_id IS NULL")[0].ingestion_status, "complete");
   const end = await run(matterRoot, { action: "next", run_id });
   assert.deepEqual([end.dispatch, end.write, end.close], [[], [], []]);
@@ -149,7 +154,7 @@ test("routes are checked whole, a file routed twice keeps its ref, and an unread
   assert.deepEqual(again.routed, ["f1"], "a resent route keeps its ref");
   assert.deepEqual(again.dispatch, [], "and is not dispatched twice");
   assert.deepEqual((await run(matterRoot, { action: "next", run_id })).close, [{ ref: "f2", contract: "facts" }], "the unreadable file fails twice and is closed");
-  await assert.rejects(run(matterRoot, { action: "staged", run_id, dispatch_id: "..\\..\\x", paths: [] }), /dispatch_id/);
+  await assert.rejects(run(matterRoot, { action: "staged", run_id, dispatch_id: "..\\..\\x", paths: [] }), /dispatch_id must be the id from the dispatch line/);
 });
 
 test("an acknowledged result that expired, or was staged under another contract version, is read again", async (t) => {
@@ -167,12 +172,13 @@ test("an acknowledged result that expired, or was staged under another contract 
   unlinkSync(stagedPath(r1.result_id)); // R10: more than 7 days old
   const listed = await run(matterRoot, { action: "next", run_id });
   assert.deepEqual(listed.dispatch.map((d) => d.ref), ["f1"]);
-  assert.deepEqual(listed.write, [{ ref: "f2", contract: "facts", result_ids: [r2.result_id] }]);
+  assert.deepEqual(listed.write, [], "a write waiting on an answer is not a write to repeat (N10)");
+  assert.deepEqual(listed.asked, [{ ref: "f2", contract: "facts", result_ids: [r2.result_id] }]);
 
   // A resume keeps every acknowledged item whose result can still be written (spec §10.3 item 4).
   const resumed = await run(matterRoot, { action: "begin", mode: "attended", resume: run_id });
   assert.equal(resumed.resumed, true);
-  assert.deepEqual(resumed.next, [{ ref: "f2", contract: "facts", result_ids: [r2.result_id] }]);
+  assert.deepEqual([resumed.next, resumed.asked], [[], [{ ref: "f2", contract: "facts", result_ids: [r2.result_id] }]]);
   writeFileSync(stagedPath(r2.result_id), JSON.stringify({ ...ask("f2"), contract_version: 0 })); // R7
   const after = await run(matterRoot, { action: "next", run_id: resumed.run_id });
   assert.deepEqual(after.dispatch.map((d) => d.ref).sort(), ["f1", "f2"], "the stale result is read again; the lost dispatch is re-sent");
@@ -202,7 +208,7 @@ test("an empty exhibit inventory takes the boundary scan, whose letters are then
   assert.deepEqual(scan.dispatch.map((d) => [d.ref, d.contract]), [["f1:p2:1", null]]);
   const inputs = await callTool({}, "matter_data__dispatch_inputs", { dispatch_id: scan.dispatch[0].dispatch_id });
   assert.deepEqual([inputs.PASS, inputs.PAGE_RANGE], [2, [3, 6]]);
-  const found = await stage({ contract: "boundaries", contract_version: 1, ref: "f1:p2:1", flags: [], boundaries: [
+  const found = await stage({ contract: "boundaries", contract_version: 2, ref: "f1:p2:1", flags: [], boundaries: [
     { letter: "A", stamp_page: 3, content_start: 4, content_end: 4, ocr_uncertain: false },
     { letter: "B", stamp_page: 5, content_start: 6, content_end: 6, ocr_uncertain: true },
   ] });
@@ -260,10 +266,10 @@ test("privileged wording leaves staging after a refusal, and stays while a quest
   const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
   const memo = { file_path: "3. CLIENT\\memo.pdf", file_hash: "c".repeat(64) };
   const write = (result_ids) => callTool({}, "matter_data__ingest_result", { matter_root: matterRoot, run_id, document: { ...memo, store: "privileged" }, contract: "privileged", result_ids, answers: { privilege: "yes" } });
-  const bad = await stage({ contract: "privileged", contract_version: 1, ref: "memo", document: { title: "Memo", category: "not a category" }, facts: [] });
+  const bad = await stage({ contract: "privileged", contract_version: 2, ref: "memo", document: { title: "Memo", category: "not a category" }, facts: [] });
   assert.equal((await write([bad.result_id])).refused, "invalid");
   assert.equal(existsSync(stagedPath(bad.result_id)), false);
-  const asking = await stage({ contract: "privileged", contract_version: 1, ref: "memo", document: { title: "Memo", category: "solicitor_client" }, facts: [],
+  const asking = await stage({ contract: "privileged", contract_version: 2, ref: "memo", document: { title: "Memo", category: "solicitor_client" }, facts: [],
     client_instructions: [{ party_name: "Someone Unknown", instructed_by: "Ada Quill", date: "2026-01-02", description: "Settle.", source_locator: "p1", status: "open" }] });
   assert.equal((await write([asking.result_id])).refused, "needs_answer");
   assert.equal(existsSync(stagedPath(asking.result_id)), true);
@@ -280,4 +286,220 @@ test("a wholly scanned document is named, never given a path (#71)", async (t) =
   assert.equal(inputs.DOCUMENT.name, "scan.pdf");
   assert.equal("path" in inputs.DOCUMENT, false);
   assert.ok(inputs.PAGE_MANIFEST.every((e) => "images" in e));
+});
+
+// ---------------------------------------------------------------- second review (N1-N15, S-M4, K-M3)
+
+const NOA = (ref) => FACTS(ref, { document: { ...FACTS(ref).document, title: "Notice of Application" } });
+
+test("a refused first write after an ok reply re-dispatches the item rather than leave it running (S-M4)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const one = file(matterRoot, "one.pdf", pdfBytes(["One"]));
+  const two = file(matterRoot, "two.pdf", pdfBytes(["Two"]));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...one, kind: "facts" }, { ...two, kind: "facts" }] });
+  // f1's extractor staged the wrong contract; f2's reply names a result that is gone.
+  const wrong = await stage({ ...FACTS("f1"), contract: "sought_orders" });
+  assert.equal((await byRef(matterRoot, run_id, "f1", "facts", [wrong.result_id])).refused, "contract_mismatch");
+  assert.equal((await byRef(matterRoot, run_id, "f2", "facts", [randomUUID()])).refused, "unknown_result");
+  const again = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual(again.dispatch.map((d) => d.ref).sort(), ["f1", "f2"], "both are read once more (R4)");
+  assert.equal(again.running, 2, "only the new dispatches are running");
+});
+
+test("a routed document sent to Path B is written through Path B, and its reading leaves staging (N1, N18)", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const doc = file(matterRoot, "letter.pdf", pdfBytes(["Letter"]));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "facts" }] });
+  const reading = await stage(FACTS("f1", { flags: [{ kind: "privilege_signal", ref: "f1" }] }));
+  assert.equal((await byRef(matterRoot, run_id, "f1", "facts", [reading.result_id])).refused, "path_b");
+  assert.equal(existsSync(stagedPath(reading.result_id)), false, "the extractor's reading is not kept 7 days");
+
+  const memo = await stage({ contract: "privileged", contract_version: 2, ref: "letter.pdf",
+    document: { title: "Letter", category: "solicitor_client", date: "2026-01-02" },
+    facts: [{ source_locator: "p1", description: "The client asked for advice.", category: null, date_of_fact: null }] });
+  const out = await callTool({}, "matter_data__ingest_result", { matter_root: matterRoot, run_id, document: { ...doc, store: "privileged" },
+    contract: "privileged", result_ids: [memo.result_id], answers: { privilege: "yes" } });
+  assert.equal(out.outcome, "written", JSON.stringify(out));
+  assert.equal(sql(caseDataDir, "SELECT count(*) AS n FROM privileged_sources", "privileged")[0].n, 1);
+  assert.equal(existsSync(stagedPath(memo.result_id)), false);
+  const after = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual([after.dispatch, after.write, after.close, after.asked], [[], [], [], undefined]);
+});
+
+test("a Notice of Application's orders that failed twice are closed once, not listed again (N2)", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const doc = file(matterRoot, "2026-02-01 NOA.pdf", pdfBytes(["Notice of Application"]));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  const first = await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "notice_of_application" }] });
+  assert.deepEqual(first.dispatch.map((d) => d.ref), ["f1", "f1:so"]);
+  const facts = await stage(NOA("f1"));
+  assert.equal((await byRef(matterRoot, run_id, "f1", "facts", [facts.result_id])).outcome, "written");
+  await run(matterRoot, { action: "status", run_id, ack: "failed f1:so unreadable" });
+  assert.deepEqual((await run(matterRoot, { action: "next", run_id })).dispatch.map((d) => d.ref), ["f1:so"]);
+  await run(matterRoot, { action: "status", run_id, ack: "failed f1:so unreadable" });
+  const closing = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual(closing.close, [{ ref: "f1:so", contract: "sought_orders" }]);
+  const out = await byRef(matterRoot, run_id, "f1:so", "sought_orders", []);
+  assert.match(out.report[0], /orders sought .* could not be read/);
+  const done = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual([done.dispatch, done.write, done.close], [[], [], []], "the close is not listed again");
+  assert.equal(sql(caseDataDir, "SELECT count(*) AS n FROM sought_orders")[0].n, 0);
+});
+
+test("the inline cap binds only a run the orchestrator began (N3)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const long = `SELECT 1;\n${"-- padding\n".repeat(900)}`;
+  const d1 = await run(matterRoot, { action: "begin", mode: "attended" });
+  const ok = await callTool({}, "matter_data__execute", { matter_root: matterRoot, run_id: d1.run_id, sql_script: long });
+  assert.equal(ok.ok, true, "a single-document ingest's run_id call is unchanged");
+  await run(matterRoot, { action: "end", run_id: d1.run_id });
+  const orch = await run(matterRoot, { action: "begin", mode: "attended", orchestrator: true });
+  await assert.rejects(callTool({}, "matter_data__execute", { matter_root: matterRoot, run_id: orch.run_id, sql_script: long }), (err) => err.code === "too_long");
+});
+
+test("after a plugin update the run is left open, and a resume writes what was acknowledged (N4)", async (t) => {
+  const { matterRoot, runRoot } = fixture(t);
+  const doc = file(matterRoot, "one.pdf", pdfBytes(["One"]));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended", orchestrator: true });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "facts" }] });
+  const { result_id } = await stage(FACTS("f1"));
+  await run(matterRoot, { action: "status", run_id, ack: `ok f1 ${result_id} 100` });
+  const path = join(runDir(runRoot), "lease.json");
+  writeFileSync(path, JSON.stringify({ ...JSON.parse(readFileSync(path, "utf-8")), build_stamp: "an older build" }));
+  assert.equal((await run(matterRoot, { action: "next", run_id })).refused, "plugin_changed");
+  const status = await run(matterRoot, { action: "status" });
+  assert.equal(status.run_id, run_id, "status names the unfinished run");
+  const resumed = await run(matterRoot, { action: "begin", mode: "attended", resume: run_id });
+  assert.deepEqual(resumed.next, [{ ref: "f1", contract: "facts", result_ids: [result_id] }]);
+  assert.equal((await byRef(matterRoot, resumed.run_id, "f1", "facts", [result_id])).outcome, "written");
+  assert.equal(JSON.parse(readFileSync(path, "utf-8")).orchestrator, true, "the resumed run keeps its kind");
+});
+
+test("privileged wording is kept after an error, so the call can be repeated, and leaves once written (N5)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  const memo = { file_path: "3. CLIENT\\memo.pdf", file_hash: "d".repeat(64) };
+  const { result_id } = await stage({ contract: "privileged", contract_version: 2, ref: "memo", document: { title: "Memo", category: "solicitor_client" },
+    facts: [{ source_locator: "p1", description: "The client asked.", category: null, date_of_fact: null }] });
+  const write = () => callTool({}, "matter_data__ingest_result", { matter_root: matterRoot, run_id, document: { ...memo, store: "privileged" }, contract: "privileged", result_ids: [result_id], answers: { privilege: "yes" } });
+  process.env.COCLERK_CASE_PYTHON_TIMEOUT_MS = "1"; // the converter times out
+  await assert.rejects(write());
+  delete process.env.COCLERK_CASE_PYTHON_TIMEOUT_MS;
+  assert.equal(existsSync(stagedPath(result_id)), true, "kept for the repeat (R6)");
+  assert.equal((await write()).outcome, "written");
+  assert.equal(existsSync(stagedPath(result_id)), false);
+});
+
+test("the exhibits are planned from the journal, so a lost Pass 1 result is not read again (N9)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const doc = file(matterRoot, "2026-03-01 AFF Quill.pdf", pdfBytes(AFF_PAGES));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "affidavit" }] });
+  const body = await stage(BODY());
+  assert.equal((await byRef(matterRoot, run_id, "f1", "affidavit_body", [body.result_id])).outcome, "written");
+  unlinkSync(stagedPath(body.result_id)); // expired (R10)
+  const exhibits = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual(exhibits.dispatch.map((d) => d.ref), ["f1:A", "f1:B"], "the body is not read and written again");
+});
+
+test("a run whose items wait on answers reaches its end, and a failed close's question waits too (N10)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const doc = file(matterRoot, "one.pdf", pdfBytes(["One"]));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "unattended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "facts" }] });
+  await run(matterRoot, { action: "status", run_id, ack: "failed f1 unreadable" });
+  await run(matterRoot, { action: "next", run_id });
+  await run(matterRoot, { action: "status", run_id, ack: "failed f1 unreadable" });
+  assert.deepEqual((await run(matterRoot, { action: "next", run_id })).close, [{ ref: "f1", contract: "facts" }]);
+  const out = await byRef(matterRoot, run_id, "f1", "facts", []);
+  assert.deepEqual([out.refused, out.ask.map((a) => a.kind)], ["needs_answer", ["category"]]);
+  const end = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual([end.dispatch, end.write, end.close, end.running], [[], [], [], 0], "nothing left to do but answer");
+  assert.deepEqual(end.asked, [{ ref: "f1", contract: "facts", result_ids: [] }]);
+  assert.equal((await byRef(matterRoot, run_id, "f1", "facts", [], { category: "court" })).outcome, "written");
+  assert.equal((await run(matterRoot, { action: "next", run_id })).asked, undefined);
+});
+
+test("an exhibit that fails twice says so, and a call whose every exhibit rolled back is a write (N12)", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const doc = file(matterRoot, "2026-03-01 AFF Quill.pdf", pdfBytes(AFF_PAGES));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "affidavit" }] });
+  await byRef(matterRoot, run_id, "f1", "affidavit_body", [(await stage(BODY())).result_id]);
+  await run(matterRoot, { action: "next", run_id });
+  holdPending(caseDataDir, "A");
+  const a = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [(await stage(PROVING("A"))).result_id]);
+  assert.equal(a.outcome, "written", "an exhibit recorded for review is a write");
+  assert.match(a.report.at(-1), /will be read again/);
+  await run(matterRoot, { action: "next", run_id });
+  const again = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [(await stage(PROVING("A"))).result_id]);
+  assert.equal(again.outcome, "written", JSON.stringify(again));
+  assert.match(again.report.at(-1), /^Exhibit A could not be read after two attempts/);
+});
+
+test("a privileged informant's answer naming no privileged document is asked again; 0 means none on file (K-M3)", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const doc = file(matterRoot, "2026-03-01 AFF Quill.pdf", pdfBytes(AFF_PAGES));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "affidavit" }] });
+  const body = await stage(BODY({ body_facts: [{ source_locator: "para. 3", description: "The loan was not repaid.", category: "breach", date_of_fact: null,
+    basis_of_knowledge: "information_and_belief", informant: "Her lawyer", informant_privileged: true }] }));
+  const first = await byRef(matterRoot, run_id, "f1", "affidavit_body", [body.result_id]);
+  assert.deepEqual(first.ask.map((a) => [a.kind, a.ref]), [["privileged_informant", "para. 3"]]);
+  const wrong = await byRef(matterRoot, run_id, "f1", "affidavit_body", [body.result_id], { informants: { "para. 3": 999 } });
+  assert.deepEqual(wrong.ask.map((a) => [a.kind, a.ref]), [["privileged_informant", "para. 3"]], JSON.stringify(wrong));
+  const none = await byRef(matterRoot, run_id, "f1", "affidavit_body", [body.result_id], { informants: { "para. 3": 0 } });
+  assert.deepEqual(none.ask, []);
+  sql(caseDataDir, "INSERT INTO privileged_sources (source_id, category, title) VALUES (5, 'solicitor_client', 'Call note')", "privileged");
+  const right = await byRef(matterRoot, run_id, "f1", "affidavit_body", [body.result_id], { informants: { "para. 3": 5 } });
+  assert.deepEqual(right.ask, []);
+  assert.deepEqual(sql(caseDataDir, "SELECT source_id, source_note FROM fact_provenance", "privileged"), [{ source_id: 5, source_note: "INFORMANT: Her lawyer" }]);
+  assert.deepEqual(sql(caseDataDir, "SELECT informant FROM facts"), [{ informant: null }]);
+});
+
+test("an unattended other copy that matches no title is reported, not dropped (K-M13)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const doc = file(matterRoot, "nocc.pdf", pdfBytes(["Claim"]));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "unattended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "facts" }] });
+  const { result_id } = await stage(FACTS("f1", { flags: [{ kind: "other_copy", ref: "f1", detail: "A Title Not On File" }] }));
+  const out = await byRef(matterRoot, run_id, "f1", "facts", [result_id]);
+  assert.equal(out.outcome, "written");
+  assert.ok(out.report.some((l) => l.includes('another copy of "A Title Not On File"')), JSON.stringify(out.report));
+});
+
+test("page images of a displaced run are removed at the next run's end, and a swept run's with it (N13)", async (t) => {
+  const { matterRoot, runRoot } = fixture(t);
+  const doc = file(matterRoot, "one.pdf", pdfBytes(["One"]));
+  const first = await run(matterRoot, { action: "begin", mode: "attended" });
+  const { dispatch } = await run(matterRoot, { action: "next", run_id: first.run_id, routes: [{ ...doc, kind: "facts" }] });
+  const images = join(matterRoot, "0. CASE DATA", "Page images", `ingest-${dispatch[0].dispatch_id}`);
+  mkdirSync(images, { recursive: true });
+  const lease = join(runDir(runRoot), "lease.json");
+  const stale = (ms) => writeFileSync(lease, JSON.stringify({ ...JSON.parse(readFileSync(lease, "utf-8")), heartbeat: new Date(Date.now() - ms).toISOString() }));
+  stale(61 * 60_000); // abandoned: a plain begin takes it over
+  const second = await run(matterRoot, { action: "begin", mode: "attended" });
+  assert.equal(existsSync(images), true);
+  await run(matterRoot, { action: "end", run_id: second.run_id });
+  assert.equal(existsSync(images), false, "the displaced run's images went with the run that ended");
+
+  const third = await run(matterRoot, { action: "begin", mode: "attended" });
+  const later = await run(matterRoot, { action: "next", run_id: third.run_id });
+  assert.deepEqual(later.dispatch, []);
+  mkdirSync(images, { recursive: true });
+  stale(31 * 24 * 60 * 60_000); // never ended, silent for over 30 days
+  await run(matterRoot, { action: "begin", mode: "attended" });
+  assert.equal(existsSync(images), false, "the sweep removes a run's images with its folder");
+});
+
+test("a second file with the same bytes is read once, and the practitioner is told (N15)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const one = file(matterRoot, "one.pdf", pdfBytes(["Same"]));
+  const copy = file(matterRoot, "copy of one.pdf", pdfBytes(["Same"]));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  const out = await run(matterRoot, { action: "next", run_id, routes: [{ ...one, kind: "facts" }, { ...copy, kind: "facts" }] });
+  assert.deepEqual(out.routed, ["f1", "f1"]);
+  assert.deepEqual(out.report, ["copy of one.pdf is the same file as one.pdf, so it is read once."]);
 });

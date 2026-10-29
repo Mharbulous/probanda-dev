@@ -614,9 +614,10 @@ function caseDataTriggersSql(env: NodeJS.ProcessEnv): string {
 export async function caseDataExecute(
   matterRoot: string,
   sqlScript: string,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  precheck?: () => Promise<void>
 ): Promise<{ ok: true; evidence_sql: string; warning?: string | null }> {
-  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env) as { ok: true; evidence_sql: string; warning?: string | null };
+  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env, precheck) as { ok: true; evidence_sql: string; warning?: string | null };
 }
 
 /**

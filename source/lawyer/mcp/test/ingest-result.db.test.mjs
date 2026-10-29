@@ -73,7 +73,7 @@ const write = (matterRoot, run_id, doc, contract, result_ids, answers) =>
 
 const FACTS = (ref, extra = {}) => ({
   contract: "facts",
-  contract_version: 1,
+  contract_version: 2,
   ref,
   flags: [],
   document: { title: "Notice of Civil Claim", description: "The claim", category: "court", date: "2026-01-05", author_or_filing_party: "Ada Quill", proceeding_file_number: "S-000001" },
@@ -121,7 +121,7 @@ test("a routed pleading is dispatched by id, its inputs served, and its staged r
   assert.equal(inputs.DOCUMENT.path, join(matterRoot, doc.file_path));
   assert.deepEqual(inputs.PAGE_MANIFEST, [{ pages: "1-3", pdf: join(matterRoot, doc.file_path) }]);
   assert.deepEqual(inputs.MATTER_CONTEXT.parties.map((p) => p.name), ["Ada Quill", "Plum Holdings Ltd."]);
-  assert.deepEqual(inputs.CONTRACT, { id: "facts", version: 1 });
+  assert.deepEqual(inputs.CONTRACT, { id: "facts", version: 2 });
   assert.deepEqual(inputs.ANSWERED_FACTS, []);
 
   const again = await run(matterRoot, { action: "next", run_id });
@@ -161,7 +161,7 @@ test("a party name that does not resolve is asked, never guessed, and the answer
   assert.equal(asked.refused, "needs_answer");
   assert.deepEqual(asked.ask.map((a) => [a.kind, a.ref]), [["participant", "Plum Holdings"]]);
   assert.deepEqual(sql(caseDataDir, "SELECT * FROM sources"), [], "nothing is written before the answer");
-  assert.deepEqual((await run(matterRoot, { action: "next", run_id })).write, [{ ref: "f1", contract: "facts", result_ids: [result_id] }]);
+  assert.deepEqual((await run(matterRoot, { action: "next", run_id })).asked, [{ ref: "f1", contract: "facts", result_ids: [result_id] }], "it waits for the answer (N10)");
 
   const out = await write(matterRoot, run_id, doc, "facts", [result_id], { participants: { "Plum Holdings": 2 } });
   assert.equal(out.outcome, "written", JSON.stringify(out));
@@ -213,7 +213,7 @@ test("an affidavit: Pass 1 writes the body partial, its exhibits are dispatched,
   assert.equal(pass1Inputs.PASS, 1);
 
   const body = await stage({
-    contract: "affidavit_body", contract_version: 1, ref: "f1",
+    contract: "affidavit_body", contract_version: 2, ref: "f1",
     flags: [],
     deponent: { name: "Ada Quill", role: "plaintiff", basis_statement: "I am the plaintiff." },
     sworn_date: "2026-03-01",
@@ -241,7 +241,7 @@ test("an affidavit: Pass 1 writes the body partial, its exhibits are dispatched,
   assert.deepEqual([bInputs.PASS, bInputs.PAGE_RANGE, bInputs.EXHIBIT_LETTER], [3, [5, 6], "B"]);
 
   const exhibit = (letter, extra = {}) => stage({
-    contract: "affidavit_exhibits", contract_version: 1, ref: `f1:${letter}`, flags: [],
+    contract: "affidavit_exhibits", contract_version: 2, ref: `f1:${letter}`, flags: [],
     exhibit_letter: letter, title: `Document ${letter}`, description: "x", date: null, needs_human: false,
     facts: [{ source_locator: `p${letter === "A" ? 4 : 6}`, description: `Exhibit ${letter} says so.`, category: "contract", date_of_fact: null, evidence: { is_proof_source: true, strength: 1, notes: null } }],
     ...extra,
@@ -268,7 +268,7 @@ test("sought orders wait for their document, then write with the unnumbered mark
   const first = await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "notice_of_application" }] });
   assert.deepEqual(first.dispatch.map((d) => [d.agent, d.ref, d.contract]),
     [["lawyer:extract-facts", "f1", "facts"], ["lawyer:extract-sought-orders", "f1:so", "sought_orders"]]);
-  const so = await stage({ contract: "sought_orders", contract_version: 1, ref: "f1:so", flags: [], numbering_absent: true, not_a_notice_of_application: false,
+  const so = await stage({ contract: "sought_orders", contract_version: 2, ref: "f1:so", flags: [], numbering_absent: true, not_a_notice_of_application: false,
     sought_orders: [{ order_number: "1", order_text: "An order for production.", ocr_uncertain: false }] });
   const early = await write(matterRoot, run_id, doc, "sought_orders", [so.result_id]);
   assert.equal(early.refused, "waiting");
@@ -298,7 +298,7 @@ test("Path B: privileged writes bare rows with their statements on the privilege
   const memo = { file_path: "3. CLIENT\\memo.pdf", file_hash: "c".repeat(64) };
   const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
   const staged = await stage({
-    contract: "privileged", contract_version: 1, ref: "memo",
+    contract: "privileged", contract_version: 2, ref: "memo",
     document: { title: "Client memo", description: null, category: "solicitor_client", author: "Ada Quill", recipient: "the firm", date: "2026-01-02" },
     facts: [{ source_locator: "p1", description: "The client says the loan was oral.", category: "contract", date_of_fact: null }],
     client_instructions: [{ party_name: "Ada Quill", instructed_by: "Ada Quill", date: "2026-01-02", description: "Settle above $4,000.", source_locator: "p1", status: "open", proceeding_file_number: "S-000001" }],
@@ -312,7 +312,7 @@ test("Path B: privileged writes bare rows with their statements on the privilege
   assert.equal(existsSync(join(process.env.LOCALAPPDATA, "Coclerk", "extract-results", `${staged.result_id}.json`)), false);
 
   const note = { file_path: "3. CLIENT\\note.pdf", file_hash: "d".repeat(64) };
-  const unclear = await stage({ contract: "privileged", contract_version: 1, ref: "note", document: { title: "File note" }, facts: [{ source_locator: "p1", description: "A call took place.", category: "background", date_of_fact: null }] });
+  const unclear = await stage({ contract: "privileged", contract_version: 2, ref: "note", document: { title: "File note" }, facts: [{ source_locator: "p1", description: "A call took place.", category: "background", date_of_fact: null }] });
   const out2 = await callTool({}, "matter_data__ingest_result", { matter_root: matterRoot, run_id, document: { ...note, store: "main" }, contract: "privileged", result_ids: [unclear.result_id], answers: { privilege: "unclear" } });
   assert.equal(out2.outcome, "written", JSON.stringify(out2));
   assert.deepEqual(sql(caseDataDir, "SELECT category, listed, privilege_status, ingestion_status FROM sources"),

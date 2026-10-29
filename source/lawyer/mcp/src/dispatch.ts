@@ -132,7 +132,7 @@ const toolDefinition = definitionLookup(buildToolDefinitions);
 
 type MatterArgs = { matter_root: string };
 
-/** An inline sql_script on a run's call is refused above this many bytes (est., spec §2.5). */
+/** An inline sql_script in a run the orchestrator began is refused above this many bytes (est., spec §2.5). */
 const INLINE_SQL_CAP = 8 * 1024;
 
 // The tools that have left the `if` chain below (#183). The rest follow in later children.
@@ -143,13 +143,18 @@ export const dataTools: Tool<DispatchContext>[] = [
     if ((args.sql_script === undefined) === (args.generator === undefined)) {
       throw new ValidationError("matter_data__execute takes sql_script or generator, not both and not neither");
     }
-    // Spec §2.5: the cap binds only a run's calls, so large callers outside a run are unaffected.
-    if (args.run_id !== undefined && args.sql_script !== undefined && Buffer.byteLength(args.sql_script, "utf-8") > INLINE_SQL_CAP) {
-      throw new ValidationError("too long to send inline: use a generator or ingest_result", "too_long");
-    }
-    if (args.run_id !== undefined) await assertLiveRun(args.matter_root, args.run_id);
     const sql = args.generator !== undefined ? generatorSql(args.matter_root, args.generator) : (args.sql_script as string);
-    return caseDataExecute(args.matter_root, sql);
+    const runId = args.run_id;
+    // The lease is checked inside the case lock, so a takeover cannot come between check and write
+    // (N6). Spec §2.5: the inline cap binds only a run the orchestrator began, so D1's ingest paths
+    // and large callers outside a run are unaffected (N3).
+    const precheck = runId === undefined ? undefined : async () => {
+      const run = await assertLiveRun(args.matter_root, runId);
+      if (run.orchestrator && args.sql_script !== undefined && Buffer.byteLength(args.sql_script, "utf-8") > INLINE_SQL_CAP) {
+        throw new ValidationError("too long to send inline: use a generator or ingest_result", "too_long");
+      }
+    };
+    return caseDataExecute(args.matter_root, sql, process.env, precheck);
   }),
   defineTool("matter_data__ingest_run", (args: IngestRunArgs) => ingestRun(args)),
   defineTool("matter_data__ingest_result", (args: IngestResultArgs) => ingestResult(args)),

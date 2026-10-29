@@ -11,12 +11,12 @@
 
 import { readFileSync, unlinkSync } from "node:fs";
 
-import { ValidationError } from "../errors.js";
+import { NotFoundError, ValidationError } from "../errors.js";
 import { readFirmProfile } from "../tools/practice/firm-profile.js";
 import { caseDataExecuteStatements, type CaseStatement, type CaseStatementGroup } from "./backend.js";
 import { runCaseScript } from "./case-script.js";
 import {
-  affidavitRun, checkRun, CONTRACT_VERSION, outsideMatter, recordWrite, runForWrite, storedForm,
+  affidavitRun, checkRun, CONTRACT_VERSION, outsideMatter, recordRefusal, recordWrite, runForWrite, storedForm,
   type Refusal,
 } from "./ingest-run.js";
 import { proceduralHistoryAppend } from "./procedural-history.js";
@@ -55,7 +55,9 @@ export interface IngestResultArgs {
 }
 
 type Ask = { kind: string; ref: string; say: string };
-type Planned = (CaseStatement & { count?: string; value_as?: string }) | (CaseStatementGroup & { statements: Array<CaseStatement & { count?: string }> });
+/** `ask`: each row the statement returns is an ask item {kind, ref, say} (K-M3). */
+type Single = CaseStatement & { count?: string; value_as?: string; ask?: boolean };
+type Planned = Single | (CaseStatementGroup & { statements: Array<CaseStatement & { count?: string }> });
 type Plan =
   | { problems: string[] }
   | { blocked: string; asks?: Ask[]; report?: string[] }
@@ -64,6 +66,8 @@ type Plan =
       params: Record<string, unknown>;
       statements: Planned[];
       post: string[];
+      /** The unattended markers written in place of passes (ingest-unattended.md Substitutions). */
+      markers?: string[];
       asks: Ask[];
       report: string[];
       title: string | null;
@@ -93,11 +97,12 @@ export interface IngestResultOutput {
 // The fixed templates of what the practitioner may be shown (G5).
 const SAY_REFUSED: Record<string, string> = {
   waiting: "This part will be recorded once the rest of its document is in.",
-  store_change: "This document is already recorded in a different place, so it was not recorded again. It needs a decision on where it belongs.",
-  race: "Another copy of this document was recorded at the same moment. It will be checked again.",
+  store_change: "This document is already recorded in a different place, so it was not recorded again. It will be checked on its own once the run ends.",
+  race: "Another copy of this document was recorded at the same moment, so this reading was not recorded. It will be checked on its own once the run ends.",
   invalid: "The reading of this document could not be used and will be read again.",
   path_b: "This document may be privileged, so nothing was recorded from its reading. It will be read here instead, once its privilege is decided.",
   set_aside: "This document is a legal authority, so it was not recorded in this run. It will be ingested on its own once the run ends.",
+  refused: "This document could not be recorded, so nothing from its reading was kept.",
 };
 
 const refused = (code: string, extra: Partial<IngestResultOutput> = {}): IngestResultOutput => ({
@@ -149,12 +154,14 @@ function resolveParties(matterRoot: string, names: string[], answered: Record<st
   return out;
 }
 
-/** The firm's own name, so the delivery check fires only on a letter the firm sent (K-M9). */
+/** The firm's own name, so the delivery check fires only on a letter the firm sent (K-M9). With no
+ *  firm profile it is null, and the converter says the delivery check could not run (N14). */
 function firmName(env: NodeJS.ProcessEnv): string | null {
   try {
     return readFirmProfile(env).firm_name;
-  } catch {
-    return null;
+  } catch (err) {
+    if (err instanceof NotFoundError) return null;
+    throw err;
   }
 }
 
@@ -182,9 +189,19 @@ function dropStaged(paths: string[]): void {
   for (const path of paths) {
     try {
       unlinkSync(path);
-    } catch {
-      // already gone
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err; // already gone
     }
+  }
+}
+
+/** A staged result, or null when it is gone (expired, R10) or not JSON. */
+function readStaged(path: string): Record<string, unknown> | null {
+  try {
+    return JSON.parse(readFileSync(path, "utf-8")) as Record<string, unknown>;
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT" || err instanceof SyntaxError) return null;
+    throw err;
   }
 }
 
@@ -195,10 +212,31 @@ export async function ingestResult(args: IngestResultArgs, env: NodeJS.ProcessEn
     throw new ValidationError(`contract must be one of ${[...Object.keys(CONVERTERS), ...LATER].join(", ")}`);
   }
   if (!Array.isArray(args.result_ids)) throw new ValidationError("result_ids must be a list");
+  // Privileged wording leaves staging on every definite outcome (N5): it is kept only on an open
+  // question, and on an error a repeat of the same call must find it (R6).
+  const privileged = args.contract === "privileged" ? args.result_ids.map((id) => stagedResultPath(id, env)) : [];
+  const dropAlso: string[] = [];
+  let keep = false;
+  try {
+    const out = await checkAndWrite(args, env, dropAlso);
+    keep = out.refused === "needs_answer";
+    return out;
+  } catch (err) {
+    keep = !(err instanceof ValidationError);
+    throw err;
+  } finally {
+    dropStaged([...(keep ? [] : privileged), ...dropAlso]);
+  }
+}
+
+type Staged = { result_id: string; path: string; ref: string; doc: Record<string, unknown> };
+
+async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dropAlso: string[]): Promise<IngestResultOutput> {
   if (new Set(args.result_ids).size !== args.result_ids.length) throw new ValidationError("result_ids must not repeat an id");
   if (args.result_ids.length === 0 && !CLOSABLE.includes(args.contract)) throw new ValidationError(`contract ${args.contract} needs result_ids`);
   const document = args.document ?? ({} as IngestResultArgs["document"]);
-  const privilegedStore = args.contract === "privileged" && args.answers?.privilege === "yes";
+  const privileged = args.contract === "privileged";
+  const privilegedStore = privileged && args.answers?.privilege === "yes";
   if (document.store !== (privilegedStore ? "privileged" : "main")) {
     throw new ValidationError(`document.store must be ${privilegedStore ? "privileged" : "main"} for this contract and answer`);
   }
@@ -211,31 +249,35 @@ export async function ingestResult(args: IngestResultArgs, env: NodeJS.ProcessEn
   if (filePath === "" || outsideMatter(filePath)) throw new ValidationError("document.file_path must be a file inside the matter folder");
   if (!/^[0-9a-f]{64}$/.test(fileHash)) throw new ValidationError("document.file_hash must be the file's SHA-256");
 
-  const results: Array<{ result_id: string; path: string; ref: string; doc: Record<string, unknown> }> = [];
+  const results: Staged[] = [];
+  // Each reply whose staged result names its item, journaled before any check below (S-M4).
+  const acks: Array<{ ref: string; result_id: string }> = [];
+  let bad: string | null = null;
   for (const id of args.result_ids) {
     const path = stagedResultPath(id, env);
-    let doc: Record<string, unknown>;
-    try {
-      doc = JSON.parse(readFileSync(path, "utf-8")) as Record<string, unknown>;
-    } catch {
-      return refused("unknown_result"); // expired (R10), never staged, or unreadable
+    const doc = readStaged(path);
+    if (doc === null) {
+      bad ??= "unknown_result"; // expired (R10), never staged, or unreadable
+      continue;
     }
-    if (doc.contract !== args.contract) return refused("contract_mismatch");
-    if (doc.contract_version !== CONTRACT_VERSION) return refused("contract_version");
     const ref = typeof doc.ref === "string" ? doc.ref : "";
     // A routed file's results carry its refs (f3, f3:so, f3:B): one of another file's is a mismatch.
-    if (run.route && ref.split(":")[0] !== run.route.ref) return refused("contract_mismatch");
+    // A Path B object names its file only by its path and hash, a routed file's included (N1).
+    const ours = privileged || run.route === null || ref.split(":")[0] === run.route.ref;
+    if (ours && !privileged && run.route) acks.push({ ref, result_id: id });
+    if (!ours || doc.contract !== args.contract) bad ??= "contract_mismatch";
+    else if (doc.contract_version !== CONTRACT_VERSION) bad ??= "contract_version";
     results.push({ result_id: id, path, ref, doc });
   }
-  // Privileged wording is deleted on every outcome but a question to answer (S-m6).
-  let drop = args.contract === "privileged" ? results.map((r) => r.path) : [];
-  try {
-    return await write(args, env, run, filePath, fileHash, results, (keep) => {
-      if (keep) drop = [];
-    }, (paths) => drop.push(...paths));
-  } finally {
-    dropStaged(drop);
+  if (bad !== null) {
+    // The item is read once more (R4), never left acknowledged and unwritten.
+    const claimed = run.route && document.ref !== undefined && args.result_ids.length === 1
+      ? { ref: document.ref, result_id: args.result_ids[0], contract: args.contract }
+      : null;
+    if (!privileged) await recordRefusal(args.matter_root, args.run_id, acks, args.result_ids, bad, claimed, env);
+    return refused(bad);
   }
+  return write(args, env, run, filePath, fileHash, results, dropAlso);
 }
 
 async function write(
@@ -244,9 +286,8 @@ async function write(
   run: Exclude<Awaited<ReturnType<typeof runForWrite>>, Refusal>,
   filePath: string,
   fileHash: string,
-  results: Array<{ result_id: string; path: string; ref: string; doc: Record<string, unknown> }>,
-  keepStaged: (keep: boolean) => void,
-  dropAlso: (paths: string[]) => void,
+  results: Staged[],
+  dropAlso: string[],
 ): Promise<IngestResultOutput> {
   const fileRef = run.route?.ref ?? "";
   const exhibits = args.contract === "affidavit_exhibits"
@@ -266,27 +307,38 @@ async function write(
     route: run.route,
     exhibits,
     answered: run.answered,
-    firm_name: args.contract === "facts" ? firmName(env) : null,
+    firm_name: firmName(env),
   }, env);
 
-  const acks = results.map((r) => ({ ref: r.ref, result_id: r.result_id }));
-  const refs = [...new Set([fileRef || results[0]?.ref || fileHash, ...results.map((r) => r.ref)])];
+  // A Path B object names no dispatched item, so it journals no reply (N1).
+  const acks = args.contract === "privileged" || !run.route ? [] : results.map((r) => ({ ref: r.ref, result_id: r.result_id }));
+  // A close names its item by the file's ref, and a Notice of Application's orders by `<ref>:so` (N2).
+  const refs = [...new Set([
+    fileRef || results[0]?.ref || fileHash,
+    ...(args.contract === "sought_orders" && fileRef ? [`${fileRef}:so`] : []),
+    ...results.map((r) => r.ref),
+  ])];
   const record = (write: Record<string, unknown>, failures: Array<{ ref: string; reason: string }> = []) =>
     recordWrite(args.matter_root, args.run_id, acks, { refs, contract: args.contract, ...write }, env, failures);
-  if ("problems" in plan) {
-    // R5: a result invalid against its contract is treated as a failed extraction, and re-dispatched once.
-    await record({ result_ids: args.result_ids, outcome: "refused", reason: "invalid" }, results.map((r) => ({ ref: r.ref, reason: "invalid" })));
-    return fit(refused("invalid", { items: [{ ref: results[0]?.ref ?? "", outcome: "failed", reason: plan.problems[0].slice(0, 160) }] }));
-  }
+  /** R5: a result that cannot be used is a failed extraction, read once more; after a second
+   *  failure `next` closes it, and that close reports it. */
+  const reread = async (reason: string) => {
+    const closed = await record({ result_ids: args.result_ids, outcome: "refused", reason: "invalid" }, results.map((r) => ({ ref: r.ref, reason: "invalid" })));
+    const out = refused("invalid", { items: [{ ref: results[0]?.ref ?? "", outcome: "failed", reason: reason.slice(0, 160) }] });
+    if (closed.length > 0) out.report = [];
+    return fit(out);
+  };
+  if ("problems" in plan) return reread(plan.problems[0]);
   if ("blocked" in plan) {
     // A document for Path B or for /ingest, or one a repeat cannot fix: not listed again (S-m8).
     await record({ result_ids: args.result_ids, outcome: "refused", reason: plan.blocked });
+    // The reading of a document that may be privileged leaves staging now; Path B reads it again (N18).
+    if (plan.blocked === "path_b") dropAlso.push(...results.map((r) => r.path));
     const out = refused(plan.blocked, { ask: plan.asks ?? [] });
     out.report.push(...(plan.report ?? []));
     return fit(out);
   }
   if (!("statements" in plan)) {
-    keepStaged(true);
     await record({ result_ids: args.result_ids, outcome: "refused", reason: "needs_answer" });
     return fit({ outcome: "refused", refused: "needs_answer", ask: plan.asks, report: [] });
   }
@@ -308,38 +360,54 @@ async function write(
   if (!done.ok) {
     const first = String(done.refused[0] ?? "");
     const code = first.split(":")[0];
+    // An answered fact gone from the pleading it answers: a fresh reading takes the new list (N7).
+    if (code === "answered") return reread(first);
     await record({ result_ids: args.result_ids, outcome: "refused", reason: code });
     return fit(refused(SAY_REFUSED[code] ? code : "refused", { items: [{ ref: refs[0], outcome: "failed", reason: first.slice(0, 160) }] }));
   }
 
   const counts = Object.fromEntries(COUNTS.map((k) => [k, 0])) as Record<(typeof COUNTS)[number], number>;
   const named: Record<string, unknown> = {};
+  const asks = [...plan.asks];
   let i = 0;
-  const tally = (s: CaseStatement & { count?: string; value_as?: string }) => {
+  const tally = (s: Single) => {
     const r = done.results[i++];
     if (s.count && s.count in counts) counts[s.count as keyof typeof counts] += r.rowcount;
     if (s.value_as) named[s.value_as] = r.rows[0] ? Object.values(r.rows[0])[0] : null;
+    if (s.ask) asks.push(...(r.rows as Ask[]));
   };
   for (const s of plan.statements) {
     if ("ref" in s && "statements" in s) s.statements.forEach(tally);
-    else tally(s as CaseStatement & { count?: string; value_as?: string });
+    else tally(s as Single);
   }
-  const inserted = COUNTS.reduce((n, k) => n + counts[k], 0);
-  // A repeat finds its row already there and adds nothing (R6); an affidavit's status change counts.
-  const unchanged = args.contract !== "affidavit_exhibits" || named.final === named.prior;
-  const outcome = named.prior != null && inserted === 0 && unchanged ? "already_written" : "written";
-  const sourceId = (named.source_id as number | null) ?? null;
-
   // An exhibit rolled back to its savepoint (a constraint) or failing its contract is recorded for
   // review by its fallback row, is not counted as written, and is read once more (S-M1, R4).
   const badLetters = [
     ...done.failed.map((f) => f.ref).filter((ref) => !ref.startsWith("fallback ")),
     ...(plan.invalid ?? []),
   ];
+  const letterOf = (ref: string) => ref.split(":").pop() as string;
   const failures = results
-    .filter((r) => badLetters.includes(r.ref.split(":").pop() as string))
-    .map((r) => ({ ref: r.ref, reason: done.failed.some((f) => f.ref === r.ref.split(":").pop()) ? "constraint" : "invalid" }));
+    .filter((r) => badLetters.includes(letterOf(r.ref)))
+    .map((r) => ({ ref: r.ref, reason: done.failed.some((f) => f.ref === letterOf(r.ref)) ? "constraint" : "invalid" }));
   const failedIds = new Set(results.filter((r) => failures.some((f) => f.ref === r.ref)).map((r) => r.result_id));
+
+  const inserted = COUNTS.reduce((n, k) => n + counts[k], 0);
+  // A repeat finds its row already there and adds nothing (R6); an affidavit's status change counts,
+  // and so does an exhibit recorded for review (N12).
+  const unchanged = args.contract !== "affidavit_exhibits" || named.final === named.prior;
+  const outcome = named.prior != null && inserted === 0 && unchanged && failures.length === 0 ? "already_written" : "written";
+  const sourceId = (named.source_id as number | null) ?? null;
+
+  // The write has landed. A journal that misses it surfaces as an error (N14): the repeated call
+  // finds the write already there (R6) and journals it then.
+  const closedNow = await record({
+    result_ids: args.result_ids.filter((id) => !failedIds.has(id)), outcome,
+    ...(args.result_ids.length === 0 ? { closed: true } : {}),
+    ...(args.contract === "affidavit_exhibits" ? { closing: exhibits?.closing === true && failures.length === 0 } : {}),
+    // Pass 1's exhibit list, so the exhibits are planned from the journal alone (N9).
+    ...(args.contract === "affidavit_body" ? inventoryOf(results[0]?.doc) : {}),
+  }, failures);
 
   const report = plan.report.map((line) => line.replace("{source}", String(sourceId)));
   const post: Array<{ pass: string; ref: string }> = [];
@@ -360,28 +428,27 @@ async function write(
     }
     if (pass === "other_copy") {
       if (named.other != null) post.push({ pass, ref: `${sourceId}:${named.other}` });
-      else if (plan.other_title) report.push(`This document may be another copy of "${plan.other_title.slice(0, 80)}", which could not be matched to a document on file.`);
       continue;
     }
     post.push({ pass, ref: String(sourceId) });
   }
-  for (const f of failures) report.push(`Exhibit ${f.ref.split(":").pop()} could not be recorded as read; it is marked for review and will be read again.`);
+  // A title the other_copy flag names that matches no document on file: reported, attended or
+  // unattended, never dropped silently (K-M13).
+  const otherCopy = plan.post.includes("other_copy") || (plan.markers ?? []).includes("other_copy");
+  if (otherCopy && named.other == null && plan.other_title) {
+    report.push(`This document may be another copy of "${plan.other_title.slice(0, 80)}", which could not be matched to a document on file.`);
+  }
+  for (const f of failures) {
+    report.push(closedNow.includes(f.ref)
+      ? `Exhibit ${letterOf(f.ref)} could not be read after two attempts; it is marked for review.`
+      : `Exhibit ${letterOf(f.ref)} could not be recorded as read; it is marked for review and will be read again.`);
+  }
   if (plan.title && !plan.failed) {
     report.unshift(`${plan.title.slice(0, 60)}: ${counts.facts} facts, ${counts.positions} positions, ${counts.relief} relief items, ${counts.links} evidence links${counts.exhibits ? `, ${counts.exhibits} exhibits` : ""}.`);
   }
   if (plan.failed) report.unshift(`${(plan.title ?? "This document").slice(0, 60)} could not be read and is recorded as not read.`);
-  dropAlso(results.filter((r) => (plan.pending ?? []).includes(r.ref.split(":").pop() as string)).map((r) => r.path));
+  dropAlso.push(...results.filter((r) => (plan.pending ?? []).includes(letterOf(r.ref))).map((r) => r.path));
 
-  try {
-    await record({
-      result_ids: args.result_ids.filter((id) => !failedIds.has(id)), outcome,
-      ...(args.result_ids.length === 0 ? { closed: true } : {}),
-      ...(args.contract === "affidavit_exhibits" ? { closing: exhibits?.closing === true && failures.length === 0 } : {}),
-    }, failures);
-  } catch {
-    // The write has landed. A journal that missed it lists the item again, and the repeated call
-    // finds it already written (R6), so the landed write is not reported as an error.
-  }
   return fit({
     outcome,
     source_id: sourceId,
@@ -390,8 +457,18 @@ async function write(
       ...done.failed.filter((f) => !f.ref.startsWith("fallback ")).map((f) => ({ ref: f.ref, outcome: "failed" as const, reason: f.reason.slice(0, 120) })),
       ...(plan.invalid ?? []).map((ref) => ({ ref, outcome: "failed" as const, reason: "invalid" })),
     ],
-    ask: plan.asks,
+    // An exhibit rolled back is read again, so its question waits for that reading.
+    ask: asks.filter((a) => !(args.contract === "affidavit_exhibits" && badLetters.includes(a.ref))),
     post,
     report,
   });
+}
+
+/** Pass 1's exhibit list as the body write journals it: letters and page ranges only (N9). */
+function inventoryOf(doc: Record<string, unknown> | undefined): Record<string, unknown> {
+  const inventory = (Array.isArray(doc?.exhibit_inventory) ? doc.exhibit_inventory : []) as Array<Record<string, unknown>>;
+  return {
+    inventory: inventory.map((e) => ({ letter: e?.letter ?? null, page_start: e?.page_start ?? null, page_end: e?.page_end ?? null })),
+    body_page_count: doc?.body_page_count ?? null,
+  };
 }

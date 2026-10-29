@@ -1,6 +1,6 @@
 // matter_data__execute's generator and inline cap (ingest orchestrator spec §2.5, stage D3): the server
 // runs an allowlisted SQL-emitting script itself, so the SQL never reaches the model, and an inline
-// script over 8 KB is refused only on a call that carries a run_id. Every name is invented.
+// script over 8 KB is refused only inside a run the orchestrator began. Every name is invented.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -96,7 +96,7 @@ test("the generator refuses a pair of two registered rows, another script and an
 
 test("a generator on a run's call checks the lease, and an inline script of exactly 8 KB passes", async (t) => {
   const { matterRoot, caseDataDir } = fixture(t);
-  const { run_id } = await callTool({}, "matter_data__ingest_run", { matter_root: matterRoot, action: "begin", mode: "attended" });
+  const { run_id } = await callTool({}, "matter_data__ingest_run", { matter_root: matterRoot, action: "begin", mode: "attended", orchestrator: true });
   const pair = { superseded: { file_path: "5. COURT FILE\\RCC draft.pdf", file_hash: H("d") }, kept: 2 };
   await assert.rejects(execute(matterRoot, { generator: emit(pair), run_id: "00000000-0000-4000-8000-000000000000" }), (err) => err.code === "lease_lost");
   assert.equal((await execute(matterRoot, { generator: emit(pair), run_id })).ok, true);
@@ -114,15 +114,19 @@ test("rehash-sql re-points the file's records to its new hash", async (t) => {
   assert.equal(sql(caseDataDir, "SELECT file_hash FROM sources WHERE source_id = 2")[0].file_hash, H("e"));
 });
 
-test("an inline script over 8 KB is refused on a run's call, and unchanged without a run_id", async (t) => {
+test("an inline script over 8 KB is refused in an orchestrator run, and unchanged elsewhere", async (t) => {
   const { matterRoot, caseDataDir } = fixture(t);
-  const { run_id } = await callTool({}, "matter_data__ingest_run", { matter_root: matterRoot, action: "begin", mode: "attended" });
+  const begin = (extra) => callTool({}, "matter_data__ingest_run", { matter_root: matterRoot, action: "begin", mode: "attended", ...extra });
+  const single = await begin({});
   const long = `INSERT INTO sources (category, title) VALUES ('court', 'long'); -- ${"x".repeat(8300)}`;
+  assert.equal((await execute(matterRoot, { sql_script: long, run_id: single.run_id })).ok, true, "a single-document ingest's run is unaffected (N3)");
+  await callTool({}, "matter_data__ingest_run", { matter_root: matterRoot, action: "end", run_id: single.run_id });
+  const { run_id } = await begin({ orchestrator: true });
   await assert.rejects(execute(matterRoot, { sql_script: long, run_id }), (err) => {
     assert.equal(err.message, "too long to send inline: use a generator or ingest_result");
     return true;
   });
-  assert.equal(sql(caseDataDir, "SELECT count(*) AS n FROM sources WHERE title = 'long'")[0].n, 0);
+  assert.equal(sql(caseDataDir, "SELECT count(*) AS n FROM sources WHERE title = 'long'")[0].n, 1, "only the first run's write");
   assert.equal((await execute(matterRoot, { sql_script: long })).ok, true, "a caller without a run_id is unaffected");
   const short = "INSERT INTO sources (category, title) VALUES ('court', 'short');";
   assert.equal((await execute(matterRoot, { sql_script: short, run_id })).ok, true);
