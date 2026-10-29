@@ -1,4 +1,4 @@
-// build-stamp: 77dd9fea725b
+// build-stamp: 6edc660633fe
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77956,6 +77956,7 @@ function fileToolDefinitions() {
 function submissionDataPrefixed(name) {
   return `drafting_data__${name}`;
 }
+var EXPECT_REVISION = "expect_revision is the database revision the practitioner approved the act at (the `revision` of the render or query shown to them); a revision that has moved since is refused with revision_moved, writing nothing.";
 function submissionDataToolDefinitions() {
   return [
     {
@@ -78073,7 +78074,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("record_sent"),
-      description: "Record a general Writing as sent (the Sent write): the one door for a general Writing's Sent date. Only an active roster lawyer (this machine's `person`) may record it, and a Writing with no stored text is refused with no_stored_text. It first applies the pre-send hold: it reads the latest render's inventory and never renders (render_first when that render is older than the revision), and while primary-authority, excerpts, noting-up or recipients (as the type declares them) is unmet it writes the Pre-send gate job, one step per unmet criterion, and refuses with held, unless send_anyway carries the practitioner's own words, which it records verbatim as each open step's WAIVED form. It then compares the sent copy (sent_copy_path: a .eml, .pdf or .msg file; or sent_copy_text: pasted text) with the stored text and refuses sent_copy_mismatch naming each paragraph the copy lacks; a .msg is recorded by path and not compared, and the result says so. Then, in one transaction, it writes the sent copy's documents row, sent_copy_id, the signer snapshot and filed_on (sent_on), which freezes the exhibits and moves the revision. It retires nothing and offers no retirement: the Writing stays on its Milestone until the practitioner retires it. Refusals: invalid_sent_on, invalid_sent_copy, invalid_send_anyway, not_found, writing_retired, already_sent, not_a_general_writing, person_unset, not_a_lawyer, not_active, invalid_signer, no_stored_text, parties_drift (a party's counsel or address for service cannot be read from case data; nothing was written), render_first, no_billing_anchor, held, pre_send_gate_changed (the Pre-send gate job changed during the call; nothing was written), sent_copy_mismatch. The same transaction first writes the party rows it was sent with (parties_snapshot), counsel and the address for service read from case data.",
+      description: "Record a general Writing as sent (the Sent write): the one door for a general Writing's Sent date. Only an active roster lawyer (this machine's `person`) may record it, and a Writing with no stored text is refused with no_stored_text. It first applies the pre-send hold: it reads the latest render's inventory and never renders (render_first when that render is older than the revision), and while primary-authority, excerpts, noting-up or recipients (as the type declares them) is unmet it writes the Pre-send gate job, one step per unmet criterion, and refuses with held, unless send_anyway carries the practitioner's own words, which it records verbatim as each open step's WAIVED form. It then compares the sent copy (sent_copy_path: a .eml, .pdf or .msg file; or sent_copy_text: pasted text) with the stored text and refuses sent_copy_mismatch naming each paragraph the copy lacks; a .msg is recorded by path and not compared, and the result says so. Then, in one transaction, it writes the sent copy's documents row, sent_copy_id, the signer snapshot and filed_on (sent_on), which freezes the exhibits and moves the revision. It retires nothing and offers no retirement: the Writing stays on its Milestone until the practitioner retires it. Refusals: invalid_sent_on, invalid_sent_copy, invalid_send_anyway, not_found, writing_retired, already_sent, not_a_general_writing, person_unset, not_a_lawyer, not_active, invalid_signer, no_stored_text, parties_drift (a party's counsel or address for service cannot be read from case data; nothing was written), render_first, no_billing_anchor, held, pre_send_gate_changed (the Pre-send gate job changed during the call; nothing was written), sent_copy_mismatch. The same transaction first writes the party rows it was sent with (parties_snapshot), counsel and the address for service read from case data. " + EXPECT_REVISION,
       inputSchema: {
         type: "object",
         properties: {
@@ -78082,40 +78083,43 @@ function submissionDataToolDefinitions() {
           sent_on: { type: "string" },
           sent_copy_path: { type: "string" },
           sent_copy_text: { type: "string" },
-          send_anyway: { type: "string" }
+          send_anyway: { type: "string" },
+          expect_revision: { type: "number" }
         },
-        required: ["db_path", "filing_id", "sent_on"],
+        required: ["db_path", "filing_id", "sent_on", "expect_revision"],
         additionalProperties: false
       },
       annotations: { destructiveHint: true, openWorldHint: false }
     },
     {
       name: submissionDataPrefixed("record_filed"),
-      description: "Record a Writing that is not a general Writing as filed on filed_on (YYYY-MM-DD): the one door for its filing date. In one transaction it writes the party rows the Writing is filed with (parties_snapshot), names, roles and flags from parties and counsel and the address for service read from case data, then sets filed_on, which freezes the exhibits and moves the revision. A Writing that already has party rows (a filed_on cleared in error) keeps them. Clearing a filed_on set in error stays an ordinary update. Refusals write nothing: invalid_filed_on, not_found, writing_retired, served_writing (a Notice of Application or Application Response recorded as served under amended Rule 8-1, whose registry filing is a job step), already_filed, general_writing (record it as sent through drafting_data__record_sent), parties_drift (a party's counsel or address for service cannot be read from case data), revision_moved (the database changed during the call). Returns filing_id, filed_on, parties_snapshot_rows, the new revision and a note.",
+      description: "Record a Writing that is not a general Writing as filed on filed_on (YYYY-MM-DD): the one door for its filing date. In one transaction it writes the party rows the Writing is filed with (parties_snapshot), names, roles and flags from parties and counsel and the address for service read from case data, then sets filed_on, which freezes the exhibits and moves the revision. A Writing that already has party rows (a filed_on cleared in error) keeps them. Clearing a filed_on set in error stays an ordinary update. Refusals write nothing: invalid_filed_on, not_found, writing_retired, served_writing (a Notice of Application or Application Response recorded as served under amended Rule 8-1, whose registry filing is a job step), already_filed, general_writing (record it as sent through drafting_data__record_sent), parties_drift (a party's counsel or address for service cannot be read from case data), revision_moved (the database changed during the call). Returns filing_id, filed_on, parties_snapshot_rows, the new revision and a note. " + EXPECT_REVISION,
       inputSchema: {
         type: "object",
         properties: {
           db_path: { type: "string" },
           filing_id: { type: "number" },
-          filed_on: { type: "string" }
+          filed_on: { type: "string" },
+          expect_revision: { type: "number" }
         },
-        required: ["db_path", "filing_id", "filed_on"],
+        required: ["db_path", "filing_id", "filed_on", "expect_revision"],
         additionalProperties: false
       },
       annotations: { destructiveHint: true, openWorldHint: false }
     },
     {
       name: submissionDataPrefixed("record_served"),
-      description: "Record a Notice of Application or Application Response as served on served_on (YYYY-MM-DD), under amended Rule 8-1 (B.C. Reg. 105/2026), which serves it before it is filed. In one transaction it writes the party rows the Writing is served with (parties_snapshot), a documents row 'Served copy \u2014 <title>' dated served_on with served_copy_path when given, sent_copy_id pointing at it, and filed_on = served_on, which freezes the Writing as served and moves the revision. Its lifecycle then reads Served until Heard; the later registry filing is a step of the Set down for hearing or File the served response job, never a write here. Anyone may record it. Refusals write nothing: invalid_served_on, invalid_served_copy (served_copy_path is not on disk), not_found, milestone_only, writing_retired, already_filed, not_served_kind (any other kind: record_filed or record_sent), parties_drift, revision_moved. Returns filing_id, served_on, sent_copy_id, parties_snapshot_rows, the new revision and a note.",
+      description: "Record a Notice of Application or Application Response as served on served_on (YYYY-MM-DD), under amended Rule 8-1 (B.C. Reg. 105/2026), which serves it before it is filed. In one transaction it writes the party rows the Writing is served with (parties_snapshot), a documents row 'Served copy \u2014 <title>' dated served_on with served_copy_path when given, sent_copy_id pointing at it, and filed_on = served_on, which freezes the Writing as served and moves the revision. Its lifecycle then reads Served until Heard; the later registry filing is a step of the Set down for hearing or File the served response job, never a write here. Anyone may record it. Refusals write nothing: invalid_served_on, invalid_served_copy (served_copy_path is not on disk), not_found, milestone_only, writing_retired, already_filed, not_served_kind (any other kind: record_filed or record_sent), parties_drift, revision_moved. Returns filing_id, served_on, sent_copy_id, parties_snapshot_rows, the new revision and a note. " + EXPECT_REVISION,
       inputSchema: {
         type: "object",
         properties: {
           db_path: { type: "string" },
           filing_id: { type: "number" },
           served_on: { type: "string" },
-          served_copy_path: { type: "string" }
+          served_copy_path: { type: "string" },
+          expect_revision: { type: "number" }
         },
-        required: ["db_path", "filing_id", "served_on"],
+        required: ["db_path", "filing_id", "served_on", "expect_revision"],
         additionalProperties: false
       },
       annotations: { destructiveHint: true, openWorldHint: false }
@@ -81254,7 +81258,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "77dd9fea725b";
+var BUILD_STAMP = false ? null : "6edc660633fe";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -93570,6 +93574,12 @@ var PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back
 function refused(message, code) {
   return new DataServerError(`${TOOL6}: ${message}`, code);
 }
+function revisionMoved(title, expected, current) {
+  return new DataServerError(
+    `"${title}": the drafting records moved from revision ${expected}, where this act was approved, to ${current}; nothing was written. Show the practitioner the Writing as it now stands before asking again`,
+    "revision_moved"
+  );
+}
 var RECORD_ACT = { unset: "the Sent write has no recorder", act: "records a Writing as sent", why: "" };
 function signerSnapshot(dbPath, filing, profile) {
   if (filing.signer_party_id !== null) {
@@ -93710,6 +93720,7 @@ async function submissionDataRecordSent(args, env = process.env) {
   const recordedBy = rosterLawyer(profile, RECORD_ACT);
   const signer = signerSnapshot(args.db_path, filing, profile);
   const revision = fetchRevision(args.db_path);
+  if (revision !== args.expect_revision) throw revisionMoved(filing.title, args.expect_revision, revision);
   const paragraphs = storedParagraphs(args.db_path, filing, stored);
   if (paragraphs.length === 0) {
     throw refused(
@@ -93833,6 +93844,7 @@ async function submissionDataRecordFiled(args, env = process.env) {
     throw refused2(`"${filing.title}" is a letter or general document; record it as sent, not as filed`, "general_writing");
   }
   const revision = fetchRevision(args.db_path);
+  if (revision !== args.expect_revision) throw revisionMoved(filing.title, args.expect_revision, revision);
   const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL7, env);
   const written = await submissionDataWriteAll(
     args.db_path,
@@ -93884,6 +93896,7 @@ async function submissionDataRecordServed(args, env = process.env) {
     );
   }
   const revision = fetchRevision(args.db_path);
+  if (revision !== args.expect_revision) throw revisionMoved(filing.title, args.expect_revision, revision);
   const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL8, env);
   const written = await submissionDataWriteAll(
     args.db_path,

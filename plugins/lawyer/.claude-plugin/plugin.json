@@ -1,7 +1,7 @@
 {
   "name": "lawyer",
   "displayName": "Lawyer",
-  "version": "0.12.4",
+  "version": "0.13.0",
   "description": "The core Probanda plugin for British Columbia lawyers: firm records, time, billing, case data and deadlines, plus skills for any lawyer (restate a request before acting, summarize a session). Install it first. The researcher, litigator, solicitor, file-manager, timekeeper and developer plugins all require it.",
   "author": {
     "name": "Probanda Legal",
@@ -93,6 +93,20 @@
             ],
             "timeout": 10,
             "statusMessage": "Rule gate"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.+practice_data__(delete_anchor|merge_contact)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/one-way-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "One-way approval gate"
           }
         ]
       }
