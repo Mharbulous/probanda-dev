@@ -158,6 +158,10 @@ Downloads — the server finds Downloads itself.
   files.
 - `append_manifest` — one manifest record per citation.
 
+When the caller names a held job's `db_path`, `ticket_id` and `session_token`,
+pass all three to every `file_download` and `append_manifest`, so the job's
+last activity moves while the run is out.
+
 If any `research_filing__*` tool is absent from your grant, your installed
 plugin predates this machinery or the host dropped the tool at spawn: return
 `status: blocked (mechanics-unavailable)` with the update-and-restart

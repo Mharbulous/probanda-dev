@@ -84,9 +84,10 @@ def how_to_present(paths):
     return ("Present " + ", ".join(f'"{p}"' for p in paths) + " as a file card now, before ending the turn, "
             "by its path, with the card tool in your tool list, as the shared rules for HTML pages and for "
             "presenting a file say. If the Cowork present_files tool is listed, call it with that path. If only "
-            "SendUserFile is listed, first check that get_device_info's connectedFolders covers the matter folder "
-            "and, if not, make the one device_request_folder_access call for the matter folder, then stage that "
-            "page alone with device_stage_files and call SendUserFile on the staged path, never the PC path. If "
+            "SendUserFile is listed, stage that page alone with device_stage_files at once when the session context "
+            "or an earlier get_device_info shows the matter folder connected, else after the one "
+            "device_request_folder_access call for the matter folder, and call SendUserFile on the staged path, "
+            "never the PC path. If "
             "device_stage_files is not in your tool list after the folder grant, load it with a select: ToolSearch "
             "first. If neither is listed, "
             "say in one line that the page is in the matter's draft folder. Never read the page.")

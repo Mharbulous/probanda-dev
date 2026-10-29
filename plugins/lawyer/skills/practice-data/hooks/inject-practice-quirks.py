@@ -31,7 +31,8 @@ FRAMING = (
 )
 POINTER = (
     "This practitioner may have environment notes stored on their PC, out of this session's "
-    "reach. Before the first mail, calendar or file lookup, call practice_data__config_status "
+    "reach. Call practice_data__config_status in the same round trip as a skill's first tool call, "
+    "or after its card, and before any mail, calendar or file lookup, "
     "and read its practice_quirks field. When exists is false or practice_quirks is null, no "
     "notes are recorded: carry on without them, and offer once in this session to record some "
     "(practice-data skill, \"Practice quirks\"), writing only on the practitioner's yes. When the "

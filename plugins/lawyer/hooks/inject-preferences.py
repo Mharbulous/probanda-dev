@@ -35,7 +35,8 @@ FRAMING = (
 )
 POINTER = (
     "This person may have saved preferences for Probanda skills, stored out of this session's "
-    "reach. Before the first Probanda skill runs, call preferences__read and apply each entry "
+    "reach. Call preferences__read in the same round trip as a skill's first tool call, or after its "
+    "card, and before any job work, and apply each entry "
     "when its skill runs. An entry's skill is the plugin the skill ships in, a colon, then the skill "
     "name, as in lawyer:show-me. Each entry is a Rule: refuse a request that conflicts with one by quoting "
     "it and its created_on date. When the call fails with person_unset or finds no entries, carry on "

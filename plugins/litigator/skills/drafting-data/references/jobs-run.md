@@ -183,17 +183,9 @@ A step not yet done can carry one status besides open (schema v78), set by `draf
 
 A step is resolved when it is done, cancelled or deferred. Gate steps never take a status: a gate waiver stays in the step's text (`references/jobs-gate.md`).
 
-## 6a. Session-active stamp
+## 6a. Last activity and the session-active stamp
 
-Reading, research and conversation record no progress, so a holder busy with them reads as idle. The session-active stamp shows that the holder is still working. It is one `db_meta` row per job, `job_active:<id>`, holding the minute. It is written as the last write of every turn in which this session held the job and worked on it, whether by reading, research, drafting or conversation about it. A turn that did not touch the job writes nothing:
-
-```sql
-INSERT OR REPLACE INTO db_meta (key, value)
-  SELECT 'job_active:2', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
-  FROM tickets WHERE id = 2 AND locked_by = 'sess-a1';
-```
-
-That `SELECT ... WHERE locked_by` is §5's guard in its insert shape, so only the holder's stamp lands. The stamp is not progress: it never moves the job's last activity or its idle tag, and it is never a reason to skip §6's step stamps. The board shows it as `session active` on an In progress job only, and only when it is no earlier than the lock, so an earlier holder's stamp never shows and is never deleted. Read `changes` as §6 does: 0 means the holder changed, so run §2's scope read and stop.
+A job's last activity is one stored stamp, which its card prints and its idle tag measures from. Every server write made for the job moves it, and so does a research_filing write given the job's `db_path`, `ticket_id` and `session_token`: each `research-paralegal`, `legislation-fetcher` and `citation-checker` dispatch for the job carries those three, so its last activity moves while the agent is out. A ⏳ step (§6b) counts as activity until its minute passes. The last call of every turn in which this session held the job and worked on it, whether by reading, research, drafting or conversation about it, is `drafting_data__touch_job` with those three. It moves the last activity, which also picks up the turn's §6 ticks and §8 captures, and writes the session-active stamp (`db_meta` `job_active:<id>`). A turn that did not touch the job calls nothing. Only the holder's call writes. It is never a reason to skip §6's step stamps. The board shows the session-active stamp as `session active` on an In progress job only, and only when it is no earlier than the lock, so an earlier holder's stamp never shows and is never deleted. `recorded: false` means the holder changed, so run §2's scope read and stop.
 
 ## 7. Scope expansion
 
@@ -219,7 +211,7 @@ INSERT INTO seeds (proceeding_id, filing_id, origin_ticket_id, created, surfaced
   VALUES (1, 1, 2, strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 'noticed while reconciling the exhibit list', 'Consider a standing exhibit-numbering convention for future filings in this proceeding.');
 ```
 
-`origin_ticket_id` is the job this session holds. Its card (`drafting_forms__board_card` with `jobs`) then lists the loose thread, and the loose thread's `created` counts as the job's latest activity, which the idle tag measures from. §6a's session-active stamp does not.
+`origin_ticket_id` is the job this session holds. Its card (`drafting_forms__board_card` with `jobs`) then lists the loose thread, and the turn's §6a call moves the job's last activity.
 
 `idea` is captured **verbatim**, at most five sentences, with no options or recommendations — the appearance of alternatives is the tell that outlining has started, and it belongs in an outlining session, not this write. `surfaced_by` is one line naming what surfaced it (a Westlaw memo, a practitioner aside, a document read in passing) — never `TRIGGER`; that column was deliberately not named after the SQLite keyword.
 
