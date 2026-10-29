@@ -14,7 +14,7 @@ Document: MEMORANDUM OF LAW
 From: <the exact model ID your own system prompt states. If it states none, write "model ID not stated". Never a marketing name, never a guess>
 Date: <the spawn prompt's Date>
 Re: "<the question, one line>"
-Format: <CRAC / IRAC / CREAC, the one the body uses>
+Format: <ICRA / IRAC / CREAC, the one the body uses>
 Confidence: "<one line: per issue, its strength and whether its authorities were noted up, and every tier the coverage line reads NOT AUDITED>"
 ---
 ```
@@ -41,7 +41,7 @@ nowhere else. Define an abbreviation in parentheses where the body first uses it
 
 Write no legend: the save appends one, generated from the approved meaning of each symbol printed.
 
-**CRAC**, the default:
+**ICRA**, the default:
 
 ```
 ## Issue

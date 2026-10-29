@@ -367,7 +367,7 @@ the scratchpad, in this order, and return only item 3:
 2. **The memo.** Fetch `shared/research-memo-template.md` with the same tool you
    fetched this file with, and write the memo to it: its YAML header, beginning at a
    line reading `---` that is immediately followed by `Document: MEMORANDUM OF LAW`,
-   then its body. The body uses CRAC unless the spawn prompt's `Memo template:` names
+   then its body. The body uses ICRA unless the spawn prompt's `Memo template:` names
    IRAC or CREAC.
 
    - The Rule (and in CREAC the Explanation) carries every proposition with its pinpoint, its note-up
@@ -378,7 +378,7 @@ the scratchpad, in this order, and return only item 3:
      quote no block.
      No coverage line and no confidence table anywhere in the memo. The header's
      one-line `Confidence:` summary of the Step 3 table is the only confidence text in it.
-   - The memo is generic. The spawn prompt's `Facts:`, `Matter:`, `Asked by:` and `Origin:`
+   - In every format the memo is generic and has no Facts section. The spawn prompt's `Facts:`, `Matter:`, `Asked by:` and `Origin:`
      only choose authorities and route the work: the memo never states, summarises or
      alludes to them. Its `Re:`, Issue and Conclusion hold no party name, date, amount,
      matter number, document name or fact pattern of the working matter.

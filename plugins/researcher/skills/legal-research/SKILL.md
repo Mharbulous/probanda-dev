@@ -128,7 +128,7 @@ permitted to make statements of law.
    Westlaw stops are the same stop as the paralegal's.
 4. Spawn `researcher:research-agent`. Fill the doctrine's spawn-prompt template: the question, the
    factual context, the matter root, the matter's file number, who asked, today's date,
-   the file stem, CRAC unless the practitioner named IRAC or CREAC, any pooled-layer results your own pre-spawn
+   the file stem, ICRA unless the practitioner named IRAC or CREAC, any pooled-layer results your own pre-spawn
    lookup returned, the Westlaw memo and decision files retrieved, the note-up records
    filed, and any
    `6. LAW\` listing and text you extracted for it, and `Re-invocation: no`. Never name CanLII as a place

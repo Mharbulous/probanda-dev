@@ -280,7 +280,7 @@ Matter root: <path>
 Matter: <the live matter's file number, such as 1234.L####>
 Asked by: <the practitioner's name>
 Date: <today, YYYY-MM-DD, from the host clock>
-Memo template: CRAC / IRAC / CREAC   (IRAC or CREAC only when the practitioner expressly asked)
+Memo template: ICRA / IRAC / CREAC   (IRAC or CREAC only when the practitioner expressly asked)
 File stem: YYYY-MM-DD ML re <two to six keywords from the question>
 Pooled-layer results: <results> / not installed / NOT AUDITED: <reason>
 Preflight: all ok / <row>: <state>[; <row>: <state>]

@@ -14,7 +14,7 @@ from pathlib import Path
 
 SHARED = Path(__file__).resolve().parents[2] / "shared"
 HEADER = ["---", "Document: MEMORANDUM OF LAW", "From:", "Date:", "Re:", "Format:", "Confidence:", "---"]
-CRAC = "```\n## Issue\n## Conclusion\n## Rule\n## Application\n```"
+ICRA = "```\n## Issue\n## Conclusion\n## Rule\n## Application\n```"
 IRAC = "```\n## Issue\n## Rule\n## Application\n## Conclusion\n```"
 CREAC = "```\n## Issue\n## Conclusion\n## Rule\n## Explanation\n## Application\n## Conclusion\n```"
 BRIEF_BLOCK = """```
@@ -59,9 +59,10 @@ class ProtocolStepSixTests(unittest.TestCase):
         for key in ("Matter:", "To:", "Privilege:"):
             self.assertNotIn("\n" + key, "\n" + header)
 
-    def test_body_is_crac_in_order(self):
+    def test_body_is_icra_in_order(self):
         template = read("research-memo-template.md")
-        self.assertIn("**CRAC**, the default:\n\n" + CRAC, template)
+        self.assertIn("**ICRA**, the default:\n\n" + ICRA, template)
+        self.assertNotIn("CRAC", template)
         self.assertIn(IRAC, template)
         self.assertIn(CREAC, template)
 
@@ -82,14 +83,15 @@ class ProtocolStepSixTests(unittest.TestCase):
             self.assertIn(text, template)
 
     def test_irac_and_creac_only_when_asked(self):
-        self.assertIn("The body uses CRAC unless the spawn prompt's `Memo template:` names IRAC or CREAC.",
+        self.assertIn("The body uses ICRA unless the spawn prompt's `Memo template:` names IRAC or CREAC.",
                       flat(step_six()))
         template = read("research-memo-template.md")
         for word in ("IRAC", "CREAC"):
             self.assertIn(f"**{word}**, only when the spawn prompt's `Memo template:` names it:", template)
 
     def test_memo_states_nothing_of_the_working_matter(self):
-        rules = between(flat(step_six()), "The memo is generic.", "Mixed coverage")
+        rules = between(flat(step_six()), "In every format the memo is generic and has no Facts section.",
+                        "Mixed coverage")
         self.assertIn("The spawn prompt's `Facts:`, `Matter:`, `Asked by:` and `Origin:` only choose authorities "
                       "and route the work: the memo never states, summarises or alludes to them.", rules)
         self.assertIn("hold no party name, date, amount, matter number, document name or fact pattern", rules)
