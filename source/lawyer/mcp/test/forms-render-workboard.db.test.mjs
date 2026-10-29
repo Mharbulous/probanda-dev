@@ -1356,6 +1356,34 @@ test("goal: a queued stock bundle job names no job on the gate row, and an ordin
   }
 });
 
+// Spec 2026-10-08 (pre-filing gate post-filing deadlock): a job that waits on File and serve, directly or
+// through other open jobs, runs after filing, so it must not hold open the gate File and serve waits on.
+test("goal: a job waiting on File and serve, directly or through open jobs, is not counted on the gate row, and a completed link breaks the chain", async () => {
+  const f = seededDbFixture();
+  try {
+    await freshSubmissionDb(f.dbPath);
+    await seedNoticeOfApplication(f.dbPath);
+    await submissionDataExecute(
+      f.dbPath,
+      `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created, completed_at)
+         VALUES
+           (1, 1, 1, 'File and serve the Notice of Application', 'File it and serve it.', 'queued', 0, 'work', 'L9002|bundle', '2026-09-24T09:00', NULL),
+           (2, 1, 1, 'Report the filing to the client', 'Tell the client it is filed.', 'queued', 0, 'work', 'L9002|after', '2026-09-24T09:01', NULL),
+           (3, 1, NULL, 'Diarize the response deadline', 'Diarize it once served.', 'queued', 0, 'work', 'L9002|after', '2026-09-24T09:02', NULL),
+           (4, 1, 1, 'Confirm the registry copy', 'Done already.', 'completed', 0, 'work', 'L9002|done', '2026-09-24T09:03', '2026-09-24T10:00'),
+           (5, 1, 1, 'Check the stamped copy', 'Waits only on a completed job.', 'queued', 0, 'work', 'L9002|before', '2026-09-24T09:04', NULL),
+           (6, 1, 1, 'Draft the affidavit of service', 'Swear it before filing.', 'queued', 0, 'work', 'L9002|before', '2026-09-24T09:05', NULL);
+       INSERT INTO ticket_blocks (blocker_id, blocked_id) VALUES (1, 2), (2, 3), (1, 4), (4, 5);`
+    );
+    const gate = criterionOf(boardWithInventory(f.dbPath, []), "gate");
+    assert.equal(gate.state, "unmet");
+    assert.deepEqual([...gate.items].sort(), ["Check the stamped copy", "Draft the affidavit of service"]);
+    assert.equal(gate.outstanding, 2);
+  } finally {
+    f.cleanup();
+  }
+});
+
 // Design §2.5: the gate job's steps carry the revision each check ran against. With every drafting
 // criterion met, the card string follows the gate.
 const WAIVER_LINE = "para 12 WIP figures are being supplied by a corrected statement served separately";

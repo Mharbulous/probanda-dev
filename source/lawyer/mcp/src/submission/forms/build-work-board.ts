@@ -15,7 +15,7 @@ import { holdsMaterial, withIdleFlag } from "./ticket-category.js";
 import { allKeysDead, deadKeySubtitle, ineligibleReasons } from "./unattended-eligibility.js";
 import { buildProceedingBoard, onFilingBoard } from "./build-proceeding-board.js";
 import { proposalsFor } from "./board-proposals.js";
-import { waitsOnGate } from "./goal-gate.js";
+import { afterGateJobs, waitsOnGate } from "./goal-gate.js";
 import { goalFor, isInternalWriting } from "./goal-card.js";
 import { buildJobOnlyBoardData, discardedSeedLines } from "./no-writing-boards.js";
 
@@ -53,7 +53,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
     });
   // Every open loose thread in the proceeding, so none strands on a sibling filing (ADR 0024 D11).
   const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);
-  const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines);
+  const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines, afterGateJobs(board.tickets, ctx.filing.id));
   // Section 14 Dispatch's last skip reasons, read off this render's inventory, this filing's type file and its
   // `recipients` and gate rows: a new array, since dispatch_skips is shared with the proceeding board's ticket.
   const unmet = (id: string): boolean => criteria.some((c) => c.id === id && c.state !== "met");

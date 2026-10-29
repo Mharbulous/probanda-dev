@@ -1,4 +1,4 @@
-// build-stamp: 78af14b7797e
+// build-stamp: f97d6681715f
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -107641,10 +107641,13 @@ import { pathToFileURL } from "node:url";
 // src/errors.ts
 var DataServerError = class extends Error {
   code;
-  constructor(message, code = "data_error") {
+  /** Structured detail the error payload carries beside its message, when the refusal has any. */
+  details;
+  constructor(message, code = "data_error", details) {
     super(message);
     this.name = new.target.name;
     this.code = code;
+    this.details = details;
   }
 };
 var ValidationError = class extends DataServerError {
@@ -108053,7 +108056,7 @@ async function toolReply(name2, run, replyText = jsonText) {
     return { content: [{ type: "text", text: replyText(name2, await run()) }] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const payload = err instanceof DataServerError ? { error: { code: err.code, message } } : { error: { code: "data_error", message } };
+    const payload = err instanceof DataServerError ? { error: { code: err.code, message, ...err.details ? { details: err.details } : {} } } : { error: { code: "data_error", message } };
     return { content: [{ type: "text", text: jsonText(name2, payload) }], isError: true };
   }
 }

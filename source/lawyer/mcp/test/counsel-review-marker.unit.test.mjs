@@ -60,7 +60,7 @@ test("a statement of law snapshots its authority's treatment, and a proposition 
   );
   assert.equal(
     reviewSnapshotSql("law_assertions"),
-    "json_object('proposition', proposition, 'overruled_statement_ids', (SELECT group_concat(s.id ORDER BY s.id) FROM statements_of_law s JOIN authorities a ON a.id = s.authority_id WHERE s.law_assertion_id = law_assertions.id AND a.treatment = 'overruled'))"
+    "json_object('proposition', proposition, 'overruled_statement_ids', (SELECT group_concat(s.id ORDER BY s.id) FROM statements_of_law s JOIN authorities a ON a.id = s.authority_id WHERE s.law_assertion_id = law_assertions.id AND a.treatment = 'overruled'), 'supporting_statements', (SELECT json_group_array(json_object('id', s.id, 'excerpt', s.excerpt) ORDER BY s.id) FROM statements_of_law s WHERE s.law_assertion_id = law_assertions.id))"
   );
 });
 

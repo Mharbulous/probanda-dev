@@ -48,7 +48,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "drafting_data__record_filed, and a Writing is recorded as served through drafting_data__record_served: a script " +
         "that leaves a filing's filed_on or sent_copy_id holding a value it did not hold is refused whole, writing " +
         "nothing (clearing filed_on stays an update). A drafting Writing's stored layout is " +
-        "re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, " +
+        "re-snapshotted through drafting_data__resnapshot_writing, a job is created through drafting_data__create_job, " +
+        "a job is assigned through drafting_data__assign_job, " +
         "a job's unchanged plan is approved through drafting_data__approve_plan, " +
         "a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, " +
         "a job step's status is set through drafting_data__set_step, " +
@@ -98,7 +99,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "Create one Writing (a filings row) on a proceeding: the one door for a new Writing, because only this tool writes " +
         "its stored layout (layout_snapshot) and needs_forum_parts, and the needs-forum guard reads both at INSERT. " +
         "It resolves the type file from /draft's knowledge tree by `tree` (country, jurisdiction, and a venue folder or " +
-        "_NoVenue) and `kind` (a row's file stem or alias in that folder's kinds index, naming exactly one row by itself), reads it and the venue's venue.md with the firm's " +
+        "_NoVenue) and `kind` (a row's file stem or alias in that folder's kinds index, naming exactly one row by itself; for a bespoke type " +
+        "the Writing stores the alias drafting_forms__render accepts, so `notice-of-application` is stored as `notice_of_application`), reads it and the venue's venue.md with the firm's " +
         "overlay and corrections merged, validates the layout, records each cited rule_ref's passage hash, and inserts the row " +
         "in one transaction. `recipient` is required under _NoVenue, where it must equal the matched row's recipient, and refused elsewhere. A venue key must equal the " +
         "proceeding's forum exactly (forum_mismatch); a _NoVenue key fits any proceeding, forum or none. The signer defaults " +
@@ -228,7 +230,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "writes the Pre-send gate job, one step per unmet criterion, and refuses with held, unless send_anyway carries " +
         "the practitioner's own words, which it records verbatim as each open step's WAIVED form. It then compares the sent " +
         "copy (sent_copy_path: a .eml, .pdf or .msg file; or sent_copy_text: pasted text) with the stored text and refuses " +
-        "sent_copy_mismatch naming each paragraph the copy lacks; a .msg is recorded by path and not compared, and the " +
+        "sent_copy_mismatch listing, for each paragraph or clause the copy lacks (up to 20, with a count of the rest), its part, its " +
+        "stored text in full and the closest span of the sent copy in full, in the message and in error.details.passages; " +
+        "a .msg is recorded by path and not compared, and the " +
         "result says so. Then, in one transaction, it writes the sent copy's documents row, sent_copy_id, the signer " +
         "snapshot and filed_on (sent_on), which freezes the exhibits and moves the revision. It retires nothing and " +
         "offers no retirement: the Writing stays on its Milestone until the practitioner retires it. Refusals: invalid_sent_on, " +
@@ -305,6 +309,100 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           expect_revision: { type: "number" },
         },
         required: ["db_path", "filing_id", "served_on", "expect_revision"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
+      name: submissionDataPrefixed("create_job"),
+      description:
+        "Create a job (a tickets row) in one call and one transaction: the row, its steps (ordinal 1, 2, 3... in order, " +
+        "at least one), scope rows, the edges from existing jobs it waits on (blocks), its conflict pairs, its conversion " +
+        "records (proposal_keys, copied from the card) and the loose thread it consumes (seed_id), under the duplicate " +
+        "guard its kind takes. Each guard is /drafting-data's documented condition, tested before the row exists, so it " +
+        "never matches the job it guards: none (an unguarded create); live_key (a queued or wip, unshelved job holds one " +
+        "of proposal_keys: the fast path and a job outlined from Proposals, jobs-create.md §3); never_held_key (any job " +
+        "not deleted ever held one of proposal_keys: intake, §3e); title_live_with_step (a queued or wip, unshelved job " +
+        "on the Writing with one of this call's titles already holds a step: counsel's review, jobs-stock.md §3c, whose " +
+        "second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this " +
+        "title and one of these step texts: a pass finding, §3g); scrutiny_statement (a queued or wip, unshelved " +
+        "'Review scrutiny finding: ' job is scoped to the statement in scope: §3d); holder_lock (held_ticket_id no " +
+        "longer carries session_token: a spin-off blocker, §3f, which copies the held job's scope). filing_id is the " +
+        "Writing's or Milestone's id, or null for a proceeding-scoped job, and is never left out. priority is an " +
+        "integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a " +
+        "Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Milestone's job, the Milestone's " +
+        "alone; on a proceeding-scoped job, every queued job in the proceeding. created_by is this session's " +
+        "session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). " +
+        "Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is " +
+        "the job that fired the guard, when one is still there). It moves no revision. Refusals write nothing: " +
+        "invalid_<field>, and an error from the database (a missing blocker, a work job with no billing_anchor). " +
+        "Returns outcome, ticket_id, companion_ids, priority, holder_id and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          proceeding_id: { type: "number" },
+          filing_id: { anyOf: [{ type: "number" }, { type: "null" }] },
+          title: { type: "string" },
+          intent: { type: "string" },
+          kind: { type: "string", enum: ["work", "charting"] },
+          priority: { anyOf: [{ type: "number" }, { type: "string", enum: ["top", "bottom"] }] },
+          billing_anchor: { type: "string" },
+          steps: { type: "array", items: { type: "string" } },
+          scope: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { entity: { type: "string" }, entity_id: { anyOf: [{ type: "number" }, { type: "null" }] } },
+              required: ["entity", "entity_id"],
+              additionalProperties: false,
+            },
+          },
+          blocks: { type: "array", items: { type: "number" }, description: "Existing jobs this job waits on (ticket_blocks.blocker_id)" },
+          conflicts: { type: "array", items: { type: "number" } },
+          proposal_keys: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { key: { type: "string" }, item: { type: "string" } },
+              required: ["key", "item"],
+              additionalProperties: false,
+            },
+          },
+          seed_id: { type: "number" },
+          created_by: { type: "string" },
+          guard: {
+            type: "string",
+            enum: ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "holder_lock"],
+          },
+          session_token: { type: "string", description: "holder_lock only" },
+          held_ticket_id: { type: "number", description: "holder_lock only" },
+          companions: {
+            type: "array",
+            description: "title_live_with_step only: further jobs written after this one, sharing its fields but title, intent, steps and scope",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                intent: { type: "string" },
+                steps: { type: "array", items: { type: "string" } },
+                scope: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: { entity: { type: "string" }, entity_id: { anyOf: [{ type: "number" }, { type: "null" }] } },
+                    required: ["entity", "entity_id"],
+                    additionalProperties: false,
+                  },
+                },
+                blocked_by_lead: { type: "boolean" },
+              },
+              required: ["title", "intent", "steps"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["db_path", "proceeding_id", "title", "intent", "kind", "priority", "steps", "guard"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: true, openWorldHint: false },

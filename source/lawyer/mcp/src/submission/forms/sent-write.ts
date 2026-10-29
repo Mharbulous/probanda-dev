@@ -63,6 +63,16 @@ export interface SentCopyComparison {
   note?: string;
 }
 
+/** One stored paragraph or clause the sent copy lacks: its index in the stored text, and the span
+ * of the copy that aligns best with it, or null when no word of it is in the copy. */
+interface Mismatch {
+  index: number;
+  sent: string | null;
+}
+
+/** The most differing passages a sent_copy_mismatch refusal lists; it counts the rest. */
+const MISMATCH_CAP = 20;
+
 export interface RecordSentResult {
   filing_id: number;
   sent_on: string;
@@ -79,8 +89,8 @@ export interface RecordSentResult {
   warning?: string;
 }
 
-function refused(message: string, code: string): DataServerError {
-  return new DataServerError(`${TOOL}: ${message}`, code);
+function refused(message: string, code: string, details?: Record<string, unknown>): DataServerError {
+  return new DataServerError(`${TOOL}: ${message}`, code, details);
 }
 
 /** The refusal of a record_sent, record_filed or record_served call whose expect_revision is not the database's. */
@@ -225,10 +235,16 @@ function gateChanged(filing: FilingRow): DataServerError {
   return refused(`"${filing.title}": its Pre-send gate job changed while it was being recorded; nothing was written. Record it as sent again`, "pre_send_gate_changed");
 }
 
+/** One paragraph or clause of the stored text, with the part it came from, e.g. `slot:body, paragraph 2`. */
+interface StoredParagraph {
+  part: string;
+  text: string;
+}
+
 /** The stored text the sent copy is checked against, in part order: each paragraph of a
  * `slot:<name>` part's prose row, and each clause of a `terms` part in `filing_clauses` order, as
  * its `wording_override` when set, else its wording (the text the `terms` projection prints). */
-function storedParagraphs(dbPath: string, filing: FilingRow, stored: StoredLayout): string[] {
+function storedParagraphs(dbPath: string, filing: FilingRow, stored: StoredLayout): StoredParagraph[] {
   const prose = fetchProse(dbPath, filing.id);
   const clauses = () =>
     rows<{ wording: string }>(
@@ -236,23 +252,25 @@ function storedParagraphs(dbPath: string, filing: FilingRow, stored: StoredLayou
       "SELECT COALESCE(fc.wording_override, c.wording) AS wording FROM filing_clauses fc JOIN clauses c ON c.id = fc.clause_id WHERE fc.filing_id = ? ORDER BY fc.ordinal",
       [filing.id]
     ).map((c) => c.wording);
-  return (stored.layout.parts as LayoutPart[])
-    .flatMap((part) =>
-      part.source === "terms" ? clauses() : part.source.startsWith("slot:") ? (prose.get(part.source.slice("slot:".length))?.text ?? "").split(/\r?\n\s*\r?\n/) : []
-    )
-    .map((p) => p.trim())
-    .filter((p) => p !== "");
+  return (stored.layout.parts as LayoutPart[]).flatMap((part) => {
+    const texts = part.source === "terms" ? clauses() : part.source.startsWith("slot:") ? (prose.get(part.source.slice("slot:".length))?.text ?? "").split(/\r?\n\s*\r?\n/) : [];
+    const unit = part.source === "terms" ? "clause" : "paragraph";
+    return texts
+      .map((p) => p.trim())
+      .filter((p) => p !== "")
+      .map((text, i) => ({ part: `${part.source}, ${unit} ${i + 1}`, text }));
+  });
 }
 
 /** The accuracy check (D6), by sent_copy_compare.py through the runtime's Python driver. */
-function compareSentCopy(paragraphs: string[], args: RecordSentArgs, env: NodeJS.ProcessEnv): SentCopyComparison {
+function compareSentCopy(paragraphs: string[], args: RecordSentArgs, env: NodeJS.ProcessEnv): SentCopyComparison & { mismatches: Mismatch[] } {
   return runPythonDriver({
     label: "sent-copy comparison",
     driver: join(submissionDataMigrateScriptsDir(env), "sent_copy_compare.py"),
     payload: JSON.stringify({ paragraphs, path: args.sent_copy_path ?? null, text: args.sent_copy_text ?? null }),
     env,
     timeoutMs: pythonTimeoutMs(env, READ_TIMEOUT_MS),
-  }) as SentCopyComparison;
+  }) as SentCopyComparison & { mismatches: Mismatch[] };
 }
 
 /** A calendar date written YYYY-MM-DD: its components must round-trip through a UTC date, so
@@ -335,13 +353,20 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
     );
   }
 
-  const comparison = compareSentCopy(paragraphs, args, env);
+  const { mismatches, ...comparison } = compareSentCopy(paragraphs.map((p) => p.text), args, env);
   if (comparison.missing.length > 0) {
+    // Each passage in full, beside the span of the copy that aligns best with it.
+    const passages = mismatches.slice(0, MISMATCH_CAP).map((m) => ({ part: paragraphs[m.index].part, stored: paragraphs[m.index].text, sent: m.sent }));
+    const unlisted = comparison.missing.length - passages.length;
     throw refused(
-      `the sent copy does not contain ${comparison.missing.length} paragraph(s) or clause(s) of the stored text:` +
-        comparison.missing.map((p) => JSON.stringify(p.length > 80 ? `${p.slice(0, 80)}…` : p)).join(", ") +
-        ". Correct the stored text to what was sent, or pass the copy actually sent",
-      "sent_copy_mismatch"
+      `the sent copy does not contain ${comparison.missing.length} paragraph(s) or clause(s) of the stored text:\n` +
+        passages
+          .map((p, i) => `${i + 1}. ${p.part}\n   stored: ${JSON.stringify(p.stored)}\n   closest in the sent copy: ${p.sent === null ? "none" : JSON.stringify(p.sent)}`)
+          .join("\n") +
+        (unlisted > 0 ? `\n${unlisted} more not listed.` : "") +
+        "\nCorrect the stored text to what was sent, or pass the copy actually sent",
+      "sent_copy_mismatch",
+      { passages, unlisted }
     );
   }
 

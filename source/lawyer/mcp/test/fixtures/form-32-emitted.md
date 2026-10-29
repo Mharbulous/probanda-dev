@@ -24,5 +24,5 @@ to_parties: ["Corbin Vasey"]
 
 ## Part 4
 
-- Draft default judgment (August 1, 2026)
+- Draft default judgment, dated August 1, 2026
 - Pleadings filed in this proceeding

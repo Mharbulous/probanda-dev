@@ -76,7 +76,9 @@ class LooseThreadTriageTest(unittest.TestCase):
         self.assertIn("only on their yes", self.triage)
         self.assertIn(
             "A queued job counts as open work against the Writing's `gate` criterion "
-            "until it is completed or shelved.",
+            "until it is completed or shelved, unless it waits, directly or through "
+            "other open jobs, on the Writing's `File and serve`, `Serve the application` "
+            "or `Serve the response` job, which puts it after the gate and outside it.",
             self.triage,
         )
 

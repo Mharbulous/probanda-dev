@@ -46,6 +46,7 @@ import { submissionDataMergeMilestones, type MergeMilestonesArgs } from "./submi
 import { submissionDataRecordFiled, type RecordFiledArgs } from "./submission/forms/filed-write.js";
 import { submissionDataRecordServed, type RecordServedArgs } from "./submission/forms/served-write.js";
 import { submissionDataAssignJob, type AssignJobArgs } from "./submission/forms/assign-job.js";
+import { submissionDataCreateJob, type CreateJobArgs } from "./submission/forms/create-job.js";
 import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/forms/approve-plan.js";
 import { submissionDataTrackSource, type TrackSourceArgs } from "./submission/forms/track-source.js";
 import { submissionDataSetStep, type SetStepArgs } from "./submission/forms/set-step.js";
@@ -218,6 +219,7 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("drafting_data__record_sent", (args: RecordSentArgs) => submissionDataRecordSent(args)),
   defineTool("drafting_data__record_filed", (args: RecordFiledArgs) => submissionDataRecordFiled(args)),
   defineTool("drafting_data__record_served", (args: RecordServedArgs) => submissionDataRecordServed(args)),
+  defineTool("drafting_data__create_job", (args: CreateJobArgs) => submissionDataCreateJob(args)),
   defineTool("drafting_data__assign_job", (args: AssignJobArgs) => submissionDataAssignJob(args)),
   defineTool("drafting_data__approve_plan", (args: ApprovePlanArgs) => submissionDataApprovePlan(args)),
   defineTool("drafting_data__track_source", (args: TrackSourceArgs) => submissionDataTrackSource(args)),

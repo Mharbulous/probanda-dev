@@ -656,3 +656,45 @@ DELETE FROM rhetorical_paragraph_law WHERE rhetorical_paragraph_id = 4;
 DELETE FROM rhetorical_paragraph_record WHERE rhetorical_paragraph_id = 4;
 DELETE FROM rhetorical_paragraphs WHERE id = 4;
 ```
+
+## 16. Add material to be relied on
+
+Adds a document held outside this database, such as an affidavit already filed, a court order or a pleading, to a Writing's material list: a Notice of Application's Part 4 (§2), an Application Response's Part 6 (§5) or a requisition's checklist (§3). It records what the document is and where it sits on the list. It ingests none of the document's contents. An affidavit drafted for this Writing is §2's "Supporting affidavits" recipe, not this one. A filed Writing refuses the `filing_documents` insert (the #712 guards), so add material only before the Writing is filed.
+
+**1. Look for a copy already held.** Read the proceeding's `documents` rows (`SELECT id, label, document_date, is_best_copy, file_path FROM documents WHERE proceeding_id = 1 ORDER BY label`). When this very copy already has a row, skip step 2 and use its id as a literal in step 3. When another copy of the same document has a row, step 2 uses that row's `label` exactly, because copies of one document share a label and 🏆 reads the label group.
+
+**2. The `documents` row.**
+
+- `label`: the document's name as the line prints it, without its date: *Affidavit #1 of A. Heifetz*, *Order made at the case planning conference*.
+- `document_date`: `YYYY-MM-DD`, the date the affidavit was made or the order was made, as the document shows it. The Notice of Application's Part 4, the Application Response's Part 6 and the Form 32 and Form 33 emits print it in the form's long style, `, dated July 8, 2026`, and omit it when the label already names that date.
+- `file_path`: the copy on disk, in the stored form (`references/document-paths.md`); NULL when no copy is held on disk.
+- `instrument`: NULL. `'affidavit'` belongs only to an affidavit drafted here, and that value renders an affidavit mockup.
+- `is_best_copy`: 1 when this row is the only copy of the document held, 0 otherwise. The `CASE` in the insert below computes it, so a sole copy never prints 🏆. When another copy exists, which copy is best stays the existing best-copy choice (`User_Journeys/choose-the-best-copy.md`), and this write leaves it alone.
+
+**3. The `filing_documents` row.**
+
+- `role`: `'affidavit'` for an affidavit, `'order'` for an order, `'pleading'` for a pleading, and `'evidence'` or `'other'` for anything else. Only `'evidence'` and `'other'` rows are checked for a tendering witness (👤). Never `'witness_statement'`, which is §1's own recipe.
+- `provenance`: on an Application Response, `'already_in_court_file'` for a document already filed, or `'served_with_this_response'` for one served with the response. NULL on every other kind, because no other form prints it.
+- `ordinal`: appended last by §7's subquery, scoped on `filing_id` alone. To place the document at position N, shift first in the same script, as §7 shows, and then insert with N as a literal. Never place it after the two standard closing lines: the renderer prints those itself, last.
+
+One script, the two inserts in this order with nothing between them, so that `last_insert_rowid()` names the document just inserted:
+
+```sql
+INSERT INTO documents (proceeding_id, label, document_date, file_path, is_best_copy)
+  VALUES (1, 'Order made at the case planning conference', '2026-07-08', '<stored file_path>',
+          CASE WHEN EXISTS (SELECT 1 FROM documents WHERE proceeding_id = 1 AND label = 'Order made at the case planning conference') THEN 0 ELSE 1 END);
+INSERT INTO filing_documents (filing_id, document_id, ordinal, role, provenance)
+  VALUES (7, last_insert_rowid(), (SELECT COALESCE(MAX(ordinal), 0) + 1 FROM filing_documents WHERE filing_id = 7), 'order', NULL);
+```
+
+When step 1 found this copy's row, the script is the second insert alone, with the row's id in place of `last_insert_rowid()`.
+
+**4. The confirm-read.** After the script, and before any retry after a non-success result (SKILL.md, `drafting_data__execute`), read the list back:
+
+```sql
+SELECT fd.id, fd.ordinal, fd.role, fd.provenance, d.id AS document_id, d.label, d.document_date, d.is_best_copy
+  FROM filing_documents fd JOIN documents d ON d.id = fd.document_id
+  WHERE fd.filing_id = 7 ORDER BY fd.ordinal;
+```
+
+The new document appears once, at the intended position, with its role, its provenance and the `is_best_copy` value step 2 set. Then re-render the Writing: its material line prints the label then `, dated <Month D, YYYY>`, with 🏆 only when another copy shares the label and none of them is marked best.

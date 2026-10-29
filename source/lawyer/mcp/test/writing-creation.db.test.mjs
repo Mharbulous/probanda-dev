@@ -171,6 +171,19 @@ test("a venue kind needs the proceeding's own forum: needs_forum on none, forum_
   assert.deepEqual(row.snapshot.passage_hashes, {});
 });
 
+test("a bespoke kind passed by its file stem stores the alias render accepts; a kind no row lists refuses naming the accepted kinds and writes nothing", async (t) => {
+  const g = await generalWritingFixture(t);
+  const created = await g.create({ proceeding_id: 2, tree: BCSC_TREE, kind: "notice-of-application", title: "NoA" });
+  const [row] = g.query("SELECT kind FROM filings WHERE id = ?", [created.filing_id]);
+  assert.equal(row.kind, "notice_of_application");
+
+  const before = g.revision();
+  const unknown = await refusal(g.create({ proceeding_id: 2, tree: BCSC_TREE, kind: "no-such-kind", title: "X" }));
+  assert.equal(unknown.code, "kind_unresolved");
+  assert.match(unknown.message, /accepted kinds: .*notice_of_application/);
+  assert.equal(g.revision(), before);
+});
+
 test("the signer: a staff person is no default, a passed key must be a roster lawyer, and a party type takes a party of its own proceeding", async (t) => {
   const g = await generalWritingFixture(t, { person: "st" });
   assert.equal(snapshotOf(g, (await g.createLetter()).filing_id).signer_key, null);

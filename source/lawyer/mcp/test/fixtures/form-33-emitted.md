@@ -18,6 +18,6 @@ Nil.
 
 ## Part 6
 
-- Affidavit of Reece Ferris, dated 2026-08-10
+- Affidavit of Reece Ferris, dated August 10, 2026
 - Pleadings filed in this proceeding
 - Such further affidavits or filed court documents as this honourable court may allow

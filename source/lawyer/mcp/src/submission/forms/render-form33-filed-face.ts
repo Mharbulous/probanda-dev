@@ -36,6 +36,7 @@ import {
   type RenderContext,
 } from "./render-vaniac-submissions.js";
 import { fetchRhetoric, interleave, renderRhetoricFiled } from "./render-rhetoric.js";
+import { materialDateSuffix } from "./render-bcca-factum.js";
 import { factsPart, fetchFacts } from "./filing-facts.js";
 import { factStatementCitationLine } from "./statement-lines.js";
 import { rows } from "../query-rows.js";
@@ -355,7 +356,7 @@ export function renderForm33FiledFace(ctx: RenderContext, warnings?: PublishWarn
   body.push("## Part 6");
   body.push("");
   for (const d of docs) {
-    body.push(`- ${d.label}${d.document_date ? `, dated ${d.document_date}` : ""}`);
+    body.push(`- ${d.label}${materialDateSuffix(d.label, d.document_date)}`);
   }
   // The standard closing lines always print, so Part 6 is never empty and never "Nil.".
   for (const text of STANDARD_MATERIAL_LINES) body.push(`- ${text}`);

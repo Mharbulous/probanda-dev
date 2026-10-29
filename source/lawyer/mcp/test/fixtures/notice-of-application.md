@@ -66,7 +66,7 @@ This matter is within the jurisdiction of an associate judge.
 ## PART 4: MATERIAL TO BE RELIED ON
 
 1. Draft default judgment 🏆 <!-- document 1 -->
-2. Inspection Report (2026-05-15) <!-- document 2 -->
+2. Inspection Report, dated May 15, 2026 <!-- document 2 -->
 3. Unsourced site photograph 🙅🏻‍♂️👤 <!-- document 3 -->
 4. Pleadings filed in this proceeding
 5. Such further affidavits or filed court documents as this honourable court may allow

@@ -9,7 +9,8 @@ Usage:
 Every plugin in source/assignment.json is built (see plugin_layout.py). Plugin P
 is built from source/P/ (plugin.json and roster.json, and .mcp.json, README.md,
 VISION.md, agents/ and hooks/ where they exist), the skills the assignment gives
-P, the whole shared/ tree, and the bundles of the servers the assignment gives P.
+P, the whole shared/ tree (unless the assignment's "shared" is false), the bundles of the servers the assignment gives P, and
+the payload the assignment names (files and folders of source/P/, copied whole).
 --out <dir> holds one folder per plugin, <dir>/P/. A folder under plugins/ that
 no plugin builds is reported stale by --check and removed by a build.
 
@@ -215,7 +216,7 @@ def collect(repo, spec):
     # plugin's source says which folders of a private skill are assets and
     # holds the agent files, so the two must agree.
     public = {t: public[t] for t in sorted(spec["skills"]) if t in public}
-    extra = [t for t in EXTRA_TREES if t == SHARED_TREE or t in spec["skills"]]
+    extra = [t for t in EXTRA_TREES if (t == SHARED_TREE and spec["shared"]) or t in spec["skills"]]
     private = {t for t in spec["skills"] if t not in public and t not in EXTRA_TREES}
     if private != set(roster):
         stop(f"{src / 'roster.json'} and source/assignment.json disagree on the private skills of '{name}': "
@@ -246,7 +247,18 @@ def collect(repo, spec):
         for path in sorted(folder.rglob("*")):
             if path.is_file():
                 files[f"skills/{top}/{path.relative_to(folder).as_posix()}"] = path.read_bytes()
-    for text_path in [p for p in files if Path(p).suffix.lower() in TEXT_SUFFIXES]:
+    for entry in spec["payload"]:
+        root = src / entry
+        if not root.exists():
+            stop(f"no payload {root} to ship")
+        for path in [root] if root.is_file() else sorted(root.rglob("*")):
+            rel = path.relative_to(src)
+            if path.is_file() and path.suffix != ".pyc" and not any(p in TREE_EXCLUDE_DIRS for p in rel.parts[:-1]):
+                files[rel.as_posix()] = path.read_bytes()
+    missing = [p for p in spec["executables"] if p not in files]
+    if missing:
+        stop(f"executables of '{name}' name no payload file: " + ", ".join(missing))
+    for text_path in [p for p in files if Path(p).suffix.lower() in TEXT_SUFFIXES or p in spec["executables"]]:
         files[text_path] = files[text_path].replace(b"\r\n", b"\n")
     # The bundles are built elsewhere and ship byte-for-byte.
     for server in spec["servers"]:
@@ -291,7 +303,7 @@ def rename(src, dst):
             time.sleep(0.5)
 
 
-def write(files, out):
+def write(files, out, executables=()):
     """Build beside `out`, then swap the finished folder into place, so a reader
     never sees a half-written `out`. Windows cannot rename a folder over an
     existing one, so the swap is two renames and `out` is absent between them.
@@ -309,7 +321,7 @@ def write(files, out):
             path = building / rel
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(data)
-            if path.suffix == ".py":
+            if path.suffix == ".py" or rel in executables:
                 path.chmod(0o755)
         if replaced.exists():
             shutil.rmtree(replaced)
@@ -356,7 +368,8 @@ def main():
     args = parser.parse_args()
     repo = args.repo.resolve()
     # Every gate of every plugin runs before anything is written.
-    built = {name: collect(repo, spec) for name, spec in plugin_layout.plugins(repo).items()}
+    specs = plugin_layout.plugins(repo)
+    built = {name: collect(repo, spec) for name, spec in specs.items()}
     plugins_dir = repo / "plugins"
     stale = sorted(p for p in plugins_dir.iterdir() if p.is_dir() and p.name not in built
                    and not p.name.startswith(".")) if plugins_dir.is_dir() else []
@@ -367,7 +380,7 @@ def main():
         return 1 if stale else code
     for name, files in built.items():
         out = (args.out.resolve() if args.out else plugins_dir) / name
-        write(files, out)
+        write(files, out, specs[name]["executables"])
         print(f"{out}: {len(files)} files")
     if not args.out:
         for folder in stale:

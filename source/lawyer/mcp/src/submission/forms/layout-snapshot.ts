@@ -27,6 +27,7 @@ import { parseKnowledgePath, type KnowledgeSeams } from "../../knowledge/tree.js
 import { readFirmProfile, type FirmProfile } from "../../tools/practice/firm-profile.js";
 import { submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { composeLayoutSnapshot } from "../writing-snapshot.js";
+import { rendererKind } from "./filler-registry.js";
 import { boardAttachmentsHeld, fetchParties, fetchProceeding, MILESTONE_KIND, type FilingRow, type ProceedingRow } from "./query.js";
 
 type Json = Record<string, unknown>;
@@ -73,6 +74,9 @@ export interface SnapshotArgs {
 }
 
 export interface BuiltSnapshot {
+  /** The kind the Writing stores: for a bespoke type, the one render's composeFiller accepts
+   * (rendererKind); for a general type, the kind as given, since render never resolves it. */
+  kind: string;
   needs_forum_parts: 0 | 1;
   /** The JSON text stored in filings.layout_snapshot. */
   snapshot: string;
@@ -90,8 +94,9 @@ export interface BuiltSnapshot {
  * `recipient` missing under _NoVenue, given elsewhere or no audience, everything the composer
  * refuses (a kind matching no row or more than one by itself, a block the validator refuses, an
  * unbuilt projection, a `legal-basis` part numbered none, a rule_ref the two blocks cite with
- * different passages), a recipient that is not the matched row's, and a venue key that is not the
- * proceeding's forum.
+ * different passages), a recipient that is not the matched row's, a venue key that is not the
+ * proceeding's forum, and a bespoke type for which render accepts neither the kind as given nor
+ * any of its row's aliases (kind_unresolved, naming the kinds render accepts).
  */
 export function buildSnapshot(args: SnapshotArgs, seams: KnowledgeSeams = {}): BuiltSnapshot {
   const { segments, key, noVenue } = treeKeyOf(args.tree);
@@ -129,7 +134,9 @@ export function buildSnapshot(args: SnapshotArgs, seams: KnowledgeSeams = {}): B
     );
   }
 
-  return { needs_forum_parts: composed.needs_forum_parts, snapshot: composed.layout_snapshot, stored: composed.stored, learned: composed.learned, forum: noVenue ? null : key };
+  const kind = composed.stored.layout.renderer === "bespoke" ? rendererKind(key, typeFile, [args.kind, ...composed.aliases], seams) : args.kind;
+
+  return { kind, needs_forum_parts: composed.needs_forum_parts, snapshot: composed.layout_snapshot, stored: composed.stored, learned: composed.learned, forum: noVenue ? null : key };
 }
 
 // ------------------------------------------------------------ read --
@@ -293,7 +300,7 @@ export async function submissionDataCreateWriting(args: CreateWritingArgs, seams
         "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ? IS NULL OR (SELECT forum FROM proceedings WHERE id = ?) IS ?",
       params: [
         proceeding.id,
-        args.kind,
+        built.kind,
         args.subkind ?? null,
         args.round ?? null,
         args.title,

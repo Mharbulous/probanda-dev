@@ -777,7 +777,7 @@ class TestSecondPlugin(FixtureTest):
         for rel in check_plugin_tree.skill_source_expected(skills, [], {}, ("shared",)):
             self.fixture.write("plugins/solicitor/skills/" + rel, read(skills, rel))
         solicitor = {"name": "solicitor", "source": "source/solicitor", "requires": ["litigator"],
-                     "servers": [], "skills": [], "agents": [], "hooks": {}}
+                     "servers": [], "skills": [], "agents": [], "hooks": {}, "shared": True}
         patcher = mock.patch.object(plugin_layout, "plugins",
                                     return_value={"litigator": self.fixture.plugin, "solicitor": solicitor})
         patcher.start()

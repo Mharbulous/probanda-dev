@@ -56,31 +56,38 @@ class TestSentCopyCompare(unittest.TestCase):
     def test_pdf_matches_across_line_breaks(self):
         # The second paragraph wraps onto two lines in the PDF, as a letter's body does.
         path = self._pdf(["Dear Counsel:", PARAGRAPHS[0], "Your client's position was not raised in time,", "and we ask that it be withdrawn."])
-        self.assertEqual(compare.run({"paragraphs": PARAGRAPHS, "path": str(path), "text": None}), {"method": "pdf", "compared": True, "missing": []})
+        self.assertEqual(compare.run({"paragraphs": PARAGRAPHS, "path": str(path), "text": None}), {"method": "pdf", "compared": True, "missing": [], "mismatches": []})
 
     def test_pdf_reports_a_paragraph_it_does_not_contain(self):
         path = self._pdf([PARAGRAPHS[0]])
         result = compare.run({"paragraphs": PARAGRAPHS, "path": str(path), "text": None})
-        self.assertEqual(result, {"method": "pdf", "compared": True, "missing": [PARAGRAPHS[1]]})
+        self.assertEqual(result, {"method": "pdf", "compared": True, "missing": [PARAGRAPHS[1]], "mismatches": [{"index": 1, "sent": None}]})
 
     def test_eml_plain_body_matches_with_curly_quotes(self):
         path = self._eml("Dear Counsel,\n\n" + PARAGRAPHS[0] + "\n\nYour client’s position was not raised in time, and we ask that it be withdrawn.\n")
-        self.assertEqual(compare.run({"paragraphs": PARAGRAPHS, "path": str(path), "text": None}), {"method": "eml", "compared": True, "missing": []})
+        self.assertEqual(compare.run({"paragraphs": PARAGRAPHS, "path": str(path), "text": None}), {"method": "eml", "compared": True, "missing": [], "mismatches": []})
 
     def test_eml_html_body_is_read_when_no_plain_part(self):
         path = self._eml("<p>" + PARAGRAPHS[0] + "</p><p>Something else entirely.</p>", html=True)
         result = compare.run({"paragraphs": PARAGRAPHS, "path": str(path), "text": None})
-        self.assertEqual(result, {"method": "eml", "compared": True, "missing": [PARAGRAPHS[1]]})
+        self.assertEqual(result, {"method": "eml", "compared": True, "missing": [PARAGRAPHS[1]], "mismatches": [{"index": 1, "sent": None}]})
 
     def test_pasted_text_is_compared_as_given(self):
         result = compare.run({"paragraphs": PARAGRAPHS, "path": None, "text": " ".join(PARAGRAPHS)})
-        self.assertEqual(result, {"method": "text", "compared": True, "missing": []})
+        self.assertEqual(result, {"method": "text", "compared": True, "missing": [], "mismatches": []})
+
+    def test_mismatch_gives_the_closest_span_of_the_copy_in_full(self):
+        reworded = "Your client’s position was raised late, and we ask that it be withdrawn."
+        text = "Dear Counsel, " + PARAGRAPHS[0] + " " + reworded + " Yours truly, Pat"
+        result = compare.run({"paragraphs": PARAGRAPHS, "path": None, "text": text})
+        self.assertEqual(result["missing"], [PARAGRAPHS[1]])
+        self.assertEqual(result["mismatches"], [{"index": 1, "sent": "Your client's position was raised late, and we ask that it be withdrawn."}])
 
     def test_msg_is_recorded_by_path_and_not_compared(self):
         path = self.dir / "sent.msg"
         path.write_bytes(b"\xd0\xcf\x11\xe0 not readable here")
         result = compare.run({"paragraphs": PARAGRAPHS, "path": str(path), "text": None})
-        self.assertEqual(result, {"method": "msg", "compared": False, "missing": [], "note": compare.MSG_NOTE})
+        self.assertEqual(result, {"method": "msg", "compared": False, "missing": [], "mismatches": [], "note": compare.MSG_NOTE})
         self.assertIn("recorded by path", result["note"])
 
     def test_refusals(self):
@@ -102,7 +109,7 @@ class TestSentCopyCompare(unittest.TestCase):
             text=True,
             check=True,
         )
-        self.assertEqual(json.loads(done.stdout), {"method": "text", "compared": True, "missing": [PARAGRAPHS[1]]})
+        self.assertEqual(json.loads(done.stdout), {"method": "text", "compared": True, "missing": [PARAGRAPHS[1]], "mismatches": [{"index": 1, "sent": None}]})
 
 
 if __name__ == "__main__":

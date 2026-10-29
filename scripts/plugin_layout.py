@@ -68,8 +68,10 @@ def load(repo):
 def plugins(repo):
     """{plugin name: spec} for every plugin built. A spec holds `name`, `source` (the
     plugin's source folder, from the repo root), `requires`, `servers` (server keys),
-    `skills` and `agents` (the names the assignment gives the plugin), and `hooks`
-    ({hook name: its script, from the repo root})."""
+    `skills` and `agents` (the names the assignment gives the plugin), `hooks`
+    ({hook name: its script, from the repo root}), `payload` (files and folders of the
+    plugin's source copied whole), `executables` (payload files marked executable) and
+    `shared` (whether the shared/ tree ships in it; it does unless the assignment says false)."""
     assignment = load(repo)
     specs = {}
     for name, given in assignment["plugins"].items():
@@ -78,7 +80,10 @@ def plugins(repo):
             stop(f"source/assignment.json gives {name} a server with no entry in SERVERS: " + ", ".join(unknown))
         specs[name] = {"name": name, "source": f"source/{name}", "requires": list(given["requires"]),
                        "servers": list(given["servers"]), "skills": list(given["skills"]),
-                       "agents": list(given["agents"]), "hooks": dict(given.get("hooks", {}))}
+                       "agents": list(given["agents"]), "hooks": dict(given.get("hooks", {})),
+                       "payload": list(given.get("payload", [])),
+                       "executables": list(given.get("executables", [])),
+                       "shared": given.get("shared", True)}
     return specs
 
 

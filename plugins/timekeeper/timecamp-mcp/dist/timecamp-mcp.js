@@ -1,4 +1,4 @@
-// build-stamp: 11c76ae205a4
+// build-stamp: 8120c998acb5
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15532,10 +15532,13 @@ $plain = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $null, 
 // src/errors.ts
 var DataServerError = class extends Error {
   code;
-  constructor(message, code = "data_error") {
+  /** Structured detail the error payload carries beside its message, when the refusal has any. */
+  details;
+  constructor(message, code = "data_error", details) {
     super(message);
     this.name = new.target.name;
     this.code = code;
+    this.details = details;
   }
 };
 var ValidationError = class extends DataServerError {

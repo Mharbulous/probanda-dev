@@ -13,11 +13,15 @@
 // lifecycle is derived with no appeal deadline, so every since-date it prints is already past. The
 // to-dos arrive already stripped to what the page draws (matter-todos.ts), and are ordered by BF
 // date alone.
+//
+// A sent letter that is not retired leaves the Writings lines and their count for the collapsed
+// "Sent, awaiting response" lane, derived here at each write and stored nowhere. The lane lists; it
+// tracks no response, and it changes nothing about retirement or the letter's Milestone (ADR 0042).
 
 import type { MatterTodos } from "../matter-todos.js";
 import { BoardIndex, boardKey, type BoardRef, sameBoard } from "./board-members.js";
 import { LIFECYCLE_LABELS, type Lifecycle, type LifecycleState } from "./lifecycle.js";
-import { isJobOnlyBoard, type FilingRow, type ProceedingRow } from "./query.js";
+import { fetchProse, isJobOnlyBoard, type FilingRow, type ProceedingRow } from "./query.js";
 import { buildProceedingBoard, milestoneLabel, onFilingBoard, preFilingLabel, type ProceedingBoard, type WorkBoardTicket } from "./render-work-board.js";
 import type { RenderState } from "../render-manifest.js";
 
@@ -59,6 +63,16 @@ export interface MatterBoardFiling {
   job_only?: true;
 }
 
+/** A row of the "Sent, awaiting response" lane: a sent letter not yet retired. */
+export interface MatterBoardSentLetter {
+  filing_id: number;
+  /** The first line of the letter's addressee block; null when it has none. */
+  addressee: string | null;
+  /** The first line of its Re line, else the Writing's title. */
+  subject: string;
+  sent_on: string;
+}
+
 /** A proceeding with no filing (ADR 0018): a line of its own. */
 export interface MatterBoardProceeding {
   proceeding_id: number;
@@ -79,8 +93,10 @@ export interface MatterBoardData {
   todos: MatterBoardTodo[];
   /** Present only when the to-dos were not read: why. */
   todos_note?: string;
-  /** In the order given, retired filings last. */
+  /** In the order given, retired filings last. Holds no sent, unretired letter. */
   filings: MatterBoardFiling[];
+  /** Sent, unretired letters, by sent date oldest first, then filing id. Absent when there are none. */
+  awaiting_response?: MatterBoardSentLetter[];
   /** In proceeding id order. */
   pre_filing: MatterBoardProceeding[];
   /** Each merged Milestone (docs/ADRs/0010): its page's name and the live sections drawn on it, the
@@ -121,6 +137,28 @@ function retiredLine(entry: RankedFiling): MatterBoardFiling {
   };
 }
 
+/** A kind is a letter when it names one: a venue's `letter`, or a `letter-to-*` kind. */
+const LETTER_KIND = /(?:^|[^a-z])letter(?:[^a-z]|$)/i;
+
+/** Sent (`filed_on` set), not retired, and a letter by its kind. */
+function awaitingResponse(filing: FilingRow): boolean {
+  return filing.filed_on !== null && !filing.retired_on && LETTER_KIND.test(filing.kind);
+}
+
+function firstLine(text: string | undefined): string | null {
+  return text?.split(/\r?\n/).map((line) => line.trim()).find((line) => line !== "") ?? null;
+}
+
+function sentLetterLine(dbPath: string, filing: FilingRow): MatterBoardSentLetter {
+  const prose = fetchProse(dbPath, filing.id);
+  return {
+    filing_id: filing.id,
+    addressee: firstLine(prose.get("addressee")?.text),
+    subject: firstLine(prose.get("re")?.text) ?? filing.title,
+    sent_on: filing.filed_on as string,
+  };
+}
+
 function preFilingLine(proceeding: ProceedingRow, board: ProceedingBoard): MatterBoardProceeding {
   return {
     proceeding_id: proceeding.id,
@@ -132,9 +170,9 @@ function preFilingLine(proceeding: ProceedingRow, board: ProceedingBoard): Matte
 
 /** A pointer draws a line only when what it names is on this page; one that no longer resolves
  * draws nothing and fails nothing (ADR 0021 D5). */
-function todoLines(todos: MatterTodos, filings: MatterBoardFiling[], preFiling: MatterBoardProceeding[]): MatterBoardTodo[] {
+function todoLines(todos: MatterTodos, filings: MatterBoardFiling[], awaiting: MatterBoardSentLetter[], preFiling: MatterBoardProceeding[]): MatterBoardTodo[] {
   if (!("rows" in todos)) return [];
-  const filingIds = new Set(filings.map((f) => f.filing_id));
+  const filingIds = new Set([...filings, ...awaiting].map((f) => f.filing_id));
   const proceedingIds = new Set(preFiling.map((p) => p.proceeding_id));
   const byBfDate = (a: string | null, b: string | null) => (a === b ? 0 : a === null ? 1 : b === null ? -1 : a < b ? -1 : 1);
   return [...todos.rows]
@@ -171,16 +209,21 @@ export function buildMatterBoardData(
     return board;
   };
 
-  const live = ranked.filter((r) => !r.filing.retired_on).map((r) => liveLine(r, boardFor(r.proceeding.id)));
+  const live = ranked.filter((r) => !r.filing.retired_on && !awaitingResponse(r.filing)).map((r) => liveLine(r, boardFor(r.proceeding.id)));
   const retired = ranked.filter((r) => r.filing.retired_on).map(retiredLine);
   const filings = [...live, ...retired];
+  const awaiting = ranked
+    .filter((r) => awaitingResponse(r.filing))
+    .map((r) => sentLetterLine(dbPath, r.filing))
+    .sort((a, b) => (a.sent_on === b.sent_on ? a.filing_id - b.filing_id : a.sent_on < b.sent_on ? -1 : 1));
   const preFilingLines = preFiling.map((p) => preFilingLine(p, boardFor(p.id)));
   const merged = mergedBoards(new BoardIndex(dbPath), ranked, preFiling);
   return {
     meta,
-    todos: todoLines(todos, filings, preFilingLines),
+    todos: todoLines(todos, filings, awaiting, preFilingLines),
     ...("note" in todos ? { todos_note: todos.note } : {}),
     filings,
+    ...(awaiting.length > 0 ? { awaiting_response: awaiting } : {}),
     pre_filing: preFilingLines,
     ...(merged.length > 0 ? { boards: merged } : {}),
   };
@@ -190,7 +233,7 @@ export function buildMatterBoardData(
 function mergedBoards(index: BoardIndex, ranked: RankedFiling[], preFiling: ProceedingRow[]): NonNullable<MatterBoardData["boards"]> {
   const groups = new Map<string, { name: string; members: BoardRef[] }>();
   const refs: BoardRef[] = [
-    ...ranked.filter((r) => !r.filing.retired_on).map((r) => ({ filing_id: r.filing.id, proceeding_id: r.proceeding.id })),
+    ...ranked.filter((r) => !r.filing.retired_on && !awaitingResponse(r.filing)).map((r) => ({ filing_id: r.filing.id, proceeding_id: r.proceeding.id })),
     ...preFiling.map((p) => ({ filing_id: null, proceeding_id: p.id })),
   ];
   for (const ref of refs) {

@@ -54,6 +54,6 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 
 **Tooling threads are reported to Probanda.** Once the practitioner has said what to pursue and what to discard, and before Step 5, run `references/suggestion-box.md` over every open `tooling` thread that is not deferred. What a thread noticed about a Probanda tool goes to the lawyer plugin as an observation holding only Probanda's own output, never the thread's words. No thread is posted as a suggestion, and none is discarded without the practitioner's answer. A plugin-related thread seen in another group is named to the practitioner in one line and stays where it is.
 
-**Step 5. Record the effort as a Ready job**, worded by `/drafting-data` §3's rule. A queued job counts as open work against the Writing's `gate` criterion until it is completed or shelved.
+**Step 5. Record the effort as a Ready job**, worded by `/drafting-data` §3's rule. A queued job counts as open work against the Writing's `gate` criterion until it is completed or shelved, unless it waits, directly or through other open jobs, on the Writing's `File and serve`, `Serve the application` or `Serve the response` job, which puts it after the gate and outside it.
 
 Deadline isolation and the HTML pages rule bind here as everywhere: no page is read, grepped, parsed or written by the session, ranks and job descriptions are read through `board_card` only, and nothing about time remaining enters a rank, its reason or its job description.

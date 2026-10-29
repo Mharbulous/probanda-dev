@@ -431,6 +431,18 @@ test("a copy lacking a stored paragraph is refused, naming it, and nothing is wr
   assert.deepEqual([filing(g, id).filed_on, documentCount(g)], [null, documents]);
 });
 
+test("a mismatch lists each passage in full, by its part, beside the closest span of the sent copy", async (t) => {
+  const long = `Second paragraph of the letter, which runs well past eighty characters so that no cut could hide where it differs.`;
+  const { g, id } = await drafted(t, { body: `First paragraph of the letter.\n\n${long}` });
+  const sent = long.replace("no cut could hide", "nothing could obscure");
+  await assert.rejects(send(g, id, { sent_copy_text: `Dear Cara,\n\n1. First paragraph of the letter.\n\n2. ${sent}\n\nYours truly,\nPat Example` }), (err) => {
+    assert.equal(err.code, "sent_copy_mismatch", err.message);
+    assert.deepEqual(err.details, { passages: [{ part: "slot:body, paragraph 2", stored: long, sent }], unlisted: 0 });
+    assert.ok(err.message.includes(JSON.stringify(long)) && err.message.includes(JSON.stringify(sent)), err.message);
+    return true;
+  });
+});
+
 test("with nothing held, a copy mismatch leaves an open Pre-send gate job and its steps as they were: step closure is in the Sent write's transaction", async (t) => {
   const { g, id } = await drafted(t);
   setInventory(g, id, [unquoted]);

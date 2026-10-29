@@ -56,6 +56,11 @@
     var where = proceedingLine(p);
     return [["name", "Proceeding " + p.proceeding_id + (where === "" ? "" : " (" + where + ")")], ["chip", p.state_label], ["jobs", jobs(p.in_progress)]];
   }
+  // A sent letter's row in the "Sent, awaiting response" lane: addressee · subject · sent date.
+  function awaitingParts(a) {
+    return [["addressee", a.addressee === null ? "No addressee recorded" : a.addressee], ["name", a.subject], ["sent", "Sent " + a.sent_on]];
+  }
+  var awaiting = data.awaiting_response || [];
 
   function filingLine(f) {
     var line = fill(el("article", "filing"), filingParts(f));
@@ -67,6 +72,11 @@
     line.setAttribute("data-proceeding-id", String(p.proceeding_id));
     return line;
   }
+  function awaitingLine(a) {
+    var line = fill(el("article", "filing"), awaitingParts(a));
+    line.setAttribute("data-filing-id", String(a.filing_id));
+    return line;
+  }
 
   function todoItem(t) {
     var li = el("li", "todo");
@@ -76,11 +86,14 @@
     if (t.bf_date !== null) head.appendChild(el("span", "bf", "BF " + t.bf_date));
     li.appendChild(head);
     var filing = t.filing_id === undefined ? null : data.filings.filter(function (f) { return f.filing_id === t.filing_id; })[0];
+    var sent = t.filing_id === undefined ? null : awaiting.filter(function (a) { return a.filing_id === t.filing_id; })[0];
     var proceeding = t.proceeding_id === undefined ? null : data.pre_filing.filter(function (p) { return p.proceeding_id === t.proceeding_id; })[0];
     if (filing) {
       var line = fill(el("p", "line"), filingParts(filing));
       line.setAttribute("data-filing-id", String(filing.filing_id));
       li.appendChild(line);
+    } else if (sent) {
+      li.appendChild(fill(el("p", "line"), awaitingParts(sent)));
     } else if (proceeding) {
       li.appendChild(fill(el("p", "line"), proceedingParts(proceeding)));
     }
@@ -139,7 +152,21 @@
   var milestones = data.filings.filter(function (f) { return f.job_only && !f.retired_on && !onBoard.filing[f.filing_id]; });
   var preFiling = data.pre_filing.filter(function (p) { return !onBoard.proceeding[p.proceeding_id]; });
   var retired = data.filings.filter(function (f) { return f.retired_on; });
-  section("filings", "Writings", live.length, stack(live.map(filingLine), writings.length === 0 ? "No Writings in this matter." : boards.length > 0 ? "Every live Writing is on a merged Milestone." : "No live Writings."));
+  section("filings", "Writings", live.length, stack(live.map(filingLine), writings.length + awaiting.length === 0 ? "No Writings in this matter." : boards.length > 0 ? "Every live Writing is on a merged Milestone." : "No live Writings."));
+  // Sent letters not yet retired: one lane, collapsed by default, outside the Writings count.
+  if (awaiting.length > 0) {
+    var lane = el("details", "lane");
+    var summary = el("summary");
+    var h2 = el("h2", "", "Sent, awaiting response ");
+    h2.appendChild(el("span", "count", String(awaiting.length)));
+    summary.appendChild(h2);
+    lane.appendChild(summary);
+    lane.appendChild(stack(awaiting.map(awaitingLine), ""));
+    var awaitingSection = el("section");
+    awaitingSection.id = "awaiting";
+    awaitingSection.appendChild(lane);
+    board.appendChild(awaitingSection);
+  }
   if (milestones.length > 0) section("milestones", "Milestones", milestones.length, stack(milestones.map(filingLine), ""));
   if (preFiling.length > 0) section("pre-filing", "Before filing", preFiling.length, stack(preFiling.map(preFilingLine), ""));
   if (retired.length > 0) section("retired", "Retired", retired.length, stack(retired.map(retiredCard), ""));

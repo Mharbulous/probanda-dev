@@ -14,9 +14,15 @@ The version rule:
 - **Minor** (0.2.1 to 0.3.0): anything else. For example: a data migration or schema change, a tool removed or its inputs changed, a new required setup step such as a credential or a settings allowlist, a raised `requires`, or a server that refuses data an old copy wrote or writes data an old copy would damage.
 - **1.0.0**: only when Probanda enters the Claude Directory.
 
-## Vendored plugin
+## TokenEconomizer
 
-The marketplace also lists `tokeneconomizer` (Token Economizer), from `vendor/tokeneconomizer/`. It is third-party code under Apache-2.0, not a Probanda plugin, so COMMANDMENTS.md does not govern it (Brahm's ruling, 2026-10-28). Its tool pruning writes `.claude/settings.local.json` in repositories. It is not built by `scripts/build_plugin.py`, not versioned by `/release`, and never goes into `public/`. It is the bundle of `Mharbulous/TokenEconomizer` at commit `a45bf5a9`, byte for byte, plus that repo's `LICENSE`, except that its `plugin.json` version was raised to 0.1.6 here. To refresh it, clone the fork, run its `python scripts/build_plugin.py --out <dir>`, replace `vendor/tokeneconomizer/` with `<dir>/tokeneconomizer/`, copy `LICENSE` back in, update the commit here, and keep `scripts/te` and `scripts/te-hook` executable in git (`git update-index --chmod=+x`).
+The marketplace also lists `tokeneconomizer` (Token Economizer): third-party code under Apache-2.0, adapted for Claude Code and Claude Cowork only, and governed by COMMANDMENTS.md like the Probanda plugins. Its source is `source/tokeneconomizer/`, and `scripts/build_plugin.py` builds it and `/release` versions it. The build, its checks and `/release` treat it as an eighth plugin; elsewhere in this file "the seven plugins" means Probanda's own. It requires no other plugin, ships no skills, agents or servers, and leaves out `shared/` (`"shared": false` in `source/assignment.json`). The assignment's `payload` names the trees the build copies whole (`LICENSE`, `lib`, `scripts`, `slash-commands`), and its `executables` the two launchers the build marks executable. It never goes into `public/`.
+
+The fork `Mharbulous/TokenEconomizer` is the source of record for the Python and the hooks. FORK_COMMIT `44538301`. To refresh, run the fork's `python scripts/build_plugin.py --out <dir>` at the new commit, replace `lib/`, `scripts/`, `README.md` and `LICENSE` (from the fork's root) in `source/tokeneconomizer/` and the slash commands other than `toolprune.md` and `untool.md`, update the commit here, and re-apply the two Probanda overrides in `source/tokeneconomizer/plugin.json`: its name, version and description, and the hooks, declared there (not in `hooks/hooks.json`, which would run each hook twice) with every command prefixed `TE_LOOPGUARD_THRESHOLDS='{"envelope_frozen":38}' TE_TOOLPRUNE=off`. Keep `plugins/tokeneconomizer/scripts/te` and `te-hook` executable in git (`git update-index --chmod=+x`), since a Windows checkout cannot set the bit.
+
+- **Fixed envelope.** A Cowork container keeps nothing between sessions, so the loop guard never learns an envelope there. The hook command gives it `envelope_frozen` 38, the probanda-dev envelope on the PC (37.75 on 2026-10-28), used until a repository has learned its own from 5 turns. To change it, read the PC's `loopguard.envelope` from `te status --json` and edit the six hook commands. The reasoning is in `docs/Plans/2026-10-29_tokeneconomizer-green-build.md`.
+- **Tool pruning is off** (`TE_TOOLPRUNE=off`), so the plugin never writes a repository's `.claude/settings.local.json` and Commandment 7 needs no ruling. The `toolprune` and `untool` slash commands are left out because `te toolprune apply` does not check the setting.
+- **File-ops check.** `scripts/check_file_ops.py` does not scan `lib/`. The fork's Python has 27 lines of file operations in 12 files, all writes under the plugin's own state root or temporary folders, plus pruning writes that are now unreachable. Rulings for them would go stale at every refresh, so none are kept. Revisit this if a refresh adds a write outside the state root.
 
 ## Two repositories
 
@@ -33,7 +39,7 @@ The source moved here from CoClerk and is no longer edited there. The `researche
 
 These are permanent once published. Do not rename them.
 
-- The plugin names `lawyer`, `researcher`, `litigator`, `solicitor`, `file-manager`, `timekeeper` and `developer`, and the vendored plugin name `tokeneconomizer`.
+- The plugin names `lawyer`, `researcher`, `litigator`, `solicitor`, `file-manager`, `timekeeper` and `developer`, and the plugin name `tokeneconomizer`.
 - The marketplace names: `Probanda_Legal` for the public repository and `Probanda_Legal_experimental` for this one. A marketplace name cannot hold a space, so the readable "Probanda Legal" and "Probanda Legal (experimental)" go in `owner.name` and each plugin entry's `author.name`.
 - Every MCP server key in a plugin's `.mcp.json`: `data` and `contacts-calendars-email` in `lawyer`, `canlii` and `commons` in `researcher`, `files` in `file-manager`, and `timecamp` in `timekeeper`.
 

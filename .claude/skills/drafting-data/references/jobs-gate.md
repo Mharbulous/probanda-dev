@@ -8,12 +8,23 @@ The checks themselves are `references/pre-filing-checks.md`; the tool is `drafti
 **Trigger — the session that completes a Writing's last open job creates the gate job.** Immediately after §9's confirm-read, in the same session, read what is still open on the Writing. The anchor is the confirm-read and not the completion `UPDATE` itself: a completion that matched nothing must not be followed by gate creation, and the confirm-read is what establishes that it landed. A Writing the Sent write holds (§14a: one that needs no forum parts, and a venue's `letter`) takes no gate job: its gate is §14a's `Pre-send gate`, so this trigger does not apply to it. A `Pre-filing consistency gate` job already sitting on a venue's letter from before that rule is left as it stands: the Milestone's gate row no longer reads it, and the practitioner may supersede it.
 
 ```sql
+WITH RECURSIVE after_gate(id) AS (
+  SELECT b.blocked_id FROM ticket_blocks b JOIN tickets f ON f.id = b.blocker_id JOIN tickets t ON t.id = b.blocked_id
+    WHERE f.filing_id = 7 AND f.status <> 'completed' AND f.deleted_at IS NULL AND t.status <> 'completed' AND t.deleted_at IS NULL
+      AND (substr(f.title, 1, 14) = 'File and serve' OR substr(f.title, 1, 21) = 'Serve the application' OR substr(f.title, 1, 18) = 'Serve the response')
+  UNION
+  SELECT b.blocked_id FROM ticket_blocks b JOIN after_gate a ON a.id = b.blocker_id JOIN tickets t ON t.id = b.blocked_id
+    WHERE t.status <> 'completed' AND t.deleted_at IS NULL
+)
 SELECT id, title, status FROM tickets WHERE filing_id = 7 AND status IN ('queued', 'wip') AND rejected_at IS NULL AND deleted_at IS NULL
   AND title NOT IN ('Availability letter', 'Application book', 'Set down for hearing', 'Reply affidavits', 'File the served response', 'Reset for hearing', 'Draft the Writing', 'Draft the letter', 'Deliver', 'Pre-send gate')
-  AND substr(title, 1, 14) <> 'File and serve' AND substr(title, 1, 21) <> 'Serve the application' AND substr(title, 1, 18) <> 'Serve the response';
+  AND substr(title, 1, 14) <> 'File and serve' AND substr(title, 1, 21) <> 'Serve the application' AND substr(title, 1, 18) <> 'Serve the response'
+  AND id NOT IN (SELECT id FROM after_gate);
 ```
 
 `AND rejected_at IS NULL` is load-bearing: a shelved job stays `queued` with `rejected_at` stamped (§10a), so without it a Writing whose only remaining job the practitioner shelved counts as still open and never gets its gate job. The `title` clauses leave out §3b's stock bundle jobs, which are not drafting work, a hand-outlined `File and serve …`, `Serve the application …` or `Serve the response …` job included: an availability letter still queued or in progress must not hold the gate job back, and neither do the two letter jobs, `Draft the letter` and `Deliver`, nor an Unstructured Writing's `Draft the Writing`, which are stock jobs too, nor §14a's `Pre-send gate`, which only the Sent write writes. §3c's `Prepare the review pages` and `Counsel's review of …` jobs are drafting work and count here like any other job, so the gate job cannot be created while the review is open.
+
+`after_gate` leaves out the work that comes after filing or service: every job that waits on one of the Writing's `File and serve …`, `Serve the application …` or `Serve the response …` jobs that is not completed, directly or through a chain of jobs that are not completed (`ticket_blocks`: `blocked_id` waits on `blocker_id`). Such a job runs only after that filing or service job, which Dispatch skips until the gate passes, so counting it would hold the gate open forever. A completed job breaks the chain: a job whose only link to filing or service runs through a completed job counts like any other. A deleted job (§10a) is neither a link nor a result. `UNION`, not `UNION ALL`, so a circular chain ends. The Milestone's `gate` criterion leaves out the same jobs from its open count.
 
 If that returns no rows, and no job titled `Pre-filing consistency gate` already exists on the Writing with a status other than `superseded`, deleted jobs (§10a) aside, create one through §3's two-call idiom — `kind = 'work'`, `billing_anchor` copied from the job just completed, `priority` one above the Writing's highest, and this fixed intent:
 
