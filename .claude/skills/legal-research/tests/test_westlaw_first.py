@@ -285,6 +285,21 @@ class DoctrineTests(unittest.TestCase):
                 self.assertLess(check.index("Call `tabs_context_mcp`"), navigate)
                 self.assertLess(navigate, check.index("blocked (westlaw-not-signed-in)", navigate))
 
+    def test_every_blocked_status_is_a_westlaw_hard_stop(self):
+        # 2026-10-10 chrome-permission hard-stop spec: a blocked status the gate
+        # did not name (chrome-permission-not-granted) let the run carry on.
+        gate = flat(read(SHARED / "legal-research.md"))
+        self.assertIn("Any `status: blocked (...)` that research-paralegal or "
+                      "citation-checker returns is a hard stop", gate)
+        self.assertIn("Any blocked status not named here", gate)
+        step = flat(read(SKILL_ROOT / "SKILL.md"))
+        self.assertIn("any `status: blocked (...)`", step)
+        for status in ("blocked (chrome-permission-not-granted)",
+                       "blocked (mechanics-unavailable)"):
+            for name, text in (("gate", gate), ("SKILL.md", step)):
+                with self.subTest(file=name, status=status):
+                    self.assertIn(status, text)
+
     def test_chrome_not_connected_only_after_the_chrome_reach_ladder(self):
         # 2026-10-06 chrome-retry spec: the paralegal returned chrome-not-connected
         # with Chrome connected, never having tried to reach it.

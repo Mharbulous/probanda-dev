@@ -216,16 +216,26 @@ other question runs the duties in their numbered order.
    rule is never sent to it: its note-up is duty 4's currency check. A decision the
    audit relies on with no record comes back as `needs_note_up` (below).
 
-**Westlaw unreachable is a hard stop.** If research-paralegal or citation-checker returns
-`status: blocked (chrome-not-connected)` or `status: blocked (westlaw-not-signed-in)`,
-stop the whole question: no audit-agent spawn, no CanLII step, and no `canlii-only`
-download or CanLII sweep in Westlaw's place. Tell the practitioner in plain words:
+**Westlaw unreachable is a hard stop.** Any `status: blocked (...)` that
+research-paralegal or citation-checker returns is a hard stop, whether or not its
+status is named here: stop the whole question, with no audit-agent spawn, no CanLII step, and no
+`canlii-only` download or CanLII sweep in Westlaw's place. Tell the practitioner in
+plain words:
 
-- `chrome-not-connected`: "Westlaw research is needed and Chrome isn't connected.
+- `status: blocked (chrome-not-connected)`: "Westlaw research is needed and Chrome isn't connected.
   Open Chrome and sign in to Westlaw, then tell me to continue."
   If its `detail:` line is `chrome-tools-absent`, say instead: "Chrome can't be reached from this session. Run this research step from a Claude Code session."
-- `westlaw-not-signed-in`: "Westlaw research is needed and Westlaw isn't signed in.
+- `status: blocked (westlaw-not-signed-in)`: "Westlaw research is needed and Westlaw isn't signed in.
   I've opened the Westlaw sign-in page in Chrome. Sign in, then tell me to continue."
+- `status: blocked (chrome-permission-not-granted)`: "Westlaw research is needed and
+  Chrome's permission prompt wasn't answered. Bring Chrome to the front and click
+  Allow on the small Claude permission window. If Westlaw then shows a sign-in page,
+  sign in yourself. Then tell me to continue."
+- `status: blocked (mechanics-unavailable)`: relay its guidance verbatim: check for
+  updates in the desktop app and fully restart it, then tell me to continue; if the
+  problem persists, run /lawyer:suggestion.
+- Any blocked status not named here or below: quote its `status:` line and its
+  `detail:` line verbatim, and ask the practitioner to resolve it and tell you to continue.
 
 On "continue", re-dispatch the same run. The fail-closed client-matter gate (`status: blocked (matter-mismatch)`, or
 `status: blocked (client-id-not-on-westlaw)` with its one-line instruction) is a genuine

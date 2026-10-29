@@ -98,11 +98,13 @@ permitted to make statements of law.
    `westlaw-query-optimizer` subskill (on a supplied or earlier-session query too),
    then `researcher:research-paralegal` in deep-research mode and in citation mode
    `source: westlaw-first` for every citation already known. If it returns
-   `status: blocked (chrome-not-connected)` or `status: blocked (westlaw-not-signed-in)`,
-   stop the whole question (no audit agent, no CanLII in its place) and tell the
-   practitioner in plain words that Westlaw research is needed and Chrome isn't
-   connected, or that Westlaw isn't signed in and the sign-in page is open in
-   Chrome, and to tell you to continue once signed in. On "continue", re-dispatch
+   any `status: blocked (...)`, such as `status: blocked (chrome-not-connected)`,
+   `status: blocked (westlaw-not-signed-in)`, `status: blocked (chrome-permission-not-granted)`
+   or `status: blocked (mechanics-unavailable)`, stop the whole question (no audit
+   agent, no CanLII in its place) and tell the practitioner in plain words what the
+   doctrine's hard-stop paragraph says for that status. For a status it does not
+   name, quote the `status:` and `detail:` lines verbatim and ask them to resolve it.
+   Either way, ask them to tell you to continue. On "continue", re-dispatch
    the same run. On a held job, after launching the query set its step ⏳ for 5 minutes, as the
    doctrine's duty 3 says ("On a held job, the Westlaw wait is a ⏳ step"). When the time has passed, check whether
    the run has finished and can be downloaded: the paralegal has returned and its memo is
