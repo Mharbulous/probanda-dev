@@ -265,14 +265,15 @@ class Converters(unittest.TestCase):
         doc = self.facts(facts=[{"fact_key": "new:1", "source_locator": "para. 1", "description": "A loan was made.",
                                  "category": "contract", "date_of_fact": None, "notes": "UNCONFIRMED: date unclear",
                                  "evidence": {"is_proof_source": True, "strength": 1, "notes": "OCR: faint"}}],
-                         fact_positions=[], relief_items=[], relief_positions=[])
+                         relief_items=[], relief_positions=[])
         self.write(ingest_facts, self.request("facts", [doc]))
         self.assertEqual(self.q("SELECT verified FROM facts"), [(2,)], "a prefixed note goes to the human queue")
         self.assertEqual(self.q("SELECT verified FROM evidence_links"), [(2,)])
         today = self.q("SELECT date('now','localtime')")[0][0]
         self.assertEqual(self.q("SELECT created_date FROM facts"), [(today,)], "host-local, not the UTC default")
         self.assertEqual(self.q("SELECT valid_from FROM evidence_links"), [(today,)])
-        self.assertEqual(self.q("SELECT count(*) FROM positions"), [(0,)], "no row means actual silence")
+        self.assertEqual(self.q("SELECT party_id FROM positions"), [(1,)],
+                         "the party who took a position has its row; the silent party has none")
 
     def test_order_detection_reads_the_leading_code_and_skips_a_notice_of_application(self):
         self.assertTrue(ingest_common.is_order("5. COURT FILE\\2026-05-01 ORDR Smith.pdf", "x", None))
@@ -363,26 +364,27 @@ class Converters(unittest.TestCase):
 
     def test_exhibits_privilege_signal_constraint_failure_twice_failed_and_already_written(self):
         self.write_body()
-        # B is already held pending a privilege decision, so a reading that cites it as proof breaks
-        # the pending-privilege guard (#49) and its group rolls back alone.
-        self.con.execute("INSERT INTO sources (category, title, parent_source_id, ingestion_status, privilege_status) "
-                         "VALUES ('court', 'Exhibit B', 1, 'complete', 'pending')")
+        # B is already held listed and failed, so a reading that carries a privilege signal would hold
+        # a listed row pending, which the sources check refuses: its group rolls back alone.
+        self.con.execute("INSERT INTO sources (category, title, parent_source_id, ingestion_status, listed) "
+                         "VALUES ('court', 'Exhibit B', 1, 'failed', 1)")
         a = self.exhibit("A", flags=[{"kind": "privilege_signal", "ref": "p4"}])
-        plan, out = self.write(ingest_affidavit, self.exhibits([a, self.exhibit("B")], expected=("A", "B", "C")))
-        self.assertEqual(plan["pending"], ["A"])
+        b = self.exhibit("B", flags=[{"kind": "privilege_signal", "ref": "p6"}])
+        plan, out = self.write(ingest_affidavit, self.exhibits([a, b], expected=("A", "B", "C")))
+        self.assertEqual(plan["pending"], ["A", "B"])
         self.assertEqual([ref for ref, _ in out["failed"]], ["B"])
         self.assertEqual(self.q("SELECT title, privilege_status, ingestion_status, verified FROM sources WHERE parent_source_id IS NOT NULL ORDER BY source_id"),
-                         [("Exhibit B", "pending", "complete", 0), ("Exhibit A — Doc A", "pending", "complete", 0)])
+                         [("Exhibit B", None, "failed", 0), ("Exhibit A — Doc A", "pending", "complete", 0)])
         self.assertEqual(self.q("SELECT count(*) FROM facts WHERE description = 'B says so.'"), [(0,)], "the failed group left nothing")
         self.assertEqual(self.q("SELECT count(*) FROM evidence_links"), [(0,)], "a pending exhibit takes no links")
         self.assertEqual(self.q("SELECT ingestion_status FROM sources WHERE parent_source_id IS NULL"), [("partial",)])
-        # C fails twice: the closing call records it and completes the body.
-        self.write(ingest_affidavit, self.exhibits([], expected=("A", "B", "C"), failed=["C"]))
+        # B and C fail twice: the closing call records them and completes the body.
+        self.write(ingest_affidavit, self.exhibits([], expected=("A", "B", "C"), failed=["B", "C"]))
         self.assertEqual(self.q("SELECT notes, verified, ingestion_status FROM sources WHERE title = 'Exhibit C'"),
                          [("UNCONFIRMED: the exhibit could not be read after two attempts.", 2, "failed")])
         self.assertEqual(self.q("SELECT ingestion_status FROM sources WHERE parent_source_id IS NULL"), [("complete",)])
         before = self.q("SELECT count(*) FROM facts")
-        _, out = self.write(ingest_affidavit, self.exhibits([self.exhibit("A")], expected=("A", "B", "C"), failed=["C"]))
+        _, out = self.write(ingest_affidavit, self.exhibits([self.exhibit("A")], expected=("A", "B", "C"), failed=["B", "C"]))
         self.assertEqual(self.q("SELECT count(*) FROM facts"), before, "a repeat writes nothing twice")
         # The data server's already_written test: a prior row, nothing counted, the status unchanged.
         self.assertEqual(sum(out["counts"].values()), 0, out["counts"])
@@ -412,6 +414,28 @@ class Converters(unittest.TestCase):
         body = self.body(flags=[{"kind": "privilege_signal", "ref": "f1", "page": 2}])
         plan = ingest_affidavit.plan(self.request("affidavit_body", [body], route={"ref": "f1", "kind": "affidavit"}))
         self.assertTrue(any("(p. 2) may disclose privileged material" in line for line in plan["report"]), plan["report"])
+
+    def test_a_failed_exhibit_held_pending_stays_pending_and_takes_no_links(self):
+        self.write_body()
+        self.con.execute("INSERT INTO sources (category, title, parent_source_id, ingestion_status, verified, privilege_status) "
+                         "VALUES ('court', 'Exhibit A', 1, 'failed', 2, 'pending')")
+        self.write(ingest_affidavit, self.exhibits([self.exhibit("A")], expected=("A",)))
+        self.assertEqual(self.q("SELECT title, ingestion_status, privilege_status FROM sources WHERE parent_source_id IS NOT NULL"),
+                         [("Exhibit A — Doc A", "complete", "pending")], "a re-read never changes privilege_status")
+        self.assertEqual(self.q("SELECT count(*) FROM evidence_links"), [(0,)])
+
+    def test_a_group_that_rolls_back_leaves_its_fallback_row_which_the_next_reading_reuses(self):
+        self.write_body()
+        plan = ingest_affidavit.plan(self.exhibits([self.exhibit("A"), self.exhibit("B")]))
+        group_b = next(g for g in plan["statements"] if g.get("ref") == "B")
+        group_b["statements"].append({"sql": "INSERT INTO main.facts (description) VALUES (NULL)"})
+        out = run_plan(self.con, plan)
+        self.assertEqual([ref for ref, _ in out["failed"]], ["B"])
+        fallback = self.q("SELECT source_id, title, ingestion_status, verified, notes FROM sources WHERE title LIKE 'Exhibit B%'")
+        self.assertEqual([row[1:] for row in fallback], [("Exhibit B", "failed", 2, ingest_affidavit.NOTE_FAILED)])
+        self.write(ingest_affidavit, self.exhibits([self.exhibit("B")]))
+        self.assertEqual(self.q("SELECT source_id, title, ingestion_status, verified FROM sources WHERE title LIKE 'Exhibit B%'"),
+                         [(fallback[0][0], "Exhibit B — Doc B", "complete", 0)])
 
     def test_no_exhibit_list_refuses_an_exhibit_write(self):
         self.write_body()

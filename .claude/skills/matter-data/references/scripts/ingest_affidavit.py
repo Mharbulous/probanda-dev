@@ -112,12 +112,13 @@ WHERE b.source_id = {BODY} AND {_EXHIBIT} IS NULL
 """
 
 # The re-extraction rule for an exhibit: a row recorded `failed` is reused and takes the new reading.
+# Its privilege_status never changes but from NULL to pending (ingest-extract.md L37, N-6).
 REFRESH_FAILED_EXHIBIT = f"""
 UPDATE main.sources
 SET title = json_extract(:ex, '$.title'), description = json_extract(:ex, '$.description'),
     date = json_extract(:ex, '$.date'), verified = json_extract(:ex, '$.verified'),
     notes = json_extract(:ex, '$.notes'), ingestion_status = json_extract(:ex, '$.status'),
-    privilege_status = json_extract(:ex, '$.privilege_status')
+    privilege_status = coalesce(privilege_status, json_extract(:ex, '$.privilege_status'))
 WHERE source_id = {_EXHIBIT} AND ingestion_status = 'failed'
 """
 
@@ -146,7 +147,8 @@ FROM (SELECT (SELECT min(x.fact_id) FROM main.facts x WHERE x.source_id = {_EXHI
              json_extract(f.value, '$.evidence.notes') AS notes, f.key AS seq
       FROM json_each(:ex, '$.facts') f
       WHERE json_type(f.value, '$.evidence') = 'object'
-        AND json_extract(:ex, '$.privilege_status') IS NULL) n
+        AND json_extract(:ex, '$.privilege_status') IS NULL
+        AND (SELECT privilege_status FROM main.sources WHERE source_id = {_EXHIBIT}) IS NOT 'pending') n
 WHERE NOT EXISTS (SELECT 1 FROM main.evidence_links x
                   WHERE x.source_id = {_EXHIBIT} AND x.fact_id = n.fact_id AND x.valid_to IS NULL)
 ORDER BY n.seq
