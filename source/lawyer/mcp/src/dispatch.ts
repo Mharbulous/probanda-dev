@@ -286,7 +286,7 @@ export const dataTools: Tool<DispatchContext>[] = [
       // #589: matter_lookup's client fields are the identity bootstrap used, so the job renders with it.
       const { client_name, client_no, matter_no } = result.matter_lookup;
       const started = performance.now();
-      const background_job = startBootstrapJob(result, { clientName: client_name, clientNo: client_no, matterNo: matter_no, matterDescription }, dates);
+      const background_job = startBootstrapJob(result, { clientName: client_name, clientNo: client_no, matterNo: matter_no, matterDescription }, dates, true);
       addJobPhase(result.timings, started);
       logTimings("drafting_forms__open_session", result.timings);
       return { ...result, background_job };

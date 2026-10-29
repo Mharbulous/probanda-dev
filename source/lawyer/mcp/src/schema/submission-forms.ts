@@ -444,7 +444,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "filing_retired) with matter_board_path, milestone_path (the opened filing's or proceeding's own Milestone " +
         "page; absent for a retired filing, which has none), milestone_paths (every Milestone page, as bootstrap " +
         "describes), view_page_paths and loose_threads_path (as bootstrap describes; no page is presented at the fast " +
-        "open), so no " +
+        "open, and the view pages are written by the background job, first), so no " +
         "separate render is needed to open a session; with nothing to open, or when that render refused (open_refused " +
         "with its code and message), the matter's pages are still written, milestone_path is the page of the filing " +
         "or proceeding the refused render tried to open, or null with nothing to open. It " +
@@ -462,17 +462,6 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "party is unlinked, not of record or unchecked; offer each back to the practitioner to apply, discard or " +
         "hold (/draft). When its migrate is refused counsel_not_reconciled it goes on at schema version 42 without " +
         "migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. " +
-        "It returns ingest_coverage, read-only: the files not yet in the case database in the folders the " +
-        "practitioner's folder map (practice_data__folder_map) gives the document types the opened filing's type " +
-        "declares as its ingest inputs (opened.ingest_inputs.types), checked only when that filing has a Ready job; " +
-        "status not_applicable or unavailable means the check did not run, and with no folder map it is unavailable, " +
-        "saying so: offer the practitioner setup. Beside to_ingest, the paths, it returns " +
-        "records, one {path, verdict, source_id, possible_version_of} per to_ingest path in the same order: " +
-        "verdict none is a file with no usable record, partial a partly ingested one and failed a failed one; " +
-        "source_id is the matter-data source behind the verdict, and possible_version_of the source that file may " +
-        "be another version of; each is null when there is none. With status ok it also returns folders, every " +
-        "folder pattern the check covered, and checked_at, when it ran (UTC); name the folders checked from " +
-        "folders, never from opened.ingest_inputs alone. " +
         "When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, " +
         "matched by number and deponent code against the file names in the folder the practitioner's folder map gives court filings, with its " +
         "court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, " +

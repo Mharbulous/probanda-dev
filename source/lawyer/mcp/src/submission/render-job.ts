@@ -73,6 +73,8 @@ export interface RenderJobOptions {
   isFresh: (filingId: number) => boolean;
   /** Runs once after the last filing, when this job rendered any, before it reports done. Throws on failure. */
   settle?: () => void;
+  /** Settle once more before the first filing, even with an empty queue: session entry left pages to it. */
+  settleFirst?: boolean;
   env?: NodeJS.ProcessEnv;
 }
 
@@ -95,6 +97,7 @@ interface Job {
   render: (filingId: number) => void;
   isFresh: (filingId: number) => boolean;
   settle?: () => void;
+  settleFirst: boolean;
   promise: Promise<JobSummary>;
   resolve: (summary: JobSummary) => void;
 }
@@ -251,6 +254,15 @@ function schedule(job: Job): void {
   setImmediate(() => step(job)).unref();
 }
 
+function settle(job: Job): void {
+  if (!job.settle) return;
+  try {
+    job.settle();
+  } catch (err) {
+    job.status.write_error = { target: "settle", code: err instanceof Error ? err.message : String(err), at: nowIso() };
+  }
+}
+
 function step(job: Job): void {
   try {
     if (!ours(job)) return finish(job, false);
@@ -261,29 +273,29 @@ function step(job: Job): void {
       return finish(job, true);
     }
 
-    const id = job.status.current as number;
+    if (job.settleFirst) {
+      job.settleFirst = false;
+      settle(job);
+    }
+    const id = job.status.current;
     const started = performance.now();
-    try {
-      if (!job.skip.has(id) && !job.isFresh(id)) {
-        job.render(id);
-        job.rendered.push(id);
-        console.error(`[render-job] filing ${id} ${Math.round(performance.now() - started)} ms`);
+    if (id !== null) {
+      try {
+        if (!job.skip.has(id) && !job.isFresh(id)) {
+          job.render(id);
+          job.rendered.push(id);
+          console.error(`[render-job] filing ${id} ${Math.round(performance.now() - started)} ms`);
+        }
+        job.status.done.push(id);
+      } catch (err) {
+        job.status.failed.push({ filing_id: id, error: err instanceof Error ? err.message : String(err) });
       }
-      job.status.done.push(id);
-    } catch (err) {
-      job.status.failed.push({ filing_id: id, error: err instanceof Error ? err.message : String(err) });
     }
 
     job.status.current = job.status.queued.shift() ?? null;
     if (job.status.current === null) {
       job.status.state = "done";
-      if (job.settle && job.rendered.length > 0) {
-        try {
-          job.settle();
-        } catch (err) {
-          job.status.write_error = { target: "settle", code: err instanceof Error ? err.message : String(err), at: nowIso() };
-        }
-      }
+      if (job.rendered.length > 0) settle(job);
     }
     try {
       utimesSync(job.lockFile, new Date(), new Date());
@@ -355,6 +367,9 @@ export function startRenderJob(options: RenderJobOptions): BackgroundJob {
   const result = acquire(lockFile, options.dbPath, stall);
 
   if ("holder" in result) {
+    // This process's own running job takes over the pages session entry left to this one.
+    const live = jobs.get(lockFile);
+    if (live && options.settleFirst) live.settleFirst = true;
     const reported = mirrorStatus(options.dbPath, env);
     if (result.holder && reported.state !== "idle" && "job_id" in reported && reported.job_id === result.holder.job_id) {
       return { ...reported, joined: true } as BackgroundJob;
@@ -365,6 +380,8 @@ export function startRenderJob(options: RenderJobOptions): BackgroundJob {
   let resolve!: (summary: JobSummary) => void;
   const promise = new Promise<JobSummary>((r) => (resolve = r));
   const [current = null, ...queued] = options.queue;
+  const settleFirst = options.settle !== undefined && options.settleFirst === true;
+  const idle = current === null && !settleFirst;
   const job: Job = {
     lockFile,
     mirrorFile: hostLocalPath(options.dbPath, "render-job.status.json", env),
@@ -372,7 +389,7 @@ export function startRenderJob(options: RenderJobOptions): BackgroundJob {
     dbPath: options.dbPath,
     status: {
       job_id: result.acquired.job_id,
-      state: current === null ? "done" : "running",
+      state: idle ? "done" : "running",
       started_at: result.acquired.started_at,
       updated_at: result.acquired.started_at,
       stall_after_ms: stall,
@@ -386,6 +403,7 @@ export function startRenderJob(options: RenderJobOptions): BackgroundJob {
     render: options.render,
     isFresh: options.isFresh,
     ...(options.settle ? { settle: options.settle } : {}),
+    settleFirst,
     promise,
     resolve,
   };
@@ -393,7 +411,7 @@ export function startRenderJob(options: RenderJobOptions): BackgroundJob {
   installExitHandler();
   publish(job);
   const reported = { ...job.status } as BackgroundJob;
-  if (current === null) finish(job, true);
+  if (idle) finish(job, true);
   else schedule(job);
   return reported;
 }

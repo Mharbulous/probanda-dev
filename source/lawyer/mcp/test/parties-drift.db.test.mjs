@@ -11,6 +11,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { createRequire, syncBuiltinESMExports } from "node:module";
 import { join } from "node:path";
 import test, { after } from "node:test";
 
@@ -31,6 +32,7 @@ const {
   submissionFormsRender,
 } = await import("../build/submission/forms.js");
 const { toFiledFace } = await import("../build/submission/forms/filed-face.js");
+const { submissionFormsOpenSession } = await import("../build/submission/open-session.js");
 const { fetchRevision } = await import("../build/submission/forms/query.js");
 const { updateCaseData, writeCaseData } = await import("./helpers/matter-data-fixture.mjs");
 const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
@@ -122,6 +124,34 @@ test("a drafting Writing prints case data's counsel, not the submission copy, wi
   const filed = submissionFormsRender(m.dbPath, 1, CLIENT, "filed");
   assert.equal(filed.parties_drift_gate_failed, undefined);
   assert.match(consentOrder(filed), /Signature of Y\. Counsel, lawyer for the Defendant/);
+});
+
+// Spec 2026-10-29 (open_session server time): bootstrap, the opening render, its page write and the
+// drift report read the same parties of record, so session entry starts the reader once.
+test("session entry reads a proceeding's parties of record once", async (t) => {
+  const m = await matterFixture(t);
+  const practicePath = join(tmpdir(), `coclerk-parties-drift-practice-${randomUUID()}.db`);
+  t.after(() => rmSync(practicePath, { force: true }));
+  const context = await createDispatchContext({ ...process.env, COCLERK_DB_PATH: practicePath });
+  const childProcess = createRequire(import.meta.url)("node:child_process");
+  const spawnSync = childProcess.spawnSync;
+  let reads = 0;
+  childProcess.spawnSync = (command, args, options) => {
+    if (args?.some((a) => String(a).includes("case-parties-of-record-driver"))) reads += 1;
+    return spawnSync(command, args, options);
+  };
+  syncBuiltinESMExports();
+  let session;
+  try {
+    // Called directly, so no background job reads the parties after the call.
+    session = (await submissionFormsOpenSession(m.matterRoot, context.practiceDb)).result;
+  } finally {
+    childProcess.spawnSync = spawnSync;
+    syncBuiltinESMExports();
+  }
+  assert.equal(session.opened.filing_id, 1, "the opening rendered the drafting Writing");
+  assert.deepEqual(session.parties_drift, []);
+  assert.equal(reads, 1);
 });
 
 test("an unlinked party is drift, whatever case data says", async (t) => {

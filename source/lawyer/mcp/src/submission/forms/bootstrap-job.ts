@@ -37,8 +37,10 @@ function renderStateOf(dbPath: string, filingId: number, client: ClientContext):
  * (#1365), so the work per filing does not grow with the matter's size, with the to-dos the last registry read recorded
  * and the hearing dates its caller read, held in this closure and never persisted (ADR 0013,
  * 2026-10-04 amendment); a page write that fails is recorded on failed[] like a render that fails.
+ * `viewsPending`: session entry wrote every page but the view pages, so the job writes every page
+ * once before its first filing, whatever its queue.
  */
-export function startBootstrapJob(result: BootstrapResult, client: ClientContext, dates: MatterDates = DATES_NOT_READ): BackgroundJob {
+export function startBootstrapJob(result: BootstrapResult, client: ClientContext, dates: MatterDates = DATES_NOT_READ, viewsPending = false): BackgroundJob {
   const dbPath = result.db_path;
   if (result.migration_required || result.bundle_outdated) return backgroundJobStatus(dbPath);
   const complete = client.clientName !== undefined && client.clientNo !== undefined && client.matterNo !== undefined;
@@ -56,6 +58,6 @@ export function startBootstrapJob(result: BootstrapResult, client: ClientContext
       if (result.matter_board_path) pages(filingId);
     },
     isFresh: (filingId) => renderStateOf(dbPath, filingId, client) === "fresh",
-    ...(result.matter_board_path ? { settle: () => pages() } : {}),
+    ...(result.matter_board_path ? { settle: () => pages(), settleFirst: viewsPending } : {}),
   });
 }

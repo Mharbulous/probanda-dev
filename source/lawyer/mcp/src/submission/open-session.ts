@@ -16,8 +16,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
-import { readIngestCoverage, type IngestCoverage } from "../case/ingest-coverage.js";
-import { documentTypes, globsFor, readFolderMap, type DocumentType, type FolderMap } from "../tools/practice/folder-map.js";
+import { inOneCall } from "../call-memo.js";
 import type { PracticeStore } from "../practice/store.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { caseDataRootFromDbPath, findDraftDir, resolveDbPath, validateMatterRoot } from "../files/matter-root.js";
@@ -106,17 +105,6 @@ export interface OpenSessionResult extends BootstrapResult {
    * and the address for service that case data does not hold (counselOffers). The session offers
    * each back to the practitioner, to apply, discard or hold (/draft). */
   counsel_offers?: CounselOffer[];
-  /** Read-only: the files in the folders the practitioner's folder map gives the document types the
-   * opened filing declares as its ingest inputs (`opened.ingest_inputs.types`) the case database does
-   * not yet hold, and, when a correspondence folder is among them, the newest dated correspondence it
-   * does (/matter-data design-decisions #60). With no folder map it is `unavailable`, saying so.
-   * `to_ingest` names those files and `records` says, one entry per `to_ingest` path, why each is not
-   * held: its verdict, its source, and the source it may be another version of. `folders` names the
-   * folder patterns it covered and `checked_at` when it ran, so the input check can stand on it
-   * (/draft job-session.md). Checked only when that filing has a Ready job. `not_applicable` and `unavailable` mean the check
-   * did not run, never that the folders are ingested. The session reports it in the fast open's
-   * closing line (/draft). */
-  ingest_coverage: IngestCoverage;
   /** Present when the opened filing's kind has a court form as its venue document (form-currency.ts
    * KIND_FORM_KEYS): that form's currency (ADR 0038). The session says a non-null warning verbatim (/draft). */
   form_currency?: FormCurrency;
@@ -163,7 +151,8 @@ function trashReport(written: Pick<PagesWritten, "moved_to_trash" | "trash_skipp
  * Opens one board under the draft folder by the very render a session would call with draft_dir, so
  * every safeguard of that render runs. A refusal is reported, not thrown: the session still needs its
  * db_path, filing list and token to recover with (/draft section 11). With nothing opened, the pages
- * are written as bootstrap wrote them.
+ * are written as bootstrap wrote them. Every page but the view pages is written here; the background
+ * job writes the view pages first (forms/bootstrap-job.ts), since none is presented at the opening.
  */
 function openBoard(
   dbPath: string,
@@ -208,7 +197,7 @@ function openBoard(
       };
     }
     if (proceedingId !== undefined) {
-      const rendered = submissionFormsRenderProceedingBoard(dbPath, proceedingId, client, undefined, listed.session_token, draftDir, todos, dates);
+      const rendered = submissionFormsRenderProceedingBoard(dbPath, proceedingId, client, undefined, listed.session_token, draftDir, todos, dates, false);
       phases(rendered.timings);
       return {
         opened: { proceeding_id: proceedingId, revision: rendered.revision, rendered_at: rendered.rendered_at, board_summary: rendered.board_summary },
@@ -224,7 +213,7 @@ function openBoard(
     if (!(err instanceof DataServerError)) throw err;
     refused = { code: err.code, message: err.message };
   }
-  const pages = writeMatterPages(dbPath, draftDir, client, nowStamp(), fetchRevision(dbPath), todos, dates, timings);
+  const pages = writeMatterPages(dbPath, draftDir, client, nowStamp(), fetchRevision(dbPath), todos, dates, timings, { views: false });
   recordPagesState(dbPath, todos);
   return {
     ...(refused ? { open_refused: refused } : {}),
@@ -236,35 +225,6 @@ function openBoard(
     loose_threads_path: pages.loose_threads_path,
     ...trashReport(pages),
   };
-}
-
-/**
- * The ingest coverage of the folders the opened filing declares, read only when that filing has a
- * Ready job; otherwise not_applicable without spawning Python. "no board opened" covers no draft
- * folder, a refused opening, nothing to open, and a pre-filing proceeding's board, which has no filing.
- */
-function openedIngestCoverage(opened: OpenSessionResult["opened"], dbPath: string, root: string): IngestCoverage {
-  if (opened?.filing_id === undefined) return { status: "not_applicable", reason: "no board opened" };
-  if (opened.ingest_inputs === undefined) return { status: "not_applicable", reason: "the opened filing declares no ingest inputs" };
-  if (opened.ingest_inputs.ready_jobs.length === 0) return { status: "not_applicable", reason: "no Ready job on the opened filing" };
-  let types: DocumentType[];
-  let map: FolderMap;
-  try {
-    types = documentTypes();
-    map = readFolderMap(process.env, types);
-  } catch (err) {
-    return { status: "unavailable", reason: `the folder map could not be read: ${(err as Error).message}` };
-  }
-  if (map.status === "no_map") {
-    return { status: "unavailable", reason: `Probanda does not know where this practitioner keeps each kind of document (${map.reason}); offer to set it up` };
-  }
-  const declared = opened.ingest_inputs.types;
-  const unknown = declared.filter((id) => !types.some((t) => t.id === id));
-  if (unknown.length) {
-    return { status: "unavailable", reason: `the filing's stored layout names ${unknown.join(", ")}, which is not a document type; re-snapshot the Writing` };
-  }
-  const correspondence = types.filter((t) => t.id.startsWith("correspondence_") || t.id === "client_communications").map((t) => t.id);
-  return readIngestCoverage(dirname(dbPath), root, globsFor(map.entries, declared), globsFor(map.entries, correspondence));
 }
 
 /** The opened filing's form currency (ADR 0038), when its kind's venue document is a court form. */
@@ -346,7 +306,11 @@ function backups(dbPath: string): Set<string> {
   return new Set(existsSync(dir) ? readdirSync(dir).filter((name) => name.startsWith(prefix)) : []);
 }
 
-export async function submissionFormsOpenSession(
+/** Session entry. One practice snapshot and one parties-of-record read per proceeding serve the
+ * whole call, however many of its parts read them (call-memo.ts). */
+export const submissionFormsOpenSession = (...args: Parameters<typeof openSession>): ReturnType<typeof openSession> => inOneCall(() => openSession(...args));
+
+async function openSession(
   matterRoot: string,
   practiceDb: PracticeStore,
   client: ClientContext = {},
@@ -421,7 +385,6 @@ export async function submissionFormsOpenSession(
     draftDir === undefined || todos === undefined || dates === undefined || refused ? {} : openBoard(dbPath, draftDir, identity, todos, dates, result, filingId, timings);
   const drift = await phase("parties_drift", () => matterPartiesDrift(dbPath));
   const offers = await phase("counsel_offers", () => counselOffers(dbPath));
-  const coverage = await phase("ingest_coverage", () => openedIngestCoverage(opening.opened, dbPath, root));
   const currency = await phase("form_currency", () => openedFormCurrency(opening.opened, dbPath));
   const courtFile = await phase("court_file_affidavits", () =>
     opening.opened?.filing_id === undefined ? undefined : courtFileAffidavits(dbPath, opening.opened.filing_id, root)
@@ -443,7 +406,6 @@ export async function submissionFormsOpenSession(
       parties_drift: drift.rows,
       ...(drift.note !== undefined ? { parties_drift_note: drift.note } : {}),
       ...(offers.length > 0 ? { counsel_offers: offers } : {}),
-      ingest_coverage: coverage,
       ...(currency ? { form_currency: currency } : {}),
       ...(courtFile !== undefined ? { court_file_affidavits: courtFile } : {}),
       timings,

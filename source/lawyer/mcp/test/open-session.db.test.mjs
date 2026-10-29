@@ -332,9 +332,8 @@ test("a per-user coclerk.json with a reachable case_data_root: nothing blocks", 
   assert.equal(result.blocking, undefined);
 });
 
-// /matter-data design-decisions #60: open_session reports which files in the folders the opened
-// filing's type declares as its ingest inputs the case database does not yet hold, and checks them
-// only when that filing has a Ready job.
+// The opened filing's declared ingest inputs and Ready jobs, which the claim-time input check reads
+// (/work job-session.md). Session entry itself checks no folder.
 
 /** APPDATA pointing at a case data root with an empty firm overlay, so create_writing reads /draft's shipped tree.
  * With `map`, this machine names person "pe", whose folder map holds those entries. */
@@ -368,8 +367,6 @@ const MAP = [
 const LETTER_TYPES = ["client_communications", "retainer_and_billing", ...CORRESPONDENCE_TYPES, "court_filings"];
 
 const LETTER = { forum: null, writing: { tree: { country: "CAN", jurisdiction: "BC", venue: "_NoVenue" }, kind: "letter-to-opposing-counsel", recipient: "opposing-counsel" } };
-const VANIAC = "CAN/BC/Vancouver-International-Arbitration-Centre";
-const SUBMISSIONS = { forum: VANIAC, writing: { tree: { country: "CAN", jurisdiction: "BC", venue: "Vancouver-International-Arbitration-Centre" }, kind: "submissions_package" } };
 
 /** A matter with a 0. DRAFT folder and matter-data stores, whose one Writing is created from a shipped
  * type file; with `ready`, one queued job on that Writing. */
@@ -391,7 +388,7 @@ async function declaringFixture(t, context, { forum, writing }, { ready = true, 
   return m;
 }
 
-test("returns ingest_coverage over the letter's declared folders, naming an unrecorded correspondence file and each folder missing", async (t) => {
+test("session entry returns the opened filing's declared inputs and Ready jobs, and runs no coverage check", async (t) => {
   const context = await practiceContext(t, { withMatter: false });
   const m = await declaringFixture(t, context, LETTER);
   mkdirSync(join(m.matterRoot, "3. CORRESPONDENCE"));
@@ -400,64 +397,17 @@ test("returns ingest_coverage over the letter's declared folders, naming an unre
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
   assert.deepEqual(result.opened.ingest_inputs, { types: LETTER_TYPES, ready_jobs: [1] });
-  assert.equal(result.ingest_coverage.status, "ok", result.ingest_coverage.reason);
-  assert.deepEqual(result.ingest_coverage.to_ingest, ["3. CORRESPONDENCE\\a.pdf"]);
-  assert.deepEqual(result.ingest_coverage.missing, ["2. SOLICITOR CLIENT*", "5. COURT*"], "discovery is not a letter's input");
-  assert.ok(result.timings.some((p) => p.phase === "ingest_coverage"));
+  assert.equal("ingest_coverage" in result, false, "the input check at the claim reads the folders itself");
+  assert.equal(result.timings.some((p) => p.phase === "ingest_coverage"), false);
 });
 
-test("an ingest coverage check that outlives its budget reads unavailable, and the session still opens", async (t) => {
-  const context = await practiceContext(t, { withMatter: false });
-  const m = await declaringFixture(t, context, LETTER);
-
-  process.env.COCLERK_CASE_PYTHON_TIMEOUT_MS = "1";
-  let result;
-  try {
-    result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
-  } finally {
-    delete process.env.COCLERK_CASE_PYTHON_TIMEOUT_MS;
-  }
-
-  assert.equal(result.ingest_coverage.status, "unavailable");
-  assert.match(result.ingest_coverage.reason, /did not finish within 1ms/);
-  assert.equal(result.filings.length, 1);
-});
-
-test("a court filing's coverage checks only court and discovery, so a solicitor-client file is not listed", async (t) => {
-  const context = await practiceContext(t, { withMatter: false });
-  const m = await declaringFixture(t, context, SUBMISSIONS);
-  mkdirSync(join(m.matterRoot, "2. SOLICITOR CLIENT"));
-  writeFileSync(join(m.matterRoot, "2. SOLICITOR CLIENT", "retainer.pdf"), "r");
-
-  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
-
-  assert.deepEqual(result.opened.ingest_inputs, { types: ["court_filings", "documents_exchanged"], ready_jobs: [1] });
-  assert.equal(result.ingest_coverage.status, "ok", result.ingest_coverage.reason);
-  assert.deepEqual(result.ingest_coverage.to_ingest, []);
-  assert.deepEqual(result.ingest_coverage.missing, ["5. COURT*", "7. DISCOVERY*"]);
-});
-
-test("with no folder map the coverage check reads unavailable and says so, assuming no layout", async (t) => {
-  const context = await practiceContext(t, { withMatter: false });
-  const m = await declaringFixture(t, context, LETTER, { map: null });
-  mkdirSync(join(m.matterRoot, "3. CORRESPONDENCE"));
-  writeFileSync(join(m.matterRoot, "3. CORRESPONDENCE", "a.pdf"), "a");
-
-  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
-
-  assert.equal(result.ingest_coverage.status, "unavailable");
-  assert.match(result.ingest_coverage.reason, /does not know where this practitioner keeps each kind of document/);
-  assert.equal(result.filings.length, 1);
-});
-
-test("a declaring filing with no Ready job is not checked", async (t) => {
+test("a declaring filing with no Ready job lists none", async (t) => {
   const context = await practiceContext(t, { withMatter: false });
   const m = await declaringFixture(t, context, LETTER, { ready: false });
 
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
   assert.deepEqual(result.opened.ingest_inputs, { types: LETTER_TYPES, ready_jobs: [] });
-  assert.deepEqual(result.ingest_coverage, { status: "not_applicable", reason: "no Ready job on the opened filing" });
 });
 
 test("a caller-supplied client identity wins over the lookup's", async (t) => {
@@ -499,6 +449,45 @@ test("one 0. DRAFT folder: the Litigation Strategy and the Milestone page are wr
   assert.equal(result.timings.some((p) => p.phase === "bootstrap: matter_pages"), false, "bootstrap writes no page");
   assert.deepEqual(result.timings.map((p) => p.phase).filter((p) => p.endsWith("matter_pages")), ["open: matter_pages"]);
   assert.equal(without.timings.some((p) => p.phase.startsWith("open: ")), false, "no draft folder, no opening");
+});
+
+// Spec 2026-10-29 (open_session server time): the opening writes every page but the view pages, which
+// the background job writes first, and one practice snapshot serves the lookup, the to-dos and the dates.
+test("one practice snapshot serves the matter lookup, the to-dos and the dates", async (t) => {
+  const m = matterFixture(t);
+  await seedOneFiling(m.dbPath);
+  mkdirSync(join(m.matterRoot, "0. DRAFT"));
+  const context = await practiceContext(t);
+  const snapshot = context.practiceDb.snapshot;
+  let snapshots = 0;
+  context.practiceDb.snapshot = function () {
+    snapshots += 1;
+    return snapshot.call(this);
+  };
+
+  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+
+  assert.equal(result.matter_lookup.found, true);
+  assert.ok(["matter_lookup", "todos", "dates"].every((phase) => result.timings.some((p) => p.phase === phase)));
+  assert.equal(snapshots, 1);
+});
+
+test("session entry writes no view page, and the background job writes them with nothing to render", async (t) => {
+  const m = matterFixture(t);
+  await seedOneFiling(m.dbPath);
+  mkdirSync(join(m.matterRoot, "0. DRAFT"));
+  // No matter in the practice store, so the job queues nothing and only its settle writes pages.
+  const context = await practiceContext(t, { withMatter: false });
+
+  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+
+  assert.equal(result.background_job.current, null, "nothing to render");
+  assert.deepEqual(result.background_job.queued, []);
+  assert.ok(existsSync(result.milestone_path));
+  assert.ok(result.view_page_paths.length > 0, "the fixture's Writing has view pages");
+  for (const { path } of result.view_page_paths) assert.equal(existsSync(path), false, `${path} is left to the job`);
+  await awaitBackgroundJobs();
+  for (const { path } of result.view_page_paths) assert.ok(existsSync(path), `${path} is written by the job`);
 });
 
 // The fast open in one call: with a draft folder, session entry opens the first live filing itself
@@ -699,7 +688,6 @@ test("filing_id naming a Milestone with no Writing opens its board, with no fold
   assert.match(named.opened.board_summary, /^State: Open$/m);
   assert.equal(named.opened.filing_retired, undefined);
   assert.equal(named.milestone_path.toLowerCase(), boardPage.toLowerCase());
-  assert.equal(named.ingest_coverage.status, "not_applicable");
   assert.equal(named.form_currency, undefined);
   const folders = () => readdirSync(draftDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
   assert.deepEqual(folders(), ["Drafting records", OPENING_FOLDER], "no folder for the board: only the Writing's and the records folder");

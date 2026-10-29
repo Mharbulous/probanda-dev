@@ -63,7 +63,9 @@ export function submissionFormsRenderProceedingBoard(
   /** The matter's open to-dos, for the Litigation Strategy a render under draft_dir rewrites. */
   todos: MatterTodos = TODOS_NOT_READ,
   /** The matter's hearing dates, for the Milestone page alone (ADR 0013, 2026-10-04 amendment). */
-  dates: MatterDates = DATES_NOT_READ
+  dates: MatterDates = DATES_NOT_READ,
+  /** false at session entry, which leaves the view pages to the background job. */
+  views?: false
 ): ProceedingBoardResult {
   const timings: PhaseTimings = [];
   const started = performance.now();
@@ -86,7 +88,7 @@ export function submissionFormsRenderProceedingBoard(
   let pages: PagesWritten | undefined;
   let change: ReturnType<typeof recordPagesState>;
   if (draft !== undefined) {
-    pages = writeMatterPages(dbPath, draft, client, now, revision, todos, dates, timings, { section });
+    pages = writeMatterPages(dbPath, draft, client, now, revision, todos, dates, timings, { section, views });
     change = recordPagesState(dbPath, todos, section, sessionToken);
   }
   return {
