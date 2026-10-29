@@ -11,13 +11,16 @@ facts carry their basis of knowledge and informant. An informant the extractor
 marked `informant_privileged` is written NULL, never into main
 (ingest-extract.md L268), and an ask says so; its answer (`answers.informants`,
 locator to privileged source id) records the informant in that source's
-`fact_provenance`. A rendered `.docx` body has no exhibits: it is flipped to
-`complete` at once.
+`fact_provenance`. An id naming no privileged source is asked again; `0` means
+no document on file (a call, a meeting), and nothing more is written for it. A
+body-level privilege signal is reported, not asked. A rendered `.docx` body has
+no exhibits: it is flipped to `complete` at once.
 
 affidavit_exhibits (Pass 3): one transaction, each exhibit in its own statement
 group, so an exhibit that fails is rolled back alone and the rest go on (spec
 2.3). The exhibit's letter is the one it was dispatched for (its ref's last
-part); an extractor letter that differs fails the exhibit's contract. An
+part); an extractor letter that differs fails the exhibit's contract, and a ref
+naming no expected letter fails that exhibit alone. An
 exhibit is deduplicated by (parent, letter in its title); a row registered
 `failed` is reused and refreshed. `needs_human` or an uncertain stamp letter
 writes it `verified = 2`; a privilege signal writes it as Path B's Unclear
@@ -74,9 +77,20 @@ FROM (SELECT (SELECT min(x.fact_id) FROM main.facts x WHERE x.source_id = {BODY}
              json_extract(i.value, '$.locator') AS locator, json_extract(i.value, '$.name') AS name
       FROM json_each(:doc, '$.informants') i) n
 WHERE n.fact_id IS NOT NULL
+  AND EXISTS (SELECT 1 FROM privileged.privileged_sources s WHERE s.source_id = n.privileged_source_id)
   AND NOT EXISTS (SELECT 1 FROM privileged.fact_provenance p
                   WHERE p.fact_id = n.fact_id AND p.source_id = n.privileged_source_id)
 """
+
+# An answer naming no privileged document on file is asked again, never an error (K-M3).
+INFORMANT_UNKNOWN = {'sql': """
+SELECT 'privileged_informant' AS kind, json_extract(i.value, '$.key') AS ref,
+       'The privileged document named for the information at ' || substr(json_extract(i.value, '$.key'), 1, 40)
+       || ' was not found. Which privileged document does it come from?' AS say
+FROM json_each(:doc, '$.informants') i
+WHERE NOT EXISTS (SELECT 1 FROM privileged.privileged_sources s
+                  WHERE s.source_id = json_extract(i.value, '$.privileged_source_id'))
+""", 'ask': True}
 
 GUARD_BODY = {'sql': f"SELECT 'waiting: the affidavit body is not registered yet' WHERE {BODY} IS NULL",
               'refuse': True}
@@ -176,14 +190,18 @@ def _body_plan(request, read):
         if fact.get('informant') and row.get('informant_privileged') is True:
             # #17: the privileged identity never lands in main.
             locator = fact['locator'] or str(i)
-            if isinstance(answered.get(locator), int):
-                informants.append({'locator': fact['locator'], 'description': fact['description'],
-                                   'name': fact['informant'], 'privileged_source_id': answered[locator]})
+            answer = answered.get(locator)
+            if isinstance(answer, int) and not isinstance(answer, bool):
+                # 0: it came from no document on file (a call, a meeting), so the name stays out of
+                # the record and nothing more is written for it.
+                if answer != 0:
+                    informants.append({'key': locator, 'locator': fact['locator'], 'description': fact['description'],
+                                       'name': fact['informant'], 'privileged_source_id': answer})
             else:
                 asks.append({'kind': 'privileged_informant', 'ref': locator,
                              'say': f'The source of the information at {locator[:40]} may be privileged, so it '
                                     'was left out of the case record. Which privileged document does it come '
-                                    'from? It will be recorded there.'})
+                                    'from, if any? It will be recorded there.'})
             fact['informant'] = None
         facts.append(fact)
     if read.problems:
@@ -197,13 +215,18 @@ def _body_plan(request, read):
     other_title = (flags['other_copy'][0].get('detail') or '').strip() if flags['other_copy'] else None
     passes, markers, report = c.post_passes(request, category, request['file_path'], source['title'],
                                             None, flags)
+    for flag in c.flags_of(doc, 'privilege_signal')[:3]:
+        # A sworn body is recorded as usual; a passage that may disclose privilege is pointed out (N16).
+        where = f" (p. {flag['page']})" if isinstance(flag.get('page'), int) and not isinstance(flag.get('page'), bool) else ''
+        report.append(f'{source["title"][:60]}: a passage{where} may disclose privileged material. It was '
+                      'recorded as sworn; check whether any of it should be kept out of the case record.')
     payload = {'source': source, 'deponent': name, 'facts': facts, 'informants': informants,
                'other_copy_title': other_title}
     statements = [
         c.guard_privileged_store(), c.GUARD_PRIVILEGE_CHANGE, c.PRIOR_STATUS,
         {'sql': c.REGISTER}, {'sql': c.REFRESH},
         {'sql': UPSERT_DEPONENT}, {'sql': ASSIGN_DEPONENT},
-        c.insert_facts(with_knowledge=True), {'sql': INFORMANT_PROVENANCE},
+        c.insert_facts(with_knowledge=True), {'sql': INFORMANT_PROVENANCE}, INFORMANT_UNKNOWN,
     ]
     if route.get('rendering'):
         # A Word body embeds no exhibits (ingest-extract.md Path C): complete once Pass 1 commits.
@@ -266,7 +289,9 @@ def _exhibits_plan(request, read):
     for entry in request.get('results') or []:
         letter = (entry.get('ref') or '').rsplit(':', 1)[-1]
         if not LETTER.match(letter) or letter not in expected:
-            return {'problems': [f'{entry.get("ref")!r} is not an exhibit of this affidavit']}
+            # That exhibit alone fails, and is read once more; the rest of the call goes on (N11).
+            invalid.append(letter)
+            continue
         doc = c.load(entry)
         ex_read = c.Reader()
         ex = _exhibit(ex_read, doc, letter, uncertain)
@@ -293,6 +318,11 @@ def _exhibits_plan(request, read):
     if run.get('deferred'):
         report.append('Exhibits ' + ', '.join(run['deferred'])[:120] + ' could not be located in the file '
                       'and were not read.')
+    twice = [letter for letter in run.get('failed') or [] if letter not in written]
+    if run.get('closing') and twice:
+        # Said once, on the call that settles the affidavit (N12).
+        report.append('Exhibits ' + ', '.join(twice)[:120] + ' could not be read after two attempts and are '
+                      'marked for review.')
     return {'params': {'doc': json.dumps(payload, ensure_ascii=False)}, 'statements': statements,
             'post': [], 'markers': [], 'asks': asks, 'report': report, 'title': None, 'date': None,
             'invalid': invalid, 'pending': pending}

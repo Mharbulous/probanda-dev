@@ -25,7 +25,7 @@ import json
 import os
 import re
 
-CONTRACT_VERSION = 1
+CONTRACT_VERSION = 2
 SOURCE_CATEGORIES = ('court', 'correspondence', 'production', 'work_product', 'disbursements')
 # conventions.md 5: a prefixed note sends its row to the human queue at insert.
 PREFIXES = ('DISCREPANCY:', 'UNCONFIRMED:', 'OCR:', 'REVERIFICATION:')
@@ -288,8 +288,12 @@ def firm_wrote(request, flags):
     if os.path.splitext(stored_path(request.get('file_path')))[1].lower() in ('.eml', '.msg'):
         return False
     firm = _norm(request.get('firm_name'))
-    return bool(firm) and any(firm in _norm(f.get('detail')) or (_norm(f.get('detail')) and _norm(f.get('detail')) in firm)
-                              for f in flags.get('outgoing_letter', []))
+
+    def names(detail):
+        # Whole words only: "Quill Law" is not "Quill Lawson LLP" (N17).
+        detail = _norm(detail)
+        return bool(detail) and (f' {firm} ' in f' {detail} ' or f' {detail} ' in f' {firm} ')
+    return bool(firm) and any(names(f.get('detail')) for f in flags.get('outgoing_letter', []))
 
 
 def post_passes(request, category, file_path, title, description, flags):
@@ -319,5 +323,9 @@ def post_passes(request, category, file_path, title, description, flags):
         (markers if unattended else passes).append('other_copy')
     if category == 'correspondence' and not unattended and firm_wrote(request, flags):
         passes.append('delivery_check')
+    elif category == 'correspondence' and not unattended and flags.get('outgoing_letter') and not request.get('firm_name'):
+        # With no firm profile the firm's own letters cannot be told apart (N14): said, not skipped silently.
+        report.append("Whether this letter was delivered was not checked, because the firm's name is not set up "
+                      "in Probanda.")
     passes.append('name_check')
     return passes, list(dict.fromkeys(markers)), report

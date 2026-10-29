@@ -16,7 +16,7 @@ ingest-extract.md Path B's branch:
 
 The staged object:
 
-    {"contract": "privileged", "contract_version": 1, "ref",
+    {"contract": "privileged", "contract_version": 2, "ref",
      "document": {"title", "description", "category", "author", "recipient", "date"},
      "facts": [{"source_locator", "description", "category", "date_of_fact", "notes"}],
      "client_instructions": [{"party_name", "instructed_by", "date", "description",

@@ -41,7 +41,7 @@ def section(db):
 def run_plan(con, plan):
     """The data server's run_statements: guards refuse the whole call, a group rolls back alone."""
     params = plan["params"]
-    refused, failed, named = [], [], {}
+    refused, failed, named, counts = [], [], {}, {}
     con.isolation_level = None
     con.execute("BEGIN")
     for n, st in enumerate(plan["statements"]):
@@ -51,23 +51,32 @@ def run_plan(con, plan):
             merged = {**params, **(st.get("params") or {})}
             con.execute(f"SAVEPOINT g_{n}")
             try:
+                done = []
                 for s in st["statements"]:
-                    rows = con.execute(s["sql"], merged).fetchall()
+                    cur = con.execute(s["sql"], merged)
+                    rows = cur.fetchall()
                     if s.get("refuse") and rows:
                         raise LookupError(rows[0][0])
+                    done.append((s.get("count"), cur.rowcount))
                 con.execute(f"RELEASE g_{n}")
+                for key, n_rows in done:
+                    if key:
+                        counts[key] = counts.get(key, 0) + max(n_rows, 0)
             except Exception as exc:  # noqa: BLE001 -- the helper's own rule
                 con.execute(f"ROLLBACK TO g_{n}")
                 con.execute(f"RELEASE g_{n}")
                 failed.append((st["ref"], str(exc)))
             continue
-        rows = con.execute(st["sql"], params).fetchall()
+        cur = con.execute(st["sql"], params)
+        rows = cur.fetchall()
+        if st.get("count"):
+            counts[st["count"]] = counts.get(st["count"], 0) + max(cur.rowcount, 0)
         if st.get("refuse"):
             refused += [r[0] for r in rows]
         if st.get("value_as"):
             named[st["value_as"]] = rows[0][0] if rows else None
     con.execute("ROLLBACK" if refused else "COMMIT")
-    return {"refused": refused, "failed": failed, "named": named}
+    return {"refused": refused, "failed": failed, "named": named, "counts": counts}
 
 
 class Converters(unittest.TestCase):
@@ -114,7 +123,7 @@ class Converters(unittest.TestCase):
     # ---------------------------------------------------------------- facts (Path A)
 
     def facts(self, **extra):
-        result = {"contract": "facts", "contract_version": 1, "ref": "f1", "flags": [],
+        result = {"contract": "facts", "contract_version": 2, "ref": "f1", "flags": [],
                   "document": {"title": "Notice of Civil Claim", "description": "The claim", "category": "court",
                                "date": "2026-01-05", "author_or_filing_party": "Ada Quill",
                                "proceeding_file_number": "S-000001"},
@@ -179,7 +188,7 @@ class Converters(unittest.TestCase):
         req = self.request("facts", [result], answered={"facts": ["fact:999"], "relief": []})
         req["route"]["answers_source_id"] = 7
         _, out = self.write(ingest_facts, req)
-        self.assertEqual(out["refused"], ["unknown answered fact 999"])
+        self.assertEqual(out["refused"], ["answered: unknown answered fact 999"])
         self.assertEqual(self.q("SELECT count(*) FROM sources"), [(0,)])
 
     def test_answered_keys_come_from_the_dispatch_not_the_extraction(self):
@@ -244,6 +253,27 @@ class Converters(unittest.TestCase):
         self.assertNotIn("delivery_check", passes("Opposing Counsel LLP"))
         self.assertNotIn("delivery_check", passes("Quill Law LLP", "2. CORRESPONDENCE\\letter.eml"))
 
+    def test_whole_words_and_a_missing_firm_profile_is_said(self):
+        doc = self.facts(flags=[{"kind": "outgoing_letter", "ref": "f1", "detail": "Quill Lawson LLP"}])
+        doc["document"]["category"] = "correspondence"
+        self.assertNotIn("delivery_check", ingest_facts.plan(self.request("facts", [doc], firm_name="Quill Law"))["post"])
+        plan = ingest_facts.plan(self.request("facts", [doc], firm_name=None))
+        self.assertNotIn("delivery_check", plan["post"])
+        self.assertTrue(any("was not checked" in line for line in plan["report"]), plan["report"])
+
+    def test_universal_rules_prefixed_notes_local_dates_and_silence(self):
+        doc = self.facts(facts=[{"fact_key": "new:1", "source_locator": "para. 1", "description": "A loan was made.",
+                                 "category": "contract", "date_of_fact": None, "notes": "UNCONFIRMED: date unclear",
+                                 "evidence": {"is_proof_source": True, "strength": 1, "notes": "OCR: faint"}}],
+                         fact_positions=[], relief_items=[], relief_positions=[])
+        self.write(ingest_facts, self.request("facts", [doc]))
+        self.assertEqual(self.q("SELECT verified FROM facts"), [(2,)], "a prefixed note goes to the human queue")
+        self.assertEqual(self.q("SELECT verified FROM evidence_links"), [(2,)])
+        today = self.q("SELECT date('now','localtime')")[0][0]
+        self.assertEqual(self.q("SELECT created_date FROM facts"), [(today,)], "host-local, not the UTC default")
+        self.assertEqual(self.q("SELECT valid_from FROM evidence_links"), [(today,)])
+        self.assertEqual(self.q("SELECT count(*) FROM positions"), [(0,)], "no row means actual silence")
+
     def test_order_detection_reads_the_leading_code_and_skips_a_notice_of_application(self):
         self.assertTrue(ingest_common.is_order("5. COURT FILE\\2026-05-01 ORDR Smith.pdf", "x", None))
         self.assertFalse(ingest_common.is_order("5. COURT FILE\\2026-05-01 AFF Smith re CO.pdf", "x", None))
@@ -260,7 +290,7 @@ class Converters(unittest.TestCase):
     # ---------------------------------------------------------------- privileged (Path B)
 
     def privileged(self, **extra):
-        result = {"contract": "privileged", "contract_version": 1, "ref": "memo",
+        result = {"contract": "privileged", "contract_version": 2, "ref": "memo",
                   "document": {"title": "Memo", "category": "solicitor_client", "date": "2026-01-02"},
                   "facts": [{"source_locator": "p1", "description": "The loan was oral.", "category": "contract",
                              "date_of_fact": None, "evidence": {"is_proof_source": True, "strength": 1, "notes": None}}]}
@@ -289,7 +319,7 @@ class Converters(unittest.TestCase):
     # ---------------------------------------------------------------- affidavits (Path C)
 
     def body(self, **extra):
-        result = {"contract": "affidavit_body", "contract_version": 1, "ref": "f1", "flags": [],
+        result = {"contract": "affidavit_body", "contract_version": 2, "ref": "f1", "flags": [],
                   "deponent": {"name": "Ada Quill", "role": "plaintiff", "basis_statement": "I am."},
                   "sworn_date": "2026-03-01",
                   "body_facts": [{"source_locator": "para. 3", "description": "The loan was not repaid.",
@@ -301,7 +331,7 @@ class Converters(unittest.TestCase):
         return result
 
     def exhibit(self, letter, **extra):
-        result = {"contract": "affidavit_exhibits", "contract_version": 1, "ref": f"f1:{letter}", "flags": [],
+        result = {"contract": "affidavit_exhibits", "contract_version": 2, "ref": f"f1:{letter}", "flags": [],
                   "exhibit_letter": letter, "title": f"Doc {letter}", "description": "x", "date": None,
                   "needs_human": False,
                   "facts": [{"source_locator": "p4", "description": f"{letter} says so.", "category": "contract",
@@ -333,24 +363,30 @@ class Converters(unittest.TestCase):
 
     def test_exhibits_privilege_signal_constraint_failure_twice_failed_and_already_written(self):
         self.write_body()
-        self.con.execute("CREATE TRIGGER boom BEFORE INSERT ON facts WHEN NEW.description = 'BOOM' BEGIN SELECT RAISE(ABORT, 'boom'); END")
+        # B is already held pending a privilege decision, so a reading that cites it as proof breaks
+        # the pending-privilege guard (#49) and its group rolls back alone.
+        self.con.execute("INSERT INTO sources (category, title, parent_source_id, ingestion_status, privilege_status) "
+                         "VALUES ('court', 'Exhibit B', 1, 'complete', 'pending')")
         a = self.exhibit("A", flags=[{"kind": "privilege_signal", "ref": "p4"}])
-        b = self.exhibit("B", facts=[{"source_locator": "p6", "description": "BOOM", "category": None, "date_of_fact": None, "evidence": None}])
-        plan, out = self.write(ingest_affidavit, self.exhibits([a, b]))
+        plan, out = self.write(ingest_affidavit, self.exhibits([a, self.exhibit("B")], expected=("A", "B", "C")))
         self.assertEqual(plan["pending"], ["A"])
         self.assertEqual([ref for ref, _ in out["failed"]], ["B"])
         self.assertEqual(self.q("SELECT title, privilege_status, ingestion_status, verified FROM sources WHERE parent_source_id IS NOT NULL ORDER BY source_id"),
-                         [("Exhibit A — Doc A", "pending", "complete", 0), ("Exhibit B", None, "failed", 2)])
+                         [("Exhibit B", "pending", "complete", 0), ("Exhibit A — Doc A", "pending", "complete", 0)])
+        self.assertEqual(self.q("SELECT count(*) FROM facts WHERE description = 'B says so.'"), [(0,)], "the failed group left nothing")
         self.assertEqual(self.q("SELECT count(*) FROM evidence_links"), [(0,)], "a pending exhibit takes no links")
         self.assertEqual(self.q("SELECT ingestion_status FROM sources WHERE parent_source_id IS NULL"), [("partial",)])
-        # B fails twice: the closing call records it and completes the body.
-        self.write(ingest_affidavit, self.exhibits([], failed=["B"]))
-        self.assertEqual(self.q("SELECT notes FROM sources WHERE title = 'Exhibit B'"),
-                         [("UNCONFIRMED: the exhibit could not be read after two attempts.",)])
+        # C fails twice: the closing call records it and completes the body.
+        self.write(ingest_affidavit, self.exhibits([], expected=("A", "B", "C"), failed=["C"]))
+        self.assertEqual(self.q("SELECT notes, verified, ingestion_status FROM sources WHERE title = 'Exhibit C'"),
+                         [("UNCONFIRMED: the exhibit could not be read after two attempts.", 2, "failed")])
         self.assertEqual(self.q("SELECT ingestion_status FROM sources WHERE parent_source_id IS NULL"), [("complete",)])
         before = self.q("SELECT count(*) FROM facts")
-        _, out = self.write(ingest_affidavit, self.exhibits([self.exhibit("A")]))
+        _, out = self.write(ingest_affidavit, self.exhibits([self.exhibit("A")], expected=("A", "B", "C"), failed=["C"]))
         self.assertEqual(self.q("SELECT count(*) FROM facts"), before, "a repeat writes nothing twice")
+        # The data server's already_written test: a prior row, nothing counted, the status unchanged.
+        self.assertEqual(sum(out["counts"].values()), 0, out["counts"])
+        self.assertEqual((out["named"]["prior"], out["named"]["final"]), ("complete", "complete"))
 
     def test_the_dispatched_letter_is_authoritative(self):
         self.write_body()
@@ -358,6 +394,24 @@ class Converters(unittest.TestCase):
         self.assertEqual(plan["invalid"], ["A"])
         run_plan(self.con, plan)
         self.assertEqual(self.q("SELECT title, ingestion_status FROM sources WHERE parent_source_id IS NOT NULL"), [("Exhibit A", "failed")])
+
+    def test_an_exhibit_naming_no_expected_letter_fails_alone(self):
+        self.write_body()
+        plan, out = self.write(ingest_affidavit, self.exhibits([self.exhibit("A"), self.exhibit("b", ref="f1:b")]))
+        self.assertEqual(plan["invalid"], ["b"])
+        self.assertEqual(self.q("SELECT title FROM sources WHERE parent_source_id IS NOT NULL"), [("Exhibit A — Doc A",)])
+
+    def test_twice_failed_exhibits_are_reported_on_the_closing_call(self):
+        self.write_body()
+        req = self.exhibits([], expected=("A",), failed=["A"])
+        req["exhibits"]["closing"] = True
+        plan, _ = self.write(ingest_affidavit, req)
+        self.assertEqual(plan["report"], ["Exhibits A could not be read after two attempts and are marked for review."])
+
+    def test_a_body_privilege_signal_is_reported(self):
+        body = self.body(flags=[{"kind": "privilege_signal", "ref": "f1", "page": 2}])
+        plan = ingest_affidavit.plan(self.request("affidavit_body", [body], route={"ref": "f1", "kind": "affidavit"}))
+        self.assertTrue(any("(p. 2) may disclose privileged material" in line for line in plan["report"]), plan["report"])
 
     def test_no_exhibit_list_refuses_an_exhibit_write(self):
         self.write_body()

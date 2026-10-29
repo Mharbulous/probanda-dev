@@ -59,14 +59,14 @@ ORDER BY n.seq
 """
 
 GUARD_ANSWERED = f"""
-SELECT 'unknown answered fact ' || json_extract(p.value, '$.fact_id')
+SELECT 'answered: unknown answered fact ' || json_extract(p.value, '$.fact_id')
 FROM json_each(:doc, '$.positions') p
 WHERE json_extract(p.value, '$.fact_id') IS NOT NULL
   AND NOT EXISTS (SELECT 1 FROM main.facts f WHERE f.fact_id = json_extract(p.value, '$.fact_id')
                   AND f.description <> ''
                   AND f.source_id IS json_extract(:doc, '$.answered_source_id'))
 UNION ALL
-SELECT 'unknown answered relief ' || json_extract(r.value, '$.relief_id')
+SELECT 'answered: unknown answered relief ' || json_extract(r.value, '$.relief_id')
 FROM json_each(:doc, '$.relief_positions') r
 WHERE json_extract(r.value, '$.relief_id') IS NOT NULL
   AND NOT EXISTS (SELECT 1 FROM main.relief_items i WHERE i.relief_id = json_extract(r.value, '$.relief_id')
