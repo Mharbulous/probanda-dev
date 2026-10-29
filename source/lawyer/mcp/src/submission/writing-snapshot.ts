@@ -40,6 +40,8 @@ export interface ComposedSnapshot {
   stored: StoredLayout;
   /** The matched kinds row's recipient; null outside _NoVenue. */
   recipient: string | null;
+  /** The matched kinds row's alias names, from which creation picks the kind render accepts. */
+  aliases: string[];
   /** Whether the type file is learned (carries `learned_by: agent`). */
   learned: boolean;
 }
@@ -58,9 +60,10 @@ export function composeLayoutSnapshot(key: TreeKey, seams: KnowledgeSeams = {}):
   const rows = kinds.filter((row) => row.file === key.kind || row.aliases.some((alias) => alias.name === key.kind));
   if (rows.length !== 1) {
     const candidates = rows.map((row) => `${row.file}${row.recipient ? ` (recipient ${row.recipient})` : ""}`);
+    const accepted = kinds.flatMap((row) => [row.file, ...row.aliases.map((alias) => alias.name)]);
     throw new DataServerError(
       `kind "${key.kind}" matches ${rows.length} rows of ${folder}/Documents/kinds.json; exactly one is required ` +
-        `(candidates: ${candidates.length > 0 ? candidates.join(", ") : "none"})`,
+        (candidates.length > 0 ? `(candidates: ${candidates.join(", ")})` : `(accepted kinds: ${accepted.length > 0 ? accepted.join(", ") : "none"})`),
       "kind_unresolved"
     );
   }
@@ -111,6 +114,7 @@ export function composeLayoutSnapshot(key: TreeKey, seams: KnowledgeSeams = {}):
     type_file: typeFile,
     stored,
     recipient: rows[0].recipient ?? null,
+    aliases: rows[0].aliases.map((alias) => alias.name),
     learned: typeRead.learned === true,
   };
 }

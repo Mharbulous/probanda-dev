@@ -1,4 +1,4 @@
-// build-stamp: 6a6c547a2ac0
+// build-stamp: d62525581ca7
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -78006,7 +78006,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("create_writing"),
-      description: "Create one Writing (a filings row) on a proceeding: the one door for a new Writing, because only this tool writes its stored layout (layout_snapshot) and needs_forum_parts, and the needs-forum guard reads both at INSERT. It resolves the type file from /draft's knowledge tree by `tree` (country, jurisdiction, and a venue folder or _NoVenue) and `kind` (a row's file stem or alias in that folder's kinds index, naming exactly one row by itself), reads it and the venue's venue.md with the firm's overlay and corrections merged, validates the layout, records each cited rule_ref's passage hash, and inserts the row in one transaction. `recipient` is required under _NoVenue, where it must equal the matched row's recipient, and refused elsewhere. A venue key must equal the proceeding's forum exactly (forum_mismatch); a _NoVenue key fits any proceeding, forum or none. The signer defaults to this machine's `person` when the firm roster marks that person an active lawyer; a passed signer_key must be one; a type declaring signer: party takes signer_party_id, a party of the proceeding. Refusals write nothing: kind_unresolved, recipient_mismatch, invalid_layout (an unknown part source, a needs-forum type under _NoVenue), projection_not_built, forum_mismatch, needs_forum, invalid_signer. On a proceeding's first Writing the same transaction moves every draft attached to the proceeding's own Milestone (a client letter or reply, ADR 0042) onto the new Writing's board, which takes that board's place, so each stays on one board. Returns filing_id, needs_forum_parts, the stored layout and venue blocks, the signer, type_file, venue_file, learned and attachments_moved (how many drafts it moved; 0 on a database below schema v67). A Milestone with no Writing is never created here: its kind is refused with reserved_kind, and drafting_data__create_milestone creates it.",
+      description: "Create one Writing (a filings row) on a proceeding: the one door for a new Writing, because only this tool writes its stored layout (layout_snapshot) and needs_forum_parts, and the needs-forum guard reads both at INSERT. It resolves the type file from /draft's knowledge tree by `tree` (country, jurisdiction, and a venue folder or _NoVenue) and `kind` (a row's file stem or alias in that folder's kinds index, naming exactly one row by itself; for a bespoke type the Writing stores the alias drafting_forms__render accepts, so `notice-of-application` is stored as `notice_of_application`), reads it and the venue's venue.md with the firm's overlay and corrections merged, validates the layout, records each cited rule_ref's passage hash, and inserts the row in one transaction. `recipient` is required under _NoVenue, where it must equal the matched row's recipient, and refused elsewhere. A venue key must equal the proceeding's forum exactly (forum_mismatch); a _NoVenue key fits any proceeding, forum or none. The signer defaults to this machine's `person` when the firm roster marks that person an active lawyer; a passed signer_key must be one; a type declaring signer: party takes signer_party_id, a party of the proceeding. Refusals write nothing: kind_unresolved, recipient_mismatch, invalid_layout (an unknown part source, a needs-forum type under _NoVenue), projection_not_built, forum_mismatch, needs_forum, invalid_signer. On a proceeding's first Writing the same transaction moves every draft attached to the proceeding's own Milestone (a client letter or reply, ADR 0042) onto the new Writing's board, which takes that board's place, so each stays on one board. Returns filing_id, needs_forum_parts, the stored layout and venue blocks, the signer, type_file, venue_file, learned and attachments_moved (how many drafts it moved; 0 on a database below schema v67). A Milestone with no Writing is never created here: its kind is refused with reserved_kind, and drafting_data__create_milestone creates it.",
       inputSchema: {
         type: "object",
         properties: {
@@ -81338,7 +81338,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "6a6c547a2ac0";
+var BUILD_STAMP = false ? null : "d62525581ca7";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -91713,8 +91713,9 @@ function composeLayoutSnapshot(key, seams = {}) {
   const rows2 = kinds.filter((row2) => row2.file === key.kind || row2.aliases.some((alias) => alias.name === key.kind));
   if (rows2.length !== 1) {
     const candidates = rows2.map((row2) => `${row2.file}${row2.recipient ? ` (recipient ${row2.recipient})` : ""}`);
+    const accepted = kinds.flatMap((row2) => [row2.file, ...row2.aliases.map((alias) => alias.name)]);
     throw new DataServerError(
-      `kind "${key.kind}" matches ${rows2.length} rows of ${folder}/Documents/kinds.json; exactly one is required (candidates: ${candidates.length > 0 ? candidates.join(", ") : "none"})`,
+      `kind "${key.kind}" matches ${rows2.length} rows of ${folder}/Documents/kinds.json; exactly one is required ` + (candidates.length > 0 ? `(candidates: ${candidates.join(", ")})` : `(accepted kinds: ${accepted.length > 0 ? accepted.join(", ") : "none"})`),
       "kind_unresolved"
     );
   }
@@ -91762,6 +91763,7 @@ function composeLayoutSnapshot(key, seams = {}) {
     type_file: typeFile,
     stored,
     recipient: rows2[0].recipient ?? null,
+    aliases: rows2[0].aliases.map((alias) => alias.name),
     learned: typeRead.learned === true
   };
 }
@@ -91816,6 +91818,2401 @@ async function resnapshotWriting(dbPath, filingId, opts = {}) {
   return { filing_id: filingId, needs_forum_parts: composed.needs_forum_parts, type_file: composed.type_file, revision: Number(after.revision) };
 }
 
+// src/submission/forms/filler-registry.ts
+import { readFileSync as readFileSync24 } from "node:fs";
+
+// src/submission/forms/filing-facts.ts
+var FACTS_PART = /* @__PURE__ */ new Map([
+  ["notice_of_application", "part2"],
+  ["application_response", "part4"],
+  ["bcca_stay_response", "part2"],
+  ["bcca_factum", "part2"]
+]);
+function factsPart(kind) {
+  const part = FACTS_PART.get(kind);
+  if (part === void 0) throw new Error(`No facts Part is registered for kind ${kind}`);
+  return part;
+}
+function fetchFacts(dbPath, filingId, part) {
+  return rows(
+    dbPath,
+    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
+     FROM filing_facts ff
+     JOIN facts f ON f.id = ff.fact_id
+     LEFT JOIN documents cr ON cr.id = f.court_record
+     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = ?
+     ORDER BY ff.ordinal`,
+    [filingId, part]
+  );
+}
+function fetchStatementsOfFact(dbPath, factIds) {
+  if (factIds.length === 0) return [];
+  const placeholders = factIds.map(() => "?").join(",");
+  return rows(
+    dbPath,
+    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
+            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
+            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
+     FROM statements_of_fact sof
+     JOIN witnesses w ON w.id = sof.witness_id
+     LEFT JOIN documents doc ON doc.id = sof.instrument
+     WHERE sof.fact_id IN (${placeholders})`,
+    factIds
+  );
+}
+
+// src/submission/forms/filing-frontmatter.ts
+function filingFrontmatter(proceeding, ctx, documentType) {
+  const fields2 = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
+    proceedingFileNo: proceeding.file_number ?? "",
+    documentType,
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields2);
+}
+
+// src/submission/forms/render-application-response.ts
+function fetchHearingDetails(dbPath, filingId) {
+  const found = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  return found[0];
+}
+function hearingDateSentence(hearing) {
+  const date3 = hearing?.proposed_hearing;
+  switch (hearing?.hearing_date_position) {
+    case "none_proposed":
+      return "";
+    case "agree":
+      return date3 ? `The application respondent(s) agree to the applicant's hearing date of ${date3}.` : null;
+    case "propose_other":
+      return date3 ? `The application respondent(s) do not agree to the applicant's hearing date and propose the following date(s): ${date3}.` : null;
+    default:
+      return null;
+  }
+}
+function fetchFilingPositions(dbPath, filingId) {
+  return rows(
+    dbPath,
+    `SELECT oo.id AS opposing_order_id, oo.paragraph_number, oo.wording, oo.document_id,
+            fp.position, fp.proposed_terms
+     FROM filing_positions fp
+     JOIN opposing_orders oo ON oo.id = fp.opposing_order_id
+     WHERE fp.filing_id = ?
+     ORDER BY oo.paragraph_number`,
+    [filingId]
+  );
+}
+function resolveRespondedToDocument(dbPath, proceedingId, positions) {
+  const positionedIds = new Set(positions.map((p3) => p3.document_id));
+  let documentId;
+  if (positionedIds.size === 1) {
+    documentId = [...positionedIds][0];
+  } else if (positionedIds.size === 0) {
+    const candidates = rows(
+      dbPath,
+      `SELECT DISTINCT document_id FROM opposing_orders WHERE proceeding_id = ?`,
+      [proceedingId]
+    );
+    if (candidates.length === 1) documentId = candidates[0].document_id;
+  }
+  if (documentId === void 0) return void 0;
+  const found = rows(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
+  return found[0];
+}
+function fetchUnpositionedOrders(dbPath, filingId, documentId) {
+  return rows(
+    dbPath,
+    `SELECT oo.id, oo.paragraph_number, oo.wording
+     FROM opposing_orders oo
+     WHERE oo.document_id = ?
+       AND oo.id NOT IN (SELECT opposing_order_id FROM filing_positions WHERE filing_id = ?)
+     ORDER BY oo.paragraph_number`,
+    [documentId, filingId]
+  );
+}
+function fetchPartSixProvenance(dbPath, filingId) {
+  const found = rows(
+    dbPath,
+    `SELECT document_id, provenance FROM filing_documents WHERE filing_id = ? AND role != 'witness_statement'`,
+    [filingId]
+  );
+  return new Map(found.map((r3) => [r3.document_id, r3.provenance]));
+}
+function provenanceLabel(p3) {
+  if (p3 === "served_with_this_response") return "served with this application response";
+  if (p3 === "already_in_court_file") return "already in the court file";
+  return "";
+}
+function witnessBackedFlags(dbPath, factIds) {
+  if (factIds.length === 0) return /* @__PURE__ */ new Map();
+  const placeholders = factIds.map(() => "?").join(",");
+  const found = rows(
+    dbPath,
+    `SELECT f.id AS fact_id, EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
+     FROM facts f WHERE f.id IN (${placeholders})`,
+    factIds
+  );
+  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
+}
+function afsCheckbox(party) {
+  if (!party) return `[ ] Yes  [ ] No ${gapMarker("question")}`;
+  if (party.address_for_service_filed === "yes") return "[x] Yes  [ ] No";
+  if (party.address_for_service_filed === "no") return "[ ] Yes  [x] No";
+  return `[ ] Yes  [ ] No ${gapMarker("question")}`;
+}
+function renderApplicationResponse(ctx) {
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
+  const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
+  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
+  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
+  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
+  const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("application_response"));
+  const statementsOfFact = fetchStatementsOfFact(ctx.dbPath, facts.map((f3) => f3.id));
+  const witnessBacked = witnessBackedFlags(ctx.dbPath, facts.map((f3) => f3.id));
+  const statementsByFact = /* @__PURE__ */ new Map();
+  for (const stmt of statementsOfFact) {
+    const list = statementsByFact.get(stmt.fact_id) ?? [];
+    list.push(stmt);
+    statementsByFact.set(stmt.fact_id, list);
+  }
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
+  const lawBySubmission = groupSubmissionLaw(lawRows);
+  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
+  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
+  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
+    ctx.dbPath,
+    allFactIds,
+    opposingPartyIds(ctx.parties),
+    ctx.rendered.slice(0, 10)
+  );
+  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
+  for (const s3 of [...statementsOfFact, ...submissionFactStatements]) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const provenanceMap = fetchPartSixProvenance(ctx.dbPath, ctx.filing.id);
+  const lines2 = [];
+  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Application_response"));
+  lines2.push("");
+  lines2.push(
+    styleOfProceedingCaption(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      titleLine: "APPLICATION RESPONSE"
+    })
+  );
+  lines2.push("");
+  const clientName = client?.name ?? gapMarker("gap");
+  const applicantName = applicant?.name ?? gapMarker("gap");
+  const datedOn = respondedTo?.document_date ?? gapMarker("gap");
+  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : gapMarker("gap");
+  const hearingDate = hearingDateSentence(hearing) ?? `The application respondent(s) ${gapMarker("gap")}`;
+  recordCriterionGlyphs(ctx.inventory, clientName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of application respondent" });
+  recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Name of applicant" });
+  recordCriterionGlyphs(ctx.inventory, datedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date of the notice of application" });
+  recordCriterionGlyphs(ctx.inventory, estimate, ["\u{1F9E9}"], { table: "form_fields", id: 3, item: "Time estimate" });
+  recordCriterionGlyphs(ctx.inventory, hearingDate, ["\u{1F9E9}"], { table: "form_fields", id: 4, item: "Whether the application respondent agrees with the applicant's hearing date" });
+  lines2.push(`Application response of: the ${client?.role ?? "Application Respondent"}, ${clientName}`);
+  lines2.push(
+    `THIS IS A RESPONSE TO the notice of application of the ${applicant?.role ?? "Applicant"}, ${applicantName}, dated ${datedOn}.`
+  );
+  lines2.push("");
+  if (hearingDate !== "") {
+    lines2.push(hearingDate);
+    lines2.push("");
+  }
+  lines2.push(`The application respondent estimates that the application will take ${estimate}`);
+  lines2.push("");
+  const consented = positions.filter((p3) => p3.position === "consented");
+  const opposed = positions.filter((p3) => p3.position === "opposed");
+  const noPosition = positions.filter((p3) => p3.position === "no_position");
+  lines2.push("## PART 1: ORDER(S) CONSENTED TO");
+  lines2.push("");
+  if (consented.length === 0) {
+    lines2.push("NONE");
+  } else {
+    consented.forEach((p3) => {
+      const terms2 = p3.proposed_terms || `Order ${p3.paragraph_number}`;
+      lines2.push(`Order ${p3.paragraph_number}: ${p3.wording} -- consented, on the following terms: ${terms2} <!-- order ${p3.paragraph_number} -->`);
+    });
+  }
+  lines2.push("");
+  lines2.push("## PART 2: ORDER(S) OPPOSED");
+  lines2.push("");
+  if (opposed.length === 0) {
+    lines2.push("The application respondent(s) oppose(s) the granting of NONE of the orders set out in Part 1 of the notice of application.");
+  } else {
+    lines2.push(
+      `The application respondent(s) oppose(s) the granting of the orders set out in paragraphs ${opposed.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
+    );
+    opposed.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
+  }
+  lines2.push("");
+  lines2.push("## PART 3: ORDER(S) ON WHICH NO POSITION IS TAKEN");
+  lines2.push("");
+  if (noPosition.length === 0) {
+    lines2.push("The application respondent(s) take(s) no position on the granting of NONE of the orders set out in Part 1 of the notice of application.");
+  } else {
+    lines2.push(
+      `The application respondent(s) take(s) no position on the granting of the orders set out in paragraphs ${noPosition.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
+    );
+    noPosition.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
+  }
+  lines2.push("");
+  if (unpositioned.length > 0) {
+    lines2.push("## Positions not yet taken");
+    lines2.push("");
+    unpositioned.forEach((o3) => {
+      const marker = unpositionedOrderMarker();
+      recordCriterionGlyphs(ctx.inventory, marker, ["\u2B1C"], { table: "opposing_orders", id: o3.id, item: o3.wording, instance: "unpositioned-order" });
+      lines2.push(`- Order ${o3.paragraph_number}: ${o3.wording} ${marker} <!-- order ${o3.paragraph_number} -->`);
+    });
+    lines2.push("");
+  }
+  let partNum = 0;
+  lines2.push("## PART 4: FACTUAL BASIS");
+  lines2.push("");
+  const factParagraphs = /* @__PURE__ */ new Map();
+  for (const entry2 of interleave(facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), (f3) => f3.filing_ordinal)) {
+    partNum += 1;
+    if (entry2.kind === "rhetoric") {
+      lines2.push(...renderRhetoricLine(ctx, entry2.row, partNum, ""));
+      continue;
+    }
+    const f3 = entry2.item;
+    factParagraphs.set(f3.id, partNum);
+    const stmts = statementsByFact.get(f3.id) ?? [];
+    const admitted = admittedFactIds.has(f3.id);
+    const courtRecordLinked = f3.court_record !== null;
+    const owedWitness = noWitnessMarker(courtRecordLinked, witnessBacked.get(f3.id) ?? false, admitted, spentGlyphByFact.get(f3.id) ?? "");
+    const witnessSuppressed = suppressedFactIds.has(f3.id);
+    const witnessMarker = suppressMarker(owedWitness, witnessSuppressed);
+    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
+    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
+    const looseThread = looseThreadMarker(true, waIds.factIds.has(f3.id));
+    recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
+    recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
+    const tokens2 = [witnessMarker, courtRecordPin, looseThread];
+    const statementSets = [];
+    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
+    for (const s3 of stmts) {
+      const statementTokens = [];
+      statementSets.push(statementTokens);
+      if (!guarded) {
+        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
+      }
+      statementTokens.push(
+        statementOfFactMarkers({
+          interviewed: s3.interviewed,
+          instrument_id: s3.instrument_id,
+          instrument_kind: s3.instrument_kind,
+          instrument_execution: s3.instrument_execution,
+          fact_court_record_linked: courtRecordLinked,
+          fact_admitted_by_all_opposing: admitted
+        })
+      );
+      statementTokens.push(doubtMarker(s3.doubt));
+      if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
+      tokens2.push(...statementTokens);
+      recordFactStatementGlyphs(
+        ctx.inventory,
+        dedupeLineMarkers(statementTokens),
+        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
+        f3.postulate
+      );
+    }
+    const lineGlyphs = dedupeLineMarkers(tokens2);
+    const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
+    stmts.forEach((s3, i3) => {
+      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
+    });
+    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
+    const citationLines = [
+      ...courtRecordCite ? [`> ${courtRecordCite}`] : [],
+      ...stmts.filter((s3) => s3.purpose !== "impeachment").flatMap((s3) => factStatementCitationLine(exhibitMap, labelMap, s3) ?? [])
+    ];
+    const trace = `<!-- fact ${partNum} -->`;
+    lines2.push(`${partNum}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
+    citationLines.forEach((c3, i3) => lines2.push(`   ${c3}${i3 === citationLines.length - 1 ? ` ${trace}` : ""}`));
+  }
+  lines2.push("");
+  lines2.push("## PART 5: LEGAL BASIS");
+  lines2.push("");
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
+    if (entry2.kind === "rhetoric") {
+      partNum += 1;
+      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, partNum, ""), "");
+      continue;
+    }
+    const s3 = entry2.item;
+    recordParagraph(ctx, s3.id, "form", partNum);
+    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s3.id));
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_submissions", id: s3.pointer_id, item: s3.contention });
+    const result = renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      partNum,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      looseThread,
+      renderedLawAssertions,
+      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings, factParagraphs, printUnplacedFacts: Boolean(ctx.filing.filed_on || ctx.filing.retired_on) }
+    );
+    lines2.push(...result.lines);
+    lines2.push("");
+    partNum = result.nextPara;
+  }
+  lines2.push("## PART 6: MATERIAL TO BE RELIED ON");
+  lines2.push("");
+  docs.forEach((d3, i3) => {
+    const copy = copyMarkers.get(d3.document_id) ?? "";
+    recordCriterionGlyphs(ctx.inventory, copy, ["\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
+    const provenance4 = provenanceLabel(provenanceMap.get(d3.document_id));
+    const provenancePart = provenance4 ? ` (${provenance4})` : "";
+    lines2.push(
+      `${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${provenancePart}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
+    );
+  });
+  STANDARD_MATERIAL_LINES.forEach((text8, i3) => lines2.push(`${docs.length + i3 + 1}. ${text8}`));
+  lines2.push("");
+  lines2.push("**Address for service filed:**");
+  const afs = afsCheckbox(client);
+  recordCriterionGlyphs(ctx.inventory, afs, ["\u{1F575}\uFE0F"], { table: "filings", id: ctx.filing.id, item: "Address for service filed" });
+  lines2.push(afs);
+  lines2.push("");
+  lines2.push(checkboxOrderBlock([]));
+  lines2.push("");
+  if (client) lines2.push(signatureBlock({ name: client.name, role: client.role, counselName: client.counsel_name }, true));
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/render-bcca-stay-response.ts
+function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, inventory, review) {
+  const statementsByFact = /* @__PURE__ */ new Map();
+  for (const stmt of fetchStatementsOfFact(dbPath, facts.map((f3) => f3.id))) {
+    const list = statementsByFact.get(stmt.fact_id) ?? [];
+    list.push(stmt);
+    statementsByFact.set(stmt.fact_id, list);
+  }
+  const lines2 = [];
+  let para2 = startPara;
+  facts.forEach((f3) => {
+    para2 += 1;
+    const stmts = statementsByFact.get(f3.id) ?? [];
+    const admitted = admittedFactIds.has(f3.id);
+    const courtRecordLinked = f3.court_record !== null;
+    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
+    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
+    recordGlyphs(inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
+    const factTokens = [
+      suppressMarker(noWitnessMarker(courtRecordLinked, stmts.length > 0, admitted, spentGlyphByFact.get(f3.id) ?? ""), suppressedFactIds.has(f3.id)),
+      courtRecordPin
+    ];
+    const tokens2 = [...factTokens];
+    const statementSets = [];
+    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
+    for (const s3 of stmts) {
+      const statementTokens = [];
+      if (!guarded) {
+        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
+      }
+      statementTokens.push(
+        statementOfFactMarkers({
+          interviewed: s3.interviewed,
+          instrument_id: s3.instrument_id,
+          instrument_kind: s3.instrument_kind,
+          instrument_execution: s3.instrument_execution,
+          fact_court_record_linked: courtRecordLinked,
+          fact_admitted_by_all_opposing: admitted
+        })
+      );
+      tokens2.push(...statementTokens);
+      recordFactStatementGlyphs(
+        inventory,
+        dedupeLineMarkers(statementTokens),
+        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
+        f3.postulate
+      );
+      const doubtAndCopy = [doubtMarker(s3.doubt), s3.instrument_id !== null ? copyMarkers.get(s3.instrument_id) ?? "" : ""];
+      tokens2.push(...doubtAndCopy);
+      statementSets.push([...statementTokens, ...doubtAndCopy]);
+    }
+    const lineGlyphs = dedupeLineMarkers(tokens2);
+    factTokens.push(reviewMarkerFor(review, inventory, lineGlyphs, "facts", f3.id, f3.postulate));
+    stmts.forEach((s3, i3) => {
+      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(review, inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
+    });
+    const glyphs = printMarkerSets([dedupeLineMarkers(factTokens), ...statementSets.map(dedupeLineMarkers)]);
+    lines2.push(`${para2}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${courtRecordCite ? "" : ` <!-- fact ${para2} -->`}`);
+    if (courtRecordCite) lines2.push(`   > ${courtRecordCite} <!-- fact ${para2} -->`);
+  });
+  return { lines: lines2, nextPara: para2 };
+}
+function renderFactParagraphsWithRhetoric(ctx, facts, rhetoric, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds) {
+  const lines2 = [];
+  let para2 = startPara;
+  let run = [];
+  const flush = () => {
+    if (run.length === 0) return;
+    const result = renderFactParagraphs(ctx.dbPath, run, para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, ctx.inventory, ctx.review);
+    lines2.push(...result.lines);
+    para2 = result.nextPara;
+    run = [];
+  };
+  for (const entry2 of interleave(facts, rhetoric, (f3) => f3.filing_ordinal)) {
+    if (entry2.kind === "host") {
+      run.push(entry2.item);
+      continue;
+    }
+    flush();
+    para2 += 1;
+    lines2.push(...renderRhetoricLine(ctx, entry2.row, para2, ""));
+  }
+  flush();
+  return { lines: lines2, nextPara: para2 };
+}
+function fetchAffidavitDetails(dbPath, documentIds) {
+  if (documentIds.length === 0) return /* @__PURE__ */ new Map();
+  const placeholders = documentIds.map(() => "?").join(",");
+  const found = rows(
+    dbPath,
+    `SELECT d.id AS document_id, w.name AS deponent_name, d.affidavit_number
+     FROM documents d
+     LEFT JOIN witnesses w ON w.id = d.deponent
+     WHERE d.id IN (${placeholders})`,
+    documentIds
+  );
+  return new Map(found.map((r3) => [r3.document_id, r3]));
+}
+function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
+  return rows(
+    dbPath,
+    `SELECT MIN(a.id) AS id, a.style_of_cause_or_title, a.citation
+     FROM filing_submissions fs
+     JOIN submission_law slk ON slk.submission_id = fs.submission_id
+     JOIN statements_of_law sl ON sl.law_assertion_id = slk.law_assertion_id
+     JOIN authorities a ON a.id = sl.authority_id
+     WHERE fs.filing_id = ? AND fs.document = 'form' AND ${BRIEF_ONLY_CAP_SQL}
+       AND a.id NOT IN (SELECT authority_id FROM opposing_authorities WHERE proceeding_id = ? AND authority_id IS NOT NULL)
+     GROUP BY a.style_of_cause_or_title, a.citation
+     ORDER BY a.style_of_cause_or_title COLLATE NOCASE`,
+    [filingId, proceedingId]
+  );
+}
+function fetchOpposingAuthoritiesCount(dbPath, proceedingId) {
+  const found = rows(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
+  return found[0]?.n ?? 0;
+}
+function fetchAttachedExhibits(dbPath, affidavitDocumentId) {
+  return rows(
+    dbPath,
+    `SELECT DISTINCT d.id AS document_id, d.label, d.document_date
+     FROM statements_of_fact sof
+     JOIN documents d ON d.id = sof.exhibit_id
+     WHERE sof.instrument = ? AND sof.exhibit_id IS NOT NULL`,
+    [affidavitDocumentId]
+  );
+}
+function buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, onMissing) {
+  const out = [];
+  const parts = [];
+  const newPart = (text8, indent) => {
+    out.push({ text: text8, indent, part: parts.length });
+    parts.push({ bookmark: text8 });
+  };
+  out.push({ text: "Cover Page", indent: 0, part: "cover" });
+  out.push({ text: "Table of Contents", indent: 0, part: "toc" });
+  out.push({ text: "Part 1: Evidence, Exhibits or Affidavits", indent: 0, part: null });
+  docs.forEach((d3) => {
+    if (d3.role === "affidavit") {
+      const detail = affidavitDetails.get(d3.document_id);
+      const deponent = detail?.deponent_name ?? onMissing(`${d3.label}'s deponent name`, { table: "documents.deponent", id: d3.document_id, item: `${d3.label}: deponent` });
+      const number3 = detail?.affidavit_number ? ` #${detail.affidavit_number}` : "";
+      const filedDate = d3.document_date ?? onMissing(`${d3.label}'s filed date`, { table: "documents.document_date", id: d3.document_id, item: `${d3.label}: filed date` });
+      newPart(`Affidavit${number3} of ${deponent}, filed ${filedDate}`, 1);
+      const exhibits = fetchAttachedExhibits(dbPath, d3.document_id);
+      exhibits.forEach((ex) => {
+        const num = exhibitMap.get(ex.document_id) ?? onMissing(`${ex.label}'s exhibit number`, { table: "documents.exhibit_number", id: ex.document_id, item: `${ex.label}: exhibit number` });
+        out.push({ text: `Exhibit ${num}: ${ex.label} (${ex.document_date ?? "undated"})`, indent: 2, part: null });
+      });
+    } else {
+      newPart(`${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}`, 1);
+    }
+  });
+  newPart("Part 2: Written Argument", 0);
+  out.push({ text: "Part 1: Statement of Facts", indent: 1, part: null });
+  out.push({ text: "Part 2: Issues", indent: 1, part: null });
+  out.push({ text: "Part 3: Analysis", indent: 1, part: null });
+  out.push({ text: "Part 4: Order(s) Sought", indent: 1, part: null });
+  if (hasAuthorities || unverifiedDelta) newPart("Part 3: Table of Authorities", 0);
+  return { rows: out, parts };
+}
+function buildToc(inv, docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta) {
+  const out = [];
+  out.push("## TABLE OF CONTENTS");
+  out.push("");
+  out.push(
+    "<!-- Required by e-CI \xA71.2. Page numbers are TBD until the combined PDF is assembled -- fill in then, and confirm this table's numbering matches the PDF's actual page numbering (e-CI \xA71.3). -->"
+  );
+  out.push("");
+  out.push("| Item | Page |");
+  out.push("| :--- | ---: |");
+  const { rows: rows2 } = buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, (_what, gap2) => {
+    const marker = gapMarker("gap");
+    recordCriterionGlyphs(inv, marker, ["\u{1F9E9}"], gap2);
+    return marker;
+  });
+  rows2.forEach((r3) => out.push(`| ${"&nbsp;&nbsp;".repeat(r3.indent)}${r3.text} | TBD |`));
+  out.push("");
+  return out;
+}
+function recordContactGaps(inv, contacts) {
+  for (const c3 of contacts) {
+    for (const cell of contactCells(c3, gapMarker("gap"))) {
+      recordCriterionGlyphs(inv, cell.text, ["\u{1F9E9}"], { table: `counsel_of_record.${cell.column}`, id: c3.partyId, item: `Counsel for the ${pluralizeRole(c3.role, c3.names.length)}: ${cell.missing}` });
+    }
+  }
+}
+function positionsSentence(positions) {
+  return positions.map((p3) => `paragraph ${p3.paragraph_number} (${p3.wording})`).join("; ");
+}
+function renderBccaStayResponse(ctx) {
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
+  const hearingDate = rows(
+    ctx.dbPath,
+    "SELECT hearing_date, hearing_time FROM hearing_details WHERE filing_id = ?",
+    [ctx.filing.id]
+  )[0];
+  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
+  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
+  const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("bcca_stay_response"));
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
+  const lawBySubmission = groupSubmissionLaw(lawRows);
+  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
+  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
+  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
+    ctx.dbPath,
+    allFactIds,
+    opposingPartyIds(ctx.parties),
+    ctx.rendered.slice(0, 10)
+  );
+  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const orders = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const affidavitDetails = fetchAffidavitDetails(ctx.dbPath, docs.map((d3) => d3.document_id));
+  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
+  for (const s3 of submissionFactStatements) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const authorities = fetchCitedAuthorities(ctx.dbPath, ctx.filing.id, ctx.proceeding.id);
+  const unverifiedDelta = fetchOpposingAuthoritiesCount(ctx.dbPath, ctx.proceeding.id) === 0;
+  const roleGroups = groupPartiesByRole(captionParties2);
+  const clientGroup = client ? roleGroups.find((g3) => g3.role === client.role) : void 0;
+  const applicantGroup = applicant ? roleGroups.find((g3) => g3.role === applicant.role) : void 0;
+  const lowerCourtRoles = buildLowerCourtRoleByRole(ctx.parties);
+  const contacts = roleGroups.map((g3) => {
+    const rep = ctx.parties.find((p3) => p3.role === g3.role);
+    return {
+      role: g3.role,
+      names: g3.names,
+      partyId: rep.id,
+      counselName: rep?.counsel_name ?? null,
+      counselFirm: rep?.counsel_firm ?? null,
+      addressForService: rep?.address_for_service ?? null,
+      counselPhone: rep?.counsel_phone ?? null,
+      counselEmail: rep?.counsel_email ?? null
+    };
+  });
+  const lines2 = [];
+  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Response_book"));
+  lines2.push("");
+  lines2.push(
+    bccaCoverPage(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      recordLabel: "Response Book",
+      titleLine: "RESPONSE BOOK",
+      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
+      onAppealFrom: {
+        judge: ctx.proceeding.under_appeal_judge,
+        court: ctx.proceeding.under_appeal_court,
+        pronounced: ctx.proceeding.under_appeal_pronounced
+      },
+      accessRestrictions: ctx.proceeding.access_restrictions,
+      lowerCourtRoleByRole: lowerCourtRoles,
+      contacts,
+      gapMarker: gapMarker("gap")
+    })
+  );
+  recordContactGaps(ctx.inventory, contacts);
+  lines2.push("");
+  lines2.push(...buildToc(ctx.inventory, docs, affidavitDetails, exhibitMap, ctx.dbPath, authorities.length > 0, unverifiedDelta));
+  const respondents = clientGroup ? `, ${formatNameList(clientGroup.names)}` : ` ${gapMarker("gap")}`;
+  const applicants = applicantGroup ? formatNameList(applicantGroup.names) : gapMarker("gap");
+  const filedOn = respondedTo?.document_date ?? gapMarker("gap");
+  const returnable = hearingDate?.hearing_date ?? gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, respondents, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Respondents" });
+  recordCriterionGlyphs(ctx.inventory, applicants, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Applicants" });
+  recordCriterionGlyphs(ctx.inventory, filedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date the stay application was filed" });
+  recordCriterionGlyphs(ctx.inventory, returnable, ["\u{1F9E9}"], { table: "form_fields", id: 3, item: "Hearing date" });
+  lines2.push(`Response of: the ${clientGroup ? pluralizeRole(clientGroup.role, clientGroup.names.length) : "Respondent"}${respondents}`);
+  lines2.push(
+    `THIS IS A RESPONSE TO the stay application of the ${applicantGroup ? pluralizeRole(applicantGroup.role, applicantGroup.names.length) : "Applicant"}, ${applicants}, filed ${filedOn}, returnable ${returnable}${hearingDate?.hearing_time ? ` at ${hearingDate.hearing_time}` : ""}.`
+  );
+  lines2.push("");
+  lines2.push(
+    "<!-- Response book per the registrar's completion instructions (R. 21(2), leave & stay version): cover page and table of contents rendered above (e-CI \xA71.2 Required), Part 1 evidence/affidavits NOT already in the application book, Part 2 written argument with its own required cover page (e-CI \xA72.1) (MAX 5 PAGES stay-only; Arial 12, 1.5-spaced, margins >= 2.5 cm), optional Part 3 table of authorities computed as a delta against the application book's own table (e-CI \xA71.2). File AND serve at least 2 business days before the hearing (R. 21(1)(a)); one PDF <= 200 MB via CSO. Book assembly is manual for this kind -- assemble from this mockup's parts. -->"
+  );
+  lines2.push("");
+  lines2.push("## PART 1: EVIDENCE, EXHIBITS OR AFFIDAVITS");
+  lines2.push("");
+  lines2.push("<!-- Only material not otherwise included in the application book or another respondent's response book (e-CI \xA71.2). -->");
+  if (docs.length === 0) {
+    lines2.push(`NONE ${gapMarker("question")}`);
+  } else {
+    docs.forEach((d3, i3) => {
+      const detail = affidavitDetails.get(d3.document_id);
+      const deponent = d3.role === "affidavit" && detail?.deponent_name ? `, deponent ${detail.deponent_name}` : "";
+      const number3 = d3.role === "affidavit" && detail?.affidavit_number ? ` (#${detail.affidavit_number})` : "";
+      const copy = copyMarkers.get(d3.document_id) ?? "";
+      lines2.push(
+        `${i3 + 1}. ${d3.label}${number3}${d3.document_date ? ` (${d3.document_date})` : ""}${deponent}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
+      );
+    });
+  }
+  lines2.push("");
+  lines2.push("## PART 2: WRITTEN ARGUMENT");
+  lines2.push("");
+  lines2.push(
+    bccaCoverPage(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      recordLabel: "Memorandum of Argument",
+      titleLine: `WRITTEN ARGUMENT OF THE ${clientGroup ? pluralizeRole(clientGroup.role, clientGroup.names.length).toUpperCase() : "RESPONDENT"} ON A STAY APPLICATION`,
+      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
+      lowerCourtRoleByRole: lowerCourtRoles,
+      contacts,
+      gapMarker: gapMarker("gap")
+    })
+  );
+  lines2.push("");
+  lines2.push(
+    "<!-- e-CI \xA72.1: the written argument carries its own required cover page, separate from the book's outer cover. Paragraphs number consecutively from the Statement of Facts through Order Sought (e-CI \xA72.2). -->"
+  );
+  lines2.push("");
+  let para2 = 0;
+  lines2.push("### Part 1: Statement of Facts");
+  lines2.push("");
+  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  lines2.push(...factResult.lines);
+  para2 = factResult.nextPara;
+  lines2.push("");
+  lines2.push("### Part 2: Issues");
+  lines2.push("");
+  const consented = positions.filter((p3) => p3.position === "consented");
+  const opposed = positions.filter((p3) => p3.position === "opposed");
+  const noPosition = positions.filter((p3) => p3.position === "no_position");
+  opposed.forEach((p3) => {
+    para2 += 1;
+    lines2.push(`${para2}. Whether the order sought in paragraph ${p3.paragraph_number} of the notice of application should be granted: ${p3.wording} <!-- order ${p3.paragraph_number} -->`);
+  });
+  if (consented.length > 0) {
+    para2 += 1;
+    lines2.push(`${para2}. The ${client?.role ?? "Respondent"}(s) consent(s) to the order(s) sought in ${positionsSentence(consented)}.`);
+  }
+  if (noPosition.length > 0) {
+    para2 += 1;
+    lines2.push(`${para2}. The ${client?.role ?? "Respondent"}(s) take(s) no position on the order(s) sought in ${positionsSentence(noPosition)}.`);
+  }
+  if (opposed.length + consented.length + noPosition.length === 0) {
+    lines2.push(mockupMessage(gapMarker("question"), "No position has been recorded on any order sought in the notice of application."));
+  }
+  lines2.push("");
+  if (unpositioned.length > 0) {
+    lines2.push("#### Positions not yet taken");
+    lines2.push("");
+    unpositioned.forEach((o3) => {
+      lines2.push(`- Order ${o3.paragraph_number}: ${o3.wording} ${unpositionedOrderMarker()} <!-- order ${o3.paragraph_number} -->`);
+    });
+    lines2.push("");
+  }
+  lines2.push("### Part 3: Analysis");
+  lines2.push("");
+  lines2.push(
+    "<!-- e-CI \xA72.1 (stay-only): a brief statement of the reasons why the stay should or should not be granted, which should include the respondent's position on (e) the merits of the proposed appeal, (f) irreparable harm, and (g) the balance of inconvenience. -->"
+  );
+  lines2.push("");
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
+    if (entry2.kind === "rhetoric") {
+      para2 += 1;
+      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, para2, ""), "");
+      continue;
+    }
+    const s3 = entry2.item;
+    recordParagraph(ctx, s3.id, "form", para2);
+    const result = renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      para2,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      "",
+      renderedLawAssertions,
+      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
+    );
+    lines2.push(...result.lines);
+    lines2.push("");
+    para2 = result.nextPara;
+  }
+  lines2.push("### Part 4: Order(s) Sought");
+  lines2.push("");
+  let orderNum = 0;
+  for (const entry2 of interleave(orders, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders"), (o3) => o3.filing_ordinal)) {
+    if (entry2.kind === "rhetoric") {
+      para2 += 1;
+      lines2.push(...renderRhetoricLine(ctx, entry2.row, para2, ""));
+      continue;
+    }
+    const o3 = entry2.item;
+    const wording = o3.wording_override ?? o3.wording;
+    if (o3.crossed_out_on !== null) {
+      lines2.push(`~~${wording}~~ <!-- order_sought_id ${o3.id} -->`);
+    } else {
+      orderNum += 1;
+      para2 += 1;
+      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", o3);
+      lines2.push(`${para2}. ${wording}${review ? ` ${review}` : ""} <!-- order_sought_id ${o3.id} -->`);
+    }
+  }
+  if (orderNum === 0) {
+    const line = mockupMessage(gapMarker("gap"), "No order sought has been recorded for this response.");
+    recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "form_fields", id: 4, item: "Order sought" });
+    lines2.push(line);
+  }
+  lines2.push("");
+  const preparer = client?.counsel_name ?? gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, preparer, ["\u{1F9E9}"], { table: "form_fields", id: 5, item: "Preparer" });
+  lines2.push(`Prepared by: ${preparer}`);
+  lines2.push("");
+  lines2.push("## PART 3: TABLE OF AUTHORITIES (OPTIONAL)");
+  lines2.push("");
+  lines2.push(
+    unverifiedDelta ? "<!-- Alphabetical. The application book's own table of authorities has not yet been transcribed into opposing_authorities for this proceeding, so every authority this filing cites is listed below (e-CI \xA71.2) -- the delta exclusion is unverified until that transcription happens. -->" : "<!-- Alphabetical; excludes authorities already referenced in the application book (e-CI \xA71.2), computed against the transcribed opposing_authorities rows. -->"
+  );
+  if (authorities.length === 0) {
+    lines2.push("NONE");
+  } else {
+    authorities.forEach((a3, i3) => {
+      const citation = a3.citation ? `, ${a3.citation}` : ` ${gapMarker("gap")}`;
+      recordCriterionGlyphs(ctx.inventory, citation, ["\u{1F9E9}"], { table: "authority_citations", id: a3.id, item: `${a3.style_of_cause_or_title}: citation` });
+      lines2.push(`${i3 + 1}. ${a3.style_of_cause_or_title}${citation}`);
+    });
+    if (unverifiedDelta) {
+      lines2.push(
+        mockupMessage(
+          gapMarker("question"),
+          "Opposing application book's table of authorities not yet transcribed -- this list may include authorities that must be excluded once it is."
+        )
+      );
+    }
+  }
+  lines2.push("");
+  if (client) lines2.push(signatureBlock({ name: client.name, role: client.role, counselName: client.counsel_name }, false));
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/render-bcca-factum.ts
+function pushGap(ctx, lines2, line, field, item) {
+  recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "form_fields", id: field, item });
+  lines2.push(line);
+}
+var WORDS_PER_PAGE = 300;
+var PARTS_PAGE_LIMIT = 30;
+var OPENING_STATEMENT_PAGE_LIMIT = 1;
+var MONTHS2 = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+function longDate(iso2) {
+  const m3 = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso2);
+  if (!m3) return iso2;
+  return `${MONTHS2[Number(m3[2]) - 1]} ${Number(m3[3])}, ${m3[1]}`;
+}
+function fetchChronology(dbPath, filingId) {
+  return rows(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
+}
+function fetchProseParagraphs(dbPath, filingId) {
+  const found = rows(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
+  return new Map(
+    found.map((r3) => [
+      r3.slot,
+      r3.text.split(/\n\s*\n/).map((p3) => p3.trim()).filter((p3) => p3 !== "")
+    ])
+  );
+}
+function fetchCitedStatements(dbPath, lawAssertionIds) {
+  if (lawAssertionIds.length === 0) return [];
+  const placeholders = lawAssertionIds.map(() => "?").join(",");
+  return rows(
+    dbPath,
+    `SELECT sl.law_assertion_id, a.id AS authority_id, a.style_of_cause_or_title AS title, a.citation, a.kind, sl.pinpoint, sl.excerpt
+     FROM statements_of_law sl
+     JOIN authorities a ON a.id = sl.authority_id
+     WHERE sl.law_assertion_id IN (${placeholders})
+       AND ${BRIEF_ONLY_CAP_SQL}
+     ORDER BY sl.id`,
+    lawAssertionIds
+  );
+}
+function factumAuthorities(dbPath, lawParas) {
+  const byAuthority = /* @__PURE__ */ new Map();
+  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) {
+    const entry2 = byAuthority.get(s3.authority_id) ?? { authority_id: s3.authority_id, authority: s3.title, citation: s3.citation, paras: [] };
+    const para2 = lawParas.get(s3.law_assertion_id);
+    if (!entry2.paras.includes(para2)) entry2.paras.push(para2);
+    byAuthority.set(s3.authority_id, entry2);
+  }
+  return [...byAuthority.values()].map((a3) => ({ ...a3, paras: a3.paras.sort((x3, y3) => x3 - y3) })).sort((x3, y3) => x3.authority.localeCompare(y3.authority, "en", { sensitivity: "base" }));
+}
+function factumLawAssertionIds(dbPath, filingId) {
+  const submissions = fetchSubmissions(dbPath, filingId, "form");
+  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(dbPath, submissions.map((s3) => s3.id)));
+  const ids = [];
+  for (const s3 of submissions) {
+    for (const la2 of lawBySubmission.get(s3.id) ?? []) {
+      if (!ids.includes(la2.lawAssertionId)) ids.push(la2.lawAssertionId);
+    }
+  }
+  return ids;
+}
+var BOOK_AUTHORITY_KINDS = /* @__PURE__ */ new Set(["case", "doctrine", "statute", "regulation"]);
+function factumBookAuthorities(dbPath, filingId) {
+  const lawParas = new Map(factumLawAssertionIds(dbPath, filingId).map((id) => [id, 0]));
+  const key = (title, citation) => `${title}\0${citation ?? ""}`;
+  const kinds = /* @__PURE__ */ new Map();
+  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) kinds.set(key(s3.title, s3.citation), s3.kind);
+  return factumAuthorities(dbPath, lawParas).filter((a3) => BOOK_AUTHORITY_KINDS.has(kinds.get(key(a3.authority, a3.citation)) ?? "")).map(({ authority, citation }) => ({ authority, citation }));
+}
+function factumEnactments(dbPath, lawParas) {
+  const enactments = /* @__PURE__ */ new Map();
+  const rules = /* @__PURE__ */ new Map();
+  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) {
+    if (s3.kind === "rule") {
+      rules.set(s3.authority_id, `${s3.title}${s3.citation ? `, ${s3.citation}` : ""}`);
+      continue;
+    }
+    if (s3.kind !== "statute" && s3.kind !== "regulation") continue;
+    const entry2 = enactments.get(s3.authority_id) ?? { authority_id: s3.authority_id, title: s3.title, citation: s3.citation, excerpts: [] };
+    if (s3.excerpt && !entry2.excerpts.some((e3) => e3.text === s3.excerpt && e3.pinpoint === s3.pinpoint)) {
+      entry2.excerpts.push({ pinpoint: s3.pinpoint, text: s3.excerpt });
+    }
+    enactments.set(s3.authority_id, entry2);
+  }
+  return {
+    enactments: [...enactments.values()].sort((x3, y3) => x3.title.localeCompare(y3.title, "en", { sensitivity: "base" })),
+    rules: [...rules.values()]
+  };
+}
+function factumSigner(ctx) {
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  if (!client) return { roleLabel: null, name: null, line: null };
+  const group = groupPartiesByRole(ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }))).find((g3) => g3.role === client.role);
+  const roleLabel = pluralizeRole(client.role, group?.names.length ?? 1);
+  return client.counsel_name ? { roleLabel, name: client.counsel_name, line: `Counsel for the ${roleLabel}` } : { roleLabel, name: client.name, line: roleLabel };
+}
+function factumRecordLabel(roleLabel) {
+  const role = roleLabel ?? "Respondent";
+  return `${role}${role.endsWith("s") ? "'" : "'s"} Factum`;
+}
+function wordCount(lines2) {
+  return lines2.join(" ").replace(/<!--[\s\S]*?-->/g, " ").split(/\s+/).filter((w3) => /[\p{L}\p{N}]/u.test(w3)).length;
+}
+function pageBudgetLine(label2, words, limit, limitNote) {
+  const pages = Math.max(1, Math.ceil(words / WORDS_PER_PAGE));
+  const over = words > limit * WORDS_PER_PAGE;
+  return `- ${label2}: ${words} words, about ${pages} page${pages === 1 ? "" : "s"} of the ${limit}-page limit.${over ? ` **Over the limit** -- ${limitNote}` : ""}`;
+}
+function renderBccaFactum(ctx) {
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  const roleGroups = groupPartiesByRole(captionParties2);
+  const clientGroup = client ? roleGroups.find((g3) => g3.role === client.role) : void 0;
+  const signer = factumSigner(ctx);
+  const prose = fetchProseParagraphs(ctx.dbPath, ctx.filing.id);
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("bcca_factum"));
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
+  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
+  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
+  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
+    ctx.dbPath,
+    allFactIds,
+    opposingPartyIds(ctx.parties),
+    ctx.rendered.slice(0, 10)
+  );
+  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
+  for (const s3 of submissionFactStatements) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const orders = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
+  const points = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
+  const contacts = roleGroups.map((g3) => {
+    const rep = ctx.parties.find((p3) => p3.role === g3.role);
+    return {
+      role: g3.role,
+      names: g3.names,
+      partyId: rep.id,
+      counselName: rep?.counsel_name ?? null,
+      counselFirm: rep?.counsel_firm ?? null,
+      addressForService: rep?.address_for_service ?? null,
+      counselPhone: rep?.counsel_phone ?? null,
+      counselEmail: rep?.counsel_email ?? null
+    };
+  });
+  const title = factumRecordLabel(signer.roleLabel);
+  const lines2 = [];
+  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Factum"));
+  lines2.push("");
+  lines2.push(
+    bccaCoverPage(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      recordLabel: title,
+      titleLine: title.toUpperCase(),
+      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
+      onAppealFrom: {
+        judge: ctx.proceeding.under_appeal_judge,
+        court: ctx.proceeding.under_appeal_court,
+        pronounced: ctx.proceeding.under_appeal_pronounced
+      },
+      accessRestrictions: ctx.proceeding.access_restrictions,
+      lowerCourtRoleByRole: buildLowerCourtRoleByRole(ctx.parties),
+      contacts,
+      gapMarker: gapMarker("gap")
+    })
+  );
+  recordContactGaps(ctx.inventory, contacts);
+  lines2.push("");
+  lines2.push(
+    "<!-- Respondent's factum per tpl_factum_respondent.dotx and the factum completion instructions (R. 25(4)): Arial 12, 1.5 spacing, single space between paragraphs, margins >= 2.5 cm, pages numbered from the cover. No wet signature -- the name of the person authorizing filing is enough (R. 79(4)). -->"
+  );
+  lines2.push("");
+  lines2.push("## TABLE OF CONTENTS");
+  lines2.push("");
+  lines2.push("<!-- Word builds this from the headings; page numbers fill when the assembled document's fields update. -->");
+  lines2.push("");
+  for (const heading of [
+    "CHRONOLOGY",
+    "OPENING STATEMENT",
+    "PART 1 - STATEMENT OF FACTS",
+    "PART 2 - ISSUES ON APPEAL",
+    "PART 3 - ARGUMENT",
+    "PART 4 - NATURE OF ORDER SOUGHT",
+    "APPENDICES: LIST OF AUTHORITIES",
+    "APPENDICES: ENACTMENTS"
+  ]) {
+    lines2.push(`- ${heading}`);
+  }
+  lines2.push("");
+  lines2.push("## CHRONOLOGY");
+  lines2.push("");
+  const chronology = fetchChronology(ctx.dbPath, ctx.filing.id);
+  if (chronology.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No chronology events recorded."), 0, "Chronology");
+  } else {
+    lines2.push("| Date | Event |");
+    lines2.push("| :--- | :--- |");
+    chronology.forEach((c3) => lines2.push(`| ${longDate(c3.event_date)} | ${c3.event} |`));
+  }
+  lines2.push("");
+  lines2.push("## OPENING STATEMENT");
+  lines2.push("");
+  const opening = prose.get("opening_statement") ?? [];
+  if (opening.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No opening statement recorded."), 1, "Opening statement");
+  } else {
+    opening.forEach((p3) => {
+      lines2.push(p3);
+      lines2.push("");
+    });
+  }
+  lines2.push("");
+  let para2 = 0;
+  const partsStart = lines2.length;
+  lines2.push("## PART 1 - STATEMENT OF FACTS");
+  lines2.push("");
+  const factsPosition = prose.get("facts_position") ?? [];
+  if (factsPosition.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No position on the appellants' statement of facts recorded."), 2, "Position on the appellants' statement of facts");
+  }
+  factsPosition.forEach((p3) => {
+    para2 += 1;
+    lines2.push(`${para2}. ${p3}`);
+  });
+  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  lines2.push(...factResult.lines);
+  para2 = factResult.nextPara;
+  lines2.push("");
+  lines2.push("## PART 2 - ISSUES ON APPEAL");
+  lines2.push("");
+  if (submissions.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No submissions deployed to this factum."), 3, "Submissions");
+  }
+  submissions.forEach((s3) => {
+    para2 += 1;
+    const answers = points.filter((pt3) => pt3.answered_by_submission_id === s3.id).map((pt3) => pt3.component);
+    lines2.push(`${para2}. ${s3.contention}${answers.length > 0 ? ` <!-- answers: ${answers.join("; ")} -->` : ""}`);
+  });
+  lines2.push("");
+  const unanswered = points.filter((pt3) => pt3.answered_by_submission_id === null);
+  if (unanswered.length > 0) {
+    lines2.push("#### Points not yet answered");
+    lines2.push("");
+    unanswered.forEach((pt3) => {
+      lines2.push(`- ${pt3.component}${pt3.pinpoint ? ` (${pt3.pinpoint})` : ""}: ${pt3.verbatim_words ?? ""} ${rebuttalMarker(null)} <!-- opposing_point ${pt3.id} -->`);
+    });
+    lines2.push("");
+  }
+  lines2.push("## PART 3 - ARGUMENT");
+  lines2.push("");
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
+    if (entry2.kind === "rhetoric") {
+      para2 += 1;
+      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, para2, ""), "");
+      continue;
+    }
+    const s3 = entry2.item;
+    recordParagraph(ctx, s3.id, "form", para2);
+    const result = renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      para2,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      "",
+      renderedLawAssertions,
+      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
+    );
+    lines2.push(...result.lines);
+    lines2.push("");
+    para2 = result.nextPara;
+  }
+  lines2.push("## PART 4 - NATURE OF ORDER SOUGHT");
+  lines2.push("");
+  for (const row2 of fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders")) {
+    para2 += 1;
+    lines2.push(...renderRhetoricLine(ctx, row2, para2, ""), "");
+  }
+  para2 += 1;
+  const seeks = signer.roleLabel && signer.roleLabel.endsWith("s") ? "seek" : "seeks";
+  lines2.push(`${para2}. The ${(signer.roleLabel ?? "respondent").toLowerCase()} ${seeks} an Order:`);
+  lines2.push("");
+  const liveOrders = orders.filter((o3) => o3.crossed_out_on === null);
+  orders.forEach((o3) => {
+    const wording = o3.wording_override ?? o3.wording;
+    if (o3.crossed_out_on !== null) {
+      lines2.push(`~~${wording}~~ <!-- order_sought_id ${o3.id} -->`);
+    } else {
+      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", o3);
+      lines2.push(`${wording}${review ? ` ${review}` : ""} <!-- order_sought_id ${o3.id} -->`);
+    }
+    lines2.push("");
+  });
+  if (liveOrders.length === 0) {
+    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No order sought recorded. The order must include a costs disposition."), 4, "Order sought");
+    lines2.push("");
+  }
+  para2 += 1;
+  lines2.push(`${para2}. All of which is respectfully submitted.`);
+  const partsEnd = lines2.length;
+  lines2.push("");
+  const place = (prose.get("signing_place") ?? []).join(" ");
+  const signingPlace = place || gapMarker("gap");
+  const signerName = signer.name ?? gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, signingPlace, ["\u{1F9E9}"], { table: "form_fields", id: 5, item: "Place of signing" });
+  recordCriterionGlyphs(ctx.inventory, signerName, ["\u{1F9E9}"], { table: "form_fields", id: 6, item: "Name authorizing filing" });
+  lines2.push(`Dated at the City of ${signingPlace}, Province of British Columbia, this [month] [day] of [year]. <!-- date supplied when the factum is assembled -->`);
+  lines2.push("");
+  lines2.push(signerName);
+  lines2.push(signer.line ?? "");
+  lines2.push("");
+  lines2.push("## APPENDICES: LIST OF AUTHORITIES");
+  lines2.push("");
+  const authorities = factumAuthorities(ctx.dbPath, renderedLawAssertions);
+  if (authorities.length === 0) {
+    lines2.push("None.");
+  } else {
+    lines2.push("| Authorities | Page # in factum | Para # in factum |");
+    lines2.push("| :--- | :---: | :---: |");
+    authorities.forEach((a3) => {
+      const citation = a3.citation ?? gapMarker("gap");
+      recordCriterionGlyphs(ctx.inventory, citation, ["\u{1F9E9}"], { table: "authority_citations", id: a3.authority_id, item: `${a3.authority}: citation` });
+      lines2.push(`| ${a3.authority}, ${citation} | (fills in Word) | ${a3.paras.join(", ")} |`);
+    });
+  }
+  lines2.push("");
+  lines2.push("## APPENDICES: ENACTMENTS");
+  lines2.push("");
+  const { enactments, rules } = factumEnactments(ctx.dbPath, renderedLawAssertions);
+  if (enactments.length === 0) {
+    lines2.push("None.");
+    lines2.push("");
+  }
+  enactments.forEach((e3) => {
+    lines2.push(`**${e3.title}**${e3.citation ? `, ${e3.citation}` : ""}`);
+    lines2.push("");
+    if (e3.excerpts.length === 0) {
+      const line = mockupMessage(gapMarker("gap"), "No excerpt recorded for this enactment.");
+      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "enactment_excerpts", id: e3.authority_id, item: `${e3.title}: excerpt` });
+      lines2.push(line);
+      lines2.push("");
+    }
+    e3.excerpts.forEach((x3) => {
+      for (const l3 of x3.text.split("\n")) if (l3.trim() !== "") lines2.push(`> ${l3}`);
+      if (x3.pinpoint) lines2.push(`> (${x3.pinpoint})`);
+      lines2.push("");
+    });
+  });
+  if (rules.length > 0) {
+    lines2.push("#### Court rules not in this appendix");
+    lines2.push("");
+    lines2.push("These authorities are recorded as rules. The appendix takes acts and regulations only, so they are left out of the filed factum, and they are left out of the Book of Authorities too, unless recorded as a regulation. They stay on the Appendix: List of Authorities either way.");
+    lines2.push("");
+    rules.forEach((r3) => lines2.push(`- ${r3}`));
+    lines2.push("");
+  }
+  lines2.push("## Page budget");
+  lines2.push("");
+  lines2.push(`Estimated at ${WORDS_PER_PAGE} words a page. Confirm in Word once the factum is assembled.`);
+  lines2.push("");
+  lines2.push(pageBudgetLine("Opening Statement", wordCount(opening), OPENING_STATEMENT_PAGE_LIMIT, "the opening statement is limited to one page."));
+  lines2.push(
+    pageBudgetLine(
+      "Parts 1-4",
+      wordCount(lines2.slice(partsStart, partsEnd)),
+      PARTS_PAGE_LIMIT,
+      "Parts 1-4 are limited to 30 pages; more pages need an order under R. 48(1)(f)."
+    )
+  );
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/render-bcsc-affidavit.ts
+var EXHIBIT_TOKEN = /\{exhibit:(\d+)\}/g;
+function placedDocumentIds(text8) {
+  return [...text8.matchAll(EXHIBIT_TOKEN)].map((m3) => Number(m3[1]));
+}
+function letterFor(index) {
+  let out = "";
+  for (let n3 = index + 1; n3 > 0; n3 = Math.floor((n3 - 1) / 26)) out = String.fromCharCode(65 + (n3 - 1) % 26) + out;
+  return out;
+}
+function exhibitLetters(paragraphTexts) {
+  const letters = /* @__PURE__ */ new Map();
+  for (const text8 of paragraphTexts) {
+    for (const id of placedDocumentIds(text8)) if (!letters.has(id)) letters.set(id, letterFor(letters.size));
+  }
+  return letters;
+}
+function withExhibitLetters(text8, letters) {
+  return text8.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
+}
+function fetchAffidavits(dbPath, filingId) {
+  return rows(
+    dbPath,
+    `SELECT d.id, d.deponent AS witness_id, w.name AS deponent_name, d.execution, d.signed_at, d.label, d.affidavit_number
+     FROM filing_documents fd
+     JOIN documents d ON d.id = fd.document_id
+     LEFT JOIN witnesses w ON w.id = d.deponent
+     WHERE fd.filing_id = ? AND fd.role = 'affidavit' AND d.instrument = 'affidavit'
+     ORDER BY fd.ordinal`,
+    [filingId]
+  );
+}
+function affidavitFileName(a3) {
+  return `${a3.label.replace(/[\\/:*?"<>|]/g, "_").trim()}.md`;
+}
+function fetchParagraphLinks(dbPath, paragraphIds) {
+  if (paragraphIds.length === 0) return [];
+  const placeholders = paragraphIds.map(() => "?").join(",");
+  return rows(
+    dbPath,
+    `SELECT psof.statement_paragraph_id, psof.statement_of_fact_id, sof.fact_id, sof.exhibit_id
+     FROM paragraph_statements_of_fact psof
+     JOIN statements_of_fact sof ON sof.id = psof.statement_of_fact_id
+     WHERE psof.statement_paragraph_id IN (${placeholders})
+     ORDER BY sof.id`,
+    paragraphIds
+  );
+}
+function fetchPlacedInProceeding(dbPath, proceedingId) {
+  const texts = rows(
+    dbPath,
+    `SELECT sp.text FROM statement_paragraphs sp
+     JOIN documents d ON d.id = sp.document_id
+     WHERE d.proceeding_id = ? AND d.instrument = 'affidavit'`,
+    [proceedingId]
+  );
+  return new Set(texts.flatMap((t3) => placedDocumentIds(t3.text)));
+}
+function frontmatterFor2(ctx) {
+  const fields2 = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: ctx.proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, ctx.proceeding).display_label,
+    proceedingFileNo: ctx.proceeding.file_number ?? "",
+    documentType: "Affidavit",
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields2);
+}
+function renderAffidavit(ctx, a3) {
+  const paragraphs = rows(ctx.dbPath, `SELECT id, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
+  const links = fetchParagraphLinks(
+    ctx.dbPath,
+    paragraphs.map((p3) => p3.id)
+  );
+  const letters = exhibitLetters(paragraphs.map((p3) => p3.text));
+  const placedInProceeding = fetchPlacedInProceeding(ctx.dbPath, ctx.proceeding.id);
+  const labels = fetchDocumentLabels(ctx.dbPath, [.../* @__PURE__ */ new Set([...letters.keys(), ...links.flatMap((l3) => l3.exhibit_id === null ? [] : [l3.exhibit_id])])]);
+  const labelOf = (id) => labels.get(id) ?? `document ${id}`;
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const deponent = a3.deponent_name ?? "________________";
+  const lines2 = [];
+  lines2.push(frontmatterFor2(ctx));
+  lines2.push("");
+  lines2.push(`This is Affidavit #${a3.affidavit_number ?? "____"} of ${deponent} in this case and was made on ${a3.execution ?? "________________"}.`);
+  lines2.push("");
+  lines2.push(
+    styleOfProceedingCaption(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      titleLine: "AFFIDAVIT"
+    })
+  );
+  lines2.push("");
+  lines2.push(`I, ${deponent}, swear (or affirm) that:`);
+  lines2.push("");
+  const affidavitGaps = [
+    ...a3.deponent_name === null ? [{ text: "no deponent recorded", what: "deponent" }] : [],
+    ...paragraphs.length === 0 && a3.execution === null ? [{ text: "no paragraphs drafted", what: "paragraphs" }] : []
+  ];
+  for (const gap2 of affidavitGaps) {
+    const line = mockupMessage(gapMarker("gap"), gap2.text);
+    recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "documents", id: a3.id, item: `${a3.label}: ${gap2.what}` });
+    lines2.push(line);
+  }
+  paragraphs.forEach((p3, i3) => {
+    const n3 = i3 + 1;
+    const own = links.filter((l3) => l3.statement_paragraph_id === p3.id);
+    const tag = own.length > 0 ? ` [facts ${own.map((l3) => `F${l3.fact_id}`).join(", ")}]` : ` ${gapMarker("gap")} [GAP -- no fact linked]`;
+    recordCriterionGlyphs(ctx.inventory, tag, ["\u{1F9E9}"], { table: "statement_paragraphs", id: p3.id, item: `${a3.label}, paragraph ${n3}: linked fact` });
+    lines2.push(`${n3}. ${withExhibitLetters(p3.text, letters)}${tag} <!-- statement_paragraph ${n3} -->`);
+    if (own.length === 0) return;
+    const tendered = new Set(own.map((l3) => l3.exhibit_id));
+    for (const id of new Set(placedDocumentIds(p3.text))) {
+      if (tendered.has(id)) continue;
+      const line = mockupMessage(gapMarker("gap"), `Exhibit "${letters.get(id)}" (${labelOf(id)}) is attached here, but no statement of fact linked to this paragraph tenders it`);
+      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "statement_paragraphs", id: p3.id, item: `${a3.label}, paragraph ${n3}: Exhibit "${letters.get(id)}" tendered` });
+      lines2.push(`   ${line}`);
+    }
+    for (const l3 of own) {
+      if (l3.exhibit_id === null || placedInProceeding.has(l3.exhibit_id)) continue;
+      const line = mockupMessage(gapMarker("gap"), `${labelOf(l3.exhibit_id)} is tendered by a statement of fact linked to this paragraph, but no affidavit in this proceeding attaches it`);
+      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "statements_of_fact", id: l3.statement_of_fact_id, item: `${a3.label}, paragraph ${n3}: ${labelOf(l3.exhibit_id)} attached` });
+      lines2.push(`   ${line}`);
+    }
+  });
+  lines2.push("");
+  const swearMarker = a3.execution === null && links.length > 0 ? "\u2712\uFE0F" : "";
+  recordGlyphs(ctx.inventory, swearMarker, ["\u2712\uFE0F"], { table: "documents", id: a3.id, item: a3.label, witness_id: a3.witness_id ?? void 0 });
+  lines2.push(`SWORN (OR AFFIRMED) BEFORE ME at ${a3.signed_at ?? "________________"}, British Columbia on ${a3.execution ?? "________________"}. ${swearMarker}`.trim());
+  lines2.push("");
+  lines2.push("________________________________");
+  lines2.push("A commissioner for taking affidavits for British Columbia");
+  lines2.push("");
+  lines2.push("________________________________");
+  lines2.push(deponent);
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/render-requisition.ts
+function fetchAlternatives(dbPath, chosenId) {
+  return rows(
+    dbPath,
+    `SELECT id, wording, template_key, template_values, crossed_out_on
+     FROM order_sought WHERE alternative_to = ?`,
+    [chosenId]
+  );
+}
+function fetchPlacedAlternativeIds(dbPath, filing) {
+  if (filing.kind !== "requisition_default_judgment") return [];
+  return rows(
+    dbPath,
+    `SELECT o.id FROM order_sought o
+     JOIN filing_orders fo ON fo.order_sought_id = o.alternative_to
+     WHERE fo.filing_id = ? AND fo.document = 'form'`,
+    [filing.id]
+  ).map((r3) => r3.id);
+}
+function frontmatterFor3(ctx, documentType) {
+  const fields2 = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: ctx.proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, ctx.proceeding).display_label,
+    proceedingFileNo: ctx.proceeding.file_number ?? "",
+    documentType,
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields2);
+}
+function captionParties(ctx) {
+  return ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+}
+var TEMPLATE_NOT_CHOSEN = "(template not chosen)";
+var UNRECOGNIZED_TEMPLATE_KEY = 'unrecognized template_key "';
+function renderTemplate(key, valuesJson) {
+  if (!key) return `${gapMarker("unchosen")} ${TEMPLATE_NOT_CHOSEN}`;
+  let values = {};
+  if (valuesJson) {
+    try {
+      values = JSON.parse(valuesJson);
+    } catch {
+      values = {};
+    }
+  }
+  switch (key) {
+    case "sum_certain":
+      return `pay to the plaintiff(s) the sum of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
+    case "damages_to_be_assessed":
+      return "pay to the plaintiff(s) damages to be assessed";
+    case "delivery_or_assessed_value":
+      return `deliver up ${values.description ?? "(not recorded)"}, or pay the assessed value of it if delivery cannot be made`;
+    case "assessed_value_for_operative":
+      return "pay to the plaintiff(s) the assessed value of the goods claimed";
+    case "interest_as_claimed":
+      return `pay to the plaintiff(s) interest as claimed in the amount of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
+    case "interest_coia":
+      return "interest under the Court Order Interest Act";
+    case "costs_fixed":
+      return `pay to the plaintiff(s) costs in the fixed amount of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
+    case "costs_to_be_assessed":
+      return "pay to the plaintiff(s) costs to be assessed";
+    default:
+      return `${gapMarker("not_recorded")} ${UNRECOGNIZED_TEMPLATE_KEY}${key}"`;
+  }
+}
+function recordTemplateChoice(inv, r3) {
+  if (!r3.template_key) inv.push({ generating: true, slug: "choose-template", marker: "\u2B1C", table: "order_sought", id: r3.id, item: r3.wording, doc: "" });
+}
+function renderRequisitionDefaultJudgment(ctx) {
+  const defendants = ctx.parties.filter((p3) => /defendant/i.test(p3.role));
+  const plaintiff = ctx.parties.find((p3) => p3.is_client === 1) ?? ctx.parties.find((p3) => p3.is_applicant === 1);
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
+    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+    registry: ctx.proceeding.registry,
+    fileNumber: ctx.proceeding.file_number,
+    titleLine: "REQUISITION - GENERAL"
+  });
+  const defendantNames = defendants.map((d3) => d3.name).join(", ") || gapMarker("gap");
+  const filedBy = plaintiff ? `${plaintiff.role}, ${plaintiff.name}` : gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, defendantNames, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Defendants" });
+  recordCriterionGlyphs(ctx.inventory, filedBy, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Filed by" });
+  const required2 = `Search for a Response to Civil Claim filed on behalf of the Defendant, ${defendantNames} and if no Response to Civil Claim has been filed, please enter default judgment.`;
+  const checklist = [];
+  const draftOrderDoc = docs.find((d3) => d3.role === "order");
+  const affidavitDoc = docs.find((d3) => d3.role === "affidavit");
+  const orderItem = "Draft default judgment";
+  const affidavitItem = "Affidavit of service and non-delivery of a response to civil claim";
+  const orderGap = draftOrderDoc ? "" : gapMarker("unchosen");
+  const affidavitGap = affidavitDoc ? "" : gapMarker("unchosen");
+  recordGlyphs(ctx.inventory, orderGap, ["\u2B1C"], { table: "filings", id: ctx.filing.id, qualifier: "order", item: orderItem });
+  recordGlyphs(ctx.inventory, affidavitGap, ["\u2B1C"], { table: "filings", id: ctx.filing.id, qualifier: "affidavit", item: affidavitItem });
+  checklist.push(`${orderGap ? `${orderGap} ` : ""}${orderItem}`);
+  checklist.push(`${affidavitGap ? `${affidavitGap} ` : ""}${affidavitItem}`);
+  const lines2 = [];
+  lines2.push(frontmatterFor3(ctx, "Requisition"));
+  lines2.push("");
+  lines2.push(
+    requisitionWrapper({
+      captionMarkdown: caption2,
+      titleLine: "REQUISITION - GENERAL",
+      filedBy,
+      required: required2,
+      checklistLeadIn: "This requisition is supported by the following:",
+      checklist
+    })
+  );
+  lines2.push("");
+  if (plaintiff) lines2.push(signatureBlock({ name: plaintiff.name, role: plaintiff.role, counselName: plaintiff.counsel_name }, false));
+  return lines2.join("\n").trimEnd() + "\n";
+}
+function renderForm8DefaultJudgment(ctx) {
+  const defendants = ctx.parties.filter((p3) => /defendant/i.test(p3.role));
+  const chosen = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
+  const defendantNames = defendants.map((d3) => d3.name).join(", ") || gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, defendantNames, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Defendants" });
+  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
+    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+    registry: ctx.proceeding.registry,
+    fileNumber: ctx.proceeding.file_number,
+    titleLine: "DEFAULT JUDGMENT"
+  });
+  const lines2 = [];
+  lines2.push(frontmatterFor3(ctx, "Default_judgment"));
+  lines2.push("");
+  lines2.push(caption2);
+  lines2.push("");
+  lines2.push(
+    `The plaintiff(s) having filed and served a notice of civil claim and the defendant(s) ${defendantNames} having failed to file and serve a response to civil claim within the time allowed;`
+  );
+  lines2.push("");
+  let opNum = 0;
+  chosen.forEach((r3) => {
+    if (r3.crossed_out_on !== null) {
+      lines2.push(`~~the defendant(s) ${defendantNames} ${renderTemplate(r3.template_key, r3.template_values)}~~ <!-- order crossed-out ${r3.id} -->`);
+      lines2.push("");
+    } else {
+      opNum += 1;
+      const prefix = opNum === 1 ? "THIS COURT ORDERS" : "THIS COURT FURTHER ORDERS";
+      recordTemplateChoice(ctx.inventory, r3);
+      const provision = `${prefix} that the defendant(s) ${defendantNames} ${renderTemplate(r3.template_key, r3.template_values)}.`;
+      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, provision, r3);
+      lines2.push(`${provision}${review ? ` ${review}` : ""} <!-- order_sought_id ${r3.id} -->`);
+      lines2.push("");
+    }
+    const alternatives = fetchAlternatives(ctx.dbPath, r3.id);
+    for (const alt of alternatives) {
+      if (alt.crossed_out_on !== null) {
+        lines2.push(`~~in the alternative, the defendant(s) ${defendantNames} ${renderTemplate(alt.template_key, alt.template_values)}~~ <!-- order crossed-out ${alt.id} -->`);
+        continue;
+      }
+      recordTemplateChoice(ctx.inventory, alt);
+      const altProvision = `THIS COURT FURTHER ORDERS that, in the alternative, the defendant(s) ${defendantNames} ${renderTemplate(alt.template_key, alt.template_values)}.`;
+      const altReview = reviewMarkerFor(ctx.review, ctx.inventory, altProvision, "order_sought", alt.id, alt.wording);
+      lines2.push(`${altProvision}${altReview ? ` ${altReview}` : ""} <!-- order_sought_id ${alt.id} -->`);
+    }
+    if (alternatives.length > 0) lines2.push("");
+  });
+  return lines2.join("\n").trimEnd() + "\n";
+}
+function renderRequisitionConsent(ctx) {
+  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? ctx.parties.find((p3) => p3.is_client === 1);
+  const filedBy = applicant ? `${applicant.role}, ${applicant.name}` : gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, filedBy, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Filed by" });
+  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
+    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+    registry: ctx.proceeding.registry,
+    fileNumber: ctx.proceeding.file_number,
+    titleLine: "REQUISITION FOR CONSENT ORDER"
+  });
+  const checklist = [
+    "The rule or other enactment relied on is Rule 8-3.",
+    "Attached to this requisition is a draft of the order required.",
+    "Each party affected has consented to the order.",
+    "No party is under a legal disability."
+  ];
+  const lines2 = [];
+  lines2.push(frontmatterFor3(ctx, "Requisition"));
+  lines2.push("");
+  lines2.push(
+    requisitionWrapper({
+      captionMarkdown: caption2,
+      titleLine: "REQUISITION FOR CONSENT ORDER",
+      filedBy,
+      required: "An order by consent.",
+      checklist
+    })
+  );
+  lines2.push("");
+  if (applicant) lines2.push(signatureBlock({ name: applicant.name, role: applicant.role, counselName: applicant.counsel_name }, false));
+  return lines2.join("\n").trimEnd() + "\n";
+}
+function renderConsentOrder(ctx) {
+  const applicants = ctx.parties.filter((p3) => p3.is_applicant === 1);
+  const applicantNames = applicants.map((p3) => p3.name).join(", ") || ctx.parties.find((p3) => p3.is_client === 1)?.name || gapMarker("gap");
+  recordCriterionGlyphs(ctx.inventory, applicantNames, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Applicants" });
+  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
+  const withCounsel = ctx.parties.filter((p3) => p3.counsel_name);
+  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
+    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+    registry: ctx.proceeding.registry,
+    fileNumber: ctx.proceeding.file_number,
+    titleLine: "CONSENT ORDER"
+  });
+  const lines2 = [];
+  lines2.push(frontmatterFor3(ctx, "Consent_order"));
+  lines2.push("");
+  lines2.push(caption2);
+  lines2.push("");
+  lines2.push(`BEFORE A REGISTRAR )  ${ctx.rendered.slice(0, 10)}  )  )`);
+  lines2.push("");
+  lines2.push(`ON THE APPLICATION of ${applicantNames} without a hearing and by consent;`);
+  lines2.push("");
+  lines2.push("THIS COURT ORDERS that:");
+  let includedOrderNum = 0;
+  let crossedOutOrderNum = 0;
+  relief.forEach((r3) => {
+    const wording = r3.wording_override ?? r3.wording;
+    if (r3.crossed_out_on !== null) {
+      crossedOutOrderNum += 1;
+      lines2.push(`~~${wording}~~ <!-- order crossed-out ${crossedOutOrderNum} -->`);
+      return;
+    }
+    includedOrderNum += 1;
+    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", r3);
+    lines2.push(`${includedOrderNum}. ${wording}${review ? ` ${review}` : ""} <!-- order ${includedOrderNum} -->`);
+  });
+  lines2.push("");
+  lines2.push("THE FOLLOWING PARTIES APPROVE THE FORM OF THIS ORDER AND CONSENT TO EACH OF THE ORDERS, IF ANY, THAT ARE INDICATED ABOVE AS BEING BY CONSENT");
+  lines2.push("");
+  for (const party of withCounsel) {
+    lines2.push(`Signature of ${party.counsel_name}, lawyer for the ${party.role}, ${party.name}`);
+    lines2.push(`${party.counsel_name}`);
+    lines2.push("");
+  }
+  lines2.push("By the Court.");
+  lines2.push("");
+  lines2.push("Registrar");
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/render-companions.ts
+var WRITTEN_ARGUMENTS_VENUES = /* @__PURE__ */ new Map([
+  ["CAN/BC/Vancouver-International-Arbitration-Centre", { tribunal: "the Arbitral Tribunal", awardCap: true, interestAndCosts: true }],
+  ["CAN/BC/BCSC", { tribunal: "the Court", awardCap: false, interestAndCosts: false }]
+]);
+function writtenArgumentsVenue(proceeding) {
+  const venue = proceeding.forum === null ? void 0 : WRITTEN_ARGUMENTS_VENUES.get(proceeding.forum);
+  if (venue === void 0) {
+    throw new DataServerError(
+      `Proceeding ${proceeding.id} has forum ${proceeding.forum === null ? "null" : `"${proceeding.forum}"`}, which has no Written Arguments settings`,
+      "venue_unknown"
+    );
+  }
+  return venue;
+}
+function frontmatterFor4(ctx, documentType) {
+  const fields2 = {
+    clientName: ctx.clientName,
+    clientNo: ctx.clientNo,
+    matterNo: ctx.matterNo,
+    matterDescription: ctx.matterDescription,
+    venue: ctx.proceeding.court_or_centre ?? venueHeadingFor(ctx.filing, ctx.proceeding)?.display_label ?? "",
+    proceedingFileNo: ctx.proceeding.file_number ?? "",
+    documentType,
+    documentName: ctx.filing.title,
+    documentDate: BLANK_UNDERLINE,
+    revision: ctx.revision,
+    rendered: ctx.rendered
+  };
+  return frontmatterHeader(fields2);
+}
+function renderWrittenArguments(ctx, documentKey) {
+  const venue = writtenArgumentsVenue(ctx.proceeding);
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  const clientRole = client?.role ?? "Party";
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, documentKey);
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
+  const lawBySubmission = groupSubmissionLaw(lawRows);
+  const factRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const factIds = [...new Set(factRows.map((f3) => f3.fact_id))];
+  const statementRows = fetchFactStatements(ctx.dbPath, factIds);
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(ctx.dbPath, factIds, opposingPartyIds(ctx.parties), ctx.rendered.slice(0, 10));
+  const factsBySubmission = groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const exhibitDocs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, exhibitDocs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(exhibitDocs.map((d3) => d3.document_id));
+  for (const s3 of statementRows) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, documentKey);
+  const includedRelief = relief.filter((r3) => r3.crossed_out_on === null);
+  const crossedOutRelief = relief.filter((r3) => r3.crossed_out_on !== null);
+  const total = includedRelief.reduce((sum, r3) => sum + (r3.amount ?? 0), 0);
+  const servedRows = submissionIds.length === 0 ? [] : rows(
+    ctx.dbPath,
+    `SELECT sb.submission_id, sb.order_sought_id, o.crossed_out_on, o.wording
+           FROM order_sought_served_by sb
+           JOIN order_sought o ON o.id = sb.order_sought_id
+           WHERE sb.submission_id IN (${submissionIds.map(() => "?").join(",")})`,
+    submissionIds
+  );
+  const servedBySubmission = /* @__PURE__ */ new Map();
+  for (const r3 of servedRows) {
+    const list = servedBySubmission.get(r3.submission_id) ?? [];
+    list.push(r3);
+    servedBySubmission.set(r3.submission_id, list);
+  }
+  function struckSubmission(submissionId) {
+    const served = servedBySubmission.get(submissionId) ?? [];
+    if (served.length === 0 || !served.every((s3) => s3.crossed_out_on !== null)) return null;
+    return served[0];
+  }
+  const lines2 = [];
+  lines2.push(frontmatterFor4(ctx, "Written_arguments"));
+  lines2.push("");
+  lines2.push(
+    styleOfProceedingCaption(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      titleLine: `WRITTEN ARGUMENT OF THE ${clientRole.toUpperCase()}`
+    })
+  );
+  lines2.push("");
+  lines2.push("## Submissions");
+  lines2.push("");
+  let n3 = 1;
+  const struckLines = [];
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, documentKey, "submissions"), (s3) => s3.filing_ordinal)) {
+    if (entry2.kind === "rhetoric") {
+      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, n3, ""), "");
+      n3 += 1;
+      continue;
+    }
+    const s3 = entry2.item;
+    const struck = struckSubmission(s3.id);
+    if (struck) {
+      struckLines.push(`~~${s3.contention}~~ (crossed out \u2014 supports order_sought ${struck.order_sought_id}, "${struck.wording}") <!-- submission_id ${s3.id} -->`);
+      continue;
+    }
+    recordParagraph(ctx, s3.id, documentKey, n3 - 1);
+    const result = renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      n3 - 1,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      "",
+      renderedLawAssertions,
+      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
+    );
+    lines2.push(...result.lines);
+    lines2.push("");
+    n3 = result.nextPara + 1;
+  }
+  for (const line of struckLines) lines2.push(line);
+  if (struckLines.length > 0) lines2.push("");
+  if (venue.awardCap) {
+    lines2.push(`${n3}. The award sought is within the Tribunal's Rule 24(j) cap.`);
+    if (total <= 25e4) {
+      lines2.push(`   The total claimed by the ${clientRole}, exclusive of interest and costs, is $${total.toLocaleString("en-US")}.`);
+    } else {
+      lines2.push(
+        `   The total claimed by the ${clientRole}, exclusive of interest and costs, is $${total.toLocaleString("en-US")}. [PRACTITIONER \u2014 total exceeds the Rule 24(j) cap; Rule 24(h) consent position required]`
+      );
+    }
+    lines2.push("");
+    n3 += 1;
+  }
+  for (const row2 of fetchRhetoric(ctx.dbPath, ctx.filing.id, documentKey, "orders")) {
+    lines2.push(...renderRhetoricLine(ctx, row2, n3, ""), "");
+    n3 += 1;
+  }
+  const askVerb = `asks ${venue.tribunal}`;
+  lines2.push(`${n3}. The ${clientRole} ${askVerb} to award the following relief.`);
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  includedRelief.forEach((r3, i3) => {
+    const wording = r3.wording_override ?? r3.wording;
+    const amountPart = r3.amount !== null ? `$${r3.amount.toLocaleString("en-US")} \u2014 ` : "";
+    const jurMarker = recordJurisdictionLadder(ctx.inventory, r3.id, r3.wording, r3.requires);
+    const petitum = unservedPetitumMarker(r3.hasServedBy);
+    recordGlyphs(ctx.inventory, petitum, ["\u{1F9B5}"], { table: "order_sought", id: r3.id, item: r3.wording });
+    const workMarkers = dedupeLineMarkers([jurMarker, petitum]);
+    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, workMarkers, r3);
+    const lineMarkers = printMarkerSets([dedupeLineMarkers([workMarkers, review])]);
+    lines2.push(`   (${letters[i3] ?? i3 + 1}) ${amountPart}${wording}${lineMarkers ? ` ${lineMarkers}` : ""} <!-- relief_item ${letters[i3] ?? i3 + 1} -->`);
+  });
+  if (venue.interestAndCosts) {
+    lines2.push(`   (${letters[includedRelief.length] ?? "x"}) interest;`);
+    lines2.push(`   (${letters[includedRelief.length + 1] ?? "y"}) costs.`);
+  }
+  lines2.push("");
+  for (const r3 of crossedOutRelief) {
+    const wording = r3.wording_override ?? r3.wording;
+    lines2.push(`~~${wording}~~ <!-- order crossed-out order_sought_id ${r3.id} -->`);
+  }
+  if (crossedOutRelief.length > 0) lines2.push("");
+  const opposingPoints = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
+  if (opposingPoints.length > 0) {
+    lines2.push("## Opposing points");
+    lines2.push("");
+    for (const op of opposingPoints) {
+      const pinpointPart = op.pinpoint ? `, ${op.pinpoint}` : "";
+      const quotePart = op.verbatim_words ? `: "${op.verbatim_words}"` : "";
+      const rebuttal = rebuttalMarker(op.answered_by_submission_id);
+      const status3 = op.answered_by_submission_id === null ? rebuttal : `\u2014 answered by: ${op.answered_by_contention}`;
+      recordCriterionGlyphs(ctx.inventory, rebuttal, ["\u21A9\uFE0F"], { table: "opposing_points", id: op.id, item: `${op.component}${pinpointPart}${quotePart}` });
+      lines2.push(`- ${op.component}${pinpointPart}${quotePart}${status3 ? ` ${status3}` : ""} <!-- opposing_point_id ${op.id} -->`);
+    }
+    lines2.push("");
+  }
+  return lines2.join("\n").trimEnd() + "\n";
+}
+function fetchProceedingOrders(dbPath, proceedingId) {
+  const orders = rows(
+    dbPath,
+    `SELECT o.id, o.wording, o.crossed_out_on,
+            EXISTS(
+              SELECT 1 FROM order_sought_served_by sb
+              JOIN submissions s ON s.id = sb.submission_id
+              WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL
+            ) AS has_served_by
+     FROM order_sought o WHERE o.proceeding_id = ? ORDER BY o.id`,
+    [proceedingId]
+  );
+  const edgesByOrder = fetchJurisdictionEdges(dbPath, orders.map((o3) => o3.id));
+  return orders.map((o3) => ({ ...o3, hasServedBy: o3.has_served_by === 1, requires: edgesByOrder.get(o3.id) ?? [] }));
+}
+function fetchOtherFilingDeployments(dbPath, proceedingId, filingId) {
+  const filings = rows(
+    dbPath,
+    // A Milestone with no Writing deploys nothing.
+    `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
+    [proceedingId, filingId, MILESTONE_KIND]
+  );
+  const orders = /* @__PURE__ */ new Set();
+  const submissions = /* @__PURE__ */ new Set();
+  for (const f3 of filings) {
+    for (const r3 of rows(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f3.id])) {
+      orders.add(r3.order_sought_id);
+    }
+    for (const id of fetchPlacedAlternativeIds(dbPath, f3)) orders.add(id);
+    for (const r3 of rows(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f3.id])) {
+      submissions.add(r3.submission_id);
+    }
+  }
+  return { orders, submissions };
+}
+function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
+  const relied = rows(
+    dbPath,
+    `SELECT sl.law_assertion_id FROM submission_law sl
+       JOIN filing_submissions fs ON fs.submission_id = sl.submission_id
+       JOIN submissions s ON s.id = fs.submission_id AND s.killed_on IS NULL
+       JOIN filings f ON f.id = fs.filing_id
+      WHERE f.proceeding_id = ? AND f.retired_on IS NULL
+     UNION
+     SELECT r.law_assertion_id FROM order_sought_requires r
+       JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id
+       JOIN filings f ON f.id = fo.filing_id
+      WHERE f.proceeding_id = ? AND f.retired_on IS NULL AND r.law_assertion_id IS NOT NULL`,
+    [proceedingId, proceedingId]
+  );
+  return new Set(relied.map((r3) => r3.law_assertion_id));
+}
+function fetchProceedingSubmissions(dbPath, proceedingId) {
+  return rows(
+    dbPath,
+    `SELECT s.id, s.contention, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()} FROM submissions s WHERE s.proceeding_id = ? AND s.killed_on IS NULL ORDER BY s.ordinal, s.id`,
+    [proceedingId]
+  );
+}
+function fetchStruckSubmissionIds(dbPath, proceedingId) {
+  const served = rows(
+    dbPath,
+    `SELECT sb.submission_id, o.crossed_out_on
+     FROM order_sought_served_by sb
+     JOIN order_sought o ON o.id = sb.order_sought_id
+     WHERE o.proceeding_id = ?`,
+    [proceedingId]
+  );
+  const bySubmission = /* @__PURE__ */ new Map();
+  for (const r3 of served) {
+    const allStruckSoFar = bySubmission.get(r3.submission_id) ?? true;
+    bySubmission.set(r3.submission_id, allStruckSoFar && r3.crossed_out_on !== null);
+  }
+  return new Set([...bySubmission].filter(([, allStruck]) => allStruck).map(([id]) => id));
+}
+function recordReserveInventory(ctx) {
+  const formIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "form");
+  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
+  const deployedOrders = /* @__PURE__ */ new Set([...formIds.orderIds, ...waIds.orderIds, ...fetchPlacedAlternativeIds(ctx.dbPath, ctx.filing)]);
+  const deployedSubmissions = /* @__PURE__ */ new Set([...formIds.submissionIds, ...waIds.submissionIds]);
+  const elsewhere = fetchOtherFilingDeployments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id);
+  const orders = fetchProceedingOrders(ctx.dbPath, ctx.proceeding.id).filter((o3) => deployedOrders.has(o3.id) || !elsewhere.orders.has(o3.id));
+  const submissions = fetchProceedingSubmissions(ctx.dbPath, ctx.proceeding.id);
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
+  const factRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const factIds = [...new Set(factRows.map((f3) => f3.fact_id))];
+  const statementRows = fetchFactStatements(ctx.dbPath, factIds);
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
+    ctx.dbPath,
+    factIds,
+    opposingPartyIds(ctx.parties),
+    ctx.rendered.slice(0, 10)
+  );
+  const factsBySubmission = groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const exhibitDocs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, exhibitDocs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(exhibitDocs.map((d3) => d3.document_id));
+  for (const s3 of statementRows) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const struckIds = fetchStruckSubmissionIds(ctx.dbPath, ctx.proceeding.id);
+  const reliedOn = fetchLiveReliedLawAssertions(ctx.dbPath, ctx.proceeding.id);
+  function recordBody(s3, startPara, renderedLawAssertions2, paragraphPrefix) {
+    return renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      startPara,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      "",
+      renderedLawAssertions2,
+      // Site 21: the only walk where lead statements are included, so the statement-line 🔬 and its
+      // 📇 come only from here (design §4). A statement whose law assertion nothing on a live
+      // Writing relies on raises no 🔬 (spec R6, schema v47). The test is per statement, not per
+      // submission: a lead under a reserved submission keeps 🔬 while another live-deployed
+      // submission or order requires the same proposition. No `review`, so no 🧐 is recorded here.
+      { paragraphPrefix, includeLeadStatements: true, inventory: ctx.inventory, scrutinyLive: (id) => reliedOn.has(id), noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
+    );
+  }
+  for (const o3 of orders) {
+    if (deployedOrders.has(o3.id) || o3.crossed_out_on !== null) continue;
+    recordJurisdictionLadder(ctx.inventory, o3.id, o3.wording, o3.requires, false);
+    recordGlyphs(ctx.inventory, unservedPetitumMarker(o3.hasServedBy), ["\u{1F9B5}"], { table: "order_sought", id: o3.id, item: o3.wording });
+  }
+  const numbered = submissions.filter((s3) => ctx.paragraphLedger.has(s3.id));
+  const held = submissions.filter(
+    (s3) => !ctx.paragraphLedger.has(s3.id) && !struckIds.has(s3.id) && (deployedSubmissions.has(s3.id) || !elsewhere.submissions.has(s3.id))
+  );
+  for (const documentKey of ["form", "written_argument"]) {
+    const group = numbered.filter((s3) => ctx.paragraphLedger.get(s3.id)?.document === documentKey).sort((a3, b3) => (ctx.paragraphLedger.get(a3.id)?.para ?? 0) - (ctx.paragraphLedger.get(b3.id)?.para ?? 0));
+    const renderedLawAssertions2 = /* @__PURE__ */ new Map();
+    for (const s3 of group) {
+      const entry2 = ctx.paragraphLedger.get(s3.id);
+      if (entry2 === void 0) continue;
+      recordBody(s3, entry2.para - 1, renderedLawAssertions2, "");
+    }
+  }
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  let r3 = 0;
+  for (const s3 of held) r3 = recordBody(s3, r3, renderedLawAssertions, "R").nextPara;
+}
+
+// src/submission/forms/render-notice-of-application.ts
+function fetchHearingDetails2(dbPath, filingId) {
+  const found = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  return found[0];
+}
+var ASSOCIATE_JUDGE_UNDETERMINED_LINE = `Associate judge jurisdiction: not yet determined ${gapMarker("unchosen")}`;
+function fetchWitnessBackedFlags(dbPath, factIds) {
+  if (factIds.length === 0) return /* @__PURE__ */ new Map();
+  const placeholders = factIds.map(() => "?").join(",");
+  const found = rows(
+    dbPath,
+    `SELECT f.id AS fact_id,
+            EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
+     FROM facts f WHERE f.id IN (${placeholders})`,
+    factIds
+  );
+  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
+}
+function renderNoticeOfApplication(ctx) {
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? ctx.parties.find((p3) => p3.is_client === 1);
+  const served = ctx.parties.filter((p3) => p3.to_be_served === 1);
+  const hearing = fetchHearingDetails2(ctx.dbPath, ctx.filing.id);
+  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
+  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("notice_of_application"));
+  const statementsOfFact = fetchStatementsOfFact(
+    ctx.dbPath,
+    facts.map((f3) => f3.id)
+  );
+  const witnessBacked = fetchWitnessBackedFlags(
+    ctx.dbPath,
+    facts.map((f3) => f3.id)
+  );
+  const statementsByFact = /* @__PURE__ */ new Map();
+  for (const stmt of statementsOfFact) {
+    const list = statementsByFact.get(stmt.fact_id) ?? [];
+    list.push(stmt);
+    statementsByFact.set(stmt.fact_id, list);
+  }
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
+  const lawBySubmission = groupSubmissionLaw(lawRows);
+  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
+  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
+  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
+    ctx.dbPath,
+    allFactIds,
+    opposingPartyIds(ctx.parties),
+    ctx.rendered.slice(0, 10)
+  );
+  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
+  for (const s3 of [...statementsOfFact, ...submissionFactStatements]) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const lines2 = [];
+  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Notice_of_application"));
+  lines2.push("");
+  lines2.push(
+    styleOfProceedingCaption(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      titleLine: "NOTICE OF APPLICATION"
+    })
+  );
+  lines2.push("");
+  const applicantName = applicant?.name ?? gapMarker("gap");
+  const servedNames = served.map((p3) => p3.name).join(", ") || gapMarker("gap");
+  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : gapMarker("gap");
+  const jurisdiction = hearing?.associate_judge == null ? ASSOCIATE_JUDGE_UNDETERMINED_LINE : hearing.associate_judge === 1 ? "This matter is within the jurisdiction of an associate judge." : "This matter is not within the jurisdiction of an associate judge.";
+  recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of applicant" });
+  recordCriterionGlyphs(ctx.inventory, servedNames, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Parties to be served" });
+  recordCriterionGlyphs(ctx.inventory, estimate, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Time estimate" });
+  recordCriterionGlyphs(ctx.inventory, jurisdiction, ["\u2B1C"], { table: "filings", id: ctx.filing.id, item: "Associate judge jurisdiction", instance: "associate-judge" });
+  lines2.push(`Name of applicant: ${applicantName}`);
+  lines2.push(`To: ${servedNames}`);
+  lines2.push("");
+  lines2.push(
+    `TAKE NOTICE that an application will be made by the applicant to the presiding judge or associate judge at the courthouse at ${ctx.proceeding.courthouse_address ?? "________________"} on a date to be set by Notice of Hearing of Application for the orders set out in Part 1 below.`
+  );
+  lines2.push("");
+  lines2.push(`The applicant estimates that the application will take: ${estimate}`);
+  lines2.push(`The applicant proposes that the matter will be heard on ${hearing?.proposed_hearing ?? "________________"}.`);
+  lines2.push(jurisdiction);
+  lines2.push("");
+  lines2.push("## PART 1: ORDER(S) SOUGHT");
+  lines2.push("");
+  let includedOrderNum = 0;
+  let crossedOutOrderNum = 0;
+  for (const entry2 of interleave(relief, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders"), (r3) => r3.filing_ordinal)) {
+    if (entry2.kind === "rhetoric") {
+      includedOrderNum += 1;
+      lines2.push(...renderRhetoricLine(ctx, entry2.row, includedOrderNum, ""));
+      continue;
+    }
+    const r3 = entry2.item;
+    const wording = r3.wording_override ?? r3.wording;
+    if (r3.crossed_out_on !== null) {
+      crossedOutOrderNum += 1;
+      lines2.push(`~~${wording}~~ <!-- order crossed-out ${crossedOutOrderNum} -->`);
+      continue;
+    }
+    includedOrderNum += 1;
+    const jurMarker = recordJurisdictionLadder(ctx.inventory, r3.id, r3.wording, r3.requires);
+    const petitum = unservedPetitumMarker(r3.hasServedBy);
+    const looseThread = looseThreadMarker(true, waIds.orderIds.has(r3.id));
+    recordGlyphs(ctx.inventory, petitum, ["\u{1F9B5}"], { table: "order_sought", id: r3.id, item: r3.wording });
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_orders", id: r3.pointer_id, item: r3.wording });
+    const workMarkers = dedupeLineMarkers([jurMarker, petitum, looseThread]);
+    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, workMarkers, r3);
+    const lineMarkers = printMarkerSets([dedupeLineMarkers([jurMarker, petitum, review]), looseThread]);
+    lines2.push(`${includedOrderNum}. ${wording}${lineMarkers ? ` ${lineMarkers}` : ""} <!-- order ${includedOrderNum} -->`);
+  }
+  lines2.push("");
+  let partNum = 0;
+  lines2.push("## PART 2: FACTUAL BASIS");
+  lines2.push("");
+  const factParagraphs = /* @__PURE__ */ new Map();
+  for (const entry2 of interleave(facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), (f3) => f3.filing_ordinal)) {
+    partNum += 1;
+    if (entry2.kind === "rhetoric") {
+      lines2.push(...renderRhetoricLine(ctx, entry2.row, partNum, ""));
+      continue;
+    }
+    const f3 = entry2.item;
+    factParagraphs.set(f3.id, partNum);
+    const stmts = statementsByFact.get(f3.id) ?? [];
+    const admitted = admittedFactIds.has(f3.id);
+    const courtRecordLinked = f3.court_record !== null;
+    const owedWitness = noWitnessMarker(courtRecordLinked, witnessBacked.get(f3.id) ?? false, admitted, spentGlyphByFact.get(f3.id) ?? "");
+    const witnessSuppressed = suppressedFactIds.has(f3.id);
+    const witnessMarker = suppressMarker(owedWitness, witnessSuppressed);
+    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
+    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
+    const looseThread = looseThreadMarker(true, waIds.factIds.has(f3.id));
+    recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
+    recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
+    const tokens2 = [witnessMarker, courtRecordPin, looseThread];
+    const statementSets = [];
+    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
+    for (const s3 of stmts) {
+      const statementTokens = [];
+      statementSets.push(statementTokens);
+      if (!guarded) {
+        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
+      }
+      statementTokens.push(
+        statementOfFactMarkers({
+          interviewed: s3.interviewed,
+          instrument_id: s3.instrument_id,
+          instrument_kind: s3.instrument_kind,
+          instrument_execution: s3.instrument_execution,
+          fact_court_record_linked: courtRecordLinked,
+          fact_admitted_by_all_opposing: admitted
+        })
+      );
+      statementTokens.push(doubtMarker(s3.doubt));
+      if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
+      tokens2.push(...statementTokens);
+      recordFactStatementGlyphs(
+        ctx.inventory,
+        dedupeLineMarkers(statementTokens),
+        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
+        f3.postulate
+      );
+    }
+    const lineGlyphs = dedupeLineMarkers(tokens2);
+    const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
+    stmts.forEach((s3, i3) => {
+      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
+    });
+    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
+    const citationLines = [
+      ...courtRecordCite ? [`> ${courtRecordCite}`] : [],
+      ...stmts.filter((s3) => s3.purpose !== "impeachment").flatMap((s3) => factStatementCitationLine(exhibitMap, labelMap, s3) ?? [])
+    ];
+    const trace = `<!-- fact ${partNum} -->`;
+    lines2.push(`${partNum}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
+    citationLines.forEach((c3, i3) => lines2.push(`   ${c3}${i3 === citationLines.length - 1 ? ` ${trace}` : ""}`));
+  }
+  lines2.push("");
+  lines2.push("## PART 3: LEGAL BASIS");
+  lines2.push("");
+  let submissionNum = 0;
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
+    if (entry2.kind === "rhetoric") {
+      submissionNum += 1;
+      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, submissionNum, ""), "");
+      continue;
+    }
+    const s3 = entry2.item;
+    recordParagraph(ctx, s3.id, "form", submissionNum);
+    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s3.id));
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_submissions", id: s3.pointer_id, item: s3.contention });
+    const result = renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      submissionNum,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      looseThread,
+      renderedLawAssertions,
+      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings, factParagraphs, printUnplacedFacts: Boolean(ctx.filing.filed_on || ctx.filing.retired_on) }
+    );
+    lines2.push(...result.lines);
+    lines2.push("");
+    submissionNum = result.nextPara;
+  }
+  lines2.push("## PART 4: MATERIAL TO BE RELIED ON");
+  lines2.push("");
+  const tenderStatus = fetchDocumentTenderStatus(
+    ctx.dbPath,
+    docs.map((d3) => d3.document_id),
+    ctx.rendered.slice(0, 10)
+  );
+  docs.forEach((d3, i3) => {
+    const copy = copyMarkers.get(d3.document_id) ?? "";
+    let tenderMarkers = "";
+    if (isExhibitTenderRole(d3.role)) {
+      const st3 = tenderStatus.get(d3.document_id);
+      tenderMarkers = dedupeLineMarkers([st3.spentGlyphs, unsponsoredExhibitMarker(st3.hasTender)]);
+    }
+    const markers = [tenderMarkers, copy].filter(Boolean).join(" ");
+    recordCriterionGlyphs(ctx.inventory, markers, ["\u{1F464}", "\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
+    const printed = printMarkerSets([markers]);
+    lines2.push(`${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${printed ? ` ${printed}` : ""} <!-- document ${i3 + 1} -->`);
+  });
+  STANDARD_MATERIAL_LINES.forEach((text8, i3) => lines2.push(`${docs.length + i3 + 1}. ${text8}`));
+  lines2.push("");
+  lines2.push(checkboxOrderBlock([]));
+  lines2.push("");
+  if (applicant) lines2.push(signatureBlock({ name: applicant.name, role: applicant.role, counselName: applicant.counsel_name }, true));
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/writing-label.ts
+var DOCUMENT_CODES = {
+  Notice_of_application: { code: "NOA", name: "Notice of Application" },
+  Application_response: { code: "AR", name: "Application Response" },
+  Requisition: { code: "REQ", name: "Requisition" },
+  Default_judgment: { code: "DJ", name: "Default Judgment" },
+  Consent_order: { code: "CO", name: "Consent Order" },
+  Factum: { code: "FACTUM", name: "Factum" },
+  Response_book: { code: "RB", name: "Response Book" },
+  Written_arguments: { code: "WA", name: "Written Arguments" },
+  Evidence_index: { code: "INDEX", name: "Evidence Index" }
+};
+var STOCK_TITLE = "Unstructured";
+function generalDocumentName(layoutTitle, writingTitle) {
+  return layoutTitle === STOCK_TITLE ? writingTitle : layoutTitle;
+}
+var ORDINALS = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"];
+function typeLabel(documentType, fileName) {
+  const row2 = DOCUMENT_CODES[documentType];
+  if (row2 !== void 0) return { short: row2.code, long: row2.name };
+  const stem3 = fileName.replace(/\.[^.]+$/, "");
+  return { short: stem3, long: stem3 };
+}
+function withSubject(label2, title) {
+  let subject = title.trim();
+  if (subject.toLowerCase().startsWith(label2.long.toLowerCase())) {
+    subject = subject.slice(label2.long.length).replace(/^(?:[:\s\-–—]|re\b)+/i, "");
+  }
+  subject = subject.trim();
+  if (subject === "") return label2;
+  return { short: `${label2.short} ${subject}`, long: `${label2.long} - ${subject}` };
+}
+function affidavitLabel(a3) {
+  const n3 = a3.affidavit_number === null ? null : a3.affidavit_number.trim().replace(/^#/, "");
+  const code = n3 === null ? "AFF" : `AFF#${n3}`;
+  if (a3.deponent_name === null) return { short: code, long: a3.label };
+  const deponent = a3.deponent_name;
+  let long;
+  if (n3 === null) long = `Affidavit of ${deponent}`;
+  else if (/^\d+$/.test(n3) && Number(n3) >= 1 && Number(n3) <= 10) long = `${ORDINALS[Number(n3) - 1]} affidavit of ${deponent}`;
+  else long = `Affidavit #${n3} of ${deponent}`;
+  return { short: `${code} ${deponent}`, long };
+}
+function witnessStatementLabel(witnessName) {
+  return { short: `WSS ${witnessName}`, long: `Witness statement of ${witnessName}` };
+}
+
+// src/submission/forms/filler-registry.ts
+var VANIAC = "CAN/BC/Vancouver-International-Arbitration-Centre";
+var BCSC = "CAN/BC/BCSC";
+var BCCA = "CAN/BC/BCCA";
+function supportingAffidavits(ctx, out) {
+  return fetchAffidavits(ctx.dbPath, ctx.filing.id).map(
+    (a3) => out.document("Affidavit", affidavitFileName(a3), () => renderAffidavit(ctx, a3), affidavitLabel(a3))
+  );
+}
+var FILLERS = [
+  {
+    venue: VANIAC,
+    kind: "submissions_package",
+    // #380's resolution: for a VanIAC filing, the Written Arguments IS the venue document -- its
+    // pointer rows read document='form', and no separate 'written_argument' companion is appended.
+    filler: (ctx, out) => [
+      out.document("Written_arguments", "Written Arguments.md", () => renderWrittenArguments(ctx, "form")),
+      out.document("Evidence_index", "Evidence Index.md", () => renderEvidenceIndex(ctx)),
+      ...out.witnessStatements()
+    ]
+  },
+  {
+    venue: BCSC,
+    kind: "notice_of_application",
+    filler: (ctx, out) => [
+      out.document("Notice_of_application", "Notice of Application.md", () => renderNoticeOfApplication(ctx)),
+      ...supportingAffidavits(ctx, out)
+    ]
+  },
+  {
+    venue: BCSC,
+    kind: "requisition_default_judgment",
+    filler: (ctx, out) => [
+      out.document("Requisition", "Form 17 Draft Requisition.md", () => renderRequisitionDefaultJudgment(ctx)),
+      out.document("Default_judgment", "Form 8 Default Judgment.md", () => renderForm8DefaultJudgment(ctx))
+    ]
+  },
+  {
+    venue: BCSC,
+    kind: "requisition_consent",
+    filler: (ctx, out) => [
+      out.document("Requisition", "Requisition for Consent Order.md", () => renderRequisitionConsent(ctx)),
+      out.document("Consent_order", "Consent Order.md", () => renderConsentOrder(ctx))
+    ]
+  },
+  {
+    venue: BCSC,
+    kind: "application_response",
+    filler: (ctx, out) => [
+      out.document("Application_response", "Application Response.md", () => renderApplicationResponse(ctx)),
+      ...supportingAffidavits(ctx, out)
+    ]
+  },
+  {
+    venue: BCCA,
+    kind: "bcca_stay_response",
+    // Like VanIAC (#380 item 5), the written argument inside the response book IS the substantive
+    // venue document (#436).
+    filler: (ctx, out) => [out.document("Response_book", "Response Book.md", () => renderBccaStayResponse(ctx))]
+  },
+  {
+    venue: BCCA,
+    kind: "bcca_factum",
+    // The factum IS the substantive venue document too (#648).
+    filler: (ctx, out) => [out.document("Factum", "Factum.md", () => renderBccaFactum(ctx))]
+  }
+];
+var REGISTERED_FILLERS = FILLERS.map(({ venue, kind }) => ({ venue, kind }));
+function fillerName(key) {
+  return `${key.venue} + ${key.kind}`;
+}
+function readShipped(path, seams) {
+  const kp = parseKnowledgePath(path, "type file lookup");
+  const { layer } = shippedLayer(kp.skill, kp.rest, seams);
+  try {
+    return readFileSync24(layer.abs, "utf-8");
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+    throw new DataServerError(`${path}: not in /draft's shipped knowledge tree (${layer.abs})`, "type_file_missing");
+  }
+}
+function resolveTypeFile(venue, kind, seams = {}) {
+  const segments = venue.split("/");
+  if (segments.length !== 3 || segments.some((segment) => segment === "")) {
+    throw new DataServerError(`forum "${venue}" is not a knowledge-tree key <Country>/<Jurisdiction>/<Venue>`, "invalid_forum");
+  }
+  const noVenue = segments[2] === NO_VENUE;
+  const documents = `draft/${venue}/Documents`;
+  const indexPath = `${documents}/kinds.json`;
+  let doc;
+  try {
+    doc = JSON.parse(readShipped(indexPath, seams));
+  } catch (err) {
+    if (err instanceof DataServerError) throw err;
+    throw new DataServerError(`${indexPath}: not valid JSON: ${err.message}`, "invalid_index");
+  }
+  const rows2 = mergeKinds({ doc, file: indexPath }, null, noVenue).kinds.filter((row2) => row2.aliases.some((alias) => alias.name === kind));
+  if (rows2.length !== 1) {
+    throw new DataServerError(
+      `${indexPath}: ${rows2.length === 0 ? "no row lists" : `${rows2.length} rows list`} kind "${kind}" as an alias${rows2.length === 0 ? "" : ` (${rows2.map((row2) => row2.file).join(", ")})`}; a stored kind names exactly one type file`,
+      "kind_unresolved"
+    );
+  }
+  const file = `${documents}/${rows2[0].file}.md`;
+  const block2 = extractJsonBlock(readShipped(file, seams), file, true);
+  validateTypeBlock(block2, file, { noVenue });
+  return { file, block: block2 };
+}
+function composeFiller(venue, kind, seams = {}) {
+  const type = resolveTypeFile(venue, kind, seams);
+  if (type.block.renderer !== "bespoke") {
+    throw new DataServerError(
+      `${type.file}: renderer "${type.block.renderer}" has no filler; a general type renders from the Writing's stored layout snapshot, never through compose`,
+      "no_renderer"
+    );
+  }
+  const registered = venue.split("/")[2] === NO_VENUE ? void 0 : FILLERS.find((entry2) => entry2.venue === venue && entry2.kind === kind);
+  if (registered === void 0) {
+    throw new DataServerError(
+      `${type.file} declares renderer "bespoke", but no filler is registered for venue ${venue}, kind ${kind}: the missing filler is "${fillerName({ venue, kind })}"`,
+      "no_filler"
+    );
+  }
+  return { ...type, filler: registered.filler };
+}
+function rendererKind(venue, typeFile, candidates, seams = {}) {
+  for (const kind of candidates) {
+    try {
+      if (composeFiller(venue, kind, seams).file === typeFile) return kind;
+    } catch (err) {
+      if (!(err instanceof DataServerError && (err.code === "kind_unresolved" || err.code === "no_filler"))) throw err;
+    }
+  }
+  const accepted = FILLERS.filter((entry2) => entry2.venue === venue).map((entry2) => entry2.kind);
+  throw new DataServerError(
+    `${typeFile} declares renderer "bespoke", but render accepts none of ${candidates.map((kind) => `"${kind}"`).join(", ")} for it; the kinds render accepts at ${venue} are ${accepted.length > 0 ? accepted.join(", ") : "none"}`,
+    "kind_unresolved"
+  );
+}
+
 // src/submission/forms/layout-snapshot.ts
 var TOOL = "drafting_data__create_writing";
 function isObject5(value) {
@@ -91867,7 +94264,8 @@ function buildSnapshot(args, seams = {}) {
       "forum_mismatch"
     );
   }
-  return { needs_forum_parts: composed.needs_forum_parts, snapshot: composed.layout_snapshot, stored: composed.stored, learned: composed.learned, forum: noVenue ? null : key };
+  const kind = composed.stored.layout.renderer === "bespoke" ? rendererKind(key, typeFile, [args.kind, ...composed.aliases], seams) : args.kind;
+  return { kind, needs_forum_parts: composed.needs_forum_parts, snapshot: composed.layout_snapshot, stored: composed.stored, learned: composed.learned, forum: noVenue ? null : key };
 }
 function citedStates(stored, filing, seams = {}) {
   const out = [];
@@ -91948,7 +94346,7 @@ async function submissionDataCreateWriting(args, seams = {}) {
       sql: "INSERT INTO filings (proceeding_id, kind, subkind, round, title, needs_forum_parts, layout_snapshot, signer_key, signer_party_id) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ? IS NULL OR (SELECT forum FROM proceedings WHERE id = ?) IS ?",
       params: [
         proceeding.id,
-        args.kind,
+        built.kind,
         args.subkind ?? null,
         args.round ?? null,
         args.title,
@@ -92400,7 +94798,7 @@ import { extname, join as join30 } from "node:path";
 
 // src/submission/render-manifest.ts
 import { createHash as createHash7 } from "node:crypto";
-import { existsSync as existsSync26, mkdirSync as mkdirSync11, readFileSync as readFileSync24, realpathSync as realpathSync5, writeFileSync as writeFileSync9 } from "node:fs";
+import { existsSync as existsSync26, mkdirSync as mkdirSync11, readFileSync as readFileSync25, realpathSync as realpathSync5, writeFileSync as writeFileSync9 } from "node:fs";
 import { basename as basename4, dirname as dirname13, isAbsolute as isAbsolute4, join as join29, resolve as resolve4 } from "node:path";
 
 // src/files/zones.ts
@@ -92459,7 +94857,7 @@ function isFolderName(name) {
 function parseManifest(file) {
   if (!existsSync26(file)) return null;
   try {
-    const parsed = JSON.parse(readFileSync24(file, "utf-8"));
+    const parsed = JSON.parse(readFileSync25(file, "utf-8"));
     if (!parsed || typeof parsed !== "object" || !parsed.stamp || !Array.isArray(parsed.files) || !Array.isArray(parsed.inventory) || !parsed.inventory.every(isInventoryEntry)) {
       return null;
     }
@@ -92504,7 +94902,7 @@ function freshManifest(dbPath, filingId, stamp2, partiesDrift) {
     if (!existsSync26(file)) return null;
     let text8;
     try {
-      text8 = readFileSync24(file, "utf-8");
+      text8 = readFileSync25(file, "utf-8");
     } catch {
       return null;
     }
@@ -93020,53 +95418,6 @@ function onFilingBoard(rowFilingId, filingId) {
   return rowFilingId === filingId || rowFilingId === null;
 }
 
-// src/submission/forms/writing-label.ts
-var DOCUMENT_CODES = {
-  Notice_of_application: { code: "NOA", name: "Notice of Application" },
-  Application_response: { code: "AR", name: "Application Response" },
-  Requisition: { code: "REQ", name: "Requisition" },
-  Default_judgment: { code: "DJ", name: "Default Judgment" },
-  Consent_order: { code: "CO", name: "Consent Order" },
-  Factum: { code: "FACTUM", name: "Factum" },
-  Response_book: { code: "RB", name: "Response Book" },
-  Written_arguments: { code: "WA", name: "Written Arguments" },
-  Evidence_index: { code: "INDEX", name: "Evidence Index" }
-};
-var STOCK_TITLE = "Unstructured";
-function generalDocumentName(layoutTitle, writingTitle) {
-  return layoutTitle === STOCK_TITLE ? writingTitle : layoutTitle;
-}
-var ORDINALS = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"];
-function typeLabel(documentType, fileName) {
-  const row2 = DOCUMENT_CODES[documentType];
-  if (row2 !== void 0) return { short: row2.code, long: row2.name };
-  const stem3 = fileName.replace(/\.[^.]+$/, "");
-  return { short: stem3, long: stem3 };
-}
-function withSubject(label2, title) {
-  let subject = title.trim();
-  if (subject.toLowerCase().startsWith(label2.long.toLowerCase())) {
-    subject = subject.slice(label2.long.length).replace(/^(?:[:\s\-–—]|re\b)+/i, "");
-  }
-  subject = subject.trim();
-  if (subject === "") return label2;
-  return { short: `${label2.short} ${subject}`, long: `${label2.long} - ${subject}` };
-}
-function affidavitLabel(a3) {
-  const n3 = a3.affidavit_number === null ? null : a3.affidavit_number.trim().replace(/^#/, "");
-  const code = n3 === null ? "AFF" : `AFF#${n3}`;
-  if (a3.deponent_name === null) return { short: code, long: a3.label };
-  const deponent = a3.deponent_name;
-  let long;
-  if (n3 === null) long = `Affidavit of ${deponent}`;
-  else if (/^\d+$/.test(n3) && Number(n3) >= 1 && Number(n3) <= 10) long = `${ORDINALS[Number(n3) - 1]} affidavit of ${deponent}`;
-  else long = `Affidavit #${n3} of ${deponent}`;
-  return { short: `${code} ${deponent}`, long };
-}
-function witnessStatementLabel(witnessName) {
-  return { short: `WSS ${witnessName}`, long: `Witness statement of ${witnessName}` };
-}
-
 // src/submission/forms/render-general.ts
 function tagOf(state) {
   if (state.item === void 0 || state.item.status === "unconfirmed") {
@@ -93137,7 +95488,7 @@ function authorityCitedLine(ctx, row2) {
   const review = row2.authority_killed_on === null ? reviewMarkerFor(ctx.review, ctx.inventory, glyphs, "statements_of_law", row2.statement_id, lawItem(row2)) : "";
   return [lawStatementCitationLine(row2), printMarkerSets([dedupeLineMarkers([glyphs, review])]), `<!-- statement_of_law_id ${row2.statement_id} -->`].filter(Boolean).join(" ");
 }
-function wordCount(lines2) {
+function wordCount2(lines2) {
   return lines2.join(" ").replace(/<!--[\s\S]*?-->/g, " ").split(/\s+/).filter((w3) => w3 !== "").length;
 }
 function notice(venue, kind, header) {
@@ -93190,7 +95541,7 @@ function renderGeneral(ctx, stored, cited2) {
   const authorities = fetchFilingLaw(ctx.dbPath, ctx.filing.id);
   const authorityItems = [...authorityUnconfirmed(ctx.filing, layout) ? [UNCONFIRMED_AUTHORITY_LINE] : [], ...authorities.map((row2) => authorityCitedLine(ctx, row2))];
   const pageLimit = scalarValue(layout.page_limit);
-  const pageBudget = pageLimit === void 0 ? [] : [withTag(`Limit: ${pageLimit} pages; estimate: ${Math.ceil(wordCount([title, ...body]) / 300)} pages`, tagAt("type", "page_limit"))];
+  const pageBudget = pageLimit === void 0 ? [] : [withTag(`Limit: ${pageLimit} pages; estimate: ${Math.ceil(wordCount2([title, ...body]) / 300)} pages`, tagAt("type", "page_limit"))];
   const unplaced = cited2.filter((s3) => !placed.has(s3) && tagOf(s3) !== "");
   const openFiles = [...new Set(cited2.filter(firmOpen).map((s3) => s3.file))];
   const confirmation = [
@@ -94494,7 +96845,7 @@ async function submissionDataSetStep(args, env = process.env) {
 }
 
 // src/submission/writing-folder.ts
-import { existsSync as existsSync29, mkdirSync as mkdirSync12, readdirSync as readdirSync15, readFileSync as readFileSync25, renameSync as renameSync5, rmdirSync, statSync as statSync11, unlinkSync as unlinkSync8 } from "node:fs";
+import { existsSync as existsSync29, mkdirSync as mkdirSync12, readdirSync as readdirSync15, readFileSync as readFileSync26, renameSync as renameSync5, rmdirSync, statSync as statSync11, unlinkSync as unlinkSync8 } from "node:fs";
 import { dirname as dirname14, extname as extname2, join as join31 } from "node:path";
 var GENERAL_DOCUMENT_TYPE = "General_writing";
 var OLD_BOARD_FILES = ["Job Board.html", "Milestone.html", "Work Board.html", "Work Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
@@ -94504,7 +96855,7 @@ function sanitizeForPath(name) {
 }
 function readExistingRevision(filePath) {
   if (!existsSync29(filePath)) return void 0;
-  const text8 = readFileSync25(filePath, "utf-8");
+  const text8 = readFileSync26(filePath, "utf-8");
   const match = text8.match(/^Revision:[ \t]*(\d+)/m) ?? text8.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text8.match(/data-k="Rev">(\d+)</);
   return match ? Number(match[1]) : void 0;
 }
@@ -94805,7 +97156,7 @@ import { basename as basename9, dirname as dirname24, join as join42 } from "nod
 import { join as join40 } from "node:path";
 
 // src/submission/matter-page-files.ts
-import { existsSync as existsSync33, mkdirSync as mkdirSync16, readdirSync as readdirSync18, readFileSync as readFileSync29 } from "node:fs";
+import { existsSync as existsSync33, mkdirSync as mkdirSync16, readdirSync as readdirSync18, readFileSync as readFileSync30 } from "node:fs";
 import { dirname as dirname16, join as join35, relative as relative2 } from "node:path";
 
 // src/file_ops/trash.ts
@@ -94823,10 +97174,10 @@ import { win32 as pathWin3217 } from "node:path";
 
 // src/file_ops/approved-row.ts
 import { createHash as createHash8 } from "node:crypto";
-import { readFileSync as readFileSync27 } from "node:fs";
+import { readFileSync as readFileSync28 } from "node:fs";
 
 // src/housekeeping/run-dir.ts
-import { closeSync as closeSync5, existsSync as existsSync30, fsyncSync, mkdirSync as mkdirSync13, openSync as openSync5, readdirSync as readdirSync16, readFileSync as readFileSync26, realpathSync as realpathSync7, statSync as statSync12, writeSync as writeSync5 } from "node:fs";
+import { closeSync as closeSync5, existsSync as existsSync30, fsyncSync, mkdirSync as mkdirSync13, openSync as openSync5, readdirSync as readdirSync16, readFileSync as readFileSync27, realpathSync as realpathSync7, statSync as statSync12, writeSync as writeSync5 } from "node:fs";
 import { win32 as pathWin3216 } from "node:path";
 
 // src/housekeeping/proposal.ts
@@ -95139,7 +97490,7 @@ function confineRunDir(matter, runId) {
 function readProposal(runDir, runId, root) {
   let text8;
   try {
-    text8 = readFileSync26(pathWin3216.join(runDir, PROPOSAL), "utf-8");
+    text8 = readFileSync27(pathWin3216.join(runDir, PROPOSAL), "utf-8");
   } catch {
     return { proposal: null, problem: "no proposal.json" };
   }
@@ -95161,7 +97512,7 @@ function requireProposal(runDir, runId, root) {
 function readApproval(runDir, runId) {
   let text8;
   try {
-    text8 = readFileSync26(pathWin3216.join(runDir, APPROVAL), "utf-8");
+    text8 = readFileSync27(pathWin3216.join(runDir, APPROVAL), "utf-8");
   } catch (err) {
     const code = err.code;
     return code === "ENOENT" ? { approval: null } : { approval: null, problem: `approval.json cannot be read (${code})` };
@@ -95210,7 +97561,7 @@ function requireApprovedRow(matterRoot, row2, source) {
   }
   let hash;
   try {
-    hash = createHash8("sha256").update(readFileSync27(source)).digest("hex");
+    hash = createHash8("sha256").update(readFileSync28(source)).digest("hex");
   } catch (err) {
     throw new DataServerError(`the approved file of row ${row2.row_id} cannot be read (${err.message}); nothing was moved: ${source}`, "changed_since_approval");
   }
@@ -96098,7 +98449,7 @@ var MATERIAL_FACTS = {
 
 // src/page-api/token.ts
 import { createHmac as createHmac2, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
-import { existsSync as existsSync32, linkSync as linkSync2, mkdirSync as mkdirSync15, readFileSync as readFileSync28, unlinkSync as unlinkSync9, writeFileSync as writeFileSync10 } from "node:fs";
+import { existsSync as existsSync32, linkSync as linkSync2, mkdirSync as mkdirSync15, readFileSync as readFileSync29, unlinkSync as unlinkSync9, writeFileSync as writeFileSync10 } from "node:fs";
 import { dirname as dirname15, join as join32 } from "node:path";
 var DEFAULT_PAGE_API_PORT = 47615;
 var SECRET_FILE = "page-api.secret";
@@ -96106,7 +98457,7 @@ var SECRET_BYTES = 32;
 function pageApiPort(env = process.env) {
   const path = configPath(env);
   if (!existsSync32(path)) return DEFAULT_PAGE_API_PORT;
-  const value = JSON.parse(readFileSync28(path, "utf-8"))?.page_api_port;
+  const value = JSON.parse(readFileSync29(path, "utf-8"))?.page_api_port;
   if (value === void 0 || value === null) return DEFAULT_PAGE_API_PORT;
   if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 65535) {
     throw new ValidationError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value)}`, "invalid_page_api_port");
@@ -96130,7 +98481,7 @@ function pageApiSecret(env) {
       unlinkSync9(temp);
     }
   }
-  const secret = readFileSync28(path);
+  const secret = readFileSync29(path);
   if (secret.length !== SECRET_BYTES) throw new Error(`${path} holds ${secret.length} bytes, not ${SECRET_BYTES}; delete it and re-render the page`);
   return secret;
 }
@@ -96890,7 +99241,7 @@ function guardTargets(names, views) {
 function refuseForeignPages(draftDir, targets) {
   for (const { name, marker, page: page2 } of targets) {
     const file = join35(draftDir, name);
-    if (existsSync33(file) && !readFileSync29(file, "utf-8").includes(marker)) {
+    if (existsSync33(file) && !readFileSync30(file, "utf-8").includes(marker)) {
       throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page2}'s marker, so this renderer did not write it`);
     }
   }
@@ -96903,7 +99254,7 @@ function writePage(file, html) {
 var OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments|loose threads) - filing \d+|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
 var PREVIEW_FILE = / preview \d+\.html$/i;
 function generatorWrote(file) {
-  const text8 = readFileSync29(file, "utf-8");
+  const text8 = readFileSync30(file, "utf-8");
   return text8.includes(MILESTONE_MARKER) || text8.includes(MATTER_BOARD_MARKER) || text8.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
 }
 function sweepOldPages(draftDir, names) {
@@ -98668,7 +101019,7 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
 }
 
 // src/submission/matter-pages-state.ts
-import { mkdirSync as mkdirSync17, readFileSync as readFileSync30 } from "node:fs";
+import { mkdirSync as mkdirSync17, readFileSync as readFileSync31 } from "node:fs";
 import { join as join39 } from "node:path";
 var PAGES_STATE_FILE = "matter-pages-state.json";
 var TODOS_NOT_READ = { note: "This matter's to-dos were not read." };
@@ -98691,7 +101042,7 @@ function isRecord(value) {
 }
 function readPagesState(dbPath) {
   try {
-    const parsed = JSON.parse(readFileSync30(statePath(dbPath), "utf-8"));
+    const parsed = JSON.parse(readFileSync31(statePath(dbPath), "utf-8"));
     const sections = parsed.sections;
     if (!isRecord(sections)) return { sections: {} };
     return {
@@ -99452,562 +101803,6 @@ function scanUntrackedCitations(dbPath, proceedingId, docs, inventory) {
   return lines2;
 }
 
-// src/submission/forms/filing-facts.ts
-var FACTS_PART = /* @__PURE__ */ new Map([
-  ["notice_of_application", "part2"],
-  ["application_response", "part4"],
-  ["bcca_stay_response", "part2"],
-  ["bcca_factum", "part2"]
-]);
-function factsPart(kind) {
-  const part = FACTS_PART.get(kind);
-  if (part === void 0) throw new Error(`No facts Part is registered for kind ${kind}`);
-  return part;
-}
-function fetchFacts(dbPath, filingId, part) {
-  return rows(
-    dbPath,
-    `SELECT f.id, f.postulate, f.court_record, f.court_record_pinpoint, ${courtRecordDocumentColumns(dbPath, "cr")}, ff.id AS pointer_id, ff.ordinal AS filing_ordinal
-     FROM filing_facts ff
-     JOIN facts f ON f.id = ff.fact_id
-     LEFT JOIN documents cr ON cr.id = f.court_record
-     WHERE ff.filing_id = ? AND ff.document = 'form' AND ff.part = ?
-     ORDER BY ff.ordinal`,
-    [filingId, part]
-  );
-}
-function fetchStatementsOfFact(dbPath, factIds) {
-  if (factIds.length === 0) return [];
-  const placeholders = factIds.map(() => "?").join(",");
-  return rows(
-    dbPath,
-    `SELECT sof.id, sof.fact_id, sof.pinpoint, sof.doubt, sof.exhibit_id, sof.exhibit_pinpoint, sof.interviewed, sof.instrument AS instrument_id, sof.purpose,
-            sof.witness_id, w.name AS witness_name, doc.label AS instrument_label,
-            doc.instrument AS instrument_kind, doc.execution AS instrument_execution
-     FROM statements_of_fact sof
-     JOIN witnesses w ON w.id = sof.witness_id
-     LEFT JOIN documents doc ON doc.id = sof.instrument
-     WHERE sof.fact_id IN (${placeholders})`,
-    factIds
-  );
-}
-
-// src/submission/forms/filing-frontmatter.ts
-function filingFrontmatter(proceeding, ctx, documentType) {
-  const fields2 = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, proceeding).display_label,
-    proceedingFileNo: proceeding.file_number ?? "",
-    documentType,
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields2);
-}
-
-// src/submission/forms/render-notice-of-application.ts
-function fetchHearingDetails(dbPath, filingId) {
-  const found = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
-  return found[0];
-}
-var ASSOCIATE_JUDGE_UNDETERMINED_LINE = `Associate judge jurisdiction: not yet determined ${gapMarker("unchosen")}`;
-function fetchWitnessBackedFlags(dbPath, factIds) {
-  if (factIds.length === 0) return /* @__PURE__ */ new Map();
-  const placeholders = factIds.map(() => "?").join(",");
-  const found = rows(
-    dbPath,
-    `SELECT f.id AS fact_id,
-            EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
-     FROM facts f WHERE f.id IN (${placeholders})`,
-    factIds
-  );
-  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
-}
-function renderNoticeOfApplication(ctx) {
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? ctx.parties.find((p3) => p3.is_client === 1);
-  const served = ctx.parties.filter((p3) => p3.to_be_served === 1);
-  const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
-  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("notice_of_application"));
-  const statementsOfFact = fetchStatementsOfFact(
-    ctx.dbPath,
-    facts.map((f3) => f3.id)
-  );
-  const witnessBacked = fetchWitnessBackedFlags(
-    ctx.dbPath,
-    facts.map((f3) => f3.id)
-  );
-  const statementsByFact = /* @__PURE__ */ new Map();
-  for (const stmt of statementsOfFact) {
-    const list = statementsByFact.get(stmt.fact_id) ?? [];
-    list.push(stmt);
-    statementsByFact.set(stmt.fact_id, list);
-  }
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
-  const lawBySubmission = groupSubmissionLaw(lawRows);
-  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
-  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
-  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
-    ctx.dbPath,
-    allFactIds,
-    opposingPartyIds(ctx.parties),
-    ctx.rendered.slice(0, 10)
-  );
-  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
-  for (const s3 of [...statementsOfFact, ...submissionFactStatements]) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const lines2 = [];
-  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Notice_of_application"));
-  lines2.push("");
-  lines2.push(
-    styleOfProceedingCaption(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      titleLine: "NOTICE OF APPLICATION"
-    })
-  );
-  lines2.push("");
-  const applicantName = applicant?.name ?? gapMarker("gap");
-  const servedNames = served.map((p3) => p3.name).join(", ") || gapMarker("gap");
-  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : gapMarker("gap");
-  const jurisdiction = hearing?.associate_judge == null ? ASSOCIATE_JUDGE_UNDETERMINED_LINE : hearing.associate_judge === 1 ? "This matter is within the jurisdiction of an associate judge." : "This matter is not within the jurisdiction of an associate judge.";
-  recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of applicant" });
-  recordCriterionGlyphs(ctx.inventory, servedNames, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Parties to be served" });
-  recordCriterionGlyphs(ctx.inventory, estimate, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Time estimate" });
-  recordCriterionGlyphs(ctx.inventory, jurisdiction, ["\u2B1C"], { table: "filings", id: ctx.filing.id, item: "Associate judge jurisdiction", instance: "associate-judge" });
-  lines2.push(`Name of applicant: ${applicantName}`);
-  lines2.push(`To: ${servedNames}`);
-  lines2.push("");
-  lines2.push(
-    `TAKE NOTICE that an application will be made by the applicant to the presiding judge or associate judge at the courthouse at ${ctx.proceeding.courthouse_address ?? "________________"} on a date to be set by Notice of Hearing of Application for the orders set out in Part 1 below.`
-  );
-  lines2.push("");
-  lines2.push(`The applicant estimates that the application will take: ${estimate}`);
-  lines2.push(`The applicant proposes that the matter will be heard on ${hearing?.proposed_hearing ?? "________________"}.`);
-  lines2.push(jurisdiction);
-  lines2.push("");
-  lines2.push("## PART 1: ORDER(S) SOUGHT");
-  lines2.push("");
-  let includedOrderNum = 0;
-  let crossedOutOrderNum = 0;
-  for (const entry2 of interleave(relief, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders"), (r3) => r3.filing_ordinal)) {
-    if (entry2.kind === "rhetoric") {
-      includedOrderNum += 1;
-      lines2.push(...renderRhetoricLine(ctx, entry2.row, includedOrderNum, ""));
-      continue;
-    }
-    const r3 = entry2.item;
-    const wording = r3.wording_override ?? r3.wording;
-    if (r3.crossed_out_on !== null) {
-      crossedOutOrderNum += 1;
-      lines2.push(`~~${wording}~~ <!-- order crossed-out ${crossedOutOrderNum} -->`);
-      continue;
-    }
-    includedOrderNum += 1;
-    const jurMarker = recordJurisdictionLadder(ctx.inventory, r3.id, r3.wording, r3.requires);
-    const petitum = unservedPetitumMarker(r3.hasServedBy);
-    const looseThread = looseThreadMarker(true, waIds.orderIds.has(r3.id));
-    recordGlyphs(ctx.inventory, petitum, ["\u{1F9B5}"], { table: "order_sought", id: r3.id, item: r3.wording });
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_orders", id: r3.pointer_id, item: r3.wording });
-    const workMarkers = dedupeLineMarkers([jurMarker, petitum, looseThread]);
-    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, workMarkers, r3);
-    const lineMarkers = printMarkerSets([dedupeLineMarkers([jurMarker, petitum, review]), looseThread]);
-    lines2.push(`${includedOrderNum}. ${wording}${lineMarkers ? ` ${lineMarkers}` : ""} <!-- order ${includedOrderNum} -->`);
-  }
-  lines2.push("");
-  let partNum = 0;
-  lines2.push("## PART 2: FACTUAL BASIS");
-  lines2.push("");
-  const factParagraphs = /* @__PURE__ */ new Map();
-  for (const entry2 of interleave(facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), (f3) => f3.filing_ordinal)) {
-    partNum += 1;
-    if (entry2.kind === "rhetoric") {
-      lines2.push(...renderRhetoricLine(ctx, entry2.row, partNum, ""));
-      continue;
-    }
-    const f3 = entry2.item;
-    factParagraphs.set(f3.id, partNum);
-    const stmts = statementsByFact.get(f3.id) ?? [];
-    const admitted = admittedFactIds.has(f3.id);
-    const courtRecordLinked = f3.court_record !== null;
-    const owedWitness = noWitnessMarker(courtRecordLinked, witnessBacked.get(f3.id) ?? false, admitted, spentGlyphByFact.get(f3.id) ?? "");
-    const witnessSuppressed = suppressedFactIds.has(f3.id);
-    const witnessMarker = suppressMarker(owedWitness, witnessSuppressed);
-    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
-    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
-    const looseThread = looseThreadMarker(true, waIds.factIds.has(f3.id));
-    recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
-    recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
-    const tokens2 = [witnessMarker, courtRecordPin, looseThread];
-    const statementSets = [];
-    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
-    for (const s3 of stmts) {
-      const statementTokens = [];
-      statementSets.push(statementTokens);
-      if (!guarded) {
-        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
-      }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s3.interviewed,
-          instrument_id: s3.instrument_id,
-          instrument_kind: s3.instrument_kind,
-          instrument_execution: s3.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted
-        })
-      );
-      statementTokens.push(doubtMarker(s3.doubt));
-      if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
-      tokens2.push(...statementTokens);
-      recordFactStatementGlyphs(
-        ctx.inventory,
-        dedupeLineMarkers(statementTokens),
-        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
-        f3.postulate
-      );
-    }
-    const lineGlyphs = dedupeLineMarkers(tokens2);
-    const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
-    stmts.forEach((s3, i3) => {
-      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
-    });
-    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
-    const citationLines = [
-      ...courtRecordCite ? [`> ${courtRecordCite}`] : [],
-      ...stmts.filter((s3) => s3.purpose !== "impeachment").flatMap((s3) => factStatementCitationLine(exhibitMap, labelMap, s3) ?? [])
-    ];
-    const trace = `<!-- fact ${partNum} -->`;
-    lines2.push(`${partNum}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
-    citationLines.forEach((c3, i3) => lines2.push(`   ${c3}${i3 === citationLines.length - 1 ? ` ${trace}` : ""}`));
-  }
-  lines2.push("");
-  lines2.push("## PART 3: LEGAL BASIS");
-  lines2.push("");
-  let submissionNum = 0;
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
-    if (entry2.kind === "rhetoric") {
-      submissionNum += 1;
-      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, submissionNum, ""), "");
-      continue;
-    }
-    const s3 = entry2.item;
-    recordParagraph(ctx, s3.id, "form", submissionNum);
-    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s3.id));
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_submissions", id: s3.pointer_id, item: s3.contention });
-    const result = renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      submissionNum,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      looseThread,
-      renderedLawAssertions,
-      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings, factParagraphs, printUnplacedFacts: Boolean(ctx.filing.filed_on || ctx.filing.retired_on) }
-    );
-    lines2.push(...result.lines);
-    lines2.push("");
-    submissionNum = result.nextPara;
-  }
-  lines2.push("## PART 4: MATERIAL TO BE RELIED ON");
-  lines2.push("");
-  const tenderStatus = fetchDocumentTenderStatus(
-    ctx.dbPath,
-    docs.map((d3) => d3.document_id),
-    ctx.rendered.slice(0, 10)
-  );
-  docs.forEach((d3, i3) => {
-    const copy = copyMarkers.get(d3.document_id) ?? "";
-    let tenderMarkers = "";
-    if (isExhibitTenderRole(d3.role)) {
-      const st3 = tenderStatus.get(d3.document_id);
-      tenderMarkers = dedupeLineMarkers([st3.spentGlyphs, unsponsoredExhibitMarker(st3.hasTender)]);
-    }
-    const markers = [tenderMarkers, copy].filter(Boolean).join(" ");
-    recordCriterionGlyphs(ctx.inventory, markers, ["\u{1F464}", "\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
-    const printed = printMarkerSets([markers]);
-    lines2.push(`${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${printed ? ` ${printed}` : ""} <!-- document ${i3 + 1} -->`);
-  });
-  STANDARD_MATERIAL_LINES.forEach((text8, i3) => lines2.push(`${docs.length + i3 + 1}. ${text8}`));
-  lines2.push("");
-  lines2.push(checkboxOrderBlock([]));
-  lines2.push("");
-  if (applicant) lines2.push(signatureBlock({ name: applicant.name, role: applicant.role, counselName: applicant.counsel_name }, true));
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
-// src/submission/forms/render-requisition.ts
-function fetchAlternatives(dbPath, chosenId) {
-  return rows(
-    dbPath,
-    `SELECT id, wording, template_key, template_values, crossed_out_on
-     FROM order_sought WHERE alternative_to = ?`,
-    [chosenId]
-  );
-}
-function fetchPlacedAlternativeIds(dbPath, filing) {
-  if (filing.kind !== "requisition_default_judgment") return [];
-  return rows(
-    dbPath,
-    `SELECT o.id FROM order_sought o
-     JOIN filing_orders fo ON fo.order_sought_id = o.alternative_to
-     WHERE fo.filing_id = ? AND fo.document = 'form'`,
-    [filing.id]
-  ).map((r3) => r3.id);
-}
-function frontmatterFor2(ctx, documentType) {
-  const fields2 = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: ctx.proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, ctx.proceeding).display_label,
-    proceedingFileNo: ctx.proceeding.file_number ?? "",
-    documentType,
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields2);
-}
-function captionParties(ctx) {
-  return ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-}
-var TEMPLATE_NOT_CHOSEN = "(template not chosen)";
-var UNRECOGNIZED_TEMPLATE_KEY = 'unrecognized template_key "';
-function renderTemplate(key, valuesJson) {
-  if (!key) return `${gapMarker("unchosen")} ${TEMPLATE_NOT_CHOSEN}`;
-  let values = {};
-  if (valuesJson) {
-    try {
-      values = JSON.parse(valuesJson);
-    } catch {
-      values = {};
-    }
-  }
-  switch (key) {
-    case "sum_certain":
-      return `pay to the plaintiff(s) the sum of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
-    case "damages_to_be_assessed":
-      return "pay to the plaintiff(s) damages to be assessed";
-    case "delivery_or_assessed_value":
-      return `deliver up ${values.description ?? "(not recorded)"}, or pay the assessed value of it if delivery cannot be made`;
-    case "assessed_value_for_operative":
-      return "pay to the plaintiff(s) the assessed value of the goods claimed";
-    case "interest_as_claimed":
-      return `pay to the plaintiff(s) interest as claimed in the amount of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
-    case "interest_coia":
-      return "interest under the Court Order Interest Act";
-    case "costs_fixed":
-      return `pay to the plaintiff(s) costs in the fixed amount of $${Number(values.amount ?? 0).toLocaleString("en-US")}`;
-    case "costs_to_be_assessed":
-      return "pay to the plaintiff(s) costs to be assessed";
-    default:
-      return `${gapMarker("not_recorded")} ${UNRECOGNIZED_TEMPLATE_KEY}${key}"`;
-  }
-}
-function recordTemplateChoice(inv, r3) {
-  if (!r3.template_key) inv.push({ generating: true, slug: "choose-template", marker: "\u2B1C", table: "order_sought", id: r3.id, item: r3.wording, doc: "" });
-}
-function renderRequisitionDefaultJudgment(ctx) {
-  const defendants = ctx.parties.filter((p3) => /defendant/i.test(p3.role));
-  const plaintiff = ctx.parties.find((p3) => p3.is_client === 1) ?? ctx.parties.find((p3) => p3.is_applicant === 1);
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
-    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-    registry: ctx.proceeding.registry,
-    fileNumber: ctx.proceeding.file_number,
-    titleLine: "REQUISITION - GENERAL"
-  });
-  const defendantNames = defendants.map((d3) => d3.name).join(", ") || gapMarker("gap");
-  const filedBy = plaintiff ? `${plaintiff.role}, ${plaintiff.name}` : gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, defendantNames, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Defendants" });
-  recordCriterionGlyphs(ctx.inventory, filedBy, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Filed by" });
-  const required2 = `Search for a Response to Civil Claim filed on behalf of the Defendant, ${defendantNames} and if no Response to Civil Claim has been filed, please enter default judgment.`;
-  const checklist = [];
-  const draftOrderDoc = docs.find((d3) => d3.role === "order");
-  const affidavitDoc = docs.find((d3) => d3.role === "affidavit");
-  const orderItem = "Draft default judgment";
-  const affidavitItem = "Affidavit of service and non-delivery of a response to civil claim";
-  const orderGap = draftOrderDoc ? "" : gapMarker("unchosen");
-  const affidavitGap = affidavitDoc ? "" : gapMarker("unchosen");
-  recordGlyphs(ctx.inventory, orderGap, ["\u2B1C"], { table: "filings", id: ctx.filing.id, qualifier: "order", item: orderItem });
-  recordGlyphs(ctx.inventory, affidavitGap, ["\u2B1C"], { table: "filings", id: ctx.filing.id, qualifier: "affidavit", item: affidavitItem });
-  checklist.push(`${orderGap ? `${orderGap} ` : ""}${orderItem}`);
-  checklist.push(`${affidavitGap ? `${affidavitGap} ` : ""}${affidavitItem}`);
-  const lines2 = [];
-  lines2.push(frontmatterFor2(ctx, "Requisition"));
-  lines2.push("");
-  lines2.push(
-    requisitionWrapper({
-      captionMarkdown: caption2,
-      titleLine: "REQUISITION - GENERAL",
-      filedBy,
-      required: required2,
-      checklistLeadIn: "This requisition is supported by the following:",
-      checklist
-    })
-  );
-  lines2.push("");
-  if (plaintiff) lines2.push(signatureBlock({ name: plaintiff.name, role: plaintiff.role, counselName: plaintiff.counsel_name }, false));
-  return lines2.join("\n").trimEnd() + "\n";
-}
-function renderForm8DefaultJudgment(ctx) {
-  const defendants = ctx.parties.filter((p3) => /defendant/i.test(p3.role));
-  const chosen = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const defendantNames = defendants.map((d3) => d3.name).join(", ") || gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, defendantNames, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Defendants" });
-  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
-    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-    registry: ctx.proceeding.registry,
-    fileNumber: ctx.proceeding.file_number,
-    titleLine: "DEFAULT JUDGMENT"
-  });
-  const lines2 = [];
-  lines2.push(frontmatterFor2(ctx, "Default_judgment"));
-  lines2.push("");
-  lines2.push(caption2);
-  lines2.push("");
-  lines2.push(
-    `The plaintiff(s) having filed and served a notice of civil claim and the defendant(s) ${defendantNames} having failed to file and serve a response to civil claim within the time allowed;`
-  );
-  lines2.push("");
-  let opNum = 0;
-  chosen.forEach((r3) => {
-    if (r3.crossed_out_on !== null) {
-      lines2.push(`~~the defendant(s) ${defendantNames} ${renderTemplate(r3.template_key, r3.template_values)}~~ <!-- order crossed-out ${r3.id} -->`);
-      lines2.push("");
-    } else {
-      opNum += 1;
-      const prefix = opNum === 1 ? "THIS COURT ORDERS" : "THIS COURT FURTHER ORDERS";
-      recordTemplateChoice(ctx.inventory, r3);
-      const provision = `${prefix} that the defendant(s) ${defendantNames} ${renderTemplate(r3.template_key, r3.template_values)}.`;
-      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, provision, r3);
-      lines2.push(`${provision}${review ? ` ${review}` : ""} <!-- order_sought_id ${r3.id} -->`);
-      lines2.push("");
-    }
-    const alternatives = fetchAlternatives(ctx.dbPath, r3.id);
-    for (const alt of alternatives) {
-      if (alt.crossed_out_on !== null) {
-        lines2.push(`~~in the alternative, the defendant(s) ${defendantNames} ${renderTemplate(alt.template_key, alt.template_values)}~~ <!-- order crossed-out ${alt.id} -->`);
-        continue;
-      }
-      recordTemplateChoice(ctx.inventory, alt);
-      const altProvision = `THIS COURT FURTHER ORDERS that, in the alternative, the defendant(s) ${defendantNames} ${renderTemplate(alt.template_key, alt.template_values)}.`;
-      const altReview = reviewMarkerFor(ctx.review, ctx.inventory, altProvision, "order_sought", alt.id, alt.wording);
-      lines2.push(`${altProvision}${altReview ? ` ${altReview}` : ""} <!-- order_sought_id ${alt.id} -->`);
-    }
-    if (alternatives.length > 0) lines2.push("");
-  });
-  return lines2.join("\n").trimEnd() + "\n";
-}
-function renderRequisitionConsent(ctx) {
-  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1) ?? ctx.parties.find((p3) => p3.is_client === 1);
-  const filedBy = applicant ? `${applicant.role}, ${applicant.name}` : gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, filedBy, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Filed by" });
-  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
-    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-    registry: ctx.proceeding.registry,
-    fileNumber: ctx.proceeding.file_number,
-    titleLine: "REQUISITION FOR CONSENT ORDER"
-  });
-  const checklist = [
-    "The rule or other enactment relied on is Rule 8-3.",
-    "Attached to this requisition is a draft of the order required.",
-    "Each party affected has consented to the order.",
-    "No party is under a legal disability."
-  ];
-  const lines2 = [];
-  lines2.push(frontmatterFor2(ctx, "Requisition"));
-  lines2.push("");
-  lines2.push(
-    requisitionWrapper({
-      captionMarkdown: caption2,
-      titleLine: "REQUISITION FOR CONSENT ORDER",
-      filedBy,
-      required: "An order by consent.",
-      checklist
-    })
-  );
-  lines2.push("");
-  if (applicant) lines2.push(signatureBlock({ name: applicant.name, role: applicant.role, counselName: applicant.counsel_name }, false));
-  return lines2.join("\n").trimEnd() + "\n";
-}
-function renderConsentOrder(ctx) {
-  const applicants = ctx.parties.filter((p3) => p3.is_applicant === 1);
-  const applicantNames = applicants.map((p3) => p3.name).join(", ") || ctx.parties.find((p3) => p3.is_client === 1)?.name || gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, applicantNames, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Applicants" });
-  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const withCounsel = ctx.parties.filter((p3) => p3.counsel_name);
-  const caption2 = styleOfProceedingCaption(captionParties(ctx), {
-    heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-    registry: ctx.proceeding.registry,
-    fileNumber: ctx.proceeding.file_number,
-    titleLine: "CONSENT ORDER"
-  });
-  const lines2 = [];
-  lines2.push(frontmatterFor2(ctx, "Consent_order"));
-  lines2.push("");
-  lines2.push(caption2);
-  lines2.push("");
-  lines2.push(`BEFORE A REGISTRAR )  ${ctx.rendered.slice(0, 10)}  )  )`);
-  lines2.push("");
-  lines2.push(`ON THE APPLICATION of ${applicantNames} without a hearing and by consent;`);
-  lines2.push("");
-  lines2.push("THIS COURT ORDERS that:");
-  let includedOrderNum = 0;
-  let crossedOutOrderNum = 0;
-  relief.forEach((r3) => {
-    const wording = r3.wording_override ?? r3.wording;
-    if (r3.crossed_out_on !== null) {
-      crossedOutOrderNum += 1;
-      lines2.push(`~~${wording}~~ <!-- order crossed-out ${crossedOutOrderNum} -->`);
-      return;
-    }
-    includedOrderNum += 1;
-    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", r3);
-    lines2.push(`${includedOrderNum}. ${wording}${review ? ` ${review}` : ""} <!-- order ${includedOrderNum} -->`);
-  });
-  lines2.push("");
-  lines2.push("THE FOLLOWING PARTIES APPROVE THE FORM OF THIS ORDER AND CONSENT TO EACH OF THE ORDERS, IF ANY, THAT ARE INDICATED ABOVE AS BEING BY CONSENT");
-  lines2.push("");
-  for (const party of withCounsel) {
-    lines2.push(`Signature of ${party.counsel_name}, lawyer for the ${party.role}, ${party.name}`);
-    lines2.push(`${party.counsel_name}`);
-    lines2.push("");
-  }
-  lines2.push("By the Court.");
-  lines2.push("");
-  lines2.push("Registrar");
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
 // src/submission/forms/unplaced-facts.ts
 var CHECKED_KINDS = /* @__PURE__ */ new Set(["notice_of_application", "application_response"]);
 function fetchUnplacedFacts(dbPath, filing) {
@@ -100333,1784 +102128,6 @@ function draftDirOfCaller(dbPath, draftDir, param2 = "drafting_forms__render.dra
     throw new ValidationError(`${param2} ${draftDir}: it is not the 0. DRAFT folder of this database's matter, ${draftDirOf(dbPath)}`);
   }
   return draft;
-}
-
-// src/submission/forms/filler-registry.ts
-import { readFileSync as readFileSync31 } from "node:fs";
-
-// src/submission/forms/render-application-response.ts
-function fetchHearingDetails2(dbPath, filingId) {
-  const found = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
-  return found[0];
-}
-function hearingDateSentence(hearing) {
-  const date3 = hearing?.proposed_hearing;
-  switch (hearing?.hearing_date_position) {
-    case "none_proposed":
-      return "";
-    case "agree":
-      return date3 ? `The application respondent(s) agree to the applicant's hearing date of ${date3}.` : null;
-    case "propose_other":
-      return date3 ? `The application respondent(s) do not agree to the applicant's hearing date and propose the following date(s): ${date3}.` : null;
-    default:
-      return null;
-  }
-}
-function fetchFilingPositions(dbPath, filingId) {
-  return rows(
-    dbPath,
-    `SELECT oo.id AS opposing_order_id, oo.paragraph_number, oo.wording, oo.document_id,
-            fp.position, fp.proposed_terms
-     FROM filing_positions fp
-     JOIN opposing_orders oo ON oo.id = fp.opposing_order_id
-     WHERE fp.filing_id = ?
-     ORDER BY oo.paragraph_number`,
-    [filingId]
-  );
-}
-function resolveRespondedToDocument(dbPath, proceedingId, positions) {
-  const positionedIds = new Set(positions.map((p3) => p3.document_id));
-  let documentId;
-  if (positionedIds.size === 1) {
-    documentId = [...positionedIds][0];
-  } else if (positionedIds.size === 0) {
-    const candidates = rows(
-      dbPath,
-      `SELECT DISTINCT document_id FROM opposing_orders WHERE proceeding_id = ?`,
-      [proceedingId]
-    );
-    if (candidates.length === 1) documentId = candidates[0].document_id;
-  }
-  if (documentId === void 0) return void 0;
-  const found = rows(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
-  return found[0];
-}
-function fetchUnpositionedOrders(dbPath, filingId, documentId) {
-  return rows(
-    dbPath,
-    `SELECT oo.id, oo.paragraph_number, oo.wording
-     FROM opposing_orders oo
-     WHERE oo.document_id = ?
-       AND oo.id NOT IN (SELECT opposing_order_id FROM filing_positions WHERE filing_id = ?)
-     ORDER BY oo.paragraph_number`,
-    [documentId, filingId]
-  );
-}
-function fetchPartSixProvenance(dbPath, filingId) {
-  const found = rows(
-    dbPath,
-    `SELECT document_id, provenance FROM filing_documents WHERE filing_id = ? AND role != 'witness_statement'`,
-    [filingId]
-  );
-  return new Map(found.map((r3) => [r3.document_id, r3.provenance]));
-}
-function provenanceLabel(p3) {
-  if (p3 === "served_with_this_response") return "served with this application response";
-  if (p3 === "already_in_court_file") return "already in the court file";
-  return "";
-}
-function witnessBackedFlags(dbPath, factIds) {
-  if (factIds.length === 0) return /* @__PURE__ */ new Map();
-  const placeholders = factIds.map(() => "?").join(",");
-  const found = rows(
-    dbPath,
-    `SELECT f.id AS fact_id, EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
-     FROM facts f WHERE f.id IN (${placeholders})`,
-    factIds
-  );
-  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
-}
-function afsCheckbox(party) {
-  if (!party) return `[ ] Yes  [ ] No ${gapMarker("question")}`;
-  if (party.address_for_service_filed === "yes") return "[x] Yes  [ ] No";
-  if (party.address_for_service_filed === "no") return "[ ] Yes  [x] No";
-  return `[ ] Yes  [ ] No ${gapMarker("question")}`;
-}
-function renderApplicationResponse(ctx) {
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
-  const hearing = fetchHearingDetails2(ctx.dbPath, ctx.filing.id);
-  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
-  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
-  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
-  const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("application_response"));
-  const statementsOfFact = fetchStatementsOfFact(ctx.dbPath, facts.map((f3) => f3.id));
-  const witnessBacked = witnessBackedFlags(ctx.dbPath, facts.map((f3) => f3.id));
-  const statementsByFact = /* @__PURE__ */ new Map();
-  for (const stmt of statementsOfFact) {
-    const list = statementsByFact.get(stmt.fact_id) ?? [];
-    list.push(stmt);
-    statementsByFact.set(stmt.fact_id, list);
-  }
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
-  const lawBySubmission = groupSubmissionLaw(lawRows);
-  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
-  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
-  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
-    ctx.dbPath,
-    allFactIds,
-    opposingPartyIds(ctx.parties),
-    ctx.rendered.slice(0, 10)
-  );
-  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
-  for (const s3 of [...statementsOfFact, ...submissionFactStatements]) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const provenanceMap = fetchPartSixProvenance(ctx.dbPath, ctx.filing.id);
-  const lines2 = [];
-  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Application_response"));
-  lines2.push("");
-  lines2.push(
-    styleOfProceedingCaption(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      titleLine: "APPLICATION RESPONSE"
-    })
-  );
-  lines2.push("");
-  const clientName = client?.name ?? gapMarker("gap");
-  const applicantName = applicant?.name ?? gapMarker("gap");
-  const datedOn = respondedTo?.document_date ?? gapMarker("gap");
-  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : gapMarker("gap");
-  const hearingDate = hearingDateSentence(hearing) ?? `The application respondent(s) ${gapMarker("gap")}`;
-  recordCriterionGlyphs(ctx.inventory, clientName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of application respondent" });
-  recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Name of applicant" });
-  recordCriterionGlyphs(ctx.inventory, datedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date of the notice of application" });
-  recordCriterionGlyphs(ctx.inventory, estimate, ["\u{1F9E9}"], { table: "form_fields", id: 3, item: "Time estimate" });
-  recordCriterionGlyphs(ctx.inventory, hearingDate, ["\u{1F9E9}"], { table: "form_fields", id: 4, item: "Whether the application respondent agrees with the applicant's hearing date" });
-  lines2.push(`Application response of: the ${client?.role ?? "Application Respondent"}, ${clientName}`);
-  lines2.push(
-    `THIS IS A RESPONSE TO the notice of application of the ${applicant?.role ?? "Applicant"}, ${applicantName}, dated ${datedOn}.`
-  );
-  lines2.push("");
-  if (hearingDate !== "") {
-    lines2.push(hearingDate);
-    lines2.push("");
-  }
-  lines2.push(`The application respondent estimates that the application will take ${estimate}`);
-  lines2.push("");
-  const consented = positions.filter((p3) => p3.position === "consented");
-  const opposed = positions.filter((p3) => p3.position === "opposed");
-  const noPosition = positions.filter((p3) => p3.position === "no_position");
-  lines2.push("## PART 1: ORDER(S) CONSENTED TO");
-  lines2.push("");
-  if (consented.length === 0) {
-    lines2.push("NONE");
-  } else {
-    consented.forEach((p3) => {
-      const terms2 = p3.proposed_terms || `Order ${p3.paragraph_number}`;
-      lines2.push(`Order ${p3.paragraph_number}: ${p3.wording} -- consented, on the following terms: ${terms2} <!-- order ${p3.paragraph_number} -->`);
-    });
-  }
-  lines2.push("");
-  lines2.push("## PART 2: ORDER(S) OPPOSED");
-  lines2.push("");
-  if (opposed.length === 0) {
-    lines2.push("The application respondent(s) oppose(s) the granting of NONE of the orders set out in Part 1 of the notice of application.");
-  } else {
-    lines2.push(
-      `The application respondent(s) oppose(s) the granting of the orders set out in paragraphs ${opposed.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
-    );
-    opposed.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
-  }
-  lines2.push("");
-  lines2.push("## PART 3: ORDER(S) ON WHICH NO POSITION IS TAKEN");
-  lines2.push("");
-  if (noPosition.length === 0) {
-    lines2.push("The application respondent(s) take(s) no position on the granting of NONE of the orders set out in Part 1 of the notice of application.");
-  } else {
-    lines2.push(
-      `The application respondent(s) take(s) no position on the granting of the orders set out in paragraphs ${noPosition.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
-    );
-    noPosition.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
-  }
-  lines2.push("");
-  if (unpositioned.length > 0) {
-    lines2.push("## Positions not yet taken");
-    lines2.push("");
-    unpositioned.forEach((o3) => {
-      const marker = unpositionedOrderMarker();
-      recordCriterionGlyphs(ctx.inventory, marker, ["\u2B1C"], { table: "opposing_orders", id: o3.id, item: o3.wording, instance: "unpositioned-order" });
-      lines2.push(`- Order ${o3.paragraph_number}: ${o3.wording} ${marker} <!-- order ${o3.paragraph_number} -->`);
-    });
-    lines2.push("");
-  }
-  let partNum = 0;
-  lines2.push("## PART 4: FACTUAL BASIS");
-  lines2.push("");
-  const factParagraphs = /* @__PURE__ */ new Map();
-  for (const entry2 of interleave(facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), (f3) => f3.filing_ordinal)) {
-    partNum += 1;
-    if (entry2.kind === "rhetoric") {
-      lines2.push(...renderRhetoricLine(ctx, entry2.row, partNum, ""));
-      continue;
-    }
-    const f3 = entry2.item;
-    factParagraphs.set(f3.id, partNum);
-    const stmts = statementsByFact.get(f3.id) ?? [];
-    const admitted = admittedFactIds.has(f3.id);
-    const courtRecordLinked = f3.court_record !== null;
-    const owedWitness = noWitnessMarker(courtRecordLinked, witnessBacked.get(f3.id) ?? false, admitted, spentGlyphByFact.get(f3.id) ?? "");
-    const witnessSuppressed = suppressedFactIds.has(f3.id);
-    const witnessMarker = suppressMarker(owedWitness, witnessSuppressed);
-    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
-    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
-    const looseThread = looseThreadMarker(true, waIds.factIds.has(f3.id));
-    recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
-    recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
-    const tokens2 = [witnessMarker, courtRecordPin, looseThread];
-    const statementSets = [];
-    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
-    for (const s3 of stmts) {
-      const statementTokens = [];
-      statementSets.push(statementTokens);
-      if (!guarded) {
-        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
-      }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s3.interviewed,
-          instrument_id: s3.instrument_id,
-          instrument_kind: s3.instrument_kind,
-          instrument_execution: s3.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted
-        })
-      );
-      statementTokens.push(doubtMarker(s3.doubt));
-      if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
-      tokens2.push(...statementTokens);
-      recordFactStatementGlyphs(
-        ctx.inventory,
-        dedupeLineMarkers(statementTokens),
-        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
-        f3.postulate
-      );
-    }
-    const lineGlyphs = dedupeLineMarkers(tokens2);
-    const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
-    stmts.forEach((s3, i3) => {
-      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
-    });
-    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
-    const citationLines = [
-      ...courtRecordCite ? [`> ${courtRecordCite}`] : [],
-      ...stmts.filter((s3) => s3.purpose !== "impeachment").flatMap((s3) => factStatementCitationLine(exhibitMap, labelMap, s3) ?? [])
-    ];
-    const trace = `<!-- fact ${partNum} -->`;
-    lines2.push(`${partNum}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
-    citationLines.forEach((c3, i3) => lines2.push(`   ${c3}${i3 === citationLines.length - 1 ? ` ${trace}` : ""}`));
-  }
-  lines2.push("");
-  lines2.push("## PART 5: LEGAL BASIS");
-  lines2.push("");
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
-    if (entry2.kind === "rhetoric") {
-      partNum += 1;
-      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, partNum, ""), "");
-      continue;
-    }
-    const s3 = entry2.item;
-    recordParagraph(ctx, s3.id, "form", partNum);
-    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s3.id));
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_submissions", id: s3.pointer_id, item: s3.contention });
-    const result = renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      partNum,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      looseThread,
-      renderedLawAssertions,
-      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings, factParagraphs, printUnplacedFacts: Boolean(ctx.filing.filed_on || ctx.filing.retired_on) }
-    );
-    lines2.push(...result.lines);
-    lines2.push("");
-    partNum = result.nextPara;
-  }
-  lines2.push("## PART 6: MATERIAL TO BE RELIED ON");
-  lines2.push("");
-  docs.forEach((d3, i3) => {
-    const copy = copyMarkers.get(d3.document_id) ?? "";
-    recordCriterionGlyphs(ctx.inventory, copy, ["\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
-    const provenance4 = provenanceLabel(provenanceMap.get(d3.document_id));
-    const provenancePart = provenance4 ? ` (${provenance4})` : "";
-    lines2.push(
-      `${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${provenancePart}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
-    );
-  });
-  STANDARD_MATERIAL_LINES.forEach((text8, i3) => lines2.push(`${docs.length + i3 + 1}. ${text8}`));
-  lines2.push("");
-  lines2.push("**Address for service filed:**");
-  const afs = afsCheckbox(client);
-  recordCriterionGlyphs(ctx.inventory, afs, ["\u{1F575}\uFE0F"], { table: "filings", id: ctx.filing.id, item: "Address for service filed" });
-  lines2.push(afs);
-  lines2.push("");
-  lines2.push(checkboxOrderBlock([]));
-  lines2.push("");
-  if (client) lines2.push(signatureBlock({ name: client.name, role: client.role, counselName: client.counsel_name }, true));
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
-// src/submission/forms/render-bcca-stay-response.ts
-function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, inventory, review) {
-  const statementsByFact = /* @__PURE__ */ new Map();
-  for (const stmt of fetchStatementsOfFact(dbPath, facts.map((f3) => f3.id))) {
-    const list = statementsByFact.get(stmt.fact_id) ?? [];
-    list.push(stmt);
-    statementsByFact.set(stmt.fact_id, list);
-  }
-  const lines2 = [];
-  let para2 = startPara;
-  facts.forEach((f3) => {
-    para2 += 1;
-    const stmts = statementsByFact.get(f3.id) ?? [];
-    const admitted = admittedFactIds.has(f3.id);
-    const courtRecordLinked = f3.court_record !== null;
-    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
-    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
-    recordGlyphs(inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
-    const factTokens = [
-      suppressMarker(noWitnessMarker(courtRecordLinked, stmts.length > 0, admitted, spentGlyphByFact.get(f3.id) ?? ""), suppressedFactIds.has(f3.id)),
-      courtRecordPin
-    ];
-    const tokens2 = [...factTokens];
-    const statementSets = [];
-    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
-    for (const s3 of stmts) {
-      const statementTokens = [];
-      if (!guarded) {
-        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
-      }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s3.interviewed,
-          instrument_id: s3.instrument_id,
-          instrument_kind: s3.instrument_kind,
-          instrument_execution: s3.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted
-        })
-      );
-      tokens2.push(...statementTokens);
-      recordFactStatementGlyphs(
-        inventory,
-        dedupeLineMarkers(statementTokens),
-        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
-        f3.postulate
-      );
-      const doubtAndCopy = [doubtMarker(s3.doubt), s3.instrument_id !== null ? copyMarkers.get(s3.instrument_id) ?? "" : ""];
-      tokens2.push(...doubtAndCopy);
-      statementSets.push([...statementTokens, ...doubtAndCopy]);
-    }
-    const lineGlyphs = dedupeLineMarkers(tokens2);
-    factTokens.push(reviewMarkerFor(review, inventory, lineGlyphs, "facts", f3.id, f3.postulate));
-    stmts.forEach((s3, i3) => {
-      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(review, inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
-    });
-    const glyphs = printMarkerSets([dedupeLineMarkers(factTokens), ...statementSets.map(dedupeLineMarkers)]);
-    lines2.push(`${para2}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${courtRecordCite ? "" : ` <!-- fact ${para2} -->`}`);
-    if (courtRecordCite) lines2.push(`   > ${courtRecordCite} <!-- fact ${para2} -->`);
-  });
-  return { lines: lines2, nextPara: para2 };
-}
-function renderFactParagraphsWithRhetoric(ctx, facts, rhetoric, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds) {
-  const lines2 = [];
-  let para2 = startPara;
-  let run = [];
-  const flush = () => {
-    if (run.length === 0) return;
-    const result = renderFactParagraphs(ctx.dbPath, run, para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, ctx.inventory, ctx.review);
-    lines2.push(...result.lines);
-    para2 = result.nextPara;
-    run = [];
-  };
-  for (const entry2 of interleave(facts, rhetoric, (f3) => f3.filing_ordinal)) {
-    if (entry2.kind === "host") {
-      run.push(entry2.item);
-      continue;
-    }
-    flush();
-    para2 += 1;
-    lines2.push(...renderRhetoricLine(ctx, entry2.row, para2, ""));
-  }
-  flush();
-  return { lines: lines2, nextPara: para2 };
-}
-function fetchAffidavitDetails(dbPath, documentIds) {
-  if (documentIds.length === 0) return /* @__PURE__ */ new Map();
-  const placeholders = documentIds.map(() => "?").join(",");
-  const found = rows(
-    dbPath,
-    `SELECT d.id AS document_id, w.name AS deponent_name, d.affidavit_number
-     FROM documents d
-     LEFT JOIN witnesses w ON w.id = d.deponent
-     WHERE d.id IN (${placeholders})`,
-    documentIds
-  );
-  return new Map(found.map((r3) => [r3.document_id, r3]));
-}
-function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
-  return rows(
-    dbPath,
-    `SELECT MIN(a.id) AS id, a.style_of_cause_or_title, a.citation
-     FROM filing_submissions fs
-     JOIN submission_law slk ON slk.submission_id = fs.submission_id
-     JOIN statements_of_law sl ON sl.law_assertion_id = slk.law_assertion_id
-     JOIN authorities a ON a.id = sl.authority_id
-     WHERE fs.filing_id = ? AND fs.document = 'form' AND ${BRIEF_ONLY_CAP_SQL}
-       AND a.id NOT IN (SELECT authority_id FROM opposing_authorities WHERE proceeding_id = ? AND authority_id IS NOT NULL)
-     GROUP BY a.style_of_cause_or_title, a.citation
-     ORDER BY a.style_of_cause_or_title COLLATE NOCASE`,
-    [filingId, proceedingId]
-  );
-}
-function fetchOpposingAuthoritiesCount(dbPath, proceedingId) {
-  const found = rows(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
-  return found[0]?.n ?? 0;
-}
-function fetchAttachedExhibits(dbPath, affidavitDocumentId) {
-  return rows(
-    dbPath,
-    `SELECT DISTINCT d.id AS document_id, d.label, d.document_date
-     FROM statements_of_fact sof
-     JOIN documents d ON d.id = sof.exhibit_id
-     WHERE sof.instrument = ? AND sof.exhibit_id IS NOT NULL`,
-    [affidavitDocumentId]
-  );
-}
-function buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, onMissing) {
-  const out = [];
-  const parts = [];
-  const newPart = (text8, indent) => {
-    out.push({ text: text8, indent, part: parts.length });
-    parts.push({ bookmark: text8 });
-  };
-  out.push({ text: "Cover Page", indent: 0, part: "cover" });
-  out.push({ text: "Table of Contents", indent: 0, part: "toc" });
-  out.push({ text: "Part 1: Evidence, Exhibits or Affidavits", indent: 0, part: null });
-  docs.forEach((d3) => {
-    if (d3.role === "affidavit") {
-      const detail = affidavitDetails.get(d3.document_id);
-      const deponent = detail?.deponent_name ?? onMissing(`${d3.label}'s deponent name`, { table: "documents.deponent", id: d3.document_id, item: `${d3.label}: deponent` });
-      const number3 = detail?.affidavit_number ? ` #${detail.affidavit_number}` : "";
-      const filedDate = d3.document_date ?? onMissing(`${d3.label}'s filed date`, { table: "documents.document_date", id: d3.document_id, item: `${d3.label}: filed date` });
-      newPart(`Affidavit${number3} of ${deponent}, filed ${filedDate}`, 1);
-      const exhibits = fetchAttachedExhibits(dbPath, d3.document_id);
-      exhibits.forEach((ex) => {
-        const num = exhibitMap.get(ex.document_id) ?? onMissing(`${ex.label}'s exhibit number`, { table: "documents.exhibit_number", id: ex.document_id, item: `${ex.label}: exhibit number` });
-        out.push({ text: `Exhibit ${num}: ${ex.label} (${ex.document_date ?? "undated"})`, indent: 2, part: null });
-      });
-    } else {
-      newPart(`${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}`, 1);
-    }
-  });
-  newPart("Part 2: Written Argument", 0);
-  out.push({ text: "Part 1: Statement of Facts", indent: 1, part: null });
-  out.push({ text: "Part 2: Issues", indent: 1, part: null });
-  out.push({ text: "Part 3: Analysis", indent: 1, part: null });
-  out.push({ text: "Part 4: Order(s) Sought", indent: 1, part: null });
-  if (hasAuthorities || unverifiedDelta) newPart("Part 3: Table of Authorities", 0);
-  return { rows: out, parts };
-}
-function buildToc(inv, docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta) {
-  const out = [];
-  out.push("## TABLE OF CONTENTS");
-  out.push("");
-  out.push(
-    "<!-- Required by e-CI \xA71.2. Page numbers are TBD until the combined PDF is assembled -- fill in then, and confirm this table's numbering matches the PDF's actual page numbering (e-CI \xA71.3). -->"
-  );
-  out.push("");
-  out.push("| Item | Page |");
-  out.push("| :--- | ---: |");
-  const { rows: rows2 } = buildTocRows(docs, affidavitDetails, exhibitMap, dbPath, hasAuthorities, unverifiedDelta, (_what, gap2) => {
-    const marker = gapMarker("gap");
-    recordCriterionGlyphs(inv, marker, ["\u{1F9E9}"], gap2);
-    return marker;
-  });
-  rows2.forEach((r3) => out.push(`| ${"&nbsp;&nbsp;".repeat(r3.indent)}${r3.text} | TBD |`));
-  out.push("");
-  return out;
-}
-function recordContactGaps(inv, contacts) {
-  for (const c3 of contacts) {
-    for (const cell of contactCells(c3, gapMarker("gap"))) {
-      recordCriterionGlyphs(inv, cell.text, ["\u{1F9E9}"], { table: `counsel_of_record.${cell.column}`, id: c3.partyId, item: `Counsel for the ${pluralizeRole(c3.role, c3.names.length)}: ${cell.missing}` });
-    }
-  }
-}
-function positionsSentence(positions) {
-  return positions.map((p3) => `paragraph ${p3.paragraph_number} (${p3.wording})`).join("; ");
-}
-function renderBccaStayResponse(ctx) {
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
-  const hearingDate = rows(
-    ctx.dbPath,
-    "SELECT hearing_date, hearing_time FROM hearing_details WHERE filing_id = ?",
-    [ctx.filing.id]
-  )[0];
-  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
-  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
-  const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("bcca_stay_response"));
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
-  const lawBySubmission = groupSubmissionLaw(lawRows);
-  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
-  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
-  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
-    ctx.dbPath,
-    allFactIds,
-    opposingPartyIds(ctx.parties),
-    ctx.rendered.slice(0, 10)
-  );
-  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const orders = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const affidavitDetails = fetchAffidavitDetails(ctx.dbPath, docs.map((d3) => d3.document_id));
-  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
-  for (const s3 of submissionFactStatements) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const authorities = fetchCitedAuthorities(ctx.dbPath, ctx.filing.id, ctx.proceeding.id);
-  const unverifiedDelta = fetchOpposingAuthoritiesCount(ctx.dbPath, ctx.proceeding.id) === 0;
-  const roleGroups = groupPartiesByRole(captionParties2);
-  const clientGroup = client ? roleGroups.find((g3) => g3.role === client.role) : void 0;
-  const applicantGroup = applicant ? roleGroups.find((g3) => g3.role === applicant.role) : void 0;
-  const lowerCourtRoles = buildLowerCourtRoleByRole(ctx.parties);
-  const contacts = roleGroups.map((g3) => {
-    const rep = ctx.parties.find((p3) => p3.role === g3.role);
-    return {
-      role: g3.role,
-      names: g3.names,
-      partyId: rep.id,
-      counselName: rep?.counsel_name ?? null,
-      counselFirm: rep?.counsel_firm ?? null,
-      addressForService: rep?.address_for_service ?? null,
-      counselPhone: rep?.counsel_phone ?? null,
-      counselEmail: rep?.counsel_email ?? null
-    };
-  });
-  const lines2 = [];
-  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Response_book"));
-  lines2.push("");
-  lines2.push(
-    bccaCoverPage(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      recordLabel: "Response Book",
-      titleLine: "RESPONSE BOOK",
-      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
-      onAppealFrom: {
-        judge: ctx.proceeding.under_appeal_judge,
-        court: ctx.proceeding.under_appeal_court,
-        pronounced: ctx.proceeding.under_appeal_pronounced
-      },
-      accessRestrictions: ctx.proceeding.access_restrictions,
-      lowerCourtRoleByRole: lowerCourtRoles,
-      contacts,
-      gapMarker: gapMarker("gap")
-    })
-  );
-  recordContactGaps(ctx.inventory, contacts);
-  lines2.push("");
-  lines2.push(...buildToc(ctx.inventory, docs, affidavitDetails, exhibitMap, ctx.dbPath, authorities.length > 0, unverifiedDelta));
-  const respondents = clientGroup ? `, ${formatNameList(clientGroup.names)}` : ` ${gapMarker("gap")}`;
-  const applicants = applicantGroup ? formatNameList(applicantGroup.names) : gapMarker("gap");
-  const filedOn = respondedTo?.document_date ?? gapMarker("gap");
-  const returnable = hearingDate?.hearing_date ?? gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, respondents, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Respondents" });
-  recordCriterionGlyphs(ctx.inventory, applicants, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Applicants" });
-  recordCriterionGlyphs(ctx.inventory, filedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date the stay application was filed" });
-  recordCriterionGlyphs(ctx.inventory, returnable, ["\u{1F9E9}"], { table: "form_fields", id: 3, item: "Hearing date" });
-  lines2.push(`Response of: the ${clientGroup ? pluralizeRole(clientGroup.role, clientGroup.names.length) : "Respondent"}${respondents}`);
-  lines2.push(
-    `THIS IS A RESPONSE TO the stay application of the ${applicantGroup ? pluralizeRole(applicantGroup.role, applicantGroup.names.length) : "Applicant"}, ${applicants}, filed ${filedOn}, returnable ${returnable}${hearingDate?.hearing_time ? ` at ${hearingDate.hearing_time}` : ""}.`
-  );
-  lines2.push("");
-  lines2.push(
-    "<!-- Response book per the registrar's completion instructions (R. 21(2), leave & stay version): cover page and table of contents rendered above (e-CI \xA71.2 Required), Part 1 evidence/affidavits NOT already in the application book, Part 2 written argument with its own required cover page (e-CI \xA72.1) (MAX 5 PAGES stay-only; Arial 12, 1.5-spaced, margins >= 2.5 cm), optional Part 3 table of authorities computed as a delta against the application book's own table (e-CI \xA71.2). File AND serve at least 2 business days before the hearing (R. 21(1)(a)); one PDF <= 200 MB via CSO. Book assembly is manual for this kind -- assemble from this mockup's parts. -->"
-  );
-  lines2.push("");
-  lines2.push("## PART 1: EVIDENCE, EXHIBITS OR AFFIDAVITS");
-  lines2.push("");
-  lines2.push("<!-- Only material not otherwise included in the application book or another respondent's response book (e-CI \xA71.2). -->");
-  if (docs.length === 0) {
-    lines2.push(`NONE ${gapMarker("question")}`);
-  } else {
-    docs.forEach((d3, i3) => {
-      const detail = affidavitDetails.get(d3.document_id);
-      const deponent = d3.role === "affidavit" && detail?.deponent_name ? `, deponent ${detail.deponent_name}` : "";
-      const number3 = d3.role === "affidavit" && detail?.affidavit_number ? ` (#${detail.affidavit_number})` : "";
-      const copy = copyMarkers.get(d3.document_id) ?? "";
-      lines2.push(
-        `${i3 + 1}. ${d3.label}${number3}${d3.document_date ? ` (${d3.document_date})` : ""}${deponent}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
-      );
-    });
-  }
-  lines2.push("");
-  lines2.push("## PART 2: WRITTEN ARGUMENT");
-  lines2.push("");
-  lines2.push(
-    bccaCoverPage(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      recordLabel: "Memorandum of Argument",
-      titleLine: `WRITTEN ARGUMENT OF THE ${clientGroup ? pluralizeRole(clientGroup.role, clientGroup.names.length).toUpperCase() : "RESPONDENT"} ON A STAY APPLICATION`,
-      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
-      lowerCourtRoleByRole: lowerCourtRoles,
-      contacts,
-      gapMarker: gapMarker("gap")
-    })
-  );
-  lines2.push("");
-  lines2.push(
-    "<!-- e-CI \xA72.1: the written argument carries its own required cover page, separate from the book's outer cover. Paragraphs number consecutively from the Statement of Facts through Order Sought (e-CI \xA72.2). -->"
-  );
-  lines2.push("");
-  let para2 = 0;
-  lines2.push("### Part 1: Statement of Facts");
-  lines2.push("");
-  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  lines2.push(...factResult.lines);
-  para2 = factResult.nextPara;
-  lines2.push("");
-  lines2.push("### Part 2: Issues");
-  lines2.push("");
-  const consented = positions.filter((p3) => p3.position === "consented");
-  const opposed = positions.filter((p3) => p3.position === "opposed");
-  const noPosition = positions.filter((p3) => p3.position === "no_position");
-  opposed.forEach((p3) => {
-    para2 += 1;
-    lines2.push(`${para2}. Whether the order sought in paragraph ${p3.paragraph_number} of the notice of application should be granted: ${p3.wording} <!-- order ${p3.paragraph_number} -->`);
-  });
-  if (consented.length > 0) {
-    para2 += 1;
-    lines2.push(`${para2}. The ${client?.role ?? "Respondent"}(s) consent(s) to the order(s) sought in ${positionsSentence(consented)}.`);
-  }
-  if (noPosition.length > 0) {
-    para2 += 1;
-    lines2.push(`${para2}. The ${client?.role ?? "Respondent"}(s) take(s) no position on the order(s) sought in ${positionsSentence(noPosition)}.`);
-  }
-  if (opposed.length + consented.length + noPosition.length === 0) {
-    lines2.push(mockupMessage(gapMarker("question"), "No position has been recorded on any order sought in the notice of application."));
-  }
-  lines2.push("");
-  if (unpositioned.length > 0) {
-    lines2.push("#### Positions not yet taken");
-    lines2.push("");
-    unpositioned.forEach((o3) => {
-      lines2.push(`- Order ${o3.paragraph_number}: ${o3.wording} ${unpositionedOrderMarker()} <!-- order ${o3.paragraph_number} -->`);
-    });
-    lines2.push("");
-  }
-  lines2.push("### Part 3: Analysis");
-  lines2.push("");
-  lines2.push(
-    "<!-- e-CI \xA72.1 (stay-only): a brief statement of the reasons why the stay should or should not be granted, which should include the respondent's position on (e) the merits of the proposed appeal, (f) irreparable harm, and (g) the balance of inconvenience. -->"
-  );
-  lines2.push("");
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
-    if (entry2.kind === "rhetoric") {
-      para2 += 1;
-      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, para2, ""), "");
-      continue;
-    }
-    const s3 = entry2.item;
-    recordParagraph(ctx, s3.id, "form", para2);
-    const result = renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      para2,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      "",
-      renderedLawAssertions,
-      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
-    );
-    lines2.push(...result.lines);
-    lines2.push("");
-    para2 = result.nextPara;
-  }
-  lines2.push("### Part 4: Order(s) Sought");
-  lines2.push("");
-  let orderNum = 0;
-  for (const entry2 of interleave(orders, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders"), (o3) => o3.filing_ordinal)) {
-    if (entry2.kind === "rhetoric") {
-      para2 += 1;
-      lines2.push(...renderRhetoricLine(ctx, entry2.row, para2, ""));
-      continue;
-    }
-    const o3 = entry2.item;
-    const wording = o3.wording_override ?? o3.wording;
-    if (o3.crossed_out_on !== null) {
-      lines2.push(`~~${wording}~~ <!-- order_sought_id ${o3.id} -->`);
-    } else {
-      orderNum += 1;
-      para2 += 1;
-      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", o3);
-      lines2.push(`${para2}. ${wording}${review ? ` ${review}` : ""} <!-- order_sought_id ${o3.id} -->`);
-    }
-  }
-  if (orderNum === 0) {
-    const line = mockupMessage(gapMarker("gap"), "No order sought has been recorded for this response.");
-    recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "form_fields", id: 4, item: "Order sought" });
-    lines2.push(line);
-  }
-  lines2.push("");
-  const preparer = client?.counsel_name ?? gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, preparer, ["\u{1F9E9}"], { table: "form_fields", id: 5, item: "Preparer" });
-  lines2.push(`Prepared by: ${preparer}`);
-  lines2.push("");
-  lines2.push("## PART 3: TABLE OF AUTHORITIES (OPTIONAL)");
-  lines2.push("");
-  lines2.push(
-    unverifiedDelta ? "<!-- Alphabetical. The application book's own table of authorities has not yet been transcribed into opposing_authorities for this proceeding, so every authority this filing cites is listed below (e-CI \xA71.2) -- the delta exclusion is unverified until that transcription happens. -->" : "<!-- Alphabetical; excludes authorities already referenced in the application book (e-CI \xA71.2), computed against the transcribed opposing_authorities rows. -->"
-  );
-  if (authorities.length === 0) {
-    lines2.push("NONE");
-  } else {
-    authorities.forEach((a3, i3) => {
-      const citation = a3.citation ? `, ${a3.citation}` : ` ${gapMarker("gap")}`;
-      recordCriterionGlyphs(ctx.inventory, citation, ["\u{1F9E9}"], { table: "authority_citations", id: a3.id, item: `${a3.style_of_cause_or_title}: citation` });
-      lines2.push(`${i3 + 1}. ${a3.style_of_cause_or_title}${citation}`);
-    });
-    if (unverifiedDelta) {
-      lines2.push(
-        mockupMessage(
-          gapMarker("question"),
-          "Opposing application book's table of authorities not yet transcribed -- this list may include authorities that must be excluded once it is."
-        )
-      );
-    }
-  }
-  lines2.push("");
-  if (client) lines2.push(signatureBlock({ name: client.name, role: client.role, counselName: client.counsel_name }, false));
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
-// src/submission/forms/render-bcca-factum.ts
-function pushGap(ctx, lines2, line, field, item) {
-  recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "form_fields", id: field, item });
-  lines2.push(line);
-}
-var WORDS_PER_PAGE = 300;
-var PARTS_PAGE_LIMIT = 30;
-var OPENING_STATEMENT_PAGE_LIMIT = 1;
-var MONTHS2 = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-function longDate(iso2) {
-  const m3 = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso2);
-  if (!m3) return iso2;
-  return `${MONTHS2[Number(m3[2]) - 1]} ${Number(m3[3])}, ${m3[1]}`;
-}
-function fetchChronology(dbPath, filingId) {
-  return rows(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
-}
-function fetchProseParagraphs(dbPath, filingId) {
-  const found = rows(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
-  return new Map(
-    found.map((r3) => [
-      r3.slot,
-      r3.text.split(/\n\s*\n/).map((p3) => p3.trim()).filter((p3) => p3 !== "")
-    ])
-  );
-}
-function fetchCitedStatements(dbPath, lawAssertionIds) {
-  if (lawAssertionIds.length === 0) return [];
-  const placeholders = lawAssertionIds.map(() => "?").join(",");
-  return rows(
-    dbPath,
-    `SELECT sl.law_assertion_id, a.id AS authority_id, a.style_of_cause_or_title AS title, a.citation, a.kind, sl.pinpoint, sl.excerpt
-     FROM statements_of_law sl
-     JOIN authorities a ON a.id = sl.authority_id
-     WHERE sl.law_assertion_id IN (${placeholders})
-       AND ${BRIEF_ONLY_CAP_SQL}
-     ORDER BY sl.id`,
-    lawAssertionIds
-  );
-}
-function factumAuthorities(dbPath, lawParas) {
-  const byAuthority = /* @__PURE__ */ new Map();
-  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) {
-    const entry2 = byAuthority.get(s3.authority_id) ?? { authority_id: s3.authority_id, authority: s3.title, citation: s3.citation, paras: [] };
-    const para2 = lawParas.get(s3.law_assertion_id);
-    if (!entry2.paras.includes(para2)) entry2.paras.push(para2);
-    byAuthority.set(s3.authority_id, entry2);
-  }
-  return [...byAuthority.values()].map((a3) => ({ ...a3, paras: a3.paras.sort((x3, y3) => x3 - y3) })).sort((x3, y3) => x3.authority.localeCompare(y3.authority, "en", { sensitivity: "base" }));
-}
-function factumLawAssertionIds(dbPath, filingId) {
-  const submissions = fetchSubmissions(dbPath, filingId, "form");
-  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(dbPath, submissions.map((s3) => s3.id)));
-  const ids = [];
-  for (const s3 of submissions) {
-    for (const la2 of lawBySubmission.get(s3.id) ?? []) {
-      if (!ids.includes(la2.lawAssertionId)) ids.push(la2.lawAssertionId);
-    }
-  }
-  return ids;
-}
-var BOOK_AUTHORITY_KINDS = /* @__PURE__ */ new Set(["case", "doctrine", "statute", "regulation"]);
-function factumBookAuthorities(dbPath, filingId) {
-  const lawParas = new Map(factumLawAssertionIds(dbPath, filingId).map((id) => [id, 0]));
-  const key = (title, citation) => `${title}\0${citation ?? ""}`;
-  const kinds = /* @__PURE__ */ new Map();
-  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) kinds.set(key(s3.title, s3.citation), s3.kind);
-  return factumAuthorities(dbPath, lawParas).filter((a3) => BOOK_AUTHORITY_KINDS.has(kinds.get(key(a3.authority, a3.citation)) ?? "")).map(({ authority, citation }) => ({ authority, citation }));
-}
-function factumEnactments(dbPath, lawParas) {
-  const enactments = /* @__PURE__ */ new Map();
-  const rules = /* @__PURE__ */ new Map();
-  for (const s3 of fetchCitedStatements(dbPath, [...lawParas.keys()])) {
-    if (s3.kind === "rule") {
-      rules.set(s3.authority_id, `${s3.title}${s3.citation ? `, ${s3.citation}` : ""}`);
-      continue;
-    }
-    if (s3.kind !== "statute" && s3.kind !== "regulation") continue;
-    const entry2 = enactments.get(s3.authority_id) ?? { authority_id: s3.authority_id, title: s3.title, citation: s3.citation, excerpts: [] };
-    if (s3.excerpt && !entry2.excerpts.some((e3) => e3.text === s3.excerpt && e3.pinpoint === s3.pinpoint)) {
-      entry2.excerpts.push({ pinpoint: s3.pinpoint, text: s3.excerpt });
-    }
-    enactments.set(s3.authority_id, entry2);
-  }
-  return {
-    enactments: [...enactments.values()].sort((x3, y3) => x3.title.localeCompare(y3.title, "en", { sensitivity: "base" })),
-    rules: [...rules.values()]
-  };
-}
-function factumSigner(ctx) {
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  if (!client) return { roleLabel: null, name: null, line: null };
-  const group = groupPartiesByRole(ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }))).find((g3) => g3.role === client.role);
-  const roleLabel = pluralizeRole(client.role, group?.names.length ?? 1);
-  return client.counsel_name ? { roleLabel, name: client.counsel_name, line: `Counsel for the ${roleLabel}` } : { roleLabel, name: client.name, line: roleLabel };
-}
-function factumRecordLabel(roleLabel) {
-  const role = roleLabel ?? "Respondent";
-  return `${role}${role.endsWith("s") ? "'" : "'s"} Factum`;
-}
-function wordCount2(lines2) {
-  return lines2.join(" ").replace(/<!--[\s\S]*?-->/g, " ").split(/\s+/).filter((w3) => /[\p{L}\p{N}]/u.test(w3)).length;
-}
-function pageBudgetLine(label2, words, limit, limitNote) {
-  const pages = Math.max(1, Math.ceil(words / WORDS_PER_PAGE));
-  const over = words > limit * WORDS_PER_PAGE;
-  return `- ${label2}: ${words} words, about ${pages} page${pages === 1 ? "" : "s"} of the ${limit}-page limit.${over ? ` **Over the limit** -- ${limitNote}` : ""}`;
-}
-function renderBccaFactum(ctx) {
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  const roleGroups = groupPartiesByRole(captionParties2);
-  const clientGroup = client ? roleGroups.find((g3) => g3.role === client.role) : void 0;
-  const signer = factumSigner(ctx);
-  const prose = fetchProseParagraphs(ctx.dbPath, ctx.filing.id);
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("bcca_factum"));
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
-  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
-  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
-  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
-    ctx.dbPath,
-    allFactIds,
-    opposingPartyIds(ctx.parties),
-    ctx.rendered.slice(0, 10)
-  );
-  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
-  for (const s3 of submissionFactStatements) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const orders = fetchOrdersSought(ctx.dbPath, ctx.filing.id, "form");
-  const points = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
-  const contacts = roleGroups.map((g3) => {
-    const rep = ctx.parties.find((p3) => p3.role === g3.role);
-    return {
-      role: g3.role,
-      names: g3.names,
-      partyId: rep.id,
-      counselName: rep?.counsel_name ?? null,
-      counselFirm: rep?.counsel_firm ?? null,
-      addressForService: rep?.address_for_service ?? null,
-      counselPhone: rep?.counsel_phone ?? null,
-      counselEmail: rep?.counsel_email ?? null
-    };
-  });
-  const title = factumRecordLabel(signer.roleLabel);
-  const lines2 = [];
-  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Factum"));
-  lines2.push("");
-  lines2.push(
-    bccaCoverPage(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      recordLabel: title,
-      titleLine: title.toUpperCase(),
-      filingPartyPhrase: clientGroup ? formatNameList(clientGroup.names) : null,
-      onAppealFrom: {
-        judge: ctx.proceeding.under_appeal_judge,
-        court: ctx.proceeding.under_appeal_court,
-        pronounced: ctx.proceeding.under_appeal_pronounced
-      },
-      accessRestrictions: ctx.proceeding.access_restrictions,
-      lowerCourtRoleByRole: buildLowerCourtRoleByRole(ctx.parties),
-      contacts,
-      gapMarker: gapMarker("gap")
-    })
-  );
-  recordContactGaps(ctx.inventory, contacts);
-  lines2.push("");
-  lines2.push(
-    "<!-- Respondent's factum per tpl_factum_respondent.dotx and the factum completion instructions (R. 25(4)): Arial 12, 1.5 spacing, single space between paragraphs, margins >= 2.5 cm, pages numbered from the cover. No wet signature -- the name of the person authorizing filing is enough (R. 79(4)). -->"
-  );
-  lines2.push("");
-  lines2.push("## TABLE OF CONTENTS");
-  lines2.push("");
-  lines2.push("<!-- Word builds this from the headings; page numbers fill when the assembled document's fields update. -->");
-  lines2.push("");
-  for (const heading of [
-    "CHRONOLOGY",
-    "OPENING STATEMENT",
-    "PART 1 - STATEMENT OF FACTS",
-    "PART 2 - ISSUES ON APPEAL",
-    "PART 3 - ARGUMENT",
-    "PART 4 - NATURE OF ORDER SOUGHT",
-    "APPENDICES: LIST OF AUTHORITIES",
-    "APPENDICES: ENACTMENTS"
-  ]) {
-    lines2.push(`- ${heading}`);
-  }
-  lines2.push("");
-  lines2.push("## CHRONOLOGY");
-  lines2.push("");
-  const chronology = fetchChronology(ctx.dbPath, ctx.filing.id);
-  if (chronology.length === 0) {
-    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No chronology events recorded."), 0, "Chronology");
-  } else {
-    lines2.push("| Date | Event |");
-    lines2.push("| :--- | :--- |");
-    chronology.forEach((c3) => lines2.push(`| ${longDate(c3.event_date)} | ${c3.event} |`));
-  }
-  lines2.push("");
-  lines2.push("## OPENING STATEMENT");
-  lines2.push("");
-  const opening = prose.get("opening_statement") ?? [];
-  if (opening.length === 0) {
-    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No opening statement recorded."), 1, "Opening statement");
-  } else {
-    opening.forEach((p3) => {
-      lines2.push(p3);
-      lines2.push("");
-    });
-  }
-  lines2.push("");
-  let para2 = 0;
-  const partsStart = lines2.length;
-  lines2.push("## PART 1 - STATEMENT OF FACTS");
-  lines2.push("");
-  const factsPosition = prose.get("facts_position") ?? [];
-  if (factsPosition.length === 0) {
-    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No position on the appellants' statement of facts recorded."), 2, "Position on the appellants' statement of facts");
-  }
-  factsPosition.forEach((p3) => {
-    para2 += 1;
-    lines2.push(`${para2}. ${p3}`);
-  });
-  const factResult = renderFactParagraphsWithRhetoric(ctx, facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  lines2.push(...factResult.lines);
-  para2 = factResult.nextPara;
-  lines2.push("");
-  lines2.push("## PART 2 - ISSUES ON APPEAL");
-  lines2.push("");
-  if (submissions.length === 0) {
-    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No submissions deployed to this factum."), 3, "Submissions");
-  }
-  submissions.forEach((s3) => {
-    para2 += 1;
-    const answers = points.filter((pt3) => pt3.answered_by_submission_id === s3.id).map((pt3) => pt3.component);
-    lines2.push(`${para2}. ${s3.contention}${answers.length > 0 ? ` <!-- answers: ${answers.join("; ")} -->` : ""}`);
-  });
-  lines2.push("");
-  const unanswered = points.filter((pt3) => pt3.answered_by_submission_id === null);
-  if (unanswered.length > 0) {
-    lines2.push("#### Points not yet answered");
-    lines2.push("");
-    unanswered.forEach((pt3) => {
-      lines2.push(`- ${pt3.component}${pt3.pinpoint ? ` (${pt3.pinpoint})` : ""}: ${pt3.verbatim_words ?? ""} ${rebuttalMarker(null)} <!-- opposing_point ${pt3.id} -->`);
-    });
-    lines2.push("");
-  }
-  lines2.push("## PART 3 - ARGUMENT");
-  lines2.push("");
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
-    if (entry2.kind === "rhetoric") {
-      para2 += 1;
-      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, para2, ""), "");
-      continue;
-    }
-    const s3 = entry2.item;
-    recordParagraph(ctx, s3.id, "form", para2);
-    const result = renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      para2,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      "",
-      renderedLawAssertions,
-      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
-    );
-    lines2.push(...result.lines);
-    lines2.push("");
-    para2 = result.nextPara;
-  }
-  lines2.push("## PART 4 - NATURE OF ORDER SOUGHT");
-  lines2.push("");
-  for (const row2 of fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "orders")) {
-    para2 += 1;
-    lines2.push(...renderRhetoricLine(ctx, row2, para2, ""), "");
-  }
-  para2 += 1;
-  const seeks = signer.roleLabel && signer.roleLabel.endsWith("s") ? "seek" : "seeks";
-  lines2.push(`${para2}. The ${(signer.roleLabel ?? "respondent").toLowerCase()} ${seeks} an Order:`);
-  lines2.push("");
-  const liveOrders = orders.filter((o3) => o3.crossed_out_on === null);
-  orders.forEach((o3) => {
-    const wording = o3.wording_override ?? o3.wording;
-    if (o3.crossed_out_on !== null) {
-      lines2.push(`~~${wording}~~ <!-- order_sought_id ${o3.id} -->`);
-    } else {
-      const review = orderReviewMarkerFor(ctx.review, ctx.inventory, "", o3);
-      lines2.push(`${wording}${review ? ` ${review}` : ""} <!-- order_sought_id ${o3.id} -->`);
-    }
-    lines2.push("");
-  });
-  if (liveOrders.length === 0) {
-    pushGap(ctx, lines2, mockupMessage(gapMarker("gap"), "No order sought recorded. The order must include a costs disposition."), 4, "Order sought");
-    lines2.push("");
-  }
-  para2 += 1;
-  lines2.push(`${para2}. All of which is respectfully submitted.`);
-  const partsEnd = lines2.length;
-  lines2.push("");
-  const place = (prose.get("signing_place") ?? []).join(" ");
-  const signingPlace = place || gapMarker("gap");
-  const signerName = signer.name ?? gapMarker("gap");
-  recordCriterionGlyphs(ctx.inventory, signingPlace, ["\u{1F9E9}"], { table: "form_fields", id: 5, item: "Place of signing" });
-  recordCriterionGlyphs(ctx.inventory, signerName, ["\u{1F9E9}"], { table: "form_fields", id: 6, item: "Name authorizing filing" });
-  lines2.push(`Dated at the City of ${signingPlace}, Province of British Columbia, this [month] [day] of [year]. <!-- date supplied when the factum is assembled -->`);
-  lines2.push("");
-  lines2.push(signerName);
-  lines2.push(signer.line ?? "");
-  lines2.push("");
-  lines2.push("## APPENDICES: LIST OF AUTHORITIES");
-  lines2.push("");
-  const authorities = factumAuthorities(ctx.dbPath, renderedLawAssertions);
-  if (authorities.length === 0) {
-    lines2.push("None.");
-  } else {
-    lines2.push("| Authorities | Page # in factum | Para # in factum |");
-    lines2.push("| :--- | :---: | :---: |");
-    authorities.forEach((a3) => {
-      const citation = a3.citation ?? gapMarker("gap");
-      recordCriterionGlyphs(ctx.inventory, citation, ["\u{1F9E9}"], { table: "authority_citations", id: a3.authority_id, item: `${a3.authority}: citation` });
-      lines2.push(`| ${a3.authority}, ${citation} | (fills in Word) | ${a3.paras.join(", ")} |`);
-    });
-  }
-  lines2.push("");
-  lines2.push("## APPENDICES: ENACTMENTS");
-  lines2.push("");
-  const { enactments, rules } = factumEnactments(ctx.dbPath, renderedLawAssertions);
-  if (enactments.length === 0) {
-    lines2.push("None.");
-    lines2.push("");
-  }
-  enactments.forEach((e3) => {
-    lines2.push(`**${e3.title}**${e3.citation ? `, ${e3.citation}` : ""}`);
-    lines2.push("");
-    if (e3.excerpts.length === 0) {
-      const line = mockupMessage(gapMarker("gap"), "No excerpt recorded for this enactment.");
-      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "enactment_excerpts", id: e3.authority_id, item: `${e3.title}: excerpt` });
-      lines2.push(line);
-      lines2.push("");
-    }
-    e3.excerpts.forEach((x3) => {
-      for (const l3 of x3.text.split("\n")) if (l3.trim() !== "") lines2.push(`> ${l3}`);
-      if (x3.pinpoint) lines2.push(`> (${x3.pinpoint})`);
-      lines2.push("");
-    });
-  });
-  if (rules.length > 0) {
-    lines2.push("#### Court rules not in this appendix");
-    lines2.push("");
-    lines2.push("These authorities are recorded as rules. The appendix takes acts and regulations only, so they are left out of the filed factum, and they are left out of the Book of Authorities too, unless recorded as a regulation. They stay on the Appendix: List of Authorities either way.");
-    lines2.push("");
-    rules.forEach((r3) => lines2.push(`- ${r3}`));
-    lines2.push("");
-  }
-  lines2.push("## Page budget");
-  lines2.push("");
-  lines2.push(`Estimated at ${WORDS_PER_PAGE} words a page. Confirm in Word once the factum is assembled.`);
-  lines2.push("");
-  lines2.push(pageBudgetLine("Opening Statement", wordCount2(opening), OPENING_STATEMENT_PAGE_LIMIT, "the opening statement is limited to one page."));
-  lines2.push(
-    pageBudgetLine(
-      "Parts 1-4",
-      wordCount2(lines2.slice(partsStart, partsEnd)),
-      PARTS_PAGE_LIMIT,
-      "Parts 1-4 are limited to 30 pages; more pages need an order under R. 48(1)(f)."
-    )
-  );
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
-// src/submission/forms/render-bcsc-affidavit.ts
-var EXHIBIT_TOKEN = /\{exhibit:(\d+)\}/g;
-function placedDocumentIds(text8) {
-  return [...text8.matchAll(EXHIBIT_TOKEN)].map((m3) => Number(m3[1]));
-}
-function letterFor(index) {
-  let out = "";
-  for (let n3 = index + 1; n3 > 0; n3 = Math.floor((n3 - 1) / 26)) out = String.fromCharCode(65 + (n3 - 1) % 26) + out;
-  return out;
-}
-function exhibitLetters(paragraphTexts) {
-  const letters = /* @__PURE__ */ new Map();
-  for (const text8 of paragraphTexts) {
-    for (const id of placedDocumentIds(text8)) if (!letters.has(id)) letters.set(id, letterFor(letters.size));
-  }
-  return letters;
-}
-function withExhibitLetters(text8, letters) {
-  return text8.replace(EXHIBIT_TOKEN, (_3, id) => `**Exhibit "${letters.get(Number(id))}"**`);
-}
-function fetchAffidavits(dbPath, filingId) {
-  return rows(
-    dbPath,
-    `SELECT d.id, d.deponent AS witness_id, w.name AS deponent_name, d.execution, d.signed_at, d.label, d.affidavit_number
-     FROM filing_documents fd
-     JOIN documents d ON d.id = fd.document_id
-     LEFT JOIN witnesses w ON w.id = d.deponent
-     WHERE fd.filing_id = ? AND fd.role = 'affidavit' AND d.instrument = 'affidavit'
-     ORDER BY fd.ordinal`,
-    [filingId]
-  );
-}
-function affidavitFileName(a3) {
-  return `${a3.label.replace(/[\\/:*?"<>|]/g, "_").trim()}.md`;
-}
-function fetchParagraphLinks(dbPath, paragraphIds) {
-  if (paragraphIds.length === 0) return [];
-  const placeholders = paragraphIds.map(() => "?").join(",");
-  return rows(
-    dbPath,
-    `SELECT psof.statement_paragraph_id, psof.statement_of_fact_id, sof.fact_id, sof.exhibit_id
-     FROM paragraph_statements_of_fact psof
-     JOIN statements_of_fact sof ON sof.id = psof.statement_of_fact_id
-     WHERE psof.statement_paragraph_id IN (${placeholders})
-     ORDER BY sof.id`,
-    paragraphIds
-  );
-}
-function fetchPlacedInProceeding(dbPath, proceedingId) {
-  const texts = rows(
-    dbPath,
-    `SELECT sp.text FROM statement_paragraphs sp
-     JOIN documents d ON d.id = sp.document_id
-     WHERE d.proceeding_id = ? AND d.instrument = 'affidavit'`,
-    [proceedingId]
-  );
-  return new Set(texts.flatMap((t3) => placedDocumentIds(t3.text)));
-}
-function frontmatterFor3(ctx) {
-  const fields2 = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: ctx.proceeding.court_or_centre ?? captionHeadingFor(ctx.filing, ctx.proceeding).display_label,
-    proceedingFileNo: ctx.proceeding.file_number ?? "",
-    documentType: "Affidavit",
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields2);
-}
-function renderAffidavit(ctx, a3) {
-  const paragraphs = rows(ctx.dbPath, `SELECT id, text FROM statement_paragraphs WHERE document_id = ? ORDER BY ordinal`, [a3.id]);
-  const links = fetchParagraphLinks(
-    ctx.dbPath,
-    paragraphs.map((p3) => p3.id)
-  );
-  const letters = exhibitLetters(paragraphs.map((p3) => p3.text));
-  const placedInProceeding = fetchPlacedInProceeding(ctx.dbPath, ctx.proceeding.id);
-  const labels = fetchDocumentLabels(ctx.dbPath, [.../* @__PURE__ */ new Set([...letters.keys(), ...links.flatMap((l3) => l3.exhibit_id === null ? [] : [l3.exhibit_id])])]);
-  const labelOf = (id) => labels.get(id) ?? `document ${id}`;
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const deponent = a3.deponent_name ?? "________________";
-  const lines2 = [];
-  lines2.push(frontmatterFor3(ctx));
-  lines2.push("");
-  lines2.push(`This is Affidavit #${a3.affidavit_number ?? "____"} of ${deponent} in this case and was made on ${a3.execution ?? "________________"}.`);
-  lines2.push("");
-  lines2.push(
-    styleOfProceedingCaption(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      titleLine: "AFFIDAVIT"
-    })
-  );
-  lines2.push("");
-  lines2.push(`I, ${deponent}, swear (or affirm) that:`);
-  lines2.push("");
-  const affidavitGaps = [
-    ...a3.deponent_name === null ? [{ text: "no deponent recorded", what: "deponent" }] : [],
-    ...paragraphs.length === 0 && a3.execution === null ? [{ text: "no paragraphs drafted", what: "paragraphs" }] : []
-  ];
-  for (const gap2 of affidavitGaps) {
-    const line = mockupMessage(gapMarker("gap"), gap2.text);
-    recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "documents", id: a3.id, item: `${a3.label}: ${gap2.what}` });
-    lines2.push(line);
-  }
-  paragraphs.forEach((p3, i3) => {
-    const n3 = i3 + 1;
-    const own = links.filter((l3) => l3.statement_paragraph_id === p3.id);
-    const tag = own.length > 0 ? ` [facts ${own.map((l3) => `F${l3.fact_id}`).join(", ")}]` : ` ${gapMarker("gap")} [GAP -- no fact linked]`;
-    recordCriterionGlyphs(ctx.inventory, tag, ["\u{1F9E9}"], { table: "statement_paragraphs", id: p3.id, item: `${a3.label}, paragraph ${n3}: linked fact` });
-    lines2.push(`${n3}. ${withExhibitLetters(p3.text, letters)}${tag} <!-- statement_paragraph ${n3} -->`);
-    if (own.length === 0) return;
-    const tendered = new Set(own.map((l3) => l3.exhibit_id));
-    for (const id of new Set(placedDocumentIds(p3.text))) {
-      if (tendered.has(id)) continue;
-      const line = mockupMessage(gapMarker("gap"), `Exhibit "${letters.get(id)}" (${labelOf(id)}) is attached here, but no statement of fact linked to this paragraph tenders it`);
-      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "statement_paragraphs", id: p3.id, item: `${a3.label}, paragraph ${n3}: Exhibit "${letters.get(id)}" tendered` });
-      lines2.push(`   ${line}`);
-    }
-    for (const l3 of own) {
-      if (l3.exhibit_id === null || placedInProceeding.has(l3.exhibit_id)) continue;
-      const line = mockupMessage(gapMarker("gap"), `${labelOf(l3.exhibit_id)} is tendered by a statement of fact linked to this paragraph, but no affidavit in this proceeding attaches it`);
-      recordCriterionGlyphs(ctx.inventory, line, ["\u{1F9E9}"], { table: "statements_of_fact", id: l3.statement_of_fact_id, item: `${a3.label}, paragraph ${n3}: ${labelOf(l3.exhibit_id)} attached` });
-      lines2.push(`   ${line}`);
-    }
-  });
-  lines2.push("");
-  const swearMarker = a3.execution === null && links.length > 0 ? "\u2712\uFE0F" : "";
-  recordGlyphs(ctx.inventory, swearMarker, ["\u2712\uFE0F"], { table: "documents", id: a3.id, item: a3.label, witness_id: a3.witness_id ?? void 0 });
-  lines2.push(`SWORN (OR AFFIRMED) BEFORE ME at ${a3.signed_at ?? "________________"}, British Columbia on ${a3.execution ?? "________________"}. ${swearMarker}`.trim());
-  lines2.push("");
-  lines2.push("________________________________");
-  lines2.push("A commissioner for taking affidavits for British Columbia");
-  lines2.push("");
-  lines2.push("________________________________");
-  lines2.push(deponent);
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
-// src/submission/forms/render-companions.ts
-var WRITTEN_ARGUMENTS_VENUES = /* @__PURE__ */ new Map([
-  ["CAN/BC/Vancouver-International-Arbitration-Centre", { tribunal: "the Arbitral Tribunal", awardCap: true, interestAndCosts: true }],
-  ["CAN/BC/BCSC", { tribunal: "the Court", awardCap: false, interestAndCosts: false }]
-]);
-function writtenArgumentsVenue(proceeding) {
-  const venue = proceeding.forum === null ? void 0 : WRITTEN_ARGUMENTS_VENUES.get(proceeding.forum);
-  if (venue === void 0) {
-    throw new DataServerError(
-      `Proceeding ${proceeding.id} has forum ${proceeding.forum === null ? "null" : `"${proceeding.forum}"`}, which has no Written Arguments settings`,
-      "venue_unknown"
-    );
-  }
-  return venue;
-}
-function frontmatterFor4(ctx, documentType) {
-  const fields2 = {
-    clientName: ctx.clientName,
-    clientNo: ctx.clientNo,
-    matterNo: ctx.matterNo,
-    matterDescription: ctx.matterDescription,
-    venue: ctx.proceeding.court_or_centre ?? venueHeadingFor(ctx.filing, ctx.proceeding)?.display_label ?? "",
-    proceedingFileNo: ctx.proceeding.file_number ?? "",
-    documentType,
-    documentName: ctx.filing.title,
-    documentDate: BLANK_UNDERLINE,
-    revision: ctx.revision,
-    rendered: ctx.rendered
-  };
-  return frontmatterHeader(fields2);
-}
-function renderWrittenArguments(ctx, documentKey) {
-  const venue = writtenArgumentsVenue(ctx.proceeding);
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  const clientRole = client?.role ?? "Party";
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, documentKey);
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
-  const lawBySubmission = groupSubmissionLaw(lawRows);
-  const factRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const factIds = [...new Set(factRows.map((f3) => f3.fact_id))];
-  const statementRows = fetchFactStatements(ctx.dbPath, factIds);
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(ctx.dbPath, factIds, opposingPartyIds(ctx.parties), ctx.rendered.slice(0, 10));
-  const factsBySubmission = groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const exhibitDocs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, exhibitDocs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(exhibitDocs.map((d3) => d3.document_id));
-  for (const s3 of statementRows) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const relief = fetchOrdersSought(ctx.dbPath, ctx.filing.id, documentKey);
-  const includedRelief = relief.filter((r3) => r3.crossed_out_on === null);
-  const crossedOutRelief = relief.filter((r3) => r3.crossed_out_on !== null);
-  const total = includedRelief.reduce((sum, r3) => sum + (r3.amount ?? 0), 0);
-  const servedRows = submissionIds.length === 0 ? [] : rows(
-    ctx.dbPath,
-    `SELECT sb.submission_id, sb.order_sought_id, o.crossed_out_on, o.wording
-           FROM order_sought_served_by sb
-           JOIN order_sought o ON o.id = sb.order_sought_id
-           WHERE sb.submission_id IN (${submissionIds.map(() => "?").join(",")})`,
-    submissionIds
-  );
-  const servedBySubmission = /* @__PURE__ */ new Map();
-  for (const r3 of servedRows) {
-    const list = servedBySubmission.get(r3.submission_id) ?? [];
-    list.push(r3);
-    servedBySubmission.set(r3.submission_id, list);
-  }
-  function struckSubmission(submissionId) {
-    const served = servedBySubmission.get(submissionId) ?? [];
-    if (served.length === 0 || !served.every((s3) => s3.crossed_out_on !== null)) return null;
-    return served[0];
-  }
-  const lines2 = [];
-  lines2.push(frontmatterFor4(ctx, "Written_arguments"));
-  lines2.push("");
-  lines2.push(
-    styleOfProceedingCaption(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      titleLine: `WRITTEN ARGUMENT OF THE ${clientRole.toUpperCase()}`
-    })
-  );
-  lines2.push("");
-  lines2.push("## Submissions");
-  lines2.push("");
-  let n3 = 1;
-  const struckLines = [];
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, documentKey, "submissions"), (s3) => s3.filing_ordinal)) {
-    if (entry2.kind === "rhetoric") {
-      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, n3, ""), "");
-      n3 += 1;
-      continue;
-    }
-    const s3 = entry2.item;
-    const struck = struckSubmission(s3.id);
-    if (struck) {
-      struckLines.push(`~~${s3.contention}~~ (crossed out \u2014 supports order_sought ${struck.order_sought_id}, "${struck.wording}") <!-- submission_id ${s3.id} -->`);
-      continue;
-    }
-    recordParagraph(ctx, s3.id, documentKey, n3 - 1);
-    const result = renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      n3 - 1,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      "",
-      renderedLawAssertions,
-      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
-    );
-    lines2.push(...result.lines);
-    lines2.push("");
-    n3 = result.nextPara + 1;
-  }
-  for (const line of struckLines) lines2.push(line);
-  if (struckLines.length > 0) lines2.push("");
-  if (venue.awardCap) {
-    lines2.push(`${n3}. The award sought is within the Tribunal's Rule 24(j) cap.`);
-    if (total <= 25e4) {
-      lines2.push(`   The total claimed by the ${clientRole}, exclusive of interest and costs, is $${total.toLocaleString("en-US")}.`);
-    } else {
-      lines2.push(
-        `   The total claimed by the ${clientRole}, exclusive of interest and costs, is $${total.toLocaleString("en-US")}. [PRACTITIONER \u2014 total exceeds the Rule 24(j) cap; Rule 24(h) consent position required]`
-      );
-    }
-    lines2.push("");
-    n3 += 1;
-  }
-  for (const row2 of fetchRhetoric(ctx.dbPath, ctx.filing.id, documentKey, "orders")) {
-    lines2.push(...renderRhetoricLine(ctx, row2, n3, ""), "");
-    n3 += 1;
-  }
-  const askVerb = `asks ${venue.tribunal}`;
-  lines2.push(`${n3}. The ${clientRole} ${askVerb} to award the following relief.`);
-  const letters = "abcdefghijklmnopqrstuvwxyz";
-  includedRelief.forEach((r3, i3) => {
-    const wording = r3.wording_override ?? r3.wording;
-    const amountPart = r3.amount !== null ? `$${r3.amount.toLocaleString("en-US")} \u2014 ` : "";
-    const jurMarker = recordJurisdictionLadder(ctx.inventory, r3.id, r3.wording, r3.requires);
-    const petitum = unservedPetitumMarker(r3.hasServedBy);
-    recordGlyphs(ctx.inventory, petitum, ["\u{1F9B5}"], { table: "order_sought", id: r3.id, item: r3.wording });
-    const workMarkers = dedupeLineMarkers([jurMarker, petitum]);
-    const review = orderReviewMarkerFor(ctx.review, ctx.inventory, workMarkers, r3);
-    const lineMarkers = printMarkerSets([dedupeLineMarkers([workMarkers, review])]);
-    lines2.push(`   (${letters[i3] ?? i3 + 1}) ${amountPart}${wording}${lineMarkers ? ` ${lineMarkers}` : ""} <!-- relief_item ${letters[i3] ?? i3 + 1} -->`);
-  });
-  if (venue.interestAndCosts) {
-    lines2.push(`   (${letters[includedRelief.length] ?? "x"}) interest;`);
-    lines2.push(`   (${letters[includedRelief.length + 1] ?? "y"}) costs.`);
-  }
-  lines2.push("");
-  for (const r3 of crossedOutRelief) {
-    const wording = r3.wording_override ?? r3.wording;
-    lines2.push(`~~${wording}~~ <!-- order crossed-out order_sought_id ${r3.id} -->`);
-  }
-  if (crossedOutRelief.length > 0) lines2.push("");
-  const opposingPoints = fetchOpposingPoints(ctx.dbPath, ctx.proceeding.id);
-  if (opposingPoints.length > 0) {
-    lines2.push("## Opposing points");
-    lines2.push("");
-    for (const op of opposingPoints) {
-      const pinpointPart = op.pinpoint ? `, ${op.pinpoint}` : "";
-      const quotePart = op.verbatim_words ? `: "${op.verbatim_words}"` : "";
-      const rebuttal = rebuttalMarker(op.answered_by_submission_id);
-      const status3 = op.answered_by_submission_id === null ? rebuttal : `\u2014 answered by: ${op.answered_by_contention}`;
-      recordCriterionGlyphs(ctx.inventory, rebuttal, ["\u21A9\uFE0F"], { table: "opposing_points", id: op.id, item: `${op.component}${pinpointPart}${quotePart}` });
-      lines2.push(`- ${op.component}${pinpointPart}${quotePart}${status3 ? ` ${status3}` : ""} <!-- opposing_point_id ${op.id} -->`);
-    }
-    lines2.push("");
-  }
-  return lines2.join("\n").trimEnd() + "\n";
-}
-function fetchProceedingOrders(dbPath, proceedingId) {
-  const orders = rows(
-    dbPath,
-    `SELECT o.id, o.wording, o.crossed_out_on,
-            EXISTS(
-              SELECT 1 FROM order_sought_served_by sb
-              JOIN submissions s ON s.id = sb.submission_id
-              WHERE sb.order_sought_id = o.id AND s.killed_on IS NULL
-            ) AS has_served_by
-     FROM order_sought o WHERE o.proceeding_id = ? ORDER BY o.id`,
-    [proceedingId]
-  );
-  const edgesByOrder = fetchJurisdictionEdges(dbPath, orders.map((o3) => o3.id));
-  return orders.map((o3) => ({ ...o3, hasServedBy: o3.has_served_by === 1, requires: edgesByOrder.get(o3.id) ?? [] }));
-}
-function fetchOtherFilingDeployments(dbPath, proceedingId, filingId) {
-  const filings = rows(
-    dbPath,
-    // A Milestone with no Writing deploys nothing.
-    `SELECT id, kind, title, filed_on, decided_on, entered_on, retired_on, needs_forum_parts FROM filings WHERE proceeding_id = ? AND id <> ? AND kind <> ? ORDER BY id`,
-    [proceedingId, filingId, MILESTONE_KIND]
-  );
-  const orders = /* @__PURE__ */ new Set();
-  const submissions = /* @__PURE__ */ new Set();
-  for (const f3 of filings) {
-    for (const r3 of rows(dbPath, `SELECT order_sought_id FROM filing_orders WHERE filing_id = ?`, [f3.id])) {
-      orders.add(r3.order_sought_id);
-    }
-    for (const id of fetchPlacedAlternativeIds(dbPath, f3)) orders.add(id);
-    for (const r3 of rows(dbPath, `SELECT submission_id FROM filing_submissions WHERE filing_id = ?`, [f3.id])) {
-      submissions.add(r3.submission_id);
-    }
-  }
-  return { orders, submissions };
-}
-function fetchLiveReliedLawAssertions(dbPath, proceedingId) {
-  const relied = rows(
-    dbPath,
-    `SELECT sl.law_assertion_id FROM submission_law sl
-       JOIN filing_submissions fs ON fs.submission_id = sl.submission_id
-       JOIN submissions s ON s.id = fs.submission_id AND s.killed_on IS NULL
-       JOIN filings f ON f.id = fs.filing_id
-      WHERE f.proceeding_id = ? AND f.retired_on IS NULL
-     UNION
-     SELECT r.law_assertion_id FROM order_sought_requires r
-       JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id
-       JOIN filings f ON f.id = fo.filing_id
-      WHERE f.proceeding_id = ? AND f.retired_on IS NULL AND r.law_assertion_id IS NOT NULL`,
-    [proceedingId, proceedingId]
-  );
-  return new Set(relied.map((r3) => r3.law_assertion_id));
-}
-function fetchProceedingSubmissions(dbPath, proceedingId) {
-  return rows(
-    dbPath,
-    `SELECT s.id, s.contention, ${noFactsNeededColumn(dbPath)}, ${noLawNeededColumn(dbPath)}, ${servedOrderWordingsColumn()} FROM submissions s WHERE s.proceeding_id = ? AND s.killed_on IS NULL ORDER BY s.ordinal, s.id`,
-    [proceedingId]
-  );
-}
-function fetchStruckSubmissionIds(dbPath, proceedingId) {
-  const served = rows(
-    dbPath,
-    `SELECT sb.submission_id, o.crossed_out_on
-     FROM order_sought_served_by sb
-     JOIN order_sought o ON o.id = sb.order_sought_id
-     WHERE o.proceeding_id = ?`,
-    [proceedingId]
-  );
-  const bySubmission = /* @__PURE__ */ new Map();
-  for (const r3 of served) {
-    const allStruckSoFar = bySubmission.get(r3.submission_id) ?? true;
-    bySubmission.set(r3.submission_id, allStruckSoFar && r3.crossed_out_on !== null);
-  }
-  return new Set([...bySubmission].filter(([, allStruck]) => allStruck).map(([id]) => id));
-}
-function recordReserveInventory(ctx) {
-  const formIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "form");
-  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
-  const deployedOrders = /* @__PURE__ */ new Set([...formIds.orderIds, ...waIds.orderIds, ...fetchPlacedAlternativeIds(ctx.dbPath, ctx.filing)]);
-  const deployedSubmissions = /* @__PURE__ */ new Set([...formIds.submissionIds, ...waIds.submissionIds]);
-  const elsewhere = fetchOtherFilingDeployments(ctx.dbPath, ctx.proceeding.id, ctx.filing.id);
-  const orders = fetchProceedingOrders(ctx.dbPath, ctx.proceeding.id).filter((o3) => deployedOrders.has(o3.id) || !elsewhere.orders.has(o3.id));
-  const submissions = fetchProceedingSubmissions(ctx.dbPath, ctx.proceeding.id);
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawBySubmission = groupSubmissionLaw(fetchSubmissionLaw(ctx.dbPath, submissionIds));
-  const factRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const factIds = [...new Set(factRows.map((f3) => f3.fact_id))];
-  const statementRows = fetchFactStatements(ctx.dbPath, factIds);
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
-    ctx.dbPath,
-    factIds,
-    opposingPartyIds(ctx.parties),
-    ctx.rendered.slice(0, 10)
-  );
-  const factsBySubmission = groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const exhibitDocs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersForFiling(ctx.dbPath, ctx.filing, exhibitDocs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(exhibitDocs.map((d3) => d3.document_id));
-  for (const s3 of statementRows) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const struckIds = fetchStruckSubmissionIds(ctx.dbPath, ctx.proceeding.id);
-  const reliedOn = fetchLiveReliedLawAssertions(ctx.dbPath, ctx.proceeding.id);
-  function recordBody(s3, startPara, renderedLawAssertions2, paragraphPrefix) {
-    return renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      startPara,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      "",
-      renderedLawAssertions2,
-      // Site 21: the only walk where lead statements are included, so the statement-line 🔬 and its
-      // 📇 come only from here (design §4). A statement whose law assertion nothing on a live
-      // Writing relies on raises no 🔬 (spec R6, schema v47). The test is per statement, not per
-      // submission: a lead under a reserved submission keeps 🔬 while another live-deployed
-      // submission or order requires the same proposition. No `review`, so no 🧐 is recorded here.
-      { paragraphPrefix, includeLeadStatements: true, inventory: ctx.inventory, scrutinyLive: (id) => reliedOn.has(id), noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
-    );
-  }
-  for (const o3 of orders) {
-    if (deployedOrders.has(o3.id) || o3.crossed_out_on !== null) continue;
-    recordJurisdictionLadder(ctx.inventory, o3.id, o3.wording, o3.requires, false);
-    recordGlyphs(ctx.inventory, unservedPetitumMarker(o3.hasServedBy), ["\u{1F9B5}"], { table: "order_sought", id: o3.id, item: o3.wording });
-  }
-  const numbered = submissions.filter((s3) => ctx.paragraphLedger.has(s3.id));
-  const held = submissions.filter(
-    (s3) => !ctx.paragraphLedger.has(s3.id) && !struckIds.has(s3.id) && (deployedSubmissions.has(s3.id) || !elsewhere.submissions.has(s3.id))
-  );
-  for (const documentKey of ["form", "written_argument"]) {
-    const group = numbered.filter((s3) => ctx.paragraphLedger.get(s3.id)?.document === documentKey).sort((a3, b3) => (ctx.paragraphLedger.get(a3.id)?.para ?? 0) - (ctx.paragraphLedger.get(b3.id)?.para ?? 0));
-    const renderedLawAssertions2 = /* @__PURE__ */ new Map();
-    for (const s3 of group) {
-      const entry2 = ctx.paragraphLedger.get(s3.id);
-      if (entry2 === void 0) continue;
-      recordBody(s3, entry2.para - 1, renderedLawAssertions2, "");
-    }
-  }
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  let r3 = 0;
-  for (const s3 of held) r3 = recordBody(s3, r3, renderedLawAssertions, "R").nextPara;
-}
-
-// src/submission/forms/filler-registry.ts
-var VANIAC = "CAN/BC/Vancouver-International-Arbitration-Centre";
-var BCSC = "CAN/BC/BCSC";
-var BCCA = "CAN/BC/BCCA";
-function supportingAffidavits(ctx, out) {
-  return fetchAffidavits(ctx.dbPath, ctx.filing.id).map(
-    (a3) => out.document("Affidavit", affidavitFileName(a3), () => renderAffidavit(ctx, a3), affidavitLabel(a3))
-  );
-}
-var FILLERS = [
-  {
-    venue: VANIAC,
-    kind: "submissions_package",
-    // #380's resolution: for a VanIAC filing, the Written Arguments IS the venue document -- its
-    // pointer rows read document='form', and no separate 'written_argument' companion is appended.
-    filler: (ctx, out) => [
-      out.document("Written_arguments", "Written Arguments.md", () => renderWrittenArguments(ctx, "form")),
-      out.document("Evidence_index", "Evidence Index.md", () => renderEvidenceIndex(ctx)),
-      ...out.witnessStatements()
-    ]
-  },
-  {
-    venue: BCSC,
-    kind: "notice_of_application",
-    filler: (ctx, out) => [
-      out.document("Notice_of_application", "Notice of Application.md", () => renderNoticeOfApplication(ctx)),
-      ...supportingAffidavits(ctx, out)
-    ]
-  },
-  {
-    venue: BCSC,
-    kind: "requisition_default_judgment",
-    filler: (ctx, out) => [
-      out.document("Requisition", "Form 17 Draft Requisition.md", () => renderRequisitionDefaultJudgment(ctx)),
-      out.document("Default_judgment", "Form 8 Default Judgment.md", () => renderForm8DefaultJudgment(ctx))
-    ]
-  },
-  {
-    venue: BCSC,
-    kind: "requisition_consent",
-    filler: (ctx, out) => [
-      out.document("Requisition", "Requisition for Consent Order.md", () => renderRequisitionConsent(ctx)),
-      out.document("Consent_order", "Consent Order.md", () => renderConsentOrder(ctx))
-    ]
-  },
-  {
-    venue: BCSC,
-    kind: "application_response",
-    filler: (ctx, out) => [
-      out.document("Application_response", "Application Response.md", () => renderApplicationResponse(ctx)),
-      ...supportingAffidavits(ctx, out)
-    ]
-  },
-  {
-    venue: BCCA,
-    kind: "bcca_stay_response",
-    // Like VanIAC (#380 item 5), the written argument inside the response book IS the substantive
-    // venue document (#436).
-    filler: (ctx, out) => [out.document("Response_book", "Response Book.md", () => renderBccaStayResponse(ctx))]
-  },
-  {
-    venue: BCCA,
-    kind: "bcca_factum",
-    // The factum IS the substantive venue document too (#648).
-    filler: (ctx, out) => [out.document("Factum", "Factum.md", () => renderBccaFactum(ctx))]
-  }
-];
-var REGISTERED_FILLERS = FILLERS.map(({ venue, kind }) => ({ venue, kind }));
-function fillerName(key) {
-  return `${key.venue} + ${key.kind}`;
-}
-function readShipped(path, seams) {
-  const kp = parseKnowledgePath(path, "type file lookup");
-  const { layer } = shippedLayer(kp.skill, kp.rest, seams);
-  try {
-    return readFileSync31(layer.abs, "utf-8");
-  } catch (err) {
-    if (err.code !== "ENOENT") throw err;
-    throw new DataServerError(`${path}: not in /draft's shipped knowledge tree (${layer.abs})`, "type_file_missing");
-  }
-}
-function resolveTypeFile(venue, kind, seams = {}) {
-  const segments = venue.split("/");
-  if (segments.length !== 3 || segments.some((segment) => segment === "")) {
-    throw new DataServerError(`forum "${venue}" is not a knowledge-tree key <Country>/<Jurisdiction>/<Venue>`, "invalid_forum");
-  }
-  const noVenue = segments[2] === NO_VENUE;
-  const documents = `draft/${venue}/Documents`;
-  const indexPath = `${documents}/kinds.json`;
-  let doc;
-  try {
-    doc = JSON.parse(readShipped(indexPath, seams));
-  } catch (err) {
-    if (err instanceof DataServerError) throw err;
-    throw new DataServerError(`${indexPath}: not valid JSON: ${err.message}`, "invalid_index");
-  }
-  const rows2 = mergeKinds({ doc, file: indexPath }, null, noVenue).kinds.filter((row2) => row2.aliases.some((alias) => alias.name === kind));
-  if (rows2.length !== 1) {
-    throw new DataServerError(
-      `${indexPath}: ${rows2.length === 0 ? "no row lists" : `${rows2.length} rows list`} kind "${kind}" as an alias${rows2.length === 0 ? "" : ` (${rows2.map((row2) => row2.file).join(", ")})`}; a stored kind names exactly one type file`,
-      "kind_unresolved"
-    );
-  }
-  const file = `${documents}/${rows2[0].file}.md`;
-  const block2 = extractJsonBlock(readShipped(file, seams), file, true);
-  validateTypeBlock(block2, file, { noVenue });
-  return { file, block: block2 };
-}
-function composeFiller(venue, kind, seams = {}) {
-  const type = resolveTypeFile(venue, kind, seams);
-  if (type.block.renderer !== "bespoke") {
-    throw new DataServerError(
-      `${type.file}: renderer "${type.block.renderer}" has no filler; a general type renders from the Writing's stored layout snapshot, never through compose`,
-      "no_renderer"
-    );
-  }
-  const registered = venue.split("/")[2] === NO_VENUE ? void 0 : FILLERS.find((entry2) => entry2.venue === venue && entry2.kind === kind);
-  if (registered === void 0) {
-    throw new DataServerError(
-      `${type.file} declares renderer "bespoke", but no filler is registered for venue ${venue}, kind ${kind}: the missing filler is "${fillerName({ venue, kind })}"`,
-      "no_filler"
-    );
-  }
-  return { ...type, filler: registered.filler };
 }
 
 // src/submission/forms/render-documents.ts
@@ -102788,7 +102805,7 @@ function renderForm33FiledFace(ctx, warnings) {
       });
     }
   }
-  const hearing = fetchHearingDetails2(ctx.dbPath, ctx.filing.id);
+  const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
   if (!hearing?.time_estimate_minutes) {
     if (warnings === void 0) {
       throw new ValidationError(`"${ctx.filing.title}": the hearing's time estimate is not recorded, so the form's time estimate cannot be filled.`);

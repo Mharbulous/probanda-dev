@@ -207,3 +207,26 @@ export function composeFiller(venue: string, kind: string, seams: KnowledgeSeams
   }
   return { ...type, filler: registered.filler };
 }
+
+/**
+ * The kind a new Writing of a bespoke type stores: the first candidate that render's own resolver,
+ * composeFiller, takes to the same type file. create_writing passes the kind as given, then the
+ * resolved row's aliases, so a file stem such as `notice-of-application` is stored as the alias the
+ * filler is registered under. Refuses kind_unresolved, naming the kinds render accepts at the
+ * venue, when no candidate resolves; any other composeFiller failure propagates.
+ */
+export function rendererKind(venue: string, typeFile: string, candidates: readonly string[], seams: KnowledgeSeams = {}): string {
+  for (const kind of candidates) {
+    try {
+      if (composeFiller(venue, kind, seams).file === typeFile) return kind;
+    } catch (err) {
+      if (!(err instanceof DataServerError && (err.code === "kind_unresolved" || err.code === "no_filler"))) throw err;
+    }
+  }
+  const accepted = FILLERS.filter((entry) => entry.venue === venue).map((entry) => entry.kind);
+  throw new DataServerError(
+    `${typeFile} declares renderer "bespoke", but render accepts none of ${candidates.map((kind) => `"${kind}"`).join(", ")} for it; ` +
+      `the kinds render accepts at ${venue} are ${accepted.length > 0 ? accepted.join(", ") : "none"}`,
+    "kind_unresolved"
+  );
+}
