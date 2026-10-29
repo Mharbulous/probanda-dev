@@ -83,6 +83,8 @@
     {"file": ".claude/skills/matter-data/operations/housekeeping-log.md", "target": "housekeeping", "why": "caller", "note": "The review log /housekeeping reads and writes."},
     {"file": ".claude/skills/matter-data/operations/ingest-extract.md", "target": "housekeeping", "why": "mention", "note": "Says where a file belongs is /housekeeping's question, not ingest's."},
     {"file": ".claude/skills/matter-data/operations/ingest-extract.md", "target": "file-apply", "why": "conditional", "note": "Applies an approved rename through /file-apply. Without file-manager it renames nothing, says so, and carries on with the ingest."},
+    {"file": ".claude/skills/ingest-orchestrator/SKILL.md", "target": "file-apply", "why": "conditional", "note": "The name check's approved renames go through /file-apply. Without file-manager it renames nothing and says so."},
+    {"file": ".claude/skills/ingest-orchestrator/references/routing.md", "target": "draft", "why": "mention", "note": "The execution status `draft`, and the folder the folder map gives drafts."},
     {"file": ".claude/skills/matter-data/operations/supersede-draft.md", "target": "files server", "why": "conditional", "note": "Step 2 moves the superseded file with file_ops__move, and §6b comments each copy with file_ops__comment_pdf. Without file-manager it moves and comments nothing, says so, and skips what depends on it."},
     {"file": ".claude/skills/matter-data/references/design-decisions.md", "target": "file-sorting", "why": "mention"},
     {"file": ".claude/skills/matter-data/references/design-decisions.md", "target": "files server", "why": "mention", "note": "Decision records describing file_ops__move's superseded mode and file_ops__comment_pdf."},

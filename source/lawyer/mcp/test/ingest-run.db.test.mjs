@@ -148,7 +148,7 @@ test("after 60 minutes without a heartbeat a plain begin takes over, and the old
 test("next and staged return empty lists, status reports the live run, end releases it", async (t) => {
   const { matterRoot, runRoot } = matterFixture(t);
   const { run_id } = await begin(matterRoot);
-  assert.deepEqual(await run(matterRoot, { action: "next", run_id }), { ok: true, items: [] });
+  assert.deepEqual(await run(matterRoot, { action: "next", run_id }), { ok: true, dispatch: [], write: [], close: [], running: 0 });
   assert.deepEqual(await run(matterRoot, { action: "staged", run_id }), { ok: true, items: [] });
 
   const status = await run(matterRoot, { action: "status" });

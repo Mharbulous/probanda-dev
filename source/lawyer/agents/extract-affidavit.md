@@ -1,10 +1,14 @@
 ---
 name: extract-affidavit
-description: Extracts a compound affidavit in three selectable passes — sworn body, exhibit boundary scan, and per-exhibit content — returning only the dispatched pass's strict JSON. Read-only — never writes. Dispatched by /matter-data ingest-extract, one instance per pass and one per exhibit on Pass 3, in parallel batches.
+description: Extracts a compound affidavit in three selectable passes — sworn body, exhibit boundary scan, and per-exhibit content — returning only the dispatched pass's strict JSON. Writes nothing but its staged result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH <id>, one instance per pass and one per exhibit on Pass 3.
 model: opus
 effort: high
 tools:
   - Read
+  - mcp__plugin_lawyer_data__matter_data__dispatch_inputs
+  - mcp__remote-devices__plugin_lawyer_data__matter_data__dispatch_inputs
+  - mcp__plugin_lawyer_data__matter_data__stage_result
+  - mcp__remote-devices__plugin_lawyer_data__matter_data__stage_result
 ---
 
 # Subagent: extract-affidavit (three passes)
@@ -20,10 +24,12 @@ return only that pass's JSON object.
 
 ## Binding constraints (all passes)
 
-- **Read-only.** You have a file-read tool only. No write, edit, shell, network,
-  or skill access.
+- **Read-only.** You have a file-read tool, and in a dispatch by id the two
+  data-server tools that section names. No write, edit, shell, network, or
+  skill access.
 - **Output is a single JSON object and NOTHING else.** No prose, no fences. The
-  main agent parses it and performs all writes; you own no IDs.
+  main agent parses it and performs all writes; you own no IDs. In a dispatch by
+  id (below) you stage that object and reply with one line.
 - Read the pages in the page manifest in order. Read a page given as images only
   from those images. Never open the PDF for it, and never use its text layer.
   Read at most 20 pages or images at a time.
@@ -226,3 +232,42 @@ Output (Pass 3):
 
 `evidence` is either an object as shown or `null`. `strength` is an integer in
 −2..2. Output the JSON object only.
+
+## Dispatch by id
+
+When your prompt is the one line `DISPATCH <dispatch_id>`, your inputs do not come in
+the prompt, and you reply with one line instead of the JSON object.
+
+1. Your first call is `matter_data__dispatch_inputs` with that `dispatch_id`, under
+   whichever of `mcp__plugin_lawyer_data__matter_data__dispatch_inputs` and
+   `mcp__remote-devices__plugin_lawyer_data__matter_data__dispatch_inputs` this host
+   grants. It returns `MATTER_CONTEXT`, `DOCUMENT`, `PASS`, `PAGE_RANGE` (Passes 2
+   and 3), `EXHIBIT_LETTER` (Pass 3), and `PAGE_MANIFEST` or `RENDERING`, each as described above, plus `ITEMS` (one
+   `{ref, page_range}`) and `CONTRACT` (`{id, version}`).
+2. Do the work exactly as above. Pass 2 reads only `PAGE_RANGE`, from its manifest.
+3. Call `matter_data__stage_result` once (either prefix), with `result` set to your pass's output object
+   plus four keys: `contract` (`CONTRACT`'s `id`), `contract_version` (its `version`),
+   `ref` (the item's `ref`) and `flags` (below). It returns `result_id` and `bytes`.
+4. Reply with one line and nothing else: `ok <ref> <result_id> <bytes>`. When you
+   cannot do the work, reply `failed <ref> <reason>` instead, the reason one of
+   `unreadable` (the pages cannot be read), `out_of_range` (the pages named are not
+   in the file), `stage_refused` (`stage_result` refused the result) or
+   `not_this_type` (the document is not the kind you read). Never put facts, counts
+   or doubts in the reply. A doubt goes in `flags`.
+
+`flags` is a list, possibly empty, of `{kind, ref, page?, detail?}`, `ref` the item's
+`ref` and `detail` a few words. Raise only a flag the document's own face supports:
+
+- `ocr_uncertain`: a scanned page you could not read with confidence (`page`).
+- `privilege_signal`: the document or a part of it appears to be a communication
+  between a lawyer and their client, or a lawyer's own working note. `ref` is the
+  locator it concerns.
+- `date_setting`: the document comes from a court registry, a judge, a tribunal, an
+  arbitrator or a case manager, as its sender or signature block shows, and fixes a
+  date (a hearing, a trial, a conference, or a date by which something must be done).
+  `detail` is the event and the date as written.
+- `other_copy`: the document says on its face that it is another copy or version of
+  a document it names. `detail` is that document's title as written.
+- `outgoing_letter`: a letter or email whose letterhead or signature block shows a
+  lawyer or law firm writing to someone outside that firm. `detail` is the firm's
+  name as written.

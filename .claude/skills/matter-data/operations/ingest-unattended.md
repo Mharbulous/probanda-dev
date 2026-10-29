@@ -69,12 +69,18 @@ Pre-process as `ingest-extract.md` says: render a `.docx`, `.eml`, `.msg` or RTF
 
 A file whose `path` the practitioner's folder map marks `privileged` (`practice_data__folder_map` with `paths`) takes Path B by `ingest-extract.md`'s solicitor-client folder rule before any routing read, the caller's included. With no folder map, stop the file before any read (step k's `stop_reason` `other`): question "Probanda does not yet know where you keep each kind of document. Set that up first?", options `setup` ("Set it up now", which the caller runs as `/probanda-setup`) and `later` ("Not now"). Reuse the page-1 routing read this session already made for the file, when its caller made one; otherwise read page 1 now (for `.docx`, `.eml` and `.msg`, the head of the rendering, and for a PDF through `pdf_pages__images` by `ingest-extract.md`'s Universal rules, a scanned page read only from its PNG). An internal document (a client email, a lawyer's note, an internal memo) takes Path B inline and never reaches a subagent. Every other file goes through `ingest-extract.md`'s gates (compound-book segmentation, the affidavit gate, Notice of Application detection) to its path and its extractor.
 
-## Step 4 — Read in parallel, write in order
+## Step 4 — Read and write through the orchestrator
 
-- **Reads run in parallel, in batches of up to 10 extractor dispatches.** Path C's per-pass and per-exhibit dispatches, and Path E's per-child ones, count toward the batch like any other. Each document gets a fresh extractor, never a resumed one (SendMessage) and never a fork (`../references/design-decisions.md` #70).
-- **Writes run one at a time, in list order.** No file's transaction commits before the transactions of every earlier file in the list. Within one document, `ingest-extract.md`'s transaction structure is unchanged: Path C commits the body, then one call per exhibit.
+A file Step 3 sends to `extract-facts`, `extract-affidavit` (a standalone affidavit) or a Notice of Application's two extractors is read and written by `/lawyer:ingest-orchestrator`'s loop (Skill: `lawyer:ingest-orchestrator`), with this run's `run_id` and `mode` `unattended`: give each such file the route its `references/routing.md` "Route fields" describe, then follow its Steps 3, 4, 5 and 7. Its extractors run in the background, at most 10 at a time, and `matter_data__ingest_result` writes each document; no extraction output and no SQL for it passes through this session. Path B documents are read inline and written last through its Step 5, privileged by default (Substitution 1b). The tools write the markers of Substitutions 1f, 1g, 1h and 1j for what they detect.
+
+Files Step 3 sends elsewhere (an authority, a book, an email's attachments) take `ingest-extract.md` as before:
+
+- **Reads run in parallel, in batches of up to 10 extractor dispatches.** Path E's per-child dispatches count toward the batch like any other. Each document gets a fresh extractor, never a resumed one (SendMessage) and never a fork (`../references/design-decisions.md` #70).
+- **Writes run one at a time, in list order.** Within one document, `ingest-extract.md`'s transaction structure is unchanged.
 - **Every `file_path` written is the file's stored form** (conventions §2.4): on `main.sources` (an affidavit's exhibits and a book's children included), on `privileged.privileged_sources`, and on `law.authorities` (a book of authorities' rows carry the book's).
 - A stop or a failure on one file never halts the list. Continue with the next file.
+
+A file's `outcome` follows from its last `matter_data__ingest_result`: `written` or `already_written` is `ingested` (`partial` while an affidavit's body stays partial); a refusal carrying an `ask` is `stopped`, with that ask as its question (Substitution 1k); a document closed after its extraction failed twice is `failed`, `extractor`.
 
 ## Substitutions
 

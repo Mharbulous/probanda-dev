@@ -93,6 +93,8 @@ Every document is screened for affidavit structure before it is routed to a stan
    - **`.docx`.** Skip the PDF branches; scan the first 10 `¶`-marked paragraphs of the rendering instead. A `.docx` never carries a registry filing stamp, so its execution status is `draft` or `affirmed`, never `filed`.
 3. Otherwise → **standard path** (pleadings / transcripts / notices to admit).
 
+**An affidavit reached from the gate goes to the orchestrator.** When this gate finds an affidavit for a file [`ingest.md`](ingest.md) routed here, end the gate's run (`matter_data__ingest_run` with `action: "end"` and its `run_id`) and hand the file to `/lawyer:ingest-orchestrator` (Skill: `lawyer:ingest-orchestrator`), which opens its own run and ingests it. Path C below still runs for a book's evidence child (Path E).
+
 **Execution status (court documents).** For a court document, an affidavit at the affidavit path or any other filed or executed document, classify its execution state from the page-1 (or jurat- or signature-page) read already performed — no extra read. [`supersede-draft.md`](supersede-draft.md) ranks two versions of one document by it:
 
 - **`affirmed`** — a commissioning line with a completed date and a commissioner/notary signature block.

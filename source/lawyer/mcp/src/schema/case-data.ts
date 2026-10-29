@@ -50,9 +50,11 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
         "One ingestion per matter at a time: the run lease and journal, kept on this computer outside the matter. " +
         "action begin (mode attended or unattended) starts a run and returns {ok, run_id, resumed, next}; pass run_id on every matter_data__execute of the run. While another run's heartbeat is under 60 minutes old it returns {ok: false, refused: run_active, run_id, say} naming that run. " +
         "begin with resume (an unfinished run's run_id) takes that run over at once with a new run_id; after 60 minutes without a heartbeat a plain begin takes over too. The displaced holder's next call is refused lease_lost. resume naming no unfinished run is refused unknown_run. " +
-        "action status returns the matter's run {active, run_id, started, heartbeat, mode, ended, next}; with run_id it also renews the heartbeat. actions next and staged (run_id) return {ok, items}. action end (run_id) finishes the run. " +
-        "Every call carrying run_id renews the heartbeat. A refusal writes nothing; relay its say to the practitioner, never the code. " +
-        "Only the /matter-data skill may call this tool -- invoke it (Skill: lawyer:matter-data) and follow its operations/ingest.md, ingest-unattended.md or extract-facts.md, which direct you to call this tool yourself, whatever skill you started in.",
+        "action status returns the matter's run {active, run_id, started, heartbeat, mode, ended, next}; with run_id it also renews the heartbeat; with run_id and ack (an extractor's failed reply line, or the ok line of a dispatch whose contract is null) it records that reply. action end (run_id) finishes the run. " +
+        "action next (run_id; routes the first time each file is routed, each {file_path, file_hash, kind facts|notice_of_application|affidavit, rendering?, execution?, witness?, answers_source_id?, category?, proceeding_id?}; bridged true in a bridged session) returns {ok, routed?: the routed files' refs in order (f1, f2, ...), dispatch: [{dispatch_id, agent, model, effort, ref, contract, stage?}] to start, each with the one-line prompt DISPATCH <dispatch_id>, write: [{ref, contract, result_ids}] acknowledged results still to write, close: [{ref, contract}] documents to close with result_ids [], running, more?}. At most 10 extractors run at once; each line is at most 200 bytes and a page at most 50 lines. " +
+        "action staged (run_id, dispatch_id, paths) records a bridged session's copies of a dispatch's stage list, in its order. " +
+        "Every call carrying run_id renews the heartbeat. A refusal writes nothing; relay its say to the practitioner, never the code. A call refused plugin_changed means the plugin was updated mid-run: end the run and resume after a restart. " +
+        "Only the /matter-data skill and the /ingest-orchestrator skill may call this tool -- invoke one (Skill: lawyer:matter-data or lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -61,11 +63,83 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
           run_id: { type: "string" },
           resume: { type: "string" },
           mode: { type: "string", enum: ["attended", "unattended"] },
+          routes: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                file_path: { type: "string" },
+                file_hash: { type: "string" },
+                kind: { type: "string", enum: ["facts", "notice_of_application", "affidavit"] },
+                rendering: { type: "string" },
+                execution: { type: "string", enum: ["draft", "affirmed", "filed"] },
+                witness: { type: "string", enum: ["fact", "expert"] },
+                answers_source_id: { type: "integer" },
+                category: { type: "string", enum: ["court", "correspondence", "production", "work_product", "disbursements"] },
+                proceeding_id: { type: "integer" },
+              },
+              required: ["file_path", "file_hash", "kind"],
+              additionalProperties: false,
+            },
+          },
+          bridged: { type: "boolean" },
+          ack: { type: "string" },
+          dispatch_id: { type: "string" },
+          paths: { type: "array", items: { type: "string" } },
         },
         required: ["matter_root", "action"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
+      name: caseDataPrefixed("ingest_result"),
+      description:
+        "Write one document's extracted results from their staged result_ids, in one transaction (an affidavit's exhibits each under their own savepoint), then regenerate evidence.sql. No extraction output and no SQL pass through the session. " +
+        "contract is facts, affidavit_body, affidavit_exhibits, sought_orders or privileged; document is {file_path (stored form), file_hash, store}; result_ids are the ids from the extractors' ok lines (all exhibits acknowledged since the last call for an affidavit); [] closes a document whose extraction failed twice. answers carries the practitioner's answers to an earlier call's ask: privilege (yes, no or unclear, required for privileged), category, proceeding_id, participants {name as extracted: party_id}. " +
+        "Returns at most 600 bytes: {outcome written|already_written|refused, refused?, source_id, counts {facts, positions, relief, links, exhibits}, items [{ref, outcome, reason}] for items that failed, ask [{kind, ref, say}], post [{pass, ref}] after-completion passes to run, report [lines]}. Relay report lines and ask the ask items in plain words; never show refused, reason or ref. A repeated call is safe: it returns already_written. refused waiting means call again once next lists it. " +
+        "Refuses without the live run_id (lease_lost) or after a plugin update (plugin_changed). " +
+        "Only the /ingest-orchestrator skill may call this tool -- invoke it (Skill: lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          matter_root: { type: "string" },
+          run_id: { type: "string" },
+          document: {
+            type: "object",
+            properties: {
+              file_path: { type: "string" },
+              file_hash: { type: "string" },
+              store: { type: "string", enum: ["main", "privileged"] },
+            },
+            required: ["file_path", "file_hash", "store"],
+            additionalProperties: false,
+          },
+          contract: { type: "string", enum: ["facts", "affidavit_body", "affidavit_exhibits", "sought_orders", "caselaw", "provision", "efiling_statement", "register_only", "privileged"] },
+          result_ids: { type: "array", items: { type: "string" } },
+          answers: {
+            type: "object",
+            properties: {
+              privilege: { type: "string", enum: ["yes", "no", "unclear"] },
+              category: { type: "string", enum: ["court", "correspondence", "production", "work_product", "disbursements"] },
+              proceeding_id: { type: "integer" },
+              participants: { type: "object", additionalProperties: { type: "integer" } },
+            },
+            additionalProperties: false,
+          },
+        },
+        required: ["matter_root", "run_id", "document", "contract", "result_ids"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
+      name: caseDataPrefixed("dispatch_inputs"),
+      description:
+        "An extraction agent's first call: the inputs stored for its dispatch (PAGE_MANIFEST or RENDERING, DOCUMENT, MATTER_CONTEXT, ANSWERED_FACTS and ANSWERED_RELIEF for a response, PASS, PAGE_RANGE and EXHIBIT_LETTER for an affidavit pass, ITEMS and CONTRACT). dispatch_id is the id in the agent's prompt line DISPATCH <dispatch_id>. Read-only. " +
+        "Only an extraction agent dispatched with DISPATCH <dispatch_id> may call this tool.",
+      inputSchema: objectSchema([{ name: "dispatch_id", type: "str" }], ["dispatch_id"]),
+      annotations: { readOnlyHint: true, openWorldHint: false },
     },
     {
       name: caseDataPrefixed("resolve_participant"),

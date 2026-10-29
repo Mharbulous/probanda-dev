@@ -6,6 +6,9 @@ templates' binding constraints assert — so a caller dispatching one of these
 templates gets that guarantee at runtime instead of on paper. The one exception is
 `extract-caselaw`, which also holds the data server's `matter_data__stage_result`
 (both name forms) to hand its result to the host (design decision #76); it writes no file.
+`extract-facts`, `extract-affidavit` and `extract-sought-orders` also hold
+`matter_data__dispatch_inputs` and `matter_data__stage_result` (both name forms), for the
+ingest orchestrator's dispatch by id (ingest orchestrator spec 6.2).
 
 The model column started as the #558 split: the verifiers are pinned so a weak session
 model cannot produce weak extraction *and* an equally weak check of it. Design decision
@@ -46,6 +49,16 @@ GRANTS = {
         "mcp__remote-devices__plugin_lawyer_data__matter_data__stage_result",
     ]
 }
+# The ingest orchestrator's fact extractors fetch their inputs by dispatch id and stage their
+# results (ingest orchestrator spec 6.2): each tool under both name forms, and no writing tool.
+for _name in ("extract-facts", "extract-affidavit", "extract-sought-orders"):
+    GRANTS[_name] = [
+        "Read",
+        "mcp__plugin_lawyer_data__matter_data__dispatch_inputs",
+        "mcp__remote-devices__plugin_lawyer_data__matter_data__dispatch_inputs",
+        "mcp__plugin_lawyer_data__matter_data__stage_result",
+        "mcp__remote-devices__plugin_lawyer_data__matter_data__stage_result",
+    ]
 
 # agent name -> pinned effort (#70); every other agent carries no effort line
 EFFORTS = {

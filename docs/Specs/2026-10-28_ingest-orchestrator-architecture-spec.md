@@ -656,6 +656,7 @@ Each stage is a separate release by the CLAUDE.md version rule. **Minor** marks 
 | D10 | Housekeeping writes triage (§3.5), by the housekeeping triage spec | Needs D4 | C7 (housekeeping half) | patch (file-manager) |
 | D11 | OCR, only if Q1 is answered yes | Needs D4 | text-less scans at tier S | minor if it raises bundle requirements |
 
+- **D2 as built (2026-10-28):** the three extractors take both forms, prompt-borne inputs for today's single-document path and `DISPATCH <id>` for the orchestrator. v1 sets authorities, compound books, emails with attachments and already-held files aside for `/ingest`'s single-document path. Only party fields (positions, relief, filing party, a client instruction's party) are resolved to party ids; a deponent and an informant stay text. An informant flagged `privilege_signal` is written NULL and asked about.
 - **Main estimated savings:** D1–D3 carry most of it, because C1 is most of the $22.49. D4–D7 carry most of the time saving.
 - **Ordering:** the value order is write path and context, then script boundaries, then tiering, then batching, then triage. The script half of triage moves up to D4, because the script boundaries are computed by it. Only housekeeping's write (D10) stays near the end.
 

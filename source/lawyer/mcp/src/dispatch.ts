@@ -21,7 +21,8 @@ import { caseDataRelocate, type RelocateMode } from "./case/relocate.js";
 import { resolveParticipant } from "./case/resolve-participant.js";
 import { ingestAuthority, type AuthorityIngestRequest } from "./case/ingest-authority.js";
 import { stageResult } from "./case/stage-result.js";
-import { assertLiveRun, ingestRun, type IngestRunArgs } from "./case/ingest-run.js";
+import { assertLiveRun, dispatchInputs, ingestRun, type IngestRunArgs } from "./case/ingest-run.js";
+import { ingestResult, type IngestResultArgs } from "./case/ingest-result.js";
 import { proceduralHistoryAppend, type ProceduralHistoryAppendArgs } from "./case/procedural-history.js";
 import { relocateSource, type RelocateSourceRequest } from "./case/relocate-source.js";
 import { housekeepingLog, type HousekeepingLogRequest } from "./case/housekeeping-log.js";
@@ -139,6 +140,8 @@ export const dataTools: Tool<DispatchContext>[] = [
     return caseDataExecute(args.matter_root, args.sql_script);
   }),
   defineTool("matter_data__ingest_run", (args: IngestRunArgs) => ingestRun(args)),
+  defineTool("matter_data__ingest_result", (args: IngestResultArgs) => ingestResult(args)),
+  defineTool("matter_data__dispatch_inputs", (args: { dispatch_id: string }) => dispatchInputs(args.dispatch_id)),
   defineTool("matter_data__resolve_participant", (args: MatterArgs & { name: string }) => resolveParticipant(args.matter_root, args.name)),
   defineTool("matter_data__stage_result", (args: { result: unknown }) => stageResult(args.result)),
   defineTool("matter_data__ingest_authority", (args: AuthorityIngestRequest) => ingestAuthority(args)),
