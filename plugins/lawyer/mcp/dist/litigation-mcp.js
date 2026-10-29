@@ -1,4 +1,4 @@
-// build-stamp: 22686d6f10ef
+// build-stamp: 77dd9fea725b
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -79602,8 +79602,31 @@ async function toolReply(name, run, replyText2 = jsonText) {
     return { content: [{ type: "text", text: jsonText(name, payload) }], isError: true };
   }
 }
-function jsonText(_name, result) {
-  return JSON.stringify(result, null, 2);
+var CONTENT_SOURCES = {
+  mail__get_email: "email",
+  mail__get_latest_emails: "email",
+  mail__search_emails: "email",
+  mail__find_thread_messages: "email",
+  mail__find_email_by_message_id: "email",
+  mail__download_attachment: "email attachment",
+  calendar__list_events: "calendar",
+  calendar__get_event: "calendar",
+  contacts__search: "contacts",
+  contacts__get: "contacts",
+  drafting_forms__read_message: "email file",
+  sources__fetch: "web page",
+  sources__check: "web page",
+  knowledge__read: "knowledge file",
+  research_filing__law_folder_text: "law folder file",
+  research_filing__legislation_search: "law folder file"
+};
+function jsonText(name, result) {
+  const source = Object.hasOwn(CONTENT_SOURCES, name) ? CONTENT_SOURCES[name] : void 0;
+  if (source === void 0) return JSON.stringify(result, null, 2);
+  if (typeof result !== "object" || result === null || Array.isArray(result)) {
+    throw new DataServerError(`${name} returned a ${Array.isArray(result) ? "list" : typeof result}, not an object to label`, "internal_error");
+  }
+  return JSON.stringify({ ...result, content_source: source }, null, 2);
 }
 
 // src/tools/practice/reads.ts
@@ -81231,7 +81254,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "22686d6f10ef";
+var BUILD_STAMP = false ? null : "77dd9fea725b";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };

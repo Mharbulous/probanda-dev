@@ -1,4 +1,4 @@
-// build-stamp: e1f133f74df8
+// build-stamp: 78af14b7797e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108057,8 +108057,31 @@ async function toolReply(name2, run, replyText = jsonText) {
     return { content: [{ type: "text", text: jsonText(name2, payload) }], isError: true };
   }
 }
-function jsonText(_name, result) {
-  return JSON.stringify(result, null, 2);
+var CONTENT_SOURCES = {
+  mail__get_email: "email",
+  mail__get_latest_emails: "email",
+  mail__search_emails: "email",
+  mail__find_thread_messages: "email",
+  mail__find_email_by_message_id: "email",
+  mail__download_attachment: "email attachment",
+  calendar__list_events: "calendar",
+  calendar__get_event: "calendar",
+  contacts__search: "contacts",
+  contacts__get: "contacts",
+  drafting_forms__read_message: "email file",
+  sources__fetch: "web page",
+  sources__check: "web page",
+  knowledge__read: "knowledge file",
+  research_filing__law_folder_text: "law folder file",
+  research_filing__legislation_search: "law folder file"
+};
+function jsonText(name2, result) {
+  const source = Object.hasOwn(CONTENT_SOURCES, name2) ? CONTENT_SOURCES[name2] : void 0;
+  if (source === void 0) return JSON.stringify(result, null, 2);
+  if (typeof result !== "object" || result === null || Array.isArray(result)) {
+    throw new DataServerError(`${name2} returned a ${Array.isArray(result) ? "list" : typeof result}, not an object to label`, "internal_error");
+  }
+  return JSON.stringify({ ...result, content_source: source }, null, 2);
 }
 
 // src/mail/tools.ts
