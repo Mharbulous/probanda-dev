@@ -284,7 +284,8 @@ vocabulary of `shared/answer-grades.md`, a preliminary impression is a recommend
 it rests on the sources audited so far, never on research not yet run. It is never advice.
 
 The statement of law, the mixed-coverage summary and the preliminary impression are each
-shown, not told: one sentence at most per proposition, then its verbatim passage.
+shown, not told: one sentence at most per proposition, then its verbatim passage (in the
+memo, the passages sit in the Rule: Step 6).
 
 ### Step 5 — Offer the research path
 
@@ -371,9 +372,10 @@ the scratchpad, in this order, and return only item 3:
 
    - The Rule (and in CREAC the Explanation) carries every proposition with its pinpoint, its note-up
      result and its reasons-voice check, exactly as Step 2 requires. Nothing uncited.
-   - Every proposition of law anywhere in the body, the Conclusion included, is one
-     sentence at most, followed at once by the verbatim passage at its pinpoint as a block
-     quote with its citation.
+   - Every proposition of law anywhere in the body carries its pinpoint citation. In the Rule
+     it is one sentence at most, followed at once by the verbatim passage at its pinpoint as a
+     block quote with its citation. The Conclusion and the Application cite in parentheses and
+     quote no block.
      No coverage line and no confidence table anywhere in the memo. The header's
      one-line `Confidence:` summary of the Step 3 table is the only confidence text in it.
    - Application compares each authority's facts with the spawn prompt's `Facts:` and

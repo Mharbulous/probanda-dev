@@ -36,10 +36,10 @@ class JobQuestionMemoTest(unittest.TestCase):
 
     def test_memo_has_one_issue_holding_the_job_question(self):
         template = read("shared", "research-memo-template.md")
-        self.assertIn("## Issue\n\n<the spawn prompt's Job question, verbatim>", template)
-        self.assertIn("### Sub-issue <n>: <the part, verbatim>", template)
+        self.assertIn("The Issue is the spawn prompt's Job question, verbatim.", flat(template))
+        self.assertIn("each `Sub-issue` heading quoting its part character for character", flat(template))
         self.assertIn("No other issue or topic heading", template)
-        self.assertIn("never paraphrased", template)
+        self.assertIn("never paraphrased", flat(template))
         self.assertIn("Confidence:", template)
         self.assertIn("## Sources", template)
 

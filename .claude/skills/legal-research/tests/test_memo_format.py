@@ -15,9 +15,9 @@ from pathlib import Path
 SHARED = Path(__file__).resolve().parents[2] / "shared"
 HEADER = ["---", "Document: MEMORANDUM OF LAW", "Privilege: PRIVILEGED AND CONFIDENTIAL", "To:",
           "From:", "Matter:", "Date:", "Re:", "Format:", "Confidence:", "---"]
-CRAC = "```\n## Conclusion\n## Rule\n## Application\n## Conclusion\n```"
+CRAC = "```\n## Issue\n## Conclusion\n## Rule\n## Application\n```"
 IRAC = "```\n## Issue\n## Rule\n## Application\n## Conclusion\n```"
-CREAC = "```\n## Conclusion\n## Rule\n## Explanation\n## Application\n## Conclusion\n```"
+CREAC = "```\n## Issue\n## Conclusion\n## Rule\n## Explanation\n## Application\n## Conclusion\n```"
 BRIEF_BLOCK = """```
 <criterion> — FOUND / GAP
   authority: <full citation>, <pinpoint>     (omit if GAP)
@@ -66,6 +66,15 @@ class ProtocolStepSixTests(unittest.TestCase):
                                              "### Secondary sources\n")]
         self.assertEqual(order, sorted(order))
         self.assertNotIn("Authorities", template)
+        self.assertNotIn("Question presented", template)
+
+    def test_issue_conclusion_rule_and_application_forms(self):
+        template = flat(read("research-memo-template.md"))
+        for text in ("The Issue is the question, as one bold sentence.",
+                     "A Conclusion is one paragraph that answers the Issue as framed. It cites in parentheses and has no block quote.",
+                     "The Rule opens with the rule itself.",
+                     "The Application is prose paragraphs, never bullets."):
+            self.assertIn(text, template)
 
     def test_irac_and_creac_only_when_asked(self):
         self.assertIn("The body uses CRAC unless the spawn prompt's `Memo template:` names IRAC or CREAC.",
