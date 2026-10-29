@@ -98,8 +98,8 @@ Test (fails today): `test_approval_gate.py` on transcript fixtures:
 
 Test (fails today): `test_pending_approvals_note.py`. `compact` lists the unanswered refusal, `startup` emits nothing, and a completed act is not listed.
 
-## 2d. Housekeeping approval binds file moves (file-manager, minor, last)
+## 2d. Housekeeping approval binds housekeeping file moves (file-manager, patch)
 
-`file_ops__move`, `move_from_downloads` and `trash` gain required `run_id` and `row_id`. Each refuses unless `approval.json` approves the row and the row's `proposal.json` hash matches the current source file. Write, Edit and Bash on `approval.json` are refused.
+Brahm chose on 2026-10-28 to check only housekeeping calls. `file_ops__move`, `move_from_downloads` and `trash` gain optional `run_id` and `row_id`, which must be given together. With them, the tool refuses unless that run's `approval.json` approves the row and the row's `proposal.json` hash matches the current source file. Without them, the tool behaves as before, because safe-file-deletion, supersede-draft, letters, presentation folders, renumber-affidavit and the Downloads flow have no housekeeping run. The /housekeeping apply step always passes them. Write, Edit and Bash on a housekeeping `approval.json` are refused.
 
-Test (fails today): `file-ops-approval.unit.test.mjs`. A move with no approved row is refused, and so is a move whose source changed after approval.
+Test (fails today): `file-ops-approval.unit.test.mjs`. With `run_id`, a move of an unapproved row is refused, and so is a move whose source changed after approval. An approved, unchanged row moves. A call with no `run_id` moves as before.
