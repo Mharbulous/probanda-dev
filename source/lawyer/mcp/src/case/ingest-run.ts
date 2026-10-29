@@ -10,7 +10,7 @@
 // the acknowledged results still to be written. `staged` records a bridged session's copies (§6.5).
 
 import { createHash, randomUUID } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
 
 import { BUILD_STAMP } from "../build-stamp.js";
@@ -69,7 +69,8 @@ export interface Route {
   ref: string;
   file_path: string;
   file_hash: string;
-  kind: "facts" | "notice_of_application" | "affidavit";
+  /** `path_b`: an internal document the session reads itself (Path B); journaled so a resume lists it (N-10). */
+  kind: "facts" | "notice_of_application" | "affidavit" | "path_b";
   /** A .docx/.eml/.msg rendering, a host path (ingest-extract.md "Document pre-processing"). */
   rendering?: string;
   execution?: "draft" | "affirmed" | "filed";
@@ -103,6 +104,9 @@ const SAY = {
   plugin_changed: "Probanda was updated while this ingest was running. Restart, and the ingest will resume where it stopped. Nothing more was written.",
 };
 
+/** A report line when page images could not be deleted because another program holds them (N-5, N-12). */
+const IMAGES_LEFT = "Some page images made for an ingest could not be deleted yet because another program is using them. They will be deleted after a later ingest.";
+
 export type Refusal = { ok: false; refused: keyof typeof SAY; say: string };
 const refusal = (code: keyof typeof SAY): Refusal => ({ ok: false, refused: code, say: SAY[code] });
 
@@ -129,14 +133,24 @@ function readJournal(dir: string): Event[] {
   return readFileSync(path, "utf-8").split("\n").filter((l) => l.trim() !== "").map((l) => JSON.parse(l) as Event);
 }
 
-/** The events of the run in the lease: from its last begin, through every takeover since. */
+/** The events of the run in the lease: from its last begin, through every takeover since. Records
+ *  held back for this folder (unjournaled) are journaled first when they belong to that run, so every
+ *  caller plans from them (N-7). Called only under the run lock. */
 function runEvents(dir: string): Event[] {
   const events = readJournal(dir);
   let start = 0;
   events.forEach((e, i) => {
     if (e.event === "begin") start = i;
   });
-  return events.slice(start);
+  const run = events.slice(start);
+  const held = unjournaled.get(dir);
+  if (held === undefined) return run;
+  unjournaled.delete(dir);
+  // A record of a run a plain begin displaced is dropped: the new run's refs start again at f1.
+  const lineage = new Set(run.map((e) => e.run_id));
+  const kept = held.filter((r) => lineage.has(r.runId));
+  for (const r of kept) journal(dir, r.event, r.runId, r.extra);
+  return kept.length > 0 ? runEvents(dir) : run;
 }
 
 const isLive = (lease: Lease | null): boolean =>
@@ -170,17 +184,52 @@ function hold(dir: string, runId: string): Lease | Refusal {
   return lease;
 }
 
-/** Deletes a folder this server made: a run folder, a dispatch folder or a bridged run's page images. */
+/** Deletes a host-local folder this server made: a run folder, or a run's dispatches folder. */
 function removeOwn(path: string): void {
   rmSync(path, { recursive: true, force: true });
 }
 
-/** Deletes the page-image folder of every dispatch in the run folder's journal, a run displaced or
- *  never ended included (N13): each is a folder this server made for a bridged dispatch. */
-function removeImages(dir: string, matterRoot: string): void {
-  for (const e of readJournal(dir)) {
-    if (e.event === "dispatch") removeOwn(imagesDir(matterRoot, e.dispatch_id as string));
+/** The delete errors of a file another program holds, as a sync client of the matter folder does. */
+const IN_USE = ["EPERM", "EBUSY", "EACCES", "ENOTEMPTY"];
+/** The names the page renderer gives its images (page-images.ts pageName), in its per-PDF folder. */
+const RENDERED = /^page-\d{4}(-tile-\d+)?\.png$/;
+
+/** Deletes the page images the renderer wrote for one bridged dispatch, and each folder that leaves
+ *  empty; a file anyone else put there stays, with its folder (N-13). False when a file is in use:
+ *  it is left for a later end or sweep (N-5, N-12). */
+function removeImageFolder(folder: string): boolean {
+  if (!existsSync(folder)) return true;
+  try {
+    for (const sub of readdirSync(folder, { withFileTypes: true })) {
+      if (!sub.isDirectory() || !/^[0-9a-f]{16}$/.test(sub.name)) continue;
+      const pdfDir = pathWin32.join(folder, sub.name);
+      for (const name of readdirSync(pdfDir)) if (RENDERED.test(name)) unlinkSync(pathWin32.join(pdfDir, name));
+      if (readdirSync(pdfDir).length === 0) rmdirSync(pdfDir);
+    }
+    if (readdirSync(folder).length === 0) rmdirSync(folder);
+    return true;
+  } catch (err) {
+    if (IN_USE.includes(String((err as NodeJS.ErrnoException).code))) return false;
+    throw err;
   }
+}
+
+/** Deletes the page images of every dispatch the run folder's journal records, a run displaced or
+ *  never ended included (N13): at an end, only since the last end that deleted all of its own
+ *  (N-19); in the sweep (`all`), every one. False when some are in use and stay. */
+function removeImages(dir: string, matterRoot: string, all = false): boolean {
+  const events = readJournal(dir);
+  let start = 0;
+  if (!all) {
+    events.forEach((e, i) => {
+      if (e.event === "end" && e.images_left !== true) start = i + 1;
+    });
+  }
+  let removed = true;
+  for (const e of events.slice(start)) {
+    if (e.event === "dispatch" && !removeImageFolder(imagesDir(matterRoot, e.dispatch_id as string))) removed = false;
+  }
+  return removed;
 }
 
 const expired = (lease: Lease | null): boolean => {
@@ -190,35 +239,41 @@ const expired = (lease: Lease | null): boolean => {
 
 /** Deletes each run folder whose run ended, or whose last heartbeat came, more than KEEP_MS ago, with
  *  its page images. Each is checked again under its own lock, so a run another session is renewing
- *  is left alone (N13); a lock another session holds now leaves that folder to a later sweep. */
-async function sweep(env: NodeJS.ProcessEnv): Promise<void> {
+ *  is left alone (N13); a lock another session holds now, or an image in use, leaves that folder to
+ *  a later sweep, and never stops this begin (N-5). Returns false when a folder was left for images. */
+async function sweep(env: NodeJS.ProcessEnv): Promise<boolean> {
   const root = hostLocalDir(SITE, env);
+  let clean = true;
   for (const entry of readdirSync(root, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const dir = pathWin32.join(root, entry.name);
     const lease = readLease(dir);
     if (!expired(lease)) continue;
     const matterRoot = lease?.matter_root;
-    if (matterRoot === undefined) {
-      removeOwn(dir); // a run from before the lease named its matter: no images can be found
+    if (matterRoot === undefined || lockKey(matterRoot) !== entry.name) {
+      // A run from before the lease named its matter (a single-document ingest, which renders no
+      // images), or a lease that names another folder's matter: only the run folder goes (N-17).
+      removeOwn(dir);
       continue;
     }
     let lock;
     try {
-      lock = await acquireLock(SITE, matterRoot, env);
+      // One attempt: a lock held now leaves the folder to a later sweep without a wait (N-17).
+      lock = await acquireLock({ ...SITE, attempts: 1 }, matterRoot, env);
     } catch (err) {
       if ((err as DataServerError).code === "lock_unavailable") continue;
       throw err;
     }
     try {
       if (expired(readLease(dir))) {
-        removeImages(dir, matterRoot);
-        removeOwn(dir);
+        if (removeImages(dir, matterRoot, true)) removeOwn(dir);
+        else clean = false;
       }
     } finally {
       lock.release();
     }
   }
+  return clean;
 }
 
 function requireRunId(args: { run_id?: string; action?: string }): string {
@@ -442,7 +497,14 @@ function plan(events: Event[], env: NodeJS.ProcessEnv) {
   };
   const closedAs = (contract: string, ref: string) => events.some((e) => e.event === "write" && e.contract === contract
     && (e.refs as string[]).includes(ref) && e.closed === true);
+  // Documents for Path B, routed so or refused path_b, until their privileged write lands (N-10).
+  const pathB: Array<{ ref: string; file_path: string }> = [];
   for (const route of l.routes) {
+    const refusedPathB = events.some((e) => e.event === "write" && (e.refs as string[]).includes(route.ref) && e.reason === "path_b");
+    if (route.kind === "path_b" || refusedPathB) {
+      if (!l.written("privileged", route.ref)) pathB.push({ ref: route.ref, file_path: route.file_path });
+      continue;
+    }
     if (route.kind !== "affidavit") {
       const s = consider({ ref: route.ref, agent: "lawyer:extract-facts", contract: "facts", route });
       if (s.state === "failed" && !l.written("facts", route.ref)) closeOrAsk("facts", route.ref);
@@ -476,8 +538,11 @@ function plan(events: Event[], env: NodeJS.ProcessEnv) {
     if (exhibits.length > 0) write.push({ ref: route.ref, contract: "affidavit_exhibits", result_ids: exhibits });
     if (affidavit.located && !open && exhibits.length === 0) close.push({ ref: route.ref, contract: "affidavit_exhibits" });
   }
-  return { dispatch: dispatch.slice(0, Math.max(0, WINDOW - inFlight)), write, close, asked, inFlight };
+  return { dispatch: dispatch.slice(0, Math.max(0, WINDOW - inFlight)), write, close, asked, pathB, inFlight };
 }
+
+/** The Path B documents still to read, as `next`, `begin {resume}` and `status` list them (N-10). */
+const pathBLines = (pathB: Array<{ ref: string; file_path: string }>) => (pathB.length ? { path_b: pathB.slice(0, PAGE) } : {});
 
 /** The exhibit letters ingest_result's affidavit_exhibits converter needs, and whether this call,
  *  writing the exhibits `refsHere`, resolves the last of them. */
@@ -573,7 +638,7 @@ function matterContext(matterRoot: string, answersSourceId: number | undefined, 
   return out;
 }
 
-const ROUTE_KINDS = ["facts", "notice_of_application", "affidavit"];
+const ROUTE_KINDS = ["facts", "notice_of_application", "affidavit", "path_b"];
 
 /** conventions.md §2.4's stored form: relative to the matter root, backslashes, no leading `.\`. */
 export function storedForm(path: string, matterRoot: string): string {
@@ -601,7 +666,7 @@ function checkRoutes(routes: Array<Omit<Route, "ref">>, matterRoot: string): Arr
     if (!existsSync(host)) throw new ValidationError(`routes[${i}].file_path does not exist: ${stored}`);
     if (sha256(host) !== r.file_hash) throw new ValidationError(`routes[${i}].file_hash is not the hash of ${stored}`);
     if (r.rendering !== undefined && !existsSync(r.rendering)) throw new ValidationError(`routes[${i}].rendering does not exist`);
-    if (r.rendering === undefined && pathWin32.extname(stored).toLowerCase() !== ".pdf") {
+    if (r.kind !== "path_b" && r.rendering === undefined && pathWin32.extname(stored).toLowerCase() !== ".pdf") {
       throw new ValidationError(`routes[${i}] is not a PDF, so it needs its rendering`);
     }
     return { ...r, file_path: stored };
@@ -609,14 +674,9 @@ function checkRoutes(routes: Array<Omit<Route, "ref">>, matterRoot: string): Arr
 }
 
 /** Records a dispatch's outcome made after `next`'s lock was released (S-m10). When that second lock
- *  cannot be had, the records wait here and the run's next `next` journals them first (N8), so an
- *  item whose inputs failed is never left counted as running. */
-const unjournaled = new Map<string, Array<{ event: string; extra: Record<string, unknown> }>>();
-
-function flushUnjournaled(dir: string, runId: string): void {
-  for (const r of unjournaled.get(dir) ?? []) journal(dir, r.event, runId, r.extra);
-  unjournaled.delete(dir);
-}
+ *  cannot be had, the records wait here, each with the run it belongs to, and runEvents journals them
+ *  first under the next lock (N8, N-7), so an item whose inputs failed is never left counted as running. */
+const unjournaled = new Map<string, Array<{ runId: string; event: string; extra: Record<string, unknown> }>>();
 
 async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknown> {
   const runId = requireRunId(args);
@@ -626,7 +686,6 @@ async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknow
   const reserved = await underLock(args.matter_root, env, (dir) => {
     const held = hold(dir, runId);
     if ("refused" in held) return held;
-    flushUnjournaled(dir, runId);
     const l = ledger(runEvents(dir));
     let n = l.routes.length;
     const fresh: Route[] = [];
@@ -654,7 +713,7 @@ async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknow
       journal(dir, "dispatch", runId, { dispatch_id: id, ref: item.ref, agent: item.agent, contract: item.contract });
       return { id, item };
     });
-    return { routed, report, items, write: p.write, close: p.close, asked: p.asked, inFlight: p.inFlight, dir };
+    return { routed, report, items, write: p.write, close: p.close, asked: p.asked, pathB: p.pathB, inFlight: p.inFlight, dir };
   });
   if ("refused" in reserved) return reserved;
 
@@ -664,36 +723,46 @@ async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknow
   const failed: string[] = [];
   const voided: string[] = [];
   let contextError: Error | null = null;
-  mkdirSync(pathWin32.join(reserved.dir, "dispatches"), { recursive: true });
-  for (const { id, item } of reserved.items) {
-    const key = String(item.route.answers_source_id ?? "");
-    if (!contexts.has(key)) {
+  let fault: unknown = null;
+  let k = 0;
+  try {
+    mkdirSync(pathWin32.join(reserved.dir, "dispatches"), { recursive: true });
+    for (; k < reserved.items.length; k++) {
+      const { id, item } = reserved.items[k];
+      const key = String(item.route.answers_source_id ?? "");
+      if (!contexts.has(key)) {
+        try {
+          contexts.set(key, matterContext(args.matter_root, item.route.answers_source_id, env));
+        } catch (err) {
+          contexts.set(key, err as Error);
+        }
+      }
+      const context = contexts.get(key) as Record<string, unknown> | Error;
+      if (context instanceof Error) {
+        // The matter's case data, not the item, is at fault: the dispatch is void, not a failure.
+        voided.push(id);
+        contextError = context;
+        continue;
+      }
       try {
-        contexts.set(key, matterContext(args.matter_root, item.route.answers_source_id, env));
+        const { inputs, stage, pageCount } = await inputsFor(item, args.matter_root, context, args.bridged === true, id);
+        writeFileSync(dispatchPath(reserved.dir, id), JSON.stringify({ inputs, stage, session: null }), "utf-8");
+        built.push({ ref: item.ref, dispatch_id: id, page_count: pageCount });
+        // #70: every fact extractor stays on Opus at high effort, on every dispatch.
+        dispatch.push({ dispatch_id: id, agent: item.agent, model: "opus", effort: "high", ref: item.ref, contract: item.contract, ...(stage.length ? { stage } : {}) });
       } catch (err) {
-        contexts.set(key, err as Error);
+        // A file that cannot be opened or rendered (a missing, encrypted or corrupt PDF) fails this
+        // item alone, as an extractor would (R4): the rest of the list goes on (S-M2). Any other
+        // error is a fault of this computer or server, and surfaces (N14), below.
+        if (!(err instanceof DataServerError) || !ITEM_FAULTS.includes(String(err.code))) throw err;
+        failed.push(item.ref);
       }
     }
-    const context = contexts.get(key) as Record<string, unknown> | Error;
-    if (context instanceof Error) {
-      // The matter's case data, not the item, is at fault: the dispatch is void, not a failure.
-      voided.push(id);
-      contextError = context;
-      continue;
-    }
-    try {
-      const { inputs, stage, pageCount } = await inputsFor(item, args.matter_root, context, args.bridged === true, id);
-      writeFileSync(dispatchPath(reserved.dir, id), JSON.stringify({ inputs, stage, session: null }), "utf-8");
-      built.push({ ref: item.ref, dispatch_id: id, page_count: pageCount });
-      // #70: every fact extractor stays on Opus at high effort, on every dispatch.
-      dispatch.push({ dispatch_id: id, agent: item.agent, model: "opus", effort: "high", ref: item.ref, contract: item.contract, ...(stage.length ? { stage } : {}) });
-    } catch (err) {
-      // A file that cannot be opened or rendered (a missing, encrypted or corrupt PDF) fails this
-      // item alone, as an extractor would (R4): the rest of the list goes on (S-M2). Any other
-      // error is a fault of this server, and surfaces (N14).
-      if (!(err instanceof DataServerError) || !ITEM_FAULTS.includes(String(err.code))) throw err;
-      failed.push(item.ref);
-    }
+  } catch (err) {
+    // The list is never returned, so no dispatch reserved by this call may stay counted as running:
+    // each one built and every one not yet reached is void, and is planned again (N-1).
+    fault = err;
+    voided.push(...built.map((b) => b.dispatch_id), ...reserved.items.slice(k).map((r) => r.id));
   }
   const records = [
     ...built.filter((b) => b.page_count !== undefined).map((b) => ({ event: "inputs", extra: b as Record<string, unknown> })),
@@ -707,9 +776,10 @@ async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknow
       });
     } catch (err) {
       if ((err as DataServerError).code !== "lock_unavailable") throw err;
-      unjournaled.set(reserved.dir, [...(unjournaled.get(reserved.dir) ?? []), ...records]);
+      unjournaled.set(reserved.dir, [...(unjournaled.get(reserved.dir) ?? []), ...records.map((r) => ({ runId, ...r }))]);
     }
   }
+  if (fault !== null) throw fault;
   if (contextError && dispatch.length === 0) throw contextError;
 
   const lines = dispatch.length + reserved.write.length + reserved.close.length;
@@ -721,6 +791,7 @@ async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknow
     write: reserved.write.slice(0, Math.max(0, PAGE - dispatch.length)),
     close: reserved.close.slice(0, Math.max(0, PAGE - dispatch.length - reserved.write.length)),
     ...(reserved.asked.length ? { asked: reserved.asked.slice(0, PAGE) } : {}),
+    ...pathBLines(reserved.pathB),
     running: reserved.inFlight + dispatch.length,
     ...(lines > PAGE ? { more: true } : {}),
   };
@@ -744,17 +815,31 @@ export interface WriteRun {
   route: Route | null;
   /** The answered pleading's keys as dispatched to the extractor (K-m2), for a `facts` write. */
   answered: { facts: string[]; relief: string[] };
+  /** The item each of the call's results answers, by the ok reply journaled for it (N-4). */
+  acked: Record<string, string>;
+  /** The call's own ref when it names an item dispatched under the call's contract (N-4). */
+  itemRef: string | null;
+  /** The call's results the run has already written (R6, N-11). */
+  written: string[];
 }
 
 /** ingest_result's run check and its record: renews the heartbeat, refuses lease_lost or
- *  plugin_changed, and returns the run's mode and the route the document names by `ref`, or by its
- *  hash when one was routed. */
-export async function runForWrite(matterRoot: string, runId: string, document: { ref?: string; file_hash?: string }, env: NodeJS.ProcessEnv = process.env): Promise<Refusal | WriteRun> {
+ *  plugin_changed, and returns the run's mode, the route the document names by `ref`, or by its
+ *  hash when one was routed, and what the journal says of the call's results. */
+export async function runForWrite(matterRoot: string, runId: string, document: { ref?: string; file_hash?: string }, contract: string, resultIds: string[], env: NodeJS.ProcessEnv = process.env): Promise<Refusal | WriteRun> {
   return underLock(matterRoot, env, (dir) => {
     const held = hold(dir, runId);
     if ("refused" in held) return held;
     const events = runEvents(dir);
     const routes = ledger(events).routes;
+    const acked: Record<string, string> = {};
+    for (const e of events) {
+      if (e.event === "ack" && e.ok === true && resultIds.includes(e.result_id as string)) acked[e.result_id as string] = e.ref as string;
+    }
+    const itemRef = document.ref !== undefined
+      && events.some((e) => e.event === "dispatch" && e.ref === document.ref && e.contract === contract) ? document.ref : null;
+    const written = resultIds.filter((id) => events.some((e) => e.event === "write" && (e.outcome === "written" || e.outcome === "already_written")
+      && ((e.result_ids as string[] | undefined) ?? []).includes(id)));
     // A line's ref (f3, f3:so, f3:B) names its file by the part before the first colon.
     const route = document.ref !== undefined
       ? routes.find((r) => r.ref === document.ref?.split(":")[0]) ?? null
@@ -767,7 +852,7 @@ export async function runForWrite(matterRoot: string, runId: string, document: {
       answered.facts = ((inputs.ANSWERED_FACTS ?? []) as Array<{ fact_key: string }>).map((f) => f.fact_key);
       answered.relief = ((inputs.ANSWERED_RELIEF ?? []) as Array<{ relief_key: string }>).map((r) => r.relief_key);
     }
-    return { ok: true as const, mode: held.mode, route, answered };
+    return { ok: true as const, mode: held.mode, route, answered, acked, itemRef, written };
   });
 }
 
@@ -792,18 +877,17 @@ export async function recordWrite(matterRoot: string, runId: string, acks: Array
 }
 
 /** ingest_result's refusal before any write (S-M4): a result that cannot be read, was staged under
- *  another contract or version, or belongs to another file. Each result's reply is journaled first,
- *  where its staged result names its item, and every acknowledged item among them is recorded as a
- *  failed reply, so it is read once more (R4) rather than left waiting forever. A result that cannot
- *  be read names no item: the reply's own ref (`claimed`) stands in, when it names an item dispatched
- *  under this contract. */
-export async function recordRefusal(matterRoot: string, runId: string, acks: Array<{ ref: string; result_id: string }>, resultIds: string[], reason: string, claimed: { ref: string; result_id: string; contract: string } | null, env: NodeJS.ProcessEnv = process.env): Promise<void> {
+ *  another contract, version or item, or belongs to another file. Each result's reply is journaled
+ *  first, under the item the reply names, when that item was dispatched, and the item of each bad
+ *  result alone is recorded as a failed reply (N-9), so it is read once more (R4) rather than left
+ *  waiting forever; the call's good results stay acknowledged, to be written again. */
+export async function recordRefusal(matterRoot: string, runId: string, acks: Array<{ ref: string; result_id: string }>, badIds: string[], reason: string, env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await underLock(matterRoot, env, (dir) => {
-    const dispatched = claimed !== null && runEvents(dir).some((e) => e.event === "dispatch" && e.ref === claimed.ref && e.contract === claimed.contract);
-    journalAcks(dir, runId, [...acks, ...(dispatched && claimed ? [{ ref: claimed.ref, result_id: claimed.result_id }] : [])]);
+    const before = runEvents(dir);
+    journalAcks(dir, runId, acks.filter((a) => before.some((e) => e.event === "dispatch" && e.ref === a.ref)));
     const events = runEvents(dir);
     const l = ledger(events);
-    for (const id of resultIds) {
+    for (const id of badIds) {
       const ack = events.filter((e) => e.event === "ack" && e.ok === true && e.result_id === id).pop();
       const ref = ack?.ref as string | undefined;
       // Only an item still waiting on this very result: a repeat of the refused call fails it once.
@@ -839,7 +923,8 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
     case "begin": {
       const mode = args.mode;
       if (mode !== "attended" && mode !== "unattended") throw new ValidationError("begin needs mode attended or unattended");
-      await sweep(env);
+      // Page images a sync client holds are left for later, said once here (N-5).
+      const report = (await sweep(env)) ? {} : { report: [IMAGES_LEFT] };
       return underLock(args.matter_root, env, (dir) => {
         const current = readLease(dir);
         const now = new Date().toISOString();
@@ -850,18 +935,17 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
           // A new id for the resuming session, so the displaced one is refused at its next call.
           writeLease(dir, { ...current, run_id: runId, heartbeat: now, build_stamp: BUILD_STAMP, mode });
           journal(dir, "takeover", runId, { displaced: current.run_id });
-          flushUnjournaled(dir, runId);
           const p = plan(runEvents(dir), env);
-          return { ok: true, run_id: runId, resumed: true, next: [...p.write, ...p.close], ...(p.asked.length ? { asked: p.asked } : {}) };
+          return { ok: true, run_id: runId, resumed: true, next: [...p.write, ...p.close], ...(p.asked.length ? { asked: p.asked } : {}), ...pathBLines(p.pathB), ...report };
         }
-        if (current !== null && isLive(current)) return { ...refusal("run_active"), run_id: current.run_id };
+        if (current !== null && isLive(current)) return { ...refusal("run_active"), run_id: current.run_id, ...report };
         if (current !== null && current.ended === null) journal(dir, "takeover", runId, { displaced: current.run_id });
         writeLease(dir, {
           run_id: runId, started: now, heartbeat: now, build_stamp: BUILD_STAMP, mode, ended: null,
           orchestrator: args.orchestrator === true, matter_root: args.matter_root,
         });
         journal(dir, "begin", runId, { mode });
-        return { ok: true, run_id: runId, resumed: false, next: [] };
+        return { ok: true, run_id: runId, resumed: false, next: [], ...report };
       });
     }
     case "status":
@@ -872,7 +956,7 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
         }
         if (args.ack !== undefined) return recordAck(dir, requireRunId(args), args.ack);
         const lease = readLease(dir);
-        const p = isLive(lease) ? plan(runEvents(dir), env) : { write: [], close: [], asked: [] };
+        const p = isLive(lease) ? plan(runEvents(dir), env) : { write: [], close: [], asked: [], pathB: [] };
         return {
           ok: true,
           active: isLive(lease),
@@ -883,6 +967,7 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
           ended: lease?.ended ?? null,
           next: [...p.write, ...p.close],
           ...(p.asked.length ? { asked: p.asked } : {}),
+          ...pathBLines(p.pathB),
         };
       });
     case "next":
@@ -910,13 +995,14 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
       return underLock(args.matter_root, env, (dir) => {
         const lease = renew(dir, runId);
         if (lease === null) return refusal("lease_lost");
-        writeLease(dir, { ...lease, ended: lease.heartbeat });
-        journal(dir, "end", runId);
         // The dispatches' stored inputs (parties, answered facts) and a bridged run's page images,
         // a displaced earlier run's included (N13), are not needed once the run has ended (S-m15).
-        removeImages(dir, args.matter_root);
+        // Images in use stay, and the run still ends: the next end or the sweep deletes them (N-12).
+        const imagesLeft = !removeImages(dir, args.matter_root);
         removeOwn(pathWin32.join(dir, "dispatches"));
-        return { ok: true, run_id: runId };
+        writeLease(dir, { ...lease, ended: lease.heartbeat });
+        journal(dir, "end", runId, imagesLeft ? { images_left: true } : {});
+        return { ok: true, run_id: runId, ...(imagesLeft ? { report: [IMAGES_LEFT] } : {}) };
       });
     }
     default:

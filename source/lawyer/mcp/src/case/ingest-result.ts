@@ -10,9 +10,10 @@
 // no database (§2.2). A name that does not resolve becomes an ask, answered on the repeated call.
 
 import { readFileSync, unlinkSync } from "node:fs";
+import { join } from "node:path";
 
-import { NotFoundError, ValidationError } from "../errors.js";
-import { readFirmProfile } from "../tools/practice/firm-profile.js";
+import { ValidationError } from "../errors.js";
+import { resolveCaseDataRoot } from "../practice/matter-data-root.js";
 import { caseDataExecuteStatements, type CaseStatement, type CaseStatementGroup } from "./backend.js";
 import { runCaseScript } from "./case-script.js";
 import {
@@ -154,16 +155,23 @@ function resolveParties(matterRoot: string, names: string[], answered: Record<st
   return out;
 }
 
-/** The firm's own name, so the delivery check fires only on a letter the firm sent (K-M9). With no
- *  firm profile it is null, and the converter says the delivery check could not run (N14). */
+/** The firm's own name, so the delivery check fires only on a letter the firm sent (K-M9): firm_name
+ *  alone, from the firm profile's firm.json (firm-profile.ts), so no other part of the profile can
+ *  fail the write (N-2). With no case data root, no firm.json or no readable name it is null, and the
+ *  converter says once that the delivery check could not run (N14). */
 function firmName(env: NodeJS.ProcessEnv): string | null {
   try {
-    return readFirmProfile(env).firm_name;
+    const firm = JSON.parse(readFileSync(join(resolveCaseDataRoot(env), "_practice", "firm", "firm.json"), "utf-8")) as { firm_name?: unknown } | null;
+    return typeof firm?.firm_name === "string" && firm.firm_name !== "" ? firm.firm_name : null;
   } catch (err) {
-    if (err instanceof NotFoundError) return null;
+    if (err instanceof ValidationError || err instanceof SyntaxError || (err as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw err;
   }
 }
+
+/** Whether a result carries a flag of this kind (spec §6.2). */
+const flagged = (doc: Record<string, unknown>, kind: string) =>
+  Array.isArray(doc.flags) && (doc.flags as Array<{ kind?: unknown } | null>).some((f) => f?.kind === kind);
 
 /** Keeps the reply within its cap (S-m4): report lines go first, then ask items, then items. */
 function fit(out: IngestResultOutput): IngestResultOutput {
@@ -212,22 +220,23 @@ export async function ingestResult(args: IngestResultArgs, env: NodeJS.ProcessEn
     throw new ValidationError(`contract must be one of ${[...Object.keys(CONVERTERS), ...LATER].join(", ")}`);
   }
   if (!Array.isArray(args.result_ids)) throw new ValidationError("result_ids must be a list");
-  // Privileged wording leaves staging on every definite outcome (N5): it is kept only on an open
-  // question, and on an error a repeat of the same call must find it (R6).
+  // Privileged wording leaves staging once it is written, or refused for a reason no repeat of the
+  // call can clear (N5). It stays on an error, an open question, a lost lease, a plugin update and a
+  // result not found, so the corrected or repeated call, or the resumed run, finds it (R6, R7, N-3).
   const privileged = args.contract === "privileged" ? args.result_ids.map((id) => stagedResultPath(id, env)) : [];
   const dropAlso: string[] = [];
-  let keep = false;
+  let drop = false;
   try {
     const out = await checkAndWrite(args, env, dropAlso);
-    keep = out.refused === "needs_answer";
+    drop = out.outcome !== "refused" || DEFINITE.includes(String(out.refused));
     return out;
-  } catch (err) {
-    keep = !(err instanceof ValidationError);
-    throw err;
   } finally {
-    dropStaged([...(keep ? [] : privileged), ...dropAlso]);
+    dropStaged([...(drop ? privileged : []), ...dropAlso]);
   }
 }
+
+/** Refusals no repeat of the same call can clear: a result to read again, or a document set aside. */
+const DEFINITE = ["invalid", "contract_mismatch", "contract_version", "race", "store_change", "path_b", "set_aside", "unresolved", "refused"];
 
 type Staged = { result_id: string; path: string; ref: string; doc: Record<string, unknown> };
 
@@ -240,7 +249,7 @@ async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dro
   if (document.store !== (privilegedStore ? "privileged" : "main")) {
     throw new ValidationError(`document.store must be ${privilegedStore ? "privileged" : "main"} for this contract and answer`);
   }
-  const run = await runForWrite(args.matter_root, args.run_id, document, env);
+  const run = await runForWrite(args.matter_root, args.run_id, document, args.contract, args.result_ids, env);
   if ("refused" in run) return { outcome: "refused", refused: run.refused, ask: [], report: [run.say] };
   if (args.contract.startsWith("affidavit_") && !run.route) throw new ValidationError("an affidavit is written only for a file routed in this run");
   // The stored form the run recorded, or the one the server derives (S-m7): never a host path.
@@ -250,33 +259,49 @@ async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dro
   if (!/^[0-9a-f]{64}$/.test(fileHash)) throw new ValidationError("document.file_hash must be the file's SHA-256");
 
   const results: Staged[] = [];
-  // Each reply whose staged result names its item, journaled before any check below (S-M4).
+  // Each reply, journaled under its item before any check below (S-M4).
   const acks: Array<{ ref: string; result_id: string }> = [];
-  let bad: string | null = null;
+  const bad: string[] = [];
+  let reason: string | null = null;
   for (const id of args.result_ids) {
+    // The item a result answers is the reply's: the ok line journaled for it, or the call's own ref
+    // when that names an item dispatched under this contract (N-4). A call with neither (a Path B
+    // object, or a caller that names the file by its path and hash) takes the staged ref.
+    const replyRef = run.acked[id] ?? (args.result_ids.length === 1 ? run.itemRef : null) ?? undefined;
     const path = stagedResultPath(id, env);
     const doc = readStaged(path);
     if (doc === null) {
-      bad ??= "unknown_result"; // expired (R10), never staged, or unreadable
+      // A repeat of a write that landed and then let its staged result go (R6, N-11).
+      if (run.written.includes(id)) continue;
+      if (!privileged && replyRef !== undefined) acks.push({ ref: replyRef, result_id: id });
+      bad.push(id);
+      reason ??= "unknown_result"; // expired (R10), never staged, or unreadable
       continue;
     }
-    const ref = typeof doc.ref === "string" ? doc.ref : "";
-    // A routed file's results carry its refs (f3, f3:so, f3:B): one of another file's is a mismatch.
-    // A Path B object names its file only by its path and hash, a routed file's included (N1).
-    const ours = privileged || run.route === null || ref.split(":")[0] === run.route.ref;
-    if (ours && !privileged && run.route) acks.push({ ref, result_id: id });
-    if (!ours || doc.contract !== args.contract) bad ??= "contract_mismatch";
-    else if (doc.contract_version !== CONTRACT_VERSION) bad ??= "contract_version";
+    const stagedRef = typeof doc.ref === "string" ? doc.ref : "";
+    const ref = privileged ? stagedRef : replyRef ?? stagedRef;
+    // A routed file's results carry its refs (f3, f3:so, f3:B): one of another file's is a mismatch,
+    // and so is a staged ref other than the reply's item. A Path B object names its file only by its
+    // path and hash, a routed file's included (N1).
+    const sameFile = run.route === null || ref.split(":")[0] === run.route.ref;
+    if (!privileged && run.route && sameFile) acks.push({ ref, result_id: id });
+    if ((!privileged && (!sameFile || ref !== stagedRef)) || doc.contract !== args.contract) {
+      bad.push(id);
+      reason ??= "contract_mismatch";
+    } else if (doc.contract_version !== CONTRACT_VERSION) {
+      bad.push(id);
+      reason ??= "contract_version";
+    }
     results.push({ result_id: id, path, ref, doc });
   }
-  if (bad !== null) {
-    // The item is read once more (R4), never left acknowledged and unwritten.
-    const claimed = run.route && document.ref !== undefined && args.result_ids.length === 1
-      ? { ref: document.ref, result_id: args.result_ids[0], contract: args.contract }
-      : null;
-    if (!privileged) await recordRefusal(args.matter_root, args.run_id, acks, args.result_ids, bad, claimed, env);
-    return refused(bad);
+  if (reason !== null) {
+    // Each bad result's item is read once more (R4), never left acknowledged and unwritten; the
+    // call's other results stay acknowledged and are listed to write again (N-9).
+    if (!privileged) await recordRefusal(args.matter_root, args.run_id, acks, bad, reason, env);
+    return refused(reason);
   }
+  // Every result already written, and its staged copy gone: the repeat finds the write (R6, N-11).
+  if (args.result_ids.length > 0 && results.length === 0) return { outcome: "already_written", ask: [], report: [] };
   return write(args, env, run, filePath, fileHash, results, dropAlso);
 }
 
@@ -307,7 +332,8 @@ async function write(
     route: run.route,
     exhibits,
     answered: run.answered,
-    firm_name: firmName(env),
+    // Read only where the delivery check can fire: an attended document with a letter flag (N-2).
+    firm_name: run.mode === "attended" && results.some((r) => flagged(r.doc, "outgoing_letter")) ? firmName(env) : null,
   }, env);
 
   // A Path B object names no dispatched item, so it journals no reply (N1).

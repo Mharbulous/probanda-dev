@@ -6,7 +6,8 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import fs, { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -97,10 +98,12 @@ const EXHIBIT = (letter, description = `Exhibit ${letter} says so.`) => ({
 
 const AFF_PAGES = ["Affidavit", "Body 2", "Exhibit A stamp", "A content", "Exhibit B stamp", "B content"];
 
-/** Exhibit `letter` held already, pending a privilege decision: a reading that cites it as proof breaks
- *  the pending-privilege guard (#49), so its statement group rolls back alone. */
-const holdPending = (caseDataDir, letter) => sql(caseDataDir, `INSERT INTO sources (category, title, parent_source_id, ingestion_status, privilege_status)
-  SELECT category, 'Exhibit ${letter}', source_id, 'complete', 'pending' FROM sources WHERE parent_source_id IS NULL`);
+/** Exhibit `letter` held already as listed and recorded failed: a reading that carries a privilege
+ *  signal would hold it pending, which the sources check refuses for a listed row, so its statement
+ *  group rolls back alone. */
+const holdListed = (caseDataDir, letter) => sql(caseDataDir, `INSERT INTO sources (category, title, parent_source_id, ingestion_status, listed)
+  SELECT category, 'Exhibit ${letter}', source_id, 'failed', 1 FROM sources WHERE parent_source_id IS NULL`);
+const SIGNALLED = (letter) => ({ ...EXHIBIT(letter), flags: [{ kind: "privilege_signal", ref: `f1:${letter}` }] });
 const PROOF = { is_proof_source: true, strength: 1, notes: null };
 const PROVING = (letter) => ({ ...EXHIBIT(letter), facts: [{ ...EXHIBIT(letter).facts[0], evidence: PROOF }] });
 
@@ -114,9 +117,9 @@ test("an exhibit that breaks a constraint is recorded for review, not as written
   const exhibits = await run(matterRoot, { action: "next", run_id });
   assert.deepEqual(exhibits.dispatch.map((d) => d.ref), ["f1:A", "f1:B"]);
 
-  holdPending(caseDataDir, "B");
+  holdListed(caseDataDir, "B");
   const a = await stage(EXHIBIT("A"));
-  const b = await stage(PROVING("B"));
+  const b = await stage(SIGNALLED("B"));
   const out = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [a.result_id, b.result_id]);
   assert.equal(out.outcome, "written", JSON.stringify(out));
   assert.deepEqual(out.items.map((i) => i.ref), ["B"]);
@@ -128,7 +131,7 @@ test("an exhibit that breaks a constraint is recorded for review, not as written
   const again = await run(matterRoot, { action: "next", run_id });
   assert.deepEqual(again.dispatch.map((d) => d.ref), ["f1:B"], "the failed exhibit is read once more (R4)");
   assert.deepEqual([again.write, again.close], [[], []]);
-  sql(caseDataDir, "UPDATE sources SET privilege_status = 'cleared' WHERE title = 'Exhibit B'"); // the practitioner decides it
+  sql(caseDataDir, "UPDATE sources SET listed = 0 WHERE title = 'Exhibit B'"); // the practitioner fixes the row
   const b2 = await stage(PROVING("B"));
   assert.equal((await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [b2.result_id])).outcome, "written");
   assert.deepEqual(sql(caseDataDir, "SELECT count(*) AS n FROM evidence_links"), [{ n: 1 }]);
@@ -429,12 +432,12 @@ test("an exhibit that fails twice says so, and a call whose every exhibit rolled
   await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "affidavit" }] });
   await byRef(matterRoot, run_id, "f1", "affidavit_body", [(await stage(BODY())).result_id]);
   await run(matterRoot, { action: "next", run_id });
-  holdPending(caseDataDir, "A");
-  const a = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [(await stage(PROVING("A"))).result_id]);
+  holdListed(caseDataDir, "A");
+  const a = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [(await stage(SIGNALLED("A"))).result_id]);
   assert.equal(a.outcome, "written", "an exhibit recorded for review is a write");
   assert.match(a.report.at(-1), /will be read again/);
   await run(matterRoot, { action: "next", run_id });
-  const again = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [(await stage(PROVING("A"))).result_id]);
+  const again = await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [(await stage(SIGNALLED("A"))).result_id]);
   assert.equal(again.outcome, "written", JSON.stringify(again));
   assert.match(again.report.at(-1), /^Exhibit A could not be read after two attempts/);
 });
@@ -502,4 +505,178 @@ test("a second file with the same bytes is read once, and the practitioner is to
   const out = await run(matterRoot, { action: "next", run_id, routes: [{ ...one, kind: "facts" }, { ...copy, kind: "facts" }] });
   assert.deepEqual(out.routed, ["f1", "f1"]);
   assert.deepEqual(out.report, ["copy of one.pdf is the same file as one.pdf, so it is read once."]);
+});
+
+// ---------------------------------------------------------------- third review (N-1 to N-13)
+
+/** Every delete under a matter's Page images folder fails as a sync client holding the files makes
+ *  it fail. Returns the undo. */
+function busyImages() {
+  const saved = { rmSync: fs.rmSync, rmdirSync: fs.rmdirSync, unlinkSync: fs.unlinkSync };
+  for (const [name, real] of Object.entries(saved)) {
+    fs[name] = (path, ...rest) => {
+      if (String(path).includes("Page images")) throw Object.assign(new Error("resource busy or locked"), { code: "EBUSY" });
+      return real(path, ...rest);
+    };
+  }
+  syncBuiltinESMExports();
+  return () => {
+    Object.assign(fs, saved);
+    syncBuiltinESMExports();
+  };
+}
+
+const SCAN = () => imagePdfBytes({ pages: [{ content: drawImage(0, 0, 612, 792), mediaBox: [0, 0, 612, 792] }] });
+
+test("a dispatch whose inputs meet a fault of this computer is void, never left running (N-1)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const doc = file(matterRoot, "scan.pdf", SCAN());
+  // The bridged page images cannot be written: their folder's place is taken by a file.
+  mkdirSync(join(matterRoot, "0. CASE DATA"), { recursive: true });
+  writeFileSync(join(matterRoot, "0. CASE DATA", "Page images"), "not a folder");
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  await assert.rejects(run(matterRoot, { action: "next", run_id, bridged: true, routes: [{ ...doc, kind: "facts" }] }));
+  unlinkSync(join(matterRoot, "0. CASE DATA", "Page images"));
+  const again = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual(again.dispatch.map((d) => d.ref), ["f1"], "the item is dispatched again, not counted as running");
+  assert.equal(again.running, 1);
+});
+
+test("the firm's name is read only for a letter the firm may have sent, and a bad profile fails no write (N-2)", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const config = join(caseDataDir, "..", "..", "probanda.json");
+  writeFileSync(config, JSON.stringify({ version: 1 })); // no case_data_root
+  process.env.COCLERK_CONFIG_PATH = config;
+  const aff = file(matterRoot, "2026-03-01 AFF Quill.pdf", pdfBytes(AFF_PAGES));
+  const letter = file(matterRoot, "2026-03-02 letter.pdf", pdfBytes(["Letter"]));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...aff, kind: "affidavit" }, { ...letter, kind: "facts", category: "correspondence" }] });
+  const body = await byRef(matterRoot, run_id, "f1", "affidavit_body", [(await stage(BODY())).result_id]);
+  assert.equal(body.outcome, "written", JSON.stringify(body));
+  const sent = await stage(FACTS("f2", { flags: [{ kind: "outgoing_letter", ref: "f2", detail: "Quill Law LLP" }],
+    document: { ...FACTS("f2").document, category: "correspondence" } }));
+  const out = await byRef(matterRoot, run_id, "f2", "facts", [sent.result_id]);
+  assert.equal(out.outcome, "written", JSON.stringify(out));
+  assert.ok(out.report.some((l) => /was not checked/.test(l)), JSON.stringify(out.report));
+});
+
+test("privileged wording stays staged after a call error or a lost lease, so the call can be made again (N-3)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  const memo = { file_path: "3. CLIENT\\memo.pdf", file_hash: "e".repeat(64) };
+  const { result_id } = await stage({ contract: "privileged", contract_version: 2, ref: "memo", document: { title: "Memo", category: "solicitor_client" },
+    facts: [{ source_locator: "p1", description: "The client asked.", category: null, date_of_fact: null }] });
+  const write = (store, id = run_id) => callTool({}, "matter_data__ingest_result", { matter_root: matterRoot, run_id: id, document: { ...memo, store }, contract: "privileged", result_ids: [result_id], answers: { privilege: "yes" } });
+  await assert.rejects(write("main"), /store/);
+  assert.equal(existsSync(stagedPath(result_id)), true, "a call the session corrects keeps it");
+  assert.equal((await write("privileged", randomUUID())).refused, "lease_lost");
+  assert.equal(existsSync(stagedPath(result_id)), true, "a lost lease keeps it for the run that resumes");
+  assert.equal((await write("privileged")).outcome, "written");
+  assert.equal(existsSync(stagedPath(result_id)), false);
+});
+
+/** An affidavit whose body is written and whose exhibits A and B are dispatched. */
+async function exhibitsDispatched(matterRoot) {
+  const doc = file(matterRoot, "2026-03-01 AFF Quill.pdf", pdfBytes(AFF_PAGES));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "affidavit" }] });
+  await byRef(matterRoot, run_id, "f1", "affidavit_body", [(await stage(BODY())).result_id]);
+  assert.deepEqual((await run(matterRoot, { action: "next", run_id })).dispatch.map((d) => d.ref), ["f1:A", "f1:B"]);
+  return run_id;
+}
+
+test("a staged ref that is not the reply's is refused under the reply's item (N-4)", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const run_id = await exhibitsDispatched(matterRoot);
+  // B's extractor staged its result as the body's: the body must not be sent back to be read again.
+  const wrong = await stage({ ...EXHIBIT("B"), ref: "f1" });
+  assert.equal((await byRef(matterRoot, run_id, "f1:B", "affidavit_exhibits", [wrong.result_id])).refused, "contract_mismatch");
+  // A's extractor staged it under a letter it was not given.
+  const lower = await stage({ ...EXHIBIT("A"), ref: "f1:a" });
+  assert.equal((await byRef(matterRoot, run_id, "f1:A", "affidavit_exhibits", [lower.result_id])).refused, "contract_mismatch");
+  const again = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual(again.dispatch.map((d) => d.ref).sort(), ["f1:A", "f1:B"], "each is read once more; the body is not");
+  assert.equal(sql(caseDataDir, "SELECT count(*) AS n FROM sources WHERE parent_source_id IS NOT NULL")[0].n, 0);
+});
+
+test("a sweep that cannot delete page images in use leaves them for later, and begin goes on (N-5)", async (t) => {
+  const { matterRoot, runRoot } = fixture(t);
+  const doc = file(matterRoot, "one.pdf", pdfBytes(["One"]));
+  const first = await run(matterRoot, { action: "begin", mode: "attended" });
+  const { dispatch } = await run(matterRoot, { action: "next", run_id: first.run_id, routes: [{ ...doc, kind: "facts" }] });
+  const images = join(matterRoot, "0. CASE DATA", "Page images", `ingest-${dispatch[0].dispatch_id}`);
+  mkdirSync(images, { recursive: true });
+  const lease = join(runDir(runRoot), "lease.json");
+  writeFileSync(lease, JSON.stringify({ ...JSON.parse(readFileSync(lease, "utf-8")), heartbeat: new Date(Date.now() - 31 * 24 * 60 * 60_000).toISOString() }));
+  const undo = busyImages();
+  let second;
+  try {
+    second = await run(matterRoot, { action: "begin", mode: "attended" });
+  } finally {
+    undo();
+  }
+  assert.equal(second.ok, true, JSON.stringify(second));
+  assert.equal(second.report.length, 1);
+  assert.equal(existsSync(images), true);
+  await run(matterRoot, { action: "end", run_id: second.run_id });
+  assert.equal(existsSync(images), false, "the run's end removes them once they are free");
+});
+
+test("one bad result in a call fails only its own item (N-9)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const run_id = await exhibitsDispatched(matterRoot);
+  const a = await stage(EXHIBIT("A"));
+  const b = await stage({ ...EXHIBIT("B"), ref: "f1:x" }); // staged under an item it was not given
+  await run(matterRoot, { action: "status", run_id, ack: `ok f1:A ${a.result_id} 10` });
+  await run(matterRoot, { action: "status", run_id, ack: `ok f1:B ${b.result_id} 10` });
+  const listed = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual(listed.write, [{ ref: "f1", contract: "affidavit_exhibits", result_ids: [a.result_id, b.result_id] }]);
+  assert.equal((await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [a.result_id, b.result_id])).refused, "contract_mismatch");
+  const after = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual(after.dispatch.map((d) => d.ref), ["f1:B"]);
+  assert.deepEqual(after.write, [{ ref: "f1", contract: "affidavit_exhibits", result_ids: [a.result_id] }]);
+});
+
+test("a Path B document is journaled and listed until it is written, a resume included (N-10, N-11)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const memo = file(matterRoot, "memo.docx", Buffer.from("a client memo"));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "attended", orchestrator: true });
+  const first = await run(matterRoot, { action: "next", run_id, routes: [{ ...memo, kind: "path_b" }] });
+  assert.deepEqual([first.routed, first.dispatch, first.path_b], [["f1"], [], [{ ref: "f1", file_path: memo.file_path }]]);
+  const resumed = await run(matterRoot, { action: "begin", mode: "attended", resume: run_id });
+  assert.deepEqual(resumed.path_b, [{ ref: "f1", file_path: memo.file_path }], "nothing depends on this session's memory");
+  const { result_id } = await stage({ contract: "privileged", contract_version: 2, ref: "f1", document: { title: "Memo", category: "solicitor_client" },
+    facts: [{ source_locator: "p1", description: "The client asked.", category: null, date_of_fact: null }] });
+  const write = () => callTool({}, "matter_data__ingest_result", { matter_root: matterRoot, run_id: resumed.run_id, document: { ref: "f1", store: "privileged" },
+    contract: "privileged", result_ids: [result_id], answers: { privilege: "yes" } });
+  assert.equal((await write()).outcome, "written");
+  assert.equal(existsSync(stagedPath(result_id)), false);
+  assert.equal((await write()).outcome, "already_written", "a repeat after a lost reply finds the write (R6)");
+  assert.equal((await run(matterRoot, { action: "next", run_id: resumed.run_id })).path_b, undefined);
+});
+
+test("end removes only the page images it rendered, and a file in use leaves the run ended with a report (N-12, N-13)", async (t) => {
+  const { matterRoot } = fixture(t);
+  const doc = file(matterRoot, "one.pdf", pdfBytes(["One"]));
+  const first = await run(matterRoot, { action: "begin", mode: "attended" });
+  const { dispatch } = await run(matterRoot, { action: "next", run_id: first.run_id, routes: [{ ...doc, kind: "facts" }] });
+  const images = join(matterRoot, "0. CASE DATA", "Page images", `ingest-${dispatch[0].dispatch_id}`);
+  const pdfDir = join(images, "0123456789abcdef");
+  mkdirSync(pdfDir, { recursive: true });
+  writeFileSync(join(pdfDir, "page-0001.png"), "png");
+  writeFileSync(join(images, "my notes.txt"), "the practitioner's own file");
+  const undo = busyImages();
+  let ended;
+  try {
+    ended = await run(matterRoot, { action: "end", run_id: first.run_id });
+  } finally {
+    undo();
+  }
+  assert.equal(ended.ok, true, JSON.stringify(ended));
+  assert.equal(ended.report.length, 1);
+  assert.equal((await run(matterRoot, { action: "status" })).active, false, "the run ended");
+  const second = await run(matterRoot, { action: "begin", mode: "attended" });
+  await run(matterRoot, { action: "end", run_id: second.run_id });
+  assert.equal(existsSync(join(pdfDir, "page-0001.png")), false, "the left images go at the next end");
+  assert.equal(existsSync(join(images, "my notes.txt")), true, "a file Probanda did not write stays");
 });
