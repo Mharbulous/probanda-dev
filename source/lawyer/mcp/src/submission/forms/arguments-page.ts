@@ -181,10 +181,9 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
 }
 
 // The page's script (arguments.js) draws window.VIEW_PAGE.data into .board as folder tabs over one
-// panel holding four sections. Each
-// section numbers its cards 1..N in page order: a picker of those numbers sits in its heading, the
-// selected number's card is the section's one open card, and each card's tag ends its statement with
-// the same number. A counter-argument lists the arguments linked to it, so a rebuttal linked to two
+// panel holding four sections, Killed only on its own tab. Each
+// section numbers its cards 1..N in page order: a picker of those numbers in its heading lists only
+// the selected card, and each card's tag ends its statement with the same number. A counter-argument lists the arguments linked to it, so a rebuttal linked to two
 // counter-arguments shows under both. One with no link shows no link line.
 /** The page's view-page registry entry (../view-pages.ts VIEW_PAGES). */
 export const ARGUMENTS_PAGE: ViewPage = {

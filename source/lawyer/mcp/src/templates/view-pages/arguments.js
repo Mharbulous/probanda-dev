@@ -83,15 +83,15 @@
   folder.setAttribute("role", "tabpanel");
   board.appendChild(folder);
 
-  // One section, its picker and its cards. At most one card is open; the picker's selected number
-  // is always the open card's, and none is selected when every card is closed.
+  // One section, its picker and its cards. The picker's selected number lists that card alone, and
+  // none selected lists them all. A statement opens or closes its card, at most one open.
   var sections = {};
   function section(name, heading, cards) {
     var sec = el("section");
     var h2 = el("h2", "", heading);
     var picker = el("span", "picker");
     picker.setAttribute("role", "radiogroup");
-    picker.setAttribute("aria-label", heading + ": open card");
+    picker.setAttribute("aria-label", heading + ": show card");
     h2.appendChild(picker);
     sec.appendChild(h2);
     var stack = el("div", "stack");
@@ -99,17 +99,18 @@
     folder.appendChild(sec);
     sections[name] = { node: sec, size: cards.length };
 
-    var current = -1;
-    var radios = [];
+    var opened = -1;
     function open(index) {
-      current = index;
+      opened = index;
       cards.forEach(function (c, i) {
         var on = i === index;
         c.node.classList.toggle("open", on);
         c.detail.hidden = !on;
         c.title.setAttribute("aria-expanded", String(on));
-        radios[i].checked = on;
       });
+    }
+    function filter(index) {
+      cards.forEach(function (c, i) { c.node.hidden = index >= 0 && i !== index; });
     }
     cards.forEach(function (c, i) {
       var input = el("input");
@@ -120,21 +121,17 @@
       label.htmlFor = input.id;
       picker.appendChild(input);
       picker.appendChild(label);
-      radios.push(input);
-      input.addEventListener("change", function () { if (input.checked) open(i); });
-      label.addEventListener("click", function (e) {
-        if (input.checked) { e.preventDefault(); open(-1); }
-      });
-      input.addEventListener("keydown", function (e) {
-        if (e.key === " " && input.checked) { e.preventDefault(); open(-1); }
-      });
-      c.title.addEventListener("click", function () { open(current === i ? -1 : i); });
+      function clear(e) { e.preventDefault(); input.checked = false; filter(-1); }
+      input.addEventListener("change", function () { if (input.checked) filter(i); });
+      label.addEventListener("click", function (e) { if (input.checked) clear(e); });
+      input.addEventListener("keydown", function (e) { if (e.key === " " && input.checked) clear(e); });
+      c.title.addEventListener("click", function () { open(opened === i ? -1 : i); });
       c.title.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(current === i ? -1 : i); }
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(opened === i ? -1 : i); }
       });
       stack.appendChild(c.node);
     });
-    open(cards.length > 0 ? 0 : -1);
+    open(-1);
   }
   section("submissions", "Submissions", data.submissions.filter(function (a) { return a.kind === "submission"; }).map(argumentCard));
   section("counter", "Counter-arguments", data.counter_arguments.map(counterCard));
@@ -163,7 +160,8 @@
   function apply() {
     var any = false;
     Object.keys(sections).forEach(function (name) {
-      var on = (current === "all" || current === name) && sections[name].size > 0;
+      var size = sections[name].size;
+      var on = current === name ? size > 0 : current === "all" && name !== "killed" && (size > 0 || name === "submissions");
       sections[name].node.hidden = !on;
       if (on) any = true;
     });
