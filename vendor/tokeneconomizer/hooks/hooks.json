@@ -19,18 +19,6 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 20
-          },
-          {
-            "type": "mcp_tool",
-            "server": "plugin:lawyer:data",
-            "tool": "practice_data__config_status",
-            "timeout": 30
-          },
-          {
-            "type": "mcp_tool",
-            "server": "remote-devices",
-            "tool": "plugin_lawyer_data__practice_data__config_status",
-            "timeout": 30
           }
         ]
       }
