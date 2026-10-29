@@ -1,8 +1,9 @@
-"""Pins that a research job's memo always answers its question: on a job the audit has no closed
-gate and no "More research is needed" sentence, its Conclusion answers from the sources held, the
-pool and the citator get gap lines, and the job question gets no offers; the caller adds a step to
-the held job for each tier a return names as not run, stamps a step only after its work ran, and
-relays-and-stops only outside a held job; and a job plan's Westlaw step has no approval point.
+"""Pins that a research memo always answers its question: the audit has no closed gate, its
+Conclusion answers from the sources held and ends with the open-issues paragraph only where the
+scope test leaves research required, the pool and the citator get gap lines, and required research
+gets no offer; the caller adds a step to the held job for each tier a return names as not run,
+stamps a step only after its work ran, and runs the same loop without steps outside a held job;
+and a job plan's Westlaw step has no approval point.
 
 Spec: docs/Specs/2026-10-21_research-job-memo-always-answers-spec.md
 
@@ -34,10 +35,10 @@ class AuditProtocolTest(unittest.TestCase):
 
     def test_a_job_memo_always_answers(self):
         step_four = between(self.protocol, "### Step 4", "### Step 5")
-        self.assertIn("**On a job, the memo always answers.**", step_four)
-        self.assertIn("Step 4 has no closed gate and no mandated sentence", step_four)
+        self.assertIn("**The memo always answers.** Write the memo whatever the coverage.", step_four)
         self.assertIn("`No authority located in <the tiers searched>.`", step_four)
-        self.assertIn("The Conclusion never defers to further research, offers research or names a tier not run.", step_four)
+        self.assertIn("Nothing else in the memo defers to further research, offers research or names a tier not run.", step_four)
+        self.assertNotIn("More research is needed before I can give", self.protocol)
 
     def test_pool_and_citator_get_gap_lines(self):
         step_four = between(self.protocol, "### Step 4", "### Step 5")
@@ -46,18 +47,22 @@ class AuditProtocolTest(unittest.TestCase):
 
     def test_no_offer_on_the_job_question(self):
         step_five = between(self.protocol, "### Step 5", "### Step 6")
-        self.assertIn("On a job, write no offer for work on the job question: each such gap is its `gap:` line.", step_five)
+        self.assertIn("Required research gets no offer: it is its `gap:` line.", step_five)
 
-    def test_mixed_coverage_sentence_only_without_a_job(self):
+    def test_open_issues_paragraph_ends_the_conclusion(self):
+        step_four = between(self.protocol, "### Step 4", "### Step 5")
+        self.assertIn("end the Conclusion with one paragraph opening `More research is needed on the following issues:`", step_four)
+        self.assertIn("write the header's `Confidence:` as `INCOMPLETE: <the research named>`", step_four)
         step_six = between(self.protocol, "### Step 6", "## Fallback ladder")
-        self.assertIn("Mixed coverage with `Job question: none`: the first `## Conclusion` opens with Step 4's mandated sentence", step_six)
+        self.assertIn("The Conclusion answers as Step 4 says, its open-issues paragraph last.", step_six)
+        self.assertNotIn("Mixed coverage", self.protocol)
 
 
 class MemoTemplateTest(unittest.TestCase):
-    def test_job_memo_conclusion_answers(self):
-        job_memo = flat(read("shared", "research-memo-template.md").split("**A job's memo.**")[1])
-        self.assertIn("Each `Conclusion` answers its part from the sources held and never defers to further research", job_memo)
-        self.assertIn("`shared/legal-audit-protocol.md` Step 4", job_memo)
+    def test_conclusion_ends_with_open_issues_only_where_research_is_required(self):
+        template = flat(read("shared", "research-memo-template.md"))
+        self.assertIn("Only where research is required (`shared/legal-audit-protocol.md` Step 4), "
+                      "the last Conclusion ends with the open-issues paragraph.", template)
 
 
 class GateDoctrineTest(unittest.TestCase):
@@ -69,15 +74,16 @@ class GateDoctrineTest(unittest.TestCase):
         self.assertIn("add one step to the held job for each tier it names, by `/drafting-data`'s partial replace", rule)
         self.assertIn("in the practitioner's name", rule)
         self.assertIn("A step is stamped done only once its work has run", rule)
-        self.assertIn("A caller holding no job keeps the single loop above.", rule)
+        self.assertIn("A caller holding no job runs the same loop, adding and stamping no steps.", rule)
 
-    def test_closed_gate_rule_excepts_a_held_job(self):
-        rule = between(self.doctrine, "**When the gate closes, closed is the answer.**", "**After the answer")
-        self.assertIn("A caller holding a `/draft` job takes the held-job rule below instead", rule)
+    def test_an_incomplete_memo_is_no_licence(self):
+        rule = between(self.doctrine, "**An incomplete memo is never a licence.**", "**After the answer")
+        self.assertIn("is never a licence to answer the question yourself", rule)
+        self.assertNotIn("**When the gate closes", self.doctrine)
 
     def test_skill_step_five_points_a_held_job_to_the_doctrine(self):
         step_five = between(flat(read("legal-research", "SKILL.md")), "5. A return carrying", "If step 1's read fails")
-        self.assertIn("A caller holding a `/draft` job never relays and stops on gaps", step_five)
+        self.assertIn("on a held job each piece of research becomes a step, and without one the same loop runs with no steps", step_five)
         self.assertIn("\"On a held job, an open tier is not an answer\"", step_five)
 
 
@@ -91,7 +97,7 @@ class JobPlanningTest(unittest.TestCase):
         self.assertIn("the Westlaw query, run without asking unless the practitioner declined it", self.section)
 
     def test_completion_test_needs_an_answer_and_a_step_per_open_tier(self):
-        self.assertIn("the memo's Conclusion answers every sub-issue", self.section)
+        self.assertIn("the memo's Conclusion answers the Issue with pinpoint citations", self.section)
         self.assertIn("each tier a research return names as not run is a step on the job", self.section)
         self.assertIn("stamped done only once its work has run", self.section)
 

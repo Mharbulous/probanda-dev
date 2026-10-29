@@ -58,7 +58,7 @@ permitted to make statements of law.
    into the spawn template's `Preflight:` field.
 1. Read `shared/legal-research.md` and follow it. It is the binding doctrine:
    what counts as a statement of law, the exceptions you may answer normally, the
-   caller's five pre-spawn duties, and the closed-gate rule. It sends you to
+   caller's five pre-spawn duties, and the memo-reviewer loop. It sends you to
    `shared/research-priority.md` for the order every legal lookup runs in — read
    that too, and follow it.
 2. Tell the practitioner: "That's a question about the law — I'll put it to the
@@ -73,7 +73,9 @@ permitted to make statements of law.
      plan's `scope: in` issues are its internal checklist, and steps 3 to 5 run all of them.
      A `scope: new` issue lies outside the question and is not researched: it is captured
      and offered (`shared/legal-research.md`, "Approved plan issues become jobs"). The
-     practitioner may still narrow or waive the job's scope in their own words.
+     practitioner may still narrow or waive the job's scope in their own words. A plan with
+     more than one `scope: in` issue is proposed for splitting (the doctrine's "A job holds
+     one question").
 
    Otherwise take the practitioner through its issues one at a time:
    - Ask each issue as its own multiple-choice question, the issue's text verbatim from
@@ -89,7 +91,7 @@ permitted to make statements of law.
      (`shared/legal-research.md`, "Approved plan issues become jobs").
    They may instead waive the whole plan, and steps 3 to 5 then run the question as
    asked. Outside a held job, steps 3 to 5 dispatch nothing until they approve or waive. The plan states no
-   law, and you add no issue of your own. Skip this step on step 5's re-invocation, on a
+   law, and you add no issue of your own. Skip this step on step 5's re-invocations, on a
    currency check asked on its own, and for a question whose plan the practitioner already
    approved in this session.
    Outside a held job, with nobody present to approve, dispatch nothing further: report the plan and stop.
@@ -136,17 +138,18 @@ permitted to make statements of law.
    `research-paralegal` (`westlaw-first`), have `citation-checker` note up any
    `needs_note_up` citations, and re-invoke the agent once, without
    stopping, with the template's `Re-invocation: yes` field naming that dispatch's
-   status line and every citation it did not retrieve. Then save the agent's memo to the matter's `6. LAW\<issue>\` folder
+   status line and every citation it did not retrieve. Then run each tier its `gap:` lines
+   name and have `researcher:memo-reviewer` check the memo, re-invoking the agent on each
+   send-back, by the doctrine's "On a held job, an open tier is not an answer" and
+   "memo-reviewer checks every memo before it is saved": on a held job each piece of research
+   becomes a step, and without one the same loop runs with no steps. Then save the agent's memo to the matter's `6. LAW\<issue>\` folder
    (`6. LAW\` itself when the question spans issues), relay its `Confidence:` line and the saved memo as its file card (`shared/present-files.md`),
-   never the finding in any words, and ingest what it cites. Relay nothing of the dispatches
+   never the finding in any words, and ingest what it cites. End with the reviewer's
+   out-of-scope questions as a numbered list and the offer of a further memo on any of them.
+   Relay nothing of the dispatches
    in between but a Westlaw stop, a question the doctrine asks the practitioner, and one
-   status line each. The doctrine's "After the answer" rule carries the mechanics. If its disclosure gate is closed after any loop — it declines, reports
-   layers unavailable, or offers only a preliminary impression — relay its
-   confidence summary and research offers verbatim and stop. Nothing is saved
-   until the practitioner chooses. A closed gate is
-   never a licence to answer the question yourself. A caller holding a `/draft` job never
-   relays and stops on gaps: it adds them to the job as steps and works them by the
-   doctrine's "On a held job, an open tier is not an answer".
+   status line each. The doctrine's "After the answer" rule carries the mechanics. An
+   `INCOMPLETE` memo is never a licence to answer the question yourself.
 
 If step 1's read fails, the gate still holds: steps 2–5 are the complete minimum
 protocol. If the `research-agent` agent itself is unavailable, report that the

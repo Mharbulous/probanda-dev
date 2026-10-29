@@ -181,7 +181,7 @@ class DoctrineTests(unittest.TestCase):
     def test_gate_makes_westlaw_a_pre_spawn_duty_and_carves_out_the_hand_off(self):
         text = read(SHARED / "legal-research.md")
         before_spawn = text[text.index("**Before spawning, run what the agent cannot.**"):
-                            text.index("**When the gate closes, closed is the answer.**")]
+                            text.index("**An incomplete memo is never a licence.**")]
         self.assertIn("Five duties fall", before_spawn)
         self.assertRegex(before_spawn, r"(?m)^3\. \*\*Tier 4, Westlaw")
         self.assertRegex(before_spawn, r"(?m)^4\. \*\*Legislation text")
@@ -244,7 +244,7 @@ class DoctrineTests(unittest.TestCase):
         duty_3 = flat(text[text.index("3. **Tier 4, Westlaw"):text.index("4. **Legislation text")])
         self.assertIn("unless the practitioner declined it this run", duty_3)
         loop = flat(text[text.index("**A `needs_download` or hand-off-packet return"):
-                         text.index("**When the gate closes")])
+                         text.index("**An incomplete memo is never a licence.**")])
         self.assertIn("a declined issue dispatches nothing", loop)
         front_door = flat(read(SKILL_ROOT / "SKILL.md"))
         self.assertIn("unless the practitioner declined:", front_door)
@@ -274,7 +274,7 @@ class DoctrineTests(unittest.TestCase):
                 self.assertIn("whatever its other gaps", text)
                 self.assertIn("hand-off packet on an issue of the question", text)
                 self.assertNotIn("only gap", text)
-        self.assertIn("If its disclosure gate is closed after any loop",
+        self.assertIn("Then run each tier its `gap:` lines name and have `researcher:memo-reviewer` check the memo",
                       flat(read(SKILL_ROOT / "SKILL.md")))
 
     def test_westlaw_unreachable_is_a_stop_never_a_canlii_fallback(self):

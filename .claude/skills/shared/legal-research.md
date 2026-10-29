@@ -56,11 +56,19 @@ marker"). A skipped issue gets no job, and the jobs need no further approval: th
 is the request. Then re-render the Milestone and stop. Writing the jobs dispatches
 nothing: each job's research runs through the gate when the job is worked. A session
 holding a `/draft` job asks no approval and writes no job. Approving the job approved
-every sub-issue its question needs, so the plan's `scope: in` issues are the issues steps
+its question, so the plan's `scope: in` issue is the issue steps
 3 to 5 run. A `scope: new` issue is not researched: capture it as a loose thread by the
 duplicate test below (`/drafting-data` §8 with a job held), relay it word for word, and
 say in one line that it is researched only if they name it. With no board, write nothing, say in one line that the matter has no board to add
-jobs to, and run steps 3 to 5 on the approved issues.
+jobs to, and run steps 3 to 5 on each approved issue, one memo per issue.
+
+**A job holds one question.** A held job whose plan returns more than one `scope: in` issue
+holds more than one question (`shared/research-memo-template.md`, rules A and C). Research
+nothing on it: propose to the practitioner one job per question, each question in full. On
+their yes, reword the held job to the first question (`/drafting-data` §3m, "Rewording a held
+job") and write each other question as a job as §3m writes a premise job (§3i's guarded create,
+the plan marker as its step). On a no, write nothing and research nothing on it, and say in
+one line that a job is researched one question at a time. An unattended run reports and stops.
 
 **A caller working a `/draft` job checks its lock before every dispatch.** Immediately
 before each `research-paralegal` or `citation-checker` dispatch and each audit-agent spawn or re-invocation
@@ -290,6 +298,7 @@ Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not re
 6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted or staged>
 Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
 Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal: <its status line, or practitioner declined>
+Review: <memo-reviewer's last JSON, verbatim> / none
 Background memos: <path>[; <path>] / none
 Here are the memos that will provide some background context for your research. Repeat the propositions and excerpts from the previous memo only if they are necessary context for explaining your own research memo, but make sure that you go beyond that information and dig deeper into the legal issue posed by your particular question.
 Flag unsettled: <what to flag as unsettled> / none
@@ -318,7 +327,8 @@ carries `Origin: none`.
 A caller working a `/draft` job fills `Job question:` with the job's title character for
 character, as its card shows it, and puts the same words in `Question:`. Every other
 caller writes `Job question: none`.
-`Re-invocation` is `no` on the first spawn and `yes` only on the one re-invocation below.
+`Re-invocation` is `no` on the first spawn and `yes` on every re-invocation below. `Review:`
+is `none` until memo-reviewer has returned on this question.
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
 is in issue. For an instrument filed in parts, `<path>` lists every part's path, separated by `; `.
@@ -352,31 +362,21 @@ citations by duty 5.
 Then re-invoke the same audit agent once, naming the new files, with
 `Re-invocation: yes` listing every citation the `westlaw-first` dispatch did not
 retrieve (`none` when it retrieved them all), and a `Note-up:` line for each record
-filed. Only a gate still
-closed after that one loop is relayed under the rule below. A Westlaw block during
+filed. The rules below then take the return. A Westlaw block during
 the loop is the hard stop above.
 
-**When the gate closes, closed is the answer.**
-
-If research-agent declines to state the law — its disclosure gate closes, it
-reports layers unavailable, or it offers only a preliminary impression — relay its
-confidence summary, its mandated phrasing, and its research offers to the
-practitioner, and stop. A closed gate is never a licence to answer the question
-yourself: do not substitute WebSearch, secondary commentary, training knowledge, or
+**An incomplete memo is never a licence.** A memo saved `INCOMPLETE`, or a question a
+stop above ended, is never a licence to answer the question yourself: do not substitute
+WebSearch, secondary commentary, training knowledge, or
 a narrower direct tool path such as your own CanLII calls,
 and do not present citations the audit did not verify — an "unverified" caveat does
-not cure an unverified statement of law. The only paths forward are the ones the
-agent offered (fix the missing source or key, run the hand-off research, accept the
-preliminary impression), and the practitioner chooses among them. A caller holding a
-`/draft` job takes the held-job rule below instead: on a job the agent's memo always
-answers, and its gaps become steps on the job.
+not cure an unverified statement of law. The only path forward is the research the memo
+names.
 
 **After the answer, the caller persists it.** This rule covers the return of
 the `research-agent` agent, or whichever law-audit agent the gate dispatched.
-Any such return that states law with pinpoint citations is persisted, and so is
-a Mixed-coverage return (one saying "More research is needed on the following
-issues", or on a job one whose `Gaps` name a tier not run), which is not a closed gate
-even where it reports layers unavailable.
+Every memo it returns is persisted once memo-reviewer's loop below ends, an `INCOMPLETE`
+one included.
 Verified pinpoints are not a precondition: filing its cited decisions puts on
 disk the full text that verifying them needs.
 
@@ -400,9 +400,34 @@ keeps, a fetcher stop) stops as they say, and its step stays open: set it ↻
 (`drafting_data__set_step`, `status: retry`) while a missing credential or an unreachable
 source blocks it, never stamped done. A Westlaw step waits as ⏳ while its run is out
 (duty 3). Once no gap names a tier
-this session can run, persist the last return by the order below: its Conclusion answers
-the question, and the job stays open on each step not yet done (`/draft`
-`references/job-session.md`, Complete). A caller holding no job keeps the single loop above.
+this session can run, the last return goes to memo-reviewer below, and the job stays open on
+each step not yet done (`/draft` `references/job-session.md`, Complete).
+A caller holding no job runs the same loop, adding and stamping no steps.
+
+**memo-reviewer checks every memo before it is saved.** Spawn `researcher:memo-reviewer`
+with the spawn prompt's `Question:`, `Job question:`, `Facts:`, `Matter:`, `Asked by:` and
+`Origin:` lines, and the full text of the memo and of the notes, read from the return's
+`Memo scratch:` and `Notes scratch:` paths, or as the return gives them, pasted in. It
+returns JSON:
+
+- `send_back` with `required` items: each is research the Issue cannot be answered without.
+  Treat each as a gap by the rule above: a step on a held job, then its work, then
+  re-invoke the agent with `Re-invocation: yes` and `Review:` the reviewer's JSON. Each tier
+  still runs at most once per issue.
+- `send_back` with `identifiers`: re-invoke the agent with `Review:` to rewrite the memo without
+  them.
+- Spawn memo-reviewer again on each new return. When it sends back only research that has
+  run or that this session cannot run, the loop ends: if the memo does not already name that
+  research in its open-issues paragraph, re-invoke the agent once with `Review:`. Save that
+  last return, its `Confidence:` reading `INCOMPLETE: <the research named>`, and tell the
+  practitioner in one line which research it still needs.
+- `complete`: when the memo still holds an open-issues paragraph or an `out_of_scope` issue,
+  re-invoke the agent once with `Review:` to drop them, and save that return without another
+  review. Never edit the memo yourself: it is saved verbatim.
+
+Capture each `out_of_scope` question as a loose thread with the return's other items below.
+End the report with those questions as a numbered list, then one line inviting the
+practitioner to say which, if any, they want a further memo on.
 
 Persist in this order. Steps 2 and 3 need not interrupt the work in hand, but they
 complete before the session ends: never leave a session with a cited decision unfiled.
@@ -448,8 +473,8 @@ last group -- and for cited legislation in one more. A decision
 never dispatched is reported the same way as one whose download failed: a decision you
 did not persist is never passed over in silence. The answer file itself is never ingested.
 It is a lead, not an authority, and ingesting it would let the next audit cite it at
-tier 1. A closed gate saves and ingests nothing. If the practitioner then asks for
-the preliminary impression, the return it produces is persisted by the same rule,
+tier 1. If the practitioner asks for
+a preliminary impression, the return it produces is persisted by the same rule,
 as `<File stem> (preliminary).md`.
 
 Relay each `matter-data:` flag in the return's notes in one line: its kind, its
@@ -470,7 +495,8 @@ test below:
 
 - each `origin-correction:` line in the notes, one thread each;
 - each `matter-data:` flag: every `pinpoint` flag together as one thread, each other flag its
-  own. The one-line offer above to record it through `/matter-data` is still relayed.
+  own. The one-line offer above to record it through `/matter-data` is still relayed;
+- each memo-reviewer `out_of_scope` question, one thread each.
 
 A session holding no job captures them through `/drafting-data`'s capture with no job held
 (§8a). A `/draft` session holding a job captures them by its own rule instead (`/draft`
@@ -521,6 +547,7 @@ Then relay, in this order:
    that the rest stay on the board as loose threads. When any relayed offer is tagged
    `kind: note-up`, the line also says that a note-up is added only in their own words, such
    as "note up <case>".
+5. The memo-reviewer's `out_of_scope` questions and the invitation line, last (above).
 
 On "add", write that offer's job by §3i, which also consumes the thread this sort captured.
 On "add" of a `kind: note-up` offer, write nothing and say so in one line (§3i).
@@ -528,7 +555,7 @@ On "drop", discard that thread by `/drafting-data` §8's drop write. Name each
 `origin-correction:` line's issue in one line pointing to the board, never restating the
 memo's words as advice on the draft.
 
-A closed gate captures nothing, adds no job and relays nothing new. When no board resolves,
+When no board resolves,
 capture nothing, add no job, relay the `Confidence:` line and every offer, each word for
 word, with the saved memo as its file card (`shared/present-files.md`), and say in one line that the matter has no
 board to capture to. A return

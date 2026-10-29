@@ -91,7 +91,7 @@ class ProtocolStepSixTests(unittest.TestCase):
 
     def test_memo_states_nothing_of_the_working_matter(self):
         rules = between(flat(step_six()), "In every format the memo is generic and has no Facts section.",
-                        "Mixed coverage")
+                        "The Conclusion answers as Step 4 says")
         self.assertIn("The spawn prompt's `Facts:`, `Matter:`, `Asked by:` and `Origin:` only choose authorities "
                       "and route the work: the memo never states, summarises or alludes to them.", rules)
         self.assertIn("hold no party name, date, amount, matter number, document name or fact pattern", rules)

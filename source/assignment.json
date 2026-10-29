@@ -94,6 +94,7 @@
         "citation-checker",
         "equivalence-checker",
         "legislation-fetcher",
+        "memo-reviewer",
         "research-agent",
         "research-paralegal",
         "research-triage",

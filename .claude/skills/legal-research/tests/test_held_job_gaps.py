@@ -41,7 +41,7 @@ class HeldJobGapsTest(unittest.TestCase):
         rule = paragraph(read("legal-research.md"), "**On a held job, an open tier is not an answer.**")
         self.assertIn("is a pipeline step, not an answer: save nothing yet", rule)
         self.assertIn("each tier runs at most once per issue", rule)
-        self.assertIn("A caller holding no job keeps the single loop above.", rule)
+        self.assertIn("A caller holding no job runs the same loop, adding and stamping no steps.", rule)
         self.assertLess(read("legal-research.md").index("**On a held job, an open tier is not an answer.**"),
                         read("legal-research.md").index("Persist in this order."))
 

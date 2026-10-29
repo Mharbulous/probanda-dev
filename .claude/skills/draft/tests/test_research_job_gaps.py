@@ -1,6 +1,7 @@
 """Pins a research job's scope on the /draft side: job-planning asks no approval of a recorded
-question's sub-issues and puts every sub-issue in the completion test, and Complete refuses a
-research job whose last return names a tier not run, unless the practitioner waives it.
+question and its completion test leaves required research as a gap only once every tier has run,
+and Complete refuses a research job whose last return names a tier not run, unless the
+practitioner waives it, and a memo with any sub-issue heading.
 
 Spec: docs/Specs/2026-10-21_held-job-research-sub-issues-implicitly-approved-spec.md
 
@@ -43,7 +44,8 @@ class ResearchJobGapsTest(unittest.TestCase):
         session = read("draft", "references", "job-session.md")
         complete = session[session.index("### Complete"):]
         self.assertIn("compare the saved memo's headings with the job's title", complete)
-        self.assertIn("one `## Issue` holding the title verbatim", complete)
+        self.assertIn("one `## Issue` holding the title verbatim, and no sub-issue or other issue or topic heading", complete)
+        self.assertNotIn("### Sub-issue", complete)
         self.assertIn("unless the practitioner says in their own words to complete it as is", complete)
 
 
