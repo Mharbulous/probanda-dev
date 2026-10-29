@@ -11,10 +11,7 @@ The memo opens with this YAML header, from its first `---` line to its second:
 ```
 ---
 Document: MEMORANDUM OF LAW
-Privilege: PRIVILEGED AND CONFIDENTIAL
-To: <the spawn prompt's Asked by>
 From: <the exact model ID your own system prompt states. If it states none, write "model ID not stated". Never a marketing name, never a guess>
-Matter: "<the spawn prompt's Matter>"
 Date: <the spawn prompt's Date>
 Re: "<the question, one line>"
 Format: <CRAC / IRAC / CREAC, the one the body uses>
@@ -26,14 +23,9 @@ A double quote inside a quoted value is written `\"`.
 
 ## Body
 
-The body opens with the question presented, then runs the format's sections in order, and
-closes with the sources relied on:
+The body runs the format's sections in order and closes with the sources relied on:
 
 ```
-## Question presented
-
-<the question, one numbered line per issue>
-
 <the format's sections, below>
 
 ## Sources
@@ -52,10 +44,10 @@ Write no legend: the save appends one, generated from the approved meaning of ea
 **CRAC**, the default:
 
 ```
+## Issue
 ## Conclusion
 ## Rule
 ## Application
-## Conclusion
 ```
 
 **IRAC**, only when the spawn prompt's `Memo template:` names it:
@@ -70,6 +62,7 @@ Write no legend: the save appends one, generated from the approved meaning of ea
 **CREAC**, only when the spawn prompt's `Memo template:` names it:
 
 ```
+## Issue
 ## Conclusion
 ## Rule
 ## Explanation
@@ -77,34 +70,32 @@ Write no legend: the save appends one, generated from the approved meaning of ea
 ## Conclusion
 ```
 
-In every format, each proposition of law is one sentence, then its source's own words:
+In every format:
 
-```
-<the proposition, one sentence> (<citation>, at <pinpoint>)
+- The Issue is the question, as one bold sentence.
+- A Conclusion is one paragraph that answers the Issue as framed. It cites in parentheses and
+  has no block quote.
+- The Rule opens with the rule itself. Each proposition of law in it is one sentence, then its
+  source's own words:
 
-> <the verbatim passage at that pinpoint>
-```
+  ```
+  <the proposition, one sentence> (<citation>, at <pinpoint>)
 
-When the question splits into issues, write one sequence under each issue's own heading,
-`## Issue <n>: <the issue in a few words>`, with the format's sections one level down (`###`).
-`## Question presented` and `## Sources` stay at the top level, once each.
+  > <the verbatim passage at that pinpoint>
+  ```
+
+- The Application is prose paragraphs, never bullets. It says how each cited authority applied
+  the rule, whether or not its facts resemble another's.
+
+**Several issues.** When the question splits into issues, write the Issue, then one
+`### Sub-issue <n>: <the part>` per part, with the format's other sections under it at `####`.
+`## Sources` stays at the top level, once.
 
 **A job's memo.** When the spawn prompt's `Job question:` is not `none`, the memo answers
-that question and nothing else. `## Issue` takes the place of `## Question presented`:
-
-```
-## Issue
-
-<the spawn prompt's Job question, verbatim>
-
-### Sub-issue <n>: <the part, verbatim>
-```
-
+that question and nothing else. The Issue is the spawn prompt's Job question, verbatim.
 The parts are the plan's `scope: in` issues, the job question split only at its own
-question marks, quoted character for character and never paraphrased. With more than one
-part, write one `### Sub-issue` per part, in order, with the format's sections under it
-at `####`. With one part, write no sub-issue heading and put the format's sections at
-`###` under `## Issue`. No other issue or topic heading: a finding beyond the job question
-goes in the notes as a Step 5 offer, never in the memo. `## Sources` stays at the
-top level, once. Each `Conclusion` answers its part from the sources held and never defers to further research
+question marks, each `Sub-issue` heading quoting its part character for character, never
+paraphrased. With one part, write no sub-issue heading and keep the format's sections at `##`.
+No other issue or topic heading: a finding beyond the job question
+goes in the notes as a Step 5 offer, never in the memo. Each `Conclusion` answers its part from the sources held and never defers to further research
 (`shared/legal-audit-protocol.md` Step 4, "On a job, the memo always answers").
