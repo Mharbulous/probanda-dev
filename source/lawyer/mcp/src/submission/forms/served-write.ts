@@ -15,7 +15,7 @@ import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { SERVED_KINDS } from "./lifecycle.js";
 import { partiesSnapshotStatements } from "./parties-snapshot.js";
 import { fetchRevision, isJobOnlyBoard, type FilingRow } from "./query.js";
-import { isCalendarDate } from "./sent-write.js";
+import { isCalendarDate, revisionMoved } from "./sent-write.js";
 
 const TOOL = "drafting_data__record_served";
 
@@ -26,6 +26,8 @@ export interface RecordServedArgs {
   served_on: string;
   /** The copy served, when it is on disk. */
   served_copy_path?: string;
+  /** The revision the practitioner approved the act at. */
+  expect_revision: number;
 }
 
 export interface RecordServedResult {
@@ -63,6 +65,7 @@ export async function submissionDataRecordServed(args: RecordServedArgs, env: No
     );
   }
   const revision = fetchRevision(args.db_path);
+  if (revision !== args.expect_revision) throw revisionMoved(filing.title, args.expect_revision, revision);
   const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL, env);
   const written = await submissionDataWriteAll(
     args.db_path,

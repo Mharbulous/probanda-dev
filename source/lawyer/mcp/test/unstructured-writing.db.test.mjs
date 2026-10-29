@@ -24,6 +24,7 @@ const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { knowledgeList, knowledgeWrite } = await import("../build/knowledge/tools.js");
 const { publishGeneral } = await import("../build/submission/publish-tools.js");
 const { submissionDataRecordSent } = await import("../build/submission/forms/sent-write.js");
+const { fetchRevision } = await import("../build/submission/forms/query.js");
 
 const CLIENT = { clientName: "Ada Client", clientNo: "0001", matterNo: "L0000" };
 const NOW = "2026-10-08 10:00";
@@ -316,7 +317,7 @@ test("the Sent write records a written Unstructured Writing from a pasted copy, 
   render(g, id);
 
   const sent = await submissionDataRecordSent(
-    { db_path: g.dbPath, filing_id: id, sent_on: "2026-10-08", sent_copy_text: `IN THE SUPREME COURT OF BRITISH COLUMBIA\n\n${BODY}\n\nPat Example` },
+    { db_path: g.dbPath, filing_id: id, sent_on: "2026-10-08", sent_copy_text: `IN THE SUPREME COURT OF BRITISH COLUMBIA\n\n${BODY}\n\nPat Example`, expect_revision: fetchRevision(g.dbPath) },
     g.seams.env
   );
   assert.equal("offer_delivered" in sent, false, "recording a Writing as sent never leads to a retirement offer (ADR 0042)");

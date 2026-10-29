@@ -16,6 +16,20 @@
   "hooks": {
     "PreToolUse": [
       {
+        "matcher": "mcp__.+drafting_data__record_(sent|filed|served)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/one-way-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "One-way approval gate"
+          }
+        ]
+      },
+      {
         "matcher": "mcp__(.+__)?plugin_lawyer_data__drafting_data__(execute|set_board_goal|merge_milestones|merge_jobs)",
         "hooks": [
           {

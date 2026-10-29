@@ -52,6 +52,8 @@ export interface RecordSentArgs {
   sent_copy_text?: string;
   /** The practitioner's words, verbatim, recorded as the WAIVED form on each open Pre-send gate step. */
   send_anyway?: string;
+  /** The revision the practitioner approved the act at. */
+  expect_revision: number;
 }
 
 export interface SentCopyComparison {
@@ -79,6 +81,15 @@ export interface RecordSentResult {
 
 function refused(message: string, code: string): DataServerError {
   return new DataServerError(`${TOOL}: ${message}`, code);
+}
+
+/** The refusal of a record_sent, record_filed or record_served call whose expect_revision is not the database's. */
+export function revisionMoved(title: string, expected: number, current: number): DataServerError {
+  return new DataServerError(
+    `"${title}": the drafting records moved from revision ${expected}, where this act was approved, to ${current}; nothing was written. ` +
+      "Show the practitioner the Writing as it now stands before asking again",
+    "revision_moved"
+  );
 }
 
 /** Who records a Writing as sent: an active roster lawyer, checked as a confirmation's author is. */
@@ -289,6 +300,7 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
   const recordedBy = rosterLawyer(profile, RECORD_ACT);
   const signer = signerSnapshot(args.db_path, filing, profile);
   const revision = fetchRevision(args.db_path);
+  if (revision !== args.expect_revision) throw revisionMoved(filing.title, args.expect_revision, revision);
   const paragraphs = storedParagraphs(args.db_path, filing, stored);
   if (paragraphs.length === 0) {
     throw refused(

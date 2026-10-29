@@ -2985,7 +2985,7 @@ test("goal: a no-forum Writing with an unmet Excerpts shows its gate row reading
   assert.deepEqual(criterionOf(before, "gate").items, ["Every excerpt is quoted, pinpointed and checked"], "with no job, the gate row names the held criterion");
 
   await assert.rejects(
-    submissionDataRecordSent({ db_path: g.dbPath, filing_id, sent_on: "2026-09-25", sent_copy_text: "We write about the late objection." }, g.seams.env),
+    submissionDataRecordSent({ db_path: g.dbPath, filing_id, sent_on: "2026-09-25", sent_copy_text: "We write about the late objection.", expect_revision: fetchRevision(g.dbPath) }, g.seams.env),
     (err) => err.code === "held"
   );
   const step = `excerpts — Every excerpt is quoted, pinpointed and checked: unmet (1 open) [rev ${g.revision()}]`;
@@ -3037,7 +3037,7 @@ test("goal: a venue's letter reads the Pre-send gate, never the pre-filing gate,
   assert.deepEqual(criterionOf(before, "gate").text, "The pre-send checks are passed or waived");
   assert.deepEqual(criterionOf(before, "gate").items, ["Every excerpt is quoted, pinpointed and checked"]);
 
-  await submissionDataRecordSent({ db_path: g.dbPath, filing_id, sent_on: "2026-09-25", sent_copy_text: "We write about the late objection.", send_anyway: "Sending today." }, g.seams.env);
+  await submissionDataRecordSent({ db_path: g.dbPath, filing_id, sent_on: "2026-09-25", sent_copy_text: "We write about the late objection.", send_anyway: "Sending today.", expect_revision: fetchRevision(g.dbPath) }, g.seams.env);
   const after = renderGeneral(g, filing_id).board;
   assert.equal(after.goal.text, "Filed on 2026-09-25");
 });

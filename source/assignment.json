@@ -61,6 +61,7 @@
         "inject-preferences": "source/lawyer/hooks/inject-preferences.py",
         "mail-send-gate": "source/lawyer/hooks/mail-send-gate.py",
         "missing-key-note": "source/lawyer/hooks/missing-key-note.py",
+        "one-way-gate": "source/lawyer/hooks/one-way-gate.py",
         "plugin-cache-guard": "source/lawyer/hooks/plugin-cache-guard.py",
         "redirect-delete-to-trash": ".claude/skills/safe-file-deletion/hooks/redirect-delete-to-trash.py",
         "rule-gate": "source/lawyer/hooks/rule-gate.py",
@@ -141,6 +142,7 @@
         "correspondence-review-gate": "source/litigator/hooks/correspondence-review-gate.py",
         "html-pages-gate": ".claude/skills/drafting-data/hooks/html-pages-gate.py",
         "milestone-card-gate": ".claude/skills/drafting-data/hooks/milestone-card-gate.py",
+        "one-way-gate": "source/litigator/hooks/one-way-gate.py",
         "practitioner-words-gate": ".claude/skills/drafting-data/hooks/practitioner-words-gate.py"
       },
       "servers": []
@@ -169,7 +171,9 @@
         "housekeeping-reader",
         "housekeeping-reviewer"
       ],
-      "hooks": {},
+      "hooks": {
+        "one-way-gate": "source/file-manager/hooks/one-way-gate.py"
+      },
       "servers": [
         "files"
       ]
@@ -187,7 +191,9 @@
         "timecamping-data"
       ],
       "agents": [],
-      "hooks": {},
+      "hooks": {
+        "one-way-gate": "source/timekeeper/hooks/one-way-gate.py"
+      },
       "servers": [
         "timecamp"
       ]

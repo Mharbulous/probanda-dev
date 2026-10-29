@@ -5,6 +5,12 @@ function submissionDataPrefixed(name: string): string {
   return `drafting_data__${name}`;
 }
 
+// The one-way approval gate approves one exact call; expect_revision ties it to the records the
+// practitioner saw, without hashing the database (plan 2026-10-28, step 0).
+const EXPECT_REVISION =
+  "expect_revision is the database revision the practitioner approved the act at (the `revision` of the render " +
+  "or query shown to them); a revision that has moved since is refused with revision_moved, writing nothing.";
+
 // Drafting-data connection-discipline surface (build ticket #294, issue 291
 // §6 / issue 292). SQL and schema stay authored inside the /drafting-data
 // skill (build ticket #295); this backend holds no table or column names.
@@ -229,7 +235,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "for service cannot be read from case data; nothing was written), render_first, no_billing_anchor, held, " +
         "pre_send_gate_changed (the Pre-send gate job changed during the call; nothing was written), sent_copy_mismatch. " +
         "The same transaction first writes the party rows it was sent with (parties_snapshot), counsel and the address for " +
-        "service read from case data.",
+        "service read from case data. " + EXPECT_REVISION,
       inputSchema: {
         type: "object",
         properties: {
@@ -239,8 +245,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           sent_copy_path: { type: "string" },
           sent_copy_text: { type: "string" },
           send_anyway: { type: "string" },
+          expect_revision: { type: "number" },
         },
-        required: ["db_path", "filing_id", "sent_on"],
+        required: ["db_path", "filing_id", "sent_on", "expect_revision"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: true, openWorldHint: false },
@@ -257,15 +264,17 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "amended Rule 8-1, whose registry filing is a job step), already_filed, general_writing (record it as sent " +
         "through drafting_data__record_sent), " +
         "parties_drift (a party's counsel or address for service cannot be read from case data), revision_moved (the " +
-        "database changed during the call). Returns filing_id, filed_on, parties_snapshot_rows, the new revision and a note.",
+        "database changed during the call). Returns filing_id, filed_on, parties_snapshot_rows, the new revision and a note. " +
+        EXPECT_REVISION,
       inputSchema: {
         type: "object",
         properties: {
           db_path: { type: "string" },
           filing_id: { type: "number" },
           filed_on: { type: "string" },
+          expect_revision: { type: "number" },
         },
-        required: ["db_path", "filing_id", "filed_on"],
+        required: ["db_path", "filing_id", "filed_on", "expect_revision"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: true, openWorldHint: false },
@@ -282,7 +291,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "write nothing: invalid_served_on, invalid_served_copy (served_copy_path is not on disk), not_found, " +
         "milestone_only, writing_retired, already_filed, not_served_kind (any other kind: record_filed or record_sent), " +
         "parties_drift, revision_moved. Returns filing_id, served_on, sent_copy_id, parties_snapshot_rows, the new " +
-        "revision and a note.",
+        "revision and a note. " +
+        EXPECT_REVISION,
       inputSchema: {
         type: "object",
         properties: {
@@ -290,8 +300,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           filing_id: { type: "number" },
           served_on: { type: "string" },
           served_copy_path: { type: "string" },
+          expect_revision: { type: "number" },
         },
-        required: ["db_path", "filing_id", "served_on"],
+        required: ["db_path", "filing_id", "served_on", "expect_revision"],
         additionalProperties: false,
       },
       annotations: { destructiveHint: true, openWorldHint: false },

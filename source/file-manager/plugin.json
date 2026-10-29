@@ -12,5 +12,23 @@
   "dependencies": [
     "lawyer"
   ],
-  "mcpServers": "./.mcp.json"
+  "mcpServers": "./.mcp.json",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__.+file_ops__comment_pdf$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/one-way-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "One-way approval gate"
+          }
+        ]
+      }
+    ]
+  }
 }

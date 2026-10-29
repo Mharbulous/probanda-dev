@@ -353,7 +353,7 @@ test("a closed board reads Closed, has no page, and is listed under Retired", as
   assert.equal(line.in_progress, undefined);
   assert.ok(readFileSync(listing.matter_board_path, "utf-8").includes('f.job_only ? "Closed " + f.retired_on'), "its Retired card reads Closed, with no reason");
   await assert.rejects(
-    callTool({}, "drafting_data__record_filed", { db_path: f.dbPath, filing_id: f.boardId, filed_on: "2026-10-12" }),
+    callTool({}, "drafting_data__record_filed", { db_path: f.dbPath, filing_id: f.boardId, filed_on: "2026-10-12", expect_revision: revisionOf(f.dbPath) }),
     code("milestone_only"),
     "a closed board is refused as a board, not as a retired Writing"
   );
@@ -391,9 +391,9 @@ test("every tool that acts on a Writing's document refuses the board", async (t)
   const f = await fixture(t);
   const base = { db_path: f.dbPath, filing_id: f.boardId };
   const calls = {
-    drafting_data__record_sent: { sent_on: "2026-10-10", sent_copy_text: "Sent as drafted." },
-    drafting_data__record_filed: { filed_on: "2026-10-10" },
-    drafting_data__record_served: { served_on: "2026-10-10" },
+    drafting_data__record_sent: { sent_on: "2026-10-10", sent_copy_text: "Sent as drafted.", expect_revision: revisionOf(f.dbPath) },
+    drafting_data__record_filed: { filed_on: "2026-10-10", expect_revision: revisionOf(f.dbPath) },
+    drafting_data__record_served: { served_on: "2026-10-10", expect_revision: revisionOf(f.dbPath) },
     drafting_data__resnapshot_writing: {},
     drafting_forms__pre_filing_check: { package_dir: f.draft },
     drafting_forms__emit_form32: {},

@@ -95,6 +95,20 @@
             "statusMessage": "Rule gate"
           }
         ]
+      },
+      {
+        "matcher": "mcp__.+practice_data__(delete_anchor|merge_contact)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/one-way-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "One-way approval gate"
+          }
+        ]
       }
     ],
     "PostToolUse": [

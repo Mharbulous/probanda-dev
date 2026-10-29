@@ -30,7 +30,8 @@ async function response(t) {
 const query = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, params).rows;
 const revision = (dbPath) => Number(query(dbPath, "SELECT value FROM db_meta WHERE key = 'revision'")[0].value);
 const filing = (dbPath, id = 1) => query(dbPath, "SELECT * FROM filings WHERE id = ?", [id])[0];
-const record = (dbPath, args = {}) => callTool({}, TOOL, { db_path: dbPath, filing_id: 1, served_on: "2026-10-05", ...args });
+const record = (dbPath, args = {}) =>
+  callTool({}, TOOL, { db_path: dbPath, filing_id: 1, served_on: "2026-10-05", expect_revision: revision(dbPath), ...args });
 const code = (expected, message) => (err) => {
   assert.equal(err.code, expected, err.message);
   if (message) assert.match(err.message, message);
@@ -59,12 +60,20 @@ test("record_served writes the party rows, the served copy and sent_copy_id, and
   );
 });
 
+test("record_served refuses an expect_revision the database has moved past, writing nothing", async (t) => {
+  const { dbPath } = await response(t);
+  const before = revision(dbPath);
+  await assert.rejects(record(dbPath, { expect_revision: before + 1 }), code("revision_moved", new RegExp(`revision ${before + 1}, where this act was approved, to ${before}`)));
+  assert.equal(filing(dbPath).filed_on, null);
+  assert.equal(revision(dbPath), before);
+});
+
 test("record_filed refuses a served Writing, naming the job that files it", async (t) => {
   const { dbPath } = await response(t);
   await record(dbPath);
   const before = revision(dbPath);
   await assert.rejects(
-    callTool({}, "drafting_data__record_filed", { db_path: dbPath, filing_id: 1, filed_on: "2026-10-12" }),
+    callTool({}, "drafting_data__record_filed", { db_path: dbPath, filing_id: 1, filed_on: "2026-10-12", expect_revision: revision(dbPath) }),
     code("served_writing", /Set down for hearing or File the served response/)
   );
   assert.equal(filing(dbPath).filed_on, "2026-10-05");

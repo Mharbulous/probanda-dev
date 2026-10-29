@@ -19,6 +19,7 @@ import { boardDataOf } from "./fixtures/forms-render-seeds.mjs";
 
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { submissionDataRecordSent } = await import("../build/submission/forms/sent-write.js");
+const { fetchRevision } = await import("../build/submission/forms/query.js");
 const { reviewSnapshotSql } = await import("../build/submission/forms/markers.js");
 const { splitGlyphs } = await import("../build/submission/forms/symbol-table.js");
 const { submissionDataMigrate } = await import("../build/submission/migrate.js");
@@ -138,7 +139,7 @@ test("record_sent holds the letter while its prose-cited lead is unquoted and le
   render(g, id);
   const revision = g.revision();
   await assert.rejects(
-    submissionDataRecordSent({ db_path: g.dbPath, filing_id: id, sent_on: "2026-09-28", sent_copy_text: AS_SENT }, g.seams.env),
+    submissionDataRecordSent({ db_path: g.dbPath, filing_id: id, sent_on: "2026-09-28", sent_copy_text: AS_SENT, expect_revision: fetchRevision(g.dbPath) }, g.seams.env),
     (err) => {
       assert.equal(err.code, "held", err.message);
       assert.match(err.message, /excerpts \(Example v\. Authority, 2020 BCSC 1\)/);
@@ -266,7 +267,7 @@ test("record_sent holds an unconfirmed letter on authority-confirmed alone, leav
   const { g, id } = await drafted(t, { cite: false, unconfirmed: true });
   render(g, id);
   const revision = g.revision();
-  const send = () => submissionDataRecordSent({ db_path: g.dbPath, filing_id: id, sent_on: "2026-09-29", sent_copy_text: AS_SENT }, g.seams.env);
+  const send = () => submissionDataRecordSent({ db_path: g.dbPath, filing_id: id, sent_on: "2026-09-29", sent_copy_text: AS_SENT, expect_revision: fetchRevision(g.dbPath) }, g.seams.env);
   await assert.rejects(send(), (err) => {
     assert.equal(err.code, "held", err.message);
     assert.match(err.message, /authority-confirmed \(link each authority the text cites, or record that it cites none\) unmet now/);

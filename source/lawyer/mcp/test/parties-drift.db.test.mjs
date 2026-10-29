@@ -31,6 +31,7 @@ const {
   submissionFormsRender,
 } = await import("../build/submission/forms.js");
 const { toFiledFace } = await import("../build/submission/forms/filed-face.js");
+const { fetchRevision } = await import("../build/submission/forms/query.js");
 const { updateCaseData, writeCaseData } = await import("./helpers/matter-data-fixture.mjs");
 const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
 const { seedBcscConsentOrder } = await import("./fixtures/forms-render-seeds.mjs");
@@ -264,7 +265,7 @@ test("bootstrap reads case data in its own timings phase", async (t) => {
 
 test("a sent filing stays fresh in bootstrap when case data changes after it was rendered", async (t) => {
   const m = await matterFixture(t);
-  await callTool({}, "drafting_data__record_filed", { db_path: m.dbPath, filing_id: 1, filed_on: "2026-09-29" });
+  await callTool({}, "drafting_data__record_filed", { db_path: m.dbPath, filing_id: 1, filed_on: "2026-09-29", expect_revision: fetchRevision(m.dbPath) });
   renderAt(m.dbPath);
   updateCaseData(m.caseDataDir, "UPDATE parties SET lawyer_name = 'Z. Counsel' WHERE party_id = 2;");
   assert.equal(stateAt(m.dbPath), "fresh");
@@ -320,7 +321,7 @@ test("a Notice of Withdrawal in case data prints no counsel for the party, with 
 
 test("a filed filing prints the counsel case data held when it was filed, never the submission copy, whatever case data says later", async (t) => {
   const m = await matterFixture(t);
-  await callTool({}, "drafting_data__record_filed", { db_path: m.dbPath, filing_id: 1, filed_on: "2026-09-29" });
+  await callTool({}, "drafting_data__record_filed", { db_path: m.dbPath, filing_id: 1, filed_on: "2026-09-29", expect_revision: fetchRevision(m.dbPath) });
   updateCaseData(m.caseDataDir, "UPDATE parties SET lawyer_name = 'Z. Counsel' WHERE party_id = 2;");
   const filed = submissionFormsRender(m.dbPath, 1, CLIENT, "filed");
   assert.equal(filed.parties_drift_gate_failed, undefined, "a sent filing is never held for drift");

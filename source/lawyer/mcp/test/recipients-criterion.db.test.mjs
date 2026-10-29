@@ -17,6 +17,7 @@ import { boardDataOf } from "./fixtures/forms-render-seeds.mjs";
 
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { submissionDataRecordSent } = await import("../build/submission/forms/sent-write.js");
+const { fetchRevision } = await import("../build/submission/forms/query.js");
 
 const CLIENT = { clientName: "Ada Client", clientNo: "0001", matterNo: "L0000" };
 const NOW = "2026-09-28 10:00";
@@ -63,7 +64,7 @@ async function written(t, block = DECLARING) {
   return { g, id };
 }
 
-const send = (g, id, extra = {}) => submissionDataRecordSent({ db_path: g.dbPath, filing_id: id, sent_on: "2026-09-28", sent_copy_text: AS_SENT, ...extra }, g.seams.env);
+const send = (g, id, extra = {}) => submissionDataRecordSent({ db_path: g.dbPath, filing_id: id, sent_on: "2026-09-28", sent_copy_text: AS_SENT, expect_revision: fetchRevision(g.dbPath), ...extra }, g.seams.env);
 const code = (expected, message) => (err) => {
   assert.equal(err.code, expected, err.message);
   if (message) assert.match(err.message, message);

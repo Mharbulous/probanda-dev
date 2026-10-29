@@ -24,6 +24,7 @@ import { boardDataOf } from "./fixtures/forms-render-seeds.mjs";
 
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { submissionDataRecordSent } = await import("../build/submission/forms/sent-write.js");
+const { fetchRevision } = await import("../build/submission/forms/query.js");
 const { submissionDataMigrate } = await import("../build/submission/migrate.js");
 const { hopsFrom } = await import("./helpers/schema-hops.mjs");
 
@@ -82,7 +83,7 @@ function setInventory(g, id, inventory) {
   writeFileSync(manifest, JSON.stringify({ ...JSON.parse(readFileSync(manifest, "utf-8")), inventory }), "utf-8");
 }
 
-const send = (g, id, extra = {}) => submissionDataRecordSent({ db_path: g.dbPath, filing_id: id, sent_on: "2026-09-25", sent_copy_text: AS_SENT, ...extra }, g.seams.env);
+const send = (g, id, extra = {}) => submissionDataRecordSent({ db_path: g.dbPath, filing_id: id, sent_on: "2026-09-25", sent_copy_text: AS_SENT, expect_revision: fetchRevision(g.dbPath), ...extra }, g.seams.env);
 const code = (expected, message) => (err) => {
   assert.equal(err.code, expected, err.message);
   if (message) assert.match(err.message, message);
@@ -401,6 +402,16 @@ test("the Sent write refuses while a party drifts, before the hold, and writes n
   const documents = documentCount(g);
   await assert.rejects(send(g, id), code("parties_drift", /Bert Other \(unlinked\).*drafting_data__record_sent again/));
   assert.deepEqual([filing(g, id).filed_on, documentCount(g), gateJobs(g, id).length, printed(g, id), g.revision()], [null, documents, 0, [], revision]);
+});
+
+test("the Sent write refuses an expect_revision the database has moved past, before the hold, and writes nothing", async (t) => {
+  const { g, id } = await drafted(t);
+  render(g, id);
+  setInventory(g, id, [unproven]);
+  const revision = g.revision();
+  const documents = documentCount(g);
+  await assert.rejects(send(g, id, { expect_revision: revision - 1 }), code("revision_moved", new RegExp(`revision ${revision - 1}, where this act was approved, to ${revision}`)));
+  assert.deepEqual([filing(g, id).filed_on, documentCount(g), gateJobs(g, id).length, g.revision()], [null, documents, 0, revision]);
 });
 
 test("a .msg copy is recorded by path and not compared, and the result says so", async (t) => {

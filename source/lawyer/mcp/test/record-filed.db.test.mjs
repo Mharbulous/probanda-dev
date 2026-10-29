@@ -43,7 +43,8 @@ const printed = (dbPath, id = 1) =>
     r.counsel_name,
     r.address_for_service,
   ]);
-const record = (dbPath, args = {}) => callTool({}, TOOL, { db_path: dbPath, filing_id: 1, filed_on: "2026-10-01", ...args });
+const record = (dbPath, args = {}) =>
+  callTool({}, TOOL, { db_path: dbPath, filing_id: 1, filed_on: "2026-10-01", expect_revision: revision(dbPath), ...args });
 const code = (expected, message) => (err) => {
   assert.equal(err.code, expected, err.message);
   if (message) assert.match(err.message, message);
@@ -92,6 +93,14 @@ test("record_filed refuses a bad date, a missing, retired or filed Writing, and 
   await assert.rejects(record(dbPath, { filing_id: 4 }), code("already_filed"));
   assert.equal(revision(dbPath), before);
   assert.deepEqual(query(dbPath, "SELECT DISTINCT filing_id FROM parties_snapshot"), []);
+});
+
+test("record_filed refuses an expect_revision the database has moved past, writing nothing", async (t) => {
+  const dbPath = await consentOrder(t);
+  const before = revision(dbPath);
+  await assert.rejects(record(dbPath, { expect_revision: before - 1 }), code("revision_moved", new RegExp(`revision ${before - 1}, where this act was approved, to ${before}`)));
+  assert.equal(filedOn(dbPath), null);
+  assert.equal(revision(dbPath), before);
 });
 
 test("a filed_on cleared in error and recorded again keeps the first snapshot, whatever case data says now", async (t) => {

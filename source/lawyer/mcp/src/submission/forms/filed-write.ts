@@ -12,7 +12,7 @@ import { storedLayout } from "./layout-snapshot.js";
 import { SERVED_KINDS } from "./lifecycle.js";
 import { partiesSnapshotStatements } from "./parties-snapshot.js";
 import { fetchRevision, isJobOnlyBoard, type FilingRow } from "./query.js";
-import { isCalendarDate } from "./sent-write.js";
+import { isCalendarDate, revisionMoved } from "./sent-write.js";
 
 const TOOL = "drafting_data__record_filed";
 
@@ -21,6 +21,8 @@ export interface RecordFiledArgs {
   filing_id: number;
   /** The filing date, YYYY-MM-DD. */
   filed_on: string;
+  /** The revision the practitioner approved the act at. */
+  expect_revision: number;
 }
 
 export interface RecordFiledResult {
@@ -56,6 +58,7 @@ export async function submissionDataRecordFiled(args: RecordFiledArgs, env: Node
     throw refused(`"${filing.title}" is a letter or general document; record it as sent, not as filed`, "general_writing");
   }
   const revision = fetchRevision(args.db_path);
+  if (revision !== args.expect_revision) throw revisionMoved(filing.title, args.expect_revision, revision);
   const snapshot = partiesSnapshotStatements(args.db_path, filing, TOOL, env);
   const written = await submissionDataWriteAll(
     args.db_path,

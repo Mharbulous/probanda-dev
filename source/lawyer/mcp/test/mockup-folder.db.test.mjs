@@ -14,6 +14,7 @@ import { BCSC_TREE, generalWritingFixture, LETTER_BLOCK } from "./helpers/genera
 
 const { submissionFormsRender, submissionFormsBootstrap } = await import("../build/submission/forms.js");
 const { submissionDataRecordSent } = await import("../build/submission/forms/sent-write.js");
+const { fetchRevision } = await import("../build/submission/forms/query.js");
 
 const CLIENT = { clientName: "Ada Client", clientNo: "0001", matterNo: "L0000" };
 const NOW = "2026-10-22 10:00";
@@ -89,7 +90,7 @@ test("a retitle keeps the Writing's folder and archives the old-named mockup und
   await retitle(g, id, "Notice of Hearing re Costs");
   assert.equal(renderState(g, id), "stale");
   await assert.rejects(
-    submissionDataRecordSent({ db_path: g.dbPath, filing_id: id, sent_on: "2026-10-22", sent_copy_text: "x" }, g.seams.env),
+    submissionDataRecordSent({ db_path: g.dbPath, filing_id: id, sent_on: "2026-10-22", sent_copy_text: "x", expect_revision: fetchRevision(g.dbPath) }, g.seams.env),
     (err) => err.code === "render_first" && /changed after its mockup was last rendered/.test(err.message)
   );
 
