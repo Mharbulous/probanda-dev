@@ -52,3 +52,13 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 - Confirm `card_path` and `past_suggestions_path` are under the settings folder at HEAD.
 - Confirm §6's text and `present-files.md`'s ordering rule as quoted in §2.
+
+## 11. Verification against HEAD (2026-10-29)
+
+| Claim | Found at HEAD | Difference |
+|---|---|---|
+| `card_path` is under the settings folder | `cardPath` in `source/lawyer/mcp/src/suggestions/card.ts` joins `storeDir(env)` and `Suggestion-<id>.html`. `storeDir` (`suggestions/store.ts`) is `<folder of probanda.json>\suggestions`, and `config-path.ts` puts probanda.json in `%APPDATA%\Probanda` unless `COCLERK_CONFIG_PATH` names another file. `openCards` and the mockup pages use the same folder | None |
+| `past_suggestions_path` is under the settings folder | `pastSuggestionsPath` in `suggestions/page.ts` is `storeDir(env)\Past suggestions.html`. `suggestion_box__status` and `suggestion_box__past_suggestions` (`suggestions/tools.ts`) both return it | None |
+| §6 text as quoted in §2 | `.claude/skills/suggestion/SKILL.md` §6, "Show it and wait": "Present `card_path` as a file card (`shared/present-files.md`), with no text." §1's Outcome check, Past suggestions, technical write-up and Open cards bullets present the page or card the same way, naming no folder to request | None |
+| `present-files.md` ordering rule as quoted in §2 | `.claude/skills/shared/present-files.md` paragraph 2 holds the quoted sentences word for word, and names "the folder the calling skill names, or else the file's own folder" as the one to request | None |
+| A folder a remote-device host can stage from without a prompt (§9) | None found. Staging needs a folder in `get_device_info`'s `connectedFolders`. The only folders the skills connect are the matter folder (`work/references/procedure.md`, Matter folder) and a repo planning folder (`fix-this`). `probanda-setup` connects no folder. No source names a device scratch or outputs folder that `device_stage_files` accepts unprompted | §6 option 1 has no prompt-free target at HEAD |
