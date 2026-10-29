@@ -32,7 +32,8 @@ const supersede = <T>(request: Record<string, unknown>, env: NodeJS.ProcessEnv) 
 /** The SQL script `generator` emits for the matter at `matterRoot`. */
 export function generatorSql(matterRoot: string, generator: Generator, env: NodeJS.ProcessEnv = process.env): string {
   const command = generator?.args?.command;
-  if (typeof command !== "string" || !(ALLOWED[generator.script] ?? []).includes(command)) {
+  const allowed = Object.hasOwn(ALLOWED, generator?.script) ? ALLOWED[generator.script] : [];
+  if (typeof command !== "string" || !allowed.includes(command)) {
     throw new ValidationError(`generator must be an allowlisted script and command: ${Object.entries(ALLOWED).map(([s, c]) => `${s} ${c.join(" or ")}`).join("; ")}`);
   }
   if (command === "rehash-sql") return supersede<string>(generator.args, env);

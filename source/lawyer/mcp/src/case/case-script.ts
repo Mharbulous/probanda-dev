@@ -10,8 +10,14 @@ import { pythonTimeoutMs, READ_TIMEOUT_MS } from "../python-timeout.js";
 import { caseDataMigrateScriptsDir } from "../repo-root.js";
 
 export function runCaseScript<T>(module: string, fn: string, request: unknown, env: NodeJS.ProcessEnv): T {
+  // The driver file sits in the shared temp folder, which Python puts first on sys.path: a planted
+  // json.py or converter module there would be imported. os and sys are loaded at startup, so
+  // nothing is imported from that folder before it leaves sys.path.
   const driver = String.raw`
-import json, sys
+import os, sys
+_here = os.path.dirname(os.path.abspath(__file__))
+sys.path[:] = [p for p in sys.path if os.path.abspath(p or os.curdir) != _here]
+import json
 
 
 def main():

@@ -9,7 +9,7 @@
 // R9), stores each dispatch's inputs beside the journal for matter_data__dispatch_inputs, and lists
 // the acknowledged results still to be written. `staged` records a bridged session's copies (§6.5).
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
 
@@ -32,7 +32,7 @@ const SITE: LockSite = {
 
 /** A lease whose heartbeat is younger than this is live (est., spec §2.4). */
 const LIVE_MS = 60 * 60_000;
-/** A run folder is deleted this long after its run ended (est., spec §2.4). */
+/** A run folder is deleted this long after its run ended, or its last heartbeat (est., spec §2.4). */
 const KEEP_MS = 30 * 24 * 60 * 60_000;
 /** Extractors running at once: #70's wave size, kept as a concurrency limit (spec §8.1). */
 const WINDOW = 10;
@@ -43,6 +43,9 @@ const READ_PAGES = 20;
 const SCAN_PAGES = 40;
 /** The contract version every D2 extractor stages (spec §6.2); R7 refuses any other. */
 export const CONTRACT_VERSION = 1;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+/** A refused write whose reason clears without a new extraction: it is listed again (S-m8). */
+const RETRYABLE = ["waiting", "needs_answer"];
 
 interface Lease {
   run_id: string;
@@ -158,14 +161,21 @@ function hold(dir: string, runId: string): Lease | Refusal {
   return lease;
 }
 
-/** Deletes each run folder whose run ended more than KEEP_MS ago. */
+/** Deletes a folder this server made: a run folder, a dispatch folder or a bridged run's page images. */
+function removeOwn(path: string): void {
+  rmSync(path, { recursive: true, force: true });
+}
+
+/** Deletes each run folder whose run ended, or whose last heartbeat came, more than KEEP_MS ago. */
 function sweep(env: NodeJS.ProcessEnv): void {
   const root = hostLocalDir(SITE, env);
+  if (!existsSync(root)) return;
   for (const entry of readdirSync(root, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const dir = pathWin32.join(root, entry.name);
     const lease = readLease(dir);
-    if (lease?.ended && Date.now() - Date.parse(lease.ended) > KEEP_MS) rmSync(dir, { recursive: true, force: true });
+    const last = lease?.ended ?? lease?.heartbeat;
+    if (last && Date.now() - Date.parse(last) > KEEP_MS) removeOwn(dir);
   }
 }
 
@@ -176,11 +186,18 @@ function requireRunId(args: { run_id?: string; action?: string }): string {
 
 /**
  * matter_data__execute's run check: a write carrying `runId` goes ahead only while `runId` holds the
- * matter's lease, and renews its heartbeat.
+ * matter's lease under the bundle that began it (R7), and renews its heartbeat.
  */
 export async function assertLiveRun(matterRoot: string, runId: string, env: NodeJS.ProcessEnv = process.env): Promise<void> {
-  const held = await underLock(matterRoot, env, (dir) => renew(dir, runId));
-  if (held === null) throw new DataServerError(SAY.lease_lost, "lease_lost");
+  const held = await underLock(matterRoot, env, (dir) => hold(dir, runId));
+  if ("refused" in held) throw new DataServerError(held.say, held.refused);
+}
+
+/** ingest_result's second check, made inside the case lock just before its write (R8): null while
+ *  `runId` still holds the lease. */
+export async function checkRun(matterRoot: string, runId: string, env: NodeJS.ProcessEnv = process.env): Promise<Refusal | null> {
+  const held = await underLock(matterRoot, env, (dir) => hold(dir, runId));
+  return "refused" in held ? held : null;
 }
 
 // ---------------------------------------------------------------- the plan (spec §8, today's passes)
@@ -197,7 +214,9 @@ interface Item {
   letter?: string;
 }
 
-type ItemState = "new" | "in_flight" | "acked" | "written" | "failed";
+/** `blocked`: its result was refused for a reason a repeat cannot clear (a store change, a race, a
+ *  document for Path B or for /ingest): neither written nor listed again. */
+type ItemState = "new" | "in_flight" | "acked" | "written" | "failed" | "blocked";
 
 interface Ledger {
   routes: Route[];
@@ -213,11 +232,15 @@ function ledger(events: Event[]): Ledger {
     if (e.event === "takeover") lastTakeover = i;
   });
   const writtenIds = new Set<string>();
+  const blockedIds = new Set<string>();
   for (const e of events) {
-    if (e.event === "write" && (e.outcome === "written" || e.outcome === "already_written")) {
-      for (const id of (e.result_ids as string[]) ?? []) writtenIds.add(id);
-    }
+    if (e.event !== "write") continue;
+    const ids = (e.result_ids as string[]) ?? [];
+    if (e.outcome === "written" || e.outcome === "already_written") ids.forEach((id) => writtenIds.add(id));
+    else if (e.outcome === "refused" && !RETRYABLE.includes(String(e.reason)) && e.reason !== "invalid") ids.forEach((id) => blockedIds.add(id));
   }
+  // A dispatch whose inputs could not be built for a reason outside the item is void (S-M2).
+  const voided = new Set(events.filter((e) => e.event === "void").map((e) => e.dispatch_id as string));
   return {
     routes,
     state(ref) {
@@ -226,7 +249,7 @@ function ledger(events: Event[]): Ledger {
       let last: Event | undefined;
       events.forEach((e, i) => {
         if (e.ref !== ref) return;
-        if (e.event === "dispatch") lastDispatch = i;
+        if (e.event === "dispatch" && !voided.has(e.dispatch_id as string)) lastDispatch = i;
         if (e.event === "ack") {
           last = e;
           if (!e.ok) failures += 1;
@@ -236,7 +259,7 @@ function ledger(events: Event[]): Ledger {
       if (last && lastAck > lastDispatch) {
         if (last.ok) {
           const id = last.result_id as string;
-          return { state: writtenIds.has(id) ? "written" : "acked", result_id: id, failures };
+          return { state: writtenIds.has(id) ? "written" : blockedIds.has(id) ? "blocked" : "acked", result_id: id, failures };
         }
         return { state: failures >= 2 ? "failed" : "new", failures };
       }
@@ -248,7 +271,7 @@ function ledger(events: Event[]): Ledger {
       events.find((e) => e.event === "write" && e.contract === contract && (e.refs as string[]).includes(ref)
         && (e.outcome === "written" || e.outcome === "already_written")),
     pageCount: (ref) => {
-      const d = events.find((e) => e.event === "dispatch" && e.ref === ref && typeof e.page_count === "number");
+      const d = events.find((e) => (e.event === "dispatch" || e.event === "inputs") && e.ref === ref && typeof e.page_count === "number");
       return d?.page_count as number | undefined;
     },
   };
@@ -262,9 +285,15 @@ function staged(resultId: string, env: NodeJS.ProcessEnv): Record<string, unknow
   }
 }
 
+/** A staged result that can still be written: present (R10) and of this build's contract version (R7). */
+function usable(resultId: string | undefined, env: NodeJS.ProcessEnv): boolean {
+  return resultId !== undefined && staged(resultId, env)?.contract_version === CONTRACT_VERSION;
+}
+
 /** An affidavit's exhibit work as far as the journal and the staged Pass 1 and Pass 2 results show it. */
 export interface AffidavitPlan {
-  items: Item[];
+  /** Each with `redo` when its staged result can no longer be read (R10, R7). */
+  items: Array<Item & { redo?: boolean }>;
   expected: string[];
   failed: string[];
   deferred: string[];
@@ -281,25 +310,31 @@ function affidavitPlan(route: Route, l: Ledger, env: NodeJS.ProcessEnv): Affidav
   const inventory = (Array.isArray(pass1.exhibit_inventory) ? pass1.exhibit_inventory : []) as Array<Record<string, unknown>>;
   const letters = inventory.map((e) => String(e.letter ?? "").trim()).filter((s) => s !== "");
   let bounds: Array<{ letter: string; start: number; end: number; uncertain: boolean }> = [];
-  const items: Item[] = [];
+  const items: AffidavitPlan["items"] = [];
   const stated = inventory.length > 0 && inventory.every((e) => Number(e.page_start) > 0 && Number(e.page_end) >= Number(e.page_start));
   let located = true;
   if (stated) {
     bounds = inventory.map((e) => ({ letter: String(e.letter), start: Number(e.page_start), end: Number(e.page_end), uncertain: false }));
-  } else if (letters.length > 0) {
-    // Pass 2 over the pages after the body, in ~40-page batches (ingest-extract.md Pass 2).
+  } else {
+    // Pass 2 over the pages after the body, in ~40-page batches, whenever Pass 1 gave no page
+    // starts, an empty inventory included (ingest-extract.md Pass 2).
     const count = l.pageCount(route.ref) ?? 0;
     const first = Math.max(Number(pass1.body_page_count) || 1, 1) + 1;
     for (let k = 0, start = first; start <= count; k++, start += SCAN_PAGES) {
       const item: Item = { ref: `${route.ref}:p2:${k + 1}`, agent: "lawyer:extract-affidavit", contract: null, route, pass: 2, pages: [start, Math.min(count, start + SCAN_PAGES - 1)] };
-      items.push(item);
       const s = l.state(item.ref);
       if (s.state === "acked" || s.state === "written") {
-        const found = (staged(s.result_id as string, env)?.boundaries ?? []) as Array<Record<string, unknown>>;
-        for (const b of found) {
+        const result = s.result_id && usable(s.result_id, env) ? staged(s.result_id, env) : null;
+        if (result === null) {
+          items.push({ ...item, redo: true });
+          located = false;
+          continue;
+        }
+        for (const b of (result.boundaries ?? []) as Array<Record<string, unknown>>) {
           bounds.push({ letter: String(b.letter), start: Number(b.content_start), end: Number(b.content_end), uncertain: b.ocr_uncertain === true });
         }
       } else if (s.state !== "failed") located = false;
+      items.push(item);
     }
   }
   if (!located) return { ...empty, items };
@@ -309,8 +344,9 @@ function affidavitPlan(route: Route, l: Ledger, env: NodeJS.ProcessEnv): Affidav
   const failed: string[] = [];
   for (const b of bounds) {
     const item: Item = { ref: `${route.ref}:${b.letter}`, agent: "lawyer:extract-affidavit", contract: "affidavit_exhibits", route, pass: 3, pages: [b.start, b.end], letter: b.letter };
-    items.push(item);
-    if (l.state(item.ref).state === "failed") failed.push(b.letter);
+    const s = l.state(item.ref);
+    items.push(s.state === "acked" && !usable(s.result_id, env) ? { ...item, redo: true } : item);
+    if (s.state === "failed") failed.push(b.letter);
   }
   return {
     items,
@@ -323,47 +359,64 @@ function affidavitPlan(route: Route, l: Ledger, env: NodeJS.ProcessEnv): Affidav
 }
 
 /** What the orchestrator does next: extractors to start, acknowledged results to write, and
- *  documents whose extraction failed twice to close with their honest status (R4). */
+ *  documents whose extraction failed twice to close with their honest status (R4). A write or close
+ *  line names the file by its `ref`, which ingest_result takes in place of the path and hash (R9). */
 function plan(events: Event[], env: NodeJS.ProcessEnv) {
   const l = ledger(events);
   const dispatch: Item[] = [];
   const write: Array<{ ref: string; contract: string; result_ids: string[] }> = [];
   const close: Array<{ ref: string; contract: string }> = [];
   let inFlight = 0;
-  const consider = (item: Item) => {
+  const consider = (item: Item, writable = true) => {
     const s = l.state(item.ref);
     if (s.state === "in_flight") inFlight += 1;
-    if (s.state === "new") dispatch.push(item);
-    if (s.state === "acked" && item.contract) write.push({ ref: item.ref, contract: item.contract, result_ids: [s.result_id as string] });
+    // An acknowledged result that expired (R10) or was staged under another contract version (R7)
+    // is extracted again rather than listed for a write that would be refused.
+    const stale = s.state === "acked" && !usable(s.result_id, env);
+    if (s.state === "new" || stale) dispatch.push(item);
+    else if (s.state === "acked" && item.contract && writable) write.push({ ref: item.ref, contract: item.contract, result_ids: [s.result_id as string] });
     return s;
   };
+  const closedAs = (contract: string, ref: string) => events.some((e) => e.event === "write" && e.contract === contract
+    && (e.refs as string[]).includes(ref) && e.closed === true);
   for (const route of l.routes) {
     if (route.kind !== "affidavit") {
       const s = consider({ ref: route.ref, agent: "lawyer:extract-facts", contract: "facts", route });
       if (s.state === "failed" && !l.written("facts", route.ref)) close.push({ ref: route.ref, contract: "facts" });
-      if (route.kind === "notice_of_application") {
-        consider({ ref: `${route.ref}:so`, agent: "lawyer:extract-sought-orders", contract: "sought_orders", route });
+      if (route.kind === "notice_of_application" && !closedAs("facts", route.ref) && s.state !== "blocked") {
+        // The orders wait for their document's own write (S-m8), and are never written onto a
+        // document recorded as not read (K-m4).
+        const ref = `${route.ref}:so`;
+        const so = consider({ ref, agent: "lawyer:extract-sought-orders", contract: "sought_orders", route }, s.state === "written");
+        if (so.state === "failed" && s.state === "written" && !l.written("sought_orders", ref)) close.push({ ref, contract: "sought_orders" });
       }
       continue;
     }
-    const body = consider({ ref: route.ref, agent: "lawyer:extract-affidavit", contract: "affidavit_body", route, pass: 1 });
+    const bodyItem: Item = { ref: route.ref, agent: "lawyer:extract-affidavit", contract: "affidavit_body", route, pass: 1 };
+    const body = consider(bodyItem);
     if (body.state === "failed" && !l.written("affidavit_body", route.ref)) close.push({ ref: route.ref, contract: "affidavit_body" });
     if (body.state !== "written" || route.rendering) continue;
+    const closed = events.some((e) => e.event === "write" && e.contract === "affidavit_exhibits" && (e.refs as string[]).includes(route.ref) && e.closing === true);
+    if (closed) continue;
+    // The exhibit list comes from Pass 1's staged result: one that expired is read again (S-M4).
+    if (!usable(body.result_id, env)) {
+      dispatch.push(bodyItem);
+      continue;
+    }
     const affidavit = affidavitPlan(route, l, env);
     const exhibits: string[] = [];
     let open = false;
     for (const item of affidavit.items) {
       const s = l.state(item.ref);
       if (s.state === "in_flight") inFlight += 1;
-      if (s.state === "new") dispatch.push(item);
-      if (item.pass === 3 && s.state === "acked") exhibits.push(s.result_id as string);
+      if (s.state === "new" || item.redo) dispatch.push(item);
+      if (item.pass === 3 && s.state === "acked" && !item.redo) exhibits.push(s.result_id as string);
       if (item.pass === 3 && s.state !== "written" && s.state !== "failed") open = true;
     }
     // An exhibit write waits for its body write (spec §8.3); exhibits acknowledged since the last
     // call for the affidavit go in one call (§2.3).
     if (exhibits.length > 0) write.push({ ref: route.ref, contract: "affidavit_exhibits", result_ids: exhibits });
-    const closed = events.some((e) => e.event === "write" && e.contract === "affidavit_exhibits" && (e.refs as string[]).includes(route.ref) && e.closing === true);
-    if (affidavit.located && !open && exhibits.length === 0 && !closed) close.push({ ref: route.ref, contract: "affidavit_exhibits" });
+    if (affidavit.located && !open && exhibits.length === 0) close.push({ ref: route.ref, contract: "affidavit_exhibits" });
   }
   return { dispatch: dispatch.slice(0, Math.max(0, WINDOW - inFlight)), write, close, inFlight };
 }
@@ -406,8 +459,11 @@ async function pageManifest(pdf: string, pages: [number, number], destination?: 
 }
 
 const hostPath = (matterRoot: string, stored: string) => pathWin32.join(matterRoot, stored);
+/** A bridged dispatch's page images: in the matter, where the session can stage them (spec §6.5),
+ *  one folder per dispatch so that `end` removes exactly the run's own. */
+const imagesDir = (matterRoot: string, dispatchId: string) => pathWin32.join(matterRoot, "0. CASE DATA", "Page images", `ingest-${dispatchId}`);
 
-async function inputsFor(item: Item, matterRoot: string, context: Record<string, unknown>, bridged: boolean) {
+async function inputsFor(item: Item, matterRoot: string, context: Record<string, unknown>, bridged: boolean, dispatchId: string) {
   const route = item.route;
   const file = hostPath(matterRoot, route.file_path);
   const kind = pathWin32.extname(route.file_path).slice(1).toLowerCase();
@@ -423,8 +479,7 @@ async function inputsFor(item: Item, matterRoot: string, context: Record<string,
     const count = (await classifyPdfPages(file)).length;
     pageCount = count;
     const range: [number, number] = item.pages ?? [1, item.pass === 1 ? Math.min(count, READ_PAGES) : count];
-    const destination = bridged ? pathWin32.join(matterRoot, "0. CASE DATA", "Page images") : undefined;
-    const m = await pageManifest(file, range, destination);
+    const m = await pageManifest(file, range, bridged ? imagesDir(matterRoot, dispatchId) : undefined);
     inputs.PAGE_MANIFEST = m.manifest;
     scanned = m.scanned && m.manifest.every((e) => "page" in e);
   }
@@ -462,7 +517,8 @@ function matterContext(matterRoot: string, answersSourceId: number | undefined, 
 
 const ROUTE_KINDS = ["facts", "notice_of_application", "affidavit"];
 
-function storedForm(path: string, matterRoot: string): string {
+/** conventions.md §2.4's stored form: relative to the matter root, backslashes, no leading `.\`. */
+export function storedForm(path: string, matterRoot: string): string {
   let p = path.replace(/\//g, "\\");
   const r = matterRoot.replace(/\//g, "\\").replace(/\\+$/, "");
   if (p.toLowerCase().startsWith(r.toLowerCase() + "\\")) p = p.slice(r.length + 1);
@@ -470,46 +526,118 @@ function storedForm(path: string, matterRoot: string): string {
   return p;
 }
 
+/** A stored form that still names a drive, a share or a root, or climbs out: outside the matter. */
+export const outsideMatter = (stored: string) => /^[A-Za-z]:|^\\/.test(stored) || stored.split("\\").includes("..");
+
+const sha256 = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
+
+/** Every route checked before any is journaled (S-M3, S-m13): inside the matter, present, with the
+ *  hash its bytes give, and a PDF or a file with a rendering (S-M2). */
+function checkRoutes(routes: Array<Omit<Route, "ref">>, matterRoot: string): Array<Omit<Route, "ref">> {
+  return routes.map((r, i) => {
+    if (!ROUTE_KINDS.includes(r.kind)) throw new ValidationError(`routes[${i}].kind must be one of ${ROUTE_KINDS.join(", ")}`);
+    if (!/^[0-9a-f]{64}$/.test(r.file_hash ?? "")) throw new ValidationError(`routes[${i}].file_hash must be the file's SHA-256`);
+    const stored = storedForm(String(r.file_path ?? ""), matterRoot);
+    if (stored === "" || outsideMatter(stored)) throw new ValidationError(`routes[${i}].file_path must be a file inside the matter folder`);
+    const host = hostPath(matterRoot, stored);
+    if (!existsSync(host)) throw new ValidationError(`routes[${i}].file_path does not exist: ${stored}`);
+    if (sha256(host) !== r.file_hash) throw new ValidationError(`routes[${i}].file_hash is not the hash of ${stored}`);
+    if (r.rendering !== undefined && !existsSync(r.rendering)) throw new ValidationError(`routes[${i}].rendering does not exist`);
+    if (r.rendering === undefined && pathWin32.extname(stored).toLowerCase() !== ".pdf") {
+      throw new ValidationError(`routes[${i}] is not a PDF, so it needs its rendering`);
+    }
+    return { ...r, file_path: stored };
+  });
+}
+
 async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknown> {
   const runId = requireRunId(args);
-  return underLock(args.matter_root, env, async (dir) => {
+  const checked = checkRoutes(args.routes ?? [], args.matter_root);
+  // Under the lock: route, plan and reserve each dispatch. The page images are rendered after the
+  // lock is released (S-m10), so the run's other calls are not kept waiting on them.
+  const reserved = await underLock(args.matter_root, env, (dir) => {
     const held = hold(dir, runId);
     if ("refused" in held) return held;
-    const known = runEvents(dir).filter((e) => e.event === "route").length;
+    const l = ledger(runEvents(dir));
+    let n = l.routes.length;
+    const fresh: Route[] = [];
     const routed: string[] = [];
-    for (const [i, r] of (args.routes ?? []).entries()) {
-      if (!ROUTE_KINDS.includes(r.kind)) throw new ValidationError(`routes[${i}].kind must be one of ${ROUTE_KINDS.join(", ")}`);
-      if (!/^[0-9a-f]{64}$/.test(r.file_hash ?? "")) throw new ValidationError(`routes[${i}].file_hash must be the file's SHA-256`);
-      const route: Route = { ...r, ref: `f${known + i + 1}`, file_path: storedForm(r.file_path, args.matter_root) };
-      journal(dir, "route", runId, { route });
+    for (const r of checked) {
+      // A file routed again (a resume, a repeated call, a second copy with one hash) keeps its ref (S-M3).
+      const known = [...l.routes, ...fresh].find((x) => x.file_hash === r.file_hash);
+      if (known) {
+        routed.push(known.ref);
+        continue;
+      }
+      const route: Route = { ...r, ref: `f${++n}` };
+      fresh.push(route);
       routed.push(route.ref);
     }
+    for (const route of fresh) journal(dir, "route", runId, { route });
     const p = plan(runEvents(dir), env);
-    const contexts = new Map<string, Record<string, unknown>>();
-    const dispatch = [];
-    for (const item of p.dispatch) {
-      const key = String(item.route.answers_source_id ?? "");
-      if (!contexts.has(key)) contexts.set(key, matterContext(args.matter_root, item.route.answers_source_id, env));
-      const { inputs, stage, pageCount } = await inputsFor(item, args.matter_root, contexts.get(key) as Record<string, unknown>, args.bridged === true);
+    const items = p.dispatch.map((item) => {
       const id = randomUUID();
-      mkdirSync(pathWin32.join(dir, "dispatches"), { recursive: true });
-      writeFileSync(dispatchPath(dir, id), JSON.stringify({ inputs, stage, session: null }), "utf-8");
-      journal(dir, "dispatch", runId, { dispatch_id: id, ref: item.ref, agent: item.agent, contract: item.contract, page_count: pageCount });
+      journal(dir, "dispatch", runId, { dispatch_id: id, ref: item.ref, agent: item.agent, contract: item.contract });
+      return { id, item };
+    });
+    return { routed, items, write: p.write, close: p.close, inFlight: p.inFlight, dir };
+  });
+  if ("refused" in reserved) return reserved;
+
+  const contexts = new Map<string, Record<string, unknown> | Error>();
+  const dispatch = [];
+  const built: Array<{ ref: string; dispatch_id: string; page_count?: number }> = [];
+  const failed: string[] = [];
+  const voided: string[] = [];
+  let contextError: Error | null = null;
+  mkdirSync(pathWin32.join(reserved.dir, "dispatches"), { recursive: true });
+  for (const { id, item } of reserved.items) {
+    const key = String(item.route.answers_source_id ?? "");
+    if (!contexts.has(key)) {
+      try {
+        contexts.set(key, matterContext(args.matter_root, item.route.answers_source_id, env));
+      } catch (err) {
+        contexts.set(key, err as Error);
+      }
+    }
+    const context = contexts.get(key) as Record<string, unknown> | Error;
+    if (context instanceof Error) {
+      // The matter's case data, not the item, is at fault: the dispatch is void, not a failure.
+      voided.push(id);
+      contextError = context;
+      continue;
+    }
+    try {
+      const { inputs, stage, pageCount } = await inputsFor(item, args.matter_root, context, args.bridged === true, id);
+      writeFileSync(dispatchPath(reserved.dir, id), JSON.stringify({ inputs, stage, session: null }), "utf-8");
+      built.push({ ref: item.ref, dispatch_id: id, page_count: pageCount });
       // #70: every fact extractor stays on Opus at high effort, on every dispatch.
       dispatch.push({ dispatch_id: id, agent: item.agent, model: "opus", effort: "high", ref: item.ref, contract: item.contract, ...(stage.length ? { stage } : {}) });
+    } catch {
+      // A file that cannot be opened or rendered (a missing, encrypted or corrupt PDF) fails this
+      // item alone, as an extractor would (R4): the rest of the list goes on (S-M2).
+      failed.push(item.ref);
     }
-    const lines = [...dispatch, ...p.write, ...p.close].length;
-    const more = lines > PAGE;
-    return {
-      ok: true,
-      ...(routed.length ? { routed } : {}),
-      dispatch,
-      write: p.write.slice(0, Math.max(0, PAGE - dispatch.length)),
-      close: p.close.slice(0, Math.max(0, PAGE - dispatch.length - p.write.length)),
-      running: p.inFlight + dispatch.length,
-      ...(more ? { more: true } : {}),
-    };
-  });
+  }
+  if (built.length + failed.length + voided.length > 0) {
+    await underLock(args.matter_root, env, (dir) => {
+      for (const b of built) if (b.page_count !== undefined) journal(dir, "inputs", runId, b);
+      for (const ref of failed) journal(dir, "ack", runId, { ref, ok: false, reason: "unreadable" });
+      for (const id of voided) journal(dir, "void", runId, { dispatch_id: id });
+    });
+  }
+  if (contextError && dispatch.length === 0) throw contextError;
+
+  const lines = dispatch.length + reserved.write.length + reserved.close.length;
+  return {
+    ok: true,
+    ...(reserved.routed.length ? { routed: reserved.routed } : {}),
+    dispatch,
+    write: reserved.write.slice(0, Math.max(0, PAGE - dispatch.length)),
+    close: reserved.close.slice(0, Math.max(0, PAGE - dispatch.length - reserved.write.length)),
+    running: reserved.inFlight + dispatch.length,
+    ...(lines > PAGE ? { more: true } : {}),
+  };
 }
 
 const ACK = /^(ok)\s+(\S+)\s+([0-9a-f-]{36})\s+\d+$|^(failed)\s+(\S+)\s+(\S+)$/;
@@ -524,22 +652,40 @@ function recordAck(dir: string, runId: string, ack: string): Record<string, unkn
   return { ok: true };
 }
 
-export async function recordAckLine(matterRoot: string, runId: string, ack: string, env: NodeJS.ProcessEnv = process.env) {
-  return underLock(matterRoot, env, (dir) => recordAck(dir, runId, ack));
+export interface WriteRun {
+  ok: true;
+  mode: Lease["mode"];
+  route: Route | null;
+  /** The answered pleading's keys as dispatched to the extractor (K-m2), for a `facts` write. */
+  answered: { facts: string[]; relief: string[] };
 }
 
 /** ingest_result's run check and its record: renews the heartbeat, refuses lease_lost or
- *  plugin_changed, and returns the run's mode and the route of `fileHash`, when one was routed. */
-export async function runForWrite(matterRoot: string, runId: string, fileHash: string, env: NodeJS.ProcessEnv = process.env): Promise<Refusal | { ok: true; mode: Lease["mode"]; route: Route | null }> {
+ *  plugin_changed, and returns the run's mode and the route the document names by `ref`, or by its
+ *  hash when one was routed. */
+export async function runForWrite(matterRoot: string, runId: string, document: { ref?: string; file_hash?: string }, env: NodeJS.ProcessEnv = process.env): Promise<Refusal | WriteRun> {
   return underLock(matterRoot, env, (dir) => {
     const held = hold(dir, runId);
     if ("refused" in held) return held;
-    const route = ledger(runEvents(dir)).routes.find((r) => r.file_hash === fileHash) ?? null;
-    return { ok: true as const, mode: held.mode, route };
+    const events = runEvents(dir);
+    const routes = ledger(events).routes;
+    // A line's ref (f3, f3:so, f3:B) names its file by the part before the first colon.
+    const route = document.ref !== undefined
+      ? routes.find((r) => r.ref === document.ref?.split(":")[0]) ?? null
+      : routes.find((r) => r.file_hash === document.file_hash) ?? null;
+    if (document.ref !== undefined && route === null) throw new ValidationError(`no file with ref ${document.ref} in this run`);
+    const answered = { facts: [] as string[], relief: [] as string[] };
+    const last = route ? events.filter((e) => e.event === "dispatch" && e.ref === route.ref && e.agent === "lawyer:extract-facts").pop() : undefined;
+    if (last && existsSync(dispatchPath(dir, last.dispatch_id as string))) {
+      const inputs = (JSON.parse(readFileSync(dispatchPath(dir, last.dispatch_id as string), "utf-8")) as { inputs: Record<string, unknown> }).inputs;
+      answered.facts = ((inputs.ANSWERED_FACTS ?? []) as Array<{ fact_key: string }>).map((f) => f.fact_key);
+      answered.relief = ((inputs.ANSWERED_RELIEF ?? []) as Array<{ relief_key: string }>).map((r) => r.relief_key);
+    }
+    return { ok: true as const, mode: held.mode, route, answered };
   });
 }
 
-export async function recordWrite(matterRoot: string, runId: string, acks: Array<{ ref: string; result_id: string }>, write: Record<string, unknown>, env: NodeJS.ProcessEnv = process.env): Promise<void> {
+export async function recordWrite(matterRoot: string, runId: string, acks: Array<{ ref: string; result_id: string }>, write: Record<string, unknown>, env: NodeJS.ProcessEnv = process.env, failures: Array<{ ref: string; reason: string }> = []): Promise<void> {
   await underLock(matterRoot, env, (dir) => {
     const events = runEvents(dir);
     for (const a of acks) {
@@ -547,16 +693,16 @@ export async function recordWrite(matterRoot: string, runId: string, acks: Array
       if (!already) journal(dir, "ack", runId, { ref: a.ref, ok: true, result_id: a.result_id });
     }
     journal(dir, "write", runId, write);
+    // An item the write could not record counts as a failed extraction (R4, R5): read once more.
+    for (const f of failures) journal(dir, "ack", runId, { ref: f.ref, ok: false, reason: f.reason });
   });
 }
 
 /** The stored inputs of `dispatchId`, with a bridged session's copies in place of host paths. */
 export function dispatchInputs(dispatchId: string, env: NodeJS.ProcessEnv = process.env): Record<string, unknown> {
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(dispatchId ?? "")) {
-    throw new ValidationError("dispatch_id must be the id from your dispatch line");
-  }
+  if (!UUID.test(dispatchId ?? "")) throw new ValidationError("dispatch_id must be the id from your dispatch line");
   const root = hostLocalDir(SITE, env);
-  for (const entry of readdirSync(root, { withFileTypes: true })) {
+  for (const entry of existsSync(root) ? readdirSync(root, { withFileTypes: true }) : []) {
     const path = dispatchPath(pathWin32.join(root, entry.name), dispatchId);
     if (!entry.isDirectory() || !existsSync(path)) continue;
     const stored = JSON.parse(readFileSync(path, "utf-8")) as { inputs: unknown; stage: string[]; session: string[] | null };
@@ -598,7 +744,10 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
     }
     case "status":
       return underLock(args.matter_root, env, (dir) => {
-        if (args.run_id !== undefined && renew(dir, args.run_id) === null) return refusal("lease_lost");
+        if (args.run_id !== undefined) {
+          const held = hold(dir, args.run_id);
+          if ("refused" in held) return held;
+        }
         if (args.ack !== undefined) return recordAck(dir, requireRunId(args), args.ack);
         const lease = readLease(dir);
         const p = isLive(lease) ? plan(runEvents(dir), env) : { write: [], close: [] };
@@ -618,8 +767,10 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
     case "staged": {
       const runId = requireRunId(args);
       return underLock(args.matter_root, env, (dir) => {
-        if (renew(dir, runId) === null) return refusal("lease_lost");
+        const held = hold(dir, runId);
+        if ("refused" in held) return held;
         if (args.dispatch_id === undefined) return { ok: true, items: [] };
+        if (!UUID.test(args.dispatch_id)) throw new ValidationError("dispatch_id must be the id from the dispatch line");
         const path = dispatchPath(dir, args.dispatch_id);
         if (!existsSync(path)) throw new ValidationError("no dispatch with that dispatch_id in this run");
         const stored = JSON.parse(readFileSync(path, "utf-8")) as { stage: string[] };
@@ -638,6 +789,12 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
         if (lease === null) return refusal("lease_lost");
         writeLease(dir, { ...lease, ended: lease.heartbeat });
         journal(dir, "end", runId);
+        // The dispatches' stored inputs (parties, answered facts) and a bridged run's page images
+        // are not needed once the run has ended (S-m15).
+        for (const e of runEvents(dir)) {
+          if (e.event === "dispatch") removeOwn(imagesDir(args.matter_root, e.dispatch_id as string));
+        }
+        removeOwn(pathWin32.join(dir, "dispatches"));
         return { ok: true, run_id: runId };
       });
     }

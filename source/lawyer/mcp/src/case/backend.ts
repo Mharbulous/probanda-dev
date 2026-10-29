@@ -628,19 +628,24 @@ export async function caseDataExecuteStatements(
   matterRoot: string,
   statements: Array<CaseStatement | CaseStatementGroup>,
   params: Record<string, unknown>,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  precheck?: () => Promise<void>
 ): Promise<CaseStatementsResult> {
-  return await executeUnderLock(matterRoot, { statements, params }, env) as CaseStatementsResult;
+  return await executeUnderLock(matterRoot, { statements, params }, env, precheck) as CaseStatementsResult;
 }
 
 async function executeUnderLock(
   matterRoot: string,
   work: CaseExecuteWork,
-  env: NodeJS.ProcessEnv
+  env: NodeJS.ProcessEnv,
+  precheck?: () => Promise<void>
 ): Promise<{ warning?: string | null }> {
   const triggersSql = caseDataTriggersSql(env);
   const lock = await acquireCaseLock(matterRoot, env);
   try {
+    // A caller's last check, made once the lock is held, so nothing can change it before the write
+    // (ingest_result's lease, ingest orchestrator spec R8). It throws to write nothing.
+    await precheck?.();
     const result = runHelper({
       op: "execute",
       matter_root: matterRoot,
