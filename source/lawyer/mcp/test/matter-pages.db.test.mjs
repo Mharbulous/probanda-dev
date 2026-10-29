@@ -362,7 +362,7 @@ test("render reports board_moves: a job taken, a holder change that moves no job
   };
 
   await board();
-  const taken = await board(`UPDATE tickets SET status = 'wip', locked_by = 'other-session', locked_at = '2026-09-23 11:00' WHERE id = 1;`);
+  const taken = await board(`UPDATE tickets SET status = 'wip', locked_by = 'other-session', locked_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') WHERE id = 1;`);
   assert.deepEqual(taken.board_moves, [{ id: 1, title: "Settle the opening", from: "ready", to: "wip" }]);
   const handedOver = await board(`UPDATE tickets SET locked_by = 'third-session' WHERE id = 1;`);
   assert.equal(handedOver.board_changed, true);
@@ -767,9 +767,14 @@ async function seededBoard(f, extraSql) {
   await seedVaniacProceeding(f.dbPath);
   await seedTickets(f.dbPath);
   await seedProposalCases(f.dbPath);
+  await submissionDataExecute(f.dbPath, HELD_AT_FIRST);
   if (extraSql) await submissionDataExecute(f.dbPath, extraSql);
   return renderInto(f, 1, undefined, FIRST, ["Work_board"]);
 }
+
+/** Moves the seed's In progress job #4's last activity to 10 minutes before FIRST, so its lock has
+ * not lapsed at FIRST (ADR 0015). */
+const HELD_AT_FIRST = `UPDATE kv_store SET value = '"2026-10-02T08:50"' WHERE namespace = 'last_activity' AND key = 'tickets:4';`;
 
 function cardOf(f, selection) {
   return submissionFormsBoardCard({ db_path: f.dbPath, filing_id: 1, ...selection }, ASHBOURNE, FIRST).card;
@@ -810,7 +815,7 @@ test("board_card(jobs) prints each job in board order: its collapsed line, a kin
         `  keys: factual-basis:submissions:1 = "${HELD}" (now: 🧾 "${HELD}")`,
         "  scope: facts, statements_of_law:12 · waits on: #1 (completed) · either-or: —",
         "- Job #4 Rebuild the evidence index · In Progress 1/2",
-        "  kind: work · priority: 2 · taken: 2026-09-02T10:05 · holder: sess-a1 · last activity: 2026-09-02T10:12",
+        "  kind: work · priority: 2 · taken: 2026-09-02T10:05 · holder: sess-a1 · last activity: 2026-10-02T08:50",
         "  intent: Reconcile the exhibit list against the disclosure log.",
         "  scope: — · waits on: — · either-or: —",
         "  steps: 1 ☑ Audit the exhibit list (2026-09-02T10:10) · 2 ☐ Reconcile against the disclosure log",
@@ -873,6 +878,7 @@ test("a job's card on the Milestone page draws its steps as its plan, with no in
     await freshSubmissionDb(f.dbPath);
     await seedVaniacProceeding(f.dbPath);
     await seedTickets(f.dbPath);
+    await submissionDataExecute(f.dbPath, HELD_AT_FIRST);
     const { draft } = draftFolder(f);
     const board = renderInto(f, 1, draft, FIRST, ["Work_board"]).documents.find((d) => d.document_type === "Work_board");
     const cards = drawPage(board.path).main.all().filter((n) => n.tag === "details");
@@ -945,7 +951,7 @@ test("the live lane prints Ready, In Progress, Bring Forward, Blocked, Completed
     await seededBoard(
       f,
       `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, locked_by, locked_at, created)
-         VALUES (30, 1, 1, 'Settle the witness list', 'Settle it.', 'wip', 0, 'work', 'L4801|witnesses', 'sess-a30', '2026-10-02T08:00', '2026-10-02T07:55');
+         VALUES (30, 1, 1, 'Settle the witness list', 'Settle it.', 'wip', 0, 'work', 'L4801|witnesses', 'sess-a30', '2026-10-02T08:15', '2026-10-02T07:55');
        INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES (30, 1, 'Settle it', '2026-10-02T08:30');`
     );
 
@@ -996,7 +1002,7 @@ test("board_card reads a proceeding with no filing", async () => {
       f.dbPath,
       `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL);
        INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, locked_by, locked_at, created)
-         VALUES (1, 1, NULL, 'Review the arbitration clause', 'Read the contract.', 'wip', 0, 'work', 'L8470', 'sess-a', '2026-09-19 09:30', '2026-09-19 09:05');`
+         VALUES (1, 1, NULL, 'Review the arbitration clause', 'Read the contract.', 'wip', 0, 'work', 'L8470', 'sess-a', '2026-10-02 08:30', '2026-10-02 08:05');`
     );
 
     const result = submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, jobs: [1] }, {}, FIRST);
@@ -1005,7 +1011,7 @@ test("board_card reads a proceeding with no filing", async () => {
       result.card,
       [
         "- Job #1 Review the arbitration clause · In Progress",
-        "  kind: work · priority: 0 · taken: 2026-09-19 09:30 · holder: sess-a · last activity: 2026-09-19 09:30",
+        "  kind: work · priority: 0 · taken: 2026-10-02 08:30 · holder: sess-a · last activity: 2026-10-02 08:30",
         "  intent: Read the contract.",
         "  scope: — · waits on: — · either-or: —",
       ].join("\n")
@@ -1030,6 +1036,8 @@ test("board_card is listed read-only, and a call through the dispatcher writes n
     await freshSubmissionDb(f.dbPath);
     await seedVaniacProceeding(f.dbPath);
     await seedTickets(f.dbPath);
+    // The dispatcher reads the card at the host's now, so job #4 is active now and still held.
+    await submissionDataExecute(f.dbPath, `UPDATE kv_store SET value = '"' || strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') || '"' WHERE namespace = 'last_activity' AND key = 'tickets:4';`);
     const { draft } = draftFolder(f);
     renderInto(f, 1, draft, FIRST);
     const context = await practiceContext(t);
@@ -1107,7 +1115,7 @@ async function heldMilestone(t) {
        VALUES (1, 1, NULL, 'Research the limitation point', 'When did time start to run?', 'wip', 0, 'work', 'L8470|limitation', 'sess-holder', '2026-01-16 09:00', '2026-01-16 09:00', '2026-01-16 08:55');
      INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES (1, 1, 'Run the research', NULL);
      INSERT INTO seeds (id, proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea) VALUES (1, 1, NULL, 1, '2026-01-16T09:20', 'noticed in the Westlaw memo', 'Is the guarantor a party?');
-     INSERT INTO kv_store (namespace, key, value, updated_at) VALUES ('last_activity', 'tickets:1', '"2026-01-16T09:20"', '2026-01-16T17:20:00.000Z');
+     INSERT INTO kv_store (namespace, key, value, updated_at) VALUES ('last_activity', 'tickets:1', '"2026-01-16T11:30"', '2026-01-16T19:30:00.000Z');
      INSERT INTO seeds (id, proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea) VALUES (2, 1, NULL, NULL, '2026-01-16T11:50', 'a practitioner aside', 'Not this job''s.');`
   );
   const law = join(dirname(dirname(f.dbPath)), "6. LAW");
@@ -1125,12 +1133,12 @@ const headline = (f) =>
 test("a job's last activity is its stored stamp, and its card lists the seeds captured from it", async (t) => {
   const { f } = await heldMilestone(t);
 
-  assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 0/1 · idle 2 h 40 min, about 0%", "the stamp at 09:20, not the lock at 09:00");
+  assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 0/1 · idle 30 min, about 0% · check window: idle past 30 min", "the stamp at 11:30, not the lock at 09:00");
   assert.equal(
     proceedingCard(f),
     [
       "- Job #1 Research the limitation point · In Progress 0/1",
-      "  kind: work · priority: 0 · taken: 2026-01-16 09:00 · holder: s-holder · last activity: 2026-01-16T09:20",
+      "  kind: work · priority: 0 · taken: 2026-01-16 09:00 · holder: s-holder · last activity: 2026-01-16T11:30",
       "  intent: When did time start to run?",
       "  scope: — · waits on: — · either-or: —",
       "  steps: 1 ☐ Run the research",
@@ -1140,51 +1148,26 @@ test("a job's last activity is its stored stamp, and its card lists the seeds ca
   );
 });
 
-/** Points the firm profile, for this test only, at a scratch matter-data root whose firm.json sets
- * `hours` as idle_flag_hours, or none when undefined. */
-function firmIdleThreshold(t, hours) {
-  const root = mkdtempSync(join(tmpdir(), "coclerk-idle-flag-"));
-  mkdirSync(join(root, "_practice", "firm"), { recursive: true });
-  writeFileSync(join(root, "_practice", "firm", "firm.json"), JSON.stringify({ firm_name: "Example Law Corporation", roster: [], ...(hours === undefined ? {} : { idle_flag_hours: hours }) }));
-  const config = join(root, "coclerk.json");
-  writeFileSync(config, JSON.stringify({ case_data_root: root }));
-  const before = process.env.COCLERK_CONFIG_PATH;
-  process.env.COCLERK_CONFIG_PATH = config;
-  t.after(() => {
-    if (before === undefined) delete process.env.COCLERK_CONFIG_PATH;
-    else process.env.COCLERK_CONFIG_PATH = before;
-    rmSync(root, { recursive: true, force: true });
-  });
-}
-
-// D6: past the firm's idle_flag_hours an In progress job carries `idle past <N> h`, naming the
-// threshold, on the live lane after the idle tag and on the page's card; within it, or unset, nothing.
-test("the idle flag past the firm's idle_flag_hours, on the live lane and the page", async (t) => {
+// ADR 0015: from 30 minutes idle an In progress job carries the check window's flag, naming the
+// threshold, on the live lane after the idle tag and on the page's card; under it, nothing.
+test("the check-window flag from 30 minutes idle, on the live lane and the page", async (t) => {
   const { f } = await heldMilestone(t);
-  firmIdleThreshold(t, 2);
   const { draft } = draftFolder(f);
 
   submissionFormsRenderProceedingBoard(f.dbPath, 1, {}, NOON, "tok", draft);
   const live = submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, lanes: ["live"] }, {}, NOON).card;
   const line = live.split("\n").find((l) => l.startsWith("- Job #1 "));
-  assert.equal(line, "- Job #1 Research the limitation point · In Progress 0/1 · idle 2 h 40 min, about 0% · idle past 2 h");
+  assert.equal(line, "- Job #1 Research the limitation point · In Progress 0/1 · idle 30 min, about 0% · check window: idle past 30 min");
   const ticket = readBoardData(join(draft, "Milestone - proceeding 1.html")).sections[0].tickets.find((x) => x.id === 1);
-  assert.equal(ticket.idle_flag, "idle past 2 h");
-  assert.ok(drawPage(join(draft, "Milestone - proceeding 1.html")).main.all().some((n) => n.className === "subtitle" && n.textContent === "idle past 2 h"), "the card draws it as a subtitle");
+  assert.equal(ticket.idle_flag, "check window: idle past 30 min");
+  assert.ok(drawPage(join(draft, "Milestone - proceeding 1.html")).main.all().some((n) => n.className === "subtitle" && n.textContent === "check window: idle past 30 min"), "the card draws it as a subtitle");
 });
 
-test("no idle flag within the firm's idle_flag_hours", async (t) => {
+test("no check-window flag, and the board data as before, under 30 minutes idle", async (t) => {
   const { f } = await heldMilestone(t);
-  firmIdleThreshold(t, 3);
-  assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 0/1 · idle 2 h 40 min, about 0%");
-  assert.equal(buildPreFilingBoardData(f.dbPath, fetchProceeding(f.dbPath, 1), { revision: 1, matter: "", client: "", rendered: NOON }).tickets[0].idle_flag, undefined);
-});
-
-test("no idle flag, and the board data as before, with idle_flag_hours unset", async (t) => {
-  const { f } = await heldMilestone(t);
-  firmIdleThreshold(t, undefined);
-  assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 0/1 · idle 2 h 40 min, about 0%");
-  assert.equal("idle_flag" in buildPreFilingBoardData(f.dbPath, fetchProceeding(f.dbPath, 1), { revision: 1, matter: "", client: "", rendered: NOON }).tickets[0], false);
+  const data = buildPreFilingBoardData(f.dbPath, fetchProceeding(f.dbPath, 1), { revision: 1, matter: "", client: "", rendered: "2026-01-16 11:59" });
+  assert.equal(renderLiveLanes(data).find((line) => line.startsWith("- Job #1 ")), "- Job #1 Research the limitation point · In Progress 0/1 · idle 29 min, about 0%");
+  assert.equal("idle_flag" in data.tickets[0], false);
 });
 
 test("save_answer with the job's id lists the answer on its card and restarts its idle clock", async (t) => {
@@ -1243,7 +1226,7 @@ test("the live lane of a board shaped like the measured one is 3 KB or less, and
     const row = (id, status, extra) => ({ id, status, ...extra });
     const tickets = [
       ...Array.from({ length: 7 }, (_, i) =>
-        row(10 + i, "wip", { locked_by: `'sess-w${i}'`, locked_at: "'2026-10-01T09:00'", plan_approved_at: "'2026-10-01T09:00'" })
+        row(10 + i, "wip", { locked_by: `'sess-w${i}'`, locked_at: "'2026-10-02T08:45'", plan_approved_at: "'2026-10-01T09:00'" })
       ),
       ...Array.from({ length: 5 }, (_, i) => row(20 + i, "queued", {})),
       ...Array.from({ length: 21 }, (_, i) => row(30 + i, "completed", { completed_at: "'2026-09-30T09:00'" })),

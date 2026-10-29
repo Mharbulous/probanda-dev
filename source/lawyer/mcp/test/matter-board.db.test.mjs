@@ -96,7 +96,7 @@ async function seedMatter(dbPath) {
 
     INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, locked_by, locked_at, created, completed_at, superseded_by)
       VALUES (1, 1, 1, 'Draft the orders </script><b>sought</b>', 'Part 1.', 'queued', 0, 'work', 'L8470', NULL, NULL, '2026-09-14 09:00', NULL, NULL),
-             (2, 1, 1, 'Settle the requisition', 'Settle it.', 'wip', 0, 'work', 'L8470', 'sess-a', '2026-09-15 08:30', '2026-09-14 09:05', NULL, NULL),
+             (2, 1, 1, 'Settle the requisition', 'Settle it.', 'wip', 0, 'work', 'L8470', 'sess-a', '2026-09-15 09:30', '2026-09-14 09:05', NULL, NULL),
              (3, 1, 1, 'Collect the consent', 'Get it signed.', 'completed', 0, 'work', 'L8470', NULL, NULL, '2026-09-10 09:00', '2026-09-12 10:00', NULL),
              (4, 1, 1, 'File the requisition', 'File it.', 'queued', 0, 'work', 'L8470', NULL, NULL, '2026-09-14 09:10', NULL, NULL),
              (5, 1, NULL, 'Confirm the style of cause', 'Check the pleadings.', 'queued', 0, 'charting', NULL, NULL, NULL, '2026-09-13 09:00', NULL, NULL),

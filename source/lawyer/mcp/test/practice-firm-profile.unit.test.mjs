@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { crc32, deflateRawSync } from "node:zlib";
 
-const { firm_profile, idleFlagHours, upsert_firm_profile, SIGNER_FIELDS, TOKENS } = await import("../build/tools/practice/firm-profile.js");
+const { firm_profile, upsert_firm_profile, SIGNER_FIELDS, TOKENS } = await import("../build/tools/practice/firm-profile.js");
 
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
@@ -434,32 +434,6 @@ test("a signature whose file is absent is refused and nothing is written", async
   });
   assert.equal(readFileSync(f.configPath, "utf-8"), configBefore, "probanda.json untouched");
   assert.equal(existsSync(f.firmDir), false, "no firm folder or firm.json written");
-});
-
-test("idle_flag_hours lands in firm.json, keeping its other keys, and firm_profile returns it", async (t) => {
-  const f = fixture(t);
-  writeFirm(f, { firm_name: "Example Law Corporation", roster: [{ ...ENTRY, active: true }] });
-
-  const result = await upsert_firm_profile({ idle_flag_hours: 2 }, f.env);
-  assert.deepEqual(result.changed, ["idle_flag_hours"]);
-  assert.deepEqual(result.written, [f.firmPath]);
-  assert.deepEqual(readJson(f.firmPath), { firm_name: "Example Law Corporation", roster: [{ ...ENTRY, active: true }], idle_flag_hours: 2 });
-  assert.equal((await firm_profile(f.env)).idle_flag_hours, 2);
-  assert.equal(idleFlagHours(f.env), 2);
-});
-
-test("an idle_flag_hours that is not a positive number is refused and nothing is written", async (t) => {
-  const f = fixture(t);
-  writeFirm(f, { firm_name: "Example Law Corporation", roster: [] });
-  const before = readFileSync(f.firmPath, "utf-8");
-
-  for (const idle_flag_hours of [0, -1, "2", Number.NaN, Number.POSITIVE_INFINITY]) {
-    await assert.rejects(upsert_firm_profile({ firm_name: "Renamed", idle_flag_hours }, f.env), /idle_flag_hours must be a positive number of hours/);
-  }
-  assert.equal(readFileSync(f.firmPath, "utf-8"), before, "firm.json untouched");
-  assert.equal((await firm_profile(f.env)).idle_flag_hours, undefined, "unset, firm_profile carries no idle_flag_hours");
-  assert.equal(idleFlagHours(f.env), null);
-  assert.equal(idleFlagHours({ APPDATA: join(f.scratch, "no-config") }), null, "an unconfigured matter-data root reads as unset");
 });
 
 test("cc_on_counsel_email lands in firm.json as roster keys, [] clears it, and an unknown key is refused writing nothing", async (t) => {

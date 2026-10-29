@@ -203,7 +203,7 @@ export function buildMatterBoardData(
   const boardFor = (proceedingId: number): ProceedingBoard => {
     let board = boards.get(proceedingId);
     if (board === undefined) {
-      board = buildProceedingBoard(dbPath, proceedingId);
+      board = buildProceedingBoard(dbPath, proceedingId, meta.rendered);
       boards.set(proceedingId, board);
     }
     return board;

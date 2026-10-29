@@ -2,7 +2,7 @@
 // releasing write followed by its confirm-read, as the /drafting-data gatekeeper documents them in
 // jobs-run.md §10. By default the guard is the caller's own token. With expected_holder (the
 // `holder:` tag off the job's card, run only on the practitioner's "Return it to Ready" on the
-// take-over form, ADR 0037) the write lands only while that holder is still on the row. Only the
+// take-over form, CoClerk ADR 0037) the write lands only while that holder is still on the row. Only the
 // status and the lock change: the plan, its approval, the steps and their stamps, scope and
 // proposals stay. One write, one read, never a retry. The job tables carry no revision triggers,
 // so the revision does not move.

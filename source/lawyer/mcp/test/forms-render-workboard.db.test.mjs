@@ -130,6 +130,8 @@ test("renders the Milestone's data", async () => {
     await seedVaniacProceeding(f.dbPath);
     await seedTickets(f.dbPath);
     await seedProposalCases(f.dbPath);
+    // Job #4 was last active 10 minutes before the render, so its lock has not lapsed (ADR 0015).
+    await submissionDataExecute(f.dbPath, `UPDATE kv_store SET value = '"2026-09-20T09:50"' WHERE namespace = 'last_activity' AND key = 'tickets:4';`);
 
     const { draft, leaf } = draftFolder(f);
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "mockup", undefined, undefined, undefined, "2026-09-20 10:00", undefined, draft);

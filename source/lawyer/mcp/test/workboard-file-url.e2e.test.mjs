@@ -108,7 +108,7 @@ async function writeSeededMatterBoard(dir) {
              (3, 1, 'notice_of_application', NULL, NULL, 'Earlier Notice of Application', '2026-08-01', 'abandoned');
     INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, locked_by, locked_at, created)
       VALUES (1, 1, 1, 'Draft the orders </script><b>sought</b>', 'Part 1.', 'queued', 0, 'work', 'L7001', NULL, NULL, '2026-09-01T09:00'),
-             (2, 1, 2, 'Settle the response', 'Settle it.', 'wip', 0, 'work', 'L7001', 'sess-b2', '2026-09-02T11:00', '2026-09-02T10:00');
+             (2, 1, 2, 'Settle the response', 'Settle it.', 'wip', 0, 'work', 'L7001', 'sess-b2', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), '2026-09-02T10:00');
     INSERT INTO seeds (id, proceeding_id, filing_id, created, surfaced_by, idea) VALUES (1, 1, NULL, '2026-09-02T11:40', 'noticed', 'Serve the guarantor too?');
     `.trim()
   );
