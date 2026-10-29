@@ -1,6 +1,6 @@
 // The Arguments view page: one `Arguments - Milestone <id>.html` per live Writing, written by the
 // view-page registry (../view-pages.ts), listing the submissions and counter-arguments the drafting
-// database records for the filing's proceeding in three kinds:
+// database records for the filing's proceeding in four kinds:
 //   submission       -- a live submission deployed by a document of some filing of the proceeding:
 //                       this filing's first (the venue form's, then the Written Arguments'), then
 //                       those only on another filing.
@@ -8,7 +8,10 @@
 //                       the proceeding (terms-and-symbols.md, Deployment). Derived, never stored.
 //   counter-argument -- an opposing point (raised, in a served document) or an anticipated point
 //                       (the practitioner's own prediction).
-// Each submission and rebuttal shows the facts and propositions of law linked to it. A rebuttal is
+//   killed           -- a submission the practitioner reviewed and rejected (submissions.killed_on,
+//                       schema v16), in kill-date order, kept so it is never re-proposed.
+// Each submission, rebuttal and killed submission shows the facts and propositions of law linked to
+// it. Only live submissions are listed under a counter-argument. A rebuttal is
 // grouped with the counter-arguments it answers by the advisory rebuts links (schema v65), which are
 // neither complete nor exhaustive: the page never calls a counter-argument unanswered for want of a
 // link, and never reads answered_by_submission_id or its ↩️ marker.
@@ -32,7 +35,7 @@ import { fetchOpposingPoints } from "./render-vaniac-submissions.js";
 import { rows } from "../query-rows.js";
 import { hasColumn, hasTable } from "../schema-capabilities.js";
 
-export type SubmissionKind = "submission" | "rebuttal";
+export type SubmissionKind = "submission" | "rebuttal" | "killed";
 
 export interface SubmissionLaw {
   text: string;
@@ -44,7 +47,8 @@ export interface PageSubmission {
   id: number;
   kind: SubmissionKind;
   contention: string;
-  /** Where it is deployed: "On this Writing", "On <filing title>[ (retired)]", or "Held in reserve". */
+  /** Where it is deployed: "On this Writing", "On <filing title>[ (retired)]", "Held in reserve", or
+   * "Killed <date>". */
   where: string;
   facts: string[];
   law: SubmissionLaw[];
@@ -92,6 +96,11 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
      ORDER BY MIN(fs.id) IS NULL, MIN(CASE fs.document WHEN 'form' THEN 0 ELSE 1 END),
               MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
     [...ids, proceedingId]
+  );
+  const killed = rows<{ id: number; contention: string; killed_on: string }>(
+    dbPath,
+    "SELECT id, contention, killed_on FROM submissions WHERE proceeding_id = ? AND killed_on IS NOT NULL ORDER BY killed_on, id",
+    [proceedingId]
   );
   const deployments = rows<{ submission_id: number; filing_id: number; title: string; retired_on: string | null }>(
     dbPath,
@@ -147,30 +156,32 @@ function argumentsFor(dbPath: string, proceedingId: number, ids: number[], merge
   }
   const counterOrder = new Map(counterArguments.map((c, i) => [c.key, i]));
 
+  const item = (s: { id: number; contention: string }, kind: SubmissionKind, where: string): PageSubmission => ({
+    id: s.id,
+    kind,
+    contention: s.contention,
+    where,
+    facts: facts.filter((f) => f.submission_id === s.id).map((f) => f.postulate),
+    law: law.filter((l) => l.submission_id === s.id).map((l) => ({ text: l.proposition, killed_on: l.killed_on })),
+    rebuts: links
+      .filter((l) => l.submission_id === s.id && counterByKey.has(l.key))
+      .map((l) => l.key)
+      .sort((a, b) => (counterOrder.get(a) ?? 0) - (counterOrder.get(b) ?? 0)),
+  });
   const items = submissions.map((s): PageSubmission => {
     const deployedOn = deployments.filter((d) => d.submission_id === s.id);
     const here = deployedOn.filter((d) => ids.includes(d.filing_id));
     const elsewhere = deployedOn.map((d) => (d.retired_on === null ? d.title : `${d.title} (retired)`)).join("; ");
     const where =
       here.length > 0 ? (merged ? `On this board: ${here.map((d) => d.title).join("; ")}` : "On this Writing") : deployedOn.length > 0 ? `On ${elsewhere}` : "Held in reserve";
-    return {
-      id: s.id,
-      kind: deployedOn.length > 0 ? "submission" : "rebuttal",
-      contention: s.contention,
-      where,
-      facts: facts.filter((f) => f.submission_id === s.id).map((f) => f.postulate),
-      law: law.filter((l) => l.submission_id === s.id).map((l) => ({ text: l.proposition, killed_on: l.killed_on })),
-      rebuts: links
-        .filter((l) => l.submission_id === s.id && counterByKey.has(l.key))
-        .map((l) => l.key)
-        .sort((a, b) => (counterOrder.get(a) ?? 0) - (counterOrder.get(b) ?? 0)),
-    };
+    return item(s, deployedOn.length > 0 ? "submission" : "rebuttal", where);
   });
+  for (const s of killed) items.push(item(s, "killed", `Killed ${s.killed_on}`));
   return { submissions: items, counter_arguments: counterArguments };
 }
 
 // The page's script (arguments.js) draws window.VIEW_PAGE.data into .board as folder tabs over one
-// panel holding three sections. Each
+// panel holding four sections. Each
 // section numbers its cards 1..N in page order: a picker of those numbers sits in its heading, the
 // selected number's card is the section's one open card, and each card's tag ends its statement with
 // the same number. A counter-argument lists the arguments linked to it, so a rebuttal linked to two

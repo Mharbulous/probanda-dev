@@ -1,4 +1,4 @@
-// build-stamp: 170e7184b1e6
+// build-stamp: 7726dc0c21f2
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -81341,7 +81341,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "170e7184b1e6";
+var BUILD_STAMP = false ? null : "7726dc0c21f2";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -97968,7 +97968,7 @@ var arguments_js_default = `(function () {
   data.submissions.forEach(function (a) { byId[a.id] = a; });
   var counterByKey = {};
   data.counter_arguments.forEach(function (c) { counterByKey[c.key] = c; });
-  var KIND_LABEL = { submission: "Submission", rebuttal: "Rebuttal", raised: "Raised", anticipated: "Anticipated" };
+  var KIND_LABEL = { submission: "Submission", rebuttal: "Rebuttal", killed: "Killed", raised: "Raised", anticipated: "Anticipated" };
 
   // A card: its statement, which toggles it and ends in its tag, then its detail.
   function card(cls, kind, text, n) {
@@ -98085,10 +98085,11 @@ var arguments_js_default = `(function () {
   section("submissions", "Submissions", data.submissions.filter(function (a) { return a.kind === "submission"; }).map(argumentCard));
   section("counter", "Counter-arguments", data.counter_arguments.map(counterCard));
   section("rebuttals", "Rebuttals", data.submissions.filter(function (a) { return a.kind === "rebuttal"; }).map(argumentCard));
+  section("killed", "Killed", data.submissions.filter(function (a) { return a.kind === "killed"; }).map(argumentCard));
   var empty = el("p", "empty", "Nothing recorded under this filter.");
   folder.appendChild(empty);
 
-  var TABS = [["all", "All"], ["submissions", "Submissions"], ["counter", "Counter-arguments"], ["rebuttals", "Rebuttals"]];
+  var TABS = [["all", "All"], ["submissions", "Submissions"], ["counter", "Counter-arguments"], ["rebuttals", "Rebuttals"], ["killed", "Killed"]];
   var tabs = TABS.map(function (t) {
     var b = el("button", "", t[1]);
     b.type = "button";
@@ -98171,6 +98172,11 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
               MIN(CASE fs.document WHEN 'form' THEN fs.ordinal END), MIN(fs.ordinal), s.ordinal, s.id`,
     [...ids, proceedingId]
   );
+  const killed = rows(
+    dbPath,
+    "SELECT id, contention, killed_on FROM submissions WHERE proceeding_id = ? AND killed_on IS NOT NULL ORDER BY killed_on, id",
+    [proceedingId]
+  );
   const deployments = rows(
     dbPath,
     `SELECT DISTINCT fs.submission_id, f.id AS filing_id, f.title, f.retired_on
@@ -98218,21 +98224,23 @@ function argumentsFor(dbPath, proceedingId, ids, merged) {
     if (counter !== void 0 && live.has(l3.submission_id) && !counter.linked.includes(l3.submission_id)) counter.linked.push(l3.submission_id);
   }
   const counterOrder = new Map(counterArguments.map((c3, i3) => [c3.key, i3]));
+  const item = (s3, kind, where) => ({
+    id: s3.id,
+    kind,
+    contention: s3.contention,
+    where,
+    facts: facts.filter((f3) => f3.submission_id === s3.id).map((f3) => f3.postulate),
+    law: law.filter((l3) => l3.submission_id === s3.id).map((l3) => ({ text: l3.proposition, killed_on: l3.killed_on })),
+    rebuts: links.filter((l3) => l3.submission_id === s3.id && counterByKey.has(l3.key)).map((l3) => l3.key).sort((a3, b3) => (counterOrder.get(a3) ?? 0) - (counterOrder.get(b3) ?? 0))
+  });
   const items2 = submissions.map((s3) => {
     const deployedOn = deployments.filter((d3) => d3.submission_id === s3.id);
     const here = deployedOn.filter((d3) => ids.includes(d3.filing_id));
     const elsewhere = deployedOn.map((d3) => d3.retired_on === null ? d3.title : `${d3.title} (retired)`).join("; ");
     const where = here.length > 0 ? merged ? `On this board: ${here.map((d3) => d3.title).join("; ")}` : "On this Writing" : deployedOn.length > 0 ? `On ${elsewhere}` : "Held in reserve";
-    return {
-      id: s3.id,
-      kind: deployedOn.length > 0 ? "submission" : "rebuttal",
-      contention: s3.contention,
-      where,
-      facts: facts.filter((f3) => f3.submission_id === s3.id).map((f3) => f3.postulate),
-      law: law.filter((l3) => l3.submission_id === s3.id).map((l3) => ({ text: l3.proposition, killed_on: l3.killed_on })),
-      rebuts: links.filter((l3) => l3.submission_id === s3.id && counterByKey.has(l3.key)).map((l3) => l3.key).sort((a3, b3) => (counterOrder.get(a3) ?? 0) - (counterOrder.get(b3) ?? 0))
-    };
+    return item(s3, deployedOn.length > 0 ? "submission" : "rebuttal", where);
   });
+  for (const s3 of killed) items2.push(item(s3, "killed", `Killed ${s3.killed_on}`));
   return { submissions: items2, counter_arguments: counterArguments };
 }
 var ARGUMENTS_PAGE = {

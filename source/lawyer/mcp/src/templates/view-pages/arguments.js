@@ -22,7 +22,7 @@
   data.submissions.forEach(function (a) { byId[a.id] = a; });
   var counterByKey = {};
   data.counter_arguments.forEach(function (c) { counterByKey[c.key] = c; });
-  var KIND_LABEL = { submission: "Submission", rebuttal: "Rebuttal", raised: "Raised", anticipated: "Anticipated" };
+  var KIND_LABEL = { submission: "Submission", rebuttal: "Rebuttal", killed: "Killed", raised: "Raised", anticipated: "Anticipated" };
 
   // A card: its statement, which toggles it and ends in its tag, then its detail.
   function card(cls, kind, text, n) {
@@ -139,10 +139,11 @@
   section("submissions", "Submissions", data.submissions.filter(function (a) { return a.kind === "submission"; }).map(argumentCard));
   section("counter", "Counter-arguments", data.counter_arguments.map(counterCard));
   section("rebuttals", "Rebuttals", data.submissions.filter(function (a) { return a.kind === "rebuttal"; }).map(argumentCard));
+  section("killed", "Killed", data.submissions.filter(function (a) { return a.kind === "killed"; }).map(argumentCard));
   var empty = el("p", "empty", "Nothing recorded under this filter.");
   folder.appendChild(empty);
 
-  var TABS = [["all", "All"], ["submissions", "Submissions"], ["counter", "Counter-arguments"], ["rebuttals", "Rebuttals"]];
+  var TABS = [["all", "All"], ["submissions", "Submissions"], ["counter", "Counter-arguments"], ["rebuttals", "Rebuttals"], ["killed", "Killed"]];
   var tabs = TABS.map(function (t) {
     var b = el("button", "", t[1]);
     b.type = "button";

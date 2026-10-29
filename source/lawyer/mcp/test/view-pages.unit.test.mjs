@@ -44,12 +44,12 @@ const FIXTURES = {
 };
 
 /** sha256 of renderViewPageHtml(page, META, FIXTURES[page.name]), taken from the inline-string pages before the move to templates;
- * Procedural History's and Material Facts' at the split of Provable Facts (docs/ADRs/0011). */
+ * Procedural History's and Material Facts' at the split of Provable Facts (docs/ADRs/0011); Arguments' at its Killed section. */
 const PINS = {
   "Procedural History": "464d015ca1fb3901ef7b40bca293d96908ba28f53f557ae500994f340316c215",
   "Material Facts": "955b762ab670b677d4aa3ec3fe42628559b53b6318a18a1ae67d76a899729fc6",
   "Raw Research": "f16317970c4b86a3a8fba7464ddfa14cd8af58ed82b2f2b5833d580f42fdc864",
-  Arguments: "d467d60950f6dd8d18eeced91d6195e723e460fb9a1ff9538c3d758fb36ec74e",
+  Arguments: "694bf7e9292c17302291226cb73142d9c057ccfe26b745c708d8d1336d0ca876",
   "Loose Threads": "721b86eeb0ee11326e5905eb01605b90ceaeba4623c47619d6a95d3c4295f7aa",
 };
 
