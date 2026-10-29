@@ -50,6 +50,8 @@ The briefing reads no mail. When the practitioner asks what someone said or sent
 matter's mail folder as part of the record, through the route in `shared/matter-mail.md` and
 never through a browser, and cite each message by its date, sender, subject and folder. This
 skill writes nothing, so skip that file's record step and say the folder was not recorded.
+When the briefing reports what a tribunal, court, counsel or witness said or wrote, quote the
+operative words verbatim first, with author, date and source (`shared/report-what-a-source-said.md`).
 
 ## Output Template
 
