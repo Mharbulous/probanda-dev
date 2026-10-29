@@ -1,7 +1,7 @@
 {
   "name": "file-manager",
   "displayName": "File Manager",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Optional Probanda plugin for British Columbia lawyers that renames, moves, changes and deletes files on your computer that Probanda did not create: matter housekeeping, routing loose accounting files and applying approved renames. Without it, Probanda cannot rename, move, change or delete any file it did not create: it only reads or copies them. Requires the lawyer plugin: install lawyer first.",
   "author": {
     "name": "Probanda Legal",
@@ -26,6 +26,20 @@
             ],
             "timeout": 10,
             "statusMessage": "One-way approval gate"
+          }
+        ]
+      },
+      {
+        "matcher": "^(Write|Edit|MultiEdit|Bash|PowerShell|mcp__(.+__)?device_bash|mcp__(.+__)?workspace__bash)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/housekeeping-approval-guard.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Housekeeping approval guard"
           }
         ]
       }
