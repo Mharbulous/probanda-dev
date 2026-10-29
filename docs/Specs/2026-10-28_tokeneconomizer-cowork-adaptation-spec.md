@@ -97,7 +97,9 @@ Brahm's ruling of 2026-10-28, after an independent review: nothing in the green 
 - **S1. The loop guard acts (PC).** In a Claude Code session on the PC, in a repository whose envelope has learned turns, stage a stuck turn: a task that sends the model round a failing loop. S1 passes if the event log records a `nudge` or `abort` for that turn. The PC runs with `shadow=true` (global, in `~/.tokeneconomizer/config.json`), so the event is logged with `shadow: true` and nothing is shown to the model.
 - **S2. The model makes a tool call a hook asks for (Cowork).** One Cowork session with a temporary probe hook, the way R8 to R12 were run in plugin 0.1.3, that at every prompt asks the model to call `practice_data__config_status` before answering. S2 records, per prompt, whether the model made the call and the token cost of the ask and the call. It passes if the model made the call at nine prompts in ten or more.
 
-The green build is then planned from their results.
+**S1 result, 2026-10-28: PASS.** In a Claude Code session in probanda-dev, 20 pairs of an edit to one scratch file and a run of a script that always failed the same way. The guard's gate opened at the segment's 19th call (8 repeats of the same failure), its first judge call returned stuck at confidence 0.80, and the guard logged a `nudge` with `shadow: true` at the turn's 26th tool call. That judge call, with the redirect it wrote, cost 148,007 effective tokens. The digest tagged the `Write` of a file containing `assert` as an error output, which shows that a file's own text can count as a failure.
+
+S2 has not run. The green build is then planned from their results.
 
 One point for planning: the loop guard learns one envelope for all sessions, and a one-shot lookup and a long housekeeping run differ widely in length. On 2026-10-28 the probanda-dev envelope held 18 turns with a median of 6.5 tool calls and a 90th percentile of 27.
 
