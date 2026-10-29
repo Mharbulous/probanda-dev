@@ -14,6 +14,10 @@ The version rule:
 - **Minor** (0.2.1 to 0.3.0): anything else. For example: a data migration or schema change, a tool removed or its inputs changed, a new required setup step such as a credential or a settings allowlist, a raised `requires`, or a server that refuses data an old copy wrote or writes data an old copy would damage.
 - **1.0.0**: only when Probanda enters the Claude Directory.
 
+## Vendored plugin
+
+The marketplace also lists `tokeneconomizer` (Token Economizer), from `vendor/tokeneconomizer/`. It is third-party code under Apache-2.0, not a Probanda plugin, so COMMANDMENTS.md does not govern it (Brahm's ruling, 2026-10-28). Its tool pruning writes `.claude/settings.local.json` in repositories. It is not built by `scripts/build_plugin.py`, not versioned by `/release`, and never goes into `public/`. It is the bundle of `Mharbulous/TokenEconomizer` at commit `a45bf5a9`, byte for byte, plus that repo's `LICENSE`. To refresh it, clone the fork, run its `python scripts/build_plugin.py --out <dir>`, replace `vendor/tokeneconomizer/` with `<dir>/tokeneconomizer/`, copy `LICENSE` back in, update the commit here, and keep `scripts/te` and `scripts/te-hook` executable in git (`git update-index --chmod=+x`).
+
 ## Two repositories
 
 - `Mharbulous/probanda-dev` is this repository. It is private, and all development happens here. It stays private: its history holds schema files. It is where new and refactored skills, agents and tools are tried out. Its seven plugins install only on the maintainer's own machines, so a change here reaches no user, and a skill may ship in a plugin here while still experimental, including a maintainer-only one. Users get a change only after it moves into `public/` and is approved and published. `developer` is never public: `python scripts/check_public_tree.py` fails on any `public/plugins/` folder or public marketplace entry outside the public plugins, and on any skill or agent that `source/assignment.json` gives `developer`.
@@ -29,7 +33,7 @@ The source moved here from CoClerk and is no longer edited there. The `researche
 
 These are permanent once published. Do not rename them.
 
-- The plugin names `lawyer`, `researcher`, `litigator`, `solicitor`, `file-manager`, `timekeeper` and `developer`.
+- The plugin names `lawyer`, `researcher`, `litigator`, `solicitor`, `file-manager`, `timekeeper` and `developer`, and the vendored plugin name `tokeneconomizer`.
 - The marketplace names: `Probanda_Legal` for the public repository and `Probanda_Legal_experimental` for this one. A marketplace name cannot hold a space, so the readable "Probanda Legal" and "Probanda Legal (experimental)" go in `owner.name` and each plugin entry's `author.name`.
 - Every MCP server key in a plugin's `.mcp.json`: `data` and `contacts-calendars-email` in `lawyer`, `canlii` and `commons` in `researcher`, `files` in `file-manager`, and `timecamp` in `timekeeper`.
 
