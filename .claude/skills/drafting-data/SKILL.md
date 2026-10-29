@@ -120,7 +120,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 
 `references/schema.sql` is the canonical current schema (its generation, the shape and what is not stored: `references/tool-contracts.md`, "Schema notes"). Never write a deadline here: the appeal deadline is a per-render `appeal_deadline` argument.
 
-**Current version**: `db_meta.schema_version = 79` (`TARGET_SCHEMA_VERSION` in `references/scripts/migrate_engine.py`); each hop's reason is its comment in `references/migrations.sql`. `drafting_forms__open_session` migrates on every entry; below v42 it returns `migration_required`. **v42 stays readable**: a database at v42 lists and renders as current, so a refused v43 hop leaves the matter behind, never unusable. Below a later hop, that hop's feature is absent (v52 saved answers, v67 attachments, v68 deferral, v69 suppression, v74 Bring Forward, v75 discard and suggest, v76 sources to get).
+**Current version**: `db_meta.schema_version = 80` (`TARGET_SCHEMA_VERSION` in `references/scripts/migrate_engine.py`); each hop's reason is its comment in `references/migrations.sql`. `drafting_forms__open_session` migrates on every entry; below v42 it returns `migration_required`. **v42 stays readable**: a database at v42 lists and renders as current, so a refused v43 hop leaves the matter behind, never unusable. Below a later hop, that hop's feature is absent (v52 saved answers, v67 attachments, v68 deferral, v69 suppression, v74 Bring Forward, v75 discard and suggest, v76 sources to get, v80 the `kv_store` table). The rules for `kv_store` values: `references/kv-store.md`.
 
 ## CRUD guidance
 

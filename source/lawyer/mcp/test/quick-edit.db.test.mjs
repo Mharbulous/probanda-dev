@@ -164,9 +164,9 @@ test("a recast makes a Part 2 fact a new Part 3 submission at its anchor and tak
   assert.equal(rows(dbPath, "SELECT COUNT(*) AS n FROM paragraph_revisions").at(0).n, 0);
 });
 
-test("apply_edit succeeds on a database at schema version 79", async (t) => {
+test("apply_edit succeeds on a database at schema version 80", async (t) => {
   const { dbPath, revision } = await matter(t);
-  assert.equal(Number(rows(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").at(0).value), 79);
+  assert.equal(Number(rows(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").at(0).value), 80);
   const preview = await submissionFormsPreviewEdit({
     db_path: dbPath, filing_id: 1, session_token: SESSION, seen_revision: revision,
     ops: [{ op: "move", target: target("3", 2), anchor: { ...target("3", 1), position: "before" } }],

@@ -1,4 +1,4 @@
-// build-stamp: 4dc36ec9c841
+// build-stamp: c5dd999758cb
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -81493,7 +81493,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "4dc36ec9c841";
+var BUILD_STAMP = false ? null : "c5dd999758cb";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -95035,7 +95035,7 @@ function withPartiesDriftLines(markdown, rows4) {
 }
 
 // src/submission/schema-ceiling.ts
-var BAKED_SCHEMA_VERSION = false ? null : 79;
+var BAKED_SCHEMA_VERSION = false ? null : 80;
 var OVERRIDE_ENV = "COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA";
 var CEILING_SEAM_ENV = "COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION";
 var OFF = /* @__PURE__ */ new Set(["", "0", "false", "no", "off"]);

@@ -3,7 +3,7 @@
 -- via references/scripts/migrate_engine.py. Do not hand-edit: regenerate
 -- after any change to migrations.sql so this file matches the live schema
 -- byte-for-byte (this is the acceptance test for issue 295).
--- Current version: db_meta.schema_version = 79
+-- Current version: db_meta.schema_version = 80
 
 
 CREATE TABLE db_meta (
@@ -1448,3 +1448,5 @@ CREATE TABLE ticket_sources (
     CHECK (reason IS NULL OR outcome IS NOT NULL),
     UNIQUE (ticket_id, kind, label)
 );
+
+CREATE TABLE kv_store (namespace TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (namespace, key));

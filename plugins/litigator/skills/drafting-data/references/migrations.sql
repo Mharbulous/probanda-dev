@@ -5044,3 +5044,20 @@ UPDATE db_meta SET value = '78' WHERE key = 'schema_version';
 ALTER TABLE hearing_details ADD COLUMN hearing_date_position TEXT CHECK (hearing_date_position IS NULL OR hearing_date_position IN ('agree', 'propose_other', 'none_proposed'));
 
 UPDATE db_meta SET value = '79' WHERE key = 'schema_version';
+
+-- MIGRATE 79 -> 80
+-- One generic key-value table, so that a new attribute of a row becomes a
+-- JSON value keyed by the row's id with no further DDL. The namespace says
+-- what the value describes and the key names the row (for example
+-- '<table>:<id>'). There is no namespace or key per tag type or link role
+-- (Commandment 5). Values hold job or process state only, never matter text
+-- that is revised: the table carries no revision triggers. The server tool
+-- that writes a value validates it (references/kv-store.md).
+--
+-- Added by Brahm's ruling of 2026-10-29, recorded in
+-- source/exception-rulings.json.
+--
+-- Additive: one new table. The hop writes no row and moves no revision.
+CREATE TABLE kv_store (namespace TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (namespace, key));
+
+UPDATE db_meta SET value = '80' WHERE key = 'schema_version';

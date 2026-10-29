@@ -1,0 +1,22 @@
+[
+  {
+    "store": "drafting-data",
+    "hop": "79 -> 80",
+    "date": "2026-10-29",
+    "ruling": "Brahm, 2026-10-29, choosing option 1 (one generic kv_store table in drafting.db, and rulings for legacy-store migrations): \"I meant I accept your recommended choice.\" and, on the plan, \"go\".",
+    "problems": [
+      {
+        "message": "forbidden file type",
+        "content": "1b162080623bf6e19c908b27375953ecb64d60223a4909424a8828f5e03536d8"
+      },
+      {
+        "message": "contains schema DDL",
+        "content": "CREATE TABLE kv_store (namespace TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (namespace, key));"
+      },
+      {
+        "message": "forbidden file type",
+        "content": "e2fe878b67fe5aa6bc7f5c5ff86a5d44fed9bed91746ef4df454cc8c370d69e6"
+      }
+    ]
+  }
+]

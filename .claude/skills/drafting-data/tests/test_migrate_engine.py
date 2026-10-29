@@ -417,8 +417,11 @@ class TestV21RevisionTriggers(unittest.TestCase):
     # its rules map, and which rules it was served, change no substance.
     # v76 adds ticket_sources, eighteen: recording or closing a source a job
     # is about to get changes no substance (migrations.sql 75 -> 76).
+    # v80 adds kv_store, nineteen: it holds job or process state only
+    # (migrations.sql 79 -> 80).
     EXEMPT = frozenset(
         {
+            "kv_store",
             "board_attachments",
             "session_position",
             "job_position",
@@ -5226,6 +5229,57 @@ class TestV79HearingDatePosition(unittest.TestCase):
         con = sqlite3.connect(str(self.db_path))
         self.addCleanup(con.close)
         self.assertIn("hearing_date_position", [r[1] for r in con.execute("PRAGMA table_info(hearing_details)")])
+
+
+class TestV80KvStore(unittest.TestCase):
+    """v80: one generic kv_store table (Brahm's ruling of 2026-10-29). The hop adds the table with no
+    revision trigger, writes no row and moves no revision."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.db_path = Path(self._tmp.name) / "submission.sqlite"
+
+    @staticmethod
+    def _revision(con):
+        return int(con.execute("SELECT value FROM db_meta WHERE key = 'revision'").fetchone()[0])
+
+    def _hop(self):
+        self.assertEqual(engine.migrate(str(self.db_path), target_version=79)[-1], (78, 79))
+        con = sqlite3.connect(str(self.db_path))
+        self.revision = self._revision(con)
+        con.close()
+        self.assertEqual(engine.run({"db_path": str(self.db_path), "target_version": 80})["applied"], [{"from": 79, "to": 80}])
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        return con
+
+    def test_hop_adds_the_empty_table_and_moves_no_revision(self):
+        con = self._hop()
+        self.assertEqual(schema_version(self.db_path), 80)
+        self.assertEqual(self._revision(con), self.revision, "the hop moves no revision")
+        self.assertEqual(
+            [(r[1], r[2], r[3], r[5]) for r in con.execute("PRAGMA table_info(kv_store)")],
+            [("namespace", "TEXT", 1, 1), ("key", "TEXT", 1, 2), ("value", "TEXT", 1, 0), ("updated_at", "TEXT", 1, 0)],
+        )
+        self.assertEqual(con.execute("SELECT COUNT(*) FROM kv_store").fetchone(), (0,))
+        self.assertEqual(con.execute("SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND tbl_name = 'kv_store'").fetchone(), (0,))
+        self.assertEqual(con.execute("PRAGMA integrity_check").fetchone(), ("ok",))
+
+    def test_a_value_write_moves_no_revision_and_the_key_is_unique(self):
+        con = self._hop()
+        con.execute("INSERT INTO kv_store VALUES ('job_state', 'tickets:1', '{\"a\": 1}', '2026-10-29T10:00')")
+        con.commit()
+        self.assertEqual(self._revision(con), self.revision, "a kv_store value is job or process state")
+        with self.assertRaises(sqlite3.IntegrityError):
+            con.execute("INSERT INTO kv_store VALUES ('job_state', 'tickets:1', '{}', '2026-10-29T10:01')")
+
+    def test_a_fresh_database_holds_the_table(self):
+        engine.run({"db_path": str(self.db_path)})
+        self.assertEqual(schema_version(self.db_path), 80)
+        con = sqlite3.connect(str(self.db_path))
+        self.addCleanup(con.close)
+        self.assertEqual(con.execute("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'kv_store'").fetchone(), (1,))
 
 
 if __name__ == "__main__":
