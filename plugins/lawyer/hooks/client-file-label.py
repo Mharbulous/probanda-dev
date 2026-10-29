@@ -2,7 +2,7 @@
 """Label a Read of a client file as client data, so the model reads it as data, never as
 instructions.
 
-Hook event: PostToolUse, matcher Read. A file counts as a client file when it lies under the
+Hook event: PostToolUse, matcher Read|Grep. A file counts as a client file when it lies under the
 case-data root, found as inject-preferences.py finds it (`case_data_root` in the per-user
 probanda.json). Any other file, or no reachable root (as in Cowork), passes untouched.
 
@@ -11,8 +11,12 @@ probanda.json). Any other file, or no reachable root (as in Cowork), passes unto
   and `</client_file>` at the end of the last line, so line numbers are unchanged. Every
   `</client_file` inside the content becomes `<\\/client_file`, so the file cannot close the label.
 - A PDF or image result gets an additionalContext note naming the file as client data.
+- A Grep in content mode whose search path lies under the root, or holds it, comes back with
+  its `content` wrapped the same way (`filenames` is empty in that mode, so the search path
+  decides). The names-only modes pass untouched.
 
-Shapes captured on 2026-10-28 (docs/Plans/2026-10-28_untrusted-content-and-approvals.md, step 0).
+Shapes captured on 2026-10-28 (docs/Plans/2026-10-28_untrusted-content-and-approvals.md, step 0;
+Grep in docs/Plans/2026-10-28_guardrail-gaps.md, gap 3).
 Fails OPEN on its own error, loudly on stderr.
 """
 import html
@@ -47,8 +51,29 @@ def labelled(content, name):
     return opening + body + CLOSE
 
 
+def labelled_grep(data):
+    response = data.get("tool_response")
+    if not isinstance(response, dict) or response.get("mode") != "content" or not response.get("content"):
+        return 0
+    root = case_data_root()
+    if root is None:
+        return 0
+    searched = Path(data.get("cwd") or ".") / ((data.get("tool_input") or {}).get("path") or ".")
+    searched = searched.resolve()
+    if not (searched.is_relative_to(root) or root.is_relative_to(searched)):
+        return 0
+    updated = json.loads(json.dumps(response))
+    body = updated["content"].replace("</client_file", "<\\/client_file")
+    updated["content"] = '<client_file source="client files: grep matches">' + body + CLOSE
+    output = {"hookEventName": "PostToolUse", "updatedToolOutput": updated}
+    sys.stdout.write(json.dumps({"hookSpecificOutput": output}) + "\n")
+    return 0
+
+
 def main():
     data = hook_io.payload()
+    if data.get("tool_name") == "Grep":
+        return labelled_grep(data)
     path = (data.get("tool_input") or {}).get("file_path")
     response = data.get("tool_response")
     if not isinstance(path, str) or not isinstance(response, dict):
