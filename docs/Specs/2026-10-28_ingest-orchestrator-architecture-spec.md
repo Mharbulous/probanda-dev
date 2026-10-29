@@ -235,6 +235,7 @@ Today the main thread applies these while composing SQL. The converters implemen
   - Why the server runs it: a file the session writes is invisible to the host in Cowork (#76). So a session-written "staged SQL file" cannot work, and the server must produce the SQL itself.
 - **Size cap:** an inline `sql_script` over 8 KB (est.) is refused with "too long to send inline: use a generator or ingest_result", but **only on a call inside a run the orchestrator began** (`begin` with `orchestrator: true`, kept on the lease).
   - Existing large callers are unaffected: those without a `run_id` (the statute path, #68, 16–43 KB; merge-authorities; the submission-law bridge), and D1's single-document ingest paths, whose `run_id` calls carry Path A, Path C and Path E transactions that can exceed 8 KB and have no generator or `ingest_result` to turn to.
+  - So the cap binds attended orchestrator runs only. `ingest-unattended.md` begins its run without `orchestrator`, because the same run also writes the files it keeps on D1's paths (authorities, books, transcripts, a `partial` affidavit's continuation).
   - The refusal is in the tool, not a hook, because the tool is Probanda's own.
 
 ---

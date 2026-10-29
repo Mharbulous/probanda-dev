@@ -39,7 +39,7 @@ Take the files one at a time, in the order given, through these checks. "Set asi
 |---|---|
 | `file_path` | the stored form (`shared/conventions.md` §2.4) |
 | `file_hash` | from check 2 |
-| `kind` | `facts`, `notice_of_application` or `affidavit` |
+| `kind` | `facts`, `notice_of_application` or `affidavit`; `path_b` for a file sent to Path B, which takes no other field |
 | `rendering` | the rendering's host path, for a `.docx`, `.eml` or `.msg` |
 | `execution` | `draft`, `affirmed` or `filed`, when known |
 | `witness` | `fact` or `expert`, for an unsworn witness statement or expert report |
