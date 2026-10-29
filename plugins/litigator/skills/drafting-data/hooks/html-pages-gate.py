@@ -12,8 +12,9 @@ proceeding <id>.html` on a merged pre-filing board (docs/ADRs/0010) (ADR 0033,
 2026-10-09 `<page name> - filing <id>.html`, still recognised until the next
 page write trashes it), and only a page name listed in VIEW_NAMES counts, so
 each new view page adds its name there. An agent never views, reads,
-greps, parses, scripts over, stages, authors or requests a screenshot; however,
-an agent may present the html to a human user for them to view, and an agent
+greps, parses, scripts over, authors or requests a screenshot; however,
+an agent may present the html to a human user for them to view, staging it
+first where presenting needs that, and an agent
 may view screenshots provided by a human user on the user's own initiative.
 So this gate refuses:
 
