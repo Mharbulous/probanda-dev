@@ -51,7 +51,8 @@ TELL = (
 MISSING = "This computer holds no Probanda key. " + TELL
 UNSEEN = (
     "This session cannot see whether this computer holds Probanda's key. Call "
-    "practice_data__config_status once. If it reports cloud_credential: missing: " + TELL
+    "practice_data__config_status once, in the same round trip as a skill's first tool call or after "
+    "its card. If it reports cloud_credential: missing: " + TELL
 )
 HELD = (
     "This computer holds {count} suggestion(s) to the Probanda team, drafted while it had no Probanda "

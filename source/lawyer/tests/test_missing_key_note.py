@@ -116,7 +116,7 @@ def test_outside_windows_the_session_is_pointed_to_config_status(monkeypatch):
     monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
     monkeypatch.setattr(module.sys, "platform", "linux")
     text = module.context()
-    assert "practice_data__config_status" in text
+    assert "practice_data__config_status once, in the same round trip as a skill's first tool call or after its card" in text
     assert "cloud_credential: missing" in text
     assert "key_request__submit" in text
 

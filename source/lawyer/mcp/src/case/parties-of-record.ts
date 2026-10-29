@@ -10,6 +10,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
+import { oncePerCall } from "../call-memo.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs, READ_TIMEOUT_MS } from "../python-timeout.js";
@@ -74,6 +75,11 @@ function read(caseDataDir: string, request: object, env: NodeJS.ProcessEnv): Par
   if (!existsSync(join(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
+  // Session entry reads the same proceeding's parties several times (call-memo.ts).
+  return oncePerCall(JSON.stringify([caseDataDir, request]), () => spawnRead(caseDataDir, request, env));
+}
+
+function spawnRead(caseDataDir: string, request: object, env: NodeJS.ProcessEnv): PartiesOfRecord {
   try {
     const parsed = runPythonDriver({
       label: "matter-data parties-of-record reader",

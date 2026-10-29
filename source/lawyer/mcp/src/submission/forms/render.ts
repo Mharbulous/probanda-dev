@@ -97,7 +97,8 @@ export function submissionFormsRender(
    * section's dateless Goal criteria (ADR 0013, 2026-10-04 amendments). */
   dates: MatterDates = DATES_NOT_READ,
   /** Not a tool input: open_session's opening is handed every page this render wrote, which the
-   * render's own response leaves out. */
+   * render's own response leaves out. Given, no view page is written: session entry leaves them
+   * to the background job. */
   onPages?: (pages: PagesWritten) => void,
   /** Test seam only: the scratch skills tree the form currency check reads (ADR 0038). */
   seams: KnowledgeSeams = {}
@@ -172,7 +173,7 @@ export function submissionFormsRender(
   // compares against what this filing last reported, never against a page.
   const writePages = (section: WorkBoardData) => {
     if (!pagesDir) return undefined;
-    const pages = writeMatterPages(dbPath, pagesDir, client, now, revision, todos, dates, timings, { section });
+    const pages = writeMatterPages(dbPath, pagesDir, client, now, revision, todos, dates, timings, { section, ...(onPages ? { views: false as const } : {}) });
     onPages?.(pages);
     return { pages, change: recordPagesState(dbPath, todos, section, sessionToken) };
   };

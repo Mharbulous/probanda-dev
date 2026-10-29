@@ -57,7 +57,8 @@ def test_the_framing_says_to_refuse_a_conflict_by_quoting_the_rule_and_its_date(
 
 def test_points_to_the_tool_when_the_config_is_out_of_reach(tmp_path):
     text = context(run(tmp_path / "absent" / "probanda.json"))
-    assert "preferences__read" in text
+    assert "preferences__read in the same round trip as a skill's first tool call" in text
+    assert "before any job work" in text
 
 
 def test_points_to_the_tool_when_the_case_data_root_is_out_of_reach(tmp_path):

@@ -77,7 +77,7 @@ export function writeMatterPages(
   todos: MatterTodos,
   dates: MatterDates,
   timings: PhaseTimings,
-  reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number } = {}
+  reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number; views?: false } = {}
 ): PagesWritten {
   return timed(timings, "matter_pages", () => {
     const { pages, keep, paths } = buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates, reuse);

@@ -61,7 +61,8 @@ export interface MatterPagesBuilt {
  * `reuse.only` names the one filing whose Milestone page and view pages are built, with the
  * Litigation Strategy: the background render job passes the filing it just rendered, and writes
  * every page once after its last, because building them all after every filing costs the square of
- * the filing count.
+ * the filing count. `reuse.views` false leaves out every view page: session entry writes the rest
+ * and leaves the view pages to the background job (open-session.ts).
  */
 export function buildMatterPages(
   dbPath: string,
@@ -73,7 +74,7 @@ export function buildMatterPages(
   /** The matter's dates, for the Milestone pages' HTML files only: never a section, the state file or
    * the return value. A linked deadline reaches its filing's section as a dateless criterion. */
   dates: MatterDates,
-  reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number } = {},
+  reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number; views?: false } = {},
   /** A preview's pages in place of the boards' own (src/pages/preview.ts): the composed Litigation
    * Strategy and Milestone templates, whole view pages by name, and the Loose Threads page. Omitted, every page is the board's. */
   templates: { matterBoard?: ComposedTemplate; milestone?: ComposedTemplate; views?: Readonly<Record<string, ViewPage>>; threads?: ViewPage<{ dbPath: string }> } = {}
@@ -96,7 +97,7 @@ export function buildMatterPages(
   // What this call builds: every page, or the page holding one filing.
   const { only } = reuse;
   const groupsWritten = only === undefined ? groups : groups.filter((g) => g.members.some((m) => m.filing?.id === only));
-  const viewsWritten = views.filter((v) => groupsWritten.includes(v.group));
+  const viewsWritten = reuse.views === false ? [] : views.filter((v) => groupsWritten.includes(v.group));
   const sectionOf = (m: Member): { section: WorkBoardData; writings: StripItem[] } => {
     if (m.filing === null) {
       const p = m.proceeding;

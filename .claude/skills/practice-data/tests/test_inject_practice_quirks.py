@@ -39,7 +39,8 @@ def test_injects_the_notes_between_rules(tmp_path):
 def test_points_to_the_tool_when_the_config_is_out_of_reach(tmp_path):
     text = context(run(tmp_path / "absent" / "probanda.json"))
     assert text.startswith("Practitioner environment notes:")
-    assert "call practice_data__config_status" in text
+    assert "Call practice_data__config_status " + "in the same round trip as a skill's first tool call" in text
+    assert "before any mail, calendar or file lookup" in text
 
 
 def test_says_when_the_notes_cannot_be_read(tmp_path):

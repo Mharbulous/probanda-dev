@@ -16,6 +16,7 @@
 
 import { randomBytes, randomUUID } from "node:crypto";
 
+import { oncePerCall } from "../call-memo.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import type { KvWrite } from "../kv/backend.js";
 import { CloudResetError, CloudUnreachableError, callItems } from "./cloud.js";
@@ -107,9 +108,9 @@ export class PracticeStore {
     return { items, meta, pending };
   }
 
-  /** Every item, for the reads. */
+  /** Every item, for the reads: one snapshot per call inside call-memo.ts's inOneCall. */
   items(): Map<string, Item> {
-    return this.snapshot().items;
+    return oncePerCall(this, () => this.snapshot().items);
   }
 
   /** Every item of one kind, flattened to its row. */

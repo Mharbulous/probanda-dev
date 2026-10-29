@@ -116,10 +116,12 @@ class PostToolUseTest(unittest.TestCase):
         self.assertIn("present_files", context)
         self.assertIn("SendUserFile", context)
 
-    def test_staging_route_checks_the_folder_grant_first(self):
+    def test_staging_route_stages_at_once_when_the_folder_is_known_connected(self):
         context = self.post(OPEN, mcp_text({"milestone_path": PAGE}))
         self.assertIn("tool list", context)
-        self.assertLess(context.index("connectedFolders"), context.index("device_stage_files"))
+        self.assertIn("at once when the session context or an earlier get_device_info shows the matter folder connected", context)
+        self.assertNotIn("first check", context)
+        self.assertLess(context.index("device_stage_files"), context.index("device_request_folder_access"))
 
     def test_staging_route_reloads_the_stage_tool_and_never_sends_the_pc_path(self):
         context = self.post(OPEN, mcp_text({"milestone_path": PAGE}))
