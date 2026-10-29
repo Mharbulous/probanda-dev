@@ -615,7 +615,11 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "authority's own line: while a counted statement survives, a proposition with an overruled statement " +
       "carries ⛔ beside 🧐 wherever 🧐 fires, until approved, the review confirming the overruling. Which of " +
       "its statements are overruled is part of the proposition snapshot (review.md), so a later overruling " +
-      "re-raises 🧐 on an approved proposition, and a later kill does not. The `(overruled: …)` tag beside that " +
+      "re-raises 🧐 on an approved proposition, and a later kill does not. Which statements support it, and the " +
+      "words each quotes, are part of it too (review.md `supporting_statements`), so linking, unlinking or " +
+      "replacing a statement, or an in-place change of its excerpt, re-raises 🧐 on an approved proposition, and " +
+      "an approved order takes the same rule for the statements on its `filled` edges (`basis_excerpts`); a " +
+      "pinpoint-only correction re-raises neither. The `(overruled: …)` tag beside that " +
       "⛔ (§1) is not part of it, so an edit of the authority's title or citation re-raises nothing. Neither the " +
       "kill nor the overruling silences 🧐 on the clause line, which is neither the cited authority's own line " +
       "nor its statement's and takes no 🏛️ ⊕ 📖 reopen prefix (📍 row): until approved, a clause citing an " +
@@ -633,7 +637,8 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "review*, re-glyphed and renamed 2026-09-24 (§6); render shipped #912, glyph shipped #1061; clause kind " +
       "admitted #1122 (review.md snapshot row), render shipped #1126; prose slot kind admitted #1207 (review.md " +
       "snapshot row), render shipped #1207; rhetorical paragraph kind admitted v71 (review.md snapshot row, " +
-      "wording alone; its plain-text tells hold nothing back)",
+      "wording alone; its plain-text tells hold nothing back); supporting_statements and basis_excerpts " +
+      "snapshot keys 2026-10-08 (review-snapshot-supporting-statements spec)",
   },
 
   // Table 1b, events: the work column is the work each routes.

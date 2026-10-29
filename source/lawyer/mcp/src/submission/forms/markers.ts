@@ -576,10 +576,10 @@ export function counselReviewMarker(otherWorkMarkers: string, currentSnapshot: s
 export const REVIEW_SNAPSHOT_FIELDS = {
   statements_of_law: ["excerpt", "pinpoint", "treatment"],
   statements_of_fact: ["excerpt", "pinpoint", "exhibit_excerpt", "exhibit_pinpoint"],
-  law_assertions: ["proposition", "overruled_statement_ids"],
+  law_assertions: ["proposition", "overruled_statement_ids", "supporting_statements"],
   facts: ["postulate", "court_record_pinpoint"],
   submissions: ["contention"],
-  order_sought: ["wording", "template_key", "template_values", "amount", "basis_statements"],
+  order_sought: ["wording", "template_key", "template_values", "amount", "basis_statements", "basis_excerpts"],
   filing_orders: ["wording_override"],
   clauses: ["wording", "basis", "pinpoint", "excerpt", "excerpt_id", "cited_overruled"],
   filing_prose: ["text"],
@@ -599,15 +599,23 @@ export type ReviewedTable = keyof typeof REVIEW_SNAPSHOT_FIELDS;
  * in edge-id order, so a change of treatment or of which statement fills the basis re-raises it on
  * the order line (#1201). `treatment` and `basis_statements` each fold in the authority's note-up
  * note (schema v51) after " — ", so a changed note re-raises 🧐 too, and a NULL note computes the
- * same bytes the two keys computed before v51. */
+ * same bytes the two keys computed before v51. `supporting_statements` (a proposition's statements)
+ * and `basis_excerpts` (the statements on an order's filled edges) are each a JSON array of
+ * `{id, excerpt}` in statement-id order, `[]` with none, so linking, unlinking or replacing a
+ * statement, or an in-place excerpt change, re-raises 🧐 on the proposition or order line; the
+ * pinpoint is left out (review.md "Snapshot fields"). */
 const DERIVED_SNAPSHOT_KEYS: Record<string, string> = {
   cited_overruled:
     "(SELECT 1 FROM statements_of_law s JOIN authorities a ON a.id = s.authority_id WHERE s.id = clauses.excerpt_id AND a.treatment = 'overruled')",
   treatment: "(SELECT a.treatment || COALESCE(' — ' || a.treatment_note, '') FROM authorities a WHERE a.id = statements_of_law.authority_id)",
   overruled_statement_ids:
     "(SELECT group_concat(s.id ORDER BY s.id) FROM statements_of_law s JOIN authorities a ON a.id = s.authority_id WHERE s.law_assertion_id = law_assertions.id AND a.treatment = 'overruled')",
+  supporting_statements:
+    "(SELECT json_group_array(json_object('id', s.id, 'excerpt', s.excerpt) ORDER BY s.id) FROM statements_of_law s WHERE s.law_assertion_id = law_assertions.id)",
   basis_statements:
     "(SELECT group_concat(concat(r.excerpt_id, ':', a.treatment, ' — ' || a.treatment_note) ORDER BY r.id) FROM order_sought_requires r JOIN statements_of_law s ON s.id = r.excerpt_id JOIN authorities a ON a.id = s.authority_id WHERE r.order_sought_id = order_sought.id AND r.basis_state = 'filled')",
+  basis_excerpts:
+    "(SELECT json_group_array(json_object('id', s.id, 'excerpt', s.excerpt) ORDER BY s.id) FROM order_sought_requires r JOIN statements_of_law s ON s.id = r.excerpt_id WHERE r.order_sought_id = order_sought.id AND r.basis_state = 'filled')",
 };
 
 /** The two note-folding keys as they read before v51, for a database held below it, which has no

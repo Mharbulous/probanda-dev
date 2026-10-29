@@ -1,5 +1,6 @@
 """Tests for scripts/build_plugin.py. Every build goes to a temp folder."""
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -12,7 +13,8 @@ from unittest import mock
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "build_plugin.py"
 SOURCE = REPO / "source"
-PLUGINS = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper", "developer")
+PLUGINS = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "timekeeper", "developer",
+           "tokeneconomizer")
 BUNDLES = {"lawyer": ("contacts-calendars-email-mcp/dist/contacts-calendars-email-mcp.js", "mcp/dist/litigation-mcp.js"),
            "researcher": ("canlii-mcp/dist/canlii-mcp.js", "commons-mcp/dist/legal-commons-mcp.js"),
            "file-manager": ("files-mcp/dist/file-manager-mcp.js",),
@@ -263,6 +265,32 @@ class CutoverBuildTest(unittest.TestCase):
     def test_server_the_plugin_does_not_declare_stops_the_build(self):
         self.put("source/practice/.mcp.json", "{}")
         self.assert_stops("declares the servers [], but 'practice' ships ['data']")
+
+    def with_payload(self, executables):
+        assignment = json.loads(json.dumps(ASSIGNMENT))
+        assignment["plugins"]["research"].update(payload=["LICENSE", "lib", "scripts"], executables=executables)
+        self.put("source/assignment.json", json.dumps(assignment))
+        self.put("source/research/LICENSE", "Apache\r\n")
+        self.put("source/research/lib/pkg/mod.py", "x = 1\r\n")
+        self.put("source/research/lib/pkg/__pycache__/mod.cpython-312.pyc", "bytecode")
+        self.put("source/research/scripts/run", "#!/bin/sh\r\necho hi\r\n")
+
+    def test_payload_ships_whole_with_its_executables_as_lf(self):
+        self.with_payload(["scripts/run"])
+        result = self.build()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        research = self.repo / "plugins" / "research"
+        self.assertEqual((research / "LICENSE").read_bytes(), b"Apache\r\n")
+        self.assertEqual((research / "lib" / "pkg" / "mod.py").read_bytes(), b"x = 1\n")
+        self.assertFalse((research / "lib" / "pkg" / "__pycache__").exists())
+        self.assertEqual((research / "scripts" / "run").read_bytes(), b"#!/bin/sh\necho hi\n")
+        if os.name == "posix":
+            self.assertTrue(os.stat(research / "scripts" / "run").st_mode & 0o111)
+        self.assertEqual(self.build("--check").returncode, 0)
+
+    def test_executable_outside_the_payload_stops_the_build(self):
+        self.with_payload(["scripts/missing"])
+        self.assert_stops("executables of 'research' name no payload file: scripts/missing")
 
 
 class LockedFolderTest(unittest.TestCase):
