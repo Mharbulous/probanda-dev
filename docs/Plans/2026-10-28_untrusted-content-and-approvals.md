@@ -10,6 +10,16 @@ Run a stdin-dumping probe hook under headless `claude -p` against the built `plu
 - one PreToolUse payload from inside a subagent: whether `transcript_path` is the main session's, and whether the hook can see its practitioner turns;
 - whether `record_filed` and `record_served` arguments name the writing's version.
 
+Results (2026-10-28, Claude Code 2.1.312):
+
+- PostToolUse `tool_response` of Read:
+  - text: `{type:"text", file:{filePath, content, numLines, startLine, totalLines}}`;
+  - PDF: `{type:"pdf", file:{filePath, base64, originalSize}}`;
+  - image: `{type:"image", file:{base64, type, originalSize, dimensions}}`.
+  1b changes only `file.content` of a text result.
+- A subagent's hook payload carries `agent_id` and `agent_type`, and the main session's `transcript_path`. The subagent's own calls and their results go to `<session>/subagents/agent-<id>.jsonl`, never to the main transcript, so the gate cannot see a refusal issued inside a subagent. One-way calls from a subagent are refused, and `troubleshoot__record` stays ungated (only the troubleshooter subagent calls it). Known gap.
+- `record_sent`, `record_filed` and `record_served` take no revision. Hashing `db_path` would void an approval on any unrelated write, so the gate never hashes a database file, and all three gain a required `expect_revision`, checked against `db_meta.revision`.
+
 ## 1a. Label outside text in MCP replies (lawyer, patch)
 
 `jsonText` in `source/lawyer/mcp/src/tool-list.ts` adds a top-level `content_source` key, naming the source, to the success and error replies of: `mail__get_email`, `get_latest_emails`, `search_emails`, `find_thread_messages`, `find_email_by_message_id`, `download_attachment`, `calendar__list_events`, `get_event`, `contacts__search`, `contacts__get`, `drafting_forms__read_message`, `sources__fetch`, `sources__check`, `knowledge__read`, `research_filing__law_folder_text`, `research_filing__legislation_search`. No existing key moves. Excluded: the generic row-query tools and the `timecamp` server.
@@ -50,7 +60,7 @@ The retry passes only when all of these hold:
 - exactly one act was refused since the previous practitioner turn;
 - the approval has not been used by an earlier successful call;
 - if the modifications text is `NONE`, the call's hash equals the refused hash. Otherwise the call may differ but must be the same tool.
-- A call with `agent_id` is refused, unless step 0 shows the hook can read the main session's turns.
+- A call with `agent_id` is refused (step 0).
 
 Gated, by plugin:
 
@@ -60,13 +70,12 @@ Gated, by plugin:
 | lawyer | `practice_data__delete_anchor`, `practice_data__merge_contact` |
 | timekeeper | `time_pipeline__delete`, `time_pipeline__bulk_apply` (only when it carries `delete` or `delete_prefix`), `timecamp__update_entry` |
 | file-manager | `file_ops__comment_pdf` |
-| researcher | `troubleshoot__record`, only if step 0 allows it |
 
-If step 0 finds that `record_filed` or `record_served` names no version, the tool gains a required `expect_revision` checked against `db_meta.revision`.
+`record_sent`, `record_filed` and `record_served` gain a required `expect_revision` (see step 0), which makes the lawyer change minor.
 
 Not gated (reversible, or already behind a human act): `publish_*`, `assemble_general`, `delete_job`, `insert_time_entry`, `set_time_entries_billable`, `import_invoices`, `record_retainer_notice`, `manage_payment_in_flight`, `set_status`, the `mail__*` writes, `knowledge__retire` and `knowledge__write`, the migrations, `suggestion_card__write_up_send` (after the Submit click), and the drafting merges (practitioner-words-gate). Known gap: the raw SQL `*_execute` tools.
 
-Version: minor for litigator, lawyer, timekeeper and file-manager, and for researcher if gated. Patch for the other plugins, because `shared/` rebuilds all seven.
+Version: minor for litigator, lawyer, timekeeper and file-manager. Patch for the other plugins, because `shared/` rebuilds all seven.
 
 Test (fails today): `test_approval_gate.py` on transcript fixtures:
 
