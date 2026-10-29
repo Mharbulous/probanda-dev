@@ -104,3 +104,21 @@ test("Dismiss over the listener sends nothing; a wrong token is refused", async 
   });
   assert.equal(missing.status, 403, "an unknown card has no valid token");
 });
+
+test("the listener serves a card's page at card_url only with that card's token", async (t) => {
+  const { built, token, port } = await listening(t);
+  const base = `http://127.0.0.1:${port}/cards/${built.card_id}`;
+  assert.equal(built.card_url, `${base}?token=${token}`);
+  const page = await fetch(built.card_url);
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get("content-type"), /^text\/html/);
+  const html = await page.text();
+  assert.match(html, new RegExp(`"card":"${built.card_id}"`));
+  assert.match(html, new RegExp(`connect-src http://127\.0\.0\.1:${port};`), "its buttons post to the origin that served it");
+  for (const url of [base, `${base}?token=${"0".repeat(64)}`, `http://127.0.0.1:${port}/cards/00000000-0000-0000-0000-000000000000?token=${token}`]) {
+    const refused = await fetch(url);
+    assert.equal(refused.status, 403, url);
+    assert.ok(!(await refused.text()).includes(built.card_id), "a refusal carries no card");
+  }
+  assert.equal((await fetch(built.card_url, { method: "POST", body: "{}" })).status, 405);
+});

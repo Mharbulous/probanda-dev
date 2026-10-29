@@ -33,7 +33,7 @@ The fork `Mharbulous/TokenEconomizer` is the source of record for the Python and
 
 ## The move from CoClerk
 
-The source moved here from CoClerk and is no longer edited there. The `researcher` plugin carries legal-commons' read side only: its gatekeeper skill, the `troubleshooter` agent, the pool read tools that `research-agent` holds, and its MCP server under the key `commons`. The push skills (`consolidation-push`, `rule-sharing`) are not part of Probanda, and `source/researcher/hooks/commons-read-only.py` refuses the commons write tools. No shipped file hands off to either skill.
+The source moved here from CoClerk and is no longer edited there. The `researcher` plugin carries legal-commons' read side only: its gatekeeper skill, the `tech-support` agent, the pool read tools that `research-agent` holds, and its MCP server under the key `commons`. The push skills (`consolidation-push`, `rule-sharing`) are not part of Probanda, and `source/researcher/hooks/commons-read-only.py` refuses the commons write tools. No shipped file hands off to either skill.
 
 ## Permanent names
 
@@ -46,6 +46,10 @@ These are permanent once published. Do not rename them.
 Together they make up the tool names (`mcp__plugin_<plugin>_<server>__*`, for example `mcp__plugin_lawyer_data__*`), the agent names (`<plugin>:<agent>`), the install keys (`<plugin>@Probanda_Legal` and `<plugin>@Probanda_Legal_experimental`) and the `${CLAUDE_PLUGIN_DATA}` directory. A rename strands every user's installed copy and saved data. `displayName` and descriptions can change freely.
 
 The plugin name `probanda` is retired and never reused. It was the single plugin until the plugin split, and claude.ai still records it against every machine that installed it. The plugin name `file-admin` is retired too (renamed `file-manager` on 2026-10-15) and never reused. The plugin name `practice` is retired too (renamed `legal` on 2026-10-15) and never reused. The plugin name `research` is retired too (renamed `researcher` on 2026-10-17) and never reused. The plugin name `legal` is retired too (folded into `lawyer` on 2026-10-17, which took over its tools, agents, hooks and servers) and never reused. The marketplace name `probanda` is retired too (split into `Probanda_Legal` and `Probanda_Legal_experimental` on 2026-10-17) and never reused.
+
+## Skills and agents
+
+A process meant to run autonomously is a custom agent. Its body holds only its procedure: the steps, their order, its stops and what it returns. How to carry out a step (know-how) and the facts, rules and conventions a step relies on (know-what) live in skills the agent preloads through the `skills:` field of its frontmatter. The human-in-the-loop version of the process uses the same skills, so both read one source. An agent that needs knowledge no skill holds gets it by adding it to a skill and preloading that skill, never in its own body. Existing skills and agents move to this pattern gradually. `tech-support` is the first agent that preloads a skill.
 
 ## Cowork constraints
 

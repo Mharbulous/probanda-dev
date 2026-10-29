@@ -182,6 +182,16 @@ test("the page holds every fixed string in decision 6's order, the guess label a
   assert.ok(!other.includes("Show a mockup of this"), "no mockup link when no item is visual");
 });
 
+test("until the page API answers, the card hides its buttons and says it cannot send, linking to card_url", async (t) => {
+  const { deps } = await device(t);
+  const { card_path, card_url } = await built(deps);
+  const body = readFileSync(card_path, "utf-8").replace(/<script[\s\S]*?<\/script>/g, "");
+  const note = /<p class="status error" id="offline">This copy cannot reach Probanda, so it cannot send\. <a href="([^"]+)"[^>]*>Open on this computer<\/a>, with Claude open there, to submit or dismiss it\.<\/p>/.exec(body);
+  assert.ok(note, "the note and its link are on the page as written, with no script run");
+  assert.equal(note[1].replace(/&#38;/g, "&"), card_url);
+  assert.match(body, /<div class="actions" id="actions" hidden><button type="button" id="submit">/, "Submit and Dismiss start hidden");
+});
+
 test("the page's script parses", async (t) => {
   const { deps } = await device(t);
   const { card_path } = await built(deps);

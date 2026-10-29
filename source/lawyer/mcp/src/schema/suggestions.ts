@@ -35,7 +35,7 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
     {
       name: "suggestion_card__build",
       description:
-        "Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path}. " +
+        "Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path, card_url}. card_url is the card as served on this computer; a copy shown where its buttons cannot work links to it by itself. " +
         "Nothing is sent: the practitioner's Submit Suggestion on the card sends it, and Dismiss sends nothing. Present card_path as a file card with no chat text at all, then call suggestion_card__wait. " +
         "The card shows, in its own fixed order and words, the origin cue (origin practitioner: \"You suggested:\"; probanda: \"Probanda noticed:\"), the pain_point, the items, a mockup link when any item is visual, " +
         "the context_lines (constraint and evidence lines) and the raw_observation lines, a comment box, and Submit Suggestion and Dismiss. " +

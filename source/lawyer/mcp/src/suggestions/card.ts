@@ -42,7 +42,7 @@ import { writeTextAtomic } from "../knowledge/sidecar.js";
 import { pageApiCardToken, pageApiPort } from "../page-api/token.js";
 import { PracticeStore } from "../practice/store.js";
 import { type CardPart, type CardText, type CrossCheckResult, type Hit, type HitKind, loadStopWords, runCrossCheck } from "./crosscheck.js";
-import { renderCardHtml } from "./card-page.js";
+import { cardUrl, renderCardHtml } from "./card-page.js";
 import { checkMockup, loadPlaceholders, renderMockupPage } from "./mockup.js";
 import { RECORD_SOURCES, type RecordSource, type RecordTexts, readRecordTexts } from "./records.js";
 import { type SuggestionFields, pluginRelease, submitSuggestion } from "./send.js";
@@ -444,7 +444,7 @@ export function unreadSources(states: CrossCheckResult["records"]): string[] {
 }
 
 export type BuildResult =
-  | { built: true; card_id: string; card_path: string }
+  | { built: true; card_id: string; card_path: string; card_url: string }
   | { built: false; hits: Array<Omit<CardPrompt, "text"> & { index?: number }> }
   | { built: false; reason: "records_unreadable"; unreadable: string[] }
   /** An AI-noticed card the daily cap or suppression does not allow now, or whose observation was already shown. */
@@ -495,7 +495,7 @@ export async function buildCard(input: CardInput, facts: Record<string, unknown>
   });
   if (!saved) return { built: false, reason: "not_raised" };
   const path = writeCardPage(card, deps.env);
-  return { built: true, card_id: card.record_id, card_path: path };
+  return { built: true, card_id: card.record_id, card_path: path, card_url: cardUrl(pageApiPort(deps.env), card.record_id, pageApiCardToken(card.record_id, deps.env)) };
 }
 
 /** Writes the card's page from the record as it is and returns its path. */
@@ -554,6 +554,11 @@ function pageState(card: CardRecord, store: SuggestionStore, now: Date): CardPag
 export async function readCardState(cardId: string, deps: CardDeps): Promise<CardPageState> {
   const store = await loadStore(deps.env);
   return pageState(findCard(store, cardId), store, nowOf(deps));
+}
+
+/** The card's page as the page API serves it, rendered from the record as it is. */
+export async function readCardPage(cardId: string, env: NodeJS.ProcessEnv): Promise<string> {
+  return renderCardHtml(findCard(await loadStore(env), cardId), pageApiPort(env), pageApiCardToken(cardId, env));
 }
 
 // ----------------------------------------------------------------- edits --

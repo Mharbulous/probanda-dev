@@ -10,7 +10,7 @@ not signal that the pipeline is blocked on a human.
 Carve-out: an approval or sign-off (including approving the skill's own
 proposals), and a failed pre-filing check, is not asked through this
 convention. It follows `/show-me`: plain text, one decision per turn, the
-source presented. Data entry, elections and setup choices keep the widget. A hash-bound review gate (§ 7) keeps its own widget. An on-the-fly revision (`draft/references/revise-on-the-fly.md`) is an approval of one revised paragraph, typed in chat, never asked in a widget.
+source presented. Data entry, elections and setup choices keep the widget. A hash-bound review gate (§ 7) keeps its own widget. A quick edit (`draft/references/revise-on-the-fly.md`) is an approval of its code-generated preview, typed in chat, never asked in a widget.
 
 ## 0. Ground rules
 

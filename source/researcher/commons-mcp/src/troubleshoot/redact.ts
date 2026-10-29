@@ -1,5 +1,5 @@
 // Deterministic second screen for troubleshoot__record, run before any network
-// call. The troubleshooter agent screens the text first; this catches what a
+// call. The tech-support agent screens the text first; this catches what a
 // pattern can catch reliably. It returns the KINDS hit, never the matched text,
 // so a refusal cannot leak what it caught.
 //

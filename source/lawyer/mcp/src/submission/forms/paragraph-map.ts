@@ -24,9 +24,9 @@ import { join } from "node:path";
 
 import { submissionDataQuery } from "../backend.js";
 
-/** The first schema whose paragraph_revisions takes the quick-edit audit rows (v80). Below it no map is
- * written and the quick-edit tools refuse. */
-export const QUICK_EDIT_MIN_SCHEMA = 80;
+/** The schema the quick-edit statements are written against (v79). Below it no map is written and the
+ * quick-edit tools refuse. The quick edits' audit is a log file, so they need no schema of their own. */
+export const QUICK_EDIT_MIN_SCHEMA = 79;
 
 const MAP_KEEP = 20;
 

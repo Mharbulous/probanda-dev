@@ -106,6 +106,13 @@ test("the page shows the sent payload's fields as stored and the mockup's srcdoc
   assert.doesNotThrow(() => new Function(scripts[0]), "the page's script parses");
 });
 
+test("on a new device the page creates the suggestions folder that /probanda-setup connects", async (t) => {
+  const f = suggestionDevice(t);
+  const path = await writePastSuggestionsPage(f.env);
+  assert.equal(path, join(f.device, "suggestions", "Past suggestions.html"));
+  assert.ok(visible(readFileSync(path, "utf-8")).includes("No suggestions have been sent from this computer yet."));
+});
+
 test("an unsent suggestion shows its card status, and a withdrawn one has no Withdraw button", async (t) => {
   const f = suggestionDevice(t);
   f.env.SUPABASE_URL = `http://127.0.0.1:${await closedPort()}`;

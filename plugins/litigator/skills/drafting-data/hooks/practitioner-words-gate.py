@@ -2,8 +2,8 @@
 """Refuse a paragraph revision, a confirmed statement of goals, or a merge of Milestones or of jobs the practitioner did not approve (#784).
 
 Hook event: PreToolUse on drafting_data__execute, drafting_data__set_board_goal,
-drafting_data__merge_milestones and drafting_data__merge_jobs (a merge passes only when the last
-practitioner turn is a bare yes).
+drafting_data__merge_milestones, drafting_data__merge_jobs (a merge passes only when the last
+practitioner turn is a bare yes) and drafting_forms__apply_edit.
 A job's title, intent and steps, and a marker suppression's note, are not read: their wording
 needs no practitioner approval (docs/Specs/2026-10-20_approved-research-issues-pass-job-words-gate-spec.md).
 
@@ -80,6 +80,18 @@ statement as an unbroken run: they typed their own goal in answer to the merge q
 the statement must pass the check a confirmed statement of goals passes, and the last turn must be
 a bare yes, so one bare yes to the shown statement confirms both the merge and the goal.
 
+drafting_forms__apply_edit writes the statements of one drafting_forms__preview_edit preview, a quick
+edit (paragraph-revision.md section 8). The gate reads that preview's own result in this session's
+transcript, by its preview_token: a tool result is the server's record, never the session's words. It
+allows the call only when (1) the session's visible reply between the previous practitioner turn and
+the last holds exactly the preview's diff blocks, each a fenced code block whose content, its final
+newline dropped, is one block's text character for character, and no other fenced block; (2) the last
+practitioner turn is a bare yes; (3) no apply_edit call and no wording revision since that turn has
+been answered: one approval admits one write; and (4) a reworded paragraph the preview carries with
+choice 'proposed' is an unbroken run of one practitioner turn. A preview result the transcript holds
+only as a persisted-output stub cannot be read, so it refuses. A wording revision by
+drafting_data__execute is likewise refused once an apply_edit since the last turn has been answered.
+
 Exit 0 allows the call; exit 2 refuses it and the session reads stderr. A refusal
 echoes the nearest turn, bounded: whole within 300 characters, else 300 characters
 centred on the longest run it shares with the value written. The gate
@@ -87,6 +99,7 @@ fails CLOSED: a checked write it cannot read, a missing transcript, or any error
 of its own refuses the call and says why.
 """
 import difflib
+import json
 import re
 import sys
 from pathlib import Path
@@ -119,6 +132,11 @@ MERGE_TOOL = "drafting_data__merge_milestones"  # two Milestones joined on the p
 MERGE_JOBS_TOOL = "drafting_data__merge_jobs"  # a duplicate job merged into another on the practitioner's yes
 GOAL_FIELD = "the statement of goals"
 MERGE_GOAL_FIELD = "the merged board's statement of goals"
+PREVIEW_TOOL = "drafting_forms__preview_edit"
+APPLY_TOOL = "drafting_forms__apply_edit"  # a quick edit's write (paragraph-revision.md section 8)
+APPLY_CLOSING = ("A quick edit is applied after the practitioner saw its preview: the session's reply before their last turn "
+                 "prints each of the preview's diff blocks verbatim as its own fenced code block, and no other, and their "
+                 "last turn is a bare yes. One approval admits one write. A changed edit is previewed again.")
 MOVE_ENTITY = "filing_facts"  # a fact move (paragraph-revision.md §6): the ordinals, no wording
 MOVE_FIELD = "the fact's old and new places"
 MOVE_CLOSING = ("A fact move is recorded as a move of the fact's place, on the practitioner's word, with the fact's old "
@@ -416,6 +434,75 @@ def read_transcript(path):
     return [segment.struck for segment in segments], last_raw, last_fences, executed
 
 
+def quick_edits(path):
+    """(every drafting_forms__preview_edit result in this session, by its preview_token, as
+    {"diff": block texts, "rewords": [...]}; the drafting_forms__apply_edit calls since the last
+    practitioner turn that a result has answered)."""
+    *segments, tail = practitioner_turns(path)
+    previews = {}
+    for segment in segments + [tail]:
+        for call in segment.calls:
+            if not call.name.endswith(PREVIEW_TOOL) or call.sidechain or call.result is None:
+                continue
+            try:
+                parsed = json.loads(call.result)
+            except ValueError:
+                continue
+            if not isinstance(parsed, dict) or not isinstance(parsed.get("preview_token"), str):
+                continue
+            diff = parsed.get("diff") if isinstance(parsed.get("diff"), list) else []
+            rewords = parsed.get("rewords") if isinstance(parsed.get("rewords"), list) else []
+            previews[parsed["preview_token"]] = {
+                "diff": [d["text"] for d in diff if isinstance(d, dict) and isinstance(d.get("text"), str)],
+                "rewords": [r for r in rewords if isinstance(r, dict) and isinstance(r.get("new_text"), str)],
+            }
+    applied = [call for call in tail.calls
+               if call.name.endswith(APPLY_TOOL) and not call.sidechain and call.result is not None]
+    return previews, applied
+
+
+def apply_gate(payload):
+    """A quick edit's write: the preview's diff blocks shown verbatim and alone, a bare yes as the last
+    turn, no other write since it, and a reword marked as the practitioner's own wording a run of one turn."""
+    token = (payload.get("tool_input") or {}).get("preview_token")
+    if not isinstance(token, str) or not token:
+        return refuse(f"the call names no preview, so there is nothing the practitioner saw to apply.\n{APPLY_CLOSING}")
+    path = payload.get("transcript_path") or ""
+    if not path:
+        return refuse("the session transcript is not available, so there is no record of what the "
+                      "practitioner saw and approved.")
+    try:
+        turns, last_raw, last_fences, executed = read_transcript(path)
+        previews, applied = quick_edits(path)
+    except OSError as exc:
+        return refuse(f"cannot read the session transcript at {path}: {exc}")
+    preview = previews.get(token)
+    if preview is None:
+        return refuse(f"no preview in this session issued preview_token {token!r}, so there is no preview the "
+                      f"practitioner saw for this call to apply.\n{APPLY_CLOSING}")
+    out = []
+    blocks = preview["diff"]
+    if sorted(last_fences) != sorted(blocks):
+        out.append(f"the session's visible reply before the practitioner's last turn holds {len(last_fences)} fenced "
+                   f"code block(s), and they are not the preview's {len(blocks)} diff block(s), each verbatim and no other.")
+    elif not approval(last_raw):
+        out.append(f"the preview was shown, but the practitioner's last turn is not a bare yes approving it.\n"
+                   f"  last turn: {echo(' '.join(blocks), last_raw)}")
+    if applied or any(wrote_wording(earlier) for earlier in executed):
+        out.append("an edit was already applied, or a paragraph revision written or attempted, since the "
+                   "practitioner's last turn, and one approval admits one write.")
+    for reword in preview["rewords"]:
+        new = reword["new_text"]
+        if reword.get("choice") != "alternative" and not any(norm(new) in norm(turn) for turn in turns):
+            nearest_turn = f"\n  nearest turn: {echo(new, nearest(new, turns))}" if turns else ""
+            out.append(f"the reworded paragraph is recorded as the practitioner's own wording, but it is not an "
+                       f"unbroken run of one thing the practitioner said in this session.\n"
+                       f"  field: {REVISION_FIELD}\n  wrote: {new}{nearest_turn}")
+    if out:
+        return refuse("\n".join(out + [APPLY_CLOSING]))
+    return 0
+
+
 def nearest(value, turns):
     def shared_run(turn):
         a, b = norm(value), norm(turn)
@@ -532,6 +619,8 @@ def main():
         return merge_boards(payload)
     if (payload.get("tool_name") or "").endswith(MERGE_JOBS_TOOL):
         return merge_jobs(payload)
+    if (payload.get("tool_name") or "").endswith(APPLY_TOOL):
+        return apply_gate(payload)
     script = (payload.get("tool_input") or {}).get("sql_script") or ""
     try:
         revisions, stmts = revision_writes(script)
@@ -562,7 +651,7 @@ def main():
         turns, last_raw, last_fences, executed = read_transcript(path)
     except OSError as exc:
         return refuse(f"cannot read the session transcript at {path}: {exc}")
-    if any(wrote_wording(earlier) for earlier in executed):
+    if any(wrote_wording(earlier) for earlier in executed) or quick_edits(path)[1]:
         return refuse(f"a paragraph revision was already written, or attempted, since the practitioner's last "
                       f"turn, and one approval admits one paragraph.\n  field: {REVISION_FIELD}\n"
                       f"  wrote: {wording[0]['new_text']}\n{REVISION_CLOSING}")

@@ -5,7 +5,8 @@
 // suggestion this computer sent (../suggestions/send.ts); and a suggestion card's buttons and its
 // mockup page's "Not like this" (POST /cards/<card id>/<state|submit|resolve|dismiss|restore|mockup|
 // reject>, ../suggestions/card.ts), each completed here with no agent needed, so Submit and Dismiss
-// work after the session that showed the card has ended.
+// work after the session that showed the card has ended. It also serves a card's page (GET
+// /cards/<card id>?token=...), the link a card copy that cannot reach this listener offers.
 //
 // index.ts starts it once the MCP transport is connected, and nothing it does reaches start():
 // every listener error is logged to stderr and the MCP server carries on. The listener and every
@@ -33,6 +34,7 @@ import {
   type CardDeps,
   cardEdits,
   dismissCard,
+  readCardPage,
   readCardState,
   rejectMockup,
   requestMockup,
@@ -149,6 +151,8 @@ async function handle(req: IncomingMessage, res: ServerResponse, env: NodeJS.Pro
   }
   const w = /^\/suggestions\/([0-9a-f-]{36})\/withdraw$/.exec(url.pathname);
   if (w) return withdraw(req, res, env, w[1]);
+  const page = /^\/cards\/([0-9a-f-]{36})$/.exec(url.pathname);
+  if (page) return cardPage(req, res, env, page[1], url.searchParams.get("token"));
   const c = /^\/cards\/([0-9a-f-]{36})\/(state|submit|resolve|dismiss|restore|mockup|reject)$/.exec(url.pathname);
   if (c) return cardClick(req, res, { ...options.card, env }, c[1], c[2] as CardRoute);
   const m = /^\/seeds\/([1-9]\d*)\/(defer|undefer)$/.exec(url.pathname);
@@ -210,6 +214,29 @@ async function withdraw(req: IncomingMessage, res: ServerResponse, env: NodeJS.P
     await writePastSuggestionsPage(env).catch(() => undefined);
   }
   json(req, res, WITHDRAW_STATUS[result.outcome], result);
+}
+
+/** A suggestion card's page, served on the port its buttons post to, so a card shown where it cannot
+ * reach this listener links here. Served only with the card's token, checked as for a click. */
+async function cardPage(req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv, cardId: string, token: string | null): Promise<void> {
+  if (req.method !== "GET") return json(req, res, 405, { error: "Method not allowed" });
+  if (token === null || !pageApiCardTokenValid(token, cardId, env)) {
+    return json(req, res, 403, { error: "This page's token does not match this suggestion. Ask a Claude session to show it again." });
+  }
+  let html: string;
+  try {
+    html = await readCardPage(cardId, env);
+  } catch (err) {
+    if ((err as { code?: string }).code === "not_found") return json(req, res, 404, { error: "Not found" });
+    throw err;
+  }
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer",
+  });
+  res.end(html);
 }
 
 type CardRoute = "state" | "submit" | "resolve" | "dismiss" | "restore" | "mockup" | "reject";

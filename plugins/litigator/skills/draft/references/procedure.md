@@ -23,7 +23,7 @@ Off a remote-device-only host no page is ever staged: the card is the page's own
 On the fallback route, on a remote-device-only host, the card is a copy frozen at staging, so restaging is the refresh. When the intake's re-render, or any later render or `drafting_data__complete_job` result, reports `board_changed` true, that host stages and presents the page at that result's `milestone_path` again, alone (`shared/html-pages.md`).
 
 <!-- atom id=draft.job-only ops=route_reply,new_work -->
-Sections 4, 9, 10, 12, 13 and 8's `/publish` hand-off run inside an assigned job's approved plan for a structured filing. For a Writing drafted under `references/letters.md` or `references/unstructured.md` they run with no job, and a job handed over by `/work` is still worked as a job; section 8 also runs when the practitioner asks to start a proceeding or Writing, or asks for a new Milestone for work that is not a Writing (a Milestone with no Writing); retirement and recovery follow `references/retire-filing.md`. An on-the-fly revision or reorder is not job-only (`references/revise-on-the-fly.md`), and neither is the practitioner's override (section 13, `references/assemble-then-gate.md`).
+Sections 4, 9, 10, 12, 13 and 8's `/publish` hand-off run inside an assigned job's approved plan for a structured filing. For a Writing drafted under `references/letters.md` or `references/unstructured.md` they run with no job, and a job handed over by `/work` is still worked as a job; section 8 also runs when the practitioner asks to start a proceeding or Writing, or asks for a new Milestone for work that is not a Writing (a Milestone with no Writing); retirement and recovery follow `references/retire-filing.md`. A quick edit is not job-only: a rewording, or the move, recast, remove, restore or kill of a paragraph, stated and approved in one exchange through `drafting_forms__preview_edit` and `drafting_forms__apply_edit`, and a reorder of material to be relied on (`references/revise-on-the-fly.md`). Neither is the practitioner's override (section 13, `references/assemble-then-gate.md`).
 
 <!-- atom id=draft.s8.setup ops=setup -->
 ## 8. New matter setup
@@ -88,7 +88,7 @@ When session entry reported no draft folder, when a render refuses with `draft_d
 <!-- atom id=draft.s12 ops=substance,revise_on_the_fly -->
 ## 12. Revise
 
-This section's rules are in `references/substance-and-revise.md`. Read it when the practitioner asks for a change. A request to reword one reviewed paragraph, or swap or move a Writing's facts or its material to be relied on, follows `references/revise-on-the-fly.md`.
+This section's rules are in `references/substance-and-revise.md`. Read it when the practitioner asks for a change. A request to reword one reviewed paragraph, to move, recast, remove, restore or kill a paragraph on a Writing, or to swap or move its material to be relied on, is a quick edit and follows `references/revise-on-the-fly.md`.
 
 <!-- atom id=draft.s13 ops=assemble -->
 ## 13. Assemble, then gate
@@ -159,4 +159,4 @@ This section's rules are in `references/assemble-then-gate.md`. Read it when the
 <!-- atom id=draft.ref.tangents ops=tangent -->
 | The practitioner starts a read-only turn outside scope (section 14) | `references/tangents.md` |
 <!-- atom id=draft.ref.revise-on-the-fly ops=revise_on_the_fly -->
-| The practitioner asks to reword one reviewed paragraph, or swap or move a Writing's facts or its material to be relied on (section 12) | `references/revise-on-the-fly.md` |
+| The practitioner asks to reword one reviewed paragraph, to move, recast, remove, restore or kill a paragraph on a Writing, or to swap or move its material to be relied on (section 12) | `references/revise-on-the-fly.md` |

@@ -14,7 +14,9 @@
 // shows as its bracket, [client] to [amount], marked out in the text.
 //
 // The script posts every click to the page API on 127.0.0.1 (../page-api/server.ts) with the card's
-// token, and every button shows what it did (decision 9): the status line reads "Sending...", then
+// token. The buttons stay hidden behind a note linking to the card as the page API serves it (cardUrl)
+// until the page API first answers, so a copy that cannot reach it, such as one shown through the chat,
+// says it cannot send instead of showing dead buttons. Every button shows what it did (decision 9): the status line reads "Sending...", then
 // "Submitted ✓" or "Not sent, will retry" (decision 13), and the card stays open showing it. Every
 // few seconds it reads the card's state: whether an agent is waiting (the mockup link is live, or
 // greyed with "Open this suggestion again to see a mockup"), the mockup now on the card (shown in a
@@ -34,6 +36,9 @@ export const LATER_LINE = "You can see this later, with its status, under Past s
 export const SUBMIT = "Submit Suggestion";
 export const DISMISS = "Dismiss";
 export const RESTORE = "Restore Suggestion";
+export const OFFLINE_NOTE = "This copy cannot reach Probanda, so it cannot send.";
+export const OPEN_HERE = "Open on this computer";
+export const OFFLINE_AFTER = ", with Claude open there, to submit or dismiss it.";
 /** Decision 13's family: the check could not read every record source, so nothing was sent. */
 export const NOT_CHECKED = "Not sent: Probanda could not check this against your records. Try again in a moment.";
 
@@ -113,7 +118,6 @@ const SCRIPT = `
   var busy = false;
   var SAY = {
     sending: "Sending...",
-    off: "This works while Claude is open on this computer. Open Claude, ask to see this suggestion again, and use it here.",
     failed: "That did not work. Try again, or ask Claude to show this suggestion again.",
     check: "Before this is sent, look at the marked text below.",
     refused: "Not sent: part of this suggestion is too long, or names someone or somewhere. Shorten it or take that out, then try again.",
@@ -356,6 +360,8 @@ const SCRIPT = `
     post("/state").then(function (state) {
       if (first) {
         first = false;
+        document.getElementById("offline").hidden = true;
+        document.getElementById("actions").hidden = false;
         if (state.state === "dismissed") greyOut();
         else if (state.state === "submitted" || state.state === "sending") finish(state.status || SAY.sending);
         else setButtons(true);
@@ -365,15 +371,18 @@ const SCRIPT = `
         say(state.status, state.status !== "Submitted \\u2713");
       }
       apply(state);
-    }).catch(function () {
-      if (first) { first = false; say(SAY.off, true); if (link) link.disabled = true; }
-    }).then(function () { setTimeout(poll, 3000); });
+    }).catch(function () {}).then(function () { setTimeout(poll, 3000); });
   }
   setButtons(false);
   if (link) link.disabled = true;
   poll();
 })();
 `;
+
+/** The card as the page API serves it, on the port its buttons post to. */
+export function cardUrl(port: number, cardId: string, token: string): string {
+  return `http://127.0.0.1:${port}/cards/${encodeURIComponent(cardId)}?token=${token}`;
+}
 
 /** The card's page for `card`, with the listener's port and the card's token. */
 export function renderCardHtml(card: CardRecord, port: number, token: string): string {
@@ -396,7 +405,8 @@ export function renderCardHtml(card: CardRecord, port: number, token: string): s
     `<details class="tech"><summary class="link">${SHOW_TECHNICAL}</summary><pre>${escapeHtml(JSON.stringify(card.environment_facts, null, 2))}</pre></details>`;
   const actions =
     `<p class="later">${escapeHtml(LATER_LINE)}</p>` +
-    `<div class="actions"><button type="button" id="submit">${SUBMIT}</button><button type="button" id="dismiss">${DISMISS}</button>` +
+    `<p class="status error" id="offline">${OFFLINE_NOTE} <a href="${escapeHtml(cardUrl(port, card.record_id, token))}" target="_blank" rel="noopener">${OPEN_HERE}</a>${OFFLINE_AFTER}</p>` +
+    `<div class="actions" id="actions" hidden><button type="button" id="submit">${SUBMIT}</button><button type="button" id="dismiss">${DISMISS}</button>` +
     `<button type="button" id="restore" hidden>${RESTORE}</button></div><p class="status" id="status" role="status"></p>`;
   const api = JSON.stringify({ port, card: card.record_id, token }).replace(/</g, "\\u003c");
   return (

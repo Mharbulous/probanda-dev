@@ -6,8 +6,9 @@
 // revision they saw, checks every touched row against that map, runs the foreign-scope read over
 // every row the edit and its triggers touch, runs the exact statements apply_edit will run on a
 // disposable copy, renders that copy, and returns a code-generated before-and-after and its
-// consequences. apply_edit re-checks every precondition and the foreign-scope read, then writes the
-// same statements in one transaction with their audit rows. No SQL is composed by the model.
+// consequences. apply_edit re-checks every precondition and the foreign-scope read, writes the same
+// statements in one transaction, and once it commits appends one line per change to the filing's
+// quick-edits log in the Drafting records folder. No SQL is composed by the model.
 //
 // Ops resolve once, at the seen revision, so a batch that removes "paragraph 15" after a recast
 // renumbers Part 3 still removes the record that printed as 15. Later ops in a batch are planned
@@ -15,14 +16,14 @@
 // row will hold when the statement runs.
 
 import { randomBytes } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
 import { ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataTrial, submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { hostLocalPath } from "../lock.js";
 import { currentSchemaVersion } from "../migrate.js";
-import { paragraphMapDir, previewDir as previewDirOf } from "../render-manifest.js";
+import { paragraphMapDir, previewDir as previewDirOf, recordsDir } from "../render-manifest.js";
 import { renderableSchemaVersion } from "../schema-ceiling.js";
 import { fetchFilingById, readSchemaVersion } from "./filing-reads.js";
 import { renderFilingInMemory, type InMemoryRender } from "./render.js";
@@ -50,9 +51,7 @@ const PREVIEW = "drafting_forms__preview_edit";
 const APPLY = "drafting_forms__apply_edit";
 const TOKEN_TTL_MS = 30 * 60 * 1000;
 const TOKEN_PRUNE_MS = 24 * 60 * 60 * 1000;
-const NOW_SQL = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 const TODAY_SQL = "date('now', 'localtime')";
-const IDS_TABLE = "temp.quick_edit_ids";
 /** Read before and after the trial, so the foreign-scope read and the preconditions cover every row a
  * trigger touches as well as the rows the ops name. */
 const TRIAL_TABLES = [
@@ -135,7 +134,8 @@ export type EditOp =
   | { op: "move"; target: ParagraphRef; anchor: AnchorRef; document?: DocumentChoice }
   | { op: "recast"; target: ParagraphRef; anchor: AnchorRef; new_type: "fact" | "submission"; document?: DocumentChoice; detach?: boolean }
   | { op: "remove"; target: ParagraphRef; document: DocumentChoice }
-  | { op: "restore"; remove_revision_id: number }
+  /** remove_line: the 1-based line of the remove in the filing's quick-edits log. */
+  | { op: "restore"; remove_line: number }
   | { op: "kill"; target: ParagraphRef };
 
 export interface PreviewEditArgs {
@@ -212,6 +212,9 @@ export interface ApplyEditResult {
   applied: boolean;
   filing_id?: number;
   revision?: number;
+  /** The filing's quick-edits log, and the 1-based lines this apply appended to it. */
+  audit_log?: string;
+  audit_lines?: number[];
   refused?: string;
   stale_rows?: string[];
   foreign_jobs?: { id: number; title: string }[];
@@ -245,10 +248,6 @@ function lit(value: unknown): SqlValue {
   return { sql: "?", params: [value] };
 }
 
-function keyRef(key: string): SqlValue {
-  return { sql: `(SELECT id FROM ${IDS_TABLE} WHERE k = ?)`, params: [key] };
-}
-
 interface Precondition {
   label: string;
   sql: string;
@@ -267,10 +266,6 @@ interface SimRow {
   fk: number | null;
   ordinal: number;
   pending: boolean;
-}
-
-function rowRef(row: SimRow): SqlValue {
-  return row.id !== null ? lit(row.id) : keyRef(row.key as string);
 }
 
 function rowName(row: SimRow): string {
@@ -294,24 +289,33 @@ function describeRef(ref: ParagraphRef): string {
 }
 
 // ---------------------------------------------------------------------------------------------
-// The plan: statements, labels, audit rows, and the state later ops plan against
+// The plan: statements, labels, log lines, and the state later ops plan against
 
-interface AuditRow {
+/** A row id: known at preview, or the rowid statement n of the script inserts (write_all binds { $rowid: n }). */
+type IdRef = number | { $rowid: number };
+
+/** One line of the filing's quick-edits log (paragraph-revision.md section 8), planned at preview. It holds
+ * ids, ordinals and text hashes, never the text. apply_edit fills each IdRef from the write's results. */
+interface LogEntry {
+  op: "reword" | "move" | "recast" | "remove" | "restore" | "kill";
+  document: MapDocument;
+  /** The paragraph's own table, or filing_orders for an order's wording override. */
   entity: string;
-  entityId: SqlValue;
-  field: string;
-  oldText: string;
-  newText: SqlValue;
-  proposed: string | null;
-  alternative: string | null;
-  flags: string | null;
-  choice: string;
-  origin: "practitioner" | "model";
+  entity_id: IdRef;
+  /** The placement row (filing_facts, filing_submissions or filing_orders) the op moves, takes off or puts back. */
+  deployment_id: IdRef | null;
+  from: string | number | null;
+  to: string | number | null;
+  old_hash: string | null;
+  new_hash: string | null;
 }
 
 class Plan {
-  readonly statements: WriteStatement[] = [{ sql: `CREATE TEMP TABLE IF NOT EXISTS quick_edit_ids (k TEXT PRIMARY KEY, id INTEGER NOT NULL)`, params: [] }];
-  readonly labels: string[] = ["the script's id table"];
+  readonly statements: WriteStatement[] = [];
+  readonly labels: string[] = [];
+  readonly log: LogEntry[] = [];
+  /** Each key's inserting statement, by index, for a { $rowid } parameter. */
+  private readonly keys = new Map<string, number>();
   /** Existing rows a statement writes, as table:id, for the pin check and the scope read. */
   readonly written = new Set<string>();
   /** Placement lists a statement renumbers or inserts into, for the list preconditions. */
@@ -332,18 +336,31 @@ class Plan {
     this.labels.push(label);
   }
 
+  /** Names the row the statement just pushed inserts, so a later statement or log line can refer to it. */
   remember(key: string): void {
-    this.push(`remember ${key}`, `INSERT INTO ${IDS_TABLE} (k, id) VALUES (?, last_insert_rowid())`, [key], 1);
+    this.keys.set(key, this.statements.length - 1);
   }
 
-  audit(a: AuditRow): void {
-    this.push(
-      `audit ${a.choice} on ${a.entity}`,
-      `INSERT INTO paragraph_revisions (entity, entity_id, field, old_text, new_text, proposed_text, alternative_text, review_flags, choice, origin, session_token, created, preview_token, seen_revision)
-       VALUES (?, ${a.entityId.sql}, ?, ?, ${a.newText.sql}, ?, ?, ?, ?, ?, ?, ${NOW_SQL}, ?, ?)`,
-      [a.entity, ...a.entityId.params, a.field, a.oldText, ...a.newText.params, a.proposed, a.alternative, a.flags, a.choice, a.origin, this.session, this.token, this.seen],
-      1
-    );
+  idOf(key: string): IdRef {
+    const n = this.keys.get(key);
+    if (n === undefined) throw new Error(`quick edit: no statement inserts ${key}`);
+    return { $rowid: n };
+  }
+
+  keyRef(key: string): SqlValue {
+    return { sql: "?", params: [this.idOf(key)] };
+  }
+
+  rowId(row: SimRow): IdRef {
+    return row.id !== null ? row.id : this.idOf(row.key as string);
+  }
+
+  rowRef(row: SimRow): SqlValue {
+    return row.id !== null ? lit(row.id) : this.keyRef(row.key as string);
+  }
+
+  audit(entry: LogEntry): void {
+    this.log.push(entry);
   }
 
   /** One filing's placement list as this script will have left it so far. */
@@ -381,7 +398,7 @@ class Plan {
         return;
       }
       if (row.ordinal === want) return;
-      const ref = rowRef(row);
+      const ref = this.rowRef(row);
       this.push(`${what}: renumber ${table} ${rowName(row)} from ${row.ordinal} to ${want}`, `UPDATE ${table} SET ordinal = ? WHERE id = ${ref.sql} AND ordinal = ?`, [want, ...ref.params, row.ordinal], 1);
       if (row.id !== null) this.written.add(`${table}:${row.id}`);
       row.ordinal = want;
@@ -493,11 +510,11 @@ function takeOff(plan: Plan, e: MapEntry, docs: readonly MapDocument[], what: st
     const list = plan.list(d.table, doc, part);
     const row = list.find((r) => r.fk === e.row_id);
     if (row === undefined) continue;
-    const ref = rowRef(row);
+    const ref = plan.rowRef(row);
     plan.push(`${what}: take ${KIND[e.entity]} ${e.row_id} off the ${docLabel(doc)}`, `DELETE FROM ${d.table} WHERE id = ${ref.sql} AND ${d.fk} = ? AND ordinal = ?`, [...ref.params, e.row_id, row.ordinal], 1);
     if (row.id !== null) plan.written.add(`${d.table}:${row.id}`);
-    const json = JSON.stringify({ filing_id: plan.filing.id, [d.fk]: e.row_id, document: doc, ...(part === null ? {} : { part }), ordinal: row.ordinal });
-    plan.audit({ entity: d.table, entityId: ref, field: "deployment", oldText: json, newText: lit(""), proposed: null, alternative: null, flags: null, choice: "remove", origin: "practitioner" });
+    // A remove's from is the placement row's stored ordinal, which a restore puts it back at.
+    plan.audit({ op: "remove", document: doc, entity: e.entity, entity_id: e.row_id, deployment_id: plan.rowId(row), from: row.ordinal, to: null, old_hash: null, new_hash: null });
     plan.setList(d.table, doc, part, list.filter((r) => r !== row));
     taken += 1;
   }
@@ -532,19 +549,7 @@ function planReword(plan: Plan, op: Extract<EditOp, { op: "reword" }>, t: MapEnt
   }
   plan.push(`reword ${entity} ${rowId}`, `UPDATE ${entity} SET ${sets.join(", ")} WHERE id = ? AND ${field} = ?`, [...values, rowId, current], 1);
   plan.written.add(`${entity}:${rowId}`);
-  const flags = op.review_flags && op.review_flags.length > 0 ? JSON.stringify(op.review_flags) : null;
-  plan.audit({
-    entity,
-    entityId: lit(rowId),
-    field,
-    oldText: current,
-    newText: lit(op.new_text),
-    proposed: op.proposed_text,
-    alternative: op.new_text,
-    flags,
-    choice: op.choice,
-    origin: op.choice === "alternative" ? "model" : "practitioner",
-  });
+  plan.audit({ op: "reword", document: t.document, entity, entity_id: rowId, deployment_id: null, from: null, to: null, old_hash: sha256Text(current), new_hash: sha256Text(op.new_text) });
   rewords.push({ new_text: op.new_text, choice: op.choice });
 }
 
@@ -582,8 +587,8 @@ function planMove(plan: Plan, op: Extract<EditOp, { op: "move" }>, t: MapEntry, 
     plan.reorder(d.table, order, `op ${i + 1} move`);
     plan.setList(d.table, doc, part, order);
     if (tr.id !== null) plan.written.add(`${d.table}:${tr.id}`);
-    // A move's audit texts are the row's position in its list, counting from 1, before and after.
-    plan.audit({ entity: d.table, entityId: rowRef(tr), field: "ordinal", oldText: String(from), newText: lit(String(to)), proposed: null, alternative: null, flags: null, choice: "move", origin: "practitioner" });
+    // A move's from and to are the row's position in its list, counting from 1, before and after.
+    plan.audit({ op: "move", document: doc, entity: t.entity, entity_id: t.row_id, deployment_id: plan.rowId(tr), from, to, old_hash: null, new_hash: null });
     moved += 1;
   }
   if (moved === 0) throw new Refusal("no_change", `${describe(t)} is already ${op.anchor.position} ${describe(a)}.`);
@@ -642,15 +647,15 @@ function planRecast(plan: Plan, op: Extract<EditOp, { op: "recast" }>, t: MapEnt
       const placed = insertAt(plan, "filing_submissions", doc, null, anchorRow, op.anchor.position, `${newKey}.${doc}`, label);
       plan.push(
         `${label}: place the new submission on the ${docLabel(doc)}`,
-        "INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (?, (SELECT id FROM temp.quick_edit_ids WHERE k = ?), ?, ?)",
-        [plan.filing.id, newKey, doc, placed.ordinal],
+        "INSERT INTO filing_submissions (filing_id, submission_id, document, ordinal) VALUES (?, ?, ?, ?)",
+        [plan.filing.id, plan.idOf(newKey), doc, placed.ordinal],
         1
       );
       plan.remember(placed.key as string);
       placed.pending = false;
     }
     takeOff(plan, t, docs, label);
-    plan.audit({ entity: "submissions", entityId: keyRef(newKey), field: "contention", oldText: text, newText: lit(text), proposed: null, alternative: null, flags: null, choice: "recast", origin: "practitioner" });
+    plan.audit({ op: "recast", document: a.document, entity: "submissions", entity_id: plan.idOf(newKey), deployment_id: null, from: null, to: null, old_hash: sha256Text(text), new_hash: sha256Text(text) });
     return;
   }
   if (a.document !== "form" || a.deployment === null || a.deployment.table !== "filing_facts") {
@@ -664,31 +669,33 @@ function planRecast(plan: Plan, op: Extract<EditOp, { op: "recast" }>, t: MapEnt
   const placed = insertAt(plan, "filing_facts", "form", part, anchorRow, op.anchor.position, `${newKey}.form`, label);
   plan.push(
     `${label}: place the new fact on the form`,
-    "INSERT INTO filing_facts (filing_id, fact_id, document, part, ordinal) VALUES (?, (SELECT id FROM temp.quick_edit_ids WHERE k = ?), 'form', ?, ?)",
-    [plan.filing.id, newKey, part, placed.ordinal],
+    "INSERT INTO filing_facts (filing_id, fact_id, document, part, ordinal) VALUES (?, ?, 'form', ?, ?)",
+    [plan.filing.id, plan.idOf(newKey), part, placed.ordinal],
     1
   );
   plan.remember(placed.key as string);
   placed.pending = false;
   takeOff(plan, t, docsFor(op.document, t.document), label);
-  plan.audit({ entity: "facts", entityId: keyRef(newKey), field: "postulate", oldText: text, newText: lit(text), proposed: null, alternative: null, flags: null, choice: "recast", origin: "practitioner" });
+  plan.audit({ op: "recast", document: "form", entity: "facts", entity_id: plan.idOf(newKey), deployment_id: null, from: null, to: null, old_hash: sha256Text(text), new_hash: sha256Text(text) });
 }
 
 function planRestore(plan: Plan, op: Extract<EditOp, { op: "restore" }>, i: number): void {
-  if (!Number.isInteger(op.remove_revision_id) || op.remove_revision_id <= 0) throw new ValidationError(`${PREVIEW}: restore needs remove_revision_id, the remove's audit row id`, "invalid_remove_revision_id");
-  const [rev] = rows(plan.db, "SELECT entity, old_text, choice FROM paragraph_revisions WHERE id = ?", [op.remove_revision_id]);
-  if (rev === undefined || rev.choice !== "remove" || !(String(rev.entity) in DEPLOY_BY_TABLE)) {
-    throw new Refusal("not_a_remove", `paragraph_revisions row ${op.remove_revision_id} is not a remove, so there is nothing to restore.`);
+  if (!Number.isInteger(op.remove_line) || op.remove_line <= 0) throw new ValidationError(`${PREVIEW}: restore needs remove_line, the remove's line in the Writing's quick-edits log`, "invalid_remove_line");
+  const file = logFile(plan.db, plan.filing.id);
+  const text = existsSync(file) ? readFileSync(file, "utf-8").split("\n")[op.remove_line - 1] : undefined;
+  const removed = text ? (JSON.parse(text) as Record<string, unknown>) : undefined;
+  const entity = String(removed?.entity);
+  const d = removed?.op === "remove" && Object.hasOwn(DEPLOY, entity) ? DEPLOY[entity as MapEntity] : undefined;
+  if (removed === undefined || d === undefined) {
+    throw new Refusal("not_a_remove", `Line ${op.remove_line} of Writing ${plan.filing.id}'s quick-edits log is not a remove, so there is nothing to restore.`);
   }
-  const d = DEPLOY_BY_TABLE[String(rev.entity) as DeployTable];
-  const removed = JSON.parse(String(rev.old_text)) as Record<string, unknown>;
-  if (Number(removed.filing_id) !== plan.filing.id) throw new Refusal("other_filing", `That remove took a row off Writing ${removed.filing_id}, not Writing ${plan.filing.id}.`);
-  const fk = Number(removed[d.fk]);
+  const fk = Number(removed.entity_id);
   const document = String(removed.document) as MapDocument;
-  const part = d.part ? String(removed.part) : null;
+  // A remove takes a fact off the Part takeOff names, so the restore puts it back there.
+  const part = d.part ? factPart(plan.filing.kind) : null;
   const list = plan.list(d.table, document, part);
   if (list.some((r) => r.fk === fk)) throw new Refusal("already_placed", `${d.kind} ${fk} is already on the ${docLabel(document)}.`);
-  const oldOrdinal = Number(removed.ordinal);
+  const oldOrdinal = Number(removed.from);
   const next = list.find((r) => r.ordinal >= oldOrdinal) ?? null;
   const key = `op${i + 1}.restored`;
   const placed = insertAt(plan, d.table, document, part, next, "before", key, `op ${i + 1} restore`);
@@ -698,8 +705,7 @@ function planRestore(plan: Plan, op: Extract<EditOp, { op: "restore" }>, i: numb
   plan.remember(key);
   placed.pending = false;
   placed.fk = fk;
-  const json = JSON.stringify({ filing_id: plan.filing.id, [d.fk]: fk, document, ...(part === null ? {} : { part }), ordinal: placed.ordinal });
-  plan.audit({ entity: d.table, entityId: keyRef(key), field: "deployment", oldText: "", newText: lit(json), proposed: null, alternative: null, flags: null, choice: "restore", origin: "practitioner" });
+  plan.audit({ op: "restore", document, entity, entity_id: fk, deployment_id: plan.idOf(key), from: null, to: placed.ordinal, old_hash: null, new_hash: null });
 }
 
 function planKill(plan: Plan, t: MapEntry): void {
@@ -735,7 +741,8 @@ function planKill(plan: Plan, t: MapEntry): void {
       elsewhere + here
     );
   }
-  plan.audit({ entity: t.entity, entityId: lit(t.row_id), field: "killed_on", oldText: "", newText: { sql: TODAY_SQL, params: [] }, proposed: null, alternative: null, flags: null, choice: "kill", origin: "practitioner" });
+  // A kill's to is the killed_on date, which apply_edit fills from the row it wrote.
+  plan.audit({ op: "kill", document: t.document, entity: t.entity, entity_id: t.row_id, deployment_id: null, from: null, to: null, old_hash: null, new_hash: null });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -910,6 +917,7 @@ interface StoredPreview {
   seen_revision: number;
   statements: WriteStatement[];
   labels: string[];
+  log: LogEntry[];
   preconditions: Precondition[];
   scope: [string, number[]][];
   expires_at: string;
@@ -1036,7 +1044,7 @@ export async function submissionFormsPreviewEdit(args: PreviewEditArgs): Promise
     const parts: string[] = [op.op];
     if (target) parts.push(`${KIND[target.entity]} ${target.row_id} (${describe(target)})`);
     if (anchor && "anchor" in op) parts.push(`${op.anchor.position} ${KIND[anchor.entity]} ${anchor.row_id} (${describe(anchor)})`);
-    if (op.op === "restore") parts.push(`the row paragraph_revisions ${op.remove_revision_id} took off`);
+    if (op.op === "restore") parts.push(`the row the remove on line ${op.remove_line} of the quick-edits log took off`);
     if ("document" in op && op.document) parts.push(`on ${op.document === "both" ? "both documents" : docLabel(op.document)}`);
     return parts.join(" ");
   });
@@ -1156,6 +1164,7 @@ export async function submissionFormsPreviewEdit(args: PreviewEditArgs): Promise
       seen_revision: args.seen_revision,
       statements: plan.statements,
       labels: plan.labels,
+      log: plan.log,
       preconditions,
       scope: [...pairs].map(([table, ids]) => [table, [...ids]]),
       expires_at: expires,
@@ -1210,5 +1219,48 @@ export async function submissionFormsApplyEdit(args: ApplyEditArgs): Promise<App
     return { applied: false, filing_id: stored.filing_id, refused: "stale_preview", stale_rows: [label], note: `Refused: "${label}" matched ${written.changes} rows instead of one, so a touched row changed since the preview. Nothing was written. Render, present and preview again.` };
   }
   const revision = fetchRevision(db);
-  return { applied: true, filing_id: stored.filing_id, revision, note: `Applied${written.warning ? ` (${written.warning})` : ""}.` };
+  const log = appendLog(db, stored, written.results, revision);
+  return { applied: true, filing_id: stored.filing_id, revision, audit_log: log.file, audit_lines: log.lines, note: `Applied${written.warning ? ` (${written.warning})` : ""}.` };
+}
+
+// ---------------------------------------------------------------------------------------------
+// The quick-edits log (paragraph-revision.md section 8)
+
+/** One filing's quick-edits log, in the matter's Drafting records folder. */
+function logFile(db: string, filingId: number): string {
+  return join(recordsDir(db), `quick-edits-${filingId}.jsonl`);
+}
+
+/** Appends one line per planned change, after the write commits, with each inserted row's id filled
+ * from the write's results. Returns the file and the 1-based lines appended. */
+function appendLog(db: string, stored: StoredPreview, results: { rowid: number }[], revision: number): { file: string; lines: number[] } {
+  const file = logFile(db, stored.filing_id);
+  mkdirSync(dirname(file), { recursive: true });
+  const before = existsSync(file) ? readFileSync(file, "utf-8").split("\n").length - 1 : 0;
+  const id = (ref: IdRef | null) => (ref === null || typeof ref === "number" ? ref : results[ref.$rowid].rowid);
+  const appliedAt = new Date().toISOString();
+  const text = stored.log
+    .map((e) => {
+      const entityId = id(e.entity_id) as number;
+      const to = e.op === "kill" ? String(rows(db, `SELECT killed_on FROM "${e.entity}" WHERE id = ?`, [entityId])[0].killed_on) : e.to;
+      return JSON.stringify({
+        applied_at: appliedAt,
+        session_token: stored.session_token,
+        preview_token: stored.token,
+        seen_revision: stored.seen_revision,
+        new_revision: revision,
+        op: e.op,
+        document: e.document,
+        entity: e.entity,
+        entity_id: entityId,
+        deployment_id: id(e.deployment_id),
+        from: e.from,
+        to,
+        old_hash: e.old_hash,
+        new_hash: e.new_hash,
+      });
+    })
+    .join("\n");
+  appendFileSync(file, `${text}\n`, "utf-8");
+  return { file, lines: stored.log.map((_, i) => before + i + 1) };
 }

@@ -22,7 +22,8 @@
 // answer, disables the buttons with one line saying why. The first click arms the button and the
 // second withdraws; every click shows its outcome on the entry.
 
-import { join } from "node:path";
+import { mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 import { NotFoundError } from "../errors.js";
 import { writeTextAtomic } from "../knowledge/sidecar.js";
@@ -327,6 +328,8 @@ export async function writePastSuggestionsPage(env: NodeJS.ProcessEnv = process.
   if (options.focus !== undefined && !store.records.some((r) => isSuggestion(r) && r.record_id === options.focus)) {
     throw new NotFoundError(`no suggestion ${options.focus} on this computer`, "not_found");
   }
+  // On a new device /probanda-setup calls this first, to create the folder it connects.
+  mkdirSync(dirname(path), { recursive: true });
   writeTextAtomic(path, renderPastSuggestionsHtml(store, pageApiPort(env), (id) => pageApiSuggestionToken(id, env), options.focus ?? null));
   return path;
 }

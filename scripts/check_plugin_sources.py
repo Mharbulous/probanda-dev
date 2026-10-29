@@ -17,7 +17,7 @@ COMMONS_SKILL = "legal-commons"
 SHARED_TREE = "shared"
 EXTRA_TREES = (SHARED_TREE, COMMONS_SKILL)
 # The agent merged in from legal-commons' read side.
-COMMONS_AGENTS = ("troubleshooter",)
+COMMONS_AGENTS = ("tech-support",)
 
 # Forbidden database-particular tokens in the legal-commons gatekeeper skill:
 # matter data is reached only through /matter-data, never by naming a local DB file.

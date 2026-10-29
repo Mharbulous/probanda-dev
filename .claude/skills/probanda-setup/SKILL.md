@@ -1,6 +1,6 @@
 ---
 name: probanda-setup
-description: "Set Probanda up on a device where it has never been set up: a practice_data tool reports probanda.json not found, or practice_data__config_status reports exists false. Finds the practitioner's 0. CASE DATA folder (or where to create one), writes this device's probanda.json, creates the practice database, records who uses this device, and records where the practitioner keeps each kind of document (their folder map). Also use it, on a device already set up, when another skill reports that Probanda does not yet know where the practitioner keeps each kind of document: it then runs only that step. Not for a settings file that exists but is broken (practice-data's repair), or for a tool that fails on a device already set up."
+description: "Set Probanda up on a device where it has never been set up: a practice_data tool reports probanda.json not found, or practice_data__config_status reports exists false. Finds the practitioner's 0. CASE DATA folder (or where to create one), writes this device's probanda.json, creates the practice database, records who uses this device, connects the folder suggestions are shown from, and records where the practitioner keeps each kind of document (their folder map). Also use it, on a device already set up, when another skill reports that Probanda does not yet know where the practitioner keeps each kind of document: it then runs only that step. Not for a settings file that exists but is broken (practice-data's repair), or for a tool that fails on a device already set up."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
@@ -12,7 +12,7 @@ A missing `probanda.json` means Probanda has not been set up on this device. It 
 **Rules that hold throughout:**
 - Write `probanda.json` only through the practice_data tools named below. Never write it or `firm.json` by hand.
 - Nothing written holds client or matter content: no client names, matter names or document text. It holds only folder paths, the firm's name and the roster.
-- Setup creates only Probanda's own folders and files: the `0. CASE DATA` folder when the practitioner approves creating it, `_practice\` and `practice.db`, `_practice\firm\firm.json`, and this person's folder map. It never deletes, moves or renames a file, and never creates a folder inside a matter. A matter's own `0. CASE DATA` folder is created by matter-data's initialize, not here.
+- Setup creates only Probanda's own folders and files: the `0. CASE DATA` folder when the practitioner approves creating it, `_practice\` and `practice.db`, `_practice\firm\firm.json`, this person's folder map, and the suggestions folder beside `probanda.json`. It never deletes, moves or renames a file, and never creates a folder inside a matter. A matter's own `0. CASE DATA` folder is created by matter-data's initialize, not here.
 - Setup never writes `practice_quirks` or a credential. `practice_quirks` follows practice-data's Practice quirks rules.
 
 ## Step 1 — Confirm this is a new device
@@ -56,7 +56,11 @@ Whether to store client names is asked by retainer-tracking's First Import, and 
 
 Follow `references/folder-layout.md`. It proposes, from one of the practitioner's matter folders, where they keep each kind of document.
 
-## Step 7 — Verify and hand back
+## Step 7 — Connect the suggestions folder
+
+Only on a remote-device host (its tool list holds `get_device_info`), where a file card is shown only from a connected folder. Call `suggestion_box__past_suggestions` with no arguments: it creates the suggestions folder, and the folder holding its `past_suggestions_path` is that folder. Never present or read the page here. Connect that folder, not the one above it, which holds this device's settings and secret. If `get_device_info`'s `connectedFolders` does not cover it, call `device_request_folder_access` once for it, with a one-line reason (Probanda shows suggestions from there) that names no file. On a decline or refusal, say in one line that the practitioner can connect it later with "Add folder" in the Claude desktop app, and carry on.
+
+## Step 8 — Verify and hand back
 
 1. Call `practice_data__matter_lookup` with any matter reference. An empty result is fine on a new install. A path-resolution error is not, and means step 3 did not take.
 2. Call `practice_data__config_status` again and confirm `exists: true` and `practice_db_exists: true`.

@@ -79,7 +79,7 @@ Follow `references/refinement.md`. In short, show, then let them react:
 
 ## 6. The card
 
-The suggestion is shown to the practitioner as a card, `Suggestion-<id>.html`, and only as a file card. The chat says nothing about it at all, before or after: no summary of it, no question, no "please review". The practitioner's click on the card is their approval of everything on it; nobody tells them they are reviewing. The card's order, labels, buttons and status lines are built in; the session supplies only the text.
+The suggestion is shown to the practitioner as a card, `Suggestion-<id>.html`, and only as a file card. The chat says nothing about it at all, before or after: no summary of it, no question, no "please review". If a line cannot be avoided, such as a status update the host asks for, it is only: "I've drafted a suggestion. It goes to the Probanda team only if you click Submit on the card." Beyond that sentence, chat never uses send, submit or post, in any form, of the suggestion or its card: a card is shown. The practitioner's click on the card is their approval of everything on it; nobody tells them they are reviewing. The card's order, labels, buttons and status lines are built in; the session supplies only the text.
 
 **Draft the blocks.** One card is one pain point with the changes that would ease it. Two unrelated pain points make two cards, built and shown one after the other.
 - **The pain point:** its effect on the practitioner, felt or not, in their own phrases where they gave them. When they never stated it, write your best guess and mark it `guess: true`.
@@ -97,7 +97,7 @@ The suggestion is shown to the practitioner as a card, `Suggestion-<id>.html`, a
 
 The build runs the full check against this computer's records first. When it returns `built: false` with `hits`, each hit says which block holds a match and where; put its bracket there or reword the block, and build again. Never quote what matched, in chat or anywhere else. Building is done when the check passes and the card is shown.
 
-When it returns `built: false` with `reason: "records_unreadable"`, the suggestion could not be checked, so it is not shown. Tell the practitioner once, in one plain sentence that names nothing inside Probanda: "I couldn't check this suggestion against your records, so I haven't shown it to you or sent it." Then stop: do not build it again in this session, and nothing is kept to send. Go to section 8.
+When it returns `built: false` with `reason: "records_unreadable"`, the suggestion could not be checked, so it is not shown. Tell the practitioner once, in one plain sentence that names nothing inside Probanda: "I couldn't check this suggestion against your records, so I haven't shown it to you, and it hasn't gone to the Probanda team." Then stop: do not build it again in this session, and nothing is kept to send. Go to section 8.
 
 **Show it and wait.** Present `card_path` as a file card (`shared/present-files.md`), with no text. Then call `suggestion_card__wait({card_id})`:
 - `pending`: call it again.
@@ -116,7 +116,7 @@ Go back to the work the suggestion interrupted, at the point it stopped and with
 
 ## 9. A card Probanda noticed
 
-Probanda records what it notices about its own work as an observation: a skill that notices a failing Probanda tool, such as one triaging loose threads, reports it through `suggestion_observation__record`, holding only Probanda's own output (the tool's name, the error's class or code, counts and the plugin's fixed texts), never anyone's words. The lawyer plugin decides by itself when one may be shown, and then its reminder at the end of a reply names this skill and gives this session's id. Only then does this section run, and it replaces sections 1 to 8: no outcome check, no pains extracted, no question, and nothing in chat before, during or after it.
+Probanda records what it notices about its own work as an observation: a skill that notices a failing Probanda tool, such as one triaging loose threads, reports it through `suggestion_observation__record`, holding only Probanda's own output (the tool's name, the error's class or code, counts and the plugin's fixed texts), never anyone's words. The lawyer plugin decides by itself when one may be shown, and then its reminder at the end of a reply names this skill and gives this session's id. Only then does this section run, and it replaces sections 1 to 8: no outcome check, no pains extracted, no question, and nothing in chat before, during or after it but section 6's one unavoidable line.
 
 1. **Ask.** Call `suggestion_observation__next({session_id})` with the session id the reminder gave. With `observation: null`, end the reply with nothing more.
 2. **Draft the blocks from the observation alone:** its `raw_observation` lines and its `fingerprint` (the plugin, its version, the skill and the kind), never the conversation, a document, a tool's arguments or the practitioner's words.

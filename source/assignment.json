@@ -97,7 +97,7 @@
         "research-agent",
         "research-paralegal",
         "research-triage",
-        "troubleshooter",
+        "tech-support",
         "verify-claim"
       ],
       "hooks": {

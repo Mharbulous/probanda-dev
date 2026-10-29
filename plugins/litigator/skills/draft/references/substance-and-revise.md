@@ -33,7 +33,7 @@ Where the type file has a Deployment section, follow it.
 
 ## Section 12: Revise
 
-Re-enter at section 9: elicit the change, write it, re-render. No revision mode, no different vocabulary. A rewording of one reviewed paragraph, or a swap or move of a Writing's facts or its material to be relied on, follows `revise-on-the-fly.md`. Every other revision re-enters at section 9 as written.
+Re-enter at section 9: elicit the change, write it, re-render. No revision mode, no different vocabulary. A rewording of one reviewed paragraph, a move, recast, removal, restoration or kill of a paragraph on a Writing, or a swap or move of its material to be relied on, is a quick edit and follows `revise-on-the-fly.md`. Every other revision re-enters at section 9 as written.
 
 The practitioner speaks in the numbers printed on the mockup they are looking at. Reorder, insert and remove are ordinary revision requests; renumbering everything downstream is the machinery's job, never something the practitioner tracks or is asked about.
 

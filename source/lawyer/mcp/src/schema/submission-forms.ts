@@ -173,12 +173,12 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
     {
       name: formsPrefixed("preview_edit"),
       description:
-        "Pinned-revision quick edit, step 1 of 2 (/drafting-data paragraph-revision.md section 8; schema v80). Runs in any " +
+        "Pinned-revision quick edit, step 1 of 2 (/drafting-data paragraph-revision.md section 8). Runs in any " +
         "session, holding a job or not, and takes no job. Writes nothing to the database. ops is a batch on one filing, each " +
         "op one of: reword {target, new_text, proposed_text, choice: proposed|alternative, review_flags?, states_law?, " +
         "states_fact?} (at most one per batch); move {target, anchor, document?}; recast {target, anchor, new_type: " +
         "fact|submission, document?, detach?}; remove {target, document: form|written_argument|both} (held in reserve); " +
-        "restore {remove_revision_id}; kill {target}. A target is {document: form|written_argument, part?, printed_number, " +
+        "restore {remove_line: the remove's 1-based line in the Writing's quick-edits log}; kill {target}. A target is {document: form|written_argument, part?, printed_number, " +
         "statement?} exactly as the practitioner saw it on the mockup at seen_revision (the revision the last presenting " +
         "render returned); an anchor adds position: before|after. Each is resolved once, through the paragraph map that " +
         "render recorded, so a later op in the batch still names the record the practitioner meant after an earlier op " +
@@ -219,11 +219,13 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "every precondition the preview recorded (each row it names, writes or saw a trigger touch, and the rows of each " +
         "list it renumbers) and the foreign-scope read: any change refuses stale_preview, naming the rows, and a wip job " +
         "of another session refuses foreign_job; an unrelated edit elsewhere in the filing does not refuse. Then writes " +
-        "the preview's statements in one transaction with their paragraph_revisions audit rows (one per row changed, " +
-        "carrying preview_token and seen_revision); a guarded statement that matches nothing rolls the whole edit back as " +
+        "the preview's statements in one transaction; a guarded statement that matches nothing rolls the whole edit back as " +
         "stale_preview. The token is spent on the first call, refused or not. On success the filing is re-rendered as " +
         "drafting_forms__render renders it (draft_dir or presentation_dir, client fields, session_token), and the result " +
-        "carries applied, revision and render: that render's response, whose revision is the new seen_revision.",
+        "carries applied, revision, audit_log, audit_lines and render: that render's response, whose revision is the new " +
+        "seen_revision. Once the write commits, one line per change is appended to the Writing's quick-edits log, " +
+        "quick-edits-<filing_id>.jsonl in the matter's Drafting records folder (audit_log), at audit_lines; the " +
+        "paragraph_revisions table is not written.",
       inputSchema: {
         type: "object",
         properties: {

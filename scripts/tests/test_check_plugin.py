@@ -401,12 +401,12 @@ class TestPlantedViolations(FixtureTest):
         # A plugin that ships the commons agents may name them, so this one stops shipping them.
         for name in check_plugin_sources.COMMONS_AGENTS:
             os.remove(os.path.join(self.fixture.root, "source", "litigator", "agents", f"{name}.md"))
-        self.fixture.write(".claude/skills/alpha/references/rules.md", "Ask the troubleshooter agent.\n")
+        self.fixture.write(".claude/skills/alpha/references/rules.md", "Ask the tech-support agent.\n")
         self.fixture.build()
-        self.assertOnlyFails("inverse-reference", "'troubleshooter' in alpha/references/rules.md")
+        self.assertOnlyFails("inverse-reference", "'tech-support' in alpha/references/rules.md")
 
     def test_inverse_reference_ignores_the_commons_agents_own_files(self):
-        self.assertIn(b"troubleshooter", read(self.fixture.root, "source/litigator/agents/troubleshooter.md"))
+        self.assertIn(b"tech-support", read(self.fixture.root, "source/litigator/agents/tech-support.md"))
         self.assertTrue(self.fixture.results()["inverse-reference"][0])
 
     def test_shipped_tree_purity(self):

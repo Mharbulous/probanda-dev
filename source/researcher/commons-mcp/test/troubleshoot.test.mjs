@@ -370,7 +370,7 @@ test("one env var without the other is reported and ignored", async () => {
   }
 });
 
-// The three store states the troubleshooter reports must stay distinguishable:
+// The three store states tech-support reports must stay distinguishable:
 // answered-and-empty, did-not-answer, and not configured.
 test("search keeps an empty store, an unreachable store and an unconfigured store apart", async () => {
   const empty = await index.dispatchTool(context(fakeClient(), fakeClient()), "troubleshoot__search", { query: "x" });
