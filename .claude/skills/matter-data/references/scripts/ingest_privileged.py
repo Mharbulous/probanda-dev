@@ -20,7 +20,12 @@ The staged object:
      "document": {"title", "description", "category", "author", "recipient", "date"},
      "facts": [{"source_locator", "description", "category", "date_of_fact", "notes"}],
      "client_instructions": [{"party_name", "instructed_by", "date", "description",
-                              "source_locator", "status", "proceeding_file_number"}]}
+                              "source_locator", "status", "proceeding_file_number",
+                              "supersedes_instruction_id"?}]}
+
+An instruction that changes a current one names it in `supersedes_instruction_id`:
+that row is closed (`valid_to`, status `superseded`) and the new row carries it
+as `prior_id`, never an update of its text (ingest-extract.md Path B).
 
 A bare row's provenance is matched on (privileged source, locator, Statement), so
 a repeated call writes nothing twice. A re-extraction never moves a document
@@ -75,14 +80,21 @@ SELECT last_insert_rowid(), {PRIV}, json_extract(:fact, '$.locator'), json_extra
 WHERE changes() = 1
 """
 
+CLOSE_PRIOR = f"""
+UPDATE privileged.client_instructions SET valid_to = {c.TODAY}, status = 'superseded'
+WHERE valid_to IS NULL
+  AND instruction_id IN (SELECT json_extract(i.value, '$.supersedes') FROM json_each(:doc, '$.instructions') i)
+"""
+
 INSTRUCTIONS = f"""
 INSERT INTO privileged.client_instructions (proceeding_id, party_id, instructed_by, date, description,
-                                            source_id, source_locator, status, valid_from, verified)
+                                            source_id, source_locator, status, valid_from, prior_id, verified)
 SELECT (SELECT p.proceeding_id FROM main.proceedings p
         WHERE p.file_number = json_extract(i.value, '$.file_number')),
        json_extract(i.value, '$.party_id'), json_extract(i.value, '$.instructed_by'),
        json_extract(i.value, '$.date'), json_extract(i.value, '$.description'), {PRIV},
-       json_extract(i.value, '$.locator'), json_extract(i.value, '$.status'), {c.TODAY}, 0
+       json_extract(i.value, '$.locator'), json_extract(i.value, '$.status'), {c.TODAY},
+       json_extract(i.value, '$.supersedes'), 0
 FROM json_each(:doc, '$.instructions') i
 WHERE NOT EXISTS (SELECT 1 FROM privileged.client_instructions x WHERE x.source_id = {PRIV}
                     AND x.source_locator IS json_extract(i.value, '$.locator')
@@ -148,12 +160,15 @@ def plan(request):
         status = row.get('status') or 'open'
         if status not in INSTRUCTION_STATUSES:
             read.problems.append(f'{where}.status must be open, actioned or superseded')
+        supersedes = row.get('supersedes_instruction_id')
+        if supersedes is not None and (not isinstance(supersedes, int) or isinstance(supersedes, bool)):
+            read.problems.append(f'{where}.supersedes_instruction_id must be an instruction id')
         instructions.append({
             'party_id': participants.get(name), 'instructed_by': read.text(row, 'instructed_by', where, required=True),
             'date': read.text(row, 'date', where, required=True),
             'description': read.text(row, 'description', where, required=True),
             'locator': read.text(row, 'source_locator', where), 'status': status,
-            'file_number': read.text(row, 'proceeding_file_number', where),
+            'file_number': read.text(row, 'proceeding_file_number', where), 'supersedes': supersedes,
         })
     if read.problems:
         return {'problems': read.problems}
@@ -172,7 +187,7 @@ def plan(request):
         bound = {'locator': fact['locator'], 'note': _note(fact), 'verified': fact['verified']}
         statements.append({'ref': f'fact {i}', 'params': {'fact': json.dumps(bound, ensure_ascii=False)},
                            'statements': [{'sql': BARE, 'count': 'facts'}, {'sql': PROVENANCE}]})
-    statements += [{'sql': INSTRUCTIONS}, SELECT_PRIV]
+    statements += [{'sql': CLOSE_PRIOR}, {'sql': INSTRUCTIONS}, SELECT_PRIV]
     return {'params': {'doc': json.dumps(payload, ensure_ascii=False)}, 'statements': statements,
             'post': [], 'markers': [], 'asks': [], 'report': [], 'title': title, 'date': source['date'],
             'store': 'privileged'}

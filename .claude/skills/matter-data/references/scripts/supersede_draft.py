@@ -82,11 +82,11 @@ def generate(request):
 
 def main(argv):
     if len(argv) != 2:
-        print('usage: supersede_draft.py candidates|rank|fold-plan|emit-sql|rehash-sql < request.json', file=sys.stderr)
+        print('usage: supersede_draft.py candidates|rank|fold-plan|emit-sql|rehash-sql|probe < request.json', file=sys.stderr)
         return 1
     try:
         result = run(argv[1], json.load(sys.stdin))
-    except (ValueError, KeyError) as exc:
+    except (ValueError, KeyError, LookupError) as exc:
         print(f'REFUSED: {exc}', file=sys.stderr)
         return 2
     print(result if isinstance(result, str) else json.dumps(result, indent=2))

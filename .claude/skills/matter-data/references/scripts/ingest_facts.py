@@ -14,14 +14,18 @@ then flip to `complete`. `pleading_positions.py` validates the arrays first.
 
 With no result (`results` empty) the extraction failed twice: the source is
 registered `failed`, its honest status, and nothing else is written.
+
+A result whose document may be privileged (a `privilege_signal` flag, or the
+category `privileged`) writes nothing and is `blocked` `path_b`: the main thread
+reads it as Path B with its privilege question. The category `authority` is
+`blocked` `set_aside`, for /ingest's own path. An unresolved target locator is
+`blocked` `unresolved` with the smallest one reported (Path A step 3).
 """
 
 import json
 
 import ingest_common as c
 from pleading_positions import ExtractionError, validate_extraction
-
-FACT_VALUES = ('claim', 'admit', 'deny', 'not_admit', 'no_position')
 
 CLOSE_POSITIONS = f"""
 UPDATE main.positions SET valid_to = {c.TODAY}
@@ -125,7 +129,8 @@ INSERT_REFERENCES = f"""
 INSERT INTO main.source_references (source_id, reference_type, target_source_id, source_locator,
                                     target_locator, description, verified)
 SELECT {c.SOURCE}, json_extract(r.value, '$.type'),
-       (SELECT min(s.source_id) FROM main.sources s WHERE s.title = json_extract(r.value, '$.target_title')),
+       (SELECT min(s.source_id) FROM main.sources s
+        WHERE s.parent_source_id IS NULL AND s.title = json_extract(r.value, '$.target_title')),
        json_extract(r.value, '$.locator'), json_extract(r.value, '$.target_locator'),
        json_extract(r.value, '$.description'), 0
 FROM json_each(:doc, '$.references') r
@@ -212,8 +217,15 @@ UPDATE main.sources SET ingestion_status = 'failed' WHERE source_id = {c.SOURCE}
 """
 
 
+CATEGORY_SAY = ('How should this document be classified: court, correspondence, production, work product, '
+                'disbursements, privileged, or a legal authority?')
+
+
 def failed_plan(request, category):
-    """The source registered `failed`: ingestion could not begin (extraction-protocol.md)."""
+    """The source registered `failed`: ingestion could not begin (extraction-protocol.md). Its
+    category comes from the route or an answer; with neither, it is asked, never assumed (K-m9)."""
+    if category not in c.SOURCE_CATEGORIES:
+        return {'asks': [{'kind': 'category', 'ref': c.title_from_path(request['file_path']), 'say': CATEGORY_SAY}]}
     source = source_row(request, c.Reader(), {}, category, {'status': 'failed'})
     return {'params': {'doc': json.dumps({'source': source}, ensure_ascii=False)},
             'statements': [c.guard_privileged_store(), c.PRIOR_STATUS, {'sql': c.REGISTER},
@@ -224,39 +236,56 @@ def failed_plan(request, category):
 def plan(request):
     route = request.get('route') or {}
     answers = request.get('answers') or {}
-    category_hint = answers.get('category') or route.get('category') or 'court'
     if not request.get('results'):
-        return failed_plan(request, category_hint)
+        return failed_plan(request, answers.get('category') or route.get('category'))
     if len(request['results']) != 1:
         return {'problems': ['contract facts takes one result per document']}
     doc = c.load(request['results'][0])
     read = c.Reader()
-
-    answered_facts = {k for p in doc.get('fact_positions') or [] for k in [p.get('target_fact_key')]
-                      if _key(k, 'fact') is not None}
-    answered_relief = {k for p in doc.get('relief_positions') or [] for k in [p.get('target_relief_key')]
-                       if _key(k, 'relief') is not None}
-    try:
-        validate_extraction(doc, answered_facts, answered_relief)
-    except (ExtractionError, KeyError, TypeError) as exc:
-        return {'problems': [f'invalid: {exc}']}
-
     document = doc.get('document') if isinstance(doc.get('document'), dict) else {}
     category = answers.get('category') or read.text(document, 'category', 'document')
+    title = read.text(document, 'title', 'document') or c.title_from_path(request['file_path'])
+
+    # K-M4: a document that may be privileged never reaches main from an extractor's reading; it
+    # goes to Path B with its question. An authority keeps /ingest's own path in v1.
+    if category == 'privileged' or (c.flags_of(doc, 'privilege_signal') and answers.get('category') is None):
+        return {'blocked': 'path_b', 'asks': [{'kind': 'privilege', 'ref': title[:80],
+                'say': f'"{title[:80]}" may be privileged. Is it privileged, not privileged, or unclear for now?'}]}
+    if category == 'authority':
+        return {'blocked': 'set_aside'}
+
+    # The answered pleading's keys as they were dispatched, never the extraction's own (K-m2).
+    answered = request.get('answered') or {}
+    try:
+        validate_extraction(doc, set(answered.get('facts') or []), set(answered.get('relief') or []))
+    except ExtractionError as exc:
+        if str(exc).startswith('unresolved target locator: '):
+            locator = str(exc).split(': ', 1)[1][:60]
+            return {'blocked': 'unresolved', 'report': [
+                f'{title[:60]}: {locator} of the pleading it answers could not be matched, so nothing was '
+                'recorded for this document.']}
+        return {'problems': [f'invalid: {exc}']}
+    except (KeyError, TypeError) as exc:
+        return {'problems': [f'invalid: {exc}']}
+
     asks = []
     if category not in c.SOURCE_CATEGORIES:
-        asks.append({'kind': 'category', 'ref': c.title_from_path(request['file_path']),
-                     'say': 'How should this document be classified: court, correspondence, '
-                            'production, work product or disbursements?'})
+        asks.append({'kind': 'category', 'ref': c.title_from_path(request['file_path']), 'say': CATEGORY_SAY})
     participants = request.get('participants') or {}
     source = source_row(request, read, document, category)
     filer = read.text(document, 'author_or_filing_party', 'document')
-    source['filed_by_party_id'] = participants.get(filer) if filer else None
+    if filer and category == 'court':
+        # A court document's filing party is resolved (spec 2.2); 0 answers "none of the parties".
+        source['filed_by_party_id'] = _party(filer, participants, asks, 'document') or None
+    else:
+        source['filed_by_party_id'] = (participants.get(filer) or None) if filer else None
 
     facts, by_key = [], {}
     for i, row in enumerate(doc['facts']):
         fact = c.read_fact(read, row, f'facts[{i}]')
         facts.append(fact)
+        if row.get('fact_key') in by_key:
+            read.problems.append(f'facts[{i}].fact_key repeats')
         by_key[row.get('fact_key')] = fact
 
     positions = []
@@ -348,4 +377,4 @@ def plan(request):
         statements.append({'sql': f'SELECT {c.other_copy()} AS other', 'value_as': 'other'})
     return {'params': {'doc': json.dumps(payload, ensure_ascii=False)}, 'statements': statements,
             'post': passes, 'markers': markers, 'asks': [], 'report': report, 'title': source['title'],
-            'date': source['date']}
+            'date': source['date'], 'other_title': other_title}

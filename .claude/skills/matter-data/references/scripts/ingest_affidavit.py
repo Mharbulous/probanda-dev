@@ -5,31 +5,44 @@ Behind `matter_data__ingest_result` contracts `affidavit_body` and
 the shape).
 
 affidavit_body (Pass 1): one transaction. The body row is registered (or
-reused) `partial`, with its execution status; the deponent is upserted as a
-fact witness and assigned to the body's proceeding; the body facts carry their
-basis of knowledge and informant. An informant the extractor flagged
-`privilege_signal` is written NULL, never into main (ingest-extract.md L268),
-and an ask says so. A rendered `.docx` body has no exhibits: it is flipped to
+reused) `partial`, with its execution status and its sworn date; the deponent
+is upserted as a fact witness and assigned to the body's proceeding; the body
+facts carry their basis of knowledge and informant. An informant the extractor
+marked `informant_privileged` is written NULL, never into main
+(ingest-extract.md L268), and an ask says so; its answer (`answers.informants`,
+locator to privileged source id) records the informant in that source's
+`fact_provenance`. A rendered `.docx` body has no exhibits: it is flipped to
 `complete` at once.
 
 affidavit_exhibits (Pass 3): one transaction, each exhibit in its own statement
 group, so an exhibit that fails is rolled back alone and the rest go on (spec
-2.3). An exhibit is deduplicated by (parent, letter in its title). `needs_human`
-or an uncertain stamp letter writes it `verified = 2`; a privilege signal
-writes it as Path B's Unclear branch (facts only, `privilege_status =
-'pending'`) and asks. An exhibit whose extraction failed twice is registered
-`failed` at `verified = 2`. The call in which every expected letter has a row
-sets the body's final status: `complete`, or `partial` when the run could not
-locate some exhibits the body lists (`deferred`).
+2.3). The exhibit's letter is the one it was dispatched for (its ref's last
+part); an extractor letter that differs fails the exhibit's contract. An
+exhibit is deduplicated by (parent, letter in its title); a row registered
+`failed` is reused and refreshed. `needs_human` or an uncertain stamp letter
+writes it `verified = 2`; a privilege signal writes it as Path B's Unclear
+branch (facts only, `privilege_status = 'pending'`) and asks. Each exhibit's
+group is followed by a fallback group that, when the exhibit's own group rolled
+back, records it `failed` at `verified = 2` with an `UNCONFIRMED:` note; an
+exhibit failing its contract is recorded the same way. Either is returned in
+`invalid` or as a failed group and read once more (R4); an exhibit whose
+extraction failed twice is registered `failed` at `verified = 2`. The call in
+which every expected letter has a row, none `failed` but those that failed
+twice, sets the body's final status: `complete`, or `partial` when the run
+could not locate some exhibits the body lists (`deferred`).
 
     request  {..., "exhibits": {"expected": [L], "failed": [L], "deferred": [L], "uncertain": [L]}}
 """
 
 import json
+import re
 
 import ingest_common as c
 
 BODY = c.top_level()
+LETTER = re.compile(r'^(?:[A-Z]{1,2}|\d{1,3})$')
+NOTE_FAILED = 'UNCONFIRMED: the exhibit could not be read into the record.'
+NOTE_TWICE = 'UNCONFIRMED: the exhibit could not be read after two attempts.'
 
 UPSERT_DEPONENT = """
 INSERT INTO main.witnesses (name, witness_type)
@@ -50,6 +63,21 @@ WHERE s.source_id = {BODY} AND s.proceeding_id IS NOT NULL AND json_extract(:doc
                     AND w.witness_type = 'fact')
 """
 
+# A privileged informant, once the practitioner names the privileged source it came from (#17).
+INFORMANT_PROVENANCE = f"""
+INSERT INTO privileged.fact_provenance (fact_id, source_id, source_locator, source_note, verified)
+SELECT n.fact_id, n.privileged_source_id, n.locator, 'INFORMANT: ' || n.name, 0
+FROM (SELECT (SELECT min(x.fact_id) FROM main.facts x WHERE x.source_id = {BODY}
+                AND x.source_locator IS json_extract(i.value, '$.locator')
+                AND x.description = json_extract(i.value, '$.description')) AS fact_id,
+             json_extract(i.value, '$.privileged_source_id') AS privileged_source_id,
+             json_extract(i.value, '$.locator') AS locator, json_extract(i.value, '$.name') AS name
+      FROM json_each(:doc, '$.informants') i) n
+WHERE n.fact_id IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM privileged.fact_provenance p
+                  WHERE p.fact_id = n.fact_id AND p.source_id = n.privileged_source_id)
+"""
+
 GUARD_BODY = {'sql': f"SELECT 'waiting: the affidavit body is not registered yet' WHERE {BODY} IS NULL",
               'refuse': True}
 
@@ -67,6 +95,16 @@ SELECT b.proceeding_id, b.category, json_extract(:ex, '$.title'), json_extract(:
        json_extract(:ex, '$.privilege_status')
 FROM main.sources b
 WHERE b.source_id = {BODY} AND {_EXHIBIT} IS NULL
+"""
+
+# The re-extraction rule for an exhibit: a row recorded `failed` is reused and takes the new reading.
+REFRESH_FAILED_EXHIBIT = f"""
+UPDATE main.sources
+SET title = json_extract(:ex, '$.title'), description = json_extract(:ex, '$.description'),
+    date = json_extract(:ex, '$.date'), verified = json_extract(:ex, '$.verified'),
+    notes = json_extract(:ex, '$.notes'), ingestion_status = json_extract(:ex, '$.status'),
+    privilege_status = json_extract(:ex, '$.privilege_status')
+WHERE source_id = {_EXHIBIT} AND ingestion_status = 'failed'
 """
 
 EXHIBIT_FACTS = f"""
@@ -107,7 +145,9 @@ SET ingestion_status = CASE WHEN json_array_length(:doc, '$.deferred') = 0 THEN 
 WHERE source_id = {BODY} AND ingestion_status = 'partial'
   AND (SELECT count(*) FROM json_each(:doc, '$.expected') l
        WHERE EXISTS (SELECT 1 FROM main.sources e WHERE e.parent_source_id = {BODY}
-                     AND (e.title = 'Exhibit ' || l.value OR e.title LIKE 'Exhibit ' || l.value || ' %')))
+                     AND (e.title = 'Exhibit ' || l.value OR e.title LIKE 'Exhibit ' || l.value || ' %')
+                     AND (e.ingestion_status IS NOT 'failed'
+                          OR l.value IN (SELECT value FROM json_each(:doc, '$.failed')))))
       = json_array_length(:doc, '$.expected')
 """
 
@@ -129,34 +169,41 @@ def _body_plan(request, read):
     doc = c.load(request['results'][0])
     deponent = doc.get('deponent') if isinstance(doc.get('deponent'), dict) else {}
     name = read.text(deponent, 'name', 'deponent', required=True)
-    signals = {f.get('ref') for f in c.flags_of(doc, 'privilege_signal')}
-    facts, asks = [], []
+    answered = answers.get('informants') or {}
+    facts, asks, informants = [], [], []
     for i, row in enumerate(read.items(doc, 'body_facts', 'result')):
         fact = c.read_fact(read, row, f'body_facts[{i}]', with_knowledge=True)
-        if fact.get('informant') and fact['locator'] in signals:
+        if fact.get('informant') and row.get('informant_privileged') is True:
+            # #17: the privileged identity never lands in main.
+            locator = fact['locator'] or str(i)
+            if isinstance(answered.get(locator), int):
+                informants.append({'locator': fact['locator'], 'description': fact['description'],
+                                   'name': fact['informant'], 'privileged_source_id': answered[locator]})
+            else:
+                asks.append({'kind': 'privileged_informant', 'ref': locator,
+                             'say': f'The source of the information at {locator[:40]} may be privileged, so it '
+                                    'was left out of the case record. Which privileged document does it come '
+                                    'from? It will be recorded there.'})
             fact['informant'] = None
-            asks.append({'kind': 'privileged_informant', 'ref': fact['locator'] or str(i),
-                         'say': f'The source of the information at {fact["locator"]} may be privileged, so it '
-                                'was left out of the case record. Say which privileged document it comes from '
-                                'to record it there.'})
         facts.append(fact)
     if read.problems:
         return {'problems': read.problems}
 
     source = _source(request, category, 'partial')
-    source['title'] = c.title_from_path(request['file_path'])
+    source['date'] = read.text(doc, 'sworn_date', 'result')
     if route.get('page_range'):
         source['notes'] = f"Book segment pp. {route['page_range']}"
     flags = {k: c.flags_of(doc, k) for k in ('date_setting', 'other_copy', 'outgoing_letter')}
     other_title = (flags['other_copy'][0].get('detail') or '').strip() if flags['other_copy'] else None
     passes, markers, report = c.post_passes(request, category, request['file_path'], source['title'],
                                             None, flags)
-    payload = {'source': source, 'deponent': name, 'facts': facts, 'other_copy_title': other_title}
+    payload = {'source': source, 'deponent': name, 'facts': facts, 'informants': informants,
+               'other_copy_title': other_title}
     statements = [
         c.guard_privileged_store(), c.GUARD_PRIVILEGE_CHANGE, c.PRIOR_STATUS,
         {'sql': c.REGISTER}, {'sql': c.REFRESH},
         {'sql': UPSERT_DEPONENT}, {'sql': ASSIGN_DEPONENT},
-        c.insert_facts(with_knowledge=True),
+        c.insert_facts(with_knowledge=True), {'sql': INFORMANT_PROVENANCE},
     ]
     if route.get('rendering'):
         # A Word body embeds no exhibits (ingest-extract.md Path C): complete once Pass 1 commits.
@@ -166,7 +213,7 @@ def _body_plan(request, read):
         statements.append({'sql': f'SELECT {c.other_copy()} AS other', 'value_as': 'other'})
     return {'params': {'doc': json.dumps(payload, ensure_ascii=False)}, 'statements': statements,
             'post': passes, 'markers': markers, 'asks': asks, 'report': report, 'title': source['title'],
-            'date': None}
+            'date': source['date'], 'other_title': other_title}
 
 
 def _source(request, category, status):
@@ -179,8 +226,12 @@ def _source(request, category, status):
             'notes': None, 'status': status, 'privilege_status': None}
 
 
-def _exhibit(read, doc, letter_hint, uncertain):
-    letter = read.text(doc, 'exhibit_letter', 'result') or letter_hint
+def _exhibit(read, doc, letter, uncertain):
+    """One exhibit's row and facts. `letter` is the dispatched one (K-M8): the extractor's own
+    letter, when it gives a different one, fails the contract rather than move the facts."""
+    given = read.text(doc, 'exhibit_letter', 'result')
+    if given is not None and given != letter:
+        read.problems.append(f'result.exhibit_letter {given!r} is not the dispatched letter {letter!r}')
     title = read.text(doc, 'title', 'result')
     signal = bool(c.flags_of(doc, 'privilege_signal'))
     notes = None
@@ -199,46 +250,62 @@ def _exhibit(read, doc, letter_hint, uncertain):
     }
 
 
+def _failed_exhibit(letter, note):
+    return {'letter': letter, 'title': f'Exhibit {letter}', 'description': None, 'date': None,
+            'verified': 2, 'notes': note, 'status': 'failed', 'privilege_status': None, 'facts': []}
+
+
 def _exhibits_plan(request, read):
     run = request.get('exhibits') or {}
+    expected = run.get('expected') or []
     uncertain = set(run.get('uncertain') or [])
-    groups, written, asks = [], [], []
+    if request.get('results') and not expected:
+        # No exhibit list: writing one would complete the body on the first exhibit (S-M6).
+        return {'problems': ['no exhibit list is known for this affidavit']}
+    groups, written, asks, invalid, pending = [], [], [], [], []
     for entry in request.get('results') or []:
+        letter = (entry.get('ref') or '').rsplit(':', 1)[-1]
+        if not LETTER.match(letter) or letter not in expected:
+            return {'problems': [f'{entry.get("ref")!r} is not an exhibit of this affidavit']}
         doc = c.load(entry)
-        hint = (entry.get('ref') or '').rsplit(':', 1)[-1]
         ex_read = c.Reader()
-        ex = _exhibit(ex_read, doc, hint, uncertain)
+        ex = _exhibit(ex_read, doc, letter, uncertain)
         if ex_read.problems:
-            # A result that fails its contract is still recorded, at verified = 2 (spec 2.3).
-            ex = {**ex, 'facts': [], 'verified': 2, 'status': 'failed',
-                  'notes': 'UNCONFIRMED: the exhibit could not be read into the record.'}
+            # A result that fails its contract is recorded for review and read once more (spec 2.3, R5).
+            ex = _failed_exhibit(letter, NOTE_FAILED)
+            invalid.append(letter)
         if ex['privilege_status']:
-            asks.append({'kind': 'privilege', 'ref': ex['letter'],
-                         'say': f'Exhibit {ex["letter"]} may be privileged. Is it privileged, not privileged, '
+            pending.append(letter)
+            asks.append({'kind': 'privilege', 'ref': letter,
+                         'say': f'Exhibit {letter} may be privileged. Is it privileged, not privileged, '
                                 'or unclear for now? Its facts are held back until you decide.'})
         groups.append(_group(ex))
-        written.append(ex['letter'])
+        # Recorded for review when the group above rolled back (a constraint, spec 2.3).
+        groups.append(_group(_failed_exhibit(letter, NOTE_FAILED), 'fallback ' + letter, register_only=True))
+        written.append(letter)
     for letter in run.get('failed') or []:
         if letter not in written:
-            groups.append(_group({'letter': letter, 'title': f'Exhibit {letter}', 'description': None,
-                                  'date': None, 'verified': 2, 'notes': None, 'status': 'failed',
-                                  'privilege_status': None, 'facts': []}))
-    payload = {'source': {'file_hash': request['file_hash']}, 'expected': run.get('expected') or [],
-               'deferred': run.get('deferred') or []}
+            groups.append(_group(_failed_exhibit(letter, NOTE_TWICE)))
+    payload = {'source': {'file_hash': request['file_hash']}, 'expected': expected,
+               'deferred': run.get('deferred') or [], 'failed': run.get('failed') or []}
     statements = [GUARD_BODY, c.PRIOR_STATUS] + groups + [{'sql': FINAL_STATUS}, SELECT_FINAL, c.SELECT_SOURCE]
     report = []
     if run.get('deferred'):
         report.append('Exhibits ' + ', '.join(run['deferred'])[:120] + ' could not be located in the file '
                       'and were not read.')
     return {'params': {'doc': json.dumps(payload, ensure_ascii=False)}, 'statements': statements,
-            'post': [], 'markers': [], 'asks': asks, 'report': report, 'title': None, 'date': None}
+            'post': [], 'markers': [], 'asks': asks, 'report': report, 'title': None, 'date': None,
+            'invalid': invalid, 'pending': pending}
 
 
-def _group(ex):
-    return {'ref': ex['letter'], 'params': {'ex': json.dumps(ex, ensure_ascii=False)},
-            'statements': [{'sql': REGISTER_EXHIBIT, 'count': 'exhibits'},
-                           {'sql': EXHIBIT_FACTS, 'count': 'facts'},
-                           {'sql': EXHIBIT_LINKS, 'count': 'links'}]}
+def _group(ex, ref=None, register_only=False):
+    statements = [{'sql': REGISTER_EXHIBIT, 'count': None if register_only else 'exhibits'}]
+    if not register_only:
+        statements += [{'sql': REFRESH_FAILED_EXHIBIT},
+                       {'sql': EXHIBIT_FACTS, 'count': 'facts'},
+                       {'sql': EXHIBIT_LINKS, 'count': 'links'}]
+    return {'ref': ref or ex['letter'], 'params': {'ex': json.dumps(ex, ensure_ascii=False)},
+            'statements': statements}
 
 
 def plan(request):

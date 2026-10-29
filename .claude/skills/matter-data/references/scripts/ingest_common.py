@@ -126,7 +126,7 @@ SELECT json_extract(:doc, '$.source.category'), json_extract(:doc, '$.source.tit
        json_extract(:doc, '$.source.notes'), json_extract(:doc, '$.source.status'),
        json_extract(:doc, '$.source.execution_status'),
        coalesce(json_extract(:doc, '$.source.proceeding_id'),
-                (SELECT p.proceeding_id FROM main.proceedings p
+                (SELECT CASE WHEN count(*) = 1 THEN min(p.proceeding_id) END FROM main.proceedings p
                  WHERE p.file_number = json_extract(:doc, '$.source.file_number'))),
        json_extract(:doc, '$.source.privilege_status')
 WHERE {SOURCE} IS NULL
@@ -213,10 +213,11 @@ WHERE source_id = {source} AND {marker} IS NOT NULL AND (notes IS NULL OR instr(
 
 
 def other_copy(source=SOURCE):
-    """The registered top-level court source the extractor's other_copy flag names by title."""
+    """The registered top-level court source the extractor's other_copy flag names by title,
+    matched without regard to case or surrounding space."""
     return f"""(SELECT min(s.source_id) FROM main.sources s
         WHERE s.parent_source_id IS NULL AND s.category = 'court' AND s.source_id IS NOT {source}
-          AND s.title = json_extract(:doc, '$.other_copy_title'))"""
+          AND lower(trim(s.title)) = lower(trim(json_extract(:doc, '$.other_copy_title'))))"""
 
 
 def marker_statements(markers, source=SOURCE):
@@ -260,10 +261,35 @@ def read_fact(read, row, where, with_knowledge=False):
     return fact
 
 
-def is_order(file_path, title, description):
-    """order-effects.md Step 1, its filename and extractor-signal arms. Over-inclusive by design."""
-    tokens = set(re.split(r'[\s_.]+', title_from_path(file_path).upper()))
-    return bool(tokens & ORDER_CODES) or bool(ORDER_WORDS.search(f'{title or ""} {description or ""}'))
+def leading_code(file_path):
+    """The file name's CODE token: the first token after a leading date, else the first token."""
+    tokens = [t for t in re.split(r'[\s_]+', title_from_path(file_path).upper()) if t]
+    if tokens and re.fullmatch(r'\d{4}-\d{2}-\d{2}', tokens[0]):
+        tokens = tokens[1:]
+    return tokens[0] if tokens else ''
+
+
+def is_order(file_path, title, description, kind=None):
+    """order-effects.md Step 1, its filename and extractor-signal arms. Over-inclusive by design,
+    but a Notice of Application asks for orders and makes none."""
+    if kind == 'notice_of_application':
+        return False
+    return leading_code(file_path) in ORDER_CODES or bool(ORDER_WORDS.search(f'{title or ""} {description or ""}'))
+
+
+def _norm(text):
+    return ' '.join(re.sub(r'[^\w&]+', ' ', (text or '').lower()).split())
+
+
+def firm_wrote(request, flags):
+    """ingest-extract.md's delivery-check test: the letter's own face shows the practitioner's firm
+    writing out (the outgoing_letter flag names the firm as written, matched to the firm's name),
+    and it is not an email."""
+    if os.path.splitext(stored_path(request.get('file_path')))[1].lower() in ('.eml', '.msg'):
+        return False
+    firm = _norm(request.get('firm_name'))
+    return bool(firm) and any(firm in _norm(f.get('detail')) or (_norm(f.get('detail')) and _norm(f.get('detail')) in firm)
+                              for f in flags.get('outgoing_letter', []))
 
 
 def post_passes(request, category, file_path, title, description, flags):
@@ -274,20 +300,24 @@ def post_passes(request, category, file_path, title, description, flags):
     passes, markers, report = [], [], []
     if category == 'court' or court_file:
         (markers if unattended else passes).append('linkage')
-    if category == 'court' and is_order(file_path, title, description):
+    kind = (request.get('route') or {}).get('kind')
+    if category == 'court' and is_order(file_path, title, description, kind):
         (markers if unattended else passes).append('order_effects')
     if category in ('court', 'correspondence'):
         for flag in flags.get('date_setting', []):
             if unattended:
                 markers.append('date_setting')
-            else:
-                detail = (flag.get('detail') or 'a date').strip()[:120]
-                report.append(f'This document sets a date ({detail}). Record it as a date to track; nothing was recorded here.')
-            break
+                continue
+            # ingest-extract.md "Date-setting correspondence", its fixed line; {source} is the
+            # written row's id, filled in by the data server.
+            detail = (flag.get('detail') or 'a date').strip()[:120]
+            where = f", p. {flag['page']}" if isinstance(flag.get('page'), int) else ''
+            report.append(f'This document sets a date: {detail}{where}. Record it as an anchor through the docket '
+                          f'clerk, citing source {{source}} ({(title or "")[:60]}). Nothing was recorded here.')
         passes.append('procedural_history')
     if category == 'court' and flags.get('other_copy'):
         (markers if unattended else passes).append('other_copy')
-    if category == 'correspondence' and flags.get('outgoing_letter') and not unattended:
+    if category == 'correspondence' and not unattended and firm_wrote(request, flags):
         passes.append('delivery_check')
     passes.append('name_check')
     return passes, list(dict.fromkeys(markers)), report
