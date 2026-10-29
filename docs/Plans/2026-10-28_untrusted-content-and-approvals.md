@@ -17,7 +17,7 @@ Results (2026-10-28, Claude Code 2.1.312):
   - PDF: `{type:"pdf", file:{filePath, base64, originalSize}}`;
   - image: `{type:"image", file:{base64, type, originalSize, dimensions}}`.
   1b changes only `file.content` of a text result.
-- A subagent's hook payload carries `agent_id` and `agent_type`, and the main session's `transcript_path`. The subagent's own calls and their results go to `<session>/subagents/agent-<id>.jsonl`, never to the main transcript, so the gate cannot see a refusal issued inside a subagent. One-way calls from a subagent are refused, and `troubleshoot__record` stays ungated (only the troubleshooter subagent calls it). Known gap.
+- A subagent's hook payload carries `agent_id` and `agent_type`, and the main session's `transcript_path`. The subagent's own calls and their results go to `<session>/subagents/agent-<id>.jsonl`, never to the main transcript, so the gate cannot see a refusal issued inside a subagent. One-way calls from a subagent are refused, and `troubleshoot__record` stays ungated (only the troubleshooter subagent calls it). Known gap, closed by `2026-10-28_guardrail-gaps.md` (gap 2).
 - `record_sent`, `record_filed` and `record_served` take no revision. Hashing `db_path` would void an approval on any unrelated write, so the gate never hashes a database file, and all three gain a required `expect_revision`, checked against `db_meta.revision`.
 
 ## 1a. Label outside text in MCP replies (lawyer, patch)
@@ -73,7 +73,7 @@ Gated, by plugin:
 
 `record_sent`, `record_filed` and `record_served` gain a required `expect_revision` (see step 0), which makes the lawyer change minor.
 
-Not gated (reversible, or already behind a human act): `publish_*`, `assemble_general`, `delete_job`, `insert_time_entry`, `set_time_entries_billable`, `import_invoices`, `record_retainer_notice`, `manage_payment_in_flight`, `set_status`, the `mail__*` writes, `knowledge__retire` and `knowledge__write`, the migrations, `suggestion_card__write_up_send` (after the Submit click), and the drafting merges (practitioner-words-gate). Known gap: the raw SQL `*_execute` tools.
+Not gated (reversible, or already behind a human act): `publish_*`, `assemble_general`, `delete_job`, `insert_time_entry`, `set_time_entries_billable`, `import_invoices`, `record_retainer_notice`, `manage_payment_in_flight`, `set_status`, the `mail__*` writes, `knowledge__retire` and `knowledge__write`, the migrations, `suggestion_card__write_up_send` (after the Submit click), and the drafting merges (practitioner-words-gate). Known gap: the raw SQL `*_execute` tools, closed for `filed_on` and `sent_copy_id` by `2026-10-28_guardrail-gaps.md` (gap 1).
 
 Version: minor for litigator, lawyer, timekeeper and file-manager. Patch for the other plugins, because `shared/` rebuilds all seven.
 

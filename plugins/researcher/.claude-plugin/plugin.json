@@ -1,7 +1,7 @@
 {
   "name": "researcher",
   "displayName": "Researcher",
-  "version": "0.10.10",
+  "version": "0.10.11",
   "description": "What the law is, for British Columbia lawyers: legal research, citation and verification against audited authorities. Requires the lawyer plugin: install lawyer first, then researcher.",
   "author": {
     "name": "Probanda Legal",
@@ -54,6 +54,20 @@
             ],
             "timeout": 10,
             "statusMessage": "Commons read-only guard"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.+troubleshoot__record$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/one-way-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "One-way approval gate"
           }
         ]
       }

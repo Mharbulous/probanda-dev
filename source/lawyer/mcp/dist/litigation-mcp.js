@@ -1,4 +1,4 @@
-// build-stamp: f631d9245d8b
+// build-stamp: 68ed579705f1
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -77977,7 +77977,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("execute"),
-      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Milestone with no Writing is created through drafting_data__create_milestone, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, a drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, a job's unchanged plan is approved through drafting_data__approve_plan, a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, a job step's status is set through drafting_data__set_step, a job is deleted through drafting_data__delete_job, and a duplicate job is merged into another through drafting_data__merge_jobs. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
+      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Milestone with no Writing is created through drafting_data__create_milestone, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, and a Writing is recorded as served through drafting_data__record_served: a script that leaves a filing's filed_on or sent_copy_id holding a value it did not hold is refused whole, writing nothing (clearing filed_on stays an update). A drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, a job is assigned through drafting_data__assign_job, a job's unchanged plan is approved through drafting_data__approve_plan, a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, a job step's status is set through drafting_data__set_step, a job is deleted through drafting_data__delete_job, and a duplicate job is merged into another through drafting_data__merge_jobs. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
       inputSchema: {
         type: "object",
         properties: {
@@ -81265,7 +81265,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "f631d9245d8b";
+var BUILD_STAMP = false ? null : "68ed579705f1";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -84868,14 +84868,33 @@ def do_query(req):
 ${stagedStorePython({ store: "submission", ext: ".sqlite", migrateTool: "drafting_data__migrate" })}
 
 
+# Recording a Writing as sent, filed or served is one-way and belongs to record_sent, record_filed
+# and record_served, behind the approval gate. So a script that leaves any filing's filed_on or
+# sent_copy_id holding a value it did not hold before is refused whole. It is judged by the state
+# after the script, never by its text, and raised on the staged copy, so even a script that commits
+# itself changes nothing live. Clearing either one stays an update. A database from before a
+# column existed is checked on the columns it has.
+def recorded(con):
+    have = {row[1] for row in con.execute("PRAGMA table_info(filings)")}
+    cols = [c for c in ("filed_on", "sent_copy_id") if c in have]
+    return {row[0]: row[1:] for row in con.execute(f"SELECT {', '.join(['id'] + cols)} FROM filings")} if cols else {}
+
+
 def do_execute(req):
     def mutate(con):
+        before = recorded(con)
         try:
             con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
         except Exception:
             if con.in_transaction:
                 con.execute("ROLLBACK")
             raise
+        for filing, now in recorded(con).items():
+            was = before.get(filing, (None,) * len(now))
+            if any(new is not None and new != old for new, old in zip(now, was)):
+                raise SystemExit(
+                    "filed_on and sent_copy_id are set only by drafting_data__record_sent, record_filed or "
+                    f"record_served; clearing filed_on stays an update. Nothing was written (filing {filing}).")
         return {"ok": True, "changes": con.total_changes}, True
     return staged_write(req, 'execute', mutate)
 

@@ -75,7 +75,7 @@ export function seedSql(dbPath, script) {
   const res = spawnSync(
     process.env.COCLERK_PYTHON || "python",
     ["-c", "import sqlite3, sys; c = sqlite3.connect(sys.argv[1]); c.execute('PRAGMA foreign_keys = ON'); "
-      + "c.executescript('BEGIN;\\n' + sys.stdin.read() + '\\n;\\nCOMMIT;'); c.close()", dbPath],
+      + "c.executescript('BEGIN;\\n' + sys.stdin.buffer.read().decode('utf-8') + '\\n;\\nCOMMIT;'); c.close()", dbPath],
     { encoding: "utf-8", input: script }
   );
   if (res.status !== 0) throw new Error(`fixture seed failed: ${res.stderr}`);

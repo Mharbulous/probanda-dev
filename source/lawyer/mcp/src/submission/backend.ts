@@ -82,25 +82,29 @@ ${stagedStorePython({ store: "submission", ext: ".sqlite", migrateTool: "draftin
 # and record_served, behind the approval gate. So a script that leaves any filing's filed_on or
 # sent_copy_id holding a value it did not hold before is refused whole. It is judged by the state
 # after the script, never by its text, and raised on the staged copy, so even a script that commits
-# itself changes nothing live. Clearing either one stays an update.
-RECORDED = "SELECT id, filed_on, sent_copy_id FROM filings"
+# itself changes nothing live. Clearing either one stays an update. A database from before a
+# column existed is checked on the columns it has.
+def recorded(con):
+    have = {row[1] for row in con.execute("PRAGMA table_info(filings)")}
+    cols = [c for c in ("filed_on", "sent_copy_id") if c in have]
+    return {row[0]: row[1:] for row in con.execute(f"SELECT {', '.join(['id'] + cols)} FROM filings")} if cols else {}
 
 
 def do_execute(req):
     def mutate(con):
-        before = {row[0]: row[1:] for row in con.execute(RECORDED)}
+        before = recorded(con)
         try:
             con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
         except Exception:
             if con.in_transaction:
                 con.execute("ROLLBACK")
             raise
-        for row in con.execute(RECORDED):
-            old = before.get(row[0], (None, None))
-            if any(new is not None and new != was for new, was in zip(row[1:], old)):
+        for filing, now in recorded(con).items():
+            was = before.get(filing, (None,) * len(now))
+            if any(new is not None and new != old for new, old in zip(now, was)):
                 raise SystemExit(
                     "filed_on and sent_copy_id are set only by drafting_data__record_sent, record_filed or "
-                    f"record_served; clearing filed_on stays an update. Nothing was written (filing {row[0]}).")
+                    f"record_served; clearing filed_on stays an update. Nothing was written (filing {filing}).")
         return {"ok": True, "changes": con.total_changes}, True
     return staged_write(req, 'execute', mutate)
 
