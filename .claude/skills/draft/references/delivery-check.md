@@ -1,4 +1,4 @@
-Read when: a letter's `Deliver` job is open at the opening, the Sent write refuses with `sent_copy_mismatch`, the practitioner asks whether a letter went out or arrived, or the session is about to ask them that.
+Read when: a letter's `Deliver` job is open at the opening, `/ingest` hands over an ingested letter, the Sent write refuses with `sent_copy_mismatch`, the practitioner asks whether a letter went out or arrived, or the session is about to ask them that.
 Assumes SKILL.md is loaded. Rules are not restated here.
 
 # Delivery check
@@ -15,8 +15,9 @@ The agent only reads. This session acts on its result, updates the draft, record
 - **Before any question** about whether a letter went out or arrived (section 1).
 - **On `sent_copy_mismatch`** from the Sent write, when the copy passed has not been checked yet.
 - **When the practitioner asks** for a letter to be checked, for any letter file in the matter.
+- **When `/ingest` hands over an ingested letter**, with its path. First look for the open Writing it came from: ask `/drafting-data` for the matter's general Writings that are neither sent nor retired, with each one's title, `To` recipients, and stored RE line and date. A Writing matches when the letter goes to the same recipient and either has the same subject or is dated on or after the Writing's stored date. A file ending ` UNSIGNED.pdf` matches none. When several match, take the one nearest in subject and date, and ask one question only when two tie. Then dispatch for the letter (section 3), with the matched Writing as `draft`, or with no `draft` when none matched, and act on the result (section 4). This runs the check only: it claims no job and invokes no `/work`.
 
-An ingested letter is checked by `/matter-data` at its ingest, not here. An unattended run never runs the check: it reports that the letter's delivery was not checked.
+Without `/ingest`'s hand-over, an ingested letter is checked by `/matter-data` at its ingest, not here. An unattended run never runs the check: it reports that the letter's delivery was not checked.
 
 ## 3. Dispatch
 
@@ -41,8 +42,9 @@ Do these in order. Nothing in this section asks the practitioner anything.
    3. Replace the letter's stored text with the text of the file at `draft.sent_text_source` (a PDF read through its page manifest, a scanned page only from its PNGs), paragraph for paragraph and changing no word, through `/drafting-data`'s write for a general Writing's prose rows and clauses.
    4. Render the mockup (SKILL.md section 11).
 6. **Record the letter as sent**, when a stated method is confirmed sent: `/drafting-data`'s Sent write, with the date of the earliest confirmed send as `sent_on` and `draft.sent_text_source` as the copy. A refusal is handled as `references/letters.md` section 8 says, except that `sent_copy_mismatch` after step 5 is quoted in one line and stops: never ask which text is right, and never retry. On a staff machine, name the signing lawyer and stop.
-7. **After a sync, show both versions and say so.** Present two file cards in one call (`references/present-files.md`): the draft as it stood (step 5.2's file) and the letter as sent. Then one line: the Milestone draft was updated to match the letter as sent, and whether it is now recorded as sent. Show both cards every time a draft is updated this way.
-8. **Keep nothing.** Write the result to no database, file, job, idea or note. It is done with once this section has run.
+7. **Carry counsel's review forward after a sync.** When step 5 updated the draft and step 6 recorded the letter as sent, the letter as sent stands as counsel's review of its text: write `/drafting-data`'s carry-forward approval (its Sent write, "Counsel's review carried forward"), then render the mockup (SKILL.md section 11), so the board no longer counts `counsel-review` against the letter. Never carry it for a letter that is not recorded as sent.
+8. **After a sync, show both versions and say so.** Present two file cards in one call (`references/present-files.md`): the draft as it stood (step 5.2's file) and the letter as sent. Then one line: the Milestone draft was updated to match the letter as sent, and whether it is now recorded as sent. Show both cards every time a draft is updated this way.
+9. **Keep nothing.** Write the result to no database, file, job, idea or note. It is done with once this section has run.
 
 ## 5. The question, when one is still needed
 
