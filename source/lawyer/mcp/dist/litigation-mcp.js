@@ -1,4 +1,4 @@
-// build-stamp: 5cef8286adbf
+// build-stamp: 4f0dbdebd20b
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -81265,7 +81265,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "5cef8286adbf";
+var BUILD_STAMP = false ? null : "4f0dbdebd20b";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -93281,9 +93281,23 @@ var STOCK_TITLES = /* @__PURE__ */ new Set([
 var UNCOUNTED_TITLES = /* @__PURE__ */ new Set([GATE_TITLE, PRE_SEND_TITLE, ...STOCK_TITLES]);
 var BEFORE_GATE_PREFIXES = ["File and serve", "Serve the application", "Serve the response"];
 var waitsOnGate = (title) => BEFORE_GATE_PREFIXES.some((p3) => title.startsWith(p3));
-function openJobs(tickets) {
+function afterGateJobs(board, filingId) {
+  const all = board.map((t3) => t3.ticket);
+  const frontier = board.filter((t3) => t3.filing_id === filingId && waitsOnGate(t3.ticket.title) && t3.ticket.status !== "completed").map((t3) => t3.ticket.id);
+  const reached = /* @__PURE__ */ new Set();
+  while (frontier.length > 0) {
+    const blocker = frontier.pop();
+    for (const t3 of all) {
+      if (t3.status === "completed" || reached.has(t3.id) || !t3.blocked_by.some((b3) => b3.id === blocker)) continue;
+      reached.add(t3.id);
+      frontier.push(t3.id);
+    }
+  }
+  return reached;
+}
+function openJobs(tickets, afterGate) {
   return tickets.filter(
-    (t3) => (t3.status === "queued" || t3.status === "wip") && t3.rejected_at === null && !UNCOUNTED_TITLES.has(t3.title) && !waitsOnGate(t3.title)
+    (t3) => (t3.status === "queued" || t3.status === "wip") && t3.rejected_at === null && !UNCOUNTED_TITLES.has(t3.title) && !waitsOnGate(t3.title) && !afterGate.has(t3.id)
   );
 }
 var WAIVER = " \u2014 WAIVED: ";
@@ -93522,7 +93536,7 @@ function internalCardText(drafting, jobs2) {
   return reviewOnly(drafting) ? REVIEW_ONLY_TEXT : null;
 }
 var NO_CRITERIA_TEXT = "No completion criteria are declared for this type of Writing.";
-function goalFor(ctx, tickets, shelved, current, deadlines) {
+function goalFor(ctx, tickets, shelved, current, deadlines, afterGate) {
   const sentence = "Completion Criteria";
   if (ctx.lifecycle.state === "retired") {
     const reason = ctx.filing.retirement_reason;
@@ -93536,7 +93550,7 @@ function goalFor(ctx, tickets, shelved, current, deadlines) {
   if (declared.length === 0) return { goal: { sentence, state: "pending", text: filed ?? NO_CRITERIA_TEXT }, criteria: [] };
   const forum = ctx.inventory === null ? null : ctx.inventory.filter((e3) => !NEVER_DELIVERED_DOCS.has(e3.doc));
   const drafting = declared.map((c3) => inventoryCriterion(c3, forum, shelved, current));
-  const jobs2 = openJobs(tickets);
+  const jobs2 = openJobs(tickets, afterGate);
   const gate = isInternalWriting(ctx.filing) ? null : send2 ? readPreSendGate(ctx, tickets, filed !== null, drafting, jobs2) : readGate(tickets, ctx.revision, filed !== null, PRE_FILING, jobs2);
   const hearing = storedLayout(ctx.filing).layout.goal_criteria.includes("hearing-date") ? hearingDateCriterion(ctx.dbPath, ctx.filing) : null;
   const criteria = [...drafting, ...gate === null ? [] : [gate.criterion], ...hearing === null ? [] : [hearing], ...deadlines];
@@ -93570,7 +93584,7 @@ function buildWorkBoardData(ctx, deadlines = []) {
     return withIdleFlag({ ...t3.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t3.ticket, printed), ...t3.filing_id === null ? { general: true } : {} }, ctx.rendered, idleHours);
   });
   const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);
-  const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines);
+  const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines, afterGateJobs(board.tickets, ctx.filing.id));
   const unmet = (id) => criteria.some((c3) => c3.id === id && c3.state !== "met");
   const lateSkips = (t3) => [
     ...allKeysDead(t3, printed) ? [{ reason: "all_keys_dead" }] : [],

@@ -34,12 +34,36 @@ const UNCOUNTED_TITLES: ReadonlySet<string> = new Set([GATE_TITLE, PRE_SEND_TITL
 const BEFORE_GATE_PREFIXES = ["File and serve", "Serve the application", "Serve the response"];
 export const waitsOnGate = (title: string): boolean => BEFORE_GATE_PREFIXES.some((p) => title.startsWith(p));
 
+/** The ids of the jobs that wait on one of `filingId`'s filing or service jobs (waitsOnGate) that is not
+ * completed, directly or through a chain of jobs that are not completed (jobs-gate.md §14, `after_gate`).
+ * Walked over the whole proceeding, since a link may sit on a sibling filing. A completed job breaks the chain. */
+export function afterGateJobs(board: readonly { filing_id: number | null; ticket: WorkBoardTicket }[], filingId: number): Set<number> {
+  const all = board.map((t) => t.ticket);
+  const frontier = board.filter((t) => t.filing_id === filingId && waitsOnGate(t.ticket.title) && t.ticket.status !== "completed").map((t) => t.ticket.id);
+  const reached = new Set<number>();
+  while (frontier.length > 0) {
+    const blocker = frontier.pop() as number;
+    for (const t of all) {
+      if (t.status === "completed" || reached.has(t.id) || !t.blocked_by.some((b) => b.id === blocker)) continue;
+      reached.add(t.id);
+      frontier.push(t.id);
+    }
+  }
+  return reached;
+}
+
 /** Every counted job this board shows still to do, rejected jobs left out (design §2.4). Loose threads
  * are not jobs. While any is open the gate row is unmet and names them. Hand-outlined filing or service
- * work is stock work too, or it would hold the gate it waits on. */
-export function openJobs(tickets: readonly WorkBoardTicket[]): WorkBoardTicket[] {
+ * work is stock work too, or it would hold the gate it waits on, and so is every job in `afterGate`,
+ * which runs only after that work. */
+export function openJobs(tickets: readonly WorkBoardTicket[], afterGate: ReadonlySet<number>): WorkBoardTicket[] {
   return tickets.filter(
-    (t) => (t.status === "queued" || t.status === "wip") && t.rejected_at === null && !UNCOUNTED_TITLES.has(t.title) && !waitsOnGate(t.title)
+    (t) =>
+      (t.status === "queued" || t.status === "wip") &&
+      t.rejected_at === null &&
+      !UNCOUNTED_TITLES.has(t.title) &&
+      !waitsOnGate(t.title) &&
+      !afterGate.has(t.id)
   );
 }
 

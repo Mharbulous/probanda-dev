@@ -77,7 +77,8 @@ export function goalFor(
   tickets: readonly WorkBoardTicket[],
   shelved: ReadonlySet<string>,
   current: ReadonlySet<string>,
-  deadlines: readonly GoalCriterion[]
+  deadlines: readonly GoalCriterion[],
+  afterGate: ReadonlySet<number>
 ): { goal: Goal; criteria: GoalCriterion[] } {
   const sentence = "Completion Criteria";
   if (ctx.lifecycle.state === "retired") {
@@ -96,7 +97,7 @@ export function goalFor(
 
   const forum = ctx.inventory === null ? null : ctx.inventory.filter((e) => !NEVER_DELIVERED_DOCS.has(e.doc));
   const drafting = declared.map((c) => inventoryCriterion(c, forum, shelved, current));
-  const jobs = openJobs(tickets);
+  const jobs = openJobs(tickets, afterGate);
   // An internal Writing is never sent or filed, so it has no gate row: its drafting rows are its completion.
   const gate =
     isInternalWriting(ctx.filing)
