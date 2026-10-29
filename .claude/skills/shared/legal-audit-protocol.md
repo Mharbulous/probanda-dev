@@ -378,10 +378,12 @@ the scratchpad, in this order, and return only item 3:
      quote no block.
      No coverage line and no confidence table anywhere in the memo. The header's
      one-line `Confidence:` summary of the Step 3 table is the only confidence text in it.
-   - Application compares each authority's facts with the spawn prompt's `Facts:` and
-     nothing else, flags where a court could distinguish them, and reaches no
-     conclusion about the matter. Say in one sentence that applying the law to the
-     matter's own facts is `/apply-to-facts`'s job.
+   - The memo is generic. The spawn prompt's `Facts:`, `Matter:`, `Asked by:` and `Origin:`
+     only choose authorities and route the work: the memo never states, summarises or
+     alludes to them. Its `Re:`, Issue and Conclusion hold no party name, date, amount,
+     matter number, document name or fact pattern of the working matter.
+   - Application describes only the facts of the cited authorities. It may say which
+     authority's facts come closest to a stated generic pattern.
    - Mixed coverage with `Job question: none`: the first `## Conclusion` opens with Step 4's mandated sentence,
      word for word. On a job, each Conclusion answers as Step 4's "On a job" rule says. A preliminary impression uses Step 4's hedged wording and repeats
      which checks are missing.

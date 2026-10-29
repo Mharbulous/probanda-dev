@@ -11,10 +11,7 @@ The memo opens with this YAML header, from its first `---` line to its second:
 ```
 ---
 Document: MEMORANDUM OF LAW
-Privilege: PRIVILEGED AND CONFIDENTIAL
-To: <the spawn prompt's Asked by>
 From: <the exact model ID your own system prompt states. If it states none, write "model ID not stated". Never a marketing name, never a guess>
-Matter: "<the spawn prompt's Matter>"
 Date: <the spawn prompt's Date>
 Re: "<the question, one line>"
 Format: <CRAC / IRAC / CREAC, the one the body uses>
