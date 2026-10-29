@@ -58,3 +58,14 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - Confirm the three header fields and the boilerplate Application sentence are produced by text in the plugin, and where.
 - Confirm the quoted sentence in `shared/legal-research.md` and every reader of the memo header fields.
 - Confirm the sibling spec's edits (section names and order, Sources) do not touch the same paragraphs; this spec edits the header, the Application paragraph and the never-state rule.
+
+## 11. Verification against HEAD (b2a87777), 2026-10-29
+
+| Spec claim | HEAD | Result |
+|---|---|---|
+| Header fields produced by plugin text | `.claude/skills/shared/research-memo-template.md` lines 14, 15 and 17 print `Privilege:`, `To:` (the spawn prompt's Asked by) and `Matter:` (the spawn prompt's Matter). `source/researcher/agents/research-agent.md` holds no header, layout or Facts text | Present; path corrected |
+| Boilerplate Application sentence produced by plugin text | `shared/legal-audit-protocol.md` Step 6, Application bullet: compares each authority's facts "with the spawn prompt's `Facts:`", then "Say in one sentence that applying the law to the matter's own facts is `/apply-to-facts`'s job". No text asks for a "Here," bullet; it follows from comparing with `Facts:` | Present; the bullet is a product of the comparison rule |
+| Quoted sentence in `shared/legal-research.md` | Present below the spawn template: "`Matter:` is the same file number duty 4 passes the fetcher, which the memo's header carries." The template still passes `Facts`, `Matter`, `Asked by` and `Origin` | Present |
+| Readers of `Matter:`, `To:`, `Privilege:` in a memo header | No code or skill parses them. `saveAnswer` (`source/lawyer/mcp/src/files/research-filing.ts`) copies the memo's bytes and only swaps the legend. `research-filing.unit.test.mjs` uses a memo with `Document` and `Re` only. `draft/references/job-session.md`, `matter-data`, `verify-law`, `scripts/` read none. Only `legal-research/tests/test_memo_format.py` pins the old header (`HEADER`) and the old Application wording | Listed; one test to update |
+| `Origin` words in the memo | They reach the notes file (`origin-correction` lines), not the memo | Notes are outside this spec |
+| Sibling spec overlap | The layout spec's section names, order, bold Issue, one-paragraph Conclusion and prose Application stay as they are. This change edits the header block, the Step 6 Application bullet and the `legal-research.md` sentence | No shared paragraph |
