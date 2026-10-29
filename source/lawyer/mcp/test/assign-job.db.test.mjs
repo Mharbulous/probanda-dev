@@ -43,6 +43,9 @@ const stampActivity = (dbPath, id, minutes) =>
     dbPath,
     `INSERT OR REPLACE INTO kv_store (namespace, key, value, updated_at) VALUES ('last_activity', 'tickets:${id}', '"' || strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-${minutes} minutes') || '"', '2026-10-01T00:00:00Z')`
   );
+/** Job `id`'s last activity as its card prints it: the stamp, else its lock. */
+const seen = (dbPath, id) =>
+  query(dbPath, "SELECT COALESCE((SELECT trim(value, '\"') FROM kv_store WHERE namespace = 'last_activity' AND key = 'tickets:' || id), locked_at) AS v FROM tickets WHERE id = ?", [id])[0].v;
 const lapseRecord = (dbPath, id) => query(dbPath, "SELECT value FROM kv_store WHERE namespace = 'lock_lapsed' AND key = ?", [`tickets:${id}`])[0]?.value;
 const code = (expected) => (err) => {
   assert.equal(err.code, expected, err.message);
@@ -79,7 +82,7 @@ test("a shelved job is no_match with and without takeover", async (t) => {
   const dbPath = await jobs(t);
   const before = revision(dbPath);
   for (const takeover of [false, true]) {
-    const result = await assign(dbPath, { ticket_id: 3, takeover, ...(takeover ? { expected_holder: "ss-other" } : {}) });
+    const result = await assign(dbPath, { ticket_id: 3, takeover, ...(takeover ? { expected_holder: "ss-other", expected_last_activity: "2026-10-01T09:05" } : {}) });
     assert.equal(result.outcome, "no_match", `takeover ${takeover}`);
     assert.equal(result.changes, 0);
     assert.equal(result.rejected_at, "2026-10-01T09:10");
@@ -93,7 +96,7 @@ test("a retirement-superseded job is no_match with and without takeover", async 
   const dbPath = await jobs(t);
   const before = revision(dbPath);
   for (const takeover of [false, true]) {
-    const result = await assign(dbPath, { ticket_id: 4, takeover, ...(takeover ? { expected_holder: "ss-other" } : {}) });
+    const result = await assign(dbPath, { ticket_id: 4, takeover, ...(takeover ? { expected_holder: "ss-other", expected_last_activity: "2026-10-01T09:05" } : {}) });
     assert.equal(result.outcome, "no_match", `takeover ${takeover}`);
     assert.equal(result.status, "superseded");
   }
@@ -104,7 +107,7 @@ test("a retirement-superseded job is no_match with and without takeover", async 
 test("a completed job is no_match even with takeover", async (t) => {
   const dbPath = await jobs(t);
   const before = revision(dbPath);
-  const result = await assign(dbPath, { ticket_id: 5, takeover: true, expected_holder: "ss-other" });
+  const result = await assign(dbPath, { ticket_id: 5, takeover: true, expected_holder: "ss-other", expected_last_activity: "2026-10-01T09:05" });
   assert.equal(result.outcome, "no_match");
   assert.equal(result.status, "completed");
   assert.equal(row(dbPath, 5).locked_by, null);
@@ -114,7 +117,7 @@ test("a completed job is no_match even with takeover", async (t) => {
 test("takeover assigns a job another session holds, with a new lock stamp", async (t) => {
   const dbPath = await jobs(t);
   const before = revision(dbPath);
-  const result = await assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other" });
+  const result = await assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other", expected_last_activity: seen(dbPath, 2) });
   assert.equal(result.outcome, "assigned");
   assert.equal(result.changes, 1);
   assert.equal(result.locked_by, "sess-a1");
@@ -126,12 +129,13 @@ test("takeover assigns a job another session holds, with a new lock stamp", asyn
 test("two take-overs naming the same holder: the first is assigned, the second is holder_changed", async (t) => {
   const dbPath = await jobs(t);
   const before = revision(dbPath);
-  const first = await assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other" });
+  const card = seen(dbPath, 2);
+  const first = await assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other", expected_last_activity: card });
   assert.equal(first.outcome, "assigned");
   assert.equal(first.changes, 1);
   assert.equal(row(dbPath, 2).locked_by, "sess-a1");
   // Back to back, inside one clock minute: the compare is on the token, not the lock time.
-  const second = await assign(dbPath, { ticket_id: 2, session_token: "sess-b2", takeover: true, expected_holder: "ss-other" });
+  const second = await assign(dbPath, { ticket_id: 2, session_token: "sess-b2", takeover: true, expected_holder: "ss-other", expected_last_activity: card });
   assert.equal(second.outcome, "holder_changed");
   assert.equal(second.changes, 0);
   assert.equal(second.locked_by, "sess-a1");
@@ -142,7 +146,7 @@ test("two take-overs naming the same holder: the first is assigned, the second i
 test("a take-over of a job released since the card was read is no_match, and the row is untouched", async (t) => {
   const dbPath = await jobs(t);
   const before = revision(dbPath);
-  const result = await assign(dbPath, { ticket_id: 1, takeover: true, expected_holder: "ss-other" });
+  const result = await assign(dbPath, { ticket_id: 1, takeover: true, expected_holder: "ss-other", expected_last_activity: "2026-10-01T09:05" });
   assert.equal(result.outcome, "no_match");
   assert.equal(result.changes, 0);
   assert.equal(result.status, "queued");
@@ -151,13 +155,15 @@ test("a take-over of a job released since the card was read is no_match, and the
   assert.equal(revision(dbPath), before);
 });
 
-test("a take-over without a valid 8-character expected_holder, or expected_holder without takeover, is refused", async (t) => {
+test("a take-over without a valid 8-character expected_holder or an expected_last_activity, or either without takeover, is refused", async (t) => {
   const dbPath = await jobs(t);
   const before = revision(dbPath);
   await assert.rejects(assign(dbPath, { ticket_id: 2, takeover: true }), code("invalid_expected_holder"));
   await assert.rejects(assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "   " }), code("invalid_expected_holder"));
   await assert.rejects(assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "sess-other" }), code("invalid_expected_holder"));
   await assert.rejects(assign(dbPath, { ticket_id: 2, expected_holder: "ss-other" }), code("invalid_expected_holder"));
+  await assert.rejects(assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other" }), code("invalid_expected_last_activity"));
+  await assert.rejects(assign(dbPath, { ticket_id: 2, expected_last_activity: "2026-10-01T09:05" }), code("invalid_expected_last_activity"));
   assert.deepEqual(row(dbPath, 2), { status: "wip", locked_by: "sess-other", locked_at: "2026-10-01T09:05", rejected_at: null });
   assert.equal(revision(dbPath), before);
 });
@@ -212,7 +218,7 @@ test("a lock idle 45 minutes is in the check window: a lost race without takeove
   assert.equal(plain.outcome, "lost_race");
   assert.equal(plain.changes, 0);
   assert.equal(row(dbPath, 2).locked_by, "sess-other");
-  const taken = await assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other" });
+  const taken = await assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other", expected_last_activity: seen(dbPath, 2) });
   assert.equal(taken.outcome, "assigned");
   assert.equal(lapseRecord(dbPath, 2), undefined, "a take-over is no lapse");
 });
@@ -222,7 +228,7 @@ test("a job active 10 minutes ago is never taken: lost_race without takeover, re
   await stampActivity(dbPath, 2, 10);
   const before = revision(dbPath);
   assert.equal((await assign(dbPath, { ticket_id: 2 })).outcome, "lost_race");
-  const result = await assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other" });
+  const result = await assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other", expected_last_activity: seen(dbPath, 2) });
   assert.equal(result.outcome, "recently_active");
   assert.equal(result.changes, 0);
   assert.deepEqual(row(dbPath, 2), { status: "wip", locked_by: "sess-other", locked_at: "2026-10-01T09:05", rejected_at: null });
@@ -238,4 +244,18 @@ test("a waiting step's wake-up minute counts as activity until it passes", async
     "INSERT INTO ticket_steps (ticket_id, ordinal, text, status, wait_until) VALUES (2, 1, 'Wait for the reply.', 'waiting', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-10 minutes'))"
   );
   assert.equal((await assign(dbPath, { ticket_id: 2 })).outcome, "lost_race");
+});
+
+test("a take-over of a job whose last activity moved since the card was read writes nothing, though the job is still idle 30 minutes", async (t) => {
+  const dbPath = await jobs(t);
+  await stampActivity(dbPath, 2, 45);
+  const card = seen(dbPath, 2);
+  await stampActivity(dbPath, 2, 40);
+  const before = revision(dbPath);
+  const result = await assign(dbPath, { ticket_id: 2, takeover: true, expected_holder: "ss-other", expected_last_activity: card });
+  assert.equal(result.outcome, "holder_changed");
+  assert.equal(result.changes, 0);
+  assert.match(result.note, /last activity moved since the card was read/);
+  assert.deepEqual(row(dbPath, 2), { status: "wip", locked_by: "sess-other", locked_at: "2026-10-01T09:05", rejected_at: null });
+  assert.equal(revision(dbPath), before);
 });

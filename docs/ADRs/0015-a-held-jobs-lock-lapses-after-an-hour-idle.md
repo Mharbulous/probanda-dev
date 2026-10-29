@@ -32,3 +32,9 @@ A job whose session died stayed In Progress until someone noticed. Dispatch neve
 - `practice_data__upsert_firm_profile` no longer takes `idle_flag_hours`, and `firm_profile` no longer returns it. A `firm.json` that still holds the key is read as before, with that key ignored.
 - `drafting_data__assign_job` has a new outcome, `recently_active`, and its guard without `takeover` also matches a lapsed lock.
 - The rule lives in `work/references/dispatch.md` (the idle report and `work.dispatch.in-progress`) and `work/references/take-over.md`.
+
+## Note: the take-over form and the idle report (spec `2026-10-29_take-over-form-and-idle-report-honour-staleness-spec.md`)
+
+- In D3, the practitioner's instruction to take over the named job, outright or on a stated condition the session has just confirmed on its card, is the yes, and the form is shown only when no instruction settles it.
+- A take-over passes the card's `last activity:` minute as `expected_last_activity` beside `expected_holder`, and lands only while the row still shows both, so a job that moved since the check is never taken. It returns `holder_changed`.
+- The idle report names each In Progress job's window: `live (under 30 min)` or the check window's flag. Like the flag, that is a fact about idle time, never a claim that a session is alive or has ended.

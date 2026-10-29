@@ -37,6 +37,13 @@ export function fetchJobActivity(dbPath: string): Map<number, string> {
   return new Map(found.map((r) => [Number(r.key.slice("tickets:".length)), JSON.parse(r.value) as string]));
 }
 
+/** SQL for the `tickets` row in scope's last activity exactly as its card prints it: the stamp, else its lock. */
+export function lastActivitySql(dbPath: string): string {
+  return hasTable(dbPath, "kv_store")
+    ? `COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = '${NAMESPACE}' AND key = 'tickets:' || tickets.id), tickets.locked_at)`
+    : "tickets.locked_at";
+}
+
 /** SQL true of the `tickets` row in scope when it has been idle for `minutes` or more by SQLite's
  * local clock, measured as idleSince measures it; false with nothing to measure from. */
 export function idleClause(dbPath: string, minutes: number): string {

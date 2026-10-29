@@ -7,14 +7,16 @@
 // that created any job (tickets.created_by, schema v72) is assigned only a job it created. A job is
 // not assigned before its bring-forward date (tickets.bf_on, schema v74), a start date the
 // practitioner alone sets, changes and clears; a take-over, which matches only a wip job, does not
-// read it. A take-over never lands on a job active in the last CHECK_AFTER_MINUTES. Without a take-over, a wip job whose lock has lapsed (job-activity.ts lapsedClause, ADR 0015)
+// read it. A take-over names the last activity it saw on the card too, and writes only while the row still
+// shows it, so a job that moved since the check is never taken. A take-over never lands on a job active in
+// the last CHECK_AFTER_MINUTES. Without a take-over, a wip job whose lock has lapsed (job-activity.ts lapsedClause, ADR 0015)
 // is assigned as a released one is, and the same transaction records the lapse in the job's history.
 // One write, one read, never a retry. The job tables carry no revision triggers, so the revision does
 // not move.
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { CHECK_AFTER_MINUTES, LAPSE_AFTER_MINUTES, idleClause, lapsedClause, recordLapseSql, touchJob } from "./job-activity.js";
+import { CHECK_AFTER_MINUTES, LAPSE_AFTER_MINUTES, idleClause, lapsedClause, lastActivitySql, recordLapseSql, touchJob } from "./job-activity.js";
 import { hasTable } from "../schema-capabilities.js";
 import { bfOnHeld, createdByHeld, deletedAtHeld, liveTicketClause } from "./query.js";
 
@@ -28,10 +30,12 @@ export interface AssignJobArgs {
   ticket_id: number;
   /** This session's identity from open_session/bootstrap. Never minted here. */
   session_token: string;
-  /** Only after the practitioner's explicit yes to the take-over prompt. Never needed for a lapsed lock. */
+  /** On the practitioner's yes to the take-over form or their instruction to take the job over. Never needed for a lapsed lock. */
   takeover?: boolean;
   /** The `holder:` tag off the job's card (the last 8 characters of its locked_by). Required with takeover. */
   expected_holder?: string;
+  /** The `last activity:` minute off the same card. Required with takeover. */
+  expected_last_activity?: string;
 }
 
 export interface AssignJobResult {
@@ -67,6 +71,7 @@ interface ConfirmRow {
    * same SQLite clock as the guard. */
   lapsed: number;
   takeable: number;
+  last_activity: string | null;
 }
 
 /** drafting_data__assign_job. Every refusal writes nothing. */
@@ -81,6 +86,9 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   if (args.takeover !== true && args.expected_holder !== undefined) {
     throw new ValidationError(`${TOOL}.expected_holder is passed only with takeover: true`, "invalid_expected_holder");
   }
+  if (args.takeover === true ? typeof args.expected_last_activity !== "string" || args.expected_last_activity.trim() === "" : args.expected_last_activity !== undefined) {
+    throw new ValidationError(`${TOOL}.expected_last_activity is the last activity: minute off the job's card, passed with takeover: true and only then`, "invalid_expected_last_activity");
+  }
   const takeover = args.takeover === true;
   // A deleted job (jobs-closeout.md §10a) is never assigned, by take-over or otherwise.
   const live = liveTicketClause(args.db_path);
@@ -94,8 +102,10 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   const lapsed = lapsedClause(args.db_path);
   // A job active in the last CHECK_AFTER_MINUTES is never taken over (ADR 0015).
   const takeable = idleClause(args.db_path, CHECK_AFTER_MINUTES);
-  const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ? AND ${takeable}` : `(status = 'queued' AND locked_by IS NULL OR ${lapsed}) AND rejected_at IS NULL${live}${notBefore}`) + creator;
-  const guardParams = [...(takeover ? [(args.expected_holder as string).trim()] : []), ...(creatorHeld ? [args.session_token, args.session_token] : [])];
+  // A take-over lands only while the card it was decided on is still current.
+  const last = lastActivitySql(args.db_path);
+  const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ? AND ${last} = ? AND ${takeable}` : `(status = 'queued' AND locked_by IS NULL OR ${lapsed}) AND rejected_at IS NULL${live}${notBefore}`) + creator;
+  const guardParams = [...(takeover ? [(args.expected_holder as string).trim(), (args.expected_last_activity as string).trim()] : []), ...(creatorHeld ? [args.session_token, args.session_token] : [])];
   const record = !takeover && hasTable(args.db_path, "kv_store") ? [{ sql: recordLapseSql(guard), params: [args.ticket_id, ...guardParams] }] : [];
   const written = await submissionDataWriteAll(
     args.db_path,
@@ -104,7 +114,7 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   );
   const changes = written.ok ? written.results[record.length].changes : written.changes;
   const tookLapsed = written.ok && record.length === 1 && written.results[0].changes === 1;
-  const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${takeable} AS takeable${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
+  const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${takeable} AS takeable, ${last} AS last_activity${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
   const [read] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows as unknown as ConfirmRow[];
   if (read === undefined) throw new NotFoundError(`${TOOL}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
@@ -114,7 +124,7 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   const beforeBf = !takeover && read.before_bf === 1;
   // The creator guard alone refused it: every other guard would have matched the row.
   const otherwiseEligible = read.rejected_at === null && !read.deleted_at && !beforeBf
-    && (takeover ? (read.status === "queued" || read.status === "wip") && read.locked_by !== null && read.locked_by.slice(-8) === (args.expected_holder as string).trim() && read.takeable === 1 : (read.status === "queued" && read.locked_by === null) || read.lapsed === 1);
+    && (takeover ? (read.status === "queued" || read.status === "wip") && read.locked_by !== null && read.locked_by.slice(-8) === (args.expected_holder as string).trim() && read.last_activity === (args.expected_last_activity as string).trim() && read.takeable === 1 : (read.status === "queued" && read.locked_by === null) || read.lapsed === 1);
   if (read.locked_by === args.session_token) {
     outcome = "assigned";
     if (changes === 1) await touchJob(args.db_path, id, args.session_token, env);
@@ -132,7 +142,8 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
     note = `Job ${id} was not taken over: it was active in the last ${CHECK_AFTER_MINUTES} minutes, and such a job is never taken over, so nothing was written. Say so in one line; never re-run to win.`;
   } else if (read.locked_by !== null && takeover) {
     outcome = "holder_changed";
-    note = `Job ${id} was not assigned: its holder changed since the card was read (locked at ${read.locked_at ?? "(unknown time)"}), so nothing was written. Re-render, show the take-over form again, and never re-run to win.`;
+    const what = read.locked_by.slice(-8) === (args.expected_holder as string).trim() ? `its last activity moved since the card was read (now ${read.last_activity ?? "(unknown time)"})` : `its holder changed since the card was read (locked at ${read.locked_at ?? "(unknown time)"})`;
+    note = `Job ${id} was not assigned: ${what}, so nothing was written. Re-render, show the take-over form again, and never re-run to win.`;
   } else if (read.locked_by !== null && read.lapsed !== 1) {
     outcome = "lost_race";
     note = `Job ${id} was not assigned: another session holds it. Re-render and say so; never re-run to win.`;

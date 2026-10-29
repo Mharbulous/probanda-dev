@@ -97,7 +97,7 @@ test("without expected_holder another session's job is taken_over, and the row i
 test("expected_holder naming a stale holder writes nothing and reads taken_over", async (t) => {
   const dbPath = await jobs(t);
   // The job changed hands after the card was read.
-  const takeover = await callTool({}, "drafting_data__assign_job", { db_path: dbPath, ticket_id: 2, session_token: "sess-b2", takeover: true, expected_holder: "ss-other" });
+  const takeover = await callTool({}, "drafting_data__assign_job", { db_path: dbPath, ticket_id: 2, session_token: "sess-b2", takeover: true, expected_holder: "ss-other", expected_last_activity: "2026-10-01T09:05" });
   assert.equal(takeover.outcome, "assigned");
   const before = revision(dbPath);
   const held = row(dbPath, 2);

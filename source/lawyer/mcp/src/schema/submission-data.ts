@@ -414,9 +414,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "By default the write matches only a job that is queued, unlocked and not shelved (rejected_at NULL), or a wip job " +
         "whose lock has lapsed (no activity for 60 minutes, so every board reads it as released): taking a lapsed lock " +
         "records the lapse in the job's history and needs no take-over. takeover: true " +
-        "admits a wip job held by another session; pass it only after the practitioner's explicit yes to the take-over " +
-        "prompt. takeover: true needs expected_holder, the `holder:` tag off the job's card (drafting_forms__board_card with " +
-        "jobs), and the write lands only while that holder is still on the row and the job has had no activity for 30 " +
+        "admits a wip job held by another session, on the practitioner's yes to the take-over form or their instruction to take it over. takeover: true needs " +
+        "expected_holder and expected_last_activity, the `holder:` tag and the `last activity:` minute off the job's card " +
+        "(drafting_forms__board_card with jobs), and the write lands only while the row still shows both and the job has had no activity for 30 " +
         "minutes; a job active in the last 30 minutes is never taken over. A shelved, completed or superseded job is " +
         "never assigned. A session that created any job (tickets.created_by, schema v72) is assigned only a job it " +
         "created, by take-over or otherwise. A job is not assigned before its bring-forward date (tickets.bf_on, schema " +
@@ -424,13 +424,13 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "tool mints none. The outcome is read off the confirm-read: assigned (the row carries this session's token; changes " +
         "is 0 when it already did), lost_race (another session's token is on the row: re-render and say the job was just " +
         "taken), holder_changed (a take-over found another holder than expected_holder: nothing was written; re-render and " +
-        "ask afresh), recently_active (a take-over of a job active in the last 30 minutes: nothing was written; say so in " +
+        "ask afresh; also when the holder is unchanged but the last activity moved), recently_active (a take-over of a job active in the last 30 minutes: nothing was written; say so in " +
         "one line), not_created_here (this session created jobs and this is not one of them: nothing was written; say so " +
         "in one line), before_bf (the job is held until its bring-forward date, the returned bf_on: nothing was written; " +
         "say so in one line, and never propose changing or clearing the date, which only the practitioner does), " +
         "no_match (no token: the guards matched nothing, and the returned status and rejected_at show why). " +
         "Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, " +
-        "invalid_expected_holder, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at, " +
+        "invalid_expected_holder, invalid_expected_last_activity, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at, " +
         "bf_on and a note.",
       inputSchema: {
         type: "object",
@@ -440,6 +440,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           session_token: { type: "string" },
           takeover: { type: "boolean" },
           expected_holder: { type: "string" },
+          expected_last_activity: { type: "string" },
         },
         required: ["db_path", "ticket_id", "session_token"],
         additionalProperties: false,
