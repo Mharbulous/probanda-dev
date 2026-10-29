@@ -1,26 +1,22 @@
 // A loose thread that left the board without being outlined (schema v75): seeds.discarded_at and
 // seeds.suggested_at. A discarded or suggested thread is not open, so it is out of fetchOpenSeeds,
-// the Defer write and the latest-activity read, and is listed by fetchDiscardedSeeds, which the Milestone
-// draws: a discarded thread as a struck line with a Restore link, a suggested one as a plain
-// line, neither in the Loose Threads count. A database held at v74 has neither column and still
-// reads and draws, with none of either.
+// the Defer write and the latest-activity read, and is listed by fetchResolvedSeeds on the matter's
+// one Loose Threads page. No Milestone draws or counts a loose thread. A database held at v74 has
+// neither column and still reads, with none of either.
 
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { runInNewContext } from "node:vm";
 
 const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
-const { readBoardData } = await import("./fixtures/forms-render-seeds.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { fetchLatestActivity, fetchProceeding, liveSeedClause, seedClosedColumns } = await import("../build/submission/forms/query.js");
-const { buildPreFilingBoardData, fetchDiscardedSeeds, fetchOpenSeeds, fetchResolvedSeeds, openSeedCondition } = await import("../build/submission/forms/render-work-board.js");
+const { buildPreFilingBoardData, fetchOpenSeeds, fetchResolvedSeeds, inRankOrder, openSeedCondition } = await import("../build/submission/forms/render-work-board.js");
 const { setSeedDeferral } = await import("../build/submission/forms/seed-deferral.js");
 const { buildLooseIdeasData, LOOSE_IDEAS_PAGE } = await import("../build/submission/forms/loose-ideas-page.js");
-const { renderWorkBoardHtml } = await import("../build/submission/forms/workboard-shell.js");
 const { renderViewPageHtml } = await import("../build/submission/view-pages.js");
 const { renderBoardSummary, renderLiveLanes, TODOS_NOT_READ } = await import("../build/submission/matter-pages.js");
 
@@ -69,74 +65,7 @@ async function heldAt74(t) {
 }
 
 const seedRow = (dbPath, id) => submissionDataQuery(dbPath, "SELECT * FROM seeds WHERE id = ?", [id]).rows[0];
-
-/** Runs a Milestone page's drawing script against stand-in elements and returns its main element. */
-function drawBoard(html) {
-  class Node {
-    constructor(tag) {
-      Object.assign(this, { tag, children: [], attrs: {}, className: "", text: "", style: { setProperty() {} } });
-    }
-    set textContent(value) {
-      this.text = String(value);
-      this.children = [];
-    }
-    get textContent() {
-      return this.text + this.children.map((c) => c.textContent).join("");
-    }
-    appendChild(child) {
-      child.parent = this;
-      this.children.push(child);
-      return child;
-    }
-    after(sibling) {
-      const siblings = this.parent.children;
-      siblings.splice(siblings.indexOf(this) + 1, 0, sibling);
-      sibling.parent = this.parent;
-    }
-    setAttribute(key, value) {
-      this.attrs[key] = String(value);
-    }
-    addEventListener() {}
-    all() {
-      return this.children.flatMap((c) => [c, ...c.all()]);
-    }
-    querySelector(selector) {
-      const match = selector.startsWith(".") ? (n) => n.className.split(" ").includes(selector.slice(1)) : (n) => n.tag === selector;
-      return this.all().find(match) ?? null;
-    }
-  }
-  const header = new Node("header");
-  header.appendChild(new Node("h1"));
-  header.appendChild(Object.assign(new Node("div"), { className: "meta" }));
-  const main = new Node("main");
-  main.appendChild(header);
-  const document = {
-    title: "",
-    body: new Node("body"),
-    querySelector: (selector) => (selector === "main" ? main : selector === "header" ? header : null),
-    createElement: (tag) => new Node(tag),
-    createTextNode: (text) => Object.assign(new Node("#text"), { text: String(text) }),
-  };
-  const line = html.split("\n").find((l) => l.startsWith("window.WORKBOARD = "));
-  const script = html.split("<script>")[2].split("</script>")[0];
-  runInNewContext(script, { window: { WORKBOARD: JSON.parse(line.slice("window.WORKBOARD = ".length, -1)) }, document });
-  return main;
-}
-
-/** The Loose Threads section a drawn board holds: its count and each child of its stack. */
-function threadsSection(main) {
-  const section = main.all().find((n) => n.tag === "section" && n.id === "ideas");
-  assert.ok(section, "expected a Loose Threads section");
-  const stack = section.children.find((n) => n.className === "stack");
-  return {
-    count: section.querySelector(".count").textContent,
-    lines: (stack?.children ?? []).map((n) => [n.tag, n.className, n.textContent]),
-    cue: section.children.find((n) => n.className === "cue")?.textContent ?? null,
-    empty: section.children.find((n) => n.className === "empty")?.textContent ?? null,
-  };
-}
-
-const pageOf = (section) => ({ meta: { revision: 1, matter: "L8470", client: "Larchmont", rendered: section.meta.rendered }, sections: [section] });
+const resolvedOf = (dbPath, p) => fetchResolvedSeeds(dbPath, p).map((r) => [r.id, r.how]);
 
 test("a current database holds both columns, and the open-thread condition names them", async (t) => {
   const { dbPath } = await current(t);
@@ -149,22 +78,19 @@ test("a current database holds both columns, and the open-thread condition names
   });
 });
 
-test("fetchOpenSeeds hides a discarded and a suggested thread, and fetchDiscardedSeeds returns them", async (t) => {
+test("fetchOpenSeeds hides a discarded and a suggested thread, and fetchResolvedSeeds returns them", async (t) => {
   const { dbPath } = await current(t);
   assert.deepEqual(fetchOpenSeeds(dbPath, 1).map((s) => s.id), [1], "the discarded, the suggested and the outlined thread are not open");
-  assert.deepEqual(fetchDiscardedSeeds(dbPath, 1), [
-    { id: 2, idea: "A discarded thread.", filing_id: null, discarded_at: "2026-10-12T09:00", suggested_at: null },
-    { id: 3, idea: "A suggested thread.", filing_id: null, discarded_at: null, suggested_at: "2026-10-13T09:00" },
-  ]);
-  assert.deepEqual(fetchDiscardedSeeds(dbPath, 2).map((s) => s.id), [5], "each proceeding's own");
+  assert.deepEqual(resolvedOf(dbPath, 1), [[3, "suggested"], [2, "discarded"], [4, "job"]]);
+  assert.deepEqual(resolvedOf(dbPath, 2), [[5, "discarded"]], "each proceeding's own");
   assert.deepEqual(fetchOpenSeeds(dbPath, 2), []);
 });
 
-test("restoring a discarded thread opens it again, and it leaves fetchDiscardedSeeds", async (t) => {
+test("restoring a discarded thread opens it again, and it leaves fetchResolvedSeeds", async (t) => {
   const { dbPath } = await current(t);
   await submissionDataExecute(dbPath, "UPDATE seeds SET discarded_at = NULL WHERE id = 2 AND discarded_at IS NOT NULL;");
   assert.deepEqual(fetchOpenSeeds(dbPath, 1).map((s) => s.id), [1, 2]);
-  assert.deepEqual(fetchDiscardedSeeds(dbPath, 1).map((s) => s.id), [3]);
+  assert.deepEqual(resolvedOf(dbPath, 1), [[3, "suggested"], [4, "job"]]);
 });
 
 test("a thread outlined into a deleted job and then discarded stays off the board", async (t) => {
@@ -173,7 +99,7 @@ test("a thread outlined into a deleted job and then discarded stays off the boar
   assert.deepEqual(fetchOpenSeeds(dbPath, 1).map((s) => s.id), [1, 4], "outlined into a deleted job, thread 4 is open again");
   await submissionDataExecute(dbPath, "UPDATE seeds SET discarded_at = '2026-10-13T10:00' WHERE id = 4;");
   assert.deepEqual(fetchOpenSeeds(dbPath, 1).map((s) => s.id), [1]);
-  assert.deepEqual(fetchDiscardedSeeds(dbPath, 1).map((s) => s.id), [2, 3, 4]);
+  assert.deepEqual(resolvedOf(dbPath, 1), [[4, "discarded"], [3, "suggested"], [2, "discarded"]]);
 });
 
 test("setSeedDeferral answers not_open for a discarded and for a suggested thread, writing nothing", async (t) => {
@@ -216,83 +142,63 @@ test("fetchLatestActivity ignores a discarded and a suggested thread", async (t)
   assert.equal(latest()[1], "2026-10-09T10:00", "a restored thread counts again");
 });
 
-test("a pre-filing board carries the discarded and suggested threads, in no count and in no summary", async (t) => {
+test("no Milestone counts a loose thread or carries a resolved one", async (t) => {
   const { dbPath } = await current(t);
   const data = buildPreFilingBoardData(dbPath, fetchProceeding(dbPath, 1), META);
-  assert.deepEqual(data.seeds.map((s) => s.id), [1]);
-  assert.deepEqual(data.discardedSeeds, [
-    { id: 2, idea: "A discarded thread.", discarded_at: "2026-10-12T09:00", suggested_at: null },
-    { id: 3, idea: "A suggested thread.", discarded_at: null, suggested_at: "2026-10-13T09:00" },
-  ]);
-
-  const lanes = renderLiveLanes(data);
-  assert.ok(lanes.includes("## Loose Threads (1)"), lanes.join("\n"));
-  for (const text of [lanes.join("\n"), renderBoardSummary(data, CLIENT, TODOS_NOT_READ)]) {
-    assert.equal(text.includes("A discarded thread."), false);
-    assert.equal(text.includes("A suggested thread."), false);
+  assert.deepEqual(data.seeds.map((s) => s.id), [1], "the open thread, for its job card's line alone");
+  assert.equal("discardedSeeds" in data, false);
+  for (const text of [renderLiveLanes(data).join("\n"), renderBoardSummary(data, CLIENT, TODOS_NOT_READ)]) {
+    assert.doesNotMatch(text, /Loose Threads|An open thread|A discarded thread|A suggested thread/, text);
   }
-
-  // The page lists a pre-filing board's threads: the open one's card, then the two lines.
-  const drawn = threadsSection(drawBoard(renderWorkBoardHtml(pageOf(data))));
-  assert.equal(drawn.count, "1", "the count is the open threads'");
-  assert.deepEqual(drawn.lines.slice(1), [
-    ["p", "deleted", "Loose thread 2:  A discarded thread. *DISCARDED* Restore"],
-    ["p", "suggested", "Loose thread 3:  A suggested thread. *SUGGESTED*"],
-  ]);
-  assert.equal(drawn.lines[0][1].split(" ").includes("seed"), true, "the open thread is a card");
 });
 
-test("the board draws a discarded thread struck with a Restore link, and a suggested one plain with none", async (t) => {
-  const { dbPath } = await current(t);
-  const data = buildPreFilingBoardData(dbPath, fetchProceeding(dbPath, 1), META);
-  const main = drawBoard(renderWorkBoardHtml(pageOf(data)));
-  const discarded = main.all().find((n) => n.className === "deleted");
-  assert.deepEqual(discarded.children.map((n) => [n.tag, n.textContent]), [["s", "Loose thread 2:  A discarded thread."], ["#text", " *DISCARDED* "], ["a", "Restore"]]);
-  assert.equal(discarded.children[2].href, "#", "the link navigates nowhere: it only copies the instruction");
-  const suggested = main.all().find((n) => n.className === "suggested");
-  assert.deepEqual(suggested.children, [], "no strike and no link");
-  assert.equal(renderWorkBoardHtml(pageOf(data)).includes('"restore loose thread #"'), true, "the instruction a Restore link copies");
-});
-
-test("a pre-filing board with only discarded threads lists them under a count of 0", async (t) => {
-  const { dbPath } = await current(t);
-  await submissionDataExecute(dbPath, "UPDATE seeds SET discarded_at = '2026-10-13T10:00' WHERE id = 1;");
-  const drawn = threadsSection(drawBoard(renderWorkBoardHtml(pageOf(buildPreFilingBoardData(dbPath, fetchProceeding(dbPath, 1), META)))));
-  assert.equal(drawn.count, "0");
-  assert.deepEqual(drawn.lines.map((l) => l[1]), ["deleted", "deleted", "suggested"]);
-  assert.equal(drawn.empty, null);
-});
-
-test("a filing's board carries them and points at the Loose Threads page, even with no open thread", async (t) => {
+// The matter's one page: every proceeding's open threads, each set as fetchOpenSeeds reads it, and no copy in a Writing's folder.
+test("the matter's Loose Threads page lists every open thread of every proceeding, as fetchOpenSeeds reads each", async (t) => {
   const { dir, dbPath } = await current(t);
   await submissionDataExecute(
     dbPath,
     `UPDATE proceedings SET forum = 'CAN/BC/BCSC', file_number = 'S-770011' WHERE id = 1;
      INSERT INTO filings (id, proceeding_id, kind, title) VALUES (1, 1, 'notice_of_application', 'Notice of Application');
-     UPDATE seeds SET discarded_at = '2026-10-13T10:00' WHERE id = 1;`
+     INSERT INTO seeds (id, proceeding_id, filing_id, created, surfaced_by, idea) VALUES
+       (6, 2, NULL, '2026-10-01T10:05', 'noticed', 'Proceeding 2''s open thread.'),
+       (7, 1, 1, '2026-10-01T10:06', 'noticed', 'Captured on the Writing.');`
   );
   const draft = join(dir, "L8470 Larchmont", "0. DRAFT");
   mkdirSync(draft, { recursive: true });
   const result = submissionFormsRender(dbPath, 1, CLIENT, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
-  const board = result.documents.find((d) => d.document_type === "Work_board");
-  assert.equal(board.path, join(draft, "Notice of Application", "Milestone.html"));
-  const page = readBoardData(board.path);
-  assert.equal(page.sections.length, 1);
-  const section = page.sections[0];
-  assert.deepEqual(section.seeds, []);
-  assert.deepEqual(section.discardedSeeds.map((s) => [s.id, s.discarded_at !== null]), [[1, true], [2, true], [3, false]]);
-  assert.equal(Object.keys(section.discardedSeeds[0]).join(), "id,idea,discarded_at,suggested_at", "no filing id on the page");
+  assert.equal(result.loose_threads_path, join(draft, "Loose Threads.html"));
+  assert.equal(existsSync(join(draft, "Notice of Application", "Loose Threads.html")), false, "no Writing has a copy");
+  const page = JSON.parse(/^window\.VIEW_PAGE = (.*);$/m.exec(readFileSync(result.loose_threads_path, "utf-8"))[1]);
+  for (const p of [1, 2]) {
+    assert.deepEqual(page.data.ideas.filter((i) => i.proceeding_id === p).map((i) => i.id), fetchOpenSeeds(dbPath, p).map((s) => s.id), `proceeding ${p}`);
+  }
+  assert.deepEqual(page.data.ideas.map((i) => i.id), [1, 6, 7], "every open thread, none lost");
+  assert.equal(page.data.ideas.find((i) => i.id === 7).origin, "from Notice of Application", "a thread names the Writing it was captured on");
+  assert.deepEqual(Object.keys(page.data.api.tokens), ["1", "2"], "each proceeding's own token, so Defer reaches either");
+});
 
-  // A filing's threads are on its Loose Threads page: the board counts the open ones and points there.
-  const drawn = threadsSection(drawBoard(readFileSync(board.path, "utf-8")));
-  assert.equal(drawn.count, "0", "the count is the open threads'");
-  assert.deepEqual(drawn.lines.map((l) => l[2]), ["To see them, ask a session to show the Loose Threads page."], "the pointer, and no thread drawn");
-  assert.equal(drawn.empty, null, "not the empty line: the page has discarded threads to show");
+// /work's triage step reads the open threads with this query (drafting_data__query); it must equal fetchOpenSeeds.
+const TRIAGE_READ =
+  "SELECT id, proceeding_id, filing_id, origin_ticket_id, surfaced_by, idea, rank, rank_group, rank_reason, rank_job, deferred_at FROM seeds " +
+  "WHERE (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL)) AND discarded_at IS NULL AND suggested_at IS NULL " +
+  "ORDER BY rank IS NULL, rank, id";
+
+test("the triage read returns the open threads fetchOpenSeeds returns, in the page's order", async (t) => {
+  const { dbPath } = await current(t);
+  await submissionDataExecute(
+    dbPath,
+    `UPDATE tickets SET deleted_at = '2026-10-10T09:00' WHERE id = 10;
+     UPDATE seeds SET rank = 1, rank_group = 'research', rank_reason = 'Ranked first.' WHERE id = 4;
+     INSERT INTO seeds (id, proceeding_id, created, surfaced_by, idea) VALUES (6, 2, '2026-10-01T10:05', 'noticed', 'Proceeding 2''s open thread.');`
+  );
+  const open = inRankOrder([1, 2].flatMap((p) => fetchOpenSeeds(dbPath, p)));
+  assert.deepEqual(open.map((s) => s.id), [4, 1, 6], "4 is outlined into a deleted job; 2, 3 and 5 are discarded or suggested");
+  assert.deepEqual(submissionDataQuery(dbPath, TRIAGE_READ, []).rows.map((r) => r.id), open.map((s) => s.id));
 });
 
 test("the Loose Threads page lists a discarded, a suggested and an outlined thread as resolved, newest first", async (t) => {
   const { dbPath } = await current(t);
-  const data = buildLooseIdeasData(dbPath, { id: 1, proceeding_id: 1 }, process.env);
+  const data = buildLooseIdeasData(dbPath, [1], process.env);
   assert.deepEqual(data.ideas.map((i) => i.id), [1], "only the open thread is a card");
   assert.deepEqual(data.resolved, [
     { id: 3, idea: "A suggested thread.", how: "suggested", at: "2026-10-13T09:00", job_id: null, job_title: null },
@@ -306,26 +212,19 @@ test("the Loose Threads page lists a discarded, a suggested and an outlined thre
   assert.deepEqual(page.extra, [["Threads", "1"], ["Ranked", "0"], ["Unranked", "1"], ["Deferred", "0"], ["Resolved", "3"]], "the header counts the open threads apart from the resolved");
 });
 
-test("a database held at v74 has neither column and still reads, defers and draws", async (t) => {
+test("a database held at v74 has neither column and still reads and defers", async (t) => {
   const { dbPath } = await heldAt74(t);
   assert.deepEqual(seedClosedColumns(dbPath), []);
   assert.equal(liveSeedClause(dbPath), "");
   assert.deepEqual(openSeedCondition(dbPath, new Set()), { sql: "(charted_into IS NULL)", params: [] });
   assert.deepEqual(fetchOpenSeeds(dbPath, 1).map((s) => s.id), [1, 2, 3], "every thread not outlined is open");
-  assert.deepEqual(fetchDiscardedSeeds(dbPath, 1), []);
-  assert.deepEqual(fetchResolvedSeeds(dbPath, 1).map((r) => [r.id, r.how]), [[4, "job"]], "it lists its outlined threads");
+  assert.deepEqual(resolvedOf(dbPath, 1), [[4, "job"]], "it lists its outlined threads");
   assert.deepEqual(fetchLatestActivity(dbPath, 1), [{ filing_id: null, latest: "2026-10-01T10:02" }]);
 
   assert.equal((await setSeedDeferral({ db_path: dbPath, proceeding_id: 1, seed_id: 2, action: "defer" })).outcome, "deferred");
   assert.equal((await setSeedDeferral({ db_path: dbPath, proceeding_id: 1, seed_id: 4, action: "defer" })).outcome, "not_open", "outlined into a live job");
 
-  const data = buildPreFilingBoardData(dbPath, fetchProceeding(dbPath, 1), META);
-  assert.deepEqual(data.discardedSeeds, []);
-  const drawn = threadsSection(drawBoard(renderWorkBoardHtml(pageOf(data))));
-  assert.equal(drawn.count, "3");
-  assert.equal(drawn.lines.length, 3, "three cards and no line");
-
-  const ideas = buildLooseIdeasData(dbPath, { id: 1, proceeding_id: 1 }, process.env);
+  const ideas = buildLooseIdeasData(dbPath, [1], process.env);
   assert.deepEqual(ideas.ideas.map((i) => i.id), [1, 2, 3]);
   assert.deepEqual(ideas.resolved.map((r) => r.id), [4]);
 });

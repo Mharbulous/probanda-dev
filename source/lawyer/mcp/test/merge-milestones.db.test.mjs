@@ -22,7 +22,6 @@ const { submissionFormsBoardCard } = await import("../build/submission/matter-pa
 const { callTool } = await import("../build/dispatch.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
 const { materialFactsData, proceduralHistoryData } = await import("../build/submission/forms/facts-pages.js");
-const { buildLooseIdeasData } = await import("../build/submission/forms/loose-ideas-page.js");
 const { readBoardData, ASHBOURNE } = await import("./fixtures/forms-render-seeds.mjs");
 const { combineSections } = await import("../build/submission/forms/combined-board.js");
 
@@ -242,7 +241,7 @@ test("one page draws the merged boards as one board, each job once, with one set
   const absorbed = join(m.draft, "Counterclaim Submissions");
   assert.ok(result.view_page_paths.every((p) => dirname(p.path) !== absorbed), "no view page path is in the absorbed Writing's folder");
   const moved = result.moved_to_trash.map((x) => x.from.toLowerCase()).sort();
-  assert.deepEqual(moved, ["Arguments", "Milestone", "Loose Threads", "Material Facts", "Procedural History", "Raw Research"].map((n) => join(absorbed, `${n}.html`).toLowerCase()).sort());
+  assert.deepEqual(moved, ["Arguments", "Milestone", "Material Facts", "Procedural History", "Raw Research"].map((n) => join(absorbed, `${n}.html`).toLowerCase()).sort());
   const board = result.documents.find((d) => d.document_type === "Work_board");
   assert.equal(board.path, pageOf(m, 1), "the absorbed Writing's render returns its survivor's page");
 
@@ -255,7 +254,7 @@ test("one page draws the merged boards as one board, each job once, with one set
     [[1, "Opening Submissions Package"], [3, "Proceeding 1"], [2, "Counterclaim Submissions"]],
     "each job once, tagged with its Writing"
   );
-  assert.deepEqual(page.strip.filter((v) => v.kind === "view").map((v) => v.file), ["Procedural History", "Material Facts", "Raw Research", "Arguments", "Loose Threads"].map((n) => join("Opening Submissions Package", `${n}.html`)));
+  assert.deepEqual(page.strip.filter((v) => v.kind === "view").map((v) => v.file), ["Procedural History", "Material Facts", "Raw Research", "Arguments"].map((n) => join("Opening Submissions Package", `${n}.html`)));
   assert.equal(readBoardData(pageOf(m, 2)).board, undefined, "an unmerged page carries no board key");
 
   const views = result.view_page_paths.filter((v) => dirname(v.path) === join(m.draft, "Opening Submissions Package"));
@@ -325,7 +324,7 @@ test("set_board_goal refuses an absorbed board, writes a merged statement by ind
   assert.deepEqual(stored.merged.map((g) => [g.from, g.statement]), [["board_goal:filing:3", "Goal: defeat the counterclaim in full."]]);
 });
 
-test("the merged view pages read every Writing: Material Facts and Procedural History Writing by Writing, each fact once; loose threads per proceeding", async (t) => {
+test("the merged view pages read every Writing: Material Facts and Procedural History Writing by Writing, each fact once", async (t) => {
   const m = await fixture(t);
   const filings = query(m.dbPath, "SELECT * FROM filings ORDER BY id");
   const proceedings = query(m.dbPath, "SELECT * FROM proceedings ORDER BY id");
@@ -341,11 +340,6 @@ test("the merged view pages read every Writing: Material Facts and Procedural Hi
   const history = proceduralHistoryData(ctx);
   assert.equal(history.order, "date");
   assert.deepEqual(history.facts.map((f) => [f.position, f.date, f.text]), [[1, "2026-03-04", "The order was served."]]);
-
-  const ideas = buildLooseIdeasData(m.dbPath, [filings[0], filings[2]], { ...process.env });
-  assert.deepEqual(ideas.ideas.map((i) => [i.id, i.proceeding_id]), [[1, 1], [2, 2]]);
-  assert.deepEqual(Object.keys(ideas.api.tokens), ["1", "2"]);
-  assert.equal(ideas.ideas[1].origin, null, "a thread captured on one of the board's Writings names no other filing");
 });
 
 test("the Litigation Strategy draws a merged board as one heading over its sections", async (t) => {
@@ -417,7 +411,6 @@ function section(filingId, proceedingId, title, criteria, tickets = []) {
     tickets,
     seeds: [],
     deleted: [],
-    discardedSeeds: [],
     attachments: [],
     proposals: [],
     lapsed_keys: [],
@@ -517,7 +510,7 @@ test("a merged page draws one board: one Criteria card, one panel per lane, no p
   const nodes = drawPage(pageOf(m, 1));
   const ids = nodes.map((n) => n.id).filter((id) => id !== "");
   assert.deepEqual(ids.filter((id, i) => ids.indexOf(id) !== i), [], "no element id repeats");
-  for (const id of ["goals", "ready", "in-progress", "completed", "ideas"]) assert.equal(ids.filter((x) => x === id).length, 1, id);
+  for (const id of ["goals", "ready", "in-progress", "completed"]) assert.equal(ids.filter((x) => x === id).length, 1, id);
   assert.equal(nodes.filter((n) => n.tag === "ol" && n.className === "writings").length, 1, "one thumbnail row");
   assert.equal(nodes.filter((n) => n.tag === "h2" && n.className === "writing-title").length, 0, "no per-Writing heading");
   assert.ok(nodes.find((n) => n.id === "ticket-2").textContent.includes("Counterclaim Submissions"), "a job card names its Writing");

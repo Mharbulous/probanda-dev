@@ -255,11 +255,11 @@ function drawLooseThreads(html, fetchImpl) {
 test("the Loose Threads page carries deferred_at and the api block; a deferred thread draws under Deferred, an open one defers through the listener", async (t) => {
   const f = await fixture(t);
   await submissionDataExecute(f.dbPath, "UPDATE seeds SET deferred_at = '2026-10-08T09:00' WHERE id = 4;");
-  const data = buildLooseIdeasData(f.dbPath, { id: 1, proceeding_id: 1 }, f.env);
+  const data = buildLooseIdeasData(f.dbPath, [1], f.env);
   assert.deepEqual(data.ideas.map((i) => [i.id, i.deferred_at]), [[1, null], [4, "2026-10-08T09:00"]]);
   assert.deepEqual(data.api, { port: f.port, db_path: f.dbPath, proceeding_id: 1, token: pageApiToken(f.dbPath, 1, f.env) });
   const html = renderViewPageHtml(LOOSE_IDEAS_PAGE, { filing: "", matter: "L8470", client: "", revision: 1, rendered: "2026-10-08 09:00" }, data);
-  writeFileSync(join(f.dir, "Loose Threads - filing 1.html"), html);
+  writeFileSync(join(f.dir, "Loose Threads.html"), html);
 
   // No listener: the buttons stay disabled and one line says why.
   const off = drawLooseThreads(html, () => Promise.reject(new Error("connection refused")));
@@ -326,7 +326,7 @@ test("the Loose Threads page draws five tabs and a Resolved section, shown under
   const f = await fixture(t);
   await submissionDataExecute(f.dbPath, RESOLVED);
   const draw = () => {
-    const data = buildLooseIdeasData(f.dbPath, { id: 1, proceeding_id: 1 }, f.env);
+    const data = buildLooseIdeasData(f.dbPath, [1], f.env);
     const html = renderViewPageHtml(LOOSE_IDEAS_PAGE, { filing: "", matter: "L8470", client: "", revision: 1, rendered: "2026-10-08 09:00" }, data);
     const { board } = drawLooseThreads(html, () => Promise.reject(new Error("connection refused")));
     const nodes = board.all();

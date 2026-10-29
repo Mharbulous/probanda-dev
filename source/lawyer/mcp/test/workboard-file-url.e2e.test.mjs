@@ -366,9 +366,7 @@ for (const [name, executable] of BROWSERS) {
               };
             }),
             seeds: [...document.querySelectorAll("details.seed")].map((d) => d.id),
-            ideasCount: document.querySelector("#ideas .count").textContent,
-            ideasLink: document.querySelector("#ideas a")?.getAttribute("href") ?? null,
-            ideasCue: document.querySelector("#ideas .cue")?.textContent ?? null,
+            ideas: document.querySelector("#ideas") !== null,
             state: document.querySelector("#goal .head > .sentence + .lifecycle")?.textContent ?? null,
             first: document.querySelector(".board").firstElementChild.id,
             second: document.querySelector(".board").firstElementChild.nextElementSibling.id,
@@ -414,11 +412,9 @@ for (const [name, executable] of BROWSERS) {
         }
         assert.deepEqual(page.cards.find(([, id]) => id === "ticket-2"), ["ready", "ticket-2"]);
         assert.deepEqual(page.cards.find(([, id]) => id === "ticket-4"), ["waiting-on", "ticket-4"]);
-        // A filing's loose threads are on its Loose Threads view page: the board counts them and, in plain text, points there.
+        // Loose threads are the matter's, on its one Loose Threads page: the Milestone neither draws nor counts them.
         assert.deepEqual(page.seeds, []);
-        assert.equal(page.ideasCount, "1");
-        assert.equal(page.ideasLink, null, "no page links to another");
-        assert.equal(page.ideasCue, "To see them, ask a session to show the Loose Threads page.");
+        assert.equal(page.ideas, false);
         assert.equal(page.state, "Drafting");
         assert.equal(page.first, "goals", "the statement of goals' card is the board's first block");
         assert.equal(page.second, "goal", "the Completion Criteria card follows it, above the first lane");
@@ -486,16 +482,16 @@ for (const [name, executable] of BROWSERS) {
         assert.deepEqual(seen.problems, [], "expected no console error, uncaught exception, failed load or network request");
         assert.deepEqual(
           board.sections,
-          ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas"],
-          "the eight lists, in order"
+          ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded"],
+          "the seven lists, in order"
         );
         assert.equal(board.controls, 0, "no line carries a checkbox, a red X, a Go button or any other control");
         // Goal card design §2.9: the card sits above the first lane. The fixture's card string is
         // null, so the sentence is drawn alone, with no placeholder in its place.
         assert.deepEqual(
           board.blocks,
-          ["goals", "goal", "ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded", "ideas"],
-          "the statement of goals' card first, then the Completion Criteria card, then the eight lists"
+          ["goals", "goal", "ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded"],
+          "the statement of goals' card first, then the Completion Criteria card, then the seven lists"
         );
         assert.deepEqual(board.goalsHead, [["sentence", FIXTURE_BOARD.goals.description], ["label", "Goal"]], "closed: the description, labelled Goal");
         assert.deepEqual(board.goalsBody, [["none", "No statement of goals yet"]], "the golden carries no statement");

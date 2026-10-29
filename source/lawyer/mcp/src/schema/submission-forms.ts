@@ -88,7 +88,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "completion criteria: none` when every criterion is met), and `Met " +
         "completion criteria: <ids>` (or `none`); a section with no criteria to list prints `State: <state>[ — " +
         "<text>]` in place of both lists. The lanes with their jobs, tags and counts, the lapsed keys, each job's " +
-        "detail, the criterion items, the Proposed and shelved lines and the loose threads come from " +
+        "detail, the criterion items and the Proposed and shelved lines come from " +
         "drafting_forms__board_card. Those two are the only board content a session reads; a " +
         "session never reads a matter page (shared/html-pages.md). Optional documents narrows the " +
         "RESPONSE to the named document_type values (e.g. [\"Work_board\"]) -- every document is still rendered and " +

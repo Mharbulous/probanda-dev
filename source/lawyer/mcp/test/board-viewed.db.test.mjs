@@ -198,12 +198,20 @@ test("on a merged board a record by the absorbed Writing's paths lands on the su
   render(m, 1);
   const absorbed = render(m, 2);
   const [doc] = docPaths(absorbed);
-  await recordViewed(m.dbPath, [viewPath(absorbed, "Loose Threads", 2), doc]);
+  await recordViewed(m.dbPath, [viewPath(absorbed, "Arguments", 2), doc]);
   assert.deepEqual(viewedRows(m.dbPath).map((r) => r.key), ["board_viewed:filing:1"]);
-  assert.deepEqual(JSON.parse(viewedRows(m.dbPath)[0].value), [`doc:2:${doc.split(/[\\/]/).pop()}`, "view:Loose Threads"]);
+  assert.deepEqual(JSON.parse(viewedRows(m.dbPath)[0].value), [`doc:2:${doc.split(/[\\/]/).pop()}`, "view:Arguments"]);
   render(m, 1);
   const strip = readBoardData(page1(m)).strip;
-  assert.deepEqual(strip.slice(0, 2).map((i) => i.key), [`doc:2:${doc.split(/[\\/]/).pop()}`, "view:Loose Threads"]);
+  assert.deepEqual(strip.slice(0, 2).map((i) => i.key), [`doc:2:${doc.split(/[\\/]/).pop()}`, "view:Arguments"]);
+});
+
+test("a stored key no strip shows, such as a Writing's Loose Threads page before 2026-10-29, is passed over", async (t) => {
+  const m = await fixture(t);
+  await submissionDataExecute(m.dbPath, `INSERT INTO db_meta (key, value) VALUES ('board_viewed:filing:1', '["view:Loose Threads","view:Arguments"]');`);
+  render(m, 1);
+  assert.deepEqual(drawnStrip(page1(m))[0], ["writing view", "Arguments"]);
+  assert.equal(readBoardData(page1(m)).strip.some((i) => i.key === "view:Loose Threads"), false);
 });
 
 test("a path that is no thumbnail, or a document name two Writings share outside their folders, is refused and nothing is written", async (t) => {
@@ -211,6 +219,7 @@ test("a path that is no thumbnail, or a document name two Writings share outside
   const first = render(m, 1);
   await assert.rejects(recordViewed(m.dbPath, [viewPath(first, "Arguments", 1), page1(m)]), code("not_a_strip_item"));
   await assert.rejects(recordViewed(m.dbPath, [join(m.draft, "Litigation Strategy.html")]), code("not_a_strip_item"));
+  await assert.rejects(recordViewed(m.dbPath, [join(m.draft, "Loose Threads.html")]), code("not_a_strip_item"));
   await assert.rejects(recordViewed(m.dbPath, []), code("invalid_paths"));
   const second = render(m, 2);
   const name = docPaths(first)[0].split(/[\\/]/).pop();

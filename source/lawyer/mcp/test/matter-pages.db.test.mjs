@@ -81,7 +81,7 @@ test("two renders of one matter leave one Milestone page per live filing and one
     renderInto(f, 1, draft, FIRST);
     renderInto(f, 2, draft, SECOND);
 
-    assert.deepEqual(readdirSync(draft), ["Drafting records", "Litigation Strategy.html", "Opening Submissions Package", "Reply Submissions Package"]);
+    assert.deepEqual(readdirSync(draft), ["Drafting records", "Litigation Strategy.html", "Loose Threads.html", "Opening Submissions Package", "Reply Submissions Package"]);
     for (const [name, filingId] of [[OPENING_PAGE, 1], [REPLY_PAGE, 2]]) {
       const page = readBoardData(join(draft, name));
       assert.equal(page.meta.rendered, SECOND, `the later render's ${name}`);
@@ -154,7 +154,7 @@ test("a matter with one live filing has that filing's Milestone page, the Litiga
 
     renderInto(f, 1, draft, FIRST);
 
-    assert.deepEqual(readdirSync(draft), ["Drafting records", "Litigation Strategy.html", "Opening Submissions Package"]);
+    assert.deepEqual(readdirSync(draft), ["Drafting records", "Litigation Strategy.html", "Loose Threads.html", "Opening Submissions Package"]);
     const { meta: pageMeta, ...page } = sectionOf(draft, 1);
     const { meta: builtMeta, ...built } = boardDataOf(f.dbPath, 1, ASHBOURNE, SECOND);
     assert.deepEqual(page, built);
@@ -234,7 +234,8 @@ test("a pre-filing proceeding has a Milestone page of its own until it gains a f
   const board = submissionFormsRenderProceedingBoard(m.dbPath, 1, ASHBOURNE, FIRST, "tok", m.draft);
   assert.equal(board.milestone_path, join(m.draft, proceedingPage));
   assert.deepEqual(board.milestone_paths, [{ filing_id: null, proceeding_id: 1, path: join(m.draft, proceedingPage) }]);
-  assert.deepEqual(readdirSync(m.draft), ["Drafting records", "Litigation Strategy.html", proceedingPage]);
+  assert.equal(board.loose_threads_path, join(m.draft, "Loose Threads.html"));
+  assert.deepEqual(readdirSync(m.draft), ["Drafting records", "Litigation Strategy.html", "Loose Threads.html", proceedingPage]);
   assert.deepEqual(readBoardData(join(m.draft, proceedingPage)).sections.map((s) => [s.meta.filing_id, s.meta.proceeding_id]), [[null, 1]]);
 
   await submissionDataExecute(m.dbPath, "INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (1, 1, 'submissions_package', 'opening', 'Opening Submissions Package');");
@@ -626,7 +627,7 @@ test("a pre-filing Milestone's header names its proceeding, draws its state as a
   const section = {
     meta: { revision: 1, matter: "", client: "", file: "", filing: "", filing_id: null, proceeding_id: 1, rendered: "2026-10-05 09:00", state: null, state_label: "No filing yet", state_since: null, ready_to_retire: false },
     goals: { description: "Proceeding 1", statement: null, status: null },
-    tickets: [], seeds: [], discardedSeeds: [], deleted: [], proposals: [], lapsed_keys: [],
+    tickets: [], seeds: [], deleted: [], proposals: [], lapsed_keys: [],
   };
   const draw = (name, dates) => {
     const file = join(dir, name);

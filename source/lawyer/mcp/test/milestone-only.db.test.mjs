@@ -216,15 +216,15 @@ test("the board shows only the rows that name it, and its jobs show on no Writin
   const board = boardDataOf(f.dbPath, f.boardId, CLIENT, PINNED);
   assert.deepEqual(board.tickets.map((x) => [x.id, x.category]), [[3, "ready"], [4, "wip"]], "never the Writing's job or the proceeding's");
   assert.deepEqual(board.deleted, [{ id: 5, title: "Scan it twice" }]);
-  assert.deepEqual(board.seeds.map((s) => [s.id, s.from_filing]), [[1, null]], "its own loose thread, not the proceeding's");
+  assert.deepEqual(board.seeds.map((s) => s.id), [1], "its own loose thread, not the proceeding's");
   assert.deepEqual(board.attachments.map((a) => a.id), [1], "its own attachment, not the proceeding's");
 
   const writing = boardDataOf(f.dbPath, 1, CLIENT, PINNED);
   assert.deepEqual(writing.tickets.map((x) => x.id), [1, 2], "the Writing's job and the proceeding's, none of the board's");
   assert.deepEqual(writing.deleted, []);
   assert.deepEqual(writing.attachments.map((a) => a.id), [2], "the proceeding's attachment stays with the lowest-id live Writing");
-  // Deliberate: every open loose thread in the proceeding shows on each Writing's board.
-  assert.deepEqual(writing.seeds.map((s) => [s.id, s.from_filing]), [[1, TITLE], [2, null]]);
+  // Every open loose thread in the proceeding is in each Writing's section, for its job cards' lines.
+  assert.deepEqual(writing.seeds.map((s) => s.id), [1, 2]);
 });
 
 test("a board with the proceeding's lowest live id still takes no proceeding-wide row", async (t) => {
@@ -256,7 +256,6 @@ test("board_card prints no criteria, Proposed or Court File lane for the board",
   assert.equal(card.includes("## Court File"), false);
   assert.match(card, /^## Ready \(1\)$/m);
   assert.match(card, /^## In Progress \(1\)$/m);
-  assert.match(card, /^## Loose Threads \(1\)$/m);
   assert.match(card, /^## Attached \(1\)$/m);
   assert.match(card, /Find the paper original/);
   assert.equal(card.includes("Settle the requisition"), false, "the Writing's job is not on this card");

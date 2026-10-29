@@ -267,7 +267,7 @@ test("renders an empty Milestone's data", async () => {
 
 // ADR 0024 D11: seeds do not strand. Every filing's board shows every open seed in its proceeding,
 // a sibling filing's seed labelled with that filing's title, and rendering moves no seed.
-test("every filing's Milestone shows every open seed in its proceeding (#1107)", async () => {
+test("every filing's section carries every open seed in its proceeding, for its job cards (#1107)", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -286,15 +286,15 @@ test("every filing's Milestone shows every open seed in its proceeding (#1107)",
     );
     const seedsOn = (filingId) => {
       submissionFormsRender(f.dbPath, filingId, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
-      return boardDataOf(f.dbPath, filingId, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }).seeds.map((s) => [s.id, s.from_filing]);
+      return boardDataOf(f.dbPath, filingId, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }).seeds.map((s) => s.id);
     };
 
-    assert.deepEqual(seedsOn(1), [[10, null], [11, "Reply Submissions Package"], [12, null]], "the sibling's seed shows, labelled; the outlined seed shows nowhere");
-    assert.deepEqual(seedsOn(2), [[10, "Opening Submissions Package"], [11, null], [12, null]]);
+    assert.deepEqual(seedsOn(1), [10, 11, 12], "the sibling's seed too; the outlined seed nowhere");
+    assert.deepEqual(seedsOn(2), [10, 11, 12]);
 
     await submissionDataExecute(f.dbPath, "UPDATE filings SET decided_on = '2026-09-02', retired_on = '2026-09-10', retirement_reason = 'decided' WHERE id = 2;");
-    assert.deepEqual(seedsOn(1), [[10, null], [11, "Reply Submissions Package"], [12, null]], "retiring a filing leaves its open seeds on its siblings' boards");
-    assert.deepEqual(seedsOn(2), [[10, "Opening Submissions Package"], [11, null], [12, null]], "and on its own board");
+    assert.deepEqual(seedsOn(1), [10, 11, 12], "retiring a filing leaves its open seeds in its siblings' sections");
+    assert.deepEqual(seedsOn(2), [10, 11, 12], "and in its own");
 
     assert.deepEqual(
       submissionDataQuery(f.dbPath, "SELECT id, filing_id FROM seeds ORDER BY id").rows.map((r) => [r.id, r.filing_id]),
@@ -936,8 +936,8 @@ test("a submission with no linked proposition counts as one open item until a pr
 });
 
 // The two senses of "loose thread" stay apart: the 🧵 work marker on the mockup counts toward open
-// items, and a captured idea in the Loose Threads lane counts toward no criterion.
-test("a 🧵 marker counts as one open item and a captured loose thread counts as none, listed in the loose threads lane", async () => {
+// items, and a captured idea counts toward no criterion.
+test("a 🧵 marker counts as one open item and a captured loose thread counts as none", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -952,11 +952,10 @@ test("a 🧵 marker counts as one open item and a captured loose thread counts a
     const data = boardWithInventory(f.dbPath, [thread]);
     const openItems = criterionOf(data, "open-items");
     assert.deepEqual([openItems.state, openItems.outstanding, openItems.items.length], ["unmet", 1, 1]);
-    assert.equal(data.seeds.length, 1, "the captured idea is on the board");
+    assert.equal(data.seeds.length, 1, "the captured idea is in the section");
 
-    const card = submissionFormsBoardCard({ db_path: f.dbPath, filing_id: 1, lanes: ["criteria", "loose_threads"] }, ASHBOURNE, GOAL_NOW).card;
+    const card = submissionFormsBoardCard({ db_path: f.dbPath, filing_id: 1, lanes: ["criteria"] }, ASHBOURNE, GOAL_NOW).card;
     assert.match(card, /^- \S+ open-items: .*\(unmet 1, met 0, total 1\)/m);
-    assert.match(card, /^## Loose Threads \(1\)\n- loose thread 1: "Is the guarantor a party\?" \(noticed\) · unranked$/m);
   } finally {
     f.cleanup();
   }
