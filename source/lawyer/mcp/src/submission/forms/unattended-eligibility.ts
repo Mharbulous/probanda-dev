@@ -14,6 +14,13 @@ export function deadKeySubtitle(ticket: WorkBoardTicket, printed: ReadonlySet<st
   return dead === 0 ? null : `${dead} of ${ticket.proposal_keys.length} items no longer show their marker`;
 }
 
+/** Section 14 Dispatch's all-keys-dead skip: a job holding keys none of which this render's
+ * inventory still prints, so its work has gone. deadKeySubtitle's predicate, and false with no
+ * inventory. */
+export function allKeysDead(ticket: WorkBoardTicket, printed: ReadonlySet<string> | null): boolean {
+  return printed !== null && ticket.proposal_keys.length > 0 && ticket.proposal_keys.every((key) => !printed.has(key));
+}
+
 /** The session token class an unattended run holds a lock with (plan decision 4), beside an
  * ordinary session's `sess-<hex>`. forms.ts mints it; the renderer reads it off `locked_by`. */
 export const UNATTENDED_TOKEN_PREFIX = "sess-unattended-";

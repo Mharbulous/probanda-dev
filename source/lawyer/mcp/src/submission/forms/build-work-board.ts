@@ -12,7 +12,7 @@ import type { DispatchSkip, WorkBoardTicket } from "./work-board-ticket.js";
 import { withFromFiling } from "./work-board-seeds.js";
 import type { GoalCriterion, WorkBoardContext, WorkBoardData } from "./work-board-data.js";
 import { holdsMaterial, withIdleFlag } from "./ticket-category.js";
-import { deadKeySubtitle, ineligibleReasons } from "./unattended-eligibility.js";
+import { allKeysDead, deadKeySubtitle, ineligibleReasons } from "./unattended-eligibility.js";
 import { buildProceedingBoard, onFilingBoard } from "./build-proceeding-board.js";
 import { proposalsFor } from "./board-proposals.js";
 import { waitsOnGate } from "./goal-gate.js";
@@ -54,10 +54,11 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
   // Every open loose thread in the proceeding, so none strands on a sibling filing (ADR 0024 D11).
   const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);
   const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines);
-  // Section 14 Dispatch's last skip reasons, read off this filing's type file and its `recipients` and gate
-  // rows: a new array, since dispatch_skips is shared with the proceeding board's ticket.
+  // Section 14 Dispatch's last skip reasons, read off this render's inventory, this filing's type file and its
+  // `recipients` and gate rows: a new array, since dispatch_skips is shared with the proceeding board's ticket.
   const unmet = (id: string): boolean => criteria.some((c) => c.id === id && c.state !== "met");
   const lateSkips = (t: WorkBoardTicket): DispatchSkip[] => [
+    ...(allKeysDead(t, printed) ? [{ reason: "all_keys_dead" } as const] : []),
     ...(t.title === "Deliver" && isInternalWriting(ctx.filing) ? [{ reason: "internal" } as const] : []),
     ...(t.title === "Deliver" && unmet("recipients") ? [{ reason: "before_recipients" } as const] : []),
     ...(waitsOnGate(t.title) && unmet("gate") ? [{ reason: "before_gate" } as const] : []),

@@ -1,4 +1,4 @@
-// build-stamp: 5e0f322af9cb
+// build-stamp: 5cef8286adbf
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -81265,7 +81265,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "5e0f322af9cb";
+var BUILD_STAMP = false ? null : "5cef8286adbf";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -92761,6 +92761,9 @@ function deadKeySubtitle(ticket, printed) {
   const dead = ticket.proposal_keys.filter((key) => !printed.has(key)).length;
   return dead === 0 ? null : `${dead} of ${ticket.proposal_keys.length} items no longer show their marker`;
 }
+function allKeysDead(ticket, printed) {
+  return printed !== null && ticket.proposal_keys.length > 0 && ticket.proposal_keys.every((key) => !printed.has(key));
+}
 var UNATTENDED_TOKEN_PREFIX = "sess-unattended-";
 var UNATTENDED_ELIGIBLE = /* @__PURE__ */ new Map([
   ["\u{1F9E9}", []],
@@ -93570,6 +93573,7 @@ function buildWorkBoardData(ctx, deadlines = []) {
   const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines);
   const unmet = (id) => criteria.some((c3) => c3.id === id && c3.state !== "met");
   const lateSkips = (t3) => [
+    ...allKeysDead(t3, printed) ? [{ reason: "all_keys_dead" }] : [],
     ...t3.title === "Deliver" && isInternalWriting(ctx.filing) ? [{ reason: "internal" }] : [],
     ...t3.title === "Deliver" && unmet("recipients") ? [{ reason: "before_recipients" }] : [],
     ...waitsOnGate(t3.title) && unmet("gate") ? [{ reason: "before_gate" }] : []
@@ -98497,6 +98501,7 @@ function keyText(key, stored, derived) {
 function skipText(s3) {
   if (s3.reason === "practitioner_own") return "practitioner's own";
   if (s3.reason === "either_or") return `either/or with #${s3.job}`;
+  if (s3.reason === "all_keys_dead") return "all_keys_dead";
   if (s3.reason === "internal") return "internal Writing, never sent";
   if (s3.reason === "before_recipients") return "before recipients";
   if (s3.reason === "before_gate") return "before the pre-filing gate";

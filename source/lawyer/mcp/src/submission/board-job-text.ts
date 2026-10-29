@@ -47,6 +47,7 @@ function keyText(key: string, stored: string | undefined, derived: Map<string, B
 function skipText(s: DispatchSkip): string {
   if (s.reason === "practitioner_own") return "practitioner's own";
   if (s.reason === "either_or") return `either/or with #${s.job}`;
+  if (s.reason === "all_keys_dead") return "all_keys_dead";
   if (s.reason === "internal") return "internal Writing, never sent";
   if (s.reason === "before_recipients") return "before recipients";
   if (s.reason === "before_gate") return "before the pre-filing gate";
