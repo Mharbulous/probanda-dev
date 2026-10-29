@@ -102,7 +102,8 @@
       "hooks": {
         "block-main-session-canlii": ".claude/skills/legal-research/hooks/block-main-session-canlii.py",
         "block-subagent-legal-research": ".claude/skills/legal-research/hooks/block-subagent-legal-research.py",
-        "commons-read-only": "source/researcher/hooks/commons-read-only.py"
+        "commons-read-only": "source/researcher/hooks/commons-read-only.py",
+        "one-way-gate": "source/researcher/hooks/one-way-gate.py"
       },
       "servers": [
         "canlii",
