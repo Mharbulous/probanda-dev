@@ -45,7 +45,7 @@ const FIXTURES = {
 
 /** sha256 of renderViewPageHtml(page, META, FIXTURES[page.name]), taken from the inline-string pages before the move to templates;
  * Procedural History's and Material Facts' at the split of Provable Facts (docs/ADRs/0011); Arguments' at its Killed section;
- * the rest retaken on 2026-10-29 for board.css's renamed first comment ("Job Board" to "Milestone"). */
+ * the rest retaken on 2026-10-29 for 8be771b7, which renamed board.css's first comment ("Job Board" to "Milestone"). */
 const PINS = {
   "Procedural History": "f8a29d4c7953ff408bd6323af74b2333a71966afb6ee5b550d550f6de594f912",
   "Material Facts": "3fb4f9f60ff8cc4ac8af3957423a83bacd8c38ba7d63194038a93376db4b0480",
