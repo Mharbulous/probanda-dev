@@ -34,7 +34,7 @@ test("dispatch is /work's, with the claim checks before the assigning write", ()
 
 test("every tagged /work file is fully mapped and the always-on atoms are its own", () => {
   assert.deepEqual(skillRulesCoverage("work").files.filter((f) => f.lines_unmapped > 0).map((f) => f.path), []);
-  assert.deepEqual(skillRulesApplicable("work", "enter").always_on, ["work.what", "work.bounds", "work.hand-off", "work.each-step"]);
+  assert.deepEqual(skillRulesApplicable("work", "enter").always_on, ["work.what", "work.bounds", "work.hand-off", "work.from-memory", "work.start-planning", "work.each-step"]);
 });
 
 test("/work loads in a checkout with no /draft skill", (t) => {
