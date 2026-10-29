@@ -61,3 +61,18 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - Confirm where the memo layout text lives and that it prints Sources under Issue, two Conclusions, bulleted Application and an "Authorities" list.
 - Confirm the list of readers of the old headings.
 - Confirm the sibling spec's edits (header fields, Application content rule) do not touch the same paragraphs; see the orchestrator's COORDINATION note.
+
+## 11. Verification against HEAD (20778ee4), 2026-10-29
+
+| Spec claim | HEAD | Result |
+|---|---|---|
+| Layout text lives in the research-agent definition | `source/researcher/agents/research-agent.md` holds no layout text. The shape is in `.claude/skills/shared/research-memo-template.md` (skeletons) and `shared/legal-audit-protocol.md` Step 6 (who writes what) | Path corrected |
+| Sources printed under Issue | None. The memo opens `## Question presented` (numbered lines), no Sources list | Not present; the Issue is not the first section by name and is not bold |
+| Conclusion nested under Issue | Only in a job's memo with one part (`###` sections under `## Issue`) | Present, job memo only |
+| Two Conclusions | CRAC, CREAC and the multi-issue form each end in a second `## Conclusion`; IRAC has one, last | Present |
+| Block quotes in Conclusion | Step 6: "Every proposition of law anywhere in the body, the Conclusion included" is followed by a block quote | Present |
+| Bulleted Application | No bullet instruction in the layout text; no prose instruction either | Absent, to be stated |
+| Authorities list | Renamed Sources with Statutes, Case authority, Secondary sources by 20778ee4; one test pins it | Met |
+| Abbreviation rule stated once | "Define an abbreviation in parentheses where the body first uses it" (template) | Met |
+| Readers of old headings | Tests: `test_memo_format.py` (CRAC/IRAC/CREAC blocks), `test_job_question_memo.py` (`## Issue` / `### Sub-issue`), `draft/tests/test_research_job_gaps.py` and `draft/references/job-session.md` (Complete compares memo headings). verify-law, case-brief, research-triage, legal-memo-extractor read no heading of this memo | Listed |
+| Sibling spec overlap | Sibling owns the header block, the `Facts:` sentence in Step 6's Application bullet and the sentence in `shared/legal-research.md`. This change leaves those lines alone | No shared paragraph |
