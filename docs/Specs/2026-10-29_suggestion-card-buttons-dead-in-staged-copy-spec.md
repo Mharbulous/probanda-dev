@@ -52,3 +52,16 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 - Confirm how the card's buttons are wired and what disables them.
 - Confirm no submit/dismiss tool already exists at HEAD.
+
+## 11. Verification against HEAD (2febfa12, 2026-10-29)
+
+| Claim | At HEAD | Where |
+|---|---|---|
+| The card's buttons post to the PC-side page server | Confirmed. The card's script posts every click to `http://127.0.0.1:<page_api_port>/cards/<card id>/<route>` with the card's token. The page's CSP allows `connect-src` to that address only. | `source/lawyer/mcp/src/suggestions/card-page.ts` (`SCRIPT`, `renderCardHtml`) |
+| What disables the buttons | Confirmed. The script disables Submit and Dismiss on load and enables them only when its first `POST /state` succeeds. When that fails it leaves them disabled and shows "This works while Claude is open on this computer. Open Claude, ask to see this suggestion again, and use it here." That line is wrong for a staged copy seen in the chat while Claude is open. | `card-page.ts`, `poll()` and `SAY.off` |
+| Why the staged copy cannot reach it | Not verified. Possible causes: the chat's file preview blocks the request (its own CSP or sandbox), or it renders on a device other than the PC. The listener echoes only `Origin: null` (a page opened from `file://`). | `source/lawyer/mcp/src/page-api/server.ts` (`corsHeaders`) |
+| A PC-served card URL exists | No. The page API serves `GET /health` only. The card routes are POST only and serve no HTML. `suggestion_card__build` returns `card_path`, a file on the PC, and no URL. | `page-api/server.ts` (`handle`), `suggestions/card.ts` (`buildCard`) |
+| A submit or dismiss tool exists | No. The `suggestion_card__*` tools are build, wait, attach_mockup, write_up_brief, write_up_check, write_up_send, check and environment_facts. | `source/lawyer/mcp/src/schema/suggestions.ts`, `suggestions/tools.ts` |
+| Skill §6 and §7 as quoted in §2 | Confirmed. §6 says "Present `card_path` as a file card ... Submit and Dismiss on the card keep working with no one waiting". §7 says "On Submit Suggestion the card saves the edits, checks everything it would send ... and sends it". §9 step 4 says "Submit Suggestion and Dismiss work by themselves". | `.claude/skills/suggestion/SKILL.md` |
+
+Result: HEAD has no PC-served card URL, so §9's choice between option 1 and option 2 goes to Brahm.
