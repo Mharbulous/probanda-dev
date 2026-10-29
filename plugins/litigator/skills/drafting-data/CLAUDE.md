@@ -3,7 +3,7 @@ When planning or designing changes to submission skills or when working the Wayf
 The following files are the SSOT:
 .claude\skills\drafting-data\references\terms-and-symbols.md
 .claude\skills\drafting-data\references\work-markers.md
-plugins\litigation\mcp\src\submission\forms\symbol-table.ts
+source\lawyer\mcp\src\submission\forms\symbol-table.ts
 
 Stop if Wayfinder issue instructions contradict anything in any of these three files, and seek human intervention.
 

@@ -638,7 +638,7 @@ export const SYMBOLS: readonly SymbolRow[] = [
       "admitted #1122 (review.md snapshot row), render shipped #1126; prose slot kind admitted #1207 (review.md " +
       "snapshot row), render shipped #1207; rhetorical paragraph kind admitted v71 (review.md snapshot row, " +
       "wording alone; its plain-text tells hold nothing back); supporting_statements and basis_excerpts " +
-      "snapshot keys 2026-10-08 (review-snapshot-supporting-statements spec)",
+      "snapshot keys 2026-10-08 (CoClerk spec 2026-10-08_review-snapshot-supporting-statements-spec.md; practitioner's decision on pinpoint and authority recorded in review.md)",
   },
 
   // Table 1b, events: the work column is the work each routes.
