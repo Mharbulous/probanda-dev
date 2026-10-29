@@ -136,7 +136,11 @@ other question runs the duties in their numbered order.
       existing `6. LAW\<issue>\` folder;
    3. dispatch `researcher:research-paralegal` in **citation** mode, `source: westlaw-first`,
       for every citation already known on the issue (from the matter, a prior memo,
-      or a prior research-agent answer), into the same folder;
+      or a prior research-agent answer), into the same folder. Split the known
+      citations into batches of at most the per-invocation cap its citation playbook
+      (`shared/research-paralegal/citation-download.md`) sets, and dispatch the
+      batches one after another: a dispatch's citation list is never longer than
+      the cap;
    4. only then, once duties 4 and 5 have run, spawn the audit agent, naming the memo
       and decision files retrieved.
 
@@ -416,7 +420,8 @@ complete before the session ends: never leave a session with a cited decision un
    dispatch `researcher:research-paralegal` in
    citation mode, `source: canlii-only`, with that same research folder as the
    destination, whichever issue the decision is cited on. Step 1's save means the
-   folder exists before dispatch. Batch as its playbook allows, one dispatch at a time.
+   folder exists before dispatch. Split the citations into batches as duty 3 does,
+   no batch longer than the playbook's cap, one dispatch at a time.
 3. Run `/ingest` on each cited decision file case data does not hold, whether it
    was downloaded now or before the audit, and on each legislation file
    `legislation-fetcher` filed in this run. A Point in Time page or bulletin it

@@ -101,7 +101,9 @@ permitted to make statements of law.
    text in tiers 1–3 answers (a handoff's say-so is no check) and that is not only a
    point-in-time legislation question (the doctrine's duty 3 skips those), run the
    `westlaw-query-optimizer` subskill (on a supplied or earlier-session query too),
-   then `researcher:research-paralegal` in deep-research mode and in citation mode
+   then `researcher:research-paralegal` in deep-research mode and, split into batches of at
+   most its citation playbook's per-invocation cap and dispatched one batch after
+   another (the doctrine's duty 3), in citation mode
    `source: westlaw-first` for every citation already known. If it returns
    any `status: blocked (...)`, such as `status: blocked (chrome-not-connected)`,
    `status: blocked (westlaw-not-signed-in)`, `status: blocked (chrome-permission-not-granted)`
