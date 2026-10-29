@@ -50,6 +50,7 @@ import { submissionDataCreateJob, type CreateJobArgs } from "./submission/forms/
 import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/forms/approve-plan.js";
 import { submissionDataTrackSource, type TrackSourceArgs } from "./submission/forms/track-source.js";
 import { submissionDataSetStep, type SetStepArgs } from "./submission/forms/set-step.js";
+import { submissionDataTouchJob, withJobActivity, type TouchJobArgs } from "./submission/forms/job-activity.js";
 import { submissionDataCompleteJob, type CompleteJobArgs } from "./submission/forms/complete-job.js";
 import { submissionDataReleaseJob, type ReleaseJobArgs } from "./submission/forms/release-job.js";
 import { submissionDataSetBoardGoal, type SetBoardGoalArgs } from "./submission/forms/board-goals.js";
@@ -225,6 +226,7 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("drafting_data__approve_plan", (args: ApprovePlanArgs) => submissionDataApprovePlan(args)),
   defineTool("drafting_data__track_source", (args: TrackSourceArgs) => submissionDataTrackSource(args)),
   defineTool("drafting_data__set_step", (args: SetStepArgs) => submissionDataSetStep(args)),
+  defineTool("drafting_data__touch_job", (args: TouchJobArgs) => submissionDataTouchJob(args)),
   defineTool("drafting_data__release_job", (args: ReleaseJobArgs) => submissionDataReleaseJob(args)),
   defineTool("drafting_data__set_board_goal", (args: SetBoardGoalArgs) => submissionDataSetBoardGoal(args)),
   defineTool("drafting_data__record_viewed", (args: RecordViewedArgs) => submissionDataRecordViewed(args)),
@@ -499,15 +501,13 @@ export async function callTool(
   }
 
   if (name === "research_filing__file_download") {
-    return fileDownload(
-      args.destination_dir as string,
-      args.source_filename as string,
-      args.destination_filename as string | undefined
+    return withJobActivity(name, args, () =>
+      fileDownload(args.destination_dir as string, args.source_filename as string, args.destination_filename as string | undefined)
     );
   }
 
   if (name === "research_filing__append_manifest") {
-    return appendManifest(args.destination_dir as string, args.record);
+    return withJobActivity(name, args, () => appendManifest(args.destination_dir as string, args.record));
   }
 
   if (name === "research_filing__save_answer") {
@@ -515,11 +515,8 @@ export async function callTool(
   }
 
   if (name === "research_filing__write_scratch") {
-    return writeScratch(
-      args.matter_root as string,
-      args.filename as string,
-      args.text as string,
-      args.kind as string | undefined
+    return withJobActivity(name, args, () =>
+      writeScratch(args.matter_root as string, args.filename as string, args.text as string, args.kind as string | undefined)
     );
   }
 
@@ -537,7 +534,7 @@ export async function callTool(
   }
 
   if (name === "research_filing__file_fetched") {
-    return fileFetched(args.url as string, args.destination_dir as string, args.filename as string, args.record);
+    return withJobActivity(name, args, () => fileFetched(args.url as string, args.destination_dir as string, args.filename as string, args.record));
   }
 
   if (name === "research__preflight") {

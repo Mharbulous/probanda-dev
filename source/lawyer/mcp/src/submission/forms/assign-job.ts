@@ -12,6 +12,7 @@
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
+import { touchJob } from "./job-activity.js";
 import { bfOnHeld, createdByHeld, deletedAtHeld, liveTicketClause } from "./query.js";
 
 const TOOL = "drafting_data__assign_job";
@@ -99,6 +100,7 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
     && (takeover ? (read.status === "queued" || read.status === "wip") && read.locked_by !== null && read.locked_by.slice(-8) === (args.expected_holder as string).trim() : read.status === "queued" && read.locked_by === null);
   if (read.locked_by === args.session_token) {
     outcome = "assigned";
+    if (changes === 1) await touchJob(args.db_path, id, args.session_token, env);
     note = changes === 1 ? `Job ${id} is assigned to this session.` : `Job ${id} already carried this session's token; nothing was written.`;
   } else if (changes === 0 && creatorHeld && otherwiseEligible && read.created_by !== args.session_token && createdAny(args.db_path, args.session_token)) {
     outcome = "not_created_here";

@@ -86,13 +86,12 @@ export interface WorkBoardTicket {
    * order they were added: the job's own record beside its steps, never part of its plan. `outcome`
    * is null while a source is open. Empty on a database held below v76. */
   sources: { kind: string; label: string; outcome: string | null; reason: string | null }[];
-  /** The job's latest recorded activity: the latest of its lock, its done steps, the loose threads
-   * captured from it, the answers saved for it and the sources to get added to it or closed on it.
-   * Null when it has none of them. The idle tag measures from it. */
+  /** The job's stored last-activity stamp (job-activity.ts), else its lock. Null when it has neither.
+   * The idle tag measures from it. */
   last_activity_at: string | null;
   /** The minute the holding session last ended a turn that worked this job: its `db_meta` row
-   * `job_active:<id>` (jobs-run.md §6a). Not progress, so it never moves `last_activity_at` or the idle
-   * tag. Null unless the job is In progress and the stamp is no earlier than its lock, so an earlier
+   * `job_active:<id>` (jobs-run.md §6a), written with `last_activity_at` by drafting_data__touch_job.
+   * Null unless the job is In progress and the stamp is no earlier than its lock, so an earlier
    * holder's stamp never shows. */
   active_at: string | null;
   /** `idle past <N> h` on an In progress job idle longer than the firm's `idle_flag_hours` (N), set by

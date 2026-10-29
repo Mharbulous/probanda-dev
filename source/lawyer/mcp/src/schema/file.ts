@@ -1,6 +1,13 @@
 import { AUDIENCES } from "../knowledge/index.js";
 import type { ToolDefinition } from "./shared.js";
 
+/** A research_filing write made for a held job names it, so the job's last activity moves. */
+const JOB_PROPERTIES = { db_path: { type: "string" }, ticket_id: { type: "number" }, session_token: { type: "string" } };
+const JOB_ACTIVITY =
+  " When the call serves a held job, also pass its `db_path`, `ticket_id` and the holder's `session_token` (all three or none): " +
+  "the job's last activity then moves, and the result carries `job: {ticket_id, recorded}`, `recorded` false when the job is no " +
+  "longer that session's. Refused before anything is written: `invalid_job`, `invalid_ticket_id`, `invalid_session_token`.";
+
 /** The pages pages__template serves, as src/pages/preview.ts PAGE_TEMPLATES names them. Written out
  * here so the files bundle, which builds its schemas from this module too, carries no board. */
 const PAGE_NAMES = [
@@ -452,13 +459,14 @@ export function fileToolDefinitions(): ToolDefinition[] {
     {
       name: "research_filing__file_download",
       description:
-        "Copy one completed download from the OS Downloads folder into an existing matter `6. LAW` subfolder, leaving the download where it is (Probanda never moves a file it did not create). `source_filename` and optional `destination_filename` (default: same name) are bare filenames -- no separators. Refuses, touching nothing: `not_found` (no such file in Downloads); `in_progress` (.crdownload/.tmp/.partial); `dest_exists` (destination filename collision -- record status failed, never overwrite); `not_law_folder`/`protected`/`invalid_path` on the destination. Returns {path, bytes}.",
+        "Copy one completed download from the OS Downloads folder into an existing matter `6. LAW` subfolder, leaving the download where it is (Probanda never moves a file it did not create). `source_filename` and optional `destination_filename` (default: same name) are bare filenames -- no separators. Refuses, touching nothing: `not_found` (no such file in Downloads); `in_progress` (.crdownload/.tmp/.partial); `dest_exists` (destination filename collision -- record status failed, never overwrite); `not_law_folder`/`protected`/`invalid_path` on the destination. Returns {path, bytes}." + JOB_ACTIVITY,
       inputSchema: {
         type: "object",
         properties: {
           destination_dir: { type: "string" },
           source_filename: { type: "string" },
           destination_filename: { type: "string" },
+          ...JOB_PROPERTIES,
         },
         required: ["destination_dir", "source_filename"],
         additionalProperties: false,
@@ -468,12 +476,13 @@ export function fileToolDefinitions(): ToolDefinition[] {
     {
       name: "research_filing__append_manifest",
       description:
-        "Append one JSON object as one line (JSONL) to `case-download-manifest.json` in an existing matter `6. LAW` subfolder, creating the file if absent. Call it once per citation as soon as that citation is resolved, never batched. Returns {path, records} where `records` is the line count after the append.",
+        "Append one JSON object as one line (JSONL) to `case-download-manifest.json` in an existing matter `6. LAW` subfolder, creating the file if absent. Call it once per citation as soon as that citation is resolved, never batched. Returns {path, records} where `records` is the line count after the append." + JOB_ACTIVITY,
       inputSchema: {
         type: "object",
         properties: {
           destination_dir: { type: "string" },
           record: { type: "object" },
+          ...JOB_PROPERTIES,
         },
         required: ["destination_dir", "record"],
         additionalProperties: false,
@@ -493,9 +502,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
           filename: { type: "string" },
           text: { type: "string" },
           from_scratch: { type: "string" },
-          db_path: { type: "string" },
-          ticket_id: { type: "number" },
-          session_token: { type: "string" },
+          ...JOB_PROPERTIES,
         },
         required: ["destination_dir", "filename"],
         additionalProperties: false,
@@ -505,7 +512,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
     {
       name: "research_filing__write_scratch",
       description:
-        "Save the research agent's internal notes: `text` byte-for-byte as a new `.md` file in `<matter_root>\\<its one 0. DRAFT* folder>\\AI Scratchpad\\research-agent\\`; never overwrites. `matter_root` is the absolute host path of the matter folder holding `probanda.json`. `filename` is a bare `.md` name; if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `AI Scratchpad` and `research-agent` are created when absent (`created_dir` true); the 0. DRAFT folder never is. Refused, nothing written: `invalid_root` (not absolute, missing, or no probanda.json), `draft_dir_missing` (no 0. DRAFT folder), `draft_dir_ambiguous` (two or more), `protected` (a privileged or disclosed tree), `invalid_filename`, `invalid_argument` (empty text), `coverage_line_malformed` (with `kind` \"research-notes\": the line starting `**Coverage:**` or `case data:` is missing or does not match the fixed six-segment shape; the message names each bad segment and its expected form; fix the line and save again). Returns {path, filename, bytes, created_dir}.",
+        "Save the research agent's internal notes: `text` byte-for-byte as a new `.md` file in `<matter_root>\\<its one 0. DRAFT* folder>\\AI Scratchpad\\research-agent\\`; never overwrites. `matter_root` is the absolute host path of the matter folder holding `probanda.json`. `filename` is a bare `.md` name; if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `AI Scratchpad` and `research-agent` are created when absent (`created_dir` true); the 0. DRAFT folder never is. Refused, nothing written: `invalid_root` (not absolute, missing, or no probanda.json), `draft_dir_missing` (no 0. DRAFT folder), `draft_dir_ambiguous` (two or more), `protected` (a privileged or disclosed tree), `invalid_filename`, `invalid_argument` (empty text), `coverage_line_malformed` (with `kind` \"research-notes\": the line starting `**Coverage:**` or `case data:` is missing or does not match the fixed six-segment shape; the message names each bad segment and its expected form; fix the line and save again). Returns {path, filename, bytes, created_dir}." + JOB_ACTIVITY,
       inputSchema: {
         type: "object",
         properties: {
@@ -513,6 +520,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
           filename: { type: "string" },
           text: { type: "string" },
           kind: { type: "string", enum: ["research-notes"] },
+          ...JOB_PROPERTIES,
         },
         required: ["matter_root", "filename", "text"],
         additionalProperties: false,
@@ -560,7 +568,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
     {
       name: "research_filing__file_fetched",
       description:
-        "File the text `sources__fetch` already fetched into an existing matter `6. LAW` subfolder, and append its manifest line in the same call. `url` is the exact string you passed to `sources__fetch`: the bytes come from that call's memo in this server process, nothing is requested again, and no memo (or one over 24 hours old) is refused `not_fetched`. An HTML page is written as a `.md` file: a front matter header {url, final_url, sha256, fetched_at, currency_marker}, then the whole page text one block per line (never cut at 200 KB). A PDF is written as its own bytes. `filename` is a bare name ending in `.md` for an HTML page or `.pdf` for a PDF (otherwise `invalid_filename`). It never overwrites: a taken name becomes `<stem> vN<ext>`. `record` carries only {citation?, title, kind, jurisdiction, official, currency_marker}; the runtime adds status \"downloaded\", source \"official-publisher\" (\"secondary\" for kind \"secondary\"), publisher_host, url, final_url, sha256 (of the fetched bytes), filename, path and fetched_at (the time of this call) to the line it appends to `case-download-manifest.json`. `destination_dir` must already exist inside a `6. LAW` tree (`not_found`, `not_law_folder`, `protected`). Returns {path, filename, bytes, record, manifest: {path, records}}.",
+        "File the text `sources__fetch` already fetched into an existing matter `6. LAW` subfolder, and append its manifest line in the same call. `url` is the exact string you passed to `sources__fetch`: the bytes come from that call's memo in this server process, nothing is requested again, and no memo (or one over 24 hours old) is refused `not_fetched`. An HTML page is written as a `.md` file: a front matter header {url, final_url, sha256, fetched_at, currency_marker}, then the whole page text one block per line (never cut at 200 KB). A PDF is written as its own bytes. `filename` is a bare name ending in `.md` for an HTML page or `.pdf` for a PDF (otherwise `invalid_filename`). It never overwrites: a taken name becomes `<stem> vN<ext>`. `record` carries only {citation?, title, kind, jurisdiction, official, currency_marker}; the runtime adds status \"downloaded\", source \"official-publisher\" (\"secondary\" for kind \"secondary\"), publisher_host, url, final_url, sha256 (of the fetched bytes), filename, path and fetched_at (the time of this call) to the line it appends to `case-download-manifest.json`. `destination_dir` must already exist inside a `6. LAW` tree (`not_found`, `not_law_folder`, `protected`). Returns {path, filename, bytes, record, manifest: {path, records}}." + JOB_ACTIVITY,
       inputSchema: {
         type: "object",
         properties: {
@@ -568,6 +576,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
           destination_dir: { type: "string" },
           filename: { type: "string" },
           record: { type: "object" },
+          ...JOB_PROPERTIES,
         },
         required: ["url", "destination_dir", "filename", "record"],
         additionalProperties: false,

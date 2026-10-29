@@ -32,14 +32,6 @@ const allStepsDone = (steps: readonly StepStateFields[]): boolean => steps.lengt
  * open steps still holds it under its lock. A job with every step done holds none. */
 export const holdsMaterial = (t: { status: TicketStatus; steps: readonly StepStateFields[] }): boolean => t.status === "wip" && !allStepsDone(t.steps);
 
-/** The latest of minute-precision local stamps written with a `T` or a space (`2026-10-02T09:00`,
- * `2026-10-02 09:00`), compared with that separator made equal; null when none is given. */
-export function latestStamp(stamps: readonly (string | null)[]): string | null {
-  let latest: string | null = null;
-  for (const s of stamps) if (s !== null && (latest === null || s.replace(" ", "T") > latest.replace(" ", "T"))) latest = s;
-  return latest;
-}
-
 /** A job's session-active stamp, kept only while it is In progress and no earlier than its lock. */
 export function activeAt(ticket: TicketRow, stamp: string | undefined): string | null {
   if (ticket.status !== "wip" || stamp === undefined || ticket.locked_at === null) return null;
@@ -87,13 +79,21 @@ export function localMinutes(stamp: string): number | null {
   return m === null ? null : Math.round(new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime() / 60_000);
 }
 
-/** The ticket with its idle flag when it is an In progress job whose last activity lies more than
+/** The minute a job's idle time runs from: its last activity, or a later wake-up minute of a ⏳ step
+ * not yet done, which counts as activity until it passes. Null with nothing to measure from. */
+export function idleSince(t: WorkBoardTicket): number | null {
+  const waits = t.steps.filter((s) => s.done_at === null && s.status === "waiting").map((s) => s.wait_until ?? null);
+  const minutes = [t.last_activity_at, ...waits].map((s) => (s == null ? null : localMinutes(s))).filter((m): m is number => m !== null);
+  return minutes.length === 0 ? null : Math.max(...minutes);
+}
+
+/** The ticket with its idle flag when it is an In progress job whose idle time runs from more than
  * `hours` (the firm's idle_flag_hours) before the section's Rendered minute. The text names the
  * threshold, not the elapsed time, so it changes once at the crossing and never churns board_changed. */
 export function withIdleFlag(t: WorkBoardTicket, rendered: string, hours: number | null): WorkBoardTicket {
   if (hours === null || t.category !== "wip") return t;
   const now = localMinutes(rendered);
-  const last = t.last_activity_at === null ? null : localMinutes(t.last_activity_at);
+  const last = idleSince(t);
   if (now === null || last === null || now - last <= hours * 60) return t;
   return { ...t, idle_flag: `idle past ${hours} h` };
 }

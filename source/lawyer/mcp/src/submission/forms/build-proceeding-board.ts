@@ -14,13 +14,13 @@ import {
   type FilingRetiredRow,
   type ProposalRow,
   type ScopeRow,
-  type SeedCaptureRow,
   type SourceRow,
   type StepRow,
 } from "./work-board-reads.js";
 import type { WorkBoardEdge, WorkBoardTicket } from "./work-board-ticket.js";
 import { fetchOpenSeeds, type WorkBoardSeed } from "./work-board-seeds.js";
-import { activeAt, classify, holdsMaterial, latestStamp, reachesItself, scopesShare, supersededReason } from "./ticket-category.js";
+import { fetchJobActivity } from "./job-activity.js";
+import { activeAt, classify, holdsMaterial, reachesItself, scopesShare, supersededReason } from "./ticket-category.js";
 import { UNATTENDED_TOKEN_PREFIX } from "./unattended-eligibility.js";
 
 function groupBy<T>(items: T[], key: (item: T) => number): Map<number, T[]> {
@@ -74,10 +74,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
   const scopeRows = proceedingIds.length === 0 ? [] : rows<ScopeRow>(dbPath, `SELECT * FROM ticket_scope WHERE ticket_id IN (${idList})`, proceedingIds);
   const proposalRows =
     proceedingIds.length === 0 ? [] : rows<ProposalRow>(dbPath, `SELECT ticket_id, proposal_key, item FROM ticket_proposals WHERE ticket_id IN (${idList})`, proceedingIds);
-  // A job's own records beyond its steps: every loose thread captured from it, outlined since or not, and every
-  // answer saved for it. Its last activity reads both, and its card lists the answers.
-  const captures =
-    proceedingIds.length === 0 ? [] : rows<SeedCaptureRow>(dbPath, `SELECT origin_ticket_id, created FROM seeds WHERE origin_ticket_id IN (${idList})`, proceedingIds);
+  // A job's own records beyond its steps, which its card lists: every answer saved for it and every source to get.
   const answerRows =
     proceedingIds.length === 0 || !ticketAnswersHeld(dbPath)
       ? []
@@ -85,7 +82,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
   const sourceRows =
     proceedingIds.length === 0 || !ticketSourcesHeld(dbPath)
       ? []
-      : rows<SourceRow>(dbPath, `SELECT ticket_id, kind, label, added_at, closed_at, outcome, reason FROM ticket_sources WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
+      : rows<SourceRow>(dbPath, `SELECT ticket_id, kind, label, outcome, reason FROM ticket_sources WHERE ticket_id IN (${idList}) ORDER BY id`, proceedingIds);
 
   const blockersOf = new Map<number, number[]>(); // blocked_id -> [blocker_id]
   for (const b of blocks) blockersOf.set(b.blocked_id, [...(blockersOf.get(b.blocked_id) ?? []), b.blocker_id]);
@@ -97,9 +94,9 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
   const stepsByTicket = groupBy(steps, (s) => s.ticket_id);
   const scopeByTicket = groupBy(scopeRows, (s) => s.ticket_id);
   const proposalsByTicket = groupBy(proposalRows, (p) => p.ticket_id);
-  const capturesByTicket = groupBy(captures, (s) => s.origin_ticket_id);
   const answersByTicket = groupBy(answerRows, (a) => a.ticket_id);
   const sourcesByTicket = groupBy(sourceRows, (s) => s.ticket_id);
+  const activityById = fetchJobActivity(dbPath);
   const activeById = new Map(
     rows<{ key: string; value: string }>(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r) => [Number(r.key.slice("job_active:".length)), r.value]),
   );
@@ -162,13 +159,8 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
       lock_note: category === "wip" && t.locked_by?.startsWith(UNATTENDED_TOKEN_PREFIX) ? "In progress with nobody present" : null,
       answers: (answersByTicket.get(t.id) ?? []).map((a) => ({ file_path: a.file_path, saved_at: a.saved_at })),
       sources: (sourcesByTicket.get(t.id) ?? []).map((s) => ({ kind: s.kind, label: s.label, outcome: s.outcome, reason: s.reason })),
-      last_activity_at: latestStamp([
-        t.locked_at,
-        ...(stepsByTicket.get(t.id) ?? []).map((s) => s.done_at),
-        ...(capturesByTicket.get(t.id) ?? []).map((s) => s.created),
-        ...(answersByTicket.get(t.id) ?? []).map((a) => a.saved_at),
-        ...(sourcesByTicket.get(t.id) ?? []).flatMap((s) => [s.added_at, s.closed_at]),
-      ]),
+      // A job locked before its database held the stamp has none yet: its lock is its last activity.
+      last_activity_at: activityById.get(t.id) ?? t.locked_at,
       active_at: activeAt(t, activeById.get(t.id)),
     };
     return { filing_id: t.filing_id, ticket };

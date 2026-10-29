@@ -1057,9 +1057,9 @@ test("board_card is listed read-only, and a call through the dispatcher writes n
   }
 });
 
-// The idle report's arithmetic, done by the server: elapsed from the job's last activity (the latest
-// of its lock, its done steps, its seeds and its saved answers, which the next test derives) to the
-// section's Rendered minute, no tag at 15 minutes or less or with nothing to measure.
+// The idle report's arithmetic, done by the server: elapsed from the job's last activity (its stored
+// stamp, job-activity.db.test.mjs) to the section's Rendered minute, no tag at 15 minutes or less or
+// with nothing to measure.
 test("the live lane's idle tag on an In progress job", () => {
   const NOW = "2026-10-16 12:00";
   const ticket = (over) => ({
@@ -1092,10 +1092,10 @@ test("the live lane's idle tag on an In progress job", () => {
   assert.equal(lineOf({ last_activity_at: "2026-10-05T19:00", steps: steps("2026-10-05T19:00") }), `${head} 1/1 · idle 10 days 17 h 0 min, about 100%`, "a job with every step stamped stays In Progress and carries the idle tag");
 });
 
-// The take-over card (FIX 3): a job's last activity is the latest of its lock, its done steps, the
-// seeds captured from it and the answers saved for it, and its card lists those seeds and answers.
-// Saving an answer with the job's id restarts its idle clock; the save is recorded only under the
-// saving session's own lock, and a refused record leaves the file saved.
+// The take-over card (FIX 3): a job's last activity is its stored stamp, and its card lists the seeds
+// captured from it and the answers saved for it. Saving an answer with the job's id restarts its idle
+// clock; the save is recorded only under the saving session's own lock, and a refused record leaves
+// the file saved.
 async function heldMilestone(t) {
   const f = seededDbFixture();
   t.after(() => f.cleanup());
@@ -1107,6 +1107,7 @@ async function heldMilestone(t) {
        VALUES (1, 1, NULL, 'Research the limitation point', 'When did time start to run?', 'wip', 0, 'work', 'L8470|limitation', 'sess-holder', '2026-01-16 09:00', '2026-01-16 09:00', '2026-01-16 08:55');
      INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES (1, 1, 'Run the research', NULL);
      INSERT INTO seeds (id, proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea) VALUES (1, 1, NULL, 1, '2026-01-16T09:20', 'noticed in the Westlaw memo', 'Is the guarantor a party?');
+     INSERT INTO kv_store (namespace, key, value, updated_at) VALUES ('last_activity', 'tickets:1', '"2026-01-16T09:20"', '2026-01-16T17:20:00.000Z');
      INSERT INTO seeds (id, proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea) VALUES (2, 1, NULL, NULL, '2026-01-16T11:50', 'a practitioner aside', 'Not this job''s.');`
   );
   const law = join(dirname(dirname(f.dbPath)), "6. LAW");
@@ -1121,10 +1122,10 @@ const headline = (f) =>
     line.startsWith("- Job #1 ")
   );
 
-test("a job's last activity counts the seeds captured from it, and its card lists them", async (t) => {
+test("a job's last activity is its stored stamp, and its card lists the seeds captured from it", async (t) => {
   const { f } = await heldMilestone(t);
 
-  assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 0/1 · idle 2 h 40 min, about 0%", "the seed at 09:20, not the lock at 09:00");
+  assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 0/1 · idle 2 h 40 min, about 0%", "the stamp at 09:20, not the lock at 09:00");
   assert.equal(
     proceedingCard(f),
     [
@@ -1414,7 +1415,7 @@ test("board_card prints each step state's glyph, the minute beside a waiting ste
   assert.ok(proceedingCard(f).includes("6 ⏳ until 12:30 Download the memo"));
   await submissionDataExecute(f.dbPath, "UPDATE ticket_steps SET wait_until = '2026-01-16T12:00' WHERE ticket_id = 1 AND ordinal = 6;");
   assert.ok(proceedingCard(f).includes("6 ☐ Download the memo"), "a wait whose minute has come reads as open");
-  assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 1/7 · idle 2 h 40 min, about 14%", "progress counts done steps only");
+  assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 1/7", "progress counts done steps only, and step 5's ⏳ keeps the job from reading idle");
 });
 
 test("the Milestone page draws each step state as a class, with until HH:MM beside a waiting step, and a passed wait as open", async (t) => {

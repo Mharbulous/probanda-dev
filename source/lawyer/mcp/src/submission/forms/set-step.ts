@@ -10,6 +10,7 @@
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
+import { touchJob } from "./job-activity.js";
 import { stepStatusHeld } from "./query.js";
 
 const TOOL = "drafting_data__set_step";
@@ -122,6 +123,7 @@ export async function submissionDataSetStep(args: SetStepArgs, env: NodeJS.Proce
     note = `Nothing was written: step ${ordinal} of job ${id} is done (${step.done_at}), and a done step stays as it is.`;
   } else if (changes === 1) {
     outcome = "set";
+    await touchJob(args.db_path, id, token, env);
     note =
       status === "waiting"
         ? `setting timer for ${minutes} minutes: step ${ordinal} of job ${id} waits until ${(step.wait_until ?? "").slice(11)}. Then check whether the process has finished; this is never a deadline.`

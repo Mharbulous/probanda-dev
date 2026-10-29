@@ -264,8 +264,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this " +
         "order: each job asked for, in board order, as its live-lane line without the tags, then " +
         "`  kind: <kind> · priority: <N>` (with ` · locked: <locked_at> · holder: <tag> · last activity: <stamp>` on an In " +
-        "Progress job, the last activity being the latest of its lock, its done steps, the loose threads " +
-        "captured from it, the answers saved for it and the sources to get added to it or closed on it), then `  intent:`, `  keys:` with each held " +
+        "Progress job), then `  intent:`, `  keys:` with each held " +
         "key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), " +
         "`  scope: … · waits on: … · either-or: …`, `  steps:` when it has steps, each `<ordinal> <glyph> <text>` joined by " +
         "` · `, the glyph ☑ done (followed by ` (<done_at>)`), ☐ open, ↻ to be retried, ☒ cancelled or ⏸ deferred (each " +

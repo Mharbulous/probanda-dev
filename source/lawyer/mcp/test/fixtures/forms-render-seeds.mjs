@@ -631,6 +631,8 @@ export async function seedTickets(dbPath) {
       VALUES (4, 1, 1, 'Rebuild the evidence index', 'Reconcile the exhibit list against the disclosure log.', 'wip', 2, 'work', 'L4801|attornment defeats the stay', 'sess-a1', '2026-09-02T10:05', '2026-09-02T10:00', '2026-09-02T09:50');
     INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES (4, 1, 'Audit the exhibit list', '2026-09-02T10:10');
     INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (4, 2, 'Reconcile against the disclosure log');
+    -- Its stored last activity: the turn that captured seed 1 below.
+    INSERT INTO kv_store (namespace, key, value, updated_at) VALUES ('last_activity', 'tickets:4', '"2026-09-02T10:12"', '2026-09-02T17:12:00.000Z');
 
     -- Ticket 5: superseded by ticket 1 (also its conflict partner) -- Superseded.
     INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created, superseded_by)

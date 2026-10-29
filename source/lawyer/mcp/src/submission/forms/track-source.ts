@@ -10,6 +10,7 @@
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { hasTable } from "../schema-capabilities.js";
+import { touchJob } from "./job-activity.js";
 
 const TOOL = "drafting_data__track_source";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -133,6 +134,7 @@ export async function submissionDataTrackSource(args: TrackSourceArgs, env: Node
   let unknown: string[] = [];
   if (read.locked_by === token) {
     outcome = "recorded";
+    if (written !== null) await touchJob(args.db_path, id, token, env);
     unknown = close.map((c) => `${c.kind}: ${c.label}`).filter((k) => !on.has(k));
     note = `Job ${id} is this session's: ${sources.length} source${sources.length === 1 ? "" : "s"} to get on it, ${open} open.${unknown.length > 0 ? ` ${unknown.length} close item${unknown.length === 1 ? " names" : "s name"} no source on the job and closed nothing.` : ""}`;
   } else if (read.locked_by !== null) {

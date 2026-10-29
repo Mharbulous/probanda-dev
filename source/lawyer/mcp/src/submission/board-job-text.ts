@@ -3,6 +3,7 @@
 
 import { localMinutes, type Category, type DispatchSkip, type WorkBoardData, type WorkBoardEdge, type WorkBoardTicket } from "./forms/render-work-board.js";
 import { stepGlyphText, stepView } from "./forms/step-state.js";
+import { idleSince } from "./forms/ticket-category.js";
 
 /** The page's chip labels (workboard-shell.ts CHIPS). The page's copy lives in inline JavaScript,
  * so this one is kept by hand; workboard-file-url.e2e's mirror test catches drift. */
@@ -78,12 +79,11 @@ function elapsedText(minutes: number): string {
   return h > 0 ? `${h} h ${m} min` : `${m} min`;
 }
 
-/** An In progress job's idle tag, measured to the section's Rendered minute from its last activity:
- * the latest of its lock, its done steps, the loose threads captured from it, the answers saved for it
- * and the sources to get added to it or closed on it (`last_activity_at`). None within the threshold, and none with nothing to measure from. */
+/** An In progress job's idle tag, measured to the section's Rendered minute from `idleSince`. None
+ * within the threshold, and none with nothing to measure from. */
 function idleTag(t: WorkBoardTicket, rendered: string): string | null {
   const now = localMinutes(rendered);
-  const last = t.last_activity_at === null ? null : localMinutes(t.last_activity_at);
+  const last = idleSince(t);
   if (now === null || last === null) return null;
   const elapsed = Math.max(0, now - last);
   if (elapsed <= IDLE_AFTER_MINUTES) return null;

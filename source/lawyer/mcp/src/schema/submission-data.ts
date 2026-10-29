@@ -560,6 +560,27 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("touch_job"),
+      description:
+        "The last call of every turn in which this session held a job and worked on it (jobs-run.md §6a): sets the " +
+        "job's session-active stamp and its last activity, which board_card prints and the idle tag measures from, to " +
+        "now. It writes only while the job's lock is this session's. recorded false means nothing was written: the job " +
+        "is no longer this session's, so run the scope read and stop. It moves no revision. Refused, nothing written: " +
+        "invalid_job, invalid_ticket_id, invalid_session_token, not_found, schema_below_v80. Returns ticket_id, recorded " +
+        "and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          ticket_id: { type: "number" },
+          session_token: { type: "string" },
+        },
+        required: ["db_path", "ticket_id", "session_token"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("release_job"),
       description:
         "Return a wip job (a tickets row) to Ready in one call: the guarded releasing write followed by its confirm-read. " +

@@ -62,11 +62,6 @@ export interface ConflictRow {
   b_id: number;
 }
 
-export interface SeedCaptureRow {
-  origin_ticket_id: number;
-  created: string;
-}
-
 export interface AnswerRow {
   ticket_id: number;
   file_path: string;
@@ -77,8 +72,6 @@ export interface SourceRow {
   ticket_id: number;
   kind: string;
   label: string;
-  added_at: string;
-  closed_at: string | null;
   outcome: string | null;
   reason: string | null;
 }
