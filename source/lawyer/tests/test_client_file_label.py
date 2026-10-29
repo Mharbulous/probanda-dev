@@ -95,8 +95,47 @@ def test_its_own_error_lets_the_result_through_loudly(tmp_path):
     assert "client-file-label hook error (allowing" in result.stderr.decode("utf-8")
 
 
-def test_the_hook_is_registered_on_read_after_the_call():
+def grep(path, cwd: Path, content: str) -> dict:
+    tool_input = {"pattern": "hearing", "output_mode": "content"}
+    if path is not None:
+        tool_input["path"] = str(path)
+    return {"hook_event_name": "PostToolUse", "tool_name": "Grep", "cwd": str(cwd), "tool_input": tool_input,
+            "tool_response": {"mode": "content", "numFiles": 0, "filenames": [], "content": content,
+                              "numLines": content.count("\n") + 1, "totalLines": content.count("\n") + 1}}
+
+
+def test_grep_content_under_the_root_is_wrapped_with_only_its_content_changed(tmp_path):
+    root, config = setup(tmp_path)
+    hit = "%s:2:%s" % (root / "L0001 Matter" / "letter.txt", HOSTILE)
+    payload = grep(root / "L0001 Matter", tmp_path, hit)
+    updated = output(run(config, payload))["updatedToolOutput"]
+    expected = json.loads(json.dumps(payload["tool_response"]))
+    expected["content"] = ('<client_file source="client files: grep matches">'
+                           + hit.replace("</client_file", "<\\/client_file") + "</client_file>")
+    assert updated == expected
+
+
+def test_grep_from_a_folder_above_the_root_is_wrapped(tmp_path):
+    root, config = setup(tmp_path)
+    hit = "%s:1:hearing" % (root / "L0001 Matter" / "letter.txt")
+    for payload in (grep(tmp_path, tmp_path, hit), grep(None, tmp_path, hit)):
+        assert "<client_file" in output(run(config, payload))["updatedToolOutput"]["content"]
+
+
+def test_grep_outside_the_root_and_names_only_modes_are_left_alone(tmp_path):
+    root, config = setup(tmp_path)
+    other = tmp_path / "elsewhere"
+    other.mkdir()
+    assert run(config, grep(other, tmp_path, "x.txt:1:hearing")).stdout == b""
+    names = grep(root, tmp_path, "")
+    names["tool_input"]["output_mode"] = "files_with_matches"
+    names["tool_response"] = {"mode": "files_with_matches", "filenames": [str(root / "a.txt")],
+                              "numFiles": 1, "totalFiles": 1}
+    assert run(config, names).stdout == b""
+
+
+def test_the_hook_is_registered_on_read_and_grep_after_the_call():
     plugin = json.loads((HOOK.parent.parent / "plugin.json").read_text(encoding="utf-8"))
     entries = [entry for entry in plugin["hooks"]["PostToolUse"]
                if any("client-file-label.py" in " ".join(hook["args"]) for hook in entry["hooks"])]
-    assert [entry["matcher"] for entry in entries] == ["Read"]
+    assert [entry["matcher"] for entry in entries] == ["Read|Grep"]
