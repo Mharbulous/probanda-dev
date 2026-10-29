@@ -383,31 +383,63 @@ def atomic_replace_set(resolved, copies):
         shutil.rmtree(sidecar, ignore_errors=True)
 
 
+def run_one(con, statement, params):
+    cur = con.execute(statement['sql'], params)
+    cols = [d[0] for d in cur.description] if cur.description else []
+    rows = [dict(zip(cols, r)) for r in cur.fetchall()] if cols else []
+    return {"rowcount": cur.rowcount, "rows": rows}
+
+
+def run_group(con, n, group, params, results, failed):
+    """One statement group (ingest orchestrator spec 2.1) under its own savepoint: an exception or a
+    'refuse' row inside it rolls back only the group, records {ref, reason}, and the call goes on.
+    Each statement still gets a result, zero for a rolled-back group's."""
+    merged = {**params, **(group.get('params') or {})}
+    own = []
+    con.execute("SAVEPOINT g_%d" % n)
+    try:
+        for statement in group['statements']:
+            result = run_one(con, statement, merged)
+            own.append(result)
+            if statement.get('refuse') and result['rows']:
+                raise LookupError(str(next(iter(result['rows'][0].values()))))
+        con.execute("RELEASE g_%d" % n)
+    except Exception as exc:
+        con.execute("ROLLBACK TO g_%d" % n)
+        con.execute("RELEASE g_%d" % n)
+        failed.append({"ref": group['ref'], "reason": str(exc)})
+        own = []
+    results.extend(own + [{"rowcount": 0, "rows": []}] * (len(group['statements']) - len(own)))
+
+
 def run_statements(con, req):
     """The other way to supply an execute's writes: a list of statements, each run with the same
     named params, in one transaction. A statement marked 'refuse' is a guard, and any row it
     returns is a reason to write nothing: the transaction rolls back before the next write and
-    the reasons are returned. Otherwise each statement's rowcount and rows are returned."""
+    the reasons are returned. Otherwise each statement's rowcount and rows are returned. An entry
+    {ref, params?, statements} is a statement group (run_group); a failure outside any group keeps
+    this rule and rolls back everything."""
     con.isolation_level = None
     params = req.get('params') or {}
-    results, refused = [], []
+    results, refused, failed = [], [], []
     con.execute("BEGIN")
     try:
-        for statement in req['statements']:
+        for n, statement in enumerate(req['statements']):
             if refused and not statement.get('refuse'):
                 break
-            cur = con.execute(statement['sql'], params)
-            cols = [d[0] for d in cur.description] if cur.description else []
-            rows = [dict(zip(cols, r)) for r in cur.fetchall()] if cols else []
+            if 'statements' in statement:
+                run_group(con, n, statement, params, results, failed)
+                continue
+            result = run_one(con, statement, params)
             if statement.get('refuse'):
-                refused.extend(next(iter(r.values())) for r in rows)
-            results.append({"rowcount": cur.rowcount, "rows": rows})
+                refused.extend(next(iter(r.values())) for r in result['rows'])
+            results.append(result)
         con.execute("ROLLBACK" if refused else "COMMIT")
     except Exception:
         if con.in_transaction:
             con.execute("ROLLBACK")
         raise
-    return {"refused": refused} if refused else {"results": results}
+    return {"refused": refused} if refused else {"results": results, "failed": failed}
 
 
 def do_execute(req, resolved):
@@ -489,15 +521,31 @@ export interface CaseStatement {
   refuse?: boolean;
 }
 
+/** A statement group (ingest orchestrator spec §2.1): its own savepoint, so its failure rolls back
+ *  only the group and is reported under `ref`. Its `params` are added to the call's own. */
+export interface CaseStatementGroup {
+  ref: string;
+  params?: Record<string, unknown>;
+  statements: CaseStatement[];
+}
+
 /** An execute's writes: one script, or a list of statements sharing one set of named params. */
 type CaseExecuteWork =
   | { sql_script: string }
-  | { statements: CaseStatement[]; params: Record<string, unknown> };
+  | { statements: Array<CaseStatement | CaseStatementGroup>; params: Record<string, unknown> };
 
 type CaseExecuteRequest = { op: "execute"; matter_root: string; triggers_sql: string } & CaseExecuteWork;
 
 export type CaseStatementsResult =
-  | { ok: true; evidence_sql: string; warning?: string | null; results: Array<{ rowcount: number; rows: Record<string, unknown>[] }> }
+  | {
+      ok: true;
+      evidence_sql: string;
+      warning?: string | null;
+      /** One per statement, a group's statements in place; a rolled-back group's read zero. */
+      results: Array<{ rowcount: number; rows: Record<string, unknown>[] }>;
+      /** Each group rolled back, with the exception or refusal that stopped it. */
+      failed: Array<{ ref: string; reason: string }>;
+    }
   /** A guard returned rows: nothing was written, and `refused` holds each row's first value. */
   | { ok: false; refused: unknown[]; warning?: string | null };
 
@@ -566,9 +614,10 @@ function caseDataTriggersSql(env: NodeJS.ProcessEnv): string {
 export async function caseDataExecute(
   matterRoot: string,
   sqlScript: string,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  precheck?: () => Promise<void>
 ): Promise<{ ok: true; evidence_sql: string; warning?: string | null }> {
-  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env) as { ok: true; evidence_sql: string; warning?: string | null };
+  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env, precheck) as { ok: true; evidence_sql: string; warning?: string | null };
 }
 
 /**
@@ -578,21 +627,26 @@ export async function caseDataExecute(
  */
 export async function caseDataExecuteStatements(
   matterRoot: string,
-  statements: CaseStatement[],
+  statements: Array<CaseStatement | CaseStatementGroup>,
   params: Record<string, unknown>,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  precheck?: () => Promise<void>
 ): Promise<CaseStatementsResult> {
-  return await executeUnderLock(matterRoot, { statements, params }, env) as CaseStatementsResult;
+  return await executeUnderLock(matterRoot, { statements, params }, env, precheck) as CaseStatementsResult;
 }
 
 async function executeUnderLock(
   matterRoot: string,
   work: CaseExecuteWork,
-  env: NodeJS.ProcessEnv
+  env: NodeJS.ProcessEnv,
+  precheck?: () => Promise<void>
 ): Promise<{ warning?: string | null }> {
   const triggersSql = caseDataTriggersSql(env);
   const lock = await acquireCaseLock(matterRoot, env);
   try {
+    // A caller's last check, made once the lock is held, so nothing can change it before the write
+    // (ingest_result's lease, ingest orchestrator spec R8). It throws to write nothing.
+    await precheck?.();
     const result = runHelper({
       op: "execute",
       matter_root: matterRoot,

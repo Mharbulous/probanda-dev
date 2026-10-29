@@ -21,7 +21,9 @@ import { caseDataRelocate, type RelocateMode } from "./case/relocate.js";
 import { resolveParticipant } from "./case/resolve-participant.js";
 import { ingestAuthority, type AuthorityIngestRequest } from "./case/ingest-authority.js";
 import { stageResult } from "./case/stage-result.js";
-import { assertLiveRun, ingestRun, type IngestRunArgs } from "./case/ingest-run.js";
+import { assertLiveRun, dispatchInputs, ingestRun, type IngestRunArgs } from "./case/ingest-run.js";
+import { ingestResult, type IngestResultArgs } from "./case/ingest-result.js";
+import { generatorSql, type Generator } from "./case/execute-generator.js";
 import { proceduralHistoryAppend, type ProceduralHistoryAppendArgs } from "./case/procedural-history.js";
 import { relocateSource, type RelocateSourceRequest } from "./case/relocate-source.js";
 import { housekeepingLog, type HousekeepingLogRequest } from "./case/housekeeping-log.js";
@@ -131,15 +133,33 @@ const toolDefinition = definitionLookup(buildToolDefinitions);
 
 type MatterArgs = { matter_root: string };
 
+/** An inline sql_script in a run the orchestrator began is refused above this many bytes (est., spec §2.5). */
+const INLINE_SQL_CAP = 8 * 1024;
+
 // The tools that have left the `if` chain below (#183). The rest follow in later children.
 export const dataTools: Tool<DispatchContext>[] = [
   defineTool("matter_data__query", (args: MatterArgs & { sql: string; params?: unknown[] }) =>
     caseDataQuery(args.matter_root, args.sql, args.params)),
-  defineTool("matter_data__execute", async (args: MatterArgs & { sql_script: string; run_id?: string }) => {
-    if (args.run_id !== undefined) await assertLiveRun(args.matter_root, args.run_id);
-    return caseDataExecute(args.matter_root, args.sql_script);
+  defineTool("matter_data__execute", async (args: MatterArgs & { sql_script?: string; generator?: Generator; run_id?: string }) => {
+    if ((args.sql_script === undefined) === (args.generator === undefined)) {
+      throw new ValidationError("matter_data__execute takes sql_script or generator, not both and not neither");
+    }
+    const sql = args.generator !== undefined ? generatorSql(args.matter_root, args.generator) : (args.sql_script as string);
+    const runId = args.run_id;
+    // The lease is checked inside the case lock, so a takeover cannot come between check and write
+    // (N6). Spec §2.5: the inline cap binds only a run the orchestrator began, so D1's ingest paths
+    // and large callers outside a run are unaffected (N3).
+    const precheck = runId === undefined ? undefined : async () => {
+      const run = await assertLiveRun(args.matter_root, runId);
+      if (run.orchestrator && args.sql_script !== undefined && Buffer.byteLength(args.sql_script, "utf-8") > INLINE_SQL_CAP) {
+        throw new ValidationError("too long to send inline: use a generator or ingest_result", "too_long");
+      }
+    };
+    return caseDataExecute(args.matter_root, sql, process.env, precheck);
   }),
   defineTool("matter_data__ingest_run", (args: IngestRunArgs) => ingestRun(args)),
+  defineTool("matter_data__ingest_result", (args: IngestResultArgs) => ingestResult(args)),
+  defineTool("matter_data__dispatch_inputs", (args: { dispatch_id: string }) => dispatchInputs(args.dispatch_id)),
   defineTool("matter_data__resolve_participant", (args: MatterArgs & { name: string }) => resolveParticipant(args.matter_root, args.name)),
   defineTool("matter_data__stage_result", (args: { result: unknown }) => stageResult(args.result)),
   defineTool("matter_data__ingest_authority", (args: AuthorityIngestRequest) => ingestAuthority(args)),

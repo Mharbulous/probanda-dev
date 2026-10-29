@@ -27,6 +27,23 @@ export function stagedResultPath(resultId: unknown, env: NodeJS.ProcessEnv): str
   return join(stagedResultsDir(env), `${resultId}.json`);
 }
 
+/** Deletes the staged results of `resultIds` a caller is done with (ingest_run's end, round 5, 7). One
+ *  already gone is skipped; one this computer cannot delete now (a file in use) is left for stageResult's
+ *  7-day expiry and counted. */
+export function dropStagedResults(resultIds: string[], env: NodeJS.ProcessEnv): { deleted: number; left: number } {
+  let deleted = 0;
+  let left = 0;
+  for (const id of resultIds) {
+    try {
+      unlinkSync(stagedResultPath(id, env));
+      deleted += 1;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") left += 1;
+    }
+  }
+  return { deleted, left };
+}
+
 export function stageResult(result: unknown, env: NodeJS.ProcessEnv = process.env): { result_id: string; bytes: number } {
   if (result === null || typeof result !== "object" || Array.isArray(result)) {
     throw new ValidationError("result must be the extractor's JSON object");

@@ -89,9 +89,10 @@ function heapU8(lib: WrappedPdfiumModule): Uint8Array {
   return (lib.pdfium as unknown as { HEAPU8: Uint8Array }).HEAPU8;
 }
 
-function malloc(lib: WrappedPdfiumModule, bytes: number): number {
+/** `code` is `file_too_large` for the copy of one PDF's bytes, a fault of that file alone (m-3). */
+function malloc(lib: WrappedPdfiumModule, bytes: number, code = "renderer_unavailable"): number {
   const ptr = lib.pdfium.wasmExports.malloc(Math.max(bytes, 1));
-  if (!ptr) throw new DataServerError(`the PDF renderer could not allocate ${bytes} bytes`, "renderer_unavailable");
+  if (!ptr) throw new DataServerError(`the PDF renderer could not allocate ${bytes} bytes`, code);
   return ptr;
 }
 
@@ -118,7 +119,7 @@ export async function withPdf<T>(
   }
   try {
     // PDFium reads the document from this buffer for as long as it is open.
-    const dataPtr = malloc(lib, data.length);
+    const dataPtr = malloc(lib, data.length, "file_too_large");
     heapU8(lib).set(data, dataPtr);
     const doc = lib.FPDF_LoadMemDocument(dataPtr, data.length, "");
     if (!doc) {

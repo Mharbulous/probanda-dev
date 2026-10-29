@@ -1,4 +1,4 @@
-// build-stamp: 2df03309e9ac
+// build-stamp: 225e8d1eba62
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -16769,31 +16769,63 @@ def atomic_replace_set(resolved, copies):
         shutil.rmtree(sidecar, ignore_errors=True)
 
 
+def run_one(con, statement, params):
+    cur = con.execute(statement['sql'], params)
+    cols = [d[0] for d in cur.description] if cur.description else []
+    rows = [dict(zip(cols, r)) for r in cur.fetchall()] if cols else []
+    return {"rowcount": cur.rowcount, "rows": rows}
+
+
+def run_group(con, n, group, params, results, failed):
+    """One statement group (ingest orchestrator spec 2.1) under its own savepoint: an exception or a
+    'refuse' row inside it rolls back only the group, records {ref, reason}, and the call goes on.
+    Each statement still gets a result, zero for a rolled-back group's."""
+    merged = {**params, **(group.get('params') or {})}
+    own = []
+    con.execute("SAVEPOINT g_%d" % n)
+    try:
+        for statement in group['statements']:
+            result = run_one(con, statement, merged)
+            own.append(result)
+            if statement.get('refuse') and result['rows']:
+                raise LookupError(str(next(iter(result['rows'][0].values()))))
+        con.execute("RELEASE g_%d" % n)
+    except Exception as exc:
+        con.execute("ROLLBACK TO g_%d" % n)
+        con.execute("RELEASE g_%d" % n)
+        failed.append({"ref": group['ref'], "reason": str(exc)})
+        own = []
+    results.extend(own + [{"rowcount": 0, "rows": []}] * (len(group['statements']) - len(own)))
+
+
 def run_statements(con, req):
     """The other way to supply an execute's writes: a list of statements, each run with the same
     named params, in one transaction. A statement marked 'refuse' is a guard, and any row it
     returns is a reason to write nothing: the transaction rolls back before the next write and
-    the reasons are returned. Otherwise each statement's rowcount and rows are returned."""
+    the reasons are returned. Otherwise each statement's rowcount and rows are returned. An entry
+    {ref, params?, statements} is a statement group (run_group); a failure outside any group keeps
+    this rule and rolls back everything."""
     con.isolation_level = None
     params = req.get('params') or {}
-    results, refused = [], []
+    results, refused, failed = [], [], []
     con.execute("BEGIN")
     try:
-        for statement in req['statements']:
+        for n, statement in enumerate(req['statements']):
             if refused and not statement.get('refuse'):
                 break
-            cur = con.execute(statement['sql'], params)
-            cols = [d[0] for d in cur.description] if cur.description else []
-            rows = [dict(zip(cols, r)) for r in cur.fetchall()] if cols else []
+            if 'statements' in statement:
+                run_group(con, n, statement, params, results, failed)
+                continue
+            result = run_one(con, statement, params)
             if statement.get('refuse'):
-                refused.extend(next(iter(r.values())) for r in rows)
-            results.append({"rowcount": cur.rowcount, "rows": rows})
+                refused.extend(next(iter(r.values())) for r in result['rows'])
+            results.append(result)
         con.execute("ROLLBACK" if refused else "COMMIT")
     except Exception:
         if con.in_transaction:
             con.execute("ROLLBACK")
         raise
-    return {"refused": refused} if refused else {"results": results}
+    return {"refused": refused} if refused else {"results": results, "failed": failed}
 
 
 def do_execute(req, resolved):
@@ -23870,9 +23902,9 @@ function loadPdfium(wasm) {
 function heapU8(lib) {
   return lib.pdfium.HEAPU8;
 }
-function malloc(lib, bytes) {
+function malloc(lib, bytes, code = "renderer_unavailable") {
   const ptr = lib.pdfium.wasmExports.malloc(Math.max(bytes, 1));
-  if (!ptr) throw new DataServerError(`the PDF renderer could not allocate ${bytes} bytes`, "renderer_unavailable");
+  if (!ptr) throw new DataServerError(`the PDF renderer could not allocate ${bytes} bytes`, code);
   return ptr;
 }
 async function withPdf(path, wasm, work) {
@@ -23888,7 +23920,7 @@ async function withPdf(path, wasm, work) {
     throw new DataServerError(`the PDF renderer did not load: ${err.message}`, "renderer_unavailable");
   }
   try {
-    const dataPtr = malloc(lib, data.length);
+    const dataPtr = malloc(lib, data.length, "file_too_large");
     heapU8(lib).set(data, dataPtr);
     const doc = lib.FPDF_LoadMemDocument(dataPtr, data.length, "");
     if (!doc) {

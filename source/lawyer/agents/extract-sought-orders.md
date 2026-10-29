@@ -1,10 +1,14 @@
 ---
 name: extract-sought-orders
-description: Transcribes a served Notice of Application's Part 1 verbatim into strict JSON, stopping at the first PART 2 heading. Read-only — never writes. Dispatched by /matter-data ingest-extract, one instance per Notice of Application.
+description: Transcribes a served Notice of Application's Part 1 verbatim into strict JSON, stopping at the first PART 2 heading. Read-only, except that a dispatch by id stages its result through stage_result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH <id>, one instance per Notice of Application.
 model: opus
 effort: high
 tools:
   - Read
+  - mcp__plugin_lawyer_data__matter_data__dispatch_inputs
+  - mcp__remote-devices__plugin_lawyer_data__matter_data__dispatch_inputs
+  - mcp__plugin_lawyer_data__matter_data__stage_result
+  - mcp__remote-devices__plugin_lawyer_data__matter_data__stage_result
 ---
 
 # Subagent: extract-sought-orders
@@ -19,11 +23,12 @@ captured, wholesale, exactly as printed.
 
 ## Binding constraints
 
-- **Read-only.** You have a file-read tool only. No write, edit, shell,
-  network, or skill access.
+- **Read-only.** You have a file-read tool, and in a dispatch by id the two
+  data-server tools that section names. No write, edit, shell, network, or
+  skill access.
 - **Output is a single JSON object and NOTHING else.** No prose, no fences.
   The main agent parses it, validates it, and performs all writes; you own no
-  IDs.
+  IDs. In a dispatch by id (below) you stage that object and reply with one line.
 - Read from the top of the document through the end of Part 1 only — stop at
   the first `PART 2` heading. Never read past it; Part 2 and beyond are read
   (if at all) by the ordinary `extract-facts.md` dispatch, not by you.
@@ -109,3 +114,41 @@ Only if both signals above are present:
 `sought_orders` is required, even when empty. `numbering_absent` and
 `not_a_notice_of_application` are required top-level booleans. `ocr_uncertain`
 is required on every entry. Output the JSON object only.
+
+## Dispatch by id
+
+When your prompt is the one line `DISPATCH <dispatch_id>`, your inputs do not come in
+the prompt, and you reply with one line instead of the JSON object.
+
+1. Your first call is `matter_data__dispatch_inputs` with that `dispatch_id`, under
+   whichever of `mcp__plugin_lawyer_data__matter_data__dispatch_inputs` and
+   `mcp__remote-devices__plugin_lawyer_data__matter_data__dispatch_inputs` this host
+   grants. It returns `MATTER_CONTEXT`, `DOCUMENT`, and `PAGE_MANIFEST` or `RENDERING`, each as described above, plus `ITEMS` (one
+   `{ref, page_range}`) and `CONTRACT` (`{id, version}`).
+2. Do the work exactly as above.
+3. Call `matter_data__stage_result` once (either prefix), with `result` set to the output contract's object
+   plus four keys: `contract` (`CONTRACT`'s `id`), `contract_version` (its `version`),
+   `ref` (the item's `ref`) and `flags` (below). It returns `result_id` and `bytes`.
+4. Reply with one line and nothing else: `ok <ref> <result_id> <bytes>`. When you
+   cannot do the work, reply `failed <ref> <reason>` instead, the reason one of
+   `unreadable` (the pages cannot be read), `out_of_range` (the pages named are not
+   in the file), `stage_refused` (`stage_result` refused the result) or
+   `not_this_type` (the document is not the kind you read). Never put facts, counts
+   or doubts in the reply. A doubt goes in `flags`.
+
+`flags` is a list, possibly empty, of `{kind, ref, page?, detail?}`, `ref` the item's
+`ref` and `detail` a few words. Raise only a flag the document's own face supports:
+
+- `ocr_uncertain`: a scanned page you could not read with confidence (`page`).
+- `privilege_signal`: the document or a part of it appears to be a communication
+  between a lawyer and their client, or a lawyer's own working note. `detail` is the
+  locator it concerns.
+- `date_setting`: the document comes from a court registry, a judge, a tribunal, an
+  arbitrator or a case manager, as its sender or signature block shows, and fixes a
+  date (a hearing, a trial, a conference, or a date by which something must be done).
+  `detail` is the event and the date as written.
+- `other_copy`: the document says on its face that it is another copy or version of
+  a document it names. `detail` is that document's title as written.
+- `outgoing_letter`: a letter whose letterhead or signature block shows a lawyer or
+  law firm writing to someone outside that firm. `detail` is the firm's name as
+  written. The writer keeps only a letter from the practitioner's own firm.
