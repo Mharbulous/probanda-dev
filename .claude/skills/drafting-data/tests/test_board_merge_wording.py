@@ -34,7 +34,7 @@ class BoardMergeWordingTest(unittest.TestCase):
         for kept in ("documents", "numbering"):
             self.assertIn(kept, ask)
         for combined in ("Milestone page", "view pages", "goal"):
-            self.assertIn(combined, ask)
+            self.assertIn(combined.lower(), ask)
 
     def test_move_section_does_not_claim_merges(self):
         when = section(self.closeout, "## 10c.", "**The target.**")
