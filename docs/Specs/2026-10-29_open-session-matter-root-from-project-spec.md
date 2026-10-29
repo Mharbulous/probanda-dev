@@ -47,3 +47,14 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 ## 10. Verify against HEAD before building
 - Confirm open_session's internal lookup and procedure.md:13/16 text.
+
+### Verification against HEAD (2026-10-29, at 18c311aa)
+
+| Claim | Status at HEAD | Where |
+|---|---|---|
+| procedure.md:13 makes `practice_data__matter_lookup` with `project_id` the first call in a Project session | Confirmed, still line 13, in the "Matter folder" paragraph | `.claude/skills/work/references/procedure.md:13` |
+| procedure.md:16 links the Project with `practice_data__link_matter` after entry when the lookup found no row | Confirmed, line 16 | `.claude/skills/work/references/procedure.md:16` |
+| open_session requires `matter_root` | Confirmed: `required: ["matter_root"]` | `source/lawyer/mcp/src/schema/submission-forms.ts` (open_session inputSchema) |
+| open_session already looks the matter up internally | Confirmed, but by the folder name's leading token (`matt_num`), not by `project_id`; phase `matter_lookup` | `source/lawyer/mcp/src/submission/open-session.ts` `lookUpMatter` |
+| The existing lookup can resolve a Project | Confirmed: `matter_lookup` filters on `project_id` and returns each row's `matter_root` (null with a reason when the library is unresolved) | `source/lawyer/mcp/src/tools/practice/reads.ts` `matter_lookup` |
+| `link_matter` refuses a Project linked to another matter | Confirmed | `source/lawyer/mcp/src/tools/practice/writes.ts` `link_matter` |
