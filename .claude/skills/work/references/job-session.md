@@ -88,6 +88,9 @@ Closing as superseded is bookkeeping by `/drafting-data` §9b, then a re-render.
 <!-- atom id=work.pre-claim.unattended ops=pre_claim when=unattended:true -->
 In an unattended run (`references/dispatch.md` section 14) nothing is shown and nothing waits. The first row, and the last after its report line, assign and dispatch. Every other row assigns nothing: the run reports the result, both texts where an item changed, and stops.
 
+<!-- atom id=work.posture-check ops=pre_claim,plan_readback -->
+**The posture check.** When the job will write or revise a passage that rests on a procedural step, `draft/references/posture-check.md` runs here: on a job of two or more steps after the assigning write and before the read-back, its block joining the read-back, and on a one-step job with the pre-claim check above, which a flagged direction fails. It is part of the single plan-approval gate, never a second pause.
+
 <!-- atom id=work.premise.never-holds ops=premise_check,pre_claim -->
 **Never say the premise holds.** Say each key's marker still fires, which is the whole of what the check knows: it inherits every marker defect the renderer has. Never report a shift of glyph within a key that still derives, because the conversion record stores no marker snapshot and which glyph stood at outlining is unknowable.
 

@@ -106,6 +106,8 @@ This section's rules are in `references/assemble-then-gate.md`. Read it when the
 | A plan step touches an authority, a statement of law, or a research marker, or a job touches reserved material or a rejected item (section 4) | `references/authorities.md` |
 <!-- atom id=draft.ref.evidence ops=evidence -->
 | A plan step touches evidence, a witness statement, or an admission | `references/evidence.md` |
+<!-- atom id=draft.ref.posture-check ops=pre_claim,plan_readback,substance,revise_on_the_fly -->
+| A job will write or revise a passage that rests on a procedural step (a deadline, a direction, a waiver, an order's effect, the stage the proceeding is at), or such a passage comes up while writing substance (sections 9 and 12) | `references/posture-check.md` |
 <!-- atom id=draft.ref.overstatement ops=overstatement -->
 | The pre-review passes run, or a revision adds or changes an assertion after the overstatement review has run | `references/overstatement.md` |
 <!-- atom id=draft.ref.letters ops=letter -->

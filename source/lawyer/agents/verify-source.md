@@ -78,7 +78,9 @@ text yourself.
    found in `facts` is a clear classification error. A proposition the filing
    party attributes to another party without advancing it itself ("the
    Defendant says X") belongs in `source_references`; it is never a missed fact
-   or missed position.
+   or missed position. A source reference whose description starts
+   `DIRECTION:` quotes the document's operative sentence verbatim: any differing
+   word, or a sentence that is not operative, is a clear error.
 4. In `normal` mode, **scan for omissions** in each collection. In
    `targeted_reverification` mode, inspect only the named targets and return no
    missed rows.
