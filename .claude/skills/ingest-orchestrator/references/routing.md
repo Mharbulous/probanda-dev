@@ -52,7 +52,7 @@ Take the files one at a time, in the order given, through these checks. "Set asi
 Read the document inline, as a whole, from its pages or rendering (#71 applies). Ask its privilege question unless check 6 answered it: is the document categorically privileged? Yes, No, or Unclear (decide later). The call is the practitioner's (#2). Then stage this object with `stage_result` and write it with `ingest_result`:
 
 ```
-{"contract": "privileged", "contract_version": 1, "ref": "<file name>",
+{"contract": "privileged", "contract_version": 2, "ref": "<file name>",
  "document": {"title", "description", "category", "author", "recipient", "date"},
  "facts": [{"source_locator", "description", "category", "date_of_fact", "notes"}],
  "client_instructions": [{"party_name", "instructed_by", "date", "description",
@@ -76,9 +76,9 @@ The tools decide every response below; this session only passes lines and relays
 | # | Failure | What happens |
 |---|---|---|
 | R4 | An extractor crashes, gives no reply, a malformed one, or `failed` | Pass `failed <ref> <reason>` to `status`. `next` dispatches it once more with a fresh agent; after a second failure it lists the document under `close` (an exhibit is recorded for review instead). |
-| R5 | `ingest_result` refuses a result as invalid | The tool records the failure itself; `next` handles it as R4. |
+| R5 | `ingest_result` refuses a result as invalid, or as one it cannot read or that belongs elsewhere | The tool records the failure itself; `next` handles it as R4. |
 | R6 | `ingest_result` errors or times out | Call it again with the same arguments: it returns `already_written` or completes, never writing twice. |
-| R7 | `plugin_changed` | End the run, relay the message, stop. A later `begin` with `resume` continues it. |
+| R7 | `plugin_changed` | Relay the message and stop, without `end`: the run stays open. After the restart, `status` then `begin` with `resume` continues it. |
 | R8 | `lease_lost` | Stop at once, writing nothing more. |
 | R9 | This session compacts or ends | `status`, then `begin` with `resume`: the journal holds the run. |
 | R10 | A staged result expired (over 7 days), or R7 left it under an old contract version | `next` dispatches the item again. |

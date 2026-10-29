@@ -166,7 +166,7 @@ Paths below are relative to `.claude/skills/matter-data/` unless they start with
   - `already_written` makes a retry safe. The tool checks the existing dedup keys before writing, so the verify-before-retry rule of `shared/conventions.md` §2.3 (L74) runs inside the tool.
 
 ### 2.2 Writer rules that move into the converters
-Today the main thread applies these while composing SQL. The converters implement **every** writer rule in `ingest-extract.md` "Universal rules" (L17–39) and in the write steps of Paths A, B, C and E, each with a test in `tests/`. That includes: `verified = 2` for a prefixed note (L17), honest status (L18), fact idempotence (L19–21), bitemporal positions (L22–27), local-time dates (L28), no row for silence (L29–31), relief and references kept out of facts (L32–34), re-extraction reusing the top-level row and stopping on a store change (L36–37), and the same-hash race recovery (L38, returned as `refused` with reason `race`, after which the orchestrator re-runs the gate lookup). The rules below need particular care:
+Today the main thread applies these while composing SQL. The converters implement **every** writer rule in `ingest-extract.md` "Universal rules" (L17–39) and in the write steps of Paths A, B, C and E, each with a test in `tests/`. That includes: `verified = 2` for a prefixed note (L17), honest status (L18), fact idempotence (L19–21), bitemporal positions (L22–27), local-time dates (L28), no row for silence (L29–31), relief and references kept out of facts (L32–34), re-extraction reusing the top-level row and stopping on a store change (L36–37), and the same-hash race recovery (L38, returned as `refused` with reason `race`, after which the orchestrator sets the file aside for `/ingest`, whose gate re-runs the lookup). The rules below need particular care:
 
 | Rule | Source today |
 |---|---|
@@ -198,7 +198,8 @@ Today the main thread applies these while composing SQL. The converters implemen
 - **Crash recovery (G2).**
   - A staged result outlives a crash. It is kept 7 days (#76).
   - The run journal (§2.4) records every acknowledged `result_id` against its document and item.
-  - On resume, `ingest_run next` lists the results that were acknowledged but not written. The orchestrator writes them without re-extracting.
+  - On resume, `ingest_run next` lists the results that were acknowledged but not written. The orchestrator writes them without re-extracting. An affidavit's exhibit list is journaled with its body write, so its exhibits are planned from the journal even after Pass 1's staged result has expired.
+  - A write that returns a question is listed apart (`asked`), never as a write to repeat. The run's work is done when nothing is left to dispatch, write or close and nothing is running; what is `asked` waits only for an answer, and an unattended run leaves it as a stop.
   - A crash inside a transaction rolls the whole transaction back. Its results are still staged, so the call is simply repeated.
   - Recovery is therefore at least as fine as today's per-exhibit commits. Nothing paid for is lost unless the resume comes more than 7 days later.
 - **Dumps.**
@@ -208,7 +209,7 @@ Today the main thread applies these while composing SQL. The converters implemen
 ### 2.4 Run lease and journal: `matter_data__ingest_run` (new tool)
 - **Actions:** `begin | next | staged | status | end` (`staged`: §6.5).
 - **State:** host-local, beside the case locks: `%LOCALAPPDATA%\Coclerk\ingest-runs\<same 16-hex key as case-lock.ts>\`, overridable with `COCLERK_INGEST_RUN_ROOT`.
-  - `lease.json` holds `{run_id, started, heartbeat, build_stamp, mode}`. `build_stamp` is `BUILD_STAMP` from `source/lawyer/mcp/src/build-stamp.ts`, which changes with the code, unlike the plugin version. `begin {resume}` re-records it.
+  - `lease.json` holds `{run_id, started, heartbeat, build_stamp, mode, orchestrator, matter_root}`. `orchestrator` is true for a run the orchestrator began (§2.5's cap). `build_stamp` is `BUILD_STAMP` from `source/lawyer/mcp/src/build-stamp.ts`, which changes with the code, unlike the plugin version. `begin {resume}` re-records it.
   - The owner is whoever holds the `run_id`, not a pid. Cowork shares one server process across sessions (`case-lock.ts` L7–9).
   - `journal.jsonl` is append-only and has one line per event: begin, triage, dispatch, ack, write, ask, answer, end, takeover.
   - A run's folder is deleted 30 days (est.) after its `end`. This delete, and §3.3's rename of a bad `triage.json`, touch only files Probanda created, and each needs a ruling in `source/file-ops.json` (`scripts/check_file_ops.py`), added in the stage that builds it.
@@ -232,8 +233,8 @@ Today the main thread applies these while composing SQL. The converters implemen
   - The generator runs only when one side of the pair has no row. Then no fact needs a model's judgment: a kept copy with no row has no facts, so every fact of S moves to it, and a superseded copy with no row has no facts to place (`supersede-draft.md` §4, paragraph after `fold_plan`). The generator refuses any other pair. This always holds in the ingest flow. A pair of two registered rows (a `SUPERSEDE-PENDING:` marker) is settled by `supersede-draft.md` as today, outside the orchestrator.
   - Relocation is not on the list, because `matter_data__relocate_source` already does it (#75).
   - Why the server runs it: a file the session writes is invisible to the host in Cowork (#76). So a session-written "staged SQL file" cannot work, and the server must produce the SQL itself.
-- **Size cap:** an inline `sql_script` over 8 KB (est.) is refused with "too long to send inline: use a generator or ingest_result", but **only on a call that carries a `run_id`**.
-  - Existing large callers without a `run_id` are unaffected: the statute path (#68, 16–43 KB), merge-authorities and the submission-law bridge.
+- **Size cap:** an inline `sql_script` over 8 KB (est.) is refused with "too long to send inline: use a generator or ingest_result", but **only on a call inside a run the orchestrator began** (`begin` with `orchestrator: true`, kept on the lease).
+  - Existing large callers are unaffected: those without a `run_id` (the statute path, #68, 16–43 KB; merge-authorities; the submission-law bridge), and D1's single-document ingest paths, whose `run_id` calls carry Path A, Path C and Path E transactions that can exceed 8 KB and have no generator or `ingest_result` to turn to.
   - The refusal is in the tool, not a hook, because the tool is Probanda's own.
 
 ---
@@ -582,7 +583,7 @@ The rule is `supersede-draft.md` §5's standing rule, applied with no question:
 | R4 | Extractor crash, no acknowledgement, a malformed acknowledgement, or `failed` | Journal the event. Re-dispatch once with a fresh agent (#70) at the same tier. On a second failure: locate tasks escalate per §5.2, and fact tasks give the item `verified = 2` (exhibit) or the document `failed` status. |
 | R5 | `ingest_result` refuses a result as invalid against its contract | The same as R4. The `reason` names the first invalid field (internal; it is never shown to the practitioner). |
 | R6 | Partial write or an execute timeout (#28's warning that a write may have committed) | Repeat the same `ingest_result` call. The tool returns `already_written` or completes. It never double-writes (§2.1). |
-| R7 | Plugin re-sync mid-run (a new bundle, skill text or agent) | `begin` recorded `build_stamp` (§2.4). Any call whose running bundle's stamp differs is refused `plugin_changed`. The orchestrator ends the run and tells the practitioner the ingest will resume after a restart. On the next `begin {resume}`, staged results are reused only where `contract_version` still matches, and the other items are re-dispatched. **Limit:** while the old server process keeps running, a changed agent or skill file is caught only by `ingest_result` refusing a result whose `contract_version` does not match. |
+| R7 | Plugin re-sync mid-run (a new bundle, skill text or agent) | `begin` recorded `build_stamp` (§2.4). Any call whose running bundle's stamp differs is refused `plugin_changed`. The orchestrator tells the practitioner the ingest will resume after a restart and stops without ending the run, so the lease and the stored dispatch inputs stay for the resume. On the next `begin {resume}`, staged results are reused only where `contract_version` still matches, and the other items are re-dispatched. **Limit:** while the old server process keeps running, a changed agent or skill file is caught only by `ingest_result` refusing a result whose `contract_version` does not match. |
 | R8 | Lease lost (a takeover, §2.4) | The old holder stops without writing. |
 | R9 | The orchestrator compacts or the session ends | State is in the journal. `begin {resume: run_id}` or `status` returns the next actions, so nothing depends on memory. |
 | R10 | The staged result has expired (more than 7 days) | `next` re-dispatches that item. |
@@ -645,7 +646,7 @@ Each stage is a separate release by the CLAUDE.md version rule. **Minor** marks 
 |---|---|---|---|---|
 | D1 | `ingest_run` lease and journal; optional `run_id` on `execute`; every existing ingest path calls `begin` (§2.4) | Yes | G1 gap | patch |
 | D2 | `ingest_result` for contracts F, A, SO and privileged; the helper's statement groups (§2.1); `dispatch_inputs`; `extract-facts`, `extract-affidavit` and `extract-sought-orders` fetch inputs by id, stage through `stage_result` and reply by §6.3; the converters of §2.2; the `ingest-orchestrator` skill v1, using **today's** passes and models. **Interim classifier:** until D4, the orchestrator runs today's gate itself (folder-map type, the affidavit gate and Notice of Application detection, `ingest-extract.md` L83–131), including its page-1 reads, because a scanned page 1 can only be read from its image by a model. It passes each result to `ingest_run next` as the file's route. D2 also builds §1.6 and §6.5. | Needs D1 | C1 (most of the orchestrator cost) | minor (agent reply contract) |
-| D3 | `execute generator` (supersede); the 8 KB inline cap on calls with a `run_id` | Needs D1 | C1 remainder | patch (the cap applies only to new `run_id` calls) |
+| D3 | `execute generator` (supersede); the 8 KB inline cap on calls inside a run the orchestrator began | Needs D1 | C1 remainder | patch (the cap binds only orchestrator runs, so D1's `run_id` calls are unchanged) |
 | D4 | `triage` (script half): page classes, segments, text-layer boundaries and candidate pages, name and content pairs, type candidate, e-filing converter; `triage.json`; Pass 2 becomes escalation only; Pass 1 reads only to `body_end` | Needs D2 | C2, C7 (ingest half) | patch |
 | D5 | `locate-stamps` (H) and the §5.2 chain; the #70 amendment of §5.5; `locate-stamps` added to `source/assignment.json` | Needs D4 | C3 (locating) | patch |
 | D6a | `compare` writes to `destination_dir` | Yes | C6 (out-of-reach images) | patch |
