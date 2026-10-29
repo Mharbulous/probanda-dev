@@ -67,7 +67,7 @@ test("render with draft_dir writes every mockup and the Writing's pages into its
     }
     assert.ok(result.view_page_paths.length > 0, "the Writing's view pages are written");
     for (const view of result.view_page_paths) assert.equal(dirname(view.path), leaf, view.path);
-    assert.deepEqual(readdirSync(draft).sort(), ["Drafting records", "Litigation Strategy.html", TITLE]);
+    assert.deepEqual(readdirSync(draft).sort(), ["Drafting records", "Litigation Strategy.html", "Loose Threads.html", TITLE]);
     assert.equal(manifestOf(draft).folder, TITLE);
     for (const name of ["workboard.css", "workboard.js"]) assert.ok(!existsSync(join(draft, name)), `expected no ${name} in the draft folder`);
   } finally {
@@ -364,7 +364,7 @@ test("render of a retired filing with presentation_dir writes the matter's pages
 
     assert.equal(result.filing_retired, true);
     assert.ok(!existsSync(leaf), "no mockup is refreshed for a retired filing");
-    assert.deepEqual(readdirSync(draft).filter((name) => name !== "Drafting records"), ["Litigation Strategy.html"], "a retired filing has no Milestone page (D1)");
+    assert.deepEqual(readdirSync(draft).filter((name) => name !== "Drafting records"), ["Litigation Strategy.html", "Loose Threads.html"], "a retired filing has no Milestone page (D1)");
     const board = result.documents[0];
     assert.equal(board.path, undefined, "no page, so no path");
     assert.equal(board.file_name, PAGE, "no page, so the generic name, never a page that does not exist");

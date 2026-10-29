@@ -530,6 +530,7 @@ test("one live filing: session entry opens it and returns its board as opened", 
   assert.ok(existsSync(result.matter_board_path));
   assert.ok(existsSync(result.milestone_path));
   assert.equal(result.matter_board_path.toLowerCase(), join(draftDir, "Litigation Strategy.html").toLowerCase());
+  assert.equal(result.loose_threads_path.toLowerCase(), join(draftDir, "Loose Threads.html").toLowerCase());
   assert.equal(result.milestone_path.toLowerCase(), join(draftDir, OPENING_PAGE).toLowerCase());
   assert.ok(result.background_job);
 });
@@ -718,6 +719,7 @@ test("a pre-filing proceeding alone: session entry opens its board", async (t) =
   assert.equal(result.opened.proceeding_id, 1);
   assert.equal(result.opened.filing_id, undefined);
   assert.ok(existsSync(result.matter_board_path));
+  assert.ok(existsSync(result.loose_threads_path));
   assert.equal(result.milestone_path.toLowerCase(), join(m.matterRoot, "0. DRAFT", "Milestone - proceeding 1.html").toLowerCase());
   assert.ok(existsSync(result.milestone_path));
   assert.deepEqual(result.milestone_paths.map((p) => p.path), [result.milestone_path]);
@@ -734,9 +736,10 @@ test("no filing and no proceeding: the Litigation Strategy is written, no Milest
   assert.equal(result.opened, undefined);
   assert.equal(result.open_refused, undefined);
   assert.ok(existsSync(result.matter_board_path));
+  assert.ok(existsSync(result.loose_threads_path));
   assert.equal(result.milestone_path, null);
   assert.deepEqual(result.milestone_paths, []);
-  assert.deepEqual(readdirSync(join(m.matterRoot, "0. DRAFT")).filter((name) => name.endsWith(".html")), ["Litigation Strategy.html"]);
+  assert.deepEqual(readdirSync(join(m.matterRoot, "0. DRAFT")).filter((name) => name.endsWith(".html")), ["Litigation Strategy.html", "Loose Threads.html"]);
 });
 
 // ADR 0021 D1, D2: open_session reads the looked-up matter's open to-dos for the page, and writes
@@ -787,6 +790,7 @@ test("no 0. DRAFT folder: matter_board_path is null with a note, and the session
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
   assert.equal(result.matter_board_path, null);
+  assert.equal(result.loose_threads_path, null);
   assert.equal(result.milestone_paths, null);
   assert.equal(result.milestone_path, undefined);
   assert.match(result.matter_board_note, /no 0\. DRAFT folder/);
