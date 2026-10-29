@@ -44,6 +44,13 @@ The `trust-summary` operation reads `accounting.csv_mapping.sign_convention` fro
 `probanda.json` and returns a display-ready balance string. If the sign convention is not
 configured, the operation returns a gap marker — render it verbatim, do not guess.
 
+### Correspondence
+
+The briefing reads no mail. When the practitioner asks what someone said or sent, read the
+matter's mail folder as part of the record, through the route in `shared/matter-mail.md` and
+never through a browser, and cite each message by its date, sender, subject and folder. This
+skill writes nothing, so skip that file's record step and say the folder was not recorded.
+
 ## Output Template
 
 Use this exact structure every time. Every data point includes its source and freshness.
