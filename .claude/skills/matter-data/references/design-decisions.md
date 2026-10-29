@@ -1297,6 +1297,22 @@ Before a suggestion leaves the computer, the data server checks its text against
 
 **Not changed:** mode `lookup` stays with `housekeeping_lookup.py` (#73), and `relocate-source`'s rules, outcomes and confirmation are as before. The host runs the tool, so its matter folder is `matter_root`.
 
+## 78. A direction of the forum is a `procedural` source reference with a `DIRECTION:` marker, not a table of its own (2026-10-29)
+
+A letter argued that the other side's time to object had closed at a deadline an early direction set. Two later emailed directions had overtaken it, and nothing in drafting looked (CoClerk spec `2026-10-08_draft-procedural-posture-check-spec.md`). `/draft`'s posture check now lists the proceeding's directions before it writes a passage that rests on a procedural step, so case data has to hold each direction with its date, author, proceeding, operative text and source.
+
+**The shape already existed, so it is reused.** A direction lives on its own `main.sources` row (court or correspondence), which already carries the date, the proceeding and the file. `main.source_references` already takes `reference_type = 'procedural'`, and the facts extractor already routed procedural statements there. What was missing was a rule for the text: the extractor now writes one row per operative sentence of a forum's direction or order, its `description` exactly `DIRECTION: <author>: "<sentence>"`, the sentence verbatim, and `verify-source` treats a changed word as a clear error. `operations/procedural-directions.md` reads them newest first.
+
+**A marker family, sibling to #36's `ORDER-EFFECT:`.** The prefix sits on `description`, not `notes`, so conventions §5's notes-prefix rule does not apply: it never sets `verified` and never routes a row to a review queue. The two families never overlap. An `ORDER-EFFECT:` row is an audit line written only on the practitioner's approval, while a `DIRECTION:` row is the forum's own words written at extraction.
+
+**Unlinked correspondence is included.** A forum's email often reaches case data with no `proceeding_id`, because the proceeding linkage check (`operations/ingest-extract.md`) runs for court documents only. The query takes a proceeding's own rows and every unlinked row, and returns `proceeding_id` so the caller can say which were unlinked.
+
+**Not the procedural history log.** `ProceduralHistory.md` (`shared/procedural-history.md`) records one line per event in the session's words and holds no deadline. A `DIRECTION:` row holds the forum's operative sentence verbatim, dates and all, and stays in case data. Neither is written from the other.
+
+**An operation, not a named query.** The read lives in its own operation file, like `operations/mail-folder.md`, rather than as `@query_31` in `references/queries.sql`: that file is a legacy SQL file, and any edit to it changes its hash, which `scripts/check_publishable.py --new-since` reports as a new problem.
+
+**Rejected.** *A `procedural_directions` table* (date, author, proceeding, text, source): a schema bump moves a dozen version surfaces, the tests and the MCP runtime's guard in one commit (`schema-bump.md`), to store what an existing row already holds. Revisit if directions need fields a source reference cannot carry, such as a link from one direction to the one it varies. *An author foreign key to `tribunal_members`*: an order or an email names its author in words, often a case manager writing for the arbitrator, and the resolver (#66) can match the words when someone needs the person.
+
 ---
 
 **Closing principle:** schemas encode categorical invariants; prose + verifier backlog encode judgment. Do not swap them.
@@ -1308,3 +1324,11 @@ Before a suggestion leaves the computer, the data server checks its text against
 So the agent hands the result to the host itself. `matter_data__stage_result` takes the output-contract object as its one argument, stores it in `%LOCALAPPDATA%\Coclerk\extract-results\<uuid>.json` and returns `{result_id, bytes}`. The agent replies `ok <result_id> <bytes>`, the byte count now being the server's, and `ingest_authority` takes `result_id` in place of `result_path` and reads only from that folder. The tool takes no path and no matter, so `extract-caselaw` drops `Write` and can write nowhere. The result costs the agent the same tokens as a `Write` did, and still never enters the session.
 
 A staged result is kept for 7 days, and each new stage deletes the older ones. It is not deleted on a successful ingest, because Path D's rerun and conventions §2.3's verify-before-retry both call the tool on the same result again. The folder is on the User's Machine (Commandment 3). The tool stores any JSON object, so the extract-facts route (#191) can stage through it too.
+
+## 77. The matter's mail folder is a `matter_metadata` key (2026-10-29)
+
+Sessions reading a matter's correspondence had no record of which folder in the practitioner's mailbox holds it, so each one searched for it, and one went to a browser. `shared/matter-mail.md` (the plugins' shared doctrine) now finds the folder once through the lawyer plugin's read-only mail tools, and `operations/mail-folder.md` keeps it under the key `mail_folder`, the path exactly as `mail__list_folders` returns it.
+
+**Why here and not practice-data.** The matter session already holds the case database, and a key in the existing key-value table needs no schema change and no new tool. Practice-data's matters table has fixed columns behind fixed tools, so the same field there would need both.
+
+**What the key is not.** It is not identity and not a completeness key: `profile` never reports it missing, and it is not seeded by `initialize`. It is a pointer into one mailbox, the one the mail tools' credential reads. Which folder trees hold matter folders is not stored here: it is a fact about the practitioner's setup, so it lives in their environment note (`/practice-data`, Practice quirks). A second practitioner reading the same matter from another mailbox would need a key of their own, which needs its own entry here first.

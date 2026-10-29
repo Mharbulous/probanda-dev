@@ -63,6 +63,8 @@ Format every result row with:
   | `claimed` | asserted, no response yet |
   | `unaddressed` | no current position rows exist |
 
+When the answer tells the practitioner what a tribunal, court, counsel, a party or a witness said or wrote, a fact's description is an extraction, not the source's words: quote the source at the cited locator before any summary, per [`../../shared/report-what-a-source-said.md`](../../shared/report-what-a-source-said.md).
+
 ## 4. No data mutation
 
 This operation never mutates any table (the one `matter_data__execute` call in §1 only ensures the reporting views exist — idempotent DDL, not a data write). Report results and stop.

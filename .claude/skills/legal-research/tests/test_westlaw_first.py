@@ -72,6 +72,7 @@ SKIP_PINPOINT_LINE = (
 )
 SKIP_NO_PINPOINT_RULE = "A skip that names no pinpoint is not a skip"
 DECLINED = "not run: practitioner declined"
+POINT_IN_TIME = "not run: point-in-time legislation question"
 AUDIT_SKIP_CHECK = "**A Westlaw skip is checked, not trusted.**"
 NO_TEXT_NOTICE = "No decision text is included in this response or available through this API."
 
@@ -249,6 +250,21 @@ class DoctrineTests(unittest.TestCase):
         self.assertIn("unless the practitioner declined:", front_door)
         self.assertIn("download or run it (unless declined) through", front_door)
 
+    def test_a_point_in_time_legislation_issue_skips_westlaw_and_a_mixed_one_does_not(self):
+        # 2026-10-10 rule-change carve-out spec: Westlaw AI does not answer
+        # point-in-time legislation questions, yet duty 3 ran it on them.
+        text = read(SHARED / "legal-research.md")
+        template = text[text.index("**Spawn the agent from this template.**"):
+                        text.index("**A `needs_download` or hand-off-packet return")]
+        westlaw_lines = [line for line in template.splitlines() if line.startswith("Westlaw:")]
+        self.assertIn(POINT_IN_TIME, westlaw_lines[0])
+        duty_3 = flat(text[text.index("3. **Tier 4, Westlaw"):text.index("4. **Legislation text")])
+        self.assertIn(f"`Westlaw: <issue>: {POINT_IN_TIME}`", duty_3)
+        self.assertIn("An issue that also asks how courts have read or applied the provision "
+                      "is not this skip: run this duty for it.", duty_3)
+        self.assertIn("The skip sends nothing to CanLII.", duty_3)
+        self.assertIn("point-in-time legislation question", flat(read(SKILL_ROOT / "SKILL.md")))
+
     def test_a_packet_beside_other_gaps_still_runs_the_loop(self):
         # #1630: "only gap" left a packet-plus-offers return with neither path taken.
         # The loop runs only on the question's own issues (live-issue test §3).
@@ -284,6 +300,21 @@ class DoctrineTests(unittest.TestCase):
                 navigate = check.index("Navigate a tab to `https://nextcanada.westlaw.com`")
                 self.assertLess(check.index("Call `tabs_context_mcp`"), navigate)
                 self.assertLess(navigate, check.index("blocked (westlaw-not-signed-in)", navigate))
+
+    def test_every_blocked_status_is_a_westlaw_hard_stop(self):
+        # 2026-10-10 chrome-permission hard-stop spec: a blocked status the gate
+        # did not name (chrome-permission-not-granted) let the run carry on.
+        gate = flat(read(SHARED / "legal-research.md"))
+        self.assertIn("Any `status: blocked (...)` that research-paralegal or "
+                      "citation-checker returns is a hard stop", gate)
+        self.assertIn("Any blocked status not named here", gate)
+        step = flat(read(SKILL_ROOT / "SKILL.md"))
+        self.assertIn("any `status: blocked (...)`", step)
+        for status in ("blocked (chrome-permission-not-granted)",
+                       "blocked (mechanics-unavailable)"):
+            for name, text in (("gate", gate), ("SKILL.md", step)):
+                with self.subTest(file=name, status=status):
+                    self.assertIn(status, text)
 
     def test_chrome_not_connected_only_after_the_chrome_reach_ladder(self):
         # 2026-10-06 chrome-retry spec: the paralegal returned chrome-not-connected

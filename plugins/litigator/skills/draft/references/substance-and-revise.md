@@ -11,6 +11,8 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 Before sending a research question, ask the gatekeeper whether the proceeding already holds an authority the practitioner reviewed and rejected on the same or a close proposition, and pass it as a named exclusion rather than re-researching it. The same applies to a rejected submission before drafting or proposing a new one. Full procedure: `references/authorities.md`.
 
+**A procedural premise.** Before writing or revising a passage that rests on a procedural step (a deadline, a direction, a waiver, an order's effect, the stage the proceeding is at), run the posture check in `references/posture-check.md`.
+
 **A contention is an application paragraph.** A contention the session proposes connects, in prose, the facts the submission rests on to the propositions it requires. It is never a bare conclusion and never a restatement of the facts alone or the law alone. A contention the practitioner words is recorded as given.
 
 One legal point supporting several submissions renders once in full and thereafter as a cross-reference ("As set out in paragraph N, above"). Do not read that as missing data.

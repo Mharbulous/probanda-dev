@@ -47,7 +47,9 @@ This skill is the **sole gatekeeper** for CRUD operations on a litigation matter
 | "Theorize a fact" (mint a fact the case theory needs, no evidence yet) / "dismiss a theorized fact" | operations/theorize-fact.md |
 | "Which facts are still theorized?" / theorized-fact status for a matter or application | operations/query.md (`@query_22_theorized_facts`) |
 | "What proceedings are in this matter?" / downstream skill needs proceedings | operations/proceedings-profile.md |
+| "What directions or orders has the forum made in this proceeding?" / the proceeding's directions, newest first, each with its date, author and operative sentence verbatim | operations/procedural-directions.md |
 | "Check profile" / "what's missing?" / form-drafting needs profile | operations/profile.md |
+| "Which mail folder holds this matter's correspondence?" / record the matter's mail folder (a correspondence reader following `shared/matter-mail.md`) | operations/mail-folder.md |
 | Analytical question ("show me denied facts without evidence") | operations/query.md |
 | "Who is <name>?" / resolve a name, surname or file code to a participant and every spelling and code on record (find-document, a letter's sender, a file-name check) | operations/participants.md (resolve) |
 | Record another spelling or file code for a participant, or a judge, arbitrator, tribunal member or registrar, after the practitioner approves it | operations/participants.md (record) |

@@ -4,7 +4,7 @@
   "needs_forum_parts": false,
   "title": "Unstructured",
   "exhibit_numbering": "writing",
-  "goal_criteria": ["noting-up", "recipients", "open-items", "counsel-review"],
+  "goal_criteria": ["noting-up", "open-items", "counsel-review"],
   "parts": [
     { "heading": null, "heading_numbering": "none", "paragraph_numbering": "none", "source": "slot:date" },
     { "heading": null, "heading_numbering": "none", "paragraph_numbering": "none", "source": "addressee" },
@@ -17,3 +17,5 @@
 # Unstructured
 
 The stock type of a Writing within the firm, outside any venue, whose document type has no type file of its own. The practitioner's own name for the document is the Writing's title. Draft it by `references/unstructured.md`.
+
+It is for counsel only and is never sent. So it declares no `recipients`, its save writes no `Deliver`, and its Milestone has no gate.

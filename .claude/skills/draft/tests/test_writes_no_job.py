@@ -45,12 +45,34 @@ class WritesWithNoJobTest(unittest.TestCase):
             scope,
         )
 
-    def test_scope_gate_for_a_held_job_is_unchanged(self):
+    def test_practitioner_write_outside_scope_expands_it(self):
         scope = paragraph(self.text, "**Scope.**")
         self.assertIn(
-            "Out of scope means refuse and offer an expansion, itself in scope.",
+            "A write the practitioner asked for outside it expands the scope "
+            "(`/drafting-data` `jobs-run.md` §7) and proceeds. "
+            "A write the session itself originated outside it is refused, "
+            "and the expansion offered, itself in scope.",
             scope,
         )
+        self.assertNotIn("Out of scope means refuse", scope)
+
+    def test_rules_bind_the_model_not_the_practitioner(self):
+        self.assertIn(
+            "Rules in this skill constrain the model's route, never refuse the practitioner.",
+            self.text,
+        )
+        ban = paragraph(self.text, "11. Never")
+        self.assertIn("Never silently supersede another session's job.", ban)
+        self.assertNotIn("Retirement refuses", ban)
+        ideas = paragraph(self.text, "**Captured ideas.**")
+        self.assertNotIn("never ripe", ideas)
+        self.assertIn(
+            "When the practitioner asks for one to be worked, outline it into a job and proceed.",
+            ideas,
+        )
+        retire = (SKILL.parent / "references" / "retire-filing.md").read_text(encoding="utf-8")
+        self.assertNotIn("stops the retirement outright", retire)
+        self.assertIn("is never superseded silently", retire)
 
 
 if __name__ == "__main__":

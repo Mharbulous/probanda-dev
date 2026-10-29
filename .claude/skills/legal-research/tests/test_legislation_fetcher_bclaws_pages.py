@@ -5,9 +5,13 @@ page the consolidation links and, for a B.C. Reg. citation, the current year's
 Cumulative B.C. Regulations Bulletin, with the same two tools it files the
 instrument with. It counts the bulletin lines naming the regulation by an exact
 number match, so `68/2009` never counts a line naming `168/2009`. Amending
-regulations are not filed: their Gazette page address is only in a link, and
-`sources__fetch` returns text without links. Each test pins one piece of that.
-BC Laws pages have one fetch route, so no research-paralegal capture mode exists.
+regulations are not filed from the bulletin: their Gazette page address is only in
+a link, and `sources__fetch` returns text without links. A caller that holds the
+exact address dispatches the amending instrument on its own (section 12), and it
+is filed as made, with no currency marker. A regulation BC Laws publishes in parts,
+such as the Supreme Court Civil Rules, is fetched part by part from the ids the
+map lists. Each test pins one piece of that. BC Laws pages have one fetch route,
+so no research-paralegal capture mode exists.
 """
 import re
 import unittest
@@ -120,8 +124,9 @@ class LimitsTests(unittest.TestCase):
     def test_amending_regulations_are_not_filed(self):
         text = section_ten()
         self.assertIn(GAZETTE_URL, text)
-        self.assertIn("`sources__fetch` returns no links, so the page cannot be reached", text)
+        self.assertIn("`sources__fetch` returns no links, so the page cannot be reached from the bulletin", text)
         self.assertIn("Never build its address from a row's numbers or dates.", text)
+        self.assertIn("A dispatch that supplies the page's exact address files it on its own (section 12).", text)
 
     def test_stated_limits(self):
         text = section_ten()
@@ -139,12 +144,115 @@ class ReaderTests(unittest.TestCase):
         text = flat(read(SHARED / "statute-currency.md"))
         self.assertIn("also files the Point in Time page the consolidation links", text)
         self.assertIn("Cumulative B.C. Regulations Bulletin", text)
-        self.assertIn("It files no amending regulation", text)
+        self.assertIn("It files an amending regulation only as made, at the exact address a caller supplies", text)
+        self.assertNotIn("has no route yet", text)
 
     def test_pages_are_never_ingested(self):
         text = flat(read(SHARED / "legal-research.md"))
         self.assertIn("A Point in Time page or bulletin it filed beside a consolidation is a currency record, "
                       "not an authority: never ingest it.", text)
+
+
+def section(heading, end=None):
+    text = read(PLAYBOOK)
+    start = text.index(heading)
+    return flat(text[start:text.index(end, start) if end else len(text)])
+
+
+def seed_parts():
+    """The BC seed's regulation_parts entry for 168_2009, as a list of part ids."""
+    seed = read(PLAYBOOK)
+    seed = seed[seed.index("BC Laws, for"):seed.index("Justice Laws, for")]
+    match = re.search(r"- id: '168_2009'\n\s+parts: '([^']+)'", seed)
+    return [part.strip() for part in match.group(1).split(",")] if match else []
+
+
+class PartsTests(unittest.TestCase):
+    """A regulation published in parts is fetched by the part ids the map lists, never by its bare id."""
+
+    def test_seed_lists_the_sccr_parts_from_the_doc_map(self):
+        doc_map = read(SHARED / "bclaws-sccr-doc-map.md")
+        listed = re.findall(r"^\| `(168_2009_\d\d(?:_\d)?)` \|", doc_map, re.M)
+        self.assertEqual(seed_parts(), [part for part in listed if part != "168_2009_00"])
+
+    def test_map_format_names_regulation_parts(self):
+        self.assertIn("`regulation_parts` (optional)", section("## 3. Publisher maps", "## 4."))
+
+    def test_step_four_builds_one_url_per_listed_part(self):
+        step = procedure_step(4, "Build the URL.")
+        self.assertIn("build one URL per listed part id, in the listed order, in place of the bare id, "
+                      "and never fetch the bare id", step)
+        self.assertIn("Never guess an id.", step)
+
+    def test_an_overlay_map_without_the_entry_takes_the_seeds(self):
+        self.assertIn("lacks a `regulation_parts` entry the BC seed holds takes the seed's entry",
+                      procedure_step(3, "Find the map."))
+        self.assertIn("overwritten to add it, keeping every other field", procedure_step(9, "Write or correct the map."))
+
+    def test_every_part_is_verified_before_any_is_filed(self):
+        self.assertIn("fetch and verify every part this way, each with its own `currency_marker`, before filing any",
+                      procedure_step(6, "Fetch and verify."))
+        self.assertIn("so each part gets its own manifest line", procedure_step(7, "File."))
+
+    def test_a_stop_on_one_part_stops_the_whole_instrument(self):
+        self.assertIn("a stop on any one part stops the whole instrument", section("## 6. Stops", "## 7."))
+
+    def test_on_disk_needs_every_part(self):
+        self.assertIn("is on disk only when every part's file (section 5) is there", procedure_step(2, "Already on disk?"))
+
+    def test_part_file_name(self):
+        self.assertIn("`Supreme Court Civil Rules, B.C. Reg. 168-2009 - 168_2009_01.md`",
+                      section("## 5. File names", "## 6."))
+
+    def test_a_listed_part_is_no_longer_a_stated_limit(self):
+        self.assertNotIn("a regulation published in parts stops at step 6", section_ten())
+
+    def test_gate_records_parts_in_one_legislation_record(self):
+        text = flat(read(SHARED / "legal-research.md"))
+        self.assertIn("still gets one legislation record: its `path`, `sha256` and `currency_marker` each list "
+                      "the parts' values", text)
+        self.assertIn("For an instrument filed in parts, `<path>` lists every part's path, separated by `; `.", text)
+
+
+class AmendingInstrumentTests(unittest.TestCase):
+    """An amending instrument at a caller-supplied publisher URL is filed as made, with no currency marker."""
+
+    def test_dispatch_carries_the_flag_and_reuses_url(self):
+        text = section("## 2. Dispatch and return", "## 3.")
+        self.assertIn("- `amending_instrument` (optional)", text)
+        self.assertIn("- `url`", text)
+        self.assertIn("`amending_instrument` and `url` come together", procedure_step(1, "Check the dispatch."))
+
+    def test_section_twelve_files_with_no_marker_on_the_publisher_host(self):
+        text = section("## 12. An amending instrument at the caller's URL")
+        self.assertIn("`not_publisher_host`", text)
+        self.assertIn("Never change the URL, never build or guess one", text)
+        self.assertIn("`final_url` must have the same host as `url`", text)
+        self.assertIn("`kind` is `amending-` followed by the dispatch's `kind`", text)
+        self.assertIn("`currency_marker` is `none`", text)
+        self.assertIn("Never infer a date", text)
+        self.assertIn("Never report the copy as current to any date.", text)
+        self.assertIn("File no section 10 page and write or correct no map.", text)
+
+    def test_without_the_flag_a_page_with_no_marker_still_stops(self):
+        self.assertIn("a page with no marker stops `no_currency_marker`", section("## 12."))
+
+    def test_gate_says_when_to_set_the_flag(self):
+        duty = flat(read(SHARED / "legal-research.md"))
+        duty = duty[duty.index("4. **Legislation text, before the audit.**"):
+                    duty.index("5. **Note-up, before the audit.**")]
+        self.assertIn("amending_instrument?, url?", duty)
+        self.assertIn("Never build or guess the address, and never set the field without one.", duty)
+        self.assertIn("Leave it out of the `legislation_currency` call", duty)
+
+    def test_spawn_template_labels_the_copy_as_made(self):
+        text = read(SHARED / "legal-research.md")
+        template = text[text.index("**Spawn the agent from this template.**"):
+                        text.index("**A `needs_download` or hand-off-packet return")]
+        self.assertIn("filed <path>, as made, not current law, no currency marker, made on <made_on>", template)
+
+    def test_agent_description_names_the_exception(self):
+        self.assertIn("except an amending instrument at the exact publisher URL the caller supplies", flat(read(FETCHER)))
 
 
 if __name__ == "__main__":

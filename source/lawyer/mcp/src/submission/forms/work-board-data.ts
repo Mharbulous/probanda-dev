@@ -105,7 +105,7 @@ export interface WorkBoardData {
   goals: BoardGoals;
   /** A filing's board only: a pre-filing proceeding's board has no Goal card (design §2.1). */
   goal?: Goal;
-  /** The stored layout's `goal_criteria` in their declared order, then `gate`, then `hearing-date`
+  /** The stored layout's `goal_criteria` in their declared order, then `gate` (on any but an internal Writing), then `hearing-date`
    * where it is declared, then the linked deadlines; empty on a type declaring none and on a retired filing. */
   criteria?: GoalCriterion[];
 }

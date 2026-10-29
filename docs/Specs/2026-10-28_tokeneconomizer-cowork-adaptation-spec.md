@@ -88,28 +88,34 @@ Facts recorded:
 
 Conclusion: TokenEconomizer runs in Cowork but cannot learn there, because nothing it writes outlasts the session. The loop guard needs learned turns before it acts, so in practice it does nothing. A hook cannot reach the PC itself: only the model's tool calls can.
 
-## Measure first
+## Spike tests first
 
-Brahm's ruling of 2026-10-28, after an independent review: nothing in the green design is built until a measurement shows the loop guard would act. The red run showed the plugin runs in Cowork, not that it saves anything, and the fork's `docs/PLUGIN.md` §5 says the loop guard has never fired on a real stuck turn.
+Brahm's ruling of 2026-10-28, after an independent review: nothing in the green design is built until a measurement shows the loop guard would act. The red run showed the plugin runs in Cowork, not that the loop guard ever acts, and the fork's `docs/PLUGIN.md` §5 says the loop guard has never fired on a real stuck turn.
 
-- From 2026-10-28 the PC runs TokenEconomizer with `shadow=true` and `toolprune=propose` (global, in `~/.tokeneconomizer/config.json`). In shadow mode every decision is computed and logged and none is acted on.
-- On or after 2026-11-11, read the would-be redirects in the state's event logs, for Claude Code and desktop sessions, and the `plugin overhead` line of `te status`. On 2026-10-28, before shadow mode, `te status` for probanda-dev showed 3 folded sessions with a plugin overhead of 389.9k of 428.7k effective tokens (47.6%), and 0 redirects.
-- Build the green design only if the guard would have redirected stuck turns often enough to repay that overhead. Otherwise the end state is: in Cowork, everything but the loop guard off, and the listing says what the plugin does there.
-- One open point for the measurement: the loop guard learns one envelope for all sessions, but a one-shot lookup and a long housekeeping run differ widely in length, so a pooled envelope may be too loose to act. The shadow log shows the spread.
+"Would act" means the loop guard can act. It is settled by a few spike tests, not by weeks of logs, and it is not a test of whether the guard pays for itself. That is measured after the build (the plan's step e). Two spike tests come before the green build is planned:
+
+- **S1. The loop guard acts (PC).** In a Claude Code session on the PC, in a repository whose envelope has learned turns, stage a stuck turn: a task that sends the model round a failing loop. S1 passes if the event log records a `nudge` or `abort` for that turn. The PC runs with `shadow=true` (global, in `~/.tokeneconomizer/config.json`), so the event is logged with `shadow: true` and nothing is shown to the model.
+- **S2. The model makes a tool call a hook asks for (Cowork).** One Cowork session with a temporary probe hook, the way R8 to R12 were run in plugin 0.1.3, that at every prompt asks the model to call `practice_data__config_status` before answering. S2 records, per prompt, whether the model made the call and the token cost of the ask and the call. It passes if the model made the call at nine prompts in ten or more.
+
+**S1 result, 2026-10-28: PASS.** In a Claude Code session in probanda-dev, 20 pairs of an edit to one scratch file and a run of a script that always failed the same way. The guard's gate opened at the segment's 19th call (8 repeats of the same failure), its first judge call returned stuck at confidence 0.80, and the guard logged a `nudge` with `shadow: true` at the turn's 26th tool call. That judge call, with the redirect it wrote, cost 148,007 effective tokens. The digest tagged the `Write` of a file containing `assert` as an error output. The fork's commit `9cdec34` has since stopped counting a successful `Edit` or `Write` as one; a shell command that prints such a file still can.
+
+**S2 result, 2026-10-28: PASS.** A new Cowork session in `te-cowork-test` on plugin 0.1.5, with the probe asking at every prompt for one `practice_data__config_status` call (a 176-character note). Of ten ordinary prompts, five needing no tool and five needing the shell or a file tool, the model made the call at all ten, and as its first tool call at nine. At the first it loaded the deferred tool with `ToolSearch` first. It also made the call at the eleventh prompt, which printed the log. Each response was 1,276 characters, so the ask and the call add about 400 tokens of context per prompt, plus one model step. The green design below needs no such call.
+
+Both passed, and the green build is planned from them in `docs/Plans/2026-10-29_tokeneconomizer-green-build.md`.
+
+On 2026-10-28 the probanda-dev envelope held 18 turns with a median of 6.5 tool calls and a 90th percentile of 27, giving an envelope of 37.75. A one-shot lookup and a long housekeeping run differ widely in length, so whether one fixed value fits Cowork's turns is measured after the build.
 
 The red tests the review asked for before any green build are R8 to R12.
 
 ## Green design
 
-From Brahm's rulings of 2026-10-28. On hold until "Measure first" says to build.
+From Brahm's rulings of 2026-10-28. The plan is `docs/Plans/2026-10-29_tokeneconomizer-green-build.md`.
 
-- **One pattern.** TokenEconomizer keeps one learned pattern for all Probanda projects, not one per folder.
-- **A Probanda plugin.** TokenEconomizer becomes a Probanda plugin, governed by COMMANDMENTS.md. It stays optional and separate from `lawyer`, and has no server of its own. It moves from `vendor/` to `source/tokeneconomizer/` and is built and released like the other plugins. CLAUDE.md's "Vendored plugin" section changes with that move.
-- **Storage on the PC.** The pattern is stored through `lawyer`'s `data` server, in SQLite under the Probanda app data folder, by two tools: one reads the pattern and one saves it. First check whether the `time_pipeline` key-value tools can take a `tokeneconomizer` namespace instead of new tools. The store obeys Commandments 3 and 5.
-- **The model carries the pattern, because R7 failed.** At the first prompt, the hook tells the model to call the read tool. The `PostToolUse` hook receives that tool's response in its input (R8) and writes the pattern to the local state root, where the loop guard reads it. At each later prompt, the hook's `additionalContext` (R9) asks the model to call the save tool with only the turns resolved since the last save. Each session's last turn is lost, which is accepted, because nothing runs after it (R12) and a `Stop` block would cost the model an extra step on every turn. This is the route Probanda's own hooks already use, for example `lawyer`'s note that tells the model to call `practice_data__config_status`.
+- **A fixed envelope in Cowork.** The loop guard gets a fixed envelope of 38 tool calls from the plugin's hook command, so it can act from a Cowork session's first prompt. It is a guard setting, `loopguard.envelope_frozen`, used only until a repository has learned 5 turns of its own. Nothing is stored on the PC for TokenEconomizer and no tool is added: Brahm's ruling of 2026-10-28 replaced the earlier design, which kept a learned pattern on the PC through two tools on `lawyer`'s `data` server and had the model carry it in and out of each session. That design cost about 400 tokens and one model step at every Cowork prompt (S2), and the envelope's only uses in the plugin (letting the judge run, placing the backstop and telling the judge the usual turn length) need no learned value.
+- **A Probanda plugin.** TokenEconomizer becomes a Probanda plugin, governed by COMMANDMENTS.md. It stays optional, requires no other plugin, and has no server of its own. It moves from `vendor/` to `source/tokeneconomizer/` and is built and released like the other plugins. CLAUDE.md's "Vendored plugin" section changes with that move.
+- **Tool pruning off.** The Probanda copy turns tool pruning off, so it never writes a user's settings file.
+- **The red tests under this design.** R5 is restated: a new Cowork session's `te status --json` reports `loopguard.envelope` 38 at its first prompt. R6 no longer applies, since nothing is folded across sessions. R7 stays FAIL: hooks do not call tools, and this design needs none. Done also needs a staged loop in Cowork to get a redirect.
 
-Open questions:
+Open question:
 
-- The token cost of the save at `Stop`, since the model writes the whole pattern out as the tool's input. A small pattern keeps it cheap. If it is not small, save only what changed.
-- Whether tool pruning can take effect in Cowork. It writes `.claude/settings.local.json` during a session on a fresh machine, which may be too late to change that session's tools.
-- The measured gain. Cowork already defers tools, so the saving may be small. The green stage measures it before the refactor.
+- The measured gain. Cowork already defers tools, so the saving may be small, and every judge wake in Cowork is now paid (26k to 148k effective tokens each on the PC). The green stage measures it before the refactor.

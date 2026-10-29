@@ -1,1 +1,1 @@
-<!-- node id=draft/done title="Job done" parents=draft/job,draft/outline when="The session has completed, released or shelved its job, or outlined jobs. It takes no other job, but a revision still runs." -->
+<!-- node id=draft/done title="Job done" parents=draft/job,draft/outline when="The session has completed, released or shelved its job, or outlined jobs. It takes no other job except one it created in this session, named by the practitioner, but a revision still runs." -->

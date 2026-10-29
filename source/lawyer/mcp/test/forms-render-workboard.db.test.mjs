@@ -1710,6 +1710,13 @@ test("tickets: a two-key ticket with one dead key reads 1 of 2 in its subtitle a
     const data = boardWithInventory(f.dbPath, inventory);
     assert.equal(ticketIn(data, 1).subtitle, "1 of 2 items no longer show their marker");
     assert.equal(ticketIn(data, 2).subtitle, null, "a completed ticket's keys are expected to be gone");
+    assert.deepEqual(ticketIn(data, 1).dispatch_skips, [], "one live key keeps the job dispatchable");
+
+    // Every key dead: Dispatch skips it whatever its step count.
+    const allDead = boardWithInventory(f.dbPath, []);
+    assert.equal(ticketIn(allDead, 1).subtitle, "2 of 2 items no longer show their marker");
+    assert.deepEqual(ticketIn(allDead, 1).dispatch_skips, [{ reason: "all_keys_dead" }]);
+    assert.ok(renderLiveLanes(allDead).find((l) => l.startsWith("- Job #1 ")).endsWith("dispatch: skip (all_keys_dead)"));
 
     await submissionDataExecute(f.dbPath, "DELETE FROM ticket_proposals WHERE ticket_id = 1;");
     const withoutKeys = ticketIn(boardWithInventory(f.dbPath, inventory), 1);

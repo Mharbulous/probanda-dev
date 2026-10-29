@@ -180,7 +180,8 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, today
   const holding = tickets.map((t) => t.ticket).filter(holdsMaterial);
   for (const { ticket } of tickets) {
     if (ticket.category !== "ready") continue;
-    if (ticket.title.startsWith("Counsel's review of ")) ticket.dispatch_skips.push({ reason: "practitioner_own" });
+    // A `Deliver` is the practitioner's too: its first step, sending, is their own act (jobs-stock.md §3b).
+    if (ticket.title.startsWith("Counsel's review of ") || ticket.title === "Deliver") ticket.dispatch_skips.push({ reason: "practitioner_own" });
     for (const p of ticket.conflicts) if (p.status === "queued" && !p.rejected) ticket.dispatch_skips.push({ reason: "either_or", job: p.id });
     for (const held of holding) {
       if (held.id === ticket.id) continue;

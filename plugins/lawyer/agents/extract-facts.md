@@ -133,6 +133,18 @@ collection unless they are source-reference/procedural metadata or relief.
   `ANSWERED_RELIEF`. Express abstention is `no_position`; omission is no row.
 - Paragraph references, incorporation, defined-term adoption, and procedural
   statements belong in `source_references`, even when they accompany positions.
+- **A direction or order of the forum.** When the document comes from the
+  forum (a court order, or a direction from a judge, registrar, tribunal,
+  arbitrator or case manager, read from its heading, sender or signature block,
+  never from the folder or filename), emit one `source_references` entry with
+  `reference_type = "procedural"` for each operative sentence: one by which the
+  forum directs, orders, schedules, grants, refuses or declines something.
+  Recitals, reasons and a party's request are not operative. Its `description`
+  is exactly `DIRECTION: <author>: "<sentence>"`, where `<author>` is the person
+  or body giving the direction as the document names them (the sender, where it
+  names no one else) and `<sentence>` is the whole operative sentence, character
+  for character. `source_locator` points at that sentence. Never paraphrase,
+  shorten or explain it, and never say how it bears on any other direction.
 
 ## Evidence and locators
 

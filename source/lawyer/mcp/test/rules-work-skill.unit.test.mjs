@@ -26,7 +26,7 @@ test("session entry and the fast open are /work's", () => {
 
 test("dispatch is /work's, with the claim checks before the assigning write", () => {
   const dispatch = ids("dispatch");
-  for (const id of ["work.dispatch", "work.dispatch.choose", "work.dispatch.assign", "work.assign", "work.pickup-review", "work.duplicate-check", "work.steps.restated"]) {
+  for (const id of ["work.dispatch", "work.dispatch.choose", "work.dispatch.work-gone", "work.dispatch.assign", "work.assign", "work.pickup-review", "work.duplicate-check", "work.steps.restated"]) {
     assert.ok(dispatch.includes(id), id);
   }
   assert.ok(dispatch.every((id) => id.startsWith("work.")), dispatch.join(" "));

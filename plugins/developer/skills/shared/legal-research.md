@@ -136,7 +136,11 @@ other question runs the duties in their numbered order.
       existing `6. LAW\<issue>\` folder;
    3. dispatch `researcher:research-paralegal` in **citation** mode, `source: westlaw-first`,
       for every citation already known on the issue (from the matter, a prior memo,
-      or a prior research-agent answer), into the same folder;
+      or a prior research-agent answer), into the same folder. Split the known
+      citations into batches of at most the per-invocation cap its citation playbook
+      (`shared/research-paralegal/citation-download.md`) sets, and dispatch the
+      batches one after another: a dispatch's citation list is never longer than
+      the cap;
    4. only then, once duties 4 and 5 have run, spawn the audit agent, naming the memo
       and decision files retrieved.
 
@@ -160,6 +164,14 @@ other question runs the duties in their numbered order.
    A skip that names no pinpoint is not a skip: run this duty for that issue. The
    audit agent opens each pinpoint and returns a hand-off packet for any issue it
    does not answer.
+
+   Skip this duty, too, for an issue that asks only what an amendment changed, such
+   as whether amending instrument X changed provision Y or what Y said on a given
+   date. Westlaw AI does not answer point-in-time legislation questions. Record
+   `Westlaw: <issue>: not run: point-in-time legislation question`. The audit agent
+   answers the issue from the legislation text duty 4 files. An issue that also asks
+   how courts have read or applied the provision is not this skip: run this duty for
+   it. The skip sends nothing to CanLII.
 4. **Legislation text, before the audit.** After the Westlaw duty (before it, for a
    statutory-text question), so that its
    `legislation_skipped` titles are known, dispatch the `researcher:legislation-fetcher` agent
@@ -170,11 +182,22 @@ other question runs the duties in their numbered order.
    by URL: it gets a `Secondary:` line, never a currency call. Skip an instrument whose `downloaded`
    record is already in the issue folder's `case-download-manifest.json`. The dispatch
    is `{citation?, title, kind, country, jurisdiction, locality?, destination_dir,
-   matter, allow_host?}`: `destination_dir` is the issue's existing `6. LAW\<issue>\`
+   matter, allow_host?, amending_instrument?, url?}`: `destination_dir` is the issue's existing `6. LAW\<issue>\`
    folder and `matter` the live matter's file number, such as `1234.L####`, never its style of cause or a party's name: the runtime stamps it into an overlay map every matter reads. Pass the citation wherever the question, the
    matter or a memo gives one: a title alone may come back `not_located`. One fetcher
    at a time. It may run beside `research-paralegal`, because it uses no Chrome, no
    Downloads folder and no Westlaw.
+   - **An amending instrument.** When an issue turns on what an amending instrument
+     did, such as whether an amending regulation changed a rule, and you hold the exact
+     address of that instrument's own page on its publisher's host (from the matter,
+     the practitioner or a memo), dispatch it as its own instrument with
+     `amending_instrument: true` and `url` that address, `kind` its own kind. Never
+     build or guess the address, and never set the field without one. Dispatch the
+     consolidation it amends as usual: the consolidation stays the currency source.
+     The fetcher files the page as made, `currency_marker` `none`, and returns
+     `made_on`. Leave it out of the `legislation_currency` call
+     (`shared/statute-currency.md` sends no amending regulation to it): its record's
+     `currency` is `not checked: as made`.
    - `refused` (`host_not_allowed`): ask the practitioner once whether to allow
      fetching from that host. On a yes, re-dispatch the same instrument with
      `allow_host` set to it. A no, or a second refusal, ends that instrument.
@@ -190,14 +213,18 @@ other question runs the duties in their numbered order.
 
    Then, still before the audit, call the canlii `legislation_currency` tool once,
    with the `currency_marker` (as `YYYY-MM-DD`) of each instrument filed with one,
-   and the citation, title and jurisdiction of every instrument in issue,
-   whatever the fetcher returned for it: CanLII's metadata can show a repeal where no
+   and the citation, title and jurisdiction of every instrument in issue, whatever the
+   fetcher returned for it, but an amending instrument dispatched as one: CanLII's metadata can show a repeal where no
    text was filed. It is a tool call, not an agent, so it waits for no Westlaw run.
    Then hold one legislation record per instrument,
    `{citation, title, path, sha256, currency_marker, currency, official}`. `title`,
    `path`, `sha256`, `currency_marker` and `official` come from the instrument's
    `downloaded` record in the issue folder's `case-download-manifest.json`, or from the
    matter-data copy used in its place, and are `none` for an instrument with neither.
+   An instrument the fetcher filed in parts (its return lists `parts`) has one
+   `downloaded` record per part under the same citation and `kind`, and still gets one
+   legislation record: its `path`, `sha256` and `currency_marker` each list the parts'
+   values in the return's part order, separated by `; `.
    `currency` comes from that call, and is `validation_unavailable` when it fails. A
    `blocked (no-api-key)` status gives every instrument `validation_unavailable`;
    relay its two key paths to the practitioner.
@@ -216,16 +243,26 @@ other question runs the duties in their numbered order.
    rule is never sent to it: its note-up is duty 4's currency check. A decision the
    audit relies on with no record comes back as `needs_note_up` (below).
 
-**Westlaw unreachable is a hard stop.** If research-paralegal or citation-checker returns
-`status: blocked (chrome-not-connected)` or `status: blocked (westlaw-not-signed-in)`,
-stop the whole question: no audit-agent spawn, no CanLII step, and no `canlii-only`
-download or CanLII sweep in Westlaw's place. Tell the practitioner in plain words:
+**Westlaw unreachable is a hard stop.** Any `status: blocked (...)` that
+research-paralegal or citation-checker returns is a hard stop, whether or not its
+status is named here: stop the whole question, with no audit-agent spawn, no CanLII step, and no
+`canlii-only` download or CanLII sweep in Westlaw's place. Tell the practitioner in
+plain words:
 
-- `chrome-not-connected`: "Westlaw research is needed and Chrome isn't connected.
+- `status: blocked (chrome-not-connected)`: "Westlaw research is needed and Chrome isn't connected.
   Open Chrome and sign in to Westlaw, then tell me to continue."
   If its `detail:` line is `chrome-tools-absent`, say instead: "Chrome can't be reached from this session. Run this research step from a Claude Code session."
-- `westlaw-not-signed-in`: "Westlaw research is needed and Westlaw isn't signed in.
+- `status: blocked (westlaw-not-signed-in)`: "Westlaw research is needed and Westlaw isn't signed in.
   I've opened the Westlaw sign-in page in Chrome. Sign in, then tell me to continue."
+- `status: blocked (chrome-permission-not-granted)`: "Westlaw research is needed and
+  Chrome's permission prompt wasn't answered. Bring Chrome to the front and click
+  Allow on the small Claude permission window. If Westlaw then shows a sign-in page,
+  sign in yourself. Then tell me to continue."
+- `status: blocked (mechanics-unavailable)`: relay its guidance verbatim: check for
+  updates in the desktop app and fully restart it, then tell me to continue; if the
+  problem persists, run /lawyer:suggestion.
+- Any blocked status not named here or below: quote its `status:` line and its
+  `detail:` line verbatim, and ask the practitioner to resolve it and tell you to continue.
 
 On "continue", re-dispatch the same run. The fail-closed client-matter gate (`status: blocked (matter-mismatch)`, or
 `status: blocked (client-id-not-on-westlaw)` with its one-line instruction) is a genuine
@@ -247,8 +284,8 @@ Memo template: CRAC / IRAC / CREAC   (IRAC or CREAC only when the practitioner e
 File stem: YYYY-MM-DD ML re <two to six keywords from the question>
 Pooled-layer results: <results> / not installed / NOT AUDITED: <reason>
 Preflight: all ok / <row>: <state>[; <row>: <state>]
-Westlaw: <issue>: run, memo(s): <paths>; decisions: <paths> / not run: tiers 1–3 held pinpointable text: <file> para <n>[; <file> para <n>] / not run: practitioner declined
-Legislation: <citation>: filed <path>, current to <marker>, currency <value> / already on disk <path>, currency <value> / not retrieved: <reason>, currency <value> / on disk from case data <path>[, pp. <X–Y>], official: false, currency <value>
+Westlaw: <issue>: run, memo(s): <paths>; decisions: <paths> / not run: tiers 1–3 held pinpointable text: <file> para <n>[; <file> para <n>] / not run: practitioner declined / not run: point-in-time legislation question
+Legislation: <citation>: filed <path>, current to <marker>, currency <value> / already on disk <path>, currency <value> / not retrieved: <reason>, currency <value> / filed <path>, as made, not current law, no currency marker, made on <made_on>, currency <value> / on disk from case data <path>[, pp. <X–Y>], official: false, currency <value>
 Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not retrieved: <reason> / none
 6. LAW listing and extracted text: <the listing, and the text or text path of each file extracted or staged>
 Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
@@ -284,7 +321,7 @@ caller writes `Job question: none`.
 `Re-invocation` is `no` on the first spawn and `yes` only on the one re-invocation below.
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
-is in issue.
+is in issue. For an instrument filed in parts, `<path>` lists every part's path, separated by `; `.
 Write one `Secondary:` line per document, and `Secondary: none` when there is none.
 Write one `Note-up:` line per decision `citation-checker` was dispatched for, and
 `Note-up: none` when none was.
@@ -398,7 +435,8 @@ complete before the session ends: never leave a session with a cited decision un
    dispatch `researcher:research-paralegal` in
    citation mode, `source: canlii-only`, with that same research folder as the
    destination, whichever issue the decision is cited on. Step 1's save means the
-   folder exists before dispatch. Batch as its playbook allows, one dispatch at a time.
+   folder exists before dispatch. Split the citations into batches as duty 3 does,
+   no batch longer than the playbook's cap, one dispatch at a time.
 3. Run `/ingest` on each cited decision file case data does not hold, whether it
    was downloaded now or before the audit, and on each legislation file
    `legislation-fetcher` filed in this run. A Point in Time page or bulletin it
