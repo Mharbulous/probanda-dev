@@ -27,7 +27,7 @@ import time
 
 from .. import loopguard
 from . import denylist, fold, history, repomap, repos, sidecall
-from .hosts import merge_outputs
+from .hosts import command, merge_outputs
 from .paths import ensure_launcher
 
 TURN_HISTORY = 200
@@ -64,14 +64,7 @@ class LiveController:
         self.store.write(self._sess_name(), s)
 
     def _cmd(self, name):
-        """How a person runs one of the plugin's commands on this host."""
-        if self.host.name in ("claude", "copilot"):    # Copilot's TUI runs plugin commands too
-            return f"/tokeneconomizer:{name}"
-        if self.host.name == "pi":
-            return f"/te {name}"                 # registered by the Pi extension
-        if self.host.name == "codex":
-            return f"$tokeneconomizer:{name}"    # the plugin's Codex skills
-        return f"te --host {self.host.name} {name}"
+        return command(self.host.name, name)
 
     def _log(self, kind, **fields):
         self.store.append("events.jsonl", dict(

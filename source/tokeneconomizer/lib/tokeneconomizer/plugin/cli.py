@@ -1,7 +1,8 @@
 """`te` -- inspect and steer what TokenEconomizer does in your sessions.
 
     te status                         what it has learned for this repository, and what it did
-    te microskills                    the facts it injects, and the ones still forming
+    te microskills [on | off]         the facts it injects, and the ones still forming; or turn
+                                      micro-skills on or off in this repository
     te toolprune show                 the proposed deny list, and the evidence behind it
     te toolprune apply [ITEM ...]     write the proposal (or the named items) to the repository's
                                       settings: tools (Claude Code), capabilities (Codex) or
@@ -163,8 +164,12 @@ def cmd_status(args):
           + (f"; {ledger['imported_sessions']} earlier session(s) imported from the agent's "
              f"logs" if ledger["imported_sessions"] else ""))
     i = out["microskills"]
-    print(f"  microskills  {i['injected_lines']} fact(s) injected at session start "
-          f"({i['sessions_folded']} sessions learned from)")
+    if cfg.microskills == "off":
+        print(f"  microskills  off (the default); `{hosts.command(ctx.host.name, 'microskills')} "
+              f"on` learns repository facts from finished sessions")
+    else:
+        print(f"  microskills  {i['injected_lines']} fact(s) injected at session start "
+              f"({i['sessions_folded']} sessions learned from)")
     u = out["toolprune"]
     if not denylist.supports(ctx.host.name):
         print("  toolprune    not available on this host")
@@ -183,12 +188,17 @@ def cmd_status(args):
 
 
 def cmd_microskills(args):
+    if args.action != "show":
+        args.action, args.pairs, args.globally = "set", [f"microskills={args.action}"], False
+        return cmd_config(args)
     ctx = _ctx(args)
     inj = ctx.store.read("injection.json") or {}
     if ctx.config.microskills == "off":
-        print(f"micro-skills is off here (the default). `config set microskills=on` turns it on: "
+        cmd = hosts.command(ctx.host.name, "microskills")
+        print(f"micro-skills is off here (the default). `{cmd} on` turns it on: "
               f"facts are then learned from finished sessions, and a model proposes more every "
-              f"{ctx.config.microskills_propose_every} sessions, through this agent")
+              f"{ctx.config.microskills_propose_every} sessions, through this agent; "
+              f"`{cmd} off` turns it off")
         if not inj:
             return 0
     text = inj.get("rendered") or ""
@@ -508,7 +518,8 @@ def cmd_config(args):
     if "distiller" in str(cur.get("microskills", "")):
         every = cur.get("microskills_propose_every") or ctx.config.microskills_propose_every
         print(f"note: micro-skills calls a model through this agent every {every} sessions to "
-              "propose facts, charged to the session's cost; `microskills=envfacts` learns "
+              f"propose facts, charged to the session's cost; "
+              f"`{hosts.command(ctx.host.name, 'config')} set microskills=envfacts` learns "
               "without model calls")
     if cur.get("loopguard") == "stop":
         print("note: `stop` acts as `nudge`: the plugin never stops a turn; a turn still stuck "
@@ -677,7 +688,8 @@ def cmd_doctor(args):
         if pause:
             print(f"{h:11s} model calls paused since "
                   f"{time.strftime('%Y-%m-%d %H:%M', time.localtime(pause['at']))}: `{h} -p` said "
-                  f"it is not signed in; `config set microskills=on` (or `loopguard=on`) "
+                  f"it is not signed in; `{hosts.command(h, 'microskills')} on` (or "
+                  f"`{hosts.command(h, 'config')} set loopguard=on`) "
                   f"tries again")
     if "claude" in agents:
         cat = os.path.join(root, "hosts", "claude", "catalog.json")
@@ -762,7 +774,9 @@ def build_parser():
     p = add("status")
     p.add_argument("--json", action="store_true")
     p.set_defaults(fn=cmd_status)
-    add("microskills", "facts").set_defaults(fn=cmd_microskills)
+    p = add("microskills", "facts")
+    p.add_argument("action", nargs="?", default="show", choices=("show", "on", "off"))
+    p.set_defaults(fn=cmd_microskills)
     p = add("toolprune", "untool")
     p.add_argument("action", nargs="?", default="show",
                    choices=("show", "apply", "restore", "refresh-catalog", "measure",

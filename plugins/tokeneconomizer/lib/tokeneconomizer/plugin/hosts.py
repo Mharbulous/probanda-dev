@@ -444,6 +444,17 @@ def _ancestor_args(limit=4):
 HOSTS = {"claude": ClaudeCode, "codex": Codex, "copilot": Copilot, "pi": Pi}
 
 
+def command(host, name):
+    """How a person runs one of the plugin's commands on this host."""
+    if host in ("claude", "copilot"):    # Copilot's TUI runs plugin commands too
+        return f"/tokeneconomizer:{name}"
+    if host == "pi":
+        return f"/te {name}"             # registered by the Pi extension
+    if host == "codex":
+        return f"$tokeneconomizer:{name}"    # the plugin's Codex skills
+    return f"te --host {host} {name}"
+
+
 def default_host(env=None, recent=None):
     """The host a `te` command run without `--host` is about: `TE_HOST`, else the agent whose
     shell it runs in (Claude Code marks its shell `CLAUDECODE=1`, Copilot `COPILOT_CLI=1`),
