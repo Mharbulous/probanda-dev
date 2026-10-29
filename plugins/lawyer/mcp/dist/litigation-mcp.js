@@ -1,4 +1,4 @@
-// build-stamp: 6be16d4bde75
+// build-stamp: 4dc36ec9c841
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -76075,7 +76075,7 @@ var PracticeStore = class {
 };
 
 // src/dispatch.ts
-import { dirname as dirname32 } from "node:path";
+import { dirname as dirname33 } from "node:path";
 
 // src/tools/practice/rule-overlay.ts
 import { randomUUID as randomUUID2 } from "node:crypto";
@@ -79500,7 +79500,7 @@ function suggestionToolDefinitions() {
     },
     {
       name: "suggestion_card__build",
-      description: `Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path}. Nothing is sent: the practitioner's Submit Suggestion on the card sends it, and Dismiss sends nothing. Present card_path as a file card with no chat text at all, then call suggestion_card__wait. The card shows, in its own fixed order and words, the origin cue (origin practitioner: "You suggested:"; probanda: "Probanda noticed:"), the pain_point, the items, a mockup link when any item is visual, the context_lines (constraint and evidence lines) and the raw_observation lines, a comment box, and Submit Suggestion and Dismiss. Each block's text is the practitioner's own phrases reshaped, with every name and indirect identifier replaced by one of the brackets [client], [matter], [person], [document], [file], [date], [amount]; any other bracketed word is refused. guess: true marks a block that holds words the practitioner did not use; the card labels it for them to edit. visual: true marks an item that changes how something looks (layout, colour, typography or page structure). source is user for the practitioner's own suggestion, assisted for one Probanda offered and they accepted, llm for a loose thread. skill, optional, names the one skill it is about. tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. observation_id and session_id, together: the AI-noticed card for the observation suggestion_observation__next returned, with origin probanda and source llm and no skill or raw_observation, which come from the observation itself; it is built only while the daily cap and suppression allow it, and otherwise returns {built: false, reason: "not_raised"}: then say nothing and end the reply. The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. When some of this computer's records could not be read, the check is not complete and no card is built: it returns {built: false, reason: "records_unreadable", unreadable: [...]}, naming each unread kind of record (client, matter, contact, folder name, document title, file name). Nothing is saved; do not build again in this session.`,
+      description: `Build a suggestion card, Suggestion-<id>.html, from a scrubbed draft, and return {built: true, card_id, card_path, card_url}. card_url is the card as served on this computer; a copy shown where its buttons cannot work links to it by itself. Nothing is sent: the practitioner's Submit Suggestion on the card sends it, and Dismiss sends nothing. Present card_path as a file card with no chat text at all, then call suggestion_card__wait. The card shows, in its own fixed order and words, the origin cue (origin practitioner: "You suggested:"; probanda: "Probanda noticed:"), the pain_point, the items, a mockup link when any item is visual, the context_lines (constraint and evidence lines) and the raw_observation lines, a comment box, and Submit Suggestion and Dismiss. Each block's text is the practitioner's own phrases reshaped, with every name and indirect identifier replaced by one of the brackets [client], [matter], [person], [document], [file], [date], [amount]; any other bracketed word is refused. guess: true marks a block that holds words the practitioner did not use; the card labels it for them to edit. visual: true marks an item that changes how something looks (layout, colour, typography or page structure). source is user for the practitioner's own suggestion, assisted for one Probanda offered and they accepted, llm for a loose thread. skill, optional, names the one skill it is about. tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. observation_id and session_id, together: the AI-noticed card for the observation suggestion_observation__next returned, with origin probanda and source llm and no skill or raw_observation, which come from the observation itself; it is built only while the daily cap and suppression allow it, and otherwise returns {built: false, reason: "not_raised"}: then say nothing and end the reply. The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; replace each with its bracket, or reword, and call again. A match in the technical details or the raw observation is removed without asking. When some of this computer's records could not be read, the check is not complete and no card is built: it returns {built: false, reason: "records_unreadable", unreadable: [...]}, naming each unread kind of record (client, matter, contact, folder name, document title, file name). Nothing is saved; do not build again in this session.`,
       inputSchema: {
         type: "object",
         properties: {
@@ -81493,7 +81493,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "6be16d4bde75";
+var BUILD_STAMP = false ? null : "4dc36ec9c841";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -84691,11 +84691,11 @@ var createPdfium = (() => {
     var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
     if (ENVIRONMENT_IS_NODE) {
       const { createRequire } = await import("module");
-      let dirname33 = import.meta.url;
-      if (dirname33.startsWith("data:")) {
-        dirname33 = "/";
+      let dirname34 = import.meta.url;
+      if (dirname34.startsWith("data:")) {
+        dirname34 = "/";
       }
-      var require2 = createRequire(dirname33);
+      var require2 = createRequire(dirname34);
     }
     var moduleOverrides = Object.assign({}, Module);
     var thisProgram = "./this.program";
@@ -117622,7 +117622,8 @@ async function withdrawSuggestion(recordId, env = process.env, seams = {}) {
 }
 
 // src/suggestions/page.ts
-import { join as join52 } from "node:path";
+import { mkdirSync as mkdirSync25 } from "node:fs";
+import { dirname as dirname31, join as join52 } from "node:path";
 var PAST_SUGGESTIONS_FILE = "Past suggestions.html";
 var BRACKET = /\[(client|matter|person|document|file|date|amount)\]/g;
 var ITEM_STATUS = {
@@ -117830,6 +117831,7 @@ async function writePastSuggestionsPage(env = process.env, options = {}) {
   if (options.focus !== void 0 && !store.records.some((r3) => isSuggestion(r3) && r3.record_id === options.focus)) {
     throw new NotFoundError(`no suggestion ${options.focus} on this computer`, "not_found");
   }
+  mkdirSync25(dirname31(path), { recursive: true });
   writeTextAtomic(path, renderPastSuggestionsHtml(store, pageApiPort(env), (id) => pageApiSuggestionToken(id, env), options.focus ?? null));
   return path;
 }
@@ -118165,6 +118167,9 @@ var LATER_LINE = "You can see this later, with its status, under Past suggestion
 var SUBMIT = "Submit Suggestion";
 var DISMISS = "Dismiss";
 var RESTORE = "Restore Suggestion";
+var OFFLINE_NOTE = "This copy cannot reach Probanda, so it cannot send.";
+var OPEN_HERE = "Open on this computer";
+var OFFLINE_AFTER = ", with Claude open there, to submit or dismiss it.";
 var NOT_CHECKED = "Not sent: Probanda could not check this against your records. Try again in a moment.";
 var BRACKET2 = /\[(client|matter|person|document|file|date|amount)\]/g;
 function escapeHtml3(text8) {
@@ -118202,7 +118207,6 @@ var SCRIPT2 = `
   var busy = false;
   var SAY = {
     sending: "Sending...",
-    off: "This works while Claude is open on this computer. Open Claude, ask to see this suggestion again, and use it here.",
     failed: "That did not work. Try again, or ask Claude to show this suggestion again.",
     check: "Before this is sent, look at the marked text below.",
     refused: "Not sent: part of this suggestion is too long, or names someone or somewhere. Shorten it or take that out, then try again.",
@@ -118445,6 +118449,8 @@ var SCRIPT2 = `
     post("/state").then(function (state) {
       if (first) {
         first = false;
+        document.getElementById("offline").hidden = true;
+        document.getElementById("actions").hidden = false;
         if (state.state === "dismissed") greyOut();
         else if (state.state === "submitted" || state.state === "sending") finish(state.status || SAY.sending);
         else setButtons(true);
@@ -118454,15 +118460,16 @@ var SCRIPT2 = `
         say(state.status, state.status !== "Submitted \\u2713");
       }
       apply(state);
-    }).catch(function () {
-      if (first) { first = false; say(SAY.off, true); if (link) link.disabled = true; }
-    }).then(function () { setTimeout(poll, 3000); });
+    }).catch(function () {}).then(function () { setTimeout(poll, 3000); });
   }
   setButtons(false);
   if (link) link.disabled = true;
   poll();
 })();
 `;
+function cardUrl(port, cardId, token) {
+  return `http://127.0.0.1:${port}/cards/${encodeURIComponent(cardId)}?token=${token}`;
+}
 function renderCardHtml(card, port, token) {
   const visual = card.items.some((i3) => i3.visual);
   const pain = `<div class="block pain" data-part="pain_point" data-id="p">${editable(card.pain_point.text)}${guess(card.pain_point.guess)}<div class="prompts"></div></div>`;
@@ -118474,7 +118481,7 @@ function renderCardHtml(card, port, token) {
   const context = `<ul class="context" id="context">${card.context_lines.map(contextLine).join("")}${observed}</ul>`;
   const commentBox = `<div id="comment-block"><textarea id="comment" aria-label="Comment" placeholder="${escapeHtml3(COMMENT_PLACEHOLDER)}">${escapeHtml3(card.comment)}</textarea><div class="prompts"></div></div>`;
   const tech = `<p class="receives">${escapeHtml3(RECEIVES_LINE)}</p><details class="tech"><summary class="link">${SHOW_TECHNICAL}</summary><pre>${escapeHtml3(JSON.stringify(card.environment_facts, null, 2))}</pre></details>`;
-  const actions = `<p class="later">${escapeHtml3(LATER_LINE)}</p><div class="actions"><button type="button" id="submit">${SUBMIT}</button><button type="button" id="dismiss">${DISMISS}</button><button type="button" id="restore" hidden>${RESTORE}</button></div><p class="status" id="status" role="status"></p>`;
+  const actions = `<p class="later">${escapeHtml3(LATER_LINE)}</p><p class="status error" id="offline">${OFFLINE_NOTE} <a href="${escapeHtml3(cardUrl(port, card.record_id, token))}" target="_blank" rel="noopener">${OPEN_HERE}</a>${OFFLINE_AFTER}</p><div class="actions" id="actions" hidden><button type="button" id="submit">${SUBMIT}</button><button type="button" id="dismiss">${DISMISS}</button><button type="button" id="restore" hidden>${RESTORE}</button></div><p class="status" id="status" role="status"></p>`;
   const api = JSON.stringify({ port, card: card.record_id, token }).replace(/</g, "\\u003c");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src http://127.0.0.1:${port}; object-src 'none'; base-uri 'none'; form-action 'none'"><title>Suggestion</title><style>${STYLE2}</style></head><body><main><p class="origin">${ORIGIN_CUE[card.origin]}</p>` + pain + items2 + mockup + context + commentBox + tech + actions + `</main><script type="application/json" id="api">${api}</script><script>${SCRIPT2}</script></body></html>`;
 }
@@ -119546,7 +119553,7 @@ async function buildCard(input, facts, deps) {
   });
   if (!saved) return { built: false, reason: "not_raised" };
   const path = writeCardPage(card, deps.env);
-  return { built: true, card_id: card.record_id, card_path: path };
+  return { built: true, card_id: card.record_id, card_path: path, card_url: cardUrl(pageApiPort(deps.env), card.record_id, pageApiCardToken(card.record_id, deps.env)) };
 }
 function writeCardPage(card, env) {
   const path = cardPath(card.record_id, env);
@@ -119584,6 +119591,9 @@ function pageState(card, store, now) {
 async function readCardState(cardId, deps) {
   const store = await loadStore(deps.env);
   return pageState(findCard(store, cardId), store, nowOf2(deps));
+}
+async function readCardPage(cardId, env) {
+  return renderCardHtml(findCard(await loadStore(env), cardId), pageApiPort(env), pageApiCardToken(cardId, env));
 }
 function blockList(label2, value) {
   if (value === void 0) return void 0;
@@ -120336,7 +120346,7 @@ async function suggestionLogWrite(args, env = process.env) {
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync57, mkdirSync as mkdirSync25, readFileSync as readFileSync45, statSync as statSync21, writeFileSync as writeFileSync16 } from "node:fs";
+import { existsSync as existsSync57, mkdirSync as mkdirSync26, readFileSync as readFileSync45, statSync as statSync21, writeFileSync as writeFileSync16 } from "node:fs";
 import { win32 as pathWin3229 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
@@ -120372,7 +120382,7 @@ function repoDocsWrite(relative5, content, overwrite = false, env) {
       "exists"
     );
   }
-  mkdirSync25(pathWin3229.dirname(resolved), { recursive: true });
+  mkdirSync26(pathWin3229.dirname(resolved), { recursive: true });
   writeFileSync16(resolved, content, "utf-8");
   return {
     path: toPosixRelative(root, resolved),
@@ -120397,7 +120407,7 @@ function repoDocsRead(relative5, env) {
 }
 
 // src/pages/preview.ts
-import { basename as basename15, dirname as dirname31, join as join58, relative as relative4 } from "node:path";
+import { basename as basename15, dirname as dirname32, join as join58, relative as relative4 } from "node:path";
 
 // src/housekeeping/templates/approval.css.ts
 var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
@@ -121809,7 +121819,7 @@ var RAW_RESEARCH_FIXTURE = {
 };
 
 // src/pages/preview-file.ts
-import { mkdirSync as mkdirSync26, writeFileSync as writeFileSync17 } from "node:fs";
+import { mkdirSync as mkdirSync27, writeFileSync as writeFileSync17 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
 import { join as join57 } from "node:path";
 var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
@@ -121827,7 +121837,7 @@ function composeWithOverrides(set, overrides = {}) {
   return composeTemplate(set.entry, { ...set.files, ...overrides });
 }
 function writePreview(dir, base, html, fixture) {
-  mkdirSync26(dir, { recursive: true });
+  mkdirSync27(dir, { recursive: true });
   const text8 = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
 ` : html;
   for (let n3 = 1; ; n3++) {
@@ -121891,7 +121901,7 @@ async function pagesPreview(args, store) {
       throw new ValidationError("the Work Board covers the whole practice: it takes no matter_root, filing_id or proceeding_id");
     }
     const html2 = renderPracticeBoardHtml(await buildPracticeBoardData(store, /* @__PURE__ */ new Date()), composed);
-    return { path: writePreview(dirname31(resolvePracticeDbPath(store.env)), stem2(PRACTICE_BOARD_FILE), html2, false) };
+    return { path: writePreview(dirname32(resolvePracticeDbPath(store.env)), stem2(PRACTICE_BOARD_FILE), html2, false) };
   }
   if (args.matter_root === void 0) throw new ValidationError(`real data for the ${page2} page needs matter_root`);
   if (page2 === "Litigation Strategy" && (ids.filing_id !== void 0 || ids.proceeding_id !== void 0)) {
@@ -121928,7 +121938,7 @@ async function pagesPreview(args, store) {
     const which = ids.filing_id !== void 0 ? `Milestone ${ids.filing_id}` : "that proceeding's board";
     throw new ValidationError(`this matter has no ${page2} page for ${which}: it is retired, merged into a board with no such page, or not in this matter`);
   }
-  return { path: writePreview(dirname31(target), stem2(basename15(target)), html, false) };
+  return { path: writePreview(dirname32(target), stem2(basename15(target)), html, false) };
 }
 function withoutListener(page2) {
   return {
@@ -121948,7 +121958,7 @@ import {
   constants,
   copyFileSync as copyFileSync4,
   existsSync as existsSync58,
-  mkdirSync as mkdirSync27,
+  mkdirSync as mkdirSync28,
   readdirSync as readdirSync33,
   readFileSync as readFileSync50,
   statSync as statSync23,
@@ -122533,7 +122543,7 @@ function researchScratchDir(root) {
   for (const name of SCRATCH_SUBFOLDERS) {
     dir = pathWin3232.join(dir, name);
     try {
-      mkdirSync27(dir);
+      mkdirSync28(dir);
       created = true;
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
@@ -122710,7 +122720,7 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
   let outDir = researchScratchDir(root).dir;
   for (const name of [LAW_TEXT_SUBFOLDER, ...below]) {
     outDir = pathWin3232.join(outDir, name);
-    mkdirSync27(outDir, { recursive: true });
+    mkdirSync28(outDir, { recursive: true });
     assertUnprotected(canonicalRoot(outDir, `law-text folder does not resolve: ${outDir}`, "not_found"));
   }
   const rows4 = [];
@@ -122853,7 +122863,7 @@ function resolveOrCreateLawDir(destinationDir) {
   }
   let created = true;
   try {
-    mkdirSync27(pathWin3232.join(parent, pathWin3232.basename(destinationDir)));
+    mkdirSync28(pathWin3232.join(parent, pathWin3232.basename(destinationDir)));
   } catch (err) {
     if (err.code !== "EEXIST") throw err;
     created = false;
@@ -123272,7 +123282,7 @@ function sectionBlocks(chunks) {
 
 // src/files/extract/page-compare.ts
 import { createHash as createHash14 } from "node:crypto";
-import { mkdirSync as mkdirSync28, writeFileSync as writeFileSync19 } from "node:fs";
+import { mkdirSync as mkdirSync29, writeFileSync as writeFileSync19 } from "node:fs";
 import { isAbsolute as isAbsolute9, join as join60 } from "node:path";
 var FPDF_ANNOT = 1;
 var GROUP_MAX = 5;
@@ -123304,7 +123314,7 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         const write2 = (side, n3, facts) => {
           workDir ??= join60(args.destination_dir, `compare-${sha2563(dataA).slice(0, 16)}-${sha2563(dataB).slice(0, 16)}`);
           const dir = join60(workDir, side);
-          mkdirSync28(dir, { recursive: true });
+          mkdirSync29(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
           return tiles.map(([top, rows4], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
@@ -124159,9 +124169,9 @@ async function pageContext(context, args, writesPage) {
   const client = clientContext2(args);
   if (!writesPage) return { client, dates: await readMatterDates(context.practiceDb, client.matterNo) };
   const started = performance.now();
-  const draftDir = args.draft_dir ?? dirname32(args.presentation_dir);
-  const resolved = (await lookUpMatter(dirname32(draftDir), context.practiceDb, client)).client;
-  const matterNo = resolved.matterNo ?? matterToken(dirname32(draftDir)) ?? void 0;
+  const draftDir = args.draft_dir ?? dirname33(args.presentation_dir);
+  const resolved = (await lookUpMatter(dirname33(draftDir), context.practiceDb, client)).client;
+  const matterNo = resolved.matterNo ?? matterToken(dirname33(draftDir)) ?? void 0;
   const todos = await readMatterTodos(context.practiceDb, matterNo);
   const dates = await readMatterDates(context.practiceDb, matterNo);
   return { client: resolved, todos: { todos, ms: Math.round((performance.now() - started) * 10) / 10 }, dates };
@@ -124295,6 +124305,8 @@ async function handle3(req, res, env, startedAt, options) {
   }
   const w3 = /^\/suggestions\/([0-9a-f-]{36})\/withdraw$/.exec(url.pathname);
   if (w3) return withdraw(req, res, env, w3[1]);
+  const page2 = /^\/cards\/([0-9a-f-]{36})$/.exec(url.pathname);
+  if (page2) return cardPage(req, res, env, page2[1], url.searchParams.get("token"));
   const c3 = /^\/cards\/([0-9a-f-]{36})\/(state|submit|resolve|dismiss|restore|mockup|reject)$/.exec(url.pathname);
   if (c3) return cardClick(req, res, { ...options.card, env }, c3[1], c3[2]);
   const m3 = /^\/seeds\/([1-9]\d*)\/(defer|undefer)$/.exec(url.pathname);
@@ -124350,6 +124362,26 @@ async function withdraw(req, res, env, recordId) {
     await writePastSuggestionsPage(env).catch(() => void 0);
   }
   json2(req, res, WITHDRAW_STATUS[result.outcome], result);
+}
+async function cardPage(req, res, env, cardId, token) {
+  if (req.method !== "GET") return json2(req, res, 405, { error: "Method not allowed" });
+  if (token === null || !pageApiCardTokenValid(token, cardId, env)) {
+    return json2(req, res, 403, { error: "This page's token does not match this suggestion. Ask a Claude session to show it again." });
+  }
+  let html;
+  try {
+    html = await readCardPage(cardId, env);
+  } catch (err) {
+    if (err.code === "not_found") return json2(req, res, 404, { error: "Not found" });
+    throw err;
+  }
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer"
+  });
+  res.end(html);
 }
 async function cardClick(req, res, deps, cardId, route2) {
   if (req.method !== "POST") return json2(req, res, 405, { error: "Method not allowed" });
