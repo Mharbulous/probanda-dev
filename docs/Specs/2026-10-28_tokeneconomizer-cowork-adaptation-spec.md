@@ -37,8 +37,13 @@ Each test runs inside a Cowork session that has the plugin installed and an empt
 | R5 | What was learned survives to the next session | A second Cowork session on the same folder finds the marker that the first session wrote in `S` |
 | R6 | A finished session is folded | `te status` in the second session counts the first session |
 | R7 | A hook can call a tool on `lawyer`'s `data` server | A `UserPromptSubmit` hook of type `mcp_tool` calling `practice_data__config_status` puts that tool's output into the session |
+| R8 | `PostToolUse` fires for a tool on the PC | The hook's input for `mcp__remote-devices__plugin_lawyer_data__practice_data__config_status` carries the tool's response |
+| R9 | A redirect reaches the Cowork model | A `PostToolUse` hook's `additionalContext` reaches the model, and its `systemMessage` reaches the person |
+| R10 | The loop guard reads the PC shell's commands | `canon_tool` maps `mcp__remote-devices__device_bash` to `bash`, and its `command` input reaches the action log (fork test `tests/test_loopguard_state.py`) |
+| R11 | The hook's cost per session is known | Hook time per tool call, judge calls per session, and the credentials `claude -p` in the container uses are recorded |
+| R12 | `SessionEnd` fires and its fold finishes | A `SessionEnd` hook's marker, and the fold's log, can be read after the session ends |
 
-R5 and R6 need a second session. The other five run in the first.
+R5 and R6 need a second session. The others run in the first. R8, R9, R11 and R12 ran with a temporary probe hook in plugin 0.1.3.
 
 ## Facts to record
 
@@ -53,7 +58,7 @@ The red run records these, because the green stage's design depends on them.
 
 ## Red run results
 
-Run by Brahm on 2026-10-28 in five probes, each a new Cowork session in the project `te-cowork-test` except probe 3, which ran in a matter project. Plugin 0.1.0, except R7 on 0.1.1.
+Run by Brahm on 2026-10-28 in six probes, each a new Cowork session in the project `te-cowork-test` except probe 3, which ran in a matter project. Plugin 0.1.0, except R7 on 0.1.1 and R8 to R12 on 0.1.3.
 
 | Id | Result | Evidence |
 |---|---|---|
@@ -64,6 +69,11 @@ Run by Brahm on 2026-10-28 in five probes, each a new Cowork session in the proj
 | R5 | FAIL | No marker survived to the next session in `/root/.tokeneconomizer`, `/root`, `/tmp`, `/home/claude`, `/root/.claude/plugins/data`, `/mnt/user-data` or `/mnt/attach/outputs` |
 | R6 | FAIL | The second session reported "0 folded" |
 | R7 | FAIL | Plugin 0.1.1 carried two such hooks, one with server `plugin:lawyer:data` and one with server `remote-devices` and tool `plugin_lawyer_data__practice_data__config_status`. Neither put any output into the session, and neither reported an error. Removed in 0.1.2 |
+| R8 | PASS | The hook's input for the PC's `config_status` held the response (1,276 characters). It fired for the PC shell too |
+| R9 | PARTIAL | The `additionalContext` line reached the model, as context added after the call. Whether the `systemMessage` showed on screen was not reported |
+| R10 | FAIL | Cowork sends the PC shell as `mcp__remote-devices__device_bash` with input key `command`. The fork test fails as expected, marked `xfail` until the green build (fork commit `bc804bd`) |
+| R11 | RECORDED | A hook call took 0.082 to 0.089 s (five runs). No judge calls and 0.0 judge tokens, because no envelope exists. No `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` is set. `ANTHROPIC_BASE_URL` and `CLAUDE_SESSION_INGRESS_TOKEN_FILE` are, so `claude -p` appears to bill through the session's own account (inferred, not verified) |
+| R12 | NOT OBSERVABLE | `/clear` does not work in Cowork, and a session ends only when its container does, which leaves nothing to read (R5). The green design does not depend on `SessionEnd` |
 
 Facts recorded:
 
@@ -87,12 +97,7 @@ Brahm's ruling of 2026-10-28, after an independent review: nothing in the green 
 - Build the green design only if the guard would have redirected stuck turns often enough to repay that overhead. Otherwise the end state is: in Cowork, everything but the loop guard off, and the listing says what the plugin does there.
 - One open point for the measurement: the loop guard learns one envelope for all sessions, but a one-shot lookup and a long housekeeping run differ widely in length, so a pooled envelope may be too loose to act. The shadow log shows the spread.
 
-Red tests to add before any green build:
-
-- A `PostToolUse` redirect (`additionalContext` and `systemMessage`) reaches the Cowork model.
-- `canon_tool` maps `mcp__remote-devices__device_bash` to `bash` (R3's missing half).
-- Cost per Cowork session: hook time per tool call, judge calls per session, and which account `claude -p` in the container bills.
-- Whether `SessionEnd` fires in the container, and whether the detached fold finishes before the container ends.
+The red tests the review asked for before any green build are R8 to R12.
 
 ## Green design
 
@@ -101,11 +106,10 @@ From Brahm's rulings of 2026-10-28. On hold until "Measure first" says to build.
 - **One pattern.** TokenEconomizer keeps one learned pattern for all Probanda projects, not one per folder.
 - **A Probanda plugin.** TokenEconomizer becomes a Probanda plugin, governed by COMMANDMENTS.md. It stays optional and separate from `lawyer`, and has no server of its own. It moves from `vendor/` to `source/tokeneconomizer/` and is built and released like the other plugins. CLAUDE.md's "Vendored plugin" section changes with that move.
 - **Storage on the PC.** The pattern is stored through `lawyer`'s `data` server, in SQLite under the Probanda app data folder, by two tools: one reads the pattern and one saves it. First check whether the `time_pipeline` key-value tools can take a `tokeneconomizer` namespace instead of new tools. The store obeys Commandments 3 and 5.
-- **The model carries the pattern, because R7 failed.** At the first prompt, the hook tells the model to call the read tool. The `PostToolUse` hook receives that tool's response in its input and writes the pattern to the local state root, where the loop guard reads it. At `Stop`, the hook asks the model to call the save tool with the updated pattern. This is the route Probanda's own hooks already use, for example `lawyer`'s note that tells the model to call `practice_data__config_status`.
+- **The model carries the pattern, because R7 failed.** At the first prompt, the hook tells the model to call the read tool. The `PostToolUse` hook receives that tool's response in its input (R8) and writes the pattern to the local state root, where the loop guard reads it. At each later prompt, the hook's `additionalContext` (R9) asks the model to call the save tool with only the turns resolved since the last save. Each session's last turn is lost, which is accepted, because nothing runs after it (R12) and a `Stop` block would cost the model an extra step on every turn. This is the route Probanda's own hooks already use, for example `lawyer`'s note that tells the model to call `practice_data__config_status`.
 
 Open questions:
 
-- Whether Cowork's `PostToolUse` hook receives the response of a tool on the PC (`mcp__remote-devices__plugin_lawyer_data__*`). The red run saw that hook fire only for cloud tools. The green stage's first test checks it.
 - The token cost of the save at `Stop`, since the model writes the whole pattern out as the tool's input. A small pattern keeps it cheap. If it is not small, save only what changed.
 - Whether tool pruning can take effect in Cowork. It writes `.claude/settings.local.json` during a session on a fresh machine, which may be too late to change that session's tools.
 - The measured gain. Cowork already defers tools, so the saving may be small. The green stage measures it before the refactor.
