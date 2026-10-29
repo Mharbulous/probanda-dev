@@ -523,7 +523,12 @@ export async function callTool(
   }
 
   if (name === "pdf_pages__compare") {
-    return pdfPagesCompare({ a: args.a as string, b: args.b as string, pages: args.pages as string | undefined });
+    return pdfPagesCompare({
+      a: args.a as string,
+      b: args.b as string,
+      pages: args.pages as string | undefined,
+      destination_dir: args.destination_dir as string,
+    });
   }
 
   if (isKeyRequestToolName(name)) {
