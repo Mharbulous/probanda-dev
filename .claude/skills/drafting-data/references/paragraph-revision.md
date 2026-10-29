@@ -1,4 +1,4 @@
-Read when: `/draft`'s `draft/references/revise-on-the-fly.md` revises one reviewed paragraph, or swaps or moves facts on a Writing (§6), in any session, holding a job or not.
+Read when: `/draft`'s `draft/references/revise-on-the-fly.md` revises one reviewed paragraph, or swaps or moves facts (§6) or material to be relied on (§7) on a Writing, in any session, holding a job or not.
 
 # On-the-fly paragraph revision
 
@@ -158,3 +158,56 @@ SELECT entity_id, old_text, new_text FROM paragraph_revisions
 Exchanged ordinals with two new audit rows: landed. Old ordinals with none: nothing was written; say so and re-render.
 
 5. **Move to position K.** Consecutive adjacent swaps, each its own script, re-locating (step 1) before each. Stop at the first swap that writes nothing and report the order as it then stands. Every intermediate order is valid, so a stop leaves no damage. A move over d positions writes d scripts and 2d audit rows.
+
+## 7. Material move
+
+Swapping two lines of a Writing's material to be relied on (a Notice of Application's Part 4, an Application Response's Part 6), or moving one to another position. A move changes `filing_documents.ordinal` only: no wording, so no revised paragraph shown and no approval, and 🧐 is not re-raised. The rendered line number is the row's position in the list sorted by `ordinal`, witness statements left out, not the ordinal itself. Unlike §6, a material move writes **no** `paragraph_revisions` row: that table's CHECKs admit `choice` `'move'` for `entity` `'filing_facts'` alone, so the swap is the two `UPDATE`s and nothing else. The #712 triggers refuse any write to a filed Writing's rows; the swap's own guard also refuses a retired one. Examples use Writing 8, rows 51 and 52 holding documents 14 and 17 at ordinals 2 and 3, and session `'sess-a1'`.
+
+**Exhibit numbers.** "Ex. N" follows this order. On every Writing but a VanIAC submissions package, Ex. N is the document's position in this list, so a swap changes the two documents' Ex. N, and every Ex. N the mockup prints follows at render time. On a VanIAC submissions package, numbers run across the proceeding: a document an earlier round already numbered keeps its number, and only a document first numbered in this draft takes one from the new order. On either, an affidavit's own exhibit letters do not change, and an "Ex. 3" typed into wording is not renumbered.
+
+1. **Locate.** The material lines print a positional trace only (`<!-- document N -->`), so the practitioner's positions are read off the ordered list:
+
+```sql
+SELECT fd.id, fd.document_id, fd.ordinal, f.kind, f.filed_on, f.retired_on
+  FROM filing_documents fd JOIN filings f ON f.id = fd.filing_id
+ WHERE fd.filing_id = 8 AND fd.role <> 'witness_statement'
+ ORDER BY fd.ordinal, fd.id;
+```
+
+Positions N and M are rows N and M of this list, counting from 1. The standard closing lines printed after the list are template text and never move. Stop, writing nothing and saying why, if the Writing is sent or retired (`filed_on` or `retired_on` set), a position is out of range, or either row's ordinal is shared with another row of the list (the rendered order is undefined there).
+
+2. **Foreign-scope read.** In place of §3's read, a material move reads three scopes: `filing_documents` naming either row, `documents` naming either document, and `filings` naming this Writing, each also matching a NULL `entity_id`:
+
+```sql
+SELECT DISTINCT t.id, t.title FROM tickets t JOIN ticket_scope s ON s.ticket_id = t.id
+ WHERE t.status = 'wip' AND t.rejected_at IS NULL AND t.deleted_at IS NULL AND t.locked_by <> 'sess-a1'
+   AND ((s.entity = 'filing_documents' AND (s.entity_id IN (51, 52) OR s.entity_id IS NULL))
+     OR (s.entity = 'documents'        AND (s.entity_id IN (14, 17) OR s.entity_id IS NULL))
+     OR (s.entity = 'filings'          AND (s.entity_id = 8         OR s.entity_id IS NULL)));
+```
+
+Any row back: refuse with `Job #<id>: <title>` and write nothing.
+
+3. **The one-script swap.** Row A at ordinal a, row B at ordinal b; here A is row 51 at 2 and B is row 52 at 3:
+
+```sql
+UPDATE filing_documents SET ordinal = 3
+ WHERE id = 51 AND ordinal = 2
+   AND (SELECT ordinal FROM filing_documents WHERE id = 52) = 3
+   AND filing_id IN (SELECT id FROM filings WHERE filed_on IS NULL AND retired_on IS NULL);
+UPDATE filing_documents SET ordinal = 2
+ WHERE id = 52 AND ordinal = 3
+   AND (SELECT ordinal FROM filing_documents WHERE id = 51) = 3;
+```
+
+Statement order matters, as in §6. The first `UPDATE` lands only if A is still at a, B at b, and the Writing is neither sent nor retired. After it, A and B both hold b, so the second `UPDATE`'s check that A holds b is the proof the first landed. If the first matched nothing (a peer moved either row, or already made the same swap), the second matches nothing too.
+
+4. **Confirm by re-query, never by `changes`** (the returned count includes trigger writes):
+
+```sql
+SELECT id, ordinal FROM filing_documents WHERE id IN (51, 52);
+```
+
+Exchanged ordinals: landed. Old ordinals: nothing was written; say so and re-render.
+
+5. **Move to position K.** Consecutive adjacent swaps, each its own script, re-locating (step 1) before each. Stop at the first swap that writes nothing and report the order as it then stands. Every intermediate order is valid, so a stop leaves no damage.

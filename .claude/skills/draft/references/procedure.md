@@ -88,7 +88,7 @@ When session entry reported no draft folder, when a render refuses with `draft_d
 <!-- atom id=draft.s12 ops=substance,revise_on_the_fly -->
 ## 12. Revise
 
-This section's rules are in `references/substance-and-revise.md`. Read it when the practitioner asks for a change. A request to reword one reviewed paragraph, or swap or move facts on a Writing, follows `references/revise-on-the-fly.md`.
+This section's rules are in `references/substance-and-revise.md`. Read it when the practitioner asks for a change. A request to reword one reviewed paragraph, or swap or move a Writing's facts or its material to be relied on, follows `references/revise-on-the-fly.md`.
 
 <!-- atom id=draft.s13 ops=assemble -->
 ## 13. Assemble, then gate
@@ -159,4 +159,4 @@ This section's rules are in `references/assemble-then-gate.md`. Read it when the
 <!-- atom id=draft.ref.tangents ops=tangent -->
 | The practitioner starts a read-only turn outside scope (section 14) | `references/tangents.md` |
 <!-- atom id=draft.ref.revise-on-the-fly ops=revise_on_the_fly -->
-| The practitioner asks to reword one reviewed paragraph, or swap or move facts on a Writing (section 12) | `references/revise-on-the-fly.md` |
+| The practitioner asks to reword one reviewed paragraph, or swap or move a Writing's facts or its material to be relied on (section 12) | `references/revise-on-the-fly.md` |

@@ -118,7 +118,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Read a statement for its review | A review job picked | `references/scrutiny.md` "Read for review" |
 | Read a submission's legal basis | Is the test on file? | `references/scrutiny.md` "Read a submission's legal basis" |
 | Close a scrutiny review | A reviewed statement closed | `references/scrutiny.md` "Close a review (change or keep)" / "Close a review (drop)" |
-| Revise one reviewed paragraph, or swap facts on a Writing, on the fly | `/draft` runs `draft/references/revise-on-the-fly.md` | `references/paragraph-revision.md` |
+| Revise one reviewed paragraph, or swap a Writing's facts or its material to be relied on, on the fly | `/draft` runs `draft/references/revise-on-the-fly.md` | `references/paragraph-revision.md` |
 
 ## Schema reference
 
