@@ -72,6 +72,16 @@ export function longDate(iso: string): string {
   return `${MONTHS[Number(m[2]) - 1]} ${Number(m[3])}, ${m[1]}`;
 }
 
+/** A BCSC material line's date: ", dated July 8, 2026", the form's long style, never the stored
+ * ISO date; nothing when there is no date or the label already names it in either style. The
+ * Notice of Application's Part 4, the Application Response's Part 6 and the Form 32 and Form 33
+ * emits share it (spec 2026-10-09, material relied on write path). */
+export function materialDateSuffix(label: string, documentDate: string | null): string {
+  if (!documentDate) return "";
+  const long = longDate(documentDate);
+  return label.includes(long) || label.includes(documentDate) ? "" : `, dated ${long}`;
+}
+
 export interface ChronologyRow {
   event_date: string;
   event: string;

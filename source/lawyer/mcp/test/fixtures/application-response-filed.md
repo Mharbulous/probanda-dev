@@ -45,7 +45,7 @@ The application respondent(s) take(s) no position on the granting of the orders 
 
 ## PART 6: MATERIAL TO BE RELIED ON
 
-1. Affidavit of Reece Ferris (2026-08-10) (served with this application response)
+1. Affidavit of Reece Ferris, dated August 10, 2026 (served with this application response)
 2. Pleadings filed in this proceeding
 3. Such further affidavits or filed court documents as this honourable court may allow
 

@@ -37,7 +37,7 @@ import {
   type RenderContext,
 } from "./render-vaniac-submissions.js";
 import { fetchRhetoric, interleave, renderRhetoricFiled } from "./render-rhetoric.js";
-import { longDate } from "./render-bcca-factum.js";
+import { longDate, materialDateSuffix } from "./render-bcca-factum.js";
 import type { FilingDocumentRow } from "./render-vaniac-submissions.js";
 import { factsPart, fetchFacts } from "./filing-facts.js";
 import { factStatementCitationLine } from "./statement-lines.js";
@@ -428,7 +428,7 @@ export function renderForm32FiledFace(ctx: RenderContext, warnings?: PublishWarn
   materials.forEach((d) => {
     const a = affidavitFields.get(d.document_id);
     if (d.role === "affidavit" || a?.instrument === "affidavit") lines.push(`- ${affidavitLine(d, a)}`);
-    else lines.push(`- ${d.label}${d.document_date ? ` (${longDate(d.document_date)})` : ""}`);
+    else lines.push(`- ${d.label}${materialDateSuffix(d.label, d.document_date)}`);
   });
   // The pleadings line always prints, so Part 4 is never empty and never "Nil.". The other
   // standard line, "Such further affidavits ... as this honourable court may allow", identifies no

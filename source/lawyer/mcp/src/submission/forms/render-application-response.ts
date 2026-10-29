@@ -53,6 +53,7 @@ import {
   type RenderContext,
 } from "./render-vaniac-submissions.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
+import { materialDateSuffix } from "./render-bcca-factum.js";
 import { factsPart, fetchFacts, fetchStatementsOfFact, type StatementOfFactRow } from "./filing-facts.js";
 import { filingFrontmatter } from "./filing-frontmatter.js";
 import { rows } from "../query-rows.js";
@@ -467,7 +468,7 @@ export function renderApplicationResponse(ctx: RenderContext): string {
     const provenance = provenanceLabel(provenanceMap.get(d.document_id));
     const provenancePart = provenance ? ` (${provenance})` : "";
     lines.push(
-      `${i + 1}. ${d.label}${d.document_date ? ` (${d.document_date})` : ""}${provenancePart}${copy ? ` ${copy}` : ""} <!-- document ${i + 1} -->`
+      `${i + 1}. ${d.label}${materialDateSuffix(d.label, d.document_date)}${provenancePart}${copy ? ` ${copy}` : ""} <!-- document ${i + 1} -->`
     );
   });
   // The standard closing lines: template text, so no marker, no criterion glyph, no provenance and no trace.

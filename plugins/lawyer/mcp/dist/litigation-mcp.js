@@ -1,4 +1,4 @@
-// build-stamp: d62525581ca7
+// build-stamp: efa30ed0cd53
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -81338,7 +81338,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "d62525581ca7";
+var BUILD_STAMP = false ? null : "efa30ed0cd53";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -91879,339 +91879,6 @@ function filingFrontmatter(proceeding, ctx, documentType) {
   return frontmatterHeader(fields2);
 }
 
-// src/submission/forms/render-application-response.ts
-function fetchHearingDetails(dbPath, filingId) {
-  const found = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
-  return found[0];
-}
-function hearingDateSentence(hearing) {
-  const date3 = hearing?.proposed_hearing;
-  switch (hearing?.hearing_date_position) {
-    case "none_proposed":
-      return "";
-    case "agree":
-      return date3 ? `The application respondent(s) agree to the applicant's hearing date of ${date3}.` : null;
-    case "propose_other":
-      return date3 ? `The application respondent(s) do not agree to the applicant's hearing date and propose the following date(s): ${date3}.` : null;
-    default:
-      return null;
-  }
-}
-function fetchFilingPositions(dbPath, filingId) {
-  return rows(
-    dbPath,
-    `SELECT oo.id AS opposing_order_id, oo.paragraph_number, oo.wording, oo.document_id,
-            fp.position, fp.proposed_terms
-     FROM filing_positions fp
-     JOIN opposing_orders oo ON oo.id = fp.opposing_order_id
-     WHERE fp.filing_id = ?
-     ORDER BY oo.paragraph_number`,
-    [filingId]
-  );
-}
-function resolveRespondedToDocument(dbPath, proceedingId, positions) {
-  const positionedIds = new Set(positions.map((p3) => p3.document_id));
-  let documentId;
-  if (positionedIds.size === 1) {
-    documentId = [...positionedIds][0];
-  } else if (positionedIds.size === 0) {
-    const candidates = rows(
-      dbPath,
-      `SELECT DISTINCT document_id FROM opposing_orders WHERE proceeding_id = ?`,
-      [proceedingId]
-    );
-    if (candidates.length === 1) documentId = candidates[0].document_id;
-  }
-  if (documentId === void 0) return void 0;
-  const found = rows(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
-  return found[0];
-}
-function fetchUnpositionedOrders(dbPath, filingId, documentId) {
-  return rows(
-    dbPath,
-    `SELECT oo.id, oo.paragraph_number, oo.wording
-     FROM opposing_orders oo
-     WHERE oo.document_id = ?
-       AND oo.id NOT IN (SELECT opposing_order_id FROM filing_positions WHERE filing_id = ?)
-     ORDER BY oo.paragraph_number`,
-    [documentId, filingId]
-  );
-}
-function fetchPartSixProvenance(dbPath, filingId) {
-  const found = rows(
-    dbPath,
-    `SELECT document_id, provenance FROM filing_documents WHERE filing_id = ? AND role != 'witness_statement'`,
-    [filingId]
-  );
-  return new Map(found.map((r3) => [r3.document_id, r3.provenance]));
-}
-function provenanceLabel(p3) {
-  if (p3 === "served_with_this_response") return "served with this application response";
-  if (p3 === "already_in_court_file") return "already in the court file";
-  return "";
-}
-function witnessBackedFlags(dbPath, factIds) {
-  if (factIds.length === 0) return /* @__PURE__ */ new Map();
-  const placeholders = factIds.map(() => "?").join(",");
-  const found = rows(
-    dbPath,
-    `SELECT f.id AS fact_id, EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
-     FROM facts f WHERE f.id IN (${placeholders})`,
-    factIds
-  );
-  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
-}
-function afsCheckbox(party) {
-  if (!party) return `[ ] Yes  [ ] No ${gapMarker("question")}`;
-  if (party.address_for_service_filed === "yes") return "[x] Yes  [ ] No";
-  if (party.address_for_service_filed === "no") return "[ ] Yes  [x] No";
-  return `[ ] Yes  [ ] No ${gapMarker("question")}`;
-}
-function renderApplicationResponse(ctx) {
-  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
-  const client = ctx.parties.find((p3) => p3.is_client === 1);
-  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
-  const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
-  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
-  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
-  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
-  const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
-  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("application_response"));
-  const statementsOfFact = fetchStatementsOfFact(ctx.dbPath, facts.map((f3) => f3.id));
-  const witnessBacked = witnessBackedFlags(ctx.dbPath, facts.map((f3) => f3.id));
-  const statementsByFact = /* @__PURE__ */ new Map();
-  for (const stmt of statementsOfFact) {
-    const list = statementsByFact.get(stmt.fact_id) ?? [];
-    list.push(stmt);
-    statementsByFact.set(stmt.fact_id, list);
-  }
-  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
-  const submissionIds = submissions.map((s3) => s3.id);
-  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
-  const lawBySubmission = groupSubmissionLaw(lawRows);
-  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
-  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
-  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
-  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
-  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
-    ctx.dbPath,
-    allFactIds,
-    opposingPartyIds(ctx.parties),
-    ctx.rendered.slice(0, 10)
-  );
-  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
-  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
-  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
-  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
-  for (const s3 of [...statementsOfFact, ...submissionFactStatements]) {
-    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
-    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
-  }
-  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
-  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
-  const provenanceMap = fetchPartSixProvenance(ctx.dbPath, ctx.filing.id);
-  const lines2 = [];
-  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Application_response"));
-  lines2.push("");
-  lines2.push(
-    styleOfProceedingCaption(captionParties2, {
-      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
-      registry: ctx.proceeding.registry,
-      fileNumber: ctx.proceeding.file_number,
-      titleLine: "APPLICATION RESPONSE"
-    })
-  );
-  lines2.push("");
-  const clientName = client?.name ?? gapMarker("gap");
-  const applicantName = applicant?.name ?? gapMarker("gap");
-  const datedOn = respondedTo?.document_date ?? gapMarker("gap");
-  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : gapMarker("gap");
-  const hearingDate = hearingDateSentence(hearing) ?? `The application respondent(s) ${gapMarker("gap")}`;
-  recordCriterionGlyphs(ctx.inventory, clientName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of application respondent" });
-  recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Name of applicant" });
-  recordCriterionGlyphs(ctx.inventory, datedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date of the notice of application" });
-  recordCriterionGlyphs(ctx.inventory, estimate, ["\u{1F9E9}"], { table: "form_fields", id: 3, item: "Time estimate" });
-  recordCriterionGlyphs(ctx.inventory, hearingDate, ["\u{1F9E9}"], { table: "form_fields", id: 4, item: "Whether the application respondent agrees with the applicant's hearing date" });
-  lines2.push(`Application response of: the ${client?.role ?? "Application Respondent"}, ${clientName}`);
-  lines2.push(
-    `THIS IS A RESPONSE TO the notice of application of the ${applicant?.role ?? "Applicant"}, ${applicantName}, dated ${datedOn}.`
-  );
-  lines2.push("");
-  if (hearingDate !== "") {
-    lines2.push(hearingDate);
-    lines2.push("");
-  }
-  lines2.push(`The application respondent estimates that the application will take ${estimate}`);
-  lines2.push("");
-  const consented = positions.filter((p3) => p3.position === "consented");
-  const opposed = positions.filter((p3) => p3.position === "opposed");
-  const noPosition = positions.filter((p3) => p3.position === "no_position");
-  lines2.push("## PART 1: ORDER(S) CONSENTED TO");
-  lines2.push("");
-  if (consented.length === 0) {
-    lines2.push("NONE");
-  } else {
-    consented.forEach((p3) => {
-      const terms2 = p3.proposed_terms || `Order ${p3.paragraph_number}`;
-      lines2.push(`Order ${p3.paragraph_number}: ${p3.wording} -- consented, on the following terms: ${terms2} <!-- order ${p3.paragraph_number} -->`);
-    });
-  }
-  lines2.push("");
-  lines2.push("## PART 2: ORDER(S) OPPOSED");
-  lines2.push("");
-  if (opposed.length === 0) {
-    lines2.push("The application respondent(s) oppose(s) the granting of NONE of the orders set out in Part 1 of the notice of application.");
-  } else {
-    lines2.push(
-      `The application respondent(s) oppose(s) the granting of the orders set out in paragraphs ${opposed.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
-    );
-    opposed.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
-  }
-  lines2.push("");
-  lines2.push("## PART 3: ORDER(S) ON WHICH NO POSITION IS TAKEN");
-  lines2.push("");
-  if (noPosition.length === 0) {
-    lines2.push("The application respondent(s) take(s) no position on the granting of NONE of the orders set out in Part 1 of the notice of application.");
-  } else {
-    lines2.push(
-      `The application respondent(s) take(s) no position on the granting of the orders set out in paragraphs ${noPosition.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
-    );
-    noPosition.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
-  }
-  lines2.push("");
-  if (unpositioned.length > 0) {
-    lines2.push("## Positions not yet taken");
-    lines2.push("");
-    unpositioned.forEach((o3) => {
-      const marker = unpositionedOrderMarker();
-      recordCriterionGlyphs(ctx.inventory, marker, ["\u2B1C"], { table: "opposing_orders", id: o3.id, item: o3.wording, instance: "unpositioned-order" });
-      lines2.push(`- Order ${o3.paragraph_number}: ${o3.wording} ${marker} <!-- order ${o3.paragraph_number} -->`);
-    });
-    lines2.push("");
-  }
-  let partNum = 0;
-  lines2.push("## PART 4: FACTUAL BASIS");
-  lines2.push("");
-  const factParagraphs = /* @__PURE__ */ new Map();
-  for (const entry2 of interleave(facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), (f3) => f3.filing_ordinal)) {
-    partNum += 1;
-    if (entry2.kind === "rhetoric") {
-      lines2.push(...renderRhetoricLine(ctx, entry2.row, partNum, ""));
-      continue;
-    }
-    const f3 = entry2.item;
-    factParagraphs.set(f3.id, partNum);
-    const stmts = statementsByFact.get(f3.id) ?? [];
-    const admitted = admittedFactIds.has(f3.id);
-    const courtRecordLinked = f3.court_record !== null;
-    const owedWitness = noWitnessMarker(courtRecordLinked, witnessBacked.get(f3.id) ?? false, admitted, spentGlyphByFact.get(f3.id) ?? "");
-    const witnessSuppressed = suppressedFactIds.has(f3.id);
-    const witnessMarker = suppressMarker(owedWitness, witnessSuppressed);
-    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
-    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
-    const looseThread = looseThreadMarker(true, waIds.factIds.has(f3.id));
-    recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
-    recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
-    const tokens2 = [witnessMarker, courtRecordPin, looseThread];
-    const statementSets = [];
-    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
-    for (const s3 of stmts) {
-      const statementTokens = [];
-      statementSets.push(statementTokens);
-      if (!guarded) {
-        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
-        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
-      }
-      statementTokens.push(
-        statementOfFactMarkers({
-          interviewed: s3.interviewed,
-          instrument_id: s3.instrument_id,
-          instrument_kind: s3.instrument_kind,
-          instrument_execution: s3.instrument_execution,
-          fact_court_record_linked: courtRecordLinked,
-          fact_admitted_by_all_opposing: admitted
-        })
-      );
-      statementTokens.push(doubtMarker(s3.doubt));
-      if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
-      tokens2.push(...statementTokens);
-      recordFactStatementGlyphs(
-        ctx.inventory,
-        dedupeLineMarkers(statementTokens),
-        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
-        f3.postulate
-      );
-    }
-    const lineGlyphs = dedupeLineMarkers(tokens2);
-    const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
-    stmts.forEach((s3, i3) => {
-      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
-    });
-    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
-    const citationLines = [
-      ...courtRecordCite ? [`> ${courtRecordCite}`] : [],
-      ...stmts.filter((s3) => s3.purpose !== "impeachment").flatMap((s3) => factStatementCitationLine(exhibitMap, labelMap, s3) ?? [])
-    ];
-    const trace = `<!-- fact ${partNum} -->`;
-    lines2.push(`${partNum}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
-    citationLines.forEach((c3, i3) => lines2.push(`   ${c3}${i3 === citationLines.length - 1 ? ` ${trace}` : ""}`));
-  }
-  lines2.push("");
-  lines2.push("## PART 5: LEGAL BASIS");
-  lines2.push("");
-  const renderedLawAssertions = /* @__PURE__ */ new Map();
-  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
-    if (entry2.kind === "rhetoric") {
-      partNum += 1;
-      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, partNum, ""), "");
-      continue;
-    }
-    const s3 = entry2.item;
-    recordParagraph(ctx, s3.id, "form", partNum);
-    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s3.id));
-    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_submissions", id: s3.pointer_id, item: s3.contention });
-    const result = renderSubmissionParagraphs(
-      s3.id,
-      s3.contention,
-      partNum,
-      factsBySubmission.get(s3.id) ?? [],
-      lawBySubmission.get(s3.id) ?? [],
-      exhibitMap,
-      labelMap,
-      copyMarkers,
-      looseThread,
-      renderedLawAssertions,
-      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings, factParagraphs, printUnplacedFacts: Boolean(ctx.filing.filed_on || ctx.filing.retired_on) }
-    );
-    lines2.push(...result.lines);
-    lines2.push("");
-    partNum = result.nextPara;
-  }
-  lines2.push("## PART 6: MATERIAL TO BE RELIED ON");
-  lines2.push("");
-  docs.forEach((d3, i3) => {
-    const copy = copyMarkers.get(d3.document_id) ?? "";
-    recordCriterionGlyphs(ctx.inventory, copy, ["\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
-    const provenance4 = provenanceLabel(provenanceMap.get(d3.document_id));
-    const provenancePart = provenance4 ? ` (${provenance4})` : "";
-    lines2.push(
-      `${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${provenancePart}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
-    );
-  });
-  STANDARD_MATERIAL_LINES.forEach((text8, i3) => lines2.push(`${docs.length + i3 + 1}. ${text8}`));
-  lines2.push("");
-  lines2.push("**Address for service filed:**");
-  const afs = afsCheckbox(client);
-  recordCriterionGlyphs(ctx.inventory, afs, ["\u{1F575}\uFE0F"], { table: "filings", id: ctx.filing.id, item: "Address for service filed" });
-  lines2.push(afs);
-  lines2.push("");
-  lines2.push(checkboxOrderBlock([]));
-  lines2.push("");
-  if (client) lines2.push(signatureBlock({ name: client.name, role: client.role, counselName: client.counsel_name }, true));
-  return lines2.join("\n").trimEnd() + "\n";
-}
-
 // src/submission/forms/render-bcca-stay-response.ts
 function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, inventory, review) {
   const statementsByFact = /* @__PURE__ */ new Map();
@@ -92679,6 +92346,11 @@ function longDate(iso2) {
   if (!m3) return iso2;
   return `${MONTHS2[Number(m3[2]) - 1]} ${Number(m3[3])}, ${m3[1]}`;
 }
+function materialDateSuffix(label2, documentDate) {
+  if (!documentDate) return "";
+  const long = longDate(documentDate);
+  return label2.includes(long) || label2.includes(documentDate) ? "" : `, dated ${long}`;
+}
 function fetchChronology(dbPath, filingId) {
   return rows(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
 }
@@ -93049,6 +92721,339 @@ function renderBccaFactum(ctx) {
       "Parts 1-4 are limited to 30 pages; more pages need an order under R. 48(1)(f)."
     )
   );
+  return lines2.join("\n").trimEnd() + "\n";
+}
+
+// src/submission/forms/render-application-response.ts
+function fetchHearingDetails(dbPath, filingId) {
+  const found = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  return found[0];
+}
+function hearingDateSentence(hearing) {
+  const date3 = hearing?.proposed_hearing;
+  switch (hearing?.hearing_date_position) {
+    case "none_proposed":
+      return "";
+    case "agree":
+      return date3 ? `The application respondent(s) agree to the applicant's hearing date of ${date3}.` : null;
+    case "propose_other":
+      return date3 ? `The application respondent(s) do not agree to the applicant's hearing date and propose the following date(s): ${date3}.` : null;
+    default:
+      return null;
+  }
+}
+function fetchFilingPositions(dbPath, filingId) {
+  return rows(
+    dbPath,
+    `SELECT oo.id AS opposing_order_id, oo.paragraph_number, oo.wording, oo.document_id,
+            fp.position, fp.proposed_terms
+     FROM filing_positions fp
+     JOIN opposing_orders oo ON oo.id = fp.opposing_order_id
+     WHERE fp.filing_id = ?
+     ORDER BY oo.paragraph_number`,
+    [filingId]
+  );
+}
+function resolveRespondedToDocument(dbPath, proceedingId, positions) {
+  const positionedIds = new Set(positions.map((p3) => p3.document_id));
+  let documentId;
+  if (positionedIds.size === 1) {
+    documentId = [...positionedIds][0];
+  } else if (positionedIds.size === 0) {
+    const candidates = rows(
+      dbPath,
+      `SELECT DISTINCT document_id FROM opposing_orders WHERE proceeding_id = ?`,
+      [proceedingId]
+    );
+    if (candidates.length === 1) documentId = candidates[0].document_id;
+  }
+  if (documentId === void 0) return void 0;
+  const found = rows(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
+  return found[0];
+}
+function fetchUnpositionedOrders(dbPath, filingId, documentId) {
+  return rows(
+    dbPath,
+    `SELECT oo.id, oo.paragraph_number, oo.wording
+     FROM opposing_orders oo
+     WHERE oo.document_id = ?
+       AND oo.id NOT IN (SELECT opposing_order_id FROM filing_positions WHERE filing_id = ?)
+     ORDER BY oo.paragraph_number`,
+    [documentId, filingId]
+  );
+}
+function fetchPartSixProvenance(dbPath, filingId) {
+  const found = rows(
+    dbPath,
+    `SELECT document_id, provenance FROM filing_documents WHERE filing_id = ? AND role != 'witness_statement'`,
+    [filingId]
+  );
+  return new Map(found.map((r3) => [r3.document_id, r3.provenance]));
+}
+function provenanceLabel(p3) {
+  if (p3 === "served_with_this_response") return "served with this application response";
+  if (p3 === "already_in_court_file") return "already in the court file";
+  return "";
+}
+function witnessBackedFlags(dbPath, factIds) {
+  if (factIds.length === 0) return /* @__PURE__ */ new Map();
+  const placeholders = factIds.map(() => "?").join(",");
+  const found = rows(
+    dbPath,
+    `SELECT f.id AS fact_id, EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
+     FROM facts f WHERE f.id IN (${placeholders})`,
+    factIds
+  );
+  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
+}
+function afsCheckbox(party) {
+  if (!party) return `[ ] Yes  [ ] No ${gapMarker("question")}`;
+  if (party.address_for_service_filed === "yes") return "[x] Yes  [ ] No";
+  if (party.address_for_service_filed === "no") return "[ ] Yes  [x] No";
+  return `[ ] Yes  [ ] No ${gapMarker("question")}`;
+}
+function renderApplicationResponse(ctx) {
+  const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
+  const client = ctx.parties.find((p3) => p3.is_client === 1);
+  const applicant = ctx.parties.find((p3) => p3.is_applicant === 1);
+  const hearing = fetchHearingDetails(ctx.dbPath, ctx.filing.id);
+  const waIds = fetchDeployedIds(ctx.dbPath, ctx.filing.id, "written_argument");
+  const positions = fetchFilingPositions(ctx.dbPath, ctx.filing.id);
+  const respondedTo = resolveRespondedToDocument(ctx.dbPath, ctx.proceeding.id, positions);
+  const unpositioned = respondedTo ? fetchUnpositionedOrders(ctx.dbPath, ctx.filing.id, respondedTo.id) : [];
+  const facts = fetchFacts(ctx.dbPath, ctx.filing.id, factsPart("application_response"));
+  const statementsOfFact = fetchStatementsOfFact(ctx.dbPath, facts.map((f3) => f3.id));
+  const witnessBacked = witnessBackedFlags(ctx.dbPath, facts.map((f3) => f3.id));
+  const statementsByFact = /* @__PURE__ */ new Map();
+  for (const stmt of statementsOfFact) {
+    const list = statementsByFact.get(stmt.fact_id) ?? [];
+    list.push(stmt);
+    statementsByFact.set(stmt.fact_id, list);
+  }
+  const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
+  const submissionIds = submissions.map((s3) => s3.id);
+  const lawRows = fetchSubmissionLaw(ctx.dbPath, submissionIds);
+  const lawBySubmission = groupSubmissionLaw(lawRows);
+  const submissionFactRows = fetchSubmissionFacts(ctx.dbPath, submissionIds);
+  const submissionFactIds = [...new Set(submissionFactRows.map((f3) => f3.fact_id))];
+  const submissionFactStatements = fetchFactStatements(ctx.dbPath, submissionFactIds);
+  const allFactIds = [.../* @__PURE__ */ new Set([...facts.map((f3) => f3.id), ...submissionFactIds])];
+  const { admittedFactIds, spentGlyphByFact, suppressedFactIds } = fetchFactAdmissionAnnotations(
+    ctx.dbPath,
+    allFactIds,
+    opposingPartyIds(ctx.parties),
+    ctx.rendered.slice(0, 10)
+  );
+  const factsBySubmission = groupSubmissionFacts(submissionFactRows, submissionFactStatements, admittedFactIds, spentGlyphByFact, suppressedFactIds);
+  const docs = fetchFilingDocuments(ctx.dbPath, ctx.filing.id);
+  const exhibitMap = exhibitNumbersFromOrderedIds(docs.map((d3) => d3.document_id));
+  const referencedDocIds = new Set(docs.map((d3) => d3.document_id));
+  for (const s3 of [...statementsOfFact, ...submissionFactStatements]) {
+    if (s3.exhibit_id !== null) referencedDocIds.add(s3.exhibit_id);
+    if (s3.instrument_id !== null) referencedDocIds.add(s3.instrument_id);
+  }
+  const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
+  const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
+  const provenanceMap = fetchPartSixProvenance(ctx.dbPath, ctx.filing.id);
+  const lines2 = [];
+  lines2.push(filingFrontmatter(ctx.proceeding, ctx, "Application_response"));
+  lines2.push("");
+  lines2.push(
+    styleOfProceedingCaption(captionParties2, {
+      heading: captionHeadingFor(ctx.filing, ctx.proceeding),
+      registry: ctx.proceeding.registry,
+      fileNumber: ctx.proceeding.file_number,
+      titleLine: "APPLICATION RESPONSE"
+    })
+  );
+  lines2.push("");
+  const clientName = client?.name ?? gapMarker("gap");
+  const applicantName = applicant?.name ?? gapMarker("gap");
+  const datedOn = respondedTo?.document_date ?? gapMarker("gap");
+  const estimate = hearing?.time_estimate_minutes ? formatTimeEstimate(hearing.time_estimate_minutes) : gapMarker("gap");
+  const hearingDate = hearingDateSentence(hearing) ?? `The application respondent(s) ${gapMarker("gap")}`;
+  recordCriterionGlyphs(ctx.inventory, clientName, ["\u{1F9E9}"], { table: "form_fields", id: 0, item: "Name of application respondent" });
+  recordCriterionGlyphs(ctx.inventory, applicantName, ["\u{1F9E9}"], { table: "form_fields", id: 1, item: "Name of applicant" });
+  recordCriterionGlyphs(ctx.inventory, datedOn, ["\u{1F9E9}"], { table: "form_fields", id: 2, item: "Date of the notice of application" });
+  recordCriterionGlyphs(ctx.inventory, estimate, ["\u{1F9E9}"], { table: "form_fields", id: 3, item: "Time estimate" });
+  recordCriterionGlyphs(ctx.inventory, hearingDate, ["\u{1F9E9}"], { table: "form_fields", id: 4, item: "Whether the application respondent agrees with the applicant's hearing date" });
+  lines2.push(`Application response of: the ${client?.role ?? "Application Respondent"}, ${clientName}`);
+  lines2.push(
+    `THIS IS A RESPONSE TO the notice of application of the ${applicant?.role ?? "Applicant"}, ${applicantName}, dated ${datedOn}.`
+  );
+  lines2.push("");
+  if (hearingDate !== "") {
+    lines2.push(hearingDate);
+    lines2.push("");
+  }
+  lines2.push(`The application respondent estimates that the application will take ${estimate}`);
+  lines2.push("");
+  const consented = positions.filter((p3) => p3.position === "consented");
+  const opposed = positions.filter((p3) => p3.position === "opposed");
+  const noPosition = positions.filter((p3) => p3.position === "no_position");
+  lines2.push("## PART 1: ORDER(S) CONSENTED TO");
+  lines2.push("");
+  if (consented.length === 0) {
+    lines2.push("NONE");
+  } else {
+    consented.forEach((p3) => {
+      const terms2 = p3.proposed_terms || `Order ${p3.paragraph_number}`;
+      lines2.push(`Order ${p3.paragraph_number}: ${p3.wording} -- consented, on the following terms: ${terms2} <!-- order ${p3.paragraph_number} -->`);
+    });
+  }
+  lines2.push("");
+  lines2.push("## PART 2: ORDER(S) OPPOSED");
+  lines2.push("");
+  if (opposed.length === 0) {
+    lines2.push("The application respondent(s) oppose(s) the granting of NONE of the orders set out in Part 1 of the notice of application.");
+  } else {
+    lines2.push(
+      `The application respondent(s) oppose(s) the granting of the orders set out in paragraphs ${opposed.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
+    );
+    opposed.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
+  }
+  lines2.push("");
+  lines2.push("## PART 3: ORDER(S) ON WHICH NO POSITION IS TAKEN");
+  lines2.push("");
+  if (noPosition.length === 0) {
+    lines2.push("The application respondent(s) take(s) no position on the granting of NONE of the orders set out in Part 1 of the notice of application.");
+  } else {
+    lines2.push(
+      `The application respondent(s) take(s) no position on the granting of the orders set out in paragraphs ${noPosition.map((p3) => p3.paragraph_number).join(", ")} of Part 1 of the notice of application.`
+    );
+    noPosition.forEach((p3) => lines2.push(`- Order ${p3.paragraph_number}: ${p3.wording} <!-- order ${p3.paragraph_number} -->`));
+  }
+  lines2.push("");
+  if (unpositioned.length > 0) {
+    lines2.push("## Positions not yet taken");
+    lines2.push("");
+    unpositioned.forEach((o3) => {
+      const marker = unpositionedOrderMarker();
+      recordCriterionGlyphs(ctx.inventory, marker, ["\u2B1C"], { table: "opposing_orders", id: o3.id, item: o3.wording, instance: "unpositioned-order" });
+      lines2.push(`- Order ${o3.paragraph_number}: ${o3.wording} ${marker} <!-- order ${o3.paragraph_number} -->`);
+    });
+    lines2.push("");
+  }
+  let partNum = 0;
+  lines2.push("## PART 4: FACTUAL BASIS");
+  lines2.push("");
+  const factParagraphs = /* @__PURE__ */ new Map();
+  for (const entry2 of interleave(facts, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "facts"), (f3) => f3.filing_ordinal)) {
+    partNum += 1;
+    if (entry2.kind === "rhetoric") {
+      lines2.push(...renderRhetoricLine(ctx, entry2.row, partNum, ""));
+      continue;
+    }
+    const f3 = entry2.item;
+    factParagraphs.set(f3.id, partNum);
+    const stmts = statementsByFact.get(f3.id) ?? [];
+    const admitted = admittedFactIds.has(f3.id);
+    const courtRecordLinked = f3.court_record !== null;
+    const owedWitness = noWitnessMarker(courtRecordLinked, witnessBacked.get(f3.id) ?? false, admitted, spentGlyphByFact.get(f3.id) ?? "");
+    const witnessSuppressed = suppressedFactIds.has(f3.id);
+    const witnessMarker = suppressMarker(owedWitness, witnessSuppressed);
+    const courtRecordCite = courtRecordCitation(f3.court_record, f3.court_record_pinpoint);
+    const courtRecordPin = courtRecordPinpointMarker(f3.court_record, f3.court_record_pinpoint, f3.court_record_execution, f3.court_record_exhibit_letters);
+    const looseThread = looseThreadMarker(true, waIds.factIds.has(f3.id));
+    recordGlyphs(ctx.inventory, courtRecordPin, ["\u{1F4CC}"], { table: "facts", id: f3.id, item: f3.postulate });
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_facts", id: f3.pointer_id, item: f3.postulate });
+    recordCriterionGlyphs(ctx.inventory, owedWitness, ["\u{1F464}"], { table: "facts", id: f3.id, item: f3.postulate, ...witnessSuppressed ? { suppressed: true } : {} });
+    const tokens2 = [witnessMarker, courtRecordPin, looseThread];
+    const statementSets = [];
+    const guarded = isAdmittedGuard(courtRecordLinked, admitted);
+    for (const s3 of stmts) {
+      const statementTokens = [];
+      statementSets.push(statementTokens);
+      if (!guarded) {
+        statementTokens.push(exhibitPinpointMarker(s3.exhibit_id, s3.exhibit_pinpoint));
+        statementTokens.push(testimonyPinpointMarker(s3.instrument_id, s3.pinpoint));
+      }
+      statementTokens.push(
+        statementOfFactMarkers({
+          interviewed: s3.interviewed,
+          instrument_id: s3.instrument_id,
+          instrument_kind: s3.instrument_kind,
+          instrument_execution: s3.instrument_execution,
+          fact_court_record_linked: courtRecordLinked,
+          fact_admitted_by_all_opposing: admitted
+        })
+      );
+      statementTokens.push(doubtMarker(s3.doubt));
+      if (s3.instrument_id !== null) statementTokens.push(copyMarkers.get(s3.instrument_id) ?? "");
+      tokens2.push(...statementTokens);
+      recordFactStatementGlyphs(
+        ctx.inventory,
+        dedupeLineMarkers(statementTokens),
+        { statement_id: s3.id, witness_id: s3.witness_id, witness_name: s3.witness_name, instrument_id: s3.instrument_id, instrument_label: s3.instrument_label },
+        f3.postulate
+      );
+    }
+    const lineGlyphs = dedupeLineMarkers(tokens2);
+    const factReview = reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "facts", f3.id, f3.postulate);
+    stmts.forEach((s3, i3) => {
+      if (s3.purpose !== "impeachment") statementSets[i3].push(reviewMarkerFor(ctx.review, ctx.inventory, lineGlyphs, "statements_of_fact", s3.id, `${s3.witness_name}: ${f3.postulate}`));
+    });
+    const glyphs = printMarkerSets([dedupeLineMarkers([witnessMarker, courtRecordPin, factReview]), looseThread, ...statementSets.map(dedupeLineMarkers)]);
+    const citationLines = [
+      ...courtRecordCite ? [`> ${courtRecordCite}`] : [],
+      ...stmts.filter((s3) => s3.purpose !== "impeachment").flatMap((s3) => factStatementCitationLine(exhibitMap, labelMap, s3) ?? [])
+    ];
+    const trace = `<!-- fact ${partNum} -->`;
+    lines2.push(`${partNum}. ${f3.postulate}${glyphs ? ` ${glyphs}` : ""}${citationLines.length > 0 ? "" : ` ${trace}`}`);
+    citationLines.forEach((c3, i3) => lines2.push(`   ${c3}${i3 === citationLines.length - 1 ? ` ${trace}` : ""}`));
+  }
+  lines2.push("");
+  lines2.push("## PART 5: LEGAL BASIS");
+  lines2.push("");
+  const renderedLawAssertions = /* @__PURE__ */ new Map();
+  for (const entry2 of interleave(submissions, fetchRhetoric(ctx.dbPath, ctx.filing.id, "form", "submissions"), (s3) => s3.filing_ordinal)) {
+    if (entry2.kind === "rhetoric") {
+      partNum += 1;
+      lines2.push("", ...renderRhetoricLine(ctx, entry2.row, partNum, ""), "");
+      continue;
+    }
+    const s3 = entry2.item;
+    recordParagraph(ctx, s3.id, "form", partNum);
+    const looseThread = looseThreadMarker(true, waIds.submissionIds.has(s3.id));
+    recordGlyphs(ctx.inventory, looseThread, ["\u{1F9F5}"], { table: "filing_submissions", id: s3.pointer_id, item: s3.contention });
+    const result = renderSubmissionParagraphs(
+      s3.id,
+      s3.contention,
+      partNum,
+      factsBySubmission.get(s3.id) ?? [],
+      lawBySubmission.get(s3.id) ?? [],
+      exhibitMap,
+      labelMap,
+      copyMarkers,
+      looseThread,
+      renderedLawAssertions,
+      { inventory: ctx.inventory, review: ctx.review, noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings, factParagraphs, printUnplacedFacts: Boolean(ctx.filing.filed_on || ctx.filing.retired_on) }
+    );
+    lines2.push(...result.lines);
+    lines2.push("");
+    partNum = result.nextPara;
+  }
+  lines2.push("## PART 6: MATERIAL TO BE RELIED ON");
+  lines2.push("");
+  docs.forEach((d3, i3) => {
+    const copy = copyMarkers.get(d3.document_id) ?? "";
+    recordCriterionGlyphs(ctx.inventory, copy, ["\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
+    const provenance4 = provenanceLabel(provenanceMap.get(d3.document_id));
+    const provenancePart = provenance4 ? ` (${provenance4})` : "";
+    lines2.push(
+      `${i3 + 1}. ${d3.label}${materialDateSuffix(d3.label, d3.document_date)}${provenancePart}${copy ? ` ${copy}` : ""} <!-- document ${i3 + 1} -->`
+    );
+  });
+  STANDARD_MATERIAL_LINES.forEach((text8, i3) => lines2.push(`${docs.length + i3 + 1}. ${text8}`));
+  lines2.push("");
+  lines2.push("**Address for service filed:**");
+  const afs = afsCheckbox(client);
+  recordCriterionGlyphs(ctx.inventory, afs, ["\u{1F575}\uFE0F"], { table: "filings", id: ctx.filing.id, item: "Address for service filed" });
+  lines2.push(afs);
+  lines2.push("");
+  lines2.push(checkboxOrderBlock([]));
+  lines2.push("");
+  if (client) lines2.push(signatureBlock({ name: client.name, role: client.role, counselName: client.counsel_name }, true));
   return lines2.join("\n").trimEnd() + "\n";
 }
 
@@ -94016,7 +94021,7 @@ function renderNoticeOfApplication(ctx) {
     const markers = [tenderMarkers, copy].filter(Boolean).join(" ");
     recordCriterionGlyphs(ctx.inventory, markers, ["\u{1F464}", "\u{1F3C6}"], { table: "documents", id: d3.document_id, item: d3.label });
     const printed = printMarkerSets([markers]);
-    lines2.push(`${i3 + 1}. ${d3.label}${d3.document_date ? ` (${d3.document_date})` : ""}${printed ? ` ${printed}` : ""} <!-- document ${i3 + 1} -->`);
+    lines2.push(`${i3 + 1}. ${d3.label}${materialDateSuffix(d3.label, d3.document_date)}${printed ? ` ${printed}` : ""} <!-- document ${i3 + 1} -->`);
   });
   STANDARD_MATERIAL_LINES.forEach((text8, i3) => lines2.push(`${docs.length + i3 + 1}. ${text8}`));
   lines2.push("");
@@ -102723,7 +102728,7 @@ function renderForm32FiledFace(ctx, warnings) {
   materials.forEach((d3) => {
     const a3 = affidavitFields.get(d3.document_id);
     if (d3.role === "affidavit" || a3?.instrument === "affidavit") lines2.push(`- ${affidavitLine(d3, a3)}`);
-    else lines2.push(`- ${d3.label}${d3.document_date ? ` (${longDate(d3.document_date)})` : ""}`);
+    else lines2.push(`- ${d3.label}${materialDateSuffix(d3.label, d3.document_date)}`);
   });
   lines2.push(`- ${STANDARD_MATERIAL_LINES[0]}`);
   const names = authorityNamePattern(ctx.dbPath, ctx.filing.proceeding_id);
@@ -102972,7 +102977,7 @@ function renderForm33FiledFace(ctx, warnings) {
   body.push("## Part 6");
   body.push("");
   for (const d3 of docs) {
-    body.push(`- ${d3.label}${d3.document_date ? `, dated ${d3.document_date}` : ""}`);
+    body.push(`- ${d3.label}${materialDateSuffix(d3.label, d3.document_date)}`);
   }
   for (const text8 of STANDARD_MATERIAL_LINES) body.push(`- ${text8}`);
   return front.join("\n") + "\n" + body.join("\n").trimEnd() + "\n";
