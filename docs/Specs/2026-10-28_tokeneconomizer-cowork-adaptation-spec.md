@@ -18,13 +18,11 @@ Test-driven, in three stages.
 
 These come from reading the fork's source and from this repository's own Cowork findings (`docs/Plans/2026-10-13_four-plugin-split.md`, Phase 0).
 
-- **Cowork's shell tool has another name.** Probanda's own hooks match Cowork's shell as `mcp__workspace__bash` or `mcp__cowork__workspace__bash` (`.claude/skills/drafting-data/hooks/html-pages-gate.py`). The loop guard maps tool names through `_TOOL_CANON` in `tokeneconomizer/loopguard/state.py`, which knows `Bash` but not those names. An unknown name passes through unchanged, so the loop guard does not read the command text of a Cowork shell call and cannot spot a failing command run again and again. Red test R3 checks this.
-- **Hooks run in Cowork's Linux machine.** Phase 0 found plugins at `/root/.claude/plugins/synced/<account>_<user>/<plugin>`, with `${CLAUDE_PLUGIN_ROOT}` set. TokenEconomizer's state root is `$TOKENECONOMIZER_HOME`, else `~/.tokeneconomizer`, which there is `/root/.tokeneconomizer`. Whether that folder survives to the next session is unknown. Red test R5 checks it.
+- **Cowork has two shell tools.** The loop guard maps tool names through `_TOOL_CANON` in `tokeneconomizer/loopguard/state.py`. It knows `Bash`, Cowork's cloud shell, but not `mcp__remote-devices__device_bash`, the shell on the person's computer. An unknown name passes through unchanged, so the loop guard does not read the command text of that shell's calls.
+- **Hooks run on a cloud machine.** TokenEconomizer's state root is `$TOKENECONOMIZER_HOME`, else `~/.tokeneconomizer`, which there is `/root/.tokeneconomizer`. Red test R5 checks whether it survives to the next session.
 - **The loop guard needs history.** It does nothing in a folder until it has learned enough resolved turns there (`envelope_min_samples` in `tokeneconomizer/loopguard/envelope.py`). If state does not survive between sessions, the loop guard never acts in Cowork.
 - **Model calls go through `claude -p`** (`tokeneconomizer/plugin/sidecall.py`). The loop guard's judge and redirect need it. Whether a `claude` command exists in Cowork's Linux machine is unknown. Red test R4 checks it.
-- **`SessionStart` output arrived late in Cowork.** In Phase 0 (2026-10-13) a hook's output reached the session only after an agent was dispatched, and in one run never. Micro-skills are injected at `SessionStart`, so they may not reach the session when they are needed. This is recorded as a fact, not a red test, because a fresh folder has no micro-skills to inject.
-- **The slash commands name "the Bash tool"** (`slash-commands/*.md`). Cowork has no tool by that name.
-- **Tool pruning writes `.claude/settings.local.json`** in the session's folder and builds its deny list from Claude Code's tool catalog. In Cowork that folder is the person's own folder, and whether Cowork reads that settings file is unknown. The green stage decides whether tool pruning is adapted or turned off in Cowork. It has no red test yet, because it acts only after several sessions.
+- **Tool pruning writes `.claude/settings.local.json`** in the session's working folder and builds its deny list from Claude Code's tool catalog. In Cowork that folder is `/home/claude` on the cloud machine, which is lost with the session. The green stage decides whether tool pruning is adapted or turned off in Cowork.
 
 ## Red tests
 
@@ -54,4 +52,26 @@ The red run records these, because the green stage's design depends on them.
 
 ## Red run results
 
-Not run yet.
+Run by Brahm on 2026-10-28 in four probes, each a new Cowork session in the project `te-cowork-test` except probe 3, which ran in a matter project. Plugin 0.1.0.
+
+| Id | Result | Evidence |
+|---|---|---|
+| R1 | PASS | `/root/.tokeneconomizer/bin/te` written and state files changed after tool calls |
+| R2 | PASS | `doctor` and `status` exit 0, Python 3.13.18 ok, state root writable, no `errors.log` |
+| R3 | PASS for `Bash`, `Read`, `Edit` and `Write` | `mcp__remote-devices__device_bash` was not tested and is not in `_TOOL_CANON` |
+| R4 | PASS | `/opt/node22/bin/claude` 2.1.312 answered `OK`, at 8,067 effective tokens for that one call |
+| R5 | FAIL | No marker survived to the next session in `/root/.tokeneconomizer`, `/root`, `/tmp`, `/home/claude`, `/root/.claude/plugins/data`, `/mnt/user-data` or `/mnt/attach/outputs` |
+| R6 | FAIL | The second session reported "0 folded" |
+
+Facts recorded:
+
+- Each session runs in a new cloud container (`container_name` holds `remote_cowork`, a new boot id each time). `CLAUDE_CODE_REMOTE_SDK_URL` points at `api.anthropic.com/v1/code/sessions/cse_...`, and `CLAUDE_CODE_SKIP_PLUGIN_MCP_SERVERS=1` is set.
+- The working folder is always `/home/claude`, not a git repository, so every Cowork session shares one state key. That matches Brahm's choice of one shared pattern for all Probanda projects.
+- The linked folder is not visible from the cloud shell. It is visible only from `mcp__remote-devices__device_bash`, at `~/mnt/<folder name>`, as a Linux user named after the session.
+- `/mnt/attach/outputs` is an rclone store named after the session, and it was empty in the next session.
+- `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PLUGIN_DATA` are not set in the shell. `CLAUDECODE=1` is.
+- A `SessionStart` hook's text (Probanda's practitioner notes) reached the session at its start.
+- The session's transcript is kept at `/root/.claude/projects/-home-claude/<id>.jsonl` and is lost with the container. The desktop app keeps no copy on the PC.
+- A post-turn memory pass writes only under `/projects/<project id>/`. It is a per-project store run by a model for facts about the person.
+
+Conclusion: TokenEconomizer runs in Cowork but cannot learn there, because nothing it writes outlasts the session. The loop guard needs learned turns before it acts, so in practice it does nothing.

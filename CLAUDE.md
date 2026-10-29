@@ -6,7 +6,7 @@ Seven plugins are developed here: `lawyer`, `researcher`, `litigator`, `solicito
 
 ## Releasing
 
-A push to `main` is the release. claude.ai installs the seven plugins from this repository as the marketplace `Probanda_Legal_experimental` and picks up new commits itself, and each machine then syncs from claude.ai. Each plugin has its own version. Release with `/release`, which bumps every plugin whose built folder changes. A change under `.claude/skills/shared/` changes all seven. Never build a `.plugin` archive and never ask for a manual upload: that was the old "My Uploads" route. No session can trigger either sync. A machine's copy under `~/.claude/plugins/synced/` can be hours behind claude.ai, so check the time on its `.last-complete-round` file before reporting which version is installed.
+A push to `main` is the release. claude.ai installs the seven plugins from this repository as the marketplace `Probanda_Legal_experimental`, which it lists under the repository's name, `probanda-dev`, and picks up new commits itself (its "Check for updates" button fetches them at once), and each machine then syncs from claude.ai. Each plugin has its own version. Release with `/release`, which bumps every plugin whose built folder changes. A change under `.claude/skills/shared/` changes all seven. Never build a `.plugin` archive and never ask for a manual upload: that was the old "My Uploads" route. No session can trigger either sync. A machine's copy under `~/.claude/plugins/synced/` can be hours behind claude.ai, so check the time on its `.last-complete-round` file before reporting which version is installed.
 
 The version rule:
 
