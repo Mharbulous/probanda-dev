@@ -18,6 +18,7 @@ import { nextVersionName } from "../files/version-name.js";
 import { zoneProblem } from "../files/zones.js";
 import { bareNameProblem } from "../housekeeping/proposal.js";
 import { appendLineDurably, openMatter } from "../housekeeping/run-dir.js";
+import { type RunRow, requireApprovedRow } from "./approved-row.js";
 import { relativeInside } from "./move.js";
 
 const MOVE_LOG = "move-log.jsonl";
@@ -46,7 +47,8 @@ export function fileOpsMoveFromDownloads(
   destination: string,
   env: NodeJS.ProcessEnv = process.env,
   seams: MoveFromDownloadsSeams = {},
-  now = new Date()
+  now = new Date(),
+  row: RunRow = {}
 ): MoveFromDownloadsResult {
   const root = validateMatterRoot(matterRoot);
   const sourceProblem = bareNameProblem(sourceFilename);
@@ -62,6 +64,7 @@ export function fileOpsMoveFromDownloads(
   if (IN_PROGRESS_EXTENSIONS.has(pathWin32.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
+  requireApprovedRow(root, row, src);
 
   if (typeof destination !== "string" || !pathWin32.isAbsolute(destination)) {
     throw new DataServerError(`destination must be an absolute host path: ${destination}`, "invalid_path");

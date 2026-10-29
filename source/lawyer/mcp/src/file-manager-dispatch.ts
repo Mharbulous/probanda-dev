@@ -11,6 +11,7 @@ import { fileOpsTrash } from "./file_ops/trash.js";
 import { fileOpsMove } from "./file_ops/move.js";
 import { fileOpsMoveFromDownloads } from "./file_ops/move-from-downloads.js";
 import { fileOpsCommentPdf } from "./file_ops/comment-pdf.js";
+import type { RunRow } from "./file_ops/approved-row.js";
 import { type CandidatesArgs, candidates } from "./housekeeping/candidates.js";
 import { journalAppend, newRun, writeRunFile } from "./housekeeping/run-files.js";
 import { preflight } from "./housekeeping/preflight.js";
@@ -23,8 +24,10 @@ import { waitApproval } from "./housekeeping/wait.js";
 type Run = { matter_root: string; run_id: string };
 
 const tools = [
-  defineTool<{ path: string; dry_run?: boolean }>("file_ops__trash", ({ path, dry_run }) => fileOpsTrash(path, dry_run ?? false)),
-  defineTool<{
+  defineTool<RunRow & { path: string; dry_run?: boolean }>("file_ops__trash", ({ path, dry_run, run_id, row_id }) =>
+    fileOpsTrash(path, dry_run ?? false, new Date(), { run_id, row_id })
+  ),
+  defineTool<RunRow & {
     matter_root: string;
     source: string;
     destination: string;
@@ -42,12 +45,17 @@ const tools = [
       args.destination,
       createFolders as string[],
       args.draft_unchanged ?? false,
-      args.superseded ?? false
+      args.superseded ?? false,
+      { run_id: args.run_id, row_id: args.row_id }
     );
   }),
-  defineTool<{ matter_root: string; source_filename: string; destination: string }>(
+  defineTool<RunRow & { matter_root: string; source_filename: string; destination: string }>(
     "file_ops__move_from_downloads",
-    (args) => fileOpsMoveFromDownloads(args.matter_root, args.source_filename, args.destination)
+    (args) =>
+      fileOpsMoveFromDownloads(args.matter_root, args.source_filename, args.destination, process.env, {}, new Date(), {
+        run_id: args.run_id,
+        row_id: args.row_id,
+      })
   ),
   defineTool<{ matter_root: string; path: string; expect_sha256: string; comments: Array<{ page: number; text: string }> }>(
     "file_ops__comment_pdf",

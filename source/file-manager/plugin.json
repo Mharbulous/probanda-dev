@@ -28,6 +28,20 @@
             "statusMessage": "One-way approval gate"
           }
         ]
+      },
+      {
+        "matcher": "^(Write|Edit|MultiEdit|Bash|PowerShell|mcp__(.+__)?device_bash|mcp__(.+__)?workspace__bash)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/housekeeping-approval-guard.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Housekeeping approval guard"
+          }
+        ]
       }
     ]
   }

@@ -1,4 +1,4 @@
-// build-stamp: a31f1a5498ed
+// build-stamp: be6488da964e
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15475,12 +15475,14 @@ function fileOpsToolDefinitions() {
   return [
     {
       name: "file_ops__trash",
-      description: "Soft-delete one file or folder in a client-matter workspace: move it to `<matter root>/TRASH/<same relative path>`. Use this instead of rm, unlink or any other delete -- one call, no shell, and it works while the device mount is down. `path` is the absolute host path (the Windows path from get_device_info connectedFolders). Refuses with an error `code`, touching nothing: `not_found`; `git_worktree` (ordinary repository rules apply); `not_a_matter_file` (no probanda.json at or above the path); `protected` (the workspace root, probanda.json, TRASH or anything in it, the 0. CASE DATA folder, or a privileged/disclosed tree); `cross_device`. A taken destination gets a ` (trashed YYYY-MM-DD HHMMSS)` suffix. `dry_run: true` returns the planned move only. Every move is logged to TRASH/.trash-log.jsonl.",
+      description: "Soft-delete one file or folder in a client-matter workspace: move it to `<matter root>/TRASH/<same relative path>`. Use this instead of rm, unlink or any other delete -- one call, no shell, and it works while the device mount is down. `path` is the absolute host path (the Windows path from get_device_info connectedFolders). Refuses with an error `code`, touching nothing: `not_found`; `git_worktree` (ordinary repository rules apply); `not_a_matter_file` (no probanda.json at or above the path); `protected` (the workspace root, probanda.json, TRASH or anything in it, the 0. CASE DATA folder, or a privileged/disclosed tree); `cross_device`. A taken destination gets a ` (trashed YYYY-MM-DD HHMMSS)` suffix. `dry_run: true` returns the planned move only. Every move is logged to TRASH/.trash-log.jsonl. With `run_id` and `row_id` (a /housekeeping run's approved row; pass both or neither), it refuses unless that run's approval.json approves the row and the file still holds the row's proposal.json hash: `not_approved` (no approval, or the row is not approved), `unknown_row`, `changed_since_approval`, `approval_corrupt`, `invalid_argument` (only one of the two).",
       inputSchema: {
         type: "object",
         properties: {
           path: { type: "string" },
-          dry_run: { type: "boolean" }
+          dry_run: { type: "boolean" },
+          run_id: { type: "string" },
+          row_id: { type: "string" }
         },
         required: ["path"],
         additionalProperties: false
@@ -15489,7 +15491,7 @@ function fileOpsToolDefinitions() {
     },
     {
       name: "file_ops__move",
-      description: "Move one file within a client matter, for an approved /housekeeping row: rename it, file it into a folder, or both. All paths are absolute host paths. `source` must be a file under `matter_root` (not probanda.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree). `destination` is the full new file path, inside a matter folder outside folders 0 and 1, TRASH and any privileged/disclosed tree; the exceptions are `draft_unchanged: true`, which moves into the matter's `0. DRAFT*` folder under the current name only, and `superseded: true` (matter-data's supersede-draft), which moves into the `Superseded` subfolder of the matter's one `0. DRAFT*` folder only, under any name, with `create_folders` naming only that subfolder; a matter with no `0. DRAFT*` folder or two refuses that move with `invalid_argument`, as does passing both flags. Missing destination folders are created only when each is listed in `create_folders` (pass housekeeping__resolve's `folders_to_create`). Never overwrites, even under a race (the destination is claimed by an exclusive create first), and never adds a suffix. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `not_a_file`, `path_out_of_scope`, `protected`, `invalid_filename` (also a folder in `create_folders` whose name ends in a dot or a space or is otherwise not a valid Windows name), `invalid_argument`, `draft_name_changed` (draft_unchanged with a different name), `folder_not_approved`, `dest_exists`, `cross_device`; `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, created_folders}; `moved_to` is the path as it now reads on disk -- check it equals the expected path and halt on a mismatch.",
+      description: "Move one file within a client matter, for an approved /housekeeping row: rename it, file it into a folder, or both. All paths are absolute host paths. `source` must be a file under `matter_root` (not probanda.json, TRASH, 0. CASE DATA, or a privileged/disclosed tree). `destination` is the full new file path, inside a matter folder outside folders 0 and 1, TRASH and any privileged/disclosed tree; the exceptions are `draft_unchanged: true`, which moves into the matter's `0. DRAFT*` folder under the current name only, and `superseded: true` (matter-data's supersede-draft), which moves into the `Superseded` subfolder of the matter's one `0. DRAFT*` folder only, under any name, with `create_folders` naming only that subfolder; a matter with no `0. DRAFT*` folder or two refuses that move with `invalid_argument`, as does passing both flags. Missing destination folders are created only when each is listed in `create_folders` (pass housekeeping__resolve's `folders_to_create`). Never overwrites, even under a race (the destination is claimed by an exclusive create first), and never adds a suffix. Refuses with an error `code`, touching nothing: `invalid_path`, `not_found`, `not_a_file`, `path_out_of_scope`, `protected`, `invalid_filename` (also a folder in `create_folders` whose name ends in a dot or a space or is otherwise not a valid Windows name), `invalid_argument`, `draft_name_changed` (draft_unchanged with a different name), `folder_not_approved`, `dest_exists`, `cross_device`; `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, created_folders}; `moved_to` is the path as it now reads on disk -- check it equals the expected path and halt on a mismatch. With `run_id` and `row_id` (a /housekeeping run's approved row; pass both or neither), it refuses unless that run's approval.json approves the row and the file still holds the row's proposal.json hash: `not_approved` (no approval, or the row is not approved), `unknown_row`, `changed_since_approval`, `approval_corrupt`, `invalid_argument` (only one of the two).",
       inputSchema: {
         type: "object",
         properties: {
@@ -15498,7 +15500,9 @@ function fileOpsToolDefinitions() {
           destination: { type: "string" },
           create_folders: { type: "array", items: { type: "string" } },
           draft_unchanged: { type: "boolean" },
-          superseded: { type: "boolean" }
+          superseded: { type: "boolean" },
+          run_id: { type: "string" },
+          row_id: { type: "string" }
         },
         required: ["matter_root", "source", "destination"],
         additionalProperties: false
@@ -15507,13 +15511,15 @@ function fileOpsToolDefinitions() {
     },
     {
       name: "file_ops__move_from_downloads",
-      description: "Move one file from the practitioner's Downloads folder into a client matter folder, such as a court registry's receipt, submission sheet or filed document. A move, not a copy: one rename on the same drive, so the file leaves Downloads and no duplicate is left. Use it whenever the practitioner asks to move a download into a matter; never copy the file and call that a move. `source_filename` is the bare file name in Downloads (the server finds the folder itself). `matter_root` and `destination` are absolute host paths; `destination` is the full new file path, in an existing folder inside the matter outside folders 0 and 1, TRASH and any privileged/disclosed tree. No folder is created. Never overwrites: a taken name gets the next ` v2`, ` v3` before the extension, even under a race (the name is claimed by an exclusive create first). Refuses with an error `code`, touching nothing: `invalid_filename`, `downloads_missing`, `not_found` (no such download, or the destination folder does not exist), `not_a_file`, `in_progress`, `invalid_path`, `path_out_of_scope`, `protected`, `cross_device` (Downloads and the matter are on different drives), `dest_exists` (no free version name); `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, versioned}; `moved_to` is the path as it now reads on disk, and `versioned` is true when a ` vN` name was used, so tell the practitioner the name it got. Every move is logged to `<matter-data folder>\\file-manager\\move-log.jsonl`; `log_error` is present when that line could not be written.",
+      description: "Move one file from the practitioner's Downloads folder into a client matter folder, such as a court registry's receipt, submission sheet or filed document. A move, not a copy: one rename on the same drive, so the file leaves Downloads and no duplicate is left. Use it whenever the practitioner asks to move a download into a matter; never copy the file and call that a move. `source_filename` is the bare file name in Downloads (the server finds the folder itself). `matter_root` and `destination` are absolute host paths; `destination` is the full new file path, in an existing folder inside the matter outside folders 0 and 1, TRASH and any privileged/disclosed tree. No folder is created. Never overwrites: a taken name gets the next ` v2`, ` v3` before the extension, even under a race (the name is claimed by an exclusive create first). Refuses with an error `code`, touching nothing: `invalid_filename`, `downloads_missing`, `not_found` (no such download, or the destination folder does not exist), `not_a_file`, `in_progress`, `invalid_path`, `path_out_of_scope`, `protected`, `cross_device` (Downloads and the matter are on different drives), `dest_exists` (no free version name); `placeholder_left` when a failed move could not remove its own empty placeholder at the destination. Returns {moved_from, moved_to, versioned}; `moved_to` is the path as it now reads on disk, and `versioned` is true when a ` vN` name was used, so tell the practitioner the name it got. Every move is logged to `<matter-data folder>\\file-manager\\move-log.jsonl`; `log_error` is present when that line could not be written. With `run_id` and `row_id` (a /housekeeping run's approved row; pass both or neither), it refuses unless that run's approval.json approves the row and the file still holds the row's proposal.json hash: `not_approved` (no approval, or the row is not approved), `unknown_row`, `changed_since_approval`, `approval_corrupt`, `invalid_argument` (only one of the two).",
       inputSchema: {
         type: "object",
         properties: {
           matter_root: { type: "string" },
           source_filename: { type: "string" },
-          destination: { type: "string" }
+          destination: { type: "string" },
+          run_id: { type: "string" },
+          row_id: { type: "string" }
         },
         required: ["matter_root", "source_filename", "destination"],
         additionalProperties: false
@@ -15830,15 +15836,15 @@ function jsonText(name, result) {
 // src/file_ops/trash.ts
 import {
   appendFileSync,
-  existsSync as existsSync5,
+  existsSync as existsSync7,
   lstatSync,
-  mkdirSync as mkdirSync2,
-  readdirSync as readdirSync5,
-  realpathSync as realpathSync2,
-  renameSync,
-  statSync as statSync3
+  mkdirSync as mkdirSync3,
+  readdirSync as readdirSync6,
+  realpathSync as realpathSync4,
+  renameSync as renameSync2,
+  statSync as statSync5
 } from "node:fs";
-import { win32 as pathWin324 } from "node:path";
+import { win32 as pathWin326 } from "node:path";
 
 // src/files/matter-root.ts
 import { existsSync as existsSync4, readdirSync as readdirSync4, readFileSync as readFileSync2, statSync as statSync2 } from "node:fs";
@@ -16943,99 +16949,48 @@ function supersededDestinationProblem(segments, draftFolder) {
   return segments.length === 2 && segments[0].toLowerCase() === draftFolder.toLowerCase() && segments[1].toLowerCase() === "superseded" ? null : `a superseded version moves only into ${draftFolder}\\Superseded`;
 }
 
-// src/file_ops/trash.ts
-var TRASH2 = "TRASH";
-var TRASH_LOG = ".trash-log.jsonl";
-function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date()) {
-  if (typeof path !== "string" || !pathWin324.isAbsolute(path)) {
-    throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
-  }
-  let target;
-  try {
-    target = pathWin324.join(realpathSync2.native(pathWin324.dirname(path)), pathWin324.basename(path));
-    lstatSync(target);
-  } catch {
-    throw new DataServerError(`path does not exist: ${path}`, "not_found");
-  }
-  const stat = lstatSync(target);
-  const ancestors = [target];
-  for (let dir = pathWin324.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin324.dirname(dir)) {
-    ancestors.push(dir);
-  }
-  if (ancestors.some((dir) => existsSync5(pathWin324.join(dir, ".git")))) {
-    throw new DataServerError(
-      `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
-      "git_worktree"
-    );
-  }
-  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin324.join(dir, marker))));
-  if (root === void 0) {
-    throw new DataServerError(
-      `no ${POINTER_FILES.join(" or ")} at or above the path; not a client-matter file: ${target}`,
-      "not_a_matter_file"
-    );
-  }
-  const rel = pathWin324.relative(root, target);
-  if (zoneProblem("move-from", target, root)) {
-    throw new DataServerError(
-      `path is protected (the workspace root, the matter pointer, ${TRASH2}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
-      "protected"
-    );
-  }
-  let dest = pathWin324.join(root, TRASH2, rel);
-  if (present(dest)) {
-    const suffix = ` (trashed ${stamp(now)})`;
-    const ext = stat.isDirectory() ? "" : pathWin324.extname(dest);
-    dest = dest.slice(0, dest.length - ext.length) + suffix + ext;
-    if (present(dest)) {
-      throw new DataServerError(`destination already exists: ${dest}`, "dest_exists");
-    }
-  }
-  if (dryRun) return { would_move_from: target, would_move_to: dest };
-  const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync5(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
-  mkdirSync2(pathWin324.dirname(dest), { recursive: true });
-  try {
-    renameSync(target, dest);
-  } catch (err) {
-    if (err.code === "EXDEV") {
-      throw new DataServerError(
-        `cannot move across devices (a junction inside the matter?); nothing was moved: ${target}`,
-        "cross_device"
-      );
-    }
-    throw err;
-  }
-  try {
-    const line = JSON.stringify({ when: now.toISOString(), from: target, to: dest });
-    appendFileSync(pathWin324.join(root, TRASH2, TRASH_LOG), line + "\n", "utf-8");
-  } catch (err) {
-    result.log_error = err instanceof Error ? err.message : String(err);
-  }
-  return result;
-}
-function isFile(path) {
-  return existsSync5(path) && statSync3(path).isFile();
-}
-function present(path) {
-  try {
-    lstatSync(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-function stamp(d) {
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
-}
+// src/file_ops/approved-row.ts
+import { createHash as createHash2 } from "node:crypto";
+import { readFileSync as readFileSync5 } from "node:fs";
 
-// src/file_ops/move.ts
-import { closeSync as closeSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync4, openSync as openSync3, readdirSync as readdirSync8, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync7, unlinkSync as unlinkSync3 } from "node:fs";
-import { win32 as pathWin329 } from "node:path";
+// src/housekeeping/run-dir.ts
+import { randomBytes as randomBytes2 } from "node:crypto";
+import { closeSync as closeSync2, existsSync as existsSync6, fsyncSync, mkdirSync as mkdirSync2, openSync as openSync2, readdirSync as readdirSync5, readFileSync as readFileSync4, realpathSync as realpathSync3, statSync as statSync4, writeSync as writeSync2 } from "node:fs";
+import { win32 as pathWin325 } from "node:path";
+
+// src/submission/render-job.ts
+import { closeSync, existsSync as existsSync5, openSync, readFileSync as readFileSync3, renameSync, statSync as statSync3, unlinkSync as unlinkSync2, utimesSync, writeFileSync as writeFileSync2, writeSync } from "node:fs";
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+function writeStatusFile(target, text, { attempts = 10, delayMs = 50 } = {}) {
+  const temp = `${target}.${process.pid}.tmp`;
+  try {
+    writeFileSync2(temp, text, "utf-8");
+  } catch (err) {
+    return err.code ?? "UNKNOWN";
+  }
+  let code = "UNKNOWN";
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      renameSync(temp, target);
+      return null;
+    } catch (err) {
+      code = err.code ?? "UNKNOWN";
+      if (!["EPERM", "EBUSY", "EACCES"].includes(code)) break;
+      if (attempt < attempts - 1) sleepSync(delayMs);
+    }
+  }
+  try {
+    unlinkSync2(temp);
+  } catch {
+  }
+  return code;
+}
 
 // src/housekeeping/proposal.ts
-import { realpathSync as realpathSync3 } from "node:fs";
-import { win32 as pathWin325 } from "node:path";
+import { realpathSync as realpathSync2 } from "node:fs";
+import { win32 as pathWin324 } from "node:path";
 var SECTIONS = ["offered", "ingested_only", "deferred"];
 var ACTION_GROUPS = {
   file: "Rename and move",
@@ -17246,9 +17201,9 @@ function validateEntries(v, rows) {
 }
 function canonical(path) {
   try {
-    return realpathSync3.native(path);
+    return realpathSync2.native(path);
   } catch {
-    return pathWin325.resolve(path);
+    return pathWin324.resolve(path);
   }
 }
 var MAX_PROBLEMS = 20;
@@ -17313,128 +17268,6 @@ var Checker = class {
   }
 };
 
-// src/housekeeping/resolve.ts
-import { readdirSync as readdirSync7, realpathSync as realpathSync5, statSync as statSync6 } from "node:fs";
-import { win32 as pathWin328 } from "node:path";
-
-// src/practice/matter-data-root.ts
-import { existsSync as existsSync6, readFileSync as readFileSync3 } from "node:fs";
-var CONFIG_STATUS_HINT = "Call practice_data__config_status to see what is missing and the candidate root.";
-function resolveCaseDataRoot(env = process.env, fallback) {
-  const configFile = configPath(env);
-  if (!existsSync6(configFile)) {
-    const derived = fallback?.() ?? null;
-    if (derived !== null) return derived;
-    throw new ValidationError(
-      `Cannot locate the practice database: ${configFile} not found. Probanda has not been set up on this device: run /lawyer:probanda-setup, and never write probanda.json by hand.`
-    );
-  }
-  let root;
-  try {
-    root = JSON.parse(readFileSync3(configFile, "utf-8")).case_data_root;
-  } catch (err) {
-    throw new ValidationError(`${configFile} is not valid JSON: ${err.message}`);
-  }
-  if (typeof root !== "string" || root === "") {
-    throw new ValidationError(
-      `${configFile} is missing "case_data_root" (the path to your "0. CASE DATA" folder). Add it, or set the COCLERK_DB_PATH env override. ` + CONFIG_STATUS_HINT
-    );
-  }
-  if (!existsSync6(root)) {
-    throw new ValidationError(
-      `Configured case_data_root does not exist: ${root}. Update ${configFile} after moving the Litigation Documents library, or restore that root. No _practice directory was created.`
-    );
-  }
-  return root;
-}
-
-// src/housekeeping/name-gate.ts
-import { existsSync as existsSync7 } from "node:fs";
-import { win32 as pathWin326 } from "node:path";
-var DRIVER = `import contextlib, io, json, sys
-import name_gate
-payload = json.load(sys.stdin)
-out = []
-for group in payload["groups"]:
-    buf = io.StringIO()
-    # "./" keeps a name that starts with "-" from reading as an option; the gate takes the basename.
-    argv = ["--registry", payload["registry"], "--files", *["./" + n for n in group["names"]], "--flag-tokens", ",".join(group["flag_tokens"])]
-    with contextlib.redirect_stdout(buf):
-        code = name_gate.main(argv)
-    if code:
-        raise SystemExit("name_gate.py exited %s" % code)
-    out.append(json.loads(buf.getvalue())["results"])
-json.dump({"groups": out}, sys.stdout)
-`;
-function fileNamingSkillDir(env = process.env, installRoot) {
-  const shipped = resolveShippedRoot("file-naming/scripts/name_gate.py", env, {
-    code: "repo_root_missing",
-    subject: "the file-naming name gate",
-    plugin: "lawyer",
-    installRoot
-  });
-  const dir = pathWin326.join(shipped.root, "file-naming");
-  for (const rel of [["scripts", "name_gate.py"], ["references", "code-registry.md"]]) {
-    if (!existsSync7(pathWin326.join(dir, ...rel))) {
-      throw new DataServerError(
-        `${rel.join("\\")} not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
-        "repo_root_missing"
-      );
-    }
-  }
-  return dir;
-}
-function runNameGate(groups, env = process.env) {
-  const live = groups.filter((g) => g.names.length > 0);
-  if (live.length === 0) return groups.map(() => []);
-  const dir = fileNamingSkillDir(env);
-  const parsed = runPythonDriver({
-    label: "file-naming name gate",
-    driver: pythonDriverFile("housekeeping-name-gate", DRIVER),
-    payload: JSON.stringify({ registry: pathWin326.join(dir, "references", "code-registry.md"), groups: live }),
-    env,
-    timeoutMs: READ_TIMEOUT_MS,
-    extraEnv: { PYTHONPATH: pathWin326.join(dir, "scripts") }
-  });
-  let next = 0;
-  return groups.map((g) => g.names.length > 0 ? parsed.groups[next++] : []);
-}
-
-// src/housekeeping/run-dir.ts
-import { randomBytes as randomBytes2 } from "node:crypto";
-import { closeSync as closeSync2, existsSync as existsSync9, fsyncSync, mkdirSync as mkdirSync3, openSync as openSync2, readdirSync as readdirSync6, readFileSync as readFileSync5, realpathSync as realpathSync4, statSync as statSync5, writeSync as writeSync2 } from "node:fs";
-import { win32 as pathWin327 } from "node:path";
-
-// src/submission/render-job.ts
-import { closeSync, existsSync as existsSync8, openSync, readFileSync as readFileSync4, renameSync as renameSync2, statSync as statSync4, unlinkSync as unlinkSync2, utimesSync, writeFileSync as writeFileSync2, writeSync } from "node:fs";
-function sleepSync(ms) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-}
-function writeStatusFile(target, text, { attempts = 10, delayMs = 50 } = {}) {
-  const temp = `${target}.${process.pid}.tmp`;
-  try {
-    writeFileSync2(temp, text, "utf-8");
-  } catch (err) {
-    return err.code ?? "UNKNOWN";
-  }
-  let code = "UNKNOWN";
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    try {
-      renameSync2(temp, target);
-      return null;
-    } catch (err) {
-      code = err.code ?? "UNKNOWN";
-      if (!["EPERM", "EBUSY", "EACCES"].includes(code)) break;
-      if (attempt < attempts - 1) sleepSync(delayMs);
-    }
-  }
-  try {
-    unlinkSync2(temp);
-  } catch {
-  }
-  return code;
-}
-
 // src/housekeeping/run-dir.ts
 var RUN_ID_RE = /^\d{8}-\d{6}(?:\d{3})?-[0-9a-f]{4}$/;
 var PROPOSAL = "proposal.json";
@@ -17443,7 +17276,7 @@ var JOURNAL = "applied.jsonl";
 function openMatter(matterRoot) {
   const root = validateMatterRoot(matterRoot);
   const caseData = existingCaseDataFolder(root);
-  return { root, caseData, housekeeping: pathWin327.join(caseData, "housekeeping") };
+  return { root, caseData, housekeeping: pathWin325.join(caseData, "housekeeping") };
 }
 function mintRunId(now = /* @__PURE__ */ new Date()) {
   const p = (n, width = 2) => String(n).padStart(width, "0");
@@ -17456,43 +17289,43 @@ function assertRunId(runId) {
   }
 }
 function createRun(matter, now = /* @__PURE__ */ new Date()) {
-  for (let dir = matter.housekeeping; dir.length > matter.caseData.length; dir = pathWin327.dirname(dir)) {
-    if (existsSync9(dir) && realpathSync4.native(dir).toLowerCase() !== dir.toLowerCase()) {
-      throw new DataServerError(`${dir} resolves elsewhere (${realpathSync4.native(dir)})`, "path_out_of_scope");
+  for (let dir = matter.housekeeping; dir.length > matter.caseData.length; dir = pathWin325.dirname(dir)) {
+    if (existsSync6(dir) && realpathSync3.native(dir).toLowerCase() !== dir.toLowerCase()) {
+      throw new DataServerError(`${dir} resolves elsewhere (${realpathSync3.native(dir)})`, "path_out_of_scope");
     }
   }
   for (; ; ) {
     const runId = mintRunId(now);
-    const dir = pathWin327.join(matter.housekeeping, runId);
-    if (existsSync9(dir)) continue;
-    mkdirSync3(dir, { recursive: true });
+    const dir = pathWin325.join(matter.housekeeping, runId);
+    if (existsSync6(dir)) continue;
+    mkdirSync2(dir, { recursive: true });
     return { runId, dir: confineRunDir(matter, runId) };
   }
 }
 function existingRunDir(matter, runId) {
   assertRunId(runId);
-  const dir = pathWin327.join(matter.housekeeping, runId);
+  const dir = pathWin325.join(matter.housekeeping, runId);
   if (!isDirectory2(dir)) throw new DataServerError(`no run directory ${runId} under ${matter.housekeeping}`, "run_not_found");
   return confineRunDir(matter, runId);
 }
 function confineRunDir(matter, runId) {
-  const expected = pathWin327.join(matter.housekeeping, runId);
-  const real = realpathSync4.native(expected);
+  const expected = pathWin325.join(matter.housekeeping, runId);
+  const real = realpathSync3.native(expected);
   if (real.toLowerCase() !== expected.toLowerCase() || zoneProblem("run-files", real)) {
     throw new DataServerError(`run directory resolves outside the matter-data folder's housekeeping folder (${expected} -> ${real})`, "path_out_of_scope");
   }
   return real;
 }
 function runFilePath(runDir, fileName) {
-  const path = pathWin327.join(runDir, fileName);
-  if (existsSync9(path) && realpathSync4.native(path).toLowerCase() !== path.toLowerCase()) {
+  const path = pathWin325.join(runDir, fileName);
+  if (existsSync6(path) && realpathSync3.native(path).toLowerCase() !== path.toLowerCase()) {
     throw new DataServerError(`${fileName} in the run directory resolves elsewhere: ${path}`, "path_out_of_scope");
   }
   return path;
 }
 function listRuns(matter) {
   if (!isDirectory2(matter.housekeeping)) return [];
-  return readdirSync6(matter.housekeeping, { withFileTypes: true }).filter((e) => e.isDirectory() && RUN_ID_RE.test(e.name)).map((e) => e.name).sort();
+  return readdirSync5(matter.housekeeping, { withFileTypes: true }).filter((e) => e.isDirectory() && RUN_ID_RE.test(e.name)).map((e) => e.name).sort();
 }
 function newerRun(matter, runId) {
   const runs = listRuns(matter);
@@ -17502,14 +17335,14 @@ function newerRun(matter, runId) {
 function newestProposalRun(matter) {
   const runs = listRuns(matter);
   for (let i = runs.length - 1; i >= 0; i--) {
-    if (readProposal(pathWin327.join(matter.housekeeping, runs[i]), runs[i], matter.root).proposal) return runs[i];
+    if (readProposal(pathWin325.join(matter.housekeeping, runs[i]), runs[i], matter.root).proposal) return runs[i];
   }
   return null;
 }
 function readProposal(runDir, runId, root) {
   let text;
   try {
-    text = readFileSync5(pathWin327.join(runDir, PROPOSAL), "utf-8");
+    text = readFileSync4(pathWin325.join(runDir, PROPOSAL), "utf-8");
   } catch {
     return { proposal: null, problem: "no proposal.json" };
   }
@@ -17531,7 +17364,7 @@ function requireProposal(runDir, runId, root) {
 function readApproval(runDir, runId) {
   let text;
   try {
-    text = readFileSync5(pathWin327.join(runDir, APPROVAL), "utf-8");
+    text = readFileSync4(pathWin325.join(runDir, APPROVAL), "utf-8");
   } catch (err) {
     const code = err.code;
     return code === "ENOENT" ? { approval: null } : { approval: null, problem: `approval.json cannot be read (${code})` };
@@ -17551,7 +17384,7 @@ function requireApproval(runDir, runId) {
   if (approval2) return approval2;
   if (problem) {
     throw new DataServerError(
-      `run ${runId}: the saved approval ${pathWin327.join(runDir, APPROVAL)} is unreadable, so nothing is applied from it: ${problem}`,
+      `run ${runId}: the saved approval ${pathWin325.join(runDir, APPROVAL)} is unreadable, so nothing is applied from it: ${problem}`,
       "approval_corrupt"
     );
   }
@@ -17561,7 +17394,7 @@ function readJournal(runDir) {
   const lines = /* @__PURE__ */ new Map();
   let text;
   try {
-    text = readFileSync5(pathWin327.join(runDir, JOURNAL), "utf-8");
+    text = readFileSync4(pathWin325.join(runDir, JOURNAL), "utf-8");
   } catch {
     return lines;
   }
@@ -17586,8 +17419,8 @@ function writeNewDurably(path, text) {
 }
 function appendLineDurably(path, line) {
   let prefix = "";
-  if (existsSync9(path)) {
-    const text = readFileSync5(path, "utf-8");
+  if (existsSync6(path)) {
+    const text = readFileSync4(path, "utf-8");
     if (text.length && !text.endsWith("\n")) prefix = "\n";
   }
   const fd = openSync2(path, "a");
@@ -17604,10 +17437,215 @@ function writeReplacing(path, text) {
 }
 function isDirectory2(path) {
   try {
-    return statSync5(path).isDirectory();
+    return statSync4(path).isDirectory();
   } catch {
     return false;
   }
+}
+
+// src/file_ops/approved-row.ts
+function requireApprovedRow(matterRoot, row3, source) {
+  if (row3.run_id === void 0 && row3.row_id === void 0) return;
+  if (row3.run_id === void 0 || row3.row_id === void 0) {
+    throw new DataServerError("run_id and row_id are given together or not at all", "invalid_argument");
+  }
+  const matter = openMatter(matterRoot);
+  const dir = existingRunDir(matter, row3.run_id);
+  const proposed = requireProposal(dir, row3.run_id, matter.root).rows.find((r) => r.row_id === row3.row_id);
+  if (!proposed) throw new DataServerError(`row ${row3.row_id} is not in run ${row3.run_id}'s proposal.json`, "unknown_row");
+  if (!requireApproval(dir, row3.run_id).rows.some((e) => e.row_id === row3.row_id)) {
+    throw new DataServerError(`row ${row3.row_id} of run ${row3.run_id} was not approved; nothing was moved`, "not_approved");
+  }
+  let hash;
+  try {
+    hash = createHash2("sha256").update(readFileSync5(source)).digest("hex");
+  } catch (err) {
+    throw new DataServerError(`the approved file of row ${row3.row_id} cannot be read (${err.message}); nothing was moved: ${source}`, "changed_since_approval");
+  }
+  if (hash !== proposed.hash) {
+    throw new DataServerError(
+      `the file is not the one approved for row ${row3.row_id} of run ${row3.run_id}: it changed after approval; nothing was moved: ${source}`,
+      "changed_since_approval"
+    );
+  }
+}
+
+// src/file_ops/trash.ts
+var TRASH2 = "TRASH";
+var TRASH_LOG = ".trash-log.jsonl";
+function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), row3 = {}) {
+  if (typeof path !== "string" || !pathWin326.isAbsolute(path)) {
+    throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
+  }
+  let target;
+  try {
+    target = pathWin326.join(realpathSync4.native(pathWin326.dirname(path)), pathWin326.basename(path));
+    lstatSync(target);
+  } catch {
+    throw new DataServerError(`path does not exist: ${path}`, "not_found");
+  }
+  const stat = lstatSync(target);
+  const ancestors = [target];
+  for (let dir = pathWin326.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin326.dirname(dir)) {
+    ancestors.push(dir);
+  }
+  if (ancestors.some((dir) => existsSync7(pathWin326.join(dir, ".git")))) {
+    throw new DataServerError(
+      `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
+      "git_worktree"
+    );
+  }
+  const root = ancestors.find((dir) => POINTER_FILES.some((marker) => isFile(pathWin326.join(dir, marker))));
+  if (root === void 0) {
+    throw new DataServerError(
+      `no ${POINTER_FILES.join(" or ")} at or above the path; not a client-matter file: ${target}`,
+      "not_a_matter_file"
+    );
+  }
+  const rel = pathWin326.relative(root, target);
+  if (zoneProblem("move-from", target, root)) {
+    throw new DataServerError(
+      `path is protected (the workspace root, the matter pointer, ${TRASH2}, the matter-data folder, or a privileged/disclosed tree): ${target}`,
+      "protected"
+    );
+  }
+  requireApprovedRow(root, row3, target);
+  let dest = pathWin326.join(root, TRASH2, rel);
+  if (present(dest)) {
+    const suffix = ` (trashed ${stamp(now)})`;
+    const ext = stat.isDirectory() ? "" : pathWin326.extname(dest);
+    dest = dest.slice(0, dest.length - ext.length) + suffix + ext;
+    if (present(dest)) {
+      throw new DataServerError(`destination already exists: ${dest}`, "dest_exists");
+    }
+  }
+  if (dryRun) return { would_move_from: target, would_move_to: dest };
+  const result = stat.isDirectory() ? { moved_from: target, moved_to: dest, kind: "dir", entries: readdirSync6(target, { recursive: true }).length } : { moved_from: target, moved_to: dest, kind: "file", bytes: stat.size };
+  mkdirSync3(pathWin326.dirname(dest), { recursive: true });
+  try {
+    renameSync2(target, dest);
+  } catch (err) {
+    if (err.code === "EXDEV") {
+      throw new DataServerError(
+        `cannot move across devices (a junction inside the matter?); nothing was moved: ${target}`,
+        "cross_device"
+      );
+    }
+    throw err;
+  }
+  try {
+    const line = JSON.stringify({ when: now.toISOString(), from: target, to: dest });
+    appendFileSync(pathWin326.join(root, TRASH2, TRASH_LOG), line + "\n", "utf-8");
+  } catch (err) {
+    result.log_error = err instanceof Error ? err.message : String(err);
+  }
+  return result;
+}
+function isFile(path) {
+  return existsSync7(path) && statSync5(path).isFile();
+}
+function present(path) {
+  try {
+    lstatSync(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+function stamp(d) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+
+// src/file_ops/move.ts
+import { closeSync as closeSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync4, openSync as openSync3, readdirSync as readdirSync8, realpathSync as realpathSync6, renameSync as renameSync3, statSync as statSync7, unlinkSync as unlinkSync3 } from "node:fs";
+import { win32 as pathWin329 } from "node:path";
+
+// src/housekeeping/resolve.ts
+import { readdirSync as readdirSync7, realpathSync as realpathSync5, statSync as statSync6 } from "node:fs";
+import { win32 as pathWin328 } from "node:path";
+
+// src/practice/matter-data-root.ts
+import { existsSync as existsSync8, readFileSync as readFileSync6 } from "node:fs";
+var CONFIG_STATUS_HINT = "Call practice_data__config_status to see what is missing and the candidate root.";
+function resolveCaseDataRoot(env = process.env, fallback) {
+  const configFile = configPath(env);
+  if (!existsSync8(configFile)) {
+    const derived = fallback?.() ?? null;
+    if (derived !== null) return derived;
+    throw new ValidationError(
+      `Cannot locate the practice database: ${configFile} not found. Probanda has not been set up on this device: run /lawyer:probanda-setup, and never write probanda.json by hand.`
+    );
+  }
+  let root;
+  try {
+    root = JSON.parse(readFileSync6(configFile, "utf-8")).case_data_root;
+  } catch (err) {
+    throw new ValidationError(`${configFile} is not valid JSON: ${err.message}`);
+  }
+  if (typeof root !== "string" || root === "") {
+    throw new ValidationError(
+      `${configFile} is missing "case_data_root" (the path to your "0. CASE DATA" folder). Add it, or set the COCLERK_DB_PATH env override. ` + CONFIG_STATUS_HINT
+    );
+  }
+  if (!existsSync8(root)) {
+    throw new ValidationError(
+      `Configured case_data_root does not exist: ${root}. Update ${configFile} after moving the Litigation Documents library, or restore that root. No _practice directory was created.`
+    );
+  }
+  return root;
+}
+
+// src/housekeeping/name-gate.ts
+import { existsSync as existsSync9 } from "node:fs";
+import { win32 as pathWin327 } from "node:path";
+var DRIVER = `import contextlib, io, json, sys
+import name_gate
+payload = json.load(sys.stdin)
+out = []
+for group in payload["groups"]:
+    buf = io.StringIO()
+    # "./" keeps a name that starts with "-" from reading as an option; the gate takes the basename.
+    argv = ["--registry", payload["registry"], "--files", *["./" + n for n in group["names"]], "--flag-tokens", ",".join(group["flag_tokens"])]
+    with contextlib.redirect_stdout(buf):
+        code = name_gate.main(argv)
+    if code:
+        raise SystemExit("name_gate.py exited %s" % code)
+    out.append(json.loads(buf.getvalue())["results"])
+json.dump({"groups": out}, sys.stdout)
+`;
+function fileNamingSkillDir(env = process.env, installRoot) {
+  const shipped = resolveShippedRoot("file-naming/scripts/name_gate.py", env, {
+    code: "repo_root_missing",
+    subject: "the file-naming name gate",
+    plugin: "lawyer",
+    installRoot
+  });
+  const dir = pathWin327.join(shipped.root, "file-naming");
+  for (const rel of [["scripts", "name_gate.py"], ["references", "code-registry.md"]]) {
+    if (!existsSync9(pathWin327.join(dir, ...rel))) {
+      throw new DataServerError(
+        `${rel.join("\\")} not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
+        "repo_root_missing"
+      );
+    }
+  }
+  return dir;
+}
+function runNameGate(groups, env = process.env) {
+  const live = groups.filter((g) => g.names.length > 0);
+  if (live.length === 0) return groups.map(() => []);
+  const dir = fileNamingSkillDir(env);
+  const parsed = runPythonDriver({
+    label: "file-naming name gate",
+    driver: pythonDriverFile("housekeeping-name-gate", DRIVER),
+    payload: JSON.stringify({ registry: pathWin327.join(dir, "references", "code-registry.md"), groups: live }),
+    env,
+    timeoutMs: READ_TIMEOUT_MS,
+    extraEnv: { PYTHONPATH: pathWin327.join(dir, "scripts") }
+  });
+  let next = 0;
+  return groups.map((g) => g.names.length > 0 ? parsed.groups[next++] : []);
 }
 
 // src/housekeeping/resolve.ts
@@ -17878,7 +17916,7 @@ function sameFile(a, b) {
 }
 
 // src/file_ops/move.ts
-function fileOpsMove(matterRoot, source, destination, createFolders = [], draftUnchanged = false, superseded = false) {
+function fileOpsMove(matterRoot, source, destination, createFolders = [], draftUnchanged = false, superseded = false, row3 = {}) {
   const root = validateMatterRoot(matterRoot);
   if (draftUnchanged && superseded) {
     throw new DataServerError("draft_unchanged and superseded are two different moves; pass one", "invalid_argument");
@@ -17904,6 +17942,7 @@ function fileOpsMove(matterRoot, source, destination, createFolders = [], draftU
   if (zoneProblem("move-from", src, root)) {
     throw new DataServerError(`source is protected (the matter pointer, TRASH, 0. CASE DATA, or a privileged/disclosed tree): ${src}`, "protected");
   }
+  requireApprovedRow(root, row3, src);
   const name = pathWin329.basename(destination);
   const nameProblem = bareNameProblem(name);
   if (nameProblem) throw new DataServerError(`destination file name ${nameProblem}: ${destination}`, "invalid_filename");
@@ -18065,7 +18104,7 @@ function nextVersionName(dir, stem, ext) {
 // src/file_ops/move-from-downloads.ts
 var MOVE_LOG = "move-log.jsonl";
 var MAX_ATTEMPTS = 100;
-function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env = process.env, seams = {}, now = /* @__PURE__ */ new Date()) {
+function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env = process.env, seams = {}, now = /* @__PURE__ */ new Date(), row3 = {}) {
   const root = validateMatterRoot(matterRoot);
   const sourceProblem = bareNameProblem(sourceFilename);
   if (sourceProblem) throw new DataServerError(`source_filename ${sourceProblem}: ${sourceFilename}`, "invalid_filename");
@@ -18080,6 +18119,7 @@ function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env =
   if (IN_PROGRESS_EXTENSIONS.has(pathWin3211.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
+  requireApprovedRow(root, row3, src);
   if (typeof destination !== "string" || !pathWin3211.isAbsolute(destination)) {
     throw new DataServerError(`destination must be an absolute host path: ${destination}`, "invalid_path");
   }
@@ -18153,12 +18193,12 @@ function fileOpsMoveFromDownloads(matterRoot, sourceFilename, destination, env =
 }
 
 // src/file_ops/comment-pdf.ts
-import { createHash as createHash2 } from "node:crypto";
+import { createHash as createHash3 } from "node:crypto";
 import { existsSync as existsSync11, realpathSync as realpathSync8, renameSync as renameSync5, unlinkSync as unlinkSync5, writeFileSync as writeFileSync4 } from "node:fs";
 import { win32 as pathWin3212 } from "node:path";
 
 // src/files/extract/page-images.ts
-import { existsSync as existsSync10, mkdirSync as mkdirSync6, mkdtempSync, readFileSync as readFileSync6, statSync as statSync10, writeFileSync as writeFileSync3 } from "node:fs";
+import { existsSync as existsSync10, mkdirSync as mkdirSync6, mkdtempSync, readFileSync as readFileSync7, statSync as statSync10, writeFileSync as writeFileSync3 } from "node:fs";
 import { extname, isAbsolute as isAbsolute2, join as join6 } from "node:path";
 
 // node_modules/@embedpdf/pdfium/dist/index.js
@@ -23815,7 +23855,7 @@ function loadPdfium(wasm) {
   let lib = loaded.get(wasm.href);
   if (!lib) {
     lib = (async () => {
-      const module = await init({ wasmBinary: readFileSync6(wasm), print: console.error, printErr: console.error });
+      const module = await init({ wasmBinary: readFileSync7(wasm), print: console.error, printErr: console.error });
       module.PDFiumExt_Init();
       return module;
     })();
@@ -23836,7 +23876,7 @@ async function withPdf(path, wasm, work) {
   if (!isAbsolute2(path)) throw new ValidationError(`path must be absolute: ${path}`);
   if (!existsSync10(path) || !statSync10(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
-  const data = readFileSync6(path);
+  const data = readFileSync7(path);
   const pending = loadPdfium(wasm);
   let lib;
   try {
@@ -23932,7 +23972,7 @@ async function fileOpsCommentPdf(matterRoot, path, expectSha256, comments, wasm 
   return { path: file2, old_sha256: expectSha256, new_sha256: sha256(bytes), comments: comments.length };
 }
 function sha256(bytes) {
-  return createHash2("sha256").update(bytes).digest("hex");
+  return createHash3("sha256").update(bytes).digest("hex");
 }
 function heapU82(lib) {
   return lib.pdfium.HEAPU8;
@@ -24052,7 +24092,7 @@ function orderProblem(matter, runId, rows) {
 }
 
 // src/housekeeping/reconcile.ts
-import { createHash as createHash3 } from "node:crypto";
+import { createHash as createHash4 } from "node:crypto";
 import { createReadStream, lstatSync as lstatSync4, realpathSync as realpathSync9 } from "node:fs";
 import { pipeline } from "node:stream/promises";
 import { win32 as pathWin3214 } from "node:path";
@@ -24147,7 +24187,7 @@ async function hashAt(path) {
   } catch {
     return { kind: "absent" };
   }
-  const hash = createHash3("sha256");
+  const hash = createHash4("sha256");
   await pipeline(createReadStream(path), hash);
   return { kind: "file", sha256: hash.digest("hex") };
 }
@@ -24442,7 +24482,7 @@ function childDirNames(dir) {
 }
 
 // src/housekeeping/run-files.ts
-import { existsSync as existsSync12, readFileSync as readFileSync7 } from "node:fs";
+import { existsSync as existsSync12, readFileSync as readFileSync8 } from "node:fs";
 var RUN_FILES = [PROPOSAL, "questions.json", "rule_gaps.json"];
 function newRun(matterRoot) {
   const run = createRun(openMatter(matterRoot));
@@ -24475,7 +24515,7 @@ function writeRunFile(matterRoot, runId, fileName, content) {
     const outOfOrder = orderProblem(matter, run.runId, parsed.rows);
     if (outOfOrder) throw new DataServerError(`proposal.json breaks the order or the 50-file cap: ${outOfOrder}`, "proposal_out_of_order");
     if (existsSync12(path)) {
-      if (readFileSync7(path, "utf-8") === content) return { run_id: run.runId, path, bytes: Buffer.byteLength(content), unchanged: true };
+      if (readFileSync8(path, "utf-8") === content) return { run_id: run.runId, path, bytes: Buffer.byteLength(content), unchanged: true };
       throw new DataServerError(`run ${run.runId} already has a proposal.json; start a new run to propose again`, "proposal_exists");
     }
   }
@@ -25118,7 +25158,10 @@ async function waitApproval(matterRoot, runId, env = process.env) {
 
 // src/file-manager-dispatch.ts
 var tools = [
-  defineTool("file_ops__trash", ({ path, dry_run }) => fileOpsTrash(path, dry_run ?? false)),
+  defineTool(
+    "file_ops__trash",
+    ({ path, dry_run, run_id, row_id }) => fileOpsTrash(path, dry_run ?? false, /* @__PURE__ */ new Date(), { run_id, row_id })
+  ),
   defineTool("file_ops__move", (args) => {
     const createFolders = args.create_folders ?? [];
     if (!Array.isArray(createFolders) || createFolders.some((f) => typeof f !== "string")) {
@@ -25130,12 +25173,16 @@ var tools = [
       args.destination,
       createFolders,
       args.draft_unchanged ?? false,
-      args.superseded ?? false
+      args.superseded ?? false,
+      { run_id: args.run_id, row_id: args.row_id }
     );
   }),
   defineTool(
     "file_ops__move_from_downloads",
-    (args) => fileOpsMoveFromDownloads(args.matter_root, args.source_filename, args.destination)
+    (args) => fileOpsMoveFromDownloads(args.matter_root, args.source_filename, args.destination, process.env, {}, /* @__PURE__ */ new Date(), {
+      run_id: args.run_id,
+      row_id: args.row_id
+    })
   ),
   defineTool(
     "file_ops__comment_pdf",

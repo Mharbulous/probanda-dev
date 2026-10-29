@@ -7,7 +7,8 @@
 // current name; and that folder's `Superseded` subfolder, only for matter-data's supersede-draft
 // (`superseded`), under any name (the rules live in files/zones.ts). Only folders named in
 // `create_folders` are created. It never overwrites and never adds a suffix, and refuses a
-// cross-device move before creating anything. Every refusal is thrown before the first filesystem change. Even under a race
+// cross-device move before creating anything. With `run_id` and `row_id`, the row must be approved and
+// the source unchanged since (approved-row.ts). Every refusal is thrown before the first filesystem change. Even under a race
 // it never overwrites: the destination is claimed by an exclusive create before the rename
 // replaces that placeholder.
 
@@ -19,6 +20,7 @@ import { validateMatterRoot } from "../files/matter-root.js";
 import { isDraftFolder, supersededDestinationProblem, zoneProblem } from "../files/zones.js";
 import { bareNameProblem } from "../housekeeping/proposal.js";
 import { sameFile } from "../housekeeping/resolve.js";
+import { type RunRow, requireApprovedRow } from "./approved-row.js";
 
 export interface MoveResult {
   moved_from: string;
@@ -33,7 +35,8 @@ export function fileOpsMove(
   destination: string,
   createFolders: string[] = [],
   draftUnchanged = false,
-  superseded = false
+  superseded = false,
+  row: RunRow = {}
 ): MoveResult {
   const root = validateMatterRoot(matterRoot);
   if (draftUnchanged && superseded) {
@@ -63,6 +66,7 @@ export function fileOpsMove(
   if (zoneProblem("move-from", src, root)) {
     throw new DataServerError(`source is protected (the matter pointer, TRASH, 0. CASE DATA, or a privileged/disclosed tree): ${src}`, "protected");
   }
+  requireApprovedRow(root, row, src);
 
   const name = pathWin32.basename(destination);
   const nameProblem = bareNameProblem(name);

@@ -21,6 +21,7 @@ import { win32 as pathWin32 } from "node:path";
 import { DataServerError } from "../errors.js";
 import { POINTER_FILES } from "../files/matter-root.js";
 import { zoneProblem } from "../files/zones.js";
+import { type RunRow, requireApprovedRow } from "./approved-row.js";
 
 const TRASH = "TRASH";
 const TRASH_LOG = ".trash-log.jsonl";
@@ -40,7 +41,7 @@ export interface TrashResult {
   log_error?: string;
 }
 
-export function fileOpsTrash(path: string, dryRun = false, now = new Date()): TrashPlan | TrashResult {
+export function fileOpsTrash(path: string, dryRun = false, now = new Date(), row: RunRow = {}): TrashPlan | TrashResult {
   if (typeof path !== "string" || !pathWin32.isAbsolute(path)) {
     throw new DataServerError(`path must be an absolute host path: ${path}`, "invalid_path");
   }
@@ -80,6 +81,7 @@ export function fileOpsTrash(path: string, dryRun = false, now = new Date()): Tr
       "protected"
     );
   }
+  requireApprovedRow(root, row, target);
 
   let dest = pathWin32.join(root, TRASH, rel);
   if (present(dest)) {
