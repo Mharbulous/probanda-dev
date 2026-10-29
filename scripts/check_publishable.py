@@ -11,9 +11,11 @@ not by where it sits, so a line that moved or a file that was renamed adds
 nothing. A problem line whose text was edited counts as new.
 
 With --new-since, a problem is not new either when a human ruling in
-source/exception-rulings.json lists its message and content, wherever it sits.
-That file is a JSON list of {store, hop, date, ruling, problems: [{message,
-content}]}. An absent file means no rulings. Only a person adds a ruling.
+source/exception-rulings.json lists its message and the sha256 of its content,
+wherever it sits. That file is a JSON list of {store, hop, date, ruling,
+problems: [{message, content_sha256}]}. It holds a hash, not the content,
+because a ruling that quoted a problem line would itself be that problem.
+An absent file means no rulings. Only a person adds a ruling.
 --propose-ruling (with --new-since) prints the new problems as a `problems`
 list ready to paste into a ruling, writes nothing and exits 0. The full scan
 ignores rulings and reports every problem.
@@ -197,15 +199,19 @@ def new_problems(base, head):
 RULINGS = PurePosixPath("source/exception-rulings.json")
 
 
+def sha256_text(content):
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
 def ruled_keys(rulings):
-    """The (message, content) pairs that any ruling in `rulings` lists."""
-    return {(p["message"], p["content"]) for r in rulings for p in r["problems"]}
+    """The (message, content_sha256) pairs that any ruling in `rulings` lists."""
+    return {(p["message"], p["content_sha256"]) for r in rulings for p in r["problems"]}
 
 
 def unruled(problems, rulings):
-    """`problems`, less each one whose message and content a ruling lists."""
+    """`problems`, less each one whose message and content hash a ruling lists."""
     keys = ruled_keys(rulings)
-    return [p for p in problems if (p[2], p[3]) not in keys]
+    return [p for p in problems if (p[2], sha256_text(p[3])) not in keys]
 
 
 def load_rulings(root):
@@ -228,8 +234,8 @@ def main():
     if args.new_since:
         found = unruled(new_problems(commit_problems(root, args.new_since), problems), load_rulings(root))
     if args.propose_ruling:
-        keys = list(dict.fromkeys((p[2], p[3]) for p in found))
-        print(json.dumps({"problems": [{"message": m, "content": c} for m, c in keys]}, indent=2))
+        keys = list(dict.fromkeys((p[2], sha256_text(p[3])) for p in found))
+        print(json.dumps({"problems": [{"message": m, "content_sha256": h} for m, h in keys]}, indent=2))
         return 0
 
     for path, lineno, message, _ in found:

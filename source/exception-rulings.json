@@ -7,15 +7,15 @@
     "problems": [
       {
         "message": "forbidden file type",
-        "content": "1b162080623bf6e19c908b27375953ecb64d60223a4909424a8828f5e03536d8"
+        "content_sha256": "39f53295899ac330199322402a2def48a2515d6dec158ee1a14f088b2f9bf206"
       },
       {
         "message": "contains schema DDL",
-        "content": "CREATE TABLE kv_store (namespace TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (namespace, key));"
+        "content_sha256": "5ed2f42735c2daedb1129bca693756105979d9eec6ffdf8650f1e35e720c34e3"
       },
       {
         "message": "forbidden file type",
-        "content": "e2fe878b67fe5aa6bc7f5c5ff86a5d44fed9bed91746ef4df454cc8c370d69e6"
+        "content_sha256": "a0b1b80fea406c1e647987e3408fc731a8db950156fe46a873194a592038327e"
       }
     ]
   }

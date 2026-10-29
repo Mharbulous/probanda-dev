@@ -6,6 +6,7 @@ Run: python -m pytest -q scripts/tests/test_check_publishable.py
 """
 
 import importlib.util
+import json
 import os
 import unittest
 from pathlib import Path, PurePosixPath
@@ -69,7 +70,7 @@ class NewProblemsTest(unittest.TestCase):
 
 class RulingsTest(unittest.TestCase):
     RULINGS = [{"store": "s", "hop": "1 -> 2", "date": "2026-10-29", "ruling": "r",
-                "problems": [{"message": "contains schema DDL", "content": DDL_A}]}]
+                "problems": [{"message": "contains schema DDL", "content_sha256": check_publishable.sha256_text(DDL_A)}]}]
 
     def new(self, base, head):
         found = check_publishable.new_problems(problems(base), problems(head))
@@ -85,6 +86,10 @@ class RulingsTest(unittest.TestCase):
     def test_one_ruling_covers_the_source_and_its_built_copy(self):
         head = {"src/m.md": f"{DDL_A}\n", "plugins/p/m.md": f"{DDL_A}\n"}
         self.assertEqual(self.new({}, head), [])
+
+    def test_a_rulings_file_holds_no_problem(self):
+        text = json.dumps(self.RULINGS, indent=2)
+        self.assertEqual(problems({"source/exception-rulings.json": text}), [])
 
 
 class CloudFolderTest(unittest.TestCase):
