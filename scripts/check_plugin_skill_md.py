@@ -56,9 +56,10 @@ def preamble_lines(plugin_name, version):
         "and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose "
         "further yourself.",
         "> **HTML pages.** Every HTML file this plugin writes is a human interface generated from its "
-        "databases; an agent never views, reads, greps, parses, scripts over, stages, authors or "
-        "requests a screenshot of one, but may present one to a human user to view, and may view a "
-        "screenshot the user provides on their own initiative. The rule and the data to use instead: "
+        "databases; an agent never views, reads, greps, parses, scripts over, authors or requests a "
+        "screenshot of one, but may present one to a human user to view, staging it first where "
+        "presenting needs that, and may view a screenshot the user provides on their own initiative. "
+        "The rule and the data to use instead: "
         "`shared/html-pages.md`.",
     ]
 
