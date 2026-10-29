@@ -49,3 +49,13 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 - Find orderByRecency, activityFor and latest_activity in mcp/src and confirm the shared-activity tie.
 - Check whether the last-activity spec changes latest_activity's inputs; land after it if both edit the same function.
+
+## 11. Verification against HEAD (0cc82b51)
+
+| Claim | Result |
+|---|---|
+| `orderByRecency` exists in mcp/src | Confirmed: `source/lawyer/mcp/src/submission/filing-order.ts`, bands retired / no activity / live, live ranked by `latest_activity` descending, ties on filing id. |
+| `activityFor` counts General Job activity as shared | Confirmed: `source/lawyer/mcp/src/submission/forms/rank-filings.ts` returns the later of the filing's own row and the `filing_id NULL` row, so a newer General Job activity gives every filing in the proceeding the same `latest_activity`, and the lowest id wins. |
+| `latest_activity` inputs | Confirmed: `fetchLatestActivity` in `source/lawyer/mcp/src/submission/forms/query.ts`, max of tickets created / locked_at / plan_approved_at / completed_at, step done_at and uncharted seeds created, grouped by `filing_id`. |
+| `openBoard` opens the first live, non-Milestone-only entry | Confirmed: `source/lawyer/mcp/src/submission/open-session.ts` `openBoard`, and a caller's `filingId` wins. |
+| Last-activity spec edits the same function | No. `2026-10-29_job-last-activity-misses-progress-spec.md` is unimplemented at HEAD and targets a per-job stamp read by `board_card` and the `idle` tag. It does not touch `activityFor` or `orderByRecency`, so this spec proceeds first. |
