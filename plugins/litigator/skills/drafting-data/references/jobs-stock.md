@@ -11,7 +11,8 @@ Fixed-text jobs `/prepare` may offer per Writing kind (the 2026-09-21 design §6
 | Application Response | `Serve the response` (after the gate job completes), `File the served response` (once the notice of hearing is filed or served). `File and serve` (after the gate job completes) only for a response filed under the rule before B.C. Reg. 105/2026 |
 | A letter kind (any `_NoVenue` letter kind, or a venue's `letter` kind) | `Deliver` alone, at the letter's save (ADR 0024 D10; a letter saved before 2026-10-23 also holds `Draft the letter`) |
 | `internal-memo` | `Deliver` alone, at the memo's save, with the memo's own intent and steps below (#1161: a memo is sent like a letter; a memo saved before 2026-10-23 also holds `Draft the letter`) |
-| `unstructured` (a venue's stock type for a document type with no type file of its own), or `unstructured-<recipient>` (a `_NoVenue` recipient's) | `Draft the Writing` and `Deliver`, both at the Writing's save |
+| `unstructured` (a venue's stock type for a document type with no type file of its own), or `unstructured-<recipient>` (a `_NoVenue` recipient's) other than `unstructured-internal` | `Draft the Writing` and `Deliver`, both at the Writing's save |
+| `unstructured-internal` (the `_NoVenue` stock type for a Writing for counsel only, which is never sent) | `Draft the Writing` alone, at the Writing's save: no `Deliver` |
 
 Each is written through §3's two-call idiom as `kind = 'work'`, with `billing_anchor` by §3's rule and `priority` from §3's priority read. **`filing_id` is always the lead Writing's id** — the Notice of Application, the Application Response, or the letter — and never NULL: a proceeding-scoped stock job would show on every later Writing's board and survive this Writing's retirement.
 
@@ -109,6 +110,8 @@ On a contempt application, Step 1 instead reads `Serve the unfiled notice and it
 - Step 2: `Record the letter as sent`
 - Scope: `('filings', <the letter's id>)` and `('documents', NULL)`
 
+**The practitioner moves `Deliver`.** Its first step, sending, is the practitioner's own act, so `/draft`'s Dispatch never chooses it (`work/references/dispatch.md`, "The practitioner's own"). It runs when the practitioner names it, and the Sent write closes it whichever session makes that call. No `Deliver` is written on an `unstructured-internal` Writing, which is never sent. One that an earlier save wrote there is left as it stands until the practitioner shelves it: nothing deletes or shelves it unasked.
+
 **On an `internal-memo`.** The same two titles, blocking and scope, so every exclusion keyed by title holds for a memo unchanged. Only the intent and step text differ, and they are as fixed as the letter's:
 
 `Draft the letter` on a memo:
@@ -131,6 +134,8 @@ The memo's save follows the letter save idiom below with this text in place of t
 - Scope: `('filing_prose', NULL)`, `('filing_recipients', NULL)`, `('filing_documents', NULL)` and `('documents', NULL)`, so the saved form copy's `documents` row and its link (filing-checklists.md §13, "Form copy") are in scope.
 
 The Writing's save writes this job and `Deliver` through §3's two-call idiom: call 1 for each job, then call 3 for this job's step and its four scope rows, `Deliver`'s steps and scope as in the letter save idiom below, and one `ticket_blocks` row from this job to `Deliver`.
+
+An `unstructured-internal` Writing's save writes `Draft the Writing` alone: call 1 inserts that one row, call 2 recovers its id, and call 3 writes its step and its four scope rows. No `Deliver` row and no `ticket_blocks` edge are written. Its stored layout declares no `recipients`, and its Milestone has no `gate` row, because it is never sent.
 
 **These twelve jobs sit outside §14's nothing-open test**, read by these titles, so a queued stock job never holds the gate job back. That is their only exception in the job checklist: every other script treats them as ordinary `work` jobs. (The `gate` completion criterion, which reads unmet while a job is open, leaves out all twelve by the same titles, and §14a's `Pre-send gate` job too.)
 
@@ -288,7 +293,7 @@ INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (14, 'authorities
 
 A completed review job never blocks a new one: the guard reads only `queued` and `wip` jobs.
 
-**The practitioner decides it, and `/draft`'s Dispatch may choose it** (`work/references/dispatch.md`, which skips only counsel's review). Once it is assigned, `/draft`'s confirmation procedure (`draft/references/authorities.md` "Failed scrutiny") runs in place of dispatch. It completes by §9 only after the confirmation write (or the drop) in the same session (`/drafting-data` "Close a scrutiny review"). It carries no `ticket_proposals` keys, so §9's still-firing check has nothing to read. It is drafting work: no title exclusion leaves it out of the open jobs the `gate` completion criterion reads or §14's nothing-open test, as none leaves out §3c's jobs.
+**The practitioner decides it, and `/draft`'s Dispatch may choose it** (`work/references/dispatch.md`, which skips only counsel's review and `Deliver` as the practitioner's own). Once it is assigned, `/draft`'s confirmation procedure (`draft/references/authorities.md` "Failed scrutiny") runs in place of dispatch. It completes by §9 only after the confirmation write (or the drop) in the same session (`/drafting-data` "Close a scrutiny review"). It carries no `ticket_proposals` keys, so §9's still-firing check has nothing to read. It is drafting work: no title exclusion leaves it out of the open jobs the `gate` completion criterion reads or §14's nothing-open test, as none leaves out §3c's jobs.
 
 **A Scrutinize job that lapses.** A queued Scrutinize job whose statement is now `'failed'` holds a key that no longer derives, since 🔬 does not fire on a failed row. It fails `/draft`'s pre-claim check at the next Opening and is closed as superseded by §9b. Nothing re-dispatches it.
 

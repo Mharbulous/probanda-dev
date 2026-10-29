@@ -7,7 +7,7 @@ An Unstructured Writing is a Writing whose document type has no type file of its
 
 ## 1. Saving it
 
-The lookup creates it at once through `/drafting-data`'s creation write, with the stock kind, `unstructured` or under `_NoVenue` `unstructured-<recipient>`, and the practitioner's name for the document as its title. The save writes its two stock jobs, `Draft the Writing` and `Deliver`, by `/drafting-data`'s save idiom for an Unstructured Writing.
+The lookup creates it at once through `/drafting-data`'s creation write, with the stock kind, `unstructured` or under `_NoVenue` `unstructured-<recipient>`, and the practitioner's name for the document as its title. The save writes its two stock jobs, `Draft the Writing` and `Deliver`, by `/drafting-data`'s save idiom for an Unstructured Writing. On `unstructured-internal`, which is for counsel only and never sent, it writes `Draft the Writing` alone.
 
 ## 2. The saved form comes first
 
@@ -34,6 +34,8 @@ The model writes the Writing's printed wording into its `body` slot through `/dr
 At a venue, `/publish` with `publish-general` makes the Word document through the venue's generic template, with the caption. It is not a replica of the court's own Word form.
 
 The Writing is recorded as sent or filed through `/drafting-data`'s Sent write, `drafting_data__record_sent`, as `references/letters.md` section 8 says for a letter: the date it went, and the copy as filed or sent. `drafting_data__record_filed` refuses a general Writing. The Sent write closes `Deliver`.
+
+An `unstructured-internal` Writing is never sent. It has no `Deliver` job, no `recipients` criterion and no gate, so its drafting conditions, counsel's review included, are the whole of its completion.
 
 ## 5. The conversion offer and job
 

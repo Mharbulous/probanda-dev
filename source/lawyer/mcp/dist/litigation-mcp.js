@@ -1,4 +1,4 @@
-// build-stamp: 68ed579705f1
+// build-stamp: 5e0f322af9cb
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -81265,7 +81265,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 // src/build-stamp.ts
 import { readFileSync as readFileSync7 } from "node:fs";
 import { join as join11 } from "node:path";
-var BUILD_STAMP = false ? null : "68ed579705f1";
+var BUILD_STAMP = false ? null : "5e0f322af9cb";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -92928,7 +92928,7 @@ function buildProceedingBoard(dbPath, proceedingId, today2 = today()) {
   const holding = tickets.map((t3) => t3.ticket).filter(holdsMaterial);
   for (const { ticket } of tickets) {
     if (ticket.category !== "ready") continue;
-    if (ticket.title.startsWith("Counsel's review of ")) ticket.dispatch_skips.push({ reason: "practitioner_own" });
+    if (ticket.title.startsWith("Counsel's review of ") || ticket.title === "Deliver") ticket.dispatch_skips.push({ reason: "practitioner_own" });
     for (const p3 of ticket.conflicts) if (p3.status === "queued" && !p3.rejected) ticket.dispatch_skips.push({ reason: "either_or", job: p3.id });
     for (const held of holding) {
       if (held.id === ticket.id) continue;
@@ -93506,8 +93506,17 @@ function cardText(drafting, gate, hearing, deadlines, send2, serve2) {
     if (gate.current) return `Drafting conditions hold. ${send2 ? "Pre-send" : "Pre-filing"} checks: ${gate.open} open.`;
     return send2 ? "Every drafting condition holds. Recording it as sent runs the pre-send checks again." : "Every drafting condition holds. The next session assembles the package and runs the pre-filing checks.";
   }
-  const reviewOnly = drafting.every((c3) => c3.state === "met" || c3.id === "counsel-review" && c3.state === "unmet");
-  return reviewOnly ? "Only your review remains. Every other drafting condition holds." : null;
+  return reviewOnly(drafting) ? REVIEW_ONLY_TEXT : null;
+}
+var REVIEW_ONLY_TEXT = "Only your review remains. Every other drafting condition holds.";
+var reviewOnly = (drafting) => drafting.every((c3) => c3.state === "met" || c3.id === "counsel-review" && c3.state === "unmet");
+function isInternalWriting(filing) {
+  return filing.layout_snapshot !== null && /\/Documents\/unstructured-internal\.md$/.test(storedLayout(filing).type_file ?? "");
+}
+function internalCardText(drafting, jobs2) {
+  if (jobs2 > 0) return null;
+  if (drafting.every((c3) => c3.state === "met")) return "Every drafting condition holds. This Writing is internal and is never sent.";
+  return reviewOnly(drafting) ? REVIEW_ONLY_TEXT : null;
 }
 var NO_CRITERIA_TEXT = "No completion criteria are declared for this type of Writing.";
 function goalFor(ctx, tickets, shelved, current, deadlines) {
@@ -93525,11 +93534,12 @@ function goalFor(ctx, tickets, shelved, current, deadlines) {
   const forum = ctx.inventory === null ? null : ctx.inventory.filter((e3) => !NEVER_DELIVERED_DOCS.has(e3.doc));
   const drafting = declared.map((c3) => inventoryCriterion(c3, forum, shelved, current));
   const jobs2 = openJobs(tickets);
-  const gate = send2 ? readPreSendGate(ctx, tickets, filed !== null, drafting, jobs2) : readGate(tickets, ctx.revision, filed !== null, PRE_FILING, jobs2);
+  const gate = isInternalWriting(ctx.filing) ? null : send2 ? readPreSendGate(ctx, tickets, filed !== null, drafting, jobs2) : readGate(tickets, ctx.revision, filed !== null, PRE_FILING, jobs2);
   const hearing = storedLayout(ctx.filing).layout.goal_criteria.includes("hearing-date") ? hearingDateCriterion(ctx.dbPath, ctx.filing) : null;
-  const criteria = [...drafting, gate.criterion, ...hearing === null ? [] : [hearing], ...deadlines];
+  const criteria = [...drafting, ...gate === null ? [] : [gate.criterion], ...hearing === null ? [] : [hearing], ...deadlines];
   const state = forum === null ? "pending" : criteria.every((c3) => c3.state === "met") ? "met" : "unmet";
-  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines, send2, serve2) }, criteria };
+  const text8 = gate === null ? internalCardText(drafting, jobs2.length) : cardText(drafting, gate, hearing, deadlines, send2, serve2);
+  return { goal: { sentence, state, text: filed ?? text8 }, criteria };
 }
 
 // src/submission/forms/build-work-board.ts
@@ -93558,8 +93568,16 @@ function buildWorkBoardData(ctx, deadlines = []) {
   });
   const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);
   const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines);
-  const gate = criteria.find((c3) => c3.id === "gate");
-  const gated = gate === void 0 || gate.state === "met" ? tickets : tickets.map((t3) => t3.category === "ready" && waitsOnGate(t3.title) ? { ...t3, dispatch_skips: [...t3.dispatch_skips, { reason: "before_gate" }] } : t3);
+  const unmet = (id) => criteria.some((c3) => c3.id === id && c3.state !== "met");
+  const lateSkips = (t3) => [
+    ...t3.title === "Deliver" && isInternalWriting(ctx.filing) ? [{ reason: "internal" }] : [],
+    ...t3.title === "Deliver" && unmet("recipients") ? [{ reason: "before_recipients" }] : [],
+    ...waitsOnGate(t3.title) && unmet("gate") ? [{ reason: "before_gate" }] : []
+  ];
+  const gated = tickets.map((t3) => {
+    const skips = t3.category === "ready" ? lateSkips(t3) : [];
+    return skips.length === 0 ? t3 : { ...t3, dispatch_skips: [...t3.dispatch_skips, ...skips] };
+  });
   const inputTypes = declaredIngestInputs(ctx.filing);
   const readyJobs = board.tickets.filter((t3) => t3.filing_id === ctx.filing.id && t3.ticket.category === "ready").map((t3) => t3.ticket.id);
   return {
@@ -98479,6 +98497,8 @@ function keyText(key, stored, derived) {
 function skipText(s3) {
   if (s3.reason === "practitioner_own") return "practitioner's own";
   if (s3.reason === "either_or") return `either/or with #${s3.job}`;
+  if (s3.reason === "internal") return "internal Writing, never sent";
+  if (s3.reason === "before_recipients") return "before recipients";
   if (s3.reason === "before_gate") return "before the pre-filing gate";
   return `shared material with #${s3.job}: ${s3.material.join(", ")}`;
 }

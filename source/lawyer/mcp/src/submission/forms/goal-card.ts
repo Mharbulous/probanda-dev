@@ -44,8 +44,25 @@ function cardText(
       ? "Every drafting condition holds. Recording it as sent runs the pre-send checks again."
       : "Every drafting condition holds. The next session assembles the package and runs the pre-filing checks.";
   }
-  const reviewOnly = drafting.every((c) => c.state === "met" || (c.id === "counsel-review" && c.state === "unmet"));
-  return reviewOnly ? "Only your review remains. Every other drafting condition holds." : null;
+  return reviewOnly(drafting) ? REVIEW_ONLY_TEXT : null;
+}
+
+const REVIEW_ONLY_TEXT = "Only your review remains. Every other drafting condition holds.";
+const reviewOnly = (drafting: readonly GoalCriterion[]): boolean => drafting.every((c) => c.state === "met" || (c.id === "counsel-review" && c.state === "unmet"));
+
+/** Whether the Writing was created on `_NoVenue`'s `unstructured-internal`, for counsel only and never
+ * sent or filed (jobs-stock.md §3b): its card has no `gate` row, and a `Deliver` an earlier save left
+ * on it is never dispatched. Read off the stored type file, as render-general.ts reads a stock type. */
+export function isInternalWriting(filing: FilingRow): boolean {
+  return filing.layout_snapshot !== null && /\/Documents\/unstructured-internal\.md$/.test(storedLayout(filing).type_file ?? "");
+}
+
+/** An internal Writing's card string (isInternalWriting). It has no gate row and nothing to send, so
+ * its drafting rows are its whole completion. Null while a counted job is open, as in cardText. */
+function internalCardText(drafting: readonly GoalCriterion[], jobs: number): string | null {
+  if (jobs > 0) return null;
+  if (drafting.every((c) => c.state === "met")) return "Every drafting condition holds. This Writing is internal and is never sent.";
+  return reviewOnly(drafting) ? REVIEW_ONLY_TEXT : null;
 }
 
 /** The card string of a type that declares no goal criteria (spec §5 "Milestone"). It never fires
@@ -80,10 +97,17 @@ export function goalFor(
   const forum = ctx.inventory === null ? null : ctx.inventory.filter((e) => !NEVER_DELIVERED_DOCS.has(e.doc));
   const drafting = declared.map((c) => inventoryCriterion(c, forum, shelved, current));
   const jobs = openJobs(tickets);
-  const gate = send ? readPreSendGate(ctx, tickets, filed !== null, drafting, jobs) : readGate(tickets, ctx.revision, filed !== null, PRE_FILING, jobs);
+  // An internal Writing is never sent or filed, so it has no gate row: its drafting rows are its completion.
+  const gate =
+    isInternalWriting(ctx.filing)
+      ? null
+      : send
+        ? readPreSendGate(ctx, tickets, filed !== null, drafting, jobs)
+        : readGate(tickets, ctx.revision, filed !== null, PRE_FILING, jobs);
   // A non-empty `declared` means a stored layout whose goal_criteria declaredCriteria has already checked.
   const hearing = (storedLayout(ctx.filing).layout.goal_criteria as string[]).includes("hearing-date") ? hearingDateCriterion(ctx.dbPath, ctx.filing) : null;
-  const criteria = [...drafting, gate.criterion, ...(hearing === null ? [] : [hearing]), ...deadlines];
+  const criteria = [...drafting, ...(gate === null ? [] : [gate.criterion]), ...(hearing === null ? [] : [hearing]), ...deadlines];
   const state: GoalState = forum === null ? "pending" : criteria.every((c) => c.state === "met") ? "met" : "unmet";
-  return { goal: { sentence, state, text: filed ?? cardText(drafting, gate, hearing, deadlines, send, serve) }, criteria };
+  const text = gate === null ? internalCardText(drafting, jobs.length) : cardText(drafting, gate, hearing, deadlines, send, serve);
+  return { goal: { sentence, state, text: filed ?? text }, criteria };
 }

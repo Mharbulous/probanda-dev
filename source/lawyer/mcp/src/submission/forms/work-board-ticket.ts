@@ -19,6 +19,8 @@ export type DispatchSkip =
   | { reason: "practitioner_own" }
   | { reason: "either_or"; job: number }
   | { reason: "shared_material"; job: number; material: string[] }
+  | { reason: "internal" }
+  | { reason: "before_recipients" }
   | { reason: "before_gate" };
 
 export interface WorkBoardTicket {

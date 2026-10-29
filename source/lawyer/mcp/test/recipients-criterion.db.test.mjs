@@ -12,7 +12,8 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 
 import { assertFiledFaceClean } from "./helpers/filed-face-scan.mjs";
-import { generalWritingFixture, LETTER_BLOCK } from "./helpers/general-writing-fixture.mjs";
+import { generalWritingFixture, LETTER_BLOCK, NO_VENUE_TREE } from "./helpers/general-writing-fixture.mjs";
+import { knowledgeFile } from "./helpers/knowledge-fixture.mjs";
 import { boardDataOf } from "./fixtures/forms-render-seeds.mjs";
 
 const { submissionFormsRender } = await import("../build/submission/forms.js");
@@ -169,4 +170,35 @@ test("a Writing whose layout does not declare recipients prints no gap, carries 
   assert.equal(criterionOf(board, "gate").state, "met");
   const sent = await send(g, id);
   assert.equal(sent.pre_send_gate, null);
+});
+
+const deliverOf = (board) => board.tickets.find((t) => t.title === "Deliver");
+
+// Spec 2026-10-08 (Deliver on internal Writings): Dispatch never chooses Deliver, whose sending is the
+// practitioner's own act, and skips it while the Writing has no To recipient.
+test("a Ready Deliver is the practitioner's own, and is skipped before recipients until a To recipient is added", async (t) => {
+  const { g, id } = await written(t);
+  assert.deepEqual(deliverOf(boardOf(render(g, id))).dispatch_skips, [{ reason: "practitioner_own" }, { reason: "before_recipients" }]);
+  await g.recipient(id, 4, "to");
+  assert.deepEqual(deliverOf(boardOf(render(g, id))).dispatch_skips, [{ reason: "practitioner_own" }]);
+});
+
+test("an unstructured-internal Writing has no gate row, and a Deliver an earlier save left on it is skipped as internal", async (t) => {
+  const g = await generalWritingFixture(t, { front: null });
+  const part = (source) => ({ heading: null, heading_numbering: "none", paragraph_numbering: "none", source });
+  g.f.local("draft/CAN/FX/_NoVenue/Documents/kinds.local.json", {
+    kinds: [{ file: "unstructured-internal", name: "Unstructured", recipient: "internal", aliases: [{ name: "unstructured_internal", source: "agent", ref: "L0000", recorded: "2026-09-20" }] }],
+  });
+  g.f.local(
+    "draft/CAN/FX/_NoVenue/Documents/unstructured-internal.md",
+    knowledgeFile(null, { renderer: "general", needs_forum_parts: false, title: "Unstructured", exhibit_numbering: "writing", goal_criteria: ["open-items", "counsel-review"], parts: [part("slot:body")] })
+  );
+  const { filing_id: id } = await g.create({ proceeding_id: 1, tree: NO_VENUE_TREE, kind: "unstructured_internal", recipient: "internal", title: "Discovery plan" });
+  await g.execute(
+    `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
+       VALUES (1, ${id}, 'Deliver', 'Send this letter to its recipients and record it as sent.', 'work', 0, 'L0000|discovery plan', '2026-09-28T09:00');`
+  );
+  const board = boardOf(render(g, id));
+  assert.deepEqual(board.criteria.map((c) => c.id), ["open-items", "counsel-review"]);
+  assert.deepEqual(deliverOf(board).dispatch_skips, [{ reason: "practitioner_own" }, { reason: "internal" }]);
 });

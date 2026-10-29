@@ -8,7 +8,7 @@ import { LIFECYCLE_LABELS } from "./lifecycle.js";
 import { proposalKey } from "./proposal-inventory.js";
 import { isJobOnlyBoard, type FilingRow } from "./query.js";
 import { fetchAttachments } from "./work-board-reads.js";
-import type { WorkBoardTicket } from "./work-board-ticket.js";
+import type { DispatchSkip, WorkBoardTicket } from "./work-board-ticket.js";
 import { withFromFiling } from "./work-board-seeds.js";
 import type { GoalCriterion, WorkBoardContext, WorkBoardData } from "./work-board-data.js";
 import { holdsMaterial, withIdleFlag } from "./ticket-category.js";
@@ -16,7 +16,7 @@ import { deadKeySubtitle, ineligibleReasons } from "./unattended-eligibility.js"
 import { buildProceedingBoard, onFilingBoard } from "./build-proceeding-board.js";
 import { proposalsFor } from "./board-proposals.js";
 import { waitsOnGate } from "./goal-gate.js";
-import { goalFor } from "./goal-card.js";
+import { goalFor, isInternalWriting } from "./goal-card.js";
 import { buildJobOnlyBoardData, discardedSeedLines } from "./no-writing-boards.js";
 
 /** The document types the Writing's jobs read: its stored layout's `ingest_inputs`
@@ -54,13 +54,18 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
   // Every open loose thread in the proceeding, so none strands on a sibling filing (ADR 0024 D11).
   const seeds = withFromFiling(ctx.dbPath, ctx.proceeding.id, ctx.filing.id, board.seeds);
   const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines);
-  // Section 14 Dispatch's last skip reason, read off this filing's gate row: a new array, since
-  // dispatch_skips is shared with the proceeding board's ticket.
-  const gate = criteria.find((c) => c.id === "gate");
-  const gated =
-    gate === undefined || gate.state === "met"
-      ? tickets
-      : tickets.map((t): WorkBoardTicket => (t.category === "ready" && waitsOnGate(t.title) ? { ...t, dispatch_skips: [...t.dispatch_skips, { reason: "before_gate" }] } : t));
+  // Section 14 Dispatch's last skip reasons, read off this filing's type file and its `recipients` and gate
+  // rows: a new array, since dispatch_skips is shared with the proceeding board's ticket.
+  const unmet = (id: string): boolean => criteria.some((c) => c.id === id && c.state !== "met");
+  const lateSkips = (t: WorkBoardTicket): DispatchSkip[] => [
+    ...(t.title === "Deliver" && isInternalWriting(ctx.filing) ? [{ reason: "internal" } as const] : []),
+    ...(t.title === "Deliver" && unmet("recipients") ? [{ reason: "before_recipients" } as const] : []),
+    ...(waitsOnGate(t.title) && unmet("gate") ? [{ reason: "before_gate" } as const] : []),
+  ];
+  const gated = tickets.map((t): WorkBoardTicket => {
+    const skips = t.category === "ready" ? lateSkips(t) : [];
+    return skips.length === 0 ? t : { ...t, dispatch_skips: [...t.dispatch_skips, ...skips] };
+  });
   const inputTypes = declaredIngestInputs(ctx.filing);
   // This filing's own Ready jobs: a proceeding-wide job has no filing, so no declared inputs.
   const readyJobs = board.tickets.filter((t) => t.filing_id === ctx.filing.id && t.ticket.category === "ready").map((t) => t.ticket.id);

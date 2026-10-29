@@ -103,7 +103,7 @@ On a `general` type, `open-items` also counts each 🧩 gap line the renderer pr
 
 `hearing-date` is met once the Writing's hearing date is recorded, which `/drafting-data` records. It records a fact and is not a drafting criterion, so it never holds counsel's review, the filing-ready declaration or the gate.
 
-`gate` alone is universal. Every card carries it and no type declares it. It prints after the declared criteria and before `hearing-date`, and it is unmet while any job on the board other than a gate job or a stock job is open, naming those jobs. A type that declares no `goal_criteria` shows a card saying none are declared, and that card never fires the filing-ready declaration.
+`gate` alone is universal. Every card carries it, except an `unstructured-internal` Writing's, which is never sent or filed, and no type declares it. It prints after the declared criteria and before `hearing-date`, and it is unmet while any job on the board other than a gate job or a stock job is open, naming those jobs. A type that declares no `goal_criteria` shows a card saying none are declared, and that card never fires the filing-ready declaration.
 
 `deadline:<type>` rows come from the practice link, never the type file: when `lawyer:docket-clerk` links a hearing anchor to the Writing, each of that anchor's deadlines prints as a row after `hearing-date`, met once the practitioner marks it met, in its anchor's date order (ADR 0013, second 2026-10-04 amendment). A type cannot declare one, and the card shows none on a type that declares no `goal_criteria`.
 
