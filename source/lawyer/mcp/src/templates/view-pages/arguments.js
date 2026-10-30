@@ -97,9 +97,17 @@
     var stack = el("div", "stack");
     sec.appendChild(stack);
     folder.appendChild(sec);
-    sections[name] = { node: sec, size: cards.length };
-
     var opened = -1;
+    var radios = [];
+    // A session's pointer (focus): every card listed, this one opened.
+    function show(index) {
+      radios.forEach(function (r) { r.checked = false; });
+      filter(-1);
+      open(index);
+      cards[index].node.scrollIntoView({ block: "start" });
+    }
+    sections[name] = { node: sec, size: cards.length, show: show };
+
     function open(index) {
       opened = index;
       cards.forEach(function (c, i) {
@@ -117,6 +125,7 @@
       input.type = "radio";
       input.name = "pick-" + name;
       input.id = "pick-" + name + "-" + (i + 1);
+      radios.push(input);
       var label = el("label", "", String(i + 1));
       label.htmlFor = input.id;
       picker.appendChild(input);
@@ -190,4 +199,30 @@
     });
   });
   apply();
+
+  // A session can point this page at a card (drafting_forms__focus_view_page): the page asks the data
+  // server's listener every 2 s and moves to each new pointer. A pointer older than 30 s when the
+  // page opens is old news and left alone. Without the listener the page stays as it is.
+  var api = data.api;
+  if (!api) return;
+  var seen = null;
+  var first = true;
+  function poll() {
+    fetch("http://127.0.0.1:" + api.port + "/focus", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ db_path: api.db_path, proceeding_id: api.proceeding_id, token: api.token, filing_ids: api.filing_ids })
+    }).then(function (res) { return res.ok ? res.json() : null; }).then(function (body) {
+      var f = body && body.focus;
+      var fresh = !first || (f && Date.now() - Date.parse(f.at) < 30000);
+      first = false;
+      if (!f || f.id === seen) return;
+      seen = f.id;
+      var s = sections[f.section];
+      if (!fresh || !s || f.number < 1 || f.number > s.size) return;
+      select(tabs.filter(function (b) { return b.getAttribute("data-filter") === f.section; })[0]);
+      s.show(f.number - 1);
+    }).catch(function () {}).then(function () { setTimeout(poll, 2000); });
+  }
+  poll();
 })();

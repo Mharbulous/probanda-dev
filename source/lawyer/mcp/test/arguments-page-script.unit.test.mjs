@@ -41,6 +41,9 @@ class Node {
     for (const fn of this.listeners[type] ?? []) fn({ target: this, preventDefault() {}, ...extra });
   }
   focus() {}
+  scrollIntoView() {
+    this.scrolled = true;
+  }
   *walk() {
     yield this;
     for (const c of this.children) yield* c.walk();
@@ -53,10 +56,10 @@ const DATA = {
   counter_arguments: [{ key: "raised:1", kind: "raised", text: "X", source: null, linked: [] }],
 };
 
-function load(data = DATA) {
+function load(data = DATA, extra = {}) {
   const board = new Node("div");
   const document = { createElement: (tag) => new Node(tag), querySelector: () => board };
-  vm.runInNewContext(script, { window: { VIEW_PAGE: { data } }, document, localStorage: { getItem: () => null, setItem() {} } });
+  vm.runInNewContext(script, { window: { VIEW_PAGE: { data } }, document, localStorage: { getItem: () => null, setItem() {} }, ...extra });
   const all = [...board.walk()];
   const section = (heading) => {
     const node = all.find((n) => n.tagName === "section" && n.children[0].text === heading);
@@ -130,4 +133,68 @@ test("All shows Submissions always, other sections only with cards, and never Ki
   assert.equal(page.section("Submissions").node.hidden, true);
   const empty = load({ submissions: [], counter_arguments: [] });
   assert.equal(empty.section("Submissions").node.hidden, false);
+});
+
+// The session's pointer (drafting_forms__focus_view_page): the page asks the listener, and each poll's
+// answer comes from `answers` in turn. Polls are run by hand, so nothing loops.
+function pointed(answers) {
+  const api = { port: 1, db_path: "D", proceeding_id: 1, token: "t", filing_ids: [5] };
+  const posted = [];
+  let next = null;
+  const fetch = (url, init) => {
+    posted.push({ url, body: JSON.parse(init.body) });
+    const answer = answers.shift();
+    return answer instanceof Error ? Promise.reject(answer) : Promise.resolve({ ok: true, json: () => Promise.resolve({ focus: answer }) });
+  };
+  const page = load({ ...DATA, api }, { fetch, setTimeout: (fn) => (next = fn) });
+  const settle = () => new Promise((r) => setImmediate(r));
+  const poll = async () => {
+    const fn = next;
+    next = null;
+    fn();
+    await settle();
+  };
+  return { page, posted, poll, settle };
+}
+const now = () => new Date().toISOString();
+
+test("a new pointer switches to its section's tab and opens its card, all cards listed", async () => {
+  const { page, posted, poll, settle } = pointed([null, { id: "a", section: "counter", number: 1, at: now() }]);
+  await settle();
+  assert.deepEqual(posted[0].body, { db_path: "D", proceeding_id: 1, token: "t", filing_ids: [5] });
+  assert.equal(posted[0].url, "http://127.0.0.1:1/focus");
+  await poll();
+  const c = page.section("Counter-arguments");
+  assert.equal(page.section("Submissions").node.hidden, true);
+  assert.equal(c.node.hidden, false);
+  assert.deepEqual(c.open(), [1]);
+  assert.equal(c.cards[0].scrolled, true);
+});
+
+test("the same pointer acts once, and a picker filter gives way to it", async () => {
+  const pointer = { id: "a", section: "submissions", number: 2, at: now() };
+  const { page, poll, settle } = pointed([null, pointer, pointer]);
+  await settle();
+  const s = page.section("Submissions");
+  badge(s, 1);
+  await poll();
+  assert.deepEqual(s.shown(), [1, 2]);
+  assert.deepEqual(s.radios.map((r) => r.checked), [false, false]);
+  assert.deepEqual(s.open(), [2]);
+  title(s, 2);
+  badge(s, 1);
+  await poll();
+  assert.deepEqual(s.open(), [], "a repeated pointer changes nothing");
+  assert.deepEqual(s.shown(), [1]);
+});
+
+test("a pointer older than the page is left alone, and a failed poll changes nothing", async () => {
+  const old = new Date(Date.now() - 60_000).toISOString();
+  const { page, poll, settle } = pointed([{ id: "a", section: "counter", number: 1, at: old }, new Error("off"), { id: "b", section: "submissions", number: 9, at: now() }]);
+  await settle();
+  assert.deepEqual(page.section("Counter-arguments").open(), []);
+  await poll();
+  await poll();
+  assert.deepEqual(page.section("Submissions").open(), [], "a number the page lacks is ignored");
+  assert.equal(page.section("Submissions").node.hidden, false);
 });

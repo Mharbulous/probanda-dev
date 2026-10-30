@@ -6,7 +6,8 @@
 // mockup page's "Not like this" (POST /cards/<card id>/<state|submit|resolve|dismiss|restore|mockup|
 // reject>, ../suggestions/card.ts), each completed here with no agent needed, so Submit and Dismiss
 // work after the session that showed the card has ended. It also serves a card's page (GET
-// /cards/<card id>?token=...), the link a card copy that cannot reach this listener offers.
+// /cards/<card id>?token=...), the link a card copy that cannot reach this listener offers. And one
+// read: the Arguments page asks which card a session pointed it at (POST /focus, ./focus.ts).
 //
 // index.ts starts it once the MCP transport is connected, and nothing it does reaches start():
 // every listener error is logged to stderr and the MCP server carries on. The listener and every
@@ -44,6 +45,7 @@ import {
 } from "../suggestions/card.js";
 import { writePastSuggestionsPage } from "../suggestions/page.js";
 import { type WithdrawOutcome, withdrawSuggestion } from "../suggestions/send.js";
+import { readFocus } from "./focus.js";
 import { pageApiCardTokenValid, pageApiPort, pageApiSuggestionTokenValid, pageApiTokenValid } from "./token.js";
 
 const MAX_BODY = 4 * 1024;
@@ -149,6 +151,7 @@ async function handle(req: IncomingMessage, res: ServerResponse, env: NodeJS.Pro
     if (req.method !== "GET") return json(req, res, 405, { error: "Method not allowed" });
     return json(req, res, 200, { ok: true, pid: process.pid, started_at: startedAt, plugin_version: pluginVersion() });
   }
+  if (url.pathname === "/focus") return focus(req, res, env);
   const w = /^\/suggestions\/([0-9a-f-]{36})\/withdraw$/.exec(url.pathname);
   if (w) return withdraw(req, res, env, w[1]);
   const page = /^\/cards\/([0-9a-f-]{36})$/.exec(url.pathname);
@@ -178,6 +181,31 @@ async function handle(req: IncomingMessage, res: ServerResponse, env: NodeJS.Pro
   }
   const result = await setSeedDeferral({ db_path: dbPath, proceeding_id: proceedingId, seed_id: Number(m[1]), action: m[2] as "defer" | "undefer" }, env);
   json(req, res, STATUS[result.outcome], result);
+}
+
+/** The Arguments page asking which card a session last pointed it at (focus.ts), with its page's token. */
+async function focus(req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv): Promise<void> {
+  if (req.method !== "POST") return json(req, res, 405, { error: "Method not allowed" });
+  let body: unknown;
+  try {
+    body = JSON.parse(await readBody(req));
+  } catch (err) {
+    return json(req, res, 400, { error: `The request could not be read: ${(err as Error).message}` });
+  }
+  const posted = (typeof body === "object" && body !== null ? body : {}) as { db_path?: unknown; proceeding_id?: unknown; token?: unknown; filing_ids?: unknown };
+  const { db_path: dbPath, proceeding_id: proceedingId, token, filing_ids: filingIds } = posted;
+  if (
+    typeof dbPath !== "string" ||
+    typeof proceedingId !== "number" ||
+    !Array.isArray(filingIds) ||
+    !filingIds.every((id) => typeof id === "number" && Number.isInteger(id) && id > 0)
+  ) {
+    return json(req, res, 400, { error: "The request must name db_path, a proceeding_id and filing_ids." });
+  }
+  if (typeof token !== "string" || !pageApiTokenValid(token, dbPath, proceedingId, env)) {
+    return json(req, res, 403, { error: "This page's token does not match its database. Ask a Claude session to render the page again." });
+  }
+  json(req, res, 200, { focus: readFocus(dbPath, filingIds as number[], env) });
 }
 
 const WITHDRAW_STATUS: Record<WithdrawOutcome, number> = {

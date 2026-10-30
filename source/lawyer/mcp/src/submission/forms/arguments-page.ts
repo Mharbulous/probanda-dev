@@ -22,6 +22,7 @@
 // The page itself is the template set in src/templates/view-pages/ (map #125).
 
 import { templated } from "../../compose-template.js";
+import { pageApiPort, pageApiToken } from "../../page-api/token.js";
 import boardCss from "../../templates/work-board/board.css.js";
 import argumentsCss from "../../templates/view-pages/arguments.css.js";
 import argumentsHtml from "../../templates/view-pages/arguments.html.js";
@@ -200,5 +201,15 @@ export const ARGUMENTS_PAGE: ViewPage = {
       "arguments.js": argumentsJs,
     },
   }),
-  data: (ctx) => buildArgumentsData(ctx.dbPath, ctx.writings.map((w) => w.filing)),
+  // The listener the page asks which card a session pointed it at (../../page-api/focus.ts).
+  data: (ctx) => ({
+    ...buildArgumentsData(ctx.dbPath, ctx.writings.map((w) => w.filing)),
+    api: {
+      port: pageApiPort(),
+      db_path: ctx.dbPath,
+      proceeding_id: ctx.proceeding.id,
+      token: pageApiToken(ctx.dbPath, ctx.proceeding.id),
+      filing_ids: ctx.writings.map((w) => w.filing.id),
+    },
+  }),
 };

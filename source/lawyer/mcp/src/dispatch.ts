@@ -78,6 +78,7 @@ import {
 import { formCurrency } from "./submission/form-currency.js";
 import { submissionFormsApplyEdit, submissionFormsPreviewEdit, type ApplyEditArgs, type PreviewEditArgs } from "./submission/forms/quick-edit.js";
 import { submissionFormsBoardCard, type BoardCardArgs } from "./submission/matter-pages.js";
+import { submissionFormsFocusViewPage, type FocusViewPageArgs } from "./submission/forms/focus-view-page.js";
 import { lookUpMatter, matterRootFor, matterToken, submissionFormsOpenSession } from "./submission/open-session.js";
 import { bcscFormHarness, type HarnessArgs } from "./submission/bcsc-form-harness.js";
 import {
@@ -247,6 +248,7 @@ export const dataTools: Tool<DispatchContext>[] = [
     const { client, dates } = await pageContext(context, args, false);
     return submissionFormsBoardCard(args, client, undefined, dates);
   }),
+  defineTool("drafting_forms__focus_view_page", (args: FocusViewPageArgs) => submissionFormsFocusViewPage(args)),
   defineTool("drafting_forms__render", (args: RenderArgs, context: DispatchContext) =>
     args.proceeding_id !== undefined ? renderProceedingBoard(args, args.proceeding_id, context) : renderFiling(args, context)),
   defineTool("drafting_forms__preview_edit", (args: PreviewEditArgs) => submissionFormsPreviewEdit(args)),

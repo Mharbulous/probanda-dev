@@ -333,6 +333,34 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     {
+      name: formsPrefixed("focus_view_page"),
+      description:
+        "Point the practitioner's open Arguments page at one card while the two of you discuss it: the page switches to " +
+        "that section's tab, opens the card and scrolls to it within a few seconds. filing_id is a view_page_paths entry's " +
+        "filing_id; section is submissions, counter (Counter-arguments), rebuttals or killed. Name the card by exactly one " +
+        "of item, its record (a submission's id, or a counter-argument's `raised:<opposing point id>` or " +
+        "`anticipated:<anticipated point id>`), and number, its number in its section as its tag shows it (\"Raised #2\" " +
+        "and \"Anticipated #2\" are both counter 2), when the practitioner names it that way. Either is checked against " +
+        "the page's data, built as the page builds it. The page moves only where it can reach this " +
+        "data server (the desktop app's file card, not a staged copy). Never read the page to check: the result does " +
+        "not say whether it moved. Refusals write nothing: unsupported_page, invalid_section, invalid_target, no_page, " +
+        "no_such_card. Writes no database and no page. Returns { focused, section, number, note }.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          filing_id: { type: "number" },
+          page: { type: "string", enum: ["Arguments"] },
+          section: { type: "string", enum: ["submissions", "counter", "rebuttals", "killed"] },
+          number: { type: "number" },
+          item: { type: ["number", "string"] },
+        },
+        required: ["db_path", "filing_id", "page", "section"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    },
+    {
       name: formsPrefixed("bootstrap"),
       description:
         "Session entry for every submissions skill: checks the database's schema version and lists every filing " +
