@@ -216,6 +216,14 @@ INSERT INTO seeds (proceeding_id, filing_id, origin_ticket_id, created, surfaced
 
 `idea` is captured **verbatim**, at most five sentences, with no options or recommendations — the appearance of alternatives is the tell that outlining has started, and it belongs in an outlining session, not this write. `surfaced_by` is one line naming what surfaced it (a Westlaw memo, a practitioner aside, a document read in passing) — never `TRIGGER`; that column was deliberately not named after the SQLite keyword.
 
+**The open set.** A proceeding's open loose threads are those not outlined into a job, not discarded and not suggested (`shared/html-pages.md`, the Loose Threads page). A session that must compare an item with them, such as `shared/legal-research.md`'s duplicate test, reads them by one `drafting_data__query`:
+
+```sql
+SELECT id, filing_id, origin_ticket_id, idea FROM seeds
+  WHERE proceeding_id = ? AND charted_into IS NULL AND discarded_at IS NULL AND suggested_at IS NULL
+  ORDER BY id;
+```
+
 ### 8a. With no job held
 
 `shared/legal-research.md`'s after-the-answer step ("With a board, the return's open items are sorted against it") captures a research return's open items for the draft the question came from, in a session holding no job. Same write, same `idea` and `surfaced_by` rules, with `origin_ticket_id` NULL: no job surfaced it, so there is no lock to guard and no job's idle clock to restart. The thread renders under "Loose Threads" with no origin job, like one whose job was deleted (`jobs-closeout.md` §10a).
