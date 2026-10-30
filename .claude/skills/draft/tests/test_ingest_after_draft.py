@@ -20,6 +20,12 @@ def atom(text, atom_id):
     return match.group(1)
 
 
+def section(text, heading):
+    start = text.index(heading)
+    end = text.find("\n## ", start + len(heading))
+    return text[start:end if end != -1 else None]
+
+
 def paragraph(text, opening):
     start = text.index(opening)
     end = text.find("\n\n", start)
@@ -52,9 +58,10 @@ class IngestAfterDraftTests(unittest.TestCase):
         self.assertIn("then the one coverage check (section 1, \"Ingestion check\")",
                       paragraph(LETTERS, "**An email Writing.**"))
 
-    def test_session_entry_holds_its_coverage_line_on_a_draft_request(self):
+    def test_session_entry_reports_no_coverage(self):
         step_3 = atom(WORK_PROCEDURE, "work.open.step-3")
-        self.assertIn("except when the session was entered for a requested draft", step_3)
+        self.assertNotIn("coverage", step_3)
+        self.assertNotIn("ingest_coverage", section(WORK_PROCEDURE, "## 15. "))
 
     def test_a_requested_job_is_assigned_before_its_input_check(self):
         check = atom(JOB_SESSION, "work.input-check")

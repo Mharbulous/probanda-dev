@@ -24,16 +24,18 @@ class ReviseOnTheFlyRoutingTest(unittest.TestCase):
     def test_the_route_file_exists(self):
         self.assertTrue((DRAFT / ROUTE).is_file())
 
-    def test_the_route_file_has_the_reorder_branch(self):
-        self.assertIn("\n## Reorder\n", (DRAFT / ROUTE).read_text(encoding="utf-8"))
+    def test_the_route_file_has_the_structural_ops(self):
+        route = (DRAFT / ROUTE).read_text(encoding="utf-8")
+        self.assertIn("\n## The structural ops\n", route)
+        self.assertIn("\n- **move**:", route)
 
     def test_section_12_names_it(self):
         self.assertIn(f"`{ROUTE}`", section(self.text, "## 12. Revise"))
 
     def test_section_15_names_it(self):
         self.assertIn(
-            f"| The practitioner asks to reword one reviewed paragraph, or swap or move a Writing's facts or its "
-            f"material to be relied on (section 12) | `{ROUTE}` |",
+            f"| The practitioner asks to reword one reviewed paragraph, to move, recast, remove, restore or kill a "
+            f"paragraph on a Writing, or to swap or move its material to be relied on (section 12) | `{ROUTE}` |",
             section(self.text, "## 15. References"),
         )
 
