@@ -55,8 +55,9 @@ const GOLDEN = {
   excluded_test_matters: 1,
 };
 
-/** sha256 of renderPracticeBoardHtml(GOLDEN), taken from the inline-string shell before the move to templates. */
-const PAGE_PIN = "007e8035a6b365b539ee103bfca89eb72785698ee5777e7b5cbd6b3f363b85f8";
+/** sha256 of renderPracticeBoardHtml(GOLDEN), taken from the inline-string shell before the move to templates,
+ * and retaken on 2026-10-31 after the 2026-10-28 rename of board.css's first comment ("Job Board" to "Milestone"). */
+const PAGE_PIN = "b5214e75a8ae8aa0834317f1fec1d8aca2becad4bc59739da4c57ece2411afe0";
 
 test("buildPracticeBoardData places each item by its stored date against the injected today", async (t) => {
   assert.deepEqual(await buildPracticeBoardData(await fixtureStore(t), NOW), GOLDEN);
