@@ -38,9 +38,15 @@ B1. The linked folder reaches the PC. No code. Brahm links the folder te-cowork-
     home folder to te-cowork-test. A pasted prompt writes, through the PC shell, a one-line marker
     and a 3 KB base64 file to ~/mnt/te-cowork-runs/b1/. A PC session checks both files with
     sha256sum. PASS: both exist on the PC, byte-identical.
-B2. The round trip a restore needs. No code. A new Cowork session reads the B1 files through the
-    PC shell and writes them into /tmp in the container with its own shell. PASS: the sha256 in
-    the container matches B1's.
+B2. The model carries real-size state both ways. No code. The model is the only bridge between
+    the container and the PC shell, and on 2026-10-31 a 5 KB base64 archive it carried came back
+    with a different sha256. In one Cowork session, the model makes a plain-text state file of at
+    least 5 KB from the container's envelope.json, ledger.jsonl and events.jsonl (repeated until
+    it is 5 KB if shorter), prints its sha256, and writes it through the PC shell to
+    ~/mnt/te-cowork-runs/b2/state.txt. In a new session, it reads that file through the PC shell
+    and writes it into /tmp/state.txt in the container with its own shell. Each session does
+    this three times. PASS: all six copies (three on the PC, three in the container) have the
+    original's sha256, and a PC session confirms the PC copies.
 B3. The fold counts tokens in Cowork. Fork code. Find why the 2026-10-31 fold recorded transcript
     null and "transcript unreadable" (the hook input on a Cowork resume), and fix it so the fold
     reads /root/.claude/projects/-home-claude/<session id>.jsonl. Fork test first, run by path.
