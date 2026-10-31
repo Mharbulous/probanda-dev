@@ -9,6 +9,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createRequire } from "node:module";
 import test, { after } from "node:test";
 
 import { startFakeCloud } from "./helpers/fake-cloud.mjs";
@@ -21,7 +22,8 @@ after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, 
 const { callTool, createDispatchContext } = await import("../build/index.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
 const { freshSubmissionDb, seedSql } = await import("./helpers/template-db.mjs");
-const { submissionDataExecute } = await import("../build/submission/backend.js");
+const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
+const { inOneCall } = await import("../build/call-memo.js");
 const writes = await import("../build/tools/practice/writes.js");
 const reads = await import("../build/tools/practice/reads.js");
 const { submissionDataMigrateScriptsDir } = await import("../build/repo-root.js");
@@ -500,6 +502,42 @@ test("one practice snapshot serves the matter lookup, the to-dos and the dates",
   assert.equal(snapshots, 1);
 });
 
+// Session entry asked the same drafting lists many times over; inside one call each distinct query
+// is one round trip to the sidecar, and a write to the database drops the reads made before it.
+test("session entry sends each distinct drafting query once", async (t) => {
+  const m = matterFixture(t);
+  await seedOneFiling(m.dbPath);
+  mkdirSync(join(m.matterRoot, "0. DRAFT"));
+  const context = await practiceContext(t);
+  const { Worker } = createRequire(import.meta.url)("node:worker_threads");
+  const postMessage = Worker.prototype.postMessage;
+  const sent = [];
+  Worker.prototype.postMessage = function (message) {
+    const request = JSON.parse(message);
+    if (request.op === "query" && request.db_path === m.dbPath) sent.push(JSON.stringify([request.sql, request.params ?? []]));
+    return postMessage.call(this, message);
+  };
+  try {
+    await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  } finally {
+    Worker.prototype.postMessage = postMessage;
+  }
+  assert.ok(sent.length > 0);
+  assert.deepEqual(sent.filter((q, i) => sent.indexOf(q) !== i), [], "no query is sent twice in one call");
+});
+
+test("a write inside one call drops the drafting reads made before it", async (t) => {
+  const m = matterFixture(t);
+  await seedOneFiling(m.dbPath);
+  const title = () => submissionDataQuery(m.dbPath, "SELECT title FROM filings WHERE id = ?", [1]).rows[0].title;
+  const seen = await inOneCall(async () => {
+    const before = title();
+    await submissionDataExecute(m.dbPath, "UPDATE filings SET title = 'Renamed Package' WHERE id = 1;");
+    return [before, title()];
+  });
+  assert.deepEqual(seen, ["Opening Submissions Package", "Renamed Package"]);
+});
+
 test("session entry writes no view page, and the background job writes them with nothing to render", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);
@@ -566,7 +604,8 @@ test("an opened Notice of Application returns Form 32's form_currency", async (t
   assert.equal(result.opened.filing_id, 1);
   assert.equal(result.form_currency.form_key, "form-32");
   assert.deepEqual(result.form_currency, formCurrency("form-32", nowStamp().slice(0, 10)));
-  assert.ok(result.timings.some((p) => p.phase === "form_currency"));
+  // The opening render reads it; session entry does not read it a second time.
+  assert.deepEqual(result.timings.map((p) => p.phase).filter((p) => p.endsWith("form_currency")), ["open: form_currency"]);
 });
 
 test("a second opening reports board_changed against the state sidecar, and a ticket write as a move", async (t) => {
@@ -1042,7 +1081,15 @@ test("project_id opens the matter linked to the Project; none or several refuse 
   await writes.upsert_client_matter(context.practiceDb, { client_num: "C-8888", name: "Other Client Ltd.", matt_num: "L8888", file_number: "F-8888" });
   await writes.link_matter(context.practiceDb, { matt_num: "L9999", matter_root: m.matterRoot, project_id: "proj-a" });
 
+  const snapshot = context.practiceDb.snapshot;
+  let snapshots = 0;
+  context.practiceDb.snapshot = function () {
+    snapshots += 1;
+    return snapshot.call(this);
+  };
   const opened = await callTool(context, "drafting_forms__open_session", { project_id: "proj-a" });
+  assert.equal(snapshots, 1, "the Project's lookup shares the call's one practice snapshot");
+  context.practiceDb.snapshot = snapshot;
   assert.equal(opened.matter_root.toLowerCase(), m.matterRoot.toLowerCase());
   assert.equal(opened.filings.length, 1);
   assert.equal(opened.matter_lookup.matter_no, "L9999");

@@ -26,7 +26,6 @@ import { courtFileAffidavits, type CourtFileAffidavit } from "./court-file-affid
 import {
   type BootstrapResult,
   type ClientContext,
-  fetchFilingById,
   nowStamp,
   type PhaseTimings,
   type RenderedDocument,
@@ -35,7 +34,7 @@ import {
   submissionFormsRender,
   submissionFormsRenderProceedingBoard,
 } from "./forms.js";
-import { formCurrency, KIND_FORM_KEYS, type FormCurrency } from "./form-currency.js";
+import { type FormCurrency } from "./form-currency.js";
 import { MATTER_BOARD_FILE } from "./forms/matter-board-shell.js";
 import { fetchRevision } from "./forms/query.js";
 import { type MatterDates, readMatterDates } from "./matter-dates.js";
@@ -137,7 +136,7 @@ export interface OpenSessionResult extends BootstrapResult {
 
 type Opening = Pick<
   OpenSessionResult,
-  "opened" | "open_refused" | "matter_board_path" | "milestone_path" | "milestone_paths" | "view_page_paths" | "loose_threads_path" | "moved_to_trash" | "trash_skipped"
+  "opened" | "open_refused" | "matter_board_path" | "milestone_path" | "milestone_paths" | "view_page_paths" | "loose_threads_path" | "moved_to_trash" | "trash_skipped" | "form_currency"
 >;
 
 function trashReport(written: Pick<PagesWritten, "moved_to_trash" | "trash_skipped">): Pick<Opening, "moved_to_trash" | "trash_skipped"> {
@@ -193,6 +192,8 @@ function openBoard(
         matter_board_path: join(draftDir, MATTER_BOARD_FILE),
         milestone_path: board.path,
         ...(written.pages ? { milestone_paths: written.pages.milestone_paths, view_page_paths: written.pages.view_page_paths, loose_threads_path: written.pages.loose_threads_path } : {}),
+        // ADR 0038: the render read the opened filing's form currency; it is not read twice.
+        ...(rendered.form_currency ? { form_currency: rendered.form_currency } : {}),
         ...trashReport(rendered),
       };
     }
@@ -225,13 +226,6 @@ function openBoard(
     loose_threads_path: pages.loose_threads_path,
     ...trashReport(pages),
   };
-}
-
-/** The opened filing's form currency (ADR 0038), when its kind's venue document is a court form. */
-function openedFormCurrency(opened: OpenSessionResult["opened"], dbPath: string): FormCurrency | undefined {
-  if (opened?.filing_id === undefined) return undefined;
-  const formKey = KIND_FORM_KEYS[fetchFilingById(dbPath, opened.filing_id).kind];
-  return formKey === undefined ? undefined : formCurrency(formKey, nowStamp().slice(0, 10));
 }
 
 function elapsedMs(start: number): number {
@@ -400,7 +394,6 @@ async function openSession(
     draftDir === undefined || todos === undefined || dates === undefined || refused ? {} : openBoard(dbPath, draftDir, identity, todos, dates, result, filingId, timings);
   const drift = await phase("parties_drift", () => matterPartiesDrift(dbPath));
   const offers = await phase("counsel_offers", () => counselOffers(dbPath));
-  const currency = await phase("form_currency", () => openedFormCurrency(opening.opened, dbPath));
   const courtFile = await phase("court_file_affidavits", () =>
     opening.opened?.filing_id === undefined ? undefined : courtFileAffidavits(dbPath, opening.opened.filing_id, root)
   );
@@ -421,7 +414,6 @@ async function openSession(
       parties_drift: drift.rows,
       ...(drift.note !== undefined ? { parties_drift_note: drift.note } : {}),
       ...(offers.length > 0 ? { counsel_offers: offers } : {}),
-      ...(currency ? { form_currency: currency } : {}),
       ...(courtFile !== undefined ? { court_file_affidavits: courtFile } : {}),
       timings,
     },

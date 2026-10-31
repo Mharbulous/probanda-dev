@@ -7,9 +7,9 @@ import { AsyncLocalStorage } from "node:async_hooks";
 
 const memo = new AsyncLocalStorage<Map<unknown, unknown>>();
 
-/** Runs `fn` with a fresh memo. */
+/** Runs `fn` with a fresh memo, or inside the memo of an enclosing inOneCall. */
 export function inOneCall<T>(fn: () => T): T {
-  return memo.run(new Map(), fn);
+  return memo.getStore() === undefined ? memo.run(new Map(), fn) : fn();
 }
 
 /** `read()`, run once per `key` inside inOneCall and every time outside it. */
@@ -18,4 +18,11 @@ export function oncePerCall<T>(key: unknown, read: () => T): T {
   if (reads === undefined) return read();
   if (!reads.has(key)) reads.set(key, read());
   return reads.get(key) as T;
+}
+
+/** Drops the reads of this call whose key passes `stale`, after a write they would now misreport. */
+export function forgetPerCall(stale: (key: unknown) => boolean): void {
+  const reads = memo.getStore();
+  if (reads === undefined) return;
+  for (const key of reads.keys()) if (stale(key)) reads.delete(key);
 }

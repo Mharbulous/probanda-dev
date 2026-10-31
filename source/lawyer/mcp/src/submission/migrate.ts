@@ -47,7 +47,7 @@ import { type DriverResponse, MIGRATE_DRIVER, pushStaleLockWarning, throwDriverR
 import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { submissionDataMigrateScriptsDir } from "../repo-root.js";
-import { pythonTimeoutMs, READ_TIMEOUT_MS, submissionDataQuery, WRITE_TIMEOUT_MS } from "./backend.js";
+import { forgetDraftingQueries, pythonTimeoutMs, READ_TIMEOUT_MS, submissionDataQuery, WRITE_TIMEOUT_MS } from "./backend.js";
 import { acquireDataLock } from "./lock.js";
 import { counselOffers, matterPartiesDrift, type CounselOffer, type PartiesDriftRow } from "./parties-drift.js";
 import { overrideActive, renderableSchemaVersion } from "./schema-ceiling.js";
@@ -82,14 +82,16 @@ export async function submissionDataMigrate(
   const lock = await acquireDataLock(dbPath, env);
   try {
     const backupsBefore = timestampedBackups(dbPath);
-    const migrate = (targetVersion?: number) =>
-      runDriver(
+    const migrate = (targetVersion?: number) => {
+      forgetDraftingQueries(dbPath);
+      return runDriver(
         "migrate",
         driverFile("migrate", MIGRATE_DRIVER),
         JSON.stringify({ db_path: dbPath, ...(targetVersion !== undefined ? { target_version: targetVersion } : {}) }),
         env,
         WRITE_TIMEOUT_MS
       );
+    };
     const stored = storedSchemaVersion(dbPath);
     let staged: Record<string, unknown> | undefined;
     if (stored !== null && stored < COUNSEL_COPY_DROPPED && target >= COUNSEL_COPY_DROPPED) {

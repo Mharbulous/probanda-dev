@@ -81,6 +81,7 @@ import { submissionFormsApplyEdit, submissionFormsPreviewEdit, type ApplyEditArg
 import { submissionFormsBoardCard, type BoardCardArgs } from "./submission/matter-pages.js";
 import { submissionFormsFocusViewPage, type FocusViewPageArgs } from "./submission/forms/focus-view-page.js";
 import { lookUpMatter, matterRootFor, matterToken, submissionFormsOpenSession } from "./submission/open-session.js";
+import { inOneCall } from "./call-memo.js";
 import { bcscFormHarness, type HarnessArgs } from "./submission/bcsc-form-harness.js";
 import {
   publishBccaFactum,
@@ -281,12 +282,9 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool(
     "drafting_forms__open_session",
     async (args: PageArgs & { matter_root?: string; project_id?: string; unattended?: boolean; filing_id?: number }, context: DispatchContext) => {
-      const { result, dates, matterDescription } = await submissionFormsOpenSession(
-        await matterRootFor(args, context.practiceDb),
-        context.practiceDb,
-        clientContext(args),
-        args.unattended === true,
-        args.filing_id
+      // The Project's matter lookup shares the call's one practice snapshot; the job below starts outside it.
+      const { result, dates, matterDescription } = await inOneCall(async () =>
+        submissionFormsOpenSession(await matterRootFor(args, context.practiceDb), context.practiceDb, clientContext(args), args.unattended === true, args.filing_id)
       );
       // #589: matter_lookup's client fields are the identity bootstrap used, so the job renders with it.
       const { client_name, client_no, matter_no } = result.matter_lookup;

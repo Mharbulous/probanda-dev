@@ -1,6 +1,6 @@
 # Spec: session entry spends ~3.8 s on work the Milestone card does not need
 
-Status: proposed, 2026-10-29. Written in a matter session; implementation is handed to Claude Code.
+Status: implemented, 2026-10-31 (18c311a on 2026-10-29, the rest on 2026-10-31; §12). Written in a matter session; implementation is handed to Claude Code.
 Plugin: `lawyer` (installed copy seen at v0.16.0; data server, build stamp 4dc36ec9c841 as seen) and `litigator` (installed copy seen at v0.13.3; `work/references/procedure.md`). Paths below are as seen in the installed copy and bundle and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: 2026-10-29_milestone-card-first-opening-order-spec.md, 2026-10-29_open-session-recency-tie-break-spec.md, 2026-10-29_open-session-matter-root-from-project-spec.md
 
@@ -69,3 +69,49 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 | matter_lookup, todos and dates each take a snapshot | `practice/store.ts:99` `snapshot()`; `tools/practice/reads.ts:44` `matter_lookup`, `:204` `open_tasks`, `:240` `active_deadlines`, each `store.items()` | Confirmed: three snapshots per open. |
 | `openedIngestCoverage` runs the folder-hashing driver | `open-session.ts:246`, `case/ingest-coverage.ts` `readIngestCoverage` | Confirmed. Its only caller is open_session, so removing the entry check leaves `case/ingest-coverage.ts` orphaned. The claim-time input check (`work/references/job-session.md`) asks `/matter-data` itself and only reads session entry's result as a shortcut. |
 | procedure.md reports coverage at entry | `.claude/skills/work/references/procedure.md:44` (response row), `:67` (closing-line clause), `:88` (opening.md trigger) | Confirmed. `opening.md`'s "The ingest-coverage clause" and `job-session.md:40` also read the entry-time field. |
+
+## 12. Implementation and timings (2026-10-31)
+
+### What landed
+
+| Criterion | Where | Status |
+|---|---|---|
+| 1. One parties-of-record spawn | 18c311a: `call-memo.ts`, keyed per proceeding | Met, one spawn per proceeding (one on a one-proceeding matter) |
+| 2. One practice snapshot | 18c311a for `matter_root`; 2026-10-31 for `project_id` | Met on both paths. 141ab85 had brought back a second snapshot on the `project_id` path, because `matterRootFor` ran before the memo. `dispatch.ts` now resolves it inside the call's memo, and `inOneCall` joins an enclosing memo. |
+| 3. No entry-time coverage | 18c311a | Met. The `/work` SKILL.md row that still listed `ingest_coverage` is gone. `case/ingest-coverage.ts` has no caller now and is left for a follow-up, because removing it touches `/matter-data`'s tests and design record. |
+| 4. Milestone pages written, view pages left to the job | 18c311a | Met |
+| 5. Other fields unchanged | | Met. `form_currency` is now the opening render's own reading, not a second read; its phase is `open: form_currency`. One edge: a retired filing named by `filing_id` no longer carries `form_currency`, since a retired Writing's render reads none. |
+
+Found while measuring, and also landed on 2026-10-31:
+- **Repeated reads.** Most of `matter_pages` was not page building or disk writes. It was the same drafting-data queries asked again and again: the proceedings, filings, tickets, hearing and goal lists, up to 18 times each per open. Each one is a blocking round trip to the Python sidecar, which opens a fresh SQLite connection on the database in the synced `0. CASE DATA` folder.
+- **The fix.** `submissionDataQuery` now goes through the existing per-call memo, so inside session entry each distinct query is one round trip. Every write to that database, and each migration hop, drops its memoised reads (`forgetDraftingQueries`). The background job runs each render and each settle as one memo call.
+
+Tried and not done:
+- **Passing bootstrap's ranking to the opening render's page write.** Rejected: the ranking carries each filing's render state, and the render changes the opened filing's state, so its Milestone would show stale.
+- **Reusing the Milestone build's `court_file_affidavits`.** Not done: it took 7 ms on the PC.
+- **Splitting the settle so the next call can interleave.** Not done: the model turn before the next call takes seconds, longer than the settle.
+
+### Timings
+
+PC: the timings this spec opens with, 3796 ms in total (`matter_pages` 1764, three parties reads about 260 each, three snapshots about 200 each). No PC timing after 18c311a or after this change exists yet. The tool-call timing log (ADR 0016, `%LOCALAPPDATA%\Coclerk\call-log`, read with `scripts/call-log-summary.mjs`) records it from the next opening on the PC.
+
+Container: Linux, local disk, a synthetic matter with one proceeding and six Milestones with made-up names (8 pages at entry, 32 after the job, 0.88 MB of HTML). Medians of 9 warm calls after one cold call; the server's own timings:
+
+| | before 18c311a (its parent) | main at 27dd9a9 (18c311a in) | this change |
+|---|---|---|---|
+| open_session, warm | 655 ms | 543 ms | 239 ms |
+| open_session, cold (first call of the process) | 838 ms | 873 ms | 553 ms |
+| `open: matter_pages`, warm | 369 ms | 357 ms | 73 ms |
+| drafting-data queries per open, warm | 159 | 166 | 56 |
+| Python starts per warm open (sidecar aside) | 3 | 1 | 1 |
+| background job after a warm call | none needed | 737 ms, 240 queries | 319 ms, 99 queries |
+| background job after the cold call | 2860 ms, 914 queries | 3594 ms, 1166 queries | 2274 ms, 664 queries |
+| disk-write time inside a warm call (write, rename, fsync) | 6.1 ms | 6.6 ms | 4.8 ms |
+
+The fixture's Writings hold no content, so their view pages are small, and in this container a Python start costs about 20 ms where the PC's cost about 250 ms. The 18c311a column therefore moves little here. On the PC it removed two Python starts and two snapshots per open and deferred the ~30 view pages.
+
+PC after, estimated, not measured:
+- 18c311a removes two parties spawns (about 520 ms), two snapshots (about 400 ms) and the view pages, which the job's settle shows to be about half the full page write (about 800 ms of 1764). That gives about 2.1 s.
+- This change cuts the remaining entry queries by two thirds. Their share of the 2.1 s is unmeasured on the PC, but in the container they were 85% of server time.
+- So session entry on the PC should be well under 2 s. The call log will confirm it or not.
+

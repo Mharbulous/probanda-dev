@@ -23,6 +23,7 @@ import { randomUUID } from "node:crypto";
 import { closeSync, existsSync, openSync, readFileSync, renameSync, statSync, unlinkSync, utimesSync, writeFileSync, writeSync } from "node:fs";
 import { join } from "node:path";
 
+import { inOneCall } from "../call-memo.js";
 import { readLockKey, removeLockIfKey } from "../lock-claim.js";
 import { hostLocalPath } from "./lock.js";
 
@@ -257,7 +258,7 @@ function schedule(job: Job): void {
 function settle(job: Job): void {
   if (!job.settle) return;
   try {
-    job.settle();
+    inOneCall(job.settle);
   } catch (err) {
     job.status.write_error = { target: "settle", code: err instanceof Error ? err.message : String(err), at: nowIso() };
   }
@@ -282,7 +283,8 @@ function step(job: Job): void {
     if (id !== null) {
       try {
         if (!job.skip.has(id) && !job.isFresh(id)) {
-          job.render(id);
+          // Each render and each settle is one call for call-memo.ts: its repeated reads run once.
+          inOneCall(() => job.render(id));
           job.rendered.push(id);
           console.error(`[render-job] filing ${id} ${Math.round(performance.now() - started)} ms`);
         }

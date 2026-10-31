@@ -37,6 +37,7 @@
 import { join } from "node:path";
 import { MessageChannel, type MessagePort, receiveMessageOnPort, Worker } from "node:worker_threads";
 
+import { forgetPerCall, oncePerCall } from "../call-memo.js";
 import { DataServerError, PythonTimeoutError, ValidationError } from "../errors.js";
 import { pythonDriverFile } from "../python-driver.js";
 import { pythonStarts, runPythonDriver } from "../python-spawn.js";
@@ -524,6 +525,7 @@ function sidecarQuery(request: QueryRequest): Record<string, unknown> {
 }
 
 function runHelper(request: ExecuteRequest | WriteRequest | WriteAllRequest | TrialRequest, env: NodeJS.ProcessEnv): Record<string, unknown> {
+  forgetDraftingQueries(request.db_path);
   // The budget stops a hung copy-back from holding the server forever. replace_live renames a
   // flushed sibling over db_path, so a kill at any point leaves db_path whole, old or new.
   return runPythonDriver({
@@ -535,13 +537,25 @@ function runHelper(request: ExecuteRequest | WriteRequest | WriteAllRequest | Tr
   }) as Record<string, unknown>;
 }
 
+/** A query's key in the call memo: `drafting-query`, then the database, the SQL and its parameters. */
+const queryKey = (dbPath: string, sql: string, params?: unknown[]) => JSON.stringify(["drafting-query", dbPath, sql, params ?? []]);
+const isQueryOf = (dbPath: string) => (key: unknown) => typeof key === "string" && key.startsWith(JSON.stringify(["drafting-query", dbPath]).slice(0, -1) + ",");
+
+/** One round trip per distinct query inside call-memo.ts's inOneCall (session entry asks the same
+ * lists many times over); every write to the database drops its memoised reads. Each caller gets
+ * its own row objects. */
 export function submissionDataQuery(
   dbPath: string,
   sql: string,
   params?: unknown[]
 ): { rows: Record<string, unknown>[] } {
-  const result = sidecarQuery({ op: "query", db_path: dbPath, sql, params });
-  return result as { rows: Record<string, unknown>[] };
+  const result = oncePerCall(queryKey(dbPath, sql, params), () => sidecarQuery({ op: "query", db_path: dbPath, sql, params }) as { rows: Record<string, unknown>[] });
+  return { ...result, rows: result.rows.map((row) => ({ ...row })) };
+}
+
+/** Called by every write to `dbPath`, so no later read in the same call is served from before it. */
+export function forgetDraftingQueries(dbPath: string): void {
+  forgetPerCall(isQueryOf(dbPath));
 }
 
 /**
