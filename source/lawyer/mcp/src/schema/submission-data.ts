@@ -457,6 +457,36 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("take_job"),
+      description:
+        "Take a Ready job in one call: every check before the assigning write that needs no judgement, then assign_job's " +
+        "guarded write, then the job's `Started Job <N>: <title>.` entry in matter_root's ProceduralHistory.md, dated today. " +
+        "Refused, writing nothing, on the first check that fails, with reason: not_ready, no_steps, needs_plan (the plan " +
+        "marker is the only step), long_title (over 12 words, on a job the pickup review covers: no step done, no plan " +
+        "approved, no keys, not fixed-text), duplicates (other live jobs on its Writing sharing a key, a scope entry or two " +
+        "title words, each with its card; pass the ones judged not the same work in not_duplicates and call again), " +
+        "restates (steps, by ordinal, equal to or containing the title or intent), and on a one-step job keys_dead, " +
+        "some_keys_dead or item_changed (a fast-path job's item reworded). A rewrite goes through drafting_data__rewrite_job, " +
+        "then take_job again. Otherwise returns assign_job's outcome: before_bf (with bf_on), lost_race, not_created_here, " +
+        "no_match, each writing nothing; or assigned with claim_no, header (`# Job <N>: <title>`), card (as " +
+        "drafting_forms__board_card prints the job), premise {state: holds|failed|none, line} and history {added, note}. " +
+        "session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. " +
+        "Never retry to win. It moves no revision.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          ticket_id: { type: "number" },
+          session_token: { type: "string" },
+          matter_root: { type: "string", description: "The matter_root open_session returned" },
+          not_duplicates: { type: "array", items: { type: "number" }, description: "Jobs judged not the same work after a duplicates refusal" },
+        },
+        required: ["db_path", "ticket_id", "session_token", "matter_root"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("approve_plan"),
       description:
         "Approve the plan of the job (a tickets row) this session holds, as its steps stand, in one call: the guarded " +

@@ -13,7 +13,7 @@ import { checkClaim, heldBy, touchStatements } from "./job-activity.js";
 const TOOL = "drafting_data__approve_plan";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 /** The fixed step a job with no plan yet carries (jobs-create.md §3, "The plan marker"). */
-const PLAN_MARKER = "Create a plan for how to complete this job.";
+export const PLAN_MARKER = "Create a plan for how to complete this job.";
 
 export interface ApprovePlanArgs {
   db_path: string;

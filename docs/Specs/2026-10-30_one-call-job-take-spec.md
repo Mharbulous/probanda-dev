@@ -71,3 +71,27 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 | `drafting-data` vocabulary state | Holds: `.claude/skills/drafting-data/` carries no atom tag and no vocabulary block, so any call fails with the lint `SKILL.md: no vocabulary block`. No skill text sends a session there for rules; the observed call was the model's guess | `skill-rules.ts` `parseFile` |
 | Fixed-text titles and the plan marker in code | `STOCK_TITLES`, `waitsOnGate` and the gate title in `goal-gate.ts`; `PLAN_MARKER` in `approve-plan.ts` | `goal-gate.ts`, `approve-plan.ts` |
 | Paths "as seen in the installed copy" | The source paths are `.claude/skills/<skill>/...` and `source/lawyer/mcp/src/...`; nothing under `plugins/` is edited | repo layout |
+
+## 12. Tool calls for a take, before and after (§7 step 5)
+
+Before, observed (§1, §2): about 40 tool calls from `/work <N>` to the announcement, 11 of them rule fetches (`skill_rules__applicable` for `work` `enter`, `dispatch`, `input_check`, `premise_check`, `announce`, `plan_readback` and for `draft` `plan_readback`, `execute`, a failed `drafting-data` call and the grep after it, `rules__at`), with five `board_card` reads and four hand writes (the pickup rewrite, `assign_job`, the history append, `approve_plan`).
+
+After, counted from the rewritten skill text for a ready many-step job with no input check, named at the Opening, on a Cowork host (not yet measured in a live session):
+
+| # | Call | Why |
+|---|---|---|
+| 1 | ToolSearch | the card path |
+| 2-4 | `open_session`, `preferences__read`, `practice_data__config_status` | session entry |
+| 5 | `skill_rules__applicable` `work` `enter` | session entry's rules |
+| 6 | ToolSearch | the staging turn |
+| 7 | `rules__move` `draft/session` | the map |
+| 8 | `skill_rules__applicable` `work` `route_reply` | a job named |
+| 9 | `board_card(jobs: [N])` | the pickup review's read |
+| 10 | `skill_rules__applicable` `work` `take` | the one rules fetch of the take path |
+| 11 | `drafting_data__take_job` | the checks, the assign, the history entry, the header, card and premise line |
+| 12 | `rules__move` `draft/job` | the map |
+| 13 | Skill `/draft` | the hand-off |
+| 14 | `skill_rules__applicable` `draft` `execute` | the announcement and the work, one fetch |
+| 15 | `drafting_data__approve_plan` | after the announcement |
+
+15 calls against about 40, and 4 rule fetches (one on the take path itself) against 11. A pickup rewrite adds two (`rewrite_job`, then `take_job` again), and a `duplicates` refusal one more `take_job`. The live count stays to be recorded from the first session on a build that ships `take_job`.

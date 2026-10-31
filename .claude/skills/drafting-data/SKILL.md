@@ -48,6 +48,7 @@ Every tool below except `drafting_forms__open_session` takes an already-resolved
 | Record a general Writing as sent | `drafting_data__record_sent` | `send_anyway` only in the practitioner's own words, recorded verbatim. `expect_revision` is the revision the practitioner saw. `references/filing-checklists.md` §13 "Sent write" |
 | Record another Writing as filed | `drafting_data__record_filed` | `expect_revision` is the revision the practitioner saw. `references/filing-checklists.md` §11 |
 | Record a Writing as served | `drafting_data__record_served` | `expect_revision` is the revision the practitioner saw. `references/filing-checklists.md` §11 "Served Writings" |
+| Take a Ready job | `drafting_data__take_job` | `work/references/job-session.md`, Assign |
 | Assign a job | `drafting_data__assign_job` | `takeover: true` only when `work/references/take-over.md` says. Never retry to win. `references/jobs-run.md` §4 |
 | Complete the held job | `drafting_data__complete_job` | `references/jobs-run.md` §9 |
 | Return a `wip` job to Ready | `drafting_data__release_job` | `expected_holder` only on the practitioner's choice of "Return it to Ready". Never retry to win. `references/jobs-run.md` §10 |

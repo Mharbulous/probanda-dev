@@ -74,3 +74,9 @@ test("a node map failing its lints fails the pilot call too", (t) => {
   checkout(t, { "root.md": ROOT });
   assert.throws(() => skillRulesApplicable("rdag", "release", {}), { code: "rules_dag_lint" });
 });
+
+test("a skill never tagged refuses not_served, naming no lint", (t) => {
+  checkout(t, null);
+  writeFileSync(join(process.env.COCLERK_REPO_ROOT, ".claude", "skills", "rdag", "SKILL.md"), "---\nname: rdag\n---\n\n## 1. Plain rules\n\nNo atoms here.\n");
+  assert.throws(() => skillRulesApplicable("rdag", "release"), (err) => err.code === "not_served" && /serves no rules by operation/.test(err.message));
+});

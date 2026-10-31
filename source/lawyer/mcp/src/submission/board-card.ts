@@ -49,6 +49,34 @@ function refuseAbsorbedCard(dbPath: string, board: BoardRef): void {
   throw new ValidationError(`${boardLabel(board)} is merged into ${boardLabel(survivor)}; read the card on ${boardLabel(survivor)}`, "board_merged");
 }
 
+/** One board's section as the matter pages build it -- a filing's from the inventory its last render
+ * saved, a proceeding with no filing's from its jobs and loose threads -- read whole on a merged board
+ * (boardSectionOf); an absorbed board refuses board_merged. Read by board_card and take_job. */
+export function boardSection(
+  dbPath: string,
+  board: { filing_id?: number; proceeding_id?: number },
+  client: ClientContext,
+  now: string,
+  dates: MatterDates,
+  revision: number = fetchRevision(dbPath)
+): WorkBoardData {
+  if (board.filing_id !== undefined) {
+    const filing = fetchFiling(dbPath, board.filing_id);
+    refuseAbsorbedCard(dbPath, { filing_id: filing.id, proceeding_id: filing.proceeding_id });
+    return boardSectionOf(dbPath, filingBoardData(dbPath, filing, fetchProceeding(dbPath, filing.proceeding_id), client, now, revision, dates), client, now, revision, dates);
+  }
+  const proceeding = fetchProceeding(dbPath, board.proceeding_id as number);
+  refuseAbsorbedCard(dbPath, { filing_id: null, proceeding_id: proceeding.id });
+  return boardSectionOf(
+    dbPath,
+    buildPreFilingBoardData(dbPath, proceeding, { revision, matter: client.matterNo ?? "", client: client.clientName ?? proceeding.matter_reference, rendered: now }),
+    client,
+    now,
+    revision,
+    dates
+  );
+}
+
 /**
  * drafting_forms__board_card: what one section's cards hold when opened, read-only. The section is
  * built as the matter pages build it -- a filing's from the inventory its last render saved, a
@@ -83,29 +111,13 @@ export function submissionFormsBoardCard(
     throw new ValidationError("drafting_forms__board_card: the court_file lane needs filing_id and draft_dir, the matter's 0. DRAFT folder session entry returned");
   }
   const draftDir = args.draft_dir === undefined ? undefined : resolveDraftDir(args.draft_dir, "drafting_forms__board_card.draft_dir");
+  if (args.proceeding_id !== undefined && fetchAllFilingsForProceeding(args.db_path, args.proceeding_id).length > 0) {
+    throw new ValidationError("This proceeding has a Writing, so its jobs are on each Writing's Milestone -- read the card there");
+  }
   const revision = fetchRevision(args.db_path);
-  let section: WorkBoardData;
-  if (args.filing_id !== undefined) {
-    const filing = fetchFiling(args.db_path, args.filing_id);
-    refuseAbsorbedCard(args.db_path, { filing_id: filing.id, proceeding_id: filing.proceeding_id });
-    section = boardSectionOf(args.db_path, filingBoardData(args.db_path, filing, fetchProceeding(args.db_path, filing.proceeding_id), client, now, revision, dates), client, now, revision, dates);
-  } else {
-    const proceeding = fetchProceeding(args.db_path, args.proceeding_id as number);
-    if (fetchAllFilingsForProceeding(args.db_path, proceeding.id).length > 0) {
-      throw new ValidationError("This proceeding has a Writing, so its jobs are on each Writing's Milestone -- read the card there");
-    }
-    refuseAbsorbedCard(args.db_path, { filing_id: null, proceeding_id: proceeding.id });
-    if (lanes.includes("criteria") || lanes.includes("proposed")) {
-      throw new ValidationError("This proceeding has no Writing yet, so its board has no completion criteria and no Proposed lane");
-    }
-    section = boardSectionOf(
-      args.db_path,
-      buildPreFilingBoardData(args.db_path, proceeding, { revision, matter: client.matterNo ?? "", client: client.clientName ?? proceeding.matter_reference, rendered: now }),
-      client,
-      now,
-      revision,
-      dates
-    );
+  const section = boardSection(args.db_path, args, client, now, dates, revision);
+  if (args.proceeding_id !== undefined && (lanes.includes("criteria") || lanes.includes("proposed"))) {
+    throw new ValidationError("This proceeding has no Writing yet, so its board has no completion criteria and no Proposed lane");
   }
   const missing = jobs.filter((id) => !section.tickets.some((t) => t.id === id));
   if (missing.length > 0) {

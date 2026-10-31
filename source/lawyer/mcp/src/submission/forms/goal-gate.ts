@@ -3,7 +3,7 @@
 import type { GoalCriterion, GoalState } from "./work-board-data.js";
 import type { WorkBoardTicket } from "./work-board-ticket.js";
 
-const GATE_TITLE = "Pre-filing consistency gate";
+export const GATE_TITLE = "Pre-filing consistency gate";
 /** A Pass 2 finding job's fixed title (jobs-stock.md §3g): a position the firm's own prior
  * correspondence contradicts. While one is open the pre-send hold reads `position-conflict` unmet. */
 export const POSITION_CONFLICT_TITLE = "Decide a position our own correspondence contradicts";

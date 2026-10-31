@@ -360,6 +360,10 @@ export function loadSkill(skill: string): Skill {
     throw new ValidationError(`skill must be a skill folder name such as "draft", not ${JSON.stringify(skill)}`);
   }
   const main = skillSourceRead(`${skill}/SKILL.md`);
+  // A skill never tagged (drafting-data) serves no rules by operation: say so, not a lint failure.
+  if (!main.content.includes(VOCAB_OPEN) && !hasTag(main.content)) {
+    throw new ValidationError(`${skill} serves no rules by operation: read the section of its SKILL.md or reference that the calling rule names`, "not_served");
+  }
   const files = [parseFile("SKILL.md", main.content, main.sha256, true)];
   for (const treePath of referencePaths(skill)) {
     const read = skillSourceRead(treePath);

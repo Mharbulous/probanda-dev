@@ -24,12 +24,17 @@ test("session entry and the fast open are /work's", () => {
   assert.ok(enter.every((id) => id.startsWith("work.")), enter.join(" "));
 });
 
-test("dispatch is /work's, with the claim checks before the assigning write", () => {
+test("dispatch is /work's, and one take call serves the judgements before the assigning write", () => {
   const dispatch = ids("dispatch");
-  for (const id of ["work.dispatch", "work.dispatch.choose", "work.dispatch.work-gone", "work.dispatch.assign", "work.assign", "work.pickup-review", "work.duplicate-check", "work.steps.restated"]) {
+  for (const id of ["work.dispatch", "work.dispatch.choose", "work.dispatch.work-gone", "work.dispatch.assign"]) {
     assert.ok(dispatch.includes(id), id);
   }
   assert.ok(dispatch.every((id) => id.startsWith("work.")), dispatch.join(" "));
+  const take = ids("take");
+  for (const id of ["work.assign", "work.assign.refused", "work.input-check", "work.pickup-review", "work.duplicate-check", "work.pre-claim", "work.posture-check", "work.steps.restated"]) {
+    assert.ok(take.includes(id), id);
+  }
+  assert.ok(take.every((id) => id.startsWith("work.")), take.join(" "));
 });
 
 test("every tagged /work file is fully mapped and the always-on atoms are its own", () => {

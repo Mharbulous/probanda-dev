@@ -22,13 +22,13 @@ class VacuousStepReadBackTest(unittest.TestCase):
         cls.work = WORK_JOB_SESSION.read_text(encoding="utf-8")
         cls.rule = paragraph(cls.work, "**A step that only restates the request.**")
 
-    def test_rule_is_served_before_the_assigning_write(self):
-        self.assertIn("<!-- atom id=work.steps.restated ops=dispatch,pre_claim,plan_readback,take_over -->", self.work)
-        self.assertIn("Before the assigning write of every ready job, one-step or many-step", self.rule)
+    def test_rule_is_served_on_the_take_path(self):
+        self.assertIn("<!-- atom id=work.steps.restated ops=take,pre_claim,plan_readback,take_over -->", self.work)
+        self.assertIn("On a ready job `take_job` refuses it with `restates`, naming the step.", self.rule)
 
-    def test_step_is_compared_with_title_and_intent_after_normalising(self):
+    def test_held_step_is_compared_with_title_and_intent_after_normalising(self):
         self.assertIn(
-            "compare each step not yet done with the job's title and with its intent, ignoring case, "
+            "On a job this session already holds, compare each step not yet done with the job's title and with its intent, ignoring case, "
             "surrounding and repeated whitespace, trailing punctuation",
             self.rule,
         )

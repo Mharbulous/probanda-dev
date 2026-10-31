@@ -54,7 +54,8 @@ class PlanMarkerStepTest(unittest.TestCase):
         self.assertIn("never assign the job or stamp its approval while the marker is its only step", rule)
         self.assertIn("then run `/job-planning` on it", rule)
         self.assertIn("never splits or rewrites the plan marker", session)
-        self.assertIn("A job whose only step is the plan marker is not checked as a one-step job", session)
+        self.assertIn("`take_job` refuses it with `needs_plan`", rule)
+        self.assertIn("the pre-claim check never takes it as a one-step job's plan", rule)
         take_over = read("draft", "references", "take-over.md")
         self.assertIn("Where its only step is the plan marker", take_over)
 
