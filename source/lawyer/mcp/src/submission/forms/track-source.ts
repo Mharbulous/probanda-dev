@@ -2,10 +2,12 @@
 // enactment or a file its work has named and is about to retrieve or read) in ticket_sources (schema
 // v76), and closes each one as got or not retrieved. The rows are the job's own record beside its
 // steps, as ticket_answers is: the steps stay the practitioner's approved plan and are never written
-// here. Every statement is guarded on the job's lock being this session's (jobs-run.md §5), so a call
-// that writes nothing is still the lock read before a dispatch. Adding an item already on the job
-// leaves an open one alone and reopens a closed one, so a retry can be closed as got. The job tables
-// carry no revision triggers, so the revision does not move.
+// here. Every statement is guarded on the job's lock being this session's under its claim (heldBy),
+// and `dispatch` lists only what the holder may now retrieve, so the call is the check before a
+// dispatch. Adding an item already on the job leaves an open one alone, reopens one closed as not
+// retrieved, so a retry can be closed as got, and leaves one closed as got closed, returning it under
+// `landed`, so a repeated dispatch is never run twice. The job tables carry no revision triggers, so the
+// revision does not move.
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
@@ -48,6 +50,10 @@ export interface TrackSourceResult {
   open: number;
   /** Each `close` item that names no source on the job, as `<kind>: <label>`. */
   unknown: string[];
+  /** Each `add` item now open on the job, as `<kind>: <label>`: dispatch these, and only on recorded. */
+  dispatch: string[];
+  /** Each `add` item the job already got: never dispatched again. */
+  landed: SourceRow[];
   locked_by: string | null;
   status: string;
   rejected_at: string | null;
@@ -111,7 +117,7 @@ export async function submissionDataTrackSource(args: TrackSourceArgs, env: Node
   const statements: WriteStatement[] = [
     ...add.flatMap((a) => [
       {
-        sql: `UPDATE ticket_sources SET closed_at = NULL, outcome = NULL, reason = NULL WHERE ticket_id = ? AND kind = ? AND label = ? AND closed_at IS NOT NULL AND ${held}`,
+        sql: `UPDATE ticket_sources SET closed_at = NULL, outcome = NULL, reason = NULL WHERE ticket_id = ? AND kind = ? AND label = ? AND outcome = 'not_retrieved' AND ${held}`,
         params: [id, a.kind, a.label, id, ...h.params],
       },
       {
@@ -135,10 +141,15 @@ export async function submissionDataTrackSource(args: TrackSourceArgs, env: Node
   let outcome: TrackSourceResult["outcome"];
   let note: string;
   let unknown: string[] = [];
+  let dispatch: string[] = [];
+  let landed: SourceRow[] = [];
   if (read.locked_by === token) {
     outcome = "recorded";
     unknown = close.map((c) => `${c.kind}: ${c.label}`).filter((k) => !on.has(k));
-    note = `Job ${id} is this session's: ${sources.length} source${sources.length === 1 ? "" : "s"} to get on it, ${open} open.${unknown.length > 0 ? ` ${unknown.length} close item${unknown.length === 1 ? " names" : "s name"} no source on the job and closed nothing.` : ""}`;
+    const added = add.map((a) => sources.find((s) => s.kind === a.kind && s.label === a.label)).filter((s): s is SourceRow => s !== undefined);
+    dispatch = added.filter((s) => s.closed_at === null).map((s) => `${s.kind}: ${s.label}`);
+    landed = added.filter((s) => s.outcome === "got");
+    note = `Job ${id} is this session's: ${sources.length} source${sources.length === 1 ? "" : "s"} to get on it, ${open} open.${unknown.length > 0 ? ` ${unknown.length} close item${unknown.length === 1 ? " names" : "s name"} no source on the job and closed nothing.` : ""}${landed.length > 0 ? ` ${landed.length} already got (landed): dispatch nothing for ${landed.length === 1 ? "it" : "them"}; read where ${landed.length === 1 ? "it" : "they"} landed from the destination's manifest.` : ""}`;
   } else if (read.locked_by !== null) {
     outcome = "not_held";
     note = `Nothing was written: another session holds job ${id} (taken over). Dispatch nothing for this job; report it and stop.`;
@@ -158,6 +169,8 @@ export async function submissionDataTrackSource(args: TrackSourceArgs, env: Node
     sources,
     open,
     unknown,
+    dispatch,
+    landed,
     locked_by: read.locked_by,
     status: read.status,
     rejected_at: read.rejected_at,

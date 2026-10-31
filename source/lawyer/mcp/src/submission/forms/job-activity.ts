@@ -155,9 +155,26 @@ export function jobIdentity(tool: string, args: JobIdentity): { dbPath: string; 
   return { dbPath, id, token, claim: checkClaim(tool, dbPath, id, token, args.claim_no) };
 }
 
-/** Runs a research_filing write, then, when the call names a job, moves its last activity. */
+/** Refuses, before anything is written, a filing for job `id` that `token` does not hold under `claim`
+ * (heldBy): taken over, released, shelved or completed. The token and claim number are the dispatch
+ * key: only the holder at the current claim files for the job. */
+export function requireHeld(tool: string, job: { dbPath: string; id: number; token: string; claim: number | null }): void {
+  const h = heldBy(job.dbPath, job.token, job.claim);
+  const [row] = submissionDataQuery(job.dbPath, `SELECT status, rejected_at, locked_by, (${h.sql}) AS held FROM tickets WHERE id = ?`, [...h.params, job.id])
+    .rows as unknown as { status: string; rejected_at: string | null; locked_by: string | null; held: number }[];
+  if (row === undefined) throw new NotFoundError(`${tool}: no job ${job.id} in ${job.dbPath}; nothing was written`, "not_found");
+  if (row.held === 1) return;
+  throw new DataServerError(
+    `${tool}: nothing was written. Job ${job.id} is not this session's under claim ${job.claim ?? "none"} (status=${row.status}, ${row.locked_by === null ? "no holder" : "locked by " + (row.locked_by === job.token ? "this session" : "another session")}, rejected_at=${row.rejected_at ?? "NULL"}), so what this dispatch got is no longer filed for it. Report it and stop; dispatch nothing more for this job.`,
+    "not_held"
+  );
+}
+
+/** Runs a research_filing write, then, when the call names a job, moves its last activity. A call
+ * naming a job this session does not hold under its claim is refused first (requireHeld). */
 export async function withJobActivity<T extends object>(tool: string, args: JobIdentity, run: () => T | Promise<T>): Promise<T | (T & { job: { ticket_id: number; recorded: boolean } })> {
   const job = jobIdentity(tool, args);
+  if (job !== null) requireHeld(tool, job);
   const result = await run();
   return job === null ? result : { ...result, job: { ticket_id: job.id, recorded: (await touchJob(job.dbPath, job.id, job.token, job.claim)).recorded } };
 }

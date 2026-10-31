@@ -54,3 +54,17 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 - Confirm `track_source`'s current guard and return shape, and the filing tools' parameters.
 - Confirm where `draft.execute.lock` and its researcher-side duplicates live.
+
+## 11. Verification against HEAD (2026-10-31, main at 63db065)
+
+| Claim in this spec | At HEAD | Source |
+|---|---|---|
+| `track_source` is the lock check for a dispatch | Confirmed. Every statement is guarded by `heldBy` (token and, since 63db065, claim number); `checkClaim` refuses a stale `claim_no` with `stale_claim` while this session still holds the job; a call with neither `add` nor `close` writes nothing and is "the lock read before a dispatch". | `source/lawyer/mcp/src/submission/forms/track-source.ts`; `schema/submission-data.ts` (track_source description) |
+| `track_source` return shape | `{ticket_id, outcome (recorded, not_held, shelved, completed, no_match), sources, open, unknown, locked_by, status, rejected_at, note, warning?}`. No key is returned. Adding a source already closed reopens it, `got` included, so a repeat re-dispatches a source that has landed. | `track-source.ts` |
+| `track_source` knows a step | Not so. It takes no step: a source is the job's own record and never a step (`jobs-common.md` §2). `ticket_sources` is keyed by `ticket_id`, `kind`, `label`. | `track-source.ts`; drafting-data `schema.sql` |
+| Only `save_answer` takes the job (§2, activity spec reading) | Superseded. `file_download`, `append_manifest`, `write_scratch`, `file_fetched` and `save_answer` all take `db_path`, `ticket_id`, `session_token` (all three or none) and `claim_no`. | `schema/file.ts` (`JOB_PROPERTIES`), `dispatch.ts` (`withJobActivity`) |
+| Filing tools refuse a stale holder | Only in part. `checkClaim` refuses a stale or missing `claim_no` only while this session still holds the job. A job taken over, released, shelved or completed is not refused: `file_download`, `append_manifest`, `file_fetched` and `write_scratch` write the file and return `job.recorded: false`; `save_answer` saves the file and returns `job.recorded: false`. | `job-activity.ts` (`jobIdentity`, `withJobActivity`); `save-job-answer.ts` |
+| The claim number exists | Confirmed: `assign_job` raises `claim_no` (kv_store `claim_no` / `tickets:<id>`) and returns it; the research briefs already carry it. | 63db065 |
+| `draft.execute.lock` | `.claude/skills/draft/references/job-session.md` (atom `draft.execute.lock`); `draft.execute.sources` beside it calls `track_source` the lock check. | |
+| Researcher-side duplicates | `.claude/skills/shared/legal-research.md` ("A caller working a `/draft` job checks its lock before every dispatch", and "its call is the lock read" under Sources to get); `.claude/skills/drafting-data/references/jobs-common.md` §2 "Lock read before a dispatch" and its `schema_below_v76` fallback; `.claude/skills/drafting-data/SKILL.md` routing row "Check the lock before a research dispatch". No researcher agent file carries a lock read. | |
+| Law-audit agent files for the job | Not so. `research-agent` writes only its scratchpad (`write_scratch`, no job named); its memo reaches the job only through the caller's `save_answer`. | `source/researcher/agents/research-agent.md`; `shared/legal-audit-protocol.md` Step 6 |

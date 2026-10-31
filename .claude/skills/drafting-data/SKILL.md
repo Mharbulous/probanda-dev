@@ -73,7 +73,6 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Timestamps | Writing any job timestamp | `references/jobs-common.md` §0 |
 | Session identity | Reading a `session_token` or `locked_by` | `references/jobs-common.md` §1 |
 | Read job state | Before a substance write, or a confirm-read | `references/jobs-common.md` §2 |
-| Check the lock before a research dispatch | Each dispatch while holding a job | `references/jobs-common.md` §2, "Lock read before a dispatch" |
 | Create a job | Selected jobs or a picked Proposal | `references/jobs-create.md` §3 |
 | Outline afresh | Reworking a queued job | `references/jobs-create.md` §3a |
 | Intake | Pulling Proposals onto the board | `references/jobs-create.md` §3e |

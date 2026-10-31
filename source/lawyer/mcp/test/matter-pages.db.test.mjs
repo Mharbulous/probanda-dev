@@ -1102,8 +1102,7 @@ test("the live lane's idle tag on an In progress job", () => {
 
 // The take-over card (FIX 3): a job's last activity is its stored stamp, and its card lists the seeds
 // captured from it and the answers saved for it. Saving an answer with the job's id restarts its idle
-// clock; the save is recorded only under the saving session's own lock, and a refused record leaves
-// the file saved.
+// clock; a save naming a job the saving session does not hold is refused and saves no file.
 async function heldMilestone(t) {
   const f = seededDbFixture();
   t.after(() => f.cleanup());
@@ -1197,23 +1196,18 @@ test("save_answer with the job's id lists the answer on its card and restarts it
   assert.equal(live.find((line) => line.startsWith("- Job #1 ")), "- Job #1 Research the limitation point · In Progress 0/1", "no idle tag right after the save");
 });
 
-test("save_answer records nothing against a job this session no longer holds, and still saves the file", async (t) => {
+test("save_answer refuses a job this session no longer holds, and saves no file", async (t) => {
   const { f, law } = await heldMilestone(t);
   const args = { destination_dir: join(law, "Limitation"), filename: "answer.md", text: "Late answer.\n", db_path: f.dbPath, ticket_id: 1 };
+  const refused = async (extra, code, pattern) =>
+    assert.rejects(callTool({}, "research_filing__save_answer", { ...args, ...extra }), (err) => err.code === code && (pattern === undefined || pattern.test(err.message)));
 
-  const stale = await callTool({}, "research_filing__save_answer", { ...args, session_token: "sess-before-takeover" });
-  assert.equal(stale.job.recorded, false);
-  assert.match(stale.job.note, /not this session's \(status=wip, another session's lock, rejected_at=NULL\).*dispatch nothing more/);
-  assert.ok(existsSync(stale.path), "the file is saved");
-  assert.equal(submissionDataQuery(f.dbPath, "SELECT COUNT(*) AS n FROM ticket_answers").rows[0].n, 0);
-  assert.equal(submissionDataQuery(f.dbPath, "SELECT locked_by FROM tickets WHERE id = 1").rows[0].locked_by, "sess-holder", "the holder's lock is untouched");
-
-  const refused = async (extra, code) => assert.rejects(callTool({}, "research_filing__save_answer", { ...args, ...extra }), (err) => err.code === code);
-  const files = () => readdirSync(join(law, "Limitation")).sort();
-  const listed = files();
+  await refused({ session_token: "sess-before-takeover" }, "not_held", /not this session's .*\(status=wip, locked by another session, rejected_at=NULL\).*dispatch nothing more/);
   await refused({}, "invalid_job");
   await refused({ session_token: "sess-holder", ticket_id: 99 }, "not_found");
-  assert.deepEqual(files(), listed, "a refusal writes no file");
+  assert.deepEqual(readdirSync(join(law, "Limitation")), [], "a refusal writes no file");
+  assert.equal(submissionDataQuery(f.dbPath, "SELECT COUNT(*) AS n FROM ticket_answers").rows[0].n, 0);
+  assert.equal(submissionDataQuery(f.dbPath, "SELECT locked_by FROM tickets WHERE id = 1").rows[0].locked_by, "sess-holder", "the holder's lock is untouched");
 });
 
 // The board the headline was measured on (2026-10-04): 43,341 chars printed fully expanded. Its lanes
