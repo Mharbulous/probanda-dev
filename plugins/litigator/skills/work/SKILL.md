@@ -46,8 +46,8 @@ The rules map is `/draft`'s, and this session moves on it, since one session hol
 <!-- atom-vocabulary -->
 | Operation | Call before |
 |---|---|
-| `enter`, `open`, `proposals`, `ingest_coverage`, `form_currency`, `idle_report`, `announce`, `route_reply` | the opening, in that order where each applies, then the practitioner's instruction or reply |
-| `dispatch`, `skip_reasons`, `assign_refused`, `input_check`, `pre_claim`, `premise_check`, `plan_readback`, `change`, `execute` | a job, from choosing it to handing it over |
+| `enter`, `open`, `proposals`, `form_currency`, `idle_report`, `announce`, `route_reply` | the opening, in that order where each applies, then the practitioner's instruction or reply |
+| `dispatch`, `skip_reasons`, `assign_refused`, `input_check`, `ingest_coverage`, `pre_claim`, `premise_check`, `plan_readback`, `change`, `execute` | a job, from choosing it to handing it over |
 | `take_over` | a job named in progress elsewhere |
 | `shelve`, `suppress`, `release`, `restore`, `bring_forward`, `new_work`, `tangent`, `triage`, `board` | that act |
 | `counsel_review`, `scrutiny_review`, `filing_picker`, `tools_not_found`, `legacy`, `unattended_run`, `nightly` | the work each names |
