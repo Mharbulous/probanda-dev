@@ -64,7 +64,7 @@ test("renders the Application Response mockup with positions grouped by Part and
     assert.match(md, /^4\. Security for costs is unwarranted given the defendant's assets in this jurisdiction\.[^\n]* <!-- submission_id 1 --> <!-- supporting fact paragraphs: 3 -->$/m);
 
     // Part 6 restarts at 1, provenance rendered.
-    assert.match(md, /^1\. Affidavit of Reece Ferris \(2026-08-10\) \(served with this application response\)/m);
+    assert.match(md, /^1\. Affidavit of Reece Ferris, dated August 10, 2026 \(served with this application response\)/m);
     // The standard closing lines number on from the documents, unmarked and untraced.
     assert.match(md, /^2\. Pleadings filed in this proceeding$/m);
     assert.match(md, /^3\. Such further affidavits or filed court documents as this honourable court may allow$/m);
@@ -287,10 +287,10 @@ test("emits a form-33.md that validate33 accepts, matching the reviewed data", a
       "expected the filed Part 4 citation lines to be the mockup's"
     );
 
-    assert.match(md, /^- Affidavit of Reece Ferris, dated 2026-08-10$/m);
+    assert.match(md, /^- Affidavit of Reece Ferris, dated August 10, 2026$/m);
     assert.ok(
       md.endsWith(
-        "- Affidavit of Reece Ferris, dated 2026-08-10\n- Pleadings filed in this proceeding\n- Such further affidavits or filed court documents as this honourable court may allow\n"
+        "- Affidavit of Reece Ferris, dated August 10, 2026\n- Pleadings filed in this proceeding\n- Such further affidavits or filed court documents as this honourable court may allow\n"
       ),
       "expected Part 6 to close with the two standard lines after the affidavit"
     );
