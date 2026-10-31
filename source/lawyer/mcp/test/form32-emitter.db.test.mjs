@@ -226,9 +226,10 @@ test("emits a form-32.md that validate32 accepts, matching the reviewed data", a
     assert.match(md, /^> default judgment may be entered once the response period has expired without a filed response$/m);
     assert.match(md, /^>> \*Miazga v\. Kvello Estate\*, 2009 SCC 51, para 15$/m);
 
-    // Part 4 materials: a document's date as Form 32 prints it, then the pleadings line alone. The
-    // catch-all "Such further affidavits ..." line identifies no document, so it is not printed.
-    assert.match(md, /^- Draft default judgment \(August 1, 2026\)$/m);
+    // Part 4 materials: a document's date as Form 32 prints it (", dated <Month D, YYYY>"), then the
+    // pleadings line alone. The catch-all "Such further affidavits ..." line identifies no document,
+    // so it is not printed.
+    assert.match(md, /^- Draft default judgment, dated August 1, 2026$/m);
     assert.ok(md.endsWith("\n- Pleadings filed in this proceeding\n"), "expected Part 4 to close with the pleadings line");
     assert.doesNotMatch(md, /Such further affidavits/);
 
