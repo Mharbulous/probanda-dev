@@ -1,6 +1,7 @@
 # Spec: A research job's plan marker becomes the standard research plan
 
 Status: proposed, 2026-10-27. Written in a matter session; implementation is handed to Claude Code.
+Partly superseded, 2026-10-31: §4c and §7.2's deletions of step 2a's plan spawn and issue forms, `mode: plan` and "Approved plan issues become jobs" are done by the one-question research fix (step 2a is now a single-question scope check, `shared/legal-research.md` "A research question holds one question"). The rest of this spec stays open.
 Plugin: `researcher` (installed copy seen at v0.10.3) and `litigator` (installed copy seen at v0.11.3). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: 2026-10-27_westlaw-sign-in-check-before-query-spec.md. Supersedes the issue-splitting parts of 2026-10-20_research-issue-by-issue-approval-creates-jobs-spec.md and 2026-10-21_held-job-research-sub-issues-implicitly-approved-spec.md. Builds on 2026-10-20_new-job-default-plan-marker-step-spec.md and 2026-10-15_research-memo-deliverable-spec.md.
 

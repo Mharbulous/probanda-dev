@@ -9,8 +9,8 @@ A research job is a queued, unshelved job whose work is a question about what th
 ## Jobs held
 
 - Hold at most three research jobs at once. Assign each with `drafting_data__assign_job` under its own token, minted for that job by `drafting_forms__bootstrap` `{db_path}`. Pass that job's token and `claim_no`, and never another job's, wherever a rule names this session's token. A job awaiting the practitioner's decision on a rewording counts toward the three.
-- Each held job is a held `/draft` job for every rule in `SKILL.md` and `shared/legal-research.md` that names one: the plan asks nothing but the split or rewording proposal ("A job holds one question"), `Job question:` is its title, gaps become steps, sources to get are recorded, and the lock is read before every dispatch.
-- After a split writes new jobs, spawn `researcher:research-triage` again with every job's state, `New memo: none` and the saved graph, save its JSON over the graph, and act on it by §4 step 3.
+- Each held job is a held `/draft` job for every rule in `SKILL.md` and `shared/legal-research.md` that names one: the scope check asks nothing but the rewording proposal ("A research question holds one question"), `Job question:` is its title, gaps become steps, sources to get are recorded, and the lock is read before every dispatch.
+- After a new question is written as a job, spawn `researcher:research-triage` again with every job's state, `New memo: none` and the saved graph, save its JSON over the graph, and act on it by §4 step 3.
 - When a job completes, its slot frees, and the session goes on to assign the next ready research job on this board. It assigns no job that is not a research job on this board.
 
 ## 1. Start

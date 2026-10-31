@@ -63,38 +63,11 @@ permitted to make statements of law.
    that too, and follow it.
 2. Tell the practitioner: "That's a question about the law — I'll put it to the
    research-agent agent."
-2a. Plan, before any search. Spawn `researcher:research-agent` with `mode: plan`
-   (`shared/legal-audit-scoped.md`), the question, the `Job question:` line
-   (`shared/legal-research.md`'s spawn template), the factual context, the matter root,
-   the `Preflight:` rows and the issue folders' `6. LAW\` listing
-   (`research_filing__list_law_folder`), by file name only.
-   - **A caller holding a `/draft` job asks nothing** but the split or rewording proposal
-     at the end of this item. The job's recorded question is already approved: it is the plan's one
-     `scope: in` issue, and steps 3 to 5 run it.
-     A `scope: new` issue lies outside the question and is not researched: it is captured
-     and offered (`shared/legal-research.md`, "Approved plan issues become jobs"). The
-     practitioner may still narrow or waive the job's scope in their own words. A plan with
-     more than one `scope: in` issue, or a title that needs rewording, is proposed for
-     splitting or rewording before any research (the doctrine's "A job holds one question").
-
-   Otherwise take the practitioner through its issues one at a time:
-   - Ask each issue as its own multiple-choice question, the issue's text verbatim from
-     the return, with the options "Yes, research it" and "No, skip it", up to four
-     questions per form. A skipped issue is dropped. With no multiple-choice tool in the
-     session, show the issues as a numbered list and take the answers in plain text.
-   - After the last form, show only the numbered list of approved issues and the
-     question "Are there any other issues that you would like this research to cover?"
-     Add no sentence about what an answer does.
-   - When they add an issue, add it in their words, show the full numbered list again and
-     ask "Are there any more issues that you would like this research job to cover?"
-   - Their "No" approves the list. What follows is the doctrine's
-     (`shared/legal-research.md`, "Approved plan issues become jobs").
-   They may instead waive the whole plan, and steps 3 to 5 then run the question as
-   asked. Outside a held job, steps 3 to 5 dispatch nothing until they approve or waive. The plan states no
-   law, and you add no issue of your own. Skip this step on step 5's re-invocations, on a
-   currency check asked on its own, and for a question whose plan the practitioner already
-   approved in this session.
-   Outside a held job, with nobody present to approve, dispatch nothing further: report the plan and stop.
+2a. Scope, before any search. Check the question by the doctrine's "A research question
+   holds one question". Whenever the practitioner raises another question, here or at any
+   later step, follow its "A new question is a new job or a new scope". A held job's
+   recorded question is already approved: ask nothing else. Skip this on step 5's
+   re-invocations and on a currency check asked on its own.
 3. Run Westlaw before the audit, without asking unless the practitioner declined: for each issue no pinpointable
    text in tiers 1–3 answers (a handoff's say-so is no check) and that is not only a
    point-in-time legislation question (the doctrine's duty 3 skips those), run the
@@ -144,9 +117,7 @@ permitted to make statements of law.
    answer" and "memo-reviewer checks every memo before it is saved": on a held job each piece
    of research becomes a step, and without one the same loop runs with no steps. Then save the
    memo the loop ends on to the matter's `6. LAW\<issue>\` folder, relay its `Confidence:` line and the saved memo as its file card (`shared/present-files.md`),
-   never the finding in any words, and ingest what it cites. End with the reviewer's
-   out-of-scope questions as a numbered list and the offer of a further memo on any of them.
-   Relay nothing of the dispatches
+   never the finding in any words, and ingest what it cites. Relay nothing of the dispatches
    in between but a Westlaw stop, a question the doctrine asks the practitioner, and one
    status line each. The doctrine's "After the answer" rule carries the mechanics. An
    `INCOMPLETE` memo is never a licence to answer the question yourself.

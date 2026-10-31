@@ -1,4 +1,4 @@
-Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs, a document setting out an opposing party's arguments is named or its review job reaches Step 4, or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h), or the practitioner names a relayed `/legal-research` Step 5 offer to add (§3i), or answers "No" to `/legal-research`'s closing plan question (§3l), or `/legal-research`'s board mode writes blockers, a premise job, a rewording or a closing (§3m).
+Read when: writing a fixed-text job: `/prepare` offers a Writing kind's stock jobs, a document setting out an opposing party's arguments is named or its review job reaches Step 4, or a letter, an `internal-memo` or an `unstructured` or `unstructured-<recipient>` Writing is saved (§3b), the pre-review passes leave nothing open (§3c), a scrutiny return is recorded `'failed'` (§3d), a pre-review pass leaves a finding undecided (§3g), the practitioner accepts `/draft`'s conversion offer on an `unstructured` or `unstructured-<recipient>` Writing (§3h), or the practitioner names a relayed `/legal-research` Step 5 offer to add (§3i), or chooses to research a new question as an additional issue (§3l), or `/legal-research`'s board mode writes blockers, a premise job, a rewording or a closing (§3m).
 Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 3b. Stock bundle jobs (`/prepare` outlining, and `/draft`'s letter, memo and Unstructured Writing save)
@@ -463,21 +463,21 @@ This is the one `charted_into` write outside an outlining session. It runs in th
 
 The job is ordinary `work`: no title exclusion leaves it out of the open jobs the `gate` completion criterion reads or §14's nothing-open test, as none leaves out §3g's. Completing it follows §9.
 
-## 3l. Research plan issue jobs
+## 3l. Research question jobs
 
-One job per issue on the list the practitioner approved at `/legal-research`'s plan stage (`shared/legal-research.md`, "Approved plan issues become jobs"). Their "No" to the closing question approves the list and is the request: it creates one job per listed issue and none for an issue they skipped. The plan stage runs in a session holding no job, and is not outlining: the write carries no `created_by`, no `ticket_proposals` row and no `ticket_blocks` edge.
+One job for a question the practitioner chose to research as an additional issue (`shared/legal-research.md`, "A new question is a new job or a new scope"). Their choice is the request. The write is not outlining: it carries no `created_by`, no `ticket_proposals` row and no `ticket_blocks` edge.
 
-- Title and intent: the issue's text as the list showed it, character for character, without its number. Never cleaned. Single quotes are doubled in the SQL literal.
+- Title and intent: their question, character for character. Never cleaned. Single quotes are doubled in the SQL literal.
 - Steps: the plan marker as its one step (`jobs-create.md` §3, "The plan marker").
 - No scope rows, and `kind`, `billing_anchor`, `priority`, `filing_id` and `proceeding_id` as §3i gives them for a session holding no job. The board is the one §8a steps 1 and 2 resolve from the question's origin, and a question with no origin takes step 2's last branch, the proceeding. With no board, write nothing (`shared/legal-research.md` says what follows).
 
-Each issue is written by §3i's guarded create and its call 2, on the issue's title. A guard that fires says "already a job: Job #K" in one line and goes on with the next issue. Call 3 writes the plan marker on the recovered literal id:
+It is written by §3i's guarded create and its call 2, on its title. A guard that fires says "already a job: Job #K" in one line. Call 3 writes the plan marker on the recovered literal id:
 
 ```sql
 INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (32, 1, 'Create a plan for how to complete this job.');
 ```
 
-Once every issue is written, re-render the board with `draft_dir`, so its Milestone page lists the new jobs. `pages_refused` means the page is stale: say so. No research runs from this write: each job is researched when it is worked.
+Then re-render the board with `draft_dir`, so its Milestone page lists the new jobs. `pages_refused` means the page is stale: say so. No research runs from this write: each job is researched when it is worked.
 
 ## 3m. Research board writes
 
@@ -489,7 +489,7 @@ The writes of `/legal-research`'s board mode, which works several research jobs 
 SELECT blocker_id, blocked_id FROM ticket_blocks WHERE blocked_id IN (5, 6, 7);
 ```
 
-**A premise job**, only on the practitioner's yes to a premise or threshold question the triage proposes. Write it as §3l writes an issue: §3i's guarded create and its call 2 on the proposed question, character for character, as title and intent, then the plan marker as its one step. Then write its edges as above.
+**A premise job**, only on the practitioner's yes to a premise or threshold question the triage proposes. Write it as §3l writes its job: §3i's guarded create and its call 2 on the proposed question, character for character, as title and intent, then the plan marker as its one step. Then write its edges as above.
 
 **Rewording a held job**, only on the practitioner's approval of the proposed question. The guard is this job's own token (§5):
 

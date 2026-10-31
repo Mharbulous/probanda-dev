@@ -259,9 +259,8 @@ paragraph opening `More research is needed on the following issues:` that lists 
 question, and write the header's `Confidence:` as `INCOMPLETE: <the research named>`. Nothing
 else in the memo defers to further research, offers research or names a tier not run. With
 no research required, write no such paragraph. A spawn prompt's `Review:` line is
-memo-reviewer's verdict on your last memo: treat each `required` item as required, leave
-each `out_of_scope` issue and each `identifiers` item out of the memo, and write no Step 5
-offer for an `out_of_scope` issue. With any `Review:` but `none`, return no `needs_download`
+memo-reviewer's verdict on your last memo: treat each `required` item as required, and cut
+each `out_of_scope` and `identifiers` passage from the memo. With any `Review:` but `none`, return no `needs_download`
 or `needs_note_up`. A `Review:` with no `required` item asks only for a rewrite: rewrite the
 memo from the sources already held, without re-running the audit.
 

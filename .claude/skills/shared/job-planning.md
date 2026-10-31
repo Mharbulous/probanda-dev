@@ -11,14 +11,14 @@ Every plan states:
 3. **Each approval point:** every point where the practitioner must approve before the work continues, named at the step it follows.
 4. **The completion test:** what must be true for the job to be complete.
 
-No step computes or mentions a deadline (`shared/deadline-isolation.md`). No step states law: an issue, an instrument or a doctrine is named only as the practitioner, the record or `/legal-research`'s planning stage put it.
+No step computes or mentions a deadline (`shared/deadline-isolation.md`). No step states law: an issue, an instrument or a doctrine is named only as the practitioner or the record put it.
 
 ## 2. A research job
 
 A job whose work is a question about what the law is also states:
 
 1. **The sources to check, in order:** the matter's `6. LAW` folder and case data, then the shared pool, then the Westlaw query, run without asking unless the practitioner declined it, then the legislation fetch, then the audit and note-up (`shared/research-priority.md`).
-2. **That the issue list comes from `/legal-research`'s planning stage.** The plan never lists the issues itself. A job whose research question is recorded needs no approval of its issues: approving the job approved its question, its one `scope: in` issue (`/legal-research` step 2a). Only an issue outside the recorded question needs the practitioner's word. The planner adds no issue to it: its one issue is the recorded question, verbatim, and a question holding more than one is proposed for splitting into one job per question (`shared/legal-research.md`, "A job holds one question").
+2. **One question.** The job's recorded question, verbatim, is its one question, and the plan adds no issue to it (`shared/legal-research.md`, "A research question holds one question").
 3. **The memo deliverable:** the answer saved in the matter's `6. LAW` folder by `/legal-research`'s "After the answer" rule, and the memo's one Issue is the job's title, verbatim (`shared/research-memo-template.md`, "A job's memo").
 4. **The completion test:** the memo's Conclusion answers the Issue with pinpoint citations, and research the scope test requires (`shared/legal-audit-protocol.md` Step 4) is left as a gap only once every source tier has run on it and memo-reviewer's loop has ended. Until then, each tier memo-reviewer finds required is a step on the job, stamped done only once its work has run (`shared/legal-research.md`, "On a held job, an open tier is not an answer"). While a missing credential or an unreachable source blocks that tier, its step is set ↻ (`drafting_data__set_step`, `/drafting-data` `references/jobs-run.md` §6b), never stamped done.
 

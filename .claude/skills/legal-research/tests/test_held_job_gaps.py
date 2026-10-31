@@ -1,5 +1,4 @@
-"""Pins the held research job's scope rules: the plan tags each issue `scope: in` or `scope: new`
-and its completion test lets an in-scope issue stand as a gap only once every tier has run; the
+"""Pins the held research job's gap rules: the
 opinion audit writes one `gap:` line per issue it leaves open and returns them; and the gate, on a
 held job, runs each tier a gap names before saving, once per tier per issue.
 
@@ -25,12 +24,6 @@ def paragraph(text, opening):
 
 
 class HeldJobGapsTest(unittest.TestCase):
-    def test_plan_tags_scope_and_tightens_the_completion_test(self):
-        scoped = read("legal-audit-scoped.md")
-        self.assertIn("  scope: in / new\n", scoped)
-        self.assertIn("each scope: in issue answered with a pinpoint citation, or named as a gap only once every source tier has run on it", scoped)
-        self.assertNotIn("named as a gap with its research offer", scoped)
-
     def test_mixed_coverage_writes_gap_lines_and_returns_them(self):
         protocol = read("legal-audit-protocol.md")
         self.assertIn("`gap: <issue> : tiers not run: <tier>[; <tier>]`", protocol)
@@ -47,13 +40,6 @@ class HeldJobGapsTest(unittest.TestCase):
         self.assertIn("A caller holding no job runs the same loop, adding and stamping no steps.", rule)
         self.assertLess(read("legal-research.md").index("**On a held job, an open tier is not an answer.**"),
                         read("legal-research.md").index("Persist in this order."))
-
-    def test_held_job_new_issue_is_captured_not_researched(self):
-        rule = paragraph(read("legal-research.md"), "**Approved plan issues become jobs.**")
-        self.assertIn("A session\nholding a `/draft` job asks no approval and writes no job, except by the split or rewording\n"
-                      "proposal below.", rule)
-        self.assertIn("A `scope: new` issue is not researched", rule)
-        self.assertIn("researched only if they name it", rule)
 
 
 if __name__ == "__main__":

@@ -4,9 +4,9 @@ Spec `2026-10-06_research-results-to-board-spec.md`: a research question taken f
 carries an `Origin:`; the audit tags each offer `live_issue` and quotes each correction to the
 draft's words. Wherever a board resolves, the relaying session captures the corrections and
 flags as loose threads and sorts every offer against the board, whatever its tag: off the
-application (dropped and counted) or on or near it (captured as a loose thread and relayed word
-for word, unless the board already holds it). An offer becomes a job only when the practitioner
-names it to add. With no board every offer is relayed.
+application (dropped) or on or near it (captured as a loose thread, unless the board already
+holds it). Captured offers are not relayed, and with no board nothing is captured: the relay is
+the answer alone.
 """
 import re
 import unittest
@@ -53,17 +53,6 @@ FIXTURE_SORT = ["board", "off", "on"]
 def offers_by_class(notes, sort, wanted):
     offers = [line for line in notes.splitlines() if OFFER_TAG.search(line)]
     return [line for line, cls in zip(offers, sort) if cls == wanted]
-
-
-def relay(notes, sort):
-    """The relay with a board: each captured offer word for word, then the count line."""
-    captured = offers_by_class(notes, sort, "on")
-    on_board = len(offers_by_class(notes, sort, "board"))
-    dropped = len(offers_by_class(notes, sort, "off"))
-    return captured + [
-        f"{len(captured)} offers captured as loose threads. {on_board} already on the board. "
-        f"{dropped} offers dropped as off this application."
-    ]
 
 
 def captures(notes, sort):
@@ -154,42 +143,27 @@ class AfterTheAnswerTests(unittest.TestCase):
         self.assertIn(
             "Then sort every Step 5 offer, whatever its `live_issue` tag, against the board.", self.step
         )
-        self.assertIn("Not captured, not relayed, counted", self.step)
+        self.assertIn("| Off the application |", self.step)
         self.assertIn(
             "Everything else: an offer serving the board's words, a new angle on the board's own "
             "subject, and any doubt",
             self.step,
         )
         self.assertIn("Captured as a loose thread at once", self.step)
-        self.assertIn("and relayed word for word", self.step)
-        self.assertIn("It states no law and rewords nothing.", self.step)
-        self.assertIn(
-            "It creates no job: an offer becomes a job only when the practitioner names it to add.",
-            self.step,
-        )
+        self.assertNotIn("relayed word for word", self.step)
+        self.assertIn("It states no law and rewords nothing and creates no job.", self.step)
+        self.assertIn("Captured offers are not relayed and invite nothing.", self.step)
 
-    def test_relay_ends_with_the_count_and_the_add_or_drop_line(self):
-        self.assertIn("2. Each captured offer, word for word.", self.step)
+    def test_relay_is_the_answer_alone(self):
         self.assertIn(
-            "`<c> offers captured as loose threads. <k> already on the board. "
-            "<d> offers dropped as off this application.`",
+            "Then relay the return's `Confidence:` line, word for word, and the saved memo as its file card",
             self.step,
         )
-        self.assertIn(
-            "One line saying they may name any relayed offer to add as a research job or to drop, "
-            "and that the rest stay on the board as loose threads.",
-            self.step,
-        )
+        self.assertNotIn("offers captured as loose threads", self.step)
+        self.assertNotIn("to add as a research job", self.step)
 
-    def test_no_board_relays_every_offer(self):
-        self.assertIn(
-            "When no board resolves, capture nothing, add no job, relay the `Confidence:` line "
-            "and every offer, each word for word, with the saved memo as its file card "
-            "(`shared/present-files.md`), then the memo-reviewer's `out_of_scope` questions as a "
-            "numbered list and the invitation line, relayed, not captured, and say "
-            "in one line that the matter has no board to capture to.",
-            self.step,
-        )
+    def test_no_board_relays_the_same(self):
+        self.assertIn("When no board resolves, capture nothing and relay the same.", self.step)
 
     def test_origin_none_outside_draft_unchanged(self):
         self.assertIn(
@@ -198,13 +172,7 @@ class AfterTheAnswerTests(unittest.TestCase):
             self.step,
         )
 
-    def test_fixture_relay_and_captures(self):
-        self.assertEqual(
-            relay(NOTES_WITH_ORIGIN, FIXTURE_SORT),
-            ["Would you like me to research FIXTURE point C? live_issue: no",
-             "1 offers captured as loose threads. 1 already on the board. "
-             "1 offers dropped as off this application."],
-        )
+    def test_fixture_captures(self):
         self.assertEqual(len(captures(NOTES_WITH_ORIGIN, FIXTURE_SORT)), 3)
 
 

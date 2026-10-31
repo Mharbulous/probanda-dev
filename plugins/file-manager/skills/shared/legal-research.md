@@ -47,33 +47,22 @@ audit because the question is narrower, not because a check was skipped. It stat
 law — never build a conclusion on it; re-dispatch in opinion mode over any criterion
 you intend to rely on.
 
-**Approved plan issues become jobs.** The practitioner's "No" at the end of the
-`/legal-research` gate's step 2a approves the numbered list it answers. In a session
-holding no job, where a board resolves, write one research job per listed issue by
-`/drafting-data` §3l: its title and intent are the issue's text as the list showed it,
-and its one step is the plan marker (`/drafting-data`'s `jobs-create.md` §3, "The plan
-marker"). A skipped issue gets no job, and the jobs need no further approval: the "No"
-is the request. Then re-render the Milestone and stop. Writing the jobs dispatches
-nothing: each job's research runs through the gate when the job is worked. A session
-holding a `/draft` job asks no approval and writes no job, except by the split or rewording
-proposal below. Approving the job approved
-its question, so the plan's `scope: in` issue is the issue steps
-3 to 5 run. A `scope: new` issue is not researched: capture it as a loose thread by the
-duplicate test below (`/drafting-data` §8 with a job held), relay it word for word, and
-say in one line that it is researched only if they name it. With no board, write nothing, say in one line that the matter has no board to add
-jobs to, and run steps 3 to 5 on each approved issue, one memo per issue.
+**A research question holds one question.** It makes sense on its own and names nothing of
+the working matter (`shared/research-memo-template.md` rules A to C,
+`shared/legal-audit-protocol.md` Step 6). Context sentences are allowed, a second question or
+a list of questions is not, and a part that depends on the one before it ("If so, ...") stays
+with it. A question that fails is never split or researched as it stands: in one proposal,
+quoting it, propose one rewording narrowed to a single question. On a yes, reword a held job
+to it (`/drafting-data` §3m, "Rewording a held job") and research that. On a no, research
+nothing. Each other question it held is one the practitioner raised (below). An unattended
+run reports and stops.
 
-**A job holds one question.** A held job whose plan returns more than one `scope: in` issue
-holds more than one question (`shared/research-memo-template.md`, rules A and C). A title
-that does not make sense on its own (rule B), or that names anything of the working matter
-(`shared/legal-audit-protocol.md` Step 6), needs rewording. Research nothing on such a job:
-in one proposal, quoting the title, propose one job per question, each question in full, and
-the rewording. A question that depends on the one before it ("If so, ...") stays with it as
-one question. On their yes, reword the held job to the first question (`/drafting-data` §3m,
-"Rewording a held job") and write each other question as a job as §3m writes a premise job
-(§3i's guarded create, the plan marker as its step), then run steps 3 to 5 on the reworded
-job. On a no, write nothing and research nothing on it, and say in one line that a job is
-researched one question at a time. An unattended run reports and stops.
+**A new question is a new job or a new scope.** When the practitioner raises a question this
+research does not hold, ask exactly one question: "Do you want this investigated as an
+additional issue (a new research job), or are you changing the scope of this job?" On the
+first, write it as a research job by `/drafting-data` §3l, or, with no board, run this gate on
+it once this memo is saved. On the second, reword the question (a held job by §3m) and
+research that. Offer no third path.
 
 **Before spawning, run what the agent cannot.** `shared/research-priority.md` is
 the binding order for every legal lookup — read it and follow it. Five duties fall
@@ -413,23 +402,18 @@ included, saves nothing: stop and relay it verbatim. On the object, re-invoke th
 
 - `send_back` with `required` items: each is research the Issue cannot be answered without,
   run by the rule above first.
-- `send_back` with `identifiers`, or `complete` with `out_of_scope` items or an open-issues
-  paragraph left in the memo: to rewrite the memo without them.
+- `send_back` with `identifiers` or `out_of_scope` items: to rewrite the memo without them.
 - `send_back` whose only items are `required` research this session cannot run: to name it
   in the open-issues paragraph, unless the memo already does.
 
 Spawn memo-reviewer again on each new return. Save a return only once a review accepts it:
-`complete` with an empty `out_of_scope`, or a `send_back` whose only items are `required`
-research this session cannot run, each named in the memo's open-issues paragraph. When the
+`complete`, or a `send_back` whose only items are `required` research this session cannot
+run, each named in the memo's open-issues paragraph. When the
 third review accepts nothing, re-invoke the agent once with it to write the memo `INCOMPLETE`,
 naming what that review still asks, and save that return. Only the memo the loop ends on is
 persisted; earlier returns stay in the scratchpad. Never edit the memo yourself: it is saved
 verbatim. On saving an `INCOMPLETE` memo, tell the practitioner in one line which research it
 still needs.
-
-Capture the questions the reviews named as `out_of_scope`, each once, as loose threads with
-the return's other items below. End the report with those questions as a numbered list, then
-one line inviting the practitioner to say which, if any, they want a further memo on.
 
 Persist in this order. Steps 2 and 3 need not interrupt the work in hand, but they
 complete before the session ends: never leave a session with a cited decision unfiled.
@@ -495,15 +479,14 @@ test below:
 
 - each `origin-correction:` line in the notes, one thread each;
 - each `matter-data:` flag: every `pinpoint` flag together as one thread, each other flag its
-  own. The one-line offer above to record it through `/matter-data` is still relayed;
-- each memo-reviewer `out_of_scope` question, one thread each.
+  own. The one-line offer above to record it through `/matter-data` is still relayed.
 
 A session holding no job captures them through `/drafting-data`'s capture with no job held
 (§8a). A `/draft` session holding a job captures them by its own rule instead (`/draft`
 SKILL.md, "Captured ideas").
 
 **The duplicate test.** Before capturing any item of the return, an `origin-correction:`
-line, a `matter-data:` flag, an offer or a memo-reviewer `out_of_scope` question, read the open loose threads by `/drafting-data` §8's
+line, a `matter-data:` flag or an offer, read the open loose threads by `/drafting-data` §8's
 open-set read. An item that restates the held job's own
 title or intent, or the idea of an open loose thread, is not captured.
 Say so in one line instead: `already on the board: Loose thread #N`, or `the held job's own
@@ -521,47 +504,27 @@ job's title and intent count too. Put each offer in one class:
 
 | Class | Test | What happens |
 |---|---|---|
-| Off the application | The offer is about a different order, claim, party, proceeding or stage than any the board names | Not captured, not relayed, counted |
-| On or near the application | Everything else: an offer serving the board's words, a new angle on the board's own subject, and any doubt | Captured as a loose thread at once, by the duplicate test above (`/drafting-data` §8 with a job held, §8a without), and relayed word for word |
+| Off the application | The offer is about a different order, claim, party, proceeding or stage than any the board names | Not captured |
+| On or near the application | Everything else: an offer serving the board's words, a new angle on the board's own subject, and any doubt | Captured as a loose thread at once, by the duplicate test above (`/drafting-data` §8 with a job held, §8a without) |
 
 An offer tagged `kind: note-up` is not sorted: it is always captured as a loose thread, by
-the duplicate test above, and relayed word for word. It is never dropped and never becomes a
-job by §3i, even on "add".
+the duplicate test above. It is never dropped and never becomes a job by §3i.
 
 The sort reads what an offer is about, never whether it is right. It states no law and
-rewords nothing. It creates no job: an offer becomes a job only when the practitioner names
-it to add.
+rewords nothing and creates no job. Captured offers are not relayed and invite nothing.
 
-An offer is its tagged line. The `job:` and `steps:` lines under it are neither captured nor
-relayed: §3i reads them from the return on "add".
+An offer is its tagged line. The `job:` and `steps:` lines under it are not captured.
 
 Name the saved answer file as what surfaced each thread. Never edit the draft. A captured
 thread is never ripe, never a blocker and never assigned to anyone: only a later `/draft`
-outlining session takes it up, or the practitioner's "add" below.
+outlining session takes it up.
 
-Then relay, in this order:
-
-1. The return's `Confidence:` line, word for word, and the saved memo as its file card (`shared/present-files.md`).
-   Restate nothing of the memo: the card is the answer.
-2. Each captured offer, word for word.
-3. One line: `<c> offers captured as loose threads. <k> already on the board. <d> offers dropped as off this application.` Any count may be 0.
-4. One line saying they may name any relayed offer to add as a research job or to drop, and
-   that the rest stay on the board as loose threads. When any relayed offer is tagged
-   `kind: note-up`, the line also says that a note-up is added only in their own words, such
-   as "note up <case>".
-5. The memo-reviewer's `out_of_scope` questions and the invitation line, last (above).
-
-On "add", write that offer's job by §3i, which also consumes the thread this sort captured.
-On "add" of a `kind: note-up` offer, write nothing and say so in one line (§3i).
-On "drop", discard that thread by `/drafting-data` §8's drop write. Name each
+Then relay the return's `Confidence:` line, word for word, and the saved memo as its file card
+(`shared/present-files.md`). Restate nothing of the memo: the card is the answer. Name each
 `origin-correction:` line's issue in one line pointing to the board, never restating the
 memo's words as advice on the draft.
 
-When no board resolves,
-capture nothing, add no job, relay the `Confidence:` line and every offer, each word for
-word, with the saved memo as its file card (`shared/present-files.md`), then the
-memo-reviewer's `out_of_scope` questions as a numbered list and the invitation line, relayed,
-not captured, and say in one line that the matter has no board to capture to. A return
+When no board resolves, capture nothing and relay the same. A return
 with `Origin: none` is sorted against the open board in a `/draft` session. Outside `/draft`
 it is relayed as before this step existed.
 

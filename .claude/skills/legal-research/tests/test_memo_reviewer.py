@@ -2,7 +2,7 @@
 memo's Conclusion with the open-issues paragraph; memo-reviewer is a read-only Opus agent that
 returns strict JSON and ships in researcher; and the gate reviews every memo after the held-job
 rule and before it persists, sends back required research and working-matter identifiers, never
-edits the memo, and ends with the out-of-scope questions.
+edits the memo, and invites no further memo.
 
 Run: python .claude/skills/legal-research/tests/test_memo_reviewer.py
 """
@@ -55,7 +55,7 @@ class ScopeTestTest(unittest.TestCase):
 
     def test_review_line_forbids_retrieval_and_a_rewrite_reruns_nothing(self):
         step_four = flat(between(read("shared", "legal-audit-protocol.md"), "### Step 4", "### Step 5"))
-        self.assertIn("write no Step 5 offer for an `out_of_scope` issue", step_four)
+        self.assertIn("cut each `out_of_scope` and `identifiers` passage from the memo", step_four)
         self.assertIn("With any `Review:` but `none`, return no `needs_download` or `needs_note_up`.", step_four)
         self.assertIn("A `Review:` with no `required` item asks only for a rewrite: rewrite the memo from the sources "
                       "already held, without re-running the audit.", step_four)
@@ -94,8 +94,9 @@ class AgentContractTest(unittest.TestCase):
         body = flat(self.agent)
         self.assertIn("Research already run is never `required`", body)
         self.assertIn("in one of the tier forms of Step 4's `gap:` line", body)
-        self.assertIn("presupposes no answer and names no rule as fact", body)
-        self.assertIn("Yes, and the memo or a `gap:` line raises it: an `out_of_scope` item", body)
+        self.assertIn("Yes, and the memo itself raises it: an `out_of_scope` item, quoting the memo's words.", body)
+        self.assertIn("Yes, and only a `gap:` line or a Step 5 offer raises it: nothing.", body)
+        self.assertIn("The verdict is `send_back` when `required`, `out_of_scope` or `identifiers` holds anything", body)
         self.assertIn("Never flag text equal to the `Job question:`.", body)
 
     def test_body_is_procedure_and_contract(self):
@@ -129,8 +130,8 @@ class GateLoopTest(unittest.TestCase):
         self.assertIn("Spawn `researcher:memo-reviewer` on every return that carries a memo", self.rule)
         self.assertIn("It reviews one question at most three times.", self.rule)
         self.assertIn("re-invoke the agent with `Review:` the reviewer's JSON", self.rule)
-        self.assertIn("`send_back` with `identifiers`, or `complete` with `out_of_scope` items or an open-issues "
-                      "paragraph left in the memo: to rewrite the memo without them.", self.rule)
+        self.assertIn("`send_back` with `identifiers` or `out_of_scope` items: to rewrite the memo without them.",
+                      self.rule)
         self.assertIn("When the third review accepts nothing, re-invoke the agent once with it to write the memo "
                       "`INCOMPLETE`, naming what that review still asks, and save that return.", self.rule)
         held = flat(between(self.text, "**On a held job, an open tier is not an answer.**",
@@ -138,7 +139,7 @@ class GateLoopTest(unittest.TestCase):
         self.assertIn("re-invoke the same agent with `Re-invocation: yes` and `Review:`", held)
 
     def test_every_save_follows_an_accepting_review(self):
-        self.assertIn("Save a return only once a review accepts it: `complete` with an empty `out_of_scope`, or a "
+        self.assertIn("Save a return only once a review accepts it: `complete`, or a "
                       "`send_back` whose only items are `required` research this session cannot run, each named in "
                       "the memo's open-issues paragraph.", self.rule)
         self.assertIn("Only the memo the loop ends on is persisted; earlier returns stay in the scratchpad.", self.rule)
@@ -152,33 +153,26 @@ class GateLoopTest(unittest.TestCase):
 
     def test_approval_drops_out_of_scope_and_never_edits(self):
         self.assertIn("Never edit the memo yourself: it is saved verbatim.", self.rule)
-        self.assertIn("Capture the questions the reviews named as `out_of_scope`, each once, as loose threads", self.rule)
-        self.assertIn("End the report with those questions as a numbered list, then one line inviting the "
-                      "practitioner to say which, if any, they want a further memo on.", self.rule)
-        self.assertIn("- each memo-reviewer `out_of_scope` question, one thread each.", self.text)
-        self.assertIn("a `matter-data:` flag, an offer or a memo-reviewer `out_of_scope` question, read the open loose "
-                      "threads", flat(self.text))
+        self.assertNotIn("further memo", self.rule)
+        self.assertNotIn("memo-reviewer `out_of_scope` question", self.text)
+        self.assertIn("a `matter-data:` flag or an offer, read the open loose threads", flat(self.text))
         self.assertIn("An offer of research the scope test found not required is sorted like any other, so off the "
                       "application it is dropped.", flat(self.text))
 
-    def test_no_board_relays_the_out_of_scope_questions(self):
+    def test_no_board_relays_only_the_answer(self):
         no_board = flat(between(self.text, "When no board resolves,", "**Statute currency.**"))
-        self.assertIn("then the memo-reviewer's `out_of_scope` questions as a numbered list and the invitation line, "
-                      "relayed, not captured", no_board)
+        self.assertIn("When no board resolves, capture nothing and relay the same.", no_board)
+        self.assertNotIn("out_of_scope", no_board)
 
     def test_re_invocation_is_yes_on_every_re_invocation(self):
         self.assertIn("`Re-invocation` is `no` on the first spawn and `yes` on every re-invocation below: `yes: review`\n"
                       "when no paralegal ran for it.", self.text)
         self.assertIn("/ yes: review\nReview: <memo-reviewer's last JSON, verbatim> / none\n", self.text)
 
-    def test_a_job_holds_one_question_and_is_reworded_first(self):
-        rule = flat(between(self.text, "**A job holds one question.**", "**A caller working a `/draft` job checks"))
-        self.assertIn("names anything of the working matter", rule)
-        self.assertIn("in one proposal, quoting the title, propose one job per question", rule)
-        self.assertIn('A question that depends on the one before it ("If so, ...") stays with it as one question.', rule)
-        self.assertIn("then run steps 3 to 5 on the reworded job", rule)
-        self.assertIn("asks no approval and writes no job, except by the split or rewording proposal below",
-                      flat(self.text))
+    def test_a_question_holds_one_question_and_is_reworded_first(self):
+        rule = flat(between(self.text, "**A research question holds one question.**", "**A new question is"))
+        self.assertIn("names nothing of the working matter", rule)
+        self.assertIn("in one proposal, quoting it, propose one rewording narrowed to a single question", rule)
 
     def test_multi_issue_filing_is_gone(self):
         self.assertNotIn("spanning more than one issue", self.text)
@@ -192,8 +186,8 @@ class GateLoopTest(unittest.TestCase):
         self.assertIn("Once memo-reviewer's loop on it has ended", board)
         self.assertIn("complete the job only by `/draft`'s job-session Complete step, which refuses an "
                       "`INCOMPLETE` memo", board)
-        self.assertIn("the plan asks nothing but the split or rewording proposal", board)
-        self.assertIn("After a split writes new jobs, spawn `researcher:research-triage` again", board)
+        self.assertIn("the scope check asks nothing but the rewording proposal", board)
+        self.assertIn("After a new question is written as a job, spawn `researcher:research-triage` again", board)
 
 
 if __name__ == "__main__":

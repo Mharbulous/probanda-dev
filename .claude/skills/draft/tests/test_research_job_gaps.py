@@ -23,14 +23,13 @@ class ResearchJobGapsTest(unittest.TestCase):
         plan = read("shared", "job-planning.md")
         section = plan[plan.index("## 2. A research job"):plan.index("## 3.")]
         self.assertNotIn("approved by the practitioner before any search", section)
-        self.assertIn("A job whose research question is recorded needs no approval of its issues", section)
-        self.assertIn("Only an issue outside the recorded question needs the practitioner's word.", section)
         self.assertIn("left as a gap only once every source tier has run on it", section)
 
     def test_job_planning_adds_no_issue_to_a_recorded_question(self):
         plan = read("shared", "job-planning.md")
         section = plan[plan.index("## 2. A research job"):plan.index("## 3.")]
-        self.assertIn("The planner adds no issue to it", section)
+        self.assertIn("The job's recorded question, verbatim, is its one question, and the plan adds no issue to it",
+                      section)
         self.assertIn("the memo's one Issue is the job's title, verbatim", section)
 
     def test_complete_refuses_an_open_tier(self):
@@ -49,7 +48,7 @@ class ResearchJobGapsTest(unittest.TestCase):
     def test_job_planning_has_one_issue_not_a_checklist(self):
         plan = read("shared", "job-planning.md")
         self.assertNotIn("internal checklist", plan)
-        self.assertIn("approving the job approved its question, its one `scope: in` issue", plan)
+        self.assertNotIn("scope: in", plan)
 
     def test_complete_compares_memo_headings_with_the_title(self):
         session = read("draft", "references", "job-session.md")

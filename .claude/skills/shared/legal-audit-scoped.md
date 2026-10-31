@@ -11,7 +11,7 @@ Absent those fields the defaults are `mode: opinion`, `report: full` — the sha
 legal audit protocol exactly as written. Silence is never scoping.
 
 **A scoped dispatch fetches no other protocol file.** `mode: inventory`
-and `mode: plan` are self-contained here — follow this file alone; do not fetch
+is self-contained here — follow this file alone; do not fetch
 `shared/legal-audit-protocol.md` or `shared/research-priority.md`. An opinion
 dispatch (`mode: opinion`, or `mode:` absent) ignores this shortcut entirely and
 runs the full protocol chain — both of those files — as today.
@@ -20,7 +20,7 @@ runs the full protocol chain — both of those files — as today.
 
 | Field | Values | Default |
 |---|---|---|
-| `mode` | `opinion` / `inventory` / `plan` | `opinion` |
+| `mode` | `opinion` / `inventory` | `opinion` |
 | `criteria` | the named points to audit, as a list | required for `inventory` |
 | `report` | `full` / `brief` | `full` |
 | `freshness` | how old a recorded currency check may be, e.g. `30d` | `30d` |
@@ -29,8 +29,8 @@ A dispatch naming `mode: inventory` with no criteria list is malformed: audit
 nothing, say so, and ask the caller for the list.
 
 Step 6 of `shared/legal-audit-protocol.md` (the memo and its internal notes) and the
-scratchpad write apply to opinion mode only. Inventory and plan keep their own
-return shapes and stay read-only.
+scratchpad write apply to opinion mode only. Inventory keeps its own
+return shape and stays read-only.
 
 ## Hard boundaries (every scoped mode)
 
@@ -107,59 +107,7 @@ Noting up a court decision is `citation-checker`'s work, dispatched by the
 `/legal-research` gate (`shared/legal-research.md`). A dispatch naming `mode: note-up`
 is malformed: audit nothing, and tell the caller to dispatch `researcher:citation-checker`.
 
-## `mode: plan` — what must the research cover?
-
-A plan dispatch asks a **planning question**, not a legal one: *into which issues does
-the question divide, which sources will be checked for each and in what order, and what
-must a complete answer hold?* The `/legal-research` gate sends it before any Westlaw or
-legislation dispatch, so the practitioner approves or changes the plan before anything
-is searched.
-
-**It makes no statement of law.** Write each issue as a question, never answered and
-never leaning either way. Name an instrument or an authority only by its citation, as a
-source to check, never with what it provides or holds. Close every plan return with:
-
-> Plan only — no statement of law. Nothing has been searched beyond the holdings named.
-
-### What it reads
-
-Only inventory's ladder step 1, the index probes, run across the issues in place of
-named criteria, and the `6. LAW` listing the caller passes, by file name only. It records
-what is already held on each issue by citation and source layer, never by what it says.
-No tier 4, no citator, no legislation fetch.
-
-### Return shape
-
-`report:` does not apply: a plan return always takes this shape, then the coverage line
-and the closing line above, and nothing else. No offers list follows: the plan is itself
-the offer.
-
-```
-Issue <n>: <the issue, as a question>
-  scope: in / new
-  held: <citation, source layer> ×n / nothing on file
-  sources, in order: 6. LAW and case data | commons pool | Westlaw: <the query's subject, in the question's words> | legislation: <citation> ×n / none | audit and note-up
-Completion test: <what the answer must hold: each scope: in issue answered with a pinpoint citation, or named as a gap only once every source tier has run on it>
-```
-
-`scope: in` marks a question the question as asked holds. `scope: new` marks an issue
-outside it: a different point, not part of the question's answer. The tag says which
-question an issue serves, never what the law is. Each issue meets the memo template's rules
-A to C (`shared/research-memo-template.md`): the gate runs one audit, and the agent writes
-one memo, per issue. Split only by rules A and C, never into a question's elements: what
-answering an issue needs is covered inside its one memo by the scope test
-(`shared/legal-audit-protocol.md` Step 4).
-
-When the spawn prompt's `Job question:` is not `none`, the job question is split only at
-its own question marks, each part quoted verbatim as its issue, in the job question's
-order: one question mark, one issue. A part that depends on the one before it ("If so,
-...") stays with it as one issue. A part that crosses two lists (rule C) is split
-further, one issue per question, in the part's own words, reworded only as far as
-separating the lists needs, with the part quoted beside it. These are the only `scope: in` issues.
-You add no issue of your own and reword no part beyond that: what a part needs checked goes in its
-`sources, in order` line, and a point outside the job question is a `scope: new` issue.
-
-## Coverage line (mandatory, every scoped return — inventory and plan alike)
+## Coverage line (mandatory, every scoped return)
 
 One line, every tier named, none omitted:
 

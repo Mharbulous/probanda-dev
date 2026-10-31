@@ -3,8 +3,8 @@ name: memo-reviewer
 description: >
   Reviews one research memo and its internal notes before the /legal-research gate saves
   it. Applies the scope test to every piece of research the memo leaves open: research the
-  Issue cannot be answered without is sent back, and an issue outside the memo is named as a
-  question. Also sends back a memo that names or states anything of the working matter.
+  Issue cannot be answered without is sent back, and so is memo text beyond the Issue. Also
+  sends back a memo that names or states anything of the working matter.
   Returns strict JSON. Read-only: writes nothing and states no law. Dispatched by the
   /legal-research gate, once per memo it returns.
 model: opus
@@ -37,11 +37,11 @@ Before reviewing, read with `skill_source__read` (in a Cowork Project session it
 1. Read the memo's Issue.
 2. For each piece of research the memo or the notes leave open (each question in the open-issues paragraph, each `gap:` line, and any part of the memo's body beyond the Issue), apply the scope test: can the Issue, as framed, be answered without it? Research already run is never `required`: where it found nothing, `No authority located in <the tiers searched>.` is the answer.
    - No: a `required` item, with the issue, the research that would close it in one of the tier forms of Step 4's `gap:` line, and one line on why the Issue cannot be answered without it.
-   - Yes, and the memo or a `gap:` line raises it: an `out_of_scope` item, written as a question that makes sense on its own, presupposes no answer and names no rule as fact.
-   - Yes, and only a Step 5 offer raises it: nothing. The gate handles the offers.
+   - Yes, and the memo itself raises it: an `out_of_scope` item, quoting the memo's words.
+   - Yes, and only a `gap:` line or a Step 5 offer raises it: nothing.
 3. Quote from the memo each party, counsel, practitioner, matter number, date, amount or document of the working matter it names, and each fact of the working matter it states: an `identifiers` item each. Never flag text equal to the `Job question:`.
 
-The verdict is `send_back` when `required` or `identifiers` holds anything, and `complete` otherwise.
+The verdict is `send_back` when `required`, `out_of_scope` or `identifiers` holds anything, and `complete` otherwise.
 
 ## Restrictions
 
@@ -57,7 +57,7 @@ Return one JSON object and nothing else. Each list is empty when there is nothin
 {
   "verdict": "complete",
   "required": [{"issue": "<the issue>", "research": "<the tier, as a gap: line names it>", "why": "<one line>"}],
-  "out_of_scope": ["<the issue, as a question>"],
+  "out_of_scope": ["<the memo's words>"],
   "identifiers": ["<the memo's words>"]
 }
 ```
