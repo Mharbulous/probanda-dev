@@ -126,4 +126,6 @@ Open question:
 
 Brahm's ruling of 2026-10-31: TokenEconomizer must keep its state between Cowork sessions with no action from the user, or be shown not to be able to. The tests, the verdict rule and the fallback are in `docs/Plans/2026-10-31_tokeneconomizer-cowork-state.md`. Option A (the loop guard within a session only) runs only after this section records a FAIL verdict with its evidence and Brahm's ruling to fall back.
 
+B1, first attempt (2026-10-31): not run. The session saw only `~/mnt/te-cowork-test`, the folder picked for the task, so Cowork does not mount another folder linked to the project. B1 now writes under the task folder. Not a FAIL.
+
 Option B verdict: not yet tried.

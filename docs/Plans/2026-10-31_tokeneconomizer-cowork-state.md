@@ -7,7 +7,7 @@ Option A never runs unless Option B has been tried and failed.
 
 Why this is needed, and the facts it rests on, are in
 `docs/Specs/2026-10-28_tokeneconomizer-cowork-adaptation-spec.md`: the red run's R5 and facts
-(nothing outlasts a Cowork session, a hook cannot reach the PC, the linked folder is visible from the
+(nothing outlasts a Cowork session, a hook cannot reach the PC, the task folder is visible from the
 PC shell at `~/mnt/<folder name>`), spike test S2 (the model made a hook-asked tool call at 10 of 10
 prompts, at about 400 tokens each) and the section "Persistence (Option B)", which holds the verdict.
 The 2026-10-31 saves wrote to `~/te-cowork-runs`, the PC shell sandbox's own home, not under `~/mnt/`,
@@ -19,15 +19,16 @@ so they never reached the PC. This plan continues step e of
 ```text
 OPTION B: the model carries TokenEconomizer's state between Cowork sessions
 
-Goal. After a one-time setup (linking one folder to the Cowork project), TokenEconomizer keeps its
-learned envelope, ledger and events between Cowork sessions with no action from the user, and
-records its own cost, so step e runs without pasting.
+Goal. With no setup, TokenEconomizer keeps its learned envelope, ledger and events between
+Cowork sessions with no action from the user, and records its own cost, so step e runs without
+pasting.
 
 Design. A hook cannot reach the PC, but the model can, through the PC shell at
-~/mnt/<linked folder>. The plugin's SessionStart hook asks the model to restore the state file
-from the linked folder into /root/.tokeneconomizer. Its Stop hook asks the model to save every
-5th turn and after any turn with a judge call. If the linked folder is missing, the ask says to
-skip, and the plugin behaves exactly as it does today. Nothing is added to lawyer's data server.
+~/mnt/<task folder>, the folder picked for the Cowork task. The plugin's SessionStart hook asks
+the model to restore the state file from a .tokeneconomizer subfolder of it into
+/root/.tokeneconomizer. Its Stop hook asks the model to save every 5th turn and after any turn
+with a judge call. State is therefore kept per task folder. If no folder is mounted, the ask
+says to skip, and the plugin behaves exactly as it does today. Nothing is added to lawyer's data server.
 Micro-skills facts are not carried: every Cowork session shares one state key (/home/claude), so
 facts from different projects would mix.
 
@@ -44,7 +45,7 @@ B2. The model carries real-size state both ways. No code. The model is the only 
     with a different sha256. In one Cowork session, the model makes a plain-text state file of at
     least 5 KB from the container's envelope.json, ledger.jsonl and events.jsonl (repeated until
     it is 5 KB if shorter), prints its sha256, and writes it through the PC shell to
-    ~/mnt/te-cowork-runs/b2/state.txt. In a new session, it reads that file through the PC shell
+    ~/mnt/te-cowork-test/te-runs/b2/state.txt. In a new session, it reads that file through the PC shell
     and writes it into /tmp/state.txt in the container with its own shell. Each session does
     this three times. PASS: all six copies (three on the PC, three in the container) have the
     original's sha256, and a PC session confirms the PC copies.
@@ -68,12 +69,12 @@ back to Option A or try a changed Option B.
 Build (only after PASS).
 1. Fork: `te carry pack` writes a compact state file (envelope turns, ledger lines and events
    since the last save) and `te carry unpack <file>` restores it. The SessionStart and Stop hooks
-   emit the asks, with the linked folder named in the hook command (TE_CARRY_FOLDER). The fixed
-   envelope of 38 stays until 5 turns are learned. Fork tests by path, commit, push.
+   emit the asks, naming the subfolder (.tokeneconomizer under the one folder in ~/mnt). The
+   fixed envelope of 38 stays until 5 turns are learned. Fork tests by path, commit, push.
 2. probanda-dev: refresh source/tokeneconomizer/ from the fork as CLAUDE.md's "TokenEconomizer"
-   section says, set TE_CARRY_FOLDER in the six hook commands, release with /release (a patch:
-   without the linked folder everything keeps working as before). The listing and README say how
-   to link the folder.
+   section says, release with /release (a patch: with no folder mounted everything keeps working
+   as before). The listing and README say that the plugin keeps a .tokeneconomizer subfolder in
+   the task's folder.
 3. Rerun step d's staged loop, then run step e from the carried state with no pasting.
 
 Done. Two Cowork sessions in a row: the second restores the first's state without being asked
@@ -98,7 +99,7 @@ the fixed envelope of 38, learns nothing and keeps no record there, and the list
 
 Steps.
 1. Payback test (step e), once. Ten Cowork sessions, saved by hand at each session's end: through
-   the linked folder if B1 passed, otherwise by print-and-paste. This is a one-off test, not
+   the task folder if B1 passed, otherwise by print-and-paste. This is a one-off test, not
    product behaviour. Count redirects from events.jsonl as the plan's step e says.
 2. Decide by step e's rule. If the guard does not repay its cost, Brahm rules what the plugin does
    in Cowork (for example, no Cowork install), and the listing says so.
