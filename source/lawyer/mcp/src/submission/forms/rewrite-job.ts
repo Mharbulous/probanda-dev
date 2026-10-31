@@ -13,7 +13,7 @@
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
-import { touchStatements } from "./job-activity.js";
+import { checkClaim, heldBy, touchStatements } from "./job-activity.js";
 import { deletedAtHeld } from "./query.js";
 
 const TOOL = "drafting_data__rewrite_job";
@@ -31,6 +31,8 @@ export interface RewriteJobArgs {
   held?: boolean;
   /** held only, and required there: this session's identity from open_session/bootstrap. */
   session_token?: string;
+  /** held only: the claim_no this session's drafting_data__assign_job returned for the job. */
+  claim_no?: number;
   /** held only: delete no step, only append. */
   append?: boolean;
 }
@@ -83,8 +85,9 @@ export async function submissionDataRewriteJob(args: RewriteJobArgs, env: NodeJS
     "status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL AND plan_approved_at IS NULL" +
     (deleted ? " AND deleted_at IS NULL" : "") +
     " AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = tickets.id AND done_at IS NOT NULL)";
-  const guard = held ? "locked_by = ?" : ready;
-  const guardParams = held ? [token] : [];
+  const holds = held ? heldBy(args.db_path, token, checkClaim(TOOL, args.db_path, id, token, args.claim_no)) : { sql: ready, params: [] };
+  const guard = holds.sql;
+  const guardParams = holds.params;
   const onJob = `EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${guard})`;
   const statements: WriteStatement[] = [];
   if (args.steps !== undefined) {
@@ -98,10 +101,10 @@ export async function submissionDataRewriteJob(args: RewriteJobArgs, env: NodeJS
         expect_changes: 1,
       });
     }
-    if (held) statements.push({ sql: `UPDATE tickets SET plan_approved_at = ${NOW} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NOT NULL`, params: [id, token] });
+    if (held) statements.push({ sql: `UPDATE tickets SET plan_approved_at = ${NOW} WHERE id = ? AND ${guard} AND plan_approved_at IS NOT NULL`, params: [id, ...guardParams] });
   }
   if (args.title !== undefined) statements.push({ sql: `UPDATE tickets SET title = ? WHERE id = ? AND ${guard}`, params: [args.title, id, ...guardParams], expect_changes: 1 });
-  if (held) statements.push(...touchStatements(args.db_path, id, token));
+  if (held) statements.push(...touchStatements(args.db_path, id, holds));
   const written = await submissionDataWriteAll(args.db_path, statements, env);
 
   const [job] = submissionDataQuery(

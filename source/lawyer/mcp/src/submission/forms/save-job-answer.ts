@@ -10,7 +10,7 @@
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { saveAnswer } from "../../files/research-filing.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { jobIdentity, touchStatements } from "./job-activity.js";
+import { heldBy, jobIdentity, touchStatements } from "./job-activity.js";
 import { ticketAnswersHeld } from "./query.js";
 
 const TOOL = "research_filing__save_answer";
@@ -28,6 +28,8 @@ export interface SaveAnswerArgs {
   ticket_id?: number;
   /** This session's identity from open_session/bootstrap. */
   session_token?: string;
+  /** The claim_no the holder's drafting_data__assign_job returned for the job. */
+  claim_no?: number;
 }
 
 export interface SaveAnswerResult {
@@ -57,7 +59,8 @@ export function lawRelativePath(path: string): string {
 export async function saveAnswerTool(args: SaveAnswerArgs, env: NodeJS.ProcessEnv = process.env): Promise<SaveAnswerResult> {
   const job = jobIdentity(TOOL, args);
   if (job === null) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
-  const { dbPath, id, token } = job;
+  const { dbPath, id, token, claim } = job;
+  const held = heldBy(dbPath, token, claim);
   if (submissionDataQuery(dbPath, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
     throw new NotFoundError(`${TOOL}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
   }
@@ -74,8 +77,8 @@ export async function saveAnswerTool(args: SaveAnswerArgs, env: NodeJS.ProcessEn
     written = await submissionDataWriteAll(
       dbPath,
       [
-        { sql: `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW} FROM tickets WHERE id = ? AND locked_by = ?`, params: [lawRelativePath(saved.path), id, token] },
-        ...touchStatements(dbPath, id, token),
+        { sql: `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW} FROM tickets WHERE id = ? AND ${held.sql}`, params: [lawRelativePath(saved.path), id, ...held.params] },
+        ...touchStatements(dbPath, id, held),
       ],
       env
     );

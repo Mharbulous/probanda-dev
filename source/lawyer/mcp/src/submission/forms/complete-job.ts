@@ -19,6 +19,7 @@ import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { type ClientContext, type RenderedDocument, submissionFormsRender, submissionFormsRenderProceedingBoard } from "../forms.js";
 import { fetchAllFilingsForProceeding, isJobOnlyBoard, liveTicketClause, stepStatusHeld } from "./query.js";
 import { type StepStateFields, stepResolved } from "./step-state.js";
+import { checkClaim, heldBy } from "./job-activity.js";
 import type { BoardMove } from "../matter-pages.js";
 import type { MatterDates } from "../matter-dates.js";
 import type { MatterTodos } from "../matter-todos.js";
@@ -31,6 +32,8 @@ export interface CompleteJobArgs {
   ticket_id: number;
   /** This session's identity from open_session/bootstrap. Never minted here. */
   session_token: string;
+  /** The claim_no this session's drafting_data__assign_job returned for the job. */
+  claim_no?: number;
   /** The matter's 0. DRAFT folder from open_session, under which the pages are rewritten. */
   draft_dir: string;
 }
@@ -154,6 +157,7 @@ export async function submissionDataCompleteJob(
   }
   const id = args.ticket_id;
   const token = args.session_token;
+  const held = heldBy(args.db_path, token, checkClaim(TOOL, args.db_path, id, token, args.claim_no));
   const open = openSteps(args.db_path, id, token);
   if (open !== null) return open;
   const written = await submissionDataWriteAll(
@@ -164,12 +168,12 @@ export async function submissionDataCompleteJob(
         sql:
           `UPDATE tickets SET status = 'superseded', superseded_by = ? WHERE status = 'queued'${liveTicketClause(args.db_path)} AND id IN ` +
           "(SELECT b_id FROM ticket_conflicts WHERE a_id = ? UNION SELECT a_id FROM ticket_conflicts WHERE b_id = ?) " +
-          "AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)",
-        params: [id, id, id, id, token],
+          `AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${held.sql})`,
+        params: [id, id, id, id, ...held.params],
       },
       {
-        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW}, locked_by = NULL, locked_at = NULL WHERE id = ? AND locked_by = ?`,
-        params: [id, token],
+        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${held.sql}`,
+        params: [id, ...held.params],
       },
     ],
     env

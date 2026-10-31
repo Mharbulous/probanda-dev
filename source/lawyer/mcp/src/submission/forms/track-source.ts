@@ -10,7 +10,7 @@
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { hasTable } from "../schema-capabilities.js";
-import { touchStatements } from "./job-activity.js";
+import { checkClaim, heldBy, touchStatements } from "./job-activity.js";
 
 const TOOL = "drafting_data__track_source";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -24,6 +24,8 @@ export interface TrackSourceArgs {
   ticket_id: number;
   /** This session's identity from open_session/bootstrap. Never minted here. */
   session_token: string;
+  /** The claim_no this session's drafting_data__assign_job returned for the job. */
+  claim_no?: number;
   add?: { kind: string; label: string }[];
   close?: { kind: string; label: string; outcome: string; reason?: string }[];
 }
@@ -104,24 +106,25 @@ export async function submissionDataTrackSource(args: TrackSourceArgs, env: Node
     );
   }
 
-  const held = "EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)";
+  const h = heldBy(args.db_path, token, checkClaim(TOOL, args.db_path, id, token, args.claim_no));
+  const held = `EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${h.sql})`;
   const statements: WriteStatement[] = [
     ...add.flatMap((a) => [
       {
         sql: `UPDATE ticket_sources SET closed_at = NULL, outcome = NULL, reason = NULL WHERE ticket_id = ? AND kind = ? AND label = ? AND closed_at IS NOT NULL AND ${held}`,
-        params: [id, a.kind, a.label, id, token],
+        params: [id, a.kind, a.label, id, ...h.params],
       },
       {
-        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${NOW} FROM tickets WHERE id = ? AND locked_by = ?`,
-        params: [a.kind, a.label, id, token],
+        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${NOW} FROM tickets WHERE id = ? AND ${h.sql}`,
+        params: [a.kind, a.label, id, ...h.params],
       },
     ]),
     ...close.map((c) => ({
       sql: `UPDATE ticket_sources SET closed_at = ${NOW}, outcome = ?, reason = ? WHERE ticket_id = ? AND kind = ? AND label = ? AND ${held}`,
-      params: [c.outcome, c.reason, id, c.kind, c.label, id, token],
+      params: [c.outcome, c.reason, id, c.kind, c.label, id, ...h.params],
     })),
   ];
-  const written = statements.length === 0 ? null : await submissionDataWriteAll(args.db_path, [...statements, ...touchStatements(args.db_path, id, token)], env);
+  const written = statements.length === 0 ? null : await submissionDataWriteAll(args.db_path, [...statements, ...touchStatements(args.db_path, id, h)], env);
 
   const [read] = submissionDataQuery(args.db_path, "SELECT status, rejected_at, locked_by FROM tickets WHERE id = ?", [id]).rows as unknown as HolderRow[];
   if (read === undefined) throw new NotFoundError(`${TOOL}: no job ${id} in ${args.db_path}`, "not_found");

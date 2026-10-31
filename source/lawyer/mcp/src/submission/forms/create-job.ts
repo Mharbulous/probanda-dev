@@ -9,6 +9,7 @@
 import { DataServerError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { createdByHeld, liveTicketClause, MILESTONE_KIND } from "./query.js";
+import { checkClaim, heldBy } from "./job-activity.js";
 
 const TOOL = "drafting_data__create_job";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -72,6 +73,8 @@ export interface CreateJobArgs {
   session_token?: string;
   /** holder_lock only: the job this session holds, whose scope the new job copies. */
   held_ticket_id?: number;
+  /** holder_lock only: the claim_no this session's drafting_data__assign_job returned for the held job. */
+  claim_no?: number;
   /** title_live_with_step only: §3c's review job, written after the lead. */
   companions?: Companion[];
 }
@@ -134,6 +137,7 @@ function validate(args: CreateJobArgs): void {
   const locked = guard === "holder_lock";
   check(locked === isText(args.session_token), "session_token", locked ? "is required under guard holder_lock" : "is passed only under guard holder_lock");
   check(locked === isId(args.held_ticket_id), "held_ticket_id", locked ? "is required under guard holder_lock" : "is passed only under guard holder_lock");
+  check(locked || args.claim_no === undefined, "claim_no", "is passed only under guard holder_lock");
   check(!locked || args.scope === undefined, "scope", "is not passed under guard holder_lock: the job copies the held job's scope");
   if (guard === "title_live_with_step" || guard === "title_and_step_any_status") {
     check(args.filing_id !== null, "filing_id", `must be the Writing's id under guard ${guard}`);
@@ -218,6 +222,13 @@ function children(job: { steps: string[]; scope?: ScopeRow[] }, at: number): Wri
   ];
 }
 
+/** holder_lock's WHERE: the held job is still this session's under its claim (heldBy). */
+function held(args: CreateJobArgs): { sql: string; params: unknown[] } {
+  const id = args.held_ticket_id as number;
+  const h = heldBy(args.db_path, args.session_token as string, checkClaim(TOOL, args.db_path, id, args.session_token as string, args.claim_no));
+  return { sql: ` WHERE EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${h.sql})`, params: [id, ...h.params] };
+}
+
 /** drafting_data__create_job. Every refusal and every guarded call writes nothing. */
 export async function submissionDataCreateJob(args: CreateJobArgs, env: NodeJS.ProcessEnv = process.env): Promise<CreateJobResult> {
   if (!("filing_id" in args)) {
@@ -232,7 +243,7 @@ export async function submissionDataCreateJob(args: CreateJobArgs, env: NodeJS.P
   const tail = writer ? ", ?" : "";
   const tailParams = writer ? [args.created_by] : [];
   const where =
-    args.guard === "holder_lock" ? { sql: " WHERE EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)", params: [args.held_ticket_id, args.session_token] }
+    args.guard === "holder_lock" ? held(args)
     : holder === null ? { sql: "", params: [] }
     : { sql: ` WHERE NOT EXISTS (${holder.sql})`, params: holder.params };
   const anchor = args.billing_anchor ?? null;

@@ -7,6 +7,14 @@ function submissionDataPrefixed(name: string): string {
 
 // The one-way approval gate approves one exact call; expect_revision ties it to the records the
 // practitioner saw, without hashing the database (plan 2026-10-28, step 0).
+/** The holder-guarded job tools' identity sentence: the session's token and the job's claim number (assign-job.ts). */
+const HOLDER =
+  "session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned, and claim_no the one " +
+  "this session's drafting_data__assign_job returned for the job (left out only when that was null); this tool mints " +
+  "neither. A claim_no that is not the job's current claim, or none on a job that has one, is work begun under another " +
+  "claim, even this session's own before a lapse: it is refused with stale_claim, and a malformed one with " +
+  "invalid_claim_no, writing nothing. Report it and stop; never re-run.";
+
 const EXPECT_REVISION =
   "expect_revision is the database revision the practitioner approved the act at (the `revision` of the render " +
   "or query shown to them); a revision that has moved since is refused with revision_moved, writing nothing.";
@@ -327,7 +335,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this " +
         "title and one of these step texts: a pass finding, §3g); scrutiny_statement (a queued or wip, unshelved " +
         "'Review scrutiny finding: ' job is scoped to the statement in scope: §3d); holder_lock (held_ticket_id no " +
-        "longer carries session_token: a spin-off blocker, §3f, which copies the held job's scope). filing_id is the " +
+        "longer carries session_token under claim_no: a spin-off blocker, §3f, which copies the held job's scope). filing_id is the " +
         "Writing's or Milestone's id, or null for a proceeding-scoped job, and is never left out. priority is an " +
         "integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a " +
         "Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Milestone's job, the Milestone's " +
@@ -376,6 +384,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
             enum: ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "holder_lock"],
           },
           session_token: { type: "string", description: "holder_lock only" },
+          claim_no: { type: "number", description: "holder_lock only: the held job's claim_no from drafting_data__assign_job" },
           held_ticket_id: { type: "number", description: "holder_lock only" },
           companions: {
             type: "array",
@@ -420,7 +429,10 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "minutes; a job active in the last 30 minutes is never taken over. A shelved, completed or superseded job is " +
         "never assigned. A session that created any job (tickets.created_by, schema v72) is assigned only a job it " +
         "created, by take-over or otherwise. A job is not assigned before its bring-forward date (tickets.bf_on, schema " +
-        "v74), a start date and never a deadline; a take-over does not read it. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this " +
+        "v74), a start date and never a deadline; a take-over does not read it. Every claim (an assign, a take-over, a re-take " +
+        "after a release or a lapse, even by the same session) raises the job's claim number in the same transaction, " +
+        "returned as claim_no on assigned (null on every other outcome, and on a job held since before claims were " +
+        "numbered); every holder-guarded job tool then takes it. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this " +
         "tool mints none. The outcome is read off the confirm-read: assigned (the row carries this session's token; changes " +
         "is 0 when it already did), lost_race (another session's token is on the row: re-render and say the job was just " +
         "taken), holder_changed (a take-over found another holder than expected_holder: nothing was written; re-render and " +
@@ -431,7 +443,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "no_match (no token: the guards matched nothing, and the returned status and rejected_at show why). " +
         "Never retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, " +
         "invalid_expected_holder, invalid_expected_last_activity, not_found. Returns ticket_id, outcome, changes, locked_by, locked_at, status, rejected_at, " +
-        "bf_on and a note.",
+        "bf_on, claim_no and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -453,8 +465,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "Approve the plan of the job (a tickets row) this session holds, as its steps stand, in one call: the guarded " +
         "stamp of plan_approved_at followed by its confirm-read. The write matches only a job holding this session's token " +
         "whose plan is not yet approved, so a re-approval confirmed unaltered writes nothing. A change to the steps (the " +
-        "Change path) stays the SQL in /drafting-data's jobs-run.md §5. session_token is the one " +
-        "drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off " +
+        "Change path) stays the SQL in /drafting-data's jobs-run.md §5. " +
+        HOLDER +
+        " The outcome is read off " +
         "the confirm-read: approved (changes 1), already_approved (this session's token, plan_approved_at already set; " +
         "changes 0), not_held (another session's token is on the row: taken over), shelved (no lock, rejected_at set), " +
         "completed, no_match (the guards matched nothing, and the returned status shows why). Never retry. It moves no " +
@@ -468,6 +481,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           db_path: { type: "string" },
           ticket_id: { type: "number" },
           session_token: { type: "string" },
+          claim_no: { type: "number" },
         },
         required: ["db_path", "ticket_id", "session_token"],
         additionalProperties: false,
@@ -485,8 +499,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "already open on the job changes nothing, and adding a closed one reopens it. close takes {kind, label, outcome, " +
         "reason?} items, outcome got or not_retrieved, reason one line of at most 60 characters. Every write matches only " +
         "a job holding this session's token, so a call with neither add nor close is the lock read before a dispatch. " +
-        "session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints " +
-        "none. The outcome is read off the confirm-read: recorded (the job is this session's), not_held (another " +
+        HOLDER +
+        " The outcome is read off the confirm-read: recorded (the job is this session's), not_held (another " +
         "session's token is on the row: taken over), shelved, completed, no_match; on any but recorded nothing was " +
         "written and nothing is dispatched for the job. Never retry. It moves no revision. Refusals write nothing: " +
         "invalid_ticket_id, invalid_session_token, invalid_item, not_found, schema_below_v76 (say once that the matter's " +
@@ -499,6 +513,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           db_path: { type: "string" },
           ticket_id: { type: "number" },
           session_token: { type: "string" },
+          claim_no: { type: "number" },
           add: {
             type: "array",
             items: {
@@ -541,8 +556,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "process again: never a deadline and never time remaining, never shown as a countdown, and never put in a " +
         "handover or a loose thread. Once it has passed the step reads as open. A done step (done_at set) is frozen: it " +
         "is never re-stamped and takes no status. The write matches only a job holding this session's token, and moves " +
-        "the job's session-active stamp and last activity in the same transaction. session_token is the one " +
-        "drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off " +
+        "the job's session-active stamp and last activity in the same transaction. " +
+        HOLDER +
+        " The outcome is read off " +
         "the confirm-read: set (changes 1), not_held (the job is not this session's: taken over, shelved or completed), " +
         "done (the step was already done and was left as it is), no_match (no such step, or the guards matched nothing). " +
         "Read the step's ordinal and text off the card first. Never retry to win. It moves no revision. Refusals write " +
@@ -558,6 +574,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           ticket_id: { type: "number" },
           ordinal: { type: "number" },
           session_token: { type: "string" },
+          claim_no: { type: "number" },
           status: { type: "string", enum: ["done", "open", "retry", "cancelled", "deferred", "waiting"] },
           wait_minutes: { type: "number" },
           practitioner_words: { type: "string" },
@@ -573,7 +590,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "Moves the session-active stamp and the last activity of the job this session holds, which board_card prints " +
         "and the idle tag measures from, to now. Every other job tool given the job's session_token moves both itself, so " +
         "this is called only at the end of a turn that worked the held job (reading, drafting, conversation about it) " +
-        "through no such tool (jobs-run.md §6a). It writes only while the job's lock is this session's. recorded false " +
+        "through no such tool (jobs-run.md §6a). It writes only while the job's lock is this session's. " +
+        HOLDER +
+        " recorded false " +
         "means nothing was written: the job is no longer this session's, so run the scope read and stop. It moves no " +
         "revision. Refused, nothing written: invalid_job, invalid_ticket_id, invalid_session_token, not_found, " +
         "schema_below_v80. Returns ticket_id, recorded and a note.",
@@ -583,6 +602,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           db_path: { type: "string" },
           ticket_id: { type: "number" },
           session_token: { type: "string" },
+          claim_no: { type: "number" },
         },
         required: ["db_path", "ticket_id", "session_token"],
         additionalProperties: false,
@@ -595,13 +615,14 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "Rewrite a job's title, steps or both in one guarded transaction, then confirm-read them (jobs-run.md §5). Every " +
         "title and step is one line, written verbatim from the job card's own words. Ready mode (the pickup rewrite, " +
         "before the assigning write): the job must be queued, unlocked, not shelved or deleted, with no plan approved " +
-        "and no step done; steps replace the whole list, and no approval is stamped. held: true with session_token (on " +
+        "and no step done; steps replace the whole list, and no approval is stamped. held: true with session_token and claim_no (on " +
         "the job this session holds): steps delete only the steps not done, or none with append: true, and go after the " +
         "highest ordinal left, so a done step keeps its row, words and stamp; an approval already on the job is " +
         "re-stamped; a title alone (the held-job title cleanup) touches no step and no stamp; the job's session-active " +
         "stamp and last activity move in the same transaction. The guard rides every statement, so all of it lands or " +
-        "none does. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this " +
-        "tool mints none. Outcomes: rewritten; held: not_held (taken over, shelved or completed: run the scope read and " +
+        "none does. " +
+        HOLDER +
+        " Outcomes: rewritten; held: not_held (taken over, shelved or completed: run the scope read and " +
         "stop); ready: locked, shelved, approved, step_done, not_ready. On any but rewritten nothing was written: " +
         "re-render, never re-run. It moves no revision. Refusals write nothing: invalid_ticket_id, " +
         "invalid_session_token, invalid_append, nothing_to_write, invalid_title, invalid_steps, not_found. Returns " +
@@ -616,6 +637,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           steps: { type: "array", items: { type: "string" } },
           held: { type: "boolean" },
           session_token: { type: "string" },
+          claim_no: { type: "number" },
           append: { type: "boolean" },
         },
         required: ["db_path", "ticket_id"],
@@ -631,8 +653,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "and proposals stay. By default the write matches only a wip job holding this session's token. expected_holder, " +
         "the `holder:` tag off the job's card (drafting_forms__board_card with jobs), releases another session's job " +
         "instead, and the write lands only while that holder is still on the row and the job is not shelved; pass it only " +
-        "after the practitioner chose Return it to Ready on /draft's take-over form. session_token is the one " +
-        "drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off " +
+        "after the practitioner chose Return it to Ready on /draft's take-over form. " +
+        HOLDER +
+        " The outcome is read off " +
         "the confirm-read: released (changes 1), taken_over (another holder is on the row, or with expected_holder the " +
         "holder changed since the card was read: nothing was written; re-render), shelved (no lock, rejected_at set), " +
         "completed, no_match (the guards matched nothing, and the returned status shows why). Never retry to win. It " +
@@ -644,6 +667,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           db_path: { type: "string" },
           ticket_id: { type: "number" },
           session_token: { type: "string" },
+          claim_no: { type: "number" },
           expected_holder: { type: "string" },
         },
         required: ["db_path", "ticket_id", "session_token"],
@@ -659,8 +683,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "queued (shelved or not), or wip and held by this session's token; the holder check and the deleted_at stamp are " +
         "one statement. A wip job held by this session goes back to queued with its lock cleared in the same write, so a " +
         "restore gives a Ready job with no lock. Nothing else moves: the delete is a soft deleted_at stamp, and every row " +
-        "pointing at the job stays. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap " +
-        "returned; this tool mints none. Per job, the outcome is read off the confirm-read: deleted (changes 1), " +
+        "pointing at the job stays. " +
+        HOLDER +
+        " Per job, the outcome is read off the confirm-read: deleted (changes 1), " +
         "held_elsewhere (wip in another session: nothing written; never re-run), refused_status (completed or superseded), " +
         "already_deleted, not_found. It moves no revision. Refusals write nothing: invalid_ticket_ids, " +
         "invalid_session_token. Returns jobs, one {ticket_id, outcome, changes, status, locked_at, rejected_at, " +
@@ -671,6 +696,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           db_path: { type: "string" },
           ticket_ids: { type: "array", items: { type: "number" }, minItems: 1 },
           session_token: { type: "string" },
+          claim_no: { type: "number" },
         },
         required: ["db_path", "ticket_ids", "session_token"],
         additionalProperties: false,
@@ -686,8 +712,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "keep their stamps; its scope rows and Proposal keys are copied to the survivor where the survivor lacks them; " +
         "jobs waiting on it wait on the survivor; the survivor's plan approval is cleared when steps were added; and " +
         "the absorbed job is superseded by the survivor (superseded_by), never deleted. The survivor is Ready or held " +
-        "by this session; the absorbed job is Ready. session_token is the one drafting_forms__open_session or " +
-        "drafting_forms__bootstrap returned; this tool mints none. Outcomes: merged, or a refusal that writes nothing " +
+        "by this session; the absorbed job is Ready. " +
+        HOLDER +
+        " Outcomes: merged, or a refusal that writes nothing " +
         "and names refused_job: held_elsewhere (in progress in another session; never re-run), held_here (the absorbed " +
         "job is this session's own: make it the survivor), completed, superseded, shelved, deleted, different_writing " +
         "(a different Writing, or a General Job with a Writing Job), different_proceeding, either_or (the absorbed job " +
@@ -703,6 +730,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           survivor_id: { type: "number" },
           absorbed_id: { type: "number" },
           session_token: { type: "string" },
+          claim_no: { type: "number" },
         },
         required: ["db_path", "survivor_id", "absorbed_id", "session_token"],
         additionalProperties: false,
@@ -717,8 +745,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "steps is open, to be retried or waiting (a waiting step whose minute has passed included), nothing is written and " +
         "the outcome is steps_open, with open_steps naming each one; a step cancelled or deferred on the practitioner's " +
         "words (drafting_data__set_step) counts as resolved. A wip conflict partner is never " +
-        "touched. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; draft_dir is " +
-        "the draft_dir open_session returned. The outcome is read off the confirm-read: completed (status completed, no " +
+        "touched. draft_dir is the draft_dir open_session returned. " +
+        HOLDER +
+        " The outcome is read off the confirm-read: completed (status completed, no " +
         "lock; changes 1 means this call completed it, 0 that another session did), not_held (another session's token is " +
         "on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing), steps_open. Only when this " +
         "call completed the job (changes 1) are the matter's Milestone pages and Litigation Strategy rewritten, by the render a " +
@@ -734,6 +763,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           db_path: { type: "string" },
           ticket_id: { type: "number" },
           session_token: { type: "string" },
+          claim_no: { type: "number" },
           draft_dir: { type: "string" },
         },
         required: ["db_path", "ticket_id", "session_token", "draft_dir"],

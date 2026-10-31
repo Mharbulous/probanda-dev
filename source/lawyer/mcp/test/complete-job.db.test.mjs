@@ -72,7 +72,7 @@ async function heldJob(t, sql = "", filingId = "1") {
   const assigned = await callTool(context, "drafting_data__assign_job", { db_path: m.dbPath, ticket_id: 1, session_token: opened.session_token });
   assert.equal(assigned.outcome, "assigned");
   const complete = (args = {}) =>
-    callTool(context, "drafting_data__complete_job", { db_path: m.dbPath, ticket_id: 1, session_token: opened.session_token, draft_dir: opened.draft_dir, ...args });
+    callTool(context, "drafting_data__complete_job", { db_path: m.dbPath, ticket_id: 1, session_token: opened.session_token, claim_no: assigned.claim_no, draft_dir: opened.draft_dir, ...args });
   return { m, context, opened, complete };
 }
 
@@ -154,9 +154,9 @@ test("a pre-filing proceeding's job rewrites the Milestone through the proceedin
   const context = await practiceContext(t);
   const opened = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
   assert.equal(opened.opened.proceeding_id, 1);
-  await callTool(context, "drafting_data__assign_job", { db_path: m.dbPath, ticket_id: 1, session_token: opened.session_token });
+  const { claim_no } = await callTool(context, "drafting_data__assign_job", { db_path: m.dbPath, ticket_id: 1, session_token: opened.session_token });
 
-  const result = await callTool(context, "drafting_data__complete_job", { db_path: m.dbPath, ticket_id: 1, session_token: opened.session_token, draft_dir: opened.draft_dir });
+  const result = await callTool(context, "drafting_data__complete_job", { db_path: m.dbPath, ticket_id: 1, session_token: opened.session_token, claim_no, draft_dir: opened.draft_dir });
 
   assert.equal(result.outcome, "completed");
   assert.equal(result.pages_written, true);

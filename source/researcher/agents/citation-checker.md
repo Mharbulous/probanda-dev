@@ -83,7 +83,7 @@ persists, run /lawyer:suggestion".
   mode. Never switch between them.
 - `destination_dir` — the issue's existing `6. LAW\<issue>\` folder. If it does not
   exist, stop and name the missing path. Never create or guess one.
-- On a held job: `db_path`, `ticket_id` and `session_token`, passed through
+- On a held job: `db_path`, `ticket_id`, `session_token` and `claim_no`, passed through
   to `research_filing__save_answer` and `research_filing__append_manifest`, so
   the job's card lists each record and its last activity moves.
 

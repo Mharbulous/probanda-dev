@@ -8,6 +8,7 @@
 
 import { ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
+import { checkClaim, heldBy } from "./job-activity.js";
 
 const TOOL = "drafting_data__delete_job";
 
@@ -16,6 +17,8 @@ export interface DeleteJobArgs {
   ticket_ids: number[];
   /** This session's identity from open_session/bootstrap. Never minted here. */
   session_token: string;
+  /** The claim_no this session's drafting_data__assign_job returned for the job it holds among ticket_ids. */
+  claim_no?: number;
 }
 
 export interface DeleteJobOutcome {
@@ -46,7 +49,7 @@ interface ConfirmRow {
 
 const STAMP =
   "UPDATE tickets SET deleted_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), status = 'queued', locked_by = NULL, locked_at = NULL " +
-  "WHERE id = ? AND deleted_at IS NULL AND (status = 'queued' OR (status = 'wip' AND locked_by = ?))";
+  "WHERE id = ? AND deleted_at IS NULL AND (status = 'queued' OR (status = 'wip' AND ";
 
 /** drafting_data__delete_job. Every refusal writes nothing. */
 export async function submissionDataDeleteJob(args: DeleteJobArgs, env: NodeJS.ProcessEnv = process.env): Promise<DeleteJobResult> {
@@ -57,9 +60,11 @@ export async function submissionDataDeleteJob(args: DeleteJobArgs, env: NodeJS.P
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
     throw new ValidationError(`${TOOL}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
+  const claims = ids.map((id) => checkClaim(TOOL, args.db_path, id, args.session_token, args.claim_no));
+  const held = heldBy(args.db_path, args.session_token, claims[0]);
   const written = await submissionDataWriteAll(
     args.db_path,
-    ids.map((id) => ({ sql: STAMP, params: [id, args.session_token] })),
+    ids.map((id) => ({ sql: `${STAMP}${held.sql}))`, params: [id, ...held.params] })),
     env
   );
   const jobs = ids.map((id, i): DeleteJobOutcome => {

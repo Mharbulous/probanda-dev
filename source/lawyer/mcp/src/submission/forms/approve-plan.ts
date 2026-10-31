@@ -8,7 +8,7 @@
 
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { touchStatements } from "./job-activity.js";
+import { checkClaim, heldBy, touchStatements } from "./job-activity.js";
 
 const TOOL = "drafting_data__approve_plan";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -20,6 +20,8 @@ export interface ApprovePlanArgs {
   ticket_id: number;
   /** This session's identity from open_session/bootstrap. Never minted here. */
   session_token: string;
+  /** The claim_no this session's drafting_data__assign_job returned for the job. */
+  claim_no?: number;
 }
 
 export interface ApprovePlanResult {
@@ -63,11 +65,12 @@ export async function submissionDataApprovePlan(args: ApprovePlanArgs, env: Node
     throw new DataServerError(`${TOOL}: job ${id}'s only step is "${PLAN_MARKER}" and nothing was written. What steps will complete this job?`, "plan_marker_only");
   }
 
+  const held = heldBy(args.db_path, args.session_token, checkClaim(TOOL, args.db_path, id, args.session_token, args.claim_no));
   const written = await submissionDataWriteAll(
     args.db_path,
     [
-      { sql: `UPDATE tickets SET plan_approved_at = ${NOW} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NULL`, params: [id, args.session_token] },
-      ...touchStatements(args.db_path, id, args.session_token),
+      { sql: `UPDATE tickets SET plan_approved_at = ${NOW} WHERE id = ? AND ${held.sql} AND plan_approved_at IS NULL`, params: [id, ...held.params] },
+      ...touchStatements(args.db_path, id, held),
     ],
     env
   );

@@ -12,7 +12,7 @@
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { touchStatements } from "./job-activity.js";
+import { checkClaim, heldBy, touchStatements } from "./job-activity.js";
 import { stepStatusHeld } from "./query.js";
 
 const TOOL = "drafting_data__set_step";
@@ -28,6 +28,8 @@ export interface SetStepArgs {
   ordinal: number;
   /** This session's identity from open_session/bootstrap. Never minted here. */
   session_token: string;
+  /** The claim_no this session's drafting_data__assign_job returned for the job. */
+  claim_no?: number;
   status: string;
   /** waiting only: minutes from now to the next check. Default 5. */
   wait_minutes?: number;
@@ -97,17 +99,18 @@ export async function submissionDataSetStep(args: SetStepArgs, env: NodeJS.Proce
     );
   }
   const minutes = status === "waiting" ? (args.wait_minutes ?? DEFAULT_WAIT_MINUTES) : null;
-  const guard = "WHERE ticket_id = ? AND ordinal = ? AND done_at IS NULL AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)";
+  const held = heldBy(args.db_path, token, checkClaim(TOOL, args.db_path, id, token, args.claim_no));
+  const guard = `WHERE ticket_id = ? AND ordinal = ? AND done_at IS NULL AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${held.sql})`;
   const write =
     status === "done"
-      ? { sql: `UPDATE ticket_steps SET done_at = ${NOW}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard}`, params: [id, ordinal, id, token] }
+      ? { sql: `UPDATE ticket_steps SET done_at = ${NOW}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard}`, params: [id, ordinal, id, ...held.params] }
       : {
           sql:
             "UPDATE ticket_steps SET status = ?, " +
             `wait_until = ${minutes === null ? "NULL" : `strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '+${minutes} minutes')`}, status_note = ? ${guard}`,
-          params: [status === "open" ? null : status, owesWords ? words : null, id, ordinal, id, token],
+          params: [status === "open" ? null : status, owesWords ? words : null, id, ordinal, id, ...held.params],
         };
-  const written = await submissionDataWriteAll(args.db_path, [write, ...touchStatements(args.db_path, id, token)], env);
+  const written = await submissionDataWriteAll(args.db_path, [write, ...touchStatements(args.db_path, id, held)], env);
   const changes = written.ok ? written.results[0].changes : written.changes;
   const columns = statusHeld ? "done_at, status, wait_until, status_note" : "done_at, NULL AS status, NULL AS wait_until, NULL AS status_note";
   const [step] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM ticket_steps WHERE ticket_id = ? AND ordinal = ?`, [id, ordinal]).rows as unknown as StepRow[];

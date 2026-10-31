@@ -11,12 +11,15 @@
 // shows it, so a job that moved since the check is never taken. A take-over never lands on a job active in
 // the last CHECK_AFTER_MINUTES. Without a take-over, a wip job whose lock has lapsed (job-activity.ts lapsedClause, ADR 0015)
 // is assigned as a released one is, and the same transaction records the lapse in the job's history.
+// Every claim raises the job's claim number (job-activity.ts claimSql) in the same transaction, and the
+// call returns it: each holder-guarded write on the job then needs it (heldBy), so work begun under an
+// earlier claim, even this session's own before a lapse, writes nothing.
 // One write, one read, never a retry. The job tables carry no revision triggers, so the revision does
 // not move.
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { CHECK_AFTER_MINUTES, LAPSE_AFTER_MINUTES, idleClause, lapsedClause, lastActivitySql, recordLapseSql, touchStatements } from "./job-activity.js";
+import { CHECK_AFTER_MINUTES, LAPSE_AFTER_MINUTES, claimSql, idleClause, lapsedClause, lastActivitySql, nextClaimSql, recordLapseSql, touchStatements } from "./job-activity.js";
 import { hasTable } from "../schema-capabilities.js";
 import { bfOnHeld, createdByHeld, deletedAtHeld, liveTicketClause } from "./query.js";
 
@@ -50,6 +53,8 @@ export interface AssignJobResult {
   rejected_at: string | null;
   /** The job's bring-forward date, a start date; null when none is set or the database is below v74. */
   bf_on: string | null;
+  /** On assigned: the job's claim number, which every holder-guarded write on it takes; null when the job carries none (below v80, or held since before claims were numbered). */
+  claim_no: number | null;
   note: string;
   warning?: string;
 }
@@ -72,6 +77,7 @@ interface ConfirmRow {
   lapsed: number;
   takeable: number;
   last_activity: string | null;
+  claim_no?: number | null;
 }
 
 /** drafting_data__assign_job. Every refusal writes nothing. */
@@ -106,19 +112,22 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   const last = lastActivitySql(args.db_path);
   const guard = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ? AND ${last} = ? AND ${takeable}` : `(status = 'queued' AND locked_by IS NULL OR ${lapsed}) AND rejected_at IS NULL${live}${notBefore}`) + creator;
   const guardParams = [...(takeover ? [(args.expected_holder as string).trim(), (args.expected_last_activity as string).trim()] : []), ...(creatorHeld ? [args.session_token, args.session_token] : [])];
-  const record = !takeover && hasTable(args.db_path, "kv_store") ? [{ sql: recordLapseSql(guard), params: [args.ticket_id, ...guardParams] }] : [];
+  const kv = hasTable(args.db_path, "kv_store");
+  const record = !takeover && kv ? [{ sql: recordLapseSql(guard), params: [args.ticket_id, ...guardParams] }] : [];
+  const claim = kv ? [{ sql: nextClaimSql(guard), params: [args.ticket_id, ...guardParams] }] : [];
   const written = await submissionDataWriteAll(
     args.db_path,
     [
       ...record,
+      ...claim,
       { sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW} WHERE id = ? AND ${guard}`, params: [args.session_token, args.ticket_id, ...guardParams] },
-      ...touchStatements(args.db_path, args.ticket_id, args.session_token),
+      ...touchStatements(args.db_path, args.ticket_id, { sql: "locked_by = ?", params: [args.session_token] }),
     ],
     env
   );
-  const changes = written.ok ? written.results[record.length].changes : written.changes;
+  const changes = written.ok ? written.results[record.length + claim.length].changes : written.changes;
   const tookLapsed = written.ok && record.length === 1 && written.results[0].changes === 1;
-  const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${takeable} AS takeable, ${last} AS last_activity${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
+  const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${takeable} AS takeable, ${last} AS last_activity${kv ? `, ${claimSql()} AS claim_no` : ""}${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
   const [read] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows as unknown as ConfirmRow[];
   if (read === undefined) throw new NotFoundError(`${TOOL}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
@@ -169,6 +178,7 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
     status: read.status,
     rejected_at: read.rejected_at,
     bf_on: read.bf_on ?? null,
+    claim_no: outcome === "assigned" ? (read.claim_no ?? null) : null,
     note,
     ...(written.warning ? { warning: written.warning } : {}),
   };

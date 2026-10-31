@@ -12,6 +12,7 @@
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { deletedAtHeld, stepStatusHeld } from "./query.js";
+import { checkClaim, heldBy } from "./job-activity.js";
 
 const TOOL = "drafting_data__merge_jobs";
 
@@ -21,6 +22,8 @@ export interface MergeJobsArgs {
   absorbed_id: number;
   /** This session's identity from open_session/bootstrap. Never minted here. */
   session_token: string;
+  /** The claim_no this session's drafting_data__assign_job returned for the survivor, when it holds the survivor. */
+  claim_no?: number;
 }
 
 type Refusal =
@@ -67,17 +70,17 @@ interface JobRow {
 /** A wait on a job that is not completed, finished by the caller's condition on `b`. */
 const WAITS_OUTSIDE = "SELECT 1 FROM ticket_blocks b JOIN tickets bt ON bt.id = b.blocker_id WHERE bt.status <> 'completed' AND";
 
-/** The guard every statement carries, on params [absorbed, survivor, token]: both jobs live and on one
- * Writing (or both General Jobs) of one proceeding, the survivor Ready or held by this session, the
- * absorbed job Ready with no either/or partner, and neither waiting on a job outside the pair that is
- * not completed. */
-function guard(dbPath: string): string {
+/** The guard every statement carries, on params [absorbed, survivor, ...held.params]: both jobs live and
+ * on one Writing (or both General Jobs) of one proceeding, the survivor Ready or held by this session
+ * (`held`, heldBy on alias s), the absorbed job Ready with no either/or partner, and neither waiting on
+ * a job outside the pair that is not completed. */
+function guard(dbPath: string, held: string): string {
   const live = deletedAtHeld(dbPath) ? " AND s.deleted_at IS NULL AND a.deleted_at IS NULL" : "";
   return (
     "EXISTS (SELECT 1 FROM tickets s JOIN tickets a ON a.id = ? WHERE s.id = ?" +
     " AND s.proceeding_id = a.proceeding_id AND s.filing_id IS a.filing_id" +
     ` AND s.rejected_at IS NULL AND a.rejected_at IS NULL${live}` +
-    " AND ((s.status = 'queued' AND s.locked_by IS NULL) OR (s.status = 'wip' AND s.locked_by = ?))" +
+    ` AND ((s.status = 'queued' AND s.locked_by IS NULL) OR (s.status = 'wip' AND ${held}))` +
     " AND a.status = 'queued' AND a.locked_by IS NULL" +
     " AND NOT EXISTS (SELECT 1 FROM ticket_conflicts c WHERE c.a_id = a.id OR c.b_id = a.id)" +
     ` AND NOT EXISTS (${WAITS_OUTSIDE} b.blocked_id IN (s.id, a.id) AND b.blocker_id NOT IN (s.id, a.id)))`
@@ -149,8 +152,9 @@ export async function submissionDataMergeJobs(args: MergeJobsArgs, env: NodeJS.P
     if (exists(`${WAITS_OUTSIDE} b.blocked_id = ? AND b.blocker_id NOT IN (?, ?)`, [id, s, a])) return refuse("blocked", role);
   }
 
-  const g = guard(args.db_path);
-  const gp = [a, s, token];
+  const held = heldBy(args.db_path, token, checkClaim(TOOL, args.db_path, s, token, args.claim_no), "s");
+  const g = guard(args.db_path, held.sql);
+  const gp = [a, s, ...held.params];
   const undone = `done_at IS NULL${stepStatusHeld(args.db_path) ? " AND (status IS NULL OR status NOT IN ('cancelled', 'deferred'))" : ""}`;
   const written = await submissionDataWriteAll(
     args.db_path,

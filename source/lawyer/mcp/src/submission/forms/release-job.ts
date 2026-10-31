@@ -9,6 +9,7 @@
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
+import { checkClaim, heldBy } from "./job-activity.js";
 
 const TOOL = "drafting_data__release_job";
 
@@ -19,6 +20,8 @@ export interface ReleaseJobArgs {
   session_token: string;
   /** The `holder:` tag off the job's card (the last 8 characters of its locked_by), for another session's job. */
   expected_holder?: string;
+  /** The claim_no this session's drafting_data__assign_job returned for the job. */
+  claim_no?: number;
 }
 
 export interface ReleaseJobResult {
@@ -52,10 +55,11 @@ export async function submissionDataReleaseJob(args: ReleaseJobArgs, env: NodeJS
     throw new ValidationError(`${TOOL}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   const holder = args.expected_holder === undefined ? null : args.expected_holder.trim();
-  const guard = holder === null ? "locked_by = ?" : "substr(locked_by, -8) = ? AND rejected_at IS NULL";
+  // Another session's job, released on the practitioner's word, is guarded on the card's holder; this session's own on its claim.
+  const guard = holder === null ? heldBy(args.db_path, args.session_token, checkClaim(TOOL, args.db_path, args.ticket_id, args.session_token, args.claim_no)) : { sql: "substr(locked_by, -8) = ? AND rejected_at IS NULL", params: [holder] };
   const written = await submissionDataWriteAll(
     args.db_path,
-    [{ sql: `UPDATE tickets SET status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = ? AND status = 'wip' AND ${guard}`, params: [args.ticket_id, holder ?? args.session_token] }],
+    [{ sql: `UPDATE tickets SET status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = ? AND status = 'wip' AND ${guard.sql}`, params: [args.ticket_id, ...guard.params] }],
     env
   );
   const changes = written.ok ? written.results[0].changes : written.changes;
