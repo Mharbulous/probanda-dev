@@ -133,7 +133,7 @@ each tier yielded — one line, no omissions:
 ```
 case data: audited | commons: audited / unavailable / not installed / NOT AUDITED |
 6. LAW: audited / n memos UNREAD | Westlaw: run (n decisions, memo Y/N) / not run: <reason> |
-CanLII: noted up / no key | Legislation: retrieved n, on disk n / not run: <reason>
+CanLII: case-level / no key | Legislation: retrieved n, on disk n / not run: <reason>
 ```
 
 The Westlaw reason is mandatory: `not run` with no reason is an incomplete

@@ -35,7 +35,7 @@ SPAWN_FIELD = (
     "Legislation: <citation>: filed <path>, current to <marker>, currency <value> / "
     "already on disk <path>, currency <value> / not retrieved: <reason>, currency <value>"
 )
-COVERAGE = "CanLII: noted up / no key | Legislation: retrieved n, on disk n / not run: <reason>"
+COVERAGE = "CanLII: case-level / no key | Legislation: retrieved n, on disk n / not run: <reason>"
 COVERAGE_FILES = ("research-priority.md", "legal-audit-protocol.md", "legal-audit-scoped.md")
 TOUCHED = (
     FETCHER,

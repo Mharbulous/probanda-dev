@@ -15,11 +15,21 @@ From: <the exact model ID your own system prompt states. If it states none, writ
 Date: <the spawn prompt's Date>
 Re: "<the question, one line>"
 Format: <ICRA / IRAC / CREAC, the one the body uses>
-Confidence: "<one line: for the Issue, its strength and whether its authorities were noted up, and every tier the coverage line reads NOT AUDITED>" / "INCOMPLETE: <the research named>"
+Status: DRAFT
+Confidence: "<one line: for the Issue, its strength and every tier the coverage line reads NOT AUDITED>[ <the case-level sentence>]" / "INCOMPLETE: <the research named>"
 ---
 ```
 
 A double quote inside a quoted value is written `\"`.
+
+Every memo is written `Status: DRAFT`. It leaves DRAFT, as `Status: FINAL`, only when every
+paragraph it relies on has had its proposition-level note-up, or when the practitioner says so.
+DRAFT is not INCOMPLETE: a DRAFT memo answers the Issue, and an `INCOMPLETE:` one does not.
+
+The case-level sentence ends the `Confidence:` line whenever a case the memo relies on has
+citing cases, word for word:
+
+> The memo relies on cases that have received judicial treatment, and the treating cases have not been downloaded or reviewed to tell whether that treatment is positive, negative or irrelevant.
 
 ## Body
 

@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 SHARED = Path(__file__).resolve().parents[2] / "shared"
-HEADER = ["---", "Document: MEMORANDUM OF LAW", "From:", "Date:", "Re:", "Format:", "Confidence:", "---"]
+HEADER = ["---", "Document: MEMORANDUM OF LAW", "From:", "Date:", "Re:", "Format:", "Status: DRAFT", "Confidence:", "---"]
 ICRA = "```\n## Issue\n## Conclusion\n## Rule\n## Application\n```"
 IRAC = "```\n## Issue\n## Rule\n## Application\n## Conclusion\n```"
 CREAC = "```\n## Issue\n## Conclusion\n## Rule\n## Explanation\n## Application\n## Conclusion\n```"
@@ -117,6 +117,15 @@ class ProtocolStepSixTests(unittest.TestCase):
     def test_memo_carries_no_confidence_table(self):
         self.assertIn("No coverage line and no confidence table anywhere in the memo", flat(step_six()))
 
+    def test_every_memo_is_draft_with_the_fixed_case_level_sentence(self):
+        template = flat(read("research-memo-template.md"))
+        self.assertIn("Every memo is written `Status: DRAFT`.", template)
+        self.assertIn("DRAFT is not INCOMPLETE: a DRAFT memo answers the Issue", template)
+        self.assertIn("> The memo relies on cases that have received judicial treatment, and the treating cases "
+                      "have not been downloaded or reviewed to tell whether that treatment is positive, negative "
+                      "or irrelevant.", template)
+        self.assertNotIn("noted up", template)
+
 
 class ScopedDispatchTests(unittest.TestCase):
     def test_step_six_is_opinion_mode_only(self):
@@ -141,6 +150,12 @@ class ConfidenceTableTests(unittest.TestCase):
         self.assertEqual(step_three.count('Never a bare "Yes"'), 2)
         self.assertIn("unverified pool record", step_three)
         self.assertIn("the number of citing cases, and how many of them were read", step_three)
+
+    def test_a_citator_record_is_case_level_never_noted_up(self):
+        step_three = flat(between(read("legal-audit-protocol.md"), "### Step 3", "### Step 4"))
+        self.assertIn("CanLII: case-level / no key", step_three)
+        self.assertIn("`case-level` when a record shows it run", step_three)
+        self.assertNotIn("`noted up`", step_three.replace("never `noted up`", ""))
 
 
 class GateDoctrineTests(unittest.TestCase):

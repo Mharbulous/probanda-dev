@@ -208,12 +208,12 @@ none omitted, in the shape `shared/research-priority.md` specifies:
 ```
 case data: audited | commons: audited / unavailable / not installed / NOT AUDITED |
 6. LAW: audited / n memos UNREAD | Westlaw: run (n decisions, memo Y/N) / not run: <reason> |
-CanLII: noted up / no key | Legislation: retrieved n, on disk n / not run: <reason>
+CanLII: case-level / no key | Legislation: retrieved n, on disk n / not run: <reason>
 ```
 
 The Westlaw reason is mandatory (for example `not run: tiers 1–3 held pinpointable
 text`, or `not run: practitioner declined`). So is the Legislation reason, read from
-the spawn prompt's `Legislation:` lines (for example `not run: no legislation in issue`). The CanLII segment reports the CanLII citator as the note-up records show it: `noted up` when a record shows it run, `no key` when the records show it not run for want of a key, and `NOT AUDITED: <reason>` when no record covers a decision relied on. KeyCite's run goes in the notes and the Reliability column. The line ends with the Legislation segment, exactly `Legislation: retrieved n, on disk n` or `Legislation: not run: <reason>`, with nothing after it. Anything more about the instruments, such as their currency, goes in the notes below the line. Any tier you could not examine, the Legislation tier included, reads `NOT AUDITED` or `NOT AUDITED: <reason>` in place of its listed forms. No segment carries a parenthetical: counts and other detail go in the notes below the line. Silence about a tier reads as coverage
+the spawn prompt's `Legislation:` lines (for example `not run: no legislation in issue`). The CanLII segment reports the CanLII citator as the note-up records show it: `case-level` when a record shows it run, because a citator's flag and count of citing cases is all a record holds, `no key` when the records show it not run for want of a key, and `NOT AUDITED: <reason>` when no record covers a decision relied on. KeyCite's run goes in the notes and the Reliability column. The line ends with the Legislation segment, exactly `Legislation: retrieved n, on disk n` or `Legislation: not run: <reason>`, with nothing after it. Anything more about the instruments, such as their currency, goes in the notes below the line. Any tier you could not examine, the Legislation tier included, reads `NOT AUDITED` or `NOT AUDITED: <reason>` in place of its listed forms. No segment carries a parenthetical: counts and other detail go in the notes below the line. Silence about a tier reads as coverage
 that did not happen. Then render this
 table, one row per issue:
 
@@ -231,10 +231,11 @@ Rubric:
   authority ("pool record, unverified: followed in *Smith v Jones*, 2024 BCCA 12"); or
   "unknown". Never a bare "Yes": a citing case nobody read shows nothing about
   treatment.
-- **Reliability** — names the note-up record: its date, each citator it ran, the
-  number of citing cases, and how many of them were read ("KeyCite
-  2026-10-21: KeyCite Red H, 12 citing; CanLII citator 2026-10-21: 9 citing; 3 read"),
-  or NOT NOTED UP. Never a bare "Yes". A note-up is not proof of good law, and an un-noted
+- **Reliability** — names the note-up record as `case-level`: its date, each citator it
+  ran with its flag, the number of citing cases, and how many of them were read
+  ("case-level: KeyCite 2026-10-21: KeyCite Red H, 12 citing; CanLII citator
+  2026-10-21: 9 citing; 3 read"), or NOT NOTED UP. Never a bare "Yes", and never
+  `noted up`. A note-up is not proof of good law, and an un-noted
   authority may be perfectly valid — you simply cannot say so.
 - **Count** — how many relevant pinpointed authorities are known.
 
