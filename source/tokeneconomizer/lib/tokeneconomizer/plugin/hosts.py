@@ -38,6 +38,7 @@ named `rollout-*`; Copilot's session-state transcript, or no transcript at all i
 hook process; Claude Code otherwise. Each plugin hook file except Claude Code's also passes
 `--host` explicitly, so detection is the fallback rather than the rule.
 """
+import glob
 import json
 import os
 import re
@@ -181,6 +182,10 @@ class Host:
         """Path of a trace `trace.load_trajectory` reads, for the finished session."""
         return transcript_path if transcript_path and os.path.exists(transcript_path) else None
 
+    def find_transcript(self, session_id, env):
+        """The finished session's log, found by its id, when no hook named one; None if not."""
+        return None
+
     def session_usage(self, transcript_path):
         raise NotImplementedError
 
@@ -252,6 +257,17 @@ class ClaudeCode(Host):
         if attended in ("0", "1"):
             return attended == "0"
         return str(env.get("CLAUDE_CODE_ENTRYPOINT", "")).startswith("sdk")
+
+    def find_transcript(self, session_id, env):
+        # Claude Cowork's hooks carried no `transcript_path` (2026-10-31); the log is still at
+        # `projects/<folder>/<id>.jsonl` (`/root/.claude/projects/-home-claude/` there).
+        from . import history
+        for d in history.default_dirs(self.name, env):
+            found = glob.glob(os.path.join(glob.escape(d), "projects", "*",
+                                           glob.escape(f"{session_id}.jsonl")))
+            if found:
+                return found[0]
+        return None
 
     def session_usage(self, transcript_path):
         return trace.claude_session_usage(transcript_path)
