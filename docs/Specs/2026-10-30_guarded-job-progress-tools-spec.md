@@ -58,3 +58,12 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - Confirm `set_step`'s source and status enum, and whether the 2026-10-29 activity spec already added a touch/heartbeat tool.
 - Confirm every place the §5/§6/§6a SQL templates are quoted (skill text, tests, docs).
 - Confirm the `drafting-data` skill still has no rules vocabulary block (the lint failure above).
+
+## 11. Verification against HEAD (e3dfa47, 2026-10-31)
+
+| Claim | Finding at HEAD |
+|---|---|
+| `set_step` source and status enum | `source/lawyer/mcp/src/submission/forms/set-step.ts`, statuses `open, retry, cancelled, deferred, waiting`; holder guard `EXISTS (... locked_by = ?)` and `done_at IS NULL`; moves last activity through `touchJob` after the write, in a second transaction. Refuses every call below schema v78. |
+| A touch/heartbeat tool from the 2026-10-29 activity spec | Exists: `drafting_data__touch_job` (`submission/forms/job-activity.ts`), which writes `db_meta` `job_active:<id>` and the `last_activity` stamp, both holder-guarded, in one transaction. So §6a holds no raw SQL any more; what is left is the "last call of every turn" rule. `touchJob` (last activity only, no `job_active`) runs after the write in `set_step`, `assign_job`, `track_source`, `research_filing__save_answer` and the research_filing writes; `approve_plan` moves neither stamp. |
+| Where the §5/§6/§6a templates are quoted | Only `.claude/skills/drafting-data/references/jobs-run.md` (the path is verified): §5 pickup rewrite, §5 partial replace, §5 held-job title cleanup, §6 step stamp, §6a turn-end rule. Prose naming them: `shared/job-planning.md` §3, `shared/legal-research.md` ("partial replace", pinned by `legal-research/tests/test_job_memo_answers.py`), `work/references/job-session.md` (pickup review, title cleanup, restating check, plan marker), `job-planning/SKILL.md` step 4, `draft/references/take-over.md`, `draft/SKILL.md` (session-active stamp row). No test or doc quotes the SQL itself. The gate job's result rewrite and waiver (`jobs-gate.md`) also stamp `done_at` by SQL, together with a text rewrite; they are not this spec's templates. |
+| `drafting-data` has no rules vocabulary block | Confirmed: `.claude/skills/drafting-data/SKILL.md` has no vocabulary block and no atoms, so `skill_rules__applicable` with `skill: "drafting-data"` fails the lint (`files/skill-rules.ts`, "no vocabulary block"). Out of this spec's scope. |
