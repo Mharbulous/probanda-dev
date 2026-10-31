@@ -232,7 +232,8 @@ proof: none of this runs offline.
   what it saved is the tokens that turn spent after the point where the guard spoke, in the
   baseline. "Plugin overhead" is the plugin's own model calls (`ledger.OVERHEAD_KEYS`: the judge,
   the redirect writer and the micro-skills proposer), not hook time.
-- **Measure.** On the PC, end shadow mode with `te config set shadow false --global`. Record, per
+- **Measure.** On the PC, end shadow mode with `te config set shadow=false --global` (done
+  2026-10-30). Record, per
   session:
   - effective tokens and plugin overhead, against the PC baseline of 2026-10-28 (`te status` for
     probanda-dev: 6 folded sessions, 9.7M effective tokens, plugin overhead 526.4k, 5.2%);
@@ -240,6 +241,27 @@ proof: none of this runs offline.
     verdicts) and wakes that ended in no verdict;
   - whether the fixed envelope looked right for Cowork's turns (the turn lengths the session's
     `envelope.json` recorded).
+
+  A Cowork container is deleted when its session ends, and its state root goes with it, so before
+  closing each counted session Brahm pastes:
+
+  > End-of-session save for the TokenEconomizer payback test. Use only this container's shell and
+  > the PC shell (mcp__remote-devices__device_bash), and change nothing else. 1. If
+  > /root/.tokeneconomizer does not exist, stop and report. 2. Write
+  > /root/.tokeneconomizer/cowork-notes.md: today's date, this session's first request in one line,
+  > and, for each line of kind "nudge" in any events.jsonl under /root/.tokeneconomizer, its
+  > tool_calls and reason, what the turn was doing in the 5 tool calls before it, and what was done
+  > after it; write "no redirects" if there are none. 3. Run `tar -czf /tmp/te-state.tgz
+  > --exclude=.tokeneconomizer/bin -C /root .tokeneconomizer` and print its size and sha256sum.
+  > 4. On the PC, create the folder te-cowork-runs/<YYYY-MM-DD_HHMM> in the PC shell's home folder.
+  > 5. Base64-encode /tmp/te-state.tgz, and append it in order, in pieces of at most 20,000
+  > characters, to te-state.tgz.b64 in that PC folder. Decode it there to te-state.tgz with the
+  > PC shell's own decoder. 6. Report the PC folder, both sha256 hashes and the number of
+  > redirects, then PASS if the hashes match and FAIL if not.
+
+  Only a session that ends in PASS counts. Each saved folder holds the session's ledger, events,
+  judge requests and results, envelope and the redirect notes. Brahm marks each redirect true or
+  false from its notes and the Cowork transcript; the counting runs on the PC once ten folders exist.
 
   Record the result in the spec, beside its open question on the measured gain.
 - **Decide.** If the guard does not repay its cost in Cowork, Brahm rules what the plugin does
