@@ -6,6 +6,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { pathToFileURL } from "node:url";
 
+import { withCallLog } from "./call-log.js";
 import { PracticeStore } from "./practice/store.js";
 import { dispatchTool, type DispatchContext } from "./dispatch.js";
 import { startPageApi } from "./page-api/server.js";
@@ -36,12 +37,13 @@ export async function start(): Promise<void> {
     tools: buildToolDefinitions(),
   }));
 
+  // Every call is timed here, in one place (call-log.ts).
+  const call = withCallLog(
+    (name, args) => dispatchTool(context, name, args),
+    new Set(buildToolDefinitions().map((tool) => tool.name))
+  );
   server.setRequestHandler(CallToolRequestSchema, async (request) =>
-    dispatchTool(
-      context,
-      request.params.name,
-      request.params.arguments ?? {}
-    )
+    call(request.params.name, request.params.arguments ?? {})
   );
 
   await server.connect(new StdioServerTransport());

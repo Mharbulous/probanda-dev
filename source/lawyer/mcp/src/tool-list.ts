@@ -79,6 +79,9 @@ export function definitionLookup(buildDefinitions: () => ToolDefinition[]): (nam
   };
 }
 
+/** Set, never sent, on an isError reply whose error is a fault (not a tool's own refusal), for the call log (call-log.ts). */
+export const FAULT = Symbol("fault");
+
 /** `run`'s result as an MCP reply, or its error as an isError reply carrying the error's code. */
 export async function toolReply(
   name: string,
@@ -92,7 +95,11 @@ export async function toolReply(
     const payload = err instanceof DataServerError
       ? { error: { code: err.code, message, ...(err.details ? { details: err.details } : {}) } }
       : { error: { code: "data_error", message } };
-    return { content: [{ type: "text", text: jsonText(name, payload) }], isError: true };
+    const reply: ToolReply = { content: [{ type: "text", text: jsonText(name, payload) }], isError: true };
+    if (!(err instanceof DataServerError) || err.code === "internal_error" || err.code === "python_timeout") {
+      Object.defineProperty(reply, FAULT, { value: true });
+    }
+    return reply;
   }
 }
 

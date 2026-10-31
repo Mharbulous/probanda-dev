@@ -274,7 +274,6 @@ export const dataTools: Tool<DispatchContext>[] = [
     const started = performance.now();
     const background_job = startBootstrapJob(result, client, dates);
     addJobPhase(result.timings, started);
-    logTimings("drafting_forms__bootstrap", result.timings);
     return { ...result, background_job };
   }),
   defineTool(
@@ -292,7 +291,6 @@ export const dataTools: Tool<DispatchContext>[] = [
       const started = performance.now();
       const background_job = startBootstrapJob(result, { clientName: client_name, clientNo: client_no, matterNo: matter_no, matterDescription }, dates, true);
       addJobPhase(result.timings, started);
-      logTimings("drafting_forms__open_session", result.timings);
       return { ...result, background_job };
     }
   ),
@@ -568,11 +566,6 @@ export async function callTool(
   throw new ValidationError(`Unknown tool "${name}"`);
 }
 
-/** #579: stdout carries the MCP protocol, so the per-phase timings go to stderr, which the host keeps in the server's log. */
-function logTimings(name: string, timings: PhaseTimings): void {
-  console.error(`[timings] ${name} ${JSON.stringify(timings)}`);
-}
-
 /** #589: starting the background job is part of the call, so its phase goes in ahead of `total`, which
  * stays last and grows by it. */
 function addJobPhase(timings: PhaseTimings, started: number): void {
@@ -617,7 +610,6 @@ async function renderProceedingBoard(args: RenderArgs, proceedingId: number, con
     dates
   );
   if (todos) insertPhase(result.timings, "todos", todos.ms);
-  logTimings("drafting_forms__render", result.timings);
   return result;
 }
 
@@ -641,7 +633,6 @@ async function renderFiling(args: RenderArgs, context: DispatchContext): Promise
     dates
   );
   if (todos) insertPhase(result.timings, "todos", todos.ms);
-  logTimings("drafting_forms__render", result.timings);
   // #589: a successful mockup render (rendered_at is set only then) tells the background job this
   // filing is done, and reports the job's status.
   if (result.rendered_at === undefined) return result;

@@ -3,7 +3,7 @@
 
 
 
-/** Per-phase durations in ms, on every render and bootstrap response and logged by dispatch
+/** Per-phase durations in ms, on every render and bootstrap response and in the call log (call-log.ts)
  * (2026-09-14 board-first bootstrap brief §0, #579). Later optimisations are measured against them. */
 export type PhaseTimings = { phase: string; ms: number }[];
 
