@@ -66,6 +66,9 @@ def ensure_launcher(env=None):
     target = os.path.join(plugin, "scripts", "te") if plugin else ""
     if not target or not os.access(target, os.X_OK):
         return None
+    if os.sep == "\\":
+        # Git Bash runs the launcher on Windows: `scripts/te` finds its folder by the last `/`.
+        target = target.replace("\\", "/")
     path = launcher_path(env)
     body = ("#!/bin/sh\n# Written by the TokenEconomizer plugin at session start: its `te` "
             "command line.\nexec %s \"$@\"\n" % shlex.quote(target))
