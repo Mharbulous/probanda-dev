@@ -34,10 +34,11 @@ facts from different projects would mix.
 Cheap tests first. Each is one Cowork session in te-cowork-test. Stop at the first FAIL and
 record it in the spec's "Persistence (Option B)" section with its evidence.
 
-B1. The linked folder reaches the PC. No code. Brahm links the folder te-cowork-runs in his PC
-    home folder to te-cowork-test. A pasted prompt writes, through the PC shell, a one-line marker
-    and a 3 KB base64 file to ~/mnt/te-cowork-runs/b1/. A PC session checks both files with
-    sha256sum. PASS: both exist on the PC, byte-identical.
+B1. The task's folder reaches the PC. No code. Cowork mounts only the folder picked for the
+    task (on 2026-10-31 a session saw ~/mnt/te-cowork-test and nothing else), so the state goes
+    in a subfolder of it and no extra folder is linked. A pasted prompt writes, through the PC
+    shell, a one-line marker and a 3 KB base64 file to ~/mnt/te-cowork-test/te-runs/b1/. A PC
+    session checks both files with sha256sum. PASS: both exist on the PC, byte-identical.
 B2. The model carries real-size state both ways. No code. The model is the only bridge between
     the container and the PC shell, and on 2026-10-31 a 5 KB base64 archive it carried came back
     with a different sha256. In one Cowork session, the model makes a plain-text state file of at
