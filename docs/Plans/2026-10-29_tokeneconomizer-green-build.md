@@ -252,16 +252,19 @@ proof: none of this runs offline.
   > and, for each line of kind "nudge" in any events.jsonl under /root/.tokeneconomizer, its
   > tool_calls and reason, what the turn was doing in the 5 tool calls before it, and what was done
   > after it; write "no redirects" if there are none. 3. Run `tar -czf /tmp/te-state.tgz
-  > --exclude=.tokeneconomizer/bin -C /root .tokeneconomizer` and print its size and sha256sum.
-  > 4. On the PC, create the folder te-cowork-runs/<YYYY-MM-DD_HHMM> in the PC shell's home folder.
-  > 5. Base64-encode /tmp/te-state.tgz, and append it in order, in pieces of at most 20,000
-  > characters, to te-state.tgz.b64 in that PC folder. Decode it there to te-state.tgz with the
-  > PC shell's own decoder. 6. Report the PC folder, both sha256 hashes and the number of
-  > redirects, then PASS if the hashes match and FAIL if not.
+  > --exclude=.tokeneconomizer/bin -C /root .tokeneconomizer`. 4. Print its sha256sum, the
+  > number of redirects, and the output of `base64 -w0 /tmp/te-state.tgz` inside a single fenced
+  > code block with nothing else in it. Do not summarise or shorten it.
 
-  Only a session that ends in PASS counts. Each saved folder holds the session's ledger, events,
-  judge requests and results, envelope and the redirect notes. Brahm marks each redirect true or
-  false from its notes and the Cowork transcript; the counting runs on the PC once ten folders exist.
+  Brahm pastes that reply into a probanda-dev session on the PC, which decodes it into
+  `~/te-cowork-runs/<YYYY-MM-DD_HHMM>/te-state.tgz` and checks the hash. Only a session whose hash
+  matches counts. The PC shell (`mcp__remote-devices__device_bash`) cannot carry the copy: on
+  2026-10-31 it reached a Linux sandbox (host `claude`, home `/sessions/<id>`), not the PC, so the
+  first saves stayed in sandboxes that end with their sessions. One archive is about 2 KB. Each holds the
+  session's ledger, events, judge requests and results, envelope and the redirect notes. Brahm
+  marks each redirect true or false from its notes and the Cowork transcript; the counting runs on
+  the PC once ten folders exist. The notes can name a matter, so the saved folders are never
+  committed.
 
   Record the result in the spec, beside its open question on the measured gain.
 - **Decide.** If the guard does not repay its cost in Cowork, Brahm rules what the plugin does
