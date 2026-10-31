@@ -43,8 +43,8 @@ B1. The task's folder reaches the PC. No code. Cowork mounts only the folder pic
 B2. The model carries real-size state both ways. No code. The model is the only bridge between
     the container and the PC shell, and on 2026-10-31 a 5 KB base64 archive it carried came back
     with a different sha256. In one Cowork session, the model makes a plain-text state file of at
-    least 5 KB from the container's envelope.json, ledger.jsonl and events.jsonl (repeated until
-    it is 5 KB if shorter), prints its sha256, and writes it through the PC shell to
+    least 5 KB of random JSON lines shaped like ledger and events lines (a new session has no
+    state files yet, as one found on 2026-10-31), prints its sha256, and writes it through the PC shell to
     ~/mnt/te-cowork-test/te-runs/b2/state.txt. In a new session, it reads that file through the PC shell
     and writes it into /tmp/state.txt in the container with its own shell. Each session does
     this three times. PASS: all six copies (three on the PC, three in the container) have the
