@@ -121,3 +121,9 @@ From Brahm's rulings of 2026-10-28. The plan is `docs/Plans/2026-10-29_tokenecon
 Open question:
 
 - The measured gain. Cowork already defers tools, so the saving may be small, and every judge wake in Cowork is now paid (26k to 148k effective tokens each on the PC). The green stage measures it before the refactor.
+
+## Persistence (Option B)
+
+Brahm's ruling of 2026-10-31: TokenEconomizer must keep its state between Cowork sessions with no action from the user, or be shown not to be able to. The tests, the verdict rule and the fallback are in `docs/Plans/2026-10-31_tokeneconomizer-cowork-state.md`. Option A (the loop guard within a session only) runs only after this section records a FAIL verdict with its evidence and Brahm's ruling to fall back.
+
+Option B verdict: not yet tried.
