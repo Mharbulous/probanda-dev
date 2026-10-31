@@ -90,9 +90,55 @@ def recorded(con):
     return {row[0]: row[1:] for row in con.execute(f"SELECT {', '.join(['id'] + cols)} FROM filings")} if cols else {}
 
 
+# A job's moves belong to the guarded job tools, which write through the write and write_all ops and never
+# reach this check. So drafting_data__execute refuses a script that leaves any of these holding a value
+# it did not hold: a job's lock, plan approval, completion or deletion stamp, a step's done stamp or
+# status, and the job keys of db_meta and kv_store, whose rows are refused changed or removed too.
+# Clearing a job column, inserting or deleting an unstamped step, and every other job write stay
+# allowed (shelving, supersession, restore, outlining). Judged by state like recorded(), on the
+# columns the database has.
+JOB_MOVES = (
+    ("tickets", "id", ("locked_by", "locked_at"), "drafting_data__assign_job"),
+    ("tickets", "id", ("plan_approved_at",), "drafting_data__approve_plan or drafting_data__rewrite_job"),
+    ("tickets", "id", ("completed_at",), "drafting_data__complete_job"),
+    ("tickets", "id", ("deleted_at",), "drafting_data__delete_job"),
+    ("ticket_steps", "ticket_id, ordinal", ("done_at", "status", "wait_until", "status_note"), "drafting_data__set_step"),
+)
+JOB_KEYS = (
+    ("db_meta", "key", "key LIKE 'job_active:%'", "drafting_data__touch_job"),
+    ("kv_store", "namespace, key", "namespace IN ('last_activity', 'lock_lapsed')", "drafting_data__touch_job or drafting_data__assign_job"),
+    ("kv_store", "namespace, key", "namespace = 'claim_no'", "drafting_data__assign_job"),
+)
+
+
+def job_state(con):
+    tables = {row[0] for row in con.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+    out = []
+    for table, key, cols, tool in JOB_MOVES:
+        have = {row[1] for row in con.execute(f'PRAGMA table_info("{table}")')} if table in tables else set()
+        cols = [c for c in cols if c in have]
+        rows = {r[:-len(cols)]: r[-len(cols):] for r in con.execute(f'SELECT {key}, {", ".join(cols)} FROM "{table}"')} if cols else {}
+        out.append((table, cols, tool, rows, False))
+    for table, key, where, tool in JOB_KEYS:
+        rows = {r[:-1]: r[-1:] for r in con.execute(f'SELECT {key}, value FROM "{table}" WHERE {where}')} if table in tables else {}
+        out.append((table, ["value"], tool, rows, True))
+    return out
+
+
+def job_move(before, after):
+    for (table, cols, tool, was, strict), (_, _, _, now, _) in zip(before, after):
+        for row in sorted(set(was) | set(now) if strict else now, key=str):
+            new, old = now.get(row, (None,) * len(cols)), was.get(row, (None,) * len(cols))
+            for col, n, o in zip(cols, new, old):
+                if n != o and (strict or n is not None):
+                    return f"job_write_refused: use {tool}. {table} {', '.join(map(str, row))}: {col} is written only by that tool. Nothing was written."
+    return None
+
+
 def do_execute(req):
     def mutate(con):
         before = recorded(con)
+        jobs = job_state(con) if req.get('guard_jobs') else None
         try:
             con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
         except Exception:
@@ -105,6 +151,9 @@ def do_execute(req):
                 raise SystemExit(
                     "filed_on and sent_copy_id are set only by drafting_data__record_sent, record_filed or "
                     f"record_served; clearing filed_on stays an update. Nothing was written (filing {filing}).")
+        refused = jobs is not None and job_move(jobs, job_state(con))
+        if refused:
+            raise SystemExit(refused)
         return {"ok": True, "changes": con.total_changes}, True
     return staged_write(req, 'execute', mutate)
 
@@ -342,6 +391,8 @@ interface ExecuteRequest {
   op: "execute";
   db_path: string;
   sql_script: string;
+  /** Refuse a job move (JOB_MOVES above): set by the drafting_data__execute tool, never by a fixture seed. */
+  guard_jobs?: boolean;
 }
 
 interface WriteRequest {
@@ -498,16 +549,18 @@ export function submissionDataQuery(
  * stage -> mutate -> copy-back window, for the same reason matter-data's execute
  * does: without it, two sessions stage from the same starting bytes and the
  * second copy-back silently discards the first session's writes. `query` stays
- * lock-free on purpose -- it is the hot path and never copies anything back.
+ * lock-free on purpose -- it is the hot path and never copies anything back. guardJobs, set by the
+ * drafting_data__execute tool alone, refuses a job move a guarded job tool owns (JOB_MOVES).
  */
 export async function submissionDataExecute(
   dbPath: string,
   sqlScript: string,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  guardJobs = false
 ): Promise<{ ok: true; changes: number; warning?: string }> {
   const lock = await acquireDataLock(dbPath, env);
   try {
-    const result = runHelper({ op: "execute", db_path: dbPath, sql_script: sqlScript }, env) as { ok: true; changes: number };
+    const result = runHelper({ op: "execute", db_path: dbPath, sql_script: sqlScript, guard_jobs: guardJobs }, env) as { ok: true; changes: number };
     const withWarning: { ok: true; changes: number; warning?: string } = { ...result };
     if (lock.brokeStale) {
       // A stale lock this long almost certainly means a crashed migrate or

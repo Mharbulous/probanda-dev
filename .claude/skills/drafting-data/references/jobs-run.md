@@ -67,30 +67,17 @@ The stamp-only approval and its confirm-read run as one call, `drafting_data__ap
 
 **A re-approval confirmed unaltered writes nothing.** If the job is already approved and the practitioner confirms the read-back step list unaltered, `plan_approved_at` and `ticket_steps` are left alone, as §3a leaves them, and every `done_at` on those steps survives. `plan_approved_at` is not re-stamped: it still records when those same steps were approved. On a taken-over job this is what keeps the predecessor session's `done_at` stamps, which the take-over exists to inherit.
 
-**Otherwise the steps travel with the approval.** The `ticket_steps` rows must be the approved plan, so a change always replaces the whole list. A re-approval after "Change" that re-stamps the approval and leaves the old rows in place is what makes a later session inherit `done_at` marks that no longer correspond to anything approved. So a first approval whose steps differ from the rows on the job, and every re-approval that alters the steps through the outlining interview, replaces the step list in the same script as the stamp:
+**Otherwise the steps travel with the approval.** The `ticket_steps` rows must be the approved plan, so a first approval whose steps differ from the rows on the job, and every re-approval that alters the steps through the outlining interview, writes the approved steps by the partial replace below: each step not yet done is replaced, and a done step keeps its row and its `done_at`, because its work was done. A re-approval is re-stamped in that same write; a first approval is then stamped by `drafting_data__approve_plan`. Each step's text is the session's wording of the plan, with no adoption ceremony (`shared/paralegal-posture.md` section 3).
 
-```sql
-DELETE FROM ticket_steps WHERE ticket_id = 2
-  AND EXISTS (SELECT 1 FROM tickets WHERE id = 2 AND locked_by = 'sess-a1');
-INSERT INTO ticket_steps (ticket_id, ordinal, text)
-  SELECT 2, 1, 'Audit the exhibit list' FROM tickets WHERE id = 2 AND locked_by = 'sess-a1';
-INSERT INTO ticket_steps (ticket_id, ordinal, text)
-  SELECT 2, 2, 'Reconcile against the disclosure log' FROM tickets WHERE id = 2 AND locked_by = 'sess-a1';
-UPDATE tickets SET plan_approved_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
-  WHERE id = 2 AND locked_by = 'sess-a1';
-```
-
-Each replaced step's text is the session's wording of the plan, with no adoption ceremony (`shared/paralegal-posture.md` section 3).
-
-**The partial replace.** A plan upgrade (`shared/job-planning.md` section 3) rewrites only the steps not yet done, so a step already done keeps its row, its ordinal, its words and its `done_at`. It is `drafting_data__rewrite_job` with `held: true`, `session_token` and the new `steps`: it deletes only the steps not done, appends each new step after the highest ordinal left, in order, and re-stamps an approval already on the job. Never use the whole-list replace above for an upgrade: it discards the done steps' stamps. With `append: true` it deletes nothing. It is also the write that adds a step for each `required` item memo-reviewer names on a held research job (`shared/legal-research.md`, "On a held job, an open tier is not an answer"), so every step already on the job keeps its row and its stamp. `not_held` reads as the confirm-read below reads a lost lock.
+**The partial replace.** A plan upgrade (`shared/job-planning.md` section 3) rewrites only the steps not yet done, so a step already done keeps its row, its ordinal, its words and its `done_at`. It is `drafting_data__rewrite_job` with `held: true`, `session_token` and the new `steps`: it deletes only the steps not done, appends each new step after the highest ordinal left, in order, and re-stamps an approval already on the job. With `append: true` it deletes nothing. It is also the write that adds a step for each `required` item memo-reviewer names on a held research job (`shared/legal-research.md`, "On a held job, an open tier is not an answer"), so every step already on the job keeps its row and its stamp. `not_held` reads as the confirm-read below reads a lost lock.
 
 **The pickup rewrite.** `/draft`'s pickup review (`work/references/job-session.md`, The pickup review) shortens a ready job's title and splits its steps, and its restating check ("A step that only restates the request") replaces a ready job's steps with a plan that names the work, before the job is assigned. It is `drafting_data__rewrite_job` with `title` (only when it changed) and `steps`, the list replaced whole. The tool writes only a queued job with no lock, not shelved, no approval stamp and no step done, and either all of it lands or none does; any other outcome assigns nothing and re-renders. Each title and step is cut from the job card's own words as a `drafting_forms__*` result printed them this session; no stamp is written, because `drafting_data__approve_plan` stamps after the plan is announced.
 
 **The held-job title cleanup.** `/draft`'s title spelling cleanup (`work/references/job-session.md`, "Title spelling cleanup on a held job") corrects the title of a job this session has just taken over, restored or re-taken after a release. It is `drafting_data__rewrite_job` with `held: true`, `session_token` and `title` only, which touches no step and no stamp. The title is the card's title with only a misspelled word corrected.
 
-If the practitioner asks for a change, it is taken in their words through the outlining interview's questions (still the same session, still the same assigned job); the revised step list is written once, with the stamp, on re-approval, exactly as above. A part added to the held form job (`/work`'s `job-session.md`, "A form is one job") is appended by the partial replace with `append: true`, so done steps keep their stamps, only once the practitioner re-approves the read-back list.
+If the practitioner asks for a change, it is taken in their words through the outlining interview's questions (still the same session, still the same assigned job); the revised step list is written once, by the partial replace, on re-approval, as above. A part added to the held form job (`/work`'s `job-session.md`, "A form is one job") is appended by the partial replace with `append: true`, so done steps keep their stamps, only once the practitioner re-approves the read-back list.
 
-**The premise check's Change path also drops the dead keys.** Where the Change was taken because a key's marker no longer fires — the assign-time premise check amendment to `Engineering/1. Design/2026-09-15_work-board-proposals-design.md` — the same script deletes those keys from `ticket_proposals`. The practitioner has just dropped that work, and a marker firing again on one of those rows must not stay hidden behind this job. The dead set is every key on the `keys:` line of the job's card (`drafting_forms__board_card` with `jobs`) that reads `(now: dead)`; name it positively, as literals copied character for character out of that line on §3's terms, never recomposed from a slug and a row id:
+**The premise check's Change path also drops the dead keys.** Where the Change was taken because a key's marker no longer fires — the assign-time premise check amendment to `Engineering/1. Design/2026-09-15_work-board-proposals-design.md` — an `execute` script run right after the partial replace deletes those keys from `ticket_proposals`. The practitioner has just dropped that work, and a marker firing again on one of those rows must not stay hidden behind this job. The dead set is every key on the `keys:` line of the job's card (`drafting_forms__board_card` with `jobs`) that reads `(now: dead)`; name it positively, as literals copied character for character out of that line on §3's terms, never recomposed from a slug and a row id:
 
 ```sql
 DELETE FROM ticket_proposals WHERE ticket_id = 2
@@ -102,7 +89,7 @@ Never a `NOT IN` of the keys kept: a `DELETE` should name what it removes, and `
 
 This and §3a's "keep it" path are the only writes in the job checklist that remove `ticket_proposals` rows.
 
-**The Change path also refreshes `item` on the keys the job keeps**, on §3a's terms: only a key whose item now reads differently, only after the practitioner has been shown both texts and confirmed, and in the same script, under this section's guard:
+**The Change path also refreshes `item` on the keys the job keeps**, on §3a's terms: only a key whose item now reads differently, only after the practitioner has been shown both texts and confirmed, and in that same script, under this section's guard:
 
 ```sql
 UPDATE ticket_proposals SET item = 'Brown v. Green, 2024 BCSC 77'

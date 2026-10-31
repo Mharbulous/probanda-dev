@@ -5,7 +5,8 @@
 // drop or put off, only on their words, which are stored as the step's status_note. waiting is a step
 // waiting on an external process: wait_until is set in SQL to now plus wait_minutes, the minute the
 // session checks the process again, never a deadline and never time remaining. open clears all
-// three. A stamped step is frozen: it is never re-stamped and takes no status. The write matches only
+// three. With text, the step's words are replaced verbatim in the same write (§14's gate results and
+// waivers). A stamped step is frozen: it is never re-stamped, reworded or given a status. The write matches only
 // a job holding this session's token (jobs-run.md §5), and the job's session-active stamp and last
 // activity move in the same transaction. The job tables carry no revision triggers, so the revision
 // does not move.
@@ -35,6 +36,8 @@ export interface SetStepArgs {
   wait_minutes?: number;
   /** cancelled and deferred only, and required there: the practitioner's own words. */
   practitioner_words?: string;
+  /** The step's new words, written verbatim; a step not yet done only. */
+  text?: string;
 }
 
 export interface SetStepResult {
@@ -85,6 +88,10 @@ export async function submissionDataSetStep(args: SetStepArgs, env: NodeJS.Proce
   if (!owesWords && args.practitioner_words !== undefined) {
     throw new ValidationError(`${TOOL}.practitioner_words is taken only with status cancelled or deferred; nothing was written`, "invalid_practitioner_words");
   }
+  if (args.text !== undefined && (typeof args.text !== "string" || args.text.trim() === "")) {
+    throw new ValidationError(`${TOOL}.text is the step's new words, not blank; nothing was written`, "invalid_text");
+  }
+  const text = args.text === undefined ? { sql: "", params: [] as string[] } : { sql: "text = ?, ", params: [args.text] };
   const id = args.ticket_id;
   const ordinal = args.ordinal;
   const token = args.session_token;
@@ -103,12 +110,12 @@ export async function submissionDataSetStep(args: SetStepArgs, env: NodeJS.Proce
   const guard = `WHERE ticket_id = ? AND ordinal = ? AND done_at IS NULL AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${held.sql})`;
   const write =
     status === "done"
-      ? { sql: `UPDATE ticket_steps SET done_at = ${NOW}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard}`, params: [id, ordinal, id, ...held.params] }
+      ? { sql: `UPDATE ticket_steps SET ${text.sql}done_at = ${NOW}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard}`, params: [...text.params, id, ordinal, id, ...held.params] }
       : {
           sql:
-            "UPDATE ticket_steps SET status = ?, " +
+            `UPDATE ticket_steps SET ${text.sql}status = ?, ` +
             `wait_until = ${minutes === null ? "NULL" : `strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '+${minutes} minutes')`}, status_note = ? ${guard}`,
-          params: [status === "open" ? null : status, owesWords ? words : null, id, ordinal, id, ...held.params],
+          params: [...text.params, status === "open" ? null : status, owesWords ? words : null, id, ordinal, id, ...held.params],
         };
   const written = await submissionDataWriteAll(args.db_path, [write, ...touchStatements(args.db_path, id, held)], env);
   const changes = written.ok ? written.results[0].changes : written.changes;

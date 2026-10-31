@@ -56,13 +56,10 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "drafting_data__record_filed, and a Writing is recorded as served through drafting_data__record_served: a script " +
         "that leaves a filing's filed_on or sent_copy_id holding a value it did not hold is refused whole, writing " +
         "nothing (clearing filed_on stays an update). A drafting Writing's stored layout is " +
-        "re-snapshotted through drafting_data__resnapshot_writing, a job is created through drafting_data__create_job, " +
-        "a job is assigned through drafting_data__assign_job, " +
-        "a job's unchanged plan is approved through drafting_data__approve_plan, " +
-        "a job is completed through drafting_data__complete_job, a job is released through drafting_data__release_job, " +
-        "a job step's status is set through drafting_data__set_step, " +
-        "a job is deleted through drafting_data__delete_job, " +
-        "and a duplicate job is merged into another through drafting_data__merge_jobs. " +
+        "re-snapshotted through drafting_data__resnapshot_writing, and a job is created through drafting_data__create_job. " +
+        "A script that takes or moves a job's lock, sets its plan approval, completion or deletion stamp, stamps a step " +
+        "done or sets its status, or writes a job's active stamp, last activity, lapse record or claim number is refused " +
+        "whole, writing nothing, with job_write_refused naming the job tool that writes it. " +
         "The result carries changes, the number of rows the script inserted, updated or deleted, rows written " +
         "by triggers included; on a script that writes only job tables, changes 0 means its guards matched " +
         "nothing and nothing was written. " +
@@ -558,8 +555,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "step waits on an external process, such as a Westlaw run: wait_until is set to now plus wait_minutes, default 5, " +
         "and the result's note says `setting timer for N minutes`). wait_until is the minute the session checks the " +
         "process again: never a deadline and never time remaining, never shown as a countdown, and never put in a " +
-        "handover or a loose thread. Once it has passed the step reads as open. A done step (done_at set) is frozen: it " +
-        "is never re-stamped and takes no status. The write matches only a job holding this session's token, and moves " +
+        "handover or a loose thread. Once it has passed the step reads as open. With text, the step's words are replaced " +
+        "by it verbatim in the same write: a pre-filing gate step's result, or its result and waiver. A done step (done_at " +
+        "set) is frozen: it is never re-stamped, reworded or given a status. The write matches only a job holding this session's token, and moves " +
         "the job's session-active stamp and last activity in the same transaction. " +
         HOLDER +
         " The outcome is read off " +
@@ -568,7 +566,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "Read the step's ordinal and text off the card first. Never retry to win. It moves no revision. Refusals write " +
         "nothing: invalid_ticket_id, invalid_ordinal, " +
         "invalid_session_token, invalid_status, invalid_wait_minutes, practitioner_words_required, " +
-        "invalid_practitioner_words, not_found, schema_below_v78 (any status but done; say once that the matter's database " +
+        "invalid_practitioner_words, invalid_text (blank), not_found, schema_below_v78 (any status but done; say once that the matter's database " +
         "needs the v78 migration, and leave the step open). Returns ticket_id, ordinal, outcome, changes, done_at, status, " +
         "wait_until, status_note, locked_by and a note.",
       inputSchema: {
@@ -582,6 +580,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           status: { type: "string", enum: ["done", "open", "retry", "cancelled", "deferred", "waiting"] },
           wait_minutes: { type: "number" },
           practitioner_words: { type: "string" },
+          text: { type: "string" },
         },
         required: ["db_path", "ticket_id", "ordinal", "session_token", "status"],
         additionalProperties: false,

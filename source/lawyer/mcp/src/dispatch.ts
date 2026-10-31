@@ -212,7 +212,7 @@ export const dataTools: Tool<DispatchContext>[] = [
 
   defineTool("drafting_data__query", (args: { db_path: string; sql: string; params?: unknown[] }) =>
     submissionDataQuery(args.db_path, args.sql, args.params)),
-  defineTool("drafting_data__execute", (args: { db_path: string; sql_script: string }) => submissionDataExecute(args.db_path, args.sql_script)),
+  defineTool("drafting_data__execute", (args: { db_path: string; sql_script: string }) => submissionDataExecute(args.db_path, args.sql_script, process.env, true)),
   defineTool("drafting_data__repoint_documents", (args: RepointDocumentsRequest) => repointDocuments(args)),
   defineTool("drafting_data__create_writing", (args: CreateWritingArgs) =>
     submissionDataCreateWriting(args, {

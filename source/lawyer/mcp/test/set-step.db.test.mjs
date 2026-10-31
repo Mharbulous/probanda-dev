@@ -143,3 +143,24 @@ test("a database held below v78 is refused every status but done, which it takes
   assert.equal(done.outcome, "set");
   assert.notEqual(query(dbPath, "SELECT done_at FROM ticket_steps WHERE ticket_id = 1 AND ordinal = 2")[0].done_at, null);
 });
+
+test("text rewrites a step not yet done in the same write, with done or open, and never a done step", async (t) => {
+  const dbPath = await seeded(t);
+  const words = (o) => query(dbPath, "SELECT text FROM ticket_steps WHERE ticket_id = 1 AND ordinal = ?", [o])[0].text;
+
+  const fail = await set(dbPath, { status: "open", text: "C2 — Unresolved-placeholder scan: fail (4 findings) [rev 412]" });
+  assert.equal(fail.outcome, "set");
+  assert.equal(words(2), "C2 — Unresolved-placeholder scan: fail (4 findings) [rev 412]");
+  assert.equal(step(dbPath, 1, 2).done_at, null);
+
+  const waived = await set(dbPath, { status: "done", text: "C2 — Unresolved-placeholder scan: fail (4 findings) [rev 412] — WAIVED: served separately" });
+  assert.equal(waived.outcome, "set");
+  assert.equal(words(2), "C2 — Unresolved-placeholder scan: fail (4 findings) [rev 412] — WAIVED: served separately");
+  assert.notEqual(step(dbPath, 1, 2).done_at, null);
+
+  const again = await set(dbPath, { status: "open", text: "C2 — Unresolved-placeholder scan: pass [rev 413]" });
+  assert.equal(again.outcome, "done");
+  assert.equal(words(2), "C2 — Unresolved-placeholder scan: fail (4 findings) [rev 412] — WAIVED: served separately", "a done step keeps its words");
+
+  await assert.rejects(set(dbPath, { ordinal: 1, status: "done", text: "   " }), code("invalid_text"));
+});
