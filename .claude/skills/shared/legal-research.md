@@ -75,12 +75,6 @@ one question. On their yes, reword the held job to the first question (`/draftin
 job. On a no, write nothing and research nothing on it, and say in one line that a job is
 researched one question at a time. An unattended run reports and stops.
 
-**A caller working a `/draft` job checks its lock before every dispatch.** Immediately
-before each `research-paralegal` or `citation-checker` dispatch and each audit-agent spawn or re-invocation
-below, run `/drafting-data`'s lock read before a dispatch on that job. Only the caller's
-own session token on the job dispatches. Anything else dispatches nothing: stop and
-report. A caller holding no job skips this.
-
 **Before spawning, run what the agent cannot.** `shared/research-priority.md` is
 the binding order for every legal lookup — read it and follow it. Five duties fall
 on the caller specifically, because the agent's own grant cannot discharge them:
@@ -350,8 +344,8 @@ decision, instrument and file on the job before the dispatch or ingest that gets
 it, and closes it once it has landed. That covers the Westlaw duty's citation
 dispatch, the legislation duty's fetcher dispatch, the `needs_download` dispatch
 below, and the cited-decision dispatch and the ingest under "After the answer".
-The rule is `/drafting-data`'s (`jobs-common.md` §2, "Sources to get"), and its
-call is the lock read before each of those dispatches. A deep-research run is not
+The rule is `/drafting-data`'s (`jobs-common.md` §2, "Sources to get"): dispatch only
+what its call lists under `dispatch`. A deep-research run is not
 a source: its record is the answer saved under the job. A caller holding no job
 records nothing.
 

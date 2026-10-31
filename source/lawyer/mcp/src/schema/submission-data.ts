@@ -496,16 +496,20 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "job's own record beside its steps and never a step. add takes {kind, label} items, kind one of decision, " +
         "legislation, file, label one line of at most 200 characters: a citation, an instrument's title and citation, or a " +
         "file name, with no statement of law, no deadline and no date other than the one inside a citation. Adding an item " +
-        "already open on the job changes nothing, and adding a closed one reopens it. close takes {kind, label, outcome, " +
+        "already open on the job changes nothing, adding one closed not_retrieved reopens it, and adding one closed got leaves " +
+        "it closed and returns it under landed: never dispatch it again. close takes {kind, label, outcome, " +
         "reason?} items, outcome got or not_retrieved, reason one line of at most 60 characters. Every write matches only " +
-        "a job holding this session's token, so a call with neither add nor close is the lock read before a dispatch. " +
+        "a job this session holds under its claim, so this call is the check before a dispatch: dispatch only what dispatch " +
+        "lists, and pass session_token and claim_no, the dispatch key, in the brief; the research_filing writes refuse a " +
+        "filing under any other. " +
         HOLDER +
         " The outcome is read off the confirm-read: recorded (the job is this session's), not_held (another " +
         "session's token is on the row: taken over), shelved, completed, no_match; on any but recorded nothing was " +
         "written and nothing is dispatched for the job. Never retry. It moves no revision. Refusals write nothing: " +
         "invalid_ticket_id, invalid_session_token, invalid_item, not_found, schema_below_v76 (say once that the matter's " +
         "database needs the v76 migration, and carry on with the work). Returns ticket_id, outcome, sources (every source " +
-        "on the job, open and closed), open, unknown (close items naming no source on the job), locked_by, status, " +
+        "on the job, open and closed), open, unknown (close items naming no source on the job), dispatch (the add items " +
+        "now open, as <kind>: <label>; empty unless recorded), landed (the add items already got), locked_by, status, " +
         "rejected_at and a note.",
       inputSchema: {
         type: "object",

@@ -3,14 +3,14 @@
 // guarded on the job's lock being the saving session's, as every write on a held job is
 // (jobs-run.md §5). The record lists the answer on the job's card and moves its last activity (job-activity.ts), so a
 // job whose session is still saving answers does not read as idle. A pre-read refuses, before any
-// file is written, a job that does not exist and a database held below v52. A record the guard
-// refuses leaves the file saved and says so: the answer is never lost, and the job is no longer
-// this session's to write. The job tables carry no revision triggers, so the revision does not move.
+// file is written, a job that does not exist, a database held below v52 and a job this session does
+// not hold under its claim (requireHeld). A record the guard refuses after that, a take-over landing
+// between the read and the write, leaves the file saved and says so. The job tables carry no revision triggers, so the revision does not move.
 
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { saveAnswer } from "../../files/research-filing.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { heldBy, jobIdentity, touchStatements } from "./job-activity.js";
+import { heldBy, jobIdentity, requireHeld, touchStatements } from "./job-activity.js";
 import { ticketAnswersHeld } from "./query.js";
 
 const TOOL = "research_filing__save_answer";
@@ -71,6 +71,7 @@ export async function saveAnswerTool(args: SaveAnswerArgs, env: NodeJS.ProcessEn
     );
   }
 
+  requireHeld(TOOL, job);
   const saved = saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
   let written: Awaited<ReturnType<typeof submissionDataWriteAll>>;
   try {

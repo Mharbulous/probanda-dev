@@ -1,11 +1,12 @@
 // A job's last activity is one stored stamp (kv_store `last_activity` / `tickets:<id>`, schema v80).
 // Every server write made for a held job moves it, the research_filing writes too when they name the
 // job, and drafting_data__touch_job moves it at the holder's turn end. A write by any session that
-// does not hold the lock moves nothing. board_card's `last activity` and the idle tag read it, and a
+// does not hold the lock moves nothing, and a research_filing write naming a job it does not hold is
+// refused not_held and files nothing. board_card's `last activity` and the idle tag read it, and a
 // ⏳ step counts as activity until its wake-up minute passes. No revision moves.
 
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -97,9 +98,11 @@ test("a write by a session that does not hold the job's lock moves nothing", asy
 
   assert.equal((await callTool({}, "drafting_data__set_step", { ...stale, ordinal: 1, status: "waiting" })).outcome, "not_held");
   assert.equal((await callTool({}, "drafting_data__track_source", { ...stale, add: [{ kind: "decision", label: "2021 BCSC 963" }] })).outcome, "not_held");
-  assert.equal((await callTool({}, "research_filing__save_answer", { ...stale, destination_dir: law, filename: "answer.md", text: "Answer.\n" })).job.recorded, false);
-  assert.deepEqual((await callTool({}, "research_filing__append_manifest", { ...stale, destination_dir: law, record: { status: "downloaded" } })).job, { ticket_id: 1, recorded: false });
-  assert.deepEqual((await callTool({}, "research_filing__write_scratch", { ...stale, matter_root: matter, filename: "notes.md", text: "Notes.\n" })).job, { ticket_id: 1, recorded: false });
+  const notHeld = (err) => err.code === "not_held" || assert.fail(`${err.code} ${err.message}`);
+  await assert.rejects(callTool({}, "research_filing__save_answer", { ...stale, destination_dir: law, filename: "answer.md", text: "Answer.\n" }), notHeld);
+  await assert.rejects(callTool({}, "research_filing__append_manifest", { ...stale, destination_dir: law, record: { status: "downloaded" } }), notHeld);
+  await assert.rejects(callTool({}, "research_filing__write_scratch", { ...stale, matter_root: matter, filename: "notes.md", text: "Notes.\n" }), notHeld);
+  assert.deepEqual(readdirSync(law), [], "a refused filing writes no file");
   const touched = await callTool({}, "drafting_data__touch_job", stale);
   assert.equal(touched.recorded, false);
   assert.match(touched.note, /not this session's/);

@@ -25,7 +25,7 @@ The dispatch is one JSON object:
 - `jurisdiction`: `BC`, `FED`, or another province's two-letter code.
 - `locality`: for a bylaw, the municipality as a knowledge-tree folder name: letters, digits, `.`, `_` and `-` only, each space a hyphen, as `North-Vancouver`.
 - `destination_dir`: the issue's existing `6. LAW\<issue>\` folder, an absolute host path.
-- `db_path`, `ticket_id` and `session_token` (optional, all three or none), with the job's `claim_no`: the held job the fetch serves. Pass them to every `research_filing__file_fetched` call.
+- `db_path`, `ticket_id` and `session_token` (optional, all three or none), with the job's `claim_no`: the held job the fetch serves. Pass them to every `research_filing__file_fetched` call. A `stale_claim` or `not_held` refusal means the job is no longer the caller's: file nothing more and return `stopped`, reason `job_not_held`.
 - `matter`: the live matter's file number, such as `1234.L####`, never its style of cause or a party's name. The runtime looks it up in practice data and stamps that matter's own number (`L####`) into every map you write, never your string. When `knowledge__write` refuses with `matter_unknown`, return `stopped`, reason `matter_unknown`.
 - `allow_host` (optional): a host the practitioner approved after a `host_not_allowed` refusal (section 7).
 - `amending_instrument` (optional): `true` when the instrument is an amending instrument, such as an amending regulation's B.C. Gazette Part II page, to be filed as made (section 12). `kind` stays the instrument's own kind, such as `regulation`.
