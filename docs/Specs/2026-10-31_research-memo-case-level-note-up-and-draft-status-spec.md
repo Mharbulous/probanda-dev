@@ -68,3 +68,24 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - Confirm every **read** quote above is still present, and grep for every other place that writes or tests `noted up`.
 - Confirm §3k can key a step to a memo paragraph, or name what it lacks.
 - Confirm where the research memo is saved (`research_filing__save_answer`) and whether it is a Writing today (it appears not to be: the sibling spec).
+
+## 11. Verification against HEAD (2026-10-31, at bbf8f297)
+
+| Claim checked | Result | Where |
+|---|---|---|
+| Coverage rule "`noted up` when a record shows it run" | Confirmed | `shared/legal-audit-protocol.md` Step 3 |
+| Header `Confidence:` "whether its authorities were noted up"; no status key | Confirmed | `shared/research-memo-template.md` |
+| Step 5: "A `kind: note-up` offer carries no `job:` or `steps:` line" | Confirmed | `shared/legal-audit-protocol.md` Step 5 |
+| "An offer tagged `kind: note-up` is not sorted ... never becomes a job by §3i" | Confirmed | `shared/legal-research.md`, "After the answer" |
+| §3k "The note-up job", one step per case, from 📇 | Confirmed | `drafting-data/references/jobs-create.md` §3k |
+| Reliability rubric counts "the number of citing cases, and how many of them were read" | Confirmed | `shared/legal-audit-protocol.md` Step 3 |
+| The coverage line's `CanLII: noted up / no key` shape is written in three skill files | `shared/research-priority.md` (the canonical shape), `shared/legal-audit-protocol.md` Step 3, and `shared/legal-audit-scoped.md` (not named in §7) | as named |
+| The shape is enforced server-side, not only in text | `write_scratch` with `kind: "research-notes"` refuses `coverage_line_malformed` unless the CanLII segment matches `/^(?:noted up\|no key)$/`; unit tests pin it. A relabel in the skill text alone would make every memo's notes save fail, so step 3 changes the validator too | `source/lawyer/mcp/src/files/coverage-line.ts`, `source/lawyer/mcp/test/research-filing.unit.test.mjs` |
+| Tests pinning the old strings | `test_legislation_fetcher.py` `COVERAGE`; `test_memo_format.py` (header keys `HEADER`, Reliability rubric) | `legal-research/tests/` |
+| `citation-checker/note-up.md` writes `noted up` | Only as the manifest `status: "noted-up"` value. The record already says "Note-up only ... A citing decision here is a lead", repeated in `source/researcher/agents/citation-checker.md` | as named |
+| Other writers of `noted up` with a count of citing decisions not all read | `drafting-data/references/note-up.md` examples `treatment_note = 'CanLII: noted up (12 citing decisions; 5 read)'`, pinned in `drafting-data/tests/test_migrate_engine.py` and several `source/lawyer/mcp/test/*.mjs`. A Writing's treatment note, not a memo, and outside §7's file list: left for a later change | as named |
+| `INCOMPLETE` is refused by complete_job in skill text, not server code | Confirmed: no `INCOMPLETE` or `Confidence:` parse in `source/lawyer/mcp/src`. The refusal is `/draft` job-session's Complete step (research-board step 1); `apply-to-facts` reads `Confidence:` for `INCOMPLETE` | `legal-research/references/research-board.md`, `apply-to-facts/SKILL.md` |
+| §3k can key a step to a memo paragraph | No. §3k runs only on a `drafting_forms__render` result's `note_up_due`, keys each step to an `authorities` row through `ticket_proposals` and scope `('authorities', <id>)`, and needs a `filing_id`. A memo has no Writing, no `authorities` rows and no per-paragraph id (the structured-Writing spec §11: a `slot:` part's paragraphs carry no stored id) | `drafting-data/references/jobs-create.md` §3k |
+| Where the memo is saved; is it a Writing | `research_filing__save_answer`, as a `.md` file under its job (research-board step 1) or the matter's `6. LAW` folder; not a Writing | `legal-research/references/research-board.md`, `shared/legal-research.md` persist step 1 |
+
+Open questions in §9 were decided by Brahm: DRAFT is a new `Status: DRAFT` header key, and a memo leaves DRAFT when every relied-on paragraph has had its proposition-level note-up or when the practitioner says so. No finding stops steps 3 and 4. Step 5 waits on the structured-Writing spec.
