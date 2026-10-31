@@ -158,9 +158,11 @@ Downloads — the server finds Downloads itself.
   files.
 - `append_manifest` — one manifest record per citation.
 
-When the caller names a held job's `db_path`, `ticket_id` and `session_token`,
-pass all three to every `file_download` and `append_manifest`, so the job's
-last activity moves while the run is out.
+When the caller names a held job's `db_path`, `ticket_id`, `session_token` and
+`claim_no`, pass them to every `file_download` and `append_manifest`, so the job's
+last activity moves while the run is out. A `stale_claim` or `not_held` refusal means
+the job is no longer the caller's: file nothing more, return
+`status: blocked (job-not-held)` and stop.
 
 If any `research_filing__*` tool is absent from your grant, your installed
 plugin predates this machinery or the host dropped the tool at spawn: return

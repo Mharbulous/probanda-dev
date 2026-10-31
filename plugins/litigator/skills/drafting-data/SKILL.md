@@ -52,10 +52,12 @@ Every tool below except `drafting_forms__open_session` takes an already-resolved
 | Record a general Writing as sent | `drafting_data__record_sent` | `send_anyway` only in the practitioner's own words, recorded verbatim. `expect_revision` is the revision the practitioner saw. `references/filing-checklists.md` §13 "Sent write" |
 | Record another Writing as filed | `drafting_data__record_filed` | `expect_revision` is the revision the practitioner saw. `references/filing-checklists.md` §11 |
 | Record a Writing as served | `drafting_data__record_served` | `expect_revision` is the revision the practitioner saw. `references/filing-checklists.md` §11 "Served Writings" |
+| Take a Ready job | `drafting_data__take_job` | `work/references/job-session.md`, Assign |
 | Assign a job | `drafting_data__assign_job` | `takeover: true` only when `work/references/take-over.md` says. Never retry to win. `references/jobs-run.md` §4 |
 | Complete the held job | `drafting_data__complete_job` | `references/jobs-run.md` §9 |
 | Return a `wip` job to Ready | `drafting_data__release_job` | `expected_holder` only on the practitioner's choice of "Return it to Ready". Never retry to win. `references/jobs-run.md` §10 |
-| Set a step's status | `drafting_data__set_step` | `cancelled` and `deferred` need the practitioner's own words as `practitioner_words`. `references/jobs-run.md` §6b |
+| Tick a step done, or set its status | `drafting_data__set_step` | `done` only once the step's work has run. `cancelled` and `deferred` need the practitioner's own words as `practitioner_words`. `references/jobs-run.md` §6, §6b |
+| Rewrite a job's title or steps | `drafting_data__rewrite_job` | The pickup rewrite on a Ready job; `held: true` for the partial replace and the held-job title cleanup. `references/jobs-run.md` §5 |
 | Delete a mistaken job | `drafting_data__delete_job` | Never retry to win. `references/jobs-closeout.md` §10a |
 | Merge a duplicate job | `drafting_data__merge_jobs` | Only after the practitioner's bare yes, which a hook checks. Never retry to win. `references/jobs-closeout.md` §9c |
 | Re-snapshot a Writing's layout | `drafting_data__resnapshot_writing` † | Only on the practitioner's explicit instruction, while the Writing is drafting |
@@ -76,7 +78,6 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Timestamps | Writing any job timestamp | `references/jobs-common.md` §0 |
 | Session identity | Reading a `session_token` or `locked_by` | `references/jobs-common.md` §1 |
 | Read job state | Before a substance write, or a confirm-read | `references/jobs-common.md` §2 |
-| Check the lock before a research dispatch | Each dispatch while holding a job | `references/jobs-common.md` §2, "Lock read before a dispatch" |
 | Create a job | Selected jobs or a picked Proposal | `references/jobs-create.md` §3 |
 | Outline afresh | Reworking a queued job | `references/jobs-create.md` §3a |
 | Intake | Pulling Proposals onto the board | `references/jobs-create.md` §3e |

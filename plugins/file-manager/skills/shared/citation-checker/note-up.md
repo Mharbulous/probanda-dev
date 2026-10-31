@@ -45,8 +45,8 @@ run.
 
 One Markdown file per citation, saved with `research_filing__save_answer` (`text`, no
 `from_scratch`) in `destination_dir`, named `YYYY-MM-DD note-up <citation>.md`, the
-date from the host clock. On a held job, pass the caller's `db_path`, `ticket_id` and
-`session_token`. A `job.recorded: false` result means the job is no longer the
+date from the host clock. On a held job, pass the caller's `db_path`, `ticket_id`,
+`session_token` and `claim_no`. A `job.recorded: false` result means the job is no longer the
 caller's: stop and report it on the status line's next line. The tool never
 overwrites: a second note-up the same day takes the next ` vN`.
 
