@@ -23,7 +23,8 @@ const { freshSubmissionDb, partiesSnapshotSql, seedSql } = await import("./helpe
 const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsBootstrap, submissionFormsRender } = await import("../build/submission/forms.js");
-const { WORKBOARD_CSS } = await import("../build/submission/forms/workboard-assets.js");
+const { default: BOARD_CSS } = await import("../build/templates/work-board/board.css.js");
+const { default: MATTER_BOARD_CSS } = await import("../build/templates/matter-board/matter-board.css.js");
 const { callTool, createDispatchContext } = await import("../build/index.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
 const writes = await import("../build/tools/practice/writes.js");
@@ -178,7 +179,8 @@ test("bootstrap with draft_dir writes one self-contained Litigation Strategy, ea
     assert.ok(!/Matter Board/.test(html), "the old name is gone from the page");
     assert.ok(!/<link/i.test(html), "no stylesheet link");
     assert.ok(!/<script[^>]*\bsrc=/i.test(html), "no external script");
-    assert.ok(html.includes(WORKBOARD_CSS), "the stylesheet is inline");
+    assert.ok(html.includes(BOARD_CSS), "the shared board stylesheet is inline");
+    assert.ok(html.includes(MATTER_BOARD_CSS), "the Litigation Strategy stylesheet is inline");
     assert.ok(!json.includes("<"), "every < in the data is escaped");
 
     assert.deepEqual(Object.keys(data), ["meta", "todos", "filings", "pre_filing"], "to-dos lead the page data");
