@@ -56,3 +56,18 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 ## 10. Verify against HEAD before building
 - Confirm the current `/work` take path, its rule ids and the `assign_job` source.
 - Confirm whether `skill_rules__applicable` can serve a new combined operation, and the `drafting-data` vocabulary state.
+
+## 11. Verification against HEAD (27dd9a9, 2026-10-31)
+
+| Claim | At HEAD | Source |
+|---|---|---|
+| `/work`'s take path | Holds. Branch A of `work/references/job-session.md`: `work.assign` (ops `dispatch`), the input check (`input_check`), the pickup review (`dispatch,pre_claim`), the duplicate check (`dispatch,pre_claim,take_over`), the pre-claim check (`pre_claim`), the premise check (`premise_check`), the restating check (`dispatch,pre_claim,plan_readback,take_over`), the plan marker paragraph (inside `work.steps.restated`), the posture check (`pre_claim,plan_readback`). `/draft`'s announcement is `draft.announce` (`pre_claim,plan_readback,take_over`) in `draft/references/job-session.md`, with `draft.premise.*`, `draft.one-step` and `draft.steps` beside it | `.claude/skills/work/references/job-session.md`, `.claude/skills/draft/references/job-session.md` |
+| Rule ids quoted in §2 | Hold: `work.steps.restated` (restating), `work.pickup-review` (12-word title), `work.assign` (history entry). The plan-marker test is in `work.steps.restated`, "A job that needs a plan" | same |
+| `assign_job` source | Holds. `source/lawyer/mcp/src/submission/forms/assign-job.ts`: one guarded write (queued and unlocked, or lapsed; not shelved, not deleted; bring-forward arrived; creator guard), the claim number raised in the same transaction (63db065), the active stamp (fdf92e6), a confirm-read mapping `assigned`, `lost_race`, `holder_changed`, `recently_active`, `not_created_here`, `before_bf`, `no_match`. It returns `claim_no` | `assign-job.ts` |
+| Guarded rewrite tool of the sibling spec | Landed: `drafting_data__rewrite_job` (ready mode for the pickup rewrite) | `rewrite-job.ts` (fdf92e6) |
+| History entry | Written by the model with `matter_data__procedural_history_append` (`matter_root`, `date`, `line`); `shared/procedural-history.md` gives the line `Started Job <N>: <title>`. The tool needs `matter_root`, which `open_session` returns, so `take_job` takes it too | `source/lawyer/mcp/src/case/procedural-history.ts` |
+| Premise data | `board_card(jobs: [N])` prints `keys: <key> = "<stored>" (now: <glyph> "<current>" \| dead)` from the board section (`board-job-text.ts` `keyText`, `derivedOf`); a server tool can read the same section (`board-card.ts`) | `board-card.ts`, `board-job-text.ts` |
+| `skill_rules__applicable` can serve a new combined operation | Yes, with no code change: an operation is a row of the SKILL.md vocabulary block, and an atom serves every operation in its `ops` list. A `take` operation is a vocabulary row plus `take` on each judgement atom's tag | `source/lawyer/mcp/src/files/skill-rules.ts` `parseVocabulary`, `skillRulesApplicable` |
+| `drafting-data` vocabulary state | Holds: `.claude/skills/drafting-data/` carries no atom tag and no vocabulary block, so any call fails with the lint `SKILL.md: no vocabulary block`. No skill text sends a session there for rules; the observed call was the model's guess | `skill-rules.ts` `parseFile` |
+| Fixed-text titles and the plan marker in code | `STOCK_TITLES`, `waitsOnGate` and the gate title in `goal-gate.ts`; `PLAN_MARKER` in `approve-plan.ts` | `goal-gate.ts`, `approve-plan.ts` |
+| Paths "as seen in the installed copy" | The source paths are `.claude/skills/<skill>/...` and `source/lawyer/mcp/src/...`; nothing under `plugins/` is edited | repo layout |
