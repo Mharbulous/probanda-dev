@@ -89,8 +89,8 @@ export interface WorkBoardTicket {
   /** The job's stored last-activity stamp (job-activity.ts), else its lock. Null when it has neither.
    * The idle tag measures from it. */
   last_activity_at: string | null;
-  /** The minute the holding session last ended a turn that worked this job: its `db_meta` row
-   * `job_active:<id>` (jobs-run.md §6a), written with `last_activity_at` by drafting_data__touch_job.
+  /** The minute the holding session last worked this job: its `db_meta` row `job_active:<id>`
+   * (jobs-run.md §6a), written with `last_activity_at` by every job tool given the holder's token.
    * Null unless the job is In progress and the stamp is no earlier than its lock, so an earlier
    * holder's stamp never shows. */
   active_at: string | null;

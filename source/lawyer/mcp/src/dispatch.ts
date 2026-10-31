@@ -50,6 +50,7 @@ import { submissionDataCreateJob, type CreateJobArgs } from "./submission/forms/
 import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/forms/approve-plan.js";
 import { submissionDataTrackSource, type TrackSourceArgs } from "./submission/forms/track-source.js";
 import { submissionDataSetStep, type SetStepArgs } from "./submission/forms/set-step.js";
+import { submissionDataRewriteJob, type RewriteJobArgs } from "./submission/forms/rewrite-job.js";
 import { submissionDataTouchJob, withJobActivity, type TouchJobArgs } from "./submission/forms/job-activity.js";
 import { submissionDataCompleteJob, type CompleteJobArgs } from "./submission/forms/complete-job.js";
 import { submissionDataReleaseJob, type ReleaseJobArgs } from "./submission/forms/release-job.js";
@@ -227,6 +228,7 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("drafting_data__approve_plan", (args: ApprovePlanArgs) => submissionDataApprovePlan(args)),
   defineTool("drafting_data__track_source", (args: TrackSourceArgs) => submissionDataTrackSource(args)),
   defineTool("drafting_data__set_step", (args: SetStepArgs) => submissionDataSetStep(args)),
+  defineTool("drafting_data__rewrite_job", (args: RewriteJobArgs) => submissionDataRewriteJob(args)),
   defineTool("drafting_data__touch_job", (args: TouchJobArgs) => submissionDataTouchJob(args)),
   defineTool("drafting_data__release_job", (args: ReleaseJobArgs) => submissionDataReleaseJob(args)),
   defineTool("drafting_data__set_board_goal", (args: SetBoardGoalArgs) => submissionDataSetBoardGoal(args)),

@@ -16,7 +16,7 @@
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { CHECK_AFTER_MINUTES, LAPSE_AFTER_MINUTES, idleClause, lapsedClause, lastActivitySql, recordLapseSql, touchJob } from "./job-activity.js";
+import { CHECK_AFTER_MINUTES, LAPSE_AFTER_MINUTES, idleClause, lapsedClause, lastActivitySql, recordLapseSql, touchStatements } from "./job-activity.js";
 import { hasTable } from "../schema-capabilities.js";
 import { bfOnHeld, createdByHeld, deletedAtHeld, liveTicketClause } from "./query.js";
 
@@ -109,7 +109,11 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   const record = !takeover && hasTable(args.db_path, "kv_store") ? [{ sql: recordLapseSql(guard), params: [args.ticket_id, ...guardParams] }] : [];
   const written = await submissionDataWriteAll(
     args.db_path,
-    [...record, { sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW} WHERE id = ? AND ${guard}`, params: [args.session_token, args.ticket_id, ...guardParams] }],
+    [
+      ...record,
+      { sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW} WHERE id = ? AND ${guard}`, params: [args.session_token, args.ticket_id, ...guardParams] },
+      ...touchStatements(args.db_path, args.ticket_id, args.session_token),
+    ],
     env
   );
   const changes = written.ok ? written.results[record.length].changes : written.changes;
@@ -127,7 +131,6 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
     && (takeover ? (read.status === "queued" || read.status === "wip") && read.locked_by !== null && read.locked_by.slice(-8) === (args.expected_holder as string).trim() && read.last_activity === (args.expected_last_activity as string).trim() && read.takeable === 1 : (read.status === "queued" && read.locked_by === null) || read.lapsed === 1);
   if (read.locked_by === args.session_token) {
     outcome = "assigned";
-    if (changes === 1) await touchJob(args.db_path, id, args.session_token, env);
     note =
       changes !== 1
         ? `Job ${id} already carried this session's token; nothing was written.`

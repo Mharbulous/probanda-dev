@@ -1,5 +1,5 @@
-// drafting_data__set_step: the session holding a job sets one step's status (schema v78) under the
-// lock-holder guard, then reads it back: retry, cancelled and deferred (only on the practitioner's
+// drafting_data__set_step: the session holding a job ticks one step done, or sets its status (schema
+// v78), under the lock-holder guard, then reads it back: done (stamps done_at, clears any status), retry, cancelled and deferred (only on the practitioner's
 // words), waiting (wait_until = now + wait_minutes, default 5, "setting timer for N minutes"), and
 // open, which clears all three. A done step is frozen. It moves no revision.
 
@@ -106,12 +106,40 @@ test("cancelled and deferred need the practitioner's words, and nothing is writt
   await assert.rejects(set(dbPath, { status: "retry", practitioner_words: "Because." }), code("invalid_practitioner_words"));
   await assert.rejects(set(dbPath, { status: "retry", wait_minutes: 5 }), code("invalid_wait_minutes"));
   await assert.rejects(set(dbPath, { status: "waiting", wait_minutes: 0 }), code("invalid_wait_minutes"));
-  await assert.rejects(set(dbPath, { status: "done" }), /status/);
+  await assert.rejects(set(dbPath, { status: "finished" }), /status/);
   assert.deepEqual(step(dbPath, 1, 2), { done_at: null, status: null, wait_until: null, status_note: null });
 });
 
-test("a database held below v78 is refused, writing nothing", async (t) => {
+test("done stamps only the holder's step, clears its status, moves the session-active stamp, and a done step stays frozen", async (t) => {
+  const dbPath = await seeded(t);
+  await set(dbPath, { status: "retry" });
+  const low = localMinute(dbPath, 0);
+  const done = await set(dbPath, { status: "done" });
+  const high = localMinute(dbPath, 0);
+  assert.equal(done.outcome, "set");
+  assert.equal(done.changes, 1);
+  assert.ok(done.done_at === low || done.done_at === high, done.done_at);
+  assert.deepEqual(step(dbPath, 1, 2), { done_at: done.done_at, status: null, wait_until: null, status_note: null });
+  assert.match(done.note, /^Step 2 of job 1 is done/);
+  const active = query(dbPath, "SELECT value FROM db_meta WHERE key = 'job_active:1'")[0]?.value;
+  assert.ok(active === low || active === high, `session active moved with the stamp (got ${active})`);
+
+  const again = await set(dbPath, { ordinal: 1, status: "done" });
+  assert.equal(again.outcome, "done");
+  assert.equal(again.changes, 0);
+  assert.equal(step(dbPath, 1, 1).done_at, "2026-10-01T09:07", "a done step is never re-stamped");
+
+  const elsewhere = await set(dbPath, { ticket_id: 2, ordinal: 1, status: "done" });
+  assert.equal(elsewhere.outcome, "not_held");
+  assert.equal(step(dbPath, 2, 1).done_at, null);
+  assert.deepEqual(query(dbPath, "SELECT key FROM db_meta WHERE key = 'job_active:2'"), [], "no stamp lands on another session's job");
+});
+
+test("a database held below v78 is refused every status but done, which it takes", async (t) => {
   const dbPath = await seeded(t, 77);
   await assert.rejects(set(dbPath, { status: "retry" }), code("schema_below_v78"));
   assert.deepEqual(query(dbPath, "SELECT done_at FROM ticket_steps WHERE ticket_id = 1 AND ordinal = 2")[0], { done_at: null });
+  const done = await set(dbPath, { status: "done" });
+  assert.equal(done.outcome, "set");
+  assert.notEqual(query(dbPath, "SELECT done_at FROM ticket_steps WHERE ticket_id = 1 AND ordinal = 2")[0].done_at, null);
 });

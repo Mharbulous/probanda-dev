@@ -1,20 +1,23 @@
-// drafting_data__set_step: the session holding a job sets one step's status (schema v78), the
-// guarded write followed by its confirm-read. retry is a step blocked by a missing credential or an
+// drafting_data__set_step: the session holding a job ticks one step done, or sets its status (schema
+// v78), the guarded write followed by its confirm-read. done stamps done_at, the only meaning of done,
+// and clears any status; it is the one status a database held below v78 takes. retry is a step blocked by a missing credential or an
 // unreachable source, never stamped done. cancelled and deferred are a step the practitioner chose to
 // drop or put off, only on their words, which are stored as the step's status_note. waiting is a step
 // waiting on an external process: wait_until is set in SQL to now plus wait_minutes, the minute the
 // session checks the process again, never a deadline and never time remaining. open clears all
-// three. done_at stays the only meaning of done, so a stamped step is frozen and takes no status.
-// The write matches only a job holding this session's token (jobs-run.md §5). The job tables carry
-// no revision triggers, so the revision does not move.
+// three. A stamped step is frozen: it is never re-stamped and takes no status. The write matches only
+// a job holding this session's token (jobs-run.md §5), and the job's session-active stamp and last
+// activity move in the same transaction. The job tables carry no revision triggers, so the revision
+// does not move.
 
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
-import { touchJob } from "./job-activity.js";
+import { touchStatements } from "./job-activity.js";
 import { stepStatusHeld } from "./query.js";
 
 const TOOL = "drafting_data__set_step";
-const STATUSES = ["open", "retry", "cancelled", "deferred", "waiting"];
+const STATUSES = ["done", "open", "retry", "cancelled", "deferred", "waiting"];
+const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 const DEFAULT_WAIT_MINUTES = 5;
 const WAIT_MINUTES_MAX = 1440;
 const WORDS_MAX = 500;
@@ -86,29 +89,28 @@ export async function submissionDataSetStep(args: SetStepArgs, env: NodeJS.Proce
   if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
     throw new NotFoundError(`${TOOL}: no job ${id} in ${args.db_path}`, "not_found");
   }
-  if (!stepStatusHeld(args.db_path)) {
+  const statusHeld = stepStatusHeld(args.db_path);
+  if (!statusHeld && status !== "done") {
     throw new ValidationError(
       `${TOOL}: ${args.db_path} is held below schema v78, so no step of job ${id} can take a status; nothing was written. Say once that the matter's database needs the v78 migration, and leave the step open.`,
       "schema_below_v78"
     );
   }
   const minutes = status === "waiting" ? (args.wait_minutes ?? DEFAULT_WAIT_MINUTES) : null;
-  const written = await submissionDataWriteAll(
-    args.db_path,
-    [
-      {
-        sql:
-          "UPDATE ticket_steps SET status = ?, " +
-          `wait_until = ${minutes === null ? "NULL" : `strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '+${minutes} minutes')`}, status_note = ? ` +
-          "WHERE ticket_id = ? AND ordinal = ? AND done_at IS NULL AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)",
-        params: [status === "open" ? null : status, owesWords ? words : null, id, ordinal, id, token],
-      },
-    ],
-    env
-  );
+  const guard = "WHERE ticket_id = ? AND ordinal = ? AND done_at IS NULL AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND locked_by = ?)";
+  const write =
+    status === "done"
+      ? { sql: `UPDATE ticket_steps SET done_at = ${NOW}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard}`, params: [id, ordinal, id, token] }
+      : {
+          sql:
+            "UPDATE ticket_steps SET status = ?, " +
+            `wait_until = ${minutes === null ? "NULL" : `strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '+${minutes} minutes')`}, status_note = ? ${guard}`,
+          params: [status === "open" ? null : status, owesWords ? words : null, id, ordinal, id, token],
+        };
+  const written = await submissionDataWriteAll(args.db_path, [write, ...touchStatements(args.db_path, id, token)], env);
   const changes = written.ok ? written.results[0].changes : written.changes;
-  const [step] = submissionDataQuery(args.db_path, "SELECT done_at, status, wait_until, status_note FROM ticket_steps WHERE ticket_id = ? AND ordinal = ?", [id, ordinal])
-    .rows as unknown as StepRow[];
+  const columns = statusHeld ? "done_at, status, wait_until, status_note" : "done_at, NULL AS status, NULL AS wait_until, NULL AS status_note";
+  const [step] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM ticket_steps WHERE ticket_id = ? AND ordinal = ?`, [id, ordinal]).rows as unknown as StepRow[];
   const [job] = submissionDataQuery(args.db_path, "SELECT locked_by FROM tickets WHERE id = ?", [id]).rows as unknown as { locked_by: string | null }[];
   let outcome: SetStepResult["outcome"];
   let note: string;
@@ -118,16 +120,17 @@ export async function submissionDataSetStep(args: SetStepArgs, env: NodeJS.Proce
   } else if (job.locked_by !== token) {
     outcome = "not_held";
     note = `Nothing was written: job ${id} is not held by this session (taken over, shelved or completed). Report it and stop.`;
+  } else if (changes === 1) {
+    outcome = "set";
+    note =
+      status === "done"
+        ? `Step ${ordinal} of job ${id} is done (${step.done_at}).`
+        : status === "waiting"
+          ? `setting timer for ${minutes} minutes: step ${ordinal} of job ${id} waits until ${(step.wait_until ?? "").slice(11)}. Then check whether the process has finished; this is never a deadline.`
+          : `Step ${ordinal} of job ${id} is ${status}.`;
   } else if (step.done_at !== null) {
     outcome = "done";
     note = `Nothing was written: step ${ordinal} of job ${id} is done (${step.done_at}), and a done step stays as it is.`;
-  } else if (changes === 1) {
-    outcome = "set";
-    await touchJob(args.db_path, id, token, env);
-    note =
-      status === "waiting"
-        ? `setting timer for ${minutes} minutes: step ${ordinal} of job ${id} waits until ${(step.wait_until ?? "").slice(11)}. Then check whether the process has finished; this is never a deadline.`
-        : `Step ${ordinal} of job ${id} is ${status}.`;
   } else {
     outcome = "no_match";
     note = `Nothing was written: the guards on step ${ordinal} of job ${id} matched nothing. Report it and stop; never re-run.`;

@@ -72,7 +72,7 @@ Two jobs on one board can name the same work in different words. `/draft`'s dupl
 
 **What it writes,** every statement under one guard in one transaction, so either all of them land or none does:
 
-- The absorbed job's steps not yet done (no `done_at`, and not dropped or put off) are appended after the survivor's highest ordinal, in their own order. This is §5's partial replace `INSERT` with no `DELETE`: every survivor step keeps its row, its ordinal, its words and its `done_at`.
+- The absorbed job's steps not yet done (no `done_at`, and not dropped or put off) are appended after the survivor's highest ordinal, in their own order. This is §5's partial replace with `append: true`: every survivor step keeps its row, its ordinal, its words and its `done_at`.
 - Its `ticket_scope` rows and `ticket_proposals` keys that the survivor lacks are copied to it.
 - Each job waiting on the absorbed job waits on the survivor instead, and the absorbed job's blocker rows are deleted, so nothing is left Blocked by a superseded job. A survivor that waited on the absorbed job is not made to wait on itself.
 - The survivor's `plan_approved_at` is cleared when steps were added, as §3a's "Adding a step" clears it. `drafting_data__approve_plan` stamps it again when the plan is announced.

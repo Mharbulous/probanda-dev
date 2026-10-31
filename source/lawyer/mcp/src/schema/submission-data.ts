@@ -531,23 +531,26 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
     {
       name: submissionDataPrefixed("set_step"),
       description:
-        "Set one step's status on the job (a tickets row) this session holds, in one call: the guarded write, then the " +
-        "confirm-read. status is open (clears the status), retry (the step is blocked by a missing credential or an " +
-        "unreachable source and is tried again later; such a step is never stamped done), cancelled or deferred (only on " +
+        "Tick one step done, or set its status, on the job (a tickets row) this session holds, in one call: the guarded " +
+        "write, then the confirm-read. status is done (stamps done_at now and clears any status; only once the step's " +
+        "work has run, never for a step blocked by a missing credential or an unreachable source), open (clears the status), retry (the step is blocked by a missing credential or an " +
+        "unreachable source and is tried again later), cancelled or deferred (only on " +
         "the practitioner's own words, passed verbatim as practitioner_words and stored with the step), or waiting (the " +
         "step waits on an external process, such as a Westlaw run: wait_until is set to now plus wait_minutes, default 5, " +
         "and the result's note says `setting timer for N minutes`). wait_until is the minute the session checks the " +
         "process again: never a deadline and never time remaining, never shown as a countdown, and never put in a " +
-        "handover or a loose thread. Once it has passed the step reads as open. A done step (done_at set) is frozen and " +
-        "takes no status. The write matches only a job holding this session's token. session_token is the one " +
+        "handover or a loose thread. Once it has passed the step reads as open. A done step (done_at set) is frozen: it " +
+        "is never re-stamped and takes no status. The write matches only a job holding this session's token, and moves " +
+        "the job's session-active stamp and last activity in the same transaction. session_token is the one " +
         "drafting_forms__open_session or drafting_forms__bootstrap returned; this tool mints none. The outcome is read off " +
         "the confirm-read: set (changes 1), not_held (the job is not this session's: taken over, shelved or completed), " +
-        "done (the step is done and was left as it is), no_match (no such step, or the guards matched nothing). Never " +
-        "retry to win. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_ordinal, " +
+        "done (the step was already done and was left as it is), no_match (no such step, or the guards matched nothing). " +
+        "Read the step's ordinal and text off the card first. Never retry to win. It moves no revision. Refusals write " +
+        "nothing: invalid_ticket_id, invalid_ordinal, " +
         "invalid_session_token, invalid_status, invalid_wait_minutes, practitioner_words_required, " +
-        "invalid_practitioner_words, not_found, schema_below_v78 (say once that the matter's database needs the v78 " +
-        "migration, and leave the step open). Returns ticket_id, ordinal, outcome, changes, done_at, status, wait_until, " +
-        "status_note, locked_by and a note.",
+        "invalid_practitioner_words, not_found, schema_below_v78 (any status but done; say once that the matter's database " +
+        "needs the v78 migration, and leave the step open). Returns ticket_id, ordinal, outcome, changes, done_at, status, " +
+        "wait_until, status_note, locked_by and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -555,7 +558,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           ticket_id: { type: "number" },
           ordinal: { type: "number" },
           session_token: { type: "string" },
-          status: { type: "string", enum: ["open", "retry", "cancelled", "deferred", "waiting"] },
+          status: { type: "string", enum: ["done", "open", "retry", "cancelled", "deferred", "waiting"] },
           wait_minutes: { type: "number" },
           practitioner_words: { type: "string" },
         },
@@ -567,12 +570,13 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
     {
       name: submissionDataPrefixed("touch_job"),
       description:
-        "The last call of every turn in which this session held a job and worked on it (jobs-run.md §6a): sets the " +
-        "job's session-active stamp and its last activity, which board_card prints and the idle tag measures from, to " +
-        "now. It writes only while the job's lock is this session's. recorded false means nothing was written: the job " +
-        "is no longer this session's, so run the scope read and stop. It moves no revision. Refused, nothing written: " +
-        "invalid_job, invalid_ticket_id, invalid_session_token, not_found, schema_below_v80. Returns ticket_id, recorded " +
-        "and a note.",
+        "Moves the session-active stamp and the last activity of the job this session holds, which board_card prints " +
+        "and the idle tag measures from, to now. Every other job tool given the job's session_token moves both itself, so " +
+        "this is called only at the end of a turn that worked the held job (reading, drafting, conversation about it) " +
+        "through no such tool (jobs-run.md §6a). It writes only while the job's lock is this session's. recorded false " +
+        "means nothing was written: the job is no longer this session's, so run the scope read and stop. It moves no " +
+        "revision. Refused, nothing written: invalid_job, invalid_ticket_id, invalid_session_token, not_found, " +
+        "schema_below_v80. Returns ticket_id, recorded and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -584,6 +588,40 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         additionalProperties: false,
       },
       annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
+      name: submissionDataPrefixed("rewrite_job"),
+      description:
+        "Rewrite a job's title, steps or both in one guarded transaction, then confirm-read them (jobs-run.md §5). Every " +
+        "title and step is one line, written verbatim from the job card's own words. Ready mode (the pickup rewrite, " +
+        "before the assigning write): the job must be queued, unlocked, not shelved or deleted, with no plan approved " +
+        "and no step done; steps replace the whole list, and no approval is stamped. held: true with session_token (on " +
+        "the job this session holds): steps delete only the steps not done, or none with append: true, and go after the " +
+        "highest ordinal left, so a done step keeps its row, words and stamp; an approval already on the job is " +
+        "re-stamped; a title alone (the held-job title cleanup) touches no step and no stamp; the job's session-active " +
+        "stamp and last activity move in the same transaction. The guard rides every statement, so all of it lands or " +
+        "none does. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned; this " +
+        "tool mints none. Outcomes: rewritten; held: not_held (taken over, shelved or completed: run the scope read and " +
+        "stop); ready: locked, shelved, approved, step_done, not_ready. On any but rewritten nothing was written: " +
+        "re-render, never re-run. It moves no revision. Refusals write nothing: invalid_ticket_id, " +
+        "invalid_session_token, invalid_append, nothing_to_write, invalid_title, invalid_steps, not_found. Returns " +
+        "ticket_id, outcome, title, steps (ordinal, text, done_at), status, locked_by, rejected_at, plan_approved_at " +
+        "and a note.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          ticket_id: { type: "number" },
+          title: { type: "string" },
+          steps: { type: "array", items: { type: "string" } },
+          held: { type: "boolean" },
+          session_token: { type: "string" },
+          append: { type: "boolean" },
+        },
+        required: ["db_path", "ticket_id"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
       name: submissionDataPrefixed("release_job"),

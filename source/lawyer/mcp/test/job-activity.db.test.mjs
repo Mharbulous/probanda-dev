@@ -72,6 +72,9 @@ test("every write made for a held job moves its one stored stamp, and no revisio
 
   await moves(dbPath, 2, "assign_job", () => callTool({}, "drafting_data__assign_job", { db_path: dbPath, ticket_id: 2, session_token: "sess-other" }));
   await moves(dbPath, 1, "set_step", () => callTool({}, "drafting_data__set_step", { ...job, ordinal: 1, status: "waiting" }));
+  assert.equal(query(dbPath, "SELECT value FROM db_meta WHERE key = 'job_active:1'")[0].value, stamp(dbPath, 1), "set_step moves the session-active stamp in the same write");
+  await moves(dbPath, 1, "approve_plan", () => callTool({}, "drafting_data__approve_plan", job));
+  await moves(dbPath, 1, "rewrite_job", () => callTool({}, "drafting_data__rewrite_job", { ...job, held: true, steps: ["Save the memo"], append: true }));
   await moves(dbPath, 1, "track_source", () => callTool({}, "drafting_data__track_source", { ...job, add: [{ kind: "decision", label: "2021 BCSC 963" }] }));
   await moves(dbPath, 1, "save_answer", () => callTool({}, "research_filing__save_answer", { ...job, destination_dir: law, filename: "answer.md", text: "Answer.\n" }));
   await moves(dbPath, 1, "file_download", async () => {

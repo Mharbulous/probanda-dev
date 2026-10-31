@@ -2,11 +2,13 @@
 // in one call, the guarded stamp followed by its confirm-read, as the /drafting-data gatekeeper
 // documents them in jobs-run.md §5. Stamp-only: the steps on the job are the plan approved, and a
 // change to them stays the Change path's SQL in §5. A job already approved is left alone, so a
-// re-approval confirmed unaltered writes nothing. One write, one read, never a retry. The job tables
+// re-approval confirmed unaltered writes nothing but the job's session-active stamp and last activity,
+// which move in the same transaction. One write, one read, never a retry. The job tables
 // carry no revision triggers, so the revision does not move.
 
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
+import { touchStatements } from "./job-activity.js";
 
 const TOOL = "drafting_data__approve_plan";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -63,7 +65,10 @@ export async function submissionDataApprovePlan(args: ApprovePlanArgs, env: Node
 
   const written = await submissionDataWriteAll(
     args.db_path,
-    [{ sql: `UPDATE tickets SET plan_approved_at = ${NOW} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NULL`, params: [id, args.session_token] }],
+    [
+      { sql: `UPDATE tickets SET plan_approved_at = ${NOW} WHERE id = ? AND locked_by = ? AND plan_approved_at IS NULL`, params: [id, args.session_token] },
+      ...touchStatements(args.db_path, id, args.session_token),
+    ],
     env
   );
   const changes = written.ok ? written.results[0].changes : written.changes;

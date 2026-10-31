@@ -9,8 +9,8 @@
 
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { saveAnswer } from "../../files/research-filing.js";
-import { submissionDataQuery, submissionDataWrite } from "../backend.js";
-import { jobIdentity, touchJob } from "./job-activity.js";
+import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
+import { jobIdentity, touchStatements } from "./job-activity.js";
 import { ticketAnswersHeld } from "./query.js";
 
 const TOOL = "research_filing__save_answer";
@@ -69,20 +69,21 @@ export async function saveAnswerTool(args: SaveAnswerArgs, env: NodeJS.ProcessEn
   }
 
   const saved = saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
-  let written: Awaited<ReturnType<typeof submissionDataWrite>>;
+  let written: Awaited<ReturnType<typeof submissionDataWriteAll>>;
   try {
-    written = await submissionDataWrite(
+    written = await submissionDataWriteAll(
       dbPath,
-      `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW} FROM tickets WHERE id = ? AND locked_by = ?`,
-      [lawRelativePath(saved.path), id, token],
+      [
+        { sql: `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW} FROM tickets WHERE id = ? AND locked_by = ?`, params: [lawRelativePath(saved.path), id, token] },
+        ...touchStatements(dbPath, id, token),
+      ],
       env
     );
   } catch (err) {
     throw new DataServerError(`The answer was saved at ${saved.path}, but recording it against job ${id} failed: ${(err as Error).message}. Do not save it again.`, "record_failed");
   }
   const warning = written.warning ? { warning: written.warning } : {};
-  if (written.changes === 1) {
-    await touchJob(dbPath, id, token, env);
+  if (written.ok && written.results[0].changes === 1) {
     return { ...saved, job: { ticket_id: id, recorded: true, note: `Recorded against job ${id}: its card lists the answer.` }, ...warning };
   }
   const [row] = submissionDataQuery(dbPath, "SELECT locked_by, status, rejected_at FROM tickets WHERE id = ?", [id]).rows as unknown as HolderRow[];

@@ -1,12 +1,14 @@
 // A job's last activity: one stored stamp per job, the kv_store value `last_activity` / `tickets:<id>`
-// (schema v80), holding the minute as a JSON string. Every server write made for a held job moves it
-// through touchJob, and the holding session's turn end moves it through drafting_data__touch_job
-// (jobs-run.md §6a). Each write is guarded on the job's lock being the caller's (jobs-run.md §5), so a
-// write by any other session moves nothing. board_card's `last activity` and the idle tag read it.
-// kv_store carries no revision triggers, so the revision does not move.
+// (schema v80), holding the minute as a JSON string, beside its session-active stamp, `db_meta`
+// `job_active:<id>`. Every job tool that names a held job writes both, the drafting_data tools in the
+// same transaction as their own write (touchStatements), and a turn that worked the job through no
+// such tool writes them through drafting_data__touch_job (jobs-run.md §6a). Each write is guarded on
+// the job's lock being the caller's (jobs-run.md §5), so a write by any other session moves nothing.
+// board_card's `last activity`, `session active` and the idle tag read them. Neither table carries
+// revision triggers, so the revision does not move.
 
 import { NotFoundError, ValidationError } from "../../errors.js";
-import { submissionDataQuery, submissionDataWrite, submissionDataWriteAll } from "../backend.js";
+import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { hasColumn, hasTable } from "../schema-capabilities.js";
 
 /** A held job's staleness, measured from its last activity (ticket-category.ts idleSince): live under
@@ -23,11 +25,24 @@ const TOUCH =
   `SELECT '${NAMESPACE}', 'tickets:' || id, '"' || ${NOW} || '"', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND locked_by = ? ` +
   "ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at";
 
-/** Moves job `id`'s last activity to now when `token` holds its lock. False when it does not, and on
- * a database held below v80, which has no stamp. */
-export async function touchJob(dbPath: string, id: number, token: string, env: NodeJS.ProcessEnv = process.env): Promise<boolean> {
-  if (!hasTable(dbPath, "kv_store")) return false;
-  return (await submissionDataWrite(dbPath, TOUCH, [id, token], env)).changes === 1;
+/** The statements that move job `id`'s session-active stamp and last activity to now, each landing
+ * only while `token` holds its lock. Appended to a tool's own write, they run in its transaction and
+ * see its result. None on a database held below v80, which has no last-activity stamp. */
+export function touchStatements(dbPath: string, id: number, token: string): WriteStatement[] {
+  if (!hasTable(dbPath, "kv_store")) return [];
+  return [
+    { sql: `INSERT OR REPLACE INTO db_meta (key, value) SELECT 'job_active:' || id, ${NOW} FROM tickets WHERE id = ? AND locked_by = ?`, params: [id, token] },
+    { sql: TOUCH, params: [id, token] },
+  ];
+}
+
+/** Moves job `id`'s session-active stamp and last activity to now, on their own, when `token` holds its
+ * lock. False when it does not, and on a database held below v80. */
+export async function touchJob(dbPath: string, id: number, token: string, env: NodeJS.ProcessEnv = process.env): Promise<{ recorded: boolean; warning?: string }> {
+  const statements = touchStatements(dbPath, id, token);
+  if (statements.length === 0) return { recorded: false };
+  const written = await submissionDataWriteAll(dbPath, statements, env);
+  return { recorded: written.ok && written.results[1].changes === 1, ...(written.warning ? { warning: written.warning } : {}) };
 }
 
 /** Each job's last activity by id; empty on a database held below v80. */
@@ -98,7 +113,7 @@ export function jobIdentity(tool: string, args: JobIdentity): { dbPath: string; 
 export async function withJobActivity<T extends object>(tool: string, args: JobIdentity, run: () => T | Promise<T>): Promise<T | (T & { job: { ticket_id: number; recorded: boolean } })> {
   const job = jobIdentity(tool, args);
   const result = await run();
-  return job === null ? result : { ...result, job: { ticket_id: job.id, recorded: await touchJob(job.dbPath, job.id, job.token) } };
+  return job === null ? result : { ...result, job: { ticket_id: job.id, recorded: (await touchJob(job.dbPath, job.id, job.token)).recorded } };
 }
 
 export interface TouchJobArgs {
@@ -108,8 +123,8 @@ export interface TouchJobArgs {
   session_token: string;
 }
 
-/** drafting_data__touch_job: the holding session's turn end. Writes the job's session-active stamp
- * (`db_meta` `job_active:<id>`) and moves its last activity, both only while the lock is this session's. */
+/** drafting_data__touch_job: a turn that worked the held job through no job tool. Writes the job's
+ * session-active stamp and moves its last activity, both only while the lock is this session's. */
 export async function submissionDataTouchJob(args: TouchJobArgs, env: NodeJS.ProcessEnv = process.env): Promise<{ ticket_id: number; recorded: boolean; note: string; warning?: string }> {
   const tool = "drafting_data__touch_job";
   const job = jobIdentity(tool, args);
@@ -119,17 +134,9 @@ export async function submissionDataTouchJob(args: TouchJobArgs, env: NodeJS.Pro
   if (!hasTable(dbPath, "kv_store")) {
     throw new ValidationError(`${tool}: ${dbPath} is held below schema v80, so job ${id} has no last-activity stamp; nothing was written.`, "schema_below_v80");
   }
-  const written = await submissionDataWriteAll(
-    dbPath,
-    [
-      { sql: `INSERT OR REPLACE INTO db_meta (key, value) SELECT 'job_active:' || id, ${NOW} FROM tickets WHERE id = ? AND locked_by = ?`, params: [id, token] },
-      { sql: TOUCH, params: [id, token] },
-    ],
-    env
-  );
-  const recorded = written.ok && written.results[1].changes === 1;
-  const warning = written.warning ? { warning: written.warning } : {};
+  const { recorded, warning } = await touchJob(dbPath, id, token, env);
+  const warned = warning ? { warning } : {};
   return recorded
-    ? { ticket_id: id, recorded, note: `Job ${id}'s session-active stamp and last activity are now.`, ...warning }
-    : { ticket_id: id, recorded, note: `Nothing was written: job ${id} is not this session's (taken over, shelved or completed). Run the scope read and stop.`, ...warning };
+    ? { ticket_id: id, recorded, note: `Job ${id}'s session-active stamp and last activity are now.`, ...warned }
+    : { ticket_id: id, recorded, note: `Nothing was written: job ${id} is not this session's (taken over, shelved or completed). Run the scope read and stop.`, ...warned };
 }

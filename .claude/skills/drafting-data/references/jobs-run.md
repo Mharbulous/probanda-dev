@@ -82,52 +82,13 @@ UPDATE tickets SET plan_approved_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localti
 
 Each replaced step's text is the session's wording of the plan, with no adoption ceremony (`shared/paralegal-posture.md` section 3).
 
-**The partial replace.** A plan upgrade (`shared/job-planning.md` section 3) rewrites only the steps not yet done, so a step already done keeps its row, its ordinal, its words and its `done_at`. The script deletes only the steps not done and appends each new step after the highest ordinal left, in order, with the stamp, every statement under this section's guard:
+**The partial replace.** A plan upgrade (`shared/job-planning.md` section 3) rewrites only the steps not yet done, so a step already done keeps its row, its ordinal, its words and its `done_at`. It is `drafting_data__rewrite_job` with `held: true`, `session_token` and the new `steps`: it deletes only the steps not done, appends each new step after the highest ordinal left, in order, and re-stamps an approval already on the job. Never use the whole-list replace above for an upgrade: it discards the done steps' stamps. With `append: true` it deletes nothing. It is also the write that adds a step for each `required` item memo-reviewer names on a held research job (`shared/legal-research.md`, "On a held job, an open tier is not an answer"), so every step already on the job keeps its row and its stamp. `not_held` reads as the confirm-read below reads a lost lock.
 
-```sql
-DELETE FROM ticket_steps WHERE ticket_id = 2 AND done_at IS NULL
-  AND EXISTS (SELECT 1 FROM tickets WHERE id = 2 AND locked_by = 'sess-a1');
-INSERT INTO ticket_steps (ticket_id, ordinal, text)
-  SELECT 2, (SELECT COALESCE(MAX(ordinal), 0) + 1 FROM ticket_steps WHERE ticket_id = 2),
-    'Save the memo in the issue folder under 6. LAW' FROM tickets WHERE id = 2 AND locked_by = 'sess-a1';
-UPDATE tickets SET plan_approved_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
-  WHERE id = 2 AND locked_by = 'sess-a1';
-```
+**The pickup rewrite.** `/draft`'s pickup review (`work/references/job-session.md`, The pickup review) shortens a ready job's title and splits its steps, and its restating check ("A step that only restates the request") replaces a ready job's steps with a plan that names the work, before the job is assigned. It is `drafting_data__rewrite_job` with `title` (only when it changed) and `steps`, the list replaced whole. The tool writes only a queued job with no lock, not shelved, no approval stamp and no step done, and either all of it lands or none does; any other outcome assigns nothing and re-renders. Each title and step is cut from the job card's own words as a `drafting_forms__*` result printed them this session; no stamp is written, because `drafting_data__approve_plan` stamps after the plan is announced.
 
-One `INSERT` per new step, in the plan's order. Never use the whole-list replace above for an upgrade: it discards the done steps' stamps. It is also the write that adds a step for each `required` item memo-reviewer names on a held research job (`shared/legal-research.md`, "On a held job, an open tier is not an answer"): its `INSERT` with no `DELETE`, so every step already on the job keeps its row and its stamp. Then run the confirm-read below and read it as below.
+**The held-job title cleanup.** `/draft`'s title spelling cleanup (`work/references/job-session.md`, "Title spelling cleanup on a held job") corrects the title of a job this session has just taken over, restored or re-taken after a release. It is `drafting_data__rewrite_job` with `held: true`, `session_token` and `title` only, which touches no step and no stamp. The title is the card's title with only a misspelled word corrected.
 
-**The pickup rewrite.** `/draft`'s pickup review (`work/references/job-session.md`, The pickup review) shortens a ready job's title and splits its steps, and its restating check ("A step that only restates the request") replaces a ready job's steps with a plan that names the work, before the job is assigned, so the job is not yet locked and the guard is the assigning write's own, plus no inherited plan: no approval stamp and no step done. One script, each statement under that guard, the step list replaced whole and the title set only when it changed:
-
-```sql
-DELETE FROM ticket_steps WHERE ticket_id = 2
-  AND EXISTS (SELECT 1 FROM tickets WHERE id = 2 AND status = 'queued' AND locked_by IS NULL
-              AND rejected_at IS NULL AND plan_approved_at IS NULL
-              AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = 2 AND done_at IS NOT NULL));
-INSERT INTO ticket_steps (ticket_id, ordinal, text)
-  SELECT 2, 1, 'Draft the reply to the letter of 3 May' FROM tickets WHERE id = 2 AND status = 'queued'
-    AND locked_by IS NULL AND rejected_at IS NULL AND plan_approved_at IS NULL
-    AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = 2 AND done_at IS NOT NULL);
-INSERT INTO ticket_steps (ticket_id, ordinal, text)
-  SELECT 2, 2, 'check the costs figure against the invoice' FROM tickets WHERE id = 2 AND status = 'queued'
-    AND locked_by IS NULL AND rejected_at IS NULL AND plan_approved_at IS NULL
-    AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = 2 AND done_at IS NOT NULL);
-UPDATE tickets SET title = 'Reply to the letter of 3 May'
-  WHERE id = 2 AND status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL AND plan_approved_at IS NULL
-    AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = 2 AND done_at IS NOT NULL);
-```
-
-Every statement carries the same guard, so either all of them write or none does. Each title and step is cut from the job card's own words as a `drafting_forms__*` result printed them this session; no stamp is written, because `drafting_data__approve_plan` stamps after the plan is announced. Confirm-read the title and the steps in order: anything but the written text assigns nothing and re-renders.
-
-**The held-job title cleanup.** `/draft`'s title spelling cleanup (`work/references/job-session.md`, "Title spelling cleanup on a held job") corrects the title of a job this session has just taken over, restored or re-taken after a release. The pickup rewrite's guard matches no row there, so the write is a title-only `UPDATE` under this section's guard, through `drafting_data__execute`, and nothing else in the script:
-
-```sql
-UPDATE tickets SET title = 'Reply to the letter of 3 May'
-  WHERE id = 2 AND locked_by = 'sess-a1';
-```
-
-It touches no step and no stamp. The title is the card's title with only a misspelled word corrected. Then run the confirm-read below and read it as below.
-
-If the practitioner asks for a change, it is taken in their words through the outlining interview's questions (still the same session, still the same assigned job); the revised step list is written once, with the stamp, on re-approval, exactly as above. A part added to the held form job (`/work`'s `job-session.md`, "A form is one job") is appended by the partial replace's `INSERT` with no `DELETE`, so done steps keep their stamps, and is written with the stamp only once the practitioner re-approves the read-back list.
+If the practitioner asks for a change, it is taken in their words through the outlining interview's questions (still the same session, still the same assigned job); the revised step list is written once, with the stamp, on re-approval, exactly as above. A part added to the held form job (`/work`'s `job-session.md`, "A form is one job") is appended by the partial replace with `append: true`, so done steps keep their stamps, only once the practitioner re-approves the read-back list.
 
 **The premise check's Change path also drops the dead keys.** Where the Change was taken because a key's marker no longer fires — the assign-time premise check amendment to `Engineering/1. Design/2026-09-15_work-board-proposals-design.md` — the same script deletes those keys from `ticket_proposals`. The practitioner has just dropped that work, and a marker firing again on one of those rows must not stay hidden behind this job. The dead set is every key on the `keys:` line of the job's card (`drafting_forms__board_card` with `jobs`) that reads `(now: dead)`; name it positively, as literals copied character for character out of that line on §3's terms, never recomposed from a slug and a row id:
 
@@ -159,23 +120,13 @@ SELECT id, title, status, rejected_at, locked_by, priority FROM tickets WHERE id
 
 ## 6. Step progress
 
-Stamp `done_at` as each step of the approved plan completes — a successor session (after an interrupted `wip` job is taken over) reads this off the Milestone to know what's already done:
-
-```sql
-UPDATE ticket_steps SET done_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
-  WHERE ticket_id = 2 AND ordinal = 1
-    AND EXISTS (SELECT 1 FROM tickets WHERE id = 2 AND locked_by = 'sess-a1');
-```
-
-That `EXISTS` is §5's guard in its child-table shape — the same clause, on a child row, for the same reason; §5 states it and nothing is restated here. The harm it refuses is specific: after a take-over the successor may already have re-approved through §5, which deletes and recreates `ticket_steps`, so `ordinal = 1` no longer names the same work. The bare stamp then lands `done_at` on a step nobody has done while the step actually worked reads undone, and the Milestone shows a step done that was not — the very read-back a take-over exists to inherit.
-
-**No confirm-read here: read `changes` on each tick.** `changes` 1 means the stamp landed. `changes` 0 means it matched nothing, which means the holder changed: stop, and run §2's scope read, whose row says why. That misses a wrong but valid ordinal, which matches one row: read `ordinal, text` first.
+Tick each step of the approved plan as it completes, with `drafting_data__set_step` `status: "done"` (§6b), so that a successor session (after an interrupted `wip` job is taken over) reads off the Milestone what's already done. Read the step's `ordinal` and `text` off the card first. `set` means the stamp landed. `not_held` means the holder changed: stop, and run §2's scope read, whose row says why. `done` means the step was already stamped, and a stamp stays as it is.
 
 **Stamp only work that ran.** A step blocked by a missing credential or an unreachable source is set to ↻ with `drafting_data__set_step` (§6b), never stamped ☑. A stamp is frozen once written, so a step stamped without its work would report that work done for good.
 
 ## 6b. Step status
 
-A step not yet done can carry one status besides open (schema v78), set by `drafting_data__set_step` with `db_path`, `ticket_id`, `ordinal`, `session_token` and `status`, under the same holder guard as §6. A done step is frozen and takes none. The glyphs are ☐ open, ☑ done, ↻ retry, ☒ cancelled, ⏸ deferred and ⏳ waiting:
+A step not yet done can carry one status besides open (schema v78), set by `drafting_data__set_step` with `db_path`, `ticket_id`, `ordinal`, `session_token` and `status`, the call that ticks it done (§6). A done step is frozen and takes none. The glyphs are ☐ open, ☑ done, ↻ retry, ☒ cancelled, ⏸ deferred and ⏳ waiting:
 
 - **`retry` ↻**: the step is blocked by a missing credential or an unreachable source. It is tried again once the block clears, and is then stamped ☑ when its work runs.
 - **`cancelled` ☒** and **`deferred` ⏸**: the practitioner chose to drop the step or put it off. Set only on the practitioner's own words, passed verbatim as `practitioner_words`, which the card prints after the step. A session never sets either on its own judgment.
@@ -186,7 +137,7 @@ A step is resolved when it is done, cancelled or deferred. Gate steps never take
 
 ## 6a. Last activity and the session-active stamp
 
-A job's last activity is one stored stamp, which its card prints and its idle tag measures from. Every server write made for the job moves it, and so does a research_filing write given the job's `db_path`, `ticket_id` and `session_token`: each `research-paralegal`, `legislation-fetcher` and `citation-checker` dispatch for the job carries those three, so its last activity moves while the agent is out. A ⏳ step (§6b) counts as activity until its minute passes. The last call of every turn in which this session held the job and worked on it, whether by reading, research, drafting or conversation about it, is `drafting_data__touch_job` with those three. It moves the last activity, which also picks up the turn's §6 ticks and §8 captures, and writes the session-active stamp (`db_meta` `job_active:<id>`). A turn that did not touch the job calls nothing. Only the holder's call writes. It is never a reason to skip §6's step stamps. The board shows the session-active stamp as `session active` on an In progress job only, and only when it is no earlier than the lock, so an earlier holder's stamp never shows and is never deleted. `recorded: false` means the holder changed, so run §2's scope read and stop.
+A job's last activity is one stored stamp, which its card prints and its idle tag measures from, and its session-active stamp (`db_meta` `job_active:<id>`) sits beside it. Every job tool given the job's `session_token` moves both in its own write, and a research_filing write given the job's `db_path`, `ticket_id` and `session_token` does too: each `research-paralegal`, `legislation-fetcher` and `citation-checker` dispatch for the job carries those three, so its last activity moves while the agent is out. A ⏳ step (§6b) counts as activity until its minute passes. A turn that worked the held job (reading, drafting or conversation about it) through no such tool ends with `drafting_data__touch_job` with those three. Only the holder's call writes. The board shows the session-active stamp as `session active` on an In progress job only, and only when it is no earlier than the lock, so an earlier holder's stamp never shows and is never deleted. `recorded: false` means the holder changed, so run §2's scope read and stop.
 
 ## 7. Scope expansion
 
@@ -212,7 +163,7 @@ INSERT INTO seeds (proceeding_id, filing_id, origin_ticket_id, created, surfaced
   VALUES (1, 1, 2, strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 'noticed while reconciling the exhibit list', 'Consider a standing exhibit-numbering convention for future filings in this proceeding.');
 ```
 
-`origin_ticket_id` is the job this session holds. Its card (`drafting_forms__board_card` with `jobs`) then lists the loose thread, and the turn's §6a call moves the job's last activity.
+`origin_ticket_id` is the job this session holds. Its card (`drafting_forms__board_card` with `jobs`) then lists the loose thread, and §6a moves the job's last activity.
 
 `idea` is captured **verbatim**, at most five sentences, with no options or recommendations — the appearance of alternatives is the tell that outlining has started, and it belongs in an outlining session, not this write. `surfaced_by` is one line naming what surfaced it (a Westlaw memo, a practitioner aside, a document read in passing) — never `TRIGGER`; that column was deliberately not named after the SQLite keyword.
 
