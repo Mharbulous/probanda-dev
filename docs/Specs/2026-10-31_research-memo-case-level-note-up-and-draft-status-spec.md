@@ -89,3 +89,32 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 | Where the memo is saved; is it a Writing | `research_filing__save_answer`, as a `.md` file under its job (research-board step 1) or the matter's `6. LAW` folder; not a Writing | `legal-research/references/research-board.md`, `shared/legal-research.md` persist step 1 |
 
 Open questions in §9 were decided by Brahm: DRAFT is a new `Status: DRAFT` header key, and a memo leaves DRAFT when every relied-on paragraph has had its proposition-level note-up or when the practitioner says so. No finding stops steps 3 and 4. Step 5 waits on the structured-Writing spec.
+
+## 12. Amendments from Brahm, 2026-10-31
+
+GOAL
+A research memo never overstates how far its authorities were checked, and it says exactly what was checked.
+Two checks are distinct and named apart:
+- HISTORY CHECK: the cited decision's own later history in the same proceeding: judicial review, appeal (for example to the BCCA or SCC), an SCC leave application (granted, refused or pending), and an appeal filed but not yet decided.
+- NOTE-UP: treatment by decisions in other proceedings, at case level (citator flag plus count) or proposition level (each citing decision read at its pinpoint against one paragraph's proposition or finding).
+
+SUCCESS CRITERIA
+1. Mandatory history check, even for a first DRAFT. Every case cited for a proposition of law, a finding of law or a finding of fact has a history check.
+   - Every later decision in the same proceeding that reviews the cited decision is downloaded and read.
+   - The decision is checked against every memo paragraph that cites that case.
+   - A pending appeal or leave application with no decision yet is stated in the memo.
+   - Prior history (the decisions below the cited one) is optional.
+   - A memo whose history check is incomplete is INCOMPLETE, not DRAFT.
+2. Labels. The coverage line and the Reliability cell report the history check separately from the note-up (for example `history: checked`). "noted up" never appears for a citator list alone. The label for a proposition-level note-up names its paragraphs (for example `proposition-level: ¶4, ¶5`).
+3. The memo is `Status: DRAFT` until one of two routes is met; it then reads `Status: FINAL`.
+   - Route 1, automatic: every proposition of law the memo cites, and every case cited in Application for a finding of fact or a finding of law, has a proposition-level note-up, with each citing decision downloaded and read at its pinpoint against that paragraph's proposition or finding.
+   - Route 2, on instruction: every such proposition and finding has a case-level note-up; every citing decision that treats the case negatively, or that the citator does not classify, has been downloaded and read at its pinpoint against the proposition or finding the case is cited for; and the practitioner has explicitly instructed that the status change to FINAL.
+   - Nothing else ends DRAFT. DRAFT and INCOMPLETE stay distinct.
+4. "Note up the propositions in paragraphs N and M" produces tracked work naming exactly those paragraphs, through drafting-data §3k (one step per paragraph). A relied-on authority produces no `kind: note-up` offer; offers for authorities the memo does not rely on keep their loose-thread path.
+5. The rules are stated once, in `shared/research-memo-template.md` (status and labels) and `shared/legal-audit-protocol.md` (how each check is done). Other files point to them. The server's coverage-line check (`source/lawyer/mcp/src/files/coverage-line.ts`) accepts every new label, and its tests pin them.
+
+CONSTRAINTS
+- research-agent is the only component that states law. citation-checker is the only one that notes up inside an agent (`hooks/block-main-session-canlii.py`); the history check runs where the note-up runs.
+- Validity is never a bare "Yes". An authority with no record at all is still NOT NOTED UP.
+- No change to how the CanLII or KeyCite tools run. If neither tool says which citing decisions belong to the same proceeding, the rule says how research-agent identifies them (case name, court, docket number), and you report that.
+- Streamline first. Anything added is shorter than what it replaces, and what it replaces is deleted in the same change. No DDL, no dist/ rebuild, no version bump, no /release.
