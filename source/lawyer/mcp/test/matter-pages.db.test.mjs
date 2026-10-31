@@ -390,11 +390,12 @@ test("a release another session renders between two of this session's renders st
     return rendered.documents.find((d) => d.document_type === "Work_board");
   };
 
-  assert.equal((await callTool(context, "drafting_data__assign_job", { db_path: m.dbPath, ticket_id: 1, session_token: x.session_token })).outcome, "assigned");
+  const assigned = await callTool(context, "drafting_data__assign_job", { db_path: m.dbPath, ticket_id: 1, session_token: x.session_token });
+  assert.equal(assigned.outcome, "assigned");
   const yHeld = await board(y);
   assert.deepEqual(yHeld.board_moves, [{ id: 1, title: "Settle the opening", from: "ready", to: "wip" }]);
 
-  assert.equal((await callTool(context, "drafting_data__release_job", { db_path: m.dbPath, ticket_id: 1, session_token: x.session_token })).outcome, "released");
+  assert.equal((await callTool(context, "drafting_data__release_job", { db_path: m.dbPath, ticket_id: 1, session_token: x.session_token, claim_no: assigned.claim_no })).outcome, "released");
   await board(x);
   const yAgain = await board(y);
   assert.equal(yAgain.board_changed, true);
@@ -1190,7 +1191,7 @@ test("save_answer with the job's id lists the answer on its card and restarts it
   // The record carries the host clock's minute, so read the card at that minute.
   const now = row.saved_at.replace("T", " ");
   const card = submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, jobs: [1] }, {}, now).card;
-  assert.match(card, new RegExp(`· last activity: ${row.saved_at}\n`));
+  assert.match(card, new RegExp(`· last activity: ${row.saved_at} · session active: ${row.saved_at}\n`));
   assert.ok(card.endsWith(`\n  answers: 6. LAW\\Limitation\\2026-10-16 research-lawyer answer.md (${row.saved_at})`), card);
   const live = renderLiveLanes(buildPreFilingBoardData(f.dbPath, fetchProceeding(f.dbPath, 1), { revision: 1, matter: "", client: "", rendered: now }));
   assert.equal(live.find((line) => line.startsWith("- Job #1 ")), "- Job #1 Research the limitation point · In Progress 0/1", "no idle tag right after the save");
