@@ -130,4 +130,8 @@ B1, first attempt (2026-10-31): not run. The session saw only `~/mnt/te-cowork-t
 
 B1: PASS (2026-10-31). Two Cowork sessions ran the B1 prompt, the second at 20:33 UTC, writing a 31-byte marker and a 3,000-byte base64 payload to `~/mnt/te-cowork-test/te-runs/b1/`. The second session's sha256 (marker `b45ba70d…e263`, payload `161673b9…85f8`) matches the PC copies in the task folder byte for byte, and the PC files' modified time is the second of the write. The second session also saw the folder the first had made at 20:30, so a file one session writes to the task folder is there for the next.
 
+B2, first attempt (2026-10-31): not run. A new Cowork session has no envelope, ledger or events files yet, so there was nothing to carry. B2 now uses random JSON lines of the same shape. Not a FAIL.
+
+B2: PASS (2026-10-31). One Cowork session made a 5,003-byte file of random JSON lines, each with quotation marks and backslashes (sha256 `e05fc6b7…25a8`), and retyped it through the PC shell into `~/mnt/te-cowork-test/te-runs/b2/state1.txt` to `state3.txt`, one tool call each. A PC session found all three byte-identical to the original. A second Cowork session read `state1.txt` through the PC shell and retyped it with its own shell into `/tmp/state1.txt` to `state3.txt`, and it reported the same sha256 for all three. All six copies match. The container side rests on the session's report.
+
 Option B verdict: not yet tried.
