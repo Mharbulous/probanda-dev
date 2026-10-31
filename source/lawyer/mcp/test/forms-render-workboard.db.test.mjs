@@ -3154,11 +3154,19 @@ test("tickets: Ready Serve the application and Serve the response jobs are skipp
   }
 });
 
-// jobs-stock.md §3b is the one list of the stock jobs' fixed titles: the board's STOCK_TITLES is it.
+// jobs-stock.md §3b is the one list of the stock jobs' fixed titles: its exact titles (no `<…>`
+// placeholder) are the board's STOCK_TITLES. Its templated titles (the opposing-argument review and
+// answer jobs) are matched by the prefix before their first `<`, are drafting work, and are not
+// stock jobs, so no stock title may start with that prefix.
 test("STOCK_TITLES is exactly the bold titles of jobs-stock.md §3b", () => {
   const md = readFileSync(join(import.meta.dirname, "../../../../.claude/skills/drafting-data/references/jobs-stock.md"), "utf-8");
   const section = md.slice(md.indexOf("## 3b."), md.indexOf("## 3c."));
-  const titles = [...section.matchAll(/^\*\*`([^`]+)`/gm)].map((m) => m[1]);
+  const all = [...section.matchAll(/^\*\*`([^`]+)`/gm)].map((m) => m[1]);
+  const titles = all.filter((t) => !t.includes("<"));
   assert.deepEqual(new Set(titles), STOCK_TITLES);
   assert.equal(titles.length, STOCK_TITLES.size);
+  for (const templated of all.filter((t) => t.includes("<"))) {
+    const prefix = templated.slice(0, templated.indexOf("<"));
+    assert.deepEqual([...STOCK_TITLES].filter((t) => t.startsWith(prefix)), [], `no stock title starts with "${prefix}"`);
+  }
 });
