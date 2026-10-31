@@ -117,14 +117,26 @@ class ProtocolStepSixTests(unittest.TestCase):
     def test_memo_carries_no_confidence_table(self):
         self.assertIn("No coverage line and no confidence table anywhere in the memo", flat(step_six()))
 
-    def test_every_memo_is_draft_with_the_fixed_case_level_sentence(self):
+    def test_status_leaves_draft_only_by_its_two_routes(self):
         template = flat(read("research-memo-template.md"))
-        self.assertIn("Every memo is written `Status: DRAFT`.", template)
-        self.assertIn("DRAFT is not INCOMPLETE: a DRAFT memo answers the Issue", template)
+        status = between(template, "### Status", "### Check labels")
+        self.assertIn("Nothing else ends DRAFT. DRAFT is not INCOMPLETE", status)
+        self.assertIn("has a proposition-level note-up", status)
+        self.assertIn("the spawn prompt's `Final instructed:` reads `yes`", status)
         self.assertIn("> The memo relies on cases that have received judicial treatment, and the treating cases "
                       "have not been downloaded or reviewed to tell whether that treatment is positive, negative "
-                      "or irrelevant.", template)
-        self.assertNotIn("noted up", template)
+                      "or irrelevant.", status)
+        self.assertIn("Final instructed: yes / no", read("legal-research.md"))
+
+    def test_history_and_note_up_labels_are_stated_once_in_the_template(self):
+        labels = between(flat(read("research-memo-template.md")), "### Check labels", "## Body")
+        for label in ("`history: checked`", "`case-level`", "`proposition-level: ¶4, ¶5`", "`NOT NOTED UP`"):
+            self.assertIn(label, labels)
+        self.assertIn("`noted up` is never a label", labels)
+        step_two = flat(between(read("legal-audit-protocol.md"), "For every authority you intend to rely on",
+                                "### Step 3"))
+        self.assertIn('`shared/research-memo-template.md` "Check labels"', step_two)
+        self.assertIn("Neither citator marks a citing decision as the same proceeding", step_two)
 
 
 class ScopedDispatchTests(unittest.TestCase):
@@ -153,9 +165,10 @@ class ConfidenceTableTests(unittest.TestCase):
 
     def test_a_citator_record_is_case_level_never_noted_up(self):
         step_three = flat(between(read("legal-audit-protocol.md"), "### Step 3", "### Step 4"))
-        self.assertIn("CanLII: case-level / no key", step_three)
+        self.assertIn("CanLII: case-level / proposition-level: ¶n[, ¶n] / no key | History: checked", step_three)
         self.assertIn("`case-level` when a record shows it run", step_three)
-        self.assertNotIn("`noted up`", step_three.replace("never `noted up`", ""))
+        self.assertIn('"history: checked; case-level: KeyCite', step_three)
+        self.assertNotIn("`noted up`", step_three)
 
 
 class GateDoctrineTests(unittest.TestCase):

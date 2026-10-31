@@ -23,7 +23,12 @@ const TIERS: Array<{ label: string; form: RegExp; expected: string }> = [
     form: new RegExp(`^(?:run \\(\\d+ decisions?, memo [YN]\\)|not run: ${REASON})$`),
     expected: "run (n decisions, memo Y/N) / not run: <reason>",
   },
-  { label: "CanLII", form: /^(?:case-level|no key)$/, expected: "case-level / no key" },
+  {
+    label: "CanLII",
+    form: /^(?:case-level|proposition-level: ¶\d+(?:, ¶\d+)*|no key)$/,
+    expected: "case-level / proposition-level: ¶n[, ¶n] / no key",
+  },
+  { label: "History", form: new RegExp(`^(?:checked|not run: ${REASON})$`), expected: "checked / not run: <reason>" },
   {
     label: "Legislation",
     form: new RegExp(`^(?:retrieved \\d+, on disk \\d+|not run: ${REASON})$`),

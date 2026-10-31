@@ -549,7 +549,8 @@ const COVERAGE_FORMS = [
     "Westlaw",
     ["run (4 decisions, memo Y)", "run (1 decision, memo N)", "not run: tiers 1–3 held pinpointable text", "not run: scoped dispatch", "NOT AUDITED"],
   ],
-  ["CanLII", ["case-level", "no key", "NOT AUDITED: citator returned 503"]],
+  ["CanLII", ["case-level", "proposition-level: ¶4", "proposition-level: ¶4, ¶5", "no key", "NOT AUDITED: citator returned 503"]],
+  ["History", ["checked", "not run: no case cited", "NOT AUDITED: appeal decision not on disk"]],
   ["Legislation", ["retrieved 3, on disk 3", "retrieved 0, on disk 1", "not run: no legislation in issue", "NOT AUDITED"]],
 ];
 const coverageLine = (swap = {}) =>
@@ -557,7 +558,7 @@ const coverageLine = (swap = {}) =>
 const notesWith = (line) => `# Internal research notes\r\n\r\n${line}\r\n\r\n| Issue | # authorities |\r\n`;
 const OBSERVED =
   "case data: audited | commons: audited (1 principle, no authorities attached) | 6. LAW: audited | " +
-  "Westlaw: not run: tiers 1–3 held pinpointable text | CanLII: case-level | " +
+  "Westlaw: not run: tiers 1–3 held pinpointable text | CanLII: case-level | History: checked | " +
   "Legislation: retrieved 3, on disk 3 (currency check leg 1 not run)";
 
 function refusal(fn) {
@@ -600,13 +601,16 @@ test("the coverage check refuses every other off-shape line", () => {
     ["a tier missing", notesWith(coverageLine().replace(" | CanLII: case-level", ""))],
     [
       "segments out of order",
-      notesWith(coverageLine().replace("CanLII: case-level | Legislation: retrieved 3, on disk 3", "Legislation: retrieved 3, on disk 3 | CanLII: case-level")),
+      notesWith(coverageLine().replace("History: checked | Legislation: retrieved 3, on disk 3", "Legislation: retrieved 3, on disk 3 | History: checked")),
     ],
     ["Westlaw not run without a reason", notesWith(coverageLine({ Westlaw: "not run" }))],
     ["Westlaw not run, empty reason", notesWith(coverageLine({ Westlaw: "not run: " }))],
     ["memo neither Y nor N", notesWith(coverageLine({ Westlaw: "run (4 decisions, memo yes)" }))],
     ["CanLII qualifier", notesWith(coverageLine({ CanLII: "case-level (43 citing decisions)" }))],
     ["CanLII noted up from a citator list alone", notesWith(coverageLine({ CanLII: "noted up" }))],
+    ["proposition-level naming no paragraph", notesWith(coverageLine({ CanLII: "proposition-level" }))],
+    ["History not run without a reason", notesWith(coverageLine({ History: "not run" }))],
+    ["History segment missing", notesWith(coverageLine().replace(" | History: checked", ""))],
     ["6. LAW qualifier", notesWith(coverageLine({ "6. LAW": "audited (four memos read)" }))],
     ["NOT AUDITED with an empty reason", notesWith(coverageLine({ "case data": "NOT AUDITED: " }))],
     ["lower-case not audited", notesWith(coverageLine({ "case data": "not audited" }))],

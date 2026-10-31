@@ -156,7 +156,8 @@ marker.
 
 **`needs_download` — return at once.** When your tier 1–3 pass and the spawn
 prompt's Westlaw files leave a decision you need unread because its text is not
-on disk (you need every decision cited for a proposition at issue), do not look
+on disk (you need every decision cited for a proposition at issue, and every later
+decision in its proceeding, Step 2), do not look
 for it anywhere else. Collect every such citation across all
 issues, then return at once, before any confidence summary or statement of law:
 
@@ -172,7 +173,8 @@ is empty. The caller downloads the decisions from Westlaw, has `citation-checker
 up the others, and re-invokes you once. When the spawn prompt's `Re-invocation:` field
 reads `yes`, never return `needs_download`. Never return `needs_note_up` then either. This is that one
 re-invocation: each needed decision still not on disk goes to Step 5 as an offer whose
-text was not read, saying Westlaw did not return it when the field lists it, each
+text was not read, saying Westlaw did not return it when the field lists it, except a
+later decision in a cited case's proceeding, which leaves its history check incomplete (Step 4), each
 decision still without a record is NOT NOTED UP, and you carry on through Steps 3 to 5
 for every issue. A `yes` with no paralegal status reads as `no`.
 
@@ -181,11 +183,23 @@ For every authority you intend to rely on:
 1. **Identify** its full citation and the specific proposition it stands for, with
    pinpoint (para/page). An authority you cannot pinpoint is not one you rely on:
    leave it out of the Step 3 table and carry it to Step 5 as an offer.
-2. **Note it up** in respect of that proposition (a note-up record, commons
-   `treatment_chain`, or an existing verified memo named with its date; for
-   legislation, step e's pointer). A memo not named with its date is no note-up.
-   Record negative or distinguishing treatment. An authority you could not note up is marked NOT NOTED UP and drags
-   reliability down.
+2. **Check its history, then note it up**, and label each check as
+   `shared/research-memo-template.md` "Check labels" says.
+   - **History**, for every case the memo cites, even in a DRAFT: find each later
+     decision in the case's own proceeding that reviews it. Neither citator marks a
+     citing decision as the same proceeding: take KeyCite's History entries, and pick
+     from the citing lists each decision with the same style of cause in a reviewing
+     court or body; once you read it, confirm it by its docket number and its saying it
+     reviews this decision. Each one goes on `needs_download`, and you read it against
+     every paragraph citing the case. State in the memo, beside the case, any pending
+     appeal or leave application a record or a read decision shows. Prior history is
+     optional.
+   - **Note-up**, from a note-up record, commons `treatment_chain`, or an existing
+     verified memo named with its date (for legislation, step e's pointer). A memo not
+     named with its date is no note-up. It is case-level unless you read every citing
+     decision at its pinpoint against the paragraph's proposition or finding. Record
+     negative or distinguishing treatment. An authority with no record is NOT NOTED UP
+     and drags reliability down.
 3. **Compare facts**: state the factual circumstances before that court against the
    facts asked about, and flag the risk of being distinguished on the facts.
 4. **Check whose reasons the pinpoint is.** The pinpointed passage must be the court's
@@ -208,12 +222,13 @@ none omitted, in the shape `shared/research-priority.md` specifies:
 ```
 case data: audited | commons: audited / unavailable / not installed / NOT AUDITED |
 6. LAW: audited / n memos UNREAD | Westlaw: run (n decisions, memo Y/N) / not run: <reason> |
-CanLII: case-level / no key | Legislation: retrieved n, on disk n / not run: <reason>
+CanLII: case-level / proposition-level: ¶n[, ¶n] / no key | History: checked / not run: <reason> |
+Legislation: retrieved n, on disk n / not run: <reason>
 ```
 
 The Westlaw reason is mandatory (for example `not run: tiers 1–3 held pinpointable
 text`, or `not run: practitioner declined`). So is the Legislation reason, read from
-the spawn prompt's `Legislation:` lines (for example `not run: no legislation in issue`). The CanLII segment reports the CanLII citator as the note-up records show it: `case-level` when a record shows it run, because a citator's flag and count of citing cases is all a record holds, `no key` when the records show it not run for want of a key, and `NOT AUDITED: <reason>` when no record covers a decision relied on. KeyCite's run goes in the notes and the Reliability column. The line ends with the Legislation segment, exactly `Legislation: retrieved n, on disk n` or `Legislation: not run: <reason>`, with nothing after it. Anything more about the instruments, such as their currency, goes in the notes below the line. Any tier you could not examine, the Legislation tier included, reads `NOT AUDITED` or `NOT AUDITED: <reason>` in place of its listed forms. No segment carries a parenthetical: counts and other detail go in the notes below the line. Silence about a tier reads as coverage
+the spawn prompt's `Legislation:` lines (for example `not run: no legislation in issue`). The CanLII segment reports the CanLII citator as the note-up records show it: `case-level` when a record shows it run, `proposition-level: ¶n[, ¶n]` naming each paragraph whose citing decisions you read (Step 2), `no key` when the records show it not run for want of a key, and `NOT AUDITED: <reason>` when no record covers a decision relied on. KeyCite's run goes in the notes and the Reliability column. The History segment reads `checked` when every cited case's history check is complete, `not run: no case cited` when the memo cites none, and `NOT AUDITED: <reason>` otherwise. The line ends with the Legislation segment, exactly `Legislation: retrieved n, on disk n` or `Legislation: not run: <reason>`, with nothing after it. Anything more about the instruments, such as their currency, goes in the notes below the line. Any tier you could not examine, the Legislation tier included, reads `NOT AUDITED` or `NOT AUDITED: <reason>` in place of its listed forms. No segment carries a parenthetical: counts and other detail go in the notes below the line. Silence about a tier reads as coverage
 that did not happen. Then render this
 table, one row per issue:
 
@@ -231,11 +246,11 @@ Rubric:
   authority ("pool record, unverified: followed in *Smith v Jones*, 2024 BCCA 12"); or
   "unknown". Never a bare "Yes": a citing case nobody read shows nothing about
   treatment.
-- **Reliability** — names the note-up record as `case-level`: its date, each citator it
-  ran with its flag, the number of citing cases, and how many of them were read
-  ("case-level: KeyCite 2026-10-21: KeyCite Red H, 12 citing; CanLII citator
-  2026-10-21: 9 citing; 3 read"), or NOT NOTED UP. Never a bare "Yes", and never
-  `noted up`. A note-up is not proof of good law, and an un-noted
+- **Reliability** — gives the history check and the note-up apart, in the template's
+  check labels, and names the note-up record: its date, each citator it ran with its
+  flag, the number of citing cases, and how many of them were read ("history: checked;
+  case-level: KeyCite 2026-10-21: KeyCite Red H, 12 citing; CanLII citator 2026-10-21:
+  9 citing; 3 read"), or NOT NOTED UP. Never a bare "Yes". A note-up is not proof of good law, and an un-noted
   authority may be perfectly valid — you simply cannot say so.
 - **Count** — how many relevant pinpointed authorities are known.
 
@@ -244,7 +259,8 @@ Rubric:
 **The scope test.** Research is required only if the Issue, as framed, cannot be answered
 without it. For each piece of research not done, ask: can the Issue be answered without it?
 No: it is required, and the memo is incomplete: name it in the open-issues paragraph below,
-and on a job it becomes a step on the job. Yes: it is not required. Never call it required
+and on a job it becomes a step on the job. Yes: it is not required, except a cited case's
+history check (Step 2), which always is. Never call it required
 and never say more research is needed on it. If it may still be worth doing, it is a Step 5
 offer, outside the memo; otherwise say nothing.
 
@@ -269,7 +285,7 @@ For each issue the paragraph names, write one line under a `Gaps` heading in the
 notes, in exactly this shape: `gap: <issue> : tiers not run: <tier>[; <tier>]`. Name each tier as
 the coverage line does: `Westlaw: <the query's subject>`, `Legislation: <citation>[,
 <the parts not on disk>]`, `6. LAW: <file> UNREAD`, `Commons: NOT AUDITED: <state>`,
-`Note-up: <citation> NOT NOTED UP`. A tier that ran on part of an
+`Note-up: <citation> NOT NOTED UP`, `History: <citation>`. A tier that ran on part of an
 instrument or a subject has not run on the rest. The line says what was not searched,
 never what the law is.
 
