@@ -45,12 +45,13 @@ const FIXTURES = {
 
 /** sha256 of renderViewPageHtml(page, META, FIXTURES[page.name]), taken from the inline-string pages before the move to templates;
  * Procedural History's and Material Facts' at the split of Provable Facts (docs/ADRs/0011); Arguments' at its badge filter;
- * the rest retaken on 2026-10-29 for 8be771b7, which renamed board.css's first comment ("Job Board" to "Milestone"). */
+ * the rest retaken on 2026-10-29 for 8be771b7, which renamed board.css's first comment ("Job Board" to "Milestone");
+ * Arguments' retaken again on 2026-10-31 for e0065be, which added the session focus pointer to arguments.js. */
 const PINS = {
   "Procedural History": "f8a29d4c7953ff408bd6323af74b2333a71966afb6ee5b550d550f6de594f912",
   "Material Facts": "3fb4f9f60ff8cc4ac8af3957423a83bacd8c38ba7d63194038a93376db4b0480",
   "Raw Research": "6252f4b66f6d80f699f568257f214e24e50e4389f43f7b0c0ffee4bc05670b45",
-  Arguments: "0e12c8719c8a87ac28305f1f9b27787e90583abd993da58541a6b0a6bf2b76ee",
+  Arguments: "ec2b611a4cd2fee78b152f97703713149c874d9a3c4ad21bbf503375cb29e5f7",
   "Loose Threads": "e9295aefed42761418487103bc2d8e8ddd7908fccb10780c6da8c04b149904f7",
 };
 
