@@ -78,13 +78,13 @@ schema check, Writing list with lifecycle and each live Writing's `render_state`
 
 ## The bundle's schema ceiling
 
-**The bundle states what schema it can read** ([#812](https://github.com/Mharbulous/CoClerk/issues/812)). `source/lawyer/mcp/scripts/bundle.mjs` reads `TARGET_SCHEMA_VERSION` out of `references/scripts/migrate_engine.py` at build time and bakes it into the bundle, the same way it bakes the build stamp. A migration is applied only when its target is at or below that baked number, so a hop that has landed in this tree but has not been packaged cannot reach a client matter database.
+**The bundle states what schema it can read** ([#812](https://github.com/Mharbulous/CoClerk/issues/812)). `source/lawyer/mcp/scripts/bundle.mjs` reads `TARGET_SCHEMA_VERSION` out of `references/scripts/migrate_engine.py` at build time and bakes it into the bundle, the same way it bakes the build stamp. A migration stops at that baked number, so a hop that has landed in this tree but has not been packaged cannot reach a client matter database.
 
 Two environment variables sit behind it, both read from the server's environment and therefore settable only by restarting the server — never by a tool argument, which the very session being guarded could set:
 
 - `COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA=1` — the deliberate escape hatch for in-progress schema work. Migrations past the bundle's ceiling are applied anyway, and every response says so. **Every database migrated this way stays unrenderable until a matching bundle is built and installed.**
 - `COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION` — a test seam that states the ceiling when there is no baked one. It loses to the baked value, so on a real bundled server it does nothing.
 
-Every `bootstrap` and `open_session` response carries `schema_target_version`, `bundle_schema_version` and `schema_source_ahead`, with a `schema_note` when they diverge, whether or not a migration was attempted. When a migration is due but would exceed the ceiling, `migration_withheld` is true, `migration_required` is false, and nothing is migrated.
+Every `bootstrap` and `open_session` response carries `schema_target_version`, `bundle_schema_version` and `schema_source_ahead`, with a `schema_note` when they diverge, whether or not a migration was attempted.
 
 `scripts/check_plugin.py` (bundle-schema-ceiling) fails while the migration source's target differs from the bundle's baked version, so a split cannot ship unnoticed.

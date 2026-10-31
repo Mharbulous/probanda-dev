@@ -50,7 +50,7 @@ import { submissionDataMigrateScriptsDir } from "../repo-root.js";
 import { pythonTimeoutMs, READ_TIMEOUT_MS, submissionDataQuery, WRITE_TIMEOUT_MS } from "./backend.js";
 import { acquireDataLock } from "./lock.js";
 import { counselOffers, matterPartiesDrift, type CounselOffer, type PartiesDriftRow } from "./parties-drift.js";
-import { assertMigrationWithinBundle } from "./schema-ceiling.js";
+import { overrideActive, renderableSchemaVersion } from "./schema-ceiling.js";
 
 // Read-only companion to MIGRATE_DRIVER (../migrate-driver.ts): reports the version the engine
 // targets, without opening a database or applying anything. TARGET_SCHEMA_VERSION
@@ -74,11 +74,10 @@ export async function submissionDataMigrate(
   dbPath: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<Record<string, unknown>> {
-  // Before the lock and before any spawn (#812): a withheld migration must leave the database
-  // file, its recorded version and its backup set exactly as they were. Refusing here is what
-  // makes that true -- the engine's copy-aside (#353) happens inside the spawn.
-  const target = currentSchemaVersion(env);
-  assertMigrationWithinBundle(dbPath, target, env);
+  // Never past what this bundle can read (#812): the run stops at the bundle's ceiling, and a
+  // database already there is left untouched -- the engine copies aside only when it migrates.
+  const engineTarget = currentSchemaVersion(env);
+  const target = overrideActive(env) ? engineTarget : Math.min(engineTarget, renderableSchemaVersion(engineTarget, env));
 
   const lock = await acquireDataLock(dbPath, env);
   try {
@@ -99,7 +98,7 @@ export async function submissionDataMigrate(
       if (stored < COUNSEL_COPY_DROPPED - 1) staged = migrate(COUNSEL_COPY_DROPPED - 1);
       assertCounselReconciled(dbPath, staged, env);
     }
-    const result = migrate();
+    const result = migrate(target);
     if (staged !== undefined) result.applied = [...(staged.applied as unknown[]), ...(result.applied as unknown[])];
     if (lock.brokeStale) pushStaleLockWarning(result, "drafting-data", "database");
     const pruneWarnings = pruneBackups(dbPath, backupsBefore);

@@ -136,45 +136,24 @@ export function submissionFormsBootstrap(
     };
   }
 
-  if (schemaVersion === null || schemaVersion < engineTarget) {
-    if (engineTarget > currentVersion) {
-      return {
-        ...build,
-        ...schemaSource,
-        db_path: dbPath,
-        schema_version: schemaVersion,
-        current_schema_version: currentVersion,
-        migration_required: false,
-        migration_withheld: true,
-        bundle_outdated: false,
-        filings: [],
-        note:
-          `This database is on schema version ${schemaVersion ?? "(unstamped)"} and the migration source would take it ` +
-          `to ${engineTarget}, but this plugin bundle was built against ${currentVersion} and cannot read ${engineTarget}. ` +
-          "The migration was WITHHELD: the database, its recorded schema version and its backups are unchanged, and " +
-          "nothing was copied aside. No filing was listed and nothing was rendered. " + bundleNextStep("source"),
-        timings: withTotal(timings, started),
-      };
-    }
-    // Behind the target but not below MIN_READABLE_SCHEMA_VERSION: listed below as current.
-    if (schemaVersion === null || schemaVersion < MIN_READABLE_SCHEMA_VERSION) {
-      return {
-        ...build,
-        ...schemaSource,
-        db_path: dbPath,
-        schema_version: schemaVersion,
-        current_schema_version: engineTarget,
-        migration_required: true,
-        bundle_outdated: false,
-        filings: [],
-        note:
-          `This database is on schema version ${schemaVersion ?? "(unstamped)"}; current is ${engineTarget}. ` +
-          "No filing was listed and nothing was rendered -- an older schema can be missing tables both the " +
-          "filing list and the renderers read. Call drafting_data__migrate on this db_path, then call " +
-          "drafting_forms__bootstrap again.",
-        timings: withTotal(timings, started),
-      };
-    }
+  // Behind this bundle but not below MIN_READABLE_SCHEMA_VERSION: listed below as current.
+  if (schemaVersion === null || schemaVersion < MIN_READABLE_SCHEMA_VERSION) {
+    return {
+      ...build,
+      ...schemaSource,
+      db_path: dbPath,
+      schema_version: schemaVersion,
+      current_schema_version: currentVersion,
+      migration_required: true,
+      bundle_outdated: false,
+      filings: [],
+      note:
+        `This database is on schema version ${schemaVersion ?? "(unstamped)"}; current is ${currentVersion}. ` +
+        "No filing was listed and nothing was rendered -- an older schema can be missing tables both the " +
+        "filing list and the renderers read. Call drafting_data__migrate on this db_path, then call " +
+        "drafting_forms__bootstrap again.",
+      timings: withTotal(timings, started),
+    };
   }
 
   // Nothing below renders an advocacy document (#584, brief D1). The critical path is SQLite
@@ -202,7 +181,7 @@ export function submissionFormsBootstrap(
     ...schemaSource,
     db_path: dbPath,
     schema_version: schemaVersion,
-    current_schema_version: engineTarget,
+    current_schema_version: currentVersion,
     migration_required: false,
     bundle_outdated: false,
     filings,

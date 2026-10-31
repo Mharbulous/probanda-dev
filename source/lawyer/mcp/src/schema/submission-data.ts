@@ -814,12 +814,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       description:
         "Create or upgrade one matter's submission database to the current schema. The sole schema-" +
         "guard bypass, run as a separate process spawn from query/execute so neither carries a bypass " +
-        "path. Run this before the first query or execute against a new database. WITHHELD (issue 812) " +
-        "when the migration source would take the database past the schema version this plugin bundle " +
-        "was built against: the call fails with code schema_ahead_of_bundle and the database, its recorded " +
-        "version and its backups are left untouched -- nothing is copied aside for a migration that never " +
-        "ran. The remedy is to rebuild and reinstall the plugin, not to retry. To apply an in-progress hop " +
-        "on purpose, set COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA=1 in the server's environment and restart " +
+        "path. Run this before the first query or execute against a new database. It stops at the schema " +
+        "version this plugin bundle was built against (issue 812); a database already there is left untouched. " +
+        "To go past it on purpose, set COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA=1 in the server's environment and restart " +
         "it; every database migrated that way stays unrenderable until a matching bundle is installed. REFUSED, code " +
         "counsel_not_reconciled, on the v43 hop that drops the submission copy of counsel of record, while any counsel " +
         "offer or parties_drift row stands: the refusal names each row, nothing is written (a database older than v42 is " +

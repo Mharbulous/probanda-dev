@@ -365,7 +365,7 @@ async function openSession(
   // A database bootstrap reads (it lists filings) may still be behind the migration target.
   const behind =
     result.migration_required ||
-    (!result.migration_withheld && !result.bundle_outdated && result.schema_version !== null && result.schema_version < result.current_schema_version);
+    (!result.bundle_outdated && result.schema_version !== null && result.schema_version < result.current_schema_version);
   if (behind) {
     const before = backups(dbPath);
     let migrateWarnings: string[] = [];
@@ -395,7 +395,7 @@ async function openSession(
     }
   }
   for (const t of result.timings) timings.push({ phase: `bootstrap: ${t.phase}`, ms: t.ms });
-  const refused = result.migration_required || result.bundle_outdated || result.migration_withheld === true;
+  const refused = result.migration_required || result.bundle_outdated;
   const opening: Opening =
     draftDir === undefined || todos === undefined || dates === undefined || refused ? {} : openBoard(dbPath, draftDir, identity, todos, dates, result, filingId, timings);
   const drift = await phase("parties_drift", () => matterPartiesDrift(dbPath));

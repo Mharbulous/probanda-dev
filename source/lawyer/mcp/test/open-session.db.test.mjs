@@ -20,7 +20,7 @@ after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, 
 
 const { callTool, createDispatchContext } = await import("../build/index.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
-const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
+const { freshSubmissionDb, seedSql } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const writes = await import("../build/tools/practice/writes.js");
 const reads = await import("../build/tools/practice/reads.js");
@@ -161,6 +161,33 @@ test("migrates a database that is behind, reports the backup, then bootstraps", 
   assert.deepEqual(result.filings, []);
   assert.ok(result.timings.some((p) => p.phase === "migrate"));
   assert.deepEqual(m.pointerBytes(), before);
+});
+
+test("source ahead of the bundle: migrates only to the bundle's version, then lists and opens the board", async (t) => {
+  // The database at N, the bundle at N+1, the migration source at N+2 (#812 follow-up).
+  const m = matterFixture(t);
+  oneVersionBehind(m.dbPath, "m.TARGET_SCHEMA_VERSION - 2");
+  seedSql(
+    m.dbPath,
+    `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L9999 - Test', 'CAN/BC/Vancouver-International-Arbitration-Centre');
+     INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (1, 1, 'submissions_package', 'opening', 'Opening Submissions Package');`
+  );
+  mkdirSync(join(m.matterRoot, "0. DRAFT"));
+  const ceiling = process.env.COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION;
+  t.after(() => (ceiling === undefined ? delete process.env.COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION : (process.env.COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION = ceiling)));
+  const context = await practiceContext(t);
+  const target = (await callTool(context, "drafting_forms__bootstrap", { db_path: m.dbPath })).schema_target_version;
+  process.env.COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION = String(target - 1);
+
+  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+
+  assert.equal(result.schema_source_ahead, true);
+  assert.deepEqual(result.migrated && [result.migrated.from, result.migrated.to], [target - 2, target - 1]);
+  assert.equal(result.schema_version, target - 1, "never written past the bundle's version");
+  assert.equal(result.filings.length, 1);
+  assert.ok(result.opened.board_summary.startsWith("# Milestone — Matter"), result.opened.board_summary);
+  assert.ok(existsSync(result.milestone_path));
+  assert.deepEqual(result.milestone_paths.map((p) => p.path), [result.milestone_path]);
 });
 
 test("the plain bootstrap tool still refuses on migration_required", async (t) => {

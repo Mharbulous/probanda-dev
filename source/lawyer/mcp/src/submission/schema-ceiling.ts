@@ -20,7 +20,6 @@
 // git check and still breaks every renderer.
 
 import { BUILD_STAMP, installedStamp } from "../build-stamp.js";
-import { DataServerError } from "../errors.js";
 import { INSTALL_ROOT, pluginManifest } from "../repo-root.js";
 
 declare const __LITIGATION_SUBMISSION_SCHEMA_VERSION__: number;
@@ -79,8 +78,8 @@ export function renderableSchemaVersion(engineTarget: number, env: NodeJS.Proces
  *
  * - The install on disk holds a different build from the one running: the plugin was updated and
  *   the app was not restarted, so the newer install never loaded.
- * - The migration source is ahead of this bundle ("source"): a build was released without its
- *   bundle rebuilt.
+ * - The migration source is ahead of this bundle ("source"): it ships in litigator, and each release
+ *   pairs it with a matching bundle (check_plugin_bundles.py), so this server is older than the plugins.
  * - The database is ahead of this bundle ("database"): a newer build migrated it.
  *
  * Names this server's build and plugin version, so a session running an install other than the
@@ -96,11 +95,10 @@ export function bundleNextStep(ahead: "source" | "database"): string {
       "restarted. Next step: fully restart the app (quit it, not just close the window), then open the session again."
     );
   }
-  const why =
-    ahead === "source"
-      ? "Its migration source is ahead of its own bundle, so this build was released without a rebuilt bundle."
-      : "The database was migrated by a newer build than this one.";
-  return `${runs} ${why} Next step: run /lawyer:suggestion naming this note, then fully restart the app once a plugin update arrives.`;
+  if (ahead === "source") {
+    return `${runs} The installed plugins are newer than this server. Next step: fully restart the app (quit it, not just close the window).`;
+  }
+  return `${runs} The database was migrated by a newer build than this one. Next step: run /lawyer:suggestion naming this note, then fully restart the app once a plugin update arrives.`;
 }
 
 export interface SchemaSourceStatus {
@@ -131,7 +129,7 @@ export function schemaSourceStatus(engineTarget: number, env: NodeJS.ProcessEnv 
       schema_source_ahead: true,
       schema_note:
         `The migration source targets schema version ${engineTarget}; this bundle was built against ${ceiling}. ` +
-        `${OVERRIDE_ENV} is set, so migrations are NOT being withheld -- a database migrated now will be on a ` +
+        `${OVERRIDE_ENV} is set, so migrations do NOT stop at ${ceiling} -- a database migrated now will be on a ` +
         "schema this bundle cannot read, and cannot be rendered until the plugin is rebuilt and reinstalled.",
     };
   }
@@ -142,7 +140,7 @@ export function schemaSourceStatus(engineTarget: number, env: NodeJS.ProcessEnv 
       schema_source_ahead: true,
       schema_note:
         `The migration source targets schema version ${engineTarget}; this bundle was built against ${ceiling}. ` +
-        "Migrations are being withheld, so no database is pushed to a schema this bundle cannot read. " +
+        `Migrations stop at ${ceiling}, so no database is pushed to a schema this bundle cannot read. ` +
         bundleNextStep("source"),
     };
   }
@@ -155,29 +153,4 @@ export function schemaSourceStatus(engineTarget: number, env: NodeJS.ProcessEnv 
     };
   }
   return { schema_target_version: engineTarget, bundle_schema_version: ceiling, schema_source_ahead: false };
-}
-
-/**
- * Throws when a migration would push dbPath past what this bundle can read.
- *
- * Called before the data lock and before any spawn, so a withheld migration leaves the
- * database file, its recorded version and its backup set untouched -- nothing is copied
- * aside for a migration that never ran.
- */
-export function assertMigrationWithinBundle(
-  dbPath: string,
-  engineTarget: number,
-  env: NodeJS.ProcessEnv = process.env
-): void {
-  const ceiling = bundleSchemaVersion(env);
-  if (ceiling === null || engineTarget <= ceiling || overrideActive(env)) return;
-
-  throw new DataServerError(
-    `Migration withheld for ${dbPath}: the migration source would take this database to schema version ` +
-      `${engineTarget}, but this plugin bundle was built against ${ceiling} and cannot read ${engineTarget}. ` +
-      "The database, its recorded schema version and its backups are unchanged; nothing was copied aside. " +
-      `${bundleNextStep("source")} To apply an in-progress hop on purpose, set ${OVERRIDE_ENV}=1 in the server's environment and ` +
-      "restart it -- every database migrated that way stays unrenderable until a matching bundle is installed.",
-    "schema_ahead_of_bundle"
-  );
 }

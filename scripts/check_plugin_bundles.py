@@ -178,7 +178,7 @@ def check_bundle_schema_ceiling(repo, plugin):
     scripts/bundle.mjs bakes TARGET_SCHEMA_VERSION into the bundle at build time
     (src/submission/schema-ceiling.ts). A migrate_engine.py hop committed without a
     rebuilt bundle ships an install whose migration source is ahead of its renderers:
-    open_session then withholds every migration and renders nothing. 3935943 (74 over
+    migrations then stop short of the shipped source. 3935943 (74 over
     a 73 bundle), 78ffce8 (75 over 74) and 7d09fd6 (76 over 74) each reached main so."""
     data_js = server_path(repo, plugin, "data", *DATA_BUNDLE)
     engine = os.path.join(skills_root(repo), "drafting-data", "references", "scripts", "migrate_engine.py")

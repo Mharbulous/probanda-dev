@@ -383,9 +383,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "server_outdated is true when they differ, and build_note names the remedy (issue 452). Every response also " +
         "carries schema_target_version (what the migration source would apply), bundle_schema_version (what this " +
         "bundle was built against, null when unbundled) and schema_source_ahead, with schema_note when they diverge " +
-        "or COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA is set (issue 812). When a migration is due but would exceed " +
-        "bundle_schema_version, migration_withheld is true, migration_required is false, nothing is migrated and " +
-        "note says so. On success it also " +
+        "or COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA is set (issue 812); a migration stops at bundle_schema_version. On success it also " +
         "carries session_token (ADR 0009, issue 609) -- a FRESH random identity minted for THIS session on every " +
         "bootstrap call, which a job-driven /draft session uses as tickets.locked_by and passes to " +
         "every later drafting_forms__render so it keeps one identity throughout. It is deliberately not derived " +

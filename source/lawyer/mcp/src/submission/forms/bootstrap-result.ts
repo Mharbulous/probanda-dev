@@ -16,10 +16,6 @@ export interface BootstrapResult extends BuildStampStatus, SchemaSourceStatus {
   schema_version: number | null;
   current_schema_version: number;
   migration_required: boolean;
-  /** Present only when a migration was due but withheld because it would push the database past
-   * what this bundle can read (#812). `migration_required` is false alongside it, so no caller
-   * attempts the migration; `note` says which versions and why. */
-  migration_withheld?: boolean;
   /** True only when the database is ahead of the installed plugin bundle (issue #352) -- distinguishes this refusal from `migration_required`'s. */
   bundle_outdated: boolean;
   /** Every filing of every proceeding, **in the order to present them in** -- the array order is
