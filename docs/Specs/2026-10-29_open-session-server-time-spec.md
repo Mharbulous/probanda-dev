@@ -78,7 +78,7 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 |---|---|---|
 | 1. One parties-of-record spawn | 18c311a: `call-memo.ts`, keyed per proceeding | Met, one spawn per proceeding (one on a one-proceeding matter) |
 | 2. One practice snapshot | 18c311a for `matter_root`; 2026-10-31 for `project_id` | Met on both paths. 141ab85 had brought back a second snapshot on the `project_id` path, because `matterRootFor` ran before the memo. `dispatch.ts` now resolves it inside the call's memo, and `inOneCall` joins an enclosing memo. |
-| 3. No entry-time coverage | 18c311a | Met. The `/work` SKILL.md row that still listed `ingest_coverage` is gone. `case/ingest-coverage.ts` has no caller now and is left for a follow-up, because removing it touches `/matter-data`'s tests and design record. |
+| 3. No entry-time coverage | 18c311a | Met. `/work`'s operations vocabulary lists `ingest_coverage` with the job operations instead of the opening's, since only the claim-time input check and letters word a coverage result now. `case/ingest-coverage.ts` has no caller now and is left for a follow-up, because removing it touches `/matter-data`'s tests and design record. |
 | 4. Milestone pages written, view pages left to the job | 18c311a | Met |
 | 5. Other fields unchanged | | Met. `form_currency` is now the opening render's own reading, not a second read; its phase is `open: form_currency`. One edge: a retired filing named by `filing_id` no longer carries `form_currency`, since a retired Writing's render reads none. |
 
