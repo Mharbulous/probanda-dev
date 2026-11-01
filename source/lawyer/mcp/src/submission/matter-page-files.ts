@@ -97,8 +97,10 @@ export function writePage(file: string, html: string): void {
  * (the matter's own, at the top, is a current target), and `Raw Research …` the Legal Memos page's before 2026-10-31. */
 const OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments) - filing \d+|loose threads(?: - (?:filing|Milestone|job board)(?: - proceeding)? \d+)?|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+|raw research(?: - (?:Milestone|job board)(?: - proceeding)? \d+)?)\.html$/i;
 
-/** A preview pages__preview wrote beside the pages (src/pages/preview.ts): never an old page, so the sweep leaves it. */
+/** A preview pages__preview wrote beside the pages (src/pages/preview.ts): never an old page, so the sweep leaves it,
+ * unless it previews a page whose name is retired (RETIRED_PREVIEW). */
 const PREVIEW_FILE = / preview \d+\.html$/i;
+const RETIRED_PREVIEW = /^raw research(?: - (?:Milestone|job board)(?: - proceeding)? \d+)? preview \d+\.html$/i;
 
 /** Whether this generator wrote the file: a page marker, or a revision the Milestone's older layouts carried. */
 function generatorWrote(file: string): boolean {
@@ -123,7 +125,8 @@ export function sweepOldPages(draftDir: string, names: string[]): Pick<PagesWrit
     .map((e) => join(draftDir, e.name));
   for (const dir of [draftDir, ...subfolders]) {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (!entry.isFile() || PREVIEW_FILE.test(entry.name) || !(OLD_PAGE.test(entry.name) || isViewPageFile(entry.name))) continue;
+      const old = RETIRED_PREVIEW.test(entry.name) || (!PREVIEW_FILE.test(entry.name) && (OLD_PAGE.test(entry.name) || isViewPageFile(entry.name)));
+      if (!entry.isFile() || !old) continue;
       const file = join(dir, entry.name);
       if (targets.has(relative(draftDir, file).toLowerCase())) continue;
       try {

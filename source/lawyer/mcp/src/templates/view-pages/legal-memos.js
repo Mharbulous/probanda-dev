@@ -19,6 +19,7 @@
     ["in_progress", "In Progress", "wip"],
     ["started", "Started", ""],
     ["completed", "Completed", "done"],
+    ["shelved", "Shelved", ""],
     ["no_job", "No job", ""]
   ];
   var LANE = {};
@@ -66,7 +67,7 @@
 
     var body = el("div", "body");
     var dl = el("dl");
-    row(dl, "Issue", m.issues, "No recorded question: no job saved this memo");
+    row(dl, "Issue", m.issues, m.jobs.length === 0 ? "No recorded question: no job saved this memo" : "No question recorded");
     row(dl, "Facts", m.facts, "No facts recorded");
     row(dl, "Status", lane[1], "");
     row(dl, "Date", m.date, "No date");

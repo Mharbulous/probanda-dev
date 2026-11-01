@@ -1,13 +1,13 @@
 // drafting_forms__board_card: the tool entry point that reads one section's cards (board-card-render.ts
 // prints them).
 
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 
 import { ValidationError } from "../errors.js";
 import { attachedDrafts, withCodes } from "./board-attachments.js";
 import { type CardLane, CARD_LANES, renderBoardCard } from "./board-card-render.js";
 import { BoardIndex, type BoardRef } from "./forms/board-members.js";
-import { buildLegalMemosData, LAW_FOLDER } from "./forms/legal-memos-page.js";
+import { buildLegalMemosData } from "./forms/legal-memos-page.js";
 import { courtFileAffidavits } from "./court-file-affidavits.js";
 import { type ClientContext, nowStamp, resolveDraftDir } from "./forms.js";
 import { fetchAllFilingsForProceeding, fetchFiling, fetchProceeding, fetchRevision } from "./forms/query.js";
@@ -142,7 +142,7 @@ export function submissionFormsBoardCard(
             .filter((id): id is number => id !== null)
             .flatMap((id) => courtFileAffidavits(args.db_path, id, dirname(draftDir)))
         : [],
-      lanes.includes("memos") && draftDir !== undefined ? buildLegalMemosData(args.db_path, section.tickets, join(dirname(draftDir), LAW_FOLDER)).memos : []
+      lanes.includes("memos") && draftDir !== undefined ? buildLegalMemosData(args.db_path, section.tickets, dirname(draftDir)).memos : []
     ),
   };
 }

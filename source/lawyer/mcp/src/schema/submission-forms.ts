@@ -310,10 +310,12 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "` · court file: none found[ (<note>)]`, then ` · mismatch: court file shows <status> <date>; drafting data shows " +
         "<unsworn|made <date>>` when they disagree; only file names are read; memos, `## Legal Memos (n)` and each legal memo linked " +
         "to the board, the Legal Memos page's list, newest first, every saved version of a memo one entry: a memo is linked when a job " +
-        "on this board (its Writings' jobs and its proceeding's General jobs) saved any version of it, or when no live job in the matter " +
-        "saved any version (then it is on every board); each as `- <title> · <research memo|Westlaw Deep Research report|note-up record> · " +
-        "<in progress|started|completed|no job> · <date> · v<n>[ (earlier: v<m>, …)] · <path from 6. LAW>[ · not in the law folder]`, then " +
-        "`  issue: \"<the saving job's question, verbatim>\"` per job (`  issue: none (no job saved it)` without one), `  facts: \"<fact>\"; …` " +
+        "drawn on this board (its Writings' jobs, its proceeding's General jobs, and every merged member's) saved any version of it, or when " +
+        "no live job drawn on any board with a Legal Memos page saved any version (then it is on every board); each as `- <title> · " +
+        "<research memo|Westlaw Deep Research report|note-up record> · <in progress|started|completed|shelved|no job> · <date> · v<n>[ " +
+        "(earlier: v<m>, …)] · <path from 6. LAW>[ · not in the law folder]`, then " +
+        "`  issue: \"<the saving job's question, verbatim>\"` per job (`  issue: none (no job saved it)` with no job, `  issue: none " +
+        "recorded` when its jobs recorded none), `  facts: \"<fact>\"; …` " +
         "(the facts the saving jobs' scope names) or `  facts: none`, and `  jobs: #<id> <title>; …` when a job saved it; only file names " +
         "are read from the 6. LAW folder, never a memo's text. Then key: the live " +
         "job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else " +

@@ -29,6 +29,7 @@ import { ARGUMENTS_PAGE } from "./forms/arguments-page.js";
 import { MATERIAL_FACTS, PROCEDURAL_HISTORY } from "./forms/facts-pages.js";
 import { LEGAL_MEMOS_PAGE } from "./forms/legal-memos-page.js";
 import type { FilingRow, ProceedingRow } from "./forms/query.js";
+import type { WorkBoardTicket } from "./forms/work-board-ticket.js";
 
 /** On every view page's root element: the overwrite guard and the old-page sweep recognise this
  * server's own view page by it. */
@@ -44,6 +45,8 @@ export interface ViewPageContext {
   writings: { filing: FilingRow; proceeding: ProceedingRow }[];
   /** The matter's 0. DRAFT folder the pages are written in. */
   draftDir: string;
+  /** The board's jobs as its Milestone page draws them, every merged member's included. */
+  jobs: WorkBoardTicket[];
   /** The write's one clock reading, the page's Rendered stamp. */
   now: string;
   /** The database's revision the write read, the page's Rev. */

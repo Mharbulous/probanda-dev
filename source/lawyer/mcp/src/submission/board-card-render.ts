@@ -36,12 +36,13 @@ export type CardLane = "goals" | "criteria" | "live" | "goal" | "proposed" | "co
 export const CARD_LANES: readonly CardLane[] = ["goals", "criteria", "live", "proposed", "completed", "rejected", "attached", "court_file", "memos"];
 
 const MEMO_SOURCE_LABELS: Record<MemoSource, string> = { research_memo: "research memo", westlaw: "Westlaw Deep Research report", note_up: "note-up record" };
-const MEMO_STATUS_LABELS: Record<MemoStatus, string> = { in_progress: "in progress", started: "started", completed: "completed", no_job: "no job" };
+const MEMO_STATUS_LABELS: Record<MemoStatus, string> = { in_progress: "in progress", started: "started", completed: "completed", shelved: "shelved", no_job: "no job" };
 
 /** The memos lane: the Legal Memos page's memos (legal-memos-page.ts), newest first, as
  * `- <title> · <source> · <status> · <date> · v<n>[ (earlier: v<m>, …)] · <path from 6. LAW>[ · not in the law folder]`,
- * then `  issue: "<the job's question>"` per job question (`  issue: none (no job saved it)` without one),
- * `  facts: "<fact>"; …` or `  facts: none`, and `  jobs: #<id> <title>; …` when a job saved it. */
+ * then `  issue: "<the job's question>"` per job question (`  issue: none (no job saved it)` with no job,
+ * `  issue: none recorded` when its jobs recorded none), `  facts: "<fact>"; …` or `  facts: none`, and
+ * `  jobs: #<id> <title>; …` when a job saved it. */
 function memosLines(memos: LegalMemo[]): string[] {
   return [
     `## Legal Memos (${memos.length})`,
@@ -51,7 +52,7 @@ function memosLines(memos: LegalMemo[]): string[] {
       if (!m.on_disk) head.push("not in the law folder");
       return [
         head.join(" · "),
-        ...(m.issues.length === 0 ? ["  issue: none (no job saved it)"] : m.issues.map((i) => `  issue: ${JSON.stringify(i)}`)),
+        ...(m.issues.length > 0 ? m.issues.map((i) => `  issue: ${JSON.stringify(i)}`) : [m.jobs.length === 0 ? "  issue: none (no job saved it)" : "  issue: none recorded"]),
         `  facts: ${m.facts.length === 0 ? "none" : m.facts.map((f) => JSON.stringify(f)).join("; ")}`,
         ...(m.jobs.length === 0 ? [] : [`  jobs: ${m.jobs.map((j) => `#${j.id} ${j.title}`).join("; ")}`]),
       ];

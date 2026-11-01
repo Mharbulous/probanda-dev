@@ -61,6 +61,10 @@ PAGE_PATHS = [
     DRAFT + r"\Notice of Hearing of Application\Milestone.html",
     DRAFT + r"\Notice of Hearing of Application\Material Facts.html",
     DRAFT + r"\Notice of Hearing of Application\Arguments preview 1.html",
+    DRAFT + r"\Notice of Hearing of Application\Legal Memos.html",
+    # Raw Research, until the next write moves it to TRASH (renamed Legal Memos, 2026-10-31).
+    DRAFT + r"\Notice of Hearing of Application\Raw Research.html",
+    DRAFT + r"\Raw Research - Milestone 1.html",
 ]
 OTHER_PATHS = [
     DRAFT + r"\approval.html",

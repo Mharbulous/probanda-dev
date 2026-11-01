@@ -19,7 +19,7 @@ import { renderWorkBoardHtml } from "./forms/workboard-shell.js";
 import { combinedPageDates, filingBoardData } from "./matter-board-section.js";
 import type { MatterDates } from "./matter-dates.js";
 import { guardTargets, type PagesWritten } from "./matter-page-files.js";
-import { type Member, pageGroups, pageTargets, viewTargets } from "./matter-page-groups.js";
+import { type Member, type PageGroup, pageGroups, pageTargets, viewTargets } from "./matter-page-groups.js";
 import type { MatterTodos } from "./matter-todos.js";
 import { readManifest } from "./render-manifest.js";
 import { renderViewPageHtml, type ViewPage } from "./view-pages.js";
@@ -123,11 +123,14 @@ export function buildMatterPages(
     };
   };
   const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta, preFiling, todos), templates.matterBoard);
+  // Each board's jobs as its Milestone draws them, which its Legal Memos page lists the memos of.
+  const boardJobs = new Map<PageGroup, WorkBoardData["tickets"]>();
   const milestones = groupsWritten.map((group) => {
     const built = group.members.map(sectionOf);
     const raw = built.map((b) => b.section);
     // A merged board is drawn as one board, its Completion Criteria card naming no Writing (docs/ADRs/0010, 2026-10-21 and 2026-10-22 amendments).
     const board = combineSections(dbPath, raw, true);
+    boardJobs.set(group, board.tickets);
     const sections = [board];
     const { proceeding, filing } = group.members[0];
     // A page that is not its one section's own: merged, or named by a retired survivor.
@@ -157,7 +160,7 @@ export function buildMatterPages(
     return renderViewPageHtml(
       page,
       { filing: v.writings.map((w) => w.filing.title).join("; "), matter: meta.matter, client: meta.client, revision, rendered: now },
-      page.data({ dbPath, filing: first.filing, proceeding: first.proceeding, writings: v.writings, draftDir, now, revision })
+      page.data({ dbPath, filing: first.filing, proceeding: first.proceeding, writings: v.writings, draftDir, jobs: boardJobs.get(v.group) ?? [], now, revision })
     );
   });
   const threadsPage = templates.threads ?? LOOSE_IDEAS_PAGE;
