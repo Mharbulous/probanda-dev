@@ -1,8 +1,9 @@
 """Pins a research job's memo to the job's own question: the spawn prompt carries the job's
-title verbatim, a question holding more than one is proposed for rewording, and the memo has one
-Issue holding the title verbatim and no sub-issues.
+intent verbatim, checked before any dispatch, a question holding more than one is proposed for
+rewording, and the memo has one Issue and no sub-issues.
 
-Spec: docs/Specs/2026-10-21_research-job-memo-restates-job-question-spec.md
+Specs: docs/Specs/2026-10-21_research-job-memo-restates-job-question-spec.md,
+docs/Specs/2026-10-31_job-question-from-intent-spec.md
 
 Run: python -m pytest .claude/skills/legal-research/tests/test_job_question_memo.py -q
 """
@@ -24,8 +25,12 @@ def flat(text):
 class JobQuestionMemoTest(unittest.TestCase):
     def test_spawn_template_carries_the_job_question(self):
         gate = flat(read("shared", "legal-research.md"))
-        self.assertIn('Job question: "<the held job\'s title, verbatim>" / none', gate)
-        self.assertIn("fills `Job question:` with the job's title character for character", gate)
+        self.assertIn('Job question: "<the job\'s intent, verbatim>" while you hold the job\'s lock / none', gate)
+        self.assertIn('Before any dispatch, check `Job question:` by "A research question holds one question"', gate)
+        board = flat(read("legal-research", "references", "research-board.md"))
+        self.assertIn("`Job question:` is its intent", board)
+        self.assertNotIn("`Job question:` with the job's title", gate)
+        self.assertNotIn("is its title", board)
 
     def test_a_question_holding_several_is_reworded(self):
         gate = flat(read("shared", "legal-research.md"))

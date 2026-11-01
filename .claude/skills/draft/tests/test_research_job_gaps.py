@@ -30,7 +30,7 @@ class ResearchJobGapsTest(unittest.TestCase):
         section = plan[plan.index("## 2. A research job"):plan.index("## 3.")]
         self.assertIn("The job's recorded question, verbatim, is its one question, and the plan adds no issue to it",
                       section)
-        self.assertIn("the memo's one Issue is the job's title, verbatim", section)
+        self.assertIn("the memo's one Issue is the job's intent, verbatim", section)
 
     def test_complete_refuses_an_open_tier(self):
         session = read("draft", "references", "job-session.md")
@@ -50,11 +50,11 @@ class ResearchJobGapsTest(unittest.TestCase):
         self.assertNotIn("internal checklist", plan)
         self.assertNotIn("scope: in", plan)
 
-    def test_complete_compares_memo_headings_with_the_title(self):
+    def test_complete_compares_memo_headings_with_the_intent(self):
         session = read("draft", "references", "job-session.md")
         complete = session[session.index("### Complete"):]
-        self.assertIn("compare the saved memo's headings with the job's title", complete)
-        self.assertIn("one `## Issue` holding the title verbatim, and no sub-issue or other issue or topic heading", complete)
+        self.assertIn("compare the saved memo's headings with the job's intent", complete)
+        self.assertIn("one `## Issue` holding the intent verbatim, and no sub-issue or other issue or topic heading", complete)
         self.assertNotIn("### Sub-issue", complete)
         self.assertIn("unless the practitioner says in their own words to complete it as is", complete)
 
