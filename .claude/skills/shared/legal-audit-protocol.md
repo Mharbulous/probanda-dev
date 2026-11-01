@@ -281,7 +281,7 @@ else in the memo defers to further research, offers research or names a tier not
 no research required, write no such paragraph. A spawn prompt's `Review:` line is
 memo-reviewer's verdict on your last memo: treat each `required` item as required, and cut
 each `out_of_scope` and `identifiers` passage from the memo, and rewrite each `findings` item
-as one finding or cut it. With any `Review:` but `none`, return no `needs_download`
+as one finding or cut the item. With any `Review:` but `none`, return no `needs_download`
 or `needs_note_up`. A `Review:` with no `required` item asks only for a rewrite: rewrite the
 memo from the sources already held, without re-running the audit.
 

@@ -56,7 +56,7 @@ class ScopeTestTest(unittest.TestCase):
     def test_review_line_forbids_retrieval_and_a_rewrite_reruns_nothing(self):
         step_four = flat(between(read("shared", "legal-audit-protocol.md"), "### Step 4", "### Step 5"))
         self.assertIn("cut each `out_of_scope` and `identifiers` passage from the memo, and rewrite each `findings` "
-                      "item as one finding or cut it.", step_four)
+                      "item as one finding or cut the item.", step_four)
         self.assertIn("With any `Review:` but `none`, return no `needs_download` or `needs_note_up`.", step_four)
         self.assertIn("A `Review:` with no `required` item asks only for a rewrite: rewrite the memo from the sources "
                       "already held, without re-running the audit.", step_four)
@@ -141,7 +141,7 @@ class GateLoopTest(unittest.TestCase):
         self.assertIn("re-invoke the agent with `Review:` the reviewer's JSON", self.rule)
         self.assertIn("`send_back` with `identifiers` or `out_of_scope` items: to rewrite the memo without them.",
                       self.rule)
-        self.assertIn("`send_back` with `findings` items: to rewrite each as one finding, or cut it.", self.rule)
+        self.assertIn("`send_back` with `findings` items: to rewrite each as one finding, or cut the item.", self.rule)
         self.assertIn("When the third review accepts nothing, re-invoke the agent once with it to write the memo "
                       "`INCOMPLETE`, naming what that review still asks, and save that return.", self.rule)
         held = flat(between(self.text, "**On a held job, an open tier is not an answer.**",
