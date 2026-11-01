@@ -13,6 +13,7 @@ import { DataServerError, NotFoundError, ValidationError } from "../../errors.js
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { framingWarning, type MergedGoal, NEEDS_CONSOLIDATION, readStored, type StoredGoals, survivorGoalsKey } from "./board-goals.js";
 import { BoardIndex, type BoardRef, memberKey, sameBoard } from "./board-members.js";
+import { fetchBoardFilings, isResearchWriting } from "./query.js";
 
 const TOOL = "drafting_data__merge_milestones";
 
@@ -44,7 +45,8 @@ function label(b: BoardRef): string {
   return b.filing_id === null ? `proceeding ${b.proceeding_id}'s board` : `Milestone ${b.filing_id}`;
 }
 
-/** One named board, refused when it is not live: a filing that is retired, or a proceeding that has a Writing. */
+/** One named board, refused when it is not live: a filing that is retired, a research Writing, which has no board,
+ * or a proceeding that has a Writing other than a research Writing. */
 function resolve(dbPath: string, arg: { filing_id?: number; proceeding_id?: number }, i: number): BoardRef {
   if ((arg?.filing_id === undefined) === (arg?.proceeding_id === undefined)) {
     throw new ValidationError(`${TOOL}.boards[${i}] takes exactly one of filing_id and proceeding_id`, "invalid_board");
@@ -52,15 +54,14 @@ function resolve(dbPath: string, arg: { filing_id?: number; proceeding_id?: numb
   const id = (arg.filing_id ?? arg.proceeding_id) as number;
   if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL}.boards[${i}]: the board id must be a positive integer`, "invalid_board");
   if (arg.filing_id !== undefined) {
-    const [f] = submissionDataQuery(dbPath, "SELECT proceeding_id, retired_on FROM filings WHERE id = ?", [id]).rows as unknown as { proceeding_id: number; retired_on: string | null }[];
+    const [f] = submissionDataQuery(dbPath, "SELECT proceeding_id, retired_on, kind FROM filings WHERE id = ?", [id]).rows as unknown as { proceeding_id: number; retired_on: string | null; kind: string }[];
     if (f === undefined) throw new NotFoundError(`${TOOL}: no Writing or Milestone ${id} in ${dbPath}`, "not_found");
+    if (isResearchWriting(f)) throw new ValidationError(`${TOOL}: Writing ${id} is a research result, which has no board to merge -- name a board that has a Milestone page`, "research_writing");
     if (f.retired_on !== null) throw new ValidationError(`${TOOL}: Milestone ${id} is retired or closed, so it has no board to merge`, "board_retired");
     return { filing_id: id, proceeding_id: f.proceeding_id };
   }
-  const [p] = submissionDataQuery(dbPath, "SELECT (SELECT COUNT(*) FROM filings WHERE proceeding_id = proceedings.id) AS filings FROM proceedings WHERE id = ?", [id])
-    .rows as unknown as { filings: number }[];
-  if (p === undefined) throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
-  if (p.filings > 0) throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- name a Writing's Milestone", "proceeding_has_writing");
+  if (submissionDataQuery(dbPath, "SELECT 1 FROM proceedings WHERE id = ?", [id]).rows.length === 0) throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
+  if (fetchBoardFilings(dbPath, id).length > 0) throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- name a Writing's Milestone", "proceeding_has_writing");
   return { filing_id: null, proceeding_id: id };
 }
 
@@ -119,7 +120,8 @@ export async function submissionDataMergeMilestones(args: MergeMilestonesArgs, e
   const written = await submissionDataWriteAll(
     args.db_path,
     [
-      { sql: "INSERT INTO db_meta (key, value) VALUES (?, ?)", params: [memberKey(absorbed), value], expect_changes: 1 },
+      // OR REPLACE: a row read as no row because it names a research Writing (BoardIndex) gives way to this one.
+      { sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [memberKey(absorbed), value], expect_changes: 1 },
       ...index.membersOf(absorbed).map((key) => ({ sql: "UPDATE db_meta SET value = ? WHERE key = ?", params: [value, key], expect_changes: 1 })),
       { sql: `INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ${stamps})`, params: [survivorKey, JSON.stringify(goals)], expect_changes: 1 },
       ...(taken === null ? [] : [{ sql: "DELETE FROM db_meta WHERE key = ?", params: [absorbedKey], expect_changes: 1 }]),

@@ -566,6 +566,21 @@ export function forgetDraftingQueries(dbPath: string): void {
  * lock-free on purpose -- it is the hot path and never copies anything back. guardJobs, set by the
  * drafting_data__execute tool alone, refuses a job move a guarded job tool owns (JOB_MOVES).
  */
+/** The attachment trigger's refusal says a proceeding with a Writing has no board of its own, which is not
+ * so when its only Writings are research Writings. The trigger stays as it is, so the refusal adds the way on. */
+function withAttachHint<T>(run: () => T): T {
+  try {
+    return run();
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("a proceeding with a Writing has no board of its own")) {
+      err.message +=
+        " Nothing was written. If this proceeding's only Writings are research memos or case briefs, its own board is still drawn: " +
+        "attach the draft with filing_id set to one of them, and it shows on that board and moves to the proceeding's first other Writing when one is created.";
+    }
+    throw err;
+  }
+}
+
 export async function submissionDataExecute(
   dbPath: string,
   sqlScript: string,
@@ -574,7 +589,7 @@ export async function submissionDataExecute(
 ): Promise<{ ok: true; changes: number; warning?: string }> {
   const lock = await acquireDataLock(dbPath, env);
   try {
-    const result = runHelper({ op: "execute", db_path: dbPath, sql_script: sqlScript, guard_jobs: guardJobs }, env) as { ok: true; changes: number };
+    const result = withAttachHint(() => runHelper({ op: "execute", db_path: dbPath, sql_script: sqlScript, guard_jobs: guardJobs }, env)) as { ok: true; changes: number };
     const withWarning: { ok: true; changes: number; warning?: string } = { ...result };
     if (lock.brokeStale) {
       // A stale lock this long almost certainly means a crashed migrate or

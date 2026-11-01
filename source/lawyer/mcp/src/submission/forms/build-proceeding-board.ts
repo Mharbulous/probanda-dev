@@ -110,6 +110,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
   );
   const filingRows = rows<FilingRetiredRow & { kind: string }>(dbPath, "SELECT id, retired_on, kind FROM filings WHERE proceeding_id = ?", [proceedingId]);
   const retiredOn = new Map(filingRows.map((f) => [f.id, f.retired_on]));
+  // A research Writing has no board, live or retired, so a job on one, deleted or not, is drawn as a proceeding-scoped job is.
   const researchWritings = new Set(filingRows.filter(isResearchWriting).map((f) => f.id));
   const edge = (id: number): WorkBoardEdge => {
     const other = ticketById.get(id);
@@ -172,8 +173,7 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
       last_activity_at: lastActivity(t),
       active_at: activeAt(t, activeById.get(t.id)),
     };
-    // A research Writing has no board, so a job on one is drawn as a proceeding-scoped job is.
-    return { filing_id: t.filing_id !== null && researchWritings.has(t.filing_id) ? null : t.filing_id, ticket };
+    return t.filing_id !== null && researchWritings.has(t.filing_id) ? { filing_id: null, ticket: { ...ticket, research_writing: t.filing_id } } : { filing_id: t.filing_id, ticket };
   });
 
   // Section 14 Dispatch's skip reasons, over every filing in the proceeding: substance tables are proceeding-scoped.
@@ -190,7 +190,12 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
     }
   }
 
-  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted };
+  return {
+    tickets,
+    seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds),
+    holders,
+    deleted: deleted.map((d) => (d.filing_id !== null && researchWritings.has(d.filing_id) ? { ...d, filing_id: null } : d)),
+  };
 }
 
 /** True when a ticket belongs on `filingId`'s board (loose threads are proceeding-wide, ADR 0024 D11): its own tickets, plus proceeding-scoped ones

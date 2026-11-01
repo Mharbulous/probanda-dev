@@ -113,7 +113,7 @@ export interface OpenSessionResult extends BootstrapResult {
    * never an affidavit's status from drafting data alone (/draft). */
   court_file_affidavits?: CourtFileAffidavit[];
   /** The fast open (/draft section 7), present when this call opened a board: with a draft folder and
-   * no refusal, `filing_id`, or the first live filing, or the first pre-filing proceeding, opened by
+   * no refusal, `filing_id`, or the first live filing with a board, or the first pre-filing proceeding, opened by
    * the render a session would call with draft_dir, which wrote the matter's pages once. */
   opened?: {
     filing_id?: number;
@@ -163,8 +163,8 @@ function openBoard(
   filingId: number | undefined,
   timings: PhaseTimings
 ): Opening {
-  // A Milestone with no Writing is never the default: it opens only when filing_id names it.
-  const target = filingId ?? listed.filings.find((f) => f.retired_on === undefined && !f.milestone_only)?.filing_id;
+  // A Milestone with no Writing and a research Writing are never the default: each opens only when filing_id names it.
+  const target = filingId ?? listed.filings.find((f) => f.retired_on === undefined && !f.milestone_only && !f.research_writing)?.filing_id;
   const proceedingId = target === undefined ? listed.pre_filing_proceedings?.[0]?.proceeding_id : undefined;
   const phases = (rendered: PhaseTimings) => {
     for (const t of rendered) timings.push({ phase: `open: ${t.phase}`, ms: t.ms });
@@ -325,7 +325,7 @@ async function openSession(
   client: ClientContext = {},
   /** Passed to bootstrap, which then mints an unattended-class session token (Goal card design §5.4). */
   unattended = false,
-  /** The filing to open; omitted, the first live filing, else the first pre-filing proceeding. */
+  /** The filing to open; omitted, the first live filing with a board, else the first pre-filing proceeding. */
   filingId?: number
 ): Promise<{ result: OpenSessionResult; dates: MatterDates; matterDescription?: string }> {
   const started = performance.now();

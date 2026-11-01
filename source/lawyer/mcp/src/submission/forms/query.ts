@@ -93,6 +93,9 @@ export function isResearchWriting(filing: Pick<FilingRow, "kind">): boolean {
   return RESEARCH_WRITING_KINDS.has(filing.kind);
 }
 
+/** The same kinds for a statement's `kind IN (...)`: a write that re-checks them inside its own transaction. */
+export const RESEARCH_WRITING_KINDS_SQL = [...RESEARCH_WRITING_KINDS].map((k) => `'${k}'`).join(", ");
+
 export interface PartyRow {
   id: number;
   proceeding_id: number;

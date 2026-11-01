@@ -41,6 +41,9 @@ export interface BootstrapResult extends BuildStampStatus, SchemaSourceStatus {
     /** True only on a Milestone with no Writing (forms/query.ts MILESTONE_KIND): listed so a session
      * can find it, never a Writing, with no paths and no render_state, since it has no mockup. */
     milestone_only?: true;
+    /** True only on a research memo or case brief Writing (forms/query.ts isResearchWriting): listed so a
+     * session can find it. It has no board, and session entry opens it only when `filing_id` names it. */
+    research_writing?: true;
   }[];
   /** Present only on success (ADR 0018): every proceeding with no filing, in id order, with its forum
    * (null while not yet chosen). Each is a section of the Milestone, rendered from proceeding_id. */

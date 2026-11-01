@@ -384,7 +384,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "no paths. Before listing it moves an older build's mockups folder beside the database into the matter's " +
         "0. DRAFT, as drafting_forms__render describes (mockups_moved). A Milestone with no Writing (drafting_data__create_milestone) is listed among filings with " +
         "milestone_only true, no paths and no render_state: it is not a Writing, has a Milestone page and no view " +
-        "page, and the background job never renders it. Every response reports both schema_version and current_schema_version; if the database is behind " +
+        "page, and the background job never renders it. A research memo or case brief is listed with research_writing true: it has no Milestone or view page, and a proceeding holding only such Writings is in pre_filing_proceedings. Every response reports both schema_version and current_schema_version; if the database is behind " +
         "schema version 42, the oldest this runtime reads, migration_required is true and the response carries no " +
         "filings at all (issue 351) -- call " +
         "drafting_data__migrate on the same db_path, then call this again. If instead the database is ahead of the " +
@@ -474,7 +474,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, " +
         "and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is " +
         "drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder " +
-        "it opens filing_id, or the first live filing that is not a Milestone with no Writing (one opens only when " +
+        "it opens filing_id, or the first live filing that is not a Milestone with no Writing or a research memo or case brief (each opens only when " +
         "filing_id names it), or the first pre-filing proceeding, as drafting_forms__render " +
         "with draft_dir would (mockups and the matter's pages written once), returning that board as opened " +
         "(board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, " +

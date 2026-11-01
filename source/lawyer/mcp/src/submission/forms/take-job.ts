@@ -108,27 +108,28 @@ export function premiseOf(t: Pick<WorkBoardTicket, "proposal_keys" | "proposal_i
   return { state: "holds", line: `Each item's marker still fires.${reworded}`, dead, changed };
 }
 
-/** The other live jobs on the job's Writing (General Jobs only with General Jobs) that share a key, a
- * scope entry or two title words with it, fixed-text jobs left out on either side. */
+/** The other live jobs on the job's Writing (General Jobs only with General Jobs, a research Writing's only
+ * with that Writing's) that share a key, a scope entry or two title words with it, fixed-text jobs left out on
+ * either side. */
 function overlapping(section: WorkBoardData, t: WorkBoardTicket, cleared: number[]): WorkBoardTicket[] {
   if (fixedText(t.title)) return [];
   const mine = words(t.title);
   return section.tickets.filter((o) => {
     if (o.id === t.id || cleared.includes(o.id) || !LIVE.has(o.category) || fixedText(o.title)) return false;
-    if (Boolean(o.general) !== Boolean(t.general) || o.writing !== t.writing) return false;
+    if (Boolean(o.general) !== Boolean(t.general) || o.writing !== t.writing || o.research_writing !== t.research_writing) return false;
     const sharedWords = [...words(o.title)].filter((w) => mine.has(w)).length;
     return o.proposal_keys.some((k) => t.proposal_keys.includes(k)) || o.scope.some((s) => t.scope.includes(s)) || sharedWords >= 2;
   });
 }
 
-/** The board the job is drawn on: its Writing's, a General Job's first live Writing's in its
- * proceeding, or its proceeding's; on a merged board, the survivor's, unless that Writing is retired
- * (board-card.ts refuseAbsorbedCard). */
+/** The board the job is drawn on: its Writing's, a General Job's or a research Writing's job's first
+ * live Writing's in its proceeding, or its proceeding's; on a merged board, the survivor's, unless that
+ * Writing is retired (board-card.ts refuseAbsorbedCard). */
 function boardOf(dbPath: string, id: number): { filing_id?: number; proceeding_id?: number } {
   const [row] = submissionDataQuery(dbPath, "SELECT filing_id, proceeding_id FROM tickets WHERE id = ?", [id]).rows as unknown as { filing_id: number | null; proceeding_id: number }[];
   if (row === undefined) throw new ValidationError(`${TOOL}: no job ${id} in ${dbPath}; nothing was written`, "not_found");
   const filings = fetchBoardFilings(dbPath, row.proceeding_id);
-  const own = row.filing_id ?? (filings.find((f) => !f.retired_on) ?? filings[0])?.id ?? null;
+  const own = filings.some((f) => f.id === row.filing_id) ? row.filing_id : ((filings.find((f) => !f.retired_on) ?? filings[0])?.id ?? null);
   const index = new BoardIndex(dbPath);
   const ref = { filing_id: own, proceeding_id: row.proceeding_id };
   const survivor = index.absorbed(ref) ? index.survivorOf(ref) : ref;
@@ -181,7 +182,8 @@ export async function submissionDataTakeJob(args: TakeJobArgs, env: NodeJS.Proce
   const restating = restatingSteps(job);
   if (restating.length > 0) return refuse("restates", `Step ${restating.join(", ")} of job ${id} only restates its title or intent, so it names no work. What does the work divide into?`, { steps: restating });
 
-  const premise = premiseOf(job, derivedOf(section));
+  // A research Writing's job's keys are its own Writing's, which this board does not derive.
+  const premise = premiseOf(job, job.research_writing === undefined ? derivedOf(section) : null);
   if (job.steps.length === 1 && premise.dead > 0) {
     return premise.dead === job.proposal_keys.length
       ? refuse("keys_dead", `The marker no longer fires on any of job ${id}'s ${premise.dead} items: close it as superseded, or keep it and say what it should now do?`)

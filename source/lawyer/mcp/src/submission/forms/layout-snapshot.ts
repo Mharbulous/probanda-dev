@@ -28,7 +28,7 @@ import { readFirmProfile, type FirmProfile } from "../../tools/practice/firm-pro
 import { submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { composeLayoutSnapshot } from "../writing-snapshot.js";
 import { rendererKind } from "./filler-registry.js";
-import { boardAttachmentsHeld, fetchParties, fetchProceeding, MILESTONE_KIND, type FilingRow, type ProceedingRow } from "./query.js";
+import { boardAttachmentsHeld, fetchParties, fetchProceeding, isResearchWriting, MILESTONE_KIND, RESEARCH_WRITING_KINDS_SQL, type FilingRow, type ProceedingRow } from "./query.js";
 
 type Json = Record<string, unknown>;
 
@@ -259,7 +259,7 @@ export interface CreateWritingResult {
   venue_file: string | null;
   learned: boolean;
   /** The drafts attached to the proceeding's own board (schema v67, ADR 0042) that this write moved
-   * onto the new Writing's board: non-zero only on a proceeding's first Writing, always 0 below v67. */
+   * onto the new Writing's board: non-zero only on a proceeding's first Writing with a board, always 0 below v67. */
   attachments_moved: number;
   warning?: string;
 }
@@ -268,7 +268,7 @@ export interface CreateWritingResult {
  * drafting_data__create_writing: a new Writing, its type resolved from the tree key, its layout
  * validated and stored with each cited passage hash, its needs_forum_parts taken from the type,
  * and its signer chosen, in one INSERT under the data lock. Nothing else writes those two columns.
- * On a proceeding's first Writing the same transaction re-points the drafts attached to the
+ * On a proceeding's first Writing with a board the same transaction re-points the drafts attached to the
  * proceeding's own board to the new Writing (ADR 0042): that board becomes the Writing's, so each
  * draft stays on exactly one board.
  */
@@ -315,13 +315,16 @@ export async function submissionDataCreateWriting(args: CreateWritingArgs, seams
       expect_changes: 1,
     },
   ];
-  // Only on the proceeding's first Writing: a proceeding that already had one had no board of its own.
-  if (boardAttachmentsHeld(args.db_path)) {
+  // Only on the proceeding's first Writing with a board: a proceeding that already had one had no board
+  // of its own. A research Writing has none, so creating one moves nothing, and the first Writing after it
+  // takes the proceeding's rows and any a research Writing holds.
+  if (boardAttachmentsHeld(args.db_path) && !isResearchWriting({ kind: built.kind })) {
     statements.push({
       sql:
-        "UPDATE board_attachments SET filing_id = last_insert_rowid() WHERE proceeding_id = ? AND filing_id IS NULL " +
-        "AND NOT EXISTS (SELECT 1 FROM filings WHERE proceeding_id = ? AND id <> last_insert_rowid())",
-      params: [proceeding.id, proceeding.id],
+        "UPDATE board_attachments SET filing_id = last_insert_rowid() WHERE proceeding_id = ? " +
+        `AND (filing_id IS NULL OR filing_id IN (SELECT id FROM filings WHERE proceeding_id = ? AND kind IN (${RESEARCH_WRITING_KINDS_SQL}))) ` +
+        `AND NOT EXISTS (SELECT 1 FROM filings WHERE proceeding_id = ? AND id <> last_insert_rowid() AND kind NOT IN (${RESEARCH_WRITING_KINDS_SQL}))`,
+      params: [proceeding.id, proceeding.id, proceeding.id],
     });
   }
   let written: Awaited<ReturnType<typeof submissionDataWriteAll>>;

@@ -20,6 +20,7 @@
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { BoardIndex, type BoardRef } from "./board-members.js";
+import { fetchBoardFilings, isResearchWriting, RESEARCH_WRITING_KINDS_SQL } from "./query.js";
 
 const TOOL = "drafting_data__set_board_goal";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -187,14 +188,14 @@ export async function submissionDataSetBoardGoal(args: SetBoardGoalArgs, env: No
 
   const onFiling = args.filing_id !== undefined;
   if (onFiling) {
-    if (submissionDataQuery(args.db_path, "SELECT 1 FROM filings WHERE id = ?", [id]).rows.length === 0) {
-      throw new NotFoundError(`${TOOL}: no Writing or Milestone ${id} in ${args.db_path}`, "not_found");
-    }
+    const [f] = submissionDataQuery(args.db_path, "SELECT kind FROM filings WHERE id = ?", [id]).rows as unknown as { kind: string }[];
+    if (f === undefined) throw new NotFoundError(`${TOOL}: no Writing or Milestone ${id} in ${args.db_path}`, "not_found");
+    if (isResearchWriting(f)) throw new ValidationError(`${TOOL}: Writing ${id} is a research result, which has no board and so no goal -- set the goal on its proceeding's board`, "research_writing");
   } else {
-    const [p] = submissionDataQuery(args.db_path, "SELECT (SELECT COUNT(*) FROM filings WHERE proceeding_id = proceedings.id) AS filings FROM proceedings WHERE id = ?", [id])
-      .rows as unknown as { filings: number }[];
-    if (p === undefined) throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
-    if (p.filings > 0) {
+    if (submissionDataQuery(args.db_path, "SELECT 1 FROM proceedings WHERE id = ?", [id]).rows.length === 0) {
+      throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
+    }
+    if (fetchBoardFilings(args.db_path, id).length > 0) {
       throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- set the goal on a Writing's Milestone", "proceeding_has_writing");
     }
   }
@@ -222,14 +223,14 @@ export async function submissionDataSetBoardGoal(args: SetBoardGoalArgs, env: No
   const description = args.description ?? (at === undefined ? prior?.description : merged[at - 1].description) ?? null;
 
   // A filing key stands while its filings row does; a proceeding key while the proceeding has no
-  // Writing, or while a merge names the proceeding's board as survivor.
+  // Writing but research Writings, or while a merge names the proceeding's board as survivor.
   const stale = (
     submissionDataQuery(
       args.db_path,
       `SELECT key FROM db_meta
         WHERE (key GLOB '${FILING_PREFIX}*' AND CAST(substr(key, ${FILING_PREFIX.length + 1}) AS INTEGER) NOT IN (SELECT id FROM filings))
            OR (key GLOB '${PROCEEDING_PREFIX}*' AND CAST(substr(key, ${PROCEEDING_PREFIX.length + 1}) AS INTEGER) NOT IN
-                 (SELECT id FROM proceedings p WHERE NOT EXISTS (SELECT 1 FROM filings f WHERE f.proceeding_id = p.id)))
+                 (SELECT id FROM proceedings p WHERE NOT EXISTS (SELECT 1 FROM filings f WHERE f.proceeding_id = p.id AND f.kind NOT IN (${RESEARCH_WRITING_KINDS_SQL}))))
         ORDER BY key`
     ).rows as unknown as { key: string }[]
   )

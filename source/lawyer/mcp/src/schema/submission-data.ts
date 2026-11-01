@@ -112,7 +112,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "to this machine's `person` when the firm roster marks that person an active lawyer; a passed signer_key must be one; " +
         "a type declaring signer: party takes signer_party_id, a party of the proceeding. Refusals write nothing: kind_unresolved, recipient_mismatch, " +
         "invalid_layout (an unknown part source, a needs-forum type under _NoVenue), projection_not_built, forum_mismatch, " +
-        "needs_forum, invalid_signer. On a proceeding's first Writing the same transaction moves every draft attached to the " +
+        "needs_forum, invalid_signer. On a proceeding's first Writing other than a research memo or case brief, which has no board, the same transaction moves every draft attached to the " +
         "proceeding's own Milestone (a client letter or reply, ADR 0042) onto the new Writing's board, which takes that " +
         "board's place, so each stays on one board. Returns filing_id, needs_forum_parts, the stored layout and venue " +
         "blocks, the signer, type_file, venue_file, learned and attachments_moved (how many drafts it moved; 0 on a " +
@@ -151,7 +151,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       description:
         "Create one Milestone with no Writing on a proceeding: the one door for a board that holds work no Writing " +
         "carries, such as finding, stamping or scanning a paper original. It is not a Writing and is never called one. " +
-        "`title` is the board's name in the practitioner's own words. The proceeding must already have a Writing: one " +
+        "`title` is the board's name in the practitioner's own words. The proceeding must already have a Writing other than a research memo or case brief: one " +
         "with none keeps its own Milestone, which already holds jobs with no Writing, and the call is refused with " +
         "no_writing. The board has a Milestone page (`Milestone <id>.html`) and jobs, and never a mockup, " +
         "a Writing folder, a view page, completion criteria, Proposals or ingest inputs; this tool writes no " +
@@ -202,7 +202,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "Once a pre-filing board is merged, its proceeding's first Writing joins the survivor. One db_meta row per " +
         "absorbed board, key `board_member:filing:<id>` or `board_member:proceeding:<id>`. Refusals write nothing: " +
         "invalid_boards, invalid_board, not_confirmed, invalid_session_token, invalid_statement, invalid_description, " +
-        "not_found, board_retired, proceeding_has_writing, board_merged (name its survivor instead), same_board. " +
+        "not_found, board_retired, research_writing (a research memo or case brief has no board to merge), proceeding_has_writing, board_merged (name its survivor instead), same_board. " +
         "Returns survivor, absorbed (each {filing_id, proceeding_id}), goal_status (confirmed or needs_consolidation) " +
         "and a note.",
       inputSchema: {
@@ -785,7 +785,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "lock; changes 1 means this call completed it, 0 that another session did), not_held (another session's token is " +
         "on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing), steps_open. Only when this " +
         "call completed the job (changes 1) are the matter's Milestone pages and Litigation Strategy rewritten, by the render a " +
-        "session runs with draft_dir: the job's filing's, or for a job with no filing_id the first live filing's in its " +
+        "session runs with draft_dir: the job's filing's, or for a job with no filing_id or on a research memo or case brief, which has no board, the first live filing's in its " +
         "proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Milestone " +
         "pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals " +
         "write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, " +
@@ -811,7 +811,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "Record one Milestone's statement of goals: the card labelled Goal at the top of the board, " +
         "drafting_forms__render's board_summary `Goal:` line and drafting_forms__board_card's goals lane. Pass exactly " +
         "one of filing_id (a Writing's board or a Milestone with no Writing) and proceeding_id (a pre-filing " +
-        "proceeding's board; one that has a Writing is refused, proceeding_has_writing). status is confirmed (the " +
+        "proceeding's board; one that has a Writing other than a research memo or case brief is refused, proceeding_has_writing). status is confirmed (the " +
         "statement the practitioner approved), inferred (the session's own wording after the practitioner declined, " +
         "never treated as confirmed) or declined (the practitioner declined and nothing is inferred yet). statement " +
         "is the whole text, stored verbatim with its indentation and line breaks; it is required for confirmed and " +
@@ -835,7 +835,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "confirmed or inferred, and the board's own statement is kept. A board merged into another is refused " +
         "(board_merged): set the goal on its survivor. Refusals write nothing: invalid_board, " +
         "invalid_session_token, invalid_status, invalid_statement, invalid_description, not_found, " +
-        "proceeding_has_writing, board_merged, invalid_merged_index. Returns key, filing_id or proceeding_id, description (null: the default), statement, " +
+        "research_writing (a research memo or case brief has no board and so no goal), proceeding_has_writing, board_merged, invalid_merged_index. Returns key, filing_id or proceeding_id, description (null: the default), statement, " +
         "status, approved_at, updated_at, session_wording (true when inferred), stale_keys_removed and a note.",
       inputSchema: {
         type: "object",

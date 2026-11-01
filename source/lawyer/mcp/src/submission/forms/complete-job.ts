@@ -4,10 +4,11 @@
 // jobs-run.md §9. When this call's completion landed, the matter's pages are rewritten by the
 // render a session would run itself with draft_dir, because a job write moves no revision and
 // starts no background render, so nothing else would refresh the Milestone pages. A job with no
-// filing_id (a scrutiny review job) shows on every filing's page in its proceeding, so when its
-// proceeding has a filing, that filing's render is used: any render rewrites every page, and
-// milestone_path is the rendered filing's page. Only a proceeding with no filing at all goes through
-// the proceeding's render, and milestone_path is then the proceeding's page.
+// filing_id (a scrutiny review job) or on a research Writing, which has no board, shows on every
+// filing's page in its proceeding, so when its proceeding has a filing with a board, that filing's
+// render is used: any render rewrites every page, and milestone_path is the rendered filing's page.
+// Only a proceeding with no such filing goes through the proceeding's render, and milestone_path is
+// then the proceeding's page.
 //
 // Before either statement, a job this session holds is read for its steps: while any step is open,
 // waiting or to be retried (step-state.ts, schema v78) nothing is written and the outcome is
@@ -77,12 +78,13 @@ type Pages = Pick<CompleteJobResult, "pages_written" | "milestone_path" | "board
 /** The render a session runs with draft_dir, as open_session's openBoard runs it. */
 function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientContext, todos: MatterTodos | undefined, dates: MatterDates | undefined): Pages {
   try {
-    let filingId = read.filing_id;
+    const boards = fetchBoardFilings(args.db_path, read.proceeding_id);
+    let filingId = boards.some((f) => f.id === read.filing_id) ? read.filing_id : null;
     if (filingId === null) {
       // The proceeding's first filing by id that is not retired, else its first filing. This picks by
       // id, not by bootstrap's ranked order, so it can differ from open_session's openBoard. Never a
       // Milestone with no Writing, which shows no job without a filing_id.
-      const filings = fetchBoardFilings(args.db_path, read.proceeding_id).filter((f) => !isJobOnlyBoard(f));
+      const filings = boards.filter((f) => !isJobOnlyBoard(f));
       filingId = (filings.find((f) => f.retired_on === null) ?? filings[0])?.id ?? null;
     }
     if (filingId !== null) {

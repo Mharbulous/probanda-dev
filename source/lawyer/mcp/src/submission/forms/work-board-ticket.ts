@@ -106,6 +106,10 @@ export interface WorkBoardTicket {
    * on a Writing's board, where General and Writing Jobs mix; absent everywhere else, so a Writing
    * Job's data is unchanged and a pre-filing board, whose every job has no Writing, tags none. */
   general?: boolean;
+  /** A job on a research Writing, which has no board: that Writing's id. The job is drawn as a General
+   * Job is, and is that Writing's work only, so no other Writing's gate or criterion reads it, and take_job
+   * checks it for overlap only against that Writing's jobs. Absent on every other job. */
+  research_writing?: number;
 }
 
 /** The codes for design §5.3's conditions, plus #1051's shared material, in the fixed order a

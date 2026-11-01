@@ -48,7 +48,8 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
       const eligible = ineligible_reasons.length === 0;
       return withIdleFlag({ ...t.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t.ticket, printed), ...(t.filing_id === null ? { general: true } : {}) }, ctx.rendered);
     });
-  const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines, afterGateJobs(board.tickets, ctx.filing.id));
+  // A research Writing's job is on this board and is none of this Writing's completion.
+  const { goal, criteria } = goalFor(ctx, tickets.filter((t) => t.research_writing === undefined), shelved, current, deadlines, afterGateJobs(board.tickets, ctx.filing.id));
   // Section 14 Dispatch's last skip reasons, read off this render's inventory, this filing's type file and its
   // `recipients` and gate rows: a new array, since dispatch_skips is shared with the proceeding board's ticket.
   const unmet = (id: string): boolean => criteria.some((c) => c.id === id && c.state !== "met");
@@ -59,7 +60,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
     ...(waitsOnGate(t.title) && unmet("gate") ? [{ reason: "before_gate" } as const] : []),
   ];
   const gated = tickets.map((t): WorkBoardTicket => {
-    const skips = t.category === "ready" ? lateSkips(t) : [];
+    const skips = t.category === "ready" && t.research_writing === undefined ? lateSkips(t) : [];
     return skips.length === 0 ? t : { ...t, dispatch_skips: [...t.dispatch_skips, ...skips] };
   });
   const inputTypes = declaredIngestInputs(ctx.filing);

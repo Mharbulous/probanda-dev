@@ -7,8 +7,12 @@
 // A pre-filing board is its proceeding's until the proceeding gets a Writing (ADR 0018). Then the
 // proceeding's first Writing takes its place: a row absorbing the proceeding absorbs that Writing,
 // and a row naming the proceeding as survivor names that Writing.
+//
+// A research Writing (query.ts isResearchWriting) is never a board, so here it is never a proceeding's
+// first Writing, and a membership row naming one, written before merge_milestones refused it, is read as
+// no row: the other board stands alone.
 
-import { isJobOnlyBoard, type FilingRow } from "./query.js";
+import { isJobOnlyBoard, isResearchWriting, type FilingRow } from "./query.js";
 import { rows } from "../query-rows.js";
 
 /** A board: a filing's (a Writing or a Milestone with no Writing), or a pre-filing proceeding's (filing_id null). */
@@ -41,9 +45,12 @@ export class BoardIndex {
 
   constructor(dbPath: string) {
     this.filings = rows<Pick<FilingRow, "id" | "proceeding_id" | "kind">>(dbPath, "SELECT id, proceeding_id, kind FROM filings ORDER BY id");
-    for (const f of this.filings) if (!this.firstFiling.has(f.proceeding_id)) this.firstFiling.set(f.proceeding_id, f);
+    for (const f of this.filings) if (!isResearchWriting(f) && !this.firstFiling.has(f.proceeding_id)) this.firstFiling.set(f.proceeding_id, f);
+    const research = this.filings.filter(isResearchWriting);
+    const absorbedResearch = new Set(research.map((f) => memberKey({ filing_id: f.id, proceeding_id: f.proceeding_id })));
     for (const r of rows<{ key: string; value: string }>(dbPath, `SELECT key, value FROM db_meta WHERE key GLOB '${PREFIX}*'`)) {
       const v = JSON.parse(r.value) as BoardRef;
+      if (absorbedResearch.has(r.key) || research.some((f) => f.id === v.filing_id)) continue;
       this.rows.set(r.key, { filing_id: v.filing_id ?? null, proceeding_id: v.proceeding_id });
     }
   }

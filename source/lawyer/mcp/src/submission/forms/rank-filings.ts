@@ -1,7 +1,7 @@
 // Every filing in Litigation Strategy order, each with its bootstrap entry.
 
 import { orderFilings, type Orderable } from "../filing-order.js";
-import { fetchAllFilingsForProceeding, fetchAllProceedings, fetchHearingDate, fetchLatestActivity, isJobOnlyBoard } from "./query.js";
+import { fetchAllFilingsForProceeding, fetchAllProceedings, fetchHearingDate, fetchLatestActivity, isJobOnlyBoard, isResearchWriting } from "./query.js";
 import { deriveLifecycle } from "./lifecycle.js";
 import type { RankedFiling } from "./render-matter-board.js";
 import { type BootstrapResult } from "./bootstrap-result.js";
@@ -95,6 +95,7 @@ export function rankFilings(
           },
         };
       }
+      const research = isResearchWriting(filing) ? { research_writing: true as const } : {};
       const hearingDate = fetchHearingDate(dbPath, filing.id);
       // No appeal deadline on this path (#583 §3), so the lifecycle never reaches appeal_expired.
       const lifecycle = deriveLifecycle(filing, hearingDate, now.slice(0, 10));
@@ -117,6 +118,7 @@ export function rankFilings(
             lifecycle: lifecycle.state,
             retired_on: filing.retired_on,
             ...(filing.retirement_reason ? { retirement_reason: filing.retirement_reason } : {}),
+            ...research,
           },
         };
       }
@@ -141,6 +143,7 @@ export function rankFilings(
           paths: existingMockupPaths(dbPath, filing.id),
           lifecycle: lifecycle.state,
           render_state: state,
+          ...research,
         },
       };
     })

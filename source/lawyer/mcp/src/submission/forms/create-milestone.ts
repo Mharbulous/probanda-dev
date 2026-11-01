@@ -1,12 +1,12 @@
 // drafting_data__create_milestone: a Milestone with no Writing, for work on a proceeding that is no
 // Writing's. It is stored as a `filings` row of the reserved kind MILESTONE_KIND with no stored
 // layout, so the jobs on it carry its id as their filing_id and show on no other board. Only this
-// tool writes that kind: drafting_data__create_writing refuses it. A proceeding with no Writing
-// keeps its own board (ADR 0018), so this write is refused there.
+// tool writes that kind: drafting_data__create_writing refuses it. A proceeding with no Writing but
+// research Writings keeps its own board (ADR 0018), so this write is refused there.
 
 import { DataServerError, ValidationError } from "../../errors.js";
 import { submissionDataWriteAll } from "../backend.js";
-import { fetchProceeding, MILESTONE_KIND } from "./query.js";
+import { fetchProceeding, MILESTONE_KIND, RESEARCH_WRITING_KINDS_SQL } from "./query.js";
 
 const TOOL = "drafting_data__create_milestone";
 
@@ -35,10 +35,10 @@ export async function submissionDataCreateMilestone(args: CreateMilestoneArgs, e
     args.db_path,
     [
       {
-        // The WHERE re-checks, inside the INSERT's own transaction, that the proceeding has a Writing.
+        // The WHERE re-checks, inside the INSERT's own transaction, that the proceeding has a Writing with a board.
         sql:
           "INSERT INTO filings (proceeding_id, kind, title, needs_forum_parts) " +
-          "SELECT ?, ?, ?, 0 WHERE EXISTS (SELECT 1 FROM filings WHERE proceeding_id = ? AND kind <> ?)",
+          `SELECT ?, ?, ?, 0 WHERE EXISTS (SELECT 1 FROM filings WHERE proceeding_id = ? AND kind <> ? AND kind NOT IN (${RESEARCH_WRITING_KINDS_SQL}))`,
         params: [proceeding.id, MILESTONE_KIND, title, proceeding.id, MILESTONE_KIND],
         expect_changes: 1,
       },

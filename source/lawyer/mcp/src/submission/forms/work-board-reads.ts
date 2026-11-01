@@ -1,6 +1,6 @@
 // The Milestone's SQL row shapes and its plain ticket and attachment reads.
 
-import { boardAttachmentsHeld, deletedAtHeld, MILESTONE_KIND, liveTicketClause } from "./query.js";
+import { boardAttachmentsHeld, deletedAtHeld, MILESTONE_KIND, liveTicketClause, RESEARCH_WRITING_KINDS_SQL } from "./query.js";
 import { rows } from "../query-rows.js";
 
 export type TicketStatus = "queued" | "wip" | "completed" | "superseded";
@@ -129,13 +129,17 @@ export function fetchDeletedTickets(dbPath: string, proceedingId: number): Delet
  * board (`filingId` null) holds every row of its proceeding. A Writing's board holds its own rows and,
  * only when it is the proceeding's lowest-id live Writing, the proceeding's rows with no Writing (rows
  * written by hand after the proceeding's first Writing, which create_writing does not re-point), so no
- * draft is ever on two boards. A Milestone with no Writing holds its own rows only and is never that Writing. */
+ * draft is ever on two boards. A Milestone with no Writing holds its own rows only and is never that Writing.
+ * A research Writing has no board, so it is never that Writing either, and a row naming one reads as a row
+ * with no Writing: a trigger refuses `filing_id` NULL once the proceeding has any filing, so a memo-only
+ * proceeding's board can hold a new draft only that way. */
 export function fetchAttachments(dbPath: string, proceedingId: number, filingId: number | null): WorkBoardAttachment[] {
   if (!boardAttachmentsHeld(dbPath)) return [];
+  const research = `SELECT id FROM filings WHERE proceeding_id = ? AND kind IN (${RESEARCH_WRITING_KINDS_SQL})`;
   return rows<WorkBoardAttachment>(
     dbPath,
-    "SELECT id, filing_id, path, kind, attached_on FROM board_attachments WHERE proceeding_id = ? AND (? IS NULL OR filing_id = ? " +
-      "OR (filing_id IS NULL AND ? = (SELECT MIN(id) FROM filings WHERE proceeding_id = ? AND retired_on IS NULL AND kind <> ?))) ORDER BY id",
-    [proceedingId, filingId, filingId, filingId, proceedingId, MILESTONE_KIND]
+    `SELECT id, CASE WHEN filing_id IN (${research}) THEN NULL ELSE filing_id END AS filing_id, path, kind, attached_on FROM board_attachments WHERE proceeding_id = ? AND (? IS NULL OR filing_id = ? ` +
+      `OR ((filing_id IS NULL OR filing_id IN (${research})) AND ? = (SELECT MIN(id) FROM filings WHERE proceeding_id = ? AND retired_on IS NULL AND kind <> ? AND kind NOT IN (${RESEARCH_WRITING_KINDS_SQL})))) ORDER BY id`,
+    [proceedingId, proceedingId, filingId, filingId, proceedingId, filingId, proceedingId, MILESTONE_KIND]
   );
 }
