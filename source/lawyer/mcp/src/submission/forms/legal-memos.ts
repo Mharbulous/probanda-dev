@@ -78,20 +78,20 @@ const NEUTRAL_CITATION = /^\d{4} [A-Z]{2,}[A-Za-z]* \d+\b/;
 const VERSIONED = /^(.*?)(?: v(\d+))?(\.[^.\\/]+)$/i;
 /** A file or folder that cannot be read now (locked by a sync client, permissions, gone): skipped. */
 const UNREADABLE = new Set(["EPERM", "EBUSY", "EACCES", "ENOENT"]);
-/** A case brief's file (shared/case-brief-template.md), which holds a decision's citation and is no memo: a `.md`
- * named `[<date> ]case brief <the case>`. A filing or decision that says "case brief" in its name is none. */
-const CASE_BRIEF_NAME = /^(?:\d{4}-\d{2}-\d{2}\s+)?case brief\s.*\.md$/i;
+/** A case brief's name (shared/case-brief-template.md), which holds a decision's citation and is no memo's:
+ * `[<date> ]case brief <the case>`. A filing or decision that only says "case brief" in its name opens otherwise. */
+const CASE_BRIEF_OPENING = /^(?:\d{4}-\d{2}-\d{2}\s+)?case brief\s/i;
 
-/** Whether a file name is a case brief's. */
+/** Whether a file name is a case brief's: only a `.md` is. */
 export function isCaseBriefFile(name: string): boolean {
-  return CASE_BRIEF_NAME.test(name);
+  return CASE_BRIEF_OPENING.test(name) && name.toLowerCase().endsWith(".md");
 }
 
 /** A memo's kind from its file name alone, or null when the name is no memo's. */
 export function memoSourceOf(name: string): MemoSource | null {
   if (isCaseBriefFile(name)) return null;
   const lower = name.toLowerCase();
-  if (lower.endsWith(".docx")) return NEUTRAL_CITATION.test(name) ? null : "westlaw";
+  if (lower.endsWith(".docx")) return NEUTRAL_CITATION.test(name) || CASE_BRIEF_OPENING.test(name) ? null : "westlaw";
   if (!lower.endsWith(".md")) return null;
   if (/(?:^|\s)note-up(?:\s|\.md$)/.test(lower)) return "note_up";
   if (/(?:^|\s)ml re(?:\s|\.md$)/.test(lower) || lower.includes("research-lawyer answer")) return "research_memo";

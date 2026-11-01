@@ -332,7 +332,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this " +
         "title and one of these step texts: a pass finding, §3g); scrutiny_statement (a queued or wip, unshelved " +
         "'Review scrutiny finding: ' job is scoped to the statement in scope: §3d); authority_brief (a queued or wip, unshelved " +
-        "'Brief the case: ' job in the proceeding is scoped to the one authority in scope: §3n); holder_lock (held_ticket_id no " +
+        "'Brief the case: ' job in the proceeding is scoped to any authority of the same case: §3n); holder_lock (held_ticket_id no " +
         "longer carries session_token under claim_no: a spin-off blocker, §3f, which copies the held job's scope). filing_id is the " +
         "Writing's or Milestone's id, or null for a proceeding-scoped job, and is never left out. priority is an " +
         "integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a " +

@@ -220,6 +220,20 @@ class Saving(unittest.TestCase):
     def test_an_incomplete_save_is_repaired_not_filed_from_scratch(self):
         self.assertIn("A save refused `brief_incomplete` is a script that missed a slot", flat(read("shared", "case-brief-template.md")))
 
+    def test_a_saved_brief_is_looked_for_through_the_whole_law_tree(self):
+        template = flat(read("shared", "case-brief-template.md"))
+        self.assertIn("with no board, look through `6. LAW` and every folder under it by `case-brief/SKILL.md` step 3's route", template)
+        self.assertNotIn("or `research_filing__list_law_folder` with no board", template)
+
+    def test_a_re_brief_saves_beside_the_brief_it_reuses(self):
+        self.assertIn("numbered only within one folder, so its `destination_dir` is the folder holding that brief", flat(read("shared", "case-brief-template.md")))
+
+    def test_a_re_brief_of_a_sent_or_retired_writing_leaves_it_alone(self):
+        self.assertIn("When that title's only Writing has `filed_on` or `retired_on` set, leave it and its statements as they are", flat(read("shared", "case-brief-template.md")))
+
+    def test_the_spawn_prompt_defers_the_stem_to_the_template(self):
+        self.assertIn('File stem: <the stem the template\'s "Saving it" chooses', read("case-brief", "SKILL.md"))
+
 
 class NotTheDecision(unittest.TestCase):
     def test_a_brief_is_not_taken_for_the_decision(self):
@@ -227,6 +241,17 @@ class NotTheDecision(unittest.TestCase):
         self.assertIn("never the decision: never ingest one", flat(read("shared", "legal-research.md")))
         self.assertIn("Never ingest a brief", read("shared", "case-brief-template.md"))
         self.assertIn("A file named `case brief`", read("case-brief", "SKILL.md"))
+
+    def test_a_note_up_is_skipped_when_locating_an_authority(self):
+        self.assertIn("`*case brief*`, `*note-up*` or `*memo*`", read("drafting-data", "references", "locate-authority.md"))
+
+
+class Guard(unittest.TestCase):
+    def test_the_guard_is_described_by_the_case_not_one_authority(self):
+        self.assertIn("scoped to any authority of the same case anywhere in the proceeding", read("drafting-data", "references", "jobs-stock.md"))
+        schema = (REPO / "source" / "lawyer" / "mcp" / "src" / "schema" / "submission-data.ts").read_text(encoding="utf-8")
+        self.assertIn("is scoped to any authority of the same case", schema)
+        self.assertNotIn("scoped to the one authority in scope", schema)
 
 
 if __name__ == "__main__":

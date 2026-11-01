@@ -511,6 +511,6 @@ One fixed-text job per case the practitioner asks to have briefed: a case they n
 - Scope: `('authorities', <the case's id>)`, the one row. A case named with no authority row gets one first (`kind` `case`, the citation as given).
 - `kind` `work`, `billing_anchor` as §3i gives it, `priority` `bottom`, `filing_id` the board's Writing, or null on a proceeding with no Writing. No `created_by`, no `ticket_proposals` row, no blocks.
 
-Write it with `drafting_data__create_job` under guard `authority_brief`, which matches a live brief job scoped to that authority anywhere in the proceeding. A guard that fires says "already a job: Job #K" in one line. Then re-render the board so its pages list the requests.
+Write it with `drafting_data__create_job` under guard `authority_brief`, which matches a live brief job scoped to any authority of the same case anywhere in the proceeding: one citation, its case, spacing, periods, pinpoint and closing court aside. A guard that fires says "already a job: Job #K" in one line. Then re-render the board so its pages list the requests.
 
 A brief job is no research job for `/legal-research` board mode, and `/case-brief` works it.

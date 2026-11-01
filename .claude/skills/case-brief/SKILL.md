@@ -31,7 +31,7 @@ One brief is one decision. For several decisions, run the steps once per decisio
    Decision: <absolute path, or the file name alone for a wholly scanned PDF>
    Decision text: <the text_path, or none>
    Page manifest: <the manifest, or none>
-   File stem: <YYYY-MM-DD case brief <style of cause>, <citation>>
+   File stem: <the stem the template's "Saving it" chooses: a saved brief's when the case has one, else YYYY-MM-DD case brief <style of cause>, <citation>>
    Style of cause: <style of cause>
    Citation: <citation>
    Focus: <the issues the practitioner narrowed it to, or all>

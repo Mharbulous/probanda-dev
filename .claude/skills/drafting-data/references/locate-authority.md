@@ -13,7 +13,7 @@ Owned by `/drafting-data`. Finds the file on disk that holds one `authorities` r
 3. **Filename match.** Otherwise list `6. LAW` and everything under it, in the matter folder as this session sees it. `matter_root` is a host path: in a Cowork session, glob the mounted matter folder instead, and use `matter_root` only to name the folder in the report (Configuration: a `C:\…` listing there is unproven). Try upper and lower case, since a mounted filesystem may be case-sensitive.
    - `kind = case`: filenames containing the neutral citation, spaced or unspaced (`2026 BCCA 74`, `2026bcca74`).
    - Statute, regulation or rule: the citation's chapter or regulation number (`168-2009`), or the title's distinctive words, never "Act", "Regulation", "Rules" or "British Columbia" alone.
-   - Skip files named `* ML re *`, `*research-lawyer answer*`, `*case brief*` or `*memo*`: they cite the authority but are not its text. Filter by filename only, never by folder, because the authority files sit in the same folder as the answer.
+   - Skip files named `* ML re *`, `*research-lawyer answer*`, `*case brief*`, `*note-up*` or `*memo*`: they cite the authority but are not its text. Filter by filename only, never by folder, because the authority files sit in the same folder as the answer.
 
    Arm: `filename match`. Read nothing else in the tree, and do not widen the search after a miss.
 
