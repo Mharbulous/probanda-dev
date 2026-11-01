@@ -1,6 +1,6 @@
 ---
 name: extract-sought-orders
-description: Transcribes a served Notice of Application's Part 1 verbatim into strict JSON, stopping at the first PART 2 heading. Read-only, except that a dispatch by id stages its result through stage_result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH <id>, one instance per Notice of Application.
+description: Transcribes a served Notice of Application's Part 1 verbatim into strict JSON, stopping at the first PART 2 heading. Read-only, except that a dispatch by id stages its result through stage_result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH {id}, one instance per Notice of Application.
 model: opus
 effort: high
 tools:

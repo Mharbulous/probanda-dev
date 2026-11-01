@@ -7,7 +7,7 @@ description: >
   Spawned by /calculate's itemize-boc at the start of every run with model: sonnet.
 model: sonnet
 inputs:
-  - name: {SKILL_DIR} — the resolved path to the itemize-boc subskill directory (e.g. skills/calculate/subskills/itemize-boc/).
+  - name: "{SKILL_DIR} — the resolved path to the itemize-boc subskill directory (e.g. skills/calculate/subskills/itemize-boc/)."
 ---
 
 # Tariff Currency Checker — Subagent Prompt
