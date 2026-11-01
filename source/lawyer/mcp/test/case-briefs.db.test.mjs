@@ -5,7 +5,7 @@
 // name is synthetic.
 
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
@@ -52,6 +52,8 @@ async function matter(t, { authorities = [], files = [], sql = "" } = {}) {
   for (const f of files) {
     mkdirSync(join(law, f, ".."), { recursive: true });
     writeFileSync(join(law, f), "brief", "utf-8");
+    const named = /(\d{4}-\d{2}-\d{2}) case brief/.exec(f)?.[1];
+    if (named !== undefined) stamp(join(law, f), named);
   }
   const dbPath = join(caseData, "submission.sqlite");
   await freshSubmissionDb(dbPath);
@@ -71,6 +73,11 @@ async function matter(t, { authorities = [], files = [], sql = "" } = {}) {
      ${sql}`
   );
   return { matterRoot, dbPath, law, draft: join(matterRoot, "0. DRAFT") };
+}
+
+/** A file last written at noon on that day. */
+function stamp(path, day) {
+  utimesSync(path, new Date(`${day}T12:00`), new Date(`${day}T12:00`));
 }
 
 const cases = (m, ids = [1]) => buildCaseBriefsData(m.dbPath, ids, m.matterRoot).cases;
@@ -269,6 +276,148 @@ test("a case relied on with no citation recorded takes the citation its brief's 
   assert.equal(cases(m)[0].citation, "2005 BCCA 7");
 });
 
+test("a comma in a style is no citation, and a citation with no comma before it is still split off", async (t) => {
+  const m = await matter(t, {
+    files: [
+      brief("2026-10-20", "Smith, 1234 BC Ltd v Jones, 2020 BCSC 1"),
+      brief("2026-10-19", "Smith, 12 Main Street Ltd v Jones, 2020 BCSC 2"),
+      brief("2026-10-18", "Smith, 456789 BC Ltd v Jones, 2020 BCSC 3"),
+      brief("2026-10-17", "Doe v Roe (2020 BCSC 4)"),
+      brief("2026-10-16", "Doe v Moe 2020 BCSC 5"),
+      brief("2026-10-15", "Low v Case, 2021 canlii 3"),
+      brief("2026-10-14", "Smith, 2 Others v Jones"),
+      brief("2026-10-13", "Abc, 100 Mile House v Def, 2019 BCCA 7"),
+      brief("2026-10-12", "Foo v Bar, 2019 BCCA 8, 10 BCLR (5th) 20"),
+      brief("2026-10-11", "Re 2020 Trust, 2021 BCSC 6"),
+    ],
+  });
+  assert.deepEqual(
+    cases(m).map((c) => [c.title, c.citation]),
+    [
+      ["Smith, 1234 BC Ltd v Jones", "2020 BCSC 1"],
+      ["Smith, 12 Main Street Ltd v Jones", "2020 BCSC 2"],
+      ["Smith, 456789 BC Ltd v Jones", "2020 BCSC 3"],
+      ["Doe v Roe", "2020 BCSC 4"],
+      ["Doe v Moe", "2020 BCSC 5"],
+      ["Low v Case", "2021 canlii 3"],
+      ["Smith, 2 Others v Jones", null],
+      ["Abc, 100 Mile House v Def", "2019 BCCA 7"],
+      ["Foo v Bar", "2019 BCCA 8, 10 BCLR (5th) 20"],
+      ["Re 2020 Trust", "2021 BCSC 6"],
+    ]
+  );
+});
+
+test("a style holding a comma and a number still matches its case", async (t) => {
+  const m = await matter(t, {
+    authorities: [[1, "Smith, 1234 BC Ltd v Jones", null], [2, "Abc, 100 Mile House v Def", "[2001] 1 SCR 1"]],
+    files: [brief("2026-10-20", "Smith, 1234 BC Ltd v Jones, 2020 BCSC 1"), brief("2026-10-20", "Abc, 100 Mile House v Def, 2 WWR 3")],
+  });
+  const all = cases(m);
+  assert.deepEqual(all.map((c) => [c.title, c.status, c.relied_on]).sort(), [
+    ["Abc, 100 Mile House v Def", "briefed", true],
+    ["Smith, 1234 BC Ltd v Jones", "briefed", true],
+  ]);
+});
+
+test("a style never marks a case briefed by a citation of another year", async (t) => {
+  const m = await matter(t, {
+    authorities: [[1, "Alpha v Beta", "[2001] 1 SCR 1"], [2, "Gamma v Delta", "[2015] 1 SCR 5"], [3, "Twin v Style", "[2003] 3 SCR 3"], [4, "Twin v Style", "[2002] 2 SCR 2"]],
+    files: [brief("2026-10-20", "Alpha v Beta, 2021 BCSC 9"), brief("2026-10-20", "Gamma v Delta, 2015 SCC 5"), brief("2026-10-20", "Twin v Style, [2002] 3 WWR 3")],
+  });
+  const all = cases(m);
+  const alpha = all.filter((c) => c.title === "Alpha v Beta");
+  assert.deepEqual(alpha.map((c) => [c.status, c.relied_on, c.citation]), [["not_briefed", true, "[2001] 1 SCR 1"], ["briefed", false, "2021 BCSC 9"]]);
+  assert.deepEqual(all.filter((c) => c.title === "Gamma v Delta").map((c) => [c.status, c.relied_on]), [["briefed", true]], "the same year can be a parallel citation");
+  assert.deepEqual(all.filter((c) => c.title === "Twin v Style").map((c) => [c.citation, c.status]), [["[2003] 3 SCR 3", "not_briefed"], ["[2002] 2 SCR 2", "briefed"]], "the year tells the two apart");
+});
+
+test("a blank citation holds no brief it does not name", async (t) => {
+  const m = await matter(t, {
+    authorities: [[1, "Blank v Citation", ""], [2, "Space v Citation", "  "], [3, "Named v Blank", ""]],
+    files: [brief("2026-10-20", "Unrelated v Case, 2017 BCCA 8"), brief("2026-10-21", "Other v Thing, (1854) 9 Ex 341"), brief("2026-10-22", "Named v Blank, 2005 BCCA 7")],
+  });
+  const by = Object.fromEntries(cases(m).map((c) => [c.title, c]));
+  assert.equal(by["Blank v Citation"].status, "not_briefed");
+  assert.equal(by["Space v Citation"].status, "not_briefed");
+  assert.equal(by["Unrelated v Case"].status, "briefed");
+  assert.equal(by["Other v Thing"].status, "briefed");
+  assert.equal(by["Named v Blank"].status, "briefed", "its style still matches");
+  assert.equal(by["Named v Blank"].citation, "2005 BCCA 7", "and a blank takes the citation its brief's name holds");
+});
+
+test("periods and a closing court do not keep a brief from its case", async (t) => {
+  const m = await matter(t, {
+    authorities: [[1, "Smith v. Jones", "[2005] 1 S.C.R. 1"], [2, "Bare v Court", "2021 CanLII 3 (BC SC)"], [3, "Old v Report", "10 B.C.L.R. 5 (S.C.)"]],
+    files: [brief("2026-10-20", "Smith v Jones, [2005] 1 SCR 1"), brief("2026-10-20", "Different v Name, 2021 CanLII 3"), brief("2026-10-20", "Other Name v Report, 10 BCLR 5")],
+  });
+  const all = cases(m);
+  assert.equal(all.length, 3);
+  assert.ok(all.every((c) => c.relied_on && c.status === "briefed"), JSON.stringify(all));
+});
+
+test("one citation's variants are one case to the page and to the guard", async (t) => {
+  assert.equal(citationKey("2021 CanLII 3"), citationKey("2021 CanLII 3 (BC SC)"));
+  assert.equal(citationKey("2019 BCSC 1"), citationKey("2019 bcsc 1"));
+  assert.equal(citationKey("2019 BCSC 1"), citationKey("2019 B.C.S.C. 1"));
+  assert.equal(citationKey("2019 BCSC 2 at para 3"), citationKey("2019 BCSC 2"));
+  assert.equal(citationKey("[2005] 1 S.C.R. 1"), citationKey("[2005] 1 SCR 1"));
+  assert.equal(citationKey("(BC SC)"), null);
+  const m = await matter(t, {
+    authorities: [[1, "P v Q", "2021 CanLII 3"], [2, "P v Q", "2021 CanLII 3 (BC SC)"], [3, "R v S", "2019 BCSC 1"], [4, "R v S", "2019 bcsc 1"]],
+    files: [brief("2026-10-20", "P v Q, 2021 CanLII 3 (BC SC)")],
+  });
+  assert.equal((await submissionDataCreateJob(briefJob(m, 1, 1, 1))).outcome, "created");
+  assert.equal((await submissionDataCreateJob(briefJob(m, 1, 1, 2))).outcome, "guarded");
+  assert.equal((await submissionDataCreateJob(briefJob(m, 1, 1, 3))).outcome, "created");
+  assert.equal((await submissionDataCreateJob(briefJob(m, 1, 1, 4))).outcome, "guarded");
+  assert.deepEqual(cases(m).map((c) => [c.title, c.status]), [["P v Q", "briefed"], ["R v S", "requested"]]);
+});
+
+test("a recorded brief moved within the law folder is one version, on disk where it now is", async (t) => {
+  const name = brief("2026-10-01", "A v B, 2020 BCCA 1");
+  const answered = (path) => `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, ${JOB}) VALUES (9, 1, 1, 'Brief the case: A v B', 'x', 'superseded', 0, 'work', 'L', '2026-10-01 08:00');
+    INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (9, 'authorities', 1);
+    INSERT INTO ticket_answers (ticket_id, file_path, saved_at) VALUES (9, '${path}', '2026-10-01T09:00');`;
+  for (const [from, to] of [[`6. LAW\\${name}`, `Sub/${name}`], [`6. LAW\\Sub\\${name}`, name]]) {
+    const m = await matter(t, { authorities: [[1, "A v B", "2020 BCCA 1"]], files: [to], sql: answered(from) });
+    const [c] = cases(m);
+    assert.equal(c.status, "briefed");
+    assert.equal(c.brief.version, 1, from);
+    assert.deepEqual(c.brief.earlier, []);
+    assert.equal(c.brief.on_disk, true);
+    assert.equal(c.brief.file, `6. LAW\\${to.replace("/", "\\")}`);
+  }
+});
+
+test("the latest version is the one last saved, shown under the day it was saved", async (t) => {
+  const name = "A v B, 2020 BCCA 1";
+  const m = await matter(t, { authorities: [[1, "A v B", "2020 BCCA 1"]], files: [brief("2026-10-01", name), brief("2026-10-20", name), brief("2026-10-01", name, " v2")] });
+  stamp(join(m.law, brief("2026-10-01", name, " v2")), "2026-10-25");
+  const b = cases(m)[0].brief;
+  assert.equal(b.file, `6. LAW\\${brief("2026-10-01", name, " v2")}`, "a re-save onto the older stem is the latest");
+  assert.equal(b.date, "2026-10-25");
+  assert.equal(b.version, 3);
+  assert.deepEqual(b.earlier_files.map((f) => [f.version, f.date]), [[2, "2026-10-01"], [1, "2026-10-20"]]);
+});
+
+test("one name in two folders is ordered by which file was written last, not by folder name", async (t) => {
+  const f = brief("2026-10-01", "A v B, 2020 BCCA 1");
+  const m = await matter(t, { authorities: [[1, "A v B", "2020 BCCA 1"]], files: [`Z/${f}`, `A/${f}`] });
+  stamp(join(m.law, "A", f), "2026-10-05");
+  assert.equal(cases(m)[0].brief.file, `6. LAW\\A\\${f}`);
+});
+
+test("one stem's versions keep their own order whatever their files' dates", async (t) => {
+  const name = "A v B, 2020 BCCA 1";
+  const m = await matter(t, { authorities: [[1, "A v B", "2020 BCCA 1"]], files: [brief("2026-10-01", name), brief("2026-10-01", name, " v2")] });
+  stamp(join(m.law, brief("2026-10-01", name)), "2026-10-30");
+  stamp(join(m.law, brief("2026-10-01", name, " v2")), "2026-10-02");
+  const b = cases(m)[0].brief;
+  assert.equal(b.file, `6. LAW\\${brief("2026-10-01", name, " v2")}`, "a touched first version does not become the latest");
+  assert.equal(b.version, 2);
+});
+
 const briefJob = (m, proceeding, filing, authority, title = "Brief the case: X") => ({
   db_path: m.dbPath,
   proceeding_id: proceeding,
@@ -330,6 +479,9 @@ test("the template tells a re-brief to reuse the stem and the Writing", () => {
   assert.match(template, /A re-brief of a case that already has a saved brief reuses that brief's file stem, date included, and saves onto the same Writing/);
   assert.match(template, /so the save is that brief's next version/);
   assert.doesNotMatch(template, /every saved version is the same brief/);
+  assert.match(template, /A case with more than one saved brief reuses the latest\./);
+  assert.match(template, /creates no Writing unless that title has none/);
+  assert.match(template, /no other `filing_law`, `order_sought_requires` or `clauses` row and no job's `ticket_scope` row names/);
 });
 
 test("a re-brief by the template's steps is the same Writing's next version, one row, and leaves no stale item", async (t) => {
@@ -350,16 +502,31 @@ test("a re-brief by the template's steps is the same Writing's next version, one
     return saveAnswer(m.law, `${stem}.md`, undefined, undefined, r.documents.find((d) => d.document_type === "General_writing").path);
   };
   await write(100, "First holding.");
-  save();
-  // The template's re-brief: the Writing's rows replaced, then the same render and save.
+  // Two more of the brief's items, one an order relies on and one a job's scope names: the template keeps both.
   await submissionDataExecute(
     m.dbPath,
-    `DELETE FROM filing_prose WHERE filing_id = ${id};
+    `INSERT INTO statements_of_law (id, proceeding_id, authority_id, pinpoint, excerpt, source, verification) VALUES (98, 1, 60, 'p', 'order', 'primary', 'lead'), (99, 1, 60, 'p', 'job', 'primary', 'lead');
+     INSERT INTO filing_law (filing_id, statement_id) VALUES (${id}, 98), (${id}, 99);
+     INSERT INTO order_sought (id, proceeding_id, wording) VALUES (1, 1, 'An order.');
+     INSERT INTO order_sought_requires (order_sought_id, excerpt_id, basis_state) VALUES (1, 98, 'filled');
+     INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, ${JOB}) VALUES (50, 1, 1, 'Review scrutiny finding: x', 'x', 'queued', 0, 'work', 'L', '2026-10-01 08:00');
+     INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (50, 'statements_of_law', 99);`
+  );
+  save();
+  // The template's re-brief, through the real tool: the Writing's rows replaced, then the same render and save.
+  await callTool({}, "drafting_data__execute", {
+    db_path: m.dbPath,
+    sql_script: `DELETE FROM filing_prose WHERE filing_id = ${id};
      CREATE TEMP TABLE old_items AS SELECT statement_id FROM filing_law WHERE filing_id = ${id};
      DELETE FROM filing_law WHERE filing_id = ${id};
-     DELETE FROM statements_of_law WHERE id IN (SELECT statement_id FROM old_items) AND id NOT IN (SELECT statement_id FROM filing_law);
-     DROP TABLE old_items;`
-  );
+     DELETE FROM statements_of_law WHERE id IN (SELECT statement_id FROM old_items)
+       AND id NOT IN (SELECT statement_id FROM filing_law)
+       AND id NOT IN (SELECT excerpt_id FROM order_sought_requires WHERE excerpt_id IS NOT NULL)
+       AND id NOT IN (SELECT excerpt_id FROM clauses WHERE excerpt_id IS NOT NULL)
+       AND id NOT IN (SELECT entity_id FROM ticket_scope WHERE entity = 'statements_of_law' AND entity_id IS NOT NULL);
+     DROP TABLE old_items;`,
+  });
+  assert.deepEqual(submissionDataQuery(m.dbPath, "SELECT id FROM statements_of_law WHERE id IN (98, 99, 100) ORDER BY id").rows.map((r) => r.id), [98, 99], "the order's and the job's stay, the rest go");
   await write(101, "Second holding.");
   const saved = save();
   assert.match(saved.path, / v2\.md$/);
@@ -373,6 +540,7 @@ test("a re-brief by the template's steps is the same Writing's next version, one
   assert.deepEqual(c.brief.earlier, [1]);
   const ids = buildPropositionsData(m.dbPath, [fetchFiling(m.dbPath, 1)]).groups.flatMap((g) => g.propositions.flatMap((p) => p.statements.map((s) => s.statement_id)));
   assert.equal(ids.includes(100), false, "the first brief's item is gone");
+  assert.deepEqual(submissionDataQuery(m.dbPath, "SELECT entity_id FROM ticket_scope WHERE ticket_id = 50").rows.map((r) => r.entity_id), [99], "no job's scope names a statement that is gone");
   assert.equal(ids.includes(101), false, "the second is the brief's own item");
 });
 

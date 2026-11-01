@@ -10,8 +10,8 @@
 //
 // A brief is a file of one case (`<date> case brief <style of cause>, <citation>.md`), and every file of a
 // case is on its one row, latest first. A file belongs to the case its brief job's authority names; with
-// none, to the case its name's neutral citation names, else a case with no neutral citation whose citation
-// text its name holds, else the one case of its style of cause (caseOfFile).
+// none, to the case its name's citation names, else a case with no neutral citation whose citation text its
+// name holds, else the one case of its style of cause whose citation does not rule it out (caseOfFile).
 // Briefed: one of the case's brief files is on disk. A recorded answer gone from disk stays on its row,
 // marked, and is no brief: a new request can be made.
 // Requested: not briefed, and a live brief job (title `Brief the case: `) scoped to an authority of the case
@@ -25,7 +25,7 @@ import { pathToFileURL } from "node:url";
 import { rows } from "../query-rows.js";
 import { hasColumn } from "../schema-capabilities.js";
 import { baseName, dateOf, isCaseBriefFile, lawDirOf, modified, scanLawFolder, titleOf, versionOf } from "./legal-memos.js";
-import { BRIEF_JOB_PREFIX, citationKey, neutralKey, squashed } from "./brief-job.js";
+import { BRIEF_JOB_PREFIX, bareCitation, citationKey, neutralKey, squashed } from "./brief-job.js";
 import { liveTicketClause, ticketAnswersHeld } from "./query.js";
 
 export type BriefStatus = "briefed" | "requested" | "not_briefed";
@@ -33,7 +33,8 @@ export type BriefStatus = "briefed" | "requested" | "not_briefed";
 export interface CaseBriefVersion {
   /** Its place among the case's files, oldest first, never below the ` vN` in its own name. */
   version: number;
-  /** Its date: from its name, else when its job last saved it, else its file's. */
+  /** Its date: a ` vN` above 1 was saved after its name's date, so when it was saved, else its file's; any
+   * other, from its name, else when its job last saved it, else its file's. */
   date: string | null;
   /** Its path from `6. LAW`. */
   file: string;
@@ -128,15 +129,36 @@ function foldKey(citation: string | null, authorityId: number | null, name: stri
   return citationKey(citation) ?? (authorityId !== null ? `id:${authorityId}` : `name:${name.toLowerCase()}`);
 }
 
-/** Where a citation opens after the style of cause: a neutral or CanLII citation, a bracketed or
- * parenthesised year, or a volume. A numbered company in the style (`0123456 BC Ltd`) is none of these. */
-const CITATION_IN_NAME = /,\s+((?:\d{4} (?:[A-Z]{2,}|CanLII)|[[(]\d{4}[\])]|\d{1,3} [A-Z]).*)$/;
+/** One citation: a bracketed or parenthesised year or a number, a reporter or court, and a closing number,
+ * then a court in brackets or a pinpoint. A numbered company in a style (`1234 BC Ltd`) closes on no number. */
+const CITATION_PIECE = /^(?:[[(]\d{4}[\])]\s+\d*|\d+)\s*[A-Za-z].*?\s\d+(?:\s*\([^()]*\))*(?:\s+at\s.*)?$/;
 
-/** A brief file's own name of its case: what follows `case brief `, as its style of cause and citation. */
+/** Whether a text is nothing but citations, parallel ones split by commas. */
+function isCitation(text: string): boolean {
+  return text.split(/,\s+/).every((piece) => CITATION_PIECE.test(piece) && !/\sv\.?\s/i.test(piece));
+}
+
+/** A brief file's own name of its case: what follows `case brief `, as its style of cause and citation. The
+ * citation is the longest tail of the name that is nothing but citations, in brackets or not. */
 function briefCase(file: string): { whole: string; style: string; citation: string | null } {
   const whole = titleOf(file).replace(/^case brief\s+/i, "");
-  const m = CITATION_IN_NAME.exec(whole);
-  return m === null ? { whole, style: whole, citation: null } : { whole, style: whole.slice(0, m.index), citation: m[1] };
+  for (const m of whole.matchAll(/\s(?=[[(\d])/g)) {
+    const tail = whole.slice(m.index + 1);
+    const citation = /^\(([^()]*)\)$/.exec(tail)?.[1] ?? tail;
+    if (isCitation(citation)) return { whole, style: whole.slice(0, m.index).replace(/[,\s]+$/, ""), citation };
+  }
+  return { whole, style: whole, citation: null };
+}
+
+/** The key a brief file's name gives its case by its citation alone, or null. */
+function namedKey(file: string): string | null {
+  const { whole, citation } = briefCase(file);
+  return citationKey(citation) ?? neutralKey(whole);
+}
+
+/** The year a citation opens with, or null: a neutral citation's or a bracketed one's, not a volume's. */
+function openingYear(citation: string | null): string | null {
+  return citation === null ? null : (/^[[(]?(\d{4})\b/.exec(citation.trim())?.[1] ?? null);
 }
 
 interface KnownCase {
@@ -147,20 +169,26 @@ interface KnownCase {
 
 /** Whether a name holds this citation's text, its case and spacing aside, and not as part of a longer number. */
 function holdsCitation(name: string, citation: string): boolean {
-  const text = squashed(citation).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const text = squashed(bareCitation(citation)).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`(?<!\\d)${text}(?!\\d)`).test(squashed(name));
 }
 
-/** The known case a brief file names, or null: its neutral citation, else a case with no neutral citation
- * whose citation text it holds, else the one case of its style of cause. A style never joins a citation to a
- * different neutral citation, which is another decision of that name. */
+/** The known case a brief file names, or null: its citation, else a case with no neutral citation whose
+ * citation text it holds, else the one case of its style of cause. A style never joins a citation to a
+ * different neutral citation or a citation of another year, which is another decision of that name: a false
+ * Briefed hides the gap, and a second row shows it. */
 function caseOfFile(file: string, known: KnownCase[]): string | null {
   const { whole, style, citation } = briefCase(file);
-  const neutral = neutralKey(whole);
-  if (neutral !== null && known.some((c) => c.key === neutral)) return neutral;
-  const cited = known.find((c) => c.citation !== null && neutralKey(c.citation) === null && holdsCitation(whole, c.citation));
+  const named = namedKey(file);
+  if (named !== null && known.some((c) => c.key === named)) return named;
+  const cited = known.find((c) => citationKey(c.citation) !== null && neutralKey(c.citation) === null && holdsCitation(whole, c.citation as string));
   if (cited !== undefined) return cited.key;
-  const styled = known.filter((c) => c.style !== null && squashed(c.style) === squashed(style) && (neutralKey(c.citation) === null || citation === null));
+  const fits = (c: KnownCase) => {
+    if (citation === null) return true;
+    const [theirs, ours] = [openingYear(c.citation), openingYear(citation)];
+    return neutralKey(c.citation) === null && (theirs === null || ours === null || theirs === ours);
+  };
+  const styled = known.filter((c) => c.style !== null && squashed(c.style) === squashed(style) && fits(c));
   const keys = new Set(styled.map((c) => c.key));
   return keys.size === 1 ? styled[0].key : null;
 }
@@ -206,12 +234,15 @@ export function buildCaseBriefsData(dbPath: string, filingIds: number[], matterD
     own.set(file.toLowerCase(), entry);
     files.set(caseKey, own);
   };
-  const ownKey = (file: string) => neutralKey(briefCase(file).whole) ?? `name:${squashed(briefCase(file).whole)}`;
+  const ownKey = (file: string) => namedKey(file) ?? `name:${squashed(briefCase(file).whole)}`;
+  // A recorded answer moved within the law folder is the file now on disk of that name, not a second version.
+  const byName = new Map([...onDisk.values()].map((f) => [baseName(f.file).toLowerCase(), f.file]));
+  const filedAt = (file: string) => (onDisk.has(file.toLowerCase()) ? file : (byName.get(baseName(file).toLowerCase()) ?? file));
   for (const a of answers) {
     if (!isCaseBriefFile(baseName(a.file_path))) continue;
     const job = jobOf.get(a.ticket_id) as BriefJob;
-    const key = job.authority_id !== null ? foldKey(job.citation, job.authority_id, job.title) : (caseOfFile(a.file_path, known) ?? neutralKey(briefCase(a.file_path).whole) ?? foldKey(job.citation, null, job.title));
-    addFile(a.file_path, key, a.saved_at);
+    const key = job.authority_id !== null ? foldKey(job.citation, job.authority_id, job.title) : (caseOfFile(a.file_path, known) ?? namedKey(a.file_path) ?? foldKey(job.citation, null, job.title));
+    addFile(filedAt(a.file_path), key, a.saved_at);
   }
   for (const f of onDisk.values()) {
     addFile(f.file, caseOfStem.get(versionOf(f.file).key) ?? caseOfFile(f.file, known) ?? ownKey(f.file), null);
@@ -224,9 +255,19 @@ export function buildCaseBriefsData(dbPath: string, filingIds: number[], matterD
         const found = onDisk.get(file.toLowerCase());
         const mtime = found !== undefined ? found.mtime : modified(path);
         const { key, version } = versionOf(file);
-        return { key, own: version, date: dateOf(file, savedAt, mtime), file, url: pathToFileURL(path).href, on_disk: found !== undefined || mtime !== null };
-      })
-      .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "") || a.key.localeCompare(b.key) || a.own - b.own);
+        const named = dateOf(file, savedAt, mtime);
+        const written = savedAt?.slice(0, 10) ?? mtime ?? named;
+        return { key, own: version, date: version > 1 ? written : named, written: written ?? "", file, url: pathToFileURL(path).href, on_disk: found !== undefined || mtime !== null };
+      });
+    // Each stem's versions stay together in their own order. Stems go by when each last gained a version
+    // (only a ` vN` is written after its name's date, since a save never overwrites), then by file date.
+    const stems = new Map<string, { gained: string; written: string }>();
+    for (const v of versions) {
+      const stem = stems.get(v.key) ?? { gained: "", written: "" };
+      stems.set(v.key, { gained: [stem.gained, v.date ?? ""].sort()[1], written: [stem.written, v.written].sort()[1] });
+    }
+    const stemOf = (key: string) => stems.get(key) as { gained: string; written: string };
+    versions.sort((a, b) => stemOf(a.key).gained.localeCompare(stemOf(b.key).gained) || stemOf(a.key).written.localeCompare(stemOf(b.key).written) || a.key.localeCompare(b.key) || a.own - b.own);
     let last = 0;
     const numbered: CaseBriefVersion[] = versions.map(({ date, file, url, on_disk, own: number }) => {
       last = Math.max(last + 1, number);
@@ -236,7 +277,7 @@ export function buildCaseBriefsData(dbPath: string, filingIds: number[], matterD
     const older = numbered.slice(0, -1);
     const { style, citation } = briefCase(current.file);
     const target = row(caseKey, style, citation, false);
-    if (target.citation === null) target.citation = citation;
+    if (citationKey(target.citation) === null) target.citation = citation;
     target.brief = { ...current, earlier: older.map((v) => v.version), earlier_files: [...older].reverse() };
   }
 

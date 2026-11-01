@@ -6,7 +6,7 @@
 // TRASH on the next write and its thumbnail keeps its viewed place. Every name is synthetic.
 
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
@@ -88,6 +88,9 @@ async function fixture(t, { files = FILES, jobs = true, lawName = "6. LAW" } = {
   for (const f of files) {
     mkdirSync(join(matterRoot, lawName, f, ".."), { recursive: true });
     writeFileSync(join(matterRoot, lawName, f), "memo", "utf-8");
+    // A case brief's ` vN` shows the day it was written, so its file is written on the day its name holds.
+    const named = /(\d{4}-\d{2}-\d{2}) case brief/.exec(f)?.[1];
+    if (named !== undefined) utimesSync(join(matterRoot, lawName, f), new Date(`${named}T12:00`), new Date(`${named}T12:00`));
   }
   const m = { matterRoot, draft: join(matterRoot, "0. DRAFT"), dbPath: join(caseDataDir, "submission.sqlite") };
   await freshSubmissionDb(m.dbPath);
