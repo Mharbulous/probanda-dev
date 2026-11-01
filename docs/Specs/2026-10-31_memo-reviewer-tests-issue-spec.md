@@ -46,3 +46,14 @@ Why was the Job-question exemption added? If it guards against flagging an appro
 
 ## 10. Verify against HEAD before building
 Confirm the quoted step texts and the gate's parsing of the reviewer JSON.
+
+## 11. Verification against HEAD (e7203624, 2026-10-31)
+
+| Claim | Where at HEAD | Result |
+|---|---|---|
+| Step 1: "Read the memo's Issue." with no test after it | `source/researcher/agents/memo-reviewer.md` line 38 | Confirmed. Step 2 then uses the Issue only as the yardstick for the scope test |
+| Step 3: "Never flag text equal to the `Job question:`." | same file, line 43, the last sentence of step 3 | Confirmed. Pinned by `.claude/skills/legal-research/tests/test_memo_reviewer.py` line 109 |
+| Verdict rule | same file, line 46 | `send_back` when `required`, `out_of_scope`, `identifiers` or `findings` holds anything. An Issue item in `identifiers` therefore yields `send_back` with no change to this line |
+| The gate parses the reviewer's JSON | `.claude/skills/shared/legal-research.md` lines 398 to 421 | Confirmed. A return that is not the object with keys `verdict`, `required`, `out_of_scope`, `identifiers`, `findings` saves nothing. `send_back` with `identifiers` items re-invokes the audit "to rewrite the memo without them". A new key would need this list and the test that pins it changed, so reusing `identifiers` (option 1) needs no gate change |
+| The rules the reviewer reads | memo-reviewer reads `shared/legal-audit-protocol.md` and `shared/research-memo-template.md` only | Rules A to C are template lines 130 to 134. "Names nothing of the working matter" is in the template's "A job's memo" rule (line 137) and the gate's "A research question holds one question" (line 50), which the reviewer does not read. Step 3 already flags any working-matter name in the memo, the Issue included, once the exemption is gone |
+| §9: why the exemption was added | `git log -S "Never flag text equal to"`: added in e7200a26 (2026-10-29, "memo-reviewer loop: review fixes") | At that commit the template made a job's Issue the Job question verbatim, with no way out, so a reviewer that flagged it would send back a memo the audit could not change, and the loop would run to its third review and save `INCOMPLETE`. The same commit moved rewording to the gate, before research. Spec 2 (e7203624) now lets the audit return a rewording proposal instead of a memo, so the exemption guards nothing and can go. The design stands |
