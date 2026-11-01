@@ -136,8 +136,9 @@ In every format:
   (`shared/legal-audit-protocol.md` Step 4), by the open-issues paragraph, after the last
   Conclusion. It cites in parentheses and has no block quote.
 - The Rule opens with the rule itself: its first item states it.
-- The Application: its items say how each cited authority applied the rule, whether or not its
-  facts resemble another's.
+- The Application: one sub-section per case, its items together. Each item is one finding of
+  that court, its sentence opening `fact:` or `law-applied:` (the law applied to the facts to
+  reach a holding), from the court's own reasons (`shared/legal-audit-protocol.md` Step 2).
 
 **A job's memo.** When the spawn prompt's `Job question:` is not `none`, the memo answers
 that question and nothing else. The Issue is the spawn prompt's Job question, verbatim, never

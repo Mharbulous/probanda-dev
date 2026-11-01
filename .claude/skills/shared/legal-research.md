@@ -288,6 +288,7 @@ Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's 
 Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal: <its status line, or practitioner declined> / yes: review
 Review: <memo-reviewer's last JSON, verbatim> / none
 Final instructed: yes / no
+Note up paragraphs: <the saved memo's path>: <n>[, <n>] / none
 Background memos: <path>[; <path>] / none
 Here are the memos that will provide some background context for your research. Repeat the propositions and excerpts from the previous memo only if they are necessary context for explaining your own research memo, but make sure that you go beyond that information and dig deeper into the legal issue posed by your particular question.
 Flag unsettled: <what to flag as unsettled> / none
@@ -320,6 +321,7 @@ caller writes `Job question: none`.
 when no paralegal ran for it. `Review:` is `none` until memo-reviewer has returned on this question.
 `Final instructed:` is `yes` only when the practitioner has explicitly instructed that this
 memo's status change to FINAL (`shared/research-memo-template.md`, "Status").
+`Note up paragraphs:` is `none` except on a proposition-level note-up (below).
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
 is in issue. For an instrument filed in parts, `<path>` lists every part's path, separated by `; `.
@@ -399,13 +401,14 @@ on every return that carries a memo, with the spawn prompt's `Question:`, `Job q
 `Facts:`, `Matter:`, `Asked by:` and `Origin:` lines, and the full text of the memo and of
 the notes, read from the return's `Memo scratch:` and `Notes scratch:` paths, or as the return
 gives them, pasted in. It reviews one question at most three times. A return that is not its
-JSON object (`verdict`, `required`, `out_of_scope`, `identifiers`), `rules unavailable`
+JSON object (`verdict`, `required`, `out_of_scope`, `identifiers`, `findings`), `rules unavailable`
 included, saves nothing: stop and relay it verbatim. On the object, re-invoke the agent with
 `Review:` the reviewer's JSON:
 
 - `send_back` with `required` items: each is research the Issue cannot be answered without,
   run by the rule above first.
 - `send_back` with `identifiers` or `out_of_scope` items: to rewrite the memo without them.
+- `send_back` with `findings` items: to rewrite each as one finding, or cut it.
 - `send_back` whose only items are `required` research this session cannot run: to name it
   in the open-issues paragraph, unless the memo already does.
 
@@ -549,6 +552,20 @@ memo's words as advice on the draft.
 When no board resolves, capture nothing and relay the same. A return
 with `Origin: none` is sorted against the open board in a `/draft` session. Outside `/draft`
 it is relayed as before this step existed.
+
+**Proposition-level note-up.** On a request to note up the propositions or findings in
+numbered paragraphs of a saved research memo, name exactly those paragraphs. Paragraph `n` is
+the memo Writing's `n`th item, and its stored item is the `statement_of_law_id` its line ends
+with. With `/drafting-data` installed, write the job by its §3k, "A research memo's
+paragraphs", and work each step there; without it, run the steps here and say no job was
+written. A step runs the gate on the memo's question with `Note up paragraphs:` naming the memo
+and its paragraph: `citation-checker` notes up any authority without a record, and
+`research-paralegal` downloads every citing decision the record lists. research-agent reads
+each at its pinpoint and returns the memo with the same items, its Validity, Confidence,
+CanLII segment and Status updated (`shared/legal-audit-protocol.md` Step 2). Save it onto
+the same Writing: replace its `memo-header` row, then render and save by persist step 1's
+Copy. Record an authority's treatment, which clears its 📇, by `/drafting-data`
+`references/note-up.md` only once every item citing it has a proposition-level note-up.
 
 **Statute currency.** In a research question the check runs at the end of duty 4.
 When a caller such as `/draft` asks for a currency check on its own, call the canlii

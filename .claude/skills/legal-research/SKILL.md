@@ -30,6 +30,10 @@ is, goes through the gate below.
 research jobs together, read `references/research-board.md` and follow it. It runs the gate
 below once per job.
 
+**Noting up a memo's paragraphs.** When the practitioner asks to note up the propositions or
+findings in numbered paragraphs of a saved research memo ("note up the propositions in
+paragraphs 4 and 5"), follow `shared/legal-research.md`, "Proposition-level note-up".
+
 ## The gate
 
 **Main session only.** The gate spawns agents. If the Agent tool is not in your tool

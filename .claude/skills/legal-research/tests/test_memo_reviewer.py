@@ -55,7 +55,8 @@ class ScopeTestTest(unittest.TestCase):
 
     def test_review_line_forbids_retrieval_and_a_rewrite_reruns_nothing(self):
         step_four = flat(between(read("shared", "legal-audit-protocol.md"), "### Step 4", "### Step 5"))
-        self.assertIn("cut each `out_of_scope` and `identifiers` passage from the memo", step_four)
+        self.assertIn("cut each `out_of_scope` and `identifiers` passage from the memo, and rewrite each `findings` "
+                      "item as one finding or cut it.", step_four)
         self.assertIn("With any `Review:` but `none`, return no `needs_download` or `needs_note_up`.", step_four)
         self.assertIn("A `Review:` with no `required` item asks only for a rewrite: rewrite the memo from the sources "
                       "already held, without re-running the audit.", step_four)
@@ -101,11 +102,14 @@ class AgentContractTest(unittest.TestCase):
         self.assertIn("in one of the tier forms of Step 4's `gap:` line", body)
         self.assertIn("Yes, and the memo itself raises it: an `out_of_scope` item, quoting the memo's words.", body)
         self.assertIn("Yes, and only a `gap:` line or a Step 5 offer raises it: nothing.", body)
-        self.assertIn("The verdict is `send_back` when `required`, `out_of_scope` or `identifiers` holds anything", body)
+        self.assertIn("The verdict is `send_back` when `required`, `out_of_scope`, `identifiers` or `findings` holds "
+                      "anything", body)
+        self.assertIn("Quote each Application item that holds more than one finding, or that is neither a finding of "
+                      "fact nor the law applied to the facts by that item's court", body)
         self.assertIn("Never flag text equal to the `Job question:`.", body)
 
     def test_body_is_procedure_and_contract(self):
-        for key in ('"verdict"', '"required"', '"out_of_scope"', '"identifiers"'):
+        for key in ('"verdict"', '"required"', '"out_of_scope"', '"identifiers"', '"findings"'):
             self.assertIn(key, self.agent)
         self.assertIn("`shared/legal-audit-protocol.md`", self.agent)
         self.assertIn("`shared/research-memo-template.md`", self.agent)
@@ -137,6 +141,7 @@ class GateLoopTest(unittest.TestCase):
         self.assertIn("re-invoke the agent with `Review:` the reviewer's JSON", self.rule)
         self.assertIn("`send_back` with `identifiers` or `out_of_scope` items: to rewrite the memo without them.",
                       self.rule)
+        self.assertIn("`send_back` with `findings` items: to rewrite each as one finding, or cut it.", self.rule)
         self.assertIn("When the third review accepts nothing, re-invoke the agent once with it to write the memo "
                       "`INCOMPLETE`, naming what that review still asks, and save that return.", self.rule)
         held = flat(between(self.text, "**On a held job, an open tier is not an answer.**",
@@ -151,9 +156,9 @@ class GateLoopTest(unittest.TestCase):
         self.assertNotIn("without another review", self.rule)
 
     def test_a_return_that_is_not_the_json_saves_nothing(self):
-        self.assertIn("A return that is not its JSON object (`verdict`, `required`, `out_of_scope`, `identifiers`), "
-                      "`rules unavailable` included, saves nothing: stop and relay it verbatim.", self.rule)
-        for key in ("`verdict`", "`required`", "`out_of_scope`", "`identifiers`"):
+        self.assertIn("A return that is not its JSON object (`verdict`, `required`, `out_of_scope`, `identifiers`, "
+                      "`findings`), `rules unavailable` included, saves nothing: stop and relay it verbatim.", self.rule)
+        for key in ("`verdict`", "`required`", "`out_of_scope`", "`identifiers`", "`findings`"):
             self.assertIn(key, self.rule)
 
     def test_approval_drops_out_of_scope_and_never_edits(self):

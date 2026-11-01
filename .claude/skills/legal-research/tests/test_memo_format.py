@@ -91,10 +91,18 @@ class ProtocolStepSixTests(unittest.TestCase):
         for text in ("The Issue is the question, as one bold sentence.",
                      "A Conclusion is one paragraph answering the Issue,",
                      "Conclusion. It cites in parentheses and has no block quote.",
-                     "The Rule opens with the rule itself: its first item states it.",
-                     "The Application: its items say how each cited authority applied the rule"):
+                     "The Rule opens with the rule itself: its first item states it."):
             self.assertIn(text, template)
         self.assertNotIn("prose paragraphs, never bullets", template)
+
+    def test_application_is_one_finding_per_item_grouped_by_case(self):
+        template = flat(read("research-memo-template.md"))
+        self.assertIn("The Application: one sub-section per case, its items together. Each item is one finding of "
+                      "that court, its sentence opening `fact:` or `law-applied:` (the law applied to the facts to "
+                      "reach a holding), from the court's own reasons (`shared/legal-audit-protocol.md` Step 2).",
+                      template)
+        self.assertNotIn("how each cited authority applied the rule", template)
+        self.assertNotIn("closest to a stated generic pattern", flat(step_six()))
 
     def test_numbered_sections_are_items_numbered_through_the_memo(self):
         template = read("research-memo-template.md")
@@ -133,7 +141,7 @@ class ProtocolStepSixTests(unittest.TestCase):
                       "and route the work: the memo never states, summarises or alludes to them.", rules)
         self.assertIn("No part of the memo holds a party name, date, amount, matter number, document name or fact pattern",
                       rules)
-        self.assertIn("Application describes only the facts of the cited authorities.", rules)
+        self.assertNotIn("Application describes", rules, "the template's findings rule replaces it")
         self.assertNotIn("matter's own facts", flat(step_six()))
 
     def test_internal_notes_come_before_the_memo(self):
@@ -180,7 +188,7 @@ class ScopedDispatchTests(unittest.TestCase):
         fields = flat(between(read("legal-audit-scoped.md"), "## The dispatch fields", "## Hard boundaries"))
         self.assertIn("Step 6", fields)
         self.assertIn("apply to opinion mode only", fields)
-        self.assertIn("stay read-only", fields)
+        self.assertIn("stays read-only", fields)
 
     def test_report_brief_template_block_is_unchanged(self):
         self.assertIn(BRIEF_BLOCK, read("legal-audit-scoped.md"))
