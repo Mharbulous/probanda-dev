@@ -55,7 +55,7 @@ const FIXTURES = {
 const PINS = {
   "Procedural History": "f8a29d4c7953ff408bd6323af74b2333a71966afb6ee5b550d550f6de594f912",
   "Material Facts": "3fb4f9f60ff8cc4ac8af3957423a83bacd8c38ba7d63194038a93376db4b0480",
-  "Legal Memos": "014fb66fcbfb7dffb3a0803cd31fbf1dab501fb660f69c10d2f8c95fa455fc5f",
+  "Legal Memos": "a950cb0ef70ad75cd3f0bcffd57aa8e810052533fcf6d79d2ec21c9a33a9f2de",
   Arguments: "ec2b611a4cd2fee78b152f97703713149c874d9a3c4ad21bbf503375cb29e5f7",
   "Loose Threads": "e9295aefed42761418487103bc2d8e8ddd7908fccb10780c6da8c04b149904f7",
 };
