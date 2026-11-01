@@ -8,6 +8,7 @@
 
 import { DataServerError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
+import { BRIEF_JOB_PREFIX } from "./brief-job.js";
 import { createdByHeld, liveTicketClause, MILESTONE_KIND } from "./query.js";
 import { checkClaim, heldBy } from "./job-activity.js";
 
@@ -21,6 +22,7 @@ export type CreateJobGuard =
   | "title_live_with_step"
   | "title_and_step_any_status"
   | "scrutiny_statement"
+  | "authority_brief"
   | "holder_lock";
 
 export interface ScopeRow {
@@ -120,9 +122,9 @@ function validate(args: CreateJobArgs): void {
   check(args.kind === "work" || args.kind === "charting", "kind", "must be work or charting");
   check(Number.isInteger(args.priority) || args.priority === "top" || args.priority === "bottom", "priority", "must be an integer, top or bottom");
   check(
-    ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "holder_lock"].includes(guard),
+    ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "holder_lock"].includes(guard),
     "guard",
-    "must be one of none, live_key, never_held_key, title_live_with_step, title_and_step_any_status, scrutiny_statement, holder_lock"
+    "must be one of none, live_key, never_held_key, title_live_with_step, title_and_step_any_status, scrutiny_statement, authority_brief, holder_lock"
   );
   checkSteps(args.steps, "steps");
   checkScope(args.scope, "scope");
@@ -145,6 +147,11 @@ function validate(args: CreateJobArgs): void {
   if (guard === "scrutiny_statement") {
     const statements = (args.scope ?? []).filter((r) => r.entity === "statements_of_law" && r.entity_id !== null);
     check(statements.length === 1, "scope", "must hold exactly one ('statements_of_law', <statement id>) row under guard scrutiny_statement");
+  }
+  if (guard === "authority_brief") {
+    check(args.title.startsWith(BRIEF_JOB_PREFIX), "title", `must open "${BRIEF_JOB_PREFIX}" under guard authority_brief`);
+    const authorities = (args.scope ?? []).filter((r) => r.entity === "authorities" && r.entity_id !== null);
+    check(authorities.length === 1, "scope", "must hold exactly one ('authorities', <authority id>) row under guard authority_brief");
   }
   const companions = args.companions ?? [];
   check(Array.isArray(companions), "companions", "must be a list");
@@ -188,6 +195,13 @@ function holderQuery(args: CreateJobArgs, titles: string[]): { sql: string; para
       return {
         sql: `SELECT t.id FROM tickets t JOIN ticket_scope sc ON sc.ticket_id = t.id WHERE ${liveStatus} AND t.title LIKE 'Review scrutiny finding: %' AND sc.entity = 'statements_of_law' AND sc.entity_id = ?`,
         params: [statement.entity_id],
+      };
+    }
+    case "authority_brief": { // jobs-stock.md §3n: a live case brief job in the proceeding is scoped to the authority.
+      const authority = (args.scope ?? []).find((r) => r.entity === "authorities" && r.entity_id !== null) as ScopeRow;
+      return {
+        sql: `SELECT t.id FROM tickets t JOIN ticket_scope sc ON sc.ticket_id = t.id WHERE t.proceeding_id = ? AND ${liveStatus} AND t.title LIKE '${BRIEF_JOB_PREFIX}%' AND sc.entity = 'authorities' AND sc.entity_id = ?`,
+        params: [args.proceeding_id, authority.entity_id],
       };
     }
     default:
@@ -314,6 +328,7 @@ function guardedReport(args: CreateJobArgs, holder: { sql: string; params: unkno
     title_live_with_step: `A live job with one of these titles already holds a step: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
     title_and_step_any_status: `This finding is already on the board, or was settled there: ${job}. Nothing was written; say "already on the board" in one line.`,
     scrutiny_statement: `A live scrutiny review job already covers this statement: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
+    authority_brief: `A live case brief job already covers this case: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
   };
   return { ...(found === undefined ? {} : { holder_id: found.id }), note: notes[args.guard] };
 }

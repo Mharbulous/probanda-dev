@@ -85,6 +85,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Create a research offer job | A research offer named to add | `references/jobs-stock.md` §3i |
 | Create a research question job | A question chosen as an additional issue | `references/jobs-stock.md` §3l |
 | Research board writes | `/legal-research` board mode | `references/jobs-stock.md` §3m |
+| Create a case brief job | The practitioner asks to have a case, or a board's relied-on cases, briefed | `references/jobs-stock.md` §3n |
 | Create a scrutiny review job | A scrutiny return recorded `'failed'` | `references/jobs-stock.md` §3d |
 | Assign a job | A Ready job picked, or a take-over | `references/jobs-run.md` §4 |
 | Approve a plan | A plan announced or changed | `references/jobs-run.md` §5 |

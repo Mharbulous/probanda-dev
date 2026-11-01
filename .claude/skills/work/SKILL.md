@@ -21,6 +21,7 @@ These rules moved from `/draft` verbatim. A file, section or part of SKILL.md th
 |---|---|
 | Work on a Writing: drafting, revising, assembling, a letter or its `Deliver` job, counsel's review, a scrutiny review | `/draft` |
 | A research question | `/legal-research` |
+| A case brief, its title opening `Brief the case: ` | `/case-brief` |
 | A job whose only step is the plan marker | `/job-planning`, then this table again |
 | Any date: a deadline, a hearing date, a limitation, a date to record | the `lawyer:docket-clerk` agent. No date is worked out here |
 | A step at a registry, such as e-filing | `/e-file` |

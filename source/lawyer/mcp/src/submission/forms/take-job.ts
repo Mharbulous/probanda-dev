@@ -22,6 +22,7 @@ import { submissionDataAssignJob, type AssignJobResult } from "./assign-job.js";
 import { PLAN_MARKER } from "./approve-plan.js";
 import { GATE_TITLE, PRE_SEND_TITLE, POSITION_CONFLICT_TITLE, STOCK_TITLES, waitsOnGate } from "./goal-gate.js";
 import { BoardIndex } from "./board-members.js";
+import { BRIEF_JOB_PREFIX } from "./brief-job.js";
 import { fetchBoardFilings } from "./query.js";
 import { nowStamp } from "./timings.js";
 import type { WorkBoardData } from "./render-work-board.js";
@@ -80,7 +81,7 @@ const words = (s: string): Set<string> => new Set(s.toLowerCase().match(/[a-z0-9
 export function fixedText(title: string): boolean {
   return (
     STOCK_TITLES.has(title) || waitsOnGate(title) || [GATE_TITLE, PRE_SEND_TITLE, POSITION_CONFLICT_TITLE].includes(title) ||
-    title.startsWith("Counsel's review of ") || title.startsWith("Review scrutiny finding: ")
+    title.startsWith("Counsel's review of ") || title.startsWith("Review scrutiny finding: ") || title.startsWith(BRIEF_JOB_PREFIX)
   );
 }
 

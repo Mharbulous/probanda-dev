@@ -125,7 +125,7 @@ class ProtocolStepSixTests(unittest.TestCase):
                 self.assertEqual(p["paragraph_numbering"], "continue" if numbered else "none", (stem, p["heading"]))
             self.assertIn("shared/research-memo-template.md", text, "the type points at the one shape")
         kinds = json.loads((TYPES / "kinds.json").read_text(encoding="utf-8"))["kinds"]
-        self.assertEqual({k["file"] for k in kinds}, {"research-memo", "research-memo-irac", "research-memo-creac"})
+        self.assertEqual({k["file"] for k in kinds}, {"research-memo", "research-memo-irac", "research-memo-creac", "case-brief"})
         self.assertTrue(all(k["recipient"] == "internal" for k in kinds))
 
     def test_irac_and_creac_only_when_asked(self):

@@ -40,6 +40,8 @@
     {"file": ".claude/skills/legal-research/references/research-board.md", "target": "drafting_forms__*", "why": "conditional", "note": "The same board mode."},
     {"file": ".claude/skills/legal-research/references/research-board.md", "target": "draft", "why": "mention", "note": "A board job counts as a held /draft job for the gate's rules."},
     {"file": ".claude/skills/legal-research/references/research-board.md", "target": "work", "why": "caller", "note": "/work hands the session to board mode."},
+    {"file": ".claude/skills/case-brief/SKILL.md", "target": "apply-to-facts", "why": "signpost", "note": "The description says whether a case helps this matter belongs to apply-to-facts."},
+    {"file": ".claude/skills/case-brief/SKILL.md", "target": "drafting-data", "why": "conditional", "note": "Without litigator: each case is briefed now and the skill says no job was written."},
     {"file": ".claude/skills/matter-data/SKILL.md", "target": "legal-research", "why": "signpost", "note": "The description says what the law is belongs to legal-research."},
     {"file": ".claude/skills/matter-data/operations/amend-law.md", "target": "commons server", "why": "mention", "note": "States that the operation never calls a commons tool."},
     {"file": ".claude/skills/matter-data/operations/ingest-extract.md", "target": "draft", "why": "mention", "note": "The execution status `draft`, and one note that /draft reads the served document itself."},

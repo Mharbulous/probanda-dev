@@ -25,6 +25,8 @@ const { buildPropositionsData } = await import("../build/submission/forms/resear
 const { fetchFiling, fetchPreFilingProceedings, isResearchWriting } = await import("../build/submission/forms/query.js");
 const { readViewed } = await import("../build/submission/forms/board-viewed.js");
 const { callTool } = await import("../build/dispatch.js");
+const { submissionDataCreateJob } = await import("../build/submission/forms/create-job.js");
+const { fixedText } = await import("../build/submission/forms/take-job.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
 const { ASHBOURNE } = await import("./fixtures/forms-render-seeds.mjs");
 
@@ -476,4 +478,31 @@ test("a proceeding holding only research Writings keeps a board of its own", asy
   assert.deepEqual(fetchPreFilingProceedings(m.dbPath).map((p) => p.id), [3]);
   const { card } = await callTool({}, "drafting_forms__board_card", { db_path: m.dbPath, proceeding_id: 3, lanes: ["live"] });
   assert.equal(typeof card, "string");
+});
+
+test("a case brief job takes one live job per case per proceeding, and take_job treats it as fixed text", async (t) => {
+  const m = await briefsFixture(t, []);
+  const job = (filing, authority, title = "Brief the case: Unbriefed v Case, 2021 BCSC 3") => ({
+    db_path: m.dbPath,
+    proceeding_id: 1,
+    filing_id: filing,
+    title,
+    intent: title,
+    kind: "work",
+    priority: "bottom",
+    billing_anchor: "L9999|case brief",
+    steps: ["Get the decision", "Brief the decision", "Save the brief under this job"],
+    scope: [{ entity: "authorities", entity_id: authority }],
+    guard: "authority_brief",
+  });
+  const first = await submissionDataCreateJob(job(1, 4));
+  assert.equal(first.outcome, "created");
+  const again = await submissionDataCreateJob(job(2, 4));
+  assert.equal(again.outcome, "guarded", "another board's request for the same case");
+  assert.equal(again.holder_id, first.ticket_id);
+  assert.equal((await submissionDataCreateJob(job(1, 5, "Brief the case: Noted v Up, 2022 BCSC 4"))).outcome, "created", "a note-up job on another case holds nothing");
+  await assert.rejects(submissionDataCreateJob(job(1, 5, "Note up Noted v Up")), /must open "Brief the case: "/);
+  await assert.rejects(submissionDataCreateJob({ ...job(1, 5), scope: [] }), /exactly one \('authorities'/);
+  assert.equal(fixedText("Brief the case: Unbriefed v Case, 2021 BCSC 3"), true);
+  assert.equal(fixedText("Brief the client"), false);
 });

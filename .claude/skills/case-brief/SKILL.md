@@ -1,143 +1,45 @@
 ---
 name: case-brief
-disable-model-invocation: true
 description: >
-  Produce a concise case brief from a court decision — Issues, Relevant Facts,
-  Disposition, and Propositions (with ratio decidendi / obiter dictum labeling).
-  Optionally persists the decision as a legal authority via matter-data.
+  Brief one court decision in someone else's case: a one-page structured summary (Case, Facts, Procedural history, Issues, Holding, Ratio decidendi, Obiter dicta, Disposition), saved in the matter's law folder and listed on the Legal Research page. Use when the practitioner asks to brief a case, or works a case brief job. Never for a decision in the matter's own litigation. Whether a case helps this matter -> /apply-to-facts.
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
 
-## Contents
-
-| Section | Read when |
-|---|---|
-| Overview | Always |
-| Scope and Output | Always, to know the output and the file path the user must give |
-| Citation Preflight | Before briefing a decision, to check whether it is already held as an authority |
-| Context Isolation | Briefing more than one decision |
-| Brief Format | Writing any brief |
-| Optional Focus | The user names issues to focus on |
-| Quality Guidelines | Writing any brief |
-| Multi-Brief Responses | Briefing multiple decisions |
-| Optional Persistence | After delivering the brief, when offering to save the decision as an authority |
-
 # Case Brief
 
-## Overview
+`shared/case-brief-template.md` says what a case brief is, its shape and how it is saved. Read it first.
 
-This skill reads a court decision and produces a structured four-section case brief as a chat response. After delivering the brief, it offers to persist the decision as a legal authority in the case database by delegating to ``matter-data``.
+**Main session only.** This skill spawns agents. If the Agent tool is not in your tool list, stop and return: "/case-brief runs only from the main session. Nothing was dispatched."
 
-## Scope and Output
+One brief is one decision. For several decisions, run the steps once per decision, spawning the agents for several at once where their decisions are all on disk.
 
-Output is a chat response containing a four-section case brief. Do not create a file unless the user explicitly asks for a document.
+## Steps
 
-The user must provide the file path to the decision. This skill does not query databases to locate files.
+1. **Name the decision.** A held job names it: the title `Brief the case: <style of cause>, <citation>` and the authority in its scope. Otherwise the practitioner names it. When the name fits more than one decision, ask which.
+2. **Refuse the matter's own litigation.** Read the matter's parties and proceedings through `/matter-data`, and compare them with the decision's style of cause, court and file number. A decision in the matter's own litigation stops here with the template's one line, and on a held job the job is left as it is for the practitioner to shelve. When in doubt, ask.
+3. **Find the decision.** List the matter's `6. LAW` folder with `research_filing__list_law_folder`, and look for a file name holding the neutral citation, spaced or unspaced. A file named `case brief`, `ML re`, `research-lawyer answer` or `memo` cites the decision and is not its text. When none is there, dispatch `researcher:research-paralegal` in citation mode, `source: westlaw-first`, into the folder for that subject under `6. LAW`. When it returns any blocked status, stop and tell the practitioner in plain words, as `shared/legal-research.md`'s hard-stop paragraph says.
+4. **Check what is already held.** In the order `shared/research-priority.md` sets, check whether the decision is already held as an authority: the matter's ingested layer through `/matter-data`, then the shared pooled layer by exact citation where this runtime can reach it. Where either holds propositions from this decision, name them in the spawn prompt's `Held:` line. This never replaces reading the decision.
+5. **Prepare a PDF.** Before any read of a PDF decision, call lawyer's `pdf_pages__images` for it (`/matter-data`'s design decision #71). The page manifest it gives goes in the spawn prompt: `{page, images}` for each scanned page and `{pages: "a-b", pdf}` for each run of born-digital pages, with no file path for a wholly scanned decision, only its file name. In a bridged session each PNG is staged like any other rendering. If the tool refuses, say so with its reason and brief nothing from that decision: never read it another way.
+6. **Write it.** Spawn `researcher:research-agent` with this prompt, and nothing of the working matter's facts:
 
-## Citation Preflight
+   ```text
+   mode: case_brief
+   Decision: <absolute path, or the file name alone for a wholly scanned PDF>
+   Page manifest: <the manifest, or none>
+   File stem: <YYYY-MM-DD case brief <style of cause>, <citation>>
+   Style of cause: <style of cause>
+   Citation: <citation>
+   Focus: <the issues the practitioner narrowed it to, or all>
+   Held: <the propositions step 4 found, or none>
+   Review: <brief-reviewer's JSON on a later pass, or none>
+   ```
 
-Before briefing, check whether the decision is already held as an authority, in
-the order `shared/research-priority.md` sets: tier 1, the matter's ingested layer
-via ``matter-data``; then tier 2, the shared pooled layer by exact public citation
-where this runtime can reach it (that file says how, and what to do when it
-cannot). Where either returns propositions already derived from this decision,
-say so and cite them alongside your own Section 4 — a proposition someone has
-already stated and noted up is worth more than a fresh paraphrase of it, and a
-divergence between the two is itself worth the reader's attention. This never
-replaces reading the decision: the brief is always your own reading of the text.
+7. **Review it.** Spawn `researcher:brief-reviewer` with the same `Decision:` and `Page manifest:` lines, `Matter:` the matter's number, parties and counsel and its proceedings' file numbers, and `Brief:` the text of the `Brief scratch:` file. It reviews one brief at most three times. A return that is not its JSON object, `rules unavailable` included, saves nothing: stop and relay it verbatim. On `send_back`, re-invoke the same agent with `Review:` the reviewer's JSON. On `own_litigation` true, stop with the template's one line and save nothing. After a third `send_back`, save nothing, and name what is still open in one line.
+8. **Save it** by the template's "Saving it".
+9. **Present it.** Show the saved file as a file card (`shared/present-files.md`), and say it is on the Legal Research page. On a held job, complete it by the template's "On a held job".
+10. **Offer to save the decision.** Unless step 4 found it held, or the run is unattended, ask once, after all the briefs in this turn: "Would you like me to save this decision as a legal authority in the case database?" On yes, invoke `/matter-data` for legal authority ingestion with the decision's file path and any focus, and report what it recorded. Pass it no SQL, schema detail or brief text: its own agents read the decision.
 
-## Context Isolation
+## Asking for several briefs
 
-When briefing more than one decision, spawn one read-only Sonnet subagent per decision using the prompt in `agents/brief.md`. The subagent reads the decision and returns the four-section brief. The main agent assembles the multi-decision response. For a single decision, inline reading is acceptable.
-
-Before any read of a PDF decision, inline or by a subagent, call lawyer's `pdf_pages__images` for it (`/matter-data`'s design decision #71). Read a page it returns as `scanned` only from its PNG, never from the PDF or its text layer, and a `born_digital` page with `Read` `pages:`. A subagent gets the page manifest in its prompt: `{page, images}` for each scanned page and `{pages: "a-b", pdf}` for each run of born-digital pages, with no file path for a wholly scanned decision, only its file name. In a bridged session each PNG is staged like any other rendering, for an inline read as for a subagent (`/matter-data`'s ingest-extract Universal rules). If the tool refuses, say so with its reason and brief nothing from that decision: never read it another way.
-
-## Brief Format
-
-### Section 1: Issues
-
-The legal questions the court addressed. State each issue as a question. For multi-issue decisions, number them. Focus on issues the court actually decided, not issues raised but not reached.
-
-### Section 2: Relevant Facts
-
-Only facts material to the legal issues — not a complete factual narrative. Include the procedural posture (what kind of proceeding, what relief was sought). Organize by issue when a multi-issue decision makes this clearer.
-
-### Section 3: Disposition
-
-All orders made by the court:
-- Main disposition (judgment for plaintiff/defendant, appeal allowed/dismissed)
-- Damages or other monetary relief
-- Costs awards (amount or scale, who pays whom, conditions, timelines)
-- Injunctive, specific performance, or declaratory relief
-- Stays, compliance timelines, or directions for further proceedings
-- Conditions attached to orders
-
-### Section 4: Propositions
-
-Statements of law in the court's own voice. Each proposition is labeled:
-
-- **Ratio decidendi** — the binding principle that decided the case on its facts. A proposition is ratio if removing it would change the outcome on at least one issue.
-- **Obiter dictum** — a non-binding remark. The court could have reached the same result without it.
-- When uncertain, label as **Ratio (arguable)** or **Obiter (arguable)** with a one-line explanation.
-
-Do not extract propositions from passages describing party submissions or rejected arguments. Apply the grammatical voice test (see `agents/brief.md`) to distinguish the court's own statements from reported speech.
-
-Format each proposition as:
-
-> **[Ratio decidendi]:** [Statement of law]
-> - Source: para. [number(s)]
-> - Decides: [which issue]
-
-> **[Obiter dictum]:** [Statement of law]
-> - Source: para. [number(s)]
-> - Why obiter: [why not necessary to the outcome]
-
-## Optional Focus
-
-If the user specifies issues to focus on (e.g. "brief this case on the attornment analysis only"), narrow all four sections to those issues.
-
-## Quality Guidelines
-
-- Quote key phrases when helpful for precision
-- Use pinpoint citations (paragraph or page numbers) when referencing the decision
-- Maintain objectivity — report what the court found/held, not personal analysis
-- Use precise legal terminology appropriate to the jurisdiction
-- Do not omit important details for brevity
-
-## Multi-Brief Responses
-
-When briefing multiple decisions, structure the response with clear headings per decision:
-
-```markdown
-# Brief: [Case Name 1]
-
-## Issues
-...
-
-## Relevant Facts
-...
-
-## Disposition
-...
-
-## Propositions
-...
-
-# Brief: [Case Name 2]
-...
-```
-
-## Optional Persistence
-
-After delivering the brief, offer to persist the decision as a legal authority in the case database. This is optional — many briefs are read-and-discard.
-
-**Prompt:** "Would you like me to save this decision as a legal authority in the case database?"
-
-**If the user accepts:**
-
-1. Invoke ``matter-data`` for legal authority ingestion, passing the decision's file path and any issue scope the user specified.
-2. matter-data handles extraction, authority registration, concept mapping, and all database writes. Do not pass schema-level details, SQL, or structured proposition data — matter-data's own extraction subagents produce the schema-specific format it needs.
-3. Report what matter-data persisted (authority registered, concepts found, criteria stored).
-
-**Relationship to ``ingest``:** Both paths use matter-data's legal authority ingest operation. ``ingest`` ingests directly without producing a brief. ``case-brief`` briefs first, then optionally persists — the user gets both a human-readable brief and persistent legal authority data. When briefing multiple decisions, offer persistence once after all briefs are delivered, not after each individual brief.
+"Brief the cases this Milestone relies on" asks for one job per case. With `/drafting-data` installed, write them by its "Create a case brief job". Without it, brief each case now and say that no job was written.

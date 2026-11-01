@@ -91,6 +91,7 @@
         "verify-law"
       ],
       "agents": [
+        "brief-reviewer",
         "citation-checker",
         "equivalence-checker",
         "legislation-fetcher",

@@ -331,7 +331,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "on the Writing with one of this call's titles already holds a step: counsel's review, jobs-stock.md §3c, whose " +
         "second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this " +
         "title and one of these step texts: a pass finding, §3g); scrutiny_statement (a queued or wip, unshelved " +
-        "'Review scrutiny finding: ' job is scoped to the statement in scope: §3d); holder_lock (held_ticket_id no " +
+        "'Review scrutiny finding: ' job is scoped to the statement in scope: §3d); authority_brief (a queued or wip, unshelved " +
+        "'Brief the case: ' job in the proceeding is scoped to the one authority in scope: §3n); holder_lock (held_ticket_id no " +
         "longer carries session_token under claim_no: a spin-off blocker, §3f, which copies the held job's scope). filing_id is the " +
         "Writing's or Milestone's id, or null for a proceeding-scoped job, and is never left out. priority is an " +
         "integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a " +
@@ -378,7 +379,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           created_by: { type: "string" },
           guard: {
             type: "string",
-            enum: ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "holder_lock"],
+            enum: ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "holder_lock"],
           },
           session_token: { type: "string", description: "holder_lock only" },
           claim_no: { type: "number", description: "holder_lock only: the held job's claim_no from drafting_data__assign_job" },

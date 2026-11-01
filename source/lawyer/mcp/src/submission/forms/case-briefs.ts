@@ -20,10 +20,8 @@ import { pathToFileURL } from "node:url";
 import { rows } from "../query-rows.js";
 import { hasColumn } from "../schema-capabilities.js";
 import { baseName, dateOf, isCaseBriefFile, lawDirOf, modified, scanLawFolder, titleOf, versionOf } from "./legal-memos.js";
+import { BRIEF_JOB_PREFIX } from "./brief-job.js";
 import { liveTicketClause, ticketAnswersHeld } from "./query.js";
-
-/** The fixed title that marks a case brief job. A note-up job scopes authorities too. */
-export const BRIEF_JOB_PREFIX = "Brief the case: ";
 
 export type BriefStatus = "briefed" | "requested" | "not_briefed";
 
