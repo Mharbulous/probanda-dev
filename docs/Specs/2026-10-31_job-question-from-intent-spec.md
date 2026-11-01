@@ -48,3 +48,15 @@ Should an intent that passes A to C but names the matter be reworded on the job,
 
 ## 10. Verify against HEAD before building
 Confirm the quoted lines exist at HEAD and that §3m rewording exists in drafting-data.
+
+### Verification at HEAD (5c479c8a, 2026-10-31)
+
+| Claim | Repo source | Result |
+|---|---|---|
+| Spawn template field `Job question: "<the held job's title, verbatim>" / none` | `.claude/skills/shared/legal-research.md` line 274 | Confirmed |
+| Fill rule "fills `Job question:` with the job's title character for character" | `.claude/skills/shared/legal-research.md` lines 317-319 | Confirmed. The "every other caller writes none" condition sits there, 43 lines below the field |
+| "A new job's title is a cleaned label; its intent is the record. ... the intent carries what was asked" | `.claude/skills/drafting-data/references/jobs-create.md` line 53 | Confirmed |
+| "`Job question:` is its title" | `.claude/skills/legal-research/references/research-board.md` line 12 | Confirmed |
+| "A research question holds one question" with matter, context-sentence and one-rewording wording | `.claude/skills/shared/legal-research.md` lines 50-58 | Confirmed. The fill rule does not point at it |
+| §3m "Rewording a held job" | `.claude/skills/drafting-data/references/jobs-stock.md` line 494 | Confirmed. It writes title and intent together |
+| A test asserts the old field text | `.claude/skills/legal-research/tests/test_job_question_memo.py` lines 27-28 | Confirmed |
