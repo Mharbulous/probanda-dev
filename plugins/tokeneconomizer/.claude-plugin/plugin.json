@@ -1,7 +1,7 @@
 {
   "name": "tokeneconomizer",
   "displayName": "TokenEconomizer",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Experience-driven black-box cost control for coding agents, adapted for Claude Code and Claude Cowork: micro-skills (short repository facts learned from earlier sessions) injected at session start, and a guard that redirects a turn stuck in a failing loop. Tool pruning is off in this copy.",
   "author": {
     "name": "TokenEconomizer authors"
