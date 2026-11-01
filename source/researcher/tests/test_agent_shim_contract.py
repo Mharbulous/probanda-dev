@@ -47,7 +47,8 @@ DESCRIPTION_CLAUSES = [
     "Every statement of law carries a pinpoint citation; anything uncited is offered "
     "as research, never asserted.",
     "Also takes `mode: inventory` / `report: brief` (a holdings check over named "
-    "criteria), which states no law.",
+    "criteria), which states no law, and `mode: case_brief` (one decision's brief, "
+    "from that decision alone, for /case-brief).",
     "Never browses: external research goes to /legal-research and research-paralegal.",
     "Not for procedural mechanics, deadline arithmetic, or restating a party's own "
     "pleaded positions.",
