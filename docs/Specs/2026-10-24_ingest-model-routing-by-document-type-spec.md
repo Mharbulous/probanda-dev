@@ -1,5 +1,7 @@
 # Spec: Ingest model and effort routing by document type
 
+**Superseded 2026-10-31 by `docs/Specs/2026-10-28_ingest-orchestrator-architecture-spec.md` §5, on its E7 recall measurement. Not to be built.**
+
 Status: proposed, 2026-10-24. Written in a matter session; implementation is handed to Claude Code.
 Plugin: `lawyer` (installed copy seen at v0.9.8). Paths below are as seen in the installed copy and are **UNVERIFIED** against the repo unless marked otherwise.
 Related specs, same date: 2026-10-24_verification-at-time-of-reliance-spec.md
