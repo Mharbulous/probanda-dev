@@ -88,7 +88,8 @@ class ProtocolStepSixTests(unittest.TestCase):
 
     def test_issue_conclusion_rule_and_application_forms(self):
         template = flat(read("research-memo-template.md"))
-        for text in ("The Issue is the question, as one bold sentence.",
+        self.assertNotIn("one bold sentence", template)
+        for text in ("The Issue is the question: any context sentences, then the one question in bold.",
                      "A Conclusion is one paragraph answering the Issue,",
                      "Conclusion. It cites in parentheses and has no block quote.",
                      "The Rule opens with the rule itself: its first item states it."):

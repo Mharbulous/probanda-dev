@@ -41,15 +41,16 @@ class JobQuestionMemoTest(unittest.TestCase):
 
     def test_memo_has_one_issue_and_rules_a_to_c(self):
         template = read("shared", "research-memo-template.md")
-        self.assertIn("The Issue is the spawn prompt's Job question, verbatim, never paraphrased.", flat(template))
+        self.assertIn("the Issue is that question verbatim if it meets rules A to C and names nothing of the "
+                      "working matter. If not, return no memo but one rewording proposal", flat(template))
+        self.assertNotIn("The Issue is the spawn prompt's Job question", flat(template))
         self.assertIn("One memo has one `## Issue` and no sub-issues.", flat(template))
         for rule in ("**A.** holds one question;", "**B.** makes sense on its own;",
-                     "**C.** lists alternatives in one place at most."):
-            self.assertIn(rule, template)
+                     "**C.** holds at most one list of alternatives (one axis)."):
+            self.assertIn(rule, flat(template))
         self.assertNotIn("Sub-issue <n>", template)
         self.assertNotIn("**Several issues.**", template)
         self.assertIn("No other issue or topic heading", template)
-        self.assertIn("never paraphrased", flat(template))
         self.assertIn("Confidence:", template)
         self.assertIn("## Sources", template)
 
