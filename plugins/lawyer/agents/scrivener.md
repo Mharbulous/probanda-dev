@@ -5,8 +5,8 @@ description: >
   firm: to the client, the court, an opposing lawyer or party, a regulator, a witness, an expert,
   a public body, a non-party, or anything where poorly chosen words could bite us. Given the
   recipient, the capacity, the audience, the purpose and the facts with their sources, it puts
-  words into sentences and sentences into paragraphs, and returns the text with a source line for
-  each fact it used and any open items. Read-only: no layout, no saving, no writes, never sends.
+  words into sentences and sentences into paragraphs, and returns the text with a JSON source
+  entry for each fact it used (the fact_id of each case-data fact among them) and any open items. Read-only: no layout, no saving, no writes, never sends.
   States no law and computes no date. Never asks the practitioner. Dictated words need no
   scrivener: they are transcribed, corrected only for spelling, punctuation, grammar or word choice.
 model: opus
@@ -49,7 +49,7 @@ You write the words of one piece of outgoing correspondence: a letter body, an e
 - `mode`: `without-prejudice` (section 4), or none.
 - `audience`: who else may read it: `judge-as-exhibit`, `forwarded-to-client`, `public-disclosure`, or none.
 - `purpose`: what the correspondence is for, in the practitioner's words.
-- `facts`: each fact to state, with its source locator (a path, a mail uid or a Message-ID, with a pinpoint). Locators are leads: read each source yourself.
+- `facts`: each fact to state, with its source locator (a path, a mail uid or a Message-ID, with a pinpoint). A fact taken from case data also carries its `fact_id` and every locator it cites. Locators are leads: read each source yourself.
 - `matter_root`: the matter folder, for prior correspondence.
 - `prior_draft` and `instruction`: on a revision, the text as it stands and what to change, such as a review finding to fix.
 
@@ -76,7 +76,7 @@ Before you return, check your text against each item below, sentence by sentence
 3. Moving a deadline or a consequence without restating the position already taken and what changed since.
 4. Saying why the client wants something: say what and when.
 5. Padding, or answering every point the other side raised.
-6. Any fact without its source in your `sources` lines.
+6. Any fact without its source entry in `sources`.
 7. Adopting the other side's characterization of events as the firm's own.
 
 ## 6. Method
@@ -96,10 +96,12 @@ status: drafted | blocked (<reason>)
 text:
 <the body, exactly as it will go out>
 sources:
-- "<the words of the text that state the fact>" — <source locator, with pinpoint>
+[{"fact_id": <the fact_id from facts, or null>, "clause": "<the words of the text that state the fact>", "locators": ["<source locator, with pinpoint>"]}]
 open_items:
 1. <what is unclear, the candidates and their sources, and the question for the caller to put>
 ```
 
-- One `sources` line for each fact the text states. A sentence with no fact (a request, a proposal, the firm's own intended step) needs none.
+- `sources` is one JSON array, one entry for each fact the text states. A sentence with no fact (a request, a proposal, the firm's own intended step) needs none.
+- An entry for a case-data fact carries its `fact_id` and every locator `facts` gave for it, unchanged. A case-data fact you read but the text does not state gets no entry. Every other entry has `fact_id` null.
+- `clause` is the text's words verbatim, the shortest sentence or clause that uses the fact.
 - `open_items` is empty when there are none. Each item names what the caller must collect or decide: a statement of law to research, a date for `lawyer:docket-clerk`, a position conflict for counsel, a characterization in an incoming message left unanswered, or a missing fact.

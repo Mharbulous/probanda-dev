@@ -66,6 +66,7 @@ This skill is the **sole gatekeeper** for CRUD operations on a litigation matter
 | "Empty the privileged wording out of the facts" / "make the facts known only from privileged sources bare rows" / a non-privileged source now states a fact that is a bare row (fill it) | operations/bare-privileged-facts.md |
 | "Review unverified rows" / "what needs my review" | operations/review.md |
 | "Re-check corrected rows" / "clear the re-verification backlog" | operations/ingest-verify.md (`@query_05d_pending_reverification`) |
+| A drafting skill checks the facts a paragraph relies on: the facts as stored, then the verifier's answer on each extraction written back | operations/reliance-verify.md |
 | "Correct/amend a legal proposition, finding, or criterion" / apply a verifier or lint finding to law-side text | operations/amend-law.md |
 | "Two authority rows for the same case/statute" / "merge duplicate authorities" / dedup `law.authorities` | operations/merge-authorities.md |
 | "Verify the legal edges" / clear the edge backlog / a push reports concepts held back for unverified edges | operations/verify-law.md |
