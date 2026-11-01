@@ -14,7 +14,7 @@ A case brief is a one-page structured summary of one decision in someone else's 
 
 ## Shape
 
-Eight parts, in this order. Each item is one numbered paragraph, numbered from 1 through the whole brief and never restarted at a heading. A part with nothing to say holds one item reading `None.` Together they fit on one page, so keep only what the holding turns on.
+Eight parts, in this order. Each item is one numbered paragraph, numbered from 1 through the whole brief and never restarted at a heading. A part with nothing to say holds one item reading `None.`, which is no item of law: it carries no pinpoint and no passage, and has no stored statement. Together they fit on one page, so keep only what the holding turns on.
 
 | Part | Slot | What it holds |
 |---|---|---|
@@ -31,7 +31,7 @@ A statement of law is ratio when removing it would change the outcome on at leas
 
 ### An item of law
 
-Every Holding, Ratio decidendi and Obiter dicta item has this form in the scratch copy, from one passage of the decision:
+Every Holding, Ratio decidendi and Obiter dicta item but a `None.` has this form in the scratch copy, from one passage of the decision:
 
 ```
 <n>. <one sentence: what the passage says>
@@ -43,7 +43,7 @@ Each passage is in the court's own voice, by `shared/authority-claim-verificatio
 
 ## The scratch copy
 
-`research-agent` writes the brief to the scratchpad with `research_filing__write_scratch`, as `<File stem>.md`, and returns only:
+`research-agent` writes the brief to the scratchpad with `research_filing__write_scratch`, as `<File stem>.md`, with the spawn prompt's `Matter root:` as `matter_root`, and returns only:
 
 ```
 Brief scratch: <the path the tool returned>
@@ -57,8 +57,9 @@ Save only after `brief-reviewer` returns `complete`. These are lawyer's own tool
 
 - **Writing.** `drafting_data__create_writing` with the same `tree` and `recipient`, `title` the `File stem:`, and `kind` `case_brief`. A caller holding a job uses its `db_path` and proceeding, as there.
 - **Authority.** Reuse the row the job's scope names. With no job, reuse the proceeding's row with that `citation`, and insert one (`kind` `case`) only when it holds none.
-- **Items.** Read `B` as that step does. One `drafting_data__execute` script: for each Holding, Ratio decidendi and Obiter dicta item `n`, `INSERT INTO statements_of_law (id, proceeding_id, authority_id, pinpoint, excerpt, source, verification)` with id `B + n`, the authority's id, and `'primary'` and `'lead'`, then `INSERT INTO filing_law (filing_id, statement_id)`. The same script writes one `filing_prose` row per slot in the table above: `case` as written, and every other slot as its items' sentences, one per paragraph, each item of law ending ` <!-- statement_of_law_id <B + n> -->`.
-- **Copy.** `drafting_forms__render` with `documents: ["General_writing"]`, then `research_filing__save_answer` with that document's `path` as `from_render`, `filename` `<File stem>.md`, and as `destination_dir` the folder under `6. LAW\` that holds the decision. A caller holding a job also passes the job's `db_path`, `ticket_id` and `claim_no` and its own `session_token`, so the job's card lists the brief. A result reading `job.recorded: false` means the job is no longer the caller's: the brief is saved, so stop and report.
+- **Items.** Read `B` as that step does. One `drafting_data__execute` script: for each Holding, Ratio decidendi and Obiter dicta item `n` but a `None.`, `INSERT INTO statements_of_law (id, proceeding_id, authority_id, pinpoint, excerpt, source, verification)` with id `B + n`, the authority's id, and `'primary'` and `'lead'`, then `INSERT INTO filing_law (filing_id, statement_id)`. The same script writes one `filing_prose` row per slot in the table above: `case` as written, and every other slot as its items' sentences, one per paragraph, each item of law ending ` <!-- statement_of_law_id <B + n> -->` and a `None.` written as it is.
+- **Copy.** `drafting_forms__render` with `documents: ["General_writing"]`, then `research_filing__save_answer` with that document's `path` as `from_render`, `filename` `<File stem>.md`, and as `destination_dir` the folder in the `6. LAW` tree that holds the decision. The save leaves out the render's work markers, trace comments and Legend, so the file is the brief alone. A caller holding a job also passes the job's `db_path`, `ticket_id` and `claim_no` and its own `session_token`, so the job's card lists the brief. A result reading `job.recorded: false` means the job is no longer the caller's: the brief is saved, so stop and report.
+- **Page.** Once the file is saved, `drafting_forms__render` again with the same Writing, `documents: ["Work_board"]` and `draft_dir` the matter's 0. DRAFT folder (`drafting_forms__open_session` returns it), which rewrites the matter's pages to list the brief. The Legal Research page is the `view_page_paths` entry of that name. It lists none when the matter holds no Writing but research results.
 - **A refusal.** When a `drafting_*` tool refuses, write nothing more to the Writing: save the `Brief scratch:` path as `from_scratch` and name the refusal in your relay.
 
 The file stem is `YYYY-MM-DD case brief <style of cause>, <citation>`, today's date first. A re-brief of a case that already has a saved brief reuses that brief's file stem, date included, and saves onto the same Writing, the `case_brief` Writing with that title: it creates none, and its `drafting_data__execute` script first deletes the Writing's `filing_prose` and `filing_law` rows and each statement those named that no other Writing cites, then writes the items as above. `save_answer` never overwrites and takes the next free ` vN` itself, so the save is that brief's next version.

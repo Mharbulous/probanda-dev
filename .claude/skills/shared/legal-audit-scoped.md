@@ -2,7 +2,9 @@
 
 # Scoped legal audit — narrowing the dispatch
 
-Loaded only when the spawn prompt names `mode:` or `report:`. It narrows *which
+Loaded only when the spawn prompt names `mode:` or `report:`, and never for
+`mode: case_brief`, which follows `shared/case-brief-template.md` and
+`case-brief/agents/brief.md` alone and none of this file. It narrows *which
 question is asked* and *how the answer is shaped*. It never narrows an audit
 guarantee: every located proposition still carries a pinpoint, every tier is still
 named in the coverage line, and nothing uncited is ever asserted.

@@ -118,6 +118,73 @@ class Jobs(unittest.TestCase):
         self.assertIn("A case brief job has no Issue heading to compare", read("draft", "references", "job-session.md"))
 
 
+class Reading(unittest.TestCase):
+    """The agents' `Read` opens no Word file, so both read the text the caller extracts, as the memo flow's do."""
+
+    def test_the_caller_extracts_a_word_decision_for_both_agents(self):
+        skill = flat(read("case-brief", "SKILL.md"))
+        self.assertIn("Call `research_filing__law_folder_text` with the matter root, the file's folder as `destination_dir` and its name as `file`", skill)
+        self.assertIn("Decision text: <the text_path, or none>", read("case-brief", "SKILL.md"))
+        self.assertIn("with the same `Decision:`, `Decision text:` and `Page manifest:` lines", skill)
+        self.assertIn("A `Decision text:` path is the decision's text", read("case-brief", "agents", "brief.md"))
+        reviewer = (REPO / "source" / "researcher" / "agents" / "brief-reviewer.md").read_text(encoding="utf-8")
+        self.assertIn("A `Decision text:` path is its text: read that file", reviewer)
+        self.assertIn("  - Read\n", reviewer)
+
+    def test_the_search_for_the_decision_reaches_subfolders(self):
+        skill = flat(read("case-brief", "SKILL.md"))
+        self.assertIn("Look through `6. LAW` and every folder under it", skill)
+        self.assertIn("`device_list_dir`", skill)
+        self.assertNotIn("List the matter's `6. LAW` folder with `research_filing__list_law_folder`", skill)
+
+
+class Scratch(unittest.TestCase):
+    def test_the_spawn_prompt_gives_write_scratch_its_matter_root(self):
+        prompt = read("case-brief", "SKILL.md")
+        self.assertIn("   Matter root: <", prompt[prompt.index("mode: case_brief") : prompt.index("Review: <brief-reviewer's")])
+        self.assertIn("with the spawn prompt's `Matter root:` as `matter_root`", flat(read("shared", "case-brief-template.md")))
+
+
+class Dispatch(unittest.TestCase):
+    def test_case_brief_reads_neither_the_scoped_file_nor_the_protocols_boundaries(self):
+        protocol = flat(read("shared", "legal-audit-protocol.md"))
+        brief_at = protocol.index("**Case brief dispatch.**")
+        self.assertLess(brief_at, protocol.index("You write nothing except"))
+        self.assertLess(brief_at, protocol.index("**Scoped dispatch.**"))
+        self.assertIn("never this file, its Hard boundaries or `shared/legal-audit-scoped.md`", protocol)
+        self.assertIn("names any other `mode:`, or `report:`, fetch `shared/legal-audit-scoped.md`", protocol)
+        self.assertIn("never for `mode: case_brief`", flat(read("shared", "legal-audit-scoped.md")))
+        self.assertIn("The scratch copy is your one write", read("case-brief", "agents", "brief.md"))
+
+    def test_the_shim_names_the_manifest_line_case_brief_uses(self):
+        shim = (REPO / "source" / "researcher" / "agents" / "research-agent.md").read_text(encoding="utf-8")
+        self.assertIn("(under `mode: case_brief`, in `Page manifest:`)", shim)
+
+
+class NoneIsNoItem(unittest.TestCase):
+    def test_none_needs_no_pinpoint_row_or_passage(self):
+        template = flat(read("shared", "case-brief-template.md"))
+        self.assertIn("`None.`, which is no item of law", template)
+        self.assertIn("item but a `None.` has this form", template)
+        self.assertIn("item `n` but a `None.`, `INSERT", template)
+        self.assertIn("a `None.` written as it is", template)
+        reviewer = flat((REPO / "source" / "researcher" / "agents" / "brief-reviewer.md").read_text(encoding="utf-8"))
+        self.assertIn("A `None.` is no item of law", reviewer)
+
+
+class Presenting(unittest.TestCase):
+    def test_a_review_that_failed_is_said_in_plain_words(self):
+        skill = flat(read("case-brief", "SKILL.md"))
+        self.assertIn("say in plain words that the brief could not be checked", skill)
+        self.assertNotIn("relay it verbatim", skill)
+
+    def test_the_page_is_named_only_when_it_exists(self):
+        template = flat(read("shared", "case-brief-template.md"))
+        self.assertIn('Once the file is saved, `drafting_forms__render` again with the same Writing, `documents: ["Work_board"]` and `draft_dir`', template)
+        self.assertLess(template.index("`research_filing__save_answer` with that document's"), template.index("**Page.**"))
+        self.assertIn("When it returned none, the matter has no Writing", flat(read("case-brief", "SKILL.md")))
+
+
 class NotTheDecision(unittest.TestCase):
     def test_a_brief_is_not_taken_for_the_decision(self):
         self.assertIn("`*case brief*`", read("drafting-data", "references", "locate-authority.md"))
