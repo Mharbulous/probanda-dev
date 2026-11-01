@@ -1,7 +1,7 @@
 # Research memo template
 
-This file is the single source of truth for the shape of a research memo: its header keys
-and the skeletons of its three body formats. `shared/legal-audit-protocol.md` Step 6 says
+This file is the single source of truth for the shape of a research memo: its header keys,
+its three body formats and its numbered items. `shared/legal-audit-protocol.md` Step 6 says
 who writes the memo and what each section may hold. Fill every `<...>` and leave no key out.
 
 ## Header
@@ -74,7 +74,9 @@ Each source is one bullet, `<full citation>, <each pinpoint relied on>`. Statute
 regulations and rules. Omit a subsection with no entries. Sources are listed here and
 nowhere else. Define an abbreviation in parentheses where the body first uses it.
 
-Write no legend: the save appends one, generated from the approved meaning of each symbol printed.
+Write no legend and no work marker: the saved copy prints each marker from the stored rows
+(📇 on an authority not yet noted up) and ends with a legend generated from the approved meaning
+of each symbol printed.
 
 **ICRA**, the default:
 
@@ -105,6 +107,22 @@ Write no legend: the save appends one, generated from the approved meaning of ea
 ## Conclusion
 ```
 
+The Issue, each Conclusion and the Sources are prose. Every other section is a list of
+numbered items, numbered from 1 through the whole memo and never restarted at a heading, so
+a paragraph number names one item. Each item holds one proposition or finding, from one excerpt
+of one authority, in exactly this shape:
+
+```
+<n>. <one sentence: what the excerpt says>
+   Authority: <style of cause or title>
+   Citation: <citation>
+   Kind: <case / statute / regulation / rule / doctrine>, <primary / secondary>
+   Pinpoint: <the pinpoint>
+   > <the verbatim passage at that pinpoint>
+```
+
+A point two authorities support is two items.
+
 In every format:
 
 - The Issue is the question, as one bold sentence. One memo has one `## Issue` and no
@@ -117,17 +135,10 @@ In every format:
 - A Conclusion is one paragraph answering the Issue, followed, only where research is required
   (`shared/legal-audit-protocol.md` Step 4), by the open-issues paragraph, after the last
   Conclusion. It cites in parentheses and has no block quote.
-- The Rule opens with the rule itself. Each proposition of law in it is one sentence, then its
-  source's own words:
-
-  ```
-  <the proposition, one sentence> (<citation>, at <pinpoint>)
-
-  > <the verbatim passage at that pinpoint>
-  ```
-
-- The Application is prose paragraphs, never bullets. It says how each cited authority applied
-  the rule, whether or not its facts resemble another's.
+- The Rule opens with the rule itself: its first item states it.
+- The Application: one sub-section per case, its items together. Each item is one finding of
+  that court, its sentence opening `fact:` or `law-applied:` (the law applied to the facts to
+  reach a holding), from the court's own reasons (`shared/legal-audit-protocol.md` Step 2).
 
 **A job's memo.** When the spawn prompt's `Job question:` is not `none`, the memo answers
 that question and nothing else. The Issue is the spawn prompt's Job question, verbatim, never

@@ -197,7 +197,10 @@ For every authority you intend to rely on:
    - **Note-up**, from a note-up record, commons `treatment_chain`, or an existing
      verified memo named with its date (for legislation, step e's pointer). A memo not
      named with its date is no note-up. It is case-level unless you read every citing
-     decision at its pinpoint against the paragraph's proposition or finding. Record
+     decision at its pinpoint against the paragraph's proposition or finding, which you
+     do for each paragraph the spawn prompt's `Note up paragraphs:` names: start from that
+     memo, keep its items and their numbers, put every citing decision not on disk on
+     `needs_download`, and update Validity, Confidence, the CanLII segment and Status. Record
      negative or distinguishing treatment. An authority with no record is NOT NOTED UP
      and drags reliability down.
 3. **Compare facts**: state the factual circumstances before that court against the
@@ -277,7 +280,8 @@ question, and write the header's `Confidence:` as `INCOMPLETE: <the research nam
 else in the memo defers to further research, offers research or names a tier not run. With
 no research required, write no such paragraph. A spawn prompt's `Review:` line is
 memo-reviewer's verdict on your last memo: treat each `required` item as required, and cut
-each `out_of_scope` and `identifiers` passage from the memo. With any `Review:` but `none`, return no `needs_download`
+each `out_of_scope` and `identifiers` passage from the memo, and rewrite each `findings` item
+as one finding or cut the item. With any `Review:` but `none`, return no `needs_download`
 or `needs_note_up`. A `Review:` with no `required` item asks only for a rewrite: rewrite the
 memo from the sources already held, without re-running the audit.
 
@@ -316,10 +320,11 @@ turned up. The tag says only which question an offer serves, never what the law 
 a board, the caller sorts every offer against it (`shared/legal-research.md`, "After the
 answer"). With none, it relays the `yes` offers.
 
+An authority the memo relies on gets no note-up offer: the practitioner asks for its
+note-up by paragraph number (`shared/legal-research.md`, "Proposition-level note-up").
 Write ` kind: note-up` just before the ` live_issue:` tag on every offer whose work is
-noting up an authority, reading the cases that cite it, or a citator or KeyCite check. This
-includes an offer to check whether a later case changes a test when that case reached you
-only through a citator's list of citing cases. You set the tag when you write the offer, so
+noting up an authority the memo does not rely on, reading the cases that cite it, or a
+citator or KeyCite check on it. You set the tag when you write the offer, so
 no caller ever reads the offer's wording to decide it. A `kind: note-up` offer carries no
 `job:` or `steps:` line: no research offer becomes a note-up job (`/drafting-data` §3i).
 
@@ -384,18 +389,15 @@ write the notes and the memo to the scratchpad, in this order, and return only i
 
    - The Rule (and in CREAC the Explanation) carries every proposition with its pinpoint, its note-up
      result and its reasons-voice check, exactly as Step 2 requires. Nothing uncited.
-   - Every proposition of law anywhere in the body carries its pinpoint citation. In the Rule
-     it is one sentence at most, followed at once by the verbatim passage at its pinpoint as a
-     block quote with its citation. The Conclusion and the Application cite in parentheses and
-     quote no block.
+   - Every proposition of law anywhere in the body carries its pinpoint citation: in a
+     numbered item in the template's item shape, and in the Conclusion in parentheses, with
+     no block quote.
      No coverage line and no confidence table anywhere in the memo. The header's
      one-line `Confidence:` summary of the Step 3 table is the only confidence text in it.
    - In every format the memo is generic and has no Facts section. The spawn prompt's `Facts:`, `Matter:`, `Asked by:` and `Origin:`
      only choose authorities and route the work: the memo never states, summarises or
      alludes to them. No part of the memo holds a party name, date, amount,
      matter number, document name or fact pattern of the working matter.
-   - Application describes only the facts of the cited authorities. It may say which
-     authority's facts come closest to a stated generic pattern.
    - The Conclusion answers as Step 4 says, its open-issues paragraph last. A preliminary impression uses Step 4's hedged wording and repeats
      which checks are missing.
 

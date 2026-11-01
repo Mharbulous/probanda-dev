@@ -288,6 +288,7 @@ Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's 
 Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal: <its status line, or practitioner declined> / yes: review
 Review: <memo-reviewer's last JSON, verbatim> / none
 Final instructed: yes / no
+Note up paragraphs: <the saved memo's path>: <n>[, <n>] / none
 Background memos: <path>[; <path>] / none
 Here are the memos that will provide some background context for your research. Repeat the propositions and excerpts from the previous memo only if they are necessary context for explaining your own research memo, but make sure that you go beyond that information and dig deeper into the legal issue posed by your particular question.
 Flag unsettled: <what to flag as unsettled> / none
@@ -320,6 +321,7 @@ caller writes `Job question: none`.
 when no paralegal ran for it. `Review:` is `none` until memo-reviewer has returned on this question.
 `Final instructed:` is `yes` only when the practitioner has explicitly instructed that this
 memo's status change to FINAL (`shared/research-memo-template.md`, "Status").
+`Note up paragraphs:` is `none` except on a proposition-level note-up (below).
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
 is in issue. For an instrument filed in parts, `<path>` lists every part's path, separated by `; `.
@@ -399,13 +401,14 @@ on every return that carries a memo, with the spawn prompt's `Question:`, `Job q
 `Facts:`, `Matter:`, `Asked by:` and `Origin:` lines, and the full text of the memo and of
 the notes, read from the return's `Memo scratch:` and `Notes scratch:` paths, or as the return
 gives them, pasted in. It reviews one question at most three times. A return that is not its
-JSON object (`verdict`, `required`, `out_of_scope`, `identifiers`), `rules unavailable`
+JSON object (`verdict`, `required`, `out_of_scope`, `identifiers`, `findings`), `rules unavailable`
 included, saves nothing: stop and relay it verbatim. On the object, re-invoke the agent with
 `Review:` the reviewer's JSON:
 
 - `send_back` with `required` items: each is research the Issue cannot be answered without,
   run by the rule above first.
 - `send_back` with `identifiers` or `out_of_scope` items: to rewrite the memo without them.
+- `send_back` with `findings` items: to rewrite each as one finding, or cut the item.
 - `send_back` whose only items are `required` research this session cannot run: to name it
   in the open-issues paragraph, unless the memo already does.
 
@@ -421,26 +424,45 @@ still needs.
 Persist in this order. Steps 2 and 3 need not interrupt the work in hand, but they
 complete before the session ends: never leave a session with a cited decision unfiled.
 
-1. Save it verbatim: the memo, from its `---` header line to the end of the return,
-   with only the trailing `Files:` list and "Nothing new to remember" note omitted,
-   nothing added but the Legend the save generates and nothing else of it removed, as `<File stem>.md` (the spawn
-   prompt's `File stem:`) in the research folder under the matter. The internal notes
-   above the memo are already in the scratchpad and are not saved here.
-   The research folder is set by the question you put to the audit agent. It
-   files in `6. LAW\<issue>\`: reuse the existing subfolder named for
-   that issue, or create one named in the question's own words for it, and name any
-   folder you created in your relay.
-   Never use the claude.ai Project. Save with `research_filing__save_answer`.
-   When the return has a `Memo scratch:` line, pass that path as `from_scratch`
-   and no `text`: the runtime copies the agent's own file byte for byte, so the
-   memo is never retyped. Only when the return has no such line, pass the memo as
-   `text`, as written. Either way it never overwrites, even a file another
-   session wrote, and takes the next free ` vN` itself. A caller working a
-   `/draft` job also passes the job's `db_path`, `ticket_id` and `claim_no` and
-   its own `session_token`, so the job's card lists the answer. A result reading
-   `job.recorded: false` means the job is no longer the caller's: the answer is
-   saved, so stop and report. The generated Legend is the only definition of a symbol in
-   the memo: where a line of it says otherwise, save the corrected memo again.
+1. Save it verbatim, nothing added but the Legend the save generates, as a research memo
+   Writing and its readable copy. Copy every field from the `Memo scratch:` file (or the memo
+   the return gives in its place) character for character, an excerpt without its `> ` marks.
+   The internal notes are already in the scratchpad and are not saved here. These are
+   lawyer's own `drafting_*` tools:
+   - **Database.** A caller holding a job uses its `db_path` and the job's proceeding. Any other
+     caller takes `db_path` from `drafting_forms__open_session` on the matter root, and the
+     matter's lowest-id proceeding, or inserts one with `drafting_data__execute`
+     (`INSERT INTO proceedings (matter_reference) VALUES ('<Matter:>');`).
+   - **Writing.** `drafting_data__create_writing` with `tree` `{country: "CAN", jurisdiction:
+     "BC", venue: "_NoVenue"}`, `recipient: "internal"`, `title` the `File stem:`, and `kind`
+     `research_memo`, `research_memo_irac` or `research_memo_creac` by the header's `Format:`.
+   - **Items.** Read `B`, `SELECT coalesce(max(id), 0) FROM statements_of_law`. Then one
+     `drafting_data__execute` script: for each item `n`, its authority unless the proceeding
+     already holds one with that `citation` (`INSERT INTO authorities (proceeding_id,
+     style_of_cause_or_title, citation, kind) SELECT ... WHERE NOT EXISTS (...)`), then
+     `INSERT INTO statements_of_law (id, proceeding_id, authority_id, pinpoint, excerpt, source,
+     verification)` with id `B + n`, the authority's id by its citation, and `'lead'`, then
+     `INSERT INTO filing_law (filing_id, statement_id)`. The same script writes one
+     `filing_prose` row per section, slot `memo-header` (the header, both `---` lines
+     included), `issue`, `conclusion`, `rule`, `explanation`, `application`,
+     `closing-conclusion` (CREAC's last Conclusion) and `sources`: a prose section as written, a
+     numbered section as its items' sentences, one per paragraph, each ending
+     ` <!-- statement_of_law_id <B + n> -->`.
+   - **Copy.** `drafting_forms__render` with the Writing's `filing_id` and `documents:
+     ["General_writing"]`, then `research_filing__save_answer` with that document's `path` as
+     `from_render`, `filename` `<File stem>.md` (the spawn prompt's `File stem:`), and as
+     `destination_dir` the research folder: `6. LAW\<issue>\`, the existing subfolder named for
+     that issue, or one created in the question's own words, named in your relay. A caller
+     working a `/draft` job also passes the job's `db_path`, `ticket_id` and `claim_no` and its
+     own `session_token`, so the job's card lists the answer. A result reading
+     `job.recorded: false` means the job is no longer the caller's: the answer is saved, so stop
+     and report.
+
+   When a `drafting_*` tool refuses, write nothing more to the Writing: save the `Memo scratch:`
+   path as `from_scratch` (the memo as `text` only when the return has no such line) and name
+   the refusal in your relay. `save_answer` never overwrites, even a file another session
+   wrote, and takes the next free ` vN` itself. The generated Legend is the only definition of a
+   symbol in the memo. Never use the claude.ai Project.
 2. For every court decision the answer cites (in support, distinguished, or
    rejected) that case data does not already hold and that is not already on disk
    under the matter's `6. LAW\` (the pre-spawn Westlaw retrieval usually filed it),
@@ -530,6 +552,20 @@ memo's words as advice on the draft.
 When no board resolves, capture nothing and relay the same. A return
 with `Origin: none` is sorted against the open board in a `/draft` session. Outside `/draft`
 it is relayed as before this step existed.
+
+**Proposition-level note-up.** On a request to note up the propositions or findings in
+numbered paragraphs of a saved research memo, name exactly those paragraphs. Paragraph `n` is
+the memo Writing's `n`th item, and its stored item is the `statement_of_law_id` its line ends
+with. With `/drafting-data` installed, write the job by its §3k, "A research memo's
+paragraphs", and work each step there; without it, run the steps here and say no job was
+written. A step runs the gate on the memo's question with `Note up paragraphs:` naming the memo
+and its paragraph: `citation-checker` notes up any authority without a record, and
+`research-paralegal` downloads every citing decision the record lists. research-agent reads
+each at its pinpoint and returns the memo with the same items, its Validity, Confidence,
+CanLII segment and Status updated (`shared/legal-audit-protocol.md` Step 2). Save it onto
+the same Writing: replace its `memo-header` row, then render and save by persist step 1's
+Copy. Record an authority's treatment, which clears its 📇, by `/drafting-data`
+`references/note-up.md` only once every item citing it has a proposition-level note-up.
 
 **Statute currency.** In a research question the check runs at the end of duty 4.
 When a caller such as `/draft` asks for a currency check on its own, call the canlii
