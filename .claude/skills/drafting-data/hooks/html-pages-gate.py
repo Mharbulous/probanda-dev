@@ -64,9 +64,9 @@ import hook_io  # noqa: E402
 STEM = r"(?:Milestone|job board|litigation strategy|to do list|work board|matter board|work_board @rev)"
 # The view pages' names, lowercased (plugins/litigation/mcp/src/submission/view-pages.ts VIEW_PAGES).
 # Each new view page adds its lowercased name here. "loose ideas" is the Loose Threads page's name
-# before 2026-10-08, and "provable facts" the Material Facts page's before 2026-10-20 (docs/ADRs/0011),
-# each kept so an old copy not yet moved to TRASH is still refused.
-VIEW_NAMES = ("procedural history", "material facts", "raw research", "arguments", "loose threads", "loose ideas", "provable facts")
+# before 2026-10-08, "provable facts" the Material Facts page's before 2026-10-20 (docs/ADRs/0011), and
+# "raw research" the Legal Memos page's before 2026-10-31, each kept so an old copy not yet moved to TRASH is still refused.
+VIEW_NAMES = ("procedural history", "material facts", "legal memos", "arguments", "loose threads", "loose ideas", "provable facts", "raw research")
 # A view page: a listed name, then ".html" in a Writing's own folder, or " - Milestone <id>.html",
 # or " - Job Board <id>.html", its name before 2026-10-28,
 # or " - filing <id>.html", its name before 2026-10-09, each kept so an old copy not yet moved to TRASH is
@@ -92,6 +92,7 @@ SAMPLE_PAGES = ("Milestone.html", "Milestone 1.html", "Milestone - filing 1.html
                 "Loose Threads - Milestone 1 preview 1.html", "Provable Facts - Milestone - proceeding 3.html",
                 "Procedural History - Milestone - proceeding 3.html", "Material Facts - Milestone - proceeding 3.html",
                 "Procedural History.html", "Material Facts.html", "Raw Research.html", "Arguments.html", "Loose Threads.html",
+                "Legal Memos.html", "Legal Memos - Milestone 1.html", "Legal Memos - Milestone 1 preview 1.html",
                 "Milestone preview 1.html", "Arguments preview 1.html")
 
 FILE_TOOLS = {"Read": "file_path", "Write": "file_path", "Edit": "file_path", "MultiEdit": "file_path",

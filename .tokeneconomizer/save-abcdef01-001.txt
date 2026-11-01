@@ -1,0 +1,2 @@
+# te-carry v0 session=abcdef0123 n=1 sha256=c203e2cfcadce18706dee5f2161968eb7d25673b220c2f7678c3b0b6b4a096c7
+events.jsonl	{"kind": "turn", "note": "quote \" and back\slash /home/mharbulous "}

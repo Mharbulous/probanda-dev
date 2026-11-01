@@ -32,7 +32,7 @@ const { LITIGATION_STRATEGY_FIXTURE } = await import("../build/board-fixtures/li
 const { MILESTONE_FIXTURE } = await import("../build/board-fixtures/milestone.js");
 const { PROCEDURAL_HISTORY_FIXTURE } = await import("../build/board-fixtures/procedural-history.js");
 const { MATERIAL_FACTS_FIXTURE } = await import("../build/board-fixtures/material-facts.js");
-const { RAW_RESEARCH_FIXTURE } = await import("../build/board-fixtures/raw-research.js");
+const { LEGAL_MEMOS_FIXTURE } = await import("../build/board-fixtures/legal-memos.js");
 const { ARGUMENTS_FIXTURE } = await import("../build/board-fixtures/arguments.js");
 const { LOOSE_THREADS_FIXTURE } = await import("../build/board-fixtures/loose-threads.js");
 const { HOUSEKEEPING_FIXTURE } = await import("../build/housekeeping/fixture.js");
@@ -49,7 +49,7 @@ const PAGES = [
   ...[
     ["Procedural History", PROCEDURAL_HISTORY_FIXTURE],
     ["Material Facts", MATERIAL_FACTS_FIXTURE],
-    ["Raw Research", RAW_RESEARCH_FIXTURE],
+    ["Legal Memos", LEGAL_MEMOS_FIXTURE],
     ["Arguments", ARGUMENTS_FIXTURE],
   ].map(([name, f]) => [name, `${name} - Milestone 1`, (page) => renderViewPageHtml({ ...viewPage(name), ...page }, f.meta, f.data)]),
   ["Loose Threads", "Loose Threads", (page) => renderViewPageHtml({ ...viewPage("Loose Threads"), ...page }, LOOSE_THREADS_FIXTURE.meta, LOOSE_THREADS_FIXTURE.data)],

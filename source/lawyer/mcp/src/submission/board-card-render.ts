@@ -4,6 +4,7 @@
 import { collapsedText, derivedOf, generalTail, jobCardLines, proposalLines } from "./board-job-text.js";
 import { criterionLine, jobsIn, proposedHeading, proposedOf, renderLiveLanes, shelvedHeading, shelvedProposalsOf } from "./board-summary.js";
 import type { CourtFileAffidavit } from "./court-file-affidavits.js";
+import type { LegalMemo, MemoSource, MemoStatus } from "./forms/legal-memos-page.js";
 import { type AttachedDraft, type Category, type WorkBoardData } from "./forms/render-work-board.js";
 
 const LIVE: ReadonlySet<Category> = new Set(["ready", "wip", "bring_forward", "waiting"]);
@@ -29,10 +30,34 @@ function goalLines(section: WorkBoardData): string[] {
 }
 
 /** `goal` is the criteria lane's former name, still accepted for it; `goals` is the statement of goals. */
-export type CardLane = "goals" | "criteria" | "live" | "goal" | "proposed" | "completed" | "rejected" | "attached" | "court_file";
+export type CardLane = "goals" | "criteria" | "live" | "goal" | "proposed" | "completed" | "rejected" | "attached" | "court_file" | "memos";
 
 /** board_card's lanes, in the order a card prints them. */
-export const CARD_LANES: readonly CardLane[] = ["goals", "criteria", "live", "proposed", "completed", "rejected", "attached", "court_file"];
+export const CARD_LANES: readonly CardLane[] = ["goals", "criteria", "live", "proposed", "completed", "rejected", "attached", "court_file", "memos"];
+
+const MEMO_SOURCE_LABELS: Record<MemoSource, string> = { research_memo: "research memo", westlaw: "Westlaw Deep Research report", note_up: "note-up record" };
+const MEMO_STATUS_LABELS: Record<MemoStatus, string> = { in_progress: "in progress", started: "started", completed: "completed", no_job: "no job" };
+
+/** The memos lane: the Legal Memos page's memos (legal-memos-page.ts), newest first, as
+ * `- <title> · <source> · <status> · <date> · v<n>[ (earlier: v<m>, …)] · <path from 6. LAW>[ · not in the law folder]`,
+ * then `  issue: "<the job's question>"` per job question (`  issue: none (no job saved it)` without one),
+ * `  facts: "<fact>"; …` or `  facts: none`, and `  jobs: #<id> <title>; …` when a job saved it. */
+function memosLines(memos: LegalMemo[]): string[] {
+  return [
+    `## Legal Memos (${memos.length})`,
+    ...memos.flatMap((m) => {
+      const head = [`- ${m.title}`, MEMO_SOURCE_LABELS[m.source], MEMO_STATUS_LABELS[m.status], m.date ?? "no date"];
+      head.push(`v${m.version}${m.earlier.length === 0 ? "" : ` (earlier: ${m.earlier.map((n) => `v${n}`).join(", ")})`}`, m.file);
+      if (!m.on_disk) head.push("not in the law folder");
+      return [
+        head.join(" · "),
+        ...(m.issues.length === 0 ? ["  issue: none (no job saved it)"] : m.issues.map((i) => `  issue: ${JSON.stringify(i)}`)),
+        `  facts: ${m.facts.length === 0 ? "none" : m.facts.map((f) => JSON.stringify(f)).join("; ")}`,
+        ...(m.jobs.length === 0 ? [] : [`  jobs: ${m.jobs.map((j) => `#${j.id} ${j.title}`).join("; ")}`]),
+      ];
+    }),
+  ];
+}
 
 const ATTACHMENT_KIND_LABELS: Record<AttachedDraft["kind"], string> = { client_letter: "client letter", reply: "reply", opposing_filing: "opposing filing" };
 
@@ -79,14 +104,15 @@ function courtFileLines(rows: CourtFileAffidavit[]): string[] {
 
 /** The selected parts of a section in a fixed grammar: each job asked for in board order, then each
  * lane asked for in CARD_LANES order, then the key lookup. `attached` is the section's attachments
- * as found on disk, read only when the attached lane is asked for. */
+ * as found on disk, read only when the attached lane is asked for, and `memos` likewise. */
 export function renderBoardCard(
   section: WorkBoardData,
   jobs: number[],
   lanes: CardLane[],
   key: string | undefined,
   attached: AttachedDraft[] = [],
-  courtFile: CourtFileAffidavit[] = []
+  courtFile: CourtFileAffidavit[] = [],
+  memos: LegalMemo[] = []
 ): string {
   const derived = derivedOf(section);
   const lines: string[] = [];
@@ -103,6 +129,7 @@ export function renderBoardCard(
     if (lane === "rejected") lines.push(shelvedHeading(section), ...jobsIn(section, "rejected").map((t) => collapsedText(t) + generalTail(t)), ...shelvedProposalsOf(section).flatMap(proposalLines));
     if (lane === "attached") lines.push(...attachedLines(attached));
     if (lane === "court_file") lines.push(...courtFileLines(courtFile));
+    if (lane === "memos") lines.push(...memosLines(memos));
   }
   if (key !== undefined) {
     const holder = section.tickets.find((t) => LIVE.has(t.category) && t.proposal_keys.includes(key));

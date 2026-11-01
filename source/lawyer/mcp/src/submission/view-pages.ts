@@ -20,14 +20,15 @@
 //
 // Provable Facts became Procedural History and Material Facts on 2026-10-20 (docs/ADRs/0011). A
 // `Provable Facts - Milestone <id>.html` left from before is an old page file (matter-page-files.ts OLD_PAGE).
+// Raw Research became Legal Memos on 2026-10-31, the same way: a `Raw Research.html` is an old page file.
 
 import { join } from "node:path";
 
 import type { TemplateSet } from "../compose-template.js";
 import { ARGUMENTS_PAGE } from "./forms/arguments-page.js";
 import { MATERIAL_FACTS, PROCEDURAL_HISTORY } from "./forms/facts-pages.js";
+import { LEGAL_MEMOS_PAGE } from "./forms/legal-memos-page.js";
 import type { FilingRow, ProceedingRow } from "./forms/query.js";
-import { RAW_RESEARCH_PAGE } from "./forms/raw-research-page.js";
 
 /** On every view page's root element: the overwrite guard and the old-page sweep recognise this
  * server's own view page by it. */
@@ -41,6 +42,8 @@ export interface ViewPageContext {
   proceeding: ProceedingRow;
   /** Every live Writing on the board (ADR 0010), the survivor's first: one, unless boards were merged. */
   writings: { filing: FilingRow; proceeding: ProceedingRow }[];
+  /** The matter's 0. DRAFT folder the pages are written in. */
+  draftDir: string;
   /** The write's one clock reading, the page's Rendered stamp. */
   now: string;
   /** The database's revision the write read, the page's Rev. */
@@ -68,7 +71,7 @@ export interface ViewPage<C = ViewPageContext> {
 export const VIEW_PAGES: readonly ViewPage[] = [
   PROCEDURAL_HISTORY,
   MATERIAL_FACTS,
-  RAW_RESEARCH_PAGE,
+  LEGAL_MEMOS_PAGE,
   ARGUMENTS_PAGE,
 ];
 

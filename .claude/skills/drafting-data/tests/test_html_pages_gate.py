@@ -18,14 +18,16 @@ STAGEABLE_NAMES = ["Milestone 1.html", "Milestone - proceeding 2.html", "Milesto
                    "Procedural History - Milestone 1.html", "Material Facts - Milestone 2.html",
                    "Material Facts - Milestone - proceeding 3.html",
                    # A Writing's own folder's pages (spec 2026-10-22).
-                   "Milestone.html", "Procedural History.html", "Arguments.html", "LOOSE THREADS.HTML"]
+                   "Milestone.html", "Procedural History.html", "Arguments.html", "LOOSE THREADS.HTML",
+                   # Raw Research renamed (2026-10-31).
+                   "Legal Memos.html", "Legal Memos - Milestone 1.html"]
 # A preview of each current page (#139), stageable like its page.
 PREVIEW_NAMES = ["Work Board preview 1.html", "Litigation Strategy preview 2.html", "Milestone 1 preview 1.html",
                  "Milestone - proceeding 2 preview 3.html", "Provable Facts - Milestone 1 preview 1.html",
                  "Raw Research - Milestone 4 preview 2.html", "Arguments - Milestone 1 preview 10.html",
                  "Loose Threads - Milestone 1 preview 1.html", "WORK BOARD PREVIEW 1.HTML",
                  "Procedural History - Milestone 1 preview 1.html", "Material Facts - Milestone 1 preview 2.html",
-                 "Milestone preview 1.html", "Raw Research preview 2.html"]
+                 "Milestone preview 1.html", "Raw Research preview 2.html", "Legal Memos preview 1.html"]
 STAGEABLE_NAMES += PREVIEW_NAMES
 UNSTAGEABLE_NAMES = ["Milestone - SUB Opening.html", "Milestone 1-1.html",
                      "Milestone-1.html", "Milestone .html", "Milestone 1 (2).html",

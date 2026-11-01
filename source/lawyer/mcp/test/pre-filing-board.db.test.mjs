@@ -109,7 +109,7 @@ test("a proceeding's Milestone page carries its tickets and seeds, and no filing
     );
     assert.deepEqual(
       readdirSync(join(f.draft, "Consent Order Requisition")),
-      ["Arguments.html", "Material Facts.html", "Milestone.html", "Procedural History.html", "Raw Research.html"],
+      ["Arguments.html", "Legal Memos.html", "Material Facts.html", "Milestone.html", "Procedural History.html"],
       "the filing's pages are in its Writing's folder"
     );
     assert.equal(existsSync(join(dirname(f.dbPath), "mockups", "Pre-filing proceeding 1")), false, "nothing beside the database");

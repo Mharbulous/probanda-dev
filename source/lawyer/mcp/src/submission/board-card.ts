@@ -1,12 +1,13 @@
 // drafting_forms__board_card: the tool entry point that reads one section's cards (board-card-render.ts
 // prints them).
 
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 
 import { ValidationError } from "../errors.js";
 import { attachedDrafts, withCodes } from "./board-attachments.js";
 import { type CardLane, CARD_LANES, renderBoardCard } from "./board-card-render.js";
 import { BoardIndex, type BoardRef } from "./forms/board-members.js";
+import { buildLegalMemosData, LAW_FOLDER } from "./forms/legal-memos-page.js";
 import { courtFileAffidavits } from "./court-file-affidavits.js";
 import { type ClientContext, nowStamp, resolveDraftDir } from "./forms.js";
 import { fetchAllFilingsForProceeding, fetchFiling, fetchProceeding, fetchRevision } from "./forms/query.js";
@@ -110,6 +111,9 @@ export function submissionFormsBoardCard(
   if (lanes.includes("court_file") && (args.draft_dir === undefined || args.filing_id === undefined)) {
     throw new ValidationError("drafting_forms__board_card: the court_file lane needs filing_id and draft_dir, the matter's 0. DRAFT folder session entry returned");
   }
+  if (lanes.includes("memos") && args.draft_dir === undefined) {
+    throw new ValidationError("drafting_forms__board_card: the memos lane needs draft_dir, the matter's 0. DRAFT folder session entry returned");
+  }
   const draftDir = args.draft_dir === undefined ? undefined : resolveDraftDir(args.draft_dir, "drafting_forms__board_card.draft_dir");
   if (args.proceeding_id !== undefined && fetchAllFilingsForProceeding(args.db_path, args.proceeding_id).length > 0) {
     throw new ValidationError("This proceeding has a Writing, so its jobs are on each Writing's Milestone -- read the card there");
@@ -137,7 +141,8 @@ export function submissionFormsBoardCard(
         ? (section.meta.writing_states?.map((w) => w.filing_id) ?? [args.filing_id])
             .filter((id): id is number => id !== null)
             .flatMap((id) => courtFileAffidavits(args.db_path, id, dirname(draftDir)))
-        : []
+        : [],
+      lanes.includes("memos") && draftDir !== undefined ? buildLegalMemosData(args.db_path, section.tickets, join(dirname(draftDir), LAW_FOLDER)).memos : []
     ),
   };
 }

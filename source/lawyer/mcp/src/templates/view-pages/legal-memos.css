@@ -1,0 +1,10 @@
+.filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:6px 0 0;font-size:13px}
+.filters label{display:flex;align-items:center;gap:6px}
+.filters select,.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink)}
+.filters input[type=search]{min-width:200px;flex:1 1 200px;max-width:360px}
+details.ticket .body dd ul{margin:0;padding-left:18px}
+details.ticket .body dd ul li{white-space:pre-wrap}
+details.ticket .body dd.none{color:var(--muted)}
+.board>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}
+[hidden]{display:none!important}
+@media (max-width:600px){main{padding:16px}}

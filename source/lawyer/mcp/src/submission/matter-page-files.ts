@@ -94,8 +94,8 @@ export function writePage(file: string, html: string): void {
  * a view page's `<page name> - filing <id>.html` is its name before 2026-10-09, and
  * `Provable Facts - Milestone <id>.html` the Material Facts page's before 2026-10-20 (docs/ADRs/0011), and
  * `Job Board …` the Milestone's name before 2026-10-28, and each board's Loose Threads page before 2026-10-29
- * (the matter's own, at the top, is a current target). */
-const OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments) - filing \d+|loose threads(?: - (?:filing|Milestone|job board)(?: - proceeding)? \d+)?|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+)\.html$/i;
+ * (the matter's own, at the top, is a current target), and `Raw Research …` the Legal Memos page's before 2026-10-31. */
+const OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments) - filing \d+|loose threads(?: - (?:filing|Milestone|job board)(?: - proceeding)? \d+)?|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+|raw research(?: - (?:Milestone|job board)(?: - proceeding)? \d+)?)\.html$/i;
 
 /** A preview pages__preview wrote beside the pages (src/pages/preview.ts): never an old page, so the sweep leaves it. */
 const PREVIEW_FILE = / preview \d+\.html$/i;

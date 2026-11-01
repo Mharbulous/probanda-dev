@@ -89,7 +89,7 @@ test("a card the page lacks, or another page, is refused and writes nothing", as
   const f = await fixture(t);
   assert.throws(() => submissionFormsFocusViewPage(args(f, "counter", 3), f.env), (e) => e.code === "no_such_card");
   assert.throws(() => submissionFormsFocusViewPage(args(f, "submissions", 1), f.env), (e) => e.code === "no_such_card");
-  assert.throws(() => submissionFormsFocusViewPage({ ...args(f, "counter", 1), page: "Raw Research" }, f.env), (e) => e.code === "unsupported_page");
+  assert.throws(() => submissionFormsFocusViewPage({ ...args(f, "counter", 1), page: "Legal Memos" }, f.env), (e) => e.code === "unsupported_page");
   assert.throws(() => submissionFormsFocusViewPage({ ...args(f, "counter"), item: "raised:1" }, f.env), (e) => e.code === "no_such_card");
   assert.throws(() => submissionFormsFocusViewPage({ ...args(f, "counter", 1), item: "anticipated:1" }, f.env), (e) => e.code === "invalid_target");
   const api = await startPageApi(f.env, { log: () => {} });

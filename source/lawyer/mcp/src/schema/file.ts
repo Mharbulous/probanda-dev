@@ -20,7 +20,7 @@ const PAGE_NAMES = [
   "Milestone",
   "Procedural History",
   "Material Facts",
-  "Raw Research",
+  "Legal Memos",
   "Arguments",
   "Loose Threads",
   "Housekeeping approval",

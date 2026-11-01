@@ -157,7 +157,7 @@ export function buildMatterPages(
     return renderViewPageHtml(
       page,
       { filing: v.writings.map((w) => w.filing.title).join("; "), matter: meta.matter, client: meta.client, revision, rendered: now },
-      page.data({ dbPath, filing: first.filing, proceeding: first.proceeding, writings: v.writings, now, revision })
+      page.data({ dbPath, filing: first.filing, proceeding: first.proceeding, writings: v.writings, draftDir, now, revision })
     );
   });
   const threadsPage = templates.threads ?? LOOSE_IDEAS_PAGE;

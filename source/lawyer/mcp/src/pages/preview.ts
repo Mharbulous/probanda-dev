@@ -31,7 +31,7 @@ import { ARGUMENTS_FIXTURE } from "../board-fixtures/arguments.js";
 import { LOOSE_THREADS_FIXTURE } from "../board-fixtures/loose-threads.js";
 import { MATERIAL_FACTS_FIXTURE } from "../board-fixtures/material-facts.js";
 import { PROCEDURAL_HISTORY_FIXTURE } from "../board-fixtures/procedural-history.js";
-import { RAW_RESEARCH_FIXTURE } from "../board-fixtures/raw-research.js";
+import { LEGAL_MEMOS_FIXTURE } from "../board-fixtures/legal-memos.js";
 import { nowStamp, resolveDraftDir } from "../submission/forms.js";
 import { LOOSE_IDEAS_PAGE, LOOSE_THREADS_FILE, LOOSE_THREADS_PAGE_NAME, type LooseIdeasData } from "../submission/forms/loose-ideas-page.js";
 import { LITIGATION_STRATEGY_TEMPLATE, MATTER_BOARD_FILE, renderMatterBoardHtml } from "../submission/forms/matter-board-shell.js";
@@ -60,7 +60,7 @@ export const PAGE_TEMPLATES: Readonly<Record<string, TemplateSet>> = {
 const VIEW_FIXTURES: Readonly<Record<string, { meta: ViewPageMeta; data: unknown }>> = {
   "Procedural History": PROCEDURAL_HISTORY_FIXTURE,
   "Material Facts": MATERIAL_FACTS_FIXTURE,
-  "Raw Research": RAW_RESEARCH_FIXTURE,
+  "Legal Memos": LEGAL_MEMOS_FIXTURE,
   Arguments: ARGUMENTS_FIXTURE,
 };
 
