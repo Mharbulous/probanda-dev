@@ -36,12 +36,12 @@ header .writing-title{margin:0;font-family:var(--sans-heading);font-weight:600;f
 header .meta.proceeding{gap:4px 6px}
 header .meta span:not([data-k])::before{content:none}
 /* The Key dates card's rows (ADR 0013, 2026-10-04 amendments): this Writing's row and the matter's
-   row, plain text with no control, each date as stored after its label and its flag after it. A
-   deadline a Goal card carries is drawn on that card instead: in its head while unmet, and on its
-   criterion row. */
-.dates .meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-family:var(--mono);font-size:12px}
+   row, plain text with no control, one line per date: its label, the date as stored and its flag,
+   all as text so a copy keeps them. A deadline a Goal card carries is drawn on that card instead:
+   in its head while unmet, and on its criterion row. */
+.dates .meta{font-family:var(--mono);font-size:12px;line-height:1.7}
 .dates .meta+.meta{margin-top:8px}
-.dates .meta span[data-k]::before{content:attr(data-k) " ";opacity:.75}
+.dates .meta .k{opacity:.75}
 .dates .meta .flag{margin-left:6px;border:1px dashed currentColor;border-radius:999px;padding:0 7px}
 /* The statement of goals' card, labelled Goal: the Completion Criteria card's look and native expand
    and collapse. Its body renders the statement's syntax as rows, a label cell beside a text cell, and

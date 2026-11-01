@@ -41,14 +41,19 @@
     if (label) span.setAttribute("data-k", label);
     row.appendChild(span);
   }
-  // A row of dates, each as stored with no day count, its label in data-k and its flag after it.
+  // A row of dates, one line each: its label, the date as stored with no day count, and its flag,
+  // all as text so a copy keeps them.
   function dateRow(cls, list) {
     var row = el("div", cls);
     list.forEach(function (d) {
-      var span = el("span", "", d.date);
-      span.setAttribute("data-k", d.label);
-      if (d.flag) span.appendChild(el("span", "flag", d.flag));
-      row.appendChild(span);
+      var line = el("div");
+      line.appendChild(el("span", "k", d.label));
+      line.appendChild(document.createTextNode(" " + d.date));
+      if (d.flag) {
+        line.appendChild(document.createTextNode(" "));
+        line.appendChild(el("span", "flag", d.flag));
+      }
+      row.appendChild(line);
     });
     return row;
   }

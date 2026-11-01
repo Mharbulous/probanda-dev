@@ -595,12 +595,15 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
     ["BCSC", " · ", "Vancouver Registry", " · ", "Court File No.: S-901433", " · ", "Halloway v. Vasey"],
     "the proceeding row draws the venue and registry unlabelled, the court file number, then the style of proceeding, a dot between each two; a page with a Goal card draws no state chip there"
   );
+  const lines = (row) => row.children.map((n) => `${n.tag}: ${n.textContent}`);
   assert.deepEqual(
-    labelled(rowOf("meta writing")),
-    [`Application hearing date: ${HEARING}`, `Application reply (other side): ${REPLY}`],
-    "this Writing's row carries its linked anchor and each of its deadlines no Goal card carries"
+    lines(rowOf("meta writing")),
+    [`div: Application hearing date ${HEARING}`, `div: Application reply (other side) ${REPLY}`],
+    "this Writing's row carries its linked anchor and each of its deadlines no Goal card carries, one line each"
   );
-  assert.deepEqual(labelled(rowOf("meta dates")), [`Trial date: ${TRIAL}`, `Trial brief: ${BRIEF}`], "the matter's row carries the anchor linked to no filing on this page");
+  assert.deepEqual(lines(rowOf("meta dates")), [`div: Trial date ${TRIAL}`, `div: Trial brief ${BRIEF}`], "the matter's row carries the anchor linked to no filing on this page");
+  assert.equal(dates.all().some((n) => n.attrs["data-k"] !== undefined), false, "every label is text a copy keeps, not CSS-generated");
+  assert.equal(/user-select\s*:\s*none|\.dates[^{]*::before/.test(readFileSync(milestone, "utf-8")), false, "nothing stops a copy of the Key dates card");
   const goal = main.all().find((n) => n.tag === "details" && n.className === "goal");
   const head = goal.children[0];
   assert.deepEqual(
