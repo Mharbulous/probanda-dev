@@ -1,7 +1,7 @@
 {
   "name": "tokeneconomizer",
   "displayName": "TokenEconomizer",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Experience-driven black-box cost control for coding agents, adapted for Claude Code and Claude Cowork: micro-skills (short repository facts learned from earlier sessions) injected at session start, and a guard that redirects a turn stuck in a failing loop. Tool pruning is off in this copy.",
   "author": {
     "name": "TokenEconomizer authors"
@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
+            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off TE_CARRY=probe \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 15
           }
         ]
@@ -34,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
+            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off TE_CARRY=probe \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 20
           }
         ]
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
+            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off TE_CARRY=probe \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 60
           }
         ]
@@ -56,7 +56,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
+            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off TE_CARRY=probe \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 60
           }
         ]
@@ -67,7 +67,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
+            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off TE_CARRY=probe \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 10
           }
         ]
@@ -78,7 +78,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
+            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off TE_CARRY=probe \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 10
           }
         ]

@@ -60,6 +60,10 @@ B4. The hook-asked carry is reliable and cheap. A probe release (patch) whose Se
     added and their effective tokens (from B3's ledger, or each call's size if B3 failed).
     PASS: at least 9 of 10 asks done, and a median of at most 2,000 effective tokens per save
     (a quarter of one side call, 8,067 in R4). Brahm can change the 2,000 before B4 runs.
+    Brahm's ruling of 2026-10-31: the 2,000 covers what a save adds, the ask's text and the
+    retyped state, measured from the save files on the PC. Each save also adds model requests
+    that re-read the cached context at 0.1x; B3 failed, so Cowork's context size cannot be
+    measured, and that cost is recorded beside the result as an estimate with its assumed size.
 
 Verdict. Option B passes when B1, B2 and B4 pass. Write "Option B verdict: PASS" or
 "Option B verdict: FAIL (B<n>)" in the spec's "Persistence (Option B)" section, with the date

@@ -26,7 +26,7 @@ import os
 import time
 
 from .. import loopguard
-from . import denylist, fold, history, repomap, repos, sidecall
+from . import carry, denylist, fold, history, repomap, repos, sidecall
 from .hosts import command, merge_outputs
 from .paths import ensure_launcher
 
@@ -161,6 +161,9 @@ class LiveController:
                                                 "SessionStart", "cached"))
                 s["repomap_done"] = True
 
+        if carry.enabled(self.ctx.env) and self.host.name == "claude":
+            outputs.append(self.host.context("SessionStart", carry.restore_ask(self.ctx.root)))
+
         if seen != seen_before:
             self.store.write("notices.json", seen)
         self._save(s)
@@ -268,14 +271,21 @@ class LiveController:
         return merge_outputs(*outputs) if outputs else {}
 
     def stop(self):
-        if self.cfg.loopguard == "off" or self.p.get("stop_hook_active"):
+        if self.p.get("stop_hook_active"):
             return {}
-        s = self._session()
-        summary = self._close_turn(s, stopped_normally=True)
-        if summary:
-            self._log("turn", **summary)
-        self._save(s)
-        return {}
+        if self.cfg.loopguard != "off":
+            s = self._session()
+            summary = self._close_turn(s, stopped_normally=True)
+            if summary:
+                self._log("turn", **summary)
+            self._save(s)
+        if not (carry.enabled(self.ctx.env) and self.host.name == "claude"):
+            return {}
+        n, ask = carry.save_ask(self.store, self.sid)
+        if not ask:
+            return {}
+        self._log("carry_ask", n=n, chars=len(ask))
+        return {"decision": "block", "reason": ask}
 
     # ---- PostToolUse ---------------------------------------------------------------------
     def _judge(self, thr, envelope):
