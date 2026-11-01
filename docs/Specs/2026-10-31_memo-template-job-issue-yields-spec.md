@@ -48,3 +48,13 @@ none
 
 ## 10. Verify against HEAD before building
 Confirm the quoted template lines and the gate's context-sentence line at HEAD.
+
+## 11. Verification against HEAD (2026-10-31, at 5c479c8a)
+
+| Claim | Repo location | Result |
+|---|---|---|
+| "A job's memo" rule: "The Issue is the spawn prompt's Job question, verbatim, never paraphrased." | `.claude/skills/shared/research-memo-template.md` lines 143-146 | Confirmed |
+| "The Issue is the question, as one bold sentence." with rules A to C, C reading "lists alternatives in one place at most" | same file, lines 128-134 | Confirmed |
+| Gate: "Context sentences are allowed" | `.claude/skills/shared/legal-research.md` line 52 ("A research question holds one question") | Confirmed. The gate also requires that the question "names nothing of the working matter", which the template's rules A to C do not say |
+| Tests that assert the old wording | `.claude/skills/legal-research/tests/test_job_question_memo.py` line 39 and 42, `test_memo_format.py` line 91 | Found |
+| Other files that cite "A job's memo" by name | `.claude/skills/draft/references/job-session.md` line 97, `.claude/skills/shared/job-planning.md` line 22 | Found. The label is kept so these references still resolve |
