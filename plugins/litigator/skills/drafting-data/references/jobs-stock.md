@@ -501,3 +501,16 @@ UPDATE tickets SET title = 'Whether a request to correct the award extends the t
 `changes` 0 means the lock is no longer this token's: report it and stop. When the practitioner keeps the original question, write nothing.
 
 **Closing a job a memo already answers**, only on the practitioner's yes: §10a's shelving of a `queued` job (`jobs-closeout.md`).
+
+## 3n. Case brief jobs
+
+One fixed-text job per case the practitioner asks to have briefed: a case they name, or each case a board's Writings rely on that the board's `briefs` lane (`drafting_forms__board_card`) prints as `not briefed`. **Requests are made only when the practitioner asks.** No session offers or writes one from a research return, a render or a loose thread. Skip a decision in the matter's own litigation and name it in one line (`shared/case-brief-template.md`).
+
+- Title and intent: `Brief the case: <style of cause>, <citation>`, with the citation left off when the authority has none. Fixed text, never cleaned. Single quotes are doubled in the SQL literal.
+- Steps, in order: `Get the decision`, `Brief the decision`, `Save the brief under this job`.
+- Scope: `('authorities', <the case's id>)`, the one row. A case named with no authority row gets one first (`kind` `case`, the citation as given).
+- `kind` `work`, `billing_anchor` as §3i gives it, `priority` `bottom`, `filing_id` the board's Writing, or null on a proceeding with no Writing. No `created_by`, no `ticket_proposals` row, no blocks.
+
+Write it with `drafting_data__create_job` under guard `authority_brief`, which matches a live brief job scoped to that authority anywhere in the proceeding. A guard that fires says "already a job: Job #K" in one line. Then re-render the board so its pages list the requests.
+
+A brief job is no research job for `/legal-research` board mode, and `/case-brief` works it.

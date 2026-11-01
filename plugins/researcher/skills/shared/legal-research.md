@@ -474,7 +474,8 @@ complete before the session ends: never leave a session with a cited decision un
    no batch longer than the playbook's cap, one dispatch at a time.
 3. Run `/ingest` on each cited decision file case data does not hold, whether it
    was downloaded now or before the audit, and on each legislation file
-   `legislation-fetcher` filed in this run. A Point in Time page or bulletin it
+   `legislation-fetcher` filed in this run. A case brief file names the decision's citation
+   and is never the decision: never ingest one. A Point in Time page or bulletin it
    filed beside a consolidation is a currency record, not an authority: never ingest it.
 
 In your relay, account for every court decision the answer cites in one line of counts --
