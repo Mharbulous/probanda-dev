@@ -21,7 +21,7 @@ const { boardSection } = await import("../build/submission/board-card.js");
 const { DATES_NOT_READ } = await import("../build/submission/matter-board-section.js");
 const { buildLegalMemosData, isCaseBriefFile, memoSourceOf, versionOf } = await import("../build/submission/forms/legal-memos.js");
 const { buildCaseBriefsData } = await import("../build/submission/forms/case-briefs.js");
-const { neutralKey } = await import("../build/submission/forms/brief-job.js");
+const { citationKey } = await import("../build/submission/forms/brief-job.js");
 const { buildPropositionsData } = await import("../build/submission/forms/research-propositions.js");
 const { fetchFiling, fetchPreFilingProceedings, isResearchWriting } = await import("../build/submission/forms/query.js");
 const { readViewed } = await import("../build/submission/forms/board-viewed.js");
@@ -379,14 +379,13 @@ test("a case brief's file is known by its name, and a neutral citation is found 
   assert.equal(isCaseBriefFile("2026-11-01 case brief Sample v Example, 2019 BCSC 1.md"), true);
   assert.equal(isCaseBriefFile("2019 BCSC 1 Sample v Example.docx"), false);
   assert.equal(isCaseBriefFile("Case Briefing Notes.md"), false);
-  assert.equal(neutralKey("2019 BCSC 1, 10 BCLR 20"), "2019 bcsc 1");
-  assert.equal(neutralKey("RSBC 1996, c 238"), null);
-  assert.equal(neutralKey(null), null);
+  assert.equal(citationKey("2019 BCSC 1, 10 BCLR 20"), citationKey("2019 BCSC 1"));
+  assert.equal(citationKey(null), null);
 });
 
 test("Case Briefs lists each case the board relies on once, by status, then the briefs and requests it does not rely on", async (t) => {
   const m = await briefsFixture(t, BRIEF_FILES);
-  const { cases } = buildCaseBriefsData(m.dbPath, [1, 2], m.matterRoot);
+  const { cases } = buildCaseBriefsData(m.dbPath, [1, 2], m.matterRoot, [1]);
   const by = Object.fromEntries(cases.map((c) => [c.title, c]));
   assert.deepEqual(cases.filter((c) => c.relied_on).map((c) => c.title), ["Job Saved v Case", "Requested v Case", "Sample v Example", "Unbriefed v Case"], "folded, sorted, and no statute, killed case, omitted proposition or unplaced proposition");
   const sample = by["Sample v Example"];
@@ -409,9 +408,9 @@ test("Case Briefs lists each case the board relies on once, by status, then the 
 
 test("a request on another board's job still reads Requested, and a board with no Writing relies on nothing", async (t) => {
   const m = await briefsFixture(t, []);
-  const onFirst = buildCaseBriefsData(m.dbPath, [1], m.matterRoot).cases;
+  const onFirst = buildCaseBriefsData(m.dbPath, [1], m.matterRoot, [1]).cases;
   assert.equal(onFirst.find((c) => c.title === "Requested v Case").status, "requested", "job 20 sits on Writing 2");
-  assert.equal(buildCaseBriefsData(m.dbPath, [], m.matterRoot).cases.some((c) => c.relied_on), false);
+  assert.equal(buildCaseBriefsData(m.dbPath, [], m.matterRoot, [1]).cases.some((c) => c.relied_on), false);
 });
 
 test("a brief is on the Case Briefs list and never on the Legal Memos list", async (t) => {

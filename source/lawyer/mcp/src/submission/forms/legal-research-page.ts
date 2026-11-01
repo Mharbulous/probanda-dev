@@ -52,7 +52,7 @@ export const LEGAL_RESEARCH_PAGE: ViewPage = {
     const filings = ctx.writings.map((w) => w.filing);
     return {
       propositions: buildPropositionsData(ctx.dbPath, filings),
-      briefs: buildCaseBriefsData(ctx.dbPath, filings.map((f) => f.id), matterDir),
+      briefs: buildCaseBriefsData(ctx.dbPath, filings.map((f) => f.id), matterDir, filings.map((f) => f.proceeding_id)),
       memos: buildLegalMemosData(ctx.dbPath, ctx.jobs, matterDir),
     };
   },

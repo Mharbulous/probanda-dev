@@ -7,7 +7,7 @@ import { ValidationError } from "../errors.js";
 import { attachedDrafts, withCodes } from "./board-attachments.js";
 import { type CardLane, CARD_LANES, renderBoardCard } from "./board-card-render.js";
 import { BoardIndex, type BoardRef } from "./forms/board-members.js";
-import { buildCaseBriefsData } from "./forms/case-briefs.js";
+import { buildCaseBriefsData, type CaseBriefRow } from "./forms/case-briefs.js";
 import { buildLegalMemosData } from "./forms/legal-memos.js";
 import { courtFileAffidavits } from "./court-file-affidavits.js";
 import { type ClientContext, nowStamp, resolveDraftDir } from "./forms.js";
@@ -146,13 +146,15 @@ export function submissionFormsBoardCard(
             .flatMap((id) => courtFileAffidavits(args.db_path, id, dirname(draftDir)))
         : [],
       lanes.includes("memos") && draftDir !== undefined ? buildLegalMemosData(args.db_path, section.tickets, dirname(draftDir)).memos : [],
-      lanes.includes("briefs") && draftDir !== undefined
-        ? buildCaseBriefsData(
-            args.db_path,
-            (section.meta.writing_states?.map((w) => w.filing_id) ?? (args.filing_id === undefined ? [] : [args.filing_id])).filter((id): id is number => id !== null),
-            dirname(draftDir)
-          ).cases
-        : []
+      lanes.includes("briefs") && draftDir !== undefined ? briefsOfBoard(args.db_path, section, dirname(draftDir)) : []
     ),
   };
+}
+
+/** The briefs lane's cases: the same reader as the Legal Research page's, for the board's Writings and their
+ * proceedings, and for the board's own proceeding when it has no Writing. */
+function briefsOfBoard(dbPath: string, section: WorkBoardData, matterDir: string): CaseBriefRow[] {
+  const states: { filing_id: number | null; proceeding_id: number }[] = section.meta.writing_states ?? [section.meta];
+  const writings = states.filter((w) => w.filing_id !== null);
+  return buildCaseBriefsData(dbPath, writings.map((w) => w.filing_id as number), matterDir, (writings.length > 0 ? writings : states).map((w) => w.proceeding_id)).cases;
 }

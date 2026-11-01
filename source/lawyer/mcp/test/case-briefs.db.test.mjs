@@ -20,7 +20,7 @@ const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { buildCaseBriefsData } = await import("../build/submission/forms/case-briefs.js");
-const { citationKey, neutralKey } = await import("../build/submission/forms/brief-job.js");
+const { citationKey } = await import("../build/submission/forms/brief-job.js");
 const { isCaseBriefFile, memoSourceOf } = await import("../build/submission/forms/legal-memos.js");
 const { buildPropositionsData } = await import("../build/submission/forms/research-propositions.js");
 const { fetchFiling } = await import("../build/submission/forms/query.js");
@@ -80,7 +80,8 @@ function stamp(path, day) {
   utimesSync(path, new Date(`${day}T12:00`), new Date(`${day}T12:00`));
 }
 
-const cases = (m, ids = [1]) => buildCaseBriefsData(m.dbPath, ids, m.matterRoot).cases;
+/** A board's cases: in `matter`, Writing n is in proceeding n. */
+const cases = (m, ids = [1]) => buildCaseBriefsData(m.dbPath, ids, m.matterRoot, ids).cases;
 const brief = (date, name, v = "") => `${date} case brief ${name}${v}.md`;
 
 test("only a .md named as a brief is a brief, and any other file is no brief's and no memo's by that name", () => {
@@ -135,6 +136,19 @@ test("a case whose latest version is gone is still briefed while an earlier one 
   assert.deepEqual(c.brief.earlier_files.map((f) => [f.version, f.on_disk]), [[1, true]]);
 });
 
+test("the briefs lane marks an earlier version gone from disk", async (t) => {
+  const stem = "Kept v Copy, 2021 BCSC 4";
+  const m = await matter(t, {
+    authorities: [[4, "Kept v Copy", "2021 BCSC 4"]],
+    files: [brief("2026-10-01", stem, " v2")],
+    sql: `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, ${JOB}) VALUES (9, 1, 1, 'Brief the case: ${stem}', 'x', 'superseded', 0, 'work', 'L', '2026-10-01 08:00');
+          INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (9, 'authorities', 4);
+          INSERT INTO ticket_answers (ticket_id, file_path, saved_at) VALUES (9, '6. LAW\\${brief("2026-10-01", stem)}', '2026-10-01T09:00');`,
+  });
+  const { card } = await callTool({}, "drafting_forms__board_card", { db_path: m.dbPath, filing_id: 1, lanes: ["briefs"], draft_dir: m.draft });
+  assert.ok(card.includes(`  earlier v1 · 2026-10-01 · 6. LAW\\${brief("2026-10-01", stem)} · not in the law folder`), card);
+});
+
 test("a job's answer that is not named as a brief makes the case no brief", async (t) => {
   const m = await matter(t, {
     authorities: [[2, "Pdf v Saved", "2021 BCSC 2"]],
@@ -148,7 +162,7 @@ test("a job's answer that is not named as a brief makes the case no brief", asyn
   assert.equal(c.brief, null);
 });
 
-test("a jobless brief matches a case with no neutral citation by its citation text, then by style of cause", async (t) => {
+test("a jobless brief matches a case by its citation text in any form, and by style of cause only when one side holds no citation", async (t) => {
   const m = await matter(t, {
     authorities: [
       [3, "Can v Lii", "2021 CanLII 3 (BC SC)"],
@@ -164,7 +178,7 @@ test("a jobless brief matches a case with no neutral citation by its citation te
       brief("2026-10-20", "Can v Lii, 2021 CanLII 3 (BC SC)"),
       brief("2026-10-20", "Spaced v Differently, 2021 CanLII 4 (BC SC)"),
       brief("2026-10-20", "Hadley v Baxendale, (1854) 9 Ex 341"),
-      brief("2026-10-20", "FOSS  V HARBOTTLE, 2 Hare 461"),
+      brief("2026-10-20", "FOSS  V HARBOTTLE, [1843] 2 HARE 461"),
       brief("2026-10-20", "No v Citation, 2005 BCCA 7"),
       brief("2026-10-20", "Twin v Style, 3 WWR 3"),
     ],
@@ -230,6 +244,7 @@ test("every file of one case is one row, latest first, the rest listed as earlie
   assert.ok(b.earlier_files.every((f) => f.url.startsWith("file:")));
   const { card } = await callTool({}, "drafting_forms__board_card", { db_path: m.dbPath, filing_id: 1, lanes: ["briefs"], draft_dir: m.draft });
   assert.ok(card.includes(`2026-10-20 · v4 (earlier: v1, v2, v3) · 6. LAW\\${brief("2026-10-20", name)}`), card);
+  assert.ok(card.includes(`  earlier v3 · 2026-10-05 · 6. LAW\\Other\\${brief("2026-10-05", name)}\n  earlier v2 · 2026-10-01 · 6. LAW\\${brief("2026-10-01", name, " v2")}\n`), card);
 });
 
 test("one stem's numbers stay the file's own, a gap included", async (t) => {
@@ -289,6 +304,8 @@ test("a comma in a style is no citation, and a citation with no comma before it 
       brief("2026-10-13", "Abc, 100 Mile House v Def, 2019 BCCA 7"),
       brief("2026-10-12", "Foo v Bar, 2019 BCCA 8, 10 BCLR (5th) 20"),
       brief("2026-10-11", "Re 2020 Trust, 2021 BCSC 6"),
+      brief("2026-10-10", "Smith v Unit 5 Block 3, 2020 BCSC 7"),
+      brief("2026-10-09", "Doe v Lot 9 Plan 4"),
     ],
   });
   assert.deepEqual(
@@ -304,6 +321,8 @@ test("a comma in a style is no citation, and a citation with no comma before it 
       ["Abc, 100 Mile House v Def", "2019 BCCA 7"],
       ["Foo v Bar", "2019 BCCA 8, 10 BCLR (5th) 20"],
       ["Re 2020 Trust", "2021 BCSC 6"],
+      ["Smith v Unit 5 Block 3", "2020 BCSC 7"],
+      ["Doe v Lot 9 Plan 4", null],
     ]
   );
 });
@@ -311,7 +330,7 @@ test("a comma in a style is no citation, and a citation with no comma before it 
 test("a style holding a comma and a number still matches its case", async (t) => {
   const m = await matter(t, {
     authorities: [[1, "Smith, 1234 BC Ltd v Jones", null], [2, "Abc, 100 Mile House v Def", "[2001] 1 SCR 1"]],
-    files: [brief("2026-10-20", "Smith, 1234 BC Ltd v Jones, 2020 BCSC 1"), brief("2026-10-20", "Abc, 100 Mile House v Def, 2 WWR 3")],
+    files: [brief("2026-10-20", "Smith, 1234 BC Ltd v Jones, 2020 BCSC 1"), brief("2026-10-20", "Abc, 100 Mile House v Def")],
   });
   const all = cases(m);
   assert.deepEqual(all.map((c) => [c.title, c.status, c.relied_on]).sort(), [
@@ -320,16 +339,87 @@ test("a style holding a comma and a number still matches its case", async (t) =>
   ]);
 });
 
-test("a style never marks a case briefed by a citation of another year", async (t) => {
+test("a style never joins two different citations, whatever their form", async (t) => {
+  const relied = [
+    [1, "Lower v Case", "2021 bcsc 9"],
+    [2, "Periods v Case", "2021 B.C.S.C. 10"],
+    [3, "Can v Lii", "2021 CanLII 3 (BC SC)"],
+    [4, "Report v Case", "[2001] 1 SCR 1"],
+    [5, "Parallel v Case", "[2015] 1 SCR 5"],
+  ];
   const m = await matter(t, {
-    authorities: [[1, "Alpha v Beta", "[2001] 1 SCR 1"], [2, "Gamma v Delta", "[2015] 1 SCR 5"], [3, "Twin v Style", "[2003] 3 SCR 3"], [4, "Twin v Style", "[2002] 2 SCR 2"]],
-    files: [brief("2026-10-20", "Alpha v Beta, 2021 BCSC 9"), brief("2026-10-20", "Gamma v Delta, 2015 SCC 5"), brief("2026-10-20", "Twin v Style, [2002] 3 WWR 3")],
+    authorities: relied,
+    files: [
+      brief("2026-10-20", "Lower v Case, 2022 BCCA 1"),
+      brief("2026-10-20", "Periods v Case, 2022 BCCA 2"),
+      brief("2026-10-20", "Can v Lii, 2022 BCCA 3"),
+      brief("2026-10-20", "Report v Case, [2001] 3 WWR 3"),
+      brief("2026-10-20", "Parallel v Case, 2015 SCC 5"),
+    ],
   });
   const all = cases(m);
-  const alpha = all.filter((c) => c.title === "Alpha v Beta");
-  assert.deepEqual(alpha.map((c) => [c.status, c.relied_on, c.citation]), [["not_briefed", true, "[2001] 1 SCR 1"], ["briefed", false, "2021 BCSC 9"]]);
-  assert.deepEqual(all.filter((c) => c.title === "Gamma v Delta").map((c) => [c.status, c.relied_on]), [["briefed", true]], "the same year can be a parallel citation");
-  assert.deepEqual(all.filter((c) => c.title === "Twin v Style").map((c) => [c.citation, c.status]), [["[2003] 3 SCR 3", "not_briefed"], ["[2002] 2 SCR 2", "briefed"]], "the year tells the two apart");
+  assert.deepEqual(all.filter((c) => c.relied_on).map((c) => c.status), relied.map(() => "not_briefed"), JSON.stringify(all));
+  assert.equal(all.filter((c) => !c.relied_on && c.status === "briefed").length, 5, "each brief keeps its own visible row");
+});
+
+test("a name that fails to split still holds a citation, and a pinpoint's second number is none", async (t) => {
+  const m = await matter(t, {
+    authorities: [[1, "Alpha v Beta", "2022 BCCA 3"], [2, "Gamma v Delta", "2020 BCSC 1 at paras 3, 5"]],
+    files: [brief("2026-10-20", "Alpha v Beta, 2021 BCSC 9 revised"), brief("2026-10-20", "Other v Case, 5 WWR 9")],
+  });
+  const relied = cases(m).filter((c) => c.relied_on);
+  assert.deepEqual(relied.map((c) => [c.title, c.status]), [["Alpha v Beta", "not_briefed"], ["Gamma v Delta", "not_briefed"]]);
+});
+
+test("a name with no citation matches the one case of its style, and two decisions of that style are not guessed", async (t) => {
+  const m = await matter(t, {
+    authorities: [[1, "Plain v Name", "2021 BCSC 9"], [2, "Twin v Style", "[2002] 2 SCR 2"], [3, "Twin v Style", "[2003] 3 SCR 3"]],
+    files: [brief("2026-10-20", "Plain v Name"), brief("2026-10-20", "Twin v Style")],
+  });
+  const all = cases(m);
+  assert.equal(all.find((c) => c.title === "Plain v Name").status, "briefed");
+  assert.deepEqual(all.filter((c) => c.relied_on && c.title === "Twin v Style").map((c) => c.status), ["not_briefed", "not_briefed"]);
+});
+
+test("a file holding one parallel of a case's citation is that case's, under any style", async (t) => {
+  const m = await matter(t, {
+    authorities: [[1, "One v Case", "2015 SCC 5, [2015] 1 SCR 5"], [2, "Two v Case", "10 BCLR 5 (SC), 20 WWR 6"], [3, "Three v Case", "2019 CanLII 7 (BC SC), 11 BCLR 7"]],
+    files: [brief("2026-10-20", "One v Case, [2015] 1 S.C.R. 5"), brief("2026-10-20", "Named Otherwise v Case, 20 wwr 6"), brief("2026-10-20", "Three v Case, 2019 canlii 7")],
+  });
+  const all = cases(m);
+  assert.deepEqual(all.map((c) => [c.title, c.status, c.relied_on]), [["One v Case", "briefed", true], ["Three v Case", "briefed", true], ["Two v Case", "briefed", true]]);
+});
+
+test("a file with no citation folds onto the one unnamed case of its style", async (t) => {
+  const m = await matter(t, { files: [brief("2026-10-01", "Lone v Case, 2020 BCSC 1"), brief("2026-10-20", "lone v case")] });
+  const all = cases(m);
+  assert.equal(all.length, 1);
+  assert.equal(all[0].citation, "2020 BCSC 1", "the latest file holds none, so the row keeps its case's");
+  assert.equal(all[0].brief.version, 2);
+
+  const twins = await matter(t, { files: [brief("2026-10-01", "Twin v Case, 2020 BCSC 1"), brief("2026-10-02", "Twin v Case, 2021 BCSC 2"), brief("2026-10-03", "Twin v Case")] });
+  assert.equal(cases(twins).length, 3, "two decisions of that style: the file with no citation is not guessed");
+});
+
+test("a job scoped to two authorities of one case is listed once on its row", async (t) => {
+  const m = await matter(t, {
+    authorities: [[1, "Sample v Example", "2019 BCSC 1"], [2, "Sample v Example", "2019 BCSC 1, 10 BCLR 20"]],
+    sql: `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, ${JOB}) VALUES (9, 1, 1, 'Brief the case: Sample v Example', 'x', 'queued', 0, 'work', 'L', '2026-10-01 08:00');
+          INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (9, 'authorities', 1), (9, 'authorities', 2);`,
+  });
+  const [c] = cases(m);
+  assert.deepEqual(c.jobs, [{ id: 9, title: "Brief the case: Sample v Example" }]);
+});
+
+test("a board with no Writing reads its own proceeding's requests, and no other's", async (t) => {
+  const job = (id, proceeding, name) => `(${id}, ${proceeding}, NULL, 'Brief the case: ${name}', 'x', 'queued', 0, 'work', 'L', '2026-10-01 08:00')`;
+  const m = await matter(t, {
+    sql: `INSERT INTO proceedings (id, matter_reference, forum) VALUES (3, 'L9999', '${FORUM}');
+          INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, ${JOB}) VALUES ${job(30, 3, "Here v Now")}, ${job(31, 1, "Other v Proceeding")};`,
+  });
+  const { card } = await callTool({}, "drafting_forms__board_card", { db_path: m.dbPath, proceeding_id: 3, lanes: ["briefs"], draft_dir: m.draft });
+  assert.ok(card.includes("  jobs: #30 Brief the case: Here v Now"), card);
+  assert.equal(card.includes("Other v Proceeding"), false, card);
 });
 
 test("a blank citation holds no brief it does not name", async (t) => {
@@ -356,6 +446,13 @@ test("periods and a closing court do not keep a brief from its case", async (t) 
   assert.ok(all.every((c) => c.relied_on && c.status === "briefed"), JSON.stringify(all));
 });
 
+test("a CanLII citation with a neutral parallel is the neutral citation's case to the page and to the guard", async (t) => {
+  const m = await matter(t, { authorities: [[1, "P v Q", "2021 CanLII 3 (BC SC), 2021 BCSC 9"], [2, "P v Q", "2021 BCSC 9"]] });
+  assert.equal((await submissionDataCreateJob(briefJob(m, 1, 1, 1))).outcome, "created");
+  assert.equal((await submissionDataCreateJob(briefJob(m, 1, 1, 2))).outcome, "guarded");
+  assert.deepEqual(cases(m).map((c) => [c.title, c.status]), [["P v Q", "requested"]]);
+});
+
 test("one citation's variants are one case to the page and to the guard", async (t) => {
   assert.equal(citationKey("2021 CanLII 3"), citationKey("2021 CanLII 3 (BC SC)"));
   assert.equal(citationKey("2019 BCSC 1"), citationKey("2019 bcsc 1"));
@@ -363,6 +460,11 @@ test("one citation's variants are one case to the page and to the guard", async 
   assert.equal(citationKey("2019 BCSC 2 at para 3"), citationKey("2019 BCSC 2"));
   assert.equal(citationKey("[2005] 1 S.C.R. 1"), citationKey("[2005] 1 SCR 1"));
   assert.equal(citationKey("(BC SC)"), null);
+  assert.equal(citationKey("2021 CanLII 3 (BC SC), 2021 BCSC 9"), citationKey("2021 BCSC 9"), "a neutral citation anywhere wins over a CanLII one");
+  assert.equal(citationKey("2021 BCSC 9, 2021 CanLII 3"), citationKey("2021 BCSC 9"));
+  assert.equal(citationKey("2021 CanLII 3, 10 BCLR 5"), citationKey("2021 CanLII 3"), "a CanLII-only citation has a stable key");
+  assert.equal(citationKey("2021 CanLII 3 (BC SC, Chambers)"), citationKey("2021 CanLII 3"));
+  assert.equal(citationKey("10 BCLR 5 at paras 3, 5"), citationKey("10 BCLR 5"));
   const m = await matter(t, {
     authorities: [[1, "P v Q", "2021 CanLII 3"], [2, "P v Q", "2021 CanLII 3 (BC SC)"], [3, "R v S", "2019 BCSC 1"], [4, "R v S", "2019 bcsc 1"]],
     files: [brief("2026-10-20", "P v Q, 2021 CanLII 3 (BC SC)")],
@@ -433,7 +535,7 @@ const briefJob = (m, proceeding, filing, authority, title = "Brief the case: X")
 });
 
 test("citationKey folds a neutral citation, then a citation's text, and holds nothing without one", () => {
-  assert.equal(citationKey("2019 BCSC 1, 10 BCLR 20"), neutralKey("2019 BCSC 1"));
+  assert.equal(citationKey("2019 BCSC 1, 10 BCLR 20"), citationKey("2019 BCSC 1"));
   assert.equal(citationKey("2021 CanLII 3 (BC SC)"), citationKey("2021  canlii 3 (BCSC)"));
   assert.notEqual(citationKey("2021 CanLII 3"), citationKey("2021 CanLII 31"));
   assert.equal(citationKey(null), null);

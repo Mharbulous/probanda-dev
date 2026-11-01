@@ -65,7 +65,8 @@ const BRIEF_STATUS_LABELS: Record<BriefStatus, string> = { briefed: "briefed", r
 
 /** The briefs lane: the Legal Research page's cases (case-briefs.ts), those relied on first, as
  * `- <style of cause>[, <citation>] · <briefed|requested|not briefed> · <relied on|not relied on>[ · <date> · v<n>[ (earlier: v<m>, …)] · <path from 6. LAW>[ · not in the law folder]]`,
- * then `  jobs: #<id> <title>; …` when a live brief job names it. */
+ * then `  earlier v<m> · <date> · <path from 6. LAW>[ · not in the law folder]` per earlier version, latest
+ * first, then `  jobs: #<id> <title>; …` when a live brief job names it. */
 function briefsLines(cases: CaseBriefRow[]): string[] {
   return [
     `## Case Briefs (${cases.length})`,
@@ -75,7 +76,8 @@ function briefsLines(cases: CaseBriefRow[]): string[] {
         head.push(c.brief.date ?? "no date", `v${c.brief.version}${c.brief.earlier.length === 0 ? "" : ` (earlier: ${c.brief.earlier.map((n) => `v${n}`).join(", ")})`}`, c.brief.file);
         if (!c.brief.on_disk) head.push("not in the law folder");
       }
-      return [head.join(" · "), ...(c.jobs.length === 0 ? [] : [`  jobs: ${c.jobs.map((j) => `#${j.id} ${j.title}`).join("; ")}`])];
+      const earlier = (c.brief?.earlier_files ?? []).map((v) => `  earlier v${v.version} · ${v.date ?? "no date"} · ${v.file}${v.on_disk ? "" : " · not in the law folder"}`);
+      return [head.join(" · "), ...earlier, ...(c.jobs.length === 0 ? [] : [`  jobs: ${c.jobs.map((j) => `#${j.id} ${j.title}`).join("; ")}`])];
     }),
   ];
 }

@@ -319,7 +319,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "(the facts the saving jobs' scope names) or `  facts: none`, and `  jobs: #<id> <title>; …` when a job saved it; only file names " +
         "are read from the 6. LAW folder, never a memo's text; briefs, `## Case Briefs (n)` and the Legal Research page's Case Briefs list: each case " +
         "the board's Writings rely on, then each brief or live request for another case, as `- <style of cause>[, <citation>] · <briefed|requested|not briefed> · " +
-        "<relied on|not relied on>[ · <date> · v<n>[ (earlier: v<m>, …)] · <path from 6. LAW>[ · not in the law folder]]`, then `  jobs: #<id> <title>; …` " +
+        "<relied on|not relied on>[ · <date> · v<n>[ (earlier: v<m>, …)] · <path from 6. LAW>[ · not in the law folder]]`, then " +
+        "`  earlier v<m> · <date> · <path from 6. LAW>[ · not in the law folder]` per earlier version, latest first, then `  jobs: #<id> <title>; …` " +
         "when a live brief job names it; only file names are read, never a brief's text. Then key: the live " +
         "job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else " +
         "`(no job or Proposal carries <key>)`. On a Milestone with no Writing (drafting_data__create_milestone) the " +
