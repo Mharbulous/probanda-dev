@@ -18,7 +18,7 @@
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { type ClientContext, type RenderedDocument, submissionFormsRender, submissionFormsRenderProceedingBoard } from "../forms.js";
-import { fetchBoardFilings, isJobOnlyBoard, liveTicketClause, stepStatusHeld } from "./query.js";
+import { fetchBoardFilings, liveTicketClause, proceedingJobBoard, stepStatusHeld } from "./query.js";
 import { type StepStateFields, stepResolved } from "./step-state.js";
 import { checkClaim, heldBy } from "./job-activity.js";
 import type { BoardMove } from "../matter-pages.js";
@@ -79,14 +79,8 @@ type Pages = Pick<CompleteJobResult, "pages_written" | "milestone_path" | "board
 function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientContext, todos: MatterTodos | undefined, dates: MatterDates | undefined): Pages {
   try {
     const boards = fetchBoardFilings(args.db_path, read.proceeding_id);
-    let filingId = boards.some((f) => f.id === read.filing_id) ? read.filing_id : null;
-    if (filingId === null) {
-      // The proceeding's first filing by id that is not retired, else its first filing. This picks by
-      // id, not by bootstrap's ranked order, so it can differ from open_session's openBoard. Never a
-      // Milestone with no Writing, which shows no job without a filing_id.
-      const filings = boards.filter((f) => !isJobOnlyBoard(f));
-      filingId = (filings.find((f) => f.retired_on === null) ?? filings[0])?.id ?? null;
-    }
+    // proceedingJobBoard picks by id, not by bootstrap's ranked order, so it can differ from open_session's openBoard.
+    const filingId = boards.some((f) => f.id === read.filing_id) ? read.filing_id : (proceedingJobBoard(boards)?.id ?? null);
     if (filingId !== null) {
       const rendered = submissionFormsRender(args.db_path, filingId, client, "mockup", ["Work_board"], undefined, undefined, undefined, args.session_token, args.draft_dir, todos, dates);
       const board = rendered.documents.find((d) => d.document_type === "Work_board") as RenderedDocument | undefined;

@@ -13,7 +13,7 @@ import { DataServerError, NotFoundError, ValidationError } from "../../errors.js
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { framingWarning, type MergedGoal, NEEDS_CONSOLIDATION, readStored, type StoredGoals, survivorGoalsKey } from "./board-goals.js";
 import { BoardIndex, type BoardRef, memberKey, sameBoard } from "./board-members.js";
-import { fetchBoardFilings, isResearchWriting } from "./query.js";
+import { fetchBoardFilings, isResearchWriting, RESEARCH_WRITING_KINDS_SQL } from "./query.js";
 
 const TOOL = "drafting_data__merge_milestones";
 
@@ -120,8 +120,10 @@ export async function submissionDataMergeMilestones(args: MergeMilestonesArgs, e
   const written = await submissionDataWriteAll(
     args.db_path,
     [
-      // OR REPLACE: a row read as no row because it names a research Writing (BoardIndex) gives way to this one.
-      { sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [memberKey(absorbed), value], expect_changes: 1 },
+      // A row read as no row because it names a research Writing (BoardIndex) gives way. Any other row stays and
+      // the insert fails on the key, so of two sessions merging one board into different survivors, one is refused.
+      { sql: `DELETE FROM db_meta WHERE key = ? AND json_extract(value, '$.filing_id') IN (SELECT id FROM filings WHERE kind IN (${RESEARCH_WRITING_KINDS_SQL}))`, params: [memberKey(absorbed)] },
+      { sql: "INSERT INTO db_meta (key, value) VALUES (?, ?)", params: [memberKey(absorbed), value], expect_changes: 1 },
       ...index.membersOf(absorbed).map((key) => ({ sql: "UPDATE db_meta SET value = ? WHERE key = ?", params: [value, key], expect_changes: 1 })),
       { sql: `INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ${stamps})`, params: [survivorKey, JSON.stringify(goals)], expect_changes: 1 },
       ...(taken === null ? [] : [{ sql: "DELETE FROM db_meta WHERE key = ?", params: [absorbedKey], expect_changes: 1 }]),

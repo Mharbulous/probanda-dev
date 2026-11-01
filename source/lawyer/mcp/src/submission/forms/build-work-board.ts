@@ -44,9 +44,12 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
   const tickets = board.tickets
     .filter((t) => onFilingBoard(t.filing_id, ctx.filing.id))
     .map((t) => {
-      const ineligible_reasons = ineligibleReasons(t.ticket, filed, printed, titles, inProgress);
+      // A research Writing's job's keys are its own Writing's: this filing's inventory and state say nothing of them.
+      const research = t.ticket.research_writing !== undefined;
+      const inventory = research ? null : printed;
+      const ineligible_reasons = ineligibleReasons(t.ticket, filed && !research, inventory, titles, inProgress);
       const eligible = ineligible_reasons.length === 0;
-      return withIdleFlag({ ...t.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t.ticket, printed), ...(t.filing_id === null ? { general: true } : {}) }, ctx.rendered);
+      return withIdleFlag({ ...t.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t.ticket, inventory), ...(t.filing_id === null ? { general: true } : {}) }, ctx.rendered);
     });
   // A research Writing's job is on this board and is none of this Writing's completion.
   const { goal, criteria } = goalFor(ctx, tickets.filter((t) => t.research_writing === undefined), shelved, current, deadlines, afterGateJobs(board.tickets, ctx.filing.id));

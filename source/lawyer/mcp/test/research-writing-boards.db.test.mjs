@@ -13,6 +13,7 @@ process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-r
 after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
 
 const { generalWritingFixture } = await import("./helpers/general-writing-fixture.mjs");
+const { partiesSnapshotSql, seedSql } = await import("./helpers/template-db.mjs");
 const { callTool } = await import("../build/dispatch.js");
 const { boardSection } = await import("../build/submission/board-card.js");
 const { submissionFormsRender, submissionFormsRenderProceedingBoard } = await import("../build/submission/forms.js");
@@ -174,6 +175,63 @@ test("take_job reads a memo's job on a real board and checks overlap only agains
   assert.equal(htmlFiles(g.draft).some((f) => f.includes(BRIEF_FOLDER)), false);
 });
 
+test("a memo job's keys are read against nothing on a sibling's board: no dead-key subtitle, no dead card line, and the sibling's filed state is not its", async (t) => {
+  const g = await fixture(t);
+  const { filing_id: memo } = await brief(g);
+  const { filing_id: letter } = await g.createLetter();
+  render(g, letter);
+  await awaitBackgroundJobs();
+  await job(g, 30, memo, "Note up the propositions");
+  await job(g, 31, null, "Check the pleading");
+  await g.execute("INSERT INTO ticket_proposals (ticket_id, proposal_key, item) VALUES (30, 'memo-key', 'an item'), (31, 'gone-key', 'an item');");
+
+  const drawn = (id) => section(g, { filing_id: letter }).tickets.find((x) => x.id === id);
+  assert.equal(drawn(30).subtitle, null);
+  assert.equal(drawn(30).ineligible_reasons.includes("dead_key"), false);
+  assert.equal(drawn(30).ineligible_reasons.includes("no_inventory"), true);
+  // The control: the General job's key is read against this board.
+  assert.equal(drawn(31).subtitle, "1 of 1 items no longer show their marker");
+  assert.equal(drawn(31).ineligible_reasons.includes("dead_key"), true);
+
+  const taken = await submissionDataTakeJob({ db_path: g.dbPath, ticket_id: 30, session_token: "tok", matter_root: dirname(g.draft) });
+  assert.equal(taken.premise.state, "none");
+  assert.match(taken.card, /keys: memo-key = "an item"\n/);
+  assert.equal(taken.card.includes("now:"), false);
+  assert.equal(taken.card.includes("no longer show"), false);
+
+  // A sent Writing's filed_on goes in by a raw update only beside its parties snapshot.
+  seedSql(g.dbPath, `${partiesSnapshotSql(g.dbPath, letter)} UPDATE filings SET filed_on = '2026-10-31' WHERE id = ${letter};`);
+  assert.equal(drawn(30).ineligible_reasons.includes("filing_filed"), false);
+  assert.equal(drawn(31).ineligible_reasons.includes("filing_filed"), true);
+});
+
+test("take_job finds a memo's job and a General job when the only live board is a Milestone with no Writing", async (t) => {
+  const g = await fixture(t);
+  const { filing_id: memo } = await brief(g);
+  const { filing_id: letter } = await g.createLetter();
+  await submissionDataCreateMilestone({ db_path: g.dbPath, proceeding_id: 1, title: "Paper originals" });
+  await g.execute(`UPDATE filings SET retired_on = '2026-10-31', retirement_reason = 'abandoned' WHERE id = ${letter};`);
+  await job(g, 30, memo, "Note up the propositions");
+  await job(g, 31, null, "Check the pleading");
+  for (const id of [30, 31]) {
+    const taken = await submissionDataTakeJob({ db_path: g.dbPath, ticket_id: id, session_token: "tok", matter_root: dirname(g.draft) });
+    assert.equal(taken.outcome, "assigned", `job ${id}`);
+  }
+});
+
+test("take_job finds a memo's job on a memo-only proceeding that already holds a Milestone with no Writing", async (t) => {
+  const g = await fixture(t);
+  const { filing_id: memo } = await brief(g);
+  // Written straight to the table: create_milestone now refuses this.
+  await g.execute("INSERT INTO filings (id, proceeding_id, kind, title, needs_forum_parts) VALUES (50, 1, 'task-board', 'Paper originals', 0);");
+  await job(g, 30, memo, "Note up the propositions");
+  await job(g, 31, null, "Check the pleading");
+  for (const id of [30, 31]) {
+    const taken = await submissionDataTakeJob({ db_path: g.dbPath, ticket_id: id, session_token: "tok", matter_root: dirname(g.draft) });
+    assert.equal(taken.outcome, "assigned", `job ${id}`);
+  }
+});
+
 test("complete_job on a memo-only proceeding's job writes the proceeding's page", async (t) => {
   const g = await fixture(t);
   const { filing_id: memo } = await brief(g);
@@ -199,7 +257,7 @@ test("attached drafts: a memo takes none, a memo-only proceeding keeps them on i
   // The v67 trigger refuses a new row naming the proceeding; the refusal says what to do, and doing it works.
   await assert.rejects(
     g.execute(`INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (2, 1, NULL, '0. DRAFT\\Reply two.eml', 'reply', '2026-10-02');`),
-    /no board of its own.*filing_id set to one of them/s
+    /no board of its own.*filing_id set to a live one of them/s
   );
   await g.execute(`INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (2, 1, ${created.filing_id}, '0. DRAFT\\Reply two.eml', 'reply', '2026-10-02');`);
   assert.deepEqual(onBoard({ proceeding_id: 1 }), [1, 2]);
@@ -257,6 +315,31 @@ test("a merge row made before the refusal, naming a memo, is read as no row: the
   const merged = await submissionDataMergeMilestones({ db_path: g.dbPath, boards: [{ filing_id: first }, { filing_id: second }], confirmed: true, session_token: "s" });
   assert.deepEqual(merged.absorbed, { filing_id: second, proceeding_id: 1 });
   assert.deepEqual(new BoardIndex(g.dbPath).survivorOf({ filing_id: second, proceeding_id: 1 }), { filing_id: first, proceeding_id: 1 });
+});
+
+test("two merges of one board into different survivors: the second is refused and the first's row stands", async (t) => {
+  const g = await fixture(t);
+  const { filing_id: a } = await g.createLetter();
+  const { filing_id: b } = await g.createLetter({ title: "Letter two" });
+  const { filing_id: c } = await g.createLetter({ title: "Letter three" });
+  const merge = (x) => submissionDataMergeMilestones({ db_path: g.dbPath, boards: [{ filing_id: x }, { filing_id: c }], confirmed: true, session_token: "s" });
+  const results = await Promise.allSettled([merge(b), merge(a)]);
+  const won = results.filter((r) => r.status === "fulfilled");
+  assert.equal(won.length, 1, "exactly one merge reports success");
+  const [row] = g.query(`SELECT value FROM db_meta WHERE key = 'board_member:filing:${c}'`);
+  assert.equal(JSON.parse(row.value).filing_id, won[0].value.survivor.filing_id);
+});
+
+test("a proceeding whose only Writings are retired memos: the refusal says a live one is needed, and recovering one lets a draft on", async (t) => {
+  const g = await fixture(t);
+  const { filing_id: memo } = await brief(g);
+  await g.execute(`UPDATE filings SET retired_on = '2026-10-31', retirement_reason = 'abandoned' WHERE id = ${memo};`);
+  const attach = (filing) => g.execute(`INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (1, 1, ${filing}, '0. DRAFT\\Reply.eml', 'reply', '2026-10-01');`);
+  await assert.rejects(attach("NULL"), /a live one of them.*if all of them are retired, this board takes none until one is recovered or another Writing is created/s);
+  await assert.rejects(attach(memo), /retired Writing has no Milestone/);
+  await g.execute(`UPDATE filings SET retired_on = NULL, retirement_reason = NULL WHERE id = ${memo};`);
+  await attach(memo);
+  assert.deepEqual(section(g, { proceeding_id: 1 }).attachments.map((a) => a.id), [1]);
 });
 
 test("create_milestone is refused on a memo-only proceeding, which keeps its board, and allowed once it has a Writing", async (t) => {

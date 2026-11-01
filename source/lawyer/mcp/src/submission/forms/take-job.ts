@@ -23,7 +23,7 @@ import { PLAN_MARKER } from "./approve-plan.js";
 import { GATE_TITLE, PRE_SEND_TITLE, POSITION_CONFLICT_TITLE, STOCK_TITLES, waitsOnGate } from "./goal-gate.js";
 import { BoardIndex } from "./board-members.js";
 import { BRIEF_JOB_PREFIX } from "./brief-job.js";
-import { fetchBoardFilings } from "./query.js";
+import { fetchBoardFilings, proceedingJobBoard } from "./query.js";
 import { nowStamp } from "./timings.js";
 import type { WorkBoardData } from "./render-work-board.js";
 import type { WorkBoardTicket } from "./work-board-ticket.js";
@@ -123,13 +123,15 @@ function overlapping(section: WorkBoardData, t: WorkBoardTicket, cleared: number
 }
 
 /** The board the job is drawn on: its Writing's, a General Job's or a research Writing's job's first
- * live Writing's in its proceeding, or its proceeding's; on a merged board, the survivor's, unless that
- * Writing is retired (board-card.ts refuseAbsorbedCard). */
+ * live Writing's in its proceeding (proceedingJobBoard), or its proceeding's; on a merged board, the
+ * survivor's, unless that Writing is retired (board-card.ts refuseAbsorbedCard). A proceeding that holds
+ * only Milestones with no Writing draws such a job on no page, so it is read on the proceeding's section. */
 function boardOf(dbPath: string, id: number): { filing_id?: number; proceeding_id?: number } {
   const [row] = submissionDataQuery(dbPath, "SELECT filing_id, proceeding_id FROM tickets WHERE id = ?", [id]).rows as unknown as { filing_id: number | null; proceeding_id: number }[];
   if (row === undefined) throw new ValidationError(`${TOOL}: no job ${id} in ${dbPath}; nothing was written`, "not_found");
   const filings = fetchBoardFilings(dbPath, row.proceeding_id);
-  const own = filings.some((f) => f.id === row.filing_id) ? row.filing_id : ((filings.find((f) => !f.retired_on) ?? filings[0])?.id ?? null);
+  const own = filings.some((f) => f.id === row.filing_id) ? row.filing_id : (proceedingJobBoard(filings)?.id ?? null);
+  if (own === null && filings.length > 0) return { proceeding_id: row.proceeding_id };
   const index = new BoardIndex(dbPath);
   const ref = { filing_id: own, proceeding_id: row.proceeding_id };
   const survivor = index.absorbed(ref) ? index.survivorOf(ref) : ref;

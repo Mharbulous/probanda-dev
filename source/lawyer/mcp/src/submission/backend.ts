@@ -558,14 +558,6 @@ export function forgetDraftingQueries(dbPath: string): void {
   forgetPerCall(isQueryOf(dbPath));
 }
 
-/**
- * Writes take the cross-process data lock (lock.ts) for the whole
- * stage -> mutate -> copy-back window, for the same reason matter-data's execute
- * does: without it, two sessions stage from the same starting bytes and the
- * second copy-back silently discards the first session's writes. `query` stays
- * lock-free on purpose -- it is the hot path and never copies anything back. guardJobs, set by the
- * drafting_data__execute tool alone, refuses a job move a guarded job tool owns (JOB_MOVES).
- */
 /** The attachment trigger's refusal says a proceeding with a Writing has no board of its own, which is not
  * so when its only Writings are research Writings. The trigger stays as it is, so the refusal adds the way on. */
 function withAttachHint<T>(run: () => T): T {
@@ -575,12 +567,21 @@ function withAttachHint<T>(run: () => T): T {
     if (err instanceof Error && err.message.includes("a proceeding with a Writing has no board of its own")) {
       err.message +=
         " Nothing was written. If this proceeding's only Writings are research memos or case briefs, its own board is still drawn: " +
-        "attach the draft with filing_id set to one of them, and it shows on that board and moves to the proceeding's first other Writing when one is created.";
+        "attach the draft with filing_id set to a live one of them, and it shows on that board and moves to the proceeding's first other Writing when one is created. " +
+        "A retired one takes no draft, so if all of them are retired, this board takes none until one is recovered or another Writing is created.";
     }
     throw err;
   }
 }
 
+/**
+ * Writes take the cross-process data lock (lock.ts) for the whole
+ * stage -> mutate -> copy-back window, for the same reason matter-data's execute
+ * does: without it, two sessions stage from the same starting bytes and the
+ * second copy-back silently discards the first session's writes. `query` stays
+ * lock-free on purpose -- it is the hot path and never copies anything back. guardJobs, set by the
+ * drafting_data__execute tool alone, refuses a job move a guarded job tool owns (JOB_MOVES).
+ */
 export async function submissionDataExecute(
   dbPath: string,
   sqlScript: string,

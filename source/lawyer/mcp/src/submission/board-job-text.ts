@@ -142,7 +142,9 @@ export function jobCardLines(t: WorkBoardTicket, derived: Map<string, BoardPropo
       ? ` · taken: ${t.locked_at ?? "(unknown time)"}${holder} · last activity: ${t.last_activity_at ?? "(unknown time)"}${t.active_at === null ? "" : ` · session active: ${t.active_at}`}`
       : "";
   const lines = [head, `  kind: ${t.kind} · priority: ${t.priority}${locked}`, `  intent: ${t.intent}`];
-  if (t.proposal_keys.length > 0) lines.push(`  keys: ${t.proposal_keys.map((key) => keyText(key, t.proposal_items[key], derived)).join("; ")}`);
+  // A research Writing's job's keys are its own Writing's, which this board does not derive.
+  const against = t.research_writing === undefined ? derived : null;
+  if (t.proposal_keys.length > 0) lines.push(`  keys: ${t.proposal_keys.map((key) => keyText(key, t.proposal_items[key], against)).join("; ")}`);
   lines.push(`  scope: ${t.scope.length === 0 ? "—" : t.scope.join(", ")} · waits on: ${edgeText(t.blocked_by)} · either-or: ${edgeText(t.conflicts)}`);
   if (t.steps.length > 0) {
     lines.push(`  steps: ${t.steps.map((s) => stepText(s, rendered)).join(" · ")}`);

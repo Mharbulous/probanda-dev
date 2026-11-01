@@ -650,6 +650,14 @@ export function fetchBoardFilings(dbPath: string, proceedingId: number): FilingR
   return fetchAllFilingsForProceeding(dbPath, proceedingId).filter((f) => !isResearchWriting(f));
 }
 
+/** Among a proceeding's board filings, the one read for a job with no board of its own (a General Job or a
+ * research Writing's job): its first live Writing by id, else its first Writing. Never a Milestone with no
+ * Writing, which shows no job without its own filing_id. */
+export function proceedingJobBoard(boards: FilingRow[]): FilingRow | undefined {
+  const writings = boards.filter((f) => !isJobOnlyBoard(f));
+  return writings.find((f) => !f.retired_on) ?? writings[0];
+}
+
 export function fetchAllProceedings(dbPath: string): ProceedingRow[] {
   return rows<ProceedingRow>(dbPath, "SELECT * FROM proceedings ORDER BY id");
 }
