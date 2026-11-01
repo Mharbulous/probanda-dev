@@ -28,12 +28,12 @@ const HTML_COMMENT_RE = /[ \t]*<!--[\s\S]*?-->/g;
 
 // A whole work-message line the renderer tagged with mockupMessage (markers.ts). Must run before
 // HTML_COMMENT_RE, which would strip the tag and leave the bare sentence behind.
-const MOCKUP_ONLY_LINE_RE = new RegExp(`^.*${MOCKUP_ONLY_TAG}[ \\t]*\\n?`, "gm");
+export const MOCKUP_ONLY_LINE_RE = new RegExp(`^.*${MOCKUP_ONLY_TAG}[ \\t]*\\n?`, "gm");
 
 // A whole gap line, the marker and a blank underline with its description in a comment
 // (projections.ts gap: `🧩 ________ <!-- signer not chosen -->`). Must run before HTML_COMMENT_RE,
 // which would strip the comment and leave a stray underline behind.
-const GAP_LINE_RE = /^🧩 _+ <!-- .* -->[ \t]*\n?/gm;
+export const GAP_LINE_RE = /^🧩 _+ <!-- (.*) -->[ \t]*\n?/gm;
 
 // Mockup-only sections, heading through to the next heading of the same or shallower level
 // (or EOF). These headings are literal strings emitted only by these renderers, at whatever

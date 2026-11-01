@@ -5,7 +5,7 @@
 // name is synthetic.
 
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
@@ -19,7 +19,7 @@ const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 const { submissionDataCreateWriting } = await import("../build/submission/forms/layout-snapshot.js");
-const { lawFolderText, saveAnswer } = await import("../build/files/research-filing.js");
+const { lawFolderText, saveAnswer, writeScratch } = await import("../build/files/research-filing.js");
 const { awaitBackgroundJobs } = await import("../build/submission/render-job.js");
 
 const NOW = "2026-11-01 09:00";
@@ -109,6 +109,68 @@ test("None. is numbered with the items and has no passage, citation or stored st
   assert.deepEqual(rows.map((r) => r.statement_id), [5, 6]);
 });
 
+test("a saved brief keeps text of a tag's shape in its own sentences, and strips the tags on a citation line", async (t) => {
+  const m = await matter(t);
+  const id = await writeBrief(m);
+  await submissionDataExecute(
+    m.dbPath,
+    `UPDATE filing_prose SET text = 'Seller refused (note-up: x) delivery [unverified: y], ending (quoting Z)' WHERE filing_id = ${id} AND slot = 'facts';
+     UPDATE authorities SET treatment_note = 'still good' WHERE id = 60;`
+  );
+  const text = readFileSync(saveFromRender(m, id, `${STEM}.md`).saved.path, "utf-8");
+  assert.match(text, /^1\. Seller refused \(note-up: x\) delivery \[unverified: y\], ending \(quoting Z\)$/m, text);
+  assert.match(text, /^> \*Alpha v Beta\*, 2020 BCCA 1, para\. 5$/m, text);
+  assert.doesNotMatch(text, /[\uE000-\uE003]/);
+});
+
+for (const [what, sql, named] of [
+  ["a slot not written", (id) => `DELETE FROM filing_prose WHERE filing_id = ${id} AND slot = 'procedural-history';`, /procedural-history not written/],
+  ["an item its Writing does not cite", (id) => `DELETE FROM filing_law WHERE filing_id = ${id} AND statement_id = 5;`, /statement_of_law 5 is not cited/],
+]) {
+  test(`a saved brief is refused while the mockup shows ${what}, and nothing is written`, async (t) => {
+    const m = await matter(t);
+    const id = await writeBrief(m);
+    await submissionDataExecute(m.dbPath, sql(id));
+    assert.throws(
+      () => saveFromRender(m, id, `${STEM}.md`),
+      (err) => err.code === "brief_incomplete" && named.test(err.message)
+    );
+    assert.deepEqual(readdirSync(m.law), []);
+  });
+}
+
+test("a stem cleaned by the template's rule is a name the scratch copy and the save accept; the raw one is refused", async (t) => {
+  const m = await matter(t);
+  assert.throws(() => writeScratch(m.root, "2026-11-01 case brief A/B v C, 2020 BCCA 1.md", "x"), (err) => err.code === "invalid_filename");
+  const scratch = writeScratch(m.root, "2026-11-01 case brief A-B v C, 2020 BCCA 1.md", "File stem: x\n");
+  assert.equal(saveAnswer(m.law, scratch.filename, undefined, scratch.path).filename, scratch.filename);
+});
+
+test("a decision the extractor refuses is a refusal the skill stops on, not a row", async (t) => {
+  const m = await matter(t);
+  writeFileSync(join(m.law, "Alpha v Beta 2020 BCCA 1.html"), "<p>x</p>", "utf-8");
+  await assert.rejects(lawFolderText(m.root, m.law, { file: "Alpha v Beta 2020 BCCA 1.html" }), (err) => err.code === "html_page");
+});
+
+test("a memo's saved file opens with its own bare header even with an untracked citation and an unreviewed header", async (t) => {
+  const m = await matter(t);
+  const { filing_id: id } = await submissionDataCreateWriting({ db_path: m.dbPath, proceeding_id: 1, tree: TREE, kind: "research_memo", recipient: "internal", title: "2026-11-01 ML re citation" });
+  await submissionDataExecute(
+    m.dbPath,
+    `${prose(id, "memo-header", "---\nDocument: MEMORANDUM OF LAW\n---")}
+     ${prose(id, "issue", "Does 2018 BCSC 44 apply?")}
+     ${prose(id, "conclusion", "Yes.")}
+     ${prose(id, "rule", "R.")}
+     ${prose(id, "application", "A.")}
+     ${prose(id, "sources", "S.")}`
+  );
+  const text = readFileSync(saveFromRender(m, id, "2026-11-01 ML re citation.md").saved.path, "utf-8");
+  assert.ok(text.startsWith("---\nDocument: MEMORANDUM OF LAW\n---\n"), text);
+  assert.doesNotMatch(text, /Cited but not tracked|# Memorandum of Law/);
+  assert.match(text, /^Does 2018 BCSC 44 apply\? 🧐$/m, "a memo's markers stay");
+  assert.match(text, /^## Legend$/m);
+});
+
 test("a memo's saved file opens with its own header, with no party's line, and keeps its trace comments and Legend", async (t) => {
   const m = await matter(t);
   const { filing_id: id } = await submissionDataCreateWriting({ db_path: m.dbPath, proceeding_id: 1, tree: TREE, kind: "research_memo", recipient: "internal", title: "2026-11-01 ML re repudiation" });
@@ -162,10 +224,14 @@ test("the render after the save lists the brief on the Legal Research page; the 
   assert.ok(after.includes(STEM), "the saved brief is listed");
 });
 
-test("a matter holding only research results gets no Legal Research page, which the skill must say", async (t) => {
+test("a matter holding only research results, a memo beside the brief, gets no Legal Research page until it holds other work", async (t) => {
   const m = await matter(t);
   const id = await writeBrief(m);
+  await submissionDataCreateWriting({ db_path: m.dbPath, proceeding_id: 1, tree: TREE, kind: "research_memo", recipient: "internal", title: "2026-11-01 ML re repudiation" });
   saveFromRender(m, id, `${STEM}.md`);
-  const r = submissionFormsRender(m.dbPath, id, {}, "mockup", ["Work_board"], undefined, undefined, NOW, "tok", m.draft);
-  assert.equal(legalResearch(r), undefined);
+  const page = () => submissionFormsRender(m.dbPath, id, {}, "mockup", ["Work_board"], undefined, undefined, NOW, "tok", m.draft);
+  assert.equal(legalResearch(page()), undefined);
+  await awaitBackgroundJobs();
+  await submissionDataExecute(m.dbPath, "INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (20, 1, 'submissions_package', 'opening', 'Opening');");
+  assert.ok(readFileSync(legalResearch(page()).path, "utf-8").includes(STEM));
 });

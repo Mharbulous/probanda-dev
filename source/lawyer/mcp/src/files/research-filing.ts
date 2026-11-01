@@ -34,7 +34,7 @@ import { DataServerError } from "../errors.js";
 import { checkCoverageLine } from "./coverage-line.js";
 import { downloadsDir, IN_PROGRESS_EXTENSIONS } from "./downloads.js";
 import { htmlBlocks, sourcesFetcher, type SourceFetcher } from "../sources/fetch.js";
-import { toFiledFace } from "../submission/forms/filed-face.js";
+import { GAP_LINE_RE, MOCKUP_ONLY_LINE_RE, toFiledFace } from "../submission/forms/filed-face.js";
 import { withLegend } from "../submission/forms/legend.js";
 import { findDraftDir, validateMatterRoot } from "./matter-root.js";
 import { canonicalRoot } from "./scope.js";
@@ -156,8 +156,10 @@ export function appendManifest(destinationDir: string, record: unknown): { path:
  * memo's or case brief's Writing): its bytes are copied without the mockup's own header, the first
  * `---` block, which names the matter, and without the title line after it. A case brief's copy is
  * presented to the practitioner as it stands, so it also loses its markers, trace comments and Legend
- * (caseBriefCopy). A memo's keeps them: a proposition-level note-up names a paragraph's stored item by
- * the `statement_of_law_id` its line ends with (shared/legal-research.md).
+ * (caseBriefCopy), and a mockup with a gap line is refused `brief_incomplete`, since that copy would
+ * hide the gap. A memo's keeps them: a proposition-level note-up names a paragraph's stored item by the
+ * `statement_of_law_id` its line ends with (shared/legal-research.md). It loses only the mockup-only
+ * lines, which would sit before its header, and the review marker on that header's closing `---`.
  */
 export function saveAnswer(
   destinationDir: string,
@@ -242,18 +244,34 @@ const CASE_BRIEF_HEADER = /^\uFEFF?---\r?\n(?:(?!---\r?\n)[^\n]*\n)*?Document Ty
 /**
  * A case brief's copy for the practitioner: the mockup's filed face (filed-face.ts), less its title. Each
  * verbatim line stays as written, because the face's whitespace tidy and tag strips would change a quote:
- * in an item's block quote (projections.ts itemLines), every line but the last, its citation line.
+ * in an item's block quote (projections.ts itemLines), every line but the last, its citation line. The
+ * tag strips reach only that citation line: a tag is only ever printed there, and text of its shape in
+ * the brief's own sentences is wording the reviewer approved, so its opening " (" or " [" is held.
+ * Refused when the mockup holds a gap line: the face deletes those, and the file would hide a slot not
+ * written or an item its Writing does not cite.
  */
-function caseBriefCopy(mockup: string): string {
+function caseBriefCopy(mockup: string, source: string): string {
+  const gaps = [...mockup.matchAll(GAP_LINE_RE)].map((m) => m[1]);
+  if (gaps.length > 0) throw new DataServerError(`this brief is not complete, so it was not saved: ${gaps.join("; ")}: ${source}`, "brief_incomplete");
   const verbatim: string[] = [];
   const held = mockup.split("\n").map((line, i, lines) => {
-    if (!line.startsWith(">") || !lines[i + 1]?.startsWith(">")) return line;
+    if (!line.startsWith(">")) return line.replace(/ \(/g, "\uE002").replace(/ \[/g, "\uE003");
+    if (!lines[i + 1]?.startsWith(">")) return line;
     verbatim.push(line);
     return `\uE000${verbatim.length - 1}\uE001`;
   });
   return toFiledFace(held.join("\n"))
     .replace(/^\s*# [^\n]*\n\s*/, "")
-    .replace(/\uE000(\d+)\uE001/g, (_, n) => verbatim[Number(n)]);
+    .replace(/\uE000(\d+)\uE001/g, (_, n) => verbatim[Number(n)])
+    .replace(/\uE002/g, " (")
+    .replace(/\uE003/g, " [");
+}
+
+/** A memo's copy: the mockup less its mockup-only lines, its header and title (MOCKUP_HEADER), with its own
+ * header's closing `---` bare. The render prints a prose slot's review marker after the slot's last line,
+ * which in the `memo-header` slot is that `---`. */
+function memoCopy(mockup: string): string {
+  return withLegend(mockup.replace(MOCKUP_ONLY_LINE_RE, "").replace(MOCKUP_HEADER, "").replace(/^---[ \t]+\uD83E\uDDD0[ \t]*$/gm, "---"), "").markdown;
 }
 
 /** A rendered mockup's saved bytes (saveAnswer's `fromRender`), refused unless its real path is a non-empty
@@ -269,7 +287,7 @@ function renderBytes(destinationDir: string, fromRender: string): Buffer {
     throw new DataServerError(`from_render is not a mockup in this matter's ${draft}: ${source}`, "not_render");
   }
   const mockup = readFileSync(source, "utf-8");
-  const body = CASE_BRIEF_HEADER.test(mockup) ? caseBriefCopy(mockup) : withLegend(mockup.replace(MOCKUP_HEADER, ""), "").markdown;
+  const body = CASE_BRIEF_HEADER.test(mockup) ? caseBriefCopy(mockup, source) : memoCopy(mockup);
   if (body.trim() === "") throw new DataServerError(`from_render is empty: ${source}`, "invalid_argument");
   return Buffer.from(body, "utf-8");
 }

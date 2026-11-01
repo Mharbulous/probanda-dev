@@ -182,7 +182,43 @@ class Presenting(unittest.TestCase):
         template = flat(read("shared", "case-brief-template.md"))
         self.assertIn('Once the file is saved, `drafting_forms__render` again with the same Writing, `documents: ["Work_board"]` and `draft_dir`', template)
         self.assertLess(template.index("`research_filing__save_answer` with that document's"), template.index("**Page.**"))
-        self.assertIn("When it returned none, the matter has no Writing", flat(read("case-brief", "SKILL.md")))
+        skill = flat(read("case-brief", "SKILL.md"))
+        self.assertIn("When it returned none, the matter holds nothing but research results", skill)
+        self.assertIn("once the matter has a filing, a letter or other work besides its research", skill)
+        self.assertNotIn("once the matter has a Writing", skill)
+
+    def test_a_failed_write_is_said_in_plain_words_too(self):
+        skill = flat(read("case-brief", "SKILL.md"))
+        self.assertIn("A return with no `Brief scratch:` line saves nothing", skill)
+        self.assertEqual(skill.count("Never pass on the return's text"), 2)
+
+    def test_the_return_lines_agree(self):
+        template = read("shared", "case-brief-template.md")
+        self.assertIn("Divergence: <one line, only when", template)
+        self.assertIn("When it can write nothing, it returns instead the one line that file gives", template)
+        brief = read("case-brief", "agents", "brief.md")
+        self.assertIn("Name a divergence in the `Divergence:` line of your return", brief)
+        self.assertIn("You never return `needs_download`", brief)
+        self.assertIn("held a `Divergence:` line", read("case-brief", "SKILL.md"))
+
+
+class Finding(unittest.TestCase):
+    def test_a_note_up_record_is_not_the_decision(self):
+        self.assertIn("`memo` or `note-up` cites the decision and is not its text", read("case-brief", "SKILL.md"))
+
+    def test_tools_take_host_paths_not_mounted_ones(self):
+        self.assertIn("A mounted path is only for looking", read("case-brief", "SKILL.md"))
+
+    def test_a_refusal_to_extract_stops_the_brief(self):
+        self.assertIn("or a refusal such as an HTML page with no text file beside it, means the decision cannot be read", read("case-brief", "SKILL.md"))
+
+
+class Saving(unittest.TestCase):
+    def test_a_stem_is_cleaned_to_a_file_name(self):
+        self.assertIn("It is a file name, so each", flat(read("shared", "case-brief-template.md")))
+
+    def test_an_incomplete_save_is_repaired_not_filed_from_scratch(self):
+        self.assertIn("A save refused `brief_incomplete` is a script that missed a slot", flat(read("shared", "case-brief-template.md")))
 
 
 class NotTheDecision(unittest.TestCase):
