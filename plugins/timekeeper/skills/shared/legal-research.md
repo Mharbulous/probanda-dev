@@ -394,6 +394,8 @@ keeps, a fetcher stop) stops as they say, and its step stays open: set it ↻
 source blocks it, never stamped done. A Westlaw step waits as ⏳ while its run is out
 (duty 3). The job stays open on each step not yet done (`/draft` `references/job-session.md`,
 Complete). A caller holding no job runs the same loop, adding and stamping no steps.
+A return with a rewording proposal and no memo saves nothing: put that proposal to the
+practitioner as "A research question holds one question" says.
 
 **memo-reviewer checks every memo before it is saved.** Spawn `researcher:memo-reviewer`
 on every return that carries a memo, with the spawn prompt's `Question:`, `Job question:`,

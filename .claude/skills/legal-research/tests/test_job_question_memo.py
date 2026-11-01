@@ -38,6 +38,8 @@ class JobQuestionMemoTest(unittest.TestCase):
         self.assertIn("rules A to C", rule)
         self.assertIn("(`/drafting-data` §3m, \"Rewording a held job\")", rule)
         self.assertNotIn("## `mode: plan`", read("shared", "legal-audit-scoped.md"))
+        self.assertIn("A return with a rewording proposal and no memo saves nothing: put that proposal to "
+                      "the practitioner as \"A research question holds one question\" says.", gate)
 
     def test_memo_has_one_issue_and_rules_a_to_c(self):
         template = read("shared", "research-memo-template.md")
