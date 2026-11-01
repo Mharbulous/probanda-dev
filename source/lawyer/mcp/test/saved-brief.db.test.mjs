@@ -86,6 +86,7 @@ test("a case brief's saved file is the brief alone: no party, marker, trace comm
   const id = await writeBrief(m);
   const { render, saved } = saveFromRender(m, id, `${STEM}.md`);
   const text = readFileSync(saved.path, "utf-8");
+  assert.equal("mockup_only_lines" in saved, false, "only a memo's result carries these");
   assert.equal(render.parties_drift[0].name, "Working Matter Client Ltd", "the session still sees the drift");
   assert.ok(text.startsWith("## Case\n"), text);
   assert.doesNotMatch(text, /Working Matter Client|L9999|Legend|research lawyer|drafter|statement_of_law_id|<!--|mockup-only|Authorities cited/);
@@ -98,6 +99,15 @@ test("a saved brief keeps each passage character for character, though the filed
   const m = await matter(t);
   const { saved } = saveFromRender(m, await writeBrief(m), `${STEM}.md`);
   assert.match(readFileSync(saved.path, "utf-8"), new RegExp(`^> ${QUOTE.replace(/[()]/g, "\\$&")}\n> and a second line\\.\n>\n> \\*Alpha`, "m"));
+});
+
+test("a saved brief's passage keeps even the characters the save borrows as placeholders", async (t) => {
+  const m = await matter(t);
+  const id = await writeBrief(m);
+  const passage = "Odd \uE002characters \uE003kept (here)";
+  await submissionDataExecute(m.dbPath, `UPDATE statements_of_law SET excerpt = '${passage}\nand a second line.' WHERE id = 5;`);
+  const text = readFileSync(saveFromRender(m, id, `${STEM}.md`).saved.path, "utf-8");
+  assert.ok(text.includes(`\n> ${passage}\n> and a second line.\n`), text);
 });
 
 test("None. is numbered with the items and has no passage, citation or stored statement", async (t) => {
@@ -126,6 +136,16 @@ test("a saved brief keeps text of a tag's shape in its own sentences, and strips
 for (const [what, sql, named] of [
   ["a slot not written", (id) => `DELETE FROM filing_prose WHERE filing_id = ${id} AND slot = 'procedural-history';`, /procedural-history not written/],
   ["an item its Writing does not cite", (id) => `DELETE FROM filing_law WHERE filing_id = ${id} AND statement_id = 5;`, /statement_of_law 5 is not cited/],
+  ["a Holding item with no trace comment", (id) => `UPDATE filing_prose SET text = 'Yes.' WHERE filing_id = ${id} AND slot = 'holding';`, /holding paragraph 1 does not end/],
+  ["a Ratio item with text after its comment", (id) => `UPDATE filing_prose SET text = 'A refusal repudiates. <!-- statement_of_law_id 6 --> Always.' WHERE filing_id = ${id} AND slot = 'ratio';`, /ratio paragraph 1 does not end/],
+  ["a Ratio item with a line after its comment", (id) => `UPDATE filing_prose SET text = 'A refusal repudiates. <!-- statement_of_law_id 6 -->\nAlways.' WHERE filing_id = ${id} AND slot = 'ratio';`, /ratio paragraph 1 does not end/],
+  ["a Holding item with a comment before its closing one", (id) => `UPDATE filing_prose SET text = 'Yes. <!-- statement_of_law_id 6 --> Plainly. <!-- statement_of_law_id 5 -->' WHERE filing_id = ${id} AND slot = 'holding';`, /holding paragraph 1 does not end/],
+  ["an Obiter item with no trace comment, beside a good one", (id) => `INSERT INTO statements_of_law (id, proceeding_id, authority_id, pinpoint, excerpt, source, verification) VALUES (7, 1, 60, 'para. 12', 'An aside.', 'primary', 'lead');
+     INSERT INTO filing_law (filing_id, statement_id) VALUES (${id}, 7);
+     UPDATE filing_prose SET text = 'An aside. <!-- statement_of_law_id 7 -->\n\nAnother aside.' WHERE filing_id = ${id} AND slot = 'obiter';`, /obiter paragraph 2 does not end/],
+  ["an item whose statement has no pinpoint", () => "UPDATE statements_of_law SET pinpoint = NULL WHERE id = 5;", /statement_of_law 5 has no pinpoint/],
+  ["an item whose statement has a blank pinpoint", () => "UPDATE statements_of_law SET pinpoint = '  ' WHERE id = 6;", /statement_of_law 6 has no pinpoint/],
+  ["an item whose statement has no passage", () => "UPDATE statements_of_law SET excerpt = NULL WHERE id = 6;", /statement_of_law 6 has no passage/],
 ]) {
   test(`a saved brief is refused while the mockup shows ${what}, and nothing is written`, async (t) => {
     const m = await matter(t);
@@ -146,6 +166,19 @@ test("a stem cleaned by the template's rule is a name the scratch copy and the s
   assert.equal(saveAnswer(m.law, scratch.filename, undefined, scratch.path).filename, scratch.filename);
 });
 
+test("a stem keeping a colon or a question mark is refused in plain words, not written to a truncated name", async (t) => {
+  const m = await matter(t);
+  for (const name of ["2026-11-01 case brief Re: X, 2020 BCCA 1.md", "2026-11-01 case brief Who?, 2020 BCCA 1.md"]) {
+    const plain = (err) => err.code === "invalid_filename" && /character a Windows file name cannot have/.test(err.message);
+    assert.throws(() => writeScratch(m.root, name, "x"), plain);
+    assert.throws(() => saveAnswer(m.law, name, "x"), plain);
+  }
+  assert.deepEqual(readdirSync(m.law), []);
+  const usual = "2026-11-01 case brief O'Neil (Re), [2020] 1 SCR 5 é & Co.md";
+  assert.equal(writeScratch(m.root, usual, "x").filename, usual);
+  assert.equal(saveAnswer(m.law, usual, "x").filename, usual);
+});
+
 test("a decision the extractor refuses is a refusal the skill stops on, not a row", async (t) => {
   const m = await matter(t);
   writeFileSync(join(m.law, "Alpha v Beta 2020 BCCA 1.html"), "<p>x</p>", "utf-8");
@@ -164,7 +197,9 @@ test("a memo's saved file opens with its own bare header even with an untracked 
      ${prose(id, "application", "A.")}
      ${prose(id, "sources", "S.")}`
   );
-  const text = readFileSync(saveFromRender(m, id, "2026-11-01 ML re citation.md").saved.path, "utf-8");
+  const { saved } = saveFromRender(m, id, "2026-11-01 ML re citation.md");
+  const text = readFileSync(saved.path, "utf-8");
+  assert.deepEqual(saved.mockup_only_lines, ["📇 Cited but not tracked: 2018 BCSC 44"], "the file leaves it out, so the result carries it");
   assert.ok(text.startsWith("---\nDocument: MEMORANDUM OF LAW\n---\n"), text);
   assert.doesNotMatch(text, /Cited but not tracked|# Memorandum of Law/);
   assert.match(text, /^Does 2018 BCSC 44 apply\? 🧐$/m, "a memo's markers stay");
@@ -188,6 +223,7 @@ test("a memo's saved file opens with its own header, with no party's line, and k
   );
   const { saved } = saveFromRender(m, id, "2026-11-01 ML re repudiation.md");
   const text = readFileSync(saved.path, "utf-8");
+  assert.equal("mockup_only_lines" in saved, false, "a memo with nothing left out says nothing");
   assert.ok(text.startsWith("---\nDocument: MEMORANDUM OF LAW\n---"), text);
   assert.doesNotMatch(text, /Working Matter Client|L9999/);
   assert.match(text, /<!-- statement_of_law_id 5 -->/, "a proposition-level note-up reads this");

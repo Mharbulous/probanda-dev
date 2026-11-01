@@ -237,6 +237,8 @@ class GateDoctrineTests(unittest.TestCase):
         self.assertIn("`research_memo`, `research_memo_irac` or `research_memo_creac`", step_one)
         self.assertIn("each ending ` <!-- statement_of_law_id <B + n> -->`", step_one)
         self.assertIn("that document's `path` as `from_render`", step_one)
+        self.assertIn("`mockup_only_lines`", step_one)
+        self.assertIn("relay each in plain words", step_one)
         self.assertIn("save the `Memo scratch:` path as `from_scratch`", step_one)
         self.assertNotIn("/drafting-data", step_one, "researcher names no litigator skill")
 

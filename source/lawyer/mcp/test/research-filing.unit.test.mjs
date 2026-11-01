@@ -276,7 +276,7 @@ test("save_answer refuses, creating nothing, outside 6. LAW and on bad input", (
   const f = fixture();
   try {
     const fresh = join(f.matter, "6. LAW", "Fresh");
-    for (const bad of ["", "sub/answer.md", "..\\answer.md", "C:answer.md", "answer.txt", "answer"]) {
+    for (const bad of ["", "sub/answer.md", "..\\answer.md", "C:answer.md", "answer.txt", "answer", "Re: X.md", "What?.md", "a*b.md", 'a"b.md', "a<b.md", "a>b.md", "a|b.md", "a\tb.md"]) {
       assert.equal(codeOf(() => saveAnswer(fresh, bad, ANSWER)), "invalid_filename", JSON.stringify(bad));
     }
     assert.equal(codeOf(() => saveAnswer(fresh, "answer.md", "")), "invalid_argument");
@@ -506,7 +506,7 @@ test("write_scratch refuses, writing nothing, outside a matter's one unprotected
     return root;
   };
   try {
-    for (const bad of ["", "sub/notes.md", "..\\notes.md", "C:notes.md", "notes.txt", "notes"]) {
+    for (const bad of ["", "sub/notes.md", "..\\notes.md", "C:notes.md", "notes.txt", "notes", "Re: X.md", "What?.md", "a*b.md", 'a"b.md', "a<b.md", "a>b.md", "a|b.md", "a\tb.md"]) {
       assert.equal(codeOf(() => writeScratch(f.matter, bad, NOTES)), "invalid_filename", JSON.stringify(bad));
     }
     assert.equal(codeOf(() => writeScratch(f.matter, "notes.md", "")), "invalid_argument");

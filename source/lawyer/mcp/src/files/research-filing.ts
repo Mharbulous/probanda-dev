@@ -36,6 +36,7 @@ import { downloadsDir, IN_PROGRESS_EXTENSIONS } from "./downloads.js";
 import { htmlBlocks, sourcesFetcher, type SourceFetcher } from "../sources/fetch.js";
 import { GAP_LINE_RE, MOCKUP_ONLY_LINE_RE, toFiledFace } from "../submission/forms/filed-face.js";
 import { withLegend } from "../submission/forms/legend.js";
+import { MOCKUP_ONLY_TAG } from "../submission/forms/markers.js";
 import { findDraftDir, validateMatterRoot } from "./matter-root.js";
 import { canonicalRoot } from "./scope.js";
 import { extractText } from "./text-extract.js";
@@ -159,7 +160,8 @@ export function appendManifest(destinationDir: string, record: unknown): { path:
  * (caseBriefCopy), and a mockup with a gap line is refused `brief_incomplete`, since that copy would
  * hide the gap. A memo's keeps them: a proposition-level note-up names a paragraph's stored item by the
  * `statement_of_law_id` its line ends with (shared/legal-research.md). It loses only the mockup-only
- * lines, which would sit before its header, and the review marker on that header's closing `---`.
+ * lines, which would sit before its header, and the review marker on that header's closing `---`. Those
+ * lines come back as `mockup_only_lines`, because a memo is on no board and nothing else would show them.
  */
 export function saveAnswer(
   destinationDir: string,
@@ -167,7 +169,7 @@ export function saveAnswer(
   text?: string,
   fromScratch?: string,
   fromRender?: string
-): { path: string; filename: string; bytes: number; created_dir: boolean; sha256: string } {
+): { path: string; filename: string; bytes: number; created_dir: boolean; sha256: string; mockup_only_lines?: string[] } {
   assertBareFilename(filename, "filename");
   const ext = pathWin32.extname(filename);
   if (ext.toLowerCase() !== ".md") {
@@ -177,8 +179,9 @@ export function saveAnswer(
     throw new DataServerError("pass exactly one of text, from_scratch and from_render", "invalid_argument");
   }
   let body: Buffer;
+  let mockupOnly: string[] = [];
   if (fromRender !== undefined) {
-    body = renderBytes(destinationDir, fromRender);
+    ({ body, mockupOnly } = renderBytes(destinationDir, fromRender));
   } else {
     let source: Buffer;
     if (fromScratch !== undefined) {
@@ -194,7 +197,7 @@ export function saveAnswer(
   const { dir, created } = resolveOrCreateLawDir(destinationDir);
   const saved = writeNewVersion(dir, filename, body);
   const sha256 = createHash("sha256").update(body).digest("hex");
-  return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created, sha256 };
+  return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created, sha256, ...(mockupOnly.length > 0 ? { mockup_only_lines: mockupOnly } : {}) };
 }
 
 /** The bytes of `fromScratch`, refused unless its real path is a non-empty file directly in the
@@ -248,7 +251,8 @@ const CASE_BRIEF_HEADER = /^\uFEFF?---\r?\n(?:(?!---\r?\n)[^\n]*\n)*?Document Ty
  * tag strips reach only that citation line: a tag is only ever printed there, and text of its shape in
  * the brief's own sentences is wording the reviewer approved, so its opening " (" or " [" is held.
  * Refused when the mockup holds a gap line: the face deletes those, and the file would hide a slot not
- * written or an item its Writing does not cite.
+ * written or an item of law short of its passage or pinpoint (projections.ts). The verbatim lines go back
+ * last, so restoring a held opening cannot change a passage that holds its placeholder character.
  */
 function caseBriefCopy(mockup: string, source: string): string {
   const gaps = [...mockup.matchAll(GAP_LINE_RE)].map((m) => m[1]);
@@ -262,21 +266,24 @@ function caseBriefCopy(mockup: string, source: string): string {
   });
   return toFiledFace(held.join("\n"))
     .replace(/^\s*# [^\n]*\n\s*/, "")
-    .replace(/\uE000(\d+)\uE001/g, (_, n) => verbatim[Number(n)])
     .replace(/\uE002/g, " (")
-    .replace(/\uE003/g, " [");
+    .replace(/\uE003/g, " [")
+    .replace(/\uE000(\d+)\uE001/g, (_, n) => verbatim[Number(n)]);
 }
 
 /** A memo's copy: the mockup less its mockup-only lines, its header and title (MOCKUP_HEADER), with its own
  * header's closing `---` bare. The render prints a prose slot's review marker after the slot's last line,
- * which in the `memo-header` slot is that `---`. */
-function memoCopy(mockup: string): string {
-  return withLegend(mockup.replace(MOCKUP_ONLY_LINE_RE, "").replace(MOCKUP_HEADER, "").replace(/^---[ \t]+\uD83E\uDDD0[ \t]*$/gm, "---"), "").markdown;
+ * which in the `memo-header` slot is that `---`. `mockupOnly` is the lines it left out, without their tag. */
+function memoCopy(mockup: string): { copy: string; mockupOnly: string[] } {
+  return {
+    copy: withLegend(mockup.replace(MOCKUP_ONLY_LINE_RE, "").replace(MOCKUP_HEADER, "").replace(/^---[ \t]+\uD83E\uDDD0[ \t]*$/gm, "---"), "").markdown,
+    mockupOnly: [...mockup.matchAll(MOCKUP_ONLY_LINE_RE)].map((m) => m[0].replace(MOCKUP_ONLY_TAG, "").trim()),
+  };
 }
 
 /** A rendered mockup's saved bytes (saveAnswer's `fromRender`), refused unless its real path is a non-empty
  * `.md` file inside the 0. DRAFT folder of the matter owning `destinationDir`'s `6. LAW` tree. */
-function renderBytes(destinationDir: string, fromRender: string): Buffer {
+function renderBytes(destinationDir: string, fromRender: string): { body: Buffer; mockupOnly: string[] } {
   if (typeof fromRender !== "string" || !pathWin32.isAbsolute(fromRender) || pathWin32.extname(fromRender).toLowerCase() !== ".md") {
     throw new DataServerError(`from_render must be the absolute path of the .md mockup drafting_forms__render returned: ${fromRender}`, "invalid_path");
   }
@@ -287,9 +294,9 @@ function renderBytes(destinationDir: string, fromRender: string): Buffer {
     throw new DataServerError(`from_render is not a mockup in this matter's ${draft}: ${source}`, "not_render");
   }
   const mockup = readFileSync(source, "utf-8");
-  const body = CASE_BRIEF_HEADER.test(mockup) ? caseBriefCopy(mockup, source) : memoCopy(mockup);
-  if (body.trim() === "") throw new DataServerError(`from_render is empty: ${source}`, "invalid_argument");
-  return Buffer.from(body, "utf-8");
+  const { copy, mockupOnly } = CASE_BRIEF_HEADER.test(mockup) ? { copy: caseBriefCopy(mockup, source), mockupOnly: [] } : memoCopy(mockup);
+  if (copy.trim() === "") throw new DataServerError(`from_render is empty: ${source}`, "invalid_argument");
+  return { body: Buffer.from(copy, "utf-8"), mockupOnly };
 }
 
 /**
@@ -833,5 +840,9 @@ function assertBareFilename(name: string, label: string): void {
     name === ".."
   ) {
     throw new DataServerError(`${label} must be a bare filename: ${name}`, "invalid_filename");
+  }
+  // Windows refuses each of these, except that a colon quietly writes to a hidden stream of a shorter name.
+  if (/[<>:"|?*\x00-\x1f]/.test(name)) {
+    throw new DataServerError(`${label} holds a character a Windows file name cannot have (one of < > : " | ? *, or a control character); replace each with "-": ${name}`, "invalid_filename");
   }
 }

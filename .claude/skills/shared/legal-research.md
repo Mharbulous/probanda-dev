@@ -457,7 +457,8 @@ complete before the session ends: never leave a session with a cited decision un
      working a `/draft` job also passes the job's `db_path`, `ticket_id` and `claim_no` and its
      own `session_token`, so the job's card lists the answer. A result reading
      `job.recorded: false` means the job is no longer the caller's: the answer is saved, so stop
-     and report.
+     and report. A result holding `mockup_only_lines` lists notes the saved file leaves out, such
+     as a citation not tracked, and nothing else shows them: relay each in plain words.
 
    When a `drafting_*` tool refuses, write nothing more to the Writing: save the `Memo scratch:`
    path as `from_scratch` (the memo as `text` only when the return has no such line) and name

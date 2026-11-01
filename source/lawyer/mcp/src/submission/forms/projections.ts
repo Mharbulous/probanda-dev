@@ -166,14 +166,23 @@ function ownLines(slot: string): Projection {
  * (filing_law): a research memo's item (shared/research-memo-template.md). */
 const STATEMENT_REF = /\s*<!-- statement_of_law_id (\d+) -->\s*$/;
 
+/** The slots of a case brief whose every item but `None.` stands for one passage at a pinpoint
+ * (shared/case-brief-template.md). */
+const BRIEF_LAW_SLOTS: ReadonlySet<string> = new Set(["holding", "ratio", "obiter"]);
+
 /** An item paragraph's lines after its summary: the statement's verbatim excerpt as a block quote,
  * then its citation line with the statement-line markers and the id comment, so a paragraph number
  * names one stored row. The markers are not recorded here: the header's "Authorities cited" line
  * records each linked statement once (render-general.ts). A statement the Writing does not cite
- * prints a gap line instead. */
+ * prints a gap line instead, as does a case brief's statement short of its passage or pinpoint, which
+ * a brief's item cannot go without. */
 function itemLines(ctx: RenderContext, state: ProjectionState, id: number, law: Map<number, FilingLawRow>): string {
   const row = law.get(id);
   if (row === undefined) return gap(ctx, state, `statement_of_law ${id} is not cited by this Writing`);
+  if (ctx.filing.kind === "case_brief") {
+    const missing = [(row.excerpt ?? "").trim() === "" && "passage", (row.pinpoint ?? "").trim() === "" && "pinpoint"].filter(Boolean);
+    if (missing.length > 0) return gap(ctx, state, `statement_of_law ${id} has no ${missing.join(" and no ")}`);
+  }
   const quote = (row.excerpt ?? "").trim() === "" ? [] : [...row.excerpt!.trim().split(/\r?\n/).map((l) => `> ${l}`.trimEnd()), ">"];
   const cite = [lawStatementCitationLine(row) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row), `<!-- statement_of_law_id ${id} -->`].filter(Boolean).join(" ");
   return [...quote, cite].join("\n");
@@ -188,9 +197,13 @@ function slot(ctx: RenderContext, name: string, part: LayoutPart, state: Project
     .split(/\r?\n[ \t]*\r?\n/)
     .map((p) => p.trim())
     .filter((p) => p !== "")
-    .map((p) => {
+    .map((p, i) => {
       const ref = STATEMENT_REF.exec(p);
-      const text = checkFormat(ctx, name, row.id, (ref ? p.slice(0, ref.index) : p).split(/\r?\n/), state).join("\n");
+      const own = ref ? p.slice(0, ref.index) : p;
+      const text = checkFormat(ctx, name, row.id, own.split(/\r?\n/), state).join("\n");
+      if (ctx.filing.kind === "case_brief" && BRIEF_LAW_SLOTS.has(name) && p !== "None." && (!ref || own.includes("<!--"))) {
+        return `${text}\n\n${gap(ctx, state, `${name} paragraph ${i + 1} does not end with its one statement_of_law_id comment`)}`;
+      }
       if (!ref) return text;
       law ??= new Map(fetchFilingLaw(ctx.dbPath, ctx.filing.id).map((r) => [r.statement_id, r]));
       return `${text}\n\n${itemLines(ctx, state, Number(ref[1]), law)}`;
