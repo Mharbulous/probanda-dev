@@ -226,45 +226,45 @@ proof: none of this runs offline.
 
 ## Step e — Measure the gain, then refactor
 
-- **Payback test, fixed before the sessions run.** Over at least ten real Cowork sessions, the guard
-  repays its cost if the effective tokens its true redirects saved are at least what all its judge
-  calls cost. A true redirect is one a person reading the transcript agrees came on a stuck turn;
-  what it saved is the tokens that turn spent after the point where the guard spoke, in the
-  baseline. "Plugin overhead" is the plugin's own model calls (`ledger.OVERHEAD_KEYS`: the judge,
-  the redirect writer and the micro-skills proposer), not hook time.
-- **Measure.** On the PC, end shadow mode with `te config set shadow=false --global` (done
-  2026-10-30). Record, per
-  session:
-  - effective tokens and plugin overhead, against the PC baseline of 2026-10-28 (`te status` for
-    probanda-dev: 6 folded sessions, 9.7M effective tokens, plugin overhead 526.4k, 5.2%);
-  - each judge wake, with its tokens, split into true redirects, false wakes ("not stuck"
-    verdicts) and wakes that ended in no verdict;
-  - whether the fixed envelope looked right for Cowork's turns (the turn lengths the session's
-    `envelope.json` recorded).
+- **Payback test, fixed before the sessions run.** Over at least ten real Cowork sessions, cost is
+  the sum of `spiral_judge_tokens` and `spiral_nudge_writer_tokens` over every "overhead" row in the
+  saved `ledger.jsonl` (exact, from each side call's own usage). Gain is the sum over true redirects
+  of `max(0, A - c) x P`, where c is the tool calls the turn made after the nudge (the `turn` event's
+  `tool_calls` minus the `nudge` event's), A is the tool calls a stuck turn left alone is assumed to
+  go on for, and P is the effective tokens per tool call. A true redirect is a `nudge` event whose
+  turn Brahm, reading the Cowork window before closing the session, agrees was stuck; a false one
+  counts its cost and no gain. A and P are assumptions, not Cowork measurements. Central case: A = 38
+  (the fixed envelope), P = 23,000 (PC ledger of 2026-11-01: 91 probanda-dev sessions, 114.2M
+  effective tokens over 4,959 model requests). Low case: A = 10, P = 10,000. Results: **pays** if
+  gain >= cost in the low case; **depends on the assumptions** if only in the central case; **does
+  not pay** if not even in the central case; **harmless, unproven** if no judge wake occurred in any
+  session (cost 0, gain 0).
+- **Record, per session**, from the saved files: each overhead row with its tokens; each `nudge` with
+  `tool_calls` and `reason`; for each nudged turn the `turn` event's `tool_calls` and `resolved_proxy`
+  (the latter for information only); and `envelope.json`'s `resolved_turns`, to judge whether 38 fits
+  Cowork's turns. No session effective tokens exist in Cowork (B3), and none are needed. Shadow mode
+  ended on the PC on 2026-10-30 (`te config set shadow=false --global`).
+- **Save.** A Cowork container is deleted when its session ends, and its state root goes with it, so
+  before closing each counted session Brahm pastes:
 
-  A Cowork container is deleted when its session ends, and its state root goes with it, so before
-  closing each counted session Brahm pastes:
+  > End-of-session save for the TokenEconomizer payback test. 1. If /root/.tokeneconomizer does not
+  > exist, stop and report. 2. Write /root/.tokeneconomizer/cowork-notes.md: today's date, this
+  > session's first request in one line naming no client, matter or person, and for each "nudge" line
+  > in any events.jsonl under /root/.tokeneconomizer its tool_calls and reason and what the turn did
+  > in the 5 tool calls before and after it; "no redirects" if none. 3. List every ledger.jsonl,
+  > events.jsonl, envelope.json, judge/*.result.json and cowork-notes.md under
+  > /root/.tokeneconomizer, each with its byte count and sha256sum. 4. Using
+  > mcp__remote-devices__device_bash, write each file as plain text, one tool call per file, under the
+  > only folder in ~/mnt/, at `<folder>/.tokeneconomizer/<YYYY-MM-DD_HHMM>/<same relative path>`, then
+  > print each written file's sha256sum from that shell. Retry any file whose hash differs, up to
+  > three times. 5. If a write is refused, print that file's full text in one fenced block,
+  > unshortened, and say which it was. 6. Finish with a table: file, bytes, container hash, PC hash,
+  > match.
 
-  > End-of-session save for the TokenEconomizer payback test. Use only this container's shell and
-  > the PC shell (mcp__remote-devices__device_bash), and change nothing else. 1. If
-  > /root/.tokeneconomizer does not exist, stop and report. 2. Write
-  > /root/.tokeneconomizer/cowork-notes.md: today's date, this session's first request in one line,
-  > and, for each line of kind "nudge" in any events.jsonl under /root/.tokeneconomizer, its
-  > tool_calls and reason, what the turn was doing in the 5 tool calls before it, and what was done
-  > after it; write "no redirects" if there are none. 3. Run `tar -czf /tmp/te-state.tgz
-  > --exclude=.tokeneconomizer/bin -C /root .tokeneconomizer`. 4. Print its sha256sum, the
-  > number of redirects, and the output of `base64 -w0 /tmp/te-state.tgz` inside a single fenced
-  > code block with nothing else in it. Do not summarise or shorten it.
-
-  Brahm pastes that reply into a probanda-dev session on the PC, which decodes it into
-  `~/te-cowork-runs/<YYYY-MM-DD_HHMM>/te-state.tgz` and checks the hash. Only a session whose hash
-  matches counts. The PC shell (`mcp__remote-devices__device_bash`) cannot carry the copy: on
-  2026-10-31 it reached a Linux sandbox (host `claude`, home `/sessions/<id>`), not the PC, so the
-  first saves stayed in sandboxes that end with their sessions. One archive is about 2 KB. Each holds the
-  session's ledger, events, judge requests and results, envelope and the redirect notes. Brahm
-  marks each redirect true or false from its notes and the Cowork transcript; the counting runs on
-  the PC once ten folders exist. The notes can name a matter, so the saved folders are never
-  committed.
+  On the PC, Brahm checks the hashes, marks each redirect true or false from his reading of the
+  window, and moves the `.tokeneconomizer` folder out of any matter folder into
+  `~/te-cowork-runs/<YYYY-MM-DD_HHMM>/`. A file counts only when its hashes match. The folders are
+  never committed.
 
   Record the result in the spec, beside its open question on the measured gain.
 - **Decide.** If the guard does not repay its cost in Cowork, Brahm rules what the plugin does
