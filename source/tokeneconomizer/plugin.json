@@ -1,7 +1,7 @@
 {
   "name": "tokeneconomizer",
   "displayName": "TokenEconomizer",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Experience-driven black-box cost control for coding agents, adapted for Claude Code and Claude Cowork: micro-skills (short repository facts learned from earlier sessions) injected at session start, and a guard that redirects a turn stuck in a failing loop. Tool pruning is off in this copy.",
   "author": {
     "name": "TokenEconomizer authors"
@@ -36,6 +36,11 @@
             "type": "command",
             "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 20
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-b6\"",
+            "timeout": 10
           }
         ]
       }
@@ -47,6 +52,11 @@
             "type": "command",
             "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-b6\"",
+            "timeout": 10
           }
         ]
       }
@@ -58,6 +68,22 @@
             "type": "command",
             "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-b6\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PermissionDenied": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-b6\"",
+            "timeout": 10
           }
         ]
       }

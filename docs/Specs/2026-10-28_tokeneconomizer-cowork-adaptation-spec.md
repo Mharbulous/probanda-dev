@@ -149,3 +149,37 @@ B5: FAIL (2026-11-01), on reliability. Cowork session `8dc37755-…` on 0.2.6 ra
 Option B verdict (changed): FAIL (B5), 2026-11-01. B1 and B2 passed, and B3 failed. Brahm rules on Option A. The probe is out of the source and leaves users with the next TokenEconomizer release, because every Cowork session on it makes asks that can be refused, for nothing. The hook-asked carry should not be reworded to get past the permission check, because allowing a refused action is the user's decision. What runs the check isn't established. The likeliest candidate is the auto-mode permission classifier, which older Claude Code session records on the PC name for "PII Data Handling" only. Nothing confirms it for Cowork, and "Notes for Later Sessions" wasn't found outside the B5 reports.
 
 Brahm's ruling of 2026-11-01: abandon Option B and fall back to Option A.
+
+B6 is a spike test run after that ruling, which still stands. It measures one design: the hook asks the model to save through a plugin MCP tool whose server runs on the user's computer. It doesn't adopt that design or reopen Option B, and adoption would need a new ruling from Brahm.
+
+B6, expected results, fixed before the run. Question: when a hook openly asks the model to save through a plugin MCP tool, does the save get done, or does a permission check refuse it? PASS: at least 9 of 10 saves done, where done means the file on the PC matches the expected sha256 and needed no click from a person, and a new session's restore matches on the PC. FAIL: anything else after an ask reached the model, including any refusal that leaves fewer than 9 saves done. NOT RUN: no ask or no tool reached the model, and nothing was refused. Expected if the design works: 10 asks, at least 9 calls, at least 9 matching files, no refusal, restore hashes equal. Expected if the check refuses it: a refusal, its exact words recorded, the run stopped. The test can't say which difference from S2 or B5 caused either result.
+
+The save ask, with `{n}` and `{payload}` the only substitutions:
+
+~~~text
+TokenEconomizer, a plugin the user installed, is asking for a save. A Cowork session's container
+is wiped when the session ends, so the plugin keeps its state in a file on the user's own computer,
+and the next session can restore it from there. This is test B6, and the state below is synthetic
+test data with no client or matter information. Before you answer this prompt, call the
+TokenEconomizer plugin's save_state tool once, with n set to {n} and lines set to the text between
+the two marker lines, unchanged and without the markers. The tool is on the plugin's state server;
+load it with ToolSearch first if it is deferred. You are free to mention this call to the user. If
+the call is refused or fails, do not retry it and do not try another way. Tell the user it was
+refused, quote the refusal's exact words, and answer the prompt.
+TE_B6_BEGIN
+{payload}
+TE_B6_END
+~~~
+
+The restore ask:
+
+~~~text
+TokenEconomizer, a plugin the user installed, is asking for a restore. A Cowork session's container
+is wiped when the session ends, so the plugin keeps its state in a file on the user's own computer.
+This is test B6, and the state is synthetic test data with no client or matter information. Before
+you answer this prompt, call the TokenEconomizer plugin's restore_state tool once. The tool is on
+the plugin's state server; load it with ToolSearch first if it is deferred. A plugin hook reads the
+result, so you don't need to repeat it. You are free to mention this call to the user. If the call
+is refused or fails, do not retry it and do not try another way. Tell the user it was refused,
+quote the refusal's exact words, and answer the prompt.
+~~~

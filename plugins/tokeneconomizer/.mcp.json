@@ -1,0 +1,6 @@
+{
+  "state": {
+    "command": "node",
+    "args": ["${CLAUDE_PLUGIN_ROOT}/state-mcp/dist/state-mcp.js"]
+  }
+}
