@@ -125,13 +125,18 @@ A point two authorities support is two items.
 
 In every format:
 
-- The Issue is the question, as one bold sentence. One memo has one `## Issue` and no
-  sub-issues. The Issue:
+- The Issue is the question: any context sentences, then the one question in bold. One memo
+  has one `## Issue` and no sub-issues. The Issue:
   - **A.** holds one question;
   - **B.** makes sense on its own;
-  - **C.** lists alternatives in one place at most. "Is gambling legal in BC or Alberta?" is one
-    question, but "Is prostitution or gambling legal in BC or Alberta?" crosses two lists into
-    four questions, and so four memos.
+  - **C.** holds at most one list of alternatives (one axis). "Is gambling legal in BC or
+    Alberta?" is one question, but "Is prostitution or gambling legal in BC or Alberta?" crosses
+    two lists into four questions, and so four memos.
+
+  **A job's memo.** In an audit whose `Job question:` is not `none`, the Issue is that question
+  verbatim if it meets rules A to C and names nothing of the working matter. If not, return no
+  memo but one rewording proposal (`shared/legal-research.md`, "A research question holds one
+  question"). No other issue or topic heading: a further finding is a Step 5 offer.
 - A Conclusion is one paragraph answering the Issue, followed, only where research is required
   (`shared/legal-audit-protocol.md` Step 4), by the open-issues paragraph, after the last
   Conclusion. It cites in parentheses and has no block quote.
@@ -139,8 +144,3 @@ In every format:
 - The Application: one sub-section per case, its items together. Each item is one finding of
   that court, its sentence opening `fact:` or `law-applied:` (the law applied to the facts to
   reach a holding), from the court's own reasons (`shared/legal-audit-protocol.md` Step 2).
-
-**A job's memo.** When the spawn prompt's `Job question:` is not `none`, the memo answers
-that question and nothing else. The Issue is the spawn prompt's Job question, verbatim, never
-paraphrased. No other issue or topic heading: a finding beyond the job question
-goes in the notes as a Step 5 offer, never in the memo.
