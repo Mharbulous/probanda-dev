@@ -118,6 +118,8 @@ This section's rules are in `references/assemble-then-gate.md`. Read it when the
 | The practitioner asks to reply to a message from the tribunal, a registry or another party's counsel, and not for a letter (section 1) | `references/reply.md` |
 <!-- atom id=draft.ref.source-trace ops=letter,reply_route,present_file -->
 | A letter, email or memo mockup is about to be presented, or any email is about to be written, after the scrivener has returned its text (SKILL.md ban 20) | `references/source-trace.md` |
+<!-- atom id=draft.ref.reliance-check ops=letter,reply_route -->
+| The scrivener's `sources` hold an entry with a `fact_id`, or the practitioner asks to verify the facts a draft or paragraph relies on | `references/reliance-check.md` |
 <!-- atom id=draft.ref.unstructured ops=unstructured -->
 | The Writing's kind is `unstructured` or `unstructured-<recipient>`, the venue and kind lookup creates an Unstructured Writing (section 1), the Sent write succeeds on one, or the assigned job is `Keep the layout of <title> for next time` (a job written before 2026-10-22 has the old title `Make <title> a Structured Writing`) | `references/unstructured.md` |
 <!-- atom id=draft.ref.court-oral ops=court_oral -->
