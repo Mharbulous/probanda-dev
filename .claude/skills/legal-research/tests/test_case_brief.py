@@ -8,6 +8,8 @@ Run: python -m pytest .claude/skills/legal-research/tests/test_case_brief.py -q
 """
 
 import json
+import re
+import sqlite3
 import unittest
 from pathlib import Path
 
@@ -252,6 +254,81 @@ class Guard(unittest.TestCase):
         schema = (REPO / "source" / "lawyer" / "mcp" / "src" / "schema" / "submission-data.ts").read_text(encoding="utf-8")
         self.assertIn("is scoped to any authority of the same case", schema)
         self.assertNotIn("scoped to the one authority in scope", schema)
+        self.assertIn("so parallel citations fold", read("drafting-data", "references", "jobs-stock.md"))
+
+
+RESEARCH = "'research_memo', 'research_memo_irac', 'research_memo_creac', 'case_brief'"
+
+
+class NoBoardOfItsOwn(unittest.TestCase):
+    """The board-choosing reads the skill gives, run against a matter that has research Writings."""
+
+    def setUp(self):
+        self.db = sqlite3.connect(":memory:")
+        self.addCleanup(self.db.close)
+        self.db.executescript(
+            """
+            CREATE TABLE proceedings (id INTEGER PRIMARY KEY, forum TEXT, file_number TEXT);
+            CREATE TABLE filings (id INTEGER PRIMARY KEY, proceeding_id INTEGER, kind TEXT, title TEXT, retired_on TEXT);
+            CREATE TABLE board_attachments (id INTEGER PRIMARY KEY, proceeding_id INTEGER, filing_id INTEGER, path TEXT, kind TEXT, attached_on TEXT);
+            INSERT INTO proceedings (id) VALUES (1), (2), (3), (4);
+            -- 1: a memo beside a letter. 2: live and retired memos only. 3: nothing. 4: only a retired brief.
+            INSERT INTO filings (id, proceeding_id, kind, title, retired_on) VALUES
+              (3, 1, 'research_memo', 'Memo', NULL), (7, 1, 'letter', 'Letter', NULL),
+              (20, 2, 'research_memo', 'Retired memo', '2026-10-01'), (21, 2, 'case_brief', 'Brief', NULL),
+              (40, 4, 'case_brief', 'Retired brief', '2026-10-01');
+            INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES
+              (1, 1, 3, 'a', 'reply', '2026-10-01'), (2, 1, 7, 'b', 'reply', '2026-10-01'), (3, 1, NULL, 'c', 'reply', '2026-10-01');
+            """
+        )
+        self.checklists = read("drafting-data", "references", "filing-checklists.md")
+
+    def block_after(self, heading):
+        return re.search(r"```sql\n(.*?)```", self.checklists[self.checklists.index(heading):], re.S).group(1)
+
+    def test_the_boards_read_offers_no_research_writing_and_keeps_a_memo_only_proceedings_board(self):
+        writings, proceedings = [s for s in self.block_after("**The matter's boards.**").split(";") if s.strip()]
+        self.assertEqual([r[0] for r in self.db.execute(writings)], [7])
+        self.assertEqual([(r[0], r[3]) for r in self.db.execute(proceedings)], [(2, 21), (3, None), (4, None)])
+
+    def test_a_writings_board_reads_rows_naming_a_research_writing_as_the_proceedings(self):
+        read_rows = self.block_after("**Read a board's attachments**")
+        self.assertEqual([r[0] for r in self.db.execute(read_rows)], [1, 2, 3])
+
+    def test_the_guard_sentence_keeps_a_memo_only_proceedings_board(self):
+        self.assertIn("One holding only research memos or case briefs still has", self.checklists)
+        self.assertNotIn("a proceeding with any Writing, live or retired, has no board of its own", self.checklists)
+
+    def test_a_thread_on_a_research_writing_goes_on_the_proceeding(self):
+        run = read("drafting-data", "references", "jobs-run.md")
+        self.assertIn("A retired Writing has no Milestone page, and neither has a research memo or case brief", run)
+        select = re.search(r"that board, `(SELECT .*?)`, the file's stored path", run).group(1)
+        self.assertEqual(self.db.execute(select, ("a",)).fetchall(), [(1, None)])
+        self.assertEqual(self.db.execute(select, ("b",)).fetchall(), [(1, 7)])
+
+    def test_the_picker_offers_none_as_a_board(self):
+        self.assertIn("A research memo or case brief is no card, live or retired", read("draft", "references", "filing-picker.md"))
+
+    def test_the_lists_name_every_kind_the_server_treats_as_research(self):
+        query = (REPO / "source" / "lawyer" / "mcp" / "src" / "submission" / "forms" / "query.ts").read_text(encoding="utf-8")
+        self.assertIn(RESEARCH.replace("'", '"'), query)
+        self.assertIn(RESEARCH, self.checklists)
+
+
+class SavedBriefLookup(unittest.TestCase):
+    def test_step_six_looks_for_a_saved_brief(self):
+        self.assertIn("after looking for the case's saved briefs", read("case-brief", "SKILL.md"))
+
+    def test_a_refusal_is_relayed_in_plain_words(self):
+        self.assertIn("say in your relay, in plain words, what was refused", flat(read("shared", "case-brief-template.md")))
+
+
+class PointerToThePlan(unittest.TestCase):
+    def test_the_old_spec_points_to_the_plan_and_the_plan_is_built(self):
+        spec = (REPO / "docs" / "Specs" / "2026-10-31_legal-memos-board.md").read_text(encoding="utf-8")
+        self.assertIn("docs/Plans/2026-11-01_legal-research-board-and-case-briefs.md", spec)
+        plan = (REPO / "docs" / "Plans" / "2026-11-01_legal-research-board-and-case-briefs.md").read_text(encoding="utf-8")
+        self.assertTrue(plan.split("\n")[2].startswith("Status: built, pending release"))
 
 
 if __name__ == "__main__":

@@ -257,7 +257,13 @@ test("attached drafts: a memo takes none, a memo-only proceeding keeps them on i
   // The v67 trigger refuses a new row naming the proceeding; the refusal says what to do, and doing it works.
   await assert.rejects(
     g.execute(`INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (2, 1, NULL, '0. DRAFT\\Reply two.eml', 'reply', '2026-10-02');`),
-    /no board of its own.*filing_id set to a live one of them/s
+    (e) => {
+      assert.match(e.message, /no board of its own.*attach the draft to a live one of them/s);
+      assert.match(e.message, /moves to the first Writing that is not a memo or case brief/);
+      assert.doesNotMatch(e.message, /first other Writing/);
+      assert.doesNotMatch(e.message, /ADR|filing_id/, "a refusal the practitioner may see names no internal");
+      return true;
+    }
   );
   await g.execute(`INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (2, 1, ${created.filing_id}, '0. DRAFT\\Reply two.eml', 'reply', '2026-10-02');`);
   assert.deepEqual(onBoard({ proceeding_id: 1 }), [1, 2]);
@@ -335,7 +341,7 @@ test("a proceeding whose only Writings are retired memos: the refusal says a liv
   const { filing_id: memo } = await brief(g);
   await g.execute(`UPDATE filings SET retired_on = '2026-10-31', retirement_reason = 'abandoned' WHERE id = ${memo};`);
   const attach = (filing) => g.execute(`INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (1, 1, ${filing}, '0. DRAFT\\Reply.eml', 'reply', '2026-10-01');`);
-  await assert.rejects(attach("NULL"), /a live one of them.*if all of them are retired, this board takes none until one is recovered or another Writing is created/s);
+  await assert.rejects(attach("NULL"), /a live one of them.*if all of them are retired, this Milestone takes none until one is recovered or another Writing is created/s);
   await assert.rejects(attach(memo), /retired Writing has no Milestone/);
   await g.execute(`UPDATE filings SET retired_on = NULL, retirement_reason = NULL WHERE id = ${memo};`);
   await attach(memo);

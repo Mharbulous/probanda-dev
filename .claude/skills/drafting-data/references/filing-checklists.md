@@ -548,22 +548,27 @@ INSERT INTO filing_law (filing_id, statement_id) VALUES (7, last_insert_rowid())
 
 A client letter (`draft/references/letters.md` section 10) and a reply on the reply route (`draft/references/reply.md`, ADR 0040) are not Writings: no `filings` row, no mockup. Each is attached to one Milestone by its file, with one `board_attachments` row (ADR 0042). The row holds the board and the path and nothing else. Never write a title, a status or any of the draft's text into this database: the Milestone reads a client letter's counsel's-review status from its first line each time it renders, and prints no other line of it. A job may be linked to an attached draft (**Link**, below): the board counts the draft's pending jobs on its card.
 
-- **`proceeding_id`** and **`filing_id`**: the board. `filing_id` names a live Writing's board, or an open Milestone with no Writing by its id. NULL names the proceeding's own board, which a proceeding has only while it has no Writing, live or retired (ADR 0018). When the proceeding gets its first Writing, `drafting_data__create_writing` sets `filing_id` on every such row to the new Writing in the same transaction and reports them as `attachments_moved`: the proceeding's board becomes that Writing's, so each draft stays on one board. A row with NULL in a proceeding that has a live Writing can only come from a hand-written insert; it shows on the proceeding's lowest-id live Writing's board alone, never on two, until it is moved to a Writing.
+- **`proceeding_id`** and **`filing_id`**: the board. `filing_id` names a live Writing's board, or an open Milestone with no Writing by its id. NULL names the proceeding's own board, which a proceeding has only while it has no Writing, live or retired (ADR 0018). A research memo or case brief Writing (`kind` `research_memo`, `research_memo_irac`, `research_memo_creac` or `case_brief`) has no board and does not count here: a proceeding holding only such Writings keeps its own board. A guard refuses a new NULL row once the proceeding has any Writing, so a new row on that board names a live one of its research Writings, and reads as on the proceeding's board. When the proceeding gets its first Writing other than a research memo or case brief, `drafting_data__create_writing` sets `filing_id` on every NULL row and every row naming a research Writing to the new Writing in the same transaction and reports them as `attachments_moved`: the proceeding's board becomes that Writing's, so each draft stays on one board. Creating a research memo or case brief moves nothing. A row with NULL or naming a research Writing, in a proceeding that has another live Writing, is a stray (a hand-written insert or an older row); it shows on the lowest-id live Writing's board alone, a research Writing and a Milestone with no Writing never being that Writing, and never on two, until it is moved to a Writing.
 - **`path`**: the file, in `documents.file_path`'s stored form, relative to the matter root with backslash separators (`document-paths.md`, whose `stored_form` helper converts it, with `matter_root` from `drafting_forms__open_session`): `0. DRAFT\2026-10-08 ET Client re costs.md`, `0. DRAFT\2026-10-08 ET Smith re hearing.md`. `UNIQUE`: a draft is on one board at a time.
 - **`kind`**: `'client_letter'`, `'reply'` or `'opposing_filing'` (schema v81): another party's filed document in the court-file folder, such as an application response or an affidavit it relies on. It is no Writing's material, so it never gets a `filing_documents` row and prints on no filed face of ours. Its `path` may be anywhere in the matter folder.
 - **`attached_on`**: the date attached, `YYYY-MM-DD`.
 
 Every value below is a literal composed into the script, each `'` doubled (§7's no-bind rule). The table is revision-exempt (§8): attaching moves no mockup. The Milestone pages show a change at their next write, so after each write here render the board under `draft_dir`: `drafting_forms__render` with the board's `filing_id` or, for a pre-filing board, `proceeding_id`, naming `Work_board` in `documents`.
 
-**The matter's boards.** Before attaching or moving, read every live Writing and every proceeding with no Writing:
+**The matter's boards.** Before attaching or moving, read every live Writing that has a board and every proceeding with no such Writing, live or retired:
 
 ```sql
-SELECT id AS filing_id, proceeding_id, title FROM filings WHERE retired_on IS NULL ORDER BY proceeding_id, id;
-SELECT id AS proceeding_id, forum, file_number FROM proceedings p
-  WHERE NOT EXISTS (SELECT 1 FROM filings f WHERE f.proceeding_id = p.id) ORDER BY id;
+SELECT id AS filing_id, proceeding_id, title FROM filings
+  WHERE retired_on IS NULL AND kind NOT IN ('research_memo', 'research_memo_irac', 'research_memo_creac', 'case_brief') ORDER BY proceeding_id, id;
+SELECT p.id AS proceeding_id, p.forum, p.file_number,
+    (SELECT MIN(f.id) FROM filings f WHERE f.proceeding_id = p.id AND f.retired_on IS NULL) AS attach_filing_id
+  FROM proceedings p
+  WHERE NOT EXISTS (SELECT 1 FROM filings f WHERE f.proceeding_id = p.id AND f.kind NOT IN ('research_memo', 'research_memo_irac', 'research_memo_creac', 'case_brief')) ORDER BY p.id;
 ```
 
-Ask the practitioner which board, naming a Writing's board by its title and a pre-filing proceeding's by its forum and file number. The default offered is the board of the Writing the session holds, the Writing of the job it holds. A matter with no proceeding at all gets a forum-less proceeding first, an ordinary `proceedings` insert with `forum` NULL (ADR 0024's superseding note on D9), and the draft goes on that proceeding's board. A proceeding whose Writings are all retired has no board at all, so attach the draft to a board of another proceeding, or recover one of its Writings (§11) and attach it there. A matter is one database, so every board read here is in the same matter.
+On a row of the second read, `attach_filing_id` is the `filing_id` an attach or move to that board writes: NULL when the proceeding has no Writing, and otherwise a live research memo or case brief of it. NULL on a proceeding whose research Writings are all retired is refused, and that board takes no draft until one is recovered or another Writing is created.
+
+Ask the practitioner which board, naming a Writing's board by its title and a pre-filing proceeding's by its forum and file number. The default offered is the board of the Writing the session holds, the Writing of the job it holds. A research memo or case brief is no default, because it has no board, so offer none and ask. A matter with no proceeding at all gets a forum-less proceeding first, an ordinary `proceedings` insert with `forum` NULL (ADR 0024's superseding note on D9), and the draft goes on that proceeding's board. A proceeding that has a Writing other than a research memo or case brief, every one of them retired, has no board at all, so attach the draft to a board of another proceeding, or recover one of its Writings (§11) and attach it there. A matter is one database, so every board read here is in the same matter.
 
 **Attach**, once, when the draft is first saved:
 
@@ -597,12 +602,13 @@ INSERT INTO ticket_scope (ticket_id, entity, entity_id) SELECT 42, 'board_attach
 DELETE FROM ticket_scope WHERE ticket_id = 42 AND entity = 'board_attachments' AND entity_id = 3;
 ```
 
-**Read a board's attachments**: a Writing's board shows the rows naming it and, only when it is the proceeding's lowest-id live Writing, the rows of its proceeding with no Writing; a pre-filing proceeding's board shows every row of the proceeding:
+**Read a board's attachments**: a Writing's board shows the rows naming it and, only when it is the proceeding's lowest-id live Writing other than a research memo or case brief, the rows of its proceeding with no Writing or naming one of those; a pre-filing proceeding's board shows every row of the proceeding:
 
 ```sql
 SELECT id, filing_id, path, kind, attached_on FROM board_attachments
   WHERE proceeding_id = 1
-    AND (filing_id = 7 OR (filing_id IS NULL AND 7 = (SELECT MIN(id) FROM filings WHERE proceeding_id = 1 AND retired_on IS NULL AND kind <> 'task-board')))
+    AND (filing_id = 7 OR ((filing_id IS NULL OR filing_id IN (SELECT id FROM filings WHERE proceeding_id = 1 AND kind IN ('research_memo', 'research_memo_irac', 'research_memo_creac', 'case_brief')))
+      AND 7 = (SELECT MIN(id) FROM filings WHERE proceeding_id = 1 AND retired_on IS NULL AND kind <> 'task-board' AND kind NOT IN ('research_memo', 'research_memo_irac', 'research_memo_creac', 'case_brief'))))
   ORDER BY id;
 ```
 
@@ -612,7 +618,7 @@ SELECT id, filing_id, path, kind, attached_on FROM board_attachments
 
 - `guard_board_attachments_live_ins`/`_upd`: a retired Writing has no board.
 - `guard_board_attachments_proceeding_ins`/`_upd`: a row names a Writing of its own proceeding.
-- `guard_board_attachments_pre_filing_ins`/`_upd`: a proceeding with any Writing, live or retired, has no board of its own, so `filing_id` NULL is refused there.
+- `guard_board_attachments_pre_filing_ins`/`_upd`: `filing_id` NULL is refused on a proceeding with any Writing, live or retired, a research memo or case brief included. A proceeding with any other Writing has no board of its own. One holding only research memos or case briefs still has, and takes its drafts through `attach_filing_id` above.
 - `guard_filings_retire_attached`: the retirement precondition (§11).
 
 ## 15. Rhetorical paragraphs (schema v71)

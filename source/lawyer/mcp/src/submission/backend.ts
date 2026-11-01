@@ -559,16 +559,18 @@ export function forgetDraftingQueries(dbPath: string): void {
 }
 
 /** The attachment trigger's refusal says a proceeding with a Writing has no board of its own, which is not
- * so when its only Writings are research Writings. The trigger stays as it is, so the refusal adds the way on. */
+ * so when its only Writings are research Writings. The trigger stays as it is, so the refusal adds the way on
+ * and drops the trigger's design-record reference: a session quotes this refusal to the practitioner. */
 function withAttachHint<T>(run: () => T): T {
   try {
     return run();
   } catch (err) {
     if (err instanceof Error && err.message.includes("a proceeding with a Writing has no board of its own")) {
-      err.message +=
-        " Nothing was written. If this proceeding's only Writings are research memos or case briefs, its own board is still drawn: " +
-        "attach the draft with filing_id set to a live one of them, and it shows on that board and moves to the proceeding's first other Writing when one is created. " +
-        "A retired one takes no draft, so if all of them are retired, this board takes none until one is recovered or another Writing is created.";
+      err.message =
+        err.message.replace(/ \(ADR \d+\)/, ".") +
+        " Nothing was written. If this proceeding's only Writings are research memos or case briefs, its own Milestone is still there: " +
+        "attach the draft to a live one of them, and it shows on that Milestone and moves to the first Writing that is not a memo or case brief when one is created. " +
+        "A retired one takes no draft, so if all of them are retired, this Milestone takes none until one is recovered or another Writing is created.";
     }
     throw err;
   }

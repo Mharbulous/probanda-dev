@@ -1,5 +1,7 @@
 # Legal Memos board (replaces Raw Research)
 
+The Legal Research page replaced this page on 2026-11-01: `docs/Plans/2026-11-01_legal-research-board-and-case-briefs.md`.
+
 Built 2026-10-31. Code: `source/lawyer/mcp/src/submission/forms/legal-memos-page.ts`. Doctrine: `.claude/skills/shared/html-pages.md`, View pages.
 
 ## What a memo is
