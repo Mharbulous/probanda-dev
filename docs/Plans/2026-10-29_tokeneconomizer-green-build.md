@@ -233,10 +233,11 @@ proof: none of this runs offline.
   `tool_calls` minus the `nudge` event's), A is the tool calls a stuck turn left alone is assumed to
   go on for, and P is the effective tokens per tool call. A true redirect is a `nudge` event whose
   turn Brahm, reading the Cowork window before closing the session, agrees was stuck; a false one
-  counts its cost and no gain. A and P are assumptions, not Cowork measurements. Central case: A = 38
-  (the fixed envelope), P = 23,000 (PC ledger of 2026-11-01: 91 probanda-dev sessions, 114.2M
-  effective tokens over 4,959 model requests). Low case: A = 10, P = 10,000. Results: **pays** if
-  gain >= cost in the low case; **depends on the assumptions** if only in the central case; **does
+  counts its cost and no gain. A and P are assumptions drawn from PC Claude Code transcripts, not
+  Cowork measurements. Central case: A = 38 (the fixed envelope), P = 18,904 (median effective tokens
+  per tool call after the gate opens). Low case: A = 10, P = 12,573 (25th percentile). A's values are
+  unchanged, since no stuck group could be measured (note below). Results: **pays** if gain >= cost
+  in the low case; **depends on the assumptions** if only in the central case; **does
   not pay** if not even in the central case; **harmless, unproven** if no judge wake occurred in any
   session (cost 0, gain 0).
 - **Record, per session**, from the saved files: each overhead row with its tokens; each `nudge` with
@@ -273,6 +274,9 @@ proof: none of this runs offline.
   is wanted, the store of the earlier draft is the follow-up.
 - **Refactor.** Simplify what steps b and c added, with the fork tests (by path) and the R tests as
   the net. Re-run every test file named above, and rerun the step d session.
+
+Measured 2026-11-01 over 405 PC transcripts, 2,308 turns, 109 gate turns (7 interrupted), 2,532 post-gate requests; a model labelled 30 sampled gate turns 0 stuck, so A keeps its values. Brahm ruled that the 2 sessions saved on 2026-10-31 do not count.
+Limits: PC Claude Code, not Cowork; A starts at the gate, before any nudge, so it may overstate; an old turn may have ended because the person stopped it; the stuck labels are a model's opinion.
 
 ## What we removed or chose not to add
 
