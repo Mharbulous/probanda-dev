@@ -7,7 +7,7 @@ import { currentSchemaVersion } from "../migrate.js";
 import { renderableSchemaVersion } from "../schema-ceiling.js";
 import { freshManifest, paragraphMapDir, readManifest, sha256, writeManifest, type RenderStamp } from "../render-manifest.js";
 import { moveCaseDataMockups, writingFolderForRender } from "../writing-folder.js";
-import { fetchParties, fetchProceeding, fetchRevision, fetchSentParties, isJobOnlyBoard, type FilingRow } from "./query.js";
+import { fetchParties, fetchProceeding, fetchRevision, fetchSentParties, isJobOnlyBoard, isResearchWriting, type FilingRow } from "./query.js";
 import { citedStates } from "./layout-snapshot.js";
 import { deadlineCriteria, type MatterDates } from "../matter-dates.js";
 import type { MatterTodos } from "../matter-todos.js";
@@ -361,8 +361,10 @@ export function submissionFormsRender(
   const cited = general === null ? [] : timed(timings, "layout_status", () => citedStates(general, filing));
   const built = documentsForFiling(ctx, timings, general, cited);
   // Each drifted party's 🏷️ line goes at the head of the venue document, which documentsForFiling
-  // always returns first. Only a mockup reaches here with drift: the filed render refused above.
-  if (drift.rows.length > 0) built[0] = { ...built[0], markdown: withPartiesDriftLines(built[0].markdown, drift.rows) };
+  // always returns first. Only a mockup reaches here with drift: the filed render refused above. A
+  // research Writing prints none: it is generic, names nothing of the working matter, and its mockup
+  // is what save_answer files. `drift` still comes back in the response, so the session sees it.
+  if (drift.rows.length > 0 && !isResearchWriting(filing)) built[0] = { ...built[0], markdown: withPartiesDriftLines(built[0].markdown, drift.rows) };
   // The form currency warning heads the venue document too, glyphless: rendered for the human, and
   // withheld from the forum by toFiledFace's mockup-only line strip, so the filed face needs no gate.
   if (currency?.warning) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, [`${currency.warning} ${MOCKUP_ONLY_TAG}`]) };

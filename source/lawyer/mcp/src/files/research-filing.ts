@@ -34,6 +34,7 @@ import { DataServerError } from "../errors.js";
 import { checkCoverageLine } from "./coverage-line.js";
 import { downloadsDir, IN_PROGRESS_EXTENSIONS } from "./downloads.js";
 import { htmlBlocks, sourcesFetcher, type SourceFetcher } from "../sources/fetch.js";
+import { toFiledFace } from "../submission/forms/filed-face.js";
 import { withLegend } from "../submission/forms/legend.js";
 import { findDraftDir, validateMatterRoot } from "./matter-root.js";
 import { canonicalRoot } from "./scope.js";
@@ -152,8 +153,11 @@ export function appendManifest(destinationDir: string, record: unknown): { path:
  * wrote: its real path must sit directly in the research-agent scratchpad of the matter that owns the
  * destination's `6. LAW` tree, and its bytes are copied as `text` is. The scratch file is kept.
  * `fromRender` is a mockup drafting_forms__render wrote in that matter's 0. DRAFT folder (a research
- * memo's Writing): its bytes are copied without the mockup's own header, the first `---` block, which
- * names the matter, and without the title line after it.
+ * memo's or case brief's Writing): its bytes are copied without the mockup's own header, the first
+ * `---` block, which names the matter, and without the title line after it. A case brief's copy is
+ * presented to the practitioner as it stands, so it also loses its markers, trace comments and Legend
+ * (caseBriefCopy). A memo's keeps them: a proposition-level note-up names a paragraph's stored item by
+ * the `statement_of_law_id` its line ends with (shared/legal-research.md).
  */
 export function saveAnswer(
   destinationDir: string,
@@ -170,19 +174,21 @@ export function saveAnswer(
   if ([text, fromScratch, fromRender].filter((v) => v !== undefined).length !== 1) {
     throw new DataServerError("pass exactly one of text, from_scratch and from_render", "invalid_argument");
   }
-  let source: Buffer;
-  if (fromScratch !== undefined) {
-    source = scratchBytes(destinationDir, fromScratch);
-  } else if (fromRender !== undefined) {
-    source = renderBytes(destinationDir, fromRender);
+  let body: Buffer;
+  if (fromRender !== undefined) {
+    body = renderBytes(destinationDir, fromRender);
   } else {
-    if (typeof text !== "string" || text.length === 0) {
-      throw new DataServerError("text must be a non-empty string", "invalid_argument");
+    let source: Buffer;
+    if (fromScratch !== undefined) {
+      source = scratchBytes(destinationDir, fromScratch);
+    } else {
+      if (typeof text !== "string" || text.length === 0) {
+        throw new DataServerError("text must be a non-empty string", "invalid_argument");
+      }
+      source = Buffer.from(text, "utf-8");
     }
-    source = Buffer.from(text, "utf-8");
+    body = Buffer.from(withLegend(source.toString("utf-8"), "").markdown, "utf-8");
   }
-  const { markdown } = withLegend(source.toString("utf-8"), "");
-  const body = Buffer.from(markdown, "utf-8");
   const { dir, created } = resolveOrCreateLawDir(destinationDir);
   const saved = writeNewVersion(dir, filename, body);
   const sha256 = createHash("sha256").update(body).digest("hex");
@@ -230,7 +236,27 @@ function destinationDraftDir(destinationDir: string): string {
  * with the memo's own `---` header as a memo file always has. */
 const MOCKUP_HEADER = /^\uFEFF?---\r?\n[\s\S]*?\r?\n---\r?\n(?:[ \t]*\r?\n)*(?:# [^\r\n]*\r?\n(?:[ \t]*\r?\n)*)?/;
 
-/** A rendered mockup's bytes less its leading `---` header, refused unless its real path is a non-empty
+/** The Document Type line of a case brief's mockup header: the type file's title (case-brief.md). */
+const CASE_BRIEF_HEADER = /^\uFEFF?---\r?\n(?:(?!---\r?\n)[^\n]*\n)*?Document Type: Case Brief\r?\n/;
+
+/**
+ * A case brief's copy for the practitioner: the mockup's filed face (filed-face.ts), less its title. Each
+ * verbatim line stays as written, because the face's whitespace tidy and tag strips would change a quote:
+ * in an item's block quote (projections.ts itemLines), every line but the last, its citation line.
+ */
+function caseBriefCopy(mockup: string): string {
+  const verbatim: string[] = [];
+  const held = mockup.split("\n").map((line, i, lines) => {
+    if (!line.startsWith(">") || !lines[i + 1]?.startsWith(">")) return line;
+    verbatim.push(line);
+    return `\uE000${verbatim.length - 1}\uE001`;
+  });
+  return toFiledFace(held.join("\n"))
+    .replace(/^\s*# [^\n]*\n\s*/, "")
+    .replace(/\uE000(\d+)\uE001/g, (_, n) => verbatim[Number(n)]);
+}
+
+/** A rendered mockup's saved bytes (saveAnswer's `fromRender`), refused unless its real path is a non-empty
  * `.md` file inside the 0. DRAFT folder of the matter owning `destinationDir`'s `6. LAW` tree. */
 function renderBytes(destinationDir: string, fromRender: string): Buffer {
   if (typeof fromRender !== "string" || !pathWin32.isAbsolute(fromRender) || pathWin32.extname(fromRender).toLowerCase() !== ".md") {
@@ -242,7 +268,8 @@ function renderBytes(destinationDir: string, fromRender: string): Buffer {
   if (!source.toLowerCase().startsWith(draft.toLowerCase() + "\\") || !statSync(source).isFile()) {
     throw new DataServerError(`from_render is not a mockup in this matter's ${draft}: ${source}`, "not_render");
   }
-  const body = readFileSync(source, "utf-8").replace(MOCKUP_HEADER, "");
+  const mockup = readFileSync(source, "utf-8");
+  const body = CASE_BRIEF_HEADER.test(mockup) ? caseBriefCopy(mockup) : withLegend(mockup.replace(MOCKUP_HEADER, ""), "").markdown;
   if (body.trim() === "") throw new DataServerError(`from_render is empty: ${source}`, "invalid_argument");
   return Buffer.from(body, "utf-8");
 }
