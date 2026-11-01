@@ -266,19 +266,18 @@ class NoBoardOfItsOwn(unittest.TestCase):
     def setUp(self):
         self.db = sqlite3.connect(":memory:")
         self.addCleanup(self.db.close)
+        self.db.executescript(read("drafting-data", "references", "schema.sql"))
         self.db.executescript(
             """
-            CREATE TABLE proceedings (id INTEGER PRIMARY KEY, forum TEXT, file_number TEXT);
-            CREATE TABLE filings (id INTEGER PRIMARY KEY, proceeding_id INTEGER, kind TEXT, title TEXT, retired_on TEXT);
-            CREATE TABLE board_attachments (id INTEGER PRIMARY KEY, proceeding_id INTEGER, filing_id INTEGER, path TEXT, kind TEXT, attached_on TEXT);
-            INSERT INTO proceedings (id) VALUES (1), (2), (3), (4);
+            INSERT INTO proceedings (id, matter_reference) VALUES (1, 'M'), (2, 'M'), (3, 'M'), (4, 'M');
+            INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (3, 1, NULL, 'c', 'reply', '2026-10-01');
             -- 1: a memo beside a letter. 2: live and retired memos only. 3: nothing. 4: only a retired brief.
-            INSERT INTO filings (id, proceeding_id, kind, title, retired_on) VALUES
-              (3, 1, 'research_memo', 'Memo', NULL), (7, 1, 'letter', 'Letter', NULL),
-              (20, 2, 'research_memo', 'Retired memo', '2026-10-01'), (21, 2, 'case_brief', 'Brief', NULL),
-              (40, 4, 'case_brief', 'Retired brief', '2026-10-01');
-            INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES
-              (1, 1, 3, 'a', 'reply', '2026-10-01'), (2, 1, 7, 'b', 'reply', '2026-10-01'), (3, 1, NULL, 'c', 'reply', '2026-10-01');
+            INSERT INTO filings (id, proceeding_id, kind, title, needs_forum_parts) VALUES
+              (3, 1, 'research_memo', 'Memo', 0), (7, 1, 'letter', 'Letter', 0),
+              (20, 2, 'research_memo', 'Retired memo', 0), (21, 2, 'case_brief', 'Brief', 0),
+              (40, 4, 'case_brief', 'Retired brief', 0);
+            INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (1, 1, 3, 'a', 'reply', '2026-10-01'), (2, 1, 7, 'b', 'reply', '2026-10-01');
+            UPDATE filings SET retired_on = '2026-10-01', retirement_reason = 'other' WHERE id IN (20, 40);
             """
         )
         self.checklists = read("drafting-data", "references", "filing-checklists.md")
@@ -328,7 +327,7 @@ class PointerToThePlan(unittest.TestCase):
         spec = (REPO / "docs" / "Specs" / "2026-10-31_legal-memos-board.md").read_text(encoding="utf-8")
         self.assertIn("docs/Plans/2026-11-01_legal-research-board-and-case-briefs.md", spec)
         plan = (REPO / "docs" / "Plans" / "2026-11-01_legal-research-board-and-case-briefs.md").read_text(encoding="utf-8")
-        self.assertTrue(plan.split("\n")[2].startswith("Status: built, pending release"))
+        self.assertTrue(plan.split("\n")[2].startswith("Status: released"))
 
 
 if __name__ == "__main__":

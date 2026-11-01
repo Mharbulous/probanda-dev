@@ -616,17 +616,16 @@ test("a re-brief by the template's steps is the same Writing's next version, one
   );
   save();
   // The template's re-brief, through the real tool: the Writing's rows replaced, then the same render and save.
+  const oldItems = submissionDataQuery(m.dbPath, "SELECT statement_id FROM filing_law WHERE filing_id = ?", [id]).rows.map((r) => r.statement_id).join(", ");
   await callTool({}, "drafting_data__execute", {
     db_path: m.dbPath,
     sql_script: `DELETE FROM filing_prose WHERE filing_id = ${id};
-     CREATE TEMP TABLE old_items AS SELECT statement_id FROM filing_law WHERE filing_id = ${id};
      DELETE FROM filing_law WHERE filing_id = ${id};
-     DELETE FROM statements_of_law WHERE id IN (SELECT statement_id FROM old_items)
+     DELETE FROM statements_of_law WHERE id IN (${oldItems})
        AND id NOT IN (SELECT statement_id FROM filing_law)
        AND id NOT IN (SELECT excerpt_id FROM order_sought_requires WHERE excerpt_id IS NOT NULL)
        AND id NOT IN (SELECT excerpt_id FROM clauses WHERE excerpt_id IS NOT NULL)
-       AND id NOT IN (SELECT entity_id FROM ticket_scope WHERE entity = 'statements_of_law' AND entity_id IS NOT NULL);
-     DROP TABLE old_items;`,
+       AND id NOT IN (SELECT entity_id FROM ticket_scope WHERE entity = 'statements_of_law' AND entity_id IS NOT NULL);`,
   });
   assert.deepEqual(submissionDataQuery(m.dbPath, "SELECT id FROM statements_of_law WHERE id IN (98, 99, 100) ORDER BY id").rows.map((r) => r.id), [98, 99], "the order's and the job's stay, the rest go");
   await write(101, "Second holding.");

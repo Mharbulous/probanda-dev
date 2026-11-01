@@ -1,6 +1,6 @@
 # Legal Research board and case briefs
 
-Status: built, pending release (approved 2026-11-01). Replaces the Legal Memos page (docs/Specs/2026-10-31_legal-memos-board.md) with one view page holding three tabs, and makes the case brief a structured Writing like the research memo. Terms: GLOSSARY.md, **Case brief** and **Legal memo**.
+Status: released in Lawyer 0.17.6, Researcher 0.10.20 and Litigator 0.13.10 (approved 2026-11-01). Replaces the Legal Memos page (docs/Specs/2026-10-31_legal-memos-board.md) with one view page holding three tabs, and makes the case brief a structured Writing like the research memo. Terms: GLOSSARY.md, **Case brief** and **Legal memo**.
 
 ## Decisions taken
 
