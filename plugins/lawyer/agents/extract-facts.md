@@ -1,6 +1,6 @@
 ---
 name: extract-facts
-description: Reads one litigation document and returns strict JSON separating substantive facts from positions, relief and non-factual source references. Read-only, except that a dispatch by id stages its result through stage_result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH <id>, one instance per document.
+description: Reads one litigation document and returns strict JSON separating substantive facts from positions, relief and non-factual source references. Read-only, except that a dispatch by id stages its result through stage_result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH {id}, one instance per document.
 model: opus
 effort: high
 tools:

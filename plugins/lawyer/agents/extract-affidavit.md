@@ -1,6 +1,6 @@
 ---
 name: extract-affidavit
-description: Extracts a compound affidavit in three selectable passes — sworn body, exhibit boundary scan, and per-exhibit content — returning only the dispatched pass's strict JSON. Read-only, except that a dispatch by id stages its result through stage_result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH <id>, one instance per pass and one per exhibit on Pass 3.
+description: Extracts a compound affidavit in three selectable passes — sworn body, exhibit boundary scan, and per-exhibit content — returning only the dispatched pass's strict JSON. Read-only, except that a dispatch by id stages its result through stage_result. Dispatched by /matter-data ingest-extract with its inputs in the prompt, or by /ingest-orchestrator as DISPATCH {id}, one instance per pass and one per exhibit on Pass 3.
 model: opus
 effort: high
 tools:
