@@ -287,6 +287,7 @@ Secondary: <title>: filed <path>, dated <marker>, from <publisher_host> / not re
 Note-up: <citation>: record <path> / <citation>: not filed: <citation-checker's status line> / none
 Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal: <its status line, or practitioner declined> / yes: review
 Review: <memo-reviewer's last JSON, verbatim> / none
+Final instructed: yes / no
 Background memos: <path>[; <path>] / none
 Here are the memos that will provide some background context for your research. Repeat the propositions and excerpts from the previous memo only if they are necessary context for explaining your own research memo, but make sure that you go beyond that information and dig deeper into the legal issue posed by your particular question.
 Flag unsettled: <what to flag as unsettled> / none
@@ -317,6 +318,8 @@ character, as its card shows it, and puts the same words in `Question:`. Every o
 caller writes `Job question: none`.
 `Re-invocation` is `no` on the first spawn and `yes` on every re-invocation below: `yes: review`
 when no paralegal ran for it. `Review:` is `none` until memo-reviewer has returned on this question.
+`Final instructed:` is `yes` only when the practitioner has explicitly instructed that this
+memo's status change to FINAL (`shared/research-memo-template.md`, "Status").
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
 is in issue. For an instrument filed in parts, `<path>` lists every part's path, separated by `; `.

@@ -1,4 +1,4 @@
-// build-stamp: 225e8d1eba62
+// build-stamp: 7676203fbe27
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15800,13 +15800,18 @@ function pairTools(definitions, tools2) {
   if (problems.length) throw new DataServerError(`The tool list and its definitions differ: ${problems.join("; ")}`, "internal_error");
   return table;
 }
+var FAULT = /* @__PURE__ */ Symbol("fault");
 async function toolReply(name, run, replyText2 = jsonText) {
   try {
     return { content: [{ type: "text", text: replyText2(name, await run()) }] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const payload = err instanceof DataServerError ? { error: { code: err.code, message, ...err.details ? { details: err.details } : {} } } : { error: { code: "data_error", message } };
-    return { content: [{ type: "text", text: jsonText(name, payload) }], isError: true };
+    const reply = { content: [{ type: "text", text: jsonText(name, payload) }], isError: true };
+    if (!(err instanceof DataServerError) || err.code === "internal_error" || err.code === "python_timeout") {
+      Object.defineProperty(reply, FAULT, { value: true });
+    }
+    return reply;
   }
 }
 var CONTENT_SOURCES = {
@@ -16995,6 +17000,12 @@ import { win32 as pathWin325 } from "node:path";
 
 // src/submission/render-job.ts
 import { closeSync, existsSync as existsSync5, openSync, readFileSync as readFileSync3, renameSync, statSync as statSync3, unlinkSync as unlinkSync2, utimesSync, writeFileSync as writeFileSync2, writeSync } from "node:fs";
+
+// src/call-memo.ts
+import { AsyncLocalStorage } from "node:async_hooks";
+var memo = new AsyncLocalStorage();
+
+// src/submission/render-job.ts
 function sleepSync(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }

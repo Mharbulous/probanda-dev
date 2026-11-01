@@ -133,9 +133,11 @@ each tier yielded — one line, no omissions:
 ```
 case data: audited | commons: audited / unavailable / not installed / NOT AUDITED |
 6. LAW: audited / n memos UNREAD | Westlaw: run (n decisions, memo Y/N) / not run: <reason> |
-CanLII: noted up / no key | Legislation: retrieved n, on disk n / not run: <reason>
+CanLII: case-level / proposition-level: ¶n[, ¶n] / no key | History: checked / not run: <reason> |
+Legislation: retrieved n, on disk n / not run: <reason>
 ```
 
+The CanLII and History values are the check labels of `shared/research-memo-template.md`.
 The Westlaw reason is mandatory: `not run` with no reason is an incomplete
 coverage line. So is the Legislation reason. The line ends with the Legislation segment, exactly `Legislation: retrieved n, on disk n` or `Legislation: not run: <reason>`, with nothing after it. Anything more about the instruments, such as their currency, goes in the notes below the line. Any tier you could not examine, the Legislation tier included, reads `NOT AUDITED` or `NOT AUDITED: <reason>` in place of its listed forms. No segment carries a parenthetical: counts and other detail go in the notes below the line. A tier that was skipped is reported as skipped. Silence about a tier reads as
 coverage that did not happen.

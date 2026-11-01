@@ -75,7 +75,7 @@ Status: run / not run: <reason>
 Citing cases:
 - <citation> | <title> | <date>[ | after since]
 
-Note-up only — no statement of law and no treatment classification. A citing decision
+Case-level note-up only — no statement of law and no treatment classification. A citing decision
 here is a lead; classifying it requires reading that decision.
 ```
 

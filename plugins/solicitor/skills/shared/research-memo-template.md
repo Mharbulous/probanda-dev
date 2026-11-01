@@ -15,11 +15,46 @@ From: <the exact model ID your own system prompt states. If it states none, writ
 Date: <the spawn prompt's Date>
 Re: "<the question, one line>"
 Format: <ICRA / IRAC / CREAC, the one the body uses>
-Confidence: "<one line: for the Issue, its strength and whether its authorities were noted up, and every tier the coverage line reads NOT AUDITED>" / "INCOMPLETE: <the research named>"
+Status: DRAFT / FINAL
+Confidence: "<one line: for the Issue, its strength and every tier the coverage line reads NOT AUDITED>[ <the case-level sentence>]" / "INCOMPLETE: <the research named>"
 ---
 ```
 
 A double quote inside a quoted value is written `\"`.
+
+### Status
+
+A memo is `Status: DRAFT` until one route below is met, and then `Status: FINAL`. Nothing else
+ends DRAFT. DRAFT is not INCOMPLETE: a DRAFT memo answers the Issue, and an `INCOMPLETE:` one does
+not.
+
+1. **Automatic.** Every proposition of law the memo cites, and every case cited in Application
+   for a finding of fact or of law, has a proposition-level note-up.
+2. **On instruction.** Each of them has a case-level note-up, every citing decision that treats
+   the case negatively or that no citator classifies has been read at its pinpoint against the
+   proposition or finding the case is cited for, and the spawn prompt's `Final instructed:` reads
+   `yes`.
+
+While any relied-on case with citing cases has only a case-level note-up, the `Confidence:`
+line ends with this sentence, word for word:
+
+> The memo relies on cases that have received judicial treatment, and the treating cases have not been downloaded or reviewed to tell whether that treatment is positive, negative or irrelevant.
+
+### Check labels
+
+A memo's notes report each case's two checks apart, in these labels and no others.
+`shared/legal-audit-protocol.md` Step 2 says how each check is done.
+
+- `history: checked`: every later decision in the case's own proceeding that reviews it
+  (judicial review, appeal, SCC leave) was read against every paragraph citing the case. A case
+  whose history check is not complete makes the memo `INCOMPLETE:`.
+- `case-level`: a citator's flag and count of citing decisions in other proceedings, not all
+  of them read for the proposition.
+- `proposition-level: ¶4, ¶5`: every citing decision was read at its pinpoint against the named
+  paragraphs' proposition or finding.
+- `NOT NOTED UP`: no note-up record.
+
+`noted up` is never a label: a citator list alone shows no treatment.
 
 ## Body
 

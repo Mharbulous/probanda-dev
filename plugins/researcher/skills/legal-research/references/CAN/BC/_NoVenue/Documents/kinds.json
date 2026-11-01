@@ -1,0 +1,28 @@
+{
+  "kinds": [
+    {
+      "file": "research-memo",
+      "name": "Research memo",
+      "aliases": [
+        { "name": "research_memo" }
+      ],
+      "recipient": "internal"
+    },
+    {
+      "file": "research-memo-irac",
+      "name": "Research memo (IRAC)",
+      "aliases": [
+        { "name": "research_memo_irac" }
+      ],
+      "recipient": "internal"
+    },
+    {
+      "file": "research-memo-creac",
+      "name": "Research memo (CREAC)",
+      "aliases": [
+        { "name": "research_memo_creac" }
+      ],
+      "recipient": "internal"
+    }
+  ]
+}

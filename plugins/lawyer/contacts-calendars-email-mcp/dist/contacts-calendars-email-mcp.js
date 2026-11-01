@@ -1,4 +1,4 @@
-// build-stamp: f97d6681715f
+// build-stamp: e013c2e87eba
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108051,13 +108051,18 @@ function pairTools(definitions, tools2) {
   if (problems.length) throw new DataServerError(`The tool list and its definitions differ: ${problems.join("; ")}`, "internal_error");
   return table;
 }
+var FAULT = /* @__PURE__ */ Symbol("fault");
 async function toolReply(name2, run, replyText = jsonText) {
   try {
     return { content: [{ type: "text", text: replyText(name2, await run()) }] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const payload = err instanceof DataServerError ? { error: { code: err.code, message, ...err.details ? { details: err.details } : {} } } : { error: { code: "data_error", message } };
-    return { content: [{ type: "text", text: jsonText(name2, payload) }], isError: true };
+    const reply = { content: [{ type: "text", text: jsonText(name2, payload) }], isError: true };
+    if (!(err instanceof DataServerError) || err.code === "internal_error" || err.code === "python_timeout") {
+      Object.defineProperty(reply, FAULT, { value: true });
+    }
+    return reply;
   }
 }
 var CONTENT_SOURCES = {

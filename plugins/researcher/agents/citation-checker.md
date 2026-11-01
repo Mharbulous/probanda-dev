@@ -137,5 +137,5 @@ not filed: <reason>`, and nothing else: no excerpts and no commentary on what an
 decision says. A final message that does not begin `status:` is not a valid return.
 Close it with:
 
-> Note-up only — no statement of law and no treatment classification. A citing
+> Case-level note-up only — no statement of law and no treatment classification. A citing
 > decision here is a lead; classifying it requires reading that decision.
