@@ -84,6 +84,15 @@ export function isJobOnlyBoard(filing: Pick<FilingRow, "kind">): boolean {
   return filing.kind === MILESTONE_KIND;
 }
 
+/** The kinds of a research result held as a Writing: a research memo, in each format, and a case brief.
+ * Such a Writing has no board of its own: no Milestone page and no view pages. A job's answer links it to
+ * that job's board, and it is listed on the board's Legal Research page (legal-research-page.ts). */
+const RESEARCH_WRITING_KINDS: ReadonlySet<string> = new Set(["research_memo", "research_memo_irac", "research_memo_creac", "case_brief"]);
+
+export function isResearchWriting(filing: Pick<FilingRow, "kind">): boolean {
+  return RESEARCH_WRITING_KINDS.has(filing.kind);
+}
+
 export interface PartyRow {
   id: number;
   proceeding_id: number;
@@ -633,13 +642,18 @@ export function fetchAllFilingsForProceeding(dbPath: string, proceedingId: numbe
   return rows<FilingRow>(dbPath, "SELECT * FROM filings WHERE proceeding_id = ? ORDER BY id", [proceedingId]);
 }
 
+/** A proceeding's filings that can hold a board: every one but its research Writings. */
+export function fetchBoardFilings(dbPath: string, proceedingId: number): FilingRow[] {
+  return fetchAllFilingsForProceeding(dbPath, proceedingId).filter((f) => !isResearchWriting(f));
+}
+
 export function fetchAllProceedings(dbPath: string): ProceedingRow[] {
   return rows<ProceedingRow>(dbPath, "SELECT * FROM proceedings ORDER BY id");
 }
 
 /** Proceedings with no filing at all, live or retired (ADR 0018), in id order. */
 export function fetchPreFilingProceedings(dbPath: string): ProceedingRow[] {
-  return rows<ProceedingRow>(dbPath, "SELECT * FROM proceedings p WHERE NOT EXISTS (SELECT 1 FROM filings f WHERE f.proceeding_id = p.id) ORDER BY p.id");
+  return rows<ProceedingRow>(dbPath, "SELECT * FROM proceedings p ORDER BY p.id").filter((p) => fetchBoardFilings(dbPath, p.id).length === 0);
 }
 
 /** The filing's hearing date, or null where it has none -- hearing_details is one-to-one with the

@@ -13,7 +13,7 @@ const { LOOSE_IDEAS_PAGE } = await import("../build/submission/forms/loose-ideas
 const PAGES = [...VIEW_PAGES, LOOSE_IDEAS_PAGE];
 
 /** Each page's entry template, in PAGES order. */
-const ENTRIES = ["procedural-history.html", "material-facts.html", "legal-memos.html", "arguments.html", "loose-threads.html"];
+const ENTRIES = ["procedural-history.html", "material-facts.html", "legal-research.html", "arguments.html", "loose-threads.html"];
 
 test("each entry template's title and heading equal its page's name", () => {
   assert.equal(PAGES.length, ENTRIES.length);
@@ -30,10 +30,14 @@ const META = { filing: "Notice of <Application>", matter: "L200", client: "Acme 
 const FIXTURES = {
   "Procedural History": { order: "date", evidence: "read", facts: [{ position: 1, date: "2026-03-04", text: "The <claim> was served", class: "provable", basis: null, links: [] }] },
   "Material Facts": { order: "filing", evidence: "read", facts: [{ position: 1, date: null, text: "The <deal> closed", class: "provable", basis: null, links: [] }] },
-  "Legal Memos": {
-    memos: [
-      { title: "ML re <set-off>", folder: "Set off", source: "research_memo", status: "completed", issues: ["Is <set-off> available?"], facts: [], jobs: [{ id: 1, title: "Research" }], date: "2026-10-01", version: 2, earlier: [1], file: "6. LAW\\Set off\\2026-10-01 ML re set-off v2.md", url: "file:///m/6.%20LAW/Set%20off/x.md", on_disk: true },
-    ],
+  "Legal Research": {
+    propositions: { counts: { in_use: 0, undecided: 1, not_relevant: 0 }, groups: [{ heading: "Not linked", note: null, propositions: [{ law_assertion_id: 1, text: "A <rule>", dead_end: false, killed_on: null, class: "undecided", linked_to: [], statements: [] }] }] },
+    briefs: { cases: [{ title: "A v <B>", citation: "2019 BCSC 1", status: "not_briefed", relied_on: true, jobs: [], brief: null }] },
+    memos: {
+      memos: [
+        { title: "ML re <set-off>", folder: "Set off", source: "research_memo", status: "completed", issues: ["Is <set-off> available?"], facts: [], jobs: [{ id: 1, title: "Research" }], date: "2026-10-01", version: 2, earlier: [1], file: "6. LAW\\Set off\\2026-10-01 ML re set-off v2.md", url: "file:///m/6.%20LAW/Set%20off/x.md", on_disk: true },
+      ],
+    },
   },
   Arguments: { submissions: [], counter_arguments: [{ key: "anticipated:1", kind: "anticipated", text: "No <duty>", source: null, linked: [] }] },
   "Loose Threads": {
@@ -51,11 +55,11 @@ const FIXTURES = {
  * Procedural History's and Material Facts' at the split of Provable Facts (docs/ADRs/0011); Arguments' at its badge filter;
  * the rest retaken on 2026-10-29 for 8be771b7, which renamed board.css's first comment ("Job Board" to "Milestone");
  * Arguments' retaken again on 2026-10-31 for e0065be, which added the session focus pointer to arguments.js;
- * Legal Memos' taken on 2026-10-31, when it replaced Raw Research. */
+ * Legal Research's taken on 2026-11-01, when it replaced Legal Memos. */
 const PINS = {
   "Procedural History": "f8a29d4c7953ff408bd6323af74b2333a71966afb6ee5b550d550f6de594f912",
   "Material Facts": "3fb4f9f60ff8cc4ac8af3957423a83bacd8c38ba7d63194038a93376db4b0480",
-  "Legal Memos": "a950cb0ef70ad75cd3f0bcffd57aa8e810052533fcf6d79d2ec21c9a33a9f2de",
+  "Legal Research": "8526024cb4239954f16b2c2692c32ae5b8446dddf520e10cc8493161ef13387a",
   Arguments: "ec2b611a4cd2fee78b152f97703713149c874d9a3c4ad21bbf503375cb29e5f7",
   "Loose Threads": "e9295aefed42761418487103bc2d8e8ddd7908fccb10780c6da8c04b149904f7",
 };

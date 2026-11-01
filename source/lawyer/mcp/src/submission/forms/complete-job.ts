@@ -17,7 +17,7 @@
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { type ClientContext, type RenderedDocument, submissionFormsRender, submissionFormsRenderProceedingBoard } from "../forms.js";
-import { fetchAllFilingsForProceeding, isJobOnlyBoard, liveTicketClause, stepStatusHeld } from "./query.js";
+import { fetchBoardFilings, isJobOnlyBoard, liveTicketClause, stepStatusHeld } from "./query.js";
 import { type StepStateFields, stepResolved } from "./step-state.js";
 import { checkClaim, heldBy } from "./job-activity.js";
 import type { BoardMove } from "../matter-pages.js";
@@ -82,7 +82,7 @@ function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientCon
       // The proceeding's first filing by id that is not retired, else its first filing. This picks by
       // id, not by bootstrap's ranked order, so it can differ from open_session's openBoard. Never a
       // Milestone with no Writing, which shows no job without a filing_id.
-      const filings = fetchAllFilingsForProceeding(args.db_path, read.proceeding_id).filter((f) => !isJobOnlyBoard(f));
+      const filings = fetchBoardFilings(args.db_path, read.proceeding_id).filter((f) => !isJobOnlyBoard(f));
       filingId = (filings.find((f) => f.retired_on === null) ?? filings[0])?.id ?? null;
     }
     if (filingId !== null) {

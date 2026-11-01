@@ -255,8 +255,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "neither does any job on a proceeding_id card, where every job has no Writing. " +
         "Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is " +
         "refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), " +
-        "lanes (any of goals, criteria, live, proposed, completed, rejected, attached, court_file, memos; goal is accepted as the criteria " +
-        "lane's former name; attached and memos need draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs " +
+        "lanes (any of goals, criteria, live, proposed, completed, rejected, attached, court_file, memos, briefs; goal is accepted as the criteria " +
+        "lane's former name; attached, memos and briefs need draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs " +
         "draft_dir and filing_id) or key (a Proposal key). " +
         "A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, or no selector at all is an " +
         "error. The section is built as the matter pages build it, from the inventory the filing's last render " +
@@ -309,15 +309,18 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "folder (with several, the one naming the proceeding's file number), as `- <label> · court file: <file name>` or " +
         "` · court file: none found[ (<note>)]`, then ` · mismatch: court file shows <status> <date>; drafting data shows " +
         "<unsworn|made <date>>` when they disagree; only file names are read; memos, `## Legal Memos (n)` and each legal memo linked " +
-        "to the board, the Legal Memos page's list, newest first, every saved version of a memo one entry: a memo is linked when a job " +
+        "to the board, the Legal Research page's Legal Memos list, newest first, every saved version of a memo one entry: a memo is linked when a job " +
         "drawn on this board (its Writings' jobs, its proceeding's General jobs, and every merged member's) saved any version of it, or when " +
-        "no live job drawn on any board with a Legal Memos page saved any version (then it is on every board); each as `- <title> · " +
+        "no live job drawn on any board with a Legal Research page saved any version (then it is on every board); each as `- <title> · " +
         "<research memo|Westlaw Deep Research report|note-up record> · <in progress|started|completed|shelved|no job> · <date> · v<n>[ " +
         "(earlier: v<m>, …)] · <path from 6. LAW>[ · not in the law folder]`, then " +
         "`  issue: \"<the saving job's question, verbatim>\"` per job (`  issue: none (no job saved it)` with no job, `  issue: none " +
         "recorded` when its jobs recorded none), `  facts: \"<fact>\"; …` " +
         "(the facts the saving jobs' scope names) or `  facts: none`, and `  jobs: #<id> <title>; …` when a job saved it; only file names " +
-        "are read from the 6. LAW folder, never a memo's text. Then key: the live " +
+        "are read from the 6. LAW folder, never a memo's text; briefs, `## Case Briefs (n)` and the Legal Research page's Case Briefs list: each case " +
+        "the board's Writings rely on, then each brief or live request for another case, as `- <style of cause>[, <citation>] · <briefed|requested|not briefed> · " +
+        "<relied on|not relied on>[ · <date> · v<n>[ (earlier: v<m>, …)] · <path from 6. LAW>[ · not in the law folder]]`, then `  jobs: #<id> <title>; …` " +
+        "when a live brief job names it; only file names are read, never a brief's text. Then key: the live " +
         "job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else " +
         "`(no job or Proposal carries <key>)`. On a Milestone with no Writing (drafting_data__create_milestone) the " +
         "criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. " +
@@ -332,7 +335,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
           client_no: { type: "string" },
           matter_no: { type: "string" },
           jobs: { type: "array", items: { type: "number" } },
-          lanes: { type: "array", items: { type: "string", enum: ["goals", "criteria", "live", "goal", "proposed", "completed", "rejected", "attached", "court_file", "memos"] } },
+          lanes: { type: "array", items: { type: "string", enum: ["goals", "criteria", "live", "goal", "proposed", "completed", "rejected", "attached", "court_file", "memos", "briefs"] } },
           key: { type: "string" },
           draft_dir: { type: "string" },
         },

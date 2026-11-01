@@ -1,6 +1,6 @@
 // drafting_forms__render with proceeding_id: a proceeding's Milestone.
 
-import { fetchAllFilingsForProceeding, fetchProceeding, fetchRevision } from "./query.js";
+import { fetchBoardFilings, fetchProceeding, fetchRevision } from "./query.js";
 import { type MatterDates } from "../matter-dates.js";
 import type { MatterTodos } from "../matter-todos.js";
 import {
@@ -71,7 +71,7 @@ export function submissionFormsRenderProceedingBoard(
   const started = performance.now();
   const draft = draftDir === undefined ? undefined : draftDirOfCaller(dbPath, draftDir);
   const proceeding = fetchProceeding(dbPath, proceedingId);
-  if (fetchAllFilingsForProceeding(dbPath, proceedingId).length > 0) {
+  if (fetchBoardFilings(dbPath, proceedingId).length > 0) {
     throw new ValidationError(
       "This proceeding has a Writing, so its jobs are on each Writing's Milestone -- render a Writing instead"
     );

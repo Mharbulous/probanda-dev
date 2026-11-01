@@ -38,7 +38,7 @@ export function docItemKey(filingId: number, fileName: string): string {
 }
 
 /** A view page's key under its name before a rename, read as its key now. */
-const RENAMED_VIEWS: Readonly<Record<string, string>> = { [viewItemKey("Raw Research")]: viewItemKey("Legal Memos") };
+const RENAMED_VIEWS: Readonly<Record<string, string>> = { [viewItemKey("Raw Research")]: viewItemKey("Legal Research"), [viewItemKey("Legal Memos")]: viewItemKey("Legal Research") };
 
 /** The board's viewed item keys, most recently viewed first; none when no row is stored. `board` is a survivor. */
 export function readViewed(dbPath: string, board: BoardRef): string[] {
@@ -54,7 +54,7 @@ export function readViewed(dbPath: string, board: BoardRef): string[] {
   if (!Array.isArray(parsed) || !parsed.every((k) => typeof k === "string")) {
     throw new DataServerError("A board's saved viewing order is damaged, so it cannot be read", "invalid_board_viewed");
   }
-  return (parsed as string[]).map((k) => RENAMED_VIEWS[k] ?? k);
+  return [...new Set((parsed as string[]).map((k) => RENAMED_VIEWS[k] ?? k))];
 }
 
 /** The strip in its drawn order: the viewed items by their place in `viewed`, then the never-viewed

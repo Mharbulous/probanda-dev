@@ -20,14 +20,14 @@ STAGEABLE_NAMES = ["Milestone 1.html", "Milestone - proceeding 2.html", "Milesto
                    # A Writing's own folder's pages (spec 2026-10-22).
                    "Milestone.html", "Procedural History.html", "Arguments.html", "LOOSE THREADS.HTML",
                    # Raw Research renamed (2026-10-31).
-                   "Legal Memos.html", "Legal Memos - Milestone 1.html"]
+                   "Legal Research.html", "Legal Research - Milestone 1.html", "Legal Memos.html", "Legal Memos - Milestone 1.html"]
 # A preview of each current page (#139), stageable like its page.
 PREVIEW_NAMES = ["Work Board preview 1.html", "Litigation Strategy preview 2.html", "Milestone 1 preview 1.html",
                  "Milestone - proceeding 2 preview 3.html", "Provable Facts - Milestone 1 preview 1.html",
                  "Raw Research - Milestone 4 preview 2.html", "Arguments - Milestone 1 preview 10.html",
                  "Loose Threads - Milestone 1 preview 1.html", "WORK BOARD PREVIEW 1.HTML",
                  "Procedural History - Milestone 1 preview 1.html", "Material Facts - Milestone 1 preview 2.html",
-                 "Milestone preview 1.html", "Raw Research preview 2.html", "Legal Memos preview 1.html"]
+                 "Milestone preview 1.html", "Raw Research preview 2.html", "Legal Memos preview 1.html", "Legal Research preview 1.html"]
 STAGEABLE_NAMES += PREVIEW_NAMES
 UNSTAGEABLE_NAMES = ["Milestone - SUB Opening.html", "Milestone 1-1.html",
                      "Milestone-1.html", "Milestone .html", "Milestone 1 (2).html",
@@ -61,8 +61,9 @@ PAGE_PATHS = [
     DRAFT + r"\Notice of Hearing of Application\Milestone.html",
     DRAFT + r"\Notice of Hearing of Application\Material Facts.html",
     DRAFT + r"\Notice of Hearing of Application\Arguments preview 1.html",
+    DRAFT + r"\Notice of Hearing of Application\Legal Research.html",
+    # Legal Memos and Raw Research, until the next write moves them to TRASH (renamed Legal Research, 2026-11-01).
     DRAFT + r"\Notice of Hearing of Application\Legal Memos.html",
-    # Raw Research, until the next write moves it to TRASH (renamed Legal Memos, 2026-10-31).
     DRAFT + r"\Notice of Hearing of Application\Raw Research.html",
     DRAFT + r"\Raw Research - Milestone 1.html",
 ]

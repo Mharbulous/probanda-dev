@@ -152,8 +152,8 @@ test("a recorded view page loses its dash and comes first; a Writing recorded af
   assert.deepEqual(JSON.parse(viewedRows(m.dbPath)[0].value), [data[0].key, "view:Material Facts"]);
 
   // Several paths in one call: the last ends up first.
-  await recordViewed(m.dbPath, [viewPath(first, "Arguments", 1), viewPath(first, "Legal Memos", 1)]);
-  assert.deepEqual(JSON.parse(viewedRows(m.dbPath)[0].value), ["view:Legal Memos", "view:Arguments", data[0].key, "view:Material Facts"]);
+  await recordViewed(m.dbPath, [viewPath(first, "Arguments", 1), viewPath(first, "Legal Research", 1)]);
+  assert.deepEqual(JSON.parse(viewedRows(m.dbPath)[0].value), ["view:Legal Research", "view:Arguments", data[0].key, "view:Material Facts"]);
 });
 
 test("record_viewed moves no revision and touches no job or state file; the next render reports no board change, and keeps the order", async (t) => {

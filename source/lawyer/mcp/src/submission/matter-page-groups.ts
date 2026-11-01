@@ -4,7 +4,7 @@
 import { join } from "node:path";
 
 import { BoardIndex, boardKey, type BoardRef, sameBoard } from "./forms/board-members.js";
-import { fetchAllFilingsForProceeding, fetchAllProceedings, isJobOnlyBoard, type FilingRow, type ProceedingRow } from "./forms/query.js";
+import { fetchAllFilingsForProceeding, fetchAllProceedings, isJobOnlyBoard, isResearchWriting, type FilingRow, type ProceedingRow } from "./forms/query.js";
 import { VIEW_PAGES, viewPageFile, type ViewPage } from "./view-pages.js";
 import type { WritingFolder } from "./writing-folder.js";
 
@@ -47,7 +47,8 @@ function boardFile(board: BoardRef, folders: ReadonlyMap<number, WritingFolder>)
 
 /** The live filings, then the pre-filing proceedings, grouped by the board each is drawn on: one
  * page per survivor, in the order its first section comes, the survivor's own section first. A
- * survivor that is retired keeps its page while any section on it is live. */
+ * survivor that is retired keeps its page while any section on it is live. A research Writing is on
+ * no board. */
 export function pageGroups(
   index: BoardIndex,
   live: { proceeding: ProceedingRow; filing: FilingRow }[],
@@ -55,7 +56,7 @@ export function pageGroups(
   folders: ReadonlyMap<number, WritingFolder>
 ): PageGroup[] {
   const groups = new Map<string, PageGroup>();
-  for (const m of [...live.map((l): Member => l), ...preFiling.map((p): Member => ({ proceeding: p, filing: null }))]) {
+  for (const m of [...live.filter((l) => !isResearchWriting(l.filing)).map((l): Member => l), ...preFiling.map((p): Member => ({ proceeding: p, filing: null }))]) {
     const ref = { filing_id: m.filing?.id ?? null, proceeding_id: m.proceeding.id };
     const board = index.survivorOf(ref);
     const key = boardKey(board);
@@ -77,7 +78,7 @@ export function liveMembers(dbPath: string): { live: { proceeding: ProceedingRow
   const proceedings = fetchAllProceedings(dbPath).map((proceeding) => ({ proceeding, filings: fetchAllFilingsForProceeding(dbPath, proceeding.id) }));
   return {
     live: proceedings.flatMap(({ proceeding, filings }) => filings.filter((f) => !f.retired_on).map((filing) => ({ proceeding, filing }))),
-    preFiling: proceedings.filter(({ filings }) => filings.length === 0).map(({ proceeding }) => proceeding),
+    preFiling: proceedings.filter(({ filings }) => filings.every(isResearchWriting)).map(({ proceeding }) => proceeding),
   };
 }
 

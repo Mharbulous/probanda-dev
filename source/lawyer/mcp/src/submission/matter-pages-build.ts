@@ -12,7 +12,7 @@ import { courtFileAffidavits } from "./court-file-affidavits.js";
 import { type ClientContext, rankFilings, type Ranked, readSchemaVersion } from "./forms.js";
 import { LOOSE_IDEAS_PAGE, LOOSE_THREADS_FILE } from "./forms/loose-ideas-page.js";
 import { MATTER_BOARD_FILE, renderMatterBoardHtml } from "./forms/matter-board-shell.js";
-import { fetchPreFilingProceedings, isJobOnlyBoard } from "./forms/query.js";
+import { fetchPreFilingProceedings, isJobOnlyBoard, isResearchWriting } from "./forms/query.js";
 import { buildMatterBoardData } from "./forms/render-matter-board.js";
 import { buildPreFilingBoardData, type StripItem, type WorkBoardData } from "./forms/render-work-board.js";
 import { renderWorkBoardHtml } from "./forms/workboard-shell.js";
@@ -122,8 +122,8 @@ export function buildMatterPages(
       })),
     };
   };
-  const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta, preFiling, todos), templates.matterBoard);
-  // Each board's jobs as its Milestone draws them, which its Legal Memos page lists the memos of.
+  const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked.filter((r) => !isResearchWriting(r.filing)), meta, preFiling, todos), templates.matterBoard);
+  // Each board's jobs as its Milestone draws them, which its Legal Research page lists the memos of.
   const boardJobs = new Map<PageGroup, WorkBoardData["tickets"]>();
   const milestones = groupsWritten.map((group) => {
     const built = group.members.map(sectionOf);

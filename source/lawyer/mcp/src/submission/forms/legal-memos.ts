@@ -1,7 +1,6 @@
-// The Legal Memos view page (docs/Specs/2026-10-31_legal-memos-board.md), which replaced Raw Research
-// on 2026-10-31: one `Legal Memos.html` per board holding a live Writing, written by the view-page
-// registry (../view-pages.ts), listing every legal memo linked to the board, its versions collapsed
-// into one card. drafting_forms__board_card's `memos` lane prints the same list from the same reader
+// The Legal Research page's Legal Memos tab (legal-research-page.ts; docs/Specs/2026-10-31_legal-memos-board.md):
+// every legal memo linked to the board, its versions collapsed into one card.
+// drafting_forms__board_card's `memos` lane prints the same list from the same reader
 // and the same jobs, so a session answers "what memos do we have on X" without the page
 // (shared/html-pages.md).
 //
@@ -10,16 +9,16 @@
 //   research memo -- `.md` named `... ML re ...` or `... research-lawyer answer ...`;
 //   note-up       -- `.md` named `... note-up ...`;
 //   Westlaw       -- `.docx` not named after a neutral citation (a Deep Research report; decisions are `.doc`).
-// Statutes, practice directions, decisions and manifests are not memos. `<stem> vN<ext>` is version N
+// Statutes, practice directions, decisions, case briefs and manifests are not memos. `<stem> vN<ext>` is version N
 // of `<stem><ext>`, which is version 1 (research_filing__save_answer's naming), in the same folder.
 //
 // Linked to a board, the one rule every board applies:
 //   1. a job drawn on the board (as its Milestone page draws it: its Writings' jobs, its proceeding's
 //      General jobs, and on a merged board every member's) recorded any version of the memo; or
-//   2. no live job drawn on any board that has a Legal Memos page recorded any version of it: nothing
+//   2. no live job drawn on any board that has a Legal Research page recorded any version of it: nothing
 //      recorded ties it to such a board, so it is on every board, under No job.
 // A memo recorded only by jobs on other boards is not on this one. A General Job's memo is on every
-// Writing's board in its proceeding. A memo whose only job sits on a board with no Legal Memos page (a
+// Writing's board in its proceeding. A memo whose only job sits on a board with no Legal Research page (a
 // retired Writing's, or a Milestone with no Writing that no Writing's board absorbed) falls under rule 2.
 //
 // Everything shown is recorded: the issue is each recording job's question (its intent) verbatim,
@@ -27,22 +26,14 @@
 // from a memo's text, which names nothing of the working matter. Only names and dates are read from disk.
 
 import { existsSync, readdirSync, statSync, type Stats } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { templated } from "../../compose-template.js";
-import boardCss from "../../templates/work-board/board.css.js";
-import legalMemosCss from "../../templates/view-pages/legal-memos.css.js";
-import legalMemosHtml from "../../templates/view-pages/legal-memos.html.js";
-import legalMemosJs from "../../templates/view-pages/legal-memos.js.js";
-import sharedJs from "../../templates/view-pages/shared.js.js";
-import viewHeadHtml from "../../templates/view-pages/view-head.html.js";
 import { liveMembers, pageGroups } from "../matter-page-groups.js";
 import { rows } from "../query-rows.js";
-import type { ViewPage } from "../view-pages.js";
 import { BoardIndex } from "./board-members.js";
 import { readTexts } from "./paragraph-map.js";
-import { isJobOnlyBoard, liveTicketClause, ticketAnswersHeld } from "./query.js";
+import { isJobOnlyBoard, isResearchWriting, liveTicketClause, ticketAnswersHeld } from "./query.js";
 import type { WorkBoardTicket } from "./work-board-ticket.js";
 
 /** The matter's law folder, beside its 0. DRAFT folder; ticket_answers paths start with it. */
@@ -87,9 +78,17 @@ const NEUTRAL_CITATION = /^\d{4} [A-Z]{2,}[A-Za-z]* \d+\b/;
 const VERSIONED = /^(.*?)(?: v(\d+))?(\.[^.\\/]+)$/i;
 /** A file or folder that cannot be read now (locked by a sync client, permissions, gone): skipped. */
 const UNREADABLE = new Set(["EPERM", "EBUSY", "EACCES", "ENOENT"]);
+/** A case brief's file (shared/case-brief-template.md), which holds a decision's citation and is no memo. */
+const CASE_BRIEF_NAME = /(?:^|\s)case brief\s/i;
+
+/** Whether a file name is a case brief's. */
+export function isCaseBriefFile(name: string): boolean {
+  return CASE_BRIEF_NAME.test(name);
+}
 
 /** A memo's kind from its file name alone, or null when the name is no memo's. */
 export function memoSourceOf(name: string): MemoSource | null {
+  if (isCaseBriefFile(name)) return null;
   const lower = name.toLowerCase();
   if (lower.endsWith(".docx")) return NEUTRAL_CITATION.test(name) ? null : "westlaw";
   if (!lower.endsWith(".md")) return null;
@@ -109,7 +108,7 @@ function localDate(stats: Stats): string {
 }
 
 /** A file's modified date, or null when it cannot be read now. Throws on any other error. */
-function modified(path: string): string | null {
+export function modified(path: string): string | null {
   try {
     return localDate(statSync(path));
   } catch (err) {
@@ -129,15 +128,15 @@ export function lawDirOf(matterDir: string): string {
   }
 }
 
-interface Found {
+export interface Found {
   /** From `6. LAW`, `\`-separated, the law folder's own name first. */
   file: string;
   mtime: string | null;
 }
 
-/** Every memo-named file under the law folder, by its path from `6. LAW`. Names and dates only; an
- * unreadable folder or file is skipped. */
-function scanLawFolder(lawDir: string): Found[] {
+/** Every file under the law folder whose name `wanted` accepts, by its path from `6. LAW`. Names and
+ * dates only; an unreadable folder or file is skipped. */
+export function scanLawFolder(lawDir: string, wanted: (name: string) => boolean): Found[] {
   if (!existsSync(lawDir)) return [];
   const head = lawDir.split(/[\\/]/).pop() as string;
   const out: Found[] = [];
@@ -151,21 +150,21 @@ function scanLawFolder(lawDir: string): Found[] {
     }
     for (const entry of entries) {
       if (entry.isDirectory()) walk(join(dir, entry.name), [...rel, entry.name]);
-      else if (entry.isFile() && memoSourceOf(entry.name) !== null) out.push({ file: [head, ...rel, entry.name].join("\\"), mtime: modified(join(dir, entry.name)) });
+      else if (entry.isFile() && wanted(entry.name)) out.push({ file: [head, ...rel, entry.name].join("\\"), mtime: modified(join(dir, entry.name)) });
     }
   };
   walk(lawDir, []);
   return out;
 }
 
-const baseName = (file: string) => file.split(/[\\/]/).pop() as string;
+export const baseName = (file: string) => file.split(/[\\/]/).pop() as string;
 
-function titleOf(file: string): string {
+export function titleOf(file: string): string {
   const m = VERSIONED.exec(baseName(file)) as RegExpExecArray;
   return m[1].replace(/^\d{4}-\d{2}-\d{2}\s+/, "");
 }
 
-function dateOf(file: string, savedAt: string | null, mtime: string | null): string | null {
+export function dateOf(file: string, savedAt: string | null, mtime: string | null): string | null {
   const name = baseName(file);
   return /^(\d{4}-\d{2}-\d{2})\b/.exec(name)?.[1] ?? /\((\d{4}-\d{2}-\d{2})\)/.exec(name)?.[1] ?? savedAt?.slice(0, 10) ?? mtime;
 }
@@ -182,8 +181,9 @@ function statusOf(jobs: BoardJob[]): MemoStatus {
 }
 
 /** The version key of every answer a live job recorded where that job is drawn on a board that has a
- * Legal Memos page: a page group holding a live Writing. A job with a filing is drawn on its filing's
- * group; a General job on each Writing's and pre-filing proceeding's group in its proceeding. */
+ * Legal Research page: a page group holding a live Writing. A job with a filing is drawn on its filing's
+ * group; a General job, or a job on a research Writing, which has no board, on each Writing's and
+ * pre-filing proceeding's group in its proceeding. */
 function recordedOnPagedBoards(dbPath: string): Set<string> {
   if (!ticketAnswersHeld(dbPath)) return new Set();
   const { live, preFiling } = liveMembers(dbPath);
@@ -191,11 +191,11 @@ function recordedOnPagedBoards(dbPath: string): Set<string> {
   const filings = new Set(paged.flatMap((g) => g.members.flatMap((m) => (m.filing === null ? [] : [m.filing.id]))));
   const general = new Set(paged.flatMap((g) => g.members.filter((m) => m.filing === null || !isJobOnlyBoard(m.filing)).map((m) => m.proceeding.id)));
   return new Set(
-    rows<{ filing_id: number | null; proceeding_id: number; file_path: string }>(
+    rows<{ filing_id: number | null; kind: string | null; proceeding_id: number; file_path: string }>(
       dbPath,
-      `SELECT t.filing_id, t.proceeding_id, ta.file_path FROM ticket_answers ta JOIN tickets t ON t.id = ta.ticket_id WHERE 1 = 1${liveTicketClause(dbPath, "t")}`
+      `SELECT t.filing_id, f.kind, t.proceeding_id, ta.file_path FROM ticket_answers ta JOIN tickets t ON t.id = ta.ticket_id LEFT JOIN filings f ON f.id = t.filing_id WHERE 1 = 1${liveTicketClause(dbPath, "t")}`
     )
-      .filter((r) => (r.filing_id === null ? general.has(r.proceeding_id) : filings.has(r.filing_id)))
+      .filter((r) => (r.filing_id === null || (r.kind !== null && isResearchWriting({ kind: r.kind })) ? general.has(r.proceeding_id) : filings.has(r.filing_id)))
       .map((r) => versionOf(r.file_path).key)
   );
 }
@@ -206,7 +206,7 @@ function recordedOnPagedBoards(dbPath: string): Set<string> {
  */
 export function buildLegalMemosData(dbPath: string, jobs: BoardJob[], matterDir: string): LegalMemosData {
   const recorded = recordedOnPagedBoards(dbPath);
-  const onDisk = new Map(scanLawFolder(lawDirOf(matterDir)).map((f) => [f.file.toLowerCase(), f]));
+  const onDisk = new Map(scanLawFolder(lawDirOf(matterDir), (name) => memoSourceOf(name) !== null).map((f) => [f.file.toLowerCase(), f]));
   // The minute a path was last saved, across the board's jobs.
   const savedAt = new Map<string, string>();
   for (const j of jobs) {
@@ -219,6 +219,7 @@ export function buildLegalMemosData(dbPath: string, jobs: BoardJob[], matterDir:
   // Each memo's versions, every recorded answer of the board's jobs included whether or not it is on disk now.
   const groups = new Map<string, Map<number, string>>();
   for (const file of [...onDisk.values()].map((f) => f.file).concat(jobs.flatMap((j) => j.answers.map((a) => a.file_path)))) {
+    if (isCaseBriefFile(baseName(file))) continue;
     const { key, version } = versionOf(file);
     const versions = groups.get(key) ?? new Map<number, string>();
     if (!versions.has(version)) versions.set(version, file);
@@ -258,22 +259,3 @@ export function buildLegalMemosData(dbPath: string, jobs: BoardJob[], matterDir:
   memos.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "") || a.title.localeCompare(b.title));
   return { memos };
 }
-
-// The page's script (legal-memos.js) draws window.VIEW_PAGE.data into .board: the status lanes, and a
-// folder filter, a source filter and a search in the header.
-/** The page's view-page registry entry (../view-pages.ts VIEW_PAGES). */
-export const LEGAL_MEMOS_PAGE: ViewPage = {
-  name: "Legal Memos",
-  ...templated({
-    entry: "legal-memos.html",
-    files: {
-      "legal-memos.html": legalMemosHtml,
-      "view-head.html": viewHeadHtml,
-      "board.css": boardCss,
-      "legal-memos.css": legalMemosCss,
-      "shared.js": sharedJs,
-      "legal-memos.js": legalMemosJs,
-    },
-  }),
-  data: (ctx) => buildLegalMemosData(ctx.dbPath, ctx.jobs, dirname(ctx.draftDir)),
-};

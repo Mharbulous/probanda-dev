@@ -7,10 +7,11 @@ import { ValidationError } from "../errors.js";
 import { attachedDrafts, withCodes } from "./board-attachments.js";
 import { type CardLane, CARD_LANES, renderBoardCard } from "./board-card-render.js";
 import { BoardIndex, type BoardRef } from "./forms/board-members.js";
-import { buildLegalMemosData } from "./forms/legal-memos-page.js";
+import { buildCaseBriefsData } from "./forms/case-briefs.js";
+import { buildLegalMemosData } from "./forms/legal-memos.js";
 import { courtFileAffidavits } from "./court-file-affidavits.js";
 import { type ClientContext, nowStamp, resolveDraftDir } from "./forms.js";
-import { fetchAllFilingsForProceeding, fetchFiling, fetchProceeding, fetchRevision } from "./forms/query.js";
+import { fetchBoardFilings, fetchFiling, fetchProceeding, fetchRevision } from "./forms/query.js";
 import { buildPreFilingBoardData, type WorkBoardData } from "./forms/render-work-board.js";
 import { boardSectionOf, DATES_NOT_READ, filingBoardData } from "./matter-board-section.js";
 import type { MatterDates } from "./matter-dates.js";
@@ -111,11 +112,13 @@ export function submissionFormsBoardCard(
   if (lanes.includes("court_file") && (args.draft_dir === undefined || args.filing_id === undefined)) {
     throw new ValidationError("drafting_forms__board_card: the court_file lane needs filing_id and draft_dir, the matter's 0. DRAFT folder session entry returned");
   }
-  if (lanes.includes("memos") && args.draft_dir === undefined) {
-    throw new ValidationError("drafting_forms__board_card: the memos lane needs draft_dir, the matter's 0. DRAFT folder session entry returned");
+  for (const lane of ["memos", "briefs"] as const) {
+    if (lanes.includes(lane) && args.draft_dir === undefined) {
+      throw new ValidationError(`drafting_forms__board_card: the ${lane} lane needs draft_dir, the matter's 0. DRAFT folder session entry returned`);
+    }
   }
   const draftDir = args.draft_dir === undefined ? undefined : resolveDraftDir(args.draft_dir, "drafting_forms__board_card.draft_dir");
-  if (args.proceeding_id !== undefined && fetchAllFilingsForProceeding(args.db_path, args.proceeding_id).length > 0) {
+  if (args.proceeding_id !== undefined && fetchBoardFilings(args.db_path, args.proceeding_id).length > 0) {
     throw new ValidationError("This proceeding has a Writing, so its jobs are on each Writing's Milestone -- read the card there");
   }
   const revision = fetchRevision(args.db_path);
@@ -142,7 +145,14 @@ export function submissionFormsBoardCard(
             .filter((id): id is number => id !== null)
             .flatMap((id) => courtFileAffidavits(args.db_path, id, dirname(draftDir)))
         : [],
-      lanes.includes("memos") && draftDir !== undefined ? buildLegalMemosData(args.db_path, section.tickets, dirname(draftDir)).memos : []
+      lanes.includes("memos") && draftDir !== undefined ? buildLegalMemosData(args.db_path, section.tickets, dirname(draftDir)).memos : [],
+      lanes.includes("briefs") && draftDir !== undefined
+        ? buildCaseBriefsData(
+            args.db_path,
+            (section.meta.writing_states?.map((w) => w.filing_id) ?? (args.filing_id === undefined ? [] : [args.filing_id])).filter((id): id is number => id !== null),
+            dirname(draftDir)
+          ).cases
+        : []
     ),
   };
 }

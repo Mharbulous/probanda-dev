@@ -20,14 +20,15 @@
 //
 // Provable Facts became Procedural History and Material Facts on 2026-10-20 (docs/ADRs/0011). A
 // `Provable Facts - Milestone <id>.html` left from before is an old page file (matter-page-files.ts OLD_PAGE).
-// Raw Research became Legal Memos on 2026-10-31, the same way: a `Raw Research.html` is an old page file.
+// Raw Research became Legal Memos on 2026-10-31, and Legal Memos became Legal Research on 2026-11-01, the same
+// way: a `Raw Research.html` or a `Legal Memos.html` is an old page file.
 
 import { join } from "node:path";
 
 import type { TemplateSet } from "../compose-template.js";
 import { ARGUMENTS_PAGE } from "./forms/arguments-page.js";
 import { MATERIAL_FACTS, PROCEDURAL_HISTORY } from "./forms/facts-pages.js";
-import { LEGAL_MEMOS_PAGE } from "./forms/legal-memos-page.js";
+import { LEGAL_RESEARCH_PAGE } from "./forms/legal-research-page.js";
 import type { FilingRow, ProceedingRow } from "./forms/query.js";
 import type { WorkBoardTicket } from "./forms/work-board-ticket.js";
 
@@ -74,7 +75,7 @@ export interface ViewPage<C = ViewPageContext> {
 export const VIEW_PAGES: readonly ViewPage[] = [
   PROCEDURAL_HISTORY,
   MATERIAL_FACTS,
-  LEGAL_MEMOS_PAGE,
+  LEGAL_RESEARCH_PAGE,
   ARGUMENTS_PAGE,
 ];
 

@@ -241,7 +241,7 @@ test("one page draws the merged boards as one board, each job once, with one set
   const absorbed = join(m.draft, "Counterclaim Submissions");
   assert.ok(result.view_page_paths.every((p) => dirname(p.path) !== absorbed), "no view page path is in the absorbed Writing's folder");
   const moved = result.moved_to_trash.map((x) => x.from.toLowerCase()).sort();
-  assert.deepEqual(moved, ["Arguments", "Legal Memos", "Milestone", "Material Facts", "Procedural History"].map((n) => join(absorbed, `${n}.html`).toLowerCase()).sort());
+  assert.deepEqual(moved, ["Arguments", "Legal Research", "Milestone", "Material Facts", "Procedural History"].map((n) => join(absorbed, `${n}.html`).toLowerCase()).sort());
   const board = result.documents.find((d) => d.document_type === "Work_board");
   assert.equal(board.path, pageOf(m, 1), "the absorbed Writing's render returns its survivor's page");
 
@@ -254,7 +254,7 @@ test("one page draws the merged boards as one board, each job once, with one set
     [[1, "Opening Submissions Package"], [3, "Proceeding 1"], [2, "Counterclaim Submissions"]],
     "each job once, tagged with its Writing"
   );
-  assert.deepEqual(page.strip.filter((v) => v.kind === "view").map((v) => v.file), ["Procedural History", "Material Facts", "Legal Memos", "Arguments"].map((n) => join("Opening Submissions Package", `${n}.html`)));
+  assert.deepEqual(page.strip.filter((v) => v.kind === "view").map((v) => v.file), ["Procedural History", "Material Facts", "Legal Research", "Arguments"].map((n) => join("Opening Submissions Package", `${n}.html`)));
   assert.equal(readBoardData(pageOf(m, 2)).board, undefined, "an unmerged page carries no board key");
 
   const views = result.view_page_paths.filter((v) => dirname(v.path) === join(m.draft, "Opening Submissions Package"));

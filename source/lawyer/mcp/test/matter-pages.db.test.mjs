@@ -194,7 +194,7 @@ test("a retired filing's Milestone page goes to TRASH", async (t) => {
   assert.deepEqual(milestonePages(m.draft), [OPENING_PAGE]);
   assert.deepEqual(
     retired.moved_to_trash.map((x) => x.from.toLowerCase()),
-    ["Arguments", "Legal Memos", "Material Facts", "Milestone", "Procedural History"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
+    ["Arguments", "Legal Research", "Material Facts", "Milestone", "Procedural History"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
   );
   assert.ok(existsSync(join(m.matterRoot, "TRASH", "0. DRAFT", REPLY_PAGE)), "the retired filing's page is in TRASH");
 });

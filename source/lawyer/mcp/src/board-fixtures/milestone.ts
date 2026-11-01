@@ -965,10 +965,10 @@ export const MILESTONE_FIXTURE: MatterMilestoneData = {
     },
     {
       "kind": "view",
-      "key": "view:Legal Memos",
+      "key": "view:Legal Research",
       "viewed": false,
-      "name": "Legal Memos",
-      "file": "Legal Memos - Milestone 1.html"
+      "name": "Legal Research",
+      "file": "Legal Research - Milestone 1.html"
     },
     {
       "kind": "view",

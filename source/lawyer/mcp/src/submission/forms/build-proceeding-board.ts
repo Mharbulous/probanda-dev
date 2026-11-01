@@ -1,7 +1,7 @@
 // One proceeding's tickets, each classified, with its open loose threads and its Proposal holders.
 
 import { rows } from "../query-rows.js";
-import { ticketAnswersHeld } from "./query.js";
+import { isResearchWriting, ticketAnswersHeld } from "./query.js";
 import { ticketSourcesHeld } from "./track-source.js";
 import {
   fetchDeletedTickets,
@@ -108,7 +108,9 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
   const activeById = new Map(
     rows<{ key: string; value: string }>(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r) => [Number(r.key.slice("job_active:".length)), r.value]),
   );
-  const retiredOn = new Map(rows<FilingRetiredRow>(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f) => [f.id, f.retired_on]));
+  const filingRows = rows<FilingRetiredRow & { kind: string }>(dbPath, "SELECT id, retired_on, kind FROM filings WHERE proceeding_id = ?", [proceedingId]);
+  const retiredOn = new Map(filingRows.map((f) => [f.id, f.retired_on]));
+  const researchWritings = new Set(filingRows.filter(isResearchWriting).map((f) => f.id));
   const edge = (id: number): WorkBoardEdge => {
     const other = ticketById.get(id);
     return { id, status: other?.status ?? null, rejected: other !== undefined && other.status === "queued" && other.rejected_at !== null };
@@ -170,7 +172,8 @@ export function buildProceedingBoard(dbPath: string, proceedingId: number, rende
       last_activity_at: lastActivity(t),
       active_at: activeAt(t, activeById.get(t.id)),
     };
-    return { filing_id: t.filing_id, ticket };
+    // A research Writing has no board, so a job on one is drawn as a proceeding-scoped job is.
+    return { filing_id: t.filing_id !== null && researchWritings.has(t.filing_id) ? null : t.filing_id, ticket };
   });
 
   // Section 14 Dispatch's skip reasons, over every filing in the proceeding: substance tables are proceeding-scoped.

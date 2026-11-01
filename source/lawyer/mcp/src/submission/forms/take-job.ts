@@ -22,7 +22,7 @@ import { submissionDataAssignJob, type AssignJobResult } from "./assign-job.js";
 import { PLAN_MARKER } from "./approve-plan.js";
 import { GATE_TITLE, PRE_SEND_TITLE, POSITION_CONFLICT_TITLE, STOCK_TITLES, waitsOnGate } from "./goal-gate.js";
 import { BoardIndex } from "./board-members.js";
-import { fetchAllFilingsForProceeding } from "./query.js";
+import { fetchBoardFilings } from "./query.js";
 import { nowStamp } from "./timings.js";
 import type { WorkBoardData } from "./render-work-board.js";
 import type { WorkBoardTicket } from "./work-board-ticket.js";
@@ -126,7 +126,7 @@ function overlapping(section: WorkBoardData, t: WorkBoardTicket, cleared: number
 function boardOf(dbPath: string, id: number): { filing_id?: number; proceeding_id?: number } {
   const [row] = submissionDataQuery(dbPath, "SELECT filing_id, proceeding_id FROM tickets WHERE id = ?", [id]).rows as unknown as { filing_id: number | null; proceeding_id: number }[];
   if (row === undefined) throw new ValidationError(`${TOOL}: no job ${id} in ${dbPath}; nothing was written`, "not_found");
-  const filings = fetchAllFilingsForProceeding(dbPath, row.proceeding_id);
+  const filings = fetchBoardFilings(dbPath, row.proceeding_id);
   const own = row.filing_id ?? (filings.find((f) => !f.retired_on) ?? filings[0])?.id ?? null;
   const index = new BoardIndex(dbPath);
   const ref = { filing_id: own, proceeding_id: row.proceeding_id };

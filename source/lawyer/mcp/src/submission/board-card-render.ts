@@ -4,7 +4,8 @@
 import { collapsedText, derivedOf, generalTail, jobCardLines, proposalLines } from "./board-job-text.js";
 import { criterionLine, jobsIn, proposedHeading, proposedOf, renderLiveLanes, shelvedHeading, shelvedProposalsOf } from "./board-summary.js";
 import type { CourtFileAffidavit } from "./court-file-affidavits.js";
-import type { LegalMemo, MemoSource, MemoStatus } from "./forms/legal-memos-page.js";
+import type { BriefStatus, CaseBriefRow } from "./forms/case-briefs.js";
+import type { LegalMemo, MemoSource, MemoStatus } from "./forms/legal-memos.js";
 import { type AttachedDraft, type Category, type WorkBoardData } from "./forms/render-work-board.js";
 
 const LIVE: ReadonlySet<Category> = new Set(["ready", "wip", "bring_forward", "waiting"]);
@@ -30,15 +31,15 @@ function goalLines(section: WorkBoardData): string[] {
 }
 
 /** `goal` is the criteria lane's former name, still accepted for it; `goals` is the statement of goals. */
-export type CardLane = "goals" | "criteria" | "live" | "goal" | "proposed" | "completed" | "rejected" | "attached" | "court_file" | "memos";
+export type CardLane = "goals" | "criteria" | "live" | "goal" | "proposed" | "completed" | "rejected" | "attached" | "court_file" | "memos" | "briefs";
 
 /** board_card's lanes, in the order a card prints them. */
-export const CARD_LANES: readonly CardLane[] = ["goals", "criteria", "live", "proposed", "completed", "rejected", "attached", "court_file", "memos"];
+export const CARD_LANES: readonly CardLane[] = ["goals", "criteria", "live", "proposed", "completed", "rejected", "attached", "court_file", "memos", "briefs"];
 
 const MEMO_SOURCE_LABELS: Record<MemoSource, string> = { research_memo: "research memo", westlaw: "Westlaw Deep Research report", note_up: "note-up record" };
 const MEMO_STATUS_LABELS: Record<MemoStatus, string> = { in_progress: "in progress", started: "started", completed: "completed", shelved: "shelved", no_job: "no job" };
 
-/** The memos lane: the Legal Memos page's memos (legal-memos-page.ts), newest first, as
+/** The memos lane: the Legal Research page's memos (legal-memos.ts), newest first, as
  * `- <title> · <source> · <status> · <date> · v<n>[ (earlier: v<m>, …)] · <path from 6. LAW>[ · not in the law folder]`,
  * then `  issue: "<the job's question>"` per job question (`  issue: none (no job saved it)` with no job,
  * `  issue: none recorded` when its jobs recorded none), `  facts: "<fact>"; …` or `  facts: none`, and
@@ -56,6 +57,25 @@ function memosLines(memos: LegalMemo[]): string[] {
         `  facts: ${m.facts.length === 0 ? "none" : m.facts.map((f) => JSON.stringify(f)).join("; ")}`,
         ...(m.jobs.length === 0 ? [] : [`  jobs: ${m.jobs.map((j) => `#${j.id} ${j.title}`).join("; ")}`]),
       ];
+    }),
+  ];
+}
+
+const BRIEF_STATUS_LABELS: Record<BriefStatus, string> = { briefed: "briefed", requested: "requested", not_briefed: "not briefed" };
+
+/** The briefs lane: the Legal Research page's cases (case-briefs.ts), those relied on first, as
+ * `- <style of cause>[, <citation>] · <briefed|requested|not briefed> · <relied on|not relied on>[ · <date> · v<n>[ (earlier: v<m>, …)] · <path from 6. LAW>[ · not in the law folder]]`,
+ * then `  jobs: #<id> <title>; …` when a live brief job names it. */
+function briefsLines(cases: CaseBriefRow[]): string[] {
+  return [
+    `## Case Briefs (${cases.length})`,
+    ...cases.flatMap((c) => {
+      const head = [`- ${c.title}${c.citation === null ? "" : `, ${c.citation}`}`, BRIEF_STATUS_LABELS[c.status], c.relied_on ? "relied on" : "not relied on"];
+      if (c.brief !== null) {
+        head.push(c.brief.date ?? "no date", `v${c.brief.version}${c.brief.earlier.length === 0 ? "" : ` (earlier: ${c.brief.earlier.map((n) => `v${n}`).join(", ")})`}`, c.brief.file);
+        if (!c.brief.on_disk) head.push("not in the law folder");
+      }
+      return [head.join(" · "), ...(c.jobs.length === 0 ? [] : [`  jobs: ${c.jobs.map((j) => `#${j.id} ${j.title}`).join("; ")}`])];
     }),
   ];
 }
@@ -105,7 +125,7 @@ function courtFileLines(rows: CourtFileAffidavit[]): string[] {
 
 /** The selected parts of a section in a fixed grammar: each job asked for in board order, then each
  * lane asked for in CARD_LANES order, then the key lookup. `attached` is the section's attachments
- * as found on disk, read only when the attached lane is asked for, and `memos` likewise. */
+ * as found on disk, read only when the attached lane is asked for, and `memos` and `briefs` likewise. */
 export function renderBoardCard(
   section: WorkBoardData,
   jobs: number[],
@@ -113,7 +133,8 @@ export function renderBoardCard(
   key: string | undefined,
   attached: AttachedDraft[] = [],
   courtFile: CourtFileAffidavit[] = [],
-  memos: LegalMemo[] = []
+  memos: LegalMemo[] = [],
+  briefs: CaseBriefRow[] = []
 ): string {
   const derived = derivedOf(section);
   const lines: string[] = [];
@@ -131,6 +152,7 @@ export function renderBoardCard(
     if (lane === "attached") lines.push(...attachedLines(attached));
     if (lane === "court_file") lines.push(...courtFileLines(courtFile));
     if (lane === "memos") lines.push(...memosLines(memos));
+    if (lane === "briefs") lines.push(...briefsLines(briefs));
   }
   if (key !== undefined) {
     const holder = section.tickets.find((t) => LIVE.has(t.category) && t.proposal_keys.includes(key));
