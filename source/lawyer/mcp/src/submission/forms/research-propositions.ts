@@ -2,8 +2,8 @@
 // drafting database records for the board's proceeding, placed or not, each with its statements of
 // law: citation, pinpoint, excerpt, verification and note-up status, and the submissions it is linked
 // to. It restores the Raw Research page's list (spec 2026-10-07), which holds propositions that may
-// not yet have a place in a Writing. A statement only a research Writing cites, with no proposition, is
-// that memo's or brief's own item and is left out.
+// not yet have a place in a Writing. A statement with no proposition that a research Writing cites, and
+// no other Writing or order does, is that memo's or brief's own item and is left out.
 //
 // A human interface generated from the database (ADR 0033): no session reads, greps, parses or
 // screenshots it. Sessions read propositions through /drafting-data and the mockups.
@@ -181,12 +181,9 @@ function propositionsFor(dbPath: string, proceedingId: number, ids: number[], me
     [proceedingId]
   );
   const citedHere = new Set(rows<{ statement_id: number }>(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r) => r.statement_id));
-  const researchOwn = new Set(
-    rows<{ statement_id: number; kind: string }>(dbPath, "SELECT fl.statement_id, f.kind FROM filing_law fl JOIN filings f ON f.id = fl.filing_id WHERE f.proceeding_id = ?", [proceedingId])
-      .filter(isResearchWriting)
-      .map((r) => r.statement_id)
-  );
-  const statements = fetchStatements(dbPath, proceedingId).filter((s) => s.law_assertion_id !== null || !researchOwn.has(s.statement_id) || citedHere.has(s.statement_id));
+  const citing = rows<{ statement_id: number; kind: string }>(dbPath, "SELECT fl.statement_id, f.kind FROM filing_law fl JOIN filings f ON f.id = fl.filing_id WHERE f.proceeding_id = ?", [proceedingId]);
+  const researchCited = new Set(citing.filter(isResearchWriting).map((r) => r.statement_id));
+  const otherCited = new Set(citing.filter((r) => !isResearchWriting(r)).map((r) => r.statement_id));
   const links = rows<SubmissionLinkRow>(
     dbPath,
     `SELECT sbl.law_assertion_id, s.id AS submission_id, s.contention, s.killed_on
@@ -220,6 +217,10 @@ function propositionsFor(dbPath: string, proceedingId: number, ids: number[], me
      FROM order_sought_requires r JOIN order_sought o ON o.id = r.order_sought_id
      WHERE o.proceeding_id = ? AND (r.law_assertion_id IS NOT NULL OR r.excerpt_id IS NOT NULL)`,
     [...ids, proceedingId]
+  );
+  const orderCited = new Set(required.map((r) => r.excerpt_id));
+  const statements = fetchStatements(dbPath, proceedingId).filter(
+    (s) => s.law_assertion_id !== null || !researchCited.has(s.statement_id) || otherCited.has(s.statement_id) || orderCited.has(s.statement_id) || citedHere.has(s.statement_id)
   );
 
   // In use on this filing: a link to a submission on it (killed ones are not in onFiling), an

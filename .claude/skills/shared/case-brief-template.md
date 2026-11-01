@@ -61,7 +61,7 @@ Save only after `brief-reviewer` returns `complete`. These are lawyer's own tool
 - **Copy.** `drafting_forms__render` with `documents: ["General_writing"]`, then `research_filing__save_answer` with that document's `path` as `from_render`, `filename` `<File stem>.md`, and as `destination_dir` the folder under `6. LAW\` that holds the decision. A caller holding a job also passes the job's `db_path`, `ticket_id` and `claim_no` and its own `session_token`, so the job's card lists the brief. A result reading `job.recorded: false` means the job is no longer the caller's: the brief is saved, so stop and report.
 - **A refusal.** When a `drafting_*` tool refuses, write nothing more to the Writing: save the `Brief scratch:` path as `from_scratch` and name the refusal in your relay.
 
-The file stem is `YYYY-MM-DD case brief <style of cause>, <citation>`, today's date first. `save_answer` never overwrites and takes the next free ` vN` itself, and every saved version is the same brief.
+The file stem is `YYYY-MM-DD case brief <style of cause>, <citation>`, today's date first. A re-brief of a case that already has a saved brief reuses that brief's file stem, date included, and saves onto the same Writing, the `case_brief` Writing with that title: it creates none, and its `drafting_data__execute` script first deletes the Writing's `filing_prose` and `filing_law` rows and each statement those named that no other Writing cites, then writes the items as above. `save_answer` never overwrites and takes the next free ` vN` itself, so the save is that brief's next version.
 
 A case brief is a lead, not an authority. Never ingest a brief, and never read it as the decision's own text.
 

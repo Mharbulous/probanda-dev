@@ -45,15 +45,25 @@
   function versionText(m) {
     return "v" + m.version + (m.earlier.length === 0 ? "" : " (earlier: " + m.earlier.map(function (n) { return "v" + n; }).join(", ") + ")");
   }
-  function fileRow(dl, m) {
+  function fileValue(m) {
     var file = m.file.split(/[\\/]/).pop();
-    if (m.on_disk) {
-      var a = el("a", "", file);
-      a.href = m.url;
-      row(dl, "File", a, "");
-    } else {
-      row(dl, "File", file + " (not in the law folder now)", "");
-    }
+    if (!m.on_disk) return file + " (not in the law folder now)";
+    var a = el("a", "", file);
+    a.href = m.url;
+    return a;
+  }
+  function fileRow(dl, m) {
+    row(dl, "File", fileValue(m), "");
+  }
+  function earlierFiles(list) {
+    var ul = el("ul");
+    list.forEach(function (v) {
+      var li = el("li", "", "v" + v.version + " (" + (v.date || "no date") + "): ");
+      var value = fileValue(v);
+      li.appendChild(typeof value === "string" ? document.createTextNode(value) : value);
+      ul.appendChild(li);
+    });
+    return ul;
   }
   function ticket(ref, title, chips, line) {
     var node = el("details", "ticket");
@@ -206,6 +216,7 @@
         row(t.dl, "Date", c.brief.date, "No date");
         row(t.dl, "Version", versionText(c.brief), "");
         fileRow(t.dl, c.brief);
+        if (c.brief.earlier_files.length > 0) row(t.dl, "Earlier versions", earlierFiles(c.brief.earlier_files), "");
       }
       return { node: t.node, text: [c.title, c.citation || ""].join(" ").toLowerCase() };
     }

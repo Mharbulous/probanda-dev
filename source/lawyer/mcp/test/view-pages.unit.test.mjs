@@ -55,11 +55,11 @@ const FIXTURES = {
  * Procedural History's and Material Facts' at the split of Provable Facts (docs/ADRs/0011); Arguments' at its badge filter;
  * the rest retaken on 2026-10-29 for 8be771b7, which renamed board.css's first comment ("Job Board" to "Milestone");
  * Arguments' retaken again on 2026-10-31 for e0065be, which added the session focus pointer to arguments.js;
- * Legal Research's taken on 2026-11-01, when it replaced Legal Memos. */
+ * Legal Research's taken on 2026-11-01, when it replaced Legal Memos, and retaken that day when Case Briefs listed each earlier file. */
 const PINS = {
   "Procedural History": "f8a29d4c7953ff408bd6323af74b2333a71966afb6ee5b550d550f6de594f912",
   "Material Facts": "3fb4f9f60ff8cc4ac8af3957423a83bacd8c38ba7d63194038a93376db4b0480",
-  "Legal Research": "8526024cb4239954f16b2c2692c32ae5b8446dddf520e10cc8493161ef13387a",
+  "Legal Research": "4052f9f7c7abc01ddf09b57ad60e3809a317460d641b9421f376f9cdccbe76c7",
   Arguments: "ec2b611a4cd2fee78b152f97703713149c874d9a3c4ad21bbf503375cb29e5f7",
   "Loose Threads": "e9295aefed42761418487103bc2d8e8ddd7908fccb10780c6da8c04b149904f7",
 };

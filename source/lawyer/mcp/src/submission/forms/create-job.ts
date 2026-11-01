@@ -8,7 +8,7 @@
 
 import { DataServerError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
-import { BRIEF_JOB_PREFIX } from "./brief-job.js";
+import { BRIEF_JOB_PREFIX, citationKey } from "./brief-job.js";
 import { createdByHeld, liveTicketClause, MILESTONE_KIND } from "./query.js";
 import { checkClaim, heldBy } from "./job-activity.js";
 
@@ -163,6 +163,14 @@ function validate(args: CreateJobArgs): void {
   });
 }
 
+/** Every authority of the proceeding that is one case with this one, as the Case Briefs tab folds them
+ * (case-briefs.ts): authorities are per exact citation, so a parallel citation is its own row. */
+function authoritiesOfCase(dbPath: string, proceedingId: number, authorityId: number): number[] {
+  const all = submissionDataQuery(dbPath, "SELECT id, citation FROM authorities WHERE proceeding_id = ?", [proceedingId]).rows as unknown as { id: number; citation: string | null }[];
+  const key = citationKey(all.find((a) => a.id === authorityId)?.citation ?? null);
+  return key === null ? [authorityId] : all.filter((a) => citationKey(a.citation) === key).map((a) => a.id);
+}
+
 /** The job whose existence fires the guard: `SELECT t.id FROM ... WHERE ...`, for the INSERT's NOT
  * EXISTS and, after a guarded call, for naming the holder. Null for none and holder_lock. */
 function holderQuery(args: CreateJobArgs, titles: string[]): { sql: string; params: unknown[] } | null {
@@ -197,11 +205,11 @@ function holderQuery(args: CreateJobArgs, titles: string[]): { sql: string; para
         params: [statement.entity_id],
       };
     }
-    case "authority_brief": { // jobs-stock.md §3n: a live case brief job in the proceeding is scoped to the authority.
+    case "authority_brief": { // jobs-stock.md §3n: a live case brief job in the proceeding is scoped to an authority of the same case.
       const authority = (args.scope ?? []).find((r) => r.entity === "authorities" && r.entity_id !== null) as ScopeRow;
       return {
-        sql: `SELECT t.id FROM tickets t JOIN ticket_scope sc ON sc.ticket_id = t.id WHERE t.proceeding_id = ? AND ${liveStatus} AND t.title LIKE '${BRIEF_JOB_PREFIX}%' AND sc.entity = 'authorities' AND sc.entity_id = ?`,
-        params: [args.proceeding_id, authority.entity_id],
+        sql: `SELECT t.id FROM tickets t JOIN ticket_scope sc ON sc.ticket_id = t.id WHERE t.proceeding_id = ? AND ${liveStatus} AND t.title LIKE '${BRIEF_JOB_PREFIX}%' AND sc.entity = 'authorities' AND sc.entity_id IN (SELECT value FROM json_each(?))`,
+        params: [args.proceeding_id, JSON.stringify(authoritiesOfCase(args.db_path, args.proceeding_id, authority.entity_id as number))],
       };
     }
     default:

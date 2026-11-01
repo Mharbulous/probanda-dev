@@ -78,8 +78,9 @@ const NEUTRAL_CITATION = /^\d{4} [A-Z]{2,}[A-Za-z]* \d+\b/;
 const VERSIONED = /^(.*?)(?: v(\d+))?(\.[^.\\/]+)$/i;
 /** A file or folder that cannot be read now (locked by a sync client, permissions, gone): skipped. */
 const UNREADABLE = new Set(["EPERM", "EBUSY", "EACCES", "ENOENT"]);
-/** A case brief's file (shared/case-brief-template.md), which holds a decision's citation and is no memo. */
-const CASE_BRIEF_NAME = /(?:^|\s)case brief\s/i;
+/** A case brief's file (shared/case-brief-template.md), which holds a decision's citation and is no memo: a `.md`
+ * named `[<date> ]case brief <the case>`. A filing or decision that says "case brief" in its name is none. */
+const CASE_BRIEF_NAME = /^(?:\d{4}-\d{2}-\d{2}\s+)?case brief\s.*\.md$/i;
 
 /** Whether a file name is a case brief's. */
 export function isCaseBriefFile(name: string): boolean {
