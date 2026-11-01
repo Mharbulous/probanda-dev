@@ -107,6 +107,33 @@ test("composes the snapshot from the tree: both blocks and each cited passage's 
   assert.deepEqual(JSON.parse(letter.layout_snapshot), { layout: LETTER_BLOCK, venue: null, passage_hashes: {}, type_file: LETTER_PATH, venue_file: null });
 });
 
+test("under _NoVenue a type in /legal-research's tree resolves too, with or without /draft's tree", (t) => {
+  const f = tree(t);
+  const MEMO_PATH = "legal-research/CAN/BC/_NoVenue/Documents/research-memo.md";
+  const { letterhead, folder_code, ...letter } = LETTER_BLOCK;
+  const MEMO_BLOCK = { ...letter, title: "Memorandum of Law" };
+  f.shipped("legal-research/CAN/BC/_NoVenue/Documents/kinds.json", {
+    kinds: [{ file: "research-memo", name: "Research memo", aliases: [{ name: "research_memo" }], recipient: "internal" }],
+  });
+  f.shipped(MEMO_PATH, knowledgeFile(null, MEMO_BLOCK));
+  const memo = composeLayoutSnapshot({ ...BC, venue: "_NoVenue", kind: "research_memo" }, f.seams);
+  assert.equal(memo.type_file, "research-memo");
+  assert.equal(memo.recipient, "internal");
+  assert.equal(JSON.parse(memo.layout_snapshot).type_file, MEMO_PATH);
+  // /draft's own kinds still resolve beside it.
+  assert.equal(composeLayoutSnapshot({ ...BC, venue: "_NoVenue", kind: "letter_to_opposing_counsel" }, f.seams).type_file, "letter-to-opposing-counsel");
+  // A venue never reads /legal-research's tree.
+  assert.throws(() => composeLayoutSnapshot({ ...BCSC_KEY, kind: "research_memo" }, f.seams), code("kind_unresolved", /matches 0 rows of draft\/CAN\/BC\/BCSC/));
+  // One kind in both trees is ambiguous.
+  f.shipped("legal-research/CAN/BC/_NoVenue/Documents/kinds.json", {
+    kinds: [{ file: "research-memo", name: "Research memo", aliases: [{ name: "letter_to_opposing_counsel" }], recipient: "internal" }],
+  });
+  assert.throws(() => composeLayoutSnapshot({ ...BC, venue: "_NoVenue", kind: "letter_to_opposing_counsel" }, f.seams), code("kind_unresolved", /matches 2 rows/));
+  // Without litigator's /draft tree the research memo still resolves.
+  rmSync(join(f.installRoot, "skills", "draft"), { recursive: true, force: true });
+  assert.equal(composeLayoutSnapshot({ ...BC, venue: "_NoVenue", kind: "research_memo" }, f.seams).type_file, "research-memo");
+});
+
 test("an unresolved kind and a needs-forum type under _NoVenue fail hard", (t) => {
   const f = tree(t);
   assert.throws(() => composeLayoutSnapshot({ ...BCSC_KEY, kind: "notice" }, f.seams), code("kind_unresolved", /"notice" matches 0 rows of draft\/CAN\/BC\/BCSC/));

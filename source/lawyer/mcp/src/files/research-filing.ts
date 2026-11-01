@@ -153,7 +153,7 @@ export function appendManifest(destinationDir: string, record: unknown): { path:
  * destination's `6. LAW` tree, and its bytes are copied as `text` is. The scratch file is kept.
  * `fromRender` is a mockup drafting_forms__render wrote in that matter's 0. DRAFT folder (a research
  * memo's Writing): its bytes are copied without the mockup's own header, the first `---` block, which
- * names the matter.
+ * names the matter, and without the title line after it.
  */
 export function saveAnswer(
   destinationDir: string,
@@ -226,8 +226,9 @@ function destinationDraftDir(destinationDir: string): string {
   return draft;
 }
 
-/** A mockup's own header: its first `---` block, and the blank lines after it. */
-const MOCKUP_HEADER = /^\uFEFF?---\r?\n[\s\S]*?\r?\n---\r?\n(?:[ \t]*\r?\n)*/;
+/** A mockup's own header, its first `---` block, and the `# <title>` line after it, so the copy opens
+ * with the memo's own `---` header as a memo file always has. */
+const MOCKUP_HEADER = /^\uFEFF?---\r?\n[\s\S]*?\r?\n---\r?\n(?:[ \t]*\r?\n)*(?:# [^\r\n]*\r?\n(?:[ \t]*\r?\n)*)?/;
 
 /** A rendered mockup's bytes less its leading `---` header, refused unless its real path is a non-empty
  * `.md` file inside the 0. DRAFT folder of the matter owning `destinationDir`'s `6. LAW` tree. */

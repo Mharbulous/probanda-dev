@@ -18,3 +18,6 @@
 }
 ```
 
+# Research memo (CREAC)
+
+research-agent's Memorandum of Law on one Issue, stored as a Writing so each numbered paragraph is one item a later job can name. Its shape is `shared/research-memo-template.md`'s and its save is `shared/legal-research.md`'s ("After the answer, the caller persists it"). Never drafted by hand: every statement of law in it comes from research-agent.

@@ -432,6 +432,30 @@ test("save_answer refuses, writing nothing, both or neither of text and from_scr
   }
 });
 
+test("save_answer from_render files a memo Writing's mockup less its own header and title, and refuses one outside the matter's 0. DRAFT", () => {
+  const f = fixture();
+  const other = fixture();
+  try {
+    const mockup = "---\nMatter no: L0000\nClient Name: Ada Client\n---\n\n# Memorandum of Law\n\n---\nDocument: MEMORANDUM OF LAW\n---\n\n## Issue\n\n**Q?**\n";
+    const folder = join(f.draft, "2026-10-31 ML re test");
+    mkdirSync(folder);
+    writeFileSync(join(folder, "General_writing.md"), mockup);
+    const saved = saveAnswer(f.law, "2026-10-31 ML re test.md", undefined, undefined, join(folder, "General_writing.md"));
+    const text = readFileSync(saved.path, "utf-8");
+    assert.ok(text.startsWith("---\nDocument: MEMORANDUM OF LAW\n---\n\n## Issue\n\n**Q?**\n"), text);
+    assert.doesNotMatch(text, /Ada Client|L0000|# Memorandum of Law/);
+
+    writeFileSync(join(other.draft, "x.md"), mockup);
+    assert.equal(codeOf(() => saveAnswer(f.law, "a.md", undefined, undefined, join(other.draft, "x.md"))), "not_render");
+    writeFileSync(join(folder, "x.txt"), mockup);
+    assert.equal(codeOf(() => saveAnswer(f.law, "a.md", undefined, undefined, join(folder, "x.txt"))), "invalid_path");
+    assert.equal(codeOf(() => saveAnswer(f.law, "a.md", "text", undefined, join(folder, "General_writing.md"))), "invalid_argument");
+  } finally {
+    f.cleanup();
+    other.cleanup();
+  }
+});
+
 test("save_answer from_scratch refuses a matter whose scratchpad does not exist yet", () => {
   const f = fixture();
   try {

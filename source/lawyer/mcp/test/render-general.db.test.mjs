@@ -632,6 +632,53 @@ INSERT INTO filing_documents (filing_id, document_id, ordinal, role) VALUES (${i
   assertFiledFaceClean(face, "General_writing");
 });
 
+test("a research memo's item paragraphs print summary, excerpt, citation and markers, numbered across Rule and Application, each naming its statement of law", async (t) => {
+  const g = await generalWritingFixture(t);
+  await g.execute("INSERT INTO proceedings (id, matter_reference, forum) VALUES (4, 'L0000', NULL);");
+  // The shipped type, from /legal-research's tree.
+  const created = await g.create({ proceeding_id: 4, tree: NO_VENUE_TREE, kind: "research_memo", recipient: "internal", title: "2026-10-31 ML re test" });
+  assert.equal(created.type_file, "legal-research/CAN/BC/_NoVenue/Documents/research-memo.md");
+  const id = created.filing_id;
+  await g.execute(`
+INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind) VALUES (60, 4, 'Alpha v Beta', '2020 BCCA 1', 'case');
+INSERT INTO statements_of_law (id, proceeding_id, authority_id, pinpoint, excerpt, source, verification) VALUES
+  (70, 4, 60, 'para. 5', 'The first passage.', 'primary', 'lead'),
+  (71, 4, 60, 'para. 9', 'The second passage.\nIts second line.', 'primary', 'lead');
+INSERT INTO filing_law (filing_id, statement_id) VALUES (${id}, 70), (${id}, 71);
+`);
+  await g.prose(id, "memo-header", "---\nDocument: MEMORANDUM OF LAW\nFormat: ICRA\n---");
+  await g.prose(id, "issue", "**Is the test met?**");
+  await g.prose(id, "conclusion", "Yes (Alpha v Beta, 2020 BCCA 1, at para. 5).");
+  await g.prose(id, "rule", "The first rule. <!-- statement_of_law_id 70 -->\n\nThe second rule. <!-- statement_of_law_id 71 -->");
+  await g.prose(id, "application", "The court applied it. <!-- statement_of_law_id 70 -->\n\nAn unlinked item. <!-- statement_of_law_id 99 -->");
+  await g.prose(id, "sources", "### Case authority\n\n- Alpha v Beta, 2020 BCCA 1, paras. 5, 9");
+
+  const md = docOf(render(g, id), "General_writing").markdown;
+  const body = [
+    "## Rule",
+    "",
+    "1. The first rule.",
+    "",
+    "> The first passage.",
+    ">",
+  ].join("\n");
+  assert.ok(md.includes(body), md);
+  for (const line of [
+    /^> \*Alpha v Beta\*, 2020 BCCA 1, para\. 5 .*📇.* <!-- statement_of_law_id 70 -->$/m,
+    /^2\. The second rule\.$/m,
+    /^> The second passage\.\n> Its second line\.\n>\n> \*Alpha v Beta\*, 2020 BCCA 1, para\. 9 .*<!-- statement_of_law_id 71 -->/m,
+    /^## Application$/m,
+    /^3\. The court applied it\.$/m,
+    /^4\. An unlinked item\.$/m,
+    /^🧩 ________ <!-- statement_of_law 99 is not cited by this Writing -->/m,
+    /^## Issue\n\n\*\*Is the test met\?\*\*/m,
+    /^## Sources\n\n### Case authority$/m,
+  ]) {
+    assert.match(md, line);
+  }
+  assert.doesNotMatch(md, /^\d+\. Yes/m, "the Conclusion is prose, never numbered");
+});
+
 test("a caption part under BCSC prints the BC Supreme Court caption from the stored venue block, with no title row", async (t) => {
   const g = await generalWritingFixture(t);
   installCaptionedNote(g, "BCSC");
