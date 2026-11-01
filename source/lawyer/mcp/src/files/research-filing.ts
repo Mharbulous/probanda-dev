@@ -148,27 +148,33 @@ export function appendManifest(destinationDir: string, record: unknown): { path:
  * between the scan and the write fails EEXIST and the next attempt re-scans. A missing destination
  * is created when its parent is already in a `6. LAW` tree -- the final folder only.
  *
- * Exactly one of `text` and `fromScratch` is given. `fromScratch` is a file `writeScratch` wrote: its
- * real path must sit directly in the research-agent scratchpad of the matter that owns the
+ * Exactly one of `text`, `fromScratch` and `fromRender` is given. `fromScratch` is a file `writeScratch`
+ * wrote: its real path must sit directly in the research-agent scratchpad of the matter that owns the
  * destination's `6. LAW` tree, and its bytes are copied as `text` is. The scratch file is kept.
+ * `fromRender` is a mockup drafting_forms__render wrote in that matter's 0. DRAFT folder (a research
+ * memo's Writing): its bytes are copied without the mockup's own header, the first `---` block, which
+ * names the matter.
  */
 export function saveAnswer(
   destinationDir: string,
   filename: string,
   text?: string,
-  fromScratch?: string
+  fromScratch?: string,
+  fromRender?: string
 ): { path: string; filename: string; bytes: number; created_dir: boolean; sha256: string } {
   assertBareFilename(filename, "filename");
   const ext = pathWin32.extname(filename);
   if (ext.toLowerCase() !== ".md") {
     throw new DataServerError(`filename must end in .md: ${filename}`, "invalid_filename");
   }
-  if ((text === undefined) === (fromScratch === undefined)) {
-    throw new DataServerError("pass exactly one of text and from_scratch", "invalid_argument");
+  if ([text, fromScratch, fromRender].filter((v) => v !== undefined).length !== 1) {
+    throw new DataServerError("pass exactly one of text, from_scratch and from_render", "invalid_argument");
   }
   let source: Buffer;
   if (fromScratch !== undefined) {
     source = scratchBytes(destinationDir, fromScratch);
+  } else if (fromRender !== undefined) {
+    source = renderBytes(destinationDir, fromRender);
   } else {
     if (typeof text !== "string" || text.length === 0) {
       throw new DataServerError("text must be a non-empty string", "invalid_argument");
@@ -189,14 +195,7 @@ function scratchBytes(destinationDir: string, fromScratch: string): Buffer {
   if (typeof fromScratch !== "string" || !pathWin32.isAbsolute(fromScratch)) {
     throw new DataServerError(`from_scratch must be the absolute path write_scratch returned: ${fromScratch}`, "invalid_path");
   }
-  // The destination may be a final folder still to be created; its parent then anchors the matter.
-  let law = existsSync(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin32.dirname(destinationDir));
-  while (pathWin32.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin32.dirname(law);
-  const root = validateMatterRoot(pathWin32.dirname(law));
-  const draft = findDraftDir(root);
-  if (draft === undefined) {
-    throw new DataServerError(`${root} has no 0. DRAFT folder, so it has no scratchpad`, "draft_dir_missing");
-  }
+  const draft = destinationDraftDir(destinationDir);
   const scratchDir = pathWin32.join(draft, ...SCRATCH_SUBFOLDERS);
   const realScratchDir = canonicalRoot(scratchDir, `the matter has no scratchpad folder: ${scratchDir}`, "not_scratch");
   assertUnprotected(realScratchDir);
@@ -212,6 +211,39 @@ function scratchBytes(destinationDir: string, fromScratch: string): Buffer {
     throw new DataServerError(`from_scratch is empty: ${source}`, "invalid_argument");
   }
   return body;
+}
+
+/** The 0. DRAFT folder of the matter owning `destinationDir`'s `6. LAW` tree. The destination may be a
+ * final folder still to be created; its parent then anchors the matter. Creates nothing. */
+function destinationDraftDir(destinationDir: string): string {
+  let law = existsSync(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin32.dirname(destinationDir));
+  while (pathWin32.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin32.dirname(law);
+  const root = validateMatterRoot(pathWin32.dirname(law));
+  const draft = findDraftDir(root);
+  if (draft === undefined) {
+    throw new DataServerError(`${root} has no 0. DRAFT folder, so it has no scratchpad or mockups`, "draft_dir_missing");
+  }
+  return draft;
+}
+
+/** A mockup's own header: its first `---` block, and the blank lines after it. */
+const MOCKUP_HEADER = /^\uFEFF?---\r?\n[\s\S]*?\r?\n---\r?\n(?:[ \t]*\r?\n)*/;
+
+/** A rendered mockup's bytes less its leading `---` header, refused unless its real path is a non-empty
+ * `.md` file inside the 0. DRAFT folder of the matter owning `destinationDir`'s `6. LAW` tree. */
+function renderBytes(destinationDir: string, fromRender: string): Buffer {
+  if (typeof fromRender !== "string" || !pathWin32.isAbsolute(fromRender) || pathWin32.extname(fromRender).toLowerCase() !== ".md") {
+    throw new DataServerError(`from_render must be the absolute path of the .md mockup drafting_forms__render returned: ${fromRender}`, "invalid_path");
+  }
+  const draft = canonicalRoot(destinationDraftDir(destinationDir), "the 0. DRAFT folder does not resolve", "draft_dir_missing");
+  assertUnprotected(draft);
+  const source = canonicalRoot(fromRender, `from_render not found: ${fromRender}`, "not_found");
+  if (!source.toLowerCase().startsWith(draft.toLowerCase() + "\\") || !statSync(source).isFile()) {
+    throw new DataServerError(`from_render is not a mockup in this matter's ${draft}: ${source}`, "not_render");
+  }
+  const body = readFileSync(source, "utf-8").replace(MOCKUP_HEADER, "");
+  if (body.trim() === "") throw new DataServerError(`from_render is empty: ${source}`, "invalid_argument");
+  return Buffer.from(body, "utf-8");
 }
 
 /**

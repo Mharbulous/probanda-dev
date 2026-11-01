@@ -19,10 +19,12 @@ const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 export interface SaveAnswerArgs {
   destination_dir: string;
   filename: string;
-  /** Exactly one of text and from_scratch. */
+  /** Exactly one of text, from_scratch and from_render. */
   text?: string;
   /** A file write_scratch wrote in the destination matter's scratchpad, copied byte for byte. */
   from_scratch?: string;
+  /** A mockup drafting_forms__render wrote in the destination matter's 0. DRAFT folder, copied less its header. */
+  from_render?: string;
   /** The job's drafting database. With ticket_id and session_token, or none of the three. */
   db_path?: string;
   ticket_id?: number;
@@ -58,7 +60,7 @@ export function lawRelativePath(path: string): string {
 
 export async function saveAnswerTool(args: SaveAnswerArgs, env: NodeJS.ProcessEnv = process.env): Promise<SaveAnswerResult> {
   const job = jobIdentity(TOOL, args);
-  if (job === null) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
+  if (job === null) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch, args.from_render);
   const { dbPath, id, token, claim } = job;
   const held = heldBy(dbPath, token, claim);
   if (submissionDataQuery(dbPath, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
@@ -72,7 +74,7 @@ export async function saveAnswerTool(args: SaveAnswerArgs, env: NodeJS.ProcessEn
   }
 
   requireHeld(TOOL, job);
-  const saved = saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch);
+  const saved = saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch, args.from_render);
   let written: Awaited<ReturnType<typeof submissionDataWriteAll>>;
   try {
     written = await submissionDataWriteAll(

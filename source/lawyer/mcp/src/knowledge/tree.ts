@@ -168,7 +168,7 @@ function treeProblem(skill: string, rest: string[], type: EntryType, layer: Laye
   const noVenue = venue === "_NoVenue";
   if (rest.length === 4 && type === "file") return venueFileProblem(skill, folder, noVenue, layer);
   if (folder === "Locations" || folder === "Judges") return noVenue ? `${folder}\\ is refused under _NoVenue` : null;
-  if (folder === "Documents" && skill === "legal-research") return "/legal-research's tree holds no Documents\\ folder";
+  if (folder === "Documents" && skill === "legal-research" && !noVenue) return "/legal-research's tree holds a Documents\\ folder only under _NoVenue";
   if (folder !== "Documents" && folder !== "Sources") return `"${folder}" is not a venue folder (Documents, Sources, Locations or Judges)`;
   if (rest.length === 4) return null;
   if (rest.length > 5 || type === "dir") return `${folder}\\ holds files only`;

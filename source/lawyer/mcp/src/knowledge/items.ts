@@ -54,7 +54,9 @@ export function blockKindOf(kp: KnowledgePath): { kind: BlockKind | "format"; no
   const noVenue = kp.rest[2] === NO_VENUE;
   const name = kp.rest[kp.rest.length - 1];
   if (kp.skill === "draft" && kp.rest.length === 4 && name === "venue.md") return { kind: "venue", noVenue };
-  if (kp.skill === "draft" && kp.rest.length === 5 && kp.rest[3] === "Documents" && name.endsWith(".md")) return { kind: "type", noVenue };
+  // A type file sits in /draft's Documents\, or in /legal-research's under _NoVenue (the research memo).
+  const typeTree = kp.skill === "draft" || (kp.skill === "legal-research" && noVenue);
+  if (typeTree && kp.rest.length === 5 && kp.rest[3] === "Documents" && name.endsWith(".md")) return { kind: "type", noVenue };
   if (kp.skill === "publish" && kp.rest.length === 4 && name === "format.md") return { kind: "format", noVenue };
   return null;
 }

@@ -104,7 +104,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "Create one Writing (a filings row) on a proceeding: the one door for a new Writing, because only this tool writes " +
         "its stored layout (layout_snapshot) and needs_forum_parts, and the needs-forum guard reads both at INSERT. " +
         "It resolves the type file from /draft's knowledge tree by `tree` (country, jurisdiction, and a venue folder or " +
-        "_NoVenue) and `kind` (a row's file stem or alias in that folder's kinds index, naming exactly one row by itself; for a bespoke type " +
+        "_NoVenue; under _NoVenue /legal-research's tree too, which holds the research memo) and `kind` (a row's file stem or alias in that folder's kinds index, naming exactly one row of the trees read by itself; for a bespoke type " +
         "the Writing stores the alias drafting_forms__render accepts, so `notice-of-application` is stored as `notice_of_application`), reads it and the venue's venue.md with the firm's " +
         "overlay and corrections merged, validates the layout, records each cited rule_ref's passage hash, and inserts the row " +
         "in one transaction. `recipient` is required under _NoVenue, where it must equal the matched row's recipient, and refused elsewhere. A venue key must equal the " +

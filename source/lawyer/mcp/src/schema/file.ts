@@ -497,7 +497,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
       name: "research_filing__save_answer",
       description:
         "Save `text` as a new `.md` file in a matter `6. LAW` folder, ending in a generated `## Legend` of the work markers it prints, which replaces any `## Legend` at its end; never overwrites. `filename` is a bare `.md` name; if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `destination_dir` is an absolute host path inside a `6. LAW` tree; if missing, it is created when its parent is already in that tree (the final folder only). Returns {path, filename, bytes, created_dir, sha256}, `sha256` being the hex digest of the bytes written. " +
-        "Pass `from_scratch` instead of `text` to copy a file `research_filing__write_scratch` wrote: the absolute path it returned. Its bytes are saved as `text` is and the scratch file is kept. It must sit directly in the research-agent scratchpad of the matter whose `6. LAW` tree holds `destination_dir`; anywhere else is refused `not_scratch`, nothing written. Exactly one of `text` and `from_scratch`; both or neither is refused `invalid_argument`. " +
+        "Pass `from_scratch` instead of `text` to copy a file `research_filing__write_scratch` wrote: the absolute path it returned. Its bytes are saved as `text` is and the scratch file is kept. It must sit directly in the research-agent scratchpad of the matter whose `6. LAW` tree holds `destination_dir`; anywhere else is refused `not_scratch`, nothing written. Pass `from_render` instead to file a research memo's Writing: the absolute path of the `.md` mockup `drafting_forms__render` returned, inside the 0. DRAFT folder of the same matter; it is saved without the mockup's own header (its first `---` block, which names the matter), and anywhere else is refused `not_render`. Exactly one of `text`, `from_scratch` and `from_render`; more or none is refused `invalid_argument`. " +
         "When the answer serves a job this session holds, also pass `db_path`, `ticket_id` and `session_token` (all three or none), with the `claim_no` this session's `drafting_data__assign_job` returned: the save is then recorded against the job, so its card lists the answer and its idle clock restarts, and the result carries `job: {ticket_id, recorded, note}`. Refused before anything is written: `invalid_job`, `invalid_ticket_id`, `invalid_session_token`, `invalid_claim_no`, `stale_claim` (work begun under another claim of the job), `not_found` (no such job), `schema_below_v52` and `not_held` (the job is not this session's under that claim: taken over, released, shelved or completed; report it and stop, saving nothing for it). `recorded: false` means a take-over landed during the save: the file is saved, so report it and stop. `record_failed` means the file was saved but the record was not: never save it again.",
       inputSchema: {
         type: "object",
@@ -506,6 +506,7 @@ export function fileToolDefinitions(): ToolDefinition[] {
           filename: { type: "string" },
           text: { type: "string" },
           from_scratch: { type: "string" },
+          from_render: { type: "string" },
           ...JOB_PROPERTIES,
         },
         required: ["destination_dir", "filename"],

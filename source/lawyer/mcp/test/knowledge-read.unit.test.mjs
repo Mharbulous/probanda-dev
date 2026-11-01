@@ -81,13 +81,14 @@ test("a path breaking the folder grammar is refused, naming the rule", (t) => {
     ["publish/CAN/BC/BCSC/venue.md", /venue\.md sits only in \/draft's tree/],
     ["draft/CAN/BC/BCSC/Notes/x.md", /not a venue folder/],
     ["draft/CAN/BC/BCSC/Documents/x.txt", /holds \.md files only/],
-    ["legal-research/CAN/BC/BCSC/Documents/x.md", /holds no Documents/],
+    ["legal-research/CAN/BC/BCSC/Documents/x.md", /holds a Documents\\ folder only under _NoVenue/],
   ]) {
     const err = readError(f, path);
     assert.equal(err.code, "grammar_violation", path);
     assert.match(err.message, rule, path);
   }
   assert.equal(readError(f, "draft/CAN/BC/BCSC/venue.md").code, "not_found");
+  assert.equal(readError(f, "legal-research/CAN/BC/_NoVenue/Documents/x.md").code, "not_found");
 });
 
 test("a missing case data root fails hard rather than reading the shipped layer alone", (t) => {

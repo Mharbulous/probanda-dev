@@ -54,20 +54,39 @@ export interface ComposedSnapshot {
  * the last two being the knowledge paths the filed render's confirmation gate reads again (a
  * _NoVenue Writing's tree key is stored nowhere else). Pure apart from the tree read. Fails hard. */
 export function composeLayoutSnapshot(key: TreeKey, seams: KnowledgeSeams = {}): ComposedSnapshot {
-  const folder = `draft/${key.country}/${key.jurisdiction}/${key.venue}`;
+  const tail = `${key.country}/${key.jurisdiction}/${key.venue}`;
+  // /draft's tree, and under _NoVenue also /legal-research's, which holds the research memo so a
+  // researcher install saves one without litigator. A tree not installed, or with no kinds index
+  // here, is passed over while the other reads.
+  const trees = key.venue === NO_VENUE ? ["draft", "legal-research"] : ["draft"];
+  const read: { folder: string; kinds: KindsView["kinds"] }[] = [];
+  let firstError: unknown = null;
+  for (const tree of trees) {
+    const at = `${tree}/${tail}`;
+    try {
+      read.push({ folder: at, kinds: (knowledgeRead(`${at}/Documents/kinds.json`, seams).view as KindsView).kinds });
+    } catch (err) {
+      if (!(err instanceof DataServerError) || !["index_missing", "skills_root_missing"].includes(err.code ?? "")) throw err;
+      firstError ??= err;
+    }
+  }
+  if (read.length === 0) throw firstError;
   // Exact match only: the stored kind is an alias (or the file stem) the composing skill already resolved.
-  const { kinds } = knowledgeRead(`${folder}/Documents/kinds.json`, seams).view as KindsView;
-  const rows = kinds.filter((row) => row.file === key.kind || row.aliases.some((alias) => alias.name === key.kind));
+  const rows = read.flatMap(({ folder, kinds }) =>
+    kinds.filter((row) => row.file === key.kind || row.aliases.some((alias) => alias.name === key.kind)).map((row) => ({ folder, row }))
+  );
   if (rows.length !== 1) {
-    const candidates = rows.map((row) => `${row.file}${row.recipient ? ` (recipient ${row.recipient})` : ""}`);
-    const accepted = kinds.flatMap((row) => [row.file, ...row.aliases.map((alias) => alias.name)]);
+    const where = read.map(({ folder }) => `${folder}/Documents/kinds.json`).join(" and ");
+    const candidates = rows.map(({ row }) => `${row.file}${row.recipient ? ` (recipient ${row.recipient})` : ""}`);
+    const accepted = read.flatMap(({ kinds }) => kinds.flatMap((row) => [row.file, ...row.aliases.map((alias) => alias.name)]));
     throw new DataServerError(
-      `kind "${key.kind}" matches ${rows.length} rows of ${folder}/Documents/kinds.json; exactly one is required ` +
+      `kind "${key.kind}" matches ${rows.length} rows of ${where}; exactly one is required ` +
         (candidates.length > 0 ? `(candidates: ${candidates.join(", ")})` : `(accepted kinds: ${accepted.length > 0 ? accepted.join(", ") : "none"})`),
       "kind_unresolved"
     );
   }
-  const typeFile = rows[0].file;
+  const { folder } = rows[0];
+  const typeFile = rows[0].row.file;
 
   const passage_hashes: Record<string, string> = {};
   const blockOf = (path: string, kind: BlockKind): KnowledgeReadResult => {
@@ -113,8 +132,8 @@ export function composeLayoutSnapshot(key: TreeKey, seams: KnowledgeSeams = {}):
     layout_snapshot: JSON.stringify(stored),
     type_file: typeFile,
     stored,
-    recipient: rows[0].recipient ?? null,
-    aliases: rows[0].aliases.map((alias) => alias.name),
+    recipient: rows[0].row.recipient ?? null,
+    aliases: rows[0].row.aliases.map((alias) => alias.name),
     learned: typeRead.learned === true,
   };
 }

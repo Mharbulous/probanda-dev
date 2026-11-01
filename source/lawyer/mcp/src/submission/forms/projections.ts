@@ -15,7 +15,7 @@
 import { DataServerError } from "../../errors.js";
 import { readFirmProfile } from "../../tools/practice/firm-profile.js";
 import { submissionDataQuery } from "../backend.js";
-import { scrutinyFailedTag } from "./law-statement-line.js";
+import { CITATION_MISSING, lawStatementCitationLine, lawStatementMarkers, scrutinyFailedTag } from "./law-statement-line.js";
 import { clauseMarkers, dedupeLineMarkers, gapMarker, printMarkerSets, unservedPetitumMarker, type ClauseRow } from "./markers.js";
 import { lawItem, recordCriterionGlyphs, recordGlyphs, recordJurisdictionLadder } from "./proposal-inventory.js";
 import {
@@ -38,7 +38,7 @@ import {
   type RenderContext,
 } from "./render-vaniac-submissions.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
-import { captionHeadingFor, clientParty, opposingPartyIds } from "./query.js";
+import { captionHeadingFor, clientParty, fetchFilingLaw, opposingPartyIds, type FilingLawRow } from "./query.js";
 import { BLANK_UNDERLINE, pluralizeRole, styleOfProceedingCaption } from "./components.js";
 import { formatFlag, proseFormatRules, REFUSED_FORMAT_RULES } from "./prose-format.js";
 import { hasTable } from "../schema-capabilities.js";
@@ -162,15 +162,39 @@ function ownLines(slot: string): Projection {
   };
 }
 
+/** The comment that ends a prose paragraph standing for one statement of law the Writing cites
+ * (filing_law): a research memo's item (shared/research-memo-template.md). */
+const STATEMENT_REF = /\s*<!-- statement_of_law_id (\d+) -->\s*$/;
+
+/** An item paragraph's lines after its summary: the statement's verbatim excerpt as a block quote,
+ * then its citation line with the statement-line markers and the id comment, so a paragraph number
+ * names one stored row. The markers are not recorded here: the header's "Authorities cited" line
+ * records each linked statement once (render-general.ts). A statement the Writing does not cite
+ * prints a gap line instead. */
+function itemLines(ctx: RenderContext, state: ProjectionState, id: number, law: Map<number, FilingLawRow>): string {
+  const row = law.get(id);
+  if (row === undefined) return gap(ctx, state, `statement_of_law ${id} is not cited by this Writing`);
+  const quote = (row.excerpt ?? "").trim() === "" ? [] : [...row.excerpt!.trim().split(/\r?\n/).map((l) => `> ${l}`.trimEnd()), ">"];
+  const cite = [lawStatementCitationLine(row) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row), `<!-- statement_of_law_id ${id} -->`].filter(Boolean).join(" ");
+  return [...quote, cite].join("\n");
+}
+
 function slot(ctx: RenderContext, name: string, part: LayoutPart, state: ProjectionState): string[] {
   const row = state.prose.get(name);
   if (row === undefined || row.text.trim() === "") return [notWritten(ctx, name, state)];
+  let law: Map<number, FilingLawRow> | null = null;
   const paragraphs = row.text
     .trim()
     .split(/\r?\n[ \t]*\r?\n/)
     .map((p) => p.trim())
     .filter((p) => p !== "")
-    .map((p) => checkFormat(ctx, name, row.id, p.split(/\r?\n/), state).join("\n"));
+    .map((p) => {
+      const ref = STATEMENT_REF.exec(p);
+      const text = checkFormat(ctx, name, row.id, (ref ? p.slice(0, ref.index) : p).split(/\r?\n/), state).join("\n");
+      if (!ref) return text;
+      law ??= new Map(fetchFilingLaw(ctx.dbPath, ctx.filing.id).map((r) => [r.statement_id, r]));
+      return `${text}\n\n${itemLines(ctx, state, Number(ref[1]), law)}`;
+    });
   if (part.paragraph_numbering === "none") return spaced(withReview(ctx, name, row.id, paragraphs));
   let n = part.paragraph_numbering === "restart" ? 0 : state.paragraph;
   const numbered = paragraphs.map((p) => `${++n}. ${p}`);
