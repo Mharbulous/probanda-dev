@@ -85,6 +85,42 @@ Done. Two Cowork sessions in a row: the second restores the first's state withou
 by Brahm, and its `te status --json` shows the first session's turns and ledger lines.
 ```
 
+## Option B, changed (asks at prompt time)
+
+Brahm's ruling of 2026-10-31, after Option B failed B4 (see the spec). B1 and B2 stand as passed,
+and B3's failure stands. In 0.2.4 the Stop hook asked for each save by blocking the stop, and
+SessionStart asked for the restore; the model skipped too many. In spike S2 a UserPromptSubmit
+ask was done at 10 of 10 prompts.
+
+```text
+OPTION B, CHANGED: the carry asks come with the prompt
+
+B5. Probe patch 0.2.6 (fork f677470). Only the UserPromptSubmit hook command sets
+    TE_CARRY=probe. A session's first prompt asks, before the reply, for the restore. Every
+    later prompt asks, before the reply, for one save of what is new since the last ask (the
+    turns closed so far). Stop and SessionStart ask nothing. Each save echoes
+    "te-carry: saved n=<n>".
+    Run: one new Cowork session in te-cowork-test, ten ordinary prompts (five needing no tool,
+    five needing the shell or a file tool, as in S2), then a second new session to check that
+    the restore brings back the first session's saves.
+    Record, per ask, whether the model did it and what the save added, measured from the save
+    files on the PC as in B4. Also record whether a PostToolUse event for the PC shell tool
+    reaches the plugin's log (the build needs it, below).
+    PASS: at least 9 of 10 asks done (the restore plus nine saves), and a median of at most
+    2,000 effective tokens per save. The test saves at every prompt, as B4 did, so the result
+    compares with B4 and the 2,000 applies as ruled. How often the build saves is decided from
+    B5's cost per turn.
+
+Verdict. The changed Option B passes when B1, B2 and B5 pass. Write "Option B verdict
+(changed): PASS" or "Option B verdict (changed): FAIL (B5)" in the spec's "Persistence
+(Option B)" section, with the date and evidence. On FAIL, Brahm rules on Option A.
+
+Build on PASS: Option B's Build, with the asks at prompt time, and no unsaved delta lost. The
+mark advances only when a PostToolUse hook sees "te-carry: saved n=<n>" in the PC shell's
+output. If PostToolUse does not reach the plugin for that tool in Cowork, each save carries
+everything since the last save that a restore found.
+```
+
 ## Option A
 
 ```text

@@ -34,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
+            "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off TE_CARRY=probe \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 20
           }
         ]

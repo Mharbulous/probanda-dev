@@ -6,7 +6,8 @@
                       plugin (`history`); with `repomap` on, refresh a stale map in the
                       background
     UserPromptSubmit  open a prompt-turn for the loop guard; on a session's first prompt, add
-                      the repository map (`repomap=on`)
+                      the repository map (`repomap=on`); with `TE_CARRY=probe`, ask the model
+                      to restore the saved state (first prompt) or save what is new (later ones)
     PostToolUse       fold the call into the turn's guard; a redirect when it first says the
                       turn is stuck, then a notice to the person saying how to stop it
     Stop              close the turn; an ended-green turn feeds the repository's envelope
@@ -161,9 +162,6 @@ class LiveController:
                                                 "SessionStart", "cached"))
                 s["repomap_done"] = True
 
-        if carry.enabled(self.ctx.env) and self.host.name == "claude":
-            outputs.append(self.host.context("SessionStart", carry.restore_ask(self.ctx.root)))
-
         if seen != seen_before:
             self.store.write("notices.json", seen)
         self._save(s)
@@ -249,8 +247,9 @@ class LiveController:
         return summary
 
     def user_prompt(self):
-        if self.cfg.loopguard == "off" and not (self.cfg.repomap == "on"
-                                             and self.host.prompt_context):
+        carrying = carry.enabled(self.ctx.env) and self.host.name == "claude"
+        if self.cfg.loopguard == "off" and not carrying and not (self.cfg.repomap == "on"
+                                                                 and self.host.prompt_context):
             return {}
         s = self._session()
         outputs = []
@@ -267,6 +266,18 @@ class LiveController:
             # outcome is unknown, so it is recorded but does not feed the envelope.
             self._close_turn(s, stopped_normally=False)
             s["turn"] = loopguard.TurnGuard(turn_key=self.host.turn_key(self.p)).to_dict()
+        if carrying:
+            # Asked before the reply: the first prompt restores, each later one saves what the
+            # turns closed so far added. A Stop-time ask was skipped too often (B4).
+            if not s.get("carry_restored"):
+                s["carry_restored"] = True
+                outputs.append(self.host.context("UserPromptSubmit",
+                                                 carry.restore_ask(self.ctx.root)))
+            else:
+                n, ask = carry.save_ask(self.store, self.sid)
+                if ask:
+                    self._log("carry_ask", n=n, chars=len(ask))
+                    outputs.append(self.host.context("UserPromptSubmit", ask))
         self._save(s)
         return merge_outputs(*outputs) if outputs else {}
 
@@ -279,13 +290,7 @@ class LiveController:
             if summary:
                 self._log("turn", **summary)
             self._save(s)
-        if not (carry.enabled(self.ctx.env) and self.host.name == "claude"):
-            return {}
-        n, ask = carry.save_ask(self.store, self.sid)
-        if not ask:
-            return {}
-        self._log("carry_ask", n=n, chars=len(ask))
-        return {"decision": "block", "reason": ask}
+        return {}
 
     # ---- PostToolUse ---------------------------------------------------------------------
     def _judge(self, thr, envelope):
