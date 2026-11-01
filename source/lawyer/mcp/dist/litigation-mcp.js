@@ -1,4 +1,4 @@
-// build-stamp: 02cfdc385964
+// build-stamp: 60a4a913b5a2
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "02cfdc385964";
+var BUILD_STAMP = false ? null : "60a4a913b5a2";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -78496,7 +78496,7 @@ function fileToolDefinitions() {
     },
     {
       name: "research_filing__save_answer",
-      description: "Save `text` as a new `.md` file in a matter `6. LAW` folder, ending in a generated `## Legend` of the work markers it prints, which replaces any `## Legend` at its end; never overwrites. `filename` is a bare `.md` name; if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `destination_dir` is an absolute host path inside a `6. LAW` tree; if missing, it is created when its parent is already in that tree (the final folder only). Returns {path, filename, bytes, created_dir, sha256}, `sha256` being the hex digest of the bytes written. Pass `from_scratch` instead of `text` to copy a file `research_filing__write_scratch` wrote: the absolute path it returned. Its bytes are saved as `text` is and the scratch file is kept. It must sit directly in the research-agent scratchpad of the matter whose `6. LAW` tree holds `destination_dir`; anywhere else is refused `not_scratch`, nothing written. Pass `from_render` instead to file a research memo's Writing: the absolute path of the `.md` mockup `drafting_forms__render` returned, inside the 0. DRAFT folder of the same matter; it is saved without the mockup's own header (its first `---` block, which names the matter) and the title line after it, and anywhere else is refused `not_render`. Exactly one of `text`, `from_scratch` and `from_render`; more or none is refused `invalid_argument`. When the answer serves a job this session holds, also pass `db_path`, `ticket_id` and `session_token` (all three or none), with the `claim_no` this session's `drafting_data__assign_job` returned: the save is then recorded against the job, so its card lists the answer and its idle clock restarts, and the result carries `job: {ticket_id, recorded, note}`. Refused before anything is written: `invalid_job`, `invalid_ticket_id`, `invalid_session_token`, `invalid_claim_no`, `stale_claim` (work begun under another claim of the job), `not_found` (no such job), `schema_below_v52` and `not_held` (the job is not this session's under that claim: taken over, released, shelved or completed; report it and stop, saving nothing for it). `recorded: false` means a take-over landed during the save: the file is saved, so report it and stop. `record_failed` means the file was saved but the record was not: never save it again.",
+      description: "Save `text` as a new `.md` file in a matter `6. LAW` folder, ending in a generated `## Legend` of the work markers it prints, which replaces any `## Legend` at its end; never overwrites. `filename` is a bare `.md` name with none of the characters Windows forbids in a file name (`< > : \" | ? *`, otherwise `invalid_filename`); if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `destination_dir` is an absolute host path inside a `6. LAW` tree; if missing, it is created when its parent is already in that tree (the final folder only). Returns {path, filename, bytes, created_dir, sha256}, `sha256` being the hex digest of the bytes written. Pass `from_scratch` instead of `text` to copy a file `research_filing__write_scratch` wrote: the absolute path it returned. Its bytes are saved as `text` is and the scratch file is kept. It must sit directly in the research-agent scratchpad of the matter whose `6. LAW` tree holds `destination_dir`; anywhere else is refused `not_scratch`, nothing written. Pass `from_render` instead to file a research memo's or case brief's Writing: the absolute path of the `.md` mockup `drafting_forms__render` returned, inside the 0. DRAFT folder of the same matter; it is saved without the mockup's own header (its first `---` block, which names the matter) and the title line after it, and anywhere else is refused `not_render`. A memo's copy also leaves out the mockup's mockup-only lines, and the result returns them as `mockup_only_lines` when there are any. A case brief's mockup is also saved without its work markers, trace comments and `## Legend`, and one still holding a gap line (a slot not written, an item its Writing does not cite, or a Holding, Ratio or Obiter item but a `None.` without its closing `statement_of_law_id` comment, its passage or its pinpoint) is refused `brief_incomplete`, nothing written. Exactly one of `text`, `from_scratch` and `from_render`; more or none is refused `invalid_argument`. When the answer serves a job this session holds, also pass `db_path`, `ticket_id` and `session_token` (all three or none), with the `claim_no` this session's `drafting_data__assign_job` returned: the save is then recorded against the job, so its card lists the answer and its idle clock restarts, and the result carries `job: {ticket_id, recorded, note}`. Refused before anything is written: `invalid_job`, `invalid_ticket_id`, `invalid_session_token`, `invalid_claim_no`, `stale_claim` (work begun under another claim of the job), `not_found` (no such job), `schema_below_v52` and `not_held` (the job is not this session's under that claim: taken over, released, shelved or completed; report it and stop, saving nothing for it). `recorded: false` means a take-over landed during the save: the file is saved, so report it and stop. `record_failed` means the file was saved but the record was not: never save it again.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78514,7 +78514,7 @@ function fileToolDefinitions() {
     },
     {
       name: "research_filing__write_scratch",
-      description: 'Save the research agent\'s internal notes: `text` byte-for-byte as a new `.md` file in `<matter_root>\\<its one 0. DRAFT* folder>\\AI Scratchpad\\research-agent\\`; never overwrites. `matter_root` is the absolute host path of the matter folder holding `probanda.json`. `filename` is a bare `.md` name; if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `AI Scratchpad` and `research-agent` are created when absent (`created_dir` true); the 0. DRAFT folder never is. Refused, nothing written: `invalid_root` (not absolute, missing, or no probanda.json), `draft_dir_missing` (no 0. DRAFT folder), `draft_dir_ambiguous` (two or more), `protected` (a privileged or disclosed tree), `invalid_filename`, `invalid_argument` (empty text), `coverage_line_malformed` (with `kind` "research-notes": the line starting `**Coverage:**` or `case data:` is missing or does not match the fixed six-segment shape; the message names each bad segment and its expected form; fix the line and save again). Returns {path, filename, bytes, created_dir}.' + JOB_ACTIVITY,
+      description: 'Save the research agent\'s internal notes: `text` byte-for-byte as a new `.md` file in `<matter_root>\\<its one 0. DRAFT* folder>\\AI Scratchpad\\research-agent\\`; never overwrites. `matter_root` is the absolute host path of the matter folder holding `probanda.json`. `filename` is a bare `.md` name; if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `AI Scratchpad` and `research-agent` are created when absent (`created_dir` true); the 0. DRAFT folder never is. Refused, nothing written: `invalid_root` (not absolute, missing, or no probanda.json), `draft_dir_missing` (no 0. DRAFT folder), `draft_dir_ambiguous` (two or more), `protected` (a privileged or disclosed tree), `invalid_filename` (not a bare `.md` name, or holding a character Windows forbids in a file name), `invalid_argument` (empty text), `coverage_line_malformed` (with `kind` "research-notes": the line starting `**Coverage:**` or `case data:` is missing or does not match the fixed six-segment shape; the message names each bad segment and its expected form; fix the line and save again). Returns {path, filename, bytes, created_dir}.' + JOB_ACTIVITY,
       inputSchema: {
         type: "object",
         properties: {
@@ -78677,7 +78677,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("create_writing"),
-      description: "Create one Writing (a filings row) on a proceeding: the one door for a new Writing, because only this tool writes its stored layout (layout_snapshot) and needs_forum_parts, and the needs-forum guard reads both at INSERT. It resolves the type file from /draft's knowledge tree by `tree` (country, jurisdiction, and a venue folder or _NoVenue; under _NoVenue /legal-research's tree too, which holds the research memo) and `kind` (a row's file stem or alias in that folder's kinds index, naming exactly one row of the trees read by itself; for a bespoke type the Writing stores the alias drafting_forms__render accepts, so `notice-of-application` is stored as `notice_of_application`), reads it and the venue's venue.md with the firm's overlay and corrections merged, validates the layout, records each cited rule_ref's passage hash, and inserts the row in one transaction. `recipient` is required under _NoVenue, where it must equal the matched row's recipient, and refused elsewhere. A venue key must equal the proceeding's forum exactly (forum_mismatch); a _NoVenue key fits any proceeding, forum or none. The signer defaults to this machine's `person` when the firm roster marks that person an active lawyer; a passed signer_key must be one; a type declaring signer: party takes signer_party_id, a party of the proceeding. Refusals write nothing: kind_unresolved, recipient_mismatch, invalid_layout (an unknown part source, a needs-forum type under _NoVenue), projection_not_built, forum_mismatch, needs_forum, invalid_signer. On a proceeding's first Writing the same transaction moves every draft attached to the proceeding's own Milestone (a client letter or reply, ADR 0042) onto the new Writing's board, which takes that board's place, so each stays on one board. Returns filing_id, needs_forum_parts, the stored layout and venue blocks, the signer, type_file, venue_file, learned and attachments_moved (how many drafts it moved; 0 on a database below schema v67). A Milestone with no Writing is never created here: its kind is refused with reserved_kind, and drafting_data__create_milestone creates it.",
+      description: "Create one Writing (a filings row) on a proceeding: the one door for a new Writing, because only this tool writes its stored layout (layout_snapshot) and needs_forum_parts, and the needs-forum guard reads both at INSERT. It resolves the type file from /draft's knowledge tree by `tree` (country, jurisdiction, and a venue folder or _NoVenue; under _NoVenue /legal-research's tree too, which holds the research memo) and `kind` (a row's file stem or alias in that folder's kinds index, naming exactly one row of the trees read by itself; for a bespoke type the Writing stores the alias drafting_forms__render accepts, so `notice-of-application` is stored as `notice_of_application`), reads it and the venue's venue.md with the firm's overlay and corrections merged, validates the layout, records each cited rule_ref's passage hash, and inserts the row in one transaction. `recipient` is required under _NoVenue, where it must equal the matched row's recipient, and refused elsewhere. A venue key must equal the proceeding's forum exactly (forum_mismatch); a _NoVenue key fits any proceeding, forum or none. The signer defaults to this machine's `person` when the firm roster marks that person an active lawyer; a passed signer_key must be one; a type declaring signer: party takes signer_party_id, a party of the proceeding. Refusals write nothing: kind_unresolved, recipient_mismatch, invalid_layout (an unknown part source, a needs-forum type under _NoVenue), projection_not_built, forum_mismatch, needs_forum, invalid_signer. On a proceeding's first Writing other than a research memo or case brief, which has no board, the same transaction moves every draft attached to the proceeding's own Milestone (a client letter or reply, ADR 0042) onto the new Writing's board, which takes that board's place, so each stays on one board. Returns filing_id, needs_forum_parts, the stored layout and venue blocks, the signer, type_file, venue_file, learned and attachments_moved (how many drafts it moved; 0 on a database below schema v67). A Milestone with no Writing is never created here: its kind is refused with reserved_kind, and drafting_data__create_milestone creates it.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78708,7 +78708,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("create_milestone"),
-      description: "Create one Milestone with no Writing on a proceeding: the one door for a board that holds work no Writing carries, such as finding, stamping or scanning a paper original. It is not a Writing and is never called one. `title` is the board's name in the practitioner's own words. The proceeding must already have a Writing: one with none keeps its own Milestone, which already holds jobs with no Writing, and the call is refused with no_writing. The board has a Milestone page (`Milestone <id>.html`) and jobs, and never a mockup, a Writing folder, a view page, completion criteria, Proposals or ingest inputs; this tool writes no job. It shows only the jobs and loose threads whose filing_id is the returned filing_id, so a job with no filing_id stays on the Writings' boards. Its state is Open, or Closed once it is retired. Refusals write nothing: invalid_title (a blank title), no_writing. Opening or closing one bumps the database revision, so each Writing's mockups read stale once. Returns filing_id, the id drafting_forms__render, drafting_forms__board_card and each job's filing_id take for this board, proceeding_id and title.",
+      description: "Create one Milestone with no Writing on a proceeding: the one door for a board that holds work no Writing carries, such as finding, stamping or scanning a paper original. It is not a Writing and is never called one. `title` is the board's name in the practitioner's own words. The proceeding must already have a Writing other than a research memo or case brief: one with none keeps its own Milestone, which already holds jobs with no Writing, and the call is refused with no_writing. The board has a Milestone page (`Milestone <id>.html`) and jobs, and never a mockup, a Writing folder, a view page, completion criteria, Proposals or ingest inputs; this tool writes no job. It shows only the jobs and loose threads whose filing_id is the returned filing_id, so a job with no filing_id stays on the Writings' boards. Its state is Open, or Closed once it is retired. Refusals write nothing: invalid_title (a blank title), no_writing. Opening or closing one bumps the database revision, so each Writing's mockups read stale once. Returns filing_id, the id drafting_forms__render, drafting_forms__board_card and each job's filing_id take for this board, proceeding_id and title.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78723,7 +78723,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("merge_milestones"),
-      description: "Merge two Milestones whose goals the practitioner has confirmed overlap or cohere (docs/ADRs/0010). First show the practitioner both boards' statements of goals (drafting_forms__board_card's goals lane) side by side, propose one combined goal as the reply's only fenced code block, and in the same turn ask whether to merge them with that goal, saying that each Writing stays a separate filing with its own documents and numbering and that only the Milestone page, view pages and goal combine; call this only after their next turn is a bare yes, or their own goal sentence, and pass confirmed: true. goal_statement is the merged board's one goal, the fenced block character for character or the practitioner's sentence; it is written as confirmed and passes the practitioner-words gate as drafting_data__set_board_goal's confirmed statement does. goal_description, only with it, is the line the closed Goal card shows. A goal naming drafting, or a description joining several goals, is still written, and the note ends with a framing warning to relay once. Without goal_statement the board's goal status is needs_consolidation, and the next /draft opening asks once for one combined goal. Either way every earlier statement of both boards is kept under the survivor's `merged` as history only, never drawn on the Goal card, board_summary or board_card once the board holds one goal. boards names the two, each by exactly one of filing_id (a Writing's board or a Milestone with no Writing) and proceeding_id (a pre-filing proceeding's board). Boards in different proceedings may merge. The survivor is a Writing's board over a Milestone with no Writing over a pre-filing board, and within a kind the lower id. The survivor's page then draws the merged boards as one board: one Completion Criteria card and one set of lanes holding every board's jobs, each job naming the Writing it serves. board_summary reads that one board by any of its Writings' ids, and board_card by the survivor's (an absorbed board's refuses board_merged). Criteria combine by id and read unmet while any Writing's is unmet; each Writing's own gate still blocks only its own filing. One set of view pages spans all its Writings, named by the survivor's id; the absorbed board's pages move to TRASH at the next page write. Boards it had absorbed move to the survivor. No job, loose thread or Writing row is written. Once a pre-filing board is merged, its proceeding's first Writing joins the survivor. One db_meta row per absorbed board, key `board_member:filing:<id>` or `board_member:proceeding:<id>`. Refusals write nothing: invalid_boards, invalid_board, not_confirmed, invalid_session_token, invalid_statement, invalid_description, not_found, board_retired, proceeding_has_writing, board_merged (name its survivor instead), same_board. Returns survivor, absorbed (each {filing_id, proceeding_id}), goal_status (confirmed or needs_consolidation) and a note.",
+      description: "Merge two Milestones whose goals the practitioner has confirmed overlap or cohere (docs/ADRs/0010). First show the practitioner both boards' statements of goals (drafting_forms__board_card's goals lane) side by side, propose one combined goal as the reply's only fenced code block, and in the same turn ask whether to merge them with that goal, saying that each Writing stays a separate filing with its own documents and numbering and that only the Milestone page, view pages and goal combine; call this only after their next turn is a bare yes, or their own goal sentence, and pass confirmed: true. goal_statement is the merged board's one goal, the fenced block character for character or the practitioner's sentence; it is written as confirmed and passes the practitioner-words gate as drafting_data__set_board_goal's confirmed statement does. goal_description, only with it, is the line the closed Goal card shows. A goal naming drafting, or a description joining several goals, is still written, and the note ends with a framing warning to relay once. Without goal_statement the board's goal status is needs_consolidation, and the next /draft opening asks once for one combined goal. Either way every earlier statement of both boards is kept under the survivor's `merged` as history only, never drawn on the Goal card, board_summary or board_card once the board holds one goal. boards names the two, each by exactly one of filing_id (a Writing's board or a Milestone with no Writing) and proceeding_id (a pre-filing proceeding's board). Boards in different proceedings may merge. The survivor is a Writing's board over a Milestone with no Writing over a pre-filing board, and within a kind the lower id. The survivor's page then draws the merged boards as one board: one Completion Criteria card and one set of lanes holding every board's jobs, each job naming the Writing it serves. board_summary reads that one board by any of its Writings' ids, and board_card by the survivor's (an absorbed board's refuses board_merged). Criteria combine by id and read unmet while any Writing's is unmet; each Writing's own gate still blocks only its own filing. One set of view pages spans all its Writings, named by the survivor's id; the absorbed board's pages move to TRASH at the next page write. Boards it had absorbed move to the survivor. No job, loose thread or Writing row is written. Once a pre-filing board is merged, its proceeding's first Writing joins the survivor. One db_meta row per absorbed board, key `board_member:filing:<id>` or `board_member:proceeding:<id>`. Refusals write nothing: invalid_boards, invalid_board, not_confirmed, invalid_session_token, invalid_statement, invalid_description, not_found, board_retired, research_writing (a research memo or case brief has no board to merge), proceeding_has_writing, board_merged (name its survivor instead), same_board. Returns survivor, absorbed (each {filing_id, proceeding_id}), goal_status (confirmed or needs_consolidation) and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78798,7 +78798,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("create_job"),
-      description: "Create a job (a tickets row) in one call and one transaction: the row, its steps (ordinal 1, 2, 3... in order, at least one), scope rows, the edges from existing jobs it waits on (blocks), its conflict pairs, its conversion records (proposal_keys, copied from the card) and the loose thread it consumes (seed_id), under the duplicate guard its kind takes. Each guard is /drafting-data's documented condition, tested before the row exists, so it never matches the job it guards: none (an unguarded create); live_key (a queued or wip, unshelved job holds one of proposal_keys: the fast path and a job outlined from Proposals, jobs-create.md \xA73); never_held_key (any job not deleted ever held one of proposal_keys: intake, \xA73e); title_live_with_step (a queued or wip, unshelved job on the Writing with one of this call's titles already holds a step: counsel's review, jobs-stock.md \xA73c, whose second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this title and one of these step texts: a pass finding, \xA73g); scrutiny_statement (a queued or wip, unshelved 'Review scrutiny finding: ' job is scoped to the statement in scope: \xA73d); authority_brief (a queued or wip, unshelved 'Brief the case: ' job in the proceeding is scoped to the one authority in scope: \xA73n); holder_lock (held_ticket_id no longer carries session_token under claim_no: a spin-off blocker, \xA73f, which copies the held job's scope). filing_id is the Writing's or Milestone's id, or null for a proceeding-scoped job, and is never left out. priority is an integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Milestone's job, the Milestone's alone; on a proceeding-scoped job, every queued job in the proceeding. created_by is this session's session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is the job that fired the guard, when one is still there). It moves no revision. Refusals write nothing: invalid_<field>, and an error from the database (a missing blocker, a work job with no billing_anchor). Returns outcome, ticket_id, companion_ids, priority, holder_id and a note.",
+      description: "Create a job (a tickets row) in one call and one transaction: the row, its steps (ordinal 1, 2, 3... in order, at least one), scope rows, the edges from existing jobs it waits on (blocks), its conflict pairs, its conversion records (proposal_keys, copied from the card) and the loose thread it consumes (seed_id), under the duplicate guard its kind takes. Each guard is /drafting-data's documented condition, tested before the row exists, so it never matches the job it guards: none (an unguarded create); live_key (a queued or wip, unshelved job holds one of proposal_keys: the fast path and a job outlined from Proposals, jobs-create.md \xA73); never_held_key (any job not deleted ever held one of proposal_keys: intake, \xA73e); title_live_with_step (a queued or wip, unshelved job on the Writing with one of this call's titles already holds a step: counsel's review, jobs-stock.md \xA73c, whose second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this title and one of these step texts: a pass finding, \xA73g); scrutiny_statement (a queued or wip, unshelved 'Review scrutiny finding: ' job is scoped to the statement in scope: \xA73d); authority_brief (a queued or wip, unshelved 'Brief the case: ' job in the proceeding is scoped to any authority of the same case: \xA73n); holder_lock (held_ticket_id no longer carries session_token under claim_no: a spin-off blocker, \xA73f, which copies the held job's scope). filing_id is the Writing's or Milestone's id, or null for a proceeding-scoped job, and is never left out. priority is an integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Milestone's job, the Milestone's alone; on a proceeding-scoped job, every queued job in the proceeding. created_by is this session's session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is the job that fired the guard, when one is still there). It moves no revision. Refusals write nothing: invalid_<field>, and an error from the database (a missing blocker, a work job with no billing_anchor). Returns outcome, ticket_id, companion_ids, priority, holder_id and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -79069,7 +79069,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("complete_job"),
-      description: "Complete the job (a tickets row) this session holds in one call: the supersession of its queued conflict partners, then the completion, both guarded on this session's token, then the confirm-read. Before either, while any of its steps is open, to be retried or waiting (a waiting step whose minute has passed included), nothing is written and the outcome is steps_open, with open_steps naming each one; a step cancelled or deferred on the practitioner's words (drafting_data__set_step) counts as resolved. A wip conflict partner is never touched. draft_dir is the draft_dir open_session returned. " + HOLDER + " The outcome is read off the confirm-read: completed (status completed, no lock; changes 1 means this call completed it, 0 that another session did), not_held (another session's token is on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing), steps_open. Only when this call completed the job (changes 1) are the matter's Milestone pages and Litigation Strategy rewritten, by the render a session runs with draft_dir: the job's filing's, or for a job with no filing_id the first live filing's in its proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Milestone pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, changes, status, completed_at, locked_by, rejected_at, pages_written, milestone_path (the rendered filing's or proceeding's Milestone page), board_changed, board_moves, pages_refused, open_steps on steps_open, and a note.",
+      description: "Complete the job (a tickets row) this session holds in one call: the supersession of its queued conflict partners, then the completion, both guarded on this session's token, then the confirm-read. Before either, while any of its steps is open, to be retried or waiting (a waiting step whose minute has passed included), nothing is written and the outcome is steps_open, with open_steps naming each one; a step cancelled or deferred on the practitioner's words (drafting_data__set_step) counts as resolved. A wip conflict partner is never touched. draft_dir is the draft_dir open_session returned. " + HOLDER + " The outcome is read off the confirm-read: completed (status completed, no lock; changes 1 means this call completed it, 0 that another session did), not_held (another session's token is on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing), steps_open. Only when this call completed the job (changes 1) are the matter's Milestone pages and Litigation Strategy rewritten, by the render a session runs with draft_dir: the job's filing's, or for a job with no filing_id or on a research memo or case brief, which has no board, the first live filing's in its proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Milestone pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, changes, status, completed_at, locked_by, rejected_at, pages_written, milestone_path (the rendered filing's or proceeding's Milestone page), board_changed, board_moves, pages_refused, open_steps on steps_open, and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -79086,7 +79086,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("set_board_goal"),
-      description: "Record one Milestone's statement of goals: the card labelled Goal at the top of the board, drafting_forms__render's board_summary `Goal:` line and drafting_forms__board_card's goals lane. Pass exactly one of filing_id (a Writing's board or a Milestone with no Writing) and proceeding_id (a pre-filing proceeding's board; one that has a Writing is refused, proceeding_has_writing). status is confirmed (the statement the practitioner approved), inferred (the session's own wording after the practitioner declined, never treated as confirmed) or declined (the practitioner declined and nothing is inferred yet). statement is the whole text, stored verbatim with its indentation and line breaks; it is required for confirmed and inferred and refused for declined. A goal is one outcome (an order obtained, a settlement reached, a claim defended), not a document or a step. description is the line the closed card shows; omitted, the stored one stays, else the board's default: `Goal not set` while no statement is stored, and once one is, the Writing's or Milestone's title, or `Proceeding <id>`. A statement or description naming drafting, or a description joining several goals (`; `, ` + `, ` & `), is still written, and the note ends with a framing warning to relay once. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned. A confirmed write passes the practitioner-words gate: the statement is an unbroken run of one practitioner turn, or the one fenced code block in the session's reply before the practitioner's last turn, character for character, and that turn is a bare yes. An inferred or declined write needs no approval. One db_meta row per board, key `board_goal:filing:<id>` or `board_goal:proceeding:<id>`, value JSON {description, statement, status, approved_at, session_token, updated_at}, approved_at set only for confirmed. The write replaces the board's row and removes the rows of boards that no longer exist (stale_keys_removed). It moves no revision. Re-render to show it. A merged board (drafting_data__merge_milestones) holds one goal, its own; each earlier statement of the boards merged into it is kept, with its own status, under `merged` as history only. A merged board left needs_consolidation (merged without a goal, or before 2026-10-22) reads that status until this tool writes its own statement, which makes it hold one goal again. merged_index (1-based, as board_card's `### To combine <n>` lists them) writes that history entry instead, confirmed or inferred, and the board's own statement is kept. A board merged into another is refused (board_merged): set the goal on its survivor. Refusals write nothing: invalid_board, invalid_session_token, invalid_status, invalid_statement, invalid_description, not_found, proceeding_has_writing, board_merged, invalid_merged_index. Returns key, filing_id or proceeding_id, description (null: the default), statement, status, approved_at, updated_at, session_wording (true when inferred), stale_keys_removed and a note.",
+      description: "Record one Milestone's statement of goals: the card labelled Goal at the top of the board, drafting_forms__render's board_summary `Goal:` line and drafting_forms__board_card's goals lane. Pass exactly one of filing_id (a Writing's board or a Milestone with no Writing) and proceeding_id (a pre-filing proceeding's board; one that has a Writing other than a research memo or case brief is refused, proceeding_has_writing). status is confirmed (the statement the practitioner approved), inferred (the session's own wording after the practitioner declined, never treated as confirmed) or declined (the practitioner declined and nothing is inferred yet). statement is the whole text, stored verbatim with its indentation and line breaks; it is required for confirmed and inferred and refused for declined. A goal is one outcome (an order obtained, a settlement reached, a claim defended), not a document or a step. description is the line the closed card shows; omitted, the stored one stays, else the board's default: `Goal not set` while no statement is stored, and once one is, the Writing's or Milestone's title, or `Proceeding <id>`. A statement or description naming drafting, or a description joining several goals (`; `, ` + `, ` & `), is still written, and the note ends with a framing warning to relay once. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap returned. A confirmed write passes the practitioner-words gate: the statement is an unbroken run of one practitioner turn, or the one fenced code block in the session's reply before the practitioner's last turn, character for character, and that turn is a bare yes. An inferred or declined write needs no approval. One db_meta row per board, key `board_goal:filing:<id>` or `board_goal:proceeding:<id>`, value JSON {description, statement, status, approved_at, session_token, updated_at}, approved_at set only for confirmed. The write replaces the board's row and removes the rows of boards that no longer exist (stale_keys_removed). It moves no revision. Re-render to show it. A merged board (drafting_data__merge_milestones) holds one goal, its own; each earlier statement of the boards merged into it is kept, with its own status, under `merged` as history only. A merged board left needs_consolidation (merged without a goal, or before 2026-10-22) reads that status until this tool writes its own statement, which makes it hold one goal again. merged_index (1-based, as board_card's `### To combine <n>` lists them) writes that history entry instead, confirmed or inferred, and the board's own statement is kept. A board merged into another is refused (board_merged): set the goal on its survivor. Refusals write nothing: invalid_board, invalid_session_token, invalid_status, invalid_statement, invalid_description, not_found, research_writing (a research memo or case brief has no board and so no goal), proceeding_has_writing, board_merged, invalid_merged_index. Returns key, filing_id or proceeding_id, description (null: the default), statement, status, approved_at, updated_at, session_wording (true when inferred), stale_keys_removed and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -79239,7 +79239,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("board_card"),
-      description: "Read-only: what one Milestone section holds beyond the short board_summary, and what its cards hold when opened. On a merged board (drafting_data__merge_milestones) the card reads the whole board as its page draws it, by its survivor's id, each job line naming its Writing after its title; a board merged into another is refused (board_merged, naming the survivor), unless that survivor is retired. A General Job (a job with no Writing, filing_id NULL, drawn on every Writing's board in its proceeding) ends its job line ` \xB7 general`, after any tags, in every lane and in jobs; a Writing Job's line carries no such tag, and neither does any job on a proceeding_id card, where every job has no Writing. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of goals, criteria, live, proposed, completed, rejected, attached, court_file, memos, briefs; goal is accepted as the criteria lane's former name; attached, memos and briefs need draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id) or key (a Proposal key). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, each `<ordinal> <glyph> <text>` joined by ` \xB7 `, the glyph \u2611 done (followed by ` (<done_at>)`), \u2610 open, \u21BB to be retried, \u2612 cancelled or \u23F8 deferred (each followed by ` (\"<the practitioner's words>\")`), or `\u23F3 until <HH:MM>` waiting, the minute the process is next checked and never a deadline; a waiting step whose minute has passed prints \u2610, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open (`\u2610 <kind>: <label>`) or closed not retrieved (`\u2612 <kind>: <label> (not retrieved: <reason>)`), which are the job's own record and never steps of its plan, each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: goals, the board's statement of goals (drafting_data__set_board_goal) as `## Goal (<confirmed|inferred|declined|none|needs_consolidation>)`, its description on the next line, then the statement verbatim, line breaks and indentation kept, when there is one, on every kind of board, and, only while needs_consolidation, each earlier statement of a merged board as `### To combine <n> (<status>)` and its text, to propose one combined goal from; criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open, and the items separated by `; `, items with the same text printed once where the first stands as `<item> \xD7<n> (at <row>, \u2026)`, each row being the Proposal key or `<glyph>:<table>:<id>` it was flagged on; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the count of Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; attached, `## Attached (n)` and each draft attached to the board (a client letter's or a reply's file, ADR 0042, or another party's filed document) as `- attachment <id> \xB7 <registry code, else client letter|reply|opposing filing> \xB7 <stored path>`, then ` \xB7 code check failed (<why>)` when the name gate could not run, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder` (the matter folder, for another party's document), ` \xB7 unreadable (<error code>)`, or ` \xB7 modified <YYYY-MM-DD>` and on a client letter ` \xB7 review: <its first line after \"Counsel's review: \">` (`no review line` when none), the rest of that file never read, then ` \xB7 pending: #<id>, \u2026` (the proceeding's Ready, In Progress, Bring Forward and Blocked jobs whose scope names `board_attachments:<id>`) or ` \xB7 pending: none`; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read; memos, `## Legal Memos (n)` and each legal memo linked to the board, the Legal Research page's Legal Memos list, newest first, every saved version of a memo one entry: a memo is linked when a job drawn on this board (its Writings' jobs, its proceeding's General jobs, and every merged member's) saved any version of it, or when no live job drawn on any board with a Legal Research page saved any version (then it is on every board); each as `- <title> \xB7 <research memo|Westlaw Deep Research report|note-up record> \xB7 <in progress|started|completed|shelved|no job> \xB7 <date> \xB7 v<n>[ (earlier: v<m>, \u2026)] \xB7 <path from 6. LAW>[ \xB7 not in the law folder]`, then `  issue: \"<the saving job's question, verbatim>\"` per job (`  issue: none (no job saved it)` with no job, `  issue: none recorded` when its jobs recorded none), `  facts: \"<fact>\"; \u2026` (the facts the saving jobs' scope names) or `  facts: none`, and `  jobs: #<id> <title>; \u2026` when a job saved it; only file names are read from the 6. LAW folder, never a memo's text; briefs, `## Case Briefs (n)` and the Legal Research page's Case Briefs list: each case the board's Writings rely on, then each brief or live request for another case, as `- <style of cause>[, <citation>] \xB7 <briefed|requested|not briefed> \xB7 <relied on|not relied on>[ \xB7 <date> \xB7 v<n>[ (earlier: v<m>, \u2026)] \xB7 <path from 6. LAW>[ \xB7 not in the law folder]]`, then `  jobs: #<id> <title>; \u2026` when a live brief job names it; only file names are read, never a brief's text. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Milestone with no Writing (drafting_data__create_milestone) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
+      description: "Read-only: what one Milestone section holds beyond the short board_summary, and what its cards hold when opened. On a merged board (drafting_data__merge_milestones) the card reads the whole board as its page draws it, by its survivor's id, each job line naming its Writing after its title; a board merged into another is refused (board_merged, naming the survivor), unless that survivor is retired. A General Job (a job with no Writing, filing_id NULL, drawn on every Writing's board in its proceeding) ends its job line ` \xB7 general`, after any tags, in every lane and in jobs; a Writing Job's line carries no such tag, and neither does any job on a proceeding_id card, where every job has no Writing. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of goals, criteria, live, proposed, completed, rejected, attached, court_file, memos, briefs; goal is accepted as the criteria lane's former name; attached, memos and briefs need draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id) or key (a Proposal key). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, each `<ordinal> <glyph> <text>` joined by ` \xB7 `, the glyph \u2611 done (followed by ` (<done_at>)`), \u2610 open, \u21BB to be retried, \u2612 cancelled or \u23F8 deferred (each followed by ` (\"<the practitioner's words>\")`), or `\u23F3 until <HH:MM>` waiting, the minute the process is next checked and never a deadline; a waiting step whose minute has passed prints \u2610, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open (`\u2610 <kind>: <label>`) or closed not retrieved (`\u2612 <kind>: <label> (not retrieved: <reason>)`), which are the job's own record and never steps of its plan, each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: goals, the board's statement of goals (drafting_data__set_board_goal) as `## Goal (<confirmed|inferred|declined|none|needs_consolidation>)`, its description on the next line, then the statement verbatim, line breaks and indentation kept, when there is one, on every kind of board, and, only while needs_consolidation, each earlier statement of a merged board as `### To combine <n> (<status>)` and its text, to propose one combined goal from; criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open, and the items separated by `; `, items with the same text printed once where the first stands as `<item> \xD7<n> (at <row>, \u2026)`, each row being the Proposal key or `<glyph>:<table>:<id>` it was flagged on; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the count of Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; attached, `## Attached (n)` and each draft attached to the board (a client letter's or a reply's file, ADR 0042, or another party's filed document) as `- attachment <id> \xB7 <registry code, else client letter|reply|opposing filing> \xB7 <stored path>`, then ` \xB7 code check failed (<why>)` when the name gate could not run, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder` (the matter folder, for another party's document), ` \xB7 unreadable (<error code>)`, or ` \xB7 modified <YYYY-MM-DD>` and on a client letter ` \xB7 review: <its first line after \"Counsel's review: \">` (`no review line` when none), the rest of that file never read, then ` \xB7 pending: #<id>, \u2026` (the proceeding's Ready, In Progress, Bring Forward and Blocked jobs whose scope names `board_attachments:<id>`) or ` \xB7 pending: none`; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read; memos, `## Legal Memos (n)` and each legal memo linked to the board, the Legal Research page's Legal Memos list, newest first, every saved version of a memo one entry: a memo is linked when a job drawn on this board (its Writings' jobs, its proceeding's General jobs, and every merged member's) saved any version of it, or when no live job drawn on any board with a Legal Research page saved any version (then it is on every board); each as `- <title> \xB7 <research memo|Westlaw Deep Research report|note-up record> \xB7 <in progress|started|completed|shelved|no job> \xB7 <date> \xB7 v<n>[ (earlier: v<m>, \u2026)] \xB7 <path from 6. LAW>[ \xB7 not in the law folder]`, then `  issue: \"<the saving job's question, verbatim>\"` per job (`  issue: none (no job saved it)` with no job, `  issue: none recorded` when its jobs recorded none), `  facts: \"<fact>\"; \u2026` (the facts the saving jobs' scope names) or `  facts: none`, and `  jobs: #<id> <title>; \u2026` when a job saved it; only file names are read from the 6. LAW folder, never a memo's text; briefs, `## Case Briefs (n)` and the Legal Research page's Case Briefs list: each case the board's Writings rely on, then each brief or live request for another case, as `- <style of cause>[, <citation>] \xB7 <briefed|requested|not briefed> \xB7 <relied on|not relied on>[ \xB7 <date> \xB7 v<n>[ (earlier: v<m>, \u2026)] \xB7 <path from 6. LAW>[ \xB7 not in the law folder]]`, then `  earlier v<m> \xB7 <date> \xB7 <path from 6. LAW>[ \xB7 not in the law folder]` per earlier version, latest first, then `  jobs: #<id> <title>; \u2026` when a live brief job names it; only file names are read, never a brief's text. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Milestone with no Writing (drafting_data__create_milestone) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
       inputSchema: {
         type: "object",
         properties: {
@@ -79279,7 +79279,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("bootstrap"),
-      description: "Session entry for every submissions skill: checks the database's schema version and lists every filing with its title, lifecycle, render_state and whatever mockup paths are already on disk. Renders nothing and returns no markdown -- call drafting_forms__render on the one filing the practitioner confirms, to read its content and write its mockups. filings comes back in the order to present them in; present that order as given. render_state is 'fresh' (the mockups on disk are what a render now would produce), 'stale' (they are not) or 'never' (none have been rendered yet); it is absent on a retired filing, which is listed with no paths. Before listing it moves an older build's mockups folder beside the database into the matter's 0. DRAFT, as drafting_forms__render describes (mockups_moved). A Milestone with no Writing (drafting_data__create_milestone) is listed among filings with milestone_only true, no paths and no render_state: it is not a Writing, has a Milestone page and no view page, and the background job never renders it. Every response reports both schema_version and current_schema_version; if the database is behind schema version 42, the oldest this runtime reads, migration_required is true and the response carries no filings at all (issue 351) -- call drafting_data__migrate on the same db_path, then call this again. If instead the database is ahead of the installed bundle (issue 352), bundle_outdated is true and the remedy is the opposite -- never drafting_data__migrate; the note names the next step for its case: fully restart the app when the plugin installed on disk is a newer build than the one running, otherwise run /lawyer:suggestion naming the note, then fully restart the app once a plugin update arrives. Every response also reports build_stamp and current_build_stamp; server_outdated is true when they differ, and build_note names the remedy (issue 452). Every response also carries schema_target_version (what the migration source would apply), bundle_schema_version (what this bundle was built against, null when unbundled) and schema_source_ahead, with schema_note when they diverge or COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA is set (issue 812); a migration stops at bundle_schema_version. On success it also carries session_token (ADR 0009, issue 609) -- a FRESH random identity minted for THIS session on every bootstrap call, which a job-driven /draft session uses as tickets.locked_by and passes to every later drafting_forms__render so it keeps one identity throughout. It is deliberately not derived from the server process: under Cowork one server is shared by every session on the machine, so a process-derived token could not tell two sessions apart. Optional unattended true (an unattended /draft run, which the practitioner launched and left) mints the token as sess-unattended-<hex> instead of sess-<hex>, so the Milestone shows a job that run holds as in progress with nobody present. Also on success: bootstrapped_at, this session's own start stamp (YYYY-MM-DD HH:mm, the same wall clock tickets.locked_at uses) -- a wip job whose locked_at precedes it was locked before this session existed and belongs to another session whatever its locked_by says (see /drafting-data's jobs.md section 1). And legacy_workboard_artifact_url -- the hosted Work Board URL this matter still records, or null, whose one-time cleanup /draft step 2 offers. Optional draft_dir (issue 585) is the absolute host path of the matter's 0. DRAFT folder itself: bootstrap then also writes the matter's pages at its top and returns their paths -- Litigation Strategy.html (matter_board_path), one self-contained page leading with the matter's open to-dos, read from practice data by matter_no (ADR 0021), then one line per filing and per proceeding with no filing (ADR 0018), and one Milestone page per live Writing and per proceeding with no Writing, a merged board's page drawing every board merged into it as one board (ADR 0033, 2026-10-05 amendments; drafting_data__merge_milestones): `Milestone.html` in the Writing's own folder for a board of a Writing, and at the folder's top `Milestone - proceeding <id>.html` and `Milestone <id>.html` (a Milestone with no Writing); a job with no filing_id is on every Writing's page in its proceeding. milestone_paths lists them, [{filing_id, proceeding_id, path}] in page order, filing_id null on a proceeding's page; bootstrap returns no milestone_path. Beside them it writes each view page (ADR 0033, 2026-10-07 amendment), `<page name>.html` beside its board's page, and returns view_page_paths [{name, filing_id, path}], and at the folder's top Loose Threads.html, every proceeding's loose threads, as loose_threads_path; both null without draft_dir. A session never reads a page (shared/html-pages.md): the board's content comes from a render naming Work_board. On success pre_filing_proceedings lists those proceedings, [{ proceeding_id, forum }] with forum null while not yet chosen -- render one with drafting_forms__render's proceeding_id. Without draft_dir no page is written and matter_board_path and milestone_paths are null. A draft_dir that is not the 0. DRAFT folder beside db_path's case data, or lies in a privileged or disclosed tree, is refused, and so is an existing Litigation Strategy.html or Milestone page that does not carry its page's marker, before any page is written. Each page is written atomically (temp file, then rename); a page write moves the old page files this server wrote (a retired filing's page, a proceeding's once it has a filing, the old single Milestone.html, per-filing boards, numbered copies, older names such as Matter Board.html) into the matter's TRASH, reported as moved_to_trash [{from, to}], and any it could not move as trash_skipped [{path, error}]. On success bootstrap also starts a background job (issue 589) that renders every listed filing whose render_state is not fresh, one at a time, and rewrites the matter's pages after each, when client_name, client_no and matter_no were all given, and returns background_job: its status (state running, done, stalled, aborted or idle; queued, done and failed filing ids; joined true when another job already held the matter). Nothing waits on it, and the filing picker can be answered at once. timings carries per-phase durations in ms, for profiling.",
+      description: "Session entry for every submissions skill: checks the database's schema version and lists every filing with its title, lifecycle, render_state and whatever mockup paths are already on disk. Renders nothing and returns no markdown -- call drafting_forms__render on the one filing the practitioner confirms, to read its content and write its mockups. filings comes back in the order to present them in; present that order as given. render_state is 'fresh' (the mockups on disk are what a render now would produce), 'stale' (they are not) or 'never' (none have been rendered yet); it is absent on a retired filing, which is listed with no paths. Before listing it moves an older build's mockups folder beside the database into the matter's 0. DRAFT, as drafting_forms__render describes (mockups_moved). A Milestone with no Writing (drafting_data__create_milestone) is listed among filings with milestone_only true, no paths and no render_state: it is not a Writing, has a Milestone page and no view page, and the background job never renders it. A research memo or case brief is listed with research_writing true: it has no Milestone or view page, and a proceeding holding only such Writings is in pre_filing_proceedings. Every response reports both schema_version and current_schema_version; if the database is behind schema version 42, the oldest this runtime reads, migration_required is true and the response carries no filings at all (issue 351) -- call drafting_data__migrate on the same db_path, then call this again. If instead the database is ahead of the installed bundle (issue 352), bundle_outdated is true and the remedy is the opposite -- never drafting_data__migrate; the note names the next step for its case: fully restart the app when the plugin installed on disk is a newer build than the one running, otherwise run /lawyer:suggestion naming the note, then fully restart the app once a plugin update arrives. Every response also reports build_stamp and current_build_stamp; server_outdated is true when they differ, and build_note names the remedy (issue 452). Every response also carries schema_target_version (what the migration source would apply), bundle_schema_version (what this bundle was built against, null when unbundled) and schema_source_ahead, with schema_note when they diverge or COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA is set (issue 812); a migration stops at bundle_schema_version. On success it also carries session_token (ADR 0009, issue 609) -- a FRESH random identity minted for THIS session on every bootstrap call, which a job-driven /draft session uses as tickets.locked_by and passes to every later drafting_forms__render so it keeps one identity throughout. It is deliberately not derived from the server process: under Cowork one server is shared by every session on the machine, so a process-derived token could not tell two sessions apart. Optional unattended true (an unattended /draft run, which the practitioner launched and left) mints the token as sess-unattended-<hex> instead of sess-<hex>, so the Milestone shows a job that run holds as in progress with nobody present. Also on success: bootstrapped_at, this session's own start stamp (YYYY-MM-DD HH:mm, the same wall clock tickets.locked_at uses) -- a wip job whose locked_at precedes it was locked before this session existed and belongs to another session whatever its locked_by says (see /drafting-data's jobs.md section 1). And legacy_workboard_artifact_url -- the hosted Work Board URL this matter still records, or null, whose one-time cleanup /draft step 2 offers. Optional draft_dir (issue 585) is the absolute host path of the matter's 0. DRAFT folder itself: bootstrap then also writes the matter's pages at its top and returns their paths -- Litigation Strategy.html (matter_board_path), one self-contained page leading with the matter's open to-dos, read from practice data by matter_no (ADR 0021), then one line per filing and per proceeding with no filing (ADR 0018), and one Milestone page per live Writing and per proceeding with no Writing, a merged board's page drawing every board merged into it as one board (ADR 0033, 2026-10-05 amendments; drafting_data__merge_milestones): `Milestone.html` in the Writing's own folder for a board of a Writing, and at the folder's top `Milestone - proceeding <id>.html` and `Milestone <id>.html` (a Milestone with no Writing); a job with no filing_id is on every Writing's page in its proceeding. milestone_paths lists them, [{filing_id, proceeding_id, path}] in page order, filing_id null on a proceeding's page; bootstrap returns no milestone_path. Beside them it writes each view page (ADR 0033, 2026-10-07 amendment), `<page name>.html` beside its board's page, and returns view_page_paths [{name, filing_id, path}], and at the folder's top Loose Threads.html, every proceeding's loose threads, as loose_threads_path; both null without draft_dir. A session never reads a page (shared/html-pages.md): the board's content comes from a render naming Work_board. On success pre_filing_proceedings lists those proceedings, [{ proceeding_id, forum }] with forum null while not yet chosen -- render one with drafting_forms__render's proceeding_id. Without draft_dir no page is written and matter_board_path and milestone_paths are null. A draft_dir that is not the 0. DRAFT folder beside db_path's case data, or lies in a privileged or disclosed tree, is refused, and so is an existing Litigation Strategy.html or Milestone page that does not carry its page's marker, before any page is written. Each page is written atomically (temp file, then rename); a page write moves the old page files this server wrote (a retired filing's page, a proceeding's once it has a filing, the old single Milestone.html, per-filing boards, numbered copies, older names such as Matter Board.html) into the matter's TRASH, reported as moved_to_trash [{from, to}], and any it could not move as trash_skipped [{path, error}]. On success bootstrap also starts a background job (issue 589) that renders every listed filing whose render_state is not fresh, one at a time, and rewrites the matter's pages after each, when client_name, client_no and matter_no were all given, and returns background_job: its status (state running, done, stalled, aborted or idle; queued, done and failed filing ids; joined true when another job already held the matter). Nothing waits on it, and the filing picker can be answered at once. timings carries per-phase durations in ms, for profiling.",
       inputSchema: {
         type: "object",
         properties: {
@@ -79297,7 +79297,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("open_session"),
-      description: "Session entry from a matter folder, in one call (issue 591): proves matter_root live host-side, reads its probanda.json for case_data_dir and derives db_path (<case_data_dir>\\submission.sqlite), looks the matter up in practice data by the folder name's leading token, migrates the database if it is behind, and bootstraps. Returns everything drafting_forms__bootstrap returns, plus matter_root, db_path and matter_lookup -- pass that db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. probanda.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code pointer_unusable, or invalid_root when the folder or probanda.json is absent) and names /matter-data as the repair; so does a pointer whose case_data_dir's parent folder does not exist on this device (one written under another profile or drive). A database behind the current schema is migrated here, with the same copy-aside backup as drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated andserver_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/matter_no always wins over the lookup's. When the case data root resolves neither from the per-user probanda.json nor from the firm's 0. CASE DATA folder beside the matter folder, so drafting_data__create_writing would fail, the response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder it opens filing_id, or the first live filing that is not a Milestone with no Writing (one opens only when filing_id names it), or the first pre-filing proceeding, as drafting_forms__render with draft_dir would (mockups and the matter's pages written once), returning that board as opened (board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, filing_retired) with matter_board_path, milestone_path (the opened filing's or proceeding's own Milestone page; absent for a retired filing, which has none), milestone_paths (every Milestone page, as bootstrap describes), view_page_paths and loose_threads_path (as bootstrap describes; no page is presented at the fast open, and the view pages are written by the background job, first), so no separate render is needed to open a session; with nothing to open, or when that render refused (open_refused with its code and message), the matter's pages are still written, milestone_path is the page of the filing or proceeding the refused render tried to open, or null with nothing to open. It returns the folder as draft_dir (issue 689) for every later drafting_forms__render; with no such folder nothing is opened, matter_board_path and milestone_paths are null and matter_board_note says why, and two or more refuse with code draft_dir_ambiguous. A session never reads a page (shared/html-pages.md). Like bootstrap it starts the background render job and returns background_job, and passes optional unattended to bootstrap, which then mints an unattended-class session_token. It returns parties_drift: every party row unlinked from case data, linked to a party not of record, or whose counsel could not be read from case data, with parties_drift_note saying why when it could not be read; present each to the practitioner (/draft). When a party row still holds a counsel or address-for-service value that case data does not hold, it returns counsel_offers, one row per party and field (kind offer), or per party when the party is unlinked, not of record or unchecked; offer each back to the practitioner to apply, discard or hold (/draft). When its migrate is refused counsel_not_reconciled it goes on at schema version 42 without migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, matched by number and deponent code against the file names in the folder the practitioner's folder map gives court filings, with its court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, AFFIRMED or SWORN name's date), and mismatch, the one board item's text when the court file and drafting data disagree, else null. Every response carries timings. In place of matter_root, project_id (a claude.ai Project's ID) opens the one matter linked to it; none, several or one with no matter_root refuses project_unresolved, naming the rows.",
+      description: "Session entry from a matter folder, in one call (issue 591): proves matter_root live host-side, reads its probanda.json for case_data_dir and derives db_path (<case_data_dir>\\submission.sqlite), looks the matter up in practice data by the folder name's leading token, migrates the database if it is behind, and bootstraps. Returns everything drafting_forms__bootstrap returns, plus matter_root, db_path and matter_lookup -- pass that db_path, and matter_lookup's client_name/client_no/matter_no, to every later drafting_forms__* call. probanda.json is read only, never rewritten: a missing, unreadable or legacy pointer refuses (code pointer_unusable, or invalid_root when the folder or probanda.json is absent) and names /matter-data as the repair; so does a pointer whose case_data_dir's parent folder does not exist on this device (one written under another profile or drive). A database behind the current schema is migrated here, with the same copy-aside backup as drafting_data__migrate, and the response carries migrated {from, to, backup}; bundle_outdated andserver_outdated are reported exactly as bootstrap reports them. A failed or empty matter lookup is never fatal: matter_lookup.found is false with a one-line note, and a caller-supplied client_name/client_no/matter_no always wins over the lookup's. When the case data root resolves neither from the per-user probanda.json nor from the firm's 0. CASE DATA folder beside the matter folder, so drafting_data__create_writing would fail, the response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder it opens filing_id, or the first live filing that is not a Milestone with no Writing or a research memo or case brief (each opens only when filing_id names it), or the first pre-filing proceeding, as drafting_forms__render with draft_dir would (mockups and the matter's pages written once), returning that board as opened (board_summary, the short summary drafting_forms__render describes, board_changed, board_moves, filing_retired) with matter_board_path, milestone_path (the opened filing's or proceeding's own Milestone page; absent for a retired filing, which has none), milestone_paths (every Milestone page, as bootstrap describes), view_page_paths and loose_threads_path (as bootstrap describes; no page is presented at the fast open, and the view pages are written by the background job, first), so no separate render is needed to open a session; with nothing to open, or when that render refused (open_refused with its code and message), the matter's pages are still written, milestone_path is the page of the filing or proceeding the refused render tried to open, or null with nothing to open. It returns the folder as draft_dir (issue 689) for every later drafting_forms__render; with no such folder nothing is opened, matter_board_path and milestone_paths are null and matter_board_note says why, and two or more refuse with code draft_dir_ambiguous. A session never reads a page (shared/html-pages.md). Like bootstrap it starts the background render job and returns background_job, and passes optional unattended to bootstrap, which then mints an unattended-class session_token. It returns parties_drift: every party row unlinked from case data, linked to a party not of record, or whose counsel could not be read from case data, with parties_drift_note saying why when it could not be read; present each to the practitioner (/draft). When a party row still holds a counsel or address-for-service value that case data does not hold, it returns counsel_offers, one row per party and field (kind offer), or per party when the party is unlinked, not of record or unchecked; offer each back to the practitioner to apply, discard or hold (/draft). When its migrate is refused counsel_not_reconciled it goes on at schema version 42 without migrating, lists the filings as usual, and returns migration_refused with the refusal beside those rows. When it opened a filing it returns court_file_affidavits, read-only: each affidavit the filing relies on, matched by number and deponent code against the file names in the folder the practitioner's folder map gives court filings, with its court_file match (file_name, date, status) or null for none found, court_file_made_on (the newest SIGNED, AFFIRMED or SWORN name's date), and mismatch, the one board item's text when the court file and drafting data disagree, else null. Every response carries timings. In place of matter_root, project_id (a claude.ai Project's ID) opens the one matter linked to it; none, several or one with no matter_root refuses project_unresolved, naming the rows.",
       inputSchema: {
         type: "object",
         properties: {
@@ -92861,10 +92861,20 @@ function submissionDataQuery(dbPath, sql, params) {
 function forgetDraftingQueries(dbPath) {
   forgetPerCall(isQueryOf(dbPath));
 }
+function withAttachHint(run) {
+  try {
+    return run();
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("a proceeding with a Writing has no board of its own")) {
+      err.message = err.message.replace(/ \(ADR \d+\)/, ".") + " Nothing was written. If this proceeding's only Writings are research memos or case briefs, its own Milestone is still there: attach the draft to a live one of them, and it shows on that Milestone and moves to the first Writing that is not a memo or case brief when one is created. A retired one takes no draft, so if all of them are retired, this Milestone takes none until one is recovered or another Writing is created.";
+    }
+    throw err;
+  }
+}
 async function submissionDataExecute(dbPath, sqlScript, env = process.env, guardJobs = false) {
   const lock = await acquireDataLock(dbPath, env);
   try {
-    const result = runHelper2({ op: "execute", db_path: dbPath, sql_script: sqlScript, guard_jobs: guardJobs }, env);
+    const result = withAttachHint(() => runHelper2({ op: "execute", db_path: dbPath, sql_script: sqlScript, guard_jobs: guardJobs }, env));
     const withWarning = { ...result };
     if (lock.brokeStale) {
       withWarning.warning = "broke a stale drafting-data write lock (>15 min old) before writing; if another session is still writing to or migrating this database, stop and reconcile";
@@ -94849,6 +94859,7 @@ var RESEARCH_WRITING_KINDS = /* @__PURE__ */ new Set(["research_memo", "research
 function isResearchWriting(filing) {
   return RESEARCH_WRITING_KINDS.has(filing.kind);
 }
+var RESEARCH_WRITING_KINDS_SQL = [...RESEARCH_WRITING_KINDS].map((k3) => `'${k3}'`).join(", ");
 function fetchFiling(dbPath, filingId) {
   const found = rows(dbPath, "SELECT * FROM filings WHERE id = ?", [filingId]);
   if (found.length === 0) throw new Error(`No filing found with id ${filingId}`);
@@ -95145,6 +95156,10 @@ function fetchAllFilingsForProceeding(dbPath, proceedingId) {
 }
 function fetchBoardFilings(dbPath, proceedingId) {
   return fetchAllFilingsForProceeding(dbPath, proceedingId).filter((f3) => !isResearchWriting(f3));
+}
+function proceedingJobBoard(boards) {
+  const writings = boards.filter((f3) => !isJobOnlyBoard(f3));
+  return writings.find((f3) => !f3.retired_on) ?? writings[0];
 }
 function fetchAllProceedings(dbPath) {
   return rows(dbPath, "SELECT * FROM proceedings ORDER BY id");
@@ -99163,9 +99178,14 @@ function ownLines(slot2) {
   };
 }
 var STATEMENT_REF = /\s*<!-- statement_of_law_id (\d+) -->\s*$/;
+var BRIEF_LAW_SLOTS = /* @__PURE__ */ new Set(["holding", "ratio", "obiter"]);
 function itemLines(ctx, state, id, law) {
   const row2 = law.get(id);
   if (row2 === void 0) return gap(ctx, state, `statement_of_law ${id} is not cited by this Writing`);
+  if (ctx.filing.kind === "case_brief") {
+    const missing = [(row2.excerpt ?? "").trim() === "" && "passage", (row2.pinpoint ?? "").trim() === "" && "pinpoint"].filter(Boolean);
+    if (missing.length > 0) return gap(ctx, state, `statement_of_law ${id} has no ${missing.join(" and no ")}`);
+  }
   const quote = (row2.excerpt ?? "").trim() === "" ? [] : [...row2.excerpt.trim().split(/\r?\n/).map((l3) => `> ${l3}`.trimEnd()), ">"];
   const cite = [lawStatementCitationLine(row2) ?? `> ${CITATION_MISSING}`, lawStatementMarkers(row2), `<!-- statement_of_law_id ${id} -->`].filter(Boolean).join(" ");
   return [...quote, cite].join("\n");
@@ -99174,9 +99194,15 @@ function slot(ctx, name, part, state) {
   const row2 = state.prose.get(name);
   if (row2 === void 0 || row2.text.trim() === "") return [notWritten(ctx, name, state)];
   let law = null;
-  const paragraphs = row2.text.trim().split(/\r?\n[ \t]*\r?\n/).map((p3) => p3.trim()).filter((p3) => p3 !== "").map((p3) => {
+  const paragraphs = row2.text.trim().split(/\r?\n[ \t]*\r?\n/).map((p3) => p3.trim()).filter((p3) => p3 !== "").map((p3, i3) => {
     const ref = STATEMENT_REF.exec(p3);
-    const text8 = checkFormat(ctx, name, row2.id, (ref ? p3.slice(0, ref.index) : p3).split(/\r?\n/), state).join("\n");
+    const own = ref ? p3.slice(0, ref.index) : p3;
+    const text8 = checkFormat(ctx, name, row2.id, own.split(/\r?\n/), state).join("\n");
+    if (ctx.filing.kind === "case_brief" && BRIEF_LAW_SLOTS.has(name) && p3 !== "None." && (!ref || own.includes("<!--"))) {
+      return `${text8}
+
+${gap(ctx, state, `${name} paragraph ${i3 + 1} does not end with its one statement_of_law_id comment`)}`;
+    }
     if (!ref) return text8;
     law ??= new Map(fetchFilingLaw(ctx.dbPath, ctx.filing.id).map((r3) => [r3.statement_id, r3]));
     return `${text8}
@@ -102076,10 +102102,10 @@ async function submissionDataCreateWriting(args, seams = {}) {
       expect_changes: 1
     }
   ];
-  if (boardAttachmentsHeld(args.db_path)) {
+  if (boardAttachmentsHeld(args.db_path) && !isResearchWriting({ kind: built.kind })) {
     statements.push({
-      sql: "UPDATE board_attachments SET filing_id = last_insert_rowid() WHERE proceeding_id = ? AND filing_id IS NULL AND NOT EXISTS (SELECT 1 FROM filings WHERE proceeding_id = ? AND id <> last_insert_rowid())",
-      params: [proceeding.id, proceeding.id]
+      sql: `UPDATE board_attachments SET filing_id = last_insert_rowid() WHERE proceeding_id = ? AND (filing_id IS NULL OR filing_id IN (SELECT id FROM filings WHERE proceeding_id = ? AND kind IN (${RESEARCH_WRITING_KINDS_SQL}))) AND NOT EXISTS (SELECT 1 FROM filings WHERE proceeding_id = ? AND id <> last_insert_rowid() AND kind NOT IN (${RESEARCH_WRITING_KINDS_SQL}))`,
+      params: [proceeding.id, proceeding.id, proceeding.id]
     });
   }
   let written;
@@ -102121,8 +102147,8 @@ async function submissionDataCreateMilestone(args, env = process.env) {
     args.db_path,
     [
       {
-        // The WHERE re-checks, inside the INSERT's own transaction, that the proceeding has a Writing.
-        sql: "INSERT INTO filings (proceeding_id, kind, title, needs_forum_parts) SELECT ?, ?, ?, 0 WHERE EXISTS (SELECT 1 FROM filings WHERE proceeding_id = ? AND kind <> ?)",
+        // The WHERE re-checks, inside the INSERT's own transaction, that the proceeding has a Writing with a board.
+        sql: `INSERT INTO filings (proceeding_id, kind, title, needs_forum_parts) SELECT ?, ?, ?, 0 WHERE EXISTS (SELECT 1 FROM filings WHERE proceeding_id = ? AND kind <> ? AND kind NOT IN (${RESEARCH_WRITING_KINDS_SQL}))`,
         params: [proceeding.id, MILESTONE_KIND, title, proceeding.id, MILESTONE_KIND],
         expect_changes: 1
       }
@@ -102160,9 +102186,12 @@ var BoardIndex = class {
   filings;
   constructor(dbPath) {
     this.filings = rows(dbPath, "SELECT id, proceeding_id, kind FROM filings ORDER BY id");
-    for (const f3 of this.filings) if (!this.firstFiling.has(f3.proceeding_id)) this.firstFiling.set(f3.proceeding_id, f3);
+    for (const f3 of this.filings) if (!isResearchWriting(f3) && !this.firstFiling.has(f3.proceeding_id)) this.firstFiling.set(f3.proceeding_id, f3);
+    const research = this.filings.filter(isResearchWriting);
+    const absorbedResearch = new Set(research.map((f3) => memberKey({ filing_id: f3.id, proceeding_id: f3.proceeding_id })));
     for (const r3 of rows(dbPath, `SELECT key, value FROM db_meta WHERE key GLOB '${PREFIX}*'`)) {
       const v3 = JSON.parse(r3.value);
+      if (absorbedResearch.has(r3.key) || research.some((f3) => f3.id === v3.filing_id)) continue;
       this.rows.set(r3.key, { filing_id: v3.filing_id ?? null, proceeding_id: v3.proceeding_id });
     }
   }
@@ -102280,13 +102309,14 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
   }
   const onFiling = args.filing_id !== void 0;
   if (onFiling) {
-    if (submissionDataQuery(args.db_path, "SELECT 1 FROM filings WHERE id = ?", [id]).rows.length === 0) {
-      throw new NotFoundError(`${TOOL3}: no Writing or Milestone ${id} in ${args.db_path}`, "not_found");
-    }
+    const [f3] = submissionDataQuery(args.db_path, "SELECT kind FROM filings WHERE id = ?", [id]).rows;
+    if (f3 === void 0) throw new NotFoundError(`${TOOL3}: no Writing or Milestone ${id} in ${args.db_path}`, "not_found");
+    if (isResearchWriting(f3)) throw new ValidationError(`${TOOL3}: Writing ${id} is a research result, which has no board and so no goal -- set the goal on its proceeding's board`, "research_writing");
   } else {
-    const [p3] = submissionDataQuery(args.db_path, "SELECT (SELECT COUNT(*) FROM filings WHERE proceeding_id = proceedings.id) AS filings FROM proceedings WHERE id = ?", [id]).rows;
-    if (p3 === void 0) throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
-    if (p3.filings > 0) {
+    if (submissionDataQuery(args.db_path, "SELECT 1 FROM proceedings WHERE id = ?", [id]).rows.length === 0) {
+      throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
+    }
+    if (fetchBoardFilings(args.db_path, id).length > 0) {
       throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- set the goal on a Writing's Milestone", "proceeding_has_writing");
     }
   }
@@ -102315,7 +102345,7 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
     `SELECT key FROM db_meta
         WHERE (key GLOB '${FILING_PREFIX}*' AND CAST(substr(key, ${FILING_PREFIX.length + 1}) AS INTEGER) NOT IN (SELECT id FROM filings))
            OR (key GLOB '${PROCEEDING_PREFIX}*' AND CAST(substr(key, ${PROCEEDING_PREFIX.length + 1}) AS INTEGER) NOT IN
-                 (SELECT id FROM proceedings p WHERE NOT EXISTS (SELECT 1 FROM filings f WHERE f.proceeding_id = p.id)))
+                 (SELECT id FROM proceedings p WHERE NOT EXISTS (SELECT 1 FROM filings f WHERE f.proceeding_id = p.id AND f.kind NOT IN (${RESEARCH_WRITING_KINDS_SQL}))))
         ORDER BY key`
   ).rows.map((r3) => r3.key).filter((k3) => k3 !== key && !(k3.startsWith(PROCEEDING_PREFIX) && index.proceedingSurvives(Number(k3.slice(PROCEEDING_PREFIX.length)))));
   const entry2 = `json_object('description', ?, 'statement', ?, 'status', ?, 'approved_at', CASE WHEN ? = 'confirmed' THEN ${NOW} END, 'session_token', ?, 'updated_at', ${NOW})`;
@@ -102363,14 +102393,14 @@ function resolve3(dbPath, arg, i3) {
   const id = arg.filing_id ?? arg.proceeding_id;
   if (!Number.isInteger(id) || id <= 0) throw new ValidationError(`${TOOL4}.boards[${i3}]: the board id must be a positive integer`, "invalid_board");
   if (arg.filing_id !== void 0) {
-    const [f3] = submissionDataQuery(dbPath, "SELECT proceeding_id, retired_on FROM filings WHERE id = ?", [id]).rows;
+    const [f3] = submissionDataQuery(dbPath, "SELECT proceeding_id, retired_on, kind FROM filings WHERE id = ?", [id]).rows;
     if (f3 === void 0) throw new NotFoundError(`${TOOL4}: no Writing or Milestone ${id} in ${dbPath}`, "not_found");
+    if (isResearchWriting(f3)) throw new ValidationError(`${TOOL4}: Writing ${id} is a research result, which has no board to merge -- name a board that has a Milestone page`, "research_writing");
     if (f3.retired_on !== null) throw new ValidationError(`${TOOL4}: Milestone ${id} is retired or closed, so it has no board to merge`, "board_retired");
     return { filing_id: id, proceeding_id: f3.proceeding_id };
   }
-  const [p3] = submissionDataQuery(dbPath, "SELECT (SELECT COUNT(*) FROM filings WHERE proceeding_id = proceedings.id) AS filings FROM proceedings WHERE id = ?", [id]).rows;
-  if (p3 === void 0) throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
-  if (p3.filings > 0) throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- name a Writing's Milestone", "proceeding_has_writing");
+  if (submissionDataQuery(dbPath, "SELECT 1 FROM proceedings WHERE id = ?", [id]).rows.length === 0) throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
+  if (fetchBoardFilings(dbPath, id).length > 0) throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- name a Writing's Milestone", "proceeding_has_writing");
   return { filing_id: null, proceeding_id: id };
 }
 async function submissionDataMergeMilestones(args, env = process.env) {
@@ -102417,6 +102447,9 @@ async function submissionDataMergeMilestones(args, env = process.env) {
   const written = await submissionDataWriteAll(
     args.db_path,
     [
+      // A row read as no row because it names a research Writing (BoardIndex) gives way. Any other row stays and
+      // the insert fails on the key, so of two sessions merging one board into different survivors, one is refused.
+      { sql: `DELETE FROM db_meta WHERE key = ? AND json_extract(value, '$.filing_id') IN (SELECT id FROM filings WHERE kind IN (${RESEARCH_WRITING_KINDS_SQL}))`, params: [memberKey(absorbed)] },
       { sql: "INSERT INTO db_meta (key, value) VALUES (?, ?)", params: [memberKey(absorbed), value], expect_changes: 1 },
       ...index.membersOf(absorbed).map((key) => ({ sql: "UPDATE db_meta SET value = ? WHERE key = ?", params: [value, key], expect_changes: 1 })),
       { sql: `INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ${stamps})`, params: [survivorKey, JSON.stringify(goals)], expect_changes: 1 },
@@ -102680,10 +102713,11 @@ function fetchDeletedTickets(dbPath, proceedingId) {
 }
 function fetchAttachments(dbPath, proceedingId, filingId) {
   if (!boardAttachmentsHeld(dbPath)) return [];
+  const research = `SELECT id FROM filings WHERE proceeding_id = ? AND kind IN (${RESEARCH_WRITING_KINDS_SQL})`;
   return rows(
     dbPath,
-    "SELECT id, filing_id, path, kind, attached_on FROM board_attachments WHERE proceeding_id = ? AND (? IS NULL OR filing_id = ? OR (filing_id IS NULL AND ? = (SELECT MIN(id) FROM filings WHERE proceeding_id = ? AND retired_on IS NULL AND kind <> ?))) ORDER BY id",
-    [proceedingId, filingId, filingId, filingId, proceedingId, MILESTONE_KIND]
+    `SELECT id, CASE WHEN filing_id IN (${research}) THEN NULL ELSE filing_id END AS filing_id, path, kind, attached_on FROM board_attachments WHERE proceeding_id = ? AND (? IS NULL OR filing_id = ? OR ((filing_id IS NULL OR filing_id IN (${research})) AND ? = (SELECT MIN(id) FROM filings WHERE proceeding_id = ? AND retired_on IS NULL AND kind <> ? AND kind NOT IN (${RESEARCH_WRITING_KINDS_SQL})))) ORDER BY id`,
+    [proceedingId, proceedingId, filingId, filingId, proceedingId, filingId, proceedingId, MILESTONE_KIND]
   );
 }
 
@@ -103242,7 +103276,7 @@ function buildProceedingBoard(dbPath, proceedingId, rendered = nowStamp()) {
       last_activity_at: lastActivity(t3),
       active_at: activeAt(t3, activeById.get(t3.id))
     };
-    return { filing_id: t3.filing_id !== null && researchWritings.has(t3.filing_id) ? null : t3.filing_id, ticket };
+    return t3.filing_id !== null && researchWritings.has(t3.filing_id) ? { filing_id: null, ticket: { ...ticket, research_writing: t3.filing_id } } : { filing_id: t3.filing_id, ticket };
   });
   const holding = tickets.map((t3) => t3.ticket).filter(holdsMaterial);
   for (const { ticket } of tickets) {
@@ -103255,7 +103289,12 @@ function buildProceedingBoard(dbPath, proceedingId, rendered = nowStamp()) {
       if (material.length > 0) ticket.dispatch_skips.push({ reason: "shared_material", job: held2.id, material });
     }
   }
-  return { tickets, seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds), holders, deleted };
+  return {
+    tickets,
+    seeds: fetchOpenSeeds(dbPath, proceedingId, deletedIds),
+    holders,
+    deleted: deleted.map((d3) => d3.filing_id !== null && researchWritings.has(d3.filing_id) ? { ...d3, filing_id: null } : d3)
+  };
 }
 function onFilingBoard(rowFilingId, filingId) {
   return rowFilingId === filingId || rowFilingId === null;
@@ -103842,11 +103881,13 @@ function buildWorkBoardData(ctx, deadlines = []) {
   const filed = ctx.filing.filed_on !== null;
   const inProgress2 = board.tickets.map((t3) => t3.ticket).filter(holdsMaterial);
   const tickets = board.tickets.filter((t3) => onFilingBoard(t3.filing_id, ctx.filing.id)).map((t3) => {
-    const ineligible_reasons = ineligibleReasons(t3.ticket, filed, printed, titles, inProgress2);
+    const research = t3.ticket.research_writing !== void 0;
+    const inventory = research ? null : printed;
+    const ineligible_reasons = ineligibleReasons(t3.ticket, filed && !research, inventory, titles, inProgress2);
     const eligible = ineligible_reasons.length === 0;
-    return withIdleFlag({ ...t3.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t3.ticket, printed), ...t3.filing_id === null ? { general: true } : {} }, ctx.rendered);
+    return withIdleFlag({ ...t3.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t3.ticket, inventory), ...t3.filing_id === null ? { general: true } : {} }, ctx.rendered);
   });
-  const { goal, criteria } = goalFor(ctx, tickets, shelved, current, deadlines, afterGateJobs(board.tickets, ctx.filing.id));
+  const { goal, criteria } = goalFor(ctx, tickets.filter((t3) => t3.research_writing === void 0), shelved, current, deadlines, afterGateJobs(board.tickets, ctx.filing.id));
   const unmet = (id) => criteria.some((c3) => c3.id === id && c3.state !== "met");
   const lateSkips = (t3) => [
     ...allKeysDead(t3, printed) ? [{ reason: "all_keys_dead" }] : [],
@@ -103855,7 +103896,7 @@ function buildWorkBoardData(ctx, deadlines = []) {
     ...waitsOnGate(t3.title) && unmet("gate") ? [{ reason: "before_gate" }] : []
   ];
   const gated = tickets.map((t3) => {
-    const skips = t3.category === "ready" ? lateSkips(t3) : [];
+    const skips = t3.category === "ready" && t3.research_writing === void 0 ? lateSkips(t3) : [];
     return skips.length === 0 ? t3 : { ...t3, dispatch_skips: [...t3.dispatch_skips, ...skips] };
   });
   const inputTypes = declaredIngestInputs(ctx.filing);
@@ -106738,15 +106779,25 @@ var legal_research_js_default = `(function () {
   function versionText(m) {
     return "v" + m.version + (m.earlier.length === 0 ? "" : " (earlier: " + m.earlier.map(function (n) { return "v" + n; }).join(", ") + ")");
   }
-  function fileRow(dl, m) {
+  function fileValue(m) {
     var file = m.file.split(/[\\\\/]/).pop();
-    if (m.on_disk) {
-      var a = el("a", "", file);
-      a.href = m.url;
-      row(dl, "File", a, "");
-    } else {
-      row(dl, "File", file + " (not in the law folder now)", "");
-    }
+    if (!m.on_disk) return file + " (not in the law folder now)";
+    var a = el("a", "", file);
+    a.href = m.url;
+    return a;
+  }
+  function fileRow(dl, m) {
+    row(dl, "File", fileValue(m), "");
+  }
+  function earlierFiles(list) {
+    var ul = el("ul");
+    list.forEach(function (v) {
+      var li = el("li", "", "v" + v.version + " (" + (v.date || "no date") + "): ");
+      var value = fileValue(v);
+      li.appendChild(typeof value === "string" ? document.createTextNode(value) : value);
+      ul.appendChild(li);
+    });
+    return ul;
   }
   function ticket(ref, title, chips, line) {
     var node = el("details", "ticket");
@@ -106899,6 +106950,7 @@ var legal_research_js_default = `(function () {
         row(t.dl, "Date", c.brief.date, "No date");
         row(t.dl, "Version", versionText(c.brief), "");
         fileRow(t.dl, c.brief);
+        if (c.brief.earlier_files.length > 0) row(t.dl, "Earlier versions", earlierFiles(c.brief.earlier_files), "");
       }
       return { node: t.node, text: [c.title, c.citation || ""].join(" ").toLowerCase() };
     }
@@ -107358,14 +107410,14 @@ var LAW_FOLDER = "6. LAW";
 var NEUTRAL_CITATION = /^\d{4} [A-Z]{2,}[A-Za-z]* \d+\b/;
 var VERSIONED = /^(.*?)(?: v(\d+))?(\.[^.\\/]+)$/i;
 var UNREADABLE = /* @__PURE__ */ new Set(["EPERM", "EBUSY", "EACCES", "ENOENT"]);
-var CASE_BRIEF_NAME = /(?:^|\s)case brief\s/i;
+var CASE_BRIEF_OPENING = /^(?:\d{4}-\d{2}-\d{2}\s+)?case brief\s/i;
 function isCaseBriefFile(name) {
-  return CASE_BRIEF_NAME.test(name);
+  return CASE_BRIEF_OPENING.test(name) && name.toLowerCase().endsWith(".md");
 }
 function memoSourceOf(name) {
   if (isCaseBriefFile(name)) return null;
   const lower = name.toLowerCase();
-  if (lower.endsWith(".docx")) return NEUTRAL_CITATION.test(name) ? null : "westlaw";
+  if (lower.endsWith(".docx")) return NEUTRAL_CITATION.test(name) || CASE_BRIEF_OPENING.test(name) ? null : "westlaw";
   if (!lower.endsWith(".md")) return null;
   if (/(?:^|\s)note-up(?:\s|\.md$)/.test(lower)) return "note_up";
   if (/(?:^|\s)ml re(?:\s|\.md$)/.test(lower) || lower.includes("research-lawyer answer")) return "research_memo";
@@ -107498,13 +107550,22 @@ function buildLegalMemosData(dbPath, jobs2, matterDir) {
 
 // src/submission/forms/brief-job.ts
 var BRIEF_JOB_PREFIX = "Brief the case: ";
+function squashed(text8) {
+  return text8.replace(/[\s.]+/g, "").toLowerCase();
+}
+function citationParts(citation) {
+  return (citation ?? "").split(/,(?![^()]*\))/).map((piece) => squashed(piece.replace(/\s+at\s.*$/i, "").replace(/\s*\([^()]*\)\s*$/, ""))).filter((part) => /\d/.test(part) && /[a-z]/.test(part));
+}
+var YEAR_WORD_NUMBER = /^\d{4}[a-z]{2,}\d+$/;
+var DATABASE_YEAR = /^\d{4}(?:canlii|carswell)/;
+function citationKey(citation) {
+  const parts = citationParts(citation);
+  if (parts.length === 0) return null;
+  const dated = parts.filter((part) => YEAR_WORD_NUMBER.test(part));
+  return dated.find((part) => !DATABASE_YEAR.test(part)) ?? dated[0] ?? parts.join(", ");
+}
 
 // src/submission/forms/case-briefs.ts
-var NEUTRAL_IN_TEXT = /\b(\d{4}) ([A-Z]{2,}[A-Za-z]*) (\d+)\b/;
-function neutralKey(text8) {
-  const m3 = text8 === null ? null : NEUTRAL_IN_TEXT.exec(text8);
-  return m3 === null ? null : `${m3[1]} ${m3[2]} ${m3[3]}`.toLowerCase();
-}
 function reliedOn(dbPath, filingIds) {
   if (filingIds.length === 0) return [];
   const inIds = `(${filingIds.map(() => "?").join(", ")})`;
@@ -107531,7 +107592,7 @@ function reliedOn(dbPath, filingIds) {
 function briefJobs(dbPath) {
   return rows(
     dbPath,
-    `SELECT t.id, t.title, t.status, t.rejected_at, a.id AS authority_id, a.style_of_cause_or_title, a.citation
+    `SELECT t.id, t.proceeding_id, t.title, t.status, t.rejected_at, a.id AS authority_id, a.style_of_cause_or_title, a.citation
      FROM tickets t
      LEFT JOIN ticket_scope s ON s.ticket_id = t.id AND s.entity = 'authorities'
      LEFT JOIN authorities a ON a.id = s.entity_id
@@ -107540,12 +107601,38 @@ function briefJobs(dbPath) {
   );
 }
 function foldKey(citation, authorityId, name) {
-  return neutralKey(citation) ?? (authorityId !== null ? `id:${authorityId}` : `name:${name.toLowerCase()}`);
+  return citationKey(citation) ?? (authorityId !== null ? `id:${authorityId}` : `name:${name.toLowerCase()}`);
 }
-function briefCaseName(file) {
-  return titleOf2(file).replace(/^case brief\s+/i, "");
+var CITATION_PIECE = /^(?:[[(]\d{4}[\])]\s+\d*|\d+)\s*[A-Za-z].*?\s\d+(?:\s*\([^()]*\))*(?:\s+at\s.*)?$/;
+function isCitation(text8) {
+  return text8.split(/,\s+/).every((piece) => CITATION_PIECE.test(piece) && !/\sv\.?\s/i.test(piece));
 }
-function buildCaseBriefsData(dbPath, filingIds, matterDir) {
+function briefCase(file) {
+  const whole = titleOf2(file).replace(/^case brief\s+/i, "");
+  for (const m3 of whole.matchAll(/\s(?=[[(\d])/g)) {
+    const before = whole.slice(0, m3.index);
+    const tail = whole.slice(m3.index + 1);
+    if (!/,\s*$/.test(before) && !/^(?:[[(]|\d{4}\s)/.test(tail)) continue;
+    const citation = /^\(([^()]*)\)$/.exec(tail)?.[1] ?? tail;
+    if (isCitation(citation)) return { whole, style: before.replace(/[,\s]+$/, ""), citation };
+  }
+  return { whole, style: whole, citation: null };
+}
+var CITATION_LIKE = /\b\d+\s*[A-Za-z.]+\s*\d+\b/;
+function holdsCitation(name, part) {
+  const text8 = part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<!\\d)${text8}(?!\\d)`).test(squashed(name));
+}
+function caseOfFile(file, known) {
+  const { whole, style, citation } = briefCase(file);
+  const cited2 = known.find((c3) => citationParts(c3.citation).some((part) => holdsCitation(whole, part)));
+  if (cited2 !== void 0) return cited2.key;
+  const uncited = citation === null && !CITATION_LIKE.test(whole);
+  const styled = known.filter((c3) => c3.style !== null && squashed(c3.style) === squashed(style) && (uncited || citationKey(c3.citation) === null));
+  const keys = new Set(styled.map((c3) => c3.key));
+  return keys.size === 1 ? styled[0].key : null;
+}
+function buildCaseBriefsData(dbPath, filingIds, matterDir, proceedingIds) {
   const lawDir = lawDirOf(matterDir);
   const onDisk = new Map(scanLawFolder(lawDir, isCaseBriefFile).map((f3) => [f3.file.toLowerCase(), f3]));
   const jobs2 = briefJobs(dbPath);
@@ -107561,55 +107648,85 @@ function buildCaseBriefsData(dbPath, filingIds, matterDir) {
     cases.set(key, made);
     return made;
   };
-  for (const a3 of reliedOn(dbPath, filingIds)) row2(foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), a3.style_of_cause_or_title, a3.citation, true);
+  const relied = reliedOn(dbPath, filingIds);
+  for (const a3 of relied) row2(foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), a3.style_of_cause_or_title, a3.citation, true);
+  const known = [
+    ...relied.map((a3) => ({ key: foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), style: a3.style_of_cause_or_title, citation: a3.citation })),
+    ...jobs2.filter((j3) => j3.authority_id !== null).map((j3) => ({ key: foldKey(j3.citation, j3.authority_id, j3.title), style: j3.style_of_cause_or_title, citation: j3.citation }))
+  ];
   const jobOf = new Map(jobs2.map((j3) => [j3.id, j3]));
-  const versions = /* @__PURE__ */ new Map();
+  const files = /* @__PURE__ */ new Map();
+  const caseOfStem = /* @__PURE__ */ new Map();
   const addFile = (file, caseKey, savedAt) => {
-    const { key, version: version2 } = versionOf(file);
-    const entry2 = versions.get(key) ?? { key: caseKey, files: /* @__PURE__ */ new Map(), savedAt: null };
-    if (!entry2.files.has(version2)) entry2.files.set(version2, file);
+    caseOfStem.set(versionOf(file).key, caseKey);
+    const own = files.get(caseKey) ?? /* @__PURE__ */ new Map();
+    const entry2 = own.get(file.toLowerCase()) ?? { file, savedAt: null };
     if (savedAt !== null && (entry2.savedAt === null || savedAt > entry2.savedAt)) entry2.savedAt = savedAt;
-    versions.set(key, entry2);
+    own.set(file.toLowerCase(), entry2);
+    files.set(caseKey, own);
   };
-  for (const a3 of answers) {
-    const job = jobOf.get(a3.ticket_id);
-    const name = baseName(a3.file_path);
-    addFile(a3.file_path, neutralKey(name) ?? (job === void 0 ? `name:${name.toLowerCase()}` : foldKey(job.citation, job.authority_id, job.title)), a3.saved_at);
+  const byName = new Map([...onDisk.values()].map((f3) => [baseName(f3.file).toLowerCase(), f3.file]));
+  const filedAt = (file) => onDisk.has(file.toLowerCase()) ? file : byName.get(baseName(file).toLowerCase()) ?? file;
+  const briefAnswers = answers.filter((a3) => isCaseBriefFile(baseName(a3.file_path)));
+  const jobOfAnswer = (a3) => jobOf.get(a3.ticket_id);
+  const looseAnswers = briefAnswers.filter((a3) => jobOfAnswer(a3).authority_id === null);
+  for (const a3 of briefAnswers) {
+    const job = jobOfAnswer(a3);
+    if (job.authority_id !== null) addFile(filedAt(a3.file_path), foldKey(job.citation, job.authority_id, job.title), a3.saved_at);
+  }
+  for (const file of [...looseAnswers.map((a3) => a3.file_path), ...[...onDisk.values()].map((f3) => f3.file)]) {
+    const { style, citation } = briefCase(file);
+    if (citation === null || caseOfStem.has(versionOf(file).key) || caseOfFile(file, known) !== null) continue;
+    known.push({ key: citationKey(citation), style, citation });
+  }
+  for (const a3 of looseAnswers) {
+    const job = jobOfAnswer(a3);
+    addFile(filedAt(a3.file_path), caseOfFile(a3.file_path, known) ?? foldKey(job.citation, null, job.title), a3.saved_at);
   }
   for (const f3 of onDisk.values()) {
-    const { key } = versionOf(f3.file);
-    const name = baseName(f3.file);
-    addFile(f3.file, versions.get(key)?.key ?? neutralKey(name) ?? `name:${briefCaseName(f3.file).toLowerCase()}`, null);
+    addFile(f3.file, caseOfStem.get(versionOf(f3.file).key) ?? caseOfFile(f3.file, known) ?? `name:${squashed(briefCase(f3.file).whole)}`, null);
   }
-  for (const entry2 of versions.values()) {
-    const numbers = [...entry2.files.keys()].sort((a3, b3) => a3 - b3);
-    const version2 = numbers[numbers.length - 1];
-    const file = entry2.files.get(version2);
-    const segments = file.split(/[\\/]/);
-    const path = join38(matterDir, ...segments);
-    const found = onDisk.get(file.toLowerCase());
-    const mtime = found !== void 0 ? found.mtime : modified(path);
-    const brief = {
-      date: dateOf(file, entry2.savedAt, mtime),
-      version: version2,
-      earlier: numbers.slice(0, -1),
-      file,
-      url: pathToFileURL2(path).href,
-      on_disk: found !== void 0 || mtime !== null
-    };
-    const target = row2(entry2.key, briefCaseName(file), null, false);
-    if (target.brief === null || (brief.date ?? "") > (target.brief.date ?? "")) target.brief = brief;
+  for (const [caseKey, own] of files) {
+    const versions = [...own.values()].map(({ file, savedAt }) => {
+      const path = join38(matterDir, ...file.split(/[\\/]/));
+      const found = onDisk.get(file.toLowerCase());
+      const mtime = found !== void 0 ? found.mtime : modified(path);
+      const { key, version: version2 } = versionOf(file);
+      const named2 = dateOf(file, savedAt, mtime);
+      const written = savedAt?.slice(0, 10) ?? mtime ?? named2;
+      return { key, own: version2, date: version2 > 1 ? written : named2, written: written ?? "", file, url: pathToFileURL2(path).href, on_disk: found !== void 0 || mtime !== null };
+    });
+    const stems = /* @__PURE__ */ new Map();
+    for (const v3 of versions) {
+      const stem3 = stems.get(v3.key) ?? { gained: "", written: "" };
+      stems.set(v3.key, { gained: [stem3.gained, v3.date ?? ""].sort()[1], written: [stem3.written, v3.written].sort()[1] });
+    }
+    const stemOf = (key) => stems.get(key);
+    versions.sort((a3, b3) => stemOf(a3.key).gained.localeCompare(stemOf(b3.key).gained) || stemOf(a3.key).written.localeCompare(stemOf(b3.key).written) || a3.key.localeCompare(b3.key) || a3.own - b3.own);
+    let last = 0;
+    const numbered = versions.map(({ date: date3, file, url, on_disk, own: number3 }) => {
+      last = Math.max(last + 1, number3);
+      return { version: last, date: date3, file, url, on_disk };
+    });
+    const current = numbered[numbered.length - 1];
+    const older = numbered.slice(0, -1);
+    const knownCase = known.find((c3) => c3.key === caseKey);
+    const target = row2(caseKey, knownCase?.style ?? briefCase(current.file).style, knownCase?.citation ?? null, false);
+    if (citationKey(target.citation) === null) target.citation = numbered.map((v3) => briefCase(v3.file).citation).filter((c3) => c3 !== null).pop() ?? null;
+    target.brief = { ...current, earlier: older.map((v3) => v3.version), earlier_files: [...older].reverse() };
   }
   for (const j3 of jobs2) {
     if (j3.status !== "queued" && j3.status !== "wip" || j3.rejected_at !== null) continue;
+    if (!proceedingIds.includes(j3.proceeding_id)) continue;
     const target = row2(foldKey(j3.citation, j3.authority_id, j3.title), j3.style_of_cause_or_title ?? j3.title.slice(BRIEF_JOB_PREFIX.length), j3.citation, false);
-    target.jobs.push({ id: j3.id, title: j3.title });
+    if (!target.jobs.some((held3) => held3.id === j3.id)) target.jobs.push({ id: j3.id, title: j3.title });
   }
   const all = [...cases.values()];
-  for (const c3 of all) c3.status = c3.brief !== null ? "briefed" : c3.jobs.length > 0 ? "requested" : "not_briefed";
-  const relied = all.filter((c3) => c3.relied_on);
+  const held2 = (b3) => b3.on_disk || b3.earlier_files.some((v3) => v3.on_disk);
+  for (const c3 of all) c3.status = c3.brief !== null && held2(c3.brief) ? "briefed" : c3.jobs.length > 0 ? "requested" : "not_briefed";
+  const reliedRows = all.filter((c3) => c3.relied_on);
   const rest = all.filter((c3) => !c3.relied_on).sort((a3, b3) => (b3.brief?.date ?? "").localeCompare(a3.brief?.date ?? "") || a3.title.localeCompare(b3.title));
-  return { cases: [...relied, ...rest] };
+  return { cases: [...reliedRows, ...rest] };
 }
 
 // src/submission/forms/research-propositions.ts
@@ -107637,7 +107754,7 @@ function fetchStatements(dbPath, proceedingId) {
     [proceedingId]
   );
 }
-function citationParts(row2) {
+function citationParts2(row2) {
   const line = lawStatementCitationLine({ ...row2, linked_provisions: null }) ?? "";
   const head = row2.authority_title === null ? null : `> *${row2.authority_title}*`;
   if (head !== null && line.startsWith(head)) return { title: row2.authority_title, rest: line.slice(head.length) };
@@ -107671,10 +107788,9 @@ function propositionsFor(dbPath, proceedingId, ids, merged) {
     [proceedingId]
   );
   const citedHere = new Set(rows(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r3) => r3.statement_id));
-  const researchOwn = new Set(
-    rows(dbPath, "SELECT fl.statement_id, f.kind FROM filing_law fl JOIN filings f ON f.id = fl.filing_id WHERE f.proceeding_id = ?", [proceedingId]).filter(isResearchWriting).map((r3) => r3.statement_id)
-  );
-  const statements = fetchStatements(dbPath, proceedingId).filter((s3) => s3.law_assertion_id !== null || !researchOwn.has(s3.statement_id) || citedHere.has(s3.statement_id));
+  const citing = rows(dbPath, "SELECT fl.statement_id, f.kind FROM filing_law fl JOIN filings f ON f.id = fl.filing_id WHERE f.proceeding_id = ?", [proceedingId]);
+  const researchCited = new Set(citing.filter(isResearchWriting).map((r3) => r3.statement_id));
+  const otherCited = new Set(citing.filter((r3) => !isResearchWriting(r3)).map((r3) => r3.statement_id));
   const links = rows(
     dbPath,
     `SELECT sbl.law_assertion_id, s.id AS submission_id, s.contention, s.killed_on
@@ -107707,6 +107823,10 @@ function propositionsFor(dbPath, proceedingId, ids, merged) {
      WHERE o.proceeding_id = ? AND (r.law_assertion_id IS NOT NULL OR r.excerpt_id IS NOT NULL)`,
     [...ids, proceedingId]
   );
+  const orderCited = new Set(required2.map((r3) => r3.excerpt_id));
+  const statements = fetchStatements(dbPath, proceedingId).filter(
+    (s3) => s3.law_assertion_id !== null || !researchCited.has(s3.statement_id) || otherCited.has(s3.statement_id) || orderCited.has(s3.statement_id) || citedHere.has(s3.statement_id)
+  );
   const onFilingIds = new Set(onFiling.map((s3) => s3.id));
   const present3 = (list) => list.filter((id) => id !== null);
   const deployed = /* @__PURE__ */ new Set([
@@ -107719,7 +107839,7 @@ function propositionsFor(dbPath, proceedingId, ids, merged) {
     const inUse = row2.law_assertion_id !== null && deployed.has(row2.law_assertion_id) || usedHere.has(row2.statement_id);
     const cls = propositionClass({ proposition_killed_on: killedOn, authority_killed_on: row2.authority_killed_on, in_use: inUse });
     counts3[cls] += 1;
-    const { title, rest } = citationParts(row2);
+    const { title, rest } = citationParts2(row2);
     return { statement_id: row2.statement_id, class: cls, citation_title: title, citation_rest: rest, excerpt: row2.excerpt, status: statusLines(row2) };
   }
   function cardClass(own, killedOn, inUse) {
@@ -107817,7 +107937,7 @@ var LEGAL_RESEARCH_PAGE = {
     const filings = ctx.writings.map((w3) => w3.filing);
     return {
       propositions: buildPropositionsData(ctx.dbPath, filings),
-      briefs: buildCaseBriefsData(ctx.dbPath, filings.map((f3) => f3.id), matterDir),
+      briefs: buildCaseBriefsData(ctx.dbPath, filings.map((f3) => f3.id), matterDir, filings.map((f3) => f3.proceeding_id)),
       memos: buildLegalMemosData(ctx.dbPath, ctx.jobs, matterDir)
     };
   }
@@ -109661,7 +109781,8 @@ function jobCardLines(t3, derived, seeds, rendered) {
   const holder = t3.locked_by === null ? "" : ` \xB7 holder: ${t3.locked_by.slice(-8)}`;
   const locked = t3.category === "wip" ? ` \xB7 taken: ${t3.locked_at ?? "(unknown time)"}${holder} \xB7 last activity: ${t3.last_activity_at ?? "(unknown time)"}${t3.active_at === null ? "" : ` \xB7 session active: ${t3.active_at}`}` : "";
   const lines2 = [head, `  kind: ${t3.kind} \xB7 priority: ${t3.priority}${locked}`, `  intent: ${t3.intent}`];
-  if (t3.proposal_keys.length > 0) lines2.push(`  keys: ${t3.proposal_keys.map((key) => keyText(key, t3.proposal_items[key], derived)).join("; ")}`);
+  const against = t3.research_writing === void 0 ? derived : null;
+  if (t3.proposal_keys.length > 0) lines2.push(`  keys: ${t3.proposal_keys.map((key) => keyText(key, t3.proposal_items[key], against)).join("; ")}`);
   lines2.push(`  scope: ${t3.scope.length === 0 ? "\u2014" : t3.scope.join(", ")} \xB7 waits on: ${edgeText(t3.blocked_by)} \xB7 either-or: ${edgeText(t3.conflicts)}`);
   if (t3.steps.length > 0) {
     lines2.push(`  steps: ${t3.steps.map((s3) => stepText(s3, rendered)).join(" \xB7 ")}`);
@@ -109821,7 +109942,8 @@ function briefsLines(cases) {
         head.push(c3.brief.date ?? "no date", `v${c3.brief.version}${c3.brief.earlier.length === 0 ? "" : ` (earlier: ${c3.brief.earlier.map((n3) => `v${n3}`).join(", ")})`}`, c3.brief.file);
         if (!c3.brief.on_disk) head.push("not in the law folder");
       }
-      return [head.join(" \xB7 "), ...c3.jobs.length === 0 ? [] : [`  jobs: ${c3.jobs.map((j3) => `#${j3.id} ${j3.title}`).join("; ")}`]];
+      const earlier = (c3.brief?.earlier_files ?? []).map((v3) => `  earlier v${v3.version} \xB7 ${v3.date ?? "no date"} \xB7 ${v3.file}${v3.on_disk ? "" : " \xB7 not in the law folder"}`);
+      return [head.join(" \xB7 "), ...earlier, ...c3.jobs.length === 0 ? [] : [`  jobs: ${c3.jobs.map((j3) => `#${j3.id} ${j3.title}`).join("; ")}`]];
     })
   ];
 }
@@ -109961,13 +110083,14 @@ function submissionFormsBoardCard(args, client = {}, now = nowStamp(), dates = D
       lanes.includes("attached") && draftDir !== void 0 ? withCodes(attachedDrafts(args.db_path, draftDir, section3)) : [],
       lanes.includes("court_file") && draftDir !== void 0 && args.filing_id !== void 0 ? (section3.meta.writing_states?.map((w3) => w3.filing_id) ?? [args.filing_id]).filter((id) => id !== null).flatMap((id) => courtFileAffidavits(args.db_path, id, dirname21(draftDir))) : [],
       lanes.includes("memos") && draftDir !== void 0 ? buildLegalMemosData(args.db_path, section3.tickets, dirname21(draftDir)).memos : [],
-      lanes.includes("briefs") && draftDir !== void 0 ? buildCaseBriefsData(
-        args.db_path,
-        (section3.meta.writing_states?.map((w3) => w3.filing_id) ?? (args.filing_id === void 0 ? [] : [args.filing_id])).filter((id) => id !== null),
-        dirname21(draftDir)
-      ).cases : []
+      lanes.includes("briefs") && draftDir !== void 0 ? briefsOfBoard(args.db_path, section3, dirname21(draftDir)) : []
     )
   };
+}
+function briefsOfBoard(dbPath, section3, matterDir) {
+  const states = section3.meta.writing_states ?? [section3.meta];
+  const writings = states.filter((w3) => w3.filing_id !== null);
+  return buildCaseBriefsData(dbPath, writings.map((w3) => w3.filing_id), matterDir, (writings.length > 0 ? writings : states).map((w3) => w3.proceeding_id)).cases;
 }
 
 // src/submission/matter-pages.ts
@@ -110114,7 +110237,7 @@ function formCurrency(formKey, today3, seams = {}) {
 var FRONTMATTER_RE = /^---\n[\s\S]*?\n---\n?/;
 var HTML_COMMENT_RE = /[ \t]*<!--[\s\S]*?-->/g;
 var MOCKUP_ONLY_LINE_RE = new RegExp(`^.*${MOCKUP_ONLY_TAG}[ \\t]*\\n?`, "gm");
-var GAP_LINE_RE = /^🧩 _+ <!-- .* -->[ \t]*\n?/gm;
+var GAP_LINE_RE = /^🧩 _+ <!-- (.*) -->[ \t]*\n?/gm;
 var MOCKUP_ONLY_HEADINGS = [
   "Source trace",
   "Facts attributed to this witness, not yet in this statement",
@@ -110883,7 +111006,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
   }
   const cited2 = general === null ? [] : timed(timings, "layout_status", () => citedStates(general, filing));
   const built = documentsForFiling(ctx, timings, general, cited2);
-  if (drift.rows.length > 0) built[0] = { ...built[0], markdown: withPartiesDriftLines(built[0].markdown, drift.rows) };
+  if (drift.rows.length > 0 && !isResearchWriting(filing)) built[0] = { ...built[0], markdown: withPartiesDriftLines(built[0].markdown, drift.rows) };
   if (currency?.warning) built[0] = { ...built[0], markdown: withLeadLines(built[0].markdown, [`${currency.warning} ${MOCKUP_ONLY_TAG}`]) };
   if (renderMode === "filed") return finishFiledRender({ dbPath, filingId, revision, filing, built, cited: cited2, documentTypes: documentTypes2, timings, started });
   const untracked = timed(
@@ -112601,6 +112724,7 @@ function rankFilings(dbPath, client, now, stamp2, timings) {
           }
         };
       }
+      const research = isResearchWriting(filing) ? { research_writing: true } : {};
       const hearingDate = fetchHearingDate(dbPath, filing.id);
       const lifecycle = deriveLifecycle(filing, hearingDate, now.slice(0, 10));
       if (filing.retired_on) {
@@ -112619,7 +112743,8 @@ function rankFilings(dbPath, client, now, stamp2, timings) {
             paths: [],
             lifecycle: lifecycle.state,
             retired_on: filing.retired_on,
-            ...filing.retirement_reason ? { retirement_reason: filing.retirement_reason } : {}
+            ...filing.retirement_reason ? { retirement_reason: filing.retirement_reason } : {},
+            ...research
           }
         };
       }
@@ -112643,7 +112768,8 @@ function rankFilings(dbPath, client, now, stamp2, timings) {
           title: filing.title,
           paths: existingMockupPaths(dbPath, filing.id),
           lifecycle: lifecycle.state,
-          render_state: state
+          render_state: state,
+          ...research
         }
       };
     })
@@ -112888,7 +113014,7 @@ function overlapping(section3, t3, cleared) {
   const mine = words(t3.title);
   return section3.tickets.filter((o3) => {
     if (o3.id === t3.id || cleared.includes(o3.id) || !LIVE2.has(o3.category) || fixedText(o3.title)) return false;
-    if (Boolean(o3.general) !== Boolean(t3.general) || o3.writing !== t3.writing) return false;
+    if (Boolean(o3.general) !== Boolean(t3.general) || o3.writing !== t3.writing || o3.research_writing !== t3.research_writing) return false;
     const sharedWords = [...words(o3.title)].filter((w3) => mine.has(w3)).length;
     return o3.proposal_keys.some((k3) => t3.proposal_keys.includes(k3)) || o3.scope.some((s3) => t3.scope.includes(s3)) || sharedWords >= 2;
   });
@@ -112897,7 +113023,8 @@ function boardOf(dbPath, id) {
   const [row2] = submissionDataQuery(dbPath, "SELECT filing_id, proceeding_id FROM tickets WHERE id = ?", [id]).rows;
   if (row2 === void 0) throw new ValidationError(`${TOOL12}: no job ${id} in ${dbPath}; nothing was written`, "not_found");
   const filings = fetchBoardFilings(dbPath, row2.proceeding_id);
-  const own = row2.filing_id ?? (filings.find((f3) => !f3.retired_on) ?? filings[0])?.id ?? null;
+  const own = filings.some((f3) => f3.id === row2.filing_id) ? row2.filing_id : proceedingJobBoard(filings)?.id ?? null;
+  if (own === null && filings.length > 0) return { proceeding_id: row2.proceeding_id };
   const index = new BoardIndex(dbPath);
   const ref = { filing_id: own, proceeding_id: row2.proceeding_id };
   const survivor = index.absorbed(ref) ? index.survivorOf(ref) : ref;
@@ -112940,7 +113067,7 @@ async function submissionDataTakeJob(args, env = process.env) {
   }
   const restating = restatingSteps(job);
   if (restating.length > 0) return refuse2("restates", `Step ${restating.join(", ")} of job ${id} only restates its title or intent, so it names no work. What does the work divide into?`, { steps: restating });
-  const premise = premiseOf(job, derivedOf(section3));
+  const premise = premiseOf(job, job.research_writing === void 0 ? derivedOf(section3) : null);
   if (job.steps.length === 1 && premise.dead > 0) {
     return premise.dead === job.proposal_keys.length ? refuse2("keys_dead", `The marker no longer fires on any of job ${id}'s ${premise.dead} items: close it as superseded, or keep it and say what it should now do?`) : refuse2("some_keys_dead", `${premise.line} What should job ${id} now do?`);
   }
@@ -113042,6 +113169,11 @@ function validate(args) {
     checkScope(c3.scope, `companions[${i3}].scope`);
   });
 }
+function authoritiesOfCase(dbPath, proceedingId, authorityId) {
+  const all = submissionDataQuery(dbPath, "SELECT id, citation FROM authorities WHERE proceeding_id = ?", [proceedingId]).rows;
+  const key = citationKey(all.find((a3) => a3.id === authorityId)?.citation ?? null);
+  return key === null ? [authorityId] : all.filter((a3) => citationKey(a3.citation) === key).map((a3) => a3.id);
+}
 function holderQuery(args, titles) {
   const live = liveTicketClause(args.db_path, "t");
   const liveStatus = `t.status IN ('queued', 'wip') AND t.rejected_at IS NULL${live}`;
@@ -113077,8 +113209,8 @@ function holderQuery(args, titles) {
     case "authority_brief": {
       const authority = (args.scope ?? []).find((r3) => r3.entity === "authorities" && r3.entity_id !== null);
       return {
-        sql: `SELECT t.id FROM tickets t JOIN ticket_scope sc ON sc.ticket_id = t.id WHERE t.proceeding_id = ? AND ${liveStatus} AND t.title LIKE '${BRIEF_JOB_PREFIX}%' AND sc.entity = 'authorities' AND sc.entity_id = ?`,
-        params: [args.proceeding_id, authority.entity_id]
+        sql: `SELECT t.id FROM tickets t JOIN ticket_scope sc ON sc.ticket_id = t.id WHERE t.proceeding_id = ? AND ${liveStatus} AND t.title LIKE '${BRIEF_JOB_PREFIX}%' AND sc.entity = 'authorities' AND sc.entity_id IN (SELECT value FROM json_each(?))`,
+        params: [args.proceeding_id, JSON.stringify(authoritiesOfCase(args.db_path, args.proceeding_id, authority.entity_id))]
       };
     }
     default:
@@ -113377,11 +113509,8 @@ var TOOL16 = "drafting_data__complete_job";
 var NOW10 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function rewritePages(args, read3, client, todos, dates) {
   try {
-    let filingId = read3.filing_id;
-    if (filingId === null) {
-      const filings = fetchBoardFilings(args.db_path, read3.proceeding_id).filter((f3) => !isJobOnlyBoard(f3));
-      filingId = (filings.find((f3) => f3.retired_on === null) ?? filings[0])?.id ?? null;
-    }
+    const boards = fetchBoardFilings(args.db_path, read3.proceeding_id);
+    const filingId = boards.some((f3) => f3.id === read3.filing_id) ? read3.filing_id : proceedingJobBoard(boards)?.id ?? null;
     if (filingId !== null) {
       const rendered2 = submissionFormsRender(args.db_path, filingId, client, "mockup", ["Work_board"], void 0, void 0, void 0, args.session_token, args.draft_dir, todos, dates);
       const board = rendered2.documents.find((d3) => d3.document_type === "Work_board");
@@ -114692,7 +114821,7 @@ function trashReport(written) {
   };
 }
 function openBoard(dbPath, draftDir, client, todos, dates, listed, filingId, timings) {
-  const target = filingId ?? listed.filings.find((f3) => f3.retired_on === void 0 && !f3.milestone_only)?.filing_id;
+  const target = filingId ?? listed.filings.find((f3) => f3.retired_on === void 0 && !f3.milestone_only && !f3.research_writing)?.filing_id;
   const proceedingId = target === void 0 ? listed.pre_filing_proceedings?.[0]?.proceeding_id : void 0;
   const phases = (rendered) => {
     for (const t3 of rendered) timings.push({ phase: `open: ${t3.phase}`, ms: t3.ms });
@@ -123229,6 +123358,15 @@ var LEGAL_RESEARCH_FIXTURE = {
             date: "2026-01-11",
             version: 2,
             earlier: [1],
+            earlier_files: [
+              {
+                version: 1,
+                date: "2026-01-11",
+                file: "6. LAW\\Breach of contract\\2026-01-11 case brief Sample Holdings Ltd. v. Example Traders Inc., 2019 BCSC 0000.md",
+                url: "file:///placeholder/6.%20LAW/Breach%20of%20contract/2026-01-11%20case%20brief.md",
+                on_disk: true
+              }
+            ],
             file: "6. LAW\\Breach of contract\\2026-01-11 case brief Sample Holdings Ltd. v. Example Traders Inc., 2019 BCSC 0000 v2.md",
             url: "file:///placeholder/6.%20LAW/Breach%20of%20contract/2026-01-11%20case%20brief%20v2.md",
             on_disk: true
@@ -123237,12 +123375,12 @@ var LEGAL_RESEARCH_FIXTURE = {
         { title: "Placeholder Co. v. Specimen Ltd.", citation: "2021 BCCA 0000", status: "requested", relied_on: true, jobs: [{ id: 21, title: "Brief the case: Placeholder Co. v. Specimen Ltd., 2021 BCCA 0000" }], brief: null },
         { title: "Model Ltd. v. Dummy Corp.", citation: "2020 BCSC 0000", status: "not_briefed", relied_on: true, jobs: [], brief: null },
         {
-          title: "Instance v. Pattern, 2018 BCCA 0000",
-          citation: null,
+          title: "Instance v. Pattern",
+          citation: "2018 BCCA 0000",
           status: "briefed",
           relied_on: false,
           jobs: [],
-          brief: { date: "2026-01-06", version: 1, earlier: [], file: "6. LAW\\Costs\\2026-01-06 case brief Instance v. Pattern, 2018 BCCA 0000.md", url: "file:///placeholder/6.%20LAW/Costs/2026-01-06%20case%20brief.md", on_disk: true }
+          brief: { date: "2026-01-06", version: 1, earlier: [], earlier_files: [], file: "6. LAW\\Costs\\2026-01-06 case brief Instance v. Pattern, 2018 BCCA 0000.md", url: "file:///placeholder/6.%20LAW/Costs/2026-01-06%20case%20brief.md", on_disk: true }
         }
       ]
     },
@@ -123970,23 +124108,26 @@ function saveAnswer(destinationDir, filename, text8, fromScratch, fromRender) {
   if ([text8, fromScratch, fromRender].filter((v3) => v3 !== void 0).length !== 1) {
     throw new DataServerError("pass exactly one of text, from_scratch and from_render", "invalid_argument");
   }
-  let source;
-  if (fromScratch !== void 0) {
-    source = scratchBytes(destinationDir, fromScratch);
-  } else if (fromRender !== void 0) {
-    source = renderBytes(destinationDir, fromRender);
+  let body;
+  let mockupOnly = [];
+  if (fromRender !== void 0) {
+    ({ body, mockupOnly } = renderBytes(destinationDir, fromRender));
   } else {
-    if (typeof text8 !== "string" || text8.length === 0) {
-      throw new DataServerError("text must be a non-empty string", "invalid_argument");
+    let source;
+    if (fromScratch !== void 0) {
+      source = scratchBytes(destinationDir, fromScratch);
+    } else {
+      if (typeof text8 !== "string" || text8.length === 0) {
+        throw new DataServerError("text must be a non-empty string", "invalid_argument");
+      }
+      source = Buffer.from(text8, "utf-8");
     }
-    source = Buffer.from(text8, "utf-8");
+    body = Buffer.from(withLegend(source.toString("utf-8"), "").markdown, "utf-8");
   }
-  const { markdown } = withLegend(source.toString("utf-8"), "");
-  const body = Buffer.from(markdown, "utf-8");
   const { dir, created } = resolveOrCreateLawDir(destinationDir);
   const saved = writeNewVersion(dir, filename, body);
   const sha2564 = createHash14("sha256").update(body).digest("hex");
-  return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created, sha256: sha2564 };
+  return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created, sha256: sha2564, ...mockupOnly.length > 0 ? { mockup_only_lines: mockupOnly } : {} };
 }
 function scratchBytes(destinationDir, fromScratch) {
   if (typeof fromScratch !== "string" || !pathWin3232.isAbsolute(fromScratch)) {
@@ -124020,6 +124161,25 @@ function destinationDraftDir(destinationDir) {
   return draft;
 }
 var MOCKUP_HEADER = /^\uFEFF?---\r?\n[\s\S]*?\r?\n---\r?\n(?:[ \t]*\r?\n)*(?:# [^\r\n]*\r?\n(?:[ \t]*\r?\n)*)?/;
+var CASE_BRIEF_HEADER = /^\uFEFF?---\r?\n(?:(?!---\r?\n)[^\n]*\n)*?Document Type: Case Brief\r?\n/;
+function caseBriefCopy(mockup, source) {
+  const gaps = [...mockup.matchAll(GAP_LINE_RE)].map((m3) => m3[1]);
+  if (gaps.length > 0) throw new DataServerError(`this brief is not complete, so it was not saved: ${gaps.join("; ")}: ${source}`, "brief_incomplete");
+  const verbatim = [];
+  const held2 = mockup.split("\n").map((line, i3, lines2) => {
+    if (!line.startsWith(">")) return line.replace(/ \(/g, "\uE002").replace(/ \[/g, "\uE003");
+    if (!lines2[i3 + 1]?.startsWith(">")) return line;
+    verbatim.push(line);
+    return `\uE000${verbatim.length - 1}\uE001`;
+  });
+  return toFiledFace(held2.join("\n")).replace(/^\s*# [^\n]*\n\s*/, "").replace(/\uE002/g, " (").replace(/\uE003/g, " [").replace(/\uE000(\d+)\uE001/g, (_3, n3) => verbatim[Number(n3)]);
+}
+function memoCopy(mockup) {
+  return {
+    copy: withLegend(mockup.replace(MOCKUP_ONLY_LINE_RE, "").replace(MOCKUP_HEADER, "").replace(/^---[ \t]+\uD83E\uDDD0[ \t]*$/gm, "---"), "").markdown,
+    mockupOnly: [...mockup.matchAll(MOCKUP_ONLY_LINE_RE)].map((m3) => m3[0].replace(MOCKUP_ONLY_TAG, "").trim())
+  };
+}
 function renderBytes(destinationDir, fromRender) {
   if (typeof fromRender !== "string" || !pathWin3232.isAbsolute(fromRender) || pathWin3232.extname(fromRender).toLowerCase() !== ".md") {
     throw new DataServerError(`from_render must be the absolute path of the .md mockup drafting_forms__render returned: ${fromRender}`, "invalid_path");
@@ -124030,9 +124190,10 @@ function renderBytes(destinationDir, fromRender) {
   if (!source.toLowerCase().startsWith(draft.toLowerCase() + "\\") || !statSync25(source).isFile()) {
     throw new DataServerError(`from_render is not a mockup in this matter's ${draft}: ${source}`, "not_render");
   }
-  const body = readFileSync52(source, "utf-8").replace(MOCKUP_HEADER, "");
-  if (body.trim() === "") throw new DataServerError(`from_render is empty: ${source}`, "invalid_argument");
-  return Buffer.from(body, "utf-8");
+  const mockup = readFileSync52(source, "utf-8");
+  const { copy, mockupOnly } = CASE_BRIEF_HEADER.test(mockup) ? { copy: caseBriefCopy(mockup, source), mockupOnly: [] } : memoCopy(mockup);
+  if (copy.trim() === "") throw new DataServerError(`from_render is empty: ${source}`, "invalid_argument");
+  return { body: Buffer.from(copy, "utf-8"), mockupOnly };
 }
 function writeScratch(matterRoot, filename, text8, kind) {
   assertBareFilename(filename, "filename");
@@ -124410,6 +124571,9 @@ function resolveLawDir(destinationDir) {
 function assertBareFilename(name, label2) {
   if (typeof name !== "string" || name.length === 0 || name.includes("\0") || /[\\/]/.test(name) || /^[A-Za-z]:/.test(name) || name === "." || name === "..") {
     throw new DataServerError(`${label2} must be a bare filename: ${name}`, "invalid_filename");
+  }
+  if (/[<>:"|?*\x00-\x1f]/.test(name)) {
+    throw new DataServerError(`${label2} holds a character a Windows file name cannot have (one of < > : " | ? *, or a control character); replace each with "-": ${name}`, "invalid_filename");
   }
 }
 
