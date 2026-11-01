@@ -183,3 +183,35 @@ result, so you don't need to repeat it. You are free to mention this call to the
 is refused or fails, do not retry it and do not try another way. Tell the user it was refused,
 quote the refusal's exact words, and answer the prompt.
 ~~~
+
+B6: FAIL (2026-11-01), by Brahm's ruling, not run. B4, B5 and B6 all rely on text the user didn't write making the model act unasked. That is the shape of prompt injection, which a model is built to resist, so the refusals weren't a permission problem to route around. A design needing this shape can't be done, and no variant gets tested. B6's hook and server tools are out of the source. Option A stands.
+
+## Persistence with no model in the path
+
+Spike test P1 asks whether plain code can keep anything between Cowork sessions, with no model acting on text it didn't get from the user. It doesn't reopen Option B, and adopting a route that passes would need a new ruling from Brahm. The hook adds no text to the session. The only model step is the user's own typed request to print the report.
+
+Each hook form calls with no model in the path:
+
+| Id | Route | Passes if |
+|---|---|---|
+| P1a | `mcp_tool` hook, server `plugin:tokeneconomizer:state`, at `UserPromptSubmit` and `Stop` | `%APPDATA%\Probanda\te-p1\hits.jsonl` on the PC gains a line with form `plugin-scoped` and a Cowork `cwd` (`/home/claude`) |
+| P1b | The same, server `remote-devices`, tool `plugin_tokeneconomizer_state__probe_hit` | The same file gains a line with form `remote-devices` |
+| P1c | The same, server `remote-devices`, tool `device_bash`, fixed command | `te-runs/p1/device-bash.txt` in the task folder gains a line on the PC |
+| P1d | Command hook writes a marker under `/projects/<project id>/` | The second session's report shows `earlier_markers` of at least 1 for that store |
+| P1e | Command hook writes a marker under `CLAUDE_PLUGIN_DATA` | The same, for that store. Not set in the hook's environment: not run |
+| P1f | Command hook writes a marker in the plugin folder (`CLAUDE_PLUGIN_ROOT`) | The same, for that store |
+| P1g | Command hook sends a bare `HEAD` request to `github.com`, `example.com`, `pypi.org` and Probanda's Supabase host | The report shows an HTTP status, not an exception, for an address. This shows the request can leave, not that a store exists |
+
+Expected results, fixed before the run. R7 and the docs' cloud-session text predict that P1a fails. P1b and P1c are unknown, with P1b needing the desktop app to offer this plugin's server. P1d is unknown: the docs conflict, and a session outside a project has no such folder. P1e and P1f are expected to fail, since R5 found nothing surviving and the docs say not to write in the plugin folder. P1g depends on the egress setting. Any route that fails stays recorded as failed for this setup only.
+
+Limit fixed before the run: an `mcp_tool` hook's reply goes to Claude Code, never to the plugin's code. So P1a, P1b and P1c can only write. A pass there serves step e, which reads the data on the PC. It can't give the guard a learned limit, and a read through the model's context would be the shape ruled out above. Only P1d, P1e, P1f or a web store can give code a read.
+
+The run: two new Cowork sessions in the project `te-cowork-test` with the folder `te-cowork-test` picked, each sending the one prompt below. The report holds environment variable names and mount points, with no values.
+
+~~~text
+te-p1 Using your container's own Bash tool, not the PC shell, print /root/.tokeneconomizer/p1/report.json exactly as it is. Then say whether your tool list has a tool whose name contains plugin_tokeneconomizer_state. Do nothing else.
+~~~
+
+The test can't distinguish why a route failed, only whether it did. Each form's Cowork result rests on the file on the PC or on the report the session prints.
+
+Control, 2026-11-01, Claude Code 2.1.312 on the PC with the built plugin: P1a's hook fired at `UserPromptSubmit` and `Stop`, the server logged both with `${session_id}` and `${cwd}` filled in, and the session's reply was unaffected. Both `remote-devices` hooks logged "mcp_tool hook skipped — MCP server 'remote-devices' not connected" at warning level only, so a skipped hook shows no error in the session, which fits R7. Lines in `hits.jsonl` from Claude Code sessions on the PC carry a Windows `cwd` and don't count for P1a or P1b.
