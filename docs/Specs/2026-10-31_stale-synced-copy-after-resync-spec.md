@@ -45,3 +45,13 @@ Does the harness keep old generations on purpose (open sessions still reading th
 
 ## 10. Verify against HEAD before building
 Locate where the build generates the "Installed copy" header; confirm it is one source.
+
+### Verification at HEAD (5c479c8a, 2026-10-31)
+
+| Claim | Found at HEAD |
+|---|---|
+| The header is one source | Not one source. Two verbatim copies: `scripts/build_plugin.py` `preamble_lines()` (stamps the built SKILL.md files) and `scripts/check_plugin_skill_md.py` `preamble_lines()` (the copy `check_plugin_tree.py` hashes against). Its docstring says the build carries its own copy on purpose |
+| Trigger is "no longer exists" | Confirmed, identical in both copies: "If `${CLAUDE_SKILL_DIR}` itself no longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` ... the highest `~g<N>`" |
+| Every plugin's SKILL.md gets it | Confirmed: `stamp_skill_md()` stamps every roster SKILL.md of every plugin; `shared/`, `legal-commons` and public skills ship unstamped |
+| Other `~g<N>` handling | `source/lawyer/mcp/src/repo-root.ts` `siblingInstalls()` already picks the highest version, then the highest `~g<N>`, for the data server's sibling reads; it does not depend on the header. `source/lawyer/mcp/src/files/skill-rules.ts` `STAMP_RE` matches the header by its `> **Installed copy.** ` prefix only, so rewording the body leaves it working |
+| Installed paths in §2 | Not verifiable from the repo; taken as observed |
