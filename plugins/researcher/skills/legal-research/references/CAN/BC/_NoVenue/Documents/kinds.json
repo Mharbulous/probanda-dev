@@ -23,6 +23,14 @@
         { "name": "research_memo_creac" }
       ],
       "recipient": "internal"
+    },
+    {
+      "file": "case-brief",
+      "name": "Case brief",
+      "aliases": [
+        { "name": "case_brief" }
+      ],
+      "recipient": "internal"
     }
   ]
 }

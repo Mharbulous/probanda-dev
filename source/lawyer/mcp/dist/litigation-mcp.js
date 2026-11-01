@@ -1,4 +1,4 @@
-// build-stamp: 8e72c58ddccb
+// build-stamp: 02cfdc385964
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -74914,7 +74914,7 @@ var StdioServerTransport = class {
 };
 
 // src/index.ts
-import { pathToFileURL as pathToFileURL2 } from "node:url";
+import { pathToFileURL as pathToFileURL3 } from "node:url";
 
 // src/call-log.ts
 import { createHash, randomUUID } from "node:crypto";
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "8e72c58ddccb";
+var BUILD_STAMP = false ? null : "02cfdc385964";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -78063,7 +78063,7 @@ var PAGE_NAMES = [
   "Milestone",
   "Procedural History",
   "Material Facts",
-  "Legal Memos",
+  "Legal Research",
   "Arguments",
   "Loose Threads",
   "Housekeeping approval"
@@ -78798,7 +78798,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("create_job"),
-      description: "Create a job (a tickets row) in one call and one transaction: the row, its steps (ordinal 1, 2, 3... in order, at least one), scope rows, the edges from existing jobs it waits on (blocks), its conflict pairs, its conversion records (proposal_keys, copied from the card) and the loose thread it consumes (seed_id), under the duplicate guard its kind takes. Each guard is /drafting-data's documented condition, tested before the row exists, so it never matches the job it guards: none (an unguarded create); live_key (a queued or wip, unshelved job holds one of proposal_keys: the fast path and a job outlined from Proposals, jobs-create.md \xA73); never_held_key (any job not deleted ever held one of proposal_keys: intake, \xA73e); title_live_with_step (a queued or wip, unshelved job on the Writing with one of this call's titles already holds a step: counsel's review, jobs-stock.md \xA73c, whose second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this title and one of these step texts: a pass finding, \xA73g); scrutiny_statement (a queued or wip, unshelved 'Review scrutiny finding: ' job is scoped to the statement in scope: \xA73d); holder_lock (held_ticket_id no longer carries session_token under claim_no: a spin-off blocker, \xA73f, which copies the held job's scope). filing_id is the Writing's or Milestone's id, or null for a proceeding-scoped job, and is never left out. priority is an integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Milestone's job, the Milestone's alone; on a proceeding-scoped job, every queued job in the proceeding. created_by is this session's session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is the job that fired the guard, when one is still there). It moves no revision. Refusals write nothing: invalid_<field>, and an error from the database (a missing blocker, a work job with no billing_anchor). Returns outcome, ticket_id, companion_ids, priority, holder_id and a note.",
+      description: "Create a job (a tickets row) in one call and one transaction: the row, its steps (ordinal 1, 2, 3... in order, at least one), scope rows, the edges from existing jobs it waits on (blocks), its conflict pairs, its conversion records (proposal_keys, copied from the card) and the loose thread it consumes (seed_id), under the duplicate guard its kind takes. Each guard is /drafting-data's documented condition, tested before the row exists, so it never matches the job it guards: none (an unguarded create); live_key (a queued or wip, unshelved job holds one of proposal_keys: the fast path and a job outlined from Proposals, jobs-create.md \xA73); never_held_key (any job not deleted ever held one of proposal_keys: intake, \xA73e); title_live_with_step (a queued or wip, unshelved job on the Writing with one of this call's titles already holds a step: counsel's review, jobs-stock.md \xA73c, whose second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this title and one of these step texts: a pass finding, \xA73g); scrutiny_statement (a queued or wip, unshelved 'Review scrutiny finding: ' job is scoped to the statement in scope: \xA73d); authority_brief (a queued or wip, unshelved 'Brief the case: ' job in the proceeding is scoped to the one authority in scope: \xA73n); holder_lock (held_ticket_id no longer carries session_token under claim_no: a spin-off blocker, \xA73f, which copies the held job's scope). filing_id is the Writing's or Milestone's id, or null for a proceeding-scoped job, and is never left out. priority is an integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Milestone's job, the Milestone's alone; on a proceeding-scoped job, every queued job in the proceeding. created_by is this session's session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is the job that fired the guard, when one is still there). It moves no revision. Refusals write nothing: invalid_<field>, and an error from the database (a missing blocker, a work job with no billing_anchor). Returns outcome, ticket_id, companion_ids, priority, holder_id and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78835,7 +78835,7 @@ function submissionDataToolDefinitions() {
           created_by: { type: "string" },
           guard: {
             type: "string",
-            enum: ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "holder_lock"]
+            enum: ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "holder_lock"]
           },
           session_token: { type: "string", description: "holder_lock only" },
           claim_no: { type: "number", description: "holder_lock only: the held job's claim_no from drafting_data__assign_job" },
@@ -79239,7 +79239,7 @@ function submissionFormsToolDefinitions() {
     },
     {
       name: formsPrefixed("board_card"),
-      description: "Read-only: what one Milestone section holds beyond the short board_summary, and what its cards hold when opened. On a merged board (drafting_data__merge_milestones) the card reads the whole board as its page draws it, by its survivor's id, each job line naming its Writing after its title; a board merged into another is refused (board_merged, naming the survivor), unless that survivor is retired. A General Job (a job with no Writing, filing_id NULL, drawn on every Writing's board in its proceeding) ends its job line ` \xB7 general`, after any tags, in every lane and in jobs; a Writing Job's line carries no such tag, and neither does any job on a proceeding_id card, where every job has no Writing. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of goals, criteria, live, proposed, completed, rejected, attached, court_file, memos; goal is accepted as the criteria lane's former name; attached and memos need draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id) or key (a Proposal key). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, each `<ordinal> <glyph> <text>` joined by ` \xB7 `, the glyph \u2611 done (followed by ` (<done_at>)`), \u2610 open, \u21BB to be retried, \u2612 cancelled or \u23F8 deferred (each followed by ` (\"<the practitioner's words>\")`), or `\u23F3 until <HH:MM>` waiting, the minute the process is next checked and never a deadline; a waiting step whose minute has passed prints \u2610, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open (`\u2610 <kind>: <label>`) or closed not retrieved (`\u2612 <kind>: <label> (not retrieved: <reason>)`), which are the job's own record and never steps of its plan, each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: goals, the board's statement of goals (drafting_data__set_board_goal) as `## Goal (<confirmed|inferred|declined|none|needs_consolidation>)`, its description on the next line, then the statement verbatim, line breaks and indentation kept, when there is one, on every kind of board, and, only while needs_consolidation, each earlier statement of a merged board as `### To combine <n> (<status>)` and its text, to propose one combined goal from; criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open, and the items separated by `; `, items with the same text printed once where the first stands as `<item> \xD7<n> (at <row>, \u2026)`, each row being the Proposal key or `<glyph>:<table>:<id>` it was flagged on; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the count of Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; attached, `## Attached (n)` and each draft attached to the board (a client letter's or a reply's file, ADR 0042, or another party's filed document) as `- attachment <id> \xB7 <registry code, else client letter|reply|opposing filing> \xB7 <stored path>`, then ` \xB7 code check failed (<why>)` when the name gate could not run, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder` (the matter folder, for another party's document), ` \xB7 unreadable (<error code>)`, or ` \xB7 modified <YYYY-MM-DD>` and on a client letter ` \xB7 review: <its first line after \"Counsel's review: \">` (`no review line` when none), the rest of that file never read, then ` \xB7 pending: #<id>, \u2026` (the proceeding's Ready, In Progress, Bring Forward and Blocked jobs whose scope names `board_attachments:<id>`) or ` \xB7 pending: none`; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read; memos, `## Legal Memos (n)` and each legal memo linked to the board, the Legal Memos page's list, newest first, every saved version of a memo one entry: a memo is linked when a job drawn on this board (its Writings' jobs, its proceeding's General jobs, and every merged member's) saved any version of it, or when no live job drawn on any board with a Legal Memos page saved any version (then it is on every board); each as `- <title> \xB7 <research memo|Westlaw Deep Research report|note-up record> \xB7 <in progress|started|completed|shelved|no job> \xB7 <date> \xB7 v<n>[ (earlier: v<m>, \u2026)] \xB7 <path from 6. LAW>[ \xB7 not in the law folder]`, then `  issue: \"<the saving job's question, verbatim>\"` per job (`  issue: none (no job saved it)` with no job, `  issue: none recorded` when its jobs recorded none), `  facts: \"<fact>\"; \u2026` (the facts the saving jobs' scope names) or `  facts: none`, and `  jobs: #<id> <title>; \u2026` when a job saved it; only file names are read from the 6. LAW folder, never a memo's text. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Milestone with no Writing (drafting_data__create_milestone) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
+      description: "Read-only: what one Milestone section holds beyond the short board_summary, and what its cards hold when opened. On a merged board (drafting_data__merge_milestones) the card reads the whole board as its page draws it, by its survivor's id, each job line naming its Writing after its title; a board merged into another is refused (board_merged, naming the survivor), unless that survivor is retired. A General Job (a job with no Writing, filing_id NULL, drawn on every Writing's board in its proceeding) ends its job line ` \xB7 general`, after any tags, in every lane and in jobs; a Writing Job's line carries no such tag, and neither does any job on a proceeding_id card, where every job has no Writing. Pass exactly one of filing_id and proceeding_id (a proceeding with no filing; one that has a filing is refused, as drafting_forms__render refuses it), and at least one selector: jobs (job ids on this section), lanes (any of goals, criteria, live, proposed, completed, rejected, attached, court_file, memos, briefs; goal is accepted as the criteria lane's former name; attached, memos and briefs need draft_dir, the matter's 0. DRAFT folder session entry returned, and court_file needs draft_dir and filing_id) or key (a Proposal key). A job id not on the section, an unknown lane, criteria or proposed on a proceeding with no filing, or no selector at all is an error. The section is built as the matter pages build it, from the inventory the filing's last render saved and the current job and shelving rows, so it reads what the session's latest render read. Returns { filing_id or proceeding_id, revision, rendered_at, card }. card is fixed-grammar text in this order: each job asked for, in board order, as its live-lane line without the tags, then `  kind: <kind> \xB7 priority: <N>` (with ` \xB7 locked: <locked_at> \xB7 holder: <tag> \xB7 last activity: <stamp>` on an In Progress job), then `  intent:`, `  keys:` with each held key's stored item and what derives now (`(now: <glyph> \"<item>\")` or `(now: dead)`), `  scope: \u2026 \xB7 waits on: \u2026 \xB7 either-or: \u2026`, `  steps:` when it has steps, each `<ordinal> <glyph> <text>` joined by ` \xB7 `, the glyph \u2611 done (followed by ` (<done_at>)`), \u2610 open, \u21BB to be retried, \u2612 cancelled or \u23F8 deferred (each followed by ` (\"<the practitioner's words>\")`), or `\u23F3 until <HH:MM>` waiting, the minute the process is next checked and never a deadline; a waiting step whose minute has passed prints \u2610, `  loose threads:` with each open loose thread captured from it (`loose thread <id>: \"<idea>\" (<created>)`) and `  answers:` with each answer saved for it (`<path from 6. LAW> (<saved_at>)`) and `  sources to get:` with the count got then each source still open (`\u2610 <kind>: <label>`) or closed not retrieved (`\u2612 <kind>: <label> (not retrieved: <reason>)`), which are the job's own record and never steps of its plan, each when it has any, and on a completed job `  completed: <completed_at>`, on a shelved one `  shelved: <rejected_at>`; a superseded job its line then `  superseded by: \u2026 \xB7 reason: \u2026`. Then each lane asked for: goals, the board's statement of goals (drafting_data__set_board_goal) as `## Goal (<confirmed|inferred|declined|none|needs_consolidation>)`, its description on the next line, then the statement verbatim, line breaks and indentation kept, when there is one, on every kind of board, and, only while needs_consolidation, each earlier statement of a merged board as `### To combine <n> (<status>)` and its text, to propose one combined goal from; criteria, the `\u{1F3AF} Completion criteria: <state>[ \u2014 <text>]` line and each criterion in board order as `- <glyph> <id>: <text>[ (after \u2026)][ (counts)][ \u2014 items]`, the counts being `(unmet <u>, met <m>, total <t>)` on a criterion read off the mockup's markers, where met counts the items the practitioner shelved or suppressed (\u{1F92B}) and total the items still flagged, shelved or suppressed, since an item fixed no longer carries a marker, and `(<n> open)` on the gate while a step or a job is open, and the items separated by `; `, items with the same text printed once where the first stands as `<item> \xD7<n> (at <row>, \u2026)`, each row being the Proposal key or `<glyph>:<table>:<id>` it was flagged on; live, `## <lane> (n)` for Ready, In Progress, Bring Forward, Blocked and Superseded, each job as the page's collapsed card text then its tags (`eligible:` and `dispatch:` on a Ready job, `idle \u2026` on an In Progress one, measured to this call's rendered_at, `BF <date>` on a Bring Forward one, the day its work may start and never a deadline), `dispatch choice: \u2026` after Ready, the counts of Completed and Shelved between Blocked and Superseded, then the count of Proposed (a filing's only), then `\u{1F9F9} lapsed keys: \u2026` when any; proposed, `## Proposed (n)` and each Proposal as `- <glyph> <title>` and `  key: \u2026 \xB7 item: \u2026 \xB7 lane: \u2026`, then, on a note-up of a statute, regulation or rule, `  step <n>: <text>` per provision the filing cites or `  steps: none`; completed, `## Completed (n)` and each completed job's line; rejected, `## Shelved (n jobs, m proposals)`, each shelved job's line, then each shelved Proposal's lines; attached, `## Attached (n)` and each draft attached to the board (a client letter's or a reply's file, ADR 0042, or another party's filed document) as `- attachment <id> \xB7 <registry code, else client letter|reply|opposing filing> \xB7 <stored path>`, then ` \xB7 code check failed (<why>)` when the name gate could not run, then ` \xB7 no Writing: shown on this proceeding's lowest-id live Writing's board` on a row with no Writing (such a row shows on that one board only), then ` \xB7 missing`, ` \xB7 not in the draft folder` (the matter folder, for another party's document), ` \xB7 unreadable (<error code>)`, or ` \xB7 modified <YYYY-MM-DD>` and on a client letter ` \xB7 review: <its first line after \"Counsel's review: \">` (`no review line` when none), the rest of that file never read, then ` \xB7 pending: #<id>, \u2026` (the proceeding's Ready, In Progress, Bring Forward and Blocked jobs whose scope names `board_attachments:<id>`) or ` \xB7 pending: none`; court_file, `## Court File (n)` and each affidavit the filing relies on, matched by number and deponent code against the file names in the matter's COURT FILE folder (with several, the one naming the proceeding's file number), as `- <label> \xB7 court file: <file name>` or ` \xB7 court file: none found[ (<note>)]`, then ` \xB7 mismatch: court file shows <status> <date>; drafting data shows <unsworn|made <date>>` when they disagree; only file names are read; memos, `## Legal Memos (n)` and each legal memo linked to the board, the Legal Research page's Legal Memos list, newest first, every saved version of a memo one entry: a memo is linked when a job drawn on this board (its Writings' jobs, its proceeding's General jobs, and every merged member's) saved any version of it, or when no live job drawn on any board with a Legal Research page saved any version (then it is on every board); each as `- <title> \xB7 <research memo|Westlaw Deep Research report|note-up record> \xB7 <in progress|started|completed|shelved|no job> \xB7 <date> \xB7 v<n>[ (earlier: v<m>, \u2026)] \xB7 <path from 6. LAW>[ \xB7 not in the law folder]`, then `  issue: \"<the saving job's question, verbatim>\"` per job (`  issue: none (no job saved it)` with no job, `  issue: none recorded` when its jobs recorded none), `  facts: \"<fact>\"; \u2026` (the facts the saving jobs' scope names) or `  facts: none`, and `  jobs: #<id> <title>; \u2026` when a job saved it; only file names are read from the 6. LAW folder, never a memo's text; briefs, `## Case Briefs (n)` and the Legal Research page's Case Briefs list: each case the board's Writings rely on, then each brief or live request for another case, as `- <style of cause>[, <citation>] \xB7 <briefed|requested|not briefed> \xB7 <relied on|not relied on>[ \xB7 <date> \xB7 v<n>[ (earlier: v<m>, \u2026)] \xB7 <path from 6. LAW>[ \xB7 not in the law folder]]`, then `  jobs: #<id> <title>; \u2026` when a live brief job names it; only file names are read, never a brief's text. Then key: the live job holding it, printed as a job above, else the Proposal with that key under its lane's heading, else `(no job or Proposal carries <key>)`. On a Milestone with no Writing (drafting_data__create_milestone) the criteria, proposed and court_file lanes print nothing and the live lane has no Proposed count. Writes nothing, moves no revision and writes no page.",
       inputSchema: {
         type: "object",
         properties: {
@@ -79250,7 +79250,7 @@ function submissionFormsToolDefinitions() {
           client_no: { type: "string" },
           matter_no: { type: "string" },
           jobs: { type: "array", items: { type: "number" } },
-          lanes: { type: "array", items: { type: "string", enum: ["goals", "criteria", "live", "goal", "proposed", "completed", "rejected", "attached", "court_file", "memos"] } },
+          lanes: { type: "array", items: { type: "string", enum: ["goals", "criteria", "live", "goal", "proposed", "completed", "rejected", "attached", "court_file", "memos", "briefs"] } },
           key: { type: "string" },
           draft_dir: { type: "string" }
         },
@@ -94845,6 +94845,10 @@ var MILESTONE_KIND = "task-board";
 function isJobOnlyBoard(filing) {
   return filing.kind === MILESTONE_KIND;
 }
+var RESEARCH_WRITING_KINDS = /* @__PURE__ */ new Set(["research_memo", "research_memo_irac", "research_memo_creac", "case_brief"]);
+function isResearchWriting(filing) {
+  return RESEARCH_WRITING_KINDS.has(filing.kind);
+}
 function fetchFiling(dbPath, filingId) {
   const found = rows(dbPath, "SELECT * FROM filings WHERE id = ?", [filingId]);
   if (found.length === 0) throw new Error(`No filing found with id ${filingId}`);
@@ -95139,11 +95143,14 @@ function fetchFilingLaw(dbPath, filingId) {
 function fetchAllFilingsForProceeding(dbPath, proceedingId) {
   return rows(dbPath, "SELECT * FROM filings WHERE proceeding_id = ? ORDER BY id", [proceedingId]);
 }
+function fetchBoardFilings(dbPath, proceedingId) {
+  return fetchAllFilingsForProceeding(dbPath, proceedingId).filter((f3) => !isResearchWriting(f3));
+}
 function fetchAllProceedings(dbPath) {
   return rows(dbPath, "SELECT * FROM proceedings ORDER BY id");
 }
 function fetchPreFilingProceedings(dbPath) {
-  return rows(dbPath, "SELECT * FROM proceedings p WHERE NOT EXISTS (SELECT 1 FROM filings f WHERE f.proceeding_id = p.id) ORDER BY p.id");
+  return rows(dbPath, "SELECT * FROM proceedings p ORDER BY p.id").filter((p3) => fetchBoardFilings(dbPath, p3.id).length === 0);
 }
 function fetchHearingDate(dbPath, filingId) {
   const found = rows(dbPath, "SELECT hearing_date FROM hearing_details WHERE filing_id = ?", [filingId]);
@@ -98365,11 +98372,11 @@ function renderWitnessStatements(ctx) {
       lines2.push(line);
     }
     lines2.push("");
-    const reliedOn = fetchDocumentsReliedOn(ctx.dbPath, s3.id);
-    if (reliedOn.length > 0) {
+    const reliedOn2 = fetchDocumentsReliedOn(ctx.dbPath, s3.id);
+    if (reliedOn2.length > 0) {
       lines2.push("**Documents relied on**");
       lines2.push("");
-      for (const d3 of reliedOn) {
+      for (const d3 of reliedOn2) {
         const exhibitNo = exhibitMap.get(d3.id);
         const cite = exhibitNo !== void 0 ? `Ex. ${exhibitNo}` : d3.label;
         const dated = d3.document_date ? `, dated ${d3.document_date}` : "";
@@ -101439,7 +101446,7 @@ function recordReserveInventory(ctx) {
   const labelMap = fetchDocumentLabels(ctx.dbPath, [...referencedDocIds]);
   const copyMarkers = fetchNotBestCopyMarkers(ctx.dbPath, ctx.proceeding.id);
   const struckIds = fetchStruckSubmissionIds(ctx.dbPath, ctx.proceeding.id);
-  const reliedOn = fetchLiveReliedLawAssertions(ctx.dbPath, ctx.proceeding.id);
+  const reliedOn2 = fetchLiveReliedLawAssertions(ctx.dbPath, ctx.proceeding.id);
   function recordBody(s3, startPara, renderedLawAssertions2, paragraphPrefix) {
     return renderSubmissionParagraphs(
       s3.id,
@@ -101457,7 +101464,7 @@ function recordReserveInventory(ctx) {
       // Writing relies on raises no 🔬 (spec R6, schema v47). The test is per statement, not per
       // submission: a lead under a reserved submission keeps 🔬 while another live-deployed
       // submission or order requires the same proposition. No `review`, so no 🧐 is recorded here.
-      { paragraphPrefix, includeLeadStatements: true, inventory: ctx.inventory, scrutinyLive: (id) => reliedOn.has(id), noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
+      { paragraphPrefix, includeLeadStatements: true, inventory: ctx.inventory, scrutinyLive: (id) => reliedOn2.has(id), noFactsNeededOn: s3.no_facts_needed_on, noLawNeededOn: s3.no_law_needed_on, servedOrderWordings: s3.served_order_wordings }
     );
   }
   for (const o3 of orders) {
@@ -103175,7 +103182,9 @@ function buildProceedingBoard(dbPath, proceedingId, rendered = nowStamp()) {
   const activeById = new Map(
     rows(dbPath, "SELECT key, value FROM db_meta WHERE key LIKE 'job_active:%'").map((r3) => [Number(r3.key.slice("job_active:".length)), r3.value])
   );
-  const retiredOn = new Map(rows(dbPath, "SELECT id, retired_on FROM filings WHERE proceeding_id = ?", [proceedingId]).map((f3) => [f3.id, f3.retired_on]));
+  const filingRows = rows(dbPath, "SELECT id, retired_on, kind FROM filings WHERE proceeding_id = ?", [proceedingId]);
+  const retiredOn = new Map(filingRows.map((f3) => [f3.id, f3.retired_on]));
+  const researchWritings = new Set(filingRows.filter(isResearchWriting).map((f3) => f3.id));
   const edge = (id) => {
     const other = ticketById.get(id);
     return { id, status: other?.status ?? null, rejected: other !== void 0 && other.status === "queued" && other.rejected_at !== null };
@@ -103233,7 +103242,7 @@ function buildProceedingBoard(dbPath, proceedingId, rendered = nowStamp()) {
       last_activity_at: lastActivity(t3),
       active_at: activeAt(t3, activeById.get(t3.id))
     };
-    return { filing_id: t3.filing_id, ticket };
+    return { filing_id: t3.filing_id !== null && researchWritings.has(t3.filing_id) ? null : t3.filing_id, ticket };
   });
   const holding = tickets.map((t3) => t3.ticket).filter(holdsMaterial);
   for (const { ticket } of tickets) {
@@ -104806,14 +104815,14 @@ function renderStateFor(dbPath, stamp2, filing, digest) {
 }
 
 // src/submission/forms/render.ts
-import { basename as basename9, dirname as dirname25, join as join47 } from "node:path";
+import { basename as basename9, dirname as dirname25, join as join48 } from "node:path";
 
 // src/submission/matter-pages.ts
-import { join as join45 } from "node:path";
+import { join as join46 } from "node:path";
 
 // src/submission/matter-page-files.ts
 import { existsSync as existsSync37, mkdirSync as mkdirSync19, readdirSync as readdirSync21, readFileSync as readFileSync34 } from "node:fs";
-import { dirname as dirname17, join as join40, relative as relative2 } from "node:path";
+import { dirname as dirname17, join as join41, relative as relative2 } from "node:path";
 
 // src/file_ops/trash.ts
 import {
@@ -106068,10 +106077,10 @@ ${page2.tail}`;
 }
 
 // src/submission/matter-page-groups.ts
-import { join as join39 } from "node:path";
+import { join as join40 } from "node:path";
 
 // src/submission/view-pages.ts
-import { join as join38 } from "node:path";
+import { join as join39 } from "node:path";
 
 // src/templates/view-pages/arguments.css.ts
 var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tag{position:absolute;right:0;bottom:0;padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
@@ -106672,26 +106681,23 @@ var MATERIAL_FACTS = {
   data: materialFactsData
 };
 
-// src/submission/forms/legal-memos-page.ts
-import { existsSync as existsSync36, readdirSync as readdirSync20, statSync as statSync17 } from "node:fs";
-import { dirname as dirname16, join as join37 } from "node:path";
-import { pathToFileURL } from "node:url";
+// src/submission/forms/legal-research-page.ts
+import { dirname as dirname16 } from "node:path";
 
-// src/templates/view-pages/legal-memos.css.ts
-var legal_memos_css_default = ".filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:6px 0 0;font-size:13px}\n.filters label{display:flex;align-items:center;gap:6px}\n.filters select,.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink)}\n.filters input[type=search]{min-width:200px;flex:1 1 200px;max-width:360px}\ndetails.ticket .body dd ul{margin:0;padding-left:18px}\ndetails.ticket .body dd ul li{white-space:pre-wrap}\ndetails.ticket .body dd.none{color:var(--muted)}\n.board>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\n[hidden]{display:none!important}\n@media (max-width:600px){main{padding:16px}}";
+// src/templates/view-pages/legal-research.css.ts
+var legal_research_css_default = ".tab-body{display:flex;flex-direction:column;gap:28px}\n.filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:0;font-size:13px}\n.filters label{display:flex;align-items:center;gap:6px;cursor:pointer}\n.filters select,.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink)}\n.filters input[type=search]{min-width:200px;flex:1 1 200px;max-width:360px}\n.counts{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.tab-body>p.hint{margin:0;font-size:13px;color:var(--muted)}\n.tab-body>p.empty,.tab-body section>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\nsection>p.note{margin:-6px 0 10px;font-size:12px;color:var(--muted)}\narticle.prop{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.prop>.text{font-weight:600;margin:0;white-space:pre-wrap}\n.prop>.text.none{font-weight:400;font-style:italic;color:var(--muted)}\n.prop>.linked,.prop>.dead{margin:0;font-size:12.5px;color:var(--muted)}\n.stmt{border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}\n.stmt .cite{margin:0}\n.stmt blockquote{margin:0;padding:2px 0 2px 12px;border-left:3px solid var(--line-strong);white-space:pre-wrap}\n.stmt .status{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}\n.prop.undecided>p,.stmt.undecided{color:var(--muted);opacity:.6}\n.prop.not_relevant>p,.stmt.not_relevant{color:var(--muted)}\n.prop.not_relevant>.text,.stmt.not_relevant .cite,.stmt.not_relevant blockquote{text-decoration:line-through;text-decoration-color:var(--muted)}\ndetails.ticket .body dd ul{margin:0;padding-left:18px}\ndetails.ticket .body dd ul li{white-space:pre-wrap}\ndetails.ticket .body dd.none{color:var(--muted)}";
 
-// src/templates/view-pages/legal-memos.html.ts
-var legal_memos_html_default = '@@include(view-head.html)@@\n<title>Legal Memos</title>\n<style>\n@@include(board.css)@@\n\n@@include(legal-memos.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Legal Memos</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(legal-memos.js)@@\n</script>\n</body>\n</html>';
+// src/templates/view-pages/legal-research.html.ts
+var legal_research_html_default = '@@include(view-head.html)@@\n<title>Legal Research</title>\n<style>\n@@include(board.css)@@\n\n\n@@include(view-folder.css)@@\n\n@@include(legal-research.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Legal Research</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(legal-research.js)@@\n</script>\n</body>\n</html>';
 
-// src/templates/view-pages/legal-memos.js.ts
-var legal_memos_js_default = `(function () {
+// src/templates/view-pages/legal-research.js.ts
+var legal_research_js_default = `(function () {
   "use strict";
   var view = window.VIEW_PAGE;
   if (!view) return;
-  var memos = view.data.memos;
-  var header = document.querySelector("header");
+  var data = view.data;
   var board = document.querySelector(".board");
-  var KEY = "legal-memos-filters";
+  var TAB_KEY = "legal-research-tab";
 
   function el(tag, cls, text) {
     var node = document.createElement(tag);
@@ -106699,25 +106705,19 @@ var legal_memos_js_default = `(function () {
     if (text !== undefined) node.textContent = text;
     return node;
   }
-
-  // The lanes, in board order, each with the Milestone's chip for its state.
-  var LANES = [
-    ["in_progress", "In Progress", "wip"],
-    ["started", "Started", ""],
-    ["completed", "Completed", "done"],
-    ["shelved", "Shelved", ""],
-    ["no_job", "No job", ""]
-  ];
-  var LANE = {};
-  LANES.forEach(function (l) { LANE[l[0]] = l; });
-  var SOURCES = { research_memo: "Research memo", westlaw: "Westlaw Deep Research report", note_up: "Note-up record" };
-  var TOP = "Top of 6. LAW";
-
-  function folderName(m) { return m.folder === "" ? TOP : m.folder; }
-  function versionText(m) {
-    return "v" + m.version + (m.earlier.length === 0 ? "" : " (earlier: " + m.earlier.map(function (n) { return "v" + n; }).join(", ") + ")");
+  function stored(key) {
+    try { return JSON.parse(localStorage.getItem(key) || "{}") || {}; } catch (e) { return {}; }
   }
-
+  function store(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+  function searchBox(label) {
+    var search = el("input");
+    search.type = "search";
+    search.placeholder = "Search";
+    search.setAttribute("aria-label", label);
+    return search;
+  }
   function row(dl, label, value, none) {
     dl.appendChild(el("dt", "", label));
     var dd = el("dd");
@@ -106735,32 +106735,10 @@ var legal_memos_js_default = `(function () {
     }
     dl.appendChild(dd);
   }
-
-  function card(m) {
-    var lane = LANE[m.status];
-    var node = el("details", "ticket");
-    node.setAttribute("data-status", m.status);
-    var summary = el("summary");
-    summary.appendChild(el("span", "ref", "v" + m.version));
-    summary.appendChild(el("span", "title", m.title));
-    var progress = el("span", "progress");
-    progress.appendChild(el("span", "chip " + lane[2], lane[1]));
-    progress.appendChild(el("span", "chip", SOURCES[m.source]));
-    progress.appendChild(document.createTextNode([m.date || "No date", folderName(m)].join(" \xB7 ")));
-    if (m.earlier.length > 0) progress.appendChild(document.createTextNode(" \xB7 " + m.earlier.length + (m.earlier.length === 1 ? " earlier version" : " earlier versions")));
-    summary.appendChild(progress);
-    node.appendChild(summary);
-
-    var body = el("div", "body");
-    var dl = el("dl");
-    row(dl, "Issue", m.issues, m.jobs.length === 0 ? "No recorded question: no job saved this memo" : "No question recorded");
-    row(dl, "Facts", m.facts, "No facts recorded");
-    row(dl, "Status", lane[1], "");
-    row(dl, "Date", m.date, "No date");
-    row(dl, "Version", versionText(m), "");
-    row(dl, "Source", SOURCES[m.source], "");
-    row(dl, "Folder", folderName(m), "");
-    row(dl, "Jobs", m.jobs.map(function (j) { return "Job #" + j.id + " " + j.title; }), "None");
+  function versionText(m) {
+    return "v" + m.version + (m.earlier.length === 0 ? "" : " (earlier: " + m.earlier.map(function (n) { return "v" + n; }).join(", ") + ")");
+  }
+  function fileRow(dl, m) {
     var file = m.file.split(/[\\\\/]/).pop();
     if (m.on_disk) {
       var a = el("a", "", file);
@@ -106769,95 +106747,371 @@ var legal_memos_js_default = `(function () {
     } else {
       row(dl, "File", file + " (not in the law folder now)", "");
     }
+  }
+  function ticket(ref, title, chips, line) {
+    var node = el("details", "ticket");
+    var summary = el("summary");
+    summary.appendChild(el("span", "ref", ref));
+    summary.appendChild(el("span", "title", title));
+    var progress = el("span", "progress");
+    chips.forEach(function (c) { progress.appendChild(el("span", "chip " + c[1], c[0])); });
+    progress.appendChild(document.createTextNode(line));
+    summary.appendChild(progress);
+    node.appendChild(summary);
+    var body = el("div", "body");
+    var dl = el("dl");
     body.appendChild(dl);
     node.appendChild(body);
-    var text = [m.title, m.folder, SOURCES[m.source]].concat(m.issues, m.facts).join(" ").toLowerCase();
-    return { node: node, memo: m, text: text };
+    return { node: node, dl: dl };
   }
 
-  // The filters: a folder, a source and a search, kept between visits.
-  function select(label, options) {
-    var wrap = el("label", "", label + " ");
-    var box = el("select");
-    options.forEach(function (o) {
-      var opt = el("option", "", o[1]);
-      opt.value = o[0];
-      box.appendChild(opt);
+  // Propositions: every one recorded, undecided shown unless the practitioner hid them.
+  function drawPropositions(tab) {
+    var props = data.propositions;
+    var KEY = "legal-research-propositions";
+    var counts = el("div", "counts");
+    counts.appendChild(el("span", "", "Statements:"));
+    [["In use", props.counts.in_use], ["Undecided", props.counts.undecided], ["Not relevant", props.counts.not_relevant]].forEach(function (pair) {
+      counts.appendChild(el("span", "", pair[0] + " " + pair[1]));
     });
-    wrap.appendChild(box);
-    return { label: wrap, box: box };
-  }
-  var folders = [];
-  memos.forEach(function (m) { if (folders.indexOf(folderName(m)) === -1) folders.push(folderName(m)); });
-  folders.sort();
-  var folderBox = select("Folder", [["", "All folders"]].concat(folders.map(function (f) { return [f, f]; })));
-  var sourceBox = select("Source", [["", "All sources"]].concat(Object.keys(SOURCES).map(function (k) { return [k, SOURCES[k]]; })));
-  var search = el("input");
-  search.type = "search";
-  search.placeholder = "Search";
-  search.setAttribute("aria-label", "Search memos");
-  var filters = el("div", "filters");
-  filters.appendChild(folderBox.label);
-  filters.appendChild(sourceBox.label);
-  filters.appendChild(search);
-  if (memos.length > 0) header.appendChild(filters);
+    tab.appendChild(counts);
+    function checkbox(text) {
+      var label = el("label");
+      var box = el("input");
+      box.type = "checkbox";
+      label.appendChild(box);
+      label.appendChild(document.createTextNode(" " + text));
+      return { label: label, box: box };
+    }
+    var undecidedBox = checkbox("Show undecided");
+    var notRelevantBox = checkbox("Show not relevant");
+    var search = searchBox("Search propositions");
+    var filters = el("div", "filters");
+    filters.appendChild(undecidedBox.label);
+    filters.appendChild(notRelevantBox.label);
+    filters.appendChild(search);
+    tab.appendChild(filters);
 
-  var empty = el("p", "empty", "No legal memo is linked to this Milestone.");
-  if (memos.length === 0) {
-    board.appendChild(empty);
-    return;
-  }
-
-  var lanes = LANES.map(function (l) {
-    var sec = el("section");
-    sec.id = l[0].replace("_", "-");
-    var h2 = el("h2", "", l[1] + " ");
-    var count = el("span", "count", "0");
-    h2.appendChild(count);
-    sec.appendChild(h2);
-    var stack = el("div", "stack");
-    var cards = memos.filter(function (m) { return m.status === l[0]; }).map(function (m) {
-      var c = card(m);
-      stack.appendChild(c.node);
-      return c;
+    // Every card and statement keeps its own search text; the filters only toggle hidden.
+    var entries = [];
+    function statementNode(s) {
+      var node = el("div", "stmt " + s.class);
+      var cite = el("p", "cite");
+      if (s.citation_title !== null) cite.appendChild(el("em", "", s.citation_title));
+      cite.appendChild(document.createTextNode(s.citation_rest));
+      node.appendChild(cite);
+      if (s.excerpt) node.appendChild(el("blockquote", "", s.excerpt));
+      if (s.status.length > 0) node.appendChild(el("p", "status", s.status.join(" \xB7 ")));
+      return node;
+    }
+    function card(p) {
+      var node = el("article", "prop " + p.class);
+      node.appendChild(p.text === null ? el("p", "text none", "No proposition recorded") : el("p", "text", p.text));
+      if (p.killed_on) node.appendChild(el("p", "dead", "Omitted " + p.killed_on));
+      if (p.dead_end) node.appendChild(el("p", "dead", "Dead end: researched, nothing found"));
+      if (p.linked_to.length > 0) node.appendChild(el("p", "linked", "Linked to: " + p.linked_to.join("; ")));
+      var rows = p.statements.map(function (s) {
+        var stmt = statementNode(s);
+        node.appendChild(stmt);
+        return { node: stmt, cls: s.class, text: [s.citation_title || "", s.citation_rest, s.excerpt || ""].join(" ").toLowerCase() };
+      });
+      if (p.statements.length === 0) node.appendChild(el("p", "linked", "No authority recorded"));
+      return { node: node, cls: p.class, text: (p.text || "").toLowerCase(), rows: rows };
+    }
+    props.groups.forEach(function (g) {
+      var sec = el("section");
+      var h2 = el("h2", "", g.heading + " ");
+      var count = el("span", "count", "0");
+      h2.appendChild(count);
+      sec.appendChild(h2);
+      if (g.note) sec.appendChild(el("p", "note", g.note));
+      var stack = el("div", "stack");
+      var cards = g.propositions.map(function (p) {
+        var c = card(p);
+        stack.appendChild(c.node);
+        return c;
+      });
+      sec.appendChild(stack);
+      tab.appendChild(sec);
+      entries.push({ node: sec, count: count, cards: cards });
     });
-    sec.appendChild(stack);
-    var none = el("p", "empty");
-    sec.appendChild(none);
-    board.appendChild(sec);
-    return { node: sec, count: count, cards: cards, none: none };
-  });
+    var empty = el("p", "empty", props.groups.length === 0 ? "No propositions of law are recorded for this proceeding." : "Nothing to show with these filters.");
+    tab.appendChild(empty);
 
-  try {
-    var saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+    var saved = stored(KEY);
+    undecidedBox.box.checked = saved.undecided !== false;
+    notRelevantBox.box.checked = saved.not_relevant === true;
+    function shown(cls) {
+      return cls === "in_use" || (cls === "undecided" && undecidedBox.box.checked) || (cls === "not_relevant" && notRelevantBox.box.checked);
+    }
+    function apply() {
+      var q = search.value.trim().toLowerCase();
+      var any = false;
+      entries.forEach(function (sec) {
+        var visible = 0;
+        sec.cards.forEach(function (c) {
+          var cardMatch = q === "" || c.text.indexOf(q) !== -1;
+          var rowsShown = 0;
+          c.rows.forEach(function (r) {
+            var on = shown(r.cls) && (cardMatch || r.text.indexOf(q) !== -1);
+            r.node.hidden = !on;
+            if (on) rowsShown += 1;
+          });
+          var on = c.rows.length === 0 ? shown(c.cls) && cardMatch : rowsShown > 0;
+          c.node.hidden = !on;
+          if (on) visible += 1;
+        });
+        sec.count.textContent = String(visible);
+        sec.node.hidden = visible === 0;
+        if (visible > 0) any = true;
+      });
+      empty.hidden = any;
+    }
+    function save() {
+      store(KEY, { undecided: undecidedBox.box.checked, not_relevant: notRelevantBox.box.checked });
+    }
+    undecidedBox.box.addEventListener("change", function () { save(); apply(); });
+    notRelevantBox.box.addEventListener("change", function () { save(); apply(); });
+    search.addEventListener("input", apply);
+    apply();
+  }
+
+  // Case Briefs: the cases relied on, then the rest. Asking for a brief happens in a session.
+  function drawBriefs(tab) {
+    var cases = data.briefs.cases;
+    var CHIPS = { briefed: ["Briefed", "done"], requested: ["Requested", "wip"], not_briefed: ["Not briefed", ""] };
+    tab.appendChild(el("p", "hint", "To request a brief, ask a session, for example: brief the cases this Milestone relies on."));
+    if (cases.length === 0) {
+      tab.appendChild(el("p", "empty", "The Writings on this Milestone rely on no case yet, and no case brief is saved."));
+      return;
+    }
+    var search = searchBox("Search case briefs");
+    var filters = el("div", "filters");
+    filters.appendChild(search);
+    tab.appendChild(filters);
+    function card(c) {
+      var chip = CHIPS[c.status];
+      var t = ticket(c.brief ? "v" + c.brief.version : "\u2014", c.title, [chip], c.citation || (c.brief && c.brief.date) || "");
+      row(t.dl, "Citation", c.citation, "None recorded");
+      row(t.dl, "Status", chip[0], "");
+      row(t.dl, "Jobs", c.jobs.map(function (j) { return "Job #" + j.id + " " + j.title; }), "None");
+      if (c.brief) {
+        row(t.dl, "Date", c.brief.date, "No date");
+        row(t.dl, "Version", versionText(c.brief), "");
+        fileRow(t.dl, c.brief);
+      }
+      return { node: t.node, text: [c.title, c.citation || ""].join(" ").toLowerCase() };
+    }
+    var sections = [["Relied on by this Milestone's Writings", true], ["Not relied on by this Milestone's Writings", false]].map(function (s) {
+      var list = cases.filter(function (c) { return c.relied_on === s[1]; });
+      var sec = el("section");
+      var h2 = el("h2", "", s[0] + " ");
+      var count = el("span", "count", "0");
+      h2.appendChild(count);
+      sec.appendChild(h2);
+      var stack = el("div", "stack");
+      var cards = list.map(function (c) {
+        var made = card(c);
+        stack.appendChild(made.node);
+        return made;
+      });
+      sec.appendChild(stack);
+      tab.appendChild(sec);
+      return { node: sec, count: count, cards: cards };
+    });
+    var none = el("p", "empty", "Nothing to show with this search.");
+    tab.appendChild(none);
+    function apply() {
+      var q = search.value.trim().toLowerCase();
+      var any = false;
+      sections.forEach(function (sec) {
+        var visible = 0;
+        sec.cards.forEach(function (c) {
+          var on = q === "" || c.text.indexOf(q) !== -1;
+          c.node.hidden = !on;
+          if (on) visible += 1;
+        });
+        sec.count.textContent = String(visible);
+        sec.node.hidden = visible === 0;
+        if (visible > 0) any = true;
+      });
+      none.hidden = any;
+    }
+    search.addEventListener("input", apply);
+    apply();
+  }
+
+  // Legal Memos: the status lanes, with a folder filter, a source filter and a search.
+  function drawMemos(tab) {
+    var memos = data.memos.memos;
+    var KEY = "legal-research-memos";
+    var LANES = [
+      ["in_progress", "In Progress", "wip"],
+      ["started", "Started", ""],
+      ["completed", "Completed", "done"],
+      ["shelved", "Shelved", ""],
+      ["no_job", "No job", ""]
+    ];
+    var LANE = {};
+    LANES.forEach(function (l) { LANE[l[0]] = l; });
+    var SOURCES = { research_memo: "Research memo", westlaw: "Westlaw Deep Research report", note_up: "Note-up record" };
+    var TOP = "Top of 6. LAW";
+    function folderName(m) { return m.folder === "" ? TOP : m.folder; }
+    if (memos.length === 0) {
+      tab.appendChild(el("p", "empty", "No legal memo is linked to this Milestone."));
+      return;
+    }
+    function card(m) {
+      var lane = LANE[m.status];
+      var line = [m.date || "No date", folderName(m)].join(" \xB7 ");
+      if (m.earlier.length > 0) line += " \xB7 " + m.earlier.length + (m.earlier.length === 1 ? " earlier version" : " earlier versions");
+      var t = ticket("v" + m.version, m.title, [[lane[1], lane[2]], [SOURCES[m.source], ""]], line);
+      t.node.setAttribute("data-status", m.status);
+      row(t.dl, "Issue", m.issues, m.jobs.length === 0 ? "No recorded question: no job saved this memo" : "No question recorded");
+      row(t.dl, "Facts", m.facts, "No facts recorded");
+      row(t.dl, "Status", lane[1], "");
+      row(t.dl, "Date", m.date, "No date");
+      row(t.dl, "Version", versionText(m), "");
+      row(t.dl, "Source", SOURCES[m.source], "");
+      row(t.dl, "Folder", folderName(m), "");
+      row(t.dl, "Jobs", m.jobs.map(function (j) { return "Job #" + j.id + " " + j.title; }), "None");
+      fileRow(t.dl, m);
+      return { node: t.node, memo: m, text: [m.title, m.folder, SOURCES[m.source]].concat(m.issues, m.facts).join(" ").toLowerCase() };
+    }
+    function select(label, options) {
+      var wrap = el("label", "", label + " ");
+      var box = el("select");
+      options.forEach(function (o) {
+        var opt = el("option", "", o[1]);
+        opt.value = o[0];
+        box.appendChild(opt);
+      });
+      wrap.appendChild(box);
+      return { label: wrap, box: box };
+    }
+    var folders = [];
+    memos.forEach(function (m) { if (folders.indexOf(folderName(m)) === -1) folders.push(folderName(m)); });
+    folders.sort();
+    var folderBox = select("Folder", [["", "All folders"]].concat(folders.map(function (f) { return [f, f]; })));
+    var sourceBox = select("Source", [["", "All sources"]].concat(Object.keys(SOURCES).map(function (k) { return [k, SOURCES[k]]; })));
+    var search = searchBox("Search memos");
+    var filters = el("div", "filters");
+    filters.appendChild(folderBox.label);
+    filters.appendChild(sourceBox.label);
+    filters.appendChild(search);
+    tab.appendChild(filters);
+
+    var lanes = LANES.map(function (l) {
+      var sec = el("section");
+      sec.id = l[0].replace("_", "-");
+      var h2 = el("h2", "", l[1] + " ");
+      var count = el("span", "count", "0");
+      h2.appendChild(count);
+      sec.appendChild(h2);
+      var stack = el("div", "stack");
+      var cards = memos.filter(function (m) { return m.status === l[0]; }).map(function (m) {
+        var c = card(m);
+        stack.appendChild(c.node);
+        return c;
+      });
+      sec.appendChild(stack);
+      var none = el("p", "empty");
+      sec.appendChild(none);
+      tab.appendChild(sec);
+      return { node: sec, count: count, cards: cards, none: none };
+    });
+
+    var saved = stored(KEY);
     if (folders.indexOf(saved.folder) !== -1) folderBox.box.value = saved.folder;
     if (SOURCES[saved.source]) sourceBox.box.value = saved.source;
-  } catch (e) {}
-
-  function apply() {
-    var q = search.value.trim().toLowerCase();
-    var folder = folderBox.box.value;
-    var source = sourceBox.box.value;
-    lanes.forEach(function (lane) {
-      var visible = 0;
-      lane.cards.forEach(function (c) {
-        var on = (folder === "" || folderName(c.memo) === folder) && (source === "" || c.memo.source === source) && (q === "" || c.text.indexOf(q) !== -1);
-        c.node.hidden = !on;
-        if (on) visible += 1;
+    function apply() {
+      var q = search.value.trim().toLowerCase();
+      var folder = folderBox.box.value;
+      var source = sourceBox.box.value;
+      lanes.forEach(function (lane) {
+        var visible = 0;
+        lane.cards.forEach(function (c) {
+          var on = (folder === "" || folderName(c.memo) === folder) && (source === "" || c.memo.source === source) && (q === "" || c.text.indexOf(q) !== -1);
+          c.node.hidden = !on;
+          if (on) visible += 1;
+        });
+        lane.count.textContent = String(visible);
+        lane.none.hidden = visible > 0;
+        lane.none.textContent = folder === "" && source === "" && q === "" ? "None." : "Nothing here under these filters.";
       });
-      lane.count.textContent = String(visible);
-      lane.none.hidden = visible > 0;
-      lane.none.textContent = folder === "" && source === "" && q === "" ? "None." : "Nothing here under these filters.";
+    }
+    function save() {
+      store(KEY, { folder: folderBox.box.value, source: sourceBox.box.value });
+    }
+    folderBox.box.addEventListener("change", function () { save(); apply(); });
+    sourceBox.box.addEventListener("change", function () { save(); apply(); });
+    search.addEventListener("input", apply);
+    apply();
+  }
+
+  // The folder tabs, the last one chosen remembered.
+  var TABS = [["propositions", "Propositions", drawPropositions], ["briefs", "Case Briefs", drawBriefs], ["memos", "Legal Memos", drawMemos]];
+  var tablist = el("div", "tabs");
+  tablist.setAttribute("role", "tablist");
+  tablist.setAttribute("aria-label", "Show");
+  board.appendChild(tablist);
+  var folder = el("div", "folder");
+  folder.id = "legal-research-panel";
+  folder.setAttribute("role", "tabpanel");
+  board.appendChild(folder);
+  var built = TABS.map(function (t) {
+    var button = el("button", "", t[1]);
+    button.type = "button";
+    button.id = "tab-" + t[0];
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-controls", folder.id);
+    tablist.appendChild(button);
+    var body = el("div", "tab-body");
+    folder.appendChild(body);
+    t[2](body);
+    return { id: t[0], button: button, body: body };
+  });
+  var current = TABS[0][0];
+  try {
+    var saved = localStorage.getItem(TAB_KEY);
+    if (TABS.some(function (t) { return t[0] === saved; })) current = saved;
+  } catch (e) {}
+  function apply() {
+    built.forEach(function (b) {
+      var on = b.id === current;
+      b.body.hidden = !on;
+      b.button.setAttribute("aria-selected", String(on));
+      b.button.tabIndex = on ? 0 : -1;
+      if (on) folder.setAttribute("aria-labelledby", b.button.id);
     });
   }
-  function save() {
-    try { localStorage.setItem(KEY, JSON.stringify({ folder: folderBox.box.value, source: sourceBox.box.value })); } catch (e) {}
+  function choose(b) {
+    current = b.id;
+    try { localStorage.setItem(TAB_KEY, current); } catch (e) {}
+    apply();
   }
-  folderBox.box.addEventListener("change", function () { save(); apply(); });
-  sourceBox.box.addEventListener("change", function () { save(); apply(); });
-  search.addEventListener("input", apply);
+  built.forEach(function (b, i) {
+    b.button.addEventListener("click", function () { choose(b); });
+    b.button.addEventListener("keydown", function (e) {
+      var step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (step === 0) return;
+      e.preventDefault();
+      var next = built[(i + step + built.length) % built.length];
+      choose(next);
+      next.button.focus();
+    });
+  });
   apply();
 })();`;
+
+// src/submission/forms/case-briefs.ts
+import { join as join38 } from "node:path";
+import { pathToFileURL as pathToFileURL2 } from "node:url";
+
+// src/submission/forms/legal-memos.ts
+import { existsSync as existsSync36, readdirSync as readdirSync20, statSync as statSync17 } from "node:fs";
+import { join as join37 } from "node:path";
+import { pathToFileURL } from "node:url";
 
 // src/submission/forms/paragraph-map.ts
 import { createHash as createHash12 } from "node:crypto";
@@ -107099,12 +107353,17 @@ function readParagraphMap(dir, revision) {
   }
 }
 
-// src/submission/forms/legal-memos-page.ts
+// src/submission/forms/legal-memos.ts
 var LAW_FOLDER = "6. LAW";
 var NEUTRAL_CITATION = /^\d{4} [A-Z]{2,}[A-Za-z]* \d+\b/;
 var VERSIONED = /^(.*?)(?: v(\d+))?(\.[^.\\/]+)$/i;
 var UNREADABLE = /* @__PURE__ */ new Set(["EPERM", "EBUSY", "EACCES", "ENOENT"]);
+var CASE_BRIEF_NAME = /(?:^|\s)case brief\s/i;
+function isCaseBriefFile(name) {
+  return CASE_BRIEF_NAME.test(name);
+}
 function memoSourceOf(name) {
+  if (isCaseBriefFile(name)) return null;
   const lower = name.toLowerCase();
   if (lower.endsWith(".docx")) return NEUTRAL_CITATION.test(name) ? null : "westlaw";
   if (!lower.endsWith(".md")) return null;
@@ -107136,7 +107395,7 @@ function lawDirOf(matterDir) {
     throw err;
   }
 }
-function scanLawFolder(lawDir) {
+function scanLawFolder(lawDir, wanted) {
   if (!existsSync36(lawDir)) return [];
   const head = lawDir.split(/[\\/]/).pop();
   const out = [];
@@ -107150,7 +107409,7 @@ function scanLawFolder(lawDir) {
     }
     for (const entry2 of entries) {
       if (entry2.isDirectory()) walk4(join37(dir, entry2.name), [...rel, entry2.name]);
-      else if (entry2.isFile() && memoSourceOf(entry2.name) !== null) out.push({ file: [head, ...rel, entry2.name].join("\\"), mtime: modified(join37(dir, entry2.name)) });
+      else if (entry2.isFile() && wanted(entry2.name)) out.push({ file: [head, ...rel, entry2.name].join("\\"), mtime: modified(join37(dir, entry2.name)) });
     }
   };
   walk4(lawDir, []);
@@ -107182,13 +107441,13 @@ function recordedOnPagedBoards(dbPath) {
   return new Set(
     rows(
       dbPath,
-      `SELECT t.filing_id, t.proceeding_id, ta.file_path FROM ticket_answers ta JOIN tickets t ON t.id = ta.ticket_id WHERE 1 = 1${liveTicketClause(dbPath, "t")}`
-    ).filter((r3) => r3.filing_id === null ? general.has(r3.proceeding_id) : filings.has(r3.filing_id)).map((r3) => versionOf(r3.file_path).key)
+      `SELECT t.filing_id, f.kind, t.proceeding_id, ta.file_path FROM ticket_answers ta JOIN tickets t ON t.id = ta.ticket_id LEFT JOIN filings f ON f.id = t.filing_id WHERE 1 = 1${liveTicketClause(dbPath, "t")}`
+    ).filter((r3) => r3.filing_id === null || r3.kind !== null && isResearchWriting({ kind: r3.kind }) ? general.has(r3.proceeding_id) : filings.has(r3.filing_id)).map((r3) => versionOf(r3.file_path).key)
   );
 }
 function buildLegalMemosData(dbPath, jobs2, matterDir) {
   const recorded = recordedOnPagedBoards(dbPath);
-  const onDisk = new Map(scanLawFolder(lawDirOf(matterDir)).map((f3) => [f3.file.toLowerCase(), f3]));
+  const onDisk = new Map(scanLawFolder(lawDirOf(matterDir), (name) => memoSourceOf(name) !== null).map((f3) => [f3.file.toLowerCase(), f3]));
   const savedAt = /* @__PURE__ */ new Map();
   for (const j3 of jobs2) {
     for (const a3 of j3.answers) {
@@ -107198,6 +107457,7 @@ function buildLegalMemosData(dbPath, jobs2, matterDir) {
   }
   const groups = /* @__PURE__ */ new Map();
   for (const file of [...onDisk.values()].map((f3) => f3.file).concat(jobs2.flatMap((j3) => j3.answers.map((a3) => a3.file_path)))) {
+    if (isCaseBriefFile(baseName(file))) continue;
     const { key, version: version2 } = versionOf(file);
     const versions = groups.get(key) ?? /* @__PURE__ */ new Map();
     if (!versions.has(version2)) versions.set(version2, file);
@@ -107235,20 +107495,332 @@ function buildLegalMemosData(dbPath, jobs2, matterDir) {
   memos.sort((a3, b3) => (b3.date ?? "").localeCompare(a3.date ?? "") || a3.title.localeCompare(b3.title));
   return { memos };
 }
-var LEGAL_MEMOS_PAGE = {
-  name: "Legal Memos",
+
+// src/submission/forms/brief-job.ts
+var BRIEF_JOB_PREFIX = "Brief the case: ";
+
+// src/submission/forms/case-briefs.ts
+var NEUTRAL_IN_TEXT = /\b(\d{4}) ([A-Z]{2,}[A-Za-z]*) (\d+)\b/;
+function neutralKey(text8) {
+  const m3 = text8 === null ? null : NEUTRAL_IN_TEXT.exec(text8);
+  return m3 === null ? null : `${m3[1]} ${m3[2]} ${m3[3]}`.toLowerCase();
+}
+function reliedOn(dbPath, filingIds) {
+  if (filingIds.length === 0) return [];
+  const inIds = `(${filingIds.map(() => "?").join(", ")})`;
+  const notOmitted = hasColumn(dbPath, "law_assertions", "killed_on") ? "AND (la.id IS NULL OR la.killed_on IS NULL)" : "";
+  return rows(
+    dbPath,
+    `SELECT DISTINCT a.id, a.style_of_cause_or_title, a.citation
+     FROM statements_of_law sl
+     JOIN authorities a ON a.id = sl.authority_id
+     LEFT JOIN law_assertions la ON la.id = sl.law_assertion_id
+     WHERE a.kind = 'case' AND a.killed_on IS NULL ${notOmitted}
+       AND (sl.id IN (SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds})
+         OR sl.id IN (SELECT r.excerpt_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
+         OR sl.law_assertion_id IN (SELECT r.law_assertion_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
+         OR sl.law_assertion_id IN (
+           SELECT sbl.law_assertion_id FROM submission_law sbl
+           JOIN submissions s ON s.id = sbl.submission_id AND s.killed_on IS NULL
+           JOIN filing_submissions fs ON fs.submission_id = s.id
+           WHERE fs.filing_id IN ${inIds}))
+     ORDER BY a.style_of_cause_or_title, a.id`,
+    [...filingIds, ...filingIds, ...filingIds, ...filingIds]
+  );
+}
+function briefJobs(dbPath) {
+  return rows(
+    dbPath,
+    `SELECT t.id, t.title, t.status, t.rejected_at, a.id AS authority_id, a.style_of_cause_or_title, a.citation
+     FROM tickets t
+     LEFT JOIN ticket_scope s ON s.ticket_id = t.id AND s.entity = 'authorities'
+     LEFT JOIN authorities a ON a.id = s.entity_id
+     WHERE t.title LIKE '${BRIEF_JOB_PREFIX}%'${liveTicketClause(dbPath, "t")}
+     ORDER BY t.id`
+  );
+}
+function foldKey(citation, authorityId, name) {
+  return neutralKey(citation) ?? (authorityId !== null ? `id:${authorityId}` : `name:${name.toLowerCase()}`);
+}
+function briefCaseName(file) {
+  return titleOf2(file).replace(/^case brief\s+/i, "");
+}
+function buildCaseBriefsData(dbPath, filingIds, matterDir) {
+  const lawDir = lawDirOf(matterDir);
+  const onDisk = new Map(scanLawFolder(lawDir, isCaseBriefFile).map((f3) => [f3.file.toLowerCase(), f3]));
+  const jobs2 = briefJobs(dbPath);
+  const answers = ticketAnswersHeld(dbPath) ? rows(dbPath, `SELECT ta.ticket_id, ta.file_path, ta.saved_at FROM ticket_answers ta JOIN tickets t ON t.id = ta.ticket_id WHERE t.title LIKE '${BRIEF_JOB_PREFIX}%'${liveTicketClause(dbPath, "t")}`) : [];
+  const cases = /* @__PURE__ */ new Map();
+  const row2 = (key, title, citation, relied2) => {
+    const found = cases.get(key);
+    if (found !== void 0) {
+      if (relied2) found.relied_on = true;
+      return found;
+    }
+    const made = { title, citation, status: "not_briefed", relied_on: relied2, jobs: [], brief: null };
+    cases.set(key, made);
+    return made;
+  };
+  for (const a3 of reliedOn(dbPath, filingIds)) row2(foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), a3.style_of_cause_or_title, a3.citation, true);
+  const jobOf = new Map(jobs2.map((j3) => [j3.id, j3]));
+  const versions = /* @__PURE__ */ new Map();
+  const addFile = (file, caseKey, savedAt) => {
+    const { key, version: version2 } = versionOf(file);
+    const entry2 = versions.get(key) ?? { key: caseKey, files: /* @__PURE__ */ new Map(), savedAt: null };
+    if (!entry2.files.has(version2)) entry2.files.set(version2, file);
+    if (savedAt !== null && (entry2.savedAt === null || savedAt > entry2.savedAt)) entry2.savedAt = savedAt;
+    versions.set(key, entry2);
+  };
+  for (const a3 of answers) {
+    const job = jobOf.get(a3.ticket_id);
+    const name = baseName(a3.file_path);
+    addFile(a3.file_path, neutralKey(name) ?? (job === void 0 ? `name:${name.toLowerCase()}` : foldKey(job.citation, job.authority_id, job.title)), a3.saved_at);
+  }
+  for (const f3 of onDisk.values()) {
+    const { key } = versionOf(f3.file);
+    const name = baseName(f3.file);
+    addFile(f3.file, versions.get(key)?.key ?? neutralKey(name) ?? `name:${briefCaseName(f3.file).toLowerCase()}`, null);
+  }
+  for (const entry2 of versions.values()) {
+    const numbers = [...entry2.files.keys()].sort((a3, b3) => a3 - b3);
+    const version2 = numbers[numbers.length - 1];
+    const file = entry2.files.get(version2);
+    const segments = file.split(/[\\/]/);
+    const path = join38(matterDir, ...segments);
+    const found = onDisk.get(file.toLowerCase());
+    const mtime = found !== void 0 ? found.mtime : modified(path);
+    const brief = {
+      date: dateOf(file, entry2.savedAt, mtime),
+      version: version2,
+      earlier: numbers.slice(0, -1),
+      file,
+      url: pathToFileURL2(path).href,
+      on_disk: found !== void 0 || mtime !== null
+    };
+    const target = row2(entry2.key, briefCaseName(file), null, false);
+    if (target.brief === null || (brief.date ?? "") > (target.brief.date ?? "")) target.brief = brief;
+  }
+  for (const j3 of jobs2) {
+    if (j3.status !== "queued" && j3.status !== "wip" || j3.rejected_at !== null) continue;
+    const target = row2(foldKey(j3.citation, j3.authority_id, j3.title), j3.style_of_cause_or_title ?? j3.title.slice(BRIEF_JOB_PREFIX.length), j3.citation, false);
+    target.jobs.push({ id: j3.id, title: j3.title });
+  }
+  const all = [...cases.values()];
+  for (const c3 of all) c3.status = c3.brief !== null ? "briefed" : c3.jobs.length > 0 ? "requested" : "not_briefed";
+  const relied = all.filter((c3) => c3.relied_on);
+  const rest = all.filter((c3) => !c3.relied_on).sort((a3, b3) => (b3.brief?.date ?? "").localeCompare(a3.brief?.date ?? "") || a3.title.localeCompare(b3.title));
+  return { cases: [...relied, ...rest] };
+}
+
+// src/submission/forms/research-propositions.ts
+function propositionClass(row2) {
+  if (row2.proposition_killed_on !== null || row2.authority_killed_on !== null) return "not_relevant";
+  return row2.in_use ? "in_use" : "undecided";
+}
+function verifiedOnColumn(dbPath) {
+  return hasColumn(dbPath, "statements_of_law", "verified_on") ? "sl.verified_on" : "NULL AS verified_on";
+}
+function propositionKilledOnColumn(dbPath) {
+  return hasColumn(dbPath, "law_assertions", "killed_on") ? "killed_on" : "NULL AS killed_on";
+}
+function fetchStatements(dbPath, proceedingId) {
+  return rows(
+    dbPath,
+    `SELECT sl.id AS statement_id, sl.law_assertion_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification,
+            ${settledOnColumn(dbPath)}, ${excerptSpeakerColumn(dbPath)}, ${verifiedOnColumn(dbPath)},
+            auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation, auth.treatment,
+            auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
+     FROM statements_of_law sl
+     JOIN authorities auth ON auth.id = sl.authority_id
+     WHERE sl.proceeding_id = ?
+     ORDER BY sl.id`,
+    [proceedingId]
+  );
+}
+function citationParts(row2) {
+  const line = lawStatementCitationLine({ ...row2, linked_provisions: null }) ?? "";
+  const head = row2.authority_title === null ? null : `> *${row2.authority_title}*`;
+  if (head !== null && line.startsWith(head)) return { title: row2.authority_title, rest: line.slice(head.length) };
+  return { title: null, rest: line.replace(/^> /, "") };
+}
+function statusLines(row2) {
+  const when = row2.verification === "verified" ? row2.verified_on : row2.verification === "settled" ? row2.settled_on : null;
+  const lines2 = [`Verification: ${row2.verification}${when ? ` ${when}` : ""}`];
+  if (row2.authority_kind === "case") lines2.push(`Note-up: ${row2.treatment === null ? "not yet noted up" : row2.treatment.replace(/_/g, " ")}`);
+  else if (row2.authority_kind !== "doctrine") lines2.push(`Currency: ${row2.currency_status ?? "not yet checked"}`);
+  return lines2;
+}
+var CLASS_RANK = { in_use: 0, undecided: 1, not_relevant: 2 };
+function buildPropositionsData(dbPath, filing) {
+  const filings = Array.isArray(filing) ? filing : [filing];
+  const counts3 = { in_use: 0, undecided: 0, not_relevant: 0 };
+  const groups = [];
+  for (const proceedingId of [...new Set(filings.map((f3) => f3.proceeding_id))]) {
+    const part = propositionsFor(dbPath, proceedingId, filings.filter((f3) => f3.proceeding_id === proceedingId).map((f3) => f3.id), filings.length > 1);
+    for (const k3 of Object.keys(counts3)) counts3[k3] += part.counts[k3];
+    groups.push(...part.groups);
+  }
+  return { counts: counts3, groups };
+}
+function propositionsFor(dbPath, proceedingId, ids, merged) {
+  const inIds = `(${ids.map(() => "?").join(", ")})`;
+  const here = merged ? "this board's Writings" : "this Writing";
+  const propositions = rows(
+    dbPath,
+    `SELECT id, proposition, dead_end, ${propositionKilledOnColumn(dbPath)} FROM law_assertions WHERE proceeding_id = ? ORDER BY id`,
+    [proceedingId]
+  );
+  const citedHere = new Set(rows(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r3) => r3.statement_id));
+  const researchOwn = new Set(
+    rows(dbPath, "SELECT fl.statement_id, f.kind FROM filing_law fl JOIN filings f ON f.id = fl.filing_id WHERE f.proceeding_id = ?", [proceedingId]).filter(isResearchWriting).map((r3) => r3.statement_id)
+  );
+  const statements = fetchStatements(dbPath, proceedingId).filter((s3) => s3.law_assertion_id !== null || !researchOwn.has(s3.statement_id) || citedHere.has(s3.statement_id));
+  const links = rows(
+    dbPath,
+    `SELECT sbl.law_assertion_id, s.id AS submission_id, s.contention, s.killed_on
+     FROM submission_law sbl JOIN submissions s ON s.id = sbl.submission_id
+     WHERE s.proceeding_id = ?
+     ORDER BY s.ordinal, s.id`,
+    [proceedingId]
+  );
+  const onFiling = rows(
+    dbPath,
+    `SELECT s.id, s.contention
+     FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
+     WHERE fs.filing_id IN ${inIds} AND s.killed_on IS NULL
+     ORDER BY CASE fs.document WHEN 'form' THEN 0 ELSE 1 END, fs.ordinal, fs.id`,
+    ids
+  );
+  const elsewhere = rows(
+    dbPath,
+    `SELECT s.id, s.contention FROM submissions s
+     WHERE s.proceeding_id = ? AND s.killed_on IS NULL
+       AND NOT EXISTS (SELECT 1 FROM filing_submissions fs WHERE fs.submission_id = s.id AND fs.filing_id IN ${inIds})
+     ORDER BY s.ordinal, s.id`,
+    [proceedingId, ...ids]
+  );
+  const required2 = rows(
+    dbPath,
+    `SELECT r.law_assertion_id, r.excerpt_id,
+            EXISTS (SELECT 1 FROM filing_orders fo WHERE fo.order_sought_id = r.order_sought_id AND fo.filing_id IN ${inIds}) AS on_filing
+     FROM order_sought_requires r JOIN order_sought o ON o.id = r.order_sought_id
+     WHERE o.proceeding_id = ? AND (r.law_assertion_id IS NOT NULL OR r.excerpt_id IS NOT NULL)`,
+    [...ids, proceedingId]
+  );
+  const onFilingIds = new Set(onFiling.map((s3) => s3.id));
+  const present3 = (list) => list.filter((id) => id !== null);
+  const deployed = /* @__PURE__ */ new Set([
+    ...links.filter((l3) => onFilingIds.has(l3.submission_id)).map((l3) => l3.law_assertion_id),
+    ...present3(required2.filter((r3) => r3.on_filing === 1).map((r3) => r3.law_assertion_id))
+  ]);
+  const usedHere = /* @__PURE__ */ new Set([...citedHere, ...present3(required2.filter((r3) => r3.on_filing === 1).map((r3) => r3.excerpt_id))]);
+  const counts3 = { in_use: 0, undecided: 0, not_relevant: 0 };
+  function statementOf(row2, killedOn) {
+    const inUse = row2.law_assertion_id !== null && deployed.has(row2.law_assertion_id) || usedHere.has(row2.statement_id);
+    const cls = propositionClass({ proposition_killed_on: killedOn, authority_killed_on: row2.authority_killed_on, in_use: inUse });
+    counts3[cls] += 1;
+    const { title, rest } = citationParts(row2);
+    return { statement_id: row2.statement_id, class: cls, citation_title: title, citation_rest: rest, excerpt: row2.excerpt, status: statusLines(row2) };
+  }
+  function cardClass(own, killedOn, inUse) {
+    if (own.length === 0) {
+      const cls = propositionClass({ proposition_killed_on: killedOn, authority_killed_on: null, in_use: inUse });
+      counts3[cls] += 1;
+      return cls;
+    }
+    return own.reduce((best, s3) => CLASS_RANK[s3.class] < CLASS_RANK[best] ? s3.class : best, "not_relevant");
+  }
+  const cards = /* @__PURE__ */ new Map();
+  for (const p3 of propositions) {
+    const own = statements.filter((s3) => s3.law_assertion_id === p3.id).map((s3) => statementOf(s3, p3.killed_on));
+    const linkedTo2 = links.filter((l3) => l3.law_assertion_id === p3.id).map((l3) => l3.killed_on === null ? l3.contention : `${l3.contention} (killed ${l3.killed_on})`);
+    cards.set(p3.id, {
+      law_assertion_id: p3.id,
+      text: p3.proposition,
+      dead_end: p3.dead_end === 1,
+      killed_on: p3.killed_on,
+      class: cardClass(own, p3.killed_on, deployed.has(p3.id)),
+      linked_to: linkedTo2,
+      statements: own
+    });
+  }
+  const loose = new Map(
+    statements.filter((s3) => s3.law_assertion_id === null).map((s3) => {
+      const own = [statementOf(s3, null)];
+      return [s3.statement_id, { law_assertion_id: null, text: null, dead_end: false, killed_on: null, class: own[0].class, linked_to: [], statements: own }];
+    })
+  );
+  const placed = /* @__PURE__ */ new Set();
+  function take(ids2) {
+    const out = [];
+    for (const id of ids2) {
+      const card = cards.get(id);
+      if (card === void 0 || placed.has(id)) continue;
+      placed.add(id);
+      out.push(card);
+    }
+    return out;
+  }
+  const placedLoose = /* @__PURE__ */ new Set();
+  function takeLoose(ids2) {
+    const out = [];
+    for (const id of ids2) {
+      const card = loose.get(id);
+      if (card === void 0 || placedLoose.has(id)) continue;
+      placedLoose.add(id);
+      out.push(card);
+    }
+    return out;
+  }
+  const linkedTo = (submissionId) => links.filter((l3) => l3.submission_id === submissionId).map((l3) => l3.law_assertion_id);
+  const groups = [];
+  const push = (heading, note, list) => {
+    if (list.length > 0) groups.push({ heading, note, propositions: list });
+  };
+  const propositionOf = new Map(statements.map((s3) => [s3.statement_id, s3.law_assertion_id]));
+  const orderGroup = (edges) => [
+    ...take(present3([...edges.map((r3) => r3.law_assertion_id), ...edges.map((r3) => r3.excerpt_id === null ? null : propositionOf.get(r3.excerpt_id) ?? null)])),
+    ...takeLoose(present3(edges.map((r3) => r3.excerpt_id)))
+  ];
+  const seen = /* @__PURE__ */ new Set();
+  for (const s3 of onFiling) {
+    if (seen.has(s3.id)) continue;
+    seen.add(s3.id);
+    push(s3.contention, `Submission on ${here}`, take(linkedTo(s3.id)));
+  }
+  push("Required by an order sought", `Order on ${here}`, orderGroup(required2.filter((r3) => r3.on_filing === 1)));
+  const cited2 = statements.filter((s3) => citedHere.has(s3.statement_id));
+  push(merged ? "Cited in the text of this board's Writings" : "Cited in this Writing's text", null, [...take(present3(cited2.map((s3) => s3.law_assertion_id))), ...takeLoose(cited2.map((s3) => s3.statement_id))]);
+  for (const s3 of elsewhere) push(s3.contention, `Submission not on ${here}`, take(linkedTo(s3.id)));
+  push("Required by an order sought", `Order not on ${here}`, orderGroup(required2.filter((r3) => r3.on_filing !== 1)));
+  push("Not linked", null, [...take(cards.keys()), ...takeLoose(loose.keys())]);
+  return { counts: counts3, groups };
+}
+
+// src/submission/forms/legal-research-page.ts
+var LEGAL_RESEARCH_PAGE = {
+  name: "Legal Research",
   ...templated({
-    entry: "legal-memos.html",
+    entry: "legal-research.html",
     files: {
-      "legal-memos.html": legal_memos_html_default,
+      "legal-research.html": legal_research_html_default,
       "view-head.html": view_head_html_default,
       "board.css": board_css_default,
-      "legal-memos.css": legal_memos_css_default,
+      "view-folder.css": view_folder_css_default,
+      "legal-research.css": legal_research_css_default,
       "shared.js": shared_js_default,
-      "legal-memos.js": legal_memos_js_default
+      "legal-research.js": legal_research_js_default
     }
   }),
-  data: (ctx) => buildLegalMemosData(ctx.dbPath, ctx.jobs, dirname16(ctx.draftDir))
+  data: (ctx) => {
+    const matterDir = dirname16(ctx.draftDir);
+    const filings = ctx.writings.map((w3) => w3.filing);
+    return {
+      propositions: buildPropositionsData(ctx.dbPath, filings),
+      briefs: buildCaseBriefsData(ctx.dbPath, filings.map((f3) => f3.id), matterDir),
+      memos: buildLegalMemosData(ctx.dbPath, ctx.jobs, matterDir)
+    };
+  }
 };
 
 // src/submission/view-pages.ts
@@ -107256,11 +107828,11 @@ var VIEW_PAGE_MARKER = "data-view-page";
 var VIEW_PAGES = [
   PROCEDURAL_HISTORY,
   MATERIAL_FACTS,
-  LEGAL_MEMOS_PAGE,
+  LEGAL_RESEARCH_PAGE,
   ARGUMENTS_PAGE
 ];
 function viewPageFile(page2, board, folder) {
-  if (folder !== void 0) return join38(folder, `${page2.name}.html`);
+  if (folder !== void 0) return join39(folder, `${page2.name}.html`);
   return board.filing_id === null ? `${page2.name} - Milestone - proceeding ${board.proceeding_id}.html` : `${page2.name} - Milestone ${board.filing_id}.html`;
 }
 function escapeRegExp(text8) {
@@ -107283,12 +107855,12 @@ function boardFolder(board, folders2) {
 }
 function boardFile(board, folders2) {
   const folder = boardFolder(board, folders2);
-  if (folder !== void 0) return join39(folder, WRITING_MILESTONE_FILE);
+  if (folder !== void 0) return join40(folder, WRITING_MILESTONE_FILE);
   return board.filing_id === null ? `Milestone - proceeding ${board.proceeding_id}.html` : `Milestone ${board.filing_id}.html`;
 }
 function pageGroups(index, live, preFiling, folders2) {
   const groups = /* @__PURE__ */ new Map();
-  for (const m3 of [...live.map((l3) => l3), ...preFiling.map((p3) => ({ proceeding: p3, filing: null }))]) {
+  for (const m3 of [...live.filter((l3) => !isResearchWriting(l3.filing)).map((l3) => l3), ...preFiling.map((p3) => ({ proceeding: p3, filing: null }))]) {
     const ref = { filing_id: m3.filing?.id ?? null, proceeding_id: m3.proceeding.id };
     const board = index.survivorOf(ref);
     const key = boardKey(board);
@@ -107306,7 +107878,7 @@ function liveMembers(dbPath) {
   const proceedings = fetchAllProceedings(dbPath).map((proceeding) => ({ proceeding, filings: fetchAllFilingsForProceeding(dbPath, proceeding.id) }));
   return {
     live: proceedings.flatMap(({ proceeding, filings }) => filings.filter((f3) => !f3.retired_on).map((filing) => ({ proceeding, filing }))),
-    preFiling: proceedings.filter(({ filings }) => filings.length === 0).map(({ proceeding }) => proceeding)
+    preFiling: proceedings.filter(({ filings }) => filings.every(isResearchWriting)).map(({ proceeding }) => proceeding)
   };
 }
 function pageTargets(groups) {
@@ -107341,7 +107913,7 @@ function guardTargets(names, views) {
 }
 function refuseForeignPages(draftDir, targets) {
   for (const { name, marker, page: page2 } of targets) {
-    const file = join40(draftDir, name);
+    const file = join41(draftDir, name);
     if (existsSync37(file) && !readFileSync34(file, "utf-8").includes(marker)) {
       throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page2}'s marker, so this renderer did not write it`);
     }
@@ -107352,9 +107924,9 @@ function writePage(file, html) {
   const code = writeStatusFile(file, html);
   if (code !== null) throw new DataServerError(`could not write ${file}: ${code}`);
 }
-var OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments) - filing \d+|loose threads(?: - (?:filing|Milestone|job board)(?: - proceeding)? \d+)?|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+|raw research(?: - (?:Milestone|job board)(?: - proceeding)? \d+)?)\.html$/i;
+var OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments) - filing \d+|loose threads(?: - (?:filing|Milestone|job board)(?: - proceeding)? \d+)?|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+|(?:raw research|legal memos)(?: - (?:Milestone|job board)(?: - proceeding)? \d+)?)\.html$/i;
 var PREVIEW_FILE = / preview \d+\.html$/i;
-var RETIRED_PREVIEW = /^raw research(?: - (?:Milestone|job board)(?: - proceeding)? \d+)? preview \d+\.html$/i;
+var RETIRED_PREVIEW = /^(?:raw research|legal memos)(?: - (?:Milestone|job board)(?: - proceeding)? \d+)? preview \d+\.html$/i;
 function generatorWrote(file) {
   const text8 = readFileSync34(file, "utf-8");
   return text8.includes(MILESTONE_MARKER) || text8.includes(MATTER_BOARD_MARKER) || text8.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
@@ -107362,13 +107934,13 @@ function generatorWrote(file) {
 function sweepOldPages(draftDir, names) {
   const moved = [];
   const skipped = [];
-  const targets = new Set([...names, MATTER_BOARD_FILE].map((name) => join40(name).toLowerCase()));
-  const subfolders = readdirSync21(draftDir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name.toLowerCase() !== "archive").map((e3) => join40(draftDir, e3.name));
+  const targets = new Set([...names, MATTER_BOARD_FILE].map((name) => join41(name).toLowerCase()));
+  const subfolders = readdirSync21(draftDir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name.toLowerCase() !== "archive").map((e3) => join41(draftDir, e3.name));
   for (const dir of [draftDir, ...subfolders]) {
     for (const entry2 of readdirSync21(dir, { withFileTypes: true })) {
       const old = RETIRED_PREVIEW.test(entry2.name) || !PREVIEW_FILE.test(entry2.name) && (OLD_PAGE.test(entry2.name) || isViewPageFile(entry2.name));
       if (!entry2.isFile() || !old) continue;
-      const file = join40(dir, entry2.name);
+      const file = join41(dir, entry2.name);
       if (targets.has(relative2(draftDir, file).toLowerCase())) continue;
       try {
         if (!generatorWrote(file)) continue;
@@ -107384,7 +107956,7 @@ function sweepOldPages(draftDir, names) {
 }
 
 // src/submission/matter-pages-build.ts
-import { dirname as dirname20, join as join43 } from "node:path";
+import { dirname as dirname20, join as join44 } from "node:path";
 
 // src/submission/board-attachments.ts
 import { closeSync as closeSync7, existsSync as existsSync39, openSync as openSync7, readSync as readSync2, realpathSync as realpathSync9, statSync as statSync18 } from "node:fs";
@@ -107509,7 +108081,7 @@ function withCodes(drafts) {
 }
 
 // src/submission/forms/board-viewed.ts
-import { basename as basename5, dirname as dirname19, join as join41, resolve as resolve6 } from "node:path";
+import { basename as basename5, dirname as dirname19, join as join42, resolve as resolve6 } from "node:path";
 var TOOL10 = "drafting_data__record_viewed";
 function viewedKey(board) {
   return `board_viewed:${boardKey(board)}`;
@@ -107520,7 +108092,7 @@ function viewItemKey(pageName2) {
 function docItemKey(filingId, fileName) {
   return `doc:${filingId}:${fileName}`;
 }
-var RENAMED_VIEWS = { [viewItemKey("Raw Research")]: viewItemKey("Legal Memos") };
+var RENAMED_VIEWS = { [viewItemKey("Raw Research")]: viewItemKey("Legal Research"), [viewItemKey("Legal Memos")]: viewItemKey("Legal Research") };
 function readViewed(dbPath, board) {
   const key = viewedKey(board);
   const [row2] = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
@@ -107534,7 +108106,7 @@ function readViewed(dbPath, board) {
   if (!Array.isArray(parsed) || !parsed.every((k3) => typeof k3 === "string")) {
     throw new DataServerError("A board's saved viewing order is damaged, so it cannot be read", "invalid_board_viewed");
   }
-  return parsed.map((k3) => RENAMED_VIEWS[k3] ?? k3);
+  return [...new Set(parsed.map((k3) => RENAMED_VIEWS[k3] ?? k3))];
 }
 function orderStrip(items2, viewed) {
   const at = (item) => viewed.indexOf(item.key);
@@ -107564,7 +108136,7 @@ function stripTargets(dbPath) {
   for (const board of boards.values()) {
     const folder = board.filing_id === null ? void 0 : folders2.get(board.filing_id)?.name;
     for (const page2 of VIEW_PAGES) {
-      const file = join41(draft, viewPageFile(page2, board, folder));
+      const file = join42(draft, viewPageFile(page2, board, folder));
       targets.push({ board, key: viewItemKey(page2.name), file: basename5(file), dir: dirname19(file) });
     }
   }
@@ -107612,7 +108184,7 @@ async function submissionDataRecordViewed(args, env = process.env) {
 
 // src/submission/court-file-affidavits.ts
 import { readdirSync as readdirSync22 } from "node:fs";
-import { basename as basename6, join as join42 } from "node:path";
+import { basename as basename6, join as join43 } from "node:path";
 var STATUSES2 = ["SIGNED", "AFFIRMED", "SWORN", "FILED", "UNFILED", "UNSIGNED", "UNSWORN"];
 var MADE = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN"]);
 var EXECUTED = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN", "FILED"]);
@@ -107657,7 +108229,7 @@ function fileNames(dir) {
   } catch {
     return [];
   }
-  return entries.flatMap((e3) => e3.isDirectory() ? fileNames(join42(dir, e3.name)) : e3.isFile() ? [e3.name] : []);
+  return entries.flatMap((e3) => e3.isDirectory() ? fileNames(join43(dir, e3.name)) : e3.isFile() ? [e3.name] : []);
 }
 function newest(names) {
   return [...names].sort((a3, b3) => b3.date.localeCompare(a3.date) || RANK[b3.status ?? "UNSWORN"] - RANK[a3.status ?? "UNSWORN"])[0] ?? null;
@@ -108858,7 +109430,7 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
       }))
     };
   };
-  const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked, meta2, preFiling, todos), templates.matterBoard);
+  const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked.filter((r3) => !isResearchWriting(r3.filing)), meta2, preFiling, todos), templates.matterBoard);
   const boardJobs = /* @__PURE__ */ new Map();
   const milestones = groupsWritten.map((group) => {
     const built = group.members.map(sectionOf);
@@ -108903,22 +109475,22 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     pages: guardTargets(groupsWritten.map((g3) => g3.file), viewsWritten).map((t3, i3) => ({ ...t3, html: html[i3] })),
     keep: [LOOSE_THREADS_FILE, ...groups.map((g3) => g3.file), ...views.map((v3) => v3.file)],
     paths: {
-      milestone_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join43(draftDir, t3.file) })),
-      matter_board_path: join43(draftDir, MATTER_BOARD_FILE),
-      loose_threads_path: join43(draftDir, LOOSE_THREADS_FILE),
-      view_page_paths: views.flatMap((v3) => v3.writings.map((w3) => ({ name: v3.page.name, filing_id: w3.filing.id, path: join43(draftDir, v3.file) })))
+      milestone_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join44(draftDir, t3.file) })),
+      matter_board_path: join44(draftDir, MATTER_BOARD_FILE),
+      loose_threads_path: join44(draftDir, LOOSE_THREADS_FILE),
+      view_page_paths: views.flatMap((v3) => v3.writings.map((w3) => ({ name: v3.page.name, filing_id: w3.filing.id, path: join44(draftDir, v3.file) })))
     }
   };
 }
 
 // src/submission/matter-pages-state.ts
 import { mkdirSync as mkdirSync20, readFileSync as readFileSync35 } from "node:fs";
-import { join as join44 } from "node:path";
+import { join as join45 } from "node:path";
 var PAGES_STATE_FILE = "matter-pages-state.json";
 var TODOS_NOT_READ = { note: "This matter's to-dos were not read." };
 var MAX_SESSIONS = 20;
 function statePath(dbPath) {
-  return join44(recordsDir(dbPath), PAGES_STATE_FILE);
+  return join45(recordsDir(dbPath), PAGES_STATE_FILE);
 }
 function isTodos(value) {
   if (typeof value !== "object" || value === null) return false;
@@ -109220,7 +109792,7 @@ function goalLines(section3) {
   const criteria = section3.criteria ?? [];
   return [`\u{1F3AF} Completion criteria: ${section3.goal.state}${section3.goal.text === null ? "" : ` \u2014 ${section3.goal.text}`}`, ...criteria.map((c3) => criterionLine(c3, criteria, true))];
 }
-var CARD_LANES = ["goals", "criteria", "live", "proposed", "completed", "rejected", "attached", "court_file", "memos"];
+var CARD_LANES = ["goals", "criteria", "live", "proposed", "completed", "rejected", "attached", "court_file", "memos", "briefs"];
 var MEMO_SOURCE_LABELS = { research_memo: "research memo", westlaw: "Westlaw Deep Research report", note_up: "note-up record" };
 var MEMO_STATUS_LABELS = { in_progress: "in progress", started: "started", completed: "completed", shelved: "shelved", no_job: "no job" };
 function memosLines(memos) {
@@ -109236,6 +109808,20 @@ function memosLines(memos) {
         `  facts: ${m3.facts.length === 0 ? "none" : m3.facts.map((f3) => JSON.stringify(f3)).join("; ")}`,
         ...m3.jobs.length === 0 ? [] : [`  jobs: ${m3.jobs.map((j3) => `#${j3.id} ${j3.title}`).join("; ")}`]
       ];
+    })
+  ];
+}
+var BRIEF_STATUS_LABELS = { briefed: "briefed", requested: "requested", not_briefed: "not briefed" };
+function briefsLines(cases) {
+  return [
+    `## Case Briefs (${cases.length})`,
+    ...cases.flatMap((c3) => {
+      const head = [`- ${c3.title}${c3.citation === null ? "" : `, ${c3.citation}`}`, BRIEF_STATUS_LABELS[c3.status], c3.relied_on ? "relied on" : "not relied on"];
+      if (c3.brief !== null) {
+        head.push(c3.brief.date ?? "no date", `v${c3.brief.version}${c3.brief.earlier.length === 0 ? "" : ` (earlier: ${c3.brief.earlier.map((n3) => `v${n3}`).join(", ")})`}`, c3.brief.file);
+        if (!c3.brief.on_disk) head.push("not in the law folder");
+      }
+      return [head.join(" \xB7 "), ...c3.jobs.length === 0 ? [] : [`  jobs: ${c3.jobs.map((j3) => `#${j3.id} ${j3.title}`).join("; ")}`]];
     })
   ];
 }
@@ -109269,7 +109855,7 @@ function courtFileLines(rows4) {
     })
   ];
 }
-function renderBoardCard(section3, jobs2, lanes, key, attached = [], courtFile = [], memos = []) {
+function renderBoardCard(section3, jobs2, lanes, key, attached = [], courtFile = [], memos = [], briefs = []) {
   const derived = derivedOf(section3);
   const lines2 = [];
   for (const t3 of section3.tickets) if (jobs2.includes(t3.id)) lines2.push(...jobCardLines(t3, derived, section3.seeds, section3.meta.rendered));
@@ -109285,6 +109871,7 @@ function renderBoardCard(section3, jobs2, lanes, key, attached = [], courtFile =
     if (lane === "attached") lines2.push(...attachedLines(attached));
     if (lane === "court_file") lines2.push(...courtFileLines(courtFile));
     if (lane === "memos") lines2.push(...memosLines(memos));
+    if (lane === "briefs") lines2.push(...briefsLines(briefs));
   }
   if (key !== void 0) {
     const holder = section3.tickets.find((t3) => LIVE.has(t3.category) && t3.proposal_keys.includes(key));
@@ -109344,11 +109931,13 @@ function submissionFormsBoardCard(args, client = {}, now = nowStamp(), dates = D
   if (lanes.includes("court_file") && (args.draft_dir === void 0 || args.filing_id === void 0)) {
     throw new ValidationError("drafting_forms__board_card: the court_file lane needs filing_id and draft_dir, the matter's 0. DRAFT folder session entry returned");
   }
-  if (lanes.includes("memos") && args.draft_dir === void 0) {
-    throw new ValidationError("drafting_forms__board_card: the memos lane needs draft_dir, the matter's 0. DRAFT folder session entry returned");
+  for (const lane of ["memos", "briefs"]) {
+    if (lanes.includes(lane) && args.draft_dir === void 0) {
+      throw new ValidationError(`drafting_forms__board_card: the ${lane} lane needs draft_dir, the matter's 0. DRAFT folder session entry returned`);
+    }
   }
   const draftDir = args.draft_dir === void 0 ? void 0 : resolveDraftDir(args.draft_dir, "drafting_forms__board_card.draft_dir");
-  if (args.proceeding_id !== void 0 && fetchAllFilingsForProceeding(args.db_path, args.proceeding_id).length > 0) {
+  if (args.proceeding_id !== void 0 && fetchBoardFilings(args.db_path, args.proceeding_id).length > 0) {
     throw new ValidationError("This proceeding has a Writing, so its jobs are on each Writing's Milestone -- read the card there");
   }
   const revision = fetchRevision(args.db_path);
@@ -109371,7 +109960,12 @@ function submissionFormsBoardCard(args, client = {}, now = nowStamp(), dates = D
       args.key,
       lanes.includes("attached") && draftDir !== void 0 ? withCodes(attachedDrafts(args.db_path, draftDir, section3)) : [],
       lanes.includes("court_file") && draftDir !== void 0 && args.filing_id !== void 0 ? (section3.meta.writing_states?.map((w3) => w3.filing_id) ?? [args.filing_id]).filter((id) => id !== null).flatMap((id) => courtFileAffidavits(args.db_path, id, dirname21(draftDir))) : [],
-      lanes.includes("memos") && draftDir !== void 0 ? buildLegalMemosData(args.db_path, section3.tickets, dirname21(draftDir)).memos : []
+      lanes.includes("memos") && draftDir !== void 0 ? buildLegalMemosData(args.db_path, section3.tickets, dirname21(draftDir)).memos : [],
+      lanes.includes("briefs") && draftDir !== void 0 ? buildCaseBriefsData(
+        args.db_path,
+        (section3.meta.writing_states?.map((w3) => w3.filing_id) ?? (args.filing_id === void 0 ? [] : [args.filing_id])).filter((id) => id !== null),
+        dirname21(draftDir)
+      ).cases : []
     )
   };
 }
@@ -109382,7 +109976,7 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     const { pages, keep, paths } = buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates, reuse);
     refuseForeignPages(draftDir, pages);
     const swept = reuse.only === void 0 ? sweepOldPages(draftDir, keep) : {};
-    for (const p3 of pages) writePage(join45(draftDir, p3.name), p3.html);
+    for (const p3 of pages) writePage(join46(draftDir, p3.name), p3.html);
     return { ...paths, ...swept };
   });
 }
@@ -109920,12 +110514,12 @@ function readSchemaVersion(dbPath) {
 
 // src/submission/forms/mockup-files.ts
 import { existsSync as existsSync40, mkdirSync as mkdirSync21, renameSync as renameSync9, unlinkSync as unlinkSync14 } from "node:fs";
-import { basename as basename7, dirname as dirname22, extname as extname4, join as join46 } from "node:path";
+import { basename as basename7, dirname as dirname22, extname as extname4, join as join47 } from "node:path";
 function existingMockupPaths(dbPath, filingId) {
   const manifest = readManifest(dbPath, filingId);
   if (manifest === null) return [];
   const dir = manifestDir(dbPath, manifest);
-  return manifest.files.map((f3) => join46(dir, f3.file_name)).filter((p3) => existsSync40(p3));
+  return manifest.files.map((f3) => join47(dir, f3.file_name)).filter((p3) => existsSync40(p3));
 }
 function fileStem(fileName) {
   return fileName.slice(0, fileName.length - extname4(fileName).length);
@@ -109936,11 +110530,11 @@ function archiveIfStale(filePath, formLabel, currentRevision) {
   archiveFile(filePath, formLabel, existingRevision);
 }
 function archiveFile(filePath, formLabel, revision) {
-  const archiveDir = join46(dirname22(filePath), "archive");
+  const archiveDir = join47(dirname22(filePath), "archive");
   mkdirSync21(archiveDir, { recursive: true });
   const name = `${sanitizeForPath(formLabel)} @rev${revision} ${nowStamp().replace(/[: ]/g, "-")}`;
-  let archivePath = join46(archiveDir, `${name}${extname4(filePath)}`);
-  for (let n3 = 2; existsSync40(archivePath); n3++) archivePath = join46(archiveDir, `${name} (${n3})${extname4(filePath)}`);
+  let archivePath = join47(archiveDir, `${name}${extname4(filePath)}`);
+  for (let n3 = 2; existsSync40(archivePath); n3++) archivePath = join47(archiveDir, `${name} (${n3})${extname4(filePath)}`);
   renameSync9(filePath, archivePath);
 }
 function archiveDroppedFiles(dbPath, previous, written) {
@@ -109952,7 +110546,7 @@ function archiveDroppedFiles(dbPath, previous, written) {
     const single = sameType.length === 1 && previous.files.filter((f3) => f3.document_type === file.document_type).length === 1;
     const renamed = single ? sameType[0] : void 0;
     try {
-      archiveFile(join46(dir, file.file_name), fileStem(renamed?.fileName ?? file.file_name), previous.stamp.revision);
+      archiveFile(join47(dir, file.file_name), fileStem(renamed?.fileName ?? file.file_name), previous.stamp.revision);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
     }
@@ -109960,7 +110554,7 @@ function archiveDroppedFiles(dbPath, previous, written) {
 }
 function writeDocument2(baseDir, output, revision) {
   mkdirSync21(baseDir, { recursive: true });
-  const filePath = join46(baseDir, output.fileName);
+  const filePath = join47(baseDir, output.fileName);
   archiveIfStale(filePath, fileStem(output.fileName), revision);
   const code = writeStatusFile(filePath, output.markdown);
   if (code) throw new DataServerError(`could not write ${filePath}: ${code}`);
@@ -109969,7 +110563,7 @@ function writeDocument2(baseDir, output, revision) {
 var RETIRED_BOARD_FILES = ["workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
 function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
   for (const name of names) {
-    const file = join46(dir, name);
+    const file = join47(dir, name);
     try {
       if (existsSync40(file)) unlinkSync14(file);
     } catch (err) {
@@ -109979,13 +110573,13 @@ function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
 }
 var STALE_WORKBOARD_MARKDOWN = "Work Board.md";
 function removeOldBoardFiles(dir) {
-  const stale = readExistingRevision(join46(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
+  const stale = readExistingRevision(join47(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
   removeRetiredBoardFiles(dir, [...RETIRED_BOARD_FILES, ...stale]);
   removeRetiredBoardFiles(dirname22(dir));
 }
 function refuseForeignTargets(dir, fileNames2) {
   for (const name of fileNames2) {
-    const target = join46(dir, name);
+    const target = join47(dir, name);
     if (existsSync40(target) && readExistingRevision(target) === void 0) {
       throw new ValidationError(`${target} was not written by Probanda, so it is not overwritten. Move it out of the Writing's folder, then render again`);
     }
@@ -110278,7 +110872,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
       const markdown = hit.contents.get(f3.file_name);
       return {
         document_type: f3.document_type,
-        path: join47(hit.dir, f3.file_name),
+        path: join48(hit.dir, f3.file_name),
         file_name: f3.file_name,
         markdown,
         ...symbolNotes(legendNotes(markdown, f3.document_type))
@@ -110352,7 +110946,7 @@ function submissionFormsRenderProceedingBoard(dbPath, proceedingId, client = {},
   const started = performance.now();
   const draft = draftDir === void 0 ? void 0 : draftDirOfCaller(dbPath, draftDir);
   const proceeding = fetchProceeding(dbPath, proceedingId);
-  if (fetchAllFilingsForProceeding(dbPath, proceedingId).length > 0) {
+  if (fetchBoardFilings(dbPath, proceedingId).length > 0) {
     throw new ValidationError(
       "This proceeding has a Writing, so its jobs are on each Writing's Milestone -- render a Writing instead"
     );
@@ -111536,7 +112130,7 @@ function submissionFormsEmitBccaFactum(dbPath, filingId, datedOn) {
 
 // src/submission/pre-filing/index.ts
 import { existsSync as existsSync43, readdirSync as readdirSync23, realpathSync as realpathSync12, statSync as statSync19 } from "node:fs";
-import { basename as basename10, dirname as dirname26, isAbsolute as isAbsolute8, join as join48, resolve as resolve8 } from "node:path";
+import { basename as basename10, dirname as dirname26, isAbsolute as isAbsolute8, join as join49, resolve as resolve8 } from "node:path";
 
 // src/submission/pre-filing/consistency-checks.ts
 function authored(docs) {
@@ -111822,7 +112416,7 @@ function resolvePackageDir(packageDir) {
   return dir;
 }
 function listPackageFiles(dir) {
-  return readdirSync23(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join48(dir, e3.name)).sort((a3, b3) => basename10(a3).localeCompare(basename10(b3)));
+  return readdirSync23(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join49(dir, e3.name)).sort((a3, b3) => basename10(a3).localeCompare(basename10(b3)));
 }
 function runPreFilingChecks(dbPath, filingId, packageDir) {
   const dir = resolvePackageDir(packageDir);
@@ -112269,7 +112863,7 @@ var LANE = { wip: "In Progress", waiting: "Blocked", superseded: "Superseded", c
 var norm2 = (s3) => s3.toLowerCase().replace(/\s+/g, " ").trim().replace(/[.!?;:,]+$/, "").trim();
 var words = (s3) => new Set(s3.toLowerCase().match(/[a-z0-9'’]{4,}/g) ?? []);
 function fixedText(title) {
-  return STOCK_TITLES.has(title) || waitsOnGate(title) || [GATE_TITLE, PRE_SEND_TITLE, POSITION_CONFLICT_TITLE].includes(title) || title.startsWith("Counsel's review of ") || title.startsWith("Review scrutiny finding: ");
+  return STOCK_TITLES.has(title) || waitsOnGate(title) || [GATE_TITLE, PRE_SEND_TITLE, POSITION_CONFLICT_TITLE].includes(title) || title.startsWith("Counsel's review of ") || title.startsWith("Review scrutiny finding: ") || title.startsWith(BRIEF_JOB_PREFIX);
 }
 function restatingSteps(t3) {
   if (fixedText(t3.title)) return [];
@@ -112302,7 +112896,7 @@ function overlapping(section3, t3, cleared) {
 function boardOf(dbPath, id) {
   const [row2] = submissionDataQuery(dbPath, "SELECT filing_id, proceeding_id FROM tickets WHERE id = ?", [id]).rows;
   if (row2 === void 0) throw new ValidationError(`${TOOL12}: no job ${id} in ${dbPath}; nothing was written`, "not_found");
-  const filings = fetchAllFilingsForProceeding(dbPath, row2.proceeding_id);
+  const filings = fetchBoardFilings(dbPath, row2.proceeding_id);
   const own = row2.filing_id ?? (filings.find((f3) => !f3.retired_on) ?? filings[0])?.id ?? null;
   const index = new BoardIndex(dbPath);
   const ref = { filing_id: own, proceeding_id: row2.proceeding_id };
@@ -112408,9 +113002,9 @@ function validate(args) {
   check(args.kind === "work" || args.kind === "charting", "kind", "must be work or charting");
   check(Number.isInteger(args.priority) || args.priority === "top" || args.priority === "bottom", "priority", "must be an integer, top or bottom");
   check(
-    ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "holder_lock"].includes(guard2),
+    ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "holder_lock"].includes(guard2),
     "guard",
-    "must be one of none, live_key, never_held_key, title_live_with_step, title_and_step_any_status, scrutiny_statement, holder_lock"
+    "must be one of none, live_key, never_held_key, title_live_with_step, title_and_step_any_status, scrutiny_statement, authority_brief, holder_lock"
   );
   checkSteps(args.steps, "steps");
   checkScope(args.scope, "scope");
@@ -112433,6 +113027,11 @@ function validate(args) {
   if (guard2 === "scrutiny_statement") {
     const statements = (args.scope ?? []).filter((r3) => r3.entity === "statements_of_law" && r3.entity_id !== null);
     check(statements.length === 1, "scope", "must hold exactly one ('statements_of_law', <statement id>) row under guard scrutiny_statement");
+  }
+  if (guard2 === "authority_brief") {
+    check(args.title.startsWith(BRIEF_JOB_PREFIX), "title", `must open "${BRIEF_JOB_PREFIX}" under guard authority_brief`);
+    const authorities = (args.scope ?? []).filter((r3) => r3.entity === "authorities" && r3.entity_id !== null);
+    check(authorities.length === 1, "scope", "must hold exactly one ('authorities', <authority id>) row under guard authority_brief");
   }
   const companions = args.companions ?? [];
   check(Array.isArray(companions), "companions", "must be a list");
@@ -112473,6 +113072,13 @@ function holderQuery(args, titles) {
       return {
         sql: `SELECT t.id FROM tickets t JOIN ticket_scope sc ON sc.ticket_id = t.id WHERE ${liveStatus} AND t.title LIKE 'Review scrutiny finding: %' AND sc.entity = 'statements_of_law' AND sc.entity_id = ?`,
         params: [statement.entity_id]
+      };
+    }
+    case "authority_brief": {
+      const authority = (args.scope ?? []).find((r3) => r3.entity === "authorities" && r3.entity_id !== null);
+      return {
+        sql: `SELECT t.id FROM tickets t JOIN ticket_scope sc ON sc.ticket_id = t.id WHERE t.proceeding_id = ? AND ${liveStatus} AND t.title LIKE '${BRIEF_JOB_PREFIX}%' AND sc.entity = 'authorities' AND sc.entity_id = ?`,
+        params: [args.proceeding_id, authority.entity_id]
       };
     }
     default:
@@ -112577,7 +113183,8 @@ function guardedReport(args, holder) {
     never_held_key: `One of these keys was already held, by ${job}, so intake writes nothing for it. Skip it and go on.`,
     title_live_with_step: `A live job with one of these titles already holds a step: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
     title_and_step_any_status: `This finding is already on the board, or was settled there: ${job}. Nothing was written; say "already on the board" in one line.`,
-    scrutiny_statement: `A live scrutiny review job already covers this statement: ${job}. Nothing was written; say "already a job: ${job}" in one line.`
+    scrutiny_statement: `A live scrutiny review job already covers this statement: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
+    authority_brief: `A live case brief job already covers this case: ${job}. Nothing was written; say "already a job: ${job}" in one line.`
   };
   return { ...found === void 0 ? {} : { holder_id: found.id }, note: notes[args.guard] };
 }
@@ -112772,7 +113379,7 @@ function rewritePages(args, read3, client, todos, dates) {
   try {
     let filingId = read3.filing_id;
     if (filingId === null) {
-      const filings = fetchAllFilingsForProceeding(args.db_path, read3.proceeding_id).filter((f3) => !isJobOnlyBoard(f3));
+      const filings = fetchBoardFilings(args.db_path, read3.proceeding_id).filter((f3) => !isJobOnlyBoard(f3));
       filingId = (filings.find((f3) => f3.retired_on === null) ?? filings[0])?.id ?? null;
     }
     if (filingId !== null) {
@@ -113097,7 +113704,7 @@ async function submissionDataMergeJobs(args, env = process.env) {
 // src/submission/forms/quick-edit.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
 import { appendFileSync as appendFileSync4, existsSync as existsSync45, mkdirSync as mkdirSync23, readdirSync as readdirSync24, readFileSync as readFileSync36, renameSync as renameSync10, rmSync as rmSync3, statSync as statSync20, unlinkSync as unlinkSync15, writeFileSync as writeFileSync14 } from "node:fs";
-import { basename as basename11, dirname as dirname28, join as join49 } from "node:path";
+import { basename as basename11, dirname as dirname28, join as join50 } from "node:path";
 var PREVIEW = "drafting_forms__preview_edit";
 var APPLY = "drafting_forms__apply_edit";
 var TOKEN_TTL_MS = 30 * 60 * 1e3;
@@ -113714,7 +114321,7 @@ function pruneTokens(db) {
   const cutoff = Date.now() - TOKEN_PRUNE_MS;
   for (const name of readdirSync24(dir)) {
     if (!name.startsWith(prefix)) continue;
-    const file = join49(dir, name);
+    const file = join50(dir, name);
     if (statSync20(file).mtimeMs < cutoff) unlinkSync15(file);
   }
 }
@@ -113877,7 +114484,7 @@ async function submissionFormsPreviewEdit(args) {
     mkdirSync23(previewDir2, { recursive: true });
     const sources = new Set(mapSources(after.documents).map((s3) => s3.title));
     const previewPaths = after.documents.filter((doc) => sources.has(doc.fileName.replace(/\.md$/i, ""))).map((doc) => {
-      const path = join49(previewDir2, doc.fileName);
+      const path = join50(previewDir2, doc.fileName);
       writeFileSync14(path, withLegend(doc.markdown, doc.documentType).markdown, "utf-8");
       return path;
     });
@@ -113961,7 +114568,7 @@ async function submissionFormsApplyEdit(args) {
   return { applied: true, filing_id: stored.filing_id, revision, audit_log: log.file, audit_lines: log.lines, note: `Applied${written.warning ? ` (${written.warning})` : ""}.` };
 }
 function logFile(db, filingId) {
-  return join49(recordsDir(db), `quick-edits-${filingId}.jsonl`);
+  return join50(recordsDir(db), `quick-edits-${filingId}.jsonl`);
 }
 function appendLog(db, stored, results, revision) {
   const file = logFile(db, stored.filing_id);
@@ -113997,12 +114604,12 @@ function appendLog(db, stored, results, revision) {
 // src/page-api/focus.ts
 import { createHash as createHash13, randomUUID as randomUUID10 } from "node:crypto";
 import { existsSync as existsSync46, mkdirSync as mkdirSync24, readFileSync as readFileSync37 } from "node:fs";
-import { dirname as dirname29, join as join50 } from "node:path";
+import { dirname as dirname29, join as join51 } from "node:path";
 var FOCUS_SECTIONS = ["submissions", "counter", "rebuttals", "killed"];
 function focusPath(dbPath, filingId, env) {
   const name = createHash13("sha256").update(`${dbPath}
 ${filingId}`).digest("hex").slice(0, 32);
-  return join50(dirname29(configPath(env)), "page-focus", `${name}.json`);
+  return join51(dirname29(configPath(env)), "page-focus", `${name}.json`);
 }
 function writeFocus(dbPath, filingId, section3, number3, env = process.env) {
   const record2 = { id: randomUUID10(), section: section3, number: number3, at: (/* @__PURE__ */ new Date()).toISOString() };
@@ -114051,7 +114658,7 @@ function submissionFormsFocusViewPage(args, env = process.env) {
 
 // src/submission/open-session.ts
 import { existsSync as existsSync47, readdirSync as readdirSync25 } from "node:fs";
-import { basename as basename12, dirname as dirname30, join as join51 } from "node:path";
+import { basename as basename12, dirname as dirname30, join as join52 } from "node:path";
 
 // src/submission/matter-todos.ts
 var text3 = (value) => value === null || value === void 0 ? null : String(value);
@@ -114110,7 +114717,7 @@ function openBoard(dbPath, draftDir, client, todos, dates, listed, filingId, tim
           ...rendered.filing_retired ? { filing_retired: true, note: rendered.note } : {},
           ...board.ingest_inputs ? { ingest_inputs: board.ingest_inputs } : {}
         },
-        matter_board_path: join51(draftDir, MATTER_BOARD_FILE),
+        matter_board_path: join52(draftDir, MATTER_BOARD_FILE),
         milestone_path: board.path,
         ...written.pages ? { milestone_paths: written.pages.milestone_paths, view_page_paths: written.pages.view_page_paths, loose_threads_path: written.pages.loose_threads_path } : {},
         // ADR 0038: the render read the opened filing's form currency; it is not read twice.
@@ -114257,7 +114864,7 @@ async function openSession(matterRoot, practiceDb2, client = {}, unattended = fa
     }
     const to2 = migrationRefused === void 0 ? target : result.schema_version;
     if (to2 !== null && to2 !== from) {
-      migrated = { from, to: to2, backup: written.length > 0 ? join51(dirname30(dbPath), written[0]) : null };
+      migrated = { from, to: to2, backup: written.length > 0 ? join52(dirname30(dbPath), written[0]) : null };
       if (migrateWarnings.length > 0) migrated.warnings = migrateWarnings;
     }
   }
@@ -117829,7 +118436,7 @@ function rulesLifecycle(dbPath, since) {
 // src/preferences/tools.ts
 import { randomUUID as randomUUID11 } from "node:crypto";
 import { existsSync as existsSync53, readFileSync as readFileSync42 } from "node:fs";
-import { join as join52 } from "node:path";
+import { join as join53 } from "node:path";
 
 // src/preferences/redact.ts
 var PLACEHOLDERS = ["<user>", "<username>", "<matter>", "<folder>"];
@@ -117931,7 +118538,7 @@ function person(env) {
 }
 function preferencesFile(env) {
   const key = person(env);
-  return { file: join52(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
+  return { file: join53(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
 }
 function readEntries(file) {
   if (!existsSync53(file)) return [];
@@ -117994,7 +118601,7 @@ async function preferencesWrite(args, env = process.env, seams = {}) {
 // src/suggestions/store.ts
 import { randomUUID as randomUUID12 } from "node:crypto";
 import { existsSync as existsSync54, readFileSync as readFileSync43 } from "node:fs";
-import { dirname as dirname32, join as join53 } from "node:path";
+import { dirname as dirname32, join as join54 } from "node:path";
 var STORE_FOLDER = "suggestions";
 var STORE_FILE = "suggestions.json";
 var LEGACY_LOG_FILE = "suggestions.local.json";
@@ -118007,13 +118614,13 @@ var CARD_STATUS = {
   unreachable: "Not sent; Probanda could not be reached"
 };
 function storeDir(env = process.env) {
-  return join53(dirname32(configPath(env)), STORE_FOLDER);
+  return join54(dirname32(configPath(env)), STORE_FOLDER);
 }
 function storePath(env = process.env) {
-  return join53(storeDir(env), STORE_FILE);
+  return join54(storeDir(env), STORE_FILE);
 }
 function legacyLogPath(env = process.env) {
-  return join53(dirname32(configPath(env)), LEGACY_LOG_FILE);
+  return join54(dirname32(configPath(env)), LEGACY_LOG_FILE);
 }
 function cardStatus(record2) {
   return CARD_STATUS[record2.state];
@@ -118419,7 +119026,7 @@ async function withdrawSuggestion(recordId, env = process.env, seams = {}) {
 
 // src/suggestions/page.ts
 import { mkdirSync as mkdirSync27 } from "node:fs";
-import { dirname as dirname33, join as join54 } from "node:path";
+import { dirname as dirname33, join as join55 } from "node:path";
 var PAST_SUGGESTIONS_FILE = "Past suggestions.html";
 var BRACKET = /\[(client|matter|person|document|file|date|amount)\]/g;
 var ITEM_STATUS = {
@@ -118619,7 +119226,7 @@ function renderPastSuggestionsHtml(store, port, tokenFor, focus2 = null) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src http://127.0.0.1:${port}; object-src 'none'; base-uri 'none'; form-action 'none'"><title>Past suggestions</title><style>${STYLE}</style></head><body><main><h1>Past suggestions</h1><p class="note">What this computer sent to the Probanda team, word for word, and what has happened to each suggestion.</p>` + body + `</main><script type="application/json" id="api">${api}</script><script>${SCRIPT}</script></body></html>`;
 }
 function pastSuggestionsPath(env = process.env) {
-  return join54(storeDir(env), PAST_SUGGESTIONS_FILE);
+  return join55(storeDir(env), PAST_SUGGESTIONS_FILE);
 }
 async function writePastSuggestionsPage(env = process.env, options = {}) {
   const store = await loadStore(env);
@@ -118635,11 +119242,11 @@ async function writePastSuggestionsPage(env = process.env, options = {}) {
 // src/suggestions/card.ts
 import { randomUUID as randomUUID14 } from "node:crypto";
 import { existsSync as existsSync58, unlinkSync as unlinkSync17 } from "node:fs";
-import { join as join58 } from "node:path";
+import { join as join59 } from "node:path";
 
 // src/suggestions/crosscheck.ts
 import { existsSync as existsSync55, readFileSync as readFileSync44 } from "node:fs";
-import { join as join55 } from "node:path";
+import { join as join56 } from "node:path";
 
 // src/case/list-record-names.ts
 var DRIVER11 = String.raw`
@@ -118789,7 +119396,7 @@ function loadStopWords(env = process.env, installRoot) {
   const root = resolveShippedRoot(STOP_WORDS_DIR, env, { subject: "the suggestion word lists", plugin: "lawyer", installRoot }).root;
   const words2 = /* @__PURE__ */ new Set();
   for (const file of STOP_WORD_FILES) {
-    const path = join55(root, ...STOP_WORDS_DIR.split("/"), file);
+    const path = join56(root, ...STOP_WORDS_DIR.split("/"), file);
     if (!existsSync55(path)) throw new DataServerError("The suggestion check is missing its word lists. Update the lawyer plugin.", "stop_words_missing");
     for (const word of parseStopWords(readFileSync44(path, "utf-8"))) words2.add(word);
   }
@@ -119284,7 +119891,7 @@ function renderCardHtml(card, port, token) {
 
 // src/suggestions/mockup.ts
 import { existsSync as existsSync56, readFileSync as readFileSync45 } from "node:fs";
-import { join as join56 } from "node:path";
+import { join as join57 } from "node:path";
 var PLACEHOLDERS_DIR = "suggestion/references/mockup";
 var PLACEHOLDERS_FILE = "placeholders.txt";
 var MAX_MOCKUP_BYTES = 1e6;
@@ -119294,7 +119901,7 @@ function parsePlaceholders(text8) {
 }
 function loadPlaceholders(env = process.env, installRoot) {
   const root = resolveShippedRoot(PLACEHOLDERS_DIR, env, { subject: "the suggestion mockup placeholders", plugin: "lawyer", installRoot }).root;
-  const path = join56(root, ...PLACEHOLDERS_DIR.split("/"), PLACEHOLDERS_FILE);
+  const path = join57(root, ...PLACEHOLDERS_DIR.split("/"), PLACEHOLDERS_FILE);
   if (!existsSync56(path)) throw new DataServerError("The suggestion mockup is missing its placeholder text. Update the lawyer plugin.", "placeholders_missing");
   return parsePlaceholders(readFileSync45(path, "utf-8"));
 }
@@ -119462,7 +120069,7 @@ function renderMockupPage(opts) {
 // src/suggestions/observation.ts
 import { randomUUID as randomUUID13 } from "node:crypto";
 import { existsSync as existsSync57, readdirSync as readdirSync33, readFileSync as readFileSync46 } from "node:fs";
-import { join as join57 } from "node:path";
+import { join as join58 } from "node:path";
 
 // src/suggestions/environment.ts
 import { arch as osArch, homedir as homedir10, hostname as osHostname, platform as osPlatform, release as osRelease, userInfo } from "node:os";
@@ -119836,7 +120443,7 @@ function parseObservationTexts(text8) {
 }
 function loadObservationTexts(env = process.env, installRoot) {
   const root = resolveShippedRoot(OBSERVATION_TEXTS_PATH, env, { subject: "the suggestion observation texts", plugin: "lawyer", installRoot }).root;
-  const path = join57(root, ...OBSERVATION_TEXTS_PATH.split("/"));
+  const path = join58(root, ...OBSERVATION_TEXTS_PATH.split("/"));
   if (!existsSync57(path)) throw new DataServerError("The suggestion observation texts are missing. Update the lawyer plugin.", "observation_texts_missing");
   return parseObservationTexts(readFileSync46(path, "utf-8"));
 }
@@ -120092,10 +120699,10 @@ function findCard(store, cardId) {
   return record2;
 }
 function cardPath(cardId, env = process.env) {
-  return join58(storeDir(env), `Suggestion-${cardId}.html`);
+  return join59(storeDir(env), `Suggestion-${cardId}.html`);
 }
 function mockupPagePath(cardId, n3, env = process.env) {
-  return join58(storeDir(env), `Suggestion-${cardId}-mockup-${n3}.html`);
+  return join59(storeDir(env), `Suggestion-${cardId}-mockup-${n3}.html`);
 }
 function nowOf2(deps) {
   return deps.now ? deps.now() : /* @__PURE__ */ new Date();
@@ -121203,7 +121810,7 @@ function repoDocsRead(relative5, env) {
 }
 
 // src/pages/preview.ts
-import { basename as basename15, dirname as dirname34, join as join60, relative as relative4 } from "node:path";
+import { basename as basename15, dirname as dirname34, join as join61, relative as relative4 } from "node:path";
 
 // src/housekeeping/templates/approval.css.ts
 var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
@@ -122374,10 +122981,10 @@ var MILESTONE_FIXTURE = {
     },
     {
       "kind": "view",
-      "key": "view:Legal Memos",
+      "key": "view:Legal Research",
       "viewed": false,
-      "name": "Legal Memos",
-      "file": "Legal Memos - Milestone 1.html"
+      "name": "Legal Research",
+      "file": "Legal Research - Milestone 1.html"
     },
     {
       "kind": "view",
@@ -122569,11 +123176,77 @@ var PROCEDURAL_HISTORY_FIXTURE = {
   }
 };
 
-// src/board-fixtures/legal-memos.ts
-var LEGAL_MEMOS_FIXTURE = {
+// src/board-fixtures/legal-research.ts
+var LEGAL_RESEARCH_FIXTURE = {
   meta: { filing: "Opening Submissions Package", matter: "L4801", client: "Ashbourne", revision: 12, rendered: "2026-01-15 09:00" },
   data: {
-    memos: [
+    propositions: {
+      counts: { in_use: 1, undecided: 1, not_relevant: 1 },
+      groups: [
+        {
+          heading: "The refusal repudiated the contract",
+          note: "Submission on this Writing",
+          propositions: [
+            {
+              law_assertion_id: 1,
+              text: "A refusal to accept delivery, without lawful excuse, repudiates a contract of sale.",
+              dead_end: false,
+              killed_on: null,
+              class: "in_use",
+              linked_to: ["The refusal repudiated the contract"],
+              statements: [
+                {
+                  statement_id: 1,
+                  class: "in_use",
+                  citation_title: "Sample Holdings Ltd. v. Example Traders Inc.",
+                  citation_rest: ", 2019 BCSC 0000, para 12.",
+                  excerpt: "A refusal of this kind goes to the root of the contract.",
+                  status: ["Verification: verified 2026-01-10", "Note-up: followed"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          heading: "Not linked",
+          note: null,
+          propositions: [
+            { law_assertion_id: 2, text: "Set-off may be raised against a promissory note in narrow cases.", dead_end: false, killed_on: null, class: "undecided", linked_to: [], statements: [] },
+            { law_assertion_id: 3, text: "A buyer need not mitigate after repudiation.", dead_end: false, killed_on: "2026-01-12", class: "not_relevant", linked_to: [], statements: [] }
+          ]
+        }
+      ]
+    },
+    briefs: {
+      cases: [
+        {
+          title: "Sample Holdings Ltd. v. Example Traders Inc.",
+          citation: "2019 BCSC 0000",
+          status: "briefed",
+          relied_on: true,
+          jobs: [],
+          brief: {
+            date: "2026-01-11",
+            version: 2,
+            earlier: [1],
+            file: "6. LAW\\Breach of contract\\2026-01-11 case brief Sample Holdings Ltd. v. Example Traders Inc., 2019 BCSC 0000 v2.md",
+            url: "file:///placeholder/6.%20LAW/Breach%20of%20contract/2026-01-11%20case%20brief%20v2.md",
+            on_disk: true
+          }
+        },
+        { title: "Placeholder Co. v. Specimen Ltd.", citation: "2021 BCCA 0000", status: "requested", relied_on: true, jobs: [{ id: 21, title: "Brief the case: Placeholder Co. v. Specimen Ltd., 2021 BCCA 0000" }], brief: null },
+        { title: "Model Ltd. v. Dummy Corp.", citation: "2020 BCSC 0000", status: "not_briefed", relied_on: true, jobs: [], brief: null },
+        {
+          title: "Instance v. Pattern, 2018 BCCA 0000",
+          citation: null,
+          status: "briefed",
+          relied_on: false,
+          jobs: [],
+          brief: { date: "2026-01-06", version: 1, earlier: [], file: "6. LAW\\Costs\\2026-01-06 case brief Instance v. Pattern, 2018 BCCA 0000.md", url: "file:///placeholder/6.%20LAW/Costs/2026-01-06%20case%20brief.md", on_disk: true }
+        }
+      ]
+    },
+    memos: { memos: [
       {
         title: "ML re repudiation by refusal to deliver",
         folder: "Breach of contract",
@@ -122634,17 +123307,17 @@ var LEGAL_MEMOS_FIXTURE = {
         url: "file:///placeholder/6.%20LAW/2026-01-05%20note-up%20Sample%20Holdings%20Ltd.%20v.%20Example%20Traders%20Inc.,%202019%20BCSC%200000%20v2.md",
         on_disk: true
       }
-    ]
+    ] }
   }
 };
 
 // src/pages/preview-file.ts
 import { mkdirSync as mkdirSync29, writeFileSync as writeFileSync17 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
-import { join as join59 } from "node:path";
+import { join as join60 } from "node:path";
 var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
 function fixturePreviewDir() {
-  return join59(tmpdir5(), FIXTURE_PREVIEW_FOLDER);
+  return join60(tmpdir5(), FIXTURE_PREVIEW_FOLDER);
 }
 var FIXTURE_PREVIEW_MARKER = "<!-- probanda-fixture-preview -->";
 function composeWithOverrides(set, overrides = {}) {
@@ -122661,7 +123334,7 @@ function writePreview(dir, base, html, fixture) {
   const text8 = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
 ` : html;
   for (let n3 = 1; ; n3++) {
-    const path = join59(dir, `${base} preview ${n3}.html`);
+    const path = join60(dir, `${base} preview ${n3}.html`);
     try {
       writeFileSync17(path, text8, { flag: "wx" });
       return path;
@@ -122683,7 +123356,7 @@ var PAGE_TEMPLATES = {
 var VIEW_FIXTURES = {
   "Procedural History": PROCEDURAL_HISTORY_FIXTURE,
   "Material Facts": MATERIAL_FACTS_FIXTURE,
-  "Legal Memos": LEGAL_MEMOS_FIXTURE,
+  "Legal Research": LEGAL_RESEARCH_FIXTURE,
   Arguments: ARGUMENTS_FIXTURE
 };
 var FIXTURE_BOARD = { filing_id: 1, proceeding_id: 1 };
@@ -122752,7 +123425,7 @@ async function pagesPreview(args, store) {
     ids.filing_id === void 0 ? {} : { only: ids.filing_id },
     threads ? { threads: withoutListener(threads) } : viewPage ? { views: { [page2]: viewPage } } : page2 === "Milestone" ? { milestone: composed } : { matterBoard: composed }
   );
-  const target = threads || page2 === "Litigation Strategy" ? join60(draftDir, threads ? LOOSE_THREADS_FILE : MATTER_BOARD_FILE) : page2 === "Milestone" ? built.paths.milestone_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
+  const target = threads || page2 === "Litigation Strategy" ? join61(draftDir, threads ? LOOSE_THREADS_FILE : MATTER_BOARD_FILE) : page2 === "Milestone" ? built.paths.milestone_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
   const pageFile = target === void 0 ? void 0 : relative4(draftDir, target);
   const html = built.pages.find((p3) => p3.name === pageFile)?.html;
   if (target === void 0 || html === void 0) {
@@ -123742,8 +124415,8 @@ function assertBareFilename(name, label2) {
 
 // src/research/preflight.ts
 import { tmpdir as tmpdir6 } from "node:os";
-import { join as join61 } from "node:path";
-var PROBE_STEM = join61(tmpdir6(), "coclerk-research-preflight-probe-absent");
+import { join as join62 } from "node:path";
+var PROBE_STEM = join62(tmpdir6(), "coclerk-research-preflight-probe-absent");
 var CAPS = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
@@ -124130,7 +124803,7 @@ function sectionBlocks(chunks) {
 // src/files/extract/page-compare.ts
 import { createHash as createHash16 } from "node:crypto";
 import { mkdirSync as mkdirSync31, writeFileSync as writeFileSync19 } from "node:fs";
-import { isAbsolute as isAbsolute9, join as join62 } from "node:path";
+import { isAbsolute as isAbsolute9, join as join63 } from "node:path";
 var FPDF_ANNOT = 1;
 var GROUP_MAX = 5;
 var VISUAL = /* @__PURE__ */ new Set(["only_in_a", "only_in_b", "size", "rotation", "render"]);
@@ -124159,13 +124832,13 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         const flagged2 = [];
         let workDir = null;
         const write2 = (side, n3, facts) => {
-          workDir ??= join62(args.destination_dir, `compare-${sha2563(dataA).slice(0, 16)}-${sha2563(dataB).slice(0, 16)}`);
-          const dir = join62(workDir, side);
+          workDir ??= join63(args.destination_dir, `compare-${sha2563(dataA).slice(0, 16)}-${sha2563(dataB).slice(0, 16)}`);
+          const dir = join63(workDir, side);
           mkdirSync31(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
           return tiles.map(([top, rows4], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-            const file = join62(dir, `${name}.png`);
+            const file = join63(dir, `${name}.png`);
             const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows4) * facts.width * 3);
             writeFileSync19(file, encodePng(rgb, facts.width, rows4));
             return file;
@@ -124377,7 +125050,7 @@ async function saveAnswerTool(args, env = process.env) {
 
 // src/key-request/tools.ts
 import { createHash as createHash17, randomBytes as randomBytes7 } from "node:crypto";
-import { join as join63 } from "node:path";
+import { join as join64 } from "node:path";
 
 // src/key-request/save-key.ts
 var TIMEOUT_MS3 = 6e4;
@@ -124435,7 +125108,7 @@ var pending2;
 var listening2;
 var sent;
 function requestPath(env = process.env) {
-  return join63(defaultStateDir(env), "key-request.json.dpapi");
+  return join64(defaultStateDir(env), "key-request.json.dpapi");
 }
 function isKeyRequestToolName(name) {
   return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
@@ -125335,7 +126008,7 @@ async function start() {
   startPageApi().catch((err) => console.error(`[page-api] listener off: ${err instanceof Error ? err.message : String(err)}`));
   retryUnsent().catch((err) => console.error(`[suggestions] retry skipped: ${err instanceof Error ? err.message : String(err)}`));
 }
-var isMain = process.argv[1] && import.meta.url === pathToFileURL2(process.argv[1]).href;
+var isMain = process.argv[1] && import.meta.url === pathToFileURL3(process.argv[1]).href;
 if (isMain) {
   start().catch((err) => {
     const message = err instanceof Error ? err.message : String(err);

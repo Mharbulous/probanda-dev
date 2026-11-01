@@ -17,6 +17,8 @@ the memo in `6. LAW` is the caller's job, never yours.
 self-contained — follow it alone, never this file or `shared/research-priority.md`.
 For scoped `opinion` dispatches, follow both this file and the scoped file: it
 narrows the question asked and the shape of the answer, never an audit guarantee.
+For `mode: case_brief`, fetch `shared/case-brief-template.md` and `case-brief/agents/brief.md`
+and follow them alone, never this file: you read one decision and say only what it holds.
 Absent `mode:`/`report:` entirely, run this protocol as written.
 
 ## Non-negotiable rule
