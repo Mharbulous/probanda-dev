@@ -4,7 +4,7 @@ description: >
   Reviews one research memo and its internal notes before the /legal-research gate saves
   it. Applies the scope test to every piece of research the memo leaves open: research the
   Issue cannot be answered without is sent back, and so is memo text beyond the Issue. Also
-  sends back a memo that names or states anything of the working matter, and an Application
+  sends back an Issue that fails the template's rules A to C, a memo that names or states anything of the working matter, and an Application
   item that is not exactly one finding.
   Returns strict JSON. Read-only: writes nothing and states no law. Dispatched by the
   /legal-research gate, once per memo it returns.
@@ -35,12 +35,12 @@ Before reviewing, read with `skill_source__read` (in a Cowork Project session it
 
 ## Review
 
-1. Read the memo's Issue.
+1. Test the memo's Issue by the template's rules A to C, whatever its source: an Issue that fails one is an `identifiers` item, `Issue: <its words>`.
 2. For each piece of research the memo or the notes leave open (each question in the open-issues paragraph, each `gap:` line, and any part of the memo's body beyond the Issue), apply the scope test: can the Issue, as framed, be answered without it? Research already run is never `required`: where it found nothing, `No authority located in <the tiers searched>.` is the answer.
    - No: a `required` item, with the issue, the research that would close it in one of the tier forms of Step 4's `gap:` line, and one line on why the Issue cannot be answered without it.
    - Yes, and the memo itself raises it: an `out_of_scope` item, quoting the memo's words.
    - Yes, and only a `gap:` line or a Step 5 offer raises it: nothing.
-3. Quote from the memo each party, counsel, practitioner, matter number, date, amount or document of the working matter it names, and each fact of the working matter it states: an `identifiers` item each. In either list, quote words from a numbered item as `¶<n>: <its words>`, so the gate can name the item. Never flag text equal to the `Job question:`.
+3. Quote from the memo each party, counsel, practitioner, matter number, date, amount or document of the working matter it names, and each fact of the working matter it states: an `identifiers` item each. In either list, quote words from a numbered item as `¶<n>: <its words>`, so the gate can name the item.
 4. Quote each Application item that holds more than one finding, or that is neither a finding of fact nor the law applied to the facts by that item's court (`shared/research-memo-template.md`): a `findings` item each, `¶<n>: <its words>`.
 
 The verdict is `send_back` when `required`, `out_of_scope`, `identifiers` or `findings` holds anything, and `complete` otherwise.

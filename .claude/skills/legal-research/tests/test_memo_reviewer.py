@@ -106,7 +106,20 @@ class AgentContractTest(unittest.TestCase):
                       "anything", body)
         self.assertIn("Quote each Application item that holds more than one finding, or that is neither a finding of "
                       "fact nor the law applied to the facts by that item's court", body)
-        self.assertIn("Never flag text equal to the `Job question:`.", body)
+
+    def test_a_label_style_issue_is_sent_back(self):
+        # A job's Issue copied from a label-style title ("Limitation period for the claim") holds
+        # no question, so it fails rule A. Step 1 tests the Issue, whatever its source, as an
+        # `identifiers` item, which the verdict rule turns into `send_back`; nothing exempts the
+        # Job question's text from step 3 either.
+        body = flat(self.agent)
+        self.assertIn("1. Test the memo's Issue by the template's rules A to C, whatever its source: an Issue that "
+                      "fails one is an `identifiers` item, `Issue: <its words>`.", body)
+        self.assertNotIn("Never flag text equal to", body)
+        template = flat(read("shared", "research-memo-template.md"))
+        self.assertIn("**A.** holds one question;", template)
+        self.assertIn("the Issue is that question verbatim if it meets rules A to C and names nothing of the working "
+                      "matter. If not, return no memo but one rewording proposal", template)
 
     def test_body_is_procedure_and_contract(self):
         for key in ('"verdict"', '"required"', '"out_of_scope"', '"identifiers"', '"findings"'):
