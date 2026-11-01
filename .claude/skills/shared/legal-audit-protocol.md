@@ -384,10 +384,9 @@ write the notes and the memo to the scratchpad, in this order, and return only i
 
    - The Rule (and in CREAC the Explanation) carries every proposition with its pinpoint, its note-up
      result and its reasons-voice check, exactly as Step 2 requires. Nothing uncited.
-   - Every proposition of law anywhere in the body carries its pinpoint citation. In the Rule
-     it is one sentence at most, followed at once by the verbatim passage at its pinpoint as a
-     block quote with its citation. The Conclusion and the Application cite in parentheses and
-     quote no block.
+   - Every proposition of law anywhere in the body carries its pinpoint citation: in a
+     numbered item in the template's item shape, and in the Conclusion in parentheses, with
+     no block quote.
      No coverage line and no confidence table anywhere in the memo. The header's
      one-line `Confidence:` summary of the Step 3 table is the only confidence text in it.
    - In every format the memo is generic and has no Facts section. The spawn prompt's `Facts:`, `Matter:`, `Asked by:` and `Origin:`

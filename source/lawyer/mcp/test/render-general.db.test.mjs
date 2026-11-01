@@ -635,9 +635,15 @@ INSERT INTO filing_documents (filing_id, document_id, ordinal, role) VALUES (${i
 test("a research memo's item paragraphs print summary, excerpt, citation and markers, numbered across Rule and Application, each naming its statement of law", async (t) => {
   const g = await generalWritingFixture(t);
   await g.execute("INSERT INTO proceedings (id, matter_reference, forum) VALUES (4, 'L0000', NULL);");
-  // The shipped type, from /legal-research's tree.
+  // The shipped ICRA type's own block, in /legal-research's tree under the fixture's jurisdiction.
+  const shipped = readFileSync(new URL("../../../../.claude/skills/legal-research/references/CAN/BC/_NoVenue/Documents/research-memo.md", import.meta.url), "utf-8");
+  const memoDocs = `legal-research/${NO_VENUE_TREE.country}/${NO_VENUE_TREE.jurisdiction}/_NoVenue/Documents`;
+  g.f.local(`${memoDocs}/kinds.local.json`, {
+    kinds: [{ file: "research-memo", name: "Research memo", recipient: "internal", aliases: [{ name: "research_memo", source: "agent", ref: "L0000", recorded: "2026-10-31" }] }],
+  });
+  g.f.local(`${memoDocs}/research-memo.md`, shipped);
   const created = await g.create({ proceeding_id: 4, tree: NO_VENUE_TREE, kind: "research_memo", recipient: "internal", title: "2026-10-31 ML re test" });
-  assert.equal(created.type_file, "legal-research/CAN/BC/_NoVenue/Documents/research-memo.md");
+  assert.equal(created.type_file, `${memoDocs}/research-memo.md`);
   const id = created.filing_id;
   await g.execute(`
 INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind) VALUES (60, 4, 'Alpha v Beta', '2020 BCCA 1', 'case');

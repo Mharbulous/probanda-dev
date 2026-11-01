@@ -131,7 +131,7 @@ test("under _NoVenue a type in /legal-research's tree resolves too, with or with
   assert.throws(() => composeLayoutSnapshot({ ...BC, venue: "_NoVenue", kind: "letter_to_opposing_counsel" }, f.seams), code("kind_unresolved", /matches 2 rows/));
   // Without litigator's /draft tree the research memo still resolves.
   rmSync(join(f.installRoot, "skills", "draft"), { recursive: true, force: true });
-  assert.equal(composeLayoutSnapshot({ ...BC, venue: "_NoVenue", kind: "research_memo" }, f.seams).type_file, "research-memo");
+  assert.equal(composeLayoutSnapshot({ ...BC, venue: "_NoVenue", kind: "research-memo" }, f.seams).type_file, "research-memo");
 });
 
 test("an unresolved kind and a needs-forum type under _NoVenue fail hard", (t) => {

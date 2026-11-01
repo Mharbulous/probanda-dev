@@ -8,11 +8,23 @@ a fuller header and a CRAC body (IRAC or CREAC only when asked), and the agent r
 `Confidence:`, `Notes scratch:` and `Memo scratch:` lines instead of the memo's text.
 Inventory and note-up dispatches keep their own shapes.
 """
+import json
 import unittest
 from pathlib import Path
 
 
 SHARED = Path(__file__).resolve().parents[2] / "shared"
+TYPES = Path(__file__).resolve().parents[1] / "references" / "CAN" / "BC" / "_NoVenue" / "Documents"
+NL = chr(10)
+FENCE_END = NL + "```"
+ITEM = """```
+<n>. <one sentence: what the excerpt says>
+   Authority: <style of cause or title>
+   Citation: <citation>
+   Kind: <case / statute / regulation / rule / doctrine>, <primary / secondary>
+   Pinpoint: <the pinpoint>
+   > <the verbatim passage at that pinpoint>
+```"""
 HEADER = ["---", "Document: MEMORANDUM OF LAW", "From:", "Date:", "Re:", "Format:", "Status: DRAFT", "Confidence:", "---"]
 ICRA = "```\n## Issue\n## Conclusion\n## Rule\n## Application\n```"
 IRAC = "```\n## Issue\n## Rule\n## Application\n## Conclusion\n```"
@@ -79,9 +91,33 @@ class ProtocolStepSixTests(unittest.TestCase):
         for text in ("The Issue is the question, as one bold sentence.",
                      "A Conclusion is one paragraph answering the Issue,",
                      "Conclusion. It cites in parentheses and has no block quote.",
-                     "The Rule opens with the rule itself.",
-                     "The Application is prose paragraphs, never bullets."):
+                     "The Rule opens with the rule itself: its first item states it.",
+                     "The Application: its items say how each cited authority applied the rule"):
             self.assertIn(text, template)
+        self.assertNotIn("prose paragraphs, never bullets", template)
+
+    def test_numbered_sections_are_items_numbered_through_the_memo(self):
+        template = read("research-memo-template.md")
+        self.assertIn("The Issue, each Conclusion and the Sources are prose. Every other section is a list of "
+                      "numbered items, numbered from 1 through the whole memo and never restarted at a heading", flat(template))
+        self.assertIn(ITEM, template)
+        self.assertIn("Each item holds one proposition or finding, from one excerpt of one authority", flat(template))
+
+    def test_each_type_file_lays_out_its_format_and_numbers_only_the_item_sections(self):
+        template = read("research-memo-template.md")
+        for stem, skeleton in (("research-memo", ICRA), ("research-memo-irac", IRAC), ("research-memo-creac", CREAC)):
+            text = (TYPES / f"{stem}.md").read_text(encoding="utf-8")
+            parts = json.loads(text[text.index("```json") + 7:text.index(FENCE_END, text.index("```json"))])["parts"]
+            self.assertEqual(parts[0]["source"], "slot:memo-header")
+            headings = [p["heading"] for p in parts[1:]]
+            self.assertEqual(headings, [line[3:] for line in skeleton.strip("`" + NL).splitlines()] + ["Sources"], stem)
+            for p in parts:
+                numbered = p["heading"] in ("Rule", "Explanation", "Application")
+                self.assertEqual(p["paragraph_numbering"], "continue" if numbered else "none", (stem, p["heading"]))
+            self.assertIn("shared/research-memo-template.md", text, "the type points at the one shape")
+        kinds = json.loads((TYPES / "kinds.json").read_text(encoding="utf-8"))["kinds"]
+        self.assertEqual({k["file"] for k in kinds}, {"research-memo", "research-memo-irac", "research-memo-creac"})
+        self.assertTrue(all(k["recipient"] == "internal" for k in kinds))
 
     def test_irac_and_creac_only_when_asked(self):
         self.assertIn("The body uses ICRA unless the spawn prompt's `Memo template:` names IRAC or CREAC.",
@@ -184,10 +220,16 @@ class GateDoctrineTests(unittest.TestCase):
         self.assertIn("research_filing__save_answer", step_one)
         self.assertNotIn("confidence summary", step_one)
 
-    def test_persist_step_one_files_the_scratch_memo_and_types_text_only_without_one(self):
+    def test_persist_step_one_writes_the_writing_then_files_its_render(self):
         step_one = between(flat(read("legal-research.md")), "1. Save it verbatim", "2. For every court decision")
-        self.assertIn("When the return has a `Memo scratch:` line, pass that path as `from_scratch` and no `text`", step_one)
-        self.assertIn("Only when the return has no such line, pass the memo as `text`", step_one)
+        order = [step_one.index(t) for t in ("**Writing.** `drafting_data__create_writing`", "**Items.**",
+                                             "**Copy.** `drafting_forms__render`", "`research_filing__save_answer` with")]
+        self.assertEqual(order, sorted(order))
+        self.assertIn("`research_memo`, `research_memo_irac` or `research_memo_creac`", step_one)
+        self.assertIn("each ending ` <!-- statement_of_law_id <B + n> -->`", step_one)
+        self.assertIn("that document's `path` as `from_render`", step_one)
+        self.assertIn("save the `Memo scratch:` path as `from_scratch`", step_one)
+        self.assertNotIn("/drafting-data", step_one, "researcher names no litigator skill")
 
 
 if __name__ == "__main__":

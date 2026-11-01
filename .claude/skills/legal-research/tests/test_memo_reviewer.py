@@ -90,6 +90,11 @@ class AgentContractTest(unittest.TestCase):
                       "  - mcp__remote-devices__plugin_lawyer_data__skill_source__read\nskills: []\n", self.front)
         self.assertNotIn("  - Read\n", self.front)
 
+    def test_reviews_the_numbered_items_and_names_each_by_number(self):
+        body = flat(self.agent)
+        self.assertIn("its prose sections and its numbered items, each one proposition or finding", body)
+        self.assertIn("quote words from a numbered item as `¶<n>: <its words>`", body)
+
     def test_review_rules(self):
         body = flat(self.agent)
         self.assertIn("Research already run is never `required`", body)

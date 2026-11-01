@@ -25,7 +25,7 @@ Invoke through an explicit fresh-context Agent-tool spawn from the `/legal-resea
 The gate pastes everything you need:
 
 - `Question:`, `Job question:`, `Facts:`, `Matter:`, `Asked by:` and `Origin:`, from the audit's spawn prompt. They tell you the working matter. They never enter your return except as a quote from the memo.
-- `Memo:` the memo's full text.
+- `Memo:` the memo's full text: its prose sections and its numbered items, each one proposition or finding (`shared/research-memo-template.md`).
 - `Notes:` the internal notes' full text.
 
 ## Rules
@@ -39,7 +39,7 @@ Before reviewing, read with `skill_source__read` (in a Cowork Project session it
    - No: a `required` item, with the issue, the research that would close it in one of the tier forms of Step 4's `gap:` line, and one line on why the Issue cannot be answered without it.
    - Yes, and the memo itself raises it: an `out_of_scope` item, quoting the memo's words.
    - Yes, and only a `gap:` line or a Step 5 offer raises it: nothing.
-3. Quote from the memo each party, counsel, practitioner, matter number, date, amount or document of the working matter it names, and each fact of the working matter it states: an `identifiers` item each. Never flag text equal to the `Job question:`.
+3. Quote from the memo each party, counsel, practitioner, matter number, date, amount or document of the working matter it names, and each fact of the working matter it states: an `identifiers` item each. In either list, quote words from a numbered item as `¶<n>: <its words>`, so the gate can name the item. Never flag text equal to the `Job question:`.
 
 The verdict is `send_back` when `required`, `out_of_scope` or `identifiers` holds anything, and `complete` otherwise.
 
