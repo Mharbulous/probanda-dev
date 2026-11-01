@@ -60,6 +60,18 @@ class BuildPluginTest(unittest.TestCase):
                 text = (self.out / plugin / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")
                 self.assertIn(f"\n<!-- {plugin} v{self.versions[plugin]} -->\n> **Installed copy.**", text)
 
+    def test_stamped_header_prefers_a_higher_generation_even_when_its_own_folder_exists(self):
+        trigger = ("plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if "
+                   "`${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session")
+        for plugin in ("lawyer", "researcher", "litigator", "developer"):
+            with self.subTest(plugin=plugin):
+                stamped = [p for p in (self.out / plugin / "skills").glob("*/SKILL.md")
+                           if "> **Installed copy.**" in p.read_text(encoding="utf-8")]
+                self.assertTrue(stamped)
+                self.assertEqual([p.parent.name for p in stamped if trigger not in p.read_text(encoding="utf-8")], [])
+                self.assertFalse([p.parent.name for p in stamped
+                                  if "If `${CLAUDE_SKILL_DIR}` itself no longer exists" in p.read_text(encoding="utf-8")])
+
     def test_no_tests_or_bytecode_ship(self):
         shipped = [p.relative_to(self.out).parts for p in self.out.rglob("*")]
         self.assertFalse([p for p in shipped if "tests" in p[:-1] or "__pycache__" in p])

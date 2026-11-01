@@ -31,7 +31,7 @@ def description_length(skill_md_path):
 
 def preamble_lines(plugin_name, version):
     """The lines stamp_skill_md() inserts after a shipped roster SKILL.md's frontmatter.
-    The build carries its own copy; shipped-tree-purity is what catches a disagreement."""
+    The one source: build_plugin.py stamps with stamp_skill_md() from here."""
     return [
         f"<!-- {plugin_name} v{version} -->",
         "> **Installed copy.** This skill's full source tree ships beside this file, and a relative "
@@ -43,11 +43,13 @@ def preamble_lines(plugin_name, version):
         "it means the directory containing this SKILL.md, not a placeholder to search for or guess. "
         "Read references and shared files natively from there, never over the litigation data "
         "server's skill-source tool and never by requesting folder access; scripts and templates the "
-        "text declares are executed and read from there too. If `${CLAUDE_SKILL_DIR}` itself no "
-        "longer exists, the plugin was re-synced mid-session: list only `${CLAUDE_SKILL_DIR}/../../..` "
-        "(the folder that held this plugin's folder), take the folder named as this plugin's folder "
-        "with any `~g<N>` suffix removed plus the highest `~g<N>`, and repeat the same three tries "
-        "with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user "
+        "text declares are executed and read from there too. Before each fresh read (a file not "
+        "already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this "
+        "plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, "
+        "plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if "
+        "`${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the "
+        "highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` "
+        "directory in place of `${CLAUDE_SKILL_DIR}`; tell the user "
         "once that the plugin updated mid-session, from the version in this file's version comment "
         "to the version in that folder's copy of this SKILL.md. If a file the text names is missing "
         "at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than "

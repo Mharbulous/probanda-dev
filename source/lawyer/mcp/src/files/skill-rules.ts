@@ -200,7 +200,7 @@ function parseFile(path: string, content: string, sha256: string, isSkill: boole
     if (close !== -1) {
       for (let i = 0; i <= close; i++) exempt[i] = true;
       // An installed SKILL.md carries the packager's stamped preamble right
-      // after its front matter (build_plugin.py preamble_lines()).
+      // after its front matter (check_plugin_skill_md.py preamble_lines()).
       for (let i = close + 1; i < lines.length && (lines[i] === "" || STAMP_RE.test(lines[i])); i++) exempt[i] = true;
     }
   }
