@@ -57,7 +57,7 @@ Refresh the intake lock. List the tombstones (**List withdrawn** in `.claude/com
 2. When `add_label` is true, `POST /issues/<n>/labels` with `{"labels":["withdrawn"]}`. If it fails because the label does not exist, create it once with `POST /labels` and the script's `label` object, then add it.
 3. When `close` is true, `PATCH /issues/<n>` with `{"state":"closed","state_reason":"not_planned"}`.
 
-Leave every other label as it is: `withdrawn` alone takes the issue out of every queue (`scripts/choose_issue.py`, `/triage-issue`, `/suggestion-triage`), and an implementer holding a claim on it stops before it pushes. Entries under `done` are already closed and labelled. Report each entry under `unmatched` (a tombstone whose issue the list does not hold) with its id and issue number, and write nothing for it.
+Leave every other label as it is: `withdrawn` alone takes the issue out of every queue (`scripts/choose_issue.py`, `/triage-issue`, `/suggestion-hitl-triage`), and an implementer holding a claim on it stops before it pushes. Entries under `done` are already closed and labelled. Report each entry under `unmatched` (a tombstone whose issue the list does not hold) with its id and issue number, and write nothing for it.
 
 ## 4. Release and catch up
 

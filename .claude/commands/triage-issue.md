@@ -30,7 +30,7 @@ In the cloud, use `curl` only: Node's `fetch` ignores the sandbox proxy. Each ca
 
 Locally, with `POOL_SECRET_KEY` set, run `node cloud/suggestions/tools/triage.mjs` instead: `list`, `show <suggestion_id>`, `set-issue <suggestion_id> <n>` and `set-review <suggestion_id> <n>`.
 
-Item decisions are not triage's: the maintainer records them through `/suggestion-triage`, which calls `triage.mjs set-item`.
+Item decisions are not triage's: the maintainer records them through `/suggestion-hitl-triage`, which calls `triage.mjs set-item`.
 
 ## The verbatim guard
 
@@ -119,7 +119,7 @@ For each red test: its path (inside Scope), the file verbatim in a fenced block,
 
 For `ready-for-human`, add `### Open decisions`, each a concrete question with its options. For `needs-info`, write the established facts and the questions in place of the brief. For `wontfix`, write why, quoting any green test command, then close the issue.
 
-For a suggestion issue, the brief is grouped by item, so that the maintainer decides each item and `/suggestion-triage` can keep only the approved items' sections for the build:
+For a suggestion issue, the brief is grouped by item, so that the maintainer decides each item and `/suggestion-hitl-triage` can keep only the approved items' sections for the build:
 
 ```markdown
 ## Agent Brief
@@ -152,7 +152,7 @@ One per item, in order: `Item <k>: approve or decline? Recommended: <recommendat
 
 A **merged brief** (step 2) is `## Agent Brief`, the `Suggestion <suggestion_id>` line, `**State:** ready-for-human`, the line `Merged by fingerprint into #m: each item is decided with #m's matching item.`, the item mapping, and one open decision per item naming `#m`. It needs no plan, check or red test of its own.
 
-Set no item status: the maintainer decides each item through `/suggestion-triage`. For any other issue, nothing is recorded on the Suggestion Box.
+Set no item status: the maintainer decides each item through `/suggestion-hitl-triage`. For any other issue, nothing is recorded on the Suggestion Box.
 
 Then set the labels: add the category, the state and, where it applies, the location label, and remove `needs-triage`. Create a missing label with `POST /labels` first: `cloud` (`{"name":"cloud","color":"0E8A16","description":"Work an unattended cloud session can do"}`) or `local` (`{"name":"local","color":"B60205","description":"Work that needs Brahm's machine, data or credentials"}`).
 

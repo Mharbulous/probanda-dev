@@ -1,6 +1,6 @@
 ---
 name: view-suggestions
-description: Use only when Brahm invokes /view-suggestions in a Claude Code session in the probanda-dev repo. Shows every suggestion in Probanda's Suggestion Box as a table, oldest first, whatever its status, and re-renders it with the filter, sort or columns Brahm asks for. Read-only. Triaging a suggestion -> /suggestion-triage.
+description: Use only when Brahm invokes /view-suggestions in a Claude Code session in the probanda-dev repo. Shows every suggestion in Probanda's Suggestion Box as a table, oldest first, whatever its status, and re-renders it with the filter, sort or columns Brahm asks for. Read-only. Triaging a suggestion -> /suggestion-hitl-triage.
 ---
 
 # View suggestions
@@ -9,7 +9,7 @@ Maintainer-only. It ships in the `developer` plugin, which is never public and i
 
 Preconditions: the session's working directory is the probanda-dev checkout (`git remote get-url origin` names `Mharbulous/probanda-dev`; otherwise say this skill runs only there, and stop), and `POOL_SECRET_KEY` is set in the environment (`node cloud/suggestions/tools/triage.mjs list --all` prints `set POOL_SECRET_KEY first` when it is not: tell Brahm and stop).
 
-Read-only. You never run `set-review`, `set-item` or `set-issue`, and never change a suggestion. Triage stays in /suggestion-triage and /adversarial-triage.
+Read-only. You never run `set-review`, `set-item` or `set-issue`, and never change a suggestion. Triage stays in /suggestion-hitl-triage.
 
 ## Steps
 
