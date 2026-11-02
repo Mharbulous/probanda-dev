@@ -26,7 +26,7 @@ const FIXTURE = {
 };
 
 /** sha256 of renderMatterBoardHtml(FIXTURE), taken from the inline-string shell before the move to templates. */
-const PAGE_PIN = "52287db7e7e0bffc438a555f4f60d1343142fdba7a37f5c13a4e0088009c1c38";
+const PAGE_PIN = "ad74d54bae0081eea8cc9c6c268c03878325d5ff438d960b483c8d6d7b35c134";
 
 test("the Litigation Strategy page is byte-identical to the pinned render", () => {
   assertSha256Pin(renderMatterBoardHtml(FIXTURE), PAGE_PIN, "Litigation Strategy");

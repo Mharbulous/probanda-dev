@@ -23,7 +23,7 @@
 
 import { templated } from "../../compose-template.js";
 import { pageApiPort, pageApiToken } from "../../page-api/token.js";
-import boardCss from "../../templates/work-board/board.css.js";
+import boardCss from "../../templates/practice-board/board.css.js";
 import argumentsCss from "../../templates/view-pages/arguments.css.js";
 import argumentsHtml from "../../templates/view-pages/arguments.html.js";
 import argumentsJs from "../../templates/view-pages/arguments.js.js";

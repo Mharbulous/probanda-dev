@@ -29,7 +29,7 @@
 // Each page is an entry template in src/templates/view-pages/ (map #125), sharing facts.css and facts.js.
 
 import { templated } from "../../compose-template.js";
-import boardCss from "../../templates/work-board/board.css.js";
+import boardCss from "../../templates/practice-board/board.css.js";
 import factsCss from "../../templates/view-pages/facts.css.js";
 import factsJs from "../../templates/view-pages/facts.js.js";
 import materialFactsHtml from "../../templates/view-pages/material-facts.html.js";

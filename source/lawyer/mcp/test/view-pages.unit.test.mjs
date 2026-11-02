@@ -58,11 +58,11 @@ const FIXTURES = {
  * Legal Research's taken on 2026-11-01, when it replaced Legal Memos, and retaken that day when Case Briefs listed each earlier file,
  * and again for the four tabs, the noting-up badges and the Legal Memos sections, and for the file link through the page API. */
 const PINS = {
-  "Procedural History": "f8a29d4c7953ff408bd6323af74b2333a71966afb6ee5b550d550f6de594f912",
-  "Material Facts": "3fb4f9f60ff8cc4ac8af3957423a83bacd8c38ba7d63194038a93376db4b0480",
-  "Legal Research": "fb04eb9ff0a098b6dad878b63a9c62372bace83123371bec552771cf203d5713",
-  Arguments: "ec2b611a4cd2fee78b152f97703713149c874d9a3c4ad21bbf503375cb29e5f7",
-  "Loose Threads": "e9295aefed42761418487103bc2d8e8ddd7908fccb10780c6da8c04b149904f7",
+  "Procedural History": "ac5b979ecc31f5442ad6d0e67c59f293346502cff179d0037c4f67a363ac0187",
+  "Material Facts": "1970c261e8ad20d7300056baf5bcc5fe678269cd82941263d06da76ad68bf00d",
+  "Legal Research": "0faafa93119733be4235e97467b87256076b340176c29ba40ccf124d41036b4b",
+  Arguments: "2b96c96b31a4815468b2f9a04efd9e05b4138150c587d002e7f0a7132e1c3d4e",
+  "Loose Threads": "2465fa93795928743d129180b66a95c20f6d46e8283019a6ebc35d30b1d1bf5d",
 };
 
 for (const page of PAGES) {

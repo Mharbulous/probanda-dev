@@ -18,10 +18,10 @@ const SECTION = JSON.parse(readFileSync(new URL("./fixtures/work-board-data.json
 const DATA = { meta: { revision: 3, matter: "L200", client: "Acme <Co>", rendered: "2026-10-19 09:30" }, sections: [SECTION] };
 
 test("the Work Board renders byte-identically to the pinned page", () => {
-  assertSha256Pin(renderWorkBoardHtml(DATA), "f60f7376d721512f345d1541b1a871d95380b6edd504efc4152acb4c25ec5c33", "Work Board");
+  assertSha256Pin(renderWorkBoardHtml(DATA), "b6daa635b8c25a397593a9d9ecbdebdb6d04befd7feb36d211e43cc6c12b701b", "Work Board");
 });
 
 test("WORKBOARD_CSS and WORKBOARD_JS are byte-identical to the pinned constants", () => {
-  assertSha256Pin(WORKBOARD_CSS, "0e1619a4db186bc9cf790434487009f1caa72250cb87ef2e1c05aac73a0e4414", "WORKBOARD_CSS");
+  assertSha256Pin(WORKBOARD_CSS, "8499455b212790bc8abc7902085fb11728b51d832f1a12b10fe9d43665f13305", "WORKBOARD_CSS");
   assertSha256Pin(WORKBOARD_JS, "dd004682299de001f1727b8d989eac85bdfadc22e6a12b6a98fe6d772f568207", "WORKBOARD_JS");
 });

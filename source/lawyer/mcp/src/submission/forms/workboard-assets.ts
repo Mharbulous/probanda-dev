@@ -7,7 +7,7 @@
 //
 // Nothing here is templated, and neither string carries matter data.
 //
-// WORKBOARD_CSS is the Work Board's own copy and the prototype for templates/work-board/board.css,
+// WORKBOARD_CSS is the Work Board's own copy and the prototype for templates/practice-board/board.css,
 // which the other board pages use. A proven change here is promoted there (shared/html-pages.md, One design template).
 
 import workboardCss from "../../templates/milestone/workboard.css.js";

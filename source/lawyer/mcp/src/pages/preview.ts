@@ -26,7 +26,7 @@ import type { PracticeStore } from "../practice/store.js";
 import { buildPracticeBoardData } from "../tools/practice/practice-board.js";
 import { MILESTONE_FIXTURE } from "../board-fixtures/milestone.js";
 import { LITIGATION_STRATEGY_FIXTURE } from "../board-fixtures/litigation-strategy.js";
-import { PRACTICE_BOARD_FIXTURE } from "../board-fixtures/work-board.js";
+import { PRACTICE_BOARD_FIXTURE } from "../board-fixtures/practice-board.js";
 import { ARGUMENTS_FIXTURE } from "../board-fixtures/arguments.js";
 import { LOOSE_THREADS_FIXTURE } from "../board-fixtures/loose-threads.js";
 import { MATERIAL_FACTS_FIXTURE } from "../board-fixtures/material-facts.js";

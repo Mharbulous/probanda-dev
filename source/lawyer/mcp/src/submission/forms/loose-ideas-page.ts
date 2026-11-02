@@ -35,7 +35,7 @@
 
 import { templated } from "../../compose-template.js";
 import { pageApiPort, pageApiToken } from "../../page-api/token.js";
-import boardCss from "../../templates/work-board/board.css.js";
+import boardCss from "../../templates/practice-board/board.css.js";
 import looseThreadsCss from "../../templates/view-pages/loose-threads.css.js";
 import looseThreadsHtml from "../../templates/view-pages/loose-threads.html.js";
 import looseThreadsJs from "../../templates/view-pages/loose-threads.js.js";

@@ -29,7 +29,7 @@ NOTE = "Before the first lookup, call practice_data__config_status and read it."
 '''
 PAGE = '''<!doctype html><html><head><style>.x{{}}</style>
 <script>const filing_id = 1; render("drafting_forms__render");</script></head>
-<body><h1 data-filing-id="7">Milestone 7</h1><p>{text}</p></body></html>
+<body><h1 data-filing-id="7">Work Board 7</h1><p>{text}</p></body></html>
 '''
 SERVER = '''import {{ join }} from "node:path";
 function filingFolderName(id: number): string {{
@@ -50,7 +50,7 @@ export function renderIt(ctx: Ctx, lines: string[]) {{
 
 
 def make_repo(root, reason="Refused: that page is for the practitioner to view.",
-              text="A Writing on its Milestone, with its Loose Threads.",
+              text="A Writing on its Work Board, with its Loose Threads.",
               name='`${id} Notice of Application`', leaf='"Notice of Application.md"',
               err='`"${title}" was not written`', mockup='`Order 1 <!-- order_sought_id ${r.id} -->`'):
     assignment = {"status": "cutover", "plugins": {

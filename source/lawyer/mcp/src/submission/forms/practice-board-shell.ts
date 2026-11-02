@@ -9,13 +9,13 @@
 // and prints no day count. A provisional alternative, a review-flagged deadline and a conflicted date
 // draw flagged, as an unconfirmed date, never as a plain due date. A to-do's BF date draws as a plain
 // label (ADR 0021 D2). Built from the board design template (board.css). The page itself is the
-// template set in src/templates/work-board/ (map #125); this module adds only the data line.
+// template set in src/templates/practice-board/ (map #125); this module adds only the data line.
 
 import { type ComposedTemplate, composeTemplate, type TemplateSet } from "../../compose-template.js";
-import boardCss from "../../templates/work-board/board.css.js";
-import workBoardCss from "../../templates/work-board/work-board.css.js";
-import workBoardHtml from "../../templates/work-board/work-board.html.js";
-import workBoardJs from "../../templates/work-board/work-board.js.js";
+import boardCss from "../../templates/practice-board/board.css.js";
+import practiceBoardCss from "../../templates/practice-board/practice-board.css.js";
+import practiceBoardHtml from "../../templates/practice-board/practice-board.html.js";
+import practiceBoardJs from "../../templates/practice-board/practice-board.js.js";
 
 export const PRACTICE_BOARD_FILE = "Practice Board.html";
 
@@ -53,12 +53,12 @@ export interface PracticeBoardData {
 }
 
 export const PRACTICE_BOARD_TEMPLATE: TemplateSet = {
-  entry: "work-board.html",
+  entry: "practice-board.html",
   files: {
-    "work-board.html": workBoardHtml,
+    "practice-board.html": practiceBoardHtml,
     "board.css": boardCss,
-    "work-board.css": workBoardCss,
-    "work-board.js": workBoardJs,
+    "practice-board.css": practiceBoardCss,
+    "practice-board.js": practiceBoardJs,
   },
 };
 

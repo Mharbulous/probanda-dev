@@ -31,7 +31,7 @@ the text is fixed in source, in four places:
 
 A line holding the marker `internals-ok` is exempt: code that is not a message (a
 query) or that must name an old internal path to move it away. The developer plugin
-is not checked. "Milestone", "Writing" and "Loose Threads" are product vocabulary
+is not checked. "Work Board", "Writing" and "Loose Threads" are product vocabulary
 and never flagged.
 
 Exit codes: 0 clean, 1 a hit. Standard library only.

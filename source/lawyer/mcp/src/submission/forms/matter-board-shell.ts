@@ -19,7 +19,7 @@
 // only the data line.
 
 import { type ComposedTemplate, composeTemplate, type TemplateSet } from "../../compose-template.js";
-import boardCss from "../../templates/work-board/board.css.js";
+import boardCss from "../../templates/practice-board/board.css.js";
 import matterBoardCss from "../../templates/matter-board/matter-board.css.js";
 import matterBoardHtml from "../../templates/matter-board/matter-board.html.js";
 import matterBoardJs from "../../templates/matter-board/matter-board.js.js";

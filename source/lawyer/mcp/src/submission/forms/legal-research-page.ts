@@ -13,7 +13,7 @@
 import { dirname } from "node:path";
 
 import { templated } from "../../compose-template.js";
-import boardCss from "../../templates/work-board/board.css.js";
+import boardCss from "../../templates/practice-board/board.css.js";
 import legalResearchCss from "../../templates/view-pages/legal-research.css.js";
 import legalResearchHtml from "../../templates/view-pages/legal-research.html.js";
 import legalResearchJs from "../../templates/view-pages/legal-research.js.js";

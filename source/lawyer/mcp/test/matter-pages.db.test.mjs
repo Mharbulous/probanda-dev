@@ -116,7 +116,7 @@ test("two live filings in one proceeding get a Work Board page each, each with o
     const { draft, result } = await twoFilingBoard(f);
 
     // seedTickets' proceeding 2 has no filing, so it has a page of its own.
-    assert.deepEqual(milestonePages(draft), ["Work Board - proceeding 2.html", OPENING_PAGE, REPLY_PAGE]);
+    assert.deepEqual(milestonePages(draft), [OPENING_PAGE, REPLY_PAGE, "Work Board - proceeding 2.html"]);
     for (const name of milestonePages(draft)) {
       const { sections } = readBoardData(join(draft, name));
       assert.equal(sections.length, 1, `${name} holds one section`);
@@ -194,7 +194,7 @@ test("a retired filing's Work Board page goes to TRASH", async (t) => {
   assert.deepEqual(milestonePages(m.draft), [OPENING_PAGE]);
   assert.deepEqual(
     retired.moved_to_trash.map((x) => x.from.toLowerCase()),
-    ["Arguments", "Legal Research", "Material Facts", "Work Board", "Procedural History"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
+    ["Arguments", "Legal Research", "Material Facts", "Procedural History", "Work Board"].map((n) => join(m.draft, "Reply Submissions Package", `${n}.html`).toLowerCase())
   );
   assert.ok(existsSync(join(m.matterRoot, "TRASH", "0. DRAFT", REPLY_PAGE)), "the retired filing's page is in TRASH");
 });
@@ -1270,13 +1270,15 @@ test("a page write moves every old page file the generator wrote into TRASH and 
   const todoList = '<!doctype html>\n<html lang="en" data-matter-board-shell>\n';
   const view = '<!doctype html>\n<html lang="en" data-view-page>\n';
   const marked = {
-    [join(m.draft, "Provable Facts - Work Board 1.html")]: view,
-    [join(m.draft, "Provable Facts - Work Board - proceeding 3.html")]: view,
-    [join(m.draft, "Work Board.html")]: board,
-    [join(m.draft, "Work Board-1.html")]: board,
-    [join(m.draft, "Work Board - SUB Opening Submissions Package.html")]: board,
-    [join(m.draft, "SUB Opening Submissions Package", "Work Board.html")]: board,
-    [join(m.draft, "Pre-filing proceeding 3", "Work Board.html")]: board,
+    [join(m.draft, "Provable Facts - Milestone 1.html")]: view,
+    [join(m.draft, "Provable Facts - Milestone - proceeding 3.html")]: view,
+    // The Work Board's name before 2026-11-01.
+    [join(m.draft, "Milestone.html")]: board,
+    [join(m.draft, "Milestone-1.html")]: board,
+    [join(m.draft, "Milestone - SUB Opening Submissions Package.html")]: board,
+    [join(m.draft, "SUB Opening Submissions Package", "Milestone.html")]: board,
+    [join(m.draft, "Pre-filing proceeding 3", "Milestone.html")]: board,
+    [join(m.draft, "Material Facts - Milestone 7.html")]: view,
     [join(m.draft, "Litigation Strategy-2.html")]: todoList,
     [join(m.draft, "To Do List.html")]: todoList,
     [join(m.draft, "To Do List-2.html")]: todoList,
@@ -1290,8 +1292,8 @@ test("a page write moves every old page file the generator wrote into TRASH and 
     [join(m.draft, "Raw Research - Job Board 7.html")]: view,
     // Each board's Loose Threads page before 2026-10-29; the matter's own is at the top.
     [join(m.draft, "Opening Submissions Package", "Loose Threads.html")]: view,
-    [join(m.draft, "Loose Threads - Work Board 4.html")]: view,
-    [join(m.draft, "Loose Threads - Work Board - proceeding 3.html")]: view,
+    [join(m.draft, "Loose Threads - Milestone 4.html")]: view,
+    [join(m.draft, "Loose Threads - Milestone - proceeding 3.html")]: view,
   };
   const unmarked = {
     [join(m.draft, "Work Board.html")]: "the practitioner's own board\n",

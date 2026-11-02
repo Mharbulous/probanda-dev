@@ -19,7 +19,7 @@
 // literally, sharing view-head.html and shared.js; its page file composes it.
 //
 // Provable Facts became Procedural History and Material Facts on 2026-10-20 (docs/ADRs/0011). A
-// `Provable Facts - Work Board <id>.html` left from before is an old page file (matter-page-files.ts OLD_PAGE).
+// `Provable Facts - Milestone <id>.html` left from before is an old page file (matter-page-files.ts OLD_PAGE).
 // Raw Research became Legal Memos on 2026-10-31, and Legal Memos became Legal Research on 2026-11-01, the same
 // way: a `Raw Research.html` or a `Legal Memos.html` is an old page file.
 
@@ -99,9 +99,9 @@ function escapeRegExp(text: string): string {
 }
 
 /** Whether a file name is a registered view page's, for any board, case aside. `- Job Board <id>` is
- * the board suffix before 2026-10-28. */
+ * the board suffix before 2026-10-28, and `- Milestone <id>` before 2026-11-01. */
 export function isViewPageFile(fileName: string): boolean {
-  return VIEW_PAGES.some((page) => new RegExp(`^${escapeRegExp(page.name)}(?: - (?:Work Board|Job Board) (?:- proceeding )?\\d+)?\\.html$`, "i").test(fileName));
+  return VIEW_PAGES.some((page) => new RegExp(`^${escapeRegExp(page.name)}(?: - (?:Work Board|Milestone|Job Board) (?:- proceeding )?\\d+)?\\.html$`, "i").test(fileName));
 }
 
 /** The header every view page prints: the page, the filing, the matter, the revision and the render stamp. */

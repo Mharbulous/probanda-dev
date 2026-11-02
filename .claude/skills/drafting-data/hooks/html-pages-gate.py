@@ -27,7 +27,7 @@ So this gate refuses:
 - every other device_* tool with any string input naming a page (for
   device_request_folder_access, its path only, never its reason), except
   device_stage_files given exactly `Litigation Strategy.html` (or the legacy
-  `To Do List.html`), `Work Board.html` (the practice-wide page beside
+  `To Do List.html`), `Practice Board.html` (the practice-wide page beside
   practice.db), `Work Board.html`, `Work Board <id>.html`,
   `Work Board - proceeding <id>.html` or a listed view page's `<page name>.html` or
   `<page name> - Work Board <id>.html`, case aside, or the same pages under their
@@ -59,33 +59,35 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "scripts
 import hook_io  # noqa: E402
 
 # "to do list" is the Litigation Strategy page's name before 2026-10-08, kept so an old copy not
-# yet moved to TRASH is still refused. "job board" is the Work Board's name before 2026-10-28, kept
-# for the same reason.
-STEM = r"(?:Work Board|job board|litigation strategy|to do list|work board|matter board|work_board @rev)"
+# yet moved to TRASH is still refused. "job board" is the Work Board's name before 2026-10-28 and
+# "milestone" before 2026-11-01, kept for the same reason.
+STEM = r"(?:work board|milestone|job board|litigation strategy|to do list|practice board|matter board|work_board @rev)"
 # The view pages' names, lowercased (plugins/litigation/mcp/src/submission/view-pages.ts VIEW_PAGES).
 # Each new view page adds its lowercased name here. "loose ideas" is the Loose Threads page's name
 # before 2026-10-08, "provable facts" the Material Facts page's before 2026-10-20 (docs/ADRs/0011), and
 # "raw research" and "legal memos" the Legal Research page's before 2026-10-31 and 2026-11-01, each kept so an old copy not yet moved to TRASH is still refused.
 VIEW_NAMES = ("procedural history", "material facts", "legal research", "arguments", "loose threads", "loose ideas", "provable facts", "raw research", "legal memos")
 # A view page: a listed name, then ".html" in a Writing's own folder, or " - Work Board <id>.html",
+# or " - Milestone <id>.html", its name before 2026-11-01,
 # or " - Job Board <id>.html", its name before 2026-10-28,
 # or " - filing <id>.html", its name before 2026-10-09, each kept so an old copy not yet moved to TRASH is
 # still recognised. A preview of a page (#139) is the page's stem, then " preview <n>.html"; a board
 # stem already matches STEM, so only a view page's preview needs its own pattern here. The bare name
 # is not matched inside a longer word.
 VIEW_NAME = r"(?:" + "|".join(re.escape(name) for name in VIEW_NAMES) + r")"
-VIEW = r"(?<![\w-])" + VIEW_NAME + r"(?: - (?:(?:Work Board|job board)(?: - proceeding)?|filing) \d+)?(?: preview \d+)?\.html"
+VIEW = r"(?<![\w-])" + VIEW_NAME + r"(?: - (?:(?:work board|milestone|job board)(?: - proceeding)?|filing) \d+)?(?: preview \d+)?\.html"
 PAGE_ANYWHERE = re.compile(STEM + r"[^\\/\n\"'`]*\.html|" + VIEW + r"|workboard-status\.js", re.I)
 PAGE_NAME = re.compile(STEM + r"[^\\/]*\.html|" + VIEW + r"|workboard-status\.js", re.I)
 # Canonical names a Grep glob is tried against.
 SAMPLE_PAGES = ("Work Board.html", "Work Board 1.html", "Work Board - filing 1.html", "Work Board - proceeding 3.html", "Litigation Strategy.html", "To Do List.html",
-                "Work Board.html", "Matter Board.html", "Work_board @rev1 2026-01-01-00-00.html", "workboard-status.js",
+                "Practice Board.html", "Matter Board.html", "Work_board @rev1 2026-01-01-00-00.html", "workboard-status.js",
+                "Milestone.html", "Milestone 1.html", "Milestone - proceeding 3.html", "Material Facts - Milestone 1.html",
                 "Procedural History - Work Board 1.html", "Material Facts - Work Board 1.html", "Provable Facts - Work Board 1.html",
                 "Raw Research - Work Board 1.html", "Arguments - Work Board 1.html",
                 "Loose Threads - Work Board 1.html", "Provable Facts - filing 1.html", "Raw Research - filing 1.html",
                 "Arguments - filing 1.html", "Loose Threads - filing 1.html", "Loose Ideas - filing 1.html",
                 "Job Board 1.html", "Provable Facts - Job Board 1.html",
-                "Work Board preview 1.html", "Litigation Strategy preview 1.html", "Work Board 1 preview 1.html",
+                "Practice Board preview 1.html", "Litigation Strategy preview 1.html", "Work Board 1 preview 1.html",
                 "Work Board - proceeding 3 preview 1.html", "Procedural History - Work Board 1 preview 1.html",
                 "Material Facts - Work Board 1 preview 1.html", "Provable Facts - Work Board 1 preview 1.html",
                 "Raw Research - Work Board 1 preview 1.html", "Arguments - Work Board 1 preview 1.html",
@@ -104,12 +106,12 @@ STAGE_TOOL = re.compile(r"mcp__(.+__)?device_stage_files")
 # A folder grant reads no page, so only its path is judged: a reason naming a page passes.
 FOLDER_TOOL = re.compile(r"mcp__(.+__)?device_request_folder_access")
 # Fullmatched on the lowercased basename: the Litigation Strategy page (and its legacy name), the
-# practice-wide Work Board beside practice.db, a Writing's Work Board page, the
+# practice-wide Practice Board beside practice.db, a Writing's Work Board page, the
 # id-named Work Board pages (and a Writing's before 2026-10-09, "Work Board - filing <id>"), the
 # listed view pages, and a preview of each current page (#139).
-STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|work board\.html|milestone\.html|milestone \d+\.html|milestone - (?:filing|proceeding) \d+\.html|"
-                       + VIEW_NAME + r"(?: - (?:milestone(?: - proceeding)?|filing) \d+)?\.html|"
-                       r"(?:litigation strategy|work board|milestone|milestone \d+|milestone - proceeding \d+|" + VIEW_NAME + r"(?: - milestone(?: - proceeding)? \d+)?) preview \d+\.html")
+STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|practice board\.html|work board\.html|work board \d+\.html|work board - (?:filing|proceeding) \d+\.html|"
+                       + VIEW_NAME + r"(?: - (?:work board(?: - proceeding)?|filing) \d+)?\.html|"
+                       r"(?:litigation strategy|practice board|work board|work board \d+|work board - proceeding \d+|" + VIEW_NAME + r"(?: - work board(?: - proceeding)? \d+)?) preview \d+\.html")
 
 
 def basename(path):
