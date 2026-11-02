@@ -1,4 +1,4 @@
-// build-stamp: f40c20ec3fcb
+// build-stamp: d2b3831d2461
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -74914,7 +74914,7 @@ var StdioServerTransport = class {
 };
 
 // src/index.ts
-import { pathToFileURL as pathToFileURL3 } from "node:url";
+import { pathToFileURL } from "node:url";
 
 // src/call-log.ts
 import { createHash, randomUUID } from "node:crypto";
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "f40c20ec3fcb";
+var BUILD_STAMP = false ? null : "d2b3831d2461";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -105422,6 +105422,18 @@ function pageApiSuggestionTokenValid(token, recordId, env = process.env) {
   const given = Buffer.from(token, "utf-8");
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
+function pageApiFileToken(path, env = process.env) {
+  return createHmac2("sha256", pageApiSecret(env)).update(`file
+${path}`).digest("hex");
+}
+function pageApiFileTokenValid(token, path, env = process.env) {
+  const expected = Buffer.from(pageApiFileToken(path, env), "utf-8");
+  const given = Buffer.from(token, "utf-8");
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}
+function pageApiFileUrl(path, env = process.env) {
+  return `http://127.0.0.1:${pageApiPort(env)}/files/open?path=${encodeURIComponent(path)}&token=${pageApiFileToken(path, env)}`;
+}
 function pageApiCardToken(cardId, env = process.env) {
   return createHmac2("sha256", pageApiSecret(env)).update(`card
 ${cardId}`).digest("hex");
@@ -106726,7 +106738,7 @@ var MATERIAL_FACTS = {
 import { dirname as dirname16 } from "node:path";
 
 // src/templates/view-pages/legal-research.css.ts
-var legal_research_css_default = '.tab-body{display:flex;flex-direction:column;gap:28px}\n.tab-body [hidden]{display:none}\n.tab-body>button.back{align-self:flex-start;font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}\ndetails.ticket[data-status="completed"]{opacity:1}\n.stmt .noting{margin:0}\n.filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:0;font-size:13px}\n.filters label{display:flex;align-items:center;gap:6px;cursor:pointer}\n.filters select,.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink)}\n.filters input[type=search]{min-width:200px;flex:1 1 200px;max-width:360px}\n.counts{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.tab-body>p.hint{margin:0;font-size:13px;color:var(--muted)}\n.tab-body>p.empty,.tab-body section>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\nsection>p.note{margin:-6px 0 10px;font-size:12px;color:var(--muted)}\narticle.prop{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.prop>.text{font-weight:600;margin:0;white-space:pre-wrap}\n.prop>.text.none{font-weight:400;font-style:italic;color:var(--muted)}\n.prop>.linked,.prop>.dead{margin:0;font-size:12.5px;color:var(--muted)}\n.stmt{border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}\n.stmt .cite{margin:0}\n.stmt blockquote{margin:0;padding:2px 0 2px 12px;border-left:3px solid var(--line-strong);white-space:pre-wrap}\n.stmt .status{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}\n.prop.undecided>p,.stmt.undecided{color:var(--muted);opacity:.6}\n.prop.not_relevant>p,.stmt.not_relevant{color:var(--muted)}\n.prop.not_relevant>.text,.stmt.not_relevant .cite,.stmt.not_relevant blockquote{text-decoration:line-through;text-decoration-color:var(--muted)}\ndetails.ticket .body dd ul{margin:0;padding-left:18px}\ndetails.ticket .body dd ul li{white-space:pre-wrap}\ndetails.ticket .body dd.none{color:var(--muted)}';
+var legal_research_css_default = '.tab-body{display:flex;flex-direction:column;gap:28px}\n.tab-body [hidden]{display:none}\n.tab-body>button.back{align-self:flex-start;font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}\ndetails.ticket[data-status="completed"]{opacity:1}\n.stmt .noting{margin:0}\n.filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:0;font-size:13px}\n.filters label{display:flex;align-items:center;gap:6px;cursor:pointer}\n.filters select,.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink)}\n.filters input[type=search]{min-width:200px;flex:1 1 200px;max-width:360px}\n.counts{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.tab-body>p.hint{margin:0;font-size:13px;color:var(--muted)}\n.tab-body>p.empty,.tab-body section>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\nsection>p.note{margin:-6px 0 10px;font-size:12px;color:var(--muted)}\narticle.prop{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.prop>.text{font-weight:600;margin:0;white-space:pre-wrap}\n.prop>.text.none{font-weight:400;font-style:italic;color:var(--muted)}\n.prop>.linked,.prop>.dead{margin:0;font-size:12.5px;color:var(--muted)}\n.stmt{border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}\n.stmt .cite{margin:0}\n.stmt blockquote{margin:0;padding:2px 0 2px 12px;border-left:3px solid var(--line-strong);white-space:pre-wrap}\n.stmt .status{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}\n.prop.undecided>p,.stmt.undecided{color:var(--muted);opacity:.6}\n.prop.not_relevant>p,.stmt.not_relevant{color:var(--muted)}\n.prop.not_relevant>.text,.stmt.not_relevant .cite,.stmt.not_relevant blockquote{text-decoration:line-through;text-decoration-color:var(--muted)}\ndetails.ticket .body dd ul{margin:0;padding-left:18px}\ndetails.ticket .body dd ul li{white-space:pre-wrap}\ndetails.ticket .body dd.none{color:var(--muted)}\n.file-path{display:block;margin:2px 0;font-size:12px;color:var(--muted);word-break:break-all;user-select:text}\n.file-copy{font:inherit;font-size:12px;padding:2px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}';
 
 // src/templates/view-pages/legal-research.html.ts
 var legal_research_html_default = '@@include(view-head.html)@@\n<title>Legal Research</title>\n<style>\n@@include(board.css)@@\n\n\n@@include(view-folder.css)@@\n\n@@include(legal-research.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Legal Research</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(legal-research.js)@@\n</script>\n</body>\n</html>';
@@ -106782,9 +106794,26 @@ var legal_research_js_default = `(function () {
   function fileValue(m) {
     var file = m.file.split(/[\\\\/]/).pop();
     if (!m.on_disk) return file + " (not in the law folder now)";
+    var value = el("span", "file-open");
     var a = el("a", "", file);
     a.href = m.url;
-    return a;
+    a.target = "_blank";
+    a.rel = "noopener";
+    value.appendChild(a);
+    value.appendChild(el("span", "file-path", m.path));
+    var copy = el("button", "file-copy", "Copy path");
+    copy.type = "button";
+    // Where the clipboard is out of reach, the path above stays to select and copy by hand.
+    function selectByHand() { copy.textContent = "Select the path above to copy it"; }
+    copy.addEventListener("click", function () {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) { selectByHand(); return; }
+      navigator.clipboard.writeText(m.path).then(function () {
+        copy.textContent = "Copied";
+        setTimeout(function () { copy.textContent = "Copy path"; }, 1500);
+      }, selectByHand);
+    });
+    value.appendChild(copy);
+    return value;
   }
   function fileRow(dl, m) {
     row(dl, "File", fileValue(m), "");
@@ -107232,12 +107261,10 @@ var legal_research_js_default = `(function () {
 
 // src/submission/forms/case-briefs.ts
 import { join as join38 } from "node:path";
-import { pathToFileURL as pathToFileURL2 } from "node:url";
 
 // src/submission/forms/legal-memos.ts
 import { existsSync as existsSync36, readdirSync as readdirSync20, statSync as statSync17 } from "node:fs";
 import { join as join37 } from "node:path";
-import { pathToFileURL } from "node:url";
 
 // src/submission/forms/paragraph-map.ts
 import { createHash as createHash12 } from "node:crypto";
@@ -107614,7 +107641,8 @@ function buildLegalMemosData(dbPath, jobs2, matterDir) {
       version: version2,
       earlier: numbers.slice(0, -1),
       file,
-      url: pathToFileURL(path).href,
+      url: pageApiFileUrl(path),
+      path,
       on_disk: mtime !== void 0
     });
   }
@@ -107786,7 +107814,7 @@ function buildCaseBriefsData(dbPath, filingIds, matterDir, proceedingIds) {
       const { key, version: version2 } = versionOf(file);
       const named2 = dateOf(file, savedAt, mtime);
       const written = savedAt?.slice(0, 10) ?? mtime ?? named2;
-      return { key, own: version2, date: version2 > 1 ? written : named2, written: written ?? "", file, url: pathToFileURL2(path).href, on_disk: found !== void 0 || mtime !== null };
+      return { key, own: version2, date: version2 > 1 ? written : named2, written: written ?? "", file, url: pageApiFileUrl(path), path, on_disk: found !== void 0 || mtime !== null };
     });
     const stems = /* @__PURE__ */ new Map();
     for (const v3 of versions) {
@@ -107796,9 +107824,9 @@ function buildCaseBriefsData(dbPath, filingIds, matterDir, proceedingIds) {
     const stemOf = (key) => stems.get(key);
     versions.sort((a3, b3) => stemOf(a3.key).gained.localeCompare(stemOf(b3.key).gained) || stemOf(a3.key).written.localeCompare(stemOf(b3.key).written) || a3.key.localeCompare(b3.key) || a3.own - b3.own);
     let last = 0;
-    const numbered = versions.map(({ date: date3, file, url, on_disk, own: number3 }) => {
+    const numbered = versions.map(({ date: date3, file, url, path, on_disk, own: number3 }) => {
       last = Math.max(last + 1, number3);
-      return { version: last, date: date3, file, url, on_disk };
+      return { version: last, date: date3, file, url, path, on_disk };
     });
     const current = numbered[numbered.length - 1];
     const older = numbered.slice(0, -1);
@@ -123540,12 +123568,14 @@ var LEGAL_RESEARCH_FIXTURE = {
                 version: 1,
                 date: "2026-01-11",
                 file: "6. LAW\\Breach of contract\\2026-01-11 case brief Sample Holdings Ltd. v. Example Traders Inc., 2019 BCSC 0000.md",
-                url: "file:///placeholder/6.%20LAW/Breach%20of%20contract/2026-01-11%20case%20brief.md",
+                url: "http://127.0.0.1:0/files/open?path=placeholder&token=",
+                path: "\\placeholder\\6. LAW\\Breach of contract\\2026-01-11 case brief.md",
                 on_disk: true
               }
             ],
             file: "6. LAW\\Breach of contract\\2026-01-11 case brief Sample Holdings Ltd. v. Example Traders Inc., 2019 BCSC 0000 v2.md",
-            url: "file:///placeholder/6.%20LAW/Breach%20of%20contract/2026-01-11%20case%20brief%20v2.md",
+            url: "http://127.0.0.1:0/files/open?path=placeholder&token=",
+            path: "\\placeholder\\6. LAW\\Breach of contract\\2026-01-11 case brief v2.md",
             on_disk: true
           }
         },
@@ -123559,7 +123589,7 @@ var LEGAL_RESEARCH_FIXTURE = {
           jobs: [],
           note_up: { label: "Noted up: negative treatment only", noted: true },
           results: ["distinguishable"],
-          brief: { date: "2026-01-06", version: 1, earlier: [], earlier_files: [], file: "6. LAW\\Costs\\2026-01-06 case brief Instance v. Pattern, 2018 BCCA 0000.md", url: "file:///placeholder/6.%20LAW/Costs/2026-01-06%20case%20brief.md", on_disk: true }
+          brief: { date: "2026-01-06", version: 1, earlier: [], earlier_files: [], file: "6. LAW\\Costs\\2026-01-06 case brief Instance v. Pattern, 2018 BCCA 0000.md", url: "http://127.0.0.1:0/files/open?path=placeholder&token=", path: "\\placeholder\\6. LAW\\Costs\\2026-01-06 case brief.md", on_disk: true }
         }
       ]
     },
@@ -123576,7 +123606,8 @@ var LEGAL_RESEARCH_FIXTURE = {
         version: 3,
         earlier: [1, 2],
         file: "6. LAW\\Breach of contract\\2026-01-14 ML re repudiation by refusal to deliver v3.md",
-        url: "file:///placeholder/6.%20LAW/Breach%20of%20contract/2026-01-14%20ML%20re%20repudiation%20by%20refusal%20to%20deliver%20v3.md",
+        url: "http://127.0.0.1:0/files/open?path=placeholder&token=",
+        path: "\\placeholder\\6. LAW\\Breach of contract\\2026-01-14 ML re repudiation by refusal to deliver v3.md",
         on_disk: true
       },
       {
@@ -123591,7 +123622,8 @@ var LEGAL_RESEARCH_FIXTURE = {
         version: 1,
         earlier: [],
         file: "6. LAW\\Costs\\2026-01-10 research-lawyer answer.md",
-        url: "file:///placeholder/6.%20LAW/Costs/2026-01-10%20research-lawyer%20answer.md",
+        url: "http://127.0.0.1:0/files/open?path=placeholder&token=",
+        path: "\\placeholder\\6. LAW\\Costs\\2026-01-10 research-lawyer answer.md",
         on_disk: true
       },
       {
@@ -123606,7 +123638,8 @@ var LEGAL_RESEARCH_FIXTURE = {
         version: 1,
         earlier: [],
         file: "6. LAW\\Set off\\2026-01-08 Westlaw set-off against a promissory note.docx",
-        url: "file:///placeholder/6.%20LAW/Set%20off/2026-01-08%20Westlaw%20set-off%20against%20a%20promissory%20note.docx",
+        url: "http://127.0.0.1:0/files/open?path=placeholder&token=",
+        path: "\\placeholder\\6. LAW\\Set off\\2026-01-08 Westlaw set-off against a promissory note.docx",
         on_disk: true
       },
       {
@@ -123621,7 +123654,8 @@ var LEGAL_RESEARCH_FIXTURE = {
         version: 2,
         earlier: [1],
         file: "6. LAW\\2026-01-05 note-up Sample Holdings Ltd. v. Example Traders Inc., 2019 BCSC 0000 v2.md",
-        url: "file:///placeholder/6.%20LAW/2026-01-05%20note-up%20Sample%20Holdings%20Ltd.%20v.%20Example%20Traders%20Inc.,%202019%20BCSC%200000%20v2.md",
+        url: "http://127.0.0.1:0/files/open?path=placeholder&token=",
+        path: "\\placeholder\\6. LAW\\2026-01-05 note-up Sample Holdings Ltd. v. Example Traders Inc., 2019 BCSC 0000 v2.md",
         on_disk: true
       }
     ] }
@@ -126056,7 +126090,7 @@ function once(fn2) {
 // src/page-api/server.ts
 import { existsSync as existsSync61 } from "node:fs";
 import { createServer as createServer2 } from "node:http";
-import { isAbsolute as isAbsolute10 } from "node:path";
+import { basename as basename16, isAbsolute as isAbsolute10 } from "node:path";
 
 // src/submission/forms/seed-deferral.ts
 async function setSeedDeferral(args, env = process.env) {
@@ -126078,6 +126112,16 @@ async function setSeedDeferral(args, env = process.env) {
     deferred_at: read3?.deferred_at ?? null,
     ...written.warning ? { warning: written.warning } : {}
   };
+}
+
+// src/page-api/open-file.ts
+import { execFile } from "node:child_process";
+var OPEN_TIMEOUT_MS = 15e3;
+function openFile(path) {
+  const [command, args, env] = process.platform === "win32" ? ["powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "Invoke-Item -LiteralPath $env:PROBANDA_OPEN_FILE -ErrorAction Stop"], { ...process.env, PROBANDA_OPEN_FILE: path }] : [process.platform === "darwin" ? "open" : "xdg-open", [path], process.env];
+  return new Promise((resolve11, reject) => {
+    execFile(command, args, { env, timeout: OPEN_TIMEOUT_MS, windowsHide: true }, (err) => err ? reject(err) : resolve11());
+  });
 }
 
 // src/page-api/server.ts
@@ -126158,6 +126202,7 @@ async function handle3(req, res, env, startedAt, options) {
     return json2(req, res, 200, { ok: true, pid: process.pid, started_at: startedAt, plugin_version: pluginVersion() });
   }
   if (url.pathname === "/focus") return focus(req, res, env);
+  if (url.pathname === "/files/open") return openFileLink(req, res, env, url.searchParams.get("path"), url.searchParams.get("token"), options.openFile ?? openFile);
   const w3 = /^\/suggestions\/([0-9a-f-]{36})\/withdraw$/.exec(url.pathname);
   if (w3) return withdraw(req, res, env, w3[1]);
   const page2 = /^\/cards\/([0-9a-f-]{36})$/.exec(url.pathname);
@@ -126256,6 +126301,29 @@ async function cardPage(req, res, env, cardId, token) {
   });
   res.end(html);
 }
+async function openFileLink(req, res, env, path, token, open) {
+  if (req.method !== "GET") return json2(req, res, 405, { error: "Method not allowed" });
+  if (path === null || token === null || !pageApiFileTokenValid(token, path, env)) {
+    return filePage(res, 403, "This link does not match a file. Ask a Claude session to show the page again.");
+  }
+  const name = basename16(path);
+  if (!isAbsolute10(path) || !existsSync61(path)) return filePage(res, 404, `${name} is not in the law folder now.`);
+  try {
+    await open(path);
+  } catch {
+    return filePage(res, 500, `${name} could not be opened. Copy its path from the page to find it in File Explorer.`);
+  }
+  filePage(res, 200, `Opened ${name}. You can close this tab.`);
+}
+function filePage(res, status3, message) {
+  res.writeHead(status3, {
+    "Content-Type": "text/html; charset=utf-8",
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer"
+  });
+  res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Probanda</title></head><body><p>${escapeHtml2(message)}</p></body></html>`);
+}
 async function cardClick(req, res, deps, cardId, route2) {
   if (req.method !== "POST") return json2(req, res, 405, { error: "Method not allowed" });
   let body;
@@ -126351,7 +126419,7 @@ async function start() {
   startPageApi().catch((err) => console.error(`[page-api] listener off: ${err instanceof Error ? err.message : String(err)}`));
   retryUnsent().catch((err) => console.error(`[suggestions] retry skipped: ${err instanceof Error ? err.message : String(err)}`));
 }
-var isMain = process.argv[1] && import.meta.url === pathToFileURL3(process.argv[1]).href;
+var isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   start().catch((err) => {
     const message = err instanceof Error ? err.message : String(err);
