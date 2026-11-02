@@ -68,7 +68,7 @@ test("two processes rendering one matter at once leave one of each page, both wh
     );
     assert.deepEqual(
       readdirSync(leaf).filter((name) => name.endsWith(".html")),
-      ["Arguments.html", "Legal Research.html", "Material Facts.html", "Work Board.html", "Procedural History.html"]
+      ["Arguments.html", "Legal Research.html", "Material Facts.html", "Procedural History.html", "Work Board.html"]
     );
     assert.deepEqual(readdirSync(draft, { recursive: true }).filter((name) => TEMP_OR_NUMBERED.test(name)), [], "no temp file and no numbered copy");
     assert.deepEqual(readdirSync(dirname(f.dbPath)).filter((name) => /mockups|\.tmp$/.test(name)), [], "nor beside the database");
