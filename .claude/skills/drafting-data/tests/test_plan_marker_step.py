@@ -44,7 +44,7 @@ class PlanMarkerStepTest(unittest.TestCase):
     def test_research_offer_without_steps_takes_the_marker(self):
         stock = read("drafting-data", "references", "jobs-stock.md")
         self.assertIn("An offer with a `job:` line and no `steps:` line takes the plan marker", stock)
-        self.assertIn("They are never a default plan and are never copied onto another job", stock)
+        self.assertIn("An offer's `steps:` line is never a default plan and is never copied onto another job", stock)
 
     def test_draft_routes_a_marker_job_to_planning(self):
         session = read("work", "references", "job-session.md")
