@@ -47,6 +47,16 @@ ACTS = {
     "comment_pdf": "write {count} comment(s) on page(s) {pages} into the PDF {path}",
     "troubleshoot__record": "add this entry to Probanda's shared store, where other Probanda users can read it: "
                             "symptom \"{symptom}\", cause \"{cause}\", fix \"{fix}\"",
+    "dedupe_apply": "move {expected_count} duplicate email copies, listed in plan {plan_id}, to Trash",
+}
+# Gated acts that can be undone, by the end of the tool's name: what the approval says the
+# practitioner understands, in place of "one-way and irreversible", and the warning shown.
+REVERSIBLE = {
+    "dedupe_apply": {
+        "understand": "They can be recovered from Trash, but the mail server may empty Trash on its own schedule.",
+        "warning": "**This step moves email to Trash: it can be recovered from there until the mail server empties "
+                   "Trash on its own schedule.**",
+    },
 }
 MARKER = re.compile(r"\[approval-gate act=([0-9a-f]{64})\]")
 MODIFICATIONS = re.compile(r"modifications:(.*)", re.I | re.S)
@@ -89,14 +99,18 @@ def first_line(name, tool_input):
         "count": len(comments),
         "pages": ", ".join(str(page) for page in sorted({c["page"] for c in comments})),
     }
-    return f"{PREFIX} this step: {ACTS[key].format_map(fields)}. I understand it is one-way and irreversible."
+    understand = REVERSIBLE[key]["understand"] if key in REVERSIBLE else "I understand it is one-way and irreversible."
+    return f"{PREFIX} this step: {ACTS[key].format_map(fields)}. {understand}"
 
 
 def refusal(name, tool_input, act, why):
+    reversible = next((v for k, v in REVERSIBLE.items() if name.endswith("__" + k)), None)
+    kind = "an approved step" if reversible else "a one-way step"
+    warning = reversible["warning"] if reversible else "**This step is a one-way door: easy to pass through and costly to reverse.**"
     return (
-        f"Approval needed [approval-gate act={act}]. {why} The call {name} is a one-way step and waits for "
+        f"Approval needed [approval-gate act={act}]. {why} The call {name} is {kind} and waits for "
         "the practitioner's approval. Do not retry it yet, and do not try another way to do it. Show this "
-        "warning in bold: **This step is a one-way door: easy to pass through and costly to reverse.** Then "
+        f"warning in bold: {warning} Then "
         "show the block below in a fenced text code block and ask the practitioner to copy and paste it back "
         "as their reply, replacing NONE with any change they want in their own words. Retry only after that "
         "reply.\n\n```text\n" + first_line(name, tool_input) + "\nModifications: NONE\n```"

@@ -31,7 +31,7 @@ Read metadata first, then one body at a time. Search one folder per call with `m
 
 When a call fails with `mail_timeout`, retry the same call once. When the retry fails too, follow "Never a browser" above: say the mailbox could not be reached and stop reading mail.
 
-Never call a mail tool that changes the mailbox in a read: `mail__save_draft`, `mail__create_folder`, `mail__rename_folder` or `mail__move_messages`, or any send, reply or forward tool. Every read opens the folder read-only, so it marks nothing read.
+Never call a mail tool that changes the mailbox in a read: `mail__save_draft`, `mail__create_folder`, `mail__rename_folder`, `mail__move_messages`, `mail__dedupe_apply` or `mail__dedupe_apply_continue`, or any send, reply or forward tool. Every read opens the folder read-only, so it marks nothing read.
 
 ## Where the content goes
 
