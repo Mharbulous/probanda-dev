@@ -215,3 +215,11 @@ te-p1 Using your container's own Bash tool, not the PC shell, print /root/.token
 The test can't distinguish why a route failed, only whether it did. Each form's Cowork result rests on the file on the PC or on the report the session prints.
 
 Control, 2026-11-01, Claude Code 2.1.312 on the PC with the built plugin: P1a's hook fired at `UserPromptSubmit` and `Stop`, the server logged both with `${session_id}` and `${cwd}` filled in, and the session's reply was unaffected. Both `remote-devices` hooks logged "mcp_tool hook skipped — MCP server 'remote-devices' not connected" at warning level only, so a skipped hook shows no error in the session, which fits R7. Lines in `hits.jsonl` from Claude Code sessions on the PC carry a Windows `cwd` and don't count for P1a or P1b.
+
+P1, first attempt (2026-11-01): not run. Two Cowork sessions sent the prompt before the PC had 0.3.1. Both listed B6's `save_state` and `restore_state`, neither found a report, and `%APPDATA%\Probanda\te-p1\` didn't exist. Neither reply showed the container's plugin version. Not a FAIL for any route. The PC reached 0.3.1 at 19:26 PST.
+
+The prompt for the run, replacing the one above, so that each reply shows the container's version:
+
+~~~text
+te-p1 Using your container's own Bash tool, not the PC shell, do these two things. First, print the version line of every file matching /root/.claude/plugins/**/tokeneconomizer*/.claude-plugin/plugin.json. Second, print /root/.tokeneconomizer/p1/report.json exactly as it is. Then say whether your tool list has a tool whose name contains plugin_tokeneconomizer_state, and name those tools. Do nothing else.
+~~~
