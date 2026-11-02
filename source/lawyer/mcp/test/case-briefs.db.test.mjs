@@ -707,6 +707,8 @@ test("the page links each earlier version of a case, and marks one no longer on 
           status: "briefed",
           relied_on: true,
           jobs: [],
+          note_up: { label: "Not noted up", noted: false },
+          results: [],
           brief: { ...entry(3, "third.md", true), earlier: [1, 2], earlier_files: [entry(2, "second.md", false), entry(1, "first.md", true)] },
         },
       ],

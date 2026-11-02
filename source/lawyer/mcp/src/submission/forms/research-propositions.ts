@@ -22,6 +22,7 @@
 // proposition. The citation line is the mockups' own (lawStatementCitationLine), so the two never drift.
 
 import { lawStatementCitationLine, type LawStatementLine } from "./law-statement-line.js";
+import { statementNoteUp, treatmentWord, type NoteUpStatus } from "./note-up-status.js";
 import { excerptSpeakerColumn, type FilingRow, isResearchWriting, settledOnColumn, treatmentNoteColumn } from "./query.js";
 import { rows } from "../query-rows.js";
 import { hasColumn } from "../schema-capabilities.js";
@@ -52,6 +53,8 @@ export interface PropositionStatement {
   excerpt: string | null;
   /** Recorded values, labelled: verification, then note-up or currency. */
   status: string[];
+  /** Null on doctrine, which is never noted up. */
+  note_up: NoteUpStatus | null;
 }
 
 export interface PropositionCard {
@@ -144,7 +147,7 @@ function citationParts(row: StatementRow): { title: string | null; rest: string 
 function statusLines(row: StatementRow): string[] {
   const when = row.verification === "verified" ? row.verified_on : row.verification === "settled" ? row.settled_on : null;
   const lines = [`Verification: ${row.verification}${when ? ` ${when}` : ""}`];
-  if (row.authority_kind === "case") lines.push(`Note-up: ${row.treatment === null ? "not yet noted up" : row.treatment.replace(/_/g, " ")}`);
+  if (row.authority_kind === "case") lines.push(`Note-up: ${row.treatment === null ? "not yet noted up" : treatmentWord(row.treatment)}`);
   else if (row.authority_kind !== "doctrine") lines.push(`Currency: ${row.currency_status ?? "not yet checked"}`);
   return lines;
 }
@@ -239,7 +242,7 @@ function propositionsFor(dbPath: string, proceedingId: number, ids: number[], me
     const cls = propositionClass({ proposition_killed_on: killedOn, authority_killed_on: row.authority_killed_on, in_use: inUse });
     counts[cls] += 1;
     const { title, rest } = citationParts(row);
-    return { statement_id: row.statement_id, class: cls, citation_title: title, citation_rest: rest, excerpt: row.excerpt, status: statusLines(row) };
+    return { statement_id: row.statement_id, class: cls, citation_title: title, citation_rest: rest, excerpt: row.excerpt, status: statusLines(row), note_up: statementNoteUp(row.authority_kind, row.treatment, row.currency_status) };
   }
   function cardClass(own: PropositionStatement[], killedOn: string | null, inUse: boolean): PropositionClass {
     if (own.length === 0) {

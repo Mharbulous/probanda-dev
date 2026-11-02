@@ -1,6 +1,6 @@
 # Legal Research board and case briefs
 
-Status: released in Lawyer 0.17.6, Researcher 0.10.20 and Litigator 0.13.10 (approved 2026-11-01). The first build went out in 0.17.5, 0.10.19 and 0.13.9 before its review's fixes, which 0.17.6, 0.10.20 and 0.13.10 carry. Replaces the Legal Memos page (docs/Specs/2026-10-31_legal-memos-board.md) with one view page holding three tabs, and makes the case brief a structured Writing like the research memo. Terms: GLOSSARY.md, **Case brief** and **Legal memo**.
+Status: released in Lawyer 0.17.6, Researcher 0.10.20 and Litigator 0.13.10 (approved 2026-11-01). The first build went out in 0.17.5, 0.10.19 and 0.13.9 before its review's fixes, which 0.17.6, 0.10.20 and 0.13.10 carry. Replaces the Legal Memos page (docs/Specs/2026-10-31_legal-memos-board.md) with one view page holding three tabs, and makes the case brief a structured Writing like the research memo. Terms: GLOSSARY.md, **Case brief** and **Legal memo**. Revised the same day after practitioner review, as the Revision section below records: the page now holds four tabs.
 
 ## Decisions taken
 
@@ -16,6 +16,19 @@ Status: released in Lawyer 0.17.6, Researcher 0.10.20 and Litigator 0.13.10 (app
 - **Memo and brief Writings get no board of their own** (practitioner, 2026-11-01). They get no Milestone page and no view pages, and the next page write moves any they already have to TRASH. A memo or brief saved under a job is linked to that job's board and listed on its Legal Research page. One saved with no job has no board, and is listed only by the Legal Memos rule 2 and the Case Briefs citation match.
 - **No schema change.** Released as patches.
 
+## Revision after practitioner review (2026-11-01)
+
+These override the decisions above where they differ. No schema change, released as patches.
+
+- **Tabs**: Legal Memos, Propositions, Statutes, Cases. "Case Briefs" is now "Cases", because most listed cases have no brief. The `briefs` data key and the `briefs` lane keep their name.
+- **Legal Memos sections**: Completed (not faded, because these are what can be relied on), In Progress, Shelved, Loose Threads. Loose Threads holds memos with the status `started` or `no_job`. The status itself and the `memos` lane are unchanged. A memo's section follows its recorded status, so a Westlaw report saved under a completed job is under Completed.
+- **Statutes** lists each statute, regulation and rule, relied on first, with its currency, the date last checked and each recorded provision's check.
+- **Cases and Statutes** open one card at a time: an open card hides the rest of the tab until it is closed or Back to all is pressed. A case has no dash in place of a version.
+- **Noting-up badges** (`note-up-status.ts`). The levels the practitioner set are below. The page shows only those the database can hold:
+  - A case or statute: not noted up; noted up for negative treatment only; noted up for everything. A recorded result reads as negative treatment only, because nothing records how far the check went and a badge must not claim more than the record proves.
+  - A proposition on a case: not noted up; case, negative treatment only; case, everything; proposition, negative treatment only; proposition, everything. The badge is on each authority line, because one proposition can rest on several authorities.
+  - A proposition on a statute: not noted up; statute level (is it in force); proposition level (has the provision been ruled ultra vires or unconstitutional).
+
 ## Build, in order
 
 1. **lawyer: the page.** `legal-research-page.ts` registers the page and composes three readers: the restored propositions reader, `buildLegalMemosData` (briefs excluded), and a new case-briefs reader over the drafting database, the board's jobs and the `6. LAW` file names. Templates `legal-research.{html,css,js}` from `view-folder.css` and the existing two scripts. The `briefs` lane. Memo and brief Writings left out of the page build (no Milestone, no view pages). Rename sweep, viewed-key alias, hook names, fixture, tests.
@@ -25,6 +38,8 @@ Status: released in Lawyer 0.17.6, Researcher 0.10.20 and Litigator 0.13.10 (app
 
 ## Left for later
 
+- Storing how far a note-up went and any proposition-level note-up, which needs a schema change and a minor release, so the remaining levels above can show. Until then no case reads "everything", and no proposition reads above case level (negative treatment only) or statute level.
+- Recording a statute's note-up for cases. The practitioner decided on 2026-11-01 to track it with no hold on filing, so the 📇 marker keeps closing on the currency check alone. This will replace decision #1628 in `shared/statute-currency.md`, which stays in force until the recording is built. Until then every statute reads Not noted up for cases.
 - A matter with no live Writing has no Legal Research page. Case briefs and memos with no job are matter-wide, so a per-matter page, like Loose Threads, may serve the research phase better.
 - `docs/Specs/2026-10-31_research-memo-structured-writing-spec.md` (proposed) would change where memo propositions live; the Propositions tab's exclusion of memo statements follows it.
 - The session focus pointer stays Arguments-only: its file is keyed by Writing, so a second page would collide.

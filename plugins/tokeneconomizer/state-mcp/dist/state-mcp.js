@@ -1,81 +1,42 @@
-// Temporary server for Cowork spike test B6, removed after the run. Hand-written, with no
-// build step and no dependencies: newline-delimited JSON-RPC over stdio. It keeps numbered
-// blocks of TokenEconomizer state in one folder on the user's computer, adds new files there,
-// and makes no network calls.
+// Temporary server for Cowork spike test P1, removed after the run. Hand-written, with no
+// build step and no dependencies: newline-delimited JSON-RPC over stdio. Its one tool adds a
+// line to one file on the user's computer, to show whether a hook's call reached it. It makes
+// no network calls, and it answers {} so the call adds nothing to the session.
 "use strict";
-const crypto = require("crypto");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const SERVER = "b6-1";
-const MAX_N = 10;
-const MAX_LINES_CHARS = 4000;
-const store = path.join(process.env.LOCALAPPDATA || os.homedir(), "TokenEconomizer", "b6");
+const SERVER = "p1-1";
+const store = path.join(process.env.APPDATA || os.homedir(), "Probanda", "te-p1");
 
 const TOOLS = [
   {
-    name: "save_state",
-    description:
-      "Saves one numbered block of TokenEconomizer state to a file on the user's computer so a later Cowork session can restore it. Writes nothing else.",
+    name: "probe_hit",
+    description: "TokenEconomizer test tool, called by a plugin hook. Adds one line to its own log file. Not for use in a conversation.",
     inputSchema: {
       type: "object",
       properties: {
-        n: { type: "integer", minimum: 1, maximum: MAX_N },
-        lines: { type: "string", maxLength: MAX_LINES_CHARS },
+        form: { type: "string", maxLength: 40 },
+        event: { type: "string", maxLength: 40 },
+        session: { type: "string", maxLength: 80 },
+        cwd: { type: "string", maxLength: 300 },
       },
-      required: ["n", "lines"],
     },
     annotations: { readOnlyHint: false, destructiveHint: false },
   },
-  {
-    name: "restore_state",
-    description:
-      "Returns every block of TokenEconomizer state saved by save_state. Changes nothing except its own read log.",
-    inputSchema: { type: "object", properties: {} },
-    annotations: { readOnlyHint: false },
-  },
 ];
 
-function sha256(text) {
-  return crypto.createHash("sha256").update(text, "utf8").digest("hex");
-}
-
-function appendLog(name, entry) {
-  fs.appendFileSync(path.join(store, name), JSON.stringify({ at: new Date().toISOString(), ...entry }) + "\n");
-}
-
-function saveState({ n, lines }) {
-  if (!Number.isInteger(n) || n < 1 || n > MAX_N) throw new Error(`n must be an integer from 1 to ${MAX_N}`);
-  if (typeof lines !== "string" || lines.length > MAX_LINES_CHARS) {
-    throw new Error(`lines must be a string of at most ${MAX_LINES_CHARS} characters`);
-  }
+function probeHit({ form, event, session, cwd }) {
   fs.mkdirSync(store, { recursive: true });
-  fs.writeFileSync(path.join(store, `save-${n}.txt`), lines, { flag: "wx" });
-  const hash = sha256(lines);
-  const bytes = Buffer.byteLength(lines, "utf8");
-  appendLog("save-log.jsonl", { n, sha256: hash, bytes });
-  return `saved n=${n} sha256=${hash} bytes=${bytes}`;
-}
-
-function restoreState() {
-  fs.mkdirSync(store, { recursive: true });
-  const blocks = [];
-  for (let n = 1; n <= MAX_N; n++) {
-    const file = path.join(store, `save-${n}.txt`);
-    if (fs.existsSync(file)) blocks.push(fs.readFileSync(file, "utf8"));
-  }
-  const rest = blocks.join("\n");
-  const hash = sha256(rest);
-  appendLog("restore-log.jsonl", { count: blocks.length, sha256: hash });
-  const first = { server: SERVER, platform: process.platform, store, count: blocks.length, sha256: hash };
-  return JSON.stringify(first) + "\n" + rest;
+  const entry = { at: new Date().toISOString(), server: SERVER, form, event, session, cwd };
+  fs.appendFileSync(path.join(store, "hits.jsonl"), JSON.stringify(entry) + "\n");
+  return "{}";
 }
 
 function callTool({ name, arguments: args }) {
   try {
-    if (name === "save_state") return { content: [{ type: "text", text: saveState(args || {}) }] };
-    if (name === "restore_state") return { content: [{ type: "text", text: restoreState() }] };
+    if (name === "probe_hit") return { content: [{ type: "text", text: probeHit(args || {}) }] };
     throw new Error(`unknown tool ${name}`);
   } catch (err) {
     return { content: [{ type: "text", text: err.message }], isError: true };

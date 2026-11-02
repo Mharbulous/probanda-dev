@@ -16,7 +16,8 @@
 //   1. a job drawn on the board (as its Milestone page draws it: its Writings' jobs, its proceeding's
 //      General jobs, and on a merged board every member's) recorded any version of the memo; or
 //   2. no live job drawn on any board that has a Legal Research page recorded any version of it: nothing
-//      recorded ties it to such a board, so it is on every board, under No job.
+//      recorded ties it to such a board, so it is on every board, with status `no_job`, which the tab
+//      lists under Loose Threads.
 // A memo recorded only by jobs on other boards is not on this one. A General Job's memo is on every
 // Writing's board in its proceeding. A memo whose only job sits on a board with no Legal Research page (a
 // retired Writing's, or a Milestone with no Writing that no Writing's board absorbed) falls under rule 2.

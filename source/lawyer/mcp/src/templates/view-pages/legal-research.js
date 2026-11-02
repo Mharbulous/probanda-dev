@@ -68,7 +68,7 @@
   function ticket(ref, title, chips, line) {
     var node = el("details", "ticket");
     var summary = el("summary");
-    summary.appendChild(el("span", "ref", ref));
+    if (ref) summary.appendChild(el("span", "ref", ref));
     summary.appendChild(el("span", "title", title));
     var progress = el("span", "progress");
     chips.forEach(function (c) { progress.appendChild(el("span", "chip " + c[1], c[0])); });
@@ -80,6 +80,89 @@
     body.appendChild(dl);
     node.appendChild(body);
     return { node: node, dl: dl };
+  }
+  function noteUpChip(status, prefix) {
+    return [(prefix || "") + status.label, status.noted ? "wip" : ""];
+  }
+
+  // One card open at a time: an open card hides the rest of its tab, and closing it brings the list back.
+  function soloList(tab, sections, apply) {
+    var back = el("button", "back", "Back to all");
+    back.type = "button";
+    back.hidden = true;
+    tab.insertBefore(back, tab.firstChild);
+    var open = null;
+    function show(card, sec) {
+      open = card;
+      Array.prototype.forEach.call(tab.children, function (child) { child.hidden = child !== sec.node && child !== back; });
+      sec.heading.hidden = true;
+      sec.cards.forEach(function (c) { c.node.hidden = c !== card; });
+    }
+    function restore() {
+      open = null;
+      Array.prototype.forEach.call(tab.children, function (child) { child.hidden = child === back; });
+      sections.forEach(function (sec) { sec.heading.hidden = false; });
+      apply();
+    }
+    back.addEventListener("click", function () {
+      var card = open;
+      restore();
+      if (card) card.node.open = false;
+    });
+    sections.forEach(function (sec) {
+      sec.cards.forEach(function (c) {
+        c.node.addEventListener("toggle", function () {
+          if (c.node.open) show(c, sec);
+          else if (open === c) restore();
+        });
+      });
+    });
+  }
+
+  // The list the Cases and Statutes tabs share: those relied on, then the rest, under one search.
+  function reliedList(tab, items, searchLabel, card) {
+    var search = searchBox(searchLabel);
+    var filters = el("div", "filters");
+    filters.appendChild(search);
+    tab.appendChild(filters);
+    var sections = [["Relied on by this Milestone's Writings", true], ["Not relied on by this Milestone's Writings", false]].map(function (s) {
+      var list = items.filter(function (c) { return c.relied_on === s[1]; });
+      var sec = el("section");
+      var h2 = el("h2", "", s[0] + " ");
+      var count = el("span", "count", "0");
+      h2.appendChild(count);
+      sec.appendChild(h2);
+      var stack = el("div", "stack");
+      var cards = list.map(function (c) {
+        var made = card(c);
+        stack.appendChild(made.node);
+        return made;
+      });
+      sec.appendChild(stack);
+      tab.appendChild(sec);
+      return { node: sec, heading: h2, count: count, cards: cards };
+    });
+    var none = el("p", "empty", "Nothing to show with this search.");
+    tab.appendChild(none);
+    function apply() {
+      var q = search.value.trim().toLowerCase();
+      var any = false;
+      sections.forEach(function (sec) {
+        var visible = 0;
+        sec.cards.forEach(function (c) {
+          var on = q === "" || c.text.indexOf(q) !== -1;
+          c.node.hidden = !on;
+          if (on) visible += 1;
+        });
+        sec.count.textContent = String(visible);
+        sec.node.hidden = visible === 0;
+        if (visible > 0) any = true;
+      });
+      none.hidden = any;
+    }
+    search.addEventListener("input", apply);
+    soloList(tab, sections, apply);
+    apply();
   }
 
   // Propositions: every one recorded, undecided shown unless the practitioner hid them.
@@ -118,6 +201,12 @@
       cite.appendChild(document.createTextNode(s.citation_rest));
       node.appendChild(cite);
       if (s.excerpt) node.appendChild(el("blockquote", "", s.excerpt));
+      if (s.note_up) {
+        var chip = noteUpChip(s.note_up);
+        var noting = el("p", "noting");
+        noting.appendChild(el("span", "chip " + chip[1], chip[0]));
+        node.appendChild(noting);
+      }
       if (s.status.length > 0) node.appendChild(el("p", "status", s.status.join(" · ")));
       return node;
     }
@@ -193,8 +282,33 @@
     apply();
   }
 
-  // Case Briefs: the cases relied on, then the rest. Asking for a brief happens in a session.
-  function drawBriefs(tab) {
+  // Statutes: the legislation relied on, then the rest, each with its last currency check.
+  function drawStatutes(tab) {
+    var statutes = data.statutes.statutes;
+    if (statutes.length === 0) {
+      tab.appendChild(el("p", "empty", "No statute, regulation or rule is recorded for this proceeding."));
+      return;
+    }
+    function currencyText(status) {
+      return status === null ? "Not yet checked" : status.replace(/_/g, " ");
+    }
+    reliedList(tab, statutes, "Search statutes", function (s) {
+      var line = [s.citation, s.currency_checked_on ? "Last checked " + s.currency_checked_on : "Never checked"].filter(Boolean).join(" · ");
+      var t = ticket("", s.title, [["Currency: " + currencyText(s.currency_status), ""], noteUpChip(s.note_up, "Cases: ")], line);
+      row(t.dl, "Citation", s.citation, "None recorded");
+      row(t.dl, "Currency", currencyText(s.currency_status), "");
+      row(t.dl, "Last checked", s.currency_checked_on, "Never checked");
+      row(t.dl, "Noted up for cases", s.note_up.label, "");
+      if (s.results.length > 0) row(t.dl, "Result", s.results, "");
+      row(t.dl, "Provisions", s.provisions.map(function (p) {
+        return p.provision + ": " + currencyText(p.currency_status) + (p.checked_on ? ", checked " + p.checked_on : "");
+      }), "None recorded");
+      return { node: t.node, text: [s.title, s.citation || ""].join(" ").toLowerCase() };
+    });
+  }
+
+  // Cases: the cases relied on, then the rest. Asking for a brief happens in a session.
+  function drawCases(tab) {
     var cases = data.briefs.cases;
     var CHIPS = { briefed: ["Briefed", "done"], requested: ["Requested", "wip"], not_briefed: ["Not briefed", ""] };
     tab.appendChild(el("p", "hint", "To request a brief, ask a session, for example: brief the cases this Milestone relies on."));
@@ -202,15 +316,13 @@
       tab.appendChild(el("p", "empty", "The Writings on this Milestone rely on no case yet, and no case brief is saved."));
       return;
     }
-    var search = searchBox("Search case briefs");
-    var filters = el("div", "filters");
-    filters.appendChild(search);
-    tab.appendChild(filters);
-    function card(c) {
+    reliedList(tab, cases, "Search cases", function (c) {
       var chip = CHIPS[c.status];
-      var t = ticket(c.brief ? "v" + c.brief.version : "—", c.title, [chip], c.citation || (c.brief && c.brief.date) || "");
+      var t = ticket(c.brief ? "v" + c.brief.version : "", c.title, [chip, noteUpChip(c.note_up)], c.citation || (c.brief && c.brief.date) || "");
       row(t.dl, "Citation", c.citation, "None recorded");
-      row(t.dl, "Status", chip[0], "");
+      row(t.dl, "Brief", chip[0], "");
+      row(t.dl, "Noted up", c.note_up.label, "");
+      if (c.results.length > 0) row(t.dl, "Result", c.results, "");
       row(t.dl, "Jobs", c.jobs.map(function (j) { return "Job #" + j.id + " " + j.title; }), "None");
       if (c.brief) {
         row(t.dl, "Date", c.brief.date, "No date");
@@ -219,59 +331,22 @@
         if (c.brief.earlier_files.length > 0) row(t.dl, "Earlier versions", earlierFiles(c.brief.earlier_files), "");
       }
       return { node: t.node, text: [c.title, c.citation || ""].join(" ").toLowerCase() };
-    }
-    var sections = [["Relied on by this Milestone's Writings", true], ["Not relied on by this Milestone's Writings", false]].map(function (s) {
-      var list = cases.filter(function (c) { return c.relied_on === s[1]; });
-      var sec = el("section");
-      var h2 = el("h2", "", s[0] + " ");
-      var count = el("span", "count", "0");
-      h2.appendChild(count);
-      sec.appendChild(h2);
-      var stack = el("div", "stack");
-      var cards = list.map(function (c) {
-        var made = card(c);
-        stack.appendChild(made.node);
-        return made;
-      });
-      sec.appendChild(stack);
-      tab.appendChild(sec);
-      return { node: sec, count: count, cards: cards };
     });
-    var none = el("p", "empty", "Nothing to show with this search.");
-    tab.appendChild(none);
-    function apply() {
-      var q = search.value.trim().toLowerCase();
-      var any = false;
-      sections.forEach(function (sec) {
-        var visible = 0;
-        sec.cards.forEach(function (c) {
-          var on = q === "" || c.text.indexOf(q) !== -1;
-          c.node.hidden = !on;
-          if (on) visible += 1;
-        });
-        sec.count.textContent = String(visible);
-        sec.node.hidden = visible === 0;
-        if (visible > 0) any = true;
-      });
-      none.hidden = any;
-    }
-    search.addEventListener("input", apply);
-    apply();
   }
 
-  // Legal Memos: the status lanes, with a folder filter, a source filter and a search.
+  // Legal Memos: the status lanes, with a folder filter, a source filter and a search. Completed comes first,
+  // being what can be relied on. Loose Threads holds what is neither finished nor abandoned, memos no job saved included.
   function drawMemos(tab) {
     var memos = data.memos.memos;
     var KEY = "legal-research-memos";
     var LANES = [
-      ["in_progress", "In Progress", "wip"],
-      ["started", "Started", ""],
-      ["completed", "Completed", "done"],
-      ["shelved", "Shelved", ""],
-      ["no_job", "No job", ""]
+      ["completed", "Completed", "", ["completed"]],
+      ["in_progress", "In Progress", "wip", ["in_progress"]],
+      ["shelved", "Shelved", "", ["shelved"]],
+      ["loose_threads", "Loose Threads", "", ["started", "no_job"]]
     ];
     var LANE = {};
-    LANES.forEach(function (l) { LANE[l[0]] = l; });
+    LANES.forEach(function (l) { l[3].forEach(function (status) { LANE[status] = l; }); });
     var SOURCES = { research_memo: "Research memo", westlaw: "Westlaw Deep Research report", note_up: "Note-up record" };
     var TOP = "Top of 6. LAW";
     function folderName(m) { return m.folder === "" ? TOP : m.folder; }
@@ -327,7 +402,7 @@
       h2.appendChild(count);
       sec.appendChild(h2);
       var stack = el("div", "stack");
-      var cards = memos.filter(function (m) { return m.status === l[0]; }).map(function (m) {
+      var cards = memos.filter(function (m) { return LANE[m.status] === l; }).map(function (m) {
         var c = card(m);
         stack.appendChild(c.node);
         return c;
@@ -368,7 +443,7 @@
   }
 
   // The folder tabs, the last one chosen remembered.
-  var TABS = [["propositions", "Propositions", drawPropositions], ["briefs", "Case Briefs", drawBriefs], ["memos", "Legal Memos", drawMemos]];
+  var TABS = [["memos", "Legal Memos", drawMemos], ["propositions", "Propositions", drawPropositions], ["statutes", "Statutes", drawStatutes], ["cases", "Cases", drawCases]];
   var tablist = el("div", "tabs");
   tablist.setAttribute("role", "tablist");
   tablist.setAttribute("aria-label", "Show");

@@ -1,7 +1,7 @@
 // The Legal Research page's placeholder fixture (map #125, #141): hand-written synthetic data for a
 // fixture-mode preview, the meta and data renderViewPageHtml takes. No real person, entity or matter, and
-// no machine path (#140). It holds each proposition class, each brief status, each memo status and source,
-// and a memo with earlier versions.
+// no machine path (#140). It holds each proposition class, each brief status, each note-up status, each memo
+// status and source, a statute checked and one never checked, and a memo with earlier versions.
 
 import type { LegalResearchData } from "../submission/forms/legal-research-page.js";
 import type { ViewPageMeta } from "../submission/view-pages.js";
@@ -30,7 +30,17 @@ export const LEGAL_RESEARCH_FIXTURE: { meta: ViewPageMeta; data: LegalResearchDa
                   citation_title: "Sample Holdings Ltd. v. Example Traders Inc.",
                   citation_rest: ", 2019 BCSC 0000, para 12.",
                   excerpt: "A refusal of this kind goes to the root of the contract.",
-                  status: ["Verification: verified 2026-01-10", "Note-up: followed"],
+                  status: ["Verification: verified 2026-01-10", "Note-up: good law"],
+                  note_up: { label: "Case noted up: negative treatment only", noted: true },
+                },
+                {
+                  statement_id: 2,
+                  class: "in_use",
+                  citation_title: "Sale of Goods Act",
+                  citation_rest: ", RSBC 0000, c 0, s 15.",
+                  excerpt: null,
+                  status: ["Verification: verified 2026-01-10", "Currency: current"],
+                  note_up: { label: "Statute level: in-force check done", noted: true },
                 },
               ],
             },
@@ -46,6 +56,21 @@ export const LEGAL_RESEARCH_FIXTURE: { meta: ViewPageMeta; data: LegalResearchDa
         },
       ],
     },
+    statutes: {
+      statutes: [
+        {
+          title: "Sale of Goods Act",
+          citation: "RSBC 0000, c 0",
+          relied_on: true,
+          currency_status: "current",
+          currency_checked_on: "2026-01-10",
+          note_up: { label: "Not noted up", noted: false },
+          results: [],
+          provisions: [{ provision: "s 15", currency_status: "current", checked_on: "2026-01-10" }, { provision: "s 16", currency_status: null, checked_on: null }],
+        },
+        { title: "Limitation Act", citation: "SBC 0000, c 0", relied_on: false, currency_status: null, currency_checked_on: null, note_up: { label: "Not noted up", noted: false }, results: [], provisions: [] },
+      ],
+    },
     briefs: {
       cases: [
         {
@@ -54,6 +79,8 @@ export const LEGAL_RESEARCH_FIXTURE: { meta: ViewPageMeta; data: LegalResearchDa
           status: "briefed",
           relied_on: true,
           jobs: [],
+          note_up: { label: "Noted up: negative treatment only", noted: true },
+          results: ["good law"],
           brief: {
             date: "2026-01-11",
             version: 2,
@@ -72,14 +99,16 @@ export const LEGAL_RESEARCH_FIXTURE: { meta: ViewPageMeta; data: LegalResearchDa
             on_disk: true,
           },
         },
-        { title: "Placeholder Co. v. Specimen Ltd.", citation: "2021 BCCA 0000", status: "requested", relied_on: true, jobs: [{ id: 21, title: "Brief the case: Placeholder Co. v. Specimen Ltd., 2021 BCCA 0000" }], brief: null },
-        { title: "Model Ltd. v. Dummy Corp.", citation: "2020 BCSC 0000", status: "not_briefed", relied_on: true, jobs: [], brief: null },
+        { title: "Placeholder Co. v. Specimen Ltd.", citation: "2021 BCCA 0000", status: "requested", relied_on: true, jobs: [{ id: 21, title: "Brief the case: Placeholder Co. v. Specimen Ltd., 2021 BCCA 0000" }], brief: null, note_up: { label: "Not noted up", noted: false }, results: [] },
+        { title: "Model Ltd. v. Dummy Corp.", citation: "2020 BCSC 0000", status: "not_briefed", relied_on: true, jobs: [], brief: null, note_up: { label: "Not noted up", noted: false }, results: [] },
         {
           title: "Instance v. Pattern",
           citation: "2018 BCCA 0000",
           status: "briefed",
           relied_on: false,
           jobs: [],
+          note_up: { label: "Noted up: negative treatment only", noted: true },
+          results: ["distinguishable"],
           brief: { date: "2026-01-06", version: 1, earlier: [], earlier_files: [], file: "6. LAW\\Costs\\2026-01-06 case brief Instance v. Pattern, 2018 BCCA 0000.md", url: "file:///placeholder/6.%20LAW/Costs/2026-01-06%20case%20brief.md", on_disk: true },
         },
       ],

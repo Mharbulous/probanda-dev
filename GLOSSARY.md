@@ -435,7 +435,7 @@ A one-page structured summary of one decision, kept in the matter's `6. LAW` fol
 _Avoid_: case brief for a decision merely ingested into case data (an **Authority** with its stored findings, not a brief); case brief for a summary of the working matter's own decisions or history; brief for a filed factum or written argument.
 
 **Legal memo**:
-A finished written answer to a legal question, kept in the matter's `6. LAW` folder: a research memo written in the practice, a Westlaw Deep Research report, or a note-up record. Every saved version of one memo is the same memo. A memo names nothing of the working matter, so which matter facts it bears on comes from the research that produced it, never from its text.
+A finished written answer to a legal question, kept in the matter's `6. LAW` folder: a research memo written in the practice, a Westlaw Deep Research report, or a note-up record. Every saved version of one memo is the same memo. A memo names nothing of the working matter, so which matter facts it bears on comes from the research that produced it, never from its text. The Legal Research page lists memos with the status started or no job under the heading Loose Threads, which is that page's heading for those memos, not a **Loose thread**.
 _Avoid_: research answer (the saved file before it is read as a memo); memo for a memo to file, which is a **Writing**.
 
 **Legal research and writing**:

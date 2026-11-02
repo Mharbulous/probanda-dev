@@ -1,9 +1,10 @@
 // The Legal Research view page (docs/Plans/2026-11-01_legal-research-board-and-case-briefs.md): one
 // `Legal Research.html` per board holding a live Writing, written by the view-page registry
-// (../view-pages.ts), with three folder tabs over one panel. Propositions (research-propositions.ts) holds
-// the propositions of law recorded, placed in a Writing or not. Case Briefs (case-briefs.ts) lists the cases
-// the board's Writings rely on and each one's brief. Legal Memos (legal-memos.ts) lists the memos linked
-// to the board. It replaced Legal Memos, which had replaced Raw Research, on 2026-11-01.
+// (../view-pages.ts), with four folder tabs over one panel. Legal Memos (legal-memos.ts) lists the memos
+// linked to the board. Propositions (research-propositions.ts) holds the propositions of law recorded, placed
+// in a Writing or not. Statutes (statutes-tab.ts) lists the legislation and when each was last checked. Cases
+// (case-briefs.ts) lists the cases the board's Writings rely on and each one's brief. It replaced Legal
+// Memos, which had replaced Raw Research, on 2026-11-01.
 //
 // A human interface generated from the database (ADR 0033): no session reads, greps, parses or
 // screenshots it. Sessions read propositions through /drafting-data, and memos and case briefs through
@@ -23,9 +24,11 @@ import type { ViewPage } from "../view-pages.js";
 import { buildCaseBriefsData, type CaseBriefsData } from "./case-briefs.js";
 import { buildLegalMemosData, type LegalMemosData } from "./legal-memos.js";
 import { buildPropositionsData, type PropositionsData } from "./research-propositions.js";
+import { buildStatutesData, type StatutesData } from "./statutes-tab.js";
 
 export interface LegalResearchData {
   propositions: PropositionsData;
+  statutes: StatutesData;
   briefs: CaseBriefsData;
   memos: LegalMemosData;
 }
@@ -52,6 +55,7 @@ export const LEGAL_RESEARCH_PAGE: ViewPage = {
     const filings = ctx.writings.map((w) => w.filing);
     return {
       propositions: buildPropositionsData(ctx.dbPath, filings),
+      statutes: buildStatutesData(ctx.dbPath, filings.map((f) => f.id), filings.map((f) => f.proceeding_id)),
       briefs: buildCaseBriefsData(ctx.dbPath, filings.map((f) => f.id), matterDir, filings.map((f) => f.proceeding_id)),
       memos: buildLegalMemosData(ctx.dbPath, ctx.jobs, matterDir),
     };

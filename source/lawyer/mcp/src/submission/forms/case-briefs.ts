@@ -25,6 +25,7 @@ import { rows } from "../query-rows.js";
 import { hasColumn } from "../schema-capabilities.js";
 import { baseName, dateOf, isCaseBriefFile, lawDirOf, modified, scanLawFolder, titleOf, versionOf } from "./legal-memos.js";
 import { BRIEF_JOB_PREFIX, citationKey, citationParts, squashed } from "./brief-job.js";
+import { authorityNoteUp, treatmentWord, type NoteUpStatus } from "./note-up-status.js";
 import { liveTicketClause, ticketAnswersHeld } from "./query.js";
 
 export type BriefStatus = "briefed" | "requested" | "not_briefed";
@@ -61,6 +62,10 @@ export interface CaseBriefRow {
   /** The live brief jobs naming the case. */
   jobs: { id: number; title: string }[];
   brief: CaseBriefFile | null;
+  /** Noted up when any authority row of the case is, since a note-up is a fact about the case. */
+  note_up: NoteUpStatus;
+  /** Each distinct treatment its authority rows record. */
+  results: string[];
 }
 
 export interface CaseBriefsData {
@@ -68,24 +73,28 @@ export interface CaseBriefsData {
   cases: CaseBriefRow[];
 }
 
-interface ReliedRow {
+export interface ReliedRow {
   id: number;
   style_of_cause_or_title: string;
   citation: string | null;
+  treatment: string | null;
+  currency_status: string | null;
+  currency_checked_on: string | null;
 }
 
-/** The case authorities behind a statement in use on these Writings. */
-function reliedOn(dbPath: string, filingIds: number[]): ReliedRow[] {
+/** The authorities of these kinds behind a statement in use on these Writings. */
+export function reliedOn(dbPath: string, filingIds: number[], kinds: readonly string[]): ReliedRow[] {
   if (filingIds.length === 0) return [];
   const inIds = `(${filingIds.map(() => "?").join(", ")})`;
+  const inKinds = kinds.map((k) => `'${k}'`).join(", ");
   const notOmitted = hasColumn(dbPath, "law_assertions", "killed_on") ? "AND (la.id IS NULL OR la.killed_on IS NULL)" : "";
   return rows<ReliedRow>(
     dbPath,
-    `SELECT DISTINCT a.id, a.style_of_cause_or_title, a.citation
+    `SELECT DISTINCT a.id, a.style_of_cause_or_title, a.citation, a.treatment, a.currency_status, a.currency_checked_on
      FROM statements_of_law sl
      JOIN authorities a ON a.id = sl.authority_id
      LEFT JOIN law_assertions la ON la.id = sl.law_assertion_id
-     WHERE a.kind = 'case' AND a.killed_on IS NULL ${notOmitted}
+     WHERE a.kind IN (${inKinds}) AND a.killed_on IS NULL ${notOmitted}
        AND (sl.id IN (SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds})
          OR sl.id IN (SELECT r.excerpt_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
          OR sl.law_assertion_id IN (SELECT r.law_assertion_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
@@ -108,13 +117,14 @@ interface BriefJob {
   authority_id: number | null;
   style_of_cause_or_title: string | null;
   citation: string | null;
+  treatment: string | null;
 }
 
 /** Every brief job not deleted, with the authority its scope names. */
 function briefJobs(dbPath: string): BriefJob[] {
   return rows<BriefJob>(
     dbPath,
-    `SELECT t.id, t.proceeding_id, t.title, t.status, t.rejected_at, a.id AS authority_id, a.style_of_cause_or_title, a.citation
+    `SELECT t.id, t.proceeding_id, t.title, t.status, t.rejected_at, a.id AS authority_id, a.style_of_cause_or_title, a.citation, a.treatment
      FROM tickets t
      LEFT JOIN ticket_scope s ON s.ticket_id = t.id AND s.entity = 'authorities'
      LEFT JOIN authorities a ON a.id = s.entity_id
@@ -123,8 +133,8 @@ function briefJobs(dbPath: string): BriefJob[] {
   );
 }
 
-/** One case's fold key: its citation's, else its authority's id, else a job's or brief's own name. */
-function foldKey(citation: string | null, authorityId: number | null, name: string): string {
+/** One authority's fold key: its citation's, else its authority's id, else a job's or brief's own name. */
+export function foldKey(citation: string | null, authorityId: number | null, name: string): string {
   return citationKey(citation) ?? (authorityId !== null ? `id:${authorityId}` : `name:${name.toLowerCase()}`);
 }
 
@@ -201,11 +211,11 @@ export function buildCaseBriefsData(dbPath: string, filingIds: number[], matterD
       if (relied) found.relied_on = true;
       return found;
     }
-    const made: CaseBriefRow = { title, citation, status: "not_briefed", relied_on: relied, jobs: [], brief: null };
+    const made: CaseBriefRow = { title, citation, status: "not_briefed", relied_on: relied, jobs: [], brief: null, note_up: authorityNoteUp(null), results: [] };
     cases.set(key, made);
     return made;
   };
-  const relied = reliedOn(dbPath, filingIds);
+  const relied = reliedOn(dbPath, filingIds, ["case"]);
   for (const a of relied) row(foldKey(a.citation, a.id, a.style_of_cause_or_title), a.style_of_cause_or_title, a.citation, true);
   const known: KnownCase[] = [
     ...relied.map((a) => ({ key: foldKey(a.citation, a.id, a.style_of_cause_or_title), style: a.style_of_cause_or_title, citation: a.citation })),
@@ -292,6 +302,16 @@ export function buildCaseBriefsData(dbPath: string, filingIds: number[], matterD
   const all = [...cases.values()];
   const held = (b: CaseBriefFile) => b.on_disk || b.earlier_files.some((v) => v.on_disk);
   for (const c of all) c.status = c.brief !== null && held(c.brief) ? "briefed" : c.jobs.length > 0 ? "requested" : "not_briefed";
+  const recorded = [
+    ...relied.map((a) => ({ key: foldKey(a.citation, a.id, a.style_of_cause_or_title), treatment: a.treatment })),
+    ...jobs.map((j) => ({ key: foldKey(j.citation, j.authority_id, j.title), treatment: j.treatment })),
+  ];
+  for (const { key, treatment } of recorded) {
+    const target = cases.get(key);
+    if (target === undefined || treatment === null) continue;
+    target.note_up = authorityNoteUp(treatment);
+    if (!target.results.includes(treatmentWord(treatment))) target.results.push(treatmentWord(treatment));
+  }
   const reliedRows = all.filter((c) => c.relied_on);
   const rest = all.filter((c) => !c.relied_on).sort((a, b) => (b.brief?.date ?? "").localeCompare(a.brief?.date ?? "") || a.title.localeCompare(b.title));
   return { cases: [...reliedRows, ...rest] };

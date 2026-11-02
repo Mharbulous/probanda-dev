@@ -21,6 +21,8 @@ const { boardSection } = await import("../build/submission/board-card.js");
 const { DATES_NOT_READ } = await import("../build/submission/matter-board-section.js");
 const { buildLegalMemosData, isCaseBriefFile, memoSourceOf, versionOf } = await import("../build/submission/forms/legal-memos.js");
 const { buildCaseBriefsData } = await import("../build/submission/forms/case-briefs.js");
+const { buildStatutesData } = await import("../build/submission/forms/statutes-tab.js");
+const { resetSchemaCapabilities } = await import("../build/submission/schema-capabilities.js");
 const { citationKey } = await import("../build/submission/forms/brief-job.js");
 const { buildPropositionsData } = await import("../build/submission/forms/research-propositions.js");
 const { fetchFiling, fetchPreFilingProceedings, isResearchWriting } = await import("../build/submission/forms/query.js");
@@ -411,6 +413,49 @@ test("a request on another board's job still reads Requested, and a board with n
   const onFirst = buildCaseBriefsData(m.dbPath, [1], m.matterRoot, [1]).cases;
   assert.equal(onFirst.find((c) => c.title === "Requested v Case").status, "requested", "job 20 sits on Writing 2");
   assert.equal(buildCaseBriefsData(m.dbPath, [], m.matterRoot, [1]).cases.some((c) => c.relied_on), false);
+});
+
+test("a case reads noted up when any of its folded rows is, with each result, and a statute's currency leaves its case note-up alone", async (t) => {
+  const m = await briefsFixture(t, []);
+  await submissionDataExecute(m.dbPath, "UPDATE authorities SET treatment = 'good_law' WHERE id = 1; UPDATE authorities SET treatment = 'negative' WHERE id = 2; UPDATE authorities SET currency_status = 'current', currency_checked_on = '2026-10-20' WHERE id = 6;");
+  const by = Object.fromEntries(buildCaseBriefsData(m.dbPath, [1, 2], m.matterRoot, [1]).cases.map((c) => [c.title, c]));
+  assert.deepEqual(by["Sample v Example"].note_up, { label: "Noted up: negative treatment only", noted: true });
+  assert.deepEqual(by["Sample v Example"].results, ["good law", "negative"]);
+  assert.deepEqual(by["Unbriefed v Case"].note_up, { label: "Not noted up", noted: false });
+  const [statute] = buildStatutesData(m.dbPath, [1], [1]).statutes;
+  assert.equal(statute.note_up.noted, false);
+  assert.equal(statute.currency_checked_on, "2026-10-20");
+});
+
+test("Statutes lists the legislation relied on, then the proceeding's other live legislation, each provision with its own check", async (t) => {
+  const m = await briefsFixture(t, []);
+  await submissionDataExecute(
+    m.dbPath,
+    `INSERT INTO authorities (id, proceeding_id, style_of_cause_or_title, citation, kind) VALUES
+       (20, 1, 'Unused Regulation', 'BC Reg 1/2000', 'regulation'),
+       (21, 1, 'Killed Act', 'RSBC 1996, c 1', 'statute'),
+       (22, 2, 'Other Proceeding Act', 'RSBC 1996, c 2', 'statute');
+     UPDATE authorities SET killed_on = '2026-10-01' WHERE id = 21;
+     INSERT INTO statements_of_law (id, proceeding_id, authority_id, law_assertion_id, pinpoint, excerpt, source, verification) VALUES (30, 1, 6, 1, 's 2', 'x', 'primary', 'lead');
+     INSERT INTO provision_currency (authority_id, provision, currency_status, checked_on, current_to) VALUES (6, 's 1', 'current', '2026-10-21', '2026-10-01');`
+  );
+  const { statutes } = buildStatutesData(m.dbPath, [1], [1]);
+  assert.deepEqual(statutes.map((s) => [s.title, s.relied_on]), [["Interpretation Act", true], ["Unused Regulation", false]]);
+  assert.deepEqual(statutes[0].provisions, [
+    { provision: "s 1", currency_status: "current", checked_on: "2026-10-21" },
+    { provision: "s 2", currency_status: null, checked_on: null },
+  ]);
+  assert.equal(statutes[0].currency_checked_on, null);
+  assert.deepEqual(statutes[0].note_up, { label: "Not noted up", noted: false });
+  assert.deepEqual(buildStatutesData(m.dbPath, [], []).statutes, [], "a board with no Writing and no proceeding has none");
+});
+
+test("Statutes reads a database held below provision_currency", async (t) => {
+  const m = await briefsFixture(t, []);
+  await submissionDataExecute(m.dbPath, "DROP TABLE provision_currency;");
+  resetSchemaCapabilities(m.dbPath);
+  const [statute] = buildStatutesData(m.dbPath, [1], [1]).statutes;
+  assert.deepEqual(statute.provisions, [{ provision: "s 1", currency_status: null, checked_on: null }]);
 });
 
 test("a brief is on the Case Briefs list and never on the Legal Memos list", async (t) => {
