@@ -31,6 +31,7 @@ With `local` as the first argument, this run is the **local implementer**: the `
 - **Pick** (step 2): list `labels=ready-for-agent,local`, and run `choose_issue.py` with `--lane local`. An issue number in the arguments is taken only when that `queue` holds it. The claim comments on each issue are the cloud run's (**Claim**).
 - **Local gate** (step 4) replaces the cloud gate. The issue is unsuitable only when a plan step or Done-when check needs: `public/` approval or publication; a minor or 1.0 version, or a schema migration; a change to `COMMANDMENTS.md`; a whole test suite or folder (the repo's hook refuses those outside CI); a browser; or a decision or check by a person.
 - **Hand back** replaces step 7, "Mark local", wherever a step names it: discard as step 7 says, then `POST /issues/<n>/labels` with `{"labels":["ready-for-human"]}` and `DELETE /issues/<n>/labels/ready-for-agent`, leaving `local` on the issue. Comment one line naming the gate item or check that failed, with its output quoted, and release the claim by **Release**.
+- **Packages.** `run-local-implementer.ps1` has already run `npm ci --ignore-scripts` in `source/lawyer/mcp`, so skip step 5's `npm ci`. When `node_modules` is missing there, because the run was started another way, hand the issue back naming that.
 - The sandbox SQLite workaround in step 5 is for the cloud only. Skip it.
 - Step 8 releases the local implementer lock, and lists the queue again as the local Pick does.
 

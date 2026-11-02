@@ -12,7 +12,11 @@ under the current user. Needs no administrator rights.
 2. Fetches origin and fast-forwards main. A clone that is dirty, off main, or has
    diverged from origin/main is left for Brahm, and the run stops.
 3. Runs scripts/local_implementer_guard.py in the clone, which refuses any other folder.
-4. Runs Claude Code headless there: claude -p "/implement-suggestions local".
+4. Runs npm ci --ignore-scripts in source/lawyer/mcp, from the committed lockfile, so
+   the run's Node builds and tests work and the model never installs anything. Brahm
+   approved this on 2026-11-02: the user-level package-install guard reserves installs
+   for the human, and this script is the one he registered.
+5. Runs Claude Code headless there: claude -p "/implement-suggestions local".
    It passes --permission-mode dontAsk, so a user-wide default of plan mode
    cannot stop the run before it writes, and anything not allowed is refused
    without a prompt. The run gets only the permissions the repo's
@@ -23,7 +27,7 @@ Each run logs to $env:LOCALAPPDATA\probanda-local-implementer\logs\run-<time>.lo
 The log holds what git, the guard and Claude Code print, and never the environment.
 
 .PARAMETER PrepareOnly
-Create or update the clone and run the guard, but do not start Claude Code.
+Create or update the clone, run the guard and install the packages, but do not start Claude Code.
 #>
 [CmdletBinding()]
 param(
@@ -124,12 +128,22 @@ try {
         Stop-Run 'the guard refused this folder (see the line above).'
     }
 
+    # 4. The Node packages, from the committed lockfile, with no install scripts.
+    $Npm = Find-Exe @('npm.cmd', 'npm')
+    if (-not $Npm) { Stop-Run 'npm is not on PATH.' }
+    Push-Location -LiteralPath (Join-Path $Clone 'source\lawyer\mcp')
+    try {
+        if ((Invoke-Logged $Npm @('ci', '--ignore-scripts')) -ne 0) { Stop-Run 'npm ci failed (see the lines above).' }
+    } finally {
+        Pop-Location
+    }
+
     if ($PrepareOnly) {
         Write-Log 'Prepared. Claude Code not started (-PrepareOnly).'
         exit 0
     }
 
-    # 4. Claude Code, headless, on the local lane.
+    # 5. Claude Code, headless, on the local lane.
     $Claude = Find-Exe @('claude')
     if (-not $Claude) { Stop-Run 'claude is not on PATH.' }
     $code = Invoke-Logged $Claude @('-p', $Prompt, '--permission-mode', 'dontAsk')
