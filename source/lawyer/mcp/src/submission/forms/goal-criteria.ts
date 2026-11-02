@@ -140,7 +140,7 @@ export const RESERVE_INVENTORY_DOC = "Counsel_brief";
 
 /** The inventory tags that never go to the forum (design §2.2): the one list. The Goal card filters
  * the inventory by it. */
-export const NEVER_DELIVERED_DOCS: ReadonlySet<string> = new Set([RESERVE_INVENTORY_DOC, "Work_board"]);
+export const NEVER_DELIVERED_DOCS: ReadonlySet<string> = new Set([RESERVE_INVENTORY_DOC, "practice_board"]);
 
 /** Whether one inventory entry is work the `evidence` criterion counts, on a document that goes to
  * the forum: the Material Facts and Procedural History pages read it per statement of fact (facts-pages.ts). */

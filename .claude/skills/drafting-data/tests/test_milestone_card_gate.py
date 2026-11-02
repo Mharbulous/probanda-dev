@@ -22,7 +22,7 @@ def mcp_text(result):
 
 
 def filing_render(pages_written, board_changed):
-    return {"filing_id": 3, "documents": [{"document_type": "Work_board", "path": PAGE, "file_name": "Milestone 3.html",
+    return {"filing_id": 3, "documents": [{"document_type": "practice_board", "path": PAGE, "file_name": "Milestone 3.html",
                                            "pages_written": pages_written, "board_changed": board_changed}]}
 
 

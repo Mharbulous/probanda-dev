@@ -1,4 +1,4 @@
-// The render's marker inventory (Work Board Proposals design §8; Phase D of
+// The render's marker inventory (Practice Board Proposals design §8; Phase D of
 // planning/2. Plan/2026-09-15_work-board-proposals-implementation-plan.md).
 //
 // Every generating work-marker glyph a mockup render emits is recorded here, at

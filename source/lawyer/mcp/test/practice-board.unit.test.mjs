@@ -1,4 +1,4 @@
-// The Work Board (practice-board-shell.ts, map #125): a data golden for buildPracticeBoardData with
+// The Practice Board (practice-board-shell.ts, map #125): a data golden for buildPracticeBoardData with
 // the clock injected, and a sha256 pin of the page it renders, taken before the move to templates.
 // The pin is checked by hash only; no test reads the page.
 
@@ -63,6 +63,6 @@ test("buildPracticeBoardData places each item by its stored date against the inj
   assert.deepEqual(await buildPracticeBoardData(await fixtureStore(t), NOW), GOLDEN);
 });
 
-test("the Work Board page is byte-identical to the pinned render", () => {
-  assertSha256Pin(renderPracticeBoardHtml(GOLDEN), PAGE_PIN, "Work Board");
+test("the Practice Board page is byte-identical to the pinned render", () => {
+  assertSha256Pin(renderPracticeBoardHtml(GOLDEN), PAGE_PIN, "Practice Board");
 });

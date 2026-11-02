@@ -762,7 +762,7 @@ test("filing_id naming a Milestone with no Writing opens its board, with no fold
   // The render a session then calls for it, through the dispatch.
   const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: boardId, draft_dir: named.draft_dir, session_token: named.session_token });
   assert.equal(rendered.milestone_only, true);
-  assert.deepEqual(rendered.documents.map((d) => d.document_type), ["Work_board"]);
+  assert.deepEqual(rendered.documents.map((d) => d.document_type), ["practice_board"]);
   assert.equal(rendered.documents[0].path.toLowerCase(), boardPage.toLowerCase());
   assert.equal(rendered.documents[0].board_changed, false);
   assert.deepEqual(folders(), ["Drafting records", OPENING_FOLDER]);
@@ -980,7 +980,7 @@ test("a render without matter_no keeps the Litigation Strategy's to-dos", async 
 
   const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token });
   assert.ok(
-    rendered.documents.some((d) => d.document_type === "Work_board" && d.path === opened.milestone_path),
+    rendered.documents.some((d) => d.document_type === "practice_board" && d.path === opened.milestone_path),
     "the render that rewrote the pages returns the filing's Milestone page"
   );
   assert.equal(rendered.milestone_url, undefined, "and no link to it");

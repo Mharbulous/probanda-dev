@@ -36,7 +36,7 @@ test("each rendered mockup ends with a legend of exactly the symbols on it, and 
     const result = submissionFormsRender(f.dbPath, 1, ASHBOURNE);
 
     let withLegend = 0;
-    for (const doc of result.documents.filter((d) => d.document_type !== "Work_board")) {
+    for (const doc of result.documents.filter((d) => d.document_type !== "practice_board")) {
       const mockup = readFileSync(doc.path, "utf-8");
       assert.equal(doc.markdown, mockup, `${doc.file_name}: the inline text is the file`);
       const visible = bodyOf(mockup).replace(/```[\s\S]*?```/g, "").replace(/<!--[\s\S]*?-->/g, "");

@@ -553,7 +553,7 @@ A client letter (`draft/references/letters.md` section 10) and a reply on the re
 - **`kind`**: `'client_letter'`, `'reply'` or `'opposing_filing'` (schema v81): another party's filed document in the court-file folder, such as an application response or an affidavit it relies on. It is no Writing's material, so it never gets a `filing_documents` row and prints on no filed face of ours. Its `path` may be anywhere in the matter folder.
 - **`attached_on`**: the date attached, `YYYY-MM-DD`.
 
-Every value below is a literal composed into the script, each `'` doubled (§7's no-bind rule). The table is revision-exempt (§8): attaching moves no mockup. The Milestone pages show a change at their next write, so after each write here render the board under `draft_dir`: `drafting_forms__render` with the board's `filing_id` or, for a pre-filing board, `proceeding_id`, naming `Work_board` in `documents`.
+Every value below is a literal composed into the script, each `'` doubled (§7's no-bind rule). The table is revision-exempt (§8): attaching moves no mockup. The Milestone pages show a change at their next write, so after each write here render the board under `draft_dir`: `drafting_forms__render` with the board's `filing_id` or, for a pre-filing board, `proceeding_id`, naming `practice_board` in `documents`.
 
 **The matter's boards.** Before attaching or moving, read every live Writing that has a board and every proceeding with no such Writing, live or retired:
 

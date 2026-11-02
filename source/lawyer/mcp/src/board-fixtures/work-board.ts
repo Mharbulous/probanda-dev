@@ -1,10 +1,10 @@
-// The Work Board's placeholder fixture (map #125, #141): hand-written synthetic data for a fixture-mode
+// The Practice Board's placeholder fixture (map #125, #141): hand-written synthetic data for a fixture-mode
 // preview. No real person, entity or matter, and no machine path (#140). Every panel, a flag, a BF date,
 // a non-billable matter and a read-failure note are present, so a preview shows each way a card draws.
 
 import type { PracticeBoardData } from "../submission/forms/practice-board-shell.js";
 
-export const WORK_BOARD_FIXTURE: PracticeBoardData = {
+export const practice_board_FIXTURE: PracticeBoardData = {
   meta: { rendered: "2026-01-15 09:00", today: "2026-01-15", horizon_days: 14 },
   panels: {
     overdue: [

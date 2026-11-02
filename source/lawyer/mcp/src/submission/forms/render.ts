@@ -183,7 +183,7 @@ export function submissionFormsRender(
   const boardDocument = (section: WorkBoardData, written: ReturnType<typeof writePages>, withSummary: boolean): RenderedDocument => {
     const path = written ? pagePathFor(written.pages, section.meta) : undefined;
     return {
-      document_type: "Work_board",
+      document_type: "practice_board",
       ...(path !== undefined ? { path } : {}),
       file_name: path !== undefined ? basename(path) : "Milestone.html",
       // On a merged board the summary reads the whole board, as its page draws it.
@@ -206,7 +206,7 @@ export function submissionFormsRender(
   // the matter's pages are rewritten, a closed board with no page, as a retired filing has none.
   if (jobOnly) {
     const section = timed(timings, "board_section", () => buildWorkBoardData(ctx));
-    selectDocuments([{ document_type: "Work_board" }], documentTypes); // only to refuse an unknown name
+    selectDocuments([{ document_type: "practice_board" }], documentTypes); // only to refuse an unknown name
     const written = writePages(section);
     return {
       filing_id: filingId,
@@ -238,7 +238,7 @@ export function submissionFormsRender(
   // retired filing with no Milestone page (#1365 D1; its old one is moved to TRASH).
   if (retiredMockup) {
     const section = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines));
-    if (pagesDir) selectDocuments([{ document_type: "Work_board" }], documentTypes);
+    if (pagesDir) selectDocuments([{ document_type: "practice_board" }], documentTypes);
     const written = writePages(section);
     return {
       filing_id: filingId,
@@ -319,14 +319,14 @@ export function submissionFormsRender(
       ...(folder?.rename ? { writing_folder_rename: folder.rename } : {}),
     };
     if (pagesDir) {
-      selectDocuments([...documents, { document_type: "Work_board" }], documentTypes); // only to refuse an unknown name
+      selectDocuments([...documents, { document_type: "practice_board" }], documentTypes); // only to refuse an unknown name
       refuseForeignMatterPages(pagesDir, dbPath);
       const projected = listDocuments(documents, documentTypes);
       const written = writePages(section);
-      const board = boardDocument(section, written, documentTypes?.includes("Work_board") ?? false);
+      const board = boardDocument(section, written, documentTypes?.includes("practice_board") ?? false);
       return { filing_id: filingId, revision, documents: [...projected, board].map(withholdHearing), ...pagesReport(written), ...tail, timings: withTotal(timings, started) };
     }
-    const inline: RenderedDocument[] = [...documents, boardDocument(section, undefined, documentTypes?.includes("Work_board") ?? false)];
+    const inline: RenderedDocument[] = [...documents, boardDocument(section, undefined, documentTypes?.includes("practice_board") ?? false)];
     return { filing_id: filingId, revision, documents: selectDocuments(inline, documentTypes).map(withholdHearing), ...tail, timings: withTotal(timings, started) };
   };
 

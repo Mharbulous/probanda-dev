@@ -108,8 +108,8 @@ test("a matter held at v42 by a counsel offer opens, lists and renders a general
   assert.deepEqual(opened.filings.map((f) => f.filing_id).sort(), [1, 2]);
 
   // Inline, naming both, so the response carries the letter's markdown and the board's summary.
-  const rendered = await callTool(m.context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 2, session_token: opened.session_token, documents: ["General_writing", "Work_board"] });
-  assert.ok(doc(rendered, "Work_board").board_summary, "expected a board_summary");
+  const rendered = await callTool(m.context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 2, session_token: opened.session_token, documents: ["General_writing", "practice_board"] });
+  assert.ok(doc(rendered, "practice_board").board_summary, "expected a board_summary");
   const letter = doc(rendered, "General_writing").markdown;
   assert.match(letter, /^ {2}- > \*Cited v\. Letter\*, 2020 BCSC 1, para 1.* <!-- statement_of_law_id 1 -->$/m, letter);
   assert.doesNotMatch(letter, /settled by counsel/);

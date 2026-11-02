@@ -31,7 +31,7 @@ function renderInto(f, presentationDir, mode = "mockup", documents) {
 
 const recordsOf = (draft) => join(draft, "Drafting records");
 const manifestOf = (draft) => JSON.parse(readFileSync(join(recordsOf(draft), "render-manifest-1.json"), "utf-8"));
-const advocacyOf = (result) => result.documents.filter((d) => d.document_type !== "Work_board");
+const advocacyOf = (result) => result.documents.filter((d) => d.document_type !== "practice_board");
 
 /** The one section of the Writing's own Milestone page. */
 function sectionIn(folder) {
@@ -52,7 +52,7 @@ test("render with draft_dir writes every mockup and the Writing's pages into its
     assert.ok(advocacyOf(result).length > 1, "fixture should render several documents");
     assert.ok(result.rendered_at, "still a mockup render");
     for (const doc of result.documents) {
-      if (doc.document_type === "Work_board") {
+      if (doc.document_type === "practice_board") {
         assert.equal(doc.path, join(leaf, PAGE), "the board is the Writing's own page, in its folder");
         assert.equal(doc.markdown_chars, undefined, "the board's markup is never returned, so never measured");
         assert.equal(doc.board_summary, undefined, "not named, so no board_summary");
@@ -339,9 +339,9 @@ test("render with presentation_dir returns the board's summary, never its markup
     await seedTickets(f.dbPath);
     const { draft, leaf } = draftFolder(f);
 
-    const result = renderInto(f, leaf, "mockup", ["Work_board"]);
+    const result = renderInto(f, leaf, "mockup", ["practice_board"]);
 
-    const board = result.documents.find((d) => d.document_type === "Work_board");
+    const board = result.documents.find((d) => d.document_type === "practice_board");
     assert.equal(board.path, join(leaf, PAGE));
     assert.equal(board.presentation_path, undefined);
     assert.equal(board.board_summary, renderBoardSummary(sectionIn(leaf), ASHBOURNE, TODOS_NOT_READ), "named, so its summary comes back, the page's own section as text");
@@ -360,7 +360,7 @@ test("render of a retired filing with presentation_dir writes the matter's pages
     await submissionDataExecute(f.dbPath, "UPDATE filings SET decided_on = '2026-09-02', retired_on = '2026-09-10', retirement_reason = 'decided' WHERE id = 1;");
     const { draft, leaf } = draftFolder(f);
 
-    const result = renderInto(f, leaf, "mockup", ["Work_board"]);
+    const result = renderInto(f, leaf, "mockup", ["practice_board"]);
 
     assert.equal(result.filing_retired, true);
     assert.ok(!existsSync(leaf), "no mockup is refreshed for a retired filing");

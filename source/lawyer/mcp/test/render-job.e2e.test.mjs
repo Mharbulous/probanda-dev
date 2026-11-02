@@ -50,7 +50,7 @@ async function matter(count, { draft = false } = {}) {
 
 const bootstrap = (dbPath, args = CLIENT) => callTool({}, "drafting_forms__bootstrap", { db_path: dbPath, ...args });
 const render = (dbPath, filingId, args = CLIENT) =>
-  callTool({}, "drafting_forms__render", { db_path: dbPath, filing_id: filingId, documents: ["Work_board"], ...args });
+  callTool({}, "drafting_forms__render", { db_path: dbPath, filing_id: filingId, documents: ["practice_board"], ...args });
 const readMirror = (m) => JSON.parse(readFileSync(m.mirrorFile, "utf-8"));
 const readPage = (file) => JSON.parse(readFileSync(file, "utf-8").replace(/^window\.WORKBOARD_STATUS = /, "").replace(/;\n$/, ""));
 /** The Litigation Strategy's page data, read off its one data line. */

@@ -28,9 +28,9 @@ const { renderWorkBoardHtml } = await import("../build/submission/forms/workboar
 const { filingBoardData, renderBoardSummary, renderLiveLanes, submissionFormsBoardCard, TODOS_NOT_READ } = await import("../build/submission/matter-pages.js");
 const { fetchFiling, fetchProceeding, fetchRevision } = await import("../build/submission/forms/query.js");
 
-// 2026-09-14 local-only design: the hosted Work Board artifact is retired. Bootstrap reports a URL a
+// 2026-09-14 local-only design: the hosted Practice Board artifact is retired. Bootstrap reports a URL a
 // matter still records from that design, so a session can offer to delete the artifact and clear it.
-test("bootstrap reports no legacy Work Board artifact on a matter that never had one", async () => {
+test("bootstrap reports no legacy Practice Board artifact on a matter that never had one", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -47,7 +47,7 @@ test("bootstrap reports no legacy Work Board artifact on a matter that never had
   }
 });
 
-test("bootstrap reports the legacy Work Board artifact URL a matter still records, and still renders", async () => {
+test("bootstrap reports the legacy Practice Board artifact URL a matter still records, and still renders", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -135,7 +135,7 @@ test("renders the Milestone's data", async () => {
 
     const { draft, leaf } = draftFolder(f);
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "mockup", undefined, undefined, undefined, "2026-09-20 10:00", undefined, draft);
-    const board = result.documents.find((d) => d.document_type === "Work_board");
+    const board = result.documents.find((d) => d.document_type === "practice_board");
     const data = boardDataOf(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "2026-09-20 10:00");
     assert.equal(board.markdown, undefined, "the board returns no markup");
     assert.equal(board.path, join(leaf, "Milestone.html"));
@@ -336,7 +336,7 @@ test("the Milestone's code is identical across matters once the data line is rem
     submissionFormsRender(a.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "mockup", undefined, undefined, undefined, undefined, undefined, draftA);
     const resultB = submissionFormsRender(b.dbPath, 1, { clientName: "Halloway", clientNo: "9002", matterNo: "L9002" }, "mockup", undefined, undefined, undefined, undefined, undefined, draftB);
     const pageA = join(leafA, "Milestone.html");
-    const pageB = resultB.documents.find((d) => d.document_type === "Work_board").path;
+    const pageB = resultB.documents.find((d) => d.document_type === "practice_board").path;
     const dataA = writingSection(leafA);
     const codeA = boardCode(readFileSync(pageA, "utf-8"));
     assert.equal(codeA, boardCode(readFileSync(pageB, "utf-8")), "expected identical code across two matters");
@@ -398,7 +398,7 @@ test("render refuses mockup mode on a retired filing, writing nothing but return
     assert.equal(result.filing_retired, true, "expected filing_retired: true");
     assert.equal(result.documents.length, 1, "expected exactly the Milestone document");
     const board = result.documents[0];
-    assert.equal(board.document_type, "Work_board");
+    assert.equal(board.document_type, "practice_board");
     assert.equal(board.path, undefined, "expected no path -- nothing was written to disk");
     // The whole point of returning the board here is so the retire flow can confirm
     // the state actually reads Retired.
@@ -426,7 +426,7 @@ test("render writes the board as one self-contained file, with no sibling suppor
     const { draft } = draftFolder(f);
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
 
-    const board = result.documents.find((d) => d.document_type === "Work_board");
+    const board = result.documents.find((d) => d.document_type === "practice_board");
     assert.equal(board.file_name, "Milestone.html");
     assert.ok(!existsSync(join(dirname(board.path), "workboard-data.js")), "expected no data script beside the board");
     for (const doc of result.documents) assert.equal("assets" in doc, false, `the board has no support files to return (${doc.document_type})`);
@@ -562,15 +562,15 @@ test("render's documents filter trims the response without changing what is writ
     await seedVaniacProceeding(f.dbPath);
 
     const full = submissionFormsRender(f.dbPath, 1, {}, "mockup");
-    const boardOnly = submissionFormsRender(f.dbPath, 1, {}, "mockup", ["Work_board"]);
+    const boardOnly = submissionFormsRender(f.dbPath, 1, {}, "mockup", ["practice_board"]);
 
     assert.ok(full.documents.length > 1, "fixture should render several documents");
-    assert.deepEqual(boardOnly.documents.map((d) => d.document_type), ["Work_board"]);
+    assert.deepEqual(boardOnly.documents.map((d) => d.document_type), ["practice_board"]);
     assert.equal(boardOnly.rendered_at !== undefined, true, "a filtered render is still a mockup render");
 
     // Every document is still rendered and still written to its canonical path -- only the
     // response shrinks, so the unrequested mockups never go stale at an old revision.
-    for (const doc of full.documents.filter((d) => d.document_type !== "Work_board")) assert.ok(existsSync(doc.path), `expected ${doc.path} to exist`);
+    for (const doc of full.documents.filter((d) => d.document_type !== "practice_board")) assert.ok(existsSync(doc.path), `expected ${doc.path} to exist`);
 
     assert.throws(
       () => submissionFormsRender(f.dbPath, 1, {}, "mockup", ["Nonexistent_doc"]),
@@ -582,7 +582,7 @@ test("render's documents filter trims the response without changing what is writ
   }
 });
 
-test("render discards a stale Markdown Work Board left by an older bundle", async () => {
+test("render discards a stale Markdown Practice Board left by an older bundle", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -590,8 +590,8 @@ test("render discards a stale Markdown Work Board left by an older bundle", asyn
 
     const first = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
     const baseDir = dirname(first.documents[0].path);
-    const stale = join(baseDir, "Work Board.md");
-    writeFileSync(stale, "Revision: 1\n\n# Work Board\n", "utf-8");
+    const stale = join(baseDir, "Practice Board.md");
+    writeFileSync(stale, "Revision: 1\n\n# Practice Board\n", "utf-8");
 
     submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
     assert.equal(existsSync(stale), false, "expected the superseded Markdown board discarded");
@@ -602,15 +602,15 @@ test("render discards a stale Markdown Work Board left by an older bundle", asyn
 });
 
 // #966: the presentation folder holds the same leftover. Only a stamped one is the renderer's own there.
-test("render discards a stamped Markdown Work Board from the presentation folder and keeps an unstamped one", async () => {
+test("render discards a stamped Markdown Practice Board from the presentation folder and keeps an unstamped one", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
     await seedVaniacProceeding(f.dbPath);
     const { leaf } = draftFolder(f);
     submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, leaf);
-    const stale = join(leaf, "Work Board.md");
-    writeFileSync(stale, "Revision: 1\n\n# Work Board\n", "utf-8");
+    const stale = join(leaf, "Practice Board.md");
+    writeFileSync(stale, "Revision: 1\n\n# Practice Board\n", "utf-8");
 
     submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, leaf);
     assert.equal(existsSync(stale), false, "expected the superseded Markdown board discarded from the presentation folder");
@@ -619,7 +619,7 @@ test("render discards a stamped Markdown Work Board from the presentation folder
     const own = "the practitioner's own notes\n";
     writeFileSync(stale, own, "utf-8");
     submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, leaf);
-    assert.equal(readFileSync(stale, "utf-8"), own, "expected an unstamped Work Board.md kept as the practitioner's");
+    assert.equal(readFileSync(stale, "utf-8"), own, "expected an unstamped Practice Board.md kept as the practitioner's");
   } finally {
     f.cleanup();
   }
@@ -636,9 +636,9 @@ test("render deletes leftover board support files and data scripts, leaving arch
 
     const first = submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, leaf);
     const baseDir = dirname(first.documents[0].path);
-    const archivedPair = join(baseDir, "archive", "Work_board @rev0 2026-09-14-10-00");
+    const archivedPair = join(baseDir, "archive", "practice_board @rev0 2026-09-14-10-00");
     mkdirSync(archivedPair, { recursive: true });
-    const keep = [join(archivedPair, "Work Board.html"), join(archivedPair, "workboard-data.js"), join(baseDir, "archive", "workboard.css")];
+    const keep = [join(archivedPair, "Practice Board.html"), join(archivedPair, "workboard-data.js"), join(baseDir, "archive", "workboard.css")];
     for (const file of keep) writeFileSync(file, "archived\n", "utf-8");
     const stale = [
       join(draft, "workboard.css"),
@@ -651,9 +651,9 @@ test("render deletes leftover board support files and data scripts, leaving arch
 
     for (const file of stale) assert.ok(!existsSync(file), `expected ${file} deleted`);
     for (const file of keep) assert.equal(readFileSync(file, "utf-8"), "archived\n", `expected ${file} untouched`);
-    assert.deepEqual(readdirSync(join(baseDir, "archive")).sort(), ["Work_board @rev0 2026-09-14-10-00", "workboard.css"], "nothing archived at an unchanged revision");
+    assert.deepEqual(readdirSync(join(baseDir, "archive")).sort(), ["practice_board @rev0 2026-09-14-10-00", "workboard.css"], "nothing archived at an unchanged revision");
     assert.ok(readdirSync(leaf).includes("Milestone.html"), "the Writing's folder holds its own Milestone page");
-    assert.equal(readdirSync(leaf).some((name) => /^Work Board/.test(name)), false, "and no other board");
+    assert.equal(readdirSync(leaf).some((name) => /^Practice Board/.test(name)), false, "and no other board");
   } finally {
     f.cleanup();
   }
@@ -690,7 +690,7 @@ function manifestFileOf(dbPath, filingId) {
 /** The inventory the render saved in the filing's render manifest, as proposal-inventory.db.test.mjs
  * reads it. */
 function inventoryOf(result) {
-  const advocacy = result.documents.find((d) => d.document_type !== "Work_board");
+  const advocacy = result.documents.find((d) => d.document_type !== "practice_board");
   return JSON.parse(readFileSync(join(dirname(dirname(advocacy.path)), "Drafting records", `render-manifest-${result.filing_id}.json`), "utf-8")).inventory;
 }
 
@@ -730,7 +730,7 @@ test("every inventory entry names the rendered document that emitted it, or the 
       await seed(f.dbPath);
       const result = submissionFormsRender(f.dbPath, 1, ASHBOURNE);
       const inventory = inventoryOf(result);
-      const rendered = new Set(result.documents.map((d) => d.document_type).filter((t) => t !== "Work_board"));
+      const rendered = new Set(result.documents.map((d) => d.document_type).filter((t) => t !== "practice_board"));
 
       assert.ok(inventory.length > 0, `${seed.name}: expected the render to record entries`);
       for (const e of inventory) {
@@ -774,7 +774,7 @@ test("a line printing 🧩 records a non-generating entry and derives no Proposa
 });
 
 // #1219: every blank field on one bespoke form is its own open item, as #1213 made each general
-// Writing's gap its own. Keyed on the filing alone, the Work Board merged them into one.
+// Writing's gap its own. Keyed on the filing alone, the Practice Board merged them into one.
 const NOA_GAPS = ["Name of applicant", "Parties to be served", "Time estimate"];
 const AR_GAPS = [
   "Name of application respondent",
@@ -2129,7 +2129,7 @@ test("tickets: a wip job with every step done stays In Progress, and shares no m
 // ids, classes and data keys keep their internal names (design §2).
 // The Litigation Strategy (the To Do List until 2026-10-08, the Matter Board until #871) names jobs in progress, so it is scanned too:
 // its page is the template set in src/templates/matter-board/ (map #125).
-test("the Milestone's page shows no Work Board, Matter Board, Rejected angles or claim wording", () => {
+test("the Milestone's page shows no Practice Board, Matter Board, Rejected angles or claim wording", () => {
   const pages = [
     [["templates/milestone/milestone.html", "templates/milestone/milestone.css", "templates/milestone/milestone.js"], (literals, htmlText) => literals.includes("Shelved") && htmlText.includes("Milestone")],
     [["templates/matter-board/matter-board.html", "templates/matter-board/matter-board.js"], (literals, htmlText) => literals.includes(" jobs in progress") && htmlText.includes("Litigation Strategy")],
@@ -2142,7 +2142,7 @@ test("the Milestone's page shows no Work Board, Matter Board, Rejected angles or
     const htmlText = [...code.matchAll(/>([^<>\n]+)</g)].map((m) => m[1]);
     assert.ok(sawOwnStrings(literals, htmlText), `expected the scan to see ${file}'s own strings`);
     for (const text of [...literals, ...htmlText]) {
-      assert.doesNotMatch(text, /Work Board|Matter Board|Rejected angles|claim/i, `${file} visible text "${text}"`);
+      assert.doesNotMatch(text, /Practice Board|Matter Board|Rejected angles|claim/i, `${file} visible text "${text}"`);
     }
   }
 });
@@ -2465,7 +2465,7 @@ test("final review: 🧐 never reaches a filed face or the reserve inventory", a
     const mockup = submissionFormsRender(f.dbPath, 1, ASHBOURNE);
     assert.ok(markdownOf(mockup, "Notice_of_application").includes("🧐"), "the mockup carries it");
     assert.ok(
-      !inventoryOf(mockup).some((e) => e.marker === "🧐" && (e.doc === RESERVE_INVENTORY_DOC || e.doc === "Work_board")),
+      !inventoryOf(mockup).some((e) => e.marker === "🧐" && (e.doc === RESERVE_INVENTORY_DOC || e.doc === "practice_board")),
       "no 🧐 entry names a never-delivered document"
     );
   } finally {
@@ -2714,7 +2714,7 @@ test("goal: board_card's criteria lane prints each criterion with its counts and
   try {
     await freshSubmissionDb(f.dbPath);
     await seedNoticeOfApplication(f.dbPath);
-    const summary = submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", ["Work_board"]).documents.find((d) => d.document_type === "Work_board").board_summary.split("\n");
+    const summary = submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", ["practice_board"]).documents.find((d) => d.document_type === "practice_board").board_summary.split("\n");
     const card = submissionFormsBoardCard({ db_path: f.dbPath, filing_id: 1, lanes: ["criteria"] }, ASHBOURNE).card.split("\n");
     const { criteria } = boardDataOf(f.dbPath, 1, ASHBOURNE);
     const glyph = { met: "✅", unmet: "❌", pending: "⏳" };

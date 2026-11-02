@@ -93,12 +93,12 @@ No plugin directory was unreachable. Hooks are searched but out of scope (§8).
 
 ### Classification of hits (§4.2)
 
-Searched: every tree in the verification table above, excluding `plugins/` (built output), `node_modules/`, `dist/` and `build/`. Terms: `present_files`, `SendUserFile`, `SendUserMessage`, `send_user_message`, `device_stage_files`, "file card", "card", "present", "send", "show the file", "open the file", `computer://`, markdown file links, "Show in Explorer", "attach". "Card" hits that mean a Milestone or Work Board card, "present" hits that mean stating something in chat, "attach" hits that mean an email attachment or an exhibit, and "send" hits that mean sending a letter or a subagent prompt are (d) and not listed. Line numbers are as at the edit commit. Each (b) and (c) hit now cites `.claude/skills/shared/present-files.md` (new, the one statement of the canonical rule), so each is now (a).
+Searched: every tree in the verification table above, excluding `plugins/` (built output), `node_modules/`, `dist/` and `build/`. Terms: `present_files`, `SendUserFile`, `SendUserMessage`, `send_user_message`, `device_stage_files`, "file card", "card", "present", "send", "show the file", "open the file", `computer://`, markdown file links, "Show in Explorer", "attach". "Card" hits that mean a Milestone or Practice Board card, "present" hits that mean stating something in chat, "attach" hits that mean an email attachment or an exhibit, and "send" hits that mean sending a letter or a subagent prompt are (d) and not listed. Line numbers are as at the edit commit. Each (b) and (c) hit now cites `.claude/skills/shared/present-files.md` (new, the one statement of the canonical rule), so each is now (a).
 
 | File | Lines (hit) | Category before | Action |
 |---|---|---|---|
 | `shared/html-pages.md` | 20 (card tool "`present_files` in Cowork and `SendUserFile` in the Code tab") | b | cite shared doc, fallback route named |
-| `shared/html-pages.md` | 13 (Work Board card) | c | cite |
+| `shared/html-pages.md` | 13 (Practice Board card) | c | cite |
 | `shared/html-pages.md` | 19, 24 (cards only, no link; hook backstop) | d | none |
 | `draft/references/procedure.md` | 80, 142 (`present_files` in Cowork, `SendUserFile` in the Code tab) | b | cite, fallback route named |
 | `draft/references/procedure.md` | 50, 77, 88 | c | cite or fallback route named |
@@ -160,7 +160,7 @@ Searched: every tree in the verification table above, excluding `plugins/` (buil
 | `draft/references/CAN/BC/BCSC/Documents/notice-of-application.md` 40, `application-response.md` 42; `CAN/BC/BCCA/Documents/stay-response-book.md` 46, `respondent-factum.md` 40; `CAN/BC/_NoVenue/Documents/release.md` 45 | present as a file card | c | cite |
 | `draft/User_Journeys/`: `work-the-worklist.md`, `witness-statement-to-signed.md`, `revise-by-asking-again.md`, `research-fills-the-open-slots.md`, `requisition-in-minutes.md`, `render-and-review-the-mockup.md`, `dead-end-decision.md`, `answer-the-other-side.md`, `a-better-copy-arrives.md`, `admissions-route.md`, `hold-it-in-reserve.md`, `offer-what-the-matter-already-knows.md`, `pick-up-where-you-left-off.md` | the assistant presents the mockup as a file card | c | cite once, at the first presenting step of each |
 | `draft/User_Journeys/gate-before-filing.md` | 41 (illustrative `(file card: ...)` in a transcript) | d | none |
-| `source/practice/mcp/src/schema-gen.ts` | 165 (`render_practice_board` description: "present work_board_path as a file card") | c | none: §9 changes a tool description only where it ranks another route above `present_files`, and this names no route |
+| `source/practice/mcp/src/schema-gen.ts` | 165 (`render_practice_board` description: "present practice_board_path as a file card") | c | none: §9 changes a tool description only where it ranks another route above `present_files`, and this names no route |
 | `source/practice/mcp/src/submission/view-pages.ts` 12, `forms/matter-board-shell.ts` 14 | code comments | d | none |
 | `source/practice/plugin.json` | 44 (hook matcher `SendUserFile`) | d | none: hooks out of scope |
 | `show-me/SKILL.md` | all | n/a | related spec (landed c3a4b92) |

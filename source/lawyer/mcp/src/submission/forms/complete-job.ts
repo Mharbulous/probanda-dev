@@ -82,8 +82,8 @@ function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientCon
     // proceedingJobBoard picks by id, not by bootstrap's ranked order, so it can differ from open_session's openBoard.
     const filingId = boards.some((f) => f.id === read.filing_id) ? read.filing_id : (proceedingJobBoard(boards)?.id ?? null);
     if (filingId !== null) {
-      const rendered = submissionFormsRender(args.db_path, filingId, client, "mockup", ["Work_board"], undefined, undefined, undefined, args.session_token, args.draft_dir, todos, dates);
-      const board = rendered.documents.find((d) => d.document_type === "Work_board") as RenderedDocument | undefined;
+      const rendered = submissionFormsRender(args.db_path, filingId, client, "mockup", ["practice_board"], undefined, undefined, undefined, args.session_token, args.draft_dir, todos, dates);
+      const board = rendered.documents.find((d) => d.document_type === "practice_board") as RenderedDocument | undefined;
       if (board === undefined) {
         return { pages_written: false, pages_refused: { code: "render_refused", message: rendered.note ?? "the render returned no Milestone page" } };
       }

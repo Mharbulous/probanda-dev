@@ -5,7 +5,7 @@
 A page is due when a result shows it was written for the practitioner to see:
 
 - drafting_forms__open_session: its milestone_path, the opened filing's or proceeding's page;
-- drafting_forms__render: the Work_board document's path on a filing's render, or milestone_path on
+- drafting_forms__render: the practice_board document's path on a filing's render, or milestone_path on
   a proceeding's, when pages_written and board_changed are both true;
 - drafting_data__complete_job: its milestone_path, when pages_written and board_changed are true.
 
@@ -68,7 +68,7 @@ def due_pages(tool, response):
     if OPEN.fullmatch(tool):
         path = result.get("milestone_path")
     elif RENDER.fullmatch(tool):
-        board = next((d for d in result.get("documents") or [] if isinstance(d, dict) and d.get("document_type") == "Work_board"), None)
+        board = next((d for d in result.get("documents") or [] if isinstance(d, dict) and d.get("document_type") == "practice_board"), None)
         if board is not None:
             path = board.get("path") if changed(board) else None
         else:

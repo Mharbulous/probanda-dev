@@ -37,7 +37,7 @@ test("an order or submission deployed only on another filing raises no reserve P
     const result = submissionFormsRender(f.dbPath, 2, { clientName: "Ledger", clientNo: "1", matterNo: "L1" });
 
     // The reserve inventory writes no document: no Counsel Brief file, entry or timing.
-    const advocacy = result.documents.find((d) => d.document_type !== "Work_board");
+    const advocacy = result.documents.find((d) => d.document_type !== "practice_board");
     assert.ok(!existsSync(join(dirname(advocacy.path), "Counsel Brief.md")), "no Counsel Brief.md is written");
     assert.ok(!result.documents.some((d) => d.document_type === "Counsel_brief"), "no Counsel_brief document is returned");
     assert.ok(!result.timings.some((t) => /Counsel Brief/.test(t.phase)), `no Counsel Brief timing: ${result.timings.map((t) => t.phase).join(", ")}`);

@@ -1,4 +1,4 @@
-// The render's marker inventory, end to end (Work Board Proposals design §8, Phase D step 1):
+// The render's marker inventory, end to end (Practice Board Proposals design §8, Phase D step 1):
 // every generating glyph the 26 emit sites print lands in render-manifest.json's `inventory`,
 // keyed on the row its work is done on. The two seeds together cover every emit site a fixture
 // reaches -- the VanIAC package covers the shared submission body, the witness statements, the
@@ -96,7 +96,7 @@ test("a rung fused to 🏅 still records primary-authority; a 🚧 line records 
     await seedFusedRungCases(f.dbPath);
     const result = submissionFormsRender(f.dbPath, 1, ASHBOURNE);
 
-    const advocacy = result.documents.filter((d) => d.document_type !== "Work_board");
+    const advocacy = result.documents.filter((d) => d.document_type !== "practice_board");
     const printed = advocacy.flatMap((d) => readFileSync(d.path, "utf-8").split("\n"));
     const lineOf = (id) => printed.find((l) => l.endsWith(`<!-- law_assertion_id ${id} -->`));
     assert.ok(lineOf(20).endsWith(`sources 🥈🏅 <!-- law_assertion_id 20 -->`), lineOf(20));
@@ -137,7 +137,7 @@ test("a statute's 📇 reads its currency on the doctrinal line and the order's 
     const state = async (sql) => {
       if (sql !== null) await submissionDataExecute(f.dbPath, sql);
       const result = submissionFormsRender(f.dbPath, 1, ASHBOURNE);
-      const printed = result.documents.filter((d) => d.document_type !== "Work_board").flatMap((d) => readFileSync(d.path, "utf-8").split("\n"));
+      const printed = result.documents.filter((d) => d.document_type !== "practice_board").flatMap((d) => readFileSync(d.path, "utf-8").split("\n"));
       const marked = (tag) => printed.filter((l) => l.includes(tag)).some((l) => l.includes("📇"));
       const keys = boardDataOf(f.dbPath, 1, ASHBOURNE).proposals.map((p) => p.key).filter((k) => k.startsWith("note-up:"));
       return { statement1: marked("<!-- statement_of_law_id 1 -->"), order1: marked("<!-- relief_item a -->"), statement4: marked("<!-- statement_of_law_id 4 -->"), keys };

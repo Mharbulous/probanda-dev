@@ -51,8 +51,8 @@ async function fixture(t) {
 
 /** The three places a board's goal description shows: the Goal card's data, board_summary's Goal line and board_card's goals lane. */
 function goalViews(m) {
-  const result = submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", ["Work_board"], undefined, undefined, NOW, TOKEN, m.draft);
-  const board = (result.documents ?? []).find((d) => d.document_type === "Work_board");
+  const result = submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", ["practice_board"], undefined, undefined, NOW, TOKEN, m.draft);
+  const board = (result.documents ?? []).find((d) => d.document_type === "practice_board");
   assert.ok(board, `render returned no Milestone: ${JSON.stringify(result).slice(0, 400)}`);
   const summary = board.board_summary;
   const { card } = submissionFormsBoardCard({ db_path: m.dbPath, filing_id: 1, lanes: ["goals"] }, ASHBOURNE, NOW);

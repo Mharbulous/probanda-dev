@@ -27,7 +27,7 @@ const { renderWorkBoardHtml } = await import("../build/submission/forms/workboar
 const { VIEW_PAGES, renderViewPageHtml } = await import("../build/submission/view-pages.js");
 const { LOOSE_IDEAS_PAGE } = await import("../build/submission/forms/loose-ideas-page.js");
 const { renderApprovalPage } = await import("../build/housekeeping/page.js");
-const { WORK_BOARD_FIXTURE } = await import("../build/board-fixtures/work-board.js");
+const { practice_board_FIXTURE } = await import("../build/board-fixtures/work-board.js");
 const { LITIGATION_STRATEGY_FIXTURE } = await import("../build/board-fixtures/litigation-strategy.js");
 const { MILESTONE_FIXTURE } = await import("../build/board-fixtures/milestone.js");
 const { PROCEDURAL_HISTORY_FIXTURE } = await import("../build/board-fixtures/procedural-history.js");
@@ -43,7 +43,7 @@ const viewPage = (name) => [...VIEW_PAGES, LOOSE_IDEAS_PAGE].find((p) => p.name 
 
 /** Each lawyer page: its preview name for the fixtures' Writing 1, and its render of its fixture with `page` composed. */
 const PAGES = [
-  ["Work Board", "Work Board", (page) => renderPracticeBoardHtml(WORK_BOARD_FIXTURE, page)],
+  ["Practice Board", "Practice Board", (page) => renderPracticeBoardHtml(practice_board_FIXTURE, page)],
   ["Litigation Strategy", "Litigation Strategy", (page) => renderMatterBoardHtml(LITIGATION_STRATEGY_FIXTURE, page)],
   ["Milestone", "Milestone 1", (page) => renderWorkBoardHtml(MILESTONE_FIXTURE, page)],
   ...[
@@ -88,9 +88,9 @@ test("a fixture preview of each page is written under its preview name, with its
     assert.equal(sha(readFileSync(path, "utf-8")), sha(expected), `${name}: the board's render of its fixture, overridden, then the marker`);
     assert.ok(expected.includes("/* preview override */"), `${name}: the override reached the page`);
   }
-  const again = await pagesPreview({ page: "Work Board", data: "fixture" }, undefined);
-  assert.equal(basename(again.path), "Work Board preview 2.html", "a second preview takes the next number and overwrites none");
-  assert.equal(sha(readFileSync(again.path, "utf-8")), sha(fixtureFile(renderPracticeBoardHtml(WORK_BOARD_FIXTURE))), "no override: the page as the board draws it");
+  const again = await pagesPreview({ page: "Practice Board", data: "fixture" }, undefined);
+  assert.equal(basename(again.path), "Practice Board preview 2.html", "a second preview takes the next number and overwrites none");
+  assert.equal(sha(readFileSync(again.path, "utf-8")), sha(fixtureFile(renderPracticeBoardHtml(practice_board_FIXTURE))), "no override: the page as the board draws it");
 });
 
 test("the housekeeping preview draws the fixture before or after approval, with its overrides", () => {

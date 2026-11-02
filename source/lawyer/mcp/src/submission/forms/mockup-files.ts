@@ -103,12 +103,12 @@ function removeRetiredBoardFiles(dir: string, names: readonly string[] = RETIRED
   }
 }
 
-const STALE_WORKBOARD_MARKDOWN = "Work Board.md";
+const STALE_WORKBOARD_MARKDOWN = "Practice Board.md";
 
 /** The board files an older render left in the Writing's folder `dir` and at the draft folder's top:
- * the retired support files, and in `dir` a `Work Board.md` carrying a render revision stamp, as every
+ * the retired support files, and in `dir` a `Practice Board.md` carrying a render revision stamp, as every
  * Markdown board did (2026-09-03 design doc §3, #966). The folder is the practitioner's too, so an
- * unstamped `Work Board.md` there is theirs and is never deleted. */
+ * unstamped `Practice Board.md` there is theirs and is never deleted. */
 export function removeOldBoardFiles(dir: string): void {
   const stale = readExistingRevision(join(dir, STALE_WORKBOARD_MARKDOWN)) !== undefined ? [STALE_WORKBOARD_MARKDOWN] : [];
   removeRetiredBoardFiles(dir, [...RETIRED_BOARD_FILES, ...stale]);

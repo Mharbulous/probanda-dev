@@ -173,11 +173,11 @@ function openBoard(
   try {
     if (target !== undefined) {
       const written: { pages?: PagesWritten } = {};
-      const rendered = submissionFormsRender(dbPath, target, client, "mockup", ["Work_board"], undefined, undefined, undefined, listed.session_token, draftDir, todos, dates, (pages) => {
+      const rendered = submissionFormsRender(dbPath, target, client, "mockup", ["practice_board"], undefined, undefined, undefined, listed.session_token, draftDir, todos, dates, (pages) => {
         written.pages = pages;
       });
       phases(rendered.timings);
-      const board = rendered.documents.find((d) => d.document_type === "Work_board") as RenderedDocument;
+      const board = rendered.documents.find((d) => d.document_type === "practice_board") as RenderedDocument;
       return {
         opened: {
           filing_id: rendered.filing_id,

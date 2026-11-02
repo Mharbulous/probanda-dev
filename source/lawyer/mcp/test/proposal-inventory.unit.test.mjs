@@ -1,4 +1,4 @@
-// deriveProposals, on hand-built inventories (Work Board Proposals design §4, §5, §7, §8;
+// deriveProposals, on hand-built inventories (Practice Board Proposals design §4, §5, §7, §8;
 // Phase D step 2). Pure: no database, no Python, no render.
 
 import assert from "node:assert/strict";

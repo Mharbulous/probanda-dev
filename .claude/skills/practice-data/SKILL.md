@@ -69,7 +69,7 @@ Determine the operation the consumer asked for and call the corresponding `pract
 | wip-hours | `practice_data__wip_hours` | optional matt_num, cutoff_date; per-matter sums; the all-matters sweep excludes non-billable matters, and non-billable entries are excluded from every call (see `operations/consumer-contract.md`) |
 | open-tasks | `practice_data__open_tasks` | read `operations/consumer-contract.md` first |
 | active-deadlines | `practice_data__active_deadlines` | read `operations/consumer-contract.md` first |
-| work-board ("show me the work board") | `practice_data__render_practice_board` | no inputs; writes the practice-wide Work Board beside practice.db and returns `work_board_path`, the panel counts, `excluded_test_matters` and `read_failures`, never a date; present the page as a file card by `work_board_path` (`shared/present-files.md`) and relay only the counts; never read the page (`shared/html-pages.md`, The Work Board) |
+| work-board ("show me the Practice Board") | `practice_data__render_practice_board` | no inputs; writes the practice-wide Practice Board beside practice.db and returns `practice_board_path`, the panel counts, `excluded_test_matters` and `read_failures`, never a date; present the page as a file card by `practice_board_path` (`shared/present-files.md`) and relay only the counts; never read the page (`shared/html-pages.md`, The Practice Board) |
 | ar-data | `practice_data__ar_data` | read `operations/consumer-contract.md` first |
 | read-signals | `practice_data__read_signals` | returns the matter's signal states; returns no policies |
 | time-entries | `practice_data__time_entries_query` | matter ref, optional from_date/to_date; per-entry rows with matter/client context |

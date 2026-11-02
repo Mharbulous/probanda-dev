@@ -34,7 +34,7 @@ function renderAt(dbPath, now, client = ASHBOURNE) {
 /** Everything but the Milestone, which sits outside the stamp and is rewritten every call. */
 
 function advocacyOf(result) {
-  return result.documents.filter((d) => d.document_type !== "Work_board");
+  return result.documents.filter((d) => d.document_type !== "practice_board");
 }
 
 /** The board's lanes as a session reads them after a render: board_card's live lane, built from the
@@ -249,7 +249,7 @@ test("memoisation: a mockup deleted from the Writing's folder is written again o
 });
 
 // ---------------------------------------------------------------------------
-// The inventory's round trip through render-manifest.json (Work Board Proposals design §8, Phase D
+// The inventory's round trip through render-manifest.json (Practice Board Proposals design §8, Phase D
 // step 5). A stamp hit re-renders nothing, so the board's Proposals have to come from the
 // inventory the miss saved -- with their lanes still read live out of SQLite. The exact key set
 // that inventory carries is proposal-inventory.db.test.mjs's, which owns it.

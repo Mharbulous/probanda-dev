@@ -120,7 +120,7 @@ function findFile(dir, fileName) {
 function boardPage(f, client) {
   const draft = join(f.dir, "Matter", "0. DRAFT");
   const rendered = submissionFormsRender(f.dbPath, 1, client, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
-  return readFileSync(rendered.documents.find((d) => d.document_type === "Work_board").path, "utf-8");
+  return readFileSync(rendered.documents.find((d) => d.document_type === "practice_board").path, "utf-8");
 }
 
 test("VanIAC submissions package renders clean from checklist-only population", async () => {

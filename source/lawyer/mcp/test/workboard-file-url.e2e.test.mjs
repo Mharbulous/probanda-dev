@@ -81,7 +81,7 @@ async function renderSeededBoard(dir) {
   const draft = join(dir, "L7001 Ashgrove", "0. DRAFT");
   mkdirSync(draft, { recursive: true });
   const result = submissionFormsRender(dbPath, 1, { clientName: "Ashgrove Holdings", clientNo: "7001", matterNo: "L7001" }, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
-  const board = result.documents.find((doc) => doc.document_type === "Work_board");
+  const board = result.documents.find((doc) => doc.document_type === "practice_board");
   return { path: board.path, data: sectionOf(draft, 1), dbPath };
 }
 

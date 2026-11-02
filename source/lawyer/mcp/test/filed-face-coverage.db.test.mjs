@@ -50,7 +50,7 @@ const { submissionFormsRender } = await import("../build/submission/forms.js");
 
 // The Milestone is no document of a filed render -- absent, not stripped. It may never appear in a
 // filed render of any kind.
-const NEVER_DELIVERED = ["Work_board"];
+const NEVER_DELIVERED = ["practice_board"];
 
 /**
  * Every filing kind, the delivered document_type values its filed render produces, and the filed
