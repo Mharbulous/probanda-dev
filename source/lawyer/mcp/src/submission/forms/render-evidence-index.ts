@@ -39,7 +39,7 @@ import { frontmatterFor } from "./vaniac-frontmatter.js";
  * glyph, but claiming it for this field is a change-controlled SSOT edit
  * this ticket does not make (issue #325).
  *
- * Known limit, not fixed (Practice Board Proposals plan, Phase C defect 5; #777): 🎾, 🕹️, live-admission
+ * Known limit, not fixed (Work Board Proposals plan, Phase C defect 5; #777): 🎾, 🕹️, live-admission
  * capture (📑 📌 / 💬 🧷 on an admission) and 🏷️ print only here, on the VanIAC Evidence Index. The NoA
  * Part 4, Application Response Part 6 and BCCA material lists emit none of them, so a Milestone for
  * those filing kinds never proposes that work (design §4: Proposals come only from emitted markers).

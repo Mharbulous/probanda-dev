@@ -12,7 +12,7 @@
 // SQLite on every render and bootstrap, it carries session lock tokens, and its
 // data reads the ticket tables, whose writes are exempt from the revision bump.
 // Hashing it would mismatch on every call and defeat the mechanism. Its marker
-// inventory is a field here all the same (Practice Board Proposals design §8): the board
+// inventory is a field here all the same (Work Board Proposals design §8): the board
 // is not memoised, but its proposed and Shelved lanes must still be derivable
 // on a stamp hit, when no advocacy renderer runs to refill the inventory.
 //
@@ -88,7 +88,7 @@ export interface RenderManifest {
    * mockup keeps its original minute and this is what `rendered_at` reports (#581 §3). */
   rendered_at: string;
   files: ManifestFile[];
-  /** The marker inventory of the render that wrote these files (Practice Board Proposals design §8).
+  /** The marker inventory of the render that wrote these files (Work Board Proposals design §8).
    * Read on a stamp hit so buildWorkBoardData derives the Proposals without re-rendering the
    * advocacy documents. Absent or malformed reads as no manifest. */
   inventory: InventoryEntry[];

@@ -11,7 +11,7 @@ DRAFT = r"<matter>\0. DRAFT"
 
 # A remote-device-only host may stage these (ADR 0033, 2026-10-05 amendments), and no other page.
 STAGEABLE_NAMES = ["Milestone 1.html", "Milestone - proceeding 2.html", "Milestone 1.HTML",
-                   "Litigation Strategy.html", "To Do List.html", "Practice Board.html",
+                   "Litigation Strategy.html", "To Do List.html", "Work Board.html",
                    # A merged pre-filing board's view page (docs/ADRs/0010).
                    "Provable Facts - Milestone - proceeding 3.html",
                    # The pages Provable Facts split into (docs/ADRs/0011).
@@ -22,16 +22,16 @@ STAGEABLE_NAMES = ["Milestone 1.html", "Milestone - proceeding 2.html", "Milesto
                    # Raw Research renamed (2026-10-31).
                    "Legal Research.html", "Legal Research - Milestone 1.html", "Legal Memos.html", "Legal Memos - Milestone 1.html"]
 # A preview of each current page (#139), stageable like its page.
-PREVIEW_NAMES = ["Practice Board preview 1.html", "Litigation Strategy preview 2.html", "Milestone 1 preview 1.html",
+PREVIEW_NAMES = ["Work Board preview 1.html", "Litigation Strategy preview 2.html", "Milestone 1 preview 1.html",
                  "Milestone - proceeding 2 preview 3.html", "Provable Facts - Milestone 1 preview 1.html",
                  "Raw Research - Milestone 4 preview 2.html", "Arguments - Milestone 1 preview 10.html",
-                 "Loose Threads - Milestone 1 preview 1.html", "Practice Board PREVIEW 1.HTML",
+                 "Loose Threads - Milestone 1 preview 1.html", "WORK BOARD PREVIEW 1.HTML",
                  "Procedural History - Milestone 1 preview 1.html", "Material Facts - Milestone 1 preview 2.html",
                  "Milestone preview 1.html", "Raw Research preview 2.html", "Legal Memos preview 1.html", "Legal Research preview 1.html"]
 STAGEABLE_NAMES += PREVIEW_NAMES
 UNSTAGEABLE_NAMES = ["Milestone - SUB Opening.html", "Milestone 1-1.html",
                      "Milestone-1.html", "Milestone .html", "Milestone 1 (2).html",
-                     "Practice Board preview.html", "Milestone 1 preview 1 (2).html",
+                     "Work Board preview.html", "Milestone 1 preview 1 (2).html",
                      "Matter Board preview 1.html", "To Do List preview 1.html", "Milestone - filing 1 preview 1.html"]
 
 PAGE_PATHS = [
@@ -47,9 +47,9 @@ PAGE_PATHS = [
     DRAFT + r"\Litigation Strategy-2.html",
     DRAFT + r"\To Do List.html",
     DRAFT + r"\To Do List-2.html",
-    DRAFT + r"\SUB <filing title>\Practice Board.html",
+    DRAFT + r"\SUB <filing title>\Work Board.html",
     DRAFT + r"\Matter Board.html",
-    r"<case data>\mockups\Filing 1\archive\practice_board @rev3 2026-09-01-10-00.html",
+    r"<case data>\mockups\Filing 1\archive\Work_board @rev3 2026-09-01-10-00.html",
     DRAFT + r"\workboard-status.js",
     "/mnt/<matter>/0. DRAFT/Litigation Strategy.html",
     "/mnt/<matter>/0. DRAFT/To Do List.html",
@@ -73,7 +73,7 @@ OTHER_PATHS = [
     DRAFT + r"\Notice of Hearing of Application\counter-arguments.html",
     DRAFT + r"\Notice of Hearing of Application\Notice of Hearing of Application.md",
     DRAFT + r"\SUB <filing title>\Evidence Index.md",
-    DRAFT + r"\SUB <filing title>\Practice Board.md",
+    DRAFT + r"\SUB <filing title>\Work Board.md",
     DRAFT + r"\Milestone notes.txt",
 ]
 
@@ -151,7 +151,7 @@ class GateTest(unittest.TestCase):
 
     def test_grep_whose_glob_names_a_page_is_refused_even_where_the_hook_sees_no_folder(self):
         unseen = "/mnt/<matter>/0. DRAFT"
-        for glob in ["Milestone*.html", "litigation strategy.html", "to do list.html", "**/practice_board @rev*.html"]:
+        for glob in ["Milestone*.html", "litigation strategy.html", "to do list.html", "**/Work_board @rev*.html"]:
             with self.subTest(glob=glob):
                 self.assertDenied(call("Grep", {"pattern": "x", "path": unseen, "glob": glob}))
         self.assertAllowed(call("Grep", {"pattern": "x", "path": unseen, "glob": "*.md"}))
@@ -210,7 +210,7 @@ class GateTest(unittest.TestCase):
 
     def test_staging_any_other_page_name_is_refused(self):
         for name in UNSTAGEABLE_NAMES + ["Litigation Strategy-2.html", "To Do List-2.html", "Matter Board.html",
-                                         "practice_board @rev3 2026-01-01-00-00.html", "workboard-status.js"]:
+                                         "Work_board @rev3 2026-01-01-00-00.html", "workboard-status.js"]:
             with self.subTest(name=name):
                 self.assertDenied(call("mcp__remote-devices__device_stage_files",
                                        {"paths": ["/mnt/<matter>/0. DRAFT/" + name]}))

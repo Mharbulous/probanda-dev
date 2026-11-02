@@ -27,7 +27,7 @@ So this gate refuses:
 - every other device_* tool with any string input naming a page (for
   device_request_folder_access, its path only, never its reason), except
   device_stage_files given exactly `Litigation Strategy.html` (or the legacy
-  `To Do List.html`), `Practice Board.html` (the practice-wide page beside
+  `To Do List.html`), `Work Board.html` (the practice-wide page beside
   practice.db), `Milestone.html`, `Milestone <id>.html`,
   `Milestone - proceeding <id>.html` or a listed view page's `<page name>.html` or
   `<page name> - Milestone <id>.html`, case aside, or the same pages under their
@@ -61,7 +61,7 @@ import hook_io  # noqa: E402
 # "to do list" is the Litigation Strategy page's name before 2026-10-08, kept so an old copy not
 # yet moved to TRASH is still refused. "job board" is the Milestone's name before 2026-10-28, kept
 # for the same reason.
-STEM = r"(?:Milestone|job board|litigation strategy|to do list|Practice Board|matter board|practice_board @rev)"
+STEM = r"(?:Milestone|job board|litigation strategy|to do list|work board|matter board|work_board @rev)"
 # The view pages' names, lowercased (plugins/litigation/mcp/src/submission/view-pages.ts VIEW_PAGES).
 # Each new view page adds its lowercased name here. "loose ideas" is the Loose Threads page's name
 # before 2026-10-08, "provable facts" the Material Facts page's before 2026-10-20 (docs/ADRs/0011), and
@@ -79,13 +79,13 @@ PAGE_ANYWHERE = re.compile(STEM + r"[^\\/\n\"'`]*\.html|" + VIEW + r"|workboard-
 PAGE_NAME = re.compile(STEM + r"[^\\/]*\.html|" + VIEW + r"|workboard-status\.js", re.I)
 # Canonical names a Grep glob is tried against.
 SAMPLE_PAGES = ("Milestone.html", "Milestone 1.html", "Milestone - filing 1.html", "Milestone - proceeding 3.html", "Litigation Strategy.html", "To Do List.html",
-                "Practice Board.html", "Matter Board.html", "practice_board @rev1 2026-01-01-00-00.html", "workboard-status.js",
+                "Work Board.html", "Matter Board.html", "Work_board @rev1 2026-01-01-00-00.html", "workboard-status.js",
                 "Procedural History - Milestone 1.html", "Material Facts - Milestone 1.html", "Provable Facts - Milestone 1.html",
                 "Raw Research - Milestone 1.html", "Arguments - Milestone 1.html",
                 "Loose Threads - Milestone 1.html", "Provable Facts - filing 1.html", "Raw Research - filing 1.html",
                 "Arguments - filing 1.html", "Loose Threads - filing 1.html", "Loose Ideas - filing 1.html",
                 "Job Board 1.html", "Provable Facts - Job Board 1.html",
-                "Practice Board preview 1.html", "Litigation Strategy preview 1.html", "Milestone 1 preview 1.html",
+                "Work Board preview 1.html", "Litigation Strategy preview 1.html", "Milestone 1 preview 1.html",
                 "Milestone - proceeding 3 preview 1.html", "Procedural History - Milestone 1 preview 1.html",
                 "Material Facts - Milestone 1 preview 1.html", "Provable Facts - Milestone 1 preview 1.html",
                 "Raw Research - Milestone 1 preview 1.html", "Arguments - Milestone 1 preview 1.html",
@@ -104,12 +104,12 @@ STAGE_TOOL = re.compile(r"mcp__(.+__)?device_stage_files")
 # A folder grant reads no page, so only its path is judged: a reason naming a page passes.
 FOLDER_TOOL = re.compile(r"mcp__(.+__)?device_request_folder_access")
 # Fullmatched on the lowercased basename: the Litigation Strategy page (and its legacy name), the
-# practice-wide Practice Board beside practice.db, a Writing's Milestone page, the
+# practice-wide Work Board beside practice.db, a Writing's Milestone page, the
 # id-named Milestone pages (and a Writing's before 2026-10-09, "Milestone - filing <id>"), the
 # listed view pages, and a preview of each current page (#139).
-STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|Practice Board\.html|milestone\.html|milestone \d+\.html|milestone - (?:filing|proceeding) \d+\.html|"
+STAGEABLE = re.compile(r"litigation strategy\.html|to do list\.html|work board\.html|milestone\.html|milestone \d+\.html|milestone - (?:filing|proceeding) \d+\.html|"
                        + VIEW_NAME + r"(?: - (?:milestone(?: - proceeding)?|filing) \d+)?\.html|"
-                       r"(?:litigation strategy|Practice Board|milestone|milestone \d+|milestone - proceeding \d+|" + VIEW_NAME + r"(?: - milestone(?: - proceeding)? \d+)?) preview \d+\.html")
+                       r"(?:litigation strategy|work board|milestone|milestone \d+|milestone - proceeding \d+|" + VIEW_NAME + r"(?: - milestone(?: - proceeding)? \d+)?) preview \d+\.html")
 
 
 def basename(path):

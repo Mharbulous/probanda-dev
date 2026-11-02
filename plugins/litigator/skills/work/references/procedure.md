@@ -42,7 +42,7 @@ Then one call, `drafting_forms__open_session`, with the matter folder's absolute
 | Matter lookup did not find the matter | Say its note in the fast open's closing line, carry on. Client identity fields render as labels only. |
 | Session entry returns `server_outdated: true` | Say its `build_note` in the fast open's closing line, carry on. |
 | Presentation-folder concept offered with no per-document path | Installed plugin predates it: see `references/legacy.md`. |
-| A legacy hosted Practice Board address reported | Run the hosted-board cleanup before anything else: see `references/legacy.md`. |
+| A legacy hosted Work Board address reported | Run the hosted-board cleanup before anything else: see `references/legacy.md`. |
 | No proceeding exists | Go to setup (section 8), then render, then continue. |
 | A proceeding with no Writing is listed | It has a board of its own: see section 7. |
 | Timeout or no response | Retry once with the same arguments, then stop and quote verbatim. |

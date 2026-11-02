@@ -31,9 +31,9 @@ const query = (dbPath, sql, params = []) => submissionDataQuery(dbPath, sql, par
 const viewedRows = (dbPath) => query(dbPath, "SELECT key, value FROM db_meta WHERE key GLOB 'board_viewed:*' ORDER BY key");
 const recordViewed = (dbPath, paths) => callTool({}, "drafting_data__record_viewed", { db_path: dbPath, paths });
 const render = (m, filingId) => submissionFormsRender(m.dbPath, filingId, ASHBOURNE, "mockup", undefined, undefined, undefined, NOW, TOKEN, m.draft);
-const workBoard = (result) => result.documents.find((d) => d.document_type === "practice_board");
+const workBoard = (result) => result.documents.find((d) => d.document_type === "Work_board");
 const viewPath = (result, name, filingId) => result.view_page_paths.find((v) => v.name === name && v.filing_id === filingId).path;
-const docPaths = (result) => result.documents.filter((d) => d.document_type !== "practice_board" && d.path !== undefined).map((d) => d.path);
+const docPaths = (result) => result.documents.filter((d) => d.document_type !== "Work_board" && d.path !== undefined).map((d) => d.path);
 
 // Proceeding 1 (VanIAC): Writing 1. Proceeding 2 (VanIAC): Writing 2. Each is its own board.
 async function fixture(t) {

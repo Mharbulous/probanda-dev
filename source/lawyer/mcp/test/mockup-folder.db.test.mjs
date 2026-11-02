@@ -241,10 +241,10 @@ test("a letter's mockup is named after its type and its folder after the Writing
   await g.prose(id, "addressee", "Cara Counsel");
   await g.prose(id, "body", "First paragraph of the letter.");
 
-  const result = render(g, id, "mockup", { draftDir: g.draft, documents: ["practice_board"] });
+  const result = render(g, id, "mockup", { draftDir: g.draft, documents: ["Work_board"] });
   assert.equal(docOf(result).path, join(g.draft, "Letter to Cara", "Letter to opposing counsel.md"));
   assert.equal(docOf(result).markdown, undefined, "under draft_dir only named documents carry markdown");
-  const board = result.documents.find((d) => d.document_type === "practice_board");
+  const board = result.documents.find((d) => d.document_type === "Work_board");
   assert.equal(board.path, join(g.draft, "Letter to Cara", "Milestone.html"));
   for (const view of result.view_page_paths) assert.equal(dirname(view.path), join(g.draft, "Letter to Cara"), view.path);
   assert.ok(existsSync(join(g.draft, "Litigation Strategy.html")));

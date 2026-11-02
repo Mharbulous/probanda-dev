@@ -91,7 +91,7 @@ test("the mockup prints each part in order with its numbering, the To line, and 
   const id = await letter(g);
 
   const result = render(g, id);
-  assert.deepEqual(result.documents.map((d) => d.document_type), ["General_writing", "practice_board"]);
+  assert.deepEqual(result.documents.map((d) => d.document_type), ["General_writing", "Work_board"]);
   const md = docOf(result, "General_writing").markdown;
   const face = [
     "# Letter to opposing counsel [unverified: R-title]",

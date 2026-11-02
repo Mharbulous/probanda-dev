@@ -150,7 +150,7 @@ export function renderRequisitionDefaultJudgment(ctx: RenderContext): string {
   });
 
   // The form's own blank fields: each 🧩 is an open item keyed on its field (#1226, as #1219). The
-  // Form 8 below keys its defendants on the same field, so the Practice Board counts that gap once.
+  // Form 8 below keys its defendants on the same field, so the Work Board counts that gap once.
   const defendantNames = defendants.map((d) => d.name).join(", ") || gapMarker("gap");
   const filedBy = plaintiff ? `${plaintiff.role}, ${plaintiff.name}` : gapMarker("gap");
   recordCriterionGlyphs(ctx.inventory, defendantNames, ["🧩"], { table: "form_fields", id: 0, item: "Defendants" });

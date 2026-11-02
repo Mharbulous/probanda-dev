@@ -368,7 +368,7 @@ test("bootstrap never overwrites a Litigation Strategy.html this server did not 
   }
 });
 
-// The rename (#871), as #869 retired Practice Board.html: a Matter Board.html goes once Litigation Strategy.html
+// The rename (#871), as #869 retired Work Board.html: a Matter Board.html goes once Litigation Strategy.html
 // is written beside it, and only when its marker proves this renderer wrote it. Since #1365 (D3) it
 // goes into the matter's TRASH, never deleted, which needs the matter's coclerk.json.
 test("writing the Litigation Strategy moves a Matter Board.html this renderer wrote into TRASH, and nothing else", async () => {
@@ -476,7 +476,7 @@ test("every render with presentation_dir or draft_dir rewrites the Litigation St
     rmSync(otherBoard);
     const fromDraft = submissionFormsRender(f.dbPath, 4, LARCHMONT, "mockup", undefined, undefined, undefined, PINNED, undefined, f.draft);
     assert.ok(existsSync(page) && existsSync(otherBoard), "a render given draft_dir writes the matter's pages");
-    assert.equal(fromDraft.documents.find((d) => d.document_type === "practice_board").path, otherBoard);
+    assert.equal(fromDraft.documents.find((d) => d.document_type === "Work_board").path, otherBoard);
 
     rmSync(page);
     for (const path of [milestone, join(f.draft, MILESTONE[2]), otherBoard]) rmSync(path);

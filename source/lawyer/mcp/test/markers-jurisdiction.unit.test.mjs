@@ -166,7 +166,7 @@ test("filled, unrated statement on a live authority -- 🏅 still renders (the c
 
 // Pins the reading, not just the behaviour: a killed item's own lines render no marker of any
 // type, work or event, so on this ladder a killed edge contributes exactly 🏛️ and nothing else.
-// The governing text is the Practice Board Proposals design (planning/1. Design/
+// The governing text is the Work Board Proposals design (planning/1. Design/
 // 2026-09-15_work-board-proposals-design.md) §4 -- "Dropped authorities never generate. Neither
 // does a statement of law whose authority is dropped, nor 📇 on a dropped authority" -- and §8,
 // which names markers printed on killed-authority statements a known defect to fix before the

@@ -74,8 +74,8 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "caller's own session identity, issued by drafting_forms__bootstrap: pass it on every mockup render of a " +
         "job-driven session and the response ECHOES it back, so the session keeps one identity for " +
         "tickets.locked_by across bootstrap and every render. This tool mints nothing and compares nothing -- omit " +
-        "it and the response simply carries no session_token. The Milestone (document_type practice_board) is no file " +
-        "of the filing's: only when documents names practice_board does its entry carry board_summary in place of " +
+        "it and the response simply carries no session_token. The Milestone (document_type Work_board) is no file " +
+        "of the filing's: only when documents names Work_board does its entry carry board_summary in place of " +
         "markdown (a retired filing's entry always carries it), the board on this filing's Milestone page (on a merged " +
         "board, the whole board, whichever of its Writings rendered) as " +
         "a short fixed-grammar summary: `# Milestone — Matter <matter no> <matter description> · Client <client " +
@@ -91,7 +91,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "detail, the criterion items and the Proposed and shelved lines come from " +
         "drafting_forms__board_card. Those two are the only board content a session reads; a " +
         "session never reads a matter page (shared/html-pages.md). Optional documents narrows the " +
-        "RESPONSE to the named document_type values (e.g. [\"practice_board\"]) -- every document is still rendered and " +
+        "RESPONSE to the named document_type values (e.g. [\"Work_board\"]) -- every document is still rendered and " +
         "still written to disk, so this trims only what crosses the token cap; an unrecognised name is an error " +
         "naming the types this filing has. Optional appeal_deadline (YYYY-MM-DD, schema v17) is the caller's own " +
         "docket-clerk lookup for this proceeding -- no deadline is ever stored in the submission database. " +
@@ -144,7 +144,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "It takes only client fields, " +
         "session_token and draft_dir, and refuses a proceeding that has a filing. " +
         "A filing_id that names a Milestone with no Writing (drafting_data__create_milestone) renders its board alone: " +
-        "milestone_only true and one practice_board entry carrying board_summary, whose State reads Open or Closed, with " +
+        "milestone_only true and one Work_board entry carrying board_summary, whose State reads Open or Closed, with " +
         "no mockup written; draft_dir rewrites the matter's pages, its own " +
         "`Milestone <id>.html` among them and no view page for it, and render_mode 'filed' or presentation_dir is " +
         "refused with milestone_only. " +
@@ -407,7 +407,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "own start stamp (YYYY-MM-DD HH:mm, the same wall clock tickets.locked_at uses) -- a wip job whose " +
         "locked_at precedes it was locked before this session existed and belongs to another session whatever its " +
         "locked_by says (see /drafting-data's jobs.md section 1). And " +
-        "legacy_workboard_artifact_url -- the hosted Practice Board URL this matter still records, or null, whose " +
+        "legacy_workboard_artifact_url -- the hosted Work Board URL this matter still records, or null, whose " +
         "one-time cleanup /draft step 2 offers. Optional draft_dir (issue 585) is the absolute host path " +
         "of the matter's 0. DRAFT folder itself: bootstrap then also writes the matter's pages at its top and " +
         "returns their paths -- Litigation Strategy.html (matter_board_path), one self-contained page leading with the " +
@@ -422,7 +422,7 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "page (ADR 0033, 2026-10-07 amendment), `<page name>.html` beside its board's page, and returns " +
         "view_page_paths [{name, filing_id, path}], and at the folder's top Loose Threads.html, every proceeding's " +
         "loose threads, as loose_threads_path; both null without draft_dir. A session never reads a page " +
-        "(shared/html-pages.md): the board's content comes from a render naming practice_board. On success " +
+        "(shared/html-pages.md): the board's content comes from a render naming Work_board. On success " +
         "pre_filing_proceedings lists those proceedings, [{ proceeding_id, forum }] with forum null while not yet " +
         "chosen -- render one with drafting_forms__render's proceeding_id. " +
         "Without draft_dir no page is written and matter_board_path and milestone_paths are null. A draft_dir " +

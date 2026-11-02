@@ -104,7 +104,7 @@ export const SIGNING_SPACE = "________________________________";
 /** A whole mockup-only 🧩 line, the marker and a blank underline with `what` in a comment (plan
  * 2026-10-07, Q2: `🧩 ________ <!-- signer not chosen -->`), which filed-face.ts drops whole. It is
  * recorded as an open-items entry (#1213) whose item is `what`, so the Milestone still names the gap.
- * Keyed on the part, not the filing: the Practice Board merges entries sharing a marker, table and id,
+ * Keyed on the part, not the filing: the Work Board merges entries sharing a marker, table and id,
  * and a part prints at most one gap line, so each gap stays its own item. A gap printed outside
  * every part passes its own `row` (render-general.ts's `recipients` gap, #1234). */
 export function gap(ctx: RenderContext, state: ProjectionState, what: string, row = { table: "layout_parts", id: state.part }): string {

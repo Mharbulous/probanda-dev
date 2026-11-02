@@ -39,7 +39,7 @@ async function fixture(t) {
 }
 const brief = (g, proceedingId = 1) => g.create({ proceeding_id: proceedingId, tree: TREE, kind: "case_brief", recipient: "internal", title: `${BRIEF_FOLDER}, 2020 BCCA 1` });
 const section = (g, board) => boardSection(g.dbPath, board, {}, NOW, DATES_NOT_READ);
-const render = (g, id) => submissionFormsRender(g.dbPath, id, {}, "mockup", ["practice_board"], undefined, undefined, NOW, "tok", g.draft);
+const render = (g, id) => submissionFormsRender(g.dbPath, id, {}, "mockup", ["Work_board"], undefined, undefined, NOW, "tok", g.draft);
 const job = (g, id, filingId, title) =>
   g.execute(
     `INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created)
@@ -168,7 +168,7 @@ test("take_job reads a memo's job on a real board and checks overlap only agains
   const done = await submissionDataCompleteJob({ db_path: g.dbPath, ticket_id: 30, session_token: "tok", claim_no: taken.claim_no, draft_dir: g.draft });
   assert.equal(done.outcome, "completed");
   assert.equal(done.pages_written, true);
-  assert.equal(done.milestone_path, join(dirname(render(g, letter).documents.find((d) => d.document_type === "practice_board").path), "Milestone.html"));
+  assert.equal(done.milestone_path, join(dirname(render(g, letter).documents.find((d) => d.document_type === "Work_board").path), "Milestone.html"));
   assert.equal(done.milestone_path.includes(BRIEF_FOLDER), false);
   assert.equal(typeof done.board_changed, "boolean");
   await awaitBackgroundJobs();
@@ -315,7 +315,7 @@ test("a merge row made before the refusal, naming a memo, is read as no row: the
 
   const rendered = render(g, second);
   await awaitBackgroundJobs();
-  assert.equal(rendered.documents.find((d) => d.document_type === "practice_board").path.includes(BRIEF_FOLDER), false);
+  assert.equal(rendered.documents.find((d) => d.document_type === "Work_board").path.includes(BRIEF_FOLDER), false);
   assert.equal(htmlFiles(g.draft).some((f) => f.includes(BRIEF_FOLDER)), false);
 
   const merged = await submissionDataMergeMilestones({ db_path: g.dbPath, boards: [{ filing_id: first }, { filing_id: second }], confirmed: true, session_token: "s" });

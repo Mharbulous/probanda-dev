@@ -80,7 +80,7 @@ export interface BootstrapResult extends BuildStampStatus, SchemaSourceStatus {
    * bootstrap-to-first-render window -- exactly when a second session is also starting up --
    * uncovered. */
   bootstrapped_at?: string;
-  /** Present only on success (2026-09-14 local-only design) -- the hosted Practice Board artifact URL this
+  /** Present only on success (2026-09-14 local-only design) -- the hosted Work Board artifact URL this
    * matter still records from the retired artifact design, or null. Read from
    * db_meta.workboard_artifact_url, so a session can offer its one-time cleanup: delete the hosted
    * artifact, then clear the key. No migration clears it, since only a session can delete the artifact. */

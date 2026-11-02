@@ -20,7 +20,7 @@
 --
 -- Legacy db_meta keys (2026-09-14, docs/design/2026-09-14 work-board-local-
 -- only-design.md): workboard_artifact_url and workboard_template_version
--- belonged to the retired hosted Practice Board artifact. No hop clears them and
+-- belonged to the retired hosted Work Board artifact. No hop clears them and
 -- no schema version changed. A migration cannot delete the hosted artifact,
 -- and clearing its URL first would orphan it, so /draft step 2
 -- deletes the artifact and only then clears both keys (jobs.md section 13).
@@ -1730,7 +1730,7 @@ UPDATE db_meta SET value = '14' WHERE key = 'schema_version';
 -- ADR 0009): stored, rendered process state -- rendered by the new Work
 -- Board mockup, never on any advocacy document. Amends this skill's
 -- SKILL.md "Not stored, deliberately... review state of any kind" and
--- ADR 0004's #300 "nothing unrendered" note (the Practice Board satisfies it).
+-- ADR 0004's #300 "nothing unrendered" note (the Work Board satisfies it).
 -- Purely additive -- no CHECK widening, no rebuild chain, no PRAGMA
 -- bracket. Every write to these six tables is EXEMPT from the
 -- db_meta.revision bump (filing-checklists.md §8) -- otherwise every claim
@@ -2323,7 +2323,7 @@ BEGIN SELECT RAISE(ABORT, 'a filed filing''s exhibits do not change (#712)'); EN
 UPDATE db_meta SET value = '24' WHERE key = 'schema_version';
 
 -- MIGRATE 24 -> 25
--- Practice Board Proposals, Phase A (Engineering/1. Design/2026-09-15_work-board-
+-- Work Board Proposals, Phase A (Engineering/1. Design/2026-09-15_work-board-
 -- proposals-design.md sections 3, 9 and 10; Engineering/2. Plan/2026-09-15_work-
 -- board-proposals-implementation-plan.md Phase A). Four changes:
 --

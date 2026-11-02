@@ -1,7 +1,7 @@
 // #1226: every 🧩 gap a bespoke renderer prints is its own non-generating open-items entry in the
 // render manifest, as #1213 made a general Writing's gap lines and #1219 the NoA's and Application
 // Response's blank fields. One logical gap printed several times is one entry, and each distinct
-// gap carries its own (table, id), since the Practice Board folds non-generating entries on
+// gap carries its own (table, id), since the Work Board folds non-generating entries on
 // marker:table:id.
 
 import assert from "node:assert/strict";
@@ -16,7 +16,7 @@ const { updateCaseData, writePartiesOfRecord } = await import("./helpers/matter-
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 
-const NEVER_DELIVERED = new Set(["practice_board"]);
+const NEVER_DELIVERED = new Set(["Work_board"]);
 
 /** Renders filing 1 and returns its 🧩 entries (from the saved manifest) and the venue documents
  * whose saved mockup prints a 🧩. The file, not the returned markdown: the returned copy withholds

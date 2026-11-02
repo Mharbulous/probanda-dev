@@ -689,7 +689,7 @@ export async function seedTickets(dbPath) {
   );
 }
 
-// Phase D step 4 (Practice Board Proposals design §7, §8): the Proposal cases the Milestone's data
+// Phase D step 4 (Work Board Proposals design §7, §8): the Proposal cases the Milestone's data
 // test asserts on -- the authority and testimony ladders seedVaniacProceeding leaves bare, a
 // Proposal held by a ticket on another filing, a direct rejection, a lapsed rejection, a rejected
 // ticket and the ticket it blocks. Runs AFTER seedVaniacProceeding and seedTickets, and only in

@@ -314,8 +314,8 @@ test("an old copy's reads are the same with contacts, affiliations and matter ro
   await writes.upsert_task(store, { matt_num: "L112", task_type: "client", description: "Call client", deadline_date: "2026-10-20" });
   const readAll = async () => {
     const board = await render_practice_board(store);
-    assert.equal(dirname(board.practice_board_path), dir, "the Practice Board goes beside the store's own practice.db (#124)");
-    delete board.practice_board_path;
+    assert.equal(dirname(board.work_board_path), dir, "the Work Board goes beside the store's own practice.db (#124)");
+    delete board.work_board_path;
     return {
       lookup: (await reads.matter_lookup(store, { matt_num: "L112" })).rows.map(({ updated_at, ...row }) => row),
       ar: await reads.ar_data(store),
@@ -323,8 +323,8 @@ test("an old copy's reads are the same with contacts, affiliations and matter ro
     };
   };
   const before = await readAll();
-  const preview = await pagesPreview({ page: "Practice Board", data: "real" }, store);
-  assert.equal(dirname(preview.path), dir, "the real-data Practice Board preview goes beside the store's own practice.db (#124)");
+  const preview = await pagesPreview({ page: "Work Board", data: "real" }, store);
+  assert.equal(dirname(preview.path), dir, "the real-data Work Board preview goes beside the store's own practice.db (#124)");
 
   const { contact_id } = await person(store, "Client Person");
   const firm = await contacts.upsert_contact(store, { entity: "organization", name: "Client Co" });

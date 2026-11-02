@@ -118,16 +118,16 @@ test("a real-data preview of a matter page is the page as the write builds it, o
   await assert.rejects(preview({ page: "Arguments", filing_id: 9 }), /no Arguments page for Milestone 9/);
 });
 
-test("a real-data Practice Board preview is written beside practice.db", async (t) => {
+test("a real-data Work Board preview is written beside practice.db", async (t) => {
   const { context, practicePath } = await practiceContext(t);
   const saved = process.env.COCLERK_DB_PATH;
   process.env.COCLERK_DB_PATH = practicePath;
   t.after(() => (saved === undefined ? delete process.env.COCLERK_DB_PATH : (process.env.COCLERK_DB_PATH = saved)));
-  const { path } = await callTool(context, "pages__preview", { page: "Practice Board", data: "real", overrides: cssOverride("Practice Board") });
-  assert.equal(path, join(dirname(practicePath), "Practice Board preview 1.html"));
+  const { path } = await callTool(context, "pages__preview", { page: "Work Board", data: "real", overrides: cssOverride("Work Board") });
+  assert.equal(path, join(dirname(practicePath), "Work Board preview 1.html"));
   assert.ok(readFileSync(path, "utf-8").includes(MARK));
   assert.ok(dataLine(readFileSync(path, "utf-8"), "PRACTICE_BOARD").panels);
-  await assert.rejects(callTool(context, "pages__preview", { page: "Practice Board", data: "real", filing_id: 1 }), /whole practice/);
+  await assert.rejects(callTool(context, "pages__preview", { page: "Work Board", data: "real", filing_id: 1 }), /whole practice/);
 });
 
 test("a real-data housekeeping preview draws the run's proposal and approval, in the run's folder", async (t) => {

@@ -46,7 +46,7 @@ export const GENERAL_DOCUMENT_TYPE = "General_writing";
 /** The board files an older render wrote beside its mockups or presentation copies: the page under
  * both its names, the support files it was split into before 2026-09-15, and the Markdown board.
  * `Job Board.html` is the page's name before 2026-10-28. */
-const OLD_BOARD_FILES = ["Job Board.html", "Milestone.html", "Practice Board.html", "Practice Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
+const OLD_BOARD_FILES = ["Job Board.html", "Milestone.html", "Work Board.html", "Work Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
 
 /** The folder the move puts anything of an older mockups tree that belongs to no Writing. */
 const OLDER_MOCKUPS = "Older mockups";

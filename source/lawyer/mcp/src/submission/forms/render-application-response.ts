@@ -263,7 +263,7 @@ export function renderApplicationResponse(ctx: RenderContext): string {
   );
   lines.push("");
   // The form's own blank fields: each 🧩 is an open item on this filing, named by its field
-  // (Goal card design §2.7), and keyed on that field so the Practice Board keeps each its own item (#1219).
+  // (Goal card design §2.7), and keyed on that field so the Work Board keeps each its own item (#1219).
   const clientName = client?.name ?? gapMarker("gap");
   const applicantName = applicant?.name ?? gapMarker("gap");
   // B.C. Reg. 105/2026: the notice is served unfiled, so the form names it by the date it bears.

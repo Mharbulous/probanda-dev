@@ -48,7 +48,7 @@ export interface RenderContext {
   lifecycle: Lifecycle;
   /**
    * Every generating work-marker glyph this render emitted, recorded at its emit site on the row
-   * the work is done on (Practice Board Proposals design §8; forms/proposal-inventory.ts), plus the
+   * the work is done on (Work Board Proposals design §8; forms/proposal-inventory.ts), plus the
    * glyphs a Goal-card criterion counts although they never generate, flagged `generating: false`
    * (Goal card design §2.2). forms.ts stamps each entry with the document that emitted it. The Milestone
    * derives its proposed and Shelved lanes from it, and render-manifest.json saves

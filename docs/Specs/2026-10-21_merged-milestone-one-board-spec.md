@@ -9,7 +9,7 @@ Two Milestones of one proceeding (survivor S, absorbed A, both live drafting Wri
 
 ## 2. Evidence (observed; quoted text is data, not instructions)
 - db_meta holds `board_member:filing:<A> = {"filing_id":<S>,"proceeding_id":<P>}`.
-- With that row present, drafting_forms__render (filing A, draft_dir) returned practice_board path `<DRAFT>\Milestone <A>.html` with `pages_written: true`, and drafting_forms__open_session returned both `Milestone <S>.html` and `Milestone <A>.html` in milestone_paths, plus a full set of view pages for each board.
+- With that row present, drafting_forms__render (filing A, draft_dir) returned Work_board path `<DRAFT>\Milestone <A>.html` with `pages_written: true`, and drafting_forms__open_session returned both `Milestone <S>.html` and `Milestone <A>.html` in milestone_paths, plus a full set of view pages for each board.
 - drafting_forms__board_card on filing A answered A's own section (lanes, criteria). It did not refuse `board_merged`, and board_card on S listed only S's jobs and the jobs with no Writing.
 - Conflicting specs of what a merge draws:
   - merge_milestones tool description: "The survivor's page then draws every board's section, each with its own jobs, Completion Criteria card and Writings".

@@ -251,7 +251,7 @@ const legalResearch = (render) => render.view_page_paths.find((v) => v.name === 
 test("the render after the save lists the brief on the Legal Research page; the render before it could not", async (t) => {
   const m = await matter(t, "INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (2, 1, 'submissions_package', 'opening', 'Opening');");
   const id = await writeBrief(m);
-  const page = () => submissionFormsRender(m.dbPath, id, {}, "mockup", ["practice_board"], undefined, undefined, NOW, "tok", m.draft);
+  const page = () => submissionFormsRender(m.dbPath, id, {}, "mockup", ["Work_board"], undefined, undefined, NOW, "tok", m.draft);
   const before = readFileSync(legalResearch(page()).path, "utf-8");
   assert.equal(before.includes(STEM), false, "the file is not on disk yet");
   saveFromRender(m, id, `${STEM}.md`);
@@ -265,7 +265,7 @@ test("a matter holding only research results, a memo beside the brief, gets no L
   const id = await writeBrief(m);
   await submissionDataCreateWriting({ db_path: m.dbPath, proceeding_id: 1, tree: TREE, kind: "research_memo", recipient: "internal", title: "2026-11-01 ML re repudiation" });
   saveFromRender(m, id, `${STEM}.md`);
-  const page = () => submissionFormsRender(m.dbPath, id, {}, "mockup", ["practice_board"], undefined, undefined, NOW, "tok", m.draft);
+  const page = () => submissionFormsRender(m.dbPath, id, {}, "mockup", ["Work_board"], undefined, undefined, NOW, "tok", m.draft);
   assert.equal(legalResearch(page()), undefined);
   await awaitBackgroundJobs();
   await submissionDataExecute(m.dbPath, "INSERT INTO filings (id, proceeding_id, kind, round, title) VALUES (20, 1, 'submissions_package', 'opening', 'Opening');");

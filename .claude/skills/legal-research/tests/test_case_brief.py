@@ -182,7 +182,7 @@ class Presenting(unittest.TestCase):
 
     def test_the_page_is_named_only_when_it_exists(self):
         template = flat(read("shared", "case-brief-template.md"))
-        self.assertIn('Once the file is saved, `drafting_forms__render` again with the same Writing, `documents: ["practice_board"]` and `draft_dir`', template)
+        self.assertIn('Once the file is saved, `drafting_forms__render` again with the same Writing, `documents: ["Work_board"]` and `draft_dir`', template)
         self.assertLess(template.index("`research_filing__save_answer` with that document's"), template.index("**Page.**"))
         skill = flat(read("case-brief", "SKILL.md"))
         self.assertIn("When it returned none, the matter holds nothing but research results", skill)

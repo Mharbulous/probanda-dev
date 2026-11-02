@@ -32,7 +32,7 @@ const filingsOf = (dbPath) => query(dbPath, "SELECT id, proceeding_id, kind, tit
 const createBoard = (dbPath, args = {}) => callTool({}, CREATE, { db_path: dbPath, proceeding_id: 1, title: TITLE, ...args });
 const render = (dbPath, filingId, { mode = "mockup", presentationDir, draftDir } = {}) =>
   submissionFormsRender(dbPath, filingId, CLIENT, mode, undefined, undefined, presentationDir, PINNED, "tok-1", draftDir);
-const boardOf = (result) => result.documents.find((d) => d.document_type === "practice_board");
+const boardOf = (result) => result.documents.find((d) => d.document_type === "Work_board");
 
 function matterBoard(path) {
   const prefix = "window.MATTER_BOARD = ";
@@ -143,7 +143,7 @@ test("without draft_dir the render returns the board alone and writes nothing", 
   assert.equal(result.filing_retired, undefined);
   assert.equal(result.session_token, "tok-1");
   assert.equal(result.rendered_at, PINNED);
-  assert.deepEqual(result.documents.map((d) => d.document_type), ["practice_board"], "no mockup");
+  assert.deepEqual(result.documents.map((d) => d.document_type), ["Work_board"], "no mockup");
   const board = boardOf(result);
   assert.match(board.board_summary, /^# Milestone — Matter L8470 · Client Larchmont \(1\) · Rev \d+\nTo Do: This matter's to-dos were not read\.\nGoal: Goal not set \(none\)\nState: Open$/);
   assert.equal(board.pages_written, false);
@@ -163,7 +163,7 @@ test("with draft_dir the render writes the board's page among the matter's pages
   const page = join(f.draft, `Milestone ${f.boardId}.html`);
   const board = boardOf(result);
   assert.equal(result.milestone_only, true);
-  assert.deepEqual(result.documents.map((d) => d.document_type), ["practice_board"]);
+  assert.deepEqual(result.documents.map((d) => d.document_type), ["Work_board"]);
   assert.equal(board.path, page);
   assert.equal(board.file_name, `Milestone ${f.boardId}.html`);
   assert.equal(board.pages_written, true);
@@ -333,7 +333,7 @@ test("a closed board reads Closed, has no page, and is listed under Retired", as
   assert.equal(closed.milestone_only, true);
   assert.equal(closed.filing_retired, true);
   assert.match(closed.note, new RegExp(`^Milestone ${f.boardId} was closed on 2026-10-11, so it has no page\\.`));
-  assert.deepEqual(closed.documents.map((d) => d.document_type), ["practice_board"]);
+  assert.deepEqual(closed.documents.map((d) => d.document_type), ["Work_board"]);
   assert.match(boardOf(closed).board_summary, /^State: Closed 2026-10-11$/m);
   assert.equal(boardOf(closed).path, undefined, "a closed board has no page");
   assert.equal(boardOf(closed).pages_written, true, "the matter's other pages are rewritten");

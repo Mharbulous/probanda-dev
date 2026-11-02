@@ -106,7 +106,7 @@ async function twoFilingBoard(f) {
   await seedTickets(f.dbPath);
   await seedProposalCases(f.dbPath);
   const { draft } = draftFolder(f);
-  const result = renderInto(f, 1, draft, FIRST, ["practice_board"]);
+  const result = renderInto(f, 1, draft, FIRST, ["Work_board"]);
   return { draft, result };
 }
 
@@ -124,7 +124,7 @@ test("two live filings in one proceeding get a Milestone page each, each with on
     }
     assert.equal(sectionOf(draft, 1).meta.filing_id, 1);
     assert.equal(sectionOf(draft, 2).meta.filing_id, 2);
-    const board = result.documents.find((d) => d.document_type === "practice_board");
+    const board = result.documents.find((d) => d.document_type === "Work_board");
     assert.equal(board.path, join(draft, OPENING_PAGE), "the render returns its own filing's page");
     assert.equal(board.file_name, "Milestone.html");
   } finally {
@@ -175,7 +175,7 @@ test("a retitle leaves the filing's Milestone page at its path and moves nothing
   const retitled = render(SECOND);
 
   assert.deepEqual(milestonePages(m.draft), [OPENING_PAGE]);
-  assert.equal(retitled.documents.find((d) => d.document_type === "practice_board").path, join(m.draft, OPENING_PAGE));
+  assert.equal(retitled.documents.find((d) => d.document_type === "Work_board").path, join(m.draft, OPENING_PAGE));
   assert.equal(sectionOf(m.draft, 1).meta.filing, "Amended Opening Submissions");
   assert.equal(retitled.moved_to_trash, undefined, "nothing moved to TRASH");
   assert.equal(existsSync(join(m.matterRoot, "TRASH")), false, "no TRASH folder");
@@ -307,8 +307,8 @@ test("session entry and render report board_changed against the state sidecar, w
   await seedOneFiling(m.dbPath);
   const context = await practiceContext(t);
   const render = (opened) =>
-    callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["practice_board"] });
-  const boardOf = (rendered) => rendered.documents.find((d) => d.document_type === "practice_board");
+    callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["Work_board"] });
+  const boardOf = (rendered) => rendered.documents.find((d) => d.document_type === "Work_board");
 
   const first = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
   assert.equal(first.milestone_path.toLowerCase(), join(m.draft, OPENING_PAGE).toLowerCase());
@@ -357,8 +357,8 @@ test("render reports board_moves: a job taken, a holder change that moves no job
   const opened = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
   const board = async (sql) => {
     if (sql) await submissionDataExecute(m.dbPath, sql);
-    const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["practice_board"] });
-    return rendered.documents.find((d) => d.document_type === "practice_board");
+    const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["Work_board"] });
+    return rendered.documents.find((d) => d.document_type === "Work_board");
   };
 
   await board();
@@ -386,8 +386,8 @@ test("a release another session renders between two of this session's renders st
   const y = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
   assert.notEqual(x.session_token, y.session_token);
   const board = async (opened) => {
-    const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["practice_board"] });
-    return rendered.documents.find((d) => d.document_type === "practice_board");
+    const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["Work_board"] });
+    return rendered.documents.find((d) => d.document_type === "Work_board");
   };
 
   const assigned = await callTool(context, "drafting_data__assign_job", { db_path: m.dbPath, ticket_id: 1, session_token: x.session_token });
@@ -555,10 +555,10 @@ test("linked deadlines are dateless Goal criteria to a session; every date is on
   assert.ok(jobs.some((job) => job.rendered.includes(2)), `the job rendered filing 2: ${JSON.stringify(jobs)}`);
   onPage("after the background job");
 
-  const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["practice_board"] });
+  const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["Work_board"] });
   onPage("after the render");
   absent(JSON.stringify(rendered), "the render response");
-  const board = rendered.documents.find((d) => d.document_type === "practice_board");
+  const board = rendered.documents.find((d) => d.document_type === "Work_board");
   summaryDeadlines(board.board_summary);
   assert.equal(board.board_changed, false, "the render built the section the opening recorded, deadline criteria included");
 
@@ -701,7 +701,7 @@ test("a malformed state sidecar reads as no section recorded", async () => {
     renderInto(f, 1, draft, FIRST);
     writeFileSync(join(draft, "Drafting records", "matter-pages-state.json"), "{ not json", "utf-8");
 
-    const board = renderInto(f, 1, draft, SECOND, ["practice_board"]).documents.find((d) => d.document_type === "practice_board");
+    const board = renderInto(f, 1, draft, SECOND, ["Work_board"]).documents.find((d) => d.document_type === "Work_board");
     assert.equal(board.board_changed, true);
     assert.equal(board.board_moves, undefined);
   } finally {
@@ -722,8 +722,8 @@ test("the fast-open render returns the short board_summary, and no lane, board d
     await seedProposalCases(f.dbPath);
     const { draft } = draftFolder(f);
 
-    const result = renderInto(f, 1, draft, FIRST, ["practice_board"]);
-    const board = result.documents.find((d) => d.document_type === "practice_board");
+    const result = renderInto(f, 1, draft, FIRST, ["Work_board"]);
+    const board = result.documents.find((d) => d.document_type === "Work_board");
     assert.deepEqual(Object.keys(board), ["document_type", "path", "file_name", "board_summary", "board_changed", "pages_written"]);
     assert.equal(board.path, join(draft, OPENING_PAGE));
     assertMatchesGolden("board-summary.md", board.board_summary + "\n");
@@ -756,8 +756,8 @@ test("board_summary's header prints no bare Matter or Client part when the matte
     await seedVaniacProceeding(f.dbPath);
     const { draft } = draftFolder(f);
 
-    const result = submissionFormsRender(f.dbPath, 1, { clientName: "", clientNo: "", matterNo: "" }, "mockup", ["practice_board"], undefined, undefined, FIRST, "tok", draft);
-    const board = result.documents.find((d) => d.document_type === "practice_board");
+    const result = submissionFormsRender(f.dbPath, 1, { clientName: "", clientNo: "", matterNo: "" }, "mockup", ["Work_board"], undefined, undefined, FIRST, "tok", draft);
+    const board = result.documents.find((d) => d.document_type === "Work_board");
     assert.equal(board.board_summary.split("\n")[0], "# Milestone — Rev 1");
   } finally {
     f.cleanup();
@@ -773,7 +773,7 @@ async function seededBoard(f, extraSql) {
   await seedProposalCases(f.dbPath);
   await submissionDataExecute(f.dbPath, HELD_AT_FIRST);
   if (extraSql) await submissionDataExecute(f.dbPath, extraSql);
-  return renderInto(f, 1, undefined, FIRST, ["practice_board"]);
+  return renderInto(f, 1, undefined, FIRST, ["Work_board"]);
 }
 
 /** Moves the seed's In progress job #4's last activity to 10 minutes before FIRST, so its lock has
@@ -884,7 +884,7 @@ test("a job's card on the Milestone page draws its steps as its plan, with no in
     await seedTickets(f.dbPath);
     await submissionDataExecute(f.dbPath, HELD_AT_FIRST);
     const { draft } = draftFolder(f);
-    const board = renderInto(f, 1, draft, FIRST, ["practice_board"]).documents.find((d) => d.document_type === "practice_board");
+    const board = renderInto(f, 1, draft, FIRST, ["Work_board"]).documents.find((d) => d.document_type === "Work_board");
     const cards = drawPage(board.path).main.all().filter((n) => n.tag === "details");
     const card = (id) => cards.find((n) => n.id === `ticket-${id}`).all();
     const terms = (nodes) => nodes.filter((n) => n.tag === "dt").map((n) => n.textContent);
@@ -973,7 +973,7 @@ test("the live lane prints Ready, In Progress, Bring Forward, Blocked, Completed
     assert.match(lines.find((l) => l.startsWith("## Proposed (")), /^## Proposed \([1-9]\d*\)$/, "the unheld Proposals are counted");
 
     const { draft } = draftFolder(f);
-    const board = renderInto(f, 1, draft, FIRST, ["practice_board"]).documents.find((d) => d.document_type === "practice_board");
+    const board = renderInto(f, 1, draft, FIRST, ["Work_board"]).documents.find((d) => d.document_type === "Work_board");
     const sections = drawPage(board.path).main.all().filter((n) => n.tag === "section").map((n) => n.id);
     assert.deepEqual(sections, ["ready", "in-progress", "bring-forward", "waiting-on", "completed", "rejected-angles", "superseded"]);
     assert.equal(readFileSync(board.path, "utf-8").includes('<section id="proposed">'), false);
@@ -1246,7 +1246,7 @@ test("the live lane of a board shaped like the measured one is 3 KB or less, and
     ].join("\n");
     await submissionDataExecute(f.dbPath, sql);
 
-    const summary = renderInto(f, 1, undefined, FIRST, ["practice_board"]).documents.find((d) => d.document_type === "practice_board").board_summary;
+    const summary = renderInto(f, 1, undefined, FIRST, ["Work_board"]).documents.find((d) => d.document_type === "Work_board").board_summary;
     const live = cardOf(f, { lanes: ["live"] });
     t.diagnostic(`board_summary ${summary.length} chars; live lane ${live.length} chars`);
     assert.match(live, /^## In Progress \(7\)$/m);
@@ -1294,7 +1294,7 @@ test("a page write moves every old page file the generator wrote into TRASH and 
     [join(m.draft, "Loose Threads - Milestone - proceeding 3.html")]: view,
   };
   const unmarked = {
-    [join(m.draft, "Practice Board.html")]: "the practitioner's own board\n",
+    [join(m.draft, "Work Board.html")]: "the practitioner's own board\n",
     [join(m.draft, "notes.html")]: "<p>notes</p>\n",
     [join(m.caseDataDir, "Milestone.html")]: board,
   };

@@ -101,7 +101,7 @@ async function fixture(t) {
 }
 
 const goalsCard = (m) => submissionFormsBoardCard({ db_path: m.dbPath, filing_id: 1, lanes: ["goals"] }, ASHBOURNE, NOW).card;
-const goalLine = (m) => submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", ["practice_board"], undefined, undefined, NOW, TOKEN, m.draft).documents.find((d) => d.document_type === "practice_board").board_summary.split("\n").find((l) => l.startsWith("Goal:"));
+const goalLine = (m) => submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", ["Work_board"], undefined, undefined, NOW, TOKEN, m.draft).documents.find((d) => d.document_type === "Work_board").board_summary.split("\n").find((l) => l.startsWith("Goal:"));
 
 test("the merge keeps the lower-id Writing's board, writes one membership row and keeps both statements of goals as history, drawn nowhere once the board holds one goal", async (t) => {
   const m = await fixture(t);
@@ -242,7 +242,7 @@ test("one page draws the merged boards as one board, each job once, with one set
   assert.ok(result.view_page_paths.every((p) => dirname(p.path) !== absorbed), "no view page path is in the absorbed Writing's folder");
   const moved = result.moved_to_trash.map((x) => x.from.toLowerCase()).sort();
   assert.deepEqual(moved, ["Arguments", "Legal Research", "Milestone", "Material Facts", "Procedural History"].map((n) => join(absorbed, `${n}.html`).toLowerCase()).sort());
-  const board = result.documents.find((d) => d.document_type === "practice_board");
+  const board = result.documents.find((d) => d.document_type === "Work_board");
   assert.equal(board.path, pageOf(m, 1), "the absorbed Writing's render returns its survivor's page");
 
   const page = readBoardData(pageOf(m, 1));
@@ -528,7 +528,7 @@ test("board_card reads the merged board by its survivor and refuses the absorbed
   );
   assert.match(submissionFormsBoardCard({ db_path: m.dbPath, filing_id: 1, jobs: [2] }, ASHBOURNE, NOW).card, /^- Job #2 Settle the counterclaim/, "a job on the other Writing is on this board");
 
-  const summary = (filingId) => render(m, filingId).documents.find((d) => d.document_type === "practice_board").board_summary;
+  const summary = (filingId) => render(m, filingId).documents.find((d) => d.document_type === "Work_board").board_summary;
   assert.equal(summary(3), summary(1), "the render's summary is the board's, whichever Writing rendered");
 });
 

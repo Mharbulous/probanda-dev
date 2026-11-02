@@ -256,7 +256,7 @@ test("render_mode 'filed' strips every human-side element and writes nothing to 
     // No disk write at all in filed mode -- not even the mockups root.
     assert.deepEqual(readdirSync(f.draft), [], "expected render_mode 'filed' to write nothing to disk");
 
-    assert.ok(!result.documents.some((d) => d.document_type === "practice_board"), "expected the Milestone genuinely absent from filed-mode output, not merely stripped");
+    assert.ok(!result.documents.some((d) => d.document_type === "Work_board"), "expected the Milestone genuinely absent from filed-mode output, not merely stripped");
 
     assertFiledFaceDocumentsClean(result.documents);
 
@@ -759,7 +759,7 @@ test("render returns each document's markdown, byte-identical to the file it wro
     assert.equal(result.documents.length, 7);
     for (const doc of result.documents) {
       assert.ok(doc.document_type, "expected every returned document to name its type");
-      if (doc.document_type === "practice_board") {
+      if (doc.document_type === "Work_board") {
         assert.equal(doc.path, undefined, "no page is written without a draft folder");
         assert.equal(doc.board_summary, undefined, "the board is not named, so no summary");
         continue;
@@ -858,7 +858,7 @@ test("bootstrap and render report per-phase timings", async () => {
     };
 
     const render = submissionFormsRender(f.dbPath, 1, client);
-    const files = render.documents.filter((d) => d.document_type !== "practice_board").map((d) => d.file_name);
+    const files = render.documents.filter((d) => d.document_type !== "Work_board").map((d) => d.file_name);
     const perDocument = [...new Set(files.map((name) => (name.startsWith("Witness Statement") ? "render Witness statements" : `render ${name}`)))];
     assertTimings(render.timings, ["schema_check", "load_filing", ...perDocument, ...files.map((name) => `write ${name}`), "remove retired board files", "board_section", "total"]);
 

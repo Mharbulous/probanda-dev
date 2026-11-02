@@ -109,7 +109,7 @@ Before any `jobs-*.md` file, read `references/jobs-common.md` (timestamps, sessi
 | Bring forward or clear | A hold date named; never offered | `references/jobs-closeout.md` §10b |
 | Move to another board | Asked; never offered | `references/jobs-closeout.md` §10c |
 | Merge two boards (`drafting_data__merge_milestones`) | Asked; never offered | `references/jobs-closeout.md` §10d |
-| Clear retired Practice Board keys | A non-null `legacy_workboard_artifact_url` | `references/jobs-closeout.md` §13 |
+| Clear retired Work Board keys | A non-null `legacy_workboard_artifact_url` | `references/jobs-closeout.md` §13 |
 | Gate job check | §9 reads `completed`, or the gate runs | `references/jobs-gate.md` §14 |
 | Pre-send gate job | `record_sent` refuses `held` | `references/jobs-gate.md` §14a |
 | Integrity checks | Setting `filing_id`, an edge or `charted_into` | `references/jobs-integrity.md` §11 |

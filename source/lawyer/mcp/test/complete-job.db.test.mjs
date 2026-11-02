@@ -84,7 +84,7 @@ test("completing a held job supersedes its queued partner, leaves its wip partne
      INSERT INTO ticket_conflicts (a_id, b_id) VALUES (1, 2), (1, 3);`
   );
   // Record the section with job 1 in progress, as the session's own render after assigning does.
-  await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["practice_board"] });
+  await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["Work_board"] });
   const page = join(m.draft, OPENING_PAGE);
   unlinkSync(page);
 
@@ -112,7 +112,7 @@ test("completing a held job supersedes its queued partner, leaves its wip partne
 test("a job with no filing_id in a proceeding that has a filing rewrites the Milestone through that filing's render", async (t) => {
   // A scrutiny review job is created with filing_id NULL and shows on every filing's board.
   const { m, context, opened, complete } = await heldJob(t, "", "NULL");
-  await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["practice_board"] });
+  await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["Work_board"] });
 
   const result = await complete();
 
@@ -192,13 +192,13 @@ test("an omitted draft_dir is refused by input validation, writing nothing", asy
 test("render's Milestone reports pages_written: false without draft_dir, true with it", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);
-  const boardOf = (rendered) => rendered.documents.find((d) => d.document_type === "practice_board");
+  const boardOf = (rendered) => rendered.documents.find((d) => d.document_type === "Work_board");
 
-  const inline = boardOf(submissionFormsRender(m.dbPath, 1, {}, "mockup", ["practice_board"]));
+  const inline = boardOf(submissionFormsRender(m.dbPath, 1, {}, "mockup", ["Work_board"]));
   assert.equal(inline.pages_written, false);
   assert.equal(inline.board_changed, undefined);
 
-  const written = boardOf(submissionFormsRender(m.dbPath, 1, {}, "mockup", ["practice_board"], undefined, undefined, undefined, undefined, m.draft));
+  const written = boardOf(submissionFormsRender(m.dbPath, 1, {}, "mockup", ["Work_board"], undefined, undefined, undefined, undefined, m.draft));
   assert.equal(written.pages_written, true);
 });
 

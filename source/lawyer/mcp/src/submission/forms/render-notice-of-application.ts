@@ -152,7 +152,7 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
   lines.push("");
   // The form's own blank fields: each 🧩 is an open item on this filing, named by its field, and ⬜
   // is the associate-judge instance the Orders criterion counts (Goal card design §2.6, §2.7).
-  // Each 🧩 is keyed on its field, not the filing: the Practice Board merges entries sharing a marker,
+  // Each 🧩 is keyed on its field, not the filing: the Work Board merges entries sharing a marker,
   // table and id, so a filing-keyed gap would swallow the rest (#1219).
   const applicantName = applicant?.name ?? gapMarker("gap");
   const servedNames = served.map((p) => p.name).join(", ") || gapMarker("gap");
@@ -374,7 +374,7 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
   // orders, pleadings, and witness statements are never checked for a
   // tendering witness/admission (dual-approved role scope, markers.ts).
   //
-  // Site 13 (Practice Board Proposals design §8) names this Part 4 document line as needing the
+  // Site 13 (Work Board Proposals design §8) names this Part 4 document line as needing the
   // collector, but nothing generating prints here today: the line carries spent admission rungs,
   // 👤 and 🏆, none of which generates a Proposal (design §4). 🎾, 🕹️, live-admission capture
   // and 🏷️ print only on the VanIAC Evidence Index -- Phase C defect 5, a known limit recorded

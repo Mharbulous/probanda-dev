@@ -1,4 +1,4 @@
-// practice_data__render_practice_board: writes the Practice Board (practice-board-shell.ts) beside
+// practice_data__render_practice_board: writes the Work Board (practice-board-shell.ts) beside
 // practice.db from the all-matters sweeps of active_deadlines and open_tasks, and returns its path and
 // panel counts, never a date. Each item is placed by its stored date against today's local date; no
 // deadline is derived. The sweeps' defaults already leave out met and dismissed deadlines, occurred
@@ -32,7 +32,7 @@ function localDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** The Practice Board's data as of `now`, which sets today, the horizon and the rendered time. */
+/** The Work Board's data as of `now`, which sets today, the horizon and the rendered time. */
 export async function buildPracticeBoardData(store: PracticeStore, now: Date): Promise<PracticeBoardData> {
   const today = localDate(now);
   const horizon = localDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + HORIZON_DAYS));
@@ -134,13 +134,13 @@ export async function render_practice_board(store: PracticeStore): Promise<Recor
 
   const file = join(dirname(resolvePracticeDbPath(store.env)), PRACTICE_BOARD_FILE);
   if (existsSync(file) && !readFileSync(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
-    throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Practice Board's marker, so this renderer did not write it`);
+    throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Work Board's marker, so this renderer did not write it`);
   }
   const code = writeStatusFile(file, renderPracticeBoardHtml(data));
   if (code !== null) throw new DataServerError(`could not write ${file}: ${code}`);
 
   return {
-    practice_board_path: file,
+    work_board_path: file,
     counts: {
       overdue: panels.overdue.length,
       due_today: panels.due_today.length,
