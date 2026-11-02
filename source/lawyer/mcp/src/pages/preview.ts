@@ -5,7 +5,7 @@
 // preview is composed by composeWithOverrides and drawn by the board's own render function.
 //
 // A fixture preview goes in the fixture preview folder (preview-file.ts), named as the fixture's own
-// page (its Writing is id 1). A real-data preview goes beside the page it previews: the Work Board's
+// page (its Writing is id 1). A real-data preview goes beside the page it previews: the Practice Board's
 // beside practice.db, a matter page's in the matter's draft folder, where the page write's sweep
 // leaves it (matter-page-files.ts PREVIEW_FILE). The real data is built exactly as the page write builds
 // it, and nothing is written but the preview. A real Loose Threads preview's buttons carry port 0 and
@@ -26,7 +26,7 @@ import type { PracticeStore } from "../practice/store.js";
 import { buildPracticeBoardData } from "../tools/practice/practice-board.js";
 import { MILESTONE_FIXTURE } from "../board-fixtures/milestone.js";
 import { LITIGATION_STRATEGY_FIXTURE } from "../board-fixtures/litigation-strategy.js";
-import { WORK_BOARD_FIXTURE } from "../board-fixtures/work-board.js";
+import { PRACTICE_BOARD_FIXTURE } from "../board-fixtures/work-board.js";
 import { ARGUMENTS_FIXTURE } from "../board-fixtures/arguments.js";
 import { LOOSE_THREADS_FIXTURE } from "../board-fixtures/loose-threads.js";
 import { MATERIAL_FACTS_FIXTURE } from "../board-fixtures/material-facts.js";
@@ -35,7 +35,7 @@ import { LEGAL_RESEARCH_FIXTURE } from "../board-fixtures/legal-research.js";
 import { nowStamp, resolveDraftDir } from "../submission/forms.js";
 import { LOOSE_IDEAS_PAGE, LOOSE_THREADS_FILE, LOOSE_THREADS_PAGE_NAME, type LooseIdeasData } from "../submission/forms/loose-ideas-page.js";
 import { LITIGATION_STRATEGY_TEMPLATE, MATTER_BOARD_FILE, renderMatterBoardHtml } from "../submission/forms/matter-board-shell.js";
-import { PRACTICE_BOARD_FILE, renderPracticeBoardHtml, WORK_BOARD_TEMPLATE } from "../submission/forms/practice-board-shell.js";
+import { PRACTICE_BOARD_FILE, renderPracticeBoardHtml, PRACTICE_BOARD_TEMPLATE } from "../submission/forms/practice-board-shell.js";
 import { fetchRevision } from "../submission/forms/query.js";
 import { MILESTONE_TEMPLATE, renderWorkBoardHtml } from "../submission/forms/workboard-shell.js";
 import { readMatterDates } from "../submission/matter-dates.js";
@@ -49,7 +49,7 @@ export const HOUSEKEEPING_PAGE = "Housekeeping approval";
 
 /** Every page's template set, by the page name the tools take. */
 export const PAGE_TEMPLATES: Readonly<Record<string, TemplateSet>> = {
-  "Work Board": WORK_BOARD_TEMPLATE,
+  "Practice Board": PRACTICE_BOARD_TEMPLATE,
   "Litigation Strategy": LITIGATION_STRATEGY_TEMPLATE,
   "Milestone": MILESTONE_TEMPLATE,
   ...Object.fromEntries([...VIEW_PAGES, LOOSE_IDEAS_PAGE].map((p) => [p.name, p.template])),
@@ -105,14 +105,14 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
       return { path: writePreview(dir, stem(viewPageFile(viewPage, FIXTURE_BOARD)), renderViewPageHtml(viewPage, meta, fixture), true) };
     }
     if (threads) return { path: writePreview(dir, page, renderViewPageHtml(threads, LOOSE_THREADS_FIXTURE.meta, LOOSE_THREADS_FIXTURE.data), true) };
-    if (page === "Work Board") return { path: writePreview(dir, stem(PRACTICE_BOARD_FILE), renderPracticeBoardHtml(WORK_BOARD_FIXTURE, composed), true) };
+    if (page === "Practice Board") return { path: writePreview(dir, stem(PRACTICE_BOARD_FILE), renderPracticeBoardHtml(PRACTICE_BOARD_FIXTURE, composed), true) };
     if (page === "Litigation Strategy") return { path: writePreview(dir, stem(MATTER_BOARD_FILE), renderMatterBoardHtml(LITIGATION_STRATEGY_FIXTURE, composed), true) };
     return { path: writePreview(dir, `Milestone ${FIXTURE_BOARD.filing_id}`, renderWorkBoardHtml(MILESTONE_FIXTURE, composed), true) };
   }
 
-  if (page === "Work Board") {
+  if (page === "Practice Board") {
     if (args.matter_root !== undefined || ids.filing_id !== undefined || ids.proceeding_id !== undefined) {
-      throw new ValidationError("the Work Board covers the whole practice: it takes no matter_root, filing_id or proceeding_id");
+      throw new ValidationError("the Practice Board covers the whole practice: it takes no matter_root, filing_id or proceeding_id");
     }
     const html = renderPracticeBoardHtml(await buildPracticeBoardData(store, new Date()), composed);
     return { path: writePreview(dirname(resolvePracticeDbPath(store.env)), stem(PRACTICE_BOARD_FILE), html, false) };

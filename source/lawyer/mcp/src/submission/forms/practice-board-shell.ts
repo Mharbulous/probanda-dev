@@ -1,4 +1,4 @@
-// The Work Board: Work Board.html, one self-contained file beside practice.db, showing the open work
+// The Practice Board: Practice Board.html, one self-contained file beside practice.db, showing the open work
 // of every matter in the practice (billable or not) in four panels: Overdue, Due today, Coming up,
 // then Other open work. Written only by practice_data__render_practice_board, which joins the deadline
 // lane, so no drafting session ever writes or presents it. Its internal name is practice_board, never
@@ -17,7 +17,7 @@ import workBoardCss from "../../templates/work-board/work-board.css.js";
 import workBoardHtml from "../../templates/work-board/work-board.html.js";
 import workBoardJs from "../../templates/work-board/work-board.js.js";
 
-export const PRACTICE_BOARD_FILE = "Work Board.html";
+export const PRACTICE_BOARD_FILE = "Practice Board.html";
 
 /** On the page's root element. The overwrite guard recognises this server's own page by it. */
 export const PRACTICE_BOARD_MARKER = "data-practice-board-shell";
@@ -52,7 +52,7 @@ export interface PracticeBoardData {
   excluded_test_matters: number;
 }
 
-export const WORK_BOARD_TEMPLATE: TemplateSet = {
+export const PRACTICE_BOARD_TEMPLATE: TemplateSet = {
   entry: "work-board.html",
   files: {
     "work-board.html": workBoardHtml,
@@ -62,7 +62,7 @@ export const WORK_BOARD_TEMPLATE: TemplateSet = {
   },
 };
 
-const PAGE = composeTemplate(WORK_BOARD_TEMPLATE.entry, WORK_BOARD_TEMPLATE.files);
+const PAGE = composeTemplate(PRACTICE_BOARD_TEMPLATE.entry, PRACTICE_BOARD_TEMPLATE.files);
 
 /** The data line starts at column 0 and every `<` is escaped, so no recorded text can close the script.
  * `page` is the composed template, a preview's own in place of the board's. */
