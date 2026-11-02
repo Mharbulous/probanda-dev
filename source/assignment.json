@@ -231,7 +231,7 @@
       "skills": [],
       "agents": [],
       "hooks": {},
-      "servers": ["state"],
+      "servers": [],
       "shared": false,
       "payload": [
         "LICENSE",
@@ -241,8 +241,7 @@
       ],
       "executables": [
         "scripts/te",
-        "scripts/te-hook",
-        "scripts/te-p1"
+        "scripts/te-hook"
       ]
     }
   }

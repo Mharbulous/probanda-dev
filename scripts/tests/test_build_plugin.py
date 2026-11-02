@@ -18,8 +18,7 @@ PLUGINS = ("lawyer", "researcher", "litigator", "solicitor", "file-manager", "ti
 BUNDLES = {"lawyer": ("contacts-calendars-email-mcp/dist/contacts-calendars-email-mcp.js", "mcp/dist/litigation-mcp.js"),
            "researcher": ("canlii-mcp/dist/canlii-mcp.js", "commons-mcp/dist/legal-commons-mcp.js"),
            "file-manager": ("files-mcp/dist/file-manager-mcp.js",),
-           "timekeeper": ("timecamp-mcp/dist/timecamp-mcp.js",),
-           "tokeneconomizer": ("state-mcp/dist/state-mcp.js",)}
+           "timekeeper": ("timecamp-mcp/dist/timecamp-mcp.js",)}
 
 
 def build(*args):

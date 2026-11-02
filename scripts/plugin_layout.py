@@ -40,8 +40,6 @@ SERVERS = {
     "contacts-calendars-email": {"dir": "contacts-calendars-email-mcp", "build": "source/lawyer/mcp",
                                  "entry": "source/lawyer/mcp/src/contacts-calendars-email-index.ts",
                                  "purity": True, "host_path": True},
-    "state": {"dir": "state-mcp", "build": "source/tokeneconomizer/state-mcp",
-              "entry": "source/tokeneconomizer/state-mcp/dist/state-mcp.js", "purity": True, "host_path": True},
 }
 SERVER_DIRS = {key: server["dir"] for key, server in SERVERS.items()}
 # Skills already free of Trade Secrets live under public/, the source of the public

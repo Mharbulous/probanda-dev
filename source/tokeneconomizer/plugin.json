@@ -1,7 +1,7 @@
 {
   "name": "tokeneconomizer",
   "displayName": "TokenEconomizer",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Experience-driven black-box cost control for coding agents, adapted for Claude Code and Claude Cowork: micro-skills (short repository facts learned from earlier sessions) injected at session start, and a guard that redirects a turn stuck in a failing loop. Tool pruning is off in this copy.",
   "author": {
     "name": "TokenEconomizer authors"
@@ -36,44 +36,6 @@
             "type": "command",
             "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 20
-          },
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/te-p1\"",
-            "timeout": 30
-          },
-          {
-            "type": "mcp_tool",
-            "server": "plugin:tokeneconomizer:state",
-            "tool": "probe_hit",
-            "timeout": 10,
-            "input": {
-              "form": "plugin-scoped",
-              "event": "${hook_event_name}",
-              "session": "${session_id}",
-              "cwd": "${cwd}"
-            }
-          },
-          {
-            "type": "mcp_tool",
-            "server": "remote-devices",
-            "tool": "plugin_tokeneconomizer_state__probe_hit",
-            "timeout": 10,
-            "input": {
-              "form": "remote-devices",
-              "event": "${hook_event_name}",
-              "session": "${session_id}",
-              "cwd": "${cwd}"
-            }
-          },
-          {
-            "type": "mcp_tool",
-            "server": "remote-devices",
-            "tool": "device_bash",
-            "timeout": 10,
-            "input": {
-              "command": "mkdir -p ~/mnt/te-cowork-test/te-runs/p1 && echo \"$(date -u +%FT%TZ) ${hook_event_name} ${session_id}\" >> ~/mnt/te-cowork-test/te-runs/p1/device-bash.txt"
-            }
           }
         ]
       }
@@ -107,39 +69,6 @@
             "type": "command",
             "command": "TE_LOOPGUARD_THRESHOLDS='{\"envelope_frozen\":38}' TE_TOOLPRUNE=off \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\"",
             "timeout": 10
-          },
-          {
-            "type": "mcp_tool",
-            "server": "plugin:tokeneconomizer:state",
-            "tool": "probe_hit",
-            "timeout": 10,
-            "input": {
-              "form": "plugin-scoped",
-              "event": "${hook_event_name}",
-              "session": "${session_id}",
-              "cwd": "${cwd}"
-            }
-          },
-          {
-            "type": "mcp_tool",
-            "server": "remote-devices",
-            "tool": "plugin_tokeneconomizer_state__probe_hit",
-            "timeout": 10,
-            "input": {
-              "form": "remote-devices",
-              "event": "${hook_event_name}",
-              "session": "${session_id}",
-              "cwd": "${cwd}"
-            }
-          },
-          {
-            "type": "mcp_tool",
-            "server": "remote-devices",
-            "tool": "device_bash",
-            "timeout": 10,
-            "input": {
-              "command": "mkdir -p ~/mnt/te-cowork-test/te-runs/p1 && echo \"$(date -u +%FT%TZ) ${hook_event_name} ${session_id}\" >> ~/mnt/te-cowork-test/te-runs/p1/device-bash.txt"
-            }
           }
         ]
       }

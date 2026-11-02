@@ -223,3 +223,21 @@ The prompt for the run, replacing the one above, so that each reply shows the co
 ~~~text
 te-p1 Using your container's own Bash tool, not the PC shell, do these two things. First, print the version line of every file matching /root/.claude/plugins/**/tokeneconomizer*/.claude-plugin/plugin.json. Second, print /root/.tokeneconomizer/p1/report.json exactly as it is. Then say whether your tool list has a tool whose name contains plugin_tokeneconomizer_state, and name those tools. Do nothing else.
 ~~~
+
+P1, the run (2026-11-01). Two new sessions sent the prompt above: both showed 0.3.1 and `mcp__remote-devices__plugin_tokeneconomizer_state__probe_hit`, so the run counts, and neither found a report. A third session, in the same project and folder, then ran the script by hand from a prompt Brahm sent.
+
+| Id | Result | Evidence |
+|---|---|---|
+| P1a | FAIL | `%APPDATA%\Probanda\te-p1\` doesn't exist on the PC, though the session's tool list held the server's tool |
+| P1b | FAIL | The same |
+| P1c | FAIL | `te-runs/p1` doesn't exist in the task folder on the PC |
+| P1d | FAIL | The container has no `/projects/*/` folder and no such mount, though `CLAUDE_PROJECT_UUID` is set |
+| P1e | FAIL, inferred, no marker test | The variable was unset in the hand run. The only mounts are the session's own disk, system mounts, read-only tool images and `/mnt/attach/outputs`, which R5 found empty in the next session. R5 also found nothing surviving in `/root/.claude/plugins/data` |
+| P1f | FAIL, inferred, no marker test | The plugin folder is on the same `/` disk, in a new container each session |
+| P1g | `github.com` answered 400, the other three `URLError` | One request got an answer through the session's proxy. This shows no store exists, and none was tried |
+
+The `te-p1` command hook wrote no report in either session, and its cause is unknown. By hand in the same container the script ran, exited 0 and wrote its report, its executable bit was set and `pwd` was `/home/claude`. `/root/.claude/projects` doesn't exist there, so no log could show why. Possible causes are a changed prompt or a different working folder in the hook. This doesn't change the results, since the stores are missing for any code in the container. No second hand run was needed: with no stores there was nothing for it to count.
+
+The container's environment names `GH_TOKEN` and `GITHUB_TOKEN`. A GitHub store would mean a plugin using a credential it wasn't given for that purpose, so it isn't tested or adopted.
+
+P1 verdict: no route passes. Option A is final. The test came out of the plugin in 0.4.0, and the server key `state` is retired.
