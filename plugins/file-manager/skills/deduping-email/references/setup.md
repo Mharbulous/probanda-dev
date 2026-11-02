@@ -30,24 +30,11 @@ Look in this order and use the first file that exists:
 
 None found: dispatch the `file-manager:mail-script-writer` agent (see SKILL.md step 3). It writes the script to `~/.probanda/deduping-email/scripts/`, with `dedupe_core.py` reached through `DEDUPE_CORE_DIR`.
 
-## 3. Credentials
+## 3. Prerequisites
 
-**Already stored.** On a Windows computer where Probanda's mail tools are signed in to the same server, the script uses that sign-in and nothing more is needed. Otherwise:
+Check `references/script-contract.md` §3 before the first run. Mail access is a prerequisite, and setting it up is out of scope (§2 there): this skill never creates accounts, app passwords or sign-ins, and never stores credentials.
 
-The user stores them once, on their own computer, in their own terminal: never in chat, never on a command line that history keeps.
-
-With `keyring` installed (`python -m pip install --user keyring`):
-
-```
-python -m keyring set deduping-email/<setup-id> MAIL_USER
-python -m keyring set deduping-email/<setup-id> <the sign-in name typed above>
-```
-
-Each command prompts for the value without showing it. The first stores the sign-in name, the second its password.
-
-Without `keyring`: set `MAIL_USER` and `MAIL_PASSWORD` in the environment of the terminal or app that runs Claude.
-
-The sign-in name is the account, not necessarily the mailbox address. **iCloud:** the Apple ID (often `@icloud.com`) and an app-specific password made at account.apple.com → Sign-In and Security → App-Specific Passwords, even when the mailbox is a custom domain. **Gmail:** the Google address and an app password (2-Step Verification on).
+The script finds an existing sign-in by itself (§7, "Credentials"): the environment, the mail sign-in Probanda's mail tools already keep on a Windows computer when it is for the same server, or the OS keyring. When the dry run reports `no credentials` or `sign-in refused`, stop and tell the user that mail access for this mailbox must be set up first, outside this skill. Nothing was scanned or moved.
 
 ## 4. Running it
 
