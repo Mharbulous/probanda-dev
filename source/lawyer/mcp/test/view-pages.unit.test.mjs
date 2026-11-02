@@ -56,11 +56,11 @@ const FIXTURES = {
  * the rest retaken on 2026-10-29 for 8be771b7, which renamed board.css's first comment ("Job Board" to "Milestone");
  * Arguments' retaken again on 2026-10-31 for e0065be, which added the session focus pointer to arguments.js;
  * Legal Research's taken on 2026-11-01, when it replaced Legal Memos, and retaken that day when Case Briefs listed each earlier file,
- * and again for the four tabs, the noting-up badges and the Legal Memos sections. */
+ * and again for the four tabs, the noting-up badges and the Legal Memos sections, and for the file link through the page API. */
 const PINS = {
   "Procedural History": "f8a29d4c7953ff408bd6323af74b2333a71966afb6ee5b550d550f6de594f912",
   "Material Facts": "3fb4f9f60ff8cc4ac8af3957423a83bacd8c38ba7d63194038a93376db4b0480",
-  "Legal Research": "c8fffc89603b92cd9990446ff0b25c3836f6c11eba44aaca91541d1f0eb73b90",
+  "Legal Research": "fb04eb9ff0a098b6dad878b63a9c62372bace83123371bec552771cf203d5713",
   Arguments: "ec2b611a4cd2fee78b152f97703713149c874d9a3c4ad21bbf503375cb29e5f7",
   "Loose Threads": "e9295aefed42761418487103bc2d8e8ddd7908fccb10780c6da8c04b149904f7",
 };

@@ -28,8 +28,8 @@
 
 import { existsSync, readdirSync, statSync, type Stats } from "node:fs";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 
+import { pageApiFileUrl } from "../../page-api/token.js";
 import { liveMembers, pageGroups } from "../matter-page-groups.js";
 import { rows } from "../query-rows.js";
 import { BoardIndex } from "./board-members.js";
@@ -65,8 +65,10 @@ export interface LegalMemo {
   earlier: number[];
   /** The current version's path from `6. LAW`, as ticket_answers stores it. */
   file: string;
-  /** The current version's file URL, which the page links to. */
+  /** The link that opens the current version (page-api/token.ts pageApiFileUrl), which the page shows. */
   url: string;
+  /** The current version's full path, which the page shows for copying when the link cannot open it. */
+  path: string;
   /** False when a job recorded the file but it is not in the law folder now. */
   on_disk: boolean;
 }
@@ -254,7 +256,8 @@ export function buildLegalMemosData(dbPath: string, jobs: BoardJob[], matterDir:
       version,
       earlier: numbers.slice(0, -1),
       file,
-      url: pathToFileURL(path).href,
+      url: pageApiFileUrl(path),
+      path,
       on_disk: mtime !== undefined,
     });
   }

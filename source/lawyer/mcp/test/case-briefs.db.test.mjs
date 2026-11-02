@@ -241,7 +241,7 @@ test("every file of one case is one row, latest first, the rest listed as earlie
       [1, "2026-10-01", `6. LAW\\${brief("2026-10-01", name)}`, true],
     ]
   );
-  assert.ok(b.earlier_files.every((f) => f.url.startsWith("file:")));
+  assert.ok(b.earlier_files.every((f) => f.url.startsWith("http://127.0.0.1:") && f.path.endsWith(".md")));
   const { card } = await callTool({}, "drafting_forms__board_card", { db_path: m.dbPath, filing_id: 1, lanes: ["briefs"], draft_dir: m.draft });
   assert.ok(card.includes(`2026-10-20 · v4 (earlier: v1, v2, v3) · 6. LAW\\${brief("2026-10-20", name)}`), card);
   assert.ok(card.includes(`  earlier v3 · 2026-10-05 · 6. LAW\\Other\\${brief("2026-10-05", name)}\n  earlier v2 · 2026-10-01 · 6. LAW\\${brief("2026-10-01", name, " v2")}\n`), card);
@@ -696,7 +696,7 @@ function fakeDocument() {
 
 test("the page links each earlier version of a case, and marks one no longer on disk", () => {
   const { board, document } = fakeDocument();
-  const entry = (version, name, on_disk) => ({ version, date: "2026-10-01", file: `6. LAW\\${name}`, url: `file:///m/${version}.md`, on_disk });
+  const entry = (version, name, on_disk) => ({ version, date: "2026-10-01", file: `6. LAW\\${name}`, url: `http://127.0.0.1:1/files/open?v=${version}`, path: `C:\\m\\${name}`, on_disk });
   const data = {
     ...LEGAL_RESEARCH_FIXTURE.data,
     briefs: {
@@ -721,8 +721,10 @@ test("the page links each earlier version of a case, and marks one no longer on 
   const dts = nodes.filter((n) => n.tag === "dt" && n.textContent === "Earlier versions");
   assert.ok(dts.length >= 1, "the row is drawn");
   const links = nodes.filter((n) => n.tag === "a").map((a) => [a.textContent, a.href]);
-  assert.ok(links.some(([t, h]) => t === "first.md" && h === "file:///m/1.md"), JSON.stringify(links));
-  assert.ok(links.some(([t, h]) => t === "third.md" && h === "file:///m/3.md"));
+  assert.ok(links.some(([t, h]) => t === "first.md" && h === "http://127.0.0.1:1/files/open?v=1"), JSON.stringify(links));
+  assert.ok(links.some(([t, h]) => t === "third.md" && h === "http://127.0.0.1:1/files/open?v=3"));
+  assert.ok(nodes.filter((n) => n.tag === "a" && n.href.includes("/files/open")).every((a) => a.target === "_blank"), "a link opens a new tab, so the page stays");
+  assert.ok(board.text().includes("C:\\m\\third.md"), "the full path is there to copy");
   assert.equal(links.some(([t]) => t === "second.md"), false, "a file that is gone has no link");
   assert.ok(board.text().includes("second.md (not in the law folder now)"));
 });

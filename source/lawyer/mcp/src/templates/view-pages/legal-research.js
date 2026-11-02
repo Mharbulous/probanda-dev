@@ -48,9 +48,26 @@
   function fileValue(m) {
     var file = m.file.split(/[\\/]/).pop();
     if (!m.on_disk) return file + " (not in the law folder now)";
+    var value = el("span", "file-open");
     var a = el("a", "", file);
     a.href = m.url;
-    return a;
+    a.target = "_blank";
+    a.rel = "noopener";
+    value.appendChild(a);
+    value.appendChild(el("span", "file-path", m.path));
+    var copy = el("button", "file-copy", "Copy path");
+    copy.type = "button";
+    // Where the clipboard is out of reach, the path above stays to select and copy by hand.
+    function selectByHand() { copy.textContent = "Select the path above to copy it"; }
+    copy.addEventListener("click", function () {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) { selectByHand(); return; }
+      navigator.clipboard.writeText(m.path).then(function () {
+        copy.textContent = "Copied";
+        setTimeout(function () { copy.textContent = "Copy path"; }, 1500);
+      }, selectByHand);
+    });
+    value.appendChild(copy);
+    return value;
   }
   function fileRow(dl, m) {
     row(dl, "File", fileValue(m), "");

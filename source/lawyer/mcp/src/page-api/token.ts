@@ -84,6 +84,25 @@ export function pageApiSuggestionTokenValid(token: string, recordId: string, env
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
 
+/** The token a page's link carries for opening one file: HMAC-SHA256(secret, "file\n" + path), hex. A link
+ * opens only the file a render named, and its prefix keeps it apart from every other token. */
+export function pageApiFileToken(path: string, env: NodeJS.ProcessEnv = process.env): string {
+  return createHmac("sha256", pageApiSecret(env)).update(`file\n${path}`).digest("hex");
+}
+
+/** Whether `token` is the one pageApiFileToken gives, compared in constant time. */
+export function pageApiFileTokenValid(token: string, path: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  const expected = Buffer.from(pageApiFileToken(path, env), "utf-8");
+  const given = Buffer.from(token, "utf-8");
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}
+
+/** The link that opens one file through the listener. A `file:///` link does nothing on a page shown from a
+ * web origin, such as a Cowork file card, and this one is a plain link, so it needs no cross-origin reply. */
+export function pageApiFileUrl(path: string, env: NodeJS.ProcessEnv = process.env): string {
+  return `http://127.0.0.1:${pageApiPort(env)}/files/open?path=${encodeURIComponent(path)}&token=${pageApiFileToken(path, env)}`;
+}
+
 /** The token a suggestion card (suggestions/card.ts) and its mockup page carry for that card's buttons:
  * HMAC-SHA256(secret, "card\n" + card id), hex. Its prefix keeps it apart from a withdraw token. */
 export function pageApiCardToken(cardId: string, env: NodeJS.ProcessEnv = process.env): string {

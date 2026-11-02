@@ -6,8 +6,10 @@
 // mockup page's "Not like this" (POST /cards/<card id>/<state|submit|resolve|dismiss|restore|mockup|
 // reject>, ../suggestions/card.ts), each completed here with no agent needed, so Submit and Dismiss
 // work after the session that showed the card has ended. It also serves a card's page (GET
-// /cards/<card id>?token=...), the link a card copy that cannot reach this listener offers. And one
-// read: the Arguments page asks which card a session pointed it at (POST /focus, ./focus.ts).
+// /cards/<card id>?token=...), the link a card copy that cannot reach this listener offers. It opens a
+// file in its default app (GET /files/open?path=...&token=..., ./open-file.ts), the Legal Research page's
+// link to a memo or brief. And one read: the Arguments page asks which card a session pointed it at
+// (POST /focus, ./focus.ts).
 //
 // index.ts starts it once the MCP transport is connected, and nothing it does reaches start():
 // every listener error is logged to stderr and the MCP server carries on. The listener and every
@@ -26,7 +28,7 @@
 
 import { existsSync } from "node:fs";
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
-import { isAbsolute } from "node:path";
+import { basename, isAbsolute } from "node:path";
 
 import { ValidationError } from "../errors.js";
 import { pluginVersion } from "../repo-root.js";
@@ -43,10 +45,11 @@ import {
   restoreCard,
   submitCard,
 } from "../suggestions/card.js";
-import { writePastSuggestionsPage } from "../suggestions/page.js";
+import { escapeHtml, writePastSuggestionsPage } from "../suggestions/page.js";
 import { type WithdrawOutcome, withdrawSuggestion } from "../suggestions/send.js";
 import { readFocus } from "./focus.js";
-import { pageApiCardTokenValid, pageApiPort, pageApiSuggestionTokenValid, pageApiTokenValid } from "./token.js";
+import { openFile } from "./open-file.js";
+import { pageApiCardTokenValid, pageApiFileTokenValid, pageApiPort, pageApiSuggestionTokenValid, pageApiTokenValid } from "./token.js";
 
 const MAX_BODY = 4 * 1024;
 /** A card's click carries the card's edited text. */
@@ -69,6 +72,8 @@ export interface PageApiOptions {
   log?: (line: string) => void;
   /** Test seam: what the card routes read records, stop words and placeholders from, and send through. */
   card?: Omit<CardDeps, "env">;
+  /** Test seam: what opens a file, so a test starts no app. */
+  openFile?: (path: string) => Promise<void>;
 }
 
 export interface PageApi {
@@ -152,6 +157,7 @@ async function handle(req: IncomingMessage, res: ServerResponse, env: NodeJS.Pro
     return json(req, res, 200, { ok: true, pid: process.pid, started_at: startedAt, plugin_version: pluginVersion() });
   }
   if (url.pathname === "/focus") return focus(req, res, env);
+  if (url.pathname === "/files/open") return openFileLink(req, res, env, url.searchParams.get("path"), url.searchParams.get("token"), options.openFile ?? openFile);
   const w = /^\/suggestions\/([0-9a-f-]{36})\/withdraw$/.exec(url.pathname);
   if (w) return withdraw(req, res, env, w[1]);
   const page = /^\/cards\/([0-9a-f-]{36})$/.exec(url.pathname);
@@ -265,6 +271,33 @@ async function cardPage(req: IncomingMessage, res: ServerResponse, env: NodeJS.P
     "Referrer-Policy": "no-referrer",
   });
   res.end(html);
+}
+
+/** A page's link to a file. It arrives as a new browser tab, so each answer is a short page in plain words.
+ * Only a path whose token a render wrote is opened (token.ts), and the reply names only the file. */
+async function openFileLink(req: IncomingMessage, res: ServerResponse, env: NodeJS.ProcessEnv, path: string | null, token: string | null, open: (path: string) => Promise<void>): Promise<void> {
+  if (req.method !== "GET") return json(req, res, 405, { error: "Method not allowed" });
+  if (path === null || token === null || !pageApiFileTokenValid(token, path, env)) {
+    return filePage(res, 403, "This link does not match a file. Ask a Claude session to show the page again.");
+  }
+  const name = basename(path);
+  if (!isAbsolute(path) || !existsSync(path)) return filePage(res, 404, `${name} is not in the law folder now.`);
+  try {
+    await open(path);
+  } catch {
+    return filePage(res, 500, `${name} could not be opened. Copy its path from the page to find it in File Explorer.`);
+  }
+  filePage(res, 200, `Opened ${name}. You can close this tab.`);
+}
+
+function filePage(res: ServerResponse, status: number, message: string): void {
+  res.writeHead(status, {
+    "Content-Type": "text/html; charset=utf-8",
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer",
+  });
+  res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Probanda</title></head><body><p>${escapeHtml(message)}</p></body></html>`);
 }
 
 type CardRoute = "state" | "submit" | "resolve" | "dismiss" | "restore" | "mockup" | "reject";

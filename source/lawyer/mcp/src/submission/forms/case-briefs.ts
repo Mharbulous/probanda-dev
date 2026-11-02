@@ -19,8 +19,8 @@
 // Everything shown is recorded, and only names and dates are read from disk. A brief's text is never read.
 
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 
+import { pageApiFileUrl } from "../../page-api/token.js";
 import { rows } from "../query-rows.js";
 import { hasColumn } from "../schema-capabilities.js";
 import { baseName, dateOf, isCaseBriefFile, lawDirOf, modified, scanLawFolder, titleOf, versionOf } from "./legal-memos.js";
@@ -38,8 +38,10 @@ export interface CaseBriefVersion {
   date: string | null;
   /** Its path from `6. LAW`. */
   file: string;
-  /** Its file URL, which the page links to. */
+  /** The link that opens it (page-api/token.ts pageApiFileUrl), which the page shows. */
   url: string;
+  /** Its full path, which the page shows for copying when the link cannot open it. */
+  path: string;
   /** False when a job recorded the file but it is not in the law folder now. */
   on_disk: boolean;
 }
@@ -267,7 +269,7 @@ export function buildCaseBriefsData(dbPath: string, filingIds: number[], matterD
         const { key, version } = versionOf(file);
         const named = dateOf(file, savedAt, mtime);
         const written = savedAt?.slice(0, 10) ?? mtime ?? named;
-        return { key, own: version, date: version > 1 ? written : named, written: written ?? "", file, url: pathToFileURL(path).href, on_disk: found !== undefined || mtime !== null };
+        return { key, own: version, date: version > 1 ? written : named, written: written ?? "", file, url: pageApiFileUrl(path), path, on_disk: found !== undefined || mtime !== null };
       });
     // Each stem's versions stay together in their own order. Stems go by when each last gained a version
     // (only a ` vN` is written after its name's date, since a save never overwrites), then by file date.
@@ -279,9 +281,9 @@ export function buildCaseBriefsData(dbPath: string, filingIds: number[], matterD
     const stemOf = (key: string) => stems.get(key) as { gained: string; written: string };
     versions.sort((a, b) => stemOf(a.key).gained.localeCompare(stemOf(b.key).gained) || stemOf(a.key).written.localeCompare(stemOf(b.key).written) || a.key.localeCompare(b.key) || a.own - b.own);
     let last = 0;
-    const numbered: CaseBriefVersion[] = versions.map(({ date, file, url, on_disk, own: number }) => {
+    const numbered: CaseBriefVersion[] = versions.map(({ date, file, url, path, on_disk, own: number }) => {
       last = Math.max(last + 1, number);
-      return { version: last, date, file, url, on_disk };
+      return { version: last, date, file, url, path, on_disk };
     });
     const current = numbered[numbered.length - 1];
     const older = numbered.slice(0, -1);

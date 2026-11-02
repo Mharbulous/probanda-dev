@@ -33,7 +33,7 @@ The page and `drafting_forms__board_card`'s `memos` lane both call `buildLegalMe
 - **Facts**: the `facts` rows the saving jobs' scope names (`facts:<id>`). A memo's text names nothing of the matter, so nothing is read from it.
 - **Status**: In Progress when any saving job is held, Completed when any is completed, Shelved when every saving job is shelved or superseded, else Started. A lapsed lock reads as released, as on the Milestone. No job when none saved it.
 - **Date**: the leading `YYYY-MM-DD` of the current version's name, else a `(YYYY-MM-DD)` in it, else when its job last saved it, else the file's modified date.
-- **Link**: an absolute `file:///` URL to the current version, shown only while the file is there. A relative link would resolve against a previewed card's web origin.
+- **Link**: a plain `http://127.0.0.1` link through the page API that opens the current version in its default app, shown only while the file is there, with the full path and a Copy button beneath it. Neither a relative link nor a `file:///` link works from a previewed card's web origin.
 
 Only file names and modified dates are read from disk. The `6. LAW` folder is matched case-insensitively. An unreadable folder or file (locked by a sync client, no permission) is skipped, so it never fails the page write.
 
@@ -56,5 +56,5 @@ The Milestone's vocabulary from `board.css`: status lanes as section panels with
 - **Recognition by name.** A memo named outside the three patterns, and saved by no job, is not listed. Every `.docx` not starting with a neutral citation counts as a Westlaw report, so a decision named with a leading date would be miscounted. A manifest field for the memo kind would end the guessing.
 - **Case-only differences.** Paths are compared case aside, so on a case-sensitive file system two folders that differ only by case merge their memos.
 - **The page script.** Its lanes, filters and empty line are not exercised by a test. The data it draws is.
-- **The link inside a file card.** Whether a `file:///` link opens from the Cowork card preview is untested.
+- **The link inside a file card.** A `file:///` link did nothing in the Cowork card preview (live check, 2026-11-01). The link now goes through the page API (`page-api/server.ts` `/files/open`), with the file's full path and a Copy button beneath it. It needs the Claude desktop app running.
 - **Raw Research's proposition view.** Removed with the page. Propositions stay readable through `/drafting-data`, and the Arguments page shows the ones linked to submissions.

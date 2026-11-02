@@ -25,3 +25,5 @@ article.prop{background:var(--card);border:2px solid var(--frame);border-radius:
 details.ticket .body dd ul{margin:0;padding-left:18px}
 details.ticket .body dd ul li{white-space:pre-wrap}
 details.ticket .body dd.none{color:var(--muted)}
+.file-path{display:block;margin:2px 0;font-size:12px;color:var(--muted);word-break:break-all;user-select:text}
+.file-copy{font:inherit;font-size:12px;padding:2px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}

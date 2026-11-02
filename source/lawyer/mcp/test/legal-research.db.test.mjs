@@ -177,7 +177,8 @@ test("a board lists its own jobs' memos, its proceeding's General jobs' memos an
   assert.equal(answer.file, "6. LAW\\Set off\\2026-10-01 research-lawyer answer v2.md");
   assert.equal(answer.folder, "Set off");
   assert.equal(answer.source, "research_memo");
-  assert.ok(answer.url.startsWith("file:///") && answer.url.endsWith("research-lawyer%20answer%20v2.md"), answer.url);
+  assert.ok(answer.url.startsWith("http://127.0.0.1:") && answer.url.includes("research-lawyer%20answer%20v2.md"), answer.url);
+  assert.ok(answer.path.endsWith("research-lawyer answer v2.md"), answer.path);
   assert.equal(answer.on_disk, true);
   assert.equal(memos[B].status, "completed");
   const noteUp = memos[NOTE_UP];
