@@ -1,4 +1,4 @@
-// build-stamp: 60a4a913b5a2
+// build-stamp: c529b24c32af
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "60a4a913b5a2";
+var BUILD_STAMP = false ? null : "c529b24c32af";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -106726,7 +106726,7 @@ var MATERIAL_FACTS = {
 import { dirname as dirname16 } from "node:path";
 
 // src/templates/view-pages/legal-research.css.ts
-var legal_research_css_default = ".tab-body{display:flex;flex-direction:column;gap:28px}\n.filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:0;font-size:13px}\n.filters label{display:flex;align-items:center;gap:6px;cursor:pointer}\n.filters select,.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink)}\n.filters input[type=search]{min-width:200px;flex:1 1 200px;max-width:360px}\n.counts{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.tab-body>p.hint{margin:0;font-size:13px;color:var(--muted)}\n.tab-body>p.empty,.tab-body section>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\nsection>p.note{margin:-6px 0 10px;font-size:12px;color:var(--muted)}\narticle.prop{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.prop>.text{font-weight:600;margin:0;white-space:pre-wrap}\n.prop>.text.none{font-weight:400;font-style:italic;color:var(--muted)}\n.prop>.linked,.prop>.dead{margin:0;font-size:12.5px;color:var(--muted)}\n.stmt{border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}\n.stmt .cite{margin:0}\n.stmt blockquote{margin:0;padding:2px 0 2px 12px;border-left:3px solid var(--line-strong);white-space:pre-wrap}\n.stmt .status{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}\n.prop.undecided>p,.stmt.undecided{color:var(--muted);opacity:.6}\n.prop.not_relevant>p,.stmt.not_relevant{color:var(--muted)}\n.prop.not_relevant>.text,.stmt.not_relevant .cite,.stmt.not_relevant blockquote{text-decoration:line-through;text-decoration-color:var(--muted)}\ndetails.ticket .body dd ul{margin:0;padding-left:18px}\ndetails.ticket .body dd ul li{white-space:pre-wrap}\ndetails.ticket .body dd.none{color:var(--muted)}";
+var legal_research_css_default = '.tab-body{display:flex;flex-direction:column;gap:28px}\n.tab-body [hidden]{display:none}\n.tab-body>button.back{align-self:flex-start;font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}\ndetails.ticket[data-status="completed"]{opacity:1}\n.stmt .noting{margin:0}\n.filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:0;font-size:13px}\n.filters label{display:flex;align-items:center;gap:6px;cursor:pointer}\n.filters select,.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink)}\n.filters input[type=search]{min-width:200px;flex:1 1 200px;max-width:360px}\n.counts{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.tab-body>p.hint{margin:0;font-size:13px;color:var(--muted)}\n.tab-body>p.empty,.tab-body section>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\nsection>p.note{margin:-6px 0 10px;font-size:12px;color:var(--muted)}\narticle.prop{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.prop>.text{font-weight:600;margin:0;white-space:pre-wrap}\n.prop>.text.none{font-weight:400;font-style:italic;color:var(--muted)}\n.prop>.linked,.prop>.dead{margin:0;font-size:12.5px;color:var(--muted)}\n.stmt{border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}\n.stmt .cite{margin:0}\n.stmt blockquote{margin:0;padding:2px 0 2px 12px;border-left:3px solid var(--line-strong);white-space:pre-wrap}\n.stmt .status{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}\n.prop.undecided>p,.stmt.undecided{color:var(--muted);opacity:.6}\n.prop.not_relevant>p,.stmt.not_relevant{color:var(--muted)}\n.prop.not_relevant>.text,.stmt.not_relevant .cite,.stmt.not_relevant blockquote{text-decoration:line-through;text-decoration-color:var(--muted)}\ndetails.ticket .body dd ul{margin:0;padding-left:18px}\ndetails.ticket .body dd ul li{white-space:pre-wrap}\ndetails.ticket .body dd.none{color:var(--muted)}';
 
 // src/templates/view-pages/legal-research.html.ts
 var legal_research_html_default = '@@include(view-head.html)@@\n<title>Legal Research</title>\n<style>\n@@include(board.css)@@\n\n\n@@include(view-folder.css)@@\n\n@@include(legal-research.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Legal Research</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(legal-research.js)@@\n</script>\n</body>\n</html>';
@@ -106802,7 +106802,7 @@ var legal_research_js_default = `(function () {
   function ticket(ref, title, chips, line) {
     var node = el("details", "ticket");
     var summary = el("summary");
-    summary.appendChild(el("span", "ref", ref));
+    if (ref) summary.appendChild(el("span", "ref", ref));
     summary.appendChild(el("span", "title", title));
     var progress = el("span", "progress");
     chips.forEach(function (c) { progress.appendChild(el("span", "chip " + c[1], c[0])); });
@@ -106814,6 +106814,89 @@ var legal_research_js_default = `(function () {
     body.appendChild(dl);
     node.appendChild(body);
     return { node: node, dl: dl };
+  }
+  function noteUpChip(status, prefix) {
+    return [(prefix || "") + status.label, status.noted ? "wip" : ""];
+  }
+
+  // One card open at a time: an open card hides the rest of its tab, and closing it brings the list back.
+  function soloList(tab, sections, apply) {
+    var back = el("button", "back", "Back to all");
+    back.type = "button";
+    back.hidden = true;
+    tab.insertBefore(back, tab.firstChild);
+    var open = null;
+    function show(card, sec) {
+      open = card;
+      Array.prototype.forEach.call(tab.children, function (child) { child.hidden = child !== sec.node && child !== back; });
+      sec.heading.hidden = true;
+      sec.cards.forEach(function (c) { c.node.hidden = c !== card; });
+    }
+    function restore() {
+      open = null;
+      Array.prototype.forEach.call(tab.children, function (child) { child.hidden = child === back; });
+      sections.forEach(function (sec) { sec.heading.hidden = false; });
+      apply();
+    }
+    back.addEventListener("click", function () {
+      var card = open;
+      restore();
+      if (card) card.node.open = false;
+    });
+    sections.forEach(function (sec) {
+      sec.cards.forEach(function (c) {
+        c.node.addEventListener("toggle", function () {
+          if (c.node.open) show(c, sec);
+          else if (open === c) restore();
+        });
+      });
+    });
+  }
+
+  // The list the Cases and Statutes tabs share: those relied on, then the rest, under one search.
+  function reliedList(tab, items, searchLabel, card) {
+    var search = searchBox(searchLabel);
+    var filters = el("div", "filters");
+    filters.appendChild(search);
+    tab.appendChild(filters);
+    var sections = [["Relied on by this Milestone's Writings", true], ["Not relied on by this Milestone's Writings", false]].map(function (s) {
+      var list = items.filter(function (c) { return c.relied_on === s[1]; });
+      var sec = el("section");
+      var h2 = el("h2", "", s[0] + " ");
+      var count = el("span", "count", "0");
+      h2.appendChild(count);
+      sec.appendChild(h2);
+      var stack = el("div", "stack");
+      var cards = list.map(function (c) {
+        var made = card(c);
+        stack.appendChild(made.node);
+        return made;
+      });
+      sec.appendChild(stack);
+      tab.appendChild(sec);
+      return { node: sec, heading: h2, count: count, cards: cards };
+    });
+    var none = el("p", "empty", "Nothing to show with this search.");
+    tab.appendChild(none);
+    function apply() {
+      var q = search.value.trim().toLowerCase();
+      var any = false;
+      sections.forEach(function (sec) {
+        var visible = 0;
+        sec.cards.forEach(function (c) {
+          var on = q === "" || c.text.indexOf(q) !== -1;
+          c.node.hidden = !on;
+          if (on) visible += 1;
+        });
+        sec.count.textContent = String(visible);
+        sec.node.hidden = visible === 0;
+        if (visible > 0) any = true;
+      });
+      none.hidden = any;
+    }
+    search.addEventListener("input", apply);
+    soloList(tab, sections, apply);
+    apply();
   }
 
   // Propositions: every one recorded, undecided shown unless the practitioner hid them.
@@ -106852,6 +106935,12 @@ var legal_research_js_default = `(function () {
       cite.appendChild(document.createTextNode(s.citation_rest));
       node.appendChild(cite);
       if (s.excerpt) node.appendChild(el("blockquote", "", s.excerpt));
+      if (s.note_up) {
+        var chip = noteUpChip(s.note_up);
+        var noting = el("p", "noting");
+        noting.appendChild(el("span", "chip " + chip[1], chip[0]));
+        node.appendChild(noting);
+      }
       if (s.status.length > 0) node.appendChild(el("p", "status", s.status.join(" \xB7 ")));
       return node;
     }
@@ -106927,8 +107016,33 @@ var legal_research_js_default = `(function () {
     apply();
   }
 
-  // Case Briefs: the cases relied on, then the rest. Asking for a brief happens in a session.
-  function drawBriefs(tab) {
+  // Statutes: the legislation relied on, then the rest, each with its last currency check.
+  function drawStatutes(tab) {
+    var statutes = data.statutes.statutes;
+    if (statutes.length === 0) {
+      tab.appendChild(el("p", "empty", "No statute, regulation or rule is recorded for this proceeding."));
+      return;
+    }
+    function currencyText(status) {
+      return status === null ? "Not yet checked" : status.replace(/_/g, " ");
+    }
+    reliedList(tab, statutes, "Search statutes", function (s) {
+      var line = [s.citation, s.currency_checked_on ? "Last checked " + s.currency_checked_on : "Never checked"].filter(Boolean).join(" \xB7 ");
+      var t = ticket("", s.title, [["Currency: " + currencyText(s.currency_status), ""], noteUpChip(s.note_up, "Cases: ")], line);
+      row(t.dl, "Citation", s.citation, "None recorded");
+      row(t.dl, "Currency", currencyText(s.currency_status), "");
+      row(t.dl, "Last checked", s.currency_checked_on, "Never checked");
+      row(t.dl, "Noted up for cases", s.note_up.label, "");
+      if (s.results.length > 0) row(t.dl, "Result", s.results, "");
+      row(t.dl, "Provisions", s.provisions.map(function (p) {
+        return p.provision + ": " + currencyText(p.currency_status) + (p.checked_on ? ", checked " + p.checked_on : "");
+      }), "None recorded");
+      return { node: t.node, text: [s.title, s.citation || ""].join(" ").toLowerCase() };
+    });
+  }
+
+  // Cases: the cases relied on, then the rest. Asking for a brief happens in a session.
+  function drawCases(tab) {
     var cases = data.briefs.cases;
     var CHIPS = { briefed: ["Briefed", "done"], requested: ["Requested", "wip"], not_briefed: ["Not briefed", ""] };
     tab.appendChild(el("p", "hint", "To request a brief, ask a session, for example: brief the cases this Milestone relies on."));
@@ -106936,15 +107050,13 @@ var legal_research_js_default = `(function () {
       tab.appendChild(el("p", "empty", "The Writings on this Milestone rely on no case yet, and no case brief is saved."));
       return;
     }
-    var search = searchBox("Search case briefs");
-    var filters = el("div", "filters");
-    filters.appendChild(search);
-    tab.appendChild(filters);
-    function card(c) {
+    reliedList(tab, cases, "Search cases", function (c) {
       var chip = CHIPS[c.status];
-      var t = ticket(c.brief ? "v" + c.brief.version : "\u2014", c.title, [chip], c.citation || (c.brief && c.brief.date) || "");
+      var t = ticket(c.brief ? "v" + c.brief.version : "", c.title, [chip, noteUpChip(c.note_up)], c.citation || (c.brief && c.brief.date) || "");
       row(t.dl, "Citation", c.citation, "None recorded");
-      row(t.dl, "Status", chip[0], "");
+      row(t.dl, "Brief", chip[0], "");
+      row(t.dl, "Noted up", c.note_up.label, "");
+      if (c.results.length > 0) row(t.dl, "Result", c.results, "");
       row(t.dl, "Jobs", c.jobs.map(function (j) { return "Job #" + j.id + " " + j.title; }), "None");
       if (c.brief) {
         row(t.dl, "Date", c.brief.date, "No date");
@@ -106953,59 +107065,22 @@ var legal_research_js_default = `(function () {
         if (c.brief.earlier_files.length > 0) row(t.dl, "Earlier versions", earlierFiles(c.brief.earlier_files), "");
       }
       return { node: t.node, text: [c.title, c.citation || ""].join(" ").toLowerCase() };
-    }
-    var sections = [["Relied on by this Milestone's Writings", true], ["Not relied on by this Milestone's Writings", false]].map(function (s) {
-      var list = cases.filter(function (c) { return c.relied_on === s[1]; });
-      var sec = el("section");
-      var h2 = el("h2", "", s[0] + " ");
-      var count = el("span", "count", "0");
-      h2.appendChild(count);
-      sec.appendChild(h2);
-      var stack = el("div", "stack");
-      var cards = list.map(function (c) {
-        var made = card(c);
-        stack.appendChild(made.node);
-        return made;
-      });
-      sec.appendChild(stack);
-      tab.appendChild(sec);
-      return { node: sec, count: count, cards: cards };
     });
-    var none = el("p", "empty", "Nothing to show with this search.");
-    tab.appendChild(none);
-    function apply() {
-      var q = search.value.trim().toLowerCase();
-      var any = false;
-      sections.forEach(function (sec) {
-        var visible = 0;
-        sec.cards.forEach(function (c) {
-          var on = q === "" || c.text.indexOf(q) !== -1;
-          c.node.hidden = !on;
-          if (on) visible += 1;
-        });
-        sec.count.textContent = String(visible);
-        sec.node.hidden = visible === 0;
-        if (visible > 0) any = true;
-      });
-      none.hidden = any;
-    }
-    search.addEventListener("input", apply);
-    apply();
   }
 
-  // Legal Memos: the status lanes, with a folder filter, a source filter and a search.
+  // Legal Memos: the status lanes, with a folder filter, a source filter and a search. Completed comes first,
+  // being what can be relied on. Loose Threads holds what is neither finished nor abandoned, memos no job saved included.
   function drawMemos(tab) {
     var memos = data.memos.memos;
     var KEY = "legal-research-memos";
     var LANES = [
-      ["in_progress", "In Progress", "wip"],
-      ["started", "Started", ""],
-      ["completed", "Completed", "done"],
-      ["shelved", "Shelved", ""],
-      ["no_job", "No job", ""]
+      ["completed", "Completed", "", ["completed"]],
+      ["in_progress", "In Progress", "wip", ["in_progress"]],
+      ["shelved", "Shelved", "", ["shelved"]],
+      ["loose_threads", "Loose Threads", "", ["started", "no_job"]]
     ];
     var LANE = {};
-    LANES.forEach(function (l) { LANE[l[0]] = l; });
+    LANES.forEach(function (l) { l[3].forEach(function (status) { LANE[status] = l; }); });
     var SOURCES = { research_memo: "Research memo", westlaw: "Westlaw Deep Research report", note_up: "Note-up record" };
     var TOP = "Top of 6. LAW";
     function folderName(m) { return m.folder === "" ? TOP : m.folder; }
@@ -107061,7 +107136,7 @@ var legal_research_js_default = `(function () {
       h2.appendChild(count);
       sec.appendChild(h2);
       var stack = el("div", "stack");
-      var cards = memos.filter(function (m) { return m.status === l[0]; }).map(function (m) {
+      var cards = memos.filter(function (m) { return LANE[m.status] === l; }).map(function (m) {
         var c = card(m);
         stack.appendChild(c.node);
         return c;
@@ -107102,7 +107177,7 @@ var legal_research_js_default = `(function () {
   }
 
   // The folder tabs, the last one chosen remembered.
-  var TABS = [["propositions", "Propositions", drawPropositions], ["briefs", "Case Briefs", drawBriefs], ["memos", "Legal Memos", drawMemos]];
+  var TABS = [["memos", "Legal Memos", drawMemos], ["propositions", "Propositions", drawPropositions], ["statutes", "Statutes", drawStatutes], ["cases", "Cases", drawCases]];
   var tablist = el("div", "tabs");
   tablist.setAttribute("role", "tablist");
   tablist.setAttribute("aria-label", "Show");
@@ -107565,18 +107640,36 @@ function citationKey(citation) {
   return dated.find((part) => !DATABASE_YEAR.test(part)) ?? dated[0] ?? parts.join(", ");
 }
 
+// src/submission/forms/note-up-status.ts
+var NOT_NOTED_UP = { label: "Not noted up", noted: false };
+var CHECK_FINISHED = /* @__PURE__ */ new Set(["current", "repealed", "archived"]);
+function treatmentWord(treatment) {
+  return treatment.replace(/_/g, " ");
+}
+function authorityNoteUp(treatment) {
+  return treatment === null ? NOT_NOTED_UP : { label: "Noted up: negative treatment only", noted: true };
+}
+function statementNoteUp(kind, treatment, currencyStatus) {
+  if (kind === "doctrine") return null;
+  if (kind !== null && LEGISLATION_KINDS.has(kind)) {
+    return currencyStatus !== null && CHECK_FINISHED.has(currencyStatus) ? { label: "Statute level: in-force check done", noted: true } : NOT_NOTED_UP;
+  }
+  return treatment === null ? NOT_NOTED_UP : { label: "Case noted up: negative treatment only", noted: true };
+}
+
 // src/submission/forms/case-briefs.ts
-function reliedOn(dbPath, filingIds) {
+function reliedOn(dbPath, filingIds, kinds) {
   if (filingIds.length === 0) return [];
   const inIds = `(${filingIds.map(() => "?").join(", ")})`;
+  const inKinds = kinds.map((k3) => `'${k3}'`).join(", ");
   const notOmitted = hasColumn(dbPath, "law_assertions", "killed_on") ? "AND (la.id IS NULL OR la.killed_on IS NULL)" : "";
   return rows(
     dbPath,
-    `SELECT DISTINCT a.id, a.style_of_cause_or_title, a.citation
+    `SELECT DISTINCT a.id, a.style_of_cause_or_title, a.citation, a.treatment, a.currency_status, a.currency_checked_on
      FROM statements_of_law sl
      JOIN authorities a ON a.id = sl.authority_id
      LEFT JOIN law_assertions la ON la.id = sl.law_assertion_id
-     WHERE a.kind = 'case' AND a.killed_on IS NULL ${notOmitted}
+     WHERE a.kind IN (${inKinds}) AND a.killed_on IS NULL ${notOmitted}
        AND (sl.id IN (SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds})
          OR sl.id IN (SELECT r.excerpt_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
          OR sl.law_assertion_id IN (SELECT r.law_assertion_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
@@ -107592,7 +107685,7 @@ function reliedOn(dbPath, filingIds) {
 function briefJobs(dbPath) {
   return rows(
     dbPath,
-    `SELECT t.id, t.proceeding_id, t.title, t.status, t.rejected_at, a.id AS authority_id, a.style_of_cause_or_title, a.citation
+    `SELECT t.id, t.proceeding_id, t.title, t.status, t.rejected_at, a.id AS authority_id, a.style_of_cause_or_title, a.citation, a.treatment
      FROM tickets t
      LEFT JOIN ticket_scope s ON s.ticket_id = t.id AND s.entity = 'authorities'
      LEFT JOIN authorities a ON a.id = s.entity_id
@@ -107644,11 +107737,11 @@ function buildCaseBriefsData(dbPath, filingIds, matterDir, proceedingIds) {
       if (relied2) found.relied_on = true;
       return found;
     }
-    const made = { title, citation, status: "not_briefed", relied_on: relied2, jobs: [], brief: null };
+    const made = { title, citation, status: "not_briefed", relied_on: relied2, jobs: [], brief: null, note_up: authorityNoteUp(null), results: [] };
     cases.set(key, made);
     return made;
   };
-  const relied = reliedOn(dbPath, filingIds);
+  const relied = reliedOn(dbPath, filingIds, ["case"]);
   for (const a3 of relied) row2(foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), a3.style_of_cause_or_title, a3.citation, true);
   const known = [
     ...relied.map((a3) => ({ key: foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), style: a3.style_of_cause_or_title, citation: a3.citation })),
@@ -107724,6 +107817,16 @@ function buildCaseBriefsData(dbPath, filingIds, matterDir, proceedingIds) {
   const all = [...cases.values()];
   const held2 = (b3) => b3.on_disk || b3.earlier_files.some((v3) => v3.on_disk);
   for (const c3 of all) c3.status = c3.brief !== null && held2(c3.brief) ? "briefed" : c3.jobs.length > 0 ? "requested" : "not_briefed";
+  const recorded = [
+    ...relied.map((a3) => ({ key: foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), treatment: a3.treatment })),
+    ...jobs2.map((j3) => ({ key: foldKey(j3.citation, j3.authority_id, j3.title), treatment: j3.treatment }))
+  ];
+  for (const { key, treatment } of recorded) {
+    const target = cases.get(key);
+    if (target === void 0 || treatment === null) continue;
+    target.note_up = authorityNoteUp(treatment);
+    if (!target.results.includes(treatmentWord(treatment))) target.results.push(treatmentWord(treatment));
+  }
   const reliedRows = all.filter((c3) => c3.relied_on);
   const rest = all.filter((c3) => !c3.relied_on).sort((a3, b3) => (b3.brief?.date ?? "").localeCompare(a3.brief?.date ?? "") || a3.title.localeCompare(b3.title));
   return { cases: [...reliedRows, ...rest] };
@@ -107763,7 +107866,7 @@ function citationParts2(row2) {
 function statusLines(row2) {
   const when = row2.verification === "verified" ? row2.verified_on : row2.verification === "settled" ? row2.settled_on : null;
   const lines2 = [`Verification: ${row2.verification}${when ? ` ${when}` : ""}`];
-  if (row2.authority_kind === "case") lines2.push(`Note-up: ${row2.treatment === null ? "not yet noted up" : row2.treatment.replace(/_/g, " ")}`);
+  if (row2.authority_kind === "case") lines2.push(`Note-up: ${row2.treatment === null ? "not yet noted up" : treatmentWord(row2.treatment)}`);
   else if (row2.authority_kind !== "doctrine") lines2.push(`Currency: ${row2.currency_status ?? "not yet checked"}`);
   return lines2;
 }
@@ -107840,7 +107943,7 @@ function propositionsFor(dbPath, proceedingId, ids, merged) {
     const cls = propositionClass({ proposition_killed_on: killedOn, authority_killed_on: row2.authority_killed_on, in_use: inUse });
     counts3[cls] += 1;
     const { title, rest } = citationParts2(row2);
-    return { statement_id: row2.statement_id, class: cls, citation_title: title, citation_rest: rest, excerpt: row2.excerpt, status: statusLines(row2) };
+    return { statement_id: row2.statement_id, class: cls, citation_title: title, citation_rest: rest, excerpt: row2.excerpt, status: statusLines(row2), note_up: statementNoteUp(row2.authority_kind, row2.treatment, row2.currency_status) };
   }
   function cardClass(own, killedOn, inUse) {
     if (own.length === 0) {
@@ -107917,6 +108020,58 @@ function propositionsFor(dbPath, proceedingId, ids, merged) {
   return { counts: counts3, groups };
 }
 
+// src/submission/forms/statutes-tab.ts
+function provisionsOf(dbPath, authorityId) {
+  const checks = hasTable(dbPath, "provision_currency");
+  return rows(
+    dbPath,
+    `SELECT DISTINCT sl.pinpoint AS provision, ${checks ? "pc.currency_status, pc.checked_on" : "NULL AS currency_status, NULL AS checked_on"}
+     FROM statements_of_law sl
+     ${checks ? "LEFT JOIN provision_currency pc ON pc.authority_id = sl.authority_id AND pc.provision = sl.pinpoint" : ""}
+     WHERE sl.authority_id = ? AND sl.pinpoint IS NOT NULL AND TRIM(sl.pinpoint) <> ''
+     ORDER BY sl.pinpoint`,
+    [authorityId]
+  );
+}
+function buildStatutesData(dbPath, filingIds, proceedingIds) {
+  const kinds = [...LEGISLATION_KINDS];
+  const relied = reliedOn(dbPath, filingIds, kinds);
+  const reliedIds = new Set(relied.map((a3) => a3.id));
+  const ids = [...new Set(proceedingIds)];
+  const others = ids.length === 0 ? [] : rows(
+    dbPath,
+    `SELECT id, style_of_cause_or_title, citation, treatment, currency_status, currency_checked_on
+     FROM authorities
+     WHERE kind IN (${kinds.map((k3) => `'${k3}'`).join(", ")}) AND killed_on IS NULL AND proceeding_id IN (${ids.map(() => "?").join(", ")})
+     ORDER BY style_of_cause_or_title, id`,
+    ids
+  ).filter((a3) => !reliedIds.has(a3.id));
+  const statutes = /* @__PURE__ */ new Map();
+  const add = (a3, isRelied) => {
+    const key = foldKey(a3.citation, a3.id, a3.style_of_cause_or_title);
+    let target = statutes.get(key);
+    if (target === void 0) {
+      target = { title: a3.style_of_cause_or_title, citation: a3.citation, relied_on: isRelied, currency_status: a3.currency_status, currency_checked_on: a3.currency_checked_on, note_up: authorityNoteUp(null), results: [], provisions: [] };
+      statutes.set(key, target);
+    }
+    if ((a3.currency_checked_on ?? "") > (target.currency_checked_on ?? "")) {
+      target.currency_status = a3.currency_status;
+      target.currency_checked_on = a3.currency_checked_on;
+    }
+    if (a3.treatment !== null) {
+      target.note_up = authorityNoteUp(a3.treatment);
+      if (!target.results.includes(treatmentWord(a3.treatment))) target.results.push(treatmentWord(a3.treatment));
+    }
+    for (const p3 of provisionsOf(dbPath, a3.id)) {
+      if (!target.provisions.some((held2) => held2.provision === p3.provision)) target.provisions.push(p3);
+    }
+  };
+  for (const a3 of relied) add(a3, true);
+  for (const a3 of others) add(a3, false);
+  const all = [...statutes.values()];
+  return { statutes: [...all.filter((s3) => s3.relied_on), ...all.filter((s3) => !s3.relied_on)] };
+}
+
 // src/submission/forms/legal-research-page.ts
 var LEGAL_RESEARCH_PAGE = {
   name: "Legal Research",
@@ -107937,6 +108092,7 @@ var LEGAL_RESEARCH_PAGE = {
     const filings = ctx.writings.map((w3) => w3.filing);
     return {
       propositions: buildPropositionsData(ctx.dbPath, filings),
+      statutes: buildStatutesData(ctx.dbPath, filings.map((f3) => f3.id), filings.map((f3) => f3.proceeding_id)),
       briefs: buildCaseBriefsData(ctx.dbPath, filings.map((f3) => f3.id), matterDir, filings.map((f3) => f3.proceeding_id)),
       memos: buildLegalMemosData(ctx.dbPath, ctx.jobs, matterDir)
     };
@@ -123330,7 +123486,17 @@ var LEGAL_RESEARCH_FIXTURE = {
                   citation_title: "Sample Holdings Ltd. v. Example Traders Inc.",
                   citation_rest: ", 2019 BCSC 0000, para 12.",
                   excerpt: "A refusal of this kind goes to the root of the contract.",
-                  status: ["Verification: verified 2026-01-10", "Note-up: followed"]
+                  status: ["Verification: verified 2026-01-10", "Note-up: good law"],
+                  note_up: { label: "Case noted up: negative treatment only", noted: true }
+                },
+                {
+                  statement_id: 2,
+                  class: "in_use",
+                  citation_title: "Sale of Goods Act",
+                  citation_rest: ", RSBC 0000, c 0, s 15.",
+                  excerpt: null,
+                  status: ["Verification: verified 2026-01-10", "Currency: current"],
+                  note_up: { label: "Statute level: in-force check done", noted: true }
                 }
               ]
             }
@@ -123346,6 +123512,21 @@ var LEGAL_RESEARCH_FIXTURE = {
         }
       ]
     },
+    statutes: {
+      statutes: [
+        {
+          title: "Sale of Goods Act",
+          citation: "RSBC 0000, c 0",
+          relied_on: true,
+          currency_status: "current",
+          currency_checked_on: "2026-01-10",
+          note_up: { label: "Not noted up", noted: false },
+          results: [],
+          provisions: [{ provision: "s 15", currency_status: "current", checked_on: "2026-01-10" }, { provision: "s 16", currency_status: null, checked_on: null }]
+        },
+        { title: "Limitation Act", citation: "SBC 0000, c 0", relied_on: false, currency_status: null, currency_checked_on: null, note_up: { label: "Not noted up", noted: false }, results: [], provisions: [] }
+      ]
+    },
     briefs: {
       cases: [
         {
@@ -123354,6 +123535,8 @@ var LEGAL_RESEARCH_FIXTURE = {
           status: "briefed",
           relied_on: true,
           jobs: [],
+          note_up: { label: "Noted up: negative treatment only", noted: true },
+          results: ["good law"],
           brief: {
             date: "2026-01-11",
             version: 2,
@@ -123372,14 +123555,16 @@ var LEGAL_RESEARCH_FIXTURE = {
             on_disk: true
           }
         },
-        { title: "Placeholder Co. v. Specimen Ltd.", citation: "2021 BCCA 0000", status: "requested", relied_on: true, jobs: [{ id: 21, title: "Brief the case: Placeholder Co. v. Specimen Ltd., 2021 BCCA 0000" }], brief: null },
-        { title: "Model Ltd. v. Dummy Corp.", citation: "2020 BCSC 0000", status: "not_briefed", relied_on: true, jobs: [], brief: null },
+        { title: "Placeholder Co. v. Specimen Ltd.", citation: "2021 BCCA 0000", status: "requested", relied_on: true, jobs: [{ id: 21, title: "Brief the case: Placeholder Co. v. Specimen Ltd., 2021 BCCA 0000" }], brief: null, note_up: { label: "Not noted up", noted: false }, results: [] },
+        { title: "Model Ltd. v. Dummy Corp.", citation: "2020 BCSC 0000", status: "not_briefed", relied_on: true, jobs: [], brief: null, note_up: { label: "Not noted up", noted: false }, results: [] },
         {
           title: "Instance v. Pattern",
           citation: "2018 BCCA 0000",
           status: "briefed",
           relied_on: false,
           jobs: [],
+          note_up: { label: "Noted up: negative treatment only", noted: true },
+          results: ["distinguishable"],
           brief: { date: "2026-01-06", version: 1, earlier: [], earlier_files: [], file: "6. LAW\\Costs\\2026-01-06 case brief Instance v. Pattern, 2018 BCCA 0000.md", url: "file:///placeholder/6.%20LAW/Costs/2026-01-06%20case%20brief.md", on_disk: true }
         }
       ]
