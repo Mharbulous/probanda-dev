@@ -1,4 +1,4 @@
-// build-stamp: 11bd861ffa9d
+// build-stamp: 5806802485f3
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "11bd861ffa9d";
+var BUILD_STAMP = false ? null : "5806802485f3";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -76656,7 +76656,7 @@ var PracticeStore = class {
 };
 
 // src/dispatch.ts
-import { dirname as dirname37 } from "node:path";
+import { dirname as dirname38 } from "node:path";
 
 // src/tools/practice/rule-overlay.ts
 import { randomUUID as randomUUID3 } from "node:crypto";
@@ -78591,7 +78591,7 @@ function fileToolDefinitions() {
     },
     {
       name: "research_filing__save_answer",
-      description: "Save `text` as a new `.md` file in a matter `6. LAW` folder, ending in a generated `## Legend` of the work markers it prints, which replaces any `## Legend` at its end; never overwrites. `filename` is a bare `.md` name with none of the characters Windows forbids in a file name (`< > : \" | ? *`, otherwise `invalid_filename`); if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `destination_dir` is an absolute host path inside a `6. LAW` tree; if missing, it is created when its parent is already in that tree (the final folder only). Returns {path, filename, bytes, created_dir, sha256}, `sha256` being the hex digest of the bytes written. Pass `from_scratch` instead of `text` to copy a file `research_filing__write_scratch` wrote: the absolute path it returned. Its bytes are saved as `text` is and the scratch file is kept. It must sit directly in the research-agent scratchpad of the matter whose `6. LAW` tree holds `destination_dir`; anywhere else is refused `not_scratch`, nothing written. Pass `from_render` instead to file a research memo's or case brief's Writing: the absolute path of the `.md` mockup `drafting_forms__render` returned, inside the 0. DRAFT folder of the same matter; it is saved without the mockup's own header (its first `---` block, which names the matter) and the title line after it, and anywhere else is refused `not_render`. A memo's copy also leaves out the mockup's mockup-only lines, and the result returns them as `mockup_only_lines` when there are any. A case brief's mockup is also saved without its work markers, trace comments and `## Legend`, and one still holding a gap line (a slot not written, an item its Writing does not cite, or a Holding, Ratio or Obiter item but a `None.` without its closing `statement_of_law_id` comment, its passage or its pinpoint) is refused `brief_incomplete`, nothing written. Exactly one of `text`, `from_scratch` and `from_render`; more or none is refused `invalid_argument`. When the answer serves a job this session holds, also pass `db_path`, `ticket_id` and `session_token` (all three or none), with the `claim_no` this session's `drafting_data__assign_job` returned: the save is then recorded against the job, so its card lists the answer and its idle clock restarts, and the result carries `job: {ticket_id, recorded, note}`. Refused before anything is written: `invalid_job`, `invalid_ticket_id`, `invalid_session_token`, `invalid_claim_no`, `stale_claim` (work begun under another claim of the job), `not_found` (no such job), `schema_below_v52` and `not_held` (the job is not this session's under that claim: taken over, released, shelved or completed; report it and stop, saving nothing for it). `recorded: false` means a take-over landed during the save: the file is saved, so report it and stop. `record_failed` means the file was saved but the record was not: never save it again.",
+      description: "Save `text` as a new `.md` file in a matter `6. LAW` folder, ending in a generated `## Legend` of the work markers it prints, which replaces any `## Legend` at its end; never overwrites. `filename` is a bare `.md` name with none of the characters Windows forbids in a file name (`< > : \" | ? *`, otherwise `invalid_filename`); if it is taken, the file becomes `<stem> vN.md`, N one above the highest version present. `destination_dir` is an absolute host path inside a `6. LAW` tree; if missing, it is created when its parent is already in that tree (the final folder only). Returns {path, filename, bytes, created_dir, sha256}, `sha256` being the hex digest of the bytes written. Pass `from_scratch` instead of `text` to copy a file `research_filing__write_scratch` wrote: the absolute path it returned. Its bytes are saved as `text` is and the scratch file is kept. It must sit directly in the research-agent scratchpad of the matter whose `6. LAW` tree holds `destination_dir`; anywhere else is refused `not_scratch`, nothing written. Pass `from_render` instead to file a research memo's or case brief's Writing: the absolute path of the `.md` mockup `drafting_forms__render` returned, inside the 0. DRAFT folder of the same matter; it is saved without the mockup's own header (its first `---` block, which names the matter) and the title line after it, and anywhere else is refused `not_render`. A memo's copy also leaves out the mockup's mockup-only lines, and the result returns them as `mockup_only_lines` when there are any. A case brief's mockup is also saved without its work markers, trace comments and `## Legend`, and one still holding a gap line (a slot not written, an item its Writing does not cite, or a Holding, Ratio or Obiter item but a `None.` without its closing `statement_of_law_id` comment, its passage or its pinpoint) is refused `brief_incomplete`, nothing written. Exactly one of `text`, `from_scratch` and `from_render`; more or none is refused `invalid_argument`. When the answer serves a job this session holds, also pass `db_path`, `ticket_id` and `session_token` (all three or none), with the `claim_no` this session's `drafting_data__assign_job` returned: the save is then recorded against the job, so its card lists the answer and its idle clock restarts, and the result carries `job: {ticket_id, recorded, note}`. Refused before anything is written: `invalid_job`, `invalid_ticket_id`, `invalid_session_token`, `invalid_claim_no`, `stale_claim` (work begun under another claim of the job), `not_found` (no such job), `schema_below_v52`, `not_research_job` (the job's title lacks `Legal research: ` and it is no case brief, note-up, other fixed-text job or job holding a Proposal's key) and `not_held` (the job is not this session's under that claim: taken over, released, shelved or completed; report it and stop, saving nothing for it). `recorded: false` means a take-over landed during the save: the file is saved, so report it and stop. `record_failed` means the file was saved but the record was not: never save it again.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78743,7 +78743,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("execute"),
-      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Work Board with no Writing is created through drafting_data__create_milestone, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, and a Writing is recorded as served through drafting_data__record_served: a script that leaves a filing's filed_on or sent_copy_id holding a value it did not hold is refused whole, writing nothing (clearing filed_on stays an update). A drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, and a job is created through drafting_data__create_job. A script that takes or moves a job's lock, sets its plan approval, completion or deletion stamp, stamps a step done or sets its status, or writes a job's active stamp, last activity, lapse record or claim number is refused whole, writing nothing, with job_write_refused naming the job tool that writes it. A loose thread is written through loose_threads__capture and loose_threads__update: a script writing the seeds table is refused whole, with loose_thread_write_refused. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
+      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Work Board with no Writing is created through drafting_data__create_milestone, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, and a Writing is recorded as served through drafting_data__record_served: a script that leaves a filing's filed_on or sent_copy_id holding a value it did not hold is refused whole, writing nothing (clearing filed_on stays an update). A drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, and a job is created through drafting_data__create_job. A script that takes or moves a job's lock, sets its plan approval, completion or deletion stamp, stamps a step done or sets its status, or writes a job's active stamp, last activity, lapse record or claim number is refused whole, writing nothing, with job_write_refused naming the job tool that writes it. A script that inserts a job titled 'Legal research: ', or changes the title or intent of a job that holds that prefix before or after, is refused whole, with research_write_refused: use create_job or rewrite_job. A loose thread is written through loose_threads__capture and loose_threads__update: a script writing the seeds table is refused whole, with loose_thread_write_refused. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78893,7 +78893,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("create_job"),
-      description: "Create a job (a tickets row) in one call and one transaction: the row, its steps (ordinal 1, 2, 3... in order, at least one), scope rows, the edges from existing jobs it waits on (blocks), its conflict pairs, its conversion records (proposal_keys, copied from the card), under the duplicate guard its kind takes. With seed_id, a second write then consumes that loose thread: thread_not_consumed in the result says it failed, and the job stands. Each guard is /drafting-data's documented condition, tested before the row exists, so it never matches the job it guards: none (an unguarded create); live_key (a queued or wip, unshelved job holds one of proposal_keys: the fast path and a job outlined from Proposals, jobs-create.md \xA73); never_held_key (any job not deleted ever held one of proposal_keys: intake, \xA73e); title_live_with_step (a queued or wip, unshelved job on the Writing with one of this call's titles already holds a step: counsel's review, jobs-stock.md \xA73c, whose second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this title and one of these step texts: a pass finding, \xA73g); scrutiny_statement (a queued or wip, unshelved 'Review scrutiny finding: ' job is scoped to the statement in scope: \xA73d); authority_brief (a queued or wip, unshelved 'Brief the case: ' job in the proceeding is scoped to any authority of the same case: \xA73n); holder_lock (held_ticket_id no longer carries session_token under claim_no: a spin-off blocker, \xA73f, which copies the held job's scope). filing_id is the Writing's or Work Board's id, or null for a proceeding-scoped job, and is never left out. priority is an integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Work Board's job, the Work Board's alone; on a proceeding-scoped job, every queued job in the proceeding. created_by is this session's session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is the job that fired the guard, when one is still there). It moves no revision. Refusals write nothing: invalid_<field>, and an error from the database (a missing blocker, a work job with no billing_anchor). Returns outcome, ticket_id, companion_ids, priority, holder_id and a note.",
+      description: "Create a job (a tickets row) in one call and one transaction: the row, its steps (ordinal 1, 2, 3... in order, at least one), scope rows, the edges from existing jobs it waits on (blocks), its conflict pairs, its conversion records (proposal_keys, copied from the card), under the duplicate guard its kind takes. With seed_id, a second write then consumes that loose thread: thread_not_consumed in the result says it failed, and the job stands. Each guard is /drafting-data's documented condition, tested before the row exists, so it never matches the job it guards: none (an unguarded create); live_key (a queued or wip, unshelved job holds one of proposal_keys: the fast path and a job outlined from Proposals, jobs-create.md \xA73); never_held_key (any job not deleted ever held one of proposal_keys: intake, \xA73e); title_live_with_step (a queued or wip, unshelved job on the Writing with one of this call's titles already holds a step: counsel's review, jobs-stock.md \xA73c, whose second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this title and one of these step texts: a pass finding, \xA73g); scrutiny_statement (a queued or wip, unshelved 'Review scrutiny finding: ' job is scoped to the statement in scope: \xA73d); authority_brief (a queued or wip, unshelved 'Brief the case: ' job in the proceeding is scoped to any authority of the same case: \xA73n); research_title (any job in the proceeding, not deleted, has this 'Legal research: ' title and a step: \xA73i, \xA73l); holder_lock (held_ticket_id no longer carries session_token under claim_no: a spin-off blocker, \xA73f, which copies the held job's scope). filing_id is the Writing's or Work Board's id, or null for a proceeding-scoped job, and is never left out. priority is an integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Work Board's job, the Work Board's alone; on a proceeding-scoped job, every queued job in the proceeding. created_by is this session's session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is the job that fired the guard, when one is still there). It moves no revision. Refusals write nothing: invalid_<field>, research_form (a 'Legal research: ' title that is not that prefix followed by the intent, or an intent that is not one to three sentences of which only the last ends in ?, each failed check named), and an error from the database (a missing blocker, a work job with no billing_anchor). Returns outcome, ticket_id, companion_ids, priority, holder_id and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78930,7 +78930,7 @@ function submissionDataToolDefinitions() {
           created_by: { type: "string" },
           guard: {
             type: "string",
-            enum: ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "holder_lock"]
+            enum: ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "research_title", "holder_lock"]
           },
           session_token: { type: "string", description: "holder_lock only" },
           claim_no: { type: "number", description: "holder_lock only: the held job's claim_no from drafting_data__assign_job" },
@@ -79094,13 +79094,15 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("rewrite_job"),
-      description: "Rewrite a job's title, steps or both in one guarded transaction, then confirm-read them (jobs-run.md \xA75). Every title and step is one line, written verbatim from the job card's own words. Ready mode (the pickup rewrite, before the assigning write): the job must be queued, unlocked, not shelved or deleted, with no plan approved and no step done; steps replace the whole list, and no approval is stamped. held: true with session_token and claim_no (on the job this session holds): steps delete only the steps not done, or none with append: true, and go after the highest ordinal left, so a done step keeps its row, words and stamp; an approval already on the job is re-stamped; a title alone (the held-job title cleanup) touches no step and no stamp; the job's session-active stamp and last activity move in the same transaction. The guard rides every statement, so all of it lands or none does. " + HOLDER + " Outcomes: rewritten; held: not_held (taken over, shelved or completed: run the scope read and stop); ready: locked, shelved, approved, step_done, not_ready. On any but rewritten nothing was written: re-render, never re-run. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, invalid_append, nothing_to_write, invalid_title, invalid_steps, not_found. Returns ticket_id, outcome, title, steps (ordinal, text, done_at), status, locked_by, rejected_at, plan_approved_at and a note.",
+      description: "Rewrite a job's title, steps or both in one guarded transaction, then confirm-read them (jobs-run.md \xA75). Every title and step is one line, written verbatim from the job card's own words. Ready mode (the pickup rewrite, before the assigning write): the job must be queued, unlocked, not shelved or deleted, with no plan approved and no step done; steps replace the whole list, and no approval is stamped. held: true with session_token and claim_no (on the job this session holds): steps delete only the steps not done, or none with append: true, and go after the highest ordinal left, so a done step keeps its row, words and stamp; an approval already on the job is re-stamped; a title alone (the held-job title cleanup) touches no step and no stamp; the job's session-active stamp and last activity move in the same transaction. A 'Legal research: ' title takes its intent with it, set together, and both are checked against the form; a job holding that prefix keeps it. migrate: true, only on the practitioner's approval, writes such a title and intent and nothing else, every step, stamp, approval and answer kept: on a queued, unlocked job, not shelved or deleted, whatever its steps' state, or with held: true on this session's job. The guard rides every statement, so all of it lands or none does. " + HOLDER + " Outcomes: rewritten; held: not_held (taken over, shelved or completed: run the scope read and stop); ready: locked, shelved, approved, step_done, not_ready. On any but rewritten nothing was written: re-render, never re-run. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, invalid_append, invalid_migrate, invalid_intent, research_form, nothing_to_write, invalid_title, invalid_steps, not_found. Returns ticket_id, outcome, title, intent, steps (ordinal, text, done_at), status, locked_by, rejected_at, plan_approved_at and a note.",
       inputSchema: {
         type: "object",
         properties: {
           db_path: { type: "string" },
           ticket_id: { type: "number" },
           title: { type: "string" },
+          intent: { type: "string", description: "A 'Legal research: ' title's intent: that title less its prefix, character for character" },
+          migrate: { type: "boolean" },
           steps: { type: "array", items: { type: "string" } },
           held: { type: "boolean" },
           session_token: { type: "string" },
@@ -79164,7 +79166,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("complete_job"),
-      description: "Complete the job (a tickets row) this session holds in one call: the supersession of its queued conflict partners, then the completion, both guarded on this session's token, then the confirm-read. Before either, while any of its steps is open, to be retried or waiting (a waiting step whose minute has passed included), nothing is written and the outcome is steps_open, with open_steps naming each one; a step cancelled or deferred on the practitioner's words (drafting_data__set_step) counts as resolved. A wip conflict partner is never touched. draft_dir is the draft_dir open_session returned. " + HOLDER + " The outcome is read off the confirm-read: completed (status completed, no lock; changes 1 means this call completed it, 0 that another session did), not_held (another session's token is on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing), steps_open. Only when this call completed the job (changes 1) are the matter's Work Board pages and Litigation Strategy rewritten, by the render a session runs with draft_dir: the job's filing's, or for a job with no filing_id or on a research memo or case brief, which has no board, the first live filing's in its proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Work Board pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, changes, status, completed_at, locked_by, rejected_at, pages_written, milestone_path (the rendered filing's or proceeding's Work Board page), board_changed, board_moves, pages_refused, open_steps on steps_open, and a note.",
+      description: "Complete the job (a tickets row) this session holds in one call: the supersession of its queued conflict partners, then the completion, both guarded on this session's token, then the confirm-read. Before either, while any of its steps is open, to be retried or waiting (a waiting step whose minute has passed included), nothing is written and the outcome is steps_open, with open_steps naming each one; a step cancelled or deferred on the practitioner's words (drafting_data__set_step) counts as resolved. A 'Legal research: ' job with no research memo saved under it is refused no_memo, and one whose last memo's Confidence: reads INCOMPLETE is refused memo_incomplete unless a step was cancelled or deferred on the practitioner's words; each writes nothing. A wip conflict partner is never touched. draft_dir is the draft_dir open_session returned. " + HOLDER + " The outcome is read off the confirm-read: completed (status completed, no lock; changes 1 means this call completed it, 0 that another session did), not_held (another session's token is on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing), steps_open. Only when this call completed the job (changes 1) are the matter's Work Board pages and Litigation Strategy rewritten, by the render a session runs with draft_dir: the job's filing's, or for a job with no filing_id or on a research memo or case brief, which has no board, the first live filing's in its proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Work Board pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, changes, status, completed_at, locked_by, rejected_at, pages_written, milestone_path (the rendered filing's or proceeding's Work Board page), board_changed, board_moves, pages_refused, open_steps on steps_open, and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -85104,11 +85106,11 @@ var createPdfium = (() => {
     var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
     if (ENVIRONMENT_IS_NODE) {
       const { createRequire } = await import("module");
-      let dirname38 = import.meta.url;
-      if (dirname38.startsWith("data:")) {
-        dirname38 = "/";
+      let dirname39 = import.meta.url;
+      if (dirname39.startsWith("data:")) {
+        dirname39 = "/";
       }
-      var require2 = createRequire(dirname38);
+      var require2 = createRequire(dirname39);
     }
     var moduleOverrides = Object.assign({}, Module);
     var thisProgram = "./this.program";
@@ -93020,6 +93022,37 @@ def staged_write(req, op_name, mutate, isolation_level=''):
 `.trim();
 }
 
+// src/submission/forms/research-job.ts
+var RESEARCH_JOB_PREFIX = "Legal research: ";
+var JOB_TEXT_MAX = 500;
+var MAX_SENTENCES = 3;
+var ABBREVIATION = /(?:^|[\s(])(?:ss|vs|inc|ltd|corp|co|no|nos|para|paras|rr|cl|art|ch|reg|sch|pt|mr|ms|mrs|dr|st|jr|sr)$/i;
+var SINGLE_LETTER = /(?:^|[\s(.])[a-z]$/i;
+function isResearchTitle(title) {
+  return title.startsWith(RESEARCH_JOB_PREFIX);
+}
+function sentenceCount(text8) {
+  let count2 = 0;
+  for (const end of text8.matchAll(/[.?!]["'”’)\]]*(?=\s|$)/g)) {
+    const before = text8.slice(0, end.index);
+    if (end[0][0] === "." && (ABBREVIATION.test(before) || SINGLE_LETTER.test(before))) continue;
+    count2 += 1;
+  }
+  return count2;
+}
+function researchFormProblems(title, intent) {
+  const problems = [];
+  if (title !== `${RESEARCH_JOB_PREFIX}${intent}`) problems.push(`the title must be "${RESEARCH_JOB_PREFIX}" followed by the intent, character for character`);
+  if (intent.trim() === "" || intent !== intent.trim()) problems.push("the issue must be non-empty, with no space at either end");
+  if (isResearchTitle(intent)) problems.push(`the intent must not itself open with "${RESEARCH_JOB_PREFIX}"`);
+  if (/[\r\n]/.test(intent)) problems.push("the issue must hold no line break");
+  if (title.length > JOB_TEXT_MAX) problems.push(`the title must be at most ${JOB_TEXT_MAX} characters`);
+  if (!intent.endsWith("?")) problems.push(`the issue's last sentence must end in "?"`);
+  if (intent.split("?").length > 2) problems.push('only the last sentence may end in "?", and the issue holds one question');
+  if (sentenceCount(intent) > MAX_SENTENCES) problems.push(`the issue must hold at most ${MAX_SENTENCES} sentences`);
+  return problems;
+}
+
 // src/submission/backend.ts
 var PY_HELPER3 = String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile, traceback
@@ -93119,6 +93152,25 @@ SEEDS_WRITE_RE = r"""(?is)\b(?:insert(?:\s+or\s+\w+)?\s+into|replace\s+into|upda
 SEEDS_REFUSED = "loose_thread_write_refused: use loose_threads__capture or loose_threads__update. Loose threads are no longer in this database. Nothing was written."
 
 
+# A legal research job's title and intent are written only through the job tools, which check its form
+# (forms/research-job.ts). So drafting_data__execute refuses a script that inserts a job with the prefix,
+# or changes the title or intent of a job that holds it before or after. Judged by state like job_move().
+RESEARCH_PREFIX = ${JSON.stringify(RESEARCH_JOB_PREFIX)}
+
+
+def research_rows(con):
+    held = con.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tickets'").fetchone()
+    return {row[0]: row[1:] for row in con.execute("SELECT id, title, intent FROM tickets")} if held else {}
+
+
+def research_write(before, after):
+    for job, now in after.items():
+        was = before.get(job)
+        if now != was and (now[0].startswith(RESEARCH_PREFIX) or (was is not None and was[0].startswith(RESEARCH_PREFIX))):
+            return f"research_write_refused: use drafting_data__create_job or drafting_data__rewrite_job. tickets {job}: a legal research job's title and intent are written only by those tools, which check its form. Nothing was written."
+    return None
+
+
 def seed_rows(con):
     held = con.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'seeds'").fetchone()
     return con.execute("SELECT * FROM seeds ORDER BY id").fetchall() if held else []
@@ -93133,6 +93185,7 @@ def do_execute(req):
         before = recorded(con)
         jobs = job_state(con) if guarded else None
         seeds = seed_rows(con) if guarded else None
+        research = research_rows(con) if guarded else None
         try:
             con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
         except Exception:
@@ -93146,6 +93199,9 @@ def do_execute(req):
                     "filed_on and sent_copy_id are set only by drafting_data__record_sent, record_filed or "
                     f"record_served; clearing filed_on stays an update. Nothing was written (filing {filing}).")
         refused = jobs is not None and job_move(jobs, job_state(con))
+        if refused:
+            raise SystemExit(refused)
+        refused = research is not None and research_write(research, research_rows(con))
         if refused:
             raise SystemExit(refused)
         if guarded and seed_rows(con) != seeds:
@@ -114154,6 +114210,7 @@ var LIVE2 = /* @__PURE__ */ new Set(["ready", "waiting", "wip"]);
 var LANE = { wip: "In Progress", waiting: "Blocked", superseded: "Superseded", completed: "Completed", rejected: "Shelved" };
 var norm2 = (s3) => s3.toLowerCase().replace(/\s+/g, " ").trim().replace(/[.!?;:,]+$/, "").trim();
 var words = (s3) => new Set(s3.toLowerCase().match(/[a-z0-9'’]{4,}/g) ?? []);
+var titleWords = (title) => words(isResearchTitle(title) ? title.slice(RESEARCH_JOB_PREFIX.length) : title);
 function fixedText(title) {
   return STOCK_TITLES.has(title) || waitsOnGate(title) || [GATE_TITLE, PRE_SEND_TITLE, POSITION_CONFLICT_TITLE].includes(title) || title.startsWith("Counsel's review of ") || title.startsWith("Review scrutiny finding: ") || title.startsWith(BRIEF_JOB_PREFIX);
 }
@@ -114177,11 +114234,11 @@ function premiseOf(t3, derived) {
 }
 function overlapping(section3, t3, cleared) {
   if (fixedText(t3.title)) return [];
-  const mine = words(t3.title);
+  const mine = titleWords(t3.title);
   return section3.tickets.filter((o3) => {
     if (o3.id === t3.id || cleared.includes(o3.id) || !LIVE2.has(o3.category) || fixedText(o3.title)) return false;
     if (Boolean(o3.general) !== Boolean(t3.general) || o3.writing !== t3.writing || o3.research_writing !== t3.research_writing) return false;
-    const sharedWords = [...words(o3.title)].filter((w3) => mine.has(w3)).length;
+    const sharedWords = [...titleWords(o3.title)].filter((w3) => mine.has(w3)).length;
     return o3.proposal_keys.some((k3) => t3.proposal_keys.includes(k3)) || o3.scope.some((s3) => t3.scope.includes(s3)) || sharedWords >= 2;
   });
 }
@@ -114222,8 +114279,8 @@ async function submissionDataTakeJob(args, env = process.env) {
   if (job.steps.length === 0) return refuse2("no_steps", `Job ${id} has no steps. What steps will complete it?`);
   if (job.steps.length === 1 && job.steps[0].text === PLAN_MARKER) return refuse2("needs_plan", `Job ${id} needs a plan: its only step is the plan marker.`);
   const reviewed = !fixedText(job.title) && job.proposal_keys.length === 0 && job.steps.every((s3) => s3.done_at === null) && !planApproved(args.db_path, id);
-  const titleWords = job.title.trim().split(/\s+/).length;
-  if (reviewed && titleWords > TITLE_MAX_WORDS) return refuse2("long_title", `Job ${id}'s title is ${titleWords} words, more than ${TITLE_MAX_WORDS}. What shorter phrase names the work?`);
+  const titleLength = job.title.trim().split(/\s+/).length;
+  if (reviewed && !isResearchTitle(job.title) && titleLength > TITLE_MAX_WORDS) return refuse2("long_title", `Job ${id}'s title is ${titleLength} words, more than ${TITLE_MAX_WORDS}. What shorter phrase names the work?`);
   const dupes = overlapping(section3, job, cleared);
   if (dupes.length > 0) {
     const derived = derivedOf(section3);
@@ -114291,6 +114348,11 @@ function checkScope(scope, field) {
     "must be a list of {entity, entity_id}, entity_id a row id or null"
   );
 }
+function checkResearchForm(title, intent) {
+  if (!isResearchTitle(title)) return;
+  const problems = researchFormProblems(title, intent);
+  if (problems.length > 0) throw new ValidationError(`${TOOL13}: this research job is not in the form: ${problems.join("; ")}. Nothing was written.`, "research_form");
+}
 function validate(args) {
   const guard2 = args.guard;
   check2(isId2(args.proceeding_id), "proceeding_id", "must be a positive integer");
@@ -114300,10 +114362,11 @@ function validate(args) {
   check2(args.kind === "work" || args.kind === "charting", "kind", "must be work or charting");
   check2(Number.isInteger(args.priority) || args.priority === "top" || args.priority === "bottom", "priority", "must be an integer, top or bottom");
   check2(
-    ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "holder_lock"].includes(guard2),
+    ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "research_title", "holder_lock"].includes(guard2),
     "guard",
-    "must be one of none, live_key, never_held_key, title_live_with_step, title_and_step_any_status, scrutiny_statement, authority_brief, holder_lock"
+    "must be one of none, live_key, never_held_key, title_live_with_step, title_and_step_any_status, scrutiny_statement, authority_brief, research_title, holder_lock"
   );
+  checkResearchForm(args.title, args.intent);
   checkSteps(args.steps, "steps");
   checkScope(args.scope, "scope");
   check2(args.blocks === void 0 || Array.isArray(args.blocks) && args.blocks.every(isId2), "blocks", "must be a list of job ids");
@@ -114331,11 +114394,15 @@ function validate(args) {
     const authorities = (args.scope ?? []).filter((r3) => r3.entity === "authorities" && r3.entity_id !== null);
     check2(authorities.length === 1, "scope", "must hold exactly one ('authorities', <authority id>) row under guard authority_brief");
   }
+  if (guard2 === "research_title") {
+    check2(isResearchTitle(args.title), "title", `must open "${RESEARCH_JOB_PREFIX}" under guard research_title`);
+  }
   const companions = args.companions ?? [];
   check2(Array.isArray(companions), "companions", "must be a list");
   check2(companions.length === 0 || guard2 === "title_live_with_step", "companions", "are written only under guard title_live_with_step (\xA73c's pair)");
   companions.forEach((c3, i3) => {
     check2(isText2(c3?.title) && isText2(c3?.intent), `companions[${i3}]`, "needs a title and an intent");
+    checkResearchForm(c3.title, c3.intent);
     checkSteps(c3.steps, `companions[${i3}].steps`);
     checkScope(c3.scope, `companions[${i3}].scope`);
   });
@@ -114384,6 +114451,11 @@ function holderQuery(args, titles) {
         params: [args.proceeding_id, JSON.stringify(authoritiesOfCase(args.db_path, args.proceeding_id, authority.entity_id))]
       };
     }
+    case "research_title":
+      return {
+        sql: `SELECT t.id FROM tickets t WHERE t.proceeding_id = ?${live} AND t.title = ? AND EXISTS (SELECT 1 FROM ticket_steps s WHERE s.ticket_id = t.id)`,
+        params: [args.proceeding_id, args.title]
+      };
     default:
       return null;
   }
@@ -114498,7 +114570,8 @@ function guardedReport(args, holder) {
     title_live_with_step: `A live job with one of these titles already holds a step: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
     title_and_step_any_status: `This finding is already on the board, or was settled there: ${job}. Nothing was written; say "already on the board" in one line.`,
     scrutiny_statement: `A live scrutiny review job already covers this statement: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
-    authority_brief: `A live case brief job already covers this case: ${job}. Nothing was written; say "already a job: ${job}" in one line.`
+    authority_brief: `A live case brief job already covers this case: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
+    research_title: `This research job already exists, or was answered: ${job}. Nothing was written; say "already a job: ${job}" in one line.`
   };
   return { ...found2 === void 0 ? {} : { holder_id: found2.id }, note: notes[args.guard] };
 }
@@ -114599,8 +114672,20 @@ async function submissionDataSetStep(args, env = process.env) {
 // src/submission/forms/rewrite-job.ts
 var TOOL15 = "drafting_data__rewrite_job";
 var NOW9 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
-var TEXT_MAX = 500;
-var isText3 = (v3) => typeof v3 === "string" && v3.trim() !== "" && v3.length <= TEXT_MAX && !/[\r\n]/.test(v3);
+var isText3 = (v3) => typeof v3 === "string" && v3.trim() !== "" && v3.length <= JOB_TEXT_MAX && !/[\r\n]/.test(v3);
+function checkResearchForm2(args, storedTitle) {
+  const refuse2 = (why) => {
+    throw new ValidationError(`${TOOL15}: ${why}. Nothing was written.`, "research_form");
+  };
+  if (args.title === void 0) return;
+  if (!isResearchTitle(args.title)) {
+    if (isResearchTitle(storedTitle)) refuse2(`a research job's title keeps its "${RESEARCH_JOB_PREFIX}" prefix`);
+    return;
+  }
+  if (args.intent === void 0) refuse2("a research job's title and intent are set together");
+  const problems = researchFormProblems(args.title, args.intent);
+  if (problems.length > 0) refuse2(`this research job is not in the form: ${problems.join("; ")}`);
+}
 async function submissionDataRewriteJob(args, env = process.env) {
   if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL15}.ticket_id must be a positive integer; nothing was written`, "invalid_ticket_id");
   const held2 = args.held === true;
@@ -114610,17 +114695,27 @@ async function submissionDataRewriteJob(args, env = process.env) {
   if (args.append !== void 0 && !(held2 && args.append === true && args.steps !== void 0)) {
     throw new ValidationError(`${TOOL15}.append is taken only as true, with held: true and steps; nothing was written`, "invalid_append");
   }
+  const migrate2 = args.migrate === true;
+  if (args.migrate !== void 0 && !(migrate2 && args.title !== void 0 && isResearchTitle(args.title) && args.steps === void 0)) {
+    throw new ValidationError(`${TOOL15}.migrate is taken only as true, with a "${RESEARCH_JOB_PREFIX}" title and its intent and no steps; nothing was written`, "invalid_migrate");
+  }
+  if (args.intent !== void 0 && !(typeof args.title === "string" && isResearchTitle(args.title))) {
+    throw new ValidationError(`${TOOL15}.intent is taken only with a "${RESEARCH_JOB_PREFIX}" title; nothing was written`, "invalid_intent");
+  }
   if (args.title === void 0 && args.steps === void 0) throw new ValidationError(`${TOOL15} takes a title, steps or both; nothing was written`, "nothing_to_write");
-  if (args.title !== void 0 && !isText3(args.title)) throw new ValidationError(`${TOOL15}.title must be one line of 1 to ${TEXT_MAX} characters; nothing was written`, "invalid_title");
+  if (args.title !== void 0 && !isText3(args.title)) throw new ValidationError(`${TOOL15}.title must be one line of 1 to ${JOB_TEXT_MAX} characters; nothing was written`, "invalid_title");
   if (args.steps !== void 0 && (!Array.isArray(args.steps) || args.steps.length === 0 || !args.steps.every(isText3))) {
-    throw new ValidationError(`${TOOL15}.steps must be a list of at least one step, each one line of 1 to ${TEXT_MAX} characters; nothing was written`, "invalid_steps");
+    throw new ValidationError(`${TOOL15}.steps must be a list of at least one step, each one line of 1 to ${JOB_TEXT_MAX} characters; nothing was written`, "invalid_steps");
   }
   const id = args.ticket_id;
   const token = args.session_token;
   const deleted = deletedAtHeld(args.db_path);
-  if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) throw new NotFoundError(`${TOOL15}: no job ${id} in ${args.db_path}`, "not_found");
-  const ready = "status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL AND plan_approved_at IS NULL" + (deleted ? " AND deleted_at IS NULL" : "") + " AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = tickets.id AND done_at IS NOT NULL)";
-  const holds2 = held2 ? heldBy2(args.db_path, token, checkClaim(TOOL15, args.db_path, id, token, args.claim_no)) : { sql: ready, params: [] };
+  const [stored] = submissionDataQuery(args.db_path, "SELECT title FROM tickets WHERE id = ?", [id]).rows;
+  if (stored === void 0) throw new NotFoundError(`${TOOL15}: no job ${id} in ${args.db_path}`, "not_found");
+  checkResearchForm2(args, stored.title);
+  const unlocked = "status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL" + (deleted ? " AND deleted_at IS NULL" : "");
+  const ready = `${unlocked} AND plan_approved_at IS NULL AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = tickets.id AND done_at IS NOT NULL)`;
+  const holds2 = held2 ? heldBy2(args.db_path, token, checkClaim(TOOL15, args.db_path, id, token, args.claim_no)) : { sql: migrate2 ? unlocked : ready, params: [] };
   const guard2 = holds2.sql;
   const guardParams = holds2.params;
   const onJob = `EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${guard2})`;
@@ -114638,12 +114733,15 @@ async function submissionDataRewriteJob(args, env = process.env) {
     }
     if (held2) statements.push({ sql: `UPDATE tickets SET plan_approved_at = ${NOW9} WHERE id = ? AND ${guard2} AND plan_approved_at IS NOT NULL`, params: [id, ...guardParams] });
   }
-  if (args.title !== void 0) statements.push({ sql: `UPDATE tickets SET title = ? WHERE id = ? AND ${guard2}`, params: [args.title, id, ...guardParams], expect_changes: 1 });
+  if (args.title !== void 0) {
+    const intent = args.intent === void 0 ? { sql: "", params: [] } : { sql: ", intent = ?", params: [args.intent] };
+    statements.push({ sql: `UPDATE tickets SET title = ?${intent.sql} WHERE id = ? AND ${guard2}`, params: [args.title, ...intent.params, id, ...guardParams], expect_changes: 1 });
+  }
   if (held2) statements.push(...touchStatements(args.db_path, id, holds2));
   const written = await submissionDataWriteAll(args.db_path, statements, env);
   const [job] = submissionDataQuery(
     args.db_path,
-    `SELECT title, status, locked_by, rejected_at, plan_approved_at, ${deleted ? "deleted_at" : "NULL AS deleted_at"} FROM tickets WHERE id = ?`,
+    `SELECT title, intent, status, locked_by, rejected_at, plan_approved_at, ${deleted ? "deleted_at" : "NULL AS deleted_at"} FROM tickets WHERE id = ?`,
     [id]
   ).rows;
   const steps = submissionDataQuery(args.db_path, "SELECT ordinal, text, done_at FROM ticket_steps WHERE ticket_id = ? ORDER BY ordinal", [id]).rows;
@@ -114661,11 +114759,11 @@ async function submissionDataRewriteJob(args, env = process.env) {
     note = `Nothing was written: job ${id} is held by a session, so it is not Ready. Re-render and never re-run.`;
   } else if (job.rejected_at !== null) {
     outcome = "shelved";
-    note = `Nothing was written: job ${id} is shelved. Re-render and never re-run.`;
-  } else if (job.plan_approved_at !== null) {
+    note = `Nothing was written: job ${id} is shelved.${migrate2 ? " A shelved job is migrated when it is restored." : ""} Re-render and never re-run.`;
+  } else if (!migrate2 && job.plan_approved_at !== null) {
     outcome = "approved";
     note = `Nothing was written: job ${id}'s plan is already approved, so it is rewritten only once held. Re-render and never re-run.`;
-  } else if (anyDone) {
+  } else if (!migrate2 && anyDone) {
     outcome = "step_done";
     note = `Nothing was written: job ${id} has a step done, so it is rewritten only once held. Re-render and never re-run.`;
   } else {
@@ -114676,6 +114774,7 @@ async function submissionDataRewriteJob(args, env = process.env) {
     ticket_id: id,
     outcome,
     title: job.title,
+    intent: job.intent,
     steps,
     status: job.status,
     locked_by: job.locked_by,
@@ -114687,6 +114786,8 @@ async function submissionDataRewriteJob(args, env = process.env) {
 }
 
 // src/submission/forms/complete-job.ts
+import { readFileSync as readFileSync37 } from "node:fs";
+import { dirname as dirname30, join as join52 } from "node:path";
 var TOOL16 = "drafting_data__complete_job";
 var NOW10 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function rewritePages(args, read3, client, todos, dates) {
@@ -114739,6 +114840,37 @@ function openSteps(dbPath, id, token) {
     note: `Job ${id} was not completed and nothing was written: ${open.length === 1 ? "step" : "steps"} ${open.map((s3) => `${s3.ordinal} "${s3.text}" (${s3.state})`).join(", ")} ${open.length === 1 ? "is" : "are"} not done. Finish each one, or, on the practitioner's own words, set it cancelled or deferred with drafting_data__set_step, then complete.`
   };
 }
+function memoIncomplete(draftDir, filePath) {
+  try {
+    return /^Confidence:\s*"?INCOMPLETE/m.test(readFileSync37(join52(dirname30(draftDir), ...filePath.split(/[\\/]+/)), "utf8"));
+  } catch (err) {
+    if (UNREADABLE.has(err.code ?? "")) return false;
+    throw err;
+  }
+}
+function researchMemoRefusal(args, token) {
+  const id = args.ticket_id;
+  const [job] = submissionDataQuery(args.db_path, "SELECT title, status, locked_by, rejected_at FROM tickets WHERE id = ?", [id]).rows;
+  if (job === void 0 || job.locked_by !== token || !isResearchTitle(job.title)) return null;
+  const answers = ticketAnswersHeld(args.db_path) ? submissionDataQuery(args.db_path, "SELECT file_path FROM ticket_answers WHERE ticket_id = ? ORDER BY id", [id]).rows : [];
+  const memos = answers.map((a3) => a3.file_path).filter((path) => memoSourceOf(path.split(/[\\/]+/).pop()) === "research_memo");
+  const refuse2 = (outcome, note) => ({
+    ticket_id: id,
+    outcome,
+    superseded: 0,
+    changes: 0,
+    status: job.status,
+    completed_at: null,
+    locked_by: job.locked_by,
+    rejected_at: job.rejected_at,
+    pages_written: false,
+    note
+  });
+  if (memos.length === 0) return refuse2("no_memo", `Job ${id} was not completed and nothing was written: a legal research job ends only in a saved memo, and none is saved under it. Save its memo, or shelve the job.`);
+  if (!memoIncomplete(args.draft_dir, memos[memos.length - 1])) return null;
+  if (stepStatusHeld(args.db_path) && submissionDataQuery(args.db_path, "SELECT 1 FROM ticket_steps WHERE ticket_id = ? AND status IN ('cancelled', 'deferred') LIMIT 1", [id]).rows.length > 0) return null;
+  return refuse2("memo_incomplete", `Job ${id} was not completed and nothing was written: its last memo reads INCOMPLETE. Run the research it names or, on the practitioner's own words, set those steps cancelled or deferred with drafting_data__set_step, then complete.`);
+}
 async function submissionDataCompleteJob(args, client = {}, todos, dates, env = process.env) {
   if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL16}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
@@ -114749,6 +114881,8 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
   const held2 = heldBy2(args.db_path, token, checkClaim(TOOL16, args.db_path, id, token, args.claim_no));
   const open = openSteps(args.db_path, id, token);
   if (open !== null) return open;
+  const noMemo = researchMemoRefusal(args, token);
+  if (noMemo !== null) return noMemo;
   const written = await submissionDataWriteAll(
     args.db_path,
     [
@@ -115014,8 +115148,8 @@ async function submissionDataMergeJobs(args, env = process.env) {
 
 // src/submission/forms/quick-edit.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
-import { appendFileSync as appendFileSync4, existsSync as existsSync47, mkdirSync as mkdirSync23, readdirSync as readdirSync24, readFileSync as readFileSync37, renameSync as renameSync10, rmSync as rmSync3, statSync as statSync20, unlinkSync as unlinkSync15, writeFileSync as writeFileSync15 } from "node:fs";
-import { basename as basename11, dirname as dirname30, join as join52 } from "node:path";
+import { appendFileSync as appendFileSync4, existsSync as existsSync47, mkdirSync as mkdirSync23, readdirSync as readdirSync24, readFileSync as readFileSync38, renameSync as renameSync10, rmSync as rmSync3, statSync as statSync20, unlinkSync as unlinkSync15, writeFileSync as writeFileSync15 } from "node:fs";
+import { basename as basename11, dirname as dirname31, join as join53 } from "node:path";
 var PREVIEW = "drafting_forms__preview_edit";
 var APPLY = "drafting_forms__apply_edit";
 var TOKEN_TTL_MS = 30 * 60 * 1e3;
@@ -115425,7 +115559,7 @@ function planRecast(plan2, op, t3, a3, i3, menu) {
 function planRestore(plan2, op, i3) {
   if (!Number.isInteger(op.remove_line) || op.remove_line <= 0) throw new ValidationError(`${PREVIEW}: restore needs remove_line, the remove's line in the Writing's quick-edits log`, "invalid_remove_line");
   const file = logFile(plan2.db, plan2.filing.id);
-  const text8 = existsSync47(file) ? readFileSync37(file, "utf-8").split("\n")[op.remove_line - 1] : void 0;
+  const text8 = existsSync47(file) ? readFileSync38(file, "utf-8").split("\n")[op.remove_line - 1] : void 0;
   const removed = text8 ? JSON.parse(text8) : void 0;
   const entity = String(removed?.entity);
   const d3 = removed?.op === "remove" && Object.hasOwn(DEPLOY, entity) ? DEPLOY[entity] : void 0;
@@ -115627,12 +115761,12 @@ function saveToken(stored) {
 }
 function pruneTokens(db) {
   const sample = tokenFile(db, "x");
-  const dir = dirname30(sample);
+  const dir = dirname31(sample);
   const prefix = basename11(sample).slice(0, -"x.json".length);
   const cutoff = Date.now() - TOKEN_PRUNE_MS;
   for (const name of readdirSync24(dir)) {
     if (!name.startsWith(prefix)) continue;
-    const file = join52(dir, name);
+    const file = join53(dir, name);
     if (statSync20(file).mtimeMs < cutoff) unlinkSync15(file);
   }
 }
@@ -115795,7 +115929,7 @@ async function submissionFormsPreviewEdit(args) {
     mkdirSync23(previewDir2, { recursive: true });
     const sources = new Set(mapSources(after.documents).map((s3) => s3.title));
     const previewPaths = after.documents.filter((doc) => sources.has(doc.fileName.replace(/\.md$/i, ""))).map((doc) => {
-      const path = join52(previewDir2, doc.fileName);
+      const path = join53(previewDir2, doc.fileName);
       writeFileSync15(path, withLegend(doc.markdown, doc.documentType).markdown, "utf-8");
       return path;
     });
@@ -115851,7 +115985,7 @@ async function submissionFormsApplyEdit(args) {
   checkSchema(db, APPLY);
   const file = tokenFile(db, args.preview_token);
   if (!existsSync47(file)) return { applied: false, refused: "unknown_token", note: "No preview with that token is recorded for this database. Preview the edit again." };
-  const stored = JSON.parse(readFileSync37(file, "utf-8"));
+  const stored = JSON.parse(readFileSync38(file, "utf-8"));
   if (stored.session_token !== args.session_token) return { applied: false, refused: "other_session", note: "That preview was made in another session. Preview the edit again in this one." };
   if (stored.used_at !== null) return { applied: false, refused: "used_token", note: `That preview was already applied, or its apply refused, at ${stored.used_at}. Preview the edit again.` };
   if (Date.parse(stored.expires_at) < Date.now()) return { applied: false, refused: "expired_token", note: `That preview expired at ${stored.expires_at}. Preview the edit again.` };
@@ -115879,12 +116013,12 @@ async function submissionFormsApplyEdit(args) {
   return { applied: true, filing_id: stored.filing_id, revision, audit_log: log.file, audit_lines: log.lines, note: `Applied${written.warning ? ` (${written.warning})` : ""}.` };
 }
 function logFile(db, filingId) {
-  return join52(recordsDir(db), `quick-edits-${filingId}.jsonl`);
+  return join53(recordsDir(db), `quick-edits-${filingId}.jsonl`);
 }
 function appendLog(db, stored, results, revision) {
   const file = logFile(db, stored.filing_id);
-  mkdirSync23(dirname30(file), { recursive: true });
-  const before = existsSync47(file) ? readFileSync37(file, "utf-8").split("\n").length - 1 : 0;
+  mkdirSync23(dirname31(file), { recursive: true });
+  const before = existsSync47(file) ? readFileSync38(file, "utf-8").split("\n").length - 1 : 0;
   const id = (ref) => ref === null || typeof ref === "number" ? ref : results[ref.$rowid].rowid;
   const appliedAt = (/* @__PURE__ */ new Date()).toISOString();
   const text8 = stored.log.map((e3) => {
@@ -115914,18 +116048,18 @@ function appendLog(db, stored, results, revision) {
 
 // src/page-api/focus.ts
 import { createHash as createHash13, randomUUID as randomUUID10 } from "node:crypto";
-import { existsSync as existsSync48, mkdirSync as mkdirSync24, readFileSync as readFileSync38 } from "node:fs";
-import { dirname as dirname31, join as join53 } from "node:path";
+import { existsSync as existsSync48, mkdirSync as mkdirSync24, readFileSync as readFileSync39 } from "node:fs";
+import { dirname as dirname32, join as join54 } from "node:path";
 var FOCUS_SECTIONS = ["submissions", "counter", "rebuttals", "killed"];
 function focusPath(dbPath, filingId, env) {
   const name = createHash13("sha256").update(`${dbPath}
 ${filingId}`).digest("hex").slice(0, 32);
-  return join53(dirname31(configPath(env)), "page-focus", `${name}.json`);
+  return join54(dirname32(configPath(env)), "page-focus", `${name}.json`);
 }
 function writeFocus(dbPath, filingId, section3, number3, env = process.env) {
   const record2 = { id: randomUUID10(), section: section3, number: number3, at: (/* @__PURE__ */ new Date()).toISOString() };
   const path = focusPath(dbPath, filingId, env);
-  mkdirSync24(dirname31(path), { recursive: true });
+  mkdirSync24(dirname32(path), { recursive: true });
   writeTextAtomic(path, JSON.stringify(record2));
   return record2;
 }
@@ -115934,7 +116068,7 @@ function readFocus(dbPath, filingIds, env = process.env) {
   for (const id of filingIds) {
     const path = focusPath(dbPath, id, env);
     if (!existsSync48(path)) continue;
-    const record2 = JSON.parse(readFileSync38(path, "utf-8"));
+    const record2 = JSON.parse(readFileSync39(path, "utf-8"));
     if (newest2 === null || record2.at > newest2.at) newest2 = record2;
   }
   return newest2;
@@ -115969,7 +116103,7 @@ function submissionFormsFocusViewPage(args, env = process.env) {
 
 // src/submission/open-session.ts
 import { existsSync as existsSync49, readdirSync as readdirSync25 } from "node:fs";
-import { basename as basename12, dirname as dirname32, join as join54 } from "node:path";
+import { basename as basename12, dirname as dirname33, join as join55 } from "node:path";
 
 // src/submission/matter-todos.ts
 var text3 = (value2) => value2 === null || value2 === void 0 ? null : String(value2);
@@ -116028,7 +116162,7 @@ function openBoard(dbPath, draftDir, client, todos, dates, listed, filingId, tim
           ...rendered.filing_retired ? { filing_retired: true, note: rendered.note } : {},
           ...board.ingest_inputs ? { ingest_inputs: board.ingest_inputs } : {}
         },
-        matter_board_path: join54(draftDir, MATTER_BOARD_FILE),
+        matter_board_path: join55(draftDir, MATTER_BOARD_FILE),
         milestone_path: board.path,
         ...written.pages ? { milestone_paths: written.pages.milestone_paths, view_page_paths: written.pages.view_page_paths, loose_threads_path: written.pages.loose_threads_path } : {},
         // ADR 0038: the render read the opened filing's form currency; it is not read twice.
@@ -116128,7 +116262,7 @@ function practiceConfigBlocking(dbPath) {
   }
 }
 function backups(dbPath) {
-  const dir = dirname32(dbPath);
+  const dir = dirname33(dbPath);
   const prefix = `${basename12(dbPath)}.bak-`;
   return new Set(existsSync49(dir) ? readdirSync25(dir).filter((name) => name.startsWith(prefix)) : []);
 }
@@ -116175,7 +116309,7 @@ async function openSession(matterRoot, practiceDb2, client = {}, unattended = fa
     }
     const to2 = migrationRefused === void 0 ? target : result.schema_version;
     if (to2 !== null && to2 !== from) {
-      migrated = { from, to: to2, backup: written.length > 0 ? join54(dirname32(dbPath), written[0]) : null };
+      migrated = { from, to: to2, backup: written.length > 0 ? join55(dirname33(dbPath), written[0]) : null };
       if (migrateWarnings.length > 0) migrated.warnings = migrateWarnings;
     }
   }
@@ -116216,7 +116350,7 @@ async function openSession(matterRoot, practiceDb2, client = {}, unattended = fa
 }
 
 // src/submission/bcsc-form-harness.ts
-import { existsSync as existsSync50, readdirSync as readdirSync26, readFileSync as readFileSync39, realpathSync as realpathSync13, statSync as statSync21 } from "node:fs";
+import { existsSync as existsSync50, readdirSync as readdirSync26, readFileSync as readFileSync40, realpathSync as realpathSync13, statSync as statSync21 } from "node:fs";
 import { win32 as pathWin3220 } from "node:path";
 var DRIVER8 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
@@ -116344,7 +116478,7 @@ function checkSession(root, caseData, sessions, sessionId) {
   if (!existsSync50(ctxPath)) {
     throw new DataServerError(`no session ${sessionId} under ${sessions}. Call this tool with command list to see the sessions.`, "session_not_found");
   }
-  const ctx = JSON.parse(readFileSync39(ctxPath).toString("utf-8").replace(/\0+$/, ""));
+  const ctx = JSON.parse(readFileSync40(ctxPath).toString("utf-8").replace(/\0+$/, ""));
   const same2 = (stored, expected) => {
     if (typeof stored !== "string" || stored === "" || !existsSync50(stored)) return false;
     return realpathSync13.native(stored).toLowerCase() === expected.toLowerCase() && statSync21(stored).isDirectory();
@@ -116620,7 +116754,7 @@ import { existsSync as existsSync54, mkdirSync as mkdirSync26, readdirSync as re
 import { win32 as pathWin3226 } from "node:path";
 
 // src/submission/email-recipients.ts
-import { dirname as dirname33 } from "node:path";
+import { dirname as dirname34 } from "node:path";
 function named(name, address2) {
   return name ? `"${name.replace(/["\\]/g, "\\$&")}" <${address2}>` : address2;
 }
@@ -116658,7 +116792,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
   let note;
   if ("filing_id" in source) {
     const filing = fetchFiling(dbPath, source.filing_id);
-    const parties2 = filing.filed_on ? fetchSentParties(dbPath, filing) : draftingParties(dirname33(dbPath), fetchProceeding(dbPath, filing.proceeding_id), fetchParties(dbPath, filing.proceeding_id), env).parties;
+    const parties2 = filing.filed_on ? fetchSentParties(dbPath, filing) : draftingParties(dirname34(dbPath), fetchProceeding(dbPath, filing.proceeding_id), fetchParties(dbPath, filing.proceeding_id), env).parties;
     const recipients = mergeSharedRecipients(fetchFilingRecipients(dbPath, filing, parties2));
     if (recipients.some((r3) => r3.role === "bcc")) {
       throw new DataServerError(
@@ -116672,7 +116806,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
     const rows4 = [];
     const drifted = /* @__PURE__ */ new Map();
     for (const proceeding of proceedings) {
-      const { parties: parties2, drift } = draftingParties(dirname33(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
+      const { parties: parties2, drift } = draftingParties(dirname34(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
       const counsel = fetchServiceListCounsel(dbPath, proceeding.id, parties2);
       for (const d3 of drift.rows) {
         const why = d3.kind === "unlinked" ? `${d3.name} is not linked to a party in case data, so its counsel cannot be read` : d3.kind === "not_of_record" ? `${d3.name} is linked to a party case data does not hold for this proceeding` : `counsel were not read from case data: ${d3.reason}`;
@@ -116702,7 +116836,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
 }
 
 // src/submission/scrutiny-review.ts
-import { copyFileSync as copyFileSync4, existsSync as existsSync53, mkdirSync as mkdirSync25, mkdtempSync as mkdtempSync2, readdirSync as readdirSync29, readFileSync as readFileSync40, realpathSync as realpathSync14, renameSync as renameSync11, rmSync as rmSync4, unlinkSync as unlinkSync16, writeFileSync as writeFileSync16 } from "node:fs";
+import { copyFileSync as copyFileSync4, existsSync as existsSync53, mkdirSync as mkdirSync25, mkdtempSync as mkdtempSync2, readdirSync as readdirSync29, readFileSync as readFileSync41, realpathSync as realpathSync14, renameSync as renameSync11, rmSync as rmSync4, unlinkSync as unlinkSync16, writeFileSync as writeFileSync16 } from "node:fs";
 import { tmpdir as tmpdir4 } from "node:os";
 import { win32 as pathWin3225 } from "node:path";
 
@@ -116988,7 +117122,7 @@ function buildPackage(ctx, spec) {
     cited: cited2.extract,
     context: context.extract,
     files: [...cited2.files, ...context.files],
-    proposedExcerpt: spec.span ? readFileSync40(proposedFile, "utf-8").replace(/\r?\n$/, "") : null
+    proposedExcerpt: spec.span ? readFileSync41(proposedFile, "utf-8").replace(/\r?\n$/, "") : null
   };
 }
 function resolve10(ctx, authority) {
@@ -117359,7 +117493,7 @@ function writeEmlPath(env = process.env, installRoot) {
 }
 
 // src/correspondence/message.ts
-import { readdirSync as readdirSync31, readFileSync as readFileSync41, realpathSync as realpathSync16, statSync as statSync22 } from "node:fs";
+import { readdirSync as readdirSync31, readFileSync as readFileSync42, realpathSync as realpathSync16, statSync as statSync22 } from "node:fs";
 import { extname as extname5, win32 as pathWin3227 } from "node:path";
 
 // src/correspondence/cfb.ts
@@ -118264,7 +118398,7 @@ function scanMessageHeaders(root) {
       if (seen >= SCAN_LIMIT2) return false;
       seen += 1;
       try {
-        messages.push({ path: relPath, ...parseMessageHeaders(readFileSync41(full), extname5(entry2.name)) });
+        messages.push({ path: relPath, ...parseMessageHeaders(readFileSync42(full), extname5(entry2.name)) });
       } catch {
       }
     }
@@ -118304,7 +118438,7 @@ function readMessage(args) {
     if (!MESSAGE_EXTENSIONS.has(ext)) {
       throw new DataServerError(`not a message file: ${relative5} (only .msg and .eml)`, "unsupported_extension");
     }
-    return { path: relative5, ...parseMessage(readFileSync41(full2), ext) };
+    return { path: relative5, ...parseMessage(readFileSync42(full2), ext) };
   }
   const needle = args.from.trim().toLowerCase();
   const scan = scanMessageHeaders(root);
@@ -118319,14 +118453,14 @@ function readMessage(args) {
   const full = pathWin3227.join(root, newest2.path);
   return {
     path: newest2.path,
-    ...parseMessage(readFileSync41(full), extname5(full)),
+    ...parseMessage(readFileSync42(full), extname5(full)),
     other_candidates: matches.slice(1, 1 + OTHER_CANDIDATES),
     scan_truncated: scan.truncated
   };
 }
 
 // src/correspondence/reply-draft.ts
-import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync32, readFileSync as readFileSync42, realpathSync as realpathSync17, writeSync as writeSync6 } from "node:fs";
+import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync32, readFileSync as readFileSync43, realpathSync as realpathSync17, writeSync as writeSync6 } from "node:fs";
 import { basename as basename13, extname as extname6, win32 as pathWin3228 } from "node:path";
 
 // src/correspondence/zip.ts
@@ -118584,7 +118718,7 @@ function exportDocx(args, root) {
   }
   if (extname6(source).toLowerCase() !== ".md") throw new ValidationError(`path must be a saved .md draft: ${given}`);
   const stem3 = basename13(source, extname6(source));
-  const docx = markdownToDocx(readFileSync42(source, "utf-8"));
+  const docx = markdownToDocx(readFileSync43(source, "utf-8"));
   const written = writeNextFree(dir, stem3, ".docx", docx);
   const wanted = pathWin3228.join(dir, `${stem3}.docx`);
   return {
@@ -119748,8 +119882,8 @@ function rulesLifecycle(dbPath, since) {
 
 // src/preferences/tools.ts
 import { randomUUID as randomUUID11 } from "node:crypto";
-import { existsSync as existsSync55, readFileSync as readFileSync43 } from "node:fs";
-import { join as join55 } from "node:path";
+import { existsSync as existsSync55, readFileSync as readFileSync44 } from "node:fs";
+import { join as join56 } from "node:path";
 
 // src/preferences/redact.ts
 var PLACEHOLDERS = ["<user>", "<username>", "<matter>", "<folder>"];
@@ -119830,7 +119964,7 @@ function text4(raw, name) {
 }
 function readJson2(file) {
   try {
-    return JSON.parse(readFileSync43(file, "utf-8"));
+    return JSON.parse(readFileSync44(file, "utf-8"));
   } catch (err) {
     throw new DataServerError(`${file} is not valid JSON: ${err.message}`, "invalid_file");
   }
@@ -119851,7 +119985,7 @@ function person(env) {
 }
 function preferencesFile(env) {
   const key = person(env);
-  return { file: join55(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
+  return { file: join56(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
 }
 function readEntries(file) {
   if (!existsSync55(file)) return [];
@@ -119913,8 +120047,8 @@ async function preferencesWrite(args, env = process.env, seams = {}) {
 
 // src/suggestions/store.ts
 import { randomUUID as randomUUID12 } from "node:crypto";
-import { existsSync as existsSync56, readFileSync as readFileSync44 } from "node:fs";
-import { dirname as dirname34, join as join56 } from "node:path";
+import { existsSync as existsSync56, readFileSync as readFileSync45 } from "node:fs";
+import { dirname as dirname35, join as join57 } from "node:path";
 var STORE_FOLDER = "suggestions";
 var STORE_FILE = "suggestions.json";
 var LEGACY_LOG_FILE = "suggestions.local.json";
@@ -119927,13 +120061,13 @@ var CARD_STATUS = {
   unreachable: "Not sent; Probanda could not be reached"
 };
 function storeDir(env = process.env) {
-  return join56(dirname34(configPath(env)), STORE_FOLDER);
+  return join57(dirname35(configPath(env)), STORE_FOLDER);
 }
 function storePath(env = process.env) {
-  return join56(storeDir(env), STORE_FILE);
+  return join57(storeDir(env), STORE_FILE);
 }
 function legacyLogPath(env = process.env) {
-  return join56(dirname34(configPath(env)), LEGACY_LOG_FILE);
+  return join57(dirname35(configPath(env)), LEGACY_LOG_FILE);
 }
 function cardStatus(record2) {
   return CARD_STATUS[record2.state];
@@ -119970,7 +120104,7 @@ function newSuggestionRecord(payload, title, now) {
 }
 function readJson3(file) {
   try {
-    const value2 = JSON.parse(readFileSync44(file, "utf-8"));
+    const value2 = JSON.parse(readFileSync45(file, "utf-8"));
     if (value2 === null || typeof value2 !== "object" || Array.isArray(value2)) throw new Error("not a JSON object");
     return value2;
   } catch (err) {
@@ -120339,7 +120473,7 @@ async function withdrawSuggestion(recordId, env = process.env, seams = {}) {
 
 // src/suggestions/page.ts
 import { mkdirSync as mkdirSync27 } from "node:fs";
-import { dirname as dirname35, join as join57 } from "node:path";
+import { dirname as dirname36, join as join58 } from "node:path";
 var PAST_SUGGESTIONS_FILE = "Past suggestions.html";
 var BRACKET = /\[(client|matter|person|document|file|date|amount)\]/g;
 var ITEM_STATUS = {
@@ -120539,7 +120673,7 @@ function renderPastSuggestionsHtml(store, port, tokenFor, focus2 = null) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src http://127.0.0.1:${port}; object-src 'none'; base-uri 'none'; form-action 'none'"><title>Past suggestions</title><style>${STYLE}</style></head><body><main><h1>Past suggestions</h1><p class="note">What this computer sent to the Probanda team, word for word, and what has happened to each suggestion.</p>` + body + `</main><script type="application/json" id="api">${api}</script><script>${SCRIPT}</script></body></html>`;
 }
 function pastSuggestionsPath(env = process.env) {
-  return join57(storeDir(env), PAST_SUGGESTIONS_FILE);
+  return join58(storeDir(env), PAST_SUGGESTIONS_FILE);
 }
 async function writePastSuggestionsPage(env = process.env, options = {}) {
   const store = await loadStore(env);
@@ -120547,7 +120681,7 @@ async function writePastSuggestionsPage(env = process.env, options = {}) {
   if (options.focus !== void 0 && !store.records.some((r3) => isSuggestion(r3) && r3.record_id === options.focus)) {
     throw new NotFoundError(`no suggestion ${options.focus} on this computer`, "not_found");
   }
-  mkdirSync27(dirname35(path), { recursive: true });
+  mkdirSync27(dirname36(path), { recursive: true });
   writeTextAtomic(path, renderPastSuggestionsHtml(store, pageApiPort(env), (id) => pageApiSuggestionToken(id, env), options.focus ?? null));
   return path;
 }
@@ -120555,11 +120689,11 @@ async function writePastSuggestionsPage(env = process.env, options = {}) {
 // src/suggestions/card.ts
 import { randomUUID as randomUUID14 } from "node:crypto";
 import { existsSync as existsSync60, unlinkSync as unlinkSync17 } from "node:fs";
-import { join as join61 } from "node:path";
+import { join as join62 } from "node:path";
 
 // src/suggestions/crosscheck.ts
-import { existsSync as existsSync57, readFileSync as readFileSync45 } from "node:fs";
-import { join as join58 } from "node:path";
+import { existsSync as existsSync57, readFileSync as readFileSync46 } from "node:fs";
+import { join as join59 } from "node:path";
 
 // src/case/list-record-names.ts
 var DRIVER11 = String.raw`
@@ -120709,9 +120843,9 @@ function loadStopWords(env = process.env, installRoot) {
   const root = resolveShippedRoot(STOP_WORDS_DIR, env, { subject: "the suggestion word lists", plugin: "lawyer", installRoot }).root;
   const words2 = /* @__PURE__ */ new Set();
   for (const file of STOP_WORD_FILES) {
-    const path = join58(root, ...STOP_WORDS_DIR.split("/"), file);
+    const path = join59(root, ...STOP_WORDS_DIR.split("/"), file);
     if (!existsSync57(path)) throw new DataServerError("The suggestion check is missing its word lists. Update the lawyer plugin.", "stop_words_missing");
-    for (const word of parseStopWords(readFileSync45(path, "utf-8"))) words2.add(word);
+    for (const word of parseStopWords(readFileSync46(path, "utf-8"))) words2.add(word);
   }
   return words2;
 }
@@ -121203,8 +121337,8 @@ function renderCardHtml(card, port, token) {
 }
 
 // src/suggestions/mockup.ts
-import { existsSync as existsSync58, readFileSync as readFileSync46 } from "node:fs";
-import { join as join59 } from "node:path";
+import { existsSync as existsSync58, readFileSync as readFileSync47 } from "node:fs";
+import { join as join60 } from "node:path";
 var PLACEHOLDERS_DIR = "suggestion/references/mockup";
 var PLACEHOLDERS_FILE = "placeholders.txt";
 var MAX_MOCKUP_BYTES = 1e6;
@@ -121214,9 +121348,9 @@ function parsePlaceholders(text8) {
 }
 function loadPlaceholders(env = process.env, installRoot) {
   const root = resolveShippedRoot(PLACEHOLDERS_DIR, env, { subject: "the suggestion mockup placeholders", plugin: "lawyer", installRoot }).root;
-  const path = join59(root, ...PLACEHOLDERS_DIR.split("/"), PLACEHOLDERS_FILE);
+  const path = join60(root, ...PLACEHOLDERS_DIR.split("/"), PLACEHOLDERS_FILE);
   if (!existsSync58(path)) throw new DataServerError("The suggestion mockup is missing its placeholder text. Update the lawyer plugin.", "placeholders_missing");
-  return parsePlaceholders(readFileSync46(path, "utf-8"));
+  return parsePlaceholders(readFileSync47(path, "utf-8"));
 }
 var REFUSED = [
   [/<script/i, "a script"],
@@ -121381,8 +121515,8 @@ function renderMockupPage(opts) {
 
 // src/suggestions/observation.ts
 import { randomUUID as randomUUID13 } from "node:crypto";
-import { existsSync as existsSync59, readdirSync as readdirSync33, readFileSync as readFileSync47 } from "node:fs";
-import { join as join60 } from "node:path";
+import { existsSync as existsSync59, readdirSync as readdirSync33, readFileSync as readFileSync48 } from "node:fs";
+import { join as join61 } from "node:path";
 
 // src/suggestions/environment.ts
 import { arch as osArch, homedir as homedir10, hostname as osHostname, platform as osPlatform, release as osRelease, userInfo } from "node:os";
@@ -121756,9 +121890,9 @@ function parseObservationTexts(text8) {
 }
 function loadObservationTexts(env = process.env, installRoot) {
   const root = resolveShippedRoot(OBSERVATION_TEXTS_PATH, env, { subject: "the suggestion observation texts", plugin: "lawyer", installRoot }).root;
-  const path = join60(root, ...OBSERVATION_TEXTS_PATH.split("/"));
+  const path = join61(root, ...OBSERVATION_TEXTS_PATH.split("/"));
   if (!existsSync59(path)) throw new DataServerError("The suggestion observation texts are missing. Update the lawyer plugin.", "observation_texts_missing");
-  return parseObservationTexts(readFileSync47(path, "utf-8"));
+  return parseObservationTexts(readFileSync48(path, "utf-8"));
 }
 function isObject7(value2) {
   return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
@@ -122012,10 +122146,10 @@ function findCard(store, cardId) {
   return record2;
 }
 function cardPath(cardId, env = process.env) {
-  return join61(storeDir(env), `Suggestion-${cardId}.html`);
+  return join62(storeDir(env), `Suggestion-${cardId}.html`);
 }
 function mockupPagePath(cardId, n3, env = process.env) {
-  return join61(storeDir(env), `Suggestion-${cardId}-mockup-${n3}.html`);
+  return join62(storeDir(env), `Suggestion-${cardId}-mockup-${n3}.html`);
 }
 function nowOf2(deps) {
   return deps.now ? deps.now() : /* @__PURE__ */ new Date();
@@ -122638,7 +122772,7 @@ async function openCards(env) {
 // src/suggestions/specification.ts
 var SPEC_FORMAT = "probanda-spec/1";
 var BACKSTOP_FORMAT = "probanda-backstop/1";
-var MAX_SENTENCES = 80;
+var MAX_SENTENCES2 = 80;
 var MAX_SENTENCE = 600;
 var MAX_CITES = 4;
 var MAX_QUOTE = 300;
@@ -122704,7 +122838,7 @@ function parseSpecification(raw) {
   }
   if (!isObject9(value2) || !Array.isArray(value2.sentences)) bad();
   const list2 = value2.sentences;
-  if (list2.length < 1 || list2.length > MAX_SENTENCES) bad();
+  if (list2.length < 1 || list2.length > MAX_SENTENCES2) bad();
   const sentences = list2.map((entry2, i3) => {
     if (!isObject9(entry2) || typeof entry2.text !== "string" || !entry2.text.trim() || entry2.text.length > MAX_SENTENCE) bad();
     if (entry2.item !== void 0 && !(Number.isInteger(entry2.item) && entry2.item >= 1)) bad();
@@ -123062,7 +123196,7 @@ async function suggestionLogWrite(args, env = process.env) {
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync61, mkdirSync as mkdirSync28, readFileSync as readFileSync48, statSync as statSync23, writeFileSync as writeFileSync17 } from "node:fs";
+import { existsSync as existsSync61, mkdirSync as mkdirSync28, readFileSync as readFileSync49, statSync as statSync23, writeFileSync as writeFileSync17 } from "node:fs";
 import { win32 as pathWin3229 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
@@ -123118,12 +123252,12 @@ function repoDocsRead(relative5, env) {
   }
   return {
     path: toPosixRelative(root, resolved),
-    content: readFileSync48(resolved, "utf-8")
+    content: readFileSync49(resolved, "utf-8")
   };
 }
 
 // src/pages/preview.ts
-import { basename as basename15, dirname as dirname36, join as join63, relative as relative4 } from "node:path";
+import { basename as basename15, dirname as dirname37, join as join64, relative as relative4 } from "node:path";
 
 // src/housekeeping/templates/approval.css.ts
 var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
@@ -124674,10 +124808,10 @@ var LEGAL_RESEARCH_FIXTURE = {
 // src/pages/preview-file.ts
 import { mkdirSync as mkdirSync29, writeFileSync as writeFileSync18 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
-import { join as join62 } from "node:path";
+import { join as join63 } from "node:path";
 var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
 function fixturePreviewDir() {
-  return join62(tmpdir5(), FIXTURE_PREVIEW_FOLDER);
+  return join63(tmpdir5(), FIXTURE_PREVIEW_FOLDER);
 }
 var FIXTURE_PREVIEW_MARKER = "<!-- probanda-fixture-preview -->";
 function composeWithOverrides(set, overrides = {}) {
@@ -124694,7 +124828,7 @@ function writePreview(dir, base, html, fixture) {
   const text8 = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
 ` : html;
   for (let n3 = 1; ; n3++) {
-    const path = join62(dir, `${base} preview ${n3}.html`);
+    const path = join63(dir, `${base} preview ${n3}.html`);
     try {
       writeFileSync18(path, text8, { flag: "wx" });
       return path;
@@ -124755,7 +124889,7 @@ async function pagesPreview(args, store) {
       throw new ValidationError("the Practice Board covers the whole practice: it takes no matter_root, filing_id or proceeding_id");
     }
     const html2 = renderPracticeBoardHtml(await buildPracticeBoardData(store, /* @__PURE__ */ new Date()), composed);
-    return { path: writePreview(dirname36(resolvePracticeDbPath(store.env)), stem2(PRACTICE_BOARD_FILE), html2, false) };
+    return { path: writePreview(dirname37(resolvePracticeDbPath(store.env)), stem2(PRACTICE_BOARD_FILE), html2, false) };
   }
   if (args.matter_root === void 0) throw new ValidationError(`real data for the ${page2} page needs matter_root`);
   if ((page2 === "Litigation Strategy" || threads) && (ids.filing_id !== void 0 || ids.proceeding_id !== void 0)) {
@@ -124785,14 +124919,14 @@ async function pagesPreview(args, store) {
     ids.filing_id === void 0 ? {} : { only: ids.filing_id },
     threads ? { threads: withoutListener(threads) } : viewPage ? { views: { [page2]: viewPage } } : page2 === "Work Board" ? { milestone: composed } : { matterBoard: composed }
   );
-  const target = threads || page2 === "Litigation Strategy" ? join63(draftDir, threads ? LOOSE_THREADS_FILE2 : MATTER_BOARD_FILE) : page2 === "Work Board" ? built.paths.milestone_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
+  const target = threads || page2 === "Litigation Strategy" ? join64(draftDir, threads ? LOOSE_THREADS_FILE2 : MATTER_BOARD_FILE) : page2 === "Work Board" ? built.paths.milestone_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
   const pageFile = target === void 0 ? void 0 : relative4(draftDir, target);
   const html = built.pages.find((p3) => p3.name === pageFile)?.html;
   if (target === void 0 || html === void 0) {
     const which = ids.filing_id !== void 0 ? `Work Board ${ids.filing_id}` : "that proceeding's board";
     throw new ValidationError(`this matter has no ${page2} page for ${which}: it is retired, merged into a board with no such page, or not in this matter`);
   }
-  return { path: writePreview(dirname36(target), stem2(basename15(target)), html, false) };
+  return { path: writePreview(dirname37(target), stem2(basename15(target)), html, false) };
 }
 function withoutListener(page2) {
   return {
@@ -124814,7 +124948,7 @@ import {
   existsSync as existsSync62,
   mkdirSync as mkdirSync30,
   readdirSync as readdirSync35,
-  readFileSync as readFileSync53,
+  readFileSync as readFileSync54,
   statSync as statSync25,
   writeFileSync as writeFileSync19
 } from "node:fs";
@@ -124892,11 +125026,11 @@ function downloadsDir(env = process.env) {
 }
 
 // src/files/text-extract.ts
-import { readFileSync as readFileSync52 } from "node:fs";
+import { readFileSync as readFileSync53 } from "node:fs";
 import { win32 as pathWin3231 } from "node:path";
 
 // src/files/extract/doc.ts
-import { readFileSync as readFileSync49 } from "node:fs";
+import { readFileSync as readFileSync50 } from "node:fs";
 var CFB_SIGNATURE = Buffer.from([208, 207, 17, 224, 161, 177, 26, 225]);
 var END_OF_CHAIN2 = 4294967294;
 var FREE_SECT = 4294967295;
@@ -125037,7 +125171,7 @@ function plain(raw) {
   return out;
 }
 function docText(path) {
-  const streams = cfbStreams(readFileSync49(path));
+  const streams = cfbStreams(readFileSync50(path));
   const wd = streams.get("WordDocument");
   if (!wd || wd.length < 154) throw new Error("not a Word document (no WordDocument stream)");
   if (wd.readUInt16LE(0) !== WORD_IDENT) throw new Error("not a Word document (bad FIB identifier)");
@@ -125085,7 +125219,7 @@ ${notes.join("\n\n")}
 }
 
 // src/files/extract/docx.ts
-import { readFileSync as readFileSync50 } from "node:fs";
+import { readFileSync as readFileSync51 } from "node:fs";
 import { inflateRawSync as inflateRawSync2 } from "node:zlib";
 var EOCD_SIG = 101010256;
 var CENTRAL_SIG = 33639248;
@@ -125122,12 +125256,12 @@ function zipEntry(zip, name) {
   throw new Error(`no ${name} in the archive`);
 }
 function docxText(path) {
-  const xml = zipEntry(readFileSync50(path), "word/document.xml").toString("utf-8");
+  const xml = zipEntry(readFileSync51(path), "word/document.xml").toString("utf-8");
   return xml.replace(/<w:tab\/>/g, "	").replace(/<\/w:p>/g, "\n").replace(/<w:br[^>]*\/>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
 }
 
 // src/files/extract/pdf.ts
-import { readFileSync as readFileSync51 } from "node:fs";
+import { readFileSync as readFileSync52 } from "node:fs";
 var pdfjs;
 var quietDepth = 0;
 var savedLog = console.log;
@@ -125160,7 +125294,7 @@ function loadPdfJs() {
 var PdfExtractorUnavailable = class extends Error {
 };
 async function pdfPages(path) {
-  const data = new Uint8Array(readFileSync51(path));
+  const data = new Uint8Array(readFileSync52(path));
   if (data.length === 0) throw new Error("file is empty (0 bytes)");
   return quietStdout(async () => {
     let lib;
@@ -125213,7 +125347,7 @@ async function extractText(path) {
   let result;
   try {
     if (COPIED_EXTENSIONS.has(ext)) {
-      result = { status: "ok", kind: "text", method: "copy", text: readFileSync52(path, "utf-8"), pages: null };
+      result = { status: "ok", kind: "text", method: "copy", text: readFileSync53(path, "utf-8"), pages: null };
     } else if (ext === ".pdf") {
       const scanned = (await classifyPdfPages(path)).indexOf("scanned");
       if (scanned >= 0) {
@@ -125318,7 +125452,7 @@ function appendManifest(destinationDir, record2) {
   }
   const path = pathWin3232.join(dir, MANIFEST);
   appendFileSync5(path, JSON.stringify(record2) + "\n", "utf-8");
-  const records = readFileSync53(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
+  const records = readFileSync54(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
   return { path, records };
 }
 function saveAnswer(destinationDir, filename, text8, fromScratch, fromRender) {
@@ -125366,7 +125500,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (!statSync25(source).isFile()) {
     throw new DataServerError(`from_scratch is not a file: ${source}`, "not_found");
   }
-  const body = readFileSync53(source);
+  const body = readFileSync54(source);
   if (body.length === 0) {
     throw new DataServerError(`from_scratch is empty: ${source}`, "invalid_argument");
   }
@@ -125412,7 +125546,7 @@ function renderBytes(destinationDir, fromRender) {
   if (!source.toLowerCase().startsWith(draft.toLowerCase() + "\\") || !statSync25(source).isFile()) {
     throw new DataServerError(`from_render is not a mockup in this matter's ${draft}: ${source}`, "not_render");
   }
-  const mockup = readFileSync53(source, "utf-8");
+  const mockup = readFileSync54(source, "utf-8");
   const { copy, mockupOnly } = CASE_BRIEF_HEADER.test(mockup) ? { copy: caseBriefCopy(mockup, source), mockupOnly: [] } : memoCopy(mockup);
   if (copy.trim() === "") throw new DataServerError(`from_render is empty: ${source}`, "invalid_argument");
   return { body: Buffer.from(copy, "utf-8"), mockupOnly };
@@ -125521,7 +125655,7 @@ function manifestMarker(law, file) {
   const path = pathWin3232.join(law, MANIFEST);
   if (!existsSync62(path)) return null;
   let marker = null;
-  for (const line of readFileSync53(path, "utf-8").split("\n")) {
+  for (const line of readFileSync54(path, "utf-8").split("\n")) {
     if (line.trim() === "") continue;
     let record2;
     try {
@@ -125801,8 +125935,8 @@ function assertBareFilename(name, label2) {
 
 // src/research/preflight.ts
 import { tmpdir as tmpdir6 } from "node:os";
-import { join as join64 } from "node:path";
-var PROBE_STEM = join64(tmpdir6(), "coclerk-research-preflight-probe-absent");
+import { join as join65 } from "node:path";
+var PROBE_STEM = join65(tmpdir6(), "coclerk-research-preflight-probe-absent");
 var CAPS = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
@@ -125848,7 +125982,7 @@ function researchPreflight(seams = {}) {
 
 // src/files/legislation-search.ts
 import { createHash as createHash15 } from "node:crypto";
-import { readFileSync as readFileSync54, statSync as statSync26 } from "node:fs";
+import { readFileSync as readFileSync55, statSync as statSync26 } from "node:fs";
 import { win32 as pathWin3233 } from "node:path";
 var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".txt"]);
 var HTML_EXTENSIONS2 = /* @__PURE__ */ new Set([".htm", ".html"]);
@@ -125883,7 +126017,7 @@ function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}, p
   }
   const ext = pathWin3233.extname(file).toLowerCase();
   const range = checkPages(pages, ext);
-  const bytes = readFileSync54(file);
+  const bytes = readFileSync55(file);
   const { lines: lines2, source, marker } = textLines(file, ext, bytes, range, seams);
   const currency = marker ?? lines2.find((l3) => /\bcurrent to\b/i.test(l3.text))?.text ?? null;
   const chunks = fixedChunks(sectionChunks(lines2));
@@ -126189,7 +126323,7 @@ function sectionBlocks(chunks) {
 // src/files/extract/page-compare.ts
 import { createHash as createHash16 } from "node:crypto";
 import { mkdirSync as mkdirSync31, writeFileSync as writeFileSync20 } from "node:fs";
-import { isAbsolute as isAbsolute9, join as join65 } from "node:path";
+import { isAbsolute as isAbsolute9, join as join66 } from "node:path";
 var FPDF_ANNOT = 1;
 var GROUP_MAX = 5;
 var VISUAL = /* @__PURE__ */ new Set(["only_in_a", "only_in_b", "size", "rotation", "render"]);
@@ -126218,13 +126352,13 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         const flagged2 = [];
         let workDir = null;
         const write2 = (side, n3, facts) => {
-          workDir ??= join65(args.destination_dir, `compare-${sha2563(dataA).slice(0, 16)}-${sha2563(dataB).slice(0, 16)}`);
-          const dir = join65(workDir, side);
+          workDir ??= join66(args.destination_dir, `compare-${sha2563(dataA).slice(0, 16)}-${sha2563(dataB).slice(0, 16)}`);
+          const dir = join66(workDir, side);
           mkdirSync31(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
           return tiles.map(([top, rows4], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-            const file = join65(dir, `${name}.png`);
+            const file = join66(dir, `${name}.png`);
             const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows4) * facts.width * 3);
             writeFileSync20(file, encodePng(rgb, facts.width, rows4));
             return file;
@@ -126388,6 +126522,11 @@ function lawRelativePath(path) {
   const segments = path.split(/[\\/]+/);
   return segments.slice(segments.findIndex((s3) => s3.toLowerCase() === "6. law")).join("\\");
 }
+function takesAnswers(dbPath, id) {
+  const [job] = submissionDataQuery(dbPath, "SELECT title FROM tickets WHERE id = ?", [id]).rows;
+  if (isResearchTitle(job.title) || fixedText(job.title) || job.title.startsWith("Note up")) return true;
+  return submissionDataQuery(dbPath, "SELECT 1 FROM ticket_proposals WHERE ticket_id = ? LIMIT 1", [id]).rows.length > 0;
+}
 async function saveAnswerTool(args, env = process.env) {
   const job = jobIdentity(TOOL20, args);
   if (job === null) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch, args.from_render);
@@ -126403,6 +126542,12 @@ async function saveAnswerTool(args, env = process.env) {
     );
   }
   requireHeld(TOOL20, job);
+  if (!takesAnswers(dbPath, id)) {
+    throw new ValidationError(
+      `${TOOL20}: job ${id}'s title does not open "${RESEARCH_JOB_PREFIX}", so no research memo can be saved under it; nothing was saved. If its work is a question about what the law is, migrate it first.`,
+      "not_research_job"
+    );
+  }
   const saved = saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch, args.from_render);
   let written;
   try {
@@ -126436,7 +126581,7 @@ async function saveAnswerTool(args, env = process.env) {
 
 // src/key-request/tools.ts
 import { createHash as createHash17, randomBytes as randomBytes7 } from "node:crypto";
-import { join as join66 } from "node:path";
+import { join as join67 } from "node:path";
 
 // src/key-request/save-key.ts
 var TIMEOUT_MS3 = 6e4;
@@ -126494,7 +126639,7 @@ var pending2;
 var listening2;
 var sent;
 function requestPath(env = process.env) {
-  return join66(defaultStateDir(env), "key-request.json.dpapi");
+  return join67(defaultStateDir(env), "key-request.json.dpapi");
 }
 function isKeyRequestToolName(name) {
   return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
@@ -127081,9 +127226,9 @@ async function pageContext(context, args, writesPage) {
   const client = clientContext2(args);
   if (!writesPage) return { client, dates: await readMatterDates(context.practiceDb, client.matterNo) };
   const started = performance.now();
-  const draftDir = args.draft_dir ?? dirname37(args.presentation_dir);
-  const resolved = (await lookUpMatter(dirname37(draftDir), context.practiceDb, client)).client;
-  const matterNo = resolved.matterNo ?? matterToken(dirname37(draftDir)) ?? void 0;
+  const draftDir = args.draft_dir ?? dirname38(args.presentation_dir);
+  const resolved = (await lookUpMatter(dirname38(draftDir), context.practiceDb, client)).client;
+  const matterNo = resolved.matterNo ?? matterToken(dirname38(draftDir)) ?? void 0;
   const todos = await readMatterTodos(context.practiceDb, matterNo);
   const dates = await readMatterDates(context.practiceDb, matterNo);
   return { client: resolved, todos: { todos, ms: Math.round((performance.now() - started) * 10) / 10 }, dates };

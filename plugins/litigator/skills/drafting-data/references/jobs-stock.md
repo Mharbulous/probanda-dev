@@ -404,76 +404,42 @@ The job is ordinary `work`: no title exclusion leaves it out of the open jobs th
 
 ## 3i. Research offer jobs
 
-One fixed-text job per follow-up research offer the practitioner names to add. An offer is one item the audit agent proposes at the end of a `/legal-research` return (`shared/legal-audit-protocol.md`, Step 5).
+One job per follow-up research offer the practitioner names to add. An offer is one item the audit agent proposes at the end of a `/legal-research` return (`shared/legal-audit-protocol.md`, Step 5).
 
 **Who creates it.** The session that relayed the return, only when the practitioner names a relayed offer to add. The sort in `shared/legal-research.md` ("After the answer") creates no job: it captures each offer as a loose thread or drops it. It runs in any session with a board, holding a job or not, and is not outlining: it writes no `created_by`, no `ticket_proposals` row and no `ticket_blocks` edge.
 
 The job's words come from the offer's `job:` and `steps:` lines in the return the session relayed (`shared/legal-audit-protocol.md`, Step 5) and from this section, never from the session.
 
-- Title and intent: the offer's `job:` line, character for character, without its `job: ` label. Single quotes are doubled in the SQL literal.
-- Steps: the offer's `steps:` line, without its `steps: ` label, split on ` · `, one `ticket_steps` row per part, character for character, ordinals in the printed order. Step 5 lets no step restate the `job:` line, so `/draft`'s pre-claim check passes them.
+- Title: the offer's `job:` line, character for character, without its `job: ` label. Intent: that title less its `Legal research: ` prefix. Step 5 writes the line in the form, and the server checks it.
+- Steps: the offer's `steps:` line, without its `steps: ` label, split on ` · `, one step per part, character for character, in the printed order. Step 5 lets no step restate the `job:` line, so `/draft`'s pre-claim check passes them.
 - An offer with no `job:` line gets no job. Write nothing, and say in one line that the offer carries no job line and that the practitioner can outline it in their own words under `/draft`.
 - An offer with a `job:` line and no `steps:` line takes the plan marker as its one step (`jobs-create.md` §3, "The plan marker"), never steps the session words.
 - An offer tagged `kind: note-up` gets no job, even on "add" (`shared/legal-audit-protocol.md`, Step 5, prints it with no `job:` line). Write nothing, and say in one line that a note-up is written only on the practitioner's own instruction, such as "note up <case>", outlined under `/draft`, or by the "Note up all cited authorities" create. **Hard rule:** no session writes a job whose title or intent is a note-up of an authority, a read of its citing cases, or a citator or KeyCite check, except on the practitioner's express instruction or by that create. Never from a research offer, a loose thread or a finding by the session's own reading.
 - The offer itself stays on record: the loose thread this add consumes keeps it verbatim (its `idea`, with `charted_into` set to the job), so the job's words can be checked against it.
 - No scope rows: the job writes no substance table (`jobs-common.md` §2 allows a job with none).
 
-`kind = 'work'`. `billing_anchor` is never asked: in a session holding a job it is the held job's, otherwise the one the board's open work jobs carry. With none to copy it is `<matter>|<the Writing's or Work Board's title>`, or for a proceeding with no Writing `<matter>|<its forum and file number>`. `priority` is one below the lowest §3's priority read returns, or `0` when no row returns.
+`kind = 'work'`. `billing_anchor` is never asked: in a session holding a job it is the held job's, otherwise the one the board's open work jobs carry. With none to copy it is `<matter>|<the Writing's or Work Board's title>`, or for a proceeding with no Writing `<matter>|<its forum and file number>`. `priority` is `bottom`.
 
 `filing_id` and `proceeding_id`: in a session holding a job, the held job's. Otherwise the board's: a Writing's id and proceeding, a Work Board with no Writing's own id and proceeding, or `filing_id` NULL where §8a step 2 resolves to the proceeding alone or to a retired Writing.
 
-**Guarded create**, on §3g's shape, one offer per call 1. Call 1 inserts the row and deletes it again, in the same script, when any job in the proceeding, of any status, shelved included, and not deleted, carries the same title and a step. The row just inserted has no step yet, so it can never match its own guard. An offer a later return repeats, or one a completed job already answered, is never written again.
+**The write.** One `drafting_data__create_job` call per offer: guard `research_title`, which fires when any job in the proceeding, of any status, shelved included, and not deleted, carries the same title and a step, so an offer a later return repeats, or one a completed job already answered, is never written again. `seed_id` is the loose thread the sort captured, which the call marks as outlined into the job. This is the one `charted_into` write outside an outlining session. It runs in the session the sort ran in, and only on a thread that sort captured.
 
-```sql
-INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
-  VALUES (1, 1, 'Research whether the example rule applies to the example situation', 'Research whether the example rule applies to the example situation', 'work', 3, '<matter>|attornment defeats the stay', strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'));
-DELETE FROM tickets WHERE id = last_insert_rowid()
-  AND EXISTS (
-    SELECT 1 FROM tickets t JOIN ticket_steps s ON s.ticket_id = t.id
-      WHERE t.proceeding_id = 1 AND t.deleted_at IS NULL
-        AND t.title = 'Research whether the example rule applies to the example situation');
-```
+`outcome: "guarded"` says "already a job: Job #K" in one line, `K` the `holder_id`. `research_form` means the offer's line is not in the form: write nothing, and propose the issue in the form by §3l.
 
-**Call 2 recovers its id**, with no `LIMIT`: the one queued job in the proceeding with that title that holds no step yet.
-
-```sql
-SELECT id FROM tickets t WHERE proceeding_id = 1 AND title = 'Research whether the example rule applies to the example situation' AND status = 'queued' AND deleted_at IS NULL
-  AND NOT EXISTS (SELECT 1 FROM ticket_steps s WHERE s.ticket_id = t.id);
-```
-
-No row means the guard fired: take the existing job's number from `drafting_forms__board_card` with `lanes: ["live"]`, or `lanes: ["completed"]` when it is not there, and say "already a job: Job #K" in one line. One row is the new job. More than one: stop and ask.
-
-**Call 3 writes the steps** on the recovered literal id (here `31`), one row per part of the `steps:` line:
-
-```sql
-INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 1, 'Read the example rule');
-INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 2, 'Put the question to /legal-research');
-INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 3, 'Save the answer under this job');
-```
-
-These rows stand for one offer's `steps:` line. They are never a default plan and are never copied onto another job: a job with no `steps:` line of its own takes the plan marker.
-
-**Consuming the thread on "add".** A relayed offer was captured as a loose thread in the turn it was relayed (`jobs-run.md` §8 or §8a). When the practitioner names it to add, write its job as above, then mark that thread as outlined into the job: `loose_threads__update` with `action: "consume"`, `id` the thread and `job_id` the job.
-
-This is the one `charted_into` write outside an outlining session. It runs in the session the sort ran in, and only on a thread that sort captured.
+An offer's `steps:` line is never a default plan and is never copied onto another job: a job with no `steps:` line of its own takes the plan marker.
 
 The job is ordinary `work`: no title exclusion leaves it out of the open jobs the `gate` completion criterion reads or §14's nothing-open test, as none leaves out §3g's. Completing it follows §9.
 
 ## 3l. Research question jobs
 
-One job for a question the practitioner chose to research as an additional issue (`shared/legal-research.md`, "A new question is a new job or a new scope"). Their choice is the request. The write is not outlining: it carries no `created_by`, no `ticket_proposals` row and no `ticket_blocks` edge.
+One job for a question about what the law is that has no job: one the practitioner chose to research as an additional issue (`shared/legal-research.md`, "A new question is a new job or a new scope"), one the `/legal-research` gate received with no job held, or one outlined as a question about what the law is. The write is not outlining: it carries no `created_by`, no `ticket_proposals` row and no `ticket_blocks` edge.
 
-- Title and intent: their question, character for character. Never cleaned. Single quotes are doubled in the SQL literal.
+- **Wording.** The session proposes the issue in the form (`shared/legal-research.md`, "Research runs only under a job"), quoting the practitioner's words, and writes only on their approval. Their approval of the wording is their request. An unattended run writes nothing.
+- Intent: the issue. Title: `Legal research: ` followed by the intent, character for character.
 - Steps: the plan marker as its one step (`jobs-create.md` §3, "The plan marker").
-- No scope rows, and `kind`, `billing_anchor`, `priority`, `filing_id` and `proceeding_id` as §3i gives them for a session holding no job. The board is the one §8a steps 1 and 2 resolve from the question's origin, and a question with no origin takes step 2's last branch, the proceeding. With no board, write nothing (`shared/legal-research.md` says what follows).
+- No scope rows, and `kind`, `billing_anchor`, `priority`, `filing_id` and `proceeding_id` as §3i gives them for a session holding no job. The board is the one §8a steps 1 and 2 resolve from the question's origin. A question with no origin, and a matter with no board, take the proceeding: `filing_id` null, on the proceeding `shared/legal-research.md`'s persist step 1 names.
 
-It is written by §3i's guarded create and its call 2, on its title. A guard that fires says "already a job: Job #K" in one line. Call 3 writes the plan marker on the recovered literal id:
-
-```sql
-INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (32, 1, 'Create a plan for how to complete this job.');
-```
-
-Then re-render the board with `draft_dir`, so its Work Board page lists the new jobs. `pages_refused` means the page is stale: say so. No research runs from this write: each job is researched when it is worked.
+It is written by one `drafting_data__create_job` call under guard `research_title`, as §3i is. A guard that fires says "already a job: Job #K" in one line. Then re-render the board with `draft_dir`, so its Work Board page lists the new jobs. `pages_refused` means the page is stale: say so. No research runs from this write unless the gate wrote it for the question in hand: each other job is researched when it is worked.
 
 ## 3m. Research board writes
 
@@ -485,16 +451,11 @@ The writes of `/legal-research`'s board mode, which works several research jobs 
 SELECT blocker_id, blocked_id FROM ticket_blocks WHERE blocked_id IN (5, 6, 7);
 ```
 
-**A premise job**, only on the practitioner's yes to a premise or threshold question the triage proposes. Write it as §3l writes its job: §3i's guarded create and its call 2 on the proposed question, character for character, as title and intent, then the plan marker as its one step. Then write its edges as above.
+**A premise job**, only on the practitioner's yes to a premise or threshold question the triage proposes. Their yes approves the wording. Write it as §3l writes its job, with the title and intent the triage returned. Then write its edges as above.
 
-**Rewording a held job**, only on the practitioner's approval of the proposed question. The guard is this job's own token (§5):
+**Rewording a held job**, only on the practitioner's approval of the proposed issue: `drafting_data__rewrite_job` with `held: true`, this job's own `session_token` and `claim_no` (§5), and the new `title` and `intent`, in the form. `outcome: "not_held"` means the lock is no longer this token's: report it and stop. When the practitioner keeps the original question, write nothing.
 
-```sql
-UPDATE tickets SET title = 'Whether a request to correct the award extends the time to apply to set it aside', intent = 'Whether a request to correct the award extends the time to apply to set it aside'
-  WHERE id = 5 AND status = 'wip' AND locked_by = 'sess-b2';
-```
-
-`changes` 0 means the lock is no longer this token's: report it and stop. When the practitioner keeps the original question, write nothing.
+**Migrating a research job**, only on the practitioner's approval in the review (`shared/research-job-migration.md`): `drafting_data__rewrite_job` with `migrate: true` and the new `title` and `intent`, in the form, and with `held: true`, `session_token` and `claim_no` on a job this session holds. It takes a queued, unlocked job whatever its steps' state, and changes only the title and intent: every step, stamp, approval and saved answer stays, and no blocker moves. `outcome: "shelved"` means restore it first.
 
 **Closing a job a memo already answers**, only on the practitioner's yes: §10a's shelving of a `queued` job (`jobs-closeout.md`).
 

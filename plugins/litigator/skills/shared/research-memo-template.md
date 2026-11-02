@@ -129,12 +129,15 @@ In every format:
   has one `## Issue` and no sub-issues. The Issue:
   - **A.** holds one question;
   - **B.** makes sense on its own;
-  - **C.** holds at most one list of alternatives (one axis). "Is gambling legal in BC or
-    Alberta?" is one question, but "Is prostitution or gambling legal in BC or Alberta?" crosses
-    two lists into four questions, and so four memos.
+  - **C.** holds at most one list, and that list conjunctive, joined by "and". "Is gambling legal
+    in BC and Alberta?" meets it. "Is gambling legal in BC or Alberta?" lists alternatives, so it is
+    two questions and two memos, and "Is prostitution and gambling legal in BC and Alberta?"
+    crosses two lists;
+  - **D.** names nothing that identifies the client, the parties, the people involved or the
+    proceeding. Context may hint at the setting ("a commercial tenant"), never identify it.
 
   **A job's memo.** In an audit whose `Job question:` is not `none`, the Issue is that question
-  verbatim if it meets rules A to C and names nothing of the working matter. If not, return no
+  verbatim if it meets rules A to D. If not, return no
   memo but one rewording proposal (`shared/legal-research.md`, "A research question holds one
   question"). No other issue or topic heading: a further finding is a Step 5 offer.
 - A Conclusion is one paragraph answering the Issue, followed, only where research is required

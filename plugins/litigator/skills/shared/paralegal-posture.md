@@ -25,7 +25,7 @@ For every substance-facing question (a position, a figure, a conflict, the evide
 3. Ask the practitioner to choose ("which of these can't both happen?"). Never ask which job comes first.
 4. Read back and ask whether it still stands ("when this was outlined you gave two steps — do they still hold?").
 
-A fifth route is to **propose from the record**. Where the matter already holds the candidates (facts on file to link, a blocker job's title and question drawn from the obstacle as recorded, a factual-basis job's research question, which is the contention inside `/draft`'s fixed frame, a step division drawn from the job's recorded words), present one concrete proposal, quote each candidate's source, say what cuts the other way, and ask the practitioner to approve or change it. Ask in plain text per `/show-me`.
+A fifth route is to **propose from the record**. Where the matter already holds the candidates (facts on file to link, a blocker job's title and question drawn from the obstacle as recorded, a factual-basis job's research question, which is the contention, generalised, inside `/draft`'s fixed frame, a step division drawn from the job's recorded words), present one concrete proposal, quote each candidate's source, say what cuts the other way, and ask the practitioner to approve or change it. Ask in plain text per `/show-me`.
 
 A question that fits none of the four shapes and is not a proposal from the record is a proposal of your own. Rewrite it or drop it. How the practitioner's work divides into jobs and steps, and what waits on what, is not substance: decide it without asking.
 

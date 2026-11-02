@@ -144,7 +144,7 @@ A snapshot row only hides. The shelved job already shows in Shelved, so its Prop
 DELETE FROM proposal_rejections WHERE proposal_key = 'note-up:authorities:5' AND ticket_id IS NULL;
 ```
 
-**Restoring a job** — clear the stamp and delete the rows carrying its id, in the same script. It returns to whatever Job list its `status` gives it; one shelved while in progress comes back `queued` with no lock, and its done steps are inherited through §4's take-over read-back. `AND rejected_at IS NOT NULL` keeps this write as confirm-readable as every other one here: a restore aimed at a job that was never shelved matches zero rows and reads as a miss, rather than writing NULL over NULL and looking like a success:
+**Restoring a job** — a restored job whose work is a question about what the law is and that is not in the form is migrated next, before any of its work (`shared/research-job-migration.md`). Clear the stamp and delete the rows carrying its id, in the same script. It returns to whatever Job list its `status` gives it; one shelved while in progress comes back `queued` with no lock, and its done steps are inherited through §4's take-over read-back. `AND rejected_at IS NOT NULL` keeps this write as confirm-readable as every other one here: a restore aimed at a job that was never shelved matches zero rows and reads as a miss, rather than writing NULL over NULL and looking like a success:
 
 ```sql
 UPDATE tickets SET rejected_at = NULL WHERE id = 42 AND rejected_at IS NOT NULL AND deleted_at IS NULL;

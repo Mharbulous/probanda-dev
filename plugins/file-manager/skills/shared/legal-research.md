@@ -47,8 +47,26 @@ audit because the question is narrower, not because a check was skipped. It stat
 law — never build a conclusion on it; re-dispatch in opinion mode over any criterion
 you intend to rely on.
 
+**Research runs only under a job.** Legal research runs only for a job this session holds
+whose title opens `Legal research: `, and it ends only in a saved memo, never in a reply in chat.
+The job reads `Legal research: <issue>`: its intent is the issue, and its title is the prefix
+followed by the intent, character for character. The issue is at most two context sentences, then
+one question, the only sentence ending in `?`. A plainly labelled hunch is no research and
+needs no job.
+
+- **No job held.** Propose the issue in the form, quoting the question, and on the
+  practitioner's approval write it by `/drafting-data` §3l, plan it (`shared/job-planning.md`
+  section 2) and assign it to this session. Without `/drafting-data` installed, write it with
+  `drafting_data__create_job`: guard `research_title`, `filing_id` null, `kind` `work`, `priority`
+  `bottom`, `billing_anchor` `<matter>|<its forum and file number>`, and the plan marker as its step. With no
+  board it goes on the proceeding that persist step 1 below names. With no matter named, ask which
+  matter and run nothing until told. An unattended run reports and stops.
+- **A held job not in the form.** Run the review in `shared/research-job-migration.md` first.
+- **Under their own routes, with no such job:** a held note-up, scrutiny or case brief job, a
+  `Note up paragraphs:` run, a currency check asked on its own and a scoped holdings dispatch.
+
 **A research question holds one question.** It makes sense on its own and names nothing of
-the working matter (`shared/research-memo-template.md` rules A to C,
+the working matter (`shared/research-memo-template.md` rules A to D,
 `shared/legal-audit-protocol.md` Step 6). Context sentences are allowed, a second question or
 a list of questions is not, and a part that depends on the one before it ("If so, ...") stays
 with it. A question that fails is never split or researched as it stands: in one proposal,
@@ -60,8 +78,7 @@ run reports and stops.
 **A new question is a new job or a new scope.** When the practitioner raises a question this
 research does not hold, ask exactly one question: "Do you want this investigated as an
 additional issue (a new research job), or are you changing the scope of this job?" On the
-first, write it as a research job by `/drafting-data` §3l, or, with no board, run this gate on
-it once this memo is saved. On the second, reword the question (a held job by §3m) and
+first, write it as a research job by `/drafting-data` §3l, on their approval of its issue. On the second, reword the question (a held job by §3m) and
 research that. Offer no third path.
 
 **Before spawning, run what the agent cannot.** `shared/research-priority.md` is
@@ -339,8 +356,7 @@ dispatch, the legislation duty's fetcher dispatch, the `needs_download` dispatch
 below, and the cited-decision dispatch and the ingest under "After the answer".
 The rule is `/drafting-data`'s (`jobs-common.md` §2, "Sources to get"): dispatch only
 what its call lists under `dispatch`. A deep-research run is not
-a source: its record is the answer saved under the job. A caller holding no job
-records nothing.
+a source: its record is the answer saved under the job.
 
 **A `needs_download` or hand-off-packet return is a pipeline step, not an
 answer.** When the agent returns a `needs_download` list, a `needs_note_up` list or a
@@ -393,7 +409,7 @@ keeps, a fetcher stop) stops as they say, and its step stays open: set it ↻
 (`drafting_data__set_step`, `status: retry`) while a missing credential or an unreachable
 source blocks it, never stamped done. A Westlaw step waits as ⏳ while its run is out
 (duty 3). The job stays open on each step not yet done (`/draft` `references/job-session.md`,
-Complete). A caller holding no job runs the same loop, adding and stamping no steps.
+Complete).
 A return with a rewording proposal and no memo saves nothing: put that proposal to the
 practitioner as "A research question holds one question" says.
 
@@ -431,7 +447,8 @@ complete before the session ends: never leave a session with a cited decision un
    The internal notes are already in the scratchpad and are not saved here. These are
    lawyer's own `drafting_*` tools:
    - **Database.** A caller holding a job uses its `db_path` and the job's proceeding. Any other
-     caller takes `db_path` from `drafting_forms__open_session` on the matter root, and the
+     caller, a job the gate is about to write or a run with no job under "Research runs only
+     under a job", takes `db_path` from `drafting_forms__open_session` on the matter root, and the
      matter's lowest-id proceeding, or inserts one with `drafting_data__execute`
      (`INSERT INTO proceedings (matter_reference) VALUES ('<Matter:>');`).
    - **Writing.** `drafting_data__create_writing` with `tree` `{country: "CAN", jurisdiction:
@@ -454,7 +471,7 @@ complete before the session ends: never leave a session with a cited decision un
      `from_render`, `filename` `<File stem>.md` (the spawn prompt's `File stem:`), and as
      `destination_dir` the research folder: `6. LAW\<issue>\`, the existing subfolder named for
      that issue, or one created in the question's own words, named in your relay. A caller
-     working a `/draft` job also passes the job's `db_path`, `ticket_id` and `claim_no` and its
+     holding a job also passes the job's `db_path`, `ticket_id` and `claim_no` and its
      own `session_token`, so the job's card lists the answer. A result reading
      `job.recorded: false` means the job is no longer the caller's: the answer is saved, so stop
      and report. A result holding `mockup_only_lines` lists notes the saved file leaves out, such

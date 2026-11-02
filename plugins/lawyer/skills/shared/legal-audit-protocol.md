@@ -57,7 +57,7 @@ the records it files.
 ### Step 1 — Frame
 
 Restate the Issue and the factual situation asked about. One memo answers one Issue
-(`shared/research-memo-template.md`, rules A to C): the caller splits a question holding
+(`shared/research-memo-template.md`, rules A to D): the caller splits a question holding
 more than one at the plan stage, one audit per issue.
 
 ### Step 2 — Audit the authorities (before forming any statement of law)
@@ -342,13 +342,14 @@ end of the offer's own line. They are the job the offer becomes if the practitio
 
 ```
 Would you like me to read the four other example files and check each for the example point? live_issue: yes
-  job: Read the four other example files and check each for the example point
+  job: Legal research: A commercial tenant holds over. Does the example point apply?
   steps: Read example file A · Read example file B · Read example file C · Read example file D · Check each for the example point · Put the question to /legal-research · Save the answer under this job
 ```
 
-- `job:` is one sentence restating the offer as an imperative statement of the work. It adds
-  no substance, scope, position or statement of law, words any research question no wider
-  than the offer does, and holds no date or deadline.
+- `job:` is `Legal research: ` followed by the offer's issue: at most two context sentences, then
+  one question, the only sentence ending in `?`, by `shared/research-memo-template.md` rules A
+  to D. It adds no substance, scope, position or statement of law, is no wider than the offer,
+  and holds no date or deadline.
 - `steps:` lists one step per concrete action the offer names, such as fetching a named
   source, reading a named file, or checking it for the point the offer names, separated by
   ` · `. The last two are always `Put the question to /legal-research` and `Save the answer

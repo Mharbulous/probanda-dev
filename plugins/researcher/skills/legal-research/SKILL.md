@@ -6,7 +6,7 @@ description: >
   answering or searching the web, unless the answer is framed explicitly as a hunch. Applying law to facts -> /apply-to-facts.
 ---
 
-<!-- researcher v0.10.23 -->
+<!-- researcher v0.11.0 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -69,6 +69,10 @@ permitted to make statements of law.
    caller's five pre-spawn duties, and the memo-reviewer loop. It sends you to
    `shared/research-priority.md` for the order every legal lookup runs in — read
    that too, and follow it.
+1a. Job, before any dispatch. Follow the doctrine's "Research runs only under a job": with no job
+   held, propose the issue and write and assign the job on the practitioner's approval; on a held
+   job not in the form, run the migration review. Skip this on step 5's re-invocations and on the
+   routes that doctrine lists as their own.
 2. Tell the practitioner: "That's a question about the law — I'll put it to the
    research-agent agent."
 2a. Scope, before any search. Check the question by the doctrine's "A research question
@@ -122,8 +126,8 @@ permitted to make statements of law.
    status line and every citation it did not retrieve. Then have `researcher:memo-reviewer`
    check the memo and run each piece of research it sends back, re-invoking the agent on each
    send-back, at most three reviews, by the doctrine's "On a held job, an open tier is not an
-   answer" and "memo-reviewer checks every memo before it is saved": on a held job each piece
-   of research becomes a step, and without one the same loop runs with no steps. Then save the
+   answer" and "memo-reviewer checks every memo before it is saved": each piece of research
+   becomes a step on the held job. Then save the
    memo the loop ends on to the matter's `6. LAW\<issue>\` folder, relay its `Confidence:` line and the saved memo as its file card (`shared/present-files.md`),
    never the finding in any words, and ingest what it cites. Relay nothing of the dispatches
    in between but a Westlaw stop, a question the doctrine asks the practitioner, and one
