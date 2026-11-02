@@ -1,5 +1,5 @@
-// The maintainer's side of the Suggestion Box, for /suggestion-triage,
-// /adversarial-triage, /view-suggestions (.claude/skills/<name>/SKILL.md) and
+// The maintainer's side of the Suggestion Box, for /suggestion-hitl-triage,
+// /view-suggestions (.claude/skills/<name>/SKILL.md) and
 // /triage-issue run locally (.claude/commands/triage-issue.md). Run from
 // Probanda's development machine.
 //

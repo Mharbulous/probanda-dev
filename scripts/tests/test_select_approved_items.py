@@ -54,7 +54,7 @@ Suggestion {SID}
 Item 1: approve or decline? Recommended: approve.
 """
 
-DECIDED_BRIEF = f"""> *Decisions recorded by /suggestion-triage.*
+DECIDED_BRIEF = f"""> *Decisions recorded by /suggestion-hitl-triage.*
 
 ## Agent Brief
 

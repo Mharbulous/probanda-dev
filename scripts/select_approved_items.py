@@ -10,11 +10,11 @@ Only the maintainer approves an item (design decisions 17 and 20), and
 recorded twice: on the item in the Suggestion Box (the cloud record's
 `item_list`, as `node cloud/suggestions/tools/triage.mjs show <id>` prints it or
 one row of suggestion-list's reply), and in the `### Decisions` list of the
-latest `## Agent Brief` that /suggestion-triage or /adversarial-triage posted.
+latest `## Agent Brief` that /suggestion-hitl-triage posted.
 An item is built only when both say approved; an item approved in one and not
 the other is not built and is reported. Both implementers run this before they
 dispatch fix-maker (.claude/commands/implement-suggestions.md,
-.claude/skills/suggestion-triage/SKILL.md step 6).
+.claude/skills/suggestion-hitl-triage/SKILL.md step 6).
 
 Inputs:
 - `--issue`: the issue as JSON, either `gh issue view <n> --json body,comments`
@@ -26,7 +26,7 @@ Inputs:
 The rule:
 - The brief is the last comment holding a line `## Agent Brief`. When no comment
   holds one, the issue body is the brief if it holds a `### Decisions` heading
-  (an issue /adversarial-triage filed itself).
+  (an issue the removed debate triage filed itself).
 - The suggestion is the brief's `Suggestion <id>` line, else the body's last
   one. When both name one and they differ, nothing is built (exit 2).
 - The brief's decisions are the lines of its `### Decisions` section of the form

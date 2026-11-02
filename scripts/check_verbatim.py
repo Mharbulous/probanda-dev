@@ -10,7 +10,7 @@ comment or decision reason that quotes a suggestion would keep the
 practitioner's words after they withdraw it (design decision 16, lifecycle
 plan Risks: git history). Triage runs this before it files or edits an issue
 and before a red test is posted or committed (.claude/commands/triage-issue.md,
-.claude/commands/intake-suggestions.md, .claude/skills/suggestion-triage/).
+.claude/commands/intake-suggestions.md, .claude/skills/suggestion-hitl-triage/).
 
 The submitted text is read from a Suggestion Box record, as
 `node cloud/suggestions/tools/triage.mjs show <id>` prints it or one row of

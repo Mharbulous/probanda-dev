@@ -209,19 +209,15 @@
         "lawyer"
       ],
       "skills": [
-        "adversarial-triage",
         "fix-this",
         "streamline-skill",
-        "suggestion-triage",
+        "suggestion-hitl-triage",
         "view-key-requests",
         "view-suggestions"
       ],
       "agents": [
-        "black-hat",
         "fix-maker",
-        "fix-planner",
-        "suggestion-oracle",
-        "white-hat"
+        "fix-planner"
       ],
       "hooks": {},
       "servers": []
