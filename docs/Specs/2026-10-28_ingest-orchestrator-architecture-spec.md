@@ -40,7 +40,7 @@ The extractor families get their own later specs (§12). This spec defines only 
 
 **Guarantees this design keeps:**
 
-- **G1.** One ingestion per matter at a time. Today this is only instruction text: `.claude/skills/ingest/SKILL.md` L23 and `operations/ingest-unattended.md` L7. No code enforces it. The per-write lock in `source/lawyer/mcp/src/case/case-lock.ts` (#28) covers one call only. §2.4 makes G1 real.
+- **G1.** Replaced by `2026-11-02_ingest-group-locking-spec.md`: several runs may share a matter, with a claim per file and a short lock per write.
 - **G2.** Per-document crash recovery. This is the honest-status rule (`shared/extraction-protocol.md`, "Register with an honest status, then flip") plus resume by re-presentation (`operations/ingest.md` Step 4).
 - **G3.** A filed copy supersedes its page-identical unfiled copy, and the linked facts are kept (`operations/supersede-draft.md`, #64).
 - **G4.** Privilege handling: Path B, the solicitor-client folder rule, and #2, #17, #49 and #67 (`operations/ingest-extract.md` "Path B").
@@ -207,6 +207,9 @@ Today the main thread applies these while composing SQL. The converters implemen
   - Dumps fall from about 40 to the number of write calls: about one per document plus one per affidavit wave. That is an estimate of about 12 for the baseline folder.
 
 ### 2.4 Run lease and journal: `matter_data__ingest_run` (new tool)
+
+> **Superseded in part.** Several runs may now share a matter. `2026-11-02_ingest-group-locking-spec.md` governs who may read and write, and it replaces everything below about one lease per matter and `run_active`.
+
 - **Actions:** `begin | next | staged | status | end` (`staged`: §6.5).
 - **State:** host-local, beside the case locks: `%LOCALAPPDATA%\Coclerk\ingest-runs\<same 16-hex key as case-lock.ts>\`, overridable with `COCLERK_INGEST_RUN_ROOT`.
   - `lease.json` holds `{run_id, started, heartbeat, build_stamp, mode, orchestrator, matter_root}`. `orchestrator` is true for a run the orchestrator began (§2.5's cap). `build_stamp` is `BUILD_STAMP` from `source/lawyer/mcp/src/build-stamp.ts`, which changes with the code, unlike the plugin version. `begin {resume}` re-records it.
@@ -560,7 +563,7 @@ The rule is `supersede-draft.md` §5's standing rule, applied with no question:
 - **Uncertain boundaries:** an affidavit whose boundaries were uncertain at t₀ dispatches Pass 1 and `locate-stamps` together, and its Pass 3 items join the window when they resolve.
 
 ### 8.3 Writes
-- Writes are serialized by the orchestrator, one `ingest_result` call at a time, under the lease and the per-write lock.
+- Writes are serialized by the write lock, one document at a time (`2026-11-02_ingest-group-locking-spec.md` section 6).
 - They happen as acknowledgements arrive. So the database fills during extraction rather than after it (C5's 7- and 19-minute gaps).
 - An exhibit write for an affidavit waits for its body write.
 - Path B documents come last (§1.4).
@@ -633,7 +636,7 @@ The rule is `supersede-draft.md` §5's standing rule, applied with no question:
    - The count thresholds in step 1 (95% and 85%) are estimates too.
 3. **Supersession.** Every pair the baseline superseded is superseded the same way, with linked-fact counts on the kept copy equal to the baseline. A pair the baseline settled by asking may now be settled by the standing rule, but to the same outcome.
    - The "NOH Application" / "NOHA" pair is compared and gets a verdict.
-4. **Locks.** A second `begin` on the same matter during the run returns `run_active`. A killed and restarted orchestrator resumes without re-dispatching any acknowledged item, per the journal.
+4. **Locks.** Two runs on one matter are covered by section 12 of `2026-11-02_ingest-group-locking-spec.md`. A killed and restarted orchestrator resumes without re-dispatching any acknowledged item, per the journal.
 
 A run that meets A6 but misses a cost or time target is reported with numbers. Delivery stage D8 (tier-M trials) is not built until A1–A3 pass.
 
