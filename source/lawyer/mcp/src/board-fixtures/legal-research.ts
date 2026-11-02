@@ -65,10 +65,9 @@ export const LEGAL_RESEARCH_FIXTURE: { meta: ViewPageMeta; data: LegalResearchDa
           currency_status: "current",
           currency_checked_on: "2026-01-10",
           note_up: { label: "Not noted up", noted: false },
-          results: [],
           provisions: [{ provision: "s 15", currency_status: "current", checked_on: "2026-01-10" }, { provision: "s 16", currency_status: null, checked_on: null }],
         },
-        { title: "Limitation Act", citation: "SBC 0000, c 0", relied_on: false, currency_status: null, currency_checked_on: null, note_up: { label: "Not noted up", noted: false }, results: [], provisions: [] },
+        { title: "Limitation Act", citation: "SBC 0000, c 0", relied_on: false, currency_status: null, currency_checked_on: null, note_up: { label: "Not noted up", noted: false }, provisions: [] },
       ],
     },
     briefs: {

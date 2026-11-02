@@ -415,9 +415,9 @@ test("a request on another board's job still reads Requested, and a board with n
   assert.equal(buildCaseBriefsData(m.dbPath, [], m.matterRoot, [1]).cases.some((c) => c.relied_on), false);
 });
 
-test("a case reads noted up when any of its folded rows is, with each result, and a statute's currency leaves its case note-up alone", async (t) => {
+test("a case reads noted up when any of its folded rows is, with each result, and a statute's currency or old treatment leaves its case note-up alone", async (t) => {
   const m = await briefsFixture(t, []);
-  await submissionDataExecute(m.dbPath, "UPDATE authorities SET treatment = 'good_law' WHERE id = 1; UPDATE authorities SET treatment = 'negative' WHERE id = 2; UPDATE authorities SET currency_status = 'current', currency_checked_on = '2026-10-20' WHERE id = 6;");
+  await submissionDataExecute(m.dbPath, "UPDATE authorities SET treatment = 'good_law' WHERE id = 1; UPDATE authorities SET treatment = 'negative' WHERE id = 2; UPDATE authorities SET treatment = 'good_law', currency_status = 'current', currency_checked_on = '2026-10-20' WHERE id = 6;");
   const by = Object.fromEntries(buildCaseBriefsData(m.dbPath, [1, 2], m.matterRoot, [1]).cases.map((c) => [c.title, c]));
   assert.deepEqual(by["Sample v Example"].note_up, { label: "Noted up: negative treatment only", noted: true });
   assert.deepEqual(by["Sample v Example"].results, ["good law", "negative"]);

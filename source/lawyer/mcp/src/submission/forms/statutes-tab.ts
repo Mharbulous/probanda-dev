@@ -2,13 +2,13 @@
 // board's Writings rely on, then the proceeding's other live ones, with when its currency was last checked
 // and whether it has been noted up for cases. Everything shown is recorded. No step records a statute's
 // note-up for cases yet (shared/statute-currency.md → Noting up legislation), so that status reads Not noted
-// up until one does.
+// up until one does, even where an older row holds a treatment.
 
 import { rows } from "../query-rows.js";
 import { hasTable } from "../schema-capabilities.js";
 import { foldKey, reliedOn } from "./case-briefs.js";
 import { LEGISLATION_KINDS } from "./markers.js";
-import { authorityNoteUp, treatmentWord, type NoteUpStatus } from "./note-up-status.js";
+import { authorityNoteUp, type NoteUpStatus } from "./note-up-status.js";
 
 export interface StatuteProvision {
   /** The pinpoint exactly as a statement of law records it. */
@@ -24,8 +24,6 @@ export interface StatuteRow {
   currency_status: string | null;
   currency_checked_on: string | null;
   note_up: NoteUpStatus;
-  /** Each distinct treatment its authority rows record. */
-  results: string[];
   provisions: StatuteProvision[];
 }
 
@@ -38,7 +36,6 @@ interface AuthorityRow {
   id: number;
   style_of_cause_or_title: string;
   citation: string | null;
-  treatment: string | null;
   currency_status: string | null;
   currency_checked_on: string | null;
 }
@@ -65,7 +62,7 @@ export function buildStatutesData(dbPath: string, filingIds: number[], proceedin
   const ids = [...new Set(proceedingIds)];
   const others = ids.length === 0 ? [] : rows<AuthorityRow>(
     dbPath,
-    `SELECT id, style_of_cause_or_title, citation, treatment, currency_status, currency_checked_on
+    `SELECT id, style_of_cause_or_title, citation, currency_status, currency_checked_on
      FROM authorities
      WHERE kind IN (${kinds.map((k) => `'${k}'`).join(", ")}) AND killed_on IS NULL AND proceeding_id IN (${ids.map(() => "?").join(", ")})
      ORDER BY style_of_cause_or_title, id`,
@@ -78,16 +75,12 @@ export function buildStatutesData(dbPath: string, filingIds: number[], proceedin
     const key = foldKey(a.citation, a.id, a.style_of_cause_or_title);
     let target = statutes.get(key);
     if (target === undefined) {
-      target = { title: a.style_of_cause_or_title, citation: a.citation, relied_on: isRelied, currency_status: a.currency_status, currency_checked_on: a.currency_checked_on, note_up: authorityNoteUp(null), results: [], provisions: [] };
+      target = { title: a.style_of_cause_or_title, citation: a.citation, relied_on: isRelied, currency_status: a.currency_status, currency_checked_on: a.currency_checked_on, note_up: authorityNoteUp(null), provisions: [] };
       statutes.set(key, target);
     }
     if ((a.currency_checked_on ?? "") > (target.currency_checked_on ?? "")) {
       target.currency_status = a.currency_status;
       target.currency_checked_on = a.currency_checked_on;
-    }
-    if (a.treatment !== null) {
-      target.note_up = authorityNoteUp(a.treatment);
-      if (!target.results.includes(treatmentWord(a.treatment))) target.results.push(treatmentWord(a.treatment));
     }
     for (const p of provisionsOf(dbPath, a.id)) {
       if (!target.provisions.some((held) => held.provision === p.provision)) target.provisions.push(p);

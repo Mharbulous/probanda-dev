@@ -39,7 +39,7 @@ These override the decisions above where they differ. No schema change, released
 ## Left for later
 
 - Storing how far a note-up went and any proposition-level note-up, which needs a schema change and a minor release, so the remaining levels above can show. Until then no case reads "everything", and no proposition reads above case level (negative treatment only) or statute level.
-- Recording a statute's note-up for cases. The practitioner decided on 2026-11-01 to track it with no hold on filing, so the 📇 marker keeps closing on the currency check alone. This will replace decision #1628 in `shared/statute-currency.md`, which stays in force until the recording is built. Until then every statute reads Not noted up for cases.
+- Recording a statute's note-up for cases. The practitioner decided on 2026-11-01 to track it with no hold on filing, so the 📇 marker keeps closing on the currency check alone. This will replace decision #1628 in `shared/statute-currency.md`, which stays in force until the recording is built. Until then every statute reads Not noted up for cases, even where an older row holds a treatment, as L4443's Supreme Court Civil Rules does.
 - A matter with no live Writing has no Legal Research page. Case briefs and memos with no job are matter-wide, so a per-matter page, like Loose Threads, may serve the research phase better.
 - `docs/Specs/2026-10-31_research-memo-structured-writing-spec.md` (proposed) would change where memo propositions live; the Propositions tab's exclusion of memo statements follows it.
 - The session focus pointer stays Arguments-only: its file is keyed by Writing, so a second page would collide.

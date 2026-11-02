@@ -299,7 +299,6 @@
       row(t.dl, "Currency", currencyText(s.currency_status), "");
       row(t.dl, "Last checked", s.currency_checked_on, "Never checked");
       row(t.dl, "Noted up for cases", s.note_up.label, "");
-      if (s.results.length > 0) row(t.dl, "Result", s.results, "");
       row(t.dl, "Provisions", s.provisions.map(function (p) {
         return p.provision + ": " + currencyText(p.currency_status) + (p.checked_on ? ", checked " + p.checked_on : "");
       }), "None recorded");
