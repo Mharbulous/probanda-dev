@@ -166,15 +166,18 @@
         "lawyer"
       ],
       "skills": [
+        "deduping-email",
         "file-apply",
         "file-sorting",
         "housekeeping",
         "route-accounting"
       ],
       "agents": [
+        "email-dedupe-judge",
         "housekeeping-namer",
         "housekeeping-reader",
-        "housekeeping-reviewer"
+        "housekeeping-reviewer",
+        "mail-script-writer"
       ],
       "hooks": {
         "housekeeping-approval-guard": "source/file-manager/hooks/housekeeping-approval-guard.py",
