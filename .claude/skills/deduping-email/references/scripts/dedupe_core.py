@@ -36,11 +36,14 @@ import os
 import re
 import sys
 import unicodedata
+import urllib.parse
 
-CORE_VERSION = 1
+CORE_VERSION = 2
 FETCH_CHUNK = 100
 DIFF_CAP = 4000
 HEADER_VALUE_CAP = 300
+# The headers the sender wrote; a difference in any of them is the sender's content.
+SENDER_HEADERS = ("from", "to", "cc", "subject", "date")
 # Headers every copy has with its own value and that say nothing about content.
 TRANSPORT_HEADERS = ("received", "x-received", "delivered-to", "return-path", "arc-seal",
                      "arc-message-signature", "arc-authentication-results",
@@ -180,36 +183,177 @@ def _strip_html(text):
     return html.unescape(re.sub(r"<[^>]+>", " ", text))
 
 
+def _is_inline_image(part):
+    """An image leaf the HTML shows in the body: it has a Content-ID or an inline disposition."""
+    if part.is_multipart() or part.get_content_maintype() != "image":
+        return False
+    disp = (part.get_content_disposition() or "").lower()
+    if disp == "attachment":
+        return False
+    return bool(part.get("Content-ID")) or disp == "inline"
+
+
 def _is_attachment(part):
-    if part.is_multipart():
+    if part.is_multipart() or _is_inline_image(part):
         return False
     disp = (part.get_content_disposition() or "").lower()
     if disp == "attachment" or part.get_filename():
         return True
-    # A non-text leaf (an inline image, an application/* part) is content the body text lacks.
+    # A non-text leaf (an application/* part, an image with no place in the body) is content the
+    # body text lacks.
     return part.get_content_maintype() != "text"
 
 
+# --- links and images -----------------------------------------------------------------------
+
+_HREF = re.compile(r"""(?is)<a\b[^>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""")
+_IMG_SRC = re.compile(r"""(?is)<img\b[^>]*?\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""")
+_PLAIN_URL = re.compile(r"""(?i)\bhttps?://[^\s<>"'\)\]]+""")
+_TRAILING_PUNCT = ".,;:!?'\""
+
+
+def _first_group(m):
+    return html.unescape(next(g for g in m.groups() if g is not None)).strip()
+
+
+def _host(url):
+    try:
+        return (urllib.parse.urlsplit(url).hostname or "").lower()
+    except ValueError:
+        return ""
+
+
+def _decode_urldefense_v3(rest):
+    """Proofpoint v3: https://urldefense.com/v3/__<url>__;<base64 of replaced chars>!!<sig>$"""
+    m = re.match(r"__(.*?)__;([A-Za-z0-9+/=_-]*)!!", rest, re.S)
+    if not m:
+        m = re.match(r"__(.*?)__", rest, re.S)
+        if not m:
+            return None
+        return m.group(1)
+    url, enc = m.group(1), m.group(2)
+    if "*" not in url:
+        return url
+    try:
+        enc = enc.replace("-", "+").replace("_", "/")
+        chars = base64.b64decode(enc + "=" * (-len(enc) % 4)).decode("utf-8")
+    except (ValueError, UnicodeDecodeError):
+        return None
+    out, k, i = [], 0, 0
+    while i < len(url):
+        if url[i] == "*":
+            n = 2 if url[i:i + 2] == "**" else 1
+            # "**A" style runs encode several characters; a single "*" is one character.
+            if n == 2 and i + 2 < len(url):
+                count = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".find(url[i + 2]) + 2
+                out.append(chars[k:k + count])
+                k += count
+                i += 3
+                continue
+            out.append(chars[k:k + 1])
+            k += 1
+            i += 1
+            continue
+        out.append(url[i])
+        i += 1
+    return "".join(out)
+
+
+def decode_rewritten_link(url):
+    """(original destination, rewriter) for a link a mail filter rewrote after delivery.
+    Microsoft Safe Links and Proofpoint URL Defense (v2 and v3) are decoded; anything else is
+    returned as found with rewriter None."""
+    host = _host(url)
+    try:
+        if host.endswith("safelinks.protection.outlook.com"):
+            q = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)
+            if q.get("url"):
+                return q["url"][0], "safelinks"
+        elif host == "urldefense.com" and "/v3/" in url:
+            orig = _decode_urldefense_v3(url.split("/v3/", 1)[1])
+            if orig:
+                return orig, "urldefense"
+        elif host == "urldefense.proofpoint.com" and "/v2/url" in url:
+            q = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)
+            if q.get("u"):
+                enc = q["u"][0].replace("_", "/")
+                enc = re.sub(r"-([0-9A-Fa-f]{2})", r"%\1", enc)
+                return urllib.parse.unquote(enc), "urldefense"
+    except ValueError:
+        pass
+    return url, None
+
+
+def _link_record(url):
+    original, by = decode_rewritten_link(url)
+    return {"url": url, "original": original, "rewritten_by": by}
+
+
+def _links(htmls_raw, plains):
+    found = set()
+    for h in htmls_raw:
+        for m in _HREF.finditer(h):
+            u = _first_group(m)
+            if u.lower().startswith(("http://", "https://")):
+                found.add(u)
+    for t in plains:
+        for m in _PLAIN_URL.finditer(t):
+            found.add(m.group(0).rstrip(_TRAILING_PUNCT))
+    return sorted((_link_record(u) for u in found), key=lambda r: (r["original"], r["url"]))
+
+
+def _image_refs(htmls_raw):
+    refs = set()
+    for h in htmls_raw:
+        for m in _IMG_SRC.finditer(h):
+            src = _first_group(m)
+            if src.lower().startswith(("cid:", "http://", "https://")):
+                refs.add(src)
+    return sorted(refs)
+
+
+def _cid(value):
+    return urllib.parse.unquote(value.strip().strip("<>").strip()).lower()
+
+
 def analyse(raw):
-    """Decoded text body, normalized-body hash, attachments and header list of one message."""
+    """Decoded text body, normalized-body hash, attachments, inline images, links, image
+    references and headers of one message, from one walk of its parts."""
     msg = email.message_from_bytes(raw, policy=email.policy.default)
-    plain, htmls, attachments = [], [], []
+    plain, htmls, htmls_raw, attachments, images = [], [], [], [], []
     for part in msg.walk():
         if part.is_multipart():
             continue
-        if _is_attachment(part):
+        if _is_inline_image(part):
+            payload = part.get_payload(decode=True) or b""
+            cid = part.get("Content-ID")
+            images.append({"content_id": " ".join(str(cid).split()) if cid else None,
+                           "filename": part.get_filename(), "size": len(payload),
+                           "sha256": sha256(payload)})
+        elif _is_attachment(part):
             payload = part.get_payload(decode=True) or b""
             attachments.append({"filename": part.get_filename() or f"(unnamed {part.get_content_type()})",
                                 "size": len(payload), "sha256": sha256(payload)})
         elif part.get_content_type() == "text/plain":
             plain.append(_part_text(part))
         elif part.get_content_type() == "text/html":
-            htmls.append(_strip_html(_part_text(part)))
+            h = _part_text(part)
+            htmls_raw.append(h)
+            htmls.append(_strip_html(h))
     text = "\n".join(plain) if plain else "\n".join(htmls)
     norm = normalize_text(text)
     headers = [(k.lower(), " ".join(str(v).split())) for k, v in msg.items()]
+    image_refs = _image_refs(htmls_raw)
+    have = {_cid(i["content_id"]) for i in images if i["content_id"]}
+    missing = sorted(r for r in image_refs if r.lower().startswith("cid:") and _cid(r[4:]) not in have)
+    sender = {}
+    for name in SENDER_HEADERS:
+        vals = sorted(v[:HEADER_VALUE_CAP] for k, v in headers if k == name)
+        sender[name] = vals[0] if len(vals) == 1 else (vals or None)
     return {"text": text, "normalized": norm, "body_sha256": sha256(norm.encode("utf-8")),
-            "attachments": attachments, "headers": headers}
+            "attachments": attachments, "images": images, "links": _links(htmls_raw, plain),
+            "image_refs": image_refs, "missing_inline_images": missing,
+            "sender_headers": sender, "headers": headers}
 
 
 def normalize_text(text):
@@ -246,6 +390,10 @@ def pair_hints(i, j, ai, aj):
     """Mechanical facts about copies i and j, to save the judge work. Not a verdict."""
     ha = {(x["sha256"]) for x in ai["attachments"]}
     hb = {(x["sha256"]) for x in aj["attachments"]}
+    la = {x["original"] for x in ai["links"]}
+    lb = {x["original"] for x in aj["links"]}
+    ia = {x["sha256"] for x in ai["images"]}
+    ib = {x["sha256"] for x in aj["images"]}
     return {
         "copies": [i, j],
         "body_equal": ai["normalized"] == aj["normalized"],
@@ -254,6 +402,15 @@ def pair_hints(i, j, ai, aj):
         "attachments_equal": ha == hb,
         "attachments_i_subset_of_j": ha <= hb,
         "attachments_j_subset_of_i": hb <= ha,
+        "links_equal": la == lb,
+        "links_i_subset_of_j": la <= lb,
+        "links_j_subset_of_i": lb <= la,
+        "rewritten_links_i": sum(1 for x in ai["links"] if x["rewritten_by"]),
+        "rewritten_links_j": sum(1 for x in aj["links"] if x["rewritten_by"]),
+        "images_equal": ia == ib,
+        "images_i_subset_of_j": ia <= ib,
+        "images_j_subset_of_i": ib <= ia,
+        "sender_headers_equal": ai["sender_headers"] == aj["sender_headers"],
     }
 
 
@@ -333,6 +490,8 @@ def build_comparison(groups, raws):
         hints = [pair_hints(i, j, analyses[i], analyses[j])
                  for i in range(len(copies)) for j in range(i + 1, len(copies))]
         dh = differing_headers(analyses)
+        sender_diff = [h for h in SENDER_HEADERS
+                       if any(a["sender_headers"][h] != analyses[0]["sender_headers"][h] for a in analyses)]
         out.append({
             "group_id": f"g{n}",
             "message_id": copies[0]["message_id"],
@@ -342,10 +501,16 @@ def build_comparison(groups, raws):
                 "sha256": c["sha256"], "date": c["date"], "internaldate": c["internaldate"],
                 "size": c["size"], "body_sha256": a["body_sha256"], "body_chars": len(a["normalized"]),
                 "attachments": a["attachments"],
+                "images": a["images"],
+                "image_refs": a["image_refs"],
+                "missing_inline_images": a["missing_inline_images"],
+                "links": a["links"],
+                "sender_headers": a["sender_headers"],
                 "differing_headers": {h: vals[i] for h, vals in dh.items()
                                       if h not in TRANSPORT_HEADERS},
                 "differing_transport_headers": sorted(h for h in dh if h in TRANSPORT_HEADERS),
             } for i, (c, a) in enumerate(zip(copies, analyses))],
+            "sender_header_differences": sender_diff,
             "body_diffs": diffs,
             "hints": hints,
         })

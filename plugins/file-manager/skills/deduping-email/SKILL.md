@@ -19,7 +19,7 @@ Delete means move to the mailbox's trash folder. Never expunge, never delete per
 4. **Tier 1 dry run.** Run the script with the folders and no mode flag, on the user's computer (`references/setup.md` §4). Show per folder: messages scanned, identical copies found, copies to move. Moves nothing.
 5. **Tier 1 apply.** On the user's yes, rerun with `--apply`. Report what moved. On `status: error`, stop and show exactly what was already moved and why it stopped.
 6. **Tier 2.** If the report's `tier2.groups` is 0, go to step 9. Otherwise dispatch the `file-manager:email-dedupe-judge` agent with the comparison file's path and a verdicts path beside it (`tier2-verdicts.json`). Never read the comparison file into this session.
-7. **Verdicts.** Show each group: the email's date and sender, the copies, the decision and its reason. Ask which groups to approve (all, none, or a list).
+7. **Verdicts.** Show each group: the email's date and sender, the copies, the decision and its reason in terms of what the sender sent (what the kept copy holds, or what a removed copy only added after delivery). Ask which groups to approve (all, none, or a list).
 8. **Tier 2 moves.** On approval, run `python references/scripts/dedupe_core.py moves-from-verdicts --comparison <cmp> --verdicts <v> --groups <approved ids> --out <moves.json>`, then the setup script with `--move-uids <moves.json>`. It moves exactly those copies and refuses any that changed since the scan.
 9. **Outcome.** Report per folder: copies moved to the trash in each tier, groups kept whole and why, and that everything moved can be restored from the trash folder.
 

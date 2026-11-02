@@ -48,7 +48,9 @@ Each is absolute. A script that breaks one does not ship.
 
 - **Identical:** byte-for-byte the same. The SHA-256 of the full raw RFC 822 message is equal.
 - **Duplicative:** the copies share a Message-ID but are not identical. They may still differ in real content, so content and attachments are compared before any copy goes.
-- **Most complete copy:** the copy whose body text and attachments contain every other copy's. It is kept regardless of age.
+- **Critical information:** everything the sender sent, as delivered: body text, quoted chain, embedded images, links (original addresses), attachments (by content), and the sender's headers (From, To, Cc, Subject, Date).
+- **Added after delivery:** content a copy gained after it was delivered: mail-program edits, notes, banners, list footers, links rewritten by a mail filter, delivery headers. It is not critical information. Content removed or altered after delivery is: the copy that still has the original is kept.
+- **Most complete copy:** the copy that holds every other copy's critical information. It is kept regardless of age.
 - **UID:** an integer stable within a folder, increasing with arrival (the IMAP UID, or for an API a stable sequence the script derives and documents). **UIDVALIDITY** changes whenever UIDs would be reused.
 
 ## 6. Logic
@@ -77,17 +79,26 @@ run(folders | --all, mode):
         write to the comparison file, per copy: folder, UID, UIDVALIDITY, date, size, sha256,
             headers that differ between copies, normalized-body hash,
             unified diff of decoded text bodies (capped), attachments as (filename, size, sha256),
-            and mechanical hints (body equal / contained, attachments equal / subset)
+            inline images as (content_id, filename, size, sha256), <img src> references and the
+            cid: references with no matching part (missing inline images),
+            links from HTML href and plain-text URLs, each with its decoded original
+            (Safe Links, Proofpoint URL Defense) and what rewrote it,
+            sender headers (from, to, cc, subject, date) and which of them differ,
+            and mechanical hints (body equal / contained, attachments, links by original and
+            images by sha256 equal / subset, rewritten-link counts, sender headers equal)
     script stops here: it moves no tier 2 copy
 
     LLM judge (one subagent, reads the comparison file, writes verdicts):
-        for each group:
-            remove the largest set of copies that can go without losing information:
-              a copy can go if one kept copy holds all of its body text and every attachment (by sha256)
-              keep the smallest set of copies that together hold everything
-              the most complete copy is kept, regardless of age
-            if each copy holds something another lacks, or a sender or recipient list differs: keep all
-            if unsure: keep all
+        for each group, apply the rule (references/judging.md):
+            "Keep the smallest set of copies that together hold everything the sender sent, as
+             delivered: body text, quoted chain, embedded images, links (original addresses),
+             attachments (by content), and the sender's headers (From, To, Cc, Subject, Date).
+             Content added after delivery (mail-program edits, notes, banners, list footers,
+             rewritten links) is not critical, and a copy differing only by it can go. Content
+             removed or altered after delivery is critical: the copy that still has the original
+             is kept. When the judge can't tell whether a difference came from the sender or was
+             added later, keep both."
+            the most complete copy is kept, regardless of age
     user approves groups
 
     # --- Approved tier 2 moves, mechanical ---
@@ -131,15 +142,26 @@ One JSON report on stdout, also saved as `report-<mode>.json` in the out dir: `s
                "date": "...", "internaldate": "...", "size": 1234,
                "body_sha256": "...", "body_chars": 410,
                "attachments": [{"filename": "...", "size": 1, "sha256": "..."}],
+               "images": [{"content_id": "<logo1>", "filename": null, "size": 1, "sha256": "..."}],
+               "image_refs": ["cid:logo1", "https://..."],
+               "missing_inline_images": [],
+               "links": [{"url": "as found", "original": "decoded destination",
+                          "rewritten_by": "safelinks|urldefense|null"}],
+               "sender_headers": {"from": "...", "to": "...", "cc": null, "subject": "...", "date": "..."},
                "differing_headers": {"subject": ["..."]},
                "differing_transport_headers": ["received"]}],
+   "sender_header_differences": ["cc"],
    "body_diffs": [{"from": 0, "to": 1, "diff": "unified diff, capped", "truncated": false}],
    "hints": [{"copies": [0, 1], "body_equal": false, "body_i_within_j": true, "body_j_within_i": false,
               "attachments_equal": false, "attachments_i_subset_of_j": true,
-              "attachments_j_subset_of_i": false}]}]}
+              "attachments_j_subset_of_i": false,
+              "links_equal": true, "links_i_subset_of_j": true, "links_j_subset_of_i": true,
+              "rewritten_links_i": 0, "rewritten_links_j": 1,
+              "images_equal": false, "images_i_subset_of_j": false, "images_j_subset_of_i": true,
+              "sender_headers_equal": false}]}]}
 ```
 
-Copies are ordered by folder order, then highest UID first. The body is the decoded `text/plain` parts (the `text/html` parts with tags stripped when there is no plain part), normalized: line endings, trailing spaces, runs of blank lines, Unicode NFC. Diffs run from copy 0 to each other copy, capped at 4,000 characters. Hints are mechanical facts, not verdicts.
+Copies are ordered by folder order, then highest UID first. The body is the decoded `text/plain` parts (the `text/html` parts with tags stripped when there is no plain part), normalized: line endings, trailing spaces, runs of blank lines, Unicode NFC. Diffs run from copy 0 to each other copy, capped at 4,000 characters. An inline image is an `image/*` part with a `Content-ID` or an inline disposition; it goes under `images`, never `attachments`. Links are every `href` in the `text/html` parts and every `http(s)://` URL in the `text/plain` parts, de-duplicated and sorted; `original` is the destination decoded from a Microsoft Safe Links (`url` parameter) or Proofpoint URL Defense (v2 `u` parameter, v3 `__<url>__`) link, else the link as found. A sender header with one value is a string, with none `null`, with several a sorted list. Hints are mechanical facts, not verdicts; link hints compare `original`, image hints `sha256`.
 
 ### Move file (`--move-uids`)
 
@@ -172,6 +194,7 @@ A new script ships with `test_<setup_id>.py` beside it (underscores). The tests 
 
 - identical copies grouped, with the highest UID kept;
 - the same Message-ID with different bytes left alone by tier 1 and reaching the comparison file, with differing headers, a body diff and attachment hashes;
+- links and inline images recorded and compared; a rewritten link decoded; a stripped inline image flagged;
 - `--move-uids` moving only the listed UIDs, and refusing one whose hash changed;
 - no permanent deletion: no EXPUNGE, CLOSE or `\Deleted` flag, and every removed copy found intact in the trash folder;
 - a server with no one-step move: nothing moved;

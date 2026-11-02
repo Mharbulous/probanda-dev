@@ -40,6 +40,32 @@ def make_message(mid="<a1@example.com>", body="Hello there.\n", received="from a
     return m.as_bytes(policy=m.policy.clone(linesep="\r\n"))
 
 
+PNG = b"\x89PNG\r\n\x1a\n fake image bytes"
+SAFELINK = ("https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fcourts.example.ca%2Forder%3Fid%3D7"
+            "&data=05%7C01%7C&reserved=0")
+
+
+def make_html_message(mid="<h1@example.com>", href="https://courts.example.ca/order?id=7",
+                      plain_url="https://registry.example.ca/file", cid="logo1", include_image=True,
+                      image=PNG, cc=None, received="from a by b; Mon, 1 Jan 2026"):
+    """A plain part, an HTML alternative, and (optionally) an inline image the HTML shows by cid."""
+    m = EmailMessage()
+    m["Received"] = received
+    m["From"] = "Sender <sender@example.com>"
+    m["To"] = "lawyer@example.ca"
+    if cc:
+        m["Cc"] = cc
+    m["Subject"] = "Order entered"
+    m["Date"] = "Mon, 01 Jan 2026 10:00:00 -0800"
+    m["Message-ID"] = mid
+    m.set_content(f"The order is entered. See {plain_url}.\n")
+    m.add_alternative(f'<p>The order is entered. <a href="{href}">Order</a></p>'
+                      f'<img src="cid:{cid}">', subtype="html")
+    if include_image:
+        m.get_payload()[1].add_related(image, maintype="image", subtype="png", cid=f"<{cid}>")
+    return m.as_bytes(policy=m.policy.clone(linesep="\r\n"))
+
+
 # --- an in-memory IMAP server ---------------------------------------------------------------
 
 _QUOTED = re.compile(r'^"(?:[^"\\]|\\.)*"$')
@@ -297,6 +323,77 @@ class TestTier2(Base):
             d = json.load(fh)["groups"][0]["body_diffs"][0]
         self.assertTrue(d["truncated"])
         self.assertLess(len(d["diff"]), core.DIFF_CAP + 100)
+
+
+# --- links, inline images and sender headers ----------------------------------------------
+
+class TestLinksImagesSenderHeaders(Base):
+    def compare(self, a, b):
+        fake, mb = mailbox({"INBOX": {"messages": {1: a, 2: b}}})
+        code, rep = run(mb, ["INBOX"], self.out_dir)
+        self.assertEqual(code, 0, rep)
+        with open(rep["tier2"]["comparison_file"], encoding="utf-8") as fh:
+            g = json.load(fh)["groups"][0]
+        return {c["uid"]: c for c in g["copies"]}, g
+
+    def test_links_from_html_href_and_plain_text_recorded(self):
+        a = core.analyse(make_html_message())
+        originals = {x["original"] for x in a["links"]}
+        self.assertIn("https://courts.example.ca/order?id=7", originals)
+        self.assertIn("https://registry.example.ca/file", originals)
+        self.assertTrue(all(x["rewritten_by"] is None for x in a["links"]))
+
+    def test_safelinks_url_decodes_to_original(self):
+        original, by = core.decode_rewritten_link(SAFELINK)
+        self.assertEqual((original, by), ("https://courts.example.ca/order?id=7", "safelinks"))
+        rec = [x for x in core.analyse(make_html_message(href=SAFELINK))["links"] if x["rewritten_by"]]
+        self.assertEqual(rec, [{"url": SAFELINK, "original": "https://courts.example.ca/order?id=7",
+                                "rewritten_by": "safelinks"}])
+
+    def test_urldefense_links_decode(self):
+        v3 = "https://urldefense.com/v3/__https://example.com/a*b__;Pw!!XYZ$"
+        self.assertEqual(core.decode_rewritten_link(v3), ("https://example.com/a?b", "urldefense"))
+        v2 = "https://urldefense.proofpoint.com/v2/url?u=https-3A__example.com_path&d=DwI&c=x"
+        self.assertEqual(core.decode_rewritten_link(v2), ("https://example.com/path", "urldefense"))
+        self.assertEqual(core.decode_rewritten_link("https://example.com/x"), ("https://example.com/x", None))
+
+    def test_rewritten_copy_has_equal_originals_and_more_rewritten_links(self):
+        by_uid, g = self.compare(make_html_message(received="from a by b; 1 Jan"),
+                                 make_html_message(href=SAFELINK, received="from c by d; 2 Jan"))
+        hint = g["hints"][0]
+        self.assertTrue(hint["links_equal"])
+        counts = {hint["rewritten_links_i"], hint["rewritten_links_j"]}
+        self.assertEqual(counts, {0, 1})
+
+    def test_inline_image_recorded_as_image_not_attachment(self):
+        a = core.analyse(make_html_message())
+        self.assertEqual(a["attachments"], [])
+        self.assertEqual(len(a["images"]), 1)
+        self.assertEqual(a["images"][0]["sha256"], core.sha256(PNG))
+        self.assertEqual(a["images"][0]["content_id"], "<logo1>")
+        self.assertEqual(a["image_refs"], ["cid:logo1"])
+        self.assertEqual(a["missing_inline_images"], [])
+
+    def test_stripped_inline_image_flagged_and_subset_hint_shows_loss(self):
+        by_uid, g = self.compare(make_html_message(received="from a by b; 1 Jan"),
+                                 make_html_message(include_image=False, received="from c by d; 2 Jan"))
+        self.assertEqual(by_uid[2]["missing_inline_images"], ["cid:logo1"])
+        self.assertEqual(by_uid[1]["missing_inline_images"], [])
+        self.assertEqual(by_uid[2]["images"], [])
+        hint = g["hints"][0]
+        idx = {c["uid"]: c["index"] for c in g["copies"]}
+        self.assertFalse(hint["images_equal"])
+        stripped_is_i = hint["copies"][0] == idx[2]
+        self.assertTrue(hint["images_i_subset_of_j"] if stripped_is_i else hint["images_j_subset_of_i"])
+        self.assertFalse(hint["images_j_subset_of_i"] if stripped_is_i else hint["images_i_subset_of_j"])
+
+    def test_different_cc_is_a_sender_header_difference(self):
+        by_uid, g = self.compare(make_html_message(received="from a by b; 1 Jan"),
+                                 make_html_message(cc="partner@example.ca", received="from c by d; 2 Jan"))
+        self.assertEqual(g["sender_header_differences"], ["cc"])
+        self.assertFalse(g["hints"][0]["sender_headers_equal"])
+        self.assertEqual(by_uid[2]["sender_headers"]["cc"], "partner@example.ca")
+        self.assertIsNone(by_uid[1]["sender_headers"]["cc"])
 
 
 # --- --move-uids ----------------------------------------------------------------------------
