@@ -13,6 +13,7 @@ import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs, READ_TIMEOUT_MS } from "../python-timeout.js";
 import { caseDataMigrateScriptsDir } from "../repo-root.js";
 import { caseDataExecute, caseDataQuery } from "./backend.js";
+import { withExclusive } from "./case-lock.js";
 
 const DRIVER = String.raw`
 import json, sys
@@ -78,15 +79,18 @@ function script(step: Record<string, unknown>, env: NodeJS.ProcessEnv): unknown 
 
 export async function relocateSource(request: RelocateSourceRequest, env: NodeJS.ProcessEnv = process.env): Promise<RelocateSourceResult> {
   const { matter_root: matterRoot } = request;
+  // The probe and the plan sit inside the lock too, so what they read still holds at the write.
+  return withExclusive(matterRoot, env, async (lock) => {
   const probe = script({ op: "probe", hash: request.hash }, env) as { sql: string; params: unknown[] };
   const rows = caseDataQuery(matterRoot, probe.sql, probe.params).rows;
   const plan = script({ op: "plan", rows, ...request }, env) as Plan;
   const result: RelocateSourceResult = { outcome: plan.outcome, stored_path: plan.stored_path, rows: plan.rows, reason: plan.reason };
   if (plan.outcome !== "relocated") return result;
 
-  const done = await caseDataExecute(matterRoot, plan.sql as string, env);
+  const done = await caseDataExecute(matterRoot, plan.sql as string, env, undefined, lock);
   const now = caseDataQuery(matterRoot, probe.sql, probe.params).rows;
   const { confirmed } = script({ op: "confirm", rows: now, plan_rows: plan.rows, matter_root: matterRoot, new_path: request.new_path }, env) as { confirmed: boolean };
   if (!confirmed) return { ...result, outcome: "failed", reason: "write_not_confirmed", rows_now: now, warning: done.warning };
   return { ...result, evidence_sql: done.evidence_sql, warning: done.warning };
+  });
 }

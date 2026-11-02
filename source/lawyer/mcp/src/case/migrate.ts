@@ -25,7 +25,7 @@ import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs, WRITE_TIMEOUT_MS } from "../python-timeout.js";
 import { caseDataMigrateScriptsDir } from "../repo-root.js";
-import { acquireCaseLock } from "./case-lock.js";
+import { acquireCaseLock, withExclusive, type CaseLock } from "./case-lock.js";
 
 function driverFile(): string {
   return pythonDriverFile("case-migrate-driver", MIGRATE_DRIVER);
@@ -45,11 +45,16 @@ export async function caseDataMigrate(
   opts: MigrateOptions = {},
   env: NodeJS.ProcessEnv = process.env
 ): Promise<Record<string, unknown>> {
+  const work = (lock: CaseLock) => {
+    const result = runDriver(matterRoot, mode, opts, env);
+    if (lock.brokeStale) pushStaleLockWarning(result, "matter-data", "matter", "its holder died, or it was >5 min old");
+    return result;
+  };
+  // A change to the whole matter shuts out new runs and file claims; a plan or a listing changes nothing.
+  if (mode === "apply" || mode === "restore") return withExclusive(matterRoot, env, work);
   const lock = await acquireCaseLock(matterRoot, env);
   try {
-    const result = runDriver(matterRoot, mode, opts, env);
-    if (lock.brokeStale) pushStaleLockWarning(result, "matter-data", "matter");
-    return result;
+    return work(lock);
   } finally {
     lock.release();
   }

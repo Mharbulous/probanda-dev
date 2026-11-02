@@ -80,7 +80,7 @@ The tools decide every response below; this session only passes lines and relays
 | R6 | `ingest_result` errors or times out | Call it again with the same arguments: it returns `already_written` or completes, never writing twice. |
 | R7 | `plugin_changed` | Relay the message and stop, without `end`: the run stays open. After the restart, `status` then `begin` with `resume` continues it. |
 | R8 | `lease_lost` | Stop at once, writing nothing more. |
-| R9 | This session compacts or ends | `status`, then `begin` with `resume`: the journal holds the run. |
+| R9 | This session compacts or ends | `status`, which lists the unfinished runs with their files, then `begin` with `resume` on this session's run: the journal holds it. When the files do not show which run is this session's, ask the practitioner, because resuming a run stops any session still working on it. |
 | R10 | A staged result expired (over 7 days), or R7 left it under an old contract version | `next` dispatches the item again. |
 
 **Not built in v1, and what stands in for it.** The transcript contradiction check (Path A step 7): transcripts are set aside (check 9a). The name check's proposal comes from the written row read back by `source_id` (SKILL Step 7), never from the extractor's result.

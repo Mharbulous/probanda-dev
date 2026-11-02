@@ -8,16 +8,22 @@
 //
 // Party names are resolved here, by matter_data__resolve_participant's logic, because converters open
 // no database (§2.2). A name that does not resolve becomes an ask, answered on the repeated call.
+//
+// The whole call runs under the write lock, so everything the write relies on is looked up against
+// the matter as it stands now, and another run cannot change it before the write lands (group locking
+// spec sections 6 and 7).
 
 import { readFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 
-import { ValidationError } from "../errors.js";
+import { DataServerError, ValidationError } from "../errors.js";
 import { resolveCaseDataRoot } from "../practice/matter-data-root.js";
 import { caseDataExecuteStatements, type CaseStatement, type CaseStatementGroup } from "./backend.js";
+import { acquireIngestWriteLock, matterRevision, type CaseLock } from "./case-lock.js";
+import { caseDataFolder } from "./backend.js";
 import { runCaseScript } from "./case-script.js";
 import {
-  affidavitRun, checkRun, CONTRACT_VERSION, outsideMatter, recordRefusal, recordWrite, runForWrite, storedForm,
+  affidavitRun, checkRun, CONTRACT_VERSION, noteWriteWait, outsideMatter, recordRefusal, recordWrite, runForWrite, storedForm,
   type Refusal,
 } from "./ingest-run.js";
 import { proceduralHistoryAppend } from "./procedural-history.js";
@@ -52,6 +58,8 @@ export interface IngestResultArgs {
     proceeding_id?: number;
     participants?: Record<string, number>;
     informants?: Record<string, number>;
+    /** What became of an `other_version` ask, once supersede-draft has settled the pair. */
+    other_version?: "superseded" | "not_version";
   };
 }
 
@@ -103,6 +111,7 @@ const SAY_REFUSED: Record<string, string> = {
   unknown_result: "The reading of this document could not be found and will be read again.",
   path_b: "This document may be privileged, so nothing was recorded from its reading. It will be read here instead, once its privilege is decided.",
   set_aside: "This document is a legal authority, so it was not recorded in this run. It will be ingested on its own once the run ends.",
+  already_held: "This document has already been recorded in another session, so it was not recorded again.",
   refused: "This document could not be recorded, so nothing from its reading was kept.",
 };
 
@@ -154,6 +163,15 @@ function resolveParties(matterRoot: string, names: string[], answered: Record<st
   }
   return out;
 }
+
+/** Every party a name could mean now, which an answer is checked against (group locking spec section 8). */
+function candidatesFor(matterRoot: string, name: string): number[] {
+  const r = resolveParticipant(matterRoot, name);
+  return r.status === "ok" ? r.matches.filter((m) => m.role === "party").map((m) => m.id).sort((a, b) => a - b) : [];
+}
+
+/** What the write relies on, looked up again now: `write_recheck.py` opens the case data, as converters do not. */
+type Recheck = { status: string; reason?: string; other_version: { source_id: number; title: string | null } | null; answers_source_id: number | null; proceeding_gone: number[]; parties_gone: number[]; names: Record<string, string> };
 
 /** The firm's own name, so the delivery check fires only on a letter the firm sent (K-M9): firm_name
  *  alone, from the firm profile's firm.json (firm-profile.ts), so no other part of the profile can
@@ -232,21 +250,30 @@ export async function ingestResult(args: IngestResultArgs, env: NodeJS.ProcessEn
   const privileged = args.contract === "privileged" ? args.result_ids.map((id) => stagedResultPath(id, env)) : [];
   const dropAlso: string[] = [];
   let drop = false;
+  let lock: CaseLock;
   try {
-    const out = await checkAndWrite(args, env, dropAlso);
+    lock = await acquireIngestWriteLock(args.matter_root, env);
+  } catch (err) {
+    if ((err as DataServerError).code !== "lock_unavailable") throw err;
+    // Another session is saving: the write stays queued, and `next` lists it again (spec 6.3).
+    return { outcome: "refused", refused: "waiting", ask: [], report: await noteWriteWait(args.matter_root, args.run_id, args.document?.ref, args.result_ids, env) };
+  }
+  try {
+    const out = await checkAndWrite(args, env, dropAlso, lock);
     drop = out.outcome !== "refused" || DEFINITE.includes(String(out.refused));
     return out;
   } finally {
+    lock.release();
     dropStaged([...(drop ? privileged : []), ...dropAlso]);
   }
 }
 
 /** Refusals no repeat of the same call can clear: a result to read again, or a document set aside. */
-const DEFINITE = ["invalid", "contract_mismatch", "contract_version", "race", "store_change", "path_b", "set_aside", "unresolved", "refused"];
+const DEFINITE = ["invalid", "contract_mismatch", "contract_version", "race", "store_change", "path_b", "set_aside", "unresolved", "refused", "already_held", "taken"];
 
 type Staged = { result_id: string; path: string; ref: string; doc: Record<string, unknown> };
 
-async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dropAlso: string[]): Promise<IngestResultOutput> {
+async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dropAlso: string[], lock: CaseLock): Promise<IngestResultOutput> {
   if (new Set(args.result_ids).size !== args.result_ids.length) throw new ValidationError("result_ids must not repeat an id");
   if (args.result_ids.length === 0 && !CLOSABLE.includes(args.contract)) throw new ValidationError(`contract ${args.contract} needs result_ids`);
   const document = args.document ?? ({} as IngestResultArgs["document"]);
@@ -331,7 +358,7 @@ async function checkAndWrite(args: IngestResultArgs, env: NodeJS.ProcessEnv, dro
       ? { outcome: "already_written", ask: [], report: [] }
       : { outcome: "refused", refused: "invalid", ask: [], report: [] };
   }
-  return write(args, env, run, filePath, fileHash, results, dropAlso);
+  return write(args, env, run, filePath, fileHash, results, dropAlso, lock);
 }
 
 async function write(
@@ -342,39 +369,109 @@ async function write(
   fileHash: string,
   results: Staged[],
   dropAlso: string[],
+  lock: CaseLock,
 ): Promise<IngestResultOutput> {
   const fileRef = run.route?.ref ?? "";
   const exhibits = args.contract === "affidavit_exhibits"
-    ? await affidavitRun(args.matter_root, fileRef, results.map((r) => r.ref), env)
+    ? await affidavitRun(args.matter_root, args.run_id, fileRef, results.map((r) => r.ref), env)
     : null;
 
-  const names = results.flatMap((r) => partyNames(args.contract, r.doc));
-  const participants = resolveParties(args.matter_root, names, args.answers?.participants ?? {});
-  const plan = runCaseScript<Plan>(CONVERTERS[args.contract], "plan", {
-    contract: args.contract,
-    mode: run.mode,
-    file_path: filePath,
-    file_hash: fileHash,
-    results: results.map(({ result_id, path, ref }) => ({ result_id, path, ref })),
-    answers: args.answers ?? {},
-    participants,
-    route: run.route,
-    exhibits,
-    answered: run.answered,
-    // Read only where the delivery check can fire: an attended document with a letter flag (N-2).
-    firm_name: run.mode === "attended" && results.some((r) => flagged(r.doc, "outgoing_letter")) ? firmName(env) : null,
-  }, env);
-
-  // A Path B object names no dispatched item, so it journals no reply (N1).
-  const acks = args.contract === "privileged" || !run.route ? [] : results.map((r) => ({ ref: r.ref, result_id: r.result_id }));
   // A close names its item by the file's ref, and a Notice of Application's orders by `<ref>:so` (N2).
   const refs = [...new Set([
     fileRef || results[0]?.ref || fileHash,
     ...(args.contract === "sought_orders" && fileRef ? [`${fileRef}:so`] : []),
     ...results.map((r) => r.ref),
   ])];
+  // A Path B object names no dispatched item, so it journals no reply (N1).
+  const acks = args.contract === "privileged" || !run.route ? [] : results.map((r) => ({ ref: r.ref, result_id: r.result_id }));
   const record = (write: Record<string, unknown>, failures: Array<{ ref: string; reason: string }> = []) =>
-    recordWrite(args.matter_root, args.run_id, acks, { refs, contract: args.contract, ...write }, env, failures);
+    recordWrite(args.matter_root, args.run_id, acks, { refs, contract: args.contract, file_hash: fileHash, ...write }, env, failures);
+
+  // Re-checks (group locking spec 7.2). Another run's write of these bytes should be impossible with
+  // claims, but a file reached with no claim can still meet one.
+  if (run.elsewhere.some((w) => w.file_hash === fileHash)) {
+    await record({ result_ids: args.result_ids, outcome: "refused", reason: "already_held" });
+    return fit(refused("already_held"));
+  }
+  const answers = { ...(args.answers ?? {}) };
+  const route = run.route ? { ...run.route } : null;
+  const staleAnswers: string[] = [];
+  const revision = matterRevision(args.matter_root, env);
+  const courtFile = route?.category === "court" || /^5\./.test(filePath);
+  const firstWrite = args.contract === "facts" || args.contract === "affidavit_body";
+  // The matter has moved since this run read the document, or since the question was asked.
+  const moved = run.readRevision === null || run.readRevision !== revision || (run.question !== null && run.question.revision !== revision);
+  let pendingOther: number | null = null;
+  if (moved) {
+    const chosen = Object.values(answers.participants ?? {}).filter((id) => id !== 0);
+    const check = runCaseScript<Recheck>("write_recheck", "run", {
+      case_data_dir: caseDataFolder(args.matter_root, env),
+      matter_root: args.matter_root,
+      file_path: filePath,
+      file_hash: fileHash,
+      answers_source_id: route?.answers_source_id ?? null,
+      proceeding_ids: [route?.proceeding_id, answers.proceeding_id].filter((id) => typeof id === "number"),
+      chosen_parties: chosen,
+      // Only documents other runs recorded since this run began, because the gate saw the rest.
+      version_source_ids: courtFile && firstWrite && answers.other_version === undefined
+        ? run.elsewhere.map((w) => w.source_id).filter((id) => id !== null) : [],
+    }, env);
+    if (check.status !== "ok") throw new DataServerError(`the matter's case data cannot be read: ${String(check.reason)}`, "case_data_unavailable");
+    if (check.other_version !== null) {
+      if (run.mode === "unattended") pendingOther = check.other_version.source_id;
+      else {
+        // Held back, and sent to the usual choice of which copy to keep (Step 6's other_version item).
+        await record({ result_ids: args.result_ids, outcome: "refused", reason: "needs_answer", revision });
+        return fit({
+          outcome: "refused",
+          refused: "needs_answer",
+          ask: [{ kind: "other_version", ref: String(check.other_version.source_id), say: `This may be another copy of "${(check.other_version.title ?? "a document on file").slice(0, 80)}", which another session has just recorded. Which copy should be kept?` }],
+          report: [],
+        });
+      }
+    }
+    if (route && check.answers_source_id !== null) route.answers_source_id = check.answers_source_id;
+    if (route?.proceeding_id !== undefined && check.proceeding_gone.includes(route.proceeding_id)) delete route.proceeding_id;
+    if (answers.proceeding_id !== undefined && check.proceeding_gone.includes(answers.proceeding_id)) {
+      delete answers.proceeding_id;
+      staleAnswers.push("Since you answered, another session changed the proceeding you chose.");
+    }
+    // Section 8: an answer the matter has moved past is dropped, so the converter asks the question again.
+    const participantsAnswered = { ...(answers.participants ?? {}) };
+    for (const [name, id] of Object.entries(participantsAnswered)) {
+      if (id === 0 || run.question === null) continue;
+      const before = run.question.candidates[name] ?? [];
+      const added = candidatesFor(args.matter_root, name).filter((candidate) => !before.includes(candidate));
+      if (check.parties_gone.includes(id)) staleAnswers.push(`Since you answered, another session changed the party you chose for "${name.slice(0, 60)}".`);
+      else if (added.length > 0) staleAnswers.push(`Since you answered, another session added ${added.map((a) => check.names[String(a)] ?? "a party").join(", ").slice(0, 80)}, who may be "${name.slice(0, 60)}".`);
+      else continue;
+      delete participantsAnswered[name];
+    }
+    answers.participants = participantsAnswered;
+  }
+  // The pair was settled through supersede-draft: a copy that ended superseded is already held.
+  if (answers.other_version === "superseded") {
+    await record({ result_ids: args.result_ids, outcome: "already_written" });
+    return { outcome: "already_written", ask: [], report: [] };
+  }
+
+  const names = results.flatMap((r) => partyNames(args.contract, r.doc));
+  const participants = resolveParties(args.matter_root, names, answers.participants ?? {});
+  const plan = runCaseScript<Plan>(CONVERTERS[args.contract], "plan", {
+    contract: args.contract,
+    mode: run.mode,
+    file_path: filePath,
+    file_hash: fileHash,
+    results: results.map(({ result_id, path, ref }) => ({ result_id, path, ref })),
+    answers,
+    participants,
+    route,
+    exhibits,
+    answered: run.answered,
+    // Read only where the delivery check can fire: an attended document with a letter flag (N-2).
+    firm_name: run.mode === "attended" && results.some((r) => flagged(r.doc, "outgoing_letter")) ? firmName(env) : null,
+  }, env);
+
   /** R5: a result that cannot be used is a failed extraction, read once more; after a second
    *  failure `next` closes it, and that close reports it. */
   const reread = async (reason: string) => {
@@ -394,16 +491,18 @@ async function write(
     return fit(out);
   }
   if (!("statements" in plan)) {
-    await record({ result_ids: args.result_ids, outcome: "refused", reason: "needs_answer" });
-    return fit({ outcome: "refused", refused: "needs_answer", ask: plan.asks, report: [] });
+    // The revision and the candidates the question rests on, for the answer's check (section 8).
+    const candidates = Object.fromEntries(plan.asks.filter((a) => a.kind === "participant").map((a) => [a.ref, candidatesFor(args.matter_root, a.ref)]));
+    await record({ result_ids: args.result_ids, outcome: "refused", reason: "needs_answer", revision, candidates });
+    return fit({ outcome: "refused", refused: "needs_answer", ask: plan.asks, report: staleAnswers });
   }
 
   let done;
   try {
     done = await caseDataExecuteStatements(args.matter_root, plan.statements, plan.params, env, async () => {
-      const gone = await checkRun(args.matter_root, args.run_id, env);
+      const gone = await checkRun(args.matter_root, args.run_id, env, run.route);
       if (gone) throw new LeaseGone(gone);
-    });
+    }, lock);
   } catch (err) {
     if (err instanceof LeaseGone) return { outcome: "refused", refused: err.refusal.refused, ask: [], report: [err.refusal.say] };
     if (/duplicate top-level source file_hash/.test((err as Error).message)) {
@@ -455,11 +554,17 @@ async function write(
   const unchanged = args.contract !== "affidavit_exhibits" || named.final === named.prior;
   const outcome = named.prior != null && inserted === 0 && unchanged && failures.length === 0 ? "already_written" : "written";
   const sourceId = (named.source_id as number | null) ?? null;
+  // Unattended, a version that turned up since reading gets today's marker for the attended run to settle.
+  if (pendingOther !== null && sourceId !== null) {
+    const marker = runCaseScript<CaseStatement>("write_recheck", "pending_marker", { source_id: sourceId, other_id: pendingOther }, env);
+    await caseDataExecuteStatements(args.matter_root, [marker], {}, env, undefined, lock);
+  }
 
   // The write has landed. A journal that misses it surfaces as an error (N14): the repeated call
   // finds the write already there (R6) and journals it then.
   const closedNow = await record({
     result_ids: args.result_ids.filter((id) => !failedIds.has(id) && !run.settled.includes(id)), outcome,
+    source_id: sourceId,
     ...(args.result_ids.length === 0 ? { closed: true } : {}),
     ...(args.contract === "affidavit_exhibits" ? { closing: exhibits?.closing === true && failures.length === 0 } : {}),
     // Pass 1's exhibit list, so the exhibits are planned from the journal alone (N9).

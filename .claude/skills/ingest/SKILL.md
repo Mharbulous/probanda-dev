@@ -20,7 +20,7 @@ Do not extract, summarize, or present facts here — that is `litigation-fact-ex
 
 A BC Court of Appeal application/response book, or a book of authorities, is one PDF holding several distinct documents behind a set of bookmarks. `matter-data` splits it by those bookmarks and reports the parts it does not ingest (reasons for judgment, the order, argument, the book's own authorities listing) rather than force-fitting the whole file through one path.
 
-Do not intentionally run ingestions into the same matter in parallel; queue them and let each handoff finish before starting the next.
+Several sessions may ingest into the same matter at once: each file is claimed by the session reading it, and another session leaves it out and says so. Ingest a matter from one computer at a time, because a second computer sharing the folder through sync cannot see those claims.
 ## Procedure
 
 0. **No document or folder named: scan, report, ingest nothing.** A bare `/ingest` is a new-document scan of the whole matter. Ask nothing. Tell `matter-data` this is a report-only scan of the whole matter, and relay its report by folder of the files not yet ingested, ending with its proposal. Privilege is decided later, at ingestion. The practitioner's answer runs the steps below. Skip steps 1-7 and end with step 10.

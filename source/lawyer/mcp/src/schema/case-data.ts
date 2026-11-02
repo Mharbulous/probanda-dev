@@ -35,7 +35,7 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
       description:
         "Run a write SQL script against a matter's attached main+law+privileged databases in a single transaction, then regenerate evidence.sql. The tool loads the cross-database FK layer itself from the /matter-data skill's references/triggers.sql on every call and refuses to write without it -- do not send it. " +
         "A non-success result (error, rejection, timeout, no response) does not prove the script did not commit: the transaction commits and the databases are committed to storage before evidence.sql is regenerated, and a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with matter_data__query before any further write or retry -- see /matter-data's shared/conventions.md section 2.3. " +
-        "run_id, given only inside an ingest run, must be the matter's live run (matter_data__ingest_run): otherwise the call is refused lease_lost and writes nothing; a write that carries it renews the run's heartbeat. In a run the ingest orchestrator began (begin with orchestrator true), an inline sql_script over 8 KB is refused, writing nothing: 'too long to send inline: use a generator or ingest_result'. In any other run, and without run_id, the call is unchanged. " +
+        "expected_revision, a number from matter_data__ingest_run status, refuses the call stale_revision and writes nothing when the matter has been written since (read it before showing a proposed change, pass it with the approved one). run_id, given only inside an ingest run, must be a live run of the matter (matter_data__ingest_run): otherwise the call is refused lease_lost and writes nothing; a write that carries it renews the run's heartbeat. In a run the ingest orchestrator began (begin with orchestrator true), an inline sql_script over 8 KB is refused, writing nothing: 'too long to send inline: use a generator or ingest_result'. In any other run, and without run_id, the call is unchanged. " +
         "Give sql_script or generator, never both. generator {script, args} has the server emit the script itself, so no SQL passes through the session: script supersede_draft.py with args.command emit-sql ({superseded, kept, approver, execution_status?}: one side a source_id, the other {file_path, file_hash} for a copy with no row; the server reads the pair and plans the fold itself) or rehash-sql ({old, new, file_path}). Any other script, command or pair is refused. " +
         "Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: {
@@ -53,6 +53,7 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
             additionalProperties: false,
           },
           run_id: { type: "string" },
+          expected_revision: { type: "integer" },
         },
         required: ["matter_root"],
         additionalProperties: false,
@@ -62,11 +63,12 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
     {
       name: caseDataPrefixed("ingest_run"),
       description:
-        "One ingestion per matter at a time: the run lease and journal, kept on this computer outside the matter. " +
-        "action begin (mode attended or unattended; orchestrator true only from the /ingest-orchestrator skill) starts a run and returns {ok, run_id, resumed, next, asked?, path_b?, report?: lines to relay}; pass run_id on every matter_data__execute of the run. While another run's heartbeat is under 60 minutes old it returns {ok: false, refused: run_active, run_id, say} naming that run. With orchestrator true, a run left unfinished with results still to record, once its heartbeat is 60 minutes old and until its folder is deleted 30 days on, returns {ok: false, refused: run_unfinished, run_id, say} naming it to resume; any other caller takes it over and is told in report. " +
-        "begin with resume (an unfinished run's run_id) takes that run over at once with a new run_id, and with orchestrator true makes it the orchestrator's run; after 60 minutes without a heartbeat a plain begin takes over too, but for run_unfinished above. The displaced holder's next call is refused lease_lost. resume naming no unfinished run is refused unknown_run. " +
-        "action status returns the matter's run {active, run_id, started, heartbeat, mode, ended, next, asked?, path_b?}; with run_id it also renews the heartbeat; with run_id and ack (an extractor's failed reply line, or the ok line of a dispatch whose contract is null) it records that reply, whose ref must be one this run dispatched. action end (run_id) finishes the run and returns {ok, run_id, report?}. " +
-        "action next (run_id; routes the first time each file is routed, each {file_path, file_hash, kind facts|notice_of_application|affidavit|path_b, rendering?, execution?, witness?, answers_source_id?, category?, proceeding_id?}; bridged true in a bridged session) returns {ok, routed?: the routed files' refs in order (f1, f2, ...), report?: lines to relay, dispatch: [{dispatch_id, agent, model, effort, ref, contract, stage?}] to start, each with the one-line prompt DISPATCH <dispatch_id>, write: [{ref, contract, result_ids}] acknowledged results still to write, close: [{ref, contract}] items to close with result_ids [], asked?: [{ref, contract, result_ids}] writes waiting for the practitioner's answer, never to repeat until it is given, path_b?: [{ref, file_path}] documents for the session to read itself (routed path_b, or refused path_b) until their privileged write, running, more?}. Pass a write or close line's ref to ingest_result as document.ref. A file routed again, or another file with the same bytes, keeps the first ref. The run's work is done when dispatch, write and close are empty and running is 0. At most 10 extractors run at once. A dispatch line without its stage list, and a close line, is at most 200 bytes; a write line adds about 40 bytes per result_id, and stage about 120 bytes per path. A page is at most 50 lines. " +
+        "Several ingestions of one matter may run at once, each claiming the files it reads: each run's lease and journal are kept on this computer outside the matter. " +
+        "action begin (mode attended or unattended; orchestrator true only from the /ingest-orchestrator skill) starts a run and returns {ok, run_id, resumed, next, asked?, path_b?, report?: lines to relay}; pass run_id on every matter_data__execute of the run. While a matter-wide change is running it returns {ok: false, refused: matter_busy, say}. With orchestrator true, a run left unfinished with results still to record, once its heartbeat is 60 minutes old and until its folder is deleted 30 days on, returns {ok: false, refused: run_unfinished, run_id, files, say} naming it to resume; any other caller starts anyway and is told in report. " +
+        "begin with resume (an unfinished run's run_id) takes that run over at once with a new run_id, its claims included, and with orchestrator true makes it the orchestrator's run. The displaced holder's next call is refused lease_lost. resume naming no unfinished run is refused unknown_run. " +
+        "action status with no run_id returns {active, revision, runs: [{run_id, active, started, heartbeat, mode, files}]}, the matter's unfinished runs; with run_id it returns that run {active, revision, run_id, started, heartbeat, mode, ended, next, asked?, path_b?} and renews the heartbeat; with run_id and ack (an extractor's failed reply line, or the ok line of a dispatch whose contract is null) it records that reply, whose ref must be one this run dispatched. action end (run_id) finishes the run and returns {ok, run_id, report?}. " +
+        "action next (run_id; routes the first time each file is routed, each {file_path, file_hash, kind facts|notice_of_application|affidavit|path_b, rendering?, execution?, witness?, answers_source_id?, category?, proceeding_id?, attachment_hashes?}; bridged true in a bridged session) claims each new file and returns {ok, routed?: the routed files' refs in order (f1, f2, ...), left_out?: files another session holds or has just recorded, report?: lines to relay, dispatch: [{dispatch_id, agent, model, effort, ref, contract, stage?}] to start, each with the one-line prompt DISPATCH <dispatch_id>, write: [{ref, contract, result_ids}] acknowledged results still to write, close: [{ref, contract}] items to close with result_ids [], asked?: [{ref, contract, result_ids}] writes waiting for the practitioner's answer, never to repeat until it is given, path_b?: [{ref, file_path}] documents for the session to read itself (routed path_b, or refused path_b) until their privileged write, running, more?}. Pass a write or close line's ref to ingest_result as document.ref. A file routed again, or another file with the same bytes, keeps the first ref. The run's work is done when dispatch, write and close are empty, running is 0 and waiting_for_slot is absent; waiting_for_slot true means no extractor slot is free yet, so call next again. At most 10 extractors run at once on this computer, across all runs. A dispatch line without its stage list, and a close line, is at most 200 bytes; a write line adds about 40 bytes per result_id, and stage about 120 bytes per path. A page is at most 50 lines. " +
+        "action claim (run_id; files, each {file_path, file_hash, attachment_hashes?}) claims files read outside next, until the run ends, and returns {ok, claimed, left_out?, report?}; read only what it claimed. " +
         "action staged (run_id, dispatch_id, paths) records a bridged session's copies of a dispatch's stage list, in its order. " +
         "Every call carrying run_id renews the heartbeat. A refusal writes nothing; relay its say to the practitioner, never the code. A call refused plugin_changed means the plugin was updated mid-run: in a run the /ingest-orchestrator skill drives, stop without end, and after a restart resume the run (status, then begin with resume); any other caller ends the run as its operation says. " +
         "Only the /matter-data skill and the /ingest-orchestrator skill may call this tool -- invoke one (Skill: lawyer:matter-data or lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
@@ -74,7 +76,7 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
         type: "object",
         properties: {
           matter_root: { type: "string" },
-          action: { type: "string", enum: ["begin", "next", "staged", "status", "end"] },
+          action: { type: "string", enum: ["begin", "next", "claim", "staged", "status", "end"] },
           run_id: { type: "string" },
           resume: { type: "string" },
           mode: { type: "string", enum: ["attended", "unattended"] },
@@ -93,8 +95,23 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
                 answers_source_id: { type: "integer" },
                 category: { type: "string", enum: ["court", "correspondence", "production", "work_product", "disbursements"] },
                 proceeding_id: { type: "integer" },
+              other_version: { type: "string", enum: ["superseded", "not_version"] },
+                attachment_hashes: { type: "array", items: { type: "string" } },
               },
               required: ["file_path", "file_hash", "kind"],
+              additionalProperties: false,
+            },
+          },
+          files: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                file_path: { type: "string" },
+                file_hash: { type: "string" },
+                attachment_hashes: { type: "array", items: { type: "string" } },
+              },
+              required: ["file_path", "file_hash"],
               additionalProperties: false,
             },
           },
@@ -113,8 +130,8 @@ export function caseDataToolDefinitions(): ToolDefinition[] {
       description:
         "Write one document's extracted results from their staged result_ids, in one transaction (an affidavit's exhibits each under their own savepoint), then regenerate evidence.sql. No extraction output and no SQL pass through the session. " +
         "contract is facts, affidavit_body, affidavit_exhibits, sought_orders or privileged; document is {ref, store} for a file routed in this run (the ref of its dispatch, write, close or path_b line, as given), or {file_path (stored form), file_hash, store} for a Path B document; store is privileged only for a privileged contract answered yes; result_ids are the ids from the extractors' ok lines: one result named by its dispatch line's ref, or the result_ids of a write line, each already acknowledged (a call of several that holds an unacknowledged id is an error); [] closes an item whose extraction failed twice. answers carries the practitioner's answers to an earlier call's ask: privilege (yes, no or unclear, any case, required for privileged, whose call takes exactly one result), category, proceeding_id, participants {name as extracted: party_id, or 0 for a filing party that is none of the parties}, informants {locator: privileged source id, or 0 when it came from no document on file} for a privileged informant. " +
-        "Returns at most 600 bytes: {outcome written|already_written|refused, refused?, source_id, counts {facts, positions, relief, links, exhibits}, items [{ref, outcome, reason}] for items that failed, ask [{kind, ref, say}], post [{pass, ref}] after-completion passes to run, report [lines]}. Relay report lines and ask the ask items in plain words; never show refused, reason or ref. A repeated call is safe: it returns already_written. refused waiting means call again once next lists it; path_b means read the document as Path B; set_aside, race and store_change mean set it aside for /ingest. A result that cannot be read, or belongs to another contract, file or item than its reply, is refused and its item alone read once more. dropped counts ask or items entries left out to keep the cap: a repeated call lists them. " +
-        "Refuses without the live run_id (lease_lost) or after a plugin update (plugin_changed). " +
+        "Returns at most 600 bytes: {outcome written|already_written|refused, refused?, source_id, counts {facts, positions, relief, links, exhibits}, items [{ref, outcome, reason}] for items that failed, ask [{kind, ref, say}], post [{pass, ref}] after-completion passes to run, report [lines]}. Relay report lines and ask the ask items in plain words; never show refused, reason or ref. A repeated call is safe: it returns already_written. refused waiting means call again once next lists it; path_b means read the document as Path B; set_aside, race and store_change mean set it aside for /ingest; already_held and taken mean the file is settled in another session, so do nothing more for it. An ask of kind other_version names a held copy by its ref: settle the pair, then repeat the call with answers.other_version superseded or not_version. A result that cannot be read, or belongs to another contract, file or item than its reply, is refused and its item alone read once more. dropped counts ask or items entries left out to keep the cap: a repeated call lists them. " +
+        "Refuses without a live run_id (lease_lost) or after a plugin update (plugin_changed). " +
         "Only the /ingest-orchestrator skill may call this tool -- invoke it (Skill: lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
       inputSchema: {
         type: "object",

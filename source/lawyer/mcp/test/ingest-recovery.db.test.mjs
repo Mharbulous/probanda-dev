@@ -61,7 +61,18 @@ function sql(caseDataDir, query, db = "main") {
   return JSON.parse(res.stdout);
 }
 
-const runDir = (runRoot) => join(runRoot, readdirSync(runRoot).find((n) => /^[0-9a-f]{16}$/.test(n)));
+/** The newest run folder of the matter's folder. */
+const runDir = (runRoot) => {
+  const key = join(runRoot, readdirSync(runRoot).find((n) => /^[0-9a-f]{16}$/.test(n)));
+  const started = (name) => {
+    try {
+      return Date.parse(JSON.parse(readFileSync(join(key, name, "lease.json"), "utf-8")).started);
+    } catch {
+      return -1;
+    }
+  };
+  return join(key, readdirSync(key).sort((a, b) => started(b) - started(a))[0]);
+};
 const run = (matterRoot, args) => callTool({}, "matter_data__ingest_run", { matter_root: matterRoot, ...args });
 const stage = (result) => callTool({}, "matter_data__stage_result", { result });
 const stagedPath = (id) => join(process.env.LOCALAPPDATA, "Coclerk", "extract-results", `${id}.json`);
@@ -376,7 +387,7 @@ test("after a plugin update the run is left open, and a resume writes what was a
   writeFileSync(path, JSON.stringify({ ...JSON.parse(readFileSync(path, "utf-8")), build_stamp: "an older build" }));
   assert.equal((await run(matterRoot, { action: "next", run_id })).refused, "plugin_changed");
   const status = await run(matterRoot, { action: "status" });
-  assert.equal(status.run_id, run_id, "status names the unfinished run");
+  assert.deepEqual(status.runs.map((r) => r.run_id), [run_id], "status names the unfinished run");
   const resumed = await run(matterRoot, { action: "begin", mode: "attended", resume: run_id });
   assert.deepEqual(resumed.next, [{ ref: "f1", contract: "facts", result_ids: [result_id] }]);
   assert.equal((await byRef(matterRoot, resumed.run_id, "f1", "facts", [result_id])).outcome, "written");
@@ -476,7 +487,7 @@ test("an unattended other copy that matches no title is reported, not dropped (K
   assert.ok(out.report.some((l) => l.includes('another copy of "A Title Not On File"')), JSON.stringify(out.report));
 });
 
-test("page images of a displaced run are removed at the next run's end, and a swept run's with it (N13)", async (t) => {
+test("page images of a stale run stay while it can be resumed, and go when its folder is swept (N13)", async (t) => {
   const { matterRoot, runRoot } = fixture(t);
   const doc = file(matterRoot, "one.pdf", pdfBytes(["One"]));
   const first = await run(matterRoot, { action: "begin", mode: "attended" });
@@ -485,16 +496,14 @@ test("page images of a displaced run are removed at the next run's end, and a sw
   mkdirSync(images, { recursive: true });
   const lease = join(runDir(runRoot), "lease.json");
   const stale = (ms) => writeFileSync(lease, JSON.stringify({ ...JSON.parse(readFileSync(lease, "utf-8")), heartbeat: new Date(Date.now() - ms).toISOString() }));
-  stale(61 * 60_000); // abandoned: a plain begin takes it over
+  stale(61 * 60_000); // stale, and its reader never came back: it can still be resumed
   const second = await run(matterRoot, { action: "begin", mode: "attended" });
-  assert.equal(existsSync(images), true);
   await run(matterRoot, { action: "end", run_id: second.run_id });
-  assert.equal(existsSync(images), false, "the displaced run's images went with the run that ended");
+  assert.equal(existsSync(images), true, "the stale run still holds its file");
 
   const third = await run(matterRoot, { action: "begin", mode: "attended" });
   const later = await run(matterRoot, { action: "next", run_id: third.run_id });
   assert.deepEqual(later.dispatch, []);
-  mkdirSync(images, { recursive: true });
   stale(31 * 24 * 60 * 60_000); // never ended, silent for over 30 days
   await run(matterRoot, { action: "begin", mode: "attended" });
   assert.equal(existsSync(images), false, "the sweep removes a run's images with its folder");
@@ -621,8 +630,8 @@ test("a sweep that cannot delete page images in use leaves them for later, and b
   assert.equal(second.ok, true, JSON.stringify(second));
   assert.equal(second.report.length, 1);
   assert.equal(existsSync(images), true);
-  await run(matterRoot, { action: "end", run_id: second.run_id });
-  assert.equal(existsSync(images), false, "the run's end removes them once they are free");
+  await run(matterRoot, { action: "begin", mode: "attended" });
+  assert.equal(existsSync(images), false, "the next sweep removes them once they are free");
 });
 
 test("one bad result in a call fails only its own item (N-9)", async (t) => {
@@ -731,7 +740,7 @@ test("a sweep error of any kind, a cut-short lease included, leaves that folder 
   assert.equal(second.report.length, 2, JSON.stringify(second.report));
   assert.equal(existsSync(join(pdfDir, "page-0001.png")), true, "left for a later sweep");
   const third = await run(matterRoot, { action: "begin", mode: "attended", orchestrator: true });
-  assert.equal(third.refused, "run_active");
+  assert.equal(third.ok, true, JSON.stringify(third));
   assert.equal(third.report, undefined, "each folder left is said once");
 });
 

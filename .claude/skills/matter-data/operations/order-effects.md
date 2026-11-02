@@ -44,6 +44,8 @@ Record, for each operative term, its locator in `../shared/conventions.md` §6 f
 
 ## Step 3 — Diff against the writable surface
 
+Before working out the diff, read the matter revision: `matter_data__ingest_run` `status` with `matter_root` returns it as `revision`. Keep it for Step 5.
+
 The pass may propose changes to **these entities and fields only**:
 
 | Entity | Fields | Example order |
@@ -127,7 +129,7 @@ Then collect approval one row at a time, per `/show-me`: the row's current and p
 
 ## Step 5 — Apply approved changes
 
-Approved changes run in **one `matter_data__execute` call**, always separate from the document transaction. Running after the document commits is what makes this pass crash-safe: the source and its facts are durably stored whether or not the effects pass completes.
+Approved changes run in **one `matter_data__execute` call**, always separate from the document transaction, passing Step 3's `revision` as `expected_revision`. A call refused `stale_revision` wrote nothing: another session has changed the matter, so go back to Step 3, work the diff out again and present what changed. Running after the document commits is what makes this pass crash-safe: the source and its facts are durably stored whether or not the effects pass completes.
 
 Each applied change (one Step 4 proposal row, so one row per field) gets an audit row in `main.source_references`, in the **same** transaction:
 

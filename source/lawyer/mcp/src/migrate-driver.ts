@@ -55,10 +55,10 @@ export function throwDriverRefusal(parsed: DriverResponse, fallbackMessage: stri
 
 /** Appends the warning that a stale write lock on store (e.g. "matter-data") was broken; subject
  * names what was locked ("matter" or "database"). */
-export function pushStaleLockWarning(result: Record<string, unknown>, store: string, subject: string): void {
+export function pushStaleLockWarning(result: Record<string, unknown>, store: string, subject: string, why = ">15 min old"): void {
   const warnings = Array.isArray(result.warnings) ? (result.warnings as string[]) : [];
   warnings.push(
-    `broke a stale ${store} write lock (>15 min old) before running; if another session ` +
+    `broke a stale ${store} write lock (${why}) before running; if another session ` +
       `is still writing to or migrating this ${subject}, stop and reconcile before continuing`
   );
   result.warnings = warnings;

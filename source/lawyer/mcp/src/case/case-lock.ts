@@ -25,7 +25,9 @@
 // BEFORE pointer resolution, which itself rewrites probanda.json and may move
 // binaries out of the legacy `9. AI` folder.
 
-import { acquireLock, type HeldLock, type LockSite } from "../data-lock.js";
+import { readFileSync, writeFileSync } from "node:fs";
+
+import { acquireLock, hostLocalFile, liveLockRecord, type HeldLock, type LockSite } from "../data-lock.js";
 
 const SITE: LockSite = {
   envVar: "COCLERK_CASE_LOCK_ROOT",
@@ -34,7 +36,15 @@ const SITE: LockSite = {
   recordField: "matterRoot",
   label: "matter-data",
   subject: "matter",
+  // Longer than the longest holder (WRITE_TIMEOUT_MS, 2 minutes), and never renewed: a session that
+  // hangs while alive cannot keep the lock (group locking spec 6.2).
+  staleMs: 5 * 60_000,
+  breakDead: true,
 };
+
+/** One ingest write's wait for the lock: 15 seconds, so the call stays under the bridge's 60. The
+ *  write then stays queued (group locking spec 6.3). */
+const WRITE_WAITS_MS = [1000, 2000, 4000, 8000];
 
 export type CaseLock = HeldLock;
 
@@ -45,4 +55,40 @@ export type CaseLock = HeldLock;
  */
 export function acquireCaseLock(matterRoot: string, env: NodeJS.ProcessEnv = process.env): Promise<CaseLock> {
   return acquireLock(SITE, matterRoot, env);
+}
+
+/** The write lock as an ingest takes it: a longer wait, because another run may be writing now. */
+export function acquireIngestWriteLock(matterRoot: string, env: NodeJS.ProcessEnv = process.env): Promise<CaseLock> {
+  return acquireLock(SITE, matterRoot, env, { waitsMs: WRITE_WAITS_MS });
+}
+
+/** Runs a matter-wide change under the lock, marked so that no run starts or claims a file meanwhile
+ *  (group locking spec section 9). Readers carry on; their writes wait for the lock as usual. */
+export async function withExclusive<T>(matterRoot: string, env: NodeJS.ProcessEnv, op: (lock: CaseLock) => T | Promise<T>): Promise<T> {
+  const lock = await acquireLock(SITE, matterRoot, env, { waitsMs: WRITE_WAITS_MS, scope: "exclusive" });
+  try {
+    advanceRevision(matterRoot, env);
+    return await op(lock);
+  } finally {
+    lock.release();
+  }
+}
+
+export function exclusiveHeld(matterRoot: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  return liveLockRecord(SITE, matterRoot, env)?.scope === "exclusive";
+}
+
+/** The matter revision (group locking spec 7.1): a count on this computer of the writes to this
+ *  matter. Unreadable counts as 0, which can only cause an extra re-check. */
+export function matterRevision(matterRoot: string, env: NodeJS.ProcessEnv = process.env): number {
+  try {
+    return Number(readFileSync(hostLocalFile(SITE, matterRoot, "revision", env), "utf-8")) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Called under the lock, just before a write: a crash can then cause an extra re-check, never a missed one. */
+export function advanceRevision(matterRoot: string, env: NodeJS.ProcessEnv = process.env): void {
+  writeFileSync(hostLocalFile(SITE, matterRoot, "revision", env), String(matterRevision(matterRoot, env) + 1), "utf-8");
 }

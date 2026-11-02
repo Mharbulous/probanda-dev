@@ -1,8 +1,10 @@
-// matter_data__ingest_run (ingest orchestrator spec §2.4): one ingestion per matter at a time (G1).
-// The lease and an append-only journal sit host-local, in a folder named by the case lock's key, so
-// one matter's run state never reaches the synced matter folder. The owner is whoever holds the
-// run_id, not a pid: Cowork shares one server process across sessions (case-lock.ts). Every read and
-// write of the lease happens under this site's own lock, so a check and its set never interleave.
+// matter_data__ingest_run (ingest orchestrator spec §2.4, group locking spec): several runs may share
+// a matter, each holding a claim on the files it is reading. Each run's lease and append-only journal
+// sit host-local, in its own folder under a folder named by the case lock's key, so one matter's run
+// state never reaches the synced matter folder. The owner is whoever holds the run_id, not a pid:
+// Cowork shares one server process across sessions (case-lock.ts). Every read and write of a lease
+// or a journal happens under this site's own per-matter lock, so a check and its set never
+// interleave. A run's claims are worked out from its journal, so no claims file can fall out of step.
 //
 // Stage D2 adds the dispatch list (§6.1, §8): `next` takes the orchestrator's routed files, plans
 // today's passes from the journal alone (so a resume after a crash or a compaction needs no memory,
@@ -14,6 +16,7 @@ import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readdirSync
 import { win32 as pathWin32 } from "node:path";
 
 import { BUILD_STAMP } from "../build-stamp.js";
+import { exclusiveHeld, matterRevision } from "./case-lock.js";
 import { acquireLock, hostLocalDir, lockKey, type LockSite } from "../data-lock.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { classifyPdfPages, pdfPageImages } from "../files/extract/page-images.js";
@@ -24,18 +27,31 @@ import { dropStagedResults, stagedResultPath } from "./stage-result.js";
 const SITE: LockSite = {
   envVar: "COCLERK_INGEST_RUN_ROOT",
   dirName: "ingest-runs",
-  attempts: 5,
+  // Several runs now take turns on it, each for a moment.
+  attempts: 25,
   recordField: "matterRoot",
   label: "ingest run",
   subject: "matter",
+  staleMs: 5 * 60_000,
+  breakDead: true,
 };
 
 /** A lease whose heartbeat is younger than this is live (est., spec §2.4). */
 const LIVE_MS = 60 * 60_000;
 /** A run folder is deleted this long after its run ended, or its last heartbeat (est., spec §2.4). */
 const KEEP_MS = 30 * 24 * 60 * 60_000;
-/** Extractors running at once: #70's wave size, kept as a concurrency limit (spec §8.1). */
+/** Extractors running at once on this computer: #70's wave size, kept as a concurrency limit (spec
+ *  §8.1, group locking spec 5.6). */
 const WINDOW = 10;
+/** A dispatch this old stops counting against WINDOW, so a crashed session's readers free their slots
+ *  without waiting out LIVE_MS. */
+const SLOT_MS = 30 * 60_000;
+/** How long, and how often, `next` looks for a free slot before telling the caller to call again. It
+ *  stays well under the bridge's 60 seconds. */
+const SLOT_WAIT_MS = 30_000;
+const SLOT_POLL_MS = 5_000;
+/** A write kept waiting this long, across calls, is reported (group locking spec section 10). */
+const WAIT_REPORT_MS = 2 * 60_000;
 /** Lines per `next` page (est., spec §1.5). */
 const PAGE = 50;
 /** Pages per read (#70) and per boundary-scan batch (ingest-extract.md Pass 2). */
@@ -75,6 +91,8 @@ export interface Route {
   file_hash: string;
   /** `path_b`: an internal document the session reads itself (Path B); journaled so a resume lists it (N-10). */
   kind: "facts" | "notice_of_application" | "affidavit" | "path_b";
+  /** An email's attachment files, claimed with it, all or none (group locking spec 5.1). */
+  attachment_hashes?: string[];
   /** A .docx/.eml/.msg rendering, a host path (ingest-extract.md "Document pre-processing"). */
   rendering?: string;
   execution?: "draft" | "affirmed" | "filed";
@@ -96,13 +114,21 @@ export interface IngestRunArgs {
   ack?: string;
   dispatch_id?: string;
   paths?: string[];
+  /** action claim: files a path that routes nothing through `next` is about to read. */
+  files?: ClaimFile[];
+}
+
+export interface ClaimFile {
+  file_path: string;
+  file_hash: string;
+  attachment_hashes?: string[];
 }
 
 type Event = { ts: string; event: string; run_id: string; [k: string]: unknown };
 
 // What the practitioner may be shown (spec §9 G5): plain words, no internal name. The code goes in `refused`.
 const SAY = {
-  run_active: "Another ingest of this matter is already under way. Let it finish, or resume it, before starting a new one. Nothing was written.",
+  matter_busy: "This matter is busy with a change that affects the whole file. Try the ingest again shortly. Nothing was written.",
   run_unfinished: "An earlier ingest of this matter stopped before it finished, and some of what it read is not yet recorded. Resume it to record that, or start afresh and those documents will be read again. Nothing was written.",
   unknown_run: "That ingest has finished, or was never started on this computer, so it cannot be resumed. Nothing was written.",
   lease_lost: "Another session has taken over this ingest of the matter, so this session must stop here. Nothing more was written.",
@@ -126,7 +152,15 @@ const RUN_UNREADABLE = "The record of an earlier ingest of this matter could not
 const PRIVILEGED_DROPPED = "What was read from documents whose privilege question is still open was deleted as this ingest ended. They will be read again when they are next ingested.";
 const PRIVILEGED_LEFT = "Some of what was read from documents whose privilege question is still open could not be deleted yet. It is deleted within 7 days.";
 
-export type Refusal = { ok: false; refused: keyof typeof SAY; say: string };
+/** The section 10 lines (group locking spec), each naming its file. */
+const shortName = (path: string) => pathWin32.basename(path).slice(0, 80);
+const LEFT_OUT = (name: string) => `${name} is being ingested in another session, so I left it out of this run.`;
+const JUST_HELD = (name: string) => `${name} has just been added to this matter in another session, so I left it out of this run.`;
+const PICKED_UP = (names: string[]) => `An earlier ingest of ${names.join(", ")} stopped without finishing. I've taken those files into this run.`;
+const TAKEN = (name: string) => `${name} was taken into another session's ingest while this one was stopped, so nothing more was recorded for it here.`;
+const SAVING = (name: string) => `Another session is saving to this matter. ${name} will be saved once it finishes.`;
+
+export type Refusal = { ok: false; refused: keyof typeof SAY | "taken"; say: string };
 const refusal = (code: keyof typeof SAY): Refusal => ({ ok: false, refused: code, say: SAY[code] });
 
 /** Each folder left behind is reported once by this server, not at every begin or end (n-4). */
@@ -141,6 +175,15 @@ function sayOnce(left: string[], line: string): Said {
 const reportLines = (report: string[]) => (report.length > 0 ? { report } : {});
 
 const leasePath = (dir: string) => pathWin32.join(dir, "lease.json");
+/** A run's lease, or null when it is missing or a crash cut it short. */
+function leaseOrNull(dir: string): Lease | null {
+  try {
+    return readLease(dir);
+  } catch (err) {
+    if (err instanceof SyntaxError) return null;
+    throw err;
+  }
+}
 const dispatchPath = (dir: string, id: string) => pathWin32.join(dir, "dispatches", `${id}.json`);
 
 function readLease(dir: string): Lease | null {
@@ -212,8 +255,15 @@ function readJournal(dir: string): Event[] {
   const path = journalPath(dir);
   if (!existsSync(path)) return [];
   const lines = readFileSync(path, "utf-8").split("\n");
-  // What follows the last newline is a line a crash cut short mid-append, never a whole event.
-  if (lines.pop() !== "") torn.add(dir);
+  // What follows the last newline is a line a crash cut short mid-append, never a whole event. Said
+  // once: a stale run's journal stays as it is, and may be read at every begin.
+  if (lines.pop() !== "") {
+    const key = `${dir}\ntail ${lines.length}`;
+    if (!unreadableLines.has(key)) {
+      unreadableLines.add(key);
+      torn.add(dir);
+    }
+  }
   // A whole line that cannot be read (one an older build joined to a cut-short line) is skipped, and
   // said once at the next begin or end, rather than block the matter for good (round 6, N4).
   const events: Event[] = [];
@@ -256,12 +306,39 @@ function runEvents(dir: string): Event[] {
 const isLive = (lease: Lease | null): boolean =>
   lease !== null && lease.ended === null && Date.now() - Date.parse(lease.heartbeat) < LIVE_MS;
 
-const runDir = (matterRoot: string, env: NodeJS.ProcessEnv) => pathWin32.join(hostLocalDir(SITE, env), lockKey(matterRoot));
+const matterDirOf = (matterRoot: string, env: NodeJS.ProcessEnv) => pathWin32.join(hostLocalDir(SITE, env), lockKey(matterRoot));
 
-async function underLock<T>(matterRoot: string, env: NodeJS.ProcessEnv, work: (dir: string) => T | Promise<T>): Promise<T> {
+/** Moves a run left in the matter's folder by a build from before several runs could share a matter
+ *  into a run folder of its own, so it can still be resumed (F9). Its lease moves last, so a move a
+ *  crash cuts short is finished next time. */
+function adoptOldLayout(matterDir: string): void {
+  if (!existsSync(leasePath(matterDir))) return;
+  const started = Date.parse(String(leaseOrNull(matterDir)?.started));
+  const dir = pathWin32.join(matterDir, `legacy-${Number.isNaN(started) ? "unreadable" : started}`);
+  mkdirSync(dir, { recursive: true });
+  for (const name of ["journal.jsonl", "dispatches", "lease.tmp", "lease.json"]) {
+    const from = pathWin32.join(matterDir, name);
+    if (existsSync(from)) whileHeld(() => renameSync(from, pathWin32.join(dir, name)));
+  }
+}
+
+/** Every run folder of a matter. */
+function runFolders(matterDir: string): string[] {
+  if (!existsSync(matterDir)) return [];
+  return readdirSync(matterDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => pathWin32.join(matterDir, e.name));
+}
+
+/** The folder of the run `runId` holds now, or null. */
+function findRun(matterDir: string, runId: string): string | null {
+  return runFolders(matterDir).find((dir) => leaseOrNull(dir)?.run_id === runId) ?? null;
+}
+
+async function underLock<T>(matterRoot: string, env: NodeJS.ProcessEnv, work: (matterDir: string) => T | Promise<T>): Promise<T> {
   const lock = await acquireLock(SITE, matterRoot, env);
   try {
-    return await work(runDir(matterRoot, env));
+    const matterDir = matterDirOf(matterRoot, env);
+    adoptOldLayout(matterDir);
+    return await work(matterDir);
   } finally {
     lock.release();
   }
@@ -276,12 +353,15 @@ function renew(dir: string, runId: string): Lease | null {
   return lease;
 }
 
+type HeldRun = Lease & { dir: string };
+
 /** renew, and R7: a running bundle whose stamp differs from the one recorded at begin is refused. */
-function hold(dir: string, runId: string): Lease | Refusal {
-  const lease = renew(dir, runId);
-  if (lease === null) return refusal("lease_lost");
+function hold(matterDir: string, runId: string): HeldRun | Refusal {
+  const dir = findRun(matterDir, runId);
+  const lease = dir === null ? null : renew(dir, runId);
+  if (dir === null || lease === null) return refusal("lease_lost");
   if (lease.build_stamp !== BUILD_STAMP) return refusal("plugin_changed");
-  return lease;
+  return { ...lease, dir };
 }
 
 /** Deletes a host-local folder this server made: a run folder, or a run's dispatches folder. A run
@@ -352,14 +432,23 @@ async function sweep(env: NodeJS.ProcessEnv, own: string): Promise<Said> {
   const root = hostLocalDir(SITE, env);
   const imagesLeft: string[] = [];
   const recordsLeft: string[] = [];
+  const dirs: Array<{ dir: string; key: string; matterDir: string }> = [];
   for (const entry of readdirSync(root, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
-    const dir = pathWin32.join(root, entry.name);
+    const matterDir = pathWin32.join(root, entry.name);
+    try {
+      adoptOldLayout(matterDir);
+      for (const dir of runFolders(matterDir)) dirs.push({ dir, key: entry.name, matterDir });
+    } catch {
+      if (matterDir !== own) recordsLeft.push(matterDir);
+    }
+  }
+  for (const { dir, key, matterDir } of dirs) {
     try {
       const lease = readLease(dir);
       if (!expired(lease)) continue;
       const matterRoot = lease?.matter_root;
-      if (matterRoot === undefined || lockKey(matterRoot) !== entry.name) {
+      if (matterRoot === undefined || lockKey(matterRoot) !== key) {
         // A run from before the lease named its matter (a single-document ingest, which renders no
         // images), or a lease that names another folder's matter: only the run folder goes (N-17).
         removeOwn(dir);
@@ -388,7 +477,14 @@ async function sweep(env: NodeJS.ProcessEnv, own: string): Promise<Said> {
         lock.release();
       }
     } catch {
-      if (dir !== own) recordsLeft.push(dir);
+      if (matterDir !== own) recordsLeft.push(dir);
+    }
+  }
+  for (const matterDir of new Set(dirs.map((d) => d.matterDir))) {
+    try {
+      if (readdirSync(matterDir).length === 0) rmdirSync(matterDir);
+    } catch {
+      // Another session has just begun a run there, or the folder is held for a moment: left for a later sweep.
     }
   }
   const images = sayOnce(imagesLeft, IMAGES_LEFT);
@@ -407,16 +503,23 @@ function requireRunId(args: { run_id?: string; action?: string }): string {
  * its heartbeat. Returns whether the ingest orchestrator began the run (the inline cap, N3).
  */
 export async function assertLiveRun(matterRoot: string, runId: string, env: NodeJS.ProcessEnv = process.env): Promise<{ orchestrator: boolean }> {
-  const held = await underLock(matterRoot, env, (dir) => hold(dir, runId));
+  const held = await underLock(matterRoot, env, (matterDir) => hold(matterDir, runId));
   if ("refused" in held) throw new DataServerError(held.say, held.refused);
   return { orchestrator: held.orchestrator === true };
 }
 
+/** What `events` says another run has taken from this one (group locking spec 5.5). */
+const takenHashes = (events: Event[]) => new Set(events.filter((e) => e.event === "taken").map((e) => e.file_hash as string));
+
 /** ingest_result's second check, made inside the case lock just before its write (R8): null while
- *  `runId` still holds the lease. */
-export async function checkRun(matterRoot: string, runId: string, env: NodeJS.ProcessEnv = process.env): Promise<Refusal | null> {
-  const held = await underLock(matterRoot, env, (dir) => hold(dir, runId));
-  return "refused" in held ? held : null;
+ *  `runId` still holds the lease, and no other run has taken the file from it. */
+export async function checkRun(matterRoot: string, runId: string, env: NodeJS.ProcessEnv = process.env, route?: Route | null): Promise<Refusal | null> {
+  return underLock(matterRoot, env, (matterDir) => {
+    const held = hold(matterDir, runId);
+    if ("refused" in held) return held;
+    if (route && takenHashes(runEvents(held.dir)).has(route.file_hash)) return { ok: false, refused: "taken", say: TAKEN(shortName(route.file_path)) };
+    return null;
+  });
 }
 
 // ---------------------------------------------------------------- the plan (spec §8, today's passes)
@@ -598,9 +701,15 @@ function plan(events: Event[], env: NodeJS.ProcessEnv) {
   // Writes and closes that wait for the practitioner's answer (N10): never a write to repeat.
   const asked: Line[] = [];
   let inFlight = 0;
+  const inFlightRefs: string[] = [];
+  const running = (ref: string) => {
+    inFlight += 1;
+    inFlightRefs.push(ref);
+  };
+  const taken = takenHashes(events);
   const consider = (item: Item, writable = true) => {
     const s = l.state(item.ref);
-    if (s.state === "in_flight") inFlight += 1;
+    if (s.state === "in_flight") running(item.ref);
     // An acknowledged result that expired (R10) or was staged under another contract version (R7)
     // is extracted again rather than listed for a write that would be refused.
     const stale = (s.state === "acked" || s.state === "asked") && !usable(s.result_id, env);
@@ -621,6 +730,7 @@ function plan(events: Event[], env: NodeJS.ProcessEnv) {
   // refused for a reason no repeat clears (a store change, a race), whose refusal said so (N-10, m-4).
   const pathB: Array<{ ref: string; file_path: string }> = [];
   for (const route of l.routes) {
+    if (taken.has(route.file_hash)) continue;
     const refusedPathB = events.some((e) => e.event === "write" && (e.refs as string[]).includes(route.ref) && e.reason === "path_b");
     if (route.kind === "path_b" || refusedPathB) {
       const blocked = events.some((e) => e.event === "write" && e.contract === "privileged" && (e.refs as string[]).includes(route.ref) && blocks(e));
@@ -650,7 +760,7 @@ function plan(events: Event[], env: NodeJS.ProcessEnv) {
     let open = false;
     for (const item of affidavit.items) {
       const s = l.state(item.ref);
-      if (s.state === "in_flight") inFlight += 1;
+      if (s.state === "in_flight") running(item.ref);
       if (s.state === "new" || item.redo) dispatch.push(item);
       if (item.pass === 3 && s.state === "acked" && !item.redo) exhibits.push(s.result_id as string);
       if (item.pass === 3 && s.state !== "written" && s.state !== "failed") open = true;
@@ -660,7 +770,131 @@ function plan(events: Event[], env: NodeJS.ProcessEnv) {
     if (exhibits.length > 0) write.push({ ref: route.ref, contract: "affidavit_exhibits", result_ids: exhibits });
     if (affidavit.located && !open && exhibits.length === 0) close.push({ ref: route.ref, contract: "affidavit_exhibits" });
   }
-  return { dispatch: dispatch.slice(0, Math.max(0, WINDOW - inFlight)), write, close, asked, pathB, inFlight };
+  return { dispatch, write, close, asked, pathB, inFlight, inFlightRefs };
+}
+
+// ---------------------------------------------------------------- claims (group locking spec section 5)
+
+/** The file hashes a run holds, each with a file name: its routed files with work still open, an
+ *  email's attachments with it, and what it claimed outright, until its run ends. */
+function heldBy(events: Event[], env: NodeJS.ProcessEnv): Map<string, string> {
+  const p = plan(events, env);
+  const open = new Set([...p.dispatch, ...p.write, ...p.close, ...p.asked, ...p.pathB].map((line) => line.ref.split(":")[0]));
+  p.inFlightRefs.forEach((ref) => open.add(ref.split(":")[0]));
+  const held = new Map<string, string>();
+  const add = (hash: string, path: string) => held.set(hash, shortName(path));
+  for (const route of ledger(events).routes) {
+    if (!open.has(route.ref)) continue;
+    add(route.file_hash, route.file_path);
+    route.attachment_hashes?.forEach((hash) => add(hash, route.file_path));
+  }
+  for (const e of events) if (e.event === "claim") add(e.file_hash as string, e.file_path as string);
+  takenHashes(events).forEach((hash) => held.delete(hash));
+  return held;
+}
+
+/** What each other unfinished run of the matter holds, and whether its heartbeat is still fresh. */
+function otherHolders(matterDir: string, own: string, env: NodeJS.ProcessEnv) {
+  return runFolders(matterDir).filter((dir) => dir !== own).flatMap((dir) => {
+    const lease = leaseOrNull(dir);
+    if (lease === null || lease.ended !== null) return [];
+    return [{ dir, runId: lease.run_id, live: isLive(lease), held: heldBy(runEvents(dir), env) }];
+  });
+}
+
+/** The files other runs have written since `since`: each write's file hash and source. */
+export function writesElsewhere(matterDir: string, own: string, since: string): Array<{ file_hash: string; source_id: number | null }> {
+  const out: Array<{ file_hash: string; source_id: number | null }> = [];
+  for (const dir of runFolders(matterDir)) {
+    if (dir === own) continue;
+    for (const e of readJournal(dir)) {
+      if (e.event === "write" && e.outcome === "written" && e.closed !== true && typeof e.file_hash === "string" && e.ts >= since) {
+        out.push({ file_hash: e.file_hash, source_id: (e.source_id as number | null | undefined) ?? null });
+      }
+    }
+  }
+  return out;
+}
+
+/** Takes the claims of `files` for the run in `own`. Each file, with its attachments, gets its claim
+ *  or is left out, whatever happens to the others, and none waits on another (5.2). */
+function takeClaims(matterDir: string, own: string, started: string, files: ClaimFile[], env: NodeJS.ProcessEnv) {
+  const holders = otherHolders(matterDir, own, env);
+  const written = new Set(writesElsewhere(matterDir, own, started).map((w) => w.file_hash));
+  const granted = new Set<string>();
+  const leftOut: string[] = [];
+  const report: string[] = [];
+  const pickedUp: string[] = [];
+  for (const file of files) {
+    const hashes = [file.file_hash, ...(file.attachment_hashes ?? [])];
+    const name = shortName(file.file_path);
+    if (holders.some((h) => h.live && hashes.some((hash) => h.held.has(hash)))) {
+      leftOut.push(file.file_path);
+      report.push(LEFT_OUT(name));
+      continue;
+    }
+    if (hashes.some((hash) => written.has(hash))) {
+      leftOut.push(file.file_path);
+      report.push(JUST_HELD(name));
+      continue;
+    }
+    for (const holder of holders) {
+      for (const hash of hashes) {
+        if (!holder.held.has(hash)) continue;
+        journal(holder.dir, "taken", holder.runId, { file_hash: hash });
+        holder.held.delete(hash);
+        if (!pickedUp.includes(name)) pickedUp.push(name);
+      }
+    }
+    granted.add(file.file_hash);
+  }
+  if (pickedUp.length > 0) report.push(PICKED_UP(pickedUp));
+  return { granted, leftOut, report };
+}
+
+/** One run's readers running now, read without its lock: every dispatch not yet answered, voided or
+ *  overtaken by a takeover, and not so old that its session must have gone (SLOT_MS). */
+function readersOf(dir: string): number {
+  let text: string;
+  try {
+    text = readFileSync(journalPath(dir), "utf-8");
+  } catch {
+    return 0;
+  }
+  const events: Event[] = [];
+  for (const line of text.split("\n")) {
+    try {
+      if (line.trim() !== "") events.push(JSON.parse(line) as Event);
+    } catch {
+      // A line being appended now, or one a crash cut short: its own run's lock holder deals with it.
+    }
+  }
+  const voided = new Set(events.filter((e) => e.event === "void").map((e) => e.dispatch_id as string));
+  const open = new Map<string, string>();
+  for (const e of events) {
+    if (e.event === "takeover") open.clear();
+    else if (e.event === "ack") open.delete(e.ref as string);
+    else if (e.event === "dispatch" && !voided.has(e.dispatch_id as string)) open.set(e.ref as string, e.ts);
+  }
+  return [...open.values()].filter((ts) => Date.now() - Date.parse(ts) < SLOT_MS).length;
+}
+
+/** Readers running on this computer in every live run but `own`, whichever matter it belongs to. */
+function readersElsewhere(own: string, env: NodeJS.ProcessEnv): number {
+  const root = hostLocalDir(SITE, env);
+  let count = 0;
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    for (const dir of runFolders(pathWin32.join(root, entry.name))) {
+      if (dir === own) continue;
+      try {
+        if (isLive(readLease(dir))) count += readersOf(dir);
+      } catch {
+        // A lease being replaced, or cut short: it counts for nothing this time.
+      }
+    }
+  }
+  return count;
 }
 
 /** The Path B documents still to read, as `next`, `begin {resume}` and `status` list them (N-10). */
@@ -668,8 +902,10 @@ const pathBLines = (pathB: Array<{ ref: string; file_path: string }>) => (pathB.
 
 /** The exhibit letters ingest_result's affidavit_exhibits converter needs, and whether this call,
  *  writing the exhibits `refsHere`, resolves the last of them. */
-export async function affidavitRun(matterRoot: string, fileRef: string, refsHere: string[], env: NodeJS.ProcessEnv = process.env) {
-  return underLock(matterRoot, env, (dir) => {
+export async function affidavitRun(matterRoot: string, runId: string, fileRef: string, refsHere: string[], env: NodeJS.ProcessEnv = process.env) {
+  return underLock(matterRoot, env, (matterDir) => {
+    const dir = findRun(matterDir, runId);
+    if (dir === null) return null;
     const events = runEvents(dir);
     const l = ledger(events);
     const route = l.routes.find((r) => r.ref === fileRef);
@@ -788,6 +1024,7 @@ function checkRoutes(routes: Array<Omit<Route, "ref">>, matterRoot: string): Arr
     if (!existsSync(host)) throw new ValidationError(`routes[${i}].file_path does not exist: ${stored}`);
     if (sha256(host) !== r.file_hash) throw new ValidationError(`routes[${i}].file_hash is not the hash of ${stored}`);
     if (r.rendering !== undefined && !existsSync(r.rendering)) throw new ValidationError(`routes[${i}].rendering does not exist`);
+    if (r.attachment_hashes?.some((hash) => !/^[0-9a-f]{64}$/.test(hash))) throw new ValidationError(`routes[${i}].attachment_hashes must each be a file's SHA-256`);
     if (r.kind !== "path_b" && r.rendering === undefined && pathWin32.extname(stored).toLowerCase() !== ".pdf") {
       throw new ValidationError(`routes[${i}] is not a PDF, so it needs its rendering`);
     }
@@ -803,17 +1040,35 @@ const unjournaled = new Map<string, Array<{ runId: string; event: string; extra:
 async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknown> {
   const runId = requireRunId(args);
   const checked = checkRoutes(args.routes ?? [], args.matter_root);
+  const revision = matterRevision(args.matter_root, env);
   // Under the lock: route, plan and reserve each dispatch. The page images are rendered after the
   // lock is released (S-m10), so the run's other calls are not kept waiting on them.
-  const reserved = await underLock(args.matter_root, env, (dir) => {
-    const held = hold(dir, runId);
+  const reserve = (routes: typeof checked) => underLock(args.matter_root, env, (matterDir) => {
+    const held = hold(matterDir, runId);
     if ("refused" in held) return held;
-    const l = ledger(runEvents(dir));
+    const dir = held.dir;
+    const before = runEvents(dir);
+    const l = ledger(before);
+    const taken = takenHashes(before);
     let n = l.routes.length;
     const fresh: Route[] = [];
     const routed: string[] = [];
     const report: string[] = [];
-    for (const r of checked) {
+    const leftOut: string[] = [];
+    // Each file not yet routed in this run takes its claim, or is left out (group locking spec 5.3).
+    const routedBefore = (hash: string) => l.routes.some((x) => x.file_hash === hash);
+    const newFiles = routes.filter((r) => !routedBefore(r.file_hash));
+    if (newFiles.length > 0 && exclusiveHeld(args.matter_root, env)) return refusal("matter_busy");
+    const claims = takeClaims(matterDir, dir, held.started, newFiles, env);
+    report.push(...claims.report);
+    leftOut.push(...claims.leftOut);
+    for (const r of routes) {
+      if (!routedBefore(r.file_hash) && !claims.granted.has(r.file_hash)) continue;
+      if (taken.has(r.file_hash)) {
+        leftOut.push(r.file_path);
+        report.push(LEFT_OUT(shortName(r.file_path)));
+        continue;
+      }
       // A file routed again (a resume, a repeated call, a second copy with one hash) keeps its ref (S-M3).
       const known = [...l.routes, ...fresh].find((x) => x.file_hash === r.file_hash);
       if (known) {
@@ -830,13 +1085,28 @@ async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknow
     }
     for (const route of fresh) journal(dir, "route", runId, { route });
     const p = plan(runEvents(dir), env);
-    const items = p.dispatch.map((item) => {
+    // The limit is per computer (group locking spec 5.6), so other runs' readers count against it.
+    const free = Math.max(0, WINDOW - p.inFlight - readersElsewhere(dir, env));
+    const items = p.dispatch.slice(0, free).map((item) => {
       const id = randomUUID();
-      journal(dir, "dispatch", runId, { dispatch_id: id, ref: item.ref, agent: item.agent, contract: item.contract });
+      journal(dir, "dispatch", runId, { dispatch_id: id, ref: item.ref, agent: item.agent, contract: item.contract, revision });
       return { id, item };
     });
-    return { routed, report, items, write: p.write, close: p.close, asked: p.asked, pathB: p.pathB, inFlight: p.inFlight, dir };
+    return { routed, report, leftOut, items, write: p.write, close: p.close, asked: p.asked, pathB: p.pathB, inFlight: p.inFlight, dir, noSlot: p.dispatch.length > items.length };
   });
+  let reserved = await reserve(checked);
+  // With nothing else to do and no slot free, look again for a while. The routes are in the journal
+  // now, so a later look routes nothing (and claims nothing) again.
+  for (let waited = 0; waited < SLOT_WAIT_MS && !("refused" in reserved) && reserved.noSlot && reserved.items.length === 0
+    && reserved.inFlight === 0 && reserved.write.length === 0 && reserved.close.length === 0; waited += SLOT_POLL_MS) {
+    await new Promise((resolve) => setTimeout(resolve, SLOT_POLL_MS));
+    const again = await reserve([]);
+    if ("refused" in again) {
+      reserved = again;
+      break;
+    }
+    reserved = { ...again, routed: reserved.routed, report: reserved.report, leftOut: reserved.leftOut };
+  }
   if ("refused" in reserved) return reserved;
 
   const contexts = new Map<string, Record<string, unknown> | Error>();
@@ -893,8 +1163,8 @@ async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknow
   ];
   if (records.length > 0) {
     try {
-      await underLock(args.matter_root, env, (dir) => {
-        for (const r of records) journal(dir, r.event, runId, r.extra);
+      await underLock(args.matter_root, env, () => {
+        for (const r of records) journal(reserved.dir, r.event, runId, r.extra);
       });
     } catch (err) {
       if ((err as DataServerError).code !== "lock_unavailable") {
@@ -918,12 +1188,15 @@ async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknow
     ok: true,
     ...(reserved.routed.length ? { routed: reserved.routed } : {}),
     ...(reserved.report.length ? { report: reserved.report } : {}),
+    ...(reserved.leftOut.length ? { left_out: reserved.leftOut } : {}),
     dispatch,
     write: reserved.write.slice(0, Math.max(0, PAGE - dispatch.length)),
     close: reserved.close.slice(0, Math.max(0, PAGE - dispatch.length - reserved.write.length)),
     ...(reserved.asked.length ? { asked: reserved.asked.slice(0, PAGE) } : {}),
     ...pathBLines(reserved.pathB),
     running: reserved.inFlight + dispatch.length,
+    // Files still to read and no reader free: not finished, so the caller calls next again.
+    ...(reserved.noSlot && dispatch.length === 0 ? { waiting_for_slot: true } : {}),
     ...(lines > PAGE ? { more: true } : {}),
   };
 }
@@ -960,15 +1233,24 @@ export interface WriteRun {
   /** The call's results whose item failed after their ok reply was journaled: a repeat of the call
    *  takes them as settled, as it does a result already written (round 6, N1). */
   settled: string[];
+  /** When this run began, for what other runs have written since (group locking spec 7.2). */
+  started: string;
+  /** The matter revision when this file's last reader was dispatched, null when none was. */
+  readRevision: number | null;
+  /** The call's last unanswered question: the revision it rested on and its candidates (spec section 8). */
+  question: { revision: number; candidates: Record<string, number[]> } | null;
+  /** Other runs' writes since this run began. */
+  elsewhere: Array<{ file_hash: string; source_id: number | null }>;
 }
 
 /** ingest_result's run check and its record: renews the heartbeat, refuses lease_lost or
  *  plugin_changed, and returns the run's mode, the route the document names by `ref`, or by its
  *  hash when one was routed, and what the journal says of the call's results. */
 export async function runForWrite(matterRoot: string, runId: string, document: { ref?: string; file_hash?: string }, contract: string, resultIds: string[], env: NodeJS.ProcessEnv = process.env): Promise<Refusal | WriteRun> {
-  return underLock(matterRoot, env, (dir) => {
-    const held = hold(dir, runId);
+  return underLock(matterRoot, env, (matterDir) => {
+    const held = hold(matterDir, runId);
     if ("refused" in held) return held;
+    const dir = held.dir;
     const events = runEvents(dir);
     const routes = ledger(events).routes;
     const acked: Record<string, string> = {};
@@ -988,6 +1270,7 @@ export async function runForWrite(matterRoot: string, runId: string, document: {
       ? routes.find((r) => r.ref === document.ref?.split(":")[0]) ?? null
       : routes.find((r) => r.file_hash === document.file_hash) ?? null;
     if (document.ref !== undefined && route === null) throw new ValidationError(`no file with ref ${document.ref} in this run`);
+    if (route && takenHashes(events).has(route.file_hash)) return { ok: false as const, refused: "taken" as const, say: TAKEN(shortName(route.file_path)) };
     const answered = { facts: [] as string[], relief: [] as string[] };
     const last = route ? events.filter((e) => e.event === "dispatch" && e.ref === route.ref && e.agent === "lawyer:extract-facts").pop() : undefined;
     if (last && existsSync(dispatchPath(dir, last.dispatch_id as string))) {
@@ -995,7 +1278,16 @@ export async function runForWrite(matterRoot: string, runId: string, document: {
       answered.facts = ((inputs.ANSWERED_FACTS ?? []) as Array<{ fact_key: string }>).map((f) => f.fact_key);
       answered.relief = ((inputs.ANSWERED_RELIEF ?? []) as Array<{ relief_key: string }>).map((r) => r.relief_key);
     }
-    return { ok: true as const, mode: held.mode, route, answered, acked, itemRef, dispatched, written, settled };
+    const reads = route ? events.filter((e) => e.event === "dispatch" && (e.ref as string).split(":")[0] === route.ref && typeof e.revision === "number") : [];
+    const lastAsk = events.filter((e) => e.event === "write" && e.reason === "needs_answer" && e.contract === contract
+      && ((e.result_ids as string[]) ?? []).join() === resultIds.join() && typeof e.revision === "number").pop();
+    return {
+      ok: true as const, mode: held.mode, route, answered, acked, itemRef, dispatched, written, settled,
+      started: held.started,
+      readRevision: reads.length > 0 ? (reads[reads.length - 1].revision as number) : null,
+      question: lastAsk ? { revision: lastAsk.revision as number, candidates: (lastAsk.candidates ?? {}) as Record<string, number[]> } : null,
+      elsewhere: writesElsewhere(matterDir, dir, held.started),
+    };
   });
 }
 
@@ -1010,7 +1302,9 @@ function journalAcks(dir: string, runId: string, acks: Array<{ ref: string; resu
 /** Journals a write. An item the write could not record counts as a failed extraction (R4, R5) and is
  *  read once more; returns the refs of those that have now failed twice, which are closed instead. */
 export async function recordWrite(matterRoot: string, runId: string, acks: Array<{ ref: string; result_id: string }>, write: Record<string, unknown>, env: NodeJS.ProcessEnv = process.env, failures: Array<{ ref: string; reason: string }> = []): Promise<string[]> {
-  return underLock(matterRoot, env, (dir) => {
+  return underLock(matterRoot, env, (matterDir) => {
+    const dir = findRun(matterDir, runId);
+    if (dir === null) throw new DataServerError(SAY.lease_lost, "lease_lost");
     journalAcks(dir, runId, acks);
     journal(dir, "write", runId, write);
     for (const f of failures) journal(dir, "ack", runId, { ref: f.ref, ok: false, reason: f.reason });
@@ -1026,7 +1320,9 @@ export async function recordWrite(matterRoot: string, runId: string, acks: Array
  *  once more (R4) rather than left waiting forever; the call's good results stay acknowledged, to be
  *  written again. */
 export async function recordRefusal(matterRoot: string, runId: string, acks: Array<{ ref: string; result_id: string }>, bad: Array<{ id: string; reason: string }>, env: NodeJS.ProcessEnv = process.env): Promise<void> {
-  await underLock(matterRoot, env, (dir) => {
+  await underLock(matterRoot, env, (matterDir) => {
+    const dir = findRun(matterDir, runId);
+    if (dir === null) throw new DataServerError(SAY.lease_lost, "lease_lost");
     const before = runEvents(dir);
     journalAcks(dir, runId, acks.filter((a) => before.some((e) => e.event === "dispatch" && e.ref === a.ref)));
     const events = runEvents(dir);
@@ -1047,9 +1343,15 @@ export async function recordRefusal(matterRoot: string, runId: string, acks: Arr
 export function dispatchInputs(dispatchId: string, env: NodeJS.ProcessEnv = process.env): Record<string, unknown> {
   if (!UUID.test(dispatchId ?? "")) throw new ValidationError("dispatch_id must be the id from your dispatch line");
   const root = hostLocalDir(SITE, env);
-  for (const entry of existsSync(root) ? readdirSync(root, { withFileTypes: true }) : []) {
-    const path = dispatchPath(pathWin32.join(root, entry.name), dispatchId);
-    if (!entry.isDirectory() || !existsSync(path)) continue;
+  const dirs = (existsSync(root) ? readdirSync(root, { withFileTypes: true }) : [])
+    .filter((entry) => entry.isDirectory())
+    .flatMap((entry) => {
+      const matterDir = pathWin32.join(root, entry.name);
+      return [matterDir, ...runFolders(matterDir)]; // a run an update has not yet moved stays in the matter's folder
+    });
+  for (const dir of dirs) {
+    const path = dispatchPath(dir, dispatchId);
+    if (!existsSync(path)) continue;
     const stored = JSON.parse(readFileSync(path, "utf-8")) as { inputs: unknown; stage: string[]; session: string[] | null };
     let text = JSON.stringify(stored.inputs);
     if (stored.session) {
@@ -1062,81 +1364,156 @@ export function dispatchInputs(dispatchId: string, env: NodeJS.ProcessEnv = proc
   throw new DataServerError("no dispatch with that id on this computer", "unknown_dispatch");
 }
 
+/** One line of `status` with no run_id: an unfinished run and the files it routed or claimed. */
+function runLine(dir: string, lease: Lease) {
+  const events = runEvents(dir);
+  const files = [...ledger(events).routes.map((r) => r.file_path), ...events.filter((e) => e.event === "claim").map((e) => e.file_path as string)];
+  return {
+    run_id: lease.run_id, active: isLive(lease), started: lease.started, heartbeat: lease.heartbeat, mode: lease.mode,
+    files: [...new Set(files)].slice(0, PAGE).map(shortName),
+  };
+}
+
+/** Ends a run: deletes what it no longer needs and marks its lease. The dispatches' stored inputs
+ *  (parties, answered facts) and a bridged run's page images are not needed once the run has ended
+ *  (S-m15). A folder any delete error leaves stays, and the run still ends: the next end or the sweep
+ *  deletes it (N-12, m-5). */
+function finishRun(dir: string, lease: Lease, runId: string, matterRoot: string, env: NodeJS.ProcessEnv) {
+  const imagesLeft = removeImages(dir, matterRoot);
+  const said = sayOnce(imagesLeft, IMAGES_LEFT);
+  const report = [...said.lines];
+  const keys = [...said.keys];
+  try {
+    removeOwn(pathWin32.join(dir, "dispatches"));
+  } catch {
+    const left = sayOnce([pathWin32.join(dir, "dispatches")], RECORDS_LEFT);
+    report.push(...left.lines);
+    keys.push(...left.keys);
+  }
+  writeLease(dir, { ...lease, ended: lease.heartbeat });
+  journal(dir, "end", runId, imagesLeft.length > 0 ? { images_left: true } : {});
+  // Privileged wording staged for a question still open is not needed once the run has ended, so it
+  // never waits out the 7-day window (G4, round 5, 7). Nor is an exhibit's reading, one the reply's cap
+  // held back with its privilege question included (round 6, N2); one this computer cannot delete now
+  // waits out that window.
+  const writes = readJournal(dir).filter((e) => e.event === "write");
+  const idsOf = (contract: string) => writes.filter((e) => e.contract === contract).flatMap((e) => (e.result_ids as string[] | undefined) ?? []);
+  const dropped = dropStagedResults(idsOf("privileged"), env);
+  if (dropped.deleted > 0) report.push(PRIVILEGED_DROPPED);
+  if (dropped.left > 0) report.push(PRIVILEGED_LEFT);
+  dropStagedResults(idsOf("affidavit_exhibits"), env);
+  return { report, keys };
+}
+
+/** Run folders of this matter whose journal a crash cut short, said at the next begin or end. */
+const tornIn = (matterDir: string) => [...torn].filter((dir) => dir === matterDir || dir.startsWith(`${matterDir}\\`));
+
+/** A write the call could not start because another session is saving: it stays queued, and past
+ *  WAIT_REPORT_MS across calls the practitioner is told once (group locking spec section 10). A lone
+ *  result's reply is journaled here, so `next` lists the write again. */
+export async function noteWriteWait(matterRoot: string, runId: string, ref: string | undefined, resultIds: string[], env: NodeJS.ProcessEnv = process.env): Promise<string[]> {
+  return underLock(matterRoot, env, (matterDir) => {
+    const held = hold(matterDir, runId);
+    if ("refused" in held) return [];
+    if (ref !== undefined && resultIds.length === 1 && runEvents(held.dir).some((e) => e.event === "dispatch" && e.ref === ref)) {
+      journalAcks(held.dir, runId, [{ ref, result_id: resultIds[0] }]);
+    }
+    const events = runEvents(held.dir);
+    const waits = events.filter((e) => e.event === "write_wait" && e.ref === (ref ?? null));
+    if (waits.length === 0) {
+      journal(held.dir, "write_wait", runId, { ref: ref ?? null });
+      return [];
+    }
+    if (waits.some((e) => e.said === true) || Date.now() - Date.parse(waits[0].ts) < WAIT_REPORT_MS) return [];
+    journal(held.dir, "write_wait", runId, { ref: ref ?? null, said: true });
+    const route = ledger(events).routes.find((r) => r.ref === ref?.split(":")[0]);
+    return [SAVING(route ? shortName(route.file_path) : "This document")];
+  });
+}
+
 export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = process.env): Promise<unknown> {
   switch (args.action) {
     case "begin": {
       const mode = args.mode;
       if (mode !== "attended" && mode !== "unattended") throw new ValidationError("begin needs mode attended or unattended");
       // What the sweep left (page images in use, a run folder it could not read) is said once (N-5, M-1, n-4).
-      const swept = await sweep(env, runDir(args.matter_root, env));
-      const out = await underLock(args.matter_root, env, (dir) => {
+      const swept = await sweep(env, matterDirOf(args.matter_root, env));
+      const out = await underLock(args.matter_root, env, (matterDir) => {
         const report = [...swept.lines];
+        const keys = [...swept.keys];
         // Every answer, a refusal included, carries the report lines, a cut-short journal's among them (round 5, 1, nit 9).
-        const reply = <T extends object>(body: T) => ({ ...body, ...reportLines([...report, ...(torn.has(dir) ? [STEP_LOST] : [])]) });
-        let current: Lease | null;
-        try {
-          current = readLease(dir);
-        } catch (err) {
-          // A lease.json that cannot be read is taken for an expired run with no work: this begin
-          // takes over and says so (round 5, 1).
-          if (!(err instanceof SyntaxError)) throw err;
-          current = null;
-          report.push(RUN_UNREADABLE);
-        }
+        const reply = <T extends object>(body: T) => ({ ...body, ...reportLines([...report, ...(tornIn(matterDir).length > 0 ? [STEP_LOST] : [])]) });
+        // A lease.json that cannot be read holds no claim and cannot be resumed: said once (round 5, 1).
+        const unreadable = sayOnce(runFolders(matterDir).filter((dir) => existsSync(leasePath(dir)) && leaseOrNull(dir) === null), RUN_UNREADABLE);
+        report.push(...unreadable.lines);
+        keys.push(...unreadable.keys);
         const now = new Date().toISOString();
         const runId = randomUUID();
         if (args.resume !== undefined) {
           // A run left unended by plugin_changed (R7) is resumed here; one that ended is not.
-          if (current === null || current.ended !== null || current.run_id !== args.resume) return reply(refusal("unknown_run"));
+          const dir = findRun(matterDir, args.resume);
+          const current = dir === null ? null : leaseOrNull(dir);
+          if (dir === null || current === null || current.ended !== null) return { keys, reply: reply(refusal("unknown_run")) };
           // A new id for the resuming session, so the displaced one is refused at its next call. The
-          // orchestrator resuming a single-document or unattended run makes it its own (n-2).
-          writeLease(dir, { ...current, run_id: runId, heartbeat: now, build_stamp: BUILD_STAMP, mode, ...(args.orchestrator === true ? { orchestrator: true } : {}) });
+          // orchestrator resuming a single-document or unattended run makes it its own (n-2). The run's
+          // claims move with it, except any another run took while it was stale (group locking spec 5.5).
+          writeLease(dir, { ...current, run_id: runId, heartbeat: now, build_stamp: BUILD_STAMP, mode, matter_root: args.matter_root, ...(args.orchestrator === true ? { orchestrator: true } : {}) });
           journal(dir, "takeover", runId, { displaced: current.run_id });
-          const p = plan(runEvents(dir), env);
-          return reply({ ok: true, run_id: runId, resumed: true, next: [...p.write, ...p.close], ...(p.asked.length ? { asked: p.asked } : {}), ...pathBLines(p.pathB) });
+          const events = runEvents(dir);
+          const taken = takenHashes(events);
+          for (const route of ledger(events).routes) if (taken.has(route.file_hash)) report.push(TAKEN(shortName(route.file_path)));
+          const p = plan(events, env);
+          return { keys, reply: reply({ ok: true, run_id: runId, resumed: true, next: [...p.write, ...p.close], ...(p.asked.length ? { asked: p.asked } : {}), ...pathBLines(p.pathB) }) };
         }
-        if (current !== null && isLive(current)) return reply({ ...refusal("run_active"), run_id: current.run_id });
-        let displaced: string | null = null;
-        if (current !== null && current.ended === null) {
-          // A run left unended with results still to record is never dropped silently (m-6): the
-          // orchestrator is refused, naming it to resume; any other caller goes on and is told.
+        if (exclusiveHeld(args.matter_root, env)) return { keys, reply: reply(refusal("matter_busy")) };
+        // A stale run with results still to record is never dropped silently (m-6): the orchestrator is
+        // refused, naming it to resume; any other caller goes on and is told once. A fresh run is left alone.
+        for (const dir of runFolders(matterDir)) {
+          const lease = leaseOrNull(dir);
+          if (lease === null || lease.ended !== null || isLive(lease)) continue;
           const p = plan(runEvents(dir), env);
-          if (p.write.length + p.asked.length + p.pathB.length > 0) {
-            if (args.orchestrator === true) return reply({ ...refusal("run_unfinished"), run_id: current.run_id });
-            report.push(DISPLACED);
-          }
-          displaced = current.run_id;
+          if (p.write.length + p.asked.length + p.pathB.length === 0) continue;
+          if (args.orchestrator === true) return { keys, reply: reply({ ...refusal("run_unfinished"), run_id: lease.run_id, files: runLine(dir, lease).files }) };
+          const said = sayOnce([`${dir}#displaced`], DISPLACED);
+          report.push(...said.lines);
+          keys.push(...said.keys);
         }
+        const dir = pathWin32.join(matterDir, runId);
         // The lease first: a lease that cannot be written leaves the journal as it was (round 5, 2).
         writeLease(dir, {
           run_id: runId, started: now, heartbeat: now, build_stamp: BUILD_STAMP, mode, ended: null,
           orchestrator: args.orchestrator === true, matter_root: args.matter_root,
         });
-        if (displaced !== null) journal(dir, "takeover", runId, { displaced });
         journal(dir, "begin", runId, { mode });
-        return reply({ ok: true, run_id: runId, resumed: false, next: [] });
+        return { keys, reply: reply({ ok: true, run_id: runId, resumed: false, next: [] }) };
       });
-      swept.keys.forEach((key) => reported.add(key));
-      torn.delete(runDir(args.matter_root, env));
-      return out;
+      out.keys.forEach((key) => reported.add(key));
+      tornIn(matterDirOf(args.matter_root, env)).forEach((dir) => torn.delete(dir));
+      return out.reply;
     }
     case "status":
-      return underLock(args.matter_root, env, (dir) => {
-        if (args.run_id !== undefined) {
-          const held = hold(dir, args.run_id);
-          if ("refused" in held) return held;
+      return underLock(args.matter_root, env, (matterDir) => {
+        const revision = matterRevision(args.matter_root, env);
+        if (args.run_id === undefined) {
+          const runs = runFolders(matterDir).flatMap((dir) => {
+            const lease = leaseOrNull(dir);
+            return lease === null || lease.ended !== null ? [] : [runLine(dir, lease)];
+          });
+          return { ok: true, active: runs.some((r) => r.active), revision, runs };
         }
-        if (args.ack !== undefined) return recordAck(dir, requireRunId(args), args.ack);
-        const lease = readLease(dir);
-        const p = isLive(lease) ? plan(runEvents(dir), env) : { write: [], close: [], asked: [], pathB: [] };
+        const held = hold(matterDir, args.run_id);
+        if ("refused" in held) return held;
+        if (args.ack !== undefined) return recordAck(held.dir, args.run_id, args.ack);
+        const p = plan(runEvents(held.dir), env);
         return {
           ok: true,
-          active: isLive(lease),
-          run_id: lease?.run_id ?? null,
-          started: lease?.started ?? null,
-          heartbeat: lease?.heartbeat ?? null,
-          mode: lease?.mode ?? null,
-          ended: lease?.ended ?? null,
+          active: true,
+          revision,
+          run_id: held.run_id,
+          started: held.started,
+          heartbeat: held.heartbeat,
+          mode: held.mode,
+          ended: held.ended,
           next: [...p.write, ...p.close],
           ...(p.asked.length ? { asked: p.asked } : {}),
           ...pathBLines(p.pathB),
@@ -1144,11 +1521,32 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
       });
     case "next":
       return next(args, env);
+    case "claim": {
+      const runId = requireRunId(args);
+      const files = (args.files ?? []).map((file, i) => {
+        if (!/^[0-9a-f]{64}$/.test(file.file_hash ?? "") || file.attachment_hashes?.some((hash) => !/^[0-9a-f]{64}$/.test(hash))) {
+          throw new ValidationError(`files[${i}] must carry the file's SHA-256, and its attachments' if any`);
+        }
+        return { ...file, file_path: storedForm(String(file.file_path ?? ""), args.matter_root) };
+      });
+      return underLock(args.matter_root, env, (matterDir) => {
+        const held = hold(matterDir, runId);
+        if ("refused" in held) return held;
+        if (exclusiveHeld(args.matter_root, env)) return refusal("matter_busy");
+        const claims = takeClaims(matterDir, held.dir, held.started, files, env);
+        const claimed = files.filter((file) => claims.granted.has(file.file_hash));
+        for (const file of claimed) {
+          for (const hash of [file.file_hash, ...(file.attachment_hashes ?? [])]) journal(held.dir, "claim", runId, { file_hash: hash, file_path: file.file_path });
+        }
+        return { ok: true, claimed: claimed.map((file) => file.file_path), ...(claims.leftOut.length ? { left_out: claims.leftOut } : {}), ...reportLines(claims.report) };
+      });
+    }
     case "staged": {
       const runId = requireRunId(args);
-      return underLock(args.matter_root, env, (dir) => {
-        const held = hold(dir, runId);
+      return underLock(args.matter_root, env, (matterDir) => {
+        const held = hold(matterDir, runId);
         if ("refused" in held) return held;
+        const dir = held.dir;
         if (args.dispatch_id === undefined) return { ok: true, items: [] };
         if (!UUID.test(args.dispatch_id)) throw new ValidationError("dispatch_id must be the id from the dispatch line");
         const path = dispatchPath(dir, args.dispatch_id);
@@ -1164,44 +1562,42 @@ export async function ingestRun(args: IngestRunArgs, env: NodeJS.ProcessEnv = pr
     }
     case "end": {
       const runId = requireRunId(args);
-      const out = await underLock(args.matter_root, env, (dir) => {
-        const lease = renew(dir, runId);
-        if (lease === null) return { keys: [], reply: refusal("lease_lost") };
-        // The dispatches' stored inputs (parties, answered facts) and a bridged run's page images,
-        // a displaced earlier run's included (N13), are not needed once the run has ended (S-m15).
-        // A folder any delete error leaves stays, and the run still ends: the next end or the sweep
-        // deletes it (N-12, m-5).
-        const imagesLeft = removeImages(dir, args.matter_root);
-        const said = sayOnce(imagesLeft, IMAGES_LEFT);
-        const report = [...said.lines];
-        const keys = [...said.keys];
-        try {
-          removeOwn(pathWin32.join(dir, "dispatches"));
-        } catch {
-          const left = sayOnce([pathWin32.join(dir, "dispatches")], RECORDS_LEFT);
-          report.push(...left.lines);
-          keys.push(...left.keys);
+      const out = await underLock(args.matter_root, env, (matterDir) => {
+        const dir = findRun(matterDir, runId);
+        const lease = dir === null ? null : renew(dir, runId);
+        if (dir === null || lease === null) return { keys: [], reply: refusal("lease_lost") };
+        const { report, keys } = finishRun(dir, lease, runId, args.matter_root, env);
+        // A stale run with nothing left open will never be resumed to any purpose: it ends here, so its
+        // page images do not wait out the 30 days (N13).
+        for (const other of runFolders(matterDir)) {
+          const stale = other === dir ? null : leaseOrNull(other);
+          if (stale === null) continue;
+          // A run that ended with page images or records still in use: tried again at each end (N-12, m-5).
+          if (stale.ended !== null) {
+            const ends = readJournal(other).filter((e) => e.event === "end");
+            if (ends[ends.length - 1]?.images_left !== true) continue;
+            if (removeImages(other, args.matter_root).length > 0) continue;
+            try {
+              removeOwn(pathWin32.join(other, "dispatches"));
+            } catch {
+              // Left for the sweep, with its folder.
+            }
+            journal(other, "end", stale.run_id);
+            continue;
+          }
+          if (isLive(stale) || heldBy(runEvents(other), env).size > 0) continue;
+          const done = finishRun(other, stale, stale.run_id, args.matter_root, env);
+          report.push(...done.report);
+          keys.push(...done.keys);
         }
-        writeLease(dir, { ...lease, ended: lease.heartbeat });
-        journal(dir, "end", runId, imagesLeft.length > 0 ? { images_left: true } : {});
-        // Privileged wording staged for a question still open, by any run this folder's journal
-        // records, is not needed once the run has ended, so it never waits out the 7-day window (G4,
-        // round 5, 7). Nor is an exhibit's reading, one the reply's cap held back with its privilege
-        // question included (round 6, N2); one this computer cannot delete now waits out that window.
-        const writes = readJournal(dir).filter((e) => e.event === "write");
-        const idsOf = (contract: string) => writes.filter((e) => e.contract === contract).flatMap((e) => (e.result_ids as string[] | undefined) ?? []);
-        const dropped = dropStagedResults(idsOf("privileged"), env);
-        if (dropped.deleted > 0) report.push(PRIVILEGED_DROPPED);
-        if (dropped.left > 0) report.push(PRIVILEGED_LEFT);
-        dropStagedResults(idsOf("affidavit_exhibits"), env);
-        if (torn.has(dir)) report.push(STEP_LOST);
+        if (tornIn(matterDir).length > 0) report.push(STEP_LOST);
         return { keys, reply: { ok: true, run_id: runId, ...reportLines(report) } };
       });
       out.keys.forEach((key) => reported.add(key));
-      if (out.reply.ok) torn.delete(runDir(args.matter_root, env));
+      if (out.reply.ok) tornIn(matterDirOf(args.matter_root, env)).forEach((dir) => torn.delete(dir));
       return out.reply;
     }
     default:
-      throw new ValidationError(`unknown action ${JSON.stringify(args.action)}; expected begin, next, staged, status or end`);
+      throw new ValidationError(`unknown action ${JSON.stringify(args.action)}; expected begin, next, claim, staged, status or end`);
   }
 }

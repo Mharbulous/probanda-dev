@@ -12,6 +12,7 @@
 // same work, and the plan upgrade, each written through rewrite_job before take_job runs again.
 
 import { ValidationError } from "../../errors.js";
+import { acquireCaseLock } from "../../case/case-lock.js";
 import { proceduralHistoryAppend } from "../../case/procedural-history.js";
 import { validateMatterRoot } from "../../files/matter-root.js";
 import { DATES_NOT_READ } from "../matter-board-section.js";
@@ -202,7 +203,13 @@ export async function submissionDataTakeJob(args: TakeJobArgs, env: NodeJS.Proce
   const line = `Started Job ${id}: ${job.title}${/[.!?]$/.test(job.title) ? "" : "."}`;
   let history: TakeJobResult["history"];
   try {
-    history = { added: proceduralHistoryAppend({ matter_root: matterRoot, date: today(), line }).added };
+    // The file is read, edited and renamed, so two sessions must take turns (group locking spec 7.2).
+    const lock = await acquireCaseLock(matterRoot, env);
+    try {
+      history = { added: proceduralHistoryAppend({ matter_root: matterRoot, date: today(), line }).added };
+    } finally {
+      lock.release();
+    }
   } catch (err) {
     const code = (err as { code?: string }).code;
     history = { added: null, note: code === "duplicate_entry" ? "Today's heading already holds this job's started entry." : `Not written: ${(err as Error).message}` };

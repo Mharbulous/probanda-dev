@@ -339,10 +339,11 @@ replicates with sync latency — neither a reliable mutex nor promptly released 
 as a mystery file in a client document library. Cross-machine concurrency on synced storage is not
 solvable by any lockfile; migrate catches it instead via the plan-token freshness check.
 
-**Stale-break is 15 minutes, set by the longest legitimate holder.** A migration on a large matter
-runs for minutes; breaking a live holder's lock mid-chain is far worse than waiting. An execute
-finishes in seconds and shares the threshold, so a stale lock on the execute path almost certainly
-means a crashed migrate — both writers say so in a warning rather than proceeding quietly.
+**Stale-break is 5 minutes, set by the longest legitimate holder** (2 minutes, `WRITE_TIMEOUT_MS`), and
+a lock whose recorded process has died is free at once. Breaking a live holder's lock mid-chain is far
+worse than waiting. Both writers say so in a warning rather than proceeding quietly. Changed from 15
+minutes by ingest group locking (`docs/Specs/2026-11-02_ingest-group-locking-spec.md`), because several
+runs now take turns on this lock.
 
 ## 29. A schema bump touches a dozen files across two languages — work the checklist
 

@@ -140,7 +140,7 @@ class IngestHashDedupeTests(unittest.TestCase):
         self.assertIn("more than one top-level", gate)
         self.assertIn("duplicate top-level source file_hash", extract)
         self.assertIn("re-run the Step 3 hash lookup", extract)
-        self.assertIn("Do not intentionally run ingestions into the same matter in parallel", router)
+        self.assertIn("Ingest a matter from one computer at a time", router)
 
         recovery = self.line_starting(extract, "- **Recover from a same-hash insert race")
         self.assertIn("Step 4", recovery)

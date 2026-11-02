@@ -35,7 +35,7 @@ import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { EXECUTE_TIMEOUT_MS, pythonTimeoutMs, READ_TIMEOUT_MS } from "../python-timeout.js";
 import { resolveShippedRoot } from "../repo-root.js";
-import { acquireCaseLock } from "./case-lock.js";
+import { acquireCaseLock, advanceRevision, type CaseLock } from "./case-lock.js";
 import CASE_DATA_RESOLVER from "./case-data-resolver.py.js";
 
 /** The prefix of the sidecar folder execute commits through; one left behind is a half-commit (#612). */
@@ -615,9 +615,10 @@ export async function caseDataExecute(
   matterRoot: string,
   sqlScript: string,
   env: NodeJS.ProcessEnv = process.env,
-  precheck?: () => Promise<void>
+  precheck?: () => Promise<void>,
+  held?: CaseLock
 ): Promise<{ ok: true; evidence_sql: string; warning?: string | null }> {
-  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env, precheck) as { ok: true; evidence_sql: string; warning?: string | null };
+  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env, precheck, held) as { ok: true; evidence_sql: string; warning?: string | null };
 }
 
 /**
@@ -630,23 +631,27 @@ export async function caseDataExecuteStatements(
   statements: Array<CaseStatement | CaseStatementGroup>,
   params: Record<string, unknown>,
   env: NodeJS.ProcessEnv = process.env,
-  precheck?: () => Promise<void>
+  precheck?: () => Promise<void>,
+  held?: CaseLock
 ): Promise<CaseStatementsResult> {
-  return await executeUnderLock(matterRoot, { statements, params }, env, precheck) as CaseStatementsResult;
+  return await executeUnderLock(matterRoot, { statements, params }, env, precheck, held) as CaseStatementsResult;
 }
 
+/** `held`: the caller already holds the lock, and keeps it after this write. */
 async function executeUnderLock(
   matterRoot: string,
   work: CaseExecuteWork,
   env: NodeJS.ProcessEnv,
-  precheck?: () => Promise<void>
+  precheck?: () => Promise<void>,
+  held?: CaseLock
 ): Promise<{ warning?: string | null }> {
   const triggersSql = caseDataTriggersSql(env);
-  const lock = await acquireCaseLock(matterRoot, env);
+  const lock = held ?? await acquireCaseLock(matterRoot, env);
   try {
     // A caller's last check, made once the lock is held, so nothing can change it before the write
     // (ingest_result's lease, ingest orchestrator spec R8). It throws to write nothing.
     await precheck?.();
+    advanceRevision(matterRoot, env);
     const result = runHelper({
       op: "execute",
       matter_root: matterRoot,
@@ -654,17 +659,16 @@ async function executeUnderLock(
       ...work,
     }, env) as { warning?: string | null };
     if (lock.brokeStale) {
-      // An execute never legitimately holds the lock for 15 minutes, so a stale
-      // one almost certainly means a crashed migrate -- say so rather than
-      // writing over whatever it left behind in silence.
+      // No holder legitimately keeps the lock for 5 minutes, so a stale one means a
+      // crashed writer -- say so rather than writing over whatever it left behind in silence.
       result.warning = [
-        "broke a stale matter-data write lock (>15 min old) before writing; if another " +
+        "broke a stale matter-data write lock (its holder died, or it was >5 min old) before writing; if another " +
           "session is still writing to or migrating this matter, stop and reconcile",
         result.warning,
       ].filter(Boolean).join(" -- ");
     }
     return result;
   } finally {
-    lock.release();
+    if (held === undefined) lock.release();
   }
 }

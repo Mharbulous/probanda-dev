@@ -16,7 +16,7 @@ import { pythonTimeoutMs, WRITE_TIMEOUT_MS } from "../python-timeout.js";
 import { caseDataMigrateScriptsDir } from "../repo-root.js";
 import { acquireDataLock } from "../submission/lock.js";
 import { caseDataFolder } from "./backend.js";
-import { acquireCaseLock } from "./case-lock.js";
+import { acquireCaseLock, withExclusive, type CaseLock } from "./case-lock.js";
 
 const RELOCATE_DRIVER = String.raw`
 import json, sys
@@ -57,14 +57,13 @@ export async function caseDataRelocate(
   mode: RelocateMode,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<Record<string, unknown>> {
-  const caseLock = await acquireCaseLock(matterRoot, env);
-  try {
+  const work = async (caseLock: CaseLock) => {
     const dataLock = await acquireDataLock(join(caseDataFolder(matterRoot, env), "submission.sqlite"), env);
     try {
       const result = runDriver(matterRoot, mode, env);
       if (caseLock.brokeStale || dataLock.brokeStale) {
         result.warnings = [
-          "broke a stale write lock (>15 min old) before running; if another session is still " +
+          "broke a stale write lock before running; if another session is still " +
             "writing to this matter, stop and reconcile before continuing",
         ];
       }
@@ -72,6 +71,11 @@ export async function caseDataRelocate(
     } finally {
       dataLock.release();
     }
+  };
+  if (mode === "apply") return withExclusive(matterRoot, env, work);
+  const caseLock = await acquireCaseLock(matterRoot, env);
+  try {
+    return await work(caseLock);
   } finally {
     caseLock.release();
   }

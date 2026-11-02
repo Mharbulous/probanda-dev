@@ -17,6 +17,7 @@ import type { PracticeStore } from "./practice/store.js";
 import { callPracticeTool } from "./tools/practice/index.js";
 import { matter_lookup } from "./tools/practice/reads.js";
 import { caseDataQuery, caseDataExecute } from "./case/backend.js";
+import { acquireCaseLock, matterRevision } from "./case/case-lock.js";
 import { caseDataMigrate, type MigrateMode } from "./case/migrate.js";
 import { caseDataRelocate, type RelocateMode } from "./case/relocate.js";
 import { resolveParticipant } from "./case/resolve-participant.js";
@@ -148,7 +149,7 @@ const INLINE_SQL_CAP = 8 * 1024;
 export const dataTools: Tool<DispatchContext>[] = [
   defineTool("matter_data__query", (args: MatterArgs & { sql: string; params?: unknown[] }) =>
     caseDataQuery(args.matter_root, args.sql, args.params)),
-  defineTool("matter_data__execute", async (args: MatterArgs & { sql_script?: string; generator?: Generator; run_id?: string }) => {
+  defineTool("matter_data__execute", async (args: MatterArgs & { sql_script?: string; generator?: Generator; run_id?: string; expected_revision?: number }) => {
     if ((args.sql_script === undefined) === (args.generator === undefined)) {
       throw new ValidationError("matter_data__execute takes sql_script or generator, not both and not neither");
     }
@@ -157,7 +158,12 @@ export const dataTools: Tool<DispatchContext>[] = [
     // The lease is checked inside the case lock, so a takeover cannot come between check and write
     // (N6). Spec §2.5: the inline cap binds only a run the orchestrator began, so D1's ingest paths
     // and large callers outside a run are unaffected (N3).
-    const precheck = runId === undefined ? undefined : async () => {
+    const precheck = async () => {
+      // Checked inside the case lock: the write lands against the state its caller showed the practitioner.
+      if (args.expected_revision !== undefined && matterRevision(args.matter_root) !== args.expected_revision) {
+        throw new DataServerError("This matter has changed since these changes were worked out, so they were not applied. Nothing was written.", "stale_revision");
+      }
+      if (runId === undefined) return;
       const run = await assertLiveRun(args.matter_root, runId);
       if (run.orchestrator && args.sql_script !== undefined && Buffer.byteLength(args.sql_script, "utf-8") > INLINE_SQL_CAP) {
         throw new ValidationError("too long to send inline: use a generator or ingest_result", "too_long");
@@ -173,7 +179,15 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("matter_data__ingest_authority", (args: AuthorityIngestRequest) => ingestAuthority(args)),
   defineTool("matter_data__relocate_source", (args: RelocateSourceRequest) => relocateSource(args)),
   defineTool("matter_data__housekeeping_log", (args: HousekeepingLogRequest) => housekeepingLog(args)),
-  defineTool("matter_data__procedural_history_append", (args: ProceduralHistoryAppendArgs) => proceduralHistoryAppend(args)),
+  defineTool("matter_data__procedural_history_append", async (args: ProceduralHistoryAppendArgs) => {
+    // The file is read, edited and renamed, so two sessions must take turns (group locking spec 7.2).
+    const lock = await acquireCaseLock(args.matter_root);
+    try {
+      return proceduralHistoryAppend(args);
+    } finally {
+      lock.release();
+    }
+  }),
   defineTool(
     "matter_data__migrate",
     (args: MatterArgs & { mode: string; plan_token?: string; user_confirmation?: string; backup_id?: string }) => {

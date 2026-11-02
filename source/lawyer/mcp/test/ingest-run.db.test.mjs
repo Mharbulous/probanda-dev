@@ -1,5 +1,5 @@
-// matter_data__ingest_run (ingest orchestrator spec §2.4, stage D1): one ingest per matter at a time.
-// A host-local lease and journal per matter; matter_data__execute checks an optional run_id against the
+// matter_data__ingest_run (ingest orchestrator spec §2.4, group locking spec): several runs may share a
+// matter. A host-local lease and journal per run; matter_data__execute checks an optional run_id against the
 // lease and behaves as before without one. Every name is invented.
 
 import assert from "node:assert/strict";
@@ -38,11 +38,21 @@ function matterFixture(t) {
 const run = (matterRoot, args) => callTool({}, TOOL, { matter_root: matterRoot, ...args });
 const begin = (matterRoot, extra = {}) => run(matterRoot, { action: "begin", mode: "attended", ...extra });
 
+/** The matter's newest run folder. */
 function runDir(runRoot) {
-  const dirs = readdirSync(runRoot, { withFileTypes: true }).filter((d) => d.isDirectory());
-  assert.equal(dirs.length, 1, "one run folder per matter");
-  assert.match(dirs[0].name, /^[0-9a-f]{16}$/);
-  return join(runRoot, dirs[0].name);
+  const keys = readdirSync(runRoot, { withFileTypes: true }).filter((d) => d.isDirectory());
+  assert.equal(keys.length, 1, "one folder per matter");
+  assert.match(keys[0].name, /^[0-9a-f]{16}$/);
+  const key = join(runRoot, keys[0].name);
+  const started = (name) => {
+    try {
+      return Date.parse(JSON.parse(readFileSync(join(key, name, "lease.json"), "utf-8")).started);
+    } catch {
+      return -1;
+    }
+  };
+  const runs = readdirSync(key, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+  return join(key, runs.sort((a, b) => started(b) - started(a))[0]);
 }
 
 const lease = (runRoot) => JSON.parse(readFileSync(join(runDir(runRoot), "lease.json"), "utf-8"));
@@ -69,20 +79,20 @@ function sourceTitles(caseDataDir) {
 const insert = (title) => `INSERT INTO sources (category, title) VALUES ('correspondence', '${title}');`;
 
 // Spec §9 G5: what the practitioner may see names no tool, field or internal word.
-const DENY = /matter_data|ingest_run|run_id|lease|journal|refused|run_active|lease_lost|unknown_run|\w+__\w+/i;
+const DENY = /matter_data|ingest_run|run_id|lease|journal|refused|matter_busy|lease_lost|unknown_run|\w+__\w+/i;
 
 test("the tool is defined with its actions, and execute takes an optional run_id", () => {
   const defs = buildToolDefinitions();
   const def = defs.find((d) => d.name === TOOL);
   assert.ok(def, `${TOOL} is defined`);
-  assert.deepEqual(def.inputSchema.properties.action.enum, ["begin", "next", "staged", "status", "end"]);
+  assert.deepEqual(def.inputSchema.properties.action.enum, ["begin", "next", "claim", "staged", "status", "end"]);
   assert.deepEqual(def.inputSchema.required, ["matter_root", "action"]);
   const execute = defs.find((d) => d.name === "matter_data__execute");
   assert.ok(execute.inputSchema.properties.run_id, "execute takes run_id");
   assert.deepEqual(execute.inputSchema.required, ["matter_root"], "sql_script or a generator (D3)");
 });
 
-test("a second begin is refused run_active, naming the live run; the first holds the lease", async (t) => {
+test("a second begin opens a second run beside the first, and status lists both", async (t) => {
   const { matterRoot, runRoot } = matterFixture(t);
   const first = await begin(matterRoot);
   assert.equal(first.ok, true);
@@ -90,16 +100,18 @@ test("a second begin is refused run_active, naming the live run; the first holds
   assert.deepEqual(first.next, []);
 
   const second = await begin(matterRoot);
-  assert.equal(second.ok, false);
-  assert.equal(second.refused, "run_active");
-  assert.equal(second.run_id, first.run_id);
-  assert.doesNotMatch(second.say, DENY);
+  assert.equal(second.ok, true);
+  assert.notEqual(second.run_id, first.run_id);
 
   const l = lease(runRoot);
-  assert.equal(l.run_id, first.run_id);
+  assert.equal(l.run_id, second.run_id);
   assert.equal(l.mode, "attended");
   assert.equal(l.ended, null);
   assert.ok("build_stamp" in l && "started" in l && "heartbeat" in l);
+
+  const status = await run(matterRoot, { action: "status" });
+  assert.deepEqual(status.runs.map((r) => r.run_id).sort(), [first.run_id, second.run_id].sort());
+  assert.equal((await run(matterRoot, { action: "status", run_id: first.run_id })).active, true, "the first keeps its lease");
 });
 
 test("begin with resume takes the lease over at once; the displaced holder is refused lease_lost", async (t) => {
@@ -123,27 +135,23 @@ test("begin with resume takes the lease over at once; the displaced holder is re
   assert.doesNotMatch(unknown.say, DENY);
 });
 
-test("after 60 minutes without a heartbeat a plain begin takes over, and the old holder gets lease_lost", async (t) => {
+test("a begin leaves a stale run with nothing to record able to resume; a resumed run's old holder gets lease_lost", async (t) => {
   const { matterRoot, runRoot } = matterFixture(t);
   const first = await begin(matterRoot);
-  ageHeartbeat(runRoot, 59);
-  assert.equal((await begin(matterRoot)).refused, "run_active", "59 minutes is still live");
-
   ageHeartbeat(runRoot, 61);
   const second = await begin(matterRoot, { mode: "unattended" });
   assert.equal(second.ok, true);
   assert.notEqual(second.run_id, first.run_id);
   assert.equal(lease(runRoot).mode, "unattended");
 
+  const resumed = await begin(matterRoot, { resume: first.run_id });
+  assert.equal(resumed.ok, true, JSON.stringify(resumed));
   for (const action of ["status", "next", "staged", "end"]) {
     const out = await run(matterRoot, { action, run_id: first.run_id });
     assert.equal(out.ok, false, action);
     assert.equal(out.refused, "lease_lost", action);
     assert.doesNotMatch(out.say, DENY);
   }
-  const takeover = journal(runRoot).find((e) => e.event === "takeover");
-  assert.equal(takeover.run_id, second.run_id);
-  assert.equal(takeover.displaced, first.run_id);
 });
 
 test("next and staged return empty lists, status reports the live run, end releases it", async (t) => {
@@ -154,14 +162,14 @@ test("next and staged return empty lists, status reports the live run, end relea
 
   const status = await run(matterRoot, { action: "status" });
   assert.equal(status.active, true);
-  assert.equal(status.run_id, run_id);
-  assert.deepEqual(status.next, []);
+  assert.equal(status.runs[0].run_id, run_id);
+  assert.deepEqual((await run(matterRoot, { action: "status", run_id })).next, []);
 
   assert.equal((await run(matterRoot, { action: "end", run_id })).ok, true);
   assert.notEqual(lease(runRoot).ended, null);
   assert.equal((await run(matterRoot, { action: "status" })).active, false);
+  assert.deepEqual(journal(runRoot).map((e) => e.event), ["begin", "end"]);
   assert.equal((await begin(matterRoot)).ok, true, "a finished run blocks nothing");
-  assert.deepEqual(journal(runRoot).map((e) => e.event), ["begin", "end", "begin"]);
   assert.ok(journal(runRoot).every((e) => typeof e.ts === "string" && typeof e.run_id === "string"));
 });
 
@@ -215,7 +223,7 @@ test("a run folder ended more than 30 days ago is deleted at the next begin", as
 const tearJournal = (runRoot) => appendFileSync(join(runDir(runRoot), "journal.jsonl"), '{"ts":"2026-10-29T00:00:00.000Z","event":"wri', "utf-8");
 
 for (const orchestrator of [false, true]) {
-  test(`a lease.json that cannot be read is taken over by ${orchestrator ? "an orchestrator" : "a single-document"} begin, which says so (round 5, 1)`, async (t) => {
+  test(`a lease.json that cannot be read is passed over by ${orchestrator ? "an orchestrator" : "a single-document"} begin, which says so (round 5, 1)`, async (t) => {
     const { matterRoot, runRoot } = matterFixture(t);
     await begin(matterRoot);
     writeFileSync(join(runDir(runRoot), "lease.json"), '{"run_id": "x", "sta');
@@ -229,15 +237,14 @@ for (const orchestrator of [false, true]) {
 
   test(`a journal whose last line a crash cut short is read without it by ${orchestrator ? "an orchestrator" : "a single-document"} begin, which says so (round 5, 1)`, async (t) => {
     const { matterRoot, runRoot } = matterFixture(t);
-    const first = await begin(matterRoot);
+    await begin(matterRoot);
     tearJournal(runRoot);
     ageHeartbeat(runRoot, 61);
     const out = await begin(matterRoot, { orchestrator });
     assert.equal(out.ok, true, JSON.stringify(out));
     assert.equal(out.report?.length, 1, JSON.stringify(out));
     assert.doesNotMatch(out.report[0], DENY);
-    assert.deepEqual(journal(runRoot).map((e) => [e.event, e.run_id]), [["begin", first.run_id], ["takeover", out.run_id], ["begin", out.run_id]],
-      "the cut-short line is gone and every later line is whole");
+    assert.equal((await begin(matterRoot, { orchestrator })).report, undefined, "said once");
   });
 }
 
@@ -288,7 +295,7 @@ test("a lease write another program holds up for a moment is tried again; one he
   assert.equal(lease(runRoot).ended !== null, true);
 });
 
-test("a plain begin that cannot write its lease journals no takeover (round 5, 2)", async (t) => {
+test("a plain begin that cannot write its lease journals nothing (round 5, 2)", async (t) => {
   const { matterRoot, runRoot } = matterFixture(t);
   await begin(matterRoot);
   ageHeartbeat(runRoot, 61);
@@ -324,10 +331,10 @@ test("a journal line that cannot be read is skipped, and the run's own end says 
   assert.equal(again.ok, true, JSON.stringify(again));
   assert.equal(again.report, undefined, "said once");
   assert.equal((await run(matterRoot, { action: "end", run_id: again.run_id })).report, undefined);
-  assert.deepEqual(events(runRoot), ["begin", "unreadable", "end", "begin", "end"]);
+  assert.deepEqual(events(runRoot), ["begin", "end"]);
 });
 
-test("a plain begin over an unfinished run whose journal holds a line that cannot be read takes over and says so (round 6, N4)", async (t) => {
+test("a plain begin beside an unfinished run whose journal holds a line that cannot be read says so (round 6, N4)", async (t) => {
   const { matterRoot, runRoot } = matterFixture(t);
   await begin(matterRoot);
   joinLine(runRoot);
@@ -335,7 +342,7 @@ test("a plain begin over an unfinished run whose journal holds a line that canno
   const out = await begin(matterRoot, { orchestrator: true });
   assert.equal(out.ok, true, JSON.stringify(out));
   assert.equal(out.report?.length, 1, JSON.stringify(out));
-  assert.deepEqual(events(runRoot), ["begin", "unreadable", "takeover", "begin"]);
+  assert.deepEqual(events(runRoot), ["begin"]);
 });
 
 /** appendFileSync onto journal.jsonl fails `code` for the first `times` calls. Returns the undo. */
@@ -366,7 +373,7 @@ test("a journal append another program holds up for a moment is tried again, so 
   }
   assert.equal(out.ok, true, JSON.stringify(out));
   assert.equal(lease(runRoot).run_id, out.run_id);
-  assert.deepEqual(journal(runRoot).map((e) => e.event), ["begin", "takeover", "begin"]);
+  assert.deepEqual(journal(runRoot).map((e) => e.event), ["begin"]);
 });
 
 test("a resume whose lease cannot be read says nothing was set aside (round 6, N7)", async (t) => {
@@ -377,4 +384,17 @@ test("a resume whose lease cannot be read says nothing was set aside (round 6, N
   assert.equal(out.refused, "unknown_run", JSON.stringify(out));
   assert.equal(out.report?.length, 1, JSON.stringify(out));
   assert.doesNotMatch(out.report[0], /set aside/);
+});
+
+test("a run an older build left in the matter's folder moves to a folder of its own and can be resumed (F9)", async (t) => {
+  const { matterRoot, runRoot } = matterFixture(t);
+  const first = await begin(matterRoot);
+  const dir = runDir(runRoot);
+  const key = join(dir, "..");
+  for (const name of ["lease.json", "journal.jsonl"]) fs.renameSync(join(dir, name), join(key, name));
+  rmSync(dir, { recursive: true });
+  const resumed = await begin(matterRoot, { resume: first.run_id });
+  assert.equal(resumed.ok, true, JSON.stringify(resumed));
+  assert.equal(fs.existsSync(join(key, "lease.json")), false);
+  assert.deepEqual(journal(runRoot).map((e) => e.event), ["begin", "takeover"]);
 });
