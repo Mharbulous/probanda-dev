@@ -383,27 +383,36 @@ class TestNeverExpunge(Base):
         a = make_message(mid="<a@x>")
         b1 = make_message(mid="<b@x>", body="x\n")
         b2 = make_message(mid="<b@x>", body="x\ny\n")
-        for caps in (("IMAP4REV1", "MOVE"), ("IMAP4REV1",)):
-            fake, mb = mailbox({"INBOX": {"messages": {1: a, 2: a, 3: b1, 4: b2}}}, capabilities=caps)
-            run(mb, ["INBOX", "--apply"], self.out_dir)
-            cmp_path = os.path.join(self.out_dir, "tier2-comparison.json")
-            with open(cmp_path, encoding="utf-8") as fh:
-                cmp = json.load(fh)
-            g = cmp["groups"][0]
-            moves = core.moves_from_verdicts(cmp, {"groups": [{"group_id": "g1", "decision": "remove",
-                                                               "remove": [{"folder": "INBOX", "uid": 3}]}]})
-            path = os.path.join(self.out_dir, "moves.json")
-            with open(path, "w", encoding="utf-8") as fh:
-                json.dump(moves, fh)
-            code, rep = run(core.ImapMailbox(fake), ["--move-uids", path], self.out_dir)
-            self.assertEqual(code, 0, rep)
-            self.assertFalse(rep["expunged"])
-            for cmd in fake.commands:
-                self.assertNotIn(cmd[0], ("EXPUNGE", "UID EXPUNGE", "CLOSE"))
-            self.assertFalse(hasattr(fake, "expunge"))
-            self.assertEqual(len(g["copies"]), 2)
-        # without MOVE the source is flagged \Deleted, never expunged: it is still there
-        self.assertIn("\\Deleted", fake.folders["INBOX"]["messages"][3]["flags"])
+        fake, mb = mailbox({"INBOX": {"messages": {1: a, 2: a, 3: b1, 4: b2}}})
+        run(mb, ["INBOX", "--apply"], self.out_dir)
+        with open(os.path.join(self.out_dir, "tier2-comparison.json"), encoding="utf-8") as fh:
+            cmp = json.load(fh)
+        moves = core.moves_from_verdicts(cmp, {"groups": [{"group_id": "g1", "decision": "remove",
+                                                           "remove": [{"folder": "INBOX", "uid": 3}]}]})
+        path = os.path.join(self.out_dir, "moves.json")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(moves, fh)
+        code, rep = run(core.ImapMailbox(fake), ["--move-uids", path], self.out_dir)
+        self.assertEqual(code, 0, rep)
+        self.assertFalse(rep["expunged"])
+        for cmd in fake.commands:
+            self.assertNotIn(cmd[0], ("EXPUNGE", "UID EXPUNGE", "CLOSE", "UID COPY", "UID STORE"))
+        self.assertFalse(hasattr(fake, "expunge"))
+        # every removed copy is in the trash folder, intact
+        trash = [m["raw"] for m in fake.folders["Deleted Messages"]["messages"].values()]
+        self.assertEqual(sorted(trash), sorted([a, b1]))
+
+    def test_server_without_move_moves_nothing(self):
+        a = make_message(mid="<a@x>")
+        fake, mb = mailbox({"INBOX": {"messages": {1: a, 2: a}}}, capabilities=("IMAP4REV1",))
+        code, rep = run(mb, ["INBOX", "--apply"], self.out_dir)
+        self.assertEqual(code, 2)
+        self.assertEqual(rep["moved"], [])
+        self.assertIn("MOVE", rep["errors"][0])
+        self.assertEqual(sorted(fake.folders["INBOX"]["messages"]), [1, 2])
+        self.assertEqual(fake.folders["INBOX"]["messages"][1]["flags"], [])
+        for cmd in fake.commands:
+            self.assertNotIn(cmd[0], ("UID COPY", "UID STORE", "EXPUNGE", "CLOSE"))
 
     def test_core_source_never_issues_expunge(self):
         with open(os.path.join(HERE, "dedupe_core.py"), encoding="utf-8") as fh:
@@ -492,6 +501,50 @@ class TestCredentials(Base):
         with mock.patch.dict(os.environ, env, clear=True), mock.patch.dict(sys.modules, {"keyring": None}):
             with self.assertRaises(core.DedupeError):
                 core.resolve_credentials("icloud-imap", "imap.mail.me.com")
+
+    def _probanda_store(self, stored):
+        root = os.path.join(self.out_dir, "localappdata")
+        os.makedirs(os.path.join(root, "Coclerk", "mail"))
+        with open(os.path.join(root, core.PROBANDA_MAIL_STORE), "wb") as fh:
+            fh.write(b"ENC" + json.dumps(stored).encode())
+        env = {k: v for k, v in os.environ.items()
+               if k not in ("MAIL_USER", "MAIL_PASSWORD", "MAIL_HOST", "MAIL_PORT")}
+        env["LOCALAPPDATA"] = root
+        return [mock.patch.dict(os.environ, env, clear=True),
+                mock.patch.object(core.os, "name", "nt"),
+                mock.patch.object(core, "_dpapi_unprotect", lambda b: b[3:]),
+                mock.patch.dict(sys.modules, {"keyring": None})]
+
+    def _with(self, patches, fn):
+        for p in patches:
+            p.start()
+        try:
+            return fn()
+        finally:
+            for p in reversed(patches):
+                p.stop()
+
+    def test_uses_probanda_stored_mail_sign_in(self):
+        stored = {"host": "imap.mail.me.com", "port": 993, "secure": True,
+                  "username": "someone@icloud.com", "password": "stored-app-pw"}
+        got = self._with(self._probanda_store(stored),
+                         lambda: core.resolve_credentials("icloud-imap", "imap.mail.me.com"))
+        self.assertEqual(got, ("imap.mail.me.com", 993, "someone@icloud.com", "stored-app-pw"))
+
+    def test_ignores_probanda_sign_in_for_another_server(self):
+        stored = {"host": "outlook.office365.com", "port": 993, "username": "x", "password": "y"}
+        with self.assertRaises(core.DedupeError):
+            self._with(self._probanda_store(stored),
+                       lambda: core.resolve_credentials("icloud-imap", "imap.mail.me.com"))
+
+    def test_environment_wins_over_probanda_store(self):
+        stored = {"host": "imap.mail.me.com", "port": 993, "username": "stored", "password": "stored"}
+        patches = self._probanda_store(stored)
+
+        def go():
+            os.environ["MAIL_USER"], os.environ["MAIL_PASSWORD"] = "env-user", "env-pw"
+            return core.resolve_credentials("icloud-imap", "imap.mail.me.com")
+        self.assertEqual(self._with(patches, go)[2:], ("env-user", "env-pw"))
 
     def test_icloud_signs_in_with_apple_id_on_993(self):
         mod = load_icloud()

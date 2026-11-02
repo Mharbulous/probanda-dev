@@ -32,6 +32,8 @@ None found: dispatch the `file-manager:mail-script-writer` agent (see SKILL.md s
 
 ## 3. Credentials
 
+**Already stored.** On a Windows computer where Probanda's mail tools are signed in to the same server, the script uses that sign-in and nothing more is needed. Otherwise:
+
 The user stores them once, on their own computer, in their own terminal: never in chat, never on a command line that history keeps.
 
 With `keyring` installed (`python -m pip install --user keyring`):

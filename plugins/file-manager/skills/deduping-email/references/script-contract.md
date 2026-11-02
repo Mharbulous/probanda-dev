@@ -46,7 +46,7 @@ Send every folder name as one IMAP quoted string (`dedupe_core.quote_mailbox`): 
 
 - **Tier 1, identical.** SHA-256 of the full raw message equal. Keep the highest UID in the folder (with `--across-folders`, the highest UID in the first listed folder holding a copy). The others are removed.
 - **Tier 2, duplicative.** Same Message-ID among the tier 1 survivors, different bytes. The script never moves these on its own. Each group goes to the comparison file. Messages with no Message-ID are counted and left alone.
-- **Delete** means a move to the trash folder. Never EXPUNGE, never CLOSE a read-write folder, never delete permanently, never empty the trash. Without IMAP MOVE, copy to the trash and flag the source `\Deleted` with no expunge.
+- **Delete** means a move to the trash folder (IMAP MOVE, or the provider's own move). Never EXPUNGE, never CLOSE a read-write folder, never flag a message `\Deleted`, never delete permanently, never empty the trash. A server without MOVE fails the run with nothing moved.
 
 ## Comparison file (`tier2-comparison.json`)
 
@@ -77,7 +77,7 @@ Built only by `python dedupe_core.py moves-from-verdicts --comparison C --verdic
 
 ## Credentials
 
-Only from `MAIL_USER`, `MAIL_PASSWORD`, `MAIL_HOST` (and `MAIL_PORT`), or the OS keyring through `keyring` when installed: service `deduping-email/<setup-id>`, the user name under the key `MAIL_USER`, the password under the user name. Never written to a file, never printed (the report redacts the password from every error), never passed through chat or on the command line.
+Only from, first found: `MAIL_USER`, `MAIL_PASSWORD`, `MAIL_HOST` (and `MAIL_PORT`); the mail sign-in Probanda's mail tools already store on a Windows computer (`dedupe_core.probanda_mail_credential`, used only when it is for the same server); or the OS keyring through `keyring` when installed: service `deduping-email/<setup-id>`, the user name under the key `MAIL_USER`, the password under the user name. Never written to a file, never printed (the report redacts the password from every error), never passed through chat or on the command line.
 
 ## Folder access
 

@@ -19,8 +19,9 @@ Helper (no network):
       prints the --move-uids file for the approved groups, taking each UID's
       UIDVALIDITY and SHA-256 from the comparison file, never from the verdicts.
 
-Nothing here ever issues EXPUNGE or CLOSE, or empties the trash. A "delete" is a
-move to the folder the server flags \\Trash.
+Nothing here ever issues EXPUNGE or CLOSE, or empties the trash. A "delete" is an
+IMAP MOVE to the folder the server flags \\Trash, and nothing else: a server without
+MOVE fails the run before anything is touched.
 """
 import argparse
 import base64
@@ -518,14 +519,12 @@ class ImapMailbox:
             raise DedupeError(f"{folder}: UIDVALIDITY changed ({expected_uidvalidity} -> {uv}); rescan")
         caps = {c.upper() if isinstance(c, str) else c.decode().upper()
                 for c in getattr(self.conn, "capabilities", ())}
-        if "MOVE" in caps:
-            self._ok(self.conn.uid("MOVE", str(uid), quote_mailbox(trash)), f"MOVE {folder} UID {uid}")
-            return "move"
-        # RFC 6851 MOVE missing: copy, then flag the source \Deleted. No EXPUNGE: the
-        # flagged source stays until the user's own mail program removes it.
-        self._ok(self.conn.uid("COPY", str(uid), quote_mailbox(trash)), f"COPY {folder} UID {uid}")
-        self._ok(self.conn.uid("STORE", str(uid), "+FLAGS.SILENT", "(\\Deleted)"), f"STORE {folder} UID {uid}")
-        return "copy+flag"
+        if "MOVE" not in caps:
+            # Without RFC 6851 MOVE the only way out of a folder is COPY plus a \Deleted flag,
+            # which a mail program may later expunge. Refuse: a delete here is a move only.
+            raise DedupeError("the server does not offer IMAP MOVE; nothing can be moved safely")
+        self._ok(self.conn.uid("MOVE", str(uid), quote_mailbox(trash)), f"MOVE {folder} UID {uid}")
+        return "move"
 
     def logout(self):
         try:
@@ -536,28 +535,77 @@ class ImapMailbox:
 
 # --- credentials ----------------------------------------------------------------------------
 
+PROBANDA_MAIL_STORE = os.path.join("Coclerk", "mail", "mail.json.dpapi")
+
+
+def _dpapi_unprotect(data):
+    """Windows DPAPI (current user) decryption through crypt32, standard library only."""
+    import ctypes
+    from ctypes import wintypes
+
+    class Blob(ctypes.Structure):
+        _fields_ = [("cbData", wintypes.DWORD), ("pbData", ctypes.POINTER(ctypes.c_char))]
+
+    buf = ctypes.create_string_buffer(data, len(data))
+    blob_in = Blob(len(data), ctypes.cast(buf, ctypes.POINTER(ctypes.c_char)))
+    blob_out = Blob()
+    if not ctypes.windll.crypt32.CryptUnprotectData(ctypes.byref(blob_in), None, None, None, None, 0,
+                                                    ctypes.byref(blob_out)):
+        raise DedupeError("the stored Probanda mail sign-in could not be unlocked for this Windows user")
+    try:
+        return ctypes.string_at(blob_out.pbData, blob_out.cbData)
+    finally:
+        ctypes.windll.kernel32.LocalFree(blob_out.pbData)
+
+
+def probanda_mail_credential(expected_host):
+    """(host, port, user, password) from the mail sign-in Probanda's own mail tools saved on this
+    Windows computer, or None when there is none or it is for another server. Read only."""
+    if os.name != "nt":
+        return None
+    root = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+    if not root:
+        return None
+    path = os.path.join(root, PROBANDA_MAIL_STORE)
+    if not os.path.isfile(path):
+        return None
+    with open(path, "rb") as fh:
+        stored = json.loads(_dpapi_unprotect(fh.read()).decode("utf-8"))
+    if str(stored.get("host", "")).lower() != expected_host.lower():
+        return None
+    if not (stored.get("username") and stored.get("password")):
+        return None
+    return stored["host"], int(stored.get("port") or 993), stored["username"], stored["password"]
+
+
 def resolve_credentials(setup_id, default_host, default_port=993):
-    """(host, port, user, password) from MAIL_HOST/MAIL_PORT/MAIL_USER/MAIL_PASSWORD, falling back
-    to the OS keyring (service "deduping-email/<setup-id>": the user name under the key
-    "MAIL_USER", the password under the user name). Never printed, never written."""
+    """(host, port, user, password), first found of: MAIL_USER and MAIL_PASSWORD (with MAIL_HOST,
+    MAIL_PORT); the mail sign-in Probanda already stores on this Windows computer, when it is for
+    the same server; the OS keyring (service "deduping-email/<setup-id>": the user name under the
+    key "MAIL_USER", the password under the user name). Never printed, never written."""
     host = os.environ.get("MAIL_HOST") or default_host
     port = int(os.environ.get("MAIL_PORT") or default_port)
     user = os.environ.get("MAIL_USER")
     password = os.environ.get("MAIL_PASSWORD")
-    if not (user and password):
-        try:
-            import keyring  # optional
-        except ImportError:
-            keyring = None
-        if keyring is not None:
-            service = f"deduping-email/{setup_id}"
-            user = user or keyring.get_password(service, "MAIL_USER")
-            if user and not password:
-                password = keyring.get_password(service, user)
+    if user and password:
+        return host, port, user, password
+    if not (user or password):
+        stored = probanda_mail_credential(host)
+        if stored:
+            return stored
+    try:
+        import keyring  # optional
+    except ImportError:
+        keyring = None
+    if keyring is not None:
+        service = f"deduping-email/{setup_id}"
+        user = user or keyring.get_password(service, "MAIL_USER")
+        if user and not password:
+            password = keyring.get_password(service, user)
     if not (host and user and password):
-        raise DedupeError("no credentials: set MAIL_USER and MAIL_PASSWORD (and MAIL_HOST if needed) "
-                          f"in the environment, or store them in the keyring under "
-                          f"'deduping-email/{setup_id}'")
+        raise DedupeError("no credentials: no Probanda mail sign-in for this server on this computer; "
+                          "set MAIL_USER and MAIL_PASSWORD in the environment, or store them in the "
+                          f"keyring under 'deduping-email/{setup_id}'")
     return host, port, user, password
 
 
