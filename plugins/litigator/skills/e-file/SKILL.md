@@ -87,7 +87,7 @@ When a portal flattens or converts a document and asks the filer to confirm noth
 2. Download each receipt and submission document the page offers, as the reference file lists them. They land in Downloads.
 3. Tell the practitioner to run `/file-manager:housekeeping` on those downloads, which names and files them after their approval. Without the file-manager plugin, say the receipts stay in Downloads until moved, and move nothing.
 4. Any follow-on date, such as a service or record deadline, goes to the docket-clerk agent.
-5. Recording the filing on the Writing's Milestone stays with the `/draft` session working the job. This skill writes nothing to the matter's records.
+5. Recording the filing on the Writing's Work Board stays with the `/draft` session working the job. This skill writes nothing to the matter's records.
 
 ## 8. A venue with no reference file
 

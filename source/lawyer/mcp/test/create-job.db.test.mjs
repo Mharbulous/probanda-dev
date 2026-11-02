@@ -9,6 +9,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+const { moveSeeds } = await import("./helpers/threads.mjs");
+const { readThreads } = await import("../build/loose-threads/backend.js");
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { callTool } = await import("../build/dispatch.js");
@@ -30,6 +32,7 @@ async function board(t) {
      INSERT INTO ticket_scope (ticket_id, entity, entity_id) VALUES (3, 'facts', NULL);
      INSERT INTO seeds (id, proceeding_id, filing_id, created, surfaced_by, idea) VALUES (1, 1, 1, '2026-10-01T09:00', 'session', 'an idea');`
   );
+  await moveSeeds(dbPath);
   return dbPath;
 }
 
@@ -65,7 +68,7 @@ test("a plain create writes the job, its steps, scope, blocks, seed and created_
   assert.deepEqual(query(dbPath, "SELECT entity, entity_id FROM ticket_scope WHERE ticket_id = ?", [id]), [{ entity: "facts", entity_id: null }]);
   assert.deepEqual(query(dbPath, "SELECT blocker_id FROM ticket_blocks WHERE blocked_id = ?", [id]), [{ blocker_id: 1 }]);
   assert.deepEqual(query(dbPath, "SELECT a_id, b_id FROM ticket_conflicts"), [{ a_id: 2, b_id: id }]);
-  assert.equal(query(dbPath, "SELECT charted_into FROM seeds WHERE id = 1")[0].charted_into, id);
+  assert.equal(readThreads(dbPath).find((t) => t.id === 1).charted_into, id);
 });
 
 test("top reads the Writing's queue; a Work Board's job reads the Work Board's alone", async (t) => {

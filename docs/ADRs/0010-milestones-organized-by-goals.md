@@ -35,6 +35,8 @@ A merge appended the absorbed board's statement of goals to the survivor's, so a
 
 Loose threads are matter-level and belong to no Milestone, amending ADR 0024 D11 (CoClerk), which drew a proceeding's open threads on each of its Writings' boards. No Milestone lists, counts or draws them: they show only on the matter's one Loose Threads page.
 
+Amended by `0018-loose-threads-have-their-own-store.md`: threads now live in a per-matter store of their own, and a merge repoints the absorbed board's threads to the survivor.
+
 ## Considered options
 
 - **Keep one Writing per page and move only jobs**: meets no requirement that the work be seen together, and leaves four view pages per Writing.

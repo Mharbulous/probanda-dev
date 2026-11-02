@@ -89,12 +89,8 @@ class LooseThreadTriageTest(unittest.TestCase):
             "## 8. Loose-thread capture",
             "## 9. Complete",
         )
-        self.assertIn(
-            "UPDATE seeds SET discarded_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') "
-            "WHERE id IN (3, 7, 12) AND discarded_at IS NULL;",
-            drop,
-        )
-        self.assertIn("never `NOT IN`", drop)
+        self.assertIn('`action: "discard"` with `ids`', drop)
+        self.assertIn("naming every id", drop)
 
     def test_jobs_run_deletes_no_loose_thread(self):
         drop = section(
@@ -102,18 +98,18 @@ class LooseThreadTriageTest(unittest.TestCase):
             "## 8. Loose-thread capture",
             "## 9. Complete",
         )
-        self.assertNotIn("DELETE FROM seeds", drop)
-        self.assertIn("never delete the row instead", drop)
+        self.assertNotIn("FROM seeds", drop)
+        self.assertIn("deletes nothing", drop)
 
     def test_a_discard_is_confirmed_as_discarded(self):
         self.assertNotIn("the ids gone", self.triage)
-        self.assertEqual(self.triage.count("confirm-read by Step 1's query (the ids discarded, the count)"), 2)
+        self.assertEqual(self.triage.count("The call's `updated` names the ids discarded."), 2)
 
-    def test_step_1_reads_the_open_set_by_one_query(self):
+    def test_step_1_reads_the_open_set_by_one_tool_call(self):
         step1 = section(self.triage, "**Step 1.", "**Step 2.")
-        self.assertIn("One `drafting_data__query`", step1)
-        self.assertIn("WHERE (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL)) "
-                      "AND discarded_at IS NULL AND suggested_at IS NULL ORDER BY rank IS NULL, rank, id", step1)
+        self.assertIn('One `loose_threads__read` with `db_path`, `mode: "triage"` and `kind: "idea"`', step1)
+        self.assertNotIn("drafting_data__query", self.triage)
+        self.assertNotIn("seeds", self.triage)
         self.assertNotIn("board_card", self.triage)
         self.assertIn("`loose_threads_path`", self.triage)
         self.assertNotIn("view_page_paths", self.triage)

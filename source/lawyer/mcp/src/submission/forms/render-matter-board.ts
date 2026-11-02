@@ -138,7 +138,7 @@ function retiredLine(entry: RankedFiling): MatterBoardFiling {
 }
 
 /** A kind is a letter when it names one: a venue's `letter`, or a `letter-to-*` kind. */
-const LETTER_KIND = /(?:^|[^a-z])letter(?:[^a-z]|$)/i;
+export const LETTER_KIND = /(?:^|[^a-z])letter(?:[^a-z]|$)/i;
 
 /** Sent (`filed_on` set), not retired, and a letter by its kind. */
 function awaitingResponse(filing: FilingRow): boolean {

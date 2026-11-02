@@ -38,7 +38,7 @@ Every job of the batch takes one below the lowest `priority` returned, or the sc
 
 The tool runs this read itself, inside its write, when `priority` is `bottom` (one below the lowest) or `top` (one above the highest), and returns the `priority` it wrote: on a Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Work Board's job, the Work Board's alone; on a proceeding-scoped job (`filing_id` null), every queued job in the proceeding, so the job is last or first on every board it shows on. A batch passes `bottom` on its first job and the returned `priority` on every later one, so the batch reads once. A value between two is an integer the session computes from the read above, after renumbering the rows beneath it by an `execute` script when those two are adjacent.
 
-**The tool call.** `drafting_data__create_job` takes `db_path`, `proceeding_id`, `filing_id` (the Writing's or Work Board's id, or `null` for a proceeding-scoped job; never left out), `title`, `intent`, `kind`, `priority`, `billing_anchor`, `steps` (each step's text, in order, at least one), `scope` (`{entity, entity_id}` rows), `blocks` (the existing jobs this one waits on, each written as `blocker_id` with this job as `blocked_id`), `conflicts` (existing job ids; the tool writes the CHECK's order), `proposal_keys` (`{key, item}` rows), `seed_id` (a loose thread this job consumes), `created_by` (below) and `guard`. The plain create below is `guard: "none"`; the guarded create from Proposals is `guard: "live_key"`. It returns `outcome: "created"` with `ticket_id` and the `priority` written, or `outcome: "guarded"` with nothing written and `holder_id`, the job that holds the key. One call writes what Call 1 to Call 3 below write, so there is no id to recover and nothing to confirm-read. Re-render afterwards.
+**The tool call.** `drafting_data__create_job` takes `db_path`, `proceeding_id`, `filing_id` (the Writing's or Work Board's id, or `null` for a proceeding-scoped job; never left out), `title`, `intent`, `kind`, `priority`, `billing_anchor`, `steps` (each step's text, in order, at least one), `scope` (`{entity, entity_id}` rows), `blocks` (the existing jobs this one waits on, each written as `blocker_id` with this job as `blocked_id`), `conflicts` (existing job ids; the tool writes the CHECK's order), `proposal_keys` (`{key, item}` rows), `seed_id` (a loose thread this job consumes, by a second write after the job's), `created_by` (below) and `guard`. The plain create below is `guard: "none"`; the guarded create from Proposals is `guard: "live_key"`. It returns `outcome: "created"` with `ticket_id` and the `priority` written, or `outcome: "guarded"` with nothing written and `holder_id`, the job that holds the key. One call writes what Call 1 to Call 3 below write, so there is no id to recover and nothing to confirm-read. `thread_not_consumed` in the result means the job stands and its thread still shows as open: say so in one line, quoting it. Re-render afterwards.
 
 **Call 1 — create the job** (the tool's contract):
 
@@ -124,13 +124,9 @@ INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (2, 1, 'Create a plan
 
 **Consuming a loose thread not yet outlined** (the practitioner chose to outline it now):
 
-```sql
-UPDATE seeds SET charted_into = 2 WHERE id = 1;
-```
+The tool's `seed_id` writes it right after the job, in another file, so the two cannot be one transaction. By hand, once the job it became exists (its recovered literal id — call 2 above), `loose_threads__update` with `action: "consume"`, `id` the thread and `job_id` the job. It closes the loose thread (open means not outlined, not discarded, not suggested). §3i's add path runs this same write outside an outlining session, on a thread its sort captured.
 
-The tool's `seed_id` writes it in the job's own transaction. By hand, run this once the job it became now exists (its recovered literal id — call 2 above). It closes the loose thread (open means not outlined, not discarded, not suggested). §3i's add path runs this same write outside an outlining session, on a thread its sort captured.
-
-**Recording the Proposals a job was outlined from** — the tool's `proposal_keys`, one `{key, item}` per key, written in the job's own transaction; by hand, the same shape as the loose-thread consumption above: its own statement, after call 2, on the recovered literal id, never `last_insert_rowid()`. One row per key the job was outlined from; one job may hold several keys, and a merged job does:
+**Recording the Proposals a job was outlined from** — the tool's `proposal_keys`, one `{key, item}` per key, written in the job's own transaction; by hand, its own statement, after call 2, on the recovered literal id, never `last_insert_rowid()`. One row per key the job was outlined from; one job may hold several keys, and a merged job does:
 
 ```sql
 INSERT INTO ticket_proposals (ticket_id, proposal_key, item)

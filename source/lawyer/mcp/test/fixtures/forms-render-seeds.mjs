@@ -12,6 +12,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, 
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { moveSeeds } from "../helpers/threads.mjs";
 const { submissionDataExecute, submissionDataQuery } = await import("../../build/submission/backend.js");
 const { filingBoardData } = await import("../../build/submission/matter-pages.js");
 const { fetchProceeding, fetchRevision } = await import("../../build/submission/forms/query.js");
@@ -687,6 +688,7 @@ export async function seedTickets(dbPath) {
     UPDATE db_meta SET value = '1' WHERE key = 'revision';
     `.trim()
   );
+  await moveSeeds(dbPath);
 }
 
 // Phase D step 4 (Work Board Proposals design §7, §8): the Proposal cases the Work Board's data

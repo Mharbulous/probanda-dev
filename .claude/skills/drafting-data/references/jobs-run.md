@@ -143,103 +143,70 @@ Re-run the scope read (§2) immediately after, so the write that prompted the ex
 
 ## 8. Loose-thread capture
 
-Mid-job, an out-of-scope idea may be captured without deciding anything about it (design §7) — a standing scope exemption, so this write is always in scope regardless of the current job's own `ticket_scope` rows:
+A loose thread is work, or an idea for work, that was snipped: someone decided enough was done and left it. Threads belong to the matter and live in their own store beside the drafting database, `loose_threads.db`, which `drafting_data__query` and `drafting_data__execute` cannot reach. Only these tools do: `loose_threads__capture`, `loose_threads__read` and `loose_threads__update`. `execute` refuses a script writing the old `seeds` table. A thread's id never changes.
 
-```sql
-INSERT INTO seeds (proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea)
-  VALUES (1, 1, 2, strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 'noticed while reconciling the exhibit list', 'Consider a standing exhibit-numbering convention for future filings in this proceeding.');
+Mid-job, an out-of-scope idea may be captured without deciding anything about it (design §7) — a standing scope exemption, so this write is always in scope regardless of the current job's own `ticket_scope` rows. `loose_threads__capture` takes `db_path`, `proceeding_id`, `filing_id` (the Writing or Work Board it came from; leave it out for the proceeding), `origin_job`, `surfaced_by`, `idea`, and, for work that was not a plain idea, `kind` and `ref`. It returns only the new thread's id:
+
+```json
+{"db_path": "<db_path>", "proceeding_id": 1, "filing_id": 1, "origin_job": 2, "surfaced_by": "noticed while reconciling the exhibit list", "idea": "Consider a standing exhibit-numbering convention for future filings in this proceeding."}
 ```
 
-`origin_ticket_id` is the job this session holds. Its card (`drafting_forms__board_card` with `jobs`) then lists the loose thread, and §6a moves the job's last activity.
+`origin_job` is the job this session holds. Its card (`drafting_forms__board_card` with `jobs`) then lists the loose thread, and only that job's card does. No other read brings threads into a job.
 
-`idea` is captured **verbatim**, at most five sentences, with no options or recommendations — the appearance of alternatives is the tell that outlining has started, and it belongs in an outlining session, not this write. `surfaced_by` is one line naming what surfaced it (a Westlaw memo, a practitioner aside, a document read in passing) — never `TRIGGER`; that column was deliberately not named after the SQLite keyword.
+`idea` is captured **verbatim**, at most five sentences, with no options or recommendations — the appearance of alternatives is the tell that outlining has started, and it belongs in an outlining session, not this write. `surfaced_by` is one line naming what surfaced it (a Westlaw memo, a practitioner aside, a document read in passing).
 
-**The open set.** A proceeding's open loose threads are those not outlined into a job, not discarded and not suggested (`shared/html-pages.md`, the Loose Threads page). A session that must compare an item with them, such as `shared/legal-research.md`'s duplicate test, reads them by one `drafting_data__query`:
+`kind` is one of `idea` (the default), `proposition` (noted, never used), `correspondence` (an abandoned draft or `.eml`, with `ref` its path), `argument` (considered, never drafted) and `work_board` (considered, never created). `ref` is the file path or record id it left off at. The file stays where it is. **The test is whether it was cut off:** a letter still being drafted is live, not a thread. Abandoned, it is one. Snipped work with a record or file of its own needs no capture, because the Loose Threads page reads it where it stays: a shelved job, a killed proposition or submission, a memo with status started or no job, a retired letter that did not go out, a closed Work Board. A killed row stays in the working database, because it is what stops the same point being proposed again.
 
-```sql
-SELECT id, filing_id, origin_ticket_id, idea FROM seeds
-  WHERE proceeding_id = ? AND charted_into IS NULL AND discarded_at IS NULL AND suggested_at IS NULL
-  ORDER BY id;
-```
+**The sweep.** Before completing a job or retiring a Writing, capture the work ideas the job or Writing leaves undone, each as a thread. That is the snip: what is left unsaid at that point is lost. Capture what was named or seen, verbatim. Never invent work to have something to capture. A job or Writing that leaves nothing captures nothing, and says nothing about it.
+
+**The open set.** A proceeding's open loose threads are those not outlined into a job, or outlined into a deleted job, and neither discarded nor suggested (`shared/html-pages.md`, the Loose Threads page). A session reads them only for the two purposes `loose_threads__read` serves. `mode: "duplicates"` with `proceeding_id` and `text` returns only the open threads that restate `text`, each as `{id, idea}`, for `shared/legal-research.md`'s duplicate test. `mode: "triage"` returns the whole open set with its rankings and deferrals in the page's order, for `/work`'s loose-thread triage. A session working a job makes neither read for any other reason.
 
 ### 8a. With no job held
 
-`shared/legal-research.md`'s after-the-answer step ("With a board, the return's open items are sorted against it") captures a research return's open items for the draft the question came from, in a session holding no job. Same write, same `idea` and `surfaced_by` rules, with `origin_ticket_id` NULL: no job surfaced it, so there is no lock to guard and no job's idle clock to restart. The thread renders under "Loose Threads" with no origin job, like one whose job was deleted (`jobs-closeout.md` §10a).
+`shared/legal-research.md`'s after-the-answer step ("With a board, the return's open items are sorted against it") captures a research return's open items for the draft the question came from, in a session holding no job. Same tool, same `idea` and `surfaced_by` rules, with `origin_job` left out: no job surfaced it, so there is no lock to guard and no job's idle clock to restart. The thread shows on the Loose Threads page with no origin job, like one whose job was deleted (`jobs-closeout.md` §10a).
 
 1. **Session entry.** `drafting_forms__open_session` with the matter root gives `db_path` and `draft_dir`. A refusal, or no drafting database for the matter, means there is no board: capture nothing and report that.
 2. **Resolve the board from the origin.**
-   - A Writing id: the Writing and its proceeding, `SELECT proceeding_id, retired_on, kind FROM filings WHERE id = ?`. A retired Writing has no Work Board page, and neither has a research memo or case brief (`kind` `research_memo`, `research_memo_irac`, `research_memo_creac` or `case_brief`), so its threads go on the proceeding with `filing_id` NULL, which shows them on every live Writing's board in it, or on the proceeding's own board when it has no other Writing. No row: there is no board.
-   - A plain draft file attached to a board (a client letter's or a reply's file; `filing-checklists.md` §14): that board, `SELECT a.proceeding_id, CASE WHEN f.kind IN ('research_memo', 'research_memo_irac', 'research_memo_creac', 'case_brief') THEN NULL ELSE a.filing_id END AS filing_id FROM board_attachments a LEFT JOIN filings f ON f.id = a.filing_id WHERE lower(a.path) = lower(?)`, the file's stored path. A row naming a research memo or case brief is on its proceeding's board, so its threads take `filing_id` NULL.
-   - Any other plain draft file: the proceeding it serves. `SELECT id, forum, file_number, style_of_cause FROM proceedings ORDER BY id`. One row is the board, with `filing_id` NULL. Several: ask the practitioner once which proceeding the draft serves, naming each by its forum and file number, and capture every thread of the return on the one they name. None: there is no board.
-3. **Write every thread in one script**, one `INSERT` per thread:
-
-```sql
-INSERT INTO seeds (proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea)
-  VALUES (1, NULL, NULL, strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), 'research answer 2026-01-01 ML re example question.md', 'Would you like me to research whether the example rule applies to the example situation? live_issue: no');
-```
-
-4. **Confirm-read**, expected one row per thread written: `SELECT id, idea FROM seeds WHERE proceeding_id = ? AND origin_ticket_id IS NULL AND surfaced_by = ? AND charted_into IS NULL ORDER BY id`.
-5. **Re-render** with `draft_dir` (the Writing, or the proceeding's live Writing or the proceeding itself), so the Loose Threads page lists them. `pages_refused` means the page is stale: say so.
+   - A Writing id: the Writing and its proceeding, `SELECT proceeding_id, retired_on, kind FROM filings WHERE id = ?`. A retired Writing has no Work Board page, and neither has a research memo or case brief (`kind` `research_memo`, `research_memo_irac`, `research_memo_creac` or `case_brief`), so its threads go on the proceeding, with `filing_id` left out. No row: there is no board.
+   - A plain draft file attached to a board (a client letter's or a reply's file; `filing-checklists.md` §14): that board, `SELECT a.proceeding_id, CASE WHEN f.kind IN ('research_memo', 'research_memo_irac', 'research_memo_creac', 'case_brief') THEN NULL ELSE a.filing_id END AS filing_id FROM board_attachments a LEFT JOIN filings f ON f.id = a.filing_id WHERE lower(a.path) = lower(?)`, the file's stored path. A row naming a research memo or case brief is on its proceeding's board, so its threads leave `filing_id` out.
+   - Any other plain draft file: the proceeding it serves. `SELECT id, forum, file_number, style_of_cause FROM proceedings ORDER BY id`. One row is the board, with `filing_id` left out. Several: ask the practitioner once which proceeding the draft serves, naming each by its forum and file number, and capture every thread of the return on the one they name. None: there is no board.
+3. **Capture each thread** by one `loose_threads__capture` call, here with `surfaced_by` `research answer 2026-01-01 ML re example question.md` and `idea` `Would you like me to research whether the example rule applies to the example situation? live_issue: no`. Each call's returned id is its confirmation.
+4. **Re-render** with `draft_dir` (the Writing, or the proceeding's live Writing or the proceeding itself), so the Loose Threads page lists them. `pages_refused` means the page is stale: say so.
 
 Never create a proceeding here, never create a job other than §3i's research offer job, and never assign anything: a loose thread is consumed only by a later outlining session (§3) or by §3i's add path.
 
-**Dropping a loose thread** — only in an outlining session, and only when the practitioner, asked what to do with the quoted loose thread, says to drop it. Or, in any session, a thread the research-offer sort (`shared/legal-research.md`, "After the answer") captured in that session, when the practitioner names that offer to drop. Dropping discards the thread (v75): it stamps `discarded_at`, the minute dropped, `YYYY-MM-DDTHH:MM` in local time, and deletes no row. A discarded thread is kept, is no longer open, and shows on the Loose Threads page as a red struck line with a Restore link. One thread or a group, the write is the same stamp, naming every id positively, never `NOT IN`. Then the confirm-read, expected `0`:
+**Writing a thread.** Each change below is one `loose_threads__update` call with `db_path`, `action` and what the action names. It returns `updated`, the ids it changed, so no confirm-read follows. A thread already in the state asked for is not among them. A refusal writes nothing. None moves `db_meta.revision`.
 
-```sql
-UPDATE seeds SET discarded_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') WHERE id IN (3, 7, 12) AND discarded_at IS NULL;
-SELECT COUNT(*) FROM seeds WHERE id IN (3, 7, 12) AND discarded_at IS NULL;
+**Dropping a loose thread** — only in an outlining session, and only when the practitioner, asked what to do with the quoted loose thread, says to drop it. Or, in any session, a thread the research-offer sort (`shared/legal-research.md`, "After the answer") captured in that session, when the practitioner names that offer to drop. Dropping discards the thread: `action: "discard"` with `ids` stamps `discarded_at`, the minute dropped, `YYYY-MM-DDTHH:MM` in local time, and deletes nothing. A discarded thread is kept, is no longer open, and shows on the Loose Threads page as a red struck line with a Restore link. One thread or a group, the call is the same, naming every id.
+
+**Dropping a group of loose threads** (`/work`'s loose-thread triage): on the practitioner's yes to dropping the threads a reported group holds, the same call. Same rule: only in an outlining session, and only on the practitioner's word for those threads.
+
+**Restoring a discarded thread**: only on the practitioner's word, usually pasted from the page's Restore link ("restore loose thread #7"), which copies the instruction and writes nothing. `action: "restore"` with `id`. The thread is open again, with the rank it had.
+
+**Suggested threads.** `suggested_at` is the minute a thread was sent to Probanda as a suggestion about the plugin. No route writes it any more: a `tooling` thread is no longer sent as a suggestion, only reported to Probanda as an observation, which stamps nothing (`work/references/suggestion-box.md`). A thread an earlier version marked keeps its stamp, is no longer open, and shows on the Loose Threads page as a plain line.
+
+**Ranking the loose threads** (`/work`'s loose-thread triage): only in an outlining session. Ranking applies to ideas only. Every open idea of the matter is ranked, except a deferred one (below), unless the practitioner asks for it to be ranked. `action: "rank"` with `ranks` writes every thread in one call, each `{id, rank, group, job, reason}`:
+
+```json
+{"db_path": "<db_path>", "action": "rank", "ranks": [
+  {"id": 7, "rank": 1, "group": "tooling", "job": "Fix the exhibit download that fails on the second exhibit.", "reason": "Blocks the exhibit download the evidence threads need."},
+  {"id": 3, "rank": 2, "group": "evidence", "job": "Correct the exhibit letter in paragraph 12 to match the affidavit.", "reason": "One exhibit letter to correct, checked against the record already on file."}
+]}
 ```
 
-On a database held below v75 the write fails with `no such column`. Say that the matter's records need an update first, and stop: never delete the row instead.
+`job` is the job description: the work the thread asks for, stated in actionable form, written before the threads are ranked so that the ranking orders jobs. It restates only what the thread says, with no position, figure, statement of law, recommendation, or research question worded beyond the thread's own words, and never names time remaining or a deadline. `idea` is never overwritten. `rank` is 1 for the best to follow up, then 2, 3 and on. `group` is one of seven slugs, mirroring the triage groups: `decision` (the practitioner's own remark or decision already made), `tooling` (a tool failure, missing feature, skill or page defect), `housekeeping` (matter-data or law-folder housekeeping: ingesting a document, an authority row, filing a text), `research` (a research offer or an open question about the law), `authority` (the Writing departs from an authority as cited), `evidence` (the Writing departs from the evidence or pleadings), `other` (fits none of these). `reason` is one line saying why the thread sits where it does. It states no law, and never names time remaining or a deadline. Ranking orders, it never removes: a weak thread leaves only by the drop above, on the practitioner's word. A thread captured after the ranking stays unranked until the next ranking. The result's `unranked_open` is the open, undeferred ideas still lacking a rank or description, which a whole ranking leaves at `0`.
 
-**Dropping a group of loose threads** (`/draft`'s loose-thread triage): on the practitioner's yes to dropping the threads a reported group holds, the stamp above. Same rule: only in an outlining session, and only on the practitioner's word for those threads.
+**Correcting a job description**: only when the practitioner names a ranked thread and gives the description it should carry. `action: "correct"` with `id` and `job`, their words. The store does not record who wrote a description.
 
-**Restoring a discarded thread** (v75): only on the practitioner's word, usually pasted from the page's Restore link ("restore loose thread #7"), which copies the instruction and writes nothing. The thread is open again, with the rank it had. Then the confirm-read, expected the one row with `discarded_at` NULL:
+**Deferring a loose thread**: `deferred_at` is the minute the practitioner deferred the thread indefinitely, and null when it is not deferred. The practitioner usually defers from the Loose Threads page: its status button writes this field through the data server's localhost listener, with no session involved. A session writes it only when the practitioner tells it to defer a named thread, or to bring a deferred one back: `action: "defer"` or `"undefer"` with `id`. Deferring sets a thread aside. It stays open, is not outlined, and keeps its rank. The triage read still returns it, with `deferred_at` set, and that is where a session reads the state. Triage and every other step that proposes loose threads skip a deferred thread, unless the practitioner asks about it or asks for the deferred threads.
 
-```sql
-UPDATE seeds SET discarded_at = NULL WHERE id = 7 AND discarded_at IS NOT NULL;
-SELECT id, discarded_at FROM seeds WHERE id = 7;
-```
-
-**Marking a thread suggested** (v75): `suggested_at` is the minute the thread was sent to Probanda as a suggestion about the plugin, and NULL when it was not. No route writes it any more: a `tooling` thread is no longer sent as a suggestion, only reported to Probanda as an observation, which stamps nothing (`work/references/suggestion-box.md`). A thread an earlier version marked keeps its stamp. A suggested thread is kept, is no longer open, and shows on the Loose Threads page as a plain line. Then the confirm-read, expected the one row with `suggested_at` set:
-
-```sql
-UPDATE seeds SET suggested_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') WHERE id = 7 AND suggested_at IS NULL AND discarded_at IS NULL;
-SELECT id, suggested_at FROM seeds WHERE id = 7;
-```
-
-**Ranking the loose threads** (`/draft`'s loose-thread triage, v66): only in an outlining session. `seeds` is not a substance table, so the scope read (`jobs-common.md` §2) does not cover this write. Every open thread of the matter is ranked, meaning the set the Loose Threads page shows, `charted_into IS NULL` or outlined into a deleted job (`charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL)`), which shows again, and in either case neither discarded nor suggested (`discarded_at IS NULL AND suggested_at IS NULL`, v75). A database held below v75 has neither column and a statement naming one fails there with `no such column`: on such a database, leave those two clauses out of the reads and guards below. Each gets a job description, a group and a reason, one `UPDATE` per thread, all in one script. `rank_job` (v70) is the job description: the work the thread asks for, stated in actionable form, written before the threads are ranked so that the ranking orders jobs. It restates only what the thread says, with no position, figure, statement of law, recommendation, or research question worded beyond the thread's own words, and never names time remaining or a deadline. `idea` is never overwritten. `rank` is 1 for the best to follow up, then 2, 3 and on. `rank_group` is one of seven slugs, mirroring the triage groups: `decision` (the practitioner's own remark or decision already made), `tooling` (a tool failure, missing feature, skill or page defect), `housekeeping` (matter-data or law-folder housekeeping: ingesting a document, an authority row, filing a text), `research` (a research offer or an open question about the law), `authority` (the Writing departs from an authority as cited), `evidence` (the Writing departs from the evidence or pleadings), `other` (fits none of these). `rank_reason` is one line saying why the thread sits where it does. It states no law, and never names time remaining or a deadline. Ranking orders, it never removes: it deletes no row and never sets `charted_into`, and a weak thread leaves only by the drop write above, on the practitioner's word. A thread captured after the ranking stays unranked (all four NULL) until the next ranking. The four are set together or all left NULL. A CHECK ties `rank`, `rank_group` and `rank_reason`, and another refuses `rank_job` without a rank, but a thread ranked before v70 may still lack `rank_job`, so the confirm-read counts that gap too. A deferred thread (below) is left as it is, unless the practitioner asks for it to be ranked. Then the confirm-read, expected `0`:
-
-```sql
-UPDATE seeds SET rank = 1, rank_group = 'tooling', rank_job = 'Fix the exhibit download that fails on the second exhibit.', rank_reason = 'Blocks the exhibit download the evidence threads need.' WHERE id = 7;
-UPDATE seeds SET rank = 2, rank_group = 'evidence', rank_job = 'Correct the exhibit letter in paragraph 12 to match the affidavit.', rank_reason = 'One exhibit letter to correct, checked against the record already on file.' WHERE id = 3;
-SELECT COUNT(*) FROM seeds WHERE (rank IS NULL OR rank_job IS NULL) AND deferred_at IS NULL
-  AND (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL))
-  AND discarded_at IS NULL AND suggested_at IS NULL;
-```
-
-**Correcting a job description** (v70): only when the practitioner names a ranked thread and gives the description it should carry. The session writes their words, changing nothing else on the row. The column does not record who wrote a description. Then the confirm-read, expected the one row with the new text:
-
-```sql
-UPDATE seeds SET rank_job = 'Research Rule 22-3 regarding: 1. Should the bracketed notes at the head of new Form 32 be reproduced or are they only drafting instructions? 2. What page formatting governs the 10-page limit?' WHERE id = 7 AND proceeding_id = 1 AND rank IS NOT NULL;
-SELECT id, rank_job FROM seeds WHERE id = 7;
-```
-
-**Deferring a loose thread** (v68): `deferred_at` is the minute the practitioner deferred the thread indefinitely, `YYYY-MM-DDTHH:MM` in local time, and NULL when it is not deferred. The practitioner usually defers from the Loose Threads page: its status button writes this column through the data server's localhost listener, with no session involved. A session writes it only when the practitioner tells it to defer a named thread, or to bring a deferred one back. Deferring sets a thread aside. It stays open: deferring deletes no row, never sets `charted_into`, and leaves the rank as it was. The triage read still returns it, with `deferred_at` set, and that is where a session reads the state. Triage and every other step that proposes loose threads skip a deferred thread, unless the practitioner asks about it or asks for the deferred threads. The guard is the page's own: the thread's proceeding, open, and not already in the state asked for. Then the confirm-read, expected the one row with `deferred_at` set (or NULL after an undefer):
-
-```sql
-UPDATE seeds SET deferred_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
-  WHERE id = 7 AND proceeding_id = 1 AND deferred_at IS NULL
-  AND (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL))
-  AND discarded_at IS NULL AND suggested_at IS NULL;
-SELECT id, deferred_at FROM seeds WHERE id = 7;
-```
-
-To bring it back, the mirror write: `UPDATE seeds SET deferred_at = NULL WHERE id = 7 AND proceeding_id = 1 AND deferred_at IS NOT NULL AND (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL)) AND discarded_at IS NULL AND suggested_at IS NULL;`, then the same confirm-read.
+**Consuming a thread**: `action: "consume"` with `id` and `job_id`, the job it was outlined into (`jobs-create.md` §3).
 
 ## 9. Complete
 
 **Before the completion, the still-firing check.** A job carrying `ticket_proposals` keys re-renders first and reads which keys on its card's `keys:` line (`drafting_forms__board_card` with `jobs`) still derive, those whose `(now: …)` names a glyph and a current item: §5's premise-check subtraction, read for the keys kept rather than the keys dropped. None still derives: complete. Any does: name them to the practitioner in one line ("its marker still fires on N of M items") and run the completion script only on their yes. Otherwise the job stays `wip` under this session's lock (§10). An unattended run reports that line and stops, the job left `wip`. A job with no `ticket_proposals` keys, outlined by hand, has nothing to check.
+
+**Then the sweep.** §8's sweep runs before the completion.
 
 **Then the open sources.** A job whose card prints an open source on its `sources to get:` line is completed only as `references/jobs-common.md` §2 ("Before completing a job with open sources") says: named in one line, on the practitioner's yes, each then closed `not_retrieved`.
 

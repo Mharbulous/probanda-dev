@@ -43,10 +43,11 @@ const FIXTURES = {
   "Loose Threads": {
     groups: [{ key: "research", label: "Research", colour: "#8E6620", count: 1 }],
     ideas: [
-      { id: 1, rank: 1, idea: "Check <s. 3>", group: "research", group_label: "Research", reason: null, job: null, surfaced_by: "draft", origin: null, deferred_at: null },
-      { id: 2, rank: null, idea: "Ask the client", group: null, group_label: null, reason: null, job: null, surfaced_by: "draft", origin: null, deferred_at: "2026-10-14" },
+      { id: 1, tab: "ideas", ref: null, rank: 1, idea: "Check <s. 3>", group: "research", group_label: "Research", reason: null, job: null, surfaced_by: "draft", origin: null, deferred_at: null },
+      { id: 2, tab: "ideas", ref: null, rank: null, idea: "Ask the client", group: null, group_label: null, reason: null, job: null, surfaced_by: "draft", origin: null, deferred_at: "2026-10-14" },
     ],
     resolved: [],
+    in_place: [{ tab: "jobs", record: "Job #4", title: "Shelved <job>", status: "Shelved", date: "2026-10-14", url: null, path: null }],
     api: { port: 4100, db_path: "drafting.db", proceeding_id: 3, token: "t" },
   },
 };
@@ -56,13 +57,14 @@ const FIXTURES = {
  * the rest retaken on 2026-10-29 for 8be771b7, which renamed board.css's first comment ("Job Board" to "Work Board");
  * Arguments' retaken again on 2026-10-31 for e0065be, which added the session focus pointer to arguments.js;
  * Legal Research's taken on 2026-11-01, when it replaced Legal Memos, and retaken that day when Case Briefs listed each earlier file,
- * and again for the four tabs, the noting-up badges and the Legal Memos sections, and for the file link through the page API. */
+ * and again for the four tabs, the noting-up badges and the Legal Memos sections, and for the file link through the page API;
+ * Loose Threads' retaken on 2026-11-02 for its tabs by kind of work and its status filter. */
 const PINS = {
   "Procedural History": "ac5b979ecc31f5442ad6d0e67c59f293346502cff179d0037c4f67a363ac0187",
   "Material Facts": "1970c261e8ad20d7300056baf5bcc5fe678269cd82941263d06da76ad68bf00d",
   "Legal Research": "0faafa93119733be4235e97467b87256076b340176c29ba40ccf124d41036b4b",
   Arguments: "2b96c96b31a4815468b2f9a04efd9e05b4138150c587d002e7f0a7132e1c3d4e",
-  "Loose Threads": "2465fa93795928743d129180b66a95c20f6d46e8283019a6ebc35d30b1d1bf5d",
+  "Loose Threads": "2cd6a6bdc56e1be7921b96a1a19520fdce33936e89f0d53c07993ab4d4f657ce",
 };
 
 for (const page of PAGES) {

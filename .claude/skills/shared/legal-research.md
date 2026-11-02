@@ -514,8 +514,8 @@ A session holding no job captures them through `/drafting-data`'s capture with n
 SKILL.md, "Captured ideas").
 
 **The duplicate test.** Before capturing any item of the return, an `origin-correction:`
-line, a `matter-data:` flag or an offer, read the open loose threads by `/drafting-data` §8's
-open-set read. An item that restates the held job's own
+line, a `matter-data:` flag or an offer, read the open loose threads that match it, by
+`loose_threads__read` with `mode: "duplicates"` and the item as `text` (`/drafting-data` §8). An item that restates the held job's own
 title or intent, or the idea of an open loose thread, is not captured.
 Say so in one line instead: `already on the board: Loose thread #N`, or `the held job's own
 subject: Job #N`. The test reads what an item is about, never whether it is right, and states

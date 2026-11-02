@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 
+const { moveSeeds } = await import("./helpers/threads.mjs");
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsBootstrap, submissionFormsRenderProceedingBoard } = await import("../build/submission/forms.js");
@@ -40,6 +41,7 @@ async function fixture() {
     INSERT INTO seeds (id, proceeding_id, filing_id, created, surfaced_by, idea) VALUES (1, 1, NULL, '2026-09-19 09:20', 'noticed', 'Is the guarantor a party?');
     `.trim()
   );
+  await moveSeeds(dbPath);
   const draft = join(dir, "L8470 Matter", "0. DRAFT");
   mkdirSync(draft, { recursive: true });
   return { dir, dbPath, draft, cleanup: () => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }) };

@@ -19,6 +19,7 @@ import { startFakeCloud } from "./helpers/fake-cloud.mjs";
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-todo-list-locks-"));
 after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
 
+const { moveSeeds } = await import("./helpers/threads.mjs");
 const { freshSubmissionDb, partiesSnapshotSql, seedSql } = await import("./helpers/template-db.mjs");
 const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
@@ -112,6 +113,7 @@ async function seedMatter(dbPath) {
     UPDATE db_meta SET value = '1' WHERE key = 'revision';
     `.trim()
   );
+  await moveSeeds(dbPath);
 }
 
 function readBoard(path) {

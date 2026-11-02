@@ -18,14 +18,14 @@ Shared doctrine for every Probanda skill, agent and session. It is not a skill: 
 - a skill's file, path, section number or wording, a design record or an issue number;
 - an internal distinction the practitioner never chose, such as whether a document type has a layout of its own.
 
-**Product vocabulary stays.** "Milestone", "Writing" and "Loose Threads", and every label a page the practitioner uses already prints (a job's number, a list's heading such as Ready or In Progress), are Probanda's words for things the practitioner works with. Use them. Until Brahm ends the rename from "Job Board", "job board" in the practitioner's words, in a tool's reply or in an old note means the Milestone: act on it as the Milestone, treat it as a sign the rename is unfinished, and when Probanda itself produced it say in one line, in plain words, where it appeared (a page name, a tool's reply, a note), never the internal name.
+**Product vocabulary stays.** "Work Board", "Writing" and "Loose Threads", and every label a page the practitioner uses already prints (a job's number, a list's heading such as Ready or In Progress), are Probanda's words for things the practitioner works with. Use them. Until Brahm ends the rename from "Job Board", "job board" in the practitioner's words, in a tool's reply or in an old note means the Work Board: act on it as the Work Board, treat it as a sign the rename is unfinished, and when Probanda itself produced it say in one line, in plain words, where it appeared (a page name, a tool's reply, a note), never the internal name.
 
 **Plain words for the commonest internals.**
 
 | Internal | Say instead |
 |---|---|
 | a tool name | what it does: "saved", "checked the court file", "rendered the draft" |
-| a filing id, a row id | the document's own name, or the job's number as its Milestone shows it |
+| a filing id, a row id | the document's own name, or the job's number as its Work Board shows it |
 | a stock type, a kind, a folder code | the document's own name, such as "Notice of Hearing of Application" |
 | a table, a column, a database | "the matter's records", "the draft's details" |
 | a rule id, a node path, a gate, a hook | nothing about the mechanism: say what happens next for the practitioner |

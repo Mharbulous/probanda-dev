@@ -60,6 +60,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "A script that takes or moves a job's lock, sets its plan approval, completion or deletion stamp, stamps a step " +
         "done or sets its status, or writes a job's active stamp, last activity, lapse record or claim number is refused " +
         "whole, writing nothing, with job_write_refused naming the job tool that writes it. " +
+        "A loose thread is written through loose_threads__capture and loose_threads__update: a script writing the seeds table is refused whole, with loose_thread_write_refused. " +
         "The result carries changes, the number of rows the script inserted, updated or deleted, rows written " +
         "by triggers included; on a script that writes only job tables, changes 0 means its guards matched " +
         "nothing and nothing was written. " +
@@ -323,8 +324,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       description:
         "Create a job (a tickets row) in one call and one transaction: the row, its steps (ordinal 1, 2, 3... in order, " +
         "at least one), scope rows, the edges from existing jobs it waits on (blocks), its conflict pairs, its conversion " +
-        "records (proposal_keys, copied from the card) and the loose thread it consumes (seed_id), under the duplicate " +
-        "guard its kind takes. Each guard is /drafting-data's documented condition, tested before the row exists, so it " +
+        "records (proposal_keys, copied from the card), under the duplicate guard its kind takes. With seed_id, a second " +
+        "write then consumes that loose thread: thread_not_consumed in the result says it failed, and the job stands. Each guard is /drafting-data's documented condition, tested before the row exists, so it " +
         "never matches the job it guards: none (an unguarded create); live_key (a queued or wip, unshelved job holds one " +
         "of proposal_keys: the fast path and a job outlined from Proposals, jobs-create.md §3); never_held_key (any job " +
         "not deleted ever held one of proposal_keys: intake, §3e); title_live_with_step (a queued or wip, unshelved job " +

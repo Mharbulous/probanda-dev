@@ -7,11 +7,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 **Deferred threads.** A thread with `deferred_at` set was set aside by the practitioner, usually with the status button on the Loose Threads page. Leave it as it is: do not rank it, propose it, or offer to discard it again, unless the practitioner asks about it or asks for the deferred threads. Read the state from Step 1's read only. To defer a thread or bring one back on the practitioner's word, use `/drafting-data`'s deferral write ("Deferring a loose thread").
 
-**Step 1. Read every loose thread once.** One `drafting_data__query` on the matter's database, the open set the Loose Threads page shows. No second read until a write changes it.
-
-```sql
-SELECT id, proceeding_id, filing_id, origin_ticket_id, surfaced_by, idea, rank, rank_group, rank_reason, rank_job, deferred_at FROM seeds WHERE (charted_into IS NULL OR charted_into IN (SELECT id FROM tickets WHERE deleted_at IS NOT NULL)) AND discarded_at IS NULL AND suggested_at IS NULL ORDER BY rank IS NULL, rank, id
-```
+**Step 1. Read every loose thread once.** One `loose_threads__read` with `db_path`, `mode: "triage"` and `kind: "idea"`, the ideas the Loose Threads page ranks, in its order. No second read until a write changes it. Ranking applies to ideas only: a thread of another kind stays under its own tab, unranked.
 
 **Step 2. Describe, then rank, every open thread.** Two passes over every thread, including a thread ranked before, but not a deferred one.
 
@@ -27,7 +23,7 @@ SELECT id, proceeding_id, filing_id, origin_ticket_id, surfaced_by, idea, rank, 
 6. **`evidence`: Writing doesn't match the evidence or pleadings.** A fact, pinpoint, exhibit letter or party that departs from the record.
 7. **`other`: miscellaneous.** Anything that fits none of the above.
 
-Rank 1 is the best to follow up. A thread that settles or unblocks others ranks above the threads it settles or unblocks: a decision settles other threads, a tool failure blocks the downloads, currency checks and review pages other threads need, housekeeping puts on file the texts research and checks read, and a research answer decides what a correction says. The reason is one line saying why the thread sits where it does. It states no law, and never names time remaining or a deadline. Write every description and rank in one script by `/drafting-data`'s ranking write ("Ranking the loose threads"), with its confirm-read. Do not ask the practitioner to approve the descriptions first.
+Rank 1 is the best to follow up. A thread that settles or unblocks others ranks above the threads it settles or unblocks: a decision settles other threads, a tool failure blocks the downloads, currency checks and review pages other threads need, housekeeping puts on file the texts research and checks read, and a research answer decides what a correction says. The reason is one line saying why the thread sits where it does. It states no law, and never names time remaining or a deadline. Write every description and rank in one call by `/drafting-data`'s ranking write ("Ranking the loose threads"), whose `unranked_open` reads `0` when none was missed. Do not ask the practitioner to approve the descriptions first.
 
 **Step 3. Present the Loose Threads page.** Re-render with `draft_dir` and present the page at that render's `loose_threads_path` as a file card (SKILL.md section 11, View pages). `pages_refused` means the page is stale: say so. Say in one line how many threads were ranked and that none was dropped. Then wait.
 
@@ -35,7 +31,7 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 
 - **Correct a description.** When they name a thread and give the description it should carry, write their words by `/drafting-data`'s correction write ("Correcting a job description") and re-render.
 - **Pursue.** Outline it under Branch B (`references/job-session.md`), on the Work Board the practitioner names. Outlining consumes it. The job's title, intent and steps are worded by `/drafting-data` §3's rule, with no adoption ceremony.
-- **Discard.** Applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read by Step 1's query (the ids discarded, the count) and re-render.
+- **Discard.** Applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. The call's `updated` names the ids discarded. Then re-render.
 - **Leave.** Nothing is written. A thread they do not name stays as it is.
 
 **Checking plugin threads against the installed plugin.** Only when the practitioner asks for it. Tested only on the `tooling` group, so written for it.
@@ -43,10 +39,10 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 - **4a. Check each thread against the installed plugin.** Read-only helpers, each taking three or four threads grouped by area, each returning only `DONE | PARTLY | NOT DONE`, one to three `file:line` evidence lines, and what is missing. How the threads divide among helpers is a mechanical choice stated in one line, as Branch A's fan-out is.
 - **4b. Spot-check every evidence line that drives a decision** before reporting it.
 - **4c. Report one table:** built (with where), partly built (with what is missing), not built.
-- **4d. Disposition.** The practitioner says what happens to each row. A drop is applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read by Step 1's query (the ids discarded, the count), re-render, and present the Loose Threads page again.
+- **4d. Disposition.** The practitioner says what happens to each row. A drop is applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. The call's `updated` names the ids discarded. Then re-render and present the Loose Threads page again.
 
 **Tooling threads are reported to Probanda.** Once the practitioner has said what to pursue and what to discard, and before Step 5, run `references/suggestion-box.md` over every open `tooling` thread that is not deferred. What a thread noticed about a Probanda tool goes to the lawyer plugin as an observation holding only Probanda's own output, never the thread's words. No thread is posted as a suggestion, and none is discarded without the practitioner's answer. A plugin-related thread seen in another group is named to the practitioner in one line and stays where it is.
 
 **Step 5. Record the effort as a Ready job**, worded by `/drafting-data` §3's rule. A queued job counts as open work against the Writing's `gate` criterion until it is completed or shelved, unless it waits, directly or through other open jobs, on the Writing's `File and serve`, `Serve the application` or `Serve the response` job, which puts it after the gate and outside it.
 
-Deadline isolation and the HTML pages rule bind here as everywhere: no page is read, grepped, parsed or written by the session, ranks and job descriptions are read through Step 1's query only, and nothing about time remaining enters a rank, its reason or its job description.
+Deadline isolation and the HTML pages rule bind here as everywhere: no page is read, grepped, parsed or written by the session, ranks and job descriptions are read through Step 1's read only, and nothing about time remaining enters a rank, its reason or its job description.

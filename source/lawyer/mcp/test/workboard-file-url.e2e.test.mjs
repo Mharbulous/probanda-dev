@@ -16,6 +16,7 @@ import { pathToFileURL } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 import test, { after } from "node:test";
 
+const { moveSeeds } = await import("./helpers/threads.mjs");
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { submissionFormsBootstrap, submissionFormsRender } = await import("../build/submission/forms.js");
@@ -78,6 +79,7 @@ async function renderSeededBoard(dir) {
       VALUES (1, 1, 1, 3, '2026-09-02T11:40', 'noticed while settling the draft', 'Ask whether the guarantor should be served too.');
     `.trim()
   );
+  await moveSeeds(dbPath);
   const draft = join(dir, "L7001 Ashgrove", "0. DRAFT");
   mkdirSync(draft, { recursive: true });
   const result = submissionFormsRender(dbPath, 1, { clientName: "Ashgrove Holdings", clientNo: "7001", matterNo: "L7001" }, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
@@ -112,6 +114,7 @@ async function writeSeededMatterBoard(dir) {
     INSERT INTO seeds (id, proceeding_id, filing_id, created, surfaced_by, idea) VALUES (1, 1, NULL, '2026-09-02T11:40', 'noticed', 'Serve the guarantor too?');
     `.trim()
   );
+  await moveSeeds(dbPath);
   const draft = join(dir, "L7001 Ashgrove", "0. DRAFT");
   mkdirSync(draft, { recursive: true });
   return submissionFormsBootstrap(dbPath, { clientName: "Ashgrove Holdings", clientNo: "7001", matterNo: "L7001" }, undefined, draft, TODOS).matter_board_path;

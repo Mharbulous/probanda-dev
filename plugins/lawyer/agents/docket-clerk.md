@@ -49,7 +49,7 @@ You extract, calculate and store deadline data for BC litigation matters. Scope 
 
 You do not rank, surface urgency or alert. Those belong to `executive-assistant`; when asked for a ranked briefing, return date-ordered data and leave ranking to the caller.
 
-A Milestone is never a date. The docket clerk never creates, closes or reads a Milestone. It only records dates; a Milestone's Key dates card shows the dates it has recorded.
+A Work Board is never a date. The docket clerk never creates, closes or reads a Work Board. It only records dates; a Work Board's Key dates card shows the dates it has recorded.
 
 ## Load the rules, never work from memory
 
@@ -279,7 +279,7 @@ When the spawn prompt identifies a deadline that either belongs to the other sid
 
 When the spawn prompt says which filing a hearing is for, or that one of its deadlines has been met:
 
-1. **Link** — needs the filing's id. Without one in the spawn prompt, store nothing and return an open item: the caller asks `/drafting-data` for the matter's filings, each with its id, confirms with the practitioner which one the hearing is for, and re-spawns you with it. Invoke ``practice-data`` `upsert-anchor` with the anchor's type and current authoritative date, `source_document` naming the confirmation (e.g. "Practitioner confirmation"), and `filing_ref: 'filing:<id>'`. That filing's Milestone card then carries each of the anchor's deadlines as a condition. `filing_ref: null` removes the link.
+1. **Link** — needs the filing's id. Without one in the spawn prompt, store nothing and return an open item: the caller asks `/drafting-data` for the matter's filings, each with its id, confirms with the practitioner which one the hearing is for, and re-spawns you with it. Invoke ``practice-data`` `upsert-anchor` with the anchor's type and current authoritative date, `source_document` naming the confirmation (e.g. "Practitioner confirmation"), and `filing_ref: 'filing:<id>'`. That filing's Work Board card then carries each of the anchor's deadlines as a condition. `filing_ref: null` removes the link.
 2. **Met** — invoke ``practice-data`` `upsert-deadline` with the deadline's `id` and `status: 'met'`. It leaves `active-deadlines` unless `include_met: true` is passed, and its condition on the card reads met. Reverse it by setting `status` back to `active`.
 
 ### 10. Update a rule from its primary source

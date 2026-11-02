@@ -17,6 +17,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
 import { inOneCall } from "../call-memo.js";
+import { moveSeedsOnce, type SeedsLeft, type SeedsMove } from "../loose-threads/migrate.js";
 import type { PracticeStore } from "../practice/store.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { caseDataRootFromDbPath, findDraftDir, resolveDbPath, validateMatterRoot } from "../files/matter-root.js";
@@ -64,6 +65,9 @@ export interface OpenSessionResult extends BootstrapResult {
    * carries the migrate's own warnings (a stale lock it broke, an older backup it could not
    * remove), present only when there is one. */
   migrated?: { from: number | null; to: number; backup: string | null; warnings?: string[] };
+  /** Present only when this call moved the matter's loose threads to their own store: how many, and
+   * the copy-aside of the database taken first; or, when `seeds` holds rows after that one move, how many. */
+  loose_threads_moved?: SeedsMove | SeedsLeft;
   /** The folded-in practice_data__matter_lookup (#590 decision 3). Never fatal: `found: false`
    * carries a one-line `note`. The client_* fields are the identity bootstrap used -- a caller's
    * own value wins over the lookup's -- and are what later drafting_forms__render calls pass. */
@@ -390,6 +394,7 @@ async function openSession(
   }
   for (const t of result.timings) timings.push({ phase: `bootstrap: ${t.phase}`, ms: t.ms });
   const refused = result.migration_required || result.bundle_outdated;
+  const threadsMoved = refused ? null : await phase("loose_threads", () => moveSeedsOnce(dbPath));
   const opening: Opening =
     draftDir === undefined || todos === undefined || dates === undefined || refused ? {} : openBoard(dbPath, draftDir, identity, todos, dates, result, filingId, timings);
   const drift = await phase("parties_drift", () => matterPartiesDrift(dbPath));
@@ -407,6 +412,7 @@ async function openSession(
       ...(draftDir !== undefined ? { draft_dir: draftDir } : {}),
       db_path: dbPath,
       ...(migrated ? { migrated } : {}),
+      ...(threadsMoved ? { loose_threads_moved: threadsMoved } : {}),
       ...(migrationRefused !== undefined ? { migration_refused: migrationRefused } : {}),
       ...(blocking.length > 0 ? { blocking } : {}),
       matter_lookup: lookup,

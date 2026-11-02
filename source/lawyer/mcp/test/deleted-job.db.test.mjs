@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+const { moveSeeds } = await import("./helpers/threads.mjs");
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery, submissionDataWrite } = await import("../build/submission/backend.js");
 const { CARD_LANES, TODOS_NOT_READ, renderBoardSummary, submissionFormsBoardCard } = await import("../build/submission/matter-pages.js");
@@ -104,6 +105,7 @@ async function matter(t) {
      INSERT INTO seeds (id, proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea, charted_into)
        VALUES (2, 1, 1, NULL, '2026-10-01T08:45', 'outlining', 'Check whether Smith was appealed.', 2);`
   );
+  await moveSeeds(dbPath);
   const stored = { layout: shippedBlock("Documents/notice-of-application.md"), venue: shippedBlock("venue.md"), passage_hashes: {} };
   await submissionDataWrite(dbPath, "UPDATE filings SET layout_snapshot = ? WHERE id = 1", [JSON.stringify(stored)]);
   writeManifest(dbPath, 1, {

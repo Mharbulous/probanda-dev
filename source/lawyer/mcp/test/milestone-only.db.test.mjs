@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 
+const { moveSeeds } = await import("./helpers/threads.mjs");
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsBootstrap, submissionFormsRender } = await import("../build/submission/forms.js");
@@ -84,6 +85,7 @@ async function seedWork(f) {
       VALUES (1, 1, ${f.boardId}, '0. DRAFT\\Letter about the original', 'client_letter', '2026-10-10');
     `.trim()
   );
+  await moveSeeds(f.dbPath);
 }
 
 test("create_milestone writes one filings row of the reserved kind, with no stored layout and no job", async (t) => {

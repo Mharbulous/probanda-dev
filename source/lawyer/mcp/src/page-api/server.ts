@@ -1,6 +1,6 @@
 // The page API: a node:http listener on 127.0.0.1 at a fixed port (token.ts pageApiPort, 47615 by
 // default) through which a page opened from file:// writes. Three kinds of write: the Loose Threads
-// page's Defer button (POST /seeds/<id>/defer, and /undefer), to the drafting database; the Past
+// page's Defer button (POST /seeds/<id>/defer, and /undefer), to the loose-thread store; the Past
 // suggestions page's Withdraw button (POST /suggestions/<record id>/withdraw), which withdraws one
 // suggestion this computer sent (../suggestions/send.ts); and a suggestion card's buttons and its
 // mockup page's "Not like this" (POST /cards/<card id>/<state|submit|resolve|dismiss|restore|mockup|

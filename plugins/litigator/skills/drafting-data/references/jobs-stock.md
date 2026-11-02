@@ -17,7 +17,7 @@ Fixed-text jobs `/prepare` may offer per Writing kind (the 2026-09-21 design §6
 
 Each is written by one `drafting_data__create_job` call (`jobs-create.md` §3, `guard: "none"`, no `created_by`) as `kind = 'work'`, with `billing_anchor` by §3's rule and `priority` from §3's priority read. This section's text supplies the call's `title`, `intent`, `steps` and `scope`. **`filing_id` is always the lead Writing's id** — the Notice of Application, the Application Response, or the letter — and never NULL: a proceeding-scoped stock job would show on every later Writing's board and survive this Writing's retirement.
 
-Opening a Milestone with no Writing (`drafting_data__create_milestone`) writes no stock job.
+Opening a Work Board with no Writing (`drafting_data__create_milestone`) writes no stock job.
 
 **`Availability letter`.** A `/draft` session dispatches it and drafts the letter. The letter is BCSC's `letter` kind, saved as a Writing on the proceeding of the job's own Writing when the job is dispatched, with its recipients defaulting to the whole service list by `filing-checklists.md` §13's forum idiom. The job is the letter's drafting job under its own title, so that save writes `Deliver` blocked by this job. No date appears in the job, nor any value derived from one.
 
@@ -161,7 +161,7 @@ The memo's save follows the letter save idiom below with this text in place of t
 
 The Writing's save writes `Draft the Writing` and this `Deliver` by two `drafting_data__create_job` calls, `Draft the Writing` first, then `Deliver` with `blocks` naming the `ticket_id` the first call returned. By hand: call 1 for each job, then call 3 for `Draft the Writing`'s step and its four scope rows, this `Deliver`'s two steps with the letter's scope rows as in the letter save idiom below, and one `ticket_blocks` row from `Draft the Writing` to `Deliver`. A `Deliver` an earlier save wrote with the letter's text keeps it.
 
-An `unstructured-internal` Writing's save writes `Draft the Writing` alone, by one `drafting_data__create_job` call; by hand, call 1 inserts that one row, call 2 recovers its id, and call 3 writes its step and its four scope rows. No `Deliver` row and no `ticket_blocks` edge are written. Its stored layout declares no `recipients`, and its Milestone has no `gate` row, because it is never sent.
+An `unstructured-internal` Writing's save writes `Draft the Writing` alone, by one `drafting_data__create_job` call; by hand, call 1 inserts that one row, call 2 recovers its id, and call 3 writes its step and its four scope rows. No `Deliver` row and no `ticket_blocks` edge are written. Its stored layout declares no `recipients`, and its Work Board has no `gate` row, because it is never sent.
 
 **These twelve jobs sit outside §14's nothing-open test**, read by these titles, so a queued stock job never holds the gate job back. That is their only exception in the job checklist: every other script treats them as ordinary `work` jobs. (The `gate` completion criterion, which reads unmet while a job is open, leaves out all twelve by the same titles, and §14a's `Pre-send gate` job too.)
 
@@ -325,7 +325,7 @@ A completed review job never blocks a new one: the guard reads only `queued` and
 
 ## 3g. Pass finding jobs
 
-One fixed-text job per finding the pre-review passes leave undecided: `/draft`'s letter passes (`draft/references/letters.md` section 4) and its overstatement review (`draft/references/overstatement.md`) on any Writing. A finding lives on the Milestone and nowhere else: never in the Writing's text, its mockup, a report file or a file card (spec `Engineering/1. Design/2026-10-06_letter-passes-emit-board-items-spec.md` §12). A client letter is no Writing and gets none: its findings stay in chat.
+One fixed-text job per finding the pre-review passes leave undecided: `/draft`'s letter passes (`draft/references/letters.md` section 4) and its overstatement review (`draft/references/overstatement.md`) on any Writing. A finding lives on the Work Board and nowhere else: never in the Writing's text, its mockup, a report file or a file card (spec `Engineering/1. Design/2026-10-06_letter-passes-emit-board-items-spec.md` §12). A client letter is no Writing and gets none: its findings stay in chat.
 
 **Who creates it.** The session that ran the pass, in the turn it states the finding to the practitioner, for each finding not resolved in that turn, written straight to Ready with no closing read-back. A finding fixed or decided in the same turn is never written.
 
@@ -386,7 +386,7 @@ One fixed-text job, written when the practitioner accepts `/draft`'s conversion 
 - Step 2: `Run /localize create with the practitioner layout and, for a court form, the saved copy of the linked form`
 - No scope rows: `/localize` writes the knowledge tree, never this database. No step offers retirement: recording a Writing as sent never leads to a retirement offer (ADR 0042 D8).
 
-`kind = 'work'`, `billing_anchor` `<matter>|unbilled firm infrastructure`, `priority` from §3's priority read, and `filing_id` the Writing's own id, so the job sits on its own Milestone. Written by one `drafting_data__create_job` call with `guard: "none"` and no `created_by`: the offer is made once, when the Writing is recorded as sent. The statements below are the call's contract. Call 1, for a Writing titled `Notice of discontinuance`:
+`kind = 'work'`, `billing_anchor` `<matter>|unbilled firm infrastructure`, `priority` from §3's priority read, and `filing_id` the Writing's own id, so the job sits on its own Work Board. Written by one `drafting_data__create_job` call with `guard: "none"` and no `created_by`: the offer is made once, when the Writing is recorded as sent. The statements below are the call's contract. Call 1, for a Writing titled `Notice of discontinuance`:
 
 ```sql
 INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created)
@@ -415,12 +415,12 @@ The job's words come from the offer's `job:` and `steps:` lines in the return th
 - An offer with no `job:` line gets no job. Write nothing, and say in one line that the offer carries no job line and that the practitioner can outline it in their own words under `/draft`.
 - An offer with a `job:` line and no `steps:` line takes the plan marker as its one step (`jobs-create.md` §3, "The plan marker"), never steps the session words.
 - An offer tagged `kind: note-up` gets no job, even on "add" (`shared/legal-audit-protocol.md`, Step 5, prints it with no `job:` line). Write nothing, and say in one line that a note-up is written only on the practitioner's own instruction, such as "note up <case>", outlined under `/draft`, or by the "Note up all cited authorities" create. **Hard rule:** no session writes a job whose title or intent is a note-up of an authority, a read of its citing cases, or a citator or KeyCite check, except on the practitioner's express instruction or by that create. Never from a research offer, a loose thread or a finding by the session's own reading.
-- The offer itself stays on record: the loose thread this add consumes keeps it verbatim (`seeds.idea`, with `charted_into` set to the job), so the job's words can be checked against it.
+- The offer itself stays on record: the loose thread this add consumes keeps it verbatim (its `idea`, with `charted_into` set to the job), so the job's words can be checked against it.
 - No scope rows: the job writes no substance table (`jobs-common.md` §2 allows a job with none).
 
-`kind = 'work'`. `billing_anchor` is never asked: in a session holding a job it is the held job's, otherwise the one the board's open work jobs carry. With none to copy it is `<matter>|<the Writing's or Milestone's title>`, or for a proceeding with no Writing `<matter>|<its forum and file number>`. `priority` is one below the lowest §3's priority read returns, or `0` when no row returns.
+`kind = 'work'`. `billing_anchor` is never asked: in a session holding a job it is the held job's, otherwise the one the board's open work jobs carry. With none to copy it is `<matter>|<the Writing's or Work Board's title>`, or for a proceeding with no Writing `<matter>|<its forum and file number>`. `priority` is one below the lowest §3's priority read returns, or `0` when no row returns.
 
-`filing_id` and `proceeding_id`: in a session holding a job, the held job's. Otherwise the board's: a Writing's id and proceeding, a Milestone with no Writing's own id and proceeding, or `filing_id` NULL where §8a step 2 resolves to the proceeding alone or to a retired Writing.
+`filing_id` and `proceeding_id`: in a session holding a job, the held job's. Otherwise the board's: a Writing's id and proceeding, a Work Board with no Writing's own id and proceeding, or `filing_id` NULL where §8a step 2 resolves to the proceeding alone or to a retired Writing.
 
 **Guarded create**, on §3g's shape, one offer per call 1. Call 1 inserts the row and deletes it again, in the same script, when any job in the proceeding, of any status, shelved included, and not deleted, carries the same title and a step. The row just inserted has no step yet, so it can never match its own guard. An offer a later return repeats, or one a completed job already answered, is never written again.
 
@@ -453,11 +453,7 @@ INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (31, 3, 'Save the ans
 
 These rows stand for one offer's `steps:` line. They are never a default plan and are never copied onto another job: a job with no `steps:` line of its own takes the plan marker.
 
-**Consuming the thread on "add".** A relayed offer was captured as a loose thread in the turn it was relayed (`jobs-run.md` §8 or §8a). When the practitioner names it to add, write its job as above, then mark that thread, here `7`, as outlined into the job:
-
-```sql
-UPDATE seeds SET charted_into = 31 WHERE id = 7;
-```
+**Consuming the thread on "add".** A relayed offer was captured as a loose thread in the turn it was relayed (`jobs-run.md` §8 or §8a). When the practitioner names it to add, write its job as above, then mark that thread as outlined into the job: `loose_threads__update` with `action: "consume"`, `id` the thread and `job_id` the job.
 
 This is the one `charted_into` write outside an outlining session. It runs in the session the sort ran in, and only on a thread that sort captured.
 
@@ -477,7 +473,7 @@ It is written by §3i's guarded create and its call 2, on its title. A guard tha
 INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (32, 1, 'Create a plan for how to complete this job.');
 ```
 
-Then re-render the board with `draft_dir`, so its Milestone page lists the new jobs. `pages_refused` means the page is stale: say so. No research runs from this write: each job is researched when it is worked.
+Then re-render the board with `draft_dir`, so its Work Board page lists the new jobs. `pages_refused` means the page is stale: say so. No research runs from this write: each job is researched when it is worked.
 
 ## 3m. Research board writes
 

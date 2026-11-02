@@ -6,10 +6,12 @@
 // goals amendment): the practitioner's combined goal_statement, written as confirmed, or with none,
 // status needs_consolidation. Each earlier statement, the survivor's own and the absorbed board's, with
 // its own merged ones, is kept under `merged` as history only, and the absorbed board's row removed.
-// No job, loose thread or Writing row is written: at the next render the survivor's page draws every
-// board on it as one board (combined-board.ts).
+// No job or Writing row is written: at the next render the survivor's page draws every board on it as
+// one board (combined-board.ts). The absorbed board's loose threads are repointed to the survivor, in
+// the store (loose-threads/tools.ts), after the merge lands; a failed repoint is reported, and the merge stands.
 
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
+import { repointThreads } from "../../loose-threads/tools.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { framingWarning, type MergedGoal, NEEDS_CONSOLIDATION, readStored, type StoredGoals, survivorGoalsKey } from "./board-goals.js";
 import { BoardIndex, type BoardRef, memberKey, sameBoard } from "./board-members.js";
@@ -39,6 +41,12 @@ export interface MergeMilestonesResult {
   goal_status: "confirmed" | typeof NEEDS_CONSOLIDATION;
   note: string;
   warning?: string;
+}
+
+/** A membership key's board, by its filing: a proceeding's own key names no filing to repoint. */
+function boardOfKey(key: string): { filing_id: number | null } {
+  const m = /filing:(\d+)$/.exec(key);
+  return { filing_id: m === null ? null : Number(m[1]) };
 }
 
 function label(b: BoardRef): string {
@@ -131,6 +139,16 @@ export async function submissionDataMergeMilestones(args: MergeMilestonesArgs, e
     env
   );
   if (!written.ok) throw new DataServerError(`${TOOL}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
+  let threadsNote = "";
+  if (survivor.filing_id !== null) {
+    const from = new Set([absorbed, ...index.membersOf(absorbed).map(boardOfKey)].flatMap((b) => (b.filing_id === null ? [] : [b.filing_id])));
+    try {
+      repointThreads(args.db_path, from, { filing_id: survivor.filing_id, proceeding_id: survivor.proceeding_id }, env);
+    } catch (err) {
+      if (!(err instanceof DataServerError)) throw err;
+      threadsNote = ` The absorbed board's loose threads still name it: ${err.message}`;
+    }
+  }
   const framing = statement === undefined ? null : framingWarning(statement, args.goal_description);
   const goalNote =
     statement === undefined
@@ -140,7 +158,7 @@ export async function submissionDataMergeMilestones(args: MergeMilestonesArgs, e
     survivor,
     absorbed,
     goal_status: goalStatus,
-    note: `${label(absorbed)} is merged into ${label(survivor)}. ${goalNote} Re-render to draw the merged page.${framing === null ? "" : ` ${framing}`}`,
+    note: `${label(absorbed)} is merged into ${label(survivor)}. ${goalNote} Re-render to draw the merged page.${threadsNote}${framing === null ? "" : ` ${framing}`}`,
     ...(written.warning ? { warning: written.warning } : {}),
   };
 }

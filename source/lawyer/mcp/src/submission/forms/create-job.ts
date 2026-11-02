@@ -1,12 +1,16 @@
 // drafting_data__create_job: one call creates a job (a tickets row) with its steps, scope, blocking
-// edges, conflict pairs, conversion records (ticket_proposals) and consumed loose thread, under the
-// duplicate guard its kind takes, in one transaction. Each guard is the condition /drafting-data
+// edges, conflict pairs and conversion records (ticket_proposals), under the duplicate guard its kind
+// takes, in one transaction, then consumes its loose thread, which lives in another file, so a failed
+// second write is reported in the result. Each guard is the condition /drafting-data
 // documents for that kind of job (jobs-create.md §3, §3e, §3f; jobs-stock.md §3c, §3d, §3g). It is
 // tested in the job's own INSERT ... SELECT ... WHERE, before the row exists, so a guard can never
 // match the job it guards, and a guarded call writes nothing and names the job that blocked it. The
 // job tables carry no revision triggers.
 
 import { DataServerError, ValidationError } from "../../errors.js";
+import { readThreads } from "../../loose-threads/backend.js";
+import { moveSeedsOnce } from "../../loose-threads/migrate.js";
+import { looseThreadsUpdate } from "../../loose-threads/tools.js";
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { BRIEF_JOB_PREFIX, citationKey } from "./brief-job.js";
 import { createdByHeld, liveTicketClause, MILESTONE_KIND } from "./query.js";
@@ -66,7 +70,7 @@ export interface CreateJobArgs {
   /** Existing jobs this one conflicts with, written in the CHECK's order. */
   conflicts?: number[];
   proposal_keys?: ProposalKey[];
-  /** A loose thread this job consumes (seeds.charted_into). */
+  /** A loose thread this job consumes (its charted_into in the loose-thread store). */
   seed_id?: number;
   /** tickets.created_by (schema v72): this session's token, written only by the creates that say so. */
   created_by?: string;
@@ -91,6 +95,8 @@ export interface CreateJobResult {
   holder_id?: number;
   note: string;
   warning?: string;
+  /** The job was created, and this says why the loose thread named by seed_id was not consumed. */
+  thread_not_consumed?: string;
 }
 
 const isId = (v: unknown): v is number => Number.isInteger(v) && (v as number) > 0;
@@ -257,6 +263,10 @@ export async function submissionDataCreateJob(args: CreateJobArgs, env: NodeJS.P
     throw new ValidationError(`${TOOL}.filing_id is required: the Writing's or Work Board's id, or null for a proceeding-scoped job`, "invalid_filing_id");
   }
   validate(args);
+  if (args.seed_id !== undefined) {
+    await moveSeedsOnce(args.db_path, env);
+    if (!readThreads(args.db_path, env).some((t) => t.id === args.seed_id)) throw new ValidationError(`${TOOL}.seed_id ${args.seed_id} names no loose thread; nothing was written`, "invalid_seed_id");
+  }
   const companions = args.companions ?? [];
   const holder = holderQuery(args, [args.title, ...companions.map((c) => c.title)]);
   const priority = priorityExpr(args);
@@ -284,8 +294,6 @@ export async function submissionDataCreateJob(args: CreateJobArgs, env: NodeJS.P
   for (const blocker of args.blocks ?? []) statements.push({ sql: "INSERT INTO ticket_blocks (blocker_id, blocked_id) VALUES (?, ?)", params: [blocker, lead] });
   for (const other of args.conflicts ?? []) statements.push({ sql: "INSERT INTO ticket_conflicts (a_id, b_id) VALUES (MIN(?, ?), MAX(?, ?))", params: [other, lead, other, lead] });
   for (const k of args.proposal_keys ?? []) statements.push({ sql: "INSERT INTO ticket_proposals (ticket_id, proposal_key, item) VALUES (?, ?, ?)", params: [lead, k.key, k.item] });
-  const seedAt = args.seed_id === undefined ? -1 : statements.length;
-  if (args.seed_id !== undefined) statements.push({ sql: "UPDATE seeds SET charted_into = ? WHERE id = ?", params: [lead, args.seed_id], expect_changes: 1 });
   const companionAt: number[] = [];
   for (const c of companions) {
     // Each companion takes the lead's priority and is inserted after it, so the lead heads the queue.
@@ -303,7 +311,6 @@ export async function submissionDataCreateJob(args: CreateJobArgs, env: NodeJS.P
   const written = await submissionDataWriteAll(args.db_path, statements, env);
   const warning = written.warning ? { warning: written.warning } : {};
   if (!written.ok) {
-    if (written.failed === seedAt) throw new ValidationError(`${TOOL}.seed_id ${args.seed_id} names no loose thread; nothing was written`, "invalid_seed_id");
     if (written.failed !== 0) throw new DataServerError(`${TOOL}: statement ${written.failed} changed ${written.changes} rows; nothing was written`);
     return { outcome: "guarded", ...guardedReport(args, holder), ...warning };
   }
@@ -311,6 +318,15 @@ export async function submissionDataCreateJob(args: CreateJobArgs, env: NodeJS.P
   const companionIds = companionAt.map((at) => written.results[at].rowid);
   const [row] = submissionDataQuery(args.db_path, "SELECT priority FROM tickets WHERE id = ?", [ticketId]).rows as unknown as { priority: number }[];
   const all = [ticketId, ...companionIds].map((id) => `Job ${id}`).join(" and ");
+  let threadNotConsumed: string | undefined;
+  if (args.seed_id !== undefined) {
+    try {
+      await looseThreadsUpdate({ db_path: args.db_path, action: "consume", id: args.seed_id, job_id: ticketId }, env);
+    } catch (err) {
+      if (!(err instanceof DataServerError)) throw err;
+      threadNotConsumed = `Loose thread ${args.seed_id} still shows as open: ${err.message}`;
+    }
+  }
   return {
     outcome: "created",
     ticket_id: ticketId,
@@ -318,6 +334,7 @@ export async function submissionDataCreateJob(args: CreateJobArgs, env: NodeJS.P
     priority: row.priority,
     note: `${all} created with steps, scope and links in one transaction${writer ? ", created_by this session" : ""}. Re-render.`,
     ...warning,
+    ...(threadNotConsumed === undefined ? {} : { thread_not_consumed: threadNotConsumed }),
   };
 }
 

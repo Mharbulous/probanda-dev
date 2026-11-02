@@ -11,6 +11,7 @@ import { DataServerError } from "../../errors.js";
 import { extractJsonBlock, validateVenueBlock } from "../../knowledge/declared-layout.js";
 import { parseKnowledgePath, shippedLayer } from "../../knowledge/tree.js";
 import { rows } from "../query-rows.js";
+import { readThreads } from "../../loose-threads/backend.js";
 import { hasColumn, hasTable } from "../schema-capabilities.js";
 import type { CaptionHeading } from "./components.js";
 import type { StoredLayout } from "./layout-snapshot.js";
@@ -612,18 +613,6 @@ export function liveTicketClause(dbPath: string, alias?: string): string {
   return deletedAtHeld(dbPath) ? ` AND ${alias === undefined ? "" : `${alias}.`}deleted_at IS NULL` : "";
 }
 
-/** The `seeds` columns that take a loose thread off the board (schema v75), as this database holds
- * them: `discarded_at` and `suggested_at`, or none on a database held below v75. */
-export function seedClosedColumns(dbPath: string): string[] {
-  return ["discarded_at", "suggested_at"].filter((column) => hasColumn(dbPath, "seeds", column));
-}
-
-/** ` AND discarded_at IS NULL AND suggested_at IS NULL`, so a query sees only loose threads that were
- * neither discarded nor suggested (jobs-run.md §8); empty on a database held below v75. */
-export function liveSeedClause(dbPath: string): string {
-  return seedClosedColumns(dbPath).map((column) => ` AND ${column} IS NULL`).join("");
-}
-
 /** A Writing's prose-cited statements of law (#1214), by statement id. */
 export function fetchFilingLaw(dbPath: string, filingId: number): FilingLawRow[] {
   return rows<FilingLawRow>(
@@ -689,7 +678,7 @@ export function fetchHearingDate(dbPath: string, filingId: number): string | nul
 export function fetchLatestActivity(dbPath: string, proceedingId: number): { filing_id: number | null; latest: string }[] {
   // A deleted job counts toward nothing (jobs-closeout.md §10a).
   const live = liveTicketClause(dbPath);
-  return rows<{ filing_id: number | null; latest: string }>(
+  const found = rows<{ filing_id: number | null; latest: string }>(
     dbPath,
     `SELECT filing_id, MAX(ts) AS latest FROM (
        SELECT filing_id, created AS ts FROM tickets WHERE proceeding_id = ?${live}
@@ -697,10 +686,15 @@ export function fetchLatestActivity(dbPath: string, proceedingId: number): { fil
        UNION ALL SELECT filing_id, plan_approved_at FROM tickets WHERE proceeding_id = ?${live}
        UNION ALL SELECT filing_id, completed_at FROM tickets WHERE proceeding_id = ?${live}
        UNION ALL SELECT t.filing_id, s.done_at FROM ticket_steps s JOIN tickets t ON t.id = s.ticket_id WHERE t.proceeding_id = ?${liveTicketClause(dbPath, "t")}
-       UNION ALL SELECT filing_id, created FROM seeds WHERE proceeding_id = ? AND charted_into IS NULL${liveSeedClause(dbPath)}
      ) WHERE ts IS NOT NULL GROUP BY filing_id`,
-    [proceedingId, proceedingId, proceedingId, proceedingId, proceedingId, proceedingId]
+    [proceedingId, proceedingId, proceedingId, proceedingId, proceedingId]
   );
+  const latest = new Map(found.map((r) => [r.filing_id, r.latest]));
+  for (const t of readThreads(dbPath)) {
+    if (t.proceeding_id !== proceedingId || t.charted_into !== null || t.discarded_at !== null || t.suggested_at !== null) continue;
+    if ((latest.get(t.filing_id) ?? "") < t.created) latest.set(t.filing_id, t.created);
+  }
+  return [...latest].map(([filing_id, value]) => ({ filing_id, latest: value })).sort((a, b) => (a.filing_id ?? 0) - (b.filing_id ?? 0));
 }
 
 export function fetchRevision(dbPath: string): number {

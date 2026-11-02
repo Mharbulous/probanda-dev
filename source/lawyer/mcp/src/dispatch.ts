@@ -8,6 +8,7 @@ import {
   submissionFormsToolDefinitions,
   timecampingToolDefinitions,
   timePipelineToolDefinitions,
+  looseThreadsToolDefinitions,
   type ToolDefinition,
 } from "./schema-gen.js";
 import { defineTool, definitionLookup, jsonText, pairTools, toolReply, type PairedTool, type Tool, type ToolReply } from "./tool-list.js";
@@ -40,6 +41,7 @@ import { timecampingDataQuery, timecampingDataExecute, timecampingDataBulkUpsert
 import { timecampingDataMigrate } from "./timecamping/migrate.js";
 import { submissionDataQuery, submissionDataExecute } from "./submission/backend.js";
 import { submissionDataMigrate } from "./submission/migrate.js";
+import { looseThreadsCapture, looseThreadsRead, looseThreadsUpdate, type CaptureArgs, type ReadArgs, type UpdateArgs } from "./loose-threads/tools.js";
 import { submissionDataCreateWriting, type CreateWritingArgs } from "./submission/forms/layout-snapshot.js";
 import { submissionDataCreateMilestone, type CreateMilestoneArgs } from "./submission/forms/create-milestone.js";
 import { submissionDataMergeMilestones, type MergeMilestonesArgs } from "./submission/forms/merge-milestones.js";
@@ -215,6 +217,9 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("drafting_data__query", (args: { db_path: string; sql: string; params?: unknown[] }) =>
     submissionDataQuery(args.db_path, args.sql, args.params)),
   defineTool("drafting_data__execute", (args: { db_path: string; sql_script: string }) => submissionDataExecute(args.db_path, args.sql_script, process.env, true)),
+  defineTool("loose_threads__capture", (args: CaptureArgs) => looseThreadsCapture(args)),
+  defineTool("loose_threads__read", (args: ReadArgs) => looseThreadsRead(args)),
+  defineTool("loose_threads__update", (args: UpdateArgs) => looseThreadsUpdate(args)),
   defineTool("drafting_data__repoint_documents", (args: RepointDocumentsRequest) => repointDocuments(args)),
   defineTool("drafting_data__create_writing", (args: CreateWritingArgs) =>
     submissionDataCreateWriting(args, {
@@ -331,6 +336,7 @@ export function dataToolDefinitions(): ToolDefinition[] {
   return [
     ...caseDataToolDefinitions(),
     ...timePipelineToolDefinitions(),
+    ...looseThreadsToolDefinitions(),
     ...timecampingToolDefinitions(),
     ...submissionDataToolDefinitions(),
     ...submissionFormsToolDefinitions(),

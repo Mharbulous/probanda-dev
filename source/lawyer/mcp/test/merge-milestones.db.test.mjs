@@ -15,6 +15,9 @@ import test, { after } from "node:test";
 process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-merge-boards-locks-"));
 after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
 
+const { moveSeeds } = await import("./helpers/threads.mjs");
+const { readThreads } = await import("../build/loose-threads/backend.js");
+const { looseThreadsCapture } = await import("../build/loose-threads/tools.js");
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
@@ -97,11 +100,21 @@ async function fixture(t) {
      INSERT INTO seeds (id, proceeding_id, filing_id, created, surfaced_by, idea) VALUES (1, 1, NULL, '2026-10-19 08:10', 'noticed', 'Ask about costs.'),
                                                                                          (2, 2, 3, '2026-10-19 08:11', 'noticed', 'Is the counterclaim late?');`
   );
+  await moveSeeds(m.dbPath);
   return m;
 }
 
 const goalsCard = (m) => submissionFormsBoardCard({ db_path: m.dbPath, filing_id: 1, lanes: ["goals"] }, ASHBOURNE, NOW).card;
 const goalLine = (m) => submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", ["Work_board"], undefined, undefined, NOW, TOKEN, m.draft).documents.find((d) => d.document_type === "Work_board").board_summary.split("\n").find((l) => l.startsWith("Goal:"));
+
+test("merging two boards of one proceeding repoints the absorbed board's loose threads to the survivor, and across proceedings leaves them", async (t) => {
+  const m = await fixture(t);
+  const { id } = await looseThreadsCapture({ db_path: m.dbPath, proceeding_id: 1, filing_id: 2, surfaced_by: "noticed", idea: "On the absorbed board." });
+  await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 2 }]);
+  assert.equal(readThreads(m.dbPath).find((x) => x.id === id).filing_id, 1, "same proceeding: repointed");
+  await merge(m.dbPath, [{ filing_id: 1 }, { filing_id: 3 }]);
+  assert.equal(readThreads(m.dbPath).find((x) => x.id === 2).filing_id, 3, "another proceeding's filing id stays");
+});
 
 test("the merge keeps the lower-id Writing's board, writes one membership row and keeps both statements of goals as history, drawn nowhere once the board holds one goal", async (t) => {
   const m = await fixture(t);

@@ -1,6 +1,6 @@
 ---
 name: task-prioritization
-description: Maintain and rank the practitioner's to-do registry (retainer-first). Use to add or complete a to-do, see the ranked to-do list, or which files need attention, or to show the Work Board (every matter's open work on one page). 'What should I work on' is answered only when the practitioner types /executive-assistant; do not route to it. Re-ranks when a retainer notice is sent, a trust balance changes, or a deadline updates.
+description: Maintain and rank the practitioner's to-do registry (retainer-first). Use to add or complete a to-do, see the ranked to-do list, or which files need attention, or to show the Practice Board (every matter's open work on one page). 'What should I work on' is answered only when the practitioner types /executive-assistant; do not route to it. Re-ranks when a retainer notice is sent, a trust balance changes, or a deadline updates.
 user-invocable: true
 ---
 
@@ -66,12 +66,12 @@ When the user asks "what should I work on?", "what's next?", or wants the ranked
 3. Within Work tier, apply tie-breaking (deadline proximity → net trust)
 4. Display using the [Output format](#output-format) — always show the reasoning
 
-When the user asks to see the work board, or all work across the practice as a page, do not rank. Call `practice-data`'s work-board operation (`practice_data__render_practice_board`), present the page as a file card (`shared/present-files.md`) by its `work_board_path`, and relay only the panel counts it returns. Never read the page (`shared/html-pages.md`).
+When the user asks to see the practice board, or all work across the practice as a page, do not rank. Call `practice-data`'s practice-board operation (`practice_data__render_practice_board`), present the page as a file card (`shared/present-files.md`) by its `practice_board_path`, and relay only the panel counts it returns. Never read the page (`shared/html-pages.md`).
 
 ### 2. Add a to-do
 
 A to-do is one outcome the practitioner would cross off, such as "Re-file default judgment
-application". Work toward it (research, checks, attaching evidence) is jobs on the Milestone of the
+application". Work toward it (research, checks, attaching evidence) is jobs on the Work Board of the
 filing it points to, never another to-do. Research that serves a filing is always a job on that
 filing. Apart from the follow-up and rule-change diary to-dos `lawyer:docket-clerk` writes, this
 skill is the only one that creates a to-do, and a drafting session hands its to-do requests here
@@ -92,7 +92,7 @@ skill is the only one that creates a to-do, and a drafting session hands its to-
    filing" is never a reason to add its to-do without the pointer (ADR 0024 D13).
 4. Invoke ``practice-data`` `upsert-task` to create the to-do. If it refuses because the filing
    already has an open to-do, name that to-do from the refusal and offer to fold the new work into it
-   as jobs on the filing's Milestone.
+   as jobs on the filing's Work Board.
 5. Confirm: "Added to-do: [description] — [matter name if applicable]". Never echo the returned row.
 6. Ask if they want to see the updated ranked list
 
@@ -149,7 +149,7 @@ The recurring-reminder loop. The caller (normally `executive-assistant`) states 
 A to-do may point to one filing, or one pre-filing proceeding, of its own matter. The matter's To
 Do List then shows that filing's one-line status under the to-do, and the filing stays in the
 list of filings below (ADR 0021 D5). The pointer holds no jobs and no plan: a filing's jobs stay on
-its own Milestone.
+its own Work Board.
 
 1. Identify the to-do. It must belong to a matter: an admin or professional to-do with no matter
    points nowhere.

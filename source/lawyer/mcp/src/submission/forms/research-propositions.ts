@@ -175,6 +175,16 @@ export function buildPropositionsData(dbPath: string, filing: FilingRow | Filing
   return { counts, groups };
 }
 
+/** The Loose Threads page's Propositions tab: every card of these proceedings, read against all of each
+ * one's filings, that the class rule calls not relevant: omitted, or resting only on a killed authority.
+ * Undecided ones may still be used, so they stay on the Legal Research page. */
+export function killedPropositions(dbPath: string, proceedingIds: number[]): PropositionCard[] {
+  return proceedingIds.flatMap((p) => {
+    const ids = rows<{ id: number }>(dbPath, "SELECT id FROM filings WHERE proceeding_id = ?", [p]).map((f) => f.id);
+    return propositionsFor(dbPath, p, ids, true).groups.flatMap((g) => g.propositions).filter((c) => c.class === "not_relevant");
+  });
+}
+
 function propositionsFor(dbPath: string, proceedingId: number, ids: number[], merged: boolean): PropositionsData {
   const inIds = `(${ids.map(() => "?").join(", ")})`;
   const here = merged ? "this board's Writings" : "this Writing";

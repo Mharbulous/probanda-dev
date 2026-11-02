@@ -1,4 +1,4 @@
-// build-stamp: aabeb4eaea61
+// build-stamp: e0c35cf59361
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -241,8 +241,8 @@ var require_scope = __commonJS({
         super(nameStr);
         this.prefix = prefix;
       }
-      setValue(value, { property, itemIndex }) {
-        this.value = value;
+      setValue(value2, { property, itemIndex }) {
+        this.value = value2;
         this.scopePath = (0, code_1._)`.${new code_1.Name(property)}[${itemIndex}]`;
       }
     };
@@ -261,13 +261,13 @@ var require_scope = __commonJS({
       name(prefix) {
         return new ValueScopeName(prefix, this._newName(prefix));
       }
-      value(nameOrPrefix, value) {
+      value(nameOrPrefix, value2) {
         var _a4;
-        if (value.ref === void 0)
+        if (value2.ref === void 0)
           throw new Error("CodeGen: ref must be passed in value");
         const name = this.toName(nameOrPrefix);
         const { prefix } = name;
-        const valueKey = (_a4 = value.key) !== null && _a4 !== void 0 ? _a4 : value.ref;
+        const valueKey = (_a4 = value2.key) !== null && _a4 !== void 0 ? _a4 : value2.ref;
         let vs2 = this._values[prefix];
         if (vs2) {
           const _name = vs2.get(valueKey);
@@ -279,8 +279,8 @@ var require_scope = __commonJS({
         vs2.set(valueKey, name);
         const s3 = this._scope[prefix] || (this._scope[prefix] = []);
         const itemIndex = s3.length;
-        s3[itemIndex] = value.ref;
-        name.setValue(value, { property: prefix, itemIndex });
+        s3[itemIndex] = value2.ref;
+        name.setValue(value2, { property: prefix, itemIndex });
         return name;
       }
       getValue(prefix, keyOrRef) {
@@ -750,8 +750,8 @@ var require_codegen = __commonJS({
         return this._extScope.name(prefix);
       }
       // reserves unique name in the external scope and assigns value to it
-      scopeValue(prefixOrName, value) {
-        const name = this._extScope.value(prefixOrName, value);
+      scopeValue(prefixOrName, value2) {
+        const name = this._extScope.value(prefixOrName, value2);
         const vs2 = this._values[name.prefix] || (this._values[name.prefix] = /* @__PURE__ */ new Set());
         vs2.add(name);
         return name;
@@ -805,13 +805,13 @@ var require_codegen = __commonJS({
       // returns code for object literal for the passed argument list of key-value pairs
       object(...keyValues) {
         const code = ["{"];
-        for (const [key, value] of keyValues) {
+        for (const [key, value2] of keyValues) {
           if (code.length > 1)
             code.push(",");
           code.push(key);
-          if (key !== value || this.opts.es5) {
+          if (key !== value2 || this.opts.es5) {
             code.push(":");
-            (0, code_1.addCodeArg)(code, value);
+            (0, code_1.addCodeArg)(code, value2);
           }
         }
         code.push("}");
@@ -890,10 +890,10 @@ var require_codegen = __commonJS({
         return this._leafNode(new Break2(label2));
       }
       // `return` statement
-      return(value) {
+      return(value2) {
         const node = new Return();
         this._blockNode(node);
-        this.code(value);
+        this.code(value2);
         if (node.nodes.length !== 1)
           throw new Error('CodeGen: "return" should have one node');
         return this._endBlockNode(Return);
@@ -2221,20 +2221,20 @@ var require_resolve = __commonJS({
       return false;
     }
     function countKeys(schema) {
-      let count = 0;
+      let count2 = 0;
       for (const key in schema) {
         if (key === "$ref")
           return Infinity;
-        count++;
+        count2++;
         if (SIMPLE_INLINED.has(key))
           continue;
         if (typeof schema[key] == "object") {
-          (0, util_1.eachItem)(schema[key], (sch) => count += countKeys(sch));
+          (0, util_1.eachItem)(schema[key], (sch) => count2 += countKeys(sch));
         }
-        if (count === Infinity)
+        if (count2 === Infinity)
           return Infinity;
       }
-      return count;
+      return count2;
     }
     function getFullPath(resolver, id = "", normalize2) {
       if (normalize2 !== false)
@@ -4762,13 +4762,13 @@ var require_ucs2length = __commonJS({
       const len = str.length;
       let length = 0;
       let pos = 0;
-      let value;
+      let value2;
       while (pos < len) {
         length++;
-        value = str.charCodeAt(pos++);
-        if (value >= 55296 && value <= 56319 && pos < len) {
-          value = str.charCodeAt(pos);
-          if ((value & 64512) === 56320)
+        value2 = str.charCodeAt(pos++);
+        if (value2 >= 55296 && value2 <= 56319 && pos < len) {
+          value2 = str.charCodeAt(pos);
+          if ((value2 & 64512) === 56320)
             pos++;
         }
       }
@@ -5406,8 +5406,8 @@ var require_contains = __commonJS({
         cxt.result(valid, () => cxt.reset());
         function validateItemsWithCount() {
           const schValid = gen.name("_valid");
-          const count = gen.let("count", 0);
-          validateItems(schValid, () => gen.if(schValid, () => checkLimits(count)));
+          const count2 = gen.let("count", 0);
+          validateItems(schValid, () => gen.if(schValid, () => checkLimits(count2)));
         }
         function validateItems(_valid, block2) {
           gen.forRange("i", 0, len, (i3) => {
@@ -5420,16 +5420,16 @@ var require_contains = __commonJS({
             block2();
           });
         }
-        function checkLimits(count) {
-          gen.code((0, codegen_1._)`${count}++`);
+        function checkLimits(count2) {
+          gen.code((0, codegen_1._)`${count2}++`);
           if (max === void 0) {
-            gen.if((0, codegen_1._)`${count} >= ${min}`, () => gen.assign(valid, true).break());
+            gen.if((0, codegen_1._)`${count2} >= ${min}`, () => gen.assign(valid, true).break());
           } else {
-            gen.if((0, codegen_1._)`${count} > ${max}`, () => gen.assign(valid, false).break());
+            gen.if((0, codegen_1._)`${count2} > ${max}`, () => gen.assign(valid, false).break());
             if (min === 1)
               gen.assign(valid, true);
             else
-              gen.if((0, codegen_1._)`${count} >= ${min}`, () => gen.assign(valid, true));
+              gen.if((0, codegen_1._)`${count2} >= ${min}`, () => gen.assign(valid, true));
           }
         }
       }
@@ -6753,11 +6753,11 @@ var require_formats = __commonJS({
     }
     var MIN_INT32 = -(2 ** 31);
     var MAX_INT32 = 2 ** 31 - 1;
-    function validateInt32(value) {
-      return Number.isInteger(value) && value <= MAX_INT32 && value >= MIN_INT32;
+    function validateInt32(value2) {
+      return Number.isInteger(value2) && value2 <= MAX_INT32 && value2 >= MIN_INT32;
     }
-    function validateInt64(value) {
-      return Number.isInteger(value);
+    function validateInt64(value2) {
+      return Number.isInteger(value2);
     }
     function validateNumber() {
       return true;
@@ -6864,8 +6864,8 @@ var require_dist = __commonJS({
         return ajv;
       }
       const [formats, exportName] = opts.mode === "fast" ? [formats_1.fastFormats, fastName] : [formats_1.fullFormats, fullName];
-      const list = opts.formats || formats_1.formatNames;
-      addFormats(ajv, list, formats, exportName);
+      const list2 = opts.formats || formats_1.formatNames;
+      addFormats(ajv, list2, formats, exportName);
       if (opts.keywords)
         (0, limit_1.default)(ajv);
       return ajv;
@@ -6877,11 +6877,11 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f3;
     };
-    function addFormats(ajv, list, fs2, exportName) {
+    function addFormats(ajv, list2, fs2, exportName) {
       var _a4;
       var _b;
       (_a4 = (_b = ajv.opts.code).formats) !== null && _a4 !== void 0 ? _a4 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
-      for (const f3 of list)
+      for (const f3 of list2)
         ajv.addFormat(f3, fs2[f3]);
     }
     module.exports = exports = formatsPlugin;
@@ -12048,10 +12048,10 @@ var init_pdf_worker_min = __esm({
         return e4.length = t4;
       };
     }, 4576: function(e3) {
-      var check2 = function(e4) {
+      var check3 = function(e4) {
         return e4 && e4.Math === Math && e4;
       };
-      e3.exports = check2("object" == typeof globalThis && globalThis) || check2("object" == typeof window && window) || check2("object" == typeof self && self) || check2("object" == typeof global && global) || check2("object" == typeof this && this) || /* @__PURE__ */ (function() {
+      e3.exports = check3("object" == typeof globalThis && globalThis) || check3("object" == typeof window && window) || check3("object" == typeof self && self) || check3("object" == typeof global && global) || check3("object" == typeof this && this) || /* @__PURE__ */ (function() {
         return this;
       })() || Function("return this")();
     }, 4603: (e3, t3, r3) => {
@@ -16011,8 +16011,8 @@ var init_pdf_worker_min = __esm({
         "function" == typeof n3.preInit && (n3.preInit = [n3.preInit]);
         for (; n3.preInit.length > 0; ) n3.preInit.pop()();
       }
-      !(function run() {
-        if (x3 > 0) S3 = run;
+      !(function run2() {
+        if (x3 > 0) S3 = run2;
         else {
           !(function preRun() {
             if (n3.preRun) {
@@ -16021,7 +16021,7 @@ var init_pdf_worker_min = __esm({
             }
             callRuntimeCallbacks(C3);
           })();
-          if (x3 > 0) S3 = run;
+          if (x3 > 0) S3 = run2;
           else if (n3.setStatus) {
             n3.setStatus("Running...");
             setTimeout((() => {
@@ -51224,10 +51224,10 @@ var init_pdf_min = __esm({
         return t4.length = e4;
       };
     }, 4576: function(t3) {
-      var check2 = function(t4) {
+      var check3 = function(t4) {
         return t4 && t4.Math === Math && t4;
       };
-      t3.exports = check2("object" == typeof globalThis && globalThis) || check2("object" == typeof window && window) || check2("object" == typeof self && self) || check2("object" == typeof global && global) || check2("object" == typeof this && this) || /* @__PURE__ */ (function() {
+      t3.exports = check3("object" == typeof globalThis && globalThis) || check3("object" == typeof window && window) || check3("object" == typeof self && self) || check3("object" == typeof global && global) || check3("object" == typeof this && this) || /* @__PURE__ */ (function() {
         return this;
       })() || Function("return this")();
     }, 4603: (t3, e3, i3) => {
@@ -66514,19 +66514,19 @@ function getEnumValues(entries) {
 function joinValues(array2, separator = "|") {
   return array2.map((val) => stringifyPrimitive(val)).join(separator);
 }
-function jsonStringifyReplacer(_3, value) {
-  if (typeof value === "bigint")
-    return value.toString();
-  return value;
+function jsonStringifyReplacer(_3, value2) {
+  if (typeof value2 === "bigint")
+    return value2.toString();
+  return value2;
 }
 function cached(getter) {
   const set = false;
   return {
     get value() {
       if (!set) {
-        const value = getter();
-        Object.defineProperty(this, "value", { value });
-        return value;
+        const value2 = getter();
+        Object.defineProperty(this, "value", { value: value2 });
+        return value2;
       }
       throw new Error("cached value already set");
     }
@@ -66550,17 +66550,17 @@ function floatSafeRemainder(val, step2) {
 }
 var EVALUATING = /* @__PURE__ */ Symbol("evaluating");
 function defineLazy(object3, key, getter) {
-  let value = void 0;
+  let value2 = void 0;
   Object.defineProperty(object3, key, {
     get() {
-      if (value === EVALUATING) {
+      if (value2 === EVALUATING) {
         return void 0;
       }
-      if (value === void 0) {
-        value = EVALUATING;
-        value = getter();
+      if (value2 === void 0) {
+        value2 = EVALUATING;
+        value2 = getter();
       }
-      return value;
+      return value2;
     },
     set(v3) {
       Object.defineProperty(object3, key, {
@@ -66574,9 +66574,9 @@ function defineLazy(object3, key, getter) {
 function objectClone(obj) {
   return Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj));
 }
-function assignProp(target, prop, value) {
+function assignProp(target, prop, value2) {
   Object.defineProperty(target, prop, {
-    value,
+    value: value2,
     writable: true,
     enumerable: true,
     configurable: true
@@ -66764,9 +66764,9 @@ function createTransparentProxy(getter) {
       target ?? (target = getter());
       return Reflect.get(target, prop, receiver);
     },
-    set(_3, prop, value, receiver) {
+    set(_3, prop, value2, receiver) {
       target ?? (target = getter());
-      return Reflect.set(target, prop, value, receiver);
+      return Reflect.set(target, prop, value2, receiver);
     },
     has(_3, prop) {
       target ?? (target = getter());
@@ -66790,12 +66790,12 @@ function createTransparentProxy(getter) {
     }
   });
 }
-function stringifyPrimitive(value) {
-  if (typeof value === "bigint")
-    return value.toString() + "n";
-  if (typeof value === "string")
-    return `"${value}"`;
-  return `${value}`;
+function stringifyPrimitive(value2) {
+  if (typeof value2 === "bigint")
+    return value2.toString() + "n";
+  if (typeof value2 === "string")
+    return `"${value2}"`;
+  return `${value2}`;
 }
 function optionalKeys(shape) {
   return Object.keys(shape).filter((k3) => {
@@ -67192,9 +67192,9 @@ function formatError(error2, mapper = (issue2) => issue2.message) {
 }
 
 // node_modules/zod/v4/core/parse.js
-var _parse = (_Err) => (schema, value, _ctx, _params) => {
+var _parse = (_Err) => (schema, value2, _ctx, _params) => {
   const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
-  const result = schema._zod.run({ value, issues: [] }, ctx);
+  const result = schema._zod.run({ value: value2, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new $ZodAsyncError();
   }
@@ -67205,9 +67205,9 @@ var _parse = (_Err) => (schema, value, _ctx, _params) => {
   }
   return result.value;
 };
-var _parseAsync = (_Err) => async (schema, value, _ctx, params) => {
+var _parseAsync = (_Err) => async (schema, value2, _ctx, params) => {
   const ctx = _ctx ? { ..._ctx, async: true } : { async: true };
-  let result = schema._zod.run({ value, issues: [] }, ctx);
+  let result = schema._zod.run({ value: value2, issues: [] }, ctx);
   if (result instanceof Promise)
     result = await result;
   if (result.issues.length) {
@@ -67217,9 +67217,9 @@ var _parseAsync = (_Err) => async (schema, value, _ctx, params) => {
   }
   return result.value;
 };
-var _safeParse = (_Err) => (schema, value, _ctx) => {
+var _safeParse = (_Err) => (schema, value2, _ctx) => {
   const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
-  const result = schema._zod.run({ value, issues: [] }, ctx);
+  const result = schema._zod.run({ value: value2, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new $ZodAsyncError();
   }
@@ -67229,9 +67229,9 @@ var _safeParse = (_Err) => (schema, value, _ctx) => {
   } : { success: true, data: result.value };
 };
 var safeParse = /* @__PURE__ */ _safeParse($ZodRealError);
-var _safeParseAsync = (_Err) => async (schema, value, _ctx) => {
+var _safeParseAsync = (_Err) => async (schema, value2, _ctx) => {
   const ctx = _ctx ? { ..._ctx, async: true } : { async: true };
-  let result = schema._zod.run({ value, issues: [] }, ctx);
+  let result = schema._zod.run({ value: value2, issues: [] }, ctx);
   if (result instanceof Promise)
     result = await result;
   return result.issues.length ? {
@@ -67240,33 +67240,33 @@ var _safeParseAsync = (_Err) => async (schema, value, _ctx) => {
   } : { success: true, data: result.value };
 };
 var safeParseAsync = /* @__PURE__ */ _safeParseAsync($ZodRealError);
-var _encode = (_Err) => (schema, value, _ctx) => {
+var _encode = (_Err) => (schema, value2, _ctx) => {
   const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
-  return _parse(_Err)(schema, value, ctx);
+  return _parse(_Err)(schema, value2, ctx);
 };
-var _decode = (_Err) => (schema, value, _ctx) => {
-  return _parse(_Err)(schema, value, _ctx);
+var _decode = (_Err) => (schema, value2, _ctx) => {
+  return _parse(_Err)(schema, value2, _ctx);
 };
-var _encodeAsync = (_Err) => async (schema, value, _ctx) => {
+var _encodeAsync = (_Err) => async (schema, value2, _ctx) => {
   const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
-  return _parseAsync(_Err)(schema, value, ctx);
+  return _parseAsync(_Err)(schema, value2, ctx);
 };
-var _decodeAsync = (_Err) => async (schema, value, _ctx) => {
-  return _parseAsync(_Err)(schema, value, _ctx);
+var _decodeAsync = (_Err) => async (schema, value2, _ctx) => {
+  return _parseAsync(_Err)(schema, value2, _ctx);
 };
-var _safeEncode = (_Err) => (schema, value, _ctx) => {
+var _safeEncode = (_Err) => (schema, value2, _ctx) => {
   const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
-  return _safeParse(_Err)(schema, value, ctx);
+  return _safeParse(_Err)(schema, value2, ctx);
 };
-var _safeDecode = (_Err) => (schema, value, _ctx) => {
-  return _safeParse(_Err)(schema, value, _ctx);
+var _safeDecode = (_Err) => (schema, value2, _ctx) => {
+  return _safeParse(_Err)(schema, value2, _ctx);
 };
-var _safeEncodeAsync = (_Err) => async (schema, value, _ctx) => {
+var _safeEncodeAsync = (_Err) => async (schema, value2, _ctx) => {
   const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
-  return _safeParseAsync(_Err)(schema, value, ctx);
+  return _safeParseAsync(_Err)(schema, value2, ctx);
 };
-var _safeDecodeAsync = (_Err) => async (schema, value, _ctx) => {
-  return _safeParseAsync(_Err)(schema, value, _ctx);
+var _safeDecodeAsync = (_Err) => async (schema, value2, _ctx) => {
+  return _safeParseAsync(_Err)(schema, value2, _ctx);
 };
 
 // node_modules/zod/v4/core/regexes.js
@@ -67860,12 +67860,12 @@ var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
     };
   }
   defineLazy(inst, "~standard", () => ({
-    validate: (value) => {
+    validate: (value2) => {
       try {
-        const r3 = safeParse(inst, value);
+        const r3 = safeParse(inst, value2);
         return r3.success ? { value: r3.data } : { issues: r3.error?.issues };
       } catch (_3) {
-        return safeParseAsync(inst, value).then((r3) => r3.success ? { value: r3.data } : { issues: r3.error?.issues });
+        return safeParseAsync(inst, value2).then((r3) => r3.success ? { value: r3.data } : { issues: r3.error?.issues });
       }
     },
     vendor: "zod",
@@ -68410,9 +68410,9 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
   });
   const isObject10 = isObject;
   const catchall = def.catchall;
-  let value;
+  let value2;
   inst._zod.parse = (payload, ctx) => {
-    value ?? (value = _normalized.value);
+    value2 ?? (value2 = _normalized.value);
     const input = payload.value;
     if (!isObject10(input)) {
       payload.issues.push({
@@ -68425,8 +68425,8 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     }
     payload.value = {};
     const proms = [];
-    const shape = value.shape;
-    for (const key of value.keys) {
+    const shape = value2.shape;
+    for (const key of value2.keys) {
       const el = shape[key];
       const isOptionalIn = el._zod.optin === "optional";
       const isOptionalOut = el._zod.optout === "optional";
@@ -68546,9 +68546,9 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
   const allowsEval2 = allowsEval;
   const fastEnabled = jit && allowsEval2.value;
   const catchall = def.catchall;
-  let value;
+  let value2;
   inst._zod.parse = (payload, ctx) => {
-    value ?? (value = _normalized.value);
+    value2 ?? (value2 = _normalized.value);
     const input = payload.value;
     if (!isObject10(input)) {
       payload.issues.push({
@@ -68565,7 +68565,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
       payload = fastpass(payload, ctx);
       if (!catchall)
         return payload;
-      return handleCatchall([], input, payload, ctx, value, inst);
+      return handleCatchall([], input, payload, ctx, value2, inst);
     }
     return superParse(payload, ctx);
   };
@@ -69718,47 +69718,47 @@ function _never(Class2, params) {
   });
 }
 // @__NO_SIDE_EFFECTS__
-function _lt(value, params) {
+function _lt(value2, params) {
   return new $ZodCheckLessThan({
     check: "less_than",
     ...normalizeParams(params),
-    value,
+    value: value2,
     inclusive: false
   });
 }
 // @__NO_SIDE_EFFECTS__
-function _lte(value, params) {
+function _lte(value2, params) {
   return new $ZodCheckLessThan({
     check: "less_than",
     ...normalizeParams(params),
-    value,
+    value: value2,
     inclusive: true
   });
 }
 // @__NO_SIDE_EFFECTS__
-function _gt(value, params) {
+function _gt(value2, params) {
   return new $ZodCheckGreaterThan({
     check: "greater_than",
     ...normalizeParams(params),
-    value,
+    value: value2,
     inclusive: false
   });
 }
 // @__NO_SIDE_EFFECTS__
-function _gte(value, params) {
+function _gte(value2, params) {
   return new $ZodCheckGreaterThan({
     check: "greater_than",
     ...normalizeParams(params),
-    value,
+    value: value2,
     inclusive: true
   });
 }
 // @__NO_SIDE_EFFECTS__
-function _multipleOf(value, params) {
+function _multipleOf(value2, params) {
   return new $ZodCheckMultipleOf({
     check: "multiple_of",
     ...normalizeParams(params),
-    value
+    value: value2
   });
 }
 // @__NO_SIDE_EFFECTS__
@@ -70864,8 +70864,8 @@ var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
       reg.add(this, meta2);
       return this;
     },
-    refine(check2, params) {
-      return this.check(refine(check2, params));
+    refine(check3, params) {
+      return this.check(refine(check3, params));
     },
     superRefine(refinement, params) {
       return this.check(superRefine(refinement, params));
@@ -71120,23 +71120,23 @@ var ZodNumber = /* @__PURE__ */ $constructor("ZodNumber", (inst, def) => {
   ZodType.init(inst, def);
   inst._zod.processJSONSchema = (ctx, json3, params) => numberProcessor(inst, ctx, json3, params);
   _installLazyMethods(inst, "ZodNumber", {
-    gt(value, params) {
-      return this.check(_gt(value, params));
+    gt(value2, params) {
+      return this.check(_gt(value2, params));
     },
-    gte(value, params) {
-      return this.check(_gte(value, params));
+    gte(value2, params) {
+      return this.check(_gte(value2, params));
     },
-    min(value, params) {
-      return this.check(_gte(value, params));
+    min(value2, params) {
+      return this.check(_gte(value2, params));
     },
-    lt(value, params) {
-      return this.check(_lt(value, params));
+    lt(value2, params) {
+      return this.check(_lt(value2, params));
     },
-    lte(value, params) {
-      return this.check(_lte(value, params));
+    lte(value2, params) {
+      return this.check(_lte(value2, params));
     },
-    max(value, params) {
-      return this.check(_lte(value, params));
+    max(value2, params) {
+      return this.check(_lte(value2, params));
     },
     int(params) {
       return this.check(int(params));
@@ -71156,11 +71156,11 @@ var ZodNumber = /* @__PURE__ */ $constructor("ZodNumber", (inst, def) => {
     nonpositive(params) {
       return this.check(_lte(0, params));
     },
-    multipleOf(value, params) {
-      return this.check(_multipleOf(value, params));
+    multipleOf(value2, params) {
+      return this.check(_multipleOf(value2, params));
     },
-    step(value, params) {
-      return this.check(_multipleOf(value, params));
+    step(value2, params) {
+      return this.check(_multipleOf(value2, params));
     },
     finite() {
       return this;
@@ -71375,11 +71375,11 @@ var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   const keys = new Set(Object.keys(def.entries));
   inst.extract = (values, params) => {
     const newEntries = {};
-    for (const value of values) {
-      if (keys.has(value)) {
-        newEntries[value] = def.entries[value];
+    for (const value2 of values) {
+      if (keys.has(value2)) {
+        newEntries[value2] = def.entries[value2];
       } else
-        throw new Error(`Key ${value} not found in enum`);
+        throw new Error(`Key ${value2} not found in enum`);
     }
     return new ZodEnum({
       ...def,
@@ -71390,11 +71390,11 @@ var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   };
   inst.exclude = (values, params) => {
     const newEntries = { ...def.entries };
-    for (const value of values) {
-      if (keys.has(value)) {
-        delete newEntries[value];
+    for (const value2 of values) {
+      if (keys.has(value2)) {
+        delete newEntries[value2];
       } else
-        throw new Error(`Key ${value} not found in enum`);
+        throw new Error(`Key ${value2} not found in enum`);
     }
     return new ZodEnum({
       ...def,
@@ -71426,10 +71426,10 @@ var ZodLiteral = /* @__PURE__ */ $constructor("ZodLiteral", (inst, def) => {
     }
   });
 });
-function literal(value, params) {
+function literal(value2, params) {
   return new ZodLiteral({
     type: "literal",
-    values: Array.isArray(value) ? value : [value],
+    values: Array.isArray(value2) ? value2 : [value2],
     ...util_exports.normalizeParams(params)
   });
 }
@@ -71674,7 +71674,7 @@ var TaskAugmentedRequestParamsSchema = BaseRequestParamsSchema.extend({
    */
   task: TaskMetadataSchema.optional()
 });
-var isTaskAugmentedRequestParams = (value) => TaskAugmentedRequestParamsSchema.safeParse(value).success;
+var isTaskAugmentedRequestParams = (value2) => TaskAugmentedRequestParamsSchema.safeParse(value2).success;
 var RequestSchema = object2({
   method: string2(),
   params: BaseRequestParamsSchema.loose().optional()
@@ -71703,18 +71703,18 @@ var JSONRPCRequestSchema = object2({
   id: RequestIdSchema,
   ...RequestSchema.shape
 }).strict();
-var isJSONRPCRequest = (value) => JSONRPCRequestSchema.safeParse(value).success;
+var isJSONRPCRequest = (value2) => JSONRPCRequestSchema.safeParse(value2).success;
 var JSONRPCNotificationSchema = object2({
   jsonrpc: literal(JSONRPC_VERSION),
   ...NotificationSchema.shape
 }).strict();
-var isJSONRPCNotification = (value) => JSONRPCNotificationSchema.safeParse(value).success;
+var isJSONRPCNotification = (value2) => JSONRPCNotificationSchema.safeParse(value2).success;
 var JSONRPCResultResponseSchema = object2({
   jsonrpc: literal(JSONRPC_VERSION),
   id: RequestIdSchema,
   result: ResultSchema
 }).strict();
-var isJSONRPCResultResponse = (value) => JSONRPCResultResponseSchema.safeParse(value).success;
+var isJSONRPCResultResponse = (value2) => JSONRPCResultResponseSchema.safeParse(value2).success;
 var ErrorCode;
 (function(ErrorCode2) {
   ErrorCode2[ErrorCode2["ConnectionClosed"] = -32e3] = "ConnectionClosed";
@@ -71744,7 +71744,7 @@ var JSONRPCErrorResponseSchema = object2({
     data: unknown().optional()
   })
 }).strict();
-var isJSONRPCErrorResponse = (value) => JSONRPCErrorResponseSchema.safeParse(value).success;
+var isJSONRPCErrorResponse = (value2) => JSONRPCErrorResponseSchema.safeParse(value2).success;
 var JSONRPCMessageSchema = union([
   JSONRPCRequestSchema,
   JSONRPCNotificationSchema,
@@ -71841,13 +71841,13 @@ var ImplementationSchema = BaseMetadataSchema.extend({
 var FormElicitationCapabilitySchema = intersection(object2({
   applyDefaults: boolean2().optional()
 }), record(string2(), unknown()));
-var ElicitationCapabilitySchema = preprocess((value) => {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    if (Object.keys(value).length === 0) {
+var ElicitationCapabilitySchema = preprocess((value2) => {
+  if (value2 && typeof value2 === "object" && !Array.isArray(value2)) {
+    if (Object.keys(value2).length === 0) {
       return { form: {} };
     }
   }
-  return value;
+  return value2;
 }, intersection(object2({
   form: FormElicitationCapabilitySchema.optional(),
   url: AssertObjectSchema.optional()
@@ -73157,11 +73157,11 @@ function getMethodLiteral(schema) {
   if (!methodSchema) {
     throw new Error("Schema is missing a method literal");
   }
-  const value = getLiteralValue(methodSchema);
-  if (typeof value !== "string") {
+  const value2 = getLiteralValue(methodSchema);
+  if (typeof value2 !== "string") {
     throw new Error("Schema method literal must be a string");
   }
-  return value;
+  return value2;
 }
 function parseWithCompat(schema, data) {
   const result = safeParse2(schema, data);
@@ -74105,8 +74105,8 @@ var Protocol = class {
     };
   }
 };
-function isPlainObject2(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
+function isPlainObject2(value2) {
+  return value2 !== null && typeof value2 === "object" && !Array.isArray(value2);
 }
 function mergeCapabilities(base, additional) {
   const result = { ...base };
@@ -75028,9 +75028,9 @@ function installSkillsRoot(installRoot) {
 var AUTODETECT_OFF = /* @__PURE__ */ new Set(["0", "false", "no", "off"]);
 function resolveRepoRoot(env = process.env, request2) {
   if (env.COCLERK_REPO_ROOT) return env.COCLERK_REPO_ROOT;
-  const found = autoDetect(env, request2.startDir ?? SELF_DIR);
-  if (found.root) return found.root;
-  throw new DataServerError(missingMessage(request2.subject, env, found.tried), request2.code);
+  const found2 = autoDetect(env, request2.startDir ?? SELF_DIR);
+  if (found2.root) return found2.root;
+  throw new DataServerError(missingMessage(request2.subject, env, found2.tried), request2.code);
 }
 var cache = /* @__PURE__ */ new Map();
 function autoDetect(env, startDir) {
@@ -75086,8 +75086,8 @@ function readConfigRepoRoot(cfgPath, tried) {
     tried.push(`"repo_root" in ${cfgPath} -- not valid JSON (${err.message})`);
     return void 0;
   }
-  const value = parsed?.repo_root;
-  if (typeof value === "string" && value !== "") return value;
+  const value2 = parsed?.repo_root;
+  if (typeof value2 === "string" && value2 !== "") return value2;
   tried.push(`"repo_root" in ${cfgPath} -- key absent or empty`);
   return void 0;
 }
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "aabeb4eaea61";
+var BUILD_STAMP = false ? null : "e0c35cf59361";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -75326,37 +75326,37 @@ function validateToolInput(tool, input) {
       throw new ValidationError(`${tool.name}.${required2} is required`);
     }
   }
-  for (const [key, value] of Object.entries(input)) {
-    if (value === void 0) continue;
-    output[key] = validateValue(`${tool.name}.${key}`, value, properties[key]);
+  for (const [key, value2] of Object.entries(input)) {
+    if (value2 === void 0) continue;
+    output[key] = validateValue(`${tool.name}.${key}`, value2, properties[key]);
   }
   return output;
 }
-function validateValue(label2, value, schema) {
-  if (!schema) return value;
-  if (value === null) return null;
+function validateValue(label2, value2, schema) {
+  if (!schema) return value2;
+  if (value2 === null) return null;
   const type = schema.type;
-  if (type === "string" && typeof value !== "string") {
+  if (type === "string" && typeof value2 !== "string") {
     throw new ValidationError(`${label2} must be a string`);
   }
-  if (type === "number" && typeof value !== "number") {
+  if (type === "number" && typeof value2 !== "number") {
     throw new ValidationError(`${label2} must be a number`);
   }
-  if (type === "boolean" && typeof value !== "boolean") {
+  if (type === "boolean" && typeof value2 !== "boolean") {
     throw new ValidationError(`${label2} must be a boolean`);
   }
-  if (type === "object" && !isPlainObject3(value)) {
+  if (type === "object" && !isPlainObject3(value2)) {
     throw new ValidationError(`${label2} must be an object`);
   }
-  if (type === "array" && !Array.isArray(value)) throw new ValidationError(`${label2} must be an array`);
+  if (type === "array" && !Array.isArray(value2)) throw new ValidationError(`${label2} must be an array`);
   const allowedValues = schema.enum;
-  if (allowedValues && !allowedValues.includes(value)) {
+  if (allowedValues && !allowedValues.includes(value2)) {
     throw new ValidationError(`${label2} must be one of: ${allowedValues.join(", ")}`);
   }
-  return value;
+  return value2;
 }
-function isPlainObject3(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function isPlainObject3(value2) {
+  return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
 }
 
 // src/tool-list.ts
@@ -75392,9 +75392,9 @@ function definitionLookup(buildDefinitions) {
   };
 }
 var FAULT = /* @__PURE__ */ Symbol("fault");
-async function toolReply(name, run, replyText2 = jsonText) {
+async function toolReply(name, run2, replyText2 = jsonText) {
   try {
-    return { content: [{ type: "text", text: replyText2(name, await run()) }] };
+    return { content: [{ type: "text", text: replyText2(name, await run2()) }] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const payload = err instanceof DataServerError ? { error: { code: err.code, message, ...err.details ? { details: err.details } : {} } } : { error: { code: "data_error", message } };
@@ -75608,9 +75608,9 @@ async function readProtectedJson(path, fallback, protect = process.platform === 
     throw error2;
   }
 }
-async function writeProtectedJson(path, value, protect = process.platform === "win32") {
+async function writeProtectedJson(path, value2, protect = process.platform === "win32") {
   await mkdir(dirname2(path), { recursive: true });
-  const data = Buffer.from(JSON.stringify(value), "utf8");
+  const data = Buffer.from(JSON.stringify(value2), "utf8");
   const stored = protect ? await protectLocalSecret(data) : data;
   const tmp = `${path}.${process.pid}.${Date.now()}.tmp`;
   await writeFile(tmp, stored);
@@ -75824,7 +75824,7 @@ async function legacyFiles(env) {
   ];
 }
 async function migrateLegacyFile(env, store) {
-  let found = "";
+  let found2 = "";
   let firstError;
   const readable = [];
   for (const path of await legacyFiles(env)) {
@@ -75832,20 +75832,20 @@ async function migrateLegacyFile(env, store) {
       const persisted = await readProtectedJson(path, null);
       if (persisted === null) continue;
       readable.push(path);
-      if (!found && persisted?.staticKey) found = persisted.staticKey;
+      if (!found2 && persisted?.staticKey) found2 = persisted.staticKey;
     } catch (error2) {
       firstError ??= error2;
     }
   }
-  if (!found) {
+  if (!found2) {
     if (firstError) throw firstError;
     return "";
   }
-  await store.write(found);
+  await store.write(found2);
   await removeLegacyFiles(readable, (error2) => {
     throw new Error(`the key was moved into Credential Manager, but its old file could not be deleted: ${error2.message}`);
   });
-  return found;
+  return found2;
 }
 async function removeLegacyFiles(paths, onError) {
   for (const path of paths) {
@@ -76395,9 +76395,9 @@ function rowsOf(items2, kind) {
 }
 function describe2(id, item) {
   const data = item?.data ?? {};
-  const label2 = [data.description, data.name, data.rule_description, data.status_label, data.source_document].find((value) => typeof value === "string" && value !== "");
+  const label2 = [data.description, data.name, data.rule_description, data.status_label, data.source_document].find((value2) => typeof value2 === "string" && value2 !== "");
   if (label2 !== void 0) return `${id} "${String(label2)}"`;
-  const tags = Object.values(item?.tags ?? {}).filter((value) => typeof value === "string");
+  const tags = Object.values(item?.tags ?? {}).filter((value2) => typeof value2 === "string");
   return tags.length ? `${id} (${tags.join(", ")})` : id;
 }
 
@@ -76408,32 +76408,32 @@ var MATTER_CODE = /\bL\d{3,4}\b/;
 function refuse(field, why) {
   throw new ValidationError(`Refused before anything was sent to Probanda's Cloud: ${field} ${why}. Nothing was saved.`);
 }
-function guardCross(value, field) {
-  if (typeof value === "string") {
-    if (MATTER_CODE.test(value)) refuse(field, "carries a client matter code, and cross data never carries matter content");
-  } else if (Array.isArray(value)) {
-    value.forEach((item, index) => guardCross(item, `${field}[${index}]`));
-  } else if (value !== null && typeof value === "object") {
-    for (const [key, item] of Object.entries(value)) guardCross(item, `${field}.${key}`);
+function guardCross(value2, field) {
+  if (typeof value2 === "string") {
+    if (MATTER_CODE.test(value2)) refuse(field, "carries a client matter code, and cross data never carries matter content");
+  } else if (Array.isArray(value2)) {
+    value2.forEach((item, index) => guardCross(item, `${field}[${index}]`));
+  } else if (value2 !== null && typeof value2 === "object") {
+    for (const [key, item] of Object.entries(value2)) guardCross(item, `${field}.${key}`);
   }
 }
-function guardRaw(value, field) {
-  if (value === null || value === void 0 || typeof value === "boolean" || typeof value === "number") return;
-  if (typeof value !== "string") refuse(field, "is not a single value");
-  if (!VOCABULARY.test(value)) refuse(field, "is not a vocabulary value (lower-case letters, digits, _ : . -), so it would leave the machine as raw text");
-  if (MATTER_CODE.test(value)) refuse(field, "carries a client matter code");
+function guardRaw(value2, field) {
+  if (value2 === null || value2 === void 0 || typeof value2 === "boolean" || typeof value2 === "number") return;
+  if (typeof value2 !== "string") refuse(field, "is not a single value");
+  if (!VOCABULARY.test(value2)) refuse(field, "is not a vocabulary value (lower-case letters, digits, _ : . -), so it would leave the machine as raw text");
+  if (MATTER_CODE.test(value2)) refuse(field, "carries a client matter code");
 }
-function canonicalJson(value) {
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
-  if (value !== null && typeof value === "object") {
-    const entries = Object.keys(value).sort().filter((key) => value[key] !== void 0).map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`);
+function canonicalJson(value2) {
+  if (Array.isArray(value2)) return `[${value2.map(canonicalJson).join(",")}]`;
+  if (value2 !== null && typeof value2 === "object") {
+    const entries = Object.keys(value2).sort().filter((key) => value2[key] !== void 0).map((key) => `${JSON.stringify(key)}:${canonicalJson(value2[key])}`);
     return `{${entries.join(",")}}`;
   }
-  return JSON.stringify(value);
+  return JSON.stringify(value2);
 }
-function hashValue(hashKey, value) {
-  if (value === null) return null;
-  return createHmac("sha256", hashKey).update(canonicalJson(value)).digest("hex");
+function hashValue(hashKey, value2) {
+  if (value2 === null) return null;
+  return createHmac("sha256", hashKey).update(canonicalJson(value2)).digest("hex");
 }
 function buildOp(spec, hashKey) {
   const at = `op ${spec.kind} ${spec.id}`;
@@ -76446,12 +76446,12 @@ function buildOp(spec, hashKey) {
   }
   if (spec.tags) {
     const tags = {};
-    for (const [tag, value] of Object.entries(spec.tags)) {
-      if (value === void 0) continue;
+    for (const [tag, value2] of Object.entries(spec.tags)) {
+      if (value2 === void 0) continue;
       guardRaw(tag, `a tag name of ${at}`);
-      if (spec.crossTags?.includes(tag)) guardCross(value, `tag ${tag} of ${at}`);
-      else guardRaw(value, `tag ${tag} of ${at}`);
-      tags[tag] = value;
+      if (spec.crossTags?.includes(tag)) guardCross(value2, `tag ${tag} of ${at}`);
+      else guardRaw(value2, `tag ${tag} of ${at}`);
+      tags[tag] = value2;
     }
     op.tags = tags;
   }
@@ -76465,9 +76465,9 @@ function buildOp(spec, hashKey) {
     }
     op.links = links;
   }
-  for (const [field, value] of Object.entries(spec.data ?? {})) {
-    if (value === void 0) continue;
-    op.hashes[field] = hashValue(hashKey, spec.blank?.includes(field) && value === "" ? null : value);
+  for (const [field, value2] of Object.entries(spec.data ?? {})) {
+    if (value2 === void 0) continue;
+    op.hashes[field] = hashValue(hashKey, spec.blank?.includes(field) && value2 === "" ? null : value2);
   }
   if (spec.cross !== void 0) {
     guardCross(spec.cross, "record");
@@ -76482,7 +76482,7 @@ var META = "meta";
 var PENDING = "pending";
 var FORMAT = "items-1";
 function definedOnly(data) {
-  return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== void 0));
+  return Object.fromEntries(Object.entries(data).filter(([, value2]) => value2 !== void 0));
 }
 function newData(local) {
   return Object.fromEntries(local.fields.map((field) => [field, field in local.data ? local.data[field] : null]));
@@ -76490,8 +76490,8 @@ function newData(local) {
 function sameMetadata(item, entry2) {
   return item.state === entry2.state && JSON.stringify(item.tags) === JSON.stringify(entry2.tags) && JSON.stringify(item.links) === JSON.stringify(entry2.links);
 }
-function isOpResult(value) {
-  const r3 = value;
+function isOpResult(value2) {
+  const r3 = value2;
   return r3 !== null && typeof r3 === "object" && typeof r3.id === "string" && typeof r3.saved === "boolean" && typeof r3.as === "string";
 }
 var PracticeStore = class {
@@ -76504,11 +76504,11 @@ var PracticeStore = class {
   snapshot() {
     const dump = this.kv.dump([ITEM, META, PENDING]);
     const items2 = /* @__PURE__ */ new Map();
-    for (const { key, value } of dump[ITEM] ?? []) items2.set(key, JSON.parse(value));
+    for (const { key, value: value2 } of dump[ITEM] ?? []) items2.set(key, JSON.parse(value2));
     const meta2 = {};
-    for (const { key, value } of dump[META] ?? []) meta2[key] = JSON.parse(value);
+    for (const { key, value: value2 } of dump[META] ?? []) meta2[key] = JSON.parse(value2);
     const pending3 = /* @__PURE__ */ new Map();
-    for (const { key, value } of dump[PENDING] ?? []) pending3.set(key, JSON.parse(value));
+    for (const { key, value: value2 } of dump[PENDING] ?? []) pending3.set(key, JSON.parse(value2));
     return { items: items2, meta: meta2, pending: pending3 };
   }
   /** Every item, for the reads: one snapshot per call inside call-memo.ts's inOneCall. */
@@ -76530,10 +76530,10 @@ var PracticeStore = class {
     const snap = this.snapshot();
     const init2 = [];
     const meta2 = { ...snap.meta };
-    const ensure = (key, value) => {
+    const ensure = (key, value2) => {
       if (meta2[key] !== void 0) return;
-      meta2[key] = value;
-      init2.push({ op: "set", namespace: META, key, value: JSON.stringify(value) });
+      meta2[key] = value2;
+      init2.push({ op: "set", namespace: META, key, value: JSON.stringify(value2) });
     };
     ensure("format", FORMAT);
     ensure("tenant", randomUUID2());
@@ -76541,7 +76541,7 @@ var PracticeStore = class {
     ensure("sync_seq", "0");
     const hashKey = Buffer.from(meta2.hash_key, "base64");
     guardRaw(tool, "the tool name");
-    for (const [flag2, value] of Object.entries(intent)) guardRaw(value, `the ${flag2} flag`);
+    for (const [flag2, value2] of Object.entries(intent)) guardRaw(value2, `the ${flag2} flag`);
     const ops = specs.map((spec) => buildOp(spec, hashKey));
     const local = {};
     for (const spec of specs) {
@@ -76656,7 +76656,7 @@ var PracticeStore = class {
 };
 
 // src/dispatch.ts
-import { dirname as dirname35 } from "node:path";
+import { dirname as dirname37 } from "node:path";
 
 // src/tools/practice/rule-overlay.ts
 import { randomUUID as randomUUID3 } from "node:crypto";
@@ -77608,6 +77608,85 @@ function timePipelineToolDefinitions() {
   ];
 }
 
+// src/schema/loose-threads.ts
+var KINDS = ["idea", "proposition", "correspondence", "argument", "work_board"];
+function looseThreadsToolDefinitions() {
+  return [
+    {
+      name: "loose_threads__capture",
+      description: "Capture one loose thread: work, or an idea for work, that was cut off and left. `idea` is verbatim, at most five sentences, with no options or recommendations. `surfaced_by` is one line naming what surfaced it. `origin_job` is the job this session holds; leave it out when none is held. `filing_id` is the Writing or Work Board it came from; leave it out for the proceeding. `kind` defaults to idea. `ref` is the file path or record id it left off at. Returns only the new thread's id. It lists no other thread. /drafting-data jobs-run.md \xA78 owns when and how.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          proceeding_id: { type: "number" },
+          filing_id: { type: ["number", "null"] },
+          origin_job: { type: ["number", "null"] },
+          surfaced_by: { type: "string" },
+          idea: { type: "string" },
+          kind: { type: "string", enum: KINDS },
+          ref: { type: "string" }
+        },
+        required: ["db_path", "proceeding_id", "surfaced_by", "idea"],
+        additionalProperties: false
+      },
+      annotations: { openWorldHint: false }
+    },
+    {
+      name: "loose_threads__read",
+      description: "Read a matter's open loose threads, only for what these two modes serve. triage: every open thread with its ranking and deferral, in the Loose Threads page's order, for an outlining session's loose-thread triage (pass kind: idea to read what is ranked). duplicates: only the open threads of proceeding_id that restate `text`, each as {id, idea}, for the duplicate test in /legal-research. A session working a job does not read threads here.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          mode: { type: "string", enum: ["triage", "duplicates"] },
+          kind: { type: "string", enum: KINDS },
+          proceeding_id: { type: "number" },
+          text: { type: "string" }
+        },
+        required: ["db_path", "mode"],
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false }
+    },
+    {
+      name: "loose_threads__update",
+      description: "Change loose threads, on the terms /drafting-data jobs-run.md \xA78 sets. action rank: `ranks`, each {id, rank, group, job, reason}, ideas only, in one write, returning unranked_open, the open undeferred ideas still lacking a rank or description. correct: `id` and `job`, a ranked thread's description. defer, undefer: `id`, an open thread. discard: `ids`, kept and no longer open. restore: `id`, a discarded thread. consume: `id` and `job_id`, the job it was outlined into. move: `from_filing_id` and `filing_id` (null for the proceeding), a board's open threads to a live board in their proceeding. Returns updated, the ids changed; a thread already in the state asked for is not among them. A refusal writes nothing.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          action: { type: "string", enum: ["rank", "correct", "defer", "undefer", "discard", "restore", "consume", "move"] },
+          id: { type: "number" },
+          ids: { type: "array", items: { type: "number" } },
+          from_filing_id: { type: "number" },
+          ranks: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "number" },
+                rank: { type: "number" },
+                group: { type: "string", enum: ["decision", "tooling", "housekeeping", "research", "authority", "evidence", "other"] },
+                job: { type: "string" },
+                reason: { type: "string" }
+              },
+              required: ["id", "rank", "group", "job", "reason"],
+              additionalProperties: false
+            }
+          },
+          job: { type: "string" },
+          job_id: { type: "number" },
+          filing_id: { type: ["number", "null"] }
+        },
+        required: ["db_path", "action"],
+        additionalProperties: false
+      },
+      annotations: { openWorldHint: false }
+    }
+  ];
+}
+
 // src/schema/timecamping.ts
 function timecampingPrefixed(name) {
   return `timecamping_data__${name}`;
@@ -77660,31 +77739,31 @@ var NO_VENUE = "_NoVenue";
 function invalid(file, where, rule) {
   throw new DataServerError(`${file}: ${where}: ${rule}`, "invalid_index");
 }
-function objectAt(value, file, where) {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) invalid(file, where, "must be an object");
-  return value;
+function objectAt(value2, file, where) {
+  if (typeof value2 !== "object" || value2 === null || Array.isArray(value2)) invalid(file, where, "must be an object");
+  return value2;
 }
 function onlyKeys(obj, allowed, file, where) {
   const extra = Object.keys(obj).filter((key) => !allowed.includes(key));
   if (extra.length) invalid(file, where, `unknown field(s) ${extra.join(", ")} (allowed: ${allowed.join(", ")})`);
 }
 function stringAt(obj, key, file, where, required2) {
-  const value = obj[key];
-  if (value === void 0) {
+  const value2 = obj[key];
+  if (value2 === void 0) {
     if (required2) invalid(file, `${where}.${key}`, "is required");
     return void 0;
   }
-  if (typeof value !== "string" || value === "") invalid(file, `${where}.${key}`, "must be a non-empty string");
-  return value;
+  if (typeof value2 !== "string" || value2 === "") invalid(file, `${where}.${key}`, "must be a non-empty string");
+  return value2;
 }
 function arrayAt(obj, key, file, where, required2) {
-  const value = obj[key];
-  if (value === void 0) {
+  const value2 = obj[key];
+  if (value2 === void 0) {
     if (required2) invalid(file, `${where}.${key}`, "is required");
     return [];
   }
-  if (!Array.isArray(value)) invalid(file, `${where}.${key}`, "must be an array");
-  return value;
+  if (!Array.isArray(value2)) invalid(file, `${where}.${key}`, "must be an array");
+  return value2;
 }
 function aliasesOf(obj, file, where, layer, required2) {
   return arrayAt(obj, "aliases", file, where, required2).map((raw, i3) => {
@@ -77717,8 +77796,8 @@ function checkStamp(obj, file, where) {
 function provenance(obj, file, where) {
   const out = {};
   for (const key of ["source", "ref", "recorded"]) {
-    const value = stringAt(obj, key, file, where, false);
-    if (value !== void 0) out[key] = value;
+    const value2 = stringAt(obj, key, file, where, false);
+    if (value2 !== void 0) out[key] = value2;
   }
   return out;
 }
@@ -78648,7 +78727,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("execute"),
-      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Work Board with no Writing is created through drafting_data__create_milestone, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, and a Writing is recorded as served through drafting_data__record_served: a script that leaves a filing's filed_on or sent_copy_id holding a value it did not hold is refused whole, writing nothing (clearing filed_on stays an update). A drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, and a job is created through drafting_data__create_job. A script that takes or moves a job's lock, sets its plan approval, completion or deletion stamp, stamps a step done or sets its status, or writes a job's active stamp, last activity, lapse record or claim number is refused whole, writing nothing, with job_write_refused naming the job tool that writes it. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
+      description: "Run a write SQL script against one matter's submission database in a single transaction, with no compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, a Work Board with no Writing is created through drafting_data__create_milestone, never here, a general Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through drafting_data__record_filed, and a Writing is recorded as served through drafting_data__record_served: a script that leaves a filing's filed_on or sent_copy_id holding a value it did not hold is refused whole, writing nothing (clearing filed_on stays an update). A drafting Writing's stored layout is re-snapshotted through drafting_data__resnapshot_writing, and a job is created through drafting_data__create_job. A script that takes or moves a job's lock, sets its plan approval, completion or deletion stamp, stamps a step done or sets its status, or writes a job's active stamp, last activity, lapse record or claim number is refused whole, writing nothing, with job_write_refused naming the job tool that writes it. A loose thread is written through loose_threads__capture and loose_threads__update: a script writing the seeds table is refused whole, with loose_thread_write_refused. The result carries changes, the number of rows the script inserted, updated or deleted, rows written by triggers included; on a script that writes only job tables, changes 0 means its guards matched nothing and nothing was written. A non-success result, a rejection included, does not prove the script did not commit: follow the execute row of /drafting-data's Operation Routing table before any retry.",
       inputSchema: {
         type: "object",
         properties: {
@@ -78798,7 +78877,7 @@ function submissionDataToolDefinitions() {
     },
     {
       name: submissionDataPrefixed("create_job"),
-      description: "Create a job (a tickets row) in one call and one transaction: the row, its steps (ordinal 1, 2, 3... in order, at least one), scope rows, the edges from existing jobs it waits on (blocks), its conflict pairs, its conversion records (proposal_keys, copied from the card) and the loose thread it consumes (seed_id), under the duplicate guard its kind takes. Each guard is /drafting-data's documented condition, tested before the row exists, so it never matches the job it guards: none (an unguarded create); live_key (a queued or wip, unshelved job holds one of proposal_keys: the fast path and a job outlined from Proposals, jobs-create.md \xA73); never_held_key (any job not deleted ever held one of proposal_keys: intake, \xA73e); title_live_with_step (a queued or wip, unshelved job on the Writing with one of this call's titles already holds a step: counsel's review, jobs-stock.md \xA73c, whose second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this title and one of these step texts: a pass finding, \xA73g); scrutiny_statement (a queued or wip, unshelved 'Review scrutiny finding: ' job is scoped to the statement in scope: \xA73d); authority_brief (a queued or wip, unshelved 'Brief the case: ' job in the proceeding is scoped to any authority of the same case: \xA73n); holder_lock (held_ticket_id no longer carries session_token under claim_no: a spin-off blocker, \xA73f, which copies the held job's scope). filing_id is the Writing's or Work Board's id, or null for a proceeding-scoped job, and is never left out. priority is an integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Work Board's job, the Work Board's alone; on a proceeding-scoped job, every queued job in the proceeding. created_by is this session's session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is the job that fired the guard, when one is still there). It moves no revision. Refusals write nothing: invalid_<field>, and an error from the database (a missing blocker, a work job with no billing_anchor). Returns outcome, ticket_id, companion_ids, priority, holder_id and a note.",
+      description: "Create a job (a tickets row) in one call and one transaction: the row, its steps (ordinal 1, 2, 3... in order, at least one), scope rows, the edges from existing jobs it waits on (blocks), its conflict pairs, its conversion records (proposal_keys, copied from the card), under the duplicate guard its kind takes. With seed_id, a second write then consumes that loose thread: thread_not_consumed in the result says it failed, and the job stands. Each guard is /drafting-data's documented condition, tested before the row exists, so it never matches the job it guards: none (an unguarded create); live_key (a queued or wip, unshelved job holds one of proposal_keys: the fast path and a job outlined from Proposals, jobs-create.md \xA73); never_held_key (any job not deleted ever held one of proposal_keys: intake, \xA73e); title_live_with_step (a queued or wip, unshelved job on the Writing with one of this call's titles already holds a step: counsel's review, jobs-stock.md \xA73c, whose second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this title and one of these step texts: a pass finding, \xA73g); scrutiny_statement (a queued or wip, unshelved 'Review scrutiny finding: ' job is scoped to the statement in scope: \xA73d); authority_brief (a queued or wip, unshelved 'Brief the case: ' job in the proceeding is scoped to any authority of the same case: \xA73n); holder_lock (held_ticket_id no longer carries session_token under claim_no: a spin-off blocker, \xA73f, which copies the held job's scope). filing_id is the Writing's or Work Board's id, or null for a proceeding-scoped job, and is never left out. priority is an integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Work Board's job, the Work Board's alone; on a proceeding-scoped job, every queued job in the proceeding. created_by is this session's session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is the job that fired the guard, when one is still there). It moves no revision. Refusals write nothing: invalid_<field>, and an error from the database (a missing blocker, a work job with no billing_anchor). Returns outcome, ticket_id, companion_ids, priority, holder_id and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -80359,6 +80438,7 @@ function buildToolDefinitions() {
     ...practiceToolDefinitions(),
     ...caseDataToolDefinitions(),
     ...timePipelineToolDefinitions(),
+    ...looseThreadsToolDefinitions(),
     ...timecampingToolDefinitions(),
     ...submissionDataToolDefinitions(),
     ...submissionFormsToolDefinitions(),
@@ -80396,8 +80476,8 @@ function nowIso() {
 function newId() {
   return randomUUID4();
 }
-function normalizeMattNum(value) {
-  return String(value).replace(/^\d*\./, "");
+function normalizeMattNum(value2) {
+  return String(value2).replace(/^\d*\./, "");
 }
 function isBillable(matter) {
   return matter?.billable !== false;
@@ -80448,9 +80528,9 @@ function effectiveCutoff(rows4) {
   }
   return best;
 }
-function asString(value, label2) {
-  if (typeof value !== "string" || value === "") throw new ValidationError(`${label2} is required`);
-  return value;
+function asString(value2, label2) {
+  if (typeof value2 !== "string" || value2 === "") throw new ValidationError(`${label2} is required`);
+  return value2;
 }
 
 // src/tools/practice/reads.ts
@@ -80464,9 +80544,9 @@ function groupBy(rows4, field) {
   const groups = /* @__PURE__ */ new Map();
   for (const row2 of rows4) {
     const key = String(row2[field]);
-    const list = groups.get(key) ?? [];
-    list.push(row2);
-    groups.set(key, list);
+    const list2 = groups.get(key) ?? [];
+    list2.push(row2);
+    groups.set(key, list2);
   }
   return groups;
 }
@@ -80639,7 +80719,7 @@ async function ar_data(store) {
   const items2 = store.items();
   const clients = loadClientsById(items2);
   const cutoffByMatter = /* @__PURE__ */ new Map();
-  for (const [id, list] of groupBy(rowsOf(items2, "invoice"), "matter_id")) cutoffByMatter.set(id, effectiveCutoff(list));
+  for (const [id, list2] of groupBy(rowsOf(items2, "invoice"), "matter_id")) cutoffByMatter.set(id, effectiveCutoff(list2));
   const wipByMatter = /* @__PURE__ */ new Map();
   for (const entry2 of rowsOf(items2, "time_entry")) {
     if (entry2.billable !== true) continue;
@@ -80760,8 +80840,8 @@ function orphanClaims(lock) {
   const dir = pathWin322.dirname(lock);
   const prefix = `${pathWin322.basename(lock)}.`;
   try {
-    const found = readdirSync5(dir).filter((name) => name.startsWith(prefix) && name.endsWith(".break"));
-    return found.length ? `; removal claim left behind (delete it if no process is mid-takeover): ${found.join(", ")}` : "";
+    const found2 = readdirSync5(dir).filter((name) => name.startsWith(prefix) && name.endsWith(".break"));
+    return found2.length ? `; removal claim left behind (delete it if no process is mid-takeover): ${found2.join(", ")}` : "";
   } catch {
     return "";
   }
@@ -81887,12 +81967,12 @@ function treeProblem(skill, rest, type, layer) {
 function mdOnly(folder) {
   return (base) => base.endsWith(".md") ? null : `${folder}\\ holds .md files only; "${base}" is not one`;
 }
-function fileProblem(name, layer, check2) {
-  if (!name.endsWith(SIDECAR_SUFFIX)) return check2(name);
+function fileProblem(name, layer, check3) {
+  if (!name.endsWith(SIDECAR_SUFFIX)) return check3(name);
   if (layer === "shipped") return "a confirmation sidecar never ships";
   const base = name.slice(0, -SIDECAR_SUFFIX.length);
   if (!base.endsWith(".md")) return "a confirmation sidecar sits only beside a .md knowledge file";
-  return check2(base);
+  return check3(base);
 }
 function indexNameProblem(name, shippedName, localName, layer) {
   if (name === (layer === "shipped" ? shippedName : localName)) return null;
@@ -82086,22 +82166,22 @@ function rowOf(items2, id) {
   if (!item) throw new NotFoundError(`Item ${id} is not in practice.db after the write`);
   return flatten(id, item);
 }
-function stringList(value, label2) {
-  if (value === void 0 || value === null) return void 0;
-  if (!Array.isArray(value) || value.some((entry2) => typeof entry2 !== "string")) {
+function stringList(value2, label2) {
+  if (value2 === void 0 || value2 === null) return void 0;
+  if (!Array.isArray(value2) || value2.some((entry2) => typeof entry2 !== "string")) {
     throw new ValidationError(`${label2} must be a list of strings`);
   }
-  return value;
+  return value2;
 }
-function addressList(value, label2) {
-  if (value === void 0 || value === null) return void 0;
-  if (!Array.isArray(value) || value.some((entry2) => entry2 === null || typeof entry2 !== "object" || Array.isArray(entry2))) {
+function addressList(value2, label2) {
+  if (value2 === void 0 || value2 === null) return void 0;
+  if (!Array.isArray(value2) || value2.some((entry2) => entry2 === null || typeof entry2 !== "object" || Array.isArray(entry2))) {
     throw new ValidationError(`${label2} must be a list of address objects`);
   }
-  return value;
+  return value2;
 }
 function contactOp(fields2, id, creating, label2) {
-  const list = (value) => value ?? (creating ? [] : void 0);
+  const list2 = (value2) => value2 ?? (creating ? [] : void 0);
   return {
     op: creating ? "create" : "update",
     id,
@@ -82109,10 +82189,10 @@ function contactOp(fields2, id, creating, label2) {
     tags: { entity: fields2.entity },
     data: {
       name: fields2.name,
-      emails: list(stringList(fields2.emails, `${label2}.emails`)),
-      phones: list(stringList(fields2.phones, `${label2}.phones`)),
-      addresses: list(addressList(fields2.addresses, `${label2}.addresses`)),
-      other_names: list(stringList(fields2.other_names, `${label2}.other_names`)),
+      emails: list2(stringList(fields2.emails, `${label2}.emails`)),
+      phones: list2(stringList(fields2.phones, `${label2}.phones`)),
+      addresses: list2(addressList(fields2.addresses, `${label2}.addresses`)),
+      other_names: list2(stringList(fields2.other_names, `${label2}.other_names`)),
       carddav_url: fields2.carddav_url,
       note: fields2.note
     }
@@ -82161,17 +82241,17 @@ async function upsert_matter_role(store, args) {
   return rowOf(items2, ops[0].as);
 }
 var CORPORATE_SUFFIX = /\s+(ltd|limited|inc|incorporated|llp|lp|llc|corp|corporation|co)$/;
-function normalizeName2(value) {
-  let name = String(value ?? "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+function normalizeName2(value2) {
+  let name = String(value2 ?? "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
   while (CORPORATE_SUFFIX.test(name)) name = name.replace(CORPORATE_SUFFIX, "");
   return name;
 }
-function phoneDigits(value) {
-  const digits2 = value.replace(/\D/g, "");
+function phoneDigits(value2) {
+  const digits2 = value2.replace(/\D/g, "");
   return digits2.length > 10 ? digits2.slice(-10) : digits2;
 }
-function listOf(value) {
-  return Array.isArray(value) ? value.filter((entry2) => typeof entry2 === "string") : [];
+function listOf(value2) {
+  return Array.isArray(value2) ? value2.filter((entry2) => typeof entry2 === "string") : [];
 }
 async function contact_lookup(store, args) {
   const byMatter = Boolean(args.matt_num || args.matter_id);
@@ -82185,11 +82265,11 @@ async function contact_lookup(store, args) {
   const limit = typeof args.limit === "number" && args.limit > 0 ? Math.floor(args.limit) : 25;
   const query = String(args.query ?? "").toLowerCase();
   const queryDigits = query.replace(/\D/g, "");
-  const found = (args.id ? contacts.filter((contact) => contact.id === String(args.id)) : contacts.filter((contact) => !query || [contact.name, ...listOf(contact.other_names), ...listOf(contact.emails), ...listOf(contact.phones)].some((value) => typeof value === "string" && value.toLowerCase().includes(query)) || queryDigits.length >= 4 && listOf(contact.phones).some((phone) => phone.replace(/\D/g, "").includes(queryDigits)))).filter((contact) => matterId === null || roles.some((row2) => row2.contact_id === contact.id)).slice(0, limit);
-  if (!args.id && !query) return { contacts: found.map((contact) => withTies(contact, affiliations, roles, matters)), near: [] };
-  const names = new Set(found.flatMap((contact) => [contact.name, ...listOf(contact.other_names)].map(normalizeName2)));
-  const emails = new Set(found.flatMap((contact) => listOf(contact.emails).map((email2) => email2.toLowerCase())));
-  const phones = new Set(found.flatMap((contact) => listOf(contact.phones).map(phoneDigits)));
+  const found2 = (args.id ? contacts.filter((contact) => contact.id === String(args.id)) : contacts.filter((contact) => !query || [contact.name, ...listOf(contact.other_names), ...listOf(contact.emails), ...listOf(contact.phones)].some((value2) => typeof value2 === "string" && value2.toLowerCase().includes(query)) || queryDigits.length >= 4 && listOf(contact.phones).some((phone) => phone.replace(/\D/g, "").includes(queryDigits)))).filter((contact) => matterId === null || roles.some((row2) => row2.contact_id === contact.id)).slice(0, limit);
+  if (!args.id && !query) return { contacts: found2.map((contact) => withTies(contact, affiliations, roles, matters)), near: [] };
+  const names = new Set(found2.flatMap((contact) => [contact.name, ...listOf(contact.other_names)].map(normalizeName2)));
+  const emails = new Set(found2.flatMap((contact) => listOf(contact.emails).map((email2) => email2.toLowerCase())));
+  const phones = new Set(found2.flatMap((contact) => listOf(contact.phones).map(phoneDigits)));
   if (query) {
     names.add(normalizeName2(query));
     emails.add(query.trim());
@@ -82197,7 +82277,7 @@ async function contact_lookup(store, args) {
   }
   names.delete("");
   phones.forEach((digits2) => digits2.length < 7 && phones.delete(digits2));
-  const foundIds = new Set(found.map((contact) => String(contact.id)));
+  const foundIds = new Set(found2.map((contact) => String(contact.id)));
   const near = [];
   for (const contact of contacts) {
     if (foundIds.has(String(contact.id))) continue;
@@ -82207,7 +82287,7 @@ async function contact_lookup(store, args) {
     if (listOf(contact.phones).some((phone) => phones.has(phoneDigits(phone)))) reasons.push("shared phone");
     if (reasons.length) near.push({ id: contact.id, name: contact.name, entity: contact.entity, reasons });
   }
-  return { contacts: found.map((contact) => withTies(contact, affiliations, roles, matters)), near };
+  return { contacts: found2.map((contact) => withTies(contact, affiliations, roles, matters)), near };
 }
 function withTies(contact, affiliations, roles, matters) {
   return {
@@ -82232,7 +82312,7 @@ function matterDataFolders(store, matters, miss) {
   const library = dirname5(caseDataRoot);
   const inMatter = holding(library, CASE_DATA_FOLDER);
   const children3 = holding(caseDataRoot, "");
-  const found = [];
+  const found2 = [];
   for (const matter of matters) {
     if (!matter.matt_num) {
       miss(matter, "it has no matter number to find its matter-data folder by");
@@ -82242,9 +82322,9 @@ function matterDataFolders(store, matters, miss) {
     const own = inMatter.filter((entry2) => folderMatterNum(entry2.name) === wanted);
     const named2 = own.length ? own : children3.filter((entry2) => folderMatterNum(entry2.name) === wanted);
     if (named2.length > 1) miss(matter, `more than one matter-data folder starts with its matter number: ${named2.map((entry2) => entry2.folder).join(", ")}`);
-    else if (named2.length === 1) found.push({ matter, folder: named2[0].folder, name: named2[0].name });
+    else if (named2.length === 1) found2.push({ matter, folder: named2[0].folder, name: named2[0].name });
   }
-  return found;
+  return found2;
 }
 async function contact_checks(store, args) {
   const items2 = store.items();
@@ -82293,16 +82373,16 @@ async function contact_checks(store, args) {
   }
   return { matters_without_client, parties_without_role, unresolved };
 }
-function present(value) {
-  return value !== null && value !== void 0 && value !== "";
+function present(value2) {
+  return value2 !== null && value2 !== void 0 && value2 !== "";
 }
 function same(a3, b3) {
   return canonicalJson(a3 ?? null) === canonicalJson(b3 ?? null);
 }
 function union2(...lists) {
   const seen = /* @__PURE__ */ new Map();
-  for (const list of lists) {
-    for (const entry2 of Array.isArray(list) ? list : []) seen.set(canonicalJson(entry2), seen.get(canonicalJson(entry2)) ?? entry2);
+  for (const list2 of lists) {
+    for (const entry2 of Array.isArray(list2) ? list2 : []) seen.set(canonicalJson(entry2), seen.get(canonicalJson(entry2)) ?? entry2);
   }
   return [...seen.values()];
 }
@@ -82527,7 +82607,7 @@ async function insert_time_entry(store, args) {
   return { id };
 }
 async function set_time_entries_billable(store, args) {
-  const ids = Array.isArray(args.entry_ids) ? args.entry_ids.map((value) => String(value)) : null;
+  const ids = Array.isArray(args.entry_ids) ? args.entry_ids.map((value2) => String(value2)) : null;
   const batchTag = typeof args.batch_tag === "string" && args.batch_tag ? args.batch_tag : null;
   if (ids && batchTag) {
     throw new ValidationError("set_time_entries_billable takes entry_ids or batch_tag, not both");
@@ -82800,8 +82880,8 @@ async function set_status(store, args) {
 }
 
 // src/tools/practice/invoices.ts
-function isEmpty(value) {
-  return value === void 0 || value === null || value === "";
+function isEmpty(value2) {
+  return value2 === void 0 || value2 === null || value2 === "";
 }
 function toSimRow(row2) {
   return {
@@ -82861,9 +82941,9 @@ async function import_invoices(store, args) {
       result.skipped_no_matter += 1;
       continue;
     }
-    const list = byMatter.get(matter.id) ?? [];
-    list.push({ row: row2, matter });
-    byMatter.set(matter.id, list);
+    const list2 = byMatter.get(matter.id) ?? [];
+    list2.push({ row: row2, matter });
+    byMatter.set(matter.id, list2);
   }
   if (!confirmRegression) {
     const regressions = [];
@@ -82926,8 +83006,8 @@ async function invoices_query(store, args) {
   const rows4 = rowsOf(items2, "invoice").filter((row2) => (!matterId || row2.matter_id === matterId) && (!args.status || row2.status === String(args.status)));
   let lastImport = null;
   for (const row2 of rows4) {
-    const value = typeof row2.last_import_at === "string" ? row2.last_import_at : null;
-    if (value && (!lastImport || value > lastImport)) lastImport = value;
+    const value2 = typeof row2.last_import_at === "string" ? row2.last_import_at : null;
+    if (value2 && (!lastImport || value2 > lastImport)) lastImport = value2;
   }
   return { rows: rows4, last_import_at: lastImport };
 }
@@ -82973,8 +83053,8 @@ function nowIso2() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
 function stallMs(env) {
-  const value = Number(env.COCLERK_RENDER_STALL_MS);
-  return Number.isFinite(value) && value > 0 ? value : DEFAULT_STALL_MS;
+  const value2 = Number(env.COCLERK_RENDER_STALL_MS);
+  return Number.isFinite(value2) && value2 > 0 ? value2 : DEFAULT_STALL_MS;
 }
 function readLock(lockFile) {
   try {
@@ -83417,13 +83497,13 @@ function readRows(sidecarAbs, knowledgePath) {
   const text8 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
   return parseSidecar(text8.startsWith("\uFEFF") ? text8.slice(1) : text8, sidecarAbs, knowledgePath);
 }
-async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check2) {
+async function upsertSidecarRow(sidecarAbs, knowledgePath, row2, check3) {
   return withFileLock(sidecarAbs, () => {
     const rows4 = readRows(sidecarAbs, knowledgePath);
     const at = rows4.findIndex((known) => known.rule_ref === row2.rule_ref);
     if (at === -1) rows4.push(row2);
     else rows4[at] = row2;
-    check2(rows4);
+    check3(rows4);
     writeTextAtomic(sidecarAbs, JSON.stringify({ file: knowledgePath, items: rows4 }, null, 2) + "\n");
     return rows4;
   });
@@ -83454,16 +83534,16 @@ function readConfig(env) {
   const path = configPath(env);
   return existsSync12(path) ? readJson(path) : { version: 1 };
 }
-function writeJson(path, value) {
-  writeTextAtomic(path, JSON.stringify(value, null, 2) + "\n");
+function writeJson(path, value2) {
+  writeTextAtomic(path, JSON.stringify(value2, null, 2) + "\n");
 }
 function rosterOf(firm, firmPath) {
   if (firm.roster === void 0) return [];
   if (!Array.isArray(firm.roster)) throw new ValidationError(`roster in ${firmPath} is not an array`);
   return firm.roster;
 }
-function isKeyList(value) {
-  return Array.isArray(value) && value.every((key) => typeof key === "string" && key !== "");
+function isKeyList(value2) {
+  return Array.isArray(value2) && value2.every((key) => typeof key === "string" && key !== "");
 }
 async function firm_profile(env = process.env) {
   return readFirmProfile(env);
@@ -83510,9 +83590,9 @@ function upsertRosterEntry(roster, input) {
     throw new ValidationError(`roster_entry has unknown field(s) ${unknown2.join(", ")} (allowed: ${ROSTER_FIELDS.join(", ")})`);
   }
   const key = asString(input.key, "roster_entry.key");
-  for (const [field, value] of Object.entries(input)) {
+  for (const [field, value2] of Object.entries(input)) {
     const type = field === "active" ? "boolean" : "string";
-    if (typeof value !== type) throw new ValidationError(`roster_entry.${field} must be a ${type}`);
+    if (typeof value2 !== type) throw new ValidationError(`roster_entry.${field} must be a ${type}`);
   }
   if (input.role !== void 0 && !ROLES.includes(input.role)) {
     throw new ValidationError(`roster_entry.role must be one of: ${ROLES.join(", ")}`);
@@ -83532,10 +83612,10 @@ function upsertRosterEntry(roster, input) {
 function readZipParts(zip, source, wanted) {
   const eocd = zip.lastIndexOf(Buffer.from([80, 75, 5, 6]));
   if (eocd < 0) throw new ValidationError(`letterhead ${source} is not a .docx: no zip directory found`);
-  const count = zip.readUInt16LE(eocd + 10);
+  const count2 = zip.readUInt16LE(eocd + 10);
   let at = zip.readUInt32LE(eocd + 16);
   const parts = /* @__PURE__ */ new Map();
-  for (let i3 = 0; i3 < count; i3 += 1) {
+  for (let i3 = 0; i3 < count2; i3 += 1) {
     if (zip.readUInt32LE(at) !== 33639248) throw new ValidationError(`letterhead ${source} has a corrupt zip directory`);
     const method = zip.readUInt16LE(at + 10);
     const size = zip.readUInt32LE(at + 20);
@@ -83825,10 +83905,10 @@ function classifyPaths(entries, types, paths) {
 function globsFor(entries, typeIds) {
   return [...new Set(entries.filter((e3) => typeIds.includes(e3.type)).flatMap((e3) => e3.folders))];
 }
-function stringList2(value, name) {
-  if (value === void 0) return void 0;
-  if (!Array.isArray(value) || !value.every((v3) => typeof v3 === "string")) throw new ValidationError(`${name} must be an array of strings`);
-  return value;
+function stringList2(value2, name) {
+  if (value2 === void 0) return void 0;
+  if (!Array.isArray(value2) || !value2.every((v3) => typeof v3 === "string")) throw new ValidationError(`${name} must be an array of strings`);
+  return value2;
 }
 async function folder_map(args, env = process.env) {
   const paths = stringList2(args.paths, "paths");
@@ -84323,7 +84403,7 @@ ${page2.tail}`;
 }
 
 // src/submission/matter-dates.ts
-var text = (value) => value === null || value === void 0 ? null : String(value);
+var text = (value2) => value2 === null || value2 === void 0 ? null : String(value2);
 async function readMatterDates(practiceDb2, matterNo) {
   if (matterNo === void 0) return { note: "No matter number was given, so this matter's dates were not read." };
   let read3;
@@ -84425,7 +84505,7 @@ function pageDates(dates, sections) {
 
 // src/tools/practice/practice-board.ts
 var HORIZON_DAYS = 14;
-var text2 = (value) => value === null || value === void 0 || value === "" ? null : String(value);
+var text2 = (value2) => value2 === null || value2 === void 0 || value2 === "" ? null : String(value2);
 function localDate(d3) {
   const pad = (n3) => String(n3).padStart(2, "0");
   return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())}`;
@@ -84881,9 +84961,9 @@ async function ingestAuthority(request2, env = process.env) {
   plan2.statements.forEach((statement, i3) => {
     const { rowcount, rows: rows4 } = done.results[i3];
     if (statement.count) {
-      const count = counts3[statement.count.table] ??= { inserted: 0, skipped: 0 };
-      count.inserted += rowcount;
-      count.skipped += statement.count.of - rowcount;
+      const count2 = counts3[statement.count.table] ??= { inserted: 0, skipped: 0 };
+      count2.inserted += rowcount;
+      count2.skipped += statement.count.of - rowcount;
     }
     if (statement.value_as) named2[statement.value_as] = Object.values(rows4[0])[0];
     if (statement.rows_as) named2[statement.rows_as] = rows4;
@@ -84936,11 +85016,11 @@ var createPdfium = (() => {
     var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
     if (ENVIRONMENT_IS_NODE) {
       const { createRequire } = await import("module");
-      let dirname36 = import.meta.url;
-      if (dirname36.startsWith("data:")) {
-        dirname36 = "/";
+      let dirname38 = import.meta.url;
+      if (dirname38.startsWith("data:")) {
+        dirname38 = "/";
       }
-      var require2 = createRequire(dirname36);
+      var require2 = createRequire(dirname38);
     }
     var moduleOverrides = Object.assign({}, Module);
     var thisProgram = "./this.program";
@@ -85472,31 +85552,31 @@ var createPdfium = (() => {
       ptr >>>= 0;
       return "0x" + ptr.toString(16).padStart(8, "0");
     };
-    function setValue(ptr, value, type = "i8") {
+    function setValue(ptr, value2, type = "i8") {
       if (type.endsWith("*")) type = "*";
       switch (type) {
         case "i1":
-          HEAP8[ptr] = value;
+          HEAP8[ptr] = value2;
           break;
         case "i8":
-          HEAP8[ptr] = value;
+          HEAP8[ptr] = value2;
           break;
         case "i16":
-          HEAP16[ptr >> 1] = value;
+          HEAP16[ptr >> 1] = value2;
           break;
         case "i32":
-          HEAP32[ptr >> 2] = value;
+          HEAP32[ptr >> 2] = value2;
           break;
         case "i64":
           abort("to do setValue(i64) use WASM_BIGINT");
         case "float":
-          HEAPF32[ptr >> 2] = value;
+          HEAPF32[ptr >> 2] = value2;
           break;
         case "double":
-          HEAPF64[ptr >> 3] = value;
+          HEAPF64[ptr >> 3] = value2;
           break;
         case "*":
-          HEAPU32[ptr >> 2] = value;
+          HEAPU32[ptr >> 2] = value2;
           break;
         default:
           abort(`invalid type for setValue: ${type}`);
@@ -86589,13 +86669,13 @@ var createPdfium = (() => {
             }
           }
           if (!islast || opts.follow) {
-            var count = 0;
+            var count2 = 0;
             while (FS.isLink(current.mode)) {
-              var link = FS.readlink(current_path);
-              current_path = PATH_FS.resolve(PATH.dirname(current_path), link);
+              var link2 = FS.readlink(current_path);
+              current_path = PATH_FS.resolve(PATH.dirname(current_path), link2);
               var lookup = FS.lookupPath(current_path, { recurse_count: opts.recurse_count + 1 });
               current = lookup.node;
-              if (count++ > 40) {
+              if (count2++ > 40) {
                 throw new FS.ErrnoError(32);
               }
             }
@@ -86820,11 +86900,11 @@ var createPdfium = (() => {
       getDevice: (dev) => FS.devices[dev],
       getMounts(mount) {
         var mounts = [];
-        var check2 = [mount];
-        while (check2.length) {
-          var m3 = check2.pop();
+        var check3 = [mount];
+        while (check3.length) {
+          var m3 = check3.pop();
           mounts.push(m3);
-          check2.push(...m3.mounts);
+          check3.push(...m3.mounts);
         }
         return mounts;
       },
@@ -87107,14 +87187,14 @@ var createPdfium = (() => {
       },
       readlink(path) {
         var lookup = FS.lookupPath(path);
-        var link = lookup.node;
-        if (!link) {
+        var link2 = lookup.node;
+        if (!link2) {
           throw new FS.ErrnoError(44);
         }
-        if (!link.node_ops.readlink) {
+        if (!link2.node_ops.readlink) {
           throw new FS.ErrnoError(28);
         }
-        return PATH_FS.resolve(FS.getPath(link.parent), link.node_ops.readlink(link));
+        return PATH_FS.resolve(FS.getPath(link2.parent), link2.node_ops.readlink(link2));
       },
       stat(path, dontFollow) {
         var lookup = FS.lookupPath(path, { follow: !dontFollow });
@@ -88035,7 +88115,7 @@ var createPdfium = (() => {
       assert4(typeof maxBytesToWrite == "number", "stringToUTF8(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!");
       return stringToUTF8Array(str, HEAPU8, outPtr, maxBytesToWrite);
     };
-    function ___syscall_getdents64(fd, dirp, count) {
+    function ___syscall_getdents64(fd, dirp, count2) {
       try {
         var stream = SYSCALLS.getStreamFromFD(fd);
         stream.getdents ||= FS.readdir(stream.path);
@@ -88043,7 +88123,7 @@ var createPdfium = (() => {
         var pos = 0;
         var off = FS.llseek(stream, 0, 1);
         var idx = Math.floor(off / struct_size);
-        while (idx < stream.getdents.length && pos + struct_size <= count) {
+        while (idx < stream.getdents.length && pos + struct_size <= count2) {
           var id;
           var type;
           var name = stream.getdents[idx];
@@ -88644,9 +88724,9 @@ var createPdfium = (() => {
       var wrappedFunc = instance.exports["f"];
       return wrappedFunc;
     };
-    var updateTableMap = (offset, count) => {
+    var updateTableMap = (offset, count2) => {
       if (functionsInTableMap) {
-        for (var i3 = offset; i3 < offset + count; i3++) {
+        for (var i3 = offset; i3 < offset + count2; i3++) {
           var item = getWasmTableEntry(i3);
           if (item) {
             functionsInTableMap.set(item, i3);
@@ -89878,14 +89958,14 @@ var createPdfium = (() => {
     var calledRun;
     var calledPrerun;
     dependenciesFulfilled = function runCaller() {
-      if (!calledRun) run();
+      if (!calledRun) run2();
       if (!calledRun) dependenciesFulfilled = runCaller;
     };
     function stackCheckInit() {
       _emscripten_stack_init();
       writeStackCookie();
     }
-    function run() {
+    function run2() {
       if (runDependencies > 0) {
         return;
       }
@@ -89925,7 +90005,7 @@ var createPdfium = (() => {
         Module["preInit"].pop()();
       }
     }
-    run();
+    run2();
     moduleRtn = readyPromise;
     for (const prop of Object.keys(Module)) {
       if (!(prop in moduleArg)) {
@@ -90749,7 +90829,7 @@ function transform2([a3, b3, c3, d3, e3, f3], [l3, bo2, r3, t3]) {
 function classify(lib, page2, n3) {
   const m3 = lib.pdfium;
   const floats = malloc(lib, 24);
-  const read3 = (count) => Array.from({ length: count }, (_3, i3) => m3.getValue(floats + 4 * i3, "float"));
+  const read3 = (count2) => Array.from({ length: count2 }, (_3, i3) => m3.getValue(floats + 4 * i3, "float"));
   const images = [];
   const texts = [];
   let invisibleText = false;
@@ -90760,8 +90840,8 @@ function classify(lib, page2, n3) {
     }
     box = read3(4);
     const bounds = (obj, matrix) => lib.FPDFPageObj_GetBounds(obj, floats, floats + 4, floats + 8, floats + 12) ? transform2(matrix, read3(4)) : null;
-    const walk4 = (count, objectAt2, matrix) => {
-      for (let i3 = 0; i3 < count; i3++) {
+    const walk4 = (count2, objectAt2, matrix) => {
+      for (let i3 = 0; i3 < count2; i3++) {
         const obj = objectAt2(i3);
         const type = lib.FPDFPageObj_GetType(obj);
         if (type === OBJ_TEXT) {
@@ -91014,14 +91094,14 @@ function runEvents(dir) {
   events.forEach((e3, i3) => {
     if (e3.event === "begin") start2 = i3;
   });
-  const run = events.slice(start2);
+  const run2 = events.slice(start2);
   const held2 = unjournaled.get(dir);
-  if (held2 === void 0) return run;
+  if (held2 === void 0) return run2;
   unjournaled.delete(dir);
-  const lineage = new Set(run.map((e3) => e3.run_id));
+  const lineage = new Set(run2.map((e3) => e3.run_id));
   const kept = held2.filter((r3) => lineage.has(r3.runId));
   for (const r3 of kept) journal(dir, r3.event, r3.runId, r3.extra);
-  return kept.length > 0 ? runEvents(dir) : run;
+  return kept.length > 0 ? runEvents(dir) : run2;
 }
 var isLive = (lease) => lease !== null && lease.ended === null && Date.now() - Date.parse(lease.heartbeat) < LIVE_MS;
 var runDir = (matterRoot, env) => pathWin329.join(hostLocalDir(SITE3, env), lockKey(matterRoot));
@@ -91216,10 +91296,10 @@ function affidavitPlan(route2, l3, env) {
   if (stated) {
     bounds = inventory.map((e3) => ({ letter: String(e3.letter), start: Number(e3.page_start), end: Number(e3.page_end), uncertain: false }));
   } else {
-    const count = l3.pageCount(route2.ref) ?? 0;
+    const count2 = l3.pageCount(route2.ref) ?? 0;
     const first = Math.max(Number(pass1.body_page_count) || 1, 1) + 1;
-    for (let k3 = 0, start2 = first; start2 <= count; k3++, start2 += SCAN_PAGES) {
-      const item = { ref: `${route2.ref}:p2:${k3 + 1}`, agent: "lawyer:extract-affidavit", contract: null, route: route2, pass: 2, pages: [start2, Math.min(count, start2 + SCAN_PAGES - 1)] };
+    for (let k3 = 0, start2 = first; start2 <= count2; k3++, start2 += SCAN_PAGES) {
+      const item = { ref: `${route2.ref}:p2:${k3 + 1}`, agent: "lawyer:extract-affidavit", contract: null, route: route2, pass: 2, pages: [start2, Math.min(count2, start2 + SCAN_PAGES - 1)] };
       const s3 = l3.state(item.ref);
       if (s3.state === "acked" || s3.state === "written") {
         const result = s3.result_id && usable(s3.result_id, env) ? staged(s3.result_id, env) : null;
@@ -91339,8 +91419,8 @@ async function pageManifest(pdf, pages, destination) {
     if (p3.kind === "scanned") manifest.push({ page: p3.page, images: (p3.images ?? []).map((i3) => i3.path) });
     else {
       const last = manifest[manifest.length - 1];
-      const run = last && "pages" in last ? /^(\d+)-(\d+)$/.exec(last.pages) : null;
-      if (run && Number(run[2]) === p3.page - 1) last.pages = `${run[1]}-${p3.page}`;
+      const run2 = last && "pages" in last ? /^(\d+)-(\d+)$/.exec(last.pages) : null;
+      if (run2 && Number(run2[2]) === p3.page - 1) last.pages = `${run2[1]}-${p3.page}`;
       else manifest.push({ pages: `${p3.page}-${p3.page}`, pdf });
     }
   }
@@ -91361,9 +91441,9 @@ async function inputsFor(item, matterRoot, context, bridged, dispatchId) {
   if (route2.rendering) {
     inputs.RENDERING = route2.rendering;
   } else {
-    const count = (await classifyPdfPages(file)).length;
-    pageCount = count;
-    const range = item.pages ?? [1, item.pass === 1 ? Math.min(count, READ_PAGES) : count];
+    const count2 = (await classifyPdfPages(file)).length;
+    pageCount = count2;
+    const range = item.pages ?? [1, item.pass === 1 ? Math.min(count2, READ_PAGES) : count2];
     const m3 = await pageManifest(file, range, bridged ? imagesDir(matterRoot, dispatchId) : void 0);
     inputs.PAGE_MANIFEST = m3.manifest;
     scanned = m3.scanned && m3.manifest.every((e3) => "page" in e3);
@@ -91773,27 +91853,27 @@ function localIsoWithOffset(d3 = /* @__PURE__ */ new Date()) {
   const abs = Math.abs(offset);
   return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())}T${pad(d3.getHours())}:${pad(d3.getMinutes())}:${pad(d3.getSeconds())}${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
 }
-function checkIsoDate(value, field) {
-  const [y3, m3, d3] = value.split("-").map(Number);
+function checkIsoDate(value2, field) {
+  const [y3, m3, d3] = value2.split("-").map(Number);
   const date3 = new Date(Date.UTC(y3, m3 - 1, d3));
-  if (!ISO_DATE.test(value) || date3.getUTCFullYear() !== y3 || date3.getUTCMonth() !== m3 - 1 || date3.getUTCDate() !== d3) {
-    throw new ValidationError(`matter_data__procedural_history_append.${field} must be a real date, YYYY-MM-DD: ${value}`, "invalid_date");
+  if (!ISO_DATE.test(value2) || date3.getUTCFullYear() !== y3 || date3.getUTCMonth() !== m3 - 1 || date3.getUTCDate() !== d3) {
+    throw new ValidationError(`matter_data__procedural_history_append.${field} must be a real date, YYYY-MM-DD: ${value2}`, "invalid_date");
   }
 }
 function datesIn(text8) {
-  const found = [];
+  const found2 = [];
   const iso2 = (y3, m3, d3) => `${y3}-${String(m3).padStart(2, "0")}-${String(d3).padStart(2, "0")}`;
   const month = (name) => MONTHS.findIndex((full) => full.startsWith(name.toLowerCase().replace(/\.$/, ""))) + 1;
-  for (const m3 of text8.matchAll(/\b(\d{4})-(\d{2})-(\d{2})\b/g)) found.push(iso2(+m3[1], +m3[2], +m3[3]));
+  for (const m3 of text8.matchAll(/\b(\d{4})-(\d{2})-(\d{2})\b/g)) found2.push(iso2(+m3[1], +m3[2], +m3[3]));
   for (const m3 of text8.matchAll(/\b([A-Za-z]{3,9}\.?)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/g)) {
     const mo2 = month(m3[1]);
-    if (mo2 > 0) found.push(iso2(+m3[3], mo2, +m3[2]));
+    if (mo2 > 0) found2.push(iso2(+m3[3], mo2, +m3[2]));
   }
   for (const m3 of text8.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9}\.?),?\s+(\d{4})\b/g)) {
     const mo2 = month(m3[2]);
-    if (mo2 > 0) found.push(iso2(+m3[3], mo2, +m3[1]));
+    if (mo2 > 0) found2.push(iso2(+m3[3], mo2, +m3[1]));
   }
-  return found;
+  return found2;
 }
 function parse3(text8) {
   const lines2 = text8.split(/\r?\n/);
@@ -92053,41 +92133,41 @@ async function checkAndWrite(args, env, dropAlso) {
   if (document2.store !== (privilegedStore ? "privileged" : "main")) {
     throw new ValidationError(`document.store must be ${privilegedStore ? "privileged" : "main"} for this contract and answer`);
   }
-  const run = await runForWrite(args.matter_root, args.run_id, document2, args.contract, args.result_ids, env);
-  if ("refused" in run) return { outcome: "refused", refused: run.refused, ask: [], report: [run.say] };
-  if (args.contract.startsWith("affidavit_") && !run.route) throw new ValidationError("an affidavit is written only for a file routed in this run");
-  const filePath = run.route?.file_path ?? storedForm(String(document2.file_path ?? ""), args.matter_root);
-  const fileHash = run.route?.file_hash ?? String(document2.file_hash ?? "");
+  const run2 = await runForWrite(args.matter_root, args.run_id, document2, args.contract, args.result_ids, env);
+  if ("refused" in run2) return { outcome: "refused", refused: run2.refused, ask: [], report: [run2.say] };
+  if (args.contract.startsWith("affidavit_") && !run2.route) throw new ValidationError("an affidavit is written only for a file routed in this run");
+  const filePath = run2.route?.file_path ?? storedForm(String(document2.file_path ?? ""), args.matter_root);
+  const fileHash = run2.route?.file_hash ?? String(document2.file_hash ?? "");
   if (filePath === "" || outsideMatter(filePath)) throw new ValidationError("document.file_path must be a file inside the matter folder");
   if (!/^[0-9a-f]{64}$/.test(fileHash)) throw new ValidationError("document.file_hash must be the file's SHA-256");
-  if (!privileged && run.route) {
+  if (!privileged && run2.route) {
     for (const id of args.result_ids) {
-      if (run.acked[id] !== void 0) continue;
+      if (run2.acked[id] !== void 0) continue;
       if (args.result_ids.length > 1) {
         throw new ValidationError("a call with several result_ids takes only results already acknowledged: pass each other result alone, with its dispatch line's ref as document.ref");
       }
-      if (run.itemRef === null) throw new ValidationError("document.ref must be the ref of the dispatch line whose reply gave this result");
+      if (run2.itemRef === null) throw new ValidationError("document.ref must be the ref of the dispatch line whose reply gave this result");
     }
   }
   const results = [];
   const acks = [];
   const bad2 = [];
   for (const id of args.result_ids) {
-    if (run.settled.includes(id)) continue;
-    const replyRef = run.acked[id] ?? (args.result_ids.length === 1 ? run.itemRef : null) ?? void 0;
+    if (run2.settled.includes(id)) continue;
+    const replyRef = run2.acked[id] ?? (args.result_ids.length === 1 ? run2.itemRef : null) ?? void 0;
     const path = stagedResultPath(id, env);
     const doc = readStaged(path);
     if (doc === null) {
-      if (run.written.includes(id)) continue;
+      if (run2.written.includes(id)) continue;
       if (!privileged && replyRef !== void 0) acks.push({ ref: replyRef, result_id: id });
       bad2.push({ id, reason: "unknown_result" });
       continue;
     }
     const stagedRef = typeof doc.ref === "string" ? doc.ref : "";
     const ref = privileged ? stagedRef : replyRef ?? stagedRef;
-    const sameFile = run.route === null || ref.split(":")[0] === run.route.ref;
-    const thisContract = replyRef === void 0 || run.dispatched.includes(replyRef);
-    if (!privileged && run.route && sameFile) acks.push({ ref, result_id: id });
+    const sameFile = run2.route === null || ref.split(":")[0] === run2.route.ref;
+    const thisContract = replyRef === void 0 || run2.dispatched.includes(replyRef);
+    if (!privileged && run2.route && sameFile) acks.push({ ref, result_id: id });
     if (!privileged && (!sameFile || ref !== stagedRef || !thisContract) || doc.contract !== args.contract) {
       bad2.push({ id, reason: "contract_mismatch" });
     } else if (doc.contract_version !== CONTRACT_VERSION) {
@@ -92100,30 +92180,30 @@ async function checkAndWrite(args, env, dropAlso) {
     return refused(bad2[0].reason);
   }
   if (args.result_ids.length > 0 && results.length === 0) {
-    return args.result_ids.some((id) => run.written.includes(id)) ? { outcome: "already_written", ask: [], report: [] } : { outcome: "refused", refused: "invalid", ask: [], report: [] };
+    return args.result_ids.some((id) => run2.written.includes(id)) ? { outcome: "already_written", ask: [], report: [] } : { outcome: "refused", refused: "invalid", ask: [], report: [] };
   }
-  return write(args, env, run, filePath, fileHash, results, dropAlso);
+  return write(args, env, run2, filePath, fileHash, results, dropAlso);
 }
-async function write(args, env, run, filePath, fileHash, results, dropAlso) {
-  const fileRef = run.route?.ref ?? "";
+async function write(args, env, run2, filePath, fileHash, results, dropAlso) {
+  const fileRef = run2.route?.ref ?? "";
   const exhibits = args.contract === "affidavit_exhibits" ? await affidavitRun(args.matter_root, fileRef, results.map((r3) => r3.ref), env) : null;
   const names = results.flatMap((r3) => partyNames(args.contract, r3.doc));
   const participants = resolveParties(args.matter_root, names, args.answers?.participants ?? {});
   const plan2 = runCaseScript(CONVERTERS[args.contract], "plan", {
     contract: args.contract,
-    mode: run.mode,
+    mode: run2.mode,
     file_path: filePath,
     file_hash: fileHash,
     results: results.map(({ result_id, path, ref }) => ({ result_id, path, ref })),
     answers: args.answers ?? {},
     participants,
-    route: run.route,
+    route: run2.route,
     exhibits,
-    answered: run.answered,
+    answered: run2.answered,
     // Read only where the delivery check can fire: an attended document with a letter flag (N-2).
-    firm_name: run.mode === "attended" && results.some((r3) => flagged(r3.doc, "outgoing_letter")) ? firmName(env) : null
+    firm_name: run2.mode === "attended" && results.some((r3) => flagged(r3.doc, "outgoing_letter")) ? firmName(env) : null
   }, env);
-  const acks = args.contract === "privileged" || !run.route ? [] : results.map((r3) => ({ ref: r3.ref, result_id: r3.result_id }));
+  const acks = args.contract === "privileged" || !run2.route ? [] : results.map((r3) => ({ ref: r3.ref, result_id: r3.result_id }));
   const refs = [.../* @__PURE__ */ new Set([
     fileRef || results[0]?.ref || fileHash,
     ...args.contract === "sought_orders" && fileRef ? [`${fileRef}:so`] : [],
@@ -92197,7 +92277,7 @@ async function write(args, env, run, filePath, fileHash, results, dropAlso) {
   const outcome = named2.prior != null && inserted === 0 && unchanged && failures.length === 0 ? "already_written" : "written";
   const sourceId = named2.source_id ?? null;
   const closedNow = await record2({
-    result_ids: args.result_ids.filter((id) => !failedIds.has(id) && !run.settled.includes(id)),
+    result_ids: args.result_ids.filter((id) => !failedIds.has(id) && !run2.settled.includes(id)),
     outcome,
     ...args.result_ids.length === 0 ? { closed: true } : {},
     ...args.contract === "affidavit_exhibits" ? { closing: exhibits?.closing === true && failures.length === 0 } : {},
@@ -92538,10 +92618,27 @@ def job_move(before, after):
     return None
 
 
+# Loose threads moved to their own store (loose-threads/backend.ts), so a row written to the emptied seeds
+# table is one nobody reads. drafting_data__execute refuses a script naming it as a write target, and one
+# that changes it by any other route. It stays in the database, empty, and fixture seeds stay unguarded.
+SEEDS_WRITE_RE = r"""(?is)\b(?:insert(?:\s+or\s+\w+)?\s+into|replace\s+into|update(?:\s+or\s+\w+)?|delete\s+from|drop\s+table|alter\s+table)\s+(?:main\s*\.\s*)?["'\[]?seeds\b"""
+SEEDS_REFUSED = "loose_thread_write_refused: use loose_threads__capture or loose_threads__update. Loose threads are no longer in this database. Nothing was written."
+
+
+def seed_rows(con):
+    held = con.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'seeds'").fetchone()
+    return con.execute("SELECT * FROM seeds ORDER BY id").fetchall() if held else []
+
+
 def do_execute(req):
+    guarded = req.get('guard_jobs')
+    if guarded and re.search(SEEDS_WRITE_RE, req['sql_script']):
+        raise SystemExit(SEEDS_REFUSED)
+
     def mutate(con):
         before = recorded(con)
-        jobs = job_state(con) if req.get('guard_jobs') else None
+        jobs = job_state(con) if guarded else None
+        seeds = seed_rows(con) if guarded else None
         try:
             con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
         except Exception:
@@ -92557,6 +92654,8 @@ def do_execute(req):
         refused = jobs is not None and job_move(jobs, job_state(con))
         if refused:
             raise SystemExit(refused)
+        if guarded and seed_rows(con) != seeds:
+            raise SystemExit(SEEDS_REFUSED)
         return {"ok": True, "changes": con.total_changes}, True
     return staged_write(req, 'execute', mutate)
 
@@ -92583,7 +92682,10 @@ def do_write_all(req):
     # statement carrying expect_changes that changes another number of rows rolls the whole
     # transaction back, and the live file is never touched. A parameter {"$rowid": n} binds the
     # rowid statement n inserted, so a later statement can name a row this transaction created.
+    # foreign_keys_off is the seeds move's alone (loose-threads/migrate.ts).
     def mutate(con):
+        if req.get('foreign_keys_off'):
+            con.execute("PRAGMA foreign_keys = OFF")
         con.execute("BEGIN")
         results = []
         try:
@@ -92861,9 +92963,9 @@ function submissionDataQuery(dbPath, sql, params) {
 function forgetDraftingQueries(dbPath) {
   forgetPerCall(isQueryOf(dbPath));
 }
-function withAttachHint(run) {
+function withAttachHint(run2) {
   try {
-    return run();
+    return run2();
   } catch (err) {
     if (err instanceof Error && err.message.includes("a proceeding with a Writing has no board of its own")) {
       err.message = err.message.replace(/ \(ADR \d+\)/, ".") + " Nothing was written. If this proceeding's only Writings are research memos or case briefs, its own Work Board is still there: attach the draft to a live one of them, and it shows on that Work Board and moves to the first Writing that is not a memo or case brief when one is created. A retired one takes no draft, so if all of them are retired, this Work Board takes none until one is recovered or another Writing is created.";
@@ -92896,10 +92998,10 @@ async function submissionDataWrite(dbPath, sql, params, env = process.env) {
     lock.release();
   }
 }
-async function submissionDataWriteAll(dbPath, statements, env = process.env) {
+async function submissionDataWriteAll(dbPath, statements, env = process.env, options = {}) {
   const lock = await acquireDataLock(dbPath, env);
   try {
-    const result = runHelper2({ op: "write_all", db_path: dbPath, statements }, env);
+    const result = runHelper2({ op: "write_all", db_path: dbPath, statements, ...options.foreignKeysOff ? { foreign_keys_off: true } : {} }, env);
     return lock.brokeStale ? {
       ...result,
       warning: "broke a stale drafting-data write lock (>15 min old) before writing; if another session is still writing to or migrating this database, stop and reconcile"
@@ -92973,9 +93075,9 @@ function timePipelineGet(namespace, key, env = process.env) {
   const db_path = resolveTimePipelineDbPath(env);
   return runHelper3({ op: "get", db_path, namespace, key }, env);
 }
-function timePipelineSet(namespace, key, value, env = process.env) {
+function timePipelineSet(namespace, key, value2, env = process.env) {
   const db_path = resolveTimePipelineDbPath(env);
-  return runHelper3({ op: "set", db_path, namespace, key, value }, env);
+  return runHelper3({ op: "set", db_path, namespace, key, value: value2 }, env);
 }
 function timePipelineList(namespace, prefix, env = process.env) {
   const db_path = resolveTimePipelineDbPath(env);
@@ -93265,11 +93367,11 @@ function runDriver3(label2, driver, payload, env) {
 }
 
 // src/submission/migrate.ts
-import { existsSync as existsSync22, statSync as statSync12 } from "node:fs";
-import { join as join29 } from "node:path";
+import { existsSync as existsSync23, statSync as statSync12 } from "node:fs";
+import { join as join30 } from "node:path";
 
 // src/submission/parties-drift.ts
-import { dirname as dirname11 } from "node:path";
+import { dirname as dirname12 } from "node:path";
 
 // src/submission/forms/symbol-table.ts
 var SYMBOLS = [
@@ -93900,12 +94002,12 @@ var STEP_GLYPHS = {
   waiting: "\u23F3"
 };
 var GLYPHS_LONGEST_FIRST = SYMBOLS.map((s3) => s3.glyph).sort((a3, b3) => b3.length - a3.length);
-function splitGlyphs(run) {
+function splitGlyphs(run2) {
   const out = [];
   let i3 = 0;
-  while (i3 < run.length) {
-    const glyph2 = GLYPHS_LONGEST_FIRST.find((g3) => run.startsWith(g3, i3));
-    if (!glyph2) throw new Error(`splitGlyphs: "${run.slice(i3)}" in "${run}" is not a table glyph`);
+  while (i3 < run2.length) {
+    const glyph2 = GLYPHS_LONGEST_FIRST.find((g3) => run2.startsWith(g3, i3));
+    if (!glyph2) throw new Error(`splitGlyphs: "${run2.slice(i3)}" in "${run2}" is not a table glyph`);
     out.push(glyph2);
     i3 += glyph2.length;
   }
@@ -94030,9 +94132,9 @@ function exhibitLetterItem(item) {
   }
   return letters;
 }
-function exhibitLetterList(list) {
+function exhibitLetterList(list2) {
   const letters = [];
-  for (const item of list.split(",")) {
+  for (const item of list2.split(",")) {
     const named2 = exhibitLetterItem(item.trim());
     if (named2 === null) return null;
     letters.push(...named2);
@@ -94636,11 +94738,11 @@ var TYPE_FIELDS = [
 ];
 var CITABLE_TYPE_FIELDS = ["title", "page_limit", "exhibit_numbering"];
 var VENUE_FIELDS = ["caption_lines", "file_number_label", "registry_label", "party_roles", "display_label"];
-function isObject2(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function isObject2(value2) {
+  return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
 }
-function isCited(value) {
-  return isObject2(value) && Object.hasOwn(value, "value") && Object.hasOwn(value, "rule_ref");
+function isCited(value2) {
+  return isObject2(value2) && Object.hasOwn(value2, "value") && Object.hasOwn(value2, "rule_ref");
 }
 function checkRuleRef(ref, file, field) {
   if (typeof ref !== "string" || ref.trim() === "") fail(file, `${field}.rule_ref`, "must be a non-empty string");
@@ -94653,15 +94755,15 @@ function scalar(block2, key, file, citable) {
   checkRuleRef(raw.rule_ref, file, key);
   return raw.value;
 }
-function requireString(value, file, field) {
-  if (typeof value !== "string" || value.trim() === "") fail(file, field, "must be a non-empty string");
+function requireString(value2, file, field) {
+  if (typeof value2 !== "string" || value2.trim() === "") fail(file, field, "must be a non-empty string");
 }
-function requireEnum(value, allowed, file, field) {
-  if (typeof value !== "string" || !allowed.includes(value)) fail(file, field, `must be one of ${allowed.join(", ")}`);
+function requireEnum(value2, allowed, file, field) {
+  if (typeof value2 !== "string" || !allowed.includes(value2)) fail(file, field, `must be one of ${allowed.join(", ")}`);
 }
-function requireNameList(value, allowed, file, field) {
-  if (!Array.isArray(value)) fail(file, field, "must be an array");
-  value.forEach((name, i3) => {
+function requireNameList(value2, allowed, file, field) {
+  if (!Array.isArray(value2)) fail(file, field, "must be an array");
+  value2.forEach((name, i3) => {
     if (field === "goal_criteria" && name === "gate") {
       fail(file, `${field}[${i3}]`, `"${name}" is universal; every card carries it and no type declares it`);
     }
@@ -94768,8 +94870,8 @@ function validateVenueBlock(raw, file) {
   requireString(scalar(block2, "display_label", file, true), file, "display_label");
   citedItems(block2, "venue", file);
 }
-function cited(value) {
-  return isCited(value) && Object.keys(value).length === 2;
+function cited(value2) {
+  return isCited(value2) && Object.keys(value2).length === 2;
 }
 function citedItems(block2, kind, file) {
   const out = [];
@@ -94825,6 +94927,57 @@ function rows(dbPath, sql, params = []) {
   return submissionDataQuery(dbPath, sql, params).rows;
 }
 
+// src/loose-threads/backend.ts
+import { existsSync as existsSync21 } from "node:fs";
+import { dirname as dirname11, join as join28 } from "node:path";
+var LOOSE_THREADS_FILE = "loose_threads.db";
+var THREAD_KINDS = ["idea", "proposition", "correspondence", "argument", "work_board"];
+var RANK_GROUPS = ["decision", "tooling", "housekeeping", "research", "authority", "evidence", "other"];
+var THREADS = "threads";
+var META2 = "meta";
+var SEEDS_MOVED = "seeds_moved";
+var KILLED_WRITE_ADVICE3 = "The write may already have committed: read the thread back before retrying.";
+function looseThreadsPath(dbPath) {
+  return join28(dirname11(dbPath), LOOSE_THREADS_FILE);
+}
+function run(dbPath, request2, env) {
+  const db_path = looseThreadsPath(dbPath);
+  const out = runKv({ ...request2, db_path, exclusive: true }, {
+    label: "loose-threads sqlite helper",
+    env,
+    timeoutMs: pythonTimeoutMs(env, isKvRead(request2.op) ? READ_TIMEOUT_MS : EXECUTE_TIMEOUT_MS, "COCLERK_SUBMISSION_PYTHON_TIMEOUT_MS"),
+    timeoutAdvice: isKvRead(request2.op) ? void 0 : KILLED_WRITE_ADVICE3
+  });
+  if (out.other_tables === true) throw new DataServerError(`${db_path} holds tables of another kind, so it was not read or written.`, "loose_threads_file_foreign");
+  return out;
+}
+var memoKey = (dbPath) => JSON.stringify(["loose-threads", dbPath]);
+function readThreads(dbPath, env = process.env) {
+  return oncePerCall(memoKey(dbPath), () => {
+    if (!existsSync21(looseThreadsPath(dbPath))) return [];
+    const { items: items2 } = run(dbPath, { op: "list", namespace: THREADS }, env);
+    return items2.map((i3) => ({ ...JSON.parse(i3.value), id: Number(i3.key) })).sort((a3, b3) => a3.id - b3.id);
+  }).map((t3) => ({ ...t3 }));
+}
+function writeThreads(dbPath, threads, env = process.env) {
+  const stale = memoKey(dbPath);
+  forgetPerCall((key) => key === stale);
+  run(dbPath, { op: "apply", writes: threads.map(({ id, ...value2 }) => ({ op: "set", namespace: THREADS, key: String(id), value: JSON.stringify(value2) })) }, env);
+}
+function readSeedsMoved(dbPath, env = process.env) {
+  if (!existsSync21(looseThreadsPath(dbPath))) return null;
+  return run(dbPath, { op: "get", namespace: META2, key: SEEDS_MOVED }, env).value;
+}
+function stampSeedsMoved(dbPath, value2, env = process.env) {
+  run(dbPath, { op: "set", namespace: META2, key: SEEDS_MOVED, value: value2 }, env);
+}
+function isOpenThread(t3, deletedIds) {
+  return (t3.charted_into === null || deletedIds.has(t3.charted_into)) && t3.discarded_at === null && t3.suggested_at === null;
+}
+function threadStamp(now = /* @__PURE__ */ new Date()) {
+  return new Date(now.getTime() - now.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+}
+
 // src/submission/schema-capabilities.ts
 var snapshots = /* @__PURE__ */ new Map();
 function readSnapshot(dbPath) {
@@ -94861,14 +95014,14 @@ function isResearchWriting(filing) {
 }
 var RESEARCH_WRITING_KINDS_SQL = [...RESEARCH_WRITING_KINDS].map((k3) => `'${k3}'`).join(", ");
 function fetchFiling(dbPath, filingId) {
-  const found = rows(dbPath, "SELECT * FROM filings WHERE id = ?", [filingId]);
-  if (found.length === 0) throw new Error(`No filing found with id ${filingId}`);
-  return found[0];
+  const found2 = rows(dbPath, "SELECT * FROM filings WHERE id = ?", [filingId]);
+  if (found2.length === 0) throw new Error(`No filing found with id ${filingId}`);
+  return found2[0];
 }
 function fetchProceeding(dbPath, proceedingId) {
-  const found = rows(dbPath, "SELECT * FROM proceedings WHERE id = ?", [proceedingId]);
-  if (found.length === 0) throw new Error(`No proceeding found with id ${proceedingId}`);
-  return found[0];
+  const found2 = rows(dbPath, "SELECT * FROM proceedings WHERE id = ?", [proceedingId]);
+  if (found2.length === 0) throw new Error(`No proceeding found with id ${proceedingId}`);
+  return found2[0];
 }
 function requireForum(proceeding, needsForum) {
   if (needsForum && proceeding.forum === null) {
@@ -94876,8 +95029,8 @@ function requireForum(proceeding, needsForum) {
   }
   return proceeding;
 }
-function isObject3(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function isObject3(value2) {
+  return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
 }
 function scalarValue(raw) {
   return isObject3(raw) && Object.hasOwn(raw, "value") && Object.hasOwn(raw, "rule_ref") ? raw.value : raw;
@@ -95130,12 +95283,6 @@ function courtRecordDocumentColumns(dbPath, alias) {
 function liveTicketClause(dbPath, alias) {
   return deletedAtHeld(dbPath) ? ` AND ${alias === void 0 ? "" : `${alias}.`}deleted_at IS NULL` : "";
 }
-function seedClosedColumns(dbPath) {
-  return ["discarded_at", "suggested_at"].filter((column) => hasColumn(dbPath, "seeds", column));
-}
-function liveSeedClause(dbPath) {
-  return seedClosedColumns(dbPath).map((column) => ` AND ${column} IS NULL`).join("");
-}
 function fetchFilingLaw(dbPath, filingId) {
   return rows(
     dbPath,
@@ -95168,12 +95315,12 @@ function fetchPreFilingProceedings(dbPath) {
   return rows(dbPath, "SELECT * FROM proceedings p ORDER BY p.id").filter((p3) => fetchBoardFilings(dbPath, p3.id).length === 0);
 }
 function fetchHearingDate(dbPath, filingId) {
-  const found = rows(dbPath, "SELECT hearing_date FROM hearing_details WHERE filing_id = ?", [filingId]);
-  return found.length === 0 ? null : found[0].hearing_date;
+  const found2 = rows(dbPath, "SELECT hearing_date FROM hearing_details WHERE filing_id = ?", [filingId]);
+  return found2.length === 0 ? null : found2[0].hearing_date;
 }
 function fetchLatestActivity(dbPath, proceedingId) {
   const live = liveTicketClause(dbPath);
-  return rows(
+  const found2 = rows(
     dbPath,
     `SELECT filing_id, MAX(ts) AS latest FROM (
        SELECT filing_id, created AS ts FROM tickets WHERE proceeding_id = ?${live}
@@ -95181,15 +95328,20 @@ function fetchLatestActivity(dbPath, proceedingId) {
        UNION ALL SELECT filing_id, plan_approved_at FROM tickets WHERE proceeding_id = ?${live}
        UNION ALL SELECT filing_id, completed_at FROM tickets WHERE proceeding_id = ?${live}
        UNION ALL SELECT t.filing_id, s.done_at FROM ticket_steps s JOIN tickets t ON t.id = s.ticket_id WHERE t.proceeding_id = ?${liveTicketClause(dbPath, "t")}
-       UNION ALL SELECT filing_id, created FROM seeds WHERE proceeding_id = ? AND charted_into IS NULL${liveSeedClause(dbPath)}
      ) WHERE ts IS NOT NULL GROUP BY filing_id`,
-    [proceedingId, proceedingId, proceedingId, proceedingId, proceedingId, proceedingId]
+    [proceedingId, proceedingId, proceedingId, proceedingId, proceedingId]
   );
+  const latest = new Map(found2.map((r3) => [r3.filing_id, r3.latest]));
+  for (const t3 of readThreads(dbPath)) {
+    if (t3.proceeding_id !== proceedingId || t3.charted_into !== null || t3.discarded_at !== null || t3.suggested_at !== null) continue;
+    if ((latest.get(t3.filing_id) ?? "") < t3.created) latest.set(t3.filing_id, t3.created);
+  }
+  return [...latest].map(([filing_id, value2]) => ({ filing_id, latest: value2 })).sort((a3, b3) => (a3.filing_id ?? 0) - (b3.filing_id ?? 0));
 }
 function fetchRevision(dbPath) {
-  const found = rows(dbPath, "SELECT value FROM db_meta WHERE key = 'revision'", []);
-  if (found.length === 0) return 0;
-  const parsed = Number(found[0].value);
+  const found2 = rows(dbPath, "SELECT value FROM db_meta WHERE key = 'revision'", []);
+  if (found2.length === 0) return 0;
+  const parsed = Number(found2[0].value);
   return Number.isFinite(parsed) ? parsed : 0;
 }
 function clientParty(parties2) {
@@ -95200,8 +95352,8 @@ function opposingPartyIds(parties2) {
 }
 
 // src/case/parties-of-record.ts
-import { existsSync as existsSync21 } from "node:fs";
-import { join as join28 } from "node:path";
+import { existsSync as existsSync22 } from "node:fs";
+import { join as join29 } from "node:path";
 var DRIVER6 = String.raw`
 import json, sys
 
@@ -95224,7 +95376,7 @@ function readPartiesById(caseDataDir, casePartyIds, env = process.env) {
   return read2(caseDataDir, { file_number: null, case_party_ids: casePartyIds }, env);
 }
 function read2(caseDataDir, request2, env) {
-  if (!existsSync21(join28(caseDataDir, "main.sqlite"))) {
+  if (!existsSync22(join29(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
   return oncePerCall(JSON.stringify([caseDataDir, request2]), () => spawnRead(caseDataDir, request2, env));
@@ -95282,9 +95434,9 @@ function draftingParties(caseDataDir, proceeding, parties2, env = process.env) {
   const read3 = new Map((record2?.parties ?? []).map((c3) => [c3.case_party_id, c3]));
   const rows4 = [];
   const resolved = parties2.map((p3) => {
-    const link = linkOf(p3);
-    const caseParty = link === null ? void 0 : read3.get(link);
-    if (link === null) rows4.push({ ...base(p3), kind: "unlinked" });
+    const link2 = linkOf(p3);
+    const caseParty = link2 === null ? void 0 : read3.get(link2);
+    if (link2 === null) rows4.push({ ...base(p3), kind: "unlinked" });
     else if (caseParty === void 0) rows4.push({ ...base(p3), kind: "not_of_record" });
     return withCaseData(p3, caseParty);
   });
@@ -95294,7 +95446,7 @@ function matterPartiesDrift(dbPath, env = process.env) {
   const rows4 = [];
   const uncheckedWhy = [];
   for (const proceeding of fetchAllProceedings(dbPath)) {
-    const { drift } = draftingParties(dirname11(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
+    const { drift } = draftingParties(dirname12(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
     rows4.push(...drift.rows);
     if (drift.unchecked) uncheckedWhy.push(drift.unchecked.note);
   }
@@ -95303,8 +95455,8 @@ function matterPartiesDrift(dbPath, env = process.env) {
 function heldValues(p3) {
   const held2 = {};
   for (const field of CASE_DATA_FIELDS) {
-    const value = p3[field];
-    if (typeof value === "string" && value.trim() !== "") held2[field] = value.trim();
+    const value2 = p3[field];
+    if (typeof value2 === "string" && value2.trim() !== "") held2[field] = value2.trim();
   }
   return held2;
 }
@@ -95314,7 +95466,7 @@ function counselOffers(dbPath, env = process.env) {
     const stored = fetchPartiesAsHeld(dbPath, proceeding.id);
     const held2 = new Map(stored.map((p3) => [p3.id, heldValues(p3)]));
     if (![...held2.values()].some((h3) => Object.keys(h3).length > 0)) continue;
-    const { parties: parties2, drift } = draftingParties(dirname11(dbPath), proceeding, stored, env);
+    const { parties: parties2, drift } = draftingParties(dirname12(dbPath), proceeding, stored, env);
     const drifted = new Map(drift.rows.map((r3) => [r3.party_id, r3]));
     for (const p3 of parties2) {
       const values = held2.get(p3.id) ?? {};
@@ -95333,10 +95485,10 @@ function counselOffers(dbPath, env = process.env) {
         continue;
       }
       for (const field of CASE_DATA_FIELDS) {
-        const value = values[field];
+        const value2 = values[field];
         const caseValue = p3[field];
-        if (value !== void 0 && (caseValue === null || caseValue.trim() !== value)) {
-          offers.push({ ...base, kind: "offer", field, case_data_value: caseValue, held_value: value });
+        if (value2 !== void 0 && (caseValue === null || caseValue.trim() !== value2)) {
+          offers.push({ ...base, kind: "offer", field, case_data_value: caseValue, held_value: value2 });
         }
       }
     }
@@ -95365,8 +95517,8 @@ var OVERRIDE_ENV = "COCLERK_SUBMISSION_ALLOW_UNBUILT_SCHEMA";
 var CEILING_SEAM_ENV = "COCLERK_SUBMISSION_BUNDLE_SCHEMA_VERSION";
 var OFF = /* @__PURE__ */ new Set(["", "0", "false", "no", "off"]);
 function overrideActive(env = process.env) {
-  const value = env[OVERRIDE_ENV];
-  return typeof value === "string" && !OFF.has(value.trim().toLowerCase());
+  const value2 = env[OVERRIDE_ENV];
+  return typeof value2 === "string" && !OFF.has(value2.trim().toLowerCase());
 }
 function bundleSchemaVersion(env = process.env) {
   if (BAKED_SCHEMA_VERSION !== null) return BAKED_SCHEMA_VERSION;
@@ -95464,7 +95616,7 @@ async function submissionDataMigrate(dbPath, env = process.env) {
 }
 var COUNSEL_COPY_DROPPED = 43;
 function storedSchemaVersion(dbPath) {
-  if (!existsSync22(dbPath)) return null;
+  if (!existsSync23(dbPath)) return null;
   const [meta2] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'db_meta'").rows;
   if (meta2.n === 0) return null;
   const [row2] = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").rows;
@@ -95494,19 +95646,19 @@ function assertCounselReconciled(dbPath, staged2, env) {
 var versionCache;
 function currentSchemaVersion(env = process.env) {
   const scriptsDir = submissionDataMigrateScriptsDir(env);
-  const engine = statSync12(join29(scriptsDir, "migrate_engine.py"));
+  const engine = statSync12(join30(scriptsDir, "migrate_engine.py"));
   const key = [scriptsDir, engine.mtimeMs, engine.size, pythonTimeoutMs2(env, READ_TIMEOUT_MS)].join("|");
   if (versionCache?.key === key) return versionCache.value;
   const result = runDriver4("schema-version", driverFile3("schema-version", VERSION_DRIVER), "", env, READ_TIMEOUT_MS);
-  const value = Number(result.target_schema_version);
-  if (!Number.isInteger(value)) {
+  const value2 = Number(result.target_schema_version);
+  if (!Number.isInteger(value2)) {
     throw new DataServerError(
       `drafting-data schema-version driver returned no usable target version: ${JSON.stringify(result)}`,
       "migrate_error"
     );
   }
-  versionCache = { key, value };
-  return value;
+  versionCache = { key, value: value2 };
+  return value2;
 }
 function runDriver4(label2, driver, payload, env, defaultTimeoutMs) {
   const scriptsDir = submissionDataMigrateScriptsDir(env);
@@ -95522,9 +95674,230 @@ function runDriver4(label2, driver, payload, env, defaultTimeoutMs) {
   return parsed.result ?? {};
 }
 
+// src/loose-threads/migrate.ts
+import { copyFileSync as copyFileSync2 } from "node:fs";
+var value = (row2, column) => row2[column] ?? null;
+function threadOf(row2) {
+  return {
+    id: row2.id,
+    kind: "idea",
+    idea: row2.idea,
+    surfaced_by: row2.surfaced_by,
+    created: row2.created,
+    proceeding_id: row2.proceeding_id,
+    filing_id: value(row2, "filing_id"),
+    origin_job: value(row2, "origin_ticket_id"),
+    charted_into: value(row2, "charted_into"),
+    // Absent on a database held below the hop that added each.
+    rank: value(row2, "rank"),
+    rank_group: value(row2, "rank_group"),
+    rank_reason: value(row2, "rank_reason"),
+    rank_job: value(row2, "rank_job"),
+    deferred_at: value(row2, "deferred_at"),
+    discarded_at: value(row2, "discarded_at"),
+    suggested_at: value(row2, "suggested_at")
+  };
+}
+function backupName(dbPath) {
+  const stamp2 = (/* @__PURE__ */ new Date()).toISOString().replace(/[-:]|\.\d+/g, "");
+  const held2 = timestampedBackups(dbPath);
+  const base = `.bak-${stamp2}`;
+  const name = dbPath.split(/[\\/]/).pop();
+  let suffix = base;
+  for (let n3 = 1; held2.has(name + suffix); n3 += 1) suffix = `${base}-${n3}`;
+  return dbPath + suffix;
+}
+async function moveSeedsOnce(dbPath, env = process.env) {
+  if (!hasTable(dbPath, "seeds")) return null;
+  const seeds = submissionDataQuery(dbPath, "SELECT * FROM seeds ORDER BY id").rows;
+  if (seeds.length === 0) return null;
+  if (readSeedsMoved(dbPath, env) !== null) return { stray: seeds.length };
+  const backup = backupName(dbPath);
+  const lock = await acquireDataLock(dbPath, env);
+  try {
+    copyFileSync2(dbPath, backup);
+  } finally {
+    lock.release();
+  }
+  const held2 = new Set(readThreads(dbPath, env).map((t3) => t3.id));
+  const fresh = seeds.map(threadOf).filter((t3) => !held2.has(t3.id));
+  if (fresh.length > 0) writeThreads(dbPath, fresh, env);
+  const now = new Set(readThreads(dbPath, env).map((t3) => t3.id));
+  const missing = seeds.filter((row2) => !now.has(row2.id)).length;
+  if (missing > 0) throw new DataServerError(`${missing} of ${seeds.length} loose threads did not reach the store, so the drafting database was left as it was.`, "loose_threads_not_moved");
+  const emptied = await submissionDataWriteAll(dbPath, [{ sql: "DELETE FROM seeds WHERE id <= ?", params: [seeds[seeds.length - 1].id] }], env, { foreignKeysOff: true });
+  if (!emptied.ok) throw new DataServerError("The moved loose threads could not be removed from the drafting database.", "loose_threads_not_moved");
+  stampSeedsMoved(dbPath, JSON.stringify({ moved: seeds.length, backup }), env);
+  return { moved: seeds.length, backup };
+}
+
+// src/loose-threads/tools.ts
+var isId = (v3) => Number.isInteger(v3) && v3 > 0;
+var isText = (v3) => typeof v3 === "string" && v3.trim() !== "";
+function check(ok, tool, field, why) {
+  if (!ok) throw new ValidationError(`loose_threads__${tool}.${field} ${why}`, `invalid_${field}`);
+}
+function count(dbPath, sql, params) {
+  return submissionDataQuery(dbPath, sql, params).rows[0].n;
+}
+async function locked(dbPath, env, write2) {
+  await moveSeedsOnce(dbPath, env);
+  const lock = await acquireDataLock(dbPath, env);
+  try {
+    return write2();
+  } finally {
+    lock.release();
+  }
+}
+function deletedJobs(dbPath) {
+  return new Set(submissionDataQuery(dbPath, "SELECT id FROM tickets WHERE deleted_at IS NOT NULL").rows.map((r3) => r3.id));
+}
+async function looseThreadsCapture(args, env = process.env) {
+  const { db_path: dbPath, proceeding_id: proceedingId, surfaced_by: surfacedBy, idea, ref } = args;
+  const filingId = args.filing_id ?? null;
+  const originJob = args.origin_job ?? null;
+  const kind = args.kind ?? "idea";
+  check(isId(proceedingId) && count(dbPath, "SELECT COUNT(*) AS n FROM proceedings WHERE id = ?", [proceedingId]) === 1, "capture", "proceeding_id", "names no proceeding in this matter");
+  check(filingId === null || isId(filingId) && count(dbPath, "SELECT COUNT(*) AS n FROM filings WHERE id = ? AND proceeding_id = ?", [filingId, proceedingId]) === 1, "capture", "filing_id", "names no Writing or Work Board in that proceeding");
+  check(originJob === null || isId(originJob) && count(dbPath, "SELECT COUNT(*) AS n FROM tickets WHERE id = ?", [originJob]) === 1, "capture", "origin_job", "names no job");
+  check(isText(idea), "capture", "idea", "must be the idea, verbatim");
+  check(isText(surfacedBy), "capture", "surfaced_by", "must name what surfaced it");
+  check(THREAD_KINDS.includes(kind), "capture", "kind", `must be one of ${THREAD_KINDS.join(", ")}`);
+  check(ref === void 0 || isText(ref), "capture", "ref", "must be a file path or a record id");
+  return locked(dbPath, env, () => {
+    const id = readThreads(dbPath, env).reduce((top, t3) => Math.max(top, t3.id), 0) + 1;
+    writeThreads(dbPath, [{
+      id,
+      kind,
+      idea,
+      surfaced_by: surfacedBy,
+      created: threadStamp(),
+      proceeding_id: proceedingId,
+      filing_id: filingId,
+      origin_job: originJob,
+      ...ref === void 0 ? {} : { ref },
+      charted_into: null,
+      rank: null,
+      rank_group: null,
+      rank_reason: null,
+      rank_job: null,
+      deferred_at: null,
+      discarded_at: null,
+      suggested_at: null
+    }], env);
+    return { id };
+  });
+}
+var significant = (text8) => new Set(text8.toLowerCase().match(/[\p{L}\p{N}]{4,}/gu) ?? []);
+function restates(thread, words2) {
+  const own = significant(`${thread.idea} ${thread.rank_job ?? ""}`);
+  return words2.size > 0 && [...words2].filter((w3) => own.has(w3)).length * 2 >= words2.size;
+}
+async function looseThreadsRead(args, env = process.env) {
+  check(args.mode === "triage" || args.mode === "duplicates", "read", "mode", "must be triage or duplicates");
+  check(args.mode === "triage" || isId(args.proceeding_id) && isText(args.text), "read", "text", "and proceeding_id are required under duplicates");
+  await moveSeedsOnce(args.db_path, env);
+  const deleted = deletedJobs(args.db_path);
+  const open = readThreads(args.db_path, env).filter((t3) => isOpenThread(t3, deleted) && (args.kind === void 0 || t3.kind === args.kind));
+  if (args.mode === "duplicates") {
+    const words2 = significant(args.text);
+    return { threads: open.filter((t3) => t3.proceeding_id === args.proceeding_id && restates(t3, words2)).map((t3) => ({ id: t3.id, idea: t3.idea })) };
+  }
+  const ranked = [...open].sort((a3, b3) => (a3.rank === null ? 1 : 0) - (b3.rank === null ? 1 : 0) || (a3.rank ?? 0) - (b3.rank ?? 0) || a3.id - b3.id);
+  return { threads: ranked };
+}
+function found(threads, id, tool = "update") {
+  const thread = threads.find((t3) => t3.id === id);
+  check(thread !== void 0, tool, "id", `${String(id)} names no loose thread`);
+  return thread;
+}
+async function looseThreadsUpdate(args, env = process.env) {
+  const dbPath = args.db_path;
+  return locked(dbPath, env, () => {
+    const threads = readThreads(dbPath, env);
+    const deleted = deletedJobs(dbPath);
+    const save2 = (changed) => {
+      if (changed.length > 0) writeThreads(dbPath, changed, env);
+      return { updated: changed.map((t3) => t3.id) };
+    };
+    const one = () => found(threads, args.id);
+    switch (args.action) {
+      case "rank": {
+        const ranks = args.ranks;
+        check(Array.isArray(ranks) && ranks.length > 0, "update", "ranks", "must list every thread ranked");
+        const changed = ranks.map((r3) => {
+          const t3 = found(threads, r3?.id);
+          check(t3.kind === "idea", "update", "ranks", `thread ${t3.id} is not an idea, and only ideas are ranked`);
+          check(isOpenThread(t3, deleted), "update", "ranks", `thread ${t3.id} is not open`);
+          check(Number.isInteger(r3.rank) && r3.rank >= 1, "update", "ranks", "each rank must be 1 or more");
+          check(RANK_GROUPS.includes(r3.group), "update", "ranks", `each group must be one of ${RANK_GROUPS.join(", ")}`);
+          check(isText(r3.job) && isText(r3.reason), "update", "ranks", "each needs a job description and a reason");
+          t3.rank = r3.rank;
+          t3.rank_group = r3.group;
+          t3.rank_job = r3.job;
+          t3.rank_reason = r3.reason;
+          return t3;
+        });
+        const result = save2(changed);
+        const lacking = threads.filter((t3) => t3.kind === "idea" && isOpenThread(t3, deleted) && t3.deferred_at === null && (t3.rank === null || t3.rank_job === null));
+        return { ...result, unranked_open: lacking.length };
+      }
+      case "correct": {
+        const t3 = one();
+        check(t3.rank !== null, "update", "id", `thread ${t3.id} is not ranked, so it has no description to correct`);
+        check(isText(args.job), "update", "job", "must be the description in the practitioner's words");
+        t3.rank_job = args.job;
+        return save2([t3]);
+      }
+      case "defer":
+      case "undefer": {
+        const t3 = one();
+        check(isOpenThread(t3, deleted), "update", "id", `thread ${t3.id} is not open`);
+        if (t3.deferred_at !== null === (args.action === "defer")) return save2([]);
+        t3.deferred_at = args.action === "defer" ? threadStamp() : null;
+        return save2([t3]);
+      }
+      case "discard": {
+        check(Array.isArray(args.ids) && args.ids.length > 0, "update", "ids", "must name every thread discarded");
+        const stamp2 = threadStamp();
+        return save2(args.ids.map((id) => found(threads, id)).filter((t3) => t3.discarded_at === null).map((t3) => ({ ...t3, discarded_at: stamp2 })));
+      }
+      case "restore": {
+        const t3 = one();
+        if (t3.discarded_at === null) return save2([]);
+        t3.discarded_at = null;
+        return save2([t3]);
+      }
+      case "consume": {
+        const t3 = one();
+        check(isId(args.job_id) && count(dbPath, "SELECT COUNT(*) AS n FROM tickets WHERE id = ?", [args.job_id]) === 1, "update", "job_id", "names no job");
+        t3.charted_into = args.job_id;
+        return save2([t3]);
+      }
+      case "move": {
+        check(isId(args.from_filing_id), "update", "from_filing_id", "must name the board the threads move from");
+        const target = args.filing_id ?? null;
+        check(count(dbPath, "SELECT COUNT(*) AS n FROM tickets WHERE filing_id = ? AND status = 'wip'", [args.from_filing_id]) === 0, "update", "from_filing_id", "names a board with a job in progress");
+        const moving = threads.filter((t3) => t3.filing_id === args.from_filing_id && isOpenThread(t3, deleted));
+        for (const t3 of moving) {
+          check(target === null || count(dbPath, "SELECT COUNT(*) AS n FROM filings WHERE id = ? AND proceeding_id = ? AND retired_on IS NULL", [target, t3.proceeding_id]) === 1, "update", "filing_id", "names no live Writing or Work Board in the threads' proceeding");
+        }
+        return save2(moving.map((t3) => ({ ...t3, filing_id: target })));
+      }
+      default:
+        throw new ValidationError(`loose_threads__update.action must be one of rank, correct, defer, undefer, discard, restore, consume, move`, "invalid_action");
+    }
+  });
+}
+function repointThreads(dbPath, from, to2, env = process.env) {
+  const moving = readThreads(dbPath, env).filter((t3) => t3.filing_id !== null && from.has(t3.filing_id) && t3.proceeding_id === to2.proceeding_id);
+  if (moving.length > 0) writeThreads(dbPath, moving.map((t3) => ({ ...t3, filing_id: to2.filing_id })), env);
+  return moving.length;
+}
+
 // src/files/skill-source.ts
 import { createHash as createHash7 } from "node:crypto";
-import { existsSync as existsSync23, readFileSync as readFileSync21, readdirSync as readdirSync14, statSync as statSync13 } from "node:fs";
+import { existsSync as existsSync24, readFileSync as readFileSync21, readdirSync as readdirSync14, statSync as statSync13 } from "node:fs";
 import { win32 as pathWin3210 } from "node:path";
 var rootCache = /* @__PURE__ */ new Map();
 function servedRoot(shipped) {
@@ -95580,7 +95953,7 @@ function resolveReference(relative5, env, installRoot, from) {
       if (err instanceof DataServerError) continue;
       throw err;
     }
-    if (existsSync23(pathWin3210.join(root, candidate))) return candidate;
+    if (existsSync24(pathWin3210.join(root, candidate))) return candidate;
   }
   return normalized2;
 }
@@ -95722,11 +96095,11 @@ function walk(dirPath, root, recursive, shipped, out) {
 import { createHash as createHash8 } from "node:crypto";
 import { mkdirSync as mkdirSync11 } from "node:fs";
 import * as https from "node:https";
-import { join as join31 } from "node:path";
+import { join as join32 } from "node:path";
 
 // src/sources/hosts.ts
-import { existsSync as existsSync24, readFileSync as readFileSync22 } from "node:fs";
-import { join as join30 } from "node:path";
+import { existsSync as existsSync25, readFileSync as readFileSync22 } from "node:fs";
+import { join as join31 } from "node:path";
 var SOURCES_ALLOWED_HOSTS = ["www.bclaws.gov.bc.ca", "bclaws.gov.bc.ca", "vaniac.org", "laws-lois.justice.gc.ca"];
 function loadFirmHosts(path) {
   const hosts = /* @__PURE__ */ new Set();
@@ -95761,8 +96134,8 @@ function readHostEntries(path) {
   }
   return entries;
 }
-function filled(value) {
-  return typeof value === "string" && value.trim() !== "";
+function filled(value2) {
+  return typeof value2 === "string" && value2.trim() !== "";
 }
 function overlayFirmHosts(env = process.env) {
   let root;
@@ -95772,11 +96145,11 @@ function overlayFirmHosts(env = process.env) {
     if (err instanceof ValidationError && !caseDataRootConfigured(env)) return [];
     throw err;
   }
-  return loadFirmHosts(join30(root, "_practice", "knowledge", "_hosts.json"));
+  return loadFirmHosts(join31(root, "_practice", "knowledge", "_hosts.json"));
 }
 function caseDataRootConfigured(env) {
   const configFile = configPath(env);
-  if (!existsSync24(configFile)) return false;
+  if (!existsSync25(configFile)) return false;
   try {
     const root = JSON.parse(readFileSync22(configFile, "utf-8")).case_data_root;
     return typeof root === "string" && root !== "";
@@ -95835,9 +96208,9 @@ function requestSource(url, allowed, transport) {
     req.end();
   });
 }
-function firstHeader(value) {
-  if (value === void 0) return null;
-  return Array.isArray(value) ? value[0] ?? null : value;
+function firstHeader(value2) {
+  if (value2 === void 0) return null;
+  return Array.isArray(value2) ? value2[0] ?? null : value2;
 }
 function errorClass(err) {
   const code = err?.code;
@@ -95982,9 +96355,9 @@ function saveFetchedPdf(fetchedRoot2, fetched) {
   if (fetched.bytes.subarray(0, 5).toString("latin1") !== "%PDF-") {
     throw new DataServerError(`${fetched.final_url} did not return a PDF`, "not_pdf");
   }
-  const dir = join31(fetchedRoot2, new URL(fetched.final_url).hostname);
+  const dir = join32(fetchedRoot2, new URL(fetched.final_url).hostname);
   mkdirSync11(dir, { recursive: true });
-  const path = join31(dir, `${fetched.sha256.slice(0, 12)}.pdf`);
+  const path = join32(dir, `${fetched.sha256.slice(0, 12)}.pdf`);
   writeBytesAtomic(path, fetched.bytes);
   return path;
 }
@@ -96061,24 +96434,24 @@ function readFrontMatter(content, where) {
     throw new DataServerError(`${where}, front matter line ${index + 2}: ${why}`, "invalid_front_matter");
   };
   const scalar2 = (text8, index) => {
-    const value2 = text8.trim();
-    if (value2 === "" || value2 === "null" || value2 === "~") return null;
-    if (value2.startsWith('"')) {
-      if (!value2.endsWith('"') || value2.length < 2) fail3(index, "unterminated double-quoted value");
+    const value3 = text8.trim();
+    if (value3 === "" || value3 === "null" || value3 === "~") return null;
+    if (value3.startsWith('"')) {
+      if (!value3.endsWith('"') || value3.length < 2) fail3(index, "unterminated double-quoted value");
       try {
-        return JSON.parse(value2);
+        return JSON.parse(value3);
       } catch {
         return fail3(index, "unsupported escape in a double-quoted value");
       }
     }
-    if (value2.startsWith("'")) {
-      if (!value2.endsWith("'") || value2.length < 2) fail3(index, "unterminated single-quoted value");
-      return value2.slice(1, -1).replace(/''/g, "'");
+    if (value3.startsWith("'")) {
+      if (!value3.endsWith("'") || value3.length < 2) fail3(index, "unterminated single-quoted value");
+      return value3.slice(1, -1).replace(/''/g, "'");
     }
-    if (/^[[{]/.test(value2)) fail3(index, "flow collections are not supported; use a block list");
-    if (/^[&*!|>]/.test(value2)) fail3(index, `unsupported value syntax ${JSON.stringify(value2.slice(0, 12))}`);
-    if (/(?:^|\s)#/.test(value2)) fail3(index, "inline comments are not supported; quote a value that contains ` #`");
-    return value2;
+    if (/^[[{]/.test(value3)) fail3(index, "flow collections are not supported; use a block list");
+    if (/^[&*!|>]/.test(value3)) fail3(index, `unsupported value syntax ${JSON.stringify(value3.slice(0, 12))}`);
+    if (/(?:^|\s)#/.test(value3)) fail3(index, "inline comments are not supported; quote a value that contains ` #`");
+    return value3;
   };
   const blockScalar = (header, start2, parent) => {
     if (!/^[|>]-?$/.test(header)) fail3(start2 - 1, `unsupported block scalar header ${JSON.stringify(header)}`);
@@ -96102,7 +96475,7 @@ function readFrontMatter(content, where) {
     return [header.endsWith("-") ? text8 : `${text8}
 `, i4];
   };
-  const value = (rest, index, parent) => {
+  const value2 = (rest, index, parent) => {
     const text8 = (rest ?? "").trim();
     if (text8.startsWith("|") || text8.startsWith(">")) return blockScalar(text8, index + 1, parent);
     return [scalar2(text8, index), index + 1];
@@ -96121,7 +96494,7 @@ function readFrontMatter(content, where) {
     const key = m3[1];
     if (Object.hasOwn(out, key)) fail3(i3, `duplicate key ${key}`);
     if ((m3[2] ?? "").trim() !== "") {
-      [out[key], i3] = value(m3[2], i3, 0);
+      [out[key], i3] = value2(m3[2], i3, 0);
       continue;
     }
     let next2 = i3 + 1;
@@ -96133,7 +96506,7 @@ function readFrontMatter(content, where) {
     }
     const dash = indentOf(body[next2]);
     if (!/^-(?:[ \t]|$)/.test(body[next2].trimStart())) fail3(next2, "nested maps are not supported; only a block list may sit under a key");
-    const list = [];
+    const list2 = [];
     i3 = next2;
     while (i3 < body.length) {
       if (isBlank(body[i3])) {
@@ -96148,7 +96521,7 @@ function readFrontMatter(content, where) {
       const itemCol = dash + 1 + (afterDash.length - item.length);
       const km = KEY_LINE.exec(item);
       if (!km) {
-        list.push(scalar2(item, i3));
+        list2.push(scalar2(item, i3));
         i3++;
         continue;
       }
@@ -96159,25 +96532,25 @@ function readFrontMatter(content, where) {
         if ((k3[2] ?? "").trim() === "" && i3 + 1 < body.length && !isBlank(body[i3 + 1]) && indentOf(body[i3 + 1]) > itemCol) {
           fail3(i3 + 1, "nested values inside a list item are not supported");
         }
-        [map[k3[1]], i3] = value(k3[2], i3, itemCol);
+        [map[k3[1]], i3] = value2(k3[2], i3, itemCol);
         while (i3 < body.length && isBlank(body[i3])) i3++;
         if (i3 >= body.length || indentOf(body[i3]) !== itemCol) break;
         k3 = KEY_LINE.exec(body[i3].slice(itemCol));
         if (!k3) fail3(i3, "expected `key: value` in a list item");
       }
-      list.push(map);
+      list2.push(map);
     }
-    out[key] = list;
+    out[key] = list2;
   }
   return out;
 }
 function optionalString(front, key, where) {
-  const value = front[key];
-  if (value === void 0 || value === null) return null;
-  if (typeof value !== "string") {
+  const value2 = front[key];
+  if (value2 === void 0 || value2 === null) return null;
+  if (typeof value2 !== "string") {
     throw new DataServerError(`${where}: \`${key}\` must be a single value`, "invalid_source_record");
   }
-  return value;
+  return value2;
 }
 function toSourceRecord(path, front) {
   const bad2 = (why) => {
@@ -96269,11 +96642,11 @@ function gapOf(outcome) {
   return gap2;
 }
 function markersFound(text8, pattern) {
-  const found = /* @__PURE__ */ new Set();
+  const found2 = /* @__PURE__ */ new Set();
   for (const match of text8.matchAll(new RegExp(pattern.source, pattern.flags))) {
-    found.add(match.length > 1 ? match[1] ?? "" : match[0]);
+    found2.add(match.length > 1 ? match[1] ?? "" : match[0]);
   }
-  return [...found].sort();
+  return [...found2].sort();
 }
 var ANCHOR_HREF = /<a\b[^>]*?\shref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/gi;
 function resolveUrl(href, base) {
@@ -96308,10 +96681,10 @@ async function checkRecord(record2, fetcher) {
     return done({ reason: "fetch_failed", host: new URL(page2.final_url).hostname, url: page2.final_url, detail: "empty_text" });
   }
   if (record2.marker_pattern) {
-    const found = markersFound(joined, record2.marker_pattern);
+    const found2 = markersFound(joined, record2.marker_pattern);
     facts.marker_recorded = record2.marker;
-    facts.marker_found = found;
-    facts.marker_matches = found.length === 1 && found[0] === record2.marker;
+    facts.marker_found = found2;
+    facts.marker_matches = found2.length === 1 && found2[0] === record2.marker;
   }
   let pdfGap;
   if (record2.pdf_url) {
@@ -96415,53 +96788,53 @@ var LENGTH = /^\d+(?:\.\d+)? (mm|cm|in|pt)$/;
 function fail2(file, field, rule) {
   throw new DataServerError(`${file}: ${field}: ${rule}`, "invalid_format");
 }
-function isObject4(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function isObject4(value2) {
+  return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
 }
-function requireLength(value, file, field, unit) {
-  const match = typeof value === "string" ? LENGTH.exec(value) : null;
+function requireLength(value2, file, field, unit) {
+  const match = typeof value2 === "string" ? LENGTH.exec(value2) : null;
   if (!match) fail2(file, field, 'must be a length "<number> <unit>", the unit one of mm, cm, in or pt, e.g. "25 mm"');
   if (unit && match[1] !== unit) fail2(file, field, `must be a length in ${unit}`);
 }
-function requireExactKeys(value, keys, file, field) {
-  if (!isObject4(value)) fail2(file, field, `must be an object with ${keys.join(", ")}`);
-  const have = Object.keys(value);
+function requireExactKeys(value2, keys, file, field) {
+  if (!isObject4(value2)) fail2(file, field, `must be an object with ${keys.join(", ")}`);
+  const have = Object.keys(value2);
   const missing = keys.filter((key) => !have.includes(key));
   const extra = have.filter((key) => !keys.includes(key));
   if (missing.length || extra.length) {
     fail2(file, field, `must hold exactly ${keys.join(", ")}${missing.length ? `; missing ${missing.join(", ")}` : ""}${extra.length ? `; unknown ${extra.join(", ")}` : ""}`);
   }
-  return value;
+  return value2;
 }
-function requireTokenString(value, file, field) {
-  if (typeof value !== "string") fail2(file, field, "must be a string");
-  const unknown2 = (value.match(/\{\{[^{}]*\}\}/g) ?? []).filter((token) => !TOKENS.includes(token));
+function requireTokenString(value2, file, field) {
+  if (typeof value2 !== "string") fail2(file, field, "must be a string");
+  const unknown2 = (value2.match(/\{\{[^{}]*\}\}/g) ?? []).filter((token) => !TOKENS.includes(token));
   if (unknown2.length) fail2(file, field, `carries ${unknown2.join(", ")}, outside the letterhead token set (${TOKENS.join(", ")})`);
 }
-function checkValue(property, value, file) {
+function checkValue(property, value2, file) {
   const field = `format.${property}.value`;
   switch (property) {
     case "paper":
-      if (typeof value !== "string" || !PAPER.includes(value)) fail2(file, field, `must be one of ${PAPER.join(", ")}`);
+      if (typeof value2 !== "string" || !PAPER.includes(value2)) fail2(file, field, `must be one of ${PAPER.join(", ")}`);
       return;
     case "margins": {
-      const margins = requireExactKeys(value, ["top", "bottom", "left", "right"], file, field);
+      const margins = requireExactKeys(value2, ["top", "bottom", "left", "right"], file, field);
       for (const side of ["top", "bottom", "left", "right"]) requireLength(margins[side], file, `${field}.${side}`);
       return;
     }
     case "typeface":
-      if (typeof value !== "string" || value.trim() === "") fail2(file, field, "must be a non-empty string");
+      if (typeof value2 !== "string" || value2.trim() === "") fail2(file, field, "must be a non-empty string");
       return;
     case "font_size":
-      requireLength(value, file, field, "pt");
-      if (parseFloat(value) <= 0) fail2(file, field, "must be greater than zero");
+      requireLength(value2, file, field, "pt");
+      if (parseFloat(value2) <= 0) fail2(file, field, "must be greater than zero");
       return;
     case "line_spacing":
-      if (typeof value !== "number" || !Number.isFinite(value)) fail2(file, field, "must be a number");
-      if (value <= 0) fail2(file, field, "must be greater than zero");
+      if (typeof value2 !== "number" || !Number.isFinite(value2)) fail2(file, field, "must be a number");
+      if (value2 <= 0) fail2(file, field, "must be greater than zero");
       return;
     case "page_numbering": {
-      const numbering = requireExactKeys(value, ["position", "format", "first_page"], file, field);
+      const numbering = requireExactKeys(value2, ["position", "format", "first_page"], file, field);
       for (const [key, allowed] of [["position", POSITIONS], ["format", NUMBER_FORMATS]]) {
         const given = numbering[key];
         if (typeof given !== "string" || !allowed.includes(given)) fail2(file, `${field}.${key}`, `must be one of ${allowed.join(", ")}`);
@@ -96471,10 +96844,10 @@ function checkValue(property, value, file) {
     }
     case "header":
     case "footer":
-      requireTokenString(value, file, field);
+      requireTokenString(value2, file, field);
       return;
     case "filing_stamp_reservation":
-      requireLength(value, file, field);
+      requireLength(value2, file, field);
       return;
   }
 }
@@ -96558,7 +96931,7 @@ function blockOf(kp, content, status3, items2) {
   const kindOf = blockKindOf(kp);
   if (!kindOf) return {};
   const known = new Set(items2.map((item) => item.rule_ref));
-  const corrections = status3.corrections.map(({ rule_ref, value }) => ({ rule_ref, value }));
+  const corrections = status3.corrections.map(({ rule_ref, value: value2 }) => ({ rule_ref, value: value2 }));
   const uncited = (refs) => {
     const missing = refs.filter((ref) => !known.has(ref));
     if (missing.length) {
@@ -96587,8 +96960,8 @@ function blockOf(kp, content, status3, items2) {
 // src/knowledge/read.ts
 function headerOf(front) {
   const header = {};
-  for (const [key, value] of Object.entries(front ?? {})) {
-    if (!Array.isArray(value)) header[key] = value;
+  for (const [key, value2] of Object.entries(front ?? {})) {
+    if (!Array.isArray(value2)) header[key] = value2;
   }
   return header;
 }
@@ -96716,8 +97089,8 @@ function walk2(kp, recursive, seams, entries, breaks, top) {
   const local = readLayerDir(loc.local, label2, kp.path);
   if (top && shipped === null && local === null) throw new DataServerError(`${label2} not found in either layer: ${kp.path}`, "not_found");
   const merged = /* @__PURE__ */ new Map();
-  const add = (layer, list) => {
-    for (const entry2 of list ?? []) {
+  const add = (layer, list2) => {
+    for (const entry2 of list2 ?? []) {
       if (layer === "shipped" && !inTree([...kp.rest, entry2.name])) continue;
       const key = entry2.name.toLowerCase();
       const known = merged.get(key) ?? { name: entry2.name, types: {} };
@@ -96796,7 +97169,7 @@ function resolveAt(kp, given, recipient, seams) {
 }
 
 // src/knowledge/overlay.ts
-import { existsSync as existsSync25, mkdirSync as mkdirSync12, realpathSync as realpathSync3 } from "node:fs";
+import { existsSync as existsSync26, mkdirSync as mkdirSync12, realpathSync as realpathSync3 } from "node:fs";
 import { win32 as pathWin3211 } from "node:path";
 var REPO_RUN_MARKER = "repo-run";
 function matterOf(raw, tool) {
@@ -96832,7 +97205,7 @@ function grammarCheck(kp, type, label2) {
 }
 function mkdirInside(root, dir, label2, original) {
   let existing = dir;
-  while (!existsSync25(existing)) {
+  while (!existsSync26(existing)) {
     const parent = pathWin3211.dirname(existing);
     if (parent === existing) break;
     existing = parent;
@@ -96859,9 +97232,9 @@ function writableOverlayPath(kp, seams, label2) {
   return { canon, abs };
 }
 function rowString(row2, key) {
-  const value = row2[key];
-  if (typeof value !== "string" || value === "") throw new ValidationError(`knowledge__write.row.${key} must be a non-empty string`);
-  return value;
+  const value2 = row2[key];
+  if (typeof value2 !== "string" || value2 === "") throw new ValidationError(`knowledge__write.row.${key} must be a non-empty string`);
+  return value2;
 }
 
 // src/knowledge/write-document.ts
@@ -96869,7 +97242,7 @@ import { readFileSync as readFileSync24 } from "node:fs";
 
 // src/knowledge/fetched.ts
 import { createHash as createHash9 } from "node:crypto";
-import { copyFileSync as copyFileSync2, existsSync as existsSync26, readdirSync as readdirSync15, readFileSync as readFileSync23, realpathSync as realpathSync4, unlinkSync as unlinkSync10 } from "node:fs";
+import { copyFileSync as copyFileSync3, existsSync as existsSync27, readdirSync as readdirSync15, readFileSync as readFileSync23, realpathSync as realpathSync4, unlinkSync as unlinkSync10 } from "node:fs";
 import { win32 as pathWin3212 } from "node:path";
 function savedCopyOf(raw, record2, front, seams) {
   const label2 = "knowledge__write.saved_copy";
@@ -96886,7 +97259,7 @@ function savedCopyOf(raw, record2, front, seams) {
   const canon = overlayCanon(seams, label2);
   const inboxAbs = pathWin3212.join(canon, "_inbox");
   const abs = pathWin3212.join(inboxAbs, ...kp.rest);
-  const inboxCanon = existsSync26(inboxAbs) ? realpathSync4.native(inboxAbs) : null;
+  const inboxCanon = existsSync27(inboxAbs) ? realpathSync4.native(inboxAbs) : null;
   if (inboxCanon !== null) assertContained(canon, inboxCanon, label2, kp.path);
   const type = entryType({ canon: inboxCanon, abs }, label2, kp.path);
   if (type === null) throw new DataServerError(`${label2}: ${kp.path} is not in the overlay`, "not_found");
@@ -96912,7 +97285,7 @@ function savedCopyOf(raw, record2, front, seams) {
 function copySavedCopy(saved, seams, label2) {
   if (!saved.pdf) return { path: saved.path, copied: false, reason: "not_pdf" };
   try {
-    copyFileSync2(saved.abs, writableOverlayPath(saved.pdf.to, seams, label2).abs);
+    copyFileSync3(saved.abs, writableOverlayPath(saved.pdf.to, seams, label2).abs);
   } catch (err) {
     const code = err.code;
     if (typeof code !== "string") throw err;
@@ -96935,7 +97308,7 @@ function liveKnowledgeTexts(canon, seams) {
   };
   for (const skill of KNOWLEDGE_SKILLS) {
     const dir = pathWin3212.join(canon, skill);
-    if (existsSync26(dir)) walk4(dir);
+    if (existsSync27(dir)) walk4(dir);
     const shipped = shippedLayer(skill, [], seams).layer.canon;
     if (shipped === null) continue;
     for (const entry2 of readdirSync15(shipped, { withFileTypes: true })) {
@@ -96948,7 +97321,7 @@ function deleteUnreferencedPdfs(hashes, seams, label2) {
   if (hashes.length === 0) return [];
   const canon = overlayCanon(seams, label2);
   const fetched = pathWin3212.join(canon, "_fetched");
-  if (!existsSync26(fetched)) return [];
+  if (!existsSync27(fetched)) return [];
   const live = liveKnowledgeTexts(canon, seams);
   const deleted = [];
   for (const hash of hashes) {
@@ -96957,7 +97330,7 @@ function deleteUnreferencedPdfs(hashes, seams, label2) {
       if (!host.isDirectory()) continue;
       const name = `${hash.slice(0, 12)}.pdf`;
       const pdf = pathWin3212.join(fetched, host.name, name);
-      if (!existsSync26(pdf)) continue;
+      if (!existsSync27(pdf)) continue;
       try {
         unlinkSync10(pdf);
       } catch (err) {
@@ -97035,13 +97408,13 @@ function checkStaleBody(path, existingAbs, previous, front, fetcher) {
   } catch (err) {
     throw new DataServerError(`${path}: its recorded currency_marker_pattern is not a valid regular expression: ${err.message}`, "invalid_source_record");
   }
-  const found = [...new Set([...memoizedPage(path, pageUrl, fetcher).matchAll(regex)].map((m3) => m3.length > 1 ? m3[1] ?? "" : m3[0]))];
-  const times = found.map(markerTime);
+  const found2 = [...new Set([...memoizedPage(path, pageUrl, fetcher).matchAll(regex)].map((m3) => m3.length > 1 ? m3[1] ?? "" : m3[0]))];
+  const times = found2.map(markerTime);
   const recordedTime = markerTime(recorded);
-  if (found.length === 0 || Number.isNaN(recordedTime) || times.some((time3) => Number.isNaN(time3))) return "not_ordered";
+  if (found2.length === 0 || Number.isNaN(recordedTime) || times.some((time3) => Number.isNaN(time3))) return "not_ordered";
   if (Math.max(...times) < recordedTime) {
     throw new DataServerError(
-      `${path}: stale_body: ${pageUrl} shows ${found.map((marker) => JSON.stringify(marker)).join(", ")}, older than the recorded currency marker ${JSON.stringify(recorded)}. Nothing was written.`,
+      `${path}: stale_body: ${pageUrl} shows ${found2.map((marker) => JSON.stringify(marker)).join(", ")}, older than the recorded currency marker ${JSON.stringify(recorded)}. Nothing was written.`,
       "stale_body"
     );
   }
@@ -97170,7 +97543,7 @@ async function confirmingLawyer(env) {
   return rosterLawyer(await firm_profile(env), CONFIRM_ACT);
 }
 function validateCorrections(kp, content, kind, noVenue, rows4) {
-  const corrections = rows4.filter((row2) => row2.status === "corrected").map(({ rule_ref, value }) => ({ rule_ref, value }));
+  const corrections = rows4.filter((row2) => row2.status === "corrected").map(({ rule_ref, value: value2 }) => ({ rule_ref, value: value2 }));
   if (kind === "format") {
     substituteFormat(extractJsonBlock(content, kp.path, false, "invalid_format"), corrections, kp.path);
   } else {
@@ -97235,11 +97608,11 @@ function listAndKey(index, row2) {
   if (row2.resolves_to !== void 0) return { list: "not_venues", key: normalizeName(rowString(row2, "name")) };
   return { list: "venues", key: rowString(row2, "code") };
 }
-function keyIn(list, row2) {
+function keyIn(list2, row2) {
   if (typeof row2 !== "object" || row2 === null) return null;
-  const value = row2[list === "venues" ? "code" : list === "kinds" ? "file" : "name"];
-  if (typeof value !== "string") return null;
-  return list === "not_venues" ? normalizeName(value) : value;
+  const value2 = row2[list2 === "venues" ? "code" : list2 === "kinds" ? "file" : "name"];
+  if (typeof value2 !== "string") return null;
+  return list2 === "not_venues" ? normalizeName(value2) : value2;
 }
 function checkAliases(row2, official, taken, file) {
   const officialSet = new Set(official.map(normalizeName));
@@ -97261,8 +97634,8 @@ function checkAliases(row2, official, taken, file) {
     seen.add(n3);
   }
 }
-function checkIndexRow(kp, view, list, key, row2, noVenue, file) {
-  if (list === "kinds") {
+function checkIndexRow(kp, view, list2, key, row2, noVenue, file) {
+  if (list2 === "kinds") {
     const kinds = view.kinds;
     if (key.endsWith(".md")) {
       throw new DataServerError(`${file}: kinds row file "${key}" must be the type file's name without ".md" ("${key.slice(0, -3)}")`, "grammar_violation");
@@ -97280,7 +97653,7 @@ function checkIndexRow(kp, view, list, key, row2, noVenue, file) {
     return;
   }
   const venues = view;
-  if (list === "venues") {
+  if (list2 === "venues") {
     if (key === NO_VENUE) throw new DataServerError(`${file}: the ${NO_VENUE} row is never stored; the runtime adds it`, "invalid_index");
     const problem = grammarProblem(kp.head, [kp.rest[0], kp.rest[1], key], "dir", "local");
     if (problem) throw new DataServerError(`${file}: venue code "${key}" is its folder name, and ${problem}`, "grammar_violation");
@@ -97308,7 +97681,7 @@ async function writeIndexRow(kp, index, args, seams, label2) {
       `knowledge__write.row: ${callerStamp.join(", ")} ${callerStamp.length === 1 ? "is not a caller field" : "are not caller fields"} of an index row; the runtime stamps plugin_version and shipped_from`
     );
   }
-  const { list, key } = listAndKey(index, given);
+  const { list: list2, key } = listAndKey(index, given);
   const folder = folderOf(kp, label2);
   const noVenue = index === "kinds" && kp.rest[2] === NO_VENUE;
   const shippedKp = parseKnowledgePath(`${folder.path}/${INDEX_NAMES[index][0]}`, label2);
@@ -97330,16 +97703,16 @@ async function writeIndexRow(kp, index, args, seams, label2) {
       }
       merge2(doc, target.abs);
     }
-    const rows4 = Array.isArray(doc[list]) ? [...doc[list]] : [];
-    const at = rows4.findIndex((known) => keyIn(list, known) === key);
+    const rows4 = Array.isArray(doc[list2]) ? [...doc[list2]] : [];
+    const at = rows4.findIndex((known) => keyIn(list2, known) === key);
     const without = rows4.filter((_3, i3) => i3 !== at);
-    checkIndexRow(kp, merge2({ ...doc, [list]: without }, target.abs), list, key, row2, noVenue, target.abs);
+    checkIndexRow(kp, merge2({ ...doc, [list2]: without }, target.abs), list2, key, row2, noVenue, target.abs);
     if (at === -1) rows4.push(row2);
     else rows4[at] = row2;
-    const next2 = { ...doc, [list]: rows4 };
+    const next2 = { ...doc, [list2]: rows4 };
     const view = merge2(next2, target.abs);
     writeTextAtomic(target.abs, JSON.stringify(next2, null, 2) + "\n");
-    return { path: kp.path, index, list, key, status: at === -1 ? "created" : "updated", view, ...provenance2(loc.shipped_from, seams) };
+    return { path: kp.path, index, list: list2, key, status: at === -1 ? "created" : "updated", view, ...provenance2(loc.shipped_from, seams) };
   });
 }
 
@@ -97372,7 +97745,7 @@ async function knowledgeWrite(args, seams = {}) {
 }
 
 // src/knowledge/retire.ts
-import { existsSync as existsSync27, readFileSync as readFileSync26, renameSync as renameSync5 } from "node:fs";
+import { existsSync as existsSync28, readFileSync as readFileSync26, renameSync as renameSync5 } from "node:fs";
 import { win32 as pathWin3213 } from "node:path";
 async function retireOne(kp, seams, label2) {
   if (entryType(locate(kp, seams, label2).local, label2, kp.path) === null) {
@@ -97388,10 +97761,10 @@ async function retireOne(kp, seams, label2) {
       const type = entryType(source, label2, kp.path);
       if (type === null) throw new DataServerError(`${kp.path} is not in the overlay (a second retire getting not_found counts as done)`, "not_found");
       if (type === "dir") throw new DataServerError(`${label2}: ${kp.path} is a folder; retire moves one file and its sidecar`, "not_a_file");
-      const hasSidecar = existsSync27(sidecar2);
+      const hasSidecar = existsSync28(sidecar2);
       const to2 = pathWin3213.join(source.canon, ...dest.segments);
       for (const abs of [to2, ...hasSidecar ? [`${to2}${SIDECAR_SUFFIX}`] : []]) {
-        if (existsSync27(abs)) {
+        if (existsSync28(abs)) {
           throw new DataServerError(`${abs} already holds a retired copy, which is never overwritten; nothing was moved`, "superseded_exists");
         }
       }
@@ -97615,8 +97988,8 @@ function fetchDeployedIds(dbPath, filingId, document2) {
 function fetchDocumentLabels(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = documentIds.map(() => "?").join(",");
-  const found = rows(dbPath, `SELECT id, label FROM documents WHERE id IN (${placeholders})`, documentIds);
-  return new Map(found.map((d3) => [d3.id, d3.label]));
+  const found2 = rows(dbPath, `SELECT id, label FROM documents WHERE id IN (${placeholders})`, documentIds);
+  return new Map(found2.map((d3) => [d3.id, d3.label]));
 }
 function fetchNotBestCopyMarkers(dbPath, proceedingId) {
   return notBestCopyMarkers(
@@ -97754,14 +98127,14 @@ function pushStatementLines(lines2, excerpt, citationLine, markers, tag, id) {
 function groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGlyphs, suppressedFactIds = /* @__PURE__ */ new Set()) {
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const s3 of statementRows) {
-    const list = statementsByFact.get(s3.fact_id) ?? [];
-    list.push(s3);
-    statementsByFact.set(s3.fact_id, list);
+    const list2 = statementsByFact.get(s3.fact_id) ?? [];
+    list2.push(s3);
+    statementsByFact.set(s3.fact_id, list2);
   }
   const result = /* @__PURE__ */ new Map();
   for (const f3 of factRows) {
-    const list = result.get(f3.submission_id) ?? [];
-    list.push({
+    const list2 = result.get(f3.submission_id) ?? [];
+    list2.push({
       factId: f3.fact_id,
       postulate: f3.postulate,
       courtRecord: f3.court_record,
@@ -97773,7 +98146,7 @@ function groupSubmissionFacts(factRows, statementRows, admittedFactIds, spentGly
       witnessSuppressed: suppressedFactIds.has(f3.fact_id),
       statements: statementsByFact.get(f3.fact_id) ?? []
     });
-    result.set(f3.submission_id, list);
+    result.set(f3.submission_id, list2);
   }
   return result;
 }
@@ -97955,9 +98328,9 @@ function fetchJurisdictionEdges(dbPath, orderIds) {
     orderIds
   );
   for (const e3 of edges) {
-    const list = edgesByOrder.get(e3.order_sought_id) ?? [];
-    list.push(e3);
-    edgesByOrder.set(e3.order_sought_id, list);
+    const list2 = edgesByOrder.get(e3.order_sought_id) ?? [];
+    list2.push(e3);
+    edgesByOrder.set(e3.order_sought_id, list2);
   }
   return edgesByOrder;
 }
@@ -98047,9 +98420,9 @@ function fetchFactAdmissionAnnotations(dbPath, factIds, opposingIds, today3) {
       set.add(r3.partyId);
       byFact.set(r3.factId, set);
     } else if (role === "spent") {
-      const list = spentByFact.get(r3.factId) ?? [];
-      list.push(admissionRungMarker(state));
-      spentByFact.set(r3.factId, list);
+      const list2 = spentByFact.get(r3.factId) ?? [];
+      list2.push(admissionRungMarker(state));
+      spentByFact.set(r3.factId, list2);
     }
   }
   for (const [factId, glyphs] of spentByFact) spentGlyphByFact.set(factId, dedupeLineMarkers(glyphs));
@@ -98081,8 +98454,8 @@ function frontmatterHeader(f3) {
     "---"
   ].join("\n");
 }
-function pluralizeRole(role, count) {
-  if (count <= 1) return role;
+function pluralizeRole(role, count2) {
+  if (count2 <= 1) return role;
   return role.endsWith("s") ? role : `${role}s`;
 }
 function groupPartiesByRole(parties2) {
@@ -98162,9 +98535,9 @@ function checkboxOrderBlock(rows4) {
 function buildLowerCourtRoleByRole(parties2) {
   const valuesByRole = /* @__PURE__ */ new Map();
   for (const p3 of parties2) {
-    const list = valuesByRole.get(p3.role) ?? [];
-    list.push(p3.lower_court_role);
-    valuesByRole.set(p3.role, list);
+    const list2 = valuesByRole.get(p3.role) ?? [];
+    list2.push(p3.lower_court_role);
+    valuesByRole.set(p3.role, list2);
   }
   const result = {};
   for (const [role, values] of valuesByRole) {
@@ -98345,10 +98718,10 @@ function renderWitnessStatements(ctx) {
       paragraphs.map((p3) => p3.id)
     );
     const factsByParagraph = /* @__PURE__ */ new Map();
-    for (const link of links) {
-      const list = factsByParagraph.get(link.statement_paragraph_id) ?? [];
-      list.push(link.fact_id);
-      factsByParagraph.set(link.statement_paragraph_id, list);
+    for (const link2 of links) {
+      const list2 = factsByParagraph.get(link2.statement_paragraph_id) ?? [];
+      list2.push(link2.fact_id);
+      factsByParagraph.set(link2.statement_paragraph_id, list2);
     }
     const witnessFacts = fetchIncludedStatementsOfFactForWitness(ctx.dbPath, s3.witness_id);
     const linkedSofIds = new Set(links.map((l3) => l3.statement_of_fact_id));
@@ -98485,9 +98858,9 @@ function fetchDocumentTenderStatus(dbPath, documentIds, today3, inventory) {
   const tenders = fetchExhibitTenders(dbPath, documentIds);
   const tendersByDoc = /* @__PURE__ */ new Map();
   for (const t3 of tenders) {
-    const list = tendersByDoc.get(t3.exhibit_id) ?? [];
-    list.push(t3);
-    tendersByDoc.set(t3.exhibit_id, list);
+    const list2 = tendersByDoc.get(t3.exhibit_id) ?? [];
+    list2.push(t3);
+    tendersByDoc.set(t3.exhibit_id, list2);
   }
   const admissionIds = [...new Set(tenders.filter((t3) => t3.admission_id !== null).map((t3) => t3.admission_id))];
   const states = /* @__PURE__ */ new Map();
@@ -98742,9 +99115,9 @@ function deriveProposals(inventory, holders, rejections) {
   const generating = inventory.filter((e3) => e3.generating !== false);
   const groups = /* @__PURE__ */ new Map();
   for (const e3 of generating) {
-    const list = groups.get(proposalKey(e3));
-    if (list === void 0) groups.set(proposalKey(e3), [e3]);
-    else list.push(e3);
+    const list2 = groups.get(proposalKey(e3));
+    if (list2 === void 0) groups.set(proposalKey(e3), [e3]);
+    else list2.push(e3);
   }
   const has = (slug, table2, id) => id !== void 0 && groups.has(`${slug}:${table2}:${id}`);
   const proposals = [];
@@ -98822,7 +99195,7 @@ function withNoteUpSteps(proposals, inventory, pinpoints, contentions) {
 // src/submission/forms/render-rhetoric.ts
 function fetchRhetoric(dbPath, filingId, document2, part) {
   if (!rhetoricHeld(dbPath)) return [];
-  const found = rows(
+  const found2 = rows(
     dbPath,
     `SELECT rp.id, rp.wording, rp.states_law, rp.states_fact, fr.ordinal,
             EXISTS(SELECT 1 FROM rhetorical_paragraph_law l WHERE l.rhetorical_paragraph_id = rp.id) AS has_law,
@@ -98834,8 +99207,8 @@ function fetchRhetoric(dbPath, filingId, document2, part) {
      ORDER BY fr.ordinal, fr.id`,
     [filingId, document2, part]
   );
-  if (found.length === 0) return [];
-  const ids = [...new Set(found.map((r3) => r3.id))];
+  if (found2.length === 0) return [];
+  const ids = [...new Set(found2.map((r3) => r3.id))];
   const recordRows = rows(
     dbPath,
     `SELECT rec.rhetorical_paragraph_id, rec.id, doc.label, rec.pinpoint, rec.excerpt
@@ -98847,11 +99220,11 @@ function fetchRhetoric(dbPath, filingId, document2, part) {
   );
   const recordsByParagraph = /* @__PURE__ */ new Map();
   for (const { rhetorical_paragraph_id, ...rec } of recordRows) {
-    const list = recordsByParagraph.get(rhetorical_paragraph_id) ?? [];
-    list.push(rec);
-    recordsByParagraph.set(rhetorical_paragraph_id, list);
+    const list2 = recordsByParagraph.get(rhetorical_paragraph_id) ?? [];
+    list2.push(rec);
+    recordsByParagraph.set(rhetorical_paragraph_id, list2);
   }
-  return found.map((r3) => ({
+  return found2.map((r3) => ({
     id: r3.id,
     wording: r3.wording,
     statesLaw: r3.states_law === 1,
@@ -99619,9 +99992,9 @@ function filingFrontmatter(proceeding, ctx, documentType) {
 function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, inventory, review) {
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const stmt of fetchStatementsOfFact(dbPath, facts.map((f3) => f3.id))) {
-    const list = statementsByFact.get(stmt.fact_id) ?? [];
-    list.push(stmt);
-    statementsByFact.set(stmt.fact_id, list);
+    const list2 = statementsByFact.get(stmt.fact_id) ?? [];
+    list2.push(stmt);
+    statementsByFact.set(stmt.fact_id, list2);
   }
   const lines2 = [];
   let para2 = startPara;
@@ -99681,17 +100054,17 @@ function renderFactParagraphs(dbPath, facts, startPara, copyMarkers, admittedFac
 function renderFactParagraphsWithRhetoric(ctx, facts, rhetoric, startPara, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds) {
   const lines2 = [];
   let para2 = startPara;
-  let run = [];
+  let run2 = [];
   const flush = () => {
-    if (run.length === 0) return;
-    const result = renderFactParagraphs(ctx.dbPath, run, para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, ctx.inventory, ctx.review);
+    if (run2.length === 0) return;
+    const result = renderFactParagraphs(ctx.dbPath, run2, para2, copyMarkers, admittedFactIds, spentGlyphByFact, suppressedFactIds, ctx.inventory, ctx.review);
     lines2.push(...result.lines);
     para2 = result.nextPara;
-    run = [];
+    run2 = [];
   };
   for (const entry2 of interleave(facts, rhetoric, (f3) => f3.filing_ordinal)) {
     if (entry2.kind === "host") {
-      run.push(entry2.item);
+      run2.push(entry2.item);
       continue;
     }
     flush();
@@ -99704,7 +100077,7 @@ function renderFactParagraphsWithRhetoric(ctx, facts, rhetoric, startPara, copyM
 function fetchAffidavitDetails(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = documentIds.map(() => "?").join(",");
-  const found = rows(
+  const found2 = rows(
     dbPath,
     `SELECT d.id AS document_id, w.name AS deponent_name, d.affidavit_number
      FROM documents d
@@ -99712,7 +100085,7 @@ function fetchAffidavitDetails(dbPath, documentIds) {
      WHERE d.id IN (${placeholders})`,
     documentIds
   );
-  return new Map(found.map((r3) => [r3.document_id, r3]));
+  return new Map(found2.map((r3) => [r3.document_id, r3]));
 }
 function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
   return rows(
@@ -99730,8 +100103,8 @@ function fetchCitedAuthorities(dbPath, filingId, proceedingId) {
   );
 }
 function fetchOpposingAuthoritiesCount(dbPath, proceedingId) {
-  const found = rows(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
-  return found[0]?.n ?? 0;
+  const found2 = rows(dbPath, `SELECT COUNT(*) AS n FROM opposing_authorities WHERE proceeding_id = ?`, [proceedingId]);
+  return found2[0]?.n ?? 0;
 }
 function fetchAttachedExhibits(dbPath, affidavitDocumentId) {
   return rows(
@@ -100091,9 +100464,9 @@ function fetchChronology(dbPath, filingId) {
   return rows(dbPath, "SELECT event_date, event FROM filing_chronology WHERE filing_id = ? ORDER BY ordinal", [filingId]);
 }
 function fetchProseParagraphs(dbPath, filingId) {
-  const found = rows(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
+  const found2 = rows(dbPath, "SELECT slot, text FROM filing_prose WHERE filing_id = ?", [filingId]);
   return new Map(
-    found.map((r3) => [
+    found2.map((r3) => [
       r3.slot,
       r3.text.split(/\n\s*\n/).map((p3) => p3.trim()).filter((p3) => p3 !== "")
     ])
@@ -100462,8 +100835,8 @@ function renderBccaFactum(ctx) {
 
 // src/submission/forms/render-application-response.ts
 function fetchHearingDetails(dbPath, filingId) {
-  const found = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
-  return found[0];
+  const found2 = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  return found2[0];
 }
 function hearingDateSentence(hearing) {
   const date3 = hearing?.proposed_hearing;
@@ -100504,8 +100877,8 @@ function resolveRespondedToDocument(dbPath, proceedingId, positions) {
     if (candidates.length === 1) documentId = candidates[0].document_id;
   }
   if (documentId === void 0) return void 0;
-  const found = rows(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
-  return found[0];
+  const found2 = rows(dbPath, `SELECT id, label, document_date FROM documents WHERE id = ?`, [documentId]);
+  return found2[0];
 }
 function fetchUnpositionedOrders(dbPath, filingId, documentId) {
   return rows(
@@ -100519,12 +100892,12 @@ function fetchUnpositionedOrders(dbPath, filingId, documentId) {
   );
 }
 function fetchPartSixProvenance(dbPath, filingId) {
-  const found = rows(
+  const found2 = rows(
     dbPath,
     `SELECT document_id, provenance FROM filing_documents WHERE filing_id = ? AND role != 'witness_statement'`,
     [filingId]
   );
-  return new Map(found.map((r3) => [r3.document_id, r3.provenance]));
+  return new Map(found2.map((r3) => [r3.document_id, r3.provenance]));
 }
 function provenanceLabel(p3) {
   if (p3 === "served_with_this_response") return "served with this application response";
@@ -100534,13 +100907,13 @@ function provenanceLabel(p3) {
 function witnessBackedFlags(dbPath, factIds) {
   if (factIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = factIds.map(() => "?").join(",");
-  const found = rows(
+  const found2 = rows(
     dbPath,
     `SELECT f.id AS fact_id, EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
      FROM facts f WHERE f.id IN (${placeholders})`,
     factIds
   );
-  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
+  return new Map(found2.map((r3) => [r3.fact_id, r3.has_statement === 1]));
 }
 function afsCheckbox(party) {
   if (!party) return `[ ] Yes  [ ] No ${gapMarker("question")}`;
@@ -100562,9 +100935,9 @@ function renderApplicationResponse(ctx) {
   const witnessBacked = witnessBackedFlags(ctx.dbPath, facts.map((f3) => f3.id));
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const stmt of statementsOfFact) {
-    const list = statementsByFact.get(stmt.fact_id) ?? [];
-    list.push(stmt);
-    statementsByFact.set(stmt.fact_id, list);
+    const list2 = statementsByFact.get(stmt.fact_id) ?? [];
+    list2.push(stmt);
+    statementsByFact.set(stmt.fact_id, list2);
   }
   const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
   const submissionIds = submissions.map((s3) => s3.id);
@@ -101253,9 +101626,9 @@ function renderWrittenArguments(ctx, documentKey) {
   );
   const servedBySubmission = /* @__PURE__ */ new Map();
   for (const r3 of servedRows) {
-    const list = servedBySubmission.get(r3.submission_id) ?? [];
-    list.push(r3);
-    servedBySubmission.set(r3.submission_id, list);
+    const list2 = servedBySubmission.get(r3.submission_id) ?? [];
+    list2.push(r3);
+    servedBySubmission.set(r3.submission_id, list2);
   }
   function struckSubmission(submissionId) {
     const served = servedBySubmission.get(submissionId) ?? [];
@@ -101518,21 +101891,21 @@ function recordReserveInventory(ctx) {
 
 // src/submission/forms/render-notice-of-application.ts
 function fetchHearingDetails2(dbPath, filingId) {
-  const found = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
-  return found[0];
+  const found2 = rows(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId]);
+  return found2[0];
 }
 var ASSOCIATE_JUDGE_UNDETERMINED_LINE = `Associate judge jurisdiction: not yet determined ${gapMarker("unchosen")}`;
 function fetchWitnessBackedFlags(dbPath, factIds) {
   if (factIds.length === 0) return /* @__PURE__ */ new Map();
   const placeholders = factIds.map(() => "?").join(",");
-  const found = rows(
+  const found2 = rows(
     dbPath,
     `SELECT f.id AS fact_id,
             EXISTS(SELECT 1 FROM statements_of_fact sof WHERE sof.fact_id = f.id) AS has_statement
      FROM facts f WHERE f.id IN (${placeholders})`,
     factIds
   );
-  return new Map(found.map((r3) => [r3.fact_id, r3.has_statement === 1]));
+  return new Map(found2.map((r3) => [r3.fact_id, r3.has_statement === 1]));
 }
 function renderNoticeOfApplication(ctx) {
   const captionParties2 = ctx.parties.map((p3) => ({ name: p3.name, role: p3.role, ordinal: p3.ordinal }));
@@ -101552,9 +101925,9 @@ function renderNoticeOfApplication(ctx) {
   );
   const statementsByFact = /* @__PURE__ */ new Map();
   for (const stmt of statementsOfFact) {
-    const list = statementsByFact.get(stmt.fact_id) ?? [];
-    list.push(stmt);
-    statementsByFact.set(stmt.fact_id, list);
+    const list2 = statementsByFact.get(stmt.fact_id) ?? [];
+    list2.push(stmt);
+    statementsByFact.set(stmt.fact_id, list2);
   }
   const submissions = fetchSubmissions(ctx.dbPath, ctx.filing.id, "form");
   const submissionIds = submissions.map((s3) => s3.id);
@@ -101956,19 +102329,19 @@ function rendererKind(venue, typeFile, candidates, seams = {}) {
 
 // src/submission/forms/layout-snapshot.ts
 var TOOL = "drafting_data__create_writing";
-function isObject5(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function isObject5(value2) {
+  return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
 }
 function treeKeyOf(raw) {
   if (!isObject5(raw)) throw new ValidationError(`${TOOL}.tree must be {country, jurisdiction, venue}`);
   const extra = Object.keys(raw).filter((k3) => !["country", "jurisdiction", "venue"].includes(k3));
   if (extra.length > 0) throw new ValidationError(`${TOOL}.tree has unknown field(s) ${extra.join(", ")} (allowed: country, jurisdiction, venue)`);
   const segments = ["country", "jurisdiction", "venue"].map((field) => {
-    const value = raw[field];
-    if (typeof value !== "string" || value === "" || /[\\/]/.test(value)) {
+    const value2 = raw[field];
+    if (typeof value2 !== "string" || value2 === "" || /[\\/]/.test(value2)) {
       throw new ValidationError(`${TOOL}.tree.${field} must be one folder name of /draft's knowledge tree`);
     }
-    return value;
+    return value2;
   });
   const key = segments.join("/");
   parseKnowledgePath(`draft/${key}`, `${TOOL}.tree`);
@@ -102383,6 +102756,10 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
 
 // src/submission/forms/merge-milestones.ts
 var TOOL4 = "drafting_data__merge_milestones";
+function boardOfKey(key) {
+  const m3 = /filing:(\d+)$/.exec(key);
+  return { filing_id: m3 === null ? null : Number(m3[1]) };
+}
 function label(b3) {
   return b3.filing_id === null ? `proceeding ${b3.proceeding_id}'s board` : `Work Board ${b3.filing_id}`;
 }
@@ -102443,28 +102820,38 @@ async function submissionDataMergeMilestones(args, env = process.env) {
   const goals = { description: args.goal_description ?? null, statement: statement ?? null, status: goalStatus, session_token: args.session_token, merged };
   const now = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
   const stamps = statement === void 0 ? `json_set(json(?), '$.approved_at', json('null'), '$.updated_at', ${now})` : `json_set(json(?), '$.approved_at', ${now}, '$.updated_at', ${now}, '$.consolidated_at', ${now})`;
-  const value = JSON.stringify({ filing_id: survivor.filing_id, proceeding_id: survivor.proceeding_id });
+  const value2 = JSON.stringify({ filing_id: survivor.filing_id, proceeding_id: survivor.proceeding_id });
   const written = await submissionDataWriteAll(
     args.db_path,
     [
       // A row read as no row because it names a research Writing (BoardIndex) gives way. Any other row stays and
       // the insert fails on the key, so of two sessions merging one board into different survivors, one is refused.
       { sql: `DELETE FROM db_meta WHERE key = ? AND json_extract(value, '$.filing_id') IN (SELECT id FROM filings WHERE kind IN (${RESEARCH_WRITING_KINDS_SQL}))`, params: [memberKey(absorbed)] },
-      { sql: "INSERT INTO db_meta (key, value) VALUES (?, ?)", params: [memberKey(absorbed), value], expect_changes: 1 },
-      ...index.membersOf(absorbed).map((key) => ({ sql: "UPDATE db_meta SET value = ? WHERE key = ?", params: [value, key], expect_changes: 1 })),
+      { sql: "INSERT INTO db_meta (key, value) VALUES (?, ?)", params: [memberKey(absorbed), value2], expect_changes: 1 },
+      ...index.membersOf(absorbed).map((key) => ({ sql: "UPDATE db_meta SET value = ? WHERE key = ?", params: [value2, key], expect_changes: 1 })),
       { sql: `INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ${stamps})`, params: [survivorKey, JSON.stringify(goals)], expect_changes: 1 },
       ...taken === null ? [] : [{ sql: "DELETE FROM db_meta WHERE key = ?", params: [absorbedKey], expect_changes: 1 }]
     ],
     env
   );
   if (!written.ok) throw new DataServerError(`${TOOL4}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
+  let threadsNote = "";
+  if (survivor.filing_id !== null) {
+    const from = new Set([absorbed, ...index.membersOf(absorbed).map(boardOfKey)].flatMap((b4) => b4.filing_id === null ? [] : [b4.filing_id]));
+    try {
+      repointThreads(args.db_path, from, { filing_id: survivor.filing_id, proceeding_id: survivor.proceeding_id }, env);
+    } catch (err) {
+      if (!(err instanceof DataServerError)) throw err;
+      threadsNote = ` The absorbed board's loose threads still name it: ${err.message}`;
+    }
+  }
   const framing = statement === void 0 ? null : framingWarning(statement, args.goal_description);
   const goalNote = statement === void 0 ? `It has no goal yet (${NEEDS_CONSOLIDATION}): at its next /draft opening, ask the practitioner once for one combined goal.` : "Its one goal is recorded as confirmed.";
   return {
     survivor,
     absorbed,
     goal_status: goalStatus,
-    note: `${label(absorbed)} is merged into ${label(survivor)}. ${goalNote} Re-render to draw the merged page.${framing === null ? "" : ` ${framing}`}`,
+    note: `${label(absorbed)} is merged into ${label(survivor)}. ${goalNote} Re-render to draw the merged page.${threadsNote}${framing === null ? "" : ` ${framing}`}`,
     ...written.warning ? { warning: written.warning } : {}
   };
 }
@@ -102500,13 +102887,13 @@ function deriveLifecycle(filing, hearingDate, today3, appealDeadline) {
 }
 
 // src/submission/forms/parties-snapshot.ts
-import { dirname as dirname12 } from "node:path";
+import { dirname as dirname13 } from "node:path";
 var INSERT = "INSERT INTO parties_snapshot (filing_id, party_id, name, role, ordinal, is_client, is_applicant, to_be_served, address_for_service, address_for_service_filed, counsel_name, counsel_firm, counsel_phone, counsel_email, lower_court_role) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM parties_snapshot WHERE filing_id = ? AND party_id = ?)";
 function partiesSnapshotStatements(dbPath, filing, tool, env = process.env) {
   const [held2] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM parties_snapshot WHERE filing_id = ?", [filing.id]).rows;
   if (held2.n > 0) return [];
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const { parties: parties2, drift } = draftingParties(dirname12(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
+  const { parties: parties2, drift } = draftingParties(dirname13(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
   if (drift.rows.length > 0) {
     throw new DataServerError(
       `${tool}: counsel of record and the address for service, which case data owns, could not be read for party row(s): ` + drift.rows.map((r3) => `${r3.name} (${r3.kind})`).join(", ") + (drift.unchecked ? ` (${drift.unchecked.note})` : "") + `. Nothing was written. Confirm each with the practitioner and link it to its matter-data party, or correct case data through /matter-data first (references/filing-checklists.md \xA70), then call ${tool} again`,
@@ -102541,13 +102928,13 @@ function partiesSnapshotStatements(dbPath, filing, tool, env = process.env) {
 }
 
 // src/submission/forms/sent-write.ts
-import { existsSync as existsSync29 } from "node:fs";
-import { extname as extname2, join as join33 } from "node:path";
+import { existsSync as existsSync30 } from "node:fs";
+import { extname as extname2, join as join34 } from "node:path";
 
 // src/submission/render-manifest.ts
 import { createHash as createHash10 } from "node:crypto";
-import { existsSync as existsSync28, mkdirSync as mkdirSync13, readFileSync as readFileSync28, realpathSync as realpathSync5, writeFileSync as writeFileSync10 } from "node:fs";
-import { basename as basename4, dirname as dirname13, isAbsolute as isAbsolute5, join as join32, resolve as resolve4 } from "node:path";
+import { existsSync as existsSync29, mkdirSync as mkdirSync13, readFileSync as readFileSync28, realpathSync as realpathSync5, writeFileSync as writeFileSync10 } from "node:fs";
+import { basename as basename4, dirname as dirname14, isAbsolute as isAbsolute5, join as join33, resolve as resolve4 } from "node:path";
 
 // src/files/zones.ts
 import { win32 as pathWin3214 } from "node:path";
@@ -102589,7 +102976,7 @@ function sha2562(text8) {
   return createHash10("sha256").update(text8, "utf-8").digest("hex");
 }
 function manifestPath(dbPath, filingId) {
-  return join32(recordsDir(dbPath), `render-manifest-${filingId}.json`);
+  return join33(recordsDir(dbPath), `render-manifest-${filingId}.json`);
 }
 function recordsDirIfAny(dbPath) {
   try {
@@ -102603,7 +102990,7 @@ function isFolderName(name) {
   return typeof name === "string" && name.trim() !== "" && name !== "." && name !== ".." && !/[\\/]/.test(name);
 }
 function parseManifest(file) {
-  if (!existsSync28(file)) return null;
+  if (!existsSync29(file)) return null;
   try {
     const parsed = JSON.parse(readFileSync28(file, "utf-8"));
     if (!parsed || typeof parsed !== "object" || !parsed.stamp || !Array.isArray(parsed.files) || !Array.isArray(parsed.inventory) || !parsed.inventory.every(isInventoryEntry)) {
@@ -102617,18 +103004,18 @@ function parseManifest(file) {
 function readManifest(dbPath, filingId) {
   const records = recordsDirIfAny(dbPath);
   if (records === void 0) return null;
-  const parsed = parseManifest(join32(records, `render-manifest-${filingId}.json`));
+  const parsed = parseManifest(join33(records, `render-manifest-${filingId}.json`));
   return parsed !== null && isFolderName(parsed.folder) && parsed.stamp.filing_id === filingId ? parsed : null;
 }
 function readLegacyManifest(dir) {
-  return parseManifest(join32(dir, LEGACY_MANIFEST_FILE));
+  return parseManifest(join33(dir, LEGACY_MANIFEST_FILE));
 }
 function writeManifest(dbPath, filingId, manifest) {
   mkdirSync13(recordsDir(dbPath), { recursive: true });
   writeFileSync10(manifestPath(dbPath, filingId), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
 }
 function manifestDir(dbPath, manifest) {
-  return join32(draftDirOf(dbPath), manifest.folder);
+  return join33(draftDirOf(dbPath), manifest.folder);
 }
 function stampsEqual(a3, b3) {
   return a3.filing_id === b3.filing_id && a3.revision === b3.revision && a3.approvals === b3.approvals && a3.schema_version === b3.schema_version && a3.build_stamp === b3.build_stamp && a3.client_name === b3.client_name && a3.client_no === b3.client_no && a3.matter_no === b3.matter_no && a3.date === b3.date;
@@ -102638,7 +103025,7 @@ function renderState(dbPath, filingId, stamp2, partiesDrift) {
   if (manifest === null) return "never";
   if (!stampsEqual(manifest.stamp, stamp2) || manifest.parties_drift !== partiesDrift) return "stale";
   const dir = manifestDir(dbPath, manifest);
-  return manifest.files.every((f3) => existsSync28(join32(dir, f3.file_name))) ? "fresh" : "stale";
+  return manifest.files.every((f3) => existsSync29(join33(dir, f3.file_name))) ? "fresh" : "stale";
 }
 function freshManifest(dbPath, filingId, stamp2, partiesDrift) {
   const manifest = readManifest(dbPath, filingId);
@@ -102646,8 +103033,8 @@ function freshManifest(dbPath, filingId, stamp2, partiesDrift) {
   const dir = manifestDir(dbPath, manifest);
   const contents = /* @__PURE__ */ new Map();
   for (const f3 of manifest.files) {
-    const file = join32(dir, f3.file_name);
-    if (!existsSync28(file)) return null;
+    const file = join33(dir, f3.file_name);
+    if (!existsSync29(file)) return null;
     let text8;
     try {
       text8 = readFileSync28(file, "utf-8");
@@ -102674,33 +103061,33 @@ function resolveDraftDir(draftDir, param2 = "drafting_forms__bootstrap.draft_dir
   return dir;
 }
 function draftDirOf(dbPath) {
-  const caseData = dirname13(resolve4(dbPath));
-  const matter = dirname13(caseData);
-  let found;
+  const caseData = dirname14(resolve4(dbPath));
+  const matter = dirname14(caseData);
+  let found2;
   if (basename4(caseData).toLowerCase() === CASE_DATA_FOLDER.toLowerCase()) {
     try {
-      found = findDraftDir(matter);
+      found2 = findDraftDir(matter);
     } catch (err) {
       if (err instanceof DataServerError) throw err;
-      found = void 0;
+      found2 = void 0;
     }
   }
-  if (found === void 0) {
+  if (found2 === void 0) {
     throw new DataServerError(
       `no 0. DRAFT folder beside ${caseData}. A Writing's mockups are written in its matter's 0. DRAFT folder, found beside the matter's own 0. CASE DATA folder that holds the database. Create the matter's 0. DRAFT folder; a matter whose case data is still under the firm's 0. CASE DATA folder is moved into the matter folder first with /matter-data relocate.`,
       "draft_dir_missing"
     );
   }
-  return resolveDraftDir(found, `the 0. DRAFT folder of ${matter}`);
+  return resolveDraftDir(found2, `the 0. DRAFT folder of ${matter}`);
 }
 function recordsDir(dbPath) {
-  return join32(draftDirOf(dbPath), RECORDS_FOLDER);
+  return join33(draftDirOf(dbPath), RECORDS_FOLDER);
 }
 function paragraphMapDir(dbPath, filingId) {
-  return join32(recordsDir(dbPath), "paragraph-maps", String(filingId));
+  return join33(recordsDir(dbPath), "paragraph-maps", String(filingId));
 }
 function previewDir(dbPath, filingId) {
-  return join32(recordsDir(dbPath), "previews", String(filingId));
+  return join33(recordsDir(dbPath), "previews", String(filingId));
 }
 
 // src/submission/forms/work-board-reads.ts
@@ -102743,43 +103130,27 @@ function seedOrigin(s3) {
   if (s3.origin_ticket_id !== null) return `from Job #${s3.origin_ticket_id}${s3.from_filing === null ? "" : ` on ${s3.from_filing}`}`;
   return s3.from_filing === null ? null : `from ${s3.from_filing}`;
 }
-function openSeedCondition(dbPath, deletedIds) {
-  const deletedList = [...deletedIds];
-  const outlinedIntoDeleted = deletedList.length === 0 ? "" : ` OR charted_into IN (${deletedList.map(() => "?").join(",")})`;
-  return { sql: `(charted_into IS NULL${outlinedIntoDeleted})${liveSeedClause(dbPath)}`, params: deletedList };
-}
 function fetchResolvedSeeds(dbPath, proceedingId) {
-  const closed2 = seedClosedColumns(dbPath);
-  const column = (name) => closed2.includes(name) ? `s.${name}` : `NULL AS ${name}`;
-  const resolved = [...closed2.map((name) => `s.${name} IS NOT NULL`), "t.id IS NOT NULL"].join(" OR ");
-  return rows(
-    dbPath,
-    `SELECT s.id, s.idea, ${column("discarded_at")}, ${column("suggested_at")}, t.id AS job_id, t.title AS job_title, t.created AS job_created
-     FROM seeds s LEFT JOIN tickets t ON t.id = s.charted_into${liveTicketClause(dbPath, "t")}
-     WHERE s.proceeding_id = ? AND (${resolved})`,
-    [proceedingId]
-  ).map((r3) => {
-    if (r3.discarded_at !== null) return { id: r3.id, idea: r3.idea, how: "discarded", at: r3.discarded_at, job_id: null, job_title: null };
-    if (r3.suggested_at !== null) return { id: r3.id, idea: r3.idea, how: "suggested", at: r3.suggested_at, job_id: null, job_title: null };
-    return { id: r3.id, idea: r3.idea, how: "job", at: r3.job_created, job_id: r3.job_id, job_title: r3.job_title };
+  const jobs2 = new Map(rows(dbPath, `SELECT id, title, created FROM tickets WHERE 1 = 1${liveTicketClause(dbPath)}`).map((j3) => [j3.id, j3]));
+  return readThreads(dbPath).filter((t3) => t3.proceeding_id === proceedingId).flatMap((t3) => {
+    const base = { id: t3.id, idea: t3.idea, kind: t3.kind };
+    if (t3.discarded_at !== null) return [{ ...base, how: "discarded", at: t3.discarded_at, job_id: null, job_title: null }];
+    if (t3.suggested_at !== null) return [{ ...base, how: "suggested", at: t3.suggested_at, job_id: null, job_title: null }];
+    const job = t3.charted_into === null ? void 0 : jobs2.get(t3.charted_into);
+    return job === void 0 ? [] : [{ ...base, how: "job", at: job.created, job_id: job.id, job_title: job.title }];
   }).sort((a3, b3) => a3.at === b3.at ? a3.id - b3.id : a3.at < b3.at ? 1 : -1);
 }
+function fetchOpenThreads(dbPath, proceedingId, deletedIds) {
+  return readThreads(dbPath).filter((t3) => t3.proceeding_id === proceedingId && isOpenThread(t3, deletedIds));
+}
 function fetchOpenSeeds(dbPath, proceedingId, deletedIds = new Set(fetchDeletedTickets(dbPath, proceedingId).map((d3) => d3.id))) {
-  const open = openSeedCondition(dbPath, deletedIds);
-  const ranking = hasColumn(dbPath, "seeds", "rank") ? "rank, rank_group, rank_reason" : "NULL AS rank, NULL AS rank_group, NULL AS rank_reason";
-  const job = hasColumn(dbPath, "seeds", "rank_job") ? "rank_job" : "NULL AS rank_job";
-  const deferral = hasColumn(dbPath, "seeds", "deferred_at") ? "deferred_at" : "NULL AS deferred_at";
-  return rows(
-    dbPath,
-    `SELECT id, filing_id, origin_ticket_id, created, surfaced_by, idea, ${ranking}, ${job}, ${deferral} FROM seeds WHERE ${open.sql} AND proceeding_id = ? ORDER BY id`,
-    [...open.params, proceedingId]
-  ).map((s3) => ({
+  return fetchOpenThreads(dbPath, proceedingId, deletedIds).map((s3) => ({
     id: s3.id,
     idea: s3.idea,
     surfaced_by: s3.surfaced_by,
     created: s3.created,
     filing_id: s3.filing_id,
-    origin_ticket_id: s3.origin_ticket_id !== null && deletedIds.has(s3.origin_ticket_id) ? null : s3.origin_ticket_id,
+    origin_ticket_id: s3.origin_job !== null && deletedIds.has(s3.origin_job) ? null : s3.origin_job,
     rank: s3.rank,
     rank_group: s3.rank_group,
     rank_reason: s3.rank_reason,
@@ -102838,8 +103209,8 @@ async function touchJob(dbPath, id, token, claim, env = process.env) {
 }
 function fetchJobActivity(dbPath) {
   if (!hasTable(dbPath, "kv_store")) return /* @__PURE__ */ new Map();
-  const found = submissionDataQuery(dbPath, "SELECT key, value FROM kv_store WHERE namespace = ?", [NAMESPACE]).rows;
-  return new Map(found.map((r3) => [Number(r3.key.slice("tickets:".length)), JSON.parse(r3.value)]));
+  const found2 = submissionDataQuery(dbPath, "SELECT key, value FROM kv_store WHERE namespace = ?", [NAMESPACE]).rows;
+  return new Map(found2.map((r3) => [Number(r3.key.slice("tickets:".length)), JSON.parse(r3.value)]));
 }
 function lastActivitySql(dbPath) {
   return hasTable(dbPath, "kv_store") ? `COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = '${NAMESPACE}' AND key = 'tickets:' || tickets.id), tickets.locked_at)` : "tickets.locked_at";
@@ -102877,10 +103248,10 @@ function requireHeld(tool, job) {
     "not_held"
   );
 }
-async function withJobActivity(tool, args, run) {
+async function withJobActivity(tool, args, run2) {
   const job = jobIdentity(tool, args);
   if (job !== null) requireHeld(tool, job);
-  const result = await run();
+  const result = await run2();
   return job === null ? result : { ...result, job: { ticket_id: job.id, recorded: (await touchJob(job.dbPath, job.id, job.token, job.claim)).recorded } };
 }
 async function submissionDataTouchJob(args, env = process.env) {
@@ -102978,24 +103349,24 @@ function withIdleFlag(t3, rendered) {
 // src/submission/forms/track-source.ts
 var TOOL5 = "drafting_data__track_source";
 var NOW3 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
-var KINDS = ["decision", "legislation", "file"];
+var KINDS2 = ["decision", "legislation", "file"];
 var OUTCOMES = ["got", "not_retrieved"];
 var LABEL_MAX = 200;
 var REASON_MAX = 60;
 function ticketSourcesHeld(dbPath) {
   return hasTable(dbPath, "ticket_sources");
 }
-function oneLine(value, field, max) {
-  if (typeof value !== "string" || value.trim() === "" || /[\r\n]/.test(value) || value.trim().length > max) {
+function oneLine(value2, field, max) {
+  if (typeof value2 !== "string" || value2.trim() === "" || /[\r\n]/.test(value2) || value2.trim().length > max) {
     throw new ValidationError(`${TOOL5}.${field} must be one line of 1 to ${max} characters; nothing was written`, "invalid_item");
   }
-  return value.trim();
+  return value2.trim();
 }
-function oneOf(value, field, allowed) {
-  if (typeof value !== "string" || !allowed.includes(value)) {
+function oneOf(value2, field, allowed) {
+  if (typeof value2 !== "string" || !allowed.includes(value2)) {
     throw new ValidationError(`${TOOL5}.${field} must be one of ${allowed.join(", ")}; nothing was written`, "invalid_item");
   }
-  return value;
+  return value2;
 }
 async function submissionDataTrackSource(args, env = process.env) {
   if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL5}.ticket_id must be a positive integer`, "invalid_ticket_id");
@@ -103004,9 +103375,9 @@ async function submissionDataTrackSource(args, env = process.env) {
   }
   const id = args.ticket_id;
   const token = args.session_token;
-  const add = (args.add ?? []).map((a3) => ({ kind: oneOf(a3.kind, "add.kind", KINDS), label: oneLine(a3.label, "add.label", LABEL_MAX) }));
+  const add = (args.add ?? []).map((a3) => ({ kind: oneOf(a3.kind, "add.kind", KINDS2), label: oneLine(a3.label, "add.label", LABEL_MAX) }));
   const close = (args.close ?? []).map((c3) => ({
-    kind: oneOf(c3.kind, "close.kind", KINDS),
+    kind: oneOf(c3.kind, "close.kind", KINDS2),
     label: oneLine(c3.label, "close.label", LABEL_MAX),
     outcome: oneOf(c3.outcome, "close.outcome", OUTCOMES),
     reason: c3.reason === void 0 ? null : oneLine(c3.reason, "close.reason", REASON_MAX)
@@ -103091,9 +103462,9 @@ function elapsedMs(start2) {
 }
 function timed(timings, phase, fn2) {
   const start2 = performance.now();
-  const value = fn2();
+  const value2 = fn2();
   timings.push({ phase, ms: elapsedMs(start2) });
-  return value;
+  return value2;
 }
 function withTotal(timings, start2) {
   timings.push({ phase: "total", ms: elapsedMs(start2) });
@@ -103175,9 +103546,9 @@ function ineligibleReasons(ticket, filed, printed, titles, inProgress2) {
 function groupBy2(items2, key) {
   const map = /* @__PURE__ */ new Map();
   for (const item of items2) {
-    const list = map.get(key(item)) ?? [];
-    list.push(item);
-    map.set(key(item), list);
+    const list2 = map.get(key(item)) ?? [];
+    list2.push(item);
+    map.set(key(item), list2);
   }
   return map;
 }
@@ -103318,10 +103689,10 @@ function confirmationGate(states) {
 var ROMAN = [[1e3, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
 function roman(n3) {
   let out = "";
-  for (const [value, numeral] of ROMAN) {
-    while (n3 >= value) {
+  for (const [value2, numeral] of ROMAN) {
+    while (n3 >= value2) {
       out += numeral;
-      n3 -= value;
+      n3 -= value2;
     }
   }
   return out;
@@ -104042,7 +104413,7 @@ function storedParagraphs(dbPath, filing, stored) {
 function compareSentCopy(paragraphs, args, env) {
   return runPythonDriver({
     label: "sent-copy comparison",
-    driver: join33(submissionDataMigrateScriptsDir(env), "sent_copy_compare.py"),
+    driver: join34(submissionDataMigrateScriptsDir(env), "sent_copy_compare.py"),
     payload: JSON.stringify({ paragraphs, path: args.sent_copy_path ?? null, text: args.sent_copy_text ?? null }),
     env,
     timeoutMs: pythonTimeoutMs2(env, READ_TIMEOUT_MS)
@@ -104066,7 +104437,7 @@ function checkArgs(args) {
     if (![".eml", ".pdf", ".msg"].includes(extname2(args.sent_copy_path).toLowerCase())) {
       throw new ValidationError(`${TOOL6}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
     }
-    if (!existsSync29(args.sent_copy_path)) throw new ValidationError(`${TOOL6}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
+    if (!existsSync30(args.sent_copy_path)) throw new ValidationError(`${TOOL6}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
   }
   if (args.send_anyway !== void 0 && args.send_anyway.trim() === "") {
     throw new ValidationError(`${TOOL6}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
@@ -104248,14 +104619,14 @@ async function submissionDataRecordFiled(args, env = process.env) {
 }
 
 // src/submission/forms/served-write.ts
-import { existsSync as existsSync30 } from "node:fs";
+import { existsSync as existsSync31 } from "node:fs";
 var TOOL8 = "drafting_data__record_served";
 function refused4(message, code) {
   return new DataServerError(`${TOOL8}: ${message}`, code);
 }
 async function submissionDataRecordServed(args, env = process.env) {
   if (!isCalendarDate(args.served_on)) throw new ValidationError(`${TOOL8}.served_on must be a calendar date, YYYY-MM-DD`, "invalid_served_on");
-  if (args.served_copy_path !== void 0 && !existsSync30(args.served_copy_path)) {
+  if (args.served_copy_path !== void 0 && !existsSync31(args.served_copy_path)) {
     throw new ValidationError(`${TOOL8}.served_copy_path does not exist: ${args.served_copy_path}`, "invalid_served_copy");
   }
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows;
@@ -104450,7 +104821,7 @@ function pageItems(held2, combined2) {
     keep.push(...own);
   }
   if (keep.every(Boolean)) return combined2;
-  const pick2 = (list) => list.filter((_3, i3) => keep[i3]);
+  const pick2 = (list2) => list2.filter((_3, i3) => keep[i3]);
   return {
     ...combined2,
     items: pick2(combined2.items),
@@ -104506,12 +104877,12 @@ function combinedCriteria(goaled, deadlineIds, page2) {
 }
 function writingTags(dbPath, ids) {
   if (ids.length === 0) return /* @__PURE__ */ new Map();
-  const found = submissionDataQuery(
+  const found2 = submissionDataQuery(
     dbPath,
     `SELECT t.id, t.proceeding_id, f.title FROM tickets t LEFT JOIN filings f ON f.id = t.filing_id WHERE t.id IN (${ids.map(() => "?").join(",")})`,
     ids
   ).rows;
-  return new Map(found.map((r3) => [r3.id, r3.title ?? `Proceeding ${r3.proceeding_id}`]));
+  return new Map(found2.map((r3) => [r3.id, r3.title ?? `Proceeding ${r3.proceeding_id}`]));
 }
 function combineSections(dbPath, sections, page2 = false) {
   if (sections.length < 2) return sections[0];
@@ -104571,8 +104942,8 @@ function combineSections(dbPath, sections, page2 = false) {
 }
 
 // src/submission/writing-folder.ts
-import { existsSync as existsSync31, mkdirSync as mkdirSync14, readdirSync as readdirSync16, readFileSync as readFileSync29, renameSync as renameSync6, rmdirSync as rmdirSync2, statSync as statSync14, unlinkSync as unlinkSync11 } from "node:fs";
-import { dirname as dirname14, extname as extname3, join as join34 } from "node:path";
+import { existsSync as existsSync32, mkdirSync as mkdirSync14, readdirSync as readdirSync16, readFileSync as readFileSync29, renameSync as renameSync6, rmdirSync as rmdirSync2, statSync as statSync14, unlinkSync as unlinkSync11 } from "node:fs";
+import { dirname as dirname15, extname as extname3, join as join35 } from "node:path";
 var GENERAL_DOCUMENT_TYPE = "General_writing";
 var OLD_BOARD_FILES = ["Job Board.html", "Milestone.html", "Work Board.html", "Work Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
 var OLDER_MOCKUPS = "Older mockups";
@@ -104580,7 +104951,7 @@ function sanitizeForPath(name) {
   return name.replace(/[\\/:*?"<>|]/g, "_").trim();
 }
 function readExistingRevision(filePath) {
-  if (!existsSync31(filePath)) return void 0;
+  if (!existsSync32(filePath)) return void 0;
   const text8 = readFileSync29(filePath, "utf-8");
   const match = text8.match(/^Revision:[ \t]*(\d+)/m) ?? text8.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text8.match(/data-k="Rev">(\d+)</);
   return match ? Number(match[1]) : void 0;
@@ -104595,8 +104966,8 @@ function folderRows(dbPath) {
 function storedLayoutField(row2, field) {
   if (row2.layout_snapshot === null) return null;
   try {
-    const value = JSON.parse(row2.layout_snapshot).layout?.[field];
-    const bare2 = typeof value === "object" && value !== null ? value.value : value;
+    const value2 = JSON.parse(row2.layout_snapshot).layout?.[field];
+    const bare2 = typeof value2 === "object" && value2 !== null ? value2.value : value2;
     return typeof bare2 === "string" ? bare2 : null;
   } catch {
     return null;
@@ -104632,7 +105003,7 @@ function writingFolders(dbPath, draft = draftDirOf(dbPath)) {
   };
   for (const row2 of rows4) {
     const manifest = readManifest(dbPath, row2.id);
-    if (manifest !== null && isDir2(join34(draft, manifest.folder)) && !taken.has(manifest.folder.toLowerCase())) {
+    if (manifest !== null && isDir2(join35(draft, manifest.folder)) && !taken.has(manifest.folder.toLowerCase())) {
       take(row2, { name: manifest.folder, legacy: matchOf(manifest.folder, row2) === "legacy" });
     }
   }
@@ -104652,7 +105023,7 @@ function writingFolders(dbPath, draft = draftDirOf(dbPath)) {
 }
 function renameable(dir) {
   const entries = readdirSync16(dir, { withFileTypes: true });
-  return entries.length > 0 && entries.every((e3) => e3.isFile() && (OLD_BOARD_FILES.includes(e3.name) || readExistingRevision(join34(dir, e3.name)) !== void 0));
+  return entries.length > 0 && entries.every((e3) => e3.isFile() && (OLD_BOARD_FILES.includes(e3.name) || readExistingRevision(join35(dir, e3.name)) !== void 0));
 }
 function renamedLegacy(name, title) {
   return `${DATE_PREFIX.exec(name)?.[0] ?? ""}${sanitizeForPath(title)}`;
@@ -104660,8 +105031,8 @@ function renamedLegacy(name, title) {
 function settled(draft, title, folder) {
   if (!folder.legacy) return folder.name;
   const target = renamedLegacy(folder.name, title);
-  if (existsSync31(join34(draft, target)) || !renameable(join34(draft, folder.name))) return folder.name;
-  renameSync6(join34(draft, folder.name), join34(draft, target));
+  if (existsSync32(join35(draft, target)) || !renameable(join35(draft, folder.name))) return folder.name;
+  renameSync6(join35(draft, folder.name), join35(draft, target));
   return target;
 }
 function writingFolderForRender(dbPath, filingId, title) {
@@ -104670,24 +105041,24 @@ function writingFolderForRender(dbPath, filingId, title) {
   if (folder === void 0) throw new DataServerError(`Work Board ${filingId} has no Writing, so it has no folder`, "milestone_only");
   if (folder.ambiguous !== void 0) {
     throw new DataServerError(
-      `${folder.ambiguous.length} folders in ${draft} could each be "${title}"'s: ${folder.ambiguous.map((n3) => `"${join34(draft, n3)}"`).join(", ")}. Nothing was written. Choose which one is its folder, then render again naming it.`,
+      `${folder.ambiguous.length} folders in ${draft} could each be "${title}"'s: ${folder.ambiguous.map((n3) => `"${join35(draft, n3)}"`).join(", ")}. Nothing was written. Choose which one is its folder, then render again naming it.`,
       "presentation_dir_ambiguous"
     );
   }
   const name = settled(draft, title, folder);
-  const dir = join34(draft, name);
-  return folder.legacy && name === folder.name ? { dir, rename: { from: dir, to: join34(draft, renamedLegacy(name, title)) } } : { dir };
+  const dir = join35(draft, name);
+  return folder.legacy && name === folder.name ? { dir, rename: { from: dir, to: join35(draft, renamedLegacy(name, title)) } } : { dir };
 }
 function freeName(dir, name) {
   const ext = extname3(name);
   const stem3 = name.slice(0, name.length - ext.length);
   let candidate = name;
-  for (let n3 = 2; existsSync31(join34(dir, candidate)); n3++) candidate = `${stem3} (${n3})${ext}`;
+  for (let n3 = 2; existsSync32(join35(dir, candidate)); n3++) candidate = `${stem3} (${n3})${ext}`;
   return candidate;
 }
 function moveInto(src, dir, name) {
   mkdirSync14(dir, { recursive: true });
-  const target = join34(dir, freeName(dir, name));
+  const target = join35(dir, freeName(dir, name));
   renameSync6(src, target);
   return target;
 }
@@ -104703,35 +105074,35 @@ function nowLabel() {
   return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())}-${pad(d3.getHours())}-${pad(d3.getMinutes())}`;
 }
 function emptyLegacyFolder(legacy, dir, row2, current) {
-  const archive = join34(dir, "archive");
+  const archive = join35(dir, "archive");
   const labels = new Map((legacy.manifest?.files ?? []).map((f3) => [f3.document_type, documentStem(row2, f3.document_type, f3.file_name)]));
   const files = [];
   for (const f3 of legacy.manifest?.files ?? []) {
-    const src = join34(legacy.dir, f3.file_name);
-    if (!existsSync31(src)) continue;
+    const src = join35(legacy.dir, f3.file_name);
+    if (!existsSync32(src)) continue;
     const name = `${documentStem(row2, f3.document_type, f3.file_name)}${extname3(f3.file_name)}`;
     if (!current) {
       moveInto(src, archive, `${labels.get(f3.document_type)} @rev${legacy.manifest?.stamp.revision} ${nowLabel()}${extname3(f3.file_name)}`);
       continue;
     }
     for (const copy of /* @__PURE__ */ new Set([f3.file_name, name])) {
-      const path = join34(dir, copy);
-      if (existsSync31(path) && readExistingRevision(path) !== void 0) unlinkSync11(path);
+      const path = join35(dir, copy);
+      if (existsSync32(path) && readExistingRevision(path) !== void 0) unlinkSync11(path);
     }
-    if (existsSync31(join34(dir, name))) {
+    if (existsSync32(join35(dir, name))) {
       moveInto(src, archive, `${labels.get(f3.document_type)} @rev${legacy.manifest?.stamp.revision} ${nowLabel()}${extname3(f3.file_name)}`);
       continue;
     }
     moveInto(src, dir, name);
     files.push(name === f3.file_name ? f3 : { document_type: f3.document_type, file_name: name, sha256: f3.sha256 });
   }
-  const oldArchive = join34(legacy.dir, "archive");
+  const oldArchive = join35(legacy.dir, "archive");
   if (isDir2(oldArchive)) {
-    for (const e3 of readdirSync16(oldArchive)) moveInto(join34(oldArchive, e3), archive, relabelled(e3, labels));
+    for (const e3 of readdirSync16(oldArchive)) moveInto(join35(oldArchive, e3), archive, relabelled(e3, labels));
     rmdirSync2(oldArchive);
   }
   for (const e3 of readdirSync16(legacy.dir)) {
-    const path = join34(legacy.dir, e3);
+    const path = join35(legacy.dir, e3);
     if (e3 === LEGACY_MANIFEST_FILE || OLD_BOARD_FILES.includes(e3)) unlinkSync11(path);
     else moveInto(path, archive, e3);
   }
@@ -104746,17 +105117,17 @@ function later(a3, b3, id) {
   return ra2 !== rb ? ra2 > rb : (a3.manifest?.rendered_at ?? "") > (b3.manifest?.rendered_at ?? "");
 }
 function moveCaseDataMockups(dbPath) {
-  const root = join34(dirname14(dbPath), "mockups");
-  if (!existsSync31(root)) return [];
+  const root = join35(dirname15(dbPath), "mockups");
+  if (!existsSync32(root)) return [];
   const draft = draftDirOf(dbPath);
   const records = recordsDir(dbPath);
   mkdirSync14(records, { recursive: true });
-  const older = join34(records, OLDER_MOCKUPS);
+  const older = join35(records, OLDER_MOCKUPS);
   const rows4 = new Map(folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3)).map((r3) => [r3.id, r3]));
   const moves = [];
   const byFiling = /* @__PURE__ */ new Map();
   for (const entry2 of readdirSync16(root, { withFileTypes: true })) {
-    const path = join34(root, entry2.name);
+    const path = join35(root, entry2.name);
     if (!entry2.isDirectory()) {
       if (entry2.name === "matter-pages-state.json") moveInto(path, records, entry2.name);
       else if (OLD_BOARD_FILES.includes(entry2.name)) unlinkSync11(path);
@@ -104772,12 +105143,12 @@ function moveCaseDataMockups(dbPath) {
     byFiling.set(id, [...byFiling.get(id) ?? [], { dir: path, manifest }]);
   }
   const folders2 = writingFolders(dbPath, draft);
-  for (const [id, found] of byFiling) {
+  for (const [id, found2] of byFiling) {
     const row2 = rows4.get(id);
     const folder = settled(draft, row2.title, folders2.get(id));
-    const dir = join34(draft, folder);
+    const dir = join35(draft, folder);
     mkdirSync14(dir, { recursive: true });
-    const [current, ...rest] = [...found].sort((a3, b3) => later(a3, b3, id) ? -1 : 1);
+    const [current, ...rest] = [...found2].sort((a3, b3) => later(a3, b3, id) ? -1 : 1);
     for (const other of rest) {
       emptyLegacyFolder(other, dir, row2, false);
       moves.push({ from: other.dir, to: dir });
@@ -104824,8 +105195,8 @@ function buildContext(dbPath, proceeding, filing, parties2, revision, client, ap
   };
 }
 function fetchApprovalsMark(dbPath) {
-  const found = submissionDataQuery(dbPath, "SELECT COALESCE(MAX(id), 0) AS mark FROM review_approvals", []).rows;
-  return found[0].mark;
+  const found2 = submissionDataQuery(dbPath, "SELECT COALESCE(MAX(id), 0) AS mark FROM review_approvals", []).rows;
+  return found2[0].mark;
 }
 function stampFor(filingId, proceeding, client, now, revision, schemaVersion, buildStamp, approvals) {
   return {
@@ -104856,19 +105227,19 @@ function renderStateFor(dbPath, stamp2, filing, digest) {
 }
 
 // src/submission/forms/render.ts
-import { basename as basename9, dirname as dirname25, join as join48 } from "node:path";
+import { basename as basename9, dirname as dirname27, join as join50 } from "node:path";
 
 // src/submission/matter-pages.ts
-import { join as join46 } from "node:path";
+import { join as join48 } from "node:path";
 
 // src/submission/matter-page-files.ts
-import { existsSync as existsSync37, mkdirSync as mkdirSync19, readdirSync as readdirSync21, readFileSync as readFileSync34 } from "node:fs";
-import { dirname as dirname17, join as join41, relative as relative2 } from "node:path";
+import { existsSync as existsSync39, mkdirSync as mkdirSync19, readdirSync as readdirSync21, readFileSync as readFileSync34 } from "node:fs";
+import { dirname as dirname19, join as join43, relative as relative2 } from "node:path";
 
 // src/file_ops/trash.ts
 import {
   appendFileSync as appendFileSync3,
-  existsSync as existsSync33,
+  existsSync as existsSync34,
   lstatSync,
   mkdirSync as mkdirSync16,
   readdirSync as readdirSync18,
@@ -104883,7 +105254,7 @@ import { createHash as createHash11 } from "node:crypto";
 import { readFileSync as readFileSync31 } from "node:fs";
 
 // src/housekeeping/run-dir.ts
-import { closeSync as closeSync6, existsSync as existsSync32, fsyncSync, mkdirSync as mkdirSync15, openSync as openSync6, readdirSync as readdirSync17, readFileSync as readFileSync30, realpathSync as realpathSync7, statSync as statSync15, writeSync as writeSync5 } from "node:fs";
+import { closeSync as closeSync6, existsSync as existsSync33, fsyncSync, mkdirSync as mkdirSync15, openSync as openSync6, readdirSync as readdirSync17, readFileSync as readFileSync30, realpathSync as realpathSync7, statSync as statSync15, writeSync as writeSync5 } from "node:fs";
 import { win32 as pathWin3216 } from "node:path";
 
 // src/housekeeping/proposal.ts
@@ -104924,10 +105295,10 @@ function relativePathProblem(path) {
   }
   return null;
 }
-function validateProposal(value, runId, root) {
+function validateProposal(value2, runId, root) {
   const v3 = new Checker();
-  if (!v3.object(value, "proposal")) return v3.problems;
-  const p3 = value;
+  if (!v3.object(value2, "proposal")) return v3.problems;
+  const p3 = value2;
   if (p3.run_id !== runId) v3.add(`run_id is ${JSON.stringify(p3.run_id)}, not this run's ${runId}`);
   if (typeof p3.matter_root !== "string" || canonical(p3.matter_root).toLowerCase() !== root.toLowerCase()) {
     v3.add(`matter_root ${JSON.stringify(p3.matter_root)} is not this matter (${root})`);
@@ -104990,9 +105361,9 @@ function validateProposal(value, runId, root) {
 function samePath(path) {
   return path.replace(/\//g, "\\").toLowerCase();
 }
-function validateRow(v3, value, label2, ids, draftFolder3) {
-  if (!v3.object(value, label2)) return;
-  const r3 = value;
+function validateRow(v3, value2, label2, ids, draftFolder3) {
+  if (!v3.object(value2, label2)) return;
+  const r3 = value2;
   if (typeof r3.row_id !== "string" || !ROW_ID_RE.test(r3.row_id)) v3.add(`${label2}.row_id must match ${ROW_ID_RE}`);
   else if (ids.has(r3.row_id)) v3.add(`${label2}.row_id ${r3.row_id} is repeated`);
   else ids.add(r3.row_id);
@@ -105007,11 +105378,11 @@ function validateRow(v3, value, label2, ids, draftFolder3) {
     r3.name_checks.forEach((c3, i3) => {
       const l3 = `${label2}.name_checks[${i3}]`;
       if (!v3.object(c3, l3)) return;
-      const check2 = c3;
-      v3.name(check2.name, `${l3}.name`);
-      v3.path(check2.folder, `${l3}.folder`);
-      v3.boolean(check2.ok, `${l3}.ok`);
-      v3.optionalString(check2.reason, `${l3}.reason`);
+      const check3 = c3;
+      v3.name(check3.name, `${l3}.name`);
+      v3.path(check3.folder, `${l3}.folder`);
+      v3.boolean(check3.ok, `${l3}.ok`);
+      v3.optionalString(check3.reason, `${l3}.reason`);
     });
   }
   v3.oneOf(r3.section, SECTIONS, `${label2}.section`);
@@ -105040,9 +105411,9 @@ var ACTION_FIELDS = {
   unreadable: { required: [], optional: [] },
   stuck: { required: ["reason"], optional: [] }
 };
-function validateAction(v3, value, label2, r3, draftFolder3) {
-  if (!v3.object(value, label2)) return;
-  const a3 = value;
+function validateAction(v3, value2, label2, r3, draftFolder3) {
+  if (!v3.object(value2, label2)) return;
+  const a3 = value2;
   if (typeof a3.kind !== "string" || !Object.hasOwn(ACTION_GROUPS, a3.kind)) {
     v3.add(`${label2}.kind must be one of ${Object.keys(ACTION_GROUPS).join(", ")}`);
     return;
@@ -105073,10 +105444,10 @@ function validateAction(v3, value, label2, r3, draftFolder3) {
   if (kind === "duplicate" && r3.twin === void 0) v3.add(`${label2}: a duplicate row needs its twin`);
   if (kind === "unreadable" && r3.ingest_outcome !== "failed") v3.add(`${label2}: try again next run is only for a failed ingest`);
 }
-function validateApproval(value, runId) {
+function validateApproval(value2, runId) {
   const v3 = new Checker();
-  if (!v3.object(value, "approval")) return v3.problems;
-  const a3 = value;
+  if (!v3.object(value2, "approval")) return v3.problems;
+  const a3 = value2;
   if (a3.run_id !== runId) v3.add(`run_id is ${JSON.stringify(a3.run_id)}, not ${runId}`);
   v3.string(a3.approved_at, "approved_at");
   validateEntries(v3, a3.rows);
@@ -105116,50 +105487,50 @@ var Checker = class {
     this.dropped++;
     this.problems[MAX_PROBLEMS] = `and ${this.dropped} more problem${this.dropped === 1 ? "" : "s"}`;
   }
-  object(value, label2) {
-    if (typeof value === "object" && value !== null && !Array.isArray(value)) return true;
+  object(value2, label2) {
+    if (typeof value2 === "object" && value2 !== null && !Array.isArray(value2)) return true;
     this.add(`${label2} must be an object`);
     return false;
   }
-  array(value, label2) {
-    if (Array.isArray(value)) return true;
+  array(value2, label2) {
+    if (Array.isArray(value2)) return true;
     this.add(`${label2} must be an array`);
     return false;
   }
-  string(value, label2) {
-    if (typeof value === "string" && value.length > 0) return true;
+  string(value2, label2) {
+    if (typeof value2 === "string" && value2.length > 0) return true;
     this.add(`${label2} must be a non-empty string`);
     return false;
   }
-  optionalString(value, label2) {
-    if (value !== void 0) this.string(value, label2);
+  optionalString(value2, label2) {
+    if (value2 !== void 0) this.string(value2, label2);
   }
-  strings(value, label2) {
-    if (Array.isArray(value) && value.every((s3) => typeof s3 === "string" && s3.length > 0)) return true;
+  strings(value2, label2) {
+    if (Array.isArray(value2) && value2.every((s3) => typeof s3 === "string" && s3.length > 0)) return true;
     this.add(`${label2} must be an array of non-empty strings`);
     return false;
   }
-  boolean(value, label2) {
-    if (typeof value !== "boolean") this.add(`${label2} must be a boolean`);
+  boolean(value2, label2) {
+    if (typeof value2 !== "boolean") this.add(`${label2} must be a boolean`);
   }
-  oneOf(value, allowed, label2) {
-    if (typeof value !== "string" || !allowed.includes(value)) this.add(`${label2} must be one of ${allowed.join(", ")}`);
+  oneOf(value2, allowed, label2) {
+    if (typeof value2 !== "string" || !allowed.includes(value2)) this.add(`${label2} must be one of ${allowed.join(", ")}`);
   }
-  name(value, label2) {
-    const problem = bareNameProblem(value);
-    if (problem) this.add(`${label2}${typeof value === "string" && value ? " " + JSON.stringify(value) : ""} ${problem}`);
+  name(value2, label2) {
+    const problem = bareNameProblem(value2);
+    if (problem) this.add(`${label2}${typeof value2 === "string" && value2 ? " " + JSON.stringify(value2) : ""} ${problem}`);
   }
   /** A destination folder: matter-root-relative, and every segment a name Windows can create (no trailing dot or space). */
-  folder(value, label2) {
-    if (typeof value === "string") {
-      const bad2 = value.split(/[\\/]+/).filter((s3) => s3 !== "" && s3 !== "." && s3 !== "..").map((s3) => [s3, bareNameProblem(s3)]).filter(([, p3]) => p3);
+  folder(value2, label2) {
+    if (typeof value2 === "string") {
+      const bad2 = value2.split(/[\\/]+/).filter((s3) => s3 !== "" && s3 !== "." && s3 !== "..").map((s3) => [s3, bareNameProblem(s3)]).filter(([, p3]) => p3);
       for (const [segment, problem] of bad2) this.add(`${label2} segment ${JSON.stringify(segment)} ${problem}`);
       if (bad2.length) return;
     }
-    this.path(value, label2);
+    this.path(value2, label2);
   }
-  path(value, label2) {
-    const problem = relativePathProblem(value);
+  path(value2, label2) {
+    const problem = relativePathProblem(value2);
     if (problem) this.add(`${label2} ${problem}`);
     return problem === null;
   }
@@ -105298,7 +105669,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), ro
   for (let dir = pathWin3217.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin3217.dirname(dir)) {
     ancestors.push(dir);
   }
-  if (ancestors.some((dir) => existsSync33(pathWin3217.join(dir, ".git")))) {
+  if (ancestors.some((dir) => existsSync34(pathWin3217.join(dir, ".git")))) {
     throw new DataServerError(
       `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
       "git_worktree"
@@ -105351,7 +105722,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), ro
   return result;
 }
 function isFile2(path) {
-  return existsSync33(path) && statSync16(path).isFile();
+  return existsSync34(path) && statSync16(path).isFile();
 }
 function present2(path) {
   try {
@@ -105368,28 +105739,28 @@ function stamp(d3) {
 
 // src/page-api/token.ts
 import { createHmac as createHmac2, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
-import { existsSync as existsSync34, linkSync as linkSync2, mkdirSync as mkdirSync17, readFileSync as readFileSync32, unlinkSync as unlinkSync12, writeFileSync as writeFileSync11 } from "node:fs";
-import { dirname as dirname15, join as join35 } from "node:path";
+import { existsSync as existsSync35, linkSync as linkSync2, mkdirSync as mkdirSync17, readFileSync as readFileSync32, unlinkSync as unlinkSync12, writeFileSync as writeFileSync11 } from "node:fs";
+import { dirname as dirname16, join as join36 } from "node:path";
 var DEFAULT_PAGE_API_PORT = 47615;
 var SECRET_FILE = "page-api.secret";
 var SECRET_BYTES = 32;
 function pageApiPort(env = process.env) {
   const path = configPath(env);
-  if (!existsSync34(path)) return DEFAULT_PAGE_API_PORT;
-  const value = JSON.parse(readFileSync32(path, "utf-8"))?.page_api_port;
-  if (value === void 0 || value === null) return DEFAULT_PAGE_API_PORT;
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 65535) {
-    throw new ValidationError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value)}`, "invalid_page_api_port");
+  if (!existsSync35(path)) return DEFAULT_PAGE_API_PORT;
+  const value2 = JSON.parse(readFileSync32(path, "utf-8"))?.page_api_port;
+  if (value2 === void 0 || value2 === null) return DEFAULT_PAGE_API_PORT;
+  if (typeof value2 !== "number" || !Number.isInteger(value2) || value2 < 1 || value2 > 65535) {
+    throw new ValidationError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value2)}`, "invalid_page_api_port");
   }
-  return value;
+  return value2;
 }
 function pageApiSecretPath(env = process.env) {
-  return join35(dirname15(configPath(env)), SECRET_FILE);
+  return join36(dirname16(configPath(env)), SECRET_FILE);
 }
 function pageApiSecret(env) {
   const path = pageApiSecretPath(env);
-  if (!existsSync34(path)) {
-    mkdirSync17(dirname15(path), { recursive: true });
+  if (!existsSync35(path)) {
+    mkdirSync17(dirname16(path), { recursive: true });
     const temp = `${path}.${process.pid}.${randomBytes3(6).toString("hex")}.tmp`;
     writeFileSync11(temp, randomBytes3(SECRET_BYTES), { flag: "wx" });
     try {
@@ -105445,7 +105816,7 @@ function pageApiCardTokenValid(token, cardId, env = process.env) {
 }
 
 // src/templates/view-pages/loose-threads.css.ts
-var loose_threads_css_default = 'header h1{color:#1d5e4a}\nheader h1::after{height:3px;background:#a8691c}\nheader .meta span::before{color:#c49a6c}\n\n@@include(view-folder.css)@@\n\n.folder section>p.note{margin:-6px 0 12px;font-size:12.5px;color:var(--muted)}\narticle.idea{position:relative;background:#fff;border:2px solid #1d5e4a;border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.idea>.text{font-weight:600;margin:0;white-space:pre-wrap;padding-right:64px;cursor:pointer}\n.idea>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:#1d5e4a;transition:transform .15s}\n.idea[data-open=true]>.text::before{transform:rotate(90deg)}\n.idea>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.idea .tags{white-space:nowrap}\n.idea .tag{display:inline-block;margin-left:6px;padding:0 8px;border:1.5px solid #1d5e4a;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;line-height:1.6;vertical-align:2px}\n.idea .tag.group{background:#fff;border-color:var(--g);color:var(--g)}\n.idea>.body{display:flex;flex-direction:column;gap:4px}\n.idea>.body>p{margin:0;font-size:12.5px;color:var(--muted)}\n.idea>.body>p.thought{white-space:pre-wrap}\n.idea>button.status{position:absolute;top:8px;right:10px;font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}\n.idea>button.status:disabled{cursor:default;opacity:.5}\n.idea>.error{margin:0;font-size:12.5px;color:#b3261e}\n.stack>p>span.status{margin-left:8px;padding:0 8px;border:1px solid var(--line-strong);border-radius:999px;font-size:11px;color:var(--muted)}\n.api-off{margin:6px 0 0;font-size:12.5px;color:var(--muted)}\n.switch{margin-left:auto;position:relative;z-index:2;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13px;font-weight:700;padding:4px 8px 4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;cursor:pointer}\n.switch .label{color:#b9c9c0;transition:color .18s}\n.switch[aria-checked=true] .label{color:#1d5e4a}\n.switch .track{position:relative;width:30px;height:17px;border-radius:999px;background:#b9c9c0;transition:background .18s}\n.switch[aria-checked=true] .track{background:#1d5e4a}\n.switch .knob{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s}\n.switch[aria-checked=true] .knob{transform:translateX(13px)}\n.switch:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.resolved-toggle{margin-left:auto;position:relative;z-index:2;font:inherit;font-size:13px;font-weight:700;padding:4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;color:#1d5e4a;cursor:pointer}\n.resolved-toggle:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.resolved-toggle:not([hidden]) + .switch{margin-left:0}\n.chips{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}\n.chip{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;padding:3px 11px;border:1.5px solid #c9d3ce;border-radius:999px;background:#fff;color:#8a948f;cursor:pointer}\n.chip[aria-pressed=true]{border-color:var(--g);background:color-mix(in srgb,var(--g) 10%,#fff);color:var(--g)}\n.chip[aria-pressed=true]::before{content:"\u2713";font-weight:800}\n.chip .n{font-family:var(--mono);font-size:11px;opacity:.8}\n.chip:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.folder section>p.empty{margin:0 0 12px}\n@media (prefers-reduced-motion:reduce){.switch .label,.switch .track,.switch .knob,.idea>.text::before{transition:none}}';
+var loose_threads_css_default = 'header h1{color:#1d5e4a}\nheader h1::after{height:3px;background:#a8691c}\nheader .meta span::before{color:#c49a6c}\n\n@@include(view-folder.css)@@\n\n.folder section>p.note{margin:-6px 0 12px;font-size:12.5px;color:var(--muted)}\narticle.idea{position:relative;background:#fff;border:2px solid #1d5e4a;border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.idea>.text{font-weight:600;margin:0;white-space:pre-wrap;padding-right:64px;cursor:pointer}\n.idea>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:#1d5e4a;transition:transform .15s}\n.idea[data-open=true]>.text::before{transform:rotate(90deg)}\n.idea>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.idea .tags{white-space:nowrap}\n.idea .tag{display:inline-block;margin-left:6px;padding:0 8px;border:1.5px solid #1d5e4a;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;line-height:1.6;vertical-align:2px}\n.idea .tag.group{background:#fff;border-color:var(--g);color:var(--g)}\n.idea>.body{display:flex;flex-direction:column;gap:4px}\n.idea>.body>p{margin:0;font-size:12.5px;color:var(--muted)}\n.idea>.body>p.thought{white-space:pre-wrap}\n.idea>button.status{position:absolute;top:8px;right:10px;font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}\n.idea>button.status:disabled{cursor:default;opacity:.5}\n.idea>.error{margin:0;font-size:12.5px;color:#b3261e}\n.stack>p>span.status{margin-left:8px;padding:0 8px;border:1px solid var(--line-strong);border-radius:999px;font-size:11px;color:var(--muted)}\n.api-off{margin:6px 0 0;font-size:12.5px;color:var(--muted)}\n.switch{margin-left:auto;position:relative;z-index:2;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13px;font-weight:700;padding:4px 8px 4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;cursor:pointer}\n.switch .label{color:#b9c9c0;transition:color .18s}\n.switch[aria-checked=true] .label{color:#1d5e4a}\n.switch .track{position:relative;width:30px;height:17px;border-radius:999px;background:#b9c9c0;transition:background .18s}\n.switch[aria-checked=true] .track{background:#1d5e4a}\n.switch .knob{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s}\n.switch[aria-checked=true] .knob{transform:translateX(13px)}\n.switch:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.resolved-toggle{margin-left:auto;position:relative;z-index:2;font:inherit;font-size:13px;font-weight:700;padding:4px 12px;border:1.5px solid #8fb3a0;border-radius:999px;background:#fff;color:#1d5e4a;cursor:pointer}\n.resolved-toggle:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.resolved-toggle:not([hidden]) + .switch{margin-left:0}\n.chips{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}\n.chip{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;padding:3px 11px;border:1.5px solid #c9d3ce;border-radius:999px;background:#fff;color:#8a948f;cursor:pointer}\n.chip[aria-pressed=true]{border-color:var(--g);background:color-mix(in srgb,var(--g) 10%,#fff);color:var(--g)}\n.chip[aria-pressed=true]::before{content:"\u2713";font-weight:800}\n.chip .n{font-family:var(--mono);font-size:11px;opacity:.8}\n.chip:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n.folder section>p.empty{margin:0 0 12px}\n.status-filter{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}\n.status-pick{font:inherit;font-size:12.5px;font-weight:600;padding:3px 11px;border:1.5px solid #c9d3ce;border-radius:999px;background:#fff;color:#636b72;cursor:pointer}\n.status-pick[aria-pressed=true]{border-color:#1d5e4a;background:#1d5e4a;color:#fff}\n.status-pick:focus-visible{outline:2px solid #1d5e4a;outline-offset:2px}\n@media (prefers-reduced-motion:reduce){.switch .label,.switch .track,.switch .knob,.idea>.text::before{transition:none}}';
 
 // src/templates/view-pages/loose-threads.html.ts
 var loose_threads_html_default = '@@include(view-head.html)@@\n<title>Loose Threads</title>\n<style>\n@@include(board.css)@@\n\n@@include(loose-threads.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Loose Threads</h1>\n    <div class="meta"></div>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(shared.js)@@\n</script>\n<script>\n@@include(loose-threads.js)@@\n</script>\n</body>\n</html>\n';
@@ -105480,10 +105851,11 @@ var loose_threads_js_default = `(function () {
     line.textContent = message;
   }
 
-  // The section an open loose thread belongs under: deferred, else ranked or unranked.
-  function home(c) { return c.deferred ? "deferred" : c.idea.rank === null ? "unranked" : "ranked"; }
+  // The section an open loose thread belongs under: deferred, else open when it is no idea, since
+  // ranking applies to ideas only, else ranked or unranked.
+  function home(c) { return c.deferred ? "deferred" : c.tab !== "ideas" ? "open" : c.idea.rank === null ? "unranked" : "ranked"; }
   function label(c) {
-    c.button.textContent = c.deferred ? "Deferred" : c.idea.rank === null ? "Unranked" : "Ranked";
+    c.button.textContent = c.deferred ? "Deferred" : c.tab !== "ideas" ? "Open" : c.idea.rank === null ? "Unranked" : "Ranked";
     c.button.title = c.deferred ? "Click to bring back" : "Click to defer";
   }
 
@@ -105527,7 +105899,7 @@ var loose_threads_js_default = `(function () {
     var text = el("p", "text");
     var body = el("div", "body");
     var button = el("button", "status");
-    var c = { node: node, idea: i, text: text, button: button, deferred: !!i.deferred_at, inert: false, open: false };
+    var c = { node: node, idea: i, tab: i.tab, text: text, button: button, deferred: !!i.deferred_at, inert: false, open: false };
     c.set = function (on) {
       c.open = on;
       node.setAttribute("data-open", String(on));
@@ -105545,9 +105917,11 @@ var loose_threads_js_default = `(function () {
     text.appendChild(document.createTextNode(i.job || i.idea));
     text.appendChild(document.createTextNode(" "));
     var tags = el("span", "tags");
-    var rank = el("span", "tag rank", i.rank === null ? "?" : String(i.rank));
-    if (i.rank === null) rank.title = "Unranked";
-    tags.appendChild(rank);
+    if (i.tab === "ideas") {
+      var rank = el("span", "tag rank", i.rank === null ? "?" : String(i.rank));
+      if (i.rank === null) rank.title = "Unranked";
+      tags.appendChild(rank);
+    }
     if (i.rank !== null && i.group_label) {
       var group = el("span", "tag group", i.group_label);
       group.setAttribute("style", "--g:" + colour[i.group]);
@@ -105557,6 +105931,7 @@ var loose_threads_js_default = `(function () {
     node.appendChild(text);
     if (i.job) body.appendChild(el("p", "thought", "Loose thought: " + i.idea));
     if (i.reason) body.appendChild(el("p", "why", i.reason));
+    if (i.ref) body.appendChild(el("p", "ref", "Left off at: " + i.ref));
     body.appendChild(el("p", "where", "Loose thread " + i.id + " \xB7 " + i.surfaced_by + (i.origin ? "; " + i.origin : "")));
     node.appendChild(body);
     text.addEventListener("click", function () { c.set(!c.open); });
@@ -105609,6 +105984,24 @@ var loose_threads_js_default = `(function () {
   folder.setAttribute("role", "tabpanel");
   board.appendChild(folder);
 
+  // The status filter inside a tab. Ranked and Unranked are offered only where ideas show.
+  var status = "all";
+  var filterRow = el("div", "status-filter");
+  filterRow.setAttribute("role", "group");
+  filterRow.setAttribute("aria-label", "Status");
+  folder.appendChild(filterRow);
+  var filters = [["all", "All statuses"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["deferred", "Deferred"], ["resolved", "Resolved"]].map(function (s) {
+    var b = el("button", "status-pick", s[1]);
+    b.type = "button";
+    b.setAttribute("data-status", s[0]);
+    b.addEventListener("click", function () {
+      status = s[0];
+      apply();
+    });
+    filterRow.appendChild(b);
+    return b;
+  });
+
   // One section: its heading, whatever sits under the heading, and its cards, the first open.
   var sections = {};
   function section(name, heading, under, cards) {
@@ -105629,7 +106022,25 @@ var loose_threads_js_default = `(function () {
   function resolvedCard(d) {
     var r = resolvedLine(d);
     r.node.appendChild(el("span", "status", "Resolved"));
+    r.tab = d.tab;
     return r;
+  }
+
+  // Snipped work that stays where it is: one read-only line naming its record, linking its file or Work Board page.
+  function placeCard(p) {
+    var line = el("p", "in-place");
+    var name = p.record + ": " + p.title;
+    if (p.url) {
+      var a = el("a", "", name);
+      a.href = p.url;
+      a.title = p.path;
+      line.appendChild(a);
+    } else {
+      line.appendChild(document.createTextNode(name));
+    }
+    if (p.date) line.appendChild(document.createTextNode(" \xB7 " + p.date));
+    line.appendChild(el("span", "status", p.status));
+    return { node: line, inert: true, tab: p.tab };
   }
 
   var allGroups = true;
@@ -105658,12 +106069,15 @@ var loose_threads_js_default = `(function () {
   noGroups.hidden = true;
 
   var open = data.ideas.filter(function (i) { return !i.deferred_at; });
-  var rankedCards = open.filter(function (i) { return i.rank !== null; }).map(ideaCard);
+  var openIdeas = open.filter(function (i) { return i.tab === "ideas"; });
+  var rankedCards = openIdeas.filter(function (i) { return i.rank !== null; }).map(ideaCard);
   section("ranked", "Ranked", [chips, noGroups], rankedCards);
-  section("unranked", "Unranked", [el("p", "note", "Captured since the last ranking.")], open.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("unranked", "Unranked", [el("p", "note", "Captured since the last ranking.")], openIdeas.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("open", "Open", [], open.filter(function (i) { return i.tab !== "ideas"; }).map(ideaCard));
   section("deferred", "Deferred", [], data.ideas.filter(function (i) { return !!i.deferred_at; }).map(ideaCard));
   section("resolved", "Resolved", [], data.resolved.map(resolvedCard));
-  var empty = el("p", "empty", data.ideas.length === 0 ? "No open loose threads." : "No loose thread under this tab.");
+  section("in_place", "Left where they are", [], data.in_place.map(placeCard));
+  var empty = el("p", "empty", data.ideas.length === 0 && data.in_place.length === 0 ? "No open loose threads." : "No loose thread under this tab.");
   folder.appendChild(empty);
 
   var toggle = el("button", "switch");
@@ -105729,7 +106143,7 @@ var loose_threads_js_default = `(function () {
     apply();
   });
 
-  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["deferred", "Deferred"], ["resolved", "Resolved"]];
+  var TABS = [["all", "All"], ["jobs", "Jobs"], ["ideas", "Ideas"], ["propositions", "Propositions"], ["memos", "Legal Memos"], ["correspondence", "Correspondence"], ["arguments", "Arguments"], ["work_boards", "Work Boards"]];
   var tabs = TABS.map(function (t) {
     var b = el("button", "", t[1]);
     b.type = "button";
@@ -105745,14 +106159,26 @@ var loose_threads_js_default = `(function () {
 
   var current = "all";
   function apply() {
-    // A card deferred from Ranked drops out of the group filter; one brought back rejoins it.
-    sections.deferred.cards.forEach(function (c) { c.node.hidden = false; });
-    sections.ranked.cards.forEach(function (c) { c.node.hidden = !allGroups && !picked[c.idea.group]; });
+    var rankable = current === "all" || current === "ideas";
+    if (!rankable && (status === "ranked" || status === "unranked")) status = "all";
+    filters.forEach(function (b) {
+      var s = b.getAttribute("data-status");
+      b.hidden = !rankable && (s === "ranked" || s === "unranked");
+      b.setAttribute("aria-pressed", String(s === status));
+    });
     noGroups.hidden = allGroups || data.groups.some(function (g) { return picked[g.key]; });
+    var bare = current === "all" && status === "all";
     var any = false;
     Object.keys(sections).forEach(function (name) {
-      var shown = current === name || (current === "all" && (name !== "resolved" || showResolved));
-      var on = shown && sections[name].cards.length > 0;
+      var shown = status === name || (status === "all" && (name !== "resolved" || (bare && showResolved)));
+      var count = 0;
+      sections[name].cards.forEach(function (c) {
+        var onTab = current === "all" || c.tab === current;
+        if (onTab) count += 1;
+        // A card deferred from Ranked drops out of the group filter; one brought back rejoins it.
+        c.node.hidden = !onTab || (name === "ranked" && !allGroups && !picked[c.idea.group]);
+      });
+      var on = shown && count > 0;
       sections[name].node.hidden = !on;
       if (on) any = true;
     });
@@ -105763,7 +106189,7 @@ var loose_threads_js_default = `(function () {
       if (on) folder.setAttribute("aria-labelledby", b.id);
     });
     empty.hidden = any;
-    if (resolvedToggle) resolvedToggle.hidden = current !== "all";
+    if (resolvedToggle) resolvedToggle.hidden = !bare;
   }
   function select(b) {
     current = b.getAttribute("data-filter");
@@ -105807,333 +106233,19 @@ var view_folder_css_default = '.board{gap:0}\n.tabs{display:flex;align-items:fle
 // src/templates/view-pages/view-head.html.ts
 var view_head_html_default = '<!doctype html>\n<html lang="en" data-view-page>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">';
 
-// src/submission/forms/loose-ideas-page.ts
-var GROUP_STYLE = {
-  decision: { label: "Practitioner decisions", colour: "#6E4F8E" },
-  tooling: { label: "Tooling", colour: "#3F6197" },
-  housekeeping: { label: "Housekeeping", colour: "#2F7466" },
-  research: { label: "Research", colour: "#8E6620" },
-  authority: { label: "Authority mismatch", colour: "#984A43" },
-  evidence: { label: "Evidence mismatch", colour: "#85587A" },
-  other: { label: "Miscellaneous", colour: "#636B72" }
-};
-function buildLooseIdeasData(dbPath, proceedings, env = process.env) {
-  const merged = proceedings.length > 1;
-  const seeds = inRankOrder(proceedings.flatMap((p3) => withFromFiling(dbPath, p3, fetchOpenSeeds(dbPath, p3)).map((s3) => ({ ...s3, proceeding_id: p3 }))));
-  const ideas = seeds.map(
-    (s3) => ({
-      ...merged ? { proceeding_id: s3.proceeding_id } : {},
-      id: s3.id,
-      rank: s3.rank,
-      idea: s3.idea,
-      group: s3.rank === null ? null : s3.rank_group,
-      group_label: s3.rank === null || s3.rank_group === null ? null : GROUP_STYLE[s3.rank_group].label,
-      reason: s3.rank === null ? null : s3.rank_reason,
-      job: s3.rank === null ? null : s3.rank_job,
-      surfaced_by: s3.surfaced_by,
-      origin: seedOrigin(s3),
-      deferred_at: s3.deferred_at
-    })
-  );
-  const groups = Object.keys(GROUP_STYLE).map((key) => ({ key, ...GROUP_STYLE[key], count: ideas.filter((i3) => i3.group === key).length })).filter((g3) => g3.count > 0);
-  const first = proceedings[0];
-  const api = {
-    port: pageApiPort(env),
-    db_path: dbPath,
-    proceeding_id: first,
-    token: pageApiToken(dbPath, first, env),
-    ...merged ? { tokens: Object.fromEntries(proceedings.map((p3) => [String(p3), pageApiToken(dbPath, p3, env)])) } : {}
-  };
-  const resolved = proceedings.flatMap((p3) => fetchResolvedSeeds(dbPath, p3));
-  return { groups, ideas, resolved: merged ? resolved.sort((a3, b3) => a3.at === b3.at ? a3.id - b3.id : a3.at < b3.at ? 1 : -1) : resolved, api };
-}
-function looseIdeasMeta(data) {
-  const deferred = data.ideas.filter((i3) => i3.deferred_at !== null).length;
-  const ranked = data.ideas.filter((i3) => i3.deferred_at === null && i3.rank !== null).length;
-  return [
-    ["Threads", String(data.ideas.length)],
-    ["Ranked", String(ranked)],
-    ["Unranked", String(data.ideas.length - ranked - deferred)],
-    ["Deferred", String(deferred)],
-    ["Resolved", String(data.resolved.length)]
-  ];
-}
-var LOOSE_THREADS_PAGE_NAME = "Loose Threads";
-var LOOSE_THREADS_FILE = `${LOOSE_THREADS_PAGE_NAME}.html`;
-var LOOSE_IDEAS_PAGE = {
-  name: LOOSE_THREADS_PAGE_NAME,
-  ...templated({
-    entry: "loose-threads.html",
-    files: {
-      "loose-threads.html": loose_threads_html_default,
-      "view-head.html": view_head_html_default,
-      "board.css": board_css_default,
-      "loose-threads.css": loose_threads_css_default,
-      "view-folder.css": view_folder_css_default,
-      "shared.js": shared_js_default,
-      "loose-threads.js": loose_threads_js_default
-    }
-  }),
-  data: (ctx) => buildLooseIdeasData(ctx.dbPath, fetchAllProceedings(ctx.dbPath).map((p3) => p3.id)),
-  metaExtra: looseIdeasMeta
-};
+// src/submission/forms/loose-thread-in-place.ts
+import { existsSync as existsSync38 } from "node:fs";
+import { dirname as dirname18, join as join42 } from "node:path";
 
-// src/templates/matter-board/matter-board.css.ts
-var matter_board_css_default = 'ul.todos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}\nli.todo{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}\nli.todo .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}\nli.todo .description{font-weight:500}\nli.todo .bf{font-family:var(--mono);font-size:12px;color:var(--muted)}\nli.todo .line{margin:0;font-size:13px;color:var(--muted)}\narticle.filing{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;font-size:13.5px}\n.name{font-weight:600}\n.line .name{font-weight:500}\n.mockups,.jobs{color:var(--muted)}\ndetails.retired{background:var(--card);border:1px solid var(--line);border-radius:10px;opacity:.7}\ndetails.retired>summary{cursor:pointer;padding:12px 14px}\ndetails.retired>p{margin:0;padding:0 14px 12px;font-size:13px;color:var(--muted)}\ndetails.lane>summary{list-style:none;cursor:pointer}\ndetails.lane>summary::-webkit-details-marker{display:none}\ndetails.lane>summary>h2{font-family:var(--sans-heading);font-size:13px;font-weight:600;color:var(--ink);margin:0;padding-bottom:8px;border-bottom:1px solid var(--frame);display:flex;align-items:baseline;gap:8px}\ndetails.lane>summary>h2::before{content:"\\25B8";color:var(--muted)}\ndetails.lane[open]>summary>h2::before{content:"\\25BE"}\ndetails.lane[open]>summary>h2{margin-bottom:12px}\ndetails.lane>summary>h2 .count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\n.addressee,.sent{color:var(--muted)}\nheader .job{display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:13px;color:var(--muted)}\nheader .job[hidden]{display:none}\nheader .job.stalled{color:var(--accent)}\nheader .job .spinner{width:10px;height:10px;border:2px solid var(--line);border-top-color:var(--ink);border-radius:50%;animation:job-spin 1s linear infinite}\n@keyframes job-spin{to{transform:rotate(360deg)}}';
-
-// src/templates/matter-board/matter-board.html.ts
-var matter_board_html_default = '<!doctype html>\n<html lang="en" data-matter-board-shell>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Litigation Strategy</title>\n<style>\n@@include(board.css)@@\n\n@@include(matter-board.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Litigation Strategy</h1>\n    <div class="meta"></div>\n    <p class="job" hidden></p>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(matter-board.js)@@\n</script>\n</body>\n</html>\n';
-
-// src/templates/matter-board/matter-board.js.ts
-var matter_board_js_default = `(function () {
-  "use strict";
-  var data = window.MATTER_BOARD;
-  var header = document.querySelector("header");
-  var board = document.querySelector(".board");
-
-  function el(tag, cls, text) {
-    var node = document.createElement(tag);
-    if (cls) node.className = cls;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  }
-
-  if (!data) return;
-
-  var meta = data.meta;
-  if (meta.matter !== "") document.title = "Litigation Strategy \u2014 " + meta.matter;
-  var metaRow = header.querySelector(".meta");
-  [
-    ["Matter", meta.matter],
-    ["Client", meta.client],
-    ["Rev", String(meta.revision)],
-    ["Rendered", meta.rendered]
-  ].forEach(function (pair) {
-    if (pair[1] === "") return;
-    var span = el("span", "", pair[1]);
-    span.setAttribute("data-k", pair[0]);
-    metaRow.appendChild(span);
-  });
-
-  var MOCKUPS = { fresh: "Mockups ready", stale: "Mockups need re-rendering", never: "Mockups not yet rendered" };
-
-  function proceedingLine(p) {
-    return [p.proceeding.court_or_centre, p.proceeding.file_number].filter(function (part) { return part; }).join(" ");
-  }
-  function jobs(n) {
-    return n === 0 ? "No jobs in progress" : n === 1 ? "1 job in progress" : n + " jobs in progress";
-  }
-
-  // One line (ADR 0021 D3): name \xB7 lifecycle state \xB7 mockup status \xB7 jobs in progress. The same
-  // line is drawn under a to-do that points at the filing or proceeding (D5).
-  function fill(node, parts) {
-    parts.forEach(function (part, i) {
-      if (i > 0) node.appendChild(document.createTextNode(" \xB7 "));
-      node.appendChild(el("span", part[0], part[1]));
-    });
-    return node;
-  }
-  function filingParts(f) {
-    var parts = [["name", f.title], ["chip", f.state_since === null ? f.state_label : f.state_label + " " + f.state_since]];
-    if (f.render_state) parts.push(["mockups", MOCKUPS[f.render_state]]);
-    if (f.in_progress !== undefined) parts.push(["jobs", jobs(f.in_progress)]);
-    return parts;
-  }
-  function proceedingParts(p) {
-    var where = proceedingLine(p);
-    return [["name", "Proceeding " + p.proceeding_id + (where === "" ? "" : " (" + where + ")")], ["chip", p.state_label], ["jobs", jobs(p.in_progress)]];
-  }
-  // A sent letter's row in the "Sent, awaiting response" lane: addressee \xB7 subject \xB7 sent date.
-  function awaitingParts(a) {
-    return [["addressee", a.addressee === null ? "No addressee recorded" : a.addressee], ["name", a.subject], ["sent", "Sent " + a.sent_on]];
-  }
-  var awaiting = data.awaiting_response || [];
-
-  function filingLine(f) {
-    var line = fill(el("article", "filing"), filingParts(f));
-    line.setAttribute("data-filing-id", String(f.filing_id));
-    return line;
-  }
-  function preFilingLine(p) {
-    var line = fill(el("article", "filing"), proceedingParts(p));
-    line.setAttribute("data-proceeding-id", String(p.proceeding_id));
-    return line;
-  }
-  function awaitingLine(a) {
-    var line = fill(el("article", "filing"), awaitingParts(a));
-    line.setAttribute("data-filing-id", String(a.filing_id));
-    return line;
-  }
-
-  function todoItem(t) {
-    var li = el("li", "todo");
-    li.setAttribute("data-todo-id", t.id);
-    var head = el("div", "head");
-    head.appendChild(el("span", "description", t.description));
-    if (t.bf_date !== null) head.appendChild(el("span", "bf", "BF " + t.bf_date));
-    li.appendChild(head);
-    var filing = t.filing_id === undefined ? null : data.filings.filter(function (f) { return f.filing_id === t.filing_id; })[0];
-    var sent = t.filing_id === undefined ? null : awaiting.filter(function (a) { return a.filing_id === t.filing_id; })[0];
-    var proceeding = t.proceeding_id === undefined ? null : data.pre_filing.filter(function (p) { return p.proceeding_id === t.proceeding_id; })[0];
-    if (filing) {
-      var line = fill(el("p", "line"), filingParts(filing));
-      line.setAttribute("data-filing-id", String(filing.filing_id));
-      li.appendChild(line);
-    } else if (sent) {
-      li.appendChild(fill(el("p", "line"), awaitingParts(sent)));
-    } else if (proceeding) {
-      li.appendChild(fill(el("p", "line"), proceedingParts(proceeding)));
-    }
-    return li;
-  }
-
-  function retiredCard(f) {
-    var card = el("details", "retired");
-    card.setAttribute("data-filing-id", String(f.filing_id));
-    card.appendChild(el("summary", "", f.title));
-    // A Work Board with no Writing is closed, never retired, and prints no reason.
-    card.appendChild(el("p", "", f.job_only ? "Closed " + f.retired_on : "Retired " + f.retired_on + (f.retirement_reason ? " \u2014 " + f.retirement_reason.replace(/_/g, " ") : "")));
-    return card;
-  }
-
-  function section(id, heading, count, body) {
-    var sec = el("section");
-    sec.id = id;
-    var h2 = el("h2", "", heading + " ");
-    h2.appendChild(el("span", "count", String(count)));
-    sec.appendChild(h2);
-    sec.appendChild(body);
-    board.appendChild(sec);
-  }
-  function stack(cards, emptyText) {
-    if (cards.length === 0) return el("p", "empty", emptyText);
-    var div = el("div", "stack");
-    cards.forEach(function (c) { div.appendChild(c); });
-    return div;
-  }
-
-  var todos = el("ul", "todos");
-  data.todos.forEach(function (t) { todos.appendChild(todoItem(t)); });
-  section("todos", "To-dos", data.todos.length, data.todos.length > 0 ? todos : el("p", "empty", data.todos_note || "No open to-dos for this matter."));
-
-  // A Work Board with no Writing is no Writing: it is counted and drawn in a section of its own.
-  // A merged Work Board (docs/ADRs/0010) is one heading with its sections' lines beneath it, and those
-  // sections are left out of the lists below.
-  var boards = data.boards || [];
-  var onBoard = { filing: {}, proceeding: {} };
-  boards.forEach(function (b) {
-    b.filing_ids.forEach(function (id) { onBoard.filing[id] = true; });
-    b.proceeding_ids.forEach(function (id) { onBoard.proceeding[id] = true; });
-  });
-  if (boards.length > 0) {
-    section("merged-boards", "Merged Work Boards", boards.length, stack(boards.map(function (b) {
-      var card = el("article", "merged-board");
-      card.appendChild(el("h3", "", b.name));
-      data.filings.filter(function (f) { return b.filing_ids.indexOf(f.filing_id) >= 0; }).forEach(function (f) { card.appendChild(filingLine(f)); });
-      data.pre_filing.filter(function (p) { return b.proceeding_ids.indexOf(p.proceeding_id) >= 0; }).forEach(function (p) { card.appendChild(preFilingLine(p)); });
-      return card;
-    }), ""));
-  }
-  var writings = data.filings.filter(function (f) { return !f.job_only; });
-  var live = writings.filter(function (f) { return !f.retired_on && !onBoard.filing[f.filing_id]; });
-  var milestones = data.filings.filter(function (f) { return f.job_only && !f.retired_on && !onBoard.filing[f.filing_id]; });
-  var preFiling = data.pre_filing.filter(function (p) { return !onBoard.proceeding[p.proceeding_id]; });
-  var retired = data.filings.filter(function (f) { return f.retired_on; });
-  section("filings", "Writings", live.length, stack(live.map(filingLine), writings.length + awaiting.length === 0 ? "No Writings in this matter." : boards.length > 0 ? "Every live Writing is on a merged Work Board." : "No live Writings."));
-  // Sent letters not yet retired: one lane, collapsed by default, outside the Writings count.
-  if (awaiting.length > 0) {
-    var lane = el("details", "lane");
-    var summary = el("summary");
-    var h2 = el("h2", "", "Sent, awaiting response ");
-    h2.appendChild(el("span", "count", String(awaiting.length)));
-    summary.appendChild(h2);
-    lane.appendChild(summary);
-    lane.appendChild(stack(awaiting.map(awaitingLine), ""));
-    var awaitingSection = el("section");
-    awaitingSection.id = "awaiting";
-    awaitingSection.appendChild(lane);
-    board.appendChild(awaitingSection);
-  }
-  if (milestones.length > 0) section("milestones", "Work Boards", milestones.length, stack(milestones.map(filingLine), ""));
-  if (preFiling.length > 0) section("pre-filing", "Before filing", preFiling.length, stack(preFiling.map(preFilingLine), ""));
-  if (retired.length > 0) section("retired", "Retired", retired.length, stack(retired.map(retiredCard), ""));
-
-  // Live status from the background render job (#589). See the file header for the rules.
-  var STALLED = "Rendering may have stalled \u2014 re-open the session to retry";
-  var job = header.querySelector(".job");
-  var boardMs = (function (m) {
-    return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime() : 0;
-  })(/^(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}):(\\d{2})/.exec(meta.rendered));
-  var tag = null;
-
-  function showJob(text, stalled) {
-    job.textContent = "";
-    if (!stalled) job.appendChild(el("span", "spinner"));
-    job.appendChild(document.createTextNode(text));
-    job.className = stalled ? "job stalled" : "job";
-    job.hidden = false;
-  }
-  // A filing's line and every to-do line pointing at it carry the same mockup status.
-  function mark(id, text) {
-    board.querySelectorAll('[data-filing-id="' + id + '"] .mockups').forEach(function (span) { span.textContent = text; });
-  }
-  function apply(s) {
-    // A status older than this board says nothing about it: the board was written after the job.
-    if (Date.parse(s.updated_at) > boardMs) {
-      s.done.forEach(function (id) { mark(id, MOCKUPS.fresh); });
-      s.failed.forEach(function (f) { mark(f.filing_id, "Mockups failed to render"); });
-    }
-    if (s.state === "running") {
-      var finished = s.done.length + s.failed.length;
-      var total = finished + s.queued.length + (s.current === null ? 0 : 1);
-      if (Date.now() - Date.parse(s.updated_at) > s.stall_after_ms) showJob(STALLED, true);
-      else showJob("Rendering mockups \u2014 " + finished + " of " + total, false);
-      setTimeout(poll, 2000);
-    } else if (s.state === "aborted") {
-      showJob(STALLED, true);
-    } else {
-      job.hidden = true;
-    }
-  }
-  function poll() {
-    if (tag) tag.remove();
-    window.WORKBOARD_STATUS = undefined;
-    tag = document.createElement("script");
-    tag.onload = function () {
-      if (window.WORKBOARD_STATUS) apply(window.WORKBOARD_STATUS);
-    };
-    tag.onerror = function () {
-      job.hidden = true;
-    };
-    tag.src = "workboard-status.js?t=" + Date.now();
-    document.body.appendChild(tag);
-  }
-  poll();
-})();`;
-
-// src/submission/forms/matter-board-shell.ts
-var MATTER_BOARD_FILE = "Litigation Strategy.html";
-var MATTER_BOARD_MARKER = "data-matter-board-shell";
-var LITIGATION_STRATEGY_TEMPLATE = {
-  entry: "matter-board.html",
-  files: {
-    "matter-board.html": matter_board_html_default,
-    "board.css": board_css_default,
-    "matter-board.css": matter_board_css_default,
-    "matter-board.js": matter_board_js_default
-  }
-};
-var PAGE3 = composeTemplate(LITIGATION_STRATEGY_TEMPLATE.entry, LITIGATION_STRATEGY_TEMPLATE.files);
-function renderMatterBoardHtml(data, page2 = PAGE3) {
-  return `${page2.head}window.MATTER_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
-${page2.tail}`;
-}
+// src/submission/forms/legal-memos.ts
+import { existsSync as existsSync37, readdirSync as readdirSync20, statSync as statSync17 } from "node:fs";
+import { join as join41 } from "node:path";
 
 // src/submission/matter-page-groups.ts
-import { join as join40 } from "node:path";
+import { join as join39 } from "node:path";
 
 // src/submission/view-pages.ts
-import { join as join39 } from "node:path";
+import { join as join38 } from "node:path";
 
 // src/templates/view-pages/arguments.css.ts
 var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tag{position:absolute;right:0;bottom:0;padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
@@ -106614,7 +106726,7 @@ var procedural_history_html_default = '@@include(view-head.html)@@\n<title>Proce
 
 // src/submission/forms/facts-pages.ts
 function factsInFilingOrder(dbPath, filingId) {
-  const found = rows(
+  const found2 = rows(
     dbPath,
     `SELECT f.*, cr.label AS court_record_label
      FROM (SELECT fact_id, 0 AS grp, ordinal AS k1, 0 AS k2 FROM filing_facts WHERE filing_id = ? AND document = 'form'
@@ -106630,7 +106742,7 @@ function factsInFilingOrder(dbPath, filingId) {
     [filingId, filingId, filingId]
   );
   const seen = /* @__PURE__ */ new Set();
-  return found.filter((f3) => {
+  return found2.filter((f3) => {
     if (seen.has(f3.id)) return false;
     seen.add(f3.id);
     return true;
@@ -106735,7 +106847,7 @@ var MATERIAL_FACTS = {
 };
 
 // src/submission/forms/legal-research-page.ts
-import { dirname as dirname16 } from "node:path";
+import { dirname as dirname17 } from "node:path";
 
 // src/templates/view-pages/legal-research.css.ts
 var legal_research_css_default = '.tab-body{display:flex;flex-direction:column;gap:28px}\n.tab-body [hidden]{display:none}\n.tab-body>button.back{align-self:flex-start;font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}\ndetails.ticket[data-status="completed"]{opacity:1}\n.stmt .noting{margin:0}\n.filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:0;font-size:13px}\n.filters label{display:flex;align-items:center;gap:6px;cursor:pointer}\n.filters select,.filters input[type=search]{font:inherit;padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink)}\n.filters input[type=search]{min-width:200px;flex:1 1 200px;max-width:360px}\n.counts{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.tab-body>p.hint{margin:0;font-size:13px;color:var(--muted)}\n.tab-body>p.empty,.tab-body section>p.empty{margin:0;font-size:13px;color:var(--muted);background:var(--card);padding:12px 14px;border:1px dashed var(--frame);border-radius:8px}\nsection>p.note{margin:-6px 0 10px;font-size:12px;color:var(--muted)}\narticle.prop{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.prop>.text{font-weight:600;margin:0;white-space:pre-wrap}\n.prop>.text.none{font-weight:400;font-style:italic;color:var(--muted)}\n.prop>.linked,.prop>.dead{margin:0;font-size:12.5px;color:var(--muted)}\n.stmt{border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}\n.stmt .cite{margin:0}\n.stmt blockquote{margin:0;padding:2px 0 2px 12px;border-left:3px solid var(--line-strong);white-space:pre-wrap}\n.stmt .status{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}\n.prop.undecided>p,.stmt.undecided{color:var(--muted);opacity:.6}\n.prop.not_relevant>p,.stmt.not_relevant{color:var(--muted)}\n.prop.not_relevant>.text,.stmt.not_relevant .cite,.stmt.not_relevant blockquote{text-decoration:line-through;text-decoration-color:var(--muted)}\ndetails.ticket .body dd ul{margin:0;padding-left:18px}\ndetails.ticket .body dd ul li{white-space:pre-wrap}\ndetails.ticket .body dd.none{color:var(--muted)}\n.file-path{display:block;margin:2px 0;font-size:12px;color:var(--muted);word-break:break-all;user-select:text}\n.file-copy{font:inherit;font-size:12px;padding:2px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}';
@@ -107260,16 +107372,558 @@ var legal_research_js_default = `(function () {
 })();`;
 
 // src/submission/forms/case-briefs.ts
-import { join as join38 } from "node:path";
-
-// src/submission/forms/legal-memos.ts
-import { existsSync as existsSync36, readdirSync as readdirSync20, statSync as statSync17 } from "node:fs";
 import { join as join37 } from "node:path";
+
+// src/submission/forms/brief-job.ts
+var BRIEF_JOB_PREFIX = "Brief the case: ";
+function squashed(text8) {
+  return text8.replace(/[\s.]+/g, "").toLowerCase();
+}
+function citationParts(citation) {
+  return (citation ?? "").split(/,(?![^()]*\))/).map((piece) => squashed(piece.replace(/\s+at\s.*$/i, "").replace(/\s*\([^()]*\)\s*$/, ""))).filter((part) => /\d/.test(part) && /[a-z]/.test(part));
+}
+var YEAR_WORD_NUMBER = /^\d{4}[a-z]{2,}\d+$/;
+var DATABASE_YEAR = /^\d{4}(?:canlii|carswell)/;
+function citationKey(citation) {
+  const parts = citationParts(citation);
+  if (parts.length === 0) return null;
+  const dated = parts.filter((part) => YEAR_WORD_NUMBER.test(part));
+  return dated.find((part) => !DATABASE_YEAR.test(part)) ?? dated[0] ?? parts.join(", ");
+}
+
+// src/submission/forms/note-up-status.ts
+var NOT_NOTED_UP = { label: "Not noted up", noted: false };
+var CHECK_FINISHED = /* @__PURE__ */ new Set(["current", "repealed", "archived"]);
+function treatmentWord(treatment) {
+  return treatment.replace(/_/g, " ");
+}
+function authorityNoteUp(treatment) {
+  return treatment === null ? NOT_NOTED_UP : { label: "Noted up: negative treatment only", noted: true };
+}
+function statementNoteUp(kind, treatment, currencyStatus) {
+  if (kind === "doctrine") return null;
+  if (kind !== null && LEGISLATION_KINDS.has(kind)) {
+    return currencyStatus !== null && CHECK_FINISHED.has(currencyStatus) ? { label: "Statute level: in-force check done", noted: true } : NOT_NOTED_UP;
+  }
+  return treatment === null ? NOT_NOTED_UP : { label: "Case noted up: negative treatment only", noted: true };
+}
+
+// src/submission/forms/case-briefs.ts
+function reliedOn(dbPath, filingIds, kinds) {
+  if (filingIds.length === 0) return [];
+  const inIds = `(${filingIds.map(() => "?").join(", ")})`;
+  const inKinds = kinds.map((k3) => `'${k3}'`).join(", ");
+  const notOmitted = hasColumn(dbPath, "law_assertions", "killed_on") ? "AND (la.id IS NULL OR la.killed_on IS NULL)" : "";
+  return rows(
+    dbPath,
+    `SELECT DISTINCT a.id, a.style_of_cause_or_title, a.citation, a.treatment, a.currency_status, a.currency_checked_on
+     FROM statements_of_law sl
+     JOIN authorities a ON a.id = sl.authority_id
+     LEFT JOIN law_assertions la ON la.id = sl.law_assertion_id
+     WHERE a.kind IN (${inKinds}) AND a.killed_on IS NULL ${notOmitted}
+       AND (sl.id IN (SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds})
+         OR sl.id IN (SELECT r.excerpt_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
+         OR sl.law_assertion_id IN (SELECT r.law_assertion_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
+         OR sl.law_assertion_id IN (
+           SELECT sbl.law_assertion_id FROM submission_law sbl
+           JOIN submissions s ON s.id = sbl.submission_id AND s.killed_on IS NULL
+           JOIN filing_submissions fs ON fs.submission_id = s.id
+           WHERE fs.filing_id IN ${inIds}))
+     ORDER BY a.style_of_cause_or_title, a.id`,
+    [...filingIds, ...filingIds, ...filingIds, ...filingIds]
+  );
+}
+function briefJobs(dbPath) {
+  return rows(
+    dbPath,
+    `SELECT t.id, t.proceeding_id, t.title, t.status, t.rejected_at, a.id AS authority_id, a.style_of_cause_or_title, a.citation, a.treatment
+     FROM tickets t
+     LEFT JOIN ticket_scope s ON s.ticket_id = t.id AND s.entity = 'authorities'
+     LEFT JOIN authorities a ON a.id = s.entity_id
+     WHERE t.title LIKE '${BRIEF_JOB_PREFIX}%'${liveTicketClause(dbPath, "t")}
+     ORDER BY t.id`
+  );
+}
+function foldKey(citation, authorityId, name) {
+  return citationKey(citation) ?? (authorityId !== null ? `id:${authorityId}` : `name:${name.toLowerCase()}`);
+}
+var CITATION_PIECE = /^(?:[[(]\d{4}[\])]\s+\d*|\d+)\s*[A-Za-z].*?\s\d+(?:\s*\([^()]*\))*(?:\s+at\s.*)?$/;
+function isCitation(text8) {
+  return text8.split(/,\s+/).every((piece) => CITATION_PIECE.test(piece) && !/\sv\.?\s/i.test(piece));
+}
+function briefCase(file) {
+  const whole = titleOf2(file).replace(/^case brief\s+/i, "");
+  for (const m3 of whole.matchAll(/\s(?=[[(\d])/g)) {
+    const before = whole.slice(0, m3.index);
+    const tail = whole.slice(m3.index + 1);
+    if (!/,\s*$/.test(before) && !/^(?:[[(]|\d{4}\s)/.test(tail)) continue;
+    const citation = /^\(([^()]*)\)$/.exec(tail)?.[1] ?? tail;
+    if (isCitation(citation)) return { whole, style: before.replace(/[,\s]+$/, ""), citation };
+  }
+  return { whole, style: whole, citation: null };
+}
+var CITATION_LIKE = /\b\d+\s*[A-Za-z.]+\s*\d+\b/;
+function holdsCitation(name, part) {
+  const text8 = part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<!\\d)${text8}(?!\\d)`).test(squashed(name));
+}
+function caseOfFile(file, known) {
+  const { whole, style, citation } = briefCase(file);
+  const cited2 = known.find((c3) => citationParts(c3.citation).some((part) => holdsCitation(whole, part)));
+  if (cited2 !== void 0) return cited2.key;
+  const uncited = citation === null && !CITATION_LIKE.test(whole);
+  const styled = known.filter((c3) => c3.style !== null && squashed(c3.style) === squashed(style) && (uncited || citationKey(c3.citation) === null));
+  const keys = new Set(styled.map((c3) => c3.key));
+  return keys.size === 1 ? styled[0].key : null;
+}
+function buildCaseBriefsData(dbPath, filingIds, matterDir, proceedingIds) {
+  const lawDir = lawDirOf(matterDir);
+  const onDisk = new Map(scanLawFolder(lawDir, isCaseBriefFile).map((f3) => [f3.file.toLowerCase(), f3]));
+  const jobs2 = briefJobs(dbPath);
+  const answers = ticketAnswersHeld(dbPath) ? rows(dbPath, `SELECT ta.ticket_id, ta.file_path, ta.saved_at FROM ticket_answers ta JOIN tickets t ON t.id = ta.ticket_id WHERE t.title LIKE '${BRIEF_JOB_PREFIX}%'${liveTicketClause(dbPath, "t")}`) : [];
+  const cases = /* @__PURE__ */ new Map();
+  const row2 = (key, title, citation, relied2) => {
+    const found2 = cases.get(key);
+    if (found2 !== void 0) {
+      if (relied2) found2.relied_on = true;
+      return found2;
+    }
+    const made = { title, citation, status: "not_briefed", relied_on: relied2, jobs: [], brief: null, note_up: authorityNoteUp(null), results: [] };
+    cases.set(key, made);
+    return made;
+  };
+  const relied = reliedOn(dbPath, filingIds, ["case"]);
+  for (const a3 of relied) row2(foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), a3.style_of_cause_or_title, a3.citation, true);
+  const known = [
+    ...relied.map((a3) => ({ key: foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), style: a3.style_of_cause_or_title, citation: a3.citation })),
+    ...jobs2.filter((j3) => j3.authority_id !== null).map((j3) => ({ key: foldKey(j3.citation, j3.authority_id, j3.title), style: j3.style_of_cause_or_title, citation: j3.citation }))
+  ];
+  const jobOf = new Map(jobs2.map((j3) => [j3.id, j3]));
+  const files = /* @__PURE__ */ new Map();
+  const caseOfStem = /* @__PURE__ */ new Map();
+  const addFile = (file, caseKey, savedAt) => {
+    caseOfStem.set(versionOf(file).key, caseKey);
+    const own = files.get(caseKey) ?? /* @__PURE__ */ new Map();
+    const entry2 = own.get(file.toLowerCase()) ?? { file, savedAt: null };
+    if (savedAt !== null && (entry2.savedAt === null || savedAt > entry2.savedAt)) entry2.savedAt = savedAt;
+    own.set(file.toLowerCase(), entry2);
+    files.set(caseKey, own);
+  };
+  const byName = new Map([...onDisk.values()].map((f3) => [baseName(f3.file).toLowerCase(), f3.file]));
+  const filedAt = (file) => onDisk.has(file.toLowerCase()) ? file : byName.get(baseName(file).toLowerCase()) ?? file;
+  const briefAnswers = answers.filter((a3) => isCaseBriefFile(baseName(a3.file_path)));
+  const jobOfAnswer = (a3) => jobOf.get(a3.ticket_id);
+  const looseAnswers = briefAnswers.filter((a3) => jobOfAnswer(a3).authority_id === null);
+  for (const a3 of briefAnswers) {
+    const job = jobOfAnswer(a3);
+    if (job.authority_id !== null) addFile(filedAt(a3.file_path), foldKey(job.citation, job.authority_id, job.title), a3.saved_at);
+  }
+  for (const file of [...looseAnswers.map((a3) => a3.file_path), ...[...onDisk.values()].map((f3) => f3.file)]) {
+    const { style, citation } = briefCase(file);
+    if (citation === null || caseOfStem.has(versionOf(file).key) || caseOfFile(file, known) !== null) continue;
+    known.push({ key: citationKey(citation), style, citation });
+  }
+  for (const a3 of looseAnswers) {
+    const job = jobOfAnswer(a3);
+    addFile(filedAt(a3.file_path), caseOfFile(a3.file_path, known) ?? foldKey(job.citation, null, job.title), a3.saved_at);
+  }
+  for (const f3 of onDisk.values()) {
+    addFile(f3.file, caseOfStem.get(versionOf(f3.file).key) ?? caseOfFile(f3.file, known) ?? `name:${squashed(briefCase(f3.file).whole)}`, null);
+  }
+  for (const [caseKey, own] of files) {
+    const versions = [...own.values()].map(({ file, savedAt }) => {
+      const path = join37(matterDir, ...file.split(/[\\/]/));
+      const found2 = onDisk.get(file.toLowerCase());
+      const mtime = found2 !== void 0 ? found2.mtime : modified(path);
+      const { key, version: version2 } = versionOf(file);
+      const named2 = dateOf(file, savedAt, mtime);
+      const written = savedAt?.slice(0, 10) ?? mtime ?? named2;
+      return { key, own: version2, date: version2 > 1 ? written : named2, written: written ?? "", file, url: pageApiFileUrl(path), path, on_disk: found2 !== void 0 || mtime !== null };
+    });
+    const stems = /* @__PURE__ */ new Map();
+    for (const v3 of versions) {
+      const stem3 = stems.get(v3.key) ?? { gained: "", written: "" };
+      stems.set(v3.key, { gained: [stem3.gained, v3.date ?? ""].sort()[1], written: [stem3.written, v3.written].sort()[1] });
+    }
+    const stemOf = (key) => stems.get(key);
+    versions.sort((a3, b3) => stemOf(a3.key).gained.localeCompare(stemOf(b3.key).gained) || stemOf(a3.key).written.localeCompare(stemOf(b3.key).written) || a3.key.localeCompare(b3.key) || a3.own - b3.own);
+    let last = 0;
+    const numbered = versions.map(({ date: date3, file, url, path, on_disk, own: number3 }) => {
+      last = Math.max(last + 1, number3);
+      return { version: last, date: date3, file, url, path, on_disk };
+    });
+    const current = numbered[numbered.length - 1];
+    const older = numbered.slice(0, -1);
+    const knownCase = known.find((c3) => c3.key === caseKey);
+    const target = row2(caseKey, knownCase?.style ?? briefCase(current.file).style, knownCase?.citation ?? null, false);
+    if (citationKey(target.citation) === null) target.citation = numbered.map((v3) => briefCase(v3.file).citation).filter((c3) => c3 !== null).pop() ?? null;
+    target.brief = { ...current, earlier: older.map((v3) => v3.version), earlier_files: [...older].reverse() };
+  }
+  for (const j3 of jobs2) {
+    if (j3.status !== "queued" && j3.status !== "wip" || j3.rejected_at !== null) continue;
+    if (!proceedingIds.includes(j3.proceeding_id)) continue;
+    const target = row2(foldKey(j3.citation, j3.authority_id, j3.title), j3.style_of_cause_or_title ?? j3.title.slice(BRIEF_JOB_PREFIX.length), j3.citation, false);
+    if (!target.jobs.some((held3) => held3.id === j3.id)) target.jobs.push({ id: j3.id, title: j3.title });
+  }
+  const all = [...cases.values()];
+  const held2 = (b3) => b3.on_disk || b3.earlier_files.some((v3) => v3.on_disk);
+  for (const c3 of all) c3.status = c3.brief !== null && held2(c3.brief) ? "briefed" : c3.jobs.length > 0 ? "requested" : "not_briefed";
+  const recorded = [
+    ...relied.map((a3) => ({ key: foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), treatment: a3.treatment })),
+    ...jobs2.map((j3) => ({ key: foldKey(j3.citation, j3.authority_id, j3.title), treatment: j3.treatment }))
+  ];
+  for (const { key, treatment } of recorded) {
+    const target = cases.get(key);
+    if (target === void 0 || treatment === null) continue;
+    target.note_up = authorityNoteUp(treatment);
+    if (!target.results.includes(treatmentWord(treatment))) target.results.push(treatmentWord(treatment));
+  }
+  const reliedRows = all.filter((c3) => c3.relied_on);
+  const rest = all.filter((c3) => !c3.relied_on).sort((a3, b3) => (b3.brief?.date ?? "").localeCompare(a3.brief?.date ?? "") || a3.title.localeCompare(b3.title));
+  return { cases: [...reliedRows, ...rest] };
+}
+
+// src/submission/forms/research-propositions.ts
+function propositionClass(row2) {
+  if (row2.proposition_killed_on !== null || row2.authority_killed_on !== null) return "not_relevant";
+  return row2.in_use ? "in_use" : "undecided";
+}
+function verifiedOnColumn(dbPath) {
+  return hasColumn(dbPath, "statements_of_law", "verified_on") ? "sl.verified_on" : "NULL AS verified_on";
+}
+function propositionKilledOnColumn(dbPath) {
+  return hasColumn(dbPath, "law_assertions", "killed_on") ? "killed_on" : "NULL AS killed_on";
+}
+function fetchStatements(dbPath, proceedingId) {
+  return rows(
+    dbPath,
+    `SELECT sl.id AS statement_id, sl.law_assertion_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification,
+            ${settledOnColumn(dbPath)}, ${excerptSpeakerColumn(dbPath)}, ${verifiedOnColumn(dbPath)},
+            auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation, auth.treatment,
+            auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
+     FROM statements_of_law sl
+     JOIN authorities auth ON auth.id = sl.authority_id
+     WHERE sl.proceeding_id = ?
+     ORDER BY sl.id`,
+    [proceedingId]
+  );
+}
+function citationParts2(row2) {
+  const line = lawStatementCitationLine({ ...row2, linked_provisions: null }) ?? "";
+  const head = row2.authority_title === null ? null : `> *${row2.authority_title}*`;
+  if (head !== null && line.startsWith(head)) return { title: row2.authority_title, rest: line.slice(head.length) };
+  return { title: null, rest: line.replace(/^> /, "") };
+}
+function statusLines(row2) {
+  const when = row2.verification === "verified" ? row2.verified_on : row2.verification === "settled" ? row2.settled_on : null;
+  const lines2 = [`Verification: ${row2.verification}${when ? ` ${when}` : ""}`];
+  if (row2.authority_kind === "case") lines2.push(`Note-up: ${row2.treatment === null ? "not yet noted up" : treatmentWord(row2.treatment)}`);
+  else if (row2.authority_kind !== "doctrine") lines2.push(`Currency: ${row2.currency_status ?? "not yet checked"}`);
+  return lines2;
+}
+var CLASS_RANK = { in_use: 0, undecided: 1, not_relevant: 2 };
+function buildPropositionsData(dbPath, filing) {
+  const filings = Array.isArray(filing) ? filing : [filing];
+  const counts3 = { in_use: 0, undecided: 0, not_relevant: 0 };
+  const groups = [];
+  for (const proceedingId of [...new Set(filings.map((f3) => f3.proceeding_id))]) {
+    const part = propositionsFor(dbPath, proceedingId, filings.filter((f3) => f3.proceeding_id === proceedingId).map((f3) => f3.id), filings.length > 1);
+    for (const k3 of Object.keys(counts3)) counts3[k3] += part.counts[k3];
+    groups.push(...part.groups);
+  }
+  return { counts: counts3, groups };
+}
+function killedPropositions(dbPath, proceedingIds) {
+  return proceedingIds.flatMap((p3) => {
+    const ids = rows(dbPath, "SELECT id FROM filings WHERE proceeding_id = ?", [p3]).map((f3) => f3.id);
+    return propositionsFor(dbPath, p3, ids, true).groups.flatMap((g3) => g3.propositions).filter((c3) => c3.class === "not_relevant");
+  });
+}
+function propositionsFor(dbPath, proceedingId, ids, merged) {
+  const inIds = `(${ids.map(() => "?").join(", ")})`;
+  const here = merged ? "this board's Writings" : "this Writing";
+  const propositions = rows(
+    dbPath,
+    `SELECT id, proposition, dead_end, ${propositionKilledOnColumn(dbPath)} FROM law_assertions WHERE proceeding_id = ? ORDER BY id`,
+    [proceedingId]
+  );
+  const citedHere = new Set(rows(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r3) => r3.statement_id));
+  const citing = rows(dbPath, "SELECT fl.statement_id, f.kind FROM filing_law fl JOIN filings f ON f.id = fl.filing_id WHERE f.proceeding_id = ?", [proceedingId]);
+  const researchCited = new Set(citing.filter(isResearchWriting).map((r3) => r3.statement_id));
+  const otherCited = new Set(citing.filter((r3) => !isResearchWriting(r3)).map((r3) => r3.statement_id));
+  const links = rows(
+    dbPath,
+    `SELECT sbl.law_assertion_id, s.id AS submission_id, s.contention, s.killed_on
+     FROM submission_law sbl JOIN submissions s ON s.id = sbl.submission_id
+     WHERE s.proceeding_id = ?
+     ORDER BY s.ordinal, s.id`,
+    [proceedingId]
+  );
+  const onFiling = rows(
+    dbPath,
+    `SELECT s.id, s.contention
+     FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
+     WHERE fs.filing_id IN ${inIds} AND s.killed_on IS NULL
+     ORDER BY CASE fs.document WHEN 'form' THEN 0 ELSE 1 END, fs.ordinal, fs.id`,
+    ids
+  );
+  const elsewhere = rows(
+    dbPath,
+    `SELECT s.id, s.contention FROM submissions s
+     WHERE s.proceeding_id = ? AND s.killed_on IS NULL
+       AND NOT EXISTS (SELECT 1 FROM filing_submissions fs WHERE fs.submission_id = s.id AND fs.filing_id IN ${inIds})
+     ORDER BY s.ordinal, s.id`,
+    [proceedingId, ...ids]
+  );
+  const required2 = rows(
+    dbPath,
+    `SELECT r.law_assertion_id, r.excerpt_id,
+            EXISTS (SELECT 1 FROM filing_orders fo WHERE fo.order_sought_id = r.order_sought_id AND fo.filing_id IN ${inIds}) AS on_filing
+     FROM order_sought_requires r JOIN order_sought o ON o.id = r.order_sought_id
+     WHERE o.proceeding_id = ? AND (r.law_assertion_id IS NOT NULL OR r.excerpt_id IS NOT NULL)`,
+    [...ids, proceedingId]
+  );
+  const orderCited = new Set(required2.map((r3) => r3.excerpt_id));
+  const statements = fetchStatements(dbPath, proceedingId).filter(
+    (s3) => s3.law_assertion_id !== null || !researchCited.has(s3.statement_id) || otherCited.has(s3.statement_id) || orderCited.has(s3.statement_id) || citedHere.has(s3.statement_id)
+  );
+  const onFilingIds = new Set(onFiling.map((s3) => s3.id));
+  const present3 = (list2) => list2.filter((id) => id !== null);
+  const deployed = /* @__PURE__ */ new Set([
+    ...links.filter((l3) => onFilingIds.has(l3.submission_id)).map((l3) => l3.law_assertion_id),
+    ...present3(required2.filter((r3) => r3.on_filing === 1).map((r3) => r3.law_assertion_id))
+  ]);
+  const usedHere = /* @__PURE__ */ new Set([...citedHere, ...present3(required2.filter((r3) => r3.on_filing === 1).map((r3) => r3.excerpt_id))]);
+  const counts3 = { in_use: 0, undecided: 0, not_relevant: 0 };
+  function statementOf(row2, killedOn) {
+    const inUse = row2.law_assertion_id !== null && deployed.has(row2.law_assertion_id) || usedHere.has(row2.statement_id);
+    const cls = propositionClass({ proposition_killed_on: killedOn, authority_killed_on: row2.authority_killed_on, in_use: inUse });
+    counts3[cls] += 1;
+    const { title, rest } = citationParts2(row2);
+    return { statement_id: row2.statement_id, class: cls, citation_title: title, citation_rest: rest, excerpt: row2.excerpt, status: statusLines(row2), note_up: statementNoteUp(row2.authority_kind, row2.treatment, row2.currency_status) };
+  }
+  function cardClass(own, killedOn, inUse) {
+    if (own.length === 0) {
+      const cls = propositionClass({ proposition_killed_on: killedOn, authority_killed_on: null, in_use: inUse });
+      counts3[cls] += 1;
+      return cls;
+    }
+    return own.reduce((best, s3) => CLASS_RANK[s3.class] < CLASS_RANK[best] ? s3.class : best, "not_relevant");
+  }
+  const cards = /* @__PURE__ */ new Map();
+  for (const p3 of propositions) {
+    const own = statements.filter((s3) => s3.law_assertion_id === p3.id).map((s3) => statementOf(s3, p3.killed_on));
+    const linkedTo2 = links.filter((l3) => l3.law_assertion_id === p3.id).map((l3) => l3.killed_on === null ? l3.contention : `${l3.contention} (killed ${l3.killed_on})`);
+    cards.set(p3.id, {
+      law_assertion_id: p3.id,
+      text: p3.proposition,
+      dead_end: p3.dead_end === 1,
+      killed_on: p3.killed_on,
+      class: cardClass(own, p3.killed_on, deployed.has(p3.id)),
+      linked_to: linkedTo2,
+      statements: own
+    });
+  }
+  const loose = new Map(
+    statements.filter((s3) => s3.law_assertion_id === null).map((s3) => {
+      const own = [statementOf(s3, null)];
+      return [s3.statement_id, { law_assertion_id: null, text: null, dead_end: false, killed_on: null, class: own[0].class, linked_to: [], statements: own }];
+    })
+  );
+  const placed = /* @__PURE__ */ new Set();
+  function take(ids2) {
+    const out = [];
+    for (const id of ids2) {
+      const card = cards.get(id);
+      if (card === void 0 || placed.has(id)) continue;
+      placed.add(id);
+      out.push(card);
+    }
+    return out;
+  }
+  const placedLoose = /* @__PURE__ */ new Set();
+  function takeLoose(ids2) {
+    const out = [];
+    for (const id of ids2) {
+      const card = loose.get(id);
+      if (card === void 0 || placedLoose.has(id)) continue;
+      placedLoose.add(id);
+      out.push(card);
+    }
+    return out;
+  }
+  const linkedTo = (submissionId) => links.filter((l3) => l3.submission_id === submissionId).map((l3) => l3.law_assertion_id);
+  const groups = [];
+  const push = (heading, note, list2) => {
+    if (list2.length > 0) groups.push({ heading, note, propositions: list2 });
+  };
+  const propositionOf = new Map(statements.map((s3) => [s3.statement_id, s3.law_assertion_id]));
+  const orderGroup = (edges) => [
+    ...take(present3([...edges.map((r3) => r3.law_assertion_id), ...edges.map((r3) => r3.excerpt_id === null ? null : propositionOf.get(r3.excerpt_id) ?? null)])),
+    ...takeLoose(present3(edges.map((r3) => r3.excerpt_id)))
+  ];
+  const seen = /* @__PURE__ */ new Set();
+  for (const s3 of onFiling) {
+    if (seen.has(s3.id)) continue;
+    seen.add(s3.id);
+    push(s3.contention, `Submission on ${here}`, take(linkedTo(s3.id)));
+  }
+  push("Required by an order sought", `Order on ${here}`, orderGroup(required2.filter((r3) => r3.on_filing === 1)));
+  const cited2 = statements.filter((s3) => citedHere.has(s3.statement_id));
+  push(merged ? "Cited in the text of this board's Writings" : "Cited in this Writing's text", null, [...take(present3(cited2.map((s3) => s3.law_assertion_id))), ...takeLoose(cited2.map((s3) => s3.statement_id))]);
+  for (const s3 of elsewhere) push(s3.contention, `Submission not on ${here}`, take(linkedTo(s3.id)));
+  push("Required by an order sought", `Order not on ${here}`, orderGroup(required2.filter((r3) => r3.on_filing !== 1)));
+  push("Not linked", null, [...take(cards.keys()), ...takeLoose(loose.keys())]);
+  return { counts: counts3, groups };
+}
+
+// src/submission/forms/statutes-tab.ts
+function provisionsOf(dbPath, authorityId) {
+  const checks = hasTable(dbPath, "provision_currency");
+  return rows(
+    dbPath,
+    `SELECT DISTINCT sl.pinpoint AS provision, ${checks ? "pc.currency_status, pc.checked_on" : "NULL AS currency_status, NULL AS checked_on"}
+     FROM statements_of_law sl
+     ${checks ? "LEFT JOIN provision_currency pc ON pc.authority_id = sl.authority_id AND pc.provision = sl.pinpoint" : ""}
+     WHERE sl.authority_id = ? AND sl.pinpoint IS NOT NULL AND TRIM(sl.pinpoint) <> ''
+     ORDER BY sl.pinpoint`,
+    [authorityId]
+  );
+}
+function buildStatutesData(dbPath, filingIds, proceedingIds) {
+  const kinds = [...LEGISLATION_KINDS];
+  const relied = reliedOn(dbPath, filingIds, kinds);
+  const reliedIds = new Set(relied.map((a3) => a3.id));
+  const ids = [...new Set(proceedingIds)];
+  const others = ids.length === 0 ? [] : rows(
+    dbPath,
+    `SELECT id, style_of_cause_or_title, citation, currency_status, currency_checked_on
+     FROM authorities
+     WHERE kind IN (${kinds.map((k3) => `'${k3}'`).join(", ")}) AND killed_on IS NULL AND proceeding_id IN (${ids.map(() => "?").join(", ")})
+     ORDER BY style_of_cause_or_title, id`,
+    ids
+  ).filter((a3) => !reliedIds.has(a3.id));
+  const statutes = /* @__PURE__ */ new Map();
+  const add = (a3, isRelied) => {
+    const key = foldKey(a3.citation, a3.id, a3.style_of_cause_or_title);
+    let target = statutes.get(key);
+    if (target === void 0) {
+      target = { title: a3.style_of_cause_or_title, citation: a3.citation, relied_on: isRelied, currency_status: a3.currency_status, currency_checked_on: a3.currency_checked_on, note_up: authorityNoteUp(null), provisions: [] };
+      statutes.set(key, target);
+    }
+    if ((a3.currency_checked_on ?? "") > (target.currency_checked_on ?? "")) {
+      target.currency_status = a3.currency_status;
+      target.currency_checked_on = a3.currency_checked_on;
+    }
+    for (const p3 of provisionsOf(dbPath, a3.id)) {
+      if (!target.provisions.some((held2) => held2.provision === p3.provision)) target.provisions.push(p3);
+    }
+  };
+  for (const a3 of relied) add(a3, true);
+  for (const a3 of others) add(a3, false);
+  const all = [...statutes.values()];
+  return { statutes: [...all.filter((s3) => s3.relied_on), ...all.filter((s3) => !s3.relied_on)] };
+}
+
+// src/submission/forms/legal-research-page.ts
+var LEGAL_RESEARCH_PAGE = {
+  name: "Legal Research",
+  ...templated({
+    entry: "legal-research.html",
+    files: {
+      "legal-research.html": legal_research_html_default,
+      "view-head.html": view_head_html_default,
+      "board.css": board_css_default,
+      "view-folder.css": view_folder_css_default,
+      "legal-research.css": legal_research_css_default,
+      "shared.js": shared_js_default,
+      "legal-research.js": legal_research_js_default
+    }
+  }),
+  data: (ctx) => {
+    const matterDir = dirname17(ctx.draftDir);
+    const filings = ctx.writings.map((w3) => w3.filing);
+    return {
+      propositions: buildPropositionsData(ctx.dbPath, filings),
+      statutes: buildStatutesData(ctx.dbPath, filings.map((f3) => f3.id), filings.map((f3) => f3.proceeding_id)),
+      briefs: buildCaseBriefsData(ctx.dbPath, filings.map((f3) => f3.id), matterDir, filings.map((f3) => f3.proceeding_id)),
+      memos: buildLegalMemosData(ctx.dbPath, ctx.jobs, matterDir)
+    };
+  }
+};
+
+// src/submission/view-pages.ts
+var VIEW_PAGE_MARKER = "data-view-page";
+var VIEW_PAGES = [
+  PROCEDURAL_HISTORY,
+  MATERIAL_FACTS,
+  LEGAL_RESEARCH_PAGE,
+  ARGUMENTS_PAGE
+];
+function viewPageFile(page2, board, folder) {
+  if (folder !== void 0) return join38(folder, `${page2.name}.html`);
+  return board.filing_id === null ? `${page2.name} - Work Board - proceeding ${board.proceeding_id}.html` : `${page2.name} - Work Board ${board.filing_id}.html`;
+}
+function escapeRegExp(text8) {
+  return text8.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function isViewPageFile(fileName) {
+  return VIEW_PAGES.some((page2) => new RegExp(`^${escapeRegExp(page2.name)}(?: - (?:Work Board|Milestone|Job Board) (?:- proceeding )?\\d+)?\\.html$`, "i").test(fileName));
+}
+function renderViewPageHtml(page2, meta2, data) {
+  const extra = page2.metaExtra ? page2.metaExtra(data) : void 0;
+  const line = JSON.stringify({ name: page2.name, meta: meta2, extra, data }).replace(/</g, "\\u003c");
+  return `${page2.head}window.VIEW_PAGE = ${line};
+${page2.tail}`;
+}
+
+// src/submission/matter-page-groups.ts
+var WRITING_MILESTONE_FILE = "Work Board.html";
+function boardFolder(board, folders2) {
+  return board.filing_id === null ? void 0 : folders2.get(board.filing_id)?.name;
+}
+function boardFile(board, folders2) {
+  const folder = boardFolder(board, folders2);
+  if (folder !== void 0) return join39(folder, WRITING_MILESTONE_FILE);
+  return board.filing_id === null ? `Work Board - proceeding ${board.proceeding_id}.html` : `Work Board ${board.filing_id}.html`;
+}
+function pageGroups(index, live, preFiling, folders2) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const m3 of [...live.filter((l3) => !isResearchWriting(l3.filing)).map((l3) => l3), ...preFiling.map((p3) => ({ proceeding: p3, filing: null }))]) {
+    const ref = { filing_id: m3.filing?.id ?? null, proceeding_id: m3.proceeding.id };
+    const board = index.survivorOf(ref);
+    const key = boardKey(board);
+    const group = groups.get(key) ?? { board, file: boardFile(board, folders2), members: [] };
+    if (sameBoard(ref, board)) group.members.unshift(m3);
+    else group.members.push(m3);
+    groups.set(key, group);
+  }
+  return [...groups.values()];
+}
+function memberRef(m3) {
+  return { filing_id: m3.filing?.id ?? null, proceeding_id: m3.proceeding.id };
+}
+function liveMembers(dbPath) {
+  const proceedings = fetchAllProceedings(dbPath).map((proceeding) => ({ proceeding, filings: fetchAllFilingsForProceeding(dbPath, proceeding.id) }));
+  return {
+    live: proceedings.flatMap(({ proceeding, filings }) => filings.filter((f3) => !f3.retired_on).map((filing) => ({ proceeding, filing }))),
+    preFiling: proceedings.filter(({ filings }) => filings.every(isResearchWriting)).map(({ proceeding }) => proceeding)
+  };
+}
+function pageTargets(groups) {
+  return groups.flatMap((g3) => g3.members.map((m3) => ({ filing_id: m3.filing?.id ?? null, proceeding_id: m3.proceeding.id, file: g3.file })));
+}
+function writingsOf(group) {
+  return group.members.filter((m3) => m3.filing !== null && !isJobOnlyBoard(m3.filing));
+}
+function viewTargets(groups, folders2) {
+  return groups.map((group) => ({ group, writings: writingsOf(group) })).filter(({ writings }) => writings.length > 0).flatMap(({ group, writings }) => VIEW_PAGES.map((page2) => ({ page: page2, group, writings, file: viewPageFile(page2, group.board, boardFolder(group.board, folders2)) })));
+}
 
 // src/submission/forms/paragraph-map.ts
 import { createHash as createHash12 } from "node:crypto";
-import { existsSync as existsSync35, mkdirSync as mkdirSync18, readdirSync as readdirSync19, readFileSync as readFileSync33, renameSync as renameSync8, unlinkSync as unlinkSync13, writeFileSync as writeFileSync12 } from "node:fs";
-import { join as join36 } from "node:path";
+import { existsSync as existsSync36, mkdirSync as mkdirSync18, readdirSync as readdirSync19, readFileSync as readFileSync33, renameSync as renameSync8, unlinkSync as unlinkSync13, writeFileSync as writeFileSync12 } from "node:fs";
+import { join as join40 } from "node:path";
 var QUICK_EDIT_MIN_SCHEMA = 79;
 var MAP_KEEP = 20;
 var LINE_NUMBER = /^([A-Z]{0,3})(\d+)\. /;
@@ -107481,10 +108135,10 @@ function toStored(entries) {
   return entries.map(({ text: _text, title: _title, ...entry2 }) => entry2);
 }
 function mapFile(dir, revision) {
-  return join36(dir, `rev-${revision}.json`);
+  return join40(dir, `rev-${revision}.json`);
 }
 function hasParagraphMap(dir, revision) {
-  return existsSync35(mapFile(dir, revision));
+  return existsSync36(mapFile(dir, revision));
 }
 function writeParagraphMap(dir, map) {
   mkdirSync18(dir, { recursive: true });
@@ -107497,7 +108151,7 @@ function writeParagraphMap(dir, map) {
 }
 function readParagraphMap(dir, revision) {
   const file = mapFile(dir, revision);
-  if (!existsSync35(file)) return null;
+  if (!existsSync36(file)) return null;
   try {
     const parsed = JSON.parse(readFileSync33(file, "utf-8"));
     return parsed && parsed.revision === revision && Array.isArray(parsed.entries) ? parsed : null;
@@ -107541,15 +108195,15 @@ function modified(path) {
 }
 function lawDirOf(matterDir) {
   try {
-    const found = readdirSync20(matterDir, { withFileTypes: true }).find((e3) => e3.isDirectory() && e3.name.toLowerCase() === LAW_FOLDER.toLowerCase());
-    return join37(matterDir, found?.name ?? LAW_FOLDER);
+    const found2 = readdirSync20(matterDir, { withFileTypes: true }).find((e3) => e3.isDirectory() && e3.name.toLowerCase() === LAW_FOLDER.toLowerCase());
+    return join41(matterDir, found2?.name ?? LAW_FOLDER);
   } catch (err) {
-    if (UNREADABLE.has(err.code ?? "")) return join37(matterDir, LAW_FOLDER);
+    if (UNREADABLE.has(err.code ?? "")) return join41(matterDir, LAW_FOLDER);
     throw err;
   }
 }
 function scanLawFolder(lawDir, wanted) {
-  if (!existsSync36(lawDir)) return [];
+  if (!existsSync37(lawDir)) return [];
   const head = lawDir.split(/[\\/]/).pop();
   const out = [];
   const walk4 = (dir, rel) => {
@@ -107561,8 +108215,8 @@ function scanLawFolder(lawDir, wanted) {
       throw err;
     }
     for (const entry2 of entries) {
-      if (entry2.isDirectory()) walk4(join37(dir, entry2.name), [...rel, entry2.name]);
-      else if (entry2.isFile() && wanted(entry2.name)) out.push({ file: [head, ...rel, entry2.name].join("\\"), mtime: modified(join37(dir, entry2.name)) });
+      if (entry2.isDirectory()) walk4(join41(dir, entry2.name), [...rel, entry2.name]);
+      else if (entry2.isFile() && wanted(entry2.name)) out.push({ file: [head, ...rel, entry2.name].join("\\"), mtime: modified(join41(dir, entry2.name)) });
     }
   };
   walk4(lawDir, []);
@@ -107624,9 +108278,9 @@ function buildLegalMemosData(dbPath, jobs2, matterDir) {
     const version2 = numbers[numbers.length - 1];
     const file = versions.get(version2);
     const segments = file.split(/[\\/]/);
-    const path = join37(matterDir, ...segments);
-    const found = onDisk.get(file.toLowerCase());
-    const mtime = found !== void 0 ? found.mtime : existsSync36(path) ? modified(path) : void 0;
+    const path = join41(matterDir, ...segments);
+    const found2 = onDisk.get(file.toLowerCase());
+    const mtime = found2 !== void 0 ? found2.mtime : existsSync37(path) ? modified(path) : void 0;
     const factIds = own.flatMap((j3) => j3.scope.filter((s3) => s3.startsWith("facts:")).map((s3) => Number(s3.slice("facts:".length))));
     const facts = readTexts(dbPath, "facts", factIds);
     memos.push({
@@ -107648,926 +108302,6 @@ function buildLegalMemosData(dbPath, jobs2, matterDir) {
   }
   memos.sort((a3, b3) => (b3.date ?? "").localeCompare(a3.date ?? "") || a3.title.localeCompare(b3.title));
   return { memos };
-}
-
-// src/submission/forms/brief-job.ts
-var BRIEF_JOB_PREFIX = "Brief the case: ";
-function squashed(text8) {
-  return text8.replace(/[\s.]+/g, "").toLowerCase();
-}
-function citationParts(citation) {
-  return (citation ?? "").split(/,(?![^()]*\))/).map((piece) => squashed(piece.replace(/\s+at\s.*$/i, "").replace(/\s*\([^()]*\)\s*$/, ""))).filter((part) => /\d/.test(part) && /[a-z]/.test(part));
-}
-var YEAR_WORD_NUMBER = /^\d{4}[a-z]{2,}\d+$/;
-var DATABASE_YEAR = /^\d{4}(?:canlii|carswell)/;
-function citationKey(citation) {
-  const parts = citationParts(citation);
-  if (parts.length === 0) return null;
-  const dated = parts.filter((part) => YEAR_WORD_NUMBER.test(part));
-  return dated.find((part) => !DATABASE_YEAR.test(part)) ?? dated[0] ?? parts.join(", ");
-}
-
-// src/submission/forms/note-up-status.ts
-var NOT_NOTED_UP = { label: "Not noted up", noted: false };
-var CHECK_FINISHED = /* @__PURE__ */ new Set(["current", "repealed", "archived"]);
-function treatmentWord(treatment) {
-  return treatment.replace(/_/g, " ");
-}
-function authorityNoteUp(treatment) {
-  return treatment === null ? NOT_NOTED_UP : { label: "Noted up: negative treatment only", noted: true };
-}
-function statementNoteUp(kind, treatment, currencyStatus) {
-  if (kind === "doctrine") return null;
-  if (kind !== null && LEGISLATION_KINDS.has(kind)) {
-    return currencyStatus !== null && CHECK_FINISHED.has(currencyStatus) ? { label: "Statute level: in-force check done", noted: true } : NOT_NOTED_UP;
-  }
-  return treatment === null ? NOT_NOTED_UP : { label: "Case noted up: negative treatment only", noted: true };
-}
-
-// src/submission/forms/case-briefs.ts
-function reliedOn(dbPath, filingIds, kinds) {
-  if (filingIds.length === 0) return [];
-  const inIds = `(${filingIds.map(() => "?").join(", ")})`;
-  const inKinds = kinds.map((k3) => `'${k3}'`).join(", ");
-  const notOmitted = hasColumn(dbPath, "law_assertions", "killed_on") ? "AND (la.id IS NULL OR la.killed_on IS NULL)" : "";
-  return rows(
-    dbPath,
-    `SELECT DISTINCT a.id, a.style_of_cause_or_title, a.citation, a.treatment, a.currency_status, a.currency_checked_on
-     FROM statements_of_law sl
-     JOIN authorities a ON a.id = sl.authority_id
-     LEFT JOIN law_assertions la ON la.id = sl.law_assertion_id
-     WHERE a.kind IN (${inKinds}) AND a.killed_on IS NULL ${notOmitted}
-       AND (sl.id IN (SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds})
-         OR sl.id IN (SELECT r.excerpt_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
-         OR sl.law_assertion_id IN (SELECT r.law_assertion_id FROM order_sought_requires r JOIN filing_orders fo ON fo.order_sought_id = r.order_sought_id WHERE fo.filing_id IN ${inIds})
-         OR sl.law_assertion_id IN (
-           SELECT sbl.law_assertion_id FROM submission_law sbl
-           JOIN submissions s ON s.id = sbl.submission_id AND s.killed_on IS NULL
-           JOIN filing_submissions fs ON fs.submission_id = s.id
-           WHERE fs.filing_id IN ${inIds}))
-     ORDER BY a.style_of_cause_or_title, a.id`,
-    [...filingIds, ...filingIds, ...filingIds, ...filingIds]
-  );
-}
-function briefJobs(dbPath) {
-  return rows(
-    dbPath,
-    `SELECT t.id, t.proceeding_id, t.title, t.status, t.rejected_at, a.id AS authority_id, a.style_of_cause_or_title, a.citation, a.treatment
-     FROM tickets t
-     LEFT JOIN ticket_scope s ON s.ticket_id = t.id AND s.entity = 'authorities'
-     LEFT JOIN authorities a ON a.id = s.entity_id
-     WHERE t.title LIKE '${BRIEF_JOB_PREFIX}%'${liveTicketClause(dbPath, "t")}
-     ORDER BY t.id`
-  );
-}
-function foldKey(citation, authorityId, name) {
-  return citationKey(citation) ?? (authorityId !== null ? `id:${authorityId}` : `name:${name.toLowerCase()}`);
-}
-var CITATION_PIECE = /^(?:[[(]\d{4}[\])]\s+\d*|\d+)\s*[A-Za-z].*?\s\d+(?:\s*\([^()]*\))*(?:\s+at\s.*)?$/;
-function isCitation(text8) {
-  return text8.split(/,\s+/).every((piece) => CITATION_PIECE.test(piece) && !/\sv\.?\s/i.test(piece));
-}
-function briefCase(file) {
-  const whole = titleOf2(file).replace(/^case brief\s+/i, "");
-  for (const m3 of whole.matchAll(/\s(?=[[(\d])/g)) {
-    const before = whole.slice(0, m3.index);
-    const tail = whole.slice(m3.index + 1);
-    if (!/,\s*$/.test(before) && !/^(?:[[(]|\d{4}\s)/.test(tail)) continue;
-    const citation = /^\(([^()]*)\)$/.exec(tail)?.[1] ?? tail;
-    if (isCitation(citation)) return { whole, style: before.replace(/[,\s]+$/, ""), citation };
-  }
-  return { whole, style: whole, citation: null };
-}
-var CITATION_LIKE = /\b\d+\s*[A-Za-z.]+\s*\d+\b/;
-function holdsCitation(name, part) {
-  const text8 = part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?<!\\d)${text8}(?!\\d)`).test(squashed(name));
-}
-function caseOfFile(file, known) {
-  const { whole, style, citation } = briefCase(file);
-  const cited2 = known.find((c3) => citationParts(c3.citation).some((part) => holdsCitation(whole, part)));
-  if (cited2 !== void 0) return cited2.key;
-  const uncited = citation === null && !CITATION_LIKE.test(whole);
-  const styled = known.filter((c3) => c3.style !== null && squashed(c3.style) === squashed(style) && (uncited || citationKey(c3.citation) === null));
-  const keys = new Set(styled.map((c3) => c3.key));
-  return keys.size === 1 ? styled[0].key : null;
-}
-function buildCaseBriefsData(dbPath, filingIds, matterDir, proceedingIds) {
-  const lawDir = lawDirOf(matterDir);
-  const onDisk = new Map(scanLawFolder(lawDir, isCaseBriefFile).map((f3) => [f3.file.toLowerCase(), f3]));
-  const jobs2 = briefJobs(dbPath);
-  const answers = ticketAnswersHeld(dbPath) ? rows(dbPath, `SELECT ta.ticket_id, ta.file_path, ta.saved_at FROM ticket_answers ta JOIN tickets t ON t.id = ta.ticket_id WHERE t.title LIKE '${BRIEF_JOB_PREFIX}%'${liveTicketClause(dbPath, "t")}`) : [];
-  const cases = /* @__PURE__ */ new Map();
-  const row2 = (key, title, citation, relied2) => {
-    const found = cases.get(key);
-    if (found !== void 0) {
-      if (relied2) found.relied_on = true;
-      return found;
-    }
-    const made = { title, citation, status: "not_briefed", relied_on: relied2, jobs: [], brief: null, note_up: authorityNoteUp(null), results: [] };
-    cases.set(key, made);
-    return made;
-  };
-  const relied = reliedOn(dbPath, filingIds, ["case"]);
-  for (const a3 of relied) row2(foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), a3.style_of_cause_or_title, a3.citation, true);
-  const known = [
-    ...relied.map((a3) => ({ key: foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), style: a3.style_of_cause_or_title, citation: a3.citation })),
-    ...jobs2.filter((j3) => j3.authority_id !== null).map((j3) => ({ key: foldKey(j3.citation, j3.authority_id, j3.title), style: j3.style_of_cause_or_title, citation: j3.citation }))
-  ];
-  const jobOf = new Map(jobs2.map((j3) => [j3.id, j3]));
-  const files = /* @__PURE__ */ new Map();
-  const caseOfStem = /* @__PURE__ */ new Map();
-  const addFile = (file, caseKey, savedAt) => {
-    caseOfStem.set(versionOf(file).key, caseKey);
-    const own = files.get(caseKey) ?? /* @__PURE__ */ new Map();
-    const entry2 = own.get(file.toLowerCase()) ?? { file, savedAt: null };
-    if (savedAt !== null && (entry2.savedAt === null || savedAt > entry2.savedAt)) entry2.savedAt = savedAt;
-    own.set(file.toLowerCase(), entry2);
-    files.set(caseKey, own);
-  };
-  const byName = new Map([...onDisk.values()].map((f3) => [baseName(f3.file).toLowerCase(), f3.file]));
-  const filedAt = (file) => onDisk.has(file.toLowerCase()) ? file : byName.get(baseName(file).toLowerCase()) ?? file;
-  const briefAnswers = answers.filter((a3) => isCaseBriefFile(baseName(a3.file_path)));
-  const jobOfAnswer = (a3) => jobOf.get(a3.ticket_id);
-  const looseAnswers = briefAnswers.filter((a3) => jobOfAnswer(a3).authority_id === null);
-  for (const a3 of briefAnswers) {
-    const job = jobOfAnswer(a3);
-    if (job.authority_id !== null) addFile(filedAt(a3.file_path), foldKey(job.citation, job.authority_id, job.title), a3.saved_at);
-  }
-  for (const file of [...looseAnswers.map((a3) => a3.file_path), ...[...onDisk.values()].map((f3) => f3.file)]) {
-    const { style, citation } = briefCase(file);
-    if (citation === null || caseOfStem.has(versionOf(file).key) || caseOfFile(file, known) !== null) continue;
-    known.push({ key: citationKey(citation), style, citation });
-  }
-  for (const a3 of looseAnswers) {
-    const job = jobOfAnswer(a3);
-    addFile(filedAt(a3.file_path), caseOfFile(a3.file_path, known) ?? foldKey(job.citation, null, job.title), a3.saved_at);
-  }
-  for (const f3 of onDisk.values()) {
-    addFile(f3.file, caseOfStem.get(versionOf(f3.file).key) ?? caseOfFile(f3.file, known) ?? `name:${squashed(briefCase(f3.file).whole)}`, null);
-  }
-  for (const [caseKey, own] of files) {
-    const versions = [...own.values()].map(({ file, savedAt }) => {
-      const path = join38(matterDir, ...file.split(/[\\/]/));
-      const found = onDisk.get(file.toLowerCase());
-      const mtime = found !== void 0 ? found.mtime : modified(path);
-      const { key, version: version2 } = versionOf(file);
-      const named2 = dateOf(file, savedAt, mtime);
-      const written = savedAt?.slice(0, 10) ?? mtime ?? named2;
-      return { key, own: version2, date: version2 > 1 ? written : named2, written: written ?? "", file, url: pageApiFileUrl(path), path, on_disk: found !== void 0 || mtime !== null };
-    });
-    const stems = /* @__PURE__ */ new Map();
-    for (const v3 of versions) {
-      const stem3 = stems.get(v3.key) ?? { gained: "", written: "" };
-      stems.set(v3.key, { gained: [stem3.gained, v3.date ?? ""].sort()[1], written: [stem3.written, v3.written].sort()[1] });
-    }
-    const stemOf = (key) => stems.get(key);
-    versions.sort((a3, b3) => stemOf(a3.key).gained.localeCompare(stemOf(b3.key).gained) || stemOf(a3.key).written.localeCompare(stemOf(b3.key).written) || a3.key.localeCompare(b3.key) || a3.own - b3.own);
-    let last = 0;
-    const numbered = versions.map(({ date: date3, file, url, path, on_disk, own: number3 }) => {
-      last = Math.max(last + 1, number3);
-      return { version: last, date: date3, file, url, path, on_disk };
-    });
-    const current = numbered[numbered.length - 1];
-    const older = numbered.slice(0, -1);
-    const knownCase = known.find((c3) => c3.key === caseKey);
-    const target = row2(caseKey, knownCase?.style ?? briefCase(current.file).style, knownCase?.citation ?? null, false);
-    if (citationKey(target.citation) === null) target.citation = numbered.map((v3) => briefCase(v3.file).citation).filter((c3) => c3 !== null).pop() ?? null;
-    target.brief = { ...current, earlier: older.map((v3) => v3.version), earlier_files: [...older].reverse() };
-  }
-  for (const j3 of jobs2) {
-    if (j3.status !== "queued" && j3.status !== "wip" || j3.rejected_at !== null) continue;
-    if (!proceedingIds.includes(j3.proceeding_id)) continue;
-    const target = row2(foldKey(j3.citation, j3.authority_id, j3.title), j3.style_of_cause_or_title ?? j3.title.slice(BRIEF_JOB_PREFIX.length), j3.citation, false);
-    if (!target.jobs.some((held3) => held3.id === j3.id)) target.jobs.push({ id: j3.id, title: j3.title });
-  }
-  const all = [...cases.values()];
-  const held2 = (b3) => b3.on_disk || b3.earlier_files.some((v3) => v3.on_disk);
-  for (const c3 of all) c3.status = c3.brief !== null && held2(c3.brief) ? "briefed" : c3.jobs.length > 0 ? "requested" : "not_briefed";
-  const recorded = [
-    ...relied.map((a3) => ({ key: foldKey(a3.citation, a3.id, a3.style_of_cause_or_title), treatment: a3.treatment })),
-    ...jobs2.map((j3) => ({ key: foldKey(j3.citation, j3.authority_id, j3.title), treatment: j3.treatment }))
-  ];
-  for (const { key, treatment } of recorded) {
-    const target = cases.get(key);
-    if (target === void 0 || treatment === null) continue;
-    target.note_up = authorityNoteUp(treatment);
-    if (!target.results.includes(treatmentWord(treatment))) target.results.push(treatmentWord(treatment));
-  }
-  const reliedRows = all.filter((c3) => c3.relied_on);
-  const rest = all.filter((c3) => !c3.relied_on).sort((a3, b3) => (b3.brief?.date ?? "").localeCompare(a3.brief?.date ?? "") || a3.title.localeCompare(b3.title));
-  return { cases: [...reliedRows, ...rest] };
-}
-
-// src/submission/forms/research-propositions.ts
-function propositionClass(row2) {
-  if (row2.proposition_killed_on !== null || row2.authority_killed_on !== null) return "not_relevant";
-  return row2.in_use ? "in_use" : "undecided";
-}
-function verifiedOnColumn(dbPath) {
-  return hasColumn(dbPath, "statements_of_law", "verified_on") ? "sl.verified_on" : "NULL AS verified_on";
-}
-function propositionKilledOnColumn(dbPath) {
-  return hasColumn(dbPath, "law_assertions", "killed_on") ? "killed_on" : "NULL AS killed_on";
-}
-function fetchStatements(dbPath, proceedingId) {
-  return rows(
-    dbPath,
-    `SELECT sl.id AS statement_id, sl.law_assertion_id, sl.pinpoint, sl.excerpt, sl.doubt, sl.source, sl.verification,
-            ${settledOnColumn(dbPath)}, ${excerptSpeakerColumn(dbPath)}, ${verifiedOnColumn(dbPath)},
-            auth.style_of_cause_or_title AS authority_title, auth.citation AS authority_citation, auth.treatment,
-            auth.kind AS authority_kind, auth.currency_status, auth.currency_checked_on, ${treatmentNoteColumn(dbPath)}, auth.killed_on AS authority_killed_on
-     FROM statements_of_law sl
-     JOIN authorities auth ON auth.id = sl.authority_id
-     WHERE sl.proceeding_id = ?
-     ORDER BY sl.id`,
-    [proceedingId]
-  );
-}
-function citationParts2(row2) {
-  const line = lawStatementCitationLine({ ...row2, linked_provisions: null }) ?? "";
-  const head = row2.authority_title === null ? null : `> *${row2.authority_title}*`;
-  if (head !== null && line.startsWith(head)) return { title: row2.authority_title, rest: line.slice(head.length) };
-  return { title: null, rest: line.replace(/^> /, "") };
-}
-function statusLines(row2) {
-  const when = row2.verification === "verified" ? row2.verified_on : row2.verification === "settled" ? row2.settled_on : null;
-  const lines2 = [`Verification: ${row2.verification}${when ? ` ${when}` : ""}`];
-  if (row2.authority_kind === "case") lines2.push(`Note-up: ${row2.treatment === null ? "not yet noted up" : treatmentWord(row2.treatment)}`);
-  else if (row2.authority_kind !== "doctrine") lines2.push(`Currency: ${row2.currency_status ?? "not yet checked"}`);
-  return lines2;
-}
-var CLASS_RANK = { in_use: 0, undecided: 1, not_relevant: 2 };
-function buildPropositionsData(dbPath, filing) {
-  const filings = Array.isArray(filing) ? filing : [filing];
-  const counts3 = { in_use: 0, undecided: 0, not_relevant: 0 };
-  const groups = [];
-  for (const proceedingId of [...new Set(filings.map((f3) => f3.proceeding_id))]) {
-    const part = propositionsFor(dbPath, proceedingId, filings.filter((f3) => f3.proceeding_id === proceedingId).map((f3) => f3.id), filings.length > 1);
-    for (const k3 of Object.keys(counts3)) counts3[k3] += part.counts[k3];
-    groups.push(...part.groups);
-  }
-  return { counts: counts3, groups };
-}
-function propositionsFor(dbPath, proceedingId, ids, merged) {
-  const inIds = `(${ids.map(() => "?").join(", ")})`;
-  const here = merged ? "this board's Writings" : "this Writing";
-  const propositions = rows(
-    dbPath,
-    `SELECT id, proposition, dead_end, ${propositionKilledOnColumn(dbPath)} FROM law_assertions WHERE proceeding_id = ? ORDER BY id`,
-    [proceedingId]
-  );
-  const citedHere = new Set(rows(dbPath, `SELECT statement_id FROM filing_law WHERE filing_id IN ${inIds}`, ids).map((r3) => r3.statement_id));
-  const citing = rows(dbPath, "SELECT fl.statement_id, f.kind FROM filing_law fl JOIN filings f ON f.id = fl.filing_id WHERE f.proceeding_id = ?", [proceedingId]);
-  const researchCited = new Set(citing.filter(isResearchWriting).map((r3) => r3.statement_id));
-  const otherCited = new Set(citing.filter((r3) => !isResearchWriting(r3)).map((r3) => r3.statement_id));
-  const links = rows(
-    dbPath,
-    `SELECT sbl.law_assertion_id, s.id AS submission_id, s.contention, s.killed_on
-     FROM submission_law sbl JOIN submissions s ON s.id = sbl.submission_id
-     WHERE s.proceeding_id = ?
-     ORDER BY s.ordinal, s.id`,
-    [proceedingId]
-  );
-  const onFiling = rows(
-    dbPath,
-    `SELECT s.id, s.contention
-     FROM filing_submissions fs JOIN submissions s ON s.id = fs.submission_id
-     WHERE fs.filing_id IN ${inIds} AND s.killed_on IS NULL
-     ORDER BY CASE fs.document WHEN 'form' THEN 0 ELSE 1 END, fs.ordinal, fs.id`,
-    ids
-  );
-  const elsewhere = rows(
-    dbPath,
-    `SELECT s.id, s.contention FROM submissions s
-     WHERE s.proceeding_id = ? AND s.killed_on IS NULL
-       AND NOT EXISTS (SELECT 1 FROM filing_submissions fs WHERE fs.submission_id = s.id AND fs.filing_id IN ${inIds})
-     ORDER BY s.ordinal, s.id`,
-    [proceedingId, ...ids]
-  );
-  const required2 = rows(
-    dbPath,
-    `SELECT r.law_assertion_id, r.excerpt_id,
-            EXISTS (SELECT 1 FROM filing_orders fo WHERE fo.order_sought_id = r.order_sought_id AND fo.filing_id IN ${inIds}) AS on_filing
-     FROM order_sought_requires r JOIN order_sought o ON o.id = r.order_sought_id
-     WHERE o.proceeding_id = ? AND (r.law_assertion_id IS NOT NULL OR r.excerpt_id IS NOT NULL)`,
-    [...ids, proceedingId]
-  );
-  const orderCited = new Set(required2.map((r3) => r3.excerpt_id));
-  const statements = fetchStatements(dbPath, proceedingId).filter(
-    (s3) => s3.law_assertion_id !== null || !researchCited.has(s3.statement_id) || otherCited.has(s3.statement_id) || orderCited.has(s3.statement_id) || citedHere.has(s3.statement_id)
-  );
-  const onFilingIds = new Set(onFiling.map((s3) => s3.id));
-  const present3 = (list) => list.filter((id) => id !== null);
-  const deployed = /* @__PURE__ */ new Set([
-    ...links.filter((l3) => onFilingIds.has(l3.submission_id)).map((l3) => l3.law_assertion_id),
-    ...present3(required2.filter((r3) => r3.on_filing === 1).map((r3) => r3.law_assertion_id))
-  ]);
-  const usedHere = /* @__PURE__ */ new Set([...citedHere, ...present3(required2.filter((r3) => r3.on_filing === 1).map((r3) => r3.excerpt_id))]);
-  const counts3 = { in_use: 0, undecided: 0, not_relevant: 0 };
-  function statementOf(row2, killedOn) {
-    const inUse = row2.law_assertion_id !== null && deployed.has(row2.law_assertion_id) || usedHere.has(row2.statement_id);
-    const cls = propositionClass({ proposition_killed_on: killedOn, authority_killed_on: row2.authority_killed_on, in_use: inUse });
-    counts3[cls] += 1;
-    const { title, rest } = citationParts2(row2);
-    return { statement_id: row2.statement_id, class: cls, citation_title: title, citation_rest: rest, excerpt: row2.excerpt, status: statusLines(row2), note_up: statementNoteUp(row2.authority_kind, row2.treatment, row2.currency_status) };
-  }
-  function cardClass(own, killedOn, inUse) {
-    if (own.length === 0) {
-      const cls = propositionClass({ proposition_killed_on: killedOn, authority_killed_on: null, in_use: inUse });
-      counts3[cls] += 1;
-      return cls;
-    }
-    return own.reduce((best, s3) => CLASS_RANK[s3.class] < CLASS_RANK[best] ? s3.class : best, "not_relevant");
-  }
-  const cards = /* @__PURE__ */ new Map();
-  for (const p3 of propositions) {
-    const own = statements.filter((s3) => s3.law_assertion_id === p3.id).map((s3) => statementOf(s3, p3.killed_on));
-    const linkedTo2 = links.filter((l3) => l3.law_assertion_id === p3.id).map((l3) => l3.killed_on === null ? l3.contention : `${l3.contention} (killed ${l3.killed_on})`);
-    cards.set(p3.id, {
-      law_assertion_id: p3.id,
-      text: p3.proposition,
-      dead_end: p3.dead_end === 1,
-      killed_on: p3.killed_on,
-      class: cardClass(own, p3.killed_on, deployed.has(p3.id)),
-      linked_to: linkedTo2,
-      statements: own
-    });
-  }
-  const loose = new Map(
-    statements.filter((s3) => s3.law_assertion_id === null).map((s3) => {
-      const own = [statementOf(s3, null)];
-      return [s3.statement_id, { law_assertion_id: null, text: null, dead_end: false, killed_on: null, class: own[0].class, linked_to: [], statements: own }];
-    })
-  );
-  const placed = /* @__PURE__ */ new Set();
-  function take(ids2) {
-    const out = [];
-    for (const id of ids2) {
-      const card = cards.get(id);
-      if (card === void 0 || placed.has(id)) continue;
-      placed.add(id);
-      out.push(card);
-    }
-    return out;
-  }
-  const placedLoose = /* @__PURE__ */ new Set();
-  function takeLoose(ids2) {
-    const out = [];
-    for (const id of ids2) {
-      const card = loose.get(id);
-      if (card === void 0 || placedLoose.has(id)) continue;
-      placedLoose.add(id);
-      out.push(card);
-    }
-    return out;
-  }
-  const linkedTo = (submissionId) => links.filter((l3) => l3.submission_id === submissionId).map((l3) => l3.law_assertion_id);
-  const groups = [];
-  const push = (heading, note, list) => {
-    if (list.length > 0) groups.push({ heading, note, propositions: list });
-  };
-  const propositionOf = new Map(statements.map((s3) => [s3.statement_id, s3.law_assertion_id]));
-  const orderGroup = (edges) => [
-    ...take(present3([...edges.map((r3) => r3.law_assertion_id), ...edges.map((r3) => r3.excerpt_id === null ? null : propositionOf.get(r3.excerpt_id) ?? null)])),
-    ...takeLoose(present3(edges.map((r3) => r3.excerpt_id)))
-  ];
-  const seen = /* @__PURE__ */ new Set();
-  for (const s3 of onFiling) {
-    if (seen.has(s3.id)) continue;
-    seen.add(s3.id);
-    push(s3.contention, `Submission on ${here}`, take(linkedTo(s3.id)));
-  }
-  push("Required by an order sought", `Order on ${here}`, orderGroup(required2.filter((r3) => r3.on_filing === 1)));
-  const cited2 = statements.filter((s3) => citedHere.has(s3.statement_id));
-  push(merged ? "Cited in the text of this board's Writings" : "Cited in this Writing's text", null, [...take(present3(cited2.map((s3) => s3.law_assertion_id))), ...takeLoose(cited2.map((s3) => s3.statement_id))]);
-  for (const s3 of elsewhere) push(s3.contention, `Submission not on ${here}`, take(linkedTo(s3.id)));
-  push("Required by an order sought", `Order not on ${here}`, orderGroup(required2.filter((r3) => r3.on_filing !== 1)));
-  push("Not linked", null, [...take(cards.keys()), ...takeLoose(loose.keys())]);
-  return { counts: counts3, groups };
-}
-
-// src/submission/forms/statutes-tab.ts
-function provisionsOf(dbPath, authorityId) {
-  const checks = hasTable(dbPath, "provision_currency");
-  return rows(
-    dbPath,
-    `SELECT DISTINCT sl.pinpoint AS provision, ${checks ? "pc.currency_status, pc.checked_on" : "NULL AS currency_status, NULL AS checked_on"}
-     FROM statements_of_law sl
-     ${checks ? "LEFT JOIN provision_currency pc ON pc.authority_id = sl.authority_id AND pc.provision = sl.pinpoint" : ""}
-     WHERE sl.authority_id = ? AND sl.pinpoint IS NOT NULL AND TRIM(sl.pinpoint) <> ''
-     ORDER BY sl.pinpoint`,
-    [authorityId]
-  );
-}
-function buildStatutesData(dbPath, filingIds, proceedingIds) {
-  const kinds = [...LEGISLATION_KINDS];
-  const relied = reliedOn(dbPath, filingIds, kinds);
-  const reliedIds = new Set(relied.map((a3) => a3.id));
-  const ids = [...new Set(proceedingIds)];
-  const others = ids.length === 0 ? [] : rows(
-    dbPath,
-    `SELECT id, style_of_cause_or_title, citation, currency_status, currency_checked_on
-     FROM authorities
-     WHERE kind IN (${kinds.map((k3) => `'${k3}'`).join(", ")}) AND killed_on IS NULL AND proceeding_id IN (${ids.map(() => "?").join(", ")})
-     ORDER BY style_of_cause_or_title, id`,
-    ids
-  ).filter((a3) => !reliedIds.has(a3.id));
-  const statutes = /* @__PURE__ */ new Map();
-  const add = (a3, isRelied) => {
-    const key = foldKey(a3.citation, a3.id, a3.style_of_cause_or_title);
-    let target = statutes.get(key);
-    if (target === void 0) {
-      target = { title: a3.style_of_cause_or_title, citation: a3.citation, relied_on: isRelied, currency_status: a3.currency_status, currency_checked_on: a3.currency_checked_on, note_up: authorityNoteUp(null), provisions: [] };
-      statutes.set(key, target);
-    }
-    if ((a3.currency_checked_on ?? "") > (target.currency_checked_on ?? "")) {
-      target.currency_status = a3.currency_status;
-      target.currency_checked_on = a3.currency_checked_on;
-    }
-    for (const p3 of provisionsOf(dbPath, a3.id)) {
-      if (!target.provisions.some((held2) => held2.provision === p3.provision)) target.provisions.push(p3);
-    }
-  };
-  for (const a3 of relied) add(a3, true);
-  for (const a3 of others) add(a3, false);
-  const all = [...statutes.values()];
-  return { statutes: [...all.filter((s3) => s3.relied_on), ...all.filter((s3) => !s3.relied_on)] };
-}
-
-// src/submission/forms/legal-research-page.ts
-var LEGAL_RESEARCH_PAGE = {
-  name: "Legal Research",
-  ...templated({
-    entry: "legal-research.html",
-    files: {
-      "legal-research.html": legal_research_html_default,
-      "view-head.html": view_head_html_default,
-      "board.css": board_css_default,
-      "view-folder.css": view_folder_css_default,
-      "legal-research.css": legal_research_css_default,
-      "shared.js": shared_js_default,
-      "legal-research.js": legal_research_js_default
-    }
-  }),
-  data: (ctx) => {
-    const matterDir = dirname16(ctx.draftDir);
-    const filings = ctx.writings.map((w3) => w3.filing);
-    return {
-      propositions: buildPropositionsData(ctx.dbPath, filings),
-      statutes: buildStatutesData(ctx.dbPath, filings.map((f3) => f3.id), filings.map((f3) => f3.proceeding_id)),
-      briefs: buildCaseBriefsData(ctx.dbPath, filings.map((f3) => f3.id), matterDir, filings.map((f3) => f3.proceeding_id)),
-      memos: buildLegalMemosData(ctx.dbPath, ctx.jobs, matterDir)
-    };
-  }
-};
-
-// src/submission/view-pages.ts
-var VIEW_PAGE_MARKER = "data-view-page";
-var VIEW_PAGES = [
-  PROCEDURAL_HISTORY,
-  MATERIAL_FACTS,
-  LEGAL_RESEARCH_PAGE,
-  ARGUMENTS_PAGE
-];
-function viewPageFile(page2, board, folder) {
-  if (folder !== void 0) return join39(folder, `${page2.name}.html`);
-  return board.filing_id === null ? `${page2.name} - Work Board - proceeding ${board.proceeding_id}.html` : `${page2.name} - Work Board ${board.filing_id}.html`;
-}
-function escapeRegExp(text8) {
-  return text8.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-function isViewPageFile(fileName) {
-  return VIEW_PAGES.some((page2) => new RegExp(`^${escapeRegExp(page2.name)}(?: - (?:Work Board|Milestone|Job Board) (?:- proceeding )?\\d+)?\\.html$`, "i").test(fileName));
-}
-function renderViewPageHtml(page2, meta2, data) {
-  const extra = page2.metaExtra ? page2.metaExtra(data) : void 0;
-  const line = JSON.stringify({ name: page2.name, meta: meta2, extra, data }).replace(/</g, "\\u003c");
-  return `${page2.head}window.VIEW_PAGE = ${line};
-${page2.tail}`;
-}
-
-// src/submission/matter-page-groups.ts
-var WRITING_MILESTONE_FILE = "Work Board.html";
-function boardFolder(board, folders2) {
-  return board.filing_id === null ? void 0 : folders2.get(board.filing_id)?.name;
-}
-function boardFile(board, folders2) {
-  const folder = boardFolder(board, folders2);
-  if (folder !== void 0) return join40(folder, WRITING_MILESTONE_FILE);
-  return board.filing_id === null ? `Work Board - proceeding ${board.proceeding_id}.html` : `Work Board ${board.filing_id}.html`;
-}
-function pageGroups(index, live, preFiling, folders2) {
-  const groups = /* @__PURE__ */ new Map();
-  for (const m3 of [...live.filter((l3) => !isResearchWriting(l3.filing)).map((l3) => l3), ...preFiling.map((p3) => ({ proceeding: p3, filing: null }))]) {
-    const ref = { filing_id: m3.filing?.id ?? null, proceeding_id: m3.proceeding.id };
-    const board = index.survivorOf(ref);
-    const key = boardKey(board);
-    const group = groups.get(key) ?? { board, file: boardFile(board, folders2), members: [] };
-    if (sameBoard(ref, board)) group.members.unshift(m3);
-    else group.members.push(m3);
-    groups.set(key, group);
-  }
-  return [...groups.values()];
-}
-function memberRef(m3) {
-  return { filing_id: m3.filing?.id ?? null, proceeding_id: m3.proceeding.id };
-}
-function liveMembers(dbPath) {
-  const proceedings = fetchAllProceedings(dbPath).map((proceeding) => ({ proceeding, filings: fetchAllFilingsForProceeding(dbPath, proceeding.id) }));
-  return {
-    live: proceedings.flatMap(({ proceeding, filings }) => filings.filter((f3) => !f3.retired_on).map((filing) => ({ proceeding, filing }))),
-    preFiling: proceedings.filter(({ filings }) => filings.every(isResearchWriting)).map(({ proceeding }) => proceeding)
-  };
-}
-function pageTargets(groups) {
-  return groups.flatMap((g3) => g3.members.map((m3) => ({ filing_id: m3.filing?.id ?? null, proceeding_id: m3.proceeding.id, file: g3.file })));
-}
-function writingsOf(group) {
-  return group.members.filter((m3) => m3.filing !== null && !isJobOnlyBoard(m3.filing));
-}
-function viewTargets(groups, folders2) {
-  return groups.map((group) => ({ group, writings: writingsOf(group) })).filter(({ writings }) => writings.length > 0).flatMap(({ group, writings }) => VIEW_PAGES.map((page2) => ({ page: page2, group, writings, file: viewPageFile(page2, group.board, boardFolder(group.board, folders2)) })));
-}
-
-// src/submission/matter-page-files.ts
-var MILESTONE_MARKER = "data-workboard-shell";
-function refuseForeignMatterPages(draftDir, dbPath) {
-  const { live, preFiling } = liveMembers(dbPath);
-  const folders2 = writingFolders(dbPath, draftDir);
-  const groups = pageGroups(new BoardIndex(dbPath), live, preFiling, folders2);
-  refuseForeignPages(draftDir, guardTargets(groups.map((g3) => g3.file), viewTargets(groups, folders2)));
-}
-function pagePathFor(pages, section3) {
-  const { filing_id, proceeding_id } = section3;
-  return pages.milestone_paths.find((p3) => filing_id !== null ? p3.filing_id === filing_id : p3.filing_id === null && p3.proceeding_id === proceeding_id)?.path;
-}
-function guardTargets(names, views) {
-  return [
-    { name: MATTER_BOARD_FILE, marker: MATTER_BOARD_MARKER, page: "Litigation Strategy" },
-    { name: LOOSE_THREADS_FILE, marker: VIEW_PAGE_MARKER, page: LOOSE_THREADS_PAGE_NAME },
-    ...names.map((name) => ({ name, marker: MILESTONE_MARKER, page: "Work Board" })),
-    ...views.map((v3) => ({ name: v3.file, marker: VIEW_PAGE_MARKER, page: v3.page.name }))
-  ];
-}
-function refuseForeignPages(draftDir, targets) {
-  for (const { name, marker, page: page2 } of targets) {
-    const file = join41(draftDir, name);
-    if (existsSync37(file) && !readFileSync34(file, "utf-8").includes(marker)) {
-      throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page2}'s marker, so this renderer did not write it`);
-    }
-  }
-}
-function writePage(file, html) {
-  mkdirSync19(dirname17(file), { recursive: true });
-  const code = writeStatusFile(file, html);
-  if (code !== null) throw new DataServerError(`could not write ${file}: ${code}`);
-}
-var OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments) - filing \d+|loose threads(?: - (?:filing|Milestone|job board)(?: - proceeding)? \d+)?|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+|(?:raw research|legal memos)(?: - (?:Milestone|job board)(?: - proceeding)? \d+)?)\.html$/i;
-var PREVIEW_FILE = / preview \d+\.html$/i;
-var RETIRED_PREVIEW = /^(?:raw research|legal memos)(?: - (?:Milestone|job board)(?: - proceeding)? \d+)? preview \d+\.html$/i;
-function generatorWrote(file) {
-  const text8 = readFileSync34(file, "utf-8");
-  return text8.includes(MILESTONE_MARKER) || text8.includes(MATTER_BOARD_MARKER) || text8.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
-}
-function sweepOldPages(draftDir, names) {
-  const moved = [];
-  const skipped = [];
-  const targets = new Set([...names, MATTER_BOARD_FILE].map((name) => join41(name).toLowerCase()));
-  const subfolders = readdirSync21(draftDir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name.toLowerCase() !== "archive").map((e3) => join41(draftDir, e3.name));
-  for (const dir of [draftDir, ...subfolders]) {
-    for (const entry2 of readdirSync21(dir, { withFileTypes: true })) {
-      const old = RETIRED_PREVIEW.test(entry2.name) || !PREVIEW_FILE.test(entry2.name) && (OLD_PAGE.test(entry2.name) || isViewPageFile(entry2.name));
-      if (!entry2.isFile() || !old) continue;
-      const file = join41(dir, entry2.name);
-      if (targets.has(relative2(draftDir, file).toLowerCase())) continue;
-      try {
-        if (!generatorWrote(file)) continue;
-        const result = fileOpsTrash(file);
-        moved.push({ from: result.moved_from, to: result.moved_to });
-      } catch (err) {
-        if (!(err instanceof DataServerError) && !["ENOENT", "EBUSY", "EPERM", "EACCES"].includes(err.code ?? "")) throw err;
-        skipped.push({ path: file, error: err.message });
-      }
-    }
-  }
-  return { ...moved.length > 0 ? { moved_to_trash: moved } : {}, ...skipped.length > 0 ? { trash_skipped: skipped } : {} };
-}
-
-// src/submission/matter-pages-build.ts
-import { dirname as dirname20, join as join44 } from "node:path";
-
-// src/submission/board-attachments.ts
-import { closeSync as closeSync7, existsSync as existsSync39, openSync as openSync7, readSync as readSync2, realpathSync as realpathSync9, statSync as statSync18 } from "node:fs";
-import { dirname as dirname18, isAbsolute as isAbsolute6, relative as relative3, resolve as resolve5, sep } from "node:path";
-
-// src/housekeeping/name-gate.ts
-import { existsSync as existsSync38 } from "node:fs";
-import { win32 as pathWin3218 } from "node:path";
-var DRIVER7 = `import contextlib, io, json, sys
-import name_gate
-payload = json.load(sys.stdin)
-out = []
-for group in payload["groups"]:
-    buf = io.StringIO()
-    # "./" keeps a name that starts with "-" from reading as an option; the gate takes the basename.
-    argv = ["--registry", payload["registry"], "--files", *["./" + n for n in group["names"]], "--flag-tokens", ",".join(group["flag_tokens"])]
-    with contextlib.redirect_stdout(buf):
-        code = name_gate.main(argv)
-    if code:
-        raise SystemExit("name_gate.py exited %s" % code)
-    out.append(json.loads(buf.getvalue())["results"])
-json.dump({"groups": out}, sys.stdout)
-`;
-function fileNamingSkillDir(env = process.env, installRoot) {
-  const shipped = resolveShippedRoot("file-naming/scripts/name_gate.py", env, {
-    code: "repo_root_missing",
-    subject: "the file-naming name gate",
-    plugin: "lawyer",
-    installRoot
-  });
-  const dir = pathWin3218.join(shipped.root, "file-naming");
-  for (const rel of [["scripts", "name_gate.py"], ["references", "code-registry.md"]]) {
-    if (!existsSync38(pathWin3218.join(dir, ...rel))) {
-      throw new DataServerError(
-        `${rel.join("\\")} not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
-        "repo_root_missing"
-      );
-    }
-  }
-  return dir;
-}
-function runNameGate(groups, env = process.env) {
-  const live = groups.filter((g3) => g3.names.length > 0);
-  if (live.length === 0) return groups.map(() => []);
-  const dir = fileNamingSkillDir(env);
-  const parsed = runPythonDriver({
-    label: "file-naming name gate",
-    driver: pythonDriverFile("housekeeping-name-gate", DRIVER7),
-    payload: JSON.stringify({ registry: pathWin3218.join(dir, "references", "code-registry.md"), groups: live }),
-    env,
-    timeoutMs: READ_TIMEOUT_MS,
-    extraEnv: { PYTHONPATH: pathWin3218.join(dir, "scripts") }
-  });
-  let next2 = 0;
-  return groups.map((g3) => g3.names.length > 0 ? parsed.groups[next2++] : []);
-}
-
-// src/submission/board-attachments.ts
-var REVIEW_LINE = /^Counsel['’]s review:\s*/;
-var FIRST_LINE_BYTES = 4096;
-var PENDING2 = /* @__PURE__ */ new Set(["ready", "wip", "bring_forward", "waiting"]);
-function firstLine(file) {
-  const fd = openSync7(file, "r");
-  try {
-    const buffer = Buffer.alloc(FIRST_LINE_BYTES);
-    const read3 = readSync2(fd, buffer, 0, FIRST_LINE_BYTES, 0);
-    return buffer.subarray(0, read3).toString("utf-8").replace(/^﻿/, "").split(/\r?\n/)[0];
-  } finally {
-    closeSync7(fd);
-  }
-}
-function leavesDraftFolder(rel) {
-  return rel === "" || rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute6(rel);
-}
-function localDate3(d3) {
-  return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
-}
-function attachedDrafts(dbPath, draftDir, section3) {
-  if (section3.attachments.length === 0) return [];
-  const matterRoot = dirname18(draftDir);
-  const writings = new Map(fetchAllFilingsForProceeding(dbPath, section3.meta.proceeding_id).map((f3) => [f3.id, f3.title]));
-  const linked = buildProceedingBoard(dbPath, section3.meta.proceeding_id).tickets.filter(({ ticket }) => PENDING2.has(ticket.category));
-  return section3.attachments.map((a3) => {
-    const segments = a3.path.split(/[\\/]+/).filter((s3) => s3 !== "");
-    const abs = resolve5(matterRoot, ...segments);
-    const name = segments[segments.length - 1] ?? a3.path;
-    const entry2 = {
-      id: a3.id,
-      kind: a3.kind,
-      path: a3.path,
-      name,
-      attached_on: a3.attached_on,
-      proceeding_wide: section3.meta.filing_id !== null && a3.filing_id === null,
-      code: null,
-      jobs: linked.filter(({ ticket }) => ticket.scope.includes(`board_attachments:${a3.id}`)).map(({ filing_id, ticket }) => ({ id: ticket.id, title: ticket.title, category: ticket.category, writing: filing_id === null ? null : writings.get(filing_id) ?? null }))
-    };
-    const absent = { ...entry2, modified: null, review: null };
-    const base = a3.kind === "opposing_filing" ? matterRoot : draftDir;
-    if (leavesDraftFolder(relative3(base, abs))) return { ...absent, state: "outside" };
-    if (!existsSync39(abs)) return { ...absent, state: "missing" };
-    try {
-      const real = realpathSync9.native(abs);
-      if (leavesDraftFolder(relative3(realpathSync9.native(base), real)) || zoneProblem("read", real)) {
-        return { ...absent, state: "outside" };
-      }
-      const modified2 = localDate3(statSync18(abs).mtime);
-      const line = a3.kind === "client_letter" ? firstLine(abs) : "";
-      return { ...entry2, modified: modified2, state: "present", review: REVIEW_LINE.test(line) ? line.replace(REVIEW_LINE, "").trim() : null };
-    } catch (err) {
-      return { ...absent, state: "unreadable", error: err.code ?? "error" };
-    }
-  });
-}
-function withCodes(drafts) {
-  if (drafts.length === 0) return drafts;
-  try {
-    const [results] = runNameGate([{ names: drafts.map((d3) => d3.name), flag_tokens: [] }]);
-    return drafts.map((d3, i3) => ({ ...d3, code: results[i3].code }));
-  } catch (err) {
-    return drafts.map((d3) => ({ ...d3, code_error: err.message }));
-  }
-}
-
-// src/submission/forms/board-viewed.ts
-import { basename as basename5, dirname as dirname19, join as join42, resolve as resolve6 } from "node:path";
-var TOOL10 = "drafting_data__record_viewed";
-function viewedKey(board) {
-  return `board_viewed:${boardKey(board)}`;
-}
-function viewItemKey(pageName2) {
-  return `view:${pageName2}`;
-}
-function docItemKey(filingId, fileName) {
-  return `doc:${filingId}:${fileName}`;
-}
-var RENAMED_VIEWS = { [viewItemKey("Raw Research")]: viewItemKey("Legal Research"), [viewItemKey("Legal Memos")]: viewItemKey("Legal Research") };
-function readViewed(dbPath, board) {
-  const key = viewedKey(board);
-  const [row2] = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
-  if (row2 === void 0) return [];
-  let parsed;
-  try {
-    parsed = JSON.parse(row2.value);
-  } catch {
-    parsed = void 0;
-  }
-  if (!Array.isArray(parsed) || !parsed.every((k3) => typeof k3 === "string")) {
-    throw new DataServerError("A board's saved viewing order is damaged, so it cannot be read", "invalid_board_viewed");
-  }
-  return [...new Set(parsed.map((k3) => RENAMED_VIEWS[k3] ?? k3))];
-}
-function orderStrip(items2, viewed) {
-  const at = (item) => viewed.indexOf(item.key);
-  return [
-    ...items2.filter((i3) => at(i3) >= 0).sort((a3, b3) => at(a3) - at(b3)).map((i3) => ({ ...i3, viewed: true })),
-    ...items2.filter((i3) => at(i3) < 0).map((i3) => ({ ...i3, viewed: false }))
-  ];
-}
-function inFolderOf(t3, path) {
-  return resolve6(t3.dir).toLowerCase() === resolve6(dirname19(path)).toLowerCase();
-}
-function stripTargets(dbPath) {
-  const index = new BoardIndex(dbPath);
-  const filings = submissionDataQuery(dbPath, "SELECT id, proceeding_id, kind, title, retired_on FROM filings ORDER BY id").rows;
-  const targets = [];
-  const boards = /* @__PURE__ */ new Map();
-  for (const f3 of filings.filter((x3) => !x3.retired_on && !isJobOnlyBoard(x3))) {
-    const board = index.survivorOf({ filing_id: f3.id, proceeding_id: f3.proceeding_id });
-    boards.set(boardKey(board), board);
-    const manifest = readManifest(dbPath, f3.id);
-    if (manifest === null) continue;
-    const dir = manifestDir(dbPath, manifest);
-    for (const doc of manifest.files) targets.push({ board, key: docItemKey(f3.id, doc.file_name), file: doc.file_name, dir });
-  }
-  const draft = draftDirOf(dbPath);
-  const folders2 = writingFolders(dbPath, draft);
-  for (const board of boards.values()) {
-    const folder = board.filing_id === null ? void 0 : folders2.get(board.filing_id)?.name;
-    for (const page2 of VIEW_PAGES) {
-      const file = join42(draft, viewPageFile(page2, board, folder));
-      targets.push({ board, key: viewItemKey(page2.name), file: basename5(file), dir: dirname19(file) });
-    }
-  }
-  return targets;
-}
-async function submissionDataRecordViewed(args, env = process.env) {
-  if (!Array.isArray(args.paths) || args.paths.length === 0 || !args.paths.every((p3) => typeof p3 === "string" && p3.trim() !== "")) {
-    throw new ValidationError(`${TOOL10}.paths must list the presented paths, none blank`, "invalid_paths");
-  }
-  const targets = stripTargets(args.db_path);
-  const matched = args.paths.map((path) => {
-    const name = path.split(/[\\/]/).pop().toLowerCase();
-    let hits = targets.filter((t3) => t3.file.toLowerCase() === name);
-    if (hits.length > 1) hits = hits.filter((t3) => inFolderOf(t3, path));
-    if (hits.length !== 1 && targets.some((t3) => t3.file.toLowerCase() === name)) {
-      throw new ValidationError(`${TOOL10}: several thumbnails are named ${name} and its folder holds none of them; pass the path in its Writing's own folder. Nothing was written.`, "ambiguous_path");
-    }
-    if (hits.length === 0) {
-      throw new ValidationError(`${TOOL10}: ${path} is no thumbnail on a Work Board: neither a view page nor a Writing's mockup. Nothing was written.`, "not_a_strip_item");
-    }
-    return hits[0];
-  });
-  const lists = /* @__PURE__ */ new Map();
-  for (const t3 of matched) {
-    const entry2 = lists.get(boardKey(t3.board)) ?? { board: t3.board, keys: readViewed(args.db_path, t3.board) };
-    entry2.keys = [t3.key, ...entry2.keys.filter((k3) => k3 !== t3.key)];
-    lists.set(boardKey(t3.board), entry2);
-  }
-  const rows4 = [...lists.values()].map(({ board, keys }) => {
-    const current = new Set(targets.filter((t3) => boardKey(t3.board) === boardKey(board)).map((t3) => t3.key));
-    return { key: viewedKey(board), value: JSON.stringify(keys.filter((k3) => current.has(k3))) };
-  });
-  const written = await submissionDataWriteAll(
-    args.db_path,
-    rows4.map((r3) => ({ sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [r3.key, r3.value], expect_changes: 1 })),
-    env
-  );
-  if (!written.ok) throw new DataServerError(`${TOOL10}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
-  return {
-    keys: rows4.map((r3) => r3.key),
-    note: "Recorded. The Work Board shows the new order the next time its page is written; this call does not rewrite it.",
-    ...written.warning ? { warning: written.warning } : {}
-  };
-}
-
-// src/submission/court-file-affidavits.ts
-import { readdirSync as readdirSync22 } from "node:fs";
-import { basename as basename6, join as join43 } from "node:path";
-var STATUSES2 = ["SIGNED", "AFFIRMED", "SWORN", "FILED", "UNFILED", "UNSIGNED", "UNSWORN"];
-var MADE = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN"]);
-var EXECUTED = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN", "FILED"]);
-var RANK = { FILED: 3, SIGNED: 2, AFFIRMED: 2, SWORN: 2, UNFILED: 1, UNSIGNED: 0, UNSWORN: 0 };
-var AFFIDAVIT_NAME = /^(\d{4}-\d{2}-\d{2}) AFF#?(\d+)(?: of)? (\S+)(.*)\.(?:pdf|docx?)$/i;
-function parseAffidavitName(fileName) {
-  const m3 = AFFIDAVIT_NAME.exec(fileName);
-  if (m3 === null) return null;
-  const markers = m3[4].toUpperCase().split(/\s+/).filter((t3) => STATUSES2.includes(t3));
-  return { file_name: fileName, date: m3[1], number: m3[2], deponent_code: m3[3], status: markers.length > 0 ? markers[markers.length - 1] : null };
-}
-function deponentCode(name) {
-  const words2 = name.trim().split(/\s+/).filter((w3) => w3 !== "");
-  if (words2.length === 0) return "";
-  if (words2.length === 1) return words2[0];
-  return `${words2[words2.length - 1]}${words2[0][0].toUpperCase()}`;
-}
-function courtFileFolder(matterRoot, fileNumber, env = process.env) {
-  let map;
-  try {
-    map = readFolderMap(env);
-  } catch (err) {
-    return { note: `the folder map could not be read: ${err.message}` };
-  }
-  if (map.status === "no_map") return { note: `Probanda does not know where this practitioner keeps court filings (${map.reason})` };
-  let paths;
-  try {
-    paths = [...new Set(globsFor(map.entries, ["court_filings"]).flatMap((glob) => expandGlob(matterRoot, glob)))].sort();
-  } catch (err) {
-    return { note: `the matter folder could not be listed (${err.code ?? "error"})` };
-  }
-  if (paths.length === 0) return { note: "the matter has no court filings folder" };
-  if (paths.length === 1) return { path: paths[0] };
-  const fitting = fileNumber ? paths.filter((p3) => basename6(p3).toUpperCase().includes(fileNumber.toUpperCase())) : [];
-  if (fitting.length === 1) return { path: fitting[0] };
-  return { note: `no single court filings folder names this proceeding's file number (${paths.map((p3) => `"${basename6(p3)}"`).join(", ")})` };
-}
-function fileNames(dir) {
-  let entries;
-  try {
-    entries = readdirSync22(dir, { withFileTypes: true });
-  } catch {
-    return [];
-  }
-  return entries.flatMap((e3) => e3.isDirectory() ? fileNames(join43(dir, e3.name)) : e3.isFile() ? [e3.name] : []);
-}
-function newest(names) {
-  return [...names].sort((a3, b3) => b3.date.localeCompare(a3.date) || RANK[b3.status ?? "UNSWORN"] - RANK[a3.status ?? "UNSWORN"])[0] ?? null;
-}
-function courtFileAffidavits(dbPath, filingId, matterRoot) {
-  const relied = submissionDataQuery(
-    dbPath,
-    `SELECT DISTINCT d.id AS document_id, d.label, d.affidavit_number, d.execution, w.name AS deponent, p.file_number
-     FROM filing_documents fd
-     JOIN documents d ON d.id = fd.document_id
-     JOIN filings f ON f.id = fd.filing_id
-     JOIN proceedings p ON p.id = f.proceeding_id
-     LEFT JOIN witnesses w ON w.id = d.deponent
-     WHERE fd.filing_id = ? AND (fd.role = 'affidavit' OR d.instrument = 'affidavit')
-     ORDER BY fd.ordinal`,
-    [filingId]
-  ).rows;
-  if (relied.length === 0) return [];
-  const folder = courtFileFolder(matterRoot, relied[0].file_number);
-  const names = "path" in folder ? fileNames(folder.path).map(parseAffidavitName).filter((n3) => n3 !== null) : [];
-  return relied.map((r3) => {
-    const base = { document_id: r3.document_id, label: r3.label, affidavit_number: r3.affidavit_number, deponent: r3.deponent, recorded: { made_on: r3.execution } };
-    const number3 = r3.affidavit_number?.match(/\d+/)?.[0];
-    if (!("path" in folder) || number3 === void 0) {
-      return { ...base, court_file: null, court_file_made_on: null, note: "path" in folder ? "drafting data records no affidavit number" : folder.note, mismatch: null };
-    }
-    const code = r3.deponent ? deponentCode(r3.deponent).toUpperCase() : null;
-    const matches = names.filter((n3) => String(Number(n3.number)) === String(Number(number3)) && (code === null || n3.deponent_code.toUpperCase() === code));
-    const latest = newest(matches);
-    const made = newest(matches.filter((n3) => n3.status !== null && MADE.has(n3.status)));
-    const madeOn = made?.date ?? null;
-    let mismatch = null;
-    if (latest?.status && EXECUTED.has(latest.status) && r3.execution === null) {
-      mismatch = `court file shows ${latest.status.toLowerCase()} ${latest.date}; drafting data shows unsworn`;
-    } else if (madeOn !== null && r3.execution !== null && madeOn !== r3.execution) {
-      mismatch = `court file shows ${(made?.status ?? "").toLowerCase()} ${madeOn}; drafting data shows made ${r3.execution}`;
-    }
-    return { ...base, court_file: latest, court_file_made_on: madeOn, mismatch };
-  });
 }
 
 // src/submission/forms/render-matter-board.ts
@@ -108604,15 +108338,15 @@ var LETTER_KIND = /(?:^|[^a-z])letter(?:[^a-z]|$)/i;
 function awaitingResponse(filing) {
   return filing.filed_on !== null && !filing.retired_on && LETTER_KIND.test(filing.kind);
 }
-function firstLine2(text8) {
+function firstLine(text8) {
   return text8?.split(/\r?\n/).map((line) => line.trim()).find((line) => line !== "") ?? null;
 }
 function sentLetterLine(dbPath, filing) {
   const prose = fetchProse(dbPath, filing.id);
   return {
     filing_id: filing.id,
-    addressee: firstLine2(prose.get("addressee")?.text),
-    subject: firstLine2(prose.get("re")?.text) ?? filing.title,
+    addressee: firstLine(prose.get("addressee")?.text),
+    subject: firstLine(prose.get("re")?.text) ?? filing.title,
     sent_on: filing.filed_on
   };
 }
@@ -108685,6 +108419,765 @@ function mergedBoards(index, ranked, preFiling) {
     filing_ids: g3.members.filter((m3) => m3.filing_id !== null).map((m3) => m3.filing_id),
     proceeding_ids: g3.members.filter((m3) => m3.filing_id === null).map((m3) => m3.proceeding_id)
   }));
+}
+
+// src/submission/forms/loose-thread-in-place.ts
+var link = (path) => path === void 0 ? { url: null, path: null } : { url: pageApiFileUrl(path), path };
+var list = (ids) => ids.map(() => "?").join(",");
+function inPlaceCards(dbPath, proceedings, draftDir, boards = []) {
+  if (proceedings.length === 0) return [];
+  const pageOf = (filingId, proceedingId) => {
+    const board = boards.find((b3) => b3.filing_id === filingId && filingId !== null) ?? boards.find((b3) => b3.proceeding_id === proceedingId);
+    return board === void 0 || draftDir === void 0 ? void 0 : join42(draftDir, board.file);
+  };
+  const jobs2 = rows(
+    dbPath,
+    `SELECT id, title, rejected_at, filing_id, proceeding_id FROM tickets WHERE rejected_at IS NOT NULL AND proceeding_id IN (${list(proceedings)})${liveTicketClause(dbPath)} ORDER BY rejected_at DESC, id`,
+    proceedings
+  ).map((j3) => ({ tab: "jobs", record: `Job #${j3.id}`, title: j3.title, status: "Shelved", date: j3.rejected_at.slice(0, 10), ...link(pageOf(j3.filing_id, j3.proceeding_id)) }));
+  const propositions = killedPropositions(dbPath, proceedings).map((p3) => ({
+    tab: "propositions",
+    record: p3.law_assertion_id === null ? "Statement of law" : `Proposition #${p3.law_assertion_id}`,
+    title: p3.text ?? [p3.statements[0]?.citation_title, p3.statements[0]?.citation_rest].filter(Boolean).join(""),
+    status: "Killed",
+    date: p3.killed_on,
+    url: null,
+    path: null
+  }));
+  const memos = draftDir === void 0 ? [] : buildLegalMemosData(dbPath, proceedings.flatMap((p3) => buildProceedingBoard(dbPath, p3).tickets.map((t3) => t3.ticket)), dirname18(draftDir)).memos.filter((m3) => m3.status === "started" || m3.status === "no_job").map((m3) => ({ tab: "memos", record: m3.folder === "" ? "6. LAW" : m3.folder, title: m3.title, status: m3.status === "started" ? "Started" : "No job", date: m3.date, ...link(m3.on_disk ? m3.path : void 0) }));
+  const filings = rows(
+    dbPath,
+    `SELECT id, kind, title, retired_on, retirement_reason, filed_on${hasColumn(dbPath, "filings", "sent_copy_id") ? ", sent_copy_id" : ""} FROM filings WHERE retired_on IS NOT NULL AND proceeding_id IN (${list(proceedings)}) ORDER BY retired_on DESC, id`,
+    proceedings
+  );
+  const folders2 = draftDir !== void 0 && existsSync38(draftDir) ? writingFolders(dbPath, draftDir) : /* @__PURE__ */ new Map();
+  const letters = filings.filter((f3) => LETTER_KIND.test(f3.kind) && f3.filed_on === null && (f3.sent_copy_id ?? null) === null && f3.retirement_reason !== "delivered").map((f3) => {
+    const folder = folders2.get(f3.id);
+    return { tab: "correspondence", record: `Writing #${f3.id}`, title: f3.title, status: "Retired", date: f3.retired_on, ...link(folder === void 0 || draftDir === void 0 ? void 0 : join42(draftDir, folder.name)) };
+  });
+  const closed2 = filings.filter((f3) => f3.kind === MILESTONE_KIND).map((f3) => ({ tab: "work_boards", record: `Work Board #${f3.id}`, title: f3.title, status: "Closed", date: f3.retired_on, url: null, path: null }));
+  const killed = rows(
+    dbPath,
+    `SELECT id, contention, killed_on FROM submissions WHERE killed_on IS NOT NULL AND proceeding_id IN (${list(proceedings)}) ORDER BY killed_on DESC, id`,
+    proceedings
+  ).map((s3) => ({ tab: "arguments", record: `Submission #${s3.id}`, title: s3.contention, status: "Killed", date: s3.killed_on, url: null, path: null }));
+  return [...jobs2, ...propositions, ...memos, ...letters, ...killed, ...closed2];
+}
+
+// src/submission/forms/loose-ideas-page.ts
+var KIND_TAB = { idea: "ideas", proposition: "propositions", correspondence: "correspondence", argument: "arguments", work_board: "work_boards" };
+var GROUP_STYLE = {
+  decision: { label: "Practitioner decisions", colour: "#6E4F8E" },
+  tooling: { label: "Tooling", colour: "#3F6197" },
+  housekeeping: { label: "Housekeeping", colour: "#2F7466" },
+  research: { label: "Research", colour: "#8E6620" },
+  authority: { label: "Authority mismatch", colour: "#984A43" },
+  evidence: { label: "Evidence mismatch", colour: "#85587A" },
+  other: { label: "Miscellaneous", colour: "#636B72" }
+};
+function buildLooseIdeasData(dbPath, proceedings, env = process.env, draftDir, boards) {
+  const merged = proceedings.length > 1;
+  const seeds = inRankOrder(
+    proceedings.flatMap((p3) => {
+      const deletedIds = new Set(fetchDeletedTickets(dbPath, p3).map((d3) => d3.id));
+      return withFromFiling(
+        dbPath,
+        p3,
+        fetchOpenThreads(dbPath, p3, deletedIds).map(({ origin_job, ...t3 }) => ({ ...t3, origin_ticket_id: origin_job !== null && deletedIds.has(origin_job) ? null : origin_job }))
+      ).map((s3) => ({ ...s3, ref: s3.ref ?? null, proceeding_id: p3 }));
+    })
+  );
+  const ideas = seeds.map(
+    (s3) => ({
+      ...merged ? { proceeding_id: s3.proceeding_id } : {},
+      id: s3.id,
+      tab: KIND_TAB[s3.kind],
+      ref: s3.ref,
+      rank: s3.rank,
+      idea: s3.idea,
+      group: s3.rank === null ? null : s3.rank_group,
+      group_label: s3.rank === null || s3.rank_group === null ? null : GROUP_STYLE[s3.rank_group].label,
+      reason: s3.rank === null ? null : s3.rank_reason,
+      job: s3.rank === null ? null : s3.rank_job,
+      surfaced_by: s3.surfaced_by,
+      origin: seedOrigin(s3),
+      deferred_at: s3.deferred_at
+    })
+  );
+  const groups = Object.keys(GROUP_STYLE).map((key) => ({ key, ...GROUP_STYLE[key], count: ideas.filter((i3) => i3.group === key).length })).filter((g3) => g3.count > 0);
+  const first = proceedings[0];
+  const api = {
+    port: pageApiPort(env),
+    db_path: dbPath,
+    proceeding_id: first,
+    token: pageApiToken(dbPath, first, env),
+    ...merged ? { tokens: Object.fromEntries(proceedings.map((p3) => [String(p3), pageApiToken(dbPath, p3, env)])) } : {}
+  };
+  const resolved = proceedings.flatMap((p3) => fetchResolvedSeeds(dbPath, p3)).map(({ kind, ...r3 }) => ({ ...r3, tab: KIND_TAB[kind] }));
+  return { groups, ideas, resolved: merged ? resolved.sort((a3, b3) => a3.at === b3.at ? a3.id - b3.id : a3.at < b3.at ? 1 : -1) : resolved, in_place: inPlaceCards(dbPath, proceedings, draftDir, boards), api };
+}
+function looseIdeasMeta(data) {
+  const deferred = data.ideas.filter((i3) => i3.deferred_at !== null).length;
+  const ranked = data.ideas.filter((i3) => i3.deferred_at === null && i3.rank !== null).length;
+  const other = data.ideas.filter((i3) => i3.deferred_at === null && i3.tab !== "ideas").length;
+  return [
+    ["Threads", String(data.ideas.length)],
+    ["Ranked", String(ranked)],
+    ["Unranked", String(data.ideas.length - ranked - deferred - other)],
+    ...other > 0 ? [["Other open", String(other)]] : [],
+    ["Deferred", String(deferred)],
+    ["Resolved", String(data.resolved.length)]
+  ];
+}
+var LOOSE_THREADS_PAGE_NAME = "Loose Threads";
+var LOOSE_THREADS_FILE2 = `${LOOSE_THREADS_PAGE_NAME}.html`;
+var LOOSE_IDEAS_PAGE = {
+  name: LOOSE_THREADS_PAGE_NAME,
+  ...templated({
+    entry: "loose-threads.html",
+    files: {
+      "loose-threads.html": loose_threads_html_default,
+      "view-head.html": view_head_html_default,
+      "board.css": board_css_default,
+      "loose-threads.css": loose_threads_css_default,
+      "view-folder.css": view_folder_css_default,
+      "shared.js": shared_js_default,
+      "loose-threads.js": loose_threads_js_default
+    }
+  }),
+  data: (ctx) => buildLooseIdeasData(ctx.dbPath, fetchAllProceedings(ctx.dbPath).map((p3) => p3.id), process.env, ctx.draftDir, ctx.boards),
+  metaExtra: looseIdeasMeta
+};
+
+// src/templates/matter-board/matter-board.css.ts
+var matter_board_css_default = 'ul.todos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}\nli.todo{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}\nli.todo .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}\nli.todo .description{font-weight:500}\nli.todo .bf{font-family:var(--mono);font-size:12px;color:var(--muted)}\nli.todo .line{margin:0;font-size:13px;color:var(--muted)}\narticle.filing{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;font-size:13.5px}\n.name{font-weight:600}\n.line .name{font-weight:500}\n.mockups,.jobs{color:var(--muted)}\ndetails.retired{background:var(--card);border:1px solid var(--line);border-radius:10px;opacity:.7}\ndetails.retired>summary{cursor:pointer;padding:12px 14px}\ndetails.retired>p{margin:0;padding:0 14px 12px;font-size:13px;color:var(--muted)}\ndetails.lane>summary{list-style:none;cursor:pointer}\ndetails.lane>summary::-webkit-details-marker{display:none}\ndetails.lane>summary>h2{font-family:var(--sans-heading);font-size:13px;font-weight:600;color:var(--ink);margin:0;padding-bottom:8px;border-bottom:1px solid var(--frame);display:flex;align-items:baseline;gap:8px}\ndetails.lane>summary>h2::before{content:"\\25B8";color:var(--muted)}\ndetails.lane[open]>summary>h2::before{content:"\\25BE"}\ndetails.lane[open]>summary>h2{margin-bottom:12px}\ndetails.lane>summary>h2 .count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\n.addressee,.sent{color:var(--muted)}\nheader .job{display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:13px;color:var(--muted)}\nheader .job[hidden]{display:none}\nheader .job.stalled{color:var(--accent)}\nheader .job .spinner{width:10px;height:10px;border:2px solid var(--line);border-top-color:var(--ink);border-radius:50%;animation:job-spin 1s linear infinite}\n@keyframes job-spin{to{transform:rotate(360deg)}}';
+
+// src/templates/matter-board/matter-board.html.ts
+var matter_board_html_default = '<!doctype html>\n<html lang="en" data-matter-board-shell>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Litigation Strategy</title>\n<style>\n@@include(board.css)@@\n\n@@include(matter-board.css)@@\n</style>\n</head>\n<body>\n<main>\n  <header>\n    <h1>Litigation Strategy</h1>\n    <div class="meta"></div>\n    <p class="job" hidden></p>\n  </header>\n  <div class="board"></div>\n</main>\n<script>\n@@data@@</script>\n<script>\n@@include(matter-board.js)@@\n</script>\n</body>\n</html>\n';
+
+// src/templates/matter-board/matter-board.js.ts
+var matter_board_js_default = `(function () {
+  "use strict";
+  var data = window.MATTER_BOARD;
+  var header = document.querySelector("header");
+  var board = document.querySelector(".board");
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  if (!data) return;
+
+  var meta = data.meta;
+  if (meta.matter !== "") document.title = "Litigation Strategy \u2014 " + meta.matter;
+  var metaRow = header.querySelector(".meta");
+  [
+    ["Matter", meta.matter],
+    ["Client", meta.client],
+    ["Rev", String(meta.revision)],
+    ["Rendered", meta.rendered]
+  ].forEach(function (pair) {
+    if (pair[1] === "") return;
+    var span = el("span", "", pair[1]);
+    span.setAttribute("data-k", pair[0]);
+    metaRow.appendChild(span);
+  });
+
+  var MOCKUPS = { fresh: "Mockups ready", stale: "Mockups need re-rendering", never: "Mockups not yet rendered" };
+
+  function proceedingLine(p) {
+    return [p.proceeding.court_or_centre, p.proceeding.file_number].filter(function (part) { return part; }).join(" ");
+  }
+  function jobs(n) {
+    return n === 0 ? "No jobs in progress" : n === 1 ? "1 job in progress" : n + " jobs in progress";
+  }
+
+  // One line (ADR 0021 D3): name \xB7 lifecycle state \xB7 mockup status \xB7 jobs in progress. The same
+  // line is drawn under a to-do that points at the filing or proceeding (D5).
+  function fill(node, parts) {
+    parts.forEach(function (part, i) {
+      if (i > 0) node.appendChild(document.createTextNode(" \xB7 "));
+      node.appendChild(el("span", part[0], part[1]));
+    });
+    return node;
+  }
+  function filingParts(f) {
+    var parts = [["name", f.title], ["chip", f.state_since === null ? f.state_label : f.state_label + " " + f.state_since]];
+    if (f.render_state) parts.push(["mockups", MOCKUPS[f.render_state]]);
+    if (f.in_progress !== undefined) parts.push(["jobs", jobs(f.in_progress)]);
+    return parts;
+  }
+  function proceedingParts(p) {
+    var where = proceedingLine(p);
+    return [["name", "Proceeding " + p.proceeding_id + (where === "" ? "" : " (" + where + ")")], ["chip", p.state_label], ["jobs", jobs(p.in_progress)]];
+  }
+  // A sent letter's row in the "Sent, awaiting response" lane: addressee \xB7 subject \xB7 sent date.
+  function awaitingParts(a) {
+    return [["addressee", a.addressee === null ? "No addressee recorded" : a.addressee], ["name", a.subject], ["sent", "Sent " + a.sent_on]];
+  }
+  var awaiting = data.awaiting_response || [];
+
+  function filingLine(f) {
+    var line = fill(el("article", "filing"), filingParts(f));
+    line.setAttribute("data-filing-id", String(f.filing_id));
+    return line;
+  }
+  function preFilingLine(p) {
+    var line = fill(el("article", "filing"), proceedingParts(p));
+    line.setAttribute("data-proceeding-id", String(p.proceeding_id));
+    return line;
+  }
+  function awaitingLine(a) {
+    var line = fill(el("article", "filing"), awaitingParts(a));
+    line.setAttribute("data-filing-id", String(a.filing_id));
+    return line;
+  }
+
+  function todoItem(t) {
+    var li = el("li", "todo");
+    li.setAttribute("data-todo-id", t.id);
+    var head = el("div", "head");
+    head.appendChild(el("span", "description", t.description));
+    if (t.bf_date !== null) head.appendChild(el("span", "bf", "BF " + t.bf_date));
+    li.appendChild(head);
+    var filing = t.filing_id === undefined ? null : data.filings.filter(function (f) { return f.filing_id === t.filing_id; })[0];
+    var sent = t.filing_id === undefined ? null : awaiting.filter(function (a) { return a.filing_id === t.filing_id; })[0];
+    var proceeding = t.proceeding_id === undefined ? null : data.pre_filing.filter(function (p) { return p.proceeding_id === t.proceeding_id; })[0];
+    if (filing) {
+      var line = fill(el("p", "line"), filingParts(filing));
+      line.setAttribute("data-filing-id", String(filing.filing_id));
+      li.appendChild(line);
+    } else if (sent) {
+      li.appendChild(fill(el("p", "line"), awaitingParts(sent)));
+    } else if (proceeding) {
+      li.appendChild(fill(el("p", "line"), proceedingParts(proceeding)));
+    }
+    return li;
+  }
+
+  function retiredCard(f) {
+    var card = el("details", "retired");
+    card.setAttribute("data-filing-id", String(f.filing_id));
+    card.appendChild(el("summary", "", f.title));
+    // A Work Board with no Writing is closed, never retired, and prints no reason.
+    card.appendChild(el("p", "", f.job_only ? "Closed " + f.retired_on : "Retired " + f.retired_on + (f.retirement_reason ? " \u2014 " + f.retirement_reason.replace(/_/g, " ") : "")));
+    return card;
+  }
+
+  function section(id, heading, count, body) {
+    var sec = el("section");
+    sec.id = id;
+    var h2 = el("h2", "", heading + " ");
+    h2.appendChild(el("span", "count", String(count)));
+    sec.appendChild(h2);
+    sec.appendChild(body);
+    board.appendChild(sec);
+  }
+  function stack(cards, emptyText) {
+    if (cards.length === 0) return el("p", "empty", emptyText);
+    var div = el("div", "stack");
+    cards.forEach(function (c) { div.appendChild(c); });
+    return div;
+  }
+
+  var todos = el("ul", "todos");
+  data.todos.forEach(function (t) { todos.appendChild(todoItem(t)); });
+  section("todos", "To-dos", data.todos.length, data.todos.length > 0 ? todos : el("p", "empty", data.todos_note || "No open to-dos for this matter."));
+
+  // A Work Board with no Writing is no Writing: it is counted and drawn in a section of its own.
+  // A merged Work Board (docs/ADRs/0010) is one heading with its sections' lines beneath it, and those
+  // sections are left out of the lists below.
+  var boards = data.boards || [];
+  var onBoard = { filing: {}, proceeding: {} };
+  boards.forEach(function (b) {
+    b.filing_ids.forEach(function (id) { onBoard.filing[id] = true; });
+    b.proceeding_ids.forEach(function (id) { onBoard.proceeding[id] = true; });
+  });
+  if (boards.length > 0) {
+    section("merged-boards", "Merged Work Boards", boards.length, stack(boards.map(function (b) {
+      var card = el("article", "merged-board");
+      card.appendChild(el("h3", "", b.name));
+      data.filings.filter(function (f) { return b.filing_ids.indexOf(f.filing_id) >= 0; }).forEach(function (f) { card.appendChild(filingLine(f)); });
+      data.pre_filing.filter(function (p) { return b.proceeding_ids.indexOf(p.proceeding_id) >= 0; }).forEach(function (p) { card.appendChild(preFilingLine(p)); });
+      return card;
+    }), ""));
+  }
+  var writings = data.filings.filter(function (f) { return !f.job_only; });
+  var live = writings.filter(function (f) { return !f.retired_on && !onBoard.filing[f.filing_id]; });
+  var milestones = data.filings.filter(function (f) { return f.job_only && !f.retired_on && !onBoard.filing[f.filing_id]; });
+  var preFiling = data.pre_filing.filter(function (p) { return !onBoard.proceeding[p.proceeding_id]; });
+  var retired = data.filings.filter(function (f) { return f.retired_on; });
+  section("filings", "Writings", live.length, stack(live.map(filingLine), writings.length + awaiting.length === 0 ? "No Writings in this matter." : boards.length > 0 ? "Every live Writing is on a merged Work Board." : "No live Writings."));
+  // Sent letters not yet retired: one lane, collapsed by default, outside the Writings count.
+  if (awaiting.length > 0) {
+    var lane = el("details", "lane");
+    var summary = el("summary");
+    var h2 = el("h2", "", "Sent, awaiting response ");
+    h2.appendChild(el("span", "count", String(awaiting.length)));
+    summary.appendChild(h2);
+    lane.appendChild(summary);
+    lane.appendChild(stack(awaiting.map(awaitingLine), ""));
+    var awaitingSection = el("section");
+    awaitingSection.id = "awaiting";
+    awaitingSection.appendChild(lane);
+    board.appendChild(awaitingSection);
+  }
+  if (milestones.length > 0) section("milestones", "Work Boards", milestones.length, stack(milestones.map(filingLine), ""));
+  if (preFiling.length > 0) section("pre-filing", "Before filing", preFiling.length, stack(preFiling.map(preFilingLine), ""));
+  if (retired.length > 0) section("retired", "Retired", retired.length, stack(retired.map(retiredCard), ""));
+
+  // Live status from the background render job (#589). See the file header for the rules.
+  var STALLED = "Rendering may have stalled \u2014 re-open the session to retry";
+  var job = header.querySelector(".job");
+  var boardMs = (function (m) {
+    return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime() : 0;
+  })(/^(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}):(\\d{2})/.exec(meta.rendered));
+  var tag = null;
+
+  function showJob(text, stalled) {
+    job.textContent = "";
+    if (!stalled) job.appendChild(el("span", "spinner"));
+    job.appendChild(document.createTextNode(text));
+    job.className = stalled ? "job stalled" : "job";
+    job.hidden = false;
+  }
+  // A filing's line and every to-do line pointing at it carry the same mockup status.
+  function mark(id, text) {
+    board.querySelectorAll('[data-filing-id="' + id + '"] .mockups').forEach(function (span) { span.textContent = text; });
+  }
+  function apply(s) {
+    // A status older than this board says nothing about it: the board was written after the job.
+    if (Date.parse(s.updated_at) > boardMs) {
+      s.done.forEach(function (id) { mark(id, MOCKUPS.fresh); });
+      s.failed.forEach(function (f) { mark(f.filing_id, "Mockups failed to render"); });
+    }
+    if (s.state === "running") {
+      var finished = s.done.length + s.failed.length;
+      var total = finished + s.queued.length + (s.current === null ? 0 : 1);
+      if (Date.now() - Date.parse(s.updated_at) > s.stall_after_ms) showJob(STALLED, true);
+      else showJob("Rendering mockups \u2014 " + finished + " of " + total, false);
+      setTimeout(poll, 2000);
+    } else if (s.state === "aborted") {
+      showJob(STALLED, true);
+    } else {
+      job.hidden = true;
+    }
+  }
+  function poll() {
+    if (tag) tag.remove();
+    window.WORKBOARD_STATUS = undefined;
+    tag = document.createElement("script");
+    tag.onload = function () {
+      if (window.WORKBOARD_STATUS) apply(window.WORKBOARD_STATUS);
+    };
+    tag.onerror = function () {
+      job.hidden = true;
+    };
+    tag.src = "workboard-status.js?t=" + Date.now();
+    document.body.appendChild(tag);
+  }
+  poll();
+})();`;
+
+// src/submission/forms/matter-board-shell.ts
+var MATTER_BOARD_FILE = "Litigation Strategy.html";
+var MATTER_BOARD_MARKER = "data-matter-board-shell";
+var LITIGATION_STRATEGY_TEMPLATE = {
+  entry: "matter-board.html",
+  files: {
+    "matter-board.html": matter_board_html_default,
+    "board.css": board_css_default,
+    "matter-board.css": matter_board_css_default,
+    "matter-board.js": matter_board_js_default
+  }
+};
+var PAGE3 = composeTemplate(LITIGATION_STRATEGY_TEMPLATE.entry, LITIGATION_STRATEGY_TEMPLATE.files);
+function renderMatterBoardHtml(data, page2 = PAGE3) {
+  return `${page2.head}window.MATTER_BOARD = ${JSON.stringify(data).replace(/</g, "\\u003c")};
+${page2.tail}`;
+}
+
+// src/submission/matter-page-files.ts
+var MILESTONE_MARKER = "data-workboard-shell";
+function refuseForeignMatterPages(draftDir, dbPath) {
+  const { live, preFiling } = liveMembers(dbPath);
+  const folders2 = writingFolders(dbPath, draftDir);
+  const groups = pageGroups(new BoardIndex(dbPath), live, preFiling, folders2);
+  refuseForeignPages(draftDir, guardTargets(groups.map((g3) => g3.file), viewTargets(groups, folders2)));
+}
+function pagePathFor(pages, section3) {
+  const { filing_id, proceeding_id } = section3;
+  return pages.milestone_paths.find((p3) => filing_id !== null ? p3.filing_id === filing_id : p3.filing_id === null && p3.proceeding_id === proceeding_id)?.path;
+}
+function guardTargets(names, views) {
+  return [
+    { name: MATTER_BOARD_FILE, marker: MATTER_BOARD_MARKER, page: "Litigation Strategy" },
+    { name: LOOSE_THREADS_FILE2, marker: VIEW_PAGE_MARKER, page: LOOSE_THREADS_PAGE_NAME },
+    ...names.map((name) => ({ name, marker: MILESTONE_MARKER, page: "Work Board" })),
+    ...views.map((v3) => ({ name: v3.file, marker: VIEW_PAGE_MARKER, page: v3.page.name }))
+  ];
+}
+function refuseForeignPages(draftDir, targets) {
+  for (const { name, marker, page: page2 } of targets) {
+    const file = join43(draftDir, name);
+    if (existsSync39(file) && !readFileSync34(file, "utf-8").includes(marker)) {
+      throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page2}'s marker, so this renderer did not write it`);
+    }
+  }
+}
+function writePage(file, html) {
+  mkdirSync19(dirname19(file), { recursive: true });
+  const code = writeStatusFile(file, html);
+  if (code !== null) throw new DataServerError(`could not write ${file}: ${code}`);
+}
+var OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strategy-\d+|work board.*|matter board.*|work_board @rev.*|loose ideas - filing \d+|(?:provable facts|raw research|arguments) - filing \d+|loose threads(?: - (?:filing|Milestone|job board)(?: - proceeding)? \d+)?|provable facts - Milestone(?: - proceeding)? \d+|provable facts - job board(?: - proceeding)? \d+|(?:raw research|legal memos)(?: - (?:Milestone|job board)(?: - proceeding)? \d+)?)\.html$/i;
+var PREVIEW_FILE = / preview \d+\.html$/i;
+var RETIRED_PREVIEW = /^(?:raw research|legal memos)(?: - (?:Milestone|job board)(?: - proceeding)? \d+)? preview \d+\.html$/i;
+function generatorWrote(file) {
+  const text8 = readFileSync34(file, "utf-8");
+  return text8.includes(MILESTONE_MARKER) || text8.includes(MATTER_BOARD_MARKER) || text8.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
+}
+function sweepOldPages(draftDir, names) {
+  const moved = [];
+  const skipped = [];
+  const targets = new Set([...names, MATTER_BOARD_FILE].map((name) => join43(name).toLowerCase()));
+  const subfolders = readdirSync21(draftDir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name.toLowerCase() !== "archive").map((e3) => join43(draftDir, e3.name));
+  for (const dir of [draftDir, ...subfolders]) {
+    for (const entry2 of readdirSync21(dir, { withFileTypes: true })) {
+      const old = RETIRED_PREVIEW.test(entry2.name) || !PREVIEW_FILE.test(entry2.name) && (OLD_PAGE.test(entry2.name) || isViewPageFile(entry2.name));
+      if (!entry2.isFile() || !old) continue;
+      const file = join43(dir, entry2.name);
+      if (targets.has(relative2(draftDir, file).toLowerCase())) continue;
+      try {
+        if (!generatorWrote(file)) continue;
+        const result = fileOpsTrash(file);
+        moved.push({ from: result.moved_from, to: result.moved_to });
+      } catch (err) {
+        if (!(err instanceof DataServerError) && !["ENOENT", "EBUSY", "EPERM", "EACCES"].includes(err.code ?? "")) throw err;
+        skipped.push({ path: file, error: err.message });
+      }
+    }
+  }
+  return { ...moved.length > 0 ? { moved_to_trash: moved } : {}, ...skipped.length > 0 ? { trash_skipped: skipped } : {} };
+}
+
+// src/submission/matter-pages-build.ts
+import { dirname as dirname22, join as join46 } from "node:path";
+
+// src/submission/board-attachments.ts
+import { closeSync as closeSync7, existsSync as existsSync41, openSync as openSync7, readSync as readSync2, realpathSync as realpathSync9, statSync as statSync18 } from "node:fs";
+import { dirname as dirname20, isAbsolute as isAbsolute6, relative as relative3, resolve as resolve5, sep } from "node:path";
+
+// src/housekeeping/name-gate.ts
+import { existsSync as existsSync40 } from "node:fs";
+import { win32 as pathWin3218 } from "node:path";
+var DRIVER7 = `import contextlib, io, json, sys
+import name_gate
+payload = json.load(sys.stdin)
+out = []
+for group in payload["groups"]:
+    buf = io.StringIO()
+    # "./" keeps a name that starts with "-" from reading as an option; the gate takes the basename.
+    argv = ["--registry", payload["registry"], "--files", *["./" + n for n in group["names"]], "--flag-tokens", ",".join(group["flag_tokens"])]
+    with contextlib.redirect_stdout(buf):
+        code = name_gate.main(argv)
+    if code:
+        raise SystemExit("name_gate.py exited %s" % code)
+    out.append(json.loads(buf.getvalue())["results"])
+json.dump({"groups": out}, sys.stdout)
+`;
+function fileNamingSkillDir(env = process.env, installRoot) {
+  const shipped = resolveShippedRoot("file-naming/scripts/name_gate.py", env, {
+    code: "repo_root_missing",
+    subject: "the file-naming name gate",
+    plugin: "lawyer",
+    installRoot
+  });
+  const dir = pathWin3218.join(shipped.root, "file-naming");
+  for (const rel of [["scripts", "name_gate.py"], ["references", "code-registry.md"]]) {
+    if (!existsSync40(pathWin3218.join(dir, ...rel))) {
+      throw new DataServerError(
+        `${rel.join("\\")} not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
+        "repo_root_missing"
+      );
+    }
+  }
+  return dir;
+}
+function runNameGate(groups, env = process.env) {
+  const live = groups.filter((g3) => g3.names.length > 0);
+  if (live.length === 0) return groups.map(() => []);
+  const dir = fileNamingSkillDir(env);
+  const parsed = runPythonDriver({
+    label: "file-naming name gate",
+    driver: pythonDriverFile("housekeeping-name-gate", DRIVER7),
+    payload: JSON.stringify({ registry: pathWin3218.join(dir, "references", "code-registry.md"), groups: live }),
+    env,
+    timeoutMs: READ_TIMEOUT_MS,
+    extraEnv: { PYTHONPATH: pathWin3218.join(dir, "scripts") }
+  });
+  let next2 = 0;
+  return groups.map((g3) => g3.names.length > 0 ? parsed.groups[next2++] : []);
+}
+
+// src/submission/board-attachments.ts
+var REVIEW_LINE = /^Counsel['’]s review:\s*/;
+var FIRST_LINE_BYTES = 4096;
+var PENDING2 = /* @__PURE__ */ new Set(["ready", "wip", "bring_forward", "waiting"]);
+function firstLine2(file) {
+  const fd = openSync7(file, "r");
+  try {
+    const buffer = Buffer.alloc(FIRST_LINE_BYTES);
+    const read3 = readSync2(fd, buffer, 0, FIRST_LINE_BYTES, 0);
+    return buffer.subarray(0, read3).toString("utf-8").replace(/^﻿/, "").split(/\r?\n/)[0];
+  } finally {
+    closeSync7(fd);
+  }
+}
+function leavesDraftFolder(rel) {
+  return rel === "" || rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute6(rel);
+}
+function localDate3(d3) {
+  return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+}
+function attachedDrafts(dbPath, draftDir, section3) {
+  if (section3.attachments.length === 0) return [];
+  const matterRoot = dirname20(draftDir);
+  const writings = new Map(fetchAllFilingsForProceeding(dbPath, section3.meta.proceeding_id).map((f3) => [f3.id, f3.title]));
+  const linked = buildProceedingBoard(dbPath, section3.meta.proceeding_id).tickets.filter(({ ticket }) => PENDING2.has(ticket.category));
+  return section3.attachments.map((a3) => {
+    const segments = a3.path.split(/[\\/]+/).filter((s3) => s3 !== "");
+    const abs = resolve5(matterRoot, ...segments);
+    const name = segments[segments.length - 1] ?? a3.path;
+    const entry2 = {
+      id: a3.id,
+      kind: a3.kind,
+      path: a3.path,
+      name,
+      attached_on: a3.attached_on,
+      proceeding_wide: section3.meta.filing_id !== null && a3.filing_id === null,
+      code: null,
+      jobs: linked.filter(({ ticket }) => ticket.scope.includes(`board_attachments:${a3.id}`)).map(({ filing_id, ticket }) => ({ id: ticket.id, title: ticket.title, category: ticket.category, writing: filing_id === null ? null : writings.get(filing_id) ?? null }))
+    };
+    const absent = { ...entry2, modified: null, review: null };
+    const base = a3.kind === "opposing_filing" ? matterRoot : draftDir;
+    if (leavesDraftFolder(relative3(base, abs))) return { ...absent, state: "outside" };
+    if (!existsSync41(abs)) return { ...absent, state: "missing" };
+    try {
+      const real = realpathSync9.native(abs);
+      if (leavesDraftFolder(relative3(realpathSync9.native(base), real)) || zoneProblem("read", real)) {
+        return { ...absent, state: "outside" };
+      }
+      const modified2 = localDate3(statSync18(abs).mtime);
+      const line = a3.kind === "client_letter" ? firstLine2(abs) : "";
+      return { ...entry2, modified: modified2, state: "present", review: REVIEW_LINE.test(line) ? line.replace(REVIEW_LINE, "").trim() : null };
+    } catch (err) {
+      return { ...absent, state: "unreadable", error: err.code ?? "error" };
+    }
+  });
+}
+function withCodes(drafts) {
+  if (drafts.length === 0) return drafts;
+  try {
+    const [results] = runNameGate([{ names: drafts.map((d3) => d3.name), flag_tokens: [] }]);
+    return drafts.map((d3, i3) => ({ ...d3, code: results[i3].code }));
+  } catch (err) {
+    return drafts.map((d3) => ({ ...d3, code_error: err.message }));
+  }
+}
+
+// src/submission/forms/board-viewed.ts
+import { basename as basename5, dirname as dirname21, join as join44, resolve as resolve6 } from "node:path";
+var TOOL10 = "drafting_data__record_viewed";
+function viewedKey(board) {
+  return `board_viewed:${boardKey(board)}`;
+}
+function viewItemKey(pageName2) {
+  return `view:${pageName2}`;
+}
+function docItemKey(filingId, fileName) {
+  return `doc:${filingId}:${fileName}`;
+}
+var RENAMED_VIEWS = { [viewItemKey("Raw Research")]: viewItemKey("Legal Research"), [viewItemKey("Legal Memos")]: viewItemKey("Legal Research") };
+function readViewed(dbPath, board) {
+  const key = viewedKey(board);
+  const [row2] = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = ?", [key]).rows;
+  if (row2 === void 0) return [];
+  let parsed;
+  try {
+    parsed = JSON.parse(row2.value);
+  } catch {
+    parsed = void 0;
+  }
+  if (!Array.isArray(parsed) || !parsed.every((k3) => typeof k3 === "string")) {
+    throw new DataServerError("A board's saved viewing order is damaged, so it cannot be read", "invalid_board_viewed");
+  }
+  return [...new Set(parsed.map((k3) => RENAMED_VIEWS[k3] ?? k3))];
+}
+function orderStrip(items2, viewed) {
+  const at = (item) => viewed.indexOf(item.key);
+  return [
+    ...items2.filter((i3) => at(i3) >= 0).sort((a3, b3) => at(a3) - at(b3)).map((i3) => ({ ...i3, viewed: true })),
+    ...items2.filter((i3) => at(i3) < 0).map((i3) => ({ ...i3, viewed: false }))
+  ];
+}
+function inFolderOf(t3, path) {
+  return resolve6(t3.dir).toLowerCase() === resolve6(dirname21(path)).toLowerCase();
+}
+function stripTargets(dbPath) {
+  const index = new BoardIndex(dbPath);
+  const filings = submissionDataQuery(dbPath, "SELECT id, proceeding_id, kind, title, retired_on FROM filings ORDER BY id").rows;
+  const targets = [];
+  const boards = /* @__PURE__ */ new Map();
+  for (const f3 of filings.filter((x3) => !x3.retired_on && !isJobOnlyBoard(x3))) {
+    const board = index.survivorOf({ filing_id: f3.id, proceeding_id: f3.proceeding_id });
+    boards.set(boardKey(board), board);
+    const manifest = readManifest(dbPath, f3.id);
+    if (manifest === null) continue;
+    const dir = manifestDir(dbPath, manifest);
+    for (const doc of manifest.files) targets.push({ board, key: docItemKey(f3.id, doc.file_name), file: doc.file_name, dir });
+  }
+  const draft = draftDirOf(dbPath);
+  const folders2 = writingFolders(dbPath, draft);
+  for (const board of boards.values()) {
+    const folder = board.filing_id === null ? void 0 : folders2.get(board.filing_id)?.name;
+    for (const page2 of VIEW_PAGES) {
+      const file = join44(draft, viewPageFile(page2, board, folder));
+      targets.push({ board, key: viewItemKey(page2.name), file: basename5(file), dir: dirname21(file) });
+    }
+  }
+  return targets;
+}
+async function submissionDataRecordViewed(args, env = process.env) {
+  if (!Array.isArray(args.paths) || args.paths.length === 0 || !args.paths.every((p3) => typeof p3 === "string" && p3.trim() !== "")) {
+    throw new ValidationError(`${TOOL10}.paths must list the presented paths, none blank`, "invalid_paths");
+  }
+  const targets = stripTargets(args.db_path);
+  const matched = args.paths.map((path) => {
+    const name = path.split(/[\\/]/).pop().toLowerCase();
+    let hits = targets.filter((t3) => t3.file.toLowerCase() === name);
+    if (hits.length > 1) hits = hits.filter((t3) => inFolderOf(t3, path));
+    if (hits.length !== 1 && targets.some((t3) => t3.file.toLowerCase() === name)) {
+      throw new ValidationError(`${TOOL10}: several thumbnails are named ${name} and its folder holds none of them; pass the path in its Writing's own folder. Nothing was written.`, "ambiguous_path");
+    }
+    if (hits.length === 0) {
+      throw new ValidationError(`${TOOL10}: ${path} is no thumbnail on a Work Board: neither a view page nor a Writing's mockup. Nothing was written.`, "not_a_strip_item");
+    }
+    return hits[0];
+  });
+  const lists = /* @__PURE__ */ new Map();
+  for (const t3 of matched) {
+    const entry2 = lists.get(boardKey(t3.board)) ?? { board: t3.board, keys: readViewed(args.db_path, t3.board) };
+    entry2.keys = [t3.key, ...entry2.keys.filter((k3) => k3 !== t3.key)];
+    lists.set(boardKey(t3.board), entry2);
+  }
+  const rows4 = [...lists.values()].map(({ board, keys }) => {
+    const current = new Set(targets.filter((t3) => boardKey(t3.board) === boardKey(board)).map((t3) => t3.key));
+    return { key: viewedKey(board), value: JSON.stringify(keys.filter((k3) => current.has(k3))) };
+  });
+  const written = await submissionDataWriteAll(
+    args.db_path,
+    rows4.map((r3) => ({ sql: "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)", params: [r3.key, r3.value], expect_changes: 1 })),
+    env
+  );
+  if (!written.ok) throw new DataServerError(`${TOOL10}: the write did not land (statement ${written.failed}); nothing was written`, "write_failed");
+  return {
+    keys: rows4.map((r3) => r3.key),
+    note: "Recorded. The Work Board shows the new order the next time its page is written; this call does not rewrite it.",
+    ...written.warning ? { warning: written.warning } : {}
+  };
+}
+
+// src/submission/court-file-affidavits.ts
+import { readdirSync as readdirSync22 } from "node:fs";
+import { basename as basename6, join as join45 } from "node:path";
+var STATUSES2 = ["SIGNED", "AFFIRMED", "SWORN", "FILED", "UNFILED", "UNSIGNED", "UNSWORN"];
+var MADE = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN"]);
+var EXECUTED = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN", "FILED"]);
+var RANK = { FILED: 3, SIGNED: 2, AFFIRMED: 2, SWORN: 2, UNFILED: 1, UNSIGNED: 0, UNSWORN: 0 };
+var AFFIDAVIT_NAME = /^(\d{4}-\d{2}-\d{2}) AFF#?(\d+)(?: of)? (\S+)(.*)\.(?:pdf|docx?)$/i;
+function parseAffidavitName(fileName) {
+  const m3 = AFFIDAVIT_NAME.exec(fileName);
+  if (m3 === null) return null;
+  const markers = m3[4].toUpperCase().split(/\s+/).filter((t3) => STATUSES2.includes(t3));
+  return { file_name: fileName, date: m3[1], number: m3[2], deponent_code: m3[3], status: markers.length > 0 ? markers[markers.length - 1] : null };
+}
+function deponentCode(name) {
+  const words2 = name.trim().split(/\s+/).filter((w3) => w3 !== "");
+  if (words2.length === 0) return "";
+  if (words2.length === 1) return words2[0];
+  return `${words2[words2.length - 1]}${words2[0][0].toUpperCase()}`;
+}
+function courtFileFolder(matterRoot, fileNumber, env = process.env) {
+  let map;
+  try {
+    map = readFolderMap(env);
+  } catch (err) {
+    return { note: `the folder map could not be read: ${err.message}` };
+  }
+  if (map.status === "no_map") return { note: `Probanda does not know where this practitioner keeps court filings (${map.reason})` };
+  let paths;
+  try {
+    paths = [...new Set(globsFor(map.entries, ["court_filings"]).flatMap((glob) => expandGlob(matterRoot, glob)))].sort();
+  } catch (err) {
+    return { note: `the matter folder could not be listed (${err.code ?? "error"})` };
+  }
+  if (paths.length === 0) return { note: "the matter has no court filings folder" };
+  if (paths.length === 1) return { path: paths[0] };
+  const fitting = fileNumber ? paths.filter((p3) => basename6(p3).toUpperCase().includes(fileNumber.toUpperCase())) : [];
+  if (fitting.length === 1) return { path: fitting[0] };
+  return { note: `no single court filings folder names this proceeding's file number (${paths.map((p3) => `"${basename6(p3)}"`).join(", ")})` };
+}
+function fileNames(dir) {
+  let entries;
+  try {
+    entries = readdirSync22(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  return entries.flatMap((e3) => e3.isDirectory() ? fileNames(join45(dir, e3.name)) : e3.isFile() ? [e3.name] : []);
+}
+function newest(names) {
+  return [...names].sort((a3, b3) => b3.date.localeCompare(a3.date) || RANK[b3.status ?? "UNSWORN"] - RANK[a3.status ?? "UNSWORN"])[0] ?? null;
+}
+function courtFileAffidavits(dbPath, filingId, matterRoot) {
+  const relied = submissionDataQuery(
+    dbPath,
+    `SELECT DISTINCT d.id AS document_id, d.label, d.affidavit_number, d.execution, w.name AS deponent, p.file_number
+     FROM filing_documents fd
+     JOIN documents d ON d.id = fd.document_id
+     JOIN filings f ON f.id = fd.filing_id
+     JOIN proceedings p ON p.id = f.proceeding_id
+     LEFT JOIN witnesses w ON w.id = d.deponent
+     WHERE fd.filing_id = ? AND (fd.role = 'affidavit' OR d.instrument = 'affidavit')
+     ORDER BY fd.ordinal`,
+    [filingId]
+  ).rows;
+  if (relied.length === 0) return [];
+  const folder = courtFileFolder(matterRoot, relied[0].file_number);
+  const names = "path" in folder ? fileNames(folder.path).map(parseAffidavitName).filter((n3) => n3 !== null) : [];
+  return relied.map((r3) => {
+    const base = { document_id: r3.document_id, label: r3.label, affidavit_number: r3.affidavit_number, deponent: r3.deponent, recorded: { made_on: r3.execution } };
+    const number3 = r3.affidavit_number?.match(/\d+/)?.[0];
+    if (!("path" in folder) || number3 === void 0) {
+      return { ...base, court_file: null, court_file_made_on: null, note: "path" in folder ? "drafting data records no affidavit number" : folder.note, mismatch: null };
+    }
+    const code = r3.deponent ? deponentCode(r3.deponent).toUpperCase() : null;
+    const matches = names.filter((n3) => String(Number(n3.number)) === String(Number(number3)) && (code === null || n3.deponent_code.toUpperCase() === code));
+    const latest = newest(matches);
+    const made = newest(matches.filter((n3) => n3.status !== null && MADE.has(n3.status)));
+    const madeOn = made?.date ?? null;
+    let mismatch = null;
+    if (latest?.status && EXECUTED.has(latest.status) && r3.execution === null) {
+      mismatch = `court file shows ${latest.status.toLowerCase()} ${latest.date}; drafting data shows unsworn`;
+    } else if (madeOn !== null && r3.execution !== null && madeOn !== r3.execution) {
+      mismatch = `court file shows ${(made?.status ?? "").toLowerCase()} ${madeOn}; drafting data shows made ${r3.execution}`;
+    }
+    return { ...base, court_file: latest, court_file_made_on: madeOn, mismatch };
+  });
 }
 
 // src/templates/milestone/milestone.css.ts
@@ -109754,7 +110247,7 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
       ),
       attached: withCodes(sections.flatMap((s3) => attachedDrafts(dbPath, draftDir, s3))),
       court_file: raw.flatMap(
-        (s3) => s3.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, s3.meta.filing_id, dirname20(draftDir)).filter((a3) => a3.mismatch !== null)
+        (s3) => s3.meta.filing_id === null ? [] : courtFileAffidavits(dbPath, s3.meta.filing_id, dirname22(draftDir)).filter((a3) => a3.mismatch !== null)
       )
     }, templates.milestone);
   });
@@ -109768,41 +110261,41 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     );
   });
   const threadsPage = templates.threads ?? LOOSE_IDEAS_PAGE;
-  const threads = renderViewPageHtml(threadsPage, { ...meta2, filing: "" }, threadsPage.data({ dbPath }));
+  const threads = renderViewPageHtml(threadsPage, { ...meta2, filing: "" }, threadsPage.data({ dbPath, draftDir, boards: targets }));
   const html = [matterBoard, threads, ...milestones, ...viewPages];
   return {
     pages: guardTargets(groupsWritten.map((g3) => g3.file), viewsWritten).map((t3, i3) => ({ ...t3, html: html[i3] })),
-    keep: [LOOSE_THREADS_FILE, ...groups.map((g3) => g3.file), ...views.map((v3) => v3.file)],
+    keep: [LOOSE_THREADS_FILE2, ...groups.map((g3) => g3.file), ...views.map((v3) => v3.file)],
     paths: {
-      milestone_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join44(draftDir, t3.file) })),
-      matter_board_path: join44(draftDir, MATTER_BOARD_FILE),
-      loose_threads_path: join44(draftDir, LOOSE_THREADS_FILE),
-      view_page_paths: views.flatMap((v3) => v3.writings.map((w3) => ({ name: v3.page.name, filing_id: w3.filing.id, path: join44(draftDir, v3.file) })))
+      milestone_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join46(draftDir, t3.file) })),
+      matter_board_path: join46(draftDir, MATTER_BOARD_FILE),
+      loose_threads_path: join46(draftDir, LOOSE_THREADS_FILE2),
+      view_page_paths: views.flatMap((v3) => v3.writings.map((w3) => ({ name: v3.page.name, filing_id: w3.filing.id, path: join46(draftDir, v3.file) })))
     }
   };
 }
 
 // src/submission/matter-pages-state.ts
 import { mkdirSync as mkdirSync20, readFileSync as readFileSync35 } from "node:fs";
-import { join as join45 } from "node:path";
+import { join as join47 } from "node:path";
 var PAGES_STATE_FILE = "matter-pages-state.json";
 var TODOS_NOT_READ = { note: "This matter's to-dos were not read." };
 var MAX_SESSIONS = 20;
 function statePath(dbPath) {
-  return join45(recordsDir(dbPath), PAGES_STATE_FILE);
+  return join47(recordsDir(dbPath), PAGES_STATE_FILE);
 }
-function isTodos(value) {
-  if (typeof value !== "object" || value === null) return false;
-  const todos = value;
+function isTodos(value2) {
+  if (typeof value2 !== "object" || value2 === null) return false;
+  const todos = value2;
   return Array.isArray(todos.rows) || typeof todos.note === "string";
 }
-function isSectionState(value) {
-  if (typeof value !== "object" || value === null) return false;
-  const section3 = value;
+function isSectionState(value2) {
+  if (typeof value2 !== "object" || value2 === null) return false;
+  const section3 = value2;
   return typeof section3.key === "string" && Array.isArray(section3.tickets);
 }
-function isRecord(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function isRecord(value2) {
+  return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
 }
 function readPagesState(dbPath) {
   try {
@@ -109958,8 +110451,8 @@ function jobCardLines(t3, derived, seeds, rendered) {
     return [head, `  superseded by: ${t3.superseded_by === null ? "\u2014" : `#${t3.superseded_by.id}`} \xB7 reason: ${t3.superseded_reason ?? "\u2014"}`];
   }
   const holder = t3.locked_by === null ? "" : ` \xB7 holder: ${t3.locked_by.slice(-8)}`;
-  const locked = t3.category === "wip" ? ` \xB7 taken: ${t3.locked_at ?? "(unknown time)"}${holder} \xB7 last activity: ${t3.last_activity_at ?? "(unknown time)"}${t3.active_at === null ? "" : ` \xB7 session active: ${t3.active_at}`}` : "";
-  const lines2 = [head, `  kind: ${t3.kind} \xB7 priority: ${t3.priority}${locked}`, `  intent: ${t3.intent}`];
+  const locked2 = t3.category === "wip" ? ` \xB7 taken: ${t3.locked_at ?? "(unknown time)"}${holder} \xB7 last activity: ${t3.last_activity_at ?? "(unknown time)"}${t3.active_at === null ? "" : ` \xB7 session active: ${t3.active_at}`}` : "";
+  const lines2 = [head, `  kind: ${t3.kind} \xB7 priority: ${t3.priority}${locked2}`, `  intent: ${t3.intent}`];
   const against = t3.research_writing === void 0 ? derived : null;
   if (t3.proposal_keys.length > 0) lines2.push(`  keys: ${t3.proposal_keys.map((key) => keyText(key, t3.proposal_items[key], against)).join("; ")}`);
   lines2.push(`  scope: ${t3.scope.length === 0 ? "\u2014" : t3.scope.join(", ")} \xB7 waits on: ${edgeText(t3.blocked_by)} \xB7 either-or: ${edgeText(t3.conflicts)}`);
@@ -110185,7 +110678,7 @@ function renderBoardCard(section3, jobs2, lanes, key, attached = [], courtFile =
 }
 
 // src/submission/board-card.ts
-import { dirname as dirname21 } from "node:path";
+import { dirname as dirname23 } from "node:path";
 function boardLabel(board) {
   return board.filing_id === null ? `proceeding ${board.proceeding_id}'s board` : `Work Board ${board.filing_id}`;
 }
@@ -110260,9 +110753,9 @@ function submissionFormsBoardCard(args, client = {}, now = nowStamp(), dates = D
       lanes,
       args.key,
       lanes.includes("attached") && draftDir !== void 0 ? withCodes(attachedDrafts(args.db_path, draftDir, section3)) : [],
-      lanes.includes("court_file") && draftDir !== void 0 && args.filing_id !== void 0 ? (section3.meta.writing_states?.map((w3) => w3.filing_id) ?? [args.filing_id]).filter((id) => id !== null).flatMap((id) => courtFileAffidavits(args.db_path, id, dirname21(draftDir))) : [],
-      lanes.includes("memos") && draftDir !== void 0 ? buildLegalMemosData(args.db_path, section3.tickets, dirname21(draftDir)).memos : [],
-      lanes.includes("briefs") && draftDir !== void 0 ? briefsOfBoard(args.db_path, section3, dirname21(draftDir)) : []
+      lanes.includes("court_file") && draftDir !== void 0 && args.filing_id !== void 0 ? (section3.meta.writing_states?.map((w3) => w3.filing_id) ?? [args.filing_id]).filter((id) => id !== null).flatMap((id) => courtFileAffidavits(args.db_path, id, dirname23(draftDir))) : [],
+      lanes.includes("memos") && draftDir !== void 0 ? buildLegalMemosData(args.db_path, section3.tickets, dirname23(draftDir)).memos : [],
+      lanes.includes("briefs") && draftDir !== void 0 ? briefsOfBoard(args.db_path, section3, dirname23(draftDir)) : []
     )
   };
 }
@@ -110278,7 +110771,7 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     const { pages, keep, paths } = buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates, reuse);
     refuseForeignPages(draftDir, pages);
     const swept = reuse.only === void 0 ? sweepOldPages(draftDir, keep) : {};
-    for (const p3 of pages) writePage(join46(draftDir, p3.name), p3.html);
+    for (const p3 of pages) writePage(join48(draftDir, p3.name), p3.html);
     return { ...paths, ...swept };
   });
 }
@@ -110375,7 +110868,7 @@ function formCurrency(formKey, today3, seams = {}) {
   let formNumber;
   if (front === null) formNumber = /^form-(\d+(?:\.\d+)?)$/.exec(formKey)?.[1] ?? null;
   else formNumber = typeof front.form_number === "string" ? front.form_number : null;
-  const conformedTo = lists[0].filter((reg) => lists.every((list) => list.includes(reg)));
+  const conformedTo = lists[0].filter((reg) => lists.every((list2) => list2.includes(reg)));
   const unconformed = [];
   for (const enactment of record2.enactments) {
     for (const change of enactment.pending_changes ?? []) {
@@ -110654,7 +111147,7 @@ var NOA_HEARING = /^(The applicant proposes that the matter will be heard on )(.
 var BCCA_HEARING = /^(THIS IS A RESPONSE TO the stay application .*, returnable )(.*?)(?: at (.*?))?\.$/m;
 function withholdHearing(doc) {
   if (doc.markdown === void 0) return doc;
-  const unlessBlank = (value, blank) => value === blank ? value : HEARING_WITHHELD;
+  const unlessBlank = (value2, blank) => value2 === blank ? value2 : HEARING_WITHHELD;
   const markdown = doc.markdown.replace(NOA_HEARING, (_m, head, proposed, tail) => `${head}${unlessBlank(proposed, "________________")}${tail}`).replace(
     BCCA_HEARING,
     (_m, head, date3, time3) => `${head}${unlessBlank(date3, gapMarker("gap"))}${time3 === void 0 ? "" : ` at ${HEARING_WITHHELD}`}.`
@@ -110796,9 +111289,9 @@ function finishFiledRender({
 
 // src/submission/forms/filing-reads.ts
 function fetchFilingById(dbPath, filingId) {
-  const found = submissionDataQuery(dbPath, "SELECT * FROM filings WHERE id = ?", [filingId]).rows;
-  if (found.length === 0) throw new ValidationError(`No filing found with id ${filingId}`);
-  return found[0];
+  const found2 = submissionDataQuery(dbPath, "SELECT * FROM filings WHERE id = ?", [filingId]).rows;
+  if (found2.length === 0) throw new ValidationError(`No filing found with id ${filingId}`);
+  return found2[0];
 }
 function refuseJobOnlyBoard(filing) {
   if (isJobOnlyBoard(filing)) {
@@ -110810,18 +111303,18 @@ function readDbMetaValue(dbPath, key) {
   return rows4.length > 0 ? rows4[0].value : null;
 }
 function readSchemaVersion(dbPath) {
-  const value = readDbMetaValue(dbPath, "schema_version");
-  return value === null ? null : Number(value);
+  const value2 = readDbMetaValue(dbPath, "schema_version");
+  return value2 === null ? null : Number(value2);
 }
 
 // src/submission/forms/mockup-files.ts
-import { existsSync as existsSync40, mkdirSync as mkdirSync21, renameSync as renameSync9, unlinkSync as unlinkSync14 } from "node:fs";
-import { basename as basename7, dirname as dirname22, extname as extname4, join as join47 } from "node:path";
+import { existsSync as existsSync42, mkdirSync as mkdirSync21, renameSync as renameSync9, unlinkSync as unlinkSync14 } from "node:fs";
+import { basename as basename7, dirname as dirname24, extname as extname4, join as join49 } from "node:path";
 function existingMockupPaths(dbPath, filingId) {
   const manifest = readManifest(dbPath, filingId);
   if (manifest === null) return [];
   const dir = manifestDir(dbPath, manifest);
-  return manifest.files.map((f3) => join47(dir, f3.file_name)).filter((p3) => existsSync40(p3));
+  return manifest.files.map((f3) => join49(dir, f3.file_name)).filter((p3) => existsSync42(p3));
 }
 function fileStem(fileName) {
   return fileName.slice(0, fileName.length - extname4(fileName).length);
@@ -110832,11 +111325,11 @@ function archiveIfStale(filePath, formLabel, currentRevision) {
   archiveFile(filePath, formLabel, existingRevision);
 }
 function archiveFile(filePath, formLabel, revision) {
-  const archiveDir = join47(dirname22(filePath), "archive");
+  const archiveDir = join49(dirname24(filePath), "archive");
   mkdirSync21(archiveDir, { recursive: true });
   const name = `${sanitizeForPath(formLabel)} @rev${revision} ${nowStamp().replace(/[: ]/g, "-")}`;
-  let archivePath = join47(archiveDir, `${name}${extname4(filePath)}`);
-  for (let n3 = 2; existsSync40(archivePath); n3++) archivePath = join47(archiveDir, `${name} (${n3})${extname4(filePath)}`);
+  let archivePath = join49(archiveDir, `${name}${extname4(filePath)}`);
+  for (let n3 = 2; existsSync42(archivePath); n3++) archivePath = join49(archiveDir, `${name} (${n3})${extname4(filePath)}`);
   renameSync9(filePath, archivePath);
 }
 function archiveDroppedFiles(dbPath, previous, written) {
@@ -110848,7 +111341,7 @@ function archiveDroppedFiles(dbPath, previous, written) {
     const single = sameType.length === 1 && previous.files.filter((f3) => f3.document_type === file.document_type).length === 1;
     const renamed = single ? sameType[0] : void 0;
     try {
-      archiveFile(join47(dir, file.file_name), fileStem(renamed?.fileName ?? file.file_name), previous.stamp.revision);
+      archiveFile(join49(dir, file.file_name), fileStem(renamed?.fileName ?? file.file_name), previous.stamp.revision);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
     }
@@ -110856,7 +111349,7 @@ function archiveDroppedFiles(dbPath, previous, written) {
 }
 function writeDocument2(baseDir, output, revision) {
   mkdirSync21(baseDir, { recursive: true });
-  const filePath = join47(baseDir, output.fileName);
+  const filePath = join49(baseDir, output.fileName);
   archiveIfStale(filePath, fileStem(output.fileName), revision);
   const code = writeStatusFile(filePath, output.markdown);
   if (code) throw new DataServerError(`could not write ${filePath}: ${code}`);
@@ -110865,9 +111358,9 @@ function writeDocument2(baseDir, output, revision) {
 var RETIRED_BOARD_FILES = ["workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
 function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
   for (const name of names) {
-    const file = join47(dir, name);
+    const file = join49(dir, name);
     try {
-      if (existsSync40(file)) unlinkSync14(file);
+      if (existsSync42(file)) unlinkSync14(file);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
     }
@@ -110875,22 +111368,22 @@ function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
 }
 var STALE_WORKBOARD_MARKDOWN = "Work Board.md";
 function removeOldBoardFiles(dir) {
-  const stale = readExistingRevision(join47(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
+  const stale = readExistingRevision(join49(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
   removeRetiredBoardFiles(dir, [...RETIRED_BOARD_FILES, ...stale]);
-  removeRetiredBoardFiles(dirname22(dir));
+  removeRetiredBoardFiles(dirname24(dir));
 }
 function refuseForeignTargets(dir, fileNames2) {
   for (const name of fileNames2) {
-    const target = join47(dir, name);
-    if (existsSync40(target) && readExistingRevision(target) === void 0) {
+    const target = join49(dir, name);
+    if (existsSync42(target) && readExistingRevision(target) === void 0) {
       throw new ValidationError(`${target} was not written by Probanda, so it is not overwritten. Move it out of the Writing's folder, then render again`);
     }
   }
 }
 
 // src/submission/forms/render-dirs.ts
-import { existsSync as existsSync41, realpathSync as realpathSync10 } from "node:fs";
-import { basename as basename8, dirname as dirname23, isAbsolute as isAbsolute7, resolve as resolve7 } from "node:path";
+import { existsSync as existsSync43, realpathSync as realpathSync10 } from "node:fs";
+import { basename as basename8, dirname as dirname25, isAbsolute as isAbsolute7, resolve as resolve7 } from "node:path";
 function resolvePresentationDir(dbPath, presentationDir, filingTitle, styleOfCause) {
   if (!isAbsolute7(presentationDir)) {
     throw new ValidationError(`drafting_forms__render.presentation_dir must be an absolute path: ${presentationDir}`);
@@ -110899,7 +111392,7 @@ function resolvePresentationDir(dbPath, presentationDir, filingTitle, styleOfCau
   const refuse2 = (why) => new ValidationError(`drafting_forms__render.presentation_dir ${dir}: ${why}`);
   let parent;
   try {
-    parent = realpathSync10.native(dirname23(dir));
+    parent = realpathSync10.native(dirname25(dir));
   } catch {
     throw refuse2("its parent must be the matter's existing 0. DRAFT folder, and it does not exist");
   }
@@ -110911,7 +111404,7 @@ function resolvePresentationDir(dbPath, presentationDir, filingTitle, styleOfCau
   if (!titles.includes(name)) {
     throw refuse2(`the folder must be named "${sanitizeForPath(filingTitle)}" (this filing's title), with or without a leading YYYY-MM-DD`);
   }
-  if (existsSync41(dir) && dirname23(realpathSync10.native(dir)).toLowerCase() !== parent.toLowerCase()) {
+  if (existsSync43(dir) && dirname25(realpathSync10.native(dir)).toLowerCase() !== parent.toLowerCase()) {
     throw refuse2("it resolves outside its 0. DRAFT folder");
   }
   return dir;
@@ -110987,10 +111480,10 @@ function documentsForFiling(ctx, timings, general, cited2) {
 }
 
 // src/submission/forms/writing-parties.ts
-import { dirname as dirname24 } from "node:path";
+import { dirname as dirname26 } from "node:path";
 function partiesFor(dbPath, proceeding, filing) {
   if (filing.filed_on) return { parties: fetchSentParties(dbPath, filing), drift: { rows: [] } };
-  return draftingParties(dirname24(dbPath), proceeding, fetchParties(dbPath, proceeding.id));
+  return draftingParties(dirname26(dbPath), proceeding, fetchParties(dbPath, proceeding.id));
 }
 function partiesDigest({ parties: parties2, drift }) {
   return sha2562(
@@ -111054,7 +111547,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
     );
   }
   const chosenDir = presentationDir === void 0 ? void 0 : resolvePresentationDir(dbPath, presentationDir, filing.title, proceeding.style_of_cause);
-  const pagesDir = draftDir !== void 0 ? draftDirOfCaller(dbPath, draftDir) : chosenDir !== void 0 ? dirname25(chosenDir) : void 0;
+  const pagesDir = draftDir !== void 0 ? draftDirOfCaller(dbPath, draftDir) : chosenDir !== void 0 ? dirname27(chosenDir) : void 0;
   const moved = renderMode === "mockup" ? timed(timings, "move case-data mockups", () => moveCaseDataMockups(dbPath)) : [];
   const movedReport = moved.length > 0 ? { mockups_moved: moved } : {};
   const revision = fetchRevision(dbPath);
@@ -111174,7 +111667,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
       const markdown = hit.contents.get(f3.file_name);
       return {
         document_type: f3.document_type,
-        path: join48(hit.dir, f3.file_name),
+        path: join50(hit.dir, f3.file_name),
         file_name: f3.file_name,
         markdown,
         ...symbolNotes(legendNotes(markdown, f3.document_type))
@@ -111227,7 +111720,7 @@ function renderFilingInMemory(dbPath, filingId, now, partiesDb = dbPath) {
   const filing = fetchFilingById(dbPath, filingId);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
   const revision = fetchRevision(dbPath);
-  const parties2 = filing.filed_on ? fetchSentParties(dbPath, filing) : draftingParties(dirname25(partiesDb), proceeding, fetchParties(dbPath, proceeding.id)).parties;
+  const parties2 = filing.filed_on ? fetchSentParties(dbPath, filing) : draftingParties(dirname27(partiesDb), proceeding, fetchParties(dbPath, proceeding.id)).parties;
   const ctx = buildContext(dbPath, proceeding, filing, parties2, revision, {}, void 0, now);
   const general = generalLayoutFor(filing);
   const cited2 = general === null ? [] : citedStates(general, filing);
@@ -111325,7 +111818,7 @@ function italicizeNames(line, names) {
 }
 function fetchAffidavitFields(dbPath, documentIds) {
   if (documentIds.length === 0) return /* @__PURE__ */ new Map();
-  const found = rows(
+  const found2 = rows(
     dbPath,
     `SELECT d.id, d.instrument, d.affidavit_number, d.execution, w.name AS deponent_name
      FROM documents d
@@ -111333,16 +111826,16 @@ function fetchAffidavitFields(dbPath, documentIds) {
      WHERE d.id IN (${documentIds.map(() => "?").join(",")})`,
     documentIds
   );
-  return new Map(found.map((r3) => [r3.id, r3]));
+  return new Map(found2.map((r3) => [r3.id, r3]));
 }
 function affidavitLine(d3, a3) {
   const made = a3?.execution ?? (a3?.instrument === "affidavit" ? null : d3.document_date);
   const who = a3?.deponent_name ? `Affidavit${a3.affidavit_number ? ` #${a3.affidavit_number}` : ""} of ${a3.deponent_name}` : d3.label;
   return `${who}, made ${made ? longDate(made) : "[date]"}`;
 }
-function frontmatterValue(value) {
-  if (value === null || value === void 0) return null;
-  const trimmed = value.trim();
+function frontmatterValue(value2) {
+  if (value2 === null || value2 === void 0) return null;
+  const trimmed = value2.trim();
   return trimmed === "" ? null : trimmed;
 }
 var MISSING_FRONTMATTER = {
@@ -111445,9 +111938,9 @@ function renderForm32FiledFace(ctx, warnings) {
     ["associate_judge", hearing?.associate_judge == null ? null : hearing.associate_judge === 1 ? "yes" : "no"],
     ["pure_law_confirmed", pureLawOn !== null ? "true" : null]
   ];
-  for (const [key, value] of frontmatterFields) {
-    if (value !== null) {
-      lines2.push(`${key}: ${value}`);
+  for (const [key, value2] of frontmatterFields) {
+    if (value2 !== null) {
+      lines2.push(`${key}: ${value2}`);
     } else if (warnings !== void 0 && key !== "pure_law_confirmed") {
       const name = key.replace(/_/g, " ");
       const missing = MISSING_FRONTMATTER[key] ?? { placeholder: `[${name}]`, message: `${name[0].toUpperCase()}${name.slice(1)}: not recorded. The form shows [${name}].` };
@@ -111578,9 +112071,9 @@ function struckSubmissionIds(dbPath, submissionIds) {
   );
   const crossedFlagsBySubmission = /* @__PURE__ */ new Map();
   for (const r3 of served) {
-    const list = crossedFlagsBySubmission.get(r3.submission_id) ?? [];
-    list.push(r3.crossed_out_on !== null);
-    crossedFlagsBySubmission.set(r3.submission_id, list);
+    const list2 = crossedFlagsBySubmission.get(r3.submission_id) ?? [];
+    list2.push(r3.crossed_out_on !== null);
+    crossedFlagsBySubmission.set(r3.submission_id, list2);
   }
   const struck = /* @__PURE__ */ new Set();
   for (const [submissionId, flags] of crossedFlagsBySubmission) {
@@ -111854,7 +112347,7 @@ function publishSidecar(ctx, emitterWarnings, coverNotes) {
 }
 
 // src/submission/substance-file.ts
-import { existsSync as existsSync42, mkdirSync as mkdirSync22, realpathSync as realpathSync11, writeFileSync as writeFileSync13 } from "node:fs";
+import { existsSync as existsSync44, mkdirSync as mkdirSync22, realpathSync as realpathSync11, writeFileSync as writeFileSync13 } from "node:fs";
 import { win32 as pathWin3219 } from "node:path";
 var BCSC_SUBSTANCE_FOLDER = "bcsc-form-substance";
 function confineCaseDataFolder(dbPath, caseDataFolder2) {
@@ -111874,11 +112367,11 @@ function writeSubstanceFile(caseData, fileName, markdown, folders2 = [BCSC_SUBST
   const dirs = folders2.map((_3, i3) => pathWin3219.join(caseData, ...folders2.slice(0, i3 + 1)));
   const path = pathWin3219.join(dirs[dirs.length - 1], fileName);
   for (const p3 of [...dirs, path]) {
-    if (existsSync42(p3) && realpathSync11.native(p3).toLowerCase() !== p3.toLowerCase()) {
+    if (existsSync44(p3) && realpathSync11.native(p3).toLowerCase() !== p3.toLowerCase()) {
       throw new PathOutOfScopeError(`${p3} resolves elsewhere (${realpathSync11.native(p3)})`);
     }
   }
-  for (const dir of dirs) if (!existsSync42(dir)) mkdirSync22(dir);
+  for (const dir of dirs) if (!existsSync44(dir)) mkdirSync22(dir);
   writeFileSync13(path, markdown, "utf-8");
   return path;
 }
@@ -112345,8 +112838,8 @@ function renderBccaFactumFiledFace(ctx, datedOn) {
   });
   const recordLabel = factumRecordLabel(signer.roleLabel);
   const front = ["---"];
-  const put = (key, value) => {
-    if (value !== null && value !== void 0 && value !== "") front.push(`${key}: ${value}`);
+  const put = (key, value2) => {
+    if (value2 !== null && value2 !== void 0 && value2 !== "") front.push(`${key}: ${value2}`);
   };
   put("file_number", proceeding.file_number);
   put("short_style", `${firstAppellant.name} vs. ${firstRespondent.name}`);
@@ -112431,8 +112924,8 @@ function submissionFormsEmitBccaFactum(dbPath, filingId, datedOn) {
 }
 
 // src/submission/pre-filing/index.ts
-import { existsSync as existsSync43, readdirSync as readdirSync23, realpathSync as realpathSync12, statSync as statSync19 } from "node:fs";
-import { basename as basename10, dirname as dirname26, isAbsolute as isAbsolute8, join as join49, resolve as resolve8 } from "node:path";
+import { existsSync as existsSync45, readdirSync as readdirSync23, realpathSync as realpathSync12, statSync as statSync19 } from "node:fs";
+import { basename as basename10, dirname as dirname28, isAbsolute as isAbsolute8, join as join51, resolve as resolve8 } from "node:path";
 
 // src/submission/pre-filing/consistency-checks.ts
 function authored(docs) {
@@ -112494,13 +112987,13 @@ function checkFigureConsistency(docs, dates, amounts) {
             });
           }
         }
-        const found = extractDates(line);
-        if (found.length === 0) continue;
+        const found2 = extractDates(line);
+        if (found2.length === 0) continue;
         const cited2 = new Set(extractExhibitReferences({ path: "", file_name: "", kind: "other", pages: 1, text_by_page: [line] }).map((r3) => r3.number));
         for (const anchor of dates) {
           if (!cited2.has(anchor.exhibit_number) && !mentions(line, anchor.label)) continue;
-          if (found.some((d3) => d3.iso === anchor.document_date)) continue;
-          for (const d3 of found.filter((x3) => isNearDate(x3.iso, anchor.document_date))) {
+          if (found2.some((d3) => d3.iso === anchor.document_date)) continue;
+          for (const d3 of found2.filter((x3) => isNearDate(x3.iso, anchor.document_date))) {
             findings.push({
               document: doc.file_name,
               page: i3 + 1,
@@ -112706,19 +113199,19 @@ function resolvePackageDir(packageDir) {
   if (!isAbsolute8(packageDir)) throw new ValidationError(`drafting_forms__pre_filing_check.package_dir must be an absolute path: ${packageDir}`);
   const dir = resolve8(packageDir);
   const refuse2 = (why) => new ValidationError(`drafting_forms__pre_filing_check.package_dir ${dir}: ${why}`);
-  if (!existsSync43(dir) || !statSync19(dir).isDirectory()) throw refuse2("it does not exist or is not a folder");
+  if (!existsSync45(dir) || !statSync19(dir).isDirectory()) throw refuse2("it does not exist or is not a folder");
   const real = realpathSync12.native(dir);
   const parts = real.split(/[\\/]/);
   if (zoneProblem("read", real)) throw refuse2("it lies inside a privileged or disclosed tree, TRASH or 0. CASE DATA");
   const draftIdx = parts.findIndex((p3) => /^0\. DRAFT/i.test(p3));
   if (draftIdx === -1 || draftIdx === parts.length - 1) throw refuse2("it must lie beneath the matter's 0. DRAFT folder");
-  if (basename10(real).toLowerCase() !== basename10(dir).toLowerCase() || dirname26(real).toLowerCase() !== realpathSync12.native(dirname26(dir)).toLowerCase()) {
+  if (basename10(real).toLowerCase() !== basename10(dir).toLowerCase() || dirname28(real).toLowerCase() !== realpathSync12.native(dirname28(dir)).toLowerCase()) {
     throw refuse2("it resolves outside its 0. DRAFT folder");
   }
   return dir;
 }
 function listPackageFiles(dir) {
-  return readdirSync23(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join49(dir, e3.name)).sort((a3, b3) => basename10(a3).localeCompare(basename10(b3)));
+  return readdirSync23(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join51(dir, e3.name)).sort((a3, b3) => basename10(a3).localeCompare(basename10(b3)));
 }
 function runPreFilingChecks(dbPath, filingId, packageDir) {
   const dir = resolvePackageDir(packageDir);
@@ -112958,13 +113451,13 @@ function rankFilings(dbPath, client, now, stamp2, timings) {
 
 // src/submission/forms/bootstrap.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { existsSync as existsSync44 } from "node:fs";
+import { existsSync as existsSync46 } from "node:fs";
 function newSessionToken(unattended) {
   return `${unattended ? UNATTENDED_TOKEN_PREFIX : "sess-"}${randomBytes4(9).toString("hex")}`;
 }
 var MIN_READABLE_SCHEMA_VERSION = 42;
 function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDir, todos = TODOS_NOT_READ, unattended = false, dates = DATES_NOT_READ) {
-  if (!existsSync44(dbPath)) {
+  if (!existsSync46(dbPath)) {
     throw new ValidationError(`No drafting records found at ${dbPath}. Set the matter's drafting records up first.`);
   }
   const draft = draftDir === void 0 ? void 0 : draftDirOfCaller(dbPath, draftDir, "drafting_forms__bootstrap.draft_dir");
@@ -113035,7 +113528,7 @@ function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDi
 }
 
 // src/submission/forms/bootstrap-job.ts
-import { dirname as dirname27 } from "node:path";
+import { dirname as dirname29 } from "node:path";
 function renderStateOf(dbPath, filingId, client) {
   const filing = fetchFilingById(dbPath, filingId);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
@@ -113047,10 +113540,10 @@ function startBootstrapJob(result, client, dates = DATES_NOT_READ, viewsPending 
   if (result.migration_required || result.bundle_outdated) return backgroundJobStatus(dbPath);
   const complete = client.clientName !== void 0 && client.clientNo !== void 0 && client.matterNo !== void 0;
   const queue = complete ? result.filings.filter((f3) => !f3.retired_on && !f3.milestone_only && f3.render_state !== "fresh").map((f3) => f3.filing_id) : [];
-  const pages = (only) => writeMatterPages(dbPath, dirname27(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, [], only === void 0 ? {} : { only });
+  const pages = (only) => writeMatterPages(dbPath, dirname29(result.matter_board_path), client, nowStamp(), fetchRevision(dbPath), persistedTodos(dbPath), dates, [], only === void 0 ? {} : { only });
   return startRenderJob({
     dbPath,
-    ...result.matter_board_path ? { draftDir: dirname27(result.matter_board_path) } : {},
+    ...result.matter_board_path ? { draftDir: dirname29(result.matter_board_path) } : {},
     queue,
     render: (filingId) => {
       const rendered = submissionFormsRender(dbPath, filingId, client);
@@ -113283,67 +113776,67 @@ function planApproved(dbPath, id) {
 // src/submission/forms/create-job.ts
 var TOOL13 = "drafting_data__create_job";
 var NOW7 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
-var isId = (v3) => Number.isInteger(v3) && v3 > 0;
-var isText = (v3) => typeof v3 === "string" && v3.trim() !== "";
-function check(ok, field, why) {
+var isId2 = (v3) => Number.isInteger(v3) && v3 > 0;
+var isText2 = (v3) => typeof v3 === "string" && v3.trim() !== "";
+function check2(ok, field, why) {
   if (!ok) throw new ValidationError(`${TOOL13}.${field} ${why}`, `invalid_${field.replace(/[.[].*$/, "")}`);
 }
 function checkSteps(steps, field) {
-  check(Array.isArray(steps) && steps.every(isText), field, "must be a list of non-empty step texts");
-  check(steps.length > 0, field, "must hold at least one step");
+  check2(Array.isArray(steps) && steps.every(isText2), field, "must be a list of non-empty step texts");
+  check2(steps.length > 0, field, "must hold at least one step");
 }
 function checkScope(scope, field) {
-  check(
-    scope === void 0 || Array.isArray(scope) && scope.every((r3) => isText(r3?.entity) && (r3.entity_id === null || isId(r3.entity_id))),
+  check2(
+    scope === void 0 || Array.isArray(scope) && scope.every((r3) => isText2(r3?.entity) && (r3.entity_id === null || isId2(r3.entity_id))),
     field,
     "must be a list of {entity, entity_id}, entity_id a row id or null"
   );
 }
 function validate(args) {
   const guard2 = args.guard;
-  check(isId(args.proceeding_id), "proceeding_id", "must be a positive integer");
-  check(args.filing_id === null || isId(args.filing_id), "filing_id", "must be the Writing's or Work Board's id, or null for a proceeding-scoped job");
-  check(isText(args.title), "title", "must be a non-empty string");
-  check(isText(args.intent), "intent", "must be a non-empty string");
-  check(args.kind === "work" || args.kind === "charting", "kind", "must be work or charting");
-  check(Number.isInteger(args.priority) || args.priority === "top" || args.priority === "bottom", "priority", "must be an integer, top or bottom");
-  check(
+  check2(isId2(args.proceeding_id), "proceeding_id", "must be a positive integer");
+  check2(args.filing_id === null || isId2(args.filing_id), "filing_id", "must be the Writing's or Work Board's id, or null for a proceeding-scoped job");
+  check2(isText2(args.title), "title", "must be a non-empty string");
+  check2(isText2(args.intent), "intent", "must be a non-empty string");
+  check2(args.kind === "work" || args.kind === "charting", "kind", "must be work or charting");
+  check2(Number.isInteger(args.priority) || args.priority === "top" || args.priority === "bottom", "priority", "must be an integer, top or bottom");
+  check2(
     ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "holder_lock"].includes(guard2),
     "guard",
     "must be one of none, live_key, never_held_key, title_live_with_step, title_and_step_any_status, scrutiny_statement, authority_brief, holder_lock"
   );
   checkSteps(args.steps, "steps");
   checkScope(args.scope, "scope");
-  check(args.blocks === void 0 || Array.isArray(args.blocks) && args.blocks.every(isId), "blocks", "must be a list of job ids");
-  check(args.conflicts === void 0 || Array.isArray(args.conflicts) && args.conflicts.every(isId), "conflicts", "must be a list of job ids");
-  check(args.seed_id === void 0 || isId(args.seed_id), "seed_id", "must be a loose thread's id");
-  check(args.created_by === void 0 || isText(args.created_by), "created_by", "must be the session_token open_session or bootstrap returned");
+  check2(args.blocks === void 0 || Array.isArray(args.blocks) && args.blocks.every(isId2), "blocks", "must be a list of job ids");
+  check2(args.conflicts === void 0 || Array.isArray(args.conflicts) && args.conflicts.every(isId2), "conflicts", "must be a list of job ids");
+  check2(args.seed_id === void 0 || isId2(args.seed_id), "seed_id", "must be a loose thread's id");
+  check2(args.created_by === void 0 || isText2(args.created_by), "created_by", "must be the session_token open_session or bootstrap returned");
   const keys = args.proposal_keys ?? [];
-  check(Array.isArray(keys) && keys.every((k3) => isText(k3?.key) && isText(k3?.item)), "proposal_keys", "must be a list of {key, item}, each copied from the card");
+  check2(Array.isArray(keys) && keys.every((k3) => isText2(k3?.key) && isText2(k3?.item)), "proposal_keys", "must be a list of {key, item}, each copied from the card");
   const keyed = guard2 === "live_key" || guard2 === "never_held_key";
-  check(keyed === keys.length > 0, "proposal_keys", keyed ? `must name the job's keys under guard ${guard2}` : "are written only under guard live_key or never_held_key");
-  const locked = guard2 === "holder_lock";
-  check(locked === isText(args.session_token), "session_token", locked ? "is required under guard holder_lock" : "is passed only under guard holder_lock");
-  check(locked === isId(args.held_ticket_id), "held_ticket_id", locked ? "is required under guard holder_lock" : "is passed only under guard holder_lock");
-  check(locked || args.claim_no === void 0, "claim_no", "is passed only under guard holder_lock");
-  check(!locked || args.scope === void 0, "scope", "is not passed under guard holder_lock: the job copies the held job's scope");
+  check2(keyed === keys.length > 0, "proposal_keys", keyed ? `must name the job's keys under guard ${guard2}` : "are written only under guard live_key or never_held_key");
+  const locked2 = guard2 === "holder_lock";
+  check2(locked2 === isText2(args.session_token), "session_token", locked2 ? "is required under guard holder_lock" : "is passed only under guard holder_lock");
+  check2(locked2 === isId2(args.held_ticket_id), "held_ticket_id", locked2 ? "is required under guard holder_lock" : "is passed only under guard holder_lock");
+  check2(locked2 || args.claim_no === void 0, "claim_no", "is passed only under guard holder_lock");
+  check2(!locked2 || args.scope === void 0, "scope", "is not passed under guard holder_lock: the job copies the held job's scope");
   if (guard2 === "title_live_with_step" || guard2 === "title_and_step_any_status") {
-    check(args.filing_id !== null, "filing_id", `must be the Writing's id under guard ${guard2}`);
+    check2(args.filing_id !== null, "filing_id", `must be the Writing's id under guard ${guard2}`);
   }
   if (guard2 === "scrutiny_statement") {
     const statements = (args.scope ?? []).filter((r3) => r3.entity === "statements_of_law" && r3.entity_id !== null);
-    check(statements.length === 1, "scope", "must hold exactly one ('statements_of_law', <statement id>) row under guard scrutiny_statement");
+    check2(statements.length === 1, "scope", "must hold exactly one ('statements_of_law', <statement id>) row under guard scrutiny_statement");
   }
   if (guard2 === "authority_brief") {
-    check(args.title.startsWith(BRIEF_JOB_PREFIX), "title", `must open "${BRIEF_JOB_PREFIX}" under guard authority_brief`);
+    check2(args.title.startsWith(BRIEF_JOB_PREFIX), "title", `must open "${BRIEF_JOB_PREFIX}" under guard authority_brief`);
     const authorities = (args.scope ?? []).filter((r3) => r3.entity === "authorities" && r3.entity_id !== null);
-    check(authorities.length === 1, "scope", "must hold exactly one ('authorities', <authority id>) row under guard authority_brief");
+    check2(authorities.length === 1, "scope", "must hold exactly one ('authorities', <authority id>) row under guard authority_brief");
   }
   const companions = args.companions ?? [];
-  check(Array.isArray(companions), "companions", "must be a list");
-  check(companions.length === 0 || guard2 === "title_live_with_step", "companions", "are written only under guard title_live_with_step (\xA73c's pair)");
+  check2(Array.isArray(companions), "companions", "must be a list");
+  check2(companions.length === 0 || guard2 === "title_live_with_step", "companions", "are written only under guard title_live_with_step (\xA73c's pair)");
   companions.forEach((c3, i3) => {
-    check(isText(c3?.title) && isText(c3?.intent), `companions[${i3}]`, "needs a title and an intent");
+    check2(isText2(c3?.title) && isText2(c3?.intent), `companions[${i3}]`, "needs a title and an intent");
     checkSteps(c3.steps, `companions[${i3}].steps`);
     checkScope(c3.scope, `companions[${i3}].scope`);
   });
@@ -113423,6 +113916,10 @@ async function submissionDataCreateJob(args, env = process.env) {
     throw new ValidationError(`${TOOL13}.filing_id is required: the Writing's or Work Board's id, or null for a proceeding-scoped job`, "invalid_filing_id");
   }
   validate(args);
+  if (args.seed_id !== void 0) {
+    await moveSeedsOnce(args.db_path, env);
+    if (!readThreads(args.db_path, env).some((t3) => t3.id === args.seed_id)) throw new ValidationError(`${TOOL13}.seed_id ${args.seed_id} names no loose thread; nothing was written`, "invalid_seed_id");
+  }
   const companions = args.companions ?? [];
   const holder = holderQuery(args, [args.title, ...companions.map((c3) => c3.title)]);
   const priority = priorityExpr(args);
@@ -113447,8 +113944,6 @@ async function submissionDataCreateJob(args, env = process.env) {
   for (const blocker of args.blocks ?? []) statements.push({ sql: "INSERT INTO ticket_blocks (blocker_id, blocked_id) VALUES (?, ?)", params: [blocker, lead] });
   for (const other of args.conflicts ?? []) statements.push({ sql: "INSERT INTO ticket_conflicts (a_id, b_id) VALUES (MIN(?, ?), MAX(?, ?))", params: [other, lead, other, lead] });
   for (const k3 of args.proposal_keys ?? []) statements.push({ sql: "INSERT INTO ticket_proposals (ticket_id, proposal_key, item) VALUES (?, ?, ?)", params: [lead, k3.key, k3.item] });
-  const seedAt = args.seed_id === void 0 ? -1 : statements.length;
-  if (args.seed_id !== void 0) statements.push({ sql: "UPDATE seeds SET charted_into = ? WHERE id = ?", params: [lead, args.seed_id], expect_changes: 1 });
   const companionAt = [];
   for (const c3 of companions) {
     const at = statements.length;
@@ -113464,7 +113959,6 @@ async function submissionDataCreateJob(args, env = process.env) {
   const written = await submissionDataWriteAll(args.db_path, statements, env);
   const warning = written.warning ? { warning: written.warning } : {};
   if (!written.ok) {
-    if (written.failed === seedAt) throw new ValidationError(`${TOOL13}.seed_id ${args.seed_id} names no loose thread; nothing was written`, "invalid_seed_id");
     if (written.failed !== 0) throw new DataServerError(`${TOOL13}: statement ${written.failed} changed ${written.changes} rows; nothing was written`);
     return { outcome: "guarded", ...guardedReport(args, holder), ...warning };
   }
@@ -113472,13 +113966,23 @@ async function submissionDataCreateJob(args, env = process.env) {
   const companionIds = companionAt.map((at) => written.results[at].rowid);
   const [row2] = submissionDataQuery(args.db_path, "SELECT priority FROM tickets WHERE id = ?", [ticketId]).rows;
   const all = [ticketId, ...companionIds].map((id) => `Job ${id}`).join(" and ");
+  let threadNotConsumed;
+  if (args.seed_id !== void 0) {
+    try {
+      await looseThreadsUpdate({ db_path: args.db_path, action: "consume", id: args.seed_id, job_id: ticketId }, env);
+    } catch (err) {
+      if (!(err instanceof DataServerError)) throw err;
+      threadNotConsumed = `Loose thread ${args.seed_id} still shows as open: ${err.message}`;
+    }
+  }
   return {
     outcome: "created",
     ticket_id: ticketId,
     ...companionIds.length > 0 ? { companion_ids: companionIds } : {},
     priority: row2.priority,
     note: `${all} created with steps, scope and links in one transaction${writer ? ", created_by this session" : ""}. Re-render.`,
-    ...warning
+    ...warning,
+    ...threadNotConsumed === void 0 ? {} : { thread_not_consumed: threadNotConsumed }
   };
 }
 function guardedReport(args, holder) {
@@ -113487,8 +113991,8 @@ function guardedReport(args, holder) {
       note: `Job ${args.held_ticket_id} no longer carries this session's token, so the lock was lost and nothing was written. Stop, run the confirm-read after a release on job ${args.held_ticket_id} (jobs-create.md \xA73f), name any blocker already written, and report; never re-run.`
     };
   }
-  const [found] = submissionDataQuery(args.db_path, `${holder.sql} ORDER BY t.id DESC LIMIT 1`, holder.params).rows;
-  const job = found === void 0 ? "a job that has since changed (re-render to see it)" : `Job #${found.id}`;
+  const [found2] = submissionDataQuery(args.db_path, `${holder.sql} ORDER BY t.id DESC LIMIT 1`, holder.params).rows;
+  const job = found2 === void 0 ? "a job that has since changed (re-render to see it)" : `Job #${found2.id}`;
   const notes = {
     live_key: `A live job already holds one of these keys: ${job}. Nothing was written; say "already a job: ${job}" in one line and go on.`,
     never_held_key: `One of these keys was already held, by ${job}, so intake writes nothing for it. Skip it and go on.`,
@@ -113497,7 +114001,7 @@ function guardedReport(args, holder) {
     scrutiny_statement: `A live scrutiny review job already covers this statement: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
     authority_brief: `A live case brief job already covers this case: ${job}. Nothing was written; say "already a job: ${job}" in one line.`
   };
-  return { ...found === void 0 ? {} : { holder_id: found.id }, note: notes[args.guard] };
+  return { ...found2 === void 0 ? {} : { holder_id: found2.id }, note: notes[args.guard] };
 }
 
 // src/submission/forms/set-step.ts
@@ -113597,7 +114101,7 @@ async function submissionDataSetStep(args, env = process.env) {
 var TOOL15 = "drafting_data__rewrite_job";
 var NOW9 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var TEXT_MAX = 500;
-var isText2 = (v3) => typeof v3 === "string" && v3.trim() !== "" && v3.length <= TEXT_MAX && !/[\r\n]/.test(v3);
+var isText3 = (v3) => typeof v3 === "string" && v3.trim() !== "" && v3.length <= TEXT_MAX && !/[\r\n]/.test(v3);
 async function submissionDataRewriteJob(args, env = process.env) {
   if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL15}.ticket_id must be a positive integer; nothing was written`, "invalid_ticket_id");
   const held2 = args.held === true;
@@ -113608,8 +114112,8 @@ async function submissionDataRewriteJob(args, env = process.env) {
     throw new ValidationError(`${TOOL15}.append is taken only as true, with held: true and steps; nothing was written`, "invalid_append");
   }
   if (args.title === void 0 && args.steps === void 0) throw new ValidationError(`${TOOL15} takes a title, steps or both; nothing was written`, "nothing_to_write");
-  if (args.title !== void 0 && !isText2(args.title)) throw new ValidationError(`${TOOL15}.title must be one line of 1 to ${TEXT_MAX} characters; nothing was written`, "invalid_title");
-  if (args.steps !== void 0 && (!Array.isArray(args.steps) || args.steps.length === 0 || !args.steps.every(isText2))) {
+  if (args.title !== void 0 && !isText3(args.title)) throw new ValidationError(`${TOOL15}.title must be one line of 1 to ${TEXT_MAX} characters; nothing was written`, "invalid_title");
+  if (args.steps !== void 0 && (!Array.isArray(args.steps) || args.steps.length === 0 || !args.steps.every(isText3))) {
     throw new ValidationError(`${TOOL15}.steps must be a list of at least one step, each one line of 1 to ${TEXT_MAX} characters; nothing was written`, "invalid_steps");
   }
   const id = args.ticket_id;
@@ -114011,8 +114515,8 @@ async function submissionDataMergeJobs(args, env = process.env) {
 
 // src/submission/forms/quick-edit.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
-import { appendFileSync as appendFileSync4, existsSync as existsSync45, mkdirSync as mkdirSync23, readdirSync as readdirSync24, readFileSync as readFileSync36, renameSync as renameSync10, rmSync as rmSync3, statSync as statSync20, unlinkSync as unlinkSync15, writeFileSync as writeFileSync14 } from "node:fs";
-import { basename as basename11, dirname as dirname28, join as join50 } from "node:path";
+import { appendFileSync as appendFileSync4, existsSync as existsSync47, mkdirSync as mkdirSync23, readdirSync as readdirSync24, readFileSync as readFileSync36, renameSync as renameSync10, rmSync as rmSync3, statSync as statSync20, unlinkSync as unlinkSync15, writeFileSync as writeFileSync14 } from "node:fs";
+import { basename as basename11, dirname as dirname30, join as join52 } from "node:path";
 var PREVIEW = "drafting_forms__preview_edit";
 var APPLY = "drafting_forms__apply_edit";
 var TOKEN_TTL_MS = 30 * 60 * 1e3;
@@ -114065,8 +114569,8 @@ var Refusal = class extends Error {
 function rows3(db, sql, params = []) {
   return submissionDataQuery(db, sql, params).rows;
 }
-function lit(value) {
-  return { sql: "?", params: [value] };
+function lit(value2) {
+  return { sql: "?", params: [value2] };
 }
 function hashRows(db, sql, params) {
   return sha256Text(JSON.stringify(rows3(db, sql, params)));
@@ -114138,20 +114642,20 @@ var Plan = class {
   /** One filing's placement list as this script will have left it so far. */
   list(table2, document2, part) {
     const key = `${table2}|${document2}|${part ?? ""}`;
-    let list = this.sim.get(key);
-    if (list === void 0) {
+    let list2 = this.sim.get(key);
+    if (list2 === void 0) {
       const d3 = DEPLOY_BY_TABLE[table2];
-      list = rows3(
+      list2 = rows3(
         this.db,
         `SELECT id, ${d3.fk} AS fk, ordinal FROM ${table2} WHERE filing_id = ? AND document = ?${part === null ? "" : " AND part = ?"} ORDER BY ordinal, id`,
         part === null ? [this.filing.id, document2] : [this.filing.id, document2, part]
       ).map((r3) => ({ id: Number(r3.id), key: null, fk: Number(r3.fk), ordinal: Number(r3.ordinal), pending: false }));
-      this.sim.set(key, list);
+      this.sim.set(key, list2);
     }
-    return list;
+    return list2;
   }
-  setList(table2, document2, part, list) {
-    this.sim.set(`${table2}|${document2}|${part ?? ""}`, list);
+  setList(table2, document2, part, list2) {
+    this.sim.set(`${table2}|${document2}|${part ?? ""}`, list2);
     this.lists.set(`${table2}|${document2}|${part ?? ""}`, { table: table2, document: document2, part });
   }
   /** Gives `order` the list's own ordinals, sorted, so a rhetorical paragraph placed on the same scale keeps
@@ -114211,8 +114715,8 @@ function resolveOp(map, op, i3) {
 }
 function currentText(db, e3) {
   if (e3.override_id !== null) {
-    const found = rows3(db, "SELECT wording_override AS text FROM filing_orders WHERE id = ?", [e3.override_id]);
-    return found.length === 0 || found[0].text === null ? void 0 : String(found[0].text);
+    const found2 = rows3(db, "SELECT wording_override AS text FROM filing_orders WHERE id = ?", [e3.override_id]);
+    return found2.length === 0 || found2[0].text === null ? void 0 : String(found2[0].text);
   }
   return readTexts(db, e3.entity, [e3.row_id]).get(e3.row_id);
 }
@@ -114228,9 +114732,9 @@ function pinCheck(db, entries) {
     if (text8 === void 0) out.push({ ...base, what: "text", seen: "printed", now: "the row is gone" });
     else if (sha256Text(text8) !== e3.text_hash) out.push({ ...base, what: "text", seen: "the text you saw", now: text8 });
     if (e3.deployment !== null) {
-      const found = rows3(db, `SELECT ordinal FROM ${e3.deployment.table} WHERE id = ?`, [e3.deployment.id]);
-      if (found.length === 0) out.push({ ...base, what: "placement", seen: `on the ${docLabel(e3.document)}`, now: `no longer on the ${docLabel(e3.document)}` });
-      else if (Number(found[0].ordinal) !== e3.deployment.ordinal) out.push({ ...base, what: "ordinal", seen: String(e3.deployment.ordinal), now: String(found[0].ordinal) });
+      const found2 = rows3(db, `SELECT ordinal FROM ${e3.deployment.table} WHERE id = ?`, [e3.deployment.id]);
+      if (found2.length === 0) out.push({ ...base, what: "placement", seen: `on the ${docLabel(e3.document)}`, now: `no longer on the ${docLabel(e3.document)}` });
+      else if (Number(found2[0].ordinal) !== e3.deployment.ordinal) out.push({ ...base, what: "ordinal", seen: String(e3.deployment.ordinal), now: String(found2[0].ordinal) });
     }
     if (e3.entity === "law_assertions" && e3.parent !== null && rows3(db, "SELECT 1 FROM submission_law WHERE submission_id = ? AND law_assertion_id = ?", [e3.parent, e3.row_id]).length === 0) {
       out.push({ ...base, what: "link", seen: `under submission ${e3.parent}`, now: `no longer under submission ${e3.parent}` });
@@ -114256,14 +114760,14 @@ function takeOff(plan2, e3, docs, what) {
   let taken = 0;
   for (const doc of docs) {
     const part = d3.part ? factPart(plan2.filing.kind) : null;
-    const list = plan2.list(d3.table, doc, part);
-    const row2 = list.find((r3) => r3.fk === e3.row_id);
+    const list2 = plan2.list(d3.table, doc, part);
+    const row2 = list2.find((r3) => r3.fk === e3.row_id);
     if (row2 === void 0) continue;
     const ref = plan2.rowRef(row2);
     plan2.push(`${what}: take ${KIND[e3.entity]} ${e3.row_id} off the ${docLabel(doc)}`, `DELETE FROM ${d3.table} WHERE id = ${ref.sql} AND ${d3.fk} = ? AND ordinal = ?`, [...ref.params, e3.row_id, row2.ordinal], 1);
     if (row2.id !== null) plan2.written.add(`${d3.table}:${row2.id}`);
     plan2.audit({ op: "remove", document: doc, entity: e3.entity, entity_id: e3.row_id, deployment_id: plan2.rowId(row2), from: row2.ordinal, to: null, old_hash: null, new_hash: null });
-    plan2.setList(d3.table, doc, part, list.filter((r3) => r3 !== row2));
+    plan2.setList(d3.table, doc, part, list2.filter((r3) => r3 !== row2));
     taken += 1;
   }
   if (taken === 0) throw new Refusal("not_placed", `${describe3(e3)} is not on the ${docs.map(docLabel).join(" or ")}, so there is nothing to take off.`);
@@ -114318,14 +114822,14 @@ function planMove(plan2, op, t3, a3, i3) {
   const part = d3.part ? t3.deployment?.part ?? factPart(plan2.filing.kind) : null;
   let moved = 0;
   for (const doc of docs) {
-    const list = plan2.list(d3.table, doc, part);
-    const tr2 = list.find((r3) => r3.fk === t3.row_id);
-    const ar2 = list.find((r3) => r3.fk === fk);
+    const list2 = plan2.list(d3.table, doc, part);
+    const tr2 = list2.find((r3) => r3.fk === t3.row_id);
+    const ar2 = list2.find((r3) => r3.fk === fk);
     if (tr2 === void 0 || ar2 === void 0) throw new Refusal("not_placed", `${tr2 === void 0 ? describe3(t3) : describe3(a3)} is not on the ${docLabel(doc)}.`);
     if (tr2 === ar2) throw new Refusal("same_paragraph", `${describe3(t3)} cannot move relative to itself.`);
-    const order = list.filter((r3) => r3 !== tr2);
+    const order = list2.filter((r3) => r3 !== tr2);
     order.splice(order.indexOf(ar2) + (op.anchor.position === "after" ? 1 : 0), 0, tr2);
-    const from = list.indexOf(tr2) + 1;
+    const from = list2.indexOf(tr2) + 1;
     const to2 = order.indexOf(tr2) + 1;
     if (from === to2) continue;
     plan2.reorder(d3.table, order, `op ${i3 + 1} move`);
@@ -114337,9 +114841,9 @@ function planMove(plan2, op, t3, a3, i3) {
   if (moved === 0) throw new Refusal("no_change", `${describe3(t3)} is already ${op.anchor.position} ${describe3(a3)}.`);
 }
 function insertAt(plan2, table2, document2, part, anchor, where, key, what) {
-  const list = plan2.list(table2, document2, part);
+  const list2 = plan2.list(table2, document2, part);
   const row2 = { id: null, key, fk: null, ordinal: 0, pending: true };
-  const order = [...list];
+  const order = [...list2];
   const index = anchor === null ? order.length : order.indexOf(anchor) + (where === "after" ? 1 : 0);
   order.splice(index, 0, row2);
   plan2.reorder(table2, order, what);
@@ -114422,7 +114926,7 @@ function planRecast(plan2, op, t3, a3, i3, menu) {
 function planRestore(plan2, op, i3) {
   if (!Number.isInteger(op.remove_line) || op.remove_line <= 0) throw new ValidationError(`${PREVIEW}: restore needs remove_line, the remove's line in the Writing's quick-edits log`, "invalid_remove_line");
   const file = logFile(plan2.db, plan2.filing.id);
-  const text8 = existsSync45(file) ? readFileSync36(file, "utf-8").split("\n")[op.remove_line - 1] : void 0;
+  const text8 = existsSync47(file) ? readFileSync36(file, "utf-8").split("\n")[op.remove_line - 1] : void 0;
   const removed = text8 ? JSON.parse(text8) : void 0;
   const entity = String(removed?.entity);
   const d3 = removed?.op === "remove" && Object.hasOwn(DEPLOY, entity) ? DEPLOY[entity] : void 0;
@@ -114432,10 +114936,10 @@ function planRestore(plan2, op, i3) {
   const fk = Number(removed.entity_id);
   const document2 = String(removed.document);
   const part = d3.part ? factPart(plan2.filing.kind) : null;
-  const list = plan2.list(d3.table, document2, part);
-  if (list.some((r3) => r3.fk === fk)) throw new Refusal("already_placed", `${d3.kind} ${fk} is already on the ${docLabel(document2)}.`);
+  const list2 = plan2.list(d3.table, document2, part);
+  if (list2.some((r3) => r3.fk === fk)) throw new Refusal("already_placed", `${d3.kind} ${fk} is already on the ${docLabel(document2)}.`);
   const oldOrdinal = Number(removed.from);
-  const next2 = list.find((r3) => r3.ordinal >= oldOrdinal) ?? null;
+  const next2 = list2.find((r3) => r3.ordinal >= oldOrdinal) ?? null;
   const key = `op${i3 + 1}.restored`;
   const placed = insertAt(plan2, d3.table, document2, part, next2, "before", key, `op ${i3 + 1} restore`);
   const columns = d3.part ? `filing_id, ${d3.fk}, document, part, ordinal` : `filing_id, ${d3.fk}, document, ordinal`;
@@ -114465,10 +114969,10 @@ function planKill(plan2, t3) {
     let here = 0;
     if (drafting) {
       for (const doc of DOCUMENTS) {
-        const list = plan2.list("filing_submissions", doc, null);
-        const kept = list.filter((r3) => r3.fk !== t3.row_id);
-        here += list.length - kept.length;
-        if (kept.length !== list.length) plan2.setList("filing_submissions", doc, null, kept);
+        const list2 = plan2.list("filing_submissions", doc, null);
+        const kept = list2.filter((r3) => r3.fk !== t3.row_id);
+        here += list2.length - kept.length;
+        if (kept.length !== list2.length) plan2.setList("filing_submissions", doc, null, kept);
       }
     }
     plan2.push(
@@ -114484,9 +114988,9 @@ function foreignJobs(db, session, pairs) {
   const clauses = [];
   const params = [session];
   for (const [table2, ids] of pairs) {
-    const list = [...ids].filter((id) => id > 0);
-    clauses.push(`(s.entity = ? AND (s.entity_id IS NULL${list.length > 0 ? ` OR s.entity_id IN (${list.map(() => "?").join(", ")})` : ""}))`);
-    params.push(table2, ...list);
+    const list2 = [...ids].filter((id) => id > 0);
+    clauses.push(`(s.entity = ? AND (s.entity_id IS NULL${list2.length > 0 ? ` OR s.entity_id IN (${list2.map(() => "?").join(", ")})` : ""}))`);
+    params.push(table2, ...list2);
   }
   if (clauses.length === 0) return [];
   return rows3(
@@ -114624,12 +115128,12 @@ function saveToken(stored) {
 }
 function pruneTokens(db) {
   const sample = tokenFile(db, "x");
-  const dir = dirname28(sample);
+  const dir = dirname30(sample);
   const prefix = basename11(sample).slice(0, -"x.json".length);
   const cutoff = Date.now() - TOKEN_PRUNE_MS;
   for (const name of readdirSync24(dir)) {
     if (!name.startsWith(prefix)) continue;
-    const file = join50(dir, name);
+    const file = join52(dir, name);
     if (statSync20(file).mtimeMs < cutoff) unlinkSync15(file);
   }
 }
@@ -114792,7 +115296,7 @@ async function submissionFormsPreviewEdit(args) {
     mkdirSync23(previewDir2, { recursive: true });
     const sources = new Set(mapSources(after.documents).map((s3) => s3.title));
     const previewPaths = after.documents.filter((doc) => sources.has(doc.fileName.replace(/\.md$/i, ""))).map((doc) => {
-      const path = join50(previewDir2, doc.fileName);
+      const path = join52(previewDir2, doc.fileName);
       writeFileSync14(path, withLegend(doc.markdown, doc.documentType).markdown, "utf-8");
       return path;
     });
@@ -114847,7 +115351,7 @@ async function submissionFormsApplyEdit(args) {
   }
   checkSchema(db, APPLY);
   const file = tokenFile(db, args.preview_token);
-  if (!existsSync45(file)) return { applied: false, refused: "unknown_token", note: "No preview with that token is recorded for this database. Preview the edit again." };
+  if (!existsSync47(file)) return { applied: false, refused: "unknown_token", note: "No preview with that token is recorded for this database. Preview the edit again." };
   const stored = JSON.parse(readFileSync36(file, "utf-8"));
   if (stored.session_token !== args.session_token) return { applied: false, refused: "other_session", note: "That preview was made in another session. Preview the edit again in this one." };
   if (stored.used_at !== null) return { applied: false, refused: "used_token", note: `That preview was already applied, or its apply refused, at ${stored.used_at}. Preview the edit again.` };
@@ -114876,12 +115380,12 @@ async function submissionFormsApplyEdit(args) {
   return { applied: true, filing_id: stored.filing_id, revision, audit_log: log.file, audit_lines: log.lines, note: `Applied${written.warning ? ` (${written.warning})` : ""}.` };
 }
 function logFile(db, filingId) {
-  return join50(recordsDir(db), `quick-edits-${filingId}.jsonl`);
+  return join52(recordsDir(db), `quick-edits-${filingId}.jsonl`);
 }
 function appendLog(db, stored, results, revision) {
   const file = logFile(db, stored.filing_id);
-  mkdirSync23(dirname28(file), { recursive: true });
-  const before = existsSync45(file) ? readFileSync36(file, "utf-8").split("\n").length - 1 : 0;
+  mkdirSync23(dirname30(file), { recursive: true });
+  const before = existsSync47(file) ? readFileSync36(file, "utf-8").split("\n").length - 1 : 0;
   const id = (ref) => ref === null || typeof ref === "number" ? ref : results[ref.$rowid].rowid;
   const appliedAt = (/* @__PURE__ */ new Date()).toISOString();
   const text8 = stored.log.map((e3) => {
@@ -114911,18 +115415,18 @@ function appendLog(db, stored, results, revision) {
 
 // src/page-api/focus.ts
 import { createHash as createHash13, randomUUID as randomUUID10 } from "node:crypto";
-import { existsSync as existsSync46, mkdirSync as mkdirSync24, readFileSync as readFileSync37 } from "node:fs";
-import { dirname as dirname29, join as join51 } from "node:path";
+import { existsSync as existsSync48, mkdirSync as mkdirSync24, readFileSync as readFileSync37 } from "node:fs";
+import { dirname as dirname31, join as join53 } from "node:path";
 var FOCUS_SECTIONS = ["submissions", "counter", "rebuttals", "killed"];
 function focusPath(dbPath, filingId, env) {
   const name = createHash13("sha256").update(`${dbPath}
 ${filingId}`).digest("hex").slice(0, 32);
-  return join51(dirname29(configPath(env)), "page-focus", `${name}.json`);
+  return join53(dirname31(configPath(env)), "page-focus", `${name}.json`);
 }
 function writeFocus(dbPath, filingId, section3, number3, env = process.env) {
   const record2 = { id: randomUUID10(), section: section3, number: number3, at: (/* @__PURE__ */ new Date()).toISOString() };
   const path = focusPath(dbPath, filingId, env);
-  mkdirSync24(dirname29(path), { recursive: true });
+  mkdirSync24(dirname31(path), { recursive: true });
   writeTextAtomic(path, JSON.stringify(record2));
   return record2;
 }
@@ -114930,7 +115434,7 @@ function readFocus(dbPath, filingIds, env = process.env) {
   let newest2 = null;
   for (const id of filingIds) {
     const path = focusPath(dbPath, id, env);
-    if (!existsSync46(path)) continue;
+    if (!existsSync48(path)) continue;
     const record2 = JSON.parse(readFileSync37(path, "utf-8"));
     if (newest2 === null || record2.at > newest2.at) newest2 = record2;
   }
@@ -114965,11 +115469,11 @@ function submissionFormsFocusViewPage(args, env = process.env) {
 }
 
 // src/submission/open-session.ts
-import { existsSync as existsSync47, readdirSync as readdirSync25 } from "node:fs";
-import { basename as basename12, dirname as dirname30, join as join52 } from "node:path";
+import { existsSync as existsSync49, readdirSync as readdirSync25 } from "node:fs";
+import { basename as basename12, dirname as dirname32, join as join54 } from "node:path";
 
 // src/submission/matter-todos.ts
-var text3 = (value) => value === null || value === void 0 ? null : String(value);
+var text3 = (value2) => value2 === null || value2 === void 0 ? null : String(value2);
 async function readMatterTodos(practiceDb2, matterNo) {
   if (matterNo === void 0) return { note: "No matter number was given, so this matter's to-dos were not read." };
   let rows4;
@@ -115025,7 +115529,7 @@ function openBoard(dbPath, draftDir, client, todos, dates, listed, filingId, tim
           ...rendered.filing_retired ? { filing_retired: true, note: rendered.note } : {},
           ...board.ingest_inputs ? { ingest_inputs: board.ingest_inputs } : {}
         },
-        matter_board_path: join52(draftDir, MATTER_BOARD_FILE),
+        matter_board_path: join54(draftDir, MATTER_BOARD_FILE),
         milestone_path: board.path,
         ...written.pages ? { milestone_paths: written.pages.milestone_paths, view_page_paths: written.pages.view_page_paths, loose_threads_path: written.pages.loose_threads_path } : {},
         // ADR 0038: the render read the opened filing's form currency; it is not read twice.
@@ -115125,9 +115629,9 @@ function practiceConfigBlocking(dbPath) {
   }
 }
 function backups(dbPath) {
-  const dir = dirname30(dbPath);
+  const dir = dirname32(dbPath);
   const prefix = `${basename12(dbPath)}.bak-`;
-  return new Set(existsSync47(dir) ? readdirSync25(dir).filter((name) => name.startsWith(prefix)) : []);
+  return new Set(existsSync49(dir) ? readdirSync25(dir).filter((name) => name.startsWith(prefix)) : []);
 }
 var submissionFormsOpenSession = (...args) => inOneCall(() => openSession(...args));
 async function openSession(matterRoot, practiceDb2, client = {}, unattended = false, filingId) {
@@ -115135,17 +115639,17 @@ async function openSession(matterRoot, practiceDb2, client = {}, unattended = fa
   const timings = [];
   const phase = async (name, fn2) => {
     const start2 = performance.now();
-    const value = await fn2();
+    const value2 = await fn2();
     timings.push({ phase: name, ms: elapsedMs2(start2) });
-    return value;
+    return value2;
   };
   const root = await phase("matter_root", () => validateMatterRoot(matterRoot));
   const dbPath = await phase("pointer", () => resolveDbPath(root));
   const blocking = await phase("practice_config", () => practiceConfigBlocking(dbPath));
   const { lookup, client: identity } = await phase("matter_lookup", () => lookUpMatter(root, practiceDb2, client));
   const draftDir = await phase("draft_dir", () => {
-    const found = findDraftDir(root);
-    return found === void 0 ? void 0 : resolveDraftDir(found);
+    const found2 = findDraftDir(root);
+    return found2 === void 0 ? void 0 : resolveDraftDir(found2);
   });
   const todos = draftDir === void 0 ? void 0 : await phase("todos", () => readMatterTodos(practiceDb2, identity.matterNo));
   const dates = draftDir === void 0 ? void 0 : await phase("dates", () => readMatterDates(practiceDb2, identity.matterNo));
@@ -115172,12 +115676,13 @@ async function openSession(matterRoot, practiceDb2, client = {}, unattended = fa
     }
     const to2 = migrationRefused === void 0 ? target : result.schema_version;
     if (to2 !== null && to2 !== from) {
-      migrated = { from, to: to2, backup: written.length > 0 ? join52(dirname30(dbPath), written[0]) : null };
+      migrated = { from, to: to2, backup: written.length > 0 ? join54(dirname32(dbPath), written[0]) : null };
       if (migrateWarnings.length > 0) migrated.warnings = migrateWarnings;
     }
   }
   for (const t3 of result.timings) timings.push({ phase: `bootstrap: ${t3.phase}`, ms: t3.ms });
   const refused5 = result.migration_required || result.bundle_outdated;
+  const threadsMoved = refused5 ? null : await phase("loose_threads", () => moveSeedsOnce(dbPath));
   const opening = draftDir === void 0 || todos === void 0 || dates === void 0 || refused5 ? {} : openBoard(dbPath, draftDir, identity, todos, dates, result, filingId, timings);
   const drift = await phase("parties_drift", () => matterPartiesDrift(dbPath));
   const offers = await phase("counsel_offers", () => counselOffers(dbPath));
@@ -115194,6 +115699,7 @@ async function openSession(matterRoot, practiceDb2, client = {}, unattended = fa
       ...draftDir !== void 0 ? { draft_dir: draftDir } : {},
       db_path: dbPath,
       ...migrated ? { migrated } : {},
+      ...threadsMoved ? { loose_threads_moved: threadsMoved } : {},
       ...migrationRefused !== void 0 ? { migration_refused: migrationRefused } : {},
       ...blocking.length > 0 ? { blocking } : {},
       matter_lookup: lookup,
@@ -115211,7 +115717,7 @@ async function openSession(matterRoot, practiceDb2, client = {}, unattended = fa
 }
 
 // src/submission/bcsc-form-harness.ts
-import { existsSync as existsSync48, readdirSync as readdirSync26, readFileSync as readFileSync38, realpathSync as realpathSync13, statSync as statSync21 } from "node:fs";
+import { existsSync as existsSync50, readdirSync as readdirSync26, readFileSync as readFileSync38, realpathSync as realpathSync13, statSync as statSync21 } from "node:fs";
 import { win32 as pathWin3220 } from "node:path";
 var DRIVER8 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
@@ -115247,7 +115753,7 @@ function bcscFormHarnessPath(env = process.env, installRoot) {
     installRoot
   });
   const path = pathWin3220.join(shipped.root, ...rel);
-  if (!existsSync48(path)) {
+  if (!existsSync50(path)) {
     throw new DataServerError(
       `harness.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -115299,20 +115805,20 @@ function bcscFormHarness(args, env = process.env, installRoot) {
   return action;
 }
 function requireArg(args, key) {
-  const value = args[key];
-  if (typeof value !== "string" || value === "") {
+  const value2 = args[key];
+  if (typeof value2 !== "string" || value2 === "") {
     throw new ValidationError(`drafting_forms__bcsc_form_harness.${key} is required for command ${args.command}`);
   }
-  return value;
+  return value2;
 }
-function assertSegment(value, label2) {
-  if (value === "." || value === ".." || /[\\/:\0]/.test(value)) {
-    throw new PathOutOfScopeError(`${label2} must be one folder name, not a path: ${value}`);
+function assertSegment(value2, label2) {
+  if (value2 === "." || value2 === ".." || /[\\/:\0]/.test(value2)) {
+    throw new PathOutOfScopeError(`${label2} must be one folder name, not a path: ${value2}`);
   }
 }
 function confinedSessionsDir(caseData) {
   const dir = pathWin3220.join(caseData, "form-sessions");
-  if (existsSync48(dir) && realpathSync13.native(dir).toLowerCase() !== dir.toLowerCase()) {
+  if (existsSync50(dir) && realpathSync13.native(dir).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`${dir} resolves elsewhere (${realpathSync13.native(dir)})`);
   }
   return dir;
@@ -115320,7 +115826,7 @@ function confinedSessionsDir(caseData) {
 function confineSessionDir(sessions, sessionId) {
   assertSegment(sessionId, "harness_session");
   const dir = pathWin3220.join(sessions, sessionId);
-  if (existsSync48(dir) && realpathSync13.native(dir).toLowerCase() !== dir.toLowerCase()) {
+  if (existsSync50(dir) && realpathSync13.native(dir).toLowerCase() !== dir.toLowerCase()) {
     throw new PathOutOfScopeError(`session ${sessionId} resolves elsewhere (${realpathSync13.native(dir)})`);
   }
   return dir;
@@ -115336,12 +115842,12 @@ function confineWritingFolder(root, writingFolder) {
 }
 function checkSession(root, caseData, sessions, sessionId) {
   const ctxPath = pathWin3220.join(confineSessionDir(sessions, sessionId), "ctx.json");
-  if (!existsSync48(ctxPath)) {
+  if (!existsSync50(ctxPath)) {
     throw new DataServerError(`no session ${sessionId} under ${sessions}. Call this tool with command list to see the sessions.`, "session_not_found");
   }
   const ctx = JSON.parse(readFileSync38(ctxPath).toString("utf-8").replace(/\0+$/, ""));
   const same2 = (stored, expected) => {
-    if (typeof stored !== "string" || stored === "" || !existsSync48(stored)) return false;
+    if (typeof stored !== "string" || stored === "" || !existsSync50(stored)) return false;
     return realpathSync13.native(stored).toLowerCase() === expected.toLowerCase() && statSync21(stored).isDirectory();
   };
   if (!same2(ctx.matter_path, root) || !same2(ctx.case_data_folder, caseData)) {
@@ -115367,14 +115873,14 @@ function confineLocatePaths(caseData, resultJson) {
   const outer = result;
   const data = outer.kind === "step_result" && typeof outer.data === "object" && outer.data !== null ? outer.data : outer;
   for (const key of LOCATE_PATH_KEYS) {
-    const value = data[key];
-    if (value === void 0) continue;
+    const value2 = data[key];
+    if (value2 === void 0) continue;
     const label2 = `result_json data.${key}`;
-    if (typeof value !== "string" || !pathWin3220.isAbsolute(value)) {
-      throw new PathOutOfScopeError(`${label2} must be an absolute path inside the matter-data folder ${caseData}: ${JSON.stringify(value)}`);
+    if (typeof value2 !== "string" || !pathWin3220.isAbsolute(value2)) {
+      throw new PathOutOfScopeError(`${label2} must be an absolute path inside the matter-data folder ${caseData}: ${JSON.stringify(value2)}`);
     }
-    const resolved = existsSync48(value) ? realpathSync13.native(value) : pathWin3220.resolve(value);
-    assertContained(caseData, resolved, label2, value);
+    const resolved = existsSync50(value2) ? realpathSync13.native(value2) : pathWin3220.resolve(value2);
+    assertContained(caseData, resolved, label2, value2);
   }
 }
 function isNewTemplate(action) {
@@ -115395,11 +115901,11 @@ function timeoutAdvice(command, sessionId) {
 }
 
 // src/submission/publish-tools.ts
-import { existsSync as existsSync50, readdirSync as readdirSync28 } from "node:fs";
+import { existsSync as existsSync52, readdirSync as readdirSync28 } from "node:fs";
 import { win32 as pathWin3222 } from "node:path";
 
 // src/submission/publish-host.ts
-import { existsSync as existsSync49, readdirSync as readdirSync27 } from "node:fs";
+import { existsSync as existsSync51, readdirSync as readdirSync27 } from "node:fs";
 import { win32 as pathWin3221 } from "node:path";
 var DRIVER9 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
@@ -115465,7 +115971,7 @@ function subskillScriptPath(skill, subskill, script2, env = process.env, install
     installRoot
   });
   const path = pathWin3221.join(shipped.root, ...rel);
-  if (!existsSync49(path)) {
+  if (!existsSync51(path)) {
     throw new DataServerError(
       `${script2} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -115473,16 +115979,16 @@ function subskillScriptPath(skill, subskill, script2, env = process.env, install
   }
   return path;
 }
-function runSubskillScript(run, env, installRoot) {
+function runSubskillScript(run2, env, installRoot) {
   return runPythonDriver({
-    label: run.label,
+    label: run2.label,
     driver: pythonDriverFile("publish-fill", DRIVER9),
-    payload: JSON.stringify({ script: subskillScriptPath(run.skill, run.subskill, run.script, env, installRoot), runs: run.runs }),
+    payload: JSON.stringify({ script: subskillScriptPath(run2.skill, run2.subskill, run2.script, env, installRoot), runs: run2.runs }),
     env,
-    timeoutMs: pythonTimeoutMs(env, PUBLISH_FILL_TIMEOUT_MS, run.timeoutVariable),
+    timeoutMs: pythonTimeoutMs(env, PUBLISH_FILL_TIMEOUT_MS, run2.timeoutVariable),
     extraEnv: { PYTHONDONTWRITEBYTECODE: "1" },
-    timeoutAdvice: run.timeoutAdvice,
-    stagingDescription: run.stagingDescription
+    timeoutAdvice: run2.timeoutAdvice,
+    stagingDescription: run2.stagingDescription
   });
 }
 function runPublishFill(subskill, script2, runs, env, installRoot) {
@@ -115500,10 +116006,10 @@ function runPublishFill(subskill, script2, runs, env, installRoot) {
 // src/submission/publish-tools.ts
 function renderRefusal(render) {
   const refusal3 = (key) => key === "bundle_outdated" || key === "filing_retired" || key.endsWith("_gate_failed");
-  const flag2 = Object.entries(render).find(([key, value]) => value === true && refusal3(key));
+  const flag2 = Object.entries(render).find(([key, value2]) => value2 === true && refusal3(key));
   return flag2 ? { success: false, error: flag2[0], detail: render.note, render } : null;
 }
-var json = (value) => JSON.stringify(value, null, 2);
+var json = (value2) => JSON.stringify(value2, null, 2);
 function publishGeneral(args, env = process.env, installRoot) {
   assertSegment(args.output_name, "output_name");
   const target = publishDraftTarget(args.matter_root, args.db_path, env);
@@ -115519,7 +116025,7 @@ function publishGeneral(args, env = process.env, installRoot) {
     };
   }
   const format = knowledgeRead(args.format_path, { env, installRoot });
-  const write2 = (name, value) => writeWorkingFile(target, ["publish-general"], name, json(value));
+  const write2 = (name, value2) => writeWorkingFile(target, ["publish-general"], name, json(value2));
   const argv = ["--filed", write2("filed.json", filed), "--format", write2("format.json", format), "--out-dir", target.draft, "--out-name", args.output_name];
   if (args.letter !== void 0) argv.push("--letter", write2("letter.json", args.letter));
   if (layout?.letterhead === true) argv.push("--profile", write2("profile.json", readFirmProfile(env)));
@@ -115550,7 +116056,7 @@ function publishVaniacPackage(args, env = process.env, installRoot) {
   const target = publishTarget(args.matter_root, args.db_path, args.writing_folder, env);
   const dataFolders = ["vaniac-submissions", vaniacFilingFolder(args.writing_folder)];
   const pkg = writingSubfolder(target, "Package");
-  const previous = existsSync50(pkg) ? readdirSync28(pkg).filter((name) => PREVIOUS_SET.test(name)) : [];
+  const previous = existsSync52(pkg) ? readdirSync28(pkg).filter((name) => PREVIOUS_SET.test(name)) : [];
   if (previous.length > 0) {
     return {
       success: false,
@@ -115611,11 +116117,11 @@ function assembleGeneral(args, env = process.env, installRoot) {
 }
 
 // src/submission/draft-harness.ts
-import { existsSync as existsSync52, mkdirSync as mkdirSync26, readdirSync as readdirSync30, realpathSync as realpathSync15 } from "node:fs";
+import { existsSync as existsSync54, mkdirSync as mkdirSync26, readdirSync as readdirSync30, realpathSync as realpathSync15 } from "node:fs";
 import { win32 as pathWin3226 } from "node:path";
 
 // src/submission/email-recipients.ts
-import { dirname as dirname31 } from "node:path";
+import { dirname as dirname33 } from "node:path";
 function named(name, address2) {
   return name ? `"${name.replace(/["\\]/g, "\\$&")}" <${address2}>` : address2;
 }
@@ -115627,11 +116133,11 @@ var Lists = class {
   cc = [];
   not_addressed = [];
   seen = /* @__PURE__ */ new Set();
-  add(list, name, address2) {
+  add(list2, name, address2) {
     const key = address2.toLowerCase();
     if (this.seen.has(key)) return;
     this.seen.add(key);
-    this[list].push(named(name, address2));
+    this[list2].push(named(name, address2));
   }
   recipient(r3, why) {
     const addresses = addressesOf(r3.email);
@@ -115653,7 +116159,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
   let note;
   if ("filing_id" in source) {
     const filing = fetchFiling(dbPath, source.filing_id);
-    const parties2 = filing.filed_on ? fetchSentParties(dbPath, filing) : draftingParties(dirname31(dbPath), fetchProceeding(dbPath, filing.proceeding_id), fetchParties(dbPath, filing.proceeding_id), env).parties;
+    const parties2 = filing.filed_on ? fetchSentParties(dbPath, filing) : draftingParties(dirname33(dbPath), fetchProceeding(dbPath, filing.proceeding_id), fetchParties(dbPath, filing.proceeding_id), env).parties;
     const recipients = mergeSharedRecipients(fetchFilingRecipients(dbPath, filing, parties2));
     if (recipients.some((r3) => r3.role === "bcc")) {
       throw new DataServerError(
@@ -115667,7 +116173,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
     const rows4 = [];
     const drifted = /* @__PURE__ */ new Map();
     for (const proceeding of proceedings) {
-      const { parties: parties2, drift } = draftingParties(dirname31(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
+      const { parties: parties2, drift } = draftingParties(dirname33(dbPath), proceeding, fetchParties(dbPath, proceeding.id), env);
       const counsel = fetchServiceListCounsel(dbPath, proceeding.id, parties2);
       for (const d3 of drift.rows) {
         const why = d3.kind === "unlinked" ? `${d3.name} is not linked to a party in case data, so its counsel cannot be read` : d3.kind === "not_of_record" ? `${d3.name} is linked to a party case data does not hold for this proceeding` : `counsel were not read from case data: ${d3.reason}`;
@@ -115697,7 +116203,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
 }
 
 // src/submission/scrutiny-review.ts
-import { copyFileSync as copyFileSync3, existsSync as existsSync51, mkdirSync as mkdirSync25, mkdtempSync as mkdtempSync2, readdirSync as readdirSync29, readFileSync as readFileSync39, realpathSync as realpathSync14, renameSync as renameSync11, rmSync as rmSync4, unlinkSync as unlinkSync16, writeFileSync as writeFileSync15 } from "node:fs";
+import { copyFileSync as copyFileSync4, existsSync as existsSync53, mkdirSync as mkdirSync25, mkdtempSync as mkdtempSync2, readdirSync as readdirSync29, readFileSync as readFileSync39, realpathSync as realpathSync14, renameSync as renameSync11, rmSync as rmSync4, unlinkSync as unlinkSync16, writeFileSync as writeFileSync15 } from "node:fs";
 import { tmpdir as tmpdir4 } from "node:os";
 import { win32 as pathWin3225 } from "node:path";
 
@@ -115892,11 +116398,11 @@ function validated(args) {
   }
   return { dbPath: args.db_path, statementId: args.statement_id, contextParas, sourcePath: args.source_path, proposed };
 }
-function isPositiveInteger(value) {
-  return typeof value === "number" && Number.isInteger(value) && value > 0;
+function isPositiveInteger(value2) {
+  return typeof value2 === "number" && Number.isInteger(value2) && value2 > 0;
 }
-function nonEmpty(value) {
-  return typeof value === "string" && value.trim() !== "";
+function nonEmpty(value2) {
+  return typeof value2 === "string" && value2.trim() !== "";
 }
 function refusal2(error2, detail, extra = {}) {
   return { success: false, error: error2, detail, ...extra };
@@ -115906,19 +116412,19 @@ function paragraphOf(pinpoint) {
   return match ? Number(match[1]) : null;
 }
 function findingParas(finding, pinpoint) {
-  const found = /* @__PURE__ */ new Set();
-  for (const list of (finding ?? "").matchAll(FINDING_PARAS)) {
-    for (const [, from, to2] of list[1].matchAll(/(\d+)(?:\s*[-–]\s*(\d+))?/g)) {
+  const found2 = /* @__PURE__ */ new Set();
+  for (const list2 of (finding ?? "").matchAll(FINDING_PARAS)) {
+    for (const [, from, to2] of list2[1].matchAll(/(\d+)(?:\s*[-–]\s*(\d+))?/g)) {
       const a3 = Number(from);
       const b3 = to2 === void 0 ? a3 : Number(to2);
-      for (let n3 = Math.min(a3, b3); n3 <= Math.max(a3, b3); n3++) found.add(n3);
+      for (let n3 = Math.min(a3, b3); n3 <= Math.max(a3, b3); n3++) found2.add(n3);
     }
   }
-  if (pinpoint !== null) found.delete(pinpoint);
-  return [...found].sort((x3, y3) => x3 - y3);
+  if (pinpoint !== null) found2.delete(pinpoint);
+  return [...found2].sort((x3, y3) => x3 - y3);
 }
 function foreignEntries(folder) {
-  if (!existsSync51(folder)) return [];
+  if (!existsSync53(folder)) return [];
   return readdirSync29(folder, { withFileTypes: true }).filter((entry2) => !(entry2.isFile() && OWN_FILE.test(entry2.name))).map((entry2) => entry2.name);
 }
 function confineMatterFile(root, given, label2) {
@@ -115942,12 +116448,12 @@ function confineMatterFile(root, given, label2) {
 function answerFile(root, named2) {
   if (named2 === null) return null;
   const path = confineMatterFile(root, named2, "the answer file the finding names");
-  return { named: named2, path, exists: existsSync51(path) };
+  return { named: named2, path, exists: existsSync53(path) };
 }
 function skillScript(rel, env, installRoot) {
   const shipped = resolveShippedRoot(rel.join("/"), env, { code: "repo_root_missing", subject: `the ${rel[0]} scripts`, installRoot });
   const path = pathWin3225.join(shipped.root, ...rel);
-  if (!existsSync51(path)) {
+  if (!existsSync53(path)) {
     throw new DataServerError(
       `${rel[rel.length - 1]} not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this step, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -115987,39 +116493,39 @@ function buildPackage(ctx, spec) {
   };
 }
 function resolve10(ctx, authority) {
-  const found = resolveAuthoritySource(
+  const found2 = resolveAuthoritySource(
     { caseDataDir: ctx.caseData, matterRoot: ctx.root, citation: authority.citation ?? "", sourcePath: ctx.sourcePath, cacheDir: authorityPdfCacheDir(ctx.env) },
     ctx.env,
     ctx.installRoot
   );
   const cite = `${authority.title}${authority.citation ? `, ${authority.citation}` : ""}`;
-  if (found.status === "authority_ambiguous") {
-    return refusal2("authority_ambiguous", `more than one stored authority matches ${cite}`, { candidates: found.candidates });
+  if (found2.status === "authority_ambiguous") {
+    return refusal2("authority_ambiguous", `more than one stored authority matches ${cite}`, { candidates: found2.candidates });
   }
-  if (found.status === "unresolved") {
+  if (found2.status === "unresolved") {
     const source2 = {
-      tried: found.tried,
-      searched: found.searched,
-      search_truncated: found.search_truncated,
-      skipped_cloud_only: found.skipped_cloud_only,
-      unreadable: found.unreadable
+      tried: found2.tried,
+      searched: found2.searched,
+      search_truncated: found2.search_truncated,
+      skipped_cloud_only: found2.skipped_cloud_only,
+      unreadable: found2.unreadable
     };
-    return refusal2("source_unresolved", `${cite}: ${found.reason}`, { partial: { ...ctx.partial, source: source2 } });
+    return refusal2("source_unresolved", `${cite}: ${found2.reason}`, { partial: { ...ctx.partial, source: source2 } });
   }
-  if (found.status !== "ok") return refusal2(found.status, `${cite}: ${found.detail}`);
-  const { status: _status, pdf, ...source } = found;
+  if (found2.status !== "ok") return refusal2(found2.status, `${cite}: ${found2.detail}`);
+  const { status: _status, pdf, ...source } = found2;
   if (Date.now() - ctx.started > BUDGET_MS) {
     return refusal2("budget_exceeded", "the converted source is cached; call again", { partial: { ...ctx.partial, source } });
   }
   return { source, pdf };
 }
 function verbatimCheck(ctx, excerptFile, pdf) {
-  const run = runCli(ctx, ctx.scripts.diff, ["--excerpt-file", excerptFile, "--source", pdf]);
+  const run2 = runCli(ctx, ctx.scripts.diff, ["--excerpt-file", excerptFile, "--source", pdf]);
   let parsed;
   try {
-    parsed = JSON.parse(run.stdout);
+    parsed = JSON.parse(run2.stdout);
   } catch {
-    return { exit: run.exit, error: run.stderr.trim() };
+    return { exit: run2.exit, error: run2.stderr.trim() };
   }
   const { source_window: _window, parts, opcodes, ...rest } = parsed;
   const missing = new Set(opcodes.filter((op) => op.op === "not_found").map((op) => op.part));
@@ -116027,7 +116533,7 @@ function verbatimCheck(ctx, excerptFile, pdf) {
     const { source_window: _partWindow, opcodes: partOpcodes, ...kept } = part;
     return { ...kept, opcodes: withheld(partOpcodes, missing.has(kept.index)) };
   }) : parts;
-  return { exit: run.exit, ...rest, opcodes: withheld(opcodes, run.exit === EXIT_NOT_FOUND), parts: strippedParts };
+  return { exit: run2.exit, ...rest, opcodes: withheld(opcodes, run2.exit === EXIT_NOT_FOUND), parts: strippedParts };
 }
 function withheld(opcodes, all) {
   return opcodes.map((op) => {
@@ -116041,30 +116547,30 @@ function citedExtract(ctx, spec, pdf, proposedFile) {
   const excerpt = ["--excerpt", spec.excerptFile];
   const para2 = spec.paragraph === null ? [] : ["--para", String(spec.paragraph), "yellow"];
   const span = spec.span ? ["--span", spec.span.start, spec.span.end, "yellow", "--excerpt-out", proposedFile] : [];
-  let run = runCli(ctx, ctx.scripts.highlight, [...base, ...excerpt, ...para2, ...span], pdf);
-  const pageCount = run.page_count ?? 0;
+  let run2 = runCli(ctx, ctx.scripts.highlight, [...base, ...excerpt, ...para2, ...span], pdf);
+  const pageCount = run2.page_count ?? 0;
   let excerptNotPainted;
   let paraNotPainted;
-  if (run.exit !== 0) {
-    const failed = failedSpecs(run.stdout);
+  if (run2.exit !== 0) {
+    const failed = failedSpecs(run2.stdout);
     if (failed.size === 1 && failed.has("excerpt") && para2.length + span.length > 0) {
       excerptNotPainted = failed.get("excerpt");
-      run = runCli(ctx, ctx.scripts.highlight, [...base, ...para2, ...span]);
+      run2 = runCli(ctx, ctx.scripts.highlight, [...base, ...para2, ...span]);
     } else if (failed.size === 1 && para2.length > 0 && failed.has(`para ${spec.paragraph} yellow`)) {
       paraNotPainted = failed.get(`para ${spec.paragraph} yellow`);
-      run = runCli(ctx, ctx.scripts.highlight, [...base, ...excerpt, ...span]);
+      run2 = runCli(ctx, ctx.scripts.highlight, [...base, ...excerpt, ...span]);
     }
-    if (run.exit !== 0) return refusal2("highlight_failed", `cited extract: ${outputOf(run)}`);
+    if (run2.exit !== 0) return refusal2("highlight_failed", `cited extract: ${outputOf(run2)}`);
   }
-  const pages = writtenPages(run.stdout);
-  const painted = paintedSpecs(run.stdout);
+  const pages = writtenPages(run2.stdout);
+  const painted = paintedSpecs(run2.stdout);
   const stem3 = `${spec.prefix}1 cited - ${pathSafe(spec.authority.title)} - p${pages[0]}${pages.length > 1 ? `-${pages[pages.length - 1]}` : ""}` + (spec.paragraph !== null && paraNotPainted === void 0 ? ` para ${spec.paragraph}` : "");
-  const { extract, files } = extractFiles(ctx, dir, stem3, run.stdout, pages, painted);
+  const { extract, files } = extractFiles(ctx, dir, stem3, run2.stdout, pages, painted);
   return {
     extract: {
       ...extract,
-      crossed_page_break: /, crossed page break(,|$)/m.test(run.stdout),
-      margin_band_words: [...run.stdout.matchAll(/, margin band: (.*)$/gm)].flatMap((m3) => m3[1].split(" ")),
+      crossed_page_break: /, crossed page break(,|$)/m.test(run2.stdout),
+      margin_band_words: [...run2.stdout.matchAll(/, margin band: (.*)$/gm)].flatMap((m3) => m3[1].split(" ")),
       ...excerptNotPainted === void 0 ? {} : { excerpt_not_painted: excerptNotPainted },
       ...paraNotPainted === void 0 ? {} : { para_not_painted: paraNotPainted }
     },
@@ -116088,35 +116594,35 @@ function contextExtract(ctx, spec, pdf, cited2, excerptFile) {
   ];
   const windowed = (paras) => runCli(ctx, ctx.scripts.highlight, [pdf, "--pages", `${first}-${last}`, ...out(paras)]);
   let usedFallback = ctx.contextParas.length === 0;
-  let run = windowed(ctx.contextParas.length > 0 ? ctx.contextParas : fallback);
+  let run2 = windowed(ctx.contextParas.length > 0 ? ctx.contextParas : fallback);
   let widened = false;
-  if (run.exit !== 0 && ctx.contextParas.length > 0) {
-    run = runCli(ctx, ctx.scripts.highlight, [pdf, ...out(ctx.contextParas)]);
+  if (run2.exit !== 0 && ctx.contextParas.length > 0) {
+    run2 = runCli(ctx, ctx.scripts.highlight, [pdf, ...out(ctx.contextParas)]);
     widened = true;
-    if (run.exit !== 0 && ctx.contextParasDerived) {
-      const failed = failedSpecs(run.stdout);
+    if (run2.exit !== 0 && ctx.contextParasDerived) {
+      const failed = failedSpecs(run2.stdout);
       const missing = ctx.contextParas.filter((n3) => failed.has(`para ${n3} yellow`));
       if (missing.length > 0) {
         for (const n3 of missing) ctx.parasNotFound.add(n3);
         const rest = ctx.contextParas.filter((n3) => !missing.includes(n3));
         usedFallback = rest.length === 0;
-        run = rest.length > 0 ? runCli(ctx, ctx.scripts.highlight, [pdf, ...out(rest)]) : windowed(fallback);
+        run2 = rest.length > 0 ? runCli(ctx, ctx.scripts.highlight, [pdf, ...out(rest)]) : windowed(fallback);
         widened = rest.length > 0;
       }
     }
   }
   let paraNotPainted;
-  if (run.exit !== 0 && usedFallback && fallback.length > 0) {
-    const failed = failedSpecs(run.stdout);
+  if (run2.exit !== 0 && usedFallback && fallback.length > 0) {
+    const failed = failedSpecs(run2.stdout);
     if (failed.size === 1 && failed.has(`para ${spec.paragraph} yellow`)) {
       paraNotPainted = failed.get(`para ${spec.paragraph} yellow`);
-      run = windowed([]);
+      run2 = windowed([]);
     }
   }
-  if (run.exit !== 0) return refusal2("highlight_failed", `context extract: ${outputOf(run)}`);
-  const pages = writtenPages(run.stdout);
+  if (run2.exit !== 0) return refusal2("highlight_failed", `context extract: ${outputOf(run2)}`);
+  const pages = writtenPages(run2.stdout);
   const stem3 = `${spec.prefix}2 context - ${pathSafe(spec.authority.title)} - pp${pages[0]}-${pages[pages.length - 1]}`;
-  const { extract, files } = extractFiles(ctx, dir, stem3, run.stdout, pages, paintedSpecs(run.stdout));
+  const { extract, files } = extractFiles(ctx, dir, stem3, run2.stdout, pages, paintedSpecs(run2.stdout));
   return {
     extract: {
       ...extract,
@@ -116162,8 +116668,8 @@ function writtenPages(stdout) {
   for (let n3 = Number(match[1]); n3 <= Number(match[2]); n3++) pages.push(n3);
   return pages;
 }
-function outputOf(run) {
-  return [run.stdout.trim(), run.stderr.trim()].filter(Boolean).join("\n");
+function outputOf(run2) {
+  return [run2.stdout.trim(), run2.stderr.trim()].filter(Boolean).join("\n");
 }
 function pathSafe(name) {
   return name.replace(/[\\/:*?"<>|]/g, "_").trim();
@@ -116175,7 +116681,7 @@ function publish2(folder, files) {
   }
   for (const file of files) {
     const final = pathWin3225.join(folder, file.name);
-    copyFileSync3(file.from, `${final}.tmp`);
+    copyFileSync4(file.from, `${final}.tmp`);
     renameSync11(`${final}.tmp`, final);
   }
 }
@@ -116221,8 +116727,8 @@ function writeEmail(args, env, installRoot) {
   if ("error" in from) return from;
   let addressed;
   if (source !== null) {
-    const found = emailRecipients(args.db_path, source, from.key, env);
-    addressed = { ...found, cc: [...found.cc, ...cc2.filter((a3) => !found.cc.includes(a3))] };
+    const found2 = emailRecipients(args.db_path, source, from.key, env);
+    addressed = { ...found2, cc: [...found2.cc, ...cc2.filter((a3) => !found2.cc.includes(a3))] };
     if (addressed.to.length === 0) {
       return {
         success: false,
@@ -116285,18 +116791,18 @@ function recipientSource(args) {
   return serviceList ? { proceeding_id: args.proceeding_id } : { filing_id: args.filing_id };
 }
 function requireString2(args, key) {
-  const value = args[key];
-  if (typeof value !== "string" || value === "") {
+  const value2 = args[key];
+  if (typeof value2 !== "string" || value2 === "") {
     throw new ValidationError(`drafting_forms__draft_harness.${key} is required for step ${args.step}`);
   }
-  return value;
+  return value2;
 }
 function stringList3(args, key, minimum) {
-  const value = args[key] ?? [];
-  if (!Array.isArray(value) || value.length < minimum || !value.every((item) => typeof item === "string")) {
+  const value2 = args[key] ?? [];
+  if (!Array.isArray(value2) || value2.length < minimum || !value2.every((item) => typeof item === "string")) {
     throw new ValidationError(`drafting_forms__draft_harness.${key} must be a list of strings, at least ${minimum}, for step ${args.step}`);
   }
-  return value;
+  return value2;
 }
 function draftFolders(root) {
   return readdirSync30(root, { withFileTypes: true }).filter((entry2) => /^0\. DRAFT/i.test(entry2.name)).map((entry2) => resolveWithin(root, entry2.name, "0. DRAFT folder", false));
@@ -116344,7 +116850,7 @@ function writeEmlPath(env = process.env, installRoot) {
     installRoot
   });
   const path = pathWin3226.join(shipped.root, ...rel);
-  if (!existsSync52(path)) {
+  if (!existsSync54(path)) {
     throw new DataServerError(
       `write_eml.py not found at ${path} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
       "repo_root_missing"
@@ -116515,14 +117021,14 @@ function quotedPrintable(text8) {
   }
   return Buffer.from(out);
 }
-function decodeWords(value) {
-  return value.replace(/(=\?[^?]+\?[bBqQ]\?[^?]*\?=)\s+(?==\?)/g, "$1").replace(/=\?([^?]+)\?([bBqQ])\?([^?]*)\?=/g, (_w, charset, enc, data) => {
+function decodeWords(value2) {
+  return value2.replace(/(=\?[^?]+\?[bBqQ]\?[^?]*\?=)\s+(?==\?)/g, "$1").replace(/=\?([^?]+)\?([bBqQ])\?([^?]*)\?=/g, (_w, charset, enc, data) => {
     const bytes = enc.toUpperCase() === "B" ? Buffer.from(data, "base64") : quotedPrintable(data.replace(/_/g, " "));
     return decodeCharset(bytes, charset.replace(/\*.*$/, ""));
   });
 }
-function param(value, key) {
-  const m3 = new RegExp(`(?:^|;)\\s*${key}\\*?\\s*=\\s*("([^"]*)"|[^;\\s]+)`, "i").exec(value);
+function param(value2, key) {
+  const m3 = new RegExp(`(?:^|;)\\s*${key}\\*?\\s*=\\s*("([^"]*)"|[^;\\s]+)`, "i").exec(value2);
   if (!m3) return void 0;
   return m3[2] ?? m3[1];
 }
@@ -116616,8 +117122,8 @@ var CSS_NAMES = {
   black: "000000"
 };
 var NONE = /* @__PURE__ */ new Set(["", "none", "transparent", "inherit", "initial", "unset", "white", "window", "#fff", "#ffffff", "ffffff", "auto"]);
-function colourName(value) {
-  let v3 = value.trim().toLowerCase();
+function colourName(value2) {
+  let v3 = value2.trim().toLowerCase();
   if (NONE.has(v3)) return null;
   if (CSS_NAMES[v3]) v3 = CSS_NAMES[v3];
   const rgb = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/.exec(v3);
@@ -116626,17 +117132,17 @@ function colourName(value) {
   if (/^[0-9a-f]{3}$/.test(v3)) v3 = v3.replace(/./g, (c3) => c3 + c3);
   if (v3 === "ffffff") return null;
   if (WORD_PALETTE[v3]) return WORD_PALETTE[v3];
-  return /^[0-9a-f]{6}$/.test(v3) ? `#${v3}` : value.trim();
+  return /^[0-9a-f]{6}$/.test(v3) ? `#${v3}` : value2.trim();
 }
 function mergeRuns(runs) {
   const merged = [];
   let current;
-  for (const run of runs) {
-    if (current && run.colour === current.colour) {
-      current.text += run.text;
+  for (const run2 of runs) {
+    if (current && run2.colour === current.colour) {
+      current.text += run2.text;
       continue;
     }
-    current = { ...run };
+    current = { ...run2 };
     merged.push(current);
   }
   return merged.filter((r3) => r3.colour !== "").map((r3) => ({ text: r3.text.replace(/\s+/g, " ").trim(), colour: r3.colour })).filter((r3) => r3.text !== "");
@@ -117161,11 +117667,11 @@ function parseMsg(bytes) {
   return finish2(headers, body, htmlReading ? htmlReading.highlights : rtfRuns, htmlReading ? "html" : rtfText !== void 0 ? "rtf" : "none", attachments);
 }
 function emlHeaders(headers) {
-  const list = (v3) => v3 ? splitAddresses(decodeWords(v3)) : [];
+  const list2 = (v3) => v3 ? splitAddresses(decodeWords(v3)) : [];
   return {
     from: collapse(decodeWords(headers.get("from") ?? "")),
-    to: list(headers.get("to")),
-    cc: list(headers.get("cc")),
+    to: list2(headers.get("to")),
+    cc: list2(headers.get("cc")),
     subject: collapse(decodeWords(headers.get("subject") ?? "")),
     sent: isoOrNull(headers.get("date"))
   };
@@ -117471,9 +117977,9 @@ function blocks2(markdown) {
   endQuote();
   return out;
 }
-function runXml(run) {
-  const props = `${run.bold ? "<w:b/>" : ""}${run.italic ? "<w:i/>" : ""}`;
-  return `<w:r>${props ? `<w:rPr>${props}</w:rPr>` : ""}<w:t xml:space="preserve">${escapeXml(run.text)}</w:t></w:r>`;
+function runXml(run2) {
+  const props = `${run2.bold ? "<w:b/>" : ""}${run2.italic ? "<w:i/>" : ""}`;
+  return `<w:r>${props ? `<w:rPr>${props}</w:rPr>` : ""}<w:t xml:space="preserve">${escapeXml(run2.text)}</w:t></w:r>`;
 }
 function linesXml(lines2) {
   return lines2.map((line) => inlineRuns(line).map(runXml).join("")).join("<w:r><w:br/></w:r>");
@@ -117727,13 +118233,13 @@ function ancestorsOf(byId2) {
   const walk4 = (id) => {
     const known = memo2.get(id);
     if (known) return known;
-    const found = /* @__PURE__ */ new Set();
+    const found2 = /* @__PURE__ */ new Set();
     for (const parent of byId2.get(id).parents) {
-      found.add(parent);
-      for (const a3 of walk4(parent)) found.add(a3);
+      found2.add(parent);
+      for (const a3 of walk4(parent)) found2.add(a3);
     }
-    memo2.set(id, found);
-    return found;
+    memo2.set(id, found2);
+    return found2;
   };
   for (const id of byId2.keys()) walk4(id);
   return memo2;
@@ -117801,8 +118307,8 @@ function lintDag(skill, nodes) {
     for (const { fact, values } of rule.when) {
       const allowed = pilot.facts.get(fact);
       if (!allowed) throw lint(`${where}: fact '${fact}' is not in the vocabulary`);
-      for (const value of values) {
-        if (!allowed.includes(value)) throw lint(`${where}: '${value}' is not a value of fact '${fact}'`);
+      for (const value2 of values) {
+        if (!allowed.includes(value2)) throw lint(`${where}: '${value2}' is not a value of fact '${fact}'`);
       }
     }
     for (const atom of rule.replaces) {
@@ -117871,10 +118377,10 @@ function composeRules(dag, path, facts) {
     const conditional = [];
     let failed = null;
     for (const cond of rule.when) {
-      const value = known.get(cond.fact);
-      if (value === void 0) {
+      const value2 = known.get(cond.fact);
+      if (value2 === void 0) {
         if (!conditional.includes(cond.fact)) conditional.push(cond.fact);
-      } else if (failed === null && !cond.values.includes(value)) {
+      } else if (failed === null && !cond.values.includes(value2)) {
         failed = cond;
       }
     }
@@ -117891,15 +118397,15 @@ function composeRules(dag, path, facts) {
   }
   return { path: steps, rules, dropped, unknownFacts: unknown2 };
 }
-function xmlAttr(value) {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+function xmlAttr(value2) {
+  return value2.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 }
-function xmlText(value) {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/]]>/g, "]]&gt;");
+function xmlText(value2) {
+  return value2.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/]]>/g, "]]&gt;");
 }
 function renderRules(dag, composed, options = {}) {
   const position2 = composed.path[composed.path.length - 1];
-  const attrs = (options.attrs ?? []).map(([name, value]) => ` ${name}="${xmlAttr(value)}"`).join("");
+  const attrs = (options.attrs ?? []).map(([name, value2]) => ` ${name}="${xmlAttr(value2)}"`).join("");
   const left = options.left ? ` left="${xmlAttr(options.left.join(" "))}"` : "";
   const lines2 = [
     `<rules position="${xmlAttr(position2)}"${attrs}>`,
@@ -117984,24 +118490,24 @@ function parseTagAttributes(body, where, tag, allowed, fail3) {
     while (j3 < body.length && body[j3] !== "=" && !/\s/.test(body[j3])) j3++;
     if (body[j3] !== "=") throw fail3(`${where}: ${tag} tag attribute without '=': ${body.slice(i3, j3)}`);
     const key = body.slice(i3, j3);
-    let value;
+    let value2;
     if (body[j3 + 1] === '"') {
       const close = body.indexOf('"', j3 + 2);
       if (close === -1) throw fail3(`${where}: ${tag} tag '${key}' has an unclosed quote`);
       if (close + 1 < body.length && !/\s/.test(body[close + 1])) throw fail3(`${where}: ${tag} tag '${key}' has text after its closing quote`);
-      value = body.slice(j3 + 2, close);
-      if (value.includes("--")) throw fail3(`${where}: ${tag} tag '${key}' holds '--' inside its quotes`);
+      value2 = body.slice(j3 + 2, close);
+      if (value2.includes("--")) throw fail3(`${where}: ${tag} tag '${key}' holds '--' inside its quotes`);
       i3 = close + 1;
     } else {
       let k3 = j3 + 1;
       while (k3 < body.length && !/\s/.test(body[k3])) k3++;
-      value = body.slice(j3 + 1, k3);
+      value2 = body.slice(j3 + 1, k3);
       i3 = k3;
     }
     if (!allowed.includes(key)) throw fail3(`${where}: unknown ${tag} tag attribute '${key}'`);
     if (attrs.has(key)) throw fail3(`${where}: ${tag} tag repeats '${key}'`);
-    if (value === "") throw fail3(`${where}: ${tag} tag '${key}' is empty`);
-    attrs.set(key, value);
+    if (value2 === "") throw fail3(`${where}: ${tag} tag '${key}' is empty`);
+    attrs.set(key, value2);
   }
   return attrs;
 }
@@ -118149,8 +118655,8 @@ function lintAtoms(atoms, ops, facts) {
     for (const { fact, values } of atom.when) {
       const allowed = facts.get(fact);
       if (!allowed) throw lint2(`${where}: fact '${fact}' is not in the vocabulary`);
-      for (const value of values) {
-        if (!allowed.includes(value)) throw lint2(`${where}: '${value}' is not a value of fact '${fact}'`);
+      for (const value2 of values) {
+        if (!allowed.includes(value2)) throw lint2(`${where}: '${value2}' is not a value of fact '${fact}'`);
       }
     }
     for (const target of atom.defeats) {
@@ -118229,11 +118735,11 @@ function normalizeFacts(input, facts) {
       unknown2.push(key);
       continue;
     }
-    const value = typeof raw === "boolean" ? String(raw) : raw;
-    if (!allowed.includes(value)) {
+    const value2 = typeof raw === "boolean" ? String(raw) : raw;
+    if (!allowed.includes(value2)) {
       throw new ValidationError(`facts.${key} must be one of: ${allowed.join(", ")} (got ${JSON.stringify(raw)})`);
     }
-    known.set(key, value);
+    known.set(key, value2);
   }
   return { known, unknown: unknown2 };
 }
@@ -118261,10 +118767,10 @@ function skillRulesApplicable(skill, operation, facts) {
     const conditional = [];
     let holds2 = true;
     for (const { fact, values } of atom.when) {
-      const value = known.get(fact);
-      if (value === void 0) {
+      const value2 = known.get(fact);
+      if (value2 === void 0) {
         if (!conditional.includes(fact)) conditional.push(fact);
-      } else if (!values.includes(value)) {
+      } else if (!values.includes(value2)) {
         holds2 = false;
       }
     }
@@ -118332,13 +118838,13 @@ function assertSchema(tool, dbPath) {
   }
 }
 function readPositions(dbPath, token) {
-  const found = rows(
+  const found2 = rows(
     dbPath,
     "SELECT branch, path, session_facts, in_force FROM session_position WHERE session_token = ? ORDER BY branch",
     [token]
   );
   return new Map(
-    found.map((r3) => [
+    found2.map((r3) => [
       r3.branch,
       { branch: r3.branch, path: r3.path.split(" "), sessionFacts: JSON.parse(r3.session_facts), inForce: JSON.parse(r3.in_force) }
     ])
@@ -118366,8 +118872,8 @@ function splitFacts(tool, dag, stored, supplied) {
   const { known } = normalizeFacts(given, dag.facts);
   const session = { ...stored };
   for (const key of SESSION_FACTS) {
-    const value = known.get(key);
-    if (value !== void 0) session[key] = value;
+    const value2 = known.get(key);
+    if (value2 !== void 0) session[key] = value2;
   }
   const turn = Object.fromEntries(Object.entries(given).filter(([key]) => !SESSION_FACTS.includes(key)));
   return { session: Object.fromEntries(Object.entries(session).sort(([a3], [b3]) => a3 < b3 ? -1 : 1)), turn };
@@ -118390,9 +118896,9 @@ function route(dag, from, to2) {
       if (parent.has(child)) continue;
       parent.set(child, at);
       if (child === to2) {
-        const found = [child];
-        for (let step2 = at; step2 !== from; step2 = parent.get(step2)) found.unshift(step2);
-        return found;
+        const found2 = [child];
+        for (let step2 = at; step2 !== from; step2 = parent.get(step2)) found2.unshift(step2);
+        return found2;
       }
       queue.push(child);
     }
@@ -118743,8 +119249,8 @@ function rulesLifecycle(dbPath, since) {
 
 // src/preferences/tools.ts
 import { randomUUID as randomUUID11 } from "node:crypto";
-import { existsSync as existsSync53, readFileSync as readFileSync42 } from "node:fs";
-import { join as join53 } from "node:path";
+import { existsSync as existsSync55, readFileSync as readFileSync42 } from "node:fs";
+import { join as join55 } from "node:path";
 
 // src/preferences/redact.ts
 var PLACEHOLDERS = ["<user>", "<username>", "<matter>", "<folder>"];
@@ -118793,10 +119299,10 @@ function findRedactionHits(text8) {
 var MAX_ITEMS_JSON_LENGTH = 5e4;
 var MAX_PREVIEW_HTML_LENGTH = 2e5;
 var MAX_MOCKUP_HTML_BYTES = 1e6;
-function leafStrings(value, into) {
-  if (typeof value === "string") into.push(value);
-  else if (Array.isArray(value)) for (const item of value) leafStrings(item, into);
-  else if (value !== null && typeof value === "object") for (const item of Object.values(value)) leafStrings(item, into);
+function leafStrings(value2, into) {
+  if (typeof value2 === "string") into.push(value2);
+  else if (Array.isArray(value2)) for (const item of value2) leafStrings(item, into);
+  else if (value2 !== null && typeof value2 === "object") for (const item of Object.values(value2)) leafStrings(item, into);
   return into;
 }
 function findSuggestionHits(fields2) {
@@ -118832,7 +119338,7 @@ function readJson2(file) {
 }
 function person(env) {
   const config2 = configPath(env);
-  const raw = existsSync53(config2) ? readJson2(config2).person : void 0;
+  const raw = existsSync55(config2) ? readJson2(config2).person : void 0;
   if (raw === void 0 || raw === null || raw === "") {
     throw new DataServerError(
       `person is not set: this machine's probanda.json names no firm roster key ("person"), so a preference has no owner. Set it with practice_data__upsert_firm_profile, then retry.`,
@@ -118846,10 +119352,10 @@ function person(env) {
 }
 function preferencesFile(env) {
   const key = person(env);
-  return { file: join53(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
+  return { file: join55(resolveCaseDataRoot(env), "_practice", "preferences", `${key}.json`), person: key };
 }
 function readEntries(file) {
-  if (!existsSync53(file)) return [];
+  if (!existsSync55(file)) return [];
   const entries = readJson2(file).entries;
   if (!Array.isArray(entries)) throw new DataServerError(`${file} has no "entries" list`, "invalid_file");
   return entries;
@@ -118908,8 +119414,8 @@ async function preferencesWrite(args, env = process.env, seams = {}) {
 
 // src/suggestions/store.ts
 import { randomUUID as randomUUID12 } from "node:crypto";
-import { existsSync as existsSync54, readFileSync as readFileSync43 } from "node:fs";
-import { dirname as dirname32, join as join54 } from "node:path";
+import { existsSync as existsSync56, readFileSync as readFileSync43 } from "node:fs";
+import { dirname as dirname34, join as join56 } from "node:path";
 var STORE_FOLDER = "suggestions";
 var STORE_FILE = "suggestions.json";
 var LEGACY_LOG_FILE = "suggestions.local.json";
@@ -118922,13 +119428,13 @@ var CARD_STATUS = {
   unreachable: "Not sent; Probanda could not be reached"
 };
 function storeDir(env = process.env) {
-  return join54(dirname32(configPath(env)), STORE_FOLDER);
+  return join56(dirname34(configPath(env)), STORE_FOLDER);
 }
 function storePath(env = process.env) {
-  return join54(storeDir(env), STORE_FILE);
+  return join56(storeDir(env), STORE_FILE);
 }
 function legacyLogPath(env = process.env) {
-  return join54(dirname32(configPath(env)), LEGACY_LOG_FILE);
+  return join56(dirname34(configPath(env)), LEGACY_LOG_FILE);
 }
 function cardStatus(record2) {
   return CARD_STATUS[record2.state];
@@ -118965,15 +119471,15 @@ function newSuggestionRecord(payload, title, now) {
 }
 function readJson3(file) {
   try {
-    const value = JSON.parse(readFileSync43(file, "utf-8"));
-    if (value === null || typeof value !== "object" || Array.isArray(value)) throw new Error("not a JSON object");
-    return value;
+    const value2 = JSON.parse(readFileSync43(file, "utf-8"));
+    if (value2 === null || typeof value2 !== "object" || Array.isArray(value2)) throw new Error("not a JSON object");
+    return value2;
   } catch (err) {
     throw new DataServerError(`${file} is not valid JSON: ${err.message}`, "invalid_file");
   }
 }
 function readStoreFile(file) {
-  if (!existsSync54(file)) return { version: 1, migrated_log: null, records: [] };
+  if (!existsSync56(file)) return { version: 1, migrated_log: null, records: [] };
   const raw = readJson3(file);
   if (!Array.isArray(raw.records)) throw new DataServerError(`${file} has no "records" list`, "invalid_file");
   return {
@@ -119028,7 +119534,7 @@ function migrateLog(store, file, now) {
 function needsMigration(store, env) {
   if (store.migrated_log) return null;
   const legacy = legacyLogPath(env);
-  return existsSync54(legacy) ? legacy : null;
+  return existsSync56(legacy) ? legacy : null;
 }
 function writeStore(file, store) {
   writeTextAtomic(file, `${JSON.stringify(store, null, 2)}
@@ -119049,7 +119555,7 @@ async function loadStore(env = process.env) {
   const file = storePath(env);
   const store = readStoreFile(file);
   if (!needsMigration(store, env)) return store;
-  return withStore(env, (locked) => structuredClone(locked));
+  return withStore(env, (locked2) => structuredClone(locked2));
 }
 function findSuggestion(store, recordId) {
   const record2 = store.records.find((r3) => r3.record_id === recordId);
@@ -119108,8 +119614,8 @@ async function post(supabaseUrl, staticKey, path, body) {
   if (!obj) return { ok: false, status: res.status, cause: `HTTP ${res.status}: a reply that is not a JSON object` };
   return { ok: true, status: res.status, json: obj };
 }
-function isObject6(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function isObject6(value2) {
+  return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
 }
 function screen(fields2) {
   const { previews, mockup, ...rest } = fields2;
@@ -119244,10 +119750,10 @@ async function retryWriteUps(env, seams) {
   for (const recordId of waiting2) await attachWriteUp(recordId, env, seams);
 }
 var NOT_CONFIGURED = "this computer has no Probanda key, so no status can be read: call cloud_key__configure_credential once and have the practitioner paste the key on the page it serves, or, if they have none, call key_request__submit";
-function cloudItems(value) {
-  if (!Array.isArray(value)) return null;
+function cloudItems(value2) {
+  if (!Array.isArray(value2)) return null;
   const text8 = (v3) => typeof v3 === "string" ? v3 : null;
-  return value.filter(isObject6).map((row2) => ({
+  return value2.filter(isObject6).map((row2) => ({
     item: typeof row2.item === "number" ? row2.item : 0,
     status: text8(row2.status),
     reason: text8(row2.reason),
@@ -119334,7 +119840,7 @@ async function withdrawSuggestion(recordId, env = process.env, seams = {}) {
 
 // src/suggestions/page.ts
 import { mkdirSync as mkdirSync27 } from "node:fs";
-import { dirname as dirname33, join as join55 } from "node:path";
+import { dirname as dirname35, join as join57 } from "node:path";
 var PAST_SUGGESTIONS_FILE = "Past suggestions.html";
 var BRACKET = /\[(client|matter|person|document|file|date|amount)\]/g;
 var ITEM_STATUS = {
@@ -119346,11 +119852,11 @@ var ITEM_STATUS = {
 function escapeHtml2(text8) {
   return text8.replace(/[&<>"']/g, (c3) => `&#${c3.charCodeAt(0)};`);
 }
-function text5(value) {
-  return escapeHtml2(value).replace(BRACKET, '<span class="bracket">[$1]</span>');
+function text5(value2) {
+  return escapeHtml2(value2).replace(BRACKET, '<span class="bracket">[$1]</span>');
 }
-function para(value) {
-  return typeof value === "string" ? `<p class="text">${text5(value)}</p>` : "";
+function para(value2) {
+  return typeof value2 === "string" ? `<p class="text">${text5(value2)}</p>` : "";
 }
 function section2(heading, body) {
   return body ? `<h3>${heading}</h3>${body}` : "";
@@ -119358,8 +119864,8 @@ function section2(heading, body) {
 function parsePayload(record2) {
   if (record2.payload === null) return null;
   try {
-    const value = JSON.parse(record2.payload);
-    return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
+    const value2 = JSON.parse(record2.payload);
+    return value2 !== null && typeof value2 === "object" && !Array.isArray(value2) ? value2 : null;
   } catch {
     return null;
   }
@@ -119372,15 +119878,15 @@ function itemStatusLine(record2, n3) {
   return `<p class="item-status"><span class="label">${escapeHtml2(label2)}</span>${reason}</p>`;
 }
 function structuredItem(item) {
-  const list = (values, key) => Array.isArray(values) && values.length ? `<ul>${values.map((v3) => `<li>${text5(String(key && v3 && typeof v3 === "object" ? v3[key] : v3))}</li>`).join("")}</ul>` : "";
-  return section2("The pain", para(item.pain)) + section2("Where", para(item.where)) + section2("What would show it is solved", para(item.done_test)) + section2("What must stay true", list(item.constraints)) + section2("Changes", list(item.changes, "change"));
+  const list2 = (values, key) => Array.isArray(values) && values.length ? `<ul>${values.map((v3) => `<li>${text5(String(key && v3 && typeof v3 === "object" ? v3[key] : v3))}</li>`).join("")}</ul>` : "";
+  return section2("The pain", para(item.pain)) + section2("Where", para(item.where)) + section2("What would show it is solved", para(item.done_test)) + section2("What must stay true", list2(item.constraints)) + section2("Changes", list2(item.changes, "change"));
 }
 function items(record2, payload) {
-  const list = Array.isArray(payload.items) ? payload.items : [];
-  if (list.length && list.every((i3) => typeof i3 === "string")) {
-    return `<ol class="items">${list.map((t3, i3) => `<li>${para(t3)}${itemStatusLine(record2, i3 + 1)}</li>`).join("")}</ol>`;
+  const list2 = Array.isArray(payload.items) ? payload.items : [];
+  if (list2.length && list2.every((i3) => typeof i3 === "string")) {
+    return `<ol class="items">${list2.map((t3, i3) => `<li>${para(t3)}${itemStatusLine(record2, i3 + 1)}</li>`).join("")}</ol>`;
   }
-  const detail = list.filter((i3) => typeof i3 === "object" && i3 !== null).map((i3) => `<div class="detail">${structuredItem(i3)}</div>`).join("");
+  const detail = list2.filter((i3) => typeof i3 === "object" && i3 !== null).map((i3) => `<div class="detail">${structuredItem(i3)}</div>`).join("");
   return `<ol class="items"><li>${para(payload.pain_point ?? payload.body)}${itemStatusLine(record2, 1)}${detail}</li></ol>`;
 }
 function contextLines(payload) {
@@ -119534,7 +120040,7 @@ function renderPastSuggestionsHtml(store, port, tokenFor, focus2 = null) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'; connect-src http://127.0.0.1:${port}; object-src 'none'; base-uri 'none'; form-action 'none'"><title>Past suggestions</title><style>${STYLE}</style></head><body><main><h1>Past suggestions</h1><p class="note">What this computer sent to the Probanda team, word for word, and what has happened to each suggestion.</p>` + body + `</main><script type="application/json" id="api">${api}</script><script>${SCRIPT}</script></body></html>`;
 }
 function pastSuggestionsPath(env = process.env) {
-  return join55(storeDir(env), PAST_SUGGESTIONS_FILE);
+  return join57(storeDir(env), PAST_SUGGESTIONS_FILE);
 }
 async function writePastSuggestionsPage(env = process.env, options = {}) {
   const store = await loadStore(env);
@@ -119542,19 +120048,19 @@ async function writePastSuggestionsPage(env = process.env, options = {}) {
   if (options.focus !== void 0 && !store.records.some((r3) => isSuggestion(r3) && r3.record_id === options.focus)) {
     throw new NotFoundError(`no suggestion ${options.focus} on this computer`, "not_found");
   }
-  mkdirSync27(dirname33(path), { recursive: true });
+  mkdirSync27(dirname35(path), { recursive: true });
   writeTextAtomic(path, renderPastSuggestionsHtml(store, pageApiPort(env), (id) => pageApiSuggestionToken(id, env), options.focus ?? null));
   return path;
 }
 
 // src/suggestions/card.ts
 import { randomUUID as randomUUID14 } from "node:crypto";
-import { existsSync as existsSync58, unlinkSync as unlinkSync17 } from "node:fs";
-import { join as join59 } from "node:path";
+import { existsSync as existsSync60, unlinkSync as unlinkSync17 } from "node:fs";
+import { join as join61 } from "node:path";
 
 // src/suggestions/crosscheck.ts
-import { existsSync as existsSync55, readFileSync as readFileSync44 } from "node:fs";
-import { join as join56 } from "node:path";
+import { existsSync as existsSync57, readFileSync as readFileSync44 } from "node:fs";
+import { join as join58 } from "node:path";
 
 // src/case/list-record-names.ts
 var DRIVER11 = String.raw`
@@ -119590,8 +120096,8 @@ function listCaseRecordNames(caseDataDirs, env = process.env, scriptsDir) {
       const r3 = raw;
       if (r3?.status === "not_applicable") return { status: "not_applicable" };
       if (r3?.status !== "ok") return { status: "unavailable" };
-      const list = (value) => Array.isArray(value) ? value.filter((v3) => typeof v3 === "string") : [];
-      return { status: "ok", titles: list(r3.titles), file_names: list(r3.file_names), matter: list(r3.matter), parties: list(r3.parties) };
+      const list2 = (value2) => Array.isArray(value2) ? value2.filter((v3) => typeof v3 === "string") : [];
+      return { status: "ok", titles: list2(r3.titles), file_names: list2(r3.file_names), matter: list2(r3.matter), parties: list2(r3.parties) };
     });
   } catch {
     return unavailable;
@@ -119600,15 +120106,15 @@ function listCaseRecordNames(caseDataDirs, env = process.env, scriptsDir) {
 
 // src/suggestions/records.ts
 var RECORD_SOURCES = ["client", "matter", "contact", "folder_name", "document_title", "file_name"];
-function leaves(value, into) {
-  if (typeof value === "string") {
-    if (value.trim()) into.push(value);
-  } else if (typeof value === "number" && Number.isFinite(value)) {
-    into.push(String(value));
-  } else if (Array.isArray(value)) {
-    for (const item of value) leaves(item, into);
-  } else if (value !== null && typeof value === "object") {
-    for (const item of Object.values(value)) leaves(item, into);
+function leaves(value2, into) {
+  if (typeof value2 === "string") {
+    if (value2.trim()) into.push(value2);
+  } else if (typeof value2 === "number" && Number.isFinite(value2)) {
+    into.push(String(value2));
+  } else if (Array.isArray(value2)) {
+    for (const item of value2) leaves(item, into);
+  } else if (value2 !== null && typeof value2 === "object") {
+    for (const item of Object.values(value2)) leaves(item, into);
   }
   return into;
 }
@@ -119704,8 +120210,8 @@ function loadStopWords(env = process.env, installRoot) {
   const root = resolveShippedRoot(STOP_WORDS_DIR, env, { subject: "the suggestion word lists", plugin: "lawyer", installRoot }).root;
   const words2 = /* @__PURE__ */ new Set();
   for (const file of STOP_WORD_FILES) {
-    const path = join56(root, ...STOP_WORDS_DIR.split("/"), file);
-    if (!existsSync55(path)) throw new DataServerError("The suggestion check is missing its word lists. Update the lawyer plugin.", "stop_words_missing");
+    const path = join58(root, ...STOP_WORDS_DIR.split("/"), file);
+    if (!existsSync57(path)) throw new DataServerError("The suggestion check is missing its word lists. Update the lawyer plugin.", "stop_words_missing");
     for (const word of parseStopWords(readFileSync44(path, "utf-8"))) words2.add(word);
   }
   return words2;
@@ -119769,19 +120275,19 @@ function matchAll(text8, patterns, kind, keep = () => true) {
   const hits = [];
   for (const pattern of patterns) {
     for (const m3 of text8.matchAll(pattern)) {
-      let value = m3[0];
-      if (kind === "path") value = value.replace(/[.,;:)\]]+$/, "");
-      if (value === "" || !keep(value)) continue;
+      let value2 = m3[0];
+      if (kind === "path") value2 = value2.replace(/[.,;:)\]]+$/, "");
+      if (value2 === "" || !keep(value2)) continue;
       const start2 = m3.index ?? 0;
-      hits.push({ kind, start: start2, end: start2 + value.length });
+      hits.push({ kind, start: start2, end: start2 + value2.length });
     }
   }
   return hits;
 }
 function findPatterns(text8) {
-  const emails = matchAll(text8, [EMAIL2], "email", (value) => !SERVICE_LOCAL_PARTS2.has(value.split("@")[0].toLowerCase()));
+  const emails = matchAll(text8, [EMAIL2], "email", (value2) => !SERVICE_LOCAL_PARTS2.has(value2.split("@")[0].toLowerCase()));
   const within = (hit, others) => others.some((o3) => o3 !== hit && o3.start <= hit.start && hit.end <= o3.end && o3.end - o3.start > hit.end - hit.start);
-  const paths = matchAll(text8, PATHS3, "path", (value) => new RegExp("\\p{L}", "u").test(value)).filter((hit) => !emails.some((e3) => e3.start <= hit.start && hit.end <= e3.end));
+  const paths = matchAll(text8, PATHS3, "path", (value2) => new RegExp("\\p{L}", "u").test(value2)).filter((hit) => !emails.some((e3) => e3.start <= hit.start && hit.end <= e3.end));
   const dates = matchAll(text8, DATES, "date");
   const amounts = matchAll(text8, AMOUNTS, "amount");
   const all = [...emails, ...paths, ...dates, ...amounts];
@@ -119794,13 +120300,13 @@ function findPatterns(text8) {
   }).sort((a3, b3) => a3.start - b3.start || a3.end - b3.end);
 }
 var READABLE_PARTS = ["pain_point", "items", "context_lines", "comment"];
-function factLeaves(value, path, into) {
-  if (typeof value === "string" || typeof value === "number" && Number.isFinite(value)) {
-    into.push({ part: "environment_facts", field: path || "(facts)", text: String(value) });
-  } else if (Array.isArray(value)) {
-    value.forEach((item, i3) => factLeaves(item, `${path}[${i3}]`, into));
-  } else if (value !== null && typeof value === "object") {
-    for (const [key, item] of Object.entries(value)) factLeaves(item, path ? `${path}.${key}` : key, into);
+function factLeaves(value2, path, into) {
+  if (typeof value2 === "string" || typeof value2 === "number" && Number.isFinite(value2)) {
+    into.push({ part: "environment_facts", field: path || "(facts)", text: String(value2) });
+  } else if (Array.isArray(value2)) {
+    value2.forEach((item, i3) => factLeaves(item, `${path}[${i3}]`, into));
+  } else if (value2 !== null && typeof value2 === "object") {
+    for (const [key, item] of Object.entries(value2)) factLeaves(item, path ? `${path}.${key}` : key, into);
   }
 }
 function locate2(card) {
@@ -119810,10 +120316,10 @@ function locate2(card) {
     if (typeof text8 !== "string") throw new ValidationError(`${part} must be a string`);
     out.push({ part, text: text8 });
   };
-  const many = (part, list) => {
-    if (list === void 0 || list === null) return;
-    if (!Array.isArray(list) || !list.every((entry2) => typeof entry2 === "string")) throw new ValidationError(`${part} must be a list of strings`);
-    list.forEach((text8, index) => out.push({ part, index, text: text8 }));
+  const many = (part, list2) => {
+    if (list2 === void 0 || list2 === null) return;
+    if (!Array.isArray(list2) || !list2.every((entry2) => typeof entry2 === "string")) throw new ValidationError(`${part} must be a list of strings`);
+    list2.forEach((text8, index) => out.push({ part, index, text: text8 }));
   };
   one("pain_point", card.pain_point);
   many("items", card.items);
@@ -119835,14 +120341,14 @@ function crossCheck(card, index) {
   const hits = [];
   for (const where of locate2(card)) {
     const readable = READABLE_PARTS.includes(where.part);
-    const found = [];
+    const found2 = [];
     for (const t3 of tokens(where.text)) {
       const sources = index.get(t3.key);
-      if (sources) found.push({ kind: "record", start: t3.start, end: t3.end, sources: RECORD_SOURCES.filter((s3) => sources.has(s3)) });
+      if (sources) found2.push({ kind: "record", start: t3.start, end: t3.end, sources: RECORD_SOURCES.filter((s3) => sources.has(s3)) });
     }
-    found.push(...findPatterns(where.text));
-    found.sort((a3, b3) => a3.start - b3.start || a3.end - b3.end);
-    for (const f3 of found) {
+    found2.push(...findPatterns(where.text));
+    found2.sort((a3, b3) => a3.start - b3.start || a3.end - b3.end);
+    for (const f3 of found2) {
       hits.push({
         part: where.part,
         ...where.index !== void 0 ? { index: where.index } : {},
@@ -120198,8 +120704,8 @@ function renderCardHtml(card, port, token) {
 }
 
 // src/suggestions/mockup.ts
-import { existsSync as existsSync56, readFileSync as readFileSync45 } from "node:fs";
-import { join as join57 } from "node:path";
+import { existsSync as existsSync58, readFileSync as readFileSync45 } from "node:fs";
+import { join as join59 } from "node:path";
 var PLACEHOLDERS_DIR = "suggestion/references/mockup";
 var PLACEHOLDERS_FILE = "placeholders.txt";
 var MAX_MOCKUP_BYTES = 1e6;
@@ -120209,8 +120715,8 @@ function parsePlaceholders(text8) {
 }
 function loadPlaceholders(env = process.env, installRoot) {
   const root = resolveShippedRoot(PLACEHOLDERS_DIR, env, { subject: "the suggestion mockup placeholders", plugin: "lawyer", installRoot }).root;
-  const path = join57(root, ...PLACEHOLDERS_DIR.split("/"), PLACEHOLDERS_FILE);
-  if (!existsSync56(path)) throw new DataServerError("The suggestion mockup is missing its placeholder text. Update the lawyer plugin.", "placeholders_missing");
+  const path = join59(root, ...PLACEHOLDERS_DIR.split("/"), PLACEHOLDERS_FILE);
+  if (!existsSync58(path)) throw new DataServerError("The suggestion mockup is missing its placeholder text. Update the lawyer plugin.", "placeholders_missing");
   return parsePlaceholders(readFileSync45(path, "utf-8"));
 }
 var REFUSED = [
@@ -120314,9 +120820,9 @@ function checkMockup(html, placeholders) {
     if (tag[0].startsWith("</")) continue;
     for (const attr of tag[2].matchAll(/([^\s=/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g)) {
       const attrName = attr[1].toLowerCase();
-      const value = attr[2] ?? attr[3] ?? attr[4] ?? "";
+      const value2 = attr[2] ?? attr[3] ?? attr[4] ?? "";
       const allowed2 = ALLOWED_ATTRIBUTES[attrName];
-      if (!allowed2 || !allowed2.test(value)) return { problem: `the mockup holds a ${attrName} attribute, which a mockup may not use` };
+      if (!allowed2 || !allowed2.test(value2)) return { problem: `the mockup holds a ${attrName} attribute, which a mockup may not use` };
     }
   }
   if (/(?<![\w-])content\s*:/i.test(html)) return { problem: "the mockup's styles add text of their own" };
@@ -120376,8 +120882,8 @@ function renderMockupPage(opts) {
 
 // src/suggestions/observation.ts
 import { randomUUID as randomUUID13 } from "node:crypto";
-import { existsSync as existsSync57, readdirSync as readdirSync33, readFileSync as readFileSync46 } from "node:fs";
-import { join as join58 } from "node:path";
+import { existsSync as existsSync59, readdirSync as readdirSync33, readFileSync as readFileSync46 } from "node:fs";
+import { join as join60 } from "node:path";
 
 // src/suggestions/environment.ts
 import { arch as osArch, homedir as homedir10, hostname as osHostname, platform as osPlatform, release as osRelease, userInfo } from "node:os";
@@ -120391,12 +120897,12 @@ var TITLE2 = "Probanda's Cloud key";
 var pending;
 var listening;
 async function serveKeyPage(save2) {
-  const link = randomBytes6(24).toString("hex");
-  pending = { link, save: save2 };
+  const link2 = randomBytes6(24).toString("hex");
+  pending = { link: link2, save: save2 };
   listening ??= listen(handle, () => {
     listening = void 0;
   });
-  return `http://127.0.0.1:${await listening}/cloud-key/${link}`;
+  return `http://127.0.0.1:${await listening}/cloud-key/${link2}`;
 }
 function listen(handle4, onError, failure2 = "<p>Return to Claude and ask for a new link.</p>", style = STYLE4) {
   const server = createServer((req, res) => {
@@ -120592,13 +121098,13 @@ function cleanVersion(version2) {
   return version2 !== null && VERSION.test(version2) ? version2 : null;
 }
 function installedVersions(installRoot) {
-  const found = /* @__PURE__ */ new Map();
+  const found2 = /* @__PURE__ */ new Map();
   const own = pluginManifest(installRoot);
-  found.set("lawyer", own.name === "lawyer" ? cleanVersion(own.version) : null);
+  found2.set("lawyer", own.name === "lawyer" ? cleanVersion(own.version) : null);
   for (const sibling of siblingInstalls(installRoot, PROBANDA_PLUGINS.filter((p3) => p3 !== "lawyer"))) {
-    found.set(sibling.name, cleanVersion(sibling.version));
+    found2.set(sibling.name, cleanVersion(sibling.version));
   }
-  return found;
+  return found2;
 }
 function hostOf(seen, env) {
   if (seen && seen.length) return seen.some((t3) => t3.bridged) ? "Cowork" : "Code";
@@ -120628,8 +121134,8 @@ function safe(read3) {
   }
 }
 function scrubFacts(facts, forbidden) {
-  const bad2 = (value) => /[\\/]/.test(value) || forbidden.some((f3) => value.toLowerCase().includes(f3));
-  const keep = (value) => value !== null && bad2(value) ? null : value;
+  const bad2 = (value2) => /[\\/]/.test(value2) || forbidden.some((f3) => value2.toLowerCase().includes(f3));
+  const keep = (value2) => value2 !== null && bad2(value2) ? null : value2;
   return {
     plugins: facts.plugins.map((p3) => ({
       ...p3,
@@ -120744,19 +121250,19 @@ function parseObservationTexts(text8) {
     const at = line.indexOf("=");
     if (at < 0) continue;
     const key = line.slice(0, at).trim();
-    const value = line.slice(at + 1).trim();
-    if (TEXT_KEY.test(key) && value) out.set(key, value);
+    const value2 = line.slice(at + 1).trim();
+    if (TEXT_KEY.test(key) && value2) out.set(key, value2);
   }
   return out;
 }
 function loadObservationTexts(env = process.env, installRoot) {
   const root = resolveShippedRoot(OBSERVATION_TEXTS_PATH, env, { subject: "the suggestion observation texts", plugin: "lawyer", installRoot }).root;
-  const path = join58(root, ...OBSERVATION_TEXTS_PATH.split("/"));
-  if (!existsSync57(path)) throw new DataServerError("The suggestion observation texts are missing. Update the lawyer plugin.", "observation_texts_missing");
+  const path = join60(root, ...OBSERVATION_TEXTS_PATH.split("/"));
+  if (!existsSync59(path)) throw new DataServerError("The suggestion observation texts are missing. Update the lawyer plugin.", "observation_texts_missing");
   return parseObservationTexts(readFileSync46(path, "utf-8"));
 }
-function isObject7(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function isObject7(value2) {
+  return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
 }
 var SERVER_PREFIXES = PROBANDA_PLUGINS.flatMap((plugin) => SERVERS[plugin].map((server) => ({ plugin, server, prefix: `plugin_${plugin}_${server}__` }))).sort((a3, b3) => b3.prefix.length - a3.prefix.length);
 var SESSION_PREFIX = /^mcp__(?:[A-Za-z0-9-]{1,64}__)?(?=plugin_)/;
@@ -120787,10 +121293,10 @@ function errorCode2(raw) {
 function counts2(raw) {
   if (!isObject7(raw)) throw new ValidationError("counts must be an object of whole numbers");
   const out = {};
-  for (const [key, value] of Object.entries(raw)) {
+  for (const [key, value2] of Object.entries(raw)) {
     if (!(key in COUNT_LABELS)) throw new ValidationError(`counts has an unknown count "${key}"; the counts are ${Object.keys(COUNT_LABELS).join(", ")}`);
-    if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > MAX_COUNT) throw new ValidationError(`counts.${key} must be a whole number`);
-    out[key] = value;
+    if (typeof value2 !== "number" || !Number.isInteger(value2) || value2 < 0 || value2 > MAX_COUNT) throw new ValidationError(`counts.${key} must be a whole number`);
+    out[key] = value2;
   }
   if (!Object.keys(out).length) throw new ValidationError("counts must hold at least one count");
   return out;
@@ -120835,8 +121341,8 @@ function rawObservationLines(observation, texts) {
   if (observation.tool) lines2.push(`Tool: ${observation.tool}`);
   if (observation.error_code) lines2.push(`Error code: ${observation.error_code}`);
   for (const name of Object.keys(COUNT_LABELS)) {
-    const value = observation.counts?.[name];
-    if (value !== void 0) lines2.push(`${COUNT_LABELS[name]}: ${value}`);
+    const value2 = observation.counts?.[name];
+    if (value2 !== void 0) lines2.push(`${COUNT_LABELS[name]}: ${value2}`);
   }
   if (observation.text_key) lines2.push(texts.get(observation.text_key));
   return lines2;
@@ -121007,10 +121513,10 @@ function findCard(store, cardId) {
   return record2;
 }
 function cardPath(cardId, env = process.env) {
-  return join59(storeDir(env), `Suggestion-${cardId}.html`);
+  return join61(storeDir(env), `Suggestion-${cardId}.html`);
 }
 function mockupPagePath(cardId, n3, env = process.env) {
-  return join59(storeDir(env), `Suggestion-${cardId}-mockup-${n3}.html`);
+  return join61(storeDir(env), `Suggestion-${cardId}-mockup-${n3}.html`);
 }
 function nowOf2(deps) {
   return deps.now ? deps.now() : /* @__PURE__ */ new Date();
@@ -121020,28 +121526,28 @@ async function recordsOf(deps) {
   const records = deps.records ? await deps.records() : await readRecordTexts(new PracticeStore(deps.env), deps.env);
   return { records, stopWords };
 }
-function isObject8(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function isObject8(value2) {
+  return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
 }
-function onlyKeys2(label2, value, keys) {
-  const extra = Object.keys(value).find((key) => !keys.includes(key));
+function onlyKeys2(label2, value2, keys) {
+  const extra = Object.keys(value2).find((key) => !keys.includes(key));
   if (extra) throw new ValidationError(`${label2} has an unknown field "${extra}"`);
 }
-function text6(label2, value, { empty: empty2 = false, max = MAX_TEXT } = {}) {
-  if (typeof value !== "string") throw new ValidationError(`${label2} must be text`);
-  const trimmed = value.trim();
+function text6(label2, value2, { empty: empty2 = false, max = MAX_TEXT } = {}) {
+  if (typeof value2 !== "string") throw new ValidationError(`${label2} must be text`);
+  const trimmed = value2.trim();
   if (!empty2 && !trimmed) throw new ValidationError(`${label2} must not be empty`);
   if (trimmed.length > max) throw new ValidationError(`${label2} is over ${max} characters`);
   return trimmed;
 }
-function flag(label2, value) {
-  if (value === void 0) return false;
-  if (typeof value !== "boolean") throw new ValidationError(`${label2} must be true or false`);
-  return value;
+function flag(label2, value2) {
+  if (value2 === void 0) return false;
+  if (typeof value2 !== "boolean") throw new ValidationError(`${label2} must be true or false`);
+  return value2;
 }
 var ANY_BRACKET = /\[([A-Za-z][A-Za-z ]{0,30})\]/g;
-function checkBrackets(label2, value) {
-  for (const m3 of value.matchAll(ANY_BRACKET)) {
+function checkBrackets(label2, value2) {
+  for (const m3 of value2.matchAll(ANY_BRACKET)) {
     if (!BRACKETS.includes(m3[1])) {
       throw new ValidationError(`${label2} holds the bracket [${m3[1]}]; a removed identifier leaves only one of ${BRACKETS.map((b3) => `[${b3}]`).join(", ")}`);
     }
@@ -121159,12 +121665,12 @@ function markFact(facts, field) {
   const last = steps[steps.length - 1];
   if (node !== null && typeof node === "object" && last !== void 0) node[last] = DROPPED;
 }
-function sweep2(value) {
-  if (Array.isArray(value)) return value.filter((v3) => v3 !== DROPPED).map(sweep2);
-  if (value !== null && typeof value === "object") {
-    return Object.fromEntries(Object.entries(value).filter(([, v3]) => v3 !== DROPPED).map(([k3, v3]) => [k3, sweep2(v3)]));
+function sweep2(value2) {
+  if (Array.isArray(value2)) return value2.filter((v3) => v3 !== DROPPED).map(sweep2);
+  if (value2 !== null && typeof value2 === "object") {
+    return Object.fromEntries(Object.entries(value2).filter(([, v3]) => v3 !== DROPPED).map(([k3, v3]) => [k3, sweep2(v3)]));
   }
-  return value;
+  return value2;
 }
 function dropGenerated(card, hits, when, at) {
   const generated = hits.filter((h3) => !isReadable(h3.part));
@@ -121235,16 +121741,16 @@ async function buildCard(input, facts, deps) {
   }
   const card = newCard(input, structuredClone(facts), at);
   const { records, stopWords } = await recordsOf(deps);
-  const check2 = runCrossCheck(cardText2(card), records, stopWords);
-  if (!check2.complete) return { built: false, reason: "records_unreadable", unreadable: unreadSources(check2.records) };
-  const readable = check2.hits.filter((h3) => isReadable(h3.part));
+  const check3 = runCrossCheck(cardText2(card), records, stopWords);
+  if (!check3.complete) return { built: false, reason: "records_unreadable", unreadable: unreadSources(check3.records) };
+  const readable = check3.hits.filter((h3) => isReadable(h3.part));
   if (readable.length) {
     return {
       built: false,
       hits: readable.map((h3) => ({ part: h3.part, id: blockOf2(card, h3.part, h3.index).id, ...h3.index !== void 0 ? { index: h3.index } : {}, start: h3.start, end: h3.end, kind: h3.kind, offer: h3.offer }))
     };
   }
-  dropGenerated(card, check2.hits, "build", at);
+  dropGenerated(card, check3.hits, "build", at);
   const plugins = input.observation_id !== null ? pluginsOf(deps.seams ?? {}) : [];
   const saved = await withStore(deps.env, (store) => {
     if (input.observation_id !== null) {
@@ -121306,30 +121812,30 @@ async function readCardState(cardId, deps) {
 async function readCardPage(cardId, env) {
   return renderCardHtml(findCard(await loadStore(env), cardId), pageApiPort(env), pageApiCardToken(cardId, env));
 }
-function blockList(label2, value) {
-  if (value === void 0) return void 0;
-  if (!Array.isArray(value)) throw new ValidationError(`${label2} must be a list`);
-  return value.map((entry2, i3) => {
+function blockList(label2, value2) {
+  if (value2 === void 0) return void 0;
+  if (!Array.isArray(value2)) throw new ValidationError(`${label2} must be a list`);
+  return value2.map((entry2, i3) => {
     if (!isObject8(entry2) || typeof entry2.id !== "string") throw new ValidationError(`${label2}[${i3}] must be {id, text}`);
     return { id: entry2.id, text: text6(`${label2}[${i3}].text`, entry2.text, { empty: true, max: MAX_EDIT }) };
   });
 }
-function cardEdits(value) {
-  if (value === void 0 || value === null) return {};
-  if (!isObject8(value)) throw new ValidationError("edits must be an object");
-  onlyKeys2("edits", value, ["pain_point", "items", "context_lines", "lines_known", "comment"]);
-  const known = value.lines_known;
+function cardEdits(value2) {
+  if (value2 === void 0 || value2 === null) return {};
+  if (!isObject8(value2)) throw new ValidationError("edits must be an object");
+  onlyKeys2("edits", value2, ["pain_point", "items", "context_lines", "lines_known", "comment"]);
+  const known = value2.lines_known;
   if (known !== void 0 && (!Array.isArray(known) || !known.every((id) => typeof id === "string"))) throw new ValidationError("lines_known must be a list of ids");
   return {
-    ...value.pain_point === void 0 ? {} : { pain_point: text6("pain_point", value.pain_point, { empty: true, max: MAX_EDIT }) },
-    ...value.items === void 0 ? {} : { items: blockList("items", value.items) },
-    ...value.context_lines === void 0 ? {} : { context_lines: blockList("context_lines", value.context_lines) },
+    ...value2.pain_point === void 0 ? {} : { pain_point: text6("pain_point", value2.pain_point, { empty: true, max: MAX_EDIT }) },
+    ...value2.items === void 0 ? {} : { items: blockList("items", value2.items) },
+    ...value2.context_lines === void 0 ? {} : { context_lines: blockList("context_lines", value2.context_lines) },
     ...known === void 0 ? {} : { lines_known: known },
-    ...value.comment === void 0 ? {} : { comment: text6("comment", value.comment, { empty: true, max: MAX_EDIT }) }
+    ...value2.comment === void 0 ? {} : { comment: text6("comment", value2.comment, { empty: true, max: MAX_EDIT }) }
   };
 }
-function edited(block2, value) {
-  return value === block2.text ? block2 : { ...block2, text: value, guess: false };
+function edited(block2, value2) {
+  return value2 === block2.text ? block2 : { ...block2, text: value2, guess: false };
 }
 function applyEdits(card, edits) {
   if (edits.pain_point !== void 0 && edits.pain_point !== "") card.pain_point = edited(card.pain_point, edits.pain_point);
@@ -121375,13 +121881,13 @@ function cardFields(card) {
   };
 }
 function checkAndClaim(card, records, stopWords, at) {
-  const check2 = runCrossCheck(cardText2(card), records, stopWords);
-  if (!check2.complete) {
-    card.check_failures = [...card.check_failures ?? [], { at, records: check2.records }];
+  const check3 = runCrossCheck(cardText2(card), records, stopWords);
+  if (!check3.complete) {
+    card.check_failures = [...card.check_failures ?? [], { at, records: check3.records }];
     return { unchecked: true };
   }
-  dropGenerated(card, check2.hits, "click", at);
-  const prompts = promptsOf(card, check2.hits);
+  dropGenerated(card, check3.hits, "click", at);
+  const prompts = promptsOf(card, check3.hits);
   if (prompts.length) return { prompts };
   card.waited_at_submit = waiting(card, new Date(at));
   card.state = "sending";
@@ -121457,10 +121963,10 @@ async function resolvePrompt(cardId, answer, deps) {
     const card = findCard(store, cardId);
     const done = closed(card, store, now);
     if (done) return { done };
-    const check2 = runCrossCheck(cardText2(card), records, stopWords);
-    const hit = check2.hits.find((h3) => h3.part === part && h3.start === answer.start && h3.end === answer.end && isReadable(h3.part) && blockOf2(card, part, h3.index).id === id);
+    const check3 = runCrossCheck(cardText2(card), records, stopWords);
+    const hit = check3.hits.find((h3) => h3.part === part && h3.start === answer.start && h3.end === answer.end && isReadable(h3.part) && blockOf2(card, part, h3.index).id === id);
     if (!hit || answer.action === "send_anyway" && hit.kind !== "date" && hit.kind !== "amount") {
-      return { done: { outcome: "stale", prompts: promptsOf(card, check2.hits), blocks: blocksOf2(card) } };
+      return { done: { outcome: "stale", prompts: promptsOf(card, check3.hits), blocks: blocksOf2(card) } };
     }
     const block2 = blockOf2(card, part, hit.index);
     const span = block2.text.slice(hit.start, hit.end);
@@ -121471,9 +121977,9 @@ async function resolvePrompt(cardId, answer, deps) {
       if (part === "pain_point") card.pain_point = { ...card.pain_point, text: replaced };
       else if (part === "comment") card.comment = replaced;
       else {
-        const list = part === "items" ? card.items : card.context_lines;
-        const at = list.findIndex((b3) => b3.id === block2.id);
-        list[at] = { ...list[at], text: replaced };
+        const list2 = part === "items" ? card.items : card.context_lines;
+        const at = list2.findIndex((b3) => b3.id === block2.id);
+        list2[at] = { ...list2[at], text: replaced };
       }
     }
     return claimed(card, checkAndClaim(card, records, stopWords, now.toISOString()));
@@ -121526,8 +122032,8 @@ async function requestMockup(cardId, edits, deps) {
     const card = findCard(store, cardId);
     if (effectiveState(card, now) !== "open") return { outcome: "closed" };
     applyEdits(card, edits);
-    const link = mockupLink(card, now);
-    if (link !== "available") return { outcome: link };
+    const link2 = mockupLink(card, now);
+    if (link2 !== "available") return { outcome: link2 };
     card.mockup_request = { at: now.toISOString(), taken_at: null };
     return { outcome: "requested" };
   });
@@ -121537,11 +122043,11 @@ async function attachMockup(cardId, html, deps) {
   const problem = checkMockup(html, placeholders);
   if (problem) throw new ValidationError(`mockup refused: ${problem.problem}. Build it again from the placeholder text alone, with inline styles.`);
   const { records, stopWords } = await recordsOf(deps);
-  const check2 = runCrossCheck({ mockup: html }, records, stopWords);
-  if (!check2.complete) {
-    throw new ValidationError(`mockup refused: it could not be checked against this computer's records (${unreadSources(check2.records).join(", ")} records unreadable)`);
+  const check3 = runCrossCheck({ mockup: html }, records, stopWords);
+  if (!check3.complete) {
+    throw new ValidationError(`mockup refused: it could not be checked against this computer's records (${unreadSources(check3.records).join(", ")} records unreadable)`);
   }
-  if (!check2.passed) {
+  if (!check3.passed) {
     throw new ValidationError("mockup refused: a word in it is found in this computer's records. Use other placeholder text or other style names.");
   }
   const now = nowOf2(deps);
@@ -121572,7 +122078,7 @@ async function rejectMockup(cardId, n3, reason, deps) {
   });
   if (result.outcome === "rejected") {
     const path = mockupPagePath(cardId, n3, deps.env);
-    if (existsSync58(path)) unlinkSync17(path);
+    if (existsSync60(path)) unlinkSync17(path);
   }
   return result;
 }
@@ -121639,14 +122145,14 @@ var MAX_CITES = 4;
 var MAX_QUOTE = 300;
 var MIN_QUOTE = 8;
 var REMOVED_SHARE_LIMIT = 0.25;
-function isObject9(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function isObject9(value2) {
+  return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
 }
 function payloadOf(record2) {
   if (record2.payload === null) throw new ValidationError("this suggestion was sent before this computer kept a copy, so it gets no technical write-up");
-  const value = JSON.parse(record2.payload);
-  if (!isObject9(value)) throw new ValidationError("this suggestion's stored copy is not readable");
-  return value;
+  const value2 = JSON.parse(record2.payload);
+  if (!isObject9(value2)) throw new ValidationError("this suggestion's stored copy is not readable");
+  return value2;
 }
 function cardLines(payload) {
   const lines2 = [];
@@ -121689,18 +122195,18 @@ function bad() {
   throw new ValidationError("not_a_specification");
 }
 function parseSpecification(raw) {
-  let value = raw;
-  if (typeof value === "string") {
+  let value2 = raw;
+  if (typeof value2 === "string") {
     try {
-      value = JSON.parse(value);
+      value2 = JSON.parse(value2);
     } catch {
       bad();
     }
   }
-  if (!isObject9(value) || !Array.isArray(value.sentences)) bad();
-  const list = value.sentences;
-  if (list.length < 1 || list.length > MAX_SENTENCES) bad();
-  const sentences = list.map((entry2, i3) => {
+  if (!isObject9(value2) || !Array.isArray(value2.sentences)) bad();
+  const list2 = value2.sentences;
+  if (list2.length < 1 || list2.length > MAX_SENTENCES) bad();
+  const sentences = list2.map((entry2, i3) => {
     if (!isObject9(entry2) || typeof entry2.text !== "string" || !entry2.text.trim() || entry2.text.length > MAX_SENTENCE) bad();
     if (entry2.item !== void 0 && !(Number.isInteger(entry2.item) && entry2.item >= 1)) bad();
     const cites = entry2.cites ?? [];
@@ -121746,9 +122252,9 @@ function verifyCitations(spec, brief, readShipped2) {
       const quote = norm3(cite.quote);
       if (named2.length !== 1 || !quote || cite.quote.length > MAX_QUOTE) return fail3("citation_shape");
       if (cite.fact !== void 0) {
-        const value = facts.get(cite.fact);
-        if (value === void 0) return fail3("unknown_fact");
-        if (norm3(value) !== quote) return fail3("quote_not_found");
+        const value2 = facts.get(cite.fact);
+        if (value2 === void 0) return fail3("unknown_fact");
+        if (norm3(value2) !== quote) return fail3("quote_not_found");
         return;
       }
       let source;
@@ -121782,17 +122288,17 @@ function backstopInput(spec, brief) {
   };
 }
 function readJudgement(raw, spec) {
-  let value = raw;
-  if (typeof value === "string") {
+  let value2 = raw;
+  if (typeof value2 === "string") {
     try {
-      value = JSON.parse(value);
+      value2 = JSON.parse(value2);
     } catch {
-      value = null;
+      value2 = null;
     }
   }
   const said = /* @__PURE__ */ new Map();
-  if (isObject9(value) && Array.isArray(value.sentences)) {
-    for (const entry2 of value.sentences) {
+  if (isObject9(value2) && Array.isArray(value2.sentences)) {
+    for (const entry2 of value2.sentences) {
       if (isObject9(entry2) && Number.isInteger(entry2.n) && typeof entry2.supported === "boolean" && !said.has(entry2.n)) {
         said.set(entry2.n, entry2.supported);
       }
@@ -121892,15 +122398,15 @@ async function checkWriteUp(cardId, raw, deps) {
   if (!citations.passed || spec === null) return { verified: false, card_id: cardId };
   return { verified: true, card_id: cardId, backstop_input: backstopInput(spec, brief) };
 }
-function combined(sentences, citations, judgement, check2) {
-  const passed = citations.passed && judgement !== null && judgement.passed && check2 !== null && check2.incoherent === null;
+function combined(sentences, citations, judgement, check3) {
+  const passed = citations.passed && judgement !== null && judgement.passed && check3 !== null && check3.incoherent === null;
   return {
     format: BACKSTOP_FORMAT,
     passed,
     sentences,
     citations,
     judgement: judgement === null ? { judged: false } : { judged: true, ...judgement },
-    record_check: check2 === null ? { ran: false } : { ran: true, removed: [...new Set(check2.removals.map((r3) => r3.sentence))], incoherent: check2.incoherent }
+    record_check: check3 === null ? { ran: false } : { ran: true, removed: [...new Set(check3.removals.map((r3) => r3.sentence))], incoherent: check3.incoherent }
   };
 }
 async function sendWriteUp(cardId, rawJudgement, deps) {
@@ -121910,33 +122416,33 @@ async function sendWriteUp(cardId, rawJudgement, deps) {
   const w0 = writeUpOf(sent2.record, "checked");
   const spec = w0.draft;
   const judgement = readJudgement(rawJudgement, spec);
-  let check2 = null;
+  let check3 = null;
   if (judgement.passed) {
     const stopWords = deps.stopWords ? deps.stopWords() : loadStopWords(deps.env);
     const records = deps.records ? await deps.records() : await readRecordTexts(new PracticeStore(deps.env), deps.env);
-    check2 = removeMatches(spec, records, stopWords);
+    check3 = removeMatches(spec, records, stopWords);
   }
   const at = nowIso4(deps);
   const recordId = sent2.record.record_id;
   const outcome = await withStore(deps.env, (s3) => {
     const record2 = findSuggestion(s3, recordId);
     const w3 = writeUpOf(record2, "checked");
-    const result = combined(spec.sentences.length, w3.citations, judgement, check2);
+    const result = combined(spec.sentences.length, w3.citations, judgement, check3);
     record2.backstop_result = result;
-    if (check2) w3.removals = check2.removals;
+    if (check3) w3.removals = check3.removals;
     if (!judgement.passed) {
       standAlone(w3, "backstop_failed", at);
       return "stands_alone";
     }
-    if (check2 === null || check2.incoherent !== null) {
-      standAlone(w3, check2?.incoherent === "records_unreadable" ? "records_unreadable" : "incoherent", at);
+    if (check3 === null || check3.incoherent !== null) {
+      standAlone(w3, check3?.incoherent === "records_unreadable" ? "records_unreadable" : "incoherent", at);
       return "stands_alone";
     }
     if (record2.withdrawn_at !== null) {
       standAlone(w3, "withdrawn", at);
       return "stands_alone";
     }
-    record2.specification = JSON.stringify(check2.spec);
+    record2.specification = JSON.stringify(check3.spec);
     w3.state = "waiting_to_send";
     w3.updated_at = at;
     delete w3.draft;
@@ -122057,7 +122563,7 @@ async function suggestionLogWrite(args, env = process.env) {
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync59, mkdirSync as mkdirSync28, readFileSync as readFileSync47, statSync as statSync23, writeFileSync as writeFileSync16 } from "node:fs";
+import { existsSync as existsSync61, mkdirSync as mkdirSync28, readFileSync as readFileSync47, statSync as statSync23, writeFileSync as writeFileSync16 } from "node:fs";
 import { win32 as pathWin3229 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
@@ -122080,7 +122586,7 @@ function repoDocsWrite(relative5, content, overwrite = false, env) {
   const root = docsRoot(env);
   assertRelativeSyntax(relative5, "path");
   const resolved = resolveWithin(root, relative5, "path", false);
-  const exists = existsSync59(resolved);
+  const exists = existsSync61(resolved);
   if (exists && statSync23(resolved).isDirectory()) {
     throw new DataServerError(
       `path is a directory, not a file: ${relative5}`,
@@ -122118,7 +122624,7 @@ function repoDocsRead(relative5, env) {
 }
 
 // src/pages/preview.ts
-import { basename as basename15, dirname as dirname34, join as join61, relative as relative4 } from "node:path";
+import { basename as basename15, dirname as dirname36, join as join63, relative as relative4 } from "node:path";
 
 // src/housekeeping/templates/approval.css.ts
 var approval_css_default = ':root{\n  --paper:#F4FAF7;--card:#FFFFFF;--ink:#025056;--muted:#436864;--line:#D7E8E0;--line-strong:#B9D3C8;\n  --accent:#8A5F1F;--accent-soft:#F7ECD6;\n  --panel:#C1E3CF;--frame:#4D8F85;--pill-bg:#BA802B;--pill-ink:#1A1A1A;--gradient:linear-gradient(90deg,#E5B521,#BA802B);\n  --ok:#025056;--ok-ink:#FFFFFF;--ok-soft:#E3F2EC;--bad:#B3261E;\n  --shadow:0 1px 2px rgba(2,80,86,.06),0 4px 14px rgba(2,80,86,.06);\n  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;\n  --sans-heading:"Trebuchet MS","Century Gothic",var(--sans);\n  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;\n}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}}\n:root[data-theme="dark"]{\n  --paper:#0E2224;--card:#133034;--ink:#D9F0E8;--muted:#8FB8B0;--line:#23494A;--line-strong:#35635F;\n  --accent:#E5B521;--accent-soft:#3A2F14;--panel:#163330;--frame:#4D8F85;\n  --ok:#7FC8B4;--ok-ink:#0E2224;--ok-soft:#1B3F3E;--bad:#F28B82;--shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);\n}\n*{box-sizing:border-box}\nbody{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}\nmain{padding:28px 28px 96px;max-width:1080px;margin:0 auto}\nheader{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}\nheader h1{font-family:var(--sans-heading);font-weight:600;font-size:22px;margin:0;letter-spacing:-.01em}\nheader h1::after{content:"";display:block;height:4px;width:140px;margin-top:8px;border-radius:2px;background:var(--gradient)}\n.meta{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px}\n.meta span::before{content:attr(data-k) " ";color:var(--line-strong)}\n.note{font-size:12.5px;color:var(--muted);margin:0}\n.banner{padding:10px 14px;border-radius:10px;border:2px solid var(--ok);background:var(--ok-soft);font-weight:600;margin-top:6px}\n.board{display:flex;flex-direction:column;gap:22px}\n\n/* Group panel */\nsection.grp{background:var(--panel);border-radius:12px;padding:14px 16px 16px}\nsection.grp>h2{font-family:var(--sans-heading);font-size:17px;font-weight:700;letter-spacing:-.005em;margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--frame);display:flex;align-items:center;gap:10px}\nlabel.all{margin-left:auto;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);padding:4px 8px;border-radius:8px}\nlabel.all:hover{color:var(--ink);background:var(--card)}\nlabel.all input{position:absolute;opacity:0;pointer-events:none}\n.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--frame);background:var(--card);display:grid;place-items:center;transition:background .12s,border-color .12s}\nlabel.all input:checked+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:checked+.box::after{content:"";width:9px;height:5px;border:2px solid var(--ok-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}\nlabel.all input:indeterminate+.box{background:var(--ok);border-color:var(--ok)}\nlabel.all input:indeterminate+.box::after{content:"";width:9px;height:2px;background:var(--ok-ink);border-radius:1px}\nlabel.all input:focus-visible+.box{outline:2px solid var(--accent);outline-offset:2px}\nlabel.all input:disabled+.box{opacity:.6}\n.count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--pill-ink);background:var(--pill-bg);border-radius:999px;padding:1px 8px;line-height:1.5}\nsection[data-kind="misfiled"]>h2,section[data-kind="stuck"]>h2{color:var(--accent)}\n\n/* Row card */\nol.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}\nli.card{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow);transition:border-color .15s,background .15s}\nli.card:hover{border-color:var(--line-strong)}\nli.card[data-state="ok"]{border-color:var(--ok);background:var(--ok-soft)}\n.what{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:2px}\n.src{font-size:13px;overflow-wrap:anywhere}\n.src a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line-strong)}\n.src a:hover{color:var(--ink);border-bottom-color:var(--ink)}\n.dir{font-weight:700}\n.to{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}\n.verb{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--frame);white-space:nowrap}\n.verb::before{content:"\\2192"}\n.verb.solo::before{content:"\\2192\\00A0\\00A0"}\n.verb.solo{font-size:12px;font-weight:600;color:var(--ink)}\n.tgt{font-weight:400;font-size:14px;overflow-wrap:anywhere}\n.dest-f{font-weight:700}\n.why{font-size:12.5px;color:var(--muted)}\n.why::before{content:"\\2014\\00A0"}\n.aside{font-size:12.5px;color:var(--muted)}\n\n/* Decision toggles */\n.pick{display:flex;gap:6px;flex:0 0 auto}\nlabel.opt{position:relative;cursor:pointer;user-select:none}\nlabel.opt input{position:absolute;opacity:0;pointer-events:none}\nlabel.opt span{display:inline-block;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line-strong);font-size:12.5px;font-weight:500;color:var(--muted);background:var(--card);transition:all .12s;white-space:nowrap}\nlabel.opt:hover span{border-color:var(--frame);color:var(--ink)}\nlabel.opt.ok input:checked+span{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}\nlabel.opt.ok input:checked+span::before{content:"\\2713\\00A0"}\nlabel.opt.leave input:checked+span{background:var(--line);border-color:var(--line-strong);color:var(--ink)}\nlabel.opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}\nlabel.opt input:disabled+span{cursor:default}\n\n/* Ingested, nothing to approve */\ndetails.ingested{margin-top:22px;background:var(--panel);border-radius:12px;padding:12px 16px}\ndetails.ingested summary{font-family:var(--sans-heading);font-size:15px;font-weight:700;cursor:pointer}\ndetails.ingested .src{padding:6px 0 0}\n\n/* Sticky footer tally */\n.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line-strong);box-shadow:0 -4px 16px rgba(2,80,86,.08)}\n.bar .in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}\n.tally{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}\n.tally b{color:var(--ink);font-weight:600}\n.tally .t-ok b{color:var(--ok)}\n.msg{font-size:13px}\n.msg.done{color:var(--ok);font-weight:600}\n.msg.error{color:var(--bad)}\nbutton.submit{margin-left:auto;font:600 14px var(--sans-heading);padding:8px 22px;border-radius:8px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:transform .08s,opacity .12s}\nbutton.submit:hover{opacity:.92}\nbutton.submit:active{transform:translateY(1px)}\nbutton.submit:disabled{opacity:.4;cursor:default}\n\n@media (max-width:640px){main{padding:18px 16px 120px}.bar .in{padding:10px 16px}.what{flex-basis:100%}}\n@media (prefers-reduced-motion: reduce){*{transition:none!important}}';
@@ -123392,15 +123898,19 @@ var LOOSE_THREADS_FIXTURE = {
       { key: "research", label: "Research", colour: "#8E6620", count: 1 }
     ],
     ideas: [
-      { id: 1, rank: 1, idea: "The client prefers to settle before the hearing.", group: "decision", group_label: "Practitioner decisions", reason: "A decision already made shapes the reply.", job: "Draft a settlement offer letter.", surfaced_by: "draft", origin: "from Job #2", deferred_at: null },
-      { id: 2, rank: 2, idea: "Is there authority on waiver of delivery by silence?", group: "research", group_label: "Research", reason: "The other side may argue waiver.", job: "Research waiver by silence.", surfaced_by: "legal-research", origin: null, deferred_at: null },
-      { id: 3, rank: null, idea: "Consider a standing exhibit-numbering convention.", group: null, group_label: null, reason: null, job: null, surfaced_by: "draft", origin: "from Notice of Application for Document Production", deferred_at: null },
-      { id: 4, rank: null, idea: "Ask whether the expert can report sooner.", group: null, group_label: null, reason: null, job: null, surfaced_by: "practitioner", origin: null, deferred_at: "2026-01-12T10:00" }
+      { id: 1, tab: "ideas", ref: null, rank: 1, idea: "The client prefers to settle before the hearing.", group: "decision", group_label: "Practitioner decisions", reason: "A decision already made shapes the reply.", job: "Draft a settlement offer letter.", surfaced_by: "draft", origin: "from Job #2", deferred_at: null },
+      { id: 2, tab: "ideas", ref: null, rank: 2, idea: "Is there authority on waiver of delivery by silence?", group: "research", group_label: "Research", reason: "The other side may argue waiver.", job: "Research waiver by silence.", surfaced_by: "legal-research", origin: null, deferred_at: null },
+      { id: 3, tab: "ideas", ref: null, rank: null, idea: "Consider a standing exhibit-numbering convention.", group: null, group_label: null, reason: null, job: null, surfaced_by: "draft", origin: "from Notice of Application for Document Production", deferred_at: null },
+      { id: 4, tab: "ideas", ref: null, rank: null, idea: "Ask whether the expert can report sooner.", group: null, group_label: null, reason: null, job: null, surfaced_by: "practitioner", origin: null, deferred_at: "2026-01-12T10:00" }
     ],
     resolved: [
-      { id: 5, idea: "Check the limitation date.", how: "job", at: "2026-01-11T09:00", job_id: 7, job_title: "Confirm the limitation date" },
-      { id: 6, idea: "Mention the weather on the day of delivery.", how: "discarded", at: "2026-01-10T15:00", job_id: null, job_title: null },
-      { id: 7, idea: "The Work Board could show hearing dates.", how: "suggested", at: "2026-01-09T11:00", job_id: null, job_title: null }
+      { id: 5, tab: "ideas", idea: "Check the limitation date.", how: "job", at: "2026-01-11T09:00", job_id: 7, job_title: "Confirm the limitation date" },
+      { id: 6, tab: "ideas", idea: "Mention the weather on the day of delivery.", how: "discarded", at: "2026-01-10T15:00", job_id: null, job_title: null },
+      { id: 7, tab: "ideas", idea: "The Work Board could show hearing dates.", how: "suggested", at: "2026-01-09T11:00", job_id: null, job_title: null }
+    ],
+    in_place: [
+      { tab: "jobs", record: "Job #9", title: "Compare the two expert reports", status: "Shelved", date: "2026-01-08", url: null, path: null },
+      { tab: "arguments", record: "Submission #4", title: "The delay alone defeats the application.", status: "Killed", date: "2026-01-06", url: null, path: null }
     ],
     api: { port: 0, db_path: "", proceeding_id: 1, token: "" }
   }
@@ -123665,10 +124175,10 @@ var LEGAL_RESEARCH_FIXTURE = {
 // src/pages/preview-file.ts
 import { mkdirSync as mkdirSync29, writeFileSync as writeFileSync17 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
-import { join as join60 } from "node:path";
+import { join as join62 } from "node:path";
 var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
 function fixturePreviewDir() {
-  return join60(tmpdir5(), FIXTURE_PREVIEW_FOLDER);
+  return join62(tmpdir5(), FIXTURE_PREVIEW_FOLDER);
 }
 var FIXTURE_PREVIEW_MARKER = "<!-- probanda-fixture-preview -->";
 function composeWithOverrides(set, overrides = {}) {
@@ -123685,7 +124195,7 @@ function writePreview(dir, base, html, fixture) {
   const text8 = fixture ? `${html}${html.endsWith("\n") ? "" : "\n"}${FIXTURE_PREVIEW_MARKER}
 ` : html;
   for (let n3 = 1; ; n3++) {
-    const path = join60(dir, `${base} preview ${n3}.html`);
+    const path = join62(dir, `${base} preview ${n3}.html`);
     try {
       writeFileSync17(path, text8, { flag: "wx" });
       return path;
@@ -123746,7 +124256,7 @@ async function pagesPreview(args, store) {
       throw new ValidationError("the Practice Board covers the whole practice: it takes no matter_root, filing_id or proceeding_id");
     }
     const html2 = renderPracticeBoardHtml(await buildPracticeBoardData(store, /* @__PURE__ */ new Date()), composed);
-    return { path: writePreview(dirname34(resolvePracticeDbPath(store.env)), stem2(PRACTICE_BOARD_FILE), html2, false) };
+    return { path: writePreview(dirname36(resolvePracticeDbPath(store.env)), stem2(PRACTICE_BOARD_FILE), html2, false) };
   }
   if (args.matter_root === void 0) throw new ValidationError(`real data for the ${page2} page needs matter_root`);
   if ((page2 === "Litigation Strategy" || threads) && (ids.filing_id !== void 0 || ids.proceeding_id !== void 0)) {
@@ -123760,9 +124270,9 @@ async function pagesPreview(args, store) {
   }
   const root = validateMatterRoot(args.matter_root);
   const dbPath = resolveDbPath(root);
-  const found = findDraftDir(root);
-  if (found === void 0) throw new ValidationError(`${root} has no 0. DRAFT folder, so it has no ${page2} page to preview`);
-  const draftDir = resolveDraftDir(found, "pages__preview.matter_root");
+  const found2 = findDraftDir(root);
+  if (found2 === void 0) throw new ValidationError(`${root} has no 0. DRAFT folder, so it has no ${page2} page to preview`);
+  const draftDir = resolveDraftDir(found2, "pages__preview.matter_root");
   const client = (await lookUpMatter(root, store, {})).client;
   const matterNo = client.matterNo ?? matterToken(root) ?? void 0;
   const built = buildMatterPages(
@@ -123776,14 +124286,14 @@ async function pagesPreview(args, store) {
     ids.filing_id === void 0 ? {} : { only: ids.filing_id },
     threads ? { threads: withoutListener(threads) } : viewPage ? { views: { [page2]: viewPage } } : page2 === "Work Board" ? { milestone: composed } : { matterBoard: composed }
   );
-  const target = threads || page2 === "Litigation Strategy" ? join61(draftDir, threads ? LOOSE_THREADS_FILE : MATTER_BOARD_FILE) : page2 === "Work Board" ? built.paths.milestone_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
+  const target = threads || page2 === "Litigation Strategy" ? join63(draftDir, threads ? LOOSE_THREADS_FILE2 : MATTER_BOARD_FILE) : page2 === "Work Board" ? built.paths.milestone_paths.find((t3) => ids.filing_id !== void 0 ? t3.filing_id === ids.filing_id : t3.filing_id === null && t3.proceeding_id === ids.proceeding_id)?.path : built.paths.view_page_paths.find((v3) => v3.name === page2 && v3.filing_id === ids.filing_id)?.path;
   const pageFile = target === void 0 ? void 0 : relative4(draftDir, target);
   const html = built.pages.find((p3) => p3.name === pageFile)?.html;
   if (target === void 0 || html === void 0) {
     const which = ids.filing_id !== void 0 ? `Work Board ${ids.filing_id}` : "that proceeding's board";
     throw new ValidationError(`this matter has no ${page2} page for ${which}: it is retired, merged into a board with no such page, or not in this matter`);
   }
-  return { path: writePreview(dirname34(target), stem2(basename15(target)), html, false) };
+  return { path: writePreview(dirname36(target), stem2(basename15(target)), html, false) };
 }
 function withoutListener(page2) {
   return {
@@ -123801,8 +124311,8 @@ import { createHash as createHash14 } from "node:crypto";
 import {
   appendFileSync as appendFileSync5,
   constants,
-  copyFileSync as copyFileSync4,
-  existsSync as existsSync60,
+  copyFileSync as copyFileSync5,
+  existsSync as existsSync62,
   mkdirSync as mkdirSync30,
   readdirSync as readdirSync35,
   readFileSync as readFileSync52,
@@ -123858,8 +124368,8 @@ function checkCoverageLine(text8) {
   TIERS.forEach((tier, i3) => {
     const segment = segments[i3];
     const head = `${tier.label}: `;
-    const value = segment.startsWith(head) ? segment.slice(head.length).trim() : void 0;
-    if (value === void 0 || !(tier.form.test(value) || NOT_AUDITED.test(value))) {
+    const value2 = segment.startsWith(head) ? segment.slice(head.length).trim() : void 0;
+    if (value2 === void 0 || !(tier.form.test(value2) || NOT_AUDITED.test(value2))) {
       faults.push(`${tier.label} segment "${segment}" must be ${head}${tier.expected}`);
     }
   });
@@ -124090,9 +124600,9 @@ function zipEntry(zip, name) {
     }
   }
   if (eocd < 0) throw new Error("not a zip file (no end of central directory)");
-  const count = zip.readUInt16LE(eocd + 10);
+  const count2 = zip.readUInt16LE(eocd + 10);
   let at = zip.readUInt32LE(eocd + 16);
-  for (let i3 = 0; i3 < count; i3++) {
+  for (let i3 = 0; i3 < count2; i3++) {
     if (zip.readUInt32LE(at) !== CENTRAL_SIG) throw new Error("corrupt zip central directory");
     const method = zip.readUInt16LE(at + 10);
     const compressedSize = zip.readUInt32LE(at + 20);
@@ -124288,18 +124798,18 @@ function fileDownload(destinationDir, sourceFilename, destinationFilename, env =
   const destName = destinationFilename ?? sourceFilename;
   assertBareFilename(destName, "destination_filename");
   const source = pathWin3232.join(downloadsDir(env), sourceFilename);
-  if (!existsSync60(source) || !statSync25(source).isFile()) {
+  if (!existsSync62(source) || !statSync25(source).isFile()) {
     throw new DataServerError(`no such file in Downloads: ${sourceFilename}`, "not_found");
   }
   if (IN_PROGRESS_EXTENSIONS.has(pathWin3232.extname(sourceFilename).toLowerCase())) {
     throw new DataServerError(`download still in progress: ${sourceFilename}`, "in_progress");
   }
   const dest = pathWin3232.join(dir, destName);
-  if (existsSync60(dest)) {
+  if (existsSync62(dest)) {
     throw new DataServerError(`destination filename collision: ${dest}`, "dest_exists");
   }
   const bytes = statSync25(source).size;
-  copyFileSync4(source, dest, constants.COPYFILE_EXCL);
+  copyFileSync5(source, dest, constants.COPYFILE_EXCL);
   return { path: dest, bytes };
 }
 function appendManifest(destinationDir, record2) {
@@ -124364,7 +124874,7 @@ function scratchBytes(destinationDir, fromScratch) {
   return body;
 }
 function destinationDraftDir(destinationDir) {
-  let law = existsSync60(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3232.dirname(destinationDir));
+  let law = existsSync62(destinationDir) ? resolveLawDir(destinationDir) : resolveLawDir(pathWin3232.dirname(destinationDir));
   while (pathWin3232.basename(law).toLowerCase() !== LAW_SEGMENT) law = pathWin3232.dirname(law);
   const root = validateMatterRoot(pathWin3232.dirname(law));
   const draft = findDraftDir(root);
@@ -124426,11 +124936,11 @@ function writeScratch(matterRoot, filename, text8, kind) {
   return { path: saved.path, filename: saved.filename, bytes: body.length, created_dir: created };
 }
 function researchScratchDir(root) {
-  const found = findDraftDir(root);
-  if (found === void 0) {
+  const found2 = findDraftDir(root);
+  if (found2 === void 0) {
     throw new DataServerError(`${root} has no 0. DRAFT folder; the scratchpad lives in it`, "draft_dir_missing");
   }
-  const draft = canonicalRoot(found, `the 0. DRAFT folder does not resolve: ${found}`, "draft_dir_missing");
+  const draft = canonicalRoot(found2, `the 0. DRAFT folder does not resolve: ${found2}`, "draft_dir_missing");
   assertUnprotected(draft);
   let dir = draft;
   let created = false;
@@ -124501,16 +125011,16 @@ function pickLawFile(files, wanted) {
   }
   return [...picked][0];
 }
-function nonNegativeInt(value, label2, fallback, min) {
-  if (value === void 0) return fallback;
-  if (typeof value !== "number" || !Number.isInteger(value) || value < min) {
-    throw new DataServerError(`${label2} must be an integer of at least ${min}: ${JSON.stringify(value)}`, "invalid_argument");
+function nonNegativeInt(value2, label2, fallback, min) {
+  if (value2 === void 0) return fallback;
+  if (typeof value2 !== "number" || !Number.isInteger(value2) || value2 < min) {
+    throw new DataServerError(`${label2} must be an integer of at least ${min}: ${JSON.stringify(value2)}`, "invalid_argument");
   }
-  return value;
+  return value2;
 }
 function manifestMarker(law, file) {
   const path = pathWin3232.join(law, MANIFEST);
-  if (!existsSync60(path)) return null;
+  if (!existsSync62(path)) return null;
   let marker = null;
   for (const line of readFileSync52(path, "utf-8").split("\n")) {
     if (line.trim() === "") continue;
@@ -124602,10 +125112,10 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
       }
       const head = read3.text.split(/\r?\n/).filter((l3) => l3.trim() !== "").slice(0, HEAD_LINES);
       searched.push({ file, status: "ok", head, manifest_marker: manifestMarker(law, file) });
-      const found = matchBlocks(file, read3.text, regex, context, maxMatches - matchCount);
-      matches.push(...found.blocks);
-      matchCount += found.count;
-      truncated = found.truncated;
+      const found2 = matchBlocks(file, read3.text, regex, context, maxMatches - matchCount);
+      matches.push(...found2.blocks);
+      matchCount += found2.count;
+      truncated = found2.truncated;
     }
     return { pattern: options.pattern, searched, matches, match_count: matchCount, truncated };
   }
@@ -124723,8 +125233,8 @@ function fetchedRecordFields(record2) {
     currency_marker: r3.currency_marker
   };
 }
-function filledString(value) {
-  return typeof value === "string" && value.trim() !== "";
+function filledString(value2) {
+  return typeof value2 === "string" && value2.trim() !== "";
 }
 function writeNewVersion(dir, filename, body) {
   const ext = pathWin3232.extname(filename);
@@ -124749,7 +125259,7 @@ function resolveOrCreateLawDir(destinationDir) {
   try {
     return { dir: resolveLawDir(destinationDir), created: false };
   } catch (err) {
-    if (err.code !== "not_found" || existsSync60(destinationDir)) throw err;
+    if (err.code !== "not_found" || existsSync62(destinationDir)) throw err;
   }
   const parent = resolveLawDir(pathWin3232.dirname(destinationDir));
   if (zoneProblem("write", pathWin3232.join(parent, pathWin3232.basename(destinationDir)))) {
@@ -124792,8 +125302,8 @@ function assertBareFilename(name, label2) {
 
 // src/research/preflight.ts
 import { tmpdir as tmpdir6 } from "node:os";
-import { join as join62 } from "node:path";
-var PROBE_STEM = join62(tmpdir6(), "coclerk-research-preflight-probe-absent");
+import { join as join64 } from "node:path";
+var PROBE_STEM = join64(tmpdir6(), "coclerk-research-preflight-probe-absent");
 var CAPS = {
   "extractor.pdf": "every PDF in 6. LAW comes back UNREAD, so the audit cannot read it",
   "extractor.docx": "every .docx in 6. LAW comes back UNREAD, so the audit cannot read it",
@@ -124960,12 +125470,12 @@ function resolveMatterFile(matterRoot, path) {
 }
 function checkTerms(terms2) {
   if (terms2 === void 0) return [];
-  const list = typeof terms2 === "string" ? [terms2] : terms2;
-  if (!Array.isArray(list) || list.some((t3) => typeof t3 !== "string" || t3.trim() === "")) {
+  const list2 = typeof terms2 === "string" ? [terms2] : terms2;
+  if (!Array.isArray(list2) || list2.some((t3) => typeof t3 !== "string" || t3.trim() === "")) {
     throw new DataServerError("terms must be a non-empty string or an array of them", "invalid_argument");
   }
-  if (list.length > MAX_TERMS) throw new DataServerError(`at most ${MAX_TERMS} terms`, "invalid_argument");
-  return list;
+  if (list2.length > MAX_TERMS) throw new DataServerError(`at most ${MAX_TERMS} terms`, "invalid_argument");
+  return list2;
 }
 function checkRegex(regex) {
   if (regex === void 0) return null;
@@ -125180,7 +125690,7 @@ function sectionBlocks(chunks) {
 // src/files/extract/page-compare.ts
 import { createHash as createHash16 } from "node:crypto";
 import { mkdirSync as mkdirSync31, writeFileSync as writeFileSync19 } from "node:fs";
-import { isAbsolute as isAbsolute9, join as join63 } from "node:path";
+import { isAbsolute as isAbsolute9, join as join65 } from "node:path";
 var FPDF_ANNOT = 1;
 var GROUP_MAX = 5;
 var VISUAL = /* @__PURE__ */ new Set(["only_in_a", "only_in_b", "size", "rotation", "render"]);
@@ -125209,13 +125719,13 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
         const flagged2 = [];
         let workDir = null;
         const write2 = (side, n3, facts) => {
-          workDir ??= join63(args.destination_dir, `compare-${sha2563(dataA).slice(0, 16)}-${sha2563(dataB).slice(0, 16)}`);
-          const dir = join63(workDir, side);
+          workDir ??= join65(args.destination_dir, `compare-${sha2563(dataA).slice(0, 16)}-${sha2563(dataB).slice(0, 16)}`);
+          const dir = join65(workDir, side);
           mkdirSync31(dir, { recursive: true });
           const tiles = tileRows(facts.width, 0, facts.height);
           return tiles.map(([top, rows4], i3) => {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-            const file = join63(dir, `${name}.png`);
+            const file = join65(dir, `${name}.png`);
             const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows4) * facts.width * 3);
             writeFileSync19(file, encodePng(rgb, facts.width, rows4));
             return file;
@@ -125257,10 +125767,10 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
   );
 }
 function reviewGroups(pages, max = GROUP_MAX) {
-  const count = Math.ceil(pages.length / max);
+  const count2 = Math.ceil(pages.length / max);
   const groups = [];
-  for (let g3 = 0, at = 0; g3 < count; g3++) {
-    const size = Math.floor(pages.length / count) + (g3 < pages.length % count ? 1 : 0);
+  for (let g3 = 0, at = 0; g3 < count2; g3++) {
+    const size = Math.floor(pages.length / count2) + (g3 < pages.length % count2 ? 1 : 0);
     groups.push(pages.slice(at, at += size));
   }
   return groups;
@@ -125319,12 +125829,12 @@ function pageText(lib, page2) {
   const textPage = lib.FPDFText_LoadPage(page2);
   if (!textPage) return "";
   try {
-    const count = lib.FPDFText_CountChars(textPage);
-    if (count <= 0) return "";
-    const bytes = (count + 1) * 2;
+    const count2 = lib.FPDFText_CountChars(textPage);
+    if (count2 <= 0) return "";
+    const bytes = (count2 + 1) * 2;
     const ptr = lib.pdfium.wasmExports.malloc(bytes);
     try {
-      const written = lib.FPDFText_GetText(textPage, 0, count, ptr);
+      const written = lib.FPDFText_GetText(textPage, 0, count2, ptr);
       const heap = lib.pdfium.HEAPU8;
       return Buffer.from(heap.subarray(ptr, ptr + Math.max(0, written - 1) * 2)).toString("utf16le");
     } finally {
@@ -125336,8 +125846,8 @@ function pageText(lib, page2) {
 }
 function imageHashes(lib, page2) {
   const hashes = [];
-  const walk4 = (count, objectAt2) => {
-    for (let i3 = 0; i3 < count; i3++) {
+  const walk4 = (count2, objectAt2) => {
+    for (let i3 = 0; i3 < count2; i3++) {
       const obj = objectAt2(i3);
       const type = lib.FPDFPageObj_GetType(obj);
       if (type === OBJ_IMAGE) {
@@ -125427,7 +125937,7 @@ async function saveAnswerTool(args, env = process.env) {
 
 // src/key-request/tools.ts
 import { createHash as createHash17, randomBytes as randomBytes7 } from "node:crypto";
-import { join as join64 } from "node:path";
+import { join as join66 } from "node:path";
 
 // src/key-request/save-key.ts
 var TIMEOUT_MS3 = 6e4;
@@ -125485,7 +125995,7 @@ var pending2;
 var listening2;
 var sent;
 function requestPath(env = process.env) {
-  return join64(defaultStateDir(env), "key-request.json.dpapi");
+  return join66(defaultStateDir(env), "key-request.json.dpapi");
 }
 function isKeyRequestToolName(name) {
   return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
@@ -125507,14 +126017,14 @@ async function submit(env) {
   if (key.configured) {
     throw new ValidationError("this computer already holds Probanda's key (practice_data__config_status reports cloud_credential: present), so no request is needed");
   }
-  const link = randomBytes7(24).toString("hex");
-  pending2 = { link, projectUrl: key.supabaseUrl, env };
+  const link2 = randomBytes7(24).toString("hex");
+  pending2 = { link: link2, projectUrl: key.supabaseUrl, env };
   listening2 ??= listen(handle2, () => {
     listening2 = void 0;
   });
   return {
     status: "awaiting_details",
-    url: `http://127.0.0.1:${await listening2}/key-request/${link}`,
+    url: `http://127.0.0.1:${await listening2}/key-request/${link2}`,
     next: "Send the practitioner this link and ask them to type their details on that page, never in chat. When they say it is sent, call key_request__status. The link works only on this computer, until a new link is made or the server restarts."
   };
 }
@@ -125656,8 +126166,8 @@ var dataTools = [
     const sql = args.generator !== void 0 ? generatorSql(args.matter_root, args.generator) : args.sql_script;
     const runId = args.run_id;
     const precheck = runId === void 0 ? void 0 : async () => {
-      const run = await assertLiveRun(args.matter_root, runId);
-      if (run.orchestrator && args.sql_script !== void 0 && Buffer.byteLength(args.sql_script, "utf-8") > INLINE_SQL_CAP) {
+      const run2 = await assertLiveRun(args.matter_root, runId);
+      if (run2.orchestrator && args.sql_script !== void 0 && Buffer.byteLength(args.sql_script, "utf-8") > INLINE_SQL_CAP) {
         throw new ValidationError("too long to send inline: use a generator or ingest_result", "too_long");
       }
     };
@@ -125709,6 +126219,9 @@ var dataTools = [
   defineTool("timecamping_data__migrate", () => timecampingDataMigrate()),
   defineTool("drafting_data__query", (args) => submissionDataQuery(args.db_path, args.sql, args.params)),
   defineTool("drafting_data__execute", (args) => submissionDataExecute(args.db_path, args.sql_script, process.env, true)),
+  defineTool("loose_threads__capture", (args) => looseThreadsCapture(args)),
+  defineTool("loose_threads__read", (args) => looseThreadsRead(args)),
+  defineTool("loose_threads__update", (args) => looseThreadsUpdate(args)),
   defineTool("drafting_data__repoint_documents", (args) => repointDocuments(args)),
   defineTool("drafting_data__create_writing", (args) => submissionDataCreateWriting(args, {
     caseDataRoot: once(() => caseDataRootFromDbPath(args.db_path, process.env))
@@ -125811,6 +126324,7 @@ function dataToolDefinitions() {
   return [
     ...caseDataToolDefinitions(),
     ...timePipelineToolDefinitions(),
+    ...looseThreadsToolDefinitions(),
     ...timecampingToolDefinitions(),
     ...submissionDataToolDefinitions(),
     ...submissionFormsToolDefinitions()
@@ -126057,9 +126571,9 @@ async function pageContext(context, args, writesPage) {
   const client = clientContext2(args);
   if (!writesPage) return { client, dates: await readMatterDates(context.practiceDb, client.matterNo) };
   const started = performance.now();
-  const draftDir = args.draft_dir ?? dirname35(args.presentation_dir);
-  const resolved = (await lookUpMatter(dirname35(draftDir), context.practiceDb, client)).client;
-  const matterNo = resolved.matterNo ?? matterToken(dirname35(draftDir)) ?? void 0;
+  const draftDir = args.draft_dir ?? dirname37(args.presentation_dir);
+  const resolved = (await lookUpMatter(dirname37(draftDir), context.practiceDb, client)).client;
+  const matterNo = resolved.matterNo ?? matterToken(dirname37(draftDir)) ?? void 0;
   const todos = await readMatterTodos(context.practiceDb, matterNo);
   const dates = await readMatterDates(context.practiceDb, matterNo);
   return { client: resolved, todos: { todos, ms: Math.round((performance.now() - started) * 10) / 10 }, dates };
@@ -126088,30 +126602,27 @@ function once(fn2) {
 }
 
 // src/page-api/server.ts
-import { existsSync as existsSync61 } from "node:fs";
+import { existsSync as existsSync63 } from "node:fs";
 import { createServer as createServer2 } from "node:http";
 import { basename as basename16, isAbsolute as isAbsolute10 } from "node:path";
 
 // src/submission/forms/seed-deferral.ts
 async function setSeedDeferral(args, env = process.env) {
-  const deletedIds = new Set(fetchDeletedTickets(args.db_path, args.proceeding_id).map((d3) => d3.id));
-  const open = openSeedCondition(args.db_path, deletedIds);
-  const sql = args.action === "defer" ? `UPDATE seeds SET deferred_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') WHERE id = ? AND proceeding_id = ? AND ${open.sql} AND deferred_at IS NULL` : `UPDATE seeds SET deferred_at = NULL WHERE id = ? AND proceeding_id = ? AND ${open.sql} AND deferred_at IS NOT NULL`;
-  const written = await submissionDataWriteAll(args.db_path, [{ sql, params: [args.seed_id, args.proceeding_id, ...open.params], expect_changes: 1 }], env);
-  const changes = written.ok ? written.results[0].changes : written.changes;
-  const [read3] = submissionDataQuery(args.db_path, `SELECT proceeding_id, charted_into, deferred_at${seedClosedColumns(args.db_path).map((c3) => `, ${c3}`).join("")} FROM seeds WHERE id = ?`, [args.seed_id]).rows;
-  let outcome;
-  if (read3 === void 0) outcome = "not_found";
-  else if (changes === 1) outcome = args.action === "defer" ? "deferred" : "undeferred";
-  else if (read3.proceeding_id !== args.proceeding_id) outcome = "wrong_proceeding";
-  else if (read3.charted_into !== null && !deletedIds.has(read3.charted_into) || read3.discarded_at != null || read3.suggested_at != null) outcome = "not_open";
-  else outcome = "already";
-  return {
-    seed_id: args.seed_id,
-    outcome,
-    deferred_at: read3?.deferred_at ?? null,
-    ...written.warning ? { warning: written.warning } : {}
-  };
+  const lock = await acquireDataLock(args.db_path, env);
+  try {
+    const thread = readThreads(args.db_path, env).find((t3) => t3.id === args.seed_id);
+    const done = (outcome, deferredAt2) => ({ seed_id: args.seed_id, outcome, deferred_at: deferredAt2 });
+    if (thread === void 0) return done("not_found", null);
+    if (thread.proceeding_id !== args.proceeding_id) return done("wrong_proceeding", thread.deferred_at);
+    const deletedIds = new Set(fetchDeletedTickets(args.db_path, args.proceeding_id).map((d3) => d3.id));
+    if (!isOpenThread(thread, deletedIds)) return done("not_open", thread.deferred_at);
+    if (thread.deferred_at !== null === (args.action === "defer")) return done("already", thread.deferred_at);
+    const deferredAt = args.action === "defer" ? threadStamp() : null;
+    writeThreads(args.db_path, [{ ...thread, deferred_at: deferredAt }], env);
+    return done(args.action === "defer" ? "deferred" : "undeferred", deferredAt);
+  } finally {
+    lock.release();
+  }
 }
 
 // src/page-api/open-file.ts
@@ -126226,7 +126737,7 @@ async function handle3(req, res, env, startedAt, options) {
   if (typeof token !== "string" || !pageApiTokenValid(token, dbPath, proceedingId, env)) {
     return json2(req, res, 403, { error: "This page's token does not match its database. Ask a Claude session to render the page again." });
   }
-  if (!isAbsolute10(dbPath) || !existsSync61(dbPath)) {
+  if (!isAbsolute10(dbPath) || !existsSync63(dbPath)) {
     return json2(req, res, 400, { error: `There is no drafting database at ${dbPath}.` });
   }
   const result = await setSeedDeferral({ db_path: dbPath, proceeding_id: proceedingId, seed_id: Number(m3[1]), action: m3[2] }, env);
@@ -126307,7 +126818,7 @@ async function openFileLink(req, res, env, path, token, open) {
     return filePage(res, 403, "This link does not match a file. Ask a Claude session to show the page again.");
   }
   const name = basename16(path);
-  if (!isAbsolute10(path) || !existsSync61(path)) return filePage(res, 404, `${name} is not in the law folder now.`);
+  if (!isAbsolute10(path) || !existsSync63(path)) return filePage(res, 404, `${name} is not in the law folder now.`);
   try {
     await open(path);
   } catch {

@@ -3,7 +3,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 # Unstructured Writings
 
-An Unstructured Writing is a Writing whose document type has no type file of its own at its venue. It is created on the venue's stock `unstructured` type and renders through the general renderer like any general Writing: caption, a link to the saved published form, the body and the signature block. Under `_NoVenue` it is created on the recipient's stock type, `unstructured-<recipient>`, which prints the date, the address, the body and the signature block, with no caption and no form link. The practitioner's own name for the document, such as "Notice of discontinuance", is the Writing's title, and the mockup's header names it as the Document Name beside `Document Type: Unstructured`. Its review, revisions, Milestone and Word document are any Writing's.
+An Unstructured Writing is a Writing whose document type has no type file of its own at its venue. It is created on the venue's stock `unstructured` type and renders through the general renderer like any general Writing: caption, a link to the saved published form, the body and the signature block. Under `_NoVenue` it is created on the recipient's stock type, `unstructured-<recipient>`, which prints the date, the address, the body and the signature block, with no caption and no form link. The practitioner's own name for the document, such as "Notice of discontinuance", is the Writing's title, and the mockup's header names it as the Document Name beside `Document Type: Unstructured`. Its review, revisions, Work Board and Word document are any Writing's.
 
 ## 1. Saving it
 
@@ -39,7 +39,7 @@ An `unstructured-internal` Writing is never sent. It has no `Deliver` job, no `r
 
 ## 5. The conversion offer and job
 
-**The offer.** When the Sent write succeeds on this Writing, offer in the same turn, as one question, to put the job `Keep the layout of <title> for next time` on its Milestone, `<title>` being the Writing's title. Say what it does in plain words: it records this document's layout, so the next one of its kind is drafted from that layout, and it is unbilled firm work. Name no type file, stock type or folder code (`shared/internals-confidentiality.md`). On a yes, write the job by `/drafting-data`'s fixed text for it, on this Writing. On a no, write nothing.
+**The offer.** When the Sent write succeeds on this Writing, offer in the same turn, as one question, to put the job `Keep the layout of <title> for next time` on its Work Board, `<title>` being the Writing's title. Say what it does in plain words: it records this document's layout, so the next one of its kind is drafted from that layout, and it is unbilled firm work. Name no type file, stock type or folder code (`shared/internals-confidentiality.md`). On a yes, write the job by `/drafting-data`'s fixed text for it, on this Writing. On a no, write nothing.
 
 No retirement is offered with it or after it: recording a Writing as sent never leads to a retirement offer (ADR 0042), so the Writing stays on its board until the practitioner asks to retire it (`references/retire-filing.md`).
 

@@ -785,6 +785,27 @@ test("a live Work Board with no Writing beside a retired Writing: nothing is ope
   assert.ok(existsSync(result.matter_board_path));
 });
 
+test("session entry moves a matter's loose threads to their store once, before the pages are written", async (t) => {
+  const m = matterFixture(t);
+  await freshSubmissionDb(m.dbPath);
+  await submissionDataExecute(
+    m.dbPath,
+    `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L9999 - Test', NULL);
+     INSERT INTO seeds (id, proceeding_id, created, surfaced_by, idea) VALUES (7, 1, '2026-10-01T09:00', 'noticed', 'A thread to move.');`
+  );
+  mkdirSync(join(m.matterRoot, "0. DRAFT"));
+  const context = await practiceContext(t);
+
+  const first = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  assert.equal(first.loose_threads_moved.moved, 1);
+  assert.ok(existsSync(first.loose_threads_moved.backup), "the copy-aside is beside the database");
+  assert.equal(submissionDataQuery(m.dbPath, "SELECT COUNT(*) AS n FROM seeds").rows[0].n, 0);
+  assert.match(readFileSync(first.loose_threads_path, "utf-8"), /A thread to move\./, "the page written by this call lists it");
+
+  const second = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  assert.equal(second.loose_threads_moved, undefined);
+});
+
 test("a pre-filing proceeding alone: session entry opens its board", async (t) => {
   const m = matterFixture(t);
   await freshSubmissionDb(m.dbPath);

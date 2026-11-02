@@ -18,4 +18,4 @@
 
 The stock type of a Writing within the firm, outside any venue, whose document type has no type file of its own. The practitioner's own name for the document is the Writing's title. Draft it by `references/unstructured.md`.
 
-It is for counsel only and is never sent. So it declares no `recipients`, its save writes no `Deliver`, and its Milestone has no gate.
+It is for counsel only and is never sent. So it declares no `recipients`, its save writes no `Deliver`, and its Work Board has no gate.

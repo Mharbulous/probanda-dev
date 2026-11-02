@@ -10,7 +10,7 @@ Verified, when fit and ratio both hold, snapshotting the pair it judged: `UPDATE
 
 A verified statement needs a pinpoint (schema v61): the write is refused on a row whose `pinpoint` is empty. Record the pinpoint the research lawyer returned first, in its own write, `UPDATE statements_of_law SET pinpoint = '<p>' WHERE id = N`, then the verified write, so the snapshot takes the new pinpoint. A return that names no pinpoint is not a verified return: record nothing and say so. When the return says the excerpt is words the court quotes from another source, not its own, the verified write also sets `excerpt_speaker = '<that source, as the return names it>'`; it prints as `(quoting <source>)` on the mockup and never on a filed face.
 
-A residual point the research lawyer raises that narrows fit or ratio makes the return a failed return: record it with the failed write instead. Any other residual point is captured word for word as a loose thread by the `jobs-run.md` §8 insert, `origin_ticket_id` the 🔬 job the recording session holds and `surfaced_by` naming the saved answer file.
+A residual point the research lawyer raises that narrows fit or ratio makes the return a failed return: record it with the failed write instead. Any other residual point is captured word for word as a loose thread by the `jobs-run.md` §8 capture, `origin_job` the 🔬 job the recording session holds and `surfaced_by` naming the saved answer file.
 
 ## Record a failed return
 

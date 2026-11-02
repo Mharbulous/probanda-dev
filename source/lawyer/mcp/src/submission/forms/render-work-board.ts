@@ -15,7 +15,7 @@ export { fetchDeletedTickets, fetchAttachments } from "./work-board-reads.js";
 export type { Category, WorkBoardEdge, DispatchSkip, WorkBoardTicket, IneligibleReason } from "./work-board-ticket.js";
 export { INELIGIBLE_REASONS } from "./work-board-ticket.js";
 export type { WorkBoardSeed, RankGroup, ResolvedSeed } from "./work-board-seeds.js";
-export { inRankOrder, seedOrigin, openSeedCondition, fetchResolvedSeeds, fetchOpenSeeds, withFromFiling } from "./work-board-seeds.js";
+export { inRankOrder, seedOrigin, fetchResolvedSeeds, fetchOpenSeeds, fetchOpenThreads, withFromFiling } from "./work-board-seeds.js";
 export type { GoalState, CriterionId, GoalCriterion, Goal, WorkBoardData } from "./work-board-data.js";
 export { WORKBOARD_DATA_FILE } from "./work-board-data.js";
 export type { MatterMilestoneData, StripItem, AttachedDraft } from "./work-board-page.js";

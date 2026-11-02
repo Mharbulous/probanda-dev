@@ -1,7 +1,7 @@
 """Tests for references/jobs-closeout.md §10c, moving jobs to another board of the same proceeding.
 
 Each documented script is run as written against a migrated database: the whole-board move takes
-board 7's queued jobs and open loose threads to board 8 and keeps their edges, a job in progress on
+board 7's queued jobs to board 8 and keeps their edges, a job in progress on
 board 7 refuses it, and a note-up job, a job keyed on the Writing's own rows, a deleted job and a
 completed job stay. §9a's close of board 7 then supersedes none of the moved jobs. The amended
 "What never changes" sentence of jobs-create.md §3a and the pointers at §10c are pinned too.
@@ -50,9 +50,6 @@ SEED = """
         (41, 'authority-excerpt:statements_of_law:12', 'Smith v. Jones'),
         (43, 'note-up:authorities:3', 'Smith v. Jones, 2023 BCCA 182'),
         (44, 'exhibit-pinpoint:filing_facts:2', 'Fact two');
-    INSERT INTO seeds (id, proceeding_id, filing_id, created, surfaced_by, idea, discarded_at) VALUES
-        (3, 1, 7, '2026-10-19T09:00', 'noticed', 'Open thread.', NULL),
-        (4, 1, 7, '2026-10-19T09:00', 'noticed', 'Dropped thread.', '2026-10-19T09:30');
 """
 
 MOVED = {41, 42}
@@ -110,14 +107,13 @@ class MoveJobsTests(unittest.TestCase):
     def test_there_are_four_scripts(self):
         self.assertEqual(len(scripts_10c()), 4)
 
-    def test_the_whole_board_move_takes_queued_jobs_and_open_threads(self):
+    def test_the_whole_board_move_takes_queued_jobs(self):
         _, move, _, confirm = scripts_10c()
-        self.assertEqual(self.run_script(move), 3)
+        self.assertEqual(self.run_script(move), 2)
         for job in MOVED:
             self.assertEqual(self.board_of(job), 8, job)
         for job in STAYED:
             self.assertEqual(self.board_of(job), 7, job)
-        self.assertEqual(self.con.execute("SELECT id, filing_id FROM seeds ORDER BY id").fetchall(), [(3, 8), (4, 7)])
         self.assertEqual(self.con.execute("SELECT blocker_id, blocked_id FROM ticket_blocks").fetchall(), [(41, 42)])
         self.assertEqual(self.con.execute("SELECT rejected_at FROM tickets WHERE id = 42").fetchone()[0],
                          "2026-10-19T09:30", "a shelved job moves still shelved")
@@ -138,7 +134,6 @@ class MoveJobsTests(unittest.TestCase):
         self.assertEqual(self.run_script(move), 0)
         self.assertEqual(self.run_script(one), 0)
         self.assertEqual(self.board_of(42), 7)
-        self.assertEqual(self.con.execute("SELECT filing_id FROM seeds WHERE id = 3").fetchone()[0], 7)
         wip_read = scripts_10c()[0].split(";")[0]
         self.assertEqual([row[0] for row in self.con.execute(wip_read)], [41])
 
@@ -147,7 +142,6 @@ class MoveJobsTests(unittest.TestCase):
         self.assertEqual(self.run_script(one), 1)
         self.assertEqual(self.board_of(42), 8)
         self.assertEqual(self.board_of(41), 7)
-        self.assertEqual(self.con.execute("SELECT filing_id FROM seeds WHERE id = 3").fetchone()[0], 7)
 
     def test_the_one_job_move_leaves_a_note_up_job(self):
         one = scripts_10c()[2].replace("id = 42", "id = 43")
@@ -190,7 +184,7 @@ class SectionTextTests(unittest.TestCase):
     def test_the_move_carries_the_wip_guard_on_every_statement(self):
         move = scripts_10c()[1]
         statements = [s for s in move.split(";") if s.strip()]
-        self.assertEqual(len(statements), 2)
+        self.assertEqual(len(statements), 1)
         for statement in statements:
             self.assertIn("NOT EXISTS (SELECT 1 FROM tickets w WHERE w.filing_id = 7 AND w.status = 'wip')", statement)
 

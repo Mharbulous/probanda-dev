@@ -22,6 +22,7 @@ after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, 
 
 const { seededDbFixture, seedVaniacProceeding, seedBcscDefaultJudgment, seedTickets, seedProposalCases, assertMatchesGolden, readBoardData, boardDataOf, ASHBOURNE, draftFolder } =
   await import("./fixtures/forms-render-seeds.mjs");
+const { moveSeeds } = await import("./helpers/threads.mjs");
 const { freshSubmissionDb, submissionDbAt } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery, submissionDataWrite } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsRenderProceedingBoard } = await import("../build/submission/forms.js");
@@ -1121,6 +1122,7 @@ async function heldMilestone(t) {
      INSERT INTO kv_store (namespace, key, value, updated_at) VALUES ('last_activity', 'tickets:1', '"2026-01-16T11:30"', '2026-01-16T19:30:00.000Z');
      INSERT INTO seeds (id, proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea) VALUES (2, 1, NULL, NULL, '2026-01-16T11:50', 'a practitioner aside', 'Not this job''s.');`
   );
+  await moveSeeds(f.dbPath);
   const law = join(dirname(dirname(f.dbPath)), "6. LAW");
   mkdirSync(join(law, "Limitation"), { recursive: true });
   return { f, law };
@@ -1374,6 +1376,7 @@ async function stepStatesBoard(t) {
        (1, 6, 'Download the memo', NULL, 'waiting', '2020-01-16T11:00', NULL),
        (1, 7, 'Draft the answer', NULL, NULL, NULL, NULL);`
   );
+  await moveSeeds(f.dbPath);
   return f;
 }
 

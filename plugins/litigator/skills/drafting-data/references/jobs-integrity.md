@@ -1,4 +1,4 @@
-Read when: composing a job write that sets `filing_id`, a `ticket_blocks` or `ticket_conflicts` edge or `seeds.charted_into`, or when `execute` returns a CHECK or foreign-key refusal on a job table.
+Read when: composing a job write that sets `filing_id`, a `ticket_blocks` or `ticket_conflicts` edge, or when `execute` returns a CHECK or foreign-key refusal on a job table.
 Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 11. Integrity the schema's CHECKs cannot hold
@@ -8,12 +8,12 @@ Not enforceable by a table constraint — hold these by discipline when composin
 - A job's `filing_id`, when set, must belong to its own `proceeding_id`.
 - A `ticket_blocks` or `ticket_conflicts` edge should join two jobs of the same proceeding.
 - A `ticket_blocks` edge whose **blocked** side is another job needs that job `queued` with `rejected_at` and `deleted_at` NULL. The edge changes what it waits on, and a completed, superseded, shelved or deleted job has nothing left to wait for. The schema refuses no such row, so §3a's write proves it instead. §3f is the one exception: its edges' blocked side is the holder's own `wip` job, and the same script releases it to `queued`.
-- `seeds.charted_into` should point at a job in the same proceeding as the loose thread.
+- A loose thread's `charted_into` should point at a job in the same proceeding as the loose thread.
 - A loose thread is never a blocker — `ticket_blocks` only ever references `tickets.id` on both sides; a loose thread has no scope, no plan, nothing to block on.
 - A `ticket_blocks` edge that points outside the job's own proceeding renders as an unresolved blocker (ADR 0018): the renderer only loads this proceeding's jobs, so it cannot see the other job's status, and the blocked job stays under "Blocked" and is never offered as ready. A `superseded_by` pointer outside the proceeding renders the pointer with no status. Either is a composition mistake to correct, never a way to share work across proceedings: no job moves between proceedings or belongs to two.
-- A job whose `filing_id` is a Writing's id is a **Writing Job**, drawn on that Writing's board alone and untagged. A job with `filing_id` NULL is a **General Job** (a job with no Writing): shared-substance work done once for every Writing in its proceeding, drawn on every live Writing's board there, its card tagged General and its `drafting_forms__board_card` line ending ` · general`, so its copy on a second board is the same job, never a duplicate. A pre-filing proceeding's own board tags none, since every job on it has no Writing. A job whose `filing_id` is a Milestone with no Writing is neither.
-- A job or loose thread of a proceeding with no Writing (ADR 0018) has `filing_id` NULL. Such a job renders on that proceeding's own Milestone (`drafting_forms__render` with `proceeding_id`) until the proceeding has a Writing, then on every Writing's board like any proceeding-scoped row. No Milestone shows a loose thread: every open one shows on the matter's Loose Threads page.
-- A Milestone with no Writing (`drafting_data__create_milestone`) shows only the jobs whose `filing_id` is its id. A proceeding-scoped row (`filing_id` NULL) never shows on it, and its own jobs show on no Writing's board.
+- A job whose `filing_id` is a Writing's id is a **Writing Job**, drawn on that Writing's board alone and untagged. A job with `filing_id` NULL is a **General Job** (a job with no Writing): shared-substance work done once for every Writing in its proceeding, drawn on every live Writing's board there, its card tagged General and its `drafting_forms__board_card` line ending ` · general`, so its copy on a second board is the same job, never a duplicate. A pre-filing proceeding's own board tags none, since every job on it has no Writing. A job whose `filing_id` is a Work Board with no Writing is neither.
+- A job or loose thread of a proceeding with no Writing (ADR 0018) has `filing_id` NULL. Such a job renders on that proceeding's own Work Board (`drafting_forms__render` with `proceeding_id`) until the proceeding has a Writing, then on every Writing's board like any proceeding-scoped row. No Work Board shows a loose thread: every open one shows on the matter's Loose Threads page.
+- A Work Board with no Writing (`drafting_data__create_milestone`) shows only the jobs whose `filing_id` is its id. A proceeding-scoped row (`filing_id` NULL) never shows on it, and its own jobs show on no Writing's board.
 
 ## 12. What the schema already refuses, loudly
 

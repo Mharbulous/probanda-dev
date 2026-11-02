@@ -54,7 +54,7 @@ export interface ViewPageContext {
   revision: number;
 }
 
-/** `C` is what the data reader is given: one board's, or the matter's Loose Threads page's ({ dbPath }). */
+/** `C` is what the data reader is given: one board's, or the matter's Loose Threads page's (LooseThreadsContext). */
 export interface ViewPage<C = ViewPageContext> {
   /** The page's title, and its file `<name>.html` (viewPageFile). Renaming it moves every copy.
    * Its entry template writes the same name literally. */

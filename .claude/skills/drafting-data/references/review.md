@@ -97,23 +97,19 @@ UPDATE review_points SET resolution = 'answered', resolved_at = strftime('%Y-%m-
 
 `leave_it` is the same statement with `resolution = 'leave_it'`.
 
-**Change wanted.** One `execute` call, which runs as one transaction: capture a loose thread in the practitioner's words, then close the point and link it to that loose thread. The loose thread follows `/drafting-data` §8: `idea` verbatim, at most five sentences, and `surfaced_by` naming the review job. Both statements carry the same open-point and lock predicate, so either both land or neither does. The just-inserted loose thread has the greatest id, so the `UPDATE` finds it by `MAX(id)` among the job's loose threads:
+**Change wanted.** Two calls, since a loose thread lives in another file. First close the point, with the open-point and lock predicate, so a point that is no longer open captures nothing:
 
 ```sql
-INSERT INTO seeds (proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea)
-  SELECT t.proceeding_id, p.filing_id, p.ticket_id, strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'),
-         'Counsel''s review of Notice of Application, Job #10', 'Put the delay point first and tie it to the March letter.'
-    FROM review_points p JOIN tickets t ON t.id = p.ticket_id
-    WHERE p.id = 5 AND p.resolution IS NULL AND t.locked_by = 'sess-a1';
-UPDATE review_points SET resolution = 'change_wanted', resolved_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'),
-    seed_id = (SELECT MAX(id) FROM seeds WHERE origin_ticket_id = review_points.ticket_id)
+UPDATE review_points SET resolution = 'change_wanted', resolved_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
   WHERE id = 5 AND resolution IS NULL
     AND EXISTS (SELECT 1 FROM tickets WHERE id = review_points.ticket_id AND locked_by = 'sess-a1');
 ```
 
-The loose thread shows under "Loose Threads" until an outlining session turns it into a job (`/drafting-data` §3). None of these writes moves `db_meta.revision`.
+Then, when the confirm-read below shows it landed, capture the loose thread in the practitioner's words by `/drafting-data` §8: `idea` verbatim, at most five sentences, `surfaced_by` naming the review job, `origin_job` the review job, `filing_id` the point's, and `ref` `review_points:5`, which is the link. `seed_id` holds only a link written before threads moved: the number of the same thread in the store, since ids are kept. It takes no new number, because the reference it carries has no row in `seeds` to find.
 
-**Confirm-read after each write.** As with every guarded write in `/drafting-data`, a review write that matches nothing returns `{"ok": true}` with zero rows, so a read after each write is the only proof it landed. After an approval, read the latest approval of that unit, `SELECT id, session_token, snapshot FROM review_approvals WHERE entity = 'statements_of_fact' AND entity_id = 12 ORDER BY id DESC LIMIT 1`: it landed when that row carries this session's token and its snapshot equals the unit's current snapshot (§Reads). After a point insert, read the job's newest point, `SELECT id, entity, entity_id, comment FROM review_points WHERE ticket_id = 10 ORDER BY id DESC LIMIT 1`, which must carry the anchor and comment just written. After a resolution, read the point's row, `SELECT resolution, resolved_at, seed_id FROM review_points WHERE id = 5`, which must carry the resolution just written, and for change wanted a `seed_id`.
+The loose thread shows on the Loose Threads page until an outlining session turns it into a job (`/drafting-data` §3). None of these writes moves `db_meta.revision`.
+
+**Confirm-read after each write.** As with every guarded write in `/drafting-data`, a review write that matches nothing returns `{"ok": true}` with zero rows, so a read after each write is the only proof it landed. After an approval, read the latest approval of that unit, `SELECT id, session_token, snapshot FROM review_approvals WHERE entity = 'statements_of_fact' AND entity_id = 12 ORDER BY id DESC LIMIT 1`: it landed when that row carries this session's token and its snapshot equals the unit's current snapshot (§Reads). After a point insert, read the job's newest point, `SELECT id, entity, entity_id, comment FROM review_points WHERE ticket_id = 10 ORDER BY id DESC LIMIT 1`, which must carry the anchor and comment just written. After a resolution, read the point's row, `SELECT resolution, resolved_at FROM review_points WHERE id = 5`, which must carry the resolution just written.
 
 ## Render freshness
 

@@ -1,6 +1,7 @@
 import { practiceToolDefinitions } from "./schema/practice.js";
 import { caseDataToolDefinitions } from "./schema/case-data.js";
 import { timePipelineToolDefinitions } from "./schema/time-pipeline.js";
+import { looseThreadsToolDefinitions } from "./schema/loose-threads.js";
 import { timecampingToolDefinitions } from "./schema/timecamping.js";
 import { fileToolDefinitions } from "./schema/file.js";
 import { submissionDataToolDefinitions } from "./schema/submission-data.js";
@@ -19,6 +20,7 @@ export {
   practiceToolDefinitions,
   caseDataToolDefinitions,
   timePipelineToolDefinitions,
+  looseThreadsToolDefinitions,
   timecampingToolDefinitions,
   fileToolDefinitions,
   submissionDataToolDefinitions,
@@ -42,6 +44,7 @@ export function buildToolDefinitions(): ToolDefinition[] {
     ...practiceToolDefinitions(),
     ...caseDataToolDefinitions(),
     ...timePipelineToolDefinitions(),
+    ...looseThreadsToolDefinitions(),
     ...timecampingToolDefinitions(),
     ...submissionDataToolDefinitions(),
     ...submissionFormsToolDefinitions(),

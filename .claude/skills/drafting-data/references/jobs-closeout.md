@@ -3,7 +3,7 @@ Any §N not in this file: find it in SKILL.md, "Job and scrutiny operations".
 
 ## 9a. Supersession on retirement
 
-Retiring a Writing (schema v17, `filing-checklists.md` §11) ends its job work: every `queued` job scoped to that Writing is superseded by the retirement itself. Not by another job — a retirement is not a job and has no id to point at, which is why the v17 hop relaxed the CHECK to `superseded_by IS NULL OR status = 'superseded'`. Leave `superseded_by` NULL; the Work Board prints "Superseded by: retirement of this Writing (date)" from the Writing's own `retired_on`.
+Before retiring a Writing, run `jobs-run.md` §8's sweep. Retiring a Writing (schema v17, `filing-checklists.md` §11) ends its job work: every `queued` job scoped to that Writing is superseded by the retirement itself. Not by another job — a retirement is not a job and has no id to point at, which is why the v17 hop relaxed the CHECK to `superseded_by IS NULL OR status = 'superseded'`. Leave `superseded_by` NULL; the Work Board prints "Superseded by: retirement of this Writing (date)" from the Writing's own `retired_on`.
 
 **Read first — a `wip` job on this Writing refuses the retirement.** Its lock belongs to another session, and clearing it here is the same violation §9 forbids on a `wip` conflict partner:
 
@@ -276,13 +276,11 @@ UPDATE tickets SET filing_id = 8
         OR p.proposal_key GLOB '*:filing_submissions:*' OR p.proposal_key GLOB '*:filing_orders:*'))
     AND EXISTS (SELECT 1 FROM filings f WHERE f.id = 8 AND f.proceeding_id = tickets.proceeding_id AND f.retired_on IS NULL)
     AND NOT EXISTS (SELECT 1 FROM tickets w WHERE w.filing_id = 7 AND w.status = 'wip');
-UPDATE seeds SET filing_id = 8
-  WHERE filing_id = 7 AND charted_into IS NULL AND discarded_at IS NULL AND suggested_at IS NULL
-    AND EXISTS (SELECT 1 FROM filings f WHERE f.id = 8 AND f.proceeding_id = seeds.proceeding_id AND f.retired_on IS NULL)
-    AND NOT EXISTS (SELECT 1 FROM tickets w WHERE w.filing_id = 7 AND w.status = 'wip');
 ```
 
-To proceeding scope, from a Writing's board only, each statement sets `filing_id = NULL` and drops the target's `EXISTS` clause.
+To proceeding scope, from a Writing's board only, the statement sets `filing_id = NULL` and drops the target's `EXISTS` clause.
+
+Then the source's open loose threads, by `loose_threads__update` with `action: "move"`, `from_filing_id` the source and `filing_id` the target, or null for proceeding scope. It refuses a target that is not live in the threads' proceeding and a source with a job in progress.
 
 **Move one job**, or several named by id, with the same guards on each id, here job `42`:
 
@@ -308,7 +306,7 @@ SELECT id, filing_id, status FROM tickets WHERE filing_id IN (7, 8) AND deleted_
 
 ## 10d. Merge two Work Boards
 
-**When.** The practitioner asks to merge two boards. Received, never offered. A merge joins two boards whose goals overlap or cohere onto one page (`docs/ADRs/0010-milestones-organized-by-goals.md`): the survivor's page draws both as one board, with one Completion Criteria card and one set of lanes holding both boards' jobs, each naming its Writing, and one set of view pages spans the board's Writings. No job, loose thread or Writing row is written. Boards in different proceedings may merge, as may a Work Board with no Writing and a pre-filing proceeding's board.
+**When.** The practitioner asks to merge two boards. Received, never offered. A merge joins two boards whose goals overlap or cohere onto one page (`docs/ADRs/0010-milestones-organized-by-goals.md`): the survivor's page draws both as one board, with one Completion Criteria card and one set of lanes holding both boards' jobs, each naming its Writing, and one set of view pages spans the board's Writings. No job or Writing row is written, and the absorbed board's loose threads in the survivor's proceeding are repointed to it. Boards in different proceedings may merge, as may a Work Board with no Writing and a pre-filing proceeding's board.
 
 **Ask first.** Read both boards' statements of goals (`drafting_forms__board_card`, lane `goals`) and show them side by side, each as "none" when it has none. In the same reply, propose one combined goal for the merged board as the reply's only fenced code block, framed per `shared/paralegal-posture.md` section 3b, "Goal framing": one outcome sentence, never a document, a step or two Writing titles joined. Then ask whether to merge the two boards with that goal. The question says in plain words that each Writing stays a separate filing, with its own documents, numbering, mockup and jobs, and that only the Work Board page, the view pages and the goal combine. For example: "Merging puts both boards on one Work Board page, with one set of view pages and the one goal above. The Requisition and the Notice of Application stay separate filings, each with its own documents and numbering. Merge the two boards with that goal? Or type the goal you want instead." When the practitioner's words show they expect the Writings themselves combined, say first that Probanda cannot move documents between Writings or make two Writings into one. A bare yes confirms both the merge and the proposed goal. A sentence the practitioner types in reply is their goal and replaces the proposal. The practitioner-words gate refuses any other call. When the practitioner wants the merge but no goal yet, ask "Merge without a goal for now?" and, on a bare yes, merge with no `goal_statement`.
 

@@ -12,6 +12,8 @@ import test from "node:test";
 import { seededDbFixture, seedVaniacProceeding, seedBcscDefaultJudgment, seedApplicationResponse, assertMatchesGolden, goldenPath, seedTickets, seedProposalCases, boardDataOf, DATA_LINE_PREFIX, boardDataLines, readBoardData, ASHBOURNE, draftFolder } from "./fixtures/forms-render-seeds.mjs";
 import { BCSC_TREE, generalWritingFixture, LETTER_BLOCK, MEMO_BLOCK, MEMO_FILE, NO_VENUE_TREE } from "./helpers/general-writing-fixture.mjs";
 import { knowledgeFile } from "./helpers/knowledge-fixture.mjs";
+const { moveSeeds } = await import("./helpers/threads.mjs");
+const { readThreads } = await import("../build/loose-threads/backend.js");
 const { freshSubmissionDb, partiesSnapshotSql, seedSql } = await import("./helpers/template-db.mjs");
 const { writePartiesOfRecord } = await import("./helpers/matter-data-fixture.mjs");
 const { submissionDataMigrate } = await import("../build/submission/migrate.js");
@@ -286,6 +288,7 @@ test("every filing's section carries every open seed in its proceeding, for its 
        INSERT INTO seeds (id, proceeding_id, filing_id, created, surfaced_by, idea, charted_into)
          VALUES (13, 1, 2, '2026-09-02T10:03', 'noticed', 'An idea already outlined.', 1);`
     );
+    await moveSeeds(f.dbPath);
     const seedsOn = (filingId) => {
       submissionFormsRender(f.dbPath, filingId, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
       return boardDataOf(f.dbPath, filingId, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }).seeds.map((s) => s.id);
@@ -299,7 +302,7 @@ test("every filing's section carries every open seed in its proceeding, for its 
     assert.deepEqual(seedsOn(2), [10, 11, 12], "and in its own");
 
     assert.deepEqual(
-      submissionDataQuery(f.dbPath, "SELECT id, filing_id FROM seeds ORDER BY id").rows.map((r) => [r.id, r.filing_id]),
+      readThreads(f.dbPath).map((r) => [r.id, r.filing_id]),
       [[10, 1], [11, 2], [12, null], [13, 2]],
       "rendering reassigns no seed's filing"
     );
@@ -947,6 +950,7 @@ test("a 🧵 marker counts as one open item and a captured loose thread counts a
       f.dbPath,
       "INSERT INTO seeds (id, proceeding_id, filing_id, created, surfaced_by, idea) VALUES (1, 1, 1, '2026-09-20 09:30', 'noticed', 'Is the guarantor a party?');"
     );
+    await moveSeeds(f.dbPath);
     const thread = inventoryOf(submissionFormsRender(f.dbPath, 1, ASHBOURNE)).find((e) => e.slug === "loose-thread" && e.marker === "🧵");
     assert.ok(thread, "the Notice of Application prints a 🧵");
 

@@ -27,10 +27,11 @@
     line.textContent = message;
   }
 
-  // The section an open loose thread belongs under: deferred, else ranked or unranked.
-  function home(c) { return c.deferred ? "deferred" : c.idea.rank === null ? "unranked" : "ranked"; }
+  // The section an open loose thread belongs under: deferred, else open when it is no idea, since
+  // ranking applies to ideas only, else ranked or unranked.
+  function home(c) { return c.deferred ? "deferred" : c.tab !== "ideas" ? "open" : c.idea.rank === null ? "unranked" : "ranked"; }
   function label(c) {
-    c.button.textContent = c.deferred ? "Deferred" : c.idea.rank === null ? "Unranked" : "Ranked";
+    c.button.textContent = c.deferred ? "Deferred" : c.tab !== "ideas" ? "Open" : c.idea.rank === null ? "Unranked" : "Ranked";
     c.button.title = c.deferred ? "Click to bring back" : "Click to defer";
   }
 
@@ -74,7 +75,7 @@
     var text = el("p", "text");
     var body = el("div", "body");
     var button = el("button", "status");
-    var c = { node: node, idea: i, text: text, button: button, deferred: !!i.deferred_at, inert: false, open: false };
+    var c = { node: node, idea: i, tab: i.tab, text: text, button: button, deferred: !!i.deferred_at, inert: false, open: false };
     c.set = function (on) {
       c.open = on;
       node.setAttribute("data-open", String(on));
@@ -92,9 +93,11 @@
     text.appendChild(document.createTextNode(i.job || i.idea));
     text.appendChild(document.createTextNode(" "));
     var tags = el("span", "tags");
-    var rank = el("span", "tag rank", i.rank === null ? "?" : String(i.rank));
-    if (i.rank === null) rank.title = "Unranked";
-    tags.appendChild(rank);
+    if (i.tab === "ideas") {
+      var rank = el("span", "tag rank", i.rank === null ? "?" : String(i.rank));
+      if (i.rank === null) rank.title = "Unranked";
+      tags.appendChild(rank);
+    }
     if (i.rank !== null && i.group_label) {
       var group = el("span", "tag group", i.group_label);
       group.setAttribute("style", "--g:" + colour[i.group]);
@@ -104,6 +107,7 @@
     node.appendChild(text);
     if (i.job) body.appendChild(el("p", "thought", "Loose thought: " + i.idea));
     if (i.reason) body.appendChild(el("p", "why", i.reason));
+    if (i.ref) body.appendChild(el("p", "ref", "Left off at: " + i.ref));
     body.appendChild(el("p", "where", "Loose thread " + i.id + " · " + i.surfaced_by + (i.origin ? "; " + i.origin : "")));
     node.appendChild(body);
     text.addEventListener("click", function () { c.set(!c.open); });
@@ -156,6 +160,24 @@
   folder.setAttribute("role", "tabpanel");
   board.appendChild(folder);
 
+  // The status filter inside a tab. Ranked and Unranked are offered only where ideas show.
+  var status = "all";
+  var filterRow = el("div", "status-filter");
+  filterRow.setAttribute("role", "group");
+  filterRow.setAttribute("aria-label", "Status");
+  folder.appendChild(filterRow);
+  var filters = [["all", "All statuses"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["deferred", "Deferred"], ["resolved", "Resolved"]].map(function (s) {
+    var b = el("button", "status-pick", s[1]);
+    b.type = "button";
+    b.setAttribute("data-status", s[0]);
+    b.addEventListener("click", function () {
+      status = s[0];
+      apply();
+    });
+    filterRow.appendChild(b);
+    return b;
+  });
+
   // One section: its heading, whatever sits under the heading, and its cards, the first open.
   var sections = {};
   function section(name, heading, under, cards) {
@@ -176,7 +198,25 @@
   function resolvedCard(d) {
     var r = resolvedLine(d);
     r.node.appendChild(el("span", "status", "Resolved"));
+    r.tab = d.tab;
     return r;
+  }
+
+  // Snipped work that stays where it is: one read-only line naming its record, linking its file or Work Board page.
+  function placeCard(p) {
+    var line = el("p", "in-place");
+    var name = p.record + ": " + p.title;
+    if (p.url) {
+      var a = el("a", "", name);
+      a.href = p.url;
+      a.title = p.path;
+      line.appendChild(a);
+    } else {
+      line.appendChild(document.createTextNode(name));
+    }
+    if (p.date) line.appendChild(document.createTextNode(" · " + p.date));
+    line.appendChild(el("span", "status", p.status));
+    return { node: line, inert: true, tab: p.tab };
   }
 
   var allGroups = true;
@@ -205,12 +245,15 @@
   noGroups.hidden = true;
 
   var open = data.ideas.filter(function (i) { return !i.deferred_at; });
-  var rankedCards = open.filter(function (i) { return i.rank !== null; }).map(ideaCard);
+  var openIdeas = open.filter(function (i) { return i.tab === "ideas"; });
+  var rankedCards = openIdeas.filter(function (i) { return i.rank !== null; }).map(ideaCard);
   section("ranked", "Ranked", [chips, noGroups], rankedCards);
-  section("unranked", "Unranked", [el("p", "note", "Captured since the last ranking.")], open.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("unranked", "Unranked", [el("p", "note", "Captured since the last ranking.")], openIdeas.filter(function (i) { return i.rank === null; }).map(ideaCard));
+  section("open", "Open", [], open.filter(function (i) { return i.tab !== "ideas"; }).map(ideaCard));
   section("deferred", "Deferred", [], data.ideas.filter(function (i) { return !!i.deferred_at; }).map(ideaCard));
   section("resolved", "Resolved", [], data.resolved.map(resolvedCard));
-  var empty = el("p", "empty", data.ideas.length === 0 ? "No open loose threads." : "No loose thread under this tab.");
+  section("in_place", "Left where they are", [], data.in_place.map(placeCard));
+  var empty = el("p", "empty", data.ideas.length === 0 && data.in_place.length === 0 ? "No open loose threads." : "No loose thread under this tab.");
   folder.appendChild(empty);
 
   var toggle = el("button", "switch");
@@ -276,7 +319,7 @@
     apply();
   });
 
-  var TABS = [["all", "All"], ["ranked", "Ranked"], ["unranked", "Unranked"], ["deferred", "Deferred"], ["resolved", "Resolved"]];
+  var TABS = [["all", "All"], ["jobs", "Jobs"], ["ideas", "Ideas"], ["propositions", "Propositions"], ["memos", "Legal Memos"], ["correspondence", "Correspondence"], ["arguments", "Arguments"], ["work_boards", "Work Boards"]];
   var tabs = TABS.map(function (t) {
     var b = el("button", "", t[1]);
     b.type = "button";
@@ -292,14 +335,26 @@
 
   var current = "all";
   function apply() {
-    // A card deferred from Ranked drops out of the group filter; one brought back rejoins it.
-    sections.deferred.cards.forEach(function (c) { c.node.hidden = false; });
-    sections.ranked.cards.forEach(function (c) { c.node.hidden = !allGroups && !picked[c.idea.group]; });
+    var rankable = current === "all" || current === "ideas";
+    if (!rankable && (status === "ranked" || status === "unranked")) status = "all";
+    filters.forEach(function (b) {
+      var s = b.getAttribute("data-status");
+      b.hidden = !rankable && (s === "ranked" || s === "unranked");
+      b.setAttribute("aria-pressed", String(s === status));
+    });
     noGroups.hidden = allGroups || data.groups.some(function (g) { return picked[g.key]; });
+    var bare = current === "all" && status === "all";
     var any = false;
     Object.keys(sections).forEach(function (name) {
-      var shown = current === name || (current === "all" && (name !== "resolved" || showResolved));
-      var on = shown && sections[name].cards.length > 0;
+      var shown = status === name || (status === "all" && (name !== "resolved" || (bare && showResolved)));
+      var count = 0;
+      sections[name].cards.forEach(function (c) {
+        var onTab = current === "all" || c.tab === current;
+        if (onTab) count += 1;
+        // A card deferred from Ranked drops out of the group filter; one brought back rejoins it.
+        c.node.hidden = !onTab || (name === "ranked" && !allGroups && !picked[c.idea.group]);
+      });
+      var on = shown && count > 0;
       sections[name].node.hidden = !on;
       if (on) any = true;
     });
@@ -310,7 +365,7 @@
       if (on) folder.setAttribute("aria-labelledby", b.id);
     });
     empty.hidden = any;
-    if (resolvedToggle) resolvedToggle.hidden = current !== "all";
+    if (resolvedToggle) resolvedToggle.hidden = !bare;
   }
   function select(b) {
     current = b.getAttribute("data-filter");

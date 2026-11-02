@@ -10,7 +10,7 @@ import { docItemKey, orderStrip, readViewed, viewItemKey } from "./forms/board-v
 import { combineSections } from "./forms/combined-board.js";
 import { courtFileAffidavits } from "./court-file-affidavits.js";
 import { type ClientContext, rankFilings, type Ranked, readSchemaVersion } from "./forms.js";
-import { LOOSE_IDEAS_PAGE, LOOSE_THREADS_FILE } from "./forms/loose-ideas-page.js";
+import { LOOSE_IDEAS_PAGE, LOOSE_THREADS_FILE, type LooseThreadsContext } from "./forms/loose-ideas-page.js";
 import { MATTER_BOARD_FILE, renderMatterBoardHtml } from "./forms/matter-board-shell.js";
 import { fetchPreFilingProceedings, isJobOnlyBoard, isResearchWriting } from "./forms/query.js";
 import { buildMatterBoardData } from "./forms/render-matter-board.js";
@@ -77,7 +77,7 @@ export function buildMatterPages(
   reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number; views?: false } = {},
   /** A preview's pages in place of the boards' own (src/pages/preview.ts): the composed Litigation
    * Strategy and Work Board templates, whole view pages by name, and the Loose Threads page. Omitted, every page is the board's. */
-  templates: { matterBoard?: ComposedTemplate; milestone?: ComposedTemplate; views?: Readonly<Record<string, ViewPage>>; threads?: ViewPage<{ dbPath: string }> } = {}
+  templates: { matterBoard?: ComposedTemplate; milestone?: ComposedTemplate; views?: Readonly<Record<string, ViewPage>>; threads?: ViewPage<LooseThreadsContext> } = {}
 ): MatterPagesBuilt {
   const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
   const preFiling = fetchPreFilingProceedings(dbPath);
@@ -164,7 +164,7 @@ export function buildMatterPages(
     );
   });
   const threadsPage = templates.threads ?? LOOSE_IDEAS_PAGE;
-  const threads = renderViewPageHtml(threadsPage, { ...meta, filing: "" }, threadsPage.data({ dbPath }));
+  const threads = renderViewPageHtml(threadsPage, { ...meta, filing: "" }, threadsPage.data({ dbPath, draftDir, boards: targets }));
   const html = [matterBoard, threads, ...milestones, ...viewPages];
   return {
     pages: guardTargets(groupsWritten.map((g) => g.file), viewsWritten).map((t, i) => ({ ...t, html: html[i] })),

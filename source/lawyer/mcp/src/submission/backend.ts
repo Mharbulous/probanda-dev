@@ -136,10 +136,27 @@ def job_move(before, after):
     return None
 
 
+# Loose threads moved to their own store (loose-threads/backend.ts), so a row written to the emptied seeds
+# table is one nobody reads. drafting_data__execute refuses a script naming it as a write target, and one
+# that changes it by any other route. It stays in the database, empty, and fixture seeds stay unguarded.
+SEEDS_WRITE_RE = r"""(?is)\b(?:insert(?:\s+or\s+\w+)?\s+into|replace\s+into|update(?:\s+or\s+\w+)?|delete\s+from|drop\s+table|alter\s+table)\s+(?:main\s*\.\s*)?["'\[]?seeds\b"""
+SEEDS_REFUSED = "loose_thread_write_refused: use loose_threads__capture or loose_threads__update. Loose threads are no longer in this database. Nothing was written."
+
+
+def seed_rows(con):
+    held = con.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'seeds'").fetchone()
+    return con.execute("SELECT * FROM seeds ORDER BY id").fetchall() if held else []
+
+
 def do_execute(req):
+    guarded = req.get('guard_jobs')
+    if guarded and re.search(SEEDS_WRITE_RE, req['sql_script']):
+        raise SystemExit(SEEDS_REFUSED)
+
     def mutate(con):
         before = recorded(con)
-        jobs = job_state(con) if req.get('guard_jobs') else None
+        jobs = job_state(con) if guarded else None
+        seeds = seed_rows(con) if guarded else None
         try:
             con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
         except Exception:
@@ -155,6 +172,8 @@ def do_execute(req):
         refused = jobs is not None and job_move(jobs, job_state(con))
         if refused:
             raise SystemExit(refused)
+        if guarded and seed_rows(con) != seeds:
+            raise SystemExit(SEEDS_REFUSED)
         return {"ok": True, "changes": con.total_changes}, True
     return staged_write(req, 'execute', mutate)
 
@@ -181,7 +200,10 @@ def do_write_all(req):
     # statement carrying expect_changes that changes another number of rows rolls the whole
     # transaction back, and the live file is never touched. A parameter {"$rowid": n} binds the
     # rowid statement n inserted, so a later statement can name a row this transaction created.
+    # foreign_keys_off is the seeds move's alone (loose-threads/migrate.ts).
     def mutate(con):
+        if req.get('foreign_keys_off'):
+            con.execute("PRAGMA foreign_keys = OFF")
         con.execute("BEGIN")
         results = []
         try:
@@ -415,6 +437,7 @@ interface WriteAllRequest {
   op: "write_all";
   db_path: string;
   statements: WriteStatement[];
+  foreign_keys_off?: boolean;
 }
 
 interface TrialRequest {
@@ -648,11 +671,12 @@ export type WriteAllResult =
 export async function submissionDataWriteAll(
   dbPath: string,
   statements: WriteStatement[],
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  options: { foreignKeysOff?: boolean } = {}
 ): Promise<WriteAllResult> {
   const lock = await acquireDataLock(dbPath, env);
   try {
-    const result = runHelper({ op: "write_all", db_path: dbPath, statements }, env) as WriteAllResult;
+    const result = runHelper({ op: "write_all", db_path: dbPath, statements, ...(options.foreignKeysOff ? { foreign_keys_off: true } : {}) }, env) as WriteAllResult;
     return lock.brokeStale
       ? {
           ...result,

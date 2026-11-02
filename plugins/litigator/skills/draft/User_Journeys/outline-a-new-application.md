@@ -3,7 +3,7 @@ journey: Outline a new application
 kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
 actor: practitioner
 trigger: the practitioner asks to start an application on a matter whose proceeding is already recorded and which has no Writing of that kind yet
-outcome: the empty Writing exists, and the work on its Milestone was outlined by the practitioner, recorded in their words, and read back before it was written — the assistant proposed none of it
+outcome: the empty Writing exists, and the work on its Work Board was outlined by the practitioner, recorded in their words, and read back before it was written — the assistant proposed none of it
 path: happy
 status: aspirational
 source: Engineering/1. Design/2026-09-13_paralegal-posture-and-outline-vocabulary-design.md; steps 8 to 12 amended 2026-09-14 so the assistant divides the work into jobs without asking (that design's Amendment, #569)
@@ -29,11 +29,11 @@ Hypothetical: Northgate, an Alberta numbered company, sues our client Hasbro and
 
    > No security for costs applications are in the works yet. Shall I create it as a new BCSC Notice of Application in the same proceeding?
 
-   **Practitioner:** yes. **Assistant:** creates the empty Writing and renders it. Its Milestone is empty.
+   **Practitioner:** yes. **Assistant:** creates the empty Writing and renders it. Its Work Board is empty.
 
 4. **Assistant:** opens the outlining session with the practitioner talking. It offers no candidate jobs.
 
-   > Done. The Milestone is empty and I'm ready to record your ideas. Can you outline the application? Which parties will you specifically be seeking costs from?
+   > Done. The Work Board is empty and I'm ready to record your ideas. Can you outline the application? Which parties will you specifically be seeking costs from?
 
 5. **Practitioner:** outlines it.
 
@@ -83,9 +83,9 @@ Hypothetical: Northgate, an Alberta numbered company, sues our client Hasbro and
 
 13. **Assistant:** reads the jobs back in the practitioner's words before writing anything: the draft bill of costs; the orders, waiting on the bill; Northgate's finances (demand letter, then the affidavit exhibiting the searches); the merits point; research on the merits point; the answer to the stifling argument. It asks nothing about order.
 
-14. **Assistant:** presents the six jobs as a multi-select read-back, each card in the practitioner's words, and writes the ones selected, the bill of costs before the orders that wait on it. It re-renders; the Writing's own Milestone page updates.
+14. **Assistant:** presents the six jobs as a multi-select read-back, each card in the practitioner's words, and writes the ones selected, the bill of costs before the orders that wait on it. It re-renders; the Writing's own Work Board page updates.
 
-    > Written. The Milestone shows six jobs.
+    > Written. The Work Board shows six jobs.
 
 ## Principles this journey encodes
 
