@@ -1,4 +1,4 @@
-// build-stamp: 7676203fbe27
+// build-stamp: c2cdb01b1eb2
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -16249,6 +16249,20 @@ function missingMessage(subject, env, tried) {
     "  then fully restart the app."
   ].join("\n");
 }
+
+// src/case/case-lock.ts
+var SITE = {
+  envVar: "COCLERK_CASE_LOCK_ROOT",
+  dirName: "case-locks",
+  attempts: 5,
+  recordField: "matterRoot",
+  label: "matter-data",
+  subject: "matter",
+  // Longer than the longest holder (WRITE_TIMEOUT_MS, 2 minutes), and never renewed: a session that
+  // hangs while alive cannot keep the lock (group locking spec 6.2).
+  staleMs: 5 * 6e4,
+  breakDead: true
+};
 
 // src/case/case-data-resolver.py.ts
 var case_data_resolver_py_default = `"""case_data_resolver.py \u2014 where a matter's case data lives (MODULE).

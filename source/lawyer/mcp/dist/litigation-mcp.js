@@ -1,4 +1,4 @@
-// build-stamp: e0c35cf59361
+// build-stamp: 11bd861ffa9d
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "e0c35cf59361";
+var BUILD_STAMP = false ? null : "11bd861ffa9d";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -77334,7 +77334,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("execute"),
-      description: "Run a write SQL script against a matter's attached main+law+privileged databases in a single transaction, then regenerate evidence.sql. The tool loads the cross-database FK layer itself from the /matter-data skill's references/triggers.sql on every call and refuses to write without it -- do not send it. A non-success result (error, rejection, timeout, no response) does not prove the script did not commit: the transaction commits and the databases are committed to storage before evidence.sql is regenerated, and a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with matter_data__query before any further write or retry -- see /matter-data's shared/conventions.md section 2.3. run_id, given only inside an ingest run, must be the matter's live run (matter_data__ingest_run): otherwise the call is refused lease_lost and writes nothing; a write that carries it renews the run's heartbeat. In a run the ingest orchestrator began (begin with orchestrator true), an inline sql_script over 8 KB is refused, writing nothing: 'too long to send inline: use a generator or ingest_result'. In any other run, and without run_id, the call is unchanged. Give sql_script or generator, never both. generator {script, args} has the server emit the script itself, so no SQL passes through the session: script supersede_draft.py with args.command emit-sql ({superseded, kept, approver, execution_status?}: one side a source_id, the other {file_path, file_hash} for a copy with no row; the server reads the pair and plans the fold itself) or rehash-sql ({old, new, file_path}). Any other script, command or pair is refused. Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      description: "Run a write SQL script against a matter's attached main+law+privileged databases in a single transaction, then regenerate evidence.sql. The tool loads the cross-database FK layer itself from the /matter-data skill's references/triggers.sql on every call and refuses to write without it -- do not send it. A non-success result (error, rejection, timeout, no response) does not prove the script did not commit: the transaction commits and the databases are committed to storage before evidence.sql is regenerated, and a rejection or give-up after dispatch never reaches the backend at all. Re-read what the script targeted with matter_data__query before any further write or retry -- see /matter-data's shared/conventions.md section 2.3. expected_revision, a number from matter_data__ingest_run status, refuses the call stale_revision and writes nothing when the matter has been written since (read it before showing a proposed change, pass it with the approved one). run_id, given only inside an ingest run, must be a live run of the matter (matter_data__ingest_run): otherwise the call is refused lease_lost and writes nothing; a write that carries it renews the run's heartbeat. In a run the ingest orchestrator began (begin with orchestrator true), an inline sql_script over 8 KB is refused, writing nothing: 'too long to send inline: use a generator or ingest_result'. In any other run, and without run_id, the call is unchanged. Give sql_script or generator, never both. generator {script, args} has the server emit the script itself, so no SQL passes through the session: script supersede_draft.py with args.command emit-sql ({superseded, kept, approver, execution_status?}: one side a source_id, the other {file_path, file_hash} for a copy with no row; the server reads the pair and plans the fold itself) or rehash-sql ({old, new, file_path}). Any other script, command or pair is refused. Only the /matter-data skill may call this tool -- you satisfy that by invoking it (Skill: lawyer:matter-data) and following the operation file it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77349,7 +77349,8 @@ function caseDataToolDefinitions() {
             required: ["script", "args"],
             additionalProperties: false
           },
-          run_id: { type: "string" }
+          run_id: { type: "string" },
+          expected_revision: { type: "integer" }
         },
         required: ["matter_root"],
         additionalProperties: false
@@ -77358,12 +77359,12 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("ingest_run"),
-      description: "One ingestion per matter at a time: the run lease and journal, kept on this computer outside the matter. action begin (mode attended or unattended; orchestrator true only from the /ingest-orchestrator skill) starts a run and returns {ok, run_id, resumed, next, asked?, path_b?, report?: lines to relay}; pass run_id on every matter_data__execute of the run. While another run's heartbeat is under 60 minutes old it returns {ok: false, refused: run_active, run_id, say} naming that run. With orchestrator true, a run left unfinished with results still to record, once its heartbeat is 60 minutes old and until its folder is deleted 30 days on, returns {ok: false, refused: run_unfinished, run_id, say} naming it to resume; any other caller takes it over and is told in report. begin with resume (an unfinished run's run_id) takes that run over at once with a new run_id, and with orchestrator true makes it the orchestrator's run; after 60 minutes without a heartbeat a plain begin takes over too, but for run_unfinished above. The displaced holder's next call is refused lease_lost. resume naming no unfinished run is refused unknown_run. action status returns the matter's run {active, run_id, started, heartbeat, mode, ended, next, asked?, path_b?}; with run_id it also renews the heartbeat; with run_id and ack (an extractor's failed reply line, or the ok line of a dispatch whose contract is null) it records that reply, whose ref must be one this run dispatched. action end (run_id) finishes the run and returns {ok, run_id, report?}. action next (run_id; routes the first time each file is routed, each {file_path, file_hash, kind facts|notice_of_application|affidavit|path_b, rendering?, execution?, witness?, answers_source_id?, category?, proceeding_id?}; bridged true in a bridged session) returns {ok, routed?: the routed files' refs in order (f1, f2, ...), report?: lines to relay, dispatch: [{dispatch_id, agent, model, effort, ref, contract, stage?}] to start, each with the one-line prompt DISPATCH <dispatch_id>, write: [{ref, contract, result_ids}] acknowledged results still to write, close: [{ref, contract}] items to close with result_ids [], asked?: [{ref, contract, result_ids}] writes waiting for the practitioner's answer, never to repeat until it is given, path_b?: [{ref, file_path}] documents for the session to read itself (routed path_b, or refused path_b) until their privileged write, running, more?}. Pass a write or close line's ref to ingest_result as document.ref. A file routed again, or another file with the same bytes, keeps the first ref. The run's work is done when dispatch, write and close are empty and running is 0. At most 10 extractors run at once. A dispatch line without its stage list, and a close line, is at most 200 bytes; a write line adds about 40 bytes per result_id, and stage about 120 bytes per path. A page is at most 50 lines. action staged (run_id, dispatch_id, paths) records a bridged session's copies of a dispatch's stage list, in its order. Every call carrying run_id renews the heartbeat. A refusal writes nothing; relay its say to the practitioner, never the code. A call refused plugin_changed means the plugin was updated mid-run: in a run the /ingest-orchestrator skill drives, stop without end, and after a restart resume the run (status, then begin with resume); any other caller ends the run as its operation says. Only the /matter-data skill and the /ingest-orchestrator skill may call this tool -- invoke one (Skill: lawyer:matter-data or lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
+      description: "Several ingestions of one matter may run at once, each claiming the files it reads: each run's lease and journal are kept on this computer outside the matter. action begin (mode attended or unattended; orchestrator true only from the /ingest-orchestrator skill) starts a run and returns {ok, run_id, resumed, next, asked?, path_b?, report?: lines to relay}; pass run_id on every matter_data__execute of the run. While a matter-wide change is running it returns {ok: false, refused: matter_busy, say}. With orchestrator true, a run left unfinished with results still to record, once its heartbeat is 60 minutes old and until its folder is deleted 30 days on, returns {ok: false, refused: run_unfinished, run_id, files, say} naming it to resume; any other caller starts anyway and is told in report. begin with resume (an unfinished run's run_id) takes that run over at once with a new run_id, its claims included, and with orchestrator true makes it the orchestrator's run. The displaced holder's next call is refused lease_lost. resume naming no unfinished run is refused unknown_run. action status with no run_id returns {active, revision, runs: [{run_id, active, started, heartbeat, mode, files}]}, the matter's unfinished runs; with run_id it returns that run {active, revision, run_id, started, heartbeat, mode, ended, next, asked?, path_b?} and renews the heartbeat; with run_id and ack (an extractor's failed reply line, or the ok line of a dispatch whose contract is null) it records that reply, whose ref must be one this run dispatched. action end (run_id) finishes the run and returns {ok, run_id, report?}. action next (run_id; routes the first time each file is routed, each {file_path, file_hash, kind facts|notice_of_application|affidavit|path_b, rendering?, execution?, witness?, answers_source_id?, category?, proceeding_id?, attachment_hashes?}; bridged true in a bridged session) claims each new file and returns {ok, routed?: the routed files' refs in order (f1, f2, ...), left_out?: files another session holds or has just recorded, report?: lines to relay, dispatch: [{dispatch_id, agent, model, effort, ref, contract, stage?}] to start, each with the one-line prompt DISPATCH <dispatch_id>, write: [{ref, contract, result_ids}] acknowledged results still to write, close: [{ref, contract}] items to close with result_ids [], asked?: [{ref, contract, result_ids}] writes waiting for the practitioner's answer, never to repeat until it is given, path_b?: [{ref, file_path}] documents for the session to read itself (routed path_b, or refused path_b) until their privileged write, running, more?}. Pass a write or close line's ref to ingest_result as document.ref. A file routed again, or another file with the same bytes, keeps the first ref. The run's work is done when dispatch, write and close are empty, running is 0 and waiting_for_slot is absent; waiting_for_slot true means no extractor slot is free yet, so call next again. At most 10 extractors run at once on this computer, across all runs. A dispatch line without its stage list, and a close line, is at most 200 bytes; a write line adds about 40 bytes per result_id, and stage about 120 bytes per path. A page is at most 50 lines. action claim (run_id; files, each {file_path, file_hash, attachment_hashes?}) claims files read outside next, until the run ends, and returns {ok, claimed, left_out?, report?}; read only what it claimed. action staged (run_id, dispatch_id, paths) records a bridged session's copies of a dispatch's stage list, in its order. Every call carrying run_id renews the heartbeat. A refusal writes nothing; relay its say to the practitioner, never the code. A call refused plugin_changed means the plugin was updated mid-run: in a run the /ingest-orchestrator skill drives, stop without end, and after a restart resume the run (status, then begin with resume); any other caller ends the run as its operation says. Only the /matter-data skill and the /ingest-orchestrator skill may call this tool -- invoke one (Skill: lawyer:matter-data or lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
           matter_root: { type: "string" },
-          action: { type: "string", enum: ["begin", "next", "staged", "status", "end"] },
+          action: { type: "string", enum: ["begin", "next", "claim", "staged", "status", "end"] },
           run_id: { type: "string" },
           resume: { type: "string" },
           mode: { type: "string", enum: ["attended", "unattended"] },
@@ -77381,9 +77382,24 @@ function caseDataToolDefinitions() {
                 witness: { type: "string", enum: ["fact", "expert"] },
                 answers_source_id: { type: "integer" },
                 category: { type: "string", enum: ["court", "correspondence", "production", "work_product", "disbursements"] },
-                proceeding_id: { type: "integer" }
+                proceeding_id: { type: "integer" },
+                other_version: { type: "string", enum: ["superseded", "not_version"] },
+                attachment_hashes: { type: "array", items: { type: "string" } }
               },
               required: ["file_path", "file_hash", "kind"],
+              additionalProperties: false
+            }
+          },
+          files: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                file_path: { type: "string" },
+                file_hash: { type: "string" },
+                attachment_hashes: { type: "array", items: { type: "string" } }
+              },
+              required: ["file_path", "file_hash"],
               additionalProperties: false
             }
           },
@@ -77399,7 +77415,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("ingest_result"),
-      description: "Write one document's extracted results from their staged result_ids, in one transaction (an affidavit's exhibits each under their own savepoint), then regenerate evidence.sql. No extraction output and no SQL pass through the session. contract is facts, affidavit_body, affidavit_exhibits, sought_orders or privileged; document is {ref, store} for a file routed in this run (the ref of its dispatch, write, close or path_b line, as given), or {file_path (stored form), file_hash, store} for a Path B document; store is privileged only for a privileged contract answered yes; result_ids are the ids from the extractors' ok lines: one result named by its dispatch line's ref, or the result_ids of a write line, each already acknowledged (a call of several that holds an unacknowledged id is an error); [] closes an item whose extraction failed twice. answers carries the practitioner's answers to an earlier call's ask: privilege (yes, no or unclear, any case, required for privileged, whose call takes exactly one result), category, proceeding_id, participants {name as extracted: party_id, or 0 for a filing party that is none of the parties}, informants {locator: privileged source id, or 0 when it came from no document on file} for a privileged informant. Returns at most 600 bytes: {outcome written|already_written|refused, refused?, source_id, counts {facts, positions, relief, links, exhibits}, items [{ref, outcome, reason}] for items that failed, ask [{kind, ref, say}], post [{pass, ref}] after-completion passes to run, report [lines]}. Relay report lines and ask the ask items in plain words; never show refused, reason or ref. A repeated call is safe: it returns already_written. refused waiting means call again once next lists it; path_b means read the document as Path B; set_aside, race and store_change mean set it aside for /ingest. A result that cannot be read, or belongs to another contract, file or item than its reply, is refused and its item alone read once more. dropped counts ask or items entries left out to keep the cap: a repeated call lists them. Refuses without the live run_id (lease_lost) or after a plugin update (plugin_changed). Only the /ingest-orchestrator skill may call this tool -- invoke it (Skill: lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
+      description: "Write one document's extracted results from their staged result_ids, in one transaction (an affidavit's exhibits each under their own savepoint), then regenerate evidence.sql. No extraction output and no SQL pass through the session. contract is facts, affidavit_body, affidavit_exhibits, sought_orders or privileged; document is {ref, store} for a file routed in this run (the ref of its dispatch, write, close or path_b line, as given), or {file_path (stored form), file_hash, store} for a Path B document; store is privileged only for a privileged contract answered yes; result_ids are the ids from the extractors' ok lines: one result named by its dispatch line's ref, or the result_ids of a write line, each already acknowledged (a call of several that holds an unacknowledged id is an error); [] closes an item whose extraction failed twice. answers carries the practitioner's answers to an earlier call's ask: privilege (yes, no or unclear, any case, required for privileged, whose call takes exactly one result), category, proceeding_id, participants {name as extracted: party_id, or 0 for a filing party that is none of the parties}, informants {locator: privileged source id, or 0 when it came from no document on file} for a privileged informant. Returns at most 600 bytes: {outcome written|already_written|refused, refused?, source_id, counts {facts, positions, relief, links, exhibits}, items [{ref, outcome, reason}] for items that failed, ask [{kind, ref, say}], post [{pass, ref}] after-completion passes to run, report [lines]}. Relay report lines and ask the ask items in plain words; never show refused, reason or ref. A repeated call is safe: it returns already_written. refused waiting means call again once next lists it; path_b means read the document as Path B; set_aside, race and store_change mean set it aside for /ingest; already_held and taken mean the file is settled in another session, so do nothing more for it. An ask of kind other_version names a held copy by its ref: settle the pair, then repeat the call with answers.other_version superseded or not_version. A result that cannot be read, or belongs to another contract, file or item than its reply, is refused and its item alone read once more. dropped counts ask or items entries left out to keep the cap: a repeated call lists them. Refuses without a live run_id (lease_lost) or after a plugin update (plugin_changed). Only the /ingest-orchestrator skill may call this tool -- invoke it (Skill: lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -80768,8 +80784,11 @@ import { existsSync as existsSync9, readdirSync as readdirSync8 } from "node:fs"
 import { dirname as dirname5, join as join13 } from "node:path";
 
 // src/case/backend.ts
-import { existsSync as existsSync7, readFileSync as readFileSync7 } from "node:fs";
+import { existsSync as existsSync7, readFileSync as readFileSync8 } from "node:fs";
 import { join as join11 } from "node:path";
+
+// src/case/case-lock.ts
+import { readFileSync as readFileSync7, writeFileSync as writeFileSync2 } from "node:fs";
 
 // src/data-lock.ts
 import { createHash as createHash3, randomUUID as randomUUID5 } from "node:crypto";
@@ -80864,15 +80883,17 @@ function hostLocalDir(site, env) {
 function hostLocalFile(site, target, suffix, env) {
   return pathWin323.join(hostLocalDir(site, env), `${lockKey(target)}.${suffix}`);
 }
-async function acquireLock(site, target, env) {
+async function acquireLock(site, target, env, options = {}) {
   const lock = hostLocalFile(site, target, "lock", env);
   let brokeStale = false;
-  for (let attempt = 0; attempt < site.attempts + (brokeStale ? 1 : 0); attempt++) {
+  const attempts = options.waitsMs ? options.waitsMs.length + 1 : site.attempts;
+  let waitedMs = 0;
+  for (let attempt = 0; attempt < attempts + (brokeStale ? 1 : 0); attempt++) {
     try {
       const token = randomUUID5();
       const fd = openSync2(lock, "wx");
       try {
-        writeSync2(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), [site.recordField]: target, token }));
+        writeSync2(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), [site.recordField]: target, token, ...options.scope ? { scope: options.scope } : {} }));
       } catch (writeErr) {
         closeSync2(fd);
         unlinkSync4(lock);
@@ -80889,17 +80910,30 @@ async function acquireLock(site, target, env) {
       if (err.code !== "EEXIST") throw err;
       const key = readLockKey(lock, "token");
       if (key === null) continue;
-      if (isStale(lock) && removeLockIfKey(lock, "token", key, () => isStale(lock))) {
+      if (isStale(lock, site) && removeLockIfKey(lock, "token", key, () => isStale(lock, site))) {
         brokeStale = true;
         continue;
       }
-      if (attempt < site.attempts - 1) await sleep(LOCK_RETRY_MS);
+      if (attempt < attempts - 1) {
+        const wait = options.waitsMs?.[attempt] ?? LOCK_RETRY_MS;
+        await sleep(wait);
+        waitedMs += wait;
+      }
     }
   }
   throw new DataServerError(
-    `could not acquire the ${site.label} write lock within ${site.attempts * LOCK_RETRY_MS / 1e3}s (${lock}: ${holderOf(lock)}); another session is writing to or migrating this ${site.subject}`,
+    `could not acquire the ${site.label} write lock within ${waitedMs / 1e3}s (${lock}: ${holderOf(lock)}); another session is writing to or migrating this ${site.subject}`,
     "lock_unavailable"
   );
+}
+function liveLockRecord(site, target, env) {
+  const lock = hostLocalFile(site, target, "lock", env);
+  if (isStale(lock, site)) return null;
+  try {
+    return JSON.parse(readFileSync6(lock, "utf-8"));
+  } catch {
+    return null;
+  }
 }
 function releaseIfOurs(lock, token) {
   try {
@@ -80907,11 +80941,26 @@ function releaseIfOurs(lock, token) {
   } catch {
   }
 }
-function isStale(lock) {
+function isStale(lock, site) {
   try {
-    return Date.now() - statSync3(lock).mtimeMs > LOCK_STALE_MS;
+    return Date.now() - statSync3(lock).mtimeMs > (site.staleMs ?? LOCK_STALE_MS) || site.breakDead === true && holderDied(lock);
   } catch {
     return false;
+  }
+}
+function holderDied(lock) {
+  let pid;
+  try {
+    pid = JSON.parse(readFileSync6(lock, "utf-8")).pid;
+  } catch {
+    return false;
+  }
+  if (typeof pid !== "number") return false;
+  try {
+    process.kill(pid, 0);
+    return false;
+  } catch (err) {
+    return err.code === "ESRCH";
   }
 }
 function holderOf(lock) {
@@ -80932,10 +80981,40 @@ var SITE = {
   attempts: 5,
   recordField: "matterRoot",
   label: "matter-data",
-  subject: "matter"
+  subject: "matter",
+  // Longer than the longest holder (WRITE_TIMEOUT_MS, 2 minutes), and never renewed: a session that
+  // hangs while alive cannot keep the lock (group locking spec 6.2).
+  staleMs: 5 * 6e4,
+  breakDead: true
 };
+var WRITE_WAITS_MS = [1e3, 2e3, 4e3, 8e3];
 function acquireCaseLock(matterRoot, env = process.env) {
   return acquireLock(SITE, matterRoot, env);
+}
+function acquireIngestWriteLock(matterRoot, env = process.env) {
+  return acquireLock(SITE, matterRoot, env, { waitsMs: WRITE_WAITS_MS });
+}
+async function withExclusive(matterRoot, env, op) {
+  const lock = await acquireLock(SITE, matterRoot, env, { waitsMs: WRITE_WAITS_MS, scope: "exclusive" });
+  try {
+    advanceRevision(matterRoot, env);
+    return await op(lock);
+  } finally {
+    lock.release();
+  }
+}
+function exclusiveHeld(matterRoot, env = process.env) {
+  return liveLockRecord(SITE, matterRoot, env)?.scope === "exclusive";
+}
+function matterRevision(matterRoot, env = process.env) {
+  try {
+    return Number(readFileSync7(hostLocalFile(SITE, matterRoot, "revision", env), "utf-8")) || 0;
+  } catch {
+    return 0;
+  }
+}
+function advanceRevision(matterRoot, env = process.env) {
+  writeFileSync2(hostLocalFile(SITE, matterRoot, "revision", env), String(matterRevision(matterRoot, env) + 1), "utf-8");
 }
 
 // src/case/case-data-resolver.py.ts
@@ -81611,19 +81690,20 @@ function caseDataTriggersSql(env) {
       "skills_root_missing"
     );
   }
-  return readFileSync7(path, "utf-8");
+  return readFileSync8(path, "utf-8");
 }
-async function caseDataExecute(matterRoot, sqlScript, env = process.env, precheck) {
-  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env, precheck);
+async function caseDataExecute(matterRoot, sqlScript, env = process.env, precheck, held2) {
+  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env, precheck, held2);
 }
-async function caseDataExecuteStatements(matterRoot, statements, params, env = process.env, precheck) {
-  return await executeUnderLock(matterRoot, { statements, params }, env, precheck);
+async function caseDataExecuteStatements(matterRoot, statements, params, env = process.env, precheck, held2) {
+  return await executeUnderLock(matterRoot, { statements, params }, env, precheck, held2);
 }
-async function executeUnderLock(matterRoot, work, env, precheck) {
+async function executeUnderLock(matterRoot, work, env, precheck, held2) {
   const triggersSql = caseDataTriggersSql(env);
-  const lock = await acquireCaseLock(matterRoot, env);
+  const lock = held2 ?? await acquireCaseLock(matterRoot, env);
   try {
     await precheck?.();
+    advanceRevision(matterRoot, env);
     const result = runHelper({
       op: "execute",
       matter_root: matterRoot,
@@ -81632,13 +81712,13 @@ async function executeUnderLock(matterRoot, work, env, precheck) {
     }, env);
     if (lock.brokeStale) {
       result.warning = [
-        "broke a stale matter-data write lock (>15 min old) before writing; if another session is still writing to or migrating this matter, stop and reconcile",
+        "broke a stale matter-data write lock (its holder died, or it was >5 min old) before writing; if another session is still writing to or migrating this matter, stop and reconcile",
         result.warning
       ].filter(Boolean).join(" -- ");
     }
     return result;
   } finally {
-    lock.release();
+    if (held2 === void 0) lock.release();
   }
 }
 
@@ -81678,7 +81758,7 @@ function listCaseParties(caseDataDir, env = process.env) {
 }
 
 // src/files/matter-root.ts
-import { existsSync as existsSync8, readdirSync as readdirSync6, readFileSync as readFileSync8, statSync as statSync4 } from "node:fs";
+import { existsSync as existsSync8, readdirSync as readdirSync6, readFileSync as readFileSync9, statSync as statSync4 } from "node:fs";
 import { basename as basename2, dirname as dirname4, isAbsolute, join as join12, normalize, resolve as resolve2, win32 as pathWin325 } from "node:path";
 
 // src/files/scope.ts
@@ -81817,7 +81897,7 @@ function pointerRefusal(root, why) {
 function resolveCaseDataDir(root) {
   let pointer;
   try {
-    pointer = JSON.parse(readFileSync8(findPointer(root) ?? join12(root, POINTER_FILES[0]), "utf-8").replace(/\0/g, ""));
+    pointer = JSON.parse(readFileSync9(findPointer(root) ?? join12(root, POINTER_FILES[0]), "utf-8").replace(/\0/g, ""));
   } catch (err) {
     throw pointerRefusal(root, `is not readable JSON (${err.message})`);
   }
@@ -81866,7 +81946,7 @@ function caseDataRootFromDbPath(dbPath, env) {
 }
 
 // src/knowledge/tree.ts
-import { readFileSync as readFileSync9, readdirSync as readdirSync7, realpathSync as realpathSync2, statSync as statSync5 } from "node:fs";
+import { readFileSync as readFileSync10, readdirSync as readdirSync7, realpathSync as realpathSync2, statSync as statSync5 } from "node:fs";
 import { win32 as pathWin326 } from "node:path";
 var KNOWLEDGE_SKILLS = ["draft", "publish", "assemble", "legal-research", "docket-clerk"];
 var SHIPPED_DIR = { "docket-clerk": "shared/docket-clerk" };
@@ -82067,7 +82147,7 @@ function entryType(root, label2, original) {
 }
 function readLayerBytes(abs, label2) {
   try {
-    return readFileSync9(abs);
+    return readFileSync10(abs);
   } catch (err) {
     const code = err.code;
     if (code === "ENOENT") throw new DataServerError(`${label2} not found: ${abs}`, "not_found");
@@ -83013,7 +83093,7 @@ async function invoices_query(store, args) {
 }
 
 // src/tools/practice/firm-profile.ts
-import { existsSync as existsSync12, mkdirSync as mkdirSync5, readFileSync as readFileSync11, writeFileSync as writeFileSync3 } from "node:fs";
+import { existsSync as existsSync12, mkdirSync as mkdirSync5, readFileSync as readFileSync12, writeFileSync as writeFileSync4 } from "node:fs";
 import { dirname as dirname6, join as join15 } from "node:path";
 import { inflateRawSync } from "node:zlib";
 
@@ -83024,7 +83104,7 @@ import { win32 as pathWin327 } from "node:path";
 
 // src/submission/render-job.ts
 import { randomUUID as randomUUID6 } from "node:crypto";
-import { closeSync as closeSync3, existsSync as existsSync10, openSync as openSync3, readFileSync as readFileSync10, renameSync, statSync as statSync6, unlinkSync as unlinkSync5, utimesSync, writeFileSync as writeFileSync2, writeSync as writeSync3 } from "node:fs";
+import { closeSync as closeSync3, existsSync as existsSync10, openSync as openSync3, readFileSync as readFileSync11, renameSync, statSync as statSync6, unlinkSync as unlinkSync5, utimesSync, writeFileSync as writeFileSync3, writeSync as writeSync3 } from "node:fs";
 import { join as join14 } from "node:path";
 
 // src/submission/lock.ts
@@ -83058,7 +83138,7 @@ function stallMs(env) {
 }
 function readLock(lockFile) {
   try {
-    return JSON.parse(readFileSync10(lockFile, "utf-8"));
+    return JSON.parse(readFileSync11(lockFile, "utf-8"));
   } catch {
     return null;
   }
@@ -83115,7 +83195,7 @@ function sleepSync2(ms2) {
 function writeStatusFile(target, text8, { attempts = 10, delayMs = 50 } = {}) {
   const temp = `${target}.${process.pid}.tmp`;
   try {
-    writeFileSync2(temp, text8, "utf-8");
+    writeFileSync3(temp, text8, "utf-8");
   } catch (err) {
     return err.code ?? "UNKNOWN";
   }
@@ -83242,7 +83322,7 @@ function mirrorStatus(dbPath, env) {
     status3 = job.status;
   } else {
     try {
-      status3 = JSON.parse(readFileSync10(hostLocalPath(dbPath, "render-job.status.json", env), "utf-8"));
+      status3 = JSON.parse(readFileSync11(hostLocalPath(dbPath, "render-job.status.json", env), "utf-8"));
     } catch {
       return { state: "idle" };
     }
@@ -83525,7 +83605,7 @@ function emailSignaturePath(env, key) {
 }
 function readJson(path) {
   try {
-    return JSON.parse(readFileSync11(path, "utf-8"));
+    return JSON.parse(readFileSync12(path, "utf-8"));
   } catch (err) {
     throw new ValidationError(`${path} is not valid JSON: ${err.message}`);
   }
@@ -83749,7 +83829,7 @@ async function upsert_firm_profile(args, env = process.env) {
   if (args.letterhead !== void 0) {
     const source = asString(args.letterhead, "letterhead");
     if (!existsSync12(source)) throw new NotFoundError(`letterhead source not found: ${source}`);
-    letterhead = readFileSync11(source);
+    letterhead = readFileSync12(source);
     const { major, minor } = checkLetterhead(letterhead, source);
     if (major !== void 0 && minor !== void 0 && major !== minor) result.theme_faces_differ = { major, minor };
     result.changed.push("letterhead");
@@ -83770,7 +83850,7 @@ async function upsert_firm_profile(args, env = process.env) {
     result.written.push(paths.firm);
   }
   if (letterhead) {
-    writeFileSync3(paths.letterhead, letterhead);
+    writeFileSync4(paths.letterhead, letterhead);
     result.written.push(paths.letterhead);
   }
   if (config2) {
@@ -83784,7 +83864,7 @@ async function upsert_firm_profile(args, env = process.env) {
 }
 
 // src/tools/practice/folder-map.ts
-import { existsSync as existsSync13, mkdirSync as mkdirSync6, readdirSync as readdirSync9, readFileSync as readFileSync12, writeFileSync as writeFileSync4 } from "node:fs";
+import { existsSync as existsSync13, mkdirSync as mkdirSync6, readdirSync as readdirSync9, readFileSync as readFileSync13, writeFileSync as writeFileSync5 } from "node:fs";
 import { dirname as dirname7, join as join16, win32 as pathWin328 } from "node:path";
 var FLAGS = ["never_ingest", "privileged_by_default", "authority"];
 var GLOSSARY = "shared/document-types.md";
@@ -83794,7 +83874,7 @@ function documentTypes(env = process.env) {
   const path = join16(root, ...GLOSSARY.split("/"));
   if (!existsSync13(path)) throw new DataServerError(`the document-type glossary is missing: ${path}`, "skills_root_missing");
   const types = [];
-  for (const line of readFileSync12(path, "utf-8").split(/\r?\n/)) {
+  for (const line of readFileSync13(path, "utf-8").split(/\r?\n/)) {
     const m3 = ROW.exec(line.trim());
     if (!m3) continue;
     const flags = [...m3[4].matchAll(/`([a-z_]+)`/g)].map((f3) => f3[1]);
@@ -83816,7 +83896,7 @@ function machinePerson(env) {
   if (!existsSync13(config2)) return null;
   let person2;
   try {
-    person2 = JSON.parse(readFileSync12(config2, "utf-8"))?.person;
+    person2 = JSON.parse(readFileSync13(config2, "utf-8"))?.person;
   } catch (err) {
     throw new ValidationError(`${config2} is not valid JSON: ${err.message}`);
   }
@@ -83864,7 +83944,7 @@ function readFolderMap(env = process.env, types = documentTypes(env)) {
   }
   let parsed;
   try {
-    parsed = JSON.parse(readFileSync12(path, "utf-8"));
+    parsed = JSON.parse(readFileSync13(path, "utf-8"));
   } catch (err) {
     throw new ValidationError(`${path} is not valid JSON: ${err.message}`);
   }
@@ -83934,12 +84014,12 @@ async function set_folder_map(args, env = process.env) {
   }
   const path = folderMapPath(env, person2);
   mkdirSync6(dirname7(path), { recursive: true });
-  writeFileSync4(path, JSON.stringify({ entries }, null, 2) + "\n", "utf-8");
+  writeFileSync5(path, JSON.stringify({ entries }, null, 2) + "\n", "utf-8");
   return { person: person2, written: path, entries };
 }
 
 // src/tools/practice/config.ts
-import { existsSync as existsSync14, mkdirSync as mkdirSync7, readdirSync as readdirSync10, readFileSync as readFileSync13, renameSync as renameSync2, statSync as statSync8, writeFileSync as writeFileSync5 } from "node:fs";
+import { existsSync as existsSync14, mkdirSync as mkdirSync7, readdirSync as readdirSync10, readFileSync as readFileSync14, renameSync as renameSync2, statSync as statSync8, writeFileSync as writeFileSync6 } from "node:fs";
 import { homedir as homedir7 } from "node:os";
 import { dirname as dirname8, isAbsolute as isAbsolute3, join as join17 } from "node:path";
 var DOCUMENTED_KEYS = [
@@ -84048,7 +84128,7 @@ async function config_status(args, env = process.env) {
   }
   if (status3.exists && status3.path) {
     try {
-      const config2 = JSON.parse(readFileSync13(status3.path, "utf-8"));
+      const config2 = JSON.parse(readFileSync14(status3.path, "utf-8"));
       status3.keys_present = Object.keys(config2);
       status3.keys_missing = keysMissing(config2);
       if (typeof config2.practice_quirks === "string" && config2.practice_quirks !== "") {
@@ -84097,7 +84177,7 @@ async function config_set_root(args, env = process.env) {
   let config2 = { version: 1 };
   if (!created) {
     try {
-      config2 = JSON.parse(readFileSync13(path, "utf-8"));
+      config2 = JSON.parse(readFileSync14(path, "utf-8"));
     } catch (err) {
       throw new ValidationError(`${path} is not valid JSON (${err.message}); repair it by hand. Nothing was written.`);
     }
@@ -84118,7 +84198,7 @@ async function config_set_root(args, env = process.env) {
   for (const target of written) {
     mkdirSync7(dirname8(target), { recursive: true });
     const temp = `${target}.${process.pid}.tmp`;
-    writeFileSync5(temp, JSON.stringify(config2, null, 2) + "\n", "utf-8");
+    writeFileSync6(temp, JSON.stringify(config2, null, 2) + "\n", "utf-8");
     renameSync2(temp, target);
   }
   const result = { path: written[0], created, previous_case_data_root: previous, case_data_root: root, keys_missing: keysMissing(config2) };
@@ -84130,7 +84210,7 @@ async function config_set_root(args, env = process.env) {
 }
 
 // src/tools/practice/practice-board.ts
-import { existsSync as existsSync15, readFileSync as readFileSync14 } from "node:fs";
+import { existsSync as existsSync15, readFileSync as readFileSync15 } from "node:fs";
 import { dirname as dirname9, join as join18 } from "node:path";
 
 // src/compose-template.ts
@@ -84598,7 +84678,7 @@ async function render_practice_board(store) {
   const data = await buildPracticeBoardData(store, /* @__PURE__ */ new Date());
   const { panels } = data;
   const file = join18(dirname9(resolvePracticeDbPath(store.env)), PRACTICE_BOARD_FILE);
-  if (existsSync15(file) && !readFileSync14(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
+  if (existsSync15(file) && !readFileSync15(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
     throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Practice Board's marker, so this renderer did not write it`);
   }
   const code = writeStatusFile(file, renderPracticeBoardHtml(data));
@@ -84730,10 +84810,10 @@ function throwDriverRefusal(parsed, fallbackMessage) {
     error2.code ?? "migrate_error"
   );
 }
-function pushStaleLockWarning(result, store, subject) {
+function pushStaleLockWarning(result, store, subject, why = ">15 min old") {
   const warnings = Array.isArray(result.warnings) ? result.warnings : [];
   warnings.push(
-    `broke a stale ${store} write lock (>15 min old) before running; if another session is still writing to or migrating this ${subject}, stop and reconcile before continuing`
+    `broke a stale ${store} write lock (${why}) before running; if another session is still writing to or migrating this ${subject}, stop and reconcile before continuing`
   );
   result.warnings = warnings;
 }
@@ -84743,11 +84823,15 @@ function driverFile() {
   return pythonDriverFile("case-migrate-driver", MIGRATE_DRIVER);
 }
 async function caseDataMigrate(matterRoot, mode, opts = {}, env = process.env) {
+  const work = (lock2) => {
+    const result = runDriver(matterRoot, mode, opts, env);
+    if (lock2.brokeStale) pushStaleLockWarning(result, "matter-data", "matter", "its holder died, or it was >5 min old");
+    return result;
+  };
+  if (mode === "apply" || mode === "restore") return withExclusive(matterRoot, env, work);
   const lock = await acquireCaseLock(matterRoot, env);
   try {
-    const result = runDriver(matterRoot, mode, opts, env);
-    if (lock.brokeStale) pushStaleLockWarning(result, "matter-data", "matter");
-    return result;
+    return work(lock);
   } finally {
     lock.release();
   }
@@ -84802,20 +84886,24 @@ def main():
 main()
 `.trim();
 async function caseDataRelocate(matterRoot, mode, env = process.env) {
-  const caseLock = await acquireCaseLock(matterRoot, env);
-  try {
+  const work = async (caseLock2) => {
     const dataLock = await acquireDataLock(join19(caseDataFolder(matterRoot, env), "submission.sqlite"), env);
     try {
       const result = runDriver2(matterRoot, mode, env);
-      if (caseLock.brokeStale || dataLock.brokeStale) {
+      if (caseLock2.brokeStale || dataLock.brokeStale) {
         result.warnings = [
-          "broke a stale write lock (>15 min old) before running; if another session is still writing to this matter, stop and reconcile before continuing"
+          "broke a stale write lock before running; if another session is still writing to this matter, stop and reconcile before continuing"
         ];
       }
       return result;
     } finally {
       dataLock.release();
     }
+  };
+  if (mode === "apply") return withExclusive(matterRoot, env, work);
+  const caseLock = await acquireCaseLock(matterRoot, env);
+  try {
+    return await work(caseLock);
   } finally {
     caseLock.release();
   }
@@ -84879,7 +84967,7 @@ function resolveParticipant(matterRoot, name, env = process.env) {
 
 // src/case/stage-result.ts
 import { randomUUID as randomUUID8 } from "node:crypto";
-import { mkdirSync as mkdirSync8, readdirSync as readdirSync11, statSync as statSync9, unlinkSync as unlinkSync6, writeFileSync as writeFileSync6 } from "node:fs";
+import { mkdirSync as mkdirSync8, readdirSync as readdirSync11, statSync as statSync9, unlinkSync as unlinkSync6, writeFileSync as writeFileSync7 } from "node:fs";
 import { homedir as homedir8 } from "node:os";
 import { join as join20 } from "node:path";
 var KEEP_MS = 7 * 24 * 60 * 60 * 1e3;
@@ -84919,7 +85007,7 @@ function stageResult(result, env = process.env) {
   }
   const resultId = randomUUID8();
   const text8 = JSON.stringify(result);
-  writeFileSync6(join20(dir, `${resultId}.json`), text8, "utf-8");
+  writeFileSync7(join20(dir, `${resultId}.json`), text8, "utf-8");
   return { result_id: resultId, bytes: Buffer.byteLength(text8, "utf-8") };
 }
 
@@ -84981,12 +85069,12 @@ async function ingestAuthority(request2, env = process.env) {
 
 // src/case/ingest-run.ts
 import { createHash as createHash6, randomUUID as randomUUID9 } from "node:crypto";
-import { appendFileSync as appendFileSync2, closeSync as closeSync5, existsSync as existsSync17, mkdirSync as mkdirSync10, openSync as openSync5, readdirSync as readdirSync12, readFileSync as readFileSync16, readSync, renameSync as renameSync3, rmdirSync, rmSync as rmSync2, statSync as statSync11, truncateSync, unlinkSync as unlinkSync7, writeFileSync as writeFileSync8 } from "node:fs";
+import { appendFileSync as appendFileSync2, closeSync as closeSync5, existsSync as existsSync17, mkdirSync as mkdirSync10, openSync as openSync5, readdirSync as readdirSync12, readFileSync as readFileSync17, readSync, renameSync as renameSync3, rmdirSync, rmSync as rmSync2, statSync as statSync11, truncateSync, unlinkSync as unlinkSync7, writeFileSync as writeFileSync9 } from "node:fs";
 import { win32 as pathWin329 } from "node:path";
 
 // src/files/extract/page-images.ts
 import { createHash as createHash5 } from "node:crypto";
-import { existsSync as existsSync16, mkdirSync as mkdirSync9, mkdtempSync, readFileSync as readFileSync15, statSync as statSync10, writeFileSync as writeFileSync7 } from "node:fs";
+import { existsSync as existsSync16, mkdirSync as mkdirSync9, mkdtempSync, readFileSync as readFileSync16, statSync as statSync10, writeFileSync as writeFileSync8 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
 import { extname, isAbsolute as isAbsolute4, join as join21 } from "node:path";
 import { deflateSync } from "node:zlib";
@@ -90658,7 +90746,7 @@ function loadPdfium(wasm) {
   let lib = loaded.get(wasm.href);
   if (!lib) {
     lib = (async () => {
-      const module = await init({ wasmBinary: readFileSync15(wasm), print: console.error, printErr: console.error });
+      const module = await init({ wasmBinary: readFileSync16(wasm), print: console.error, printErr: console.error });
       module.PDFiumExt_Init();
       return module;
     })();
@@ -90679,7 +90767,7 @@ async function withPdf(path, wasm, work) {
   if (!isAbsolute4(path)) throw new ValidationError(`path must be absolute: ${path}`);
   if (!existsSync16(path) || !statSync10(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
-  const data = readFileSync15(path);
+  const data = readFileSync16(path);
   const pending3 = loadPdfium(wasm);
   let lib;
   try {
@@ -90764,7 +90852,7 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
         const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows4));
         const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
         const file = join21(renderDir, `${name}.png`);
-        writeFileSync7(file, png);
+        writeFileSync8(file, png);
         const image = { path: file, sha256: createHash5("sha256").update(png).digest("hex"), width, height: rows4 };
         if (tiles.length > 1) image.tile = i3 + 1;
         images.push(image);
@@ -90981,14 +91069,21 @@ main()
 var SITE3 = {
   envVar: "COCLERK_INGEST_RUN_ROOT",
   dirName: "ingest-runs",
-  attempts: 5,
+  // Several runs now take turns on it, each for a moment.
+  attempts: 25,
   recordField: "matterRoot",
   label: "ingest run",
-  subject: "matter"
+  subject: "matter",
+  staleMs: 5 * 6e4,
+  breakDead: true
 };
 var LIVE_MS = 60 * 6e4;
 var KEEP_MS2 = 30 * 24 * 60 * 6e4;
 var WINDOW = 10;
+var SLOT_MS = 30 * 6e4;
+var SLOT_WAIT_MS = 3e4;
+var SLOT_POLL_MS = 5e3;
+var WAIT_REPORT_MS = 2 * 6e4;
 var PAGE2 = 50;
 var READ_PAGES = 20;
 var SCAN_PAGES = 40;
@@ -90998,7 +91093,7 @@ var RETRYABLE = ["waiting"];
 var blocks = (e3) => e3.outcome === "refused" && e3.reason !== "needs_answer" && e3.reason !== "invalid" && !RETRYABLE.includes(String(e3.reason));
 var ITEM_FAULTS = ["not_found", "not_pdf", "password_protected", "bad_pages", "page_too_large", "file_too_large"];
 var SAY = {
-  run_active: "Another ingest of this matter is already under way. Let it finish, or resume it, before starting a new one. Nothing was written.",
+  matter_busy: "This matter is busy with a change that affects the whole file. Try the ingest again shortly. Nothing was written.",
   run_unfinished: "An earlier ingest of this matter stopped before it finished, and some of what it read is not yet recorded. Resume it to record that, or start afresh and those documents will be read again. Nothing was written.",
   unknown_run: "That ingest has finished, or was never started on this computer, so it cannot be resumed. Nothing was written.",
   lease_lost: "Another session has taken over this ingest of the matter, so this session must stop here. Nothing more was written.",
@@ -91011,6 +91106,12 @@ var STEP_LOST = "An ingest of this matter was cut off while saving its progress.
 var RUN_UNREADABLE = "The record of an earlier ingest of this matter could not be read. Anything it read but had not yet recorded will be read again when those documents are next ingested.";
 var PRIVILEGED_DROPPED = "What was read from documents whose privilege question is still open was deleted as this ingest ended. They will be read again when they are next ingested.";
 var PRIVILEGED_LEFT = "Some of what was read from documents whose privilege question is still open could not be deleted yet. It is deleted within 7 days.";
+var shortName = (path) => pathWin329.basename(path).slice(0, 80);
+var LEFT_OUT = (name) => `${name} is being ingested in another session, so I left it out of this run.`;
+var JUST_HELD = (name) => `${name} has just been added to this matter in another session, so I left it out of this run.`;
+var PICKED_UP = (names) => `An earlier ingest of ${names.join(", ")} stopped without finishing. I've taken those files into this run.`;
+var TAKEN = (name) => `${name} was taken into another session's ingest while this one was stopped, so nothing more was recorded for it here.`;
+var SAVING = (name) => `Another session is saving to this matter. ${name} will be saved once it finishes.`;
 var refusal = (code) => ({ ok: false, refused: code, say: SAY[code] });
 var reported = /* @__PURE__ */ new Set();
 function sayOnce(left, line) {
@@ -91019,9 +91120,17 @@ function sayOnce(left, line) {
 }
 var reportLines = (report) => report.length > 0 ? { report } : {};
 var leasePath = (dir) => pathWin329.join(dir, "lease.json");
+function leaseOrNull(dir) {
+  try {
+    return readLease(dir);
+  } catch (err) {
+    if (err instanceof SyntaxError) return null;
+    throw err;
+  }
+}
 var dispatchPath = (dir, id) => pathWin329.join(dir, "dispatches", `${id}.json`);
 function readLease(dir) {
-  return existsSync17(leasePath(dir)) ? JSON.parse(readFileSync16(leasePath(dir), "utf-8")) : null;
+  return existsSync17(leasePath(dir)) ? JSON.parse(readFileSync17(leasePath(dir), "utf-8")) : null;
 }
 var HELD = ["EPERM", "EACCES", "EBUSY"];
 function whileHeld(op) {
@@ -91038,7 +91147,7 @@ function whileHeld(op) {
 function writeLease(dir, lease) {
   mkdirSync10(dir, { recursive: true });
   const temp = pathWin329.join(dir, "lease.tmp");
-  writeFileSync8(temp, JSON.stringify(lease), "utf-8");
+  writeFileSync9(temp, JSON.stringify(lease), "utf-8");
   whileHeld(() => renameSync3(temp, leasePath(dir)));
 }
 var journalPath = (dir) => pathWin329.join(dir, "journal.jsonl");
@@ -91060,7 +91169,7 @@ function journal(dir, event, runId, extra = {}) {
   const line = JSON.stringify({ ts: (/* @__PURE__ */ new Date()).toISOString(), event, run_id: runId, ...extra });
   const path = journalPath(dir);
   if (existsSync17(path) && ![null, 10].includes(lastByte(path))) {
-    const bytes = readFileSync16(path);
+    const bytes = readFileSync17(path);
     truncateSync(path, bytes.lastIndexOf(10) + 1);
     torn.add(dir);
   }
@@ -91069,8 +91178,15 @@ function journal(dir, event, runId, extra = {}) {
 function readJournal(dir) {
   const path = journalPath(dir);
   if (!existsSync17(path)) return [];
-  const lines2 = readFileSync16(path, "utf-8").split("\n");
-  if (lines2.pop() !== "") torn.add(dir);
+  const lines2 = readFileSync17(path, "utf-8").split("\n");
+  if (lines2.pop() !== "") {
+    const key = `${dir}
+tail ${lines2.length}`;
+    if (!unreadableLines.has(key)) {
+      unreadableLines.add(key);
+      torn.add(dir);
+    }
+  }
   const events = [];
   lines2.forEach((l3, i3) => {
     if (l3.trim() === "") return;
@@ -91104,11 +91220,30 @@ function runEvents(dir) {
   return kept.length > 0 ? runEvents(dir) : run2;
 }
 var isLive = (lease) => lease !== null && lease.ended === null && Date.now() - Date.parse(lease.heartbeat) < LIVE_MS;
-var runDir = (matterRoot, env) => pathWin329.join(hostLocalDir(SITE3, env), lockKey(matterRoot));
+var matterDirOf = (matterRoot, env) => pathWin329.join(hostLocalDir(SITE3, env), lockKey(matterRoot));
+function adoptOldLayout(matterDir) {
+  if (!existsSync17(leasePath(matterDir))) return;
+  const started = Date.parse(String(leaseOrNull(matterDir)?.started));
+  const dir = pathWin329.join(matterDir, `legacy-${Number.isNaN(started) ? "unreadable" : started}`);
+  mkdirSync10(dir, { recursive: true });
+  for (const name of ["journal.jsonl", "dispatches", "lease.tmp", "lease.json"]) {
+    const from = pathWin329.join(matterDir, name);
+    if (existsSync17(from)) whileHeld(() => renameSync3(from, pathWin329.join(dir, name)));
+  }
+}
+function runFolders(matterDir) {
+  if (!existsSync17(matterDir)) return [];
+  return readdirSync12(matterDir, { withFileTypes: true }).filter((e3) => e3.isDirectory()).map((e3) => pathWin329.join(matterDir, e3.name));
+}
+function findRun(matterDir, runId) {
+  return runFolders(matterDir).find((dir) => leaseOrNull(dir)?.run_id === runId) ?? null;
+}
 async function underLock(matterRoot, env, work) {
   const lock = await acquireLock(SITE3, matterRoot, env);
   try {
-    return await work(runDir(matterRoot, env));
+    const matterDir = matterDirOf(matterRoot, env);
+    adoptOldLayout(matterDir);
+    return await work(matterDir);
   } finally {
     lock.release();
   }
@@ -91120,11 +91255,12 @@ function renew(dir, runId) {
   writeLease(dir, lease);
   return lease;
 }
-function hold(dir, runId) {
-  const lease = renew(dir, runId);
-  if (lease === null) return refusal("lease_lost");
+function hold(matterDir, runId) {
+  const dir = findRun(matterDir, runId);
+  const lease = dir === null ? null : renew(dir, runId);
+  if (dir === null || lease === null) return refusal("lease_lost");
   if (lease.build_stamp !== BUILD_STAMP) return refusal("plugin_changed");
-  return lease;
+  return { ...lease, dir };
 }
 function removeOwn(path) {
   const rest = existsSync17(path) ? readdirSync12(path).filter((name) => name !== "lease.json").map((name) => pathWin329.join(path, name)) : [];
@@ -91171,14 +91307,23 @@ async function sweep(env, own) {
   const root = hostLocalDir(SITE3, env);
   const imagesLeft = [];
   const recordsLeft = [];
+  const dirs = [];
   for (const entry2 of readdirSync12(root, { withFileTypes: true })) {
     if (!entry2.isDirectory()) continue;
-    const dir = pathWin329.join(root, entry2.name);
+    const matterDir = pathWin329.join(root, entry2.name);
+    try {
+      adoptOldLayout(matterDir);
+      for (const dir of runFolders(matterDir)) dirs.push({ dir, key: entry2.name, matterDir });
+    } catch {
+      if (matterDir !== own) recordsLeft.push(matterDir);
+    }
+  }
+  for (const { dir, key, matterDir } of dirs) {
     try {
       const lease = readLease(dir);
       if (!expired(lease)) continue;
       const matterRoot = lease?.matter_root;
-      if (matterRoot === void 0 || lockKey(matterRoot) !== entry2.name) {
+      if (matterRoot === void 0 || lockKey(matterRoot) !== key) {
         removeOwn(dir);
         reported.delete(dir);
         torn.delete(dir);
@@ -91204,7 +91349,13 @@ async function sweep(env, own) {
         lock.release();
       }
     } catch {
-      if (dir !== own) recordsLeft.push(dir);
+      if (matterDir !== own) recordsLeft.push(dir);
+    }
+  }
+  for (const matterDir of new Set(dirs.map((d3) => d3.matterDir))) {
+    try {
+      if (readdirSync12(matterDir).length === 0) rmdirSync(matterDir);
+    } catch {
     }
   }
   const images = sayOnce(imagesLeft, IMAGES_LEFT);
@@ -91216,13 +91367,18 @@ function requireRunId(args) {
   return args.run_id;
 }
 async function assertLiveRun(matterRoot, runId, env = process.env) {
-  const held2 = await underLock(matterRoot, env, (dir) => hold(dir, runId));
+  const held2 = await underLock(matterRoot, env, (matterDir) => hold(matterDir, runId));
   if ("refused" in held2) throw new DataServerError(held2.say, held2.refused);
   return { orchestrator: held2.orchestrator === true };
 }
-async function checkRun(matterRoot, runId, env = process.env) {
-  const held2 = await underLock(matterRoot, env, (dir) => hold(dir, runId));
-  return "refused" in held2 ? held2 : null;
+var takenHashes = (events) => new Set(events.filter((e3) => e3.event === "taken").map((e3) => e3.file_hash));
+async function checkRun(matterRoot, runId, env = process.env, route2) {
+  return underLock(matterRoot, env, (matterDir) => {
+    const held2 = hold(matterDir, runId);
+    if ("refused" in held2) return held2;
+    if (route2 && takenHashes(runEvents(held2.dir)).has(route2.file_hash)) return { ok: false, refused: "taken", say: TAKEN(shortName(route2.file_path)) };
+    return null;
+  });
 }
 function ledger(events) {
   const routes = events.filter((e3) => e3.event === "route").map((e3) => e3.route);
@@ -91274,7 +91430,7 @@ function ledger(events) {
 }
 function staged(resultId, env) {
   try {
-    return JSON.parse(readFileSync16(stagedResultPath(resultId, env), "utf-8"));
+    return JSON.parse(readFileSync17(stagedResultPath(resultId, env), "utf-8"));
   } catch {
     return null;
   }
@@ -91342,9 +91498,15 @@ function plan(events, env) {
   const close = [];
   const asked = [];
   let inFlight = 0;
+  const inFlightRefs = [];
+  const running = (ref) => {
+    inFlight += 1;
+    inFlightRefs.push(ref);
+  };
+  const taken = takenHashes(events);
   const consider = (item, writable = true) => {
     const s3 = l3.state(item.ref);
-    if (s3.state === "in_flight") inFlight += 1;
+    if (s3.state === "in_flight") running(item.ref);
     const stale = (s3.state === "acked" || s3.state === "asked") && !usable(s3.result_id, env);
     if (s3.state === "new" || stale) dispatch.push(item);
     else if (s3.state === "acked" && item.contract && writable) write2.push({ ref: item.ref, contract: item.contract, result_ids: [s3.result_id] });
@@ -91359,6 +91521,7 @@ function plan(events, env) {
   const closedAs = (contract, ref) => events.some((e3) => e3.event === "write" && e3.contract === contract && e3.refs.includes(ref) && e3.closed === true);
   const pathB = [];
   for (const route2 of l3.routes) {
+    if (taken.has(route2.file_hash)) continue;
     const refusedPathB = events.some((e3) => e3.event === "write" && e3.refs.includes(route2.ref) && e3.reason === "path_b");
     if (route2.kind === "path_b" || refusedPathB) {
       const blocked = events.some((e3) => e3.event === "write" && e3.contract === "privileged" && e3.refs.includes(route2.ref) && blocks(e3));
@@ -91386,7 +91549,7 @@ function plan(events, env) {
     let open = false;
     for (const item of affidavit.items) {
       const s3 = l3.state(item.ref);
-      if (s3.state === "in_flight") inFlight += 1;
+      if (s3.state === "in_flight") running(item.ref);
       if (s3.state === "new" || item.redo) dispatch.push(item);
       if (item.pass === 3 && s3.state === "acked" && !item.redo) exhibits.push(s3.result_id);
       if (item.pass === 3 && s3.state !== "written" && s3.state !== "failed") open = true;
@@ -91394,11 +91557,118 @@ function plan(events, env) {
     if (exhibits.length > 0) write2.push({ ref: route2.ref, contract: "affidavit_exhibits", result_ids: exhibits });
     if (affidavit.located && !open && exhibits.length === 0) close.push({ ref: route2.ref, contract: "affidavit_exhibits" });
   }
-  return { dispatch: dispatch.slice(0, Math.max(0, WINDOW - inFlight)), write: write2, close, asked, pathB, inFlight };
+  return { dispatch, write: write2, close, asked, pathB, inFlight, inFlightRefs };
+}
+function heldBy(events, env) {
+  const p3 = plan(events, env);
+  const open = new Set([...p3.dispatch, ...p3.write, ...p3.close, ...p3.asked, ...p3.pathB].map((line) => line.ref.split(":")[0]));
+  p3.inFlightRefs.forEach((ref) => open.add(ref.split(":")[0]));
+  const held2 = /* @__PURE__ */ new Map();
+  const add = (hash, path) => held2.set(hash, shortName(path));
+  for (const route2 of ledger(events).routes) {
+    if (!open.has(route2.ref)) continue;
+    add(route2.file_hash, route2.file_path);
+    route2.attachment_hashes?.forEach((hash) => add(hash, route2.file_path));
+  }
+  for (const e3 of events) if (e3.event === "claim") add(e3.file_hash, e3.file_path);
+  takenHashes(events).forEach((hash) => held2.delete(hash));
+  return held2;
+}
+function otherHolders(matterDir, own, env) {
+  return runFolders(matterDir).filter((dir) => dir !== own).flatMap((dir) => {
+    const lease = leaseOrNull(dir);
+    if (lease === null || lease.ended !== null) return [];
+    return [{ dir, runId: lease.run_id, live: isLive(lease), held: heldBy(runEvents(dir), env) }];
+  });
+}
+function writesElsewhere(matterDir, own, since) {
+  const out = [];
+  for (const dir of runFolders(matterDir)) {
+    if (dir === own) continue;
+    for (const e3 of readJournal(dir)) {
+      if (e3.event === "write" && e3.outcome === "written" && e3.closed !== true && typeof e3.file_hash === "string" && e3.ts >= since) {
+        out.push({ file_hash: e3.file_hash, source_id: e3.source_id ?? null });
+      }
+    }
+  }
+  return out;
+}
+function takeClaims(matterDir, own, started, files, env) {
+  const holders = otherHolders(matterDir, own, env);
+  const written = new Set(writesElsewhere(matterDir, own, started).map((w3) => w3.file_hash));
+  const granted = /* @__PURE__ */ new Set();
+  const leftOut = [];
+  const report = [];
+  const pickedUp = [];
+  for (const file of files) {
+    const hashes = [file.file_hash, ...file.attachment_hashes ?? []];
+    const name = shortName(file.file_path);
+    if (holders.some((h3) => h3.live && hashes.some((hash) => h3.held.has(hash)))) {
+      leftOut.push(file.file_path);
+      report.push(LEFT_OUT(name));
+      continue;
+    }
+    if (hashes.some((hash) => written.has(hash))) {
+      leftOut.push(file.file_path);
+      report.push(JUST_HELD(name));
+      continue;
+    }
+    for (const holder of holders) {
+      for (const hash of hashes) {
+        if (!holder.held.has(hash)) continue;
+        journal(holder.dir, "taken", holder.runId, { file_hash: hash });
+        holder.held.delete(hash);
+        if (!pickedUp.includes(name)) pickedUp.push(name);
+      }
+    }
+    granted.add(file.file_hash);
+  }
+  if (pickedUp.length > 0) report.push(PICKED_UP(pickedUp));
+  return { granted, leftOut, report };
+}
+function readersOf(dir) {
+  let text8;
+  try {
+    text8 = readFileSync17(journalPath(dir), "utf-8");
+  } catch {
+    return 0;
+  }
+  const events = [];
+  for (const line of text8.split("\n")) {
+    try {
+      if (line.trim() !== "") events.push(JSON.parse(line));
+    } catch {
+    }
+  }
+  const voided = new Set(events.filter((e3) => e3.event === "void").map((e3) => e3.dispatch_id));
+  const open = /* @__PURE__ */ new Map();
+  for (const e3 of events) {
+    if (e3.event === "takeover") open.clear();
+    else if (e3.event === "ack") open.delete(e3.ref);
+    else if (e3.event === "dispatch" && !voided.has(e3.dispatch_id)) open.set(e3.ref, e3.ts);
+  }
+  return [...open.values()].filter((ts2) => Date.now() - Date.parse(ts2) < SLOT_MS).length;
+}
+function readersElsewhere(own, env) {
+  const root = hostLocalDir(SITE3, env);
+  let count2 = 0;
+  for (const entry2 of readdirSync12(root, { withFileTypes: true })) {
+    if (!entry2.isDirectory()) continue;
+    for (const dir of runFolders(pathWin329.join(root, entry2.name))) {
+      if (dir === own) continue;
+      try {
+        if (isLive(readLease(dir))) count2 += readersOf(dir);
+      } catch {
+      }
+    }
+  }
+  return count2;
 }
 var pathBLines = (pathB) => pathB.length ? { path_b: pathB.slice(0, PAGE2) } : {};
-async function affidavitRun(matterRoot, fileRef, refsHere, env = process.env) {
-  return underLock(matterRoot, env, (dir) => {
+async function affidavitRun(matterRoot, runId, fileRef, refsHere, env = process.env) {
+  return underLock(matterRoot, env, (matterDir) => {
+    const dir = findRun(matterDir, runId);
+    if (dir === null) return null;
     const events = runEvents(dir);
     const l3 = ledger(events);
     const route2 = l3.routes.find((r3) => r3.ref === fileRef);
@@ -91484,7 +91754,7 @@ function storedForm(path, matterRoot) {
   return p3;
 }
 var outsideMatter = (stored) => /^[A-Za-z]:|^\\/.test(stored) || stored.split("\\").includes("..");
-var sha256 = (path) => createHash6("sha256").update(readFileSync16(path)).digest("hex");
+var sha256 = (path) => createHash6("sha256").update(readFileSync17(path)).digest("hex");
 function checkRoutes(routes, matterRoot) {
   return routes.map((r3, i3) => {
     if (!ROUTE_KINDS.includes(r3.kind)) throw new ValidationError(`routes[${i3}].kind must be one of ${ROUTE_KINDS.join(", ")}`);
@@ -91495,6 +91765,7 @@ function checkRoutes(routes, matterRoot) {
     if (!existsSync17(host)) throw new ValidationError(`routes[${i3}].file_path does not exist: ${stored}`);
     if (sha256(host) !== r3.file_hash) throw new ValidationError(`routes[${i3}].file_hash is not the hash of ${stored}`);
     if (r3.rendering !== void 0 && !existsSync17(r3.rendering)) throw new ValidationError(`routes[${i3}].rendering does not exist`);
+    if (r3.attachment_hashes?.some((hash) => !/^[0-9a-f]{64}$/.test(hash))) throw new ValidationError(`routes[${i3}].attachment_hashes must each be a file's SHA-256`);
     if (r3.kind !== "path_b" && r3.rendering === void 0 && pathWin329.extname(stored).toLowerCase() !== ".pdf") {
       throw new ValidationError(`routes[${i3}] is not a PDF, so it needs its rendering`);
     }
@@ -91505,15 +91776,32 @@ var unjournaled = /* @__PURE__ */ new Map();
 async function next(args, env) {
   const runId = requireRunId(args);
   const checked = checkRoutes(args.routes ?? [], args.matter_root);
-  const reserved = await underLock(args.matter_root, env, (dir) => {
-    const held2 = hold(dir, runId);
+  const revision = matterRevision(args.matter_root, env);
+  const reserve = (routes) => underLock(args.matter_root, env, (matterDir) => {
+    const held2 = hold(matterDir, runId);
     if ("refused" in held2) return held2;
-    const l3 = ledger(runEvents(dir));
+    const dir = held2.dir;
+    const before = runEvents(dir);
+    const l3 = ledger(before);
+    const taken = takenHashes(before);
     let n3 = l3.routes.length;
     const fresh = [];
     const routed = [];
     const report = [];
-    for (const r3 of checked) {
+    const leftOut = [];
+    const routedBefore = (hash) => l3.routes.some((x3) => x3.file_hash === hash);
+    const newFiles = routes.filter((r3) => !routedBefore(r3.file_hash));
+    if (newFiles.length > 0 && exclusiveHeld(args.matter_root, env)) return refusal("matter_busy");
+    const claims = takeClaims(matterDir, dir, held2.started, newFiles, env);
+    report.push(...claims.report);
+    leftOut.push(...claims.leftOut);
+    for (const r3 of routes) {
+      if (!routedBefore(r3.file_hash) && !claims.granted.has(r3.file_hash)) continue;
+      if (taken.has(r3.file_hash)) {
+        leftOut.push(r3.file_path);
+        report.push(LEFT_OUT(shortName(r3.file_path)));
+        continue;
+      }
       const known = [...l3.routes, ...fresh].find((x3) => x3.file_hash === r3.file_hash);
       if (known) {
         routed.push(known.ref);
@@ -91528,13 +91816,24 @@ async function next(args, env) {
     }
     for (const route2 of fresh) journal(dir, "route", runId, { route: route2 });
     const p3 = plan(runEvents(dir), env);
-    const items2 = p3.dispatch.map((item) => {
+    const free = Math.max(0, WINDOW - p3.inFlight - readersElsewhere(dir, env));
+    const items2 = p3.dispatch.slice(0, free).map((item) => {
       const id = randomUUID9();
-      journal(dir, "dispatch", runId, { dispatch_id: id, ref: item.ref, agent: item.agent, contract: item.contract });
+      journal(dir, "dispatch", runId, { dispatch_id: id, ref: item.ref, agent: item.agent, contract: item.contract, revision });
       return { id, item };
     });
-    return { routed, report, items: items2, write: p3.write, close: p3.close, asked: p3.asked, pathB: p3.pathB, inFlight: p3.inFlight, dir };
+    return { routed, report, leftOut, items: items2, write: p3.write, close: p3.close, asked: p3.asked, pathB: p3.pathB, inFlight: p3.inFlight, dir, noSlot: p3.dispatch.length > items2.length };
   });
+  let reserved = await reserve(checked);
+  for (let waited = 0; waited < SLOT_WAIT_MS && !("refused" in reserved) && reserved.noSlot && reserved.items.length === 0 && reserved.inFlight === 0 && reserved.write.length === 0 && reserved.close.length === 0; waited += SLOT_POLL_MS) {
+    await new Promise((resolve11) => setTimeout(resolve11, SLOT_POLL_MS));
+    const again = await reserve([]);
+    if ("refused" in again) {
+      reserved = again;
+      break;
+    }
+    reserved = { ...again, routed: reserved.routed, report: reserved.report, leftOut: reserved.leftOut };
+  }
   if ("refused" in reserved) return reserved;
   const contexts = /* @__PURE__ */ new Map();
   const dispatch = [];
@@ -91564,7 +91863,7 @@ async function next(args, env) {
       }
       try {
         const { inputs, stage, pageCount } = await inputsFor(item, args.matter_root, context, args.bridged === true, id);
-        writeFileSync8(dispatchPath(reserved.dir, id), JSON.stringify({ inputs, stage, session: null }), "utf-8");
+        writeFileSync9(dispatchPath(reserved.dir, id), JSON.stringify({ inputs, stage, session: null }), "utf-8");
         built.push({ ref: item.ref, dispatch_id: id, page_count: pageCount });
         dispatch.push({ dispatch_id: id, agent: item.agent, model: "opus", effort: "high", ref: item.ref, contract: item.contract, ...stage.length ? { stage } : {} });
       } catch (err) {
@@ -91583,8 +91882,8 @@ async function next(args, env) {
   ];
   if (records.length > 0) {
     try {
-      await underLock(args.matter_root, env, (dir) => {
-        for (const r3 of records) journal(dir, r3.event, runId, r3.extra);
+      await underLock(args.matter_root, env, () => {
+        for (const r3 of records) journal(reserved.dir, r3.event, runId, r3.extra);
       });
     } catch (err) {
       if (err.code !== "lock_unavailable") {
@@ -91605,12 +91904,15 @@ async function next(args, env) {
     ok: true,
     ...reserved.routed.length ? { routed: reserved.routed } : {},
     ...reserved.report.length ? { report: reserved.report } : {},
+    ...reserved.leftOut.length ? { left_out: reserved.leftOut } : {},
     dispatch,
     write: reserved.write.slice(0, Math.max(0, PAGE2 - dispatch.length)),
     close: reserved.close.slice(0, Math.max(0, PAGE2 - dispatch.length - reserved.write.length)),
     ...reserved.asked.length ? { asked: reserved.asked.slice(0, PAGE2) } : {},
     ...pathBLines(reserved.pathB),
     running: reserved.inFlight + dispatch.length,
+    // Files still to read and no reader free: not finished, so the caller calls next again.
+    ...reserved.noSlot && dispatch.length === 0 ? { waiting_for_slot: true } : {},
     ...lines2 > PAGE2 ? { more: true } : {}
   };
 }
@@ -91625,9 +91927,10 @@ function recordAck(dir, runId, ack) {
   return { ok: true };
 }
 async function runForWrite(matterRoot, runId, document2, contract, resultIds, env = process.env) {
-  return underLock(matterRoot, env, (dir) => {
-    const held2 = hold(dir, runId);
+  return underLock(matterRoot, env, (matterDir) => {
+    const held2 = hold(matterDir, runId);
     if ("refused" in held2) return held2;
+    const dir = held2.dir;
     const events = runEvents(dir);
     const routes = ledger(events).routes;
     const acked = {};
@@ -91643,14 +91946,31 @@ async function runForWrite(matterRoot, runId, document2, contract, resultIds, en
     });
     const route2 = document2.ref !== void 0 ? routes.find((r3) => r3.ref === document2.ref?.split(":")[0]) ?? null : routes.find((r3) => r3.file_hash === document2.file_hash) ?? null;
     if (document2.ref !== void 0 && route2 === null) throw new ValidationError(`no file with ref ${document2.ref} in this run`);
+    if (route2 && takenHashes(events).has(route2.file_hash)) return { ok: false, refused: "taken", say: TAKEN(shortName(route2.file_path)) };
     const answered = { facts: [], relief: [] };
     const last = route2 ? events.filter((e3) => e3.event === "dispatch" && e3.ref === route2.ref && e3.agent === "lawyer:extract-facts").pop() : void 0;
     if (last && existsSync17(dispatchPath(dir, last.dispatch_id))) {
-      const inputs = JSON.parse(readFileSync16(dispatchPath(dir, last.dispatch_id), "utf-8")).inputs;
+      const inputs = JSON.parse(readFileSync17(dispatchPath(dir, last.dispatch_id), "utf-8")).inputs;
       answered.facts = (inputs.ANSWERED_FACTS ?? []).map((f3) => f3.fact_key);
       answered.relief = (inputs.ANSWERED_RELIEF ?? []).map((r3) => r3.relief_key);
     }
-    return { ok: true, mode: held2.mode, route: route2, answered, acked, itemRef, dispatched, written, settled: settled2 };
+    const reads = route2 ? events.filter((e3) => e3.event === "dispatch" && e3.ref.split(":")[0] === route2.ref && typeof e3.revision === "number") : [];
+    const lastAsk = events.filter((e3) => e3.event === "write" && e3.reason === "needs_answer" && e3.contract === contract && (e3.result_ids ?? []).join() === resultIds.join() && typeof e3.revision === "number").pop();
+    return {
+      ok: true,
+      mode: held2.mode,
+      route: route2,
+      answered,
+      acked,
+      itemRef,
+      dispatched,
+      written,
+      settled: settled2,
+      started: held2.started,
+      readRevision: reads.length > 0 ? reads[reads.length - 1].revision : null,
+      question: lastAsk ? { revision: lastAsk.revision, candidates: lastAsk.candidates ?? {} } : null,
+      elsewhere: writesElsewhere(matterDir, dir, held2.started)
+    };
   });
 }
 function journalAcks(dir, runId, acks) {
@@ -91661,7 +91981,9 @@ function journalAcks(dir, runId, acks) {
   }
 }
 async function recordWrite(matterRoot, runId, acks, write2, env = process.env, failures = []) {
-  return underLock(matterRoot, env, (dir) => {
+  return underLock(matterRoot, env, (matterDir) => {
+    const dir = findRun(matterDir, runId);
+    if (dir === null) throw new DataServerError(SAY.lease_lost, "lease_lost");
     journalAcks(dir, runId, acks);
     journal(dir, "write", runId, write2);
     for (const f3 of failures) journal(dir, "ack", runId, { ref: f3.ref, ok: false, reason: f3.reason });
@@ -91670,7 +91992,9 @@ async function recordWrite(matterRoot, runId, acks, write2, env = process.env, f
   });
 }
 async function recordRefusal(matterRoot, runId, acks, bad2, env = process.env) {
-  await underLock(matterRoot, env, (dir) => {
+  await underLock(matterRoot, env, (matterDir) => {
+    const dir = findRun(matterDir, runId);
+    if (dir === null) throw new DataServerError(SAY.lease_lost, "lease_lost");
     const before = runEvents(dir);
     journalAcks(dir, runId, acks.filter((a3) => before.some((e3) => e3.event === "dispatch" && e3.ref === a3.ref)));
     const events = runEvents(dir);
@@ -91688,10 +92012,14 @@ async function recordRefusal(matterRoot, runId, acks, bad2, env = process.env) {
 function dispatchInputs(dispatchId, env = process.env) {
   if (!UUID3.test(dispatchId ?? "")) throw new ValidationError("dispatch_id must be the id from your dispatch line");
   const root = hostLocalDir(SITE3, env);
-  for (const entry2 of existsSync17(root) ? readdirSync12(root, { withFileTypes: true }) : []) {
-    const path = dispatchPath(pathWin329.join(root, entry2.name), dispatchId);
-    if (!entry2.isDirectory() || !existsSync17(path)) continue;
-    const stored = JSON.parse(readFileSync16(path, "utf-8"));
+  const dirs = (existsSync17(root) ? readdirSync12(root, { withFileTypes: true }) : []).filter((entry2) => entry2.isDirectory()).flatMap((entry2) => {
+    const matterDir = pathWin329.join(root, entry2.name);
+    return [matterDir, ...runFolders(matterDir)];
+  });
+  for (const dir of dirs) {
+    const path = dispatchPath(dir, dispatchId);
+    if (!existsSync17(path)) continue;
+    const stored = JSON.parse(readFileSync17(path, "utf-8"));
     let text8 = JSON.stringify(stored.inputs);
     if (stored.session) {
       stored.stage.forEach((host, i3) => {
@@ -91702,42 +92030,99 @@ function dispatchInputs(dispatchId, env = process.env) {
   }
   throw new DataServerError("no dispatch with that id on this computer", "unknown_dispatch");
 }
+function runLine(dir, lease) {
+  const events = runEvents(dir);
+  const files = [...ledger(events).routes.map((r3) => r3.file_path), ...events.filter((e3) => e3.event === "claim").map((e3) => e3.file_path)];
+  return {
+    run_id: lease.run_id,
+    active: isLive(lease),
+    started: lease.started,
+    heartbeat: lease.heartbeat,
+    mode: lease.mode,
+    files: [...new Set(files)].slice(0, PAGE2).map(shortName)
+  };
+}
+function finishRun(dir, lease, runId, matterRoot, env) {
+  const imagesLeft = removeImages(dir, matterRoot);
+  const said = sayOnce(imagesLeft, IMAGES_LEFT);
+  const report = [...said.lines];
+  const keys = [...said.keys];
+  try {
+    removeOwn(pathWin329.join(dir, "dispatches"));
+  } catch {
+    const left = sayOnce([pathWin329.join(dir, "dispatches")], RECORDS_LEFT);
+    report.push(...left.lines);
+    keys.push(...left.keys);
+  }
+  writeLease(dir, { ...lease, ended: lease.heartbeat });
+  journal(dir, "end", runId, imagesLeft.length > 0 ? { images_left: true } : {});
+  const writes = readJournal(dir).filter((e3) => e3.event === "write");
+  const idsOf = (contract) => writes.filter((e3) => e3.contract === contract).flatMap((e3) => e3.result_ids ?? []);
+  const dropped = dropStagedResults(idsOf("privileged"), env);
+  if (dropped.deleted > 0) report.push(PRIVILEGED_DROPPED);
+  if (dropped.left > 0) report.push(PRIVILEGED_LEFT);
+  dropStagedResults(idsOf("affidavit_exhibits"), env);
+  return { report, keys };
+}
+var tornIn = (matterDir) => [...torn].filter((dir) => dir === matterDir || dir.startsWith(`${matterDir}\\`));
+async function noteWriteWait(matterRoot, runId, ref, resultIds, env = process.env) {
+  return underLock(matterRoot, env, (matterDir) => {
+    const held2 = hold(matterDir, runId);
+    if ("refused" in held2) return [];
+    if (ref !== void 0 && resultIds.length === 1 && runEvents(held2.dir).some((e3) => e3.event === "dispatch" && e3.ref === ref)) {
+      journalAcks(held2.dir, runId, [{ ref, result_id: resultIds[0] }]);
+    }
+    const events = runEvents(held2.dir);
+    const waits = events.filter((e3) => e3.event === "write_wait" && e3.ref === (ref ?? null));
+    if (waits.length === 0) {
+      journal(held2.dir, "write_wait", runId, { ref: ref ?? null });
+      return [];
+    }
+    if (waits.some((e3) => e3.said === true) || Date.now() - Date.parse(waits[0].ts) < WAIT_REPORT_MS) return [];
+    journal(held2.dir, "write_wait", runId, { ref: ref ?? null, said: true });
+    const route2 = ledger(events).routes.find((r3) => r3.ref === ref?.split(":")[0]);
+    return [SAVING(route2 ? shortName(route2.file_path) : "This document")];
+  });
+}
 async function ingestRun(args, env = process.env) {
   switch (args.action) {
     case "begin": {
       const mode = args.mode;
       if (mode !== "attended" && mode !== "unattended") throw new ValidationError("begin needs mode attended or unattended");
-      const swept = await sweep(env, runDir(args.matter_root, env));
-      const out = await underLock(args.matter_root, env, (dir) => {
+      const swept = await sweep(env, matterDirOf(args.matter_root, env));
+      const out = await underLock(args.matter_root, env, (matterDir) => {
         const report = [...swept.lines];
-        const reply = (body) => ({ ...body, ...reportLines([...report, ...torn.has(dir) ? [STEP_LOST] : []]) });
-        let current;
-        try {
-          current = readLease(dir);
-        } catch (err) {
-          if (!(err instanceof SyntaxError)) throw err;
-          current = null;
-          report.push(RUN_UNREADABLE);
-        }
+        const keys = [...swept.keys];
+        const reply = (body) => ({ ...body, ...reportLines([...report, ...tornIn(matterDir).length > 0 ? [STEP_LOST] : []]) });
+        const unreadable = sayOnce(runFolders(matterDir).filter((dir2) => existsSync17(leasePath(dir2)) && leaseOrNull(dir2) === null), RUN_UNREADABLE);
+        report.push(...unreadable.lines);
+        keys.push(...unreadable.keys);
         const now = (/* @__PURE__ */ new Date()).toISOString();
         const runId = randomUUID9();
         if (args.resume !== void 0) {
-          if (current === null || current.ended !== null || current.run_id !== args.resume) return reply(refusal("unknown_run"));
-          writeLease(dir, { ...current, run_id: runId, heartbeat: now, build_stamp: BUILD_STAMP, mode, ...args.orchestrator === true ? { orchestrator: true } : {} });
-          journal(dir, "takeover", runId, { displaced: current.run_id });
-          const p3 = plan(runEvents(dir), env);
-          return reply({ ok: true, run_id: runId, resumed: true, next: [...p3.write, ...p3.close], ...p3.asked.length ? { asked: p3.asked } : {}, ...pathBLines(p3.pathB) });
+          const dir2 = findRun(matterDir, args.resume);
+          const current = dir2 === null ? null : leaseOrNull(dir2);
+          if (dir2 === null || current === null || current.ended !== null) return { keys, reply: reply(refusal("unknown_run")) };
+          writeLease(dir2, { ...current, run_id: runId, heartbeat: now, build_stamp: BUILD_STAMP, mode, matter_root: args.matter_root, ...args.orchestrator === true ? { orchestrator: true } : {} });
+          journal(dir2, "takeover", runId, { displaced: current.run_id });
+          const events = runEvents(dir2);
+          const taken = takenHashes(events);
+          for (const route2 of ledger(events).routes) if (taken.has(route2.file_hash)) report.push(TAKEN(shortName(route2.file_path)));
+          const p3 = plan(events, env);
+          return { keys, reply: reply({ ok: true, run_id: runId, resumed: true, next: [...p3.write, ...p3.close], ...p3.asked.length ? { asked: p3.asked } : {}, ...pathBLines(p3.pathB) }) };
         }
-        if (current !== null && isLive(current)) return reply({ ...refusal("run_active"), run_id: current.run_id });
-        let displaced = null;
-        if (current !== null && current.ended === null) {
-          const p3 = plan(runEvents(dir), env);
-          if (p3.write.length + p3.asked.length + p3.pathB.length > 0) {
-            if (args.orchestrator === true) return reply({ ...refusal("run_unfinished"), run_id: current.run_id });
-            report.push(DISPLACED);
-          }
-          displaced = current.run_id;
+        if (exclusiveHeld(args.matter_root, env)) return { keys, reply: reply(refusal("matter_busy")) };
+        for (const dir2 of runFolders(matterDir)) {
+          const lease = leaseOrNull(dir2);
+          if (lease === null || lease.ended !== null || isLive(lease)) continue;
+          const p3 = plan(runEvents(dir2), env);
+          if (p3.write.length + p3.asked.length + p3.pathB.length === 0) continue;
+          if (args.orchestrator === true) return { keys, reply: reply({ ...refusal("run_unfinished"), run_id: lease.run_id, files: runLine(dir2, lease).files }) };
+          const said = sayOnce([`${dir2}#displaced`], DISPLACED);
+          report.push(...said.lines);
+          keys.push(...said.keys);
         }
+        const dir = pathWin329.join(matterDir, runId);
         writeLease(dir, {
           run_id: runId,
           started: now,
@@ -91748,31 +92133,36 @@ async function ingestRun(args, env = process.env) {
           orchestrator: args.orchestrator === true,
           matter_root: args.matter_root
         });
-        if (displaced !== null) journal(dir, "takeover", runId, { displaced });
         journal(dir, "begin", runId, { mode });
-        return reply({ ok: true, run_id: runId, resumed: false, next: [] });
+        return { keys, reply: reply({ ok: true, run_id: runId, resumed: false, next: [] }) };
       });
-      swept.keys.forEach((key) => reported.add(key));
-      torn.delete(runDir(args.matter_root, env));
-      return out;
+      out.keys.forEach((key) => reported.add(key));
+      tornIn(matterDirOf(args.matter_root, env)).forEach((dir) => torn.delete(dir));
+      return out.reply;
     }
     case "status":
-      return underLock(args.matter_root, env, (dir) => {
-        if (args.run_id !== void 0) {
-          const held2 = hold(dir, args.run_id);
-          if ("refused" in held2) return held2;
+      return underLock(args.matter_root, env, (matterDir) => {
+        const revision = matterRevision(args.matter_root, env);
+        if (args.run_id === void 0) {
+          const runs = runFolders(matterDir).flatMap((dir) => {
+            const lease = leaseOrNull(dir);
+            return lease === null || lease.ended !== null ? [] : [runLine(dir, lease)];
+          });
+          return { ok: true, active: runs.some((r3) => r3.active), revision, runs };
         }
-        if (args.ack !== void 0) return recordAck(dir, requireRunId(args), args.ack);
-        const lease = readLease(dir);
-        const p3 = isLive(lease) ? plan(runEvents(dir), env) : { write: [], close: [], asked: [], pathB: [] };
+        const held2 = hold(matterDir, args.run_id);
+        if ("refused" in held2) return held2;
+        if (args.ack !== void 0) return recordAck(held2.dir, args.run_id, args.ack);
+        const p3 = plan(runEvents(held2.dir), env);
         return {
           ok: true,
-          active: isLive(lease),
-          run_id: lease?.run_id ?? null,
-          started: lease?.started ?? null,
-          heartbeat: lease?.heartbeat ?? null,
-          mode: lease?.mode ?? null,
-          ended: lease?.ended ?? null,
+          active: true,
+          revision,
+          run_id: held2.run_id,
+          started: held2.started,
+          heartbeat: held2.heartbeat,
+          mode: held2.mode,
+          ended: held2.ended,
           next: [...p3.write, ...p3.close],
           ...p3.asked.length ? { asked: p3.asked } : {},
           ...pathBLines(p3.pathB)
@@ -91780,66 +92170,89 @@ async function ingestRun(args, env = process.env) {
       });
     case "next":
       return next(args, env);
+    case "claim": {
+      const runId = requireRunId(args);
+      const files = (args.files ?? []).map((file, i3) => {
+        if (!/^[0-9a-f]{64}$/.test(file.file_hash ?? "") || file.attachment_hashes?.some((hash) => !/^[0-9a-f]{64}$/.test(hash))) {
+          throw new ValidationError(`files[${i3}] must carry the file's SHA-256, and its attachments' if any`);
+        }
+        return { ...file, file_path: storedForm(String(file.file_path ?? ""), args.matter_root) };
+      });
+      return underLock(args.matter_root, env, (matterDir) => {
+        const held2 = hold(matterDir, runId);
+        if ("refused" in held2) return held2;
+        if (exclusiveHeld(args.matter_root, env)) return refusal("matter_busy");
+        const claims = takeClaims(matterDir, held2.dir, held2.started, files, env);
+        const claimed2 = files.filter((file) => claims.granted.has(file.file_hash));
+        for (const file of claimed2) {
+          for (const hash of [file.file_hash, ...file.attachment_hashes ?? []]) journal(held2.dir, "claim", runId, { file_hash: hash, file_path: file.file_path });
+        }
+        return { ok: true, claimed: claimed2.map((file) => file.file_path), ...claims.leftOut.length ? { left_out: claims.leftOut } : {}, ...reportLines(claims.report) };
+      });
+    }
     case "staged": {
       const runId = requireRunId(args);
-      return underLock(args.matter_root, env, (dir) => {
-        const held2 = hold(dir, runId);
+      return underLock(args.matter_root, env, (matterDir) => {
+        const held2 = hold(matterDir, runId);
         if ("refused" in held2) return held2;
+        const dir = held2.dir;
         if (args.dispatch_id === void 0) return { ok: true, items: [] };
         if (!UUID3.test(args.dispatch_id)) throw new ValidationError("dispatch_id must be the id from the dispatch line");
         const path = dispatchPath(dir, args.dispatch_id);
         if (!existsSync17(path)) throw new ValidationError("no dispatch with that dispatch_id in this run");
-        const stored = JSON.parse(readFileSync16(path, "utf-8"));
+        const stored = JSON.parse(readFileSync17(path, "utf-8"));
         if (!Array.isArray(args.paths) || args.paths.length !== stored.stage.length) {
           throw new ValidationError(`paths must list the ${stored.stage.length} staged copies, in the order of stage`);
         }
-        writeFileSync8(path, JSON.stringify({ ...stored, session: args.paths }), "utf-8");
+        writeFileSync9(path, JSON.stringify({ ...stored, session: args.paths }), "utf-8");
         journal(dir, "staged", runId, { dispatch_id: args.dispatch_id });
         return { ok: true };
       });
     }
     case "end": {
       const runId = requireRunId(args);
-      const out = await underLock(args.matter_root, env, (dir) => {
-        const lease = renew(dir, runId);
-        if (lease === null) return { keys: [], reply: refusal("lease_lost") };
-        const imagesLeft = removeImages(dir, args.matter_root);
-        const said = sayOnce(imagesLeft, IMAGES_LEFT);
-        const report = [...said.lines];
-        const keys = [...said.keys];
-        try {
-          removeOwn(pathWin329.join(dir, "dispatches"));
-        } catch {
-          const left = sayOnce([pathWin329.join(dir, "dispatches")], RECORDS_LEFT);
-          report.push(...left.lines);
-          keys.push(...left.keys);
+      const out = await underLock(args.matter_root, env, (matterDir) => {
+        const dir = findRun(matterDir, runId);
+        const lease = dir === null ? null : renew(dir, runId);
+        if (dir === null || lease === null) return { keys: [], reply: refusal("lease_lost") };
+        const { report, keys } = finishRun(dir, lease, runId, args.matter_root, env);
+        for (const other of runFolders(matterDir)) {
+          const stale = other === dir ? null : leaseOrNull(other);
+          if (stale === null) continue;
+          if (stale.ended !== null) {
+            const ends = readJournal(other).filter((e3) => e3.event === "end");
+            if (ends[ends.length - 1]?.images_left !== true) continue;
+            if (removeImages(other, args.matter_root).length > 0) continue;
+            try {
+              removeOwn(pathWin329.join(other, "dispatches"));
+            } catch {
+            }
+            journal(other, "end", stale.run_id);
+            continue;
+          }
+          if (isLive(stale) || heldBy(runEvents(other), env).size > 0) continue;
+          const done = finishRun(other, stale, stale.run_id, args.matter_root, env);
+          report.push(...done.report);
+          keys.push(...done.keys);
         }
-        writeLease(dir, { ...lease, ended: lease.heartbeat });
-        journal(dir, "end", runId, imagesLeft.length > 0 ? { images_left: true } : {});
-        const writes = readJournal(dir).filter((e3) => e3.event === "write");
-        const idsOf = (contract) => writes.filter((e3) => e3.contract === contract).flatMap((e3) => e3.result_ids ?? []);
-        const dropped = dropStagedResults(idsOf("privileged"), env);
-        if (dropped.deleted > 0) report.push(PRIVILEGED_DROPPED);
-        if (dropped.left > 0) report.push(PRIVILEGED_LEFT);
-        dropStagedResults(idsOf("affidavit_exhibits"), env);
-        if (torn.has(dir)) report.push(STEP_LOST);
+        if (tornIn(matterDir).length > 0) report.push(STEP_LOST);
         return { keys, reply: { ok: true, run_id: runId, ...reportLines(report) } };
       });
       out.keys.forEach((key) => reported.add(key));
-      if (out.reply.ok) torn.delete(runDir(args.matter_root, env));
+      if (out.reply.ok) tornIn(matterDirOf(args.matter_root, env)).forEach((dir) => torn.delete(dir));
       return out.reply;
     }
     default:
-      throw new ValidationError(`unknown action ${JSON.stringify(args.action)}; expected begin, next, staged, status or end`);
+      throw new ValidationError(`unknown action ${JSON.stringify(args.action)}; expected begin, next, claim, staged, status or end`);
   }
 }
 
 // src/case/ingest-result.ts
-import { readFileSync as readFileSync18, unlinkSync as unlinkSync8 } from "node:fs";
+import { readFileSync as readFileSync19, unlinkSync as unlinkSync8 } from "node:fs";
 import { join as join23 } from "node:path";
 
 // src/case/procedural-history.ts
-import { existsSync as existsSync18, readFileSync as readFileSync17, renameSync as renameSync4, writeFileSync as writeFileSync9 } from "node:fs";
+import { existsSync as existsSync18, readFileSync as readFileSync18, renameSync as renameSync4, writeFileSync as writeFileSync10 } from "node:fs";
 import { join as join22 } from "node:path";
 var FILE_NAME = "ProceduralHistory.md";
 var TITLE = "# Procedural history";
@@ -91924,7 +92337,7 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
   if (args.source_path !== void 0 && args.told_on !== void 0) {
     throw new ValidationError("matter_data__procedural_history_append takes source_path or told_on, never both", "invalid_entry");
   }
-  const existing = existsSync18(path) ? readFileSync17(path, "utf-8") : void 0;
+  const existing = existsSync18(path) ? readFileSync18(path, "utf-8") : void 0;
   const eol = existing?.includes("\r\n") ? "\r\n" : "\n";
   const { sections } = existing === void 0 ? { sections: [] } : parse3(existing);
   let bullet;
@@ -91975,7 +92388,7 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
   }
   const stamp2 = localIsoWithOffset(now);
   const temp = `${path}.tmp-${process.pid}`;
-  writeFileSync9(temp, serialize(stamp2, sections, eol), "utf-8");
+  writeFileSync10(temp, serialize(stamp2, sections, eol), "utf-8");
   renameSync4(temp, path);
   return {
     ok: true,
@@ -92008,6 +92421,7 @@ var SAY_REFUSED = {
   unknown_result: "The reading of this document could not be found and will be read again.",
   path_b: "This document may be privileged, so nothing was recorded from its reading. It will be read here instead, once its privilege is decided.",
   set_aside: "This document is a legal authority, so it was not recorded in this run. It will be ingested on its own once the run ends.",
+  already_held: "This document has already been recorded in another session, so it was not recorded again.",
   refused: "This document could not be recorded, so nothing from its reading was kept."
 };
 var refused = (code, extra = {}) => ({
@@ -92054,9 +92468,13 @@ function resolveParties(matterRoot, names, answered) {
   }
   return out;
 }
+function candidatesFor(matterRoot, name) {
+  const r3 = resolveParticipant(matterRoot, name);
+  return r3.status === "ok" ? r3.matches.filter((m3) => m3.role === "party").map((m3) => m3.id).sort((a3, b3) => a3 - b3) : [];
+}
 function firmName(env) {
   try {
-    const firm = JSON.parse(readFileSync18(join23(resolveCaseDataRoot(env), "_practice", "firm", "firm.json"), "utf-8"));
+    const firm = JSON.parse(readFileSync19(join23(resolveCaseDataRoot(env), "_practice", "firm", "firm.json"), "utf-8"));
     return typeof firm?.firm_name === "string" && firm.firm_name !== "" ? firm.firm_name : null;
   } catch (err) {
     if (err instanceof ValidationError || err instanceof SyntaxError) return null;
@@ -92096,7 +92514,7 @@ function dropStaged(paths) {
 }
 function readStaged(path) {
   try {
-    return JSON.parse(readFileSync18(path, "utf-8"));
+    return JSON.parse(readFileSync19(path, "utf-8"));
   } catch (err) {
     if (err.code === "ENOENT" || err instanceof SyntaxError) return null;
     throw err;
@@ -92112,16 +92530,24 @@ async function ingestResult(args, env = process.env) {
   const privileged = args.contract === "privileged" ? args.result_ids.map((id) => stagedResultPath(id, env)) : [];
   const dropAlso = [];
   let drop = false;
+  let lock;
   try {
-    const out = await checkAndWrite(args, env, dropAlso);
+    lock = await acquireIngestWriteLock(args.matter_root, env);
+  } catch (err) {
+    if (err.code !== "lock_unavailable") throw err;
+    return { outcome: "refused", refused: "waiting", ask: [], report: await noteWriteWait(args.matter_root, args.run_id, args.document?.ref, args.result_ids, env) };
+  }
+  try {
+    const out = await checkAndWrite(args, env, dropAlso, lock);
     drop = out.outcome !== "refused" || DEFINITE.includes(String(out.refused));
     return out;
   } finally {
+    lock.release();
     dropStaged([...drop ? privileged : [], ...dropAlso]);
   }
 }
-var DEFINITE = ["invalid", "contract_mismatch", "contract_version", "race", "store_change", "path_b", "set_aside", "unresolved", "refused"];
-async function checkAndWrite(args, env, dropAlso) {
+var DEFINITE = ["invalid", "contract_mismatch", "contract_version", "race", "store_change", "path_b", "set_aside", "unresolved", "refused", "already_held", "taken"];
+async function checkAndWrite(args, env, dropAlso, lock) {
   if (new Set(args.result_ids).size !== args.result_ids.length) throw new ValidationError("result_ids must not repeat an id");
   if (args.result_ids.length === 0 && !CLOSABLE.includes(args.contract)) throw new ValidationError(`contract ${args.contract} needs result_ids`);
   const document2 = args.document ?? {};
@@ -92182,34 +92608,94 @@ async function checkAndWrite(args, env, dropAlso) {
   if (args.result_ids.length > 0 && results.length === 0) {
     return args.result_ids.some((id) => run2.written.includes(id)) ? { outcome: "already_written", ask: [], report: [] } : { outcome: "refused", refused: "invalid", ask: [], report: [] };
   }
-  return write(args, env, run2, filePath, fileHash, results, dropAlso);
+  return write(args, env, run2, filePath, fileHash, results, dropAlso, lock);
 }
-async function write(args, env, run2, filePath, fileHash, results, dropAlso) {
+async function write(args, env, run2, filePath, fileHash, results, dropAlso, lock) {
   const fileRef = run2.route?.ref ?? "";
-  const exhibits = args.contract === "affidavit_exhibits" ? await affidavitRun(args.matter_root, fileRef, results.map((r3) => r3.ref), env) : null;
+  const exhibits = args.contract === "affidavit_exhibits" ? await affidavitRun(args.matter_root, args.run_id, fileRef, results.map((r3) => r3.ref), env) : null;
+  const refs = [.../* @__PURE__ */ new Set([
+    fileRef || results[0]?.ref || fileHash,
+    ...args.contract === "sought_orders" && fileRef ? [`${fileRef}:so`] : [],
+    ...results.map((r3) => r3.ref)
+  ])];
+  const acks = args.contract === "privileged" || !run2.route ? [] : results.map((r3) => ({ ref: r3.ref, result_id: r3.result_id }));
+  const record2 = (write2, failures2 = []) => recordWrite(args.matter_root, args.run_id, acks, { refs, contract: args.contract, file_hash: fileHash, ...write2 }, env, failures2);
+  if (run2.elsewhere.some((w3) => w3.file_hash === fileHash)) {
+    await record2({ result_ids: args.result_ids, outcome: "refused", reason: "already_held" });
+    return fit(refused("already_held"));
+  }
+  const answers = { ...args.answers ?? {} };
+  const route2 = run2.route ? { ...run2.route } : null;
+  const staleAnswers = [];
+  const revision = matterRevision(args.matter_root, env);
+  const courtFile = route2?.category === "court" || /^5\./.test(filePath);
+  const firstWrite = args.contract === "facts" || args.contract === "affidavit_body";
+  const moved = run2.readRevision === null || run2.readRevision !== revision || run2.question !== null && run2.question.revision !== revision;
+  let pendingOther = null;
+  if (moved) {
+    const chosen = Object.values(answers.participants ?? {}).filter((id) => id !== 0);
+    const check3 = runCaseScript("write_recheck", "run", {
+      case_data_dir: caseDataFolder(args.matter_root, env),
+      matter_root: args.matter_root,
+      file_path: filePath,
+      file_hash: fileHash,
+      answers_source_id: route2?.answers_source_id ?? null,
+      proceeding_ids: [route2?.proceeding_id, answers.proceeding_id].filter((id) => typeof id === "number"),
+      chosen_parties: chosen,
+      // Only documents other runs recorded since this run began, because the gate saw the rest.
+      version_source_ids: courtFile && firstWrite && answers.other_version === void 0 ? run2.elsewhere.map((w3) => w3.source_id).filter((id) => id !== null) : []
+    }, env);
+    if (check3.status !== "ok") throw new DataServerError(`the matter's case data cannot be read: ${String(check3.reason)}`, "case_data_unavailable");
+    if (check3.other_version !== null) {
+      if (run2.mode === "unattended") pendingOther = check3.other_version.source_id;
+      else {
+        await record2({ result_ids: args.result_ids, outcome: "refused", reason: "needs_answer", revision });
+        return fit({
+          outcome: "refused",
+          refused: "needs_answer",
+          ask: [{ kind: "other_version", ref: String(check3.other_version.source_id), say: `This may be another copy of "${(check3.other_version.title ?? "a document on file").slice(0, 80)}", which another session has just recorded. Which copy should be kept?` }],
+          report: []
+        });
+      }
+    }
+    if (route2 && check3.answers_source_id !== null) route2.answers_source_id = check3.answers_source_id;
+    if (route2?.proceeding_id !== void 0 && check3.proceeding_gone.includes(route2.proceeding_id)) delete route2.proceeding_id;
+    if (answers.proceeding_id !== void 0 && check3.proceeding_gone.includes(answers.proceeding_id)) {
+      delete answers.proceeding_id;
+      staleAnswers.push("Since you answered, another session changed the proceeding you chose.");
+    }
+    const participantsAnswered = { ...answers.participants ?? {} };
+    for (const [name, id] of Object.entries(participantsAnswered)) {
+      if (id === 0 || run2.question === null) continue;
+      const before = run2.question.candidates[name] ?? [];
+      const added = candidatesFor(args.matter_root, name).filter((candidate) => !before.includes(candidate));
+      if (check3.parties_gone.includes(id)) staleAnswers.push(`Since you answered, another session changed the party you chose for "${name.slice(0, 60)}".`);
+      else if (added.length > 0) staleAnswers.push(`Since you answered, another session added ${added.map((a3) => check3.names[String(a3)] ?? "a party").join(", ").slice(0, 80)}, who may be "${name.slice(0, 60)}".`);
+      else continue;
+      delete participantsAnswered[name];
+    }
+    answers.participants = participantsAnswered;
+  }
+  if (answers.other_version === "superseded") {
+    await record2({ result_ids: args.result_ids, outcome: "already_written" });
+    return { outcome: "already_written", ask: [], report: [] };
+  }
   const names = results.flatMap((r3) => partyNames(args.contract, r3.doc));
-  const participants = resolveParties(args.matter_root, names, args.answers?.participants ?? {});
+  const participants = resolveParties(args.matter_root, names, answers.participants ?? {});
   const plan2 = runCaseScript(CONVERTERS[args.contract], "plan", {
     contract: args.contract,
     mode: run2.mode,
     file_path: filePath,
     file_hash: fileHash,
     results: results.map(({ result_id, path, ref }) => ({ result_id, path, ref })),
-    answers: args.answers ?? {},
+    answers,
     participants,
-    route: run2.route,
+    route: route2,
     exhibits,
     answered: run2.answered,
     // Read only where the delivery check can fire: an attended document with a letter flag (N-2).
     firm_name: run2.mode === "attended" && results.some((r3) => flagged(r3.doc, "outgoing_letter")) ? firmName(env) : null
   }, env);
-  const acks = args.contract === "privileged" || !run2.route ? [] : results.map((r3) => ({ ref: r3.ref, result_id: r3.result_id }));
-  const refs = [.../* @__PURE__ */ new Set([
-    fileRef || results[0]?.ref || fileHash,
-    ...args.contract === "sought_orders" && fileRef ? [`${fileRef}:so`] : [],
-    ...results.map((r3) => r3.ref)
-  ])];
-  const record2 = (write2, failures2 = []) => recordWrite(args.matter_root, args.run_id, acks, { refs, contract: args.contract, ...write2 }, env, failures2);
   const reread = async (reason) => {
     const closed2 = await record2({ result_ids: args.result_ids, outcome: "refused", reason: "invalid" }, results.map((r3) => ({ ref: r3.ref, reason: "invalid" })));
     const out2 = refused("invalid", { items: [{ ref: results[0]?.ref ?? "", outcome: "failed", reason: reason.slice(0, 160) }] });
@@ -92225,15 +92711,16 @@ async function write(args, env, run2, filePath, fileHash, results, dropAlso) {
     return fit(out2);
   }
   if (!("statements" in plan2)) {
-    await record2({ result_ids: args.result_ids, outcome: "refused", reason: "needs_answer" });
-    return fit({ outcome: "refused", refused: "needs_answer", ask: plan2.asks, report: [] });
+    const candidates = Object.fromEntries(plan2.asks.filter((a3) => a3.kind === "participant").map((a3) => [a3.ref, candidatesFor(args.matter_root, a3.ref)]));
+    await record2({ result_ids: args.result_ids, outcome: "refused", reason: "needs_answer", revision, candidates });
+    return fit({ outcome: "refused", refused: "needs_answer", ask: plan2.asks, report: staleAnswers });
   }
   let done;
   try {
     done = await caseDataExecuteStatements(args.matter_root, plan2.statements, plan2.params, env, async () => {
-      const gone = await checkRun(args.matter_root, args.run_id, env);
+      const gone = await checkRun(args.matter_root, args.run_id, env, run2.route);
       if (gone) throw new LeaseGone(gone);
-    });
+    }, lock);
   } catch (err) {
     if (err instanceof LeaseGone) return { outcome: "refused", refused: err.refusal.refused, ask: [], report: [err.refusal.say] };
     if (/duplicate top-level source file_hash/.test(err.message)) {
@@ -92276,9 +92763,14 @@ async function write(args, env, run2, filePath, fileHash, results, dropAlso) {
   const unchanged = args.contract !== "affidavit_exhibits" || named2.final === named2.prior;
   const outcome = named2.prior != null && inserted === 0 && unchanged && failures.length === 0 ? "already_written" : "written";
   const sourceId = named2.source_id ?? null;
+  if (pendingOther !== null && sourceId !== null) {
+    const marker = runCaseScript("write_recheck", "pending_marker", { source_id: sourceId, other_id: pendingOther }, env);
+    await caseDataExecuteStatements(args.matter_root, [marker], {}, env, void 0, lock);
+  }
   const closedNow = await record2({
     result_ids: args.result_ids.filter((id) => !failedIds.has(id) && !run2.settled.includes(id)),
     outcome,
+    source_id: sourceId,
     ...args.result_ids.length === 0 ? { closed: true } : {},
     ...args.contract === "affidavit_exhibits" ? { closing: exhibits?.closing === true && failures.length === 0 } : {},
     // Pass 1's exhibit list, so the exhibits are planned from the journal alone (N9).
@@ -92411,16 +92903,18 @@ function script(step2, env) {
 }
 async function relocateSource(request2, env = process.env) {
   const { matter_root: matterRoot } = request2;
-  const probe2 = script({ op: "probe", hash: request2.hash }, env);
-  const rows4 = caseDataQuery(matterRoot, probe2.sql, probe2.params).rows;
-  const plan2 = script({ op: "plan", rows: rows4, ...request2 }, env);
-  const result = { outcome: plan2.outcome, stored_path: plan2.stored_path, rows: plan2.rows, reason: plan2.reason };
-  if (plan2.outcome !== "relocated") return result;
-  const done = await caseDataExecute(matterRoot, plan2.sql, env);
-  const now = caseDataQuery(matterRoot, probe2.sql, probe2.params).rows;
-  const { confirmed } = script({ op: "confirm", rows: now, plan_rows: plan2.rows, matter_root: matterRoot, new_path: request2.new_path }, env);
-  if (!confirmed) return { ...result, outcome: "failed", reason: "write_not_confirmed", rows_now: now, warning: done.warning };
-  return { ...result, evidence_sql: done.evidence_sql, warning: done.warning };
+  return withExclusive(matterRoot, env, async (lock) => {
+    const probe2 = script({ op: "probe", hash: request2.hash }, env);
+    const rows4 = caseDataQuery(matterRoot, probe2.sql, probe2.params).rows;
+    const plan2 = script({ op: "plan", rows: rows4, ...request2 }, env);
+    const result = { outcome: plan2.outcome, stored_path: plan2.stored_path, rows: plan2.rows, reason: plan2.reason };
+    if (plan2.outcome !== "relocated") return result;
+    const done = await caseDataExecute(matterRoot, plan2.sql, env, void 0, lock);
+    const now = caseDataQuery(matterRoot, probe2.sql, probe2.params).rows;
+    const { confirmed } = script({ op: "confirm", rows: now, plan_rows: plan2.rows, matter_root: matterRoot, new_path: request2.new_path }, env);
+    if (!confirmed) return { ...result, outcome: "failed", reason: "write_not_confirmed", rows_now: now, warning: done.warning };
+    return { ...result, evidence_sql: done.evidence_sql, warning: done.warning };
+  });
 }
 
 // src/case/housekeeping-log.ts
@@ -92466,7 +92960,7 @@ async function housekeepingLog(request2, env = process.env) {
 }
 
 // src/submission/repoint-documents.ts
-import { existsSync as existsSync19, readFileSync as readFileSync19 } from "node:fs";
+import { existsSync as existsSync19, readFileSync as readFileSync20 } from "node:fs";
 import { join as join24 } from "node:path";
 
 // src/submission/backend.ts
@@ -93037,7 +93531,7 @@ async function repointDocuments(request2, env = process.env) {
   const dbPath = resolveDbPath(validateMatterRoot(request2.matter_root));
   if (!existsSync19(dbPath)) return { database: false, repointed: [] };
   const shipped = resolveShippedRoot(REFERENCE, env, { subject: "the drafting-data document-paths reference", plugin: "litigator" });
-  const text8 = readFileSync19(join24(shipped.root, ...REFERENCE.split("/")), "utf-8").replace(/\r\n/g, "\n");
+  const text8 = readFileSync20(join24(shipped.root, ...REFERENCE.split("/")), "utf-8").replace(/\r\n/g, "\n");
   const values = {
     old_path: request2.old_path,
     old_absolute: `${request2.matter_root.replace(/[\\/]+$/, "")}\\${request2.old_path}`,
@@ -94651,7 +95145,7 @@ function admissionCaptureMarkers(row2, state) {
 }
 
 // src/submission/forms/query.ts
-import { readFileSync as readFileSync20 } from "node:fs";
+import { readFileSync as readFileSync21 } from "node:fs";
 
 // src/knowledge/declared-layout.ts
 function fail(file, field, rule) {
@@ -95063,7 +95557,7 @@ function shippedVenueBlock(filing, forum) {
   const { layer } = shippedLayer("draft", parseKnowledgePath(path, `"${filing.title}"'s court or tribunal`).rest, {});
   let content;
   try {
-    content = readFileSync20(layer.abs, "utf-8");
+    content = readFileSync21(layer.abs, "utf-8");
   } catch (err) {
     if (err.code !== "ENOENT") throw err;
     throw new DataServerError(`"${filing.title}": Probanda has no layout for its court or tribunal, ${forum}`, "venue_missing");
@@ -95897,7 +96391,7 @@ function repointThreads(dbPath, from, to2, env = process.env) {
 
 // src/files/skill-source.ts
 import { createHash as createHash7 } from "node:crypto";
-import { existsSync as existsSync24, readFileSync as readFileSync21, readdirSync as readdirSync14, statSync as statSync13 } from "node:fs";
+import { existsSync as existsSync24, readFileSync as readFileSync22, readdirSync as readdirSync14, statSync as statSync13 } from "node:fs";
 import { win32 as pathWin3210 } from "node:path";
 var rootCache = /* @__PURE__ */ new Map();
 function servedRoot(shipped) {
@@ -95985,7 +96479,7 @@ function skillSourceRead(relative5, env, from, match, installRoot) {
       "not_found"
     );
   }
-  const bytes = readFileSync21(resolved);
+  const bytes = readFileSync22(resolved);
   const path = toPosixRelative(root, resolved);
   const slash = path.lastIndexOf("/");
   const whole = bytes.toString("utf-8");
@@ -96098,7 +96592,7 @@ import * as https from "node:https";
 import { join as join32 } from "node:path";
 
 // src/sources/hosts.ts
-import { existsSync as existsSync25, readFileSync as readFileSync22 } from "node:fs";
+import { existsSync as existsSync25, readFileSync as readFileSync23 } from "node:fs";
 import { join as join31 } from "node:path";
 var SOURCES_ALLOWED_HOSTS = ["www.bclaws.gov.bc.ca", "bclaws.gov.bc.ca", "vaniac.org", "laws-lois.justice.gc.ca"];
 function loadFirmHosts(path) {
@@ -96118,7 +96612,7 @@ function admittedHost(entry2) {
 function readHostEntries(path) {
   let text8;
   try {
-    text8 = readFileSync22(path, "utf-8");
+    text8 = readFileSync23(path, "utf-8");
   } catch (err) {
     if (err.code === "ENOENT") return [];
     throw err;
@@ -96151,7 +96645,7 @@ function caseDataRootConfigured(env) {
   const configFile = configPath(env);
   if (!existsSync25(configFile)) return false;
   try {
-    const root = JSON.parse(readFileSync22(configFile, "utf-8")).case_data_root;
+    const root = JSON.parse(readFileSync23(configFile, "utf-8")).case_data_root;
     return typeof root === "string" && root !== "";
   } catch {
     return true;
@@ -97238,11 +97732,11 @@ function rowString(row2, key) {
 }
 
 // src/knowledge/write-document.ts
-import { readFileSync as readFileSync24 } from "node:fs";
+import { readFileSync as readFileSync25 } from "node:fs";
 
 // src/knowledge/fetched.ts
 import { createHash as createHash9 } from "node:crypto";
-import { copyFileSync as copyFileSync3, existsSync as existsSync27, readdirSync as readdirSync15, readFileSync as readFileSync23, realpathSync as realpathSync4, unlinkSync as unlinkSync10 } from "node:fs";
+import { copyFileSync as copyFileSync3, existsSync as existsSync27, readdirSync as readdirSync15, readFileSync as readFileSync24, realpathSync as realpathSync4, unlinkSync as unlinkSync10 } from "node:fs";
 import { win32 as pathWin3212 } from "node:path";
 function savedCopyOf(raw, record2, front, seams) {
   const label2 = "knowledge__write.saved_copy";
@@ -97303,7 +97797,7 @@ function liveKnowledgeTexts(canon, seams) {
     for (const entry2 of readdirSync15(dir, { withFileTypes: true })) {
       const abs = pathWin3212.join(dir, entry2.name);
       if (entry2.isDirectory()) walk4(abs);
-      else if (entry2.isFile() && entry2.name.endsWith(".md")) texts.push(readFileSync23(abs, "utf-8").toLowerCase());
+      else if (entry2.isFile() && entry2.name.endsWith(".md")) texts.push(readFileSync24(abs, "utf-8").toLowerCase());
     }
   };
   for (const skill of KNOWLEDGE_SKILLS) {
@@ -97458,7 +97952,7 @@ async function writeDocument(kp, args, matter, seams, label2) {
         "exists"
       );
     }
-    const old = existing === "file" ? readFileSync24(target.abs, "utf-8") : null;
+    const old = existing === "file" ? readFileSync25(target.abs, "utf-8") : null;
     const stale_check = old === null ? null : checkStaleBody(kp.path, target.abs, old, front, fetcher);
     writeTextAtomic(target.abs, text8);
     return { old, stale_check };
@@ -97602,7 +98096,7 @@ async function confirmItem(kp, args, operation, seams, label2) {
 }
 
 // src/knowledge/write-index.ts
-import { readFileSync as readFileSync25 } from "node:fs";
+import { readFileSync as readFileSync26 } from "node:fs";
 function listAndKey(index, row2) {
   if (index === "kinds") return { list: "kinds", key: rowString(row2, "file") };
   if (row2.resolves_to !== void 0) return { list: "not_venues", key: normalizeName(rowString(row2, "name")) };
@@ -97695,7 +98189,7 @@ async function writeIndexRow(kp, index, args, seams, label2) {
     const existing = entryType(target, label2, kp.path);
     let doc = {};
     if (existing === "file") {
-      const text8 = readFileSync25(target.abs, "utf-8");
+      const text8 = readFileSync26(target.abs, "utf-8");
       try {
         doc = JSON.parse(text8.startsWith("\uFEFF") ? text8.slice(1) : text8);
       } catch (err) {
@@ -97745,7 +98239,7 @@ async function knowledgeWrite(args, seams = {}) {
 }
 
 // src/knowledge/retire.ts
-import { existsSync as existsSync28, readFileSync as readFileSync26, renameSync as renameSync5 } from "node:fs";
+import { existsSync as existsSync28, readFileSync as readFileSync27, renameSync as renameSync5 } from "node:fs";
 import { win32 as pathWin3213 } from "node:path";
 async function retireOne(kp, seams, label2) {
   if (entryType(locate(kp, seams, label2).local, label2, kp.path) === null) {
@@ -97769,7 +98263,7 @@ async function retireOne(kp, seams, label2) {
         }
       }
       const target = writableOverlayPath(dest, seams, label2);
-      const text8 = readFileSync26(source.abs, "utf-8");
+      const text8 = readFileSync27(source.abs, "utf-8");
       renameSync5(source.abs, target.abs);
       if (hasSidecar) renameSync5(sidecar2, `${target.abs}${SIDECAR_SUFFIX}`);
       return {
@@ -99928,7 +100422,7 @@ async function resnapshotWriting(dbPath, filingId, opts = {}) {
 }
 
 // src/submission/forms/filler-registry.ts
-import { readFileSync as readFileSync27 } from "node:fs";
+import { readFileSync as readFileSync28 } from "node:fs";
 
 // src/submission/forms/filing-facts.ts
 var FACTS_PART = /* @__PURE__ */ new Map([
@@ -102262,7 +102756,7 @@ function readShipped(path, seams) {
   const kp = parseKnowledgePath(path, "type file lookup");
   const { layer } = shippedLayer(kp.skill, kp.rest, seams);
   try {
-    return readFileSync27(layer.abs, "utf-8");
+    return readFileSync28(layer.abs, "utf-8");
   } catch (err) {
     if (err.code !== "ENOENT") throw err;
     throw new DataServerError(`${path}: not in /draft's shipped knowledge tree (${layer.abs})`, "type_file_missing");
@@ -102933,7 +103427,7 @@ import { extname as extname2, join as join34 } from "node:path";
 
 // src/submission/render-manifest.ts
 import { createHash as createHash10 } from "node:crypto";
-import { existsSync as existsSync29, mkdirSync as mkdirSync13, readFileSync as readFileSync28, realpathSync as realpathSync5, writeFileSync as writeFileSync10 } from "node:fs";
+import { existsSync as existsSync29, mkdirSync as mkdirSync13, readFileSync as readFileSync29, realpathSync as realpathSync5, writeFileSync as writeFileSync11 } from "node:fs";
 import { basename as basename4, dirname as dirname14, isAbsolute as isAbsolute5, join as join33, resolve as resolve4 } from "node:path";
 
 // src/files/zones.ts
@@ -102992,7 +103486,7 @@ function isFolderName(name) {
 function parseManifest(file) {
   if (!existsSync29(file)) return null;
   try {
-    const parsed = JSON.parse(readFileSync28(file, "utf-8"));
+    const parsed = JSON.parse(readFileSync29(file, "utf-8"));
     if (!parsed || typeof parsed !== "object" || !parsed.stamp || !Array.isArray(parsed.files) || !Array.isArray(parsed.inventory) || !parsed.inventory.every(isInventoryEntry)) {
       return null;
     }
@@ -103012,7 +103506,7 @@ function readLegacyManifest(dir) {
 }
 function writeManifest(dbPath, filingId, manifest) {
   mkdirSync13(recordsDir(dbPath), { recursive: true });
-  writeFileSync10(manifestPath(dbPath, filingId), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+  writeFileSync11(manifestPath(dbPath, filingId), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
 }
 function manifestDir(dbPath, manifest) {
   return join33(draftDirOf(dbPath), manifest.folder);
@@ -103037,7 +103531,7 @@ function freshManifest(dbPath, filingId, stamp2, partiesDrift) {
     if (!existsSync29(file)) return null;
     let text8;
     try {
-      text8 = readFileSync28(file, "utf-8");
+      text8 = readFileSync29(file, "utf-8");
     } catch {
       return null;
     }
@@ -103176,7 +103670,7 @@ var claimSql = (t3 = "tickets") => `(SELECT CAST(value AS INTEGER) FROM kv_store
 function nextClaimSql(guard2) {
   return `INSERT INTO kv_store (namespace, key, value, updated_at) SELECT 'claim_no', 'tickets:' || id, COALESCE(${claimSql()}, 0) + 1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND ${guard2} ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`;
 }
-function heldBy(dbPath, token, claim, t3 = "tickets") {
+function heldBy2(dbPath, token, claim, t3 = "tickets") {
   return hasTable(dbPath, "kv_store") ? { sql: `${t3}.locked_by = ? AND ${claimSql(t3)} IS ?`, params: [token, claim] } : { sql: `${t3}.locked_by = ?`, params: [token] };
 }
 function checkClaim(tool, dbPath, id, token, claim) {
@@ -103202,7 +103696,7 @@ function touchStatements(dbPath, id, held2) {
   ];
 }
 async function touchJob(dbPath, id, token, claim, env = process.env) {
-  const statements = touchStatements(dbPath, id, heldBy(dbPath, token, claim));
+  const statements = touchStatements(dbPath, id, heldBy2(dbPath, token, claim));
   if (statements.length === 0) return { recorded: false };
   const written = await submissionDataWriteAll(dbPath, statements, env);
   return { recorded: written.ok && written.results[1].changes === 1, ...written.warning ? { warning: written.warning } : {} };
@@ -103239,7 +103733,7 @@ function jobIdentity(tool, args) {
   return { dbPath, id, token, claim: checkClaim(tool, dbPath, id, token, args.claim_no) };
 }
 function requireHeld(tool, job) {
-  const h3 = heldBy(job.dbPath, job.token, job.claim);
+  const h3 = heldBy2(job.dbPath, job.token, job.claim);
   const [row2] = submissionDataQuery(job.dbPath, `SELECT status, rejected_at, locked_by, (${h3.sql}) AS held FROM tickets WHERE id = ?`, [...h3.params, job.id]).rows;
   if (row2 === void 0) throw new NotFoundError(`${tool}: no job ${job.id} in ${job.dbPath}; nothing was written`, "not_found");
   if (row2.held === 1) return;
@@ -103391,7 +103885,7 @@ async function submissionDataTrackSource(args, env = process.env) {
       "schema_below_v76"
     );
   }
-  const h3 = heldBy(args.db_path, token, checkClaim(TOOL5, args.db_path, id, token, args.claim_no));
+  const h3 = heldBy2(args.db_path, token, checkClaim(TOOL5, args.db_path, id, token, args.claim_no));
   const held2 = `EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${h3.sql})`;
   const statements = [
     ...add.flatMap((a3) => [
@@ -104942,7 +105436,7 @@ function combineSections(dbPath, sections, page2 = false) {
 }
 
 // src/submission/writing-folder.ts
-import { existsSync as existsSync32, mkdirSync as mkdirSync14, readdirSync as readdirSync16, readFileSync as readFileSync29, renameSync as renameSync6, rmdirSync as rmdirSync2, statSync as statSync14, unlinkSync as unlinkSync11 } from "node:fs";
+import { existsSync as existsSync32, mkdirSync as mkdirSync14, readdirSync as readdirSync16, readFileSync as readFileSync30, renameSync as renameSync6, rmdirSync as rmdirSync2, statSync as statSync14, unlinkSync as unlinkSync11 } from "node:fs";
 import { dirname as dirname15, extname as extname3, join as join35 } from "node:path";
 var GENERAL_DOCUMENT_TYPE = "General_writing";
 var OLD_BOARD_FILES = ["Job Board.html", "Milestone.html", "Work Board.html", "Work Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
@@ -104952,7 +105446,7 @@ function sanitizeForPath(name) {
 }
 function readExistingRevision(filePath) {
   if (!existsSync32(filePath)) return void 0;
-  const text8 = readFileSync29(filePath, "utf-8");
+  const text8 = readFileSync30(filePath, "utf-8");
   const match = text8.match(/^Revision:[ \t]*(\d+)/m) ?? text8.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text8.match(/data-k="Rev">(\d+)</);
   return match ? Number(match[1]) : void 0;
 }
@@ -105233,7 +105727,7 @@ import { basename as basename9, dirname as dirname27, join as join50 } from "nod
 import { join as join48 } from "node:path";
 
 // src/submission/matter-page-files.ts
-import { existsSync as existsSync39, mkdirSync as mkdirSync19, readdirSync as readdirSync21, readFileSync as readFileSync34 } from "node:fs";
+import { existsSync as existsSync39, mkdirSync as mkdirSync19, readdirSync as readdirSync21, readFileSync as readFileSync35 } from "node:fs";
 import { dirname as dirname19, join as join43, relative as relative2 } from "node:path";
 
 // src/file_ops/trash.ts
@@ -105251,10 +105745,10 @@ import { win32 as pathWin3217 } from "node:path";
 
 // src/file_ops/approved-row.ts
 import { createHash as createHash11 } from "node:crypto";
-import { readFileSync as readFileSync31 } from "node:fs";
+import { readFileSync as readFileSync32 } from "node:fs";
 
 // src/housekeeping/run-dir.ts
-import { closeSync as closeSync6, existsSync as existsSync33, fsyncSync, mkdirSync as mkdirSync15, openSync as openSync6, readdirSync as readdirSync17, readFileSync as readFileSync30, realpathSync as realpathSync7, statSync as statSync15, writeSync as writeSync5 } from "node:fs";
+import { closeSync as closeSync6, existsSync as existsSync33, fsyncSync, mkdirSync as mkdirSync15, openSync as openSync6, readdirSync as readdirSync17, readFileSync as readFileSync31, realpathSync as realpathSync7, statSync as statSync15, writeSync as writeSync5 } from "node:fs";
 import { win32 as pathWin3216 } from "node:path";
 
 // src/housekeeping/proposal.ts
@@ -105564,10 +106058,10 @@ function confineRunDir(matter, runId) {
   }
   return real;
 }
-function readProposal(runDir2, runId, root) {
+function readProposal(runDir, runId, root) {
   let text8;
   try {
-    text8 = readFileSync30(pathWin3216.join(runDir2, PROPOSAL), "utf-8");
+    text8 = readFileSync31(pathWin3216.join(runDir, PROPOSAL), "utf-8");
   } catch {
     return { proposal: null, problem: "no proposal.json" };
   }
@@ -105581,15 +106075,15 @@ function readProposal(runDir2, runId, root) {
   if (problems.length) return { proposal: null, problem: `proposal.json is invalid: ${problems.join("; ")}` };
   return { proposal: parsed };
 }
-function requireProposal(runDir2, runId, root) {
-  const { proposal, problem } = readProposal(runDir2, runId, root);
+function requireProposal(runDir, runId, root) {
+  const { proposal, problem } = readProposal(runDir, runId, root);
   if (!proposal) throw new DataServerError(`run ${runId}: ${problem}`, "invalid_proposal");
   return proposal;
 }
-function readApproval(runDir2, runId) {
+function readApproval(runDir, runId) {
   let text8;
   try {
-    text8 = readFileSync30(pathWin3216.join(runDir2, APPROVAL), "utf-8");
+    text8 = readFileSync31(pathWin3216.join(runDir, APPROVAL), "utf-8");
   } catch (err) {
     const code = err.code;
     return code === "ENOENT" ? { approval: null } : { approval: null, problem: `approval.json cannot be read (${code})` };
@@ -105604,12 +106098,12 @@ function readApproval(runDir2, runId) {
   if (problems.length) return { approval: null, problem: `approval.json is invalid: ${problems.join("; ")}` };
   return { approval: parsed };
 }
-function requireApproval(runDir2, runId) {
-  const { approval, problem } = readApproval(runDir2, runId);
+function requireApproval(runDir, runId) {
+  const { approval, problem } = readApproval(runDir, runId);
   if (approval) return approval;
   if (problem) {
     throw new DataServerError(
-      `run ${runId}: the saved approval ${pathWin3216.join(runDir2, APPROVAL)} is unreadable, so nothing is applied from it: ${problem}`,
+      `run ${runId}: the saved approval ${pathWin3216.join(runDir, APPROVAL)} is unreadable, so nothing is applied from it: ${problem}`,
       "approval_corrupt"
     );
   }
@@ -105638,7 +106132,7 @@ function requireApprovedRow(matterRoot, row2, source) {
   }
   let hash;
   try {
-    hash = createHash11("sha256").update(readFileSync31(source)).digest("hex");
+    hash = createHash11("sha256").update(readFileSync32(source)).digest("hex");
   } catch (err) {
     throw new DataServerError(`the approved file of row ${row2.row_id} cannot be read (${err.message}); nothing was moved: ${source}`, "changed_since_approval");
   }
@@ -105739,7 +106233,7 @@ function stamp(d3) {
 
 // src/page-api/token.ts
 import { createHmac as createHmac2, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
-import { existsSync as existsSync35, linkSync as linkSync2, mkdirSync as mkdirSync17, readFileSync as readFileSync32, unlinkSync as unlinkSync12, writeFileSync as writeFileSync11 } from "node:fs";
+import { existsSync as existsSync35, linkSync as linkSync2, mkdirSync as mkdirSync17, readFileSync as readFileSync33, unlinkSync as unlinkSync12, writeFileSync as writeFileSync12 } from "node:fs";
 import { dirname as dirname16, join as join36 } from "node:path";
 var DEFAULT_PAGE_API_PORT = 47615;
 var SECRET_FILE = "page-api.secret";
@@ -105747,7 +106241,7 @@ var SECRET_BYTES = 32;
 function pageApiPort(env = process.env) {
   const path = configPath(env);
   if (!existsSync35(path)) return DEFAULT_PAGE_API_PORT;
-  const value2 = JSON.parse(readFileSync32(path, "utf-8"))?.page_api_port;
+  const value2 = JSON.parse(readFileSync33(path, "utf-8"))?.page_api_port;
   if (value2 === void 0 || value2 === null) return DEFAULT_PAGE_API_PORT;
   if (typeof value2 !== "number" || !Number.isInteger(value2) || value2 < 1 || value2 > 65535) {
     throw new ValidationError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value2)}`, "invalid_page_api_port");
@@ -105762,7 +106256,7 @@ function pageApiSecret(env) {
   if (!existsSync35(path)) {
     mkdirSync17(dirname16(path), { recursive: true });
     const temp = `${path}.${process.pid}.${randomBytes3(6).toString("hex")}.tmp`;
-    writeFileSync11(temp, randomBytes3(SECRET_BYTES), { flag: "wx" });
+    writeFileSync12(temp, randomBytes3(SECRET_BYTES), { flag: "wx" });
     try {
       linkSync2(temp, path);
     } catch (err) {
@@ -105771,7 +106265,7 @@ function pageApiSecret(env) {
       unlinkSync12(temp);
     }
   }
-  const secret = readFileSync32(path);
+  const secret = readFileSync33(path);
   if (secret.length !== SECRET_BYTES) throw new Error(`${path} holds ${secret.length} bytes, not ${SECRET_BYTES}; delete it and re-render the page`);
   return secret;
 }
@@ -107922,7 +108416,7 @@ function viewTargets(groups, folders2) {
 
 // src/submission/forms/paragraph-map.ts
 import { createHash as createHash12 } from "node:crypto";
-import { existsSync as existsSync36, mkdirSync as mkdirSync18, readdirSync as readdirSync19, readFileSync as readFileSync33, renameSync as renameSync8, unlinkSync as unlinkSync13, writeFileSync as writeFileSync12 } from "node:fs";
+import { existsSync as existsSync36, mkdirSync as mkdirSync18, readdirSync as readdirSync19, readFileSync as readFileSync34, renameSync as renameSync8, unlinkSync as unlinkSync13, writeFileSync as writeFileSync13 } from "node:fs";
 import { join as join40 } from "node:path";
 var QUICK_EDIT_MIN_SCHEMA = 79;
 var MAP_KEEP = 20;
@@ -108144,7 +108638,7 @@ function writeParagraphMap(dir, map) {
   mkdirSync18(dir, { recursive: true });
   const file = mapFile(dir, map.revision);
   const tmp = `${file}.tmp`;
-  writeFileSync12(tmp, JSON.stringify(map) + "\n", "utf-8");
+  writeFileSync13(tmp, JSON.stringify(map) + "\n", "utf-8");
   renameSync8(tmp, file);
   const kept = readdirSync19(dir).map((name) => /^rev-(\d+)\.json$/.exec(name)).flatMap((m3) => m3 ? [Number(m3[1])] : []).sort((a3, b3) => b3 - a3);
   for (const revision of kept.slice(MAP_KEEP)) unlinkSync13(mapFile(dir, revision));
@@ -108153,7 +108647,7 @@ function readParagraphMap(dir, revision) {
   const file = mapFile(dir, revision);
   if (!existsSync36(file)) return null;
   try {
-    const parsed = JSON.parse(readFileSync33(file, "utf-8"));
+    const parsed = JSON.parse(readFileSync34(file, "utf-8"));
     return parsed && parsed.revision === revision && Array.isArray(parsed.entries) ? parsed : null;
   } catch {
     return null;
@@ -108823,7 +109317,7 @@ function guardTargets(names, views) {
 function refuseForeignPages(draftDir, targets) {
   for (const { name, marker, page: page2 } of targets) {
     const file = join43(draftDir, name);
-    if (existsSync39(file) && !readFileSync34(file, "utf-8").includes(marker)) {
+    if (existsSync39(file) && !readFileSync35(file, "utf-8").includes(marker)) {
       throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page2}'s marker, so this renderer did not write it`);
     }
   }
@@ -108837,7 +109331,7 @@ var OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strat
 var PREVIEW_FILE = / preview \d+\.html$/i;
 var RETIRED_PREVIEW = /^(?:raw research|legal memos)(?: - (?:Milestone|job board)(?: - proceeding)? \d+)? preview \d+\.html$/i;
 function generatorWrote(file) {
-  const text8 = readFileSync34(file, "utf-8");
+  const text8 = readFileSync35(file, "utf-8");
   return text8.includes(MILESTONE_MARKER) || text8.includes(MATTER_BOARD_MARKER) || text8.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
 }
 function sweepOldPages(draftDir, names) {
@@ -110276,7 +110770,7 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
 }
 
 // src/submission/matter-pages-state.ts
-import { mkdirSync as mkdirSync20, readFileSync as readFileSync35 } from "node:fs";
+import { mkdirSync as mkdirSync20, readFileSync as readFileSync36 } from "node:fs";
 import { join as join47 } from "node:path";
 var PAGES_STATE_FILE = "matter-pages-state.json";
 var TODOS_NOT_READ = { note: "This matter's to-dos were not read." };
@@ -110299,7 +110793,7 @@ function isRecord(value2) {
 }
 function readPagesState(dbPath) {
   try {
-    const parsed = JSON.parse(readFileSync35(statePath(dbPath), "utf-8"));
+    const parsed = JSON.parse(readFileSync36(statePath(dbPath), "utf-8"));
     const sections = parsed.sections;
     if (!isRecord(sections)) return { sections: {} };
     return {
@@ -112347,7 +112841,7 @@ function publishSidecar(ctx, emitterWarnings, coverNotes) {
 }
 
 // src/submission/substance-file.ts
-import { existsSync as existsSync44, mkdirSync as mkdirSync22, realpathSync as realpathSync11, writeFileSync as writeFileSync13 } from "node:fs";
+import { existsSync as existsSync44, mkdirSync as mkdirSync22, realpathSync as realpathSync11, writeFileSync as writeFileSync14 } from "node:fs";
 import { win32 as pathWin3219 } from "node:path";
 var BCSC_SUBSTANCE_FOLDER = "bcsc-form-substance";
 function confineCaseDataFolder(dbPath, caseDataFolder2) {
@@ -112372,7 +112866,7 @@ function writeSubstanceFile(caseData, fileName, markdown, folders2 = [BCSC_SUBST
     }
   }
   for (const dir of dirs) if (!existsSync44(dir)) mkdirSync22(dir);
-  writeFileSync13(path, markdown, "utf-8");
+  writeFileSync14(path, markdown, "utf-8");
   return path;
 }
 
@@ -113607,7 +114101,7 @@ async function submissionDataApprovePlan(args, env = process.env) {
   if (job.steps === 1 && job.markers === 1) {
     throw new DataServerError(`${TOOL11}: job ${id}'s only step is "${PLAN_MARKER}" and nothing was written. What steps will complete this job?`, "plan_marker_only");
   }
-  const held2 = heldBy(args.db_path, args.session_token, checkClaim(TOOL11, args.db_path, id, args.session_token, args.claim_no));
+  const held2 = heldBy2(args.db_path, args.session_token, checkClaim(TOOL11, args.db_path, id, args.session_token, args.claim_no));
   const written = await submissionDataWriteAll(
     args.db_path,
     [
@@ -113752,7 +114246,12 @@ async function submissionDataTakeJob(args, env = process.env) {
   const line = `Started Job ${id}: ${job.title}${/[.!?]$/.test(job.title) ? "" : "."}`;
   let history;
   try {
-    history = { added: proceduralHistoryAppend({ matter_root: matterRoot, date: today2(), line }).added };
+    const lock = await acquireCaseLock(matterRoot, env);
+    try {
+      history = { added: proceduralHistoryAppend({ matter_root: matterRoot, date: today2(), line }).added };
+    } finally {
+      lock.release();
+    }
   } catch (err) {
     const code = err.code;
     history = { added: null, note: code === "duplicate_entry" ? "Today's heading already holds this job's started entry." : `Not written: ${err.message}` };
@@ -113908,7 +114407,7 @@ function children(job, at) {
 }
 function held(args) {
   const id = args.held_ticket_id;
-  const h3 = heldBy(args.db_path, args.session_token, checkClaim(TOOL13, args.db_path, id, args.session_token, args.claim_no));
+  const h3 = heldBy2(args.db_path, args.session_token, checkClaim(TOOL13, args.db_path, id, args.session_token, args.claim_no));
   return { sql: ` WHERE EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${h3.sql})`, params: [id, ...h3.params] };
 }
 async function submissionDataCreateJob(args, env = process.env) {
@@ -114053,7 +114552,7 @@ async function submissionDataSetStep(args, env = process.env) {
     );
   }
   const minutes = status3 === "waiting" ? args.wait_minutes ?? DEFAULT_WAIT_MINUTES : null;
-  const held2 = heldBy(args.db_path, token, checkClaim(TOOL14, args.db_path, id, token, args.claim_no));
+  const held2 = heldBy2(args.db_path, token, checkClaim(TOOL14, args.db_path, id, token, args.claim_no));
   const guard2 = `WHERE ticket_id = ? AND ordinal = ? AND done_at IS NULL AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${held2.sql})`;
   const write2 = status3 === "done" ? { sql: `UPDATE ticket_steps SET ${text8.sql}done_at = ${NOW8}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard2}`, params: [...text8.params, id, ordinal, id, ...held2.params] } : {
     sql: `UPDATE ticket_steps SET ${text8.sql}status = ?, wait_until = ${minutes === null ? "NULL" : `strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '+${minutes} minutes')`}, status_note = ? ${guard2}`,
@@ -114121,7 +114620,7 @@ async function submissionDataRewriteJob(args, env = process.env) {
   const deleted = deletedAtHeld(args.db_path);
   if (submissionDataQuery(args.db_path, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) throw new NotFoundError(`${TOOL15}: no job ${id} in ${args.db_path}`, "not_found");
   const ready = "status = 'queued' AND locked_by IS NULL AND rejected_at IS NULL AND plan_approved_at IS NULL" + (deleted ? " AND deleted_at IS NULL" : "") + " AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = tickets.id AND done_at IS NOT NULL)";
-  const holds2 = held2 ? heldBy(args.db_path, token, checkClaim(TOOL15, args.db_path, id, token, args.claim_no)) : { sql: ready, params: [] };
+  const holds2 = held2 ? heldBy2(args.db_path, token, checkClaim(TOOL15, args.db_path, id, token, args.claim_no)) : { sql: ready, params: [] };
   const guard2 = holds2.sql;
   const guardParams = holds2.params;
   const onJob = `EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${guard2})`;
@@ -114247,7 +114746,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
   }
   const id = args.ticket_id;
   const token = args.session_token;
-  const held2 = heldBy(args.db_path, token, checkClaim(TOOL16, args.db_path, id, token, args.claim_no));
+  const held2 = heldBy2(args.db_path, token, checkClaim(TOOL16, args.db_path, id, token, args.claim_no));
   const open = openSteps(args.db_path, id, token);
   if (open !== null) return open;
   const written = await submissionDataWriteAll(
@@ -114315,7 +114814,7 @@ async function submissionDataReleaseJob(args, env = process.env) {
     throw new ValidationError(`${TOOL17}.expected_holder must be the 8-character holder: tag off the job's card`, "invalid_expected_holder");
   }
   const holder = args.expected_holder === void 0 ? null : args.expected_holder.trim();
-  const guard2 = holder === null ? heldBy(args.db_path, args.session_token, checkClaim(TOOL17, args.db_path, args.ticket_id, args.session_token, args.claim_no)) : { sql: "substr(locked_by, -8) = ? AND rejected_at IS NULL", params: [holder] };
+  const guard2 = holder === null ? heldBy2(args.db_path, args.session_token, checkClaim(TOOL17, args.db_path, args.ticket_id, args.session_token, args.claim_no)) : { sql: "substr(locked_by, -8) = ? AND rejected_at IS NULL", params: [holder] };
   const written = await submissionDataWriteAll(
     args.db_path,
     [{ sql: `UPDATE tickets SET status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = ? AND status = 'wip' AND ${guard2.sql}`, params: [args.ticket_id, ...guard2.params] }],
@@ -114369,7 +114868,7 @@ async function submissionDataDeleteJob(args, env = process.env) {
     throw new ValidationError(`${TOOL18}.session_token must be the session_token open_session or bootstrap returned`, "invalid_session_token");
   }
   const claims = ids.map((id) => checkClaim(TOOL18, args.db_path, id, args.session_token, args.claim_no));
-  const held2 = heldBy(args.db_path, args.session_token, claims[0]);
+  const held2 = heldBy2(args.db_path, args.session_token, claims[0]);
   const written = await submissionDataWriteAll(
     args.db_path,
     ids.map((id) => ({ sql: `${STAMP2}${held2.sql}))`, params: [id, ...held2.params] })),
@@ -114466,7 +114965,7 @@ async function submissionDataMergeJobs(args, env = process.env) {
   for (const [id, role] of [[a3, "absorbed"], [s3, "survivor"]]) {
     if (exists(`${WAITS_OUTSIDE} b.blocked_id = ? AND b.blocker_id NOT IN (?, ?)`, [id, s3, a3])) return refuse2("blocked", role);
   }
-  const held2 = heldBy(args.db_path, token, checkClaim(TOOL19, args.db_path, s3, token, args.claim_no), "s");
+  const held2 = heldBy2(args.db_path, token, checkClaim(TOOL19, args.db_path, s3, token, args.claim_no), "s");
   const g3 = guard(args.db_path, held2.sql);
   const gp = [a3, s3, ...held2.params];
   const undone = `done_at IS NULL${stepStatusHeld(args.db_path) ? " AND (status IS NULL OR status NOT IN ('cancelled', 'deferred'))" : ""}`;
@@ -114515,7 +115014,7 @@ async function submissionDataMergeJobs(args, env = process.env) {
 
 // src/submission/forms/quick-edit.ts
 import { randomBytes as randomBytes5 } from "node:crypto";
-import { appendFileSync as appendFileSync4, existsSync as existsSync47, mkdirSync as mkdirSync23, readdirSync as readdirSync24, readFileSync as readFileSync36, renameSync as renameSync10, rmSync as rmSync3, statSync as statSync20, unlinkSync as unlinkSync15, writeFileSync as writeFileSync14 } from "node:fs";
+import { appendFileSync as appendFileSync4, existsSync as existsSync47, mkdirSync as mkdirSync23, readdirSync as readdirSync24, readFileSync as readFileSync37, renameSync as renameSync10, rmSync as rmSync3, statSync as statSync20, unlinkSync as unlinkSync15, writeFileSync as writeFileSync15 } from "node:fs";
 import { basename as basename11, dirname as dirname30, join as join52 } from "node:path";
 var PREVIEW = "drafting_forms__preview_edit";
 var APPLY = "drafting_forms__apply_edit";
@@ -114926,7 +115425,7 @@ function planRecast(plan2, op, t3, a3, i3, menu) {
 function planRestore(plan2, op, i3) {
   if (!Number.isInteger(op.remove_line) || op.remove_line <= 0) throw new ValidationError(`${PREVIEW}: restore needs remove_line, the remove's line in the Writing's quick-edits log`, "invalid_remove_line");
   const file = logFile(plan2.db, plan2.filing.id);
-  const text8 = existsSync47(file) ? readFileSync36(file, "utf-8").split("\n")[op.remove_line - 1] : void 0;
+  const text8 = existsSync47(file) ? readFileSync37(file, "utf-8").split("\n")[op.remove_line - 1] : void 0;
   const removed = text8 ? JSON.parse(text8) : void 0;
   const entity = String(removed?.entity);
   const d3 = removed?.op === "remove" && Object.hasOwn(DEPLOY, entity) ? DEPLOY[entity] : void 0;
@@ -115123,7 +115622,7 @@ function tokenFile(db, token) {
 }
 function saveToken(stored) {
   const file = tokenFile(stored.db_path, stored.token);
-  writeFileSync14(`${file}.tmp`, JSON.stringify(stored), "utf-8");
+  writeFileSync15(`${file}.tmp`, JSON.stringify(stored), "utf-8");
   renameSync10(`${file}.tmp`, file);
 }
 function pruneTokens(db) {
@@ -115297,7 +115796,7 @@ async function submissionFormsPreviewEdit(args) {
     const sources = new Set(mapSources(after.documents).map((s3) => s3.title));
     const previewPaths = after.documents.filter((doc) => sources.has(doc.fileName.replace(/\.md$/i, ""))).map((doc) => {
       const path = join52(previewDir2, doc.fileName);
-      writeFileSync14(path, withLegend(doc.markdown, doc.documentType).markdown, "utf-8");
+      writeFileSync15(path, withLegend(doc.markdown, doc.documentType).markdown, "utf-8");
       return path;
     });
     const appliable = jobs2.length === 0 && diff.length > 0;
@@ -115352,7 +115851,7 @@ async function submissionFormsApplyEdit(args) {
   checkSchema(db, APPLY);
   const file = tokenFile(db, args.preview_token);
   if (!existsSync47(file)) return { applied: false, refused: "unknown_token", note: "No preview with that token is recorded for this database. Preview the edit again." };
-  const stored = JSON.parse(readFileSync36(file, "utf-8"));
+  const stored = JSON.parse(readFileSync37(file, "utf-8"));
   if (stored.session_token !== args.session_token) return { applied: false, refused: "other_session", note: "That preview was made in another session. Preview the edit again in this one." };
   if (stored.used_at !== null) return { applied: false, refused: "used_token", note: `That preview was already applied, or its apply refused, at ${stored.used_at}. Preview the edit again.` };
   if (Date.parse(stored.expires_at) < Date.now()) return { applied: false, refused: "expired_token", note: `That preview expired at ${stored.expires_at}. Preview the edit again.` };
@@ -115385,7 +115884,7 @@ function logFile(db, filingId) {
 function appendLog(db, stored, results, revision) {
   const file = logFile(db, stored.filing_id);
   mkdirSync23(dirname30(file), { recursive: true });
-  const before = existsSync47(file) ? readFileSync36(file, "utf-8").split("\n").length - 1 : 0;
+  const before = existsSync47(file) ? readFileSync37(file, "utf-8").split("\n").length - 1 : 0;
   const id = (ref) => ref === null || typeof ref === "number" ? ref : results[ref.$rowid].rowid;
   const appliedAt = (/* @__PURE__ */ new Date()).toISOString();
   const text8 = stored.log.map((e3) => {
@@ -115415,7 +115914,7 @@ function appendLog(db, stored, results, revision) {
 
 // src/page-api/focus.ts
 import { createHash as createHash13, randomUUID as randomUUID10 } from "node:crypto";
-import { existsSync as existsSync48, mkdirSync as mkdirSync24, readFileSync as readFileSync37 } from "node:fs";
+import { existsSync as existsSync48, mkdirSync as mkdirSync24, readFileSync as readFileSync38 } from "node:fs";
 import { dirname as dirname31, join as join53 } from "node:path";
 var FOCUS_SECTIONS = ["submissions", "counter", "rebuttals", "killed"];
 function focusPath(dbPath, filingId, env) {
@@ -115435,7 +115934,7 @@ function readFocus(dbPath, filingIds, env = process.env) {
   for (const id of filingIds) {
     const path = focusPath(dbPath, id, env);
     if (!existsSync48(path)) continue;
-    const record2 = JSON.parse(readFileSync37(path, "utf-8"));
+    const record2 = JSON.parse(readFileSync38(path, "utf-8"));
     if (newest2 === null || record2.at > newest2.at) newest2 = record2;
   }
   return newest2;
@@ -115717,7 +116216,7 @@ async function openSession(matterRoot, practiceDb2, client = {}, unattended = fa
 }
 
 // src/submission/bcsc-form-harness.ts
-import { existsSync as existsSync50, readdirSync as readdirSync26, readFileSync as readFileSync38, realpathSync as realpathSync13, statSync as statSync21 } from "node:fs";
+import { existsSync as existsSync50, readdirSync as readdirSync26, readFileSync as readFileSync39, realpathSync as realpathSync13, statSync as statSync21 } from "node:fs";
 import { win32 as pathWin3220 } from "node:path";
 var DRIVER8 = `import contextlib, io, json, runpy, sys
 payload = json.load(sys.stdin)
@@ -115845,7 +116344,7 @@ function checkSession(root, caseData, sessions, sessionId) {
   if (!existsSync50(ctxPath)) {
     throw new DataServerError(`no session ${sessionId} under ${sessions}. Call this tool with command list to see the sessions.`, "session_not_found");
   }
-  const ctx = JSON.parse(readFileSync38(ctxPath).toString("utf-8").replace(/\0+$/, ""));
+  const ctx = JSON.parse(readFileSync39(ctxPath).toString("utf-8").replace(/\0+$/, ""));
   const same2 = (stored, expected) => {
     if (typeof stored !== "string" || stored === "" || !existsSync50(stored)) return false;
     return realpathSync13.native(stored).toLowerCase() === expected.toLowerCase() && statSync21(stored).isDirectory();
@@ -116203,7 +116702,7 @@ function emailRecipients(dbPath, source, senderKey, env) {
 }
 
 // src/submission/scrutiny-review.ts
-import { copyFileSync as copyFileSync4, existsSync as existsSync53, mkdirSync as mkdirSync25, mkdtempSync as mkdtempSync2, readdirSync as readdirSync29, readFileSync as readFileSync39, realpathSync as realpathSync14, renameSync as renameSync11, rmSync as rmSync4, unlinkSync as unlinkSync16, writeFileSync as writeFileSync15 } from "node:fs";
+import { copyFileSync as copyFileSync4, existsSync as existsSync53, mkdirSync as mkdirSync25, mkdtempSync as mkdtempSync2, readdirSync as readdirSync29, readFileSync as readFileSync40, realpathSync as realpathSync14, renameSync as renameSync11, rmSync as rmSync4, unlinkSync as unlinkSync16, writeFileSync as writeFileSync16 } from "node:fs";
 import { tmpdir as tmpdir4 } from "node:os";
 import { win32 as pathWin3225 } from "node:path";
 
@@ -116309,7 +116808,7 @@ function scrutinyReview(args, env = process.env, installRoot) {
   const scratch = mkdtempSync2(pathWin3225.join(tmpdir4(), "coclerk-scrutiny-"));
   try {
     const excerptFile = pathWin3225.join(scratch, "excerpt.txt");
-    writeFileSync15(excerptFile, read3.excerpt ?? "", "utf-8");
+    writeFileSync16(excerptFile, read3.excerpt ?? "", "utf-8");
     const ctx = {
       env,
       installRoot,
@@ -116331,7 +116830,7 @@ function scrutinyReview(args, env = process.env, installRoot) {
     if (finding.answer_file === null && finding.text !== null) {
       const name = `${pathWin3225.basename(current.cited.pdf, ".pdf").replace(/^1 cited/, "3 finding")}.txt`;
       const from = pathWin3225.join(scratch, "finding.txt");
-      writeFileSync15(from, finding.text, "utf-8");
+      writeFileSync16(from, finding.text, "utf-8");
       current.files.push({ from, name });
       findingFile = pathWin3225.join(folder, name);
     }
@@ -116489,7 +116988,7 @@ function buildPackage(ctx, spec) {
     cited: cited2.extract,
     context: context.extract,
     files: [...cited2.files, ...context.files],
-    proposedExcerpt: spec.span ? readFileSync39(proposedFile, "utf-8").replace(/\r?\n$/, "") : null
+    proposedExcerpt: spec.span ? readFileSync40(proposedFile, "utf-8").replace(/\r?\n$/, "") : null
   };
 }
 function resolve10(ctx, authority) {
@@ -116860,7 +117359,7 @@ function writeEmlPath(env = process.env, installRoot) {
 }
 
 // src/correspondence/message.ts
-import { readdirSync as readdirSync31, readFileSync as readFileSync40, realpathSync as realpathSync16, statSync as statSync22 } from "node:fs";
+import { readdirSync as readdirSync31, readFileSync as readFileSync41, realpathSync as realpathSync16, statSync as statSync22 } from "node:fs";
 import { extname as extname5, win32 as pathWin3227 } from "node:path";
 
 // src/correspondence/cfb.ts
@@ -117765,7 +118264,7 @@ function scanMessageHeaders(root) {
       if (seen >= SCAN_LIMIT2) return false;
       seen += 1;
       try {
-        messages.push({ path: relPath, ...parseMessageHeaders(readFileSync40(full), extname5(entry2.name)) });
+        messages.push({ path: relPath, ...parseMessageHeaders(readFileSync41(full), extname5(entry2.name)) });
       } catch {
       }
     }
@@ -117805,7 +118304,7 @@ function readMessage(args) {
     if (!MESSAGE_EXTENSIONS.has(ext)) {
       throw new DataServerError(`not a message file: ${relative5} (only .msg and .eml)`, "unsupported_extension");
     }
-    return { path: relative5, ...parseMessage(readFileSync40(full2), ext) };
+    return { path: relative5, ...parseMessage(readFileSync41(full2), ext) };
   }
   const needle = args.from.trim().toLowerCase();
   const scan = scanMessageHeaders(root);
@@ -117820,14 +118319,14 @@ function readMessage(args) {
   const full = pathWin3227.join(root, newest2.path);
   return {
     path: newest2.path,
-    ...parseMessage(readFileSync40(full), extname5(full)),
+    ...parseMessage(readFileSync41(full), extname5(full)),
     other_candidates: matches.slice(1, 1 + OTHER_CANDIDATES),
     scan_truncated: scan.truncated
   };
 }
 
 // src/correspondence/reply-draft.ts
-import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync32, readFileSync as readFileSync41, realpathSync as realpathSync17, writeSync as writeSync6 } from "node:fs";
+import { closeSync as closeSync8, openSync as openSync8, readdirSync as readdirSync32, readFileSync as readFileSync42, realpathSync as realpathSync17, writeSync as writeSync6 } from "node:fs";
 import { basename as basename13, extname as extname6, win32 as pathWin3228 } from "node:path";
 
 // src/correspondence/zip.ts
@@ -118085,7 +118584,7 @@ function exportDocx(args, root) {
   }
   if (extname6(source).toLowerCase() !== ".md") throw new ValidationError(`path must be a saved .md draft: ${given}`);
   const stem3 = basename13(source, extname6(source));
-  const docx = markdownToDocx(readFileSync41(source, "utf-8"));
+  const docx = markdownToDocx(readFileSync42(source, "utf-8"));
   const written = writeNextFree(dir, stem3, ".docx", docx);
   const wanted = pathWin3228.join(dir, `${stem3}.docx`);
   return {
@@ -119249,7 +119748,7 @@ function rulesLifecycle(dbPath, since) {
 
 // src/preferences/tools.ts
 import { randomUUID as randomUUID11 } from "node:crypto";
-import { existsSync as existsSync55, readFileSync as readFileSync42 } from "node:fs";
+import { existsSync as existsSync55, readFileSync as readFileSync43 } from "node:fs";
 import { join as join55 } from "node:path";
 
 // src/preferences/redact.ts
@@ -119331,7 +119830,7 @@ function text4(raw, name) {
 }
 function readJson2(file) {
   try {
-    return JSON.parse(readFileSync42(file, "utf-8"));
+    return JSON.parse(readFileSync43(file, "utf-8"));
   } catch (err) {
     throw new DataServerError(`${file} is not valid JSON: ${err.message}`, "invalid_file");
   }
@@ -119414,7 +119913,7 @@ async function preferencesWrite(args, env = process.env, seams = {}) {
 
 // src/suggestions/store.ts
 import { randomUUID as randomUUID12 } from "node:crypto";
-import { existsSync as existsSync56, readFileSync as readFileSync43 } from "node:fs";
+import { existsSync as existsSync56, readFileSync as readFileSync44 } from "node:fs";
 import { dirname as dirname34, join as join56 } from "node:path";
 var STORE_FOLDER = "suggestions";
 var STORE_FILE = "suggestions.json";
@@ -119471,7 +119970,7 @@ function newSuggestionRecord(payload, title, now) {
 }
 function readJson3(file) {
   try {
-    const value2 = JSON.parse(readFileSync43(file, "utf-8"));
+    const value2 = JSON.parse(readFileSync44(file, "utf-8"));
     if (value2 === null || typeof value2 !== "object" || Array.isArray(value2)) throw new Error("not a JSON object");
     return value2;
   } catch (err) {
@@ -120059,7 +120558,7 @@ import { existsSync as existsSync60, unlinkSync as unlinkSync17 } from "node:fs"
 import { join as join61 } from "node:path";
 
 // src/suggestions/crosscheck.ts
-import { existsSync as existsSync57, readFileSync as readFileSync44 } from "node:fs";
+import { existsSync as existsSync57, readFileSync as readFileSync45 } from "node:fs";
 import { join as join58 } from "node:path";
 
 // src/case/list-record-names.ts
@@ -120212,7 +120711,7 @@ function loadStopWords(env = process.env, installRoot) {
   for (const file of STOP_WORD_FILES) {
     const path = join58(root, ...STOP_WORDS_DIR.split("/"), file);
     if (!existsSync57(path)) throw new DataServerError("The suggestion check is missing its word lists. Update the lawyer plugin.", "stop_words_missing");
-    for (const word of parseStopWords(readFileSync44(path, "utf-8"))) words2.add(word);
+    for (const word of parseStopWords(readFileSync45(path, "utf-8"))) words2.add(word);
   }
   return words2;
 }
@@ -120704,7 +121203,7 @@ function renderCardHtml(card, port, token) {
 }
 
 // src/suggestions/mockup.ts
-import { existsSync as existsSync58, readFileSync as readFileSync45 } from "node:fs";
+import { existsSync as existsSync58, readFileSync as readFileSync46 } from "node:fs";
 import { join as join59 } from "node:path";
 var PLACEHOLDERS_DIR = "suggestion/references/mockup";
 var PLACEHOLDERS_FILE = "placeholders.txt";
@@ -120717,7 +121216,7 @@ function loadPlaceholders(env = process.env, installRoot) {
   const root = resolveShippedRoot(PLACEHOLDERS_DIR, env, { subject: "the suggestion mockup placeholders", plugin: "lawyer", installRoot }).root;
   const path = join59(root, ...PLACEHOLDERS_DIR.split("/"), PLACEHOLDERS_FILE);
   if (!existsSync58(path)) throw new DataServerError("The suggestion mockup is missing its placeholder text. Update the lawyer plugin.", "placeholders_missing");
-  return parsePlaceholders(readFileSync45(path, "utf-8"));
+  return parsePlaceholders(readFileSync46(path, "utf-8"));
 }
 var REFUSED = [
   [/<script/i, "a script"],
@@ -120882,7 +121381,7 @@ function renderMockupPage(opts) {
 
 // src/suggestions/observation.ts
 import { randomUUID as randomUUID13 } from "node:crypto";
-import { existsSync as existsSync59, readdirSync as readdirSync33, readFileSync as readFileSync46 } from "node:fs";
+import { existsSync as existsSync59, readdirSync as readdirSync33, readFileSync as readFileSync47 } from "node:fs";
 import { join as join60 } from "node:path";
 
 // src/suggestions/environment.ts
@@ -121259,7 +121758,7 @@ function loadObservationTexts(env = process.env, installRoot) {
   const root = resolveShippedRoot(OBSERVATION_TEXTS_PATH, env, { subject: "the suggestion observation texts", plugin: "lawyer", installRoot }).root;
   const path = join60(root, ...OBSERVATION_TEXTS_PATH.split("/"));
   if (!existsSync59(path)) throw new DataServerError("The suggestion observation texts are missing. Update the lawyer plugin.", "observation_texts_missing");
-  return parseObservationTexts(readFileSync46(path, "utf-8"));
+  return parseObservationTexts(readFileSync47(path, "utf-8"));
 }
 function isObject7(value2) {
   return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
@@ -122563,7 +123062,7 @@ async function suggestionLogWrite(args, env = process.env) {
 }
 
 // src/files/repo-docs.ts
-import { existsSync as existsSync61, mkdirSync as mkdirSync28, readFileSync as readFileSync47, statSync as statSync23, writeFileSync as writeFileSync16 } from "node:fs";
+import { existsSync as existsSync61, mkdirSync as mkdirSync28, readFileSync as readFileSync48, statSync as statSync23, writeFileSync as writeFileSync17 } from "node:fs";
 import { win32 as pathWin3229 } from "node:path";
 var rootCache2 = /* @__PURE__ */ new Map();
 function docsRoot(env = process.env) {
@@ -122600,7 +123099,7 @@ function repoDocsWrite(relative5, content, overwrite = false, env) {
     );
   }
   mkdirSync28(pathWin3229.dirname(resolved), { recursive: true });
-  writeFileSync16(resolved, content, "utf-8");
+  writeFileSync17(resolved, content, "utf-8");
   return {
     path: toPosixRelative(root, resolved),
     bytes: Buffer.byteLength(content, "utf-8"),
@@ -122619,7 +123118,7 @@ function repoDocsRead(relative5, env) {
   }
   return {
     path: toPosixRelative(root, resolved),
-    content: readFileSync47(resolved, "utf-8")
+    content: readFileSync48(resolved, "utf-8")
   };
 }
 
@@ -124173,7 +124672,7 @@ var LEGAL_RESEARCH_FIXTURE = {
 };
 
 // src/pages/preview-file.ts
-import { mkdirSync as mkdirSync29, writeFileSync as writeFileSync17 } from "node:fs";
+import { mkdirSync as mkdirSync29, writeFileSync as writeFileSync18 } from "node:fs";
 import { tmpdir as tmpdir5 } from "node:os";
 import { join as join62 } from "node:path";
 var FIXTURE_PREVIEW_FOLDER = "Probanda fixture previews";
@@ -124197,7 +124696,7 @@ function writePreview(dir, base, html, fixture) {
   for (let n3 = 1; ; n3++) {
     const path = join62(dir, `${base} preview ${n3}.html`);
     try {
-      writeFileSync17(path, text8, { flag: "wx" });
+      writeFileSync18(path, text8, { flag: "wx" });
       return path;
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
@@ -124315,9 +124814,9 @@ import {
   existsSync as existsSync62,
   mkdirSync as mkdirSync30,
   readdirSync as readdirSync35,
-  readFileSync as readFileSync52,
+  readFileSync as readFileSync53,
   statSync as statSync25,
-  writeFileSync as writeFileSync18
+  writeFileSync as writeFileSync19
 } from "node:fs";
 import { win32 as pathWin3232 } from "node:path";
 
@@ -124393,11 +124892,11 @@ function downloadsDir(env = process.env) {
 }
 
 // src/files/text-extract.ts
-import { readFileSync as readFileSync51 } from "node:fs";
+import { readFileSync as readFileSync52 } from "node:fs";
 import { win32 as pathWin3231 } from "node:path";
 
 // src/files/extract/doc.ts
-import { readFileSync as readFileSync48 } from "node:fs";
+import { readFileSync as readFileSync49 } from "node:fs";
 var CFB_SIGNATURE = Buffer.from([208, 207, 17, 224, 161, 177, 26, 225]);
 var END_OF_CHAIN2 = 4294967294;
 var FREE_SECT = 4294967295;
@@ -124538,7 +125037,7 @@ function plain(raw) {
   return out;
 }
 function docText(path) {
-  const streams = cfbStreams(readFileSync48(path));
+  const streams = cfbStreams(readFileSync49(path));
   const wd = streams.get("WordDocument");
   if (!wd || wd.length < 154) throw new Error("not a Word document (no WordDocument stream)");
   if (wd.readUInt16LE(0) !== WORD_IDENT) throw new Error("not a Word document (bad FIB identifier)");
@@ -124586,7 +125085,7 @@ ${notes.join("\n\n")}
 }
 
 // src/files/extract/docx.ts
-import { readFileSync as readFileSync49 } from "node:fs";
+import { readFileSync as readFileSync50 } from "node:fs";
 import { inflateRawSync as inflateRawSync2 } from "node:zlib";
 var EOCD_SIG = 101010256;
 var CENTRAL_SIG = 33639248;
@@ -124623,12 +125122,12 @@ function zipEntry(zip, name) {
   throw new Error(`no ${name} in the archive`);
 }
 function docxText(path) {
-  const xml = zipEntry(readFileSync49(path), "word/document.xml").toString("utf-8");
+  const xml = zipEntry(readFileSync50(path), "word/document.xml").toString("utf-8");
   return xml.replace(/<w:tab\/>/g, "	").replace(/<\/w:p>/g, "\n").replace(/<w:br[^>]*\/>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
 }
 
 // src/files/extract/pdf.ts
-import { readFileSync as readFileSync50 } from "node:fs";
+import { readFileSync as readFileSync51 } from "node:fs";
 var pdfjs;
 var quietDepth = 0;
 var savedLog = console.log;
@@ -124661,7 +125160,7 @@ function loadPdfJs() {
 var PdfExtractorUnavailable = class extends Error {
 };
 async function pdfPages(path) {
-  const data = new Uint8Array(readFileSync50(path));
+  const data = new Uint8Array(readFileSync51(path));
   if (data.length === 0) throw new Error("file is empty (0 bytes)");
   return quietStdout(async () => {
     let lib;
@@ -124714,7 +125213,7 @@ async function extractText(path) {
   let result;
   try {
     if (COPIED_EXTENSIONS.has(ext)) {
-      result = { status: "ok", kind: "text", method: "copy", text: readFileSync51(path, "utf-8"), pages: null };
+      result = { status: "ok", kind: "text", method: "copy", text: readFileSync52(path, "utf-8"), pages: null };
     } else if (ext === ".pdf") {
       const scanned = (await classifyPdfPages(path)).indexOf("scanned");
       if (scanned >= 0) {
@@ -124819,7 +125318,7 @@ function appendManifest(destinationDir, record2) {
   }
   const path = pathWin3232.join(dir, MANIFEST);
   appendFileSync5(path, JSON.stringify(record2) + "\n", "utf-8");
-  const records = readFileSync52(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
+  const records = readFileSync53(path, "utf-8").split("\n").filter((line) => line.trim() !== "").length;
   return { path, records };
 }
 function saveAnswer(destinationDir, filename, text8, fromScratch, fromRender) {
@@ -124867,7 +125366,7 @@ function scratchBytes(destinationDir, fromScratch) {
   if (!statSync25(source).isFile()) {
     throw new DataServerError(`from_scratch is not a file: ${source}`, "not_found");
   }
-  const body = readFileSync52(source);
+  const body = readFileSync53(source);
   if (body.length === 0) {
     throw new DataServerError(`from_scratch is empty: ${source}`, "invalid_argument");
   }
@@ -124913,7 +125412,7 @@ function renderBytes(destinationDir, fromRender) {
   if (!source.toLowerCase().startsWith(draft.toLowerCase() + "\\") || !statSync25(source).isFile()) {
     throw new DataServerError(`from_render is not a mockup in this matter's ${draft}: ${source}`, "not_render");
   }
-  const mockup = readFileSync52(source, "utf-8");
+  const mockup = readFileSync53(source, "utf-8");
   const { copy, mockupOnly } = CASE_BRIEF_HEADER.test(mockup) ? { copy: caseBriefCopy(mockup, source), mockupOnly: [] } : memoCopy(mockup);
   if (copy.trim() === "") throw new DataServerError(`from_render is empty: ${source}`, "invalid_argument");
   return { body: Buffer.from(copy, "utf-8"), mockupOnly };
@@ -125022,7 +125521,7 @@ function manifestMarker(law, file) {
   const path = pathWin3232.join(law, MANIFEST);
   if (!existsSync62(path)) return null;
   let marker = null;
-  for (const line of readFileSync52(path, "utf-8").split("\n")) {
+  for (const line of readFileSync53(path, "utf-8").split("\n")) {
     if (line.trim() === "") continue;
     let record2;
     try {
@@ -125136,7 +125635,7 @@ async function lawFolderText(matterRoot, destinationDir, options = {}) {
     }
     const textPath = pathWin3232.join(outDir, `${file}.txt`);
     const body = Buffer.from(read3.text, "utf-8");
-    writeFileSync18(textPath, body);
+    writeFileSync19(textPath, body);
     rows4.push({ file, text_path: textPath, bytes: body.length, method: read3.method, status: "ok" });
   }
   return { out_dir: outDir, files: rows4 };
@@ -125243,7 +125742,7 @@ function writeNewVersion(dir, filename, body) {
     const name = nextVersionName(dir, stem3, ext);
     const path = pathWin3232.join(dir, name);
     try {
-      writeFileSync18(path, body, { flag: "wx" });
+      writeFileSync19(path, body, { flag: "wx" });
     } catch (err) {
       if (err.code === "EEXIST") continue;
       throw err;
@@ -125349,7 +125848,7 @@ function researchPreflight(seams = {}) {
 
 // src/files/legislation-search.ts
 import { createHash as createHash15 } from "node:crypto";
-import { readFileSync as readFileSync53, statSync as statSync26 } from "node:fs";
+import { readFileSync as readFileSync54, statSync as statSync26 } from "node:fs";
 import { win32 as pathWin3233 } from "node:path";
 var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".txt"]);
 var HTML_EXTENSIONS2 = /* @__PURE__ */ new Set([".htm", ".html"]);
@@ -125384,7 +125883,7 @@ function legislationSearch(matterRoot, path, terms2, regex, pages, seams = {}, p
   }
   const ext = pathWin3233.extname(file).toLowerCase();
   const range = checkPages(pages, ext);
-  const bytes = readFileSync53(file);
+  const bytes = readFileSync54(file);
   const { lines: lines2, source, marker } = textLines(file, ext, bytes, range, seams);
   const currency = marker ?? lines2.find((l3) => /\bcurrent to\b/i.test(l3.text))?.text ?? null;
   const chunks = fixedChunks(sectionChunks(lines2));
@@ -125689,7 +126188,7 @@ function sectionBlocks(chunks) {
 
 // src/files/extract/page-compare.ts
 import { createHash as createHash16 } from "node:crypto";
-import { mkdirSync as mkdirSync31, writeFileSync as writeFileSync19 } from "node:fs";
+import { mkdirSync as mkdirSync31, writeFileSync as writeFileSync20 } from "node:fs";
 import { isAbsolute as isAbsolute9, join as join65 } from "node:path";
 var FPDF_ANNOT = 1;
 var GROUP_MAX = 5;
@@ -125727,7 +126226,7 @@ async function pdfPagesCompare(args, wasm = DEFAULT_WASM) {
             const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
             const file = join65(dir, `${name}.png`);
             const rgb = facts.rgb.subarray(top * facts.width * 3, (top + rows4) * facts.width * 3);
-            writeFileSync19(file, encodePng(rgb, facts.width, rows4));
+            writeFileSync20(file, encodePng(rgb, facts.width, rows4));
             return file;
           });
         };
@@ -125893,7 +126392,7 @@ async function saveAnswerTool(args, env = process.env) {
   const job = jobIdentity(TOOL20, args);
   if (job === null) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch, args.from_render);
   const { dbPath, id, token, claim } = job;
-  const held2 = heldBy(dbPath, token, claim);
+  const held2 = heldBy2(dbPath, token, claim);
   if (submissionDataQuery(dbPath, "SELECT id FROM tickets WHERE id = ?", [id]).rows.length === 0) {
     throw new NotFoundError(`${TOOL20}: no job ${id} in ${dbPath}; nothing was saved`, "not_found");
   }
@@ -126165,7 +126664,11 @@ var dataTools = [
     }
     const sql = args.generator !== void 0 ? generatorSql(args.matter_root, args.generator) : args.sql_script;
     const runId = args.run_id;
-    const precheck = runId === void 0 ? void 0 : async () => {
+    const precheck = async () => {
+      if (args.expected_revision !== void 0 && matterRevision(args.matter_root) !== args.expected_revision) {
+        throw new DataServerError("This matter has changed since these changes were worked out, so they were not applied. Nothing was written.", "stale_revision");
+      }
+      if (runId === void 0) return;
       const run2 = await assertLiveRun(args.matter_root, runId);
       if (run2.orchestrator && args.sql_script !== void 0 && Buffer.byteLength(args.sql_script, "utf-8") > INLINE_SQL_CAP) {
         throw new ValidationError("too long to send inline: use a generator or ingest_result", "too_long");
@@ -126181,7 +126684,14 @@ var dataTools = [
   defineTool("matter_data__ingest_authority", (args) => ingestAuthority(args)),
   defineTool("matter_data__relocate_source", (args) => relocateSource(args)),
   defineTool("matter_data__housekeeping_log", (args) => housekeepingLog(args)),
-  defineTool("matter_data__procedural_history_append", (args) => proceduralHistoryAppend(args)),
+  defineTool("matter_data__procedural_history_append", async (args) => {
+    const lock = await acquireCaseLock(args.matter_root);
+    try {
+      return proceduralHistoryAppend(args);
+    } finally {
+      lock.release();
+    }
+  }),
   defineTool(
     "matter_data__migrate",
     (args) => {
