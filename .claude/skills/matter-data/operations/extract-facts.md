@@ -215,16 +215,17 @@ Writes go through `matter_data__execute` (§2.3), which regenerates `evidence.sq
 
 ## 8. Report-only mode (bare `/ingest`)
 
-Reached when `/ingest` names no document or folder. It lists every file in the matter that is not yet held, by folder, and **writes nothing and asks nothing**: every database read goes through `matter_data__query`, nothing is moved, and no question is put. The practitioner names what to ingest afterwards, and that request takes the ordinary paths.
+Reached when `/ingest` names no document or folder. It lists every file in the matter that is not yet ingested, by folder, and **writes nothing and asks nothing**: every database read goes through `matter_data__query` and nothing is moved. Its proposal is a statement, not a question. The practitioner's next message answers it, and that request takes the ordinary paths.
 
 1. **Scope.** Read the practitioner's folder map (`practice_data__folder_map`). With `status` `no_map`, run `/probanda-setup` step 6 first. The scope is the whole matter root, its loose files included, less every file the map marks `never_ingest` (step 2). Privileged and authority folders are scanned: privilege and authority handling happen at ingestion.
 2. **Walk.** §2's `find_candidate_sources` over the matter root, in the bridged shell or through a host tool, never with `matter_root` as a sandbox path (conventions §2.2). Resolve every file found in one `practice_data__folder_map` call (`paths`, stored form), and drop each file the answer marks `never_ingest`, before any hash.
 3. **Classify.** §3's `classify` for every file. Its semantics are §3's alone.
 4. **Versions.** [`supersede-draft.md`](supersede-draft.md) §1's `candidates` over the `new` files and the registered top-level court rows, with an empty `scan_folder` (the whole matter). Read the pairs only: that operation's §2 onwards, and §6c, are not run. §6's proceeding-linkage check is not run either.
 5. **Report**, naming folders and files, never stores, tables or tools:
-   - one table, a row per folder: counts of new, changed, re-extract, duplicate, superseded, partial and corrupt files;
-   - the new, changed and re-extract files by name, under their folder. A `new` file that `candidates` pairs with another file, and a changed file whose held row is a court document, is marked: ingesting it will be proposed as a supersession;
+   - one table, a row per folder in the matter's own folder order: counts of new, changed, re-extract, duplicate, superseded, partial and corrupt files;
+   - the new, changed and re-extract files by name, under their folder, in that order. A `new` file that `candidates` pairs with another file, and a changed file whose held row is a court document, is marked: ingesting it will be proposed as a supersession;
    - partial files with their `/ingest` route, and corrupt files with the source ids holding their hash (§3);
    - non-ingestable extensions found, with counts (§2's `skipped_extensions`);
    - the folders left out under step 2 as never ingested, each with its type's name;
-   - the folders holding files the map gives no type, so the practitioner can add them to it.
+   - the folders holding files the map gives no type, so the practitioner can add them to it;
+   - **One proposal, last, as a statement.** Count only new, changed and re-extract files, which together are the files not yet ingested. With 19 or fewer in all, propose all of them as one batch. Otherwise propose the first folder, in the order below, with 20 or more. With no such folder, propose all of them together. With none, propose nothing. The order is by type, and a folder takes the earliest type its files carry, with ties in folder order: client communications, retainer and billing; correspondence with opposing lawyers, unrepresented parties, the court and non-parties; court filings; correspondence with witnesses and experts, searches, work product, trial materials; disbursement records; documents exchanged, whose evidence has been listed and produced; authorities; last, any folder the map gives no type, such as a case map, whose evidence is raw and unreviewed. An all-files batch is handed over in this same order.
