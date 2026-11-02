@@ -1,7 +1,7 @@
 // A loose thread that left the board without being outlined (schema v75): seeds.discarded_at and
 // seeds.suggested_at. A discarded or suggested thread is not open, so it is out of fetchOpenSeeds,
 // the Defer write and the latest-activity read, and is listed by fetchResolvedSeeds on the matter's
-// one Loose Threads page. No Milestone draws or counts a loose thread. A database held at v74 has
+// one Loose Threads page. No Work Board draws or counts a loose thread. A database held at v74 has
 // neither column and still reads, with none of either.
 
 import assert from "node:assert/strict";
@@ -142,7 +142,7 @@ test("fetchLatestActivity ignores a discarded and a suggested thread", async (t)
   assert.equal(latest()[1], "2026-10-09T10:00", "a restored thread counts again");
 });
 
-test("no Milestone counts a loose thread or carries a resolved one", async (t) => {
+test("no Work Board counts a loose thread or carries a resolved one", async (t) => {
   const { dbPath } = await current(t);
   const data = buildPreFilingBoardData(dbPath, fetchProceeding(dbPath, 1), META);
   assert.deepEqual(data.seeds.map((s) => s.id), [1], "the open thread, for its job card's line alone");

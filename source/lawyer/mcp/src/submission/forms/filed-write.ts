@@ -44,7 +44,7 @@ export async function submissionDataRecordFiled(args: RecordFiledArgs, env: Node
   if (!isCalendarDate(args.filed_on)) throw new ValidationError(`${TOOL}.filed_on must be a calendar date, YYYY-MM-DD`, "invalid_filed_on");
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows as unknown as FilingRow[];
   if (filing === undefined) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
-  if (isJobOnlyBoard(filing)) throw refused(`Milestone ${filing.id} has no Writing, so there is nothing to record as filed`, "milestone_only");
+  if (isJobOnlyBoard(filing)) throw refused(`Work Board ${filing.id} has no Writing, so there is nothing to record as filed`, "milestone_only");
   if (filing.retired_on) throw refused(`"${filing.title}" was retired on ${filing.retired_on}`, "writing_retired");
   if (filing.filed_on && filing.sent_copy_id !== null && SERVED_KINDS.has(filing.kind)) {
     throw refused(

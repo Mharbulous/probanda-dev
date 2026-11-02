@@ -65,7 +65,7 @@ function internalCardText(drafting: readonly GoalCriterion[], jobs: number): str
   return reviewOnly(drafting) ? REVIEW_ONLY_TEXT : null;
 }
 
-/** The card string of a type that declares no goal criteria (spec §5 "Milestone"). It never fires
+/** The card string of a type that declares no goal criteria (spec §5 "Work Board"). It never fires
  * the filing-ready declaration: its goal stays pending. */
 const NO_CRITERIA_TEXT = "No completion criteria are declared for this type of Writing.";
 

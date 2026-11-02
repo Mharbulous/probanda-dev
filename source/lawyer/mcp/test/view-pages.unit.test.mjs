@@ -53,7 +53,7 @@ const FIXTURES = {
 
 /** sha256 of renderViewPageHtml(page, META, FIXTURES[page.name]), taken from the inline-string pages before the move to templates;
  * Procedural History's and Material Facts' at the split of Provable Facts (docs/ADRs/0011); Arguments' at its badge filter;
- * the rest retaken on 2026-10-29 for 8be771b7, which renamed board.css's first comment ("Job Board" to "Milestone");
+ * the rest retaken on 2026-10-29 for 8be771b7, which renamed board.css's first comment ("Job Board" to "Work Board");
  * Arguments' retaken again on 2026-10-31 for e0065be, which added the session focus pointer to arguments.js;
  * Legal Research's taken on 2026-11-01, when it replaced Legal Memos, and retaken that day when Case Briefs listed each earlier file,
  * and again for the four tabs, the noting-up badges and the Legal Memos sections, and for the file link through the page API. */

@@ -1,6 +1,6 @@
 """Tests for loose threads after the loose-threads job was dropped (2026-10-29).
 
-A thread is worked only by outlining it on a Milestone the practitioner names. These pin the rules
+A thread is worked only by outlining it on a Work Board the practitioner names. These pin the rules
 that outlived the job: discards need the practitioner's yes, and an instruction about the held
 job's own work is applied, not captured.
 

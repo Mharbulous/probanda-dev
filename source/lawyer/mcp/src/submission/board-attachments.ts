@@ -1,7 +1,7 @@
 // A board's attachments as found on disk (ADR 0042): a client letter's or a reply's file, or another
-// party's filed document (schema v81), attached to a Milestone by a board_attachments row that holds
+// party's filed document (schema v81), attached to a Work Board by a board_attachments row that holds
 // only the board and the path (schema v67).
-// The Milestone page and board_card's attached lane both read them here, at the moment they are
+// The Work Board page and board_card's attached lane both read them here, at the moment they are
 // written or read, so nothing about a file is ever stored.
 //
 // A client letter's counsel's-review status lives only in its first line (/draft letters.md section

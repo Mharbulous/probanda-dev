@@ -9,11 +9,11 @@ import { deadlineCriteria, type MatterDates, type PageDates, pageDates } from ".
 import { liveMembers, memberRef, pageGroups } from "./matter-page-groups.js";
 import { readManifest, type RenderManifest } from "./render-manifest.js";
 
-/** What the Milestone's header draws when its caller read no dates: a direct call, never a tool entry point. */
+/** What the Work Board's header draws when its caller read no dates: a direct call, never a tool entry point. */
 export const DATES_NOT_READ: MatterDates = { note: "This matter's dates were not read." };
 
 /**
- * One filing's Milestone section, built as a render builds it, from the inventory its last render
+ * One filing's Work Board section, built as a render builds it, from the inventory its last render
  * saved in the manifest: a filing never rendered reads null, so its Goal card reads pending. No
  * appeal deadline on this path (bootstrap's rule), and no party is read, since the board reads none.
  * `dates` gives its linked deadlines' criteria, as a render's own section has them. `manifest` is that

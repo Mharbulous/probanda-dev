@@ -107,7 +107,7 @@ SELECT id, title, status, rejected_at, locked_by, priority FROM tickets WHERE id
 
 ## 6. Step progress
 
-Tick each step of the approved plan as it completes, with `drafting_data__set_step` `status: "done"` (§6b), so that a successor session (after an interrupted `wip` job is taken over) reads off the Milestone what's already done. Read the step's `ordinal` and `text` off the card first. `set` means the stamp landed. `not_held` means the holder changed: stop, and run §2's scope read, whose row says why. `done` means the step was already stamped, and a stamp stays as it is.
+Tick each step of the approved plan as it completes, with `drafting_data__set_step` `status: "done"` (§6b), so that a successor session (after an interrupted `wip` job is taken over) reads off the Work Board what's already done. Read the step's `ordinal` and `text` off the card first. `set` means the stamp landed. `not_held` means the holder changed: stop, and run §2's scope read, whose row says why. `done` means the step was already stamped, and a stamp stays as it is.
 
 **Stamp only work that ran.** A step blocked by a missing credential or an unreachable source is set to ↻ with `drafting_data__set_step` (§6b), never stamped ☑. A stamp is frozen once written, so a step stamped without its work would report that work done for good.
 
@@ -168,7 +168,7 @@ SELECT id, filing_id, origin_ticket_id, idea FROM seeds
 
 1. **Session entry.** `drafting_forms__open_session` with the matter root gives `db_path` and `draft_dir`. A refusal, or no drafting database for the matter, means there is no board: capture nothing and report that.
 2. **Resolve the board from the origin.**
-   - A Writing id: the Writing and its proceeding, `SELECT proceeding_id, retired_on, kind FROM filings WHERE id = ?`. A retired Writing has no Milestone page, and neither has a research memo or case brief (`kind` `research_memo`, `research_memo_irac`, `research_memo_creac` or `case_brief`), so its threads go on the proceeding with `filing_id` NULL, which shows them on every live Writing's board in it, or on the proceeding's own board when it has no other Writing. No row: there is no board.
+   - A Writing id: the Writing and its proceeding, `SELECT proceeding_id, retired_on, kind FROM filings WHERE id = ?`. A retired Writing has no Work Board page, and neither has a research memo or case brief (`kind` `research_memo`, `research_memo_irac`, `research_memo_creac` or `case_brief`), so its threads go on the proceeding with `filing_id` NULL, which shows them on every live Writing's board in it, or on the proceeding's own board when it has no other Writing. No row: there is no board.
    - A plain draft file attached to a board (a client letter's or a reply's file; `filing-checklists.md` §14): that board, `SELECT a.proceeding_id, CASE WHEN f.kind IN ('research_memo', 'research_memo_irac', 'research_memo_creac', 'case_brief') THEN NULL ELSE a.filing_id END AS filing_id FROM board_attachments a LEFT JOIN filings f ON f.id = a.filing_id WHERE lower(a.path) = lower(?)`, the file's stored path. A row naming a research memo or case brief is on its proceeding's board, so its threads take `filing_id` NULL.
    - Any other plain draft file: the proceeding it serves. `SELECT id, forum, file_number, style_of_cause FROM proceedings ORDER BY id`. One row is the board, with `filing_id` NULL. Several: ask the practitioner once which proceeding the draft serves, naming each by its forum and file number, and capture every thread of the return on the one they name. None: there is no board.
 3. **Write every thread in one script**, one `INSERT` per thread:
@@ -243,7 +243,7 @@ To bring it back, the mirror write: `UPDATE seeds SET deferred_at = NULL WHERE i
 
 **Then the open sources.** A job whose card prints an open source on its `sources to get:` line is completed only as `references/jobs-common.md` §2 ("Before completing a job with open sources") says: named in one line, on the practitioner's yes, each then closed `not_retrieved`.
 
-The completion, its confirm-read and the rewrite of the matter's pages (the Litigation Strategy page and each Milestone page, ADR 0033's 2026-10-05 amendment) run as one call, `drafting_data__complete_job`, with `db_path`, `ticket_id`, `session_token` and `draft_dir` from session entry; the SQL here is what that tool runs and is kept as the documented semantics.
+The completion, its confirm-read and the rewrite of the matter's pages (the Litigation Strategy page and each Work Board page, ADR 0033's 2026-10-05 amendment) run as one call, `drafting_data__complete_job`, with `db_path`, `ticket_id`, `session_token` and `draft_dir` from session entry; the SQL here is what that tool runs and is kept as the documented semantics.
 
 The supersession of **only the `queued` conflict partners** runs first, then the completion — both statements carrying this session's own token. A `wip` partner's lock belongs to another session and must never be cleared by this one. The tool binds the job's own id to every `2` below (this is one job's own completion, not a join across two):
 
@@ -264,7 +264,7 @@ Keep the token guard on both statements and keep the supersession first: an ungu
 
 The two statements run in one transaction, in order, and see each other's writes, so statement 1 reads the token statement 2 is about to clear. `superseded` in the result is statement 1's row count and `changes` is statement 2's.
 
-If a conflict partner is `wip`, do not touch it — report it to the practitioner (the Milestone already shows it as "Either/or with ... in progress") and let its own session complete or supersede it in turn. The session then ends its job work; it is never assigned another (design §3.4).
+If a conflict partner is `wip`, do not touch it — report it to the practitioner (the Work Board already shows it as "Either/or with ... in progress") and let its own session complete or supersede it in turn. The session then ends its job work; it is never assigned another (design §3.4).
 
 The tool then runs the confirm-read:
 
@@ -278,11 +278,11 @@ and returns its outcome:
 - **`not_held`** — another session's token is on the row: a take-over (§4). **`shelved`** — `locked_by` NULL with `rejected_at` stamped: a §10a shelving. **`no_match`** — neither statement matched, and the returned row shows why. On any of these neither statement landed: report which one it was and stop.
 - **`steps_open`** — before either statement, the tool read a step not resolved (§6b): ☐, ↻ or ⏳, a ⏳ whose minute has passed included, and wrote nothing. `open_steps` names each one. Finish each, or, on the practitioner's own words, set it ☒ or ⏸ with `drafting_data__set_step`, then complete. On a database held below v78 every unstamped step is open.
 
-Only when `changes` is 1 does the call rewrite the matter's pages, by the render a session runs with `draft_dir`, and it returns `pages_written`, `milestone_path`, `board_changed` and `board_moves`, so no separate render is needed after it. When the result says `pages_written: false` after a completion this call made, say the Milestone was not refreshed and quote `pages_refused` verbatim. The completion stands either way.
+Only when `changes` is 1 does the call rewrite the matter's pages, by the render a session runs with `draft_dir`, and it returns `pages_written`, `milestone_path`, `board_changed` and `board_moves`, so no separate render is needed after it. When the result says `pages_written: false` after a completion this call made, say the Work Board was not refreshed and quote `pages_refused` verbatim. The completion stands either way.
 
 ## 10. Unfinished
 
-A `wip` job the session does not finish stays `wip`, under this session's own lock, unless the practitioner tells the session to release it (below) or shelve it (§10a). It surfaces on the Milestone as "In Progress" for take-over by a later session (§4). With every step stamped it still surfaces as "In Progress", `wip` under its lock, and is closed only by the practitioner's answer to `/draft`'s close form, which runs §4's take-over variant then §9. Nothing closes it on its own, though its lock lapses after 60 minutes idle (ADR 0015). A session never releases or shelves its own job on its own initiative, except §3f's release on the practitioner's yes, and an unattended run never does either.
+A `wip` job the session does not finish stays `wip`, under this session's own lock, unless the practitioner tells the session to release it (below) or shelve it (§10a). It surfaces on the Work Board as "In Progress" for take-over by a later session (§4). With every step stamped it still surfaces as "In Progress", `wip` under its lock, and is closed only by the practitioner's answer to `/draft`'s close form, which runs §4's take-over variant then §9. Nothing closes it on its own, though its lock lapses after 60 minutes idle (ADR 0015). A session never releases or shelves its own job on its own initiative, except §3f's release on the practitioner's yes, and an unattended run never does either.
 
 **Release (the holding session's own job)** — on the practitioner's typed "release job #N" about the job this session holds, applied at once with no confirmation (ADR 0028). A §3f spin-off ends with this same release, on the practitioner's yes to the spin-off, in the same script as its `ticket_blocks` edges. The job goes back to `queued`, unlocked and **not** shelved, so it shows in Ready again. Its `plan_approved_at`, `ticket_steps` with every `done_at`, `ticket_scope` and `ticket_proposals` are left exactly as they are, so the next session to be assigned it inherits them through the taken-over read-back, as a restored job does (§10a). The guard is this session's own token on a `wip` row:
 

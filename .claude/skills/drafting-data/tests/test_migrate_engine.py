@@ -412,7 +412,7 @@ class TestV21RevisionTriggers(unittest.TestCase):
     # twelve: the audit row is append-only, and the substance UPDATE written
     # beside it moves the revision through its own table's triggers. v67 adds
     # board_attachments, thirteen: attaching a draft to a board changes no
-    # mockup, only the Milestone pages (ADR 0042, migrations.sql 66 -> 67).
+    # mockup, only the Work Board pages (ADR 0042, migrations.sql 66 -> 67).
     # v73 adds the rules-position tables, seventeen: where a session stands on
     # its rules map, and which rules it was served, change no substance.
     # v76 adds ticket_sources, eighteen: recording or closing a source a job

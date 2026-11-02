@@ -1,1 +1,1 @@
-<!-- node id=draft/setup title="Setting up a filing" parents=draft/session when="No proceeding, or a new proceeding, filing, document type or letter is started, or a new Milestone with no Writing is asked for: forum, parties, type, venue lookup, save first." -->
+<!-- node id=draft/setup title="Setting up a filing" parents=draft/session when="No proceeding, or a new proceeding, filing, document type or letter is started, or a new Work Board with no Writing is asked for: forum, parties, type, venue lookup, save first." -->

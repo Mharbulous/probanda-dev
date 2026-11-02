@@ -594,11 +594,11 @@ test("Notice of Application filed face drops a crossed-out order entirely", asyn
   }
 });
 
-// Another party's filed documents are attached to a Milestone as board_attachments rows of kind
+// Another party's filed documents are attached to a Work Board as board_attachments rows of kind
 // 'opposing_filing' (schema v81). No renderer reads that table, so such a row reaches no face of our
 // own Notice of Application: Part 4, the material list and the filed face stay byte for byte as they
 // were, and attaching moves no revision.
-test("Notice of Application renders the same, mockup and filed, with another party's filings attached to its Milestone", async () => {
+test("Notice of Application renders the same, mockup and filed, with another party's filings attached to its Work Board", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);

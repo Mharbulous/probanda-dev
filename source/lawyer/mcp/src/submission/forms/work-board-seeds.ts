@@ -1,4 +1,4 @@
-// The Milestone's loose threads: their shapes, their shared order and labels, and their reads.
+// The Work Board's loose threads: their shapes, their shared order and labels, and their reads.
 
 import { fetchDeletedTickets, type FilingTitleRow } from "./work-board-reads.js";
 import { liveSeedClause, liveTicketClause, seedClosedColumns } from "./query.js";

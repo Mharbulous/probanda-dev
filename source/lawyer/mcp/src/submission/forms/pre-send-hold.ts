@@ -61,7 +61,7 @@ export function readPreSendGate(
 }
 
 /** The declared held criteria (HELD_CRITERIA) that `inventory` leaves unmet on this Writing,
- * derived exactly as its Milestone derives them from the same inventory: the Sent write's hold
+ * derived exactly as its Work Board derives them from the same inventory: the Sent write's hold
  * (#951 note). */
 export function unmetHeldCriteria(dbPath: string, filing: FilingRow, inventory: MarkerInventory): GoalCriterion[] {
   const board = buildProceedingBoard(dbPath, filing.proceeding_id);

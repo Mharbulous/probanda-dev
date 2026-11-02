@@ -41,9 +41,9 @@ export interface MatterPage {
 
 export interface MatterPagesBuilt {
   /** The pages a write puts in the draft folder, in write order: the Litigation Strategy, the Loose
-   * Threads page, the Milestone pages, then the view pages. */
+   * Threads page, the Work Board pages, then the view pages. */
   pages: MatterPage[];
-  /** Every current Loose Threads, Milestone and view page's file name, built by this call or not: what the sweep keeps. */
+  /** Every current Loose Threads, Work Board and view page's file name, built by this call or not: what the sweep keeps. */
   keep: string[];
   /** Every current page's path, built by this call or not. */
   paths: Pick<PagesWritten, "milestone_paths" | "matter_board_path" | "loose_threads_path" | "view_page_paths">;
@@ -51,14 +51,14 @@ export interface MatterPagesBuilt {
 
 /**
  * Builds `<draftDir>\Litigation Strategy.html`, `<draftDir>\Loose Threads.html` (every proceeding's
- * open loose threads) and one Milestone page per live filing and per
+ * open loose threads) and one Work Board page per live filing and per
  * pre-filing proceeding, each holding that one section (ADR 0033, 2026-10-05 amendment), and each live
  * filing's view pages (2026-10-07 amendment), from database state. Writes nothing: writeMatterPages
  * guards, sweeps and writes, and a preview renders the same pages without them.
  * `draftDir` is already confined (resolveDraftDir, or the parent of a confined Writing folder).
  * `reuse` hands over what the caller already built: bootstrap's ranked filings, and the section a
  * render just built for its own filing or proceeding, which then stands in for that section.
- * `reuse.only` names the one filing whose Milestone page and view pages are built, with the
+ * `reuse.only` names the one filing whose Work Board page and view pages are built, with the
  * Litigation Strategy: the background render job passes the filing it just rendered, and writes
  * every page once after its last, because building them all after every filing costs the square of
  * the filing count. `reuse.views` false leaves out every view page: session entry writes the rest
@@ -71,12 +71,12 @@ export function buildMatterPages(
   now: string,
   revision: number,
   todos: MatterTodos,
-  /** The matter's dates, for the Milestone pages' HTML files only: never a section, the state file or
+  /** The matter's dates, for the Work Board pages' HTML files only: never a section, the state file or
    * the return value. A linked deadline reaches its filing's section as a dateless criterion. */
   dates: MatterDates,
   reuse: { ranked?: Ranked[]; section?: WorkBoardData; only?: number; views?: false } = {},
   /** A preview's pages in place of the boards' own (src/pages/preview.ts): the composed Litigation
-   * Strategy and Milestone templates, whole view pages by name, and the Loose Threads page. Omitted, every page is the board's. */
+   * Strategy and Work Board templates, whole view pages by name, and the Loose Threads page. Omitted, every page is the board's. */
   templates: { matterBoard?: ComposedTemplate; milestone?: ComposedTemplate; views?: Readonly<Record<string, ViewPage>>; threads?: ViewPage<{ dbPath: string }> } = {}
 ): MatterPagesBuilt {
   const ranked = reuse.ranked ?? rankFilings(dbPath, client, now, { revision, schemaVersion: readSchemaVersion(dbPath), buildStamp: buildStampStatus().build_stamp }, []);
@@ -109,7 +109,7 @@ export function buildMatterPages(
         writings: [],
       };
     }
-    // A Milestone with no Writing has no mockup folder, so none is looked up for it.
+    // A Work Board with no Writing has no mockup folder, so none is looked up for it.
     const manifest = isJobOnlyBoard(m.filing) ? null : readManifest(dbPath, m.filing.id);
     const filingId = m.filing.id;
     return {
@@ -123,7 +123,7 @@ export function buildMatterPages(
     };
   };
   const matterBoard = renderMatterBoardHtml(buildMatterBoardData(dbPath, ranked.filter((r) => !isResearchWriting(r.filing)), meta, preFiling, todos), templates.matterBoard);
-  // Each board's jobs as its Milestone draws them, which its Legal Research page lists the memos of.
+  // Each board's jobs as its Work Board draws them, which its Legal Research page lists the memos of.
   const boardJobs = new Map<PageGroup, WorkBoardData["tickets"]>();
   const milestones = groupsWritten.map((group) => {
     const built = group.members.map(sectionOf);

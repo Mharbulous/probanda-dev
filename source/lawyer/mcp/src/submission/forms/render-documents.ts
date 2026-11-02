@@ -17,7 +17,7 @@ export interface DocumentOutput {
   documentType: string;
   fileName: string;
   markdown: string;
-  /** The Milestone Writings strip's short label and `title` text; stored in the manifest. */
+  /** The Work Board Writings strip's short label and `title` text; stored in the manifest. */
   label: WritingLabel;
   /** A general Writing only: the parts it printed with no content, which the filed render refuses on. */
   unwritten?: string[];
@@ -102,9 +102,9 @@ function venueDocumentsForFiling(
  * every type that declares `written-arguments` among its `companions` (shared/declared-layout.md
  * section 6); a type whose venue document is itself the written argument (VanIAC's submissions
  * package, the BCCA response book and factum) declares none. The reserve inventory is then
- * recorded for every filing, with no document. The Milestone
+ * recorded for every filing, with no document. The Work Board
  * is no document of the filing's (#1365): the render builds its section from this render's
- * inventory, after these documents, and the filing's own Milestone page carries it. */
+ * inventory, after these documents, and the filing's own Work Board page carries it. */
 export function documentsForFiling(ctx: RenderContext, timings: PhaseTimings, general: StoredLayout | null, cited: CitedState[]): DocumentOutput[] {
   // ORDER IS LOAD-BEARING: recordReserveInventory reads ctx.paragraphLedger, which the venue
   // renderers and the Written Arguments companion fill as they number their own paragraphs. It
@@ -112,7 +112,7 @@ export function documentsForFiling(ctx: RenderContext, timings: PhaseTimings, ge
   // priority for a submission carried by both documents). Evaluation here is eager and strictly
   // ordered, so this holds -- but nothing else enforces it.
   const { docs, companions } = venueDocumentsForFiling(ctx, timings, general, cited);
-  // The venue document alone carries the Writing's subject on the Milestone's Writings strip.
+  // The venue document alone carries the Writing's subject on the Work Board's Writings strip.
   docs[0] = { ...docs[0], label: withSubject(docs[0].label, ctx.filing.title) };
   if (companions.includes("written-arguments")) {
     docs.push(renderDocument(ctx, timings, "Written_arguments", "Written Arguments.md", () => renderWrittenArguments(ctx, "written_argument")));

@@ -68,12 +68,12 @@ test("two processes rendering one matter at once leave one of each page, both wh
     );
     assert.deepEqual(
       readdirSync(leaf).filter((name) => name.endsWith(".html")),
-      ["Arguments.html", "Legal Research.html", "Material Facts.html", "Milestone.html", "Procedural History.html"]
+      ["Arguments.html", "Legal Research.html", "Material Facts.html", "Work Board.html", "Procedural History.html"]
     );
     assert.deepEqual(readdirSync(draft, { recursive: true }).filter((name) => TEMP_OR_NUMBERED.test(name)), [], "no temp file and no numbered copy");
     assert.deepEqual(readdirSync(dirname(f.dbPath)).filter((name) => /mockups|\.tmp$/.test(name)), [], "nor beside the database");
 
-    assert.deepEqual(readBoardData(join(leaf, "Milestone.html")).sections.map((s) => s.meta.filing_id), [1], "the Milestone page parses");
+    assert.deepEqual(readBoardData(join(leaf, "Work Board.html")).sections.map((s) => s.meta.filing_id), [1], "the Work Board page parses");
     const todoList = readFileSync(join(draft, "Litigation Strategy.html"), "utf-8");
     assert.ok(todoList.includes("data-matter-board-shell"), "the Litigation Strategy carries its marker");
     const lines = todoList.split("\n").filter((line) => line.startsWith("window.MATTER_BOARD = "));

@@ -1,6 +1,6 @@
-// The Milestone opened the way the practitioner opens it: double-clicked in Explorer, a file://
+// The Work Board opened the way the practitioner opens it: double-clicked in Explorer, a file://
 // load with no server behind it (docs/design/2026-09-14 work-board-local-only-design.md). The page
-// is the filing's own Milestone page in its Writing's folder in 0. DRAFT (ADR 0033, 2026-10-05
+// is the filing's own Work Board page in its Writing's folder in 0. DRAFT (ADR 0033, 2026-10-05
 // amendment; spec 2026-10-22), opened where the render wrote it; the Litigation Strategy is opened as a lone copy, so a page that still needed a sibling
 // file would fail here. Drives
 // an installed Chrome or Edge over the DevTools Protocol with Node's built-in WebSocket -- no
@@ -47,7 +47,7 @@ const SECTION_OF = { ready: "ready", wip: "in-progress", waiting: "waiting-on", 
 // The golden board data: the one fixture carrying Proposals in all three lanes.
 const FIXTURE_BOARD = JSON.parse(readFileSync(new URL("./fixtures/work-board-data.json", import.meta.url), "utf-8"));
 
-/** One filing's board data as its Milestone page holds it: the page's own meta, one section. */
+/** One filing's board data as its Work Board page holds it: the page's own meta, one section. */
 const pageOf = (section) => ({
   meta: { revision: section.meta.revision, matter: section.meta.matter, client: section.meta.client, rendered: section.meta.rendered },
   sections: [section],
@@ -268,7 +268,7 @@ const statusScript = (status) => `window.WORKBOARD_STATUS = ${JSON.stringify(sta
 const readStatusScript = (file) => JSON.parse(readFileSync(file, "utf-8").replace(/^window\.WORKBOARD_STATUS = /, "").replace(/;\n$/, ""));
 
 // Goal card design §4.7: the server sends the retirement text finished, so the shell composes none.
-test("the Milestone's shell composes no retirement text of its own", () => {
+test("the Work Board's shell composes no retirement text of its own", () => {
   const source = readFileSync(new URL("../src/templates/milestone/milestone.js", import.meta.url), "utf-8");
   assert.equal(source.includes("retirement of this Writing"), false);
 });
@@ -309,13 +309,13 @@ const statementRows = (inferred) => {
 };
 
 if (BROWSERS.length === 0) {
-  test("the Milestone and the Litigation Strategy open from disk in a browser", (t) => {
+  test("the Work Board and the Litigation Strategy open from disk in a browser", (t) => {
     t.skip(`no Chrome or Edge found; looked in: ${CANDIDATES.map(([, path]) => path).filter(Boolean).join("; ")} (or set CHROME_PATH)`);
   });
 }
 
 for (const [name, executable] of BROWSERS) {
-  test(`the Milestone opens from disk in ${name} and draws every card`, { timeout: 120000 }, async () => {
+  test(`the Work Board opens from disk in ${name} and draws every card`, { timeout: 120000 }, async () => {
     const dir = mkdtempSync(join(tmpdir(), "coclerk-workboard-file-url-"));
     try {
       const { path: written, data, dbPath } = await renderSeededBoard(dir);
@@ -386,8 +386,8 @@ for (const [name, executable] of BROWSERS) {
         const page = JSON.parse(result.value);
 
         assert.deepEqual(problems, [], "expected no console error, uncaught exception, failed load or network request");
-        assert.equal(page.title, "Milestone — L7001");
-        assert.equal(page.heading, "Milestone 1", "the heading names the page's number");
+        assert.equal(page.title, "Work Board — L7001");
+        assert.equal(page.heading, "Work Board 1", "the heading names the page's number");
         assert.equal(page.writingTitle, "Notice of Application", "the Writing's title on its own line under the heading");
         assert.equal(page.sectionHeads, 0, "no heading under the header: the page heading names the one section");
         assert.deepEqual(
@@ -412,7 +412,7 @@ for (const [name, executable] of BROWSERS) {
         }
         assert.deepEqual(page.cards.find(([, id]) => id === "ticket-2"), ["ready", "ticket-2"]);
         assert.deepEqual(page.cards.find(([, id]) => id === "ticket-4"), ["waiting-on", "ticket-4"]);
-        // Loose threads are the matter's, on its one Loose Threads page: the Milestone neither draws nor counts them.
+        // Loose threads are the matter's, on its one Loose Threads page: the Work Board neither draws nor counts them.
         assert.deepEqual(page.seeds, []);
         assert.equal(page.ideas, false);
         assert.equal(page.state, "Drafting");
@@ -434,7 +434,7 @@ for (const [name, executable] of BROWSERS) {
 
   // Design §13: the Shelved lane, drawn from the golden board data -- the one fixture carrying
   // Proposals in all three server-assigned lanes. The page draws no Proposed lane.
-  test(`the Milestone draws its Shelved lane in ${name}`, { timeout: 120000 }, async () => {
+  test(`the Work Board draws its Shelved lane in ${name}`, { timeout: 120000 }, async () => {
     const dir = mkdtempSync(join(tmpdir(), "coclerk-workboard-proposals-"));
     try {
       const data = {
@@ -442,7 +442,7 @@ for (const [name, executable] of BROWSERS) {
         // A card string of null, which the golden no longer carries (its type declares no criteria).
         goal: { ...FIXTURE_BOARD.goal, text: null },
       };
-      const page = join(dir, "Milestone.html");
+      const page = join(dir, "Work Board.html");
       writeFileSync(page, renderWorkBoardHtml(pageOf(data)), "utf-8");
 
       await withBrowser(executable, async (cdp) => {
@@ -537,7 +537,7 @@ for (const [name, executable] of BROWSERS) {
 
   // A confirmed statement: the same rows, the connectors set apart, no caption. Laid out as rows, so a
   // label never wraps and a wrapped line returns to its text cell's edge, not the card's margin.
-  test(`the Milestone draws a confirmed statement of goals as rows in ${name}`, { timeout: 120000 }, async () => {
+  test(`the Work Board draws a confirmed statement of goals as rows in ${name}`, { timeout: 120000 }, async () => {
     const dir = mkdtempSync(join(tmpdir(), "coclerk-workboard-goals-"));
     try {
       const data = { ...FIXTURE_BOARD, goals: { description: FIXTURE_BOARD.goals.description, statement: CONFIRMED_STATEMENT, status: "confirmed" } };
@@ -570,7 +570,7 @@ for (const [name, executable] of BROWSERS) {
   // Goal card plan Phase 5: the Goal card and the server-composed ticket strings, drawn as given.
   // Injected here rather than in the shared fixture: a card string, one criterion in each state, a
   // ticket carrying a subtitle, and a superseded ticket carrying a reason and no pointer.
-  test(`the Milestone draws the Goal card and the server's ticket strings as given in ${name}`, { timeout: 120000 }, async () => {
+  test(`the Work Board draws the Goal card and the server's ticket strings as given in ${name}`, { timeout: 120000 }, async () => {
     const dir = mkdtempSync(join(tmpdir(), "coclerk-workboard-goal-"));
     try {
       const reason = "Superseded: its marker no longer shows (2026-09-20)";
@@ -597,7 +597,7 @@ for (const [name, executable] of BROWSERS) {
       for (const control of ["<input", "<button", "onclick"]) {
         assert.equal(html.includes(control), false, `expected no ${control} anywhere on the board`);
       }
-      const page = join(dir, "Milestone.html");
+      const page = join(dir, "Work Board.html");
       writeFileSync(page, html, "utf-8");
 
       await withBrowser(executable, async (cdp) => {
@@ -687,13 +687,13 @@ for (const [name, executable] of BROWSERS) {
   });
 
   // A pre-filing board sends no goal: nothing is drawn in the Completion Criteria card's place.
-  test(`the Milestone draws no Goal card when the data carries no goal in ${name}`, { timeout: 120000 }, async () => {
+  test(`the Work Board draws no Goal card when the data carries no goal in ${name}`, { timeout: 120000 }, async () => {
     const dir = mkdtempSync(join(tmpdir(), "coclerk-workboard-nogoal-"));
     try {
       const data = { ...FIXTURE_BOARD };
       delete data.goal;
       delete data.criteria;
-      const page = join(dir, "Milestone.html");
+      const page = join(dir, "Work Board.html");
       writeFileSync(page, renderWorkBoardHtml(pageOf(data)), "utf-8");
 
       await withBrowser(executable, async (cdp) => {
@@ -724,7 +724,7 @@ for (const [name, executable] of BROWSERS) {
 
   // Each panel lists its jobs by job number, lowest first. The data keeps queue order (priority,
   // then id), which the summary's Dispatch rule reads, so the page sorts a copy and never the data.
-  test(`the Milestone lists each panel's jobs by job number in ${name}`, { timeout: 120000 }, async () => {
+  test(`the Work Board lists each panel's jobs by job number in ${name}`, { timeout: 120000 }, async () => {
     const dir = mkdtempSync(join(tmpdir(), "coclerk-workboard-order-"));
     try {
       const base = FIXTURE_BOARD.tickets.find((t) => t.id === 7);
@@ -737,7 +737,7 @@ for (const [name, executable] of BROWSERS) {
         job(61, "rejected", 1), job(60, "rejected"),
       ];
       const data = { ...FIXTURE_BOARD, tickets };
-      const page = join(dir, "Milestone.html");
+      const page = join(dir, "Work Board.html");
       writeFileSync(page, renderWorkBoardHtml(pageOf(data)), "utf-8");
 
       await withBrowser(executable, async (cdp) => {
@@ -776,7 +776,7 @@ for (const [name, executable] of BROWSERS) {
   // A deleted job (schema v54, jobs-closeout.md §10a) is one struck red line among the Completed cards,
   // in job-number order, and counts toward nothing. Its Restore link only copies an instruction; the
   // click handler is read, not driven, since a clipboard round trip under parallel tests is unreliable.
-  test(`the Milestone draws a deleted job as a struck line in Completed in ${name}`, { timeout: 120000 }, async () => {
+  test(`the Work Board draws a deleted job as a struck line in Completed in ${name}`, { timeout: 120000 }, async () => {
     const dir = mkdtempSync(join(tmpdir(), "coclerk-workboard-deleted-"));
     try {
       const base = FIXTURE_BOARD.tickets.find((t) => t.id === 7);
@@ -786,7 +786,7 @@ for (const [name, executable] of BROWSERS) {
         tickets: [{ ...base, id: 3, category: "completed" }, { ...base, id: 1, category: "completed" }],
         deleted: [{ id: 2, title }],
       };
-      const page = join(dir, "Milestone.html");
+      const page = join(dir, "Work Board.html");
       writeFileSync(page, renderWorkBoardHtml(pageOf(data)), "utf-8");
 
       await withBrowser(executable, async (cdp) => {

@@ -568,9 +568,9 @@ function withAttachHint<T>(run: () => T): T {
     if (err instanceof Error && err.message.includes("a proceeding with a Writing has no board of its own")) {
       err.message =
         err.message.replace(/ \(ADR \d+\)/, ".") +
-        " Nothing was written. If this proceeding's only Writings are research memos or case briefs, its own Milestone is still there: " +
-        "attach the draft to a live one of them, and it shows on that Milestone and moves to the first Writing that is not a memo or case brief when one is created. " +
-        "A retired one takes no draft, so if all of them are retired, this Milestone takes none until one is recovered or another Writing is created.";
+        " Nothing was written. If this proceeding's only Writings are research memos or case briefs, its own Work Board is still there: " +
+        "attach the draft to a live one of them, and it shows on that Work Board and moves to the first Writing that is not a memo or case brief when one is created. " +
+        "A retired one takes no draft, so if all of them are retired, this Work Board takes none until one is recovered or another Writing is created.";
     }
     throw err;
   }

@@ -13,14 +13,14 @@
 // of `<stem><ext>`, which is version 1 (research_filing__save_answer's naming), in the same folder.
 //
 // Linked to a board, the one rule every board applies:
-//   1. a job drawn on the board (as its Milestone page draws it: its Writings' jobs, its proceeding's
+//   1. a job drawn on the board (as its Work Board page draws it: its Writings' jobs, its proceeding's
 //      General jobs, and on a merged board every member's) recorded any version of the memo; or
 //   2. no live job drawn on any board that has a Legal Research page recorded any version of it: nothing
 //      recorded ties it to such a board, so it is on every board, with status `no_job`, which the tab
 //      lists under Loose Threads.
 // A memo recorded only by jobs on other boards is not on this one. A General Job's memo is on every
 // Writing's board in its proceeding. A memo whose only job sits on a board with no Legal Research page (a
-// retired Writing's, or a Milestone with no Writing that no Writing's board absorbed) falls under rule 2.
+// retired Writing's, or a Work Board with no Writing that no Writing's board absorbed) falls under rule 2.
 //
 // Everything shown is recorded: the issue is each recording job's question (its intent) verbatim,
 // never a summary; the facts are the facts its scope names; the status is its jobs'. Nothing is read
@@ -43,7 +43,7 @@ export const LAW_FOLDER = "6. LAW";
 export type MemoSource = "research_memo" | "westlaw" | "note_up";
 export type MemoStatus = "in_progress" | "started" | "completed" | "shelved" | "no_job";
 
-/** What the reader needs of a job on the board: the Milestone's own ticket shape. */
+/** What the reader needs of a job on the board: the Work Board's own ticket shape. */
 export type BoardJob = Pick<WorkBoardTicket, "id" | "title" | "intent" | "category" | "scope" | "answers">;
 
 export interface LegalMemo {
@@ -206,7 +206,7 @@ function recordedOnPagedBoards(dbPath: string): Set<string> {
 
 /**
  * The memos linked to one board (the rule in this file's header), newest first. `jobs` are the
- * board's jobs as its Milestone page draws them; `matterDir` is the matter folder holding `6. LAW`.
+ * board's jobs as its Work Board page draws them; `matterDir` is the matter folder holding `6. LAW`.
  */
 export function buildLegalMemosData(dbPath: string, jobs: BoardJob[], matterDir: string): LegalMemosData {
   const recorded = recordedOnPagedBoards(dbPath);

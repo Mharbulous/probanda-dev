@@ -1,8 +1,8 @@
-// The Milestone (workboard-shell.ts, map #125): a sha256 pin of the page it renders for the golden
+// The Work Board (workboard-shell.ts, map #125): a sha256 pin of the page it renders for the golden
 // section and of the two asset constants, taken before the move to templates. The pins are checked by
 // hash only; no test reads a page. The page and stylesheet pins were retaken on 2026-10-28 for the
 // rename from "Job Board" (the page's title, heading and a stylesheet comment), and again on
-// 2026-10-29, when the Milestone stopped drawing loose threads. The page pin was retaken again on
+// 2026-10-29, when the Work Board stopped drawing loose threads. The page pin was retaken again on
 // 2026-10-31 for the idle-flag comment in milestone.js (inlined into the page) and the fixture's
 // moved activity stamp (job staleness fixtures).
 
@@ -17,8 +17,8 @@ const { WORKBOARD_CSS, WORKBOARD_JS } = await import("../build/submission/forms/
 const SECTION = JSON.parse(readFileSync(new URL("./fixtures/work-board-data.json", import.meta.url), "utf-8"));
 const DATA = { meta: { revision: 3, matter: "L200", client: "Acme <Co>", rendered: "2026-10-19 09:30" }, sections: [SECTION] };
 
-test("the Milestone renders byte-identically to the pinned page", () => {
-  assertSha256Pin(renderWorkBoardHtml(DATA), "f60f7376d721512f345d1541b1a871d95380b6edd504efc4152acb4c25ec5c33", "Milestone");
+test("the Work Board renders byte-identically to the pinned page", () => {
+  assertSha256Pin(renderWorkBoardHtml(DATA), "f60f7376d721512f345d1541b1a871d95380b6edd504efc4152acb4c25ec5c33", "Work Board");
 });
 
 test("WORKBOARD_CSS and WORKBOARD_JS are byte-identical to the pinned constants", () => {

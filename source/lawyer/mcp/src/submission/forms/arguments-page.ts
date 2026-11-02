@@ -1,4 +1,4 @@
-// The Arguments view page: one `Arguments - Milestone <id>.html` per live Writing, written by the
+// The Arguments view page: one `Arguments - Work Board <id>.html` per live Writing, written by the
 // view-page registry (../view-pages.ts), listing the submissions and counter-arguments the drafting
 // database records for the filing's proceeding in four kinds:
 //   submission       -- a live submission deployed by a document of some filing of the proceeding:

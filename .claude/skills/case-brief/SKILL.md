@@ -48,4 +48,4 @@ One brief is one decision. For several decisions, run the steps once per decisio
 
 ## Asking for several briefs
 
-"Brief the cases this Milestone relies on" asks for one job per case. With `/drafting-data` installed, write them by its "Create a case brief job". Without it, brief each case now and say that no job was written.
+"Brief the cases this Work Board relies on" asks for one job per case. With `/drafting-data` installed, write them by its "Create a case brief job". Without it, brief each case now and say that no job was written.

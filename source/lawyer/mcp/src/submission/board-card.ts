@@ -38,7 +38,7 @@ export interface BoardCardResult {
 
 /** A board as board_card's refusal names it. */
 function boardLabel(board: BoardRef): string {
-  return board.filing_id === null ? `proceeding ${board.proceeding_id}'s board` : `Milestone ${board.filing_id}`;
+  return board.filing_id === null ? `proceeding ${board.proceeding_id}'s board` : `Work Board ${board.filing_id}`;
 }
 
 /** Refuses a card on a board a merge absorbed (docs/ADRs/0010): its jobs are read on its survivor's
@@ -119,7 +119,7 @@ export function submissionFormsBoardCard(
   }
   const draftDir = args.draft_dir === undefined ? undefined : resolveDraftDir(args.draft_dir, "drafting_forms__board_card.draft_dir");
   if (args.proceeding_id !== undefined && fetchBoardFilings(args.db_path, args.proceeding_id).length > 0) {
-    throw new ValidationError("This proceeding has a Writing, so its jobs are on each Writing's Milestone -- read the card there");
+    throw new ValidationError("This proceeding has a Writing, so its jobs are on each Writing's Work Board -- read the card there");
   }
   const revision = fetchRevision(args.db_path);
   const section = boardSection(args.db_path, args, client, now, dates, revision);

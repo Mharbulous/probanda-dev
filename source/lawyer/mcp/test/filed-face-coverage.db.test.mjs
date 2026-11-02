@@ -48,7 +48,7 @@ const { submissionDataExecute } = await import("../build/submission/backend.js")
 const { REGISTERED_FILLERS } = await import("../build/submission/forms/filler-registry.js");
 const { submissionFormsRender } = await import("../build/submission/forms.js");
 
-// The Milestone is no document of a filed render -- absent, not stripped. It may never appear in a
+// The Work Board is no document of a filed render -- absent, not stripped. It may never appear in a
 // filed render of any kind.
 const NEVER_DELIVERED = ["Work_board"];
 

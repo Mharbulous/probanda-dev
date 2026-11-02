@@ -45,13 +45,13 @@ const viewPage = (name) => [...VIEW_PAGES, LOOSE_IDEAS_PAGE].find((p) => p.name 
 const PAGES = [
   ["Practice Board", "Practice Board", (page) => renderPracticeBoardHtml(PRACTICE_BOARD_FIXTURE, page)],
   ["Litigation Strategy", "Litigation Strategy", (page) => renderMatterBoardHtml(LITIGATION_STRATEGY_FIXTURE, page)],
-  ["Milestone", "Milestone 1", (page) => renderWorkBoardHtml(MILESTONE_FIXTURE, page)],
+  ["Work Board", "Work Board 1", (page) => renderWorkBoardHtml(MILESTONE_FIXTURE, page)],
   ...[
     ["Procedural History", PROCEDURAL_HISTORY_FIXTURE],
     ["Material Facts", MATERIAL_FACTS_FIXTURE],
     ["Legal Research", LEGAL_RESEARCH_FIXTURE],
     ["Arguments", ARGUMENTS_FIXTURE],
-  ].map(([name, f]) => [name, `${name} - Milestone 1`, (page) => renderViewPageHtml({ ...viewPage(name), ...page }, f.meta, f.data)]),
+  ].map(([name, f]) => [name, `${name} - Work Board 1`, (page) => renderViewPageHtml({ ...viewPage(name), ...page }, f.meta, f.data)]),
   ["Loose Threads", "Loose Threads", (page) => renderViewPageHtml({ ...viewPage("Loose Threads"), ...page }, LOOSE_THREADS_FIXTURE.meta, LOOSE_THREADS_FIXTURE.data)],
 ];
 
@@ -110,16 +110,16 @@ test("the housekeeping preview draws the fixture before or after approval, with 
 });
 
 test("a preview refuses an override naming no file, a non-text override, and inputs its data does not take", async () => {
-  await assert.rejects(pagesPreview({ page: "Milestone", data: "fixture", overrides: { "nope.css": "" } }, undefined), /overrides name no template file of this page: nope\.css/);
-  await assert.rejects(pagesPreview({ page: "Milestone", data: "fixture", overrides: { "milestone.css": 1 } }, undefined), /milestone\.css is not/);
-  await assert.rejects(pagesPreview({ page: "Milestone", data: "fixture", filing_id: 1 }, undefined), /fixture data takes no matter_root, filing_id or proceeding_id/);
+  await assert.rejects(pagesPreview({ page: "Work Board", data: "fixture", overrides: { "nope.css": "" } }, undefined), /overrides name no template file of this page: nope\.css/);
+  await assert.rejects(pagesPreview({ page: "Work Board", data: "fixture", overrides: { "milestone.css": 1 } }, undefined), /milestone\.css is not/);
+  await assert.rejects(pagesPreview({ page: "Work Board", data: "fixture", filing_id: 1 }, undefined), /fixture data takes no matter_root, filing_id or proceeding_id/);
   await assert.rejects(pagesPreview({ page: "Housekeeping approval", data: "fixture" }, undefined), /housekeeping__preview/);
-  await assert.rejects(pagesPreview({ page: "Milestone", data: "real", matter_root: TEMP }, undefined), /exactly one of filing_id or proceeding_id/);
+  await assert.rejects(pagesPreview({ page: "Work Board", data: "real", matter_root: TEMP }, undefined), /exactly one of filing_id or proceeding_id/);
   await assert.rejects(pagesPreview({ page: "Arguments", data: "real", matter_root: TEMP, proceeding_id: 1 }, undefined), /needs filing_id and takes no proceeding_id/);
   await assert.rejects(pagesPreview({ page: "Loose Threads", data: "real", matter_root: TEMP, filing_id: 1 }, undefined), /Loose Threads covers the whole matter/);
   await assert.rejects(pagesPreview({ page: "Litigation Strategy", data: "real" }, undefined), /needs matter_root/);
   assert.throws(() => housekeepingPreview({ data: "fixture", run_id: "x" }), /fixture data takes no matter_root or run_id/);
   assert.throws(() => housekeepingPreview({ data: "real" }), /real data needs matter_root and run_id/);
   assert.throws(() => housekeepingPreview({ data: "fixture", overrides: { "approval.html": "<html>@@data@@</html>" } }), /no <\/title>/);
-  assert.deepEqual(readdirSync(fixturePreviewDir()).filter((f) => f.startsWith("Milestone") || f.startsWith("Arguments - ")).length, 2, "a refused preview writes nothing");
+  assert.deepEqual(readdirSync(fixturePreviewDir()).filter((f) => f.startsWith("Work Board") || f.startsWith("Arguments - ")).length, 2, "a refused preview writes nothing");
 });

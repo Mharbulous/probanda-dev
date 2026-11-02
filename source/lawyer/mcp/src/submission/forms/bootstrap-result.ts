@@ -38,7 +38,7 @@ export interface BootstrapResult extends BuildStampStatus, SchemaSourceStatus {
     render_state?: RenderState;
     retired_on?: string;
     retirement_reason?: string;
-    /** True only on a Milestone with no Writing (forms/query.ts MILESTONE_KIND): listed so a session
+    /** True only on a Work Board with no Writing (forms/query.ts MILESTONE_KIND): listed so a session
      * can find it, never a Writing, with no paths and no render_state, since it has no mockup. */
     milestone_only?: true;
     /** True only on a research memo or case brief Writing (forms/query.ts isResearchWriting): listed so a
@@ -46,12 +46,12 @@ export interface BootstrapResult extends BuildStampStatus, SchemaSourceStatus {
     research_writing?: true;
   }[];
   /** Present only on success (ADR 0018): every proceeding with no filing, in id order, with its forum
-   * (null while not yet chosen). Each is a section of the Milestone, rendered from proceeding_id. */
+   * (null while not yet chosen). Each is a section of the Work Board, rendered from proceeding_id. */
   pre_filing_proceedings?: { proceeding_id: number; forum: ProceedingRow["forum"] }[];
   /** Present only on success (#585): the Litigation Strategy written into the caller's draft_dir, or null
    * when no draft_dir was given. A path, never the board's data (#337). */
   matter_board_path?: string | null;
-  /** Present only on success (#1365, ADR 0033's 2026-10-05 amendment): every Milestone page written
+  /** Present only on success (#1365, ADR 0033's 2026-10-05 amendment): every Work Board page written
    * beside the Litigation Strategy, one per live filing then one per pre-filing proceeding, in page order;
    * null on the same terms. */
   milestone_paths?: PagesWritten["milestone_paths"] | null;

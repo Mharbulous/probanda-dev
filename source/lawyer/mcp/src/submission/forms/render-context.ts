@@ -50,7 +50,7 @@ export interface RenderContext {
    * Every generating work-marker glyph this render emitted, recorded at its emit site on the row
    * the work is done on (Work Board Proposals design §8; forms/proposal-inventory.ts), plus the
    * glyphs a Goal-card criterion counts although they never generate, flagged `generating: false`
-   * (Goal card design §2.2). forms.ts stamps each entry with the document that emitted it. The Milestone
+   * (Goal card design §2.2). forms.ts stamps each entry with the document that emitted it. The Work Board
    * derives its proposed and Shelved lanes from it, and render-manifest.json saves
    * it so a stamp hit derives the same lanes without re-rendering. Every mockup render builds all
    * documents before the board, so the inventory is complete by the time the board reads it -- the
@@ -110,7 +110,7 @@ export function buildContext(
     // reads it back. See the field's own doc comment on RenderContext.
     paragraphLedger: new Map(),
     // Fresh per filing: every emit site that prints a generating glyph appends to it, and the
-    // Milestone reads it back last. See the field's own doc comment on RenderContext. The
+    // Work Board reads it back last. See the field's own doc comment on RenderContext. The
     // filed-face emitters and the pre-filing check build a context through here too and simply
     // carry the empty array -- neither renders the board.
     inventory: [],

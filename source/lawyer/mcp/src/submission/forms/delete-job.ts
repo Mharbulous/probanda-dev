@@ -78,7 +78,7 @@ export async function submissionDataDeleteJob(args: DeleteJobArgs, env: NodeJS.P
     let note: string;
     if (changes === 1) {
       outcome = "deleted";
-      note = `Job ${id} is deleted: it shows only as a struck line in the Milestone's Completed list, and restore job #${id} returns it as a Ready job with no lock.`;
+      note = `Job ${id} is deleted: it shows only as a struck line in the Work Board's Completed list, and restore job #${id} returns it as a Ready job with no lock.`;
     } else if (read.deleted_at !== null) {
       outcome = "already_deleted";
       note = `Job ${id} was deleted earlier (deleted_at ${read.deleted_at}), so nothing was written.`;

@@ -2,7 +2,7 @@
 // written by bootstrap into the top of the matter's 0. DRAFT folder before the filing picker, and
 // rewritten by every render that writes presentation copies there. The matter's open to-dos lead
 // it (D1), each with its BF date as a plain date (D2). Below them each filing and pre-filing
-// proceeding is one line (D3); its jobs, steps and Proposals stay on its own Milestone.
+// proceeding is one line (D3); its jobs, steps and Proposals stay on its own Work Board.
 //
 // SQLite only for the filings (brief D1). Proposals are absent altogether: they are derived at each
 // full render (#504), and a count carried from the last render goes stale when the revision moves
@@ -16,7 +16,7 @@
 //
 // A sent letter that is not retired leaves the Writings lines and their count for the collapsed
 // "Sent, awaiting response" lane, derived here at each write and stored nowhere. The lane lists; it
-// tracks no response, and it changes nothing about retirement or the letter's Milestone (ADR 0042).
+// tracks no response, and it changes nothing about retirement or the letter's Work Board (ADR 0042).
 
 import type { MatterTodos } from "../matter-todos.js";
 import { BoardIndex, boardKey, type BoardRef, sameBoard } from "./board-members.js";
@@ -58,7 +58,7 @@ export interface MatterBoardFiling {
   in_progress?: number;
   retired_on?: string;
   retirement_reason?: string;
-  /** True only on a Milestone with no Writing: drawn under Milestones, never under Writings, its
+  /** True only on a Work Board with no Writing: drawn under Work Boards, never under Writings, its
    * state_label Open or Closed and its in_progress counting only its own jobs. */
   job_only?: true;
 }
@@ -83,7 +83,7 @@ export interface MatterBoardProceeding {
 
 export interface MatterBoardData {
   meta: {
-    /** First key, as on the Milestone's data line. */
+    /** First key, as on the Work Board's data line. */
     revision: number;
     matter: string;
     client: string;
@@ -99,7 +99,7 @@ export interface MatterBoardData {
   awaiting_response?: MatterBoardSentLetter[];
   /** In proceeding id order. */
   pre_filing: MatterBoardProceeding[];
-  /** Each merged Milestone (docs/ADRs/0010): its page's name and the live sections drawn on it, the
+  /** Each merged Work Board (docs/ADRs/0010): its page's name and the live sections drawn on it, the
    * survivor's first. Those sections are drawn under it and not in their own lists. Absent when none is merged. */
   boards?: { name: string; filing_ids: number[]; proceeding_ids: number[] }[];
 }
@@ -107,7 +107,7 @@ export interface MatterBoardData {
 const inProgress = (tickets: WorkBoardTicket[]) => tickets.filter((t) => t.category === "wip").length;
 
 function liveLine(entry: RankedFiling, board: ProceedingBoard): MatterBoardFiling {
-  // A Milestone with no Writing holds only its own jobs: a proceeding-wide job is on the Writings' boards.
+  // A Work Board with no Writing holds only its own jobs: a proceeding-wide job is on the Writings' boards.
   const jobOnly = isJobOnlyBoard(entry.filing);
   const onBoard = (filingId: number | null) => (jobOnly ? filingId === entry.filing.id : onFilingBoard(filingId, entry.filing.id));
   return {
@@ -238,7 +238,7 @@ function mergedBoards(index: BoardIndex, ranked: RankedFiling[], preFiling: Proc
   ];
   for (const ref of refs) {
     const board = index.survivorOf(ref);
-    const group = groups.get(boardKey(board)) ?? { name: board.filing_id === null ? `Milestone: Proceeding ${board.proceeding_id}` : `Milestone ${board.filing_id}`, members: [] };
+    const group = groups.get(boardKey(board)) ?? { name: board.filing_id === null ? `Work Board: Proceeding ${board.proceeding_id}` : `Work Board ${board.filing_id}`, members: [] };
     if (sameBoard(ref, board)) group.members.unshift(ref);
     else group.members.push(ref);
     groups.set(boardKey(board), group);

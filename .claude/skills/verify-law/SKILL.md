@@ -60,7 +60,7 @@ not a stylistic preference.
    `research-paralegal` agent. Retrieval runs only on the practitioner's confirmation — one rule
    for CanLII and Westlaw alike — and never while another `research-paralegal` instance is in
    flight (it is the singleton owner of the shared Chrome session and Downloads folder). A caller
-   holding a job on the Milestone records the citation on the job before that dispatch and closes it once
+   holding a job on the Work Board records the citation on the job before that dispatch and closes it once
    it has landed (`/drafting-data`'s `jobs-common.md` §2, "Sources to get"). If
    matter-data's operation does not fit this citation, name the mismatch and ask. No other method.
 

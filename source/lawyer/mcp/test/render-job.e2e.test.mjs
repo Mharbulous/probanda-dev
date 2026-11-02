@@ -110,7 +110,7 @@ test("bootstrap's job renders each stale filing once, skips fresh and retired on
     assert.equal(readMirror(m).state, "done");
     assert.equal(readPage(join(m.draftDir, STATUS_FILE)).state, "done");
 
-    // #1365 A7: after each filing the job rewrote the matter's pages from database state -- a Milestone
+    // #1365 A7: after each filing the job rewrote the matter's pages from database state -- a Work Board
     // page per live filing (ADR 0033, 2026-10-05 amendment), and the Litigation Strategy with the to-dos
     // bootstrap read, which the job cannot read itself; its lines now show the filings the job
     // rendered as fresh.
@@ -364,9 +364,9 @@ test("two processes bootstrapping one matter at once render each stale filing ex
     assert.ok(joined.length <= 1);
     assert.equal(readPage(join(m.draftDir, STATUS_FILE)).state, "done");
     const names = readdirSync(m.draftDir, { recursive: true }).map(String);
-    const boards = Array.from({ length: 40 }, (_, i) => join(`Notice of Application ${i + 1}`, "Milestone.html"));
+    const boards = Array.from({ length: 40 }, (_, i) => join(`Notice of Application ${i + 1}`, "Work Board.html"));
     const views = Array.from({ length: 40 }, (_, i) => VIEW_PAGES.map((page) => join(`Notice of Application ${i + 1}`, `${page.name}.html`))).flat();
-    assert.deepEqual(names.filter((name) => name.endsWith(".html")).sort(), [...boards, ...views, "Litigation Strategy.html", "Loose Threads.html"].sort(), "a Milestone page and the view pages per filing, the Litigation Strategy and the Loose Threads page, and no other page file");
+    assert.deepEqual(names.filter((name) => name.endsWith(".html")).sort(), [...boards, ...views, "Litigation Strategy.html", "Loose Threads.html"].sort(), "a Work Board page and the view pages per filing, the Litigation Strategy and the Loose Threads page, and no other page file");
     assert.deepEqual(names.filter((name) => name.endsWith(".tmp")), [], "no temp file left behind");
     for (const [i, name] of boards.entries()) {
       assert.deepEqual(readBoardData(join(m.draftDir, name)).sections.map((s) => s.meta.filing_id), [i + 1], `${name} parses, its filing's section alone`);

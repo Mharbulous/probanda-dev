@@ -300,7 +300,7 @@ class NoBoardOfItsOwn(unittest.TestCase):
 
     def test_a_thread_on_a_research_writing_goes_on_the_proceeding(self):
         run = read("drafting-data", "references", "jobs-run.md")
-        self.assertIn("A retired Writing has no Milestone page, and neither has a research memo or case brief", run)
+        self.assertIn("A retired Writing has no Work Board page, and neither has a research memo or case brief", run)
         select = re.search(r"that board, `(SELECT .*?)`, the file's stored path", run).group(1)
         self.assertEqual(self.db.execute(select, ("a",)).fetchall(), [(1, None)])
         self.assertEqual(self.db.execute(select, ("b",)).fetchall(), [(1, 7)])

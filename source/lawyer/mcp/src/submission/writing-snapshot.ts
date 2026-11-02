@@ -164,7 +164,7 @@ export async function resnapshotWriting(
     [filingId]
   ).rows[0] as unknown as (FilingDates & { kind: string; title: string; forum: string | null }) | undefined;
   if (!filing) throw new NotFoundError("That Writing is not in this matter's drafting records", "not_found");
-  if (isJobOnlyBoard(filing)) throw new ValidationError(`Milestone ${filingId} has no Writing, so it has no layout to refresh`, "milestone_only");
+  if (isJobOnlyBoard(filing)) throw new ValidationError(`Work Board ${filingId} has no Writing, so it has no layout to refresh`, "milestone_only");
   const refused = notDrafting(filing.title, filing);
   if (refused) throw refused;
 

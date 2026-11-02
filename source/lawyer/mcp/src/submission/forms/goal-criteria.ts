@@ -115,7 +115,7 @@ function openItems(declared: readonly string[]): StockCriterion {
 }
 
 /** The Writing's goal criteria: its stored layout's `goal_criteria`, in their declared order
- * (spec §5 "Milestone"; shared/declared-layout.md sections 5-6). Empty where the type declares
+ * (spec §5 "Work Board"; shared/declared-layout.md sections 5-6). Empty where the type declares
  * none, and on a row with no stored layout (a seeded test row; every real database is snapshotted
  * since v30). A name outside the vocabulary fails hard, naming the filing. `hearing-date` is
  * skipped: it is not an inventory criterion (hearingDateCriterion). */

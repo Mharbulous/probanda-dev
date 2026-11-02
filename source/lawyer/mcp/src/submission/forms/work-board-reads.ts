@@ -1,4 +1,4 @@
-// The Milestone's SQL row shapes and its plain ticket and attachment reads.
+// The Work Board's SQL row shapes and its plain ticket and attachment reads.
 
 import { boardAttachmentsHeld, deletedAtHeld, MILESTONE_KIND, liveTicketClause, RESEARCH_WRITING_KINDS_SQL } from "./query.js";
 import { rows } from "../query-rows.js";
@@ -99,7 +99,7 @@ export interface FilingRetiredRow {
   retired_on: string | null;
 }
 
-/** A file attached to a Milestone that is not a Writing (schema v67, ADR 0042): a client letter's or a
+/** A file attached to a Work Board that is not a Writing (schema v67, ADR 0042): a client letter's or a
  * reply's draft, or another party's filed document in the court-file folder (schema v81). */
 export type AttachmentKind = "client_letter" | "reply" | "opposing_filing";
 
@@ -129,7 +129,7 @@ export function fetchDeletedTickets(dbPath: string, proceedingId: number): Delet
  * board (`filingId` null) holds every row of its proceeding. A Writing's board holds its own rows and,
  * only when it is the proceeding's lowest-id live Writing, the proceeding's rows with no Writing (rows
  * written by hand after the proceeding's first Writing, which create_writing does not re-point), so no
- * draft is ever on two boards. A Milestone with no Writing holds its own rows only and is never that Writing.
+ * draft is ever on two boards. A Work Board with no Writing holds its own rows only and is never that Writing.
  * A research Writing has no board, so it is never that Writing either, and a row naming one reads as a row
  * with no Writing: a trigger refuses `filing_id` NULL once the proceeding has any filing, so a memo-only
  * proceeding's board can hold a new draft only that way. */

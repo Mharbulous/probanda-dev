@@ -1,4 +1,4 @@
-// The board sections with no Writing: a Milestone of MILESTONE_KIND and a pre-filing proceeding's.
+// The board sections with no Writing: a Work Board of MILESTONE_KIND and a pre-filing proceeding's.
 
 import { fetchBoardGoals } from "./board-goals.js";
 import type { FilingRow, ProceedingRow } from "./query.js";
@@ -12,12 +12,12 @@ export function preFilingLabel(proceeding: ProceedingRow): string {
   return proceeding.forum === null ? "Forum not yet chosen" : "No filing yet";
 }
 
-/** The State row of a Milestone with no Writing, shared with its Litigation Strategy line. */
+/** The State row of a Work Board with no Writing, shared with its Litigation Strategy line. */
 export function milestoneLabel(filing: Pick<FilingRow, "retired_on">): string {
   return filing.retired_on ? "Closed" : "Open";
 }
 
-/** A Milestone with no Writing (MILESTONE_KIND): only the jobs, deleted jobs, open loose threads and
+/** A Work Board with no Writing (MILESTONE_KIND): only the jobs, deleted jobs, open loose threads and
  * attachments whose filing_id is its own, so a proceeding-wide row (filing_id NULL) stays on the
  * Writings' boards. No stored layout is read: it has no lifecycle, Goal card, criteria, Proposals or
  * ingest inputs. */

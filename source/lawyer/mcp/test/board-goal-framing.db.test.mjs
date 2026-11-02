@@ -1,4 +1,4 @@
-// Milestone goal default title and framing (docs/Specs/2026-10-22_board-goal-default-title-and-framing-spec.md):
+// Work Board goal default title and framing (docs/Specs/2026-10-22_board-goal-default-title-and-framing-spec.md):
 // a board with no statement of goals reads `Goal not set` on the Goal card, board_summary and board_card,
 // a stored statement with no description reads the board's title with no `Drafting`, and
 // drafting_data__set_board_goal warns, never refuses, on a goal naming a drafting step or joining goals.
@@ -53,11 +53,11 @@ async function fixture(t) {
 function goalViews(m) {
   const result = submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", ["Work_board"], undefined, undefined, NOW, TOKEN, m.draft);
   const board = (result.documents ?? []).find((d) => d.document_type === "Work_board");
-  assert.ok(board, `render returned no Milestone: ${JSON.stringify(result).slice(0, 400)}`);
+  assert.ok(board, `render returned no Work Board: ${JSON.stringify(result).slice(0, 400)}`);
   const summary = board.board_summary;
   const { card } = submissionFormsBoardCard({ db_path: m.dbPath, filing_id: 1, lanes: ["goals"] }, ASHBOURNE, NOW);
   return {
-    page: readBoardData(join(m.draft, "Opening Submissions Package", "Milestone.html")).sections[0].goals.description,
+    page: readBoardData(join(m.draft, "Opening Submissions Package", "Work Board.html")).sections[0].goals.description,
     summary: summary.split("\n").find((l) => l.startsWith("Goal: ")),
     card: card.split("\n").slice(card.split("\n").findIndex((l) => l.startsWith("## Goal")), card.split("\n").findIndex((l) => l.startsWith("## Goal")) + 2),
   };

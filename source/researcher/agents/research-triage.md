@@ -1,7 +1,7 @@
 ---
 name: research-triage
 description: >
-  Orders the research Jobs on one Milestone. From each Job's exact wording it maps which
+  Orders the research Jobs on one Work Board. From each Job's exact wording it maps which
   question is broader and which assumes another's answer, and returns a blocker graph:
   each blocker's kind (hard or soft) and a one-line reason. Re-dispatched each time a
   memo lands, it proposes rewording, new premise Jobs, blocker changes and Jobs the memo

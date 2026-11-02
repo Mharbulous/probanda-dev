@@ -3,7 +3,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 ## Section 14: Loose-thread triage
 
-**What it is.** An outlining session, under Branch B's rules (`references/job-session.md`): a thread outlined here is a job this session created, under Dispatch's rule for such a session (`references/dispatch.md` section 14), outlining a loose thread consumes it, leaving it touches nothing, and dropping it discards it on the practitioner's word only. A loose thread cannot be shelved or superseded. The session ranks every open thread best to worst for follow-up and shows the order on the Loose Threads page. Ranking orders, it never removes: however weak a thread, the session never drops it on its own judgment. A thread captured after the ranking shows as unranked until the next ranking. Loose threads belong to the matter, not to a Milestone: to work one, the practitioner names a Milestone and the thread is outlined there (Step 4, Pursue).
+**What it is.** An outlining session, under Branch B's rules (`references/job-session.md`): a thread outlined here is a job this session created, under Dispatch's rule for such a session (`references/dispatch.md` section 14), outlining a loose thread consumes it, leaving it touches nothing, and dropping it discards it on the practitioner's word only. A loose thread cannot be shelved or superseded. The session ranks every open thread best to worst for follow-up and shows the order on the Loose Threads page. Ranking orders, it never removes: however weak a thread, the session never drops it on its own judgment. A thread captured after the ranking shows as unranked until the next ranking. Loose threads belong to the matter, not to a Work Board: to work one, the practitioner names a Work Board and the thread is outlined there (Step 4, Pursue).
 
 **Deferred threads.** A thread with `deferred_at` set was set aside by the practitioner, usually with the status button on the Loose Threads page. Leave it as it is: do not rank it, propose it, or offer to discard it again, unless the practitioner asks about it or asks for the deferred threads. Read the state from Step 1's read only. To defer a thread or bring one back on the practitioner's word, use `/drafting-data`'s deferral write ("Deferring a loose thread").
 
@@ -34,7 +34,7 @@ Rank 1 is the best to follow up. A thread that settles or unblocks others ranks 
 **Step 4. Outline or discard only on the practitioner's word.** They say which threads to outline as jobs of their own and which to discard, by rank or by idea. Never infer a discard from a low rank.
 
 - **Correct a description.** When they name a thread and give the description it should carry, write their words by `/drafting-data`'s correction write ("Correcting a job description") and re-render.
-- **Pursue.** Outline it under Branch B (`references/job-session.md`), on the Milestone the practitioner names. Outlining consumes it. The job's title, intent and steps are worded by `/drafting-data` §3's rule, with no adoption ceremony.
+- **Pursue.** Outline it under Branch B (`references/job-session.md`), on the Work Board the practitioner names. Outlining consumes it. The job's title, intent and steps are worded by `/drafting-data` §3's rule, with no adoption ceremony.
 - **Discard.** Applied only on their yes, by `/drafting-data`'s drop write, naming each thread id. Then confirm-read by Step 1's query (the ids discarded, the count) and re-render.
 - **Leave.** Nothing is written. A thread they do not name stays as it is.
 

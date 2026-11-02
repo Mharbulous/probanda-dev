@@ -1,6 +1,6 @@
 // The Loose Threads page: the matter's one `Loose Threads.html` at the top of its 0. DRAFT folder,
 // written with the Litigation Strategy (../matter-pages-build.ts), listing every proceeding's open
-// loose threads (fetchOpenSeeds; no Milestone draws them) in the shared order (inRankOrder):
+// loose threads (fetchOpenSeeds; no Work Board draws them) in the shared order (inRankOrder):
 //   ranked   -- by rank, ties by id, each with its group and the one-line reason the ranking gave it
 //               (schema v66).
 //   unranked -- by id: the loose threads captured since the last ranking, and every one on a database

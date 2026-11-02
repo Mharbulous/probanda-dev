@@ -32,7 +32,7 @@
   if (!data) return;
 
   var meta = data.meta;
-  if (meta.matter !== "") document.title = "Milestone — " + meta.matter;
+  if (meta.matter !== "") document.title = "Work Board — " + meta.matter;
 
   // One header span: its text, and its label in data-k when it has one. A blank value draws nothing.
   function metaSpan(row, label, value) {
@@ -68,20 +68,20 @@
     return smeta.state_since === null ? smeta.state_label : smeta.state_label + " " + smeta.state_since;
   }
 
-  // The page's one section names the page: "Milestone <id>", the id the file name's, then the
+  // The page's one section names the page: "Work Board <id>", the id the file name's, then the
   // heading's gold rule, then the Writing's title on its own line.
   // A merged board's page (docs/ADRs/0010) is named by its survivor, and its one section is every
   // merged board's, pooled on the server: each job card names its Writing.
   var first = data.sections[0];
   var merged = !!data.board;
   if (merged) {
-    header.querySelector("h1").textContent = data.board.filing_id === null ? "Milestone: Proceeding " + data.board.proceeding_id : "Milestone " + data.board.filing_id;
+    header.querySelector("h1").textContent = data.board.filing_id === null ? "Work Board: Proceeding " + data.board.proceeding_id : "Work Board " + data.board.filing_id;
   } else if (first) {
     var h1 = header.querySelector("h1");
     if (first.meta.filing_id === null) {
-      h1.textContent = "Milestone: Proceeding " + first.meta.proceeding_id;
+      h1.textContent = "Work Board: Proceeding " + first.meta.proceeding_id;
     } else {
-      h1.textContent = "Milestone " + first.meta.filing_id;
+      h1.textContent = "Work Board " + first.meta.filing_id;
       if (first.meta.filing) h1.after(el("p", "writing-title", first.meta.filing));
     }
   }

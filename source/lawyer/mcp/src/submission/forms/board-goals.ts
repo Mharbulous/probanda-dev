@@ -1,9 +1,9 @@
-// The statement of goals (2026-10-14 Milestone goal card spec, as amended): one per Milestone, held
+// The statement of goals (2026-10-14 Work Board goal card spec, as amended): one per Work Board, held
 // as one db_meta row and never a table of its own. Key `board_goal:filing:<id>` for a Writing's board
-// or a Milestone with no Writing, `board_goal:proceeding:<id>` for a pre-filing proceeding's board.
+// or a Work Board with no Writing, `board_goal:proceeding:<id>` for a pre-filing proceeding's board.
 // Value: JSON {description, statement, status, approved_at, session_token, updated_at}. It is job
 // process state: db_meta carries no revision trigger, so a write here moves no revision and archives
-// no mockup. drafting_data__set_board_goal writes it. Every Milestone section reads it
+// no mockup. drafting_data__set_board_goal writes it. Every Work Board section reads it
 // (render-work-board.ts), and the page's Goal card, board_summary's Goal line and board_card's goals
 // lane print it. A key whose board no longer exists is never read, since no section is built for it,
 // and the next write removes it.
@@ -73,7 +73,7 @@ export function needsConsolidation(stored: StoredGoals): boolean {
   return stored.status === NEEDS_CONSOLIDATION || ((stored.merged ?? []).length > 0 && stored.consolidated_at == null);
 }
 
-/** The db_meta key of a board: a filing's (a Writing or a Milestone with no Writing), or a pre-filing proceeding's. */
+/** The db_meta key of a board: a filing's (a Writing or a Work Board with no Writing), or a pre-filing proceeding's. */
 export function boardGoalsKey(board: { filing_id: number | null; proceeding_id: number }): string {
   return board.filing_id === null ? `${PROCEEDING_PREFIX}${board.proceeding_id}` : `${FILING_PREFIX}${board.filing_id}`;
 }
@@ -189,14 +189,14 @@ export async function submissionDataSetBoardGoal(args: SetBoardGoalArgs, env: No
   const onFiling = args.filing_id !== undefined;
   if (onFiling) {
     const [f] = submissionDataQuery(args.db_path, "SELECT kind FROM filings WHERE id = ?", [id]).rows as unknown as { kind: string }[];
-    if (f === undefined) throw new NotFoundError(`${TOOL}: no Writing or Milestone ${id} in ${args.db_path}`, "not_found");
+    if (f === undefined) throw new NotFoundError(`${TOOL}: no Writing or Work Board ${id} in ${args.db_path}`, "not_found");
     if (isResearchWriting(f)) throw new ValidationError(`${TOOL}: Writing ${id} is a research result, which has no board and so no goal -- set the goal on its proceeding's board`, "research_writing");
   } else {
     if (submissionDataQuery(args.db_path, "SELECT 1 FROM proceedings WHERE id = ?", [id]).rows.length === 0) {
       throw new NotFoundError("That proceeding is not in this matter's drafting records", "not_found");
     }
     if (fetchBoardFilings(args.db_path, id).length > 0) {
-      throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- set the goal on a Writing's Milestone", "proceeding_has_writing");
+      throw new ValidationError("That proceeding has a Writing, so its own board is no longer drawn -- set the goal on a Writing's Work Board", "proceeding_has_writing");
     }
   }
   const index = new BoardIndex(args.db_path);
@@ -206,7 +206,7 @@ export async function submissionDataSetBoardGoal(args: SetBoardGoalArgs, env: No
   if (index.absorbed(board)) {
     const s = index.survivorOf(board);
     throw new ValidationError(
-      `${TOOL}: ${onFiling ? `Milestone ${id}` : `proceeding ${id}'s board`} is merged into ${s.filing_id === null ? `proceeding ${s.proceeding_id}'s board` : `Milestone ${s.filing_id}`}; set the goal there`,
+      `${TOOL}: ${onFiling ? `Work Board ${id}` : `proceeding ${id}'s board`} is merged into ${s.filing_id === null ? `proceeding ${s.proceeding_id}'s board` : `Work Board ${s.filing_id}`}; set the goal there`,
       "board_merged"
     );
   }
@@ -262,7 +262,7 @@ export async function submissionDataSetBoardGoal(args: SetBoardGoalArgs, env: No
   if (whole === null) throw new DataServerError(`${TOOL}: ${key} is missing after the write`, "write_failed");
   const stored = at === undefined ? whole : (whole.merged as MergedGoal[])[at - 1];
 
-  const label = `${onFiling ? `Milestone ${id}` : `proceeding ${id}'s board`}${at === undefined ? "" : ` (merged statement ${at})`}`;
+  const label = `${onFiling ? `Work Board ${id}` : `proceeding ${id}'s board`}${at === undefined ? "" : ` (merged statement ${at})`}`;
   const note =
     status === "confirmed"
       ? `The statement of goals on ${label} is recorded as confirmed (approved_at ${stored.approved_at}). Re-render to show it.`

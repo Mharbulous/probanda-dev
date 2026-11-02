@@ -76,9 +76,9 @@ async function seedOneFiling(dbPath) {
   );
 }
 
-/** seedOneFiling's filing's Milestone page, in its Writing's own folder (spec 2026-10-22 §9). */
+/** seedOneFiling's filing's Work Board page, in its Writing's own folder (spec 2026-10-22 §9). */
 const OPENING_FOLDER = "Opening Submissions Package";
-const OPENING_PAGE = join(OPENING_FOLDER, "Milestone.html");
+const OPENING_PAGE = join(OPENING_FOLDER, "Work Board.html");
 
 async function practiceContext(t, { withMatter = true, dbPath } = {}) {
   const practicePath = dbPath ?? join(tmpdir(), `coclerk-open-session-practice-${randomUUID()}.db`);
@@ -187,7 +187,7 @@ test("source ahead of the bundle: migrates only to the bundle's version, then li
   assert.deepEqual(result.migrated && [result.migrated.from, result.migrated.to], [target - 2, target - 1]);
   assert.equal(result.schema_version, target - 1, "never written past the bundle's version");
   assert.equal(result.filings.length, 1);
-  assert.ok(result.opened.board_summary.startsWith("# Milestone — Matter"), result.opened.board_summary);
+  assert.ok(result.opened.board_summary.startsWith("# Work Board — Matter"), result.opened.board_summary);
   assert.ok(existsSync(result.milestone_path));
   assert.deepEqual(result.milestone_paths.map((p) => p.path), [result.milestone_path]);
 });
@@ -452,7 +452,7 @@ test("a caller-supplied client identity wins over the lookup's", async (t) => {
 });
 
 // #651: open_session finds the matter's 0. DRAFT folder itself and opens a board under it.
-test("one 0. DRAFT folder: the Litigation Strategy and the Milestone page are written there and their paths returned", async (t) => {
+test("one 0. DRAFT folder: the Litigation Strategy and the Work Board page are written there and their paths returned", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);
   const draftDir = join(m.matterRoot, "0. DRAFT");
@@ -571,10 +571,10 @@ test("one live filing: session entry opens it and returns its board as opened", 
 
   assert.equal(result.opened.filing_id, 1);
   const summary = result.opened.board_summary;
-  assert.ok(summary.startsWith("# Milestone — Matter"), summary);
+  assert.ok(summary.startsWith("# Work Board — Matter"), summary);
   assert.ok(!summary.includes("## "), summary);
   const [header, todo] = summary.split("\n");
-  assert.match(header, /^# Milestone — Matter L9999 Test v\. Example · Client Lookup Client Ltd\. \(C-9999\) · Rev \d+$/, "the matter's description from the lookup");
+  assert.match(header, /^# Work Board — Matter L9999 Test v\. Example · Client Lookup Client Ltd\. \(C-9999\) · Rev \d+$/, "the matter's description from the lookup");
   assert.equal(todo, "To Do: Settle the opening submissions", "the open to-do linked to filing 1");
   assert.equal(result.opened.board_changed, true, "no section recorded yet");
   assert.equal(result.opened.board_moves, undefined);
@@ -640,7 +640,7 @@ test("filing_id naming a retired filing opens its board as retired, with no mock
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot, filing_id: 1 });
 
   assert.equal(result.opened.filing_retired, true);
-  assert.ok(result.opened.board_summary.startsWith("# Milestone — Matter"), result.opened.board_summary);
+  assert.ok(result.opened.board_summary.startsWith("# Work Board — Matter"), result.opened.board_summary);
   assert.ok(!result.opened.board_summary.includes("## "), result.opened.board_summary);
   assert.match(result.opened.board_summary, /^State: Retired 2026-09-30/m);
   assert.equal(result.opened.rendered_at, undefined);
@@ -681,7 +681,7 @@ test("a refused opening of a live filing returns that filing's page", async (t) 
   assert.ok(existsSync(result.milestone_path));
 });
 
-// A Milestone with no Writing (drafting_data__create_milestone) is listed, and is never the default opening.
+// A Work Board with no Writing (drafting_data__create_milestone) is listed, and is never the default opening.
 async function seedMilestone(context, m) {
   const board = await callTool(context, "drafting_data__create_milestone", { db_path: m.dbPath, proceeding_id: 1, title: "Paper originals" });
   // Its job is the matter's latest activity, so the board leads bootstrap's list.
@@ -693,14 +693,14 @@ async function seedMilestone(context, m) {
   return board.filing_id;
 }
 
-test("a Milestone with no Writing leads the list and is not opened by default", async (t) => {
+test("a Work Board with no Writing leads the list and is not opened by default", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);
   const draftDir = join(m.matterRoot, "0. DRAFT");
   mkdirSync(draftDir);
   const context = await practiceContext(t);
   const boardId = await seedMilestone(context, m);
-  const boardPage = join(draftDir, `Milestone ${boardId}.html`);
+  const boardPage = join(draftDir, `Work Board ${boardId}.html`);
 
   const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
 
@@ -739,14 +739,14 @@ test("a newer General Job does not outrank a Writing's own older activity, and f
   assert.equal(named.opened.filing_id, 1);
 });
 
-test("filing_id naming a Milestone with no Writing opens its board, with no folder of its own", async (t) => {
+test("filing_id naming a Work Board with no Writing opens its board, with no folder of its own", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);
   const draftDir = join(m.matterRoot, "0. DRAFT");
   mkdirSync(draftDir);
   const context = await practiceContext(t);
   const boardId = await seedMilestone(context, m);
-  const boardPage = join(draftDir, `Milestone ${boardId}.html`);
+  const boardPage = join(draftDir, `Work Board ${boardId}.html`);
 
   const named = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot, filing_id: boardId });
 
@@ -768,7 +768,7 @@ test("filing_id naming a Milestone with no Writing opens its board, with no fold
   assert.deepEqual(folders(), ["Drafting records", OPENING_FOLDER]);
 });
 
-test("a live Milestone with no Writing beside a retired Writing: nothing is opened by default", async (t) => {
+test("a live Work Board with no Writing beside a retired Writing: nothing is opened by default", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);
   mkdirSync(join(m.matterRoot, "0. DRAFT"));
@@ -798,12 +798,12 @@ test("a pre-filing proceeding alone: session entry opens its board", async (t) =
   assert.equal(result.opened.filing_id, undefined);
   assert.ok(existsSync(result.matter_board_path));
   assert.ok(existsSync(result.loose_threads_path));
-  assert.equal(result.milestone_path.toLowerCase(), join(m.matterRoot, "0. DRAFT", "Milestone - proceeding 1.html").toLowerCase());
+  assert.equal(result.milestone_path.toLowerCase(), join(m.matterRoot, "0. DRAFT", "Work Board - proceeding 1.html").toLowerCase());
   assert.ok(existsSync(result.milestone_path));
   assert.deepEqual(result.milestone_paths.map((p) => p.path), [result.milestone_path]);
 });
 
-test("no filing and no proceeding: the Litigation Strategy is written, no Milestone page, and nothing is opened", async (t) => {
+test("no filing and no proceeding: the Litigation Strategy is written, no Work Board page, and nothing is opened", async (t) => {
   const m = matterFixture(t);
   await freshSubmissionDb(m.dbPath);
   mkdirSync(join(m.matterRoot, "0. DRAFT"));
@@ -981,7 +981,7 @@ test("a render without matter_no keeps the Litigation Strategy's to-dos", async 
   const rendered = await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token });
   assert.ok(
     rendered.documents.some((d) => d.document_type === "Work_board" && d.path === opened.milestone_path),
-    "the render that rewrote the pages returns the filing's Milestone page"
+    "the render that rewrote the pages returns the filing's Work Board page"
   );
   assert.equal(rendered.milestone_url, undefined, "and no link to it");
   assert.equal(rendered.matter_board_url, undefined);

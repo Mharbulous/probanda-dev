@@ -93,7 +93,7 @@ export function submissionFormsRender(
   draftDir?: string,
   /** The matter's open to-dos, for the Litigation Strategy a render under draft_dir rewrites. */
   todos: MatterTodos = TODOS_NOT_READ,
-  /** The matter's dates, for the Milestone pages alone, and this filing's linked deadlines as its
+  /** The matter's dates, for the Work Board pages alone, and this filing's linked deadlines as its
    * section's dateless Goal criteria (ADR 0013, 2026-10-04 amendments). */
   dates: MatterDates = DATES_NOT_READ,
   /** Not a tool input: open_session's opening is handed every page this render wrote, which the
@@ -135,12 +135,12 @@ export function submissionFormsRender(
   const loadStart = performance.now();
   const filing = fetchFilingById(dbPath, filingId);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  // A Milestone with no Writing has no document, so no filed face and no Writing folder: only
+  // A Work Board with no Writing has no document, so no filed face and no Writing folder: only
   // its board renders, and under draft_dir the matter's pages go into that folder itself.
   const jobOnly = isJobOnlyBoard(filing);
   if (jobOnly && (renderMode !== "mockup" || presentationDir !== undefined)) {
     throw new ValidationError(
-      `Milestone ${filingId} has no Writing, so it has no ${renderMode !== "mockup" ? "filed document" : "Writing folder"}; ` +
+      `Work Board ${filingId} has no Writing, so it has no ${renderMode !== "mockup" ? "filed document" : "Writing folder"}; ` +
         "render only its board and the matter's pages",
       "milestone_only"
     );
@@ -159,7 +159,7 @@ export function submissionFormsRender(
   // Party/counsel SSOT: a drafting Writing's counsel and address for service are read live from
   // case data, through /matter-data's own script, so the filed-face refusal below rests on no caller input.
   // A retired filing's mockup render, below, prints only the board, which reads no party: it reads none.
-  // Nor does a Milestone with no Writing.
+  // Nor does a Work Board with no Writing.
   const retiredMockup = renderMode === "mockup" && Boolean(filing.retired_on);
   const { parties, drift }: DraftingParties = retiredMockup || jobOnly
     ? { parties: [], drift: { rows: [] } }
@@ -177,7 +177,7 @@ export function submissionFormsRender(
     onPages?.(pages);
     return { pages, change: recordPagesState(dbPath, todos, section, sessionToken) };
   };
-  // The board's entry names this filing's own Milestone page (ADR 0033, 2026-10-05 amendment): its
+  // The board's entry names this filing's own Work Board page (ADR 0033, 2026-10-05 amendment): its
   // path when this render wrote the pages, none for a retired filing, which has no page. With no
   // page written, file_name is the generic name and names no page.
   const boardDocument = (section: WorkBoardData, written: ReturnType<typeof writePages>, withSummary: boolean): RenderedDocument => {
@@ -185,7 +185,7 @@ export function submissionFormsRender(
     return {
       document_type: "Work_board",
       ...(path !== undefined ? { path } : {}),
-      file_name: path !== undefined ? basename(path) : "Milestone.html",
+      file_name: path !== undefined ? basename(path) : "Work Board.html",
       // On a merged board the summary reads the whole board, as its page draws it.
       ...(withSummary ? { board_summary: renderBoardSummary(boardSectionOf(dbPath, section, client, ctx.rendered, revision, dates), client, todos) } : {}),
       ...(written?.change ?? {}),
@@ -201,7 +201,7 @@ export function submissionFormsRender(
   // The filing's linked deadlines, its section's last Goal criteria: dateless, so board_summary can carry them.
   const deadlines = deadlineCriteria(dates, filingId);
 
-  // A Milestone with no Writing, open or closed: the board alone. documentsForFiling, the manifest
+  // A Work Board with no Writing, open or closed: the board alone. documentsForFiling, the manifest
   // and finishMockup are never reached, so no mockup or manifest is written for it. Under draft_dir
   // the matter's pages are rewritten, a closed board with no page, as a retired filing has none.
   if (jobOnly) {
@@ -219,7 +219,7 @@ export function submissionFormsRender(
         ? {
             filing_retired: true,
             note:
-              `Milestone ${filingId} was closed on ${filing.retired_on}, so it has no page. ` +
+              `Work Board ${filingId} was closed on ${filing.retired_on}, so it has no page. ` +
               "Recover it (clear filings.retired_on and retirement_reason) before working it again.",
           }
         : {}),
@@ -235,7 +235,7 @@ export function submissionFormsRender(
   // `filing.retired_on`, already reflected in `ctx.lifecycle` above): `documents` carries its
   // board_summary. Filed mode is untouched: a filed face of a filing already delivered to the
   // forum is still a legitimate read. Under draft_dir the matter's pages are rewritten, the
-  // retired filing with no Milestone page (#1365 D1; its old one is moved to TRASH).
+  // retired filing with no Work Board page (#1365 D1; its old one is moved to TRASH).
   if (retiredMockup) {
     const section = timed(timings, "board_section", () => buildWorkBoardData(ctx, deadlines));
     if (pagesDir) selectDocuments([{ document_type: "Work_board" }], documentTypes);
@@ -270,7 +270,7 @@ export function submissionFormsRender(
   // Memoisation by stamp (#582, brief §1). A render is a pure function of the stamp's
   // inputs (#581 §1), so when none has moved and every file the manifest lists is still
   // byte-for-byte what it recorded, the advocacy documents are neither rendered nor
-  // written: their paths, and their text when it is asked for, come off disk. The Milestone's
+  // written: their paths, and their text when it is asked for, come off disk. The Work Board's
   // section is rebuilt either way -- it sits outside the stamp (#581 §2),
   // since its data reads the ticket tables, whose writes are exempt from the revision bump.
   // The Writing's own folder (writing-folder.ts): the one its manifest records, so a retitle never
@@ -306,7 +306,7 @@ export function submissionFormsRender(
   /** The mockup render's response, after the hit or the miss: under draft_dir or presentation_dir the
    * matter's pages are written, each target checked before any is, and markdown comes back only for
    * named documents; otherwise every document's markdown. Either way the board's summary only when
-   * the board is named in `documents`. The Milestone is the last document either way. */
+   * the board is named in `documents`. The Work Board is the last document either way. */
   const finishMockup = (documents: Projectable[], section: WorkBoardData, renderedAt: string): RenderResult => {
     const due = noteUpDue(section.proposals);
     const tail = {
@@ -393,7 +393,7 @@ export function submissionFormsRender(
     markdown: doc.markdown,
     ...symbolNotes(doc.symbolNotes),
   }));
-  // Records what this render produced, so the next one can skip it. The Milestone's section is
+  // Records what this render produced, so the next one can skip it. The Work Board's section is
   // no file of the filing's: it is rebuilt on every call (#581 §2).
   if (stamp) {
     timed(timings, "manifest_write", () =>

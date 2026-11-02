@@ -1,4 +1,4 @@
-// drafting_data__create_milestone: a Milestone with no Writing, for work on a proceeding that is no
+// drafting_data__create_milestone: a Work Board with no Writing, for work on a proceeding that is no
 // Writing's. It is stored as a `filings` row of the reserved kind MILESTONE_KIND with no stored
 // layout, so the jobs on it carry its id as their filing_id and show on no other board. Only this
 // tool writes that kind: drafting_data__create_writing refuses it. A proceeding with no Writing but
@@ -27,7 +27,7 @@ export interface CreateMilestoneResult {
 /** drafting_data__create_milestone. Every refusal writes nothing. */
 export async function submissionDataCreateMilestone(args: CreateMilestoneArgs, env: NodeJS.ProcessEnv = process.env): Promise<CreateMilestoneResult> {
   if (typeof args.title !== "string" || args.title.trim() === "") {
-    throw new ValidationError(`${TOOL}.title must name the Milestone`, "invalid_title");
+    throw new ValidationError(`${TOOL}.title must name the Work Board`, "invalid_title");
   }
   const title = args.title.trim();
   const proceeding = fetchProceeding(args.db_path, args.proceeding_id);
@@ -47,7 +47,7 @@ export async function submissionDataCreateMilestone(args: CreateMilestoneArgs, e
   );
   if (!written.ok) {
     throw new DataServerError(
-      `${TOOL}: proceeding ${proceeding.id} has no Writing, so its own Milestone already holds jobs with no Writing; nothing was written. ` +
+      `${TOOL}: proceeding ${proceeding.id} has no Writing, so its own Work Board already holds jobs with no Writing; nothing was written. ` +
         "Outline the work on that board (render it by proceeding_id)",
       "no_writing"
     );

@@ -1,5 +1,5 @@
-// Golden-fixture tests for the submission form renderers (build ticket #297): the Milestone: its data, code and ticket rendering.
-// Since ADR 0033's 2026-10-05 amendment a filing's board is the one section of its own Milestone
+// Golden-fixture tests for the submission form renderers (build ticket #297): the Work Board: its data, code and ticket rendering.
+// Since ADR 0033's 2026-10-05 amendment a filing's board is the one section of its own Work Board
 // page, and a render returns it as board_summary; boardDataOf builds the section exactly as the page does.
 // Split out of the former forms-render.test.mjs; shared seeds live in fixtures/forms-render-seeds.mjs,
 // which also documents regenerating the golden fixtures.
@@ -82,10 +82,10 @@ test("bootstrap mints sess-<hex>, and sess-unattended-<hex> when asked for an un
   }
 });
 
-/** The one section of a Writing's own Milestone page, `<Writing folder>Milestone.html` (spec 2026-10-22). */
+/** The one section of a Writing's own Work Board page, `<Writing folder>Work Board.html` (spec 2026-10-22). */
 function writingSection(folder) {
-  const page = readBoardData(join(folder, "Milestone.html"));
-  assert.equal(page.sections.length, 1, `the Milestone page in ${folder} holds one section`);
+  const page = readBoardData(join(folder, "Work Board.html"));
+  assert.equal(page.sections.length, 1, `the Work Board page in ${folder} holds one section`);
   return page.sections[0];
 }
 
@@ -123,7 +123,7 @@ function goldenBoardData(data) {
 //   * 📌 on the `facts` table (the court-record locator) -- no fact here is court-record linked.
 //   * ⬜ unchosen and choose-template -- requisition checklists and Form 8 only, covered by
 //     proposal-inventory.db.test.mjs's BCSC default-judgment tests.
-test("renders the Milestone's data", async () => {
+test("renders the Work Board's data", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -138,7 +138,7 @@ test("renders the Milestone's data", async () => {
     const board = result.documents.find((d) => d.document_type === "Work_board");
     const data = boardDataOf(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "2026-09-20 10:00");
     assert.equal(board.markdown, undefined, "the board returns no markup");
-    assert.equal(board.path, join(leaf, "Milestone.html"));
+    assert.equal(board.path, join(leaf, "Work Board.html"));
     assert.deepEqual(writingSection(leaf), data, "the filing's page carries exactly the board data");
 
     // Ordered priority DESC, then id, within each category.
@@ -250,7 +250,7 @@ test("renders the Milestone's data", async () => {
   }
 });
 
-test("renders an empty Milestone's data", async () => {
+test("renders an empty Work Board's data", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -311,7 +311,7 @@ test("every filing's section carries every open seed in its proceeding, for its 
 // Design §13: the Shelved lane is read-only, so no line carries a checkbox,
 // a red X, a Go button or any other control. The shell draws step state as list classes, so an
 // empty box would be the only box on the board and would read as one.
-test("the Milestone's page carries no control -- no input, no button, no click handler", () => {
+test("the Work Board's page carries no control -- no input, no button, no click handler", () => {
   const html = renderWorkBoardHtml({ meta: { revision: 1, matter: "", client: "", rendered: "" }, sections: [JSON.parse(readFileSync(goldenPath("work-board-data.json"), "utf-8"))] });
 
   for (const control of ["<input", "<button", "onclick"]) {
@@ -321,7 +321,7 @@ test("the Milestone's page carries no control -- no input, no button, no click h
   assert.ok(html.includes('addEventListener("toggle"'), "expected the open-one-card behaviour intact");
 });
 
-test("the Milestone's code is identical across matters once the data line is removed, and carries no matter data", async () => {
+test("the Work Board's code is identical across matters once the data line is removed, and carries no matter data", async () => {
   const a = seededDbFixture();
   const b = seededDbFixture();
   try {
@@ -335,7 +335,7 @@ test("the Milestone's code is identical across matters once the data line is rem
     const draftB = draftFolder(b).draft;
     submissionFormsRender(a.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "mockup", undefined, undefined, undefined, undefined, undefined, draftA);
     const resultB = submissionFormsRender(b.dbPath, 1, { clientName: "Halloway", clientNo: "9002", matterNo: "L9002" }, "mockup", undefined, undefined, undefined, undefined, undefined, draftB);
-    const pageA = join(leafA, "Milestone.html");
+    const pageA = join(leafA, "Work Board.html");
     const pageB = resultB.documents.find((d) => d.document_type === "Work_board").path;
     const dataA = writingSection(leafA);
     const codeA = boardCode(readFileSync(pageA, "utf-8"));
@@ -396,7 +396,7 @@ test("render refuses mockup mode on a retired filing, writing nothing but return
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
 
     assert.equal(result.filing_retired, true, "expected filing_retired: true");
-    assert.equal(result.documents.length, 1, "expected exactly the Milestone document");
+    assert.equal(result.documents.length, 1, "expected exactly the Work Board document");
     const board = result.documents[0];
     assert.equal(board.document_type, "Work_board");
     assert.equal(board.path, undefined, "expected no path -- nothing was written to disk");
@@ -405,7 +405,7 @@ test("render refuses mockup mode on a retired filing, writing nothing but return
     // Goal card design §2.9: a retired filing's card names the retirement and carries no criteria,
     // so the summary prints the State line in place of the two criteria lists.
     const [header, todo, goal, state, ...rest] = board.board_summary.split("\n");
-    assert.match(header, /^# Milestone — Matter L4801 · Client Ashbourne \(2417\) · Rev \d+$/);
+    assert.match(header, /^# Work Board — Matter L4801 · Client Ashbourne \(2417\) · Rev \d+$/);
     assert.equal(todo, "To Do: This matter's to-dos were not read.");
     assert.equal(goal, "Goal: Goal not set (none)", "no statement of goals is stored, so the board's default reads none");
     assert.equal(state, "State: Retired 2026-09-10 — Retired on 2026-09-10 — decided", "expected the board's own state to read Retired");
@@ -427,7 +427,7 @@ test("render writes the board as one self-contained file, with no sibling suppor
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
 
     const board = result.documents.find((d) => d.document_type === "Work_board");
-    assert.equal(board.file_name, "Milestone.html");
+    assert.equal(board.file_name, "Work Board.html");
     assert.ok(!existsSync(join(dirname(board.path), "workboard-data.js")), "expected no data script beside the board");
     for (const doc of result.documents) assert.equal("assets" in doc, false, `the board has no support files to return (${doc.document_type})`);
 
@@ -544,7 +544,7 @@ test("ticket text containing a closing script tag cannot break out of the board'
 
     const { draft, leaf } = draftFolder(f);
     submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "mockup", undefined, undefined, undefined, undefined, undefined, draft);
-    const html = readFileSync(join(leaf, "Milestone.html"), "utf-8");
+    const html = readFileSync(join(leaf, "Work Board.html"), "utf-8");
 
     const [dataLine] = boardDataLines(html);
     assert.ok(!dataLine.includes("<"), "expected every < on the data line escaped");
@@ -614,7 +614,7 @@ test("render discards a stamped Markdown Work Board from the presentation folder
 
     submissionFormsRender(f.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, leaf);
     assert.equal(existsSync(stale), false, "expected the superseded Markdown board discarded from the presentation folder");
-    assert.equal(existsSync(join(leaf, "Milestone.html")), true, "the filing's Milestone page is written beside it, in its Writing folder");
+    assert.equal(existsSync(join(leaf, "Work Board.html")), true, "the filing's Work Board page is written beside it, in its Writing folder");
 
     const own = "the practitioner's own notes\n";
     writeFileSync(stale, own, "utf-8");
@@ -626,7 +626,7 @@ test("render discards a stamped Markdown Work Board from the presentation folder
 });
 
 // Decision 3 (2026-09-15): renders delete the files the split board left behind -- fixed names only,
-// never inside archive/. Since spec 2026-10-22 the Writing's folder holds its own Milestone page and no other board.
+// never inside archive/. Since spec 2026-10-22 the Writing's folder holds its own Work Board page and no other board.
 test("render deletes leftover board support files and data scripts, leaving archive/ untouched, and writes only the Writing's own page in its folder", async () => {
   const f = seededDbFixture();
   try {
@@ -652,7 +652,7 @@ test("render deletes leftover board support files and data scripts, leaving arch
     for (const file of stale) assert.ok(!existsSync(file), `expected ${file} deleted`);
     for (const file of keep) assert.equal(readFileSync(file, "utf-8"), "archived\n", `expected ${file} untouched`);
     assert.deepEqual(readdirSync(join(baseDir, "archive")).sort(), ["Work_board @rev0 2026-09-14-10-00", "workboard.css"], "nothing archived at an unchanged revision");
-    assert.ok(readdirSync(leaf).includes("Milestone.html"), "the Writing's folder holds its own Milestone page");
+    assert.ok(readdirSync(leaf).includes("Work Board.html"), "the Writing's folder holds its own Work Board page");
     assert.equal(readdirSync(leaf).some((name) => /^Work Board/.test(name)), false, "and no other board");
   } finally {
     f.cleanup();
@@ -713,7 +713,7 @@ function shippedBlock(rel) {
 }
 
 /** The stored layout the v30 backfill writes on a BCSC Writing (filing-checklists.md §13): the
- * shipped type block and venue block, verbatim, citing nothing. The Milestone reads its criteria
+ * shipped type block and venue block, verbatim, citing nothing. The Work Board reads its criteria
  * from it, never from the kind. */
 async function snapshotFromShipped(dbPath, filingId, typeFile) {
   const stored = { layout: shippedBlock(`BCSC/Documents/${typeFile}.md`), venue: shippedBlock("BCSC/venue.md"), passage_hashes: {} };
@@ -2129,9 +2129,9 @@ test("tickets: a wip job with every step done stays In Progress, and shares no m
 // ids, classes and data keys keep their internal names (design §2).
 // The Litigation Strategy (the To Do List until 2026-10-08, the Matter Board until #871) names jobs in progress, so it is scanned too:
 // its page is the template set in src/templates/matter-board/ (map #125).
-test("the Milestone's page shows no Work Board, Matter Board, Rejected angles or claim wording", () => {
+test("the Work Board's page shows no Work Board, Matter Board, Rejected angles or claim wording", () => {
   const pages = [
-    [["templates/milestone/milestone.html", "templates/milestone/milestone.css", "templates/milestone/milestone.js"], (literals, htmlText) => literals.includes("Shelved") && htmlText.includes("Milestone")],
+    [["templates/milestone/milestone.html", "templates/milestone/milestone.css", "templates/milestone/milestone.js"], (literals, htmlText) => literals.includes("Shelved") && htmlText.includes("Work Board")],
     [["templates/matter-board/matter-board.html", "templates/matter-board/matter-board.js"], (literals, htmlText) => literals.includes(" jobs in progress") && htmlText.includes("Litigation Strategy")],
   ];
   for (const [files, sawOwnStrings] of pages) {
@@ -2666,7 +2666,7 @@ test("final review: a Form 8 order printing ⬜ carries no 🧐, and a clean one
   }
 });
 
-// Plan Phase 15: the card's criteria are the stored layout's goal_criteria (spec §5 "Milestone";
+// Plan Phase 15: the card's criteria are the stored layout's goal_criteria (spec §5 "Work Board";
 // shared/declared-layout.md sections 5-6), never the kind. Each count below is the declared list;
 // `gate` follows on every card, and `hearing-date` after it where the type declares it.
 

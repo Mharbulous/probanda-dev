@@ -2,7 +2,7 @@
 //
 // Each Writing has one folder directly under 0. DRAFT, named after the document: its sanitized title,
 // e.g. `0. DRAFT\Notice of Hearing of Application\`. It holds the Writing's mockups (one file each,
-// the only copy), their `archive\` folder, its Milestone page and view pages, and the Word and PDF
+// the only copy), their `archive\` folder, its Work Board page and view pages, and the Word and PDF
 // deliverables the publish and assemble skills write beside them. No folder or file name carries a
 // type's code, a stock type's name or a filing id. The render manifests and the pages' state file are
 // in the records folder (render-manifest.ts RECORDS_FOLDER).
@@ -46,7 +46,7 @@ export const GENERAL_DOCUMENT_TYPE = "General_writing";
 /** The board files an older render wrote beside its mockups or presentation copies: the page under
  * both its names, the support files it was split into before 2026-09-15, and the Markdown board.
  * `Job Board.html` is the page's name before 2026-10-28. */
-const OLD_BOARD_FILES = ["Job Board.html", "Milestone.html", "Work Board.html", "Work Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
+const OLD_BOARD_FILES = ["Job Board.html", "Work Board.html", "Work Board.html", "Work Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
 
 /** The folder the move puts anything of an older mockups tree that belongs to no Writing. */
 const OLDER_MOCKUPS = "Older mockups";
@@ -62,7 +62,7 @@ export function readExistingRevision(filePath: string): number | undefined {
   // which the bundle-contract test's host-path scanner (HOST_PATH =
   // /[A-Za-z]:\\|.../) reads as a baked Windows drive path. Not a real path;
   // just avoid a backslash escape directly after "n:" in the source regex.
-  // The Milestone carries no YAML frontmatter. Its revision is the first key of its data line, a
+  // The Work Board carries no YAML frontmatter. Its revision is the first key of its data line, a
   // line of its own inside the page since 2026-09-15 (hence the m flag) and the whole of the sibling
   // workboard-data.js the day before; a board written before the 2026-09-14 local-only design
   // carried it in its header meta line instead, which still identifies an older board as this renderer's own.
@@ -138,7 +138,7 @@ function isDir(path: string): boolean {
 }
 
 /**
- * Every Writing's folder in the matter's 0. DRAFT, read-only, by filing id (a Milestone with no Writing
+ * Every Writing's folder in the matter's 0. DRAFT, read-only, by filing id (a Work Board with no Writing
  * has none). One rule for the render, the move and the page write, so they agree on each name.
  */
 export function writingFolders(dbPath: string, draft: string = draftDirOf(dbPath)): Map<number, WritingFolder> {
@@ -198,7 +198,7 @@ function settled(draft: string, title: string, folder: WritingFolder): string {
 export function writingFolderForRender(dbPath: string, filingId: number, title: string): { dir: string; rename?: MockupMove } {
   const draft = draftDirOf(dbPath);
   const folder = writingFolders(dbPath, draft).get(filingId);
-  if (folder === undefined) throw new DataServerError(`Milestone ${filingId} has no Writing, so it has no folder`, "milestone_only");
+  if (folder === undefined) throw new DataServerError(`Work Board ${filingId} has no Writing, so it has no folder`, "milestone_only");
   if (folder.ambiguous !== undefined) {
     throw new DataServerError(
       `${folder.ambiguous.length} folders in ${draft} could each be "${title}"'s: ${folder.ambiguous.map((n) => `"${join(draft, n)}"`).join(", ")}. ` +

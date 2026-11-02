@@ -51,7 +51,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       description:
         "Run a write SQL script against one matter's submission database in a single transaction, with no " +
         "compare-and-swap. A filing (Writing) is created through drafting_data__create_writing, never here, " +
-        "a Milestone with no Writing is created through drafting_data__create_milestone, never here, a general " +
+        "a Work Board with no Writing is created through drafting_data__create_milestone, never here, a general " +
         "Writing is recorded as sent through drafting_data__record_sent, any other Writing is recorded as filed through " +
         "drafting_data__record_filed, and a Writing is recorded as served through drafting_data__record_served: a script " +
         "that leaves a filing's filed_on or sent_copy_id holding a value it did not hold is refused whole, writing " +
@@ -113,10 +113,10 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "a type declaring signer: party takes signer_party_id, a party of the proceeding. Refusals write nothing: kind_unresolved, recipient_mismatch, " +
         "invalid_layout (an unknown part source, a needs-forum type under _NoVenue), projection_not_built, forum_mismatch, " +
         "needs_forum, invalid_signer. On a proceeding's first Writing other than a research memo or case brief, which has no board, the same transaction moves every draft attached to the " +
-        "proceeding's own Milestone (a client letter or reply, ADR 0042) onto the new Writing's board, which takes that " +
+        "proceeding's own Work Board (a client letter or reply, ADR 0042) onto the new Writing's board, which takes that " +
         "board's place, so each stays on one board. Returns filing_id, needs_forum_parts, the stored layout and venue " +
         "blocks, the signer, type_file, venue_file, learned and attachments_moved (how many drafts it moved; 0 on a " +
-        "database below schema v67). A Milestone with no Writing is never created here: its kind is refused with " +
+        "database below schema v67). A Work Board with no Writing is never created here: its kind is refused with " +
         "reserved_kind, and drafting_data__create_milestone creates it.",
       inputSchema: {
         type: "object",
@@ -149,11 +149,11 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
     {
       name: submissionDataPrefixed("create_milestone"),
       description:
-        "Create one Milestone with no Writing on a proceeding: the one door for a board that holds work no Writing " +
+        "Create one Work Board with no Writing on a proceeding: the one door for a board that holds work no Writing " +
         "carries, such as finding, stamping or scanning a paper original. It is not a Writing and is never called one. " +
         "`title` is the board's name in the practitioner's own words. The proceeding must already have a Writing other than a research memo or case brief: one " +
-        "with none keeps its own Milestone, which already holds jobs with no Writing, and the call is refused with " +
-        "no_writing. The board has a Milestone page (`Milestone <id>.html`) and jobs, and never a mockup, " +
+        "with none keeps its own Work Board, which already holds jobs with no Writing, and the call is refused with " +
+        "no_writing. The board has a Work Board page (`Work Board <id>.html`) and jobs, and never a mockup, " +
         "a Writing folder, a view page, completion criteria, Proposals or ingest inputs; this tool writes no " +
         "job. It shows only the jobs and loose threads whose filing_id is the returned filing_id, so a job with no " +
         "filing_id stays on the Writings' boards. Its state is Open, or Closed once it is retired. Refusals write " +
@@ -175,11 +175,11 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
     {
       name: submissionDataPrefixed("merge_milestones"),
       description:
-        "Merge two Milestones whose goals the practitioner has confirmed overlap or cohere (docs/ADRs/0010). First " +
+        "Merge two Work Boards whose goals the practitioner has confirmed overlap or cohere (docs/ADRs/0010). First " +
         "show the practitioner both boards' statements of goals (drafting_forms__board_card's goals lane) side by side, " +
         "propose one combined goal as the reply's only fenced code block, and in the same turn ask whether to merge them " +
         "with that goal, saying that each Writing stays a separate filing with its own documents and numbering and " +
-        "that only the Milestone page, view pages and goal combine; call this only after their next turn is a bare " +
+        "that only the Work Board page, view pages and goal combine; call this only after their next turn is a bare " +
         "yes, or their own goal sentence, and pass confirmed: true. goal_statement is the merged board's one goal, " +
         "the fenced block character for character or the practitioner's sentence; it is written as confirmed and " +
         "passes the practitioner-words gate as drafting_data__set_board_goal's confirmed statement does. " +
@@ -189,9 +189,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "asks once for one combined goal. Either way every earlier statement of both boards is kept under the " +
         "survivor's `merged` as history only, never drawn on the Goal card, board_summary or board_card once the " +
         "board holds one goal. " +
-        "boards names the two, each by exactly one of filing_id (a Writing's board or a Milestone with no Writing) and " +
+        "boards names the two, each by exactly one of filing_id (a Writing's board or a Work Board with no Writing) and " +
         "proceeding_id (a pre-filing proceeding's board). Boards in different proceedings may merge. The survivor is " +
-        "a Writing's board over a Milestone with no Writing over a pre-filing board, and within a kind the lower id. " +
+        "a Writing's board over a Work Board with no Writing over a pre-filing board, and within a kind the lower id. " +
         "The survivor's page then draws the merged boards as one board: one Completion Criteria card and one set of " +
         "lanes holding every board's jobs, each job naming the Writing it serves. board_summary reads that one board by " +
         "any of its Writings' ids, and board_card by the survivor's (an absorbed board's refuses board_merged). Criteria combine by id and read unmet while any Writing's is unmet; " +
@@ -240,7 +240,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "a .msg is recorded by path and not compared, and the " +
         "result says so. Then, in one transaction, it writes the sent copy's documents row, sent_copy_id, the signer " +
         "snapshot and filed_on (sent_on), which freezes the exhibits and moves the revision. It retires nothing and " +
-        "offers no retirement: the Writing stays on its Milestone until the practitioner retires it. Refusals: invalid_sent_on, " +
+        "offers no retirement: the Writing stays on its Work Board until the practitioner retires it. Refusals: invalid_sent_on, " +
         "invalid_sent_copy, invalid_send_anyway, not_found, writing_retired, already_sent, not_a_general_writing, " +
         "person_unset, not_a_lawyer, not_active, invalid_signer, no_stored_text, parties_drift (a party's counsel or address " +
         "for service cannot be read from case data; nothing was written), render_first, no_billing_anchor, held, " +
@@ -334,9 +334,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "'Review scrutiny finding: ' job is scoped to the statement in scope: §3d); authority_brief (a queued or wip, unshelved " +
         "'Brief the case: ' job in the proceeding is scoped to any authority of the same case: §3n); holder_lock (held_ticket_id no " +
         "longer carries session_token under claim_no: a spin-off blocker, §3f, which copies the held job's scope). filing_id is the " +
-        "Writing's or Milestone's id, or null for a proceeding-scoped job, and is never left out. priority is an " +
+        "Writing's or Work Board's id, or null for a proceeding-scoped job, and is never left out. priority is an " +
         "integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a " +
-        "Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Milestone's job, the Milestone's " +
+        "Writing's job, that Writing's queue with the proceeding-scoped jobs; on a Work Board's job, the Work Board's " +
         "alone; on a proceeding-scoped job, every queued job in the proceeding. created_by is this session's " +
         "session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). " +
         "Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is " +
@@ -784,13 +784,13 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         " The outcome is read off the confirm-read: completed (status completed, no " +
         "lock; changes 1 means this call completed it, 0 that another session did), not_held (another session's token is " +
         "on the row: taken over), shelved (no lock, rejected_at set), no_match (the guards matched nothing), steps_open. Only when this " +
-        "call completed the job (changes 1) are the matter's Milestone pages and Litigation Strategy rewritten, by the render a " +
+        "call completed the job (changes 1) are the matter's Work Board pages and Litigation Strategy rewritten, by the render a " +
         "session runs with draft_dir: the job's filing's, or for a job with no filing_id or on a research memo or case brief, which has no board, the first live filing's in its " +
-        "proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Milestone " +
+        "proceeding, or the proceeding's own when it has no filing. pages_written: false with pages_refused means the Work Board " +
         "pages are stale and the session must say so; the completion still stands. It moves no revision. Refusals " +
         "write nothing: invalid_ticket_id, invalid_session_token, not_found. Returns ticket_id, outcome, superseded, " +
         "changes, status, completed_at, locked_by, rejected_at, pages_written, milestone_path (the rendered filing's or " +
-        "proceeding's Milestone page), board_changed, board_moves, pages_refused, open_steps on steps_open, and a note.",
+        "proceeding's Work Board page), board_changed, board_moves, pages_refused, open_steps on steps_open, and a note.",
       inputSchema: {
         type: "object",
         properties: {
@@ -808,9 +808,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
     {
       name: submissionDataPrefixed("set_board_goal"),
       description:
-        "Record one Milestone's statement of goals: the card labelled Goal at the top of the board, " +
+        "Record one Work Board's statement of goals: the card labelled Goal at the top of the board, " +
         "drafting_forms__render's board_summary `Goal:` line and drafting_forms__board_card's goals lane. Pass exactly " +
-        "one of filing_id (a Writing's board or a Milestone with no Writing) and proceeding_id (a pre-filing " +
+        "one of filing_id (a Writing's board or a Work Board with no Writing) and proceeding_id (a pre-filing " +
         "proceeding's board; one that has a Writing other than a research memo or case brief is refused, proceeding_has_writing). status is confirmed (the " +
         "statement the practitioner approved), inferred (the session's own wording after the practitioner declined, " +
         "never treated as confirmed) or declined (the practitioner declined and nothing is inferred yet). statement " +
@@ -818,7 +818,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "inferred and refused for declined. A goal is one outcome (an order obtained, a settlement reached, a claim " +
         "defended), not a document or a step. description is the line the closed card shows; omitted, the stored one " +
         "stays, else the board's default: `Goal not set` while no statement is stored, and once one is, the Writing's " +
-        "or Milestone's title, or `Proceeding <id>`. A statement or description naming drafting, or a description " +
+        "or Work Board's title, or `Proceeding <id>`. A statement or description naming drafting, or a description " +
         "joining several goals (`; `, ` + `, ` & `), is still written, and the note ends with a framing warning to relay " +
         "once. session_token is the one drafting_forms__open_session or drafting_forms__bootstrap " +
         "returned. A confirmed write passes the practitioner-words gate: the statement is an unbroken run of one " +
@@ -857,9 +857,9 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
     {
       name: submissionDataPrefixed("record_viewed"),
       description:
-        "Record that the practitioner was just shown pages, so the Milestone's thumbnails put the most recently " +
+        "Record that the practitioner was just shown pages, so the Work Board's thumbnails put the most recently " +
         "viewed first and a view page's tile stops being dashed. Call it right after presenting a view page or a " +
-        "Writing's mockup as a file card, with the exact paths presented, in the order presented; never for a Milestone " +
+        "Writing's mockup as a file card, with the exact paths presented, in the order presented; never for a Work Board " +
         "or Litigation Strategy page. Each path is matched by its file name to a thumbnail: a board's view " +
         "page (view_page_paths), or a live Writing's document by its mockup, by its folder too " +
         "when several thumbnails share the name. Each moves to the front of its board's order, so the last " +

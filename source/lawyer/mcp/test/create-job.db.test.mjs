@@ -68,11 +68,11 @@ test("a plain create writes the job, its steps, scope, blocks, seed and created_
   assert.equal(query(dbPath, "SELECT charted_into FROM seeds WHERE id = 1")[0].charted_into, id);
 });
 
-test("top reads the Writing's queue; a Milestone's job reads the Milestone's alone", async (t) => {
+test("top reads the Writing's queue; a Work Board's job reads the Work Board's alone", async (t) => {
   const dbPath = await board(t);
   assert.equal((await create(dbPath, { priority: "top" })).priority, 4);
   const milestone = await callTool({}, "drafting_data__create_milestone", { db_path: dbPath, proceeding_id: 1, title: "Settlement" });
-  // Job 2 is proceeding-scoped and never queues on a Milestone, so the Milestone starts at 0.
+  // Job 2 is proceeding-scoped and never queues on a Work Board, so the Work Board starts at 0.
   assert.equal((await create(dbPath, { filing_id: milestone.filing_id, priority: "bottom" })).priority, 0);
 });
 

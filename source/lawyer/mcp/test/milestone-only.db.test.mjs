@@ -1,5 +1,5 @@
-// A Milestone with no Writing: a `filings` row of the reserved kind `task-board`, written only by
-// drafting_data__create_milestone on a proceeding that already has a Writing. It has a Milestone page
+// A Work Board with no Writing: a `filings` row of the reserved kind `task-board`, written only by
+// drafting_data__create_milestone on a proceeding that already has a Writing. It has a Work Board page
 // and jobs, and never a mockup, a view page, completion criteria or Proposals. Its
 // place in open_session's default opening is in open-session.db.test.mjs, and in the background render
 // job's queue in render-job.e2e.test.mjs.
@@ -41,7 +41,7 @@ function matterBoard(path) {
 }
 
 // Proceeding 1: BCSC with one Writing, filing 1. Proceeding 2: no filing. With `board`, filing 2 is a
-// Milestone with no Writing on proceeding 1, opened through the tool. Attachment 2 names proceeding 1
+// Work Board with no Writing on proceeding 1, opened through the tool. Attachment 2 names proceeding 1
 // alone: it is written before the proceeding's first Writing, the only time the v67 guard allows one.
 async function fixture(t, { board = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-milestone-only-"));
@@ -145,7 +145,7 @@ test("without draft_dir the render returns the board alone and writes nothing", 
   assert.equal(result.rendered_at, PINNED);
   assert.deepEqual(result.documents.map((d) => d.document_type), ["Work_board"], "no mockup");
   const board = boardOf(result);
-  assert.match(board.board_summary, /^# Milestone — Matter L8470 · Client Larchmont \(1\) · Rev \d+\nTo Do: This matter's to-dos were not read\.\nGoal: Goal not set \(none\)\nState: Open$/);
+  assert.match(board.board_summary, /^# Work Board — Matter L8470 · Client Larchmont \(1\) · Rev \d+\nTo Do: This matter's to-dos were not read\.\nGoal: Goal not set \(none\)\nState: Open$/);
   assert.equal(board.pages_written, false);
   assert.equal(board.path, undefined);
   assert.equal(board.ingest_inputs, undefined);
@@ -160,12 +160,12 @@ test("with draft_dir the render writes the board's page among the matter's pages
 
   const result = render(f.dbPath, f.boardId, { draftDir: f.draft });
 
-  const page = join(f.draft, `Milestone ${f.boardId}.html`);
+  const page = join(f.draft, `Work Board ${f.boardId}.html`);
   const board = boardOf(result);
   assert.equal(result.milestone_only, true);
   assert.deepEqual(result.documents.map((d) => d.document_type), ["Work_board"]);
   assert.equal(board.path, page);
-  assert.equal(board.file_name, `Milestone ${f.boardId}.html`);
+  assert.equal(board.file_name, `Work Board ${f.boardId}.html`);
   assert.equal(board.pages_written, true);
   assert.match(board.board_summary, /^State: Open$/m);
   assert.equal(board.board_summary.includes("🎯"), false, "no completion criteria");
@@ -173,9 +173,9 @@ test("with draft_dir the render writes the board's page among the matter's pages
   const entries = readdirSync(f.draft, { withFileTypes: true });
   assert.deepEqual(entries.filter((e) => e.isDirectory()).map((e) => e.name), ["Consent Order Requisition", "Drafting records"], "the Writing's folder and the records folder, and no folder for the board");
   const names = entries.map((e) => e.name);
-  assert.deepEqual(names.filter((name) => name.includes(`Milestone ${f.boardId}`)), [`Milestone ${f.boardId}.html`], "its page, and no view page beside it");
+  assert.deepEqual(names.filter((name) => name.includes(`Work Board ${f.boardId}`)), [`Work Board ${f.boardId}.html`], "its page, and no view page beside it");
   assert.ok(names.includes("Litigation Strategy.html"));
-  assert.ok(existsSync(join(f.draft, "Consent Order Requisition", "Milestone.html")), "the Writing's page is written too");
+  assert.ok(existsSync(join(f.draft, "Consent Order Requisition", "Work Board.html")), "the Writing's page is written too");
   assert.ok(existsSync(join(f.draft, "Consent Order Requisition", "Arguments.html")), "the Writing keeps its view pages");
   assert.deepEqual([...new Set(result.view_page_paths.map((p) => p.filing_id))], [1], "view pages are the Writing's alone");
   for (const name of readdirSync(dirname(f.dbPath))) {
@@ -266,7 +266,7 @@ test("board_card prints no criteria, Proposed or Court File lane for the board",
   assert.throws(() => submissionFormsBoardCard({ db_path: f.dbPath, filing_id: 1, jobs: [3] }, CLIENT, PINNED), /no Job #3 on this section/);
 });
 
-test("bootstrap lists the board with no paths and no render_state, and the Litigation Strategy lists it under Milestones", async (t) => {
+test("bootstrap lists the board with no paths and no render_state, and the Litigation Strategy lists it under Work Boards", async (t) => {
   const f = await fixture(t);
   await seedWork(f);
 
@@ -284,9 +284,9 @@ test("bootstrap lists the board with no paths and no render_state, and the Litig
   assert.deepEqual(
     result.milestone_paths.map((p) => [p.filing_id, p.proceeding_id, p.path]).sort(),
     [
-      [1, 1, join(f.draft, "Consent Order Requisition", "Milestone.html")],
-      [f.boardId, 1, join(f.draft, `Milestone ${f.boardId}.html`)],
-      [null, 2, join(f.draft, "Milestone - proceeding 2.html")],
+      [1, 1, join(f.draft, "Consent Order Requisition", "Work Board.html")],
+      [f.boardId, 1, join(f.draft, `Work Board ${f.boardId}.html`)],
+      [null, 2, join(f.draft, "Work Board - proceeding 2.html")],
     ].sort(),
     "the board has a page of its own"
   );
@@ -294,7 +294,7 @@ test("bootstrap lists the board with no paths and no render_state, and the Litig
   assert.deepEqual(readdirSync(join(f.draft, "Drafting records")), ["matter-pages-state.json"], "bootstrap looks up no manifest for it");
 
   const page = readFileSync(result.matter_board_path, "utf-8");
-  assert.ok(page.includes('section("milestones", "Milestones"'), "the page draws a Milestones section");
+  assert.ok(page.includes('section("milestones", "Work Boards"'), "the page draws a Work Boards section");
   const data = matterBoard(result.matter_board_path);
   const line = data.filings.find((x) => x.filing_id === f.boardId);
   assert.deepEqual(line, { filing_id: f.boardId, title: TITLE, state: line.state, state_label: "Open", state_since: null, render_state: null, in_progress: 1, job_only: true });
@@ -332,7 +332,7 @@ test("a closed board reads Closed, has no page, and is listed under Retired", as
   const closed = render(f.dbPath, f.boardId, { draftDir: f.draft });
   assert.equal(closed.milestone_only, true);
   assert.equal(closed.filing_retired, true);
-  assert.match(closed.note, new RegExp(`^Milestone ${f.boardId} was closed on 2026-10-11, so it has no page\\.`));
+  assert.match(closed.note, new RegExp(`^Work Board ${f.boardId} was closed on 2026-10-11, so it has no page\\.`));
   assert.deepEqual(closed.documents.map((d) => d.document_type), ["Work_board"]);
   assert.match(boardOf(closed).board_summary, /^State: Closed 2026-10-11$/m);
   assert.equal(boardOf(closed).path, undefined, "a closed board has no page");
@@ -360,7 +360,7 @@ test("a closed board reads Closed, has no page, and is listed under Retired", as
 
 test("reopening a closed board brings its page back and un-supersedes nothing", async (t) => {
   const f = await closedBoard(t);
-  const page = join(f.draft, `Milestone ${f.boardId}.html`);
+  const page = join(f.draft, `Work Board ${f.boardId}.html`);
   assert.equal(boardOf(render(f.dbPath, f.boardId, { draftDir: f.draft })).path, undefined);
   assert.equal(existsSync(page), false);
 
@@ -404,7 +404,7 @@ test("every tool that acts on a Writing's document refuses the board", async (t)
   const before = JSON.stringify(filingsOf(f.dbPath));
   const revision = revisionOf(f.dbPath);
   for (const [tool, args] of Object.entries(calls)) {
-    await assert.rejects(async () => callTool({}, tool, { ...base, ...args }), code("milestone_only", /Milestone \d+ has no Writing/), tool);
+    await assert.rejects(async () => callTool({}, tool, { ...base, ...args }), code("milestone_only", /Work Board \d+ has no Writing/), tool);
   }
   assert.equal(JSON.stringify(filingsOf(f.dbPath)), before);
   assert.equal(revisionOf(f.dbPath), revision);
@@ -426,12 +426,12 @@ test("completing a proceeding-wide job rewrites a Writing's page, and completing
   const wide = await complete(2);
   assert.equal(wide.outcome, "completed");
   assert.equal(wide.pages_refused, undefined);
-  assert.equal(wide.milestone_path, join(f.draft, "Second Requisition", "Milestone.html"), "never the board, which shows no job without a filing_id");
+  assert.equal(wide.milestone_path, join(f.draft, "Second Requisition", "Work Board.html"), "never the board, which shows no job without a filing_id");
 
   const own = await complete(4);
   assert.equal(own.outcome, "completed");
   assert.equal(own.pages_refused, undefined);
   assert.equal(own.pages_written, true);
-  assert.equal(own.milestone_path, join(f.draft, `Milestone ${f.boardId}.html`));
+  assert.equal(own.milestone_path, join(f.draft, `Work Board ${f.boardId}.html`));
   assert.deepEqual(readBoardData(own.milestone_path).sections[0].tickets.map((x) => [x.id, x.category]), [[3, "ready"], [4, "completed"]]);
 });

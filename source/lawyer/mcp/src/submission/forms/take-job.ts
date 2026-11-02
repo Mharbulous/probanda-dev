@@ -125,7 +125,7 @@ function overlapping(section: WorkBoardData, t: WorkBoardTicket, cleared: number
 /** The board the job is drawn on: its Writing's, a General Job's or a research Writing's job's first
  * live Writing's in its proceeding (proceedingJobBoard), or its proceeding's; on a merged board, the
  * survivor's, unless that Writing is retired (board-card.ts refuseAbsorbedCard). A proceeding that holds
- * only Milestones with no Writing draws such a job on no page, so it is read on the proceeding's section. */
+ * only Work Boards with no Writing draws such a job on no page, so it is read on the proceeding's section. */
 function boardOf(dbPath: string, id: number): { filing_id?: number; proceeding_id?: number } {
   const [row] = submissionDataQuery(dbPath, "SELECT filing_id, proceeding_id FROM tickets WHERE id = ?", [id]).rows as unknown as { filing_id: number | null; proceeding_id: number }[];
   if (row === undefined) throw new ValidationError(`${TOOL}: no job ${id} in ${dbPath}; nothing was written`, "not_found");

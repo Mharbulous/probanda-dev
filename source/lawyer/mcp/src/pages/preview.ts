@@ -51,7 +51,7 @@ export const HOUSEKEEPING_PAGE = "Housekeeping approval";
 export const PAGE_TEMPLATES: Readonly<Record<string, TemplateSet>> = {
   "Practice Board": PRACTICE_BOARD_TEMPLATE,
   "Litigation Strategy": LITIGATION_STRATEGY_TEMPLATE,
-  "Milestone": MILESTONE_TEMPLATE,
+  "Work Board": MILESTONE_TEMPLATE,
   ...Object.fromEntries([...VIEW_PAGES, LOOSE_IDEAS_PAGE].map((p) => [p.name, p.template])),
   [HOUSEKEEPING_PAGE]: APPROVAL_TEMPLATE,
 };
@@ -107,7 +107,7 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
     if (threads) return { path: writePreview(dir, page, renderViewPageHtml(threads, LOOSE_THREADS_FIXTURE.meta, LOOSE_THREADS_FIXTURE.data), true) };
     if (page === "Practice Board") return { path: writePreview(dir, stem(PRACTICE_BOARD_FILE), renderPracticeBoardHtml(PRACTICE_BOARD_FIXTURE, composed), true) };
     if (page === "Litigation Strategy") return { path: writePreview(dir, stem(MATTER_BOARD_FILE), renderMatterBoardHtml(LITIGATION_STRATEGY_FIXTURE, composed), true) };
-    return { path: writePreview(dir, `Milestone ${FIXTURE_BOARD.filing_id}`, renderWorkBoardHtml(MILESTONE_FIXTURE, composed), true) };
+    return { path: writePreview(dir, `Work Board ${FIXTURE_BOARD.filing_id}`, renderWorkBoardHtml(MILESTONE_FIXTURE, composed), true) };
   }
 
   if (page === "Practice Board") {
@@ -122,8 +122,8 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
   if ((page === "Litigation Strategy" || threads) && (ids.filing_id !== undefined || ids.proceeding_id !== undefined)) {
     throw new ValidationError(`the ${page} covers the whole matter: it takes no filing_id or proceeding_id`);
   }
-  if (page === "Milestone" && (ids.filing_id === undefined) === (ids.proceeding_id === undefined)) {
-    throw new ValidationError("the Milestone needs exactly one of filing_id or proceeding_id");
+  if (page === "Work Board" && (ids.filing_id === undefined) === (ids.proceeding_id === undefined)) {
+    throw new ValidationError("the Work Board needs exactly one of filing_id or proceeding_id");
   }
   if (viewPage && (ids.filing_id === undefined || ids.proceeding_id !== undefined)) {
     throw new ValidationError(`the ${page} page needs filing_id and takes no proceeding_id`);
@@ -146,18 +146,18 @@ export async function pagesPreview(args: PreviewArgs, store: PracticeStore): Pro
     await readMatterTodos(store, matterNo),
     await readMatterDates(store, matterNo),
     ids.filing_id === undefined ? {} : { only: ids.filing_id },
-    threads ? { threads: withoutListener(threads) } : viewPage ? { views: { [page]: viewPage } } : page === "Milestone" ? { milestone: composed } : { matterBoard: composed }
+    threads ? { threads: withoutListener(threads) } : viewPage ? { views: { [page]: viewPage } } : page === "Work Board" ? { milestone: composed } : { matterBoard: composed }
   );
   const target =
     threads || page === "Litigation Strategy"
       ? join(draftDir, threads ? LOOSE_THREADS_FILE : MATTER_BOARD_FILE)
-      : page === "Milestone"
+      : page === "Work Board"
         ? built.paths.milestone_paths.find((t) => (ids.filing_id !== undefined ? t.filing_id === ids.filing_id : t.filing_id === null && t.proceeding_id === ids.proceeding_id))?.path
         : built.paths.view_page_paths.find((v) => v.name === page && v.filing_id === ids.filing_id)?.path;
   const pageFile = target === undefined ? undefined : relative(draftDir, target);
   const html = built.pages.find((p) => p.name === pageFile)?.html;
   if (target === undefined || html === undefined) {
-    const which = ids.filing_id !== undefined ? `Milestone ${ids.filing_id}` : "that proceeding's board";
+    const which = ids.filing_id !== undefined ? `Work Board ${ids.filing_id}` : "that proceeding's board";
     throw new ValidationError(`this matter has no ${page} page for ${which}: it is retired, merged into a board with no such page, or not in this matter`);
   }
   return { path: writePreview(dirname(target), stem(basename(target)), html, false) };

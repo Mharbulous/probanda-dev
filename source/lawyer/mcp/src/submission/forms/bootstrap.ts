@@ -34,7 +34,7 @@ import { type PhaseTimings, timed, withTotal, nowStamp } from "./timings.js";
 // of the server process: how many processes a host spawns is not load-bearing
 // and was already wrong once (#586, #609).
 //
-// An unattended run (Goal card design §5.4) asks for a token of its own class, so the Milestone
+// An unattended run (Goal card design §5.4) asks for a token of its own class, so the Work Board
 // can tell its lock from an attended session's without a new column.
 function newSessionToken(unattended: boolean): string {
   return `${unattended ? UNATTENDED_TOKEN_PREFIX : "sess-"}${randomBytes(9).toString("hex")}`;
@@ -88,7 +88,7 @@ export function submissionFormsBootstrap(
   /** This call's single clock reading (#581 §4), shared with every render it makes. Not a
    * tool input -- dispatch never passes it. */
   now: string = nowStamp(),
-  /** The matter's 0. DRAFT folder (#585). Given, the Litigation Strategy and the Milestone pages are written
+  /** The matter's 0. DRAFT folder (#585). Given, the Litigation Strategy and the Work Board pages are written
    * there; omitted, nothing is written, and matter_board_path and milestone_paths are null. Confined
    * before any other work. */
   draftDir?: string,
@@ -97,7 +97,7 @@ export function submissionFormsBootstrap(
   todos: MatterTodos = TODOS_NOT_READ,
   /** An unattended /draft run's entry (Goal card design §5.4): the token minted is of the unattended class. */
   unattended = false,
-  /** The matter's hearing dates, for the Milestone page alone (ADR 0013, 2026-10-04 amendment). */
+  /** The matter's hearing dates, for the Work Board page alone (ADR 0013, 2026-10-04 amendment). */
   dates: MatterDates = DATES_NOT_READ
 ): BootstrapResult {
   if (!existsSync(dbPath)) {

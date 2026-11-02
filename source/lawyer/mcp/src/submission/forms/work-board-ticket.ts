@@ -1,4 +1,4 @@
-// A Milestone ticket's public shape, and the codes for why an unattended run may not take it.
+// A Work Board ticket's public shape, and the codes for why an unattended run may not take it.
 
 import type { TicketRow, TicketStatus } from "./work-board-reads.js";
 

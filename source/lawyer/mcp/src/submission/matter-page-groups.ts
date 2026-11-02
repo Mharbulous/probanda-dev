@@ -1,4 +1,4 @@
-// Which board each live filing and pre-filing proceeding is drawn on, and the file each Milestone
+// Which board each live filing and pre-filing proceeding is drawn on, and the file each Work Board
 // page and view page goes in (matter-pages.ts has the whole picture).
 
 import { join } from "node:path";
@@ -28,21 +28,21 @@ export interface PageGroup {
   members: Member[];
 }
 
-/** A Writing's Milestone page, in the Writing's own folder (spec 2026-10-22 §9). */
-export const WRITING_MILESTONE_FILE = "Milestone.html";
+/** A Writing's Work Board page, in the Writing's own folder (spec 2026-10-22 §9). */
+export const WRITING_MILESTONE_FILE = "Work Board.html";
 
 /** The draft folder's subfolder a board's pages go in: its survivor Writing's own folder, or none for
- * a board whose survivor is a pre-filing proceeding or a Milestone with no Writing. */
+ * a board whose survivor is a pre-filing proceeding or a Work Board with no Writing. */
 function boardFolder(board: BoardRef, folders: ReadonlyMap<number, WritingFolder>): string | undefined {
   return board.filing_id === null ? undefined : folders.get(board.filing_id)?.name;
 }
 
-/** A board's page, relative to the draft folder: `Milestone.html` in its survivor Writing's folder,
+/** A board's page, relative to the draft folder: `Work Board.html` in its survivor Writing's folder,
  * else at the top, named by its survivor's id. */
 function boardFile(board: BoardRef, folders: ReadonlyMap<number, WritingFolder>): string {
   const folder = boardFolder(board, folders);
   if (folder !== undefined) return join(folder, WRITING_MILESTONE_FILE);
-  return board.filing_id === null ? `Milestone - proceeding ${board.proceeding_id}.html` : `Milestone ${board.filing_id}.html`;
+  return board.filing_id === null ? `Work Board - proceeding ${board.proceeding_id}.html` : `Work Board ${board.filing_id}.html`;
 }
 
 /** The live filings, then the pre-filing proceedings, grouped by the board each is drawn on: one
@@ -87,7 +87,7 @@ export function pageTargets(groups: PageGroup[]): PageTarget[] {
   return groups.flatMap((g) => g.members.map((m) => ({ filing_id: m.filing?.id ?? null, proceeding_id: m.proceeding.id, file: g.file })));
 }
 
-/** A board's Writings, those of its sections that are live Writings: a Milestone with no Writing and a pre-filing proceeding have none. */
+/** A board's Writings, those of its sections that are live Writings: a Work Board with no Writing and a pre-filing proceeding have none. */
 function writingsOf(group: PageGroup): { proceeding: ProceedingRow; filing: FilingRow }[] {
   return group.members.filter((m): m is { proceeding: ProceedingRow; filing: FilingRow } => m.filing !== null && !isJobOnlyBoard(m.filing));
 }
@@ -101,7 +101,7 @@ export interface ViewTarget {
 }
 
 /** Every registered view page for each board holding a Writing, in page order (ADR 0033, 2026-10-07
- * amendment; ADR 0010): one set per board, beside its Milestone page. */
+ * amendment; ADR 0010): one set per board, beside its Work Board page. */
 export function viewTargets(groups: PageGroup[], folders: ReadonlyMap<number, WritingFolder>): ViewTarget[] {
   return groups
     .map((group) => ({ group, writings: writingsOf(group) }))

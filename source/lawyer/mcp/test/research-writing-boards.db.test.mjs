@@ -56,7 +56,7 @@ test("session entry never opens a research Writing by default: a memo-only proce
   const result = await openSession(g);
   assert.equal(result.opened.filing_id, undefined);
   assert.equal(result.opened.proceeding_id, 1);
-  assert.equal(result.milestone_path, join(g.draft, "Milestone - proceeding 1.html"));
+  assert.equal(result.milestone_path, join(g.draft, "Work Board - proceeding 1.html"));
   assert.deepEqual(result.filings.map((f) => [f.filing_id, f.research_writing]), [[id, true]], "still findable in the list");
   assert.ok(result.pre_filing_proceedings.some((p) => p.proceeding_id === 1));
 });
@@ -83,7 +83,7 @@ test("a memo with the proceeding's lowest id is no first Writing: the proceeding
   assert.equal(section(g, { proceeding_id: 1 }).goals.statement, "Win the stay");
 
   const rendered = submissionFormsRenderProceedingBoard(g.dbPath, 1, {}, undefined, "tok", g.draft);
-  assert.equal(rendered.milestone_path, join(g.draft, "Milestone - proceeding 1.html"));
+  assert.equal(rendered.milestone_path, join(g.draft, "Work Board - proceeding 1.html"));
   assert.equal(htmlFiles(g.draft).some((f) => f.includes(BRIEF_FOLDER)), false, "nothing in the memo's folder");
 
   const other = await submissionDataSetBoardGoal({ db_path: g.dbPath, proceeding_id: 2, statement: "Another", status: "confirmed", session_token: "s" });
@@ -168,7 +168,7 @@ test("take_job reads a memo's job on a real board and checks overlap only agains
   const done = await submissionDataCompleteJob({ db_path: g.dbPath, ticket_id: 30, session_token: "tok", claim_no: taken.claim_no, draft_dir: g.draft });
   assert.equal(done.outcome, "completed");
   assert.equal(done.pages_written, true);
-  assert.equal(done.milestone_path, join(dirname(render(g, letter).documents.find((d) => d.document_type === "Work_board").path), "Milestone.html"));
+  assert.equal(done.milestone_path, join(dirname(render(g, letter).documents.find((d) => d.document_type === "Work_board").path), "Work Board.html"));
   assert.equal(done.milestone_path.includes(BRIEF_FOLDER), false);
   assert.equal(typeof done.board_changed, "boolean");
   await awaitBackgroundJobs();
@@ -205,7 +205,7 @@ test("a memo job's keys are read against nothing on a sibling's board: no dead-k
   assert.equal(drawn(31).ineligible_reasons.includes("filing_filed"), true);
 });
 
-test("take_job finds a memo's job and a General job when the only live board is a Milestone with no Writing", async (t) => {
+test("take_job finds a memo's job and a General job when the only live board is a Work Board with no Writing", async (t) => {
   const g = await fixture(t);
   const { filing_id: memo } = await brief(g);
   const { filing_id: letter } = await g.createLetter();
@@ -219,7 +219,7 @@ test("take_job finds a memo's job and a General job when the only live board is 
   }
 });
 
-test("take_job finds a memo's job on a memo-only proceeding that already holds a Milestone with no Writing", async (t) => {
+test("take_job finds a memo's job on a memo-only proceeding that already holds a Work Board with no Writing", async (t) => {
   const g = await fixture(t);
   const { filing_id: memo } = await brief(g);
   // Written straight to the table: create_milestone now refuses this.
@@ -241,7 +241,7 @@ test("complete_job on a memo-only proceeding's job writes the proceeding's page"
   await g.execute("UPDATE ticket_steps SET done_at = '2026-11-01T09:00' WHERE ticket_id = 30;");
   const done = await submissionDataCompleteJob({ db_path: g.dbPath, ticket_id: 30, session_token: "tok", claim_no: taken.claim_no, draft_dir: g.draft });
   assert.equal(done.pages_written, true);
-  assert.equal(done.milestone_path, join(g.draft, "Milestone - proceeding 1.html"));
+  assert.equal(done.milestone_path, join(g.draft, "Work Board - proceeding 1.html"));
   assert.equal(done.pages_refused, undefined);
 });
 
@@ -341,8 +341,8 @@ test("a proceeding whose only Writings are retired memos: the refusal says a liv
   const { filing_id: memo } = await brief(g);
   await g.execute(`UPDATE filings SET retired_on = '2026-10-31', retirement_reason = 'abandoned' WHERE id = ${memo};`);
   const attach = (filing) => g.execute(`INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (1, 1, ${filing}, '0. DRAFT\\Reply.eml', 'reply', '2026-10-01');`);
-  await assert.rejects(attach("NULL"), /a live one of them.*if all of them are retired, this Milestone takes none until one is recovered or another Writing is created/s);
-  await assert.rejects(attach(memo), /retired Writing has no Milestone/);
+  await assert.rejects(attach("NULL"), /a live one of them.*if all of them are retired, this Work Board takes none until one is recovered or another Writing is created/s);
+  await assert.rejects(attach(memo), /retired Writing has no Work Board/);
   await g.execute(`UPDATE filings SET retired_on = NULL, retirement_reason = NULL WHERE id = ${memo};`);
   await attach(memo);
   assert.deepEqual(section(g, { proceeding_id: 1 }).attachments.map((a) => a.id), [1]);

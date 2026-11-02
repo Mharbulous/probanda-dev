@@ -18,8 +18,8 @@ const { renderBoardSummary, TODOS_NOT_READ } = await import("../build/submission
 
 /** The VanIAC seed's Writing title, so the name of its folder. */
 const TITLE = "Opening Submissions Package";
-/** A Writing's own Milestone page, in its folder. */
-const PAGE = "Milestone.html";
+/** A Writing's own Work Board page, in its folder. */
+const PAGE = "Work Board.html";
 
 function renderFromDraft(f, draftDir, mode = "mockup", documents) {
   return submissionFormsRender(f.dbPath, 1, ASHBOURNE, mode, documents, undefined, undefined, undefined, undefined, draftDir);
@@ -33,7 +33,7 @@ const recordsOf = (draft) => join(draft, "Drafting records");
 const manifestOf = (draft) => JSON.parse(readFileSync(join(recordsOf(draft), "render-manifest-1.json"), "utf-8"));
 const advocacyOf = (result) => result.documents.filter((d) => d.document_type !== "Work_board");
 
-/** The one section of the Writing's own Milestone page. */
+/** The one section of the Writing's own Work Board page. */
 function sectionIn(folder) {
   const page = readBoardData(join(folder, PAGE));
   assert.equal(page.sections.length, 1);
@@ -364,7 +364,7 @@ test("render of a retired filing with presentation_dir writes the matter's pages
 
     assert.equal(result.filing_retired, true);
     assert.ok(!existsSync(leaf), "no mockup is refreshed for a retired filing");
-    assert.deepEqual(readdirSync(draft).filter((name) => name !== "Drafting records"), ["Litigation Strategy.html", "Loose Threads.html"], "a retired filing has no Milestone page (D1)");
+    assert.deepEqual(readdirSync(draft).filter((name) => name !== "Drafting records"), ["Litigation Strategy.html", "Loose Threads.html"], "a retired filing has no Work Board page (D1)");
     const board = result.documents[0];
     assert.equal(board.path, undefined, "no page, so no path");
     assert.equal(board.file_name, PAGE, "no page, so the generic name, never a page that does not exist");

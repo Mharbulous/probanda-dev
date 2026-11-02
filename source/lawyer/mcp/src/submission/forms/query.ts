@@ -75,8 +75,8 @@ export interface FilingRow {
   pure_law_note?: string | null;
 }
 
-/** The reserved kind of a Milestone with no Writing: a `filings` row that only
- * drafting_data__create_milestone writes, with no stored layout. It has a Milestone page and jobs,
+/** The reserved kind of a Work Board with no Writing: a `filings` row that only
+ * drafting_data__create_milestone writes, with no stored layout. It has a Work Board page and jobs,
  * and never a mockup, a view page, completion criteria or Proposals. */
 export const MILESTONE_KIND = "task-board";
 
@@ -85,7 +85,7 @@ export function isJobOnlyBoard(filing: Pick<FilingRow, "kind">): boolean {
 }
 
 /** The kinds of a research result held as a Writing: a research memo, in each format, and a case brief.
- * Such a Writing has no board of its own: no Milestone page and no view pages. A job's answer links it to
+ * Such a Writing has no board of its own: no Work Board page and no view pages. A job's answer links it to
  * that job's board, and it is listed on the board's Legal Research page (legal-research-page.ts). */
 const RESEARCH_WRITING_KINDS: ReadonlySet<string> = new Set(["research_memo", "research_memo_irac", "research_memo_creac", "case_brief"]);
 
@@ -651,7 +651,7 @@ export function fetchBoardFilings(dbPath: string, proceedingId: number): FilingR
 }
 
 /** Among a proceeding's board filings, the one read for a job with no board of its own (a General Job or a
- * research Writing's job): its first live Writing by id, else its first Writing. Never a Milestone with no
+ * research Writing's job): its first live Writing by id, else its first Writing. Never a Work Board with no
  * Writing, which shows no job without its own filing_id. */
 export function proceedingJobBoard(boards: FilingRow[]): FilingRow | undefined {
   const writings = boards.filter((f) => !isJobOnlyBoard(f));

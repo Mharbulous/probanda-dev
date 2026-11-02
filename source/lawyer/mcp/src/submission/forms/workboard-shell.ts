@@ -1,6 +1,6 @@
-// The Milestone (docs/design/2026-09-14 work-board-local-only-design.md, amended 2026-09-15; one
-// page per board section since ADR 0033's 2026-10-05 amendment): `Milestone <id>.html`
-// per live Writing and `Milestone - proceeding <id>.html` per pre-filing proceeding, at the top of the
+// The Work Board (docs/design/2026-09-14 work-board-local-only-design.md, amended 2026-09-15; one
+// page per board section since ADR 0033's 2026-10-05 amendment): `Work Board <id>.html`
+// per live Writing and `Work Board - proceeding <id>.html` per pre-filing proceeding, at the top of the
 // matter's 0. DRAFT folder, each holding that one section. Its stylesheet, its data and both scripts
 // are inline, so the file draws completely wherever it is opened. The page's code is identical for
 // every matter; only the data line differs. The page itself is the template set in

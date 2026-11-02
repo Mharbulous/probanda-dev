@@ -31,7 +31,7 @@ function renderAt(dbPath, now, client = ASHBOURNE) {
   return submissionFormsRender(dbPath, 1, client, "mockup", undefined, undefined, undefined, now);
 }
 
-/** Everything but the Milestone, which sits outside the stamp and is rewritten every call. */
+/** Everything but the Work Board, which sits outside the stamp and is rewritten every call. */
 
 function advocacyOf(result) {
   return result.documents.filter((d) => d.document_type !== "Work_board");

@@ -2,7 +2,7 @@
 // of every matter in the practice (billable or not) in four panels: Overdue, Due today, Coming up,
 // then Other open work. Written only by practice_data__render_practice_board, which joins the deadline
 // lane, so no drafting session ever writes or presents it. Its internal name is practice_board, never
-// Work_board (the Milestone's document type).
+// Work_board (the Work Board's document type).
 //
 // No model reads this file (shared/html-pages.md). Practice data enters only through
 // renderPracticeBoardHtml's one data line. The page draws stored dates only: it derives no deadline

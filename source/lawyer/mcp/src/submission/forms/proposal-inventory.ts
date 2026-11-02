@@ -26,7 +26,7 @@ import { dedupeLineMarkers, jurisdictionEdgeMarkers, LEGISLATION_KINDS, type Jur
 import { CITATION_MISSING } from "./render-vaniac-submissions.js";
 import { PLACEMENTS, SYMBOLS } from "./symbol-table.js";
 
-/** Design §4's table, in its own order -- which is the Milestone's card order (design §8). */
+/** Design §4's table, in its own order -- which is the Work Board's card order (design §8). */
 export type ProposalSlug =
   | "doctrinal-basis" | "primary-authority" | "jurisdictional-basis"
   | "authority-excerpt" | "authority-pinpoint" | "scrutinize" | "note-up" | "authority-rating"
@@ -97,7 +97,7 @@ export function proposalKey(e: Pick<ProposalEntry, "slug" | "table" | "id" | "qu
   return `${e.slug}:${e.table}:${e.id}` + (e.qualifier ? `:${e.qualifier}` : "");
 }
 
-/** The Milestone's card order: design §4's table, in its own order (design §8). Slugs only. Each
+/** The Work Board's card order: design §4's table, in its own order (design §8). Slugs only. Each
  * title, and each glyph's slug, is written once, on its row in symbol-table.ts. */
 const CARD_ORDER: readonly ProposalSlug[] = [
   "doctrinal-basis", "primary-authority", "jurisdictional-basis",

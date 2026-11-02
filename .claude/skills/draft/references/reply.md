@@ -3,7 +3,7 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 # The reply route
 
-A reply to a message is a plain markdown file at the top of the matter's `0. DRAFT` folder (ADR 0040). It is not a Writing. It has no job and no mockup, so the route takes no intake and no session entry's opening (`/work`'s section 6). It opens the drafting database only to attach the file to one Milestone (section 3, ADR 0042). A formal letter is not this route: one on letterhead, one with enclosures, or one the practitioner calls a letter goes by `references/letters.md`. Asked for one mid-route, leave the route and go there.
+A reply to a message is a plain markdown file at the top of the matter's `0. DRAFT` folder (ADR 0040). It is not a Writing. It has no job and no mockup, so the route takes no intake and no session entry's opening (`/work`'s section 6). It opens the drafting database only to attach the file to one Work Board (section 3, ADR 0042). A formal letter is not this route: one on letterhead, one with enclosures, or one the practitioner calls a letter goes by `references/letters.md`. Asked for one mid-route, leave the route and go there.
 
 Two doctrines hold throughout:
 
@@ -37,7 +37,7 @@ Load `drafting_forms__read_message`, `drafting_forms__reply_draft`, `drafting_fo
 3. **Save every version with `reply_draft` step `save`, always under the same name.** The server writes `<name>.md`, or the next free ` vN` when that name is taken, and never overwrites (SKILL.md section 2, item 6).
    - A revision is always a new save. A saved version is never edited, and the file is never written any other way.
 4. **Present the saved `.md` as a file card** (`shared/present-files.md`), then confirm the save in one line.
-5. **Attach it to a Milestone at its first save** (ADR 0042), through `/drafting-data`, which owns every particular of the write:
+5. **Attach it to a Work Board at its first save** (ADR 0042), through `/drafting-data`, which owns every particular of the write:
    - Call `drafting_forms__open_session` with `matter_root`, for the database and the draft folder. A refusal is quoted in one line: the reply stays saved, on no board yet.
    - Ask which board the reply goes on, naming each board `/drafting-data` reads for the matter. The default offered is the board of the Writing the session holds, if it holds one. A matter with no proceeding gets a forum-less proceeding first.
    - Attach the saved file by `/drafting-data`'s attach write, then render that board so its page lists the reply, and confirm both in one line.

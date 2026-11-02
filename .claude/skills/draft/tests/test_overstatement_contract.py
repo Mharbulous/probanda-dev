@@ -16,7 +16,7 @@ SKILL_PARTS = (
     SKILL_ROOT / "references" / "opening-announcements.md",
 )
 
-# Findings go to the Milestone as fixed-text jobs, never a report file (letter-passes spec §12).
+# Findings go to the Work Board as fixed-text jobs, never a report file (letter-passes spec §12).
 FINDING_FIELDS = (
     "the assertion, the source and pinpoint, what the source says, the verdict",
     "a rewrite at the source's strength",
@@ -117,7 +117,7 @@ class OverstatementReviewContractTests(unittest.TestCase):
 
     def test_letters_emit_to_the_board(self):
         letters = LETTERS.read_text(encoding="utf-8")
-        self.assertIn("**Findings go to the Milestone, never into the letter or beside it.**", letters)
+        self.assertIn("**Findings go to the Work Board, never into the letter or beside it.**", letters)
         self.assertIn("`position-conflict`", letters)
         self.assertNotIn("Pass 5's table", letters)
 

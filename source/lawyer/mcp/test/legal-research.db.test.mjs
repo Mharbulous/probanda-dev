@@ -290,13 +290,13 @@ test("the next write moves every old Raw Research and Legal Memos page and previ
   const marked = '<!doctype html><main data-view-page="1"></main>';
   const old = [
     join(folder, "Raw Research.html"),
-    join(m.draft, "Raw Research - Milestone 1.html"),
-    join(m.draft, "Raw Research - Milestone - proceeding 3.html"),
+    join(m.draft, "Raw Research - Work Board 1.html"),
+    join(m.draft, "Raw Research - Work Board - proceeding 3.html"),
     join(m.draft, "Raw Research - Job Board 7.html"),
     join(folder, "Raw Research preview 2.html"),
-    join(m.draft, "Raw Research - Milestone 1 preview 1.html"),
+    join(m.draft, "Raw Research - Work Board 1 preview 1.html"),
     join(folder, "Legal Memos.html"),
-    join(m.draft, "Legal Memos - Milestone 1.html"),
+    join(m.draft, "Legal Memos - Work Board 1.html"),
     join(folder, "Legal Memos preview 3.html"),
   ];
   for (const file of old) writeFileSync(file, marked, "utf-8");
@@ -493,7 +493,7 @@ test("Propositions holds a placed and an unplaced proposition, and leaves out a 
   assert.equal(statements.includes(20), false, "the memo's own item is left out");
 });
 
-test("a research Writing has no board: no Milestone or view page, an old one moved to TRASH, off the Litigation Strategy, its job drawn with the General jobs", async (t) => {
+test("a research Writing has no board: no Work Board or view page, an old one moved to TRASH, off the Litigation Strategy, its job drawn with the General jobs", async (t) => {
   const m = await fixture(t, { files: [], jobs: false });
   assert.equal(isResearchWriting({ kind: "case_brief" }), true);
   assert.equal(isResearchWriting({ kind: "research_memo_creac" }), true);
@@ -506,11 +506,11 @@ test("a research Writing has no board: no Milestone or view page, an old one mov
   );
   const memoFolder = join(m.draft, "ML re a point");
   mkdirSync(memoFolder, { recursive: true });
-  writeFileSync(join(memoFolder, "Milestone.html"), '<!doctype html><main data-workboard-shell="1"></main>', "utf-8");
+  writeFileSync(join(memoFolder, "Work Board.html"), '<!doctype html><main data-workboard-shell="1"></main>', "utf-8");
   writeFileSync(join(memoFolder, "Arguments.html"), '<!doctype html><main data-view-page="1"></main>', "utf-8");
   const result = await submissionFormsRender(m.dbPath, 1, ASHBOURNE, "mockup", undefined, undefined, undefined, NOW, "tok-memos", m.draft);
   await awaitBackgroundJobs();
-  assert.equal(existsSync(join(memoFolder, "Milestone.html")), false, "its old Milestone moved");
+  assert.equal(existsSync(join(memoFolder, "Work Board.html")), false, "its old Work Board moved");
   assert.equal(existsSync(join(memoFolder, "Arguments.html")), false, "its old view page moved");
   assert.equal(result.view_page_paths.some((v) => v.filing_id === 9), false);
   assert.equal(result.milestone_paths?.some((p) => p.filing_id === 9) ?? false, false);

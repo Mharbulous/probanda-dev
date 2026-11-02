@@ -142,7 +142,7 @@
     var filters = el("div", "filters");
     filters.appendChild(search);
     tab.appendChild(filters);
-    var sections = [["Relied on by this Milestone's Writings", true], ["Not relied on by this Milestone's Writings", false]].map(function (s) {
+    var sections = [["Relied on by this Work Board's Writings", true], ["Not relied on by this Work Board's Writings", false]].map(function (s) {
       var list = items.filter(function (c) { return c.relied_on === s[1]; });
       var sec = el("section");
       var h2 = el("h2", "", s[0] + " ");
@@ -327,9 +327,9 @@
   function drawCases(tab) {
     var cases = data.briefs.cases;
     var CHIPS = { briefed: ["Briefed", "done"], requested: ["Requested", "wip"], not_briefed: ["Not briefed", ""] };
-    tab.appendChild(el("p", "hint", "To request a brief, ask a session, for example: brief the cases this Milestone relies on."));
+    tab.appendChild(el("p", "hint", "To request a brief, ask a session, for example: brief the cases this Work Board relies on."));
     if (cases.length === 0) {
-      tab.appendChild(el("p", "empty", "The Writings on this Milestone rely on no case yet, and no case brief is saved."));
+      tab.appendChild(el("p", "empty", "The Writings on this Work Board rely on no case yet, and no case brief is saved."));
       return;
     }
     reliedList(tab, cases, "Search cases", function (c) {
@@ -367,7 +367,7 @@
     var TOP = "Top of 6. LAW";
     function folderName(m) { return m.folder === "" ? TOP : m.folder; }
     if (memos.length === 0) {
-      tab.appendChild(el("p", "empty", "No legal memo is linked to this Milestone."));
+      tab.appendChild(el("p", "empty", "No legal memo is linked to this Work Board."));
       return;
     }
     function card(m) {

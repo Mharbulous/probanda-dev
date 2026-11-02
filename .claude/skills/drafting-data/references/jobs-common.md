@@ -17,7 +17,7 @@ Every `created` / `locked_at` / `plan_approved_at` / `done_at` / `completed_at` 
 strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')
 ```
 
-`'localtime'` matters: `drafting_data__execute` runs host-side Python, so this is the same host wall-clock `drafting_forms__render` stamps every mockup's `Rendered:` line with (#383) — a Cowork sandbox clock is UTC and would disagree with the Milestone. Never infer a timestamp from the conversation; if a write needs "now," compute it this way, in the same statement. The one job value not computed this way is `tickets.bf_on`, a job's bring-forward date (`jobs-closeout.md` §10b): a literal `YYYY-MM-DD`, either the calendar date the practitioner states or the date a read-only query resolved from their calendar phrase and they confirmed.
+`'localtime'` matters: `drafting_data__execute` runs host-side Python, so this is the same host wall-clock `drafting_forms__render` stamps every mockup's `Rendered:` line with (#383) — a Cowork sandbox clock is UTC and would disagree with the Work Board. Never infer a timestamp from the conversation; if a write needs "now," compute it this way, in the same statement. The one job value not computed this way is `tickets.bf_on`, a job's bring-forward date (`jobs-closeout.md` §10b): a literal `YYYY-MM-DD`, either the calendar date the practitioner states or the date a read-only query resolved from their calendar phrase and they confirmed.
 
 ## 1. Session identity (`locked_by`)
 
@@ -35,7 +35,7 @@ Fallback, only when calling an older bundle whose `bootstrap` returns no `sessio
 
 ## 2. Reads
 
-Six shapes — everything else a session needs for orientation comes from the short `board_summary` that session entry's `opened` carries and `drafting_forms__render` returns when `Work_board` is named in its `documents`, and from the lanes and cards `drafting_forms__board_card` prints (ADR 0005: orient from the mockup, not a query battery; never from the Milestone page, `shared/html-pages.md`). Counted here are the reads a session runs on their own account; the reads that belong to a write idiom — §3's priority read and its id recovery, §9a's `wip` check before a retirement, §14's open-job check — sit with their own writes and are not among these four.
+Six shapes — everything else a session needs for orientation comes from the short `board_summary` that session entry's `opened` carries and `drafting_forms__render` returns when `Work_board` is named in its `documents`, and from the lanes and cards `drafting_forms__board_card` prints (ADR 0005: orient from the mockup, not a query battery; never from the Work Board page, `shared/html-pages.md`). Counted here are the reads a session runs on their own account; the reads that belong to a write idiom — §3's priority read and its id recovery, §9a's `wip` check before a retirement, §14's open-job check — sit with their own writes and are not among these four.
 
 That orientation includes each job's stored `ticket_proposals.item`: on a Writing's card (`drafting_forms__board_card` with `jobs`), every live job's `keys:` line prints each of its keys as `<key> = "<stored item>"`, then `(now: <glyph> "<current item>")` while a Proposal in any lane still carries the key, or `(now: dead)` once none does, each item a JSON-quoted string without any count, so the changed-item comparison needs no fourth read.
 

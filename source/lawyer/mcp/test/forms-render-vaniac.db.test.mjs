@@ -50,7 +50,7 @@ test("renders the VanIAC submissions package (written argument, witness statemen
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
     assert.equal(result.filing_id, 1);
     assert.equal(result.revision, 1);
-    // Written Arguments (venue) + 4 witness statements + evidence index + Milestone (ADR 0009).
+    // Written Arguments (venue) + 4 witness statements + evidence index + Work Board (ADR 0009).
     assert.equal(result.documents.length, 7);
 
     const baseDir = dirname(result.documents[0].path);
@@ -250,13 +250,13 @@ test("render_mode 'filed' strips every human-side element and writes nothing to 
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" }, "filed");
     assert.equal(result.filing_id, 1);
     // Written Arguments (venue) + 4 witness statements + evidence index --
-    // the Milestone is genuinely absent here, not merely stripped (ADR 0009).
+    // the Work Board is genuinely absent here, not merely stripped (ADR 0009).
     assert.equal(result.documents.length, 6);
 
     // No disk write at all in filed mode -- not even the mockups root.
     assert.deepEqual(readdirSync(f.draft), [], "expected render_mode 'filed' to write nothing to disk");
 
-    assert.ok(!result.documents.some((d) => d.document_type === "Work_board"), "expected the Milestone genuinely absent from filed-mode output, not merely stripped");
+    assert.ok(!result.documents.some((d) => d.document_type === "Work_board"), "expected the Work Board genuinely absent from filed-mode output, not merely stripped");
 
     assertFiledFaceDocumentsClean(result.documents);
 
@@ -724,7 +724,7 @@ test("bootstrap lists a seeded matter's filings and reports the schema version, 
     assert.equal(rendered.documents.length, 7);
 
     const after = submissionFormsBootstrap(f.dbPath, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
-    // Written Arguments (venue) + 4 witness statements + evidence index; the Milestone
+    // Written Arguments (venue) + 4 witness statements + evidence index; the Work Board
     // is no file of the filing's since #1365.
     assert.equal(after.filings[0].paths.length, 6);
     for (const p of after.filings[0].paths) assert.ok(existsSync(p), `expected ${p} to exist`);
@@ -754,7 +754,7 @@ test("render returns each document's markdown, byte-identical to the file it wro
     const result = submissionFormsRender(f.dbPath, 1, { clientName: "Ashbourne", clientNo: "2417", matterNo: "L4801" });
 
     // Written Arguments (venue) + 4 witness statements + evidence index, then the
-    // Milestone's entry (#1365), with no file of the filing's, no page without a draft folder, and no
+    // Work Board's entry (#1365), with no file of the filing's, no page without a draft folder, and no
     // summary unless the board is named in documents.
     assert.equal(result.documents.length, 7);
     for (const doc of result.documents) {

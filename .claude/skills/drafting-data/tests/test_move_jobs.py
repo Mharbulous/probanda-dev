@@ -26,7 +26,7 @@ import migrate_engine as engine  # noqa: E402
 JOBS_CLOSEOUT = SKILL / "references" / "jobs-closeout.md"
 JOBS_CREATE = SKILL / "references" / "jobs-create.md"
 
-# Board 7 is a Writing, board 8 a Milestone with no Writing, both in proceeding 1; board 9 is in
+# Board 7 is a Writing, board 8 a Work Board with no Writing, both in proceeding 1; board 9 is in
 # proceeding 2. On board 7: queued jobs 41 and 42 (42 shelved) with a waits-on edge between them,
 # a note-up job 43, a job 44 keyed on a filing_facts row, deleted job 45, completed job 46.
 SEED = """

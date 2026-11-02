@@ -1,7 +1,7 @@
 // drafting_data__complete_job: a /draft session completes the job it holds in one call -- the
 // queued conflict partners superseded, the completion, the confirm-read (jobs-run.md §9) -- and,
 // only when this call completed the job, the matter's pages rewritten by the render a session runs
-// with draft_dir. Also render's pages_written on the Milestone document.
+// with draft_dir. Also render's pages_written on the Work Board document.
 
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -58,8 +58,8 @@ async function practiceContext(t) {
 }
 
 const TICKET = "INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created";
-/** Filing 1's Milestone page, in its Writing's own folder (spec 2026-10-22 §9). */
-const OPENING_PAGE = join("Opening Submissions Package", "Milestone.html");
+/** Filing 1's Work Board page, in its Writing's own folder (spec 2026-10-22 §9). */
+const OPENING_PAGE = join("Opening Submissions Package", "Work Board.html");
 const row = (dbPath, id) => submissionDataQuery(dbPath, "SELECT status, superseded_by, locked_by, completed_at FROM tickets WHERE id = ?", [id]).rows[0];
 
 /** A matter with one filing and job 1 queued, opened and assigned to the session's token. */
@@ -76,7 +76,7 @@ async function heldJob(t, sql = "", filingId = "1") {
   return { m, context, opened, complete };
 }
 
-test("completing a held job supersedes its queued partner, leaves its wip partner, and rewrites the Milestone", async (t) => {
+test("completing a held job supersedes its queued partner, leaves its wip partner, and rewrites the Work Board", async (t) => {
   const { m, context, opened, complete } = await heldJob(
     t,
     `${TICKET}) VALUES (2, 1, 1, 'Queued partner', 'Do it.', 'queued', 0, 'work', 'L9999|opening', '2026-09-23 10:00');
@@ -101,7 +101,7 @@ test("completing a held job supersedes its queued partner, leaves its wip partne
     result.board_moves.some((mv) => mv.id === 1 && mv.from === "wip" && mv.to === "completed"),
     JSON.stringify(result.board_moves)
   );
-  assert.ok(existsSync(page), "the filing's Milestone page was written again");
+  assert.ok(existsSync(page), "the filing's Work Board page was written again");
   assert.equal(result.pages_refused, undefined);
   assert.equal(row(m.dbPath, 1).status, "completed");
   assert.equal(row(m.dbPath, 1).locked_by, null);
@@ -109,7 +109,7 @@ test("completing a held job supersedes its queued partner, leaves its wip partne
   assert.deepEqual({ status: row(m.dbPath, 3).status, locked_by: row(m.dbPath, 3).locked_by }, { status: "wip", locked_by: "sess-other" });
 });
 
-test("a job with no filing_id in a proceeding that has a filing rewrites the Milestone through that filing's render", async (t) => {
+test("a job with no filing_id in a proceeding that has a filing rewrites the Work Board through that filing's render", async (t) => {
   // A scrutiny review job is created with filing_id NULL and shows on every filing's board.
   const { m, context, opened, complete } = await heldJob(t, "", "NULL");
   await callTool(context, "drafting_forms__render", { db_path: m.dbPath, filing_id: 1, draft_dir: opened.draft_dir, session_token: opened.session_token, documents: ["Work_board"] });
@@ -143,7 +143,7 @@ test("another session's token completes nothing and writes no page", async (t) =
   assert.equal(existsSync(page), false, "no page written");
 });
 
-test("a pre-filing proceeding's job rewrites the Milestone through the proceeding's render", async (t) => {
+test("a pre-filing proceeding's job rewrites the Work Board through the proceeding's render", async (t) => {
   const m = matterFixture(t);
   await freshSubmissionDb(m.dbPath);
   await submissionDataExecute(
@@ -160,11 +160,11 @@ test("a pre-filing proceeding's job rewrites the Milestone through the proceedin
 
   assert.equal(result.outcome, "completed");
   assert.equal(result.pages_written, true);
-  assert.equal(result.milestone_path.toLowerCase(), join(m.draft, "Milestone - proceeding 1.html").toLowerCase());
+  assert.equal(result.milestone_path.toLowerCase(), join(m.draft, "Work Board - proceeding 1.html").toLowerCase());
   assert.equal(typeof result.board_changed, "boolean");
 });
 
-test("a Milestone page without the marker is reported as pages_refused; the completion stands and the file is untouched", async (t) => {
+test("a Work Board page without the marker is reported as pages_refused; the completion stands and the file is untouched", async (t) => {
   const { m, complete } = await heldJob(t);
   const page = join(m.draft, OPENING_PAGE);
   const own = "<p>the practitioner's own page</p>\n";
@@ -189,7 +189,7 @@ test("an omitted draft_dir is refused by input validation, writing nothing", asy
   assert.deepEqual(row(m.dbPath, 1), { status: "wip", superseded_by: null, locked_by: opened.session_token, completed_at: null });
 });
 
-test("render's Milestone reports pages_written: false without draft_dir, true with it", async (t) => {
+test("render's Work Board reports pages_written: false without draft_dir, true with it", async (t) => {
   const m = matterFixture(t);
   await seedOneFiling(m.dbPath);
   const boardOf = (rendered) => rendered.documents.find((d) => d.document_type === "Work_board");

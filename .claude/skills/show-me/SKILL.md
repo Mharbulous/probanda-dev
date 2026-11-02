@@ -1,7 +1,7 @@
 ---
 name: show-me
 user-invocable: false
-description: "Use before any approval ask or sign-off, including a draft presented for sign-off, before any question to the practitioner about a specific document, even one asked again, and when the practitioner asks to see a Milestone or any job on it. Also before any reply that reports what a tribunal, court, arbitrator, opposing counsel or witness said or wrote (an email, letter, direction, order or ruling), asked for or not: quote the operative words verbatim first, with author, date and source."
+description: "Use before any approval ask or sign-off, including a draft presented for sign-off, before any question to the practitioner about a specific document, even one asked again, and when the practitioner asks to see a Work Board or any job on it. Also before any reply that reports what a tribunal, court, arbitrator, opposing counsel or witness said or wrote (an email, letter, direction, order or ruling), asked for or not: quote the operative words verbatim first, with author, date and source."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
@@ -10,7 +10,7 @@ description: "Use before any approval ask or sign-off, including a draft present
 
 | Section | Read when |
 |---|---|
-| Scope | Checking whether an approval, a choice, an authorization or a question about a document falls under this skill, a request to see a Milestone, or reporting what a source said |
+| Scope | Checking whether an approval, a choice, an authorization or a question about a document falls under this skill, a request to see a Work Board, or reporting what a source said |
 | The rules | Composing any approval ask: one decision, source file, full text, absences, the fixed order |
 | Marking conventions | Highlighting a source file or writing its caption legend |
 | Mechanics | Building the page extract and sending the files, text and question in order |
@@ -34,7 +34,7 @@ It does not decide *whether* a candidate question needs a human at all — that 
 
 A plain report of what a tribunal, court, arbitrator, opposing counsel or witness said or wrote is not an approval ask, and the rules below do not govern it. It follows `shared/report-what-a-source-said.md`: the operative words quoted verbatim first, with author, date and source, no summary in words stronger than the source's own, and the session's reading labelled "My reading:". When such a report leads into an approval ask, the ask follows this skill unchanged.
 
-When the practitioner asks to see a Milestone, or any job on it, render that board and present its page as `shared/html-pages.md` ("Present each page by its path") says. Never write its lanes, jobs, steps, goal or loose threads into chat.
+When the practitioner asks to see a Work Board, or any job on it, render that board and present its page as `shared/html-pages.md` ("Present each page by its path") says. Never write its lanes, jobs, steps, goal or loose threads into chat.
 
 ## The rules
 

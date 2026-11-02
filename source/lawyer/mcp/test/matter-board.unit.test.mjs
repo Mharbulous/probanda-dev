@@ -9,7 +9,7 @@ import { assertSha256Pin } from "./helpers/sha256-pin.mjs";
 const { renderMatterBoardHtml } = await import("../build/submission/forms/matter-board-shell.js");
 
 /** Every branch the page draws: to-dos pointing at a filing, a proceeding and nothing, a `<` in a
- * description, a live Writing, a Milestone with no Writing, a retired filing and a pre-filing proceeding. */
+ * description, a live Writing, a Work Board with no Writing, a retired filing and a pre-filing proceeding. */
 const FIXTURE = {
   meta: { revision: 7, matter: "L200", client: "Acme Co", rendered: "2026-10-15 09:30" },
   todos: [

@@ -22,7 +22,7 @@ export const LOOSE_THREADS_FIXTURE: { meta: ViewPageMeta; data: LooseIdeasData }
     resolved: [
       { id: 5, idea: "Check the limitation date.", how: "job", at: "2026-01-11T09:00", job_id: 7, job_title: "Confirm the limitation date" },
       { id: 6, idea: "Mention the weather on the day of delivery.", how: "discarded", at: "2026-01-10T15:00", job_id: null, job_title: null },
-      { id: 7, idea: "The Milestone could show hearing dates.", how: "suggested", at: "2026-01-09T11:00", job_id: null, job_title: null },
+      { id: 7, idea: "The Work Board could show hearing dates.", how: "suggested", at: "2026-01-09T11:00", job_id: null, job_title: null },
     ],
     api: { port: 0, db_path: "", proceeding_id: 1, token: "" },
   },

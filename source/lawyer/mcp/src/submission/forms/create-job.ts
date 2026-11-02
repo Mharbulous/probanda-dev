@@ -51,7 +51,7 @@ export interface Companion {
 export interface CreateJobArgs {
   db_path: string;
   proceeding_id: number;
-  /** The Writing's or Milestone's id, or null for a proceeding-scoped job. Never left out. */
+  /** The Writing's or Work Board's id, or null for a proceeding-scoped job. Never left out. */
   filing_id: number | null;
   title: string;
   intent: string;
@@ -116,7 +116,7 @@ function checkScope(scope: unknown, field: string): void {
 function validate(args: CreateJobArgs): void {
   const guard = args.guard;
   check(isId(args.proceeding_id), "proceeding_id", "must be a positive integer");
-  check(args.filing_id === null || isId(args.filing_id), "filing_id", "must be the Writing's or Milestone's id, or null for a proceeding-scoped job");
+  check(args.filing_id === null || isId(args.filing_id), "filing_id", "must be the Writing's or Work Board's id, or null for a proceeding-scoped job");
   check(isText(args.title), "title", "must be a non-empty string");
   check(isText(args.intent), "intent", "must be a non-empty string");
   check(args.kind === "work" || args.kind === "charting", "kind", "must be work or charting");
@@ -219,7 +219,7 @@ function holderQuery(args: CreateJobArgs, titles: string[]): { sql: string; para
 
 /** §3's priority read as a subquery, run inside the write: one above the highest queued, or one
  * below the lowest, 0 when nothing is queued. A Writing's job reads that Writing's queue with the
- * proceeding-scoped jobs, a Milestone's job reads the Milestone's alone (§11), and a
+ * proceeding-scoped jobs, a Work Board's job reads the Work Board's alone (§11), and a
  * proceeding-scoped job reads every queued job in the proceeding, so it is first or last on every
  * board it shows on. */
 function priorityExpr(args: CreateJobArgs): { sql: string; params: unknown[] } {
@@ -254,7 +254,7 @@ function held(args: CreateJobArgs): { sql: string; params: unknown[] } {
 /** drafting_data__create_job. Every refusal and every guarded call writes nothing. */
 export async function submissionDataCreateJob(args: CreateJobArgs, env: NodeJS.ProcessEnv = process.env): Promise<CreateJobResult> {
   if (!("filing_id" in args)) {
-    throw new ValidationError(`${TOOL}.filing_id is required: the Writing's or Milestone's id, or null for a proceeding-scoped job`, "invalid_filing_id");
+    throw new ValidationError(`${TOOL}.filing_id is required: the Writing's or Work Board's id, or null for a proceeding-scoped job`, "invalid_filing_id");
   }
   validate(args);
   const companions = args.companions ?? [];

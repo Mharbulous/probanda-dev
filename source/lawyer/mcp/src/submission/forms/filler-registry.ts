@@ -37,7 +37,7 @@ import { affidavitLabel, type WritingLabel } from "./writing-label.js";
 /** How a filler emits its documents. The caller supplies both, so each document is timed and its
  * inventory entries stamped exactly as the render path always has. */
 export interface FillerOutput<D> {
-  /** One venue document, rendered and stamped under its own documentType, with its label for the Milestone's
+  /** One venue document, rendered and stamped under its own documentType, with its label for the Work Board's
    * Writings strip, the type's own when omitted. */
   document(documentType: string, fileName: string, render: () => string, label?: WritingLabel): D;
   /** Every witness statement, from one render call, all under the one documentType. */

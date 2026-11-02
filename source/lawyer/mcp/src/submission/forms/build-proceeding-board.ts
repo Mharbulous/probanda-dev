@@ -34,7 +34,7 @@ function groupBy<T>(items: T[], key: (item: T) => number): Map<number, T[]> {
 }
 
 /** Every ticket and open loose thread in one proceeding, each ticket already classified. The per-filing
- * Milestone and the Matter Board both draw from this, so the category rules run in one place. */
+ * Work Board and the Matter Board both draw from this, so the category rules run in one place. */
 export interface ProceedingBoard {
   /** In board order (priority, then id), each with the filing it belongs to -- null when proceeding-scoped. */
   tickets: { filing_id: number | null; ticket: WorkBoardTicket }[];

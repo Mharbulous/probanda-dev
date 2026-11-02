@@ -143,7 +143,7 @@ export function renderBoardCard(
   for (const t of section.tickets) if (jobs.includes(t.id)) lines.push(...jobCardLines(t, derived, section.seeds, section.meta.rendered));
   for (const lane of CARD_LANES) {
     if (!lanes.includes(lane)) continue;
-    // A Milestone with no Writing has no Proposals and no court file: those lanes print nothing, as its criteria lane does.
+    // A Work Board with no Writing has no Proposals and no court file: those lanes print nothing, as its criteria lane does.
     if (section.meta.job_only && (lane === "proposed" || lane === "court_file")) continue;
     if (lane === "goals") lines.push(...goalsLines(section));
     if (lane === "criteria") lines.push(...goalLines(section));

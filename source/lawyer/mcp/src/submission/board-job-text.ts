@@ -30,7 +30,7 @@ function edgeText(edges: WorkBoardEdge[]): string {
 export type BoardProposal = WorkBoardData["proposals"][number];
 
 /** What derives now for each key: the Proposals by key, or null on a pre-filing section, a
- * retired filing or a Milestone with no Writing, which derive none. */
+ * retired filing or a Work Board with no Writing, which derive none. */
 export function derivedOf(section: WorkBoardData): Map<string, BoardProposal> | null {
   const m = section.meta;
   return m.filing_id === null || m.state_label === "Retired" || m.job_only ? null : new Map(section.proposals.map((p) => [p.key, p]));

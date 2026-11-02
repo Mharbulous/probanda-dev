@@ -82,9 +82,9 @@ export interface OpenSessionResult extends BootstrapResult {
    * which resolves it the same way, would fail. Never set for a matter the practice database
    * simply does not list; that stays in matter_lookup. */
   blocking?: { code: string; message: string; remedy: string }[];
-  /** Present only when matter_root has no `0. DRAFT*` folder, so neither the Litigation Strategy nor any Milestone page was written (#651, #1365). */
+  /** Present only when matter_root has no `0. DRAFT*` folder, so neither the Litigation Strategy nor any Work Board page was written (#651, #1365). */
   matter_board_note?: string;
-  /** With a draft folder: the Milestone page of the filing or proceeding opened, or the one the
+  /** With a draft folder: the Work Board page of the filing or proceeding opened, or the one the
    * refused opening tried to open; null when there was nothing to open (ADR 0033, 2026-10-05
    * amendment). Absent when the opened filing is retired, which has no page. */
   milestone_path?: string | null;
@@ -163,7 +163,7 @@ function openBoard(
   filingId: number | undefined,
   timings: PhaseTimings
 ): Opening {
-  // A Milestone with no Writing and a research Writing are never the default: each opens only when filing_id names it.
+  // A Work Board with no Writing and a research Writing are never the default: each opens only when filing_id names it.
   const target = filingId ?? listed.filings.find((f) => f.retired_on === undefined && !f.milestone_only && !f.research_writing)?.filing_id;
   const proceedingId = target === undefined ? listed.pre_filing_proceedings?.[0]?.proceeding_id : undefined;
   const phases = (rendered: PhaseTimings) => {
@@ -348,7 +348,7 @@ async function openSession(
   });
   // ADR 0021 D1: the Litigation Strategy's to-dos, read only when there is a page to draw them on.
   const todos = draftDir === undefined ? undefined : await phase("todos", () => readMatterTodos(practiceDb, identity.matterNo));
-  // ADR 0013, 2026-10-04 amendment: the Milestone's hearing dates, read beside them. They are
+  // ADR 0013, 2026-10-04 amendment: the Work Board's hearing dates, read beside them. They are
   // returned beside the result, never in it, since the result is the tool response.
   const dates = draftDir === undefined ? undefined : await phase("dates", () => readMatterDates(practiceDb, identity.matterNo));
 
@@ -410,7 +410,7 @@ async function openSession(
       ...(migrationRefused !== undefined ? { migration_refused: migrationRefused } : {}),
       ...(blocking.length > 0 ? { blocking } : {}),
       matter_lookup: lookup,
-      ...(draftDir === undefined ? { matter_board_note: `${root} has no 0. DRAFT folder, so neither the Litigation Strategy nor any Milestone page was written.` } : {}),
+      ...(draftDir === undefined ? { matter_board_note: `${root} has no 0. DRAFT folder, so neither the Litigation Strategy nor any Work Board page was written.` } : {}),
       parties_drift: drift.rows,
       ...(drift.note !== undefined ? { parties_drift_note: drift.note } : {}),
       ...(offers.length > 0 ? { counsel_offers: offers } : {}),
