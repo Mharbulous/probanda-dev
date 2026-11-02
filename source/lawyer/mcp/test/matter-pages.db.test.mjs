@@ -1116,7 +1116,7 @@ async function heldMilestone(t) {
     f.dbPath,
     `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL);
      INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, locked_by, locked_at, plan_approved_at, created)
-       VALUES (1, 1, NULL, 'Research the limitation point', 'When did time start to run?', 'wip', 0, 'work', 'L8470|limitation', 'sess-holder', '2026-01-16 09:00', '2026-01-16 09:00', '2026-01-16 08:55');
+       VALUES (1, 1, NULL, 'Legal research: When did time start to run?', 'When did time start to run?', 'wip', 0, 'work', 'L8470|limitation', 'sess-holder', '2026-01-16 09:00', '2026-01-16 09:00', '2026-01-16 08:55');
      INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES (1, 1, 'Run the research', NULL);
      INSERT INTO seeds (id, proceeding_id, filing_id, origin_ticket_id, created, surfaced_by, idea) VALUES (1, 1, NULL, 1, '2026-01-16T09:20', 'noticed in the Westlaw memo', 'Is the guarantor a party?');
      INSERT INTO kv_store (namespace, key, value, updated_at) VALUES ('last_activity', 'tickets:1', '"2026-01-16T11:30"', '2026-01-16T19:30:00.000Z');
@@ -1138,11 +1138,11 @@ const headline = (f) =>
 test("a job's last activity is its stored stamp, and its card lists the seeds captured from it", async (t) => {
   const { f } = await heldMilestone(t);
 
-  assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 0/1 · idle 30 min, about 0% · check window: idle past 30 min", "the stamp at 11:30, not the lock at 09:00");
+  assert.equal(headline(f), "- Job #1 Legal research: When did time start to run? · In Progress 0/1 · idle 30 min, about 0% · check window: idle past 30 min", "the stamp at 11:30, not the lock at 09:00");
   assert.equal(
     proceedingCard(f),
     [
-      "- Job #1 Research the limitation point · In Progress 0/1",
+      "- Job #1 Legal research: When did time start to run? · In Progress 0/1",
       "  kind: work · priority: 0 · taken: 2026-01-16 09:00 · holder: s-holder · last activity: 2026-01-16T11:30",
       "  intent: When did time start to run?",
       "  scope: — · waits on: — · either-or: —",
@@ -1162,7 +1162,7 @@ test("the check-window flag from 30 minutes idle, on the live lane and the page"
   submissionFormsRenderProceedingBoard(f.dbPath, 1, {}, NOON, "tok", draft);
   const live = submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, lanes: ["live"] }, {}, NOON).card;
   const line = live.split("\n").find((l) => l.startsWith("- Job #1 "));
-  assert.equal(line, "- Job #1 Research the limitation point · In Progress 0/1 · idle 30 min, about 0% · check window: idle past 30 min");
+  assert.equal(line, "- Job #1 Legal research: When did time start to run? · In Progress 0/1 · idle 30 min, about 0% · check window: idle past 30 min");
   const ticket = readBoardData(join(draft, "Work Board - proceeding 1.html")).sections[0].tickets.find((x) => x.id === 1);
   assert.equal(ticket.idle_flag, "check window: idle past 30 min");
   assert.ok(drawPage(join(draft, "Work Board - proceeding 1.html")).main.all().some((n) => n.className === "subtitle" && n.textContent === "check window: idle past 30 min"), "the card draws it as a subtitle");
@@ -1171,7 +1171,7 @@ test("the check-window flag from 30 minutes idle, on the live lane and the page"
 test("no check-window flag, and the board data as before, under 30 minutes idle", async (t) => {
   const { f } = await heldMilestone(t);
   const data = buildPreFilingBoardData(f.dbPath, fetchProceeding(f.dbPath, 1), { revision: 1, matter: "", client: "", rendered: "2026-01-16 11:59" });
-  assert.equal(renderLiveLanes(data).find((line) => line.startsWith("- Job #1 ")), "- Job #1 Research the limitation point · In Progress 0/1 · idle 29 min, about 0%");
+  assert.equal(renderLiveLanes(data).find((line) => line.startsWith("- Job #1 ")), "- Job #1 Legal research: When did time start to run? · In Progress 0/1 · idle 29 min, about 0%");
   assert.equal("idle_flag" in data.tickets[0], false);
 });
 
@@ -1199,7 +1199,7 @@ test("save_answer with the job's id lists the answer on its card and restarts it
   assert.match(card, new RegExp(`· last activity: ${row.saved_at} · session active: ${row.saved_at}\n`));
   assert.ok(card.endsWith(`\n  answers: 6. LAW\\Limitation\\2026-10-16 research-lawyer answer.md (${row.saved_at})`), card);
   const live = renderLiveLanes(buildPreFilingBoardData(f.dbPath, fetchProceeding(f.dbPath, 1), { revision: 1, matter: "", client: "", rendered: now }));
-  assert.equal(live.find((line) => line.startsWith("- Job #1 ")), "- Job #1 Research the limitation point · In Progress 0/1", "no idle tag right after the save");
+  assert.equal(live.find((line) => line.startsWith("- Job #1 ")), "- Job #1 Legal research: When did time start to run? · In Progress 0/1", "no idle tag right after the save");
 });
 
 test("save_answer refuses a job this session no longer holds, and saves no file", async (t) => {
@@ -1401,7 +1401,7 @@ test("board_card prints each step state's glyph, the minute beside a waiting ste
   assert.ok(proceedingCard(f).includes("6 ⏳ until 12:30 Download the memo"));
   await submissionDataExecute(f.dbPath, "UPDATE ticket_steps SET wait_until = '2026-01-16T12:00' WHERE ticket_id = 1 AND ordinal = 6;");
   assert.ok(proceedingCard(f).includes("6 ☐ Download the memo"), "a wait whose minute has come reads as open");
-  assert.equal(headline(f), "- Job #1 Research the limitation point · In Progress 1/7", "progress counts done steps only, and step 5's ⏳ keeps the job from reading idle");
+  assert.equal(headline(f), "- Job #1 Legal research: When did time start to run? · In Progress 1/7", "progress counts done steps only, and step 5's ⏳ keeps the job from reading idle");
 });
 
 test("the Work Board page draws each step state as a class, with until HH:MM beside a waiting step, and a passed wait as open", async (t) => {
@@ -1436,7 +1436,7 @@ test("a step on a database held below v78 reads as open or done", async (t) => {
     f.dbPath,
     `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL);
      INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, locked_by, locked_at, plan_approved_at, created)
-       VALUES (1, 1, NULL, 'Research the limitation point', 'When did time start to run?', 'wip', 0, 'work', 'L8470|limitation', 'sess-holder', '2026-01-16 09:00', '2026-01-16 09:00', '2026-01-16 08:55');
+       VALUES (1, 1, NULL, 'Legal research: When did time start to run?', 'When did time start to run?', 'wip', 0, 'work', 'L8470|limitation', 'sess-holder', '2026-01-16 09:00', '2026-01-16 09:00', '2026-01-16 08:55');
      INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES (1, 1, 'Read the file', '2026-01-16T09:10'), (1, 2, 'Run the research', NULL);`
   );
   assert.ok(proceedingCard(f).includes("  steps: 1 ☑ Read the file (2026-01-16T09:10) · 2 ☐ Run the research"), proceedingCard(f));

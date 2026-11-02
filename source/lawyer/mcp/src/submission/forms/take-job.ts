@@ -25,6 +25,7 @@ import { GATE_TITLE, PRE_SEND_TITLE, POSITION_CONFLICT_TITLE, STOCK_TITLES, wait
 import { BoardIndex } from "./board-members.js";
 import { BRIEF_JOB_PREFIX } from "./brief-job.js";
 import { fetchBoardFilings, proceedingJobBoard } from "./query.js";
+import { isResearchTitle, RESEARCH_JOB_PREFIX } from "./research-job.js";
 import { nowStamp } from "./timings.js";
 import type { WorkBoardData } from "./render-work-board.js";
 import type { WorkBoardTicket } from "./work-board-ticket.js";
@@ -77,6 +78,8 @@ export interface TakeJobResult {
 
 const norm = (s: string): string => s.toLowerCase().replace(/\s+/g, " ").trim().replace(/[.!?;:,]+$/, "").trim();
 const words = (s: string): Set<string> => new Set(s.toLowerCase().match(/[a-z0-9'’]{4,}/g) ?? []);
+/** A title's words for the overlap check: the research prefix, which every research job shares, is left out. */
+const titleWords = (title: string): Set<string> => words(isResearchTitle(title) ? title.slice(RESEARCH_JOB_PREFIX.length) : title);
 
 /** A job whose title readers match by text: stock, gate, counsel's review and scrutiny review jobs. */
 export function fixedText(title: string): boolean {
@@ -114,11 +117,11 @@ export function premiseOf(t: Pick<WorkBoardTicket, "proposal_keys" | "proposal_i
  * either side. */
 function overlapping(section: WorkBoardData, t: WorkBoardTicket, cleared: number[]): WorkBoardTicket[] {
   if (fixedText(t.title)) return [];
-  const mine = words(t.title);
+  const mine = titleWords(t.title);
   return section.tickets.filter((o) => {
     if (o.id === t.id || cleared.includes(o.id) || !LIVE.has(o.category) || fixedText(o.title)) return false;
     if (Boolean(o.general) !== Boolean(t.general) || o.writing !== t.writing || o.research_writing !== t.research_writing) return false;
-    const sharedWords = [...words(o.title)].filter((w) => mine.has(w)).length;
+    const sharedWords = [...titleWords(o.title)].filter((w) => mine.has(w)).length;
     return o.proposal_keys.some((k) => t.proposal_keys.includes(k)) || o.scope.some((s) => t.scope.includes(s)) || sharedWords >= 2;
   });
 }
@@ -171,8 +174,9 @@ export async function submissionDataTakeJob(args: TakeJobArgs, env: NodeJS.Proce
   if (job.steps.length === 1 && job.steps[0].text === PLAN_MARKER) return refuse("needs_plan", `Job ${id} needs a plan: its only step is the plan marker.`);
 
   const reviewed = !fixedText(job.title) && job.proposal_keys.length === 0 && job.steps.every((s) => s.done_at === null) && !planApproved(args.db_path, id);
-  const titleWords = job.title.trim().split(/\s+/).length;
-  if (reviewed && titleWords > TITLE_MAX_WORDS) return refuse("long_title", `Job ${id}'s title is ${titleWords} words, more than ${TITLE_MAX_WORDS}. What shorter phrase names the work?`);
+  const titleLength = job.title.trim().split(/\s+/).length;
+  // A research job's title is its whole issue, which its form limits instead.
+  if (reviewed && !isResearchTitle(job.title) && titleLength > TITLE_MAX_WORDS) return refuse("long_title", `Job ${id}'s title is ${titleLength} words, more than ${TITLE_MAX_WORDS}. What shorter phrase names the work?`);
 
   const dupes = overlapping(section, job, cleared);
   if (dupes.length > 0) {

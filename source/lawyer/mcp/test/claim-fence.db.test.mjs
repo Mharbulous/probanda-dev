@@ -24,8 +24,8 @@ async function seeded(t) {
   await submissionDataExecute(
     dbPath,
     `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', 'CAN/BC/BCSC');
-     INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created) VALUES (1, 1, 'The job', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
-     INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created) VALUES (2, 1, 'A duplicate', 'Do it.', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
+     INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created) VALUES (1, 1, 'Legal research: Is it?', 'Is it?', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
+     INSERT INTO tickets (id, proceeding_id, title, intent, status, kind, billing_anchor, created) VALUES (2, 1, 'Legal research: Is that?', 'Is that?', 'queued', 'work', 'L8470|x', '2026-10-01T09:00');
      INSERT INTO ticket_steps (ticket_id, ordinal, text) VALUES (1, 1, 'Read the file.'), (1, 2, 'Write the memo.'), (2, 1, 'Read it again.');`
   );
   const law = join(dir, "6. LAW", "Issue");

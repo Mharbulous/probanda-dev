@@ -43,6 +43,7 @@ import { pythonDriverFile } from "../python-driver.js";
 import { pythonStarts, runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs as namespaceTimeoutMs, READ_TIMEOUT_MS, WRITE_TIMEOUT_MS } from "../python-timeout.js";
 import { stagedStorePython } from "../staged-store.js";
+import { RESEARCH_JOB_PREFIX } from "./forms/research-job.js";
 import { acquireDataLock } from "./lock.js";
 
 const PY_HELPER = String.raw`
@@ -143,6 +144,25 @@ SEEDS_WRITE_RE = r"""(?is)\b(?:insert(?:\s+or\s+\w+)?\s+into|replace\s+into|upda
 SEEDS_REFUSED = "loose_thread_write_refused: use loose_threads__capture or loose_threads__update. Loose threads are no longer in this database. Nothing was written."
 
 
+# A legal research job's title and intent are written only through the job tools, which check its form
+# (forms/research-job.ts). So drafting_data__execute refuses a script that inserts a job with the prefix,
+# or changes the title or intent of a job that holds it before or after. Judged by state like job_move().
+RESEARCH_PREFIX = ${JSON.stringify(RESEARCH_JOB_PREFIX)}
+
+
+def research_rows(con):
+    held = con.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tickets'").fetchone()
+    return {row[0]: row[1:] for row in con.execute("SELECT id, title, intent FROM tickets")} if held else {}
+
+
+def research_write(before, after):
+    for job, now in after.items():
+        was = before.get(job)
+        if now != was and (now[0].startswith(RESEARCH_PREFIX) or (was is not None and was[0].startswith(RESEARCH_PREFIX))):
+            return f"research_write_refused: use drafting_data__create_job or drafting_data__rewrite_job. tickets {job}: a legal research job's title and intent are written only by those tools, which check its form. Nothing was written."
+    return None
+
+
 def seed_rows(con):
     held = con.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'seeds'").fetchone()
     return con.execute("SELECT * FROM seeds ORDER BY id").fetchall() if held else []
@@ -157,6 +177,7 @@ def do_execute(req):
         before = recorded(con)
         jobs = job_state(con) if guarded else None
         seeds = seed_rows(con) if guarded else None
+        research = research_rows(con) if guarded else None
         try:
             con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
         except Exception:
@@ -170,6 +191,9 @@ def do_execute(req):
                     "filed_on and sent_copy_id are set only by drafting_data__record_sent, record_filed or "
                     f"record_served; clearing filed_on stays an update. Nothing was written (filing {filing}).")
         refused = jobs is not None and job_move(jobs, job_state(con))
+        if refused:
+            raise SystemExit(refused)
+        refused = research is not None and research_write(research, research_rows(con))
         if refused:
             raise SystemExit(refused)
         if guarded and seed_rows(con) != seeds:

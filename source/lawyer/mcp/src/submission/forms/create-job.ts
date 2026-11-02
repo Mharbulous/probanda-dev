@@ -15,6 +15,7 @@ import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from
 import { BRIEF_JOB_PREFIX, citationKey } from "./brief-job.js";
 import { createdByHeld, liveTicketClause, MILESTONE_KIND } from "./query.js";
 import { checkClaim, heldBy } from "./job-activity.js";
+import { isResearchTitle, RESEARCH_JOB_PREFIX, researchFormProblems } from "./research-job.js";
 
 const TOOL = "drafting_data__create_job";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -27,6 +28,7 @@ export type CreateJobGuard =
   | "title_and_step_any_status"
   | "scrutiny_statement"
   | "authority_brief"
+  | "research_title"
   | "holder_lock";
 
 export interface ScopeRow {
@@ -119,6 +121,13 @@ function checkScope(scope: unknown, field: string): void {
   );
 }
 
+/** A title opening the research prefix must be in the form (research-job.ts). */
+function checkResearchForm(title: string, intent: string): void {
+  if (!isResearchTitle(title)) return;
+  const problems = researchFormProblems(title, intent);
+  if (problems.length > 0) throw new ValidationError(`${TOOL}: this research job is not in the form: ${problems.join("; ")}. Nothing was written.`, "research_form");
+}
+
 function validate(args: CreateJobArgs): void {
   const guard = args.guard;
   check(isId(args.proceeding_id), "proceeding_id", "must be a positive integer");
@@ -128,10 +137,11 @@ function validate(args: CreateJobArgs): void {
   check(args.kind === "work" || args.kind === "charting", "kind", "must be work or charting");
   check(Number.isInteger(args.priority) || args.priority === "top" || args.priority === "bottom", "priority", "must be an integer, top or bottom");
   check(
-    ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "holder_lock"].includes(guard),
+    ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "research_title", "holder_lock"].includes(guard),
     "guard",
-    "must be one of none, live_key, never_held_key, title_live_with_step, title_and_step_any_status, scrutiny_statement, authority_brief, holder_lock"
+    "must be one of none, live_key, never_held_key, title_live_with_step, title_and_step_any_status, scrutiny_statement, authority_brief, research_title, holder_lock"
   );
+  checkResearchForm(args.title, args.intent);
   checkSteps(args.steps, "steps");
   checkScope(args.scope, "scope");
   check(args.blocks === undefined || (Array.isArray(args.blocks) && args.blocks.every(isId)), "blocks", "must be a list of job ids");
@@ -159,11 +169,15 @@ function validate(args: CreateJobArgs): void {
     const authorities = (args.scope ?? []).filter((r) => r.entity === "authorities" && r.entity_id !== null);
     check(authorities.length === 1, "scope", "must hold exactly one ('authorities', <authority id>) row under guard authority_brief");
   }
+  if (guard === "research_title") {
+    check(isResearchTitle(args.title), "title", `must open "${RESEARCH_JOB_PREFIX}" under guard research_title`);
+  }
   const companions = args.companions ?? [];
   check(Array.isArray(companions), "companions", "must be a list");
   check(companions.length === 0 || guard === "title_live_with_step", "companions", "are written only under guard title_live_with_step (§3c's pair)");
   companions.forEach((c, i) => {
     check(isText(c?.title) && isText(c?.intent), `companions[${i}]`, "needs a title and an intent");
+    checkResearchForm(c.title, c.intent);
     checkSteps(c.steps, `companions[${i}].steps`);
     checkScope(c.scope, `companions[${i}].scope`);
   });
@@ -218,6 +232,11 @@ function holderQuery(args: CreateJobArgs, titles: string[]): { sql: string; para
         params: [args.proceeding_id, JSON.stringify(authoritiesOfCase(args.db_path, args.proceeding_id, authority.entity_id as number))],
       };
     }
+    case "research_title": // jobs-stock.md §3i, §3l: any job in the proceeding, of any status, not deleted, has this title and a step.
+      return {
+        sql: `SELECT t.id FROM tickets t WHERE t.proceeding_id = ?${live} AND t.title = ? AND EXISTS (SELECT 1 FROM ticket_steps s WHERE s.ticket_id = t.id)`,
+        params: [args.proceeding_id, args.title],
+      };
     default:
       return null;
   }
@@ -354,6 +373,7 @@ function guardedReport(args: CreateJobArgs, holder: { sql: string; params: unkno
     title_and_step_any_status: `This finding is already on the board, or was settled there: ${job}. Nothing was written; say "already on the board" in one line.`,
     scrutiny_statement: `A live scrutiny review job already covers this statement: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
     authority_brief: `A live case brief job already covers this case: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
+    research_title: `This research job already exists, or was answered: ${job}. Nothing was written; say "already a job: ${job}" in one line.`,
   };
   return { ...(found === undefined ? {} : { holder_id: found.id }), note: notes[args.guard] };
 }

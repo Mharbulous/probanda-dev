@@ -60,6 +60,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "A script that takes or moves a job's lock, sets its plan approval, completion or deletion stamp, stamps a step " +
         "done or sets its status, or writes a job's active stamp, last activity, lapse record or claim number is refused " +
         "whole, writing nothing, with job_write_refused naming the job tool that writes it. " +
+        "A script that inserts a job titled 'Legal research: ', or changes the title or intent of a job that holds that prefix before or after, is refused whole, with research_write_refused: use create_job or rewrite_job. " +
         "A loose thread is written through loose_threads__capture and loose_threads__update: a script writing the seeds table is refused whole, with loose_thread_write_refused. " +
         "The result carries changes, the number of rows the script inserted, updated or deleted, rows written " +
         "by triggers included; on a script that writes only job tables, changes 0 means its guards matched " +
@@ -333,7 +334,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "second job is passed in companions); title_and_step_any_status (any job on the Writing, not deleted, has this " +
         "title and one of these step texts: a pass finding, §3g); scrutiny_statement (a queued or wip, unshelved " +
         "'Review scrutiny finding: ' job is scoped to the statement in scope: §3d); authority_brief (a queued or wip, unshelved " +
-        "'Brief the case: ' job in the proceeding is scoped to any authority of the same case: §3n); holder_lock (held_ticket_id no " +
+        "'Brief the case: ' job in the proceeding is scoped to any authority of the same case: §3n); research_title (any job in the proceeding, not deleted, has this " +
+        "'Legal research: ' title and a step: §3i, §3l); holder_lock (held_ticket_id no " +
         "longer carries session_token under claim_no: a spin-off blocker, §3f, which copies the held job's scope). filing_id is the " +
         "Writing's or Work Board's id, or null for a proceeding-scoped job, and is never left out. priority is an " +
         "integer, or top (one above the highest queued) or bottom (one below the lowest), read inside the write: on a " +
@@ -342,7 +344,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "session_token, passed only where /drafting-data says the create writes it (tickets.created_by, schema v72). " +
         "Outcomes: created (ticket_id, companion_ids, the priority written) or guarded (nothing was written; holder_id is " +
         "the job that fired the guard, when one is still there). It moves no revision. Refusals write nothing: " +
-        "invalid_<field>, and an error from the database (a missing blocker, a work job with no billing_anchor). " +
+        "invalid_<field>, research_form (a 'Legal research: ' title that is not that prefix followed by the intent, or an intent that is not one to three " +
+        "sentences of which only the last ends in ?, each failed check named), and an error from the database (a missing blocker, a work job with no billing_anchor). " +
         "Returns outcome, ticket_id, companion_ids, priority, holder_id and a note.",
       inputSchema: {
         type: "object",
@@ -380,7 +383,7 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           created_by: { type: "string" },
           guard: {
             type: "string",
-            enum: ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "holder_lock"],
+            enum: ["none", "live_key", "never_held_key", "title_live_with_step", "title_and_step_any_status", "scrutiny_statement", "authority_brief", "research_title", "holder_lock"],
           },
           session_token: { type: "string", description: "holder_lock only" },
           claim_no: { type: "number", description: "holder_lock only: the held job's claim_no from drafting_data__assign_job" },
@@ -654,14 +657,16 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "the job this session holds): steps delete only the steps not done, or none with append: true, and go after the " +
         "highest ordinal left, so a done step keeps its row, words and stamp; an approval already on the job is " +
         "re-stamped; a title alone (the held-job title cleanup) touches no step and no stamp; the job's session-active " +
-        "stamp and last activity move in the same transaction. The guard rides every statement, so all of it lands or " +
-        "none does. " +
+        "stamp and last activity move in the same transaction. A 'Legal research: ' title takes its intent with it, set together, and both are checked " +
+        "against the form; a job holding that prefix keeps it. migrate: true, only on the practitioner's approval, writes such a title and intent and nothing else, every step, stamp, " +
+        "approval and answer kept: on a queued, unlocked job, not shelved or deleted, whatever its steps' state, or with held: true on this session's job. " +
+        "The guard rides every statement, so all of it lands or none does. " +
         HOLDER +
         " Outcomes: rewritten; held: not_held (taken over, shelved or completed: run the scope read and " +
         "stop); ready: locked, shelved, approved, step_done, not_ready. On any but rewritten nothing was written: " +
         "re-render, never re-run. It moves no revision. Refusals write nothing: invalid_ticket_id, " +
-        "invalid_session_token, invalid_append, nothing_to_write, invalid_title, invalid_steps, not_found. Returns " +
-        "ticket_id, outcome, title, steps (ordinal, text, done_at), status, locked_by, rejected_at, plan_approved_at " +
+        "invalid_session_token, invalid_append, invalid_migrate, invalid_intent, research_form, nothing_to_write, invalid_title, invalid_steps, not_found. Returns " +
+        "ticket_id, outcome, title, intent, steps (ordinal, text, done_at), status, locked_by, rejected_at, plan_approved_at " +
         "and a note.",
       inputSchema: {
         type: "object",
@@ -669,6 +674,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
           db_path: { type: "string" },
           ticket_id: { type: "number" },
           title: { type: "string" },
+          intent: { type: "string", description: "A 'Legal research: ' title's intent: that title less its prefix, character for character" },
+          migrate: { type: "boolean" },
           steps: { type: "array", items: { type: "string" } },
           held: { type: "boolean" },
           session_token: { type: "string" },
@@ -779,7 +786,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "then the completion, both guarded on this session's token, then the confirm-read. Before either, while any of its " +
         "steps is open, to be retried or waiting (a waiting step whose minute has passed included), nothing is written and " +
         "the outcome is steps_open, with open_steps naming each one; a step cancelled or deferred on the practitioner's " +
-        "words (drafting_data__set_step) counts as resolved. A wip conflict partner is never " +
+        "words (drafting_data__set_step) counts as resolved. A 'Legal research: ' job with no research memo saved under it is refused no_memo, and one whose last memo's Confidence: " +
+        "reads INCOMPLETE is refused memo_incomplete unless a step was cancelled or deferred on the practitioner's words; each writes nothing. A wip conflict partner is never " +
         "touched. draft_dir is the draft_dir open_session returned. " +
         HOLDER +
         " The outcome is read off the confirm-read: completed (status completed, no " +

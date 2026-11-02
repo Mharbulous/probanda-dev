@@ -12,6 +12,8 @@ import { saveAnswer } from "../../files/research-filing.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { heldBy, jobIdentity, requireHeld, touchStatements } from "./job-activity.js";
 import { ticketAnswersHeld } from "./query.js";
+import { isResearchTitle, RESEARCH_JOB_PREFIX } from "./research-job.js";
+import { fixedText } from "./take-job.js";
 
 const TOOL = "research_filing__save_answer";
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
@@ -58,6 +60,15 @@ export function lawRelativePath(path: string): string {
   return segments.slice(segments.findIndex((s) => s.toLowerCase() === "6. law")).join("\\");
 }
 
+/** Whether a job may have an answer saved under it. A memo goes only under a research job. The jobs with an
+ * output of their own also save here: a fixed-text job (a case brief), a note-up, and a job holding a Proposal's
+ * key (a scrutiny), whose work comes from a marker and holds no question of its own words. */
+function takesAnswers(dbPath: string, id: number): boolean {
+  const [job] = submissionDataQuery(dbPath, "SELECT title FROM tickets WHERE id = ?", [id]).rows as unknown as { title: string }[];
+  if (isResearchTitle(job.title) || fixedText(job.title) || job.title.startsWith("Note up")) return true;
+  return submissionDataQuery(dbPath, "SELECT 1 FROM ticket_proposals WHERE ticket_id = ? LIMIT 1", [id]).rows.length > 0;
+}
+
 export async function saveAnswerTool(args: SaveAnswerArgs, env: NodeJS.ProcessEnv = process.env): Promise<SaveAnswerResult> {
   const job = jobIdentity(TOOL, args);
   if (job === null) return saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch, args.from_render);
@@ -74,7 +85,13 @@ export async function saveAnswerTool(args: SaveAnswerArgs, env: NodeJS.ProcessEn
   }
 
   requireHeld(TOOL, job);
-  const saved = saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch, args.from_render);
+  if (!takesAnswers(dbPath, id)) {
+    throw new ValidationError(
+      `${TOOL}: job ${id}'s title does not open "${RESEARCH_JOB_PREFIX}", so no research memo can be saved under it; nothing was saved. If its work is a question about what the law is, migrate it first.`,
+      "not_research_job"
+    );
+  }
+  const saved =saveAnswer(args.destination_dir, args.filename, args.text, args.from_scratch, args.from_render);
   let written: Awaited<ReturnType<typeof submissionDataWriteAll>>;
   try {
     written = await submissionDataWriteAll(

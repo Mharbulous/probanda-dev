@@ -20,7 +20,7 @@ const { callTool } = await import("../build/index.js");
 
 const SEED = `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL);
   INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, locked_by, locked_at, plan_approved_at, created)
-    VALUES (1, 1, NULL, 'Research the limitation point', 'When did time start to run?', 'wip', 0, 'work', 'L8470|limitation', 'sess-holder', '2026-01-16 09:00', '2026-01-16 09:00', '2026-01-16 08:55');
+    VALUES (1, 1, NULL, 'Legal research: When did time start to run?', 'When did time start to run?', 'wip', 0, 'work', 'L8470|limitation', 'sess-holder', '2026-01-16 09:00', '2026-01-16 09:00', '2026-01-16 08:55');
   INSERT INTO tickets (id, proceeding_id, filing_id, title, intent, status, priority, kind, billing_anchor, created)
     VALUES (2, 1, NULL, 'Check the guarantor', 'Is the guarantor a party?', 'queued', 0, 'work', 'L8470|guarantor', '2026-01-16 08:56');
   INSERT INTO ticket_steps (ticket_id, ordinal, text, done_at) VALUES (1, 1, 'Run the research', NULL);`;
@@ -128,7 +128,7 @@ test("board_card's last activity and the idle tag read the stamp, and a ⏳ step
   const { dbPath } = await seeded(t);
   const line = (rendered) =>
     renderLiveLanes(buildPreFilingBoardData(dbPath, fetchProceeding(dbPath, 1), { revision: 1, matter: "", client: "", rendered })).find((l) => l.startsWith("- Job #1 "));
-  const head = "- Job #1 Research the limitation point · In Progress 0/1";
+  const head = "- Job #1 Legal research: When did time start to run? · In Progress 0/1";
 
   const flag = " · check window: idle past 30 min";
 

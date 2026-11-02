@@ -14,11 +14,20 @@
 // waiting or to be retried (step-state.ts, schema v78) nothing is written and the outcome is
 // steps_open, naming each one. A step the practitioner dropped or put off (drafting_data__set_step
 // with their words) is resolved. On a database held below v78 every unstamped step is open.
+//
+// A legal research job ends only in a memo: one this session holds, with no research memo saved under it,
+// is refused no_memo. Its newest memo reading INCOMPLETE is refused memo_incomplete, unless a step was
+// dropped or put off on the practitioner's words, which is how they complete it without that research.
+
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { type ClientContext, type RenderedDocument, submissionFormsRender, submissionFormsRenderProceedingBoard } from "../forms.js";
-import { fetchBoardFilings, liveTicketClause, proceedingJobBoard, stepStatusHeld } from "./query.js";
+import { memoSourceOf, UNREADABLE } from "./legal-memos.js";
+import { fetchBoardFilings, liveTicketClause, proceedingJobBoard, stepStatusHeld, ticketAnswersHeld } from "./query.js";
+import { isResearchTitle } from "./research-job.js";
 import { type StepStateFields, stepResolved } from "./step-state.js";
 import { checkClaim, heldBy } from "./job-activity.js";
 import type { BoardMove } from "../matter-pages.js";
@@ -41,7 +50,7 @@ export interface CompleteJobArgs {
 
 export interface CompleteJobResult {
   ticket_id: number;
-  outcome: "completed" | "not_held" | "shelved" | "no_match" | "steps_open";
+  outcome: "completed" | "not_held" | "shelved" | "no_match" | "steps_open" | "no_memo" | "memo_incomplete";
   /** Queued conflict partners this call superseded. */
   superseded: number;
   /** Rows the completion changed: 1 when this call completed the job, 0 otherwise. */
@@ -139,6 +148,41 @@ function openSteps(dbPath: string, id: number, token: string): CompleteJobResult
   };
 }
 
+/** Whether a saved memo's header reads INCOMPLETE. One that cannot be read now is left to the skill's rule. */
+function memoIncomplete(draftDir: string, filePath: string): boolean {
+  try {
+    return /^Confidence:\s*"?INCOMPLETE/m.test(readFileSync(join(dirname(draftDir), ...filePath.split(/[\\/]+/)), "utf8"));
+  } catch (err) {
+    if (UNREADABLE.has((err as NodeJS.ErrnoException).code ?? "")) return false;
+    throw err;
+  }
+}
+
+/** The refusal for a research job this session holds with no finished memo saved under it; null otherwise. */
+function researchMemoRefusal(args: CompleteJobArgs, token: string): CompleteJobResult | null {
+  const id = args.ticket_id;
+  const [job] = submissionDataQuery(args.db_path, "SELECT title, status, locked_by, rejected_at FROM tickets WHERE id = ?", [id]).rows as unknown as { title: string; status: string; locked_by: string | null; rejected_at: string | null }[];
+  if (job === undefined || job.locked_by !== token || !isResearchTitle(job.title)) return null;
+  const answers = ticketAnswersHeld(args.db_path) ? (submissionDataQuery(args.db_path, "SELECT file_path FROM ticket_answers WHERE ticket_id = ? ORDER BY id", [id]).rows as unknown as { file_path: string }[]) : [];
+  const memos = answers.map((a) => a.file_path).filter((path) => memoSourceOf(path.split(/[\\/]+/).pop() as string) === "research_memo");
+  const refuse = (outcome: "no_memo" | "memo_incomplete", note: string): CompleteJobResult => ({
+    ticket_id: id,
+    outcome,
+    superseded: 0,
+    changes: 0,
+    status: job.status,
+    completed_at: null,
+    locked_by: job.locked_by,
+    rejected_at: job.rejected_at,
+    pages_written: false,
+    note,
+  });
+  if (memos.length === 0) return refuse("no_memo", `Job ${id} was not completed and nothing was written: a legal research job ends only in a saved memo, and none is saved under it. Save its memo, or shelve the job.`);
+  if (!memoIncomplete(args.draft_dir, memos[memos.length - 1])) return null;
+  if (stepStatusHeld(args.db_path) && submissionDataQuery(args.db_path, "SELECT 1 FROM ticket_steps WHERE ticket_id = ? AND status IN ('cancelled', 'deferred') LIMIT 1", [id]).rows.length > 0) return null;
+  return refuse("memo_incomplete", `Job ${id} was not completed and nothing was written: its last memo reads INCOMPLETE. Run the research it names or, on the practitioner's own words, set those steps cancelled or deferred with drafting_data__set_step, then complete.`);
+}
+
 /** drafting_data__complete_job. Every validation refusal writes nothing; a page refusal is reported, never thrown. */
 export async function submissionDataCompleteJob(
   args: CompleteJobArgs,
@@ -156,7 +200,9 @@ export async function submissionDataCompleteJob(
   const held = heldBy(args.db_path, token, checkClaim(TOOL, args.db_path, id, token, args.claim_no));
   const open = openSteps(args.db_path, id, token);
   if (open !== null) return open;
-  const written = await submissionDataWriteAll(
+  const noMemo = researchMemoRefusal(args, token);
+  if (noMemo !== null) return noMemo;
+  const written =await submissionDataWriteAll(
     args.db_path,
     [
       {

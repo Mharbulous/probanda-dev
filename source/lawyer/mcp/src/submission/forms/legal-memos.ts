@@ -80,7 +80,7 @@ export interface LegalMemosData {
 const NEUTRAL_CITATION = /^\d{4} [A-Z]{2,}[A-Za-z]* \d+\b/;
 const VERSIONED = /^(.*?)(?: v(\d+))?(\.[^.\\/]+)$/i;
 /** A file or folder that cannot be read now (locked by a sync client, permissions, gone): skipped. */
-const UNREADABLE = new Set(["EPERM", "EBUSY", "EACCES", "ENOENT"]);
+export const UNREADABLE = new Set(["EPERM", "EBUSY", "EACCES", "ENOENT"]);
 /** A case brief's name (shared/case-brief-template.md), which holds a decision's citation and is no memo's:
  * `[<date> ]case brief <the case>`. A filing or decision that only says "case brief" in its name opens otherwise. */
 const CASE_BRIEF_OPENING = /^(?:\d{4}-\d{2}-\d{2}\s+)?case brief\s/i;
