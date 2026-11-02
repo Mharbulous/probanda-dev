@@ -2,7 +2,7 @@
 journey: Gate before filing
 kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
 actor: practitioner
-trigger: the last substance job on a Writing completes and the package exists as files; the Milestone now shows a `Pre-filing consistency gate` job
+trigger: the last substance job on a Writing completes and the package exists as files; the Work Board now shows a `Pre-filing consistency gate` job
 outcome: every check has passed, is not applicable, or is waived with the practitioner's one-line reason, recorded on the job — and only then is the filing presented as ready for the practitioner's final approval to file
 path: happy, with one failure handled
 status: aspirational (desired UX — not yet verified against the implementation)
@@ -13,7 +13,7 @@ source: L8212 Cowork session, 2026-09-14, Claimant Opening Submissions package (
 
 ## The journey
 
-1. **Practitioner:** opens the Writing. The Milestone's ready cards show one job left: *Pre-filing consistency gate*, created when the last substance job completed. They pick it.
+1. **Practitioner:** opens the Writing. The Work Board's ready cards show one job left: *Pre-filing consistency gate*, created when the last substance job completed. They pick it.
 
 2. **Assistant:** claims it, reads back its fixed six steps as the plan, and on approval calls the check tool once on the package folder — the written argument, two signed witness statements, the Index of Exhibits and sixteen exhibit files. One call, no questions.
 
@@ -56,7 +56,7 @@ source: L8212 Cowork session, 2026-09-14, Claimant Opening Submissions package (
 
 ## Principles this journey encodes
 
-- **The gate is a job, not a state.** It claims, locks, records steps and completes like any other job, so the record of what was checked and what was waived survives the session on the Milestone. The seven lifecycle states are untouched (ADR 0016).
+- **The gate is a job, not a state.** It claims, locks, records steps and completes like any other job, so the record of what was checked and what was waived survives the session on the Work Board. The seven lifecycle states are untouched (ADR 0016).
 - **The gate reports; a job fixes.** No session edits a package document to clear a finding — a placeholder in a signed statement is cured by a corrected statement, not by touching the signed file.
 - **Show the mismatch, never describe it.** A failed check is presented per `/show-me`: the offending document itself as a highlighted page extract, captioned with its document and page, and the offending paragraph in full in a code block, before any interpretation.
 - **A waiver is the practitioner's sentence, verbatim.** One line, no options, no recommendation, recorded on the step — the same shape as a loose thread (`/drafting-data` §8).

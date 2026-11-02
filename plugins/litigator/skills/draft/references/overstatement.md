@@ -26,7 +26,7 @@ It is not the verbatim check. A stored excerpt that may be misquoted goes down t
 
 ## Findings
 
-The review never edits substance. It writes no report: no file, no table and no card. Its findings live on the Writing's Milestone and nowhere else (`/drafting-data` §3g). Each assertion checked yields a finding with these fields, citing the mockup's printed paragraph number: the assertion, the source and pinpoint, what the source says, the verdict, and, on a finding other than supported, a rewrite at the source's strength. A supported finding has nothing to decide and is written nowhere.
+The review never edits substance. It writes no report: no file, no table and no card. Its findings live on the Writing's Work Board and nowhere else (`/drafting-data` §3g). Each assertion checked yields a finding with these fields, citing the mockup's printed paragraph number: the assertion, the source and pinpoint, what the source says, the verdict, and, on a finding other than supported, a rewrite at the source's strength. A supported finding has nothing to decide and is written nowhere.
 
 Quote the source verbatim where possible, otherwise paraphrase at exactly its strength. A rewrite for an understated finding goes up to the source's own words and no further. The rewrite is a proposal the practitioner may take or leave, never a write. It is the one proposal the paralegal posture permits here, because running the review is what asked for it.
 
@@ -44,7 +44,7 @@ Quote the source verbatim where possible, otherwise paraphrase at exactly its st
 
 Every finding other than supported is the practitioner's to decide: keep as drafted, or rewrite at the source's strength. State each in one line in the turn it is found, with its fields, and present one decision form per finding. A chat answer covering several findings is a valid answer. A not-located finding instead asks for the source, and is decided once it arrives. A rewrite the practitioner takes is an ordinary revision (section 12), written through the gatekeeper and re-rendered.
 
-A finding decided in that turn is written nowhere. Each one left undecided becomes a `Decide an overstatement finding` job on the Writing's Milestone (`/drafting-data` §3g), its step the finding's fields in §3g's form. Closing that job records the decision, and §3g's guard never writes the same finding again, so a finding kept as drafted is not raised again unless the assertion or its source changes. A client letter is no Writing and takes no job, even on the board it is attached to: its findings are decided in chat only (`references/letters.md` section 10).
+A finding decided in that turn is written nowhere. Each one left undecided becomes a `Decide an overstatement finding` job on the Writing's Work Board (`/drafting-data` §3g), its step the finding's fields in §3g's form. Closing that job records the decision, and §3g's guard never writes the same finding again, so a finding kept as drafted is not raised again unless the assertion or its source changes. A client letter is no Writing and takes no job, even on the board it is attached to: its findings are decided in chat only (`references/letters.md` section 10).
 
 Findings are decided within the pre-review passes, before section 14 checks whether the passes left anything open. A finding still undecided then, such as a not-located one whose source has not arrived, is named in one line with its job's number. It does not stop the review jobs.
 

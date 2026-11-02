@@ -13,7 +13,7 @@ source: design `Engineering/1. Design/2026-09-08_retire-filing-consolidation-cur
 
 ## The journey
 
-1. **Practitioner:** opens `/draft` on a stay-application response filed three months ago, and says the appeal period has run out. The Milestone says **Decided**.
+1. **Practitioner:** opens `/draft` on a stay-application response filed three months ago, and says the appeal period has run out. The Work Board says **Decided**.
 
 2. **Assistant:** presents the Writing's ready jobs as usual, and last on the widget — after "Something else…", never preselected — a card:
 
@@ -40,7 +40,7 @@ source: design `Engineering/1. Design/2026-09-08_retire-filing-consolidation-cur
 
 9. **Assistant:** writes the retirement — its date and reason, the decision date, and the supersession of this Writing's own queued jobs — in one write. Then it hands the Writing's research to `/matter-data`: the assertions the Writing argued, the statements of law beneath them, the authorities they rest on, the opposing authorities the Writing answered, and what the court orally did with each. The authority the practitioner dropped weeks ago and the assertion that dead-ended are left out — nobody should inherit rejected research. It reports back what landed, what was held back for verification, and what collided with law already on file, plainly and in full.
 
-10. **Assistant:** re-renders the board alone. Its summary reads **Retired**, and the superseded jobs say so; the Writing's Milestone page is moved to TRASH on the next page write; only live Writings have one. The Writing's other mockups are untouched — frozen as they stood at retirement, which is the point of retiring it.
+10. **Assistant:** re-renders the board alone. Its summary reads **Retired**, and the superseded jobs say so; the Writing's Work Board page is moved to TRASH on the next page write; only live Writings have one. The Writing's other mockups are untouched — frozen as they stood at retirement, which is the point of retiring it.
 
 
 ## The refusal branch

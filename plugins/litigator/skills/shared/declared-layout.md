@@ -65,7 +65,7 @@ An unknown name fails at Writing creation. Adding a projection is a runtime chan
 
 | Field | Value | Rule |
 |---|---|---|
-| `goal_criteria` | array of names from section 6 | The Milestone's goal criteria for this type. |
+| `goal_criteria` | array of names from section 6 | The Work Board's goal criteria for this type. |
 | `companions` | array of names from section 6 | The companion documents rendered with this type. |
 | `page_limit` | positive integer, pages | Shown only on the mockup, under a "Page budget" heading, which never reaches the filed face. |
 | `letterhead` | `true` or `false` | `true` marks a letter: it renders through the firm letterhead and lets `signature-block` print the roster `closing`. Allowed on `general` types only. |
@@ -76,7 +76,7 @@ An unknown name fails at Writing creation. Adding a projection is a runtime chan
 
 Both are closed and owned by the runtime. A name outside them fails.
 
-**`goal_criteria` members.** Each is a condition on the Writing's Milestone card, met when nothing on the Writing's forum documents counts against it.
+**`goal_criteria` members.** Each is a condition on the Writing's Work Board card, met when nothing on the Writing's forum documents counts against it.
 
 | Member | Card text |
 |---|---|

@@ -1,10 +1,10 @@
 ---
 name: task-prioritization
-description: Maintain and rank the practitioner's to-do registry (retainer-first). Use to add or complete a to-do, see the ranked to-do list, or which files need attention, or to show the Work Board (every matter's open work on one page). 'What should I work on' is answered only when the practitioner types /executive-assistant; do not route to it. Re-ranks when a retainer notice is sent, a trust balance changes, or a deadline updates.
+description: Maintain and rank the practitioner's to-do registry (retainer-first). Use to add or complete a to-do, see the ranked to-do list, or which files need attention, or to show the Practice Board (every matter's open work on one page). 'What should I work on' is answered only when the practitioner types /executive-assistant; do not route to it. Re-ranks when a retainer notice is sent, a trust balance changes, or a deadline updates.
 user-invocable: true
 ---
 
-<!-- lawyer v0.17.9 -->
+<!-- lawyer v0.18.0 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -66,12 +66,12 @@ When the user asks "what should I work on?", "what's next?", or wants the ranked
 3. Within Work tier, apply tie-breaking (deadline proximity → net trust)
 4. Display using the [Output format](#output-format) — always show the reasoning
 
-When the user asks to see the work board, or all work across the practice as a page, do not rank. Call `practice-data`'s work-board operation (`practice_data__render_practice_board`), present the page as a file card (`shared/present-files.md`) by its `work_board_path`, and relay only the panel counts it returns. Never read the page (`shared/html-pages.md`).
+When the user asks to see the practice board, or all work across the practice as a page, do not rank. Call `practice-data`'s practice-board operation (`practice_data__render_practice_board`), present the page as a file card (`shared/present-files.md`) by its `practice_board_path`, and relay only the panel counts it returns. Never read the page (`shared/html-pages.md`).
 
 ### 2. Add a to-do
 
 A to-do is one outcome the practitioner would cross off, such as "Re-file default judgment
-application". Work toward it (research, checks, attaching evidence) is jobs on the Milestone of the
+application". Work toward it (research, checks, attaching evidence) is jobs on the Work Board of the
 filing it points to, never another to-do. Research that serves a filing is always a job on that
 filing. Apart from the follow-up and rule-change diary to-dos `lawyer:docket-clerk` writes, this
 skill is the only one that creates a to-do, and a drafting session hands its to-do requests here
@@ -92,7 +92,7 @@ skill is the only one that creates a to-do, and a drafting session hands its to-
    filing" is never a reason to add its to-do without the pointer (ADR 0024 D13).
 4. Invoke ``practice-data`` `upsert-task` to create the to-do. If it refuses because the filing
    already has an open to-do, name that to-do from the refusal and offer to fold the new work into it
-   as jobs on the filing's Milestone.
+   as jobs on the filing's Work Board.
 5. Confirm: "Added to-do: [description] — [matter name if applicable]". Never echo the returned row.
 6. Ask if they want to see the updated ranked list
 
@@ -149,7 +149,7 @@ The recurring-reminder loop. The caller (normally `executive-assistant`) states 
 A to-do may point to one filing, or one pre-filing proceeding, of its own matter. The matter's To
 Do List then shows that filing's one-line status under the to-do, and the filing stays in the
 list of filings below (ADR 0021 D5). The pointer holds no jobs and no plan: a filing's jobs stay on
-its own Milestone.
+its own Work Board.
 
 1. Identify the to-do. It must belong to a matter: an admin or professional to-do with no matter
    points nowhere.

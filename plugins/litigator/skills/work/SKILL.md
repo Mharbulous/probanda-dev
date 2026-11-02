@@ -1,17 +1,17 @@
 ---
 name: work
 description: >
-  Open a matter's Milestone and take, take over, release, shelve, restore or bring forward its jobs: drafting, research, delivery, filing and other work. Use when the practitioner asks to work the Milestone, take the next job, pick up or hand back a job, outline new jobs, or rank the loose threads. Hands each job to the skill that works it. Drafting a letter, email, memo or filing -> /draft.
+  Open a matter's Work Board and take, take over, release, shelve, restore or bring forward its jobs: drafting, research, delivery, filing and other work. Use when the practitioner asks to work the Work Board, take the next job, pick up or hand back a job, outline new jobs, or rank the loose threads. Hands each job to the skill that works it. Drafting a letter, email, memo or filing -> /draft.
 ---
 
-<!-- litigator v0.13.11 -->
+<!-- litigator v0.13.12 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
 ## 1. What this skill is
 
 <!-- atom id=work.what ops=always -->
-The Milestone's entry. It enters the session, opens the matter's Milestone, chooses or takes a job, runs the checks before the assigning write, assigns it, and hands it to the skill that works it. It also outlines new jobs and applies the board's bookkeeping: shelve, restore, release, delete, bring forward, the statement of goals and the loose threads. It drafts nothing and works no job's steps itself. It never calls the `lawyer:scrivener` agent either, because the words of a letter or email reach a job only through `/draft` (`shared/correspondence-isolation.md`).
+The Work Board's entry. It enters the session, opens the matter's Work Board, chooses or takes a job, runs the checks before the assigning write, assigns it, and hands it to the skill that works it. It also outlines new jobs and applies the board's bookkeeping: shelve, restore, release, delete, bring forward, the statement of goals and the loose threads. It drafts nothing and works no job's steps itself. It never calls the `lawyer:scrivener` agent either, because the words of a letter or email reach a job only through `/draft` (`shared/correspondence-isolation.md`).
 
 These rules moved from `/draft` verbatim. A file, section or part of SKILL.md they name that this skill does not hold is `/draft`'s, in its file of the same name: section 14 is this skill's `references/dispatch.md`, sections 6 and 7 its `references/procedure.md`, and every other section number is `/draft`'s.
 
@@ -35,7 +35,7 @@ These rules moved from `/draft` verbatim. A file, section or part of SKILL.md th
 **A question answerable from memory.** Answer it before any tool call, and look nothing up unless asked. Frame it as a hunch ("My hunch is ...") and hedge each recalled section, rule or time limit where it appears ("I believe", "if memory serves"), never in a caveat paragraph up front. A date for a matter still goes to the `lawyer:docket-clerk` agent. End with one sentence offering to verify it.
 
 <!-- atom id=work.start-planning ops=always -->
-**"Shall we start planning?"** End the reply with that question when there is no clear instruction on what work to do next and the discussion relates to no Milestone, or to one with no completed job.
+**"Shall we start planning?"** End the reply with that question when there is no clear instruction on what work to do next and the discussion relates to no Work Board, or to one with no completed job.
 
 ## Rules for each step
 

@@ -37,7 +37,7 @@ Re-enter at section 9: elicit the change, write it, re-render. No revision mode,
 
 The practitioner speaks in the numbers printed on the mockup they are looking at. Reorder, insert and remove are ordinary revision requests; renumbering everything downstream is the machinery's job, never something the practitioner tracks or is asked about.
 
-Once the overstatement review has run on the Writing, a revision that adds or changes an assertion reruns the overstatement review on that assertion with the re-render, one decision form per new flagged finding, each left undecided written to the Milestone, never a report or a card (`references/overstatement.md`).
+Once the overstatement review has run on the Writing, a revision that adds or changes an assertion reruns the overstatement review on that assertion with the re-render, one decision form per new flagged finding, each left undecided written to the Work Board, never a report or a card (`references/overstatement.md`).
 
 A revision that falsifies a fact a letter's title names offers a new title in one line. Once confirmed, retitle through `/drafting-data`, then run section 11's rename and the nightly-list retitle update (`work/references/nightly-launch.md`, Opt-in, withdrawal and retitle), and render again.
 

@@ -2,7 +2,7 @@
 journey: A fresh outline after a blocker changes
 kind: ux journey — describes the interaction the practitioner experiences, not the data model. Data-focused journeys use a different format and live in `.claude/skills/drafting-data/User_Journeys/`.
 actor: practitioner
-trigger: a job the practitioner outlined was waiting on another, what it waited on was superseded and came out differently, and the Milestone shows the waiting job as Blocked by a superseded job
+trigger: a job the practitioner outlined was waiting on another, what it waited on was superseded and came out differently, and the Work Board shows the waiting job as Blocked by a superseded job
 outcome: the practitioner decides, in their own words, how the waiting job now stands; that decision and their reasoning are recorded verbatim and the job is written afresh; a loose thread from an earlier session is put to them as a three-way choice and handled as they say
 path: happy
 status: aspirational
@@ -15,7 +15,7 @@ Continues `outline-a-new-application.md`. The orders job was outlined as waiting
 
 ## The journey
 
-1. **Practitioner:** opens `/draft` on the Notice of Application and chooses "Something else…". The Milestone shows the orders job under Blocked, its blocker superseded and needing a fresh outline, and one loose thread under "Loose Threads".
+1. **Practitioner:** opens `/draft` on the Notice of Application and chooses "Something else…". The Work Board shows the orders job under Blocked, its blocker superseded and needing a fresh outline, and one loose thread under "Loose Threads".
 
 2. **Assistant:** says what changed, from the record, and asks how the practitioner wants to handle it. It does not suggest a new figure.
 
@@ -39,7 +39,7 @@ Continues `outline-a-new-application.md`. The orders job was outlined as waiting
 
    > Written. There's one loose thread from last session — you mentioned Mr. Baker might have a counterclaim. Outline it now, leave it as an idea, or drop it?
 
-7. **Practitioner:** leave it. **Assistant:** leaves the loose thread untouched under "Loose Threads" and re-renders; the Writing's own Milestone page updates.
+7. **Practitioner:** leave it. **Assistant:** leaves the loose thread untouched under "Loose Threads" and re-renders; the Writing's own Work Board page updates.
 
 ## Principles this journey encodes
 
