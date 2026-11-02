@@ -1,4 +1,4 @@
-// build-stamp: c529b24c32af
+// build-stamp: f40c20ec3fcb
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "c529b24c32af";
+var BUILD_STAMP = false ? null : "f40c20ec3fcb";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -107033,7 +107033,6 @@ var legal_research_js_default = `(function () {
       row(t.dl, "Currency", currencyText(s.currency_status), "");
       row(t.dl, "Last checked", s.currency_checked_on, "Never checked");
       row(t.dl, "Noted up for cases", s.note_up.label, "");
-      if (s.results.length > 0) row(t.dl, "Result", s.results, "");
       row(t.dl, "Provisions", s.provisions.map(function (p) {
         return p.provision + ": " + currencyText(p.currency_status) + (p.checked_on ? ", checked " + p.checked_on : "");
       }), "None recorded");
@@ -108040,7 +108039,7 @@ function buildStatutesData(dbPath, filingIds, proceedingIds) {
   const ids = [...new Set(proceedingIds)];
   const others = ids.length === 0 ? [] : rows(
     dbPath,
-    `SELECT id, style_of_cause_or_title, citation, treatment, currency_status, currency_checked_on
+    `SELECT id, style_of_cause_or_title, citation, currency_status, currency_checked_on
      FROM authorities
      WHERE kind IN (${kinds.map((k3) => `'${k3}'`).join(", ")}) AND killed_on IS NULL AND proceeding_id IN (${ids.map(() => "?").join(", ")})
      ORDER BY style_of_cause_or_title, id`,
@@ -108051,16 +108050,12 @@ function buildStatutesData(dbPath, filingIds, proceedingIds) {
     const key = foldKey(a3.citation, a3.id, a3.style_of_cause_or_title);
     let target = statutes.get(key);
     if (target === void 0) {
-      target = { title: a3.style_of_cause_or_title, citation: a3.citation, relied_on: isRelied, currency_status: a3.currency_status, currency_checked_on: a3.currency_checked_on, note_up: authorityNoteUp(null), results: [], provisions: [] };
+      target = { title: a3.style_of_cause_or_title, citation: a3.citation, relied_on: isRelied, currency_status: a3.currency_status, currency_checked_on: a3.currency_checked_on, note_up: authorityNoteUp(null), provisions: [] };
       statutes.set(key, target);
     }
     if ((a3.currency_checked_on ?? "") > (target.currency_checked_on ?? "")) {
       target.currency_status = a3.currency_status;
       target.currency_checked_on = a3.currency_checked_on;
-    }
-    if (a3.treatment !== null) {
-      target.note_up = authorityNoteUp(a3.treatment);
-      if (!target.results.includes(treatmentWord(a3.treatment))) target.results.push(treatmentWord(a3.treatment));
     }
     for (const p3 of provisionsOf(dbPath, a3.id)) {
       if (!target.provisions.some((held2) => held2.provision === p3.provision)) target.provisions.push(p3);
@@ -123521,10 +123516,9 @@ var LEGAL_RESEARCH_FIXTURE = {
           currency_status: "current",
           currency_checked_on: "2026-01-10",
           note_up: { label: "Not noted up", noted: false },
-          results: [],
           provisions: [{ provision: "s 15", currency_status: "current", checked_on: "2026-01-10" }, { provision: "s 16", currency_status: null, checked_on: null }]
         },
-        { title: "Limitation Act", citation: "SBC 0000, c 0", relied_on: false, currency_status: null, currency_checked_on: null, note_up: { label: "Not noted up", noted: false }, results: [], provisions: [] }
+        { title: "Limitation Act", citation: "SBC 0000, c 0", relied_on: false, currency_status: null, currency_checked_on: null, note_up: { label: "Not noted up", noted: false }, provisions: [] }
       ]
     },
     briefs: {
