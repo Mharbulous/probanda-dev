@@ -8,6 +8,11 @@ choose_issue: which issue an implementer lane takes next, and whether its lock i
       [--comments <n>=<file> ...] [--handled <n> ...] [--now <ISO time>]
   python scripts/choose_issue.py lock --lane cloud|local --comments <file> [--comments <file> ...]
       [--own <comment id>] [--now <ISO time>]
+  python scripts/choose_issue.py untriaged --issues <file> [--issues <file> ...]
+
+untriaged is for the nightly sweep of /triage-issue, not the implementers: the open
+issues with no state label, newest first, so an issue that stops a sweep holds back
+only older ones. It leaves out pull requests and `withdrawn` and `wayfinder:*` issues.
 
 Both implementers of .claude/commands/implement-suggestions.md work one implement
 queue, each in its own lane: the cloud run takes only `cloud` issues, and the
@@ -59,6 +64,7 @@ LANES = {
                       "for 90 minutes (docs/agents/issue-tracker.md, Implementer lock)."},
 }
 LANE_RANK = {"lane:user": 1, "lane:ai": 2}
+STATE_LABELS = {"ready-for-agent", "ready-for-human", "needs-info", "wontfix"}
 
 
 class Unsettled(Exception):
@@ -116,6 +122,19 @@ def queue(issues, lane, handled=()):
     return [int(i["number"]) for i in sorted(out, key=lambda i: (rank(i), int(i["number"])))]
 
 
+def untriaged(issues):
+    """The open issues /triage-issue's sweep may take, newest first."""
+    numbers = set()
+    for issue in issues:
+        names = labels(issue)
+        if issue.get("pull_request") is not None or issue.get("state", "open") != "open":
+            continue
+        if names & STATE_LABELS or "withdrawn" in names or any(n.startswith("wayfinder:") for n in names):
+            continue
+        numbers.add(int(issue["number"]))
+    return sorted(numbers, reverse=True)
+
+
 def live(comments, prefix, window, now):
     """The live stamps starting with prefix, earliest id first."""
     out = [c for c in comments
@@ -153,8 +172,8 @@ def lock(comments, lane, own=None, now=None):
 
 def main(argv):
     try:
-        if not argv or argv[0] not in ("queue", "pick", "lock"):
-            raise Unsettled("give queue, pick or lock first")
+        if not argv or argv[0] not in ("queue", "pick", "lock", "untriaged"):
+            raise Unsettled("give queue, pick, lock or untriaged first")
         command, lane, issues, comments, lock_comments, handled, own, now = argv[0], None, [], {}, [], set(), None, None
         i = 1
         while i < len(argv):
@@ -175,18 +194,20 @@ def main(argv):
                 comments.setdefault(int(m.group(1)), []).extend(load_arrays(m.group(2)))
             elif flag == "--comments" and command == "lock":
                 lock_comments.extend(load_arrays(value))
-            elif flag == "--handled" and command != "lock":
+            elif flag == "--handled" and command in ("queue", "pick"):
                 handled.add(int(value.lstrip("#")))
             elif flag == "--own" and command == "lock":
                 own = int(value)
-            elif flag == "--now" and command != "queue":
+            elif flag == "--now" and command in ("pick", "lock"):
                 now = parse_time(value)
             else:
                 raise Unsettled(f"unknown option {flag} for {command}")
             i += 2
-        if lane is None:
+        if lane is None and command != "untriaged":
             raise Unsettled("give --lane cloud or --lane local")
-        if command == "queue":
+        if command == "untriaged":
+            result = {"queue": untriaged(issues)}
+        elif command == "queue":
             result = {"lane": lane, "queue": queue(issues, lane, handled)}
         elif command == "pick":
             result = pick(issues, lane, comments, handled, now)

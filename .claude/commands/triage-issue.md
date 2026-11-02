@@ -1,15 +1,15 @@
 ---
 description: Cloud or local. Triage one probanda-dev issue unattended, including a Suggestion Box entry filed by /intake-suggestions - verify it, write its work order, and label its category, state and location (cloud or local). A suggestion issue always ends ready-for-human, one open decision per item.
-argument-hint: <issue number>
+argument-hint: [issue number]
 ---
 
 # /triage-issue
 
-Triages one issue: the number in the arguments, or, when a GitHub event started the run, the issue in the event payload. Nobody answers questions during the run. Where the issue needs a person's decision, that is an outcome (`ready-for-human`), never a reason to stop and ask.
+Triages one issue: the number in the arguments, or, when a GitHub event started the run, the issue in the event payload. With neither, as on the nightly schedule, the run is a **sweep** (below). Nobody answers questions during the run. Where the issue needs a person's decision, that is an outcome (`ready-for-human`), never a reason to stop and ask.
 
 The cloud does not load Brahm's own global rules, so these hold for the whole run:
 
-- Triage commits and pushes nothing, and deletes any test file it wrote to run in step 4. Its only writes are to the issue (one comment and its labels, and for a merged suggestion one comment on the issue it merges into) and, for a suggestion issue, the suggestion's `under review` status. Triage never approves or declines an item: only the maintainer does (design decisions 17 and 20). A command the session runs after triage, such as the implementer, follows its own rules.
+- Triage commits and pushes nothing, and deletes any test file it wrote to run in step 4. Its only writes are to the issue (one comment and its labels, and for a merged suggestion one comment on the issue it merges into), for a suggestion issue, the suggestion's `under review` status, and in a sweep, the triage lock. Triage never approves or declines an item: only the maintainer does (design decisions 17 and 20). A command the session runs after triage, such as the implementer, follows its own rules.
 - Never mention Claude or Anthropic in the comment, and never name a person, entity, matter or account in it.
 - **Paraphrase, never quote** (design decision 16). Nothing triage writes to GitHub, and no red test, holds the practitioner's text: describe each item and the pain in your own words and refer to items by number. Before posting any comment, run the verbatim guard over it (step 6).
 - Nobody answers a permission prompt, so never cause one. Read and search files with the Read, Grep and Glob tools, not shell commands. Never name `approve_public.py` or `public-approved.json` in a shell command: a hook stops the run for a person whenever a command names either and it cannot tell the command only reads.
@@ -36,6 +36,15 @@ Item decisions are not triage's: the maintainer records them through `/suggestio
 
 `python scripts/check_verbatim.py --suggestion <record.json> [--suggestion <record.json> ...] <file> [<file> ...]` fails (exit 1) when any checked file holds a sentence of a record's submitted text word for word, ignoring case, spacing, line breaks and punctuation, and prints only where. Write each comment, issue body and red test to a file outside the checkout and run the guard over it with the record of every suggestion it concerns. On a failure, reword the located passage in your own words and run it again. Never post or hand on a file the guard fails.
 
+## Sweep
+
+A sweep catches the issues the event route missed.
+
+1. Take the triage lock (`docs/agents/issue-tracker.md`, **Triage lock**, over the route above). When it is held, stop and report that.
+2. Save every page of `GET /issues?state=open&per_page=100` to one file outside the checkout, and run `python scripts/choose_issue.py untriaged --issues <file>`. Exit 2: release the lock, and stop and report its message.
+3. For each number in its `queue`, in order: refresh the lock, then run steps 1 to 6 on that issue. An issue that stops at step 1 or fails partway is noted, and the sweep goes on to the next.
+4. Release the lock. Step 7's report covers each issue triaged, each one stopped at step 1 with why, and each failure.
+
 ## 1. Read
 
 `GET /issues/<n>` and every page of `GET /issues/<n>/comments?per_page=100`. Stop without writing anything when the issue:
@@ -43,7 +52,8 @@ Item decisions are not triage's: the maintainer records them through `/suggestio
 - is closed or is a pull request;
 - carries any `wayfinder:*` label, or its parent carries `wayfinder:map` (the wayfinder skill owns those);
 - carries `withdrawn`: its sender withdrew the suggestion, and `/intake-suggestions` closes it. This holds even when the issue is named in the arguments;
-- already carries a state label (`ready-for-agent`, `ready-for-human`, `needs-info`, `wontfix`) and was not named in the arguments.
+- already carries a state label (`ready-for-agent`, `ready-for-human`, `needs-info`, `wontfix`) and was not named in the arguments;
+- in a sweep, already carries an `## Agent Brief` comment (**Brief read** in `docs/agents/issue-tracker.md`): it has been triaged already.
 
 A **suggestion issue** is one labelled `suggestion` whose body ends with a `Suggestion <suggestion_id>` line. Its body is intake's paraphrase. Read the cloud record by its id (**Read one**): the record, not the issue body, is what step 3 plans. If the Suggestion Box holds no such row, or its status is `withdrawn`, stop and report it, writing nothing. Otherwise open it for review now (**Open for review**, with this issue's number). A refusal because another issue is recorded means the suggestion is filed under that issue: stop and report both numbers.
 

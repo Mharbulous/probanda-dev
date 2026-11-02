@@ -187,5 +187,41 @@ class Cli(unittest.TestCase):
             self.assertEqual(self.run_main("queue", "--lane", "local", "--issues", bad)[0], 2)
 
 
+class Untriaged(unittest.TestCase):
+    def bare(self, n, *names):
+        return {"number": n, "state": "open", "labels": [{"name": x} for x in names]}
+
+    def test_only_open_issues_with_no_state_label_newest_first(self):
+        issues = [
+            self.bare(200),
+            self.bare(202, "enhancement", "needs-triage"),
+            self.bare(226, "suggestion", "needs-triage", "lane:user"),
+            self.bare(183, "enhancement", "local"),
+            self.bare(190, "ready-for-human"),
+            self.bare(191, "ready-for-agent"),
+            self.bare(192, "needs-info"),
+            self.bare(193, "wontfix"),
+            self.bare(194, "withdrawn", "suggestion"),
+            self.bare(195, "wayfinder:map"),
+            self.bare(196, "wayfinder:task"),
+            {**self.bare(197), "pull_request": {"url": "x"}},
+            {**self.bare(198), "state": "closed"},
+            self.bare(200),
+        ]
+        self.assertEqual(ci.untriaged(issues), [226, 202, 200, 183])
+
+    def test_cli_needs_no_lane(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, "issues.json")
+            with open(path, "w", encoding="utf-8") as f:
+                # Two pages back to back, as `gh api --paginate` prints them.
+                f.write(json.dumps([self.bare(5)]) + json.dumps([self.bare(9)]))
+            out = io.StringIO()
+            with redirect_stdout(out):
+                code = ci.main(["untriaged", "--issues", path])
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(out.getvalue()), {"queue": [9, 5]})
+
+
 if __name__ == "__main__":
     unittest.main()
