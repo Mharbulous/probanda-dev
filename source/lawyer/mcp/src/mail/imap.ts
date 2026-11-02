@@ -33,7 +33,8 @@ export interface CopyResult {
 
 // The part of imapflow's ImapFlow the mail tools use. A read opens its folder
 // read-only, so the server never sets \Seen as a side effect. Only
-// mail__move_messages opens a folder writable.
+// mail__move_messages and the move step of mail__dedupe_apply and
+// mail__dedupe_apply_continue open a folder writable.
 export interface ImapClientLike {
   capabilities: Map<string, boolean | number>;
   connect(): Promise<void>;
@@ -41,7 +42,7 @@ export interface ImapClientLike {
   close(): void;
   list(): Promise<FolderEntry[]>;
   status(path: string, query: Record<string, boolean>): Promise<Record<string, unknown>>;
-  mailboxOpen(path: string, options: { readOnly: boolean }): Promise<{ exists: number }>;
+  mailboxOpen(path: string, options: { readOnly: boolean }): Promise<{ exists: number; uidValidity?: bigint | number }>;
   mailboxCreate(path: string): Promise<{ path: string; created?: boolean }>;
   mailboxRename(path: string, newPath: string): Promise<{ path: string; newPath: string }>;
   messageMove(range: string, destination: string, options: { uid: true }): Promise<CopyResult | false>;
@@ -168,3 +169,13 @@ export async function specialFolder(client: ImapClientLike, use: string, names: 
 
 export const sentFolder = (client: ImapClientLike) => specialFolder(client, "\\Sent", ["Sent Messages", "Sent", "Sent Items"]);
 export const draftsFolder = (client: ImapClientLike) => specialFolder(client, "\\Drafts", ["Drafts"]);
+export const trashFolder = (client: ImapClientLike) => specialFolder(client, "\\Trash", ["Deleted Messages", "Trash", "Deleted Items"]);
+
+// INBOX is case-insensitive in IMAP; every other folder name is exact.
+export function findFolder(list: FolderEntry[], path: string): FolderEntry | undefined {
+  const inbox = path.toUpperCase() === "INBOX";
+  return list.find((f) => f.path === path || (inbox && f.path.toUpperCase() === "INBOX"));
+}
+
+export const folderMissing = (path: string): DataServerError =>
+  new DataServerError(`no folder named "${path}"; take the exact name from mail__list_folders`, "mail_not_found");

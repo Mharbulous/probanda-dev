@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import test, { after } from "node:test";
@@ -224,7 +224,7 @@ test("a call the server never answers fails mail_timeout within the timeout and 
   assert.ok(Date.now() - started < 2000);
 });
 
-test("with no credential every mail tool but the two configure tools refuses mail_not_configured", async (t) => {
+test("with no credential every mail tool that opens a connection on its first call refuses mail_not_configured", async (t) => {
   const dir = tempDir(t, "coclerk-mail-unconfigured-");
   const eml = join(dir, "draft.eml");
   writeFileSync(eml, EML, "latin1");
@@ -243,6 +243,7 @@ test("with no credential every mail tool but the two configure tools refuses mai
     mail__create_folder: { name: "Sorted" },
     mail__rename_folder: { folder: "Sorted", new_name: "Filed" },
     mail__move_messages: { folder: "INBOX", uids: [1], destination: "Sorted" },
+    mail__dedupe_scan: { all: true },
   };
   for (const [name, args] of Object.entries(calls)) {
     const error = await errorOf(ctx, name, args);
@@ -534,7 +535,7 @@ test("rename_folder renames an ordinary folder and refuses INBOX, a special-use 
   }
 });
 
-test("no file under src/mail/, src/dav/, src/calendar/ or src/contacts/ deletes a folder or a message, copies or flags mail, expunges, opens a folder writable outside the move, or puts the password in a message", () => {
+test("no file under src/mail/, src/dav/, src/calendar/ or src/contacts/ deletes a folder or a message, copies or flags mail, expunges, opens a folder writable outside the moves, or puts the password in a message", () => {
   const forbidden = ["mailboxDelete", "messageDelete", "messageCopy", "messageFlagsAdd", "messageFlagsRemove", "messageFlagsSet"];
   const once = ["messageMove", "mailboxCreate", "mailboxRename"];
   const calls = Object.fromEntries(once.map((n) => [n, []]));
@@ -569,24 +570,31 @@ test("no file under src/mail/, src/dav/, src/calendar/ or src/contacts/ deletes 
   // Not vacuous: the scan saw the folder opens and the message templates.
   assert.ok(opens >= 5, `only ${opens} mailboxOpen calls found`);
   assert.ok(literals >= 30, `only ${literals} template literals found`);
-  assert.equal(writable, 1, "only mail__move_messages opens a folder writable");
-  for (const name of once) {
+  assert.equal(writable, 2, "only mail__move_messages and the one move step behind mail__dedupe_apply and mail__dedupe_apply_continue open a folder writable");
+  for (const name of ["mailboxCreate", "mailboxRename"]) {
     assert.equal(calls[name].length, 1, `${name} is called ${calls[name].length} times`);
     assert.ok(calls[name][0].file.endsWith("tools.ts"), `${name} is called outside tools.ts`);
   }
-  // The one move follows its own MOVE check, so imapflow never falls back to copy and remove.
-  const move = calls.messageMove[0];
-  const fn = move.text.slice(move.text.lastIndexOf("function ", move.index), move.index);
-  assert.match(fn, /if \(!client\.capabilities\.has\("MOVE"\)\)/);
+  assert.deepEqual(calls.messageMove.map((c) => basename(c.file)).sort(), ["dedupe.ts", "tools.ts"], "messageMove is called once each in tools.ts and dedupe.ts");
+  // Each move follows its own MOVE check, so imapflow never falls back to copy and remove.
+  for (const move of calls.messageMove) {
+    const fn = move.text.slice(move.text.lastIndexOf("function ", move.index), move.index);
+    assert.match(fn, /if \(!client\.capabilities\.has\("MOVE"\)\)/, move.file);
+  }
   for (const t of buildContactsCalendarsEmailToolDefinitions()) assert.doesNotMatch(t.name, /delete|expunge|purge/i);
 });
 
-test("the contacts-calendars-email server lists the fifteen mail tools and the five calendar and contacts tools, and the data and files servers none", () => {
+test("the contacts-calendars-email server lists the twenty mail tools and the five calendar and contacts tools, and the data and files servers none", () => {
   const mail = buildContactsCalendarsEmailToolDefinitions().map((t) => t.name).filter((n) => n.startsWith("mail__")).sort();
   assert.deepEqual(mail, [
     "mail__configure_credential",
     "mail__configure_status",
     "mail__create_folder",
+    "mail__dedupe_apply",
+    "mail__dedupe_apply_continue",
+    "mail__dedupe_plan_tier2",
+    "mail__dedupe_read_comparison",
+    "mail__dedupe_scan",
     "mail__download_attachment",
     "mail__find_email_by_message_id",
     "mail__find_thread_messages",
@@ -613,7 +621,7 @@ test("the contacts-calendars-email server lists the fifteen mail tools and the f
     "contacts__search",
   ]);
   for (const t of dav) assert.equal(t.annotations?.readOnlyHint, true, t.name);
-  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 20);
+  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 25);
   assert.deepEqual(buildToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
   assert.deepEqual(buildFileManagerToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
 });

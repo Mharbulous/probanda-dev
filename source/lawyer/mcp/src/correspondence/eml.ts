@@ -1,6 +1,8 @@
 // A MIME message (.eml): headers unfolded and RFC 2047-decoded, multipart walked, and the first
 // inline text/plain, text/html and text/rtf parts decoded through their transfer encoding and charset.
 
+import { createHash } from "node:crypto";
+
 import { DataServerError } from "../errors.js";
 
 export interface MimeParts {
@@ -8,8 +10,13 @@ export interface MimeParts {
   plain?: string;
   html?: string;
   rtf?: Buffer;
-  attachments: { name: string; size: number }[];
+  attachments: { name: string; size: number; sha256: string }[];
+  // Every other inline leaf part (a second text part, an unnamed image, a nested message), so a
+  // comparison of two copies of a message can see what the fields above leave out.
+  others: { type: string; size: number; sha256: string }[];
 }
+
+const sha256 = (bytes: Buffer): string => createHash("sha256").update(bytes).digest("hex");
 
 function splitHead(raw: Buffer): { head: string; body: Buffer } {
   const text = raw.toString("latin1");
@@ -82,7 +89,7 @@ export function parseMime(raw: Buffer): MimeParts {
   if (!headers.has("from") && !headers.has("subject") && !headers.has("date")) {
     throw new DataServerError("not a readable .eml: no From, Subject or Date header", "not_a_message");
   }
-  const parts: MimeParts = { headers, attachments: [] };
+  const parts: MimeParts = { headers, attachments: [], others: [] };
   walk(raw, parts, 0);
   return parts;
 }
@@ -111,13 +118,14 @@ function walk(raw: Buffer, out: MimeParts, depth: number): void {
   }
   const decoded = decodeBody(body, headers.get("content-transfer-encoding"));
   if (disposition.startsWith("attachment") || (filename && !mediaType.startsWith("text/"))) {
-    out.attachments.push({ name: decodeWords(filename ?? "attachment"), size: decoded.length });
+    out.attachments.push({ name: decodeWords(filename ?? "attachment"), size: decoded.length, sha256: sha256(decoded) });
     return;
   }
   const charset = param(type, "charset");
   if (mediaType === "text/plain" && out.plain === undefined) out.plain = decodeCharset(decoded, charset);
   else if (mediaType === "text/html" && out.html === undefined) out.html = decodeCharset(decoded, charset);
   else if ((mediaType === "text/rtf" || mediaType === "application/rtf") && out.rtf === undefined) out.rtf = decoded;
+  else out.others.push({ type: mediaType, size: decoded.length, sha256: sha256(decoded) });
 }
 
 function escapeRegex(text: string): string {

@@ -1,8 +1,9 @@
 // The mail__* tools of the lawyer plugin's data server (docs/Plans/2026-10-15_imap-mail.md,
 // step 4): IMAP reads, save_message and download_attachment, which write a read
-// message or part to a local folder, save_draft, which only appends to a folder, and three
-// organizing writes: create_folder, rename_folder and move_messages. No tool
-// sends, deletes a message or a folder, flags or marks read. Every read opens its
+// message or part to a local folder, save_draft, which only appends to a folder, three
+// organizing writes: create_folder, rename_folder and move_messages, and the dedupe_* tools
+// (dedupe.ts), whose apply tools move only the copies of an approved plan to Trash. No tool
+// sends, permanently deletes a message or a folder, flags or marks read. Every read opens its
 // folder read-only. Tool definitions live in schema-gen.ts.
 
 import { createHash } from "node:crypto";
@@ -26,10 +27,13 @@ import {
   type RenderedBody,
 } from "./body.js";
 import { persistMailCredential, type MailCredential, type MailState } from "./config.js";
+import { dedupeApply, dedupeApplyContinue, dedupePlanTier2, dedupeReadComparison, dedupeScan } from "./dedupe.js";
 import {
   DEFAULT_TIMEOUT_MS,
   defaultImapFactory,
   draftsFolder,
+  findFolder,
+  folderMissing,
   runImap,
   sentFolder,
   withImap,
@@ -48,6 +52,7 @@ export interface MailContext extends DavContext {
   // Tests inject a fake client and a short timeout; the server uses neither.
   imapFactory?: ImapClientFactory;
   mailTimeoutMs?: number;
+  mailSliceMs?: number;
 }
 
 type Args = Record<string, unknown>;
@@ -75,6 +80,11 @@ export const mailTools: Tool<MailContext>[] = [
   { name: "mail__create_folder", handler: (args, context) => createFolder(runFor(context), args) },
   { name: "mail__rename_folder", handler: (args, context) => renameFolder(runFor(context), args) },
   { name: "mail__move_messages", handler: (args, context) => moveMessages(runFor(context), args) },
+  { name: "mail__dedupe_scan", handler: (args, context) => dedupeScan(context, args) },
+  { name: "mail__dedupe_read_comparison", handler: (args) => dedupeReadComparison(args) },
+  { name: "mail__dedupe_plan_tier2", handler: (args) => dedupePlanTier2(args) },
+  { name: "mail__dedupe_apply", handler: (args, context) => dedupeApply(context, args) },
+  { name: "mail__dedupe_apply_continue", handler: (args, context) => dedupeApplyContinue(context, args) },
 ];
 
 function runFor(context: MailContext): Run {
@@ -583,15 +593,6 @@ async function saveDraft(run: Run, args: Args): Promise<unknown> {
 // --- organizing (writes) ------------------------------------------------------------
 
 const MOVE_MAX = 500;
-
-// INBOX is case-insensitive in IMAP; every other folder name is exact.
-function findFolder(list: FolderEntry[], path: string): FolderEntry | undefined {
-  const inbox = path.toUpperCase() === "INBOX";
-  return list.find((f) => f.path === path || (inbox && f.path.toUpperCase() === "INBOX"));
-}
-
-const folderMissing = (path: string): DataServerError =>
-  new DataServerError(`no folder named "${path}"; take the exact name from mail__list_folders`, "mail_not_found");
 
 const folderExists = (path: string): DataServerError =>
   new DataServerError(`a folder named "${path}" already exists`, "mail_folder_exists");

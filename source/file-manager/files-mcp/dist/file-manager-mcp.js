@@ -1,4 +1,4 @@
-// build-stamp: c2cdb01b1eb2
+// build-stamp: cdb80877d1a4
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15821,6 +15821,9 @@ var CONTENT_SOURCES = {
   mail__find_thread_messages: "email",
   mail__find_email_by_message_id: "email",
   mail__download_attachment: "email attachment",
+  mail__dedupe_scan: "email",
+  mail__dedupe_read_comparison: "email",
+  mail__dedupe_plan_tier2: "email",
   calendar__list_events: "calendar",
   calendar__get_event: "calendar",
   contacts__search: "contacts",

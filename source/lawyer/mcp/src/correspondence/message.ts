@@ -222,7 +222,7 @@ function parseEml(bytes: Buffer): Message {
   const body = mime.plain ?? htmlReading?.text ?? rtfReading?.text ?? "";
   const highlights = htmlReading?.highlights ?? rtfReading?.highlights ?? [];
   const source = htmlReading ? "html" : rtfReading ? "rtf" : "none";
-  return finish(headers, body, highlights, source, mime.attachments);
+  return finish(headers, body, highlights, source, mime.attachments.map(({ name, size }) => ({ name, size })));
 }
 
 function finish(

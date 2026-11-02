@@ -132,6 +132,10 @@ SAMPLES = {
                                                              'symptom "s1", cause "c1", fix "f1"'),
     "mcp__remote-devices__plugin_researcher_commons__troubleshoot__record": ("researcher", {
         "symptom": "s1", "cause": "c1", "fix": "f1"}, 'symptom "s1", cause "c1", fix "f1"'),
+    "mcp__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply": ("lawyer", {"plan_id": "abc", "expected_count": 3},
+                                                                        "move 3 duplicate email copies, listed in plan abc, to Trash"),
+    "mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply": (
+        "lawyer", {"plan_id": "abc", "expected_count": 3}, "move 3 duplicate email copies, listed in plan abc, to Trash"),
 }
 
 
@@ -271,10 +275,55 @@ def test_a_troubleshooting_entry_goes_to_the_store_only_on_the_pasted_block(tmp_
     assert s.gate(name=name, tool_input=entry, plugin="researcher") is None
 
 
+DEDUPE = "mcp__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply"
+DEDUPE_CALL = {"plan_id": "abc", "expected_count": 3}
+
+
+def test_a_dedupe_move_says_trash_and_recoverable_never_one_way(tmp_path):
+    s = Session(tmp_path)
+    s.say("Remove the duplicates.")
+    reason = s.gate(name=DEDUPE, tool_input=DEDUPE_CALL)
+    block = block_of(reason)
+    assert ("this step: move 3 duplicate email copies, listed in plan abc, to Trash. They can be recovered from "
+            "Trash, but the mail server may empty Trash on its own schedule.") in block
+    assert "**This step moves email to Trash: it can be recovered from there until the mail server empties Trash on its own schedule.**" in reason
+    for wording in ("irreversible", "one-way", "costly to reverse"):
+        assert wording not in reason
+    s.say(block)
+    assert s.gate(name=DEDUPE, tool_input=DEDUPE_CALL) is None
+
+
+def test_a_dedupe_block_for_one_plan_does_not_approve_another(tmp_path):
+    s = Session(tmp_path)
+    s.say("Remove the duplicates.")
+    block = block_of(s.gate(name=DEDUPE, tool_input=DEDUPE_CALL))
+    s.say(block)
+    assert s.gate(name=DEDUPE, tool_input={**DEDUPE_CALL, "plan_id": "def"})
+
+
+def test_a_dedupe_move_from_a_subagent_is_refused(tmp_path):
+    s = Session(tmp_path)
+    s.say("Remove the duplicates.")
+    s.say(block_of(s.gate(name=DEDUPE, tool_input=DEDUPE_CALL)))
+    reason = s.gate(name=DEDUPE, tool_input=DEDUPE_CALL, agent_id="a1", agent_type="lawyer:duplicate-judge")
+    assert reason and "subagent" in reason
+
+
+def test_an_existing_acts_wording_is_unchanged(tmp_path):
+    s = Session(tmp_path)
+    s.say("Delete that anchor.")
+    reason = s.gate()
+    assert reason.startswith("Approval needed [approval-gate act=")
+    assert ("The call " + TOOL + " is a one-way step and waits for the practitioner's approval. Do not retry it yet, "
+            "and do not try another way to do it. Show this warning in bold: **This step is a one-way door: easy to "
+            "pass through and costly to reverse.** Then show the block below in a fenced text code block") in reason
+
+
 GATED = {
     "litigator": ["mcp__plugin_lawyer_data__drafting_data__record_sent", "mcp__plugin_lawyer_data__drafting_data__record_filed",
                   "mcp__plugin_lawyer_data__drafting_data__record_served"],
-    "lawyer": ["mcp__plugin_lawyer_data__practice_data__delete_anchor", "mcp__plugin_lawyer_data__practice_data__merge_contact"],
+    "lawyer": ["mcp__plugin_lawyer_data__practice_data__delete_anchor", "mcp__plugin_lawyer_data__practice_data__merge_contact",
+               DEDUPE, "mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply"],
     "timekeeper": ["mcp__plugin_lawyer_data__time_pipeline__delete", "mcp__plugin_lawyer_data__time_pipeline__bulk_apply",
                    "mcp__plugin_timekeeper_timecamp__update_entry"],
     "file-manager": ["mcp__plugin_file-manager_files__file_ops__comment_pdf"],
@@ -292,6 +341,9 @@ UNGATED = [
     "mcp__plugin_lawyer_data__time_pipeline__set", "mcp__plugin_lawyer_data__time_pipeline__get",
     "mcp__plugin_lawyer_data__practice_data__upsert_anchor", "mcp__plugin_researcher_commons__troubleshoot__confirm_fix",
     "mcp__plugin_file-manager_files__file_ops__move", "mcp__plugin_lawyer_data__drafting_data__execute",
+    "mcp__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply_continue",
+    "mcp__plugin_lawyer_contacts-calendars-email__mail__dedupe_scan",
+    "mcp__plugin_lawyer_contacts-calendars-email__mail__move_messages",
 ]
 
 
