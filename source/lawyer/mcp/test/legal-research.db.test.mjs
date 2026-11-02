@@ -290,13 +290,13 @@ test("the next write moves every old Raw Research and Legal Memos page and previ
   const marked = '<!doctype html><main data-view-page="1"></main>';
   const old = [
     join(folder, "Raw Research.html"),
-    join(m.draft, "Raw Research - Work Board 1.html"),
-    join(m.draft, "Raw Research - Work Board - proceeding 3.html"),
+    join(m.draft, "Raw Research - Milestone 1.html"),
+    join(m.draft, "Raw Research - Milestone - proceeding 3.html"),
     join(m.draft, "Raw Research - Job Board 7.html"),
     join(folder, "Raw Research preview 2.html"),
-    join(m.draft, "Raw Research - Work Board 1 preview 1.html"),
+    join(m.draft, "Raw Research - Milestone 1 preview 1.html"),
     join(folder, "Legal Memos.html"),
-    join(m.draft, "Legal Memos - Work Board 1.html"),
+    join(m.draft, "Legal Memos - Milestone 1.html"),
     join(folder, "Legal Memos preview 3.html"),
   ];
   for (const file of old) writeFileSync(file, marked, "utf-8");

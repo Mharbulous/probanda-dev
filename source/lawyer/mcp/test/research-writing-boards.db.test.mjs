@@ -342,7 +342,7 @@ test("a proceeding whose only Writings are retired memos: the refusal says a liv
   await g.execute(`UPDATE filings SET retired_on = '2026-10-31', retirement_reason = 'abandoned' WHERE id = ${memo};`);
   const attach = (filing) => g.execute(`INSERT INTO board_attachments (id, proceeding_id, filing_id, path, kind, attached_on) VALUES (1, 1, ${filing}, '0. DRAFT\\Reply.eml', 'reply', '2026-10-01');`);
   await assert.rejects(attach("NULL"), /a live one of them.*if all of them are retired, this Work Board takes none until one is recovered or another Writing is created/s);
-  await assert.rejects(attach(memo), /retired Writing has no Work Board/);
+  await assert.rejects(attach(memo), /retired Writing has no Milestone/); // the schema's trigger text
   await g.execute(`UPDATE filings SET retired_on = NULL, retirement_reason = NULL WHERE id = ${memo};`);
   await attach(memo);
   assert.deepEqual(section(g, { proceeding_id: 1 }).attachments.map((a) => a.id), [1]);

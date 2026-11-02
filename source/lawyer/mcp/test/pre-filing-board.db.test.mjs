@@ -109,7 +109,7 @@ test("a proceeding's Work Board page carries its tickets and seeds, and no filin
     );
     assert.deepEqual(
       readdirSync(join(f.draft, "Consent Order Requisition")),
-      ["Arguments.html", "Legal Research.html", "Material Facts.html", "Work Board.html", "Procedural History.html"],
+      ["Arguments.html", "Legal Research.html", "Material Facts.html", "Procedural History.html", "Work Board.html"],
       "the filing's pages are in its Writing's folder"
     );
     assert.equal(existsSync(join(dirname(f.dbPath), "mockups", "Pre-filing proceeding 1")), false, "nothing beside the database");

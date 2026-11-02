@@ -652,8 +652,7 @@ test("render deletes leftover board support files and data scripts, leaving arch
     for (const file of stale) assert.ok(!existsSync(file), `expected ${file} deleted`);
     for (const file of keep) assert.equal(readFileSync(file, "utf-8"), "archived\n", `expected ${file} untouched`);
     assert.deepEqual(readdirSync(join(baseDir, "archive")).sort(), ["Work_board @rev0 2026-09-14-10-00", "workboard.css"], "nothing archived at an unchanged revision");
-    assert.ok(readdirSync(leaf).includes("Work Board.html"), "the Writing's folder holds its own Work Board page");
-    assert.equal(readdirSync(leaf).some((name) => /^Work Board/.test(name)), false, "and no other board");
+    assert.deepEqual(readdirSync(leaf).filter((name) => /^Work Board/.test(name)), ["Work Board.html"], "the Writing's folder holds its own Work Board page and no other board");
   } finally {
     f.cleanup();
   }
@@ -2129,7 +2128,7 @@ test("tickets: a wip job with every step done stays In Progress, and shares no m
 // ids, classes and data keys keep their internal names (design §2).
 // The Litigation Strategy (the To Do List until 2026-10-08, the Matter Board until #871) names jobs in progress, so it is scanned too:
 // its page is the template set in src/templates/matter-board/ (map #125).
-test("the Work Board's page shows no Work Board, Matter Board, Rejected angles or claim wording", () => {
+test("the Work Board's page shows no Milestone, Practice Board, Matter Board, Rejected angles or claim wording", () => {
   const pages = [
     [["templates/milestone/milestone.html", "templates/milestone/milestone.css", "templates/milestone/milestone.js"], (literals, htmlText) => literals.includes("Shelved") && htmlText.includes("Work Board")],
     [["templates/matter-board/matter-board.html", "templates/matter-board/matter-board.js"], (literals, htmlText) => literals.includes(" jobs in progress") && htmlText.includes("Litigation Strategy")],
@@ -2142,7 +2141,8 @@ test("the Work Board's page shows no Work Board, Matter Board, Rejected angles o
     const htmlText = [...code.matchAll(/>([^<>\n]+)</g)].map((m) => m[1]);
     assert.ok(sawOwnStrings(literals, htmlText), `expected the scan to see ${file}'s own strings`);
     for (const text of [...literals, ...htmlText]) {
-      assert.doesNotMatch(text, /Work Board|Matter Board|Rejected angles|claim/i, `${file} visible text "${text}"`);
+      assert.doesNotMatch(text, /Practice Board|Matter Board|Rejected angles|claim/i, `${file} visible text "${text}"`);
+      assert.doesNotMatch(text, /Milestone/, `${file} visible text "${text}"`);
     }
   }
 });
