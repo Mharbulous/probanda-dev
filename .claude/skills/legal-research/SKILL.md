@@ -65,6 +65,10 @@ permitted to make statements of law.
    caller's five pre-spawn duties, and the memo-reviewer loop. It sends you to
    `shared/research-priority.md` for the order every legal lookup runs in — read
    that too, and follow it.
+1a. Job, before any dispatch. Follow the doctrine's "Research runs only under a job": with no job
+   held, propose the issue and write and assign the job on the practitioner's approval; on a held
+   job not in the form, run the migration review. Skip this on step 5's re-invocations and on the
+   routes that doctrine lists as their own.
 2. Tell the practitioner: "That's a question about the law — I'll put it to the
    research-agent agent."
 2a. Scope, before any search. Check the question by the doctrine's "A research question
@@ -118,8 +122,8 @@ permitted to make statements of law.
    status line and every citation it did not retrieve. Then have `researcher:memo-reviewer`
    check the memo and run each piece of research it sends back, re-invoking the agent on each
    send-back, at most three reviews, by the doctrine's "On a held job, an open tier is not an
-   answer" and "memo-reviewer checks every memo before it is saved": on a held job each piece
-   of research becomes a step, and without one the same loop runs with no steps. Then save the
+   answer" and "memo-reviewer checks every memo before it is saved": each piece of research
+   becomes a step on the held job. Then save the
    memo the loop ends on to the matter's `6. LAW\<issue>\` folder, relay its `Confidence:` line and the saved memo as its file card (`shared/present-files.md`),
    never the finding in any words, and ingest what it cites. Relay nothing of the dispatches
    in between but a Westlaw stop, a question the doctrine asks the practitioner, and one

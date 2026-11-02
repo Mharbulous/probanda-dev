@@ -35,20 +35,21 @@ class JobQuestionMemoTest(unittest.TestCase):
     def test_a_question_holding_several_is_reworded(self):
         gate = flat(read("shared", "legal-research.md"))
         rule = gate[gate.index("**A research question holds one question.**"):gate.index("**A new question is")]
-        self.assertIn("rules A to C", rule)
+        self.assertIn("rules A to D", rule)
         self.assertIn("(`/drafting-data` §3m, \"Rewording a held job\")", rule)
         self.assertNotIn("## `mode: plan`", read("shared", "legal-audit-scoped.md"))
         self.assertIn("A return with a rewording proposal and no memo saves nothing: put that proposal to "
                       "the practitioner as \"A research question holds one question\" says.", gate)
 
-    def test_memo_has_one_issue_and_rules_a_to_c(self):
+    def test_memo_has_one_issue_and_rules_a_to_d(self):
         template = read("shared", "research-memo-template.md")
-        self.assertIn("the Issue is that question verbatim if it meets rules A to C and names nothing of the "
-                      "working matter. If not, return no memo but one rewording proposal", flat(template))
+        self.assertIn("the Issue is that question verbatim if it meets rules A to D. If not, return no memo "
+                      "but one rewording proposal", flat(template))
         self.assertNotIn("The Issue is the spawn prompt's Job question", flat(template))
         self.assertIn("One memo has one `## Issue` and no sub-issues.", flat(template))
         for rule in ("**A.** holds one question;", "**B.** makes sense on its own;",
-                     "**C.** holds at most one list of alternatives (one axis)."):
+                     "**C.** holds at most one list, and that list conjunctive, joined by \"and\".",
+                     "**D.** names nothing that identifies the client, the parties, the people involved or the proceeding."):
             self.assertIn(rule, flat(template))
         self.assertNotIn("Sub-issue <n>", template)
         self.assertNotIn("**Several issues.**", template)

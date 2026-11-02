@@ -32,9 +32,11 @@ class ResearchQuestionJobsTest(unittest.TestCase):
         stock = read("drafting-data", "references", "jobs-stock.md")
         start = stock.index("## 3l. Research question jobs")
         section = stock[start:stock.index("## 3m.", start)]
-        self.assertIn("Title and intent: their question, character for character.", section)
+        self.assertIn("writes only on their approval", section)
+        self.assertIn("Title: `Legal research: ` followed by the intent, character for character.", section)
+        self.assertNotIn("Never cleaned", section)
         self.assertIn("Steps: the plan marker as its one step", section)
-        self.assertIn(f"VALUES (32, 1, '{MARKER}');", section)
+        self.assertIn("one `drafting_data__create_job` call under guard `research_title`", section)
         self.assertIn("No research runs from this write", section)
         self.assertNotIn("skipped", section)
 

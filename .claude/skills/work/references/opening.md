@@ -11,6 +11,8 @@ Assumes SKILL.md is loaded. Rules are not restated here.
 
 **Lapse cleanup.** After `references/procedure.md` section 11's render and before the opening line, delete the shelving rows for every key on the `live` lane's `🧹 lapsed keys:` line, per `/drafting-data`'s own lapsed-row script, and say so in the fast open's closing line (`references/procedure.md` section 7). A shelving applies to the line as it read when it was shelved, so once that line's marker glyph or item text changed, the shelving no longer describes anything. Where a lapsed row carried a job, that shelved job stays in Shelved and its Proposal returns to Proposed beside it. That is designed and visible, not a defect to repair. Counsel's recorded decision that a contention needs no stated fact is not a shelving: the database resets it when the wording changes, and it never appears on the `🧹 lapsed keys` line.
 
+**Research job sweep.** After the lapse cleanup and before any Dispatch, run the sweep on this board (`shared/research-job-migration.md`).
+
 <!-- atom id=work.intake ops=proposals when=unattended:false -->
 ## Intake
 

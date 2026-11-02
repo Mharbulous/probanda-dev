@@ -37,7 +37,7 @@ class HeldJobGapsTest(unittest.TestCase):
         self.assertIn("Each tier runs at most once per issue: the tier is its kind and object as a `gap:` line names it "
                       "(Westlaw, `Legislation: <citation>`, `6. LAW: <file>`, Commons, `Note-up: <citation>`), never the "
                       "Westlaw query's subject, and the issue is the memo's one Issue.", rule)
-        self.assertIn("A caller holding no job runs the same loop, adding and stamping no steps.", rule)
+        self.assertNotIn("A caller holding no job", rule)
         self.assertLess(read("legal-research.md").index("**On a held job, an open tier is not an answer.**"),
                         read("legal-research.md").index("Persist in this order."))
 

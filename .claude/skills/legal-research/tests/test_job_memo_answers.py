@@ -2,7 +2,7 @@
 Conclusion answers from the sources held and ends with the open-issues paragraph only where the
 scope test leaves research required, the pool and the citator get gap lines, and required research
 gets no offer; the caller adds a step to the held job for each `required` item memo-reviewer names,
-stamps a step only after its work ran, and runs the same loop without steps outside a held job;
+and stamps a step only after its work ran;
 and a job plan's Westlaw step has no approval point.
 
 Spec: docs/Specs/2026-10-21_research-job-memo-always-answers-spec.md
@@ -74,7 +74,7 @@ class GateDoctrineTest(unittest.TestCase):
         self.assertIn("add one step to the held job for each tier they name, by `/drafting-data`'s partial replace", rule)
         self.assertIn("in the practitioner's name", rule)
         self.assertIn("A step is stamped done only once its work has run", rule)
-        self.assertIn("A caller holding no job runs the same loop, adding and stamping no steps.", rule)
+        self.assertNotIn("A caller holding no job", rule)
 
     def test_an_incomplete_memo_is_no_licence(self):
         rule = between(self.doctrine, "**An incomplete memo is never a licence.**", "**After the answer")
@@ -83,7 +83,7 @@ class GateDoctrineTest(unittest.TestCase):
 
     def test_skill_step_five_points_a_held_job_to_the_doctrine(self):
         step_five = between(flat(read("legal-research", "SKILL.md")), "5. A return carrying", "If step 1's read fails")
-        self.assertIn("on a held job each piece of research becomes a step, and without one the same loop runs with no steps", step_five)
+        self.assertIn("each piece of research becomes a step on the held job", step_five)
         self.assertIn("\"On a held job, an open tier is not an answer\"", step_five)
 
 

@@ -52,7 +52,9 @@ Read the new memo. For each Job it unblocks that has not started (state `queued`
 
 Leave every `held` and `completed` Job as it is: no rewording, no closing, no new edge onto it.
 
-**Rewording.** Thoroughness outranks avoiding duplication. Legal issues rarely split along a clean seam, and two questions reworded until they no longer overlap leave a gap between them. A rewording points the later question at what the earlier memos did not reach. It never carves subject matter out of the question. Return the proposed question in full.
+**Rewording.** Thoroughness outranks avoiding duplication. Legal issues rarely split along a clean seam, and two questions reworded until they no longer overlap leave a gap between them. A rewording points the later question at what the earlier memos did not reach. It never carves subject matter out of the question.
+
+**The form.** Each proposed question is an issue: at most two context sentences, then one question, the only sentence ending in `?`, holding at most one list, joined by "and", and naming nothing that identifies the client, the parties, the people involved or the proceeding. `intent` is the issue in full, and `title` is `Legal research: ` followed by it, character for character.
 
 ## Restrictions
 
@@ -67,8 +69,8 @@ Return one JSON object and nothing else. `edges` is the whole graph after this p
 ```json
 {
   "edges": [{"blocker": 3, "blocked": 5, "kind": "hard", "reason": "<one line>"}],
-  "new_jobs": [{"title": "<the question, in full>", "blocks": [3, 5], "blocked_by": [], "reason": "<one line>"}],
-  "reword": [{"job": 5, "proposed": "<the question, in full>", "reasons": [{"memo": "<path>", "pinpoint": "<where>", "quote": "<verbatim>", "why": "<one line>"}]}],
+  "new_jobs": [{"title": "Legal research: <the issue>", "intent": "<the issue>", "blocks": [3, 5], "blocked_by": [], "reason": "<one line>"}],
+  "reword": [{"job": 5, "title": "Legal research: <the issue>", "intent": "<the issue>", "reasons": [{"memo": "<path>", "pinpoint": "<where>", "quote": "<verbatim>", "why": "<one line>"}]}],
   "close": [{"job": 6, "memo": "<path>", "pinpoint": "<where>", "quote": "<verbatim>"}],
   "flag_for": [{"job": 3, "instruction": "<what to flag as unsettled>"}],
   "waves": [[3, 4], [5], [6, 7]]

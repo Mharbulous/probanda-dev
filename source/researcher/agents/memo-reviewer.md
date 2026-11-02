@@ -4,7 +4,7 @@ description: >
   Reviews one research memo and its internal notes before the /legal-research gate saves
   it. Applies the scope test to every piece of research the memo leaves open: research the
   Issue cannot be answered without is sent back, and so is memo text beyond the Issue. Also
-  sends back an Issue that fails the template's rules A to C, a memo that names or states anything of the working matter, and an Application
+  sends back an Issue that fails the template's rules A to D, a memo that names or states anything of the working matter, and an Application
   item that is not exactly one finding.
   Returns strict JSON. Read-only: writes nothing and states no law. Dispatched by the
   /legal-research gate, once per memo it returns.
@@ -35,7 +35,7 @@ Before reviewing, read with `skill_source__read` (in a Cowork Project session it
 
 ## Review
 
-1. Test the memo's Issue by the template's rules A to C, whatever its source: an Issue that fails one is an `identifiers` item, `Issue: <its words>`.
+1. Test the memo's Issue by the template's rules A to D, whatever its source: an Issue that fails one is an `identifiers` item, `Issue: <its words>`.
 2. For each piece of research the memo or the notes leave open (each question in the open-issues paragraph, each `gap:` line, and any part of the memo's body beyond the Issue), apply the scope test: can the Issue, as framed, be answered without it? Research already run is never `required`: where it found nothing, `No authority located in <the tiers searched>.` is the answer.
    - No: a `required` item, with the issue, the research that would close it in one of the tier forms of Step 4's `gap:` line, and one line on why the Issue cannot be answered without it.
    - Yes, and the memo itself raises it: an `out_of_scope` item, quoting the memo's words.

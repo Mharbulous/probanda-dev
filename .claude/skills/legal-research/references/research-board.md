@@ -4,7 +4,7 @@ Read when: the practitioner asks to research a board's research jobs together, o
 
 One session, the main session, works every research job on one Work Board. The `researcher:research-triage` agent decides which jobs wait on which, and how a later question should be reworded. This session follows its blockers mechanically and runs each job's research through the gate's steps 2a to 5. Subagents cannot spawn agents, so every agent a job needs is spawned here.
 
-A research job is a queued, unshelved job whose work is a question about what the law is. A case brief job, its title opening `Brief the case: `, is none: `/case-brief` works it. Every write below is `/drafting-data`'s (§3m, and the sections it names).
+A research job is a queued, unshelved job whose title opens `Legal research: `. A case brief job, its title opening `Brief the case: `, is none: `/case-brief` works it. Every write below is `/drafting-data`'s (§3m, and the sections it names).
 
 ## Jobs held
 
@@ -15,7 +15,7 @@ A research job is a queued, unshelved job whose work is a question about what th
 
 ## 1. Start
 
-1. Render the board (`drafting_forms__board_card`, `lanes: ["live", "completed"]`) and list its research jobs, with the saved memo path on each completed one's `answers:` line.
+1. Run the sweep (`shared/research-job-migration.md`), then render the board (`drafting_forms__board_card`, `lanes: ["live", "completed"]`) and list its research jobs, with the saved memo path on each completed one's `answers:` line.
 2. Spawn `researcher:research-triage` with `Jobs:`, `Memos:`, `New memo: none` and `Graph: none`. Save its JSON with `research_filing__write_scratch`. That file is the graph: each blocker's kind and reason live only there.
 3. Write its `edges` (§3m, Blockers). Put each `new_jobs` entry to the practitioner, and write it only on their yes (§3m, A premise job).
 4. Show the graph once, as a picture: one numbered column per `waves` entry, each job with its blockers' kinds and reasons. The columns are a picture only. Nothing waits for a column to finish.

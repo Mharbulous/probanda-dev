@@ -113,13 +113,13 @@ class AgentContractTest(unittest.TestCase):
         # `identifiers` item, which the verdict rule turns into `send_back`; nothing exempts the
         # Job question's text from step 3 either.
         body = flat(self.agent)
-        self.assertIn("1. Test the memo's Issue by the template's rules A to C, whatever its source: an Issue that "
+        self.assertIn("1. Test the memo's Issue by the template's rules A to D, whatever its source: an Issue that "
                       "fails one is an `identifiers` item, `Issue: <its words>`.", body)
         self.assertNotIn("Never flag text equal to", body)
         template = flat(read("shared", "research-memo-template.md"))
         self.assertIn("**A.** holds one question;", template)
-        self.assertIn("the Issue is that question verbatim if it meets rules A to C and names nothing of the working "
-                      "matter. If not, return no memo but one rewording proposal", template)
+        self.assertIn("the Issue is that question verbatim if it meets rules A to D. If not, return no memo but one "
+                      "rewording proposal", template)
 
     def test_body_is_procedure_and_contract(self):
         for key in ('"verdict"', '"required"', '"out_of_scope"', '"identifiers"', '"findings"'):
