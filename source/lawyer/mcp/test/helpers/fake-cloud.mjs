@@ -21,6 +21,8 @@ const UPSERT_KEYS = {
   client: [["hash:client_num"]],
   matter: [["hash:file_number"], ["hash:matt_num"]],
   invoice: [["link:matter", "hash:invoice_number"]],
+  time_entry: [["link:matter", "hash:source_key"]],
+  rate: [["link:matter", "hash:timekeeper", "hash:effective_date"]],
   signal: [["link:matter", "tag:signal_key"]],
   calendar_year: [["hash:year"]],
   affiliation: [["link:person", "link:organization", "hash:from?"]],

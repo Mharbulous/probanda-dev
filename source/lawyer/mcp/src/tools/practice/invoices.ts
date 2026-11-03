@@ -159,7 +159,21 @@ export async function import_invoices(
   const importedAt = nowIso();
   let savedMatters = 0;
   for (const [matterId, entries] of byMatter) {
-    const ops: OpSpec[] = entries.map(({ row }) => ({
+    const existing = invoicesOf(items, matterId);
+    const ops: OpSpec[] = entries.map(({ row }) => {
+      // An issued invoice stays as issued, so an import adds only what happened to it since.
+      const issued = existing.find((inv) => inv.issue_state === "issued" && inv.invoice_number === row.invoice_number);
+      if (issued) {
+        return {
+          op: "update", id: String(issued.id), kind: "invoice",
+          data: {
+            amount_paid: row.amount_paid ?? undefined,
+            status: typeof row.status === "string" ? row.status.toLowerCase() : undefined,
+            last_import_at: importedAt,
+          },
+        };
+      }
+      return {
       op: "upsert", id: newId(), kind: "invoice",
       links: { matter: matterId },
       data: {
@@ -171,7 +185,8 @@ export async function import_invoices(
         status: typeof row.status === "string" ? row.status.toLowerCase() : row.status ?? null,
         last_import_at: importedAt,
       },
-    }));
+      };
+    });
     try {
       await store.write("import_invoices", {}, ops);
     } catch (err) {

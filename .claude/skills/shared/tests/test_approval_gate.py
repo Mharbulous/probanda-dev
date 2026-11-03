@@ -120,6 +120,8 @@ SAMPLES = {
     "mcp__plugin_lawyer_data__practice_data__delete_anchor": ("lawyer", {"anchor_id": "a9"}, "delete anchor a9"),
     "mcp__plugin_lawyer_data__practice_data__merge_contact": ("lawyer", {"keep_id": "c1", "spare_id": "c2"},
                                                               "merge contact c2 into contact c1"),
+    "mcp__plugin_lawyer_data__practice_data__issue_invoice": ("lawyer", {"invoice_number": "101", "amount": 50},
+                                                              "record invoice 101 for 50 as issued"),
     "mcp__plugin_lawyer_data__time_pipeline__delete": ("timekeeper", {"namespace": "timeline", "key": "k1"},
                                                        "delete the key k1 from the time-pipeline namespace timeline"),
     "mcp__plugin_lawyer_data__time_pipeline__bulk_apply": ("timekeeper", {"namespace": "timeline", "path": "/x/gone.jsonl"},

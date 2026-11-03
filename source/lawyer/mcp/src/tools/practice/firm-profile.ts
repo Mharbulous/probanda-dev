@@ -69,6 +69,14 @@ export interface FirmProfile {
   practice_quirks: string | null;
   /** Roster keys copied on every email write_email addresses from case data; present only when firm.json sets some. */
   cc_on_counsel_email?: string[];
+  /** The firm's billing rules, present only when firm.json sets them. */
+  billing_settings?: Record<string, unknown>;
+  /** The confirmed layout and fixed wording of the firm's invoice, present only when firm.json sets it. */
+  invoice_template?: Record<string, unknown>;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function isKeyList(value: unknown): value is string[] {
@@ -118,6 +126,8 @@ export function readFirmProfile(env: NodeJS.ProcessEnv = process.env, fallback?:
     person,
     practice_quirks: typeof quirks === "string" && quirks !== "" ? quirks : null,
     ...(isKeyList(firm.cc_on_counsel_email) && firm.cc_on_counsel_email.length > 0 ? { cc_on_counsel_email: firm.cc_on_counsel_email } : {}),
+    ...(isObject(firm.billing_settings) ? { billing_settings: firm.billing_settings } : {}),
+    ...(isObject(firm.invoice_template) ? { invoice_template: firm.invoice_template } : {}),
   };
 }
 
@@ -245,20 +255,20 @@ export interface UpsertFirmProfileResult {
 // The cap on practice_quirks. A longer note is refused, never truncated.
 export const PRACTICE_QUIRKS_MAX = 1000;
 
-// Any combination of firm_name, roster_entry, person, signature, practice_quirks, letterhead
-// and cc_on_counsel_email, at least one. Every input is checked before any file is written, so a
+// Any combination of firm_name, roster_entry, person, signature, practice_quirks, letterhead,
+// cc_on_counsel_email, billing_settings and invoice_template, at least one. Every input is checked before any file is written, so a
 // refusal leaves firm.json, the letterhead and probanda.json as they were.
 export async function upsert_firm_profile(
   args: Record<string, unknown>,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<UpsertFirmProfileResult> {
-  const inputs = ["firm_name", "roster_entry", "person", "signature", "practice_quirks", "letterhead", "cc_on_counsel_email"];
+  const inputs = ["firm_name", "roster_entry", "person", "signature", "practice_quirks", "letterhead", "cc_on_counsel_email", "billing_settings", "invoice_template"];
   if (inputs.every((input) => args[input] === undefined)) {
     throw new ValidationError(`upsert_firm_profile needs at least one of ${inputs.join(", ")}`);
   }
   // A call that sets only this machine's practice_quirks or signature needs no firm folder, so it
   // still writes when probanda.json or its case_data_root is not set up yet.
-  const firmNeeded = ["firm_name", "roster_entry", "person", "letterhead", "cc_on_counsel_email"].some((input) => args[input] !== undefined);
+  const firmNeeded = ["firm_name", "roster_entry", "person", "letterhead", "cc_on_counsel_email", "billing_settings", "invoice_template"].some((input) => args[input] !== undefined);
   let resolved: { firm: string; letterhead: string } | undefined;
   try {
     resolved = firmPaths(env);
@@ -270,7 +280,8 @@ export async function upsert_firm_profile(
 
   const current = resolved && existsSync(paths.firm) ? readJson(paths.firm) : undefined;
   let firm: Record<string, unknown> | undefined;
-  if (args.firm_name !== undefined || args.roster_entry !== undefined || args.cc_on_counsel_email !== undefined) {
+  if (args.firm_name !== undefined || args.roster_entry !== undefined || args.cc_on_counsel_email !== undefined
+      || args.billing_settings !== undefined || args.invoice_template !== undefined) {
     firm = { firm_name: undefined, roster: [], ...current };
     if (args.firm_name !== undefined) {
       firm.firm_name = asString(args.firm_name, "firm_name");
@@ -293,6 +304,13 @@ export async function upsert_firm_profile(
       if (keys.length === 0) delete firm.cc_on_counsel_email;
       else firm.cc_on_counsel_email = [...new Set(keys)];
       result.changed.push("cc_on_counsel_email");
+    }
+    // Each merges into what is there, so setting one rule leaves the others.
+    for (const field of ["billing_settings", "invoice_template"]) {
+      if (args[field] === undefined) continue;
+      if (!isObject(args[field])) throw new ValidationError(`${field} must be an object`);
+      firm[field] = { ...(isObject(firm[field]) ? firm[field] : {}), ...args[field] };
+      result.changed.push(field);
     }
   }
 

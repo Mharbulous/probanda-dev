@@ -28,6 +28,15 @@ import {
   upsert_task,
 } from "./writes.js";
 import { import_invoices, invoices_query } from "./invoices.js";
+import {
+  invoice_lines_query,
+  issue_invoice,
+  rates_query,
+  record_adjustment,
+  record_invoice_sent,
+  upsert_rate,
+  upsert_time_entries,
+} from "./billing.js";
 import { firm_profile, upsert_firm_profile } from "./firm-profile.js";
 import { folder_map, set_folder_map } from "./folder-map.js";
 import { config_set_root, config_status } from "./config.js";
@@ -88,6 +97,13 @@ export const practiceTools = [
   practiceTool("practice_data__court_calendar_days", (args, store) => court_calendar_days(store, args), { read: true }),
   practiceTool("practice_data__import_invoices", (args, store) => import_invoices(store, args)),
   practiceTool("practice_data__invoices_query", (args, store) => invoices_query(store, args), { read: true }),
+  practiceTool("practice_data__upsert_time_entries", (args, store) => upsert_time_entries(store, args)),
+  practiceTool("practice_data__upsert_rate", (args, store) => upsert_rate(store, args)),
+  practiceTool("practice_data__rates_query", (args, store) => rates_query(store, args), { read: true }),
+  practiceTool("practice_data__record_adjustment", (args, store) => record_adjustment(store, args)),
+  practiceTool("practice_data__issue_invoice", (args, store) => issue_invoice(store, args)),
+  practiceTool("practice_data__record_invoice_sent", (args, store) => record_invoice_sent(store, args)),
+  practiceTool("practice_data__invoice_lines_query", (args, store) => invoice_lines_query(store, args), { read: true }),
   practiceTool("practice_data__upsert_rule_overlay", (args, store) => upsert_rule_overlay(store, args)),
   practiceTool("practice_data__rule_overlay", (args, store) => rule_overlay(store, args), { read: true }),
   practiceTool("practice_data__render_practice_board", (_args, store) => render_practice_board(store), { read: true }),

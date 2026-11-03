@@ -19,7 +19,8 @@ export interface Item {
 export type Row = Record<string, unknown>;
 
 // The state's field name in the old row, where it is not `status`.
-const STATE_FIELD: Record<string, string> = { signal: "state", payment: "cleared" };
+// An invoice's data already has a `status`, its payment status.
+const STATE_FIELD: Record<string, string> = { signal: "state", payment: "cleared", invoice: "issue_state" };
 
 function stateValue(field: string, state: string): unknown {
   return field === "cleared" ? state === "true" : state;
