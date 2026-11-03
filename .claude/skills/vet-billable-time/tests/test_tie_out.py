@@ -44,7 +44,7 @@ class Case(unittest.TestCase):
     def judged(self, days):
         (self.dir / "judged.jsonl").write_text("".join(json.dumps({"date": d}) + "\n" for d in days), encoding="utf-8")
 
-    def run_tie(self, stage, entries, vetted=None, count=None, total=None, last="2030-01-01", late=None):
+    def run_tie(self, stage, entries, vetted=None, count=None, total=None, last="2030-01-01", late=None, extra=()):
         (self.dir / "entries.json").write_text(json.dumps(entries), encoding="utf-8")
         argv = [stage, "--entries", str(self.dir / "entries.json"),
                 "--connector-count", str(len(entries) if count is None else count),
@@ -59,6 +59,7 @@ class Case(unittest.TestCase):
                 path = self.dir / f"late{i}.json"
                 path.write_text(json.dumps(rows), encoding="utf-8")
                 argv += ["--late-entries", str(path)]
+            argv += list(extra)
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             code = tie_out.main(argv)
@@ -235,6 +236,142 @@ class Candidates(Case):
         self.assertIn("## Entry 1: 2030-01-10, Pat Example", audit)
         self.assertIn("- Evidence: telus_calls c1 at 09:00", audit)
         self.assertIn("- Determination: 7", audit)
+
+
+def estimate(**over):
+    base = {"key": "e1", "date": "2030-01-15", "user": "Pat Example", "seconds": 1800, "description": "Drafting and filing an affidavit",
+            "basis": [{"source": "filing", "native_id": "p9", "time": "11:00"}], "method": "document creation to PDF save",
+            "reason": "No tracker entry", "approved_by": "Pat Example", "approved_at": "2030-01-20"}
+    base.update(over)
+    return base
+
+
+class Estimates(Case):
+    def read(self, name):
+        return json.loads((self.dir / "data" / name).read_text(encoding="utf-8"))
+
+    def test_an_approved_estimate_reaches_the_invoice_with_its_provenance(self):
+        code, out = self.run_tie("final", [entry(1, "2030-01-10", 738)], self.vetted([line(1, 738)], estimates=[estimate()]))
+        self.assertEqual(code, 0, out)
+        rows = {r["date"]: r for r in self.invoice()["rows"]}
+        self.assertEqual(rows["2030-01-15"]["hours"], "0.5")
+        self.assertEqual(rows["2030-01-15"]["provenance"], "estimate")
+        self.assertEqual(rows["2030-01-10"]["provenance"], "tracker")
+        self.assertEqual(rows["2030-01-15"]["support"]["estimate_bases"], 1)
+
+    def test_an_estimate_joins_the_persons_day_and_is_labelled_on_the_reports(self):
+        code, out = self.run_tie("final", [entry(1, "2030-01-10", 738)], self.vetted([line(1, 738)], estimates=[estimate(date="2030-01-10")]))
+        self.assertEqual(code, 0, out)
+        row = self.invoice()["rows"][0]
+        self.assertEqual(row["provenance"], "tracker+estimate")
+        self.assertEqual(row["hours"], "0.8")
+        summary = (self.dir / "report" / "2030-02-01 Billable time summary.md").read_text(encoding="utf-8")
+        self.assertIn("## Estimates: documented work with no TimeCamp entry", summary)
+        self.assertIn("filing p9", summary)
+        audit = (self.dir / "report" / "2030-02-01 Billable time audit.md").read_text(encoding="utf-8")
+        self.assertIn("document creation to PDF save", audit)
+
+    def test_an_estimate_covers_its_strong_date(self):
+        code, out = self.run_tie("final", [entry(1, "2030-01-15", 3600)], self.vetted([line(1, 3600)], estimates=[estimate(date="2030-01-10")]))
+        self.assertEqual(code, 0, out)
+
+    def test_an_estimate_without_a_basis_or_approval_fails(self):
+        for over in ({"basis": []}, {"approved_by": ""}, {"method": ""}, {"seconds": 0}):
+            code, out = self.run_tie("final", [entry(1, "2030-01-10", 738)], self.vetted([line(1, 738)], estimates=[estimate(**over)]))
+            self.assertEqual(code, 1, over)
+            self.assertIn("estimates", out["failed"])
+
+    def test_the_line_map_and_time_entries_carry_both_kinds(self):
+        self.run_tie("final", [entry(1, "2030-01-10", 738)], self.vetted([line(1, 738)], estimates=[estimate()]))
+        mapped = {l["date"]: l for l in self.read("line_map.json")["lines"]}
+        self.assertEqual(mapped["2030-01-10"]["entries"][0]["evidence"][0]["native_id"], "c1")
+        self.assertEqual(mapped["2030-01-15"]["estimates"][0]["method"], "document creation to PDF save")
+        records = {r["source_key"]: r for r in self.read("time_entries.json")}
+        self.assertEqual(records["timecamp:1"]["provenance"], "tracker")
+        self.assertEqual(records["estimate:e1"]["provenance"], "estimate")
+        self.assertEqual(records["estimate:e1"]["billed_seconds"], 1800)
+
+
+class Exclusions(Case):
+    def read(self, name):
+        return json.loads((self.dir / "data" / name).read_text(encoding="utf-8"))
+
+    def excluded(self, secs=1800):
+        return [{"marker": "evidence:marker:1", "seconds": secs, "confirmed": "Yes, that was software work"}]
+
+    def test_an_approved_exclusion_reduces_the_day_and_becomes_an_adjustment(self):
+        code, out = self.run_tie("final", [entry(1, "2030-01-10", 3600)], self.vetted([line(1, 1800, excluded=self.excluded())]))
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.invoice()["rows"][0]["hours"], "0.5")
+        adjustment = self.read("line_map.json")["adjustments"][0]
+        self.assertEqual((adjustment["kind"], adjustment["seconds"], adjustment["marker"]), ("trim", 1800, "evidence:marker:1"))
+        self.assertEqual(self.read("time_entries.json")[0]["billed_seconds"], 1800)
+        self.assertEqual(self.read("time_entries.json")[0]["tracked_seconds"], 3600)
+        summary = (self.dir / "report" / "2030-02-01 Billable time summary.md").read_text(encoding="utf-8")
+        self.assertIn("Yes, that was software work", summary)
+
+    def test_with_no_answer_nothing_comes_off(self):
+        code, out = self.run_tie("final", [entry(1, "2030-01-10", 3600)], self.vetted([line(1, 3600)]))
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.invoice()["rows"][0]["hours"], "1.0")
+
+    def test_the_minimum_applies_after_the_exclusion(self):
+        entries = [entry(1, "2030-01-10", 3600), entry(2, "2030-01-15", 400)]
+        lines = [line(1, 3600), line(2, 100, excluded=[{"marker": "m", "seconds": 300, "confirmed": "yes"}])]
+        code, out = self.run_tie("final", entries, self.vetted(lines))
+        self.assertEqual(code, 0, out)
+        self.assertEqual([r["date"] for r in self.invoice()["rows"]], ["2030-01-10"])
+        kinds = {(a["kind"], a["entry_source_key"]) for a in self.read("line_map.json")["adjustments"]}
+        self.assertEqual(kinds, {("trim", "timecamp:2"), ("write_off", "timecamp:2")})
+        written_off = {r["source_key"]: r for r in self.read("time_entries.json")}["timecamp:2"]
+        self.assertEqual((written_off["billed_seconds"], written_off["billable"]), (0, False))
+
+    def test_an_exclusion_needs_its_marker_and_approval_and_cannot_exceed_the_entry(self):
+        for bad in ([{"marker": "m", "seconds": 60, "confirmed": ""}], [{"marker": "", "seconds": 60, "confirmed": "y"}],
+                    [{"marker": "m", "seconds": 9999, "confirmed": "y"}]):
+            code, out = self.run_tie("final", [entry(1, "2030-01-10", 3600)], self.vetted([line(1, 3600, excluded=bad)]))
+            self.assertEqual(code, 1, bad)
+            self.assertIn("line_exclusions", out["failed"])
+
+
+class Coverage(Case):
+    def coverage(self, rows):
+        path = self.dir / "coverage.json"
+        path.write_text(json.dumps(rows), encoding="utf-8")
+        return ["--coverage", str(path), "--run-started", "2030-02-01T00:00:00"]
+
+    def test_an_unavailable_source_shows_on_the_line_and_the_reports(self):
+        extra = self.coverage([{"source_name": "telus_calls", "local_date": "2030-01-10", "status": "skipped",
+                                "error_detail": "unavailable: the carrier changed", "fetched_at": "2030-02-01T09:00:00"}])
+        code, out = self.run_tie("final", [entry(1, "2030-01-10", 738)], self.vetted([line(1, 738)]), extra=extra)
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.invoice()["rows"][0]["unavailable"], [{"source": "telus_calls", "reason": "the carrier changed"}])
+        for name in ("summary", "audit"):
+            text = (self.dir / "report" / f"2030-02-01 Billable time {name}.md").read_text(encoding="utf-8")
+            self.assertIn("the carrier changed", text)
+
+    def test_a_date_fetched_off_the_list_fails_and_an_older_fetch_does_not(self):
+        rows = [{"source_name": "gcal_events", "local_date": "2030-01-25", "status": "fetched", "fetched_at": "2030-02-01T09:00:00"}]
+        code, out = self.run_tie("final", [entry(1, "2030-01-10", 738)], self.vetted([line(1, 738)]), extra=self.coverage(rows))
+        self.assertEqual(code, 1)
+        self.assertIn("run_scope", out["failed"])
+        rows[0]["fetched_at"] = "2030-01-01T09:00:00"
+        code, out = self.run_tie("final", [entry(1, "2030-01-10", 738)], self.vetted([line(1, 738)]), extra=self.coverage(rows))
+        self.assertEqual(code, 0, out)
+
+
+class Settings(Case):
+    def test_a_firms_own_increment_and_minimum_apply(self):
+        code, out = self.run_tie("final", [entry(1, "2030-01-10", 1000)], self.vetted([line(1, 1000)]),
+                                 extra=["--increment-seconds", "900", "--minimum-seconds", "900"])
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.invoice()["rows"][0]["hours"], "0.50")
+
+    def test_evidence_rows_never_hold_text(self):
+        row = {"source": "sent_mail", "native_id": "m1", "time": "09:00", "body": "a mail body"}
+        code, out = self.run_tie("final", [entry(1, "2030-01-10", 738)], self.vetted([line(1, 738, evidence=[row])]))
+        self.assertEqual(code, 1)
+        self.assertIn("line_evidence", out["failed"])
 
 
 if __name__ == "__main__":
