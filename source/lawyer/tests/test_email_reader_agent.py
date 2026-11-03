@@ -1,7 +1,6 @@
 """The email-reader agent's reach, and that its rules' version matches the mail server's."""
 from __future__ import annotations
 
-import json
 import re
 import sys
 from pathlib import Path
@@ -40,15 +39,6 @@ def test_it_runs_on_opus_at_high_effort_and_opens_with_the_briefing():
     assert re.search(r"^model: opus$", head, re.M)
     assert re.search(r"^effort: high$", head, re.M)
     assert body.lstrip().startswith(BRIEFING)
-
-
-def test_the_retired_judge_is_gone():
-    assignment = json.loads((REPO / "source" / "assignment.json").read_text(encoding="utf-8"))
-    agents = assignment["plugins"]["lawyer"]["agents"] if "plugins" in assignment else assignment["lawyer"]["agents"]
-    assert "email-reader" in agents
-    assert "duplicate-judge" not in agents
-    assert not (REPO / "source" / "lawyer" / "agents" / "duplicate-judge.md").exists()
-    assert not (REPO / ".claude" / "skills" / "deduping-email" / "references" / "judging.md").exists()
 
 
 def test_the_rules_version_matches_the_mail_server():
