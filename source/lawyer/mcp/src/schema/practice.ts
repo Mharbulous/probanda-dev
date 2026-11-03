@@ -231,6 +231,7 @@ export function practiceToolDefinitions(): ToolDefinition[] {
           file_number: { type: "string" },
           matter_id: { type: "string" },
           batch_tag: { type: "string" },
+          entries_file: { type: "string", description: "Absolute path of a JSON array of entries, in place of entries." },
           entries: {
             type: "array",
             items: {
@@ -255,7 +256,6 @@ export function practiceToolDefinitions(): ToolDefinition[] {
             },
           },
         },
-        required: ["entries"],
         additionalProperties: false,
       },
     },
@@ -311,10 +311,11 @@ export function practiceToolDefinitions(): ToolDefinition[] {
           snapshot_path: { type: "string" },
           snapshot_hash: { type: "string" },
           trust_application: { type: "object", description: "Balance before, amount applied, balance after and the instruction to accounting." },
+          records_file: { type: "string", description: "Absolute path of a JSON object holding lines and adjustments, in place of those two." },
           lines: { type: "array", items: { type: "object" }, description: "Each: line_key, line_kind (fee or disbursement), description, amount; a fee's entry_source_keys, entry_date, timekeeper, hours, rate, rate_source and provenance; a disbursement's receipt_hash." },
           adjustments: { type: "array", items: { type: "object" }, description: "Each: kind, reason, decided_by, decided_at, and any of seconds, amount, marker, entry_source_key, line_key." },
         },
-        required: ["invoice_number", "issue_date", "date_to", "amount", "signed_copy_path", "signed_copy_hash", "snapshot_path", "snapshot_hash", "lines"],
+        required: ["invoice_number", "issue_date", "date_to", "amount", "signed_copy_path", "signed_copy_hash", "snapshot_path", "snapshot_hash"],
         additionalProperties: false,
       },
     },

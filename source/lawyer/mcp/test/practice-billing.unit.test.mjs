@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 
 import { memoryKv, startFakeCloud } from "./helpers/fake-cloud.mjs";
@@ -152,6 +155,20 @@ test("rates: one row per timekeeper and date, each with its source", async (t) =
   const { rows } = await billing.rates_query(store, MATTER);
   assert.deepEqual(rows.map((row) => [row.effective_date, row.rate, row.source_document]),
     [["2030-01-01", 120, "Retainer"], ["2030-06-01", 130, "Rate notice"]]);
+});
+
+test("the entries and an issue's records can come from files, read by the server", async (t) => {
+  const { store } = await setup(t);
+  const dir = mkdtempSync(join(tmpdir(), "billing-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const entriesFile = join(dir, "time_entries.json");
+  writeFileSync(entriesFile, JSON.stringify([entry("tc:1")]));
+  assert.equal((await billing.upsert_time_entries(store, { ...MATTER, entries_file: entriesFile })).saved, 1);
+  const recordsFile = join(dir, "issue_records.json");
+  const { lines, ...rest } = issue();
+  writeFileSync(recordsFile, JSON.stringify({ lines, adjustments: [] }));
+  assert.equal((await billing.issue_invoice(store, { ...rest, records_file: recordsFile })).lines, 1);
+  await assert.rejects(billing.upsert_time_entries(store, { ...MATTER, entries_file: join(dir, "gone.json") }), /cannot be read/);
 });
 
 test("record_invoice_sent: adds the sent date to an issued invoice", async (t) => {

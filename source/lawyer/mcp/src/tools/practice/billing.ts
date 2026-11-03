@@ -3,6 +3,8 @@
 // The invoice, its lines and its adjustments are first written when it issues, in the one write
 // that locks the entries, so an unsigned draft never moves the matter's billing cutoff.
 
+import { readFileSync } from "node:fs";
+
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { rowsOf, type Item, type Row } from "../../practice/items.js";
 import type { OpSpec } from "../../practice/ops.js";
@@ -20,6 +22,15 @@ function objects(value: unknown, label: string): Args[] {
     throw new ValidationError(`${label} must be a list of objects`);
   }
   return value as Args[];
+}
+
+function jsonFile(path: unknown, label: string): unknown {
+  const file = asString(path, label);
+  try {
+    return JSON.parse(readFileSync(file, "utf-8"));
+  } catch (err) {
+    throw new ValidationError(`${label} ${file} cannot be read: ${(err as Error).message}`);
+  }
 }
 
 function entriesOf(items: Map<string, Item>, matterId: string): Row[] {
@@ -41,7 +52,8 @@ export async function upsert_time_entries(
   const locked = new Set(entriesOf(items, matter.id).filter((row) => row.status === "locked").map((row) => row.source_key));
   const ops: OpSpec[] = [];
   const lockedUnchanged: string[] = [];
-  for (const entry of objects(args.entries, "entries")) {
+  const given = args.entries_file === undefined ? args.entries : jsonFile(args.entries_file, "entries_file");
+  for (const entry of objects(given, "entries")) {
     const sourceKey = asString(entry.source_key, "entries[].source_key");
     if (locked.has(sourceKey)) {
       lockedUnchanged.push(sourceKey);
@@ -147,6 +159,7 @@ export async function issue_invoice(
   const number = asString(args.invoice_number, "invoice_number");
   if (invoiceOf(items, matter.id, number)?.issue_state === "issued") throw new ValidationError(`Invoice ${number} is already issued`);
 
+  const records = (args.records_file === undefined ? args : jsonFile(args.records_file, "records_file")) as Args;
   const entries = entriesOf(items, matter.id);
   const invoiceId = newId();
   const ops: OpSpec[] = [{
@@ -167,7 +180,7 @@ export async function issue_invoice(
 
   const lockLinks = new Map<string, string | undefined>();
   const lineIds = new Map<string, string>();
-  for (const line of objects(args.lines, "lines")) {
+  for (const line of objects(records.lines, "lines")) {
     const key = asString(line.line_key, "lines[].line_key");
     if (!LINE_KINDS.includes(String(line.line_kind))) throw new ValidationError(`Line ${key}: line_kind must be one of ${LINE_KINDS.join(", ")}`);
     const named = line.line_kind === "fee" ? line.entry_source_keys : [];
@@ -186,13 +199,13 @@ export async function issue_invoice(
         line_key: key, line_kind: line.line_kind, entry_date: line.entry_date ?? null, timekeeper: line.timekeeper ?? null,
         description: asString(line.description, `lines[${key}].description`), hours: line.hours ?? null, rate: line.rate ?? null,
         rate_source: line.rate_source ?? null, amount: line.amount, provenance: line.provenance ?? null,
-        receipt_hash: line.receipt_hash ?? null, entry_source_keys: named,
+        rounding: line.rounding ?? null, receipt_hash: line.receipt_hash ?? null, entry_source_keys: named,
       },
     });
     for (const sourceKey of named) lockLinks.set(entryIdOf(entries, sourceKey, number), lineId);
   }
 
-  for (const adjustment of objects(args.adjustments ?? [], "adjustments")) {
+  for (const adjustment of objects(records.adjustments ?? [], "adjustments")) {
     const entryId = adjustment.entry_source_key === undefined ? undefined : entryIdOf(entries, adjustment.entry_source_key, number);
     if (entryId && !lockLinks.has(entryId)) lockLinks.set(entryId, undefined);
     ops.push(adjustmentOp(matter.id, adjustment, {

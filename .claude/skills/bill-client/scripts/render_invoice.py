@@ -5,7 +5,8 @@
                       --out-dir DIR --out-name STEM [--pdf]
 
 --lines is tie_out.py's invoice_lines.json, written only on a pass. This script recomputes every
-amount and refuses a figure that does not tie, a lines file with no pass stamp, and a dollar amount
+amount and refuses a figure that does not tie, a lines file with no pass stamp, a line with neither
+evidence nor a recorded estimate basis, and a dollar amount
 in the fixed wording, which could carry an old figure from the last invoice. --invoice holds what the last signed invoice fixes, each key required
 unless marked:
     meta         [[label, value], ...], such as the invoice date, the firm's reference, the bill number
@@ -90,6 +91,10 @@ def totals(lines, taxes):
                 raise Refusal("amount_mismatch", f"{row['date']} {row['user']}: {row['amount']} against {amount}")
             if not row["description"].strip():
                 raise Refusal("no_description", f"{row['date']} {row['user']}")
+            support = row.get("support") or {}
+            if not support.get("evidence_rows") and not support.get("estimate_bases"):
+                raise Refusal("no_support", f"The line for {row['date']}, {row['user']} has no evidence and no recorded estimate basis, "
+                                            "so it cannot go on the invoice.")
             subtotal += amount
         if subtotal != Decimal(lines["subtotal"]):
             raise Refusal("subtotal_mismatch", f"{lines['subtotal']} against {subtotal}")

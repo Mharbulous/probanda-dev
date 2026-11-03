@@ -36,7 +36,8 @@ def invoice():
 
 def lines():
     return {"rows": [{"date": "2030-01-10", "user": "Lee Lawyer", "initials": "LL", "description": "Phone call to client",
-                      "unrounded_hours": "0.205", "hours": "0.3", "rate": "400.00", "amount": "120.00"}],
+                      "unrounded_hours": "0.205", "hours": "0.3", "rate": "400.00", "amount": "120.00",
+                      "support": {"evidence_rows": 1, "estimate_bases": 0}}],
             "subtotal": "120.00", "passed_on": "2030-02-01"}
 
 
@@ -66,6 +67,20 @@ class Render(unittest.TestCase):
         document = docx.Document(path)
         table_text = [cell.text for table in document.tables for row in table.rows for cell in row.cells]
         return "\n".join([p.text for p in document.paragraphs] + table_text), document
+
+    def test_a_line_with_no_evidence_or_estimate_basis_is_refused_in_plain_words(self):
+        bare = lines()
+        bare["rows"][0]["support"] = {"evidence_rows": 0, "estimate_bases": 0}
+        code, out = self.run_render(the_lines=bare)
+        self.assertEqual((code, out["error"]), (1, "no_support"))
+        self.assertIn("The line for 2030-01-10, Lee Lawyer has no evidence", out["detail"])
+        del bare["rows"][0]["support"]
+        self.assertEqual(self.run_render(the_lines=bare)[1]["error"], "no_support")
+
+    def test_an_estimate_basis_alone_is_enough(self):
+        estimated = lines()
+        estimated["rows"][0]["support"] = {"evidence_rows": 0, "estimate_bases": 1}
+        self.assertEqual(self.run_render(the_lines=estimated)[0], 0)
 
     def test_face_says_draft_and_totals_tie_to_the_lines(self):
         code, out = self.run_render()
