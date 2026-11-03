@@ -8,8 +8,8 @@ ignored) and `profile` (the firm profile as the server read it). No database is 
 action fill: `letter` is render_letterhead.py's payload. Only the profile's registered letterhead
 is filled, the signing space stays blank, and the first paragraph is the hold line. A Word or PDF
 deliverable is never overwritten, so a revision is the next " vN", naming the copy it revises in
-`revises` (a stem), which must be the newest. The earlier copy keeps the practitioner's Word edits;
-if it was approved it gets its hold line back, so no unheld copy of superseded text stays on disk.
+`revises` (a stem), which must be the newest. The earlier copy is read by nothing here and stays as
+it is, Word edits included: it may be the practitioner's own file (Commandment 7).
 
 action approve: this machine's `person` must be an active roster lawyer. Removes the hold line and
 the blank after it from the newest copy. Every other paragraph and part stays as it stands, Word
@@ -117,20 +117,11 @@ def fill(req):
         if not newest or not same_file(prior, newest):
             raise Refusal("newer_copy", "revises names %s, but the newest copy is %s. Ask the practitioner which text stands. Nothing was written."
                           % (os.path.basename(prior), os.path.basename(newest) if newest else "none"))
-    restore = prior is not None and hold_span(read_document(prior)) is None
-    if restore:
-        check_closed(prior)
     letter = {**req["letter"], "warning": HOLD}
     render_letterhead.render(letter, req["profile"], path, scan=False)
     result = {"success": True, "path": os.path.abspath(path)}
     if prior:
         result["versioned_from"] = os.path.abspath(prior)
-    if restore:
-        document = read_document(prior)
-        at = BODY_OPEN.search(document).end()
-        hold = fill_general.para(HOLD, "", fill_general.MINOR + "<w:b/><w:bCs/>") + fill_general.blank(fill_general.MINOR)
-        rewrite_document(prior, document[:at] + hold + document[at:])
-        result["hold_restored_on"] = os.path.abspath(prior)
     return result
 
 

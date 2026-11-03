@@ -180,17 +180,17 @@ class ClientLetterTest(unittest.TestCase):
         self.assertTrue(result["path"].endswith(STEM + " v2.docx"))
         self.assertEqual(result["versioned_from"], str(first))
         self.assertEqual(first.read_bytes(), edited, "a held earlier copy is not touched at all")
-        self.assertNotIn("hold_restored_on", result)
         self.assertEqual(paragraphs(result["path"])[0], "Counsel's review: pending")
 
-    def test_a_revision_after_approval_puts_the_hold_back_on_the_approved_copy(self):
-        first = self.fill()["path"]
-        edit_document(first, "First paragraph of invented advice.", "The lawyer's own wording.")
+    def test_a_revision_never_changes_an_earlier_copy_with_no_hold_line(self):
+        # An approved copy and the practitioner's own Word file look the same here, and Commandment 7
+        # bars changing the second.
+        first = Path(self.fill()["path"])
         self.approve()
+        approved = first.read_bytes()
         result = self.fill(revises=STEM)
-        self.assertEqual(result["hold_restored_on"], first)
-        self.assertEqual(paragraphs(first)[0], "Counsel's review: pending")
-        self.assertIn("The lawyer's own wording.", paragraphs(first))
+        self.assertEqual(first.read_bytes(), approved)
+        self.assertEqual(paragraphs(result["path"])[0], "Counsel's review: pending")
 
     def test_a_revision_must_name_the_newest_copy(self):
         self.fill()
