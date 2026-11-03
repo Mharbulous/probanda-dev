@@ -43,7 +43,7 @@ def staff_line(**over):
 class Lines(unittest.TestCase):
     def final(self, staff):
         """Run the final tie-out on two blank-note lawyer entries and one staff entry, all in one day."""
-        lines = [lawyer_line(1, "Telephone call with client"), lawyer_line(2, "Review draft affidavit"), staff]
+        lines = [lawyer_line(1, "Telephone call with client"), lawyer_line(2, "review draft affidavit"), staff]
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             entries = [entry(1, LAWYER, "09:00:00"), entry(2, LAWYER, "10:00:00"), entry(3, STAFF, "11:00:00")]
@@ -71,7 +71,7 @@ class Lines(unittest.TestCase):
         row = next(r for r in result["rows"] if r["user"] == LAWYER)
         self.assertEqual({k: row[k] for k in ("date", "initials", "description", "hours")},
                          {"date": "2030-01-10", "initials": "PE",
-                          "description": "Telephone call with client; Review draft affidavit", "hours": "1.0"})
+                          "description": "Telephone call with client; review draft affidavit", "hours": "1.0"})
 
     def test_a_confirmed_inferred_staff_line_keeps_its_basis_in_the_audit(self):
         result = self.final(staff_line())
