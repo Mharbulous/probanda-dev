@@ -63,7 +63,7 @@ Leave every other label as it is: `withdrawn` alone takes the issue out of every
 
 Release the intake lock (**Intake lock**, Release). Then list submitted suggestions once more. If an unfiled one is left, take the lock again and go back to step 2.
 
-Then, for each open issue labelled both `suggestion` and `needs-triage`, and not `withdrawn`, that was opened more than an hour ago, run `/triage-issue <n>`, then `/implement-suggestions` once if any of them left an issue `ready-for-agent` + `cloud`. This catches a suggestion whose triage never started.
+Then, for each open issue labelled both `suggestion` and `needs-triage`, and not `withdrawn`, that was opened more than an hour ago, run `/triage-issue <n>`, then `/implement-queue` once if any of them left an issue `ready-for-agent` + `cloud`. This catches a suggestion whose triage never started.
 
 ## 5. Report
 

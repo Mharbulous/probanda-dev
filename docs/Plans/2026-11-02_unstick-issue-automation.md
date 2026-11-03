@@ -5,7 +5,7 @@ Status: approved by Brahm on 2026-11-02.
 ## Goal
 This repo's issue automation stays, and so does its human approval stop. On 2026-11-02 its 19 open issues were stuck: 9 needed Brahm's decision, 5 were handed back, 4 were never triaged and 1 was blocked. This plan fixes what stops them.
 
-Current files: `.claude/commands/triage-issue.md`, `.claude/commands/implement-suggestions.md`, `docs/agents/issue-tracker.md`, `scripts/local-implementer/run-local-implementer.ps1`. Routines: "Triage new issues" `trig_01HzqbUKQXED8BT7rkNBR8zv` (event only, no schedule) and "Implement suggestion issues" `trig_012StPmMPbSYJr7HLYoqEJN5`.
+Current files: `.claude/commands/triage-issue.md`, `.claude/commands/implement-queue.md`, `docs/agents/issue-tracker.md`, `scripts/local-implementer/run-local-implementer.ps1`. Routines: "Triage new issues" `trig_01HzqbUKQXED8BT7rkNBR8zv` (event only, no schedule) and "Implement suggestion issues" `trig_012StPmMPbSYJr7HLYoqEJN5`.
 
 ## 1. Never-triaged issues (#200, #202, #209, #226)
 Find out why they were missed, by reading the routine's run history. Add a nightly schedule to "Triage new issues", if its prompt can work without an event, or a small backstop that triages every issue carrying no state label.

@@ -63,7 +63,7 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 | `scripts/tests/test_check_plugin.py:301-303` | Reads the `[FAIL]` line and `CHECK FAILED` line. Still printed by default. |
 | `scripts/tests/test_check_plugin.py:821-826` | Reads the section headers, an `[N/A]` line, its reason and the N/A count in the default output. Update in this change (a test, not a caller, so §9 needs no question). |
 | `.claude/commands/release.md:54` | Reads only `ALL CHECKS PASSED`. Unaffected. |
-| `.claude/commands/implement-suggestions.md:90`, `.claude/commands/rule-remodel.md:11,44`, `source/developer/agents/fix-maker.md:36` | Run the script and read its verdict. None parses PASS or N/A lines. |
+| `.claude/commands/implement-queue.md:90`, `.claude/commands/rule-remodel.md:11,44`, `source/developer/agents/fix-maker.md:36` | Run the script and read its verdict. None parses PASS or N/A lines. |
 | `.github/workflows/` | No workflow runs `check_plugin.py`. |
 | `docs/` | `docs/Plans/2026-10-13_four-plugin-split.md:209` records history ("prints `[N/A]` with a reason"). No document relies on N/A reasons in the default output. |
 | `.claude/hooks/public-repo-guard.test.js:37-38`, `.claude/hooks/no-regression-suite.py:13` | Name the script as a command string only. |

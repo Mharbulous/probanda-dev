@@ -13,7 +13,7 @@ one row of suggestion-list's reply), and in the `### Decisions` list of the
 latest `## Agent Brief` that /hitl-triage posted.
 An item is built only when both say approved; an item approved in one and not
 the other is not built and is reported. Both implementers run this before they
-dispatch fix-maker (.claude/commands/implement-suggestions.md,
+dispatch fix-maker (.claude/commands/implement-queue.md,
 .claude/skills/hitl-triage/references/suggestion-route.md step 6).
 
 Inputs:
