@@ -17,7 +17,7 @@ REPO = Path(__file__).resolve().parents[3]
 PLUGIN = REPO / "plugins" / "lawyer"
 LABEL = '<client_file source="client file: letter.txt">'
 
-pytestmark = pytest.mark.skipif(os.environ.get("CI") or not shutil.which("claude"),
+pytestmark = pytest.mark.skipif(bool(os.environ.get("CI")) or shutil.which("claude") is None,
                                 reason="needs a signed-in claude CLI; CI has none")
 
 
