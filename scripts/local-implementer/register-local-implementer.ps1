@@ -91,6 +91,6 @@ $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -Ru
 
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings `
     -Principal $principal -Force `
-    -Description 'Runs /implement-suggestions local in its own clone of probanda-dev, once a day.' | Out-Null
+    -Description 'Runs /implement-queue local in its own clone of probanda-dev, once a day.' | Out-Null
 
 Write-Host ("Registered '{0}' for {1}: daily at {2:HH:mm}, plus up to 10 minutes. Runs {3}" -f $TaskName, $user, $time, $CloneRun)

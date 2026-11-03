@@ -14,7 +14,7 @@ untriaged is for the nightly sweep of /triage-issue, not the implementers: the o
 issues with no state label, newest first, so an issue that stops a sweep holds back
 only older ones. It leaves out pull requests and `withdrawn` and `wayfinder:*` issues.
 
-Both implementers of .claude/commands/implement-suggestions.md work one implement
+Both implementers of .claude/commands/implement-queue.md work one implement
 queue, each in its own lane: the cloud run takes only `cloud` issues, and the
 local implementer (Brahm's daily scheduled task, in its own clone) takes only
 `local` ones. They use the same per-issue claim comments, and each lane has its

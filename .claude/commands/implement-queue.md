@@ -3,7 +3,7 @@ description: Under the implementer lock, work the implement queue (every open `r
 argument-hint: [local] [issue number]
 ---
 
-# /implement-suggestions
+# /implement-queue
 
 Run unattended in the cloud (or, with `local`, on Brahm's machine: **Local lane** below): by the session that just queued an issue (triage or Suggestion Box intake), by a label added to an issue that then carries `ready-for-agent` and `cloud`, by the daily backstop routine, or by a session started by hand, optionally with one issue number to take first. Only one run works at a time, under the implementer lock (`docs/agents/issue-tracker.md`, **Implementer lock**). Nobody answers questions during the run: where a step would need a person, the issue is unsuitable (step 4). An issue triaged by `/triage-issue`, Suggestion Box entries included, carries its work order (Plan, Scope and Done when) in its latest `## Agent Brief` comment, which governs over the issue body. For a suggestion issue that is the brief `/hitl-triage` posts after Brahm decides each item, holding only the approved items and a `### Decisions` list. A suggestion issue's items are built by the `fix-maker` agent, one approved item at a time, and only an item that both the cloud record and the latest brief approve (step 5, design decisions 17 and 21).
 
@@ -21,7 +21,7 @@ The cloud does not load Brahm's own global rules, so these hold for the whole ru
 
 ## Local lane
 
-With `local` as the first argument, this run is the **local implementer**: the `local` lane of the same queue, on Brahm's machine. Brahm's daily scheduled task starts it (`scripts/local-implementer/run-local-implementer.ps1`, registered by `register-local-implementer.ps1`) as `claude -p "/implement-suggestions local"`, or Brahm runs it there by hand, optionally with one issue number after `local`. Everything in this file holds, with these changes:
+With `local` as the first argument, this run is the **local implementer**: the `local` lane of the same queue, on Brahm's machine. Brahm's daily scheduled task starts it (`scripts/local-implementer/run-local-implementer.ps1`, registered by `register-local-implementer.ps1`) as `claude -p "/implement-queue local"`, or Brahm runs it there by hand, optionally with one issue number after `local`. Everything in this file holds, with these changes:
 
 - **Its own clone only.** Before step 1, run `python scripts/local_implementer_guard.py`. When it exits non-zero, stop and report its line. It passes only in the dedicated clone (`%LOCALAPPDATA%\probanda-local-implementer\probanda-dev`), never in the checkout Brahm and his sessions share or any worktree of it. Do all git work in that clone, and in the `/tmp/base` worktree only to compare with the base.
 - **Preflight sync** (step 1): `git merge --ff-only origin/main` in place of `git checkout -B main origin/main`, which a hook on Brahm's machine refuses. When it is not a fast-forward, stop and report its output. Likewise in step 6, when `main` moved on, merge with `python ~/.claude/hooks/merge-origin-main.py -C .` in place of `git merge --no-edit origin/main`, which the same hook refuses.

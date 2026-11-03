@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Runs the local implementer once: the local lane of /implement-suggestions, in its own clone.
+Runs the local implementer once: the local lane of /implement-queue, in its own clone.
 
 .DESCRIPTION
 Started each day by the scheduled task that register-local-implementer.ps1 registers
@@ -16,7 +16,7 @@ under the current user. Needs no administrator rights.
    the run's Node builds and tests work and the model never installs anything. Brahm
    approved this on 2026-11-02: the user-level package-install guard reserves installs
    for the human, and this script is the one he registered.
-5. Runs Claude Code headless there: claude -p "/implement-suggestions local".
+5. Runs Claude Code headless there: claude -p "/implement-queue local".
    It passes --permission-mode dontAsk, so a user-wide default of plan mode
    cannot stop the run before it writes, and anything not allowed is refused
    without a prompt. The run gets only the permissions the repo's
@@ -38,7 +38,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $RepoUrl = 'https://github.com/Mharbulous/probanda-dev.git'
-$Prompt = '/implement-suggestions local'
+$Prompt = '/implement-queue local'
 
 if (-not $env:LOCALAPPDATA) {
     Write-Error 'LOCALAPPDATA is not set, so the local implementer has no home folder.'

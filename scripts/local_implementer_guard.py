@@ -4,7 +4,7 @@ local_implementer_guard: refuse to run the local implementer anywhere but its ow
 
   python scripts/local_implementer_guard.py [--dir <path>]
 
-The local implementer (`/implement-suggestions local`, started each day by
+The local implementer (`/implement-queue local`, started each day by
 Brahm's scheduled task, scripts/local-implementer/) pulls, builds, commits and
 pushes to `main`. It must never do that in the checkout Brahm and his other
 sessions share, or in a worktree of it, where it would sweep up their

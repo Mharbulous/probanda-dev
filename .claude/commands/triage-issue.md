@@ -80,7 +80,7 @@ Steps 4 to 6 then treat the planner's per-item Plan, Scope and checks as the iss
 
 Start with the red tests, so no one plans or builds a change that changes nothing. For a suggestion issue, the checks are the planner's, one per item. For any other issue, they are the work order's Done-when checks. For each:
 
-- **Write** the narrowest test that states it, with invented data and none of the record's text, at the path where the repo's runner finds it (for example `source/lawyer/mcp/test/<name>.test.mjs`, or a skill's `tests/test_<name>.py`), or as one command. Take the facts from the code, not from the issue's wording. Install only what that test needs, as in `.claude/commands/implement-suggestions.md` step 5, including its SQLite note. Run the guard over a suggestion's red test before running it: the file is posted in step 6 and later committed by the implementer.
+- **Write** the narrowest test that states it, with invented data and none of the record's text, at the path where the repo's runner finds it (for example `source/lawyer/mcp/test/<name>.test.mjs`, or a skill's `tests/test_<name>.py`), or as one command. Take the facts from the code, not from the issue's wording. Install only what that test needs, as in `.claude/commands/implement-queue.md` step 5, including its SQLite note. Run the guard over a suggestion's red test before running it: the file is posted in step 6 and later committed by the implementer.
 - **Run** it against current `main`, and record one result:
   - **Red:** it fails on an assertion that states the check. An import error, a failed build or a missing tool is not red: fix the test, or record it as not run.
   - **Green:** it passes on `main`, so that part needs no change. For a suggestion item, its recommendation becomes `decline: already works as asked`, with the reason "Already works as asked", whatever the planner recommended. For any other issue, drop it from the Plan.
@@ -99,7 +99,7 @@ State each decision with a one-line reason.
   - `needs-info`: facts only the reporter holds are missing.
   - `ready-for-human`: the work needs a design decision, a judgement call, or a check by a person. The issue's own open questions count, as does any proposal the issue itself calls risky, and any Done-when check not run because it needs a person.
   - `ready-for-agent`: an agent can finish it from the work order alone and check its own result: every remaining Done-when check came out red, or was not run only for want of Windows, data or a secret.
-- **Location**, for `ready-for-agent` and `ready-for-human` only: `local` when any step or check of the work needs an item in the cloud gate of `.claude/commands/implement-suggestions.md` (step 4) other than "a decision or check by a person". Otherwise `cloud`. For a suggestion issue, judge it over the items recommended for approval, or over every item when none is.
+- **Location**, for `ready-for-agent` and `ready-for-human` only: `local` when any step or check of the work needs an item in the cloud gate of `.claude/commands/implement-queue.md` (step 4) other than "a decision or check by a person". Otherwise `cloud`. For a suggestion issue, judge it over the items recommended for approval, or over every item when none is.
 
 ## 6. Write
 
