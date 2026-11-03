@@ -1,4 +1,4 @@
-// build-stamp: 3ca56f241603
+// build-stamp: 594388d2fa0d
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "3ca56f241603";
+var BUILD_STAMP = false ? null : "594388d2fa0d";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -80875,14 +80875,16 @@ var case_data_resolver_py_default = `"""case_data_resolver.py \u2014 where a mat
 
 The one resolver of a matter's matter-data folder (ADR 0013). Two readers take it:
 resolve_paths.py imports it, and the data server's build pastes this file's text
-into the backend's embedded helper (source/lawyer/mcp/scripts/resolver.mjs), so the
-server still imports nothing from the skill tree at run time.
+(source/lawyer/mcp/scripts/resolver.mjs) at the head of two embedded Python
+programs: the pointer read's driver in source/lawyer/mcp/src/case/locate.ts, which
+the files server runs, and the backend's helper in case/backend.ts. So the server
+still imports nothing from the skill tree at run time.
 
 BYPASS-FREE BY DESIGN: this file holds no pointer write-back, no legacy migration and
 no schema-version guard, so it has nothing a migrate_only flag could skip. The guard
 bypass stays in resolve_paths.resolve_pointer, reached only from migrate_engine.py
 (design-decisions.md #27). Never add resolve_pointer, or anything that imports
-resolve_paths, here: the backend embeds this file whole.
+resolve_paths, here: locate.ts and the backend embed this file whole.
 
 E1-ONLY, as resolve_paths.py: it stages temp copies of main.sqlite. See ../scripts.md.
 

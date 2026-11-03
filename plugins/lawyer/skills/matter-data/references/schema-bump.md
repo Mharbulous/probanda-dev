@@ -107,18 +107,24 @@ current one.
 ## 5. The duplicate guard in the MCP runtime — the one that gets missed
 
 `source/lawyer/mcp/src/case/backend.ts` carries a **hand-ported copy** of
-the pointer read and the schema guard as an embedded Python string. Only the
-location search, `case_data_resolver.py`, is shared, pasted in at build time.
-The guard is duplicated on purpose — the
+the schema guard as an embedded Python string. Its helper is built from three
+parts: the location search, `case_data_resolver.py`, pasted in at build time;
+the pointer read, `LOCATE_PY` in `source/lawyer/mcp/src/case/locate.ts` (#186),
+which the files server also runs on its own; and the backend's own code, which
+holds the guard. The guard is duplicated on purpose — the
 schema-guard bypass has to live in a different process from the read/write path
 (`design-decisions.md` #27, #28) — so it never picks up a change to `resolve_paths.py`.
-Bump, in that file:
+Bump, in `backend.ts`:
 
 - `EXPECTED_USER_VERSION`
 - `DUMP_HEADER`
 - the two guard messages
 
-Then, in `plugins/litigation/mcp`:
+A bump of the pointer's `schema_version` (not the database's `user_version`)
+changes `EXPECTED_SCHEMA_VERSION` in `locate.ts` instead, alongside
+`resolve_paths.py`'s own.
+
+Then, in `source/lawyer/mcp`:
 
 ```bash
 npm test

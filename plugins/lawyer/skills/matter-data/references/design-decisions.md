@@ -268,7 +268,9 @@ was the stated reason migrate could not be a tool at all, and it ran E1-only. It
 - The bypass is a hardcoded literal at exactly one call site (`references/scripts/migrate_engine.py`,
   `resolve()`), never derived from tool input. No argument to `matter_data__migrate` can flip it.
 - `matter_data__query`/`matter_data__execute` run in a **separate spawn** whose pointer resolver is
-  embedded in `source/lawyer/mcp/src/case/backend.ts` and takes one positional argument.
+  embedded in `source/lawyer/mcp/src/case/backend.ts` and takes one positional argument. Since
+  #186 its source is `LOCATE_PY` in `source/lawyer/mcp/src/case/locate.ts`, which the backend
+  pastes into its helper and the files server runs on its own; it has no bypass either.
   There is no `migrate_only` parameter to pass — not a guarded one, none.
 
 **Never "simplify" that backend into importing `resolve_paths`.** The duplication looks like debt
@@ -281,7 +283,8 @@ holds `resolve_case_data_dir` and its helpers, and nothing else: no pointer writ
 bypass. `resolve_paths.py` imports it, and the data server's build pastes its text into the backend's
 embedded helper (`source/lawyer/mcp/scripts/resolver.mjs`), which refuses a file that defines
 `resolve_pointer`, takes `migrate_only` or imports `resolve_paths`. The backend still imports nothing
-from the skill tree at run time, and its pointer read and schema guard stay hand-ported.
+from the skill tree at run time, and its pointer read and schema guard stay hand-ported (the
+pointer read in `source/lawyer/mcp/src/case/locate.ts` since #186, which pastes the same text ahead of it).
 
 **The E1-only rule that preceded this was stale reasoning, and it is worth saying why.** It read as
 a FUSE-staleness rule, but `operations/migrate.md` never actually claimed that — it cited two
