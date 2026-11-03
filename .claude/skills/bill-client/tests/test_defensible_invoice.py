@@ -154,6 +154,25 @@ class Defensible(unittest.TestCase):
         self.assertEqual((code, out["error"]), (1, "no_signed_copy"))
         self.assertFalse((self.dir / "billing").exists())
 
+    def freeze_with(self, line):
+        path = self.dir / "disbursements.json"
+        path.write_text(json.dumps({"lines": [line], "subtotal": "0"}), encoding="utf-8")
+        (self.dir / "meta.json").write_text(json.dumps({
+            "matter": "M1", "invoice_number": "101", "issue_date": "2030-02-02", "date_to": "2030-01-31", "amount": self.subtotal(),
+            "taxes": "0.00", "signed_copy_path": str(self.dir / "signed.pdf")}), encoding="utf-8")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = freeze_invoice.main(["--line-map", str(self.data / "line_map.json"), "--meta", str(self.dir / "meta.json"),
+                                        "--out-dir", str(self.dir / "billing"), "--data-dir", str(self.data), "--disbursements", str(path)])
+        return code, json.loads(out.getvalue())
+
+    def test_a_disbursement_awaiting_a_decision_is_refused_and_nothing_is_written(self):
+        line = {"line_key": "d", "line_kind": "disbursement", "description": "Invented filing fee", "amount": "25.00",
+                "receipt_hash": "a" * 64, "receipt_path": "r.pdf", "taxable": False, "confirm": True}
+        self.assertEqual(self.freeze_with(line)[1]["error"], "disbursement_unconfirmed")
+        self.assertEqual(self.freeze_with({**line, "confirm": False, "taxable": None})[1]["error"], "disbursement_tax_undecided")
+        self.assertFalse((self.dir / "billing").exists())
+
     def test_the_issue_records_name_every_entry_and_adjustment(self):
         _, result = self.freeze(self.subtotal())
         records = json.loads(Path(result["records_file"]).read_text(encoding="utf-8"))
