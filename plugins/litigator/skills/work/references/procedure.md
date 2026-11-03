@@ -19,7 +19,6 @@ Then one call, `drafting_forms__open_session`, with the matter folder's absolute
 **Refusals:**
 - Unusable pointer or invalid matter root: quote the refusal in one line, point the practitioner at `/matter-data` to initialize or repair the pointer, and stop. Never heal or rewrite the pointer.
 - More than one draft folder: quote the refusal in one line, ask the practitioner to keep one `0. DRAFT` folder, and stop. Never pick one.
-- No database at the derived path: run `drafting_data__migrate` on the path named, then call session entry again.
 - Timeout or no response: retry once with identical arguments, then stop and quote the error verbatim.
 
 <!-- atom id=work.enter.keep ops=enter -->
@@ -36,7 +35,7 @@ Then one call, `drafting_forms__open_session`, with the matter folder's absolute
 | No `milestone_paths` field at all | Installed plugin predates the fixed pages: see `references/legacy.md`. |
 | Opened Writing retired (`opened.filing_retired`) | State it is retired and offer recovery (section 7, Retired Writings in `draft/references/filing-picker.md`). |
 | Opening refused (`open_refused`) | Follow section 11's refusal handling for its code. The render that then succeeds supplies the board. |
-| Migrated | Say in the fast open's closing line that the matter's records were updated and a backup kept, with no version number. Migration is housekeeping, never a conversation. |
+| Migrated | Say in the fast open's closing line that the matter's records were set up (`from` 0) or updated and a backup kept, with no version number. Migration is housekeeping, never a conversation. |
 | Migration refused (`migration_refused`) | The hop that drops the database's copy of counsel waits on the practitioner; the database stays at v42, listed and rendered as usual. Quote the refusal in one line, then present the drift rows and counsel offers at once (section 8). Once every row is decided, call session entry again. |
 | `blocking` returned (`practice_config_unreachable`: no Writing can be saved this session) | State each member's `message` and `remedy` in the fast open's closing line. Do not enter the Opening: no intake, no Dispatch, no job assigned. Read-only work stays available (`drafting_forms__render`, `drafting_forms__board_card`, `/find-document`). Offer `/practice-data`'s settings repair in that line, the one repair path, and run it only on a yes; once it reports `case_data_root` set, call session entry again. Never create, heal or edit `probanda.json` here. |
 | Matter lookup did not find the matter | Say its note in the fast open's closing line, carry on. Client identity fields render as labels only. |

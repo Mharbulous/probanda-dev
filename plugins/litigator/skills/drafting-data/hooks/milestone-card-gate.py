@@ -7,13 +7,14 @@ A page is due when a result shows it was written for the practitioner to see:
 - drafting_forms__open_session: its milestone_path, the opened filing's or proceeding's page;
 - drafting_forms__render: the Work_board document's path on a filing's render, or milestone_path on
   a proceeding's, when pages_written and board_changed are both true;
-- drafting_data__complete_job: its milestone_path, when pages_written and board_changed are true.
+- drafting_data__complete_job and drafting_data__attach_to_board: its milestone_path, when pages_written and
+  board_changed are true.
 
 bootstrap opens no board, and view pages and the Litigation Strategy are presented only on request,
 so none of those is ever due.
 
 Hook events:
-- PostToolUse on those three tools: names each due page in additionalContext, to present now.
+- PostToolUse on those four tools: names each due page in additionalContext, to present now.
 - Stop: blocks the end of a turn while a due page of that turn has no later card call, that is
   mcp__cowork__present_files or SendUserFile given a path with the page's file name (a staged copy
   keeps it). Never blocks when stop_hook_active is set, so it never blocks twice in a row.
@@ -31,7 +32,7 @@ import hook_io  # noqa: E402
 
 OPEN = re.compile(r"mcp__(.+__)?plugin_lawyer_data__drafting_forms__open_session")
 RENDER = re.compile(r"mcp__(.+__)?plugin_lawyer_data__drafting_forms__render")
-COMPLETE = re.compile(r"mcp__(.+__)?plugin_lawyer_data__drafting_data__complete_job")
+COMPLETE = re.compile(r"mcp__(.+__)?plugin_lawyer_data__drafting_data__(complete_job|attach_to_board)")
 CARD = re.compile(r"mcp__(.+__)?present_files|(mcp__(.+__)?)?SendUserFile")
 
 

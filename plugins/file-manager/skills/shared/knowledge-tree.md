@@ -54,7 +54,7 @@ Inside each shipped root, and each overlay root, at fixed depth:
 - **Venue** is the official neutral-citation code where one exists (`BCSC`, `BCCA`, `BCPC`, `BCCRT`, `SCC`, `FC`, `FCA`, `TCC`, `CHRT`). For the United States it is the Bluebook-style code with punctuation removed (`SCOTUS`, `NDCal`, `CA9`). Where no standard code exists, it is the full official name with each space made a hyphen, as with `Vancouver-International-Arbitration-Centre`. Never invent an abbreviation and never use a generic name such as "Supreme Court".
 - **Name characters.** A tree folder or file name holds only letters, digits, `.`, `_` and `-`, in the shipped tree and the firm overlay alike, because the plugin upload validator rejects any other character in an archive path (e45186c). Where a venue's code is its full official name, each space becomes a hyphen; the spaced name stays in the venue row's `name` (Brahm on #1113, 2026-09-25).
 - **Reserved folder names** are `Documents\`, `Locations\`, `Judges\` and `Sources\`.
-- `Sources\` holds excerpts cut at sub-paragraph pinpoint, and only for rules a file may need to quote. In `/legal-research`'s tree it also holds publisher maps: where an official publisher puts an instrument's text, its URL patterns and its "current to" marker, and never any text of an instrument.
+- `Sources\` holds excerpts cut at sub-paragraph pinpoint, and only for rules a file may need to quote. In `/draft`'s overlay it also holds standing client guidance (section 12). In `/legal-research`'s tree it also holds publisher maps: where an official publisher puts an instrument's text, its URL patterns and its "current to" marker, and never any text of an instrument.
 - `Locations\` holds whatever local unit the venue uses (county, division, registry, courthouse), may nest, and records which kind of unit each folder is. It is left out where a venue has one location. `Judges\` exists only where a venue has judge-specific standing orders.
 - `venue.md` and `format.md` are files, not folders.
 - **`_NoVenue`** is the only member of the reserved `_` prefix. `Locations\`, `Judges\` and `venue.md` are refused under it.
@@ -195,3 +195,14 @@ Note: the {venue} requirements for {document kind} used here were reviewed by {r
 ```
 
 At each firm the notice stops only when every item of the file reads confirmed or corrected in that firm's own sidecar. Neither promotion nor a maintainer's review stops it: every item reads `unconfirmed` until the firm confirms or corrects it.
+
+## 12. Standing client guidance
+
+An item is one paragraph a client letter may use word for word. It is `/legal-research`'s output, never the writer's, and it holds no client or matter content. Items live in the overlay only, and none ships.
+
+- **Paths.** The item is `draft/CAN/BC/<Venue>/Sources/client-guidance-<topic>.md`. Its memo sits beside it as `client-guidance-<topic>.memo.md`: a copy of the saved memo under a front matter holding `accessed`. The copy lets a session in any matter read the memo, and keeps a matter folder's name out of the overlay.
+- **Header.** `memo_path` (the memo's knowledge path), `currency_date` (YYYY-MM-DD, the day the memo's authorities were last checked), `relies_on` (a list of each enactment and section the memo cites), and `stale` once marked. The runtime refuses to write an item that lacks any of the first three, or whose memo is not there. An item carries no `items:` and no sidecar, because the fact checker reviews it on every letter.
+- **Body.** `## Paragraph`, then `## Trace`, which gives each sentence's memo paragraph and pinpoint.
+- **Writing.** The session that ran the `/legal-research` job writes both with `knowledge__write`, the memo first, once the practitioner has approved them under `/show-me`. A re-check writes both again with `overwrite: true`, a new `currency_date` and no `stale`.
+- **Stale.** When `/rule-update` knows an amending instrument and its sections, it runs `knowledge__list` on each venue's `Sources` folder and reads each item there. An item whose `relies_on` names an amended section, and whose `currency_date` is before the commencement date, is written again with `overwrite: true`: the same text plus `stale: "<instrument>, in force <date>"`, with the item's `header.matter` as `matter`. Then it tells the practitioner in one line that the guidance needs a re-check through `/legal-research`.
+- **Use.** The recipient file names the item the scrivener reads. A stale item is unusable until re-checked. The fact checker reviews every sentence against the memo (it gains a source, not an exemption).
