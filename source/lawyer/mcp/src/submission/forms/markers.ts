@@ -28,7 +28,7 @@
 // pinpoint markers then split by basis (#502/#511): 📜 📍 authority,
 // 📑 📌 exhibit, 💬 🧷 testimony -- see excerptMarker below.
 
-import { splitGlyphs } from "./symbol-table.js";
+import { SYMBOLS, splitGlyphs } from "./symbol-table.js";
 
 export function gapMarker(wrapper: string): string {
   switch (wrapper) {
@@ -492,73 +492,20 @@ export function rebuttalMarker(answeredBySubmissionId: number | null): string {
 
 /**
  * Every glyph this module can emit, for the filed-face strip (forms/filed-face.ts,
- * build ticket #359). Enumerated by reading every marker function above, not
- * derived mechanically -- glyphs live inside composed return strings across a
- * dozen functions, so there is no reflection-based way to collect them. Kept
- * in sync by the pictograph-leak scan over golden filed-face fixtures
- * (test/filed-face.test.mjs): a marker shipped here without joining this list
- * fails that scan loud, rather than silently leaking onto the filed face.
- * Ordered longest-grapheme-first (the one ZWJ+skin-tone sequence first) so a
- * naive sequential strip never has to special-case it, though as full string
- * literals none of these actually collide as substrings of one another.
+ * build ticket #359): the glyph of every row of SYMBOLS in symbol-table.ts, which
+ * holds one row per glyph a marker function here prints (#231). A marker shipped
+ * here without a row there is caught by the pictograph-leak scan over golden
+ * filed-face fixtures (test/filed-face.test.mjs). Sorted longest first by code
+ * units, with a stable sort, so the one ZWJ+skin-tone sequence comes first and a
+ * naive sequential strip never has to special-case it, though none of these
+ * collide as substrings of one another (test/symbol-table.unit.test.mjs).
  */
-export const ALL_MARKER_GLYPHS: readonly string[] = [
-  "🙅🏻‍♂️", // denied (admission ladder)
-  "🧩", // gap
-  "🏷️", // not recorded
-  "🕵️", // question
-  "⬜", // unchosen
-  "🏛️", // jurisdictional basis needed
-  "🚧", // dead end (doctrinal / jurisdictional)
-  "📖", // doctrinal basis needed
-  "🔬", // scrutinize an unverified lead (#502)
-  "🥈", // only secondary
-  "🥉", // only tertiary
-  "🏅", // unrated source (#597)
-  "📜", // authority excerpt needed
-  "📑", // exhibit excerpt needed
-  "💬", // testimony excerpt needed
-  "📍", // authority pinpoint missing
-  "📌", // exhibit pinpoint missing
-  "🧷", // testimony pinpoint missing
-  "↩️", // rebuttal needed
-  "📇", // note up
-  "⚠️", // treatment: distinguishable
-  "🚨", // treatment: negative
-  "⛔", // treatment: overruled
-  "🕰️", // predates the provision (schema v61)
-  "🏆", // not best copy
-  "🤥", // reserved for impeachment
-  "🂡", // reserved
-  "🚩", // adverse (hold, printed on no page)
-  "🦵", // unserved petitum
-  "🧵", // loose thread
-  "🧾", // factual basis needed
-  "📚", // proposition needed
-  "👃", // doubt (suspicious fact / dubious law)
-  "👤", // no witness
-  "🤫", // suppressed by counsel (schema v69)
-  "🗣️", // talk to witness
-  "✍️", // draft it
-  "🖋️", // sign it (witness statement)
-  "✒️", // swear it (affidavit)
-  "🎾", // admission: serve it
-  "⏳", // admission: waiting
-  "🫸", // admission: refused
-  "🤷", // admission: no knowledge
-  "⏰", // admission: deemed
-  "⚡️", // admission: struck
-  "🤝", // admission: tendered/agreed
-  "🕹️", // tender the proof
-  "🧐", // final review (#861)
-] as const;
+export const ALL_MARKER_GLYPHS: readonly string[] = SYMBOLS.map((s) => s.glyph).sort((a, b) => b.length - a.length);
 
-/** The 31 work glyphs of work-markers.md table 1a: the 1a subset of ALL_MARKER_GLYPHS. Read by
- * counselReviewMarker alone, which fires 🧐 only on a line carrying none of the other 30. */
-export const WORK_MARKER_GLYPHS: readonly string[] = [
-  "🧩", "🏛️", "📖", "📜", "📑", "💬", "📍", "📌", "🧷", "🔬", "↩️", "👃", "📇", "🏷️", "🕵️",
-  "⬜", "👤", "🗣️", "✍️", "🖋️", "✒️", "🎾", "🕹️", "🥉", "🥈", "🏅", "🦵", "🧵", "🧾", "📚", "🧐",
-] as const;
+/** The 31 work glyphs of work-markers.md table 1a: the SYMBOLS rows in the `work` group, a subset of
+ * ALL_MARKER_GLYPHS. Read by counselReviewMarker alone, which fires 🧐 only on a line carrying none
+ * of the other 30, so their order does not matter. */
+export const WORK_MARKER_GLYPHS: readonly string[] = SYMBOLS.filter((s) => s.group === "work").map((s) => s.glyph);
 
 /** 🧐 final review (work-markers.md row 🧐; practitioner-review design §3, §5): no other 1a work
  * marker fires on the object, and no approval matches its current stored fields. `otherWorkMarkers`

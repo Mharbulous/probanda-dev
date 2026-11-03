@@ -43,6 +43,38 @@ test("the work rows are WORK_MARKER_GLYPHS, and the groups count 31 work, 14 eve
   assert.deepEqual([of("work").length, of("event").length, of("hold").length], [31, 14, 3]);
 });
 
+test("ALL_MARKER_GLYPHS and WORK_MARKER_GLYPHS, derived from the table, hold the members of the hand-written lists they replaced", () => {
+  // Literal copies of markers.ts's two lists as they stood before they were derived (#231).
+  const allMarkerGlyphs = [
+    "🙅🏻‍♂️", "🧩", "🏷️", "🕵️", "⬜", "🏛️", "🚧", "📖", "🔬", "🥈", "🥉", "🏅", "📜", "📑", "💬", "📍",
+    "📌", "🧷", "↩️", "📇", "⚠️", "🚨", "⛔", "🕰️", "🏆", "🤥", "🂡", "🚩", "🦵", "🧵", "🧾", "📚",
+    "👃", "👤", "🤫", "🗣️", "✍️", "🖋️", "✒️", "🎾", "⏳", "🫸", "🤷", "⏰", "⚡️", "🤝", "🕹️", "🧐",
+  ];
+  const workMarkerGlyphs = [
+    "🧩", "🏛️", "📖", "📜", "📑", "💬", "📍", "📌", "🧷", "🔬", "↩️", "👃", "📇", "🏷️", "🕵️",
+    "⬜", "👤", "🗣️", "✍️", "🖋️", "✒️", "🎾", "🕹️", "🥉", "🥈", "🏅", "🦵", "🧵", "🧾", "📚", "🧐",
+  ];
+  assert.equal(ALL_MARKER_GLYPHS.length, allMarkerGlyphs.length);
+  assert.deepEqual([...ALL_MARKER_GLYPHS].sort(), [...allMarkerGlyphs].sort());
+  assert.equal(WORK_MARKER_GLYPHS.length, workMarkerGlyphs.length);
+  assert.deepEqual([...WORK_MARKER_GLYPHS].sort(), [...workMarkerGlyphs].sort());
+});
+
+test("ALL_MARKER_GLYPHS puts the skin-tone ZWJ sequence first and runs longest first", () => {
+  assert.equal(ALL_MARKER_GLYPHS[0], "🙅🏻‍♂️");
+  for (let i = 1; i < ALL_MARKER_GLYPHS.length; i++) {
+    assert.ok(ALL_MARKER_GLYPHS[i - 1].length >= ALL_MARKER_GLYPHS[i].length, `${ALL_MARKER_GLYPHS[i]} is longer than ${ALL_MARKER_GLYPHS[i - 1]}, which comes before it`);
+  }
+});
+
+test("no glyph in ALL_MARKER_GLYPHS is a substring of another", () => {
+  for (const a of ALL_MARKER_GLYPHS) {
+    for (const b of ALL_MARKER_GLYPHS) {
+      if (a !== b) assert.ok(!b.includes(a), `${a} is a substring of ${b}`);
+    }
+  }
+});
+
 test("WORK_NAMES and GLYPH_SLUGS, derived from the table, equal the hand-written constants they replaced", () => {
   // Literal copies of proposal-inventory.ts's WORK_NAMES and GLYPH_SLUGS as they stood before stage 4
   // derived them, in their key order: WORK_NAMES's key order is the Work Board's card order.
