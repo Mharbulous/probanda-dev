@@ -4,14 +4,14 @@ import type { ToolDefinition } from "./shared.js";
 // mailbox over IMAP, read-only apart from save_draft, which only appends a draft,
 // create_folder, rename_folder and move_messages, which organize it, and
 // dedupe_apply and dedupe_apply_continue, which move an approved plan's copies to
-// Trash. No tool permanently deletes mail or a folder. Served by the
+// Trash. No tool permanently deletes mail or deletes a folder (terms: CLAUDE.md, Mail terms). Served by the
 // `contacts-calendars-email` server only, never by file-manager's `files` server.
 export function mailToolDefinitions(): ToolDefinition[] {
   const errors =
     " Errors: `mail_not_configured` (call mail__configure_credential), `mail_auth` (the server refused the sign-in), " +
     "`mail_timeout` (no answer within 30 s; the connection was closed, so retry once), `mail_error`.";
   const readOnly = " Read-only: every folder is opened read-only, so nothing is marked read.";
-  const organizes = " Writes to the mailbox. No Probanda tool deletes mail or a folder.";
+  const organizes = " Writes to the mailbox. No Probanda tool permanently deletes mail or deletes a folder.";
   const folder = { type: "string", description: "Exact folder name from mail__list_folders. Default INBOX." };
   const uid = { type: "integer", minimum: 1, description: "The message's UID in that folder, from a list or search." };
   const bodyOptions = {
@@ -322,11 +322,12 @@ export function mailToolDefinitions(): ToolDefinition[] {
       name: "mail__move_messages",
       description:
         "Move messages from `folder` to `destination` (exact folder names from mail__list_folders) by their `uids` in " +
-        "`folder` (1-500, from a list or search). Only those messages leave `folder`. Uses only the server's MOVE; a " +
-        "server without MOVE is refused (`mail_move_unsupported`) and nothing changes. The tool deletes nothing. Moving " +
-        "to the Trash folder is a move; the mail server may empty its Trash on its own schedule. Returns {folder, " +
+        "`folder` (1-500, from a list or search). Only those messages leave `folder`. It never permanently deletes " +
+        "email: on a server without MOVE it copies, confirms each copy, then removes only those originals, and a server " +
+        "with neither MOVE nor UIDPLUS is refused (`mail_move_unsupported`) with nothing changed. Moving " +
+        "to the Trash folder is a soft-delete; the mail server may empty its Trash on its own schedule. Returns {folder, " +
         "destination, moved: [{uid, newUid?}], notFound, notMoved}; `newUid` is the message's UID in `destination`, and " +
-        "the old UID no longer works, so use `newUid` afterwards." +
+        "the old UID no longer works, so use `newUid` afterwards. A UID in `notMoved` may also be in `destination`." +
         organizes +
         errors,
       inputSchema: {

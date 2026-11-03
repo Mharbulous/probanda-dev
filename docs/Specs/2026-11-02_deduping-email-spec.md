@@ -10,17 +10,17 @@ Design principle: do as much as possible deterministically in plugin code, which
 
 ## Definitions
 
-- **Delete**: move the message to the mailbox's Deleted Items / Trash folder. Find it by the IMAP `\Trash` special-use flag or the provider's equivalent. Never expunge, never permanently delete, never empty the trash.
+- **Delete**: in this spec, a soft-delete (CLAUDE.md, Mail terms): move the message to the mailbox's Deleted Items / Trash folder. Find it by the IMAP `\Trash` special-use flag or the provider's equivalent. Never permanently delete, never empty the trash.
 - **Identical**: byte-for-byte the same, meaning the SHA-256 of the full raw RFC 822 message is equal.
 - **Duplicative**: the copies share a Message-ID but are not byte-identical. Copies with the same Message-ID can still differ in real content, so content and attachments must be compared before anything is removed.
 
 ## Deletion policy (deliberate, narrow exception)
 
-The practitioner's standing rule is that Probanda tools do not delete email; they may sort and organize. This skill is a deliberate exception, and only on these terms:
-- Messages only ever go to Trash, which is recoverable. Nothing is ever expunged.
+The practitioner's standing rule is that Probanda tools never permanently delete email; they may sort, organize and soft-delete. This skill soft-deletes, and only on these terms:
+- Messages only ever go to Trash, which is recoverable. Nothing is permanently deleted.
 - Nothing moves without the practitioner's explicit yes to the exact list shown to them, given in the conversation for that batch.
 - The move tool accepts only an approved plan that the scan produced. It is not a general move-to-Trash tool. It refuses any UID that is not in the approved plan, and it refuses any message whose identity no longer matches what was approved (the folder's UIDVALIDITY or the message's hash has changed).
-- No other mail tool gains the ability to delete.
+- No mail tool gains the ability to permanently delete.
 
 ## Tier 1: identical copies (deterministic, zero tokens)
 
@@ -78,7 +78,7 @@ Use the repo's own test framework, with synthetic RFC 822 messages and no networ
 - Tier 1 groups byte-identical copies and keeps the highest UID.
 - Same-Message-ID copies with different bytes survive tier 1 and appear in the comparison file, with the differing headers, a body diff and attachment hashes.
 - Apply moves only the UIDs in the approved plan, and refuses an unplanned UID, a changed UIDVALIDITY and a changed hash.
-- Nothing is ever expunged, and nothing goes anywhere except Trash.
+- Nothing is permanently deleted, and nothing goes anywhere except Trash.
 - Folder names with spaces, slashes and parentheses are quoted correctly.
 - The scan's returned summary contains no message bodies.
 

@@ -201,7 +201,7 @@ const stale = (message: string): DataServerError => new DataServerError(message,
 async function requireTrashAndMove(client: ImapClientLike): Promise<string> {
   if (!client.capabilities.has("MOVE")) {
     throw new DataServerError(
-      "this mail server does not offer MOVE, so copies cannot be moved to Trash without deleting the originals; nothing was changed",
+      "duplicate removal moves copies only by the server's MOVE, which this mail server does not offer; nothing was changed",
       "mail_move_unsupported"
     );
   }

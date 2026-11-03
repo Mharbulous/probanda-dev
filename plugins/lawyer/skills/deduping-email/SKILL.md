@@ -3,9 +3,9 @@ name: deduping-email
 description: >-
   Remove duplicate emails from named mail folders or the whole mailbox: byte-identical
   copies first, then copies that share a Message-ID but differ, judged so that only a copy
-  whose information another copy holds can go. Copies go to Trash only, each batch on the
-  practitioner's approval, and on a mail server that cannot move mail safely it only lists
-  them for the practitioner to remove. Use for "dedupe my email", "remove duplicate emails"
+  whose information another copy holds can go. Copies are soft-deleted to Trash only, each
+  batch on the practitioner's approval, and on a mail server without one-step MOVE or a
+  Trash folder it only lists them for the practitioner to remove. Use for "dedupe my email", "remove duplicate emails"
   or "this folder has duplicates". Not for sorting or filing mail.
 ---
 
@@ -35,7 +35,7 @@ Only `mail__dedupe_apply` and `mail__dedupe_apply_continue` change the mailbox. 
 
 ## When the server cannot move
 
-When the scan says `can_move: false`, this mail server cannot move mail safely. Say so in plain words, and that nothing will be moved, so the practitioner removes the copies in their mail app. Ask for no approval and never call `mail__dedupe_plan_tier2` or `mail__dedupe_apply`.
+When the scan says `can_move: false`, this skill cannot move copies on this mail server, which has no one-step move or no Trash folder. Say so in plain words, and that nothing will be moved, so the practitioner removes the copies in their mail app. Ask for no approval and never call `mail__dedupe_plan_tier2` or `mail__dedupe_apply`.
 
 - **Tier 1.** Follow step 3, and give the full list. Say the listed copies are extras: each is byte-for-byte the same as a copy that stays, so they remove only as many as are listed and leave one copy of each email in each folder (or, with `across_folders`, the one in the first folder listed).
 - **Tier 2.** Follow steps 5 and 6, then show the verdicts as in step 7, as a list of which copy to remove, named by folder, date and size.

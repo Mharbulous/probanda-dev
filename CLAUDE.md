@@ -61,6 +61,14 @@ Cowork runs plugins in a sandboxed Linux VM.
 - Scripts use LF line endings and are executable.
 - A plugin has no top-level `bin/` directory, because Cowork does not install a plugin that has one.
 
+## Mail terms
+
+Never write a bare "delete" about mail in code, skills or documents. Use one of these terms, decided by the practitioner on 2026-11-02:
+
+- **Soft-delete**: move a message to the mailbox's Trash folder (`Deleted Messages` or `Deleted Items`, as the case may be), where it stays recoverable until the mail server empties that folder. Probanda may soft-delete.
+- **Permanently delete**: leave a message in no folder, as emptying Trash does. No Probanda tool does this, and none offers a delete, an expunge or an empty-Trash.
+- **Move**: put a message in another folder. Removing the original from the old folder is part of a move, not a permanent delete, because the message still exists in the destination. Without the server's MOVE, `mail__move_messages` copies, confirms the copy, then removes only that original.
+
 ## Never commit
 
 - SQL files or schema DDL. **Exception:** the plugin still ships the legacy schemas (`.sql` files in its data skills, and DDL in the data server bundle), in its source and in the built folders under `plugins/`, so the publish-readiness check fails by design until each legacy store is converted and leaves the list in the Exception of COMMANDMENTS.md. No change may add any.

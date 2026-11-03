@@ -25,7 +25,7 @@ export interface FetchedMessage extends FetchedSummary {
   headers?: Buffer;
 }
 
-/** What messageMove returns: source UID to destination UID, when the server reports it. */
+/** What messageMove and messageCopy return: source UID to destination UID, when the server reports it. */
 export interface CopyResult {
   destination: string;
   uidMap?: Map<number, number>;
@@ -46,6 +46,8 @@ export interface ImapClientLike {
   mailboxCreate(path: string): Promise<{ path: string; created?: boolean }>;
   mailboxRename(path: string, newPath: string): Promise<{ path: string; newPath: string }>;
   messageMove(range: string, destination: string, options: { uid: true }): Promise<CopyResult | false>;
+  messageCopy(range: string, destination: string, options: { uid: true }): Promise<CopyResult | false>;
+  messageDelete(range: string, options: { uid: true }): Promise<boolean>;
   fetch(range: string | number[], query: Record<string, unknown>, options?: { uid?: boolean }): AsyncIterable<FetchedMessage>;
   fetchOne(seq: string, query: Record<string, unknown>, options?: { uid?: boolean }): Promise<FetchedMessage | false | undefined>;
   search(query: Record<string, unknown>, options?: { uid?: boolean }): Promise<number[] | false | undefined>;

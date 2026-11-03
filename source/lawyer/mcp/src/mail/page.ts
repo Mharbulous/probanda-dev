@@ -68,8 +68,8 @@ const FLOW =
   "If only the calendar or contacts sign-in fails, mail is still saved, and calendar or contacts are marked as not set up.</li>" +
   "<li>If the sign-in works, the password is saved encrypted on this computer only. It is never logged and never shown again. " +
   "If it cannot be saved, this page tells you.</li>" +
-  "<li>Probanda uses it to read your mail, calendar and contacts, and to save drafts to your Drafts folder. Probanda does not send " +
-  "or delete mail. That is how Probanda is built, not a limit set by the password, which gives full access to the mailbox.</li>" +
+  "<li>Probanda uses it to read your mail, calendar and contacts, to save drafts to your Drafts folder, and to move mail between " +
+  "folders, including to your deleted-mail folder, where it stays recoverable. Probanda does not send mail or permanently delete it. That is how Probanda is built, not a limit set by the password, which gives full access to the mailbox.</li>" +
   "<li>Setting up changes nothing in your mailbox. To end Probanda's access, revoke the password with your mail provider " +
   "(for iCloud, in your Apple Account at account.apple.com). Probanda can no longer sign in after that.</li>" +
   "</ol>";
