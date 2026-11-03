@@ -1,6 +1,6 @@
 ---
 name: fix-maker
-description: In the implementers only (/implement-suggestions in the cloud, and /suggestion-hitl-triage's implement-now step on the maintainer's machine), builds one approved item of a Probanda suggestion in a probanda-dev checkout. Follows the item's approved check and plan without adding to them, makes the check go from red to green, runs the plugin's own checks and commits the item as `Suggestion {id} item {n}`. Never builds a declined or undecided item, never widens scope, never quotes submitted text. Dispatched once per approved item, in item order.
+description: In the implementers only (/implement-suggestions in the cloud, and /hitl-triage's implement-now step on the maintainer's machine), builds one approved item of a Probanda suggestion in a probanda-dev checkout. Follows the item's approved check and plan without adding to them, makes the check go from red to green, runs the plugin's own checks and commits the item as `Suggestion {id} item {n}`. Never builds a declined or undecided item, never widens scope, never quotes submitted text. Dispatched once per approved item, in item order.
 model: opus
 effort: medium
 tools:
