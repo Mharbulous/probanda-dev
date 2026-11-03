@@ -15,12 +15,16 @@ import { apiRequest, missingTokenReason, persistToken, TimeCampError, type Token
 import { serveTokenPage } from "./page.js";
 
 type Args = Record<string, unknown>;
+type Row = Record<string, unknown>;
 
 const DATE = "^\\d{4}-\\d{2}-\\d{2}$";
+const TIME = "^([01]\\d|2[0-3]):[0-5]\\d$";
 const PRINTABLE = /^[^\x00-\x1F\x7F]+$/;
 
 const STOP_RULE =
   "If status reports usable: false, stop and tell the practitioner its reason. Never open the TimeCamp web app instead.";
+const OUT_FILE_RULE = "With out_file, writes the rows as a JSON array to that new file instead and returns only the count and totals.";
+const OUT_FILE_INPUT = { type: "string", description: "Absolute path of a file that does not exist yet." };
 
 export function timecampToolDefinitions(): ToolDefinition[] {
   return [
@@ -60,8 +64,7 @@ export function timecampToolDefinitions(): ToolDefinition[] {
       description:
         "TimeCamp time entries from `from` to `to` (local dates, inclusive), every user's unless filtered. task_ids also " +
         "takes in every active descendant of each task. Returns the rows as TimeCamp gives them and totals by user and by " +
-        "day in TimeCamp's own seconds, with hours as seconds / 3600, never rounded. With out_file, writes the rows as a " +
-        "JSON array to that new file instead and returns only the count and totals. Read-only. " + STOP_RULE,
+        "day in TimeCamp's own seconds, with hours as seconds / 3600, never rounded. " + OUT_FILE_RULE + " Read-only. " + STOP_RULE,
       inputSchema: {
         type: "object",
         properties: {
@@ -70,7 +73,7 @@ export function timecampToolDefinitions(): ToolDefinition[] {
           task_ids: { type: "array", items: { type: "string" }, description: "Keep only entries on these tasks or their active descendants." },
           user_ids: { type: "array", items: { type: "string" }, description: "Keep only entries of these TimeCamp user ids." },
           billable: { type: "boolean", description: "true keeps billable entries only, false non-billable only." },
-          out_file: { type: "string", description: "Absolute path of a file that does not exist yet." },
+          out_file: OUT_FILE_INPUT,
         },
         required: ["from", "to"],
         additionalProperties: false,
@@ -81,16 +84,22 @@ export function timecampToolDefinitions(): ToolDefinition[] {
       name: "activities",
       description:
         "TimeCamp computer activities (applications and window titles tracked by the desktop app) for 1 to 20 dates, " +
-        "with application and window_title resolved to names. Returns the rows as TimeCamp gives them. Read-only. " + STOP_RULE,
+        "with application and window_title resolved to names. Filter with entry_ids, user_ids, from_time and to_time. " +
+        "Returns the rows as TimeCamp gives them and totals by entry in seconds. " + OUT_FILE_RULE + " Read-only. " + STOP_RULE,
       inputSchema: {
         type: "object",
         properties: {
           dates: { type: "array", items: { type: "string", pattern: DATE }, description: "1 to 20 dates, YYYY-MM-DD." },
+          entry_ids: { type: "array", items: { type: "string" }, description: "Keep only rows carrying these entry ids; \"0\" means no entry." },
+          user_ids: { type: "array", items: { type: "string" }, description: "Keep only rows of these TimeCamp user ids." },
+          from_time: { type: "string", pattern: TIME, description: "Keep only rows running after this local time on each date, HH:MM." },
+          to_time: { type: "string", pattern: TIME, description: "Keep only rows running before this local time on each date, HH:MM." },
+          out_file: OUT_FILE_INPUT,
         },
         required: ["dates"],
         additionalProperties: false,
       },
-      annotations: { readOnlyHint: true, openWorldHint: true },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },
     {
       name: "update_entry",
@@ -139,7 +148,7 @@ async function callTool(state: TokenState, name: string, args: Args): Promise<un
   const token = requireToken(state);
   if (name === "tasks") return tasks(token, args.query as string | undefined);
   if (name === "entries") return entries(token, args);
-  if (name === "activities") return activities(token, stringList("activities.dates", args.dates) ?? []);
+  if (name === "activities") return activities(token, args);
   if (name === "update_entry") return updateEntry(token, args);
   throw new ValidationError(`Unknown tool "${name}"`);
 }
@@ -151,6 +160,13 @@ function stringList(label: string, value: unknown): string[] | undefined {
     throw new ValidationError(`${label} must be an array of strings`);
   }
   return value.map(String);
+}
+
+function keepIds(rows: Row[], key: string, label: string, value: unknown): Row[] {
+  const ids = stringList(label, value);
+  if (!ids?.length) return rows;
+  const keep = new Set(ids);
+  return rows.filter((r) => keep.has(String(r[key])));
 }
 
 function date(label: string, value: unknown): string {
@@ -267,23 +283,18 @@ async function entries(token: string, args: Args): Promise<unknown> {
   const from = date("entries.from", args.from);
   const to = date("entries.to", args.to);
   if (from > to) throw new ValidationError("entries.from must not be after entries.to");
-  const outFile = args.out_file as string | undefined;
-  if (outFile !== undefined && !isAbsolute(outFile)) throw new ValidationError("entries.out_file must be an absolute path");
+  const outFile = checkedOutFile("entries", args);
 
   const body = await apiRequest(token, "GET", "entries/", new URLSearchParams({ from, to, format: "json" }));
   if (!Array.isArray(body)) throw new TimeCampError("TimeCamp's entries answer is not a list");
-  let rows = body as Record<string, unknown>[];
+  let rows = body as Row[];
 
   const taskIds = stringList("entries.task_ids", args.task_ids);
   if (taskIds?.length) {
     const keep = withDescendants(await allTasks(token), taskIds);
     rows = rows.filter((r) => keep.has(String(r.task_id)));
   }
-  const userIds = stringList("entries.user_ids", args.user_ids);
-  if (userIds?.length) {
-    const keep = new Set(userIds);
-    rows = rows.filter((r) => keep.has(String(r.user_id)));
-  }
+  rows = keepIds(rows, "user_id", "entries.user_ids", args.user_ids);
   if (typeof args.billable === "boolean") {
     const want = args.billable ? 1 : 0;
     rows = rows.filter((r) => Number(r.billable) === want);
@@ -291,19 +302,29 @@ async function entries(token: string, args: Args): Promise<unknown> {
 
   const result = { from, to, count: rows.length, totals: totals(rows) };
   if (outFile === undefined) return { ...result, rows };
+  await writeRowsFile("entries", outFile, rows);
+  return { ...result, out_file: outFile };
+}
+
+function checkedOutFile(tool: string, args: Args): string | undefined {
+  const outFile = args.out_file as string | undefined;
+  if (outFile !== undefined && !isAbsolute(outFile)) throw new ValidationError(`${tool}.out_file must be an absolute path`);
+  return outFile;
+}
+
+async function writeRowsFile(tool: string, outFile: string, rows: Row[]): Promise<void> {
   await mkdir(dirname(outFile), { recursive: true });
   try {
     await writeFile(outFile, JSON.stringify(rows), { flag: "wx" });
   } catch (error) {
     if ((error as NodeJS.ErrnoException)?.code === "EEXIST") {
-      throw new ValidationError(`entries.out_file ${outFile} already exists; name a new file`);
+      throw new ValidationError(`${tool}.out_file ${outFile} already exists; name a new file`);
     }
     throw error;
   }
-  return { ...result, out_file: outFile };
 }
 
-function totals(rows: Record<string, unknown>[]): unknown {
+function totals(rows: Row[]): unknown {
   const byUser = new Map<string, { user_id: string; user_name: unknown; seconds: number }>();
   const byDay = new Map<string, number>();
   let seconds = 0;
@@ -324,16 +345,52 @@ function totals(rows: Record<string, unknown>[]): unknown {
   };
 }
 
-async function activities(token: string, dates: string[]): Promise<unknown> {
+function timeOfDay(label: string, value: unknown): number | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "string" || !new RegExp(TIME).test(value)) throw new ValidationError(`${label} must be a time, HH:MM`);
+  return Number(value.slice(0, 2)) * 3600 + Number(value.slice(3)) * 60;
+}
+
+/** Seconds into the day that a row's end_time ("YYYY-MM-DD HH:MM:SS") falls. */
+function endOfRow(row: Row): number {
+  const [h, m, s] = String(row.end_time).slice(11).split(":").map(Number);
+  return h * 3600 + m * 60 + s;
+}
+
+async function activities(token: string, args: Args): Promise<unknown> {
+  const dates = stringList("activities.dates", args.dates) ?? [];
   if (dates.length < 1 || dates.length > 20) throw new ValidationError("activities.dates takes 1 to 20 dates");
   dates.forEach((d) => date("activities.dates", d));
+  const from = timeOfDay("activities.from_time", args.from_time);
+  const to = timeOfDay("activities.to_time", args.to_time);
+  if (from !== undefined && to !== undefined && from >= to) throw new ValidationError("activities.from_time must be before activities.to_time");
+  const outFile = checkedOutFile("activities", args);
+
   const query = new URLSearchParams();
   for (const d of dates) query.append("dates[]", d);
   query.set("include", "application,window_title");
   query.set("format", "json");
   const body = await apiRequest(token, "GET", "activity/", query);
   if (!Array.isArray(body)) throw new TimeCampError("TimeCamp's activity answer is not a list");
-  return { dates, count: body.length, rows: body };
+  let rows = keepIds(body as Row[], "entry_id", "activities.entry_ids", args.entry_ids);
+  rows = keepIds(rows, "user_id", "activities.user_ids", args.user_ids);
+  // Overlap, not end-inside-window, so a row running across the window's edge is kept.
+  if (from !== undefined) rows = rows.filter((r) => endOfRow(r) > from);
+  if (to !== undefined) rows = rows.filter((r) => endOfRow(r) - Number(r.time_span) < to);
+
+  const byEntry = new Map<string, number>();
+  for (const r of rows) byEntry.set(String(r.entry_id), (byEntry.get(String(r.entry_id)) ?? 0) + (Number(r.time_span) || 0));
+  const result = {
+    dates,
+    count: rows.length,
+    totals: {
+      seconds: [...byEntry.values()].reduce((sum, s) => sum + s, 0),
+      by_entry: [...byEntry.entries()].map(([entry_id, seconds]) => ({ entry_id, seconds })),
+    },
+  };
+  if (outFile === undefined) return { ...result, rows };
+  await writeRowsFile("activities", outFile, rows);
+  return { ...result, out_file: outFile };
 }
 
 // --- write ---------------------------------------------------------------------------

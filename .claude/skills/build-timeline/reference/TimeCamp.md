@@ -35,11 +35,7 @@ programming API token". Call `status` again once they say it is done.
 
 ## Fetching Computer Activities
 
-Call the connector's `activities` with `dates: ["{YYYY-MM-DD}"]` (up to 20
-dates per call). It returns the rows with application names and window titles
-already resolved, and keeps the mandatory trailing slash on `/activity/` (the
-bare URL redirects and drops the query string, confirmed live 2026-09-10,
-issue #456 triage).
+Call the connector's `activities` with `dates: ["{YYYY-MM-DD}"]`.
 
 ### Response Format
 
