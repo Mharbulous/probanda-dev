@@ -1,7 +1,6 @@
 ---
 name: timecamping
-disable-model-invocation: true
-description: Correct pre-categorized TimeCamp time entries (amber placeholders like "Phone calls (to be sorted)" and "Viewing Outlook Email Inbox"), and flag uncovered time (client work the evidence shows but no TimeCamp entry covers), by assembling every available evidence source into one time-ordered picture before inferring the matter — never from a partial view. Use for "sort my TimeCamp entries", "categorize today's amber entries", "fix my time tracking for {date}", "what unbilled time is on {date}", or reviewing/correcting TimeCamp assignments. Read-only against every source but TimeCamp itself; write-back requires explicit practitioner approval and defaults to a dry-run report. Uncovered time is reported for the practitioner to enter by hand, never created.
+description: Use for "correct my TimeCamp entries", "categorize today's amber entries", "fix my time tracking for {date}", "what unbilled time is on {date}", reviewing or correcting TimeCamp assignments, or working a matter's candidate dates for /bill-client. Does not classify raw activity into a first cut (/time-sorting), bill (/bill-client) or create a time entry.
 dependencies:
   - timecamping-data        # timecamping.db: source tables, the assembly gate, proposals, determinations, presumptions
   - build-timeline           # delegated ingestion for TimeCamp computer-activity, Telus, Google Calendar, iCloud calendar and sent-mail rows
@@ -18,6 +17,9 @@ dependencies:
 | Scope | Deciding whether a request falls inside this skill |
 | Workflow | Every run: Steps 0 to 7. Step 2 reads `reference/sources.md`, Steps 4 and 5 `reference/inference.md`, Step 6's presumptions `reference/presumptions.md` |
 | Queries | The practitioner asks one of the listed questions. A Backfill reads `reference/backfill.md` |
+| A candidate list | `/bill-client` opened this skill, or the practitioner gave a matter's candidate-dates file |
+
+This skill deliberately carries no `disable-model-invocation` line: `/bill-client` opens it through the Skill tool, which refuses a skill carrying that line. It is a stated exception. Do not add the line back. It never starts a correction unasked: the bill starts only when the practitioner types it, and every `update_entry` still needs a pasted approval.
 
 # Timecamping
 
@@ -48,16 +50,18 @@ when, not hoping it holds back.
   related but distinct objects (raw, uncategorized activity vs. TimeCamp's
   own existing entries). This is not something to resolve unilaterally in
   this file — flag it to the practitioner if it becomes confusing in
-  practice, rather than silently picking a resolution. One part is settled:
+  practice, rather than silently picking a resolution. Two parts are settled:
   the practitioner placed the uncovered-time check here, not in
-  `/time-sorting` (#939, 2026-09-24).
+  `/time-sorting` (#939, 2026-09-24), and for billing this skill is the only
+  judge of a block's matter, with `/time-sorting` kept for its task list
+  (Brahm, 2026-11-02).
 
 ## Scope
 
 This skill corrects **TimeCamp's pre-categorized time entries** — the
 amber/green colored timesheet blocks, not raw computer-activity tracking.
-It generalizes `bill-client`'s Step 9a Telus cross-check to every registered
-evidence source and every entry, not just phone-labeled ones.
+It checks every entry against every registered evidence source, not just
+phone-labeled entries against the phone log.
 
 It also flags **uncovered time**: a stretch where direct evidence shows work
 on a client matter but no TimeCamp entry covers it — possible unbilled time
@@ -262,6 +266,15 @@ silence, from a later fetch, or from approval of a different entry. The
 proposal leaves both lists at once. It is not a write-back, and no report
 presents it as sent. A proposal not yet past Step 6 cannot be marked, and an
 unconfirmed one stays listed.
+
+## A candidate list
+
+Given a matter's candidate-dates file, run Steps 0 to 7 once per date, in this order: Strong, then Medium, each oldest first. Then offer the Weak dates once as a group, and work them only on a yes. A date marked `Staff` alone is not worked, because this skill judges only the practitioner's own time.
+
+- **Recheck the matter's own entries.** This run reviews the entries already on the matter's task as well as the default queue. Being opened with a candidate list is the practitioner-directed recheck `reference/TimeCampEntries.md` describes.
+- **Skip a date already judged.** The marks are in `<matter-data folder>\timecamping\judged-dates.jsonl`, the folder as `shared/workspace-output-rule.md` resolves it.
+- **Judged mark.** A date is judged when none of its proposals is `pending` and the practitioner has answered Step 7 for each entry. Only then append one line: `{"date": "YYYY-MM-DD", "judged_at": "<UTC now>"}`. A date that stops at the Step 3 gate or a failed source gets no mark: report it, and go on to the next date.
+- **At the end,** return the Possible unbilled time list across all the dates, and each date left without a mark and why.
 
 ## Queries
 

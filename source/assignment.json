@@ -198,7 +198,8 @@
         "time-pipeline-data",
         "time-sorting",
         "timecamping",
-        "timecamping-data"
+        "timecamping-data",
+        "vet-billable-time"
       ],
       "agents": [],
       "hooks": {

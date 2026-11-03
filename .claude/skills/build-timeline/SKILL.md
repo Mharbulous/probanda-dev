@@ -271,15 +271,24 @@ For each raw record returned by a source:
 
 ### Step 4: Replace-by-source within range
 
-Before inserting new rows for a given source and range:
+A date's replacement is **one `/time-pipeline-data` bulk apply**, covering every
+source fetched for that date, so a re-fetch asks for one pasted approval per
+date, never one per row. Never delete rows one at a time. For a range, do this
+once per date. For each source fetched:
 
 1. Load `index:activity:by-source:{source}` and `index:event:by-source:{source}`.
 2. For each id, load the row and check whether its timestamp (for events) or
-   interval (for activities) falls within the requested range. Activities that
-   overlap the range — even partially — are considered in-range.
-3. Delete every in-range row (`activity:{id}` or `event:{id}`) and remove its
-   id from the by-source and by-date indexes.
-4. Insert the freshly-fetched rows and update all indexes.
+   interval (for activities) falls within the date. Activities that
+   overlap the date — even partially — are considered in-range.
+3. Add to the date's JSONL file, in this order: a `delete` line for every in-range
+   row (`activity:{id}` or `event:{id}`); a `set` line for every freshly-fetched
+   row; a `set` line for each by-source index with its in-range ids removed and
+   the fresh ids added; and for each by-date index the source touches, a `merge`
+   line with `drop_prefix` `{source}:` and `add` the ids that index should hold
+   from this source.
+
+Then apply the file once. A first fetch of a date has no `delete` line, so it
+asks for no approval.
 
 The practical effect: re-fetching Telus for 2026-04-15 wipes only Telus rows
 in that date; TimeCamp and GCal rows for the same day are untouched.

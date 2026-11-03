@@ -1,6 +1,8 @@
 {
   "ar-follow-up": [],
-  "bill-client": [],
+  "bill-client": [
+    "scripts"
+  ],
   "calendar-reminders": [
     "agents"
   ],

@@ -9,5 +9,8 @@
   "timecamping": [],
   "timecamping-data": [
     "scripts"
+  ],
+  "vet-billable-time": [
+    "scripts"
   ]
 }

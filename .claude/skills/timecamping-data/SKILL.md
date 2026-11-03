@@ -48,6 +48,21 @@ Design source of truth: `Engineering/1. Design/2026-08-28_timecamping-evidence-f
 
 **The backfill overlay is the second sanctioned read, with one use** (#1270): after a backfill has ingested a closed day's newly registered `sent_mail` and `icloud_events` rows, it lays those rows over the day's existing proposals. Read `references/backfill.sql` verbatim and pass it to `timecamping_data__query` with `params: ["<YYYY-MM-DD>"]`, exactly as for `splice.sql`. It embeds the same seven-source gate. Its columns are `source` (`sm` or `ic`), `source_row_id`, `start_ts`, `end_ts`, `summary` (the same text the consolidated read prints for that row), then the overlapping proposal's `proposal_id`, `proposal_status`, `proposed_matter_ref`, `proposal_start_ts`, `proposal_end_ts`, `written_back` and `entered_by_hand_at`, and last `timecamp_entries`: the target date's `timecamp_time_entries` rows covering the source row, as a JSON array of `{id, timecamp_task_id, task_display}` objects (`id` is the entry's id in the consolidated read's `tte` lines), or NULL when no entry covers it. Coverage uses the same overlap rule as proposals and depends only on the source row, so a row overlapping two proposals carries the same value on both its result rows. A NULL `timecamp_entries` is the overlay's test for possible unrecorded work: most of a day's entries never became proposals, so a NULL proposal column alone means only that no proposal covers the row. Such a row with a non-NULL `timecamp_entries` is tested against its covering entry's task instead, and a contradiction there is also possible unrecorded work. There is one row per source row and overlapping non-superseded proposal: a sent email overlaps a proposal when `start_ts <= sent_ts < end_ts`, and an iCloud event when the spans intersect. A row overlapping two proposals appears twice, and a row overlapping none appears once with every proposal column NULL. A `GATE` row (`source = 'GATE'`, `summary` the violation text, every other column NULL) comes alone and halts the caller exactly as a violation line does. The overlay is never an inference-pass input.
 
+**The billing read is the third sanctioned read, with one use:** `/vet-billable-time` joins a matter's TimeCamp entries to their determinations, on days `/timecamping` has already judged. Pass this as `sql` with `params: ["<first date>", "<last date>"]`. It returns one row per entry and live proposal naming that entry in its evidence chain; an entry no live proposal names has no row:
+
+```sql
+SELECT t.native_id AS entry_id, p.id AS proposal_id, p.status, p.corroboration, p.proposed_matter_ref,
+       p.proposed_description, p.evidence_chain, p.rationale, d.decision, d.final_matter_ref,
+       d.final_description, d.practitioner_note
+  FROM timecamp_time_entries t
+  JOIN proposals p ON p.status IN ('committed_silent','committed_after_ceremony')
+   AND EXISTS (SELECT 1 FROM json_each(p.evidence_chain) c, json_each(c.value, '$.source_row_ids') r
+                WHERE json_extract(c.value, '$.source_table') = 'timecamp_time_entries' AND r.value = t.id)
+  LEFT JOIN determinations d ON d.proposal_id = p.id
+ WHERE t.local_date BETWEEN ? AND ?
+ ORDER BY t.local_date, t.start_ts;
+```
+
 ## Bulk ingest file
 
 A day's source rows reach the database as one file, never as SQL and never through tool arguments. `timecamping_data__bulk_upsert` reads the file itself, one JSON object per line:
@@ -145,7 +160,7 @@ Unlike `matter_data__*` (a `probanda.json` pointer resolving a per-matter folder
 ## Anti-Patterns
 
 - **Any other skill embedding SQL, resolving the timecamping database path, or opening a connection directly.** All access goes through the `timecamping_data__*` tools via this skill.
-- **Reading a per-source table directly to build a "consolidated view," or to look up a standing fact the splice already carries.** `references/splice.sql` is the literal, only sanctioned consolidated read — it embeds the assembly gate, and its `FACT` lines are how a date-independent fact reaches a caller. The one other sanctioned read is `references/backfill.sql`, the backfill overlay of a closed day's newly ingested `sent_mail` and `icloud_events` rows on its proposals, gated identically. A hand-rolled `UNION ALL` bypasses the gate and is exactly the failure mode the evidence-first design exists to prevent.
+- **Reading a per-source table directly to build a "consolidated view," or to look up a standing fact the splice already carries.** `references/splice.sql` is the literal, only sanctioned consolidated read — it embeds the assembly gate, and its `FACT` lines are how a date-independent fact reaches a caller. The other sanctioned reads are `references/backfill.sql`, the backfill overlay of a closed day's newly ingested `sent_mail` and `icloud_events` rows on its proposals, gated identically, and the billing read under Operation Routing, which reads only what `/timecamping` already committed. A hand-rolled `UNION ALL` bypasses the gate and is exactly the failure mode the evidence-first design exists to prevent.
 - **Ingesting source rows with inline SQL.** An `execute` script of `INSERT`s sends every row through tool arguments, and an `INSERT OR REPLACE` renumbers the `id`s that `proposals.evidence_chain` points at. Source rows go into a `scripts/build_ingest.py` file and load through `bulk_upsert`.
 - **Treating a `gate_violation` result as something to work around.** It means what it says: some registered source has no terminal fetch status for that day. Halt and report which sources are missing; do not proceed on partial data, and do not silently skip the gate check "just this once."
 - **Inventing a table or column not in `references/schema.sql`.** If a change is needed, change `references/migrations.sql` (a new additive hop, never an edit to the 0 → 1 hop) and regenerate `references/schema.sql` from a fresh migration.

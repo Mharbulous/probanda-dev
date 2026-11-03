@@ -19,7 +19,7 @@ Narrow one matter to the dates worth a minute-by-minute review. A candidate date
 
 ## Phase 0: the last invoice
 
-Do this before reading any other source.
+Do this before reading any other source. When `/bill-client` opened this skill and gave the bill date, the last billed date and each billed date with its time, take them as given and go to Phase 1, so the PDF is read once.
 
 1. Find the last invoice: `/practice-data`'s invoice data, then the matter's `2. SOLICITOR CLIENT` folder, then firm receipts reports. Practice records can be empty for a matter that has been billed.
 2. Read the invoice PDF itself. Never take its number, date or amount from the file name. Call `pdf_pages__images` first: read a `scanned` page only from its PNGs and a `born_digital` page with `Read` `pages:`. Read the bar chart's labels or the itemized list exactly.
@@ -88,9 +88,11 @@ The list is one table, by date:
 | Date or range | Strength | Lawyer or Staff | Flags | Evidence, with local times |
 |---|---|---|---|---|
 
+- **Date or range:** `YYYY-MM-DD`, or `YYYY-MM-DD to YYYY-MM-DD`, because the billing check reads it exactly.
+- **Lawyer or Staff:** `Lawyer`, `Staff` or `Both`. A date with only staff evidence is `Staff`.
 - **Strength:** Strong means several independent sources, or a document or email the lawyer wrote. Medium means one direct source. Weak means a seconds-long touch, a client or staff action only, or an inferred window.
 - **Flags:** suspicious, under-billed, inferred, unverified.
 
 After the table come three sections: **Write-offs**, **Sources checked, nothing found** and **Unexplored leads**.
 
-Then tell the practitioner where the list is and how many dates it holds at each strength. `/build-timeline` and `/timecamping` take these dates one at a time for the review. Billing stays with `/bill-client`, run by the practitioner.
+Then tell the practitioner where the list is and how many dates it holds at each strength. `/timecamping` takes these dates one at a time for the review, through `/build-timeline`. Billing stays with `/bill-client`, run by the practitioner. When `/bill-client` opened this skill, return the list's path to it and go on.
