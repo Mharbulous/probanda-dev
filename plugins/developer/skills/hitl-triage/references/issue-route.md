@@ -1,6 +1,6 @@
 # Issue route
 
-For an issue step 1 of `SKILL.md` sent here: any issue without both the label `suggestion` and a `Suggestion <id>` line. It has no Suggestion Box record, so `triage.mjs`, `check_verbatim.py`, `select_approved_items.py` and `fix-maker` play no part. The implementer builds it from its latest `## Agent Brief` (`.claude/commands/implement-suggestions.md`).
+For an issue step 1 of `SKILL.md` sent here: any issue without both the label `suggestion` and a `Suggestion <id>` line. It has no Suggestion Box record, so `triage.mjs`, `check_verbatim.py`, `select_approved_items.py` and `fix-maker` play no part. The implementer builds it from its latest `## Agent Brief` (`.claude/commands/implement-queue.md`).
 
 ## Steps
 
