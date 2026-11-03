@@ -69,6 +69,128 @@ class RenderDocxTests(unittest.TestCase):
                 self.assertFalse(out.exists())
 
 
+EMAIL_HEAD = (
+    "From: Opposing Counsel <opp.counsel@example-llp.test>\r\n"
+    "To: Firm Lawyer <lawyer@firm.example.test>\r\n"
+    "Date: Mon, 01 Jun 2026 09:30:00 -0700\r\n"
+    "Subject: Re: Production\r\n"
+)
+REPLY_IDS = (
+    "Message-ID: <reply-1@example-llp.test>\r\n"
+    "In-Reply-To: <parent-1@firm.example.test>\r\n"
+    "References: <root-1@firm.example.test>\r\n <parent-1@firm.example.test>\r\n"
+)
+
+
+class StripQuotedTests(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory(dir=TEST_TMP)
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    def eml(self, body, head=EMAIL_HEAD + REPLY_IDS):
+        path = Path(self.tempdir.name) / "mail.eml"
+        path.write_bytes((head + "Content-Type: text/plain; charset=utf-8\r\n\r\n" + body).encode("utf-8"))
+        return str(path)
+
+    def both(self, body):
+        path = self.eml(body)
+        full, full_count, _ = render_document.render_eml(path)
+        meta = {}
+        stripped, count, _ = render_document.render_eml(path, strip_quoted=True, meta=meta)
+        self.assertEqual(count, full_count)
+        full_lines = full.splitlines()
+        for line in stripped.splitlines():
+            if not line.startswith("quoted\t"):
+                self.assertIn(line, full_lines)  # a filter of the full rendering, never renumbered
+        return full_lines, stripped.splitlines(), meta
+
+    def test_each_marker_drops_the_trailing_block_and_keeps_the_ordinals(self):
+        for marker in (
+            "On Mon, Jun 1, 2026 at 9:00 AM Firm Lawyer <lawyer@firm.example.test> wrote:\r\n> Please produce.\r\n> Thanks.",
+            "On Mon, Jun 1, 2026 at 9:00 AM Firm Lawyer\r\n<lawyer@firm.example.test> wrote:\r\n> Please produce.\r\n> Thanks.",
+            "-----Original Message-----\r\nFrom: Firm Lawyer\r\nSent: June 1\r\nTo: Counsel\r\n\r\nPlease produce.",
+            "From: Firm Lawyer\r\nSent: June 1\r\nTo: Counsel\r\nSubject: Production\r\n\r\nPlease produce.",
+            "________________________________\r\nFrom: Firm Lawyer\r\nDate: June 1\r\nTo: Counsel\r\n\r\nPlease produce.",
+            "> Please produce.\r\n> Thanks.\r\n\r\n> And one more.",
+        ):
+            with self.subTest(marker=marker[:30]):
+                full, stripped, meta = self.both(f"We agree.\r\n\r\nThe dates work.\r\n\r\n{marker}\r\n")
+                self.assertEqual(stripped[4:6], ["¶1\tWe agree.", "¶2\tThe dates work."])
+                self.assertTrue(stripped[6].startswith("quoted\tparent-1@firm.example.test\t"))
+                self.assertEqual(len(stripped), 7)
+                self.assertGreater(len(full), 6)
+                block = meta["quoted_blocks"][0]
+                self.assertEqual(block["after_paragraph"], 2)
+                self.assertEqual(block["in_reply_to"], "parent-1@firm.example.test")
+                self.assertEqual(stripped[6], f"quoted\tparent-1@firm.example.test\t{block['lines']} lines")
+
+    def test_new_text_after_quoted_lines_is_never_dropped(self):
+        for body in (
+            "> Question one?\r\n\r\nAnswer one.\r\n\r\n> Question two?\r\n\r\nAnswer two.\r\n",
+            "On Mon, Jun 1, 2026 at 9:00 AM Firm Lawyer wrote:\r\n> Question?\r\n\r\nMy answer below your text.\r\n",
+            "Thanks.\r\nOn Mon, Jun 1, 2026 at 9:00 AM Firm Lawyer wrote:\r\nand a line of new text\r\n",
+        ):
+            with self.subTest(body=body[:25]):
+                full, stripped, meta = self.both(body)
+                self.assertEqual(stripped, full)
+                self.assertEqual(meta["quoted_blocks"], [])
+
+    def test_a_body_that_is_only_a_quote_is_one_quoted_line_and_no_paragraphs(self):
+        _full, stripped, meta = self.both("-----Original Message-----\r\nFrom: Firm Lawyer\r\n\r\nPlease produce.\r\n")
+        self.assertEqual(stripped[4:], ["quoted\tparent-1@firm.example.test\t3 lines"])
+        self.assertEqual(meta["quoted_blocks"][0]["after_paragraph"], 0)
+
+    def test_no_in_reply_to_reads_unknown(self):
+        path = self.eml("Fine.\r\n\r\n> Please produce.\r\n", head=EMAIL_HEAD)
+        text, _count, _ = render_document.render_eml(path, strip_quoted=True)
+        self.assertIn("quoted\tunknown\t1 lines", text)
+
+    def test_cli_without_the_flag_is_byte_identical_and_the_json_only_fields_stay_out_of_the_text(self):
+        path = self.eml("We agree.\r\n\r\n> Please produce.\r\n", head=EMAIL_HEAD + REPLY_IDS + "X-Unsent: 1\r\nAuto-Submitted: auto-replied\r\n")
+        out = Path(self.tempdir.name) / "out"
+        direct, _count, _ = render_document.render_eml(path)
+        import contextlib
+        import io
+        import json
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            self.assertEqual(render_document.main([path, str(out)]), 0)
+        result = json.loads(stdout.getvalue())
+        self.assertEqual((out / "mail.eml.txt").read_text(encoding="utf-8"), direct)
+        self.assertEqual(result["message_id"], "reply-1@example-llp.test")
+        self.assertEqual(result["in_reply_to"], "parent-1@firm.example.test")
+        self.assertEqual(result["references"], ["root-1@firm.example.test", "parent-1@firm.example.test"])
+        self.assertIs(result["x_unsent"], True)
+        self.assertEqual(result["auto_submitted"], "auto-replied")
+        self.assertNotIn("quoted_blocks", result)
+        self.assertNotIn("reply-1@example-llp.test", direct)
+
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            self.assertEqual(render_document.main([path, str(out), "--strip-quoted", "--head-chars", "20"]), 0)
+        result = json.loads(stdout.getvalue())
+        self.assertEqual(result["quoted_blocks"][0]["lines"], 1)
+        self.assertIn("quoted\t", (out / "mail.eml.txt").read_text(encoding="utf-8"))
+
+    def test_absent_identity_fields_and_other_auto_reply_headers(self):
+        cases = (("", None), ("Auto-Submitted: no\r\n", None), ("X-Autorespond: yes\r\n", "x-autorespond"),
+                 ("X-Autoreply: yes\r\n", "x-autoreply"), ("Precedence: auto_reply\r\n", "auto_reply"), ("Precedence: bulk\r\n", None))
+        for header, expected in cases:
+            with self.subTest(header=header):
+                meta = {}
+                render_document.render_eml(self.eml("Out of office.\r\n", head=EMAIL_HEAD + header), meta=meta)
+                self.assertEqual(meta["auto_submitted"], expected)
+                self.assertIsNone(meta["message_id"])
+                self.assertEqual(meta["references"], [])
+                self.assertIs(meta["x_unsent"], False)
+
+    def test_the_flag_refuses_every_other_kind(self):
+        rc = render_document.main([str(FIXTURES / "sample.docx"), str(Path(self.tempdir.name) / "x"), "--strip-quoted"])
+        self.assertEqual(rc, 2)
+
+
 class RenderEmlTests(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory(dir=TEST_TMP)

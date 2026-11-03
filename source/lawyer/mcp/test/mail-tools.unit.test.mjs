@@ -237,6 +237,7 @@ test("with no credential every mail tool that opens a connection on its first ca
     mail__get_email: { uid: 1 },
     mail__download_attachment: { uid: 1, index: 0, save_dir: dir },
     mail__save_message: { uid: 1, save_dir: dir },
+    mail__list_headers: { folder: "INBOX" },
     mail__find_email_by_message_id: { message_id: "<x@example.test>" },
     mail__find_thread_messages: { uid: 1 },
     mail__save_draft: { eml_path: eml },
@@ -388,6 +389,23 @@ test("download_attachment writes the part under save_dir, never overwrites, and 
 
   const missing = await errorOf(context(fakeClient(script())), "mail__download_attachment", { uid: 9, index: 0, save_dir: join(dir, "no-such-folder") });
   assert.match(missing.message, /save_dir must be the absolute path of an existing folder/);
+});
+
+test("list_headers hashes the bytes the server sent, and saves them under the same hash", async (t) => {
+  const dir = tempDir(t, "coclerk-mail-list-");
+  const source = Buffer.from(EML, "latin1");
+  const client = fakeClient({
+    fetchOne: () => ({ uid: 9, source, flags: new Set(), envelope: { messageId: "<draft-1@example.test>" } }),
+    search: [9],
+    methods: { async mailboxOpen() { return { exists: 1, uidValidity: 5n, uidNext: 10 }; } },
+  });
+  const listed = await callTool(context(client), "mail__list_headers", { folder: "INBOX" });
+  const { messages: [m], uidValidity, uidNext } = JSON.parse(readFileSync(listed.list_path, "utf-8"));
+  assert.deepEqual([uidValidity, uidNext], ["5", 10]);
+  assert.equal(m.raw_sha256, createHash("sha256").update(source).digest("hex"));
+  assert.equal(m.size, source.length);
+  const saved = await callTool(context(client), "mail__save_message", { uid: 9, save_dir: dir });
+  assert.equal(saved.sha256, m.raw_sha256);
 });
 
 test("save_message writes the message's stored bytes, reports their sha256, never overwrites, and refuses a missing save_dir", async (t) => {
@@ -627,7 +645,7 @@ test("no file under src/mail/, src/dav/, src/calendar/ or src/contacts/ deletes 
   for (const t of buildContactsCalendarsEmailToolDefinitions()) assert.doesNotMatch(t.name, /delete|expunge|purge/i);
 });
 
-test("the contacts-calendars-email server lists the twenty mail tools and the five calendar and contacts tools, and the data and files servers none", () => {
+test("the contacts-calendars-email server lists the twenty-two mail tools and the five calendar and contacts tools, and the data and files servers none", () => {
   const mail = buildContactsCalendarsEmailToolDefinitions().map((t) => t.name).filter((n) => n.startsWith("mail__")).sort();
   assert.deepEqual(mail, [
     "mail__configure_credential",
@@ -637,6 +655,7 @@ test("the contacts-calendars-email server lists the twenty mail tools and the fi
     "mail__dedupe_apply_continue",
     "mail__dedupe_plan_tier2",
     "mail__dedupe_read_comparison",
+    "mail__dedupe_record_verdicts",
     "mail__dedupe_scan",
     "mail__download_attachment",
     "mail__find_email_by_message_id",
@@ -645,6 +664,7 @@ test("the contacts-calendars-email server lists the twenty mail tools and the fi
     "mail__get_email",
     "mail__get_latest_emails",
     "mail__list_folders",
+    "mail__list_headers",
     "mail__move_messages",
     "mail__rename_folder",
     "mail__save_draft",
@@ -664,7 +684,7 @@ test("the contacts-calendars-email server lists the twenty mail tools and the fi
     "contacts__search",
   ]);
   for (const t of dav) assert.equal(t.annotations?.readOnlyHint, true, t.name);
-  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 25);
+  assert.equal(buildContactsCalendarsEmailToolDefinitions().length, 27);
   assert.deepEqual(buildToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
   assert.deepEqual(buildFileManagerToolDefinitions().filter((t) => /^(mail|calendar|contacts)__/.test(t.name)), []);
 });

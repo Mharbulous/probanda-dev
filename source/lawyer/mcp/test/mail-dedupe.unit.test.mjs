@@ -129,6 +129,8 @@ async function applyToEnd(ctx, planId, count) {
   return reply;
 }
 
+const scanFile = (scanId, name) => join(STATE_DIR, "Coclerk", "mail", "dedupe", scanId, name);
+
 const comparison = async (ctx, scanId, view) => (await callTool(ctx, "mail__dedupe_read_comparison", { scan_id: scanId, ...(view ? { view } : {}), limit: 200 })).items;
 
 // --- tier 1 ------------------------------------------------------------------------------------
@@ -220,11 +222,10 @@ test("with no MOVE or no Trash the scan finishes and lists the copies, but write
     assert.match(readFileSync(reply.tier1.list_path, "utf-8"), /INBOX\t.*\tHello\t\d+\t1/, what);
     assert.equal((await comparison(ctx, reply.scan_id, "tier1_copies")).length, 1, what);
 
-    const planPath = join(STATE_DIR, "Coclerk", "mail", "dedupe", "tier1-plan.json");
-    assert.equal(readFileSync(planPath, "utf-8"), "", what);
+    assert.equal(existsSync(scanFile(reply.scan_id, "tier1-plan.json")), false, what);
     const refused = await errorOf(ctx, "mail__dedupe_plan_tier2", { scan_id: reply.scan_id, approved: [{ group_id: "g1", remove: ["g1-2"] }] });
     assert.equal(refused.code, "mail_move_unsupported", what);
-    assert.equal(readFileSync(join(STATE_DIR, "Coclerk", "mail", "dedupe", "tier2-plan.json"), "utf-8"), "", what);
+    assert.equal(existsSync(scanFile(reply.scan_id, "tier2-plan.json")), false, what);
 
     const emptyPlanId = createHash("sha256").update("").digest("hex");
     for (const plan_id of [emptyPlanId, "0".repeat(64)]) {
@@ -236,28 +237,28 @@ test("with no MOVE or no Trash the scan finishes and lists the copies, but write
   }
 });
 
-test("a new scan on a server without MOVE clears an earlier server's plan", async () => {
+test("an earlier plan is refused once the server no longer offers MOVE, whatever a later scan found", async () => {
   const { ctx, planId, client } = await scannedPlan();
   client.capabilities.delete("MOVE");
   const reply = await scanToEnd(ctx, { folders: ["INBOX"] });
   assert.equal(reply.can_move, false);
-  assert.equal((await errorOf(ctx, "mail__dedupe_apply", { plan_id: planId, expected_count: 2 })).code, "dedupe_plan_not_found");
+  assert.equal((await errorOf(ctx, "mail__dedupe_apply", { plan_id: planId, expected_count: 2 })).code, "mail_move_unsupported");
   assert.equal(moves(client).length, 0);
 });
 
 test("a scan saved by an older copy has no can_move and still plans and groups, and a saved can_move: false is still refused", async () => {
-  const scanPath = join(STATE_DIR, "Coclerk", "mail", "dedupe", "scan.json");
-  const edit = (change) => {
-    const saved = JSON.parse(readFileSync(scanPath, "utf-8"));
-    change(saved);
-    writeFileSync(scanPath, JSON.stringify(saved));
-  };
   const raw = mail();
   const client = mailbox({ INBOX: { 1: raw, 2: raw, 3: mail({ messageId: "<b@example.test>" }), 4: mail({ messageId: "<b@example.test>", headers: ["X-Mailer: Two"] }) }, [TRASH]: {} });
   const sliced = context(client, { mailSliceMs: 0 });
 
   const first = await callTool(sliced, "mail__dedupe_scan", { folders: ["INBOX"] });
   assert.equal(first.status, "scanning");
+  const scanPath = scanFile(first.scan_id, "scan.json");
+  const edit = (change) => {
+    const saved = JSON.parse(readFileSync(scanPath, "utf-8"));
+    change(saved);
+    writeFileSync(scanPath, JSON.stringify(saved));
+  };
   edit((saved) => { delete saved.can_move; });
   const done = await scanToEnd(sliced, { scan_id: first.scan_id });
   assert.equal(done.can_move, true);
@@ -301,12 +302,12 @@ test("a scan cut at every slice boundary gives the same result as one run straig
   assert.equal(first.status, "scanning");
   assert.equal(first.messages_read, 1);
   const done = await scanToEnd(sliced, { scan_id: first.scan_id });
-  const same = ({ folders: f, tier1, tier2 }) => ({ f, tier1: { ...tier1, plan_id: null }, tier2 });
+  const same = ({ folders: f, tier1, tier2 }) => ({ f, tier1: { ...tier1, plan_id: null, list_path: null }, tier2 });
   assert.deepEqual(same(done), same(straight));
   assert.ok(client.calls.filter((c) => c.name === "connect").length > 5);
 });
 
-test("a resumed scan refuses a scan that was replaced or a folder whose UIDVALIDITY changed", async () => {
+test("a resumed scan refuses an unknown scan or a folder whose UIDVALIDITY changed, and a new scan leaves it resumable", async () => {
   const client = mailbox({ INBOX: { 1: mail(), 2: mail() }, [TRASH]: {} });
   const sliced = context(client, { mailSliceMs: 0 });
   const first = await callTool(sliced, "mail__dedupe_scan", { folders: ["INBOX"] });
@@ -314,7 +315,10 @@ test("a resumed scan refuses a scan that was replaced or a folder whose UIDVALID
   assert.equal((await errorOf(sliced, "mail__dedupe_scan", { scan_id: first.scan_id })).code, "dedupe_stale");
   client.boxes.INBOX.uidValidity = 7n;
   await callTool(sliced, "mail__dedupe_scan", { folders: ["INBOX"] });
-  assert.equal((await errorOf(sliced, "mail__dedupe_scan", { scan_id: first.scan_id })).code, "dedupe_scan_replaced");
+  assert.equal((await scanToEnd(sliced, { scan_id: first.scan_id })).tier1.copies, 1);
+  for (const scan_id of ["00000000-0000-0000-0000-000000000000", "..", "..\\..\\mail"]) {
+    assert.equal((await errorOf(sliced, "mail__dedupe_scan", { scan_id })).code, "dedupe_scan_replaced", scan_id);
+  }
   assert.match((await errorOf(sliced, "mail__dedupe_scan", { scan_id: first.scan_id, all: true })).message, /takes no other field/);
 });
 
@@ -343,11 +347,11 @@ test("apply moves only the plan's copies, only to Trash, only by a writable open
 });
 
 test("apply takes no UID, and a plan changed on disk to add one is refused", async () => {
-  const { client, ctx, planId } = await scannedPlan();
+  const { client, ctx, planId, reply } = await scannedPlan();
   const unknown = await errorOf(ctx, "mail__dedupe_apply", { plan_id: planId, expected_count: 2, uids: [4] });
   assert.match(unknown.message, /unknown field "uids"/);
 
-  const path = join(STATE_DIR, "Coclerk", "mail", "dedupe", "tier1-plan.json");
+  const path = scanFile(reply.scan_id, "tier1-plan.json");
   const plan = JSON.parse(readFileSync(path, "utf-8"));
   plan.remove.push({ ...plan.remove[0], uid: 4 });
   writeFileSync(path, JSON.stringify(plan));
@@ -393,11 +397,62 @@ test("apply refuses a wrong count, a plan already used, an unknown plan and a se
   assert.equal(moves(second.client).length, 0);
 });
 
-test("a new scan replaces the last plan, so the old plan can no longer move anything", async () => {
-  const { client, ctx, planId } = await scannedPlan();
-  await scanToEnd(ctx, { folders: ["INBOX"] });
-  assert.equal((await errorOf(ctx, "mail__dedupe_apply", { plan_id: planId, expected_count: 2 })).code, "dedupe_plan_not_found");
-  assert.equal(moves(client).length, 0);
+test("a second scan does not disturb the first scan's results or its plan, whose copies are still checked before any move", async () => {
+  const { client, ctx, planId, reply: first } = await scannedPlan();
+  const second = await scanToEnd(ctx, { folders: ["INBOX"] });
+  assert.notEqual(second.scan_id, first.scan_id);
+  assert.equal((await comparison(ctx, first.scan_id, "tier1_copies")).length, 2);
+  assert.equal((await callTool(ctx, "mail__dedupe_scan", { scan_id: first.scan_id })).tier1.plan_id, planId);
+  assert.ok(existsSync(first.tier1.list_path));
+  const moved = await applyToEnd(ctx, planId, 2);
+  assert.equal(moved.moved, 2);
+  assert.deepEqual(uidsIn(client, "INBOX"), [3, 4]);
+
+  // The second scan's plan names copies now gone, so it stops before moving anything.
+  const stale = await errorOf(ctx, "mail__dedupe_apply", { plan_id: second.tier1.plan_id, expected_count: 2 });
+  assert.equal(stale.code, "dedupe_stale");
+  assert.equal(moves(client).length, 1);
+});
+
+test("a plan an ended session left moving holds back its own scan's next plan and not a new scan's", async () => {
+  const raw = mail();
+  const client = mailbox({ INBOX: { 1: raw, 2: raw, 3: raw }, [TRASH]: {} });
+  const sliced = context(client, { mailSliceMs: 0 });
+  const first = await scanToEnd(sliced, { folders: ["INBOX"] });
+  const started = await callTool(sliced, "mail__dedupe_apply", { plan_id: first.tier1.plan_id, expected_count: 2 });
+  assert.notEqual(started.status, "done");
+  const second = await scanToEnd(sliced, { folders: ["INBOX"] });
+  const reply = await applyToEnd(sliced, second.tier1.plan_id, 2);
+  assert.equal(reply.moved, 2);
+  assert.deepEqual(uidsIn(client, "INBOX"), [3]);
+});
+
+test("a scan an older copy saved directly under dedupe/ still resumes, reads, plans and moves", async () => {
+  const raw = mail();
+  const client = mailbox({
+    INBOX: { 1: raw, 2: raw, 3: mail({ messageId: "<b@example.test>" }), 4: mail({ messageId: "<b@example.test>", headers: ["X-Mailer: Two"] }) },
+    [TRASH]: {},
+  });
+  const sliced = context(client, { mailSliceMs: 0 });
+  const first = await callTool(sliced, "mail__dedupe_scan", { folders: ["INBOX"] });
+  assert.equal(first.status, "scanning");
+  const older = join(STATE_DIR, "Coclerk", "mail", "dedupe");
+  const saved = JSON.parse(readFileSync(scanFile(first.scan_id, "scan.json"), "utf-8"));
+  delete saved.own_folder;
+  delete saved.drafts;
+  delete saved.can_move;
+  writeFileSync(join(older, "scan.json"), JSON.stringify(saved));
+  rmSync(join(older, first.scan_id), { recursive: true });
+
+  const done = await scanToEnd(sliced, { scan_id: first.scan_id });
+  assert.equal(done.can_move, true);
+  assert.equal(done.tier1.list_path, join(older, "tier1-copies.txt"));
+  assert.equal(existsSync(join(older, first.scan_id)), false);
+  const [group] = await comparison(sliced, first.scan_id);
+  assert.equal(group.copies.length, 2);
+  const made = await callTool(sliced, "mail__dedupe_plan_tier2", { scan_id: first.scan_id, approved: [{ group_id: group.group_id, remove: [group.copies[0].copy_id] }] });
+  assert.ok(existsSync(join(older, "tier2-plan.json")));
+  assert.equal((await applyToEnd(sliced, made.plan_id, 1)).moved, 1);
 });
 
 test("continue refuses a plan apply never started, then carries a started plan through its slices", async () => {
@@ -611,7 +666,7 @@ test("the state files stay under the mail state folder, and a scan with no copie
   const client = mailbox({ INBOX: { 1: mail() }, [TRASH]: {} });
   const reply = await scanToEnd(context(client), { folders: ["INBOX"] });
   assert.equal(reply.tier1.plan_id, null);
-  assert.equal(readFileSync(join(STATE_DIR, "Coclerk", "mail", "dedupe", "tier1-plan.json"), "utf-8"), "");
-  assert.ok(reply.tier1.list_path.startsWith(join(STATE_DIR, "Coclerk", "mail", "dedupe")));
+  assert.equal(existsSync(scanFile(reply.scan_id, "tier1-plan.json")), false);
+  assert.ok(reply.tier1.list_path.startsWith(join(STATE_DIR, "Coclerk", "mail", "dedupe", reply.scan_id)));
   assert.ok(existsSync(reply.tier1.list_path));
 });

@@ -344,6 +344,9 @@ UNGATED = [
     "mcp__plugin_file-manager_files__file_ops__move", "mcp__plugin_lawyer_data__drafting_data__execute",
     "mcp__plugin_lawyer_contacts-calendars-email__mail__dedupe_apply_continue",
     "mcp__plugin_lawyer_contacts-calendars-email__mail__dedupe_scan",
+    "mcp__plugin_lawyer_contacts-calendars-email__mail__dedupe_record_verdicts",
+    "mcp__plugin_lawyer_contacts-calendars-email__mail__list_headers",
+    "mcp__plugin_lawyer_contacts-calendars-email__mail__save_message",
     "mcp__plugin_lawyer_contacts-calendars-email__mail__move_messages",
 ]
 
