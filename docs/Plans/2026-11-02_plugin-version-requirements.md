@@ -2,6 +2,15 @@
 
 Status: approved by Brahm on 2026-11-02. Layers 1 to 3 are confirmed against the Step 0 results before they are built.
 
+## Rollout record: first release with ranges
+Released in 4b7dcca7 and f26ebf07, whose messages left out the required lines: lawyer 0.21.2, researcher 0.12.0, litigator 0.16.0, solicitor 0.5.0, file-manager 0.11.0, timekeeper 0.4.0, developer 0.4.0. Every dependency names the marketplace `Probanda_Legal_experimental`, and lawyer ranges are `^0.21.2`.
+
+Users must: run Check for updates in claude.ai on each machine. A plugin stays disabled until the plugins it requires are at the required version.
+
+Users must: type /developer:hitl-triage after the update.
+
+Not yet proven on these real plugins. The minor-version stops and freeze wording stay until the conditions in the plan are met.
+
 ## Goal
 `/release` tells Brahm to freeze a plugin on every machine for a minor release (`.claude/commands/release.md:46` and `:66-70`). Nobody can check that a freeze is being followed, and public users won't follow one. Each released plugin must carry its version requirements instead, and stay frozen until they are met. A blocked user sees a plain explanation.
 
