@@ -68,8 +68,8 @@ For each supported source the user selected, run its setup sub-procedure. These 
 
 ### 2c: Telus Business Connect Setup
 
-1. No persistent configuration needed. Inform: *"Telus Business Connect works from CSV exports — you'll provide the file path each time you sort. No setup needed on my end."*
-2. Optionally ask: *"Do you typically export the call log yourself, or does someone else provide it?"* (informational context for future conversational flow).
+1. Ask: *"Which folder holds your zipped Telus call logs?"* Save the answer as the entry's `archive_folder`.
+2. Ask: *"Which extensions on that line are yours? Give each as the call log writes it, such as `4 - Your Name`."* Save the answers as the entry's `own_extensions` list. Calls on any other extension are left out.
 
 ### 2d: SyncoPaid Setup
 
@@ -145,7 +145,9 @@ Save the time-tracking configuration under a new `time_tracking` top-level key o
         "id": "telus",
         "type": "telephony",
         "enabled": true,
-        "auth": "csv_per_use",
+        "auth": "none",
+        "archive_folder": "<the folder from step 2c>",
+        "own_extensions": ["<each extension from step 2c>"],
         "reference": "build-timeline/reference/TelusConnect.md"
       },
       {
@@ -164,7 +166,7 @@ Save the time-tracking configuration under a new `time_tracking` top-level key o
 Write an entry for every supported source: `enabled: true` for the sources the user selected, `enabled: false` for the rest. A registry written here therefore never lacks an entry, so every `skipped` status traces to an explicit choice. The `auth` field indicates how credentials are managed:
 - `"store"` — API token stored in the time-pipeline store
 - `"mcp"` — MCP server handles authentication
-- `"csv_per_use"` — no persistent auth, user provides data each time
+- `"none"` — no credential; the source is read from local files
 - `"cli_opt_in"` — no credential is stored or held; access is a live on/off toggle inside the tool's own settings, re-checked before every fetch
 
 The `sent_mail` entry may also carry `copy_confirmed: "YYYY-MM-DD"`, the date the iCloud copy of the Microsoft 365 Sent Items was confirmed (#1262's close check), and `copy_from: "YYYY-MM-DD"`, the first day that check confirmed the copy holds. This step never writes either. Until it is set, every sent-mail day is `failed` (`build-timeline/reference/SentMail.md`).
@@ -178,7 +180,7 @@ Summarize what was configured:
 > - **Google Calendar**: Connected (MCP authenticated)
 > - **iCloud Calendar**: Registered (read through the Probanda mail connector; Work and Home only)
 > - **Sent mail**: Registered (the iCloud copy of Sent Items, read through the lawyer plugin's mail tools; read once that copy is confirmed complete)
-> - **Telus Business Connect**: Ready (CSV-based, no setup needed)
+> - **Telus Business Connect**: Ready (read from your call-log folder)
 > - **SyncoPaid**: Registered (evidence capture status checked live on each build)
 > - **[unselected source]**: Not used (registered as disabled)
 >

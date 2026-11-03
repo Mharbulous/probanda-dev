@@ -54,6 +54,24 @@ export function timecampingToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: timecampingPrefixed("calls"),
+      description:
+        "The phone calls in a local date range, every outcome and duration, matched to contacts on the last 10 digits of their numbers. `from` and `to` are YYYY-MM-DD. `matter` (a matter number, file number or matter id) returns only the calls with that matter's role-holding contacts and with `numbers`, numbers in any format; without `matter` every call in the range returns, or only those with `numbers` when given. Returns { calls: [{ date, time, direction, duration_seconds, action_result, number, contact_name, contacts: [{ contact_id, name, role, matt_num }] }], contacts_without_phone, numbers_searched, uncovered_dates }. `direction` is null on a call from the older files, which do not record it. `contact_name` is the carrier's. `contacts_without_phone` are the matter's contacts with no number to search. `uncovered_dates` are the dates in the range that no imported archive covers, so no call found there proves nothing. Reads only what `.claude/skills/timecamping-data/scripts/import_calls.py` has loaded. " +
+        "Only the /timecamping-data skill may call this tool -- you satisfy that by invoking it (Skill: timekeeper:timecamping-data) and following the operation it routes you to, which directs you to call this tool yourself, whatever skill you started in.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          from: { type: "string" },
+          to: { type: "string" },
+          matter: { type: "string" },
+          numbers: { type: "array", items: { type: "string" } },
+        },
+        required: ["from", "to"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    {
       name: timecampingPrefixed("migrate"),
       description:
         "Apply every pending schema migration hop to the timecamping database, in order, creating it fresh if it doesn't exist yet. Takes no parameters -- the database path is resolved server-side. This is the only tool that bypasses the schema-version guard, and the only one that may create or upgrade the database's schema. Only the /timecamping-data skill may call this tool -- invoke it (Skill: timekeeper:timecamping-data) and follow the operation it routes you to.",

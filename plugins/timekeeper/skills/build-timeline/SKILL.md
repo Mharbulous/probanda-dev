@@ -3,6 +3,7 @@ name: build-timeline
 description: "Sole ingester of raw time evidence into the timeline store, one date at a time, from the registered sources: TimeCamp, Telus Business Connect, Google Calendar, the iCloud calendar (Work and Home calendars, read through the lawyer plugin's calendar tools), sent mail (the iCloud copy of the Microsoft 365 Sent Items, read through the lawyer plugin's mail tools), and SyncoPaid screen-activity blocks, plus a one-time historical bulk import of Chrometa screen-activity logs. Use to build/refresh/re-import raw time-tracking data for a date, or to run the Chrometa historical import. Raw data only -- does not classify time or assign it to matters (that is time-sorting), and does not bill."
 dependencies:
   - time-pipeline-data  # continuous timeline store under the `timeline` namespace
+  - timecamping-data    # the Telus source's importer and its bulk ingest
   - google-calendar-mcp # calendar events (optional — degrades gracefully if unavailable)
   - calendar tools of the lawyer plugin's contacts-calendars-email server # iCloud calendar events (Work and Home calendars only), read-only (an unconfigured calendar records that source `failed`)
   - mail tools of the lawyer plugin's contacts-calendars-email server # sent mail (Sent Items, Sent Messages and their LEAP subfolders only), metadata only
@@ -342,17 +343,18 @@ Total: 54 activities, 12 events stored in timeline.
 If any source failed, list the failures explicitly:
 
 ```
-Telus: failed — CSV not found at C:/Users/Brahm/Downloads/telus-2026-04-15.csv
+Telus: failed — call archive folder not found
 ```
 
-If a source was skipped because its own live access gate is off — an expected
-state, not an error — give it its own line, distinct from a failure, and omit
-it from the counts block above (a skipped source has no counts, and appearing
-there as `0 activities` would read as "checked, found nothing" rather than
-"never checked"):
+If a source was skipped because its own live access gate is off, or because no
+archive covers the date — an expected state, not an error — give it its own
+line, distinct from a failure, and omit it from the counts block above (a
+skipped source has no counts, and appearing there as `0 activities` would read
+as "checked, found nothing" rather than "never checked"):
 
 ```
 SyncoPaid: skipped — evidence access disabled (lawyer opt-in off)
+Telus: skipped — no archive covers 2026-09-15
 ```
 
 Step 2 iterates only enabled sources, so take the registry's `enabled: false`
@@ -371,8 +373,8 @@ Queries below.
 |----------|---------------|
 | Build today's timeline | Full workflow for today. |
 | Build the timeline for 2026-04-15 | Full workflow with target=2026-04-15. |
-| Re-import Telus CSV at {path} for {date} | Run Telus source only, with the supplied CSV, target={date}. Replaces only Telus rows in that range. |
-| Fetch only {sources} for {date} | Run Step 2 for the named registry entries only, target={date}. Each must still be `enabled: true` and qualified per its own reference. Replace-by-source (Step 4) and the metadata update (Step 5) touch only those sources. The report lists only them, and names every other registry source as not fetched this run, not as skipped. The Telus re-import row above is this row with Telus and a supplied CSV. |
+| Re-import the call archive for {date} | Run Telus source only, target={date}. Replaces only Telus rows in that range. |
+| Fetch only {sources} for {date} | Run Step 2 for the named registry entries only, target={date}. Each must still be `enabled: true` and qualified per its own reference. Replace-by-source (Step 4) and the metadata update (Step 5) touch only those sources. The report lists only them, and names every other registry source as not fetched this run, not as skipped. The call archive re-import row above is this row with Telus. |
 | Import Chrometa historical logs | Run the Chrometa import per `reference/Chrometa.md` against `C:\Users\Brahm\Sync\ADMIN\TIME TRACKING\Chrometa Time Records\Consolidated Time Summaries.xlsx`, scoped to the full 2019-01–2020-03 range. |
 | What sources are fetched for {date}? | Read `source:{source}:ranges` for each registry entry, plus Chrometa; report which cover {date}. |
 | Show me the raw timeline for {window} | Require a window ≤ 60 minutes. Load `index:activity:by-date:{date}` and `index:event:by-date:{date}`, filter to the window, sort by start_ts/ts, present as a table with columns: Time, Duration (activities only), Source, Raw Type, Key Fields. |
@@ -425,7 +427,7 @@ The practitioner can ask to inspect the raw timeline, but:
 - **No silent data loss.** Every source ends in exactly one of three loud
   outcomes: it succeeds (rows stored, indexes updated, metadata recorded), it
   fails (reported in the summary), or it is skipped because its own live
-  access gate is off or its registry entry is `enabled: false` (reported in
+  access gate is off, no archive covers the date, or its registry entry is `enabled: false` (reported in
   the summary on its own line, metadata untouched). There is no middle state and no silent outcome.
 - **No interpretation.** If there is a choice to make about what a period
   "really was," defer it. This skill's job is faithful recording.

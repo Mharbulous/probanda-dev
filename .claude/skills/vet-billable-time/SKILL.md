@@ -33,7 +33,7 @@ Connector tools are named without their prefix. Call each under whichever of `mc
 4. **Rates and initials.** Read the rates from the retainer PDF in `2. SOLICITOR CLIENT`: call `pdf_pages__images` first, then read a `scanned` page only from its PNGs and a `born_digital` page with `Read` `pages:`. Show them once. If none is found, ask once. Initials come from `practice_data__firm_profile`; ask once for anyone not on its roster.
 
 5. **Vet each line, one at a time, under `/show-me`:** date, person, start, end, unrounded hours, the proposed description, and the evidence (entry id, source rows). The practitioner confirms, corrects or writes it off, and each answer applies to that line alone. Save each answer to `vetted.json` in the working folder before showing the next line, so a long run survives compaction: on re-entry, start from the first line it does not hold.
-   - The description states only what the evidence shows: "Phone call to client, 12 min", "Drafting retainer letter". Never a guessed purpose.
+   - The description states only what the evidence shows: "Phone call to client, 12 min", "Drafting retainer letter". Never a guessed purpose. A call's evidence names its direction, duration and outcome.
    - Show the span the evidence supports, in seconds: a call's length, a document's edit span, a screen block, counting overlapping evidence once. Where the evidence cannot bound the duration, show "unbounded" and ask for the practitioner's figure, which is recorded as their estimate.
    - A "no evidence" line bills only if the practitioner confirms it and gives an estimate. The summary lists it apart.
 

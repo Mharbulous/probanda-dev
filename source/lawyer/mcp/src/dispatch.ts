@@ -39,6 +39,7 @@ import {
   timePipelineExport,
 } from "./time-pipeline/backend.js";
 import { timecampingDataQuery, timecampingDataExecute, timecampingDataBulkUpsert } from "./timecamping/backend.js";
+import { timecampingCalls, type CallsArgs } from "./timecamping/calls.js";
 import { timecampingDataMigrate } from "./timecamping/migrate.js";
 import { submissionDataQuery, submissionDataExecute } from "./submission/backend.js";
 import { submissionDataMigrate } from "./submission/migrate.js";
@@ -226,6 +227,7 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("timecamping_data__query", (args: { sql: string; params?: unknown[] }) => timecampingDataQuery(args.sql, args.params)),
   defineTool("timecamping_data__execute", (args: { sql_script: string }) => timecampingDataExecute(args.sql_script)),
   defineTool("timecamping_data__bulk_upsert", (args: { path: string }) => timecampingDataBulkUpsert(args.path)),
+  defineTool("timecamping_data__calls", (args: CallsArgs, context: DispatchContext) => timecampingCalls(args, context.practiceDb)),
   defineTool("timecamping_data__migrate", () => timecampingDataMigrate()),
 
   defineTool("drafting_data__query", (args: { db_path: string; sql: string; params?: unknown[] }) =>

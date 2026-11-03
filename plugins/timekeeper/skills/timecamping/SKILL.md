@@ -120,7 +120,7 @@ source's exit statuses.
 **Name every `skipped` source in the run summary**, one line each with the
 reason of the exit taken, kept apart from any counts — for example
 `Google Calendar: skipped — disabled in the time-tracking registry`, or
-`Telus calls: skipped — no CSV supplied`. A registry-disabled `timecamp`
+`Telus calls: skipped — no archive covers this date`. A registry-disabled `timecamp`
 entry yields two lines, one per TimeCamp source. These lines belong only to
 the end-of-run summary, never to this step's output, so a whole-day skip is
 visible without showing any per-source view early.

@@ -14,7 +14,8 @@ Each output line is {"table": ..., "key": [...], "row": {...}}. Row values are
 JSON scalars (raw_payload is JSON-encoded here), a source row is keyed on
 `native_id` and a fetch-log row on (source_name, local_date), and `id` is never
 emitted. It lives in the /timecamping-data gatekeeper because it carries the
-seven source tables' column names (references/schema.sql).
+source tables' column names (references/schema.sql). `telus_calls` rows come from
+import_calls.py instead.
 
 A required field missing from an input row is a hard failure naming it, never a
 default. A failed invocation appends nothing.
@@ -49,7 +50,6 @@ SOURCE_TABLES = (
 )
 TIMELINE_TABLES = {
     "timecamp": "timecamp_computer_activities",
-    "telus": "telus_calls",
     "gcal": "gcal_events",
     "icloud": "icloud_events",
     "sent_mail": "sent_mail",
@@ -181,11 +181,8 @@ def payload_json(obj):
 # The stored row shape is build-timeline/SKILL.md's activity row schema: id,
 # source, native_id, start_ts, end_ts (UTC), raw_type, raw_payload (an object),
 # fetched_at. TimeCamp and GCal payload keys are the shapes surveyed from the
-# live store on 2026-09-22. Telus's follow time-sorting (`phone_number`/
-# `contact_name`) and snake-cased CSV columns: the store held no Telus row to
-# survey, and TelusConnect.md pins only `format`, `Direction`, `internal`,
-# `anonymous` and `unnormalized`. Any required key missing is a hard failure
-# naming it; a present key's null value passes through where the column is nullable.
+# live store on 2026-09-22. Any required key missing is a hard failure naming
+# it; a present key's null value passes through where the column is nullable.
 #
 # Sent mail is the exception: its stored rows are build-timeline/SKILL.md's
 # event row schema, one instant `ts` and no start_ts or end_ts, exported under
@@ -201,23 +198,6 @@ def map_timecamp(row, payload, where):
         "application": need(payload, "application", where + " raw_payload"),
         "window_title": need(payload, "window_title", where + " raw_payload"),
         "timecamp_task_id": need(payload, "task_id", where + " raw_payload"),
-    }
-
-
-def map_telus(row, payload, where, start, end):
-    # Telus rows carry a minute-precision start and end = start + the CSV's
-    # Duration (TelusConnect.md), so the interval is the call's duration.
-    return {
-        "native_id": need(row, "native_id", where),
-        "phone_number": need(payload, "phone_number", where + " raw_payload"),
-        "contact_name": need(payload, "contact_name", where + " raw_payload"),
-        "action": need(payload, "action", where + " raw_payload"),
-        "action_result": need(payload, "action_result", where + " raw_payload"),
-        "result_description": need(payload, "result_description", where + " raw_payload"),
-        "duration_seconds": int((end - start).total_seconds()),
-        "raw_type": need(row, "raw_type", where),
-        # TelusConnect.md sets `internal: true` on an extension and nothing otherwise.
-        "is_internal": 1 if payload.get("internal") is True else 0,
     }
 
 
@@ -344,7 +324,7 @@ def cmd_timeline(args):
                 start = parse_instant(need(row, "ts", where), where + " ts")
             else:
                 start = parse_instant(need(row, "start_ts", where), where + " start_ts")
-                end = parse_instant(need(row, "end_ts", where), where + " end_ts")
+                parse_instant(need(row, "end_ts", where), where + " end_ts")
             if local_date(start, zone) != day:
                 continue
             payload = need(row, "raw_payload", where)
@@ -352,8 +332,6 @@ def cmd_timeline(args):
                 fail("%s raw_payload is not a JSON object" % where)
             if args.source == "timecamp":
                 mapped = map_timecamp(row, payload, where)
-            elif args.source == "telus":
-                mapped = map_telus(row, payload, where, start, end)
             elif args.source == "gcal":
                 mapped = map_gcal(row, payload, where)
             elif args.source == "icloud":
@@ -474,7 +452,7 @@ def cmd_syncopaid_captures(args):
                  % (cap_id, second, timed[-1][2]["id"], timed[-1][1]))
         timed.append((instant, second, cap))
     # Captures sharing a second: the first by full precision keeps the bare id,
-    # the rest get #2, #3, ... (the Telus same-minute rule).
+    # the rest get #2, #3, ... (the rule import_calls.py applies to same-minute calls).
     timed.sort(key=lambda t: t[0])
     instants = [second for _, second, _ in timed]
     native_ids = []

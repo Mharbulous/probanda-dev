@@ -13,7 +13,7 @@
 // drafting_data__query/execute: this backend never embeds a query, a table
 // name, or a column name. All SQL and schema knowledge stays inside the
 // /timecamping-data gatekeeper skill (root CLAUDE.md's database-encapsulation
-// rule).
+// rule). The one exception is timecamping/calls.ts, whose header states it.
 //
 // `execute` stages a temp copy, mutates it under one BEGIN...COMMIT, and
 // copies it back only after a clean commit and a closed connection -- the

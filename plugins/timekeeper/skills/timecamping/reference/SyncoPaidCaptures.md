@@ -102,7 +102,7 @@ granularity, different id space; the two must never be confused or merged).
 **Two captures in the same second.** Order the day's captures by full-precision
 `capturedAtUtc`. The first in a second keeps the bare id and the rest get `#2`,
 `#3`, … (e.g. `2026-09-01T16:02:30Z#2`), mirroring the Telus same-minute rule
-(`build-timeline/reference/TelusConnect.md`, "Two rows with the same key"). The
+(`build-timeline/reference/TelusConnect.md`, "The row contract"). The
 suffix goes on `native_id` only: `captured_at` stays the unsuffixed second, and
 `end_ts` chains to the next capture in full-precision order. A day with no
 collision keeps exactly the ids it had before this rule. A file whose captures

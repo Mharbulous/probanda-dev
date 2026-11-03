@@ -14,7 +14,7 @@ by Step 0.
 | Source | Mechanism | Reference |
 |---|---|---|
 | TimeCamp computer activity | **Delegate**: invoke `/build-timeline` for the target date, then have `/time-pipeline-data` export its stored rows (prefix `activity:timecamp:`) to a file and convert them with the gatekeeper's `build_ingest.py timeline --source timecamp`. No independent HTTP call. | `build-timeline/reference/TimeCamp.md` |
-| Telus calls | **Delegate** the same way: export prefix `activity:telus:`, convert with `--source telus`. Reuses the already-verified CSV parsing rules; don't refork them. No CSV supplied for the day → recorded as `skipped`, a terminal (gate-satisfying) status, not `failed`. | `build-timeline/reference/TelusConnect.md` |
+| Telus calls | **Delegate** to `/build-timeline`, whose Telus source imports the whole call archive and loads it, with each covered date's status, through the bulk ingest. Nothing to export or convert here. No archive covers the day → `skipped`, a terminal (gate-satisfying) status, not `failed`. | `build-timeline/reference/TelusConnect.md` |
 | SyncoPaid captures | **New fetch, capture-level** — not build-timeline's coarser block-level call, which discards the per-capture/OCR detail every SyncoPaid-heavy fixture needs. Redirect the `evidence query ... --include-ocr-text` output to a file, then convert it with `build_ingest.py syncopaid-captures`. Same live-opt-in gate as build-timeline's fetch. | `reference/SyncoPaidCaptures.md` |
 | TimeCamp time entries | **New fetch** — the practitioner's own amber/green timesheet rows, a different endpoint from build-timeline's computer-activity fetch. The `timecamp` connector's `entries` writes the day's rows to a file (`out_file`), then `build_ingest.py timecamp-entries` converts it, filtering to the practitioner's own `user_id`. Same connector. | `reference/TimeCampEntries.md` |
 | Google Calendar | **Delegate** the same way: export prefix `activity:gcal:`, convert with `--source gcal`. build-timeline owns the registry entry and the fetch; this skill qualifies the route first and never reads a calendar independently. Registered as the fifth source in #454; the doctrine behind it is #421's. | `build-timeline/reference/GoogleCalendar.md` |
@@ -45,11 +45,13 @@ For each of the seven sources above, in any order:
    qualified and read, and the day must fall inside a range in
    `source:sent_mail:ranges`.
    For TimeCamp, build-timeline must have reported the day fetched. Telus
-   converts only when a Telus CSV was supplied for the day. Unconfirmed
+   takes its outcome from build-timeline's report: fetched needs no line here,
+   because the import already wrote the day's rows and status. Unconfirmed
    TimeCamp, Google Calendar, iCloud or sent mail is `failed` (step 4), with an
    `--error-detail` saying the source was not fetched for the date, never
    `empty`: an `empty` for a day never fetched releases the assembly gate on
-   missing evidence. Telus with no CSV supplied is `skipped` (step 4).
+   missing evidence. Telus with no archive covering the day is `skipped`, and
+   Telus reported failed is `failed` (step 4).
 3. **Convert it** with the matching `build_ingest.py` subcommand, appending to
    the day's ingest file. It writes the source's rows and its `fetched` or
    `empty` status line.
@@ -61,7 +63,7 @@ a day rebuilds the file and loads it again; rows upsert in place on their
 source key, so their ids stay stable.
 
 A registry-disabled source (`enabled: false`), a live-gate-off source
-(SyncoPaid), or a not-yet-provided CSV (Telus) is `skipped`, an expected,
+(SyncoPaid), or a date no archive covers (Telus) is `skipped`, an expected,
 terminal state — never `failed`. A registry with no entry for a source is
 `failed`, not `skipped`: only an explicit `enabled: false` may skip a source
 (the `timecamp` entry covers both TimeCamp sources). A genuine fetch error

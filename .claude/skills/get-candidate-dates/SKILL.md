@@ -11,7 +11,7 @@ Narrow one matter to the dates worth a minute-by-minute review. A candidate date
 
 ## Rules for every phase
 
-- **Read-only against every source.** Never mark mail read, move mail, write TimeCamp or the practice database, or create a time entry. The one write is the report in Phase 3.
+- **Read-only against every source.** Never mark mail read, move mail, write TimeCamp or the practice database, or create a time entry. The writes are the report in Phase 3, the call archive import, and a contact's number the practitioner approves (Phase 2, Phone).
 - **Mail** follows `shared/matter-mail.md`: its route, its reading rules, and its rule that the content stays in the matter. Every email counts once, by Message-ID. A message with no Message-ID counts alone and is flagged unverified.
 - **A file's modified date is never the work date.** A batch of older files can all carry one later date. Use the filename date and internal metadata first (Phase 2, Documents).
 - **Folder access:** ask once for each folder, for the smallest folder that holds the source. On a refusal or a missing tool, list the source under unexplored leads and continue.
@@ -42,7 +42,8 @@ Work through every source. Each is a place to look, and finding nothing there is
 - *A truncated search* (`returned` below `totalFound`) is narrowed by date and run again, never accepted.
 
 **Phone, matched on digits against the service list**
-- *Carrier call-log archives:* monthly zipped CSVs, read in memory without extracting them, by the formats and rules in `build-timeline/reference/TelusConnect.md`. Try the folder it names, then ask the practitioner once for the path. Check both monthly series and identify the lawyer's own extension from the `Extension` column. A forwarding series adds a date only for a call the own series lacks.
+- *Carrier call-log archive:* run the import in `build-timeline/reference/TelusConnect.md` and load it. Then make one `/timecamping-data` calls read for the matter and the window, with any number from the service list that is not on a contact in `numbers`. Every call returned is a candidate date, whatever its outcome or duration. Each date in `uncovered_dates`, and anything in the import's `files_failed`, goes under unexplored leads.
+- *A contact in `contacts_without_phone`:* find the number in the intake form or the file and pass it in `numbers`. Offer once to save it to the contact with `upsert_contact`, sending the contact's existing phones plus the new one, because the list replaces. Save it only on the practitioner's yes.
 - *Current provider logs:* a portal keeps only its recent window. A carrier changed mid-period, or a log past its window, goes under unexplored leads.
 - *Missed-call and voicemail email notices* from the carrier are a second phone source.
 

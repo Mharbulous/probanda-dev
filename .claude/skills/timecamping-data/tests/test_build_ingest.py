@@ -89,31 +89,6 @@ def timecamp_activity(native_id, start, end="2026-09-01T16:10:00Z", application=
     }
 
 
-def telus_call(native_id="c2026-09-01T09:20+16045551234", payload_extra=None, drop=None):
-    payload = {
-        "format": "portal",
-        "type": "Voice",
-        "phone_number": "+16045551234",
-        "contact_name": "Jesse Marlowe",
-        "action": "VoIP Call",
-        "action_result": "Call connected",
-        "result_description": "",
-    }
-    payload.update(payload_extra or {})
-    if drop:
-        del payload[drop]
-    return {
-        "id": "telus:" + native_id,
-        "source": "telus",
-        "native_id": native_id,
-        "start_ts": "2026-09-01T16:20:00Z",
-        "end_ts": "2026-09-01T16:21:16Z",
-        "raw_type": "phone_call",
-        "raw_payload": payload,
-        "fetched_at": "2026-09-02T03:00:00Z",
-    }
-
-
 def gcal_event(event_id="abc123", all_day=False, start_ts="2026-09-01T18:00:00Z", drop=None):
     # The stored shape surveyed from the live store on 2026-09-22 (browser
     # route: created, updated and transparency are present but null).
@@ -328,7 +303,6 @@ class BuildIngestTest(unittest.TestCase):
 
     def test_every_subcommand_emits_schema_shaped_lines(self):
         self.timeline("timecamp", [timecamp_activity("48291", "2026-09-01T16:05:00Z")])
-        self.timeline("telus", [telus_call()])
         self.timeline("gcal", [gcal_event()])
         self.timeline("icloud", [icloud_event()])
         self.timeline("sent_mail", [sent_email()])
@@ -349,20 +323,21 @@ class BuildIngestTest(unittest.TestCase):
         self.assertEqual(
             sorted(l["table"] for l in lines if l["table"] != "source_fetch_log"),
             sorted([
-                "timecamp_computer_activities", "telus_calls", "gcal_events", "icloud_events", "sent_mail",
+                "timecamp_computer_activities", "gcal_events", "icloud_events", "sent_mail",
                 "timecamp_time_entries", "syncopaid_captures",
             ]),
         )
         self.assertEqual(
             sorted(l["row"]["source_name"] for l in lines if l["table"] == "source_fetch_log"),
-            sorted(SOURCE_TABLES + ("telus_calls",)),
+            sorted(SOURCE_TABLES),
         )
 
     def test_raw_payload_is_a_json_string_of_the_whole_source_record(self):
-        self.timeline("telus", [telus_call()])
+        activity = timecamp_activity("1", "2026-09-01T16:05:00Z")
+        self.timeline("timecamp", [activity])
         row = self.lines()[0]["row"]
         self.assertIsInstance(row["raw_payload"], str)
-        self.assertEqual(json.loads(row["raw_payload"]), telus_call()["raw_payload"])
+        self.assertEqual(json.loads(row["raw_payload"]), activity["raw_payload"])
 
     # --- timeline ----------------------------------------------------------
 
@@ -414,28 +389,11 @@ class BuildIngestTest(unittest.TestCase):
         self.assertEqual(self.lines(), [], "a failed run must append nothing")
 
     def test_timeline_with_no_rows_on_the_date_logs_empty(self):
-        self.timeline("telus", [])
+        self.timeline("timecamp", [])
         self.assertEqual(
             [(l["table"], l["row"]["status"], l["row"]["row_count"]) for l in self.lines()],
             [("source_fetch_log", "empty", 0)],
         )
-
-    def test_telus_maps_columns_duration_and_internal_flag(self):
-        internal = telus_call("c2026-09-01T10:00+10", payload_extra={"phone_number": "10", "internal": True})
-        self.timeline("telus", [telus_call(), internal])
-        rows = [l["row"] for l in self.lines() if l["table"] == "telus_calls"]
-        self.assertEqual(rows[0]["native_id"], "c2026-09-01T09:20+16045551234")
-        self.assertEqual(rows[0]["phone_number"], "+16045551234")
-        self.assertEqual(rows[0]["contact_name"], "Jesse Marlowe")
-        self.assertEqual(rows[0]["action_result"], "Call connected")
-        self.assertEqual(rows[0]["duration_seconds"], 76)
-        self.assertEqual(rows[0]["raw_type"], "phone_call")
-        self.assertEqual([r["is_internal"] for r in rows], [0, 1])
-
-    def test_telus_missing_required_payload_key_fails_naming_it(self):
-        proc = self.timeline("telus", [telus_call(drop="contact_name")], ok=False)
-        self.assertIn("contact_name", proc.stderr)
-        self.assertEqual(self.lines(), [], "a failed run must append nothing")
 
     def test_gcal_maps_native_id_title_attendees_and_all_day(self):
         all_day = gcal_event("day1", all_day=True, start_ts="2026-09-01T07:00:00Z")
@@ -468,8 +426,8 @@ class BuildIngestTest(unittest.TestCase):
         self.assertEqual(self.lines(), [], "a failed run must append nothing")
 
     def test_a_row_from_another_source_fails(self):
-        proc = self.timeline("gcal", [telus_call()], ok=False)
-        self.assertIn("telus", proc.stderr)
+        proc = self.timeline("gcal", [timecamp_activity("1", "2026-09-01T16:05:00Z")], ok=False)
+        self.assertIn("timecamp", proc.stderr)
 
     def test_icloud_maps_calendar_identity_flags_and_native_id(self):
         # A free, all-day Home event with no location or notes, stored as reported.
