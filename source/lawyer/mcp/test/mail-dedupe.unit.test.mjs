@@ -245,6 +245,37 @@ test("a new scan on a server without MOVE clears an earlier server's plan", asyn
   assert.equal(moves(client).length, 0);
 });
 
+test("a scan saved by an older copy has no can_move and still plans and groups, and a saved can_move: false is still refused", async () => {
+  const scanPath = join(STATE_DIR, "Coclerk", "mail", "dedupe", "scan.json");
+  const edit = (change) => {
+    const saved = JSON.parse(readFileSync(scanPath, "utf-8"));
+    change(saved);
+    writeFileSync(scanPath, JSON.stringify(saved));
+  };
+  const raw = mail();
+  const client = mailbox({ INBOX: { 1: raw, 2: raw, 3: mail({ messageId: "<b@example.test>" }), 4: mail({ messageId: "<b@example.test>", headers: ["X-Mailer: Two"] }) }, [TRASH]: {} });
+  const sliced = context(client, { mailSliceMs: 0 });
+
+  const first = await callTool(sliced, "mail__dedupe_scan", { folders: ["INBOX"] });
+  assert.equal(first.status, "scanning");
+  edit((saved) => { delete saved.can_move; });
+  const done = await scanToEnd(sliced, { scan_id: first.scan_id });
+  assert.equal(done.can_move, true);
+  assert.equal(typeof done.tier1.plan_id, "string");
+  assert.equal(done.tier2.groups, 1);
+
+  edit((saved) => { delete saved.can_move; });
+  assert.equal((await callTool(sliced, "mail__dedupe_scan", { scan_id: first.scan_id })).can_move, true);
+  const [group] = await comparison(sliced, first.scan_id);
+  const approved = [{ group_id: group.group_id, remove: [group.copies[0].copy_id] }];
+  assert.equal((await callTool(sliced, "mail__dedupe_plan_tier2", { scan_id: first.scan_id, approved })).expected_count, 1);
+
+  edit((saved) => { saved.can_move = false; });
+  assert.equal((await callTool(sliced, "mail__dedupe_scan", { scan_id: first.scan_id })).can_move, false);
+  assert.equal((await errorOf(sliced, "mail__dedupe_plan_tier2", { scan_id: first.scan_id, approved })).code, "mail_move_unsupported");
+  assert.equal(moves(client).length, 0);
+});
+
 test("a message with no Message-ID is counted and left alone by both tiers", async () => {
   const raw = mail({ messageId: null });
   const client = mailbox({ INBOX: { 1: raw, 2: raw, 3: mail({ messageId: null, body: "y\r\n" }) }, [TRASH]: {} });

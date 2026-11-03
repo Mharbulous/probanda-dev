@@ -114,7 +114,8 @@ interface ScanState {
   scan_id: string;
   across: boolean;
   trash: string | null;
-  can_move: boolean;
+  // Absent from a scan saved by an older copy, which only began with MOVE and Trash confirmed.
+  can_move?: boolean;
   phase: "hashing" | "comparing" | "done";
   scans: FolderScan[];
   entries: Entry[];
@@ -375,7 +376,7 @@ function groupEntries(state: ScanState): void {
       (tally.get(e.folder) as FolderTally).copies += 1;
     }
   }
-  if (state.can_move && remove.length > 0) {
+  if (state.can_move !== false && remove.length > 0) {
     state.tier1.plan_id = writePlan({ tier: 1, scan_id: state.scan_id, trash: state.trash as string, remove, keep });
   }
   writeState("tier1-copies.txt", listText(state.rows));
@@ -555,7 +556,7 @@ function summary(state: ScanState): unknown {
   return {
     status: "done",
     scan_id: state.scan_id,
-    can_move: state.can_move,
+    can_move: state.can_move !== false,
     trash_folder: state.trash,
     folders: state.tallies,
     tier1: {
@@ -606,7 +607,7 @@ export function dedupeReadComparison(args: Args): unknown {
 
 export function dedupePlanTier2(args: Args): unknown {
   const state = finishedScan(args.scan_id);
-  if (!state.can_move) {
+  if (state.can_move === false) {
     throw new DataServerError("this mail server offers no MOVE or has no Trash folder, so no plan can be made; nothing was changed", "mail_move_unsupported");
   }
   const groups = new Map((loadJson<ComparedGroup[]>("comparison.json") ?? []).map((g) => [g.group_id, g]));
