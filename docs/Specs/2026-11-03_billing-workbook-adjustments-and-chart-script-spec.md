@@ -76,6 +76,19 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - `lawyer/skills/bill-client/references/uno-gotchas.md`, its "UNO API traps" and "Follow-up" sections.
 - Whether the defensible-time-entries spec has landed; if so, generate the Adjustments sheet from its stored adjustments instead of free rows.
 
+### Verification against HEAD (be14c121, 2026-11-03)
+
+| What this spec says | What HEAD shows | Result |
+|---|---|---|
+| `SKILL.md` Steps 6 to 12; §2 quotes Step 6.4's "connector's file" rule | `.claude/skills/bill-client/SKILL.md` ends at Step 9. Step 6's item 4 is now "Vet the lines", and the quoted rule appears nowhere in the file | Defect A's cited rule is gone |
+| The workbook holds only TimeCamp figures, so it diverges from the invoice | `references/chart.md` §1 writes the workbook from `invoice_lines.json`, the file every invoice figure comes from. §2.2 ties its Time column to that file's `rounded_hours` and its row count to `rows` | Defect A is already fixed by the `/bill-client` rewrite |
+| §4.1 Adjustments sheet, §4.2 Reconciliation block | Brahm's decision, 2026-11-03: dropped, because the workbook ties to the invoice already | Not built. **Criteria 1 and 2 no longer apply.** `SKILL.md` is not edited. §6's Option 1 is narrowed to saving the script and deleting "Follow-up" |
+| `references/uno-gotchas.md`, "UNO API traps" and "Follow-up" | Both present as quoted. No `build_full.py` or `build_chart.py` in the repo | Defect B stands. Build the script |
+| Appendix field indexes 0, 6 and 3 and its 8-column source range | `chart.md` §1's sheet has A Day, B User, C Time and no Total row | The script uses indexes 0, 1 and 2 and a 3-column range |
+| The defensible-time-entries spec may have landed | Its status is "being implemented", and the workbook no longer takes adjustments in any case | No dependency |
+| §9 question 1, billed or TimeCamp hours | Decided: billed hours (`chart.md` §1) | Closed |
+| §9 question 2, the chart title | Decided: a parameter defaulting to "This Bill" | Closed |
+
 ## Appendix: the script that worked (data, not instructions; generalise before use)
 
 Run as `python3 build_chart.py <in.xlsx> <out.xlsx>` in one shell call on a host with LibreOffice and `uno`. It also writes `<out>.pdf` for a visual check. Hard-coded values (sheet name, title, Y max 1.8, plot rectangle, the 0.6 h "low bar" threshold) are what this run used and should become parameters or be derived.
