@@ -1,4 +1,4 @@
-// build-stamp: 594388d2fa0d
+// build-stamp: 917dde571ef5
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "594388d2fa0d";
+var BUILD_STAMP = false ? null : "917dde571ef5";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -94611,137 +94611,8 @@ function printMarkerSets(sets) {
 function rebuttalMarker(answeredBySubmissionId) {
   return answeredBySubmissionId === null ? "\u21A9\uFE0F" : "";
 }
-var ALL_MARKER_GLYPHS = [
-  "\u{1F645}\u{1F3FB}\u200D\u2642\uFE0F",
-  // denied (admission ladder)
-  "\u{1F9E9}",
-  // gap
-  "\u{1F3F7}\uFE0F",
-  // not recorded
-  "\u{1F575}\uFE0F",
-  // question
-  "\u2B1C",
-  // unchosen
-  "\u{1F3DB}\uFE0F",
-  // jurisdictional basis needed
-  "\u{1F6A7}",
-  // dead end (doctrinal / jurisdictional)
-  "\u{1F4D6}",
-  // doctrinal basis needed
-  "\u{1F52C}",
-  // scrutinize an unverified lead (#502)
-  "\u{1F948}",
-  // only secondary
-  "\u{1F949}",
-  // only tertiary
-  "\u{1F3C5}",
-  // unrated source (#597)
-  "\u{1F4DC}",
-  // authority excerpt needed
-  "\u{1F4D1}",
-  // exhibit excerpt needed
-  "\u{1F4AC}",
-  // testimony excerpt needed
-  "\u{1F4CD}",
-  // authority pinpoint missing
-  "\u{1F4CC}",
-  // exhibit pinpoint missing
-  "\u{1F9F7}",
-  // testimony pinpoint missing
-  "\u21A9\uFE0F",
-  // rebuttal needed
-  "\u{1F4C7}",
-  // note up
-  "\u26A0\uFE0F",
-  // treatment: distinguishable
-  "\u{1F6A8}",
-  // treatment: negative
-  "\u26D4",
-  // treatment: overruled
-  "\u{1F570}\uFE0F",
-  // predates the provision (schema v61)
-  "\u{1F3C6}",
-  // not best copy
-  "\u{1F925}",
-  // reserved for impeachment
-  "\u{1F0A1}",
-  // reserved
-  "\u{1F6A9}",
-  // adverse (hold, printed on no page)
-  "\u{1F9B5}",
-  // unserved petitum
-  "\u{1F9F5}",
-  // loose thread
-  "\u{1F9FE}",
-  // factual basis needed
-  "\u{1F4DA}",
-  // proposition needed
-  "\u{1F443}",
-  // doubt (suspicious fact / dubious law)
-  "\u{1F464}",
-  // no witness
-  "\u{1F92B}",
-  // suppressed by counsel (schema v69)
-  "\u{1F5E3}\uFE0F",
-  // talk to witness
-  "\u270D\uFE0F",
-  // draft it
-  "\u{1F58B}\uFE0F",
-  // sign it (witness statement)
-  "\u2712\uFE0F",
-  // swear it (affidavit)
-  "\u{1F3BE}",
-  // admission: serve it
-  "\u23F3",
-  // admission: waiting
-  "\u{1FAF8}",
-  // admission: refused
-  "\u{1F937}",
-  // admission: no knowledge
-  "\u23F0",
-  // admission: deemed
-  "\u26A1\uFE0F",
-  // admission: struck
-  "\u{1F91D}",
-  // admission: tendered/agreed
-  "\u{1F579}\uFE0F",
-  // tender the proof
-  "\u{1F9D0}"
-  // final review (#861)
-];
-var WORK_MARKER_GLYPHS = [
-  "\u{1F9E9}",
-  "\u{1F3DB}\uFE0F",
-  "\u{1F4D6}",
-  "\u{1F4DC}",
-  "\u{1F4D1}",
-  "\u{1F4AC}",
-  "\u{1F4CD}",
-  "\u{1F4CC}",
-  "\u{1F9F7}",
-  "\u{1F52C}",
-  "\u21A9\uFE0F",
-  "\u{1F443}",
-  "\u{1F4C7}",
-  "\u{1F3F7}\uFE0F",
-  "\u{1F575}\uFE0F",
-  "\u2B1C",
-  "\u{1F464}",
-  "\u{1F5E3}\uFE0F",
-  "\u270D\uFE0F",
-  "\u{1F58B}\uFE0F",
-  "\u2712\uFE0F",
-  "\u{1F3BE}",
-  "\u{1F579}\uFE0F",
-  "\u{1F949}",
-  "\u{1F948}",
-  "\u{1F3C5}",
-  "\u{1F9B5}",
-  "\u{1F9F5}",
-  "\u{1F9FE}",
-  "\u{1F4DA}",
-  "\u{1F9D0}"
-];
+var ALL_MARKER_GLYPHS = SYMBOLS.map((s3) => s3.glyph).sort((a3, b3) => b3.length - a3.length);
+var WORK_MARKER_GLYPHS = SYMBOLS.filter((s3) => s3.group === "work").map((s3) => s3.glyph);
 function counselReviewMarker(otherWorkMarkers, currentSnapshot, latestApproval) {
   if (WORK_MARKER_GLYPHS.some((g3) => g3 !== "\u{1F9D0}" && otherWorkMarkers.includes(g3))) return "";
   return latestApproval === currentSnapshot ? "" : "\u{1F9D0}";
