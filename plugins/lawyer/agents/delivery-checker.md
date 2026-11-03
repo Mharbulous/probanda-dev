@@ -6,8 +6,8 @@ description: >
   process server, Adobe Sign, or any combination), from the evidence on file and in the
   sent mail, and compares a Work Board draft of the letter with the letter as sent.
   Returns one strict JSON result. Read-only: writes nothing, records nothing, sends
-  nothing and shows nothing. Dispatched by /draft, by /matter-data after an outgoing
-  letter is ingested, or on the practitioner's request, one instance per letter, before
+  nothing and shows nothing. Dispatched by /draft, by /issue-invoice for an invoice, by
+  /matter-data after an outgoing letter is ingested, or on the practitioner's request, one instance per letter, before
   anyone asks the practitioner whether a letter went out. Never works out a deadline
   or a deemed-service date.
 model: opus
