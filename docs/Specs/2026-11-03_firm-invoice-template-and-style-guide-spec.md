@@ -75,3 +75,17 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - `bill-client/SKILL.md` has no invoice step at HEAD (v0.21.9 may differ from v0.21.7).
 - `practice_data__firm_profile` returns only `letterhead` among templates.
 - Whether `2026-11-03_defensible-time-entries-spec.md` has landed and already defines where the invoice is rendered.
+
+## 11. Verification against HEAD (de5d9711, 2026-11-03)
+
+| Spec statement | At HEAD | Where |
+|---|---|---|
+| §1, §10 `/bill-client` has no invoice step, template or renderer | False. Step 8 renders a draft invoice with `render_invoice.py`, added in df131b34. It lays the page out in code on the letterhead (`write_body`, `add_lines_table`) and copies layout and wording from the last signed invoice. The missing parts are the template and the style guide | `.claude/skills/bill-client/SKILL.md` Step 8, `.claude/skills/bill-client/scripts/render_invoice.py` |
+| §10 the firm profile returns only `letterhead` among templates | Partly. It returns `letterhead` as a path. It also returns `invoice_template`, a JSON object of layout and wording from 05fc2107. No skill, script or test reads that object, and the firm's `firm.json` does not set it, so changing its shape to a path strands nothing | `source/lawyer/mcp/src/tools/practice/firm-profile.ts`, `source/lawyer/mcp/src/schema/practice.ts` |
+| §10 whether the defensible-time spec has landed and says where the invoice is rendered | It has landed. Its §6 step 6 says only "from the firm's invoice template", and `render_invoice.py` is the renderer. Its verification table says "firm style guide: not built, nothing would read it". That is out of date: the invoice template and the chart now read it | `docs/Specs/2026-11-03_defensible-time-entries-spec.md` §13 |
+| §2 the chart colour is in `bill-client/SKILL.md` | Moved. The two standing colours are literals in `references/chart.md`, under "Custom series colors by team member" | `.claude/skills/bill-client/references/chart.md` |
+| §2 `letterhead.docx` is a Letter page with the four placeholders in the first-page header | Confirmed. The logo is a floating image in that header, and the body is empty | The firm's `letterhead.docx`, read only |
+| §9 question 1, who builds the template | Decided by Brahm: built once on first run from the letterhead and the style guide, corrected by the practitioner in Word, saved to the firm folder on approval, and only filled after that | |
+| §9 question 2, the preview route | Decided: the PDF route tries Word, then soffice. `render_invoice.py` already does this | `convert` in `render_invoice.py` |
+| §9 question 3, letters | Out of scope. Letterhead placeholders and `render_letterhead.py` stay as they are | |
+| §4 the renderer's checks | Kept: figure recomputation and its refusals (including `no_support`), no signature input, never overwriting, and PDF by Word then soffice. Only the code layout goes | `render_invoice.py` |
