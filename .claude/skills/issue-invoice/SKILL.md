@@ -26,7 +26,9 @@ It needs `<matter-data folder>\vet-billable-time\line_map.json`, the record the 
 
 ## When it went out
 
-When the practitioner says the invoice went out, call `practice_data__record_invoice_sent` with the sent date and the sent copy's path.
+Never ask whether the invoice was sent, delivered or received until `lawyer:delivery-checker` has checked it. Dispatch it once, with `matter_root`, the sent copy (or else the signed copy) as `letter_path`, `file_name`, `file_size` and, for a PDF, `page_manifests` from `pdf_pages__images`. Report its result, which updates nothing, and ask only about what it lists under `could_not_determine`, naming what was checked. A check marked `needs page images` is reported as not checked.
+
+When the practitioner says the invoice went out, check it first, then call `practice_data__record_invoice_sent` with the invoice number, the sent date and the sent copy's path. Then call `matter_data__procedural_history_append` with `date` the sent date, `line` `Sent invoice <number> to client` and `source_path` the sent copy, relative to the matter folder. A `duplicate_entry` refusal means it is already recorded: say so in one line.
 
 ## A correction after issue
 
