@@ -1,6 +1,6 @@
 # timekeeper
 
-The optional Probanda plugin for automated time tracking. It holds `/build-timeline` (gathering a day's raw time evidence), `/time-sorting` (sorting that evidence to client matters), `/timecamping` (correcting TimeCamp from the evidence), `/time-entry-drafting` (drafting time entries from a sorted day), and the two stores' gatekeepers, `/timecamping-data` and `/time-pipeline-data`.
+The optional Probanda plugin for automated time tracking. It holds `/get-candidate-dates` (narrowing a matter to the dates worth reviewing before a bill), `/build-timeline` (gathering a day's raw time evidence), `/time-sorting` (sorting that evidence to client matters), `/timecamping` (correcting TimeCamp from the evidence), `/time-entry-drafting` (drafting time entries from a sorted day), and the two stores' gatekeepers, `/timecamping-data` and `/time-pipeline-data`.
 
 Their tools, `time_pipeline__*` and `timecamping_data__*`, are still served by the `data` server that `lawyer` ships, so these skills call `mcp__plugin_lawyer_data__...`. The data stays where it was, in the practitioner's `_practice` folder.
 

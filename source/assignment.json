@@ -192,6 +192,7 @@
       ],
       "skills": [
         "build-timeline",
+        "get-candidate-dates",
         "time-entry-drafting",
         "time-pipeline-data",
         "time-sorting",
