@@ -84,7 +84,7 @@ Any time the underlying "Time Tracking Report - decimal" sheet is edited (rows d
 
 `Ctrl+S`. Confirm the file is saved with AutoSave/manual save before considering the task done. If AutoSave is on (check the toggle top-left of the Excel window), it is also your safety net — if a window gets closed by mistake mid-edit (see step 2), the file's "Date modified" timestamp will confirm whether recent changes survived, and reopening it from its saved path recovers the work rather than losing it.
 
-Then save the chart as a PNG (right-click the chart's border → **Save as Picture...**) in `<matter-data folder>\bill-client\`.
+Then save the chart as a PNG (`build_chart.py` writes one itself; otherwise right-click the chart's border → **Save as Picture...**) in `<matter-data folder>\bill-client\`.
 
 ## General technique notes (apply throughout)
 

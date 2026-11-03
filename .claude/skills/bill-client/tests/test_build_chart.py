@@ -218,10 +218,13 @@ class RealBuild(unittest.TestCase):
         self.assertEqual(float(re.search(r'<c:max val="([^"]+)"', self.chart_xml).group(1)), 1.8)
 
     def test_the_summary_line_ties_to_the_rows(self):
-        self.assertIn("12 rows, 10 days, 6.60 hours", self.result.stdout)
+        self.assertIn("12 rows, 10 days, 6.40 hours", self.result.stdout)
 
     def test_the_pdf_is_written_beside_the_output(self):
         self.assertTrue(self.output.with_suffix(".pdf").read_bytes().startswith(b"%PDF"))
+
+    def test_the_png_is_written_beside_the_output(self):
+        self.assertTrue(self.output.with_suffix(".png").read_bytes().startswith(b"\x89PNG"))
 
     def test_the_input_is_unchanged(self):
         self.assertEqual(hashlib.sha256(self.source.read_bytes()).hexdigest(), self.source_hash)

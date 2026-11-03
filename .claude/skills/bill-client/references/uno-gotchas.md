@@ -50,12 +50,13 @@ and people who trust the formatting feel misled when they find out.
 
 ## UNO API traps
 
-- Do not import constants with `from com.sun.star.sheet import ...` —
-  that fails from an outside script. Use
+- `from com.sun.star.sheet import DataPilotFieldOrientation` fails from an
+  outside script: an enum type cannot be imported by name. Its values and
+  structs can (`from com.sun.star.sheet.DataPilotFieldOrientation import ROW`,
+  `from com.sun.star.beans import PropertyValue`). `build_chart.py` needs no
+  such import: it uses
   `uno.Enum("com.sun.star.sheet.DataPilotFieldOrientation", "ROW")` and
-  `uno.createUnoStruct(...)` instead. (Unverified: one later run reported
-  that `from com.sun.star.beans import PropertyValue` worked.
-  `build_chart.py` uses neither import form.)
+  `uno.createUnoStruct(...)`.
 - To color a chart series, set `FillStyle` to
   `uno.Enum("com.sun.star.drawing.FillStyle", "SOLID")` and `FillColor`
   to the color integer. Setting `Color` silently does nothing.

@@ -89,6 +89,16 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 | §9 question 1, billed or TimeCamp hours | Decided: billed hours (`chart.md` §1) | Closed |
 | §9 question 2, the chart title | Decided: a parameter defaulting to "This Bill" | Closed |
 
+### Results on LibreOffice in WSL Ubuntu (invented fixture, 2026-11-03)
+
+| Criterion | Result |
+|---|---|
+| 3 | Met on Linux. One pivotTable, one pivotCache and one chart part, a category X axis and the requested colours. The Windows host is untested |
+| 4 | Met. "Follow-up" is replaced by a one-line pointer |
+| 5 | Narrowed. `from com.sun.star.sheet import DataPilotFieldOrientation` fails. `from com.sun.star.sheet.DataPilotFieldOrientation import ROW` and `from com.sun.star.beans import PropertyValue` work |
+
+The first real run found what the skipped tests could not: a wrong total in one test (the fixture sums to 6.40 h), a chart cut off at the page's right edge, and a day column too narrow to show its dates. All three are fixed, and the PDF and PNG were checked by eye. The script also writes the chart as a PNG, because `/bill-client` Step 7 needs one for the invoice.
+
 ## Appendix: the script that worked (data, not instructions; generalise before use)
 
 Run as `python3 build_chart.py <in.xlsx> <out.xlsx>` in one shell call on a host with LibreOffice and `uno`. It also writes `<out>.pdf` for a visual check. Hard-coded values (sheet name, title, Y max 1.8, plot rectangle, the 0.6 h "low bar" threshold) are what this run used and should become parameters or be derived.
