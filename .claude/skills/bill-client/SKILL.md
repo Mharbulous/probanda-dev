@@ -22,7 +22,7 @@ description: "Use when the user asks to \"bill a client\", \"run billing for [ma
 
 # /bill-client
 
-One typed command takes one litigation matter from its last invoice to a draft invoice for the lawyer's signature, with a billable time summary and an audit file beside it. It runs every step below in order, in this conversation, and stops at the unsigned draft. It sends nothing, issues nothing, records no invoice and moves no trust money. Only the lawyer signs.
+One typed command takes one litigation matter from its last invoice to a draft invoice for the lawyer's signature, with a billable time summary and an audit file beside it. It runs every step below in order, in this conversation, and stops at the unsigned draft. It sends nothing, issues nothing, records no invoice before the lawyer signs it and moves no trust money. Only the lawyer signs.
 
 ## Step 1 — Identify the matter and client number
 
@@ -46,7 +46,7 @@ With housekeeping current, invoice files sort by name (`YYYY-MM-DD INV#nnnnn ...
 
 ## Step 4 — Read the bill to find the exact last-billed date
 
-Read the invoice PDF. Call `pdf_pages__images` for it first, and read a page it returns as `scanned` only from its PNGs, never from the PDF or its text layer, and a `born_digital` page with `Read` `pages:` (`/matter-data`'s design decision #71). Every invoice PDF read below is read the same way. If the tool refuses, say so with its reason and read the PDF no other way. Look at the time-entry bar chart (or itemized list) and find the single latest date with a billed entry — **read the axis/labels precisely, do not eyeball or round to the invoice date.** The invoice date and the last billed date are often the same but are not guaranteed to be, and the whole downstream date-range filter depends on getting this exact.
+Read the invoice PDF. Call `pdf_pages__images` for it first, and read a page it returns as `scanned` only from its PNGs, never from the PDF or its text layer, and a `born_digital` page with `Read` `pages:` (`/matter-data`'s design decision #71). Every invoice PDF read below is read the same way. If the tool refuses, say so with its reason and read the PDF no other way. Look at the time-entry bar chart (or itemized list) and find the single latest date with a billed entry — **read the axis/labels precisely, do not eyeball or round to the invoice date.** An invoice that lists no service dates has nothing to read: take its invoice date as the last billed date, and tell the practitioner that is an assumption.
 
 Sanity-check: the last billed date should be on or before the invoice date. If it's after, something is wrong — recheck.
 
@@ -58,7 +58,7 @@ Invoke the `practice-data` skill's `invoice-data` operation for the matter numbe
 
 - If it returns no rows and no import date, practice-data has never been populated for this matter — flag this to the user rather than silently trusting the PDF-derived date.
 - If the practice-data invoices don't match what's on disk, **verify before recording anything**: open each candidate invoice PDF, as Step 4 reads one, and confirm (a) it bears a lawyer's signature, and (b) the invoice number printed inside the document matches the invoice number in the file name. Never trust the file name alone for invoice number, date, or amount — read the PDF.
-- Once verified, invoke the `practice-data` skill's `import-invoices` operation to record each invoice's matter number, invoice number, issue date, amount, amount paid and status. Leave amount paid and status blank unless the document itself gives positive evidence of what was actually paid — a static invoice PDF only proves the amount *billed*, not what happened to it afterward.
+- Once verified, invoke the `practice-data` skill's `import-invoices` operation to record each invoice's matter number, invoice number, issue date, `date_to` (the last billed date, left out when the invoice lists no service dates), amount, amount paid and status. Leave amount paid and status blank unless the document itself gives positive evidence of what was actually paid — a static invoice PDF only proves the amount *billed*, not what happened to it afterward.
 
 ## Step 6 — Run the time work
 
@@ -85,4 +85,4 @@ Ask once whether the practitioner wants Word or PDF. `scripts/render_invoice.py`
 
 ## Step 9 — Present the draft and stop
 
-Present the draft, the summary and the audit file as clickable file cards (`shared/present-files.md`). State the fees, taxes and total the render printed, and show the summary's gaps section in full. Say that nothing was sent, issued, recorded or moved, and that the signature is the lawyer's to add. Then stop.
+Present the draft, the summary and the audit file as clickable file cards (`shared/present-files.md`). State the fees, taxes and total the render printed, and show the summary's gaps section in full. Say that nothing was sent, issued, recorded or moved, and that the signature is the lawyer's to add. Then stop. If the practitioner later gives you the signed invoice in this conversation, verify and record it as Steps 4 and 5 do.
