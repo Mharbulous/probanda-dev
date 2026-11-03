@@ -253,7 +253,7 @@ export function appendLineDurably(path: string, line: string): void {
   }
 }
 
-/** Temp-then-rename with the bounded retry OneDrive needs (status-file.ts). */
+/** Temp-then-rename with the bounded retry a file-sync client needs (status-file.ts). */
 export function writeReplacing(path: string, text: string): void {
   const code = writeStatusFile(path, text);
   if (code) throw new DataServerError(`could not write ${path}: ${code}`, "write_failed");

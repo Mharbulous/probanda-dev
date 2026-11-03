@@ -1,4 +1,4 @@
-// build-stamp: 88122a5b9bad
+// build-stamp: 5248adcb7c64
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -107662,7 +107662,7 @@ var KIND_ROW_KEYS = ["file", "name", "aliases", "recipient", ...STAMP_KEYS];
 function mailToolDefinitions() {
   const errors = " Errors: `mail_not_configured` (call mail__configure_credential), `mail_auth` (the server refused the sign-in), `mail_timeout` (no answer within 30 s; the connection was closed, so retry once), `mail_error`.";
   const readOnly = " Read-only: every folder is opened read-only, so nothing is marked read.";
-  const organizes = " Writes to the mailbox. No Probanda tool deletes mail or a folder.";
+  const organizes = " Writes to the mailbox. No Probanda tool permanently deletes mail or deletes a folder.";
   const folder = { type: "string", description: "Exact folder name from mail__list_folders. Default INBOX." };
   const uid = { type: "integer", minimum: 1, description: "The message's UID in that folder, from a list or search." };
   const bodyOptions = {
@@ -107873,7 +107873,7 @@ function mailToolDefinitions() {
     },
     {
       name: "mail__move_messages",
-      description: "Move messages from `folder` to `destination` (exact folder names from mail__list_folders) by their `uids` in `folder` (1-500, from a list or search). Only those messages leave `folder`. Uses only the server's MOVE; a server without MOVE is refused (`mail_move_unsupported`) and nothing changes. The tool deletes nothing. Moving to the Trash folder is a move; the mail server may empty its Trash on its own schedule. Returns {folder, destination, moved: [{uid, newUid?}], notFound, notMoved}; `newUid` is the message's UID in `destination`, and the old UID no longer works, so use `newUid` afterwards." + organizes + errors,
+      description: "Move messages from `folder` to `destination` (exact folder names from mail__list_folders) by their `uids` in `folder` (1-500, from a list or search). Only those messages leave `folder`. It never permanently deletes email: on a server without MOVE it copies, confirms each copy, then removes only those originals, and a server with neither MOVE nor UIDPLUS is refused (`mail_move_unsupported`) with nothing changed. Moving to the Trash folder is a soft-delete; the mail server may empty its Trash on its own schedule. Returns {folder, destination, moved: [{uid, newUid?}], notFound, notMoved}; `newUid` is the message's UID in `destination`, and the old UID no longer works, so use `newUid` afterwards. A UID in `notMoved` may also be in `destination`." + organizes + errors,
       inputSchema: {
         type: "object",
         properties: {
@@ -118660,7 +118660,7 @@ var stale = (message) => new DataServerError(message, "dedupe_stale");
 async function requireTrashAndMove(client) {
   if (!client.capabilities.has("MOVE")) {
     throw new DataServerError(
-      "this mail server does not offer MOVE, so copies cannot be moved to Trash without deleting the originals; nothing was changed",
+      "duplicate removal moves copies only by the server's MOVE, which this mail server does not offer; nothing was changed",
       "mail_move_unsupported"
     );
   }
@@ -119280,7 +119280,7 @@ function needsAppleIdHint(fields) {
   const domain = fields.username.trim().toLowerCase().split("@")[1] ?? "";
   return !["icloud.com", "me.com", "mac.com"].includes(domain);
 }
-var FLOW = "<h2>What happens when you click Sign in and save</h2><ol><li>Probanda signs in to your mail server with the password to check that it works, then to any calendar and contacts servers listed above, and to any server they move the account to while signing in. The password is not sent to Claude or Anthropic.</li><li>If the mail sign-in fails, nothing is saved and any earlier password stays in place. You can correct it and try again here. If only the calendar or contacts sign-in fails, mail is still saved, and calendar or contacts are marked as not set up.</li><li>If the sign-in works, the password is saved encrypted on this computer only. It is never logged and never shown again. If it cannot be saved, this page tells you.</li><li>Probanda uses it to read your mail, calendar and contacts, and to save drafts to your Drafts folder. Probanda does not send or delete mail. That is how Probanda is built, not a limit set by the password, which gives full access to the mailbox.</li><li>Setting up changes nothing in your mailbox. To end Probanda's access, revoke the password with your mail provider (for iCloud, in your Apple Account at account.apple.com). Probanda can no longer sign in after that.</li></ol>";
+var FLOW = "<h2>What happens when you click Sign in and save</h2><ol><li>Probanda signs in to your mail server with the password to check that it works, then to any calendar and contacts servers listed above, and to any server they move the account to while signing in. The password is not sent to Claude or Anthropic.</li><li>If the mail sign-in fails, nothing is saved and any earlier password stays in place. You can correct it and try again here. If only the calendar or contacts sign-in fails, mail is still saved, and calendar or contacts are marked as not set up.</li><li>If the sign-in works, the password is saved encrypted on this computer only. It is never logged and never shown again. If it cannot be saved, this page tells you.</li><li>Probanda uses it to read your mail, calendar and contacts, to save drafts to your Drafts folder, and to move mail between folders, including to your deleted-mail folder, where it stays recoverable. Probanda does not send mail or permanently delete it. That is how Probanda is built, not a limit set by the password, which gives full access to the mailbox.</li><li>Setting up changes nothing in your mailbox. To end Probanda's access, revoke the password with your mail provider (for iCloud, in your Apple Account at account.apple.com). Probanda can no longer sign in after that.</li></ol>";
 var DISCLAIMER = '<p class="disclaimer">We have made our best efforts to make this email connection secure, but no system is completely secure. Probanda and its authors accept no liability for any loss, damage or unauthorized access arising from its use. Use of this connection is at your own risk.</p>';
 function recipients(fields) {
   const dav = [fields.caldavUrl, fields.carddavUrl].filter((u3) => Boolean(u3)).map((u3) => new URL(u3).host);
@@ -121930,6 +121930,16 @@ function renameFolder(run, args) {
     return { renamed: true, from: entry.path, to: renamed.newPath || newName };
   });
 }
+async function copyThenRemove(client, uids, target) {
+  const range = uids.join(",");
+  const copied = await client.messageCopy(range, target, { uid: true });
+  if (!copied) throw new DataServerError(`the server refused to copy the messages to "${target}"; nothing was removed`, "mail_error");
+  if (uids.some((u3) => !copied.uidMap?.has(u3))) {
+    throw new DataServerError(`the server did not confirm every copy in "${target}", so the originals were left in place; copies may also be in "${target}"`, "mail_error");
+  }
+  await client.messageDelete(range, { uid: true });
+  return copied;
+}
 function moveMessages(run, args) {
   const folder = folderName("mail__move_messages.folder", args.folder);
   const destination = folderName("mail__move_messages.destination", args.destination);
@@ -121949,9 +121959,9 @@ function moveMessages(run, args) {
     }
     const [source, target] = [ends[0].path, ends[1].path];
     if (source === target) throw new ValidationError("mail__move_messages.destination must differ from folder");
-    if (!client.capabilities.has("MOVE")) {
+    if (!client.capabilities.has("MOVE") && !client.capabilities.has("UIDPLUS")) {
       throw new DataServerError(
-        "this mail server does not offer MOVE, so messages cannot be moved without deleting the originals; nothing was changed. Move them in the practitioner's mail program instead.",
+        "this mail server offers neither MOVE nor UIDPLUS, so messages cannot be moved without risking other messages; nothing was changed",
         "mail_move_unsupported"
       );
     }
@@ -121963,7 +121973,7 @@ function moveMessages(run, args) {
       throw new DataServerError(`none of these UIDs is in "${source}"; UIDs change when mail is moved, so search again`, "mail_not_found");
     }
     const range = existing.join(",");
-    const result = await client.messageMove(range, target, { uid: true });
+    const result = client.capabilities.has("MOVE") ? await client.messageMove(range, target, { uid: true }) : await copyThenRemove(client, existing, target);
     if (!result) throw new DataServerError(`the server refused to move the messages to "${target}"`, "mail_error");
     const left = new Set(await client.search({ uid: range }, { uid: true }) || []);
     const map = result.uidMap;

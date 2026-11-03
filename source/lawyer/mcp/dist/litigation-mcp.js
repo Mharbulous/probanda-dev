@@ -1,4 +1,4 @@
-// build-stamp: e28bd4136c6f
+// build-stamp: 3ca56f241603
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "e28bd4136c6f";
+var BUILD_STAMP = false ? null : "3ca56f241603";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -79922,7 +79922,7 @@ function housekeepingToolDefinitions() {
 function mailToolDefinitions() {
   const errors = " Errors: `mail_not_configured` (call mail__configure_credential), `mail_auth` (the server refused the sign-in), `mail_timeout` (no answer within 30 s; the connection was closed, so retry once), `mail_error`.";
   const readOnly = " Read-only: every folder is opened read-only, so nothing is marked read.";
-  const organizes = " Writes to the mailbox. No Probanda tool deletes mail or a folder.";
+  const organizes = " Writes to the mailbox. No Probanda tool permanently deletes mail or deletes a folder.";
   const folder = { type: "string", description: "Exact folder name from mail__list_folders. Default INBOX." };
   const uid = { type: "integer", minimum: 1, description: "The message's UID in that folder, from a list or search." };
   const bodyOptions = {
@@ -80133,7 +80133,7 @@ function mailToolDefinitions() {
     },
     {
       name: "mail__move_messages",
-      description: "Move messages from `folder` to `destination` (exact folder names from mail__list_folders) by their `uids` in `folder` (1-500, from a list or search). Only those messages leave `folder`. Uses only the server's MOVE; a server without MOVE is refused (`mail_move_unsupported`) and nothing changes. The tool deletes nothing. Moving to the Trash folder is a move; the mail server may empty its Trash on its own schedule. Returns {folder, destination, moved: [{uid, newUid?}], notFound, notMoved}; `newUid` is the message's UID in `destination`, and the old UID no longer works, so use `newUid` afterwards." + organizes + errors,
+      description: "Move messages from `folder` to `destination` (exact folder names from mail__list_folders) by their `uids` in `folder` (1-500, from a list or search). Only those messages leave `folder`. It never permanently deletes email: on a server without MOVE it copies, confirms each copy, then removes only those originals, and a server with neither MOVE nor UIDPLUS is refused (`mail_move_unsupported`) with nothing changed. Moving to the Trash folder is a soft-delete; the mail server may empty its Trash on its own schedule. Returns {folder, destination, moved: [{uid, newUid?}], notFound, notMoved}; `newUid` is the message's UID in `destination`, and the old UID no longer works, so use `newUid` afterwards. A UID in `notMoved` may also be in `destination`." + organizes + errors,
       inputSchema: {
         type: "object",
         properties: {
@@ -80867,242 +80867,8 @@ async function read_signals(store, args) {
 import { isAbsolute as isAbsolute2, relative } from "node:path";
 
 // src/tools/practice/contacts.ts
-import { existsSync as existsSync9, readdirSync as readdirSync8 } from "node:fs";
-import { dirname as dirname5, join as join13 } from "node:path";
-
-// src/case/backend.ts
-import { existsSync as existsSync7, readFileSync as readFileSync8 } from "node:fs";
-import { join as join11 } from "node:path";
-
-// src/case/case-lock.ts
-import { readFileSync as readFileSync7, writeFileSync as writeFileSync2 } from "node:fs";
-
-// src/data-lock.ts
-import { createHash as createHash3, randomUUID as randomUUID5 } from "node:crypto";
-import { closeSync as closeSync2, existsSync as existsSync6, mkdirSync as mkdirSync3, openSync as openSync2, readFileSync as readFileSync6, statSync as statSync3, unlinkSync as unlinkSync4, writeSync as writeSync2 } from "node:fs";
-import { homedir as homedir6 } from "node:os";
-import { win32 as pathWin323 } from "node:path";
-
-// src/lock-claim.ts
-import { closeSync, openSync, readdirSync as readdirSync5, readFileSync as readFileSync5, unlinkSync as unlinkSync3, writeSync } from "node:fs";
-import { win32 as pathWin322 } from "node:path";
-var UUID2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-function readLockKey(lock, field) {
-  let text8;
-  try {
-    text8 = readFileSync5(lock, "utf-8");
-  } catch {
-    return null;
-  }
-  try {
-    const key = JSON.parse(text8)[field];
-    return typeof key === "string" && UUID2.test(key) ? key : "none";
-  } catch {
-    return "none";
-  }
-}
-function removeLockIfKey(lock, field, key, stillStale = () => true, waitMs = 0) {
-  const claim = `${lock}.${key}.break`;
-  for (let waited = 0; ; waited += 50) {
-    try {
-      const fd = openSync(claim, "wx");
-      try {
-        writeSync(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString() }));
-      } finally {
-        closeSync(fd);
-      }
-      break;
-    } catch (err) {
-      if (err.code !== "EEXIST") throw err;
-      if (waited >= waitMs) return false;
-      sleepSync(50);
-    }
-  }
-  try {
-    if (readLockKey(lock, field) !== key || !stillStale()) return false;
-    unlinkSync3(lock);
-    return true;
-  } catch {
-    return false;
-  } finally {
-    unlinkClaim(claim);
-  }
-}
-function unlinkClaim(claim) {
-  let code = "UNKNOWN";
-  for (let attempt = 0; attempt < 10; attempt++) {
-    try {
-      unlinkSync3(claim);
-      return;
-    } catch (err) {
-      code = err.code ?? "UNKNOWN";
-      if (code === "ENOENT") return;
-      sleepSync(50);
-    }
-  }
-  console.error(`[lock] could not remove the removal claim ${claim}: ${code}`);
-}
-function orphanClaims(lock) {
-  const dir = pathWin322.dirname(lock);
-  const prefix = `${pathWin322.basename(lock)}.`;
-  try {
-    const found2 = readdirSync5(dir).filter((name) => name.startsWith(prefix) && name.endsWith(".break"));
-    return found2.length ? `; removal claim left behind (delete it if no process is mid-takeover): ${found2.join(", ")}` : "";
-  } catch {
-    return "";
-  }
-}
-function sleepSync(ms2) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms2);
-}
-
-// src/data-lock.ts
-var LOCK_RETRY_MS = 400;
-var LOCK_STALE_MS = 9e5;
-function lockKey(target) {
-  return createHash3("sha256").update(pathWin323.normalize(target).toLowerCase()).digest("hex").slice(0, 16);
-}
-function hostLocalDir(site, env) {
-  const base = env[site.envVar] || pathWin323.join(env.LOCALAPPDATA || homedir6(), "Coclerk", site.dirName);
-  mkdirSync3(base, { recursive: true });
-  return base;
-}
-function hostLocalFile(site, target, suffix, env) {
-  return pathWin323.join(hostLocalDir(site, env), `${lockKey(target)}.${suffix}`);
-}
-async function acquireLock(site, target, env, options = {}) {
-  const lock = hostLocalFile(site, target, "lock", env);
-  let brokeStale = false;
-  const attempts = options.waitsMs ? options.waitsMs.length + 1 : site.attempts;
-  let waitedMs = 0;
-  for (let attempt = 0; attempt < attempts + (brokeStale ? 1 : 0); attempt++) {
-    try {
-      const token = randomUUID5();
-      const fd = openSync2(lock, "wx");
-      try {
-        writeSync2(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), [site.recordField]: target, token, ...options.scope ? { scope: options.scope } : {} }));
-      } catch (writeErr) {
-        closeSync2(fd);
-        unlinkSync4(lock);
-        throw writeErr;
-      }
-      closeSync2(fd);
-      return {
-        brokeStale,
-        release() {
-          releaseIfOurs(lock, token);
-        }
-      };
-    } catch (err) {
-      if (err.code !== "EEXIST") throw err;
-      const key = readLockKey(lock, "token");
-      if (key === null) continue;
-      if (isStale(lock, site) && removeLockIfKey(lock, "token", key, () => isStale(lock, site))) {
-        brokeStale = true;
-        continue;
-      }
-      if (attempt < attempts - 1) {
-        const wait = options.waitsMs?.[attempt] ?? LOCK_RETRY_MS;
-        await sleep(wait);
-        waitedMs += wait;
-      }
-    }
-  }
-  throw new DataServerError(
-    `could not acquire the ${site.label} write lock within ${waitedMs / 1e3}s (${lock}: ${holderOf(lock)}); another session is writing to or migrating this ${site.subject}`,
-    "lock_unavailable"
-  );
-}
-function liveLockRecord(site, target, env) {
-  const lock = hostLocalFile(site, target, "lock", env);
-  if (isStale(lock, site)) return null;
-  try {
-    return JSON.parse(readFileSync6(lock, "utf-8"));
-  } catch {
-    return null;
-  }
-}
-function releaseIfOurs(lock, token) {
-  try {
-    removeLockIfKey(lock, "token", token, void 0, 500);
-  } catch {
-  }
-}
-function isStale(lock, site) {
-  try {
-    return Date.now() - statSync3(lock).mtimeMs > (site.staleMs ?? LOCK_STALE_MS) || site.breakDead === true && holderDied(lock);
-  } catch {
-    return false;
-  }
-}
-function holderDied(lock) {
-  let pid;
-  try {
-    pid = JSON.parse(readFileSync6(lock, "utf-8")).pid;
-  } catch {
-    return false;
-  }
-  if (typeof pid !== "number") return false;
-  try {
-    process.kill(pid, 0);
-    return false;
-  } catch (err) {
-    return err.code === "ESRCH";
-  }
-}
-function holderOf(lock) {
-  try {
-    return (existsSync6(lock) ? readFileSync6(lock, "utf-8").trim() : "released") + orphanClaims(lock);
-  } catch {
-    return "unreadable";
-  }
-}
-function sleep(ms2) {
-  return new Promise((resolve11) => setTimeout(resolve11, ms2));
-}
-
-// src/case/case-lock.ts
-var SITE = {
-  envVar: "COCLERK_CASE_LOCK_ROOT",
-  dirName: "case-locks",
-  attempts: 5,
-  recordField: "matterRoot",
-  label: "matter-data",
-  subject: "matter",
-  // Longer than the longest holder (WRITE_TIMEOUT_MS, 2 minutes), and never renewed: a session that
-  // hangs while alive cannot keep the lock (group locking spec 6.2).
-  staleMs: 5 * 6e4,
-  breakDead: true
-};
-var WRITE_WAITS_MS = [1e3, 2e3, 4e3, 8e3];
-function acquireCaseLock(matterRoot, env = process.env) {
-  return acquireLock(SITE, matterRoot, env);
-}
-function acquireIngestWriteLock(matterRoot, env = process.env) {
-  return acquireLock(SITE, matterRoot, env, { waitsMs: WRITE_WAITS_MS });
-}
-async function withExclusive(matterRoot, env, op) {
-  const lock = await acquireLock(SITE, matterRoot, env, { waitsMs: WRITE_WAITS_MS, scope: "exclusive" });
-  try {
-    advanceRevision(matterRoot, env);
-    return await op(lock);
-  } finally {
-    lock.release();
-  }
-}
-function exclusiveHeld(matterRoot, env = process.env) {
-  return liveLockRecord(SITE, matterRoot, env)?.scope === "exclusive";
-}
-function matterRevision(matterRoot, env = process.env) {
-  try {
-    return Number(readFileSync7(hostLocalFile(SITE, matterRoot, "revision", env), "utf-8")) || 0;
-  } catch {
-    return 0;
-  }
-}
-function advanceRevision(matterRoot, env = process.env) {
-  writeFileSync2(hostLocalFile(SITE, matterRoot, "revision", env), String(matterRevision(matterRoot, env) + 1), "utf-8");
-}
+import { existsSync as existsSync7, readdirSync as readdirSync7 } from "node:fs";
+import { dirname as dirname5, join as join12 } from "node:path";
 
 // src/case/case-data-resolver.py.ts
 var case_data_resolver_py_default = `"""case_data_resolver.py \u2014 where a matter's case data lives (MODULE).
@@ -81286,53 +81052,14 @@ def resolve_case_data_dir(matter_root, stored, root, legacy_dir):
     return derived, rejected
 `;
 
-// src/case/backend.ts
+// src/case/locate.ts
 var HALF_COMMIT_PREFIX = ".coclerk_execute_";
-var PY_HELPER2 = case_data_resolver_py_default + String.raw`
-import json, os, re, shutil, sqlite3, sys, tempfile
+var LOCATE_PY = String.raw`
+import json, os, sys
 
 LEGACY_ARTIFACTS_DIR = '9. AI'
-EXPECTED_USER_VERSION = 90
 EXPECTED_SCHEMA_VERSION = 5
 POINTER_NAMES = ('probanda.json', 'coclerk.json')
-DBS = ('main', 'law', 'privileged')
-DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
-
-
-def pointer_case_data_dir(matter_root, case_data_dir):
-    """The pointer's case_data_dir value: relative to the matter root when the folder is
-    inside it, absolute otherwise, as evidence_sql_path is stored."""
-    try:
-        rel = os.path.relpath(case_data_dir, matter_root)
-    except ValueError:
-        return case_data_dir
-    if rel in (os.curdir, os.pardir) or rel.startswith(os.pardir + os.sep):
-        return case_data_dir
-    return rel
-
-
-def default_evidence_sql(matter_root, case_data_dir):
-    """The text dump beside the databases, relative to the matter root so the pointer survives
-    a change of user profile; absolute when the two are on different drives."""
-    path = norm_join(case_data_dir, 'evidence.sql')
-    try:
-        return os.path.relpath(path, matter_root)
-    except ValueError:
-        return path
-
-
-def read_user_version(sqlite_path):
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_guard_{os.environ["COCLERK_STAGING_TAG"]}_')
-    probe = os.path.join(tmp, os.path.basename(sqlite_path))
-    try:
-        shutil.copy2(sqlite_path, probe)
-        con = sqlite3.connect(probe)
-        try:
-            return con.execute("PRAGMA user_version").fetchone()[0]
-        finally:
-            con.close()
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def read_pointer(matter_root):
@@ -81366,447 +81093,20 @@ def locate_case_data_dir(matter_root):
         matter_root, pointer.get('case_data_dir'), case_data_root(matter_root),
         norm_join(matter_root, LEGACY_ARTIFACTS_DIR))
     return {'case_data_dir': case_data_dir}
+`;
+var LOCATE_DRIVER = case_data_resolver_py_default + LOCATE_PY + String.raw`
 
-
-def resolve_pointer(matter_root):
-    matter_root = os.path.normpath(matter_root)
-    root_ptrs, from_legacy, pointer_path, pointer = read_pointer(matter_root)
-
-    root = case_data_root(matter_root)
-    legacy_dir = norm_join(matter_root, LEGACY_ARTIFACTS_DIR)
-    stored = pointer.get('case_data_dir')
-
-    def is_legacy_value(p):
-        if not p:
-            return False
-        resolved = os.path.normpath(p) if is_absolute(p) else norm_join(matter_root, p)
-        return resolved == legacy_dir
-
-    case_data_dir, rejected_nominee = resolve_case_data_dir(
-        matter_root, stored, root, legacy_dir)
-
-    # Legacy migration: 9. AI -> the matter's 0. CASE DATA folder.
-    if is_legacy_value(pointer.get('case_data_dir')) or from_legacy:
-        os.makedirs(case_data_dir, exist_ok=True)
-        if os.path.isdir(legacy_dir):
-            for fn in ('main.sqlite', 'law.sqlite', 'privileged.sqlite'):
-                src = norm_join(legacy_dir, fn)
-                dst = norm_join(case_data_dir, fn)
-                if os.path.exists(src) and not os.path.exists(dst):
-                    shutil.move(src, dst)
-        mid, _ = identity_from_metadata(norm_join(case_data_dir, 'main.sqlite'))
-        if mid:
-            preferred = matter_case_data_dir(matter_root)
-            if preferred != case_data_dir:
-                os.makedirs(os.path.dirname(preferred), exist_ok=True)
-                if not os.path.exists(preferred):
-                    shutil.move(case_data_dir, preferred)
-                    case_data_dir = preferred
-
-    normalized = {
-        'schema_version': EXPECTED_SCHEMA_VERSION,
-        'matter_root': matter_root,
-        'case_data_dir': pointer_case_data_dir(matter_root, case_data_dir),
-        'evidence_sql_path': pointer.get(
-            'evidence_sql_path', default_evidence_sql(matter_root, case_data_dir)),
-    }
-    # Migrate-on-write: probanda.json, and coclerk.json with the same content so an older
-    # copy of the plugin still finds the matter.
-    for root_ptr in root_ptrs:
-        with open(root_ptr, 'w', encoding='utf-8') as fh:
-            json.dump(normalized, fh, indent=2)
-
-    main_sqlite = norm_join(case_data_dir, 'main.sqlite')
-
-    if os.path.exists(main_sqlite):
-        uv = read_user_version(main_sqlite)
-        version = 62 if uv == 0 else uv
-        if version < EXPECTED_USER_VERSION:
-            major, minor = version // 10, version % 10
-            raise SystemExit(
-                f"Database schema is at v{major}.{minor} but this skill "
-                "requires v9.0. Run the migrate operation: call "
-                "matter_data__migrate with mode 'plan' first, then 'apply' with "
-                "the plan_token it returns. (Not rebuild -- rebuild replays a "
-                "current dump and rejects an out-of-date one.)")
-
-    evidence_sql = norm_join(matter_root, normalized['evidence_sql_path'])
-    warnings = []
-    if rejected_nominee:
-        warnings.append(
-            "Stored case_data_dir nominee did not contain main.sqlite; "
-            f"selected live-derived location {case_data_dir} and healed probanda.json.")
-    if os.path.exists(evidence_sql):
-        try:
-            with open(evidence_sql, 'r', encoding='utf-8', errors='replace') as fh:
-                first = fh.readline()
-            m = re.search(r'schema v(\d+)\.(\d+)', first)
-            if not m or (int(m.group(1)) * 10 + int(m.group(2))) < EXPECTED_USER_VERSION:
-                warnings.append(
-                    "evidence.sql is missing a v9.0 schema header or predates "
-                    "v9.0. Regenerate it via maintain; the rebuild-only "
-                    "transition through v7.6 is the sole exception.")
-        except Exception:
-            pass
-
-    return {
-        'case_data_dir': case_data_dir,
-        'main_sqlite': main_sqlite,
-        'law_sqlite': norm_join(case_data_dir, 'law.sqlite'),
-        'privileged_sqlite': norm_join(case_data_dir, 'privileged.sqlite'),
-        'evidence_sql': evidence_sql,
-        'warning': " ".join(warnings) or None,
-    }
-
-
-def copy_fsync(src, dst):
-    """copy2 then flush to disk, so a later rename cannot expose a torn file."""
-    shutil.copy2(src, dst)
-    with open(dst, 'rb+') as fh:
-        os.fsync(fh.fileno())
-    return dst
-
-
-def stage_copies(resolved, tmpdir_):
-    copies = {}
-    for db in DBS:
-        native = resolved[f'{db}_sqlite']
-        dst = os.path.join(tmpdir_, f'{db}.sqlite')
-        if os.path.exists(native):
-            shutil.copy2(native, dst)
-        copies[db] = dst
-    return copies
-
-
-def open_attached(copies, triggers_sql):
-    con = sqlite3.connect(copies['main'])
-    con.execute("ATTACH DATABASE '%s' AS law" % copies['law'].replace("'", "''"))
-    con.execute("ATTACH DATABASE '%s' AS privileged" % copies['privileged'].replace("'", "''"))
-    if triggers_sql:
-        con.executescript(triggers_sql)
-    con.execute("PRAGMA journal_mode = DELETE")
-    con.execute("PRAGMA foreign_keys = ON")
-    mode = con.execute("PRAGMA journal_mode").fetchone()[0]
-    if str(mode).lower() != 'delete':
-        raise SystemExit(f"Refusing to operate: journal_mode is '{mode}', expected 'delete'.")
-    return con
-
-
-def dump_db(path):
-    c = sqlite3.connect(path)
-    try:
-        return "\n".join(c.iterdump())
-    finally:
-        c.close()
-
-
-def write_dump(resolved, copies):
-    lines = [DUMP_HEADER]
-    for db in DBS:
-        body = dump_db(copies[db])
-        lines.append(f"-- ===== v6 BEGIN {db} =====")
-        lines.append(body)
-        lines.append(f"-- ===== v6 END {db} =====")
-    text = "\n".join(lines) + "\n"
-    path = resolved['evidence_sql']
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    tmp = path + '.tmp'
-    with open(tmp, 'w', encoding='utf-8', newline='\n') as fh:
-        fh.write(text)
-    os.replace(tmp, path)
-
-
-# Leading whitespace, '--' line comments and '/* */' block comments are
-# skipped before the keyword check, so a query copied verbatim from a skill
-# file that opens with a comment is not refused. Each comment matches only up
-# to its own terminator, the way SQLite reads it, so a comment cannot hide a
-# write. One character of whitespace per step keeps the match linear.
-READ_ONLY_RE = r'(?is)^(?:\s|--[^\n]*(?:\n|$)|/\*(?:(?!\*/).)*\*/)*(select|with|pragma)\b'
-
-
-def do_query(req, resolved):
-    sql = req['sql'].strip()
-    if not re.match(READ_ONLY_RE, sql):
-        raise SystemExit("matter_data__query only accepts SELECT/WITH/PRAGMA statements; use matter_data__execute for writes.")
-    if not os.path.exists(resolved['main_sqlite']):
-        raise SystemExit(
-            "No case database found: resolved main.sqlite is missing at "
-            f"{resolved['main_sqlite']}. Re-run matter-data initialize for a new matter "
-            "or restore the database at the live-derived location.")
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_case_query_{os.environ["COCLERK_STAGING_TAG"]}_')
-    try:
-        copies = stage_copies(resolved, tmp)
-        con = open_attached(copies, '')
-        try:
-            cur = con.execute(sql, req.get('params') or [])
-            cols = [d[0] for d in cur.description] if cur.description else []
-            rows = [dict(zip(cols, r)) for r in cur.fetchall()]
-        finally:
-            con.close()
-        return {"rows": rows, "warning": resolved.get('warning')}
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
-
-
-def databases_are_empty(copies):
-    for db in DBS:
-        con = sqlite3.connect(copies[db])
-        try:
-            if con.execute("SELECT count(*) FROM sqlite_master").fetchone()[0]:
-                return False
-        finally:
-            con.close()
-    return True
-
-
-def atomic_replace_set(resolved, copies):
-    """Commit the mutated binaries to native storage as close to atomically as
-    three separate files allow: stage every finished binary and a rollback copy
-    of every existing native in a same-volume sidecar, flush both to disk, then
-    replace the natives by rename. A rename that fails part-way is undone, so a
-    failed commit-to-disk never leaves some databases carrying the new state and
-    the rest the old -- the cross-database inconsistency I5 exists to prevent.
-
-    Ported from migrate_engine.atomic_replace_set rather than imported:
-    matter_data__execute runs in a separate spawn whose Python is this
-    self-contained helper with no PYTHONPATH imports, and that process
-    separation is what contains the schema-guard bypass (matter-data/references/design-decisions.md
-    #27). A shared import would collapse it.
-
-    os.replace is atomic only within a volume and COCLERK_CASE_DATA_ROOT can
-    point at another drive or a UNC path, so the sidecar is created INSIDE
-    case_data_dir to guarantee same-volume renames by construction. Every
-    connection is closed before anything reaches the sidecar, so no live handle
-    is ever held on synced storage.
-    """
-    natives = {db: resolved[f'{db}_sqlite'] for db in DBS}
-    for dst in natives.values():
-        os.makedirs(os.path.dirname(dst), exist_ok=True)
-    sidecar = tempfile.mkdtemp(prefix='${HALF_COMMIT_PREFIX}', dir=resolved['case_data_dir'])
-    try:
-        rollback_dir = os.path.join(sidecar, 'rollback')
-        os.makedirs(rollback_dir)
-        staged, rollback = {}, {}
-        for db in DBS:
-            staged[db] = copy_fsync(copies[db], os.path.join(sidecar, f'{db}.sqlite'))
-            # The rollback source is the native, not the staged copy -- the
-            # transaction mutated the staged copies in place. Reading the native
-            # now is safe because execute holds the cross-process lock across
-            # this whole window, so it is unchanged since staging. A native that
-            # never existed (the bootstrap path) is undone by removal instead.
-            rollback[db] = (
-                copy_fsync(natives[db], os.path.join(rollback_dir, f'{db}.sqlite'))
-                if os.path.exists(natives[db]) else None)
-
-        replaced = []
-        try:
-            for db in DBS:
-                os.replace(staged[db], natives[db])
-                replaced.append(db)
-        except Exception as exc:
-            failed = DBS[len(replaced)]
-            for i, db in enumerate(replaced):
-                try:
-                    if rollback[db] is None:
-                        os.remove(natives[db])
-                    else:
-                        os.replace(rollback[db], natives[db])
-                except Exception as rollback_exc:
-                    # Databases before index i were already undone.
-                    raise SystemExit(
-                        "Replacing %s.sqlite failed (%s) AND undoing %s.sqlite failed "
-                        "(%s). The case databases are now a mix of new and previous "
-                        "state: %s carry the new state, the rest the previous. Do not "
-                        "write again. Recover from evidence.sql (it still holds the last "
-                        "committed state: maintain rebuild), or from the synced folder's "
-                        "version history, or from a matter_data__migrate backup if one exists."
-                        % (failed, exc, db, rollback_exc, ", ".join(replaced[i:])))
-            raise SystemExit(
-                "Replacing %s.sqlite in native storage failed (%s); every database was "
-                "rolled back and the previous set is intact." % (failed, exc))
-    finally:
-        shutil.rmtree(sidecar, ignore_errors=True)
-
-
-def run_one(con, statement, params):
-    cur = con.execute(statement['sql'], params)
-    cols = [d[0] for d in cur.description] if cur.description else []
-    rows = [dict(zip(cols, r)) for r in cur.fetchall()] if cols else []
-    return {"rowcount": cur.rowcount, "rows": rows}
-
-
-def run_group(con, n, group, params, results, failed):
-    """One statement group (ingest orchestrator spec 2.1) under its own savepoint: an exception or a
-    'refuse' row inside it rolls back only the group, records {ref, reason}, and the call goes on.
-    Each statement still gets a result, zero for a rolled-back group's."""
-    merged = {**params, **(group.get('params') or {})}
-    own = []
-    con.execute("SAVEPOINT g_%d" % n)
-    try:
-        for statement in group['statements']:
-            result = run_one(con, statement, merged)
-            own.append(result)
-            if statement.get('refuse') and result['rows']:
-                raise LookupError(str(next(iter(result['rows'][0].values()))))
-        con.execute("RELEASE g_%d" % n)
-    except Exception as exc:
-        con.execute("ROLLBACK TO g_%d" % n)
-        con.execute("RELEASE g_%d" % n)
-        failed.append({"ref": group['ref'], "reason": str(exc)})
-        own = []
-    results.extend(own + [{"rowcount": 0, "rows": []}] * (len(group['statements']) - len(own)))
-
-
-def run_statements(con, req):
-    """The other way to supply an execute's writes: a list of statements, each run with the same
-    named params, in one transaction. A statement marked 'refuse' is a guard, and any row it
-    returns is a reason to write nothing: the transaction rolls back before the next write and
-    the reasons are returned. Otherwise each statement's rowcount and rows are returned. An entry
-    {ref, params?, statements} is a statement group (run_group); a failure outside any group keeps
-    this rule and rolls back everything."""
-    con.isolation_level = None
-    params = req.get('params') or {}
-    results, refused, failed = [], [], []
-    con.execute("BEGIN")
-    try:
-        for n, statement in enumerate(req['statements']):
-            if refused and not statement.get('refuse'):
-                break
-            if 'statements' in statement:
-                run_group(con, n, statement, params, results, failed)
-                continue
-            result = run_one(con, statement, params)
-            if statement.get('refuse'):
-                refused.extend(next(iter(r.values())) for r in result['rows'])
-            results.append(result)
-        con.execute("ROLLBACK" if refused else "COMMIT")
-    except Exception:
-        if con.in_transaction:
-            con.execute("ROLLBACK")
-        raise
-    return {"refused": refused} if refused else {"results": results, "failed": failed}
-
-
-def do_execute(req, resolved):
-    triggers_sql = req.get('triggers_sql')
-    if not triggers_sql or not triggers_sql.strip():
-        raise SystemExit("matter_data__execute found an empty triggers.sql -- a write session must not proceed without the cross-database FK layer loaded.")
-    tmp = tempfile.mkdtemp(prefix=f'coclerk_case_execute_{os.environ["COCLERK_STAGING_TAG"]}_')
-    try:
-        copies = stage_copies(resolved, tmp)
-        # Bootstrap (initialize) inverts the trigger order, and only then. Every
-        # table the FK triggers reference is created by this very script, so
-        # loading them first is unsatisfiable ("no such table: criteria_facts").
-        # They load after the commit instead, where they still prove the new
-        # schema carries every table the FK layer guards -- I3 is verified, not
-        # skipped, and a failure raises before any copy-back.
-        bootstrap = databases_are_empty(copies)
-        con = open_attached(copies, '' if bootstrap else triggers_sql)
-        outcome = {}
-        try:
-            if 'statements' in req:
-                outcome = run_statements(con, req)
-            else:
-                try:
-                    con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
-                except Exception:
-                    if con.in_transaction:
-                        con.execute("ROLLBACK")
-                    raise
-            if bootstrap:
-                con.executescript(triggers_sql)
-        finally:
-            con.close()
-        if 'refused' in outcome:
-            return {"ok": False, "warning": resolved.get('warning'), **outcome}
-        # Commit the mutated binaries to native storage only after a successful
-        # commit and a closed connection (I2), and all-or-nothing (I5).
-        atomic_replace_set(resolved, copies)
-        write_dump(resolved, copies)
-        return {"ok": True, "evidence_sql": resolved['evidence_sql'], "warning": resolved.get('warning'), **outcome}
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
-
-
-def main():
-    req = json.load(sys.stdin)
-    op = req['op']
-    if op == 'locate':
-        return locate_case_data_dir(req['matter_root'])
-    resolved = resolve_pointer(req['matter_root'])
-    if op == 'query':
-        return do_query(req, resolved)
-    if op == 'execute':
-        return do_execute(req, resolved)
-    raise SystemExit(f"unknown op: {op}")
-
-
-print(json.dumps(main()))
-`.trim();
-function helperFile2() {
-  return pythonDriverFile("case-sqlite", PY_HELPER2);
-}
-var EXECUTE_TIMEOUT_ADVICE = `The write may already have committed: verify before retrying (/matter-data shared/conventions.md \xA72.3). If a ${HALF_COMMIT_PREFIX}* folder remains in the matter's matter-data folder, the kill landed inside the commit-to-disk step and the databases may be a mix of new and previous state: do not write again until reconciled. Any complete copy in its rollback subfolder is a previous database (one that did not exist before has none); delete the folder once reconciled. evidence.sql may not yet reflect a committed write.`;
-function runHelper(request2, env) {
-  const execute = request2.op === "execute";
-  return runPythonDriver({
-    label: "matter-data sqlite helper",
-    driver: helperFile2(),
-    payload: JSON.stringify(request2),
-    env,
-    timeoutMs: pythonTimeoutMs(env, execute ? EXECUTE_TIMEOUT_MS : READ_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS"),
-    timeoutAdvice: execute ? EXECUTE_TIMEOUT_ADVICE : void 0
-  });
-}
-function caseDataQuery(matterRoot, sql, params) {
-  const result = runHelper({ op: "query", matter_root: matterRoot, sql, params }, process.env);
-  return result;
-}
+print(json.dumps(locate_case_data_dir(json.load(sys.stdin)['matter_root'])))
+`;
 function caseDataFolder(matterRoot, env = process.env) {
-  return runHelper({ op: "locate", matter_root: matterRoot }, env).case_data_dir;
-}
-function caseDataTriggersSql(env) {
-  const shipped = resolveShippedRoot("matter-data/references/triggers.sql", env, {
-    subject: "the matter-data trigger layer",
-    plugin: "lawyer"
+  const result = runPythonDriver({
+    label: "matter-data sqlite helper",
+    driver: pythonDriverFile("case-locate", LOCATE_DRIVER),
+    payload: JSON.stringify({ matter_root: matterRoot }),
+    env,
+    timeoutMs: pythonTimeoutMs(env, READ_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS")
   });
-  const path = join11(shipped.root, "matter-data", "references", "triggers.sql");
-  if (!existsSync7(path)) {
-    throw new DataServerError(
-      `matter_data__execute cannot load the cross-database trigger layer: ${path} not found. Nothing was written.`,
-      "skills_root_missing"
-    );
-  }
-  return readFileSync8(path, "utf-8");
-}
-async function caseDataExecute(matterRoot, sqlScript, env = process.env, precheck, held2) {
-  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env, precheck, held2);
-}
-async function caseDataExecuteStatements(matterRoot, statements, params, env = process.env, precheck, held2) {
-  return await executeUnderLock(matterRoot, { statements, params }, env, precheck, held2);
-}
-async function executeUnderLock(matterRoot, work, env, precheck, held2) {
-  const triggersSql = caseDataTriggersSql(env);
-  const lock = held2 ?? await acquireCaseLock(matterRoot, env);
-  try {
-    await precheck?.();
-    advanceRevision(matterRoot, env);
-    const result = runHelper({
-      op: "execute",
-      matter_root: matterRoot,
-      triggers_sql: triggersSql,
-      ...work
-    }, env);
-    if (lock.brokeStale) {
-      result.warning = [
-        "broke a stale matter-data write lock (its holder died, or it was >5 min old) before writing; if another session is still writing to or migrating this matter, stop and reconcile",
-        result.warning
-      ].filter(Boolean).join(" -- ");
-    }
-    return result;
-  } finally {
-    if (held2 === void 0) lock.release();
-  }
+  return result.case_data_dir;
 }
 
 // src/case/list-parties.ts
@@ -81845,12 +81145,12 @@ function listCaseParties(caseDataDir, env = process.env) {
 }
 
 // src/files/matter-root.ts
-import { existsSync as existsSync8, readdirSync as readdirSync6, readFileSync as readFileSync9, statSync as statSync4 } from "node:fs";
-import { basename as basename2, dirname as dirname4, isAbsolute, join as join12, normalize, resolve as resolve2, win32 as pathWin325 } from "node:path";
+import { existsSync as existsSync6, readdirSync as readdirSync5, readFileSync as readFileSync5, statSync as statSync3 } from "node:fs";
+import { basename as basename2, dirname as dirname4, isAbsolute, join as join11, normalize, resolve as resolve2, win32 as pathWin323 } from "node:path";
 
 // src/files/scope.ts
 import { realpathSync } from "node:fs";
-import { win32 as pathWin324 } from "node:path";
+import { win32 as pathWin322 } from "node:path";
 var PathOutOfScopeError = class extends DataServerError {
   constructor(message) {
     super(message, "path_out_of_scope");
@@ -81886,7 +81186,7 @@ function canonicalRoot(root, missingMessage2, code = "skills_root_missing") {
   }
 }
 function resolveWithin(canonRoot, relative5, label2, mustExist = true) {
-  const joined = pathWin324.join(canonRoot, relative5);
+  const joined = pathWin322.join(canonRoot, relative5);
   let resolved;
   if (mustExist) {
     try {
@@ -81906,20 +81206,20 @@ function resolveDeepestExisting(target) {
   for (; ; ) {
     try {
       const base = realpathSync.native(cursor);
-      return tail.length ? pathWin324.join(base, ...tail.reverse()) : base;
+      return tail.length ? pathWin322.join(base, ...tail.reverse()) : base;
     } catch {
-      const parent = pathWin324.dirname(cursor);
+      const parent = pathWin322.dirname(cursor);
       if (parent === cursor) {
-        return pathWin324.normalize(target);
+        return pathWin322.normalize(target);
       }
-      tail.push(pathWin324.basename(cursor));
+      tail.push(pathWin322.basename(cursor));
       cursor = parent;
     }
   }
 }
 function assertContained(canonRoot, resolved, label2, original) {
   const needle = resolved.toLowerCase();
-  const prefix = (canonRoot.endsWith(pathWin324.sep) ? canonRoot : canonRoot + pathWin324.sep).toLowerCase();
+  const prefix = (canonRoot.endsWith(pathWin322.sep) ? canonRoot : canonRoot + pathWin322.sep).toLowerCase();
   if (needle !== canonRoot.toLowerCase() && !needle.startsWith(prefix)) {
     throw new PathOutOfScopeError(
       `${label2} resolves outside its permitted root (${original} -> ${resolved})`
@@ -81927,7 +81227,7 @@ function assertContained(canonRoot, resolved, label2, original) {
   }
 }
 function toPosixRelative(canonRoot, resolved) {
-  return pathWin324.relative(canonRoot, resolved).split(pathWin324.sep).join("/");
+  return pathWin322.relative(canonRoot, resolved).split(pathWin322.sep).join("/");
 }
 
 // src/files/matter-root.ts
@@ -81937,17 +81237,17 @@ var LEGACY_ARTIFACTS_DIR = "9. AI";
 var SUBMISSION_DB_FILE = "submission.sqlite";
 var CASE_DATA_FOLDER = "0. CASE DATA";
 function findPointer(root) {
-  return POINTER_FILES.map((name) => join12(root, name)).find((path) => existsSync8(path));
+  return POINTER_FILES.map((name) => join11(root, name)).find((path) => existsSync6(path));
 }
 function validateMatterRoot(matterRoot) {
   if (typeof matterRoot !== "string" || matterRoot.length === 0) {
     throw new DataServerError("matter_root is required", "invalid_root");
   }
-  if (!pathWin325.isAbsolute(matterRoot)) {
+  if (!pathWin323.isAbsolute(matterRoot)) {
     throw new DataServerError(`matter_root must be an absolute path: ${matterRoot}`, "invalid_root");
   }
   const canon = canonicalRoot(matterRoot, `matter_root not found: ${matterRoot}`, "invalid_root");
-  if (!statSync4(canon).isDirectory()) {
+  if (!statSync3(canon).isDirectory()) {
     throw new DataServerError(`matter_root is not a directory: ${matterRoot}`, "invalid_root");
   }
   if (findPointer(canon) === void 0) {
@@ -81959,32 +81259,32 @@ function validateMatterRoot(matterRoot) {
   return canon;
 }
 function findDraftDir(root) {
-  const matches = readdirSync6(root, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && /^0\. DRAFT/i.test(e3.name)).map((e3) => e3.name).sort();
+  const matches = readdirSync5(root, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && /^0\. DRAFT/i.test(e3.name)).map((e3) => e3.name).sort();
   if (matches.length > 1) {
     throw new DataServerError(
       `${root} has ${matches.length} 0. DRAFT folders (${matches.map((m3) => `"${m3}"`).join(", ")}); keep one so the Litigation Strategy has a single home.`,
       "draft_dir_ambiguous"
     );
   }
-  return matches.length === 1 ? join12(root, matches[0]) : void 0;
+  return matches.length === 1 ? join11(root, matches[0]) : void 0;
 }
 function existingCaseDataFolder(root, env = process.env) {
   const dir = caseDataFolder(root, env);
   const missing = `the matter's matter-data folder does not exist: ${dir}. Run /matter-data initialize on this matter first.`;
   const canon = canonicalRoot(dir, missing, "case_data_missing");
-  if (!statSync4(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
+  if (!statSync3(canon).isDirectory()) throw new DataServerError(missing, "case_data_missing");
   return canon;
 }
 function pointerRefusal(root, why) {
   return new DataServerError(
-    `${findPointer(root) ?? join12(root, POINTER_FILES[0])} ${why}. Run /matter-data on this matter to initialize or repair its pointer; drafting_forms__open_session never rewrites it.`,
+    `${findPointer(root) ?? join11(root, POINTER_FILES[0])} ${why}. Run /matter-data on this matter to initialize or repair its pointer; drafting_forms__open_session never rewrites it.`,
     "pointer_unusable"
   );
 }
 function resolveCaseDataDir(root) {
   let pointer;
   try {
-    pointer = JSON.parse(readFileSync9(findPointer(root) ?? join12(root, POINTER_FILES[0]), "utf-8").replace(/\0/g, ""));
+    pointer = JSON.parse(readFileSync5(findPointer(root) ?? join11(root, POINTER_FILES[0]), "utf-8").replace(/\0/g, ""));
   } catch (err) {
     throw pointerRefusal(root, `is not readable JSON (${err.message})`);
   }
@@ -81996,15 +81296,15 @@ function resolveCaseDataDir(root) {
     throw pointerRefusal(root, "has no case_data_dir");
   }
   const caseDataDir = normalize(isAbsolute(stored) ? stored : resolve2(root, stored));
-  if (caseDataDir.toLowerCase() === normalize(join12(root, LEGACY_ARTIFACTS_DIR)).toLowerCase()) {
+  if (caseDataDir.toLowerCase() === normalize(join11(root, LEGACY_ARTIFACTS_DIR)).toLowerCase()) {
     throw pointerRefusal(root, `still points at the legacy "${LEGACY_ARTIFACTS_DIR}" folder`);
   }
   return caseDataDir;
 }
 function resolveDbPath(root) {
   const caseDataDir = resolveCaseDataDir(root);
-  const dbPath = join12(caseDataDir, SUBMISSION_DB_FILE);
-  if (!existsSync8(dbPath) && !existsSync8(dirname4(caseDataDir))) {
+  const dbPath = join11(caseDataDir, SUBMISSION_DB_FILE);
+  if (!existsSync6(dbPath) && !existsSync6(dirname4(caseDataDir))) {
     throw pointerRefusal(root, `names ${caseDataDir}, whose parent folder does not exist on this device`);
   }
   return dbPath;
@@ -82012,7 +81312,7 @@ function resolveDbPath(root) {
 function caseDataRootFromCaseDataDir(dir, env) {
   const normal2 = normalize(dir);
   const inMatter = basename2(normal2).toLowerCase() === CASE_DATA_FOLDER.toLowerCase();
-  const parent = inMatter ? join12(dirname4(dirname4(normal2)), CASE_DATA_FOLDER) : dirname4(normal2);
+  const parent = inMatter ? join11(dirname4(dirname4(normal2)), CASE_DATA_FOLDER) : dirname4(normal2);
   const override2 = env.COCLERK_CASE_DATA_ROOT;
   const named2 = inMatter || basename2(parent).toLowerCase() === CASE_DATA_FOLDER.toLowerCase() || !!override2 && normalize(override2).toLowerCase() === parent.toLowerCase();
   if (!named2) return null;
@@ -82022,7 +81322,7 @@ function caseDataRootFromCaseDataDir(dir, env) {
   } catch {
     return null;
   }
-  return statSync4(canon).isDirectory() ? canon : null;
+  return statSync3(canon).isDirectory() ? canon : null;
 }
 function caseDataRootFromMatterRoot(matterRoot, env) {
   const root = validateMatterRoot(matterRoot);
@@ -82033,8 +81333,8 @@ function caseDataRootFromDbPath(dbPath, env) {
 }
 
 // src/knowledge/tree.ts
-import { readFileSync as readFileSync10, readdirSync as readdirSync7, realpathSync as realpathSync2, statSync as statSync5 } from "node:fs";
-import { win32 as pathWin326 } from "node:path";
+import { readFileSync as readFileSync6, readdirSync as readdirSync6, realpathSync as realpathSync2, statSync as statSync4 } from "node:fs";
+import { win32 as pathWin324 } from "node:path";
 var KNOWLEDGE_SKILLS = ["draft", "publish", "assemble", "legal-research", "docket-clerk"];
 var SHIPPED_DIR = { "docket-clerk": "shared/docket-clerk" };
 var OVERLAY_RESERVED = ["_superseded", "_fetched", "_inbox", "_hosts.json"];
@@ -82079,7 +81379,7 @@ function parseKnowledgePath(raw, label2, allowRoot = false) {
 function joinRelative(fromPath, relative5) {
   const slash = fromPath.lastIndexOf("/");
   const dir = slash === -1 ? "" : fromPath.slice(0, slash);
-  return pathWin326.normalize(dir ? `${dir}\\${relative5}` : relative5).split("\\").join("/");
+  return pathWin324.normalize(dir ? `${dir}\\${relative5}` : relative5).split("\\").join("/");
 }
 var COUNTRY = /^[A-Z]{3}$/;
 var JURISDICTION = /^[A-Z]{2,3}$/;
@@ -82185,7 +81485,7 @@ function shippedLayer(skill, rest, seams) {
     shipped.shipped_from === "install" ? `bundled skill source not found at ${shipped.root}; reinstall the plugin and fully restart` : `skills tree not found at ${shipped.root}; the repo has moved or COCLERK_REPO_ROOT is wrong`,
     "skills_root_missing"
   );
-  const references = pathWin326.join(skillsRoot, ...dir.split("/"), "references");
+  const references = pathWin324.join(skillsRoot, ...dir.split("/"), "references");
   let canon = null;
   try {
     canon = realpathSync2.native(references);
@@ -82193,11 +81493,11 @@ function shippedLayer(skill, rest, seams) {
     canon = null;
   }
   if (canon !== null) assertContained(skillsRoot, canon, `${skill}/references`, references);
-  return { layer: { canon, abs: pathWin326.join(canon ?? references, ...rest) }, shipped_from: shipped.shipped_from };
+  return { layer: { canon, abs: pathWin324.join(canon ?? references, ...rest) }, shipped_from: shipped.shipped_from };
 }
 function overlayLayer(segments, seams, label2) {
   const configured = resolveCaseDataRoot(seams.env ?? process.env, seams.caseDataRoot);
-  const shown = pathWin326.join(configured, "_practice", "knowledge", ...segments);
+  const shown = pathWin324.join(configured, "_practice", "knowledge", ...segments);
   if (shown.length > MAX_PATH_CHARS) {
     throw new DataServerError(
       `${label2}: the overlay path is ${shown.length} characters, over the Windows limit of ${MAX_PATH_CHARS}: ${shown}`,
@@ -82205,7 +81505,7 @@ function overlayLayer(segments, seams, label2) {
     );
   }
   const caseRoot = canonicalRoot(configured, `case_data_root not found: ${configured}`, "case_data_root_missing");
-  const knowledgeDir = pathWin326.join(caseRoot, "_practice", "knowledge");
+  const knowledgeDir = pathWin324.join(caseRoot, "_practice", "knowledge");
   let canon = null;
   try {
     canon = realpathSync2.native(knowledgeDir);
@@ -82213,7 +81513,7 @@ function overlayLayer(segments, seams, label2) {
     canon = null;
   }
   if (canon !== null) assertContained(caseRoot, canon, label2, knowledgeDir);
-  return { canon, abs: pathWin326.join(canon ?? knowledgeDir, ...segments) };
+  return { canon, abs: pathWin324.join(canon ?? knowledgeDir, ...segments) };
 }
 function locate(kp, seams, label2 = "path") {
   const local = overlayLayer(kp.segments, seams, label2);
@@ -82230,11 +81530,11 @@ function entryType(root, label2, original) {
     return null;
   }
   assertContained(root.canon, real, label2, original);
-  return statSync5(real).isDirectory() ? "dir" : "file";
+  return statSync4(real).isDirectory() ? "dir" : "file";
 }
 function readLayerBytes(abs, label2) {
   try {
-    return readFileSync10(abs);
+    return readFileSync6(abs);
   } catch (err) {
     const code = err.code;
     if (code === "ENOENT") throw new DataServerError(`${label2} not found: ${abs}`, "not_found");
@@ -82280,8 +81580,8 @@ function readLayerDir(root, label2, original) {
   const type = entryType(root, label2, original);
   if (type === null) return null;
   if (type === "file") throw new DataServerError(`${label2} is a file, not a folder: ${original} (use knowledge__read)`, "not_a_folder");
-  return readdirSync7(root.abs).map((name) => {
-    const child = entryType({ canon: root.canon, abs: pathWin326.join(root.abs, name) }, label2, `${original}/${name}`);
+  return readdirSync6(root.abs).map((name) => {
+    const child = entryType({ canon: root.canon, abs: pathWin324.join(root.abs, name) }, label2, `${original}/${name}`);
     return { name, type: child ?? "file" };
   });
 }
@@ -82475,7 +81775,7 @@ function matterDataFolders(store, matters, miss) {
     miss(null, `the case data root could not be found: ${err.message}`);
     return [];
   }
-  const holding = (parent, sub) => readdirSync8(parent, { withFileTypes: true }).filter((entry2) => entry2.isDirectory() && existsSync9(join13(parent, entry2.name, sub, "main.sqlite"))).map((entry2) => ({ name: entry2.name, folder: join13(parent, entry2.name, sub) }));
+  const holding = (parent, sub) => readdirSync7(parent, { withFileTypes: true }).filter((entry2) => entry2.isDirectory() && existsSync7(join12(parent, entry2.name, sub, "main.sqlite"))).map((entry2) => ({ name: entry2.name, folder: join12(parent, entry2.name, sub) }));
   const library = dirname5(caseDataRoot);
   const inMatter = holding(library, CASE_DATA_FOLDER);
   const children3 = holding(caseDataRoot, "");
@@ -83180,109 +82480,97 @@ async function invoices_query(store, args) {
 }
 
 // src/tools/practice/firm-profile.ts
-import { existsSync as existsSync12, mkdirSync as mkdirSync5, readFileSync as readFileSync12, writeFileSync as writeFileSync4 } from "node:fs";
-import { dirname as dirname6, join as join15 } from "node:path";
+import { existsSync as existsSync9, mkdirSync as mkdirSync4, readFileSync as readFileSync8, writeFileSync as writeFileSync3 } from "node:fs";
+import { dirname as dirname6, join as join13 } from "node:path";
 import { inflateRawSync } from "node:zlib";
 
 // src/knowledge/sidecar.ts
-import { createHash as createHash4, randomUUID as randomUUID7 } from "node:crypto";
-import { closeSync as closeSync4, existsSync as existsSync11, mkdirSync as mkdirSync4, openSync as openSync4, statSync as statSync7, writeSync as writeSync4 } from "node:fs";
-import { win32 as pathWin327 } from "node:path";
+import { createHash as createHash3, randomUUID as randomUUID5 } from "node:crypto";
+import { closeSync as closeSync2, existsSync as existsSync8, mkdirSync as mkdirSync3, openSync as openSync2, statSync as statSync5, writeSync as writeSync2 } from "node:fs";
+import { win32 as pathWin326 } from "node:path";
 
-// src/submission/render-job.ts
-import { randomUUID as randomUUID6 } from "node:crypto";
-import { closeSync as closeSync3, existsSync as existsSync10, openSync as openSync3, readFileSync as readFileSync11, renameSync, statSync as statSync6, unlinkSync as unlinkSync5, utimesSync, writeFileSync as writeFileSync3, writeSync as writeSync3 } from "node:fs";
-import { join as join14 } from "node:path";
-
-// src/submission/lock.ts
-var SITE2 = {
-  envVar: "COCLERK_SUBMISSION_LOCK_ROOT",
-  dirName: "submission-locks",
-  // 10 s, not the other locks' 2 s: parallel job helpers write to one drafting database at once.
-  attempts: 25,
-  recordField: "dbPath",
-  label: "drafting-data",
-  subject: "database"
-};
-function hostLocalPath(dbPath, suffix, env = process.env) {
-  return hostLocalFile(SITE2, dbPath, suffix, env);
-}
-function acquireDataLock(dbPath, env = process.env) {
-  return acquireLock(SITE2, dbPath, env);
-}
-
-// src/submission/render-job.ts
-var STATUS_FILE = "workboard-status.js";
-var DEFAULT_STALL_MS = 6e4;
-var jobs = /* @__PURE__ */ new Map();
-var exitHandlerInstalled = false;
-function nowIso2() {
-  return (/* @__PURE__ */ new Date()).toISOString();
-}
-function stallMs(env) {
-  const value2 = Number(env.COCLERK_RENDER_STALL_MS);
-  return Number.isFinite(value2) && value2 > 0 ? value2 : DEFAULT_STALL_MS;
-}
-function readLock(lockFile) {
+// src/lock-claim.ts
+import { closeSync, openSync, readdirSync as readdirSync8, readFileSync as readFileSync7, unlinkSync as unlinkSync3, writeSync } from "node:fs";
+import { win32 as pathWin325 } from "node:path";
+var UUID2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function readLockKey(lock, field) {
+  let text8;
   try {
-    return JSON.parse(readFileSync11(lockFile, "utf-8"));
+    text8 = readFileSync7(lock, "utf-8");
   } catch {
     return null;
   }
-}
-function pidAlive(pid) {
   try {
-    process.kill(pid, 0);
-    return true;
-  } catch (err) {
-    return err.code !== "ESRCH";
-  }
-}
-function holderIsStale(lockFile, holder, stall) {
-  let mtimeMs;
-  try {
-    mtimeMs = statSync6(lockFile).mtimeMs;
+    const key = JSON.parse(text8)[field];
+    return typeof key === "string" && UUID2.test(key) ? key : "none";
   } catch {
-    return null;
+    return "none";
   }
-  if (holder && typeof holder.pid === "number") {
-    if (!pidAlive(holder.pid)) return true;
-    if (holder.pid === process.pid && !jobs.has(lockFile)) return true;
-  }
-  return Date.now() - mtimeMs > 3 * stall;
 }
-function acquire(lockFile, dbPath, stall) {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const record2 = { job_id: randomUUID6(), pid: process.pid, started_at: nowIso2(), db_path: dbPath };
+function removeLockIfKey(lock, field, key, stillStale = () => true, waitMs = 0) {
+  const claim = `${lock}.${key}.break`;
+  for (let waited = 0; ; waited += 50) {
     try {
-      const fd = openSync3(lockFile, "wx");
+      const fd = openSync(claim, "wx");
       try {
-        writeSync3(fd, JSON.stringify(record2));
+        writeSync(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString() }));
       } finally {
-        closeSync3(fd);
+        closeSync(fd);
       }
-      return { acquired: record2 };
+      break;
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
-    }
-    const key = readLockKey(lockFile, "job_id");
-    const holder = readLock(lockFile);
-    const stale = holderIsStale(lockFile, holder, stall);
-    if (stale === false) return { holder };
-    if (stale === null || key === null) continue;
-    if (!removeLockIfKey(lockFile, "job_id", key, () => holderIsStale(lockFile, readLock(lockFile), stall) === true)) {
-      sleepSync2(50);
+      if (waited >= waitMs) return false;
+      sleepSync(50);
     }
   }
-  return { holder: readLock(lockFile) };
+  try {
+    if (readLockKey(lock, field) !== key || !stillStale()) return false;
+    unlinkSync3(lock);
+    return true;
+  } catch {
+    return false;
+  } finally {
+    unlinkClaim(claim);
+  }
 }
+function unlinkClaim(claim) {
+  let code = "UNKNOWN";
+  for (let attempt = 0; attempt < 10; attempt++) {
+    try {
+      unlinkSync3(claim);
+      return;
+    } catch (err) {
+      code = err.code ?? "UNKNOWN";
+      if (code === "ENOENT") return;
+      sleepSync(50);
+    }
+  }
+  console.error(`[lock] could not remove the removal claim ${claim}: ${code}`);
+}
+function orphanClaims(lock) {
+  const dir = pathWin325.dirname(lock);
+  const prefix = `${pathWin325.basename(lock)}.`;
+  try {
+    const found2 = readdirSync8(dir).filter((name) => name.startsWith(prefix) && name.endsWith(".break"));
+    return found2.length ? `; removal claim left behind (delete it if no process is mid-takeover): ${found2.join(", ")}` : "";
+  } catch {
+    return "";
+  }
+}
+function sleepSync(ms2) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms2);
+}
+
+// src/status-file.ts
+import { renameSync, unlinkSync as unlinkSync4, writeFileSync as writeFileSync2 } from "node:fs";
 function sleepSync2(ms2) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms2);
 }
 function writeStatusFile(target, text8, { attempts = 10, delayMs = 50 } = {}) {
   const temp = `${target}.${process.pid}.tmp`;
   try {
-    writeFileSync3(temp, text8, "utf-8");
+    writeFileSync2(temp, text8, "utf-8");
   } catch (err) {
     return err.code ?? "UNKNOWN";
   }
@@ -83298,199 +82586,15 @@ function writeStatusFile(target, text8, { attempts = 10, delayMs = 50 } = {}) {
     }
   }
   try {
-    unlinkSync5(temp);
+    unlinkSync4(temp);
   } catch {
   }
   return code;
 }
-function ours(job) {
-  return readLock(job.lockFile)?.job_id === job.status.job_id;
-}
-function publish(job) {
-  if (!ours(job)) return false;
-  job.status.updated_at = nowIso2();
-  if (job.pageFile) {
-    const page2 = `window.WORKBOARD_STATUS = ${JSON.stringify(job.status).replace(/</g, "\\u003c")};
-`;
-    const code2 = writeStatusFile(job.pageFile, page2);
-    if (code2 !== null) job.status.write_error = { target: job.pageFile, code: code2, at: nowIso2() };
-  }
-  const code = writeStatusFile(job.mirrorFile, JSON.stringify(job.status));
-  if (code !== null) job.status.write_error = { target: job.mirrorFile, code, at: nowIso2() };
-  return true;
-}
-function releaseLock(job) {
-  try {
-    removeLockIfKey(job.lockFile, "job_id", job.status.job_id, void 0, 500);
-  } catch {
-  }
-}
-function finish(job, release) {
-  if (release) releaseLock(job);
-  jobs.delete(job.lockFile);
-  job.resolve({ job_id: job.status.job_id, rendered: job.rendered, done: job.status.done, failed: job.status.failed });
-}
-function schedule(job) {
-  setImmediate(() => step(job)).unref();
-}
-function settle(job) {
-  if (!job.settle) return;
-  try {
-    inOneCall(job.settle);
-  } catch (err) {
-    job.status.write_error = { target: "settle", code: err instanceof Error ? err.message : String(err), at: nowIso2() };
-  }
-}
-function step(job) {
-  try {
-    if (!ours(job)) return finish(job, false);
-    if (!existsSync10(job.dbPath)) {
-      job.status.state = "aborted";
-      job.status.current = null;
-      publish(job);
-      return finish(job, true);
-    }
-    if (job.settleFirst) {
-      job.settleFirst = false;
-      settle(job);
-    }
-    const id = job.status.current;
-    const started = performance.now();
-    if (id !== null) {
-      try {
-        if (!job.skip.has(id) && !job.isFresh(id)) {
-          inOneCall(() => job.render(id));
-          job.rendered.push(id);
-          console.error(`[render-job] filing ${id} ${Math.round(performance.now() - started)} ms`);
-        }
-        job.status.done.push(id);
-      } catch (err) {
-        job.status.failed.push({ filing_id: id, error: err instanceof Error ? err.message : String(err) });
-      }
-    }
-    job.status.current = job.status.queued.shift() ?? null;
-    if (job.status.current === null) {
-      job.status.state = "done";
-      if (job.rendered.length > 0) settle(job);
-    }
-    try {
-      utimesSync(job.lockFile, /* @__PURE__ */ new Date(), /* @__PURE__ */ new Date());
-    } catch {
-    }
-    if (!publish(job)) return finish(job, false);
-    if (job.status.state === "done") return finish(job, true);
-    schedule(job);
-  } catch (err) {
-    try {
-      job.status.state = "aborted";
-      job.status.write_error ??= { target: job.mirrorFile, code: err instanceof Error ? err.message : String(err), at: nowIso2() };
-      publish(job);
-    } finally {
-      finish(job, true);
-    }
-  }
-}
-function installExitHandler() {
-  if (exitHandlerInstalled) return;
-  exitHandlerInstalled = true;
-  process.on("exit", () => {
-    for (const job of jobs.values()) {
-      job.status.state = "aborted";
-      job.status.current = null;
-      if (publish(job)) releaseLock(job);
-    }
-  });
-}
-function mirrorStatus(dbPath, env) {
-  const lockFile = hostLocalPath(dbPath, "render-job.lock", env);
-  const job = jobs.get(lockFile);
-  let status3;
-  if (job) {
-    status3 = job.status;
-  } else {
-    try {
-      status3 = JSON.parse(readFileSync11(hostLocalPath(dbPath, "render-job.status.json", env), "utf-8"));
-    } catch {
-      return { state: "idle" };
-    }
-  }
-  if (status3.state !== "running") return { ...status3 };
-  if (!job && !existsSync10(lockFile)) return { ...status3, state: "aborted" };
-  if (Date.now() - Date.parse(status3.updated_at) > status3.stall_after_ms) return { ...status3, state: "stalled" };
-  return { ...status3 };
-}
-function backgroundJobStatus(dbPath, env = process.env) {
-  return mirrorStatus(dbPath, env);
-}
-function startRenderJob(options) {
-  const env = options.env ?? process.env;
-  const stall = stallMs(env);
-  const lockFile = hostLocalPath(options.dbPath, "render-job.lock", env);
-  const result = acquire(lockFile, options.dbPath, stall);
-  if ("holder" in result) {
-    const live = jobs.get(lockFile);
-    if (live && options.settleFirst) live.settleFirst = true;
-    const reported3 = mirrorStatus(options.dbPath, env);
-    if (result.holder && reported3.state !== "idle" && "job_id" in reported3 && reported3.job_id === result.holder.job_id) {
-      return { ...reported3, joined: true };
-    }
-    return { state: "running", job_id: result.holder?.job_id ?? null, started_at: result.holder?.started_at ?? null, joined: true };
-  }
-  let resolve11;
-  const promise = new Promise((r3) => resolve11 = r3);
-  const [current = null, ...queued] = options.queue;
-  const settleFirst = options.settle !== void 0 && options.settleFirst === true;
-  const idle = current === null && !settleFirst;
-  const job = {
-    lockFile,
-    mirrorFile: hostLocalPath(options.dbPath, "render-job.status.json", env),
-    ...options.draftDir ? { pageFile: join14(options.draftDir, STATUS_FILE) } : {},
-    dbPath: options.dbPath,
-    status: {
-      job_id: result.acquired.job_id,
-      state: idle ? "done" : "running",
-      started_at: result.acquired.started_at,
-      updated_at: result.acquired.started_at,
-      stall_after_ms: stall,
-      queued,
-      done: [],
-      failed: [],
-      current
-    },
-    rendered: [],
-    skip: /* @__PURE__ */ new Set(),
-    render: options.render,
-    isFresh: options.isFresh,
-    ...options.settle ? { settle: options.settle } : {},
-    settleFirst,
-    promise,
-    resolve: resolve11
-  };
-  jobs.set(lockFile, job);
-  installExitHandler();
-  publish(job);
-  const reported2 = { ...job.status };
-  if (idle) finish(job, true);
-  else schedule(job);
-  return reported2;
-}
-function markRenderedInForeground(dbPath, filingId, env = process.env) {
-  const job = jobs.get(hostLocalPath(dbPath, "render-job.lock", env));
-  if (!job || job.status.state !== "running") return;
-  const queuedAt = job.status.queued.indexOf(filingId);
-  if (queuedAt === -1 && job.status.current !== filingId) return;
-  if (!job.isFresh(filingId)) return;
-  job.skip.add(filingId);
-  if (queuedAt !== -1) {
-    job.status.queued.splice(queuedAt, 1);
-    job.status.done.push(filingId);
-    publish(job);
-  }
-}
 
 // src/knowledge/sidecar.ts
 function passageHash(passage) {
-  return createHash4("sha256").update(passage.replace(/\s+/g, " ").trim(), "utf8").digest("hex");
+  return createHash3("sha256").update(passage.replace(/\s+/g, " ").trim(), "utf8").digest("hex");
 }
 function invalid2(file, where, rule) {
   throw new DataServerError(`${file}: ${where}: ${rule}`, "invalid_sidecar");
@@ -83609,40 +82713,40 @@ function effectiveStatus(input) {
   return out;
 }
 var LOCK_ATTEMPTS = 5;
-var LOCK_RETRY_MS2 = 400;
-var LOCK_STALE_MS2 = 6e4;
+var LOCK_RETRY_MS = 400;
+var LOCK_STALE_MS = 6e4;
 function lockIsStale(lock) {
   try {
-    return Date.now() - statSync7(lock).mtimeMs > LOCK_STALE_MS2;
+    return Date.now() - statSync5(lock).mtimeMs > LOCK_STALE_MS;
   } catch {
     return false;
   }
 }
-async function acquireLock2(lock) {
+async function acquireLock(lock) {
   for (let attempt = 0; attempt < LOCK_ATTEMPTS; attempt++) {
     try {
-      const token = randomUUID7();
-      const fd = openSync4(lock, "wx");
-      writeSync4(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), token }));
-      closeSync4(fd);
+      const token = randomUUID5();
+      const fd = openSync2(lock, "wx");
+      writeSync2(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), token }));
+      closeSync2(fd);
       return token;
     } catch (err) {
       if (err.code !== "EEXIST") throw err;
       const key = readLockKey(lock, "token");
       if (key === null) continue;
       if (lockIsStale(lock) && removeLockIfKey(lock, "token", key, () => lockIsStale(lock))) continue;
-      if (attempt < LOCK_ATTEMPTS - 1) await new Promise((resolve11) => setTimeout(resolve11, LOCK_RETRY_MS2));
+      if (attempt < LOCK_ATTEMPTS - 1) await new Promise((resolve11) => setTimeout(resolve11, LOCK_RETRY_MS));
     }
   }
   throw new DataServerError(
-    `could not acquire the knowledge write lock within ${LOCK_ATTEMPTS * LOCK_RETRY_MS2 / 1e3}s (${lock}${orphanClaims(lock)}); another session is writing`,
+    `could not acquire the knowledge write lock within ${LOCK_ATTEMPTS * LOCK_RETRY_MS / 1e3}s (${lock}${orphanClaims(lock)}); another session is writing`,
     "lock_timeout"
   );
 }
 async function withFileLock(target, fn2) {
-  mkdirSync4(pathWin327.dirname(target), { recursive: true });
+  mkdirSync3(pathWin326.dirname(target), { recursive: true });
   const lock = `${target}.lock`;
-  const token = await acquireLock2(lock);
+  const token = await acquireLock(lock);
   try {
     return await fn2();
   } finally {
@@ -83660,7 +82764,7 @@ function writeBytesAtomic(target, bytes) {
   writeTextAtomic(target, bytes);
 }
 function readRows(sidecarAbs, knowledgePath) {
-  if (!existsSync11(sidecarAbs)) return [];
+  if (!existsSync8(sidecarAbs)) return [];
   const text8 = readLayerBytes(sidecarAbs, "the confirmation sidecar").toString("utf-8");
   return parseSidecar(text8.startsWith("\uFEFF") ? text8.slice(1) : text8, sidecarAbs, knowledgePath);
 }
@@ -83684,22 +82788,22 @@ var TOKENS = ["{{AUTHOR_NAME}}", "{{AUTHOR_EMAIL}}", "{{DIRECT_LINE}}", "{{FILE_
 var HEADER_FOOTER_PART = /^word\/(header|footer)\d*\.xml$/;
 var THEME_PART = "word/theme/theme1.xml";
 function firmPaths(env, fallback) {
-  const dir = join15(resolveCaseDataRoot(env, fallback), "_practice", "firm");
-  return { firm: join15(dir, "firm.json"), letterhead: join15(dir, "letterhead.docx") };
+  const dir = join13(resolveCaseDataRoot(env, fallback), "_practice", "firm");
+  return { firm: join13(dir, "firm.json"), letterhead: join13(dir, "letterhead.docx") };
 }
 function emailSignaturePath(env, key) {
-  return join15(dirname6(firmPaths(env).firm), "email-signatures", `${key}.htm`);
+  return join13(dirname6(firmPaths(env).firm), "email-signatures", `${key}.htm`);
 }
 function readJson(path) {
   try {
-    return JSON.parse(readFileSync12(path, "utf-8"));
+    return JSON.parse(readFileSync8(path, "utf-8"));
   } catch (err) {
     throw new ValidationError(`${path} is not valid JSON: ${err.message}`);
   }
 }
 function readConfig(env) {
   const path = configPath(env);
-  return existsSync12(path) ? readJson(path) : { version: 1 };
+  return existsSync9(path) ? readJson(path) : { version: 1 };
 }
 function writeJson(path, value2) {
   writeTextAtomic(path, JSON.stringify(value2, null, 2) + "\n");
@@ -83717,7 +82821,7 @@ async function firm_profile(env = process.env) {
 }
 function readFirmProfile(env = process.env, fallback) {
   const paths = firmPaths(env, fallback);
-  const firm = existsSync12(paths.firm) ? readJson(paths.firm) : void 0;
+  const firm = existsSync9(paths.firm) ? readJson(paths.firm) : void 0;
   const firmName2 = typeof firm?.firm_name === "string" ? firm.firm_name : "";
   if (!firm || firmName2 === "") {
     const missing = firm ? `firm_name in ${paths.firm}` : `firm.json (${paths.firm})`;
@@ -83727,7 +82831,7 @@ function readFirmProfile(env = process.env, fallback) {
   }
   const roster = rosterOf(firm, paths.firm);
   const config2 = configPath(env);
-  const machine = existsSync12(config2) ? readJson(config2) : void 0;
+  const machine = existsSync9(config2) ? readJson(config2) : void 0;
   const raw = machine?.person;
   const person2 = raw === void 0 || raw === null || raw === "" ? null : raw;
   const quirks = machine?.practice_quirks;
@@ -83745,7 +82849,7 @@ function readFirmProfile(env = process.env, fallback) {
   return {
     firm_name: firmName2,
     roster,
-    letterhead: existsSync12(paths.letterhead) ? paths.letterhead : null,
+    letterhead: existsSync9(paths.letterhead) ? paths.letterhead : null,
     person: person2,
     practice_quirks: typeof quirks === "string" && quirks !== "" ? quirks : null,
     ...isKeyList(firm.cc_on_counsel_email) && firm.cc_on_counsel_email.length > 0 ? { cc_on_counsel_email: firm.cc_on_counsel_email } : {}
@@ -83855,7 +82959,7 @@ async function upsert_firm_profile(args, env = process.env) {
   }
   const paths = resolved;
   const result = { changed: [], written: [] };
-  const current = resolved && existsSync12(paths.firm) ? readJson(paths.firm) : void 0;
+  const current = resolved && existsSync9(paths.firm) ? readJson(paths.firm) : void 0;
   let firm;
   if (args.firm_name !== void 0 || args.roster_entry !== void 0 || args.cc_on_counsel_email !== void 0) {
     firm = { firm_name: void 0, roster: [], ...current };
@@ -83896,7 +83000,7 @@ async function upsert_firm_profile(args, env = process.env) {
   }
   if (config2 && args.signature !== void 0) {
     const signature = asString(args.signature, "signature");
-    if (!existsSync12(signature)) throw new NotFoundError(`signature file not found: ${signature}`);
+    if (!existsSync9(signature)) throw new NotFoundError(`signature file not found: ${signature}`);
     config2.signature = signature;
     result.changed.push("signature");
   }
@@ -83915,8 +83019,8 @@ async function upsert_firm_profile(args, env = process.env) {
   let letterhead;
   if (args.letterhead !== void 0) {
     const source = asString(args.letterhead, "letterhead");
-    if (!existsSync12(source)) throw new NotFoundError(`letterhead source not found: ${source}`);
-    letterhead = readFileSync12(source);
+    if (!existsSync9(source)) throw new NotFoundError(`letterhead source not found: ${source}`);
+    letterhead = readFileSync8(source);
     const { major, minor } = checkLetterhead(letterhead, source);
     if (major !== void 0 && minor !== void 0 && major !== minor) result.theme_faces_differ = { major, minor };
     result.changed.push("letterhead");
@@ -83931,18 +83035,18 @@ async function upsert_firm_profile(args, env = process.env) {
   const person2 = (config2 ?? readConfig(env)).person;
   const preparer = roster.find((entry2) => typeof person2 === "string" && entry2.key === person2);
   if (preparer && !preparer.initials) result.preparer_initials_missing = person2;
-  if (firm || letterhead) mkdirSync5(dirname6(paths.firm), { recursive: true });
+  if (firm || letterhead) mkdirSync4(dirname6(paths.firm), { recursive: true });
   if (firm) {
     writeJson(paths.firm, firm);
     result.written.push(paths.firm);
   }
   if (letterhead) {
-    writeFileSync4(paths.letterhead, letterhead);
+    writeFileSync3(paths.letterhead, letterhead);
     result.written.push(paths.letterhead);
   }
   if (config2) {
     for (const target of configWritePaths(env)) {
-      mkdirSync5(dirname6(target), { recursive: true });
+      mkdirSync4(dirname6(target), { recursive: true });
       writeJson(target, config2);
       result.written.push(target);
     }
@@ -83951,17 +83055,17 @@ async function upsert_firm_profile(args, env = process.env) {
 }
 
 // src/tools/practice/folder-map.ts
-import { existsSync as existsSync13, mkdirSync as mkdirSync6, readdirSync as readdirSync9, readFileSync as readFileSync13, writeFileSync as writeFileSync5 } from "node:fs";
-import { dirname as dirname7, join as join16, win32 as pathWin328 } from "node:path";
+import { existsSync as existsSync10, mkdirSync as mkdirSync5, readdirSync as readdirSync9, readFileSync as readFileSync9, writeFileSync as writeFileSync4 } from "node:fs";
+import { dirname as dirname7, join as join14, win32 as pathWin327 } from "node:path";
 var FLAGS = ["never_ingest", "privileged_by_default", "authority"];
 var GLOSSARY = "shared/document-types.md";
 var ROW = /^\| `([a-z_]+)` \| ([^|]+?) \| ([^|]+?) \|([^|]*)\|$/;
 function documentTypes(env = process.env) {
   const root = resolveShippedRoot(GLOSSARY, env, { subject: "the document-type glossary", plugin: "lawyer" }).root;
-  const path = join16(root, ...GLOSSARY.split("/"));
-  if (!existsSync13(path)) throw new DataServerError(`the document-type glossary is missing: ${path}`, "skills_root_missing");
+  const path = join14(root, ...GLOSSARY.split("/"));
+  if (!existsSync10(path)) throw new DataServerError(`the document-type glossary is missing: ${path}`, "skills_root_missing");
   const types = [];
-  for (const line of readFileSync13(path, "utf-8").split(/\r?\n/)) {
+  for (const line of readFileSync9(path, "utf-8").split(/\r?\n/)) {
     const m3 = ROW.exec(line.trim());
     if (!m3) continue;
     const flags = [...m3[4].matchAll(/`([a-z_]+)`/g)].map((f3) => f3[1]);
@@ -83973,17 +83077,17 @@ function documentTypes(env = process.env) {
   return types;
 }
 function folderMapsDir(env) {
-  return join16(resolveCaseDataRoot(env), "_practice", "firm", "folder-maps");
+  return join14(resolveCaseDataRoot(env), "_practice", "firm", "folder-maps");
 }
 function folderMapPath(env, key) {
-  return join16(folderMapsDir(env), `${key}.json`);
+  return join14(folderMapsDir(env), `${key}.json`);
 }
 function machinePerson(env) {
   const config2 = configPath(env);
-  if (!existsSync13(config2)) return null;
+  if (!existsSync10(config2)) return null;
   let person2;
   try {
-    person2 = JSON.parse(readFileSync13(config2, "utf-8"))?.person;
+    person2 = JSON.parse(readFileSync9(config2, "utf-8"))?.person;
   } catch (err) {
     throw new ValidationError(`${config2} is not valid JSON: ${err.message}`);
   }
@@ -83996,7 +83100,7 @@ function splitGlob(glob) {
 }
 function checkGlob(glob, where) {
   if (typeof glob !== "string" || glob.trim() === "") throw new ValidationError(`${where}: a folder must be a non-empty string`);
-  if (pathWin328.isAbsolute(glob) || /^[a-z]:/i.test(glob) || /^[\\/]/.test(glob)) {
+  if (pathWin327.isAbsolute(glob) || /^[a-z]:/i.test(glob) || /^[\\/]/.test(glob)) {
     throw new ValidationError(`${where}: "${glob}" must be relative to the matter folder`);
   }
   if (splitGlob(glob).some((s3) => s3 === "" || s3 === "." || s3 === "..")) {
@@ -84026,12 +83130,12 @@ function readFolderMap(env = process.env, types = documentTypes(env)) {
     return { status: "no_map", person: null, map_path: null, reason: "this machine names no person, so no folder map applies" };
   }
   const path = folderMapPath(env, person2);
-  if (!existsSync13(path)) {
+  if (!existsSync10(path)) {
     return { status: "no_map", person: person2, map_path: path, reason: `no folder map is recorded for ${person2}` };
   }
   let parsed;
   try {
-    parsed = JSON.parse(readFileSync13(path, "utf-8"));
+    parsed = JSON.parse(readFileSync9(path, "utf-8"));
   } catch (err) {
     throw new ValidationError(`${path} is not valid JSON: ${err.message}`);
   }
@@ -84051,7 +83155,7 @@ function expandGlob(root, glob) {
   let dirs = [root];
   for (const segment of splitGlob(glob)) {
     dirs = dirs.flatMap(
-      (dir) => readdirSync9(dir, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && segmentMatches(segment, e3.name)).map((e3) => join16(dir, e3.name)).sort()
+      (dir) => readdirSync9(dir, { withFileTypes: true }).filter((e3) => (e3.isDirectory() || e3.isSymbolicLink()) && segmentMatches(segment, e3.name)).map((e3) => join14(dir, e3.name)).sort()
     );
   }
   return dirs;
@@ -84100,15 +83204,15 @@ async function set_folder_map(args, env = process.env) {
     throw new ValidationError("this machine names no person, so there is no one to record a folder map for. Set person with practice_data__upsert_firm_profile first. Nothing was written.");
   }
   const path = folderMapPath(env, person2);
-  mkdirSync6(dirname7(path), { recursive: true });
-  writeFileSync5(path, JSON.stringify({ entries }, null, 2) + "\n", "utf-8");
+  mkdirSync5(dirname7(path), { recursive: true });
+  writeFileSync4(path, JSON.stringify({ entries }, null, 2) + "\n", "utf-8");
   return { person: person2, written: path, entries };
 }
 
 // src/tools/practice/config.ts
-import { existsSync as existsSync14, mkdirSync as mkdirSync7, readdirSync as readdirSync10, readFileSync as readFileSync14, renameSync as renameSync2, statSync as statSync8, writeFileSync as writeFileSync6 } from "node:fs";
-import { homedir as homedir7 } from "node:os";
-import { dirname as dirname8, isAbsolute as isAbsolute3, join as join17 } from "node:path";
+import { existsSync as existsSync11, mkdirSync as mkdirSync6, readdirSync as readdirSync10, readFileSync as readFileSync10, renameSync as renameSync2, statSync as statSync6, writeFileSync as writeFileSync5 } from "node:fs";
+import { homedir as homedir6 } from "node:os";
+import { dirname as dirname8, isAbsolute as isAbsolute3, join as join15 } from "node:path";
 var DOCUMENTED_KEYS = [
   "version",
   "case_data_root",
@@ -84124,20 +83228,20 @@ var DOCUMENTED_KEYS = [
 ];
 function isFile(path) {
   try {
-    return statSync8(path).isFile();
+    return statSync6(path).isFile();
   } catch {
     return false;
   }
 }
 function isDir(path) {
   try {
-    return statSync8(path).isDirectory();
+    return statSync6(path).isDirectory();
   } catch {
     return false;
   }
 }
 function practiceDb(root) {
-  return join17(root, "_practice", "practice.db");
+  return join15(root, "_practice", "practice.db");
 }
 function rootWorks(root) {
   return typeof root === "string" && root !== "" && isDir(root) && isFile(practiceDb(root));
@@ -84146,21 +83250,21 @@ function keysMissing(config2) {
   return DOCUMENTED_KEYS.filter((key) => config2[key] === void 0 || config2[key] === null || config2[key] === "");
 }
 function redirectedCopies(env) {
-  const packages = join17(env.LOCALAPPDATA || join17(homedir7(), "AppData", "Local"), "Packages");
+  const packages = join15(env.LOCALAPPDATA || join15(homedir6(), "AppData", "Local"), "Packages");
   let names;
   try {
     names = readdirSync10(packages);
   } catch {
     return [];
   }
-  return names.flatMap((name) => [CONFIG_FOLDER, LEGACY_CONFIG_FOLDER].flatMap((folder) => [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file) => join17(packages, name, "LocalCache", "Roaming", folder, file)))).filter(isFile);
+  return names.flatMap((name) => [CONFIG_FOLDER, LEGACY_CONFIG_FOLDER].flatMap((folder) => [CONFIG_FILE, LEGACY_CONFIG_FILE].map((file) => join15(packages, name, "LocalCache", "Roaming", folder, file)))).filter(isFile);
 }
 var SCAN_DEPTH = 4;
 var SCAN_LIMIT = 5e3;
 var SCAN_SKIP = /* @__PURE__ */ new Set(["appdata", "node_modules"]);
 function scanCandidates(env) {
   const roots = [];
-  const queue = [[env.USERPROFILE || homedir7(), 0]];
+  const queue = [[env.USERPROFILE || homedir6(), 0]];
   let visited = 0;
   for (let i3 = 0; i3 < queue.length; i3++) {
     const [dir, depth] = queue[i3];
@@ -84172,7 +83276,7 @@ function scanCandidates(env) {
     }
     for (const name of names) {
       if (name.startsWith(".") || SCAN_SKIP.has(name.toLowerCase())) continue;
-      const child = join17(dir, name);
+      const child = join15(dir, name);
       if (!isDir(child)) continue;
       if (++visited > SCAN_LIMIT) return { roots, truncated: true };
       if (name.toLowerCase() === "0. case data" || rootWorks(child)) roots.push(child);
@@ -84184,7 +83288,7 @@ function scanCandidates(env) {
 function pendingWrites(env) {
   try {
     const path = resolvePracticeDbPath(env);
-    if (!isFile(path) || statSync8(path).size === 0) return 0;
+    if (!isFile(path) || statSync6(path).size === 0) return 0;
     return new PracticeStore(env).pendingCount();
   } catch {
     return null;
@@ -84215,7 +83319,7 @@ async function config_status(args, env = process.env) {
   }
   if (status3.exists && status3.path) {
     try {
-      const config2 = JSON.parse(readFileSync14(status3.path, "utf-8"));
+      const config2 = JSON.parse(readFileSync10(status3.path, "utf-8"));
       status3.keys_present = Object.keys(config2);
       status3.keys_missing = keysMissing(config2);
       if (typeof config2.practice_quirks === "string" && config2.practice_quirks !== "") {
@@ -84260,11 +83364,11 @@ async function config_set_root(args, env = process.env) {
       `Refused: ${practiceDb(root)} does not exist. case_data_root must name a folder that already holds _practice\\practice.db, unless initialize is true for a new device's approved root. Nothing was written.`
     );
   }
-  const created = !existsSync14(path);
+  const created = !existsSync11(path);
   let config2 = { version: 1 };
   if (!created) {
     try {
-      config2 = JSON.parse(readFileSync14(path, "utf-8"));
+      config2 = JSON.parse(readFileSync10(path, "utf-8"));
     } catch (err) {
       throw new ValidationError(`${path} is not valid JSON (${err.message}); repair it by hand. Nothing was written.`);
     }
@@ -84280,12 +83384,12 @@ async function config_set_root(args, env = process.env) {
   }
   const previous = typeof config2.case_data_root === "string" ? config2.case_data_root : null;
   config2.case_data_root = root;
-  if (initialize) mkdirSync7(join17(root, "_practice"), { recursive: true });
+  if (initialize) mkdirSync6(join15(root, "_practice"), { recursive: true });
   const written = configWritePaths(env);
   for (const target of written) {
-    mkdirSync7(dirname8(target), { recursive: true });
+    mkdirSync6(dirname8(target), { recursive: true });
     const temp = `${target}.${process.pid}.tmp`;
-    writeFileSync6(temp, JSON.stringify(config2, null, 2) + "\n", "utf-8");
+    writeFileSync5(temp, JSON.stringify(config2, null, 2) + "\n", "utf-8");
     renameSync2(temp, target);
   }
   const result = { path: written[0], created, previous_case_data_root: previous, case_data_root: root, keys_missing: keysMissing(config2) };
@@ -84297,8 +83401,8 @@ async function config_set_root(args, env = process.env) {
 }
 
 // src/tools/practice/practice-board.ts
-import { existsSync as existsSync15, readFileSync as readFileSync15 } from "node:fs";
-import { dirname as dirname9, join as join18 } from "node:path";
+import { existsSync as existsSync12, readFileSync as readFileSync11 } from "node:fs";
+import { dirname as dirname9, join as join16 } from "node:path";
 
 // src/compose-template.ts
 var INCLUDE = /@@include\(([^)]*)\)@@/g;
@@ -84764,8 +83868,8 @@ async function buildPracticeBoardData(store, now) {
 async function render_practice_board(store) {
   const data = await buildPracticeBoardData(store, /* @__PURE__ */ new Date());
   const { panels } = data;
-  const file = join18(dirname9(resolvePracticeDbPath(store.env)), PRACTICE_BOARD_FILE);
-  if (existsSync15(file) && !readFileSync15(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
+  const file = join16(dirname9(resolvePracticeDbPath(store.env)), PRACTICE_BOARD_FILE);
+  if (existsSync12(file) && !readFileSync11(file, "utf-8").includes(PRACTICE_BOARD_MARKER)) {
     throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the Practice Board's marker, so this renderer did not write it`);
   }
   const code = writeStatusFile(file, renderPracticeBoardHtml(data));
@@ -84864,6 +83968,646 @@ async function callPracticeTool(store, name, args) {
   return result;
 }
 
+// src/case/backend.ts
+import { existsSync as existsSync14, readFileSync as readFileSync14 } from "node:fs";
+import { join as join17 } from "node:path";
+
+// src/case/case-lock.ts
+import { readFileSync as readFileSync13, writeFileSync as writeFileSync6 } from "node:fs";
+
+// src/data-lock.ts
+import { createHash as createHash4, randomUUID as randomUUID6 } from "node:crypto";
+import { closeSync as closeSync3, existsSync as existsSync13, mkdirSync as mkdirSync7, openSync as openSync3, readFileSync as readFileSync12, statSync as statSync7, unlinkSync as unlinkSync5, writeSync as writeSync3 } from "node:fs";
+import { homedir as homedir7 } from "node:os";
+import { win32 as pathWin328 } from "node:path";
+var LOCK_RETRY_MS2 = 400;
+var LOCK_STALE_MS2 = 9e5;
+function lockKey(target) {
+  return createHash4("sha256").update(pathWin328.normalize(target).toLowerCase()).digest("hex").slice(0, 16);
+}
+function hostLocalDir(site, env) {
+  const base = env[site.envVar] || pathWin328.join(env.LOCALAPPDATA || homedir7(), "Coclerk", site.dirName);
+  mkdirSync7(base, { recursive: true });
+  return base;
+}
+function hostLocalFile(site, target, suffix, env) {
+  return pathWin328.join(hostLocalDir(site, env), `${lockKey(target)}.${suffix}`);
+}
+async function acquireLock2(site, target, env, options = {}) {
+  const lock = hostLocalFile(site, target, "lock", env);
+  let brokeStale = false;
+  const attempts = options.waitsMs ? options.waitsMs.length + 1 : site.attempts;
+  let waitedMs = 0;
+  for (let attempt = 0; attempt < attempts + (brokeStale ? 1 : 0); attempt++) {
+    try {
+      const token = randomUUID6();
+      const fd = openSync3(lock, "wx");
+      try {
+        writeSync3(fd, JSON.stringify({ pid: process.pid, ts: (/* @__PURE__ */ new Date()).toISOString(), [site.recordField]: target, token, ...options.scope ? { scope: options.scope } : {} }));
+      } catch (writeErr) {
+        closeSync3(fd);
+        unlinkSync5(lock);
+        throw writeErr;
+      }
+      closeSync3(fd);
+      return {
+        brokeStale,
+        release() {
+          releaseIfOurs(lock, token);
+        }
+      };
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+      const key = readLockKey(lock, "token");
+      if (key === null) continue;
+      if (isStale(lock, site) && removeLockIfKey(lock, "token", key, () => isStale(lock, site))) {
+        brokeStale = true;
+        continue;
+      }
+      if (attempt < attempts - 1) {
+        const wait = options.waitsMs?.[attempt] ?? LOCK_RETRY_MS2;
+        await sleep(wait);
+        waitedMs += wait;
+      }
+    }
+  }
+  throw new DataServerError(
+    `could not acquire the ${site.label} write lock within ${waitedMs / 1e3}s (${lock}: ${holderOf(lock)}); another session is writing to or migrating this ${site.subject}`,
+    "lock_unavailable"
+  );
+}
+function liveLockRecord(site, target, env) {
+  const lock = hostLocalFile(site, target, "lock", env);
+  if (isStale(lock, site)) return null;
+  try {
+    return JSON.parse(readFileSync12(lock, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+function releaseIfOurs(lock, token) {
+  try {
+    removeLockIfKey(lock, "token", token, void 0, 500);
+  } catch {
+  }
+}
+function isStale(lock, site) {
+  try {
+    return Date.now() - statSync7(lock).mtimeMs > (site.staleMs ?? LOCK_STALE_MS2) || site.breakDead === true && holderDied(lock);
+  } catch {
+    return false;
+  }
+}
+function holderDied(lock) {
+  let pid;
+  try {
+    pid = JSON.parse(readFileSync12(lock, "utf-8")).pid;
+  } catch {
+    return false;
+  }
+  if (typeof pid !== "number") return false;
+  try {
+    process.kill(pid, 0);
+    return false;
+  } catch (err) {
+    return err.code === "ESRCH";
+  }
+}
+function holderOf(lock) {
+  try {
+    return (existsSync13(lock) ? readFileSync12(lock, "utf-8").trim() : "released") + orphanClaims(lock);
+  } catch {
+    return "unreadable";
+  }
+}
+function sleep(ms2) {
+  return new Promise((resolve11) => setTimeout(resolve11, ms2));
+}
+
+// src/case/case-lock.ts
+var SITE = {
+  envVar: "COCLERK_CASE_LOCK_ROOT",
+  dirName: "case-locks",
+  attempts: 5,
+  recordField: "matterRoot",
+  label: "matter-data",
+  subject: "matter",
+  // Longer than the longest holder (WRITE_TIMEOUT_MS, 2 minutes), and never renewed: a session that
+  // hangs while alive cannot keep the lock (group locking spec 6.2).
+  staleMs: 5 * 6e4,
+  breakDead: true
+};
+var WRITE_WAITS_MS = [1e3, 2e3, 4e3, 8e3];
+function acquireCaseLock(matterRoot, env = process.env) {
+  return acquireLock2(SITE, matterRoot, env);
+}
+function acquireIngestWriteLock(matterRoot, env = process.env) {
+  return acquireLock2(SITE, matterRoot, env, { waitsMs: WRITE_WAITS_MS });
+}
+async function withExclusive(matterRoot, env, op) {
+  const lock = await acquireLock2(SITE, matterRoot, env, { waitsMs: WRITE_WAITS_MS, scope: "exclusive" });
+  try {
+    advanceRevision(matterRoot, env);
+    return await op(lock);
+  } finally {
+    lock.release();
+  }
+}
+function exclusiveHeld(matterRoot, env = process.env) {
+  return liveLockRecord(SITE, matterRoot, env)?.scope === "exclusive";
+}
+function matterRevision(matterRoot, env = process.env) {
+  try {
+    return Number(readFileSync13(hostLocalFile(SITE, matterRoot, "revision", env), "utf-8")) || 0;
+  } catch {
+    return 0;
+  }
+}
+function advanceRevision(matterRoot, env = process.env) {
+  writeFileSync6(hostLocalFile(SITE, matterRoot, "revision", env), String(matterRevision(matterRoot, env) + 1), "utf-8");
+}
+
+// src/case/backend.ts
+var PY_HELPER2 = case_data_resolver_py_default + LOCATE_PY + String.raw`
+import json, os, re, shutil, sqlite3, sys, tempfile
+
+EXPECTED_USER_VERSION = 90
+DBS = ('main', 'law', 'privileged')
+DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
+
+
+def pointer_case_data_dir(matter_root, case_data_dir):
+    """The pointer's case_data_dir value: relative to the matter root when the folder is
+    inside it, absolute otherwise, as evidence_sql_path is stored."""
+    try:
+        rel = os.path.relpath(case_data_dir, matter_root)
+    except ValueError:
+        return case_data_dir
+    if rel in (os.curdir, os.pardir) or rel.startswith(os.pardir + os.sep):
+        return case_data_dir
+    return rel
+
+
+def default_evidence_sql(matter_root, case_data_dir):
+    """The text dump beside the databases, relative to the matter root so the pointer survives
+    a change of user profile; absolute when the two are on different drives."""
+    path = norm_join(case_data_dir, 'evidence.sql')
+    try:
+        return os.path.relpath(path, matter_root)
+    except ValueError:
+        return path
+
+
+def read_user_version(sqlite_path):
+    tmp = tempfile.mkdtemp(prefix=f'coclerk_guard_{os.environ["COCLERK_STAGING_TAG"]}_')
+    probe = os.path.join(tmp, os.path.basename(sqlite_path))
+    try:
+        shutil.copy2(sqlite_path, probe)
+        con = sqlite3.connect(probe)
+        try:
+            return con.execute("PRAGMA user_version").fetchone()[0]
+        finally:
+            con.close()
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def resolve_pointer(matter_root):
+    matter_root = os.path.normpath(matter_root)
+    root_ptrs, from_legacy, pointer_path, pointer = read_pointer(matter_root)
+
+    root = case_data_root(matter_root)
+    legacy_dir = norm_join(matter_root, LEGACY_ARTIFACTS_DIR)
+    stored = pointer.get('case_data_dir')
+
+    def is_legacy_value(p):
+        if not p:
+            return False
+        resolved = os.path.normpath(p) if is_absolute(p) else norm_join(matter_root, p)
+        return resolved == legacy_dir
+
+    case_data_dir, rejected_nominee = resolve_case_data_dir(
+        matter_root, stored, root, legacy_dir)
+
+    # Legacy migration: 9. AI -> the matter's 0. CASE DATA folder.
+    if is_legacy_value(pointer.get('case_data_dir')) or from_legacy:
+        os.makedirs(case_data_dir, exist_ok=True)
+        if os.path.isdir(legacy_dir):
+            for fn in ('main.sqlite', 'law.sqlite', 'privileged.sqlite'):
+                src = norm_join(legacy_dir, fn)
+                dst = norm_join(case_data_dir, fn)
+                if os.path.exists(src) and not os.path.exists(dst):
+                    shutil.move(src, dst)
+        mid, _ = identity_from_metadata(norm_join(case_data_dir, 'main.sqlite'))
+        if mid:
+            preferred = matter_case_data_dir(matter_root)
+            if preferred != case_data_dir:
+                os.makedirs(os.path.dirname(preferred), exist_ok=True)
+                if not os.path.exists(preferred):
+                    shutil.move(case_data_dir, preferred)
+                    case_data_dir = preferred
+
+    normalized = {
+        'schema_version': EXPECTED_SCHEMA_VERSION,
+        'matter_root': matter_root,
+        'case_data_dir': pointer_case_data_dir(matter_root, case_data_dir),
+        'evidence_sql_path': pointer.get(
+            'evidence_sql_path', default_evidence_sql(matter_root, case_data_dir)),
+    }
+    # Migrate-on-write: probanda.json, and coclerk.json with the same content so an older
+    # copy of the plugin still finds the matter.
+    for root_ptr in root_ptrs:
+        with open(root_ptr, 'w', encoding='utf-8') as fh:
+            json.dump(normalized, fh, indent=2)
+
+    main_sqlite = norm_join(case_data_dir, 'main.sqlite')
+
+    if os.path.exists(main_sqlite):
+        uv = read_user_version(main_sqlite)
+        version = 62 if uv == 0 else uv
+        if version < EXPECTED_USER_VERSION:
+            major, minor = version // 10, version % 10
+            raise SystemExit(
+                f"Database schema is at v{major}.{minor} but this skill "
+                "requires v9.0. Run the migrate operation: call "
+                "matter_data__migrate with mode 'plan' first, then 'apply' with "
+                "the plan_token it returns. (Not rebuild -- rebuild replays a "
+                "current dump and rejects an out-of-date one.)")
+
+    evidence_sql = norm_join(matter_root, normalized['evidence_sql_path'])
+    warnings = []
+    if rejected_nominee:
+        warnings.append(
+            "Stored case_data_dir nominee did not contain main.sqlite; "
+            f"selected live-derived location {case_data_dir} and healed probanda.json.")
+    if os.path.exists(evidence_sql):
+        try:
+            with open(evidence_sql, 'r', encoding='utf-8', errors='replace') as fh:
+                first = fh.readline()
+            m = re.search(r'schema v(\d+)\.(\d+)', first)
+            if not m or (int(m.group(1)) * 10 + int(m.group(2))) < EXPECTED_USER_VERSION:
+                warnings.append(
+                    "evidence.sql is missing a v9.0 schema header or predates "
+                    "v9.0. Regenerate it via maintain; the rebuild-only "
+                    "transition through v7.6 is the sole exception.")
+        except Exception:
+            pass
+
+    return {
+        'case_data_dir': case_data_dir,
+        'main_sqlite': main_sqlite,
+        'law_sqlite': norm_join(case_data_dir, 'law.sqlite'),
+        'privileged_sqlite': norm_join(case_data_dir, 'privileged.sqlite'),
+        'evidence_sql': evidence_sql,
+        'warning': " ".join(warnings) or None,
+    }
+
+
+def copy_fsync(src, dst):
+    """copy2 then flush to disk, so a later rename cannot expose a torn file."""
+    shutil.copy2(src, dst)
+    with open(dst, 'rb+') as fh:
+        os.fsync(fh.fileno())
+    return dst
+
+
+def stage_copies(resolved, tmpdir_):
+    copies = {}
+    for db in DBS:
+        native = resolved[f'{db}_sqlite']
+        dst = os.path.join(tmpdir_, f'{db}.sqlite')
+        if os.path.exists(native):
+            shutil.copy2(native, dst)
+        copies[db] = dst
+    return copies
+
+
+def open_attached(copies, triggers_sql):
+    con = sqlite3.connect(copies['main'])
+    con.execute("ATTACH DATABASE '%s' AS law" % copies['law'].replace("'", "''"))
+    con.execute("ATTACH DATABASE '%s' AS privileged" % copies['privileged'].replace("'", "''"))
+    if triggers_sql:
+        con.executescript(triggers_sql)
+    con.execute("PRAGMA journal_mode = DELETE")
+    con.execute("PRAGMA foreign_keys = ON")
+    mode = con.execute("PRAGMA journal_mode").fetchone()[0]
+    if str(mode).lower() != 'delete':
+        raise SystemExit(f"Refusing to operate: journal_mode is '{mode}', expected 'delete'.")
+    return con
+
+
+def dump_db(path):
+    c = sqlite3.connect(path)
+    try:
+        return "\n".join(c.iterdump())
+    finally:
+        c.close()
+
+
+def write_dump(resolved, copies):
+    lines = [DUMP_HEADER]
+    for db in DBS:
+        body = dump_db(copies[db])
+        lines.append(f"-- ===== v6 BEGIN {db} =====")
+        lines.append(body)
+        lines.append(f"-- ===== v6 END {db} =====")
+    text = "\n".join(lines) + "\n"
+    path = resolved['evidence_sql']
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + '.tmp'
+    with open(tmp, 'w', encoding='utf-8', newline='\n') as fh:
+        fh.write(text)
+    os.replace(tmp, path)
+
+
+# Leading whitespace, '--' line comments and '/* */' block comments are
+# skipped before the keyword check, so a query copied verbatim from a skill
+# file that opens with a comment is not refused. Each comment matches only up
+# to its own terminator, the way SQLite reads it, so a comment cannot hide a
+# write. One character of whitespace per step keeps the match linear.
+READ_ONLY_RE = r'(?is)^(?:\s|--[^\n]*(?:\n|$)|/\*(?:(?!\*/).)*\*/)*(select|with|pragma)\b'
+
+
+def do_query(req, resolved):
+    sql = req['sql'].strip()
+    if not re.match(READ_ONLY_RE, sql):
+        raise SystemExit("matter_data__query only accepts SELECT/WITH/PRAGMA statements; use matter_data__execute for writes.")
+    if not os.path.exists(resolved['main_sqlite']):
+        raise SystemExit(
+            "No case database found: resolved main.sqlite is missing at "
+            f"{resolved['main_sqlite']}. Re-run matter-data initialize for a new matter "
+            "or restore the database at the live-derived location.")
+    tmp = tempfile.mkdtemp(prefix=f'coclerk_case_query_{os.environ["COCLERK_STAGING_TAG"]}_')
+    try:
+        copies = stage_copies(resolved, tmp)
+        con = open_attached(copies, '')
+        try:
+            cur = con.execute(sql, req.get('params') or [])
+            cols = [d[0] for d in cur.description] if cur.description else []
+            rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        finally:
+            con.close()
+        return {"rows": rows, "warning": resolved.get('warning')}
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def databases_are_empty(copies):
+    for db in DBS:
+        con = sqlite3.connect(copies[db])
+        try:
+            if con.execute("SELECT count(*) FROM sqlite_master").fetchone()[0]:
+                return False
+        finally:
+            con.close()
+    return True
+
+
+def atomic_replace_set(resolved, copies):
+    """Commit the mutated binaries to native storage as close to atomically as
+    three separate files allow: stage every finished binary and a rollback copy
+    of every existing native in a same-volume sidecar, flush both to disk, then
+    replace the natives by rename. A rename that fails part-way is undone, so a
+    failed commit-to-disk never leaves some databases carrying the new state and
+    the rest the old -- the cross-database inconsistency I5 exists to prevent.
+
+    Ported from migrate_engine.atomic_replace_set rather than imported:
+    matter_data__execute runs in a separate spawn whose Python is this
+    self-contained helper with no PYTHONPATH imports, and that process
+    separation is what contains the schema-guard bypass (matter-data/references/design-decisions.md
+    #27). A shared import would collapse it.
+
+    os.replace is atomic only within a volume and COCLERK_CASE_DATA_ROOT can
+    point at another drive or a UNC path, so the sidecar is created INSIDE
+    case_data_dir to guarantee same-volume renames by construction. Every
+    connection is closed before anything reaches the sidecar, so no live handle
+    is ever held on synced storage.
+    """
+    natives = {db: resolved[f'{db}_sqlite'] for db in DBS}
+    for dst in natives.values():
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+    sidecar = tempfile.mkdtemp(prefix='${HALF_COMMIT_PREFIX}', dir=resolved['case_data_dir'])
+    try:
+        rollback_dir = os.path.join(sidecar, 'rollback')
+        os.makedirs(rollback_dir)
+        staged, rollback = {}, {}
+        for db in DBS:
+            staged[db] = copy_fsync(copies[db], os.path.join(sidecar, f'{db}.sqlite'))
+            # The rollback source is the native, not the staged copy -- the
+            # transaction mutated the staged copies in place. Reading the native
+            # now is safe because execute holds the cross-process lock across
+            # this whole window, so it is unchanged since staging. A native that
+            # never existed (the bootstrap path) is undone by removal instead.
+            rollback[db] = (
+                copy_fsync(natives[db], os.path.join(rollback_dir, f'{db}.sqlite'))
+                if os.path.exists(natives[db]) else None)
+
+        replaced = []
+        try:
+            for db in DBS:
+                os.replace(staged[db], natives[db])
+                replaced.append(db)
+        except Exception as exc:
+            failed = DBS[len(replaced)]
+            for i, db in enumerate(replaced):
+                try:
+                    if rollback[db] is None:
+                        os.remove(natives[db])
+                    else:
+                        os.replace(rollback[db], natives[db])
+                except Exception as rollback_exc:
+                    # Databases before index i were already undone.
+                    raise SystemExit(
+                        "Replacing %s.sqlite failed (%s) AND undoing %s.sqlite failed "
+                        "(%s). The case databases are now a mix of new and previous "
+                        "state: %s carry the new state, the rest the previous. Do not "
+                        "write again. Recover from evidence.sql (it still holds the last "
+                        "committed state: maintain rebuild), or from the synced folder's "
+                        "version history, or from a matter_data__migrate backup if one exists."
+                        % (failed, exc, db, rollback_exc, ", ".join(replaced[i:])))
+            raise SystemExit(
+                "Replacing %s.sqlite in native storage failed (%s); every database was "
+                "rolled back and the previous set is intact." % (failed, exc))
+    finally:
+        shutil.rmtree(sidecar, ignore_errors=True)
+
+
+def run_one(con, statement, params):
+    cur = con.execute(statement['sql'], params)
+    cols = [d[0] for d in cur.description] if cur.description else []
+    rows = [dict(zip(cols, r)) for r in cur.fetchall()] if cols else []
+    return {"rowcount": cur.rowcount, "rows": rows}
+
+
+def run_group(con, n, group, params, results, failed):
+    """One statement group (ingest orchestrator spec 2.1) under its own savepoint: an exception or a
+    'refuse' row inside it rolls back only the group, records {ref, reason}, and the call goes on.
+    Each statement still gets a result, zero for a rolled-back group's."""
+    merged = {**params, **(group.get('params') or {})}
+    own = []
+    con.execute("SAVEPOINT g_%d" % n)
+    try:
+        for statement in group['statements']:
+            result = run_one(con, statement, merged)
+            own.append(result)
+            if statement.get('refuse') and result['rows']:
+                raise LookupError(str(next(iter(result['rows'][0].values()))))
+        con.execute("RELEASE g_%d" % n)
+    except Exception as exc:
+        con.execute("ROLLBACK TO g_%d" % n)
+        con.execute("RELEASE g_%d" % n)
+        failed.append({"ref": group['ref'], "reason": str(exc)})
+        own = []
+    results.extend(own + [{"rowcount": 0, "rows": []}] * (len(group['statements']) - len(own)))
+
+
+def run_statements(con, req):
+    """The other way to supply an execute's writes: a list of statements, each run with the same
+    named params, in one transaction. A statement marked 'refuse' is a guard, and any row it
+    returns is a reason to write nothing: the transaction rolls back before the next write and
+    the reasons are returned. Otherwise each statement's rowcount and rows are returned. An entry
+    {ref, params?, statements} is a statement group (run_group); a failure outside any group keeps
+    this rule and rolls back everything."""
+    con.isolation_level = None
+    params = req.get('params') or {}
+    results, refused, failed = [], [], []
+    con.execute("BEGIN")
+    try:
+        for n, statement in enumerate(req['statements']):
+            if refused and not statement.get('refuse'):
+                break
+            if 'statements' in statement:
+                run_group(con, n, statement, params, results, failed)
+                continue
+            result = run_one(con, statement, params)
+            if statement.get('refuse'):
+                refused.extend(next(iter(r.values())) for r in result['rows'])
+            results.append(result)
+        con.execute("ROLLBACK" if refused else "COMMIT")
+    except Exception:
+        if con.in_transaction:
+            con.execute("ROLLBACK")
+        raise
+    return {"refused": refused} if refused else {"results": results, "failed": failed}
+
+
+def do_execute(req, resolved):
+    triggers_sql = req.get('triggers_sql')
+    if not triggers_sql or not triggers_sql.strip():
+        raise SystemExit("matter_data__execute found an empty triggers.sql -- a write session must not proceed without the cross-database FK layer loaded.")
+    tmp = tempfile.mkdtemp(prefix=f'coclerk_case_execute_{os.environ["COCLERK_STAGING_TAG"]}_')
+    try:
+        copies = stage_copies(resolved, tmp)
+        # Bootstrap (initialize) inverts the trigger order, and only then. Every
+        # table the FK triggers reference is created by this very script, so
+        # loading them first is unsatisfiable ("no such table: criteria_facts").
+        # They load after the commit instead, where they still prove the new
+        # schema carries every table the FK layer guards -- I3 is verified, not
+        # skipped, and a failure raises before any copy-back.
+        bootstrap = databases_are_empty(copies)
+        con = open_attached(copies, '' if bootstrap else triggers_sql)
+        outcome = {}
+        try:
+            if 'statements' in req:
+                outcome = run_statements(con, req)
+            else:
+                try:
+                    con.executescript("BEGIN;\n" + req['sql_script'] + "\n;\nCOMMIT;")
+                except Exception:
+                    if con.in_transaction:
+                        con.execute("ROLLBACK")
+                    raise
+            if bootstrap:
+                con.executescript(triggers_sql)
+        finally:
+            con.close()
+        if 'refused' in outcome:
+            return {"ok": False, "warning": resolved.get('warning'), **outcome}
+        # Commit the mutated binaries to native storage only after a successful
+        # commit and a closed connection (I2), and all-or-nothing (I5).
+        atomic_replace_set(resolved, copies)
+        write_dump(resolved, copies)
+        return {"ok": True, "evidence_sql": resolved['evidence_sql'], "warning": resolved.get('warning'), **outcome}
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def main():
+    req = json.load(sys.stdin)
+    op = req['op']
+    resolved = resolve_pointer(req['matter_root'])
+    if op == 'query':
+        return do_query(req, resolved)
+    if op == 'execute':
+        return do_execute(req, resolved)
+    raise SystemExit(f"unknown op: {op}")
+
+
+print(json.dumps(main()))
+`.trim();
+function helperFile2() {
+  return pythonDriverFile("case-sqlite", PY_HELPER2);
+}
+var EXECUTE_TIMEOUT_ADVICE = `The write may already have committed: verify before retrying (/matter-data shared/conventions.md \xA72.3). If a ${HALF_COMMIT_PREFIX}* folder remains in the matter's matter-data folder, the kill landed inside the commit-to-disk step and the databases may be a mix of new and previous state: do not write again until reconciled. Any complete copy in its rollback subfolder is a previous database (one that did not exist before has none); delete the folder once reconciled. evidence.sql may not yet reflect a committed write.`;
+function runHelper(request2, env) {
+  const execute = request2.op === "execute";
+  return runPythonDriver({
+    label: "matter-data sqlite helper",
+    driver: helperFile2(),
+    payload: JSON.stringify(request2),
+    env,
+    timeoutMs: pythonTimeoutMs(env, execute ? EXECUTE_TIMEOUT_MS : READ_TIMEOUT_MS, "COCLERK_CASE_PYTHON_TIMEOUT_MS"),
+    timeoutAdvice: execute ? EXECUTE_TIMEOUT_ADVICE : void 0
+  });
+}
+function caseDataQuery(matterRoot, sql, params) {
+  const result = runHelper({ op: "query", matter_root: matterRoot, sql, params }, process.env);
+  return result;
+}
+function caseDataTriggersSql(env) {
+  const shipped = resolveShippedRoot("matter-data/references/triggers.sql", env, {
+    subject: "the matter-data trigger layer",
+    plugin: "lawyer"
+  });
+  const path = join17(shipped.root, "matter-data", "references", "triggers.sql");
+  if (!existsSync14(path)) {
+    throw new DataServerError(
+      `matter_data__execute cannot load the cross-database trigger layer: ${path} not found. Nothing was written.`,
+      "skills_root_missing"
+    );
+  }
+  return readFileSync14(path, "utf-8");
+}
+async function caseDataExecute(matterRoot, sqlScript, env = process.env, precheck, held2) {
+  return await executeUnderLock(matterRoot, { sql_script: sqlScript }, env, precheck, held2);
+}
+async function caseDataExecuteStatements(matterRoot, statements, params, env = process.env, precheck, held2) {
+  return await executeUnderLock(matterRoot, { statements, params }, env, precheck, held2);
+}
+async function executeUnderLock(matterRoot, work, env, precheck, held2) {
+  const triggersSql = caseDataTriggersSql(env);
+  const lock = held2 ?? await acquireCaseLock(matterRoot, env);
+  try {
+    await precheck?.();
+    advanceRevision(matterRoot, env);
+    const result = runHelper({
+      op: "execute",
+      matter_root: matterRoot,
+      triggers_sql: triggersSql,
+      ...work
+    }, env);
+    if (lock.brokeStale) {
+      result.warning = [
+        "broke a stale matter-data write lock (its holder died, or it was >5 min old) before writing; if another session is still writing to or migrating this matter, stop and reconcile",
+        result.warning
+      ].filter(Boolean).join(" -- ");
+    }
+    return result;
+  } finally {
+    if (held2 === void 0) lock.release();
+  }
+}
+
 // src/migrate-driver.ts
 var MIGRATE_DRIVER = String.raw`
 import json, sys
@@ -84946,7 +84690,26 @@ function runDriver(matterRoot, mode, opts, env) {
 }
 
 // src/case/relocate.ts
-import { join as join19 } from "node:path";
+import { join as join18 } from "node:path";
+
+// src/submission/lock.ts
+var SITE2 = {
+  envVar: "COCLERK_SUBMISSION_LOCK_ROOT",
+  dirName: "submission-locks",
+  // 10 s, not the other locks' 2 s: parallel job helpers write to one drafting database at once.
+  attempts: 25,
+  recordField: "dbPath",
+  label: "drafting-data",
+  subject: "database"
+};
+function hostLocalPath(dbPath, suffix, env = process.env) {
+  return hostLocalFile(SITE2, dbPath, suffix, env);
+}
+function acquireDataLock(dbPath, env = process.env) {
+  return acquireLock2(SITE2, dbPath, env);
+}
+
+// src/case/relocate.ts
 var RELOCATE_DRIVER = String.raw`
 import json, sys
 
@@ -84974,7 +84737,7 @@ main()
 `.trim();
 async function caseDataRelocate(matterRoot, mode, env = process.env) {
   const work = async (caseLock2) => {
-    const dataLock = await acquireDataLock(join19(caseDataFolder(matterRoot, env), "submission.sqlite"), env);
+    const dataLock = await acquireDataLock(join18(caseDataFolder(matterRoot, env), "submission.sqlite"), env);
     try {
       const result = runDriver2(matterRoot, mode, env);
       if (caseLock2.brokeStale || dataLock.brokeStale) {
@@ -85053,20 +84816,20 @@ function resolveParticipant(matterRoot, name, env = process.env) {
 }
 
 // src/case/stage-result.ts
-import { randomUUID as randomUUID8 } from "node:crypto";
-import { mkdirSync as mkdirSync8, readdirSync as readdirSync11, statSync as statSync9, unlinkSync as unlinkSync6, writeFileSync as writeFileSync7 } from "node:fs";
+import { randomUUID as randomUUID7 } from "node:crypto";
+import { mkdirSync as mkdirSync8, readdirSync as readdirSync11, statSync as statSync8, unlinkSync as unlinkSync6, writeFileSync as writeFileSync7 } from "node:fs";
 import { homedir as homedir8 } from "node:os";
-import { join as join20 } from "node:path";
+import { join as join19 } from "node:path";
 var KEEP_MS = 7 * 24 * 60 * 60 * 1e3;
 var RESULT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 function stagedResultsDir(env) {
-  return join20(env.LOCALAPPDATA || homedir8(), "Coclerk", "extract-results");
+  return join19(env.LOCALAPPDATA || homedir8(), "Coclerk", "extract-results");
 }
 function stagedResultPath(resultId, env) {
   if (typeof resultId !== "string" || !RESULT_ID.test(resultId)) {
     throw new ValidationError(`result_id must be the id matter_data__stage_result returned; got ${JSON.stringify(resultId)}`);
   }
-  return join20(stagedResultsDir(env), `${resultId}.json`);
+  return join19(stagedResultsDir(env), `${resultId}.json`);
 }
 function dropStagedResults(resultIds, env) {
   let deleted = 0;
@@ -85089,12 +84852,12 @@ function stageResult(result, env = process.env) {
   mkdirSync8(dir, { recursive: true });
   const now = Date.now();
   for (const name of readdirSync11(dir)) {
-    const file = join20(dir, name);
-    if (name.endsWith(".json") && now - statSync9(file).mtimeMs > KEEP_MS) unlinkSync6(file);
+    const file = join19(dir, name);
+    if (name.endsWith(".json") && now - statSync8(file).mtimeMs > KEEP_MS) unlinkSync6(file);
   }
-  const resultId = randomUUID8();
+  const resultId = randomUUID7();
   const text8 = JSON.stringify(result);
-  writeFileSync7(join20(dir, `${resultId}.json`), text8, "utf-8");
+  writeFileSync7(join19(dir, `${resultId}.json`), text8, "utf-8");
   return { result_id: resultId, bytes: Buffer.byteLength(text8, "utf-8") };
 }
 
@@ -85155,15 +84918,15 @@ async function ingestAuthority(request2, env = process.env) {
 }
 
 // src/case/ingest-run.ts
-import { createHash as createHash6, randomUUID as randomUUID9 } from "node:crypto";
-import { appendFileSync as appendFileSync2, closeSync as closeSync5, existsSync as existsSync17, mkdirSync as mkdirSync10, openSync as openSync5, readdirSync as readdirSync12, readFileSync as readFileSync17, readSync, renameSync as renameSync3, rmdirSync, rmSync as rmSync2, statSync as statSync11, truncateSync, unlinkSync as unlinkSync7, writeFileSync as writeFileSync9 } from "node:fs";
+import { createHash as createHash6, randomUUID as randomUUID8 } from "node:crypto";
+import { appendFileSync as appendFileSync2, closeSync as closeSync4, existsSync as existsSync16, mkdirSync as mkdirSync10, openSync as openSync4, readdirSync as readdirSync12, readFileSync as readFileSync16, readSync, renameSync as renameSync3, rmdirSync, rmSync as rmSync2, statSync as statSync10, truncateSync, unlinkSync as unlinkSync7, writeFileSync as writeFileSync9 } from "node:fs";
 import { win32 as pathWin329 } from "node:path";
 
 // src/files/extract/page-images.ts
 import { createHash as createHash5 } from "node:crypto";
-import { existsSync as existsSync16, mkdirSync as mkdirSync9, mkdtempSync, readFileSync as readFileSync16, statSync as statSync10, writeFileSync as writeFileSync8 } from "node:fs";
+import { existsSync as existsSync15, mkdirSync as mkdirSync9, mkdtempSync, readFileSync as readFileSync15, statSync as statSync9, writeFileSync as writeFileSync8 } from "node:fs";
 import { tmpdir as tmpdir3 } from "node:os";
-import { extname, isAbsolute as isAbsolute4, join as join21 } from "node:path";
+import { extname, isAbsolute as isAbsolute4, join as join20 } from "node:path";
 import { deflateSync } from "node:zlib";
 
 // node_modules/@embedpdf/pdfium/dist/index.js
@@ -90833,7 +90596,7 @@ function loadPdfium(wasm) {
   let lib = loaded.get(wasm.href);
   if (!lib) {
     lib = (async () => {
-      const module = await init({ wasmBinary: readFileSync16(wasm), print: console.error, printErr: console.error });
+      const module = await init({ wasmBinary: readFileSync15(wasm), print: console.error, printErr: console.error });
       module.PDFiumExt_Init();
       return module;
     })();
@@ -90852,9 +90615,9 @@ function malloc(lib, bytes, code = "renderer_unavailable") {
 }
 async function withPdf(path, wasm, work) {
   if (!isAbsolute4(path)) throw new ValidationError(`path must be absolute: ${path}`);
-  if (!existsSync16(path) || !statSync10(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
+  if (!existsSync15(path) || !statSync9(path).isFile()) throw new DataServerError(`no file at ${path}`, "not_found");
   if (extname(path).toLowerCase() !== ".pdf") throw new DataServerError(`not a .pdf: ${path}`, "not_pdf");
-  const data = readFileSync16(path);
+  const data = readFileSync15(path);
   const pending3 = loadPdfium(wasm);
   let lib;
   try {
@@ -90927,9 +90690,9 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
       }
       const { width, height, tiles } = plan2;
       if (renderDir === null) {
-        if (args.destination_dir === void 0) renderDir = mkdtempSync(join21(tmpdir3(), "probanda-pages-"));
+        if (args.destination_dir === void 0) renderDir = mkdtempSync(join20(tmpdir3(), "probanda-pages-"));
         else {
-          renderDir = join21(args.destination_dir, sourceSha256.slice(0, 16));
+          renderDir = join20(args.destination_dir, sourceSha256.slice(0, 16));
           mkdirSync9(renderDir, { recursive: true });
         }
       }
@@ -90938,7 +90701,7 @@ async function pdfPageImages(args, wasm = DEFAULT_WASM) {
         await nextTurn();
         const png = withPage(lib, doc, n3, (page2) => renderPng(lib, page2, n3, width, height, top, rows4));
         const name = tiles.length === 1 ? pageName(n3) : `${pageName(n3)}-tile-${i3 + 1}`;
-        const file = join21(renderDir, `${name}.png`);
+        const file = join20(renderDir, `${name}.png`);
         writeFileSync8(file, png);
         const image = { path: file, sha256: createHash5("sha256").update(png).digest("hex"), width, height: rows4 };
         if (tiles.length > 1) image.tile = i3 + 1;
@@ -91217,7 +90980,7 @@ function leaseOrNull(dir) {
 }
 var dispatchPath = (dir, id) => pathWin329.join(dir, "dispatches", `${id}.json`);
 function readLease(dir) {
-  return existsSync17(leasePath(dir)) ? JSON.parse(readFileSync17(leasePath(dir), "utf-8")) : null;
+  return existsSync16(leasePath(dir)) ? JSON.parse(readFileSync16(leasePath(dir), "utf-8")) : null;
 }
 var HELD = ["EPERM", "EACCES", "EBUSY"];
 function whileHeld(op) {
@@ -91241,22 +91004,22 @@ var journalPath = (dir) => pathWin329.join(dir, "journal.jsonl");
 var torn = /* @__PURE__ */ new Set();
 var unreadableLines = /* @__PURE__ */ new Set();
 function lastByte(path) {
-  const size = statSync11(path).size;
+  const size = statSync10(path).size;
   if (size === 0) return null;
-  const fd = openSync5(path, "r");
+  const fd = openSync4(path, "r");
   try {
     const byte = Buffer.alloc(1);
     readSync(fd, byte, 0, 1, size - 1);
     return byte[0];
   } finally {
-    closeSync5(fd);
+    closeSync4(fd);
   }
 }
 function journal(dir, event, runId, extra = {}) {
   const line = JSON.stringify({ ts: (/* @__PURE__ */ new Date()).toISOString(), event, run_id: runId, ...extra });
   const path = journalPath(dir);
-  if (existsSync17(path) && ![null, 10].includes(lastByte(path))) {
-    const bytes = readFileSync17(path);
+  if (existsSync16(path) && ![null, 10].includes(lastByte(path))) {
+    const bytes = readFileSync16(path);
     truncateSync(path, bytes.lastIndexOf(10) + 1);
     torn.add(dir);
   }
@@ -91264,8 +91027,8 @@ function journal(dir, event, runId, extra = {}) {
 }
 function readJournal(dir) {
   const path = journalPath(dir);
-  if (!existsSync17(path)) return [];
-  const lines2 = readFileSync17(path, "utf-8").split("\n");
+  if (!existsSync16(path)) return [];
+  const lines2 = readFileSync16(path, "utf-8").split("\n");
   if (lines2.pop() !== "") {
     const key = `${dir}
 tail ${lines2.length}`;
@@ -91309,24 +91072,24 @@ function runEvents(dir) {
 var isLive = (lease) => lease !== null && lease.ended === null && Date.now() - Date.parse(lease.heartbeat) < LIVE_MS;
 var matterDirOf = (matterRoot, env) => pathWin329.join(hostLocalDir(SITE3, env), lockKey(matterRoot));
 function adoptOldLayout(matterDir) {
-  if (!existsSync17(leasePath(matterDir))) return;
+  if (!existsSync16(leasePath(matterDir))) return;
   const started = Date.parse(String(leaseOrNull(matterDir)?.started));
   const dir = pathWin329.join(matterDir, `legacy-${Number.isNaN(started) ? "unreadable" : started}`);
   mkdirSync10(dir, { recursive: true });
   for (const name of ["journal.jsonl", "dispatches", "lease.tmp", "lease.json"]) {
     const from = pathWin329.join(matterDir, name);
-    if (existsSync17(from)) whileHeld(() => renameSync3(from, pathWin329.join(dir, name)));
+    if (existsSync16(from)) whileHeld(() => renameSync3(from, pathWin329.join(dir, name)));
   }
 }
 function runFolders(matterDir) {
-  if (!existsSync17(matterDir)) return [];
+  if (!existsSync16(matterDir)) return [];
   return readdirSync12(matterDir, { withFileTypes: true }).filter((e3) => e3.isDirectory()).map((e3) => pathWin329.join(matterDir, e3.name));
 }
 function findRun(matterDir, runId) {
   return runFolders(matterDir).find((dir) => leaseOrNull(dir)?.run_id === runId) ?? null;
 }
 async function underLock(matterRoot, env, work) {
-  const lock = await acquireLock(SITE3, matterRoot, env);
+  const lock = await acquireLock2(SITE3, matterRoot, env);
   try {
     const matterDir = matterDirOf(matterRoot, env);
     adoptOldLayout(matterDir);
@@ -91350,13 +91113,13 @@ function hold(matterDir, runId) {
   return { ...lease, dir };
 }
 function removeOwn(path) {
-  const rest = existsSync17(path) ? readdirSync12(path).filter((name) => name !== "lease.json").map((name) => pathWin329.join(path, name)) : [];
+  const rest = existsSync16(path) ? readdirSync12(path).filter((name) => name !== "lease.json").map((name) => pathWin329.join(path, name)) : [];
   for (const target of [...rest, path]) rmSync2(target, { recursive: true, force: true });
 }
 var RENDERED = /^page-\d{4,}(-tile-\d+)?\.png$/;
 function removeImageFolder(folder) {
   try {
-    if (!existsSync17(folder)) return true;
+    if (!existsSync16(folder)) return true;
     for (const sub of readdirSync12(folder, { withFileTypes: true })) {
       if (!sub.isDirectory() || !/^[0-9a-f]{16}$/.test(sub.name)) continue;
       const pdfDir = pathWin329.join(folder, sub.name);
@@ -91418,7 +91181,7 @@ async function sweep(env, own) {
       }
       let lock;
       try {
-        lock = await acquireLock({ ...SITE3, attempts: 1 }, matterRoot, env);
+        lock = await acquireLock2({ ...SITE3, attempts: 1 }, matterRoot, env);
       } catch (err) {
         if (err.code === "lock_unavailable") continue;
         throw err;
@@ -91517,7 +91280,7 @@ function ledger(events) {
 }
 function staged(resultId, env) {
   try {
-    return JSON.parse(readFileSync17(stagedResultPath(resultId, env), "utf-8"));
+    return JSON.parse(readFileSync16(stagedResultPath(resultId, env), "utf-8"));
   } catch {
     return null;
   }
@@ -91716,7 +91479,7 @@ function takeClaims(matterDir, own, started, files, env) {
 function readersOf(dir) {
   let text8;
   try {
-    text8 = readFileSync17(journalPath(dir), "utf-8");
+    text8 = readFileSync16(journalPath(dir), "utf-8");
   } catch {
     return 0;
   }
@@ -91841,7 +91604,7 @@ function storedForm(path, matterRoot) {
   return p3;
 }
 var outsideMatter = (stored) => /^[A-Za-z]:|^\\/.test(stored) || stored.split("\\").includes("..");
-var sha256 = (path) => createHash6("sha256").update(readFileSync17(path)).digest("hex");
+var sha256 = (path) => createHash6("sha256").update(readFileSync16(path)).digest("hex");
 function checkRoutes(routes, matterRoot) {
   return routes.map((r3, i3) => {
     if (!ROUTE_KINDS.includes(r3.kind)) throw new ValidationError(`routes[${i3}].kind must be one of ${ROUTE_KINDS.join(", ")}`);
@@ -91849,9 +91612,9 @@ function checkRoutes(routes, matterRoot) {
     const stored = storedForm(String(r3.file_path ?? ""), matterRoot);
     if (stored === "" || outsideMatter(stored)) throw new ValidationError(`routes[${i3}].file_path must be a file inside the matter folder`);
     const host = hostPath(matterRoot, stored);
-    if (!existsSync17(host)) throw new ValidationError(`routes[${i3}].file_path does not exist: ${stored}`);
+    if (!existsSync16(host)) throw new ValidationError(`routes[${i3}].file_path does not exist: ${stored}`);
     if (sha256(host) !== r3.file_hash) throw new ValidationError(`routes[${i3}].file_hash is not the hash of ${stored}`);
-    if (r3.rendering !== void 0 && !existsSync17(r3.rendering)) throw new ValidationError(`routes[${i3}].rendering does not exist`);
+    if (r3.rendering !== void 0 && !existsSync16(r3.rendering)) throw new ValidationError(`routes[${i3}].rendering does not exist`);
     if (r3.attachment_hashes?.some((hash) => !/^[0-9a-f]{64}$/.test(hash))) throw new ValidationError(`routes[${i3}].attachment_hashes must each be a file's SHA-256`);
     if (r3.kind !== "path_b" && r3.rendering === void 0 && pathWin329.extname(stored).toLowerCase() !== ".pdf") {
       throw new ValidationError(`routes[${i3}] is not a PDF, so it needs its rendering`);
@@ -91905,7 +91668,7 @@ async function next(args, env) {
     const p3 = plan(runEvents(dir), env);
     const free = Math.max(0, WINDOW - p3.inFlight - readersElsewhere(dir, env));
     const items2 = p3.dispatch.slice(0, free).map((item) => {
-      const id = randomUUID9();
+      const id = randomUUID8();
       journal(dir, "dispatch", runId, { dispatch_id: id, ref: item.ref, agent: item.agent, contract: item.contract, revision });
       return { id, item };
     });
@@ -92036,8 +91799,8 @@ async function runForWrite(matterRoot, runId, document2, contract, resultIds, en
     if (route2 && takenHashes(events).has(route2.file_hash)) return { ok: false, refused: "taken", say: TAKEN(shortName(route2.file_path)) };
     const answered = { facts: [], relief: [] };
     const last = route2 ? events.filter((e3) => e3.event === "dispatch" && e3.ref === route2.ref && e3.agent === "lawyer:extract-facts").pop() : void 0;
-    if (last && existsSync17(dispatchPath(dir, last.dispatch_id))) {
-      const inputs = JSON.parse(readFileSync17(dispatchPath(dir, last.dispatch_id), "utf-8")).inputs;
+    if (last && existsSync16(dispatchPath(dir, last.dispatch_id))) {
+      const inputs = JSON.parse(readFileSync16(dispatchPath(dir, last.dispatch_id), "utf-8")).inputs;
       answered.facts = (inputs.ANSWERED_FACTS ?? []).map((f3) => f3.fact_key);
       answered.relief = (inputs.ANSWERED_RELIEF ?? []).map((r3) => r3.relief_key);
     }
@@ -92099,14 +91862,14 @@ async function recordRefusal(matterRoot, runId, acks, bad2, env = process.env) {
 function dispatchInputs(dispatchId, env = process.env) {
   if (!UUID3.test(dispatchId ?? "")) throw new ValidationError("dispatch_id must be the id from your dispatch line");
   const root = hostLocalDir(SITE3, env);
-  const dirs = (existsSync17(root) ? readdirSync12(root, { withFileTypes: true }) : []).filter((entry2) => entry2.isDirectory()).flatMap((entry2) => {
+  const dirs = (existsSync16(root) ? readdirSync12(root, { withFileTypes: true }) : []).filter((entry2) => entry2.isDirectory()).flatMap((entry2) => {
     const matterDir = pathWin329.join(root, entry2.name);
     return [matterDir, ...runFolders(matterDir)];
   });
   for (const dir of dirs) {
     const path = dispatchPath(dir, dispatchId);
-    if (!existsSync17(path)) continue;
-    const stored = JSON.parse(readFileSync17(path, "utf-8"));
+    if (!existsSync16(path)) continue;
+    const stored = JSON.parse(readFileSync16(path, "utf-8"));
     let text8 = JSON.stringify(stored.inputs);
     if (stored.session) {
       stored.stage.forEach((host, i3) => {
@@ -92181,11 +91944,11 @@ async function ingestRun(args, env = process.env) {
         const report = [...swept.lines];
         const keys = [...swept.keys];
         const reply = (body) => ({ ...body, ...reportLines([...report, ...tornIn(matterDir).length > 0 ? [STEP_LOST] : []]) });
-        const unreadable = sayOnce(runFolders(matterDir).filter((dir2) => existsSync17(leasePath(dir2)) && leaseOrNull(dir2) === null), RUN_UNREADABLE);
+        const unreadable = sayOnce(runFolders(matterDir).filter((dir2) => existsSync16(leasePath(dir2)) && leaseOrNull(dir2) === null), RUN_UNREADABLE);
         report.push(...unreadable.lines);
         keys.push(...unreadable.keys);
         const now = (/* @__PURE__ */ new Date()).toISOString();
-        const runId = randomUUID9();
+        const runId = randomUUID8();
         if (args.resume !== void 0) {
           const dir2 = findRun(matterDir, args.resume);
           const current = dir2 === null ? null : leaseOrNull(dir2);
@@ -92286,8 +92049,8 @@ async function ingestRun(args, env = process.env) {
         if (args.dispatch_id === void 0) return { ok: true, items: [] };
         if (!UUID3.test(args.dispatch_id)) throw new ValidationError("dispatch_id must be the id from the dispatch line");
         const path = dispatchPath(dir, args.dispatch_id);
-        if (!existsSync17(path)) throw new ValidationError("no dispatch with that dispatch_id in this run");
-        const stored = JSON.parse(readFileSync17(path, "utf-8"));
+        if (!existsSync16(path)) throw new ValidationError("no dispatch with that dispatch_id in this run");
+        const stored = JSON.parse(readFileSync16(path, "utf-8"));
         if (!Array.isArray(args.paths) || args.paths.length !== stored.stage.length) {
           throw new ValidationError(`paths must list the ${stored.stage.length} staged copies, in the order of stage`);
         }
@@ -92335,12 +92098,12 @@ async function ingestRun(args, env = process.env) {
 }
 
 // src/case/ingest-result.ts
-import { readFileSync as readFileSync19, unlinkSync as unlinkSync8 } from "node:fs";
-import { join as join23 } from "node:path";
+import { readFileSync as readFileSync18, unlinkSync as unlinkSync8 } from "node:fs";
+import { join as join22 } from "node:path";
 
 // src/case/procedural-history.ts
-import { existsSync as existsSync18, readFileSync as readFileSync18, renameSync as renameSync4, writeFileSync as writeFileSync10 } from "node:fs";
-import { join as join22 } from "node:path";
+import { existsSync as existsSync17, readFileSync as readFileSync17, renameSync as renameSync4, writeFileSync as writeFileSync10 } from "node:fs";
+import { join as join21 } from "node:path";
 var FILE_NAME = "ProceduralHistory.md";
 var TITLE = "# Procedural history";
 var HEADING = /^## (\d{4}-\d{2}-\d{2})\s*$/;
@@ -92413,7 +92176,7 @@ function serialize(stamp2, sections, eol) {
 }
 function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
   const root = validateMatterRoot(args.matter_root);
-  const path = join22(root, FILE_NAME);
+  const path = join21(root, FILE_NAME);
   const hasEntry = args.date !== void 0 || args.line !== void 0;
   if (hasEntry && (args.date === void 0 || args.line === void 0)) {
     throw new ValidationError("matter_data__procedural_history_append takes date and line together, or neither to stamp last_updated alone", "invalid_entry");
@@ -92424,7 +92187,7 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
   if (args.source_path !== void 0 && args.told_on !== void 0) {
     throw new ValidationError("matter_data__procedural_history_append takes source_path or told_on, never both", "invalid_entry");
   }
-  const existing = existsSync18(path) ? readFileSync18(path, "utf-8") : void 0;
+  const existing = existsSync17(path) ? readFileSync17(path, "utf-8") : void 0;
   const eol = existing?.includes("\r\n") ? "\r\n" : "\n";
   const { sections } = existing === void 0 ? { sections: [] } : parse3(existing);
   let bullet;
@@ -92561,7 +92324,7 @@ function candidatesFor(matterRoot, name) {
 }
 function firmName(env) {
   try {
-    const firm = JSON.parse(readFileSync19(join23(resolveCaseDataRoot(env), "_practice", "firm", "firm.json"), "utf-8"));
+    const firm = JSON.parse(readFileSync18(join22(resolveCaseDataRoot(env), "_practice", "firm", "firm.json"), "utf-8"));
     return typeof firm?.firm_name === "string" && firm.firm_name !== "" ? firm.firm_name : null;
   } catch (err) {
     if (err instanceof ValidationError || err instanceof SyntaxError) return null;
@@ -92601,7 +92364,7 @@ function dropStaged(paths) {
 }
 function readStaged(path) {
   try {
-    return JSON.parse(readFileSync19(path, "utf-8"));
+    return JSON.parse(readFileSync18(path, "utf-8"));
   } catch (err) {
     if (err.code === "ENOENT" || err instanceof SyntaxError) return null;
     throw err;
@@ -93047,8 +92810,8 @@ async function housekeepingLog(request2, env = process.env) {
 }
 
 // src/submission/repoint-documents.ts
-import { existsSync as existsSync19, readFileSync as readFileSync20 } from "node:fs";
-import { join as join24 } from "node:path";
+import { existsSync as existsSync18, readFileSync as readFileSync19 } from "node:fs";
+import { join as join23 } from "node:path";
 
 // src/submission/backend.ts
 import { MessageChannel, receiveMessageOnPort, Worker as Worker2 } from "node:worker_threads";
@@ -93670,9 +93433,9 @@ async function repointDocuments(request2, env = process.env) {
   assertStoredForm("old_path", request2.old_path);
   assertStoredForm("new_path", request2.new_path);
   const dbPath = resolveDbPath(validateMatterRoot(request2.matter_root));
-  if (!existsSync19(dbPath)) return { database: false, repointed: [] };
+  if (!existsSync18(dbPath)) return { database: false, repointed: [] };
   const shipped = resolveShippedRoot(REFERENCE, env, { subject: "the drafting-data document-paths reference", plugin: "litigator" });
-  const text8 = readFileSync20(join24(shipped.root, ...REFERENCE.split("/")), "utf-8").replace(/\r\n/g, "\n");
+  const text8 = readFileSync19(join23(shipped.root, ...REFERENCE.split("/")), "utf-8").replace(/\r\n/g, "\n");
   const values = {
     old_path: request2.old_path,
     old_absolute: `${request2.matter_root.replace(/[\\/]+$/, "")}\\${request2.old_path}`,
@@ -93687,11 +93450,11 @@ async function repointDocuments(request2, env = process.env) {
 }
 
 // src/time-pipeline/backend.ts
-import { join as join25 } from "node:path";
+import { join as join24 } from "node:path";
 function resolveTimePipelineDbPath(env = process.env) {
   if (env.COCLERK_TIME_PIPELINE_DB_PATH) return env.COCLERK_TIME_PIPELINE_DB_PATH;
   const root = resolveCaseDataRoot(env);
-  return join25(root, "_practice", env.COCLERK_TIME_PIPELINE_DB_NAME || "time_pipeline.db");
+  return join24(root, "_practice", env.COCLERK_TIME_PIPELINE_DB_NAME || "time_pipeline.db");
 }
 function timePipelineTimeoutMs(op, env = process.env) {
   const defaultMs = isKvRead(op) ? READ_TIMEOUT_MS : op === "bulk_apply" ? WRITE_TIMEOUT_MS : EXECUTE_TIMEOUT_MS;
@@ -93732,7 +93495,7 @@ function timePipelineExport(namespace, prefix, path, env = process.env) {
 }
 
 // src/timecamping/backend.ts
-import { join as join26 } from "node:path";
+import { join as join25 } from "node:path";
 
 // src/timecamping/lock.ts
 var SITE4 = {
@@ -93744,14 +93507,14 @@ var SITE4 = {
   subject: "database"
 };
 function acquireDataLock2(dbPath, env = process.env) {
-  return acquireLock(SITE4, dbPath, env);
+  return acquireLock2(SITE4, dbPath, env);
 }
 
 // src/timecamping/backend.ts
 function resolveTimecampingDbPath(env = process.env) {
   if (env.COCLERK_TIMECAMPING_DB_PATH) return env.COCLERK_TIMECAMPING_DB_PATH;
   const root = resolveCaseDataRoot(env);
-  return join26(root, "_practice", env.COCLERK_TIMECAMPING_DB_NAME || "timecamping.db");
+  return join25(root, "_practice", env.COCLERK_TIMECAMPING_DB_NAME || "timecamping.db");
 }
 var PY_HELPER4 = String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile
@@ -93943,13 +93706,13 @@ async function timecampingDataBulkUpsert(path, env = process.env) {
 }
 
 // src/migrate-backups.ts
-import { existsSync as existsSync20, readdirSync as readdirSync13, unlinkSync as unlinkSync9 } from "node:fs";
-import { basename as basename3, dirname as dirname10, join as join27 } from "node:path";
+import { existsSync as existsSync19, readdirSync as readdirSync13, unlinkSync as unlinkSync9 } from "node:fs";
+import { basename as basename3, dirname as dirname10, join as join26 } from "node:path";
 var STAMP = /^\.bak-\d{8}T\d{6}Z(-\d+)?$/;
 function timestampedBackups(dbPath) {
   const dir = dirname10(dbPath);
   const name = basename3(dbPath);
-  return new Set(existsSync20(dir) ? readdirSync13(dir).filter((f3) => f3.startsWith(name) && STAMP.test(f3.slice(name.length))) : []);
+  return new Set(existsSync19(dir) ? readdirSync13(dir).filter((f3) => f3.startsWith(name) && STAMP.test(f3.slice(name.length))) : []);
 }
 function pruneBackups(dbPath, before) {
   const all = [...timestampedBackups(dbPath)];
@@ -93959,7 +93722,7 @@ function pruneBackups(dbPath, before) {
   for (const f3 of all) {
     if (f3 === kept) continue;
     try {
-      unlinkSync9(join27(dirname10(dbPath), f3));
+      unlinkSync9(join26(dirname10(dbPath), f3));
     } catch (err) {
       warnings.push(`could not remove the older migration backup ${f3} (${err.message}); the migrate succeeded and ${kept} is the backup to keep`);
     }
@@ -94002,8 +93765,8 @@ function runDriver3(label2, driver, payload, env) {
 }
 
 // src/submission/migrate.ts
-import { existsSync as existsSync23, statSync as statSync12 } from "node:fs";
-import { join as join30 } from "node:path";
+import { existsSync as existsSync22, statSync as statSync11 } from "node:fs";
+import { join as join29 } from "node:path";
 
 // src/submission/parties-drift.ts
 import { dirname as dirname12 } from "node:path";
@@ -95286,7 +95049,7 @@ function admissionCaptureMarkers(row2, state) {
 }
 
 // src/submission/forms/query.ts
-import { readFileSync as readFileSync21 } from "node:fs";
+import { readFileSync as readFileSync20 } from "node:fs";
 
 // src/knowledge/declared-layout.ts
 function fail(file, field, rule) {
@@ -95563,8 +95326,8 @@ function rows(dbPath, sql, params = []) {
 }
 
 // src/loose-threads/backend.ts
-import { existsSync as existsSync21 } from "node:fs";
-import { dirname as dirname11, join as join28 } from "node:path";
+import { existsSync as existsSync20 } from "node:fs";
+import { dirname as dirname11, join as join27 } from "node:path";
 var LOOSE_THREADS_FILE = "loose_threads.db";
 var THREAD_KINDS = ["idea", "proposition", "correspondence", "argument", "work_board"];
 var RANK_GROUPS = ["decision", "tooling", "housekeeping", "research", "authority", "evidence", "other"];
@@ -95573,7 +95336,7 @@ var META2 = "meta";
 var SEEDS_MOVED = "seeds_moved";
 var KILLED_WRITE_ADVICE3 = "The write may already have committed: read the thread back before retrying.";
 function looseThreadsPath(dbPath) {
-  return join28(dirname11(dbPath), LOOSE_THREADS_FILE);
+  return join27(dirname11(dbPath), LOOSE_THREADS_FILE);
 }
 function run(dbPath, request2, env) {
   const db_path = looseThreadsPath(dbPath);
@@ -95589,7 +95352,7 @@ function run(dbPath, request2, env) {
 var memoKey = (dbPath) => JSON.stringify(["loose-threads", dbPath]);
 function readThreads(dbPath, env = process.env) {
   return oncePerCall(memoKey(dbPath), () => {
-    if (!existsSync21(looseThreadsPath(dbPath))) return [];
+    if (!existsSync20(looseThreadsPath(dbPath))) return [];
     const { items: items2 } = run(dbPath, { op: "list", namespace: THREADS }, env);
     return items2.map((i3) => ({ ...JSON.parse(i3.value), id: Number(i3.key) })).sort((a3, b3) => a3.id - b3.id);
   }).map((t3) => ({ ...t3 }));
@@ -95600,7 +95363,7 @@ function writeThreads(dbPath, threads, env = process.env) {
   run(dbPath, { op: "apply", writes: threads.map(({ id, ...value2 }) => ({ op: "set", namespace: THREADS, key: String(id), value: JSON.stringify(value2) })) }, env);
 }
 function readSeedsMoved(dbPath, env = process.env) {
-  if (!existsSync21(looseThreadsPath(dbPath))) return null;
+  if (!existsSync20(looseThreadsPath(dbPath))) return null;
   return run(dbPath, { op: "get", namespace: META2, key: SEEDS_MOVED }, env).value;
 }
 function stampSeedsMoved(dbPath, value2, env = process.env) {
@@ -95698,7 +95461,7 @@ function shippedVenueBlock(filing, forum) {
   const { layer } = shippedLayer("draft", parseKnowledgePath(path, `"${filing.title}"'s court or tribunal`).rest, {});
   let content;
   try {
-    content = readFileSync21(layer.abs, "utf-8");
+    content = readFileSync20(layer.abs, "utf-8");
   } catch (err) {
     if (err.code !== "ENOENT") throw err;
     throw new DataServerError(`"${filing.title}": Probanda has no layout for its court or tribunal, ${forum}`, "venue_missing");
@@ -95987,8 +95750,8 @@ function opposingPartyIds(parties2) {
 }
 
 // src/case/parties-of-record.ts
-import { existsSync as existsSync22 } from "node:fs";
-import { join as join29 } from "node:path";
+import { existsSync as existsSync21 } from "node:fs";
+import { join as join28 } from "node:path";
 var DRIVER6 = String.raw`
 import json, sys
 
@@ -96011,7 +95774,7 @@ function readPartiesById(caseDataDir, casePartyIds, env = process.env) {
   return read2(caseDataDir, { file_number: null, case_party_ids: casePartyIds }, env);
 }
 function read2(caseDataDir, request2, env) {
-  if (!existsSync22(join29(caseDataDir, "main.sqlite"))) {
+  if (!existsSync21(join28(caseDataDir, "main.sqlite"))) {
     return { status: "not_applicable", reason: `no matter-data database in ${caseDataDir}` };
   }
   return oncePerCall(JSON.stringify([caseDataDir, request2]), () => spawnRead(caseDataDir, request2, env));
@@ -96251,7 +96014,7 @@ async function submissionDataMigrate(dbPath, env = process.env) {
 }
 var COUNSEL_COPY_DROPPED = 43;
 function storedSchemaVersion(dbPath) {
-  if (!existsSync23(dbPath)) return null;
+  if (!existsSync22(dbPath)) return null;
   const [meta2] = submissionDataQuery(dbPath, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'db_meta'").rows;
   if (meta2.n === 0) return null;
   const [row2] = submissionDataQuery(dbPath, "SELECT value FROM db_meta WHERE key = 'schema_version'").rows;
@@ -96281,7 +96044,7 @@ function assertCounselReconciled(dbPath, staged2, env) {
 var versionCache;
 function currentSchemaVersion(env = process.env) {
   const scriptsDir = submissionDataMigrateScriptsDir(env);
-  const engine = statSync12(join30(scriptsDir, "migrate_engine.py"));
+  const engine = statSync11(join29(scriptsDir, "migrate_engine.py"));
   const key = [scriptsDir, engine.mtimeMs, engine.size, pythonTimeoutMs2(env, READ_TIMEOUT_MS)].join("|");
   if (versionCache?.key === key) return versionCache.value;
   const result = runDriver4("schema-version", driverFile3("schema-version", VERSION_DRIVER), "", env, READ_TIMEOUT_MS);
@@ -96532,7 +96295,7 @@ function repointThreads(dbPath, from, to2, env = process.env) {
 
 // src/files/skill-source.ts
 import { createHash as createHash7 } from "node:crypto";
-import { existsSync as existsSync24, readFileSync as readFileSync22, readdirSync as readdirSync14, statSync as statSync13 } from "node:fs";
+import { existsSync as existsSync23, readFileSync as readFileSync21, readdirSync as readdirSync14, statSync as statSync12 } from "node:fs";
 import { win32 as pathWin3210 } from "node:path";
 var rootCache = /* @__PURE__ */ new Map();
 function servedRoot(shipped) {
@@ -96588,7 +96351,7 @@ function resolveReference(relative5, env, installRoot, from) {
       if (err instanceof DataServerError) continue;
       throw err;
     }
-    if (existsSync24(pathWin3210.join(root, candidate))) return candidate;
+    if (existsSync23(pathWin3210.join(root, candidate))) return candidate;
   }
   return normalized2;
 }
@@ -96613,14 +96376,14 @@ function skillSourceRead(relative5, env, from, match, installRoot) {
   const shipped = resolveShippedRoot(normalizedInput, e3, { installRoot });
   const root = servedRoot(shipped);
   const resolved = resolveServed(shipped, root, normalizedInput, "path", relative5);
-  const stats = statSync13(resolved);
+  const stats = statSync12(resolved);
   if (stats.isDirectory()) {
     throw new DataServerError(
       `path is a directory, not a file: ${relative5} (use skill_source__list)`,
       "not_found"
     );
   }
-  const bytes = readFileSync22(resolved);
+  const bytes = readFileSync21(resolved);
   const path = toPosixRelative(root, resolved);
   const slash = path.lastIndexOf("/");
   const whole = bytes.toString("utf-8");
@@ -96671,7 +96434,7 @@ function skillSourceList(dir = "", recursive = false, env, installRoot) {
     const shipped = resolveShippedRoot(normalizedDir, e3, { installRoot });
     const root = servedRoot(shipped);
     const base = resolveServed(shipped, root, normalizedDir, "dir", dir);
-    if (!statSync13(base).isDirectory()) {
+    if (!statSync12(base).isDirectory()) {
       throw new DataServerError(`dir is a file, not a directory: ${dir}`, "not_found");
     }
     walk(base, root, recursive, shipped, entries);
@@ -96718,7 +96481,7 @@ function walk(dirPath, root, recursive, shipped, out) {
     out.push({
       path: toPosixRelative(root, full),
       type: isDir3 ? "dir" : "file",
-      size: isDir3 ? null : statSync13(full).size,
+      size: isDir3 ? null : statSync12(full).size,
       shipped_from: shipped.shipped_from,
       plugin: shipped.plugin
     });
@@ -96730,11 +96493,11 @@ function walk(dirPath, root, recursive, shipped, out) {
 import { createHash as createHash8 } from "node:crypto";
 import { mkdirSync as mkdirSync11 } from "node:fs";
 import * as https from "node:https";
-import { join as join32 } from "node:path";
+import { join as join31 } from "node:path";
 
 // src/sources/hosts.ts
-import { existsSync as existsSync25, readFileSync as readFileSync23 } from "node:fs";
-import { join as join31 } from "node:path";
+import { existsSync as existsSync24, readFileSync as readFileSync22 } from "node:fs";
+import { join as join30 } from "node:path";
 var SOURCES_ALLOWED_HOSTS = ["www.bclaws.gov.bc.ca", "bclaws.gov.bc.ca", "vaniac.org", "laws-lois.justice.gc.ca"];
 function loadFirmHosts(path) {
   const hosts = /* @__PURE__ */ new Set();
@@ -96753,7 +96516,7 @@ function admittedHost(entry2) {
 function readHostEntries(path) {
   let text8;
   try {
-    text8 = readFileSync23(path, "utf-8");
+    text8 = readFileSync22(path, "utf-8");
   } catch (err) {
     if (err.code === "ENOENT") return [];
     throw err;
@@ -96780,13 +96543,13 @@ function overlayFirmHosts(env = process.env) {
     if (err instanceof ValidationError && !caseDataRootConfigured(env)) return [];
     throw err;
   }
-  return loadFirmHosts(join31(root, "_practice", "knowledge", "_hosts.json"));
+  return loadFirmHosts(join30(root, "_practice", "knowledge", "_hosts.json"));
 }
 function caseDataRootConfigured(env) {
   const configFile = configPath(env);
-  if (!existsSync25(configFile)) return false;
+  if (!existsSync24(configFile)) return false;
   try {
-    const root = JSON.parse(readFileSync23(configFile, "utf-8")).case_data_root;
+    const root = JSON.parse(readFileSync22(configFile, "utf-8")).case_data_root;
     return typeof root === "string" && root !== "";
   } catch {
     return true;
@@ -96990,9 +96753,9 @@ function saveFetchedPdf(fetchedRoot2, fetched) {
   if (fetched.bytes.subarray(0, 5).toString("latin1") !== "%PDF-") {
     throw new DataServerError(`${fetched.final_url} did not return a PDF`, "not_pdf");
   }
-  const dir = join32(fetchedRoot2, new URL(fetched.final_url).hostname);
+  const dir = join31(fetchedRoot2, new URL(fetched.final_url).hostname);
   mkdirSync11(dir, { recursive: true });
-  const path = join32(dir, `${fetched.sha256.slice(0, 12)}.pdf`);
+  const path = join31(dir, `${fetched.sha256.slice(0, 12)}.pdf`);
   writeBytesAtomic(path, fetched.bytes);
   return path;
 }
@@ -97804,7 +97567,7 @@ function resolveAt(kp, given, recipient, seams) {
 }
 
 // src/knowledge/overlay.ts
-import { existsSync as existsSync26, mkdirSync as mkdirSync12, realpathSync as realpathSync3 } from "node:fs";
+import { existsSync as existsSync25, mkdirSync as mkdirSync12, realpathSync as realpathSync3 } from "node:fs";
 import { win32 as pathWin3211 } from "node:path";
 var REPO_RUN_MARKER = "repo-run";
 function matterOf(raw, tool) {
@@ -97840,7 +97603,7 @@ function grammarCheck(kp, type, label2) {
 }
 function mkdirInside(root, dir, label2, original) {
   let existing = dir;
-  while (!existsSync26(existing)) {
+  while (!existsSync25(existing)) {
     const parent = pathWin3211.dirname(existing);
     if (parent === existing) break;
     existing = parent;
@@ -97873,11 +97636,11 @@ function rowString(row2, key) {
 }
 
 // src/knowledge/write-document.ts
-import { readFileSync as readFileSync25 } from "node:fs";
+import { readFileSync as readFileSync24 } from "node:fs";
 
 // src/knowledge/fetched.ts
 import { createHash as createHash9 } from "node:crypto";
-import { copyFileSync as copyFileSync3, existsSync as existsSync27, readdirSync as readdirSync15, readFileSync as readFileSync24, realpathSync as realpathSync4, unlinkSync as unlinkSync10 } from "node:fs";
+import { copyFileSync as copyFileSync3, existsSync as existsSync26, readdirSync as readdirSync15, readFileSync as readFileSync23, realpathSync as realpathSync4, unlinkSync as unlinkSync10 } from "node:fs";
 import { win32 as pathWin3212 } from "node:path";
 function savedCopyOf(raw, record2, front, seams) {
   const label2 = "knowledge__write.saved_copy";
@@ -97894,7 +97657,7 @@ function savedCopyOf(raw, record2, front, seams) {
   const canon = overlayCanon(seams, label2);
   const inboxAbs = pathWin3212.join(canon, "_inbox");
   const abs = pathWin3212.join(inboxAbs, ...kp.rest);
-  const inboxCanon = existsSync27(inboxAbs) ? realpathSync4.native(inboxAbs) : null;
+  const inboxCanon = existsSync26(inboxAbs) ? realpathSync4.native(inboxAbs) : null;
   if (inboxCanon !== null) assertContained(canon, inboxCanon, label2, kp.path);
   const type = entryType({ canon: inboxCanon, abs }, label2, kp.path);
   if (type === null) throw new DataServerError(`${label2}: ${kp.path} is not in the overlay`, "not_found");
@@ -97938,12 +97701,12 @@ function liveKnowledgeTexts(canon, seams) {
     for (const entry2 of readdirSync15(dir, { withFileTypes: true })) {
       const abs = pathWin3212.join(dir, entry2.name);
       if (entry2.isDirectory()) walk4(abs);
-      else if (entry2.isFile() && entry2.name.endsWith(".md")) texts.push(readFileSync24(abs, "utf-8").toLowerCase());
+      else if (entry2.isFile() && entry2.name.endsWith(".md")) texts.push(readFileSync23(abs, "utf-8").toLowerCase());
     }
   };
   for (const skill of KNOWLEDGE_SKILLS) {
     const dir = pathWin3212.join(canon, skill);
-    if (existsSync27(dir)) walk4(dir);
+    if (existsSync26(dir)) walk4(dir);
     const shipped = shippedLayer(skill, [], seams).layer.canon;
     if (shipped === null) continue;
     for (const entry2 of readdirSync15(shipped, { withFileTypes: true })) {
@@ -97956,7 +97719,7 @@ function deleteUnreferencedPdfs(hashes, seams, label2) {
   if (hashes.length === 0) return [];
   const canon = overlayCanon(seams, label2);
   const fetched = pathWin3212.join(canon, "_fetched");
-  if (!existsSync27(fetched)) return [];
+  if (!existsSync26(fetched)) return [];
   const live = liveKnowledgeTexts(canon, seams);
   const deleted = [];
   for (const hash of hashes) {
@@ -97965,7 +97728,7 @@ function deleteUnreferencedPdfs(hashes, seams, label2) {
       if (!host.isDirectory()) continue;
       const name = `${hash.slice(0, 12)}.pdf`;
       const pdf = pathWin3212.join(fetched, host.name, name);
-      if (!existsSync27(pdf)) continue;
+      if (!existsSync26(pdf)) continue;
       try {
         unlinkSync10(pdf);
       } catch (err) {
@@ -98093,7 +97856,7 @@ async function writeDocument(kp, args, matter, seams, label2) {
         "exists"
       );
     }
-    const old = existing === "file" ? readFileSync25(target.abs, "utf-8") : null;
+    const old = existing === "file" ? readFileSync24(target.abs, "utf-8") : null;
     const stale_check = old === null ? null : checkStaleBody(kp.path, target.abs, old, front, fetcher);
     writeTextAtomic(target.abs, text8);
     return { old, stale_check };
@@ -98237,7 +98000,7 @@ async function confirmItem(kp, args, operation, seams, label2) {
 }
 
 // src/knowledge/write-index.ts
-import { readFileSync as readFileSync26 } from "node:fs";
+import { readFileSync as readFileSync25 } from "node:fs";
 function listAndKey(index, row2) {
   if (index === "kinds") return { list: "kinds", key: rowString(row2, "file") };
   if (row2.resolves_to !== void 0) return { list: "not_venues", key: normalizeName(rowString(row2, "name")) };
@@ -98330,7 +98093,7 @@ async function writeIndexRow(kp, index, args, seams, label2) {
     const existing = entryType(target, label2, kp.path);
     let doc = {};
     if (existing === "file") {
-      const text8 = readFileSync26(target.abs, "utf-8");
+      const text8 = readFileSync25(target.abs, "utf-8");
       try {
         doc = JSON.parse(text8.startsWith("\uFEFF") ? text8.slice(1) : text8);
       } catch (err) {
@@ -98380,7 +98143,7 @@ async function knowledgeWrite(args, seams = {}) {
 }
 
 // src/knowledge/retire.ts
-import { existsSync as existsSync28, readFileSync as readFileSync27, renameSync as renameSync5 } from "node:fs";
+import { existsSync as existsSync27, readFileSync as readFileSync26, renameSync as renameSync5 } from "node:fs";
 import { win32 as pathWin3213 } from "node:path";
 async function retireOne(kp, seams, label2) {
   if (entryType(locate(kp, seams, label2).local, label2, kp.path) === null) {
@@ -98396,15 +98159,15 @@ async function retireOne(kp, seams, label2) {
       const type = entryType(source, label2, kp.path);
       if (type === null) throw new DataServerError(`${kp.path} is not in the overlay (a second retire getting not_found counts as done)`, "not_found");
       if (type === "dir") throw new DataServerError(`${label2}: ${kp.path} is a folder; retire moves one file and its sidecar`, "not_a_file");
-      const hasSidecar = existsSync28(sidecar2);
+      const hasSidecar = existsSync27(sidecar2);
       const to2 = pathWin3213.join(source.canon, ...dest.segments);
       for (const abs of [to2, ...hasSidecar ? [`${to2}${SIDECAR_SUFFIX}`] : []]) {
-        if (existsSync28(abs)) {
+        if (existsSync27(abs)) {
           throw new DataServerError(`${abs} already holds a retired copy, which is never overwritten; nothing was moved`, "superseded_exists");
         }
       }
       const target = writableOverlayPath(dest, seams, label2);
-      const text8 = readFileSync27(source.abs, "utf-8");
+      const text8 = readFileSync26(source.abs, "utf-8");
       renameSync5(source.abs, target.abs);
       if (hasSidecar) renameSync5(sidecar2, `${target.abs}${SIDECAR_SUFFIX}`);
       return {
@@ -100563,7 +100326,7 @@ async function resnapshotWriting(dbPath, filingId, opts = {}) {
 }
 
 // src/submission/forms/filler-registry.ts
-import { readFileSync as readFileSync28 } from "node:fs";
+import { readFileSync as readFileSync27 } from "node:fs";
 
 // src/submission/forms/filing-facts.ts
 var FACTS_PART = /* @__PURE__ */ new Map([
@@ -102897,7 +102660,7 @@ function readShipped(path, seams) {
   const kp = parseKnowledgePath(path, "type file lookup");
   const { layer } = shippedLayer(kp.skill, kp.rest, seams);
   try {
-    return readFileSync28(layer.abs, "utf-8");
+    return readFileSync27(layer.abs, "utf-8");
   } catch (err) {
     if (err.code !== "ENOENT") throw err;
     throw new DataServerError(`${path}: not in /draft's shipped knowledge tree (${layer.abs})`, "type_file_missing");
@@ -103563,13 +103326,13 @@ function partiesSnapshotStatements(dbPath, filing, tool, env = process.env) {
 }
 
 // src/submission/forms/sent-write.ts
-import { existsSync as existsSync30 } from "node:fs";
-import { extname as extname2, join as join34 } from "node:path";
+import { existsSync as existsSync29 } from "node:fs";
+import { extname as extname2, join as join33 } from "node:path";
 
 // src/submission/render-manifest.ts
 import { createHash as createHash10 } from "node:crypto";
-import { existsSync as existsSync29, mkdirSync as mkdirSync13, readFileSync as readFileSync29, realpathSync as realpathSync5, writeFileSync as writeFileSync11 } from "node:fs";
-import { basename as basename4, dirname as dirname14, isAbsolute as isAbsolute5, join as join33, resolve as resolve4 } from "node:path";
+import { existsSync as existsSync28, mkdirSync as mkdirSync13, readFileSync as readFileSync28, realpathSync as realpathSync5, writeFileSync as writeFileSync11 } from "node:fs";
+import { basename as basename4, dirname as dirname14, isAbsolute as isAbsolute5, join as join32, resolve as resolve4 } from "node:path";
 
 // src/files/zones.ts
 import { win32 as pathWin3214 } from "node:path";
@@ -103611,7 +103374,7 @@ function sha2562(text8) {
   return createHash10("sha256").update(text8, "utf-8").digest("hex");
 }
 function manifestPath(dbPath, filingId) {
-  return join33(recordsDir(dbPath), `render-manifest-${filingId}.json`);
+  return join32(recordsDir(dbPath), `render-manifest-${filingId}.json`);
 }
 function recordsDirIfAny(dbPath) {
   try {
@@ -103625,9 +103388,9 @@ function isFolderName(name) {
   return typeof name === "string" && name.trim() !== "" && name !== "." && name !== ".." && !/[\\/]/.test(name);
 }
 function parseManifest(file) {
-  if (!existsSync29(file)) return null;
+  if (!existsSync28(file)) return null;
   try {
-    const parsed = JSON.parse(readFileSync29(file, "utf-8"));
+    const parsed = JSON.parse(readFileSync28(file, "utf-8"));
     if (!parsed || typeof parsed !== "object" || !parsed.stamp || !Array.isArray(parsed.files) || !Array.isArray(parsed.inventory) || !parsed.inventory.every(isInventoryEntry)) {
       return null;
     }
@@ -103639,18 +103402,18 @@ function parseManifest(file) {
 function readManifest(dbPath, filingId) {
   const records = recordsDirIfAny(dbPath);
   if (records === void 0) return null;
-  const parsed = parseManifest(join33(records, `render-manifest-${filingId}.json`));
+  const parsed = parseManifest(join32(records, `render-manifest-${filingId}.json`));
   return parsed !== null && isFolderName(parsed.folder) && parsed.stamp.filing_id === filingId ? parsed : null;
 }
 function readLegacyManifest(dir) {
-  return parseManifest(join33(dir, LEGACY_MANIFEST_FILE));
+  return parseManifest(join32(dir, LEGACY_MANIFEST_FILE));
 }
 function writeManifest(dbPath, filingId, manifest) {
   mkdirSync13(recordsDir(dbPath), { recursive: true });
   writeFileSync11(manifestPath(dbPath, filingId), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
 }
 function manifestDir(dbPath, manifest) {
-  return join33(draftDirOf(dbPath), manifest.folder);
+  return join32(draftDirOf(dbPath), manifest.folder);
 }
 function stampsEqual(a3, b3) {
   return a3.filing_id === b3.filing_id && a3.revision === b3.revision && a3.approvals === b3.approvals && a3.schema_version === b3.schema_version && a3.build_stamp === b3.build_stamp && a3.client_name === b3.client_name && a3.client_no === b3.client_no && a3.matter_no === b3.matter_no && a3.date === b3.date;
@@ -103660,7 +103423,7 @@ function renderState(dbPath, filingId, stamp2, partiesDrift) {
   if (manifest === null) return "never";
   if (!stampsEqual(manifest.stamp, stamp2) || manifest.parties_drift !== partiesDrift) return "stale";
   const dir = manifestDir(dbPath, manifest);
-  return manifest.files.every((f3) => existsSync29(join33(dir, f3.file_name))) ? "fresh" : "stale";
+  return manifest.files.every((f3) => existsSync28(join32(dir, f3.file_name))) ? "fresh" : "stale";
 }
 function freshManifest(dbPath, filingId, stamp2, partiesDrift) {
   const manifest = readManifest(dbPath, filingId);
@@ -103668,11 +103431,11 @@ function freshManifest(dbPath, filingId, stamp2, partiesDrift) {
   const dir = manifestDir(dbPath, manifest);
   const contents = /* @__PURE__ */ new Map();
   for (const f3 of manifest.files) {
-    const file = join33(dir, f3.file_name);
-    if (!existsSync29(file)) return null;
+    const file = join32(dir, f3.file_name);
+    if (!existsSync28(file)) return null;
     let text8;
     try {
-      text8 = readFileSync29(file, "utf-8");
+      text8 = readFileSync28(file, "utf-8");
     } catch {
       return null;
     }
@@ -103716,13 +103479,13 @@ function draftDirOf(dbPath) {
   return resolveDraftDir(found2, `the 0. DRAFT folder of ${matter}`);
 }
 function recordsDir(dbPath) {
-  return join33(draftDirOf(dbPath), RECORDS_FOLDER);
+  return join32(draftDirOf(dbPath), RECORDS_FOLDER);
 }
 function paragraphMapDir(dbPath, filingId) {
-  return join33(recordsDir(dbPath), "paragraph-maps", String(filingId));
+  return join32(recordsDir(dbPath), "paragraph-maps", String(filingId));
 }
 function previewDir(dbPath, filingId) {
-  return join33(recordsDir(dbPath), "previews", String(filingId));
+  return join32(recordsDir(dbPath), "previews", String(filingId));
 }
 
 // src/submission/forms/work-board-reads.ts
@@ -105048,7 +104811,7 @@ function storedParagraphs(dbPath, filing, stored) {
 function compareSentCopy(paragraphs, args, env) {
   return runPythonDriver({
     label: "sent-copy comparison",
-    driver: join34(submissionDataMigrateScriptsDir(env), "sent_copy_compare.py"),
+    driver: join33(submissionDataMigrateScriptsDir(env), "sent_copy_compare.py"),
     payload: JSON.stringify({ paragraphs, path: args.sent_copy_path ?? null, text: args.sent_copy_text ?? null }),
     env,
     timeoutMs: pythonTimeoutMs2(env, READ_TIMEOUT_MS)
@@ -105072,7 +104835,7 @@ function checkArgs(args) {
     if (![".eml", ".pdf", ".msg"].includes(extname2(args.sent_copy_path).toLowerCase())) {
       throw new ValidationError(`${TOOL6}.sent_copy_path must be a .eml, .pdf or .msg file: ${args.sent_copy_path}`, "invalid_sent_copy");
     }
-    if (!existsSync30(args.sent_copy_path)) throw new ValidationError(`${TOOL6}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
+    if (!existsSync29(args.sent_copy_path)) throw new ValidationError(`${TOOL6}.sent_copy_path does not exist: ${args.sent_copy_path}`, "invalid_sent_copy");
   }
   if (args.send_anyway !== void 0 && args.send_anyway.trim() === "") {
     throw new ValidationError(`${TOOL6}.send_anyway must carry the practitioner's own words`, "invalid_send_anyway");
@@ -105254,14 +105017,14 @@ async function submissionDataRecordFiled(args, env = process.env) {
 }
 
 // src/submission/forms/served-write.ts
-import { existsSync as existsSync31 } from "node:fs";
+import { existsSync as existsSync30 } from "node:fs";
 var TOOL8 = "drafting_data__record_served";
 function refused4(message, code) {
   return new DataServerError(`${TOOL8}: ${message}`, code);
 }
 async function submissionDataRecordServed(args, env = process.env) {
   if (!isCalendarDate(args.served_on)) throw new ValidationError(`${TOOL8}.served_on must be a calendar date, YYYY-MM-DD`, "invalid_served_on");
-  if (args.served_copy_path !== void 0 && !existsSync31(args.served_copy_path)) {
+  if (args.served_copy_path !== void 0 && !existsSync30(args.served_copy_path)) {
     throw new ValidationError(`${TOOL8}.served_copy_path does not exist: ${args.served_copy_path}`, "invalid_served_copy");
   }
   const [filing] = submissionDataQuery(args.db_path, "SELECT * FROM filings WHERE id = ?", [args.filing_id]).rows;
@@ -105577,8 +105340,8 @@ function combineSections(dbPath, sections, page2 = false) {
 }
 
 // src/submission/writing-folder.ts
-import { existsSync as existsSync32, mkdirSync as mkdirSync14, readdirSync as readdirSync16, readFileSync as readFileSync30, renameSync as renameSync6, rmdirSync as rmdirSync2, statSync as statSync14, unlinkSync as unlinkSync11 } from "node:fs";
-import { dirname as dirname15, extname as extname3, join as join35 } from "node:path";
+import { existsSync as existsSync31, mkdirSync as mkdirSync14, readdirSync as readdirSync16, readFileSync as readFileSync29, renameSync as renameSync6, rmdirSync as rmdirSync2, statSync as statSync13, unlinkSync as unlinkSync11 } from "node:fs";
+import { dirname as dirname15, extname as extname3, join as join34 } from "node:path";
 var GENERAL_DOCUMENT_TYPE = "General_writing";
 var OLD_BOARD_FILES = ["Job Board.html", "Milestone.html", "Work Board.html", "Work Board.md", "workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
 var OLDER_MOCKUPS = "Older mockups";
@@ -105586,8 +105349,8 @@ function sanitizeForPath(name) {
   return name.replace(/[\\/:*?"<>|]/g, "_").trim();
 }
 function readExistingRevision(filePath) {
-  if (!existsSync32(filePath)) return void 0;
-  const text8 = readFileSync30(filePath, "utf-8");
+  if (!existsSync31(filePath)) return void 0;
+  const text8 = readFileSync29(filePath, "utf-8");
   const match = text8.match(/^Revision:[ \t]*(\d+)/m) ?? text8.match(/^window\.WORKBOARD = \{"meta":\{"revision":(\d+)/m) ?? text8.match(/data-k="Rev">(\d+)</);
   return match ? Number(match[1]) : void 0;
 }
@@ -105623,7 +105386,7 @@ function matchOf(name, row2) {
 }
 function isDir2(path) {
   try {
-    return statSync14(path).isDirectory();
+    return statSync13(path).isDirectory();
   } catch {
     return false;
   }
@@ -105638,7 +105401,7 @@ function writingFolders(dbPath, draft = draftDirOf(dbPath)) {
   };
   for (const row2 of rows4) {
     const manifest = readManifest(dbPath, row2.id);
-    if (manifest !== null && isDir2(join35(draft, manifest.folder)) && !taken.has(manifest.folder.toLowerCase())) {
+    if (manifest !== null && isDir2(join34(draft, manifest.folder)) && !taken.has(manifest.folder.toLowerCase())) {
       take(row2, { name: manifest.folder, legacy: matchOf(manifest.folder, row2) === "legacy" });
     }
   }
@@ -105658,7 +105421,7 @@ function writingFolders(dbPath, draft = draftDirOf(dbPath)) {
 }
 function renameable(dir) {
   const entries = readdirSync16(dir, { withFileTypes: true });
-  return entries.length > 0 && entries.every((e3) => e3.isFile() && (OLD_BOARD_FILES.includes(e3.name) || readExistingRevision(join35(dir, e3.name)) !== void 0));
+  return entries.length > 0 && entries.every((e3) => e3.isFile() && (OLD_BOARD_FILES.includes(e3.name) || readExistingRevision(join34(dir, e3.name)) !== void 0));
 }
 function renamedLegacy(name, title) {
   return `${DATE_PREFIX.exec(name)?.[0] ?? ""}${sanitizeForPath(title)}`;
@@ -105666,8 +105429,8 @@ function renamedLegacy(name, title) {
 function settled(draft, title, folder) {
   if (!folder.legacy) return folder.name;
   const target = renamedLegacy(folder.name, title);
-  if (existsSync32(join35(draft, target)) || !renameable(join35(draft, folder.name))) return folder.name;
-  renameSync6(join35(draft, folder.name), join35(draft, target));
+  if (existsSync31(join34(draft, target)) || !renameable(join34(draft, folder.name))) return folder.name;
+  renameSync6(join34(draft, folder.name), join34(draft, target));
   return target;
 }
 function writingFolderForRender(dbPath, filingId, title) {
@@ -105676,24 +105439,24 @@ function writingFolderForRender(dbPath, filingId, title) {
   if (folder === void 0) throw new DataServerError(`Work Board ${filingId} has no Writing, so it has no folder`, "milestone_only");
   if (folder.ambiguous !== void 0) {
     throw new DataServerError(
-      `${folder.ambiguous.length} folders in ${draft} could each be "${title}"'s: ${folder.ambiguous.map((n3) => `"${join35(draft, n3)}"`).join(", ")}. Nothing was written. Choose which one is its folder, then render again naming it.`,
+      `${folder.ambiguous.length} folders in ${draft} could each be "${title}"'s: ${folder.ambiguous.map((n3) => `"${join34(draft, n3)}"`).join(", ")}. Nothing was written. Choose which one is its folder, then render again naming it.`,
       "presentation_dir_ambiguous"
     );
   }
   const name = settled(draft, title, folder);
-  const dir = join35(draft, name);
-  return folder.legacy && name === folder.name ? { dir, rename: { from: dir, to: join35(draft, renamedLegacy(name, title)) } } : { dir };
+  const dir = join34(draft, name);
+  return folder.legacy && name === folder.name ? { dir, rename: { from: dir, to: join34(draft, renamedLegacy(name, title)) } } : { dir };
 }
 function freeName(dir, name) {
   const ext = extname3(name);
   const stem3 = name.slice(0, name.length - ext.length);
   let candidate = name;
-  for (let n3 = 2; existsSync32(join35(dir, candidate)); n3++) candidate = `${stem3} (${n3})${ext}`;
+  for (let n3 = 2; existsSync31(join34(dir, candidate)); n3++) candidate = `${stem3} (${n3})${ext}`;
   return candidate;
 }
 function moveInto(src, dir, name) {
   mkdirSync14(dir, { recursive: true });
-  const target = join35(dir, freeName(dir, name));
+  const target = join34(dir, freeName(dir, name));
   renameSync6(src, target);
   return target;
 }
@@ -105709,35 +105472,35 @@ function nowLabel() {
   return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())}-${pad(d3.getHours())}-${pad(d3.getMinutes())}`;
 }
 function emptyLegacyFolder(legacy, dir, row2, current) {
-  const archive = join35(dir, "archive");
+  const archive = join34(dir, "archive");
   const labels = new Map((legacy.manifest?.files ?? []).map((f3) => [f3.document_type, documentStem(row2, f3.document_type, f3.file_name)]));
   const files = [];
   for (const f3 of legacy.manifest?.files ?? []) {
-    const src = join35(legacy.dir, f3.file_name);
-    if (!existsSync32(src)) continue;
+    const src = join34(legacy.dir, f3.file_name);
+    if (!existsSync31(src)) continue;
     const name = `${documentStem(row2, f3.document_type, f3.file_name)}${extname3(f3.file_name)}`;
     if (!current) {
       moveInto(src, archive, `${labels.get(f3.document_type)} @rev${legacy.manifest?.stamp.revision} ${nowLabel()}${extname3(f3.file_name)}`);
       continue;
     }
     for (const copy of /* @__PURE__ */ new Set([f3.file_name, name])) {
-      const path = join35(dir, copy);
-      if (existsSync32(path) && readExistingRevision(path) !== void 0) unlinkSync11(path);
+      const path = join34(dir, copy);
+      if (existsSync31(path) && readExistingRevision(path) !== void 0) unlinkSync11(path);
     }
-    if (existsSync32(join35(dir, name))) {
+    if (existsSync31(join34(dir, name))) {
       moveInto(src, archive, `${labels.get(f3.document_type)} @rev${legacy.manifest?.stamp.revision} ${nowLabel()}${extname3(f3.file_name)}`);
       continue;
     }
     moveInto(src, dir, name);
     files.push(name === f3.file_name ? f3 : { document_type: f3.document_type, file_name: name, sha256: f3.sha256 });
   }
-  const oldArchive = join35(legacy.dir, "archive");
+  const oldArchive = join34(legacy.dir, "archive");
   if (isDir2(oldArchive)) {
-    for (const e3 of readdirSync16(oldArchive)) moveInto(join35(oldArchive, e3), archive, relabelled(e3, labels));
+    for (const e3 of readdirSync16(oldArchive)) moveInto(join34(oldArchive, e3), archive, relabelled(e3, labels));
     rmdirSync2(oldArchive);
   }
   for (const e3 of readdirSync16(legacy.dir)) {
-    const path = join35(legacy.dir, e3);
+    const path = join34(legacy.dir, e3);
     if (e3 === LEGACY_MANIFEST_FILE || OLD_BOARD_FILES.includes(e3)) unlinkSync11(path);
     else moveInto(path, archive, e3);
   }
@@ -105752,17 +105515,17 @@ function later(a3, b3, id) {
   return ra2 !== rb ? ra2 > rb : (a3.manifest?.rendered_at ?? "") > (b3.manifest?.rendered_at ?? "");
 }
 function moveCaseDataMockups(dbPath) {
-  const root = join35(dirname15(dbPath), "mockups");
-  if (!existsSync32(root)) return [];
+  const root = join34(dirname15(dbPath), "mockups");
+  if (!existsSync31(root)) return [];
   const draft = draftDirOf(dbPath);
   const records = recordsDir(dbPath);
   mkdirSync14(records, { recursive: true });
-  const older = join35(records, OLDER_MOCKUPS);
+  const older = join34(records, OLDER_MOCKUPS);
   const rows4 = new Map(folderRows(dbPath).filter((r3) => !isJobOnlyBoard(r3)).map((r3) => [r3.id, r3]));
   const moves = [];
   const byFiling = /* @__PURE__ */ new Map();
   for (const entry2 of readdirSync16(root, { withFileTypes: true })) {
-    const path = join35(root, entry2.name);
+    const path = join34(root, entry2.name);
     if (!entry2.isDirectory()) {
       if (entry2.name === "matter-pages-state.json") moveInto(path, records, entry2.name);
       else if (OLD_BOARD_FILES.includes(entry2.name)) unlinkSync11(path);
@@ -105781,7 +105544,7 @@ function moveCaseDataMockups(dbPath) {
   for (const [id, found2] of byFiling) {
     const row2 = rows4.get(id);
     const folder = settled(draft, row2.title, folders2.get(id));
-    const dir = join35(draft, folder);
+    const dir = join34(draft, folder);
     mkdirSync14(dir, { recursive: true });
     const [current, ...rest] = [...found2].sort((a3, b3) => later(a3, b3, id) ? -1 : 1);
     for (const other of rest) {
@@ -105862,34 +105625,34 @@ function renderStateFor(dbPath, stamp2, filing, digest) {
 }
 
 // src/submission/forms/render.ts
-import { basename as basename9, dirname as dirname27, join as join50 } from "node:path";
+import { basename as basename9, dirname as dirname27, join as join49 } from "node:path";
 
 // src/submission/matter-pages.ts
-import { join as join48 } from "node:path";
+import { join as join47 } from "node:path";
 
 // src/submission/matter-page-files.ts
-import { existsSync as existsSync39, mkdirSync as mkdirSync19, readdirSync as readdirSync21, readFileSync as readFileSync35 } from "node:fs";
-import { dirname as dirname19, join as join43, relative as relative2 } from "node:path";
+import { existsSync as existsSync38, mkdirSync as mkdirSync19, readdirSync as readdirSync21, readFileSync as readFileSync34 } from "node:fs";
+import { dirname as dirname19, join as join42, relative as relative2 } from "node:path";
 
 // src/file_ops/trash.ts
 import {
   appendFileSync as appendFileSync3,
-  existsSync as existsSync34,
+  existsSync as existsSync33,
   lstatSync,
   mkdirSync as mkdirSync16,
   readdirSync as readdirSync18,
   realpathSync as realpathSync8,
   renameSync as renameSync7,
-  statSync as statSync16
+  statSync as statSync15
 } from "node:fs";
 import { win32 as pathWin3217 } from "node:path";
 
 // src/file_ops/approved-row.ts
 import { createHash as createHash11 } from "node:crypto";
-import { readFileSync as readFileSync32 } from "node:fs";
+import { readFileSync as readFileSync31 } from "node:fs";
 
 // src/housekeeping/run-dir.ts
-import { closeSync as closeSync6, existsSync as existsSync33, fsyncSync, mkdirSync as mkdirSync15, openSync as openSync6, readdirSync as readdirSync17, readFileSync as readFileSync31, realpathSync as realpathSync7, statSync as statSync15, writeSync as writeSync5 } from "node:fs";
+import { closeSync as closeSync5, existsSync as existsSync32, fsyncSync, mkdirSync as mkdirSync15, openSync as openSync5, readdirSync as readdirSync17, readFileSync as readFileSync30, realpathSync as realpathSync7, statSync as statSync14, writeSync as writeSync4 } from "node:fs";
 import { win32 as pathWin3216 } from "node:path";
 
 // src/housekeeping/proposal.ts
@@ -106202,7 +105965,7 @@ function confineRunDir(matter, runId) {
 function readProposal(runDir, runId, root) {
   let text8;
   try {
-    text8 = readFileSync31(pathWin3216.join(runDir, PROPOSAL), "utf-8");
+    text8 = readFileSync30(pathWin3216.join(runDir, PROPOSAL), "utf-8");
   } catch {
     return { proposal: null, problem: "no proposal.json" };
   }
@@ -106224,7 +105987,7 @@ function requireProposal(runDir, runId, root) {
 function readApproval(runDir, runId) {
   let text8;
   try {
-    text8 = readFileSync31(pathWin3216.join(runDir, APPROVAL), "utf-8");
+    text8 = readFileSync30(pathWin3216.join(runDir, APPROVAL), "utf-8");
   } catch (err) {
     const code = err.code;
     return code === "ENOENT" ? { approval: null } : { approval: null, problem: `approval.json cannot be read (${code})` };
@@ -106252,7 +106015,7 @@ function requireApproval(runDir, runId) {
 }
 function isDirectory2(path) {
   try {
-    return statSync15(path).isDirectory();
+    return statSync14(path).isDirectory();
   } catch {
     return false;
   }
@@ -106273,7 +106036,7 @@ function requireApprovedRow(matterRoot, row2, source) {
   }
   let hash;
   try {
-    hash = createHash11("sha256").update(readFileSync32(source)).digest("hex");
+    hash = createHash11("sha256").update(readFileSync31(source)).digest("hex");
   } catch (err) {
     throw new DataServerError(`the approved file of row ${row2.row_id} cannot be read (${err.message}); nothing was moved: ${source}`, "changed_since_approval");
   }
@@ -106304,7 +106067,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), ro
   for (let dir = pathWin3217.dirname(target); dir !== ancestors[ancestors.length - 1]; dir = pathWin3217.dirname(dir)) {
     ancestors.push(dir);
   }
-  if (ancestors.some((dir) => existsSync34(pathWin3217.join(dir, ".git")))) {
+  if (ancestors.some((dir) => existsSync33(pathWin3217.join(dir, ".git")))) {
     throw new DataServerError(
       `path is inside a Git worktree; ordinary repository rules apply there: ${target}`,
       "git_worktree"
@@ -106357,7 +106120,7 @@ function fileOpsTrash(path, dryRun = false, now = /* @__PURE__ */ new Date(), ro
   return result;
 }
 function isFile2(path) {
-  return existsSync34(path) && statSync16(path).isFile();
+  return existsSync33(path) && statSync15(path).isFile();
 }
 function present2(path) {
   try {
@@ -106374,15 +106137,15 @@ function stamp(d3) {
 
 // src/page-api/token.ts
 import { createHmac as createHmac2, randomBytes as randomBytes3, timingSafeEqual } from "node:crypto";
-import { existsSync as existsSync35, linkSync as linkSync2, mkdirSync as mkdirSync17, readFileSync as readFileSync33, unlinkSync as unlinkSync12, writeFileSync as writeFileSync12 } from "node:fs";
-import { dirname as dirname16, join as join36 } from "node:path";
+import { existsSync as existsSync34, linkSync as linkSync2, mkdirSync as mkdirSync17, readFileSync as readFileSync32, unlinkSync as unlinkSync12, writeFileSync as writeFileSync12 } from "node:fs";
+import { dirname as dirname16, join as join35 } from "node:path";
 var DEFAULT_PAGE_API_PORT = 47615;
 var SECRET_FILE = "page-api.secret";
 var SECRET_BYTES = 32;
 function pageApiPort(env = process.env) {
   const path = configPath(env);
-  if (!existsSync35(path)) return DEFAULT_PAGE_API_PORT;
-  const value2 = JSON.parse(readFileSync33(path, "utf-8"))?.page_api_port;
+  if (!existsSync34(path)) return DEFAULT_PAGE_API_PORT;
+  const value2 = JSON.parse(readFileSync32(path, "utf-8"))?.page_api_port;
   if (value2 === void 0 || value2 === null) return DEFAULT_PAGE_API_PORT;
   if (typeof value2 !== "number" || !Number.isInteger(value2) || value2 < 1 || value2 > 65535) {
     throw new ValidationError(`${path}: page_api_port must be a whole number from 1 to 65535, got ${JSON.stringify(value2)}`, "invalid_page_api_port");
@@ -106390,11 +106153,11 @@ function pageApiPort(env = process.env) {
   return value2;
 }
 function pageApiSecretPath(env = process.env) {
-  return join36(dirname16(configPath(env)), SECRET_FILE);
+  return join35(dirname16(configPath(env)), SECRET_FILE);
 }
 function pageApiSecret(env) {
   const path = pageApiSecretPath(env);
-  if (!existsSync35(path)) {
+  if (!existsSync34(path)) {
     mkdirSync17(dirname16(path), { recursive: true });
     const temp = `${path}.${process.pid}.${randomBytes3(6).toString("hex")}.tmp`;
     writeFileSync12(temp, randomBytes3(SECRET_BYTES), { flag: "wx" });
@@ -106406,7 +106169,7 @@ function pageApiSecret(env) {
       unlinkSync12(temp);
     }
   }
-  const secret = readFileSync33(path);
+  const secret = readFileSync32(path);
   if (secret.length !== SECRET_BYTES) throw new Error(`${path} holds ${secret.length} bytes, not ${SECRET_BYTES}; delete it and re-render the page`);
   return secret;
 }
@@ -106869,18 +106632,18 @@ var view_folder_css_default = '.board{gap:0}\n.tabs{display:flex;align-items:fle
 var view_head_html_default = '<!doctype html>\n<html lang="en" data-view-page>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">';
 
 // src/submission/forms/loose-thread-in-place.ts
-import { existsSync as existsSync38 } from "node:fs";
-import { dirname as dirname18, join as join42 } from "node:path";
+import { existsSync as existsSync37 } from "node:fs";
+import { dirname as dirname18, join as join41 } from "node:path";
 
 // src/submission/forms/legal-memos.ts
-import { existsSync as existsSync37, readdirSync as readdirSync20, statSync as statSync17 } from "node:fs";
-import { join as join41 } from "node:path";
+import { existsSync as existsSync36, readdirSync as readdirSync20, statSync as statSync16 } from "node:fs";
+import { join as join40 } from "node:path";
 
 // src/submission/matter-page-groups.ts
-import { join as join39 } from "node:path";
+import { join as join38 } from "node:path";
 
 // src/submission/view-pages.ts
-import { join as join38 } from "node:path";
+import { join as join37 } from "node:path";
 
 // src/templates/view-pages/arguments.css.ts
 var arguments_css_default = '.picker{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}\n.picker input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}\n.picker label{display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #1d5e4a;color:#025056;font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;padding-bottom:1px;font-variant-numeric:tabular-nums;cursor:pointer}\n.picker input:checked+label{width:31px;height:31px;background:#a8691c;border-color:#a8691c;color:#fff;font-size:15px;font-weight:800}\n.picker input:focus-visible+label{outline:2px solid #1d5e4a;outline-offset:2px}\narticle.arg{background:var(--card);border:2px solid var(--frame);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}\n.arg>.text{position:relative;font-weight:400;margin:0;padding-bottom:22px;white-space:pre-wrap;cursor:pointer}\n.arg>.text::before{content:"\u25B8";display:inline-block;margin-right:6px;color:var(--frame);transition:transform .15s}\n.arg.open>.text::before{transform:rotate(90deg)}\n.arg>.text:focus-visible{outline:2px solid #1d5e4a;outline-offset:3px;border-radius:4px}\n.arg .tag{position:absolute;right:0;bottom:0;padding:1px 9px;border-radius:999px;background:#1d5e4a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.6;white-space:nowrap}\n.arg .detail{display:flex;flex-direction:column;gap:6px}\n.arg .where,.arg .label,.arg .none{margin:0;font-size:12.5px;color:var(--muted)}\n.arg .head{margin:4px 0 0;font-size:17px;font-weight:700}\n.arg ul{margin:0;padding-left:20px}\n.arg li{margin:2px 0;white-space:pre-wrap}\n.arg li.omitted{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}\n.arg .linked{border-top:1px solid var(--line);padding-top:6px}';
@@ -108007,7 +107770,7 @@ var legal_research_js_default = `(function () {
 })();`;
 
 // src/submission/forms/case-briefs.ts
-import { join as join37 } from "node:path";
+import { join as join36 } from "node:path";
 
 // src/submission/forms/brief-job.ts
 var BRIEF_JOB_PREFIX = "Brief the case: ";
@@ -108167,7 +107930,7 @@ function buildCaseBriefsData(dbPath, filingIds, matterDir, proceedingIds) {
   }
   for (const [caseKey, own] of files) {
     const versions = [...own.values()].map(({ file, savedAt }) => {
-      const path = join37(matterDir, ...file.split(/[\\/]/));
+      const path = join36(matterDir, ...file.split(/[\\/]/));
       const found2 = onDisk.get(file.toLowerCase());
       const mtime = found2 !== void 0 ? found2.mtime : modified(path);
       const { key, version: version2 } = versionOf(file);
@@ -108496,7 +108259,7 @@ var VIEW_PAGES = [
   ARGUMENTS_PAGE
 ];
 function viewPageFile(page2, board, folder) {
-  if (folder !== void 0) return join38(folder, `${page2.name}.html`);
+  if (folder !== void 0) return join37(folder, `${page2.name}.html`);
   return board.filing_id === null ? `${page2.name} - Work Board - proceeding ${board.proceeding_id}.html` : `${page2.name} - Work Board ${board.filing_id}.html`;
 }
 function escapeRegExp(text8) {
@@ -108519,7 +108282,7 @@ function boardFolder(board, folders2) {
 }
 function boardFile(board, folders2) {
   const folder = boardFolder(board, folders2);
-  if (folder !== void 0) return join39(folder, WRITING_MILESTONE_FILE);
+  if (folder !== void 0) return join38(folder, WRITING_MILESTONE_FILE);
   return board.filing_id === null ? `Work Board - proceeding ${board.proceeding_id}.html` : `Work Board ${board.filing_id}.html`;
 }
 function pageGroups(index, live, preFiling, folders2) {
@@ -108557,8 +108320,8 @@ function viewTargets(groups, folders2) {
 
 // src/submission/forms/paragraph-map.ts
 import { createHash as createHash12 } from "node:crypto";
-import { existsSync as existsSync36, mkdirSync as mkdirSync18, readdirSync as readdirSync19, readFileSync as readFileSync34, renameSync as renameSync8, unlinkSync as unlinkSync13, writeFileSync as writeFileSync13 } from "node:fs";
-import { join as join40 } from "node:path";
+import { existsSync as existsSync35, mkdirSync as mkdirSync18, readdirSync as readdirSync19, readFileSync as readFileSync33, renameSync as renameSync8, unlinkSync as unlinkSync13, writeFileSync as writeFileSync13 } from "node:fs";
+import { join as join39 } from "node:path";
 var QUICK_EDIT_MIN_SCHEMA = 79;
 var MAP_KEEP = 20;
 var LINE_NUMBER = /^([A-Z]{0,3})(\d+)\. /;
@@ -108770,10 +108533,10 @@ function toStored(entries) {
   return entries.map(({ text: _text, title: _title, ...entry2 }) => entry2);
 }
 function mapFile(dir, revision) {
-  return join40(dir, `rev-${revision}.json`);
+  return join39(dir, `rev-${revision}.json`);
 }
 function hasParagraphMap(dir, revision) {
-  return existsSync36(mapFile(dir, revision));
+  return existsSync35(mapFile(dir, revision));
 }
 function writeParagraphMap(dir, map) {
   mkdirSync18(dir, { recursive: true });
@@ -108786,9 +108549,9 @@ function writeParagraphMap(dir, map) {
 }
 function readParagraphMap(dir, revision) {
   const file = mapFile(dir, revision);
-  if (!existsSync36(file)) return null;
+  if (!existsSync35(file)) return null;
   try {
-    const parsed = JSON.parse(readFileSync34(file, "utf-8"));
+    const parsed = JSON.parse(readFileSync33(file, "utf-8"));
     return parsed && parsed.revision === revision && Array.isArray(parsed.entries) ? parsed : null;
   } catch {
     return null;
@@ -108822,7 +108585,7 @@ function localDate2(stats) {
 }
 function modified(path) {
   try {
-    return localDate2(statSync17(path));
+    return localDate2(statSync16(path));
   } catch (err) {
     if (UNREADABLE.has(err.code ?? "")) return null;
     throw err;
@@ -108831,14 +108594,14 @@ function modified(path) {
 function lawDirOf(matterDir) {
   try {
     const found2 = readdirSync20(matterDir, { withFileTypes: true }).find((e3) => e3.isDirectory() && e3.name.toLowerCase() === LAW_FOLDER.toLowerCase());
-    return join41(matterDir, found2?.name ?? LAW_FOLDER);
+    return join40(matterDir, found2?.name ?? LAW_FOLDER);
   } catch (err) {
-    if (UNREADABLE.has(err.code ?? "")) return join41(matterDir, LAW_FOLDER);
+    if (UNREADABLE.has(err.code ?? "")) return join40(matterDir, LAW_FOLDER);
     throw err;
   }
 }
 function scanLawFolder(lawDir, wanted) {
-  if (!existsSync37(lawDir)) return [];
+  if (!existsSync36(lawDir)) return [];
   const head = lawDir.split(/[\\/]/).pop();
   const out = [];
   const walk4 = (dir, rel) => {
@@ -108850,8 +108613,8 @@ function scanLawFolder(lawDir, wanted) {
       throw err;
     }
     for (const entry2 of entries) {
-      if (entry2.isDirectory()) walk4(join41(dir, entry2.name), [...rel, entry2.name]);
-      else if (entry2.isFile() && wanted(entry2.name)) out.push({ file: [head, ...rel, entry2.name].join("\\"), mtime: modified(join41(dir, entry2.name)) });
+      if (entry2.isDirectory()) walk4(join40(dir, entry2.name), [...rel, entry2.name]);
+      else if (entry2.isFile() && wanted(entry2.name)) out.push({ file: [head, ...rel, entry2.name].join("\\"), mtime: modified(join40(dir, entry2.name)) });
     }
   };
   walk4(lawDir, []);
@@ -108913,9 +108676,9 @@ function buildLegalMemosData(dbPath, jobs2, matterDir) {
     const version2 = numbers[numbers.length - 1];
     const file = versions.get(version2);
     const segments = file.split(/[\\/]/);
-    const path = join41(matterDir, ...segments);
+    const path = join40(matterDir, ...segments);
     const found2 = onDisk.get(file.toLowerCase());
-    const mtime = found2 !== void 0 ? found2.mtime : existsSync37(path) ? modified(path) : void 0;
+    const mtime = found2 !== void 0 ? found2.mtime : existsSync36(path) ? modified(path) : void 0;
     const factIds = own.flatMap((j3) => j3.scope.filter((s3) => s3.startsWith("facts:")).map((s3) => Number(s3.slice("facts:".length))));
     const facts = readTexts(dbPath, "facts", factIds);
     memos.push({
@@ -109063,7 +108826,7 @@ function inPlaceCards(dbPath, proceedings, draftDir, boards = []) {
   if (proceedings.length === 0) return [];
   const pageOf = (filingId, proceedingId) => {
     const board = boards.find((b3) => b3.filing_id === filingId && filingId !== null) ?? boards.find((b3) => b3.proceeding_id === proceedingId);
-    return board === void 0 || draftDir === void 0 ? void 0 : join42(draftDir, board.file);
+    return board === void 0 || draftDir === void 0 ? void 0 : join41(draftDir, board.file);
   };
   const jobs2 = rows(
     dbPath,
@@ -109085,10 +108848,10 @@ function inPlaceCards(dbPath, proceedings, draftDir, boards = []) {
     `SELECT id, kind, title, retired_on, retirement_reason, filed_on${hasColumn(dbPath, "filings", "sent_copy_id") ? ", sent_copy_id" : ""} FROM filings WHERE retired_on IS NOT NULL AND proceeding_id IN (${list(proceedings)}) ORDER BY retired_on DESC, id`,
     proceedings
   );
-  const folders2 = draftDir !== void 0 && existsSync38(draftDir) ? writingFolders(dbPath, draftDir) : /* @__PURE__ */ new Map();
+  const folders2 = draftDir !== void 0 && existsSync37(draftDir) ? writingFolders(dbPath, draftDir) : /* @__PURE__ */ new Map();
   const letters = filings.filter((f3) => LETTER_KIND.test(f3.kind) && f3.filed_on === null && (f3.sent_copy_id ?? null) === null && f3.retirement_reason !== "delivered").map((f3) => {
     const folder = folders2.get(f3.id);
-    return { tab: "correspondence", record: `Writing #${f3.id}`, title: f3.title, status: "Retired", date: f3.retired_on, ...link(folder === void 0 || draftDir === void 0 ? void 0 : join42(draftDir, folder.name)) };
+    return { tab: "correspondence", record: `Writing #${f3.id}`, title: f3.title, status: "Retired", date: f3.retired_on, ...link(folder === void 0 || draftDir === void 0 ? void 0 : join41(draftDir, folder.name)) };
   });
   const closed2 = filings.filter((f3) => f3.kind === MILESTONE_KIND).map((f3) => ({ tab: "work_boards", record: `Work Board #${f3.id}`, title: f3.title, status: "Closed", date: f3.retired_on, url: null, path: null }));
   const killed = rows(
@@ -109457,8 +109220,8 @@ function guardTargets(names, views) {
 }
 function refuseForeignPages(draftDir, targets) {
   for (const { name, marker, page: page2 } of targets) {
-    const file = join43(draftDir, name);
-    if (existsSync39(file) && !readFileSync35(file, "utf-8").includes(marker)) {
+    const file = join42(draftDir, name);
+    if (existsSync38(file) && !readFileSync34(file, "utf-8").includes(marker)) {
       throw new ValidationError(`refusing to overwrite ${file} -- it does not carry the ${page2}'s marker, so this renderer did not write it`);
     }
   }
@@ -109472,19 +109235,19 @@ var OLD_PAGE = /^(?:Milestone.*|job board.*|to do list(?:-\d+)?|litigation strat
 var PREVIEW_FILE = / preview \d+\.html$/i;
 var RETIRED_PREVIEW = /^(?:raw research|legal memos)(?: - (?:Milestone|job board)(?: - proceeding)? \d+)? preview \d+\.html$/i;
 function generatorWrote(file) {
-  const text8 = readFileSync35(file, "utf-8");
+  const text8 = readFileSync34(file, "utf-8");
   return text8.includes(MILESTONE_MARKER) || text8.includes(MATTER_BOARD_MARKER) || text8.includes(VIEW_PAGE_MARKER) || readExistingRevision(file) !== void 0;
 }
 function sweepOldPages(draftDir, names) {
   const moved = [];
   const skipped = [];
-  const targets = new Set([...names, MATTER_BOARD_FILE].map((name) => join43(name).toLowerCase()));
-  const subfolders = readdirSync21(draftDir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name.toLowerCase() !== "archive").map((e3) => join43(draftDir, e3.name));
+  const targets = new Set([...names, MATTER_BOARD_FILE].map((name) => join42(name).toLowerCase()));
+  const subfolders = readdirSync21(draftDir, { withFileTypes: true }).filter((e3) => e3.isDirectory() && e3.name.toLowerCase() !== "archive").map((e3) => join42(draftDir, e3.name));
   for (const dir of [draftDir, ...subfolders]) {
     for (const entry2 of readdirSync21(dir, { withFileTypes: true })) {
       const old = RETIRED_PREVIEW.test(entry2.name) || !PREVIEW_FILE.test(entry2.name) && (OLD_PAGE.test(entry2.name) || isViewPageFile(entry2.name));
       if (!entry2.isFile() || !old) continue;
-      const file = join43(dir, entry2.name);
+      const file = join42(dir, entry2.name);
       if (targets.has(relative2(draftDir, file).toLowerCase())) continue;
       try {
         if (!generatorWrote(file)) continue;
@@ -109500,14 +109263,14 @@ function sweepOldPages(draftDir, names) {
 }
 
 // src/submission/matter-pages-build.ts
-import { dirname as dirname22, join as join46 } from "node:path";
+import { dirname as dirname22, join as join45 } from "node:path";
 
 // src/submission/board-attachments.ts
-import { closeSync as closeSync7, existsSync as existsSync41, openSync as openSync7, readSync as readSync2, realpathSync as realpathSync9, statSync as statSync18 } from "node:fs";
+import { closeSync as closeSync6, existsSync as existsSync40, openSync as openSync6, readSync as readSync2, realpathSync as realpathSync9, statSync as statSync17 } from "node:fs";
 import { dirname as dirname20, isAbsolute as isAbsolute6, relative as relative3, resolve as resolve5, sep } from "node:path";
 
 // src/housekeeping/name-gate.ts
-import { existsSync as existsSync40 } from "node:fs";
+import { existsSync as existsSync39 } from "node:fs";
 import { win32 as pathWin3218 } from "node:path";
 var DRIVER7 = `import contextlib, io, json, sys
 import name_gate
@@ -109533,7 +109296,7 @@ function fileNamingSkillDir(env = process.env, installRoot) {
   });
   const dir = pathWin3218.join(shipped.root, "file-naming");
   for (const rel of [["scripts", "name_gate.py"], ["references", "code-registry.md"]]) {
-    if (!existsSync40(pathWin3218.join(dir, ...rel))) {
+    if (!existsSync39(pathWin3218.join(dir, ...rel))) {
       throw new DataServerError(
         `${rel.join("\\")} not found under ${dir} -- ` + (shipped.shipped_from === "install" ? `${installedPluginLabel(shipped)}'s bundled skill source lacks it; reinstall the plugin and fully restart` : "the installed bundle predates this phase, or the repo has moved; reinstall the plugin and fully restart"),
         "repo_root_missing"
@@ -109563,13 +109326,13 @@ var REVIEW_LINE = /^Counsel['’]s review:\s*/;
 var FIRST_LINE_BYTES = 4096;
 var PENDING2 = /* @__PURE__ */ new Set(["ready", "wip", "bring_forward", "waiting"]);
 function firstLine2(file) {
-  const fd = openSync7(file, "r");
+  const fd = openSync6(file, "r");
   try {
     const buffer = Buffer.alloc(FIRST_LINE_BYTES);
     const read3 = readSync2(fd, buffer, 0, FIRST_LINE_BYTES, 0);
     return buffer.subarray(0, read3).toString("utf-8").replace(/^﻿/, "").split(/\r?\n/)[0];
   } finally {
-    closeSync7(fd);
+    closeSync6(fd);
   }
 }
 function leavesDraftFolder(rel) {
@@ -109600,13 +109363,13 @@ function attachedDrafts(dbPath, draftDir, section3) {
     const absent = { ...entry2, modified: null, review: null };
     const base = a3.kind === "opposing_filing" ? matterRoot : draftDir;
     if (leavesDraftFolder(relative3(base, abs))) return { ...absent, state: "outside" };
-    if (!existsSync41(abs)) return { ...absent, state: "missing" };
+    if (!existsSync40(abs)) return { ...absent, state: "missing" };
     try {
       const real = realpathSync9.native(abs);
       if (leavesDraftFolder(relative3(realpathSync9.native(base), real)) || zoneProblem("read", real)) {
         return { ...absent, state: "outside" };
       }
-      const modified2 = localDate3(statSync18(abs).mtime);
+      const modified2 = localDate3(statSync17(abs).mtime);
       const line = a3.kind === "client_letter" ? firstLine2(abs) : "";
       return { ...entry2, modified: modified2, state: "present", review: REVIEW_LINE.test(line) ? line.replace(REVIEW_LINE, "").trim() : null };
     } catch (err) {
@@ -109625,7 +109388,7 @@ function withCodes(drafts) {
 }
 
 // src/submission/forms/board-viewed.ts
-import { basename as basename5, dirname as dirname21, join as join44, resolve as resolve6 } from "node:path";
+import { basename as basename5, dirname as dirname21, join as join43, resolve as resolve6 } from "node:path";
 var TOOL10 = "drafting_data__record_viewed";
 function viewedKey(board) {
   return `board_viewed:${boardKey(board)}`;
@@ -109680,7 +109443,7 @@ function stripTargets(dbPath) {
   for (const board of boards.values()) {
     const folder = board.filing_id === null ? void 0 : folders2.get(board.filing_id)?.name;
     for (const page2 of VIEW_PAGES) {
-      const file = join44(draft, viewPageFile(page2, board, folder));
+      const file = join43(draft, viewPageFile(page2, board, folder));
       targets.push({ board, key: viewItemKey(page2.name), file: basename5(file), dir: dirname21(file) });
     }
   }
@@ -109728,7 +109491,7 @@ async function submissionDataRecordViewed(args, env = process.env) {
 
 // src/submission/court-file-affidavits.ts
 import { readdirSync as readdirSync22 } from "node:fs";
-import { basename as basename6, join as join45 } from "node:path";
+import { basename as basename6, join as join44 } from "node:path";
 var STATUSES2 = ["SIGNED", "AFFIRMED", "SWORN", "FILED", "UNFILED", "UNSIGNED", "UNSWORN"];
 var MADE = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN"]);
 var EXECUTED = /* @__PURE__ */ new Set(["SIGNED", "AFFIRMED", "SWORN", "FILED"]);
@@ -109773,7 +109536,7 @@ function fileNames(dir) {
   } catch {
     return [];
   }
-  return entries.flatMap((e3) => e3.isDirectory() ? fileNames(join45(dir, e3.name)) : e3.isFile() ? [e3.name] : []);
+  return entries.flatMap((e3) => e3.isDirectory() ? fileNames(join44(dir, e3.name)) : e3.isFile() ? [e3.name] : []);
 }
 function newest(names) {
   return [...names].sort((a3, b3) => b3.date.localeCompare(a3.date) || RANK[b3.status ?? "UNSWORN"] - RANK[a3.status ?? "UNSWORN"])[0] ?? null;
@@ -110902,22 +110665,22 @@ function buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     pages: guardTargets(groupsWritten.map((g3) => g3.file), viewsWritten).map((t3, i3) => ({ ...t3, html: html[i3] })),
     keep: [LOOSE_THREADS_FILE2, ...groups.map((g3) => g3.file), ...views.map((v3) => v3.file)],
     paths: {
-      milestone_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join46(draftDir, t3.file) })),
-      matter_board_path: join46(draftDir, MATTER_BOARD_FILE),
-      loose_threads_path: join46(draftDir, LOOSE_THREADS_FILE2),
-      view_page_paths: views.flatMap((v3) => v3.writings.map((w3) => ({ name: v3.page.name, filing_id: w3.filing.id, path: join46(draftDir, v3.file) })))
+      milestone_paths: targets.map((t3) => ({ filing_id: t3.filing_id, proceeding_id: t3.proceeding_id, path: join45(draftDir, t3.file) })),
+      matter_board_path: join45(draftDir, MATTER_BOARD_FILE),
+      loose_threads_path: join45(draftDir, LOOSE_THREADS_FILE2),
+      view_page_paths: views.flatMap((v3) => v3.writings.map((w3) => ({ name: v3.page.name, filing_id: w3.filing.id, path: join45(draftDir, v3.file) })))
     }
   };
 }
 
 // src/submission/matter-pages-state.ts
-import { mkdirSync as mkdirSync20, readFileSync as readFileSync36 } from "node:fs";
-import { join as join47 } from "node:path";
+import { mkdirSync as mkdirSync20, readFileSync as readFileSync35 } from "node:fs";
+import { join as join46 } from "node:path";
 var PAGES_STATE_FILE = "matter-pages-state.json";
 var TODOS_NOT_READ = { note: "This matter's to-dos were not read." };
 var MAX_SESSIONS = 20;
 function statePath(dbPath) {
-  return join47(recordsDir(dbPath), PAGES_STATE_FILE);
+  return join46(recordsDir(dbPath), PAGES_STATE_FILE);
 }
 function isTodos(value2) {
   if (typeof value2 !== "object" || value2 === null) return false;
@@ -110934,7 +110697,7 @@ function isRecord(value2) {
 }
 function readPagesState(dbPath) {
   try {
-    const parsed = JSON.parse(readFileSync36(statePath(dbPath), "utf-8"));
+    const parsed = JSON.parse(readFileSync35(statePath(dbPath), "utf-8"));
     const sections = parsed.sections;
     if (!isRecord(sections)) return { sections: {} };
     return {
@@ -111406,7 +111169,7 @@ function writeMatterPages(dbPath, draftDir, client, now, revision, todos, dates,
     const { pages, keep, paths } = buildMatterPages(dbPath, draftDir, client, now, revision, todos, dates, reuse);
     refuseForeignPages(draftDir, pages);
     const swept = reuse.only === void 0 ? sweepOldPages(draftDir, keep) : {};
-    for (const p3 of pages) writePage(join48(draftDir, p3.name), p3.html);
+    for (const p3 of pages) writePage(join47(draftDir, p3.name), p3.html);
     return { ...paths, ...swept };
   });
 }
@@ -111943,13 +111706,13 @@ function readSchemaVersion(dbPath) {
 }
 
 // src/submission/forms/mockup-files.ts
-import { existsSync as existsSync42, mkdirSync as mkdirSync21, renameSync as renameSync9, unlinkSync as unlinkSync14 } from "node:fs";
-import { basename as basename7, dirname as dirname24, extname as extname4, join as join49 } from "node:path";
+import { existsSync as existsSync41, mkdirSync as mkdirSync21, renameSync as renameSync9, unlinkSync as unlinkSync14 } from "node:fs";
+import { basename as basename7, dirname as dirname24, extname as extname4, join as join48 } from "node:path";
 function existingMockupPaths(dbPath, filingId) {
   const manifest = readManifest(dbPath, filingId);
   if (manifest === null) return [];
   const dir = manifestDir(dbPath, manifest);
-  return manifest.files.map((f3) => join49(dir, f3.file_name)).filter((p3) => existsSync42(p3));
+  return manifest.files.map((f3) => join48(dir, f3.file_name)).filter((p3) => existsSync41(p3));
 }
 function fileStem(fileName) {
   return fileName.slice(0, fileName.length - extname4(fileName).length);
@@ -111960,11 +111723,11 @@ function archiveIfStale(filePath, formLabel, currentRevision) {
   archiveFile(filePath, formLabel, existingRevision);
 }
 function archiveFile(filePath, formLabel, revision) {
-  const archiveDir = join49(dirname24(filePath), "archive");
+  const archiveDir = join48(dirname24(filePath), "archive");
   mkdirSync21(archiveDir, { recursive: true });
   const name = `${sanitizeForPath(formLabel)} @rev${revision} ${nowStamp().replace(/[: ]/g, "-")}`;
-  let archivePath = join49(archiveDir, `${name}${extname4(filePath)}`);
-  for (let n3 = 2; existsSync42(archivePath); n3++) archivePath = join49(archiveDir, `${name} (${n3})${extname4(filePath)}`);
+  let archivePath = join48(archiveDir, `${name}${extname4(filePath)}`);
+  for (let n3 = 2; existsSync41(archivePath); n3++) archivePath = join48(archiveDir, `${name} (${n3})${extname4(filePath)}`);
   renameSync9(filePath, archivePath);
 }
 function archiveDroppedFiles(dbPath, previous, written) {
@@ -111976,7 +111739,7 @@ function archiveDroppedFiles(dbPath, previous, written) {
     const single = sameType.length === 1 && previous.files.filter((f3) => f3.document_type === file.document_type).length === 1;
     const renamed = single ? sameType[0] : void 0;
     try {
-      archiveFile(join49(dir, file.file_name), fileStem(renamed?.fileName ?? file.file_name), previous.stamp.revision);
+      archiveFile(join48(dir, file.file_name), fileStem(renamed?.fileName ?? file.file_name), previous.stamp.revision);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
     }
@@ -111984,7 +111747,7 @@ function archiveDroppedFiles(dbPath, previous, written) {
 }
 function writeDocument2(baseDir, output, revision) {
   mkdirSync21(baseDir, { recursive: true });
-  const filePath = join49(baseDir, output.fileName);
+  const filePath = join48(baseDir, output.fileName);
   archiveIfStale(filePath, fileStem(output.fileName), revision);
   const code = writeStatusFile(filePath, output.markdown);
   if (code) throw new DataServerError(`could not write ${filePath}: ${code}`);
@@ -111993,9 +111756,9 @@ function writeDocument2(baseDir, output, revision) {
 var RETIRED_BOARD_FILES = ["workboard.css", "workboard.js", WORKBOARD_DATA_FILE];
 function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
   for (const name of names) {
-    const file = join49(dir, name);
+    const file = join48(dir, name);
     try {
-      if (existsSync42(file)) unlinkSync14(file);
+      if (existsSync41(file)) unlinkSync14(file);
     } catch (err) {
       if (!["ENOENT", "EBUSY", "EPERM"].includes(err.code ?? "")) throw err;
     }
@@ -112003,21 +111766,21 @@ function removeRetiredBoardFiles(dir, names = RETIRED_BOARD_FILES) {
 }
 var STALE_WORKBOARD_MARKDOWN = "Work Board.md";
 function removeOldBoardFiles(dir) {
-  const stale = readExistingRevision(join49(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
+  const stale = readExistingRevision(join48(dir, STALE_WORKBOARD_MARKDOWN)) !== void 0 ? [STALE_WORKBOARD_MARKDOWN] : [];
   removeRetiredBoardFiles(dir, [...RETIRED_BOARD_FILES, ...stale]);
   removeRetiredBoardFiles(dirname24(dir));
 }
 function refuseForeignTargets(dir, fileNames2) {
   for (const name of fileNames2) {
-    const target = join49(dir, name);
-    if (existsSync42(target) && readExistingRevision(target) === void 0) {
+    const target = join48(dir, name);
+    if (existsSync41(target) && readExistingRevision(target) === void 0) {
       throw new ValidationError(`${target} was not written by Probanda, so it is not overwritten. Move it out of the Writing's folder, then render again`);
     }
   }
 }
 
 // src/submission/forms/render-dirs.ts
-import { existsSync as existsSync43, realpathSync as realpathSync10 } from "node:fs";
+import { existsSync as existsSync42, realpathSync as realpathSync10 } from "node:fs";
 import { basename as basename8, dirname as dirname25, isAbsolute as isAbsolute7, resolve as resolve7 } from "node:path";
 function resolvePresentationDir(dbPath, presentationDir, filingTitle, styleOfCause) {
   if (!isAbsolute7(presentationDir)) {
@@ -112039,7 +111802,7 @@ function resolvePresentationDir(dbPath, presentationDir, filingTitle, styleOfCau
   if (!titles.includes(name)) {
     throw refuse2(`the folder must be named "${sanitizeForPath(filingTitle)}" (this filing's title), with or without a leading YYYY-MM-DD`);
   }
-  if (existsSync43(dir) && dirname25(realpathSync10.native(dir)).toLowerCase() !== parent.toLowerCase()) {
+  if (existsSync42(dir) && dirname25(realpathSync10.native(dir)).toLowerCase() !== parent.toLowerCase()) {
     throw refuse2("it resolves outside its 0. DRAFT folder");
   }
   return dir;
@@ -112302,7 +112065,7 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
       const markdown = hit.contents.get(f3.file_name);
       return {
         document_type: f3.document_type,
-        path: join50(hit.dir, f3.file_name),
+        path: join49(hit.dir, f3.file_name),
         file_name: f3.file_name,
         markdown,
         ...symbolNotes(legendNotes(markdown, f3.document_type))
@@ -112982,7 +112745,7 @@ function publishSidecar(ctx, emitterWarnings, coverNotes) {
 }
 
 // src/submission/substance-file.ts
-import { existsSync as existsSync44, mkdirSync as mkdirSync22, realpathSync as realpathSync11, writeFileSync as writeFileSync14 } from "node:fs";
+import { existsSync as existsSync43, mkdirSync as mkdirSync22, realpathSync as realpathSync11, writeFileSync as writeFileSync14 } from "node:fs";
 import { win32 as pathWin3219 } from "node:path";
 var BCSC_SUBSTANCE_FOLDER = "bcsc-form-substance";
 function confineCaseDataFolder(dbPath, caseDataFolder2) {
@@ -113002,11 +112765,11 @@ function writeSubstanceFile(caseData, fileName, markdown, folders2 = [BCSC_SUBST
   const dirs = folders2.map((_3, i3) => pathWin3219.join(caseData, ...folders2.slice(0, i3 + 1)));
   const path = pathWin3219.join(dirs[dirs.length - 1], fileName);
   for (const p3 of [...dirs, path]) {
-    if (existsSync44(p3) && realpathSync11.native(p3).toLowerCase() !== p3.toLowerCase()) {
+    if (existsSync43(p3) && realpathSync11.native(p3).toLowerCase() !== p3.toLowerCase()) {
       throw new PathOutOfScopeError(`${p3} resolves elsewhere (${realpathSync11.native(p3)})`);
     }
   }
-  for (const dir of dirs) if (!existsSync44(dir)) mkdirSync22(dir);
+  for (const dir of dirs) if (!existsSync43(dir)) mkdirSync22(dir);
   writeFileSync14(path, markdown, "utf-8");
   return path;
 }
@@ -113559,8 +113322,8 @@ function submissionFormsEmitBccaFactum(dbPath, filingId, datedOn) {
 }
 
 // src/submission/pre-filing/index.ts
-import { existsSync as existsSync45, readdirSync as readdirSync23, realpathSync as realpathSync12, statSync as statSync19 } from "node:fs";
-import { basename as basename10, dirname as dirname28, isAbsolute as isAbsolute8, join as join51, resolve as resolve8 } from "node:path";
+import { existsSync as existsSync44, readdirSync as readdirSync23, realpathSync as realpathSync12, statSync as statSync18 } from "node:fs";
+import { basename as basename10, dirname as dirname28, isAbsolute as isAbsolute8, join as join50, resolve as resolve8 } from "node:path";
 
 // src/submission/pre-filing/consistency-checks.ts
 function authored(docs) {
@@ -113834,7 +113597,7 @@ function resolvePackageDir(packageDir) {
   if (!isAbsolute8(packageDir)) throw new ValidationError(`drafting_forms__pre_filing_check.package_dir must be an absolute path: ${packageDir}`);
   const dir = resolve8(packageDir);
   const refuse2 = (why) => new ValidationError(`drafting_forms__pre_filing_check.package_dir ${dir}: ${why}`);
-  if (!existsSync45(dir) || !statSync19(dir).isDirectory()) throw refuse2("it does not exist or is not a folder");
+  if (!existsSync44(dir) || !statSync18(dir).isDirectory()) throw refuse2("it does not exist or is not a folder");
   const real = realpathSync12.native(dir);
   const parts = real.split(/[\\/]/);
   if (zoneProblem("read", real)) throw refuse2("it lies inside a privileged or disclosed tree, TRASH or 0. CASE DATA");
@@ -113846,7 +113609,7 @@ function resolvePackageDir(packageDir) {
   return dir;
 }
 function listPackageFiles(dir) {
-  return readdirSync23(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join51(dir, e3.name)).sort((a3, b3) => basename10(a3).localeCompare(basename10(b3)));
+  return readdirSync23(dir, { withFileTypes: true }).filter((e3) => e3.isFile() && !e3.name.startsWith("~$") && !e3.name.startsWith(".")).map((e3) => join50(dir, e3.name)).sort((a3, b3) => basename10(a3).localeCompare(basename10(b3)));
 }
 function runPreFilingChecks(dbPath, filingId, packageDir) {
   const dir = resolvePackageDir(packageDir);
@@ -114086,13 +113849,13 @@ function rankFilings(dbPath, client, now, stamp2, timings) {
 
 // src/submission/forms/bootstrap.ts
 import { randomBytes as randomBytes4 } from "node:crypto";
-import { existsSync as existsSync46 } from "node:fs";
+import { existsSync as existsSync45 } from "node:fs";
 function newSessionToken(unattended) {
   return `${unattended ? UNATTENDED_TOKEN_PREFIX : "sess-"}${randomBytes4(9).toString("hex")}`;
 }
 var MIN_READABLE_SCHEMA_VERSION = 42;
 function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDir, todos = TODOS_NOT_READ, unattended = false, dates = DATES_NOT_READ) {
-  if (!existsSync46(dbPath)) {
+  if (!existsSync45(dbPath)) {
     throw new ValidationError(`No drafting records found at ${dbPath}. Set the matter's drafting records up first.`);
   }
   const draft = draftDir === void 0 ? void 0 : draftDirOfCaller(dbPath, draftDir, "drafting_forms__bootstrap.draft_dir");
@@ -114164,6 +113927,261 @@ function submissionFormsBootstrap(dbPath, client = {}, now = nowStamp(), draftDi
 
 // src/submission/forms/bootstrap-job.ts
 import { dirname as dirname29 } from "node:path";
+
+// src/submission/render-job.ts
+import { randomUUID as randomUUID9 } from "node:crypto";
+import { closeSync as closeSync7, existsSync as existsSync46, openSync as openSync7, readFileSync as readFileSync36, statSync as statSync19, utimesSync, writeSync as writeSync5 } from "node:fs";
+import { join as join51 } from "node:path";
+var STATUS_FILE = "workboard-status.js";
+var DEFAULT_STALL_MS = 6e4;
+var jobs = /* @__PURE__ */ new Map();
+var exitHandlerInstalled = false;
+function nowIso2() {
+  return (/* @__PURE__ */ new Date()).toISOString();
+}
+function stallMs(env) {
+  const value2 = Number(env.COCLERK_RENDER_STALL_MS);
+  return Number.isFinite(value2) && value2 > 0 ? value2 : DEFAULT_STALL_MS;
+}
+function readLock(lockFile) {
+  try {
+    return JSON.parse(readFileSync36(lockFile, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+function pidAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return err.code !== "ESRCH";
+  }
+}
+function holderIsStale(lockFile, holder, stall) {
+  let mtimeMs;
+  try {
+    mtimeMs = statSync19(lockFile).mtimeMs;
+  } catch {
+    return null;
+  }
+  if (holder && typeof holder.pid === "number") {
+    if (!pidAlive(holder.pid)) return true;
+    if (holder.pid === process.pid && !jobs.has(lockFile)) return true;
+  }
+  return Date.now() - mtimeMs > 3 * stall;
+}
+function acquire(lockFile, dbPath, stall) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const record2 = { job_id: randomUUID9(), pid: process.pid, started_at: nowIso2(), db_path: dbPath };
+    try {
+      const fd = openSync7(lockFile, "wx");
+      try {
+        writeSync5(fd, JSON.stringify(record2));
+      } finally {
+        closeSync7(fd);
+      }
+      return { acquired: record2 };
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+    }
+    const key = readLockKey(lockFile, "job_id");
+    const holder = readLock(lockFile);
+    const stale = holderIsStale(lockFile, holder, stall);
+    if (stale === false) return { holder };
+    if (stale === null || key === null) continue;
+    if (!removeLockIfKey(lockFile, "job_id", key, () => holderIsStale(lockFile, readLock(lockFile), stall) === true)) {
+      sleepSync2(50);
+    }
+  }
+  return { holder: readLock(lockFile) };
+}
+function ours(job) {
+  return readLock(job.lockFile)?.job_id === job.status.job_id;
+}
+function publish(job) {
+  if (!ours(job)) return false;
+  job.status.updated_at = nowIso2();
+  if (job.pageFile) {
+    const page2 = `window.WORKBOARD_STATUS = ${JSON.stringify(job.status).replace(/</g, "\\u003c")};
+`;
+    const code2 = writeStatusFile(job.pageFile, page2);
+    if (code2 !== null) job.status.write_error = { target: job.pageFile, code: code2, at: nowIso2() };
+  }
+  const code = writeStatusFile(job.mirrorFile, JSON.stringify(job.status));
+  if (code !== null) job.status.write_error = { target: job.mirrorFile, code, at: nowIso2() };
+  return true;
+}
+function releaseLock(job) {
+  try {
+    removeLockIfKey(job.lockFile, "job_id", job.status.job_id, void 0, 500);
+  } catch {
+  }
+}
+function finish(job, release) {
+  if (release) releaseLock(job);
+  jobs.delete(job.lockFile);
+  job.resolve({ job_id: job.status.job_id, rendered: job.rendered, done: job.status.done, failed: job.status.failed });
+}
+function schedule(job) {
+  setImmediate(() => step(job)).unref();
+}
+function settle(job) {
+  if (!job.settle) return;
+  try {
+    inOneCall(job.settle);
+  } catch (err) {
+    job.status.write_error = { target: "settle", code: err instanceof Error ? err.message : String(err), at: nowIso2() };
+  }
+}
+function step(job) {
+  try {
+    if (!ours(job)) return finish(job, false);
+    if (!existsSync46(job.dbPath)) {
+      job.status.state = "aborted";
+      job.status.current = null;
+      publish(job);
+      return finish(job, true);
+    }
+    if (job.settleFirst) {
+      job.settleFirst = false;
+      settle(job);
+    }
+    const id = job.status.current;
+    const started = performance.now();
+    if (id !== null) {
+      try {
+        if (!job.skip.has(id) && !job.isFresh(id)) {
+          inOneCall(() => job.render(id));
+          job.rendered.push(id);
+          console.error(`[render-job] filing ${id} ${Math.round(performance.now() - started)} ms`);
+        }
+        job.status.done.push(id);
+      } catch (err) {
+        job.status.failed.push({ filing_id: id, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+    job.status.current = job.status.queued.shift() ?? null;
+    if (job.status.current === null) {
+      job.status.state = "done";
+      if (job.rendered.length > 0) settle(job);
+    }
+    try {
+      utimesSync(job.lockFile, /* @__PURE__ */ new Date(), /* @__PURE__ */ new Date());
+    } catch {
+    }
+    if (!publish(job)) return finish(job, false);
+    if (job.status.state === "done") return finish(job, true);
+    schedule(job);
+  } catch (err) {
+    try {
+      job.status.state = "aborted";
+      job.status.write_error ??= { target: job.mirrorFile, code: err instanceof Error ? err.message : String(err), at: nowIso2() };
+      publish(job);
+    } finally {
+      finish(job, true);
+    }
+  }
+}
+function installExitHandler() {
+  if (exitHandlerInstalled) return;
+  exitHandlerInstalled = true;
+  process.on("exit", () => {
+    for (const job of jobs.values()) {
+      job.status.state = "aborted";
+      job.status.current = null;
+      if (publish(job)) releaseLock(job);
+    }
+  });
+}
+function mirrorStatus(dbPath, env) {
+  const lockFile = hostLocalPath(dbPath, "render-job.lock", env);
+  const job = jobs.get(lockFile);
+  let status3;
+  if (job) {
+    status3 = job.status;
+  } else {
+    try {
+      status3 = JSON.parse(readFileSync36(hostLocalPath(dbPath, "render-job.status.json", env), "utf-8"));
+    } catch {
+      return { state: "idle" };
+    }
+  }
+  if (status3.state !== "running") return { ...status3 };
+  if (!job && !existsSync46(lockFile)) return { ...status3, state: "aborted" };
+  if (Date.now() - Date.parse(status3.updated_at) > status3.stall_after_ms) return { ...status3, state: "stalled" };
+  return { ...status3 };
+}
+function backgroundJobStatus(dbPath, env = process.env) {
+  return mirrorStatus(dbPath, env);
+}
+function startRenderJob(options) {
+  const env = options.env ?? process.env;
+  const stall = stallMs(env);
+  const lockFile = hostLocalPath(options.dbPath, "render-job.lock", env);
+  const result = acquire(lockFile, options.dbPath, stall);
+  if ("holder" in result) {
+    const live = jobs.get(lockFile);
+    if (live && options.settleFirst) live.settleFirst = true;
+    const reported3 = mirrorStatus(options.dbPath, env);
+    if (result.holder && reported3.state !== "idle" && "job_id" in reported3 && reported3.job_id === result.holder.job_id) {
+      return { ...reported3, joined: true };
+    }
+    return { state: "running", job_id: result.holder?.job_id ?? null, started_at: result.holder?.started_at ?? null, joined: true };
+  }
+  let resolve11;
+  const promise = new Promise((r3) => resolve11 = r3);
+  const [current = null, ...queued] = options.queue;
+  const settleFirst = options.settle !== void 0 && options.settleFirst === true;
+  const idle = current === null && !settleFirst;
+  const job = {
+    lockFile,
+    mirrorFile: hostLocalPath(options.dbPath, "render-job.status.json", env),
+    ...options.draftDir ? { pageFile: join51(options.draftDir, STATUS_FILE) } : {},
+    dbPath: options.dbPath,
+    status: {
+      job_id: result.acquired.job_id,
+      state: idle ? "done" : "running",
+      started_at: result.acquired.started_at,
+      updated_at: result.acquired.started_at,
+      stall_after_ms: stall,
+      queued,
+      done: [],
+      failed: [],
+      current
+    },
+    rendered: [],
+    skip: /* @__PURE__ */ new Set(),
+    render: options.render,
+    isFresh: options.isFresh,
+    ...options.settle ? { settle: options.settle } : {},
+    settleFirst,
+    promise,
+    resolve: resolve11
+  };
+  jobs.set(lockFile, job);
+  installExitHandler();
+  publish(job);
+  const reported2 = { ...job.status };
+  if (idle) finish(job, true);
+  else schedule(job);
+  return reported2;
+}
+function markRenderedInForeground(dbPath, filingId, env = process.env) {
+  const job = jobs.get(hostLocalPath(dbPath, "render-job.lock", env));
+  if (!job || job.status.state !== "running") return;
+  const queuedAt = job.status.queued.indexOf(filingId);
+  if (queuedAt === -1 && job.status.current !== filingId) return;
+  if (!job.isFresh(filingId)) return;
+  job.skip.add(filingId);
+  if (queuedAt !== -1) {
+    job.status.queued.splice(queuedAt, 1);
+    job.status.done.push(filingId);
+    publish(job);
+  }
+}
+
+// src/submission/forms/bootstrap-job.ts
 function renderStateOf(dbPath, filingId, client) {
   const filing = fetchFilingById(dbPath, filingId);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
