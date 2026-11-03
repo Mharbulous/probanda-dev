@@ -18,7 +18,7 @@ Run commands from the repo root. Call git as `git -C <repo root>`.
 
 - `rebuild:` lines name each bundle whose `src/`, `scripts/`, `source/mcp-shared/` or the drafting-data `migrate_engine.py` changed since the bump. Step 3 rebuilds it, then run `--check` again. Trust `--check` only after that.
 - `released:` lines name each plugin whose `plugins/P/` changed since its bump. That plugin is released even when `--check` exits 0.
-- Both exit 0: report "nothing to release" and stop. Exit 1 means something is listed: continue. Either exits 2: stop and report its output.
+- Both exit 0: report "nothing to release" and stop, unless Brahm has expressly asked for the first release with ranges (step 5). Exit 1 means something is listed: continue. Either exits 2: stop and report its output.
 - Otherwise the released plugins are those `--check` lists, those the script lists, and those whose bundle step 3 rebuilds.
 
 For each such plugin P, its change set is everything since its last release: `git log -1 --format=%H -- source/P/plugin.json` gives the last bump, and `git diff <that commit>..HEAD` over P's inputs (its skills in `source/assignment.json`, `.claude/skills/shared/`, `source/P/`, and the servers it ships) gives the change.
@@ -47,7 +47,7 @@ A patch goes on to step 5. A minor release needs a freeze, so show the lines to 
 
 ## 5. Bump and build
 
-Bump `version` in `source/P/plugin.json` for each released plugin: the last number for a patch, the middle number for a minor (resetting the last to 0). Never reach 1.0.0. Run `python scripts/build_plugin.py`. Check: `python scripts/build_plugin.py --check` exits 0.
+Bump `version` in `source/P/plugin.json` for each released plugin: the last number for a patch, the middle number for a minor (resetting the last to 0). Never reach 1.0.0. Then run `python scripts/stamp_dependencies.py <each released plugin>`, which writes each one's version ranges. Exit 1 names each plugin `left behind`, whose range no longer accepts a dependency's new version: it is released too, as a minor, so without Brahm's go-ahead for it stop here, and with it bump it and run the script again with it added, until it exits 0. Only when Brahm has expressly asked for the first release with ranges, add `--first-ranges`, which also lists every plugin still on bare names as left behind. Run `python scripts/build_plugin.py`. Check: `python scripts/build_plugin.py --check` exits 0.
 
 ## 6. Checks
 
@@ -56,7 +56,7 @@ Bump `version` in `source/P/plugin.json` for each released plugin: the last numb
 
 ## 7. Ship
 
-Commit by explicit pathspec, never `git add -A`: the bumped `source/*/plugin.json`, any rebuilt `dist/` bundles, and `plugins/`. Subject: `<Plugin> <version>[, <Plugin> <version>]: <what changed>`. For a minor release, add a body line `Users must: <the action>`. Then `git pull --ff-only` and `git push`.
+Commit by explicit pathspec, never `git add -A`: the bumped `source/*/plugin.json`, any rebuilt `dist/` bundles, `plugins/`, and `scripts/check_plugin_baselines/dependency_ranges_pending.json` if the first release with ranges changed or removed it. Subject: `<Plugin> <version>[, <Plugin> <version>]: <what changed>`. For a minor release, add a body line `Users must: <the action>`. Then `git pull --ff-only` and `git push`.
 
 ## 8. Report
 

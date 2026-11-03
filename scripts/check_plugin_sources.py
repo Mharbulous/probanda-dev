@@ -29,6 +29,12 @@ HOST_PATH = re.compile(r"(?<![A-Za-z0-9_])[A-Za-z]:[\\]{1,2}|/(?:home|Users)/[A-
 # A linked-worktree path, kept only to specialise the bundle-no-host-path message.
 WORKTREE_PATH = re.compile(r"\.claude[\\/]+worktrees[\\/]+")
 
+# The range form stamp_dependencies.py writes, the only one a dependency entry may hold.
+CARET_RANGE = re.compile(r"\^(\d+\.\d+\.\d+)")
+# Lists the plugins that keep bare-name dependencies until the first release with ranges.
+# That release empties the list and deletes the file (stamp_dependencies.py --first-ranges).
+RANGES_PENDING = ("scripts", "check_plugin_baselines", "dependency_ranges_pending.json")
+
 
 class NotApplicable(Exception):
     """Raised by a check that guards something the plugin does not ship. The message
@@ -195,12 +201,80 @@ def check_commons_encapsulation(repo, plugin):
     return not enc_hits, "; ".join(f"{rel} has '{n}'" for n, rel in enc_hits)
 
 
+def read_manifest(repo, plugin):
+    with open(source_path(repo, plugin, "plugin.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def marketplace_name(repo):
+    """This repo's marketplace name: what every dependency entry here must name."""
+    with open(os.path.join(repo, ".claude-plugin", "marketplace.json"), encoding="utf-8") as f:
+        return json.load(f)["name"]
+
+
+def ranges_pending_path(repo):
+    return os.path.join(repo, *RANGES_PENDING)
+
+
+def ranges_pending(repo):
+    """The plugins whose bare-name dependencies wait for the first release with ranges."""
+    try:
+        with open(ranges_pending_path(repo), encoding="utf-8") as f:
+            return set(json.load(f)["pending"])
+    except FileNotFoundError:
+        return set()
+
+
+def caret_accepts(floor, version):
+    """Whether ^floor accepts version, by the caret rule: the first non-zero number of
+    the floor stays fixed. Below 1.0 that keeps a range within one minor version."""
+    low = tuple(int(n) for n in floor.split("."))
+    fixed = next((i for i, n in enumerate(low) if n), len(low) - 1)
+    high = low[:fixed] + (low[fixed] + 1,) + (0,) * (len(low) - fixed - 1)
+    return low <= tuple(int(n) for n in version.split(".")) < high
+
+
+def range_problems(repo, plugin):
+    """Why this plugin's dependency entries would not hold it to a working copy of each
+    dependency. An entry needs its marketplace, because synced plugins ignore the range
+    of an entry that names none (Step 0 of docs/Plans/2026-11-02_plugin-version-requirements.md)."""
+    specs = plugin_layout.plugins(repo)
+    problems = []
+    for entry in read_manifest(repo, plugin).get("dependencies", []):
+        if not isinstance(entry, dict):
+            problems.append(f"'{entry}' has no version range and names no marketplace")
+            continue
+        name, market, wanted = entry.get("name"), entry.get("marketplace"), entry.get("version")
+        if market is None:
+            problems.append(f"'{name}' names no marketplace")
+        elif market != marketplace_name(repo):
+            problems.append(f"'{name}' names the marketplace '{market}', expected '{marketplace_name(repo)}'")
+        if wanted is None:
+            problems.append(f"'{name}' has no version range")
+            continue
+        caret = CARET_RANGE.fullmatch(wanted)
+        if not caret:
+            problems.append(f"'{name}' has the range '{wanted}', expected ^X.Y.Z")
+            continue
+        current = read_manifest(repo, specs[name])["version"]
+        if not caret_accepts(caret.group(1), current):
+            problems.append(f"'{name}' has the range '{wanted}', which leaves out its current version {current}: "
+                            f"{plugin['name']} would be disabled with no working version to update to, "
+                            "so release it in the same commit")
+    return problems
+
+
 def check_dependencies(repo, plugin):
     """The host installs and enforces what plugin.json declares, and the build, the
     hook-matchers check and the layering check trust what the assignment says."""
-    with open(source_path(repo, plugin, "plugin.json"), encoding="utf-8") as f:
-        declared = json.load(f).get("dependencies", [])
-    if sorted(declared) != sorted(plugin["requires"]):
-        return False, (f"plugin.json declares {sorted(declared)}, but source/assignment.json "
+    declared = read_manifest(repo, plugin).get("dependencies", [])
+    names = sorted(entry.get("name", "") if isinstance(entry, dict) else entry for entry in declared)
+    if names != sorted(plugin["requires"]):
+        return False, (f"plugin.json declares {names}, but source/assignment.json "
                        f"requires {sorted(plugin['requires'])}")
-    return True, ""
+    if plugin["name"] in ranges_pending(repo):
+        if declared and all(isinstance(entry, str) for entry in declared):
+            return True, "bare names until the first release with ranges"
+        return False, f"{'/'.join(RANGES_PENDING)} lists {plugin['name']}, which has no bare-name dependencies"
+    problems = range_problems(repo, plugin)
+    return not problems, "; ".join(problems)

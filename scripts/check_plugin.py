@@ -243,7 +243,8 @@ CHECKS = (
      check_commons_encapsulation),
     ("hook-matchers: every hook matcher that names a plugin tool or a plugin agent names one that "
      "plugin ships", check_hook_matchers),
-    ("dependencies: plugin.json's dependencies are the plugins source/assignment.json says it requires",
+    ("dependencies: plugin.json's dependencies are the plugins source/assignment.json says it requires, "
+     "each naming this repo's marketplace and a ^X.Y.Z range that accepts the dependency's current version",
      check_dependencies),
 )
 # Checks across the plugins built. Each takes (repo).

@@ -766,10 +766,13 @@ class TestSecondPlugin(FixtureTest):
         "hook-matchers": "solicitor declares no hook matcher",
     }
 
+    GOOD_ENTRY = {"name": "litigator", "marketplace": "Invented_market", "version": "^" + VERSION}
+
     def setUp(self):
         super().setUp()
+        self.fixture.write(".claude-plugin/marketplace.json", json.dumps({"name": "Invented_market"}) + "\n")
         self.fixture.write("source/solicitor/plugin.json", json.dumps(
-            {"name": "solicitor", "version": "0.2.0", "dependencies": ["litigator"]}) + "\n")
+            {"name": "solicitor", "version": "0.2.0", "dependencies": [self.GOOD_ENTRY]}) + "\n")
         self.fixture.write("source/solicitor/roster.json", "{}\n")
         self.fixture.write("source/solicitor/VISION.md", "# solicitor\n")
         self.fixture.write("plugins/solicitor/VISION.md", "# solicitor\n")
@@ -814,6 +817,81 @@ class TestSecondPlugin(FixtureTest):
                 self.assertEqual(detail, f"plugin.json declares {sorted(declared.get('dependencies', []))}, "
                                          "but source/assignment.json requires ['litigator']")
         self.assertEqual(self.results("litigator")["dependencies"], (True, ""))
+
+    def dependency_result(self, *entries):
+        self.fixture.write("source/solicitor/plugin.json", json.dumps(
+            {"name": "solicitor", "version": "0.2.0", "dependencies": list(entries)}) + "\n")
+        return self.results("solicitor")["dependencies"]
+
+    def test_a_good_entry_passes(self):
+        self.assertEqual(self.dependency_result(self.GOOD_ENTRY), (True, ""))
+
+    def test_a_bad_entry_fails(self):
+        no_range = {k: v for k, v in self.GOOD_ENTRY.items() if k != "version"}
+        no_market = {k: v for k, v in self.GOOD_ENTRY.items() if k != "marketplace"}
+        for entry, fragment in (
+                ("litigator", "'litigator' has no version range and names no marketplace"),
+                (no_range, "'litigator' has no version range"),
+                (no_market, "'litigator' names no marketplace"),
+                ({**self.GOOD_ENTRY, "marketplace": "synced"},
+                 "'litigator' names the marketplace 'synced', expected 'Invented_market'"),
+                ({**self.GOOD_ENTRY, "version": "*"}, "'litigator' has the range '*', expected ^X.Y.Z"),
+                ({**self.GOOD_ENTRY, "version": ">=0.1.0"}, "'litigator' has the range '>=0.1.0', expected ^X.Y.Z")):
+            with self.subTest(entry=entry):
+                ok, detail = self.dependency_result(entry)
+                self.assertFalse(ok)
+                self.assertIn(fragment, detail)
+
+    def test_a_range_that_excludes_the_current_version_fails(self):
+        # The fixture's litigator is at 0.1.0.
+        for wanted in ("^0.2.0", "^0.1.1", "^0.0.9", "^1.0.0"):
+            with self.subTest(wanted=wanted):
+                ok, detail = self.dependency_result({**self.GOOD_ENTRY, "version": wanted})
+                self.assertFalse(ok)
+                self.assertIn(f"'{wanted}', which leaves out its current version 0.1.0", detail)
+
+    def bump_litigator(self, version):
+        manifest = json.loads(read(self.fixture.root, "source/litigator/plugin.json"))
+        self.fixture.write("source/litigator/plugin.json", json.dumps({**manifest, "version": version}) + "\n")
+
+    def test_a_minor_bump_with_a_dependent_left_behind_fails(self):
+        self.assertEqual(self.dependency_result(self.GOOD_ENTRY), (True, ""))
+        self.bump_litigator("0.2.0")
+        ok, detail = self.results("solicitor")["dependencies"]
+        self.assertFalse(ok)
+        self.assertIn("leaves out its current version 0.2.0: solicitor would be disabled", detail)
+
+    def test_a_patch_bump_leaves_the_dependent_passing(self):
+        self.assertEqual(self.dependency_result(self.GOOD_ENTRY), (True, ""))
+        self.bump_litigator("0.1.1")
+        self.assertEqual(self.results("solicitor")["dependencies"], (True, ""))
+
+    def pend(self, *names):
+        self.fixture.write("/".join(check_plugin_sources.RANGES_PENDING), json.dumps({"pending": list(names)}) + "\n")
+
+    def test_a_listed_plugin_keeps_bare_names_until_the_first_release_with_ranges(self):
+        self.pend("solicitor")
+        self.assertEqual(self.dependency_result("litigator"), (True, "bare names until the first release with ranges"))
+
+    def test_a_listed_plugin_with_ranges_fails_as_stale(self):
+        self.pend("solicitor")
+        ok, detail = self.dependency_result(self.GOOD_ENTRY)
+        self.assertFalse(ok)
+        self.assertIn("lists solicitor, which has no bare-name dependencies", detail)
+
+    def test_a_listed_plugin_still_needs_the_right_names(self):
+        self.pend("solicitor")
+        ok, detail = self.dependency_result("research")
+        self.assertFalse(ok)
+        self.assertIn("requires ['litigator']", detail)
+
+    def test_the_caret_rule(self):
+        for floor, version, accepted in (
+                ("0.11.3", "0.11.3", True), ("0.11.3", "0.11.9", True), ("0.11.3", "0.12.0", False),
+                ("0.11.3", "0.11.2", False), ("0.0.3", "0.0.3", True), ("0.0.3", "0.0.4", False),
+                ("1.2.3", "1.9.0", True), ("1.2.3", "2.0.0", False), ("0.11.3", "0.9.9", False)):
+            with self.subTest(floor=floor, version=version):
+                self.assertEqual(check_plugin_sources.caret_accepts(floor, version), accepted)
 
     def test_main_prints_a_section_for_each_plugin_and_one_across_them(self):
         out = io.TextIOWrapper(io.BytesIO(), encoding="utf-8")   # main() reconfigures stdout

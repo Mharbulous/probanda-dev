@@ -16,14 +16,29 @@ The docs describe this for Claude Code and do not say Cowork enforces it. Create
 4. A bare-name entry and one naming a marketplace, because the docs only describe the second for claude.ai-synced plugins.
 5. Whether a `base` hook can see `needs-base`'s version and its disabled state from inside Cowork.
 
+### Step 0 results, from a real Cowork task
+| Entry form | Requirement | Result in Cowork |
+|---|---|---|
+| `{"name":"base","version":"^0.2.0"}`, no marketplace named, base 0.3.0 | broken | NOT enforced: both loaded. Same on the PC. |
+| `{"name":"base","marketplace":"plugin-dependency-test","version":"^0.3.0"}`, base 0.3.0 | met | Loaded, skill and hook ran |
+| `{"name":"base","marketplace":"plugin-dependency-test","version":"^0.2.0"}`, base 0.3.0 | broken | Blocked. `claude plugin list` shows `Status: × disabled` and `Error: Requires "base@synced" ^0.2.0, installed 0.3.0`. Its skill was unavailable, and its hook did not run. `base` kept working. |
+
+- Every entry must name a marketplace, or synced plugins ignore the range. The check refuses an entry with no `marketplace`.
+- The error names `base@synced`, not the marketplace. Whether the marketplace value must be the real name is untested, so the real one is written.
+- Probanda's plugins reach machines by the synced route, so that route is what counts.
+- `claude plugin list` read correctly inside Cowork, but a subagent found it unreliable after a manual update in Claude Code, so nothing relies on it alone.
+- In Cowork, a task asked twice for `SessionStart` hook text said none, though the hook ran. On the PC the text does reach the session. So a startup hook may not deliver text in Cowork. A skill reading `claude plugin list` did surface the reason.
+
 ## Layer 1: The requirement in every release (always built)
+- **Entry form:** `{"name":"<dependency>","marketplace":"<this repo's marketplace>","version":"^<current version>"}`. The marketplace is `Probanda_Legal_experimental` here and `Probanda_Legal` in `public/`, each read from that tree's own `.claude-plugin/marketplace.json`.
 - **Range rule:** `^<dependency's current version>`. Below 1.0, a caret stays within one minor version, so `^0.11.3` means 0.11.3 up to, but not including, 0.12.0. This matches `CLAUDE.md:13-14`, where a minor version means an old and new copy can't safely share data.
-- **Both directions are covered:** new litigator with old lawyer disables litigator, and old litigator with new lawyer also disables litigator. Lawyer has no dependencies, so it keeps running. Confirm that in `source/assignment.json`.
-- **A script writes the ranges:** new `scripts/stamp_dependencies.py`, called in `release.md` step 5, writes each released plugin's ranges into `source/<plugin>/plugin.json`. Names still come from `requires` in `source/assignment.json`.
-- **Checks that refuse a bad release:** extend `check_dependencies` (`scripts/check_plugin_sources.py:198`), which today compares names only and would fail on range entries. `check_plugin.py` must fail when:
-  - An entry has no range.
+- **Both directions are covered:** new litigator with old lawyer disables litigator, and old litigator with new lawyer also disables litigator. Lawyer has no dependencies, so it keeps running. `source/assignment.json` confirms it: lawyer and tokeneconomizer require nothing, researcher requires lawyer, litigator requires lawyer and researcher, and solicitor, file-manager, timekeeper and developer each require lawyer.
+- **A script writes the ranges:** `scripts/stamp_dependencies.py`, called in `release.md` step 5, writes each released plugin's entries into `source/<plugin>/plugin.json`. Names still come from `requires` in `source/assignment.json`. It exits 1 naming each plugin left behind, and a minor release cascades through it: lawyer to researcher to litigator.
+- **Checks that refuse a bad release:** `check_dependencies` (`scripts/check_plugin_sources.py`) keeps the name comparison, and `check_plugin.py` fails when:
+  - An entry has no range, or its range is not `^X.Y.Z`.
+  - An entry names no marketplace, or not this repo's.
   - An entry doesn't accept the dependency's current version. This forces a minor lawyer release to re-release every plugin needing it in the same commit, because otherwise a dependent would be disabled with no working version to update to.
-- **Rollout:** the first release with ranges is a minor release, because the version rule counts a raised requirement as minor. `public/` gets the ranges only through Brahm's normal approval and publish step.
+- **Rollout:** the first release with ranges is a minor release, because the version rule counts a raised requirement as minor, and it needs Brahm's go-ahead. Until then `scripts/check_plugin_baselines/dependency_ranges_pending.json` lists the six dependents, whose bare names pass and whose patch releases carry on as before, so checks on `main` and unattended releases keep working. `stamp_dependencies.py --first-ranges` is that release: it stamps them, empties the list and deletes the file. A listed plugin with ranges fails as stale. `public/` gets the ranges only through Brahm's normal approval and publish step.
 
 ## Layer 2: The data server refuses what it can't safely handle
 A running session keeps the versions it loaded, so Layer 1 can't stop a session already open during an update. The database check does: `bundle_outdated` already refuses a database newer than the installed server (`source/lawyer/mcp/src/submission/`). Audit every tool in the lawyer `data` server that writes, list any that skip the check, and add it.
@@ -32,7 +47,7 @@ A running session keeps the versions it loaded, so Layer 1 can't stop a session 
 A disabled plugin can't run its own hook, so it can't explain itself. Lawyer stays running, so a lawyer `SessionStart` hook supplies the facts, labelled as data, and asks the model to do nothing (context-engineering rule 19): which plugin is frozen, that its version doesn't match another plugin's, that this protects their data, and that it stays frozen until both are up to date, with how to update. It depends on Step 0 item 5. If the hook can't see other plugins in Cowork, tell Brahm and work out another way.
 
 ## If Cowork doesn't enforce the requirement
-Only then build the standard check Brahm suggested. A `PreToolUse` hook shipped in each plugin blocks that plugin's tools and says why. The hook blocks directly, so it is allowed under rule 19. It is not built before the test, because it would duplicate what the platform does.
+Step 0 showed that Cowork enforces an entry naming a marketplace, so this is not built. Only if it did not would we build the standard check Brahm suggested. A `PreToolUse` hook shipped in each plugin blocks that plugin's tools and says why. The hook blocks directly, so it is allowed under rule 19. It is not built before the test, because it would duplicate what the platform does.
 
 ## Replace the freeze wording
 - `release.md:46`: a minor release still needs Brahm's go-ahead, but no freeze.

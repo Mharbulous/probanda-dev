@@ -8,8 +8,9 @@ with the skills, agents, hooks and servers the file gives it. The file's "status
 
 Imported by build_plugin.py, check_plugin.py, check_plugin_agents.py,
 check_plugin_bundles.py, check_plugin_sources.py, check_public_tree.py,
-check_layering.py, check_file_ops.py, check_internals.py and release_changes.py, so
-the file is read, and the layout is walked, in one place. Standard library only.
+check_layering.py, check_file_ops.py, check_internals.py, release_changes.py and
+stamp_dependencies.py, so the file is read, and the layout is walked, in one place.
+Standard library only.
 """
 import json
 import sys
