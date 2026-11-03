@@ -48,8 +48,8 @@ For each of the seven sources above, in any order:
    takes its outcome from build-timeline's report: fetched needs no line here,
    because the import already wrote the day's rows and status. Unconfirmed
    TimeCamp, Google Calendar, iCloud or sent mail is `failed` (step 4), with an
-   `--error-detail` saying the source was not fetched for the date, never
-   `empty`: an `empty` for a day never fetched releases the assembly gate on
+   `--error-detail` saying the source was not fetched for the date, unless it is
+   unavailable as below, never `empty`: an `empty` for a day never fetched releases the assembly gate on
    missing evidence. Telus with no archive covering the day is `skipped`, and
    Telus reported failed is `failed` (step 4).
 3. **Convert it** with the matching `build_ingest.py` subcommand, appending to
@@ -64,7 +64,10 @@ source key, so their ids stay stable.
 
 A registry-disabled source (`enabled: false`), a live-gate-off source
 (SyncoPaid), or a date no archive covers (Telus) is `skipped`, an expected,
-terminal state — never `failed`. A registry with no entry for a source is
+terminal state — never `failed`. So is a source that can never be read for this
+date, such as a carrier changed mid-period, a log past its retention window, or
+sent mail before `copy_from`: its `--error-detail` starts `unavailable: ` and gives
+the reason, which every proposal and invoice line on that date shows. A registry with no entry for a source is
 `failed`, not `skipped`: only an explicit `enabled: false` may skip a source
 (the `timecamp` entry covers both TimeCamp sources). A genuine fetch error
 (bad token, malformed response, network failure) is `failed`, and so is the

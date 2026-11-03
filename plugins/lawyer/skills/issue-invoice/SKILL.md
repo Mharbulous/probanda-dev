@@ -1,0 +1,37 @@
+---
+name: issue-invoice
+disable-model-invocation: true
+description: "Use when the practitioner says a draft invoice from /bill-client is signed and types /issue-invoice: records the signed invoice as issued, locks its lines and time entries, writes the frozen copy of what supports each line, and saves a draft email to accounting about trust. Also records when the invoice went out. Sends nothing and moves no trust money."
+---
+
+<!-- lawyer v0.21.9 -->
+> **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
+> **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
+
+**Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
+
+# /issue-invoice
+
+Runs only on the practitioner's word that the invoice is signed. It sends nothing and moves no trust money.
+
+It needs `<matter-data folder>\vet-billable-time\line_map.json`, the record the bill's time work left. Without that file, say the invoice was not built from vetted time, so it cannot be issued with its support, and stop. Run scripts with the host Python (`python`; if that is the WindowsApps stub, the interpreter `COCLERK_PYTHON` names).
+
+## Steps
+
+1. **Read the signed invoice.** Call `pdf_pages__images` first: read a `scanned` page only from its PNGs and a `born_digital` page with `Read` `pages:`. Confirm it bears a lawyer's signature. Take the invoice number, date, total and taxes from the document, never from the file name. Take `date_to` from the latest date in the line map.
+
+2. **Freeze the record.** Write `<matter-data folder>\issue-invoice\meta.json` as `bill-client/scripts/freeze_invoice.py`'s docstring says, with any trust amount the invoice states as `trust_application`: the balance before from `practice_data__trust_summary`, the amount applied, and the balance after. Run `bill-client/scripts/freeze_invoice.py` with `--out-dir` the matter's draft folder's `BILLING` subfolder and `--data-dir` the same working folder, and `--disbursements` the disbursements file if the bill has one. A refusal stops this skill: tell the practitioner what it says. A total that does not tie means the signed invoice differs from the vetted time, and the practitioner decides what to correct.
+
+3. **Issue it.** Call `practice_data__issue_invoice` with the matter, the figures from step 1, and the signed copy's path and the snapshot's path and hash the script printed, with `records_file` its `issue_records.json`. This is one-way, so it passes only on the practitioner's approval. If the cloud answers with a question, relay it and stop.
+
+4. **Draft the trust instruction.** If the invoice states trust applied, draft one email to accounting with `mail__save_draft`, stating the invoice number, the amount and the balances from step 2. Ask once who receives it. Never send it, and never state a rule or a deadline about trust.
+
+5. **Report.** Present the signed copy, the audit report and the draft as file cards (`shared/present-files.md`). Say the invoice's records are now locked, that a later correction is recorded as an adjustment, and that the draft email is unsent.
+
+## When it went out
+
+When the practitioner says the invoice went out, call `practice_data__record_invoice_sent` with the sent date and the sent copy's path.
+
+## A correction after issue
+
+An issued record never changes. Call `practice_data__record_adjustment` with the amount or time, the reason, who decided it and when. The frozen copy stays as it is.

@@ -1,7 +1,7 @@
 ---
 name: time-pipeline-data
 user-invocable: false
-description: Sole gatekeeper for the time-pipeline key-value store (timeline/timesort/tedraft namespaces).
+description: Sole gatekeeper for the time-pipeline key-value store (timeline/timesort/tedraft/evidence namespaces).
 ---
 
 <!-- timekeeper v0.4.4 -->
@@ -80,7 +80,7 @@ number. On success it returns `{ lines, sets, deletes, merges, deleted_by_prefix
 
 ## Namespaces
 
-Three namespaces exist today, each owned by exactly one consumer skill for
+Four namespaces exist today, each owned by exactly one consumer skill for
 writes (any skill may `get`/`list` another skill's namespace when its own
 workflow legitimately needs to read it — e.g. time-sorting reads `timeline`):
 
@@ -89,6 +89,7 @@ workflow legitimately needs to read it — e.g. time-sorting reads `timeline`):
 | `timeline` | build-timeline | Raw source-attributed activities and events |
 | `timesort` | time-sorting | Classified day objects, project tree, corrections |
 | `tedraft` | time-entry-drafting | Draft entries, UTBMS metadata, description patterns |
+| `evidence` | timecamping-data, whose table names each family's writer | Billing evidence with no table of its own |
 
 ## Conventions
 

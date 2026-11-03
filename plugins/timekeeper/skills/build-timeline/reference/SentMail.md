@@ -32,7 +32,7 @@ Search each in-scope folder separately: a search does not include the folder's s
 The registry entry is `sent_mail` (`time-sorting/protocols/FirstSetup.md`). It may carry `copy_confirmed: "YYYY-MM-DD"`, the date #1262's close check passed, and `copy_from: "YYYY-MM-DD"`, the first day that check confirmed the copy holds. #1262 closed on 2026-10-01 on the practitioner's criterion that the past six months suffice, so the live entry carries `copy_confirmed: "2026-10-01"` and `copy_from: "2026-04-01"`.
 
 - **No `copy_confirmed`**: do not read. Every day is `failed`, with an `error_detail` saying the iCloud Sent Items copy is not yet confirmed complete (#1262) and to set `copy_confirmed` when its close check passes. The copy is still uploading, so a read would return a partial day that looks complete.
-- **`copy_confirmed` set**: every day from `copy_from` on is read, whether it falls before or after `copy_confirmed`. A day before `copy_from` is `failed`, with an `error_detail` saying the confirmed copy does not reach that date: a read would find nothing and record `empty` on mail never copied. An entry with `copy_confirmed` and no `copy_from` reads every day.
+- **`copy_confirmed` set**: every day from `copy_from` on is read, whether it falls before or after `copy_confirmed`. A day before `copy_from` is unavailable: `skipped`, with an `error_detail` starting `unavailable: ` and saying the confirmed copy does not reach that date. A read would find nothing and record `empty` on mail never copied. An entry with `copy_confirmed` and no `copy_from` reads every day.
 
 ## Qualifying the route
 

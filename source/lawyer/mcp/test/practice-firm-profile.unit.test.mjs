@@ -192,6 +192,7 @@ test("firm_profile returns the firm name, the roster, the letterhead path and th
     firm_name: "Example Law Corporation",
     roster: [{ ...ENTRY, active: true }],
     letterhead: f.letterheadPath,
+    invoice_template: null,
     person: "pe",
     practice_quirks: null,
   });
@@ -205,6 +206,7 @@ test("firm_profile returns a null letterhead and a null person when neither is s
     firm_name: "Example Law Corporation",
     roster: [],
     letterhead: null,
+    invoice_template: null,
     person: null,
     practice_quirks: null,
   });
@@ -465,4 +467,36 @@ test("input validation failures are hard errors", async (t) => {
   );
   await assert.rejects(upsert_firm_profile({ letterhead: join(f.scratch, "absent.docx") }, f.env), /letterhead source not found/);
   assert.equal(existsSync(f.firmDir), false);
+});
+
+test("the invoice template is registered beside the letterhead and its path returned", async (t) => {
+  const f = fixture(t);
+  await upsert_firm_profile({ firm_name: "Example Law Corporation" }, f.env);
+  assert.equal((await firm_profile(f.env)).invoice_template, null);
+  const source = join(f.scratch, "corrected.docx");
+  writeFileSync(source, zip(templateParts()));
+  const result = await upsert_firm_profile({ invoice_template: source }, f.env);
+  const registered = join(f.firmDir, "invoice.docx");
+  assert.deepEqual(result.changed, ["invoice_template"]);
+  assert.deepEqual(result.written, [registered]);
+  assert.ok(readFileSync(registered).equals(readFileSync(source)), "copied byte for byte");
+  assert.equal((await firm_profile(f.env)).invoice_template, registered);
+});
+
+test("an invoice template that is not a .docx is refused and nothing is written", async (t) => {
+  const f = fixture(t);
+  const source = join(f.scratch, "not.docx");
+  writeFileSync(source, "not a zip");
+  await assert.rejects(upsert_firm_profile({ invoice_template: source }, f.env), /invoice template .* is not a \.docx/);
+  await assert.rejects(upsert_firm_profile({ invoice_template: join(f.scratch, "absent.docx") }, f.env), /invoice template source not found/);
+  assert.equal(existsSync(f.firmDir), false);
+});
+
+test("style merges into what is set and is returned", async (t) => {
+  const f = fixture(t);
+  await upsert_firm_profile({ firm_name: "Example Law Corporation", style: { font: { name: "Georgia", size_pt: 10 } } }, f.env);
+  assert.equal((await firm_profile(f.env)).style.font.name, "Georgia");
+  await upsert_firm_profile({ style: { table: { banded_rows: true } } }, f.env);
+  assert.deepEqual((await firm_profile(f.env)).style, { font: { name: "Georgia", size_pt: 10 }, table: { banded_rows: true } });
+  await assert.rejects(upsert_firm_profile({ style: "teal" }, f.env), /style must be an object/);
 });

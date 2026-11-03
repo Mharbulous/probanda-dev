@@ -52,11 +52,11 @@ writes SQL, and never reads accounting CSVs directly. Two operations supply ever
   `date_to` is the last day the invoice covers, or NULL when the source export had no such column.
   Powers invoice presence and the invoice-side staleness check.
 
-**Not supported by practice data:** per-invoice `hourly_rate`, a billing-period start,
-and any `invoice_line_items` (per-line linking of entries to a draft). Checks that would need them —
-invoice-total-vs-rate, rate mismatch, and every line-item cross-check — are **not available**. Report
-them as unsupported in the "checks performed" list rather than probing for them. If the
-practitioner needs line-item verification, say so explicitly; do not fabricate it.
+**Not supported by practice data:** a billing-period start, and per-line records of an invoice
+that is still a draft. Checks that would need them are **not available** unless the practitioner names
+the draft's lines file, which Check F uses. Report them as unsupported in the "checks performed" list
+rather than probing for them. If the practitioner needs line-item verification, say so explicitly; do
+not fabricate it.
 
 **Billing-period overlap is not performed.** Invoices record a period end (`date_to`) but no period
 start, and this skill defines no overlap rule on that basis. Report the check as not performed.
@@ -126,6 +126,15 @@ Fetch entries once via `time-entries` with the matter ref and the billing period
 `from_date`/`to_date`; run the statistics skill-side over the returned rows (`id`, `entry_date`,
 `hours`, `description`). For the NULL/zero-hours check, fetch the matter's entries without a date
 filter so error rows outside the assumed period are still caught.
+
+#### Check F: Each Line's Support, and Hours That Tie
+
+For an entry with a `source_key`: flag one with neither `proposal_ids` nor an `estimate` holding a
+basis, as `Entry #{id} ({entry_date}): nothing recorded supports it.` Name each one whose `provenance`
+is `estimate` so the practitioner sees it. When the practitioner names the draft's `invoice_lines.json`,
+read it. For each row, sum `billed_seconds` over the entries for that date and person, and flag a row whose
+`unrounded_hours` differ, as `Line {date}, {user}: {unrounded_hours} h on the draft against {sum} h recorded.`
+Flag a row with no such entries, and any row carrying unavailable sources, with their reasons.
 
 #### Check A: NULL or Zero Hours
 

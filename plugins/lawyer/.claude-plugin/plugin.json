@@ -97,7 +97,7 @@
         ]
       },
       {
-        "matcher": "mcp__.+(practice_data__(delete_anchor|merge_contact)|mail__dedupe_apply)$",
+        "matcher": "mcp__.+(practice_data__(delete_anchor|merge_contact|issue_invoice)|mail__dedupe_apply)$",
         "hooks": [
           {
             "type": "command",

@@ -68,10 +68,10 @@ Invoke the `practice-data` skill's `invoice-data` operation for the matter numbe
 
 This step needs the timekeeper plugin. If no timekeeper skill is in your skill list, tell the practitioner that the time work needs the timekeeper plugin installed, and stop. Never tally time from the TimeCamp web app: a figure that did not come from the connector is not used.
 
-1. **Candidate dates.** Invoke `/get-candidate-dates` for the matter, giving it the last invoice's facts from Step 4, so the PDF is read once.
+1. **Candidate dates.** Invoke `/triage-billing-dates` for the matter, giving it the last invoice's facts from Step 4, so the PDF is read once.
 2. **Judge the days.** Invoke `/timecamping` with the candidate list. It works the Strong and Medium dates, strongest first, and every change it makes to TimeCamp waits for the practitioner's approval.
-3. **Time only the practitioner can enter.** Give the practitioner `/timecamping`'s list of possible unbilled time, and stop until they say they have entered it in TimeCamp by hand or have decided not to. The session never creates an entry.
-4. **Vet the lines.** Invoke `/vet-billable-time` with the matter, the candidate list, the last billed date and the retainer PDF. It writes the billable time summary and the audit file to the `BILLING` folder, and `invoice_lines.json` to its working folder. Every figure on the invoice comes from that file. A step that stops stops this skill: report it and go no further.
+3. **Uncovered time.** Give the practitioner `/timecamping`'s list of possible unbilled time. For each block they may enter the time in TimeCamp by hand, or leave it for the next step to propose as an estimate. Stop until they have said which. The session never creates an entry.
+4. **Vet the lines.** Invoke `/vet-billable-time` with the matter, the candidate list, the last billed date and the retainer PDF. It records the vetted time entries, writes the billable time summary and the audit file to the `BILLING` folder, and writes `invoice_lines.json` to its working folder. Every figure on the invoice comes from that file, and a line with neither evidence nor an estimate basis cannot reach it. A step that stops stops this skill: report it and go no further.
 
 ## Step 7 — The chart
 
@@ -89,4 +89,4 @@ Ask once whether the practitioner wants Word or PDF. `scripts/render_invoice.py`
 
 ## Step 9 — Present the draft and stop
 
-Present the draft, the summary and the audit file as clickable file cards (`shared/present-files.md`). State the fees, taxes and total the render printed, and show the summary's gaps section in full. Say that nothing was sent, issued, recorded or moved, and that the signature is the lawyer's to add. Then stop. If the practitioner later gives you the signed invoice in this conversation, verify and record it as Steps 4 and 5 do.
+Present the draft, the summary and the audit file as clickable file cards (`shared/present-files.md`). State the fees, taxes and total the render printed, and show the summary's gaps section in full. Say that nothing was sent, issued, recorded or moved, and that the signature is the lawyer's to add. Then stop. Tell the practitioner that once it is signed, `/issue-invoice` records it, locks its support and writes the frozen copy.

@@ -1,6 +1,6 @@
 ---
 name: get-candidate-dates
-description: "Use for 'get candidate dates', 'which dates should I look at before billing', or /get-candidate-dates for a matter: narrows the whole matter to a short, evidenced list of dates with an indicator of work, reconciled against the last invoice. Does not bill (/bill-client), fetch or store a day's evidence (/build-timeline), sort time to matters (/time-sorting), correct TimeCamp (/timecamping) or draft entries (/time-entry-drafting)."
+description: "Use when a bill must go out now for one matter and the time records are behind, or for 'which dates should I look at before billing' or /triage-billing-dates: narrows that one matter to a short, evidenced list of dates with an indicator of work, reconciled against the last invoice, so only those dates' evidence is gathered. Does not bill (/bill-client), fetch or store a day's evidence (/build-timeline), sort time to matters (/time-sorting), correct TimeCamp (/timecamping) or draft entries (/time-entry-drafting)."
 ---
 
 <!-- timekeeper v0.4.4 -->
@@ -9,13 +9,13 @@ description: "Use for 'get candidate dates', 'which dates should I look at befor
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
 
-# /get-candidate-dates
+# /triage-billing-dates
 
 Narrow one matter to the dates worth a minute-by-minute review. A candidate date is any day with an indicator of work on the matter. The list is not proof of time, and it records no hours as billable.
 
 ## Rules for every phase
 
-- **Read-only against every source.** Never mark mail read, move mail, write TimeCamp or the practice database, or create a time entry. The writes are the report in Phase 3, the call archive import, and a contact's number the practitioner approves (Phase 2, Phone).
+- **Read-only against every source.** Never mark mail read, move mail, write TimeCamp or the practice database, or create a time entry. The writes are the report and the saved evidence in Phase 3, the call archive import, and a contact's number the practitioner approves (Phase 2, Phone).
 - **Mail** follows `shared/matter-mail.md`: its route, its reading rules, and its rule that the content stays in the matter. Every email counts once, by Message-ID. A message with no Message-ID counts alone and is flagged unverified.
 - **A file's modified date is never the work date.** A batch of older files can all carry one later date. Use the filename date and internal metadata first (Phase 2, Documents).
 - **Folder access:** ask once for each folder, for the smallest folder that holds the source. On a refusal or a missing tool, list the source under unexplored leads and continue.
@@ -37,7 +37,7 @@ Build or confirm it from matter data, correspondence and pleadings: every party 
 
 ## Phase 2: the sources
 
-Work through every source. Each is a place to look, and finding nothing there is a result to report.
+Fastest first: the drafts folder, then sent mail, calls against the service list, filings and the calendar. Stop once the dates are clear, and list each source not reached under unexplored leads. Work the rest only when the practitioner asks for a thorough list. The phone scan in Time trackers runs on every run. Each source reached is a place to look, and finding nothing there is a result to report.
 
 **Mail, deduplicated across all folders**
 - *Sent:* the folders in `build-timeline/reference/SentMail.md`. A date before that reference's `copy_from` goes under unexplored leads, because a search there finds nothing and would look like no mail.
@@ -60,6 +60,7 @@ Work through every source. Each is a place to look, and finding nothing there is
 
 **Time trackers**
 - *TimeCamp entries* on the matter's task, all users: the connector's `status`, `tasks`, then `entries` with `out_file`, under the hard rule in `build-timeline/reference/TimeCamp.md`.
+- *Phone numbers in window titles, on every run:* a call can show only as a calling app's window whose title is the number. Call `activities` with `out_file`, at most 20 dates a call, covering the window once, and read none of it. Run `timecamping-data/scripts/scan_windows.py phones` over those files, with `--numbers` every service-list number, from case data and never guessed, and `--tasks` the matter's task ids, and `--out` `phone-matches.json` in `<matter-data folder>\triage-billing-dates\`. Every match is a candidate date. Report its date, start, end, entry id and task, and flag a match off the matter's task or with no entry. This needs no carrier portal.
 - *TimeCamp activities:* one background subagent over the whole range, with the brief below, because the rows of a long range run to about 100k tokens.
 - *SyncoPaid and screenshots:* read only with SyncoPaid's own evidence access on. Never switch it on. Otherwise list it under unexplored leads.
 
@@ -87,6 +88,8 @@ Find this matter's work in TimeCamp computer activity, from {first date} to {las
 4. Otherwise, keep a candidate date that falls before the last billed date and is absent from the bill, as Flagged: suspicious, missed by the last bill. If it holds up, state why the bill missed it (for example, no TimeCamp entry, or work after the bill was drafted).
 
 **Save the list** as a Markdown file named `YYYY-MM-DD Candidate dates` in the matter's draft folder's `BILLING` subfolder. Resolve the draft folder as `shared/workspace-output-rule.md` says, and create only the `BILLING` leaf if it is absent. Rewrite the file in place on a re-run. If the session cannot reach that folder, save it to the matter's project instead.
+
+**Save what put each date on the list,** through `/timecamping-data`'s evidence store: the triage list, the service list, and a row for each document, court filing and received-mail window. Later steps cite those rows.
 
 The list is one table, by date:
 

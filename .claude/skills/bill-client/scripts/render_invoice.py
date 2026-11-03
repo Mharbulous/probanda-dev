@@ -1,29 +1,30 @@
 #!/usr/bin/env python3
-"""Render a draft invoice on the firm's letterhead, marked DRAFT and never signed.
+"""Fill the firm's invoice template to a draft invoice, marked DRAFT and never signed.
 
-    render_invoice.py --invoice invoice.json --lines invoice_lines.json --letterhead letterhead.docx
-                      --out-dir DIR --out-name STEM [--pdf]
+    render_invoice.py --invoice invoice.json --lines invoice_lines.json --template invoice.docx
+                      [--disbursements disbursements.json] --out-dir DIR --out-name STEM [--pdf]
 
---lines is tie_out.py's invoice_lines.json, written only on a pass. This script recomputes every
-amount and refuses a figure that does not tie, a lines file with no pass stamp, a line with neither
-evidence nor a recorded estimate basis, and a dollar amount
-in the fixed wording, which could carry an old figure from the last invoice. --invoice holds what the last signed invoice fixes, each key required
-unless marked:
-    meta         [[label, value], ...], such as the invoice date, the firm's reference, the bill number
-    addressee    [line, ...]
-    delivery     optional, a delivery line
-    salutation, re, amount_due_label
-    tokens       {"{{TOKEN}}": value}: the letterhead's header and footer tokens
-    taxes        [{"name", "rate"}, ...], rate as a decimal string such as "0.05"
-    trust_applied  optional, a statement of the trust amount, printed under the total. Nothing moves.
-    closing      [line, ...], the firm's name and the lawyer's. The signing space stays empty.
-    after        [{"bold", "text"}, ...], the paragraphs after the closing, such as payment options
-    chart        optional, the path of the chart's image
+--lines is tie_out.py's invoice_lines.json, written only on a pass. --disbursements is
+collect_disbursements.py's output. This script recomputes every amount and refuses a figure that does
+not tie, a lines file with no pass stamp, a line with neither evidence nor a recorded estimate basis, a
+disbursement with its tax status unset or a flag undecided, and a dollar amount in the template's fixed
+wording, which could carry an old figure. Taxable services and taxable disbursements are the base for
+each tax, and non-taxable disbursements go below the taxes. --invoice holds what changes per bill, each
+key required unless marked:
+    invoice_date, our_ref, bill_number, salutation
+    addressee, re   [line, ...]
+    delivery        optional, a delivery line
+    tokens          {"{{TOKEN}}": value}: the letterhead's tokens
+    taxes           [{"name", "rate"}, ...], rate as a decimal string such as "0.05"
+    trust_balance   optional, the matter's trust balance as a decimal string. The trust applied is
+                    the lesser of it and the total. Nothing moves.
+    chart           optional, the path of the chart's image
 
-Any other key is refused, so a signature cannot reach the page: this script takes no signature
-input and adds no image but the chart. Never overwrites: a taken name gets the next " vN". With
---pdf it also writes the PDF, by Word and then by soffice. Prints one JSON line. On a refusal it
-prints {"error", "detail"} and exits 1, writing nothing.
+The layout and all other wording are the template's. Any other key is refused, so a signature cannot
+reach the page: this script takes no signature input and adds no image but the chart. A row or paragraph
+whose field has no value is removed, and a template that has lost a required field is refused. Never
+overwrites: a taken name gets the next " vN". With --pdf it also writes the PDF, by Word and then by
+soffice. Prints one JSON line. On a refusal it prints {"error", "detail"} and exits 1, writing nothing.
 """
 import argparse
 import json
@@ -33,15 +34,26 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from copy import deepcopy
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
 
+try:
+    import docx
+    from docx.oxml.ns import qn
+    from docx.text.paragraph import Paragraph
+except ImportError:
+    docx = None
+
 CENT = Decimal("0.01")
-REQUIRED = {"meta", "addressee", "salutation", "re", "amount_due_label", "tokens", "taxes", "closing", "after"}
-OPTIONAL = {"delivery", "trust_applied", "chart"}
+REQUIRED = {"invoice_date", "our_ref", "bill_number", "addressee", "salutation", "re", "tokens", "taxes"}
+OPTIONAL = {"delivery", "trust_balance", "chart"}
+TEMPLATE_FIELDS = {"{{%s}}" % name for name in (
+    "INVOICE_DATE", "OUR_REF", "BILL_NUMBER", "ADDRESSEE", "DELIVERY", "SALUTATION", "RE", "CHART", "LINE_DATE", "LINE_DESCRIPTION",
+    "LINE_HOURS", "TAXABLE_SERVICES", "TAXABLE_DISBURSEMENTS", "SUBTOTAL", "TAX_NAME", "TAX_AMOUNT", "NON_TAXABLE_DISBURSEMENTS",
+    "TOTAL", "TRUST_APPLIED", "AMOUNT_DUE")}
 TOKEN = re.compile(r"\{\{[A-Z_]+\}\}")
 DRAFT_MARK = "DRAFT: not issued and not signed"
-LINE_WIDTHS = (0.95, 0.75, 2.8, 0.7, 0.75, 0.85)  # inches: Date, Person, Description, Hours, Rate, Amount
 
 
 class Refusal(Exception):
@@ -68,15 +80,34 @@ def check_invoice(invoice):
         raise Refusal("missing_field", ", ".join(sorted(REQUIRED - keys)))
     if keys - REQUIRED - OPTIONAL:
         raise Refusal("unknown_field", ", ".join(sorted(keys - REQUIRED - OPTIONAL)))
-    wording = [invoice["re"], *invoice["closing"], *(f"{i.get('bold', '')} {i.get('text', '')}" for i in invoice["after"])]
-    with_amount = [text for text in wording if "$" in text]
+    for key in ("addressee", "re"):
+        if not isinstance(invoice[key], list):
+            raise Refusal("bad_field", f"{key} must be a list of lines")
+    with_amount = [text for text in invoice["re"] if "$" in text]
     if with_amount:
         raise Refusal("amount_in_wording", "; ".join(with_amount))
     if invoice.get("chart") and not Path(invoice["chart"]).is_file():
         raise Refusal("chart_missing", invoice["chart"])
 
 
-def totals(lines, taxes):
+def disbursement_totals(disbursements):
+    """(taxable, non-taxable), recomputed. Refuses an unset tax status, an undecided flag or a total that does not tie."""
+    taxable = non_taxable = Decimal(0)
+    for line in disbursements["lines"]:
+        if line.get("taxable") not in (True, False):
+            raise Refusal("taxable_unset", f"Say whether this disbursement is taxable: {line['description']}")
+        if line.get("flags") and not line.get("decided"):
+            raise Refusal("undecided_line", f"Decide this flagged disbursement: {line['description']}")
+        if line["taxable"]:
+            taxable += Decimal(line["amount"])
+        else:
+            non_taxable += Decimal(line["amount"])
+    if taxable != Decimal(disbursements["taxable_subtotal"]) or taxable + non_taxable != Decimal(disbursements["subtotal"]):
+        raise Refusal("subtotal_mismatch", f"disbursements: {disbursements['subtotal']} against {taxable + non_taxable}")
+    return taxable, non_taxable
+
+
+def totals(lines, taxes, disbursements, trust_balance):
     """Recompute from each row's hours and rate. Refuses a figure that does not tie."""
     rows = lines.get("rows") or []
     if not lines.get("passed_on"):
@@ -84,7 +115,7 @@ def totals(lines, taxes):
     if not rows:
         raise Refusal("no_lines", "the lines file holds no rows")
     try:
-        subtotal = Decimal(0)
+        fees = Decimal(0)
         for row in rows:
             amount = (Decimal(row["hours"]) * Decimal(row["rate"])).quantize(CENT, ROUND_HALF_UP)
             if amount != Decimal(row["amount"]):
@@ -95,13 +126,20 @@ def totals(lines, taxes):
             if not support.get("evidence_rows") and not support.get("estimate_bases"):
                 raise Refusal("no_support", f"The line for {row['date']}, {row['user']} has no evidence and no recorded estimate basis, "
                                             "so it cannot go on the invoice.")
-            subtotal += amount
-        if subtotal != Decimal(lines["subtotal"]):
-            raise Refusal("subtotal_mismatch", f"{lines['subtotal']} against {subtotal}")
+            fees += amount
+        if fees != Decimal(lines["subtotal"]):
+            raise Refusal("subtotal_mismatch", f"{lines['subtotal']} against {fees}")
+        taxable, non_taxable = disbursement_totals(disbursements) if disbursements else (Decimal(0), Decimal(0))
+        subtotal = fees + taxable
         charged = [(tax["name"], (subtotal * Decimal(tax["rate"])).quantize(CENT, ROUND_HALF_UP)) for tax in taxes]
+        total = subtotal + sum(amount for _, amount in charged) + non_taxable
+        balance = Decimal(trust_balance or 0)
+        if balance < 0:
+            raise Refusal("bad_figure", f"trust balance {balance}")
     except (KeyError, InvalidOperation, TypeError) as err:
         raise Refusal("bad_figure", repr(err)) from err
-    return subtotal, charged, subtotal + sum(amount for _, amount in charged)
+    return {"fees": fees, "taxable_disbursements": taxable, "non_taxable_disbursements": non_taxable, "subtotal": subtotal,
+            "taxes": charged, "total": total, "trust_balance": balance, "trust_applied": min(balance, total)}
 
 
 def free_stem(out_dir, stem):
@@ -113,102 +151,116 @@ def free_stem(out_dir, stem):
     return candidate
 
 
-def fill_tokens(paragraph, tokens):
-    text = paragraph.text
-    if not TOKEN.search(text):
-        return
-    for token, value in tokens.items():
-        text = text.replace(token, value)
-    left = TOKEN.findall(text)
+def stories(document):
+    """The body and every header and footer the document defines."""
+    yield document._body
+    for section in document.sections:
+        for part in (section.header, section.first_page_header, section.even_page_header,
+                     section.footer, section.first_page_footer, section.even_page_footer):
+            if not part.is_linked_to_previous:
+                yield part
+
+
+def paragraphs_of(story, element=None):
+    """Every paragraph, including those in tables and text boxes."""
+    return [Paragraph(p, story) for p in (story._element if element is None else element).iter(qn("w:p"))]
+
+
+def own_text(paragraph):
+    return "".join(run.text for run in paragraph.runs)
+
+
+def fill_paragraph(paragraph, values):
+    """Replace each field that has a value, keeping each run's formatting. A value takes the run its field starts in."""
+    runs = paragraph.runs
+    texts = [run.text for run in runs]
+    for match in reversed(list(TOKEN.finditer("".join(texts)))):
+        if match.group() not in values:
+            continue
+        at = 0
+        for index, piece in enumerate(texts):
+            begin, end = max(match.start() - at, 0), min(match.end() - at, len(piece))
+            if begin < end:
+                texts[index] = piece[:begin] + (values[match.group()] if at <= match.start() else "") + piece[end:]
+            at += len(piece)
+    for run, text in zip(runs, texts):
+        if run.text != text:
+            run.text = text
+
+
+def repeat_rows(document, prefix, items):
+    """One row per item, cycling through the rows that hold a field with this prefix, so a plain row and a tinted one alternate."""
+    body = document._body
+    patterns = [tr for tr in body._element.iter(qn("w:tr"))
+                if any(prefix in own_text(paragraph) for paragraph in paragraphs_of(body, tr))]
+    for index, item in enumerate(items):
+        row = deepcopy(patterns[index % len(patterns)])
+        patterns[0].addprevious(row)
+        for paragraph in paragraphs_of(body, row):
+            fill_paragraph(paragraph, item)
+    for tr in patterns:
+        tr.getparent().remove(tr)
+
+
+def remove_empty(story, values):
+    """Remove each paragraph with a field that has no value, or its whole table row."""
+    for paragraph in paragraphs_of(story):
+        if any(values.get(token, "") is None for token in TOKEN.findall(own_text(paragraph))):
+            target = next(paragraph._p.iterancestors(qn("w:tr")), paragraph._p)
+            if target.getparent() is not None:
+                target.getparent().remove(target)
+
+
+def check_template(document):
+    """Refuses a dollar amount in the fixed wording, or a required field the template has lost."""
+    texts = [own_text(paragraph) for story in stories(document) for paragraph in paragraphs_of(story)]
+    with_amount = [text for text in texts if "$" in text]
+    if with_amount:
+        raise Refusal("amount_in_wording", "; ".join(with_amount))
+    lost = TEMPLATE_FIELDS - {token for text in texts for token in TOKEN.findall(text)}
+    if lost:
+        raise Refusal("template_field_missing", ", ".join(sorted(lost)))
+
+
+def place_chart(document, chart):
+    section = document.sections[0]
+    for paragraph in paragraphs_of(document._body):
+        if "{{CHART}}" in own_text(paragraph):
+            for run in paragraph.runs:
+                run.text = ""
+            paragraph.runs[0].add_picture(chart, width=section.page_width - section.left_margin - section.right_margin)
+
+
+def shown(amount):
+    return money(amount) if amount else None
+
+
+def fill_template(document, invoice, lines, figures):
+    check_template(document)
+    repeat_rows(document, "{{LINE_", [{"{{LINE_DATE}}": r["date"], "{{LINE_BY}}": r["initials"], "{{LINE_DESCRIPTION}}": r["description"],
+                                       "{{LINE_HOURS}}": r["hours"], "{{LINE_RATE}}": money(Decimal(r["rate"])),
+                                       "{{LINE_AMOUNT}}": money(Decimal(r["amount"]))} for r in lines["rows"]])
+    repeat_rows(document, "{{TAX_", [{"{{TAX_NAME}}": name, "{{TAX_AMOUNT}}": money(amount)} for name, amount in figures["taxes"]])
+    if invoice.get("chart"):
+        place_chart(document, invoice["chart"])
+    values = {**invoice["tokens"], "{{INVOICE_DATE}}": invoice["invoice_date"], "{{OUR_REF}}": invoice["our_ref"],
+              "{{BILL_NUMBER}}": invoice["bill_number"], "{{ADDRESSEE}}": "\n".join(invoice["addressee"]),
+              "{{DELIVERY}}": invoice.get("delivery"), "{{SALUTATION}}": invoice["salutation"], "{{RE}}": "\n".join(invoice["re"]),
+              "{{CHART}}": None, "{{TAXABLE_SERVICES}}": money(figures["fees"]),
+              "{{TAXABLE_DISBURSEMENTS}}": shown(figures["taxable_disbursements"]), "{{SUBTOTAL}}": money(figures["subtotal"]),
+              "{{NON_TAXABLE_DISBURSEMENTS}}": shown(figures["non_taxable_disbursements"]), "{{TOTAL}}": money(figures["total"]),
+              "{{TRUST_APPLIED}}": shown(figures["trust_applied"]), "{{TRUST_BALANCE}}": shown(figures["trust_balance"]),
+              "{{AMOUNT_DUE}}": money(figures["total"] - figures["trust_applied"])}
+    for story in stories(document):
+        remove_empty(story, values)
+        for paragraph in paragraphs_of(story):
+            fill_paragraph(paragraph, values)
+    left = [token for story in stories(document) for paragraph in paragraphs_of(story) for token in TOKEN.findall(own_text(paragraph))]
     if left:
         raise Refusal("missing_token", ", ".join(left))
-    paragraph.runs[0].text = text
-    for run in paragraph.runs[1:]:
-        run.text = ""
-
-
-def prepare_letterhead(document, tokens):
-    """Fill the header and footer tokens, mark each header DRAFT, and empty the body."""
     for section in document.sections:
-        for part in (section.header, section.first_page_header, section.footer, section.first_page_footer):
-            for paragraph in part.paragraphs:
-                fill_tokens(paragraph, tokens)
         for header in (section.header, section.first_page_header):
             header.add_paragraph().add_run(DRAFT_MARK).bold = True
-    body = document.element.body
-    for child in list(body):
-        if not child.tag.endswith("}sectPr"):
-            body.remove(child)
-
-
-def align_right(cell, text, bold=False):
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-    paragraph = cell.paragraphs[0]
-    paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    paragraph.add_run(text).bold = bold
-
-
-def add_lines_table(document, rows):
-    from docx.shared import Inches
-    headers = ("Date", "Person", "Description", "Hours", "Rate", "Amount")
-    table = document.add_table(rows=1, cols=len(headers))
-    table.autofit = False
-    for column, (cell, header) in enumerate(zip(table.rows[0].cells, headers)):
-        if column >= 3:
-            align_right(cell, header, True)
-        else:
-            cell.paragraphs[0].add_run(header).bold = True
-    for row in rows:
-        for column, (cell, text) in enumerate(zip(table.add_row().cells, row)):
-            if column >= 3:
-                align_right(cell, text)
-            else:
-                cell.text = text
-    for row in table.rows:
-        for cell, width in zip(row.cells, LINE_WIDTHS):
-            cell.width = Inches(width)
-
-
-def add_block(document, lines=()):
-    """A paragraph with a blank line after it, since the letterhead's Normal style has no spacing."""
-    from docx.shared import Pt
-    paragraph = document.add_paragraph("\n".join(lines))
-    paragraph.paragraph_format.space_after = Pt(11)
-    return paragraph
-
-
-def write_body(document, invoice, lines, subtotal, charged, total):
-    for index, (label, value) in enumerate(invoice["meta"]):
-        paragraph = add_block(document) if index == len(invoice["meta"]) - 1 else document.add_paragraph()
-        paragraph.add_run(f"{label} ").bold = True
-        paragraph.add_run(value)
-    add_block(document, invoice["addressee"])
-    if invoice.get("delivery"):
-        add_block(document).add_run(invoice["delivery"]).bold = True
-    add_block(document, [invoice["salutation"]])
-    paragraph = add_block(document)
-    paragraph.add_run("Re: ").bold = True
-    paragraph.add_run(invoice["re"]).bold = True
-    add_lines_table(document, [(r["date"], r["initials"], r["description"], r["hours"], money(Decimal(r["rate"])),
-                                money(Decimal(r["amount"]))) for r in lines["rows"]])
-    document.add_paragraph()
-    if invoice.get("chart"):
-        document.add_picture(invoice["chart"])
-    summary = document.add_table(rows=0, cols=2)
-    figures = [("Fees", money(subtotal), False)] + [(name, money(amount), False) for name, amount in charged]
-    for label, figure, bold in figures + [(invoice["amount_due_label"], money(total), True)]:
-        cells = summary.add_row().cells
-        align_right(cells[0], label, bold)
-        align_right(cells[1], figure, bold)
-    if invoice.get("trust_applied"):
-        document.add_paragraph(invoice["trust_applied"])
-    document.add_paragraph()
-    add_block(document, invoice["closing"])
-    for item in invoice["after"]:
-        paragraph = add_block(document)
-        if item.get("bold"):
-            paragraph.add_run(f"{item['bold']} ").bold = True
-        paragraph.add_run(item.get("text", ""))
 
 
 def word_convert(docx_path, pdf_path):
@@ -252,28 +304,28 @@ def convert(docx_path, pdf_path):
 
 
 def render(args):
-    try:
-        import docx
-    except ImportError as err:
-        raise Refusal("python_docx_missing", "this step needs the python-docx package") from err
+    if docx is None:
+        raise Refusal("python_docx_missing", "this step needs the python-docx package")
     invoice = load(args.invoice, "invoice")
     lines = load(args.lines, "lines")
     check_invoice(invoice)
-    subtotal, charged, total = totals(lines, invoice["taxes"])
+    disbursements = load(args.disbursements, "disbursements") if args.disbursements else None
+    figures = totals(lines, invoice["taxes"], disbursements, invoice.get("trust_balance"))
     out_dir = Path(args.out_dir)
     if not out_dir.is_dir():
         raise Refusal("no_out_dir", str(out_dir))
     try:
-        document = docx.Document(args.letterhead)
+        document = docx.Document(args.template)
     except Exception as err:  # python-docx raises several unrelated types on a bad package
-        raise Refusal("bad_letterhead", f"{args.letterhead}: {err}") from err
-    prepare_letterhead(document, invoice["tokens"])
-    write_body(document, invoice, lines, subtotal, charged, total)
+        raise Refusal("bad_template", f"{args.template}: {err}") from err
+    fill_template(document, invoice, lines, figures)
     stem = free_stem(out_dir, args.out_name)
     docx_path = out_dir / f"{stem}.docx"
     document.save(docx_path)
-    result = {"docx": str(docx_path), "fees": str(subtotal),
-              "taxes": {name: str(amount) for name, amount in charged}, "total": str(total)}
+    result = {"docx": str(docx_path), "fees": str(figures["fees"]), "taxable_disbursements": str(figures["taxable_disbursements"]),
+              "non_taxable_disbursements": str(figures["non_taxable_disbursements"]),
+              "taxes": {name: str(amount) for name, amount in figures["taxes"]}, "total": str(figures["total"]),
+              "trust_applied": str(figures["trust_applied"]), "amount_due": str(figures["total"] - figures["trust_applied"])}
     if stem != args.out_name:
         result["versioned_from"] = args.out_name
     if args.pdf:
@@ -287,7 +339,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--invoice", required=True)
     parser.add_argument("--lines", required=True)
-    parser.add_argument("--letterhead", required=True)
+    parser.add_argument("--template", required=True)
+    parser.add_argument("--disbursements")
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--out-name", required=True)
     parser.add_argument("--pdf", action="store_true")

@@ -41,6 +41,7 @@ ACTS = {
     "record_served": "record Writing {filing_id} as served on {served_on}, in the database {db_path}",
     "delete_anchor": "delete anchor {anchor_id} and its sources and derived deadlines",
     "merge_contact": "merge contact {spare_id} into contact {keep_id}, deleting contact {spare_id}",
+    "issue_invoice": "record invoice {invoice_number} for {amount} as issued, locking its lines and time entries",
     "time_pipeline__delete": "delete the key {key} from the time-pipeline namespace {namespace}",
     "time_pipeline__bulk_apply": "apply the writes in {path}, which include deletes, to the time-pipeline namespace {namespace}",
     "update_entry": "move TimeCamp entry {entry_id} to task {task_id} and replace its note with \"{note}\"",

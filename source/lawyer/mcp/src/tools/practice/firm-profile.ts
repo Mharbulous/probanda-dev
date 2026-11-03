@@ -1,6 +1,6 @@
 // Firm profile (spec §3.4, plan Phase 6). The firm's name and roster live in
-// `<case_data_root>\_practice\firm\firm.json`, its letterhead in `letterhead.docx`
-// beside it, and each person's email signature template in `email-signatures\`. This machine's roster key (`person`), signature path and the practitioner's
+// `<case_data_root>\_practice\firm\firm.json`, its letterhead in `letterhead.docx` and
+// its invoice template in `invoice.docx` beside it, and each person's email signature template in `email-signatures\`. This machine's roster key (`person`), signature path and the practitioner's
 // environment notes (`practice_quirks`) live in the Roaming probanda.json. Files, not
 // practice.db rows: these tools never open the DB.
 
@@ -24,9 +24,9 @@ export const TOKENS = ["{{AUTHOR_NAME}}", "{{AUTHOR_EMAIL}}", "{{DIRECT_LINE}}",
 const HEADER_FOOTER_PART = /^word\/(header|footer)\d*\.xml$/;
 const THEME_PART = "word/theme/theme1.xml";
 
-function firmPaths(env: NodeJS.ProcessEnv, fallback?: () => string | null): { firm: string; letterhead: string } {
+function firmPaths(env: NodeJS.ProcessEnv, fallback?: () => string | null): { firm: string; letterhead: string; invoiceTemplate: string } {
   const dir = join(resolveCaseDataRoot(env, fallback), "_practice", "firm");
-  return { firm: join(dir, "firm.json"), letterhead: join(dir, "letterhead.docx") };
+  return { firm: join(dir, "firm.json"), letterhead: join(dir, "letterhead.docx"), invoiceTemplate: join(dir, "invoice.docx") };
 }
 
 // A roster person's email signature template, placed by hand in Outlook's layout (<key>.htm, with
@@ -64,6 +64,8 @@ export interface FirmProfile {
   firm_name: string;
   roster: RosterEntry[];
   letterhead: string | null;
+  /** The firm's invoice template, or null when none is registered. */
+  invoice_template: string | null;
   person: string | null;
   /** This practitioner's environment notes from probanda.json, or null when unset. */
   practice_quirks: string | null;
@@ -71,8 +73,8 @@ export interface FirmProfile {
   cc_on_counsel_email?: string[];
   /** The firm's billing rules, present only when firm.json sets them. */
   billing_settings?: Record<string, unknown>;
-  /** The confirmed layout and fixed wording of the firm's invoice, present only when firm.json sets it. */
-  invoice_template?: Record<string, unknown>;
+  /** The firm's style guide (colors, font, table), present only when firm.json sets it. */
+  style?: Record<string, unknown>;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -123,11 +125,12 @@ export function readFirmProfile(env: NodeJS.ProcessEnv = process.env, fallback?:
     firm_name: firmName,
     roster,
     letterhead: existsSync(paths.letterhead) ? paths.letterhead : null,
+    invoice_template: existsSync(paths.invoiceTemplate) ? paths.invoiceTemplate : null,
     person,
     practice_quirks: typeof quirks === "string" && quirks !== "" ? quirks : null,
     ...(isKeyList(firm.cc_on_counsel_email) && firm.cc_on_counsel_email.length > 0 ? { cc_on_counsel_email: firm.cc_on_counsel_email } : {}),
     ...(isObject(firm.billing_settings) ? { billing_settings: firm.billing_settings } : {}),
-    ...(isObject(firm.invoice_template) ? { invoice_template: firm.invoice_template } : {}),
+    ...(isObject(firm.style) ? { style: firm.style } : {}),
   };
 }
 
@@ -163,12 +166,12 @@ function upsertRosterEntry(roster: RosterEntry[], input: Record<string, unknown>
 // Word writes stored (0) and deflated (8) entries only; any other method is refused.
 function readZipParts(zip: Buffer, source: string, wanted: (name: string) => boolean): Map<string, string> {
   const eocd = zip.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
-  if (eocd < 0) throw new ValidationError(`letterhead ${source} is not a .docx: no zip directory found`);
+  if (eocd < 0) throw new ValidationError(`${source} is not a .docx: no zip directory found`);
   const count = zip.readUInt16LE(eocd + 10);
   let at = zip.readUInt32LE(eocd + 16);
   const parts = new Map<string, string>();
   for (let i = 0; i < count; i += 1) {
-    if (zip.readUInt32LE(at) !== 0x02014b50) throw new ValidationError(`letterhead ${source} has a corrupt zip directory`);
+    if (zip.readUInt32LE(at) !== 0x02014b50) throw new ValidationError(`${source} has a corrupt zip directory`);
     const method = zip.readUInt16LE(at + 10);
     const size = zip.readUInt32LE(at + 20);
     const nameLength = zip.readUInt16LE(at + 28);
@@ -177,7 +180,7 @@ function readZipParts(zip: Buffer, source: string, wanted: (name: string) => boo
     at += 46 + nameLength + zip.readUInt16LE(at + 30) + zip.readUInt16LE(at + 32);
     if (!wanted(name)) continue;
     if (method !== 0 && method !== 8) {
-      throw new ValidationError(`letterhead ${source}: part ${name} uses unsupported zip compression method ${method}`);
+      throw new ValidationError(`${source}: part ${name} uses unsupported zip compression method ${method}`);
     }
     const start = local + 30 + zip.readUInt16LE(local + 26) + zip.readUInt16LE(local + 28);
     const data = zip.subarray(start, start + size);
@@ -223,7 +226,7 @@ function themeFace(theme: string, slot: "majorFont" | "minorFont"): string | und
 // the theme's heading (major) and body (minor) Latin faces. A letterhead with no theme
 // part names no faces, so there is nothing to compare.
 function checkLetterhead(zip: Buffer, source: string): { major?: string; minor?: string } {
-  const parts = readZipParts(zip, source, (name) => HEADER_FOOTER_PART.test(name) || name === THEME_PART);
+  const parts = readZipParts(zip, `letterhead ${source}`, (name) => HEADER_FOOTER_PART.test(name) || name === THEME_PART);
   const split: string[] = [];
   for (const [name, xml] of parts) {
     if (name === THEME_PART) continue;
@@ -255,33 +258,33 @@ export interface UpsertFirmProfileResult {
 // The cap on practice_quirks. A longer note is refused, never truncated.
 export const PRACTICE_QUIRKS_MAX = 1000;
 
-// Any combination of firm_name, roster_entry, person, signature, practice_quirks, letterhead,
-// cc_on_counsel_email, billing_settings and invoice_template, at least one. Every input is checked before any file is written, so a
-// refusal leaves firm.json, the letterhead and probanda.json as they were.
+// Any combination of firm_name, roster_entry, person, signature, practice_quirks, letterhead, invoice_template,
+// cc_on_counsel_email, billing_settings and style, at least one. Every input is checked before any file is written, so a
+// refusal leaves firm.json, the letterhead, the invoice template and probanda.json as they were.
 export async function upsert_firm_profile(
   args: Record<string, unknown>,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<UpsertFirmProfileResult> {
-  const inputs = ["firm_name", "roster_entry", "person", "signature", "practice_quirks", "letterhead", "cc_on_counsel_email", "billing_settings", "invoice_template"];
+  const inputs = ["firm_name", "roster_entry", "person", "signature", "practice_quirks", "letterhead", "invoice_template", "cc_on_counsel_email", "billing_settings", "style"];
   if (inputs.every((input) => args[input] === undefined)) {
     throw new ValidationError(`upsert_firm_profile needs at least one of ${inputs.join(", ")}`);
   }
   // A call that sets only this machine's practice_quirks or signature needs no firm folder, so it
   // still writes when probanda.json or its case_data_root is not set up yet.
-  const firmNeeded = ["firm_name", "roster_entry", "person", "letterhead", "cc_on_counsel_email", "billing_settings", "invoice_template"].some((input) => args[input] !== undefined);
-  let resolved: { firm: string; letterhead: string } | undefined;
+  const firmNeeded = ["firm_name", "roster_entry", "person", "letterhead", "invoice_template", "cc_on_counsel_email", "billing_settings", "style"].some((input) => args[input] !== undefined);
+  let resolved: ReturnType<typeof firmPaths> | undefined;
   try {
     resolved = firmPaths(env);
   } catch (err) {
     if (firmNeeded) throw err;
   }
-  const paths = resolved as { firm: string; letterhead: string };
+  const paths = resolved as ReturnType<typeof firmPaths>;
   const result: UpsertFirmProfileResult = { changed: [], written: [] };
 
   const current = resolved && existsSync(paths.firm) ? readJson(paths.firm) : undefined;
   let firm: Record<string, unknown> | undefined;
   if (args.firm_name !== undefined || args.roster_entry !== undefined || args.cc_on_counsel_email !== undefined
-      || args.billing_settings !== undefined || args.invoice_template !== undefined) {
+      || args.billing_settings !== undefined || args.style !== undefined) {
     firm = { firm_name: undefined, roster: [], ...current };
     if (args.firm_name !== undefined) {
       firm.firm_name = asString(args.firm_name, "firm_name");
@@ -306,7 +309,7 @@ export async function upsert_firm_profile(
       result.changed.push("cc_on_counsel_email");
     }
     // Each merges into what is there, so setting one rule leaves the others.
-    for (const field of ["billing_settings", "invoice_template"]) {
+    for (const field of ["billing_settings", "style"]) {
       if (args[field] === undefined) continue;
       if (!isObject(args[field])) throw new ValidationError(`${field} must be an object`);
       firm[field] = { ...(isObject(firm[field]) ? firm[field] : {}), ...args[field] };
@@ -360,6 +363,17 @@ export async function upsert_firm_profile(
     result.changed.push("letterhead");
   }
 
+  let invoiceTemplate: Buffer | undefined;
+  if (args.invoice_template !== undefined) {
+    const source = asString(args.invoice_template, "invoice_template");
+    if (!existsSync(source)) throw new NotFoundError(`invoice template source not found: ${source}`);
+    invoiceTemplate = readFileSync(source);
+    if (readZipParts(invoiceTemplate, `invoice template ${source}`, (name) => name === "word/document.xml").size === 0) {
+      throw new ValidationError(`invoice template ${source} is not a .docx: it has no document part`);
+    }
+    result.changed.push("invoice_template");
+  }
+
   // Warnings, not refusals: each reads the roster and person as this call leaves them.
   const after = firm ?? current;
   const roster = after ? rosterOf(after, paths.firm) : [];
@@ -372,7 +386,7 @@ export async function upsert_firm_profile(
   const preparer = roster.find((entry) => typeof person === "string" && entry.key === person);
   if (preparer && !preparer.initials) result.preparer_initials_missing = person as string;
 
-  if (firm || letterhead) mkdirSync(dirname(paths.firm), { recursive: true });
+  if (firm || letterhead || invoiceTemplate) mkdirSync(dirname(paths.firm), { recursive: true });
   if (firm) {
     writeJson(paths.firm, firm);
     result.written.push(paths.firm);
@@ -380,6 +394,10 @@ export async function upsert_firm_profile(
   if (letterhead) {
     writeFileSync(paths.letterhead, letterhead);
     result.written.push(paths.letterhead);
+  }
+  if (invoiceTemplate) {
+    writeFileSync(paths.invoiceTemplate, invoiceTemplate);
+    result.written.push(paths.invoiceTemplate);
   }
   if (config) {
     for (const target of configWritePaths(env)) {
