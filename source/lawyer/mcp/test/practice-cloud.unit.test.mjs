@@ -22,6 +22,7 @@ setCloudKeyStore(fakeCloudKeyStore());
 const { PracticeStore } = await import("../build/practice/store.js");
 const { callPracticeTool } = await import("../build/tools/practice/index.js");
 const writes = await import("../build/tools/practice/writes.js");
+const reads = await import("../build/tools/practice/reads.js");
 const ruleOverlay = await import("../build/tools/practice/rule-overlay.js");
 
 const UNREACHABLE = /^Probanda's Cloud did not answer \((.+)\)\. Nothing was saved, in the cloud or in practice\.db\. If this persists, check whether the Supabase project is paused\.$/;
@@ -102,6 +103,32 @@ test("no clear data value and no hash_key appears in any request body", async (t
   const entry = [...items(kv).values()].find((item) => item.kind === "time_entry");
   assert.equal(entry.data.description, "Drafted the reply to Acme");
   assert.equal(entry.data.batch_tag, "retire:7:2026-08-01");
+});
+
+test("a retainer notice keeps its amount and copy on this machine, and a notice without them stays valid", async (t) => {
+  const { cloud, kv, store } = await setup(t);
+  const { matter_id } = await seedMatter(store);
+  await writes.upsert_task(store, { matt_num: "L100", task_type: "client", description: "Check for reply to the invented letter" });
+  await writes.record_retainer_notice(store, { matt_num: "L100", sent_at: "2026-08-01" });
+  const { id } = await writes.record_retainer_notice(store, {
+    matt_num: "L100", sent_at: "2026-08-02", amount_requested: 4321.09, source_path: "Correspondence/invented letter.pdf",
+  });
+
+  const [op] = cloud.writes().at(-1).ops;
+  assert.equal(op.kind, "retainer_notice");
+  assert.deepEqual(op.links, { matter: matter_id });
+  assert.deepEqual(Object.keys(op.hashes).sort(), ["amount_requested", "sent_at", "source_path"]);
+  for (const value of Object.values(op.hashes)) assert.match(value, HEX64);
+  assert.deepEqual(items(kv).get(id).data, { sent_at: "2026-08-02", amount_requested: 4321.09, source_path: "Correspondence/invented letter.pdf" });
+  for (const { raw, path } of cloud.requests) {
+    for (const value of ["4321.09", "invented letter.pdf", "2026-08-02"]) assert.equal(raw.includes(value), false, `${path} carries "${value}"`);
+  }
+
+  const bare = cloud.writes().at(-2).ops[0];
+  assert.deepEqual(Object.keys(bare.hashes), ["sent_at"], "only the fields given are sent");
+  const { rows } = await reads.open_tasks(store, { matt_num: "L100" });
+  assert.equal(rows[0].last_retainer_notice_at, "2026-08-02");
+  assert.equal(rows[0].description, "Check for reply to the invented letter", "a to-do needs no filing_ref");
 });
 
 test("a null field is sent as null, an empty label as null, and equal values hash equally across fields", async (t) => {

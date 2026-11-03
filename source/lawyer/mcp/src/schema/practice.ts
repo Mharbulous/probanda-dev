@@ -465,10 +465,12 @@ export function practiceToolDefinitions(): ToolDefinition[] {
     },
     {
       name: practicePrefixed("record_retainer_notice"),
-      description: "Record that a retainer replenishment notice was sent. Returns the new notice id.",
+      description: "Record that a retainer replenishment notice was sent, with the amount it requested and the path of the copy as sent, relative to the matter folder, when known. Returns the new notice id.",
       inputSchema: objectSchema([
         ...matterRef,
         { name: "sent_at", type: "str" },
+        { name: "amount_requested", type: "num" },
+        { name: "source_path", type: "str" },
       ], ["sent_at"]),
     },
     {

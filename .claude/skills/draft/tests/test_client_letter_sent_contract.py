@@ -1,3 +1,4 @@
+import re
 import unittest
 from pathlib import Path
 
@@ -18,7 +19,7 @@ def section(text, heading):
 
 
 class ClientLetterSentTest(unittest.TestCase):
-    """A client letter's sent act writes the history file, and no database."""
+    """A client letter's sent act writes the history file, and no database but a replenishment request's notice."""
 
     @classmethod
     def setUpClass(cls):
@@ -36,8 +37,9 @@ class ClientLetterSentTest(unittest.TestCase):
         self.assertIn("`duplicate_entry`", self.act)
 
     def test_no_database_write(self):
-        for write in ("drafting_data__", "/drafting-data", "practice_data__", "board_attachments"):
+        for write in ("drafting_data__", "/drafting-data", "board_attachments"):
             self.assertNotIn(write, self.act)
+        self.assertEqual(re.findall(r"practice_data__\w+", self.act), ["practice_data__record_retainer_notice"])
         self.assertIn("never write its title, its status or any of its text there", self.client_letters)
         self.assertIn("no Sent write", self.client_letters)
 

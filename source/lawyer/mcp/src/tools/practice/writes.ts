@@ -299,7 +299,8 @@ export async function record_retainer_notice(
   const matter = requireMatter(store.items(), args);
   const id = newId();
   await store.write("record_retainer_notice", {}, [{
-    op: "create", id, kind: "retainer_notice", links: { matter: matter.id }, data: { sent_at: asString(args.sent_at, "sent_at") },
+    op: "create", id, kind: "retainer_notice", links: { matter: matter.id },
+    data: { sent_at: asString(args.sent_at, "sent_at"), amount_requested: args.amount_requested, source_path: args.source_path },
   }]);
   return { id };
 }
