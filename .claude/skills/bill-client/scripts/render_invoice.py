@@ -7,7 +7,7 @@
 --lines is tie_out.py's invoice_lines.json, written only on a pass. --disbursements is
 collect_disbursements.py's output. This script recomputes every amount and refuses a figure that does
 not tie, a lines file with no pass stamp, a line with neither evidence nor a recorded estimate basis, a
-disbursement with its tax status unset or a flag undecided, and a dollar amount in the template's fixed
+disbursement with its tax status unset or still marked for confirmation, and a dollar amount in the template's fixed
 wording, which could carry an old figure. Taxable services and taxable disbursements are the base for
 each tax, and non-taxable disbursements go below the taxes. --invoice holds what changes per bill, each
 key required unless marked:
@@ -96,7 +96,7 @@ def disbursement_totals(disbursements):
     for line in disbursements["lines"]:
         if line.get("taxable") not in (True, False):
             raise Refusal("taxable_unset", f"Say whether this disbursement is taxable: {line['description']}")
-        if line.get("flags") and not line.get("decided"):
+        if line.get("confirm"):
             raise Refusal("undecided_line", f"Decide this flagged disbursement: {line['description']}")
         if line["taxable"]:
             taxable += Decimal(line["amount"])

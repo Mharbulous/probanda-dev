@@ -3,6 +3,7 @@ import contextlib
 import io
 import json
 import struct
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -222,10 +223,28 @@ class Summary(Base):
         self.assertFalse(list(self.dir.glob("2030-02-01*")))
 
     def test_a_flagged_line_needs_a_decision(self):
-        flagged = disbursement("a", "30.00", True, flags=["not processed"])
+        flagged = disbursement("a", "30.00", True, flags=["not_processed"], confirm=True)
         self.assertEqual(self.run_render(the_disbursements=disbursements(flagged))[1]["error"], "undecided_line")
-        flagged["decided"] = True
+        flagged["confirm"] = False
         self.assertEqual(self.run_render(the_disbursements=disbursements(flagged))[0], 0)
+
+    def test_the_collectors_own_output_fills_and_its_unset_tax_status_refuses(self):
+        (self.dir / "a.pdf").write_bytes(b"%PDF-receipt-a")
+        (self.dir / "b.pdf").write_bytes(b"%PDF-receipt-b")
+        receipts = [{"path": str(self.dir / "a.pdf"), "description": "Courier", "amount": "30.00", "taxable": True},
+                    {"path": str(self.dir / "b.pdf"), "description": "Filing fee", "amount": "25.00", "taxable": False}]
+
+        def collected():
+            (self.dir / "receipts.json").write_text(json.dumps(receipts), encoding="utf-8")
+            script = Path(render_invoice.__file__).with_name("collect_disbursements.py")
+            subprocess.run([sys.executable, str(script), "--receipts", str(self.dir / "receipts.json"), "--out", str(self.dir / "collected.json")],
+                           check=True, capture_output=True)
+            return json.loads((self.dir / "collected.json").read_text(encoding="utf-8"))
+        _, out = self.run_render(the_disbursements=collected())
+        self.assertEqual((out["taxable_disbursements"], out["non_taxable_disbursements"], out["total"]), ("30.00", "25.00", "193.00"))
+        del receipts[1]["taxable"]
+        code, out = self.run_render(the_disbursements=collected())
+        self.assertEqual((code, out["error"]), (1, "taxable_unset"))
 
     def test_disbursement_totals_must_tie(self):
         bad = disbursements()
