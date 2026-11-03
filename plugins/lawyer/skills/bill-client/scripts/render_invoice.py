@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Fill the firm's invoice template to a draft invoice, marked DRAFT and never signed.
+"""Fill the firm's invoice template to a draft marked DRAFT, or to an unmarked invoice ready for signature. Never signed.
 
     render_invoice.py --invoice invoice.json --lines invoice_lines.json --template invoice.docx
                       [--disbursements disbursements.json] --out-dir DIR --out-name STEM [--pdf]
+                      [--ready-for-signature]
 
+--ready-for-signature leaves the DRAFT mark off, and refuses a bill_number that is blank or says DRAFT.
 --lines is tie_out.py's invoice_lines.json, written only on a pass. --disbursements is
 collect_disbursements.py's output. This script recomputes every amount and refuses a figure that does
 not tie, a lines file with no pass stamp, a line with neither evidence nor a recorded estimate basis, a
@@ -235,7 +237,7 @@ def shown(amount):
     return money(amount) if amount else None
 
 
-def fill_template(document, invoice, lines, figures):
+def fill_template(document, invoice, lines, figures, ready=False):
     check_template(document)
     repeat_rows(document, "{{LINE_", [{"{{LINE_DATE}}": r["date"], "{{LINE_BY}}": r["initials"], "{{LINE_DESCRIPTION}}": r["description"],
                                        "{{LINE_HOURS}}": r["hours"], "{{LINE_RATE}}": money(Decimal(r["rate"])),
@@ -258,6 +260,8 @@ def fill_template(document, invoice, lines, figures):
     left = [token for story in stories(document) for paragraph in paragraphs_of(story) for token in TOKEN.findall(own_text(paragraph))]
     if left:
         raise Refusal("missing_token", ", ".join(left))
+    if ready:
+        return
     for section in document.sections:
         for header in (section.header, section.first_page_header):
             header.add_paragraph().add_run(DRAFT_MARK).bold = True
@@ -318,7 +322,9 @@ def render(args):
         document = docx.Document(args.template)
     except Exception as err:  # python-docx raises several unrelated types on a bad package
         raise Refusal("bad_template", f"{args.template}: {err}") from err
-    fill_template(document, invoice, lines, figures)
+    if args.ready_for_signature and invoice["bill_number"].strip().upper() in ("", "DRAFT"):
+        raise Refusal("no_bill_number", "An invoice ready for signature needs its bill number from accounting")
+    fill_template(document, invoice, lines, figures, args.ready_for_signature)
     stem = free_stem(out_dir, args.out_name)
     docx_path = out_dir / f"{stem}.docx"
     document.save(docx_path)
@@ -344,6 +350,7 @@ def main(argv=None):
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--out-name", required=True)
     parser.add_argument("--pdf", action="store_true")
+    parser.add_argument("--ready-for-signature", action="store_true")
     try:
         print(json.dumps(render(parser.parse_args(argv))))
     except Refusal as refused:
