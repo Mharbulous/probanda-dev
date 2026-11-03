@@ -1,6 +1,7 @@
 // PreToolUse hook for Bash, PowerShell and the file-writing tools. Publication cannot be
-// reliably undone, so a person confirms each approval and each publication. The hook does
-// not refuse: it makes the app ask the person to approve the one tool call. It asks for:
+// reliably undone, so a person confirms each approval and each publication. The hook makes
+// the app ask the person to approve the one tool call. In a cloud run nobody can answer and
+// the prompt would stop the run for good, so there it refuses instead. It acts on:
 //   - a write to the public repository: a push or remote change that names it, a gh command
 //     that changes it, or a git push from a checkout whose remote is it;
 //   - starting the publish-public workflow;
@@ -28,7 +29,11 @@ const input = data.tool_input || {};
 
 function ask(reason) {
   process.stdout.write(JSON.stringify({
-    hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "ask", permissionDecisionReason: reason }
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: process.env.CLAUDE_CODE_REMOTE === "true" ? "deny" : "ask",
+      permissionDecisionReason: reason
+    }
   }));
   process.exit(0);
 }

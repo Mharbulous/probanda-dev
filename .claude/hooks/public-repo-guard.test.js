@@ -4,8 +4,11 @@ const path = require("path");
 const HOOK = path.join(__dirname, "public-repo-guard.js");
 const CWD = path.join(__dirname, "..", "..");
 
-function decide(payload) {
-  const r = spawnSync(process.execPath, [HOOK], { input: JSON.stringify(payload), encoding: "utf8" });
+function decide(payload, cloud = false) {
+  const env = { ...process.env };
+  delete env.CLAUDE_CODE_REMOTE;
+  if (cloud) env.CLAUDE_CODE_REMOTE = "true";
+  const r = spawnSync(process.execPath, [HOOK], { input: JSON.stringify(payload), encoding: "utf8", env });
   if (!r.stdout) return "pass";
   return JSON.parse(r.stdout).hookSpecificOutput.permissionDecision;
 }
@@ -91,9 +94,21 @@ const ASK = [
   "git push https://github.com/Probanda-app/Legal HEAD:main",
 ];
 
+// In a cloud run nobody can answer, so what asks elsewhere is refused, and what passes still passes.
+const REFUSED_IN_CLOUD = [
+  "gh workflow run publish-public",
+  "git push https://github.com/Probanda-app/Legal HEAD:main",
+  "python scripts/approve_public.py --yes",
+  "cp x public/public-approved.json",
+  "cp x source/exception-rulings.json",
+  // Stalled the implementer on #200 (2026-11-02) when it asked.
+  "python3 - <<'EOF'\nfrom pathlib import Path\np=Path('scripts/tests/test_approve_public.py')\nEOF",
+];
+const PASSES_IN_CLOUD = ["cat public/public-approved.json", "python scripts/approve_public.py"];
+
 let failed = 0;
-const check = (payload, want, label) => {
-  const got = decide(payload);
+const check = (payload, want, label, cloud = false) => {
+  const got = decide(payload, cloud);
   if (got !== want) { failed++; console.log(`FAIL ${label} -> ${got} (expected ${want})`); }
 };
 for (const c of PASS) check(bash(c), "pass", c);
@@ -102,5 +117,8 @@ for (const tool_name of ["Edit", "Write"]) {
   check({ tool_name, tool_input: { file_path: "C:\\Users\\Brahm\\Git\\probanda-plugins\\public\\public-approved.json" } }, "ask", `${tool_name} public-approved.json`);
   check({ tool_name, tool_input: { file_path: "source\\exception-rulings.json" } }, "ask", `${tool_name} exception-rulings.json`);
 }
+for (const c of REFUSED_IN_CLOUD) check(bash(c), "deny", `cloud: ${c}`, true);
+for (const c of PASSES_IN_CLOUD) check(bash(c), "pass", `cloud: ${c}`, true);
+check({ tool_name: "Edit", tool_input: { file_path: "public/public-approved.json" } }, "deny", "cloud: Edit public-approved.json", true);
 console.log(failed ? `${failed} failed` : "all passed");
 process.exit(failed ? 1 : 0);
