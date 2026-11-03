@@ -78,7 +78,7 @@ class Base(unittest.TestCase):
                                                 "--wording", str(self.dir / "wording.json"), "--out", str(out or self.template)])
         return code, json.loads(output.getvalue())
 
-    def run_render(self, the_invoice=None, the_lines=None, the_disbursements=None):
+    def run_render(self, the_invoice=None, the_lines=None, the_disbursements=None, ready=False):
         (self.dir / "invoice.json").write_text(json.dumps(the_invoice or invoice()), encoding="utf-8")
         (self.dir / "lines.json").write_text(json.dumps(the_lines or lines()), encoding="utf-8")
         argv = ["--invoice", str(self.dir / "invoice.json"), "--lines", str(self.dir / "lines.json"), "--template", str(self.template),
@@ -86,6 +86,8 @@ class Base(unittest.TestCase):
         if the_disbursements:
             (self.dir / "disbursements.json").write_text(json.dumps(the_disbursements), encoding="utf-8")
             argv += ["--disbursements", str(self.dir / "disbursements.json")]
+        if ready:
+            argv.append("--ready-for-signature")
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             code = render_invoice.main(argv)
@@ -129,6 +131,25 @@ class Render(Base):
             self.assertIn(figure, text)
         self.assertNotIn("Letterhead body text", text)
         self.assertIsNone(render_invoice.TOKEN.search(text))
+
+    def test_ready_for_signature_has_no_draft_mark_and_the_same_figures(self):
+        _, draft = self.run_render()
+        code, ready = self.run_render({**invoice(), "bill_number": "12345"}, ready=True)
+        self.assertEqual(code, 0, ready)
+        self.assertEqual(ready["total"], draft["total"])
+        section = docx.Document(ready["docx"]).sections[0]
+        headers = "\n".join(p.text for header in (section.header, section.first_page_header) for p in header.paragraphs)
+        self.assertNotIn(render_invoice.DRAFT_MARK, headers)
+        text, _ = self.text_of(ready["docx"])
+        self.assertIn("12345", text)
+        self.assertNotIn("DRAFT", text)
+
+    def test_ready_for_signature_refuses_a_missing_bill_number_and_writes_nothing(self):
+        before = set(self.dir.iterdir())
+        for number in ("DRAFT", " draft ", ""):
+            code, out = self.run_render({**invoice(), "bill_number": number}, ready=True)
+            self.assertEqual((code, out["error"]), (1, "no_bill_number"))
+        self.assertEqual({p for p in self.dir.iterdir() if p.suffix == ".docx"}, {p for p in before if p.suffix == ".docx"})
 
     def test_header_token_split_across_runs_is_filled(self):
         _, out = self.run_render()

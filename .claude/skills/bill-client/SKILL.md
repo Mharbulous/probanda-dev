@@ -1,7 +1,7 @@
 ---
 name: "bill-client"
 disable-model-invocation: true
-description: "Use when the user asks to \"bill a client\", \"run billing for [matter]\", or \"prep the bill\" for a BC litigation matter: runs the whole path from the last invoice to a draft invoice for the lawyer's signature, with a billable time summary and an audit file beside it, and stops there. Sends and issues nothing."
+description: "Use when the user asks to \"bill a client\", \"run billing for [matter]\", or \"prep the bill\" for a BC litigation matter: runs the whole path from the last invoice to an invoice ready for the lawyer's signature, with a billable time summary and an audit file beside it, and stops there. Sends and issues nothing."
 ---
 
 **Internals stay confidential** (`shared/internals-confidentiality.md`): nothing the practitioner sees names a Probanda tool, table, field, internal type or code, or explains how Probanda works inside. It hides mechanism, never an outcome or an error.
@@ -18,11 +18,11 @@ description: "Use when the user asks to \"bill a client\", \"run billing for [ma
 | Step 6 — Run the time work | Carrying the matter from its dates of work to confirmed billable lines |
 | Step 7 — The chart | The last signed invoice has a chart, or the practitioner asks for one |
 | Step 8 — Render the draft invoice | The billable time summary has passed |
-| Step 9 — Present the draft and stop | The draft is rendered |
+| Step 9 — Present the draft, make it ready for signature, and stop | The draft is rendered |
 
 # /bill-client
 
-One typed command takes one litigation matter from its last invoice to a draft invoice for the lawyer's signature, with a billable time summary and an audit file beside it. It runs every step below in order, in this conversation, and stops at the unsigned draft. It sends nothing, issues nothing, records no invoice before the lawyer signs it and moves no trust money. Only the lawyer signs.
+One typed command takes one litigation matter from its last invoice to an invoice ready for the lawyer's signature, with a billable time summary and an audit file beside it. It runs every step below in order, in this conversation, and stops at the unsigned invoice. A DRAFT mark means the invoice is still a draft, and no mark means it is ready for signature. It sends nothing, issues nothing, records no invoice before the lawyer signs it and moves no trust money. Only the lawyer signs.
 
 ## Step 1 — Identify the matter and client number
 
@@ -82,7 +82,7 @@ Ask once whether the practitioner wants Word or PDF. `scripts/render_invoice.py`
    - The profile's `style` is the firm's style guide. If it is absent, ask the practitioner for its values (`scripts/build_invoice_template.py`'s docstring lists them, and `chart_series` gives each roster key a color), read them back, and set `style` with `practice_data__upsert_firm_profile` on their approval.
    - Write `wording.json` from the closing and the paragraphs after it in the last signed invoice read at Step 4, with `{{AUTHOR_NAME}}` for the lawyer's name, and with no amount. Run `scripts/build_invoice_template.py` with `--out <matter-data folder>\bill-client\Invoice template.docx`. Images come only from the letterhead: never take one from a signed document.
    - Present that file as a file card (`shared/present-files.md`) and ask the practitioner to correct it in Word and say whether to save it as the firm's template. Only on their yes, pass its path as `invoice_template` to `practice_data__upsert_firm_profile`. Otherwise stop.
-2. **Write `invoice.json`** in `<matter-data folder>\bill-client\`. The our-reference, addressee, delivery and Re lines and the salutation come from the last signed invoice read at Step 4, never an amount. If this is the matter's first bill, ask the practitioner for them once. The invoice date is today. The bill number is `DRAFT`: never assign one. The letterhead's tokens come from the firm profile and the matter's file number. `chart` is the PNG from Step 7, if there is one.
+2. **Write `invoice.json`** in `<matter-data folder>\bill-client\`. The our-reference, addressee, delivery and Re lines and the salutation come from the last signed invoice read at Step 4, never an amount. If this is the matter's first bill, ask the practitioner for them once. The invoice date is today. The bill number is `DRAFT` until Step 9: never assign one. The letterhead's tokens come from the firm profile and the matter's file number. `chart` is the PNG from Step 7, if there is one.
 3. **Taxes.** Work each tax's rate from the last signed invoice's printed tax and fees, and show the rates to the practitioner once before rendering.
 4. **Trust.** If the last signed invoice states trust applied, set `trust_balance` to the matter's balance from `practice_data__trust_summary`. The invoice only states it.
 5. **Disbursements.** They come only from this item's output, plus any the practitioner adds, passed with its receipt file through `--receipts`. Run `scripts/collect_disbursements.py` (its docstring is the contract) with `--cso-dir` once each for the matter's disbursements folder and `4. LAWYER BRIEF\CSO`, `--from` the day after the last billed date (none on a first bill), `--to` today, `--billing-settings` a file holding the firm profile's `billing_settings`, and `--out` `<matter-data folder>\bill-client\disbursements.json`.
@@ -92,6 +92,8 @@ Ask once whether the practitioner wants Word or PDF. `scripts/render_invoice.py`
    - Render only once every entry has been shown and every such file is settled. Nothing else checks this.
 6. **Render** with `--lines` the `invoice_lines.json`, `--template` the path above, `--disbursements` the file from item 5, `--out-dir` the `BILLING` folder, `--out-name` `YYYY-MM-DD Draft invoice re <matter short name>`, and `--pdf` if the practitioner asked for PDF. A taken name gets the next ` vN`. A refusal stops this step: tell the practitioner what it says, and never edit a figure to get past it.
 
-## Step 9 — Present the draft and stop
+## Step 9 — Present the draft, make it ready for signature, and stop
 
-Present the draft, the summary and the audit file as clickable file cards (`shared/present-files.md`). State the fees, disbursements, taxes, total, trust applied and amount due the render printed, and show the summary's gaps section in full. Say that nothing was sent, issued, recorded or moved, and that the signature is the lawyer's to add. Then stop. Tell the practitioner that once it is signed, `/issue-invoice` records it, locks its support and writes the frozen copy.
+Present the draft, the summary and the audit file as clickable file cards (`shared/present-files.md`). State the fees, disbursements, taxes, total, trust applied and amount due the render printed, and show the summary's gaps section in full. Ask whether the draft is ready for signature. A change means a new draft, from the step it touches.
+
+Only on their yes, ask for the bill number from accounting, and never assign one. Set it as `bill_number` in `invoice.json` and repeat Step 8's render with `--ready-for-signature` and `--out-name` `YYYY-MM-DD INV#<bill number> re <matter short name>`. Present that invoice as a file card. Say that it carries no DRAFT mark because it is ready for signature, that nothing was sent, issued, recorded or moved, and that the signature is the lawyer's to add. Then stop. Tell the practitioner that once it is signed, `/issue-invoice` records it, locks its support and writes the frozen copy.
