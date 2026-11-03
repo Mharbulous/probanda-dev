@@ -8,12 +8,15 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
+
 HOOK = Path(__file__).resolve().parent.parent / "hooks" / "housekeeping-approval-guard.py"
 APPROVAL = r"C:\Matters\Smith case data\housekeeping\20260924-100000123-a1b2\approval.json"
 
 
 def run(stdin: str) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, str(HOOK)], input=stdin.encode("utf-8"), capture_output=True, timeout=30)
+    return run_hook(HOOK, stdin)
 
 
 def call(tool_name: str, **tool_input) -> subprocess.CompletedProcess:

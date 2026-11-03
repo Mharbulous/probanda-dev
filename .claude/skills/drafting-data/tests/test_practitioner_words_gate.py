@@ -1,10 +1,12 @@
 import json
 import re
-import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
 
 SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "practitioner-words-gate.py"
 PLUGIN_JSON = Path(__file__).resolve().parents[4] / "source" / "litigator" / "plugin.json"
@@ -160,8 +162,7 @@ class GateTestCase(unittest.TestCase):
         payload = {"hook_event_name": "PreToolUse", "session_id": "s-1",
                    "tool_name": f"mcp__plugin_lawyer_data__drafting_data__{tool}", "tool_input": tool_input,
                    "transcript_path": str(self.transcript) if transcript is None else transcript}
-        return subprocess.run([sys.executable, str(SCRIPT)], input=json.dumps(payload).encode("utf-8"),
-                              capture_output=True)
+        return run_hook(SCRIPT, payload, timeout=None)
 
     def run_hook(self, sql, transcript=None):
         return self.run_payload("execute", {"db_path": "C:/matter/submission.sqlite", "sql_script": sql}, transcript)
@@ -546,7 +547,7 @@ class MergeMilestonesGateTest(unittest.TestCase):
                    "tool_input": {"db_path": "C:/matter/submission.sqlite", "boards": [{"filing_id": 1}, {"filing_id": 3}],
                                   "confirmed": True, "session_token": "tok", **extra},
                    "transcript_path": str(self.transcript)}
-        return subprocess.run([sys.executable, str(SCRIPT)], input=json.dumps(payload).encode("utf-8"), capture_output=True)
+        return run_hook(SCRIPT, payload, timeout=None)
 
     def test_passes_after_a_bare_yes(self):
         result = self.run_merge(turn_line("merge the stay boards"), reply_line("Goal 12: ... Goal 15: ... Merge them?"), turn_line("yes"))
@@ -603,7 +604,7 @@ class MergeJobsGateTest(unittest.TestCase):
                    "tool_input": {"db_path": "C:/matter/submission.sqlite", "survivor_id": 2, "absorbed_id": 5,
                                   "session_token": "tok"},
                    "transcript_path": str(self.transcript)}
-        return subprocess.run([sys.executable, str(SCRIPT)], input=json.dumps(payload).encode("utf-8"), capture_output=True)
+        return run_hook(SCRIPT, payload, timeout=None)
 
     def test_passes_after_a_bare_yes(self):
         result = self.run_merge(reply_line("Job 5 may be the same work as Job 2. Merge Job 5 into Job 2?"), turn_line("yes"))
@@ -657,7 +658,7 @@ class ApplyEditGateTest(GateTestCase):
                    "tool_name": "mcp__plugin_lawyer_data__drafting_forms__apply_edit",
                    "tool_input": {"db_path": "C:/matter/submission.sqlite", "preview_token": token, "session_token": "sess-a1"},
                    "transcript_path": str(self.transcript)}
-        return subprocess.run([sys.executable, str(SCRIPT)], input=json.dumps(payload).encode("utf-8"), capture_output=True)
+        return run_hook(SCRIPT, payload, timeout=None)
 
     def test_passes_on_the_diff_shown_and_a_bare_yes(self):
         self.write_transcript(turn_line("move paragraph 3 to the top"), *preview_lines(), reply_line(shown_diff(DIFF)), turn_line("yes"))

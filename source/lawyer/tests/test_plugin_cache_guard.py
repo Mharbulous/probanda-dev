@@ -8,6 +8,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
+
 HOOK = Path(__file__).resolve().parent.parent / "hooks" / "plugin-cache-guard.py"
 
 
@@ -15,8 +18,7 @@ def run(stdin: str, plugin_root: Path | None, **env) -> subprocess.CompletedProc
     base = {k: v for k, v in os.environ.items() if k not in ("COCLERK_HTML_DEV", "CLAUDE_PLUGIN_ROOT")}
     if plugin_root is not None:
         base["CLAUDE_PLUGIN_ROOT"] = str(plugin_root)
-    return subprocess.run([sys.executable, str(HOOK)], input=stdin.encode("utf-8"), capture_output=True,
-                          env={**base, **env}, timeout=30)
+    return run_hook(HOOK, stdin, env={**base, **env})
 
 
 def edit(tmp_path: Path, path: Path, plugin_root: Path | None, **env) -> subprocess.CompletedProcess:

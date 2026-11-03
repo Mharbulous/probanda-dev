@@ -1,9 +1,11 @@
 import json
-import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
 
 SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "milestone-card-gate.py"
 PAGE = r"<matter>\0. DRAFT\Work Board 3.html"
@@ -13,8 +15,7 @@ COMPLETE = "mcp__plugin_lawyer_data__drafting_data__complete_job"
 
 
 def run(payload):
-    return subprocess.run([sys.executable, str(SCRIPT)], input=json.dumps(payload), capture_output=True,
-                          text=True, encoding="utf-8")
+    return run_hook(SCRIPT, json.dumps(payload), timeout=None, text=True, encoding="utf-8")
 
 
 def mcp_text(result):

@@ -1,9 +1,11 @@
 """The SessionStart note routes every outgoing letter, email or memo through /draft, and its words to the scrivener."""
 import json
-import subprocess
 import sys
 import unittest
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
 
 
 PLUGIN_DIR = Path(__file__).resolve().parents[1]
@@ -13,7 +15,7 @@ HOOK_ARG = "${CLAUDE_PLUGIN_ROOT}/hooks/correspondence-note.py"
 
 class NoteTests(unittest.TestCase):
     def test_note_shape_and_route(self):
-        result = subprocess.run([sys.executable, str(HOOK)], capture_output=True, text=True, encoding="utf-8")
+        result = run_hook(HOOK, timeout=None, text=True, encoding="utf-8")
         self.assertEqual(result.returncode, 0, result.stderr)
         output = json.loads(result.stdout)["hookSpecificOutput"]
         self.assertEqual(output["hookEventName"], "SessionStart")

@@ -1,12 +1,14 @@
 import json
 import os
 import re
-import subprocess
 import sys
 import tempfile
 import unittest
 import uuid
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tests"))
+from hook_runner import run_hook  # noqa: E402
 
 SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "session-lane-guard.py"
 PLUGIN_JSON = Path(__file__).resolve().parents[5] / "source" / "lawyer" / "plugin.json"
@@ -26,8 +28,7 @@ class SessionLaneGuardTest(unittest.TestCase):
 
     def run_hook(self, payload, session=None):
         payload = dict(payload, session_id=session or self.session)
-        return subprocess.run([sys.executable, str(SCRIPT)], input=json.dumps(payload),
-                              capture_output=True, text=True, env=self.env)
+        return run_hook(SCRIPT, json.dumps(payload), env=self.env, timeout=None, text=True)
 
     def skill(self, name, **kw):
         return self.run_hook({"hook_event_name": "PreToolUse", "tool_name": "Skill",
@@ -157,8 +158,7 @@ class SessionLaneGuardTest(unittest.TestCase):
         self.assertIn("hook error", result.stderr)
 
     def test_malformed_input_fails_open(self):
-        result = subprocess.run([sys.executable, str(SCRIPT)], input="not json",
-                                capture_output=True, text=True, env=self.env)
+        result = run_hook(SCRIPT, "not json", env=self.env, timeout=None, text=True)
         self.assertEqual(result.returncode, 0)
         self.assertIn("hook error", result.stderr)
 

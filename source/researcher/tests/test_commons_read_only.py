@@ -12,6 +12,9 @@ import sys
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
+
 
 PLUGIN_DIR = Path(__file__).resolve().parents[1]
 PLUGIN_JSON = PLUGIN_DIR / "plugin.json"
@@ -110,8 +113,7 @@ class CommonsReadOnlyGuardTests(unittest.TestCase):
         # A crash exits 1, which lets the write through.
         for payload in ("", "{not json"):
             with self.subTest(payload=payload):
-                result = subprocess.run([sys.executable, str(HOOK)], input=payload,
-                                        capture_output=True, text=True, encoding="utf-8")
+                result = run_hook(HOOK, payload, timeout=None, text=True, encoding="utf-8")
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"], "deny")
 

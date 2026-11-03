@@ -1,10 +1,12 @@
 import json
 import os
-import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
 
 SCRIPT = Path(__file__).resolve().parents[1] / "hooks" / "html-pages-gate.py"
 DRAFT = r"<matter>\0. DRAFT"
@@ -83,8 +85,7 @@ def run(payload, dev=False):
     if dev:
         env["COCLERK_HTML_DEV"] = "1"
     stdin = payload if isinstance(payload, str) else json.dumps(payload)
-    return subprocess.run([sys.executable, str(SCRIPT)], input=stdin, capture_output=True,
-                          text=True, encoding="utf-8", env=env)
+    return run_hook(SCRIPT, stdin, env=env, timeout=None, text=True, encoding="utf-8")
 
 
 def call(tool, tool_input, cwd=None, dev=False):
@@ -243,8 +244,7 @@ class GateTest(unittest.TestCase):
         env_payload = json.dumps({"tool_name": "Read", "tool_input": {"file_path": PAGE_PATHS[0]}})
         env = {k: v for k, v in os.environ.items() if k != "COCLERK_HTML_DEV"}
         env["COCLERK_HTML_DEV"] = "0"
-        result = subprocess.run([sys.executable, str(SCRIPT)], input=env_payload, capture_output=True,
-                                text=True, encoding="utf-8", env=env)
+        result = run_hook(SCRIPT, env_payload, env=env, timeout=None, text=True, encoding="utf-8")
         self.assertDenied(result)
 
     def test_the_exemption_is_set_in_settings_and_never_named_in_the_refusal(self):

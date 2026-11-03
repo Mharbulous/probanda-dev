@@ -7,12 +7,15 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
+
 HOOK = Path(__file__).resolve().parent.parent / "hooks" / "mail-send-gate.py"
 TOOL = "mcp__plugin_lawyer_contacts-calendars-email__mail_send_email"
 
 
 def run(stdin: str) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, str(HOOK)], input=stdin.encode("utf-8"), capture_output=True, timeout=30)
+    return run_hook(HOOK, stdin)
 
 
 def send(**tool_input) -> subprocess.CompletedProcess:

@@ -5,11 +5,13 @@ from __future__ import annotations
 import io
 import json
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hook_runner import run_hook  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import hook_io  # noqa: E402
@@ -106,7 +108,7 @@ def test_a_fail_closed_gate_that_cannot_find_its_helper_refuses(tmp_path, gate):
     copy = tmp_path / "a" / "b" / "hooks" / Path(gate).name
     copy.parent.mkdir(parents=True)
     shutil.copy(REPO / gate, copy)
-    result = subprocess.run([sys.executable, str(copy)], input=b"{}", capture_output=True, timeout=30)
+    result = run_hook(copy, b"{}")
     assert result.returncode == 2
     assert result.stdout == b""
     assert result.stderr.decode("utf-8").startswith(f"Refused: {copy.stem} cannot load its helper: ")

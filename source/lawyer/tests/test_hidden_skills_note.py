@@ -1,10 +1,12 @@
 """The SessionStart note carries the scrivener rule: who words correspondence, the dictation
 exception and its four edit types, and stopping when the scrivener is absent."""
 import json
-import subprocess
 import sys
 import unittest
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
 
 
 PLUGIN_DIR = Path(__file__).resolve().parents[1]
@@ -17,7 +19,7 @@ EDIT_TYPES = ("spelling", "punctuation", "grammar", "word choice")
 
 
 def note():
-    result = subprocess.run([sys.executable, str(HOOK)], capture_output=True, text=True, encoding="utf-8")
+    result = run_hook(HOOK, timeout=None, text=True, encoding="utf-8")
     assert result.returncode == 0, result.stderr
     output = json.loads(result.stdout)["hookSpecificOutput"]
     assert output["hookEventName"] == "SessionStart"

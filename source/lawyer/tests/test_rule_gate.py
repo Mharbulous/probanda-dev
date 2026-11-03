@@ -7,6 +7,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
+
 HOOK = Path(__file__).resolve().parent.parent / "hooks" / "rule-gate.py"
 PLUGIN_JSON = Path(__file__).resolve().parents[1] / "plugin.json"
 QUESTION = "Do you want me to enforce that rule for all future sessions?"
@@ -40,8 +43,7 @@ def run(tmp_path: Path, lines: list, tool_input: dict, transcript: str | None = 
     path.write_text("".join(json.dumps(line, ensure_ascii=False) + "\n" for line in lines), encoding="utf-8")
     payload = {"hook_event_name": "PreToolUse", "tool_name": "mcp__plugin_lawyer_data__preferences__write",
                "tool_input": tool_input, "transcript_path": str(path) if transcript is None else transcript}
-    return subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-                          capture_output=True, timeout=30)
+    return run_hook(HOOK, json.dumps(payload, ensure_ascii=False))
 
 
 def add(instruction: str) -> dict:

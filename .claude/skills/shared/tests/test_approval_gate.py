@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hook_runner import run_hook  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[4]
 HOOKS = {plugin: REPO / "source" / plugin / "hooks" / "one-way-gate.py"
@@ -56,8 +58,7 @@ class Session:
         answered = extra.pop("answered", True)
         payload = {"hook_event_name": "PreToolUse", "tool_name": name, "tool_input": tool_input,
                    "transcript_path": str(self.path), **extra}
-        result = subprocess.run([sys.executable, str(HOOKS[plugin])], input=json.dumps(payload).encode("utf-8"),
-                                capture_output=True, timeout=30)
+        result = run_hook(HOOKS[plugin], payload)
         assert result.returncode == 0, result.stderr
         if not result.stdout:
             if answered:

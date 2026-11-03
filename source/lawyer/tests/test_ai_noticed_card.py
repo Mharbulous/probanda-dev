@@ -16,6 +16,9 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
+
 HOOK = Path(__file__).resolve().parent.parent / "hooks" / "ai-noticed-card.py"
 MCP = Path(__file__).resolve().parent.parent / "mcp"
 SESSION = "5f0c2a9e-7b1d-4e3a-9c8b-2d6e1f4a7b30"
@@ -59,8 +62,7 @@ class AiNoticedCardHook(unittest.TestCase):
                 "permission_mode": "default", "hook_event_name": "Stop", "stop_hook_active": False}
         body.update(payload or {})
         env = dict(os.environ, COCLERK_CONFIG_PATH=str(self.config))
-        result = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(body), env=env,
-                                capture_output=True, text=True, timeout=30)
+        result = run_hook(HOOK, json.dumps(body), env=env, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stderr, "")
         return result.stdout

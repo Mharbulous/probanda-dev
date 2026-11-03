@@ -8,12 +8,15 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
+
 HOOK = Path(__file__).resolve().parent.parent / "hooks" / "inject-preferences.py"
 
 
 def run(config: Path) -> subprocess.CompletedProcess:
     env = {**os.environ, "COCLERK_CONFIG_PATH": str(config)}
-    return subprocess.run([sys.executable, str(HOOK)], env=env, capture_output=True, text=True, timeout=30)
+    return run_hook(HOOK, env=env, text=True)
 
 
 def setup(tmp_path: Path, entries: list | None, person: str | None = "bd") -> Path:

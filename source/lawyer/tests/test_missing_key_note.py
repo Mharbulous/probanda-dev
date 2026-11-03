@@ -16,6 +16,9 @@ from pathlib import Path
 
 import pytest
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / ".claude" / "skills" / "shared" / "tests"))
+from hook_runner import run_hook  # noqa: E402
+
 HOOK = Path(__file__).resolve().parent.parent / "hooks" / "missing-key-note.py"
 SECRET = "sb_secret_do-not-echo"
 CRED_TYPE_GENERIC = 1
@@ -43,7 +46,7 @@ def run(tmp_path: Path, target: str, **extra: str) -> subprocess.CompletedProces
     env = {k: v for k, v in os.environ.items() if k not in ("LEGAL_COMMONS_SUPABASE_KEY", "SUPABASE_SERVICE_ROLE_KEY")}
     env.update({"PROBANDA_CLOUD_KEY_TARGET": target, "COCLERK_CONFIG_PATH": str(tmp_path / "device" / "probanda.json")})
     env.update(extra)
-    return subprocess.run([sys.executable, str(HOOK)], env=env, capture_output=True, text=True, timeout=30)
+    return run_hook(HOOK, env=env, text=True)
 
 
 def store_key(target: str) -> None:
