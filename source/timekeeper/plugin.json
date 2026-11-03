@@ -13,7 +13,7 @@
     {
       "name": "lawyer",
       "marketplace": "Probanda_Legal_experimental",
-      "version": "^0.21.1"
+      "version": "^0.21.2"
     }
   ],
   "mcpServers": "./.mcp.json",
