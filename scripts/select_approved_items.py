@@ -10,11 +10,11 @@ Only the maintainer approves an item (design decisions 17 and 20), and
 recorded twice: on the item in the Suggestion Box (the cloud record's
 `item_list`, as `node cloud/suggestions/tools/triage.mjs show <id>` prints it or
 one row of suggestion-list's reply), and in the `### Decisions` list of the
-latest `## Agent Brief` that /suggestion-hitl-triage posted.
+latest `## Agent Brief` that /hitl-triage posted.
 An item is built only when both say approved; an item approved in one and not
 the other is not built and is reported. Both implementers run this before they
 dispatch fix-maker (.claude/commands/implement-suggestions.md,
-.claude/skills/suggestion-hitl-triage/SKILL.md step 6).
+.claude/skills/hitl-triage/references/suggestion-route.md step 6).
 
 Inputs:
 - `--issue`: the issue as JSON, either `gh issue view <n> --json body,comments`
