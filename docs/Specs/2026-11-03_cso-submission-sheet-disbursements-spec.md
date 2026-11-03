@@ -65,3 +65,18 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 - Whether v0.21.9's `bill-client` already has a disbursement step.
 - Whether the defensible-time-entries spec's receipt de-duplication has landed, so this spec reuses it instead of adding its own.
+
+## 11. Verification against HEAD (2026-11-03)
+
+| Spec claim or question | Finding at HEAD | Effect on the build |
+|---|---|---|
+| Skill path `bill-client/SKILL.md` | The source is `.claude/skills/bill-client/SKILL.md` | Stage 2 edits that file |
+| Does `bill-client` have a disbursement step? (§10) | No. The word "disbursement" does not occur in the file. Step 8 renders from `invoice_lines.json` only | Still needed: the call and the criterion 3 wording |
+| Has the defensible-time receipt de-duplication landed? (§10) | Yes. `.claude/skills/bill-client/scripts/collect_disbursements.py` (commit 8e79a1a7) reads a JSON list of stated receipts, groups them by file hash in one run with no store, and stops on two amounts for one receipt | Extend it. No second de-duplicator and no store |
+| Output shape | `freeze_invoice.py` reads `lines[]` (`line_key`, `line_kind`, `description`, `amount`, `receipt_hash`, `receipt_path`) and `subtotal`. `/issue-invoice` passes the file to it | Keep the shape, add fields only |
+| Tax status | `collect_disbursements.py` turns a missing `taxable` into `false`, which is a guess | Change it to null, flagged, outside `taxable_subtotal` |
+| `billing_settings` | The firm profile holds it as a free object whose schema describes "tax treatment of fees and each disbursement kind". No code reads a tax key yet | This spec names the key |
+| PDF library | PyMuPDF is used by the `/assemble` scripts, which refuse with a stated message when it is missing. `pdf_pages__images` classifies a page as `scanned` when images cover at least 50% and the text is invisible or covers under 5% | Use PyMuPDF, imported only for a folder read, with the same test. No new dependency |
+| What "Not Processed" means (§9 question 1) | `e-file/references/CAN/BC/BCSC/cso.md` says "a fee the registry has not yet collected shows 'Not Processed'". Whether it was collected later is not on the sheet | Listed and flagged. The practitioner decides, so the question needs no answer here |
+| Account history (§9 question 2) | No sign-in route exists | Out of scope |
+| Sample sheet or receipt in the repo | None. The layout is known only from the wording quoted in §2 and the Package ID procedure in `file-sorting/profiles/litigation-matter/notes/disbursement-notes.md` | The parser reports a file it cannot read instead of passing over it, and it has not been run on a real sheet |
