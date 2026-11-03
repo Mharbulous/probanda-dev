@@ -74,3 +74,20 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - `letters.md` §1, §3, §8 and §10, and the email-first rule in `/draft` SKILL.md.
 - The firm-profile tool's `letterhead` field and whether any tool reads the file.
 - Whether the invoice-template spec's renderer has landed and can be shared.
+
+## 11. Verification against HEAD (2026-11-03, base 4867a126)
+
+| Spec's claim or path | At HEAD | Result |
+|---|---|---|
+| `litigator/skills/draft/SKILL.md`, "An email request writes the `.eml` first" | `.claude/skills/draft/SKILL.md`, atom `draft.email-first`, same words | Confirmed |
+| `letters.md` §1, "A letter to the client is never a Writing (section 10)" | `.claude/skills/draft/references/letters.md` §1 | Confirmed, kept |
+| `letters.md` §3 lists the letter's parts | Same file §3: date, address, salutation, RE:, body, signature block | Confirmed |
+| `letters.md` §8, the covering email and "An email Writing" | Same file §8 | Confirmed, unchanged |
+| `letters.md` §10, the Markdown draft, "never build or approximate the letterhead", "write no sendable copy" | Same file §10 | Confirmed, the first two replaced |
+| Firm profile's `letterhead` | `source/lawyer/mcp/src/tools/practice/firm-profile.ts`: `practice_data__firm_profile` returns the path, null when none | Confirmed. No tool read the file from a Cowork sandbox, so the fill runs host-side as a `drafting_forms__draft_harness` step that reads the profile itself |
+| A fill step to reuse | `.claude/skills/publish/scripts/render_letterhead.py` fills the four tokens in every header and footer part. Its `warning` payload key prints a bold first paragraph | Reused by `.claude/skills/publish/scripts/client_letter.py`. `render` gained `scan=False`, because it otherwise places the scanned signature on the signer's machine |
+| The invoice-template spec's renderer | `.claude/skills/bill-client/scripts/render_invoice.py` landed: python-docx on a filled invoice template, with invoice-only tokens and a DRAFT mark | Not shared: nothing in it fits a letter that `render_letterhead.py` does not already do |
+| The board reads a client letter's first line | `source/lawyer/mcp/src/submission/board-attachments.ts` read it as UTF-8 | Confirmed, now reads the first paragraph through the bundle's `files/extract/docx.ts` |
+| `drafting_data__attach_to_board` takes a `.docx` | `forms/attach-to-board.ts` checks only the folder and that the file exists | Confirmed by test |
+| Code that gates the hold | None: `mail-send-gate.py` only names the first line in its message | `write_email` now refuses a held review draft as an attachment |
+| `<case_data_root>\_practice\firm\letterhead.docx` | `firmPaths` in `firm-profile.ts` | Confirmed |

@@ -89,7 +89,7 @@ const ATTACHMENT_KIND_LABELS: Record<AttachedDraft["kind"], string> = { client_l
  * ` · no Writing: shown on this proceeding's lowest-id live Writing's board` on a row of the
  * proceeding shown on a Writing's board, then its state: ` · missing`, ` · not in the draft folder`,
  * ` · unreadable (<code>)`, or ` · modified <date>` and on a client letter ` · review: <status>`
- * (`no review line` when its first line is none), then ` · pending: #<id>, …` or ` · pending: none`. */
+ * (`no review line` when a Markdown draft's first line is none, `approved` when a Word letter's is), then ` · pending: #<id>, …` or ` · pending: none`. */
 function attachedLines(attached: AttachedDraft[]): string[] {
   return [
     `## Attached (${attached.length})`,

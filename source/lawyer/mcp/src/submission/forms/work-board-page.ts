@@ -78,7 +78,7 @@ export interface AttachedDraft {
   /** The error code of a failed read; present only when `state` is `unreadable`. */
   error?: string;
   /** A present client letter's counsel's-review status: the rest of its first line when that line is
-   * a counsel's-review line (`pending`, `approved by …`), else null. Only that line is read and
-   * drawn, never the body. Null for a reply. */
+   * a counsel's-review line (`pending`, `approved by …`), else null, or `approved` on a Word letter.
+   * Only that line is kept and drawn, never the body. Null for a reply. */
   review: string | null;
 }

@@ -143,6 +143,26 @@ def template_parts(logo=True, body_image=False):
             for name, data in parts.items()}
 
 
+def first_page_template_parts():
+    """template_parts plus a first-page header with the four tokens, each in its own run."""
+    parts = template_parts()
+    runs = "".join("<w:r><w:t>{{%s}}</w:t></w:r>" % t
+                   for t in ("AUTHOR_NAME", "AUTHOR_EMAIL", "DIRECT_LINE", "FILE_NUMBER"))
+    parts["word/header1.xml"] = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<w:hdr xmlns:w="%s" xmlns:r="%s"><w:p>%s</w:p></w:hdr>' % (W, R, runs)).encode("utf-8")
+    edit = lambda name, old, new: parts.__setitem__(name, parts[name].decode("utf-8").replace(old, new).encode("utf-8"))
+    edit("word/_rels/document.xml.rels", "</Relationships>",
+         '<Relationship Id="rIdFirst" Type="%s/header" Target="header1.xml"/></Relationships>' % R)
+    edit("[Content_Types].xml", "</Types>",
+         '<Override PartName="/word/header1.xml" ContentType="application/'
+         'vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/></Types>')
+    edit("word/document.xml", "<w:sectPr>",
+         '<w:sectPr><w:headerReference w:type="first" r:id="rIdFirst"/>')
+    edit("word/document.xml", "</w:sectPr>", "<w:titlePg/></w:sectPr>")
+    return parts
+
+
 def write_zip(path, parts):
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
         for name, data in parts.items():

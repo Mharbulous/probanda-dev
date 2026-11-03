@@ -104,16 +104,19 @@ def load_json(path, what):
             sys.exit("%s %s is not valid JSON: %s" % (what, path, err))
 
 
-def load_profile(path):
-    profile = load_json(path, "firm profile")
+def check_profile(profile, where):
     missing = [k for k in ("firm_name", "roster") if not profile.get(k)]
     if missing:
         sys.exit("firm profile %s has no %s: save practice_data__firm_profile's response "
-                 "as it is" % (path, ", ".join(missing)))
+                 "as it is" % (where, ", ".join(missing)))
     if not profile.get("letterhead"):
         sys.exit("no letterhead is registered: register one with "
                  "practice_data__upsert_firm_profile's letterhead input")
     return profile
+
+
+def load_profile(path):
+    return check_profile(load_json(path, "firm profile"), path)
 
 
 def load_machine():
@@ -285,8 +288,9 @@ def verify(out_path, template_path, signed, values):
             sys.exit("output sectPr differs from the template")
 
 
-def render(payload, profile, out):
-    """Write the letter to `out`, or stop naming what is wrong."""
+def render(payload, profile, out, scan=True):
+    """Write the letter to `out`, or stop naming what is wrong. With scan False the signing
+    space stays blank whoever prepares it: client_letter.py's letter is signed by hand."""
     if os.path.exists(out):
         sys.exit("refusing to overwrite an existing file: " + out)
     check_payload(payload)
@@ -305,7 +309,7 @@ def render(payload, profile, out):
     check_template(parts)
 
     image = None
-    if signature and person == payload["signer"]:
+    if scan and signature and person == payload["signer"]:
         blob, image = signature_image(signature)
         add_signature(parts, names, blob)
 

@@ -5,7 +5,8 @@
 // written or read, so nothing about a file is ever stored.
 //
 // A client letter's counsel's-review status lives only in its first line (/draft letters.md section
-// 10). That one line is read, and nothing else of the file is read or drawn. A path that leaves the
+// 10), which in a Word letter is its first paragraph, and a Word letter with none is approved. That
+// one line is kept, and nothing else of the file is kept or drawn. A path that leaves the
 // matter's draft folder, by its stored or its real path, or whose real path lies where nothing is
 // read (files/zones.ts), is reported and never read; a path with nothing at it is reported as
 // missing, and one that cannot be read as unreadable, never dropped.
@@ -17,6 +18,7 @@
 import { closeSync, existsSync, openSync, readSync, realpathSync, statSync } from "node:fs";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
+import { docxText } from "../files/extract/docx.js";
 import { zoneProblem } from "../files/zones.js";
 import { runNameGate } from "../housekeeping/name-gate.js";
 import { buildProceedingBoard } from "./forms/build-proceeding-board.js";
@@ -42,6 +44,16 @@ function firstLine(file: string): string {
   } finally {
     closeSync(fd);
   }
+}
+
+/** A review draft's status: the rest of its hold line. With no hold line a Word letter is approved,
+ * since approval removes the line (letters.md section 10), and a Markdown draft has no status. Blank
+ * paragraphs above a Word letter's line are passed over, so one typed there never reads as approved. */
+export function reviewStatus(file: string): string | null {
+  const word = /\.docx$/i.test(file);
+  const line = word ? docxText(file).trimStart().split("\n")[0] : firstLine(file);
+  if (REVIEW_LINE.test(line)) return line.replace(REVIEW_LINE, "").trim();
+  return word ? "approved" : null;
 }
 
 /** Whether a path relative to the draft folder leaves it: the folder itself, `..`, a path under `..`,
@@ -94,8 +106,7 @@ export function attachedDrafts(dbPath: string, draftDir: string, section: WorkBo
         return { ...absent, state: "outside" };
       }
       const modified = localDate(statSync(abs).mtime);
-      const line = a.kind === "client_letter" ? firstLine(abs) : "";
-      return { ...entry, modified, state: "present", review: REVIEW_LINE.test(line) ? line.replace(REVIEW_LINE, "").trim() : null };
+      return { ...entry, modified, state: "present", review: a.kind === "client_letter" ? reviewStatus(abs) : null };
     } catch (err) {
       return { ...absent, state: "unreadable", error: (err as NodeJS.ErrnoException).code ?? "error" };
     }

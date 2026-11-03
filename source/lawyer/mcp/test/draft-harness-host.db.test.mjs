@@ -73,7 +73,7 @@ test("draft_harness: registered after publish_general, taking a step and that st
   assert.ok(at > 0, "not in buildToolDefinitions()");
   assert.equal(tools[at - 1].name, "drafting_forms__publish_general");
   assert.deepEqual(Object.keys(tools[at].inputSchema.properties), [
-    "step", "matter_root", "output_name", "folder", "to", "cc", "to_service_list", "proceeding_id", "filing_id", "subject", "body", "attachments",
+    "step", "matter_root", "output_name", "letter", "revises", "folder", "to", "cc", "to_service_list", "proceeding_id", "filing_id", "subject", "body", "attachments",
     "db_path", "statement_id", "context_paras", "source_path", "proposed",
   ]);
   assert.deepEqual(tools[at].inputSchema.required, ["step"]);
@@ -83,8 +83,8 @@ test("draft_harness: registered after publish_general, taking a step and that st
 
 test("draft_harness: an unknown step is refused, through the tool surface and directly, writing nothing", async (t) => {
   const f = fixture(t);
-  await assert.rejects(callTool({}, TOOL, { ...f.args, step: "send_email" }), /step must be one of: write_email, scrutiny_review$/);
-  assert.throws(() => f.run({ step: "send_email" }), /step must be one of: write_email, scrutiny_review \(got "send_email"\)/);
+  await assert.rejects(callTool({}, TOOL, { ...f.args, step: "send_email" }), /step must be one of: write_email, scrutiny_review, client_letter_fill, client_letter_approve$/);
+  assert.throws(() => f.run({ step: "send_email" }), /step must be one of: write_email, scrutiny_review, client_letter_fill, client_letter_approve \(got "send_email"\)/);
   assert.deepEqual(readdirSync(f.draft), []);
 });
 
