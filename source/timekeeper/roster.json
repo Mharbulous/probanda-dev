@@ -2,7 +2,7 @@
   "build-timeline": [
     "scripts"
   ],
-  "get-candidate-dates": [],
+  "triage-billing-dates": [],
   "time-entry-drafting": [],
   "time-pipeline-data": [],
   "time-sorting": [],

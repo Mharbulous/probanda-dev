@@ -19,6 +19,7 @@
   "ingest": [],
   "ingest-orchestrator": [],
   "invoice-reviewing": [],
+  "issue-invoice": [],
   "invoice-tracking": [],
   "localize": [],
   "matter-status-tracking": [],

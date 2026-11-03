@@ -99,7 +99,14 @@ Determine the operation the consumer asked for and call the corresponding `pract
 | upsert-rule-overlay | `practice_data__upsert_rule_overlay` | read `operations/consumer-contract.md` first |
 | rule-overlay | `practice_data__rule_overlay` | read `operations/consumer-contract.md` first |
 | import-invoices | `practice_data__import_invoices` | takes normalized rows; CSV parsing stays in invoice-tracking; rows Probanda's Cloud does not save (a non-billable matter's) are counted in `not_saved`, with each refused matter's question in `questions` to relay (see `operations/consumer-contract.md`) |
-| invoice-data | `practice_data__invoices_query` | rows + latest `last_import_at` staleness |
+| invoice-data | `practice_data__invoices_query` | rows + latest `last_import_at` staleness; `issue_state` is `issued` for an invoice recorded by issue-invoice |
+| upsert-time-entries | `practice_data__upsert_time_entries` | a matter's vetted entries, as `entries` or an `entries_file`, keyed by `source_key`; a locked entry is left alone and named |
+| upsert-rate, rates | `practice_data__upsert_rate`, `practice_data__rates_query` | a timekeeper's rate on a matter from an effective date, with its source document |
+| issue-invoice | `practice_data__issue_invoice` | one-way, on approval; the invoice, its lines and adjustments and the lock on their entries, in one write |
+| record-invoice-sent | `practice_data__record_invoice_sent` | sent date and copy of an issued invoice |
+| record-adjustment | `practice_data__record_adjustment` | a correction to an issued record, which itself never changes; an `adjustment_key` saves once |
+| invoice-lines | `practice_data__invoice_lines_query` | an issued invoice's lines, each line's entries, and adjustments |
+| what supports this charge | [`operations/defend-invoice-line.md`](operations/defend-invoice-line.md) | read it first; fetches nothing |
 | firm-profile | `practice_data__firm_profile` | read `operations/configuration.md` first |
 | upsert-firm-profile | `practice_data__upsert_firm_profile` | read `operations/configuration.md` first |
 | folder-map | `practice_data__folder_map` | read `operations/configuration.md` first |

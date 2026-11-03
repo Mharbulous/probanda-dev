@@ -64,6 +64,42 @@ SELECT t.native_id AS entry_id, p.id AS proposal_id, p.status, p.corroboration, 
  ORDER BY t.local_date, t.start_ts;
 ```
 
+**The uncovered read is its companion:** the proposals over the same dates that name no TimeCamp entry, for the estimates `/vet-billable-time` proposes. Pass this as `sql` with the same `params`:
+
+```sql
+SELECT p.id AS proposal_id, p.status, p.proposed_matter_ref, p.proposed_description, p.start_ts, p.end_ts,
+       p.evidence_chain, p.rationale, d.practitioner_note
+  FROM proposals p
+  LEFT JOIN determinations d ON d.proposal_id = p.id
+ WHERE date(p.start_ts) BETWEEN ? AND ?
+   AND p.status IN ('committed_silent','committed_after_ceremony') AND p.entered_by_hand_at IS NULL
+   AND NOT EXISTS (SELECT 1 FROM json_each(p.evidence_chain) c
+                    WHERE json_extract(c.value, '$.source_table') = 'timecamp_time_entries')
+ ORDER BY p.start_ts;
+```
+
+**The coverage read** gives `tie_out.py` the source log for a bill's dates. Pass this as `sql` with the same `params`, and write the rows to the file it is given as they come:
+
+```sql
+SELECT source_name, local_date, status, error_detail, fetched_at FROM source_fetch_log WHERE local_date BETWEEN ? AND ?;
+```
+
+## The evidence store
+
+Evidence with no table here lives in the `evidence` namespace of the time-pipeline store, reached through `/time-pipeline-data`: one row per item, its key `<family>:<native id>` and its value JSON. Keys come from the source's own ids, so saving again changes nothing. A proposal's evidence chain or a billing line cites a row by source `evidence:<family>` and that native id. Rows hold metadata and references only: never a mail body, document text or image bytes.
+
+| Family | Written by | Holds |
+|---|---|---|
+| `triage:<matter>:<date>` | `/triage-billing-dates` | Each date or range, strength, lawyer or staff, flags, and the evidence that put it on the list |
+| `service_list:<matter>` | `/triage-billing-dates` | Each person's name, role, addresses and numbers |
+| `document` | `/triage-billing-dates` | Path at the time, filename date, internal created, modified, last-modified-by and total editing time, PDF dates, file hash |
+| `filing` | `/triage-billing-dates` | Package id, submitted-by, submitted-at, document list, fees, receipt ids, file hash |
+| `received_mail` | `/triage-billing-dates` | Message-ID, received time, first evidence of opening, reply or forward time |
+| `call_window` | `/timecamping` | App, title digits, date, start, end, seconds, entry id, task id; an inferred call |
+| `statement` | `/timecamping` | The practitioner's words, when said, the date and matter they speak to |
+| `marker` | `/timecamping`, `/vet-billable-time` | The pattern, the ruling verbatim and when. No client content |
+| `estimate` | `/vet-billable-time` | Its basis rows, minutes, method, reason, who approved it and when |
+
 ## Bulk ingest file
 
 A day's source rows reach the database as one file, never as SQL and never through tool arguments. `timecamping_data__bulk_upsert` reads the file itself, one JSON object per line:

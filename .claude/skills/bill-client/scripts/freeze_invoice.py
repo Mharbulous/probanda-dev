@@ -7,8 +7,9 @@
 is {"matter", "invoice_number", "issue_date", "date_to", "amount", "taxes", "signed_copy_path",
 "trust_application"}, amount and taxes as decimal strings, trust_application optional.
 
-Writes two files to --out-dir, `<date> Invoice <number> audit.json` and `.md`, and refuses if either
-exists: a frozen copy is never rewritten. The JSON file's sha256 is the snapshot hash, printed and
+Writes two files to --out-dir, `<date> Invoice <number> audit.json` and `.md`. A frozen copy is never
+rewritten: if they exist and the JSON is this same copy, it reports them and writes nothing to them, so an
+issue that stopped can resume; any other content is refused. The JSON file's sha256 is the snapshot hash, printed and
 named in issue_records.json, which goes to --data-dir with the lines and adjustments for the issue
 record. Refuses when fees, disbursements and taxes do not add up to the amount, a fee line has neither
 evidence nor an estimate basis, or the signed copy cannot be read. Prints one JSON line. On a
@@ -118,19 +119,20 @@ def freeze(args):
     out_dir = Path(args.out_dir)
     stem = f"{meta['issue_date']} Invoice {meta['invoice_number']} audit"
     json_path, report_path = out_dir / f"{stem}.json", out_dir / f"{stem}.md"
-    taken = [str(p) for p in (json_path, report_path) if p.exists()]
-    if taken:
-        raise Refusal("already_frozen", "; ".join(taken))
     snapshot = {"invoice": {**meta, "signed_copy_hash": signed_hash}, "lines": line_map["lines"], "disbursements": disbursements.get("lines", []),
                 "not_billed": line_map.get("not_billed", []), "adjustments": line_map["adjustments"],
                 "unexplained": line_map.get("unexplained", {}), "gaps": line_map.get("gaps", []), "not_candidates": line_map.get("not_candidates", [])}
     body = json.dumps(snapshot, indent=2, sort_keys=True).encode("utf-8")
     digest = hashlib.sha256(body).hexdigest()
-    out_dir.mkdir(parents=True, exist_ok=True)
-    with json_path.open("xb") as handle:
-        handle.write(body)
-    with report_path.open("xb") as handle:
-        handle.write(report(snapshot).encode("utf-8"))
+    taken = [str(p) for p in (json_path, report_path) if p.exists()]
+    if taken and not (json_path.exists() and report_path.exists() and json_path.read_bytes() == body):
+        raise Refusal("already_frozen", "; ".join(taken))
+    if not taken:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        with json_path.open("xb") as handle:
+            handle.write(body)
+        with report_path.open("xb") as handle:
+            handle.write(report(snapshot).encode("utf-8"))
 
     data_dir = Path(args.data_dir)
     data_dir.mkdir(parents=True, exist_ok=True)

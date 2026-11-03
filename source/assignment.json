@@ -20,6 +20,7 @@
         "ingest",
         "ingest-orchestrator",
         "invoice-reviewing",
+        "issue-invoice",
         "invoice-tracking",
         "localize",
         "matter-status-tracking",
@@ -193,7 +194,7 @@
       ],
       "skills": [
         "build-timeline",
-        "get-candidate-dates",
+        "triage-billing-dates",
         "time-entry-drafting",
         "time-pipeline-data",
         "time-sorting",

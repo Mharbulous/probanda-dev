@@ -17,7 +17,7 @@ and exits 0 on a pass and 1 on a fail. A bad input stops with a message on stder
 Inputs:
     --entries       the connector's out_file: a JSON array of TimeCamp entries
     --connector-*   the count and totals.hours the same connector call returned
-    --candidates    the /get-candidate-dates list, Markdown, one table by date
+    --candidates    the /triage-billing-dates list, Markdown, one table by date
     --judged        JSON lines, each with a "date": the dates /timecamping has judged
     --late-entries  a connector out_file for one earlier date, for a late line
     --vetted        {"people": {user_name: {"initials", "rate", "rate_source"}},

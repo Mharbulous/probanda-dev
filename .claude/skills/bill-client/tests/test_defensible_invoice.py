@@ -137,9 +137,15 @@ class Defensible(unittest.TestCase):
     def test_the_frozen_copy_is_never_rewritten(self):
         _, first = self.freeze(self.subtotal())
         before = Path(first["snapshot_path"]).read_bytes()
-        code, second = self.freeze(self.subtotal())
+        code, second = self.freeze(self.subtotal(), {"trust_application": {"applied": "1.00"}})
         self.assertEqual((code, second["error"]), (1, "already_frozen"))
         self.assertEqual(Path(first["snapshot_path"]).read_bytes(), before)
+
+    def test_an_issue_that_stopped_can_resume_from_the_same_copy(self):
+        _, first = self.freeze(self.subtotal())
+        code, again = self.freeze(self.subtotal())
+        self.assertEqual(code, 0)
+        self.assertEqual(again["snapshot_hash"], first["snapshot_hash"])
 
     def test_a_total_that_does_not_tie_or_a_missing_signed_copy_writes_nothing(self):
         code, out = self.freeze("1.00")

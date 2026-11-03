@@ -274,6 +274,9 @@ Given a matter's candidate-dates file, run Steps 0 to 7 once per date, in this o
 - **Recheck the matter's own entries.** This run reviews the entries already on the matter's task as well as the default queue. Being opened with a candidate list is the practitioner-directed recheck `reference/TimeCampEntries.md` describes.
 - **Skip a date already judged.** The marks are in `<matter-data folder>\timecamping\judged-dates.jsonl`, the folder as `shared/workspace-output-rule.md` resolves it.
 - **Judged mark.** A date is judged when none of its proposals is `pending` and the practitioner has answered Step 7 for each entry. Only then append one line: `{"date": "YYYY-MM-DD", "judged_at": "<UTC now>"}`. A date that stops at the Step 3 gate or a failed source gets no mark: report it, and go on to the next date.
+- **No duplicate proposals.** Before writing a date's proposals on a re-run, read its live proposals. Keep one that has the same span and matter, whatever has been answered about it.
+- **Calls in window titles.** For each match in `<matter-data folder>\triage-billing-dates\phone-matches.json` on this date, save a `call_window` row to `/timecamping-data`'s evidence store and cite it in the block's evidence chain. A match off the matter's task or with no entry is direct evidence of a call on the matter: propose it as a block on the matter, for a ceremony. A title that is only a number names no matter by itself, so the service list is what ties it.
+- **What the practitioner says.** Save a statement about a date or matter that the evidence does not hold ("I know I called the client that day") verbatim as a `statement` row, with when it was said, and cite it. Save a ruling that a window pattern is never billable as a `marker` row: the pattern, the ruling verbatim and when. A pattern holds no client content.
 - **At the end,** return the Possible unbilled time list across all the dates, and each date left without a mark and why.
 
 ## Queries

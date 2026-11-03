@@ -238,8 +238,9 @@ registry. On subsequent runs this check passes through immediately.
 
 Default target is today in the practitioner's local timezone. Accepted user
 inputs: a single date ("build timeline for 2026-04-15"), a relative date
-("yesterday", "today"), or a range ("build timeline for this week"). Interpret
-the input in local time (from `probanda.json` → `time_tracking.timezone`,
+("yesterday", "today"), a range ("build timeline for this week"), or a list of
+dates, such as one matter's triage dates, each run once and nothing between them.
+Interpret the input in local time (from `probanda.json` → `time_tracking.timezone`,
 default `"America/Vancouver"` if unset),
 then convert to UTC for the concrete `[start_ts, end_ts]` pair used
 downstream. For example, "2026-04-15 in Vancouver" becomes the UTC range
