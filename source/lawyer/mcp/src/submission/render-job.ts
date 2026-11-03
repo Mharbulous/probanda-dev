@@ -20,11 +20,12 @@
 // host included. A session never reads either file itself (#324).
 
 import { randomUUID } from "node:crypto";
-import { closeSync, existsSync, openSync, readFileSync, renameSync, statSync, unlinkSync, utimesSync, writeFileSync, writeSync } from "node:fs";
+import { closeSync, existsSync, openSync, readFileSync, statSync, utimesSync, writeSync } from "node:fs";
 import { join } from "node:path";
 
 import { inOneCall } from "../call-memo.js";
 import { readLockKey, removeLockIfKey } from "../lock-claim.js";
+import { sleepSync, writeStatusFile } from "../status-file.js";
 import { hostLocalPath } from "./lock.js";
 
 export const STATUS_FILE = "workboard-status.js";
@@ -178,45 +179,6 @@ function acquire(lockFile: string, dbPath: string, stall: number): Acquired {
     }
   }
   return { holder: readLock(lockFile) };
-}
-
-function sleepSync(ms: number): void {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-}
-
-/**
- * Writes `text` to `target` through a sibling temp file and a rename, so a reader never sees half a
- * file. A rename refused because another process holds the target (the OneDrive client, typically)
- * is retried; past the budget the temp file is removed and the error code returned. Never throws.
- */
-export function writeStatusFile(
-  target: string,
-  text: string,
-  { attempts = 10, delayMs = 50 }: { attempts?: number; delayMs?: number } = {}
-): string | null {
-  const temp = `${target}.${process.pid}.tmp`;
-  try {
-    writeFileSync(temp, text, "utf-8");
-  } catch (err) {
-    return (err as NodeJS.ErrnoException).code ?? "UNKNOWN";
-  }
-  let code = "UNKNOWN";
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    try {
-      renameSync(temp, target);
-      return null;
-    } catch (err) {
-      code = (err as NodeJS.ErrnoException).code ?? "UNKNOWN";
-      if (!["EPERM", "EBUSY", "EACCES"].includes(code)) break;
-      if (attempt < attempts - 1) sleepSync(delayMs);
-    }
-  }
-  try {
-    unlinkSync(temp);
-  } catch {
-    // Already gone.
-  }
-  return code;
 }
 
 function ours(job: Job): boolean {

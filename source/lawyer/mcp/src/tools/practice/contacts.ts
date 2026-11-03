@@ -7,7 +7,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-import { caseDataFolder } from "../../case/backend.js";
+import { caseDataFolder } from "../../case/locate.js";
 import { listCaseParties } from "../../case/list-parties.js";
 import { NotFoundError, ValidationError } from "../../errors.js";
 import { CASE_DATA_FOLDER } from "../../files/matter-root.js";

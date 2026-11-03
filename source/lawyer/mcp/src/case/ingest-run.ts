@@ -20,7 +20,7 @@ import { exclusiveHeld, matterRevision } from "./case-lock.js";
 import { acquireLock, hostLocalDir, lockKey, type LockSite } from "../data-lock.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { classifyPdfPages, pdfPageImages } from "../files/extract/page-images.js";
-import { caseDataFolder } from "./backend.js";
+import { caseDataFolder } from "./locate.js";
 import { runCaseScript } from "./case-script.js";
 import { dropStagedResults, stagedResultPath } from "./stage-result.js";
 

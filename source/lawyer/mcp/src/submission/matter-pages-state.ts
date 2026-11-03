@@ -9,7 +9,7 @@ import { DataServerError } from "../errors.js";
 import type { Category, WorkBoardData, WorkBoardTicket } from "./forms/render-work-board.js";
 import type { MatterTodos } from "./matter-todos.js";
 import { recordsDir, sha256 } from "./render-manifest.js";
-import { writeStatusFile } from "./render-job.js";
+import { writeStatusFile } from "../status-file.js";
 
 export const PAGES_STATE_FILE = "matter-pages-state.json";
 

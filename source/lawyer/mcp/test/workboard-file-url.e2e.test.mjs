@@ -22,7 +22,8 @@ const { submissionDataExecute } = await import("../build/submission/backend.js")
 const { submissionFormsBootstrap, submissionFormsRender } = await import("../build/submission/forms.js");
 const { renderWorkBoardHtml } = await import("../build/submission/forms/workboard-shell.js");
 const { submissionFormsBoardCard } = await import("../build/submission/matter-pages.js");
-const { writeStatusFile, STATUS_FILE } = await import("../build/submission/render-job.js");
+const { STATUS_FILE } = await import("../build/submission/render-job.js");
+const { writeStatusFile } = await import("../build/status-file.js");
 const { CLIENT, seedFilings, startChild } = await import("./fixtures/render-job-helpers.mjs");
 const { sectionOf } = await import("./fixtures/forms-render-seeds.mjs");
 

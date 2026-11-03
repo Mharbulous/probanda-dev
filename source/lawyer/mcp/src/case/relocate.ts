@@ -15,7 +15,7 @@ import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs, WRITE_TIMEOUT_MS } from "../python-timeout.js";
 import { caseDataMigrateScriptsDir } from "../repo-root.js";
 import { acquireDataLock } from "../submission/lock.js";
-import { caseDataFolder } from "./backend.js";
+import { caseDataFolder } from "./locate.js";
 import { acquireCaseLock, withExclusive, type CaseLock } from "./case-lock.js";
 
 const RELOCATE_DRIVER = String.raw`

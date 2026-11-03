@@ -4,7 +4,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, normalize, resolve, win32 as pathWin32 } from "node:path";
 
-import { caseDataFolder } from "../case/backend.js";
+import { caseDataFolder } from "../case/locate.js";
 import { DataServerError } from "../errors.js";
 import { canonicalRoot } from "./scope.js";
 
@@ -12,7 +12,7 @@ import { canonicalRoot } from "./scope.js";
  * /matter-data keeps updated with the same content so an older copy of the plugin still finds the
  * matter. Either one marks an initialized matter. */
 export const POINTER_FILES: readonly string[] = ["probanda.json", "coclerk.json"];
-/** The pointer schema version /matter-data writes (case/backend.ts EXPECTED_SCHEMA_VERSION). */
+/** The pointer schema version /matter-data writes (case/locate.ts EXPECTED_SCHEMA_VERSION). */
 const POINTER_SCHEMA_VERSION = 5;
 const LEGACY_ARTIFACTS_DIR = "9. AI";
 const SUBMISSION_DB_FILE = "submission.sqlite";

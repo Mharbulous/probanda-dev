@@ -37,19 +37,15 @@ import { EXECUTE_TIMEOUT_MS, pythonTimeoutMs, READ_TIMEOUT_MS } from "../python-
 import { resolveShippedRoot } from "../repo-root.js";
 import { acquireCaseLock, advanceRevision, type CaseLock } from "./case-lock.js";
 import CASE_DATA_RESOLVER from "./case-data-resolver.py.js";
-
-/** The prefix of the sidecar folder execute commits through; one left behind is a half-commit (#612). */
-export const HALF_COMMIT_PREFIX = ".coclerk_execute_";
+import { HALF_COMMIT_PREFIX, LOCATE_PY } from "./locate.js";
 
 // The resolver itself comes first: the matter-data skill's bypass-free case_data_resolver.py,
 // pasted in at build time (scripts/resolver.mjs), so this helper imports nothing at run time.
-const PY_HELPER = CASE_DATA_RESOLVER + String.raw`
+// The pointer read follows it, from case/locate.ts, which the files server runs on its own.
+const PY_HELPER = CASE_DATA_RESOLVER + LOCATE_PY + String.raw`
 import json, os, re, shutil, sqlite3, sys, tempfile
 
-LEGACY_ARTIFACTS_DIR = '9. AI'
 EXPECTED_USER_VERSION = 90
-EXPECTED_SCHEMA_VERSION = 5
-POINTER_NAMES = ('probanda.json', 'coclerk.json')
 DBS = ('main', 'law', 'privileged')
 DUMP_HEADER = "-- Case Data evidence dump -- schema v9.0"
 
@@ -88,39 +84,6 @@ def read_user_version(sqlite_path):
             con.close()
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-
-
-def read_pointer(matter_root):
-    # probanda.json first; coclerk.json is the legacy name, kept updated on every write so an
-    # older copy of the plugin still finds the matter (spec 2026-10-16, Option 1).
-    root_ptrs = [norm_join(matter_root, name) for name in POINTER_NAMES]
-    legacy_ptrs = [norm_join(matter_root, LEGACY_ARTIFACTS_DIR, name) for name in POINTER_NAMES]
-    pointer_path = next((p for p in root_ptrs + legacy_ptrs if os.path.exists(p)), None)
-    if pointer_path is None:
-        raise SystemExit("probanda.json not found; initialize the matter first.")
-
-    with open(pointer_path, 'rb') as fh:
-        raw = fh.read()
-    pointer = json.loads(raw.replace(b'\x00', b'').decode('utf-8'))
-
-    schema_version = pointer.get('schema_version')
-    if schema_version != EXPECTED_SCHEMA_VERSION:
-        raise SystemExit(
-            "stale pointer -- re-run initialize "
-            f"(the pointer is schema_version {schema_version!r}, expected {EXPECTED_SCHEMA_VERSION})")
-    return root_ptrs, pointer_path in legacy_ptrs, pointer_path, pointer
-
-
-def locate_case_data_dir(matter_root):
-    """The matter-data folder resolve_pointer chooses, found without writing: no pointer heal, no
-    legacy migration, no database version guard. A legacy (9. AI) pointer means no execute has
-    run since, so skipping its migration cannot hide an execute sidecar."""
-    matter_root = os.path.normpath(matter_root)
-    pointer = read_pointer(matter_root)[3]
-    case_data_dir, _ = resolve_case_data_dir(
-        matter_root, pointer.get('case_data_dir'), case_data_root(matter_root),
-        norm_join(matter_root, LEGACY_ARTIFACTS_DIR))
-    return {'case_data_dir': case_data_dir}
 
 
 def resolve_pointer(matter_root):
@@ -486,8 +449,6 @@ def do_execute(req, resolved):
 def main():
     req = json.load(sys.stdin)
     op = req['op']
-    if op == 'locate':
-        return locate_case_data_dir(req['matter_root'])
     resolved = resolve_pointer(req['matter_root'])
     if op == 'query':
         return do_query(req, resolved)
@@ -508,11 +469,6 @@ interface CaseQueryRequest {
   matter_root: string;
   sql: string;
   params?: unknown[];
-}
-
-interface CaseLocateRequest {
-  op: "locate";
-  matter_root: string;
 }
 
 /** One statement of a statement-list execute. `refuse` marks a guard: a row it returns stops the write. */
@@ -559,7 +515,7 @@ const EXECUTE_TIMEOUT_ADVICE =
   "not exist before has none); delete the folder once reconciled. evidence.sql may not yet reflect a " +
   "committed write.";
 
-function runHelper(request: CaseQueryRequest | CaseLocateRequest | CaseExecuteRequest, env: NodeJS.ProcessEnv): Record<string, unknown> {
+function runHelper(request: CaseQueryRequest | CaseExecuteRequest, env: NodeJS.ProcessEnv): Record<string, unknown> {
   const execute = request.op === "execute";
   return runPythonDriver({
     label: "matter-data sqlite helper",
@@ -578,12 +534,6 @@ export function caseDataQuery(
 ): { rows: Record<string, unknown>[]; warning?: string | null } {
   const result = runHelper({ op: "query", matter_root: matterRoot, sql, params }, process.env);
   return result as { rows: Record<string, unknown>[]; warning?: string | null };
-}
-
-/** The matter's matter-data folder as query and execute resolve it, found without writing
- * anything (no pointer heal, no legacy migration). It may not exist. */
-export function caseDataFolder(matterRoot: string, env: NodeJS.ProcessEnv = process.env): string {
-  return (runHelper({ op: "locate", matter_root: matterRoot }, env) as { case_data_dir: string }).case_data_dir;
 }
 
 /** The cross-database trigger layer (#12), read fresh for every write from the matter-data

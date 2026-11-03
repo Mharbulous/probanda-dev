@@ -20,7 +20,8 @@ after(() => rmSync(LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, re
 
 const { submissionDataExecute } = await import("../build/submission/backend.js");
 const { callTool } = await import("../build/dispatch.js");
-const { awaitBackgroundJobs, backgroundJobStatus, writeStatusFile, STATUS_FILE } = await import("../build/submission/render-job.js");
+const { awaitBackgroundJobs, backgroundJobStatus, STATUS_FILE } = await import("../build/submission/render-job.js");
+const { writeStatusFile } = await import("../build/status-file.js");
 const { hostLocalPath } = await import("../build/submission/lock.js");
 const { CLIENT, seedFilings, startChild } = await import("./fixtures/render-job-helpers.mjs");
 const { createDispatchContext } = await import("../build/index.js");

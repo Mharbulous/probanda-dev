@@ -1,7 +1,7 @@
 // The one case-data resolver (issue #177): the matter-data skill's case_data_resolver.py, which
-// resolve_paths.py imports and the build pastes into case/backend.ts. These cases run it through the
-// backend's `locate` op, the cases test_resolve_paths.py runs through resolve_paths, so both readers
-// are held to the same behaviour (ADR 0013's order).
+// resolve_paths.py imports and the build pastes into case/backend.ts and case/locate.ts. These cases
+// run it through caseDataFolder, the cases test_resolve_paths.py runs through resolve_paths, so both
+// readers are held to the same behaviour (ADR 0013's order).
 
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -12,7 +12,7 @@ import test, { after } from "node:test";
 import { resolverText } from "../scripts/resolver.mjs";
 import { writeCaseData } from "./helpers/matter-data-fixture.mjs";
 
-const { caseDataFolder } = await import("../build/case/backend.js");
+const { caseDataFolder } = await import("../build/case/locate.js");
 
 const scratches = [];
 after(() => scratches.forEach((dir) => rmSync(dir, { recursive: true, force: true })));

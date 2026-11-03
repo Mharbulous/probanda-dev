@@ -18,7 +18,7 @@ import {
   type PracticeBoardItem,
 } from "../../submission/forms/practice-board-shell.js";
 import { humanise } from "../../submission/matter-dates.js";
-import { writeStatusFile } from "../../submission/render-job.js";
+import { writeStatusFile } from "../../status-file.js";
 import { active_deadlines, open_tasks } from "./reads.js";
 import { isBillable } from "./shared.js";
 

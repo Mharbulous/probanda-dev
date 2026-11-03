@@ -15,7 +15,7 @@ import { DataServerError } from "../errors.js";
 import { orphanClaims, readLockKey, removeLockIfKey } from "../lock-claim.js";
 import type { ShippedFrom } from "../repo-root.js";
 import { STAMP_KEYS, stampProblem } from "./index.js";
-import { writeStatusFile } from "../submission/render-job.js";
+import { writeStatusFile } from "../status-file.js";
 import { readLayerBytes } from "./tree.js";
 
 export interface SidecarRow {

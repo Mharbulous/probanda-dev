@@ -102,10 +102,15 @@ async function bundle(entry, out, extraBanner = "") {
     },
     outfile: out,
     write: false,
+    metafile: true,
   });
   const text = result.outputFiles[0].text;
   const stamp = createHash("sha256").update(text).digest("hex").slice(0, 12);
   await writeFile(out, text.replaceAll(STAMP_PLACEHOLDER, stamp));
+  // Which source modules this bundle holds, read by test/bundle-modules.unit.test.mjs.
+  const metafile = resolve(root, "build", `metafile-${entry.replace(/\.ts$/, "")}.json`);
+  await mkdir(dirname(metafile), { recursive: true });
+  await writeFile(metafile, JSON.stringify(result.metafile));
 }
 
 await bundle("index.ts", outfile, REQUIRE_SHIM);

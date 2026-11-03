@@ -20,7 +20,7 @@ import { DataServerError, ValidationError } from "../errors.js";
 import { resolveCaseDataRoot } from "../practice/matter-data-root.js";
 import { caseDataExecuteStatements, type CaseStatement, type CaseStatementGroup } from "./backend.js";
 import { acquireIngestWriteLock, matterRevision, type CaseLock } from "./case-lock.js";
-import { caseDataFolder } from "./backend.js";
+import { caseDataFolder } from "./locate.js";
 import { runCaseScript } from "./case-script.js";
 import {
   affidavitRun, checkRun, CONTRACT_VERSION, noteWriteWait, outsideMatter, recordRefusal, recordWrite, runForWrite, storedForm,

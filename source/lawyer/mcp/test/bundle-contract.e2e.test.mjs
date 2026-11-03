@@ -6,10 +6,10 @@
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { copyFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import test, { after } from "node:test";
@@ -21,6 +21,11 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const MCP_ROOT = resolve(HERE, "..");
 const REPO_ROOT = resolve(MCP_ROOT, "..", "..", "..");
 const LITIGATION_BUNDLE = join(MCP_ROOT, "dist", "litigation-mcp.js");
+const FILE_MANAGER_BUNDLE = join(REPO_ROOT, "source", "file-manager", "files-mcp", "dist", "file-manager-mcp.js");
+const TIMECAMP_BUNDLE = join(REPO_ROOT, "source", "timekeeper", "timecamp-mcp", "dist", "timecamp-mcp.js");
+const CONTACTS_BUNDLE = join(
+  REPO_ROOT, "source", "lawyer", "contacts-calendars-email-mcp", "dist", "contacts-calendars-email-mcp.js"
+);
 const CANLII_BUNDLE = join(REPO_ROOT, "source", "researcher", "canlii-mcp", "dist", "canlii-mcp.js");
 
 // A spawned bundle's bootstrap starts the background render job (#589): keep its locks and status
@@ -29,7 +34,11 @@ process.env.COCLERK_SUBMISSION_LOCK_ROOT = mkdtempSync(join(tmpdir(), "coclerk-b
 after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }));
 
 const { resolveRepoRoot } = await import("../build/repo-root.js");
-const { buildToolDefinitions } = await import("../build/schema-gen.js");
+const {
+  buildToolDefinitions,
+  buildFileManagerToolDefinitions,
+  buildContactsCalendarsEmailToolDefinitions,
+} = await import("../build/schema-gen.js");
 
 // Backslash-only for the drive form: `[A-Za-z]:[\\/]` would also match `p:/`
 // inside an ordinary `http://` URL string. Nothing in these bundles should
@@ -45,7 +54,7 @@ const STAMP_PLACEHOLDER = "__LITIGATION_BUILD_STAMP_PLACEHOLDER__";
 const STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 
 test("no tracked dist bundle contains an absolute host path or an unsubstituted define", () => {
-  for (const bundle of [LITIGATION_BUNDLE, CANLII_BUNDLE]) {
+  for (const bundle of [LITIGATION_BUNDLE, FILE_MANAGER_BUNDLE, TIMECAMP_BUNDLE, CONTACTS_BUNDLE, CANLII_BUNDLE]) {
     const text = readFileSync(bundle, "utf-8");
     const hits = text.match(HOST_PATH) ?? [];
     assert.deepEqual(hits, [], `${bundle} bakes a host path: ${hits.join(", ")}`);
@@ -148,18 +157,19 @@ test("a server spawned before a rebuild reports server_outdated from its bootstr
 });
 
 /**
- * Spawns `dist/litigation-mcp.js` copied ALONE into a marker-free tmpdir, with
- * only the pdfium.wasm that ships beside it in dist/ --
+ * Spawns `bundle` (by default `dist/litigation-mcp.js`) copied ALONE into a marker-free tmpdir, with
+ * only the pdfium.wasm that ships beside it in dist/, where one does --
  * nothing else from the repo is present, and the tmpdir's own ancestry (under
  * the OS temp root) holds no repo marker either. This is the same shape as an
  * extracted .plugin install: no .git, no .claude/skills, anywhere above the
  * running file.
  */
-async function withDistOnlyServer(env, fn) {
+async function withDistOnlyServer(env, fn, bundle = LITIGATION_BUNDLE) {
   const dir = mkdtempSync(join(tmpdir(), "coclerk-dist-only-"));
-  const bundleCopy = join(dir, "litigation-mcp.js");
-  copyFileSync(LITIGATION_BUNDLE, bundleCopy);
-  copyFileSync(join(dirname(LITIGATION_BUNDLE), "pdfium.wasm"), join(dir, "pdfium.wasm"));
+  const bundleCopy = join(dir, basename(bundle));
+  copyFileSync(bundle, bundleCopy);
+  const wasm = join(dirname(bundle), "pdfium.wasm");
+  if (existsSync(wasm)) copyFileSync(wasm, join(dir, "pdfium.wasm"));
 
   const transport = new StdioClientTransport({
     command: process.execPath,
@@ -195,6 +205,27 @@ test("the dist-only bundle completes an MCP handshake and registers every tool",
       assert.equal(tools.length, buildToolDefinitions().length);
     },
   );
+});
+
+test("the dist-only files bundle completes an MCP handshake and registers every tool", async () => {
+  await withDistOnlyServer({ ...process.env, COCLERK_REPO_ROOT: REPO_ROOT }, async (client) => {
+    const { tools } = await client.listTools();
+    assert.equal(tools.length, buildFileManagerToolDefinitions().length);
+  }, FILE_MANAGER_BUNDLE);
+});
+
+test("the dist-only contacts-calendars-email bundle completes an MCP handshake and registers every tool", async () => {
+  await withDistOnlyServer({ ...process.env, COCLERK_REPO_ROOT: REPO_ROOT }, async (client) => {
+    const { tools } = await client.listTools();
+    assert.equal(tools.length, buildContactsCalendarsEmailToolDefinitions().length);
+  }, CONTACTS_BUNDLE);
+});
+
+test("the dist-only timecamp bundle completes an MCP handshake and registers its tools", async () => {
+  await withDistOnlyServer({ ...process.env, COCLERK_REPO_ROOT: REPO_ROOT }, async (client) => {
+    const { tools } = await client.listTools();
+    assert.ok(tools.length >= 1);
+  }, TIMECAMP_BUNDLE);
 });
 
 // #591's acceptance: no model call anywhere in session entry. The packaged bundle runs

@@ -6,7 +6,7 @@ import { basename, dirname, extname, join } from "node:path";
 
 import { manifestDir, readManifest, type RenderManifest } from "../render-manifest.js";
 import { readExistingRevision, sanitizeForPath } from "../writing-folder.js";
-import { writeStatusFile } from "../render-job.js";
+import { writeStatusFile } from "../../status-file.js";
 import { WORKBOARD_DATA_FILE } from "./render-work-board.js";
 import { DataServerError, ValidationError } from "../../errors.js";
 import { type DocumentOutput } from "./render-documents.js";

@@ -4,7 +4,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
 
-import { HALF_COMMIT_PREFIX, caseDataFolder } from "../case/backend.js";
+import { HALF_COMMIT_PREFIX, caseDataFolder } from "../case/locate.js";
 import { DataServerError } from "../errors.js";
 import { findPointer, validateMatterRoot } from "../files/matter-root.js";
 import { templateRoot } from "./resolve.js";

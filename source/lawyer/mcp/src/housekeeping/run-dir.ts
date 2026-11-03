@@ -18,7 +18,7 @@ import { win32 as pathWin32 } from "node:path";
 import { DataServerError } from "../errors.js";
 import { existingCaseDataFolder, validateMatterRoot } from "../files/matter-root.js";
 import { zoneProblem } from "../files/zones.js";
-import { writeStatusFile } from "../submission/render-job.js";
+import { writeStatusFile } from "../status-file.js";
 import { type Approval, type Proposal, validateApproval, validateProposal } from "./proposal.js";
 
 /**
@@ -253,7 +253,7 @@ export function appendLineDurably(path: string, line: string): void {
   }
 }
 
-/** Temp-then-rename with the bounded retry OneDrive needs (submission/render-job.ts). */
+/** Temp-then-rename with the bounded retry OneDrive needs (status-file.ts). */
 export function writeReplacing(path: string, text: string): void {
   const code = writeStatusFile(path, text);
   if (code) throw new DataServerError(`could not write ${path}: ${code}`, "write_failed");

@@ -11,7 +11,7 @@ import { readExistingRevision } from "./forms.js";
 import { LOOSE_THREADS_FILE, LOOSE_THREADS_PAGE_NAME } from "./forms/loose-ideas-page.js";
 import { MATTER_BOARD_FILE, MATTER_BOARD_MARKER } from "./forms/matter-board-shell.js";
 import { liveMembers, pageGroups, viewTargets } from "./matter-page-groups.js";
-import { writeStatusFile } from "./render-job.js";
+import { writeStatusFile } from "../status-file.js";
 import { isViewPageFile, VIEW_PAGE_MARKER, type ViewPage, type ViewPagePath } from "./view-pages.js";
 import { writingFolders } from "./writing-folder.js";
 

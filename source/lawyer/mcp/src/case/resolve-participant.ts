@@ -12,7 +12,7 @@ import { pythonDriverFile } from "../python-driver.js";
 import { runPythonDriver } from "../python-spawn.js";
 import { pythonTimeoutMs, READ_TIMEOUT_MS } from "../python-timeout.js";
 import { caseDataMigrateScriptsDir } from "../repo-root.js";
-import { caseDataFolder } from "./backend.js";
+import { caseDataFolder } from "./locate.js";
 
 // Pure plumbing: one JSON request in on stdin, one JSON response out on stdout.
 const DRIVER = String.raw`
