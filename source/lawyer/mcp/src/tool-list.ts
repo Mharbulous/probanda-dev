@@ -6,7 +6,15 @@ import { DataServerError, ValidationError } from "./errors.js";
 import type { ToolDefinition } from "./schema-gen.js";
 import { validateToolInput, type ToolInput } from "./validate.js";
 
-export type ToolReply = { content: Array<{ type: "text"; text: string }>; isError?: boolean };
+export type ToolReply = {
+  content: Array<{ type: "text"; text: string } | { type: "image"; data: string; mimeType: string }>;
+  isError?: boolean;
+};
+
+/** A handler's result with PNGs that go in the reply after its text, in order. */
+export class WithImages {
+  constructor(readonly result: unknown, readonly images: Buffer[]) {}
+}
 
 export interface Tool<C, F = undefined> {
   name: string;
@@ -89,7 +97,16 @@ export async function toolReply(
   replyText: (name: string, result: unknown) => string = jsonText
 ): Promise<ToolReply> {
   try {
-    return { content: [{ type: "text", text: replyText(name, await run()) }] };
+    const result = await run();
+    if (result instanceof WithImages) {
+      return {
+        content: [
+          { type: "text", text: replyText(name, result.result) },
+          ...result.images.map((png) => ({ type: "image" as const, data: png.toString("base64"), mimeType: "image/png" })),
+        ],
+      };
+    }
+    return { content: [{ type: "text", text: replyText(name, result) }] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const payload = err instanceof DataServerError
@@ -126,6 +143,7 @@ const CONTENT_SOURCES: Record<string, string> = {
   knowledge__read: "knowledge file",
   research_filing__law_folder_text: "law folder file",
   research_filing__legislation_search: "law folder file",
+  research_filing__matter_folder: "matter folder file",
 };
 
 export function jsonText(name: string, result: unknown): string {

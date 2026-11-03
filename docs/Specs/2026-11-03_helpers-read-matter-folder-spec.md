@@ -68,3 +68,17 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - The two agents' frontmatter tool lists.
 - `research_filing__law_folder_text` and `research_filing__list_law_folder` contracts.
 - Any existing rule that tells the main session to stage files for subagents.
+
+## Verification against HEAD (4867a126, 2026-11-03)
+
+| Item | Spec says | HEAD | Effect |
+|---|---|---|---|
+| `lawyer:scrivener` tools | Read, Glob, Grep, skill source, matter query, mail | Same, plus `knowledge__read`: `source/lawyer/agents/scrivener.md` | Tool added under both prefixes |
+| `litigator:source-tracer` tools | Read, Glob, Grep, mail, matter query, skill source | Same, plus `knowledge__read`: `source/litigator/agents/source-tracer.md` | Tool added under both prefixes |
+| `research_filing__list_law_folder` | Comparable read tool | Names and sizes of files, one folder, confined to `6. LAW` by `resolveLawDir`. research-paralegal, citation-checker and legislation-fetcher rely on that confinement | Left as it is |
+| `research_filing__law_folder_text` | Comparable read tool, can be widened | Writes scratch files unless given `pattern`, confined to `6. LAW`, does not read `.eml`, and reads no scanned page: `source/lawyer/mcp/src/files/research-filing.ts` | Widening it would fail §5's read-only, so option 1 gives way to one sibling, `research_filing__matter_folder` (`source/lawyer/mcp/src/files/matter-folder.ts`) |
+| `.eml` decoder | Not named | `parseMessage` in `source/lawyer/mcp/src/correspondence/message.ts`, already exported, caps a body at 100,000 characters | Reused, with the cap now a parameter |
+| Scanned page rule | `pdf_pages__images` rule | `classifyPdfPages` in `source/lawyer/mcp/src/files/extract/page-images.ts`. `pdfPageImages` writes PNGs to disk, and a PNG on the PC is out of a bridged agent's reach | Same classifier and renderer; PNGs now also come back in memory and go in the reply as image blocks |
+| Zones | Scope is the matter folder | `zoneProblem` in `source/lawyer/mcp/src/files/zones.ts` bars privileged, disclosed, TRASH and `0. CASE DATA` from every read. `assertContained` and `resolveWithin` in `scope.ts` resolve links before they check containment | Reused unchanged |
+| Rule that tells the main session to stage files for these agents | "Any existing rule" | None. Every `device_stage_files` line in skill text is about a file card, a Probanda page, `/ingest` or `/verify-law`, and neither `references/source-trace.md` nor `references/letters.md` mentions staging. The staging seen in §2 was the session's own workaround | Nothing to remove. Contract tests now hold it for both agents and `references/source-trace.md` |
+| Probanda pages | Not named | `html-pages-gate.py` refuses a page on `Read`, `Grep`, a shell and `device_*` tools, by tool name, so it would not see this tool | The tool itself refuses any `.htm` or `.html` file, as `law_folder_text` does |

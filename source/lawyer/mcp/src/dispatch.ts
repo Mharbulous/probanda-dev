@@ -127,6 +127,7 @@ import {
 } from "./files/research-filing.js";
 import { researchPreflight } from "./research/preflight.js";
 import { legislationSearch } from "./files/legislation-search.js";
+import { matterFolder, type MatterFolderArgs } from "./files/matter-folder.js";
 import { pdfPageImages } from "./files/extract/page-images.js";
 import { pdfPagesCompare } from "./files/extract/page-compare.js";
 import { saveAnswerTool, type SaveAnswerArgs } from "./submission/forms/save-job-answer.js";
@@ -561,6 +562,10 @@ export async function callTool(
 
   if (name === "research_filing__legislation_search") {
     return legislationSearch(args.matter_root as string, args.path as string, args.terms, args.regex, args.pages, {}, args.pinpoint);
+  }
+
+  if (name === "research_filing__matter_folder") {
+    return matterFolder(args as unknown as MatterFolderArgs);
   }
 
   if (name === "research_filing__file_fetched") {

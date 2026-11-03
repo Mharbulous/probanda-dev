@@ -17,7 +17,7 @@ Spawn the `litigator:source-tracer` agent once for the text, from the main sessi
 - `kind` and `audience`.
 - `matter_root`.
 - `text`: the exact text that will go out. For an email, the exact `body` the `write_email` call will pass, character for character. For a letter or memo, the mockup's text as rendered.
-- `sources`: the locators of what the draft was written from (paths, mail uids, Message-IDs), the locators of the scrivener's `sources` entries among them. Locators only: never a summary of what a source says.
+- `sources`: the locators of what the draft was written from (PC paths, mail uids, Message-IDs), the locators of the scrivener's `sources` entries among them. Locators only: never a summary of what a source says. The agent reads the matter folder itself.
 - `accepted`: the assertions the practitioner has accepted in an earlier round on this text, with their words.
 
 ## 3. Resolve each finding

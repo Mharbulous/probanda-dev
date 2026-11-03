@@ -88,7 +88,7 @@ export function withCallLog(dispatch: Dispatch, toolNames: ReadonlySet<string>, 
 
 /** The record for one call. `reply` is undefined when the dispatch threw. */
 export function callRecord(tool: string, started: Date, ms: number, reply: ToolReply | undefined, session: string): CallRecord {
-  const text = reply?.content.map((c) => c.text).join("") ?? "";
+  const text = reply?.content.map((c) => (c.type === "text" ? c.text : "")).join("") ?? "";
   const record: CallRecord = { t: started.toISOString(), tool, ms, outcome: "ok", bytes: Buffer.byteLength(text, "utf-8"), build: BUILD_STAMP, session };
   if (reply === undefined || reply.isError) {
     // A refusal is a tool saying no for a reason; a fault (toolReply's FAULT) or a throw is an error.

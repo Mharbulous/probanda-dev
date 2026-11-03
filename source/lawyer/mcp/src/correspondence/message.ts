@@ -137,7 +137,7 @@ function openMsg(bytes: Buffer): { cfb: CompoundFile; msg: MsgNode } {
   return { cfb, msg: new MsgNode(cfb, "", 1252) };
 }
 
-function parseMsg(bytes: Buffer): Message {
+function parseMsg(bytes: Buffer, bodyLimit: number): Message {
   const { cfb, msg } = openMsg(bytes);
   const headers = msgHeaders(cfb, msg);
 
@@ -173,7 +173,7 @@ function parseMsg(bytes: Buffer): Message {
     attachments.push({ name: name || "attachment", size: a.binary(0x3701)?.length ?? a.int(0x0e20) ?? 0 });
   }
 
-  return finish(headers, body, htmlReading ? htmlReading.highlights : rtfRuns, htmlReading ? "html" : rtfText !== undefined ? "rtf" : "none", attachments);
+  return finish(headers, body, htmlReading ? htmlReading.highlights : rtfRuns, htmlReading ? "html" : rtfText !== undefined ? "rtf" : "none", attachments, bodyLimit);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -209,7 +209,7 @@ function splitAddresses(text: string): string[] {
   return out.map((a) => collapse(a.replace(/^"([^"]*)"/, "$1"))).filter(Boolean);
 }
 
-function parseEml(bytes: Buffer): Message {
+function parseEml(bytes: Buffer, bodyLimit: number): Message {
   const mime = parseMime(bytes);
   const headers = emlHeaders(mime.headers);
   let html = mime.html;
@@ -222,7 +222,7 @@ function parseEml(bytes: Buffer): Message {
   const body = mime.plain ?? htmlReading?.text ?? rtfReading?.text ?? "";
   const highlights = htmlReading?.highlights ?? rtfReading?.highlights ?? [];
   const source = htmlReading ? "html" : rtfReading ? "rtf" : "none";
-  return finish(headers, body, highlights, source, mime.attachments.map(({ name, size }) => ({ name, size })));
+  return finish(headers, body, highlights, source, mime.attachments.map(({ name, size }) => ({ name, size })), bodyLimit);
 }
 
 function finish(
@@ -230,13 +230,14 @@ function finish(
   body: string,
   highlights: HighlightRun[],
   source: Message["highlight_source"],
-  attachments: Message["attachments"]
+  attachments: Message["attachments"],
+  bodyLimit: number
 ): Message {
   const normalized = body.replace(/\r\n/g, "\n").replace(/\0+$/, "");
   return {
     ...headers,
-    body: normalized.slice(0, BODY_LIMIT),
-    body_truncated: normalized.length > BODY_LIMIT,
+    body: normalized.slice(0, bodyLimit),
+    body_truncated: normalized.length > bodyLimit,
     highlights,
     highlight_source: source,
     attachments,
@@ -245,10 +246,10 @@ function finish(
 
 // ---------------------------------------------------------------------------------------------
 
-export function parseMessage(bytes: Buffer, extension: string): Message {
+export function parseMessage(bytes: Buffer, extension: string, bodyLimit = BODY_LIMIT): Message {
   const ext = extension.toLowerCase();
-  if (ext === ".msg") return parseMsg(bytes);
-  if (ext === ".eml") return parseEml(bytes);
+  if (ext === ".msg") return parseMsg(bytes, bodyLimit);
+  if (ext === ".eml") return parseEml(bytes, bodyLimit);
   throw new DataServerError(`not a message file: ${extension} (only .msg and .eml)`, "unsupported_extension");
 }
 

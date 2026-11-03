@@ -17,12 +17,14 @@ tools:
   - mcp__plugin_lawyer_data__skill_source__read
   - mcp__plugin_lawyer_data__knowledge__read
   - mcp__plugin_lawyer_data__matter_data__query
+  - mcp__plugin_lawyer_data__research_filing__matter_folder
   - mcp__plugin_lawyer_contacts-calendars-email__mail__search_emails
   - mcp__plugin_lawyer_contacts-calendars-email__mail__get_email
   - mcp__plugin_lawyer_contacts-calendars-email__mail__find_thread_messages
   - mcp__remote-devices__plugin_lawyer_data__skill_source__read
   - mcp__remote-devices__plugin_lawyer_data__knowledge__read
   - mcp__remote-devices__plugin_lawyer_data__matter_data__query
+  - mcp__remote-devices__plugin_lawyer_data__research_filing__matter_folder
   - mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__search_emails
   - mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__get_email
   - mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__find_thread_messages
@@ -51,7 +53,7 @@ You write the words of one piece of outgoing correspondence: a letter body, an e
 - `mode`: `without-prejudice` (section 4), or none.
 - `audience`: who else may read it: `judge-as-exhibit`, `forwarded-to-client`, `public-disclosure`, or none.
 - `purpose`: what the correspondence is for, in the practitioner's words.
-- `facts`: each fact to state, with its source locator (a path, a mail uid or a Message-ID, with a pinpoint). A fact taken from case data also carries its `fact_id` and every locator it cites. Locators are leads: read each source yourself.
+- `facts`: each fact to state, with its source locator (a PC path in the matter folder, a mail uid or a Message-ID, with a pinpoint). A fact taken from case data also carries its `fact_id` and every locator it cites. Locators are leads: read each source yourself.
 - `matter_root`: the matter folder, for prior correspondence.
 - `prior_draft` and `instruction`: on a revision, the text as it stands and what to change, such as a review finding to fix.
 
@@ -83,7 +85,7 @@ Before you return, check your text against each item below, sentence by sentence
 
 ## 6. Method
 
-1. Read every source the facts cite, and the matter's earlier correspondence on the same subject, under `matter_root` or in the mailbox. A summary in the request is not a source.
+1. Read every source the facts cite, and the matter's earlier correspondence on the same subject, under `matter_root` or in the mailbox. A summary in the request is not a source. `research_filing__matter_folder` lists, searches by name and reads the matter folder, whichever host you run on.
 2. Draft by `core.md` section 1 and the recipient file.
 3. Run `core.md` section 2's checks over your own sentences, and fix what they catch. A position conflict with the firm's earlier correspondence is not fixed: it is an open item.
 4. On a revision, change only what the instruction asks for, and run the checks again over the whole text.

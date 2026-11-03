@@ -75,6 +75,14 @@ class AgentTests(unittest.TestCase):
         for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
             self.assertIn(f"{prefix}knowledge__read", tools)
 
+    def test_reads_the_matter_folder_itself_and_nothing_stages_for_it(self):
+        agent = AGENT.read_text(encoding="utf-8")
+        tools = re.findall(r"^\s+- (\S+)", frontmatter(AGENT), re.M)
+        for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
+            self.assertIn(f"{prefix}research_filing__matter_folder", tools)
+        self.assertIn("a PC path in the matter folder", agent)
+        self.assertNotIn("device_stage_files", agent)
+
     def test_without_prejudice_is_a_mode_not_a_capacity(self):
         agent = AGENT.read_text(encoding="utf-8")
         self.assertIn("- `mode`: `without-prejudice`", agent)

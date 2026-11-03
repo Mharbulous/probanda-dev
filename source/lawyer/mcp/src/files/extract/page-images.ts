@@ -174,12 +174,49 @@ export async function pdfPageImages(
   if (args.destination_dir !== undefined && !isAbsolute(args.destination_dir)) {
     throw new ValidationError(`destination_dir must be absolute: ${args.destination_dir}`);
   }
+  let renderDir: string | null = null;
+  const { source_sha256, page_count, pages } = await renderScannedPages(args, wasm, ({ png, name, width, height, tile }, sourceSha256) => {
+    // In destination_dir, one folder per PDF, so a re-render overwrites the same bytes.
+    if (renderDir === null) {
+      if (args.destination_dir === undefined) renderDir = mkdtempSync(join(tmpdir(), "probanda-pages-"));
+      else {
+        renderDir = join(args.destination_dir, sourceSha256.slice(0, 16));
+        mkdirSync(renderDir, { recursive: true });
+      }
+    }
+    const file = join(renderDir, `${name}.png`);
+    writeFileSync(file, png);
+    const image: PageImage = { path: file, sha256: createHash("sha256").update(png).digest("hex"), width, height };
+    if (tile !== undefined) image.tile = tile;
+    return image;
+  });
+  return { source_sha256, page_count, render_dir: renderDir, pages };
+}
+
+export interface PagePng {
+  png: Buffer;
+  name: string;
+  width: number;
+  height: number;
+  tile?: number;
+}
+
+/** pdfPageImages' pages with each PNG held in memory: nothing is written. */
+export function pdfPagePngs(path: string, pages: string, wasm: URL = DEFAULT_WASM) {
+  return renderScannedPages({ path, pages }, wasm, (png) => png);
+}
+
+/** Classifies each page in range and hands `keep` each tile of each scanned page. */
+async function renderScannedPages<T>(
+  args: { path: string; pages?: string; tiles?: boolean },
+  wasm: URL,
+  keep: (png: PagePng, sourceSha256: string) => T
+): Promise<{ source_sha256: string; page_count: number; pages: Array<{ page: number; kind: PageKind; images?: T[] }> }> {
   return withPdf(args.path, wasm, async (lib, doc, data) => {
     const sourceSha256 = createHash("sha256").update(data).digest("hex");
     const pageCount = lib.FPDF_GetPageCount(doc);
     const [first, last] = pageRange(args.pages, pageCount);
-    let renderDir: string | null = null;
-    const pages: PageImagesResult["pages"] = [];
+    const pages: Array<{ page: number; kind: PageKind; images?: T[] }> = [];
     for (let n = first; n <= last; n++) {
       if (n > first) await nextTurn();
       const plan = withPage(lib, doc, n, (page) => {
@@ -192,34 +229,17 @@ export async function pdfPageImages(
         continue;
       }
       const { width, height, tiles } = plan;
-      // In destination_dir, one folder per PDF, so a re-render overwrites the same bytes.
-      if (renderDir === null) {
-        if (args.destination_dir === undefined) renderDir = mkdtempSync(join(tmpdir(), "probanda-pages-"));
-        else {
-          renderDir = join(args.destination_dir, sourceSha256.slice(0, 16));
-          mkdirSync(renderDir, { recursive: true });
-        }
-      }
-      const images: PageImage[] = [];
+      const images: T[] = [];
       for (const [i, [top, rows]] of tiles.entries()) {
         // Each tile loads the page again, so its render, encoding and free stay within one turn.
         await nextTurn();
         const png = withPage(lib, doc, n, (page) => renderPng(lib, page, n, width, height, top, rows));
         const name = tiles.length === 1 ? pageName(n) : `${pageName(n)}-tile-${i + 1}`;
-        const file = join(renderDir, `${name}.png`);
-        writeFileSync(file, png);
-        const image: PageImage = { path: file, sha256: createHash("sha256").update(png).digest("hex"), width, height: rows };
-        if (tiles.length > 1) image.tile = i + 1;
-        images.push(image);
+        images.push(keep({ png, name, width, height: rows, ...(tiles.length > 1 ? { tile: i + 1 } : {}) }, sourceSha256));
       }
       pages.push({ page: n, kind: "scanned", images });
     }
-    return {
-      source_sha256: sourceSha256,
-      page_count: pageCount,
-      render_dir: renderDir,
-      pages,
-    };
+    return { source_sha256: sourceSha256, page_count: pageCount, pages };
   });
 }
 

@@ -36,6 +36,7 @@ const LABELLED = {
   knowledge__read: "knowledge file",
   research_filing__law_folder_text: "law folder file",
   research_filing__legislation_search: "law folder file",
+  research_filing__matter_folder: "matter folder file",
 };
 
 const reply = (r) => JSON.parse(r.content[0].text);

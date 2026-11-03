@@ -21,12 +21,14 @@ tools:
   - mcp__plugin_lawyer_contacts-calendars-email__mail__get_email
   - mcp__plugin_lawyer_contacts-calendars-email__mail__find_thread_messages
   - mcp__plugin_lawyer_data__matter_data__query
+  - mcp__plugin_lawyer_data__research_filing__matter_folder
   - mcp__plugin_lawyer_data__skill_source__read
   - mcp__plugin_lawyer_data__knowledge__read
   - mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__search_emails
   - mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__get_email
   - mcp__remote-devices__plugin_lawyer_contacts-calendars-email__mail__find_thread_messages
   - mcp__remote-devices__plugin_lawyer_data__matter_data__query
+  - mcp__remote-devices__plugin_lawyer_data__research_filing__matter_folder
   - mcp__remote-devices__plugin_lawyer_data__skill_source__read
   - mcp__remote-devices__plugin_lawyer_data__knowledge__read
 ---
@@ -57,14 +59,14 @@ A dispatch whose first line is `mode: reliance` follows section 6 instead of sec
 - `audience`: who receives it (client, opposing counsel, the court, a third party).
 - `matter_root`: the matter folder.
 - `text`: the exact text that will go out. For an email, the body as it will be written.
-- `sources`: locators only, the paths, mail uids or Message-IDs the drafter worked from. They are leads. You may and should look further.
+- `sources`: locators only, the PC paths in the matter folder, mail uids or Message-IDs the drafter worked from. They are leads. You may and should look further.
 - `accepted`: assertions the practitioner has already accepted as their own knowledge, each with its words. Give each the verdict `accepted` when the text still says it.
 
 ## 4. Method
 
 1. Read the catalogue of drafting habits with `skill_source__read`, path `shared/scrivener/references/core.md`, section 4. Each finding's `habit` is one of its ids, or null.
 2. Split `text` into factual assertions: each event, date, amount, name, quotation, document, filing, agreement, position or state of affairs it states. A sentence can hold several. Statements of law, requests, proposals and the firm's own intended actions are not assertions.
-3. For each assertion, find its primary source and read it: the document, order, filed copy or email itself, from the matter folder, case data or the mailbox. Then decide:
+3. For each assertion, find its primary source and read it: the document, order, filed copy or email itself, from the matter folder, case data or the mailbox. `research_filing__matter_folder` lists, searches by name and reads the matter folder, whichever host you run on. Then decide:
    - **`verified`**: a primary source you read states it, in substance and in strength. Copying a party's account is verified only as that party's account.
    - **`attribute`**: its only source is a person's report, characterization or self-serving account, such as other counsel saying what happened or another firm saying a document was filed. The text must say who said it. `proposed_text` attributes it neutrally ("Mr. X's counsel writes that …").
    - **`trace_needed`**: no source you could read settles it, or the primary record that would (a court registry, a filed copy, a document not on file) is out of reach. `reason` names the record that would settle it.
