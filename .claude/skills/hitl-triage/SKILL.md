@@ -39,3 +39,7 @@ Otherwise run `gh issue list -R Mharbulous/probanda-dev --label ready-for-human 
 
 - An issue with the label `suggestion` and a `Suggestion <id>` line in its body or latest brief: read `references/suggestion-route.md`, which holds its steps and its rules for submitted text, and follow it.
 - Any other issue: read `references/issue-route.md`, which holds its steps, and follow it.
+
+## 3. Start a local build
+
+When the route's steps are done, this session relabelled the issue `ready-for-agent`, the issue carries `local`, and this session is not building it itself, start the local implementer: `powershell.exe -NoProfile -Command 'Start-ScheduledTask -TaskName "Probanda local implementer"'`. A run already in progress ignores the start and takes the issue when it lists the queue again. If the command fails, quote its error and say the daily run takes the issue.
