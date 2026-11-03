@@ -230,14 +230,63 @@ test("refuses a folder with no coclerk.json", async (t) => {
   assert.equal(existsSync(join(base, "coclerk.json")), false);
 });
 
-test("refuses when the pointer resolves but no submission database exists there", async (t) => {
+test("no submission database at the derived path: entry creates it and reports the migration", async (t) => {
   const m = matterFixture(t);
   const context = await practiceContext(t, { withMatter: false });
-  await assert.rejects(
-    callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot }),
-    /No drafting records found.*Set the matter.s drafting records up first/
-  );
-  assert.equal(existsSync(m.dbPath), false, "open_session never creates a database");
+  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  assert.equal(result.db_path, m.dbPath);
+  assert.equal(existsSync(m.dbPath), true);
+  assert.deepEqual(result.migrated, { from: 0, to: result.current_schema_version, backup: null });
+  assert.equal(result.migration_required, false);
+  assert.deepEqual(result.filings, []);
+  assert.deepEqual(readdirSync(m.caseDataDir).filter((n) => n.includes(".bak-")), [], "a fresh create backs up nothing");
+  const again = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  assert.equal(again.migrated, undefined, "the second entry finds it current");
+});
+
+test("a database behind on the same path still gets its copy-aside on entry", async (t) => {
+  const m = matterFixture(t);
+  const context = await practiceContext(t, { withMatter: false });
+  await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  oneVersionBehind(m.dbPath);
+  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  assert.ok(result.migrated.backup, "the backup is reported");
+  assert.equal(existsSync(result.migrated.backup), true);
+});
+
+test("the matter's own 0. CASE DATA folder is made when missing, and nothing above the matter", async (t) => {
+  const m = matterFixture(t);
+  rmSync(m.caseDataDir, { recursive: true });
+  const context = await practiceContext(t, { withMatter: false });
+  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
+  assert.equal(result.migrated.from, 0);
+  assert.equal(existsSync(m.dbPath), true);
+});
+
+test("a pointer naming a missing folder outside the matter refuses and creates nothing", async (t) => {
+  const stale = join(tmpdir(), `coclerk-open-session-stale-${randomUUID()}`);
+  mkdirSync(stale);
+  t.after(() => rmSync(stale, { recursive: true, force: true }));
+  const missing = join(stale, "L9999 Test Matter");
+  const m = matterFixture(t, { pointer: { case_data_dir: missing } });
+  const context = await practiceContext(t, { withMatter: false });
+  await assert.rejects(callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot }), (err) => err.code === "case_data_missing" && /\/matter-data/.test(err.message));
+  assert.equal(existsSync(missing), false);
+});
+
+test("a missing matter folder is refused and is not created", async (t) => {
+  const m = matterFixture(t);
+  const missing = join(m.base, "L1234 No Such Matter");
+  const context = await practiceContext(t, { withMatter: false });
+  await assert.rejects(callTool(context, "drafting_forms__open_session", { matter_root: missing }), (err) => err.code === "invalid_root");
+  assert.equal(existsSync(missing), false);
+});
+
+test("the plain bootstrap tool still refuses a missing database and creates nothing", async (t) => {
+  const m = matterFixture(t);
+  const context = await practiceContext(t, { withMatter: false });
+  await assert.rejects(callTool(context, "drafting_forms__bootstrap", { db_path: m.dbPath }), /No drafting records found.*Set the matter.s drafting records up first/);
+  assert.equal(existsSync(m.dbPath), false);
 });
 
 test("refuses a pointer written on another device as unusable, with no migrate hint", async (t) => {

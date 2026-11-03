@@ -46,7 +46,7 @@ function firstLine(file: string): string {
 
 /** Whether a path relative to the draft folder leaves it: the folder itself, `..`, a path under `..`,
  * or another drive. A name that only begins with `..`, such as `..foo`, stays inside. */
-function leavesDraftFolder(rel: string): boolean {
+export function leavesDraftFolder(rel: string): boolean {
   return rel === "" || rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel);
 }
 

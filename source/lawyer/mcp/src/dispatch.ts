@@ -58,6 +58,7 @@ import { submissionDataSetStep, type SetStepArgs } from "./submission/forms/set-
 import { submissionDataRewriteJob, type RewriteJobArgs } from "./submission/forms/rewrite-job.js";
 import { submissionDataTouchJob, withJobActivity, type TouchJobArgs } from "./submission/forms/job-activity.js";
 import { submissionDataCompleteJob, type CompleteJobArgs } from "./submission/forms/complete-job.js";
+import { submissionDataAttachToBoard, type AttachToBoardArgs } from "./submission/forms/attach-to-board.js";
 import { submissionDataReleaseJob, type ReleaseJobArgs } from "./submission/forms/release-job.js";
 import { submissionDataSetBoardGoal, type SetBoardGoalArgs } from "./submission/forms/board-goals.js";
 import { submissionDataRecordViewed, type RecordViewedArgs } from "./submission/forms/board-viewed.js";
@@ -268,6 +269,11 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("drafting_data__complete_job", async (args: CompleteJobArgs & PageArgs, context: DispatchContext) => {
     const { client, todos, dates } = await pageContext(context, args, true);
     return submissionDataCompleteJob(args, client, todos?.todos, dates);
+  }),
+
+  defineTool("drafting_data__attach_to_board", async (args: AttachToBoardArgs & PageArgs, context: DispatchContext) => {
+    const { client, todos, dates } = await pageContext(context, args, true);
+    return submissionDataAttachToBoard(args, client, todos?.todos, dates);
   }),
 
   defineTool("drafting_forms__board_card", async (args: BoardCardArgs & PageArgs, context: DispatchContext) => {

@@ -815,6 +815,37 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
       annotations: { destructiveHint: true, openWorldHint: false },
     },
     {
+      name: submissionDataPrefixed("attach_to_board"),
+      description:
+        "Put one file that is no Writing on one Work Board (ADR 0042), in one call, and rewrite that board's pages. kind is " +
+        "client_letter or reply, a file in draft_dir, or opposing_filing, a file anywhere in the matter folder. path is absolute or " +
+        "relative to the matter folder, and the file must exist. With no proceeding in the matter it creates a forum-less one in the " +
+        "same transaction (proceeding_created). With one board it attaches there. With several, refused several_boards, naming them in " +
+        "boards: ask the practitioner and call again with filing_id or proceeding_id. A file already attached stays on its board " +
+        "(already_attached). Only the board and the path are written, never a title, status or text. Refusals write nothing: invalid_kind, " +
+        "invalid_session_token, invalid_board, path_outside, path_missing, schema_below_v67, not_a_board, no_board, several_boards. " +
+        "Returns attachment_id, proceeding_id, filing_id, path, pages_written, milestone_path (the page to present), board_changed, board_moves, and pages_refused " +
+        "when the attachment stands but its page could not be written. It moves no revision unless it creates the proceeding.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          db_path: { type: "string" },
+          kind: { type: "string", enum: ["client_letter", "reply", "opposing_filing"] },
+          path: { type: "string" },
+          draft_dir: { type: "string" },
+          session_token: { type: "string" },
+          filing_id: { type: "number" },
+          proceeding_id: { type: "number" },
+          client_name: { type: "string" },
+          client_no: { type: "string" },
+          matter_no: { type: "string" },
+        },
+        required: ["db_path", "kind", "path", "draft_dir", "session_token"],
+        additionalProperties: false,
+      },
+      annotations: { destructiveHint: false, openWorldHint: false },
+    },
+    {
       name: submissionDataPrefixed("set_board_goal"),
       description:
         "Record one Work Board's statement of goals: the card labelled Goal at the top of the board, " +

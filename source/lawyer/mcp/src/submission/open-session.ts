@@ -13,7 +13,7 @@
 // migrate is the same separate spawn under the data lock with the #353 copy-aside backup, so the
 // safeguard is unchanged -- only the round trip goes.
 
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
 import { inOneCall } from "../call-memo.js";
@@ -60,7 +60,8 @@ export interface OpenSessionResult extends BootstrapResult {
   /** #689: the matter's one 0. DRAFT folder, absent when there is none. Passed to every later
    * drafting_forms__render, under which the server rewrites the matter's pages. */
   draft_dir?: string;
-  /** Present only when this call migrated the database before bootstrapping. `backup` is the
+  /** Present only when this call created or migrated the database before bootstrapping: `from` 0 is a
+   * database it created. `backup` is the
    * #353 copy-aside the migrate wrote beside the database, or null if none appeared. `warnings`
    * carries the migrate's own warnings (a stale lock it broke, an older backup it could not
    * remove), present only when there is one. */
@@ -319,6 +320,21 @@ function backups(dbPath: string): Set<string> {
   return new Set(existsSync(dir) ? readdirSync(dir).filter((name) => name.startsWith(prefix)) : []);
 }
 
+/** A first entry on a matter with no drafting database creates it at the path its pointer derives, by
+ * the one migration path (a fresh create has nothing to back up, #353). Only the matter's own folder
+ * may be made: a folder elsewhere that is missing means the pointer is stale, so that is refused. */
+async function createDatabase(root: string, dbPath: string): Promise<NonNullable<OpenSessionResult["migrated"]>> {
+  const folder = dirname(dbPath);
+  if (!existsSync(folder)) {
+    if (dirname(folder).toLowerCase() !== root.toLowerCase()) {
+      throw new DataServerError(`The matter-data folder this matter's pointer names does not exist: ${folder}. Nothing was created. Run /matter-data on this matter to initialize or repair it.`, "case_data_missing");
+    }
+    mkdirSync(folder);
+  }
+  const done = await submissionDataMigrate(dbPath);
+  return { from: 0, to: done.schema_version as number, backup: null, ...(Array.isArray(done.warnings) && done.warnings.length > 0 ? { warnings: done.warnings as string[] } : {}) };
+}
+
 /** Session entry. One practice snapshot and one parties-of-record read per proceeding serve the
  * whole call, however many of its parts read them (call-memo.ts). */
 export const submissionFormsOpenSession = (...args: Parameters<typeof openSession>): ReturnType<typeof openSession> => inOneCall(() => openSession(...args));
@@ -356,9 +372,9 @@ async function openSession(
   // returned beside the result, never in it, since the result is the tool response.
   const dates = draftDir === undefined ? undefined : await phase("dates", () => readMatterDates(practiceDb, identity.matterNo));
 
+  let migrated: OpenSessionResult["migrated"] = existsSync(dbPath) ? undefined : await phase("create_database", () => createDatabase(root, dbPath));
   // Bootstrap writes no page: the opening below writes the pages, once.
   let result = submissionFormsBootstrap(dbPath, identity, undefined, undefined, undefined, unattended);
-  let migrated: OpenSessionResult["migrated"];
   let migrationRefused: string | undefined;
   // A database bootstrap reads (it lists filings) may still be behind the migration target.
   const behind =

@@ -473,8 +473,9 @@ export function submissionFormsToolDefinitions(): ToolDefinition[] {
         "probanda.json nor from the firm's 0. CASE DATA folder beside the matter folder, so drafting_data__create_writing would fail, the " +
         "response carries blocking [{code: practice_config_unreachable, message, remedy}], the remedy naming " +
         "practice_data__config_status and practice_data__config_set_root: the session states it and takes no job, " +
-        "and read-only work goes on; nothing is written. No submission database at db_path refuses -- creating one is " +
-        "drafting_data__migrate's job. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder " +
+        "and read-only work goes on; nothing is written. No submission database at db_path: it creates one, reported as " +
+        "migrated {from: 0, to, backup: null}, and the matter's own 0. CASE DATA folder if that is missing; a missing folder anywhere else " +
+        "refuses, case_data_missing, naming /matter-data. It finds matter_root's one 0. DRAFT folder itself (issue 651); with that folder " +
         "it opens filing_id, or the first live filing that is not a Work Board with no Writing or a research memo or case brief (each opens only when " +
         "filing_id names it), or the first pre-filing proceeding, as drafting_forms__render " +
         "with draft_dir would (mockups and the matter's pages written once), returning that board as opened " +

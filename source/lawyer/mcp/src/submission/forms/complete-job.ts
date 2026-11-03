@@ -82,10 +82,16 @@ interface ConfirmRow {
   filing_id: number | null;
 }
 
-type Pages = Pick<CompleteJobResult, "pages_written" | "milestone_path" | "board_changed" | "board_moves" | "pages_refused">;
+export type Pages = Pick<CompleteJobResult, "pages_written" | "milestone_path" | "board_changed" | "board_moves" | "pages_refused">;
 
 /** The render a session runs with draft_dir, as open_session's openBoard runs it. */
-function rewritePages(args: CompleteJobArgs, read: ConfirmRow, client: ClientContext, todos: MatterTodos | undefined, dates: MatterDates | undefined): Pages {
+export function rewritePages(
+  args: Pick<CompleteJobArgs, "db_path" | "session_token" | "draft_dir">,
+  read: Pick<ConfirmRow, "proceeding_id" | "filing_id">,
+  client: ClientContext,
+  todos: MatterTodos | undefined,
+  dates: MatterDates | undefined
+): Pages {
   try {
     const boards = fetchBoardFilings(args.db_path, read.proceeding_id);
     // proceedingJobBoard picks by id, not by bootstrap's ranked order, so it can differ from open_session's openBoard.
