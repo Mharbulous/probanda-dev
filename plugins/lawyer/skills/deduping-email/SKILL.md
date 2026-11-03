@@ -4,8 +4,9 @@ description: >-
   Remove duplicate emails from named mail folders or the whole mailbox: byte-identical
   copies first, then copies that share a Message-ID but differ, judged so that only a copy
   whose information another copy holds can go. Copies go to Trash only, each batch on the
-  practitioner's approval. Use for "dedupe my email", "remove duplicate emails" or "this
-  folder has duplicates". Not for sorting or filing mail.
+  practitioner's approval, and on a mail server that cannot move mail safely it only lists
+  them for the practitioner to remove. Use for "dedupe my email", "remove duplicate emails"
+  or "this folder has duplicates". Not for sorting or filing mail.
 ---
 
 <!-- lawyer v0.21.1 -->
@@ -23,7 +24,7 @@ Only `mail__dedupe_apply` and `mail__dedupe_apply_continue` change the mailbox. 
 ## Steps
 
 1. **Take the folders.** Ask which folders, or the whole mailbox, unless the practitioner said. Use exact names from `mail__list_folders`. Each folder is deduplicated on its own. When the practitioner wants the same email kept once across several folders, set `across_folders`, listing first the folder that keeps its copy.
-2. **Scan.** Call `mail__dedupe_scan` with `folders` or `all: true`. While the reply says `status: "scanning"`, call it again with only `scan_id`, and tell the practitioner the progress in plain words every few calls. On `mail_timeout` retry the same call once.
+2. **Scan.** Call `mail__dedupe_scan` with `folders` or `all: true`. While the reply says `status: "scanning"`, call it again with only `scan_id`, and tell the practitioner the progress in plain words every few calls. On `mail_timeout` retry the same call once. When the final reply says `can_move: false`, see **When the server cannot move** and follow it through to the end of the run.
 3. **Show tier 1.** When `tier1.copies` is 0, say no identical copies were found and go to step 5. Otherwise show, in plain words, the counts per folder, the copies and space involved, and the sample lines, and say the kept copy is the newest in each folder (or the one in the first folder listed). Say that the full list is available: present the file at `tier1.list_path` as `shared/present-files.md` says. If it cannot be shown or they ask to see the list here, page it with `mail__dedupe_read_comparison`, `view: "tier1_copies"`. Say any messages without a Message-ID were left alone.
 4. **Apply tier 1 on approval.** Ask whether to move them. On a yes, call `mail__dedupe_apply` with `tier1.plan_id` and `tier1.expected_count`. It is refused until the practitioner pastes the approval block its refusal gives: show the warning and the block exactly as the refusal says, then retry once they have pasted it. Then see **Moving**. On a no, leave them and go on.
 5. **Tier 2 comparison.** The scan already built it. When `tier2.groups` is 0, go to step 9. Otherwise ask whether to check those copies: the practitioner may stop here.
@@ -31,6 +32,14 @@ Only `mail__dedupe_apply` and `mail__dedupe_apply_continue` change the mailbox. 
 7. **Show the verdicts.** Page `mail__dedupe_read_comparison` with `view: "group_list"` for each group's subject, date and copies. Show each group with a proposed removal: its subject and date, which copy goes and which stays by folder and date, and the judge's reason. Say how many groups keep all copies. Never show a group's message text beyond this.
 8. **Apply tier 2 on approval.** Ask which to move: all, some or none. Call `mail__dedupe_plan_tier2` with only the approved copies. Call `mail__dedupe_apply` with the `plan_id` and `expected_count` it returns, under the same approval as step 4. Then see **Moving**.
 9. **Report the outcome.** Say how many copies went to Trash from each folder, how many were already gone, what was left alone, and that Trash holds them until the mail server empties it on its own schedule. Offer no other action on Trash.
+
+## When the server cannot move
+
+When the scan says `can_move: false`, this mail server cannot move mail safely. Say so in plain words, and that nothing will be moved, so the practitioner removes the copies in their mail app. Ask for no approval and never call `mail__dedupe_plan_tier2` or `mail__dedupe_apply`.
+
+- **Tier 1.** Follow step 3, and give the full list. Say the listed copies are extras: each is byte-for-byte the same as a copy that stays, so they remove only as many as are listed and leave one copy of each email in each folder (or, with `across_folders`, the one in the first folder listed).
+- **Tier 2.** Follow steps 5 and 6, then show the verdicts as in step 7, as a list of which copy to remove, named by folder, date and size.
+- **Report.** Say what was found and listed, and that nothing in the mailbox changed. Skip step 9.
 
 ## Moving
 

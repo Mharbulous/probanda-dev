@@ -11,7 +11,7 @@ A push to `main` is the release. claude.ai installs the seven plugins from this 
 The version rule:
 
 - **Patch** (0.2.1 to 0.2.2): after the update, everything the user had working keeps working with no action, and an old copy and a new copy of the plugin can safely use the same data. New features are patches.
-- **Minor** (0.2.1 to 0.3.0): anything else. For example: a data migration or schema change, a tool removed or its inputs changed, a new required setup step such as a credential or a settings allowlist, a raised `requires`, or a server that refuses data an old copy wrote or writes data an old copy would damage.
+- **Minor** (0.2.1 to 0.3.0): anything else. For example: a data migration or schema change, a tool removed or its inputs changed, a new required setup step such as a credential or a settings allowlist, a range that moves to a new minor version of a dependency, or a server that refuses data an old copy wrote or writes data an old copy would damage.
 - **1.0.0**: only when Probanda enters the Claude Directory.
 
 ## TokenEconomizer

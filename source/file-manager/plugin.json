@@ -1,7 +1,7 @@
 {
   "name": "file-manager",
   "displayName": "File Manager",
-  "version": "0.10.17",
+  "version": "0.11.0",
   "description": "Optional Probanda plugin for British Columbia lawyers that renames, moves, changes and deletes files on your computer that Probanda did not create: matter housekeeping, routing loose accounting files and applying approved renames. Without it, Probanda cannot rename, move, change or delete any file it did not create: it only reads or copies them. Requires the lawyer plugin: install lawyer first.",
   "author": {
     "name": "Probanda Legal",
@@ -10,7 +10,11 @@
   "homepage": "https://github.com/Probanda-app/Legal",
   "repository": "https://github.com/Probanda-app/Legal",
   "dependencies": [
-    "lawyer"
+    {
+      "name": "lawyer",
+      "marketplace": "Probanda_Legal_experimental",
+      "version": "^0.21.1"
+    }
   ],
   "mcpServers": "./.mcp.json",
   "hooks": {
