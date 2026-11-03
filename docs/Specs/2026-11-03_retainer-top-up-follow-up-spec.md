@@ -61,3 +61,20 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 - `letters.md` §8 and §10 at HEAD, after the record-sent spec lands.
 - `practice_data__record_retainer_notice` contract.
+
+## 11. Verification against HEAD (b4a3dab9, 2026-11-03)
+
+| Item | Finding | Evidence |
+|---|---|---|
+| `letters.md` path and landing of the record-sent spec | Holds. The source is `.claude/skills/draft/references/letters.md`, and §10's "When it goes out" paragraph landed in 4e5a33cb. | `git log` on the file; `letters.md` §10 |
+| §2's quotation of §8's follow-up paragraph | Holds. It fires only "When the Sent write succeeds" and only on a date the letter states. A client letter has no Sent write. | `letters.md` §8, §10 |
+| "client letter or email" | An email to the client is a client letter: only a client letter and a reply on the reply route are not Writings, and a client letter's send copy is emailed. So §10's sent act covers both, and a Writing never goes to the client. | `procedure.md` "Save first"; `letters.md` §10 |
+| A reply on the reply route | No trigger: a reply is no Writing and has no Sent record, so a reply that requests replenishment is never "recorded as sent". Left out of this spec. | `.claude/skills/draft/references/reply.md` |
+| `record_retainer_notice` contract | Holds `sent_at` only, plus the matter reference. The goal's amount requested and source letter need two optional inputs, a patch change. | `source/lawyer/mcp/src/tools/practice/writes.ts:295`; `source/lawyer/mcp/src/schema/practice.ts:466` |
+| The store and the cloud accept the extra data | Yes. Data fields stay on the machine and only their keyed hashes leave. The cloud checks each hash's format and keeps no list of field names by kind. | `cloud/items/rules.sql:496-504`; `source/lawyer/mcp/test/practice-cloud.unit.test.mjs` |
+| What reads `retainer_notice` | Only `open_tasks`, which reads `sent_at`. A notice without the new fields, migrated or old, stays valid. | `source/lawyer/mcp/src/tools/practice/reads.ts:216`; `scripts/migrate_practice_db.py:98` |
+| A to-do with no `filing_ref` | Allowed. Its pointer is optional in the tool and the cloud. /task-prioritization requires it only for a filing, or a letter to the forum or another party. | `writes.ts` `upsert_task`; `cloud/items/rules.sql:190`; `task-prioritization/SKILL.md` "Add a to-do" |
+| "render the mockup" in §8's paragraph | Not limited to a Writing, and a client letter has no mockup. It must be limited. | `letters.md` §8, §10 |
+| A test pins the sent act | `test_no_database_write` forbids any `practice_data__` in §10's act, so the one new tool must be excepted there. | `.claude/skills/draft/tests/test_client_letter_sent_contract.py` |
+| The tool reaches a /draft session | The staging turn's tool search does not list `practice_data__record_retainer_notice`, so it must be added. | `.claude/skills/draft/SKILL.md` "Rules for each step" |
+| §9's open question | Answered: a letter requests replenishment if its own text does or the practitioner says so. No scrivener flag. | Maintainer's decision, 2026-11-03 |
