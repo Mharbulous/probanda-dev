@@ -4,7 +4,7 @@ Read when: `/bill-client` Step 7 finds the last signed invoice has a chart, or t
 
 ## 1. Write the workbook
 
-*(No computer use? `request_cowork_directory` + `references/uno-gotchas.md` cover steps 2 and 3.)*
+*(No computer use? `request_cowork_directory` + `references/build_chart.py` cover steps 2 and 3. Read `references/uno-gotchas.md` first.)*
 
 Write the workbook from `invoice_lines.json` with the session's spreadsheet tooling (for example Python with openpyxl). Put one sheet, **"Time Tracking Report - decimal"**, with a header row and then one row per entry in the file's `rows`, in order:
 
