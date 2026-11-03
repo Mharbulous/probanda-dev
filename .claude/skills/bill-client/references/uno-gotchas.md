@@ -53,7 +53,9 @@ and people who trust the formatting feel misled when they find out.
 - Do not import constants with `from com.sun.star.sheet import ...` —
   that fails from an outside script. Use
   `uno.Enum("com.sun.star.sheet.DataPilotFieldOrientation", "ROW")` and
-  `uno.createUnoStruct(...)` instead.
+  `uno.createUnoStruct(...)` instead. (Unverified: one later run reported
+  that `from com.sun.star.beans import PropertyValue` worked.
+  `build_chart.py` uses neither import form.)
 - To color a chart series, set `FillStyle` to
   `uno.Enum("com.sun.star.drawing.FillStyle", "SOLID")` and `FillColor`
   to the color integer. Setting `Color` silently does nothing.
@@ -79,11 +81,6 @@ the internal link that ties the chart itself to the pivot table
 (`c:pivotSource`), so in Excel, Refresh works on the pivot table's
 cells but may not appear on the chart's own right-click menu.
 
-## Follow-up
+## The script
 
-The session that discovered all of this finished with a working script
-(`build_full.py`) that builds the whole thing in one pass. That script
-was never saved — it exists only in that session's own transcript, which
-later sessions cannot read. Next time this fallback runs successfully,
-save a generalized copy (person names/colors, sheet name, and output
-path as parameters) into this folder.
+`build_chart.py`, beside this file, builds the pivot and chart in one call; its docstring gives the command.
