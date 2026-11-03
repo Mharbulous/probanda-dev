@@ -12,7 +12,8 @@ rewritten: if they exist and the JSON is this same copy, it reports them and wri
 issue that stopped can resume; any other content is refused. The JSON file's sha256 is the snapshot hash, printed and
 named in issue_records.json, which goes to --data-dir with the lines and adjustments for the issue
 record. Refuses when fees, disbursements and taxes do not add up to the amount, a fee line has neither
-evidence nor an estimate basis, or the signed copy cannot be read. Prints one JSON line. On a
+evidence nor an estimate basis, a disbursement is still waiting for a decision or has no tax status, or
+the signed copy cannot be read. Prints one JSON line. On a
 refusal it prints {"error", "detail"} and exits 1, writing nothing.
 """
 import argparse
@@ -48,6 +49,14 @@ def check_support(lines):
         support = line.get("support") or {}
         if not support.get("evidence_rows") and not support.get("estimate_bases"):
             raise Refusal("no_support", f"The line for {line.get('date')}, {line.get('user')} has no evidence and no recorded estimate basis.")
+
+
+def check_disbursements(disbursements):
+    for line in disbursements.get("lines", []):
+        if line.get("confirm"):
+            raise Refusal("disbursement_unconfirmed", f"The disbursement \"{line['description']}\" is still waiting for the practitioner's decision.")
+        if not isinstance(line.get("taxable"), bool):
+            raise Refusal("disbursement_tax_undecided", f"The disbursement \"{line['description']}\" has no decision on whether it is taxable.")
 
 
 def check_total(meta, line_map, disbursements):
@@ -110,6 +119,7 @@ def freeze(args):
     if missing:
         raise Refusal("missing_field", ", ".join(missing))
     check_support(line_map.get("lines") or [])
+    check_disbursements(disbursements)
     check_total(meta, line_map, disbursements)
     try:
         signed_hash = hashlib.sha256(Path(meta["signed_copy_path"]).read_bytes()).hexdigest()
