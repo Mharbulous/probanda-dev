@@ -69,3 +69,17 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - `litigator:source-tracer`'s agent file and `references/source-trace.md`.
 - The mail search tool's folder-name handling.
 - `/matter-data`'s mail-folder operation and how practice quirks are passed to subagents.
+
+## Verification against HEAD (2315f593, 2026-11-03)
+
+| Item | Spec says | HEAD | Effect |
+|---|---|---|---|
+| `litigator:source-tracer` agent | Installed-copy path | `source/litigator/agents/source-tracer.md`. Holds the mail read tools and `research_filing__matter_folder`, but not `mail__list_folders`, `practice_data__*` or `Skill` | Body and inputs edited. No tool added |
+| `references/source-trace.md` | Installed-copy path | `.claude/skills/draft/references/source-trace.md`. The brief carried no note and no mail folder | Two brief fields added |
+| How practice quirks reach a subagent | Unverified | `.claude/skills/practice-data/hooks/inject-practice-quirks.py` adds the note to the main session, and in Cowork tells it to call `practice_data__config_status`. No hook reaches a plugin agent. `operations/practice-quirks.md` already tells a dispatching session to copy the note into a brief whose work touches mail, and `draft/references/delivery-check.md` passes it as `environment_notes` | Same field name and same copy, which is smaller than a new read tool. The note stays data |
+| Matter's mail folder | `/matter-data`'s mail-folder operation | `.claude/skills/matter-data/operations/mail-folder.md` reads key `mail_folder`, the path exactly as `mail__list_folders` returns it. No row is not an error | Passed in full as `mail_folder`, left out when none is recorded (§9.1) |
+| Exported mail in the matter folder | Search by header and body (§4.2) | `research_filing__matter_folder` (`source/lawyer/mcp/src/files/matter-folder.ts`) lists, finds by file name and reads one `.eml` or `.msg` decoded. No search reaches inside a file. It refuses privileged and disclosed trees | Tool not widened. The agent lists once, picks by name and date, and reads those, so a message's headers and body are read only after that choice |
+| Negatives (§9.2) | Open question | The agent's `verified` already needs located words | Exported mail confirms or contradicts only. A negative about an unreachable mailbox is `trace_needed` with a short reason. No new verdict |
+| Mail search's folder name | Unverified | `source/lawyer/mcp/src/mail/tools.ts` passes `folder` straight to `mailboxOpen`, or `status` for `mail__folder_status`, and `runImap` in `imap.ts` reports the server's refusal as `mail_error`. The `contacts-calendars-email` server lists these tools | Refusal now returns the full names (§8.4). A name is never resolved, so an ambiguous leaf picks nothing |
+| Connection after a refused name | Not named | imapflow 2.0.5's select returns the connection to the authenticated state, read in the shipped bundle | A folder list can follow on the same connection. Not tried against a real server |
+| Other users of the path | `/matter-data`, delivery-checker | `/matter-data` only reads and records. `shared/matter-mail.md` goes to its folder-list step when `mail__folder_status` says the folder does not exist. `lawyer:delivery-checker` takes names from `mail__list_folders`. No skill or agent names `mail_error` | Unaffected, and a listed folder or a failed list keeps its old error |

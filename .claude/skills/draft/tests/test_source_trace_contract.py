@@ -87,6 +87,26 @@ class SourceTraceContractTests(unittest.TestCase):
         for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
             self.assertIn(f"{prefix}knowledge__read", tools)
 
+    def test_brief_carries_the_note_and_the_full_mail_folder(self):
+        stage = STAGE.read_text(encoding="utf-8")
+        agent = AGENT.read_text(encoding="utf-8")
+        for field in ("`environment_notes`", "`mail_folder`"):
+            with self.subTest(field=field):
+                self.assertIn(field, stage)
+                self.assertIn(field, agent)
+        self.assertIn("mail-folder operation", stage)
+
+    def test_reviewer_reads_exported_mail_and_it_settles_no_negative(self):
+        agent = AGENT.read_text(encoding="utf-8")
+        self.assertIn("`.eml` and `.msg`", agent)
+        self.assertIn("settles no negative", agent)
+
+    def test_unreachable_negative_goes_to_the_practitioner_without_a_new_verdict(self):
+        agent = AGENT.read_text(encoding="utf-8")
+        self.assertIn("Only the practitioner can confirm", agent)
+        self.assertIn("Run no other search", agent)
+        self.assertIn("verified | attribute | trace_needed | cut | accepted", agent)
+
     def test_reviewer_never_takes_the_drafter_word(self):
         agent = AGENT.read_text(encoding="utf-8")
         self.assertIn("Read every source yourself", agent)

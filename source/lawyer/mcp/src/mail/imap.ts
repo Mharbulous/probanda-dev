@@ -181,3 +181,28 @@ export function findFolder(list: FolderEntry[], path: string): FolderEntry | und
 
 export const folderMissing = (path: string): DataServerError =>
   new DataServerError(`no folder named "${path}"; take the exact name from mail__list_folders`, "mail_not_found");
+
+const leafKey = (path: string, delimiter = "/"): string =>
+  path.slice(path.lastIndexOf(delimiter) + 1).replace(/\s+/g, " ").trim().toLowerCase();
+
+/**
+ * Runs `act`, a read naming `folder`. When the server refuses and the mailbox lists no such folder,
+ * the refusal names the selectable folders with the same last segment. It never opens one, so a
+ * leaf name several folders share picks none of them. Any other failure keeps its own error.
+ */
+export async function namingFolder<T>(client: ImapClientLike, folder: string, act: () => Promise<T>): Promise<T> {
+  try {
+    return await act();
+  } catch (error) {
+    const list = await client.list().catch(() => undefined);
+    if (!list || findFolder(list, folder)) throw error;
+    const sameLeaf = list
+      .filter((f) => !f.flags?.has("\\Noselect") && leafKey(f.path, f.delimiter) === leafKey(folder, f.delimiter))
+      .map((f) => `"${f.path}"`);
+    if (sameLeaf.length === 0) throw folderMissing(folder);
+    throw new DataServerError(`no folder named "${folder}"; folders with that last segment: ${sameLeaf.join(", ")}`, "mail_not_found");
+  }
+}
+
+export const openReadOnly = (client: ImapClientLike, folder: string) =>
+  namingFolder(client, folder, () => client.mailboxOpen(folder, { readOnly: true }));

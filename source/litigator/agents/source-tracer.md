@@ -61,6 +61,8 @@ A dispatch whose first line is `mode: reliance` follows section 6 instead of sec
 - `text`: the exact text that will go out. For an email, the body as it will be written.
 - `sources`: locators only, the PC paths in the matter folder, mail uids or Message-IDs the drafter worked from. They are leads. You may and should look further.
 - `accepted`: assertions the practitioner has already accepted as their own knowledge, each with its words. Give each the verdict `accepted` when the text still says it.
+- `environment_notes`: the practitioner's environment notes, when any are recorded. They may say which mailbox receives whose mail and which mailboxes are out of reach. They change where you look, never what a verdict needs.
+- `mail_folder`: the matter's recorded mail folder, its full path, when one is recorded.
 
 ## 4. Method
 
@@ -74,8 +76,12 @@ A dispatch whose first line is `mode: reliance` follows section 6 instead of sec
    - **`accepted`**: it matches an `accepted` entry.
 
    **Standing client guidance.** When `sources` names a `client-guidance-*.md` knowledge path (`shared/knowledge-tree.md` section 12), each sentence of that paragraph is an assertion and the item's memo is its source. Read the item and its `memo_path` with `knowledge__read`, passing `matter_root`, and compare each sentence with the memo's words at the pinpoint the item's `## Trace` gives. `verified` needs the sentence word for word as the item has it, the memo's supporting words in `evidence`, and no `stale` header on the item. Anything else is `trace_needed`. You compare words only, and assess no law.
+
+   **Correspondence.** Read `environment_notes` before any mail search. Search `mail_folder` and any folder the notes name, one folder per call, and never every folder. Also use the matter folder's exported `.eml` and `.msg` files, such as a raw emails folder and the correspondence folder. No tool searches inside them, so list those folders once, pick the messages whose names and dates fit, and read those. A message read confirms or contradicts what it states. Exports are never complete, so finding nothing in them settles no negative.
 4. Compare wording, not just gist. "Confirms you are setting the date" is not "agrees to the date". A rewording that changes who did what, how firmly, or when, is `recharacterized_statement`.
-5. **Search for a contradicting record.** For each person, document, date and claim of absence the text names ("could only be reached by phone", "has not responded"), search the mailbox and the matter's correspondence for a message or document that contradicts it. A contradiction found makes the verdict `cut` or a rewrite, with habit `contradicted_record`.
+5. **Search for a contradicting record.** For each person, document, date and claim of absence the text names ("could only be reached by phone", "has not responded"), search the mailbox and the matter's correspondence for a message or document that contradicts it. A contradiction found makes the verdict `cut` or a rewrite, with habit `contradicted_record`. A search that finds nothing never makes a negative `verified`.
+
+   **A negative about mail out of reach.** When the notes put the mail that would settle a claim of absence in a mailbox you cannot reach, check only the exported messages you listed and one search of `mail_folder` for that correspondent and date. Run no other search for it. Unless that finds a contradiction, the verdict is `trace_needed` with the `reason` "Only the practitioner can confirm: " and the mailbox.
 6. For a reply, or a letter answering correspondence, list in `unanswered` each characterization in the incoming message that the text leaves unanswered where silence could be read as agreement.
 7. Every source you could not open goes in `unread_sources`.
 

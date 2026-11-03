@@ -119,6 +119,69 @@ test("list_folders with a prefix returns only that tree and counts every folder"
   assert.deepEqual(client.names(), ["connect", "list", "logout"]);
 });
 
+// A server that refuses every folder but its one real one, as an IMAP server refuses a name it does not hold.
+function refusingClient(folders, real) {
+  const refuse = (path) => {
+    if (path !== real) throw Object.assign(new Error("Command failed"), { responseText: "Mailbox does not exist" });
+  };
+  return fakeClient({
+    folders,
+    methods: {
+      async mailboxOpen(path) { refuse(path); return { exists: 0 }; },
+      async status(path) { refuse(path); return { messages: 0, unseen: 0 }; },
+    },
+  });
+}
+
+const MATTER_FOLDERS = [
+  { path: "1. OPEN FILES", delimiter: "/", flags: new Set(["\\Noselect"]) },
+  { path: "1. OPEN FILES/L1234 Example", delimiter: "/", flags: new Set() },
+  { path: "2. CLOSED FILES/L1234 Example", delimiter: "/", flags: new Set() },
+  { path: "1. OPEN FILES/L5678 Other", delimiter: "/", flags: new Set() },
+];
+
+test("a folder named by its leaf is refused with its full name, on every read that names a folder", async () => {
+  const folders = MATTER_FOLDERS.filter((f) => !f.path.startsWith("2."));
+  for (const [tool, args] of [
+    ["mail__search_emails", {}],
+    ["mail__folder_status", {}],
+    ["mail__get_latest_emails", {}],
+    ["mail__get_email", { uid: 1 }],
+    ["mail__find_thread_messages", { uid: 1 }],
+  ]) {
+    const error = await errorOf(context(refusingClient(folders, "1. OPEN FILES/L1234 Example")), tool, { ...args, folder: "L1234 Example" });
+    assert.equal(error.code, "mail_not_found", tool);
+    assert.equal(error.message, 'no folder named "L1234 Example"; folders with that last segment: "1. OPEN FILES/L1234 Example"', tool);
+  }
+});
+
+test("a leaf name that two folders share names both and searches neither", async () => {
+  const client = refusingClient(MATTER_FOLDERS, "1. OPEN FILES/L1234 Example");
+  const error = await errorOf(context(client), "mail__search_emails", { folder: "l1234  example" });
+  assert.equal(error.code, "mail_not_found");
+  assert.match(error.message, /"1\. OPEN FILES\/L1234 Example", "2\. CLOSED FILES\/L1234 Example"$/);
+  assert.equal(client.names().includes("search"), false);
+});
+
+test("a wrong parent gets the full name; a name no folder ends in gets no guess", async () => {
+  const wrongParent = await errorOf(context(refusingClient(MATTER_FOLDERS, "x")), "mail__search_emails", { folder: "OPEN/L5678 Other" });
+  assert.match(wrongParent.message, /"1\. OPEN FILES\/L5678 Other"$/);
+  const unknown = await errorOf(context(refusingClient(MATTER_FOLDERS, "x")), "mail__search_emails", { folder: "L9999" });
+  assert.deepEqual([unknown.code, unknown.message], ["mail_not_found", 'no folder named "L9999"; take the exact name from mail__list_folders']);
+});
+
+test("a listed folder the server still refuses keeps the server's own error, and so does a failed list", async () => {
+  const listed = await errorOf(context(refusingClient(MATTER_FOLDERS, "x")), "mail__search_emails", { folder: "1. OPEN FILES/L5678 Other" });
+  assert.equal(listed.code, "mail_error");
+  assert.match(listed.message, /Mailbox does not exist/);
+
+  const client = refusingClient(MATTER_FOLDERS, "x");
+  client.list = async () => { throw new Error("connection lost"); };
+  const noList = await errorOf(context(client), "mail__search_emails", { folder: "L1234 Example" });
+  assert.equal(noList.code, "mail_error");
+  assert.match(noList.message, /Mailbox does not exist/);
+});
+
 test("search_emails builds the search criteria and returns the ingest shape", async () => {
   const message = (uid, iso, cc) => ({
     uid,

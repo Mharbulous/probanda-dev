@@ -51,6 +51,8 @@ import {
   draftsFolder,
   findFolder,
   folderMissing,
+  namingFolder,
+  openReadOnly,
   runImap,
   sentFolder,
   withImap,
@@ -324,7 +326,9 @@ function listFolders(run: Run, args: Args): Promise<unknown> {
 function folderStatus(run: Run, args: Args): Promise<unknown> {
   const folder = folderArg(args);
   return run(`reading the status of "${folder}"`, async (client) => {
-    const s = await client.status(folder, { messages: true, unseen: true, recent: true, uidNext: true, uidValidity: true });
+    const s = await namingFolder(client, folder, () =>
+      client.status(folder, { messages: true, unseen: true, recent: true, uidNext: true, uidValidity: true })
+    );
     return {
       folder,
       total: s.messages,
@@ -343,7 +347,7 @@ function getLatestEmails(run: Run, args: Args): Promise<unknown> {
   const count = intArg("mail__get_latest_emails.count", args.count, 10, 1, 200);
   const body = listBodyOptions("mail__get_latest_emails", args);
   return run(`reading the latest messages in "${folder}"`, async (client) => {
-    const box = await client.mailboxOpen(folder, { readOnly: true });
+    const box = await openReadOnly(client, folder);
     if (box.exists === 0) return { folder, messages: [] };
     const uids: number[] = [];
     for await (const m of client.fetch(`${Math.max(1, box.exists - count + 1)}:*`, { uid: true })) uids.push(m.uid);
@@ -363,7 +367,7 @@ function searchEmails(run: Run, args: Args): Promise<unknown> {
   if (args.flagged !== undefined) criteria.flagged = args.flagged;
   if (Object.keys(criteria).length === 0) criteria.all = true;
   return run(`searching "${folder}"`, async (client) => {
-    await client.mailboxOpen(folder, { readOnly: true });
+    await openReadOnly(client, folder);
     const uids = (await client.search(criteria, { uid: true })) || [];
     const newest = [...uids].sort((a, b) => a - b).slice(-limit);
     const messages = (await fetchSummaries(client, folder, newest, body)).sort(byDateDesc).slice(0, limit);
@@ -383,7 +387,7 @@ function getEmail(run: Run, args: Args): Promise<unknown> {
     stripInlineImages: args.strip_inline_images === true,
   };
   return run(`reading message ${uid} in "${folder}"`, async (client) => {
-    await client.mailboxOpen(folder, { readOnly: true });
+    await openReadOnly(client, folder);
     const m = await client.fetchOne(
       String(uid),
       { uid: true, source: true, flags: true, envelope: true, bodyStructure: true, internalDate: true },
@@ -472,7 +476,7 @@ async function downloadAttachment(run: Run, args: Args): Promise<unknown> {
   const saveDir = saveDirArg("mail__download_attachment", args);
 
   const { entry, bytes } = await run(`downloading an attachment of message ${uid} in "${folder}"`, async (client) => {
-    await client.mailboxOpen(folder, { readOnly: true });
+    await openReadOnly(client, folder);
     const m = await client.fetchOne(String(uid), { uid: true, bodyStructure: true }, { uid: true });
     if (!m) throw notFound(uid, folder);
     const entry = pickAttachment(attachmentList(m.bodyStructure), filename, index);
@@ -532,7 +536,7 @@ async function saveMessage(run: Run, args: Args): Promise<unknown> {
   const saveDir = staging ? undefined : saveDirArg("mail__save_message", args);
 
   const { source, messageId, subject } = await run(`saving message ${uid} in "${folder}"`, async (client) => {
-    await client.mailboxOpen(folder, { readOnly: true });
+    await openReadOnly(client, folder);
     const m = await client.fetchOne(String(uid), { uid: true, source: true, envelope: true }, { uid: true });
     if (!m || !m.source) throw notFound(uid, folder);
     return { source: m.source, messageId: m.envelope?.messageId, subject: m.envelope?.subject };
@@ -683,7 +687,7 @@ function findThreadMessages(run: Run, args: Args): Promise<unknown> {
     throw new ValidationError("mail__find_thread_messages.search_folders must be a non-empty list of folder names");
   }
   return run(`tracing the thread of message ${uid} in "${folder}"`, async (client) => {
-    await client.mailboxOpen(folder, { readOnly: true });
+    await openReadOnly(client, folder);
     const m = await client.fetchOne(String(uid), { uid: true, envelope: true, headers: ["references"] }, { uid: true });
     if (!m) throw notFound(uid, folder);
     const references = m.headers?.toString("latin1").match(/<[^<>\s]+>/g) ?? [];
@@ -701,7 +705,7 @@ function findThreadMessages(run: Run, args: Args): Promise<unknown> {
     const or = ids.flatMap((id) => [{ header: { "message-id": id } }, { header: { references: id } }, { header: { "in-reply-to": id } }]);
     const messages: MessageSummary[] = [];
     for (const f of folders) {
-      await client.mailboxOpen(f, { readOnly: true });
+      await openReadOnly(client, f);
       const uids = (await client.search(or.length === 1 ? or[0] : { or }, { uid: true })) || [];
       messages.push(...(await fetchSummaries(client, f, uids, body)));
     }
