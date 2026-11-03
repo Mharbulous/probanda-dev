@@ -12,6 +12,7 @@ PAGE = r"<matter>\0. DRAFT\Work Board 3.html"
 OPEN = "mcp__remote-devices__plugin_lawyer_data__drafting_forms__open_session"
 RENDER = "mcp__plugin_lawyer_data__drafting_forms__render"
 COMPLETE = "mcp__plugin_lawyer_data__drafting_data__complete_job"
+ATTACH = "mcp__plugin_lawyer_data__drafting_data__attach_to_board"
 
 
 def run(payload):
@@ -132,6 +133,10 @@ class PostToolUseTest(unittest.TestCase):
     def test_response_given_as_object_or_content_dict(self):
         self.assertIn(PAGE, self.post(COMPLETE, {"pages_written": True, "board_changed": True, "milestone_path": PAGE}))
         self.assertIn(PAGE, self.post(RENDER, {"content": mcp_text(filing_render(True, True))}))
+
+    def test_attach_names_its_page_when_it_changed(self):
+        self.assertIn(PAGE, self.post(ATTACH, mcp_text({"pages_written": True, "board_changed": True, "milestone_path": PAGE})))
+        self.assertIsNone(self.post(ATTACH, mcp_text({"pages_written": True, "board_changed": False, "milestone_path": PAGE})))
 
     def test_nothing_written_says_nothing(self):
         self.assertIsNone(self.post(RENDER, mcp_text(filing_render(False, False))))

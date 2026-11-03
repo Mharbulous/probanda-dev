@@ -553,9 +553,11 @@ A client letter (`draft/references/letters.md` section 10) and a reply on the re
 - **`kind`**: `'client_letter'`, `'reply'` or `'opposing_filing'` (schema v81): another party's filed document in the court-file folder, such as an application response or an affidavit it relies on. It is no Writing's material, so it never gets a `filing_documents` row and prints on no filed face of ours. Its `path` may be anywhere in the matter folder.
 - **`attached_on`**: the date attached, `YYYY-MM-DD`.
 
-Every value below is a literal composed into the script, each `'` doubled (§7's no-bind rule). The table is revision-exempt (§8): attaching moves no mockup. The Work Board pages show a change at their next write, so after each write here render the board under `draft_dir`: `drafting_forms__render` with the board's `filing_id` or, for a pre-filing board, `proceeding_id`, naming `Work_board` in `documents`.
+**Attach**, once, when the draft is first saved, with `drafting_data__attach_to_board`, never `execute`: `kind`, `path` (absolute or relative to the matter folder, the file already written), `draft_dir`, `session_token`. In one transaction it creates a forum-less proceeding when the matter has none (`forum` NULL, ADR 0024's superseding note on D9) and attaches to the matter's one board, then rewrites that board's pages, returning `milestone_path`. Several boards refuse `several_boards`, naming them. Ask the practitioner which, offering as the default the board of the Writing the session holds, the Writing of the job it holds, never a research memo or case brief, and call again with `filing_id` or `proceeding_id`. Proceedings whose Writings are all retired have no board and refuse `no_board`: recover one of the Writings (§11) or create one. A file already attached stays on its board (`already_attached`).
 
-**The matter's boards.** Before attaching or moving, read every live Writing that has a board and every proceeding with no such Writing, live or retired:
+Every value in the writes below is a literal composed into the script, each `'` doubled (§7's no-bind rule). The table is revision-exempt (§8): attaching moves no mockup. The Work Board pages show a change at their next write, so after each write below render the board under `draft_dir`: `drafting_forms__render` with the board's `filing_id` or, for a pre-filing board, `proceeding_id`, naming `Work_board` in `documents`.
+
+**The matter's boards.** Before moving, read every live Writing that has a board and every proceeding with no such Writing, live or retired:
 
 ```sql
 SELECT id AS filing_id, proceeding_id, title FROM filings
@@ -566,18 +568,9 @@ SELECT p.id AS proceeding_id, p.forum, p.file_number,
   WHERE NOT EXISTS (SELECT 1 FROM filings f WHERE f.proceeding_id = p.id AND f.kind NOT IN ('research_memo', 'research_memo_irac', 'research_memo_creac', 'case_brief')) ORDER BY p.id;
 ```
 
-On a row of the second read, `attach_filing_id` is the `filing_id` an attach or move to that board writes: NULL when the proceeding has no Writing, and otherwise a live research memo or case brief of it. NULL on a proceeding whose research Writings are all retired is refused, and that board takes no draft until one is recovered or another Writing is created.
+On a row of the second read, `attach_filing_id` is the `filing_id` a move to that board writes: NULL when the proceeding has no Writing, and otherwise a live research memo or case brief of it. NULL on a proceeding whose research Writings are all retired is refused, and that board takes no draft until one is recovered or another Writing is created.
 
-Ask the practitioner which board, naming a Writing's board by its title and a pre-filing proceeding's by its forum and file number. The default offered is the board of the Writing the session holds, the Writing of the job it holds. A research memo or case brief is no default, because it has no board, so offer none and ask. A matter with no proceeding at all gets a forum-less proceeding first, an ordinary `proceedings` insert with `forum` NULL (ADR 0024's superseding note on D9), and the draft goes on that proceeding's board. A proceeding that has a Writing other than a research memo or case brief, every one of them retired, has no board at all, so attach the draft to a board of another proceeding, or recover one of its Writings (§11) and attach it there. A matter is one database, so every board read here is in the same matter.
-
-**Attach**, once, when the draft is first saved:
-
-```sql
-INSERT INTO board_attachments (proceeding_id, filing_id, path, kind, attached_on)
-  VALUES (1, 7, '0. DRAFT\2026-10-08 ET Client re costs.md', 'client_letter', '2026-10-08');
-```
-
-A `UNIQUE` refusal on `path` means the draft is already attached: read its row and say which board holds it. Never attach it twice.
+Name a Writing's board by its title and a pre-filing proceeding's by its forum and file number. A matter is one database, so every board read here is in the same matter.
 
 **Move**, only when the practitioner asks, to any other board of the matter, the row's id from the read below:
 
@@ -618,7 +611,7 @@ SELECT id, filing_id, path, kind, attached_on FROM board_attachments
 
 - `guard_board_attachments_live_ins`/`_upd`: a retired Writing has no board.
 - `guard_board_attachments_proceeding_ins`/`_upd`: a row names a Writing of its own proceeding.
-- `guard_board_attachments_pre_filing_ins`/`_upd`: `filing_id` NULL is refused on a proceeding with any Writing, live or retired, a research memo or case brief included. A proceeding with any other Writing has no board of its own. One holding only research memos or case briefs still has, and takes its drafts through `attach_filing_id` above.
+- `guard_board_attachments_pre_filing_ins`/`_upd`: `filing_id` NULL is refused on a proceeding with any Writing, live or retired, a research memo or case brief included. A proceeding with any other Writing has no board of its own. One holding only research memos or case briefs still has, and a move there writes `attach_filing_id` above.
 - `guard_filings_retire_attached`: the retirement precondition (§11).
 
 ## 15. Rhetorical paragraphs (schema v71)

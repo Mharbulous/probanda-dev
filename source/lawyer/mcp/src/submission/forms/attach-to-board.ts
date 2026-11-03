@@ -74,12 +74,10 @@ function boardsOf(dbPath: string): Board[] {
   return boards.filter((b) => !index.absorbed({ filing_id: b.filing_id, proceeding_id: b.proceeding_id }));
 }
 
-function named(boards: Board[]): string {
-  return boards.map((b) => `"${b.name}" (${b.filing_id === null ? `proceeding_id ${b.proceeding_id}` : `filing_id ${b.filing_id}`})`).join(", ");
-}
-
 function chooseBoard(args: AttachToBoardArgs, boards: Board[]): Board {
-  const refusal = (why: string, code: string) => new DataServerError(`${why}: ${named(boards)}. Ask the practitioner which, and call again naming it. Nothing was written.`, code, { boards });
+  // The message names each board for the practitioner; `boards` carries the ids the next call takes.
+  const refusal = (why: string, code: string) =>
+    new DataServerError(`${why}: ${boards.map((b) => `"${b.name}"`).join(", ")}. Ask the practitioner which, and call again naming it. Nothing was written.`, code, { boards });
   if (args.filing_id !== undefined || args.proceeding_id !== undefined) {
     const board = boards.find((b) => (args.filing_id !== undefined ? b.filing_id === args.filing_id : b.filing_id === null && b.proceeding_id === args.proceeding_id));
     if (board === undefined) throw refusal("That is not a Work Board this matter can attach to. Its boards are", "not_a_board");

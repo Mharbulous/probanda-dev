@@ -71,7 +71,7 @@ test("one board attaches there; an absolute path is stored in the same form", as
   await submissionDataExecute(
     f.dbPath,
     `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L9999', NULL);
-     INSERT INTO filings (id, proceeding_id, kind, title) VALUES (5, 1, 'task-board', 'Paper originals');`
+     INSERT INTO filings (id, proceeding_id, kind, title, needs_forum_parts) VALUES (5, 1, 'task-board', 'Paper originals', 0);`
   );
   const result = await attach(f, { path: join(f.draftDir, LETTER) });
   assert.equal(result.proceeding_created, undefined);
@@ -84,9 +84,14 @@ test("several boards refuse, naming them, until the call names one", async (t) =
   await submissionDataExecute(
     f.dbPath,
     `INSERT INTO proceedings (id, matter_reference, forum, file_number) VALUES (1, 'L9999', NULL, NULL), (2, 'L9999', NULL, NULL);
-     INSERT INTO filings (id, proceeding_id, kind, title) VALUES (5, 1, 'task-board', 'Paper originals');`
+     INSERT INTO filings (id, proceeding_id, kind, title, needs_forum_parts) VALUES (5, 1, 'task-board', 'Paper originals', 0);`
   );
-  await assert.rejects(attach(f), (err) => err.code === "several_boards" && /"Paper originals" \(filing_id 5\)/.test(err.message) && /proceeding_id 2/.test(err.message));
+  await assert.rejects(attach(f), (err) => {
+    assert.equal(err.code, "several_boards");
+    assert.match(err.message, /"Paper originals"/);
+    assert.deepEqual(err.details.boards.map((b) => [b.filing_id, b.proceeding_id]), [[5, 1], [null, 2]]);
+    return true;
+  });
   assert.equal(rows(f, "SELECT COUNT(*) AS n FROM board_attachments")[0].n, 0, "the refusal writes nothing");
   await assert.rejects(attach(f, { filing_id: 99 }), (err) => err.code === "not_a_board");
   await attach(f, { proceeding_id: 2 });
@@ -105,7 +110,8 @@ test("a retry leaves the file on its board, and proceedings with no live board r
   await submissionDataExecute(
     g.dbPath,
     `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L9999', NULL);
-     INSERT INTO filings (id, proceeding_id, kind, title, retired_on, retired_reason) VALUES (5, 1, 'task-board', 'Closed', '2026-10-01', 'abandoned');`
+     INSERT INTO filings (id, proceeding_id, kind, title, needs_forum_parts) VALUES (5, 1, 'task-board', 'Closed', 0);
+     UPDATE filings SET retired_on = '2026-10-01', retirement_reason = 'abandoned' WHERE id = 5;`
   );
   await assert.rejects(attach(g), (err) => err.code === "no_board");
 });
@@ -115,7 +121,7 @@ test("a proceeding holding only a research memo takes the file through that memo
   await submissionDataExecute(
     f.dbPath,
     `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L9999', NULL);
-     INSERT INTO filings (id, proceeding_id, kind, title) VALUES (3, 1, 'research_memo', 'Memo');`
+     INSERT INTO filings (id, proceeding_id, kind, title, needs_forum_parts) VALUES (3, 1, 'research_memo', 'Memo', 0);`
   );
   const result = await attach(f);
   assert.deepEqual(rows(f, "SELECT proceeding_id, filing_id FROM board_attachments"), [{ proceeding_id: 1, filing_id: 3 }]);

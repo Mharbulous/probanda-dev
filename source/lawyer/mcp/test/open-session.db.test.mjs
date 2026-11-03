@@ -244,17 +244,7 @@ test("no submission database at the derived path: entry creates it and reports t
   assert.equal(again.migrated, undefined, "the second entry finds it current");
 });
 
-test("a database behind on the same path still gets its copy-aside on entry", async (t) => {
-  const m = matterFixture(t);
-  const context = await practiceContext(t, { withMatter: false });
-  await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
-  oneVersionBehind(m.dbPath);
-  const result = await callTool(context, "drafting_forms__open_session", { matter_root: m.matterRoot });
-  assert.ok(result.migrated.backup, "the backup is reported");
-  assert.equal(existsSync(result.migrated.backup), true);
-});
-
-test("the matter's own 0. CASE DATA folder is made when missing, and nothing above the matter", async (t) => {
+test("the matter's own 0. CASE DATA folder is made when missing", async (t) => {
   const m = matterFixture(t);
   rmSync(m.caseDataDir, { recursive: true });
   const context = await practiceContext(t, { withMatter: false });

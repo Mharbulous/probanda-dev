@@ -39,8 +39,7 @@ Load `drafting_forms__read_message`, `drafting_forms__reply_draft`, `drafting_fo
 4. **Present the saved `.md` as a file card** (`shared/present-files.md`), then confirm the save in one line.
 5. **Attach it to a Work Board at its first save** (ADR 0042), through `/drafting-data`, which owns every particular of the write:
    - Call `drafting_forms__open_session` with `matter_root`, for the database and the draft folder. A refusal is quoted in one line: the reply stays saved, on no board yet.
-   - Ask which board the reply goes on, naming each board `/drafting-data` reads for the matter. The default offered is the board of the Writing the session holds, if it holds one. A matter with no proceeding gets a forum-less proceeding first.
-   - Attach the saved file by `/drafting-data`'s attach write, then render that board so its page lists the reply, and confirm both in one line.
+   - Call `drafting_data__attach_to_board` with `kind` `reply` and the saved file, and confirm in one line. On `several_boards`, ask which of the boards it names, offering as the default the board of the Writing the session holds, if it holds one, and call again naming it.
    - Each later save of the same reply re-points the attachment to the new version's file by `/drafting-data`'s move write, on the same board.
    - The earlier version's file stays in `0. DRAFT`, on no board, by design: only the latest version is on the board.
    - Move it to another board of the matter, or detach it, only when the practitioner asks. Detaching leaves every file where it is.

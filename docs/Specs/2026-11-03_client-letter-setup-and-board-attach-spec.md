@@ -69,3 +69,19 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - `drafting_forms__open_session`'s missing-database path and `drafting_data__migrate`.
 - `/drafting-data`'s attach write in `filing-checklists.md` §14 and whether a legacy-store freeze bars changes to it (see the record-client-bill-and-letter-sent spec's §11).
 - `/work` `references/procedure.md` entry refusals.
+
+## 11. Verified against HEAD (72d549c5, 2026-11-03)
+
+| Claim | Finding | Evidence |
+|---|---|---|
+| `open_session` refuses a missing database | Confirmed. The refusal sits in bootstrap, which `open_session` calls | `source/lawyer/mcp/src/submission/forms/bootstrap.ts:103-105` |
+| It already migrates a database that is behind | Confirmed, decided in CoClerk #590, built in b7bf98b8 there. `drafting_forms__bootstrap` stays a pure gate, and keeps its refusal | `source/lawyer/mcp/src/submission/open-session.ts` header and `behind` block |
+| `drafting_data__migrate` creates a database and keeps the copy-aside | Confirmed. A fresh create backs up nothing, because there is nothing to protect (#353). The engine does not create folders | `.claude/skills/drafting-data/references/scripts/migrate_engine.py:423-478` |
+| §9.1: a stated reason for the refusal | None found. The tool description and the contract only allocate the job ("creating one stays `migrate`'s job"). The reason in bootstrap's comment concerns upgrading live client data, and #590 decided it the other way for `open_session`. The nearest guard, a9cb0a41, refuses a pointer from another device, and it stays: `resolveDbPath` runs first | ADRs in both repositories, `git log -S` in both, b7bf98b8 and a9cb0a41 messages |
+| Attach write in `filing-checklists.md` §14 | Confirmed: raw SQL through `drafting_data__execute`, with a separate forum-less `proceedings` insert | §14 before this change |
+| A legacy-store freeze bars changes | No freeze on tools over existing tables. The Exception in COMMANDMENTS.md bars more reliance on the store, so the tool adds no DDL and no migration | `git diff` holds no change to `migrations.sql` |
+| `/work` refusal bullet | Confirmed at line 22, deleted | `.claude/skills/work/references/procedure.md` |
+| ADR 0004 and ADR 0042 | Both are in CoClerk's `docs/adr`, not here. ADR 0042 D2 confirms the pointer holds the board and path only | `Coclerk/docs/adr/0042-every-draft-document-is-on-one-job-board.md` |
+| 0-to-latest time on an empty fixture | 5.0 to 5.6 s over 5 runs (81 hops, through `submissionDataMigrate`, this PC), under the Cowork bridge's 60 s limit | Measured 2026-11-03 |
+
+§9.2 decided: no board and no proceeding creates one, one board attaches there, several boards refuse and name them. The tool takes `kind`, so a reply and another party's filing use it too and §14's raw attach write is gone.

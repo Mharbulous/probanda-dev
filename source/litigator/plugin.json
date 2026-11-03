@@ -97,7 +97,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "mcp__(.+__)?plugin_lawyer_data__(drafting_forms__(open_session|render)|drafting_data__complete_job)",
+        "matcher": "mcp__(.+__)?plugin_lawyer_data__(drafting_forms__(open_session|render)|drafting_data__(complete_job|attach_to_board))",
         "hooks": [
           {
             "type": "command",
