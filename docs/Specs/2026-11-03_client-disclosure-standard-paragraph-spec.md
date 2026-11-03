@@ -68,3 +68,19 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - The scrivener's `recipient/client.md` and `core.md`.
 - The fact checker's accepted source kinds.
 - Whether any firm-wide guidance store already exists that a scrivener can read.
+
+## 11. Queued research job
+
+For the practitioner to run through `/legal-research`, in a matter session: "In a BC Supreme Court action, what, if anything, must a party do to disclose its own documents (scope, timing, and whether the duty continues), what, if anything, must it do to preserve them, and what follows if it does not? Give a pinpoint for each, leave out the other side's obligations, and use no client or matter facts. With the memo, give one plain-language paragraph for a client, each sentence traced to a memo paragraph and pinpoint. Once I approve them, store both as `shared/knowledge-tree.md` section 12 says, topic `document-disclosure`, venue `BCSC`."
+
+## 12. Verification against HEAD (2026-11-03)
+
+| Spec path or claim | At HEAD | Result |
+|---|---|---|
+| `litigator/skills/draft/SKILL.md` | `.claude/skills/draft/SKILL.md` | Source path differs |
+| `lawyer:scrivener` | `source/lawyer/agents/scrivener.md` | Exists. Section 1 and `core.md` section 1 barred any law the request did not give, so both gained the standing-item exception |
+| Scrivener's `recipient/client.md` and `core.md` | `.claude/skills/shared/scrivener/references/` | Exist |
+| `litigator:source-tracer` | `source/litigator/agents/source-tracer.md` | Exists. It skipped every statement of law and had no knowledge tool |
+| Fact checker's accepted source kinds | `source-tracer.md` section 4 | No memo was accepted. The memo is now the source for a guidance item's sentences |
+| Firm-wide guidance store | `shared/knowledge-tree.md`, `source/lawyer/mcp/src/knowledge/` | The overlay exists. `/draft`'s `Sources\` takes an item under the folder grammar with no tree change. `/legal-research`'s tree is not used, because section 2 says it never holds a statement of law |
+| Stale marking | `.claude/skills/rule-update/SKILL.md` | No such step existed. Step 2a now marks an item by overwrite, under the matter number the item already carries |

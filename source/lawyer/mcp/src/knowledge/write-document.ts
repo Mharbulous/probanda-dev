@@ -7,7 +7,7 @@ import { pluginVersion } from "../repo-root.js";
 import { parseItems, readFrontMatter, type FrontMatter } from "../sources/check.js";
 import { htmlBlocks, passagePresent, sourcesFetcher, type SourceFetcher } from "../sources/fetch.js";
 import { withFileLock, writeTextAtomic } from "./sidecar.js";
-import { locate, entryType, type KnowledgePath } from "./tree.js";
+import { locate, entryType, parseKnowledgePath, readServed, type KnowledgePath } from "./tree.js";
 import { provenance } from "./common.js";
 import { blockOf, itemsOf } from "./items.js";
 import { refuseArgs, stampedMatter, writableOverlayPath, type Args, type WriteSeams } from "./overlay.js";
@@ -123,6 +123,19 @@ function checkStaleBody(path: string, existingAbs: string, previous: string, fro
   return "compared";
 }
 
+/** A standing client-guidance item must name its memo, which must exist, its currency date and what it relies on (shared/knowledge-tree.md section 12). */
+function checkClientGuidance(kp: KnowledgePath, front: FrontMatter, seams: WriteSeams, label: string): void {
+  const name = kp.segments[kp.segments.length - 1];
+  if (!name.startsWith("client-guidance-") || name.endsWith(".memo.md")) return;
+  const bad = (why: string): never => {
+    throw new DataServerError(`${kp.path}: ${why}. Nothing was written.`, "invalid_client_guidance");
+  };
+  if (typeof front.currency_date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(front.currency_date)) bad("`currency_date` must be YYYY-MM-DD");
+  if (!Array.isArray(front.relies_on) || front.relies_on.length === 0) bad("`relies_on` must list what the memo cites");
+  if (typeof front.memo_path !== "string") bad("`memo_path` must name the memo");
+  readServed(parseKnowledgePath(front.memo_path, `${label}: memo_path`), seams, `${label}: memo_path`);
+}
+
 export async function writeDocument(kp: KnowledgePath, args: Args, matter: string, seams: WriteSeams, label: string): Promise<Record<string, unknown>> {
   refuseArgs(args, ["row"], "to a document file");
   const mattNum = await stampedMatter(matter, seams, kp.path);
@@ -149,6 +162,7 @@ export async function writeDocument(kp: KnowledgePath, args: Args, matter: strin
   blockOf(kp, content, { corrections: [] }, itemsOf(kp, front, seams, label).items);
   const fetcher = seams.fetcher ?? sourcesFetcher;
   checkExcerpts(kp.path, front, fetcher);
+  checkClientGuidance(kp, front, seams, label);
   const saved = args.saved_copy === undefined ? null : savedCopyOf(args.saved_copy, kp.path, front, seams);
 
   const stamp: Stamp = { learned_by: "agent", matter: mattNum, plugin_version: pluginVersion(seams.installRoot), shipped_from: loc.shipped_from };

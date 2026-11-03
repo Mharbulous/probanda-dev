@@ -70,6 +70,14 @@ class SourceTraceContractTests(unittest.TestCase):
             with self.subTest(tool=tool):
                 self.assertNotRegex(tool, r"^(Write|Edit|MultiEdit|Bash|PowerShell|Agent)$|save|write|execute|upsert")
 
+    def test_reviewer_takes_a_guidance_item_memo_as_source(self):
+        agent = AGENT.read_text(encoding="utf-8")
+        self.assertIn("the item's memo is its source", agent)
+        self.assertIn("each sentence of that paragraph is an assertion", agent)
+        tools = re.findall(r"^\s+- (\S+)", agent.split("---")[1], re.M)
+        for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
+            self.assertIn(f"{prefix}knowledge__read", tools)
+
     def test_reviewer_never_takes_the_drafter_word(self):
         agent = AGENT.read_text(encoding="utf-8")
         self.assertIn("Read every source yourself", agent)

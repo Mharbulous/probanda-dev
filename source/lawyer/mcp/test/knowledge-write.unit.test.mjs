@@ -112,6 +112,48 @@ test("create writes a learned document to the overlay, stamping learned_by, the 
   ]);
 });
 
+// ------------------------------------------------------------ standing client guidance --
+
+const GUIDANCE = "draft/CAN/BC/BCSC/Sources/client-guidance-fixture.md";
+const GUIDANCE_MEMO = "draft/CAN/BC/BCSC/Sources/client-guidance-fixture.memo.md";
+const guidance = (header) => `---\n${header}---\n## Paragraph\nPlaceholder.\n\n## Trace\nSentence 1: memo para 1.\n`;
+const GUIDANCE_HEADER = `memo_path: ${GUIDANCE_MEMO}\ncurrency_date: 2026-11-03\nrelies_on:\n  - Fixture Instrument, s. 1\n`;
+
+test("a client-guidance item is refused without its memo path, currency date or relies_on, or when its memo is absent", async (t) => {
+  const { f, write } = await setup(t);
+  await write({ operation: "create", path: GUIDANCE_MEMO, content: "---\naccessed: 2026-11-03\n---\nMemo.\n" });
+  for (const header of [
+    "currency_date: 2026-11-03\nrelies_on:\n  - Fixture Instrument, s. 1\n",
+    `memo_path: ${GUIDANCE_MEMO}\nrelies_on:\n  - Fixture Instrument, s. 1\n`,
+    `memo_path: ${GUIDANCE_MEMO}\ncurrency_date: 2026-11-03\n`,
+  ]) {
+    const err = await rejection(write({ operation: "create", path: GUIDANCE, content: guidance(header) }));
+    assert.equal(err.code, "invalid_client_guidance");
+  }
+  const missing = await rejection(
+    write({ operation: "create", path: GUIDANCE, content: guidance("memo_path: draft/CAN/BC/BCSC/Sources/client-guidance-none.memo.md\ncurrency_date: 2026-11-03\nrelies_on:\n  - Fixture Instrument, s. 1\n") })
+  );
+  assert.equal(missing.code, "not_found");
+  assert.equal(existsSync(f.localPath(GUIDANCE)), false);
+});
+
+test("a client-guidance item reads back with its header, and a stale mark survives on overwrite under the item's own matter", async (t) => {
+  const { f, write } = await setup(t);
+  await write({ operation: "create", path: GUIDANCE_MEMO, content: "---\naccessed: 2026-11-03\n---\nMemo.\n" });
+  await write({ operation: "create", path: GUIDANCE, content: guidance(GUIDANCE_HEADER) });
+  const fresh = knowledgeRead(GUIDANCE, f.seams);
+  assert.equal(fresh.header.memo_path, GUIDANCE_MEMO);
+  assert.equal(fresh.header.currency_date, "2026-11-03");
+  assert.equal(fresh.header.stale, undefined);
+  assert.match(fresh.content, /## Paragraph\nPlaceholder\./);
+
+  const marked = await write({ operation: "create", path: GUIDANCE, matter: fresh.header.matter, overwrite: true, content: fresh.content.replace("---\n## Paragraph", 'stale: "Fixture Amendment, in force 2026-12-01"\n---\n## Paragraph') });
+  assert.equal(marked.status, "overwritten");
+  const stale = knowledgeRead(GUIDANCE, f.seams);
+  assert.equal(stale.header.stale, "Fixture Amendment, in force 2026-12-01");
+  assert.equal(stale.header.matter, fresh.header.matter);
+});
+
 test("create refuses a path the shipped tree holds", async (t) => {
   const { f, write } = await setup(t);
   f.shipped(RECORD_PATH, record());

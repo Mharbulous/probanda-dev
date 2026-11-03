@@ -2,6 +2,8 @@
 
 Read when: the recipient is the firm's own client: the people who have hired the firm and whose interests it represents. The goal is to inform, advise and get clear instructions, without over-explaining or being paternalistic.
 
+**Standing client guidance.** When `purpose` asks to tell the client about their own document-disclosure duty in a BC Supreme Court action, call `knowledge__read` with `matter_root` and the path "draft/CAN/BC/BCSC/Sources/client-guidance-document-disclosure.md". Use its `## Paragraph` word for word, and give it one `sources` entry whose locators are that path and the header's `memo_path`. An error or a `stale` header makes it unusable: return an open item to research it or re-check it (`shared/knowledge-tree.md` section 12).
+
 ## Voice and tone
 
 Client emails from this practice are direct, practical and analytical. They read like a smart advisor talking to someone they respect, not a lawyer performing for a file. Key characteristics drawn from practice samples:

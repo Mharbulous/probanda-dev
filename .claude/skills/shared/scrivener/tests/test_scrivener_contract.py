@@ -68,6 +68,13 @@ class AgentTests(unittest.TestCase):
                 self.assertIn(item, agent)
         self.assertIn("Check the text against section 5's list, last, every time.", agent)
 
+    def test_client_file_names_where_standing_guidance_is_read(self):
+        client = (REFS / "recipient" / "client.md").read_text(encoding="utf-8")
+        self.assertIn("draft/CAN/BC/BCSC/Sources/client-guidance-document-disclosure.md", client)
+        tools = re.findall(r"^\s+- (\S+)", frontmatter(AGENT), re.M)
+        for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
+            self.assertIn(f"{prefix}knowledge__read", tools)
+
     def test_without_prejudice_is_a_mode_not_a_capacity(self):
         agent = AGENT.read_text(encoding="utf-8")
         self.assertIn("- `mode`: `without-prejudice`", agent)

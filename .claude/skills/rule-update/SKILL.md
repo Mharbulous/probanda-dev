@@ -60,6 +60,8 @@ what a rule means. Writes go through the clerk. A question of law met on the way
      another decision's quotation or memory.
    - Copy each affected subrule **verbatim**. A scanned PDF's text can misread letters and
      digits, so check every number against the page as shown, not only the extracted text.
+2a. **Mark standing client guidance stale**, once the instrument and its sections are known, as
+   `shared/knowledge-tree.md` section 12 says. This does not wait on any approval below.
 3. **Spawn the clerk with the passages** (`lawyer:docket-clerk`, workflow 10). The prompt
    carries: the live-issue answer, the instrument (reg, OIC, commencement), each passage
    verbatim with its subrule, the source URL and the fetch date. A prompt carrying passages
