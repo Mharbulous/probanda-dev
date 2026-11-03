@@ -75,3 +75,19 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - `lawyer/skills/bill-client/SKILL.md` (as seen in the installed copy at v0.21.7; v0.21.9 may already differ): Step 6 and the Notes column.
 - `timekeeper/skills/vet-billable-time/SKILL.md` (UNVERIFIED path; skill seen only in the skill list).
 - Whether the defensible-time-entries spec has landed first; if so, read its staff-time and vetting changes and do not duplicate them.
+
+## 11. Verification against HEAD (be14c121, 2026-11-03)
+
+| Spec claim | Finding at HEAD | Consequence |
+|---|---|---|
+| `/bill-client` Step 6 writes the TimeCamp description into a "Notes" column | Gone. Step 6 no longer has a Notes column, and the deliverable is the draft invoice. | Nothing to delete. §6 option 1's removal is already done. |
+| `/bill-client` calls `/vet-billable-time` before any table of time (§4.1, criterion 1) | Met. `.claude/skills/bill-client/SKILL.md` Step 6.4 invokes it, and every invoice figure comes from its `invoice_lines.json`. Steps 6.1 to 6.3 show candidate dates and `/timecamping`'s day judgments, which are evidence review, not time-entry lines. | No edit to `/bill-client`. |
+| Path `timekeeper/skills/vet-billable-time/SKILL.md` (UNVERIFIED) | Source is `.claude/skills/vet-billable-time/SKILL.md`. `source/assignment.json` assigns it to `timekeeper`. | All work is in that folder. |
+| Whether `/vet-billable-time` writes bill-style descriptions | No. Step 5's examples are "Phone call to client, 12 min" and "Drafting retainer letter". | Replace them with the style (§4.2). |
+| §2 format: date, initials, semicolon sequence, hours to one decimal | The row shape already exists. `tie_out.py` `final` joins a person-day's descriptions with "; " and writes `date`, `initials` and `hours` in `invoice_lines.json`. | The skill only has to write each line's phrases. No script change. |
+| Style exists once (§4.2) | The only examples of it in skill text are in `vet-billable-time/SKILL.md`. "Phone call to client" also appears in test fixtures only. | One copy, in Step 5. |
+| Staff entries with no activity (§4.3) | Step 3 flags them "no evidence", and Step 5 forbids "a guessed purpose". There is no inference rule. A "no evidence" line bills only if confirmed with an estimate, which `tie_out.py` enforces (`line_evidence`). | Add the labelled inference to Step 5, and keep the existing rule. |
+| Blank staff notes (§4.4) | Not listed anywhere. The skill never calls `update_entry`. The roster's `role` field marks `staff`. | One new small script. |
+| Whether the defensible-time-entries spec has landed | Partly. be14c121 landed its `tie_out.py`, `line_map.py` and their tests. Its staff inference and recorded confirmation are not in `/vet-billable-time` or `/timecamping`, whose SKILL.md still says it judges only the practitioner's own time. | Do not edit those files or `/timecamping`. This spec adds only the flag and the one-line basis. |
+
+Open questions (§9), decided by the orchestrating session: the format applies to `/bill-client`'s litigation matters, and unconfirmed inferred text never reaches the draft because Step 5 confirms every line.
