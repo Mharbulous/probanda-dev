@@ -42,7 +42,7 @@ export interface ImapClientLike {
   close(): void;
   list(): Promise<FolderEntry[]>;
   status(path: string, query: Record<string, boolean>): Promise<Record<string, unknown>>;
-  mailboxOpen(path: string, options: { readOnly: boolean }): Promise<{ exists: number; uidValidity?: bigint | number }>;
+  mailboxOpen(path: string, options: { readOnly: boolean }): Promise<{ exists: number; uidValidity?: bigint | number; uidNext?: number }>;
   mailboxCreate(path: string): Promise<{ path: string; created?: boolean }>;
   mailboxRename(path: string, newPath: string): Promise<{ path: string; newPath: string }>;
   messageMove(range: string, destination: string, options: { uid: true }): Promise<CopyResult | false>;

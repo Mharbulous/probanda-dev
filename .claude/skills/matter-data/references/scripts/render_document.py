@@ -11,7 +11,7 @@ does in-session on every path (../../operations/ingest.md Step 2).
 
 Output contract:
 
-  python3 render_document.py <input_path> <output_dir> [--head-chars N]
+  python3 render_document.py <input_path> <output_dir> [--head-chars N] [--strip-quoted]
 
 Writes "<output_dir>/<original_basename>.txt" (the original extension is kept
 in the stem, e.g. "Letter.docx.txt", so same-stem/different-extension inputs
@@ -23,6 +23,25 @@ sharing one output dir never collide). Prints one line of JSON to stdout:
 With --head-chars N (a positive integer), it also writes the rendering's first
 N characters to "<output_dir>/<original_basename>.head.txt" ("Letter.docx.head.txt")
 and adds "head_path" to the JSON: a page-1 read of a rendered file.
+
+The JSON for an .eml also carries "message_id", "in_reply_to" (each without its
+angle brackets, or null), "references" (a list), "x_unsent" (true on X-Unsent: 1)
+and "auto_submitted" (the Auto-Submitted value unless it is "no", else the name of
+an X-Autoreply, X-Autorespond or Precedence: auto_reply header, else null). They
+are JSON only: the rendered text does not change.
+
+--strip-quoted (.eml only) writes a stripped rendering: a filter of the full one,
+never renumbered, so each kept line equals the full rendering's line and a ¶N
+cited from it is valid against the full rendering. It drops the trailing quoted
+block of the body: everything from the first paragraph that opens with a line
+"On ... wrote:", "-----Original Message-----", a "From:" line followed by "Sent:"
+or "Date:" and "To:" lines, or a "____" rule followed by such a block; or a run of
+paragraphs whose every line begins ">". "On ... wrote:" or ">" paragraphs with new
+text after them are not trailing and stay, and a paragraph that holds a marker only
+after its first line stays whole, so no new text is ever dropped. The block becomes
+one line, "quoted\\t<In-Reply-To Message-ID or unknown>\\t<n lines>", and the JSON
+gains "quoted_blocks": [{"after_paragraph", "in_reply_to", "lines"}].
+paragraph_count stays the full rendering's. Any other file kind is refused.
 
 For an .eml or .msg, each attachments entry also carries "size",
 "content_type" and "path", and the attachment bytes are written to
@@ -86,6 +105,10 @@ import zipfile
 
 WORD_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 HEADER_ORDER = ("From", "To", "Cc", "Date", "Subject")
+_ON_WROTE = re.compile(r"^On .+ wrote:$")
+_ORIGINAL_MESSAGE = re.compile(r"^-----Original Message-----$", re.I)
+_UNDERSCORE_RULE = re.compile(r"^_{10,}$")
+_MESSAGE_ID = re.compile(r"<[^<>\s]+>")
 
 
 class RenderError(Exception):
@@ -145,9 +168,62 @@ def _write_attachment(attachment_dir, idx, name, payload):
     return out
 
 
-def render_eml(input_path, attachment_dir=None):
+def _lines_of(block):
+    return [line.strip() for line in block.splitlines() if line.strip()]
+
+
+def _is_header_block(lines):
+    """A From: line followed, within its next four lines, by Sent:/Date: and To:."""
+    if not lines or not re.match(r"^From: .+$", lines[0]):
+        return False
+    following = lines[1:5]
+    return (any(re.match(r"^(Sent|Date): ", line) for line in following)
+            and any(line.startswith("To: ") for line in following))
+
+
+def _is_quoted_only(lines):
+    return bool(lines) and all(line.startswith(">") for line in lines)
+
+
+def _quote_start(blocks):
+    """The index of the first paragraph of the body's trailing quoted block, or
+    None. Only whole paragraphs are dropped, and only when no new text follows."""
+    parsed = [_lines_of(block) for block in blocks]
+    for i, lines in enumerate(parsed):
+        after = parsed[i + 1:]
+        next_lines = after[0] if after else []
+        if _ORIGINAL_MESSAGE.match(lines[0]) or _is_header_block(lines):
+            return i
+        if _UNDERSCORE_RULE.match(lines[0]) and (_is_header_block(lines[1:]) or _is_header_block(next_lines)):
+            return i
+        if _ON_WROTE.match(lines[0]) or (len(lines) > 1 and _ON_WROTE.match(f"{lines[0]} {lines[1]}")):
+            prefixed = any(line.startswith(">") for line in lines[1:]) or _is_quoted_only(next_lines)
+            if not prefixed or all(_is_quoted_only(rest) for rest in after):
+                return i
+        if _is_quoted_only(lines) and all(_is_quoted_only(rest) for rest in after):
+            return i
+    return None
+
+
+def _bare_id(value):
+    value = str(value).strip().strip("<>").strip() if value is not None else ""
+    return value or None
+
+
+def _auto_submitted(msg):
+    value = str(msg.get("Auto-Submitted", "")).strip()
+    if value and value.lower() != "no":
+        return value
+    for name in ("X-Autoreply", "X-Autorespond"):
+        if msg.get(name) is not None:
+            return name.lower()
+    return "auto_reply" if str(msg.get("Precedence", "")).strip().lower() == "auto_reply" else None
+
+
+def render_eml(input_path, attachment_dir=None, strip_quoted=False, meta=None):
     """Render an .eml. When attachment_dir is given, each attachment's bytes
-    are written there as "<index>_<name>" and its path reported."""
+    are written there as "<index>_<name>" and its path reported. When meta is a
+    dict, it receives the JSON-only fields, so the rendering is unchanged."""
     try:
         with open(input_path, "rb") as fh:
             raw = fh.read()
@@ -166,13 +242,28 @@ def render_eml(input_path, attachment_dir=None):
             lines.append(f"hdr\t{name}: {str(value).strip()}")
 
     body_text = _eml_body_text(msg)
-    paragraphs = [
-        _collapse_ws(block)
-        for block in re.split(r"\n\s*\n", body_text)
-        if _collapse_ws(block)
-    ]
-    for i, text in enumerate(paragraphs, start=1):
+    blocks = [block for block in re.split(r"\n\s*\n", body_text) if _collapse_ws(block)]
+    paragraphs = [_collapse_ws(block) for block in blocks]
+    in_reply_to = _bare_id(msg.get("In-Reply-To"))
+    start = _quote_start(blocks) if strip_quoted else None
+    kept = paragraphs if start is None else paragraphs[:start]
+    for i, text in enumerate(kept, start=1):
         lines.append(f"¶{i}\t{text}")
+    quoted_blocks = []
+    if start is not None:
+        count = sum(len(_lines_of(block)) for block in blocks[start:])
+        lines.append(f"quoted\t{in_reply_to or 'unknown'}\t{count} lines")
+        quoted_blocks.append({"after_paragraph": start, "in_reply_to": in_reply_to or "unknown", "lines": count})
+    if meta is not None:
+        meta.update({
+            "message_id": _bare_id(msg.get("Message-ID")),
+            "in_reply_to": in_reply_to,
+            "references": [_bare_id(m) for m in _MESSAGE_ID.findall(str(msg.get("References", "")))],
+            "x_unsent": str(msg.get("X-Unsent", "")).strip() == "1",
+            "auto_submitted": _auto_submitted(msg),
+        })
+        if strip_quoted:
+            meta["quoted_blocks"] = quoted_blocks
 
     attachments = []
     for part in msg.iter_attachments():
@@ -609,6 +700,9 @@ def render_rtf(input_path):
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     head_chars = None
+    strip_quoted = "--strip-quoted" in argv
+    if strip_quoted:
+        argv = [arg for arg in argv if arg != "--strip-quoted"]
     if len(argv) == 4 and argv[2] == "--head-chars":
         head_chars = int(argv[3]) if argv[3].isdigit() else 0
         argv = argv[:2]
@@ -616,17 +710,21 @@ def main(argv=None):
             print("--head-chars takes a positive integer", file=sys.stderr)
             return 2
     if len(argv) != 2:
-        print("usage: render_document.py <input_path> <output_dir> [--head-chars N]", file=sys.stderr)
+        print("usage: render_document.py <input_path> <output_dir> [--head-chars N] [--strip-quoted]", file=sys.stderr)
         return 2
 
     input_path, output_dir = argv
     ext = os.path.splitext(input_path)[1].lower()
     basename = os.path.basename(input_path)
     att_dir = os.path.join(output_dir, f"{basename}.attachments")
+    if strip_quoted and ext != ".eml":
+        print("--strip-quoted applies only to an .eml", file=sys.stderr)
+        return 2
+    meta = {}
     if ext == ".docx":
         renderer, fmt = render_docx, "docx"
     elif ext == ".eml":
-        renderer, fmt = (lambda p: render_eml(p, att_dir)), "eml"
+        renderer, fmt = (lambda p: render_eml(p, att_dir, strip_quoted, meta)), "eml"
     elif ext == ".msg":
         renderer, fmt = (lambda p: render_msg(p, att_dir)), "msg"
     elif ext in (".doc", ".rtf"):
@@ -667,6 +765,7 @@ def main(argv=None):
     }
     if head_chars is not None:
         result["head_path"] = head_path
+    result.update(meta)
     print(json.dumps(result))
     return 0
 

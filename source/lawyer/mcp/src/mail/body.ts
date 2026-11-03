@@ -136,6 +136,9 @@ export const formatAddresses = (list: Address[] | undefined): string[] =>
   (list ?? []).map(formatAddress).filter((a): a is string => a !== undefined);
 
 /** ISO 8601 in UTC, or undefined for a missing or unparseable date. */
+/** A Message-ID without its angle brackets and surrounding whitespace. */
+export const stripBrackets = (id: string): string => id.trim().replace(/^<|>$/g, "");
+
 export function isoDate(value: Date | string | undefined): string | undefined {
   if (value === undefined) return undefined;
   const date = new Date(value);

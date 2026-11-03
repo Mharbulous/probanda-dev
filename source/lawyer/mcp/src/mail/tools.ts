@@ -8,9 +8,10 @@
 // folder read-only. Tool definitions live in schema-gen.ts.
 
 import { createHash } from "node:crypto";
-import { readFileSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { basename, extname, join, win32 as pathWin32 } from "node:path";
 
+import { defaultStateDir } from "../../../../mcp-shared/dpapi-store.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { parseMime } from "../correspondence/eml.js";
 import { pdfPages } from "../files/extract/pdf.js";
@@ -20,6 +21,7 @@ import {
   formatAddresses,
   isoDate,
   renderBody,
+  stripBrackets,
   summarize,
   type AttachmentEntry,
   type BodyFormat,
@@ -28,7 +30,20 @@ import {
   type RenderedBody,
 } from "./body.js";
 import { persistMailCredential, type MailCredential, type MailState } from "./config.js";
-import { dedupeApply, dedupeApplyContinue, dedupePlanTier2, dedupeReadComparison, dedupeScan } from "./dedupe.js";
+import {
+  autoSubmitted,
+  connect,
+  dedupeApply,
+  dedupeApplyContinue,
+  dedupePlanTier2,
+  dedupeReadComparison,
+  dedupeRecordVerdicts,
+  dedupeScan,
+  isUnsent,
+  normalizedBody,
+  sha256,
+  sliceClock,
+} from "./dedupe.js";
 import {
   DEFAULT_TIMEOUT_MS,
   defaultImapFactory,
@@ -65,6 +80,7 @@ const BODY_CAP = 25;
 const DRAFT_MAX_BYTES = 25 * 1024 * 1024;
 const FETCH_FIELDS = { uid: true, envelope: true, flags: true, size: true, internalDate: true };
 const PRINTABLE = /^[^\x00-\x1F\x7F]+$/;
+const STAGING_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const mailTools: Tool<MailContext>[] = [
   { name: "mail__configure_credential", handler: (args, context) => configureCredential(context, args) },
@@ -76,6 +92,7 @@ export const mailTools: Tool<MailContext>[] = [
   { name: "mail__get_email", handler: (args, context) => getEmail(runFor(context), args) },
   { name: "mail__download_attachment", handler: (args, context) => downloadAttachment(runFor(context), args) },
   { name: "mail__save_message", handler: (args, context) => saveMessage(runFor(context), args) },
+  { name: "mail__list_headers", handler: (args, context) => listHeaders(context, args) },
   { name: "mail__find_email_by_message_id", handler: (args, context) => findByMessageId(runFor(context), args) },
   { name: "mail__find_thread_messages", handler: (args, context) => findThreadMessages(runFor(context), args) },
   { name: "mail__save_draft", handler: (args, context) => saveDraft(runFor(context), args) },
@@ -83,8 +100,9 @@ export const mailTools: Tool<MailContext>[] = [
   { name: "mail__rename_folder", handler: (args, context) => renameFolder(runFor(context), args) },
   { name: "mail__move_messages", handler: (args, context) => moveMessages(runFor(context), args) },
   { name: "mail__dedupe_scan", handler: (args, context) => dedupeScan(context, args) },
-  { name: "mail__dedupe_read_comparison", handler: (args) => dedupeReadComparison(args) },
-  { name: "mail__dedupe_plan_tier2", handler: (args) => dedupePlanTier2(args) },
+  { name: "mail__dedupe_read_comparison", handler: (args, context) => dedupeReadComparison(context, args) },
+  { name: "mail__dedupe_record_verdicts", handler: (args, context) => dedupeRecordVerdicts(context, args) },
+  { name: "mail__dedupe_plan_tier2", handler: (args, context) => dedupePlanTier2(context, args) },
   { name: "mail__dedupe_apply", handler: (args, context) => dedupeApply(context, args) },
   { name: "mail__dedupe_apply_continue", handler: (args, context) => dedupeApplyContinue(context, args) },
 ];
@@ -134,8 +152,6 @@ function ymd(label: string, value: unknown): Date {
 
 const notFound = (uid: number, folder: string): DataServerError =>
   new DataServerError(`no email with UID ${uid} in folder "${folder}"; UIDs change when mail is moved, so search again`, "mail_not_found");
-
-const stripBrackets = (id: string): string => id.trim().replace(/^<|>$/g, "");
 
 // --- shared reads -------------------------------------------------------------------
 
@@ -411,7 +427,8 @@ function pickAttachment(list: AttachmentEntry[], filename: string | undefined, i
 function safeName(name: string | undefined, fallback: string): string {
   const base = (name ?? "").split(/[\\/]/).pop() ?? "";
   const clean = base.replace(/[<>:"|?*\x00-\x1F]/g, "_").replace(/[. ]+$/, "").trim();
-  return clean || fallback;
+  // Windows keeps these device names, whatever the extension.
+  return /^(con|prn|aux|nul|com\d|lpt\d)(\.|$)/i.test(clean) ? `_${clean}` : clean || fallback;
 }
 
 // Writes `bytes` under `dir` without overwriting: "name (1).ext" and so on. The
@@ -484,12 +501,32 @@ async function downloadAttachment(run: Run, args: Args): Promise<unknown> {
   return result;
 }
 
+// Today's folder under the mail staging root, created here, after removing each of this server's
+// dated folders more than 7 days old. Anything else in the root is left alone.
+function stagingDir(): string {
+  const root = defaultStateDir(process.env, "mail-staging");
+  mkdirSync(root, { recursive: true });
+  for (const name of readdirSync(root)) {
+    const m = /^(\d{4})(\d{2})(\d{2})$/.exec(name);
+    if (m && Date.now() - new Date(+m[1], +m[2] - 1, +m[3]).getTime() > STAGING_MAX_AGE_MS) {
+      rmSync(join(root, name), { recursive: true, force: true });
+    }
+  }
+  const now = new Date();
+  const today = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  const dir = join(root, today);
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
 // Saves the message exactly as the server stores it, so its hash matches any other
 // byte-for-byte copy and no inline image or header is lost to a rebuild.
 async function saveMessage(run: Run, args: Args): Promise<unknown> {
   const folder = folderArg(args);
   const uid = intArg("mail__save_message.uid", args.uid, undefined, 1);
-  const saveDir = saveDirArg("mail__save_message", args);
+  const staging = args.staging === true;
+  if (staging === (args.save_dir !== undefined)) throw new ValidationError("mail__save_message needs either save_dir or staging: true");
+  const saveDir = staging ? undefined : saveDirArg("mail__save_message", args);
 
   const { source, messageId, subject } = await run(`saving message ${uid} in "${folder}"`, async (client) => {
     await client.mailboxOpen(folder, { readOnly: true });
@@ -498,8 +535,10 @@ async function saveMessage(run: Run, args: Args): Promise<unknown> {
     return { source: m.source, messageId: m.envelope?.messageId, subject: m.envelope?.subject };
   });
 
-  const stem = safeName(subject?.replace(/[\\/]/g, "_").slice(0, 120), `message-${uid}`);
-  const path = writeFree(saveDir, `${stem}.eml`, source);
+  const name = args.filename !== undefined
+    ? safeName(args.filename as string, `message-${uid}.eml`)
+    : `${safeName(subject?.replace(/[\\/]/g, "_").slice(0, 120), `message-${uid}`)}.eml`;
+  const path = writeFree(saveDir ?? stagingDir(), name, source);
   return {
     saved: true,
     path,
@@ -508,6 +547,111 @@ async function saveMessage(run: Run, args: Args): Promise<unknown> {
     sha256: createHash("sha256").update(source).digest("hex"),
     messageId,
   };
+}
+
+// --- the header list ----------------------------------------------------------------
+
+// What a later list reuses without fetching the message again, by UIDVALIDITY and UID. Hashes and
+// identifiers only: no subject, address or text.
+interface CachedHashes {
+  size: number;
+  raw_sha256: string;
+  body_sha256: string | null;
+  references: string[];
+  x_unsent: boolean;
+  auto_submitted: string | null;
+  has_attachments: boolean;
+  unreadable?: true;
+}
+
+function hashesOf(source: Buffer): CachedHashes {
+  const hashes = { size: source.length, raw_sha256: sha256(source) };
+  try {
+    const parts = parseMime(source);
+    return {
+      ...hashes,
+      body_sha256: sha256(normalizedBody(parts)),
+      references: (parts.headers.get("references")?.match(/<[^<>\s]+>/g) ?? []).map(stripBrackets),
+      x_unsent: isUnsent(parts.headers),
+      auto_submitted: autoSubmitted(parts.headers),
+      has_attachments: parts.attachments.length > 0,
+    };
+  } catch {
+    return { ...hashes, body_sha256: null, references: [], x_unsent: false, auto_submitted: null, has_attachments: false, unreadable: true };
+  }
+}
+
+function readCache(path: string): Record<string, CachedHashes> {
+  try {
+    return JSON.parse(readFileSync(path, "utf-8")) as Record<string, CachedHashes>;
+  } catch (error) {
+    // A cache cut short by a crash costs only fetching those messages again.
+    if (error instanceof SyntaxError || (error as NodeJS.ErrnoException).code === "ENOENT") return {};
+    throw error;
+  }
+}
+
+// One page of a folder's messages, written to a file so hashes and subjects never pass through the
+// model. The first list of a folder downloads every message to hash it, so a call stops when its
+// slice runs out and the next one resumes at next_uid. The folder is opened read-only and only ever
+// fetched from, so nothing is marked read. Each page states its folder's UIDVALIDITY, so a reader
+// can see that a folder was renumbered between two pages.
+function listHeaders(context: MailContext, args: Args): Promise<unknown> {
+  const folder = args.folder as string;
+  const uidFrom = intArg("mail__list_headers.uid_from", args.uid_from, 1, 1);
+  const limit = intArg("mail__list_headers.limit", args.limit, 200, 1, 500);
+  return connect(context, `listing the messages in "${folder}"`, async (client) => {
+    const box = await client.mailboxOpen(folder, { readOnly: true });
+    if (box.uidValidity === undefined) throw new DataServerError(`"${folder}" did not report its UIDVALIDITY, so its messages cannot be identified`, "mail_error");
+    const uidValidity = String(box.uidValidity);
+    const uids = [...((await client.search({ all: true }, { uid: true })) || [])].filter((u) => u >= uidFrom).sort((a, b) => a - b);
+
+    const credential = context.mail.credential as MailCredential;
+    const stateDir = defaultStateDir(process.env, "mail");
+    const key = `${sha256(JSON.stringify([credential.username, credential.host, folder])).slice(0, 32)}-${uidValidity}`;
+    const cachePath = join(stateDir, "hash-cache", `${key}.json`);
+    const cache = readCache(cachePath);
+    const clock = sliceClock(context);
+    const messages: Record<string, unknown>[] = [];
+    let read = 0;
+    try {
+      while (read < uids.length && messages.length < limit && !clock.spent()) {
+        const uid = uids[read];
+        const cached = cache[String(uid)];
+        const m = await client.fetchOne(String(uid), { ...FETCH_FIELDS, source: !cached }, { uid: true });
+        read += 1;
+        clock.tick();
+        if (!m || (!cached && !m.source)) continue;
+        const hashes = cached ?? hashesOf(m.source as Buffer);
+        cache[String(uid)] = hashes;
+        const e = m.envelope ?? {};
+        const { references, ...rest } = hashes;
+        messages.push({
+          uid,
+          message_id: e.messageId ? stripBrackets(e.messageId) || null : null,
+          in_reply_to: e.inReplyTo ? stripBrackets(e.inReplyTo) || null : null,
+          references,
+          date: isoDate(e.date ?? m.internalDate),
+          from: formatAddress(e.from?.[0]),
+          to: formatAddresses(e.to),
+          cc: formatAddresses(e.cc),
+          subject: e.subject,
+          flags: [...(m.flags ?? [])],
+          ...rest,
+        });
+      }
+    } finally {
+      mkdirSync(join(stateDir, "hash-cache"), { recursive: true });
+      writeFileSync(cachePath, JSON.stringify(cache));
+    }
+    const done = read >= uids.length;
+    // Named by the range it holds, so another session's list of the same folder cannot change this page.
+    const pageDir = join(stateDir, "headers");
+    mkdirSync(pageDir, { recursive: true });
+    const listPath = join(pageDir, `${key}-${uidFrom}-${uids[read - 1] ?? uidFrom}.json`);
+    writeFileSync(listPath, JSON.stringify({ folder, uidValidity, uidNext: box.uidNext, messages }));
+    return { list_path: listPath, count: messages.length, next_uid: done ? null : uids[read], done };
+  });
 }
 
 // --- finding messages ---------------------------------------------------------------
