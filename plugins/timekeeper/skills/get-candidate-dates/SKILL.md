@@ -3,7 +3,7 @@ name: get-candidate-dates
 description: "Use for 'get candidate dates', 'which dates should I look at before billing', or /get-candidate-dates for a matter: narrows the whole matter to a short, evidenced list of dates with an indicator of work, reconciled against the last invoice. Does not bill (/bill-client), fetch or store a day's evidence (/build-timeline), sort time to matters (/time-sorting), correct TimeCamp (/timecamping) or draft entries (/time-entry-drafting)."
 ---
 
-<!-- timekeeper v0.4.2 -->
+<!-- timekeeper v0.4.3 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -23,7 +23,7 @@ Narrow one matter to the dates worth a minute-by-minute review. A candidate date
 
 ## Phase 0: the last invoice
 
-Do this before reading any other source.
+Do this before reading any other source. When `/bill-client` opened this skill and gave the bill date, the last billed date and each billed date with its time, take them as given and go to Phase 1, so the PDF is read once.
 
 1. Find the last invoice: `/practice-data`'s invoice data, then the matter's `2. SOLICITOR CLIENT` folder, then firm receipts reports. Practice records can be empty for a matter that has been billed.
 2. Read the invoice PDF itself. Never take its number, date or amount from the file name. Call `pdf_pages__images` first: read a `scanned` page only from its PNGs and a `born_digital` page with `Read` `pages:`. Read the bar chart's labels or the itemized list exactly.
@@ -92,9 +92,11 @@ The list is one table, by date:
 | Date or range | Strength | Lawyer or Staff | Flags | Evidence, with local times |
 |---|---|---|---|---|
 
+- **Date or range:** `YYYY-MM-DD`, or `YYYY-MM-DD to YYYY-MM-DD`, because the billing check reads it exactly.
+- **Lawyer or Staff:** `Lawyer`, `Staff` or `Both`. A date with only staff evidence is `Staff`.
 - **Strength:** Strong means several independent sources, or a document or email the lawyer wrote. Medium means one direct source. Weak means a seconds-long touch, a client or staff action only, or an inferred window.
 - **Flags:** suspicious, under-billed, inferred, unverified.
 
 After the table come three sections: **Write-offs**, **Sources checked, nothing found** and **Unexplored leads**.
 
-Then tell the practitioner where the list is and how many dates it holds at each strength. `/build-timeline` and `/timecamping` take these dates one at a time for the review. Billing stays with `/bill-client`, run by the practitioner.
+Then tell the practitioner where the list is and how many dates it holds at each strength. `/timecamping` takes these dates one at a time for the review, through `/build-timeline`. Billing stays with `/bill-client`, run by the practitioner. When `/bill-client` opened this skill, return the list's path to it and go on.

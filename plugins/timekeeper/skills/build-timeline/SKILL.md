@@ -8,7 +8,7 @@ dependencies:
   - mail tools of the lawyer plugin's contacts-calendars-email server # sent mail (Sent Items, Sent Messages and their LEAP subfolders only), metadata only
 ---
 
-<!-- timekeeper v0.4.2 -->
+<!-- timekeeper v0.4.3 -->
 > **Installed copy.** This skill's full source tree ships beside this file, and a relative path in the text below cites that tree. Resolve one by trying, in order: the directory of the file you are reading, then `${CLAUDE_SKILL_DIR}/<path>`, then `${CLAUDE_SKILL_DIR}/../<path>` (so `shared/x.md` is at `${CLAUDE_SKILL_DIR}/../shared/x.md`). The host substitutes `${CLAUDE_SKILL_DIR}` with the directory holding this SKILL.md when this file loads; if the literal text `${CLAUDE_SKILL_DIR}` is what you see, that IS the definition: it means the directory containing this SKILL.md, not a placeholder to search for or guess. Read references and shared files natively from there, never over the litigation data server's skill-source tool and never by requesting folder access; scripts and templates the text declares are executed and read from there too. Before each fresh read (a file not already in context), list only `${CLAUDE_SKILL_DIR}/../../..` (the folder holding this plugin's folder). If it holds this plugin's folder name, with any `~g<N>` suffix removed, plus a `~g<N>` higher than this plugin's folder's own (none counts as 0), or if `${CLAUDE_SKILL_DIR}` no longer exists, the plugin was re-synced mid-session: take the highest `~g<N>` copy and repeat the same three tries with its `skills/<this skill>` directory in place of `${CLAUDE_SKILL_DIR}`; tell the user once that the plugin updated mid-session, from the version in this file's version comment to the version in that folder's copy of this SKILL.md. If a file the text names is missing at every one of those paths, including the re-synced folder's, STOP and report the exact path and error to the user rather than substituting an alternative: do not re-derive a script's logic from its source text or the prose, and do not search elsewhere on the filesystem. Ask the user to reinstall the plugin and fully restart the app; this may fix it, but STOP means stop regardless: do not diagnose further yourself.
 > **HTML pages.** Every HTML file this plugin writes is a human interface generated from its databases; an agent never views, reads, greps, parses, scripts over, authors or requests a screenshot of one, but may present one to a human user to view, staging it first where presenting needs that, and may view a screenshot the user provides on their own initiative. The rule and the data to use instead: `shared/html-pages.md`.
 
@@ -275,15 +275,24 @@ For each raw record returned by a source:
 
 ### Step 4: Replace-by-source within range
 
-Before inserting new rows for a given source and range:
+A date's replacement is **one `/time-pipeline-data` bulk apply**, covering every
+source fetched for that date, so a re-fetch asks for one pasted approval per
+date, never one per row. Never delete rows one at a time. For a range, do this
+once per date. For each source fetched:
 
 1. Load `index:activity:by-source:{source}` and `index:event:by-source:{source}`.
 2. For each id, load the row and check whether its timestamp (for events) or
-   interval (for activities) falls within the requested range. Activities that
-   overlap the range — even partially — are considered in-range.
-3. Delete every in-range row (`activity:{id}` or `event:{id}`) and remove its
-   id from the by-source and by-date indexes.
-4. Insert the freshly-fetched rows and update all indexes.
+   interval (for activities) falls within the date. Activities that
+   overlap the date — even partially — are considered in-range.
+3. Add to the date's JSONL file, in this order: a `delete` line for every in-range
+   row (`activity:{id}` or `event:{id}`); a `set` line for every freshly-fetched
+   row; a `set` line for each by-source index with its in-range ids removed and
+   the fresh ids added; and for each by-date index the source touches, a `merge`
+   line with `drop_prefix` `{source}:` and `add` the ids that index should hold
+   from this source.
+
+Then apply the file once. A first fetch of a date has no `delete` line, so it
+asks for no approval.
 
 The practical effect: re-fetching Telus for 2026-04-15 wipes only Telus rows
 in that date; TimeCamp and GCal rows for the same day are untouched.
