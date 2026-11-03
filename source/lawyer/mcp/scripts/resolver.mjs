@@ -3,13 +3,14 @@
 //   node scripts/resolver.mjs
 //
 // Turns the matter-data skill's case_data_resolver.py into src/case/case-data-resolver.py.ts, whose
-// default export is the file's text. case/backend.ts puts that text at the head of its embedded
-// Python helper, so the resolver has one source and the server still reads no skill file at run
-// time. The generated module is gitignored, so a build that skipped this step fails on a missing
-// module.
+// default export is the file's text. Two modules put that text at the head of their embedded
+// Python: case/locate.ts, ahead of its pointer read (the driver the files server runs), and
+// case/backend.ts, ahead of its helper. So the resolver has one source and the server still reads
+// no skill file at run time. The generated module is gitignored, so a build that skipped this step
+// fails on a missing module.
 //
 // The guards refuse a CR, a migrate_only parameter, a resolve_pointer definition and an import of
-// resolve_paths: the backend must never carry the schema-guard bypass (matter-data
+// resolve_paths: neither locate.ts nor the backend may carry the schema-guard bypass (matter-data
 // design-decisions.md #27).
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";

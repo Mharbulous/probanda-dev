@@ -137,7 +137,8 @@ reasons stated at their own entry below):
   guard's escape hatch. Its callers are `migrate_engine.py` (the operative one),
   `rebuild.py --migrate`, and `resolve_pointer.py --migrate-only`. The `matter_data__query`/`matter_data__execute` backend
   (`source/lawyer/mcp/src/case/backend.ts`) carries its own pointer resolver
-  with **no such parameter**, built on a pasted copy of `case_data_resolver.py`,
+  with **no such parameter**: the pointer read `LOCATE_PY` from
+  `source/lawyer/mcp/src/case/locate.ts`, built on a pasted copy of `case_data_resolver.py`,
   which is what keeps the bypass off the read path — never "simplify" that
   backend into importing this module.
 - After a bare `rebuild.py`, run `dump.py` so
