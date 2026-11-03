@@ -311,7 +311,7 @@ begin
     'links', (select count(*) from rules.link_role),
     'keys', (select count(*) from rules.natural_key)) into v_counts;
   perform pg_temp.t_check('P3 applying both files twice leaves one copy of every table of the rulebook',
-    v_counts = '{"kinds": 17, "policies": 8, "vocabulary": 73, "tags": 13, "links": 18, "keys": 10}'::jsonb, v_counts::text);
+    v_counts = '{"kinds": 20, "policies": 8, "vocabulary": 76, "tags": 13, "links": 25, "keys": 12}'::jsonb, v_counts::text);
 end $t$;
 
 -- =============================================================================
@@ -618,7 +618,7 @@ begin
          jsonb_build_object('state', 'partial', 'hashes', jsonb_build_object('year', pg_temp.h('2030'))))),
       ('matter billable', pg_temp.op('update', v_m, 'matter', '{"tags": {"billable": "yes"}}'::jsonb)),
       ('time entry state', pg_temp.op('create', gen_random_uuid(), 'time_entry',
-         jsonb_build_object('state', 'open', 'links', jsonb_build_object('matter', v_m)))),
+         jsonb_build_object('state', 'billed', 'links', jsonb_build_object('matter', v_m)))),
       ('required task_type', pg_temp.op('create', gen_random_uuid(), 'task', '{}'::jsonb)),
       ('required matter link', pg_temp.op('create', gen_random_uuid(), 'time_entry', '{}'::jsonb)),
       ('required signal state', pg_temp.op('upsert', gen_random_uuid(), 'signal', jsonb_build_object(
@@ -1984,6 +1984,105 @@ begin
   perform pg_temp.t_check('Seed of a malformed item seeds nothing and says what is malformed',
     (s->>'seeded')::integer = 0 and jsonb_array_length(s->'questions') = 1
     and not exists (select 1 from ledger.item i where i.tenant = v_t), s::text);
+end $t$;
+
+-- =============================================================================
+-- Issuing an invoice: its records stay as issued
+-- =============================================================================
+
+do $t$
+declare
+  v_t uuid := gen_random_uuid();
+  v_m uuid := gen_random_uuid();
+  v_e uuid := gen_random_uuid();
+  v_old uuid := gen_random_uuid();
+  v_inv uuid := gen_random_uuid();
+  v_line uuid := gen_random_uuid();
+  v_adj uuid := gen_random_uuid();
+  v_rate uuid := gen_random_uuid();
+  r jsonb;
+begin
+  perform pg_temp.w(v_t, 'upsert_client_matter', jsonb_build_array(
+    pg_temp.op('create', v_m, 'matter', jsonb_build_object('hashes', jsonb_build_object('matt_num', pg_temp.h('M1'))))));
+
+  r := pg_temp.w(v_t, 'upsert_time_entries', jsonb_build_array(
+    pg_temp.op('upsert', v_e, 'time_entry', jsonb_build_object('state', 'open', 'links', jsonb_build_object('matter', v_m),
+      'hashes', jsonb_build_object('source_key', pg_temp.h('tc:1'), 'hours', pg_temp.h('0.5'))))));
+  perform pg_temp.t_check('A billing time entry is saved open', pg_temp.saved(r), r::text);
+
+  r := pg_temp.w(v_t, 'upsert_time_entries', jsonb_build_array(
+    pg_temp.op('upsert', gen_random_uuid(), 'time_entry', jsonb_build_object('links', jsonb_build_object('matter', v_m),
+      'hashes', jsonb_build_object('source_key', pg_temp.h('tc:1'), 'hours', pg_temp.h('0.6'))))));
+  perform pg_temp.t_check('Upserting the same source key updates the one entry, with no duplicate',
+    pg_temp.as_id(r) = v_e
+    and (select count(*) from ledger.item i where i.tenant = v_t and i.kind = 'time_entry') = 1, r::text);
+
+  r := pg_temp.w(v_t, 'insert_time_entry', jsonb_build_array(
+    pg_temp.op('create', v_old, 'time_entry', jsonb_build_object('links', jsonb_build_object('matter', v_m),
+      'hashes', jsonb_build_object('hours', pg_temp.h('1'))))));
+  perform pg_temp.t_check('An entry with no state is still saved', pg_temp.saved(r)
+    and (select i.state from ledger.item i where i.tenant = v_t and i.id = v_old) is null, r::text);
+
+  r := pg_temp.w(v_t, 'set_time_entries_billable', jsonb_build_array(
+    pg_temp.op('update', v_old, 'time_entry', jsonb_build_object('tags', jsonb_build_object('billable', false)))));
+  perform pg_temp.t_check('An entry with no state can still be edited', pg_temp.saved(r), r::text);
+
+  r := pg_temp.w(v_t, 'upsert_rate', jsonb_build_array(
+    pg_temp.op('upsert', v_rate, 'rate', jsonb_build_object('links', jsonb_build_object('matter', v_m),
+      'hashes', jsonb_build_object('timekeeper', pg_temp.h('Pat'), 'effective_date', pg_temp.h('2030-01-01'), 'rate', pg_temp.h('100'))))));
+  perform pg_temp.t_check('A rate is saved', pg_temp.saved(r), r::text);
+
+  r := pg_temp.w(v_t, 'issue_invoice', jsonb_build_array(
+    pg_temp.op('upsert', v_inv, 'invoice', jsonb_build_object('state', 'issued', 'links', jsonb_build_object('matter', v_m),
+      'hashes', jsonb_build_object('invoice_number', pg_temp.h('101'), 'amount', pg_temp.h('50'), 'snapshot_hash', pg_temp.h('s')))),
+    pg_temp.op('create', v_line, 'invoice_line', jsonb_build_object('links', jsonb_build_object('matter', v_m, 'invoice', v_inv),
+      'hashes', jsonb_build_object('hours', pg_temp.h('0.6')))),
+    pg_temp.op('update', v_e, 'time_entry', jsonb_build_object('state', 'locked', 'links', jsonb_build_object('invoice_line', v_line)))));
+  perform pg_temp.t_check('Issuing saves the invoice and its line and locks the entry in one write', pg_temp.saved(r)
+    and (select i.state from ledger.item i where i.tenant = v_t and i.id = v_e) = 'locked', r::text);
+
+  r := pg_temp.w(v_t, 'upsert_time_entries', jsonb_build_array(
+    pg_temp.op('update', v_e, 'time_entry', jsonb_build_object('hashes', jsonb_build_object('hours', pg_temp.h('9'))))));
+  perform pg_temp.t_check('A locked entry refuses a changed field', pg_temp.refused(r), r::text);
+
+  r := pg_temp.w(v_t, 'set_time_entries_billable', jsonb_build_array(
+    pg_temp.op('update', v_e, 'time_entry', jsonb_build_object('tags', jsonb_build_object('billable', false)))));
+  perform pg_temp.t_check('A locked entry refuses a changed billable flag', pg_temp.refused(r), r::text);
+
+  r := pg_temp.w(v_t, 'upsert_time_entries', jsonb_build_array(
+    pg_temp.op('update', v_e, 'time_entry', jsonb_build_object('state', 'open'))));
+  perform pg_temp.t_check('A locked entry refuses being reopened', pg_temp.refused(r), r::text);
+
+  r := pg_temp.w(v_t, 'delete', jsonb_build_array(pg_temp.op('delete', v_e, 'time_entry')));
+  perform pg_temp.t_check('A locked entry refuses a delete', pg_temp.refused(r), r::text);
+
+  r := pg_temp.w(v_t, 'delete', jsonb_build_array(pg_temp.op('delete', v_line, 'invoice_line')));
+  perform pg_temp.t_check('An invoice line refuses a delete', pg_temp.refused(r), r::text);
+
+  r := pg_temp.w(v_t, 'update', jsonb_build_array(
+    pg_temp.op('update', v_line, 'invoice_line', jsonb_build_object('hashes', jsonb_build_object('hours', pg_temp.h('9'))))));
+  perform pg_temp.t_check('An invoice line refuses a change', pg_temp.refused(r), r::text);
+
+  r := pg_temp.w(v_t, 'import_invoices', jsonb_build_array(
+    pg_temp.op('upsert', gen_random_uuid(), 'invoice', jsonb_build_object('links', jsonb_build_object('matter', v_m),
+      'hashes', jsonb_build_object('invoice_number', pg_temp.h('101'), 'amount', pg_temp.h('99'))))));
+  perform pg_temp.t_check('An issued invoice refuses a changed amount', pg_temp.refused(r), r::text);
+
+  r := pg_temp.w(v_t, 'delete', jsonb_build_array(pg_temp.op('delete', v_inv, 'invoice')));
+  perform pg_temp.t_check('An issued invoice refuses a delete', pg_temp.refused(r), r::text);
+
+  r := pg_temp.w(v_t, 'import_invoices', jsonb_build_array(
+    pg_temp.op('update', v_inv, 'invoice', jsonb_build_object('hashes', jsonb_build_object(
+      'amount_paid', pg_temp.h('50'), 'status', pg_temp.h('paid'), 'sent_date', pg_temp.h('2030-02-01'))))));
+  perform pg_temp.t_check('An issued invoice still records payment and sending', pg_temp.saved(r), r::text);
+
+  r := pg_temp.w(v_t, 'record_adjustment', jsonb_build_array(
+    pg_temp.op('create', v_adj, 'adjustment', jsonb_build_object('links', jsonb_build_object('matter', v_m, 'time_entry', v_e),
+      'hashes', jsonb_build_object('reason', pg_temp.h('credit'))))));
+  perform pg_temp.t_check('A correction to a locked entry is saved as an adjustment', pg_temp.saved(r), r::text);
+
+  r := pg_temp.w(v_t, 'delete', jsonb_build_array(pg_temp.op('delete', v_adj, 'adjustment')));
+  perform pg_temp.t_check('An adjustment refuses a delete', pg_temp.refused(r), r::text);
 end $t$;
 
 -- =============================================================================

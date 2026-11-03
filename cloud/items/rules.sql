@@ -111,8 +111,11 @@ delete from rules.kind;
 insert into rules.kind (kind, store, has_state, state_required, state_default, state_by_rule) values
   ('client',          'practice', false, false, null,     false),
   ('matter',          'practice', true,  false, null,     false),
-  ('time_entry',      'practice', false, false, null,     false),
-  ('invoice',         'practice', false, false, null,     false),
+  ('time_entry',      'practice', true,  false, null,     false),
+  ('invoice',         'practice', true,  false, null,     false),
+  ('invoice_line',    'practice', false, false, null,     false),
+  ('adjustment',      'practice', false, false, null,     false),
+  ('rate',            'practice', false, false, null,     false),
   ('task',            'practice', true,  true,  'open',   false),
   ('retainer_notice', 'practice', false, false, null,     false),
   ('anchor',          'practice', true,  true,  null,     true),
@@ -138,6 +141,8 @@ select v.kind, v.field, unnest(v.vals) from (values
   ('deadline',      'source_type',     array['bc_rules', 'order_term', 'manual']),
   ('deadline',      'review_flag',     array['shift_pending', 'limited_day', 'rule_stale', 'practitioner_choice']),
   ('payment',       'state',           array['false', 'true']),
+  ('time_entry',    'state',           array['open', 'locked']),
+  ('invoice',       'state',           array['issued']),
   ('signal',        'state',           array['confirmed', 'unconfirmed', 'absent']),
   ('calendar_year', 'state',           array['confirmed', 'unavailable']),
   ('calendar_day',  'status_category', array['full_closure', 'limited', 'regional_exception']),
@@ -173,7 +178,14 @@ delete from rules.link_role;
 insert into rules.link_role (kind, role, target_kind, required, synced) values
   ('matter',          'client',        'client',        false, true),
   ('time_entry',      'matter',        'matter',        true,  true),
+  ('time_entry',      'invoice_line',  'invoice_line',  false, true),
   ('invoice',         'matter',        'matter',        true,  true),
+  ('invoice_line',    'matter',        'matter',        true,  true),
+  ('invoice_line',    'invoice',       'invoice',       true,  true),
+  ('adjustment',      'matter',        'matter',        true,  true),
+  ('adjustment',      'time_entry',    'time_entry',    false, true),
+  ('adjustment',      'invoice_line',  'invoice_line',  false, true),
+  ('rate',            'matter',        'matter',        true,  true),
   ('task',            'matter',        'matter',        false, true),
   ('task',            'filing',        null,            false, true),
   ('retainer_notice', 'matter',        'matter',        true,  true),
@@ -193,7 +205,11 @@ insert into rules.link_role (kind, role, target_kind, required, synced) values
 delete from rules.transition;
 insert into rules.transition (kind, from_state, to_state) values
   ('payment', '',      'false'),
-  ('payment', 'false', 'true');
+  ('payment', 'false', 'true'),
+  ('time_entry', '',     'open'),
+  ('time_entry', '',     'locked'),
+  ('time_entry', 'open', 'locked'),
+  ('invoice',    '',     'issued');
 
 delete from rules.natural_key;
 insert into rules.natural_key (kind, purpose, rank, parts, states) values
@@ -201,6 +217,8 @@ insert into rules.natural_key (kind, purpose, rank, parts, states) values
   ('matter',        'upsert',    1, array['hash:file_number'], null),
   ('matter',        'upsert',    2, array['hash:matt_num'], null),
   ('invoice',       'upsert',    1, array['link:matter', 'hash:invoice_number'], null),
+  ('time_entry',    'upsert',    1, array['link:matter', 'hash:source_key'], null),
+  ('rate',          'upsert',    1, array['link:matter', 'hash:timekeeper', 'hash:effective_date'], null),
   ('signal',        'upsert',    1, array['link:matter', 'tag:signal_key'], null),
   ('calendar_year', 'upsert',    1, array['hash:year'], null),
   ('anchor',        'upsert',    1, array['link:matter', 'tag:anchor_type', 'hash:party_label?', 'hash:proceeding_label?'],
@@ -822,6 +840,28 @@ begin
 end;
 $f$;
 
+-- An issued invoice's record of what was billed stays as it was issued. What
+-- happens to the bill afterwards (payment, sending) can still be recorded. A
+-- locked time entry does not change, and a line or adjustment is never rewritten.
+-- p_new is null on a delete.
+create or replace function rules.check_issued(p_cur ledger.item, p_new ledger.item)
+returns void language plpgsql immutable
+set search_path = pg_catalog, pg_temp
+as $f$
+declare
+  v_after text[] := array['amount_paid', 'status', 'last_import_at', 'sent_date', 'sent_copy_path'];
+begin
+  if p_cur.kind in ('invoice_line', 'adjustment')
+     or (p_cur.kind = 'time_entry' and p_cur.state = 'locked'
+         and (p_new.id is null or p_new.tags <> p_cur.tags or p_new.links <> p_cur.links or p_new.hashes <> p_cur.hashes))
+     or (p_cur.kind = 'invoice' and p_cur.state = 'issued'
+         and (p_new.id is null or p_new.tags <> p_cur.tags or p_new.links <> p_cur.links
+              or (p_new.hashes - v_after) <> (p_cur.hashes - v_after))) then
+    perform rules.refuse(format('What correction should be recorded against {{item:%s}}?', p_cur.id));
+  end if;
+end;
+$f$;
+
 -- R6. A new time entry takes its matter's billable flag unless it carries one.
 create or replace function rules.kind_time_entry(
   p_tenant uuid, p_seq bigint, p_write jsonb, p_op jsonb, p_create boolean, p_cur ledger.item, p_new ledger.item)
@@ -1275,6 +1315,7 @@ begin
     if v_kind = 'contact' then
       perform rules.kind_contact_delete(p_tenant, v_id);
     end if;
+    perform rules.check_issued(v_cur, null::ledger.item);
     update ledger.item i set deleted = true, seq = p_seq, updated_at = now()
     where i.tenant = p_tenant and i.id = v_id;
     if v_kind = 'anchor' then
@@ -1340,6 +1381,9 @@ begin
 
   perform rules.check_item(v_new, p_op, v_create);
   perform rules.check_transition(v_kind, case when v_create then null else v_cur.state end, v_new.state, v_target);
+  if not v_create then
+    perform rules.check_issued(v_cur, v_new);
+  end if;
 
   v_new := case v_kind
     when 'matter'       then rules.kind_matter(p_tenant, p_seq, p_write, p_op, v_create, v_cur, v_new)
