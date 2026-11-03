@@ -8,8 +8,9 @@ IN.xlsx is the workbook chart.md section 1 writes: a data sheet with the headers
 in columns A to C and no Total row. It is never saved over. --timekeeper pairs a name with its bar
 colour and must cover every User in the data.
 
-Writes OUT.xlsx, and OUT.pdf beside it to check by eye, and nothing else. It refuses if either
-already exists. The Y axis and the place for the title and legend are derived from the data.
+Writes OUT.xlsx, OUT.png (the chart alone, for the invoice) and OUT.pdf (to check by eye) beside it,
+and nothing else. It refuses if any already exists. The Y axis and the place for the title and legend
+are derived from the data.
 
 Run it once, in one shell call, on a host with soffice and the Python uno module. On success it
 prints one line with the rows and total hours, to tie to invoice_lines.json as chart.md section 2
@@ -40,8 +41,8 @@ DAY_FORMAT = "YYYY-MM-DD"
 CONNECT_SECONDS = 60
 
 # Lengths in 1/100 mm. This chart size keeps the chart on one PDF page.
-CHART_X, CHART_WIDTH, CHART_HEIGHT = 500, 17000, 11000
-PLOT_X, PLOT_Y, PLOT_WIDTH, PLOT_HEIGHT = 2000, 500, 14500, 8100
+CHART_X, CHART_WIDTH, CHART_HEIGHT = 0, 16500, 11000
+PLOT_X, PLOT_Y, PLOT_WIDTH, PLOT_HEIGHT = 2000, 500, 14000, 8100
 ROW_HEIGHT = 460
 TITLE_CHAR_WIDTH, TITLE_HALF_HEIGHT = 200, 330
 LEGEND_CHAR_WIDTH, LEGEND_ENTRY_WIDTH, LEGEND_HALF_HEIGHT = 170, 600, 280
@@ -79,7 +80,7 @@ def check_paths(source, output):
         raise Refused(f"no workbook at {source}")
     if output.suffix.lower() != ".xlsx":
         raise Refused(f"the output must end in .xlsx: {output}")
-    for path in (output, output.with_suffix(".pdf")):
+    for path in (output, output.with_suffix(".png"), output.with_suffix(".pdf")):
         if path.exists():
             raise Refused(f"{path} already exists; choose another output name")
 
@@ -255,6 +256,7 @@ def build(doc, args):
         raise Refused(f"no --timekeeper colour for {unnamed}")
 
     format_days(doc, pivot_sheet.getCellRangeByPosition(left, header_row + 1, left, last_day_row))
+    pivot_sheet.getCellRangeByPosition(left, output.StartRow, right, output.EndRow).Columns.OptimalWidth = True  # else ###
     day_peaks = [max(cell(column, row).getValue() for column in series_columns)
                  for row in range(header_row + 1, last_day_row + 1)]
     labels_range = struct("com.sun.star.table.CellRangeAddress", Sheet=0, StartColumn=left, EndColumn=series_columns[-1],
@@ -269,8 +271,15 @@ def free_port():
         return probe.getsockname()[1]
 
 
+def export_png(context, doc, path):
+    """Save the chart alone as a picture. The sheet's one drawing is the chart add_chart placed."""
+    exporter = context.ServiceManager.createInstanceWithContext("com.sun.star.drawing.GraphicExportFilter", context)
+    exporter.setSourceDocument(doc.Sheets.getByName(PIVOT_SHEET).DrawPage.getByIndex(0))
+    exporter.filter((prop("MediaType", "image/png"), prop("URL", uno.systemPathToFileUrl(str(path.resolve())))))
+
+
 def connect(port, office):
-    """The desktop of the LibreOffice this script started. Its only process control is on that child."""
+    """The context of the LibreOffice this script started. Its only process control is on that child."""
     local = uno.getComponentContext()
     resolver = local.ServiceManager.createInstanceWithContext("com.sun.star.bridge.UnoUrlResolver", local)
     url = f"uno:socket,host=localhost,port={port};urp;StarOffice.ComponentContext"
@@ -282,7 +291,7 @@ def connect(port, office):
                 raise Refused(f"soffice exited with code {office.returncode} before accepting a connection")
             time.sleep(1)
         else:
-            return context.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", context)
+            return context
     raise Refused(f"soffice did not accept a connection within {CONNECT_SECONDS} seconds")
 
 
@@ -294,7 +303,8 @@ def run(args, soffice):
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     desktop = None
     try:
-        desktop = connect(port, office)
+        context = connect(port, office)
+        desktop = context.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", context)
         doc = desktop.loadComponentFromURL(uno.systemPathToFileUrl(str(args.input.resolve())), "_blank", 0,
                                            (prop("Hidden", True),))
         if doc is None:
@@ -306,6 +316,7 @@ def run(args, soffice):
                            (prop("FilterName", "Calc MS Excel 2007 XML"),))
             doc.storeToURL(uno.systemPathToFileUrl(str(args.output.with_suffix(".pdf").resolve())),
                            (prop("FilterName", "calc_pdf_Export"),))
+            export_png(context, doc, args.output.with_suffix(".png"))
         finally:
             doc.close(True)
         return result
@@ -332,7 +343,7 @@ def main(argv=None):
     except Refused as reason:
         print(f"refused: {reason}", file=sys.stderr)
         return 1
-    print(f"saved {args.output} and {args.output.with_suffix('.pdf').name}: {rows} rows, {days} days, {hours:.2f} hours")
+    print(f"saved {args.output}, {args.output.with_suffix('.png').name} and {args.output.with_suffix('.pdf').name}: {rows} rows, {days} days, {hours:.2f} hours")
     return 0
 
 
