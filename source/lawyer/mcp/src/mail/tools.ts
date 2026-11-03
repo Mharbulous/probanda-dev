@@ -37,7 +37,6 @@ import {
   runImap,
   sentFolder,
   withImap,
-  type CopyResult,
   type FolderEntry,
   type ImapClientFactory,
   type ImapClientLike,
@@ -643,22 +642,9 @@ function renameFolder(run: Run, args: Args): Promise<unknown> {
   });
 }
 
-// The move on a server without MOVE, whose only caller has checked for UIDPLUS: without it,
-// imapflow's messageDelete would purge every message flagged deleted, not just these UIDs.
-// An original is removed only after the server's COPYUID reply confirms its copy.
-async function copyThenRemove(client: ImapClientLike, uids: number[], target: string): Promise<CopyResult> {
-  const range = uids.join(",");
-  const copied = await client.messageCopy(range, target, { uid: true });
-  if (!copied) throw new DataServerError(`the server refused to copy the messages to "${target}"; nothing was removed`, "mail_error");
-  if (uids.some((u) => !copied.uidMap?.has(u))) {
-    throw new DataServerError(`the server did not confirm every copy in "${target}", so the originals were left in place; copies may also be in "${target}"`, "mail_error");
-  }
-  await client.messageDelete(range, { uid: true });
-  return copied;
-}
-
-// Moves only the named UIDs. imapflow's messageMove, on a server without MOVE, removes
-// the originals even when its copy failed, so it runs only behind a MOVE check.
+// Moves only the named UIDs, and only by the server's MOVE. imapflow's
+// messageMove, on a server without MOVE, copies and then permanently removes the
+// originals, so a server without MOVE is refused before anything changes.
 function moveMessages(run: Run, args: Args): Promise<unknown> {
   const folder = folderName("mail__move_messages.folder", args.folder);
   const destination = folderName("mail__move_messages.destination", args.destination);
@@ -678,9 +664,10 @@ function moveMessages(run: Run, args: Args): Promise<unknown> {
     }
     const [source, target] = [ends[0]!.path, ends[1]!.path];
     if (source === target) throw new ValidationError("mail__move_messages.destination must differ from folder");
-    if (!client.capabilities.has("MOVE") && !client.capabilities.has("UIDPLUS")) {
+    if (!client.capabilities.has("MOVE")) {
       throw new DataServerError(
-        "this mail server offers neither MOVE nor UIDPLUS, so messages cannot be moved without risking other messages; nothing was changed",
+        "this mail server does not offer MOVE, so messages cannot be moved without deleting the originals; " +
+          "nothing was changed. Move them in the practitioner's mail program instead.",
         "mail_move_unsupported"
       );
     }
@@ -692,7 +679,7 @@ function moveMessages(run: Run, args: Args): Promise<unknown> {
       throw new DataServerError(`none of these UIDs is in "${source}"; UIDs change when mail is moved, so search again`, "mail_not_found");
     }
     const range = existing.join(",");
-    const result = client.capabilities.has("MOVE") ? await client.messageMove(range, target, { uid: true }) : await copyThenRemove(client, existing, target);
+    const result = await client.messageMove(range, target, { uid: true });
     if (!result) throw new DataServerError(`the server refused to move the messages to "${target}"`, "mail_error");
     const left = new Set((await client.search({ uid: range }, { uid: true })) || []);
     const map = result.uidMap;

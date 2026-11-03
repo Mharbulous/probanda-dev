@@ -322,12 +322,11 @@ export function mailToolDefinitions(): ToolDefinition[] {
       name: "mail__move_messages",
       description:
         "Move messages from `folder` to `destination` (exact folder names from mail__list_folders) by their `uids` in " +
-        "`folder` (1-500, from a list or search). Only those messages leave `folder`. It never permanently deletes " +
-        "email: on a server without MOVE it copies, confirms each copy, then removes only those originals, and a server " +
-        "with neither MOVE nor UIDPLUS is refused (`mail_move_unsupported`) with nothing changed. Moving " +
+        "`folder` (1-500, from a list or search). Only those messages leave `folder`. Uses only the server's MOVE; a " +
+        "server without MOVE is refused (`mail_move_unsupported`) and nothing changes. The tool deletes nothing. Moving " +
         "to the Trash folder is a move; the mail server may empty its Trash on its own schedule. Returns {folder, " +
         "destination, moved: [{uid, newUid?}], notFound, notMoved}; `newUid` is the message's UID in `destination`, and " +
-        "the old UID no longer works, so use `newUid` afterwards. A UID in `notMoved` may also be in `destination`." +
+        "the old UID no longer works, so use `newUid` afterwards." +
         organizes +
         errors,
       inputSchema: {
