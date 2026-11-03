@@ -73,3 +73,29 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - `bill-client/SKILL.md` at HEAD: does an issue or post-signature step already exist (the v0.21.9 rewrite may have added one)?
 - `practice_data__manage_payment_in_flight`: its parameters and whether a trust application fits.
 - Whether the firm profile holds an accounting address.
+
+## 11. Verification against HEAD (2026-11-03, a4df9880)
+
+| Spec claim or question | Finding at HEAD | Source |
+|---|---|---|
+| `/bill-client` has no step after signing; add an "Issue" step there | Superseded. The practitioner decided that `/bill-client` stops at the unsigned draft and a typed `/issue-invoice` saves the draft email. The step goes in `/issue-invoice`, and `bill-client/SKILL.md` is not edited: its Step 9 already points there | `defensible-time-entries-spec.md` §13 decision 3; `bill-client/SKILL.md` Step 9 |
+| §9 question 1: email, form or record | Answered: an email, by the same decision | `defensible-time-entries-spec.md` §13 decision 3 |
+| §9 question 2: which address accounting uses | Answered by procedure: step 4 of `/issue-invoice` asks once who receives it. The firm profile holds no accounting address, only roster emails and `cc_on_counsel_email` | `issue-invoice/SKILL.md` step 4; `tools/practice/firm-profile.ts` |
+| An instruction carrying number, amount and balances is needed | Exists: step 4 of `/issue-invoice` drafts it | `issue-invoice/SKILL.md` step 4 |
+| The trust application is stored | Only if the session passes it. `issue_invoice` stores `args.trust_application`, but step 2 writes it to `meta.json`, `issue_records.json` holds only lines and adjustments, and step 3 does not name it | `tools/practice/billing.ts:177`; `freeze_invoice.py`; `issue-invoice/SKILL.md` step 3 |
+| Attaching the signed bill | `mail__save_draft` takes only `eml_path` and `folder`. `drafting_forms__draft_harness` step `write_email` takes `attachments` and is the only author of a drafted `.eml`, so the attachment goes on that step | `schema/mail.ts`; `shared/email.md` |
+| Stored firm setting on trust withdrawal | None exists. `billing_settings` is a free object merged on write, so it can hold one, and no code reads such a key | `schema/practice.ts:399`; `tools/practice/firm-profile.ts` |
+| `import_invoices` can mark an issued invoice paid | Yes: it updates only `amount_paid`, `status` and `last_import_at`, and a test covers it | `tools/practice/invoices.ts:165`; `practice-billing.unit.test.mjs` |
+| `manage_payment_in_flight` fits a trust application | Its shape fits: `record` needs a matter, and `amount`, `notes` and `expected_clear_by` are free, `clear` takes the id. Its meaning does not: see the readers below | `tools/practice/writes.ts:409` |
+
+What each reader of a pending payment does with a trust application:
+
+| Reader | What it does | Result |
+|---|---|---|
+| `ar-follow-up` | Suppresses all reminders for the client until the payment clears or expires (principle 3, anti-pattern "suppress that client entirely"). Withholds "Retainer depleted, policy requires cease work", which applies only with "no payment in flight". Expires the record 5 business days after `recorded_at`, or on a deposit in a trust import. It does not read `notes` | **Wrong.** A trust application takes money out of trust, so it is the moment a top-up is most likely due, and the client drops off the list with every matter, including a retainer shortfall before a hearing. No deposit will ever confirm it, and the 5-day window computes a date this step promised not to |
+| `file-review-prep` | Prints `Payment-in-flight: amount, recorded_at, expected_clear_by`, without `notes` | Misleading. It reads as money coming from the client |
+| `executive-assistant` | Carries it in its matter map from `ar-data`. Nothing later uses it | None |
+| `practice_data__ar_data` | Returns every uncleared payment per matter, with no type | Passes the problem to the readers |
+| `task-prioritization`, `wip-tracker`, `matter-status-tracking` | No use of pending payments | None |
+
+So §4.1c as written gives a wrong AR list. The decision is open in the handback to the orchestrating session, and §4.1c is not built until it is made.
