@@ -146,6 +146,28 @@ test("import_invoices: an issued invoice keeps its record and takes payment, and
   assert.equal(row.issue_state, "issued");
 });
 
+test("a trust application: pending as issued with no amount paid, then paid by import, with the issued figures unchanged", async (t) => {
+  const { store } = await setup(t);
+  await billing.upsert_time_entries(store, { ...MATTER, entries: [entry("tc:1")] });
+  const trust_application = { balance_before: 80, applied: 50, balance_after: 30 };
+  await billing.issue_invoice(store, issue({ trust_application }));
+
+  const [pending] = (await invoicesTool.invoices_query(store, MATTER)).rows;
+  assert.deepEqual(pending.trust_application, trust_application);
+  assert.equal(pending.amount_paid, undefined);
+  assert.equal(pending.status, undefined);
+
+  await invoicesTool.import_invoices(store, { rows: [{ ...MATTER, invoice_number: "101", amount: 50, amount_paid: 50, status: "paid" }] });
+  const { rows } = await invoicesTool.invoices_query(store, MATTER);
+  assert.equal(rows.length, 1);
+  const { amount_paid, status, last_import_at, updated_at, ...issued } = rows[0];
+  const { updated_at: _before, ...issuedBefore } = pending;
+  assert.equal(amount_paid, 50);
+  assert.equal(status, "paid");
+  assert.ok(last_import_at);
+  assert.deepEqual(issued, issuedBefore);
+});
+
 test("rates: one row per timekeeper and date, each with its source", async (t) => {
   const { store } = await setup(t);
   const rate = { ...MATTER, timekeeper: "Pat Example", effective_date: "2030-01-01", rate: 100, source_document: "Retainer" };

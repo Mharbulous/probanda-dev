@@ -98,4 +98,4 @@ What each reader of a pending payment does with a trust application:
 | `practice_data__ar_data` | Returns every uncleared payment per matter, with no type | Passes the problem to the readers |
 | `task-prioritization`, `wip-tracker`, `matter-status-tracking` | No use of pending payments | None |
 
-So §4.1c as written gives a wrong AR list. The decision is open in the handback to the orchestrating session, and §4.1c is not built until it is made.
+So §4.1c as written gives a wrong AR list. By Brahm's decision of 2026-11-03, no pending payment record is written: §8 criterion 2's "records a pending payment" is met by the invoice's own state, issued with a `trust_application` and no `amount_paid`. The reason is that a payment record would trigger `ar-follow-up`'s suppression and withhold its cease-work flag. Until accounting confirms, the invoice counts as outstanding in the AR total while trust still shows the balance before the application.

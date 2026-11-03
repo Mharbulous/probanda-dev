@@ -12,6 +12,7 @@
     {"file": ".claude/skills/reflect/SKILL.md", "target": "legal-research", "why": "mention", "note": "A maintainer comment."},
     {"file": ".claude/skills/reflect/SKILL.md", "target": "research-agent", "why": "mention", "note": "Reads that agent's returns in a transcript, when there are any."},
     {"file": ".claude/skills/rule-update/SKILL.md", "target": "legal-research", "why": "signpost"},
+    {"file": ".claude/skills/issue-invoice/SKILL.md", "target": "legal-research", "why": "signpost"},
     {"file": ".claude/skills/show-me/SKILL.md", "target": "apply-to-facts", "why": "mention", "note": "One of a list of the kinds of decision the skill presents."},
     {"file": ".claude/skills/show-me/SKILL.md", "target": "draft", "why": "caller"},
     {"file": ".claude/skills/show-me/SKILL.md", "target": "review-proposition", "why": "signpost", "note": "A proposition of law under review is presented by that skill instead."},
