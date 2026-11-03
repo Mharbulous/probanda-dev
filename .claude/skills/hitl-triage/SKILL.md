@@ -13,7 +13,7 @@ Only Brahm decides. Each message is self-contained, because Brahm often answers 
 
 ## 1. Pick and claim
 
-Several sessions can run this skill at once, so a session works only an issue it has claimed. A claim is **Claim** steps 1 to 3 in `docs/agents/issue-tracker.md`, and it comes before any other write. Record the claim id. Step 4, the blocker gate, does not apply, because Brahm can decide a blocked issue.
+Several sessions can run this skill at once, so a session works only an issue it has claimed. A claim is **HITL claim** in `docs/agents/issue-tracker.md`, and it comes before any other write. Record the claim id.
 
 Take the issue or `suggestion_id` Brahm names, and claim it unless a line below stops the run first. If another session holds it, say since when, and ask whether to take it over, which deletes that session's claim comment and then claims the issue, or to do nothing.
 
@@ -24,13 +24,13 @@ Otherwise run `gh issue list -R Mharbulous/probanda-dev --label ready-for-human 
 - When Brahm names an issue that still carries `needs-triage`, or has no `## Agent Brief`, run `/triage-issue <n>` in this session first, then carry on.
 - When Brahm names a suggestion that has no issue yet, say intake has not filed it, and stop.
 
-**Keep the claim.** A claim lasts 5 hours, and Brahm may take longer to answer. Before each write that records a decision (a comment, `set-item`, a label or a close), read the issue's claim comments again:
+**Keep the claim.** A claim lasts 1 hour, and Brahm may take longer to answer. Before each write that records a decision (a comment, `set-item`, a label or a close), read the issue's claim comments again:
 
 - Your claim is the earliest live one: go on.
 - Another session's claim is the earliest live one: it has the issue. Write nothing more, say so, and stop.
 - None is live: claim the issue again. If that is refused, stop the same way.
 
-**End the claim.** A live claim keeps the implementers off the issue, so never leave one behind:
+**End the claim.** A live claim keeps other triage sessions off the issue, so never leave one behind:
 
 - Before relabelling the issue `ready-for-agent`, or when Brahm leaves it where it is or the session stops with the issue still open: **Release**, giving the reason.
 - After closing the issue: delete your claim comment and post no release comment.
