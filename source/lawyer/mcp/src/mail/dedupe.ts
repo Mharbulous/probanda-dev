@@ -1,7 +1,8 @@
 // The mail__dedupe_* tools: find duplicate emails and move an approved plan's copies to Trash.
 // Tier 1 is copies byte-for-byte the same. Tier 2 is copies that share a Message-ID but differ,
 // compared here and judged by the duplicate-judge agent. Nothing but plan copies moves, only by
-// the server's MOVE, and only to Trash.
+// the server's MOVE, and only to Trash. A server without MOVE or a Trash folder is still scanned,
+// but gets no plan, so the scan only lists its copies.
 //
 // A call may not outlast a tool call's time limit and hashing a folder takes far longer, so the
 // scan and the apply work in time-limited slices and save their progress between calls. The
@@ -112,7 +113,8 @@ interface ComparedGroup {
 interface ScanState {
   scan_id: string;
   across: boolean;
-  trash: string;
+  trash: string | null;
+  can_move: boolean;
   phase: "hashing" | "comparing" | "done";
   scans: FolderScan[];
   entries: Entry[];
@@ -234,7 +236,7 @@ export async function dedupeScan(context: MailContext, args: Args): Promise<unkn
     throw new ValidationError("mail__dedupe_scan.across_folders needs listed folders, because the first one listed is the one kept");
   }
   return connect(context, "scanning for duplicate emails", async (client) => {
-    const trash = await requireTrashAndMove(client);
+    const trash = (await trashFolder(client)) ?? null;
     const list = await client.list();
     let targets: string[];
     if (folders) {
@@ -255,6 +257,7 @@ export async function dedupeScan(context: MailContext, args: Args): Promise<unkn
       scan_id: randomUUID(),
       across: args.across_folders === true,
       trash,
+      can_move: client.capabilities.has("MOVE") && trash !== null,
       phase: "hashing",
       scans: targets.map((folder) => ({ folder, uidValidity: "", uids: [], next: 0 })),
       entries: [],
@@ -372,8 +375,8 @@ function groupEntries(state: ScanState): void {
       (tally.get(e.folder) as FolderTally).copies += 1;
     }
   }
-  if (remove.length > 0) {
-    state.tier1.plan_id = writePlan({ tier: 1, scan_id: state.scan_id, trash: state.trash, remove, keep });
+  if (state.can_move && remove.length > 0) {
+    state.tier1.plan_id = writePlan({ tier: 1, scan_id: state.scan_id, trash: state.trash as string, remove, keep });
   }
   writeState("tier1-copies.txt", listText(state.rows));
 
@@ -552,6 +555,7 @@ function summary(state: ScanState): unknown {
   return {
     status: "done",
     scan_id: state.scan_id,
+    can_move: state.can_move,
     trash_folder: state.trash,
     folders: state.tallies,
     tier1: {
@@ -602,6 +606,9 @@ export function dedupeReadComparison(args: Args): unknown {
 
 export function dedupePlanTier2(args: Args): unknown {
   const state = finishedScan(args.scan_id);
+  if (!state.can_move) {
+    throw new DataServerError("this mail server offers no MOVE or has no Trash folder, so no plan can be made; nothing was changed", "mail_move_unsupported");
+  }
   const groups = new Map((loadJson<ComparedGroup[]>("comparison.json") ?? []).map((g) => [g.group_id, g]));
   const notIn = (what: string): DataServerError => new DataServerError(`${what} is not in the comparison`, "dedupe_not_in_comparison");
   const remove: PlanCopy[] = [];
@@ -624,7 +631,7 @@ export function dedupePlanTier2(args: Args): unknown {
       if (samples.length < SAMPLE_COUNT) samples.push({ folder: copy.folder, date: copy.date, subject: group.subject });
     }
   }
-  const plan_id = writePlan({ tier: 2, scan_id: state.scan_id, trash: state.trash, remove, keep });
+  const plan_id = writePlan({ tier: 2, scan_id: state.scan_id, trash: state.trash as string, remove, keep });
   return { plan_id, expected_count: remove.length, groups: seen.size, samples };
 }
 

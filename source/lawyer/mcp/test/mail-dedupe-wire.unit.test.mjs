@@ -36,14 +36,14 @@ const SPACED = "1. OPEN FILES/Example v. Sample L000 (old)";
 const NON_ASCII = ["Résumé", "R&AOk-sum&AOk-"];
 const TRASH = "Deleted Messages";
 
-function imapServer() {
+function imapServer({ capabilities = "IMAP4rev1 MOVE UIDPLUS" } = {}) {
   const wire = [];
   const boxes = new Map([[SPACED, new Set([5, 6])], [NON_ASCII[1], new Set([7, 8])], [TRASH, new Set()]]);
   const unquote = (name) => name.replace(/^"|"$/g, "").replace(/\\(.)/g, "$1");
   const server = createServer((socket) => {
     let open;
     let buffered = "";
-    socket.write("* OK [CAPABILITY IMAP4rev1 MOVE UIDPLUS] ready\r\n");
+    socket.write(`* OK [CAPABILITY ${capabilities}] ready\r\n`);
     socket.on("error", () => {});
     socket.on("data", (chunk) => {
       buffered += chunk.toString("latin1");
@@ -57,10 +57,10 @@ function imapServer() {
         const done = (text = "done") => socket.write(`${tag} OK ${text}\r\n`);
         const verb = command.toUpperCase();
         if (verb === "CAPABILITY") {
-          socket.write("* CAPABILITY IMAP4rev1 MOVE UIDPLUS\r\n");
+          socket.write(`* CAPABILITY ${capabilities}\r\n`);
           done();
         } else if (verb === "LOGIN") {
-          done("[CAPABILITY IMAP4rev1 MOVE UIDPLUS] signed in");
+          done(`[CAPABILITY ${capabilities}] signed in`);
         } else if (verb === "LIST" || verb === "LSUB") {
           // An empty pattern asks only for the separator, and `INBOX` is its own question.
           if (/ ""$/.test(rest)) socket.write(`* ${verb} (\\Noselect) "/" ""\r\n`);
@@ -127,4 +127,22 @@ test("folder names reach the server quoted and encoded, on the read-only scan an
   assert.deepEqual([...boxes.get(SPACED)], [6]);
   assert.deepEqual([...boxes.get(NON_ASCII[1])], [8]);
   assert.equal(wire.some((l) => /\b(STORE|EXPUNGE|COPY)\b/i.test(l)), false, "only MOVE is used");
+});
+
+test("on a server with UIDPLUS and no MOVE, like iCloud, the scan finishes with nothing but reads on the wire", async (t) => {
+  const { server, wire, boxes, port } = await imapServer({ capabilities: "IMAP4rev1 UIDPLUS" });
+  t.after(() => server.close());
+  const context = { practiceDb: {}, mail: { credential: { host: "127.0.0.1", port, secure: false, username: "someone", password: "fake-password-0000-not-real" } } };
+
+  let scan = await callTool(context, "mail__dedupe_scan", { folders: [SPACED, NON_ASCII[0]] });
+  while (scan.status === "scanning") scan = await callTool(context, "mail__dedupe_scan", { scan_id: scan.scan_id });
+  assert.equal(scan.status, "done");
+  assert.equal(scan.can_move, false);
+  assert.equal(scan.trash_folder, TRASH);
+  assert.equal(scan.tier1.plan_id, null);
+  assert.equal(scan.tier1.copies, 2);
+  assert.ok(wire.some((l) => l.endsWith(`EXAMINE "${SPACED}"`)), wire.join("\n"));
+  assert.equal(wire.some((l) => /\b(SELECT|COPY|STORE|EXPUNGE|MOVE)\b/i.test(l)), false, wire.join("\n"));
+  assert.deepEqual([...boxes.get(SPACED)], [5, 6]);
+  assert.deepEqual([...boxes.get(NON_ASCII[1])], [7, 8]);
 });

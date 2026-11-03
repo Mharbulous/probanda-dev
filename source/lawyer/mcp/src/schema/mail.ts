@@ -349,12 +349,13 @@ export function mailToolDefinitions(): ToolDefinition[] {
         "listed folders as one set, keeping the copy in the first folder listed. Works in time-limited slices: while the " +
         "reply says {status: \"scanning\", scan_id, phase, ...}, call again with only `scan_id`, which resumes; a call " +
         "without `scan_id` starts over and replaces the last scan and its plans. The final reply is {status: \"done\", " +
-        "scan_id, trash_folder, folders: [{folder, messages, without_message_id, groups, copies}], tier1: {groups, copies, " +
+        "scan_id, can_move, trash_folder, folders: [{folder, messages, without_message_id, groups, copies}], tier1: {groups, copies, " +
         "bytes, plan_id, expected_count, samples, list_path}, tier2: {groups, unreadable_groups}}. Tier 1 is copies " +
         "byte-for-byte the same, keeping the highest UID; `list_path` is a text file listing every copy it proposes to " +
         "move. Tier 2 is copies that share a Message-ID but differ, read through mail__dedupe_read_comparison. A message " +
-        "with no Message-ID is counted and left alone. Returns no message body. Refuses a server without MOVE " +
-        "(`mail_move_unsupported`), a mailbox with no Trash folder (`mail_no_trash`), a Trash or folder-only target, " +
+        "with no Message-ID is counted and left alone. Returns no message body. `can_move` is true only when the server " +
+        "offers MOVE and a Trash folder was found; when false, `trash_folder` may be null, no plan is written, " +
+        "`tier1.plan_id` is null and the copies are only listed. Refuses a Trash or folder-only target " +
         "and a `scan_id` that is no longer the last scan (`dedupe_scan_replaced`) or whose folder changed (`dedupe_stale`)." +
         readOnly +
         errors,
@@ -400,7 +401,8 @@ export function mailToolDefinitions(): ToolDefinition[] {
         "Turn the tier 2 copies the practitioner approved into a plan for mail__dedupe_apply. `approved` holds, per group, " +
         "the `copy_id`s to move. Returns {plan_id, expected_count, groups, samples}. Moves nothing. Writing a new plan " +
         "replaces the last tier 2 plan. Refuses a group or copy not in the comparison (`dedupe_not_in_comparison`) and a " +
-        "plan that would leave a group with no copy (`dedupe_no_copy_left`).",
+        "plan that would leave a group with no copy (`dedupe_no_copy_left`), and a scan whose `can_move` is false " +
+        "(`mail_move_unsupported`).",
       inputSchema: {
         type: "object",
         properties: {

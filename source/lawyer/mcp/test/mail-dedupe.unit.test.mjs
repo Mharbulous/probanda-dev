@@ -194,17 +194,55 @@ test("the whole mailbox skips Trash and folder-only entries, and naming Trash or
   assert.match((await errorOf(context(client), "mail__dedupe_scan", {})).message, /either folders or all/);
 });
 
-test("Trash is found by its role under any name and by a provider's name when unflagged; none, or no MOVE, is refused before a read", async () => {
+test("Trash is found by its role under any name and by a provider's name when unflagged", async () => {
   const unflagged = mailbox({ INBOX: {}, [TRASH]: {} }, { trashFlag: false });
-  assert.equal((await scanToEnd(context(unflagged), { folders: ["INBOX"] })).trash_folder, TRASH);
+  const reply = await scanToEnd(context(unflagged), { folders: ["INBOX"] });
+  assert.equal(reply.trash_folder, TRASH);
+  assert.equal(reply.can_move, true);
+});
 
-  const none = mailbox({ INBOX: { 1: mail(), 2: mail() } });
-  assert.equal((await errorOf(context(none), "mail__dedupe_scan", { folders: ["INBOX"] })).code, "mail_no_trash");
-  assert.equal(none.calls.some((c) => c.name === "fetchOne"), false);
+test("with no MOVE or no Trash the scan finishes and lists the copies, but writes no plan and changes nothing", async () => {
+  const raw = mail();
+  const conflicting = { 3: mail({ messageId: "<b@example.test>" }), 4: mail({ messageId: "<b@example.test>", headers: ["X-Mailer: Two"] }) };
+  for (const [what, folders, options, trashName] of [
+    ["no MOVE", { INBOX: { 1: raw, 2: raw, ...conflicting }, [TRASH]: {} }, { caps: ["UIDPLUS"] }, TRASH],
+    ["no Trash", { INBOX: { 1: raw, 2: raw, ...conflicting } }, {}, null],
+  ]) {
+    const client = mailbox(folders, options);
+    const ctx = context(client);
+    const reply = await scanToEnd(ctx, { folders: ["INBOX"] });
+    assert.equal(reply.can_move, false, what);
+    assert.equal(reply.trash_folder, trashName, what);
+    assert.equal(reply.tier1.plan_id, null, what);
+    assert.equal(reply.tier1.copies, 1, what);
+    assert.equal(reply.tier1.expected_count, 1, what);
+    assert.equal(reply.tier2.groups, 1, what);
+    assert.match(readFileSync(reply.tier1.list_path, "utf-8"), /INBOX\t.*\tHello\t\d+\t1/, what);
+    assert.equal((await comparison(ctx, reply.scan_id, "tier1_copies")).length, 1, what);
 
-  const noMove = mailbox({ INBOX: { 1: mail(), 2: mail() }, [TRASH]: {} }, { caps: ["UIDPLUS"] });
-  assert.equal((await errorOf(context(noMove), "mail__dedupe_scan", { folders: ["INBOX"] })).code, "mail_move_unsupported");
-  assert.equal(noMove.calls.some((c) => c.name === "fetchOne"), false);
+    const planPath = join(STATE_DIR, "Coclerk", "mail", "dedupe", "tier1-plan.json");
+    assert.equal(readFileSync(planPath, "utf-8"), "", what);
+    const refused = await errorOf(ctx, "mail__dedupe_plan_tier2", { scan_id: reply.scan_id, approved: [{ group_id: "g1", remove: ["g1-2"] }] });
+    assert.equal(refused.code, "mail_move_unsupported", what);
+    assert.equal(readFileSync(join(STATE_DIR, "Coclerk", "mail", "dedupe", "tier2-plan.json"), "utf-8"), "", what);
+
+    const emptyPlanId = createHash("sha256").update("").digest("hex");
+    for (const plan_id of [emptyPlanId, "0".repeat(64)]) {
+      assert.equal((await errorOf(ctx, "mail__dedupe_apply", { plan_id, expected_count: 1 })).code, "dedupe_plan_not_found", what);
+    }
+    assert.equal(moves(client).length, 0, what);
+    assert.ok(client.calls.filter((c) => c.name === "mailboxOpen").every((c) => c.readOnly === true), what);
+    assert.deepEqual(uidsIn(client, "INBOX"), [1, 2, 3, 4], what);
+  }
+});
+
+test("a new scan on a server without MOVE clears an earlier server's plan", async () => {
+  const { ctx, planId, client } = await scannedPlan();
+  client.capabilities.delete("MOVE");
+  const reply = await scanToEnd(ctx, { folders: ["INBOX"] });
+  assert.equal(reply.can_move, false);
+  assert.equal((await errorOf(ctx, "mail__dedupe_apply", { plan_id: planId, expected_count: 2 })).code, "dedupe_plan_not_found");
+  assert.equal(moves(client).length, 0);
 });
 
 test("a message with no Message-ID is counted and left alone by both tiers", async () => {
