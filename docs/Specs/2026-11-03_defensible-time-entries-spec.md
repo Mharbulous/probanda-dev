@@ -220,6 +220,15 @@ Read against a52974ff and the working tree. "Refuted" means the code says otherw
 3. `/bill-client` stops at the unsigned draft. A typed `/issue-invoice` locks, freezes and saves a draft email to accounting.
 4. Documented work with no tracker time gets a proposed estimate, held for approval. The practitioner may approve, correct or write it off, or enter the time by hand instead.
 
+**Changes made while building:**
+
+- K is first written at issue, in the one write that locks H, not as a draft. A draft invoice record would move the matter's billing cutoff before anything was billed.
+- An invoice's lock state reads as `issue_state`, because its data already has a payment `status`. After issue, payment and sending can still be recorded; the billed figures cannot change.
+- The rounding rule is stored on the invoice line, because rounding applies to a person's day and not to one entry. A person-day under the minimum and each approved exclusion are adjustments (I).
+- The evidence for each line travels in `line_map.json` and is frozen with it, so `lawyer` reads a file and names no timekeeper tool.
+- Spec 2026-11-03_firm-invoice-template-and-style-guide-spec.md owns the invoice template and the style guide, and 2026-11-03_cso-submission-sheet-disbursements-spec.md owns reading filing fees. `collect_disbursements.py` is the shared de-duplicator.
+- Connector filtered reads and the call-log store landed separately (2142c066, 84439771).
+
 **Criteria added to §11:**
 
 11. A Strong candidate date with no tracker entry yields a proposed estimate line, labelled as an estimate, citing the date's evidence and held for approval. The candidate list itself is never proof of time.
