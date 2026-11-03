@@ -1,6 +1,6 @@
 // The mail__dedupe_* tools: find duplicate emails and move an approved plan's copies to Trash.
 // Tier 1 is copies byte-for-byte the same. Tier 2 is copies that share a Message-ID but differ,
-// compared here and judged by the duplicate-judge agent. Nothing but plan copies moves, only by
+// compared here and judged by the email-reader agent. Nothing but plan copies moves, only by
 // the server's MOVE, and only to Trash. A server without MOVE or a Trash folder is still scanned,
 // but gets no plan, so the scan only lists its copies.
 //
@@ -11,15 +11,16 @@
 //
 // A scan's files live under dedupe/<scan_id>/ in the mail state folder, so a new scan leaves every
 // other scan and its plans alone. A scan saved by an older copy sits directly under dedupe/ and
-// still reads. apply.json stays directly under dedupe/, because one plan moves at a time. Nothing
-// here is ever deleted.
+// still reads. apply.json stays directly under dedupe/, because one plan moves at a time. A new scan
+// removes each scan folder with nothing written in it for 7 days, since its comparison holds message
+// text. The verdict ledger stays, so a removed scan's verdicts are still reused.
 //
 // The verdict ledger (verdicts.json in the mail state folder) keeps each tier 2 group's verdict by
 // a hash of the account, the Message-ID and the copies' hashes, so a verdict is reused whichever
 // skill judged the group first. It holds hashes, the verdict's one sentence and no message text.
 
 import { createHash, randomUUID } from "node:crypto";
-import { mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { defaultStateDir } from "../../../../mcp-shared/dpapi-store.js";
@@ -47,7 +48,9 @@ const VERDICT_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000;
 const REASON_MAX = 300;
 const ROLES = ["record", "extra", "duplicate", "draft"];
 const BASES = ["comparison", "single_copy", "identical"];
-// Bump with the rules the reader agent judges by: a verdict made under older rules is ignored.
+const STATE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+// Bump with the version in shared/mail-judging.md, the rules the reader agent judges by: a verdict
+// made under older rules is ignored.
 const RULES_VERSION = 1;
 
 // --- state ---------------------------------------------------------------------------------
@@ -235,6 +238,29 @@ function readPlan(planId: string): Plan | undefined {
   return undefined;
 }
 
+function lastWritten(path: string): number {
+  const stat = statSync(path);
+  if (!stat.isDirectory()) return stat.mtimeMs;
+  return Math.max(stat.mtimeMs, ...readdirSync(path).map((name) => statSync(join(path, name)).mtimeMs));
+}
+
+/**
+ * Removes each entry of a state folder that bears a name this server generates and has had nothing
+ * written in it for 7 days. Any other name stays, and nothing in the mailbox changes. An entry that
+ * is in use or already gone stays for the next prune, so this never stops the call that prunes.
+ */
+export function pruneOld(dir: string, ownName: RegExp): void {
+  for (const name of readdirSync(dir)) {
+    if (!ownName.test(name)) continue;
+    const path = join(dir, name);
+    try {
+      if (Date.now() - lastWritten(path) > STATE_MAX_AGE_MS) rmSync(path, { recursive: true, force: true });
+    } catch {
+      continue;
+    }
+  }
+}
+
 // --- verdict ledger ------------------------------------------------------------------------
 
 const ledgerPath = (): string => join(mailStateDir(), "verdicts.json");
@@ -369,6 +395,7 @@ export async function dedupeScan(context: MailContext, args: Args): Promise<unkn
       groupCount: 0,
     };
     saveScan(state);
+    pruneOld(dedupeDir(), SCAN_ID);
     return runScan(client, context, state);
   });
 }

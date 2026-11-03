@@ -306,7 +306,7 @@ def test_a_dedupe_move_from_a_subagent_is_refused(tmp_path):
     s = Session(tmp_path)
     s.say("Remove the duplicates.")
     s.say(block_of(s.gate(name=DEDUPE, tool_input=DEDUPE_CALL)))
-    reason = s.gate(name=DEDUPE, tool_input=DEDUPE_CALL, agent_id="a1", agent_type="lawyer:duplicate-judge")
+    reason = s.gate(name=DEDUPE, tool_input=DEDUPE_CALL, agent_id="a1", agent_type="lawyer:email-reader")
     assert reason and "subagent" in reason
 
 

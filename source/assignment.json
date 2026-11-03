@@ -41,7 +41,7 @@
         "compare-pages",
         "delivery-checker",
         "docket-clerk",
-        "duplicate-judge",
+        "email-reader",
         "extract-affidavit",
         "extract-caselaw",
         "extract-facts",
@@ -71,7 +71,8 @@
         "rule-gate": "source/lawyer/hooks/rule-gate.py",
         "session-lane-guard": ".claude/skills/shared/docket-clerk/hooks/session-lane-guard.py",
         "staged-file-gate": ".claude/skills/show-me/hooks/staged-file-gate.py",
-        "trailing-dyu": "public/plugins/lawyer/skills/dyu/hooks/trailing-dyu.py"
+        "trailing-dyu": "public/plugins/lawyer/skills/dyu/hooks/trailing-dyu.py",
+        "verdict-gate": "source/lawyer/hooks/verdict-gate.py"
       },
       "servers": [
         "data",

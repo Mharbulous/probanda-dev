@@ -1,4 +1,4 @@
-// build-stamp: 774d0679e24a
+// build-stamp: 0c4e4840e48f
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108228,7 +108228,7 @@ function jsonText(name2, result) {
 
 // src/mail/tools.ts
 import { createHash as createHash4 } from "node:crypto";
-import { mkdirSync as mkdirSync2, readdirSync as readdirSync2, readFileSync as readFileSync3, rmSync, statSync, writeFileSync as writeFileSync2 } from "node:fs";
+import { mkdirSync as mkdirSync2, readdirSync as readdirSync2, readFileSync as readFileSync3, rmSync as rmSync2, statSync as statSync2, writeFileSync as writeFileSync2 } from "node:fs";
 import { basename, extname, join as join4, win32 as pathWin32 } from "node:path";
 
 // ../../mcp-shared/dpapi-store.js
@@ -108976,7 +108976,7 @@ async function persistMailCredential(credential, env = process.env) {
 
 // src/mail/dedupe.ts
 import { createHash as createHash3, randomUUID } from "node:crypto";
-import { mkdirSync, readdirSync, readFileSync as readFileSync2, renameSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync as readFileSync2, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join as join3 } from "node:path";
 
 // node_modules/imapflow/dist/esm/imap-flow.js
@@ -118667,6 +118667,7 @@ var VERDICT_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1e3;
 var REASON_MAX = 300;
 var ROLES = ["record", "extra", "duplicate", "draft"];
 var BASES = ["comparison", "single_copy", "identical"];
+var STATE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1e3;
 var RULES_VERSION = 1;
 var mailStateDir = () => defaultStateDir(process.env, "mail");
 var dedupeDir = () => join3(mailStateDir(), "dedupe");
@@ -118718,6 +118719,22 @@ function readPlan(planId) {
     }
   }
   return void 0;
+}
+function lastWritten(path) {
+  const stat = statSync(path);
+  if (!stat.isDirectory()) return stat.mtimeMs;
+  return Math.max(stat.mtimeMs, ...readdirSync(path).map((name2) => statSync(join3(path, name2)).mtimeMs));
+}
+function pruneOld(dir, ownName) {
+  for (const name2 of readdirSync(dir)) {
+    if (!ownName.test(name2)) continue;
+    const path = join3(dir, name2);
+    try {
+      if (Date.now() - lastWritten(path) > STATE_MAX_AGE_MS) rmSync(path, { recursive: true, force: true });
+    } catch {
+      continue;
+    }
+  }
 }
 var ledgerPath = () => join3(mailStateDir(), "verdicts.json");
 var isLive = (v3) => v3.rules_version >= RULES_VERSION && Date.now() - Date.parse(v3.recorded_at) <= VERDICT_MAX_AGE_MS;
@@ -118833,6 +118850,7 @@ async function dedupeScan(context, args) {
       groupCount: 0
     };
     saveScan(state);
+    pruneOld(dedupeDir(), SCAN_ID);
     return runScan(client, context, state);
   });
 }
@@ -121669,6 +121687,7 @@ var DRAFT_MAX_BYTES = 25 * 1024 * 1024;
 var FETCH_FIELDS = { uid: true, envelope: true, flags: true, size: true, internalDate: true };
 var PRINTABLE = /^[^\x00-\x1F\x7F]+$/;
 var STAGING_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1e3;
+var HEADER_PAGE = /^[0-9a-f]{32}-\d+-\d+-\d+\.json$/;
 var mailTools = [
   { name: "mail__configure_credential", handler: (args, context) => configureCredential(context, args) },
   { name: "mail__configure_status", handler: (_args, context) => configureStatus(context.mail) },
@@ -121968,7 +121987,7 @@ function saveDirArg(tool, args) {
   const saveDir = args.save_dir;
   let isDir = false;
   try {
-    isDir = pathWin32.isAbsolute(saveDir) && statSync(saveDir).isDirectory();
+    isDir = pathWin32.isAbsolute(saveDir) && statSync2(saveDir).isDirectory();
   } catch {
     isDir = false;
   }
@@ -122019,7 +122038,7 @@ function stagingDir() {
   for (const name2 of readdirSync2(root)) {
     const m3 = /^(\d{4})(\d{2})(\d{2})$/.exec(name2);
     if (m3 && Date.now() - new Date(+m3[1], +m3[2] - 1, +m3[3]).getTime() > STAGING_MAX_AGE_MS) {
-      rmSync(join4(root, name2), { recursive: true, force: true });
+      rmSync2(join4(root, name2), { recursive: true, force: true });
     }
   }
   const now = /* @__PURE__ */ new Date();
@@ -122125,6 +122144,7 @@ function listHeaders(context, args) {
     const done = read >= uids.length;
     const pageDir = join4(stateDir, "headers");
     mkdirSync2(pageDir, { recursive: true });
+    pruneOld(pageDir, HEADER_PAGE);
     const listPath = join4(pageDir, `${key}-${uidFrom}-${uids[read - 1] ?? uidFrom}.json`);
     writeFileSync2(listPath, JSON.stringify({ folder, uidValidity, uidNext: box.uidNext, messages }));
     return { list_path: listPath, count: messages.length, next_uid: done ? null : uids[read], done };
@@ -122182,7 +122202,7 @@ async function saveDraft(run, args) {
   if (!pathWin32.isAbsolute(emlPath)) throw new ValidationError("mail__save_draft.eml_path must be an absolute path");
   let size;
   try {
-    const stat = statSync(emlPath);
+    const stat = statSync2(emlPath);
     if (!stat.isFile()) throw new Error("not a file");
     size = stat.size;
   } catch {

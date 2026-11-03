@@ -42,6 +42,7 @@ import {
   isUnsent,
   normalizedBody,
   sha256,
+  pruneOld,
   sliceClock,
 } from "./dedupe.js";
 import {
@@ -81,6 +82,8 @@ const DRAFT_MAX_BYTES = 25 * 1024 * 1024;
 const FETCH_FIELDS = { uid: true, envelope: true, flags: true, size: true, internalDate: true };
 const PRINTABLE = /^[^\x00-\x1F\x7F]+$/;
 const STAGING_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+// The name listHeaders gives a page: the folder's key, its UIDVALIDITY, and the page's first and last UID.
+const HEADER_PAGE = /^[0-9a-f]{32}-\d+-\d+-\d+\.json$/;
 
 export const mailTools: Tool<MailContext>[] = [
   { name: "mail__configure_credential", handler: (args, context) => configureCredential(context, args) },
@@ -648,6 +651,7 @@ function listHeaders(context: MailContext, args: Args): Promise<unknown> {
     // Named by the range it holds, so another session's list of the same folder cannot change this page.
     const pageDir = join(stateDir, "headers");
     mkdirSync(pageDir, { recursive: true });
+    pruneOld(pageDir, HEADER_PAGE);
     const listPath = join(pageDir, `${key}-${uidFrom}-${uids[read - 1] ?? uidFrom}.json`);
     writeFileSync(listPath, JSON.stringify({ folder, uidValidity, uidNext: box.uidNext, messages }));
     return { list_path: listPath, count: messages.length, next_uid: done ? null : uids[read], done };

@@ -109,6 +109,20 @@
             "statusMessage": "One-way approval gate"
           }
         ]
+      },
+      {
+        "matcher": "mcp__(.+__)?plugin_lawyer_contacts-calendars-email__mail__dedupe_record_verdicts",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/verdict-gate.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Email verdict gate"
+          }
+        ]
       }
     ],
     "PostToolUse": [
