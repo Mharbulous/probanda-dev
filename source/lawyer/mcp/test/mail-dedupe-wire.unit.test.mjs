@@ -1,6 +1,7 @@
-// The mail__dedupe_* tools through the real ImapFlow, against a small IMAP server on loopback,
-// because a fake client cannot see the wire. Folder names with spaces, slashes, parentheses and
-// non-ASCII characters must reach the server correctly quoted and encoded. Synthetic data only.
+// The mail__dedupe_* tools and mail__move_messages through the real ImapFlow, against a small IMAP
+// server on loopback, because a fake client cannot see the wire. Folder names with spaces, slashes,
+// parentheses and non-ASCII characters must reach the server correctly quoted and encoded, and a move
+// without MOVE must remove only the UIDs it copied. Synthetic data only.
 
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -36,14 +37,15 @@ const SPACED = "1. OPEN FILES/Example v. Sample L000 (old)";
 const NON_ASCII = ["Résumé", "R&AOk-sum&AOk-"];
 const TRASH = "Deleted Messages";
 
-function imapServer() {
+function imapServer(capabilities = "IMAP4rev1 MOVE UIDPLUS") {
   const wire = [];
+  const flagged = new Set();
   const boxes = new Map([[SPACED, new Set([5, 6])], [NON_ASCII[1], new Set([7, 8])], [TRASH, new Set()]]);
   const unquote = (name) => name.replace(/^"|"$/g, "").replace(/\\(.)/g, "$1");
   const server = createServer((socket) => {
     let open;
     let buffered = "";
-    socket.write("* OK [CAPABILITY IMAP4rev1 MOVE UIDPLUS] ready\r\n");
+    socket.write(`* OK [CAPABILITY ${capabilities}] ready\r\n`);
     socket.on("error", () => {});
     socket.on("data", (chunk) => {
       buffered += chunk.toString("latin1");
@@ -57,10 +59,10 @@ function imapServer() {
         const done = (text = "done") => socket.write(`${tag} OK ${text}\r\n`);
         const verb = command.toUpperCase();
         if (verb === "CAPABILITY") {
-          socket.write("* CAPABILITY IMAP4rev1 MOVE UIDPLUS\r\n");
+          socket.write(`* CAPABILITY ${capabilities}\r\n`);
           done();
         } else if (verb === "LOGIN") {
-          done("[CAPABILITY IMAP4rev1 MOVE UIDPLUS] signed in");
+          done(`[CAPABILITY ${capabilities}] signed in`);
         } else if (verb === "LIST" || verb === "LSUB") {
           // An empty pattern asks only for the separator, and `INBOX` is its own question.
           if (/ ""$/.test(rest)) socket.write(`* ${verb} (\\Noselect) "/" ""\r\n`);
@@ -91,6 +93,17 @@ function imapServer() {
           const [, range] = /^MOVE (\S+) /i.exec(rest);
           for (const uid of range.split(",").map(Number)) boxes.get(open).delete(uid);
           done("moved");
+        } else if (verb === "UID" && /^COPY/i.test(rest)) {
+          const [, range, name] = /^COPY (\S+) (.+)$/i.exec(rest);
+          const uids = range.split(",").map(Number);
+          for (const uid of uids) boxes.get(unquote(name)).add(uid + 100);
+          done(`[COPYUID 42 ${range} ${uids.map((u) => u + 100).join(",")}] copied`);
+        } else if (verb === "UID" && /^STORE/i.test(rest)) {
+          for (const uid of /^STORE (\S+) /i.exec(rest)[1].split(",").map(Number)) flagged.add(uid);
+          done("stored");
+        } else if (verb === "UID" && /^EXPUNGE/i.test(rest)) {
+          for (const uid of /^EXPUNGE (\S+)/i.exec(rest)[1].split(",").map(Number)) if (flagged.has(uid)) boxes.get(open).delete(uid);
+          done("expunged");
         } else if (verb === "LOGOUT") {
           socket.write("* BYE bye\r\n");
           done();
@@ -127,4 +140,20 @@ test("folder names reach the server quoted and encoded, on the read-only scan an
   assert.deepEqual([...boxes.get(SPACED)], [6]);
   assert.deepEqual([...boxes.get(NON_ASCII[1])], [8]);
   assert.equal(wire.some((l) => /\b(STORE|EXPUNGE|COPY)\b/i.test(l)), false, "only MOVE is used");
+});
+
+test("a move without MOVE copies, flags and removes only its own UIDs, and never sends a bare EXPUNGE", async (t) => {
+  const { server, wire, boxes, port } = await imapServer("IMAP4rev1 UIDPLUS");
+  t.after(() => server.close());
+  const context = { practiceDb: {}, mail: { credential: { host: "127.0.0.1", port, secure: false, username: "someone", password: "fake-password-0000-not-real" } } };
+
+  const result = await callTool(context, "mail__move_messages", { folder: SPACED, uids: [5], destination: TRASH });
+  assert.deepEqual(result.moved, [{ uid: 5, newUid: 105 }]);
+  assert.deepEqual(result.notMoved, []);
+  assert.deepEqual([...boxes.get(SPACED)], [6]);
+  assert.deepEqual([...boxes.get(TRASH)], [105]);
+
+  const steps = [/UID COPY 5 "Deleted Messages"$/, /UID STORE 5 \+FLAGS/, /UID EXPUNGE 5$/].map((step) => wire.findIndex((l) => step.test(l)));
+  assert.ok(steps.every((at, i) => at >= 0 && (i === 0 || at > steps[i - 1])), wire.join("\n"));
+  assert.equal(wire.some((l) => /^\S+ EXPUNGE\b/i.test(l) || /\bUID MOVE\b/i.test(l)), false, wire.join("\n"));
 });
