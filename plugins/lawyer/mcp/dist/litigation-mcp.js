@@ -1,4 +1,4 @@
-// build-stamp: db646044d8af
+// build-stamp: de4c1ec50f88
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "db646044d8af";
+var BUILD_STAMP = false ? null : "de4c1ec50f88";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -110527,7 +110527,7 @@ var milestone_js_default = `(function () {
     // this write), then its pending jobs. A path with nothing at it, or one that could not be read,
     // says so, never dropped.
     var ATTACHED_KINDS = { client_letter: "Client letter", reply: "Reply", opposing_filing: "Opposing filing" };
-    var PENDING_EMOJI = { ready: "\u{1F7E2} Ready", wip: "\u{1F535} In Progress", bring_forward: "\u{1F4C5} Bring Forward", waiting: "\u26D4 Blocked" };
+    var PENDING_EMOJI = { ready: "\u{1F7E2} Ready", wip: "\u{1F535} In Progress", bring_forward: "\u{1F4C5} Bring Forward", waiting: "\u{1F534} Blocked" };
     function attachedCard(a) {
       var tile = el("li", "writing attachment");
       tile.setAttribute("data-long", a.name);
