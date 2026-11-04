@@ -13,11 +13,11 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import check_plugin_sources  # noqa: E402
+import fake_repo  # noqa: E402
 import plugin_layout  # noqa: E402
 import stamp_dependencies  # noqa: E402
 
 MARKET = "Invented_market"
-SPEC = {"skills": [], "agents": [], "hooks": {}, "servers": []}
 REQUIRES = {"base": [], "mid": ["base"], "top": ["base", "mid"]}
 
 
@@ -26,8 +26,7 @@ class StampTest(unittest.TestCase):
         self.root = os.path.realpath(tempfile.mkdtemp(prefix="stamp-dependencies-"))
         self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
         self.put(".claude-plugin/marketplace.json", {"name": MARKET})
-        self.put("source/assignment.json", {"status": "cutover", "plugins": {
-            name: {**SPEC, "requires": requires} for name, requires in REQUIRES.items()}})
+        fake_repo.write_assignment(self.root, {name: {"requires": requires} for name, requires in REQUIRES.items()})
         self.put("source/base/plugin.json", {"name": "base", "version": "0.2.1", "description": "é"})
         self.put("source/mid/plugin.json", {"name": "mid", "version": "0.5.0", "dependencies": ["base"], "hooks": {}})
         self.put("source/top/plugin.json", {"name": "top", "version": "0.7.3", "dependencies": ["base", "mid"]})
