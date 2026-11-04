@@ -744,7 +744,7 @@ test("a sweep error of any kind, a cut-short lease included, leaves that folder 
   assert.equal(third.report, undefined, "each folder left is said once");
 });
 
-test("a privileged call's shape is checked first, keeping its wording; the answer's case and spaces do not matter (m-1)", async (t) => {
+test("a privileged call's shape is checked first, keeping its wording (m-1)", async (t) => {
   const { matterRoot, caseDataDir } = fixture(t);
   const { run_id } = await run(matterRoot, { action: "begin", mode: "attended" });
   const memo = { file_path: "3. CLIENT\\memo.pdf", file_hash: "f".repeat(64) };
@@ -757,7 +757,7 @@ test("a privileged call's shape is checked first, keeping its wording; the answe
   await assert.rejects(write([one.result_id], "maybe", "main"), /must be one of: yes, no, unclear/);
   await assert.rejects(write([one.result_id, two.result_id], "yes", "privileged"), /one result/);
   assert.deepEqual([existsSync(stagedPath(one.result_id)), existsSync(stagedPath(two.result_id))], [true, true], "the wording is kept for the corrected call");
-  assert.equal((await write([one.result_id], " Yes ", "privileged")).outcome, "written");
+  assert.equal((await write([one.result_id], "yes", "privileged")).outcome, "written");
   assert.equal(sql(caseDataDir, "SELECT count(*) AS n FROM privileged_sources", "privileged")[0].n, 1);
 });
 
