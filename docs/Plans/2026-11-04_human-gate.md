@@ -109,3 +109,5 @@ Two issues differ from the table, both because a real human stop outranks queue 
 - **#187** stays `ready-for-human`. Its recorded go-ahead names `lawyer`, `researcher`, `timekeeper` and `file-manager`, but `litigator`, `solicitor` and `developer` pin `lawyer` to `^0.21.12`, so a `lawyer` minor makes each of them a minor too. Its new brief asks Brahm whether the go-ahead covers those three.
 
 So 10 issues are `ready-for-agent` and 4 are `ready-for-human`, in place of the 12 and 2 under Verification.
+
+Later on 2026-11-04, Brahm extended the #187 go-ahead to `litigator`, `solicitor` and `developer`, recorded in comment 6629202020. That makes 11 `ready-for-agent` and 3 `ready-for-human` (#191, #216, #226).
