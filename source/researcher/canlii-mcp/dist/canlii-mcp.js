@@ -13009,6 +13009,20 @@ var StdioServerTransport = class {
 // src/index.ts
 import { pathToFileURL } from "node:url";
 
+// ../../mcp-shared/timed-fetch.js
+var DEFAULT_TIMEOUT_MS = 6e4;
+async function timedFetch(url, { init, timeoutMs = DEFAULT_TIMEOUT_MS, redact, label, fetch: fetch2 = globalThis.fetch } = {}) {
+  try {
+    return await fetch2(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error2) {
+    const raw = error2 instanceof Error ? error2.message : String(error2);
+    const detail = redact ? redact(raw) : raw;
+    const failure = new Error(label ? `${label} could not be reached (${detail})` : detail, { cause: error2?.cause });
+    if (error2 instanceof Error) failure.name = error2.name;
+    throw failure;
+  }
+}
+
 // src/dpapi-store.ts
 import { join as join2 } from "node:path";
 
@@ -13119,7 +13133,6 @@ function redactedKeyHint(key) {
 var API_BASE = "https://api.canlii.org/v1/";
 var MIN_INTERVAL_MS = 500;
 var DAILY_LIMIT = 5e3;
-var TIMEOUT_MS = 6e4;
 function sanitizeError(message) {
   return message.replace(/api_key=[^&\s]*/gi, "api_key=REDACTED");
 }
@@ -13177,12 +13190,7 @@ var CanliiClient = class {
       }
       this.lastRequestTime = this.now();
       this.dailyCount++;
-      try {
-        return await this.fetchImpl(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-      } catch (error2) {
-        const detail = sanitizeError(error2 instanceof Error ? error2.message : String(error2));
-        throw new Error(`network: CanLII could not be reached (${detail})`);
-      }
+      return timedFetch(url, { fetch: this.fetchImpl, redact: sanitizeError, label: "network: CanLII" });
     });
     this.queue = run.then(() => void 0, () => void 0);
     return run;
@@ -13198,7 +13206,7 @@ var CanliiClient = class {
   }
   // A page outside the CanLII API (BC Laws), so it takes no key and no rate limit.
   async fetchText(url) {
-    const response = await this.fetchImpl(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+    const response = await timedFetch(url, { fetch: this.fetchImpl });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.text();
   }

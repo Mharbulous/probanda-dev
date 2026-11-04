@@ -1,4 +1,4 @@
-// build-stamp: d9e240cd135e
+// build-stamp: 9e4425cc528f
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -107638,11 +107638,8 @@ var StdioServerTransport = class {
 // src/contacts-calendars-email-index.ts
 import { pathToFileURL } from "node:url";
 
-// src/errors.ts
+// ../../mcp-shared/errors.js
 var DataServerError = class extends Error {
-  code;
-  /** Structured detail the error payload carries beside its message, when the refusal has any. */
-  details;
   constructor(message, code = "data_error", details) {
     super(message);
     this.name = new.target.name;
@@ -108100,53 +108097,81 @@ function buildContactsCalendarsEmailToolDefinitions() {
   ];
 }
 
-// src/validate.ts
+// ../../mcp-shared/validate.js
 function validateToolInput(tool, input) {
   if (input === void 0 || input === null) return {};
   if (!isPlainObject3(input)) {
     throw new ValidationError(`${tool.name} input must be an object`);
   }
   const schema = tool.inputSchema;
-  const properties = schema.properties ?? {};
-  const output = {};
-  for (const key of Object.keys(input)) {
-    if (!(key in properties)) {
-      throw new ValidationError(`${tool.name} received unknown field "${key}" (allowed: ${Object.keys(properties).join(", ")})`);
-    }
-  }
+  refuseUnknown(tool.name, input, schema.properties ?? {});
   for (const required2 of schema.required ?? []) {
-    if (!(required2 in input) || input[required2] === void 0 || input[required2] === null || input[required2] === "") {
+    if (input[required2] === void 0 || input[required2] === null || input[required2] === "") {
       throw new ValidationError(`${tool.name}.${required2} is required`);
     }
   }
+  const output = {};
   for (const [key, value] of Object.entries(input)) {
     if (value === void 0) continue;
-    output[key] = validateValue(`${tool.name}.${key}`, value, properties[key]);
+    checkValue(`${tool.name}.${key}`, value, schema.properties?.[key]);
+    output[key] = value;
   }
   return output;
 }
-function validateValue(label, value, schema) {
-  if (!schema) return value;
-  if (value === null) return null;
-  const type = schema.type;
-  if (type === "string" && typeof value !== "string") {
-    throw new ValidationError(`${label} must be a string`);
+function refuseUnknown(label, value, properties) {
+  for (const key of Object.keys(value)) {
+    if (!Object.hasOwn(properties, key)) {
+      throw new ValidationError(`${label} received unknown field "${key}" (allowed: ${Object.keys(properties).join(", ")})`);
+    }
   }
-  if (type === "number" && typeof value !== "number") {
-    throw new ValidationError(`${label} must be a number`);
+}
+function checkValue(label, value, schema, nullAllowed = true) {
+  if (!schema || value === null && nullAllowed) return;
+  if (schema["x-encrypted"] && typeof value !== "string") {
+    throw new ValidationError(`${label} is encrypted and must be a string`);
   }
-  if (type === "boolean" && typeof value !== "boolean") {
-    throw new ValidationError(`${label} must be a boolean`);
+  checkType(label, value, schema.type);
+  if (schema.enum && !schema.enum.includes(value)) {
+    throw new ValidationError(`${label} must be one of: ${schema.enum.join(", ")}`);
   }
-  if (type === "object" && !isPlainObject3(value)) {
-    throw new ValidationError(`${label} must be an object`);
+  if (typeof value === "string" && schema.pattern !== void 0 && !new RegExp(schema.pattern).test(value)) {
+    throw new ValidationError(`${label} must match ${schema.pattern}`);
   }
-  if (type === "array" && !Array.isArray(value)) throw new ValidationError(`${label} must be an array`);
-  const allowedValues = schema.enum;
-  if (allowedValues && !allowedValues.includes(value)) {
-    throw new ValidationError(`${label} must be one of: ${allowedValues.join(", ")}`);
+  if (typeof value === "number") {
+    if (schema.minimum !== void 0 && value < schema.minimum) throw new ValidationError(`${label} must be at least ${schema.minimum}`);
+    if (schema.maximum !== void 0 && value > schema.maximum) throw new ValidationError(`${label} must be at most ${schema.maximum}`);
   }
-  return value;
+  if (Array.isArray(value) && schema.items) {
+    value.forEach((item, index) => {
+      if (schema.items.type === "string" && typeof item !== "string") throw new ValidationError(`${label} must be an array of strings`);
+      checkValue(`${label}[${index}]`, item, schema.items, false);
+    });
+  }
+  if (isPlainObject3(value)) {
+    if (schema.additionalProperties === false) refuseUnknown(label, value, schema.properties ?? {});
+    for (const required2 of schema.required ?? []) {
+      if (value[required2] === void 0) throw new ValidationError(`${label}.${required2} is required`);
+    }
+    for (const [key, field] of Object.entries(value)) {
+      if (field !== void 0) checkValue(`${label}.${key}`, field, schema.properties?.[key]);
+    }
+  }
+}
+var TYPE_CHECKS = {
+  string: [(value) => typeof value === "string", "a string"],
+  number: [(value) => typeof value === "number", "a number"],
+  integer: [(value) => Number.isInteger(value), "an integer"],
+  boolean: [(value) => typeof value === "boolean", "a boolean"],
+  object: [isPlainObject3, "an object"],
+  array: [Array.isArray, "an array"],
+  null: [(value) => value === null, "null"]
+};
+function checkType(label, value, type) {
+  if (type === void 0) return;
+  const types = Array.isArray(type) ? type : [type];
+  if (!types.some((name2) => TYPE_CHECKS[name2][0](value))) {
+    throw new ValidationError(`${label} must be ${types.map((name2) => TYPE_CHECKS[name2][1]).join(" or ")}`);
+  }
 }
 function isPlainObject3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -121747,24 +121772,13 @@ var mailTools = [
 function runFor(context) {
   return (what, fn2) => withImap(context.mail, context.imapFactory ?? defaultImapFactory, what, fn2, context.mailTimeoutMs);
 }
-function intArg(label, value, fallback, min, max = Infinity) {
-  if (value === void 0) {
-    if (fallback === void 0) throw new ValidationError(`${label} is required`);
-    return fallback;
-  }
-  if (typeof value !== "number" || !Number.isInteger(value) || value < min || value > max) {
-    throw new ValidationError(
-      max === Infinity ? `${label} must be an integer of at least ${min}` : `${label} must be an integer from ${min} to ${max}`
-    );
-  }
-  return value;
-}
+var intArg = (value, fallback) => value ?? fallback;
 var folderArg = (args) => args.folder ?? "INBOX";
-function listBodyOptions(tool, args) {
+function listBodyOptions(args) {
   if (args.include_body !== true) return void 0;
   return {
     format: args.body_format ?? "text",
-    maxLength: intArg(`${tool}.body_max_length`, args.body_max_length, 1e4, 1),
+    maxLength: intArg(args.body_max_length, 1e4),
     stripQuoted: args.strip_quoted === true,
     stripInlineImages: args.strip_inline_images === true
   };
@@ -121793,7 +121807,7 @@ async function fetchSummaries(client, folder, uids, body) {
 async function configureCredential(context, args) {
   const host = String(args.host ?? "").trim();
   const username = String(args.username ?? "").trim();
-  const port = intArg("mail__configure_credential.port", args.port, 993, 1, 65535);
+  const port = intArg(args.port, 993);
   const fromAddress = String(args.from_address ?? "").trim();
   for (const [label, value] of [["host", host], ["username", username]]) {
     if (!value) throw new ValidationError(`mail__configure_credential requires ${label}`);
@@ -121928,8 +121942,8 @@ function folderStatus(run, args) {
 }
 function getLatestEmails(run, args) {
   const folder = folderArg(args);
-  const count = intArg("mail__get_latest_emails.count", args.count, 10, 1, 200);
-  const body = listBodyOptions("mail__get_latest_emails", args);
+  const count = intArg(args.count, 10);
+  const body = listBodyOptions(args);
   return run(`reading the latest messages in "${folder}"`, async (client) => {
     const box = await openReadOnly(client, folder);
     if (box.exists === 0) return { folder, messages: [] };
@@ -121941,8 +121955,8 @@ function getLatestEmails(run, args) {
 }
 function searchEmails(run, args) {
   const folder = folderArg(args);
-  const limit = intArg("mail__search_emails.limit", args.limit, 50, 1, 500);
-  const body = listBodyOptions("mail__search_emails", args);
+  const limit = intArg(args.limit, 50);
+  const body = listBodyOptions(args);
   const criteria = {};
   for (const key of ["from", "to", "subject", "body"]) if (args[key]) criteria[key] = args[key];
   for (const key of ["since", "before"]) if (args[key]) criteria[key] = ymd(`mail__search_emails.${key}`, args[key]);
@@ -121959,10 +121973,10 @@ function searchEmails(run, args) {
 }
 function getEmail(run, args) {
   const folder = folderArg(args);
-  const uid = intArg("mail__get_email.uid", args.uid, void 0, 1);
+  const uid = args.uid;
   const options = {
     format: args.body_format ?? "text",
-    maxLength: intArg("mail__get_email.max_length", args.max_length, 2e4, 1),
+    maxLength: intArg(args.max_length, 2e4),
     stripQuoted: args.strip_quoted === true,
     stripInlineImages: args.strip_inline_images === true
   };
@@ -122032,8 +122046,8 @@ function saveDirArg(tool, args) {
 }
 async function downloadAttachment(run, args) {
   const folder = folderArg(args);
-  const uid = intArg("mail__download_attachment.uid", args.uid, void 0, 1);
-  const index = args.index === void 0 ? void 0 : intArg("mail__download_attachment.index", args.index, void 0, 0);
+  const uid = args.uid;
+  const index = args.index ?? void 0;
   const filename = args.filename;
   if (index === void 0 && !filename) throw new ValidationError("mail__download_attachment needs filename or index");
   const saveDir = saveDirArg("mail__download_attachment", args);
@@ -122085,7 +122099,7 @@ function stagingDir() {
 }
 async function saveMessage(run, args) {
   const folder = folderArg(args);
-  const uid = intArg("mail__save_message.uid", args.uid, void 0, 1);
+  const uid = args.uid;
   const staging = args.staging === true;
   if (staging === (args.save_dir !== void 0)) throw new ValidationError("mail__save_message needs either save_dir or staging: true");
   const saveDir = staging ? void 0 : saveDirArg("mail__save_message", args);
@@ -122132,8 +122146,8 @@ function readCache(path) {
 }
 function listHeaders(context, args) {
   const folder = args.folder;
-  const uidFrom = intArg("mail__list_headers.uid_from", args.uid_from, 1, 1);
-  const limit = intArg("mail__list_headers.limit", args.limit, 200, 1, 500);
+  const uidFrom = intArg(args.uid_from, 1);
+  const limit = intArg(args.limit, 200);
   return connect(context, `listing the messages in "${folder}"`, async (client) => {
     const box = await client.mailboxOpen(folder, { readOnly: true });
     if (box.uidValidity === void 0) throw new DataServerError(`"${folder}" did not report its UIDVALIDITY, so its messages cannot be identified`, "mail_error");
@@ -122201,8 +122215,8 @@ function findByMessageId(run, args) {
 }
 function findThreadMessages(run, args) {
   const folder = folderArg(args);
-  const uid = intArg("mail__find_thread_messages.uid", args.uid, void 0, 1);
-  const body = listBodyOptions("mail__find_thread_messages", args);
+  const uid = args.uid;
+  const body = listBodyOptions(args);
   const named = args.search_folders;
   if (named !== void 0 && (!Array.isArray(named) || named.length === 0 || named.some((f3) => typeof f3 !== "string" || !f3))) {
     throw new ValidationError("mail__find_thread_messages.search_folders must be a non-empty list of folder names");

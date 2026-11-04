@@ -1,4 +1,4 @@
-// build-stamp: 00005314684e
+// build-stamp: a36c4bdec708
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -74937,11 +74937,8 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-// src/errors.ts
+// ../../mcp-shared/errors.js
 var DataServerError = class extends Error {
-  code;
-  /** Structured detail the error payload carries beside its message, when the refusal has any. */
-  details;
   constructor(message, code = "data_error", details) {
     super(message);
     this.name = new.target.name;
@@ -75264,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "00005314684e";
+var BUILD_STAMP = false ? null : "a36c4bdec708";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -75307,53 +75304,81 @@ function buildStampStatus(env = process.env) {
   };
 }
 
-// src/validate.ts
+// ../../mcp-shared/validate.js
 function validateToolInput(tool, input) {
   if (input === void 0 || input === null) return {};
   if (!isPlainObject3(input)) {
     throw new ValidationError(`${tool.name} input must be an object`);
   }
   const schema = tool.inputSchema;
-  const properties = schema.properties ?? {};
-  const output = {};
-  for (const key of Object.keys(input)) {
-    if (!(key in properties)) {
-      throw new ValidationError(`${tool.name} received unknown field "${key}" (allowed: ${Object.keys(properties).join(", ")})`);
-    }
-  }
+  refuseUnknown(tool.name, input, schema.properties ?? {});
   for (const required2 of schema.required ?? []) {
-    if (!(required2 in input) || input[required2] === void 0 || input[required2] === null || input[required2] === "") {
+    if (input[required2] === void 0 || input[required2] === null || input[required2] === "") {
       throw new ValidationError(`${tool.name}.${required2} is required`);
     }
   }
+  const output = {};
   for (const [key, value2] of Object.entries(input)) {
     if (value2 === void 0) continue;
-    output[key] = validateValue(`${tool.name}.${key}`, value2, properties[key]);
+    checkValue(`${tool.name}.${key}`, value2, schema.properties?.[key]);
+    output[key] = value2;
   }
   return output;
 }
-function validateValue(label2, value2, schema) {
-  if (!schema) return value2;
-  if (value2 === null) return null;
-  const type = schema.type;
-  if (type === "string" && typeof value2 !== "string") {
-    throw new ValidationError(`${label2} must be a string`);
+function refuseUnknown(label2, value2, properties) {
+  for (const key of Object.keys(value2)) {
+    if (!Object.hasOwn(properties, key)) {
+      throw new ValidationError(`${label2} received unknown field "${key}" (allowed: ${Object.keys(properties).join(", ")})`);
+    }
   }
-  if (type === "number" && typeof value2 !== "number") {
-    throw new ValidationError(`${label2} must be a number`);
+}
+function checkValue(label2, value2, schema, nullAllowed = true) {
+  if (!schema || value2 === null && nullAllowed) return;
+  if (schema["x-encrypted"] && typeof value2 !== "string") {
+    throw new ValidationError(`${label2} is encrypted and must be a string`);
   }
-  if (type === "boolean" && typeof value2 !== "boolean") {
-    throw new ValidationError(`${label2} must be a boolean`);
+  checkType(label2, value2, schema.type);
+  if (schema.enum && !schema.enum.includes(value2)) {
+    throw new ValidationError(`${label2} must be one of: ${schema.enum.join(", ")}`);
   }
-  if (type === "object" && !isPlainObject3(value2)) {
-    throw new ValidationError(`${label2} must be an object`);
+  if (typeof value2 === "string" && schema.pattern !== void 0 && !new RegExp(schema.pattern).test(value2)) {
+    throw new ValidationError(`${label2} must match ${schema.pattern}`);
   }
-  if (type === "array" && !Array.isArray(value2)) throw new ValidationError(`${label2} must be an array`);
-  const allowedValues = schema.enum;
-  if (allowedValues && !allowedValues.includes(value2)) {
-    throw new ValidationError(`${label2} must be one of: ${allowedValues.join(", ")}`);
+  if (typeof value2 === "number") {
+    if (schema.minimum !== void 0 && value2 < schema.minimum) throw new ValidationError(`${label2} must be at least ${schema.minimum}`);
+    if (schema.maximum !== void 0 && value2 > schema.maximum) throw new ValidationError(`${label2} must be at most ${schema.maximum}`);
   }
-  return value2;
+  if (Array.isArray(value2) && schema.items) {
+    value2.forEach((item, index) => {
+      if (schema.items.type === "string" && typeof item !== "string") throw new ValidationError(`${label2} must be an array of strings`);
+      checkValue(`${label2}[${index}]`, item, schema.items, false);
+    });
+  }
+  if (isPlainObject3(value2)) {
+    if (schema.additionalProperties === false) refuseUnknown(label2, value2, schema.properties ?? {});
+    for (const required2 of schema.required ?? []) {
+      if (value2[required2] === void 0) throw new ValidationError(`${label2}.${required2} is required`);
+    }
+    for (const [key, field] of Object.entries(value2)) {
+      if (field !== void 0) checkValue(`${label2}.${key}`, field, schema.properties?.[key]);
+    }
+  }
+}
+var TYPE_CHECKS = {
+  string: [(value2) => typeof value2 === "string", "a string"],
+  number: [(value2) => typeof value2 === "number", "a number"],
+  integer: [(value2) => Number.isInteger(value2), "an integer"],
+  boolean: [(value2) => typeof value2 === "boolean", "a boolean"],
+  object: [isPlainObject3, "an object"],
+  array: [Array.isArray, "an array"],
+  null: [(value2) => value2 === null, "null"]
+};
+function checkType(label2, value2, type) {
+  if (type === void 0) return;
+  const types = Array.isArray(type) ? type : [type];
+  if (!types.some((name) => TYPE_CHECKS[name][0](value2))) {
+    throw new ValidationError(`${label2} must be ${types.map((name) => TYPE_CHECKS[name][1]).join(" or ")}`);
+  }
 }
 function isPlainObject3(value2) {
   return typeof value2 === "object" && value2 !== null && !Array.isArray(value2);
@@ -75605,6 +75630,20 @@ function forgetPerCall(stale) {
   const reads = memo.getStore();
   if (reads === void 0) return;
   for (const key of reads.keys()) if (stale(key)) reads.delete(key);
+}
+
+// ../../mcp-shared/timed-fetch.js
+var DEFAULT_TIMEOUT_MS = 6e4;
+async function timedFetch(url, { init: init2, timeoutMs = DEFAULT_TIMEOUT_MS, redact, label: label2, fetch: fetch2 = globalThis.fetch } = {}) {
+  try {
+    return await fetch2(url, { ...init2, signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error2) {
+    const raw = error2 instanceof Error ? error2.message : String(error2);
+    const detail = redact ? redact(raw) : raw;
+    const failure2 = new Error(label2 ? `${label2} could not be reached (${detail})` : detail, { cause: error2?.cause });
+    if (error2 instanceof Error) failure2.name = error2.name;
+    throw failure2;
+  }
 }
 
 // ../../mcp-shared/commons-key.js
@@ -75915,7 +75954,6 @@ var CloudResetError = class extends DataServerError {
   }
   detail;
 };
-var TIMEOUT_MS = 6e4;
 var RESET_CODES = /* @__PURE__ */ new Set(["ECONNRESET", "UND_ERR_SOCKET"]);
 function failure(err) {
   const cause = err.cause;
@@ -75935,11 +75973,8 @@ async function callItems(env, fn2, body) {
   const { supabaseUrl, staticKey } = await cloudCredential(env);
   let res;
   try {
-    res = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/${PATHS[fn2]}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", apikey: staticKey },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS)
+    res = await timedFetch(`${supabaseUrl.replace(/\/+$/, "")}/${PATHS[fn2]}`, {
+      init: { method: "POST", headers: { "Content-Type": "application/json", apikey: staticKey }, body: JSON.stringify(body) }
     });
   } catch (err) {
     const { detail, code } = failure(err);
@@ -97697,7 +97732,7 @@ function requireTokenString(value2, file, field) {
   const unknown2 = (value2.match(/\{\{[^{}]*\}\}/g) ?? []).filter((token) => !TOKENS.includes(token));
   if (unknown2.length) fail2(file, field, `carries ${unknown2.join(", ")}, outside the letterhead token set (${TOKENS.join(", ")})`);
 }
-function checkValue(property, value2, file) {
+function checkValue2(property, value2, file) {
   const field = `format.${property}.value`;
   switch (property) {
     case "paper":
@@ -97752,7 +97787,7 @@ function validateFormatBlock(raw, file) {
     const seen = refs.get(cited2.rule_ref);
     if (seen) fail2(file, `format.${property}.rule_ref`, `"${cited2.rule_ref}" is already cited by format.${seen}; a rule_ref is unique within the file`);
     refs.set(cited2.rule_ref, property);
-    checkValue(property, cited2.value, file);
+    checkValue2(property, cited2.value, file);
   }
   return { defaulted: FORMAT_PROPERTIES.filter((property) => !Object.hasOwn(raw.format, property)) };
 }
@@ -121000,7 +121035,6 @@ var PATHS2 = {
   withdraw: "functions/v1/suggestion-withdraw",
   attach: "functions/v1/suggestion-attach-specification"
 };
-var TIMEOUT_MS2 = 6e4;
 var MAX_STATUS_IDS = 50;
 var UUID4 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var nowIso3 = (seams) => (seams.now ? seams.now() : /* @__PURE__ */ new Date()).toISOString();
@@ -121014,11 +121048,8 @@ function pluginRelease(installRoot = INSTALL_ROOT) {
 async function post(supabaseUrl, staticKey, path, body) {
   let res;
   try {
-    res = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", apikey: staticKey },
-      body,
-      signal: AbortSignal.timeout(TIMEOUT_MS2)
+    res = await timedFetch(`${supabaseUrl.replace(/\/+$/, "")}/${path}`, {
+      init: { method: "POST", headers: { "Content-Type": "application/json", apikey: staticKey }, body }
     });
   } catch (err) {
     const cause = err.cause;
@@ -127585,7 +127616,6 @@ import { createHash as createHash18, randomBytes as randomBytes7 } from "node:cr
 import { join as join67 } from "node:path";
 
 // src/key-request/save-key.ts
-var TIMEOUT_MS3 = 6e4;
 async function configureCloudKey(env = process.env) {
   const url = await serveKeyPage((typed) => saveKey(typed, env));
   return {
@@ -127614,11 +127644,8 @@ async function saveKey(typed, env) {
 async function probe(supabaseUrl, staticKey) {
   let res;
   try {
-    res = await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/items-sync`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", apikey: staticKey },
-      body: "{}",
-      signal: AbortSignal.timeout(TIMEOUT_MS3)
+    res = await timedFetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/items-sync`, {
+      init: { method: "POST", headers: { "Content-Type": "application/json", apikey: staticKey }, body: "{}" }
     });
   } catch (error2) {
     throw new ValidationError(
@@ -127634,7 +127661,6 @@ async function probe(supabaseUrl, staticKey) {
 var MAX_NAME = 200;
 var MAX_EMAIL = 254;
 var MAX_PHONE = 40;
-var TIMEOUT_MS4 = 6e4;
 var TITLE3 = "Ask Probanda for a key";
 var pending2;
 var listening2;
@@ -127704,11 +127730,8 @@ var NEXT = {
 async function post2(projectUrl, path, body, what) {
   let res;
   try {
-    res = await fetch(`${projectUrl.replace(/\/$/, "")}/${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS4)
+    res = await timedFetch(`${projectUrl.replace(/\/$/, "")}/${path}`, {
+      init: { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
     });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);

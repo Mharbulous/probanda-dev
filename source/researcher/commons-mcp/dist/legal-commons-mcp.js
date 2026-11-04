@@ -15447,19 +15447,18 @@ var StdioServerTransport = class {
 // src/index.ts
 import { pathToFileURL } from "node:url";
 
-// src/errors.ts
+// ../../mcp-shared/errors.js
 var DataServerError = class extends Error {
-  code;
-  constructor(message, code = "data_error") {
+  constructor(message, code = "data_error", details) {
     super(message);
     this.name = new.target.name;
     this.code = code;
+    this.details = details;
   }
 };
 var ValidationError = class extends DataServerError {
 };
 var TransportError = class extends DataServerError {
-  status;
   constructor(message, status) {
     super(message);
     this.status = status;
@@ -15817,7 +15816,6 @@ async function treatmentChain(client, args) {
 async function push(client, args) {
   for (const [i, a] of (Array.isArray(args.authorities) ? args.authorities : []).entries()) {
     const auth = a ?? {};
-    refuseNoteUpDate(`push.authorities[${i}]`, auth);
     if (auth.relationship !== void 0 && auth.relationship !== null) {
       requireOneOf(`push.authorities[${i}].relationship`, auth.relationship, RELATIONSHIP_VALUES);
     }
@@ -15890,11 +15888,6 @@ var EDGE_TREATMENT_VALUES = [
   "superseded_by_statute",
   "abrogated"
 ];
-function refuseNoteUpDate(label, authority) {
-  if (typeof authority === "object" && authority !== null && "last_verified_at" in authority) {
-    throw new ValidationError(`${label} received unknown field "last_verified_at"`);
-  }
-}
 function requireOneOf(label, value, allowed) {
   const text = String(value);
   if (!allowed.includes(text)) {
@@ -15907,7 +15900,6 @@ async function recordTreatment(client, args) {
   if (typeof treating !== "object" || treating === null || Array.isArray(treating)) {
     throw new ValidationError("record_treatment requires treating as an object with a citation");
   }
-  refuseNoteUpDate("record_treatment.treating", treating);
   const citation = String(treating.citation ?? "").trim();
   if (!citation) throw new ValidationError("record_treatment requires treating.citation");
   const treatment = requireOneOf("record_treatment.treatment", args.treatment, TREATMENT_VALUES);
@@ -16376,56 +16368,81 @@ function buildToolDefinitions() {
   ];
 }
 
-// src/validate.ts
+// ../../mcp-shared/validate.js
 function validateToolInput(tool, input) {
   if (input === void 0 || input === null) return {};
   if (!isPlainObject4(input)) {
     throw new ValidationError(`${tool.name} input must be an object`);
   }
   const schema = tool.inputSchema;
-  const properties = schema.properties ?? {};
-  const output = {};
-  for (const key of Object.keys(input)) {
-    if (!(key in properties)) {
-      throw new ValidationError(`${tool.name} received unknown field "${key}"`);
-    }
-  }
+  refuseUnknown(tool.name, input, schema.properties ?? {});
   for (const required2 of schema.required ?? []) {
-    if (!(required2 in input) || input[required2] === void 0 || input[required2] === null || input[required2] === "") {
+    if (input[required2] === void 0 || input[required2] === null || input[required2] === "") {
       throw new ValidationError(`${tool.name}.${required2} is required`);
     }
   }
+  const output = {};
   for (const [key, value] of Object.entries(input)) {
     if (value === void 0) continue;
-    output[key] = validateValue(`${tool.name}.${key}`, value, properties[key]);
+    checkValue(`${tool.name}.${key}`, value, schema.properties?.[key]);
+    output[key] = value;
   }
   return output;
 }
-function validateValue(label, value, schema) {
-  if (!schema) return value;
-  if (value === null) return null;
-  const type = schema.type;
+function refuseUnknown(label, value, properties) {
+  for (const key of Object.keys(value)) {
+    if (!Object.hasOwn(properties, key)) {
+      throw new ValidationError(`${label} received unknown field "${key}" (allowed: ${Object.keys(properties).join(", ")})`);
+    }
+  }
+}
+function checkValue(label, value, schema, nullAllowed = true) {
+  if (!schema || value === null && nullAllowed) return;
   if (schema["x-encrypted"] && typeof value !== "string") {
     throw new ValidationError(`${label} is encrypted and must be a string`);
   }
-  if (type === "string" && typeof value !== "string") {
-    throw new ValidationError(`${label} must be a string`);
+  checkType(label, value, schema.type);
+  if (schema.enum && !schema.enum.includes(value)) {
+    throw new ValidationError(`${label} must be one of: ${schema.enum.join(", ")}`);
   }
-  if (type === "number" && typeof value !== "number") {
-    throw new ValidationError(`${label} must be a number`);
+  if (typeof value === "string" && schema.pattern !== void 0 && !new RegExp(schema.pattern).test(value)) {
+    throw new ValidationError(`${label} must match ${schema.pattern}`);
   }
-  if (type === "boolean" && typeof value !== "boolean") {
-    throw new ValidationError(`${label} must be a boolean`);
+  if (typeof value === "number") {
+    if (schema.minimum !== void 0 && value < schema.minimum) throw new ValidationError(`${label} must be at least ${schema.minimum}`);
+    if (schema.maximum !== void 0 && value > schema.maximum) throw new ValidationError(`${label} must be at most ${schema.maximum}`);
   }
-  if (type === "object" && !isPlainObject4(value)) {
-    throw new ValidationError(`${label} must be an object`);
+  if (Array.isArray(value) && schema.items) {
+    value.forEach((item, index) => {
+      if (schema.items.type === "string" && typeof item !== "string") throw new ValidationError(`${label} must be an array of strings`);
+      checkValue(`${label}[${index}]`, item, schema.items, false);
+    });
   }
-  if (type === "array" && !Array.isArray(value)) throw new ValidationError(`${label} must be an array`);
-  const allowedValues = schema.enum;
-  if (allowedValues && !allowedValues.includes(value)) {
-    throw new ValidationError(`${label} must be one of: ${allowedValues.join(", ")}`);
+  if (isPlainObject4(value)) {
+    if (schema.additionalProperties === false) refuseUnknown(label, value, schema.properties ?? {});
+    for (const required2 of schema.required ?? []) {
+      if (value[required2] === void 0) throw new ValidationError(`${label}.${required2} is required`);
+    }
+    for (const [key, field] of Object.entries(value)) {
+      if (field !== void 0) checkValue(`${label}.${key}`, field, schema.properties?.[key]);
+    }
   }
-  return value;
+}
+var TYPE_CHECKS = {
+  string: [(value) => typeof value === "string", "a string"],
+  number: [(value) => typeof value === "number", "a number"],
+  integer: [(value) => Number.isInteger(value), "an integer"],
+  boolean: [(value) => typeof value === "boolean", "a boolean"],
+  object: [isPlainObject4, "an object"],
+  array: [Array.isArray, "an array"],
+  null: [(value) => value === null, "null"]
+};
+function checkType(label, value, type) {
+  if (type === void 0) return;
+  const types = Array.isArray(type) ? type : [type];
+  if (!types.some((name) => TYPE_CHECKS[name][0](value))) {
+    throw new ValidationError(`${label} must be ${types.map((name) => TYPE_CHECKS[name][1]).join(" or ")}`);
+  }
 }
 function isPlainObject4(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -16910,8 +16927,21 @@ function textResult(result) {
   };
 }
 
+// ../../mcp-shared/timed-fetch.js
+var DEFAULT_TIMEOUT_MS = 6e4;
+async function timedFetch(url, { init, timeoutMs = DEFAULT_TIMEOUT_MS, redact, label, fetch = globalThis.fetch } = {}) {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error2) {
+    const raw = error2 instanceof Error ? error2.message : String(error2);
+    const detail = redact ? redact(raw) : raw;
+    const failure = new Error(label ? `${label} could not be reached (${detail})` : detail, { cause: error2?.cause });
+    if (error2 instanceof Error) failure.name = error2.name;
+    throw failure;
+  }
+}
+
 // src/legal-commons/client.ts
-var TIMEOUT_MS = 6e4;
 var LegalCommonsClient = class {
   // `reload` reads the credential store again. Only the pool's client has one:
   // the lawyer plugin's cloud_key__configure_credential saves the key from
@@ -17028,21 +17058,22 @@ var LegalCommonsClient = class {
     const label = this.config.label ?? "legal_commons";
     let res;
     try {
-      res = await fetch(`${url}${path}`, {
-        method,
-        redirect: "manual",
-        headers: {
-          apikey: this.config.staticKey,
-          Authorization: `Bearer ${this.config.staticKey}`,
-          "Content-Type": "application/json",
-          ...extraHeaders
-        },
-        body: body === void 0 ? void 0 : JSON.stringify(body),
-        signal: AbortSignal.timeout(TIMEOUT_MS)
+      res = await timedFetch(`${url}${path}`, {
+        label,
+        init: {
+          method,
+          redirect: "manual",
+          headers: {
+            apikey: this.config.staticKey,
+            Authorization: `Bearer ${this.config.staticKey}`,
+            "Content-Type": "application/json",
+            ...extraHeaders
+          },
+          body: body === void 0 ? void 0 : JSON.stringify(body)
+        }
       });
     } catch (error2) {
-      const detail = error2 instanceof Error ? error2.message : String(error2);
-      throw new TransportError(`${label} could not be reached (${detail})`);
+      throw new TransportError(error2.message);
     }
     const text = await res.text();
     if (res.status >= 300 && res.status < 400) {

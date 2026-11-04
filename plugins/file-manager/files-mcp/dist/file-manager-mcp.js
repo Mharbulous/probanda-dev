@@ -1,4 +1,4 @@
-// build-stamp: 076eb7be568d
+// build-stamp: 20086ee54abf
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15448,11 +15448,8 @@ var StdioServerTransport = class {
 // src/file-manager-index.ts
 import { pathToFileURL } from "node:url";
 
-// src/errors.ts
+// ../../mcp-shared/errors.js
 var DataServerError = class extends Error {
-  code;
-  /** Structured detail the error payload carries beside its message, when the refusal has any. */
-  details;
   constructor(message, code = "data_error", details) {
     super(message);
     this.name = new.target.name;
@@ -15715,53 +15712,81 @@ function buildFileManagerToolDefinitions() {
   ];
 }
 
-// src/validate.ts
+// ../../mcp-shared/validate.js
 function validateToolInput(tool, input) {
   if (input === void 0 || input === null) return {};
   if (!isPlainObject3(input)) {
     throw new ValidationError(`${tool.name} input must be an object`);
   }
   const schema = tool.inputSchema;
-  const properties = schema.properties ?? {};
-  const output = {};
-  for (const key of Object.keys(input)) {
-    if (!(key in properties)) {
-      throw new ValidationError(`${tool.name} received unknown field "${key}" (allowed: ${Object.keys(properties).join(", ")})`);
-    }
-  }
+  refuseUnknown(tool.name, input, schema.properties ?? {});
   for (const required2 of schema.required ?? []) {
-    if (!(required2 in input) || input[required2] === void 0 || input[required2] === null || input[required2] === "") {
+    if (input[required2] === void 0 || input[required2] === null || input[required2] === "") {
       throw new ValidationError(`${tool.name}.${required2} is required`);
     }
   }
+  const output = {};
   for (const [key, value] of Object.entries(input)) {
     if (value === void 0) continue;
-    output[key] = validateValue(`${tool.name}.${key}`, value, properties[key]);
+    checkValue(`${tool.name}.${key}`, value, schema.properties?.[key]);
+    output[key] = value;
   }
   return output;
 }
-function validateValue(label, value, schema) {
-  if (!schema) return value;
-  if (value === null) return null;
-  const type = schema.type;
-  if (type === "string" && typeof value !== "string") {
-    throw new ValidationError(`${label} must be a string`);
+function refuseUnknown(label, value, properties) {
+  for (const key of Object.keys(value)) {
+    if (!Object.hasOwn(properties, key)) {
+      throw new ValidationError(`${label} received unknown field "${key}" (allowed: ${Object.keys(properties).join(", ")})`);
+    }
   }
-  if (type === "number" && typeof value !== "number") {
-    throw new ValidationError(`${label} must be a number`);
+}
+function checkValue(label, value, schema, nullAllowed = true) {
+  if (!schema || value === null && nullAllowed) return;
+  if (schema["x-encrypted"] && typeof value !== "string") {
+    throw new ValidationError(`${label} is encrypted and must be a string`);
   }
-  if (type === "boolean" && typeof value !== "boolean") {
-    throw new ValidationError(`${label} must be a boolean`);
+  checkType(label, value, schema.type);
+  if (schema.enum && !schema.enum.includes(value)) {
+    throw new ValidationError(`${label} must be one of: ${schema.enum.join(", ")}`);
   }
-  if (type === "object" && !isPlainObject3(value)) {
-    throw new ValidationError(`${label} must be an object`);
+  if (typeof value === "string" && schema.pattern !== void 0 && !new RegExp(schema.pattern).test(value)) {
+    throw new ValidationError(`${label} must match ${schema.pattern}`);
   }
-  if (type === "array" && !Array.isArray(value)) throw new ValidationError(`${label} must be an array`);
-  const allowedValues = schema.enum;
-  if (allowedValues && !allowedValues.includes(value)) {
-    throw new ValidationError(`${label} must be one of: ${allowedValues.join(", ")}`);
+  if (typeof value === "number") {
+    if (schema.minimum !== void 0 && value < schema.minimum) throw new ValidationError(`${label} must be at least ${schema.minimum}`);
+    if (schema.maximum !== void 0 && value > schema.maximum) throw new ValidationError(`${label} must be at most ${schema.maximum}`);
   }
-  return value;
+  if (Array.isArray(value) && schema.items) {
+    value.forEach((item, index) => {
+      if (schema.items.type === "string" && typeof item !== "string") throw new ValidationError(`${label} must be an array of strings`);
+      checkValue(`${label}[${index}]`, item, schema.items, false);
+    });
+  }
+  if (isPlainObject3(value)) {
+    if (schema.additionalProperties === false) refuseUnknown(label, value, schema.properties ?? {});
+    for (const required2 of schema.required ?? []) {
+      if (value[required2] === void 0) throw new ValidationError(`${label}.${required2} is required`);
+    }
+    for (const [key, field] of Object.entries(value)) {
+      if (field !== void 0) checkValue(`${label}.${key}`, field, schema.properties?.[key]);
+    }
+  }
+}
+var TYPE_CHECKS = {
+  string: [(value) => typeof value === "string", "a string"],
+  number: [(value) => typeof value === "number", "a number"],
+  integer: [(value) => Number.isInteger(value), "an integer"],
+  boolean: [(value) => typeof value === "boolean", "a boolean"],
+  object: [isPlainObject3, "an object"],
+  array: [Array.isArray, "an array"],
+  null: [(value) => value === null, "null"]
+};
+function checkType(label, value, type) {
+  if (type === void 0) return;
+  const types = Array.isArray(type) ? type : [type];
+  if (!types.some((name) => TYPE_CHECKS[name][0](value))) {
+    throw new ValidationError(`${label} must be ${types.map((name) => TYPE_CHECKS[name][1]).join(" or ")}`);
+  }
 }
 function isPlainObject3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);

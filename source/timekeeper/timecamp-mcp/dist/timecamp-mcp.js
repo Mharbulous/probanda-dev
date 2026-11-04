@@ -1,4 +1,4 @@
-// build-stamp: 74ab1244c2f8
+// build-stamp: 5030f8429f9c
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -6579,7 +6579,7 @@ var require_formats = __commonJS({
     }
     exports.fullFormats = {
       // date: http://tools.ietf.org/html/rfc3339#section-5.6
-      date: fmtDef(date4, compareDate),
+      date: fmtDef(date3, compareDate),
       // date-time: http://tools.ietf.org/html/rfc3339#section-5.6
       time: fmtDef(getTime(true), compareTime),
       "date-time": fmtDef(getDateTime(true), compareDateTime),
@@ -6645,7 +6645,7 @@ var require_formats = __commonJS({
     }
     var DATE2 = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
     var DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    function date4(str) {
+    function date3(str) {
       const matches = DATE2.exec(str);
       if (!matches)
         return false;
@@ -6714,7 +6714,7 @@ var require_formats = __commonJS({
       const time3 = getTime(strictTimeZone);
       return function date_time(str) {
         const dateTime = str.split(DATE_TIME_SEPARATOR);
-        return dateTime.length === 2 && date4(dateTime[0]) && time3(dateTime[1]);
+        return dateTime.length === 2 && date3(dateTime[0]) && time3(dateTime[1]);
       };
     }
     function compareDateTime(dt1, dt2) {
@@ -15529,11 +15529,22 @@ $plain = [System.Security.Cryptography.ProtectedData]::Unprotect($bytes, $null, 
 [Console]::Out.Write([Convert]::ToBase64String($plain))
 `;
 
-// src/errors.ts
+// ../../mcp-shared/timed-fetch.js
+var DEFAULT_TIMEOUT_MS = 6e4;
+async function timedFetch(url, { init, timeoutMs = DEFAULT_TIMEOUT_MS, redact, label, fetch = globalThis.fetch } = {}) {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error2) {
+    const raw = error2 instanceof Error ? error2.message : String(error2);
+    const detail = redact ? redact(raw) : raw;
+    const failure = new Error(label ? `${label} could not be reached (${detail})` : detail, { cause: error2?.cause });
+    if (error2 instanceof Error) failure.name = error2.name;
+    throw failure;
+  }
+}
+
+// ../../mcp-shared/errors.js
 var DataServerError = class extends Error {
-  code;
-  /** Structured detail the error payload carries beside its message, when the refusal has any. */
-  details;
   constructor(message, code = "data_error", details) {
     super(message);
     this.name = new.target.name;
@@ -15546,7 +15557,6 @@ var ValidationError = class extends DataServerError {
 
 // src/timecamp/client.ts
 var API_BASE = "https://www.timecamp.com/third_party/api/";
-var TIMEOUT_MS = 6e4;
 function credentialPath(env = process.env) {
   return join2(defaultStateDir(env, "timecamp"), "timecamp.json.dpapi");
 }
@@ -15574,7 +15584,7 @@ function missingTokenReason(state) {
   return "no TimeCamp token is set on this computer; set it with configure_credential";
 }
 var TimeCampError = class extends DataServerError {
-  constructor(message, code = "timecamp_error") {
+  constructor(message, code = "data_error") {
     super(message, code);
   }
 };
@@ -15582,20 +15592,21 @@ async function apiRequest(token, method, path, query, form) {
   const url = API_BASE + path + (query ? `?${query.toString()}` : "");
   let res;
   try {
-    res = await fetch(url, {
-      method,
-      redirect: "manual",
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-        ...form ? { "Content-Type": "application/x-www-form-urlencoded" } : {}
-      },
-      ...form ? { body: form.toString() } : {}
+    res = await timedFetch(url, {
+      label: "network: TimeCamp",
+      init: {
+        method,
+        redirect: "manual",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          ...form ? { "Content-Type": "application/x-www-form-urlencoded" } : {}
+        },
+        ...form ? { body: form.toString() } : {}
+      }
     });
   } catch (error2) {
-    const detail = error2 instanceof Error ? error2.message : String(error2);
-    throw new TimeCampError(`network: TimeCamp could not be reached (${detail})`, "timecamp_network");
+    throw new TimeCampError(error2.message, "timecamp_network");
   }
   const text = await res.text();
   if (res.status >= 300 && res.status < 400) {
@@ -15623,56 +15634,148 @@ function snippet(text) {
 import { mkdir as mkdir2, writeFile as writeFile2 } from "node:fs/promises";
 import { dirname as dirname2, isAbsolute } from "node:path";
 
-// src/validate.ts
+// ../../mcp-shared/validate.js
 function validateToolInput(tool, input) {
   if (input === void 0 || input === null) return {};
   if (!isPlainObject3(input)) {
     throw new ValidationError(`${tool.name} input must be an object`);
   }
   const schema = tool.inputSchema;
-  const properties = schema.properties ?? {};
-  const output = {};
-  for (const key of Object.keys(input)) {
-    if (!(key in properties)) {
-      throw new ValidationError(`${tool.name} received unknown field "${key}" (allowed: ${Object.keys(properties).join(", ")})`);
-    }
-  }
+  refuseUnknown(tool.name, input, schema.properties ?? {});
   for (const required2 of schema.required ?? []) {
-    if (!(required2 in input) || input[required2] === void 0 || input[required2] === null || input[required2] === "") {
+    if (input[required2] === void 0 || input[required2] === null || input[required2] === "") {
       throw new ValidationError(`${tool.name}.${required2} is required`);
     }
   }
+  const output = {};
   for (const [key, value] of Object.entries(input)) {
     if (value === void 0) continue;
-    output[key] = validateValue(`${tool.name}.${key}`, value, properties[key]);
+    checkValue(`${tool.name}.${key}`, value, schema.properties?.[key]);
+    output[key] = value;
   }
   return output;
 }
-function validateValue(label, value, schema) {
-  if (!schema) return value;
-  if (value === null) return null;
-  const type = schema.type;
-  if (type === "string" && typeof value !== "string") {
-    throw new ValidationError(`${label} must be a string`);
+function refuseUnknown(label, value, properties) {
+  for (const key of Object.keys(value)) {
+    if (!Object.hasOwn(properties, key)) {
+      throw new ValidationError(`${label} received unknown field "${key}" (allowed: ${Object.keys(properties).join(", ")})`);
+    }
   }
-  if (type === "number" && typeof value !== "number") {
-    throw new ValidationError(`${label} must be a number`);
+}
+function checkValue(label, value, schema, nullAllowed = true) {
+  if (!schema || value === null && nullAllowed) return;
+  if (schema["x-encrypted"] && typeof value !== "string") {
+    throw new ValidationError(`${label} is encrypted and must be a string`);
   }
-  if (type === "boolean" && typeof value !== "boolean") {
-    throw new ValidationError(`${label} must be a boolean`);
+  checkType(label, value, schema.type);
+  if (schema.enum && !schema.enum.includes(value)) {
+    throw new ValidationError(`${label} must be one of: ${schema.enum.join(", ")}`);
   }
-  if (type === "object" && !isPlainObject3(value)) {
-    throw new ValidationError(`${label} must be an object`);
+  if (typeof value === "string" && schema.pattern !== void 0 && !new RegExp(schema.pattern).test(value)) {
+    throw new ValidationError(`${label} must match ${schema.pattern}`);
   }
-  if (type === "array" && !Array.isArray(value)) throw new ValidationError(`${label} must be an array`);
-  const allowedValues = schema.enum;
-  if (allowedValues && !allowedValues.includes(value)) {
-    throw new ValidationError(`${label} must be one of: ${allowedValues.join(", ")}`);
+  if (typeof value === "number") {
+    if (schema.minimum !== void 0 && value < schema.minimum) throw new ValidationError(`${label} must be at least ${schema.minimum}`);
+    if (schema.maximum !== void 0 && value > schema.maximum) throw new ValidationError(`${label} must be at most ${schema.maximum}`);
   }
-  return value;
+  if (Array.isArray(value) && schema.items) {
+    value.forEach((item, index) => {
+      if (schema.items.type === "string" && typeof item !== "string") throw new ValidationError(`${label} must be an array of strings`);
+      checkValue(`${label}[${index}]`, item, schema.items, false);
+    });
+  }
+  if (isPlainObject3(value)) {
+    if (schema.additionalProperties === false) refuseUnknown(label, value, schema.properties ?? {});
+    for (const required2 of schema.required ?? []) {
+      if (value[required2] === void 0) throw new ValidationError(`${label}.${required2} is required`);
+    }
+    for (const [key, field] of Object.entries(value)) {
+      if (field !== void 0) checkValue(`${label}.${key}`, field, schema.properties?.[key]);
+    }
+  }
+}
+var TYPE_CHECKS = {
+  string: [(value) => typeof value === "string", "a string"],
+  number: [(value) => typeof value === "number", "a number"],
+  integer: [(value) => Number.isInteger(value), "an integer"],
+  boolean: [(value) => typeof value === "boolean", "a boolean"],
+  object: [isPlainObject3, "an object"],
+  array: [Array.isArray, "an array"],
+  null: [(value) => value === null, "null"]
+};
+function checkType(label, value, type) {
+  if (type === void 0) return;
+  const types = Array.isArray(type) ? type : [type];
+  if (!types.some((name) => TYPE_CHECKS[name][0](value))) {
+    throw new ValidationError(`${label} must be ${types.map((name) => TYPE_CHECKS[name][1]).join(" or ")}`);
+  }
 }
 function isPlainObject3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// src/tool-list.ts
+var WithImages = class {
+  constructor(result, images) {
+    this.result = result;
+    this.images = images;
+  }
+  result;
+  images;
+};
+var FAULT = /* @__PURE__ */ Symbol("fault");
+async function toolReply(name, run, replyText = jsonText) {
+  try {
+    const result = await run();
+    if (result instanceof WithImages) {
+      return {
+        content: [
+          { type: "text", text: replyText(name, result.result) },
+          ...result.images.map((png) => ({ type: "image", data: png.toString("base64"), mimeType: "image/png" }))
+        ]
+      };
+    }
+    return { content: [{ type: "text", text: replyText(name, result) }] };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const payload = err instanceof DataServerError ? { error: { code: err.code, message, ...err.details ? { details: err.details } : {} } } : { error: { code: "data_error", message } };
+    const reply = { content: [{ type: "text", text: jsonText(name, payload) }], isError: true };
+    if (!(err instanceof DataServerError) || err.code === "internal_error" || err.code === "python_timeout") {
+      Object.defineProperty(reply, FAULT, { value: true });
+    }
+    return reply;
+  }
+}
+var CONTENT_SOURCES = {
+  mail__get_email: "email",
+  mail__get_latest_emails: "email",
+  mail__search_emails: "email",
+  mail__find_thread_messages: "email",
+  mail__find_email_by_message_id: "email",
+  mail__download_attachment: "email attachment",
+  mail__dedupe_scan: "email",
+  mail__dedupe_read_comparison: "email",
+  mail__dedupe_plan_tier2: "email",
+  calendar__list_events: "calendar",
+  calendar__get_event: "calendar",
+  contacts__search: "contacts",
+  contacts__get: "contacts",
+  drafting_forms__read_message: "email file",
+  sources__fetch: "web page",
+  sources__check: "web page",
+  knowledge__read: "knowledge file",
+  research_filing__law_folder_text: "law folder file",
+  research_filing__legislation_search: "law folder file",
+  research_filing__matter_folder: "matter folder file",
+  research_filing__research_folder: "research folder file"
+};
+function jsonText(name, result) {
+  const source = Object.hasOwn(CONTENT_SOURCES, name) ? CONTENT_SOURCES[name] : void 0;
+  if (source === void 0) return JSON.stringify(result, null, 2);
+  if (typeof result !== "object" || result === null || Array.isArray(result)) {
+    throw new DataServerError(`${name} returned a ${Array.isArray(result) ? "list" : typeof result}, not an object to label`, "internal_error");
+  }
+  return JSON.stringify({ ...result, content_source: source }, null, 2);
 }
 
 // src/timecamp/page.ts
@@ -15853,17 +15956,13 @@ function timecampToolDefinitions() {
   ];
 }
 var definitions;
-async function dispatchTimecampTool(state, name, rawArgs) {
-  try {
+function dispatchTimecampTool(state, name, rawArgs) {
+  return toolReply(name, () => {
     definitions ??= new Map(timecampToolDefinitions().map((tool) => [tool.name, tool]));
     const definition = definitions.get(name);
     if (!definition) throw new ValidationError(`Unknown tool "${name}"`);
-    return textResult(await callTool(state, name, validateToolInput(definition, rawArgs)));
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const code = err instanceof DataServerError ? err.code : "timecamp_error";
-    return { ...textResult({ error: { code, message } }), isError: true };
-  }
+    return callTool(state, name, validateToolInput(definition, rawArgs));
+  });
 }
 async function callTool(state, name, args) {
   if (name === "configure_credential") return configureCredential(state);
@@ -15875,22 +15974,10 @@ async function callTool(state, name, args) {
   if (name === "update_entry") return updateEntry(token, args);
   throw new ValidationError(`Unknown tool "${name}"`);
 }
-function stringList(label, value) {
-  if (value === void 0 || value === null) return void 0;
-  if (!Array.isArray(value) || value.some((v) => typeof v !== "string" && typeof v !== "number")) {
-    throw new ValidationError(`${label} must be an array of strings`);
-  }
-  return value.map(String);
-}
-function keepIds(rows, key, label, value) {
-  const ids = stringList(label, value);
+function keepIds(rows, key, ids) {
   if (!ids?.length) return rows;
   const keep = new Set(ids);
   return rows.filter((r) => keep.has(String(r[key])));
-}
-function date3(label, value) {
-  if (typeof value !== "string" || !new RegExp(DATE).test(value)) throw new ValidationError(`${label} must be a date, YYYY-MM-DD`);
-  return value;
 }
 function requireToken(state) {
   const reason = missingTokenReason(state);
@@ -15977,19 +16064,19 @@ function withDescendants(all, ids) {
   return keep;
 }
 async function entries(token, args) {
-  const from = date3("entries.from", args.from);
-  const to = date3("entries.to", args.to);
+  const from = args.from;
+  const to = args.to;
   if (from > to) throw new ValidationError("entries.from must not be after entries.to");
   const outFile = checkedOutFile("entries", args);
   const body = await apiRequest(token, "GET", "entries/", new URLSearchParams({ from, to, format: "json" }));
   if (!Array.isArray(body)) throw new TimeCampError("TimeCamp's entries answer is not a list");
   let rows = body;
-  const taskIds = stringList("entries.task_ids", args.task_ids);
+  const taskIds = args.task_ids;
   if (taskIds?.length) {
     const keep = withDescendants(await allTasks(token), taskIds);
     rows = rows.filter((r) => keep.has(String(r.task_id)));
   }
-  rows = keepIds(rows, "user_id", "entries.user_ids", args.user_ids);
+  rows = keepIds(rows, "user_id", args.user_ids);
   if (typeof args.billable === "boolean") {
     const want = args.billable ? 1 : 0;
     rows = rows.filter((r) => Number(r.billable) === want);
@@ -16032,7 +16119,7 @@ function totals(rows) {
     seconds,
     hours: seconds / 3600,
     by_user: [...byUser.values()].map((u) => ({ ...u, hours: u.seconds / 3600 })),
-    by_day: [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date4, s]) => ({ date: date4, seconds: s, hours: s / 3600 }))
+    by_day: [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date3, s]) => ({ date: date3, seconds: s, hours: s / 3600 }))
   };
 }
 function timeOfDay(label, value) {
@@ -16045,9 +16132,8 @@ function endOfRow(row) {
   return h * 3600 + m * 60 + s;
 }
 async function activities(token, args) {
-  const dates = stringList("activities.dates", args.dates) ?? [];
+  const dates = args.dates;
   if (dates.length < 1 || dates.length > 20) throw new ValidationError("activities.dates takes 1 to 20 dates");
-  dates.forEach((d) => date3("activities.dates", d));
   const from = timeOfDay("activities.from_time", args.from_time);
   const to = timeOfDay("activities.to_time", args.to_time);
   if (from !== void 0 && to !== void 0 && from >= to) throw new ValidationError("activities.from_time must be before activities.to_time");
@@ -16058,8 +16144,8 @@ async function activities(token, args) {
   query.set("format", "json");
   const body = await apiRequest(token, "GET", "activity/", query);
   if (!Array.isArray(body)) throw new TimeCampError("TimeCamp's activity answer is not a list");
-  let rows = keepIds(body, "entry_id", "activities.entry_ids", args.entry_ids);
-  rows = keepIds(rows, "user_id", "activities.user_ids", args.user_ids);
+  let rows = keepIds(body, "entry_id", args.entry_ids);
+  rows = keepIds(rows, "user_id", args.user_ids);
   if (from !== void 0) rows = rows.filter((r) => endOfRow(r) > from);
   if (to !== void 0) rows = rows.filter((r) => endOfRow(r) - Number(r.time_span) < to);
   const byEntry = /* @__PURE__ */ new Map();
@@ -16084,9 +16170,6 @@ async function updateEntry(token, args) {
     echo,
     next: "Re-read this entry's date with entries and compare task_id and description; only that confirms the write."
   };
-}
-function textResult(result) {
-  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
 }
 
 // src/timecamp-index.ts
