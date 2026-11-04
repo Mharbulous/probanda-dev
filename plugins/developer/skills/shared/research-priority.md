@@ -24,7 +24,7 @@ Judicial consideration of legislation is answering (`statute-currency.md`).
 
 | Row | Source | Use | Cost |
 |---|---|---|---|
-| Note-up (citator) | Westlaw KeyCite Canada | Run first by `citation-checker`, dispatched by the `/legal-research` caller. It records KeyCite's flag, History and Citing References word for word, and never a treatment of its own. | subscription, in-plan content only |
+| Note-up (citator) | Westlaw KeyCite Canada | Run first by `citation-checker`, dispatched by the `/legal-research` caller. It records KeyCite's flag, History and newest Citing References word for word, and never a treatment of its own. | subscription, in-plan content only |
 | Note-up (citator) only | CanLII | CanLII's API returns no decision text. It cannot tell you what a case says. Never use it to find, read or summarize a decision. Its citator (citing cases) is run second by `citation-checker` to note up an authority whose text was read at tiers 1–4. | free, needs a key |
 
 **Westlaw unreachable is a hard stop, never a descent to CanLII.** When Chrome is

@@ -154,10 +154,13 @@ function openSteps(dbPath: string, id: number, token: string): CompleteJobResult
   };
 }
 
-/** Whether a saved memo's header reads INCOMPLETE. One that cannot be read now is left to the skill's rule. */
+/** A memo is INCOMPLETE when it holds the open-issues paragraph, or, saved before 2026-11-03, a header value starting INCOMPLETE. */
+const INCOMPLETE_MEMO = /^(?:More research is needed on the following issues:|Confidence:\s*"?INCOMPLETE)/m;
+
+/** Whether a saved memo reads INCOMPLETE. One that cannot be read now is left to the skill's rule. */
 function memoIncomplete(draftDir: string, filePath: string): boolean {
   try {
-    return /^Confidence:\s*"?INCOMPLETE/m.test(readFileSync(join(dirname(draftDir), ...filePath.split(/[\\/]+/)), "utf8"));
+    return INCOMPLETE_MEMO.test(readFileSync(join(dirname(draftDir), ...filePath.split(/[\\/]+/)), "utf8"));
   } catch (err) {
     if (UNREADABLE.has((err as NodeJS.ErrnoException).code ?? "")) return false;
     throw err;

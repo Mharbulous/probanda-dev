@@ -10,17 +10,17 @@ The memo opens with this YAML header, from its first `---` line to its second:
 
 ```
 ---
-Document: MEMORANDUM OF LAW
-From: <the exact model ID your own system prompt states. If it states none, write "model ID not stated". Never a marketing name, never a guess>
 Date: <the spawn prompt's Date>
-Re: "<the question, one line>"
-Format: <ICRA / IRAC / CREAC, the one the body uses>
+Document: MEMORANDUM OF LAW for Job #<the spawn prompt's Job> / MEMORANDUM OF LAW when it reads none
 Status: DRAFT / FINAL
-Confidence: "<one line: for the Issue, its strength and every tier the coverage line reads NOT AUDITED>[ <the case-level sentence>]" / "INCOMPLETE: <the research named>"
+From: <the exact model ID your own system prompt states. If it states none, write "model ID not stated". Never a marketing name, never a guess>
+Re: "<the question, one line>"
 ---
 ```
 
-A double quote inside a quoted value is written `\"`.
+A double quote inside a quoted value is written `\"`. The header holds these five keys and no other.
+
+A memo is INCOMPLETE when it holds the open-issues paragraph (`shared/legal-audit-protocol.md` Step 4). A memo saved before 2026-11-03 is also INCOMPLETE when a header value starts `INCOMPLETE`.
 
 ### Status
 
@@ -30,13 +30,13 @@ not.
 
 1. **Automatic.** Every proposition of law the memo cites, and every case cited in Application
    for a finding of fact or of law, has a proposition-level note-up.
-2. **On instruction.** Each of them has a case-level note-up, every citing decision that treats
+2. **On instruction.** Each of them has a case-level note-up, every citing decision its record lists that treats
    the case negatively or that no citator classifies has been read at its pinpoint against the
    proposition or finding the case is cited for, and the spawn prompt's `Final instructed:` reads
    `yes`.
 
-While any relied-on case with citing cases has only a case-level note-up, the `Confidence:`
-line ends with this sentence, word for word:
+While any relied-on case with citing cases has only a case-level note-up, the return's `Audit:`
+line (`shared/legal-audit-protocol.md` Step 6) ends with this sentence, word for word:
 
 > The memo relies on cases that have received judicial treatment, and the treating cases have not been downloaded or reviewed to tell whether that treatment is positive, negative or irrelevant.
 
@@ -50,8 +50,9 @@ A memo's notes report each case's two checks apart, in these labels and no other
   whose history check is not complete makes the memo `INCOMPLETE:`.
 - `case-level`: a citator's flag and count of citing decisions in other proceedings, not all
   of them read for the proposition.
-- `proposition-level: ¶4, ¶5`: every citing decision was read at its pinpoint against the named
-  paragraphs' proposition or finding.
+- `proposition-level: ¶4, ¶5`: at most 5 citing decisions per authority, chosen by
+  `shared/legal-research.md`, "Proposition-level note-up", were read at the pages that cite it
+  against the named paragraphs' proposition or finding.
 - `NOT NOTED UP`: no note-up record.
 
 `noted up` is never a label: a citator list alone shows no treatment.

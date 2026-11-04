@@ -5,7 +5,8 @@ that its internal notes (coverage line, confidence table, flags and offers) go t
 scratchpad through `research_filing__write_scratch`, never into the saved memo. On
 2026-10-15 the header and body skeletons moved to `shared/research-memo-template.md`, with
 a fuller header and a CRAC body (IRAC or CREAC only when asked), and the agent returns
-`Confidence:`, `Notes scratch:` and `Memo scratch:` lines instead of the memo's text.
+`Audit:` (was `Confidence:`), `Notes scratch:` and `Memo scratch:` lines instead of the memo's text. On
+2026-11-03 the header shrank to Date, Document (with the job number), Status, From and Re.
 Inventory and note-up dispatches keep their own shapes.
 """
 import json
@@ -25,7 +26,7 @@ ITEM = """```
    Pinpoint: <the pinpoint>
    > <the verbatim passage at that pinpoint>
 ```"""
-HEADER = ["---", "Document: MEMORANDUM OF LAW", "From:", "Date:", "Re:", "Format:", "Status: DRAFT", "Confidence:", "---"]
+HEADER = ["---", "Date:", "Document: MEMORANDUM OF LAW for Job #", "Status: DRAFT", "From:", "Re:", "---"]
 ICRA = "```\n## Issue\n## Conclusion\n## Rule\n## Application\n```"
 IRAC = "```\n## Issue\n## Rule\n## Application\n## Conclusion\n```"
 CREAC = "```\n## Issue\n## Conclusion\n## Rule\n## Explanation\n## Application\n## Conclusion\n```"
@@ -59,16 +60,17 @@ class ProtocolStepSixTests(unittest.TestCase):
     def test_memo_opens_with_the_template_header(self):
         self.assertIn("Fetch `shared/research-memo-template.md`", flat(step_six()))
         lines = [line.strip() for line in read("research-memo-template.md").splitlines()]
-        start = lines.index("Document: MEMORANDUM OF LAW") - 1
+        start = next(i for i, line in enumerate(lines) if line.startswith("Date:")) - 1
         found = lines[start:start + len(HEADER)]
         self.assertEqual(len(found), len(HEADER))
         for expected, line in zip(HEADER, found):
             self.assertTrue(line.startswith(expected), f"{line!r} should start with {expected!r}")
+        self.assertIn("/ MEMORANDUM OF LAW when it reads none", found[2])
 
     def test_header_names_no_matter_practitioner_or_privilege(self):
         template = read("research-memo-template.md")
-        header = template[template.index("Document: MEMORANDUM OF LAW"):template.index("\n---", template.index("Format:"))]
-        for key in ("Matter:", "To:", "Privilege:"):
+        header = template[template.index("Date: <"):template.index("\n---", template.index("Re: "))]
+        for key in ("Matter:", "To:", "Privilege:", "Format:", "Confidence:"):
             self.assertNotIn("\n" + key, "\n" + header)
 
     def test_body_is_icra_in_order(self):
@@ -148,7 +150,7 @@ class ProtocolStepSixTests(unittest.TestCase):
 
     def test_internal_notes_come_before_the_memo(self):
         text = step_six()
-        self.assertLess(text.index("# Internal research notes"), text.index("Document: MEMORANDUM OF LAW"))
+        self.assertLess(text.index("# Internal research notes"), text.index("immediately followed by `Date:`"))
         self.assertIn("research_filing__write_scratch", text)
 
     def test_agent_saves_the_memo_to_scratch_and_names_the_path(self):
@@ -161,7 +163,7 @@ class ProtocolStepSixTests(unittest.TestCase):
                       "and the memo from its `---` line to its end.", text)
 
     def test_memo_carries_no_confidence_table(self):
-        self.assertIn("No coverage line and no confidence table anywhere in the memo", flat(step_six()))
+        self.assertIn("No coverage line, confidence table or confidence text anywhere in the memo", flat(step_six()))
 
     def test_status_leaves_draft_only_by_its_two_routes(self):
         template = flat(read("research-memo-template.md"))
@@ -221,7 +223,7 @@ class GateDoctrineTests(unittest.TestCase):
     def test_spawn_template_carries_the_memo_fields(self):
         template = between(read("legal-research.md"), "**Spawn the agent from this template.**",
                            "**A `needs_download` or hand-off-packet return")
-        for field in ("Asked by:", "Date:", "Memo template:", "File stem:"):
+        for field in ("Asked by:", "Date:", "Job:", "Memo template:", "File stem:"):
             self.assertIn("\n" + field, template)
 
     def test_persist_step_one_saves_the_memo_and_not_the_confidence_summary(self):

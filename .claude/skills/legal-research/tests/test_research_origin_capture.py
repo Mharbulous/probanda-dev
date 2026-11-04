@@ -156,7 +156,7 @@ class AfterTheAnswerTests(unittest.TestCase):
 
     def test_relay_is_the_answer_alone(self):
         self.assertIn(
-            "Then relay the return's `Confidence:` line, word for word, and the saved memo as its file card",
+            "Then relay the return's `Audit:` line, word for word, and the saved memo as its file card",
             self.step,
         )
         self.assertNotIn("offers captured as loose threads", self.step)

@@ -110,7 +110,7 @@ permitted to make statements of law.
    question asks to have noted up, never while `research-paralegal` is out. Its
    Westlaw stops are the same stop as the paralegal's.
 4. Spawn `researcher:research-agent`. Fill the doctrine's spawn-prompt template: the question, the
-   factual context, the matter root, the matter's file number, who asked, today's date,
+   factual context, the held job's number, the matter root, the matter's file number, who asked, today's date,
    the file stem, ICRA unless the practitioner named IRAC or CREAC, any pooled-layer results your own pre-spawn
    lookup returned, the Westlaw memo and decision files retrieved, the note-up records
    filed, and any
@@ -128,7 +128,7 @@ permitted to make statements of law.
    send-back, at most three reviews, by the doctrine's "On a held job, an open tier is not an
    answer" and "memo-reviewer checks every memo before it is saved": each piece of research
    becomes a step on the held job. Then save the
-   memo the loop ends on to the matter's `6. LAW\<issue>\` folder, relay its `Confidence:` line and the saved memo as its file card (`shared/present-files.md`),
+   memo the loop ends on to the matter's `6. LAW\<issue>\` folder, relay its `Audit:` line and the saved memo as its file card (`shared/present-files.md`),
    never the finding in any words, and ingest what it cites. Relay nothing of the dispatches
    in between but a Westlaw stop, a question the doctrine asks the practitioner, and one
    status line each. The doctrine's "After the answer" rule carries the mechanics. An

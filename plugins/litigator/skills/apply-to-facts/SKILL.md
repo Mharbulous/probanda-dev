@@ -61,8 +61,8 @@ Two things carry over from `shared/legal-research.md` and bind you as the caller
 - **The pre-spawn duties are yours.** Run the tier-2 pooled-layer lookups the agent cannot
   reach, and extract any `6. LAW\` `.docx` memo text it cannot open, and pass both into the
   spawn. Read `shared/research-priority.md` and follow its order.
-- **An `INCOMPLETE` memo is the answer.** If the saved memo's `Confidence:` reads
-  `INCOMPLETE`, or the research stopped, relay its confidence line and the research it names
+- **An `INCOMPLETE` memo is the answer.** If the saved memo is INCOMPLETE
+  (`shared/research-memo-template.md`), or the research stopped, relay the return's `Audit:` line and the research it names
   and stop. You do not have a test to apply, so there is no conclusion to reach. Reasoning on
   from a preliminary impression, or reasoning "in the alternative" around an incomplete memo, is
   the failure this skill exists to prevent.

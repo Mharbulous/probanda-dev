@@ -175,6 +175,22 @@ test("complete_job refuses a research job with no memo or an INCOMPLETE one, and
   assert.equal((await complete()).outcome, "completed");
 });
 
+test("complete_job reads a 2026-11-03 memo as INCOMPLETE by its open-issues paragraph, with no Confidence line", async (t) => {
+  const { dir, dbPath, draft } = await seeded(t);
+  const { claim_no } = await assign(dbPath, 1);
+  const complete = () => submissionDataCompleteJob({ db_path: dbPath, ticket_id: 1, session_token: TOKEN, claim_no, draft_dir: draft });
+  await submissionDataExecute(dbPath, "UPDATE ticket_steps SET done_at = '2026-10-01T09:40' WHERE ticket_id = 1;");
+  const header = "---\nDate: 2026-11-03\nDocument: MEMORANDUM OF LAW for Job #1\nStatus: DRAFT\nFrom: model\nRe: \"Q?\"\n---\n";
+  const memo = (name, conclusion) => {
+    writeFileSync(join(dir, "6. LAW", "Lease", name), `${header}## Issue\n${ISSUE}\n\n## Conclusion\n\n${conclusion}\n`);
+    return submissionDataExecute(dbPath, `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) VALUES (1, '6. LAW\\Lease\\${name}', '2026-10-01T09:42');`);
+  };
+  await memo("2026-11-03 ML re rent.md", "Yes.\n\nMore research is needed on the following issues:\n1. The citing cases?");
+  assert.equal((await complete()).outcome, "memo_incomplete");
+  await memo("2026-11-03 ML re rent v2.md", "Yes.");
+  assert.equal((await complete()).outcome, "completed");
+});
+
 test("complete_job takes an INCOMPLETE memo once the practitioner has dropped or put off a step", async (t) => {
   const { dir, dbPath, draft } = await seeded(t);
   const { claim_no } = await assign(dbPath, 1);

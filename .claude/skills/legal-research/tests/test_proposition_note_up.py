@@ -59,7 +59,7 @@ class PropositionNoteUpTests(unittest.TestCase):
                                 "### Step 3"))
         self.assertIn("each paragraph the spawn prompt's `Note up paragraphs:` names", step_two)
         self.assertIn("keep its items and their numbers", step_two)
-        self.assertIn("update Validity, Confidence, the CanLII segment and Status", step_two)
+        self.assertIn("update Validity, the `Audit:` line, the CanLII segment and Status", step_two)
 
     def test_the_read_is_capped_and_run_by_the_gate(self):
         section = between(flat(read("shared/legal-research.md")), "**Proposition-level note-up.**",

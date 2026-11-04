@@ -35,7 +35,7 @@ class ResearchJobGapsTest(unittest.TestCase):
     def test_complete_refuses_an_open_tier(self):
         session = read("draft", "references", "job-session.md")
         complete = session[session.index("### Complete"):]
-        self.assertIn("A research job whose last saved memo's `Confidence:` starts with `INCOMPLETE` is not completed", complete)
+        self.assertIn("A research job whose last saved memo is INCOMPLETE (`shared/research-memo-template.md`) is not completed", complete)
         self.assertIn("unless the practitioner says in their own words to complete the job without it", complete)
         self.assertIn("an unattended run reports and stops", complete)
 

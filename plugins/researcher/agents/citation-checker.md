@@ -2,9 +2,10 @@
 name: citation-checker
 description: >
   Notes up case law: for each named decision, records what each citator shows
-  (Westlaw KeyCite Canada, then the CanLII citator), word for word and
-  attributed, and files one note-up record per citation in the issue's 6. LAW
-  folder. Never reads a citing decision, never classifies treatment and never
+  (Westlaw KeyCite Canada's flag and History in full, then its counts and newest
+  citing decisions, then the CanLII citator's count and newest citing cases, each
+  capped at 5 and saying so), word for word and attributed, and files one note-up
+  record per citation in the issue's 6. LAW folder. Never reads a citing decision, never classifies treatment and never
   states law (research-agent does that from the records). Every final report
   begins with a status: line. Singleton: never in flight beside
   research-paralegal, browser-driver or another citation-checker, because they
@@ -76,7 +77,7 @@ persists, run /lawyer:suggestion".
 ## Input
 
 - `citations` — at most 5 court decisions per invocation, each with an optional `since`
-  date (`YYYY-MM-DD`). With a `since`, the record marks which citing decisions are dated
+  date (`YYYY-MM-DD`). With a `since`, the record marks which KeyCite rows are dated
   after it. Given more, note up the first 5 and leave the rest for the caller to
   re-dispatch.
 - `client_matter_id` — the Westlaw client ID, the matter's `{client}.{matter}` ID or

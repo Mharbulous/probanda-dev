@@ -52,7 +52,7 @@ class AuditProtocolTest(unittest.TestCase):
     def test_open_issues_paragraph_ends_the_conclusion(self):
         step_four = between(self.protocol, "### Step 4", "### Step 5")
         self.assertIn("end the Conclusion with one paragraph opening `More research is needed on the following issues:`", step_four)
-        self.assertIn("write the header's `Confidence:` as `INCOMPLETE: <the research named>`", step_four)
+        self.assertIn("begin the return's `Audit:` line `INCOMPLETE:`", step_four)
         step_six = between(self.protocol, "### Step 6", "## Fallback ladder")
         self.assertIn("The Conclusion answers as Step 4 says, its open-issues paragraph last.", step_six)
         self.assertNotIn("Mixed coverage", self.protocol)

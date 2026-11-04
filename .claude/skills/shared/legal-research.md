@@ -278,6 +278,7 @@ Question: <the legal question>
 Facts: <the factual context>
 Origin: <draft file path or Writing id>: "<the draft's words the question came from>" / none
 Job question: "<the job's intent, verbatim>" while you hold the job's lock / none
+Job: <the held job's number> / none
 Matter root: <path>
 Matter: <the live matter's file number, such as 1234.L####>
 Asked by: <the practitioner's name>
@@ -444,7 +445,7 @@ complete before the session ends: never leave a session with a cited decision un
      (`INSERT INTO proceedings (matter_reference) VALUES ('<Matter:>');`).
    - **Writing.** `drafting_data__create_writing` with `tree` `{country: "CAN", jurisdiction:
      "BC", venue: "_NoVenue"}`, `recipient: "internal"`, `title` the `File stem:`, and `kind`
-     `research_memo`, `research_memo_irac` or `research_memo_creac` by the header's `Format:`.
+     `research_memo`, `research_memo_irac` or `research_memo_creac` by the spawn prompt's `Memo template:`.
    - **Items.** Read `B`, `SELECT coalesce(max(id), 0) FROM statements_of_law`. Then one
      `drafting_data__execute` script: for each item `n`, its authority unless the proceeding
      already holds one with that `citation` (`INSERT INTO authorities (proceeding_id,
@@ -554,7 +555,7 @@ Name the saved answer file as what surfaced each thread. Never edit the draft. A
 thread is never ripe, never a blocker and never assigned to anyone: only a later `/draft`
 outlining session takes it up.
 
-Then relay the return's `Confidence:` line, word for word, and the saved memo as its file card
+Then relay the return's `Audit:` line, word for word, and the saved memo as its file card
 (`shared/present-files.md`). Restate nothing of the memo: the card is the answer. Name each
 `origin-correction:` line's issue in one line pointing to the board, never restating the
 memo's words as advice on the draft.
@@ -577,7 +578,7 @@ one `researcher:research-agent` with `mode: citing_read` (`shared/legal-audit-sc
 decision, no more than 3 at once per authority, with that mode's fields, and another from the
 page a return's `More:` line names.
 Name each return on the audit spawn's `Citing reads:` line. research-agent
-returns the memo with the same items, its Validity, Confidence,
+returns the memo with the same items, its Validity, `Audit:` line,
 CanLII segment and Status updated (`shared/legal-audit-protocol.md` Step 2). Save it onto
 the same Writing: replace its `memo-header` row, then render and save by persist step 1's
 Copy. Record an authority's treatment, which clears its 📇, by `/drafting-data`

@@ -91,8 +91,10 @@ class ScopeTestTest(unittest.TestCase):
 
     def test_template_confidence_and_conclusion(self):
         template = flat(read("shared", "research-memo-template.md"))
-        self.assertIn('Confidence: "<one line: for the Issue,', template)
-        self.assertIn('/ "INCOMPLETE: <the research named>"', template)
+        protocol = flat(read("shared", "legal-audit-protocol.md"))
+        self.assertNotIn("Confidence:", template)
+        self.assertIn("Audit: <one line: for the Issue,", protocol)
+        self.assertIn("/ INCOMPLETE: <the research named>", protocol)
         self.assertNotIn("per issue", template)
         self.assertIn("A Conclusion is one paragraph answering the Issue, followed, only where research is required "
                       "(`shared/legal-audit-protocol.md` Step 4), by the open-issues paragraph", template)

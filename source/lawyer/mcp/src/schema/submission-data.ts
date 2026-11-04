@@ -784,8 +784,8 @@ export function submissionDataToolDefinitions(): ToolDefinition[] {
         "then the completion, both guarded on this session's token, then the confirm-read. Before either, while any of its " +
         "steps is open, to be retried or waiting (a waiting step whose minute has passed included), nothing is written and " +
         "the outcome is steps_open, with open_steps naming each one; a step cancelled or deferred on the practitioner's " +
-        "words (drafting_data__set_step) counts as resolved. A 'Legal research: ' job with no research memo saved under it is refused no_memo, and one whose last memo's Confidence: " +
-        "reads INCOMPLETE is refused memo_incomplete unless a step was cancelled or deferred on the practitioner's words; each writes nothing. A wip conflict partner is never " +
+        "words (drafting_data__set_step) counts as resolved. A 'Legal research: ' job with no research memo saved under it is refused no_memo, and one whose last memo " +
+        "reads INCOMPLETE (it holds the open-issues paragraph) is refused memo_incomplete unless a step was cancelled or deferred on the practitioner's words; each writes nothing. A wip conflict partner is never " +
         "touched. draft_dir is the draft_dir open_session returned. " +
         HOLDER +
         " The outcome is read off the confirm-read: completed (status completed, no " +

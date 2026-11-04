@@ -62,18 +62,25 @@ Client ID: <the verified Westlaw client ID> / not used
 
 ## KeyCite Canada
 Status: run / not run: <reason>
-Flag: <the flag tooltip, word for word> / no flag shown
+Flag: <the flag's label, word for word> / no flag shown
+Banner: <the KeyCite treatment banner, word for word> / no banner shown
 Tabs: <each tab's label and count, word for word>
 History:
 - <each History entry's fields, word for word> / none listed
-Citing References:
-- <Treatment> | <Title> | <Date> | <Type> | <Depth> | <Abridgment Classifications>[ | Out of Plan][ | after since]
+Content types: <each label and count, word for word> / not recorded: <reason>
+Treatment Type: <each label and count, word for word> / not recorded: <reason>
+Citing References (Cases and Decisions, Date sort, newest first):
+- <Treatment> | <Title> | <Date> | <Type> | <Depth> | <Abridgment Classifications>[ | Out of Plan][ | after since] / not recorded: <reason>
+Rows of the banner's label: <label>, newest first:
+- <the same six fields> / no banner shown / not recorded: <reason>
+Not recorded: cap 5, newest first: every other citing reference
 Export: <the filed export's path> / none
 
 ## CanLII citator
 Status: run / not run: <reason>
-Citing cases:
-- <citation> | <title> | <date>[ | after since]
+Citing cases: <total>
+- <citation> | <title>
+Not recorded: cap 5, newest by neutral citation, year then number: every other citing case
 
 Case-level note-up only — no statement of law and no treatment classification. A citing decision
 here is a lead; classifying it requires reading that decision.
@@ -81,7 +88,9 @@ here is a lead; classifying it requires reading that decision.
 
 Write each field as the citator shows it. An empty cell stays empty, never filled from
 another column or another citator. Put no word of your own about treatment anywhere in
-the record. Mark a row `after since` only when its date is after the `Since:` date.
+the record. Mark a row `after since` only when its date is after the `Since:` date. A
+`Not recorded:` line stays even when the count shows nothing was left out, and it never
+reads as none: a citing reference it covers was not looked at.
 
 ## The manifest line
 

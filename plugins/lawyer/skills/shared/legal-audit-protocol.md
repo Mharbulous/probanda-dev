@@ -17,7 +17,7 @@ edit or ingest anything. Your deliverable is the return described in Step 6. Fil
 the memo in `6. LAW` is the caller's job, never yours.
 
 **Scoped dispatch.** If the spawn prompt names any other `mode:`, or `report:`, fetch
-`shared/legal-audit-scoped.md`. For `mode: inventory` the scoped file is
+`shared/legal-audit-scoped.md`. For `mode: inventory` and `mode: citing_read` the scoped file is
 self-contained — follow it alone, never this file or `shared/research-priority.md`.
 For scoped `opinion` dispatches, follow both this file and the scoped file: it
 narrows the question asked and the shape of the answer, never an audit guarantee.
@@ -200,11 +200,12 @@ For every authority you intend to rely on:
      optional.
    - **Note-up**, from a note-up record, commons `treatment_chain`, or an existing
      verified memo named with its date (for legislation, step e's pointer). A memo not
-     named with its date is no note-up. It is case-level unless you read every citing
-     decision at its pinpoint against the paragraph's proposition or finding, which you
+     named with its date is no note-up. It is case-level unless the citing decisions were
+     read against the paragraph's proposition or finding, which you
      do for each paragraph the spawn prompt's `Note up paragraphs:` names: start from that
-     memo, keep its items and their numbers, put every citing decision not on disk on
-     `needs_download`, and update Validity, Confidence, the CanLII segment and Status. Record
+     memo, keep its items and their numbers, read each note on `Citing reads:`, name in your
+     notes each decision it lists as unread or not located, and update Validity, the `Audit:` line,
+     the CanLII segment and Status. Record
      negative or distinguishing treatment. An authority with no record is NOT NOTED UP
      and drags reliability down.
 3. **Compare facts**: state the factual circumstances before that court against the
@@ -280,7 +281,7 @@ one sentence naming what was searched: `No authority located in <the tiers searc
 
 **Open issues.** When the scope test leaves research required, end the Conclusion with one
 paragraph opening `More research is needed on the following issues:` that lists each as a
-question, and write the header's `Confidence:` as `INCOMPLETE: <the research named>`. Nothing
+question, and begin the return's `Audit:` line `INCOMPLETE:` (Step 6). Nothing
 else in the memo defers to further research, offers research or names a tier not run. A spawn
 prompt's `Review:` line is memo-reviewer's verdict on your last memo: treat each `required` item
 as required, cut each `identifiers` passage from the memo, move each `out_of_scope` passage to
@@ -388,7 +389,7 @@ write the notes and the memo to the scratchpad, in this order, and return only i
    memo's appendix: the offers and flags go there, never into the memo's body.
 2. **The memo.** Fetch `shared/research-memo-template.md` with the same tool you
    fetched this file with, and write the memo to it: its YAML header, beginning at a
-   line reading `---` that is immediately followed by `Document: MEMORANDUM OF LAW`,
+   line reading `---` that is immediately followed by `Date:`,
    then its body. The body uses ICRA unless the spawn prompt's `Memo template:` names
    IRAC or CREAC.
 
@@ -397,8 +398,7 @@ write the notes and the memo to the scratchpad, in this order, and return only i
    - Every proposition of law anywhere in the body carries its pinpoint citation: in a
      numbered item in the template's item shape, and in the Conclusion in parentheses, with
      no block quote.
-     No coverage line and no confidence table anywhere in the memo. The header's
-     one-line `Confidence:` summary of the Step 3 table is the only confidence text in it.
+     No coverage line, confidence table or confidence text anywhere in the memo.
    - In every format the memo is generic and has no Facts section. The spawn prompt's `Facts:`, `Matter:`, `Asked by:` and `Origin:`
      only choose authorities and route the work: the memo never states, summarises or
      alludes to them. No part of the memo holds a party name, date, amount,
@@ -412,7 +412,7 @@ write the notes and the memo to the scratchpad, in this order, and return only i
 3. **The return.** Return these three lines:
 
    ```
-   Confidence: <the memo header's Confidence value>
+   Audit: <one line: for the Issue, its strength and every tier the coverage line reads NOT AUDITED>[ <the case-level sentence>] / INCOMPLETE: <the research named>
    Notes scratch: <the path the tool returned for the notes>
    Memo scratch: <the path the tool returned for the memo>
    ```
@@ -421,9 +421,8 @@ write the notes and the memo to the scratchpad, in this order, and return only i
    its `job:` and `steps:` lines, verbatim, because the caller acts on them. Nothing
    else: the coverage line, the confidence table, the per-tier notes and the memo's
    text stay in the two files, and the caller files the memo file and never retypes
-   it. The `Confidence:` line opens the return and the memo's header holds it above
-   the body, so the confidence summary is disclosed before any statement of law, as
-   Step 3 requires. If the tool refuses either save, leave that file's line out, give
+   it. The `Audit:` line opens the return, so the confidence summary is disclosed
+   before any statement of law, as Step 3 requires. If the tool refuses either save, leave that file's line out, give
    its refusal code, and return that section in full in its place: the notes before
    the memo, and the memo from its `---` line to its end.
 
