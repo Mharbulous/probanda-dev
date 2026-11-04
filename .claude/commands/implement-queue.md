@@ -31,7 +31,7 @@ With `local` as the first argument, this run is the **local implementer**: the `
 - **Pick** (step 2): list `labels=ready-for-agent,local`, and run `choose_issue.py` with `--lane local`. An issue number in the arguments is taken only when that `queue` holds it. The claim comments on each issue are the cloud run's (**Claim**).
 - **Local gate** (step 4) replaces the cloud gate. The issue is unsuitable only when a plan step or Done-when check needs: `public/` approval or publication; a minor version with no **Minor go-ahead**, a 1.0 version, or a schema migration; a change to `COMMANDMENTS.md`; a write under `.claude/`, which this lane's permission mode refuses whatever the allowlist says (tested 2026-11-04), so never route it through a shell; a browser; or a decision or check by a person.
 - **Hand back** (the section below step 7) replaces step 7, "Mark local", wherever a step names it.
-- **Packages.** `run-local-implementer.ps1` has already run `npm ci --ignore-scripts` in `source/lawyer/mcp`, so skip step 5's `npm ci`. When `node_modules` is missing there, because the run was started another way, hand the issue back naming that.
+- **Packages.** `run-local-implementer.ps1` has already run `npm ci --ignore-scripts` in `source/lawyer/mcp`, `source/researcher/commons-mcp` and `source/researcher/canlii-mcp`, so skip step 5's `npm ci`. When `node_modules` is missing in one of them, because the run was started another way, hand the issue back naming that.
 - The sandbox SQLite workaround in step 5 is for the cloud only. Skip it.
 - Step 8 releases the local implementer lock, and lists the queue again as the local Pick does.
 

@@ -1,5 +1,6 @@
 """missing-key-note.py: the one-sentence notice when no key is stored, silence when it is,
-the held-suggestion note, the tool pointer outside Windows, and never the key's value.
+the held-suggestion note, the out-of-sight note outside Windows, facts only on every branch,
+and never the key's value.
 
 Each test points the hook at its own Credential Manager target, so the real
 Probanda/cloud-key is never read, written or deleted."""
@@ -68,14 +69,12 @@ def context(result: subprocess.CompletedProcess) -> str:
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Credential Manager is checked only on Windows")
-def test_no_key_file_gives_the_one_sentence_notice_and_the_route(tmp_path, target):
+def test_no_key_file_states_the_fact_and_its_effect(tmp_path, target):
     text = context(run(tmp_path, target))
     assert text.startswith("This computer holds no Probanda key.")
-    assert "once, in this one sentence" in text
-    assert "Do not repeat it" in text
-    assert "key_request__submit" in text
-    assert "Never ask for the key in chat" in text
-    assert "/lawyer:suggestion" in text
+    assert "suggestions to the Probanda team cannot be sent" in text
+    assert "kept on this computer and sent by itself once the key is stored" in text
+    assert "__" not in text and "/lawyer:" not in text
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Credential Manager is checked only on Windows")
@@ -111,7 +110,7 @@ def test_an_environment_key_counts_as_present_and_is_never_echoed(tmp_path, targ
     assert SECRET not in result.stderr
 
 
-def test_outside_windows_the_session_is_pointed_to_config_status(monkeypatch):
+def test_outside_windows_the_session_is_told_only_that_the_key_is_out_of_sight(monkeypatch):
     spec = importlib.util.spec_from_file_location("missing_key_note", HOOK)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -119,9 +118,22 @@ def test_outside_windows_the_session_is_pointed_to_config_status(monkeypatch):
     monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
     monkeypatch.setattr(module.sys, "platform", "linux")
     text = module.context()
-    assert "practice_data__config_status once, in the same round trip as a skill's first tool call or after its card" in text
-    assert "cloud_credential: missing" in text
-    assert "key_request__submit" in text
+    assert text.startswith("This session cannot see whether this computer holds Probanda's key")
+    assert "suggestions to the Probanda team cannot be sent" in text
+    assert "__" not in text and "/lawyer:" not in text
+
+
+ASKS = ("call ", "invoke ", "tell the practitioner", "follow ", "offer ", "ask ", "do not ", "never ")
+
+
+def test_every_branch_states_facts_only():
+    """No branch asks the model to act, names a tool or names a skill (issue #227)."""
+    module = load_hook()
+    for text in (module.MISSING, module.UNSEEN, module.HELD.format(count=2)):
+        assert "__" not in text and "/lawyer:" not in text and "/" not in text, text
+        lowered = text.lower()
+        for ask in ASKS:
+            assert ask not in lowered, (ask, text)
 
 
 def load_hook():

@@ -26,6 +26,8 @@ It does not answer agenda or day-summary prompts. It never writes to the calenda
 
 Tools are named without their prefix. Call each under whichever of `mcp__plugin_lawyer_contacts-calendars-email__<name>` and `mcp__remote-devices__plugin_lawyer_contacts-calendars-email__<name>` this host grants.
 
+**Environment notes first.** Unless this practitioner's environment notes were added at session start, read them before the first calendar lookup in the session: call `practice_data__config_status` in the same round trip as this skill's first tool call, and take its `practice_quirks` (`practice-data`'s "Practice quirks", "Read").
+
 Use `calendar__list_events`:
 
 - `calendars`: omit it to read every calendar, unless the user names one (`calendar__list_calendars` lists the names).

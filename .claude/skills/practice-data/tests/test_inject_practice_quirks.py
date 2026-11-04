@@ -1,4 +1,4 @@
-"""inject-practice-quirks.py: the practitioner's notes are injected, the pointer when the config is
+"""inject-practice-quirks.py: the practitioner's notes are injected, a fact-only note when the config is
 out of reach, a note when it cannot be read, and silence when there are none."""
 from __future__ import annotations
 
@@ -39,11 +39,30 @@ def test_injects_the_notes_between_rules(tmp_path):
     assert text.endswith("\n---\nMail routes through iCloud.\n---")
 
 
-def test_points_to_the_tool_when_the_config_is_out_of_reach(tmp_path):
+def test_says_only_that_the_notes_are_out_of_reach_when_the_config_is(tmp_path):
     text = context(run(tmp_path / "absent" / "probanda.json"))
     assert text.startswith("Practitioner environment notes:")
-    assert "Call practice_data__config_status " + "in the same round trip as a skill's first tool call" in text
-    assert "before any mail, calendar or file lookup" in text
+    assert "out of this session's reach" in text
+    assert "No notes are in this context." in text
+
+
+ASKS = ("call ", "invoke ", "read its", "offer ", "carry on", "copy the", "say once", "ask again")
+
+
+def test_every_branch_states_facts_only(tmp_path):
+    """No branch asks the model to act, names a tool or names a skill (issue #227)."""
+    texts = [
+        context(run(tmp_path / "absent" / "probanda.json")),
+        context(run(config(tmp_path, json.dumps({"practice_quirks": "Mail routes through iCloud."})))),
+        context(run(config(tmp_path, "{not json"))),
+        context(run(config(tmp_path, json.dumps({"practice_quirks": ["a"]})))),
+    ]
+    for text in texts:
+        frame = text.split("\n---\n")[0]
+        assert "__" not in frame and "/lawyer:" not in frame, frame
+        lowered = frame.lower()
+        for ask in ASKS:
+            assert ask not in lowered, (ask, frame)
 
 
 def test_says_when_the_notes_cannot_be_read(tmp_path):
