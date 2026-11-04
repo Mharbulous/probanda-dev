@@ -15,28 +15,16 @@ import {
 import { courtRecordCitation, courtRecordPinpointMarker, dedupeLineMarkers, doubtMarker, exhibitPinpointMarker, gapMarker, isAdmittedGuard, isExhibitTenderRole, looseThreadMarker, noWitnessMarker, suppressMarker, printMarkerSets, statementOfFactMarkers, testimonyPinpointMarker, unservedPetitumMarker, unsponsoredExhibitMarker } from "./markers.js";
 import { recordCriterionGlyphs, recordFactStatementGlyphs, recordGlyphs, recordJurisdictionLadder } from "./proposal-inventory.js";
 import { captionHeadingFor, opposingPartyIds } from "./query.js";
-import {
-  exhibitNumbersFromOrderedIds,
-  factStatementCitationLine,
-  fetchDeployedIds,
-  fetchDocumentLabels,
-  fetchDocumentTenderStatus,
-  fetchFactAdmissionAnnotations,
-  fetchFactStatements,
-  fetchFilingDocuments,
-  fetchNotBestCopyMarkers,
-  fetchOrdersSought,
-  fetchSubmissionFacts,
-  fetchSubmissionLaw,
-  fetchSubmissions,
-  groupSubmissionFacts,
-  groupSubmissionLaw,
-  orderReviewMarkerFor,
-  recordParagraph,
-  renderSubmissionParagraphs,
-  reviewMarkerFor,
-  type RenderContext,
-} from "./render-vaniac-submissions.js";
+import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments, fetchNotBestCopyMarkers } from "./exhibit-documents.js";
+import { factStatementCitationLine } from "./statement-lines.js";
+import { fetchDeployedIds, fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions } from "./submission-reads.js";
+import { fetchDocumentTenderStatus } from "./document-tenders.js";
+import { fetchFactAdmissionAnnotations } from "./admission-annotations.js";
+import { fetchOrdersSought } from "./orders-sought.js";
+import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
+import { orderReviewMarkerFor, reviewMarkerFor } from "./review-state.js";
+import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
+import type { RenderContext } from "./render-context.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
 import { materialDateSuffix } from "./render-bcca-factum.js";
 import { factsPart, fetchFacts, fetchStatementsOfFact, type StatementOfFactRow } from "./filing-facts.js";
@@ -334,7 +322,7 @@ export function renderNoticeOfApplication(ctx: RenderContext): string {
     }
     const s = entry.item;
     // renderSubmissionParagraphs is shared with the VanIAC written argument
-    // (render-vaniac-submissions.ts) and stamps its own <!-- fact_id N -->/
+    // (render-documents.ts) and stamps its own <!-- fact_id N -->/
     // <!-- law_assertion_id N --> id-trace comments by database row id --
     // no token collision with Part 2's positional <!-- fact N --> above,
     // since bare labels are always positional and `_id`-suffixed labels

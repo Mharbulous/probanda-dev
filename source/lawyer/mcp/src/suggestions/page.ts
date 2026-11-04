@@ -26,7 +26,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { NotFoundError } from "../errors.js";
-import { writeTextAtomic } from "../knowledge/sidecar.js";
+import { writeTextAtomic } from "../file-lock.js";
 import { pageApiPort, pageApiSuggestionToken } from "../page-api/token.js";
 import { type SuggestionRecord, type SuggestionStore, cardStatus, isSuggestion, loadStore, storeDir } from "./store.js";
 

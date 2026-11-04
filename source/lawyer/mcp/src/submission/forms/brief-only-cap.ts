@@ -18,7 +18,7 @@ export interface BriefOnlyCapRow {
   treatment: string | null;
 }
 
-// The atomic checks, exported separately because render-vaniac-submissions.ts reads its
+// The atomic checks, exported separately because submission-paragraphs.ts reads its
 // intermediate steps (`live`, `counted`) for its own marker logic.
 export const authorityNotKilled = (s: Pick<BriefOnlyCapRow, "authority_killed_on">): boolean => s.authority_killed_on === null;
 export const authorityNotOverruled = (s: Pick<BriefOnlyCapRow, "treatment">): boolean => s.treatment !== "overruled";

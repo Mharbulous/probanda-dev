@@ -57,27 +57,14 @@ import {
 } from "./markers.js";
 import { recordCriterionGlyphs, recordFactStatementGlyphs, recordGlyphs, type MarkerInventory } from "./proposal-inventory.js";
 import { captionHeadingFor, opposingPartyIds } from "./query.js";
-import {
-  exhibitNumbersFromOrderedIds,
-  fetchDocumentLabels,
-  fetchFactAdmissionAnnotations,
-  fetchFactStatements,
-  fetchFilingDocuments,
-  fetchNotBestCopyMarkers,
-  fetchOrdersSought,
-  fetchSubmissionFacts,
-  fetchSubmissionLaw,
-  type FilingDocumentRow,
-  fetchSubmissions,
-  groupSubmissionFacts,
-  groupSubmissionLaw,
-  orderReviewMarkerFor,
-  recordParagraph,
-  renderSubmissionParagraphs,
-  reviewMarkerFor,
-  type RenderContext,
-  type ReviewState,
-} from "./render-vaniac-submissions.js";
+import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments, fetchNotBestCopyMarkers, type FilingDocumentRow } from "./exhibit-documents.js";
+import { fetchFactAdmissionAnnotations } from "./admission-annotations.js";
+import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions } from "./submission-reads.js";
+import { fetchOrdersSought } from "./orders-sought.js";
+import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
+import { orderReviewMarkerFor, reviewMarkerFor, type ReviewState } from "./review-state.js";
+import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
+import type { RenderContext } from "./render-context.js";
 import {
   fetchFilingPositions,
   fetchUnpositionedOrders,

@@ -2,7 +2,7 @@
 
 import { DataServerError, ValidationError } from "../errors.js";
 import { admittedHost, readHostEntries } from "../sources/hosts.js";
-import { withFileLock, writeTextAtomic } from "./sidecar.js";
+import { withFileLock, writeTextAtomic } from "../file-lock.js";
 import { entryType, type KnowledgePath } from "./tree.js";
 import { provenance, today } from "./common.js";
 import { refuseArgs, rowString, writableOverlayPath, type Args, type Json, type WriteSeams } from "./overlay.js";

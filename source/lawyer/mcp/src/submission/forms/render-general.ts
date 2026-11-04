@@ -18,7 +18,8 @@ import { gap, renderPart, type CurrencyWithheld, type LayoutPart, type Projectio
 import { lawItem, recordLawStatementGlyphs } from "./proposal-inventory.js";
 import { fetchFilingLaw, fetchFilingRecipients, fetchProse, mergeSharedRecipients, type FilingLawRow, type FilingRecipientRow, type FilingRow } from "./query.js";
 import { scalarValue, type CitedState, type StoredLayout } from "./layout-snapshot.js";
-import { reviewMarkerFor, type RenderContext } from "./render-vaniac-submissions.js";
+import { reviewMarkerFor } from "./review-state.js";
+import type { RenderContext } from "./render-context.js";
 import { generalDocumentName } from "./writing-label.js";
 
 /** The item's mockup tag, or "" when it needs none. */

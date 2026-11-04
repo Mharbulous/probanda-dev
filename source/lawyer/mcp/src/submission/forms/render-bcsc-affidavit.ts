@@ -1,6 +1,6 @@
 // BCSC supporting affidavit companion (#1486; decisions in #1425's resolution comment): one
 // mockup per affidavit the Notice of Application or Application Response lists under role
-// 'affidavit'. Pattern: renderWitnessStatements (render-vaniac-submissions.ts). Content follows
+// 'affidavit'. Pattern: renderWitnessStatements (render-witness-statements.ts). Content follows
 // the Form 109 style guide (publish-bcsc-form/forms/109-AFF/style-guide.md): numbered paragraphs,
 // no headings, bold exhibit references. Exhibit letters are derived here and never stored.
 
@@ -8,7 +8,8 @@ import { BLANK_UNDERLINE, frontmatterHeader, styleOfProceedingCaption, type Capt
 import { gapMarker, mockupMessage } from "./markers.js";
 import { recordCriterionGlyphs, recordGlyphs } from "./proposal-inventory.js";
 import { captionHeadingFor } from "./query.js";
-import { fetchDocumentLabels, type RenderContext } from "./render-vaniac-submissions.js";
+import { fetchDocumentLabels } from "./exhibit-documents.js";
+import type { RenderContext } from "./render-context.js";
 import { rows } from "../query-rows.js";
 
 /** Where a paragraph attaches an exhibit: `{exhibit:<document_id>}` in its stored text. */
@@ -163,7 +164,7 @@ export function renderAffidavit(ctx: RenderContext, a: AffidavitRow): string {
   lines.push(`I, ${deponent}, swear (or affirm) that:`);
   lines.push("");
   // Rendered for the human, withheld from the filed face, like the witness statement's
-  // statement-level 🧩 (render-vaniac-submissions.ts). A sworn affidavit relied on here, with no
+  // statement-level 🧩 (render-witness-statements.ts). A sworn affidavit relied on here, with no
   // paragraphs stored, owes nothing.
   const affidavitGaps = [
     ...(a.deponent_name === null ? [{ text: "no deponent recorded", what: "deponent" }] : []),

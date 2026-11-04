@@ -20,21 +20,11 @@ import {
   fetchProseParagraphs,
 } from "./render-bcca-factum.js";
 import { factsPart, fetchFacts } from "./filing-facts.js";
-import {
-  exhibitNumbersFromOrderedIds,
-  fetchDocumentLabels,
-  fetchFactStatements,
-  fetchFilingDocuments,
-  fetchOrdersSought,
-  fetchSubmissionFacts,
-  fetchSubmissionLaw,
-  fetchSubmissions,
-  groupSubmissionFacts,
-  groupSubmissionLaw,
-  type FactStatementRow,
-  type LawAssertionRow,
-  type RenderContext,
-} from "./render-vaniac-submissions.js";
+import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments } from "./exhibit-documents.js";
+import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type FactStatementRow, type LawAssertionRow } from "./submission-reads.js";
+import { fetchOrdersSought } from "./orders-sought.js";
+import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
+import type { RenderContext } from "./render-context.js";
 import { fetchRhetoric, interleave, renderRhetoricFiled, type RhetoricRow } from "./render-rhetoric.js";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;

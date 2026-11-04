@@ -18,25 +18,14 @@ import { submissionDataQuery } from "../backend.js";
 import { CITATION_MISSING, lawStatementCitationLine, lawStatementMarkers, scrutinyFailedTag } from "./law-statement-line.js";
 import { clauseMarkers, dedupeLineMarkers, gapMarker, printMarkerSets, unservedPetitumMarker, type ClauseRow } from "./markers.js";
 import { lawItem, recordCriterionGlyphs, recordGlyphs, recordJurisdictionLadder } from "./proposal-inventory.js";
-import {
-  exhibitNumbersForFiling,
-  fetchDocumentLabels,
-  fetchFactAdmissionAnnotations,
-  fetchFactStatements,
-  fetchFilingDocuments,
-  fetchNotBestCopyMarkers,
-  fetchOrdersSought,
-  fetchSubmissionFacts,
-  fetchSubmissionLaw,
-  fetchSubmissions,
-  groupSubmissionFacts,
-  groupSubmissionLaw,
-  orderReviewMarkerFor,
-  recordParagraph,
-  renderSubmissionParagraphs,
-  reviewMarkerFor,
-  type RenderContext,
-} from "./render-vaniac-submissions.js";
+import { exhibitNumbersForFiling, fetchDocumentLabels, fetchFilingDocuments, fetchNotBestCopyMarkers } from "./exhibit-documents.js";
+import { fetchFactAdmissionAnnotations } from "./admission-annotations.js";
+import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions } from "./submission-reads.js";
+import { fetchOrdersSought } from "./orders-sought.js";
+import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
+import { orderReviewMarkerFor, reviewMarkerFor } from "./review-state.js";
+import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
+import type { RenderContext } from "./render-context.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
 import { captionHeadingFor, clientParty, fetchFilingLaw, opposingPartyIds, type FilingLawRow } from "./query.js";
 import { BLANK_UNDERLINE, pluralizeRole, styleOfProceedingCaption } from "./components.js";

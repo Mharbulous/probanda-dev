@@ -7,7 +7,7 @@
 // is owned by .claude/skills/publish/subskills/publish-bcsc-form/references/assembly-input-contract.md.
 
 import { groupPartiesByRole, pluralizeRole } from "./forms/components.js";
-import type { RenderContext } from "./forms/render-vaniac-submissions.js";
+import type { RenderContext } from "./forms/render-context.js";
 import { criterionLine, filingBoardData } from "./matter-pages.js";
 
 /** One cover-page line. `missing_datum` is information the form needs and the database does not hold,

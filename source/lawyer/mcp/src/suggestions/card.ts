@@ -38,7 +38,7 @@ import { existsSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 
 import { NotFoundError, ValidationError } from "../errors.js";
-import { writeTextAtomic } from "../knowledge/sidecar.js";
+import { writeTextAtomic } from "../file-lock.js";
 import { pageApiCardToken, pageApiPort } from "../page-api/token.js";
 import { PracticeStore } from "../practice/store.js";
 import { type CardPart, type CardText, type CrossCheckResult, type Hit, type HitKind, loadStopWords, runCrossCheck } from "./crosscheck.js";

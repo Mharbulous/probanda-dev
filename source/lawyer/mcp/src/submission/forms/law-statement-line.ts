@@ -1,5 +1,5 @@
 // A statement of law's line: its citation and its statement-line markers. Shared by the doctrinal
-// statement line (render-vaniac-submissions.ts's renderSubmissionParagraphs) and the general
+// statement line (submission-paragraphs.ts's renderSubmissionParagraphs) and the general
 // renderer's prose-cited line under "Authorities cited" (render-general.ts, #1214), so the two
 // can never drift.
 

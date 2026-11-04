@@ -7,7 +7,7 @@
 
 import { ValidationError } from "../../errors.js";
 import { exhibitLetters, renderAffidavit, withExhibitLetters, type AffidavitRow } from "./render-bcsc-affidavit.js";
-import type { RenderContext } from "./render-vaniac-submissions.js";
+import type { RenderContext } from "./render-context.js";
 import { rows } from "../query-rows.js";
 
 /** One affidavit's filed face. Throws ValidationError on anything the practitioner must still settle. */

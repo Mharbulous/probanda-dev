@@ -10,7 +10,7 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { configPath } from "../config-path.js";
-import { writeTextAtomic } from "../knowledge/sidecar.js";
+import { writeTextAtomic } from "../file-lock.js";
 
 export const FOCUS_SECTIONS = ["submissions", "counter", "rebuttals", "killed"] as const;
 export type FocusSection = (typeof FOCUS_SECTIONS)[number];

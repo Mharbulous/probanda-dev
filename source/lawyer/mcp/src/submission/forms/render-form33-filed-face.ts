@@ -21,20 +21,11 @@ import {
   hearingDateSentence,
   resolveRespondedToDocument,
 } from "./render-application-response.js";
-import {
-  CITATION_MISSING,
-  exhibitNumbersFromOrderedIds,
-  fetchDocumentLabels,
-  fetchFactStatements,
-  fetchFilingDocuments,
-  fetchSubmissionFacts,
-  fetchSubmissionLaw,
-  fetchSubmissions,
-  groupSubmissionFacts,
-  groupSubmissionLaw,
-  type LawAssertionRow,
-  type RenderContext,
-} from "./render-vaniac-submissions.js";
+import { CITATION_MISSING } from "./law-statement-line.js";
+import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments } from "./exhibit-documents.js";
+import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type LawAssertionRow } from "./submission-reads.js";
+import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
+import type { RenderContext } from "./render-context.js";
 import { fetchRhetoric, interleave, renderRhetoricFiled } from "./render-rhetoric.js";
 import { materialDateSuffix } from "./render-bcca-factum.js";
 import { factsPart, fetchFacts } from "./filing-facts.js";
@@ -47,7 +38,7 @@ const HEARING_DATE_PLACEHOLDER = "[agree, or propose other hearing date(s)]";
 const TIME_ESTIMATE_PLACEHOLDER = "[time estimate]";
 const NO_FACTUAL_BASIS = "[factual basis: no facts recorded]";
 
-/** Duplicated from render-vaniac-submissions.ts (private there) -- mirrors render-form32-filed-face.ts's own copy. authority_title === null is structurally unreachable via groupSubmissionLaw's output -- kept defensive, not deleted. */
+/** Mirrors render-form32-filed-face.ts's own copy. authority_title === null is structurally unreachable via groupSubmissionLaw's output -- kept defensive, not deleted. */
 function lawStatementCitationLine(row: LawAssertionRow): string | null {
   if (row.authority_title === null) return row.pinpoint ? `> ${row.pinpoint}` : null;
   const citation = row.authority_citation ?? CITATION_MISSING;

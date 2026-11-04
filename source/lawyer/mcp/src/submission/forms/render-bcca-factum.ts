@@ -26,25 +26,15 @@ import {
 import { gapMarker, mockupMessage, rebuttalMarker } from "./markers.js";
 import { recordCriterionGlyphs } from "./proposal-inventory.js";
 import { captionHeadingFor, opposingPartyIds } from "./query.js";
-import {
-  exhibitNumbersFromOrderedIds,
-  fetchDocumentLabels,
-  fetchFactAdmissionAnnotations,
-  fetchFactStatements,
-  fetchFilingDocuments,
-  fetchNotBestCopyMarkers,
-  fetchOpposingPoints,
-  fetchOrdersSought,
-  fetchSubmissionFacts,
-  fetchSubmissionLaw,
-  fetchSubmissions,
-  groupSubmissionFacts,
-  groupSubmissionLaw,
-  orderReviewMarkerFor,
-  recordParagraph,
-  renderSubmissionParagraphs,
-  type RenderContext,
-} from "./render-vaniac-submissions.js";
+import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments, fetchNotBestCopyMarkers } from "./exhibit-documents.js";
+import { fetchFactAdmissionAnnotations } from "./admission-annotations.js";
+import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions } from "./submission-reads.js";
+import { fetchOpposingPoints } from "./opposing-points.js";
+import { fetchOrdersSought } from "./orders-sought.js";
+import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
+import { orderReviewMarkerFor } from "./review-state.js";
+import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
+import type { RenderContext } from "./render-context.js";
 import { recordContactGaps, renderFactParagraphsWithRhetoric } from "./render-bcca-stay-response.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
 import { factsPart, fetchFacts } from "./filing-facts.js";

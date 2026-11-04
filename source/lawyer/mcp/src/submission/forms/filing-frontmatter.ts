@@ -3,7 +3,7 @@
 
 import { BLANK_UNDERLINE, frontmatterHeader, type FrontmatterFields } from "./components.js";
 import { captionHeadingFor, type ProceedingRow } from "./query.js";
-import type { RenderContext } from "./render-vaniac-submissions.js";
+import type { RenderContext } from "./render-context.js";
 
 export function filingFrontmatter(proceeding: ProceedingRow, ctx: RenderContext, documentType: string): string {
   const fields: FrontmatterFields = {

@@ -13,7 +13,7 @@ import test from "node:test";
 
 const { toFiledFace } = await import("../build/submission/forms/filed-face.js");
 const { ALL_MARKER_GLYPHS, mockupMessage } = await import("../build/submission/forms/markers.js");
-const { CITATION_MISSING } = await import("../build/submission/forms/render-vaniac-submissions.js");
+const { CITATION_MISSING } = await import("../build/submission/forms/law-statement-line.js");
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 
 // No file number: the parties are linked by case_party_id to case data holding their counsel.

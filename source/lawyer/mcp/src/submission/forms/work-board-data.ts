@@ -3,7 +3,7 @@
 import type { BoardGoals } from "./board-goals.js";
 import type { LifecycleState } from "./lifecycle.js";
 import type { MarkerInventory, Proposal } from "./proposal-inventory.js";
-import type { RenderContext } from "./render-vaniac-submissions.js";
+import type { RenderContext } from "./render-context.js";
 import type { WorkBoardAttachment } from "./work-board-reads.js";
 import type { WorkBoardTicket } from "./work-board-ticket.js";
 import type { WorkBoardSeed } from "./work-board-seeds.js";

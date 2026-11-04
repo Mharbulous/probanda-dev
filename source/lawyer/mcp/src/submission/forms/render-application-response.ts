@@ -33,25 +33,14 @@ import {
 } from "./markers.js";
 import { recordCriterionGlyphs, recordFactStatementGlyphs, recordGlyphs } from "./proposal-inventory.js";
 import { captionHeadingFor, opposingPartyIds, type PartyRow } from "./query.js";
-import {
-  exhibitNumbersFromOrderedIds,
-  factStatementCitationLine,
-  fetchDeployedIds,
-  fetchDocumentLabels,
-  fetchFactAdmissionAnnotations,
-  fetchFactStatements,
-  fetchFilingDocuments,
-  fetchNotBestCopyMarkers,
-  fetchSubmissionFacts,
-  fetchSubmissionLaw,
-  fetchSubmissions,
-  groupSubmissionFacts,
-  groupSubmissionLaw,
-  recordParagraph,
-  renderSubmissionParagraphs,
-  reviewMarkerFor,
-  type RenderContext,
-} from "./render-vaniac-submissions.js";
+import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments, fetchNotBestCopyMarkers } from "./exhibit-documents.js";
+import { factStatementCitationLine } from "./statement-lines.js";
+import { fetchDeployedIds, fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions } from "./submission-reads.js";
+import { fetchFactAdmissionAnnotations } from "./admission-annotations.js";
+import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
+import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
+import { reviewMarkerFor } from "./review-state.js";
+import type { RenderContext } from "./render-context.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";
 import { materialDateSuffix } from "./render-bcca-factum.js";
 import { factsPart, fetchFacts, fetchStatementsOfFact, type StatementOfFactRow } from "./filing-facts.js";
@@ -165,7 +154,7 @@ export function fetchUnpositionedOrders(dbPath: string, filingId: number, docume
 }
 
 /** Part 6's own provenance lookup (#372) -- filing_documents.provenance has no place on the
- * shared FilingDocumentRow (render-vaniac-submissions.ts's fetchFilingDocuments), since no other
+ * shared FilingDocumentRow (exhibit-documents.ts's fetchFilingDocuments), since no other
  * renderer reads it; keyed by document_id so it composes with that shared fetch's own ordering
  * rather than risking a second, possibly-misaligned document list. */
 function fetchPartSixProvenance(dbPath: string, filingId: number): Map<number, "served_with_this_response" | "already_in_court_file" | null> {

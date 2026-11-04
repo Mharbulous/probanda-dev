@@ -2,7 +2,7 @@
 
 import { DataServerError, ValidationError } from "../errors.js";
 import type { ShippedFrom } from "../repo-root.js";
-import { NO_VENUE, resolveKind, resolveVenue, type KindsView, type Resolution, type VenuesView } from "./index.js";
+import { NO_VENUE, resolveKind, resolveVenue, type KindsView, type Resolution, type VenuesView } from "./venues-kinds.js";
 import {
   grammarProblem,
   inTree,

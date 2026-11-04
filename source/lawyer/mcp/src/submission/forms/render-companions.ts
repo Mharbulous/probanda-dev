@@ -18,28 +18,15 @@ import {
   unservedPetitumMarker,
   type JurisdictionRequiresEdge,
 } from "./markers.js";
-import {
-  exhibitNumbersForFiling,
-  fetchDeployedIds,
-  fetchDocumentLabels,
-  fetchFactAdmissionAnnotations,
-  fetchFactStatements,
-  fetchFilingDocuments,
-  fetchJurisdictionEdges,
-  fetchNotBestCopyMarkers,
-  fetchOpposingPoints,
-  fetchOrdersSought,
-  fetchSubmissionFacts,
-  fetchSubmissionLaw,
-  fetchSubmissions,
-  groupSubmissionFacts,
-  groupSubmissionLaw,
-  orderReviewMarkerFor,
-  recordParagraph,
-  renderSubmissionParagraphs,
-  type PointerDocument,
-  type RenderContext,
-} from "./render-vaniac-submissions.js";
+import { exhibitNumbersForFiling, fetchDocumentLabels, fetchFilingDocuments, fetchNotBestCopyMarkers } from "./exhibit-documents.js";
+import { fetchDeployedIds, fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type PointerDocument } from "./submission-reads.js";
+import { fetchFactAdmissionAnnotations } from "./admission-annotations.js";
+import { fetchJurisdictionEdges, fetchOrdersSought } from "./orders-sought.js";
+import { fetchOpposingPoints } from "./opposing-points.js";
+import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
+import { orderReviewMarkerFor } from "./review-state.js";
+import { recordParagraph, renderSubmissionParagraphs } from "./submission-paragraphs.js";
+import type { RenderContext } from "./render-context.js";
 import { recordCriterionGlyphs, recordGlyphs, recordJurisdictionLadder } from "./proposal-inventory.js";
 import { fetchPlacedAlternativeIds } from "./render-requisition.js";
 import { fetchRhetoric, interleave, renderRhetoricLine } from "./render-rhetoric.js";

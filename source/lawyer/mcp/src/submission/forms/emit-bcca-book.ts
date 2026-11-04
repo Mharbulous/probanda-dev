@@ -36,7 +36,8 @@ import {
   type TocRow,
 } from "./render-bcca-stay-response.js";
 import { factumBookAuthorities } from "./render-bcca-factum.js";
-import { exhibitNumbersFromOrderedIds, fetchFilingDocuments, type RenderContext } from "./render-vaniac-submissions.js";
+import { exhibitNumbersFromOrderedIds, fetchFilingDocuments } from "./exhibit-documents.js";
+import type { RenderContext } from "./render-context.js";
 import type { PartyRow } from "./query.js";
 
 /** "Respondents" -> "Respondents'"; "Respondent" -> "Respondent's" -- the possessive prefix

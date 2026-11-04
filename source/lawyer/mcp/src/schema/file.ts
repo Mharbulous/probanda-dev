@@ -1,4 +1,4 @@
-import { AUDIENCES } from "../knowledge/index.js";
+import { AUDIENCES } from "../knowledge/venues-kinds.js";
 import type { ToolDefinition } from "./shared.js";
 
 /** A research_filing write made for a held job names it, so the job's last activity moves. */

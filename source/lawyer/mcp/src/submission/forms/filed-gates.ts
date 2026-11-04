@@ -1,7 +1,7 @@
 // The filed render (build #359, design #358): its gates and the delivered filed face. Writes nothing to disk.
 
 import { type FilingRow } from "./query.js";
-import { CITATION_MISSING } from "./render-vaniac-submissions.js";
+import { CITATION_MISSING } from "./law-statement-line.js";
 import { type CitedState } from "./layout-snapshot.js";
 import { confirmationGate } from "./render-general.js";
 import { currencyLabel } from "./projections.js";
@@ -18,7 +18,7 @@ import { type PhaseTimings, withTotal } from "./timings.js";
 /** Ticket 2026-08-31, decision 5: a filed-face document may never contain CITATION_MISSING. Scans
  * the pre-strip mockup markdown (toFiledFace runs after this, and would strip the very
  * <!-- statement_of_law_id N --> trace comment this needs to name the offending statement).
- * pushStatementLines (render-vaniac-submissions.ts) always emits the citation line immediately
+ * pushStatementLines (statement-lines.ts) always emits the citation line immediately
  * before the markers+id-comment line, so the trace is on the same line or the next. */
 function findMissingLawCitations(markdown: string): number[] {
   const ids: number[] = [];

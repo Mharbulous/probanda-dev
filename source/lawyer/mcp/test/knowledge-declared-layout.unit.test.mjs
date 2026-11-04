@@ -19,7 +19,7 @@ import test from "node:test";
 
 const { extractJsonBlock, validateTypeBlock, validateVenueBlock } = await import("../build/knowledge/declared-layout.js");
 const { validateFormatBlock } = await import("../build/knowledge/declared-format.js");
-const { NO_VENUE } = await import("../build/knowledge/index.js");
+const { NO_VENUE } = await import("../build/knowledge/venues-kinds.js");
 const { knowledgeRead } = await import("../build/knowledge/tools.js");
 const { readFrontMatter } = await import("../build/sources/check.js");
 const { resolveShippedRoot } = await import("../build/repo-root.js");

@@ -29,7 +29,7 @@ import { dirname, join } from "node:path";
 
 import { configPath } from "../config-path.js";
 import { DataServerError } from "../errors.js";
-import { withFileLock, writeTextAtomic } from "../knowledge/sidecar.js";
+import { withFileLock, writeTextAtomic } from "../file-lock.js";
 
 export const STORE_FOLDER = "suggestions";
 export const STORE_FILE = "suggestions.json";

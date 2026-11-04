@@ -10,7 +10,7 @@ import { inflateRawSync } from "node:zlib";
 
 import { configPath, configWritePaths } from "../../config-path.js";
 import { NotFoundError, ValidationError } from "../../errors.js";
-import { writeTextAtomic } from "../../knowledge/sidecar.js";
+import { writeTextAtomic } from "../../file-lock.js";
 import { resolveCaseDataRoot } from "../../practice/backend.js";
 import { asString } from "./shared.js";
 

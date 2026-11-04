@@ -17,7 +17,7 @@ import test from "node:test";
 
 const { freshSubmissionDb, seedSql } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute } = await import("../build/submission/backend.js");
-const { fetchProceedingExhibitNumbers } = await import("../build/submission/forms/render-vaniac-submissions.js");
+const { fetchProceedingExhibitNumbers } = await import("../build/submission/forms/exhibit-documents.js");
 const { checkExhibitNumbering, extractExhibitReferences } = await import("../build/submission/pre-filing/checks.js");
 
 /** A VanIAC proceeding with a FILED Opening (three exhibits) and a DRAFT Reply that relies on the

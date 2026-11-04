@@ -13,7 +13,7 @@ import { orphanClaims, readLockKey, removeLockIfKey } from "./lock-claim.js";
 
 const LOCK_RETRY_MS = 400;
 
-// 15 minutes, not knowledge/sidecar.ts's 60s: a migration on a large matter legitimately
+// 15 minutes, not file-lock.ts's 60s: a migration on a large matter legitimately
 // runs for minutes, and breaking a live holder's lock mid-chain would be far
 // worse than waiting. An execute finishes in seconds but shares the threshold --
 // it is set by the longest legitimate holder, not the shortest.

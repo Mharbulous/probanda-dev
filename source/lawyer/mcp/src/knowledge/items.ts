@@ -4,7 +4,7 @@ import { DataServerError } from "../errors.js";
 import { parseItems, readFrontMatter, sourcesListOf, type FrontMatter } from "../sources/check.js";
 import { extractJsonBlock, substituteLayout, validateTypeBlock, validateVenueBlock, citedItems, type BlockKind } from "./declared-layout.js";
 import { formatRefs, substituteFormat, validateFormatBlock } from "./declared-format.js";
-import { NO_VENUE } from "./index.js";
+import { NO_VENUE } from "./venues-kinds.js";
 import type { EffectiveStatus, StatusItem } from "./sidecar.js";
 import { identicalText, joinRelative, parseKnowledgePath, readServed, type KnowledgePath, type KnowledgeSeams } from "./tree.js";
 

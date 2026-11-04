@@ -17,7 +17,7 @@ import { join } from "node:path";
 import { configPath } from "../config-path.js";
 import { DataServerError, ValidationError } from "../errors.js";
 import { today } from "../knowledge/common.js";
-import { withFileLock, writeTextAtomic } from "../knowledge/sidecar.js";
+import { withFileLock, writeTextAtomic } from "../file-lock.js";
 import { resolveCaseDataRoot } from "../practice/matter-data-root.js";
 import { pluginVersion } from "../repo-root.js";
 import { findRedactionHits } from "./redact.js";

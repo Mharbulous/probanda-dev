@@ -12,7 +12,7 @@ import { generalWritingFixture } from "./helpers/general-writing-fixture.mjs";
 import { boardDataOf } from "./fixtures/forms-render-seeds.mjs";
 
 const { submissionFormsRender } = await import("../build/submission/forms.js");
-const { fetchReviewState } = await import("../build/submission/forms/render-vaniac-submissions.js");
+const { fetchReviewState } = await import("../build/submission/forms/review-state.js");
 
 const SHIPPED_LETTER = new URL("../../../../.claude/skills/draft/references/CAN/BC/_NoVenue/Documents/letter-to-opposing-counsel.md", import.meta.url);
 const LETTER_BLOCK = JSON.parse(/^```json\n([\s\S]*?)\n```$/m.exec(readFileSync(SHIPPED_LETTER, "utf-8").replace(/\r\n/g, "\n"))[1]);

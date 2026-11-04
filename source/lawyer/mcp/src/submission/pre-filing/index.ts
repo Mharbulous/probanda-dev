@@ -9,7 +9,7 @@ import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 
 import { ValidationError } from "../../errors.js";
 import { zoneProblem } from "../../files/zones.js";
-import { exhibitNumbersForFiling, fetchFilingDocuments } from "../forms/render-vaniac-submissions.js";
+import { exhibitNumbersForFiling, fetchFilingDocuments } from "../forms/exhibit-documents.js";
 import type { FilingRow } from "../forms/query.js";
 import { submissionDataQuery } from "../backend.js";
 import { checkExhibitFiles, checkExhibitNumbering, checkPlaceholders, EXHIBIT_FILE_RE, type CheckResult, type IndexRow } from "./checks.js";

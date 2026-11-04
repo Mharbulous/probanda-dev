@@ -3,7 +3,7 @@ import { win32 as pathWin32 } from "node:path";
 
 // Removal of a lock file -- a stale takeover or the owner's own release -- is shared by every
 // cross-process lock in this runtime (case/case-lock.ts, submission/lock.ts, timecamping/lock.ts,
-// knowledge/sidecar.ts, submission/render-job.ts). A bare read-then-unlink is not enough: takers A
+// file-lock.ts, submission/render-job.ts). A bare read-then-unlink is not enough: takers A
 // and B both judge one stale lock, A removes it and creates a fresh one, and B's unlink then
 // removes A's fresh lock, so both hold.
 //

@@ -23,7 +23,7 @@
 // generate are recorded too, flagged `generating: false`; deriveProposals drops them first.
 
 import { dedupeLineMarkers, jurisdictionEdgeMarkers, LEGISLATION_KINDS, type JurisdictionRequiresEdge } from "./markers.js";
-import { CITATION_MISSING } from "./render-vaniac-submissions.js";
+import { CITATION_MISSING } from "./law-statement-line.js";
 import { PLACEMENTS, SYMBOLS } from "./symbol-table.js";
 
 /** Design §4's table, in its own order -- which is the Work Board's card order (design §8). */

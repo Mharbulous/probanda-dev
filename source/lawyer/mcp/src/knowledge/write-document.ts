@@ -6,7 +6,7 @@ import { DataServerError, ValidationError } from "../errors.js";
 import { pluginVersion } from "../repo-root.js";
 import { parseItems, readFrontMatter, type FrontMatter } from "../sources/check.js";
 import { htmlBlocks, passagePresent, sourcesFetcher, type SourceFetcher } from "../sources/fetch.js";
-import { withFileLock, writeTextAtomic } from "./sidecar.js";
+import { withFileLock, writeTextAtomic } from "../file-lock.js";
 import { locate, entryType, parseKnowledgePath, readServed, type KnowledgePath } from "./tree.js";
 import { provenance } from "./common.js";
 import { blockOf, itemsOf } from "./items.js";

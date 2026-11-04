@@ -821,7 +821,7 @@ export function statementOfFactMarkers(row: StatementOfFactRow): string {
 //
 // Scope (see issue #344's resolution comment for the full reasoning): this
 // builds the derivation and renders the rung as decoration on the Evidence
-// Index Tendered-by cell (render-vaniac-submissions.ts), including the
+// Index Tendered-by cell (render-evidence-index.ts), including the
 // admission-local 🕹️/💬/📍 work it routes. It does NOT touch isAdmittedGuard,
 // make unsponsoredExhibitMarker per-party, or change any Tendered-by
 // suppression/clearing boolean -- that is issue #345, the blocked follow-on.

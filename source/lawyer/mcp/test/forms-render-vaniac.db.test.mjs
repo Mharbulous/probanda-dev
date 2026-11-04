@@ -13,7 +13,8 @@ const { assertFiledFaceDocumentsClean } = await import("./helpers/filed-face-sca
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { submissionFormsRender, submissionFormsBootstrap } = await import("../build/submission/forms.js");
 const { renderWrittenArguments } = await import("../build/submission/forms/render-companions.js");
-const { fetchReviewState, renderWitnessStatements } = await import("../build/submission/forms/render-vaniac-submissions.js");
+const { fetchReviewState } = await import("../build/submission/forms/review-state.js");
+const { renderWitnessStatements } = await import("../build/submission/forms/render-witness-statements.js");
 const { currentSchemaVersion } = await import("../build/submission/migrate.js");
 
 // Ticket 2026-09-01: a submission's body opens with its own contention

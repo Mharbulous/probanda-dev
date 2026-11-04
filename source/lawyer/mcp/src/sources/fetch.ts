@@ -20,7 +20,7 @@ import * as https from "node:https";
 import { join } from "node:path";
 
 import { DataServerError, ValidationError } from "../errors.js";
-import { writeBytesAtomic } from "../knowledge/sidecar.js";
+import { writeBytesAtomic } from "../file-lock.js";
 import { entryType, locate, parseKnowledgePath, type KnowledgeSeams } from "../knowledge/tree.js";
 import { overlayFirmHosts, SOURCES_ALLOWED_HOSTS } from "./hosts.js";
 

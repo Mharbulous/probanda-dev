@@ -10,7 +10,7 @@ import test from "node:test";
 const { ALL_MARKER_GLYPHS, WORK_MARKER_GLYPHS, counselReviewMarker, REVIEW_SNAPSHOT_FIELDS, reviewSnapshotSql } = await import("../build/submission/forms/markers.js");
 const { NON_GENERATING_GLYPHS, GLYPH_SLUGS, deriveProposals } = await import("../build/submission/forms/proposal-inventory.js");
 const { submissionDataMigrateScriptsDir } = await import("../build/repo-root.js");
-const { orderReviewMarkerFor } = await import("../build/submission/forms/render-vaniac-submissions.js");
+const { orderReviewMarkerFor } = await import("../build/submission/forms/review-state.js");
 
 const SNAP = `{"excerpt":"The passage.","pinpoint":"para 4"}`;
 

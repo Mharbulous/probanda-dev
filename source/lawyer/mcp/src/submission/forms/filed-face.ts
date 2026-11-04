@@ -2,7 +2,7 @@
 // #359). Issue #358's design: the filed face is "the same documents as the
 // mockup minus everything human-side -- work markers, Held in reserve,
 // human-side subsections, source traces, HTML comments." One shared render
-// pass builds each document's mockup content (render-vaniac-submissions.ts
+// pass builds each document's mockup content (render-documents.ts
 // and friends); this module strips that markdown down to the filed face
 // rather than threading a second render path through every renderer call
 // site -- see forms.ts's submissionFormsRender for where render_mode
@@ -75,7 +75,7 @@ const MOCKUP_ONLY_HEADINGS = [
 // refuses on that one first, forms.ts). Last, a proposition line's overruled
 // tag (#1202): titles and citations carry both brackets and parentheses, so the
 // match runs lazily to the ")" that immediately precedes ⛔ -- it depends on ⛔
-// leading the line's markers (render-vaniac-submissions.ts), still present here
+// leading the line's markers (submission-paragraphs.ts), still present here
 // because this runs before the glyph strip. After it, the failed-scrutiny tag
 // (schema v46) on a proposition or clause line: a finding is free text and can
 // hold parentheses, so the match runs greedily to the line's last ")". The tag

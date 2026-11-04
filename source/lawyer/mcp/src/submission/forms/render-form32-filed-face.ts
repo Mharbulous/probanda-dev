@@ -21,24 +21,14 @@ import { ValidationError } from "../../errors.js";
 import type { PublishWarning } from "../publish-sidecar.js";
 import { passesBriefOnlyCap } from "./brief-only-cap.js";
 import { formatTimeEstimate, pushExcerptBlockquote, STANDARD_MATERIAL_LINES } from "./components.js";
-import {
-  CITATION_MISSING,
-  exhibitNumbersFromOrderedIds,
-  fetchDocumentLabels,
-  fetchFactStatements,
-  fetchFilingDocuments,
-  fetchOrdersSought,
-  fetchSubmissionFacts,
-  fetchSubmissionLaw,
-  fetchSubmissions,
-  groupSubmissionFacts,
-  groupSubmissionLaw,
-  type LawAssertionRow,
-  type RenderContext,
-} from "./render-vaniac-submissions.js";
+import { CITATION_MISSING } from "./law-statement-line.js";
+import { exhibitNumbersFromOrderedIds, fetchDocumentLabels, fetchFilingDocuments, type FilingDocumentRow } from "./exhibit-documents.js";
+import { fetchFactStatements, fetchSubmissionFacts, fetchSubmissionLaw, fetchSubmissions, type LawAssertionRow } from "./submission-reads.js";
+import { fetchOrdersSought } from "./orders-sought.js";
+import { groupSubmissionFacts, groupSubmissionLaw } from "./submission-groups.js";
+import type { RenderContext } from "./render-context.js";
 import { fetchRhetoric, interleave, renderRhetoricFiled } from "./render-rhetoric.js";
 import { longDate, materialDateSuffix } from "./render-bcca-factum.js";
-import type { FilingDocumentRow } from "./render-vaniac-submissions.js";
 import { factsPart, fetchFacts } from "./filing-facts.js";
 import { factStatementCitationLine } from "./statement-lines.js";
 import { rows } from "../query-rows.js";
@@ -54,7 +44,7 @@ function fetchHearingDetails(dbPath: string, filingId: number): HearingDetailsRo
   return rows<HearingDetailsRow>(dbPath, "SELECT * FROM hearing_details WHERE filing_id = ?", [filingId])[0];
 }
 
-/** Duplicated from render-vaniac-submissions.ts (private there, and that file is out of scope for this ticket). authority_title === null is structurally unreachable via groupSubmissionLaw's output -- kept defensive, not deleted. */
+/** A copy of law-statement-line.ts's function of this name, with this form's own line prefix. authority_title === null is structurally unreachable via groupSubmissionLaw's output -- kept defensive, not deleted. */
 function lawStatementCitationLine(row: LawAssertionRow): string | null {
   if (row.authority_title === null) return row.pinpoint ? `>> ${row.pinpoint}` : null;
   const citation = row.authority_citation ?? CITATION_MISSING;

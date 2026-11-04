@@ -32,7 +32,7 @@ import viewFolderCss from "../../templates/view-pages/view-folder.css.js";
 import viewHeadHtml from "../../templates/view-pages/view-head.html.js";
 import type { ViewPage } from "../view-pages.js";
 import type { FilingRow } from "./query.js";
-import { fetchOpposingPoints } from "./render-vaniac-submissions.js";
+import { fetchOpposingPoints } from "./opposing-points.js";
 import { rows } from "../query-rows.js";
 import { hasColumn, hasTable } from "../schema-capabilities.js";
 

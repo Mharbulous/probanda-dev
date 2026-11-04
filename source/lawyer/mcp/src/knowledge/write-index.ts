@@ -4,8 +4,8 @@ import { readFileSync } from "node:fs";
 
 import { DataServerError, ValidationError } from "../errors.js";
 import { pluginVersion } from "../repo-root.js";
-import { mergeKinds, mergeVenues, NO_VENUE, normalizeName, STAMP_KEYS, type IndexSource, type KindsView, type VenuesView } from "./index.js";
-import { withFileLock, writeTextAtomic } from "./sidecar.js";
+import { mergeKinds, mergeVenues, NO_VENUE, normalizeName, STAMP_KEYS, type IndexSource, type KindsView, type VenuesView } from "./venues-kinds.js";
+import { withFileLock, writeTextAtomic } from "../file-lock.js";
 import { grammarProblem, locate, parseKnowledgePath, readLayerFiles, entryType, type KnowledgePath } from "./tree.js";
 import { folderOf, INDEX_NAMES, parseJson, provenance } from "./common.js";
 import { refuseArgs, rowString, writableOverlayPath, type Args, type Json, type WriteSeams } from "./overlay.js";

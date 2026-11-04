@@ -40,7 +40,8 @@ import { readManifest } from "../render-manifest.js";
 import type { ViewPage, ViewPageContext } from "../view-pages.js";
 import type { InventoryEntry } from "./proposal-inventory.js";
 import { fetchParties } from "./query.js";
-import { factStatementCitationLine, fetchFactAdmissionCoverage } from "./render-vaniac-submissions.js";
+import { factStatementCitationLine } from "./statement-lines.js";
+import { fetchFactAdmissionCoverage } from "./admission-annotations.js";
 import { isEvidenceWork } from "./render-work-board.js";
 import { rows } from "../query-rows.js";
 

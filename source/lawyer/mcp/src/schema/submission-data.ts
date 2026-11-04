@@ -1,4 +1,4 @@
-import { AUDIENCES } from "../knowledge/index.js";
+import { AUDIENCES } from "../knowledge/venues-kinds.js";
 import { type ToolDefinition, SQL_PARAMS } from "./shared.js";
 
 function submissionDataPrefixed(name: string): string {

@@ -13,7 +13,10 @@
 // A database held below v71 has none of these tables, so every read here returns nothing there.
 
 import { rhetoricHeld } from "./query.js";
-import { pushStatementLines, reviewMarkerFor, type PointerDocument, type RenderContext } from "./render-vaniac-submissions.js";
+import { pushStatementLines } from "./statement-lines.js";
+import { reviewMarkerFor } from "./review-state.js";
+import type { PointerDocument } from "./submission-reads.js";
+import type { RenderContext } from "./render-context.js";
 import { rows } from "../query-rows.js";
 
 /** The host part a filing_rhetoric row places a paragraph in. */

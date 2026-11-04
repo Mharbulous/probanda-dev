@@ -4,7 +4,7 @@ import { existsSync, readFileSync, renameSync } from "node:fs";
 import { win32 as pathWin32 } from "node:path";
 
 import { DataServerError, ValidationError } from "../errors.js";
-import { withFileLock } from "./sidecar.js";
+import { withFileLock } from "../file-lock.js";
 import { identicalText, locate, parseKnowledgePath, readLayerFiles, SIDECAR_SUFFIX, entryType, type KnowledgePath, type KnowledgeSeams } from "./tree.js";
 import { provenance } from "./common.js";
 import { knowledgeList, type GrammarBreak, type ListEntry } from "./list.js";

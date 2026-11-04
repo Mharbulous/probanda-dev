@@ -17,7 +17,7 @@ import { readFileSync } from "node:fs";
 
 import { DataServerError } from "../../errors.js";
 import { extractJsonBlock, validateTypeBlock } from "../../knowledge/declared-layout.js";
-import { mergeKinds, NO_VENUE } from "../../knowledge/index.js";
+import { mergeKinds, NO_VENUE } from "../../knowledge/venues-kinds.js";
 import { parseKnowledgePath, shippedLayer, type KnowledgeSeams } from "../../knowledge/tree.js";
 import { renderApplicationResponse } from "./render-application-response.js";
 import { renderBccaFactum } from "./render-bcca-factum.js";
@@ -31,7 +31,8 @@ import {
   renderRequisitionConsent,
   renderRequisitionDefaultJudgment,
 } from "./render-requisition.js";
-import { renderEvidenceIndex, type RenderContext } from "./render-vaniac-submissions.js";
+import { renderEvidenceIndex } from "./render-evidence-index.js";
+import type { RenderContext } from "./render-context.js";
 import { affidavitLabel, type WritingLabel } from "./writing-label.js";
 
 /** How a filler emits its documents. The caller supplies both, so each document is timed and its

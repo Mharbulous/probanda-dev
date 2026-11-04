@@ -13,7 +13,7 @@
 
 import { DataServerError, NotFoundError, ValidationError } from "../errors.js";
 import { citedItems, type BlockKind } from "../knowledge/declared-layout.js";
-import { NO_VENUE, type KindsView } from "../knowledge/index.js";
+import { NO_VENUE, type KindsView } from "../knowledge/venues-kinds.js";
 import type { ItemStatus } from "../knowledge/sidecar.js";
 import { knowledgeRead, type KnowledgeReadResult } from "../knowledge/tools.js";
 import type { KnowledgeSeams } from "../knowledge/tree.js";

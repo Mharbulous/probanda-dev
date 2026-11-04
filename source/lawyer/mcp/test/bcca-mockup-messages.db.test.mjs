@@ -8,7 +8,7 @@
 // prints a work message the mechanism owns: render-requisition.ts (order-template fragments
 // interpolated mid-sentence, refused by template_key_gate_failed), projections.ts gap() (the
 // general renderer, covered by MESSAGE_LINE_RES and unwritten_gate_failed), and
-// render-vaniac-submissions.ts (its one message line is a MESSAGE_LINE_RES entry). The stay
+// the VanIAC submission renderers (their one message line is a MESSAGE_LINE_RES entry). The stay
 // response's `NONE 🕵️` (Part 1, no documents) is not a message line: it strips to the true word NONE.
 
 import assert from "node:assert/strict";

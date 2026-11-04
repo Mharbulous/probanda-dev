@@ -3,7 +3,7 @@
 import { BUILD_STAMP } from "../build-stamp.js";
 import { DataServerError } from "../errors.js";
 import { pluginVersion, type ShippedFrom } from "../repo-root.js";
-import { mergeKinds, mergeVenues, NO_VENUE, type Conflict, type IndexSource, type KindsView, type VenuesView } from "./index.js";
+import { mergeKinds, mergeVenues, NO_VENUE, type Conflict, type IndexSource, type KindsView, type VenuesView } from "./venues-kinds.js";
 import { grammarProblem, locate, parseKnowledgePath, readLayerFiles, type KnowledgePath, type KnowledgeSeams, type LayerFile } from "./tree.js";
 
 export interface Provenance {

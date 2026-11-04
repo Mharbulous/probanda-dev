@@ -2,7 +2,8 @@
 
 import { GENERAL_DOCUMENT_TYPE, generalDocumentName, sanitizeForPath } from "../writing-folder.js";
 import { requireForum } from "./query.js";
-import { renderWitnessStatements, type RenderContext } from "./render-vaniac-submissions.js";
+import { renderWitnessStatements } from "./render-witness-statements.js";
+import type { RenderContext } from "./render-context.js";
 import { composeFiller } from "./filler-registry.js";
 import { scalarValue, type CitedState, type StoredLayout } from "./layout-snapshot.js";
 import { renderGeneral } from "./render-general.js";

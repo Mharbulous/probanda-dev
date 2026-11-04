@@ -13,7 +13,7 @@ import test from "node:test";
 const { freshSubmissionDb } = await import("./helpers/template-db.mjs");
 const { submissionDataExecute, submissionDataQuery } = await import("../build/submission/backend.js");
 const { callTool } = await import("../build/dispatch.js");
-const { AUDIENCES } = await import("../build/knowledge/index.js");
+const { AUDIENCES } = await import("../build/knowledge/venues-kinds.js");
 const { buildToolDefinitions } = await import("../build/schema-gen.js");
 
 const DOCS = "draft/CAN/BC/_NoVenue/Documents";

@@ -1,14 +1,14 @@
 // Every shipped index (plan Phase 5, decision 3): each `kinds.json` row's `file` exists, each
 // alias resolves to exactly one file, and every type file in a `Documents` folder is named by a
 // row. Each `venues.json` venue has its folder, and each venue alias resolves to exactly one
-// venue. Resolution is the runtime's own (knowledge/index.ts), the one knowledge__list uses.
+// venue. Resolution is the runtime's own (knowledge/venues-kinds.ts), the one knowledge__list uses.
 
 import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
-const { mergeKinds, mergeVenues, NO_VENUE, resolveKind, resolveVenue } = await import("../build/knowledge/index.js");
+const { mergeKinds, mergeVenues, NO_VENUE, resolveKind, resolveVenue } = await import("../build/knowledge/venues-kinds.js");
 const { KNOWLEDGE_SKILLS } = await import("../build/knowledge/tree.js");
 const { resolveShippedRoot } = await import("../build/repo-root.js");
 
