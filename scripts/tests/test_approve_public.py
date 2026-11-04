@@ -35,7 +35,7 @@ class ApproveTest(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
         self.repo = Path(self._tmp.name).resolve()
-        self.put("source/assignment.json", '{"status": "cutover", "plugins": {"lawyer": {"requires": [], "skills": [], '
+        self.put("source/assignment.json", '{"status": "cutover", "plugins": {"lawyer": {"requires": [], "skills": ["x", "y"], '
                                            '"agents": [], "hooks": {}, "servers": []}}}')
         self.put("source/lawyer/plugin.json", "{}")
         self.put(".claude/skills/data/SKILL.md", "the private skill\n")
