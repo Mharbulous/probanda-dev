@@ -58,3 +58,18 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 
 - `researcher` citation-checker agent file and `shared/citation-checker/note-up.md`.
 - `shared/legal-research.md` duties 3 and 5.
+
+## 11. Verification against HEAD
+
+Checked at commit `22a3fdae`, 2026-11-03.
+
+| Claim in this spec | Repo path | Result |
+|---|---|---|
+| The note-up agent has no cap | `source/researcher/agents/citation-checker.md` | Confirmed. `## Input` takes "one or more court decisions" with no limit. `## Output` has only `<record path>` and `not filed: <reason>` per citation. |
+| The playbook sets no cap | `.claude/skills/shared/citation-checker/note-up.md` | Confirmed. It works per citation and names no limit. It needs no change: the agent definition holds the cap. |
+| The download playbook caps a run at 5 | `.claude/skills/shared/research-paralegal/citation-download.md` line 28 | Confirmed, word for word. |
+| Duty 3 batches | `.claude/skills/shared/legal-research.md` lines 152-156 | Confirmed. It points to the download playbook's cap and does not state the number. |
+| Duty 5 dispatches "once", with no batch size | `.claude/skills/shared/legal-research.md` lines 246-257 | Confirmed. Line 253 already bars a second `citation-checker` while one is out. |
+| Installed-copy paths in §2 | as above | `researcher/skills/shared/` in the installed copy is `.claude/skills/shared/` in source. |
+
+Not in the spec: the post-answer download step (`legal-research.md` lines 491-492) repeats duty 3's batching rule, and the `needs_note_up` loop (lines 368-369) already routes through duty 5. Open question 1 is decided: the cap is 5.
