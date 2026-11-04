@@ -87,7 +87,7 @@ class Who(unittest.TestCase):
         assignment = json.loads((REPO / "source" / "assignment.json").read_text(encoding="utf-8"))
         self.assertIn("brief-reviewer", json.dumps(assignment["plugins"]["researcher"]["agents"]))
         front = (REPO / "source" / "researcher" / "agents" / "brief-reviewer.md").read_text(encoding="utf-8").split("---")[1]
-        for tool in ("Write", "Edit", "Bash", "drafting_data"):
+        for tool in ("Read", "Write", "Edit", "Bash", "drafting_data"):
             self.assertNotIn(tool, front.split("tools:")[1])
         skill = read("case-brief", "SKILL.md")
         self.assertLess(skill.index("researcher:brief-reviewer"), skill.index("**Save it**"))
@@ -121,17 +121,32 @@ class Jobs(unittest.TestCase):
 
 
 class Reading(unittest.TestCase):
-    """The agents' `Read` opens no Word file, so both read the text the caller extracts, as the memo flow's do."""
+    """Both agents read the text the caller extracts, and a scanned page, through the narrow tool, on any host."""
 
-    def test_the_caller_extracts_a_word_decision_for_both_agents(self):
+    def test_the_caller_extracts_the_decision_for_both_agents(self):
         skill = flat(read("case-brief", "SKILL.md"))
         self.assertIn("Call `research_filing__law_folder_text` with the matter root, the file's folder as `destination_dir` and its name as `file`", skill)
         self.assertIn("Decision text: <the text_path, or none>", read("case-brief", "SKILL.md"))
-        self.assertIn("with the same `Decision:`, `Decision text:` and `Page manifest:` lines", skill)
+        self.assertIn("with the same `Matter root:`, `Decision:` and `Decision text:` lines", skill)
         self.assertIn("A `Decision text:` path is the decision's text", read("case-brief", "agents", "brief.md"))
-        reviewer = (REPO / "source" / "researcher" / "agents" / "brief-reviewer.md").read_text(encoding="utf-8")
+
+    def test_nothing_is_staged_and_no_manifest_passes(self):
+        for text in (read("case-brief", "SKILL.md"), read("case-brief", "agents", "brief.md")):
+            for gone in ("device_stage_files", "pdf_pages__images", "manifest"):
+                self.assertNotIn(gone, text)
+        for agent in ("brief-reviewer", "research-agent"):
+            text = (REPO / "source" / "researcher" / "agents" / f"{agent}.md").read_text(encoding="utf-8")
+            self.assertNotIn("Page manifest", text, agent)
+
+    def test_a_scanned_page_is_read_only_from_its_images(self):
+        self.assertIn("each scanned page only from its images", read("case-brief", "SKILL.md"))
+        self.assertIn("Read a page given as images only from those images", read("case-brief", "agents", "brief.md"))
+
+    def test_the_reviewer_reads_only_through_the_narrow_tool_and_only_the_decision(self):
+        reviewer = flat((REPO / "source" / "researcher" / "agents" / "brief-reviewer.md").read_text(encoding="utf-8"))
         self.assertIn("A `Decision text:` path is its text: read that file", reviewer)
-        self.assertIn("  - Read\n", reviewer)
+        self.assertIn("Read a page given as images only from those images", reviewer)
+        self.assertIn("You never list a folder or open any other file", reviewer)
 
     def test_the_search_for_the_decision_reaches_subfolders(self):
         skill = flat(read("case-brief", "SKILL.md"))
@@ -157,10 +172,6 @@ class Dispatch(unittest.TestCase):
         self.assertIn("names any other `mode:`, or `report:`, fetch `shared/legal-audit-scoped.md`", protocol)
         self.assertIn("never for `mode: case_brief`", flat(read("shared", "legal-audit-scoped.md")))
         self.assertIn("The scratch copy is your one write", read("case-brief", "agents", "brief.md"))
-
-    def test_the_shim_names_the_manifest_line_case_brief_uses(self):
-        shim = (REPO / "source" / "researcher" / "agents" / "research-agent.md").read_text(encoding="utf-8")
-        self.assertIn("(under `mode: case_brief`, in `Page manifest:`)", shim)
 
 
 class NoneIsNoItem(unittest.TestCase):

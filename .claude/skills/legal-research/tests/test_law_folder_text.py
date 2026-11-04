@@ -44,8 +44,8 @@ class DutyTwoTests(unittest.TestCase):
         self.assertIn(f"each `text_path`, and the PDF of each `ocr_unavailable` row, through `{READER}`", duty)
         self.assertIn("The agent reads a scanned page only from its images", duty)
 
-    def test_both_agents_hold_the_narrow_tool_and_not_the_whole_matter_one(self):
-        for agent in ("research-agent", "memo-reviewer"):
+    def test_the_agents_hold_the_narrow_tool_and_not_the_whole_matter_one(self):
+        for agent in ("research-agent", "memo-reviewer", "brief-reviewer"):
             text = (REPO_ROOT / "source" / "researcher" / "agents" / f"{agent}.md").read_text(encoding="utf-8")
             front = text.split("---")[1]
             for prefix in ("mcp__plugin_lawyer_data__", "mcp__remote-devices__plugin_lawyer_data__"):
