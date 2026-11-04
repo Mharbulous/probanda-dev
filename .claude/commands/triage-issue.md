@@ -167,7 +167,7 @@ A **merged brief** (step 2) is `## Agent Brief`, the `Suggestion <suggestion_id>
 
 Set no item status: the maintainer decides each item through `/hitl-triage`. For any other issue, nothing is recorded on the Suggestion Box.
 
-Then set the labels: add the category, the state and, where it applies, the location label, and remove `needs-triage`. Create a missing label with `POST /labels` first: `cloud` (`{"name":"cloud","color":"0E8A16","description":"Work an unattended cloud session can do"}`) or `local` (`{"name":"local","color":"B60205","description":"Work that needs Brahm's machine, data or credentials"}`).
+Then set the labels: add the category, the state and, where it applies, the location label, and remove `needs-triage`. Add `off peak` when the brief's work is token-intensive (**Off-peak work** in `docs/agents/issue-tracker.md`). Create a missing label with `POST /labels` first: `cloud` (`{"name":"cloud","color":"0E8A16","description":"Work an unattended cloud session can do"}`) or `local` (`{"name":"local","color":"B60205","description":"Work that needs Brahm's machine, data or credentials"}`).
 
 ## 7. Report
 
