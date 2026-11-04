@@ -1,5 +1,5 @@
 ---
-name: get-candidate-dates
+name: triage-billing-dates
 description: "Use when a bill must go out now for one matter and the time records are behind, or for 'which dates should I look at before billing' or /triage-billing-dates: narrows that one matter to a short, evidenced list of dates with an indicator of work, reconciled against the last invoice, so only those dates' evidence is gathered. Does not bill (/bill-client), fetch or store a day's evidence (/build-timeline), sort time to matters (/time-sorting), correct TimeCamp (/timecamping) or draft entries (/time-entry-drafting)."
 ---
 
