@@ -27,7 +27,7 @@ import { paragraphMapDir, previewDir as previewDirOf, recordsDir } from "../rend
 import { renderableSchemaVersion } from "../schema-ceiling.js";
 import { fetchFilingById, readSchemaVersion } from "./filing-reads.js";
 import { renderFilingInMemory, type InMemoryRender } from "./render.js";
-import { nowStamp } from "./timings.js";
+import { nowStamp, todaySql } from "./timings.js";
 import { fetchRevision, type FilingRow } from "./query.js";
 import { withLegend } from "./legend.js";
 import {
@@ -51,7 +51,6 @@ const PREVIEW = "drafting_forms__preview_edit";
 const APPLY = "drafting_forms__apply_edit";
 const TOKEN_TTL_MS = 30 * 60 * 1000;
 const TOKEN_PRUNE_MS = 24 * 60 * 60 * 1000;
-const TODAY_SQL = "date('now', 'localtime')";
 /** Read before and after the trial, so the foreign-scope read and the preconditions cover every row a
  * trigger touches as well as the rows the ops name. */
 const TRIAL_TABLES = [
@@ -712,7 +711,7 @@ function planKill(plan: Plan, t: MapEntry): void {
   if (t.sub !== 0 || (t.entity !== "submissions" && t.entity !== "law_assertions")) {
     throw new Refusal("unsupported", `${describe(t)} is a ${t.sub ? "statement printed under a paragraph" : KIND[t.entity]}; only a submission or a proposition is killed.`);
   }
-  plan.push(`kill ${KIND[t.entity]} ${t.row_id}`, `UPDATE ${t.entity} SET killed_on = ${TODAY_SQL} WHERE id = ? AND killed_on IS NULL`, [t.row_id], 1);
+  plan.push(`kill ${KIND[t.entity]} ${t.row_id}`, `UPDATE ${t.entity} SET killed_on = ${todaySql()} WHERE id = ? AND killed_on IS NULL`, [t.row_id], 1);
   plan.written.add(`${t.entity}:${t.row_id}`);
   if (t.entity === "submissions") {
     // Killing a submission takes it off every drafting Writing in the same write; a sent or retired Writing keeps its row.

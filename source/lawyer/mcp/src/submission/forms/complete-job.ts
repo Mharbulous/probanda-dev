@@ -30,12 +30,12 @@ import { fetchBoardFilings, liveTicketClause, proceedingJobBoard, stepStatusHeld
 import { isResearchTitle } from "./research-job.js";
 import { type StepStateFields, stepResolved } from "./step-state.js";
 import { checkClaim, heldBy } from "./job-activity.js";
+import { nowMinuteSql } from "./timings.js";
 import type { BoardMove } from "../matter-pages.js";
 import type { MatterDates } from "../matter-dates.js";
 import type { MatterTodos } from "../matter-todos.js";
 
 const TOOL = "drafting_data__complete_job";
-const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 
 export interface CompleteJobArgs {
   db_path: string;
@@ -223,7 +223,7 @@ export async function submissionDataCompleteJob(
         params: [id, id, id, id, ...held.params],
       },
       {
-        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${held.sql}`,
+        sql: `UPDATE tickets SET status = 'completed', completed_at = ${nowMinuteSql()}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${held.sql}`,
         params: [id, ...held.params],
       },
     ],

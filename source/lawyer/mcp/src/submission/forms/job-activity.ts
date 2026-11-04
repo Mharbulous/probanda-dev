@@ -11,6 +11,7 @@
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { hasColumn, hasTable } from "../schema-capabilities.js";
+import { nowMinuteSql } from "./timings.js";
 
 /** A held job's staleness, measured from its last activity (ticket-category.ts idleSince): until
  * LAPSE_AFTER_MINUTES it is held, its take-over only on the practitioner's instruction; from there its
@@ -18,11 +19,10 @@ import { hasColumn, hasTable } from "../schema-capabilities.js";
  * (ADR 0015). A lock-lapse time, never a countdown. */
 export const LAPSE_AFTER_MINUTES = 60;
 
-const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 const NAMESPACE = "last_activity";
-const touch = (held: string): string =>
+const touch = (held: string, now: string): string =>
   "INSERT INTO kv_store (namespace, key, value, updated_at) " +
-  `SELECT '${NAMESPACE}', 'tickets:' || id, '"' || ${NOW} || '"', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND ${held} ` +
+  `SELECT '${NAMESPACE}', 'tickets:' || id, '"' || ${now} || '"', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND ${held} ` +
   "ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at";
 
 /** SQL for the claim number of the `tickets` row in scope (alias `t`): the kv_store value `claim_no` /
@@ -72,9 +72,10 @@ export function checkClaim(tool: string, dbPath: string, id: number, token: stri
  * result. None on a database held below v80, which has no last-activity stamp. */
 export function touchStatements(dbPath: string, id: number, held: { sql: string; params: unknown[] }): WriteStatement[] {
   if (!hasTable(dbPath, "kv_store")) return [];
+  const now = nowMinuteSql();
   return [
-    { sql: `INSERT OR REPLACE INTO db_meta (key, value) SELECT 'job_active:' || id, ${NOW} FROM tickets WHERE id = ? AND ${held.sql}`, params: [id, ...held.params] },
-    { sql: touch(held.sql), params: [id, ...held.params] },
+    { sql: `INSERT OR REPLACE INTO db_meta (key, value) SELECT 'job_active:' || id, ${now} FROM tickets WHERE id = ? AND ${held.sql}`, params: [id, ...held.params] },
+    { sql: touch(held.sql, now), params: [id, ...held.params] },
   ];
 }
 
@@ -101,7 +102,7 @@ export function lastActivitySql(dbPath: string): string {
     : "tickets.locked_at";
 }
 
-/** SQL true of the `tickets` row in scope when it has been idle for `minutes` or more by SQLite's
+/** SQL true of the `tickets` row in scope when it has been idle for `minutes` or more by Node's
  * local clock, measured as idleSince measures it; false with nothing to measure from. */
 export function idleClause(dbPath: string, minutes: number): string {
   const stamp = "replace(substr(tickets.locked_at, 1, 16), ' ', 'T')";
@@ -111,7 +112,7 @@ export function idleClause(dbPath: string, minutes: number): string {
   const wait = hasColumn(dbPath, "ticket_steps", "wait_until")
     ? ", COALESCE((SELECT max(wait_until) FROM ticket_steps s WHERE s.ticket_id = tickets.id AND s.done_at IS NULL AND s.status = 'waiting'), '')"
     : "";
-  return `COALESCE(max(${last}${wait}, '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-${minutes} minutes'), 0)`;
+  return `COALESCE(max(${last}${wait}, '') <= ${nowMinuteSql(-minutes)}, 0)`;
 }
 
 /** SQL true of the `tickets` row in scope when its lock has lapsed: held, not shelved, and idle for
@@ -126,7 +127,7 @@ export function lapsedClause(dbPath: string): string {
 export function recordLapseSql(guard: string): string {
   return (
     "INSERT INTO kv_store (namespace, key, value, updated_at) " +
-    `SELECT 'lock_lapsed', 'tickets:' || id, '{"at":"' || ${NOW} || '","from":"' || substr(locked_by, -8) || '"}', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') ` +
+    `SELECT 'lock_lapsed', 'tickets:' || id, '{"at":"' || ${nowMinuteSql()} || '","from":"' || substr(locked_by, -8) || '"}', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') ` +
     `FROM tickets WHERE id = ? AND status = 'wip' AND ${guard} ` +
     "ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at"
   );

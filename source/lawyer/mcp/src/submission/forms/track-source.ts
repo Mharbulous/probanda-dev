@@ -13,9 +13,9 @@ import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { hasTable } from "../schema-capabilities.js";
 import { checkClaim, heldBy, touchStatements } from "./job-activity.js";
+import { nowMinuteSql } from "./timings.js";
 
 const TOOL = "drafting_data__track_source";
-const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 const KINDS = ["decision", "legislation", "file"];
 const OUTCOMES = ["got", "not_retrieved"];
 const LABEL_MAX = 200;
@@ -121,12 +121,12 @@ export async function submissionDataTrackSource(args: TrackSourceArgs, env: Node
         params: [id, a.kind, a.label, id, ...h.params],
       },
       {
-        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${NOW} FROM tickets WHERE id = ? AND ${h.sql}`,
+        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${nowMinuteSql()} FROM tickets WHERE id = ? AND ${h.sql}`,
         params: [a.kind, a.label, id, ...h.params],
       },
     ]),
     ...close.map((c) => ({
-      sql: `UPDATE ticket_sources SET closed_at = ${NOW}, outcome = ?, reason = ? WHERE ticket_id = ? AND kind = ? AND label = ? AND ${held}`,
+      sql: `UPDATE ticket_sources SET closed_at = ${nowMinuteSql()}, outcome = ?, reason = ? WHERE ticket_id = ? AND kind = ? AND label = ? AND ${held}`,
       params: [c.outcome, c.reason, id, c.kind, c.label, id, ...h.params],
     })),
   ];

@@ -16,6 +16,7 @@ import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { framingWarning, type MergedGoal, NEEDS_CONSOLIDATION, readStored, type StoredGoals, survivorGoalsKey } from "./board-goals.js";
 import { BoardIndex, type BoardRef, memberKey, sameBoard } from "./board-members.js";
 import { fetchBoardFilings, isResearchWriting, RESEARCH_WRITING_KINDS_SQL } from "./query.js";
+import { nowMinuteSql } from "./timings.js";
 
 const TOOL = "drafting_data__merge_milestones";
 
@@ -118,7 +119,7 @@ export async function submissionDataMergeMilestones(args: MergeMilestonesArgs, e
   const goalStatus = statement === undefined ? NEEDS_CONSOLIDATION : "confirmed";
   const goals = { description: args.goal_description ?? null, statement: statement ?? null, status: goalStatus, session_token: args.session_token, merged };
   // Stamped in SQL: approved_at and consolidated_at only with a goal.
-  const now = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+  const now = nowMinuteSql();
   const stamps =
     statement === undefined
       ? `json_set(json(?), '$.approved_at', json('null'), '$.updated_at', ${now})`

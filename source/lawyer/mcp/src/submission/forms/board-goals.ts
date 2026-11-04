@@ -21,9 +21,9 @@ import { DataServerError, NotFoundError, ValidationError } from "../../errors.js
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { BoardIndex, type BoardRef } from "./board-members.js";
 import { fetchBoardFilings, isResearchWriting, RESEARCH_WRITING_KINDS_SQL } from "./query.js";
+import { nowMinuteSql } from "./timings.js";
 
 const TOOL = "drafting_data__set_board_goal";
-const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 const FILING_PREFIX = "board_goal:filing:";
 const PROCEEDING_PREFIX = "board_goal:proceeding:";
 
@@ -239,15 +239,16 @@ export async function submissionDataSetBoardGoal(args: SetBoardGoalArgs, env: No
 
   // The board's own statement, keeping any merged ones as history and so holding one goal, or one
   // merged statement in its place.
+  const now = nowMinuteSql();
   const entry =
     `json_object('description', ?, 'statement', ?, 'status', ?, ` +
-    `'approved_at', CASE WHEN ? = 'confirmed' THEN ${NOW} END, 'session_token', ?, 'updated_at', ${NOW})`;
+    `'approved_at', CASE WHEN ? = 'confirmed' THEN ${now} END, 'session_token', ?, 'updated_at', ${now})`;
   const entryParams = [description, statement, status, status, args.session_token];
   const write =
     at !== undefined
       ? { sql: `json_set(json(?), '$.merged[${at - 1}]', json_set(${entry}, '$.from', ?))`, params: [JSON.stringify(prior), ...entryParams, merged[at - 1].from] }
       : merged.length > 0
-        ? { sql: `json_set(${entry}, '$.merged', json(?), '$.consolidated_at', ${NOW})`, params: [...entryParams, JSON.stringify(merged)] }
+        ? { sql: `json_set(${entry}, '$.merged', json(?), '$.consolidated_at', ${now})`, params: [...entryParams, JSON.stringify(merged)] }
         : { sql: entry, params: entryParams };
   const written = await submissionDataWriteAll(
     args.db_path,

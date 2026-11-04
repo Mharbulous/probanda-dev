@@ -3,7 +3,7 @@
 // and clears any status; it is the one status a database held below v78 takes. retry is a step blocked by a missing credential or an
 // unreachable source, never stamped done. cancelled and deferred are a step the practitioner chose to
 // drop or put off, only on their words, which are stored as the step's status_note. waiting is a step
-// waiting on an external process: wait_until is set in SQL to now plus wait_minutes, the minute the
+// waiting on an external process: wait_until is set to now plus wait_minutes, the minute the
 // session checks the process again, never a deadline and never time remaining. open clears all
 // three. With text, the step's words are replaced verbatim in the same write (§14's gate results and
 // waivers). A stamped step is frozen: it is never re-stamped, reworded or given a status. The write matches only
@@ -15,10 +15,10 @@ import { NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { checkClaim, heldBy, touchStatements } from "./job-activity.js";
 import { stepStatusHeld } from "./query.js";
+import { nowMinuteSql } from "./timings.js";
 
 const TOOL = "drafting_data__set_step";
 const STATUSES = ["done", "open", "retry", "cancelled", "deferred", "waiting"];
-const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 const DEFAULT_WAIT_MINUTES = 5;
 const WAIT_MINUTES_MAX = 1440;
 const WORDS_MAX = 500;
@@ -110,11 +110,11 @@ export async function submissionDataSetStep(args: SetStepArgs, env: NodeJS.Proce
   const guard = `WHERE ticket_id = ? AND ordinal = ? AND done_at IS NULL AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${held.sql})`;
   const write =
     status === "done"
-      ? { sql: `UPDATE ticket_steps SET ${text.sql}done_at = ${NOW}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard}`, params: [...text.params, id, ordinal, id, ...held.params] }
+      ? { sql: `UPDATE ticket_steps SET ${text.sql}done_at = ${nowMinuteSql()}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard}`, params: [...text.params, id, ordinal, id, ...held.params] }
       : {
           sql:
             `UPDATE ticket_steps SET ${text.sql}status = ?, ` +
-            `wait_until = ${minutes === null ? "NULL" : `strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '+${minutes} minutes')`}, status_note = ? ${guard}`,
+            `wait_until = ${minutes === null ? "NULL" : nowMinuteSql(minutes)}, status_note = ? ${guard}`,
           params: [...text.params, status === "open" ? null : status, owesWords ? words : null, id, ordinal, id, ...held.params],
         };
   const written = await submissionDataWriteAll(args.db_path, [write, ...touchStatements(args.db_path, id, held)], env);

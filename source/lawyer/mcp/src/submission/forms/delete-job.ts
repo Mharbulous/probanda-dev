@@ -9,6 +9,7 @@
 import { ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { checkClaim, heldBy } from "./job-activity.js";
+import { nowMinuteSql } from "./timings.js";
 
 const TOOL = "drafting_data__delete_job";
 
@@ -47,8 +48,8 @@ interface ConfirmRow {
   deleted_at: string | null;
 }
 
-const STAMP =
-  "UPDATE tickets SET deleted_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), status = 'queued', locked_by = NULL, locked_at = NULL " +
+const stamp = (): string =>
+  `UPDATE tickets SET deleted_at = ${nowMinuteSql()}, status = 'queued', locked_by = NULL, locked_at = NULL ` +
   "WHERE id = ? AND deleted_at IS NULL AND (status = 'queued' OR (status = 'wip' AND ";
 
 /** drafting_data__delete_job. Every refusal writes nothing. */
@@ -64,7 +65,7 @@ export async function submissionDataDeleteJob(args: DeleteJobArgs, env: NodeJS.P
   const held = heldBy(args.db_path, args.session_token, claims[0]);
   const written = await submissionDataWriteAll(
     args.db_path,
-    ids.map((id) => ({ sql: `${STAMP}${held.sql}))`, params: [id, ...held.params] })),
+    ids.map((id) => ({ sql: `${stamp()}${held.sql}))`, params: [id, ...held.params] })),
     env
   );
   const jobs = ids.map((id, i): DeleteJobOutcome => {

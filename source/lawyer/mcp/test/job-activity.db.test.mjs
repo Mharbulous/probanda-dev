@@ -16,6 +16,7 @@ const { submissionDataExecute, submissionDataQuery } = await import("../build/su
 const { fetchProceeding } = await import("../build/submission/forms/query.js");
 const { buildPreFilingBoardData } = await import("../build/submission/forms/render-work-board.js");
 const { renderLiveLanes, submissionFormsBoardCard } = await import("../build/submission/matter-pages.js");
+const { nowMinute } = await import("../build/submission/forms/timings.js");
 const { callTool } = await import("../build/index.js");
 
 const SEED = `INSERT INTO proceedings (id, matter_reference, forum) VALUES (1, 'L8470 - Larchmont', NULL);
@@ -53,15 +54,14 @@ const stamp = (dbPath, id) => {
   const [row] = query(dbPath, "SELECT value FROM kv_store WHERE namespace = 'last_activity' AND key = ?", [`tickets:${id}`]);
   return row === undefined ? null : JSON.parse(row.value);
 };
-const minute = (dbPath) => query(dbPath, "SELECT strftime('%Y-%m-%dT%H:%M', 'now', 'localtime') AS m")[0].m;
 const clear = (dbPath) => submissionDataExecute(dbPath, "DELETE FROM kv_store WHERE namespace = 'last_activity'");
 
 /** Runs `write` with the stamp cleared, then asserts it moved to the minute the write ran in. */
 async function moves(dbPath, id, label, write) {
   await clear(dbPath);
-  const from = minute(dbPath);
+  const from = nowMinute();
   await write();
-  const to = minute(dbPath);
+  const to = nowMinute();
   const at = stamp(dbPath, id);
   assert.ok(at !== null && at >= from && at <= to, `${label} moved the stamp (got ${at})`);
 }

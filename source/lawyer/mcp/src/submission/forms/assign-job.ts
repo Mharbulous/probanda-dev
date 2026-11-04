@@ -21,11 +21,9 @@ import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { LAPSE_AFTER_MINUTES, claimSql, lapsedClause, lastActivitySql, nextClaimSql, recordLapseSql, touchStatements } from "./job-activity.js";
 import { hasTable } from "../schema-capabilities.js";
 import { bfOnHeld, createdByHeld, deletedAtHeld, liveTicketClause } from "./query.js";
+import { nowMinuteSql, todaySql } from "./timings.js";
 
 const TOOL = "drafting_data__assign_job";
-const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
-/** True of a job with no bring-forward date, or one whose date is the local date or earlier. */
-const ARRIVED = "(bf_on IS NULL OR bf_on <= date('now', 'localtime'))";
 
 export interface AssignJobArgs {
   db_path: string;
@@ -100,7 +98,9 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
   const creator = creatorHeld ? " AND (created_by = ? OR NOT EXISTS (SELECT 1 FROM tickets c WHERE c.created_by = ?))" : "";
   // A job is not assigned before its bring-forward date (jobs-run.md §4). A take-over holds a wip job, which the date does not move.
   const bfHeld = bfOnHeld(args.db_path);
-  const notBefore = bfHeld && !takeover ? ` AND ${ARRIVED}` : "";
+  // True of a job with no bring-forward date, or one whose date is the local date or earlier.
+  const arrived = `(bf_on IS NULL OR bf_on <= ${todaySql()})`;
+  const notBefore = bfHeld && !takeover ? ` AND ${arrived}` : "";
   // A lapsed lock reads as released (ADR 0015).
   const lapsed = lapsedClause(args.db_path);
   // A take-over lands only while the card it was decided on is still current.
@@ -115,14 +115,14 @@ export async function submissionDataAssignJob(args: AssignJobArgs, env: NodeJS.P
     [
       ...record,
       ...claim,
-      { sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW} WHERE id = ? AND ${guard}`, params: [args.session_token, args.ticket_id, ...guardParams] },
+      { sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${nowMinuteSql()} WHERE id = ? AND ${guard}`, params: [args.session_token, args.ticket_id, ...guardParams] },
       ...touchStatements(args.db_path, args.ticket_id, { sql: "locked_by = ?", params: [args.session_token] }),
     ],
     env
   );
   const changes = written.ok ? written.results[record.length + claim.length].changes : written.changes;
   const tookLapsed = written.ok && record.length === 1 && written.results[0].changes === 1;
-  const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${last} AS last_activity${kv ? `, ${claimSql()} AS claim_no` : ""}${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
+  const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${last} AS last_activity${kv ? `, ${claimSql()} AS claim_no` : ""}${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${arrived} AS before_bf` : ""}`;
   const [read] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows as unknown as ConfirmRow[];
   if (read === undefined) throw new NotFoundError(`${TOOL}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;

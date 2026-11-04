@@ -14,9 +14,9 @@ import { heldBy, jobIdentity, requireHeld, touchStatements } from "./job-activit
 import { ticketAnswersHeld } from "./query.js";
 import { isResearchTitle, RESEARCH_JOB_PREFIX } from "./research-job.js";
 import { fixedText } from "./take-job.js";
+import { nowMinuteSql } from "./timings.js";
 
 const TOOL = "research_filing__save_answer";
-const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 
 export interface SaveAnswerArgs {
   destination_dir: string;
@@ -97,7 +97,7 @@ export async function saveAnswerTool(args: SaveAnswerArgs, env: NodeJS.ProcessEn
     written = await submissionDataWriteAll(
       dbPath,
       [
-        { sql: `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW} FROM tickets WHERE id = ? AND ${held.sql}`, params: [lawRelativePath(saved.path), id, ...held.params] },
+        { sql: `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${nowMinuteSql()} FROM tickets WHERE id = ? AND ${held.sql}`, params: [lawRelativePath(saved.path), id, ...held.params] },
         ...touchStatements(dbPath, id, held),
       ],
       env

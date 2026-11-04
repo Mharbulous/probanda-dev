@@ -33,10 +33,10 @@ import { partiesSnapshotStatements } from "./parties-snapshot.js";
 import type { MarkerInventory } from "./proposal-inventory.js";
 import { fetchProse, fetchRevision, isJobOnlyBoard, liveTicketClause, type FilingRow } from "./query.js";
 import { PRE_SEND_TITLE, unmetAuthorityConfirmedCriterion, unmetCurrencyCriterion, unmetHeldCriteria, unmetPositionConflictCriterion, type GoalCriterion } from "./render-work-board.js";
+import { nowMinuteSql } from "./timings.js";
 import { rows } from "../query-rows.js";
 
 const TOOL = "drafting_data__record_sent";
-const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 const DELIVER_TITLE = "Deliver";
 const WAIVER = " — WAIVED: ";
 const PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back from being recorded as sent.";
@@ -193,7 +193,7 @@ function planPreSendGate(dbPath: string, filing: FilingRow, held: GoalCriterion[
       {
         sql:
           `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created) ` +
-          `SELECT ?, ?, ?, ?, 'work', (SELECT COALESCE(MAX(priority), 0) + 1 FROM tickets WHERE filing_id = ?), ?, ${NOW} ` +
+          `SELECT ?, ?, ?, ?, 'work', (SELECT COALESCE(MAX(priority), 0) + 1 FROM tickets WHERE filing_id = ?), ?, ${nowMinuteSql()} ` +
           `WHERE NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`,
         params: [filing.proceeding_id, filing.id, PRE_SEND_TITLE, PRE_SEND_INTENT, filing.id, anchor.billing_anchor, filing.id, PRE_SEND_TITLE],
         expect_changes: 1,
@@ -220,7 +220,7 @@ function planPreSendGate(dbPath: string, filing: FilingRow, held: GoalCriterion[
     const c = byId.get(id);
     statements.push(
       c === undefined
-        ? { sql: `UPDATE ticket_steps SET text = ?, done_at = ${NOW} WHERE ticket_id = ? AND ordinal = ?`, params: [`${label}: met [rev ${rev}]`, ticketId, step.ordinal] }
+        ? { sql: `UPDATE ticket_steps SET text = ?, done_at = ${nowMinuteSql()} WHERE ticket_id = ? AND ordinal = ?`, params: [`${label}: met [rev ${rev}]`, ticketId, step.ordinal] }
         : { sql: "UPDATE ticket_steps SET text = ?, done_at = NULL WHERE ticket_id = ? AND ordinal = ?", params: [unmetStep(c, rev), ticketId, step.ordinal] }
     );
   }
@@ -402,13 +402,13 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
     statements.push(...gate.statements);
     if (waived.length > 0) {
       statements.push({
-        sql: `UPDATE ticket_steps SET text = text || ? || ?, done_at = ${NOW} WHERE ticket_id = ${job.sql} AND done_at IS NULL AND text NOT LIKE '% — WAIVED: %'`,
+        sql: `UPDATE ticket_steps SET text = text || ? || ?, done_at = ${nowMinuteSql()} WHERE ticket_id = ${job.sql} AND done_at IS NULL AND text NOT LIKE '% — WAIVED: %'`,
         params: [WAIVER, args.send_anyway, ...job.params],
       });
     }
     statements.push({
       sql:
-        `UPDATE tickets SET status = 'completed', completed_at = ${NOW} WHERE id = ${job.sql} AND status IN ('queued', 'wip') ` +
+        `UPDATE tickets SET status = 'completed', completed_at = ${nowMinuteSql()} WHERE id = ${job.sql} AND status IN ('queued', 'wip') ` +
         `AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = ${job.sql} AND done_at IS NULL)`,
       params: [...job.params, ...job.params],
       expect_changes: 1,
@@ -422,8 +422,8 @@ export async function submissionDataRecordSent(args: RecordSentArgs, env: NodeJS
   if (deliverId !== null) {
     const live = "status IN ('queued', 'wip') AND rejected_at IS NULL";
     statements.push(
-      { sql: `UPDATE ticket_steps SET done_at = ${NOW} WHERE ticket_id = ? AND done_at IS NULL AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`, params: [deliverId, deliverId] },
-      { sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live}`, params: [deliverId] }
+      { sql: `UPDATE ticket_steps SET done_at = ${nowMinuteSql()} WHERE ticket_id = ? AND done_at IS NULL AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`, params: [deliverId, deliverId] },
+      { sql: `UPDATE tickets SET status = 'completed', completed_at = ${nowMinuteSql()}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live}`, params: [deliverId] }
     );
   }
   const written = await submissionDataWriteAll(args.db_path, statements, env);

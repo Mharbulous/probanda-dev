@@ -20,9 +20,9 @@ import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from
 import { checkClaim, heldBy, touchStatements } from "./job-activity.js";
 import { deletedAtHeld } from "./query.js";
 import { isResearchTitle, JOB_TEXT_MAX as TEXT_MAX, RESEARCH_JOB_PREFIX, researchFormProblems } from "./research-job.js";
+import { nowMinuteSql } from "./timings.js";
 
 const TOOL = "drafting_data__rewrite_job";
-const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 
 export interface RewriteJobArgs {
   db_path: string;
@@ -133,7 +133,7 @@ export async function submissionDataRewriteJob(args: RewriteJobArgs, env: NodeJS
         expect_changes: 1,
       });
     }
-    if (held) statements.push({ sql: `UPDATE tickets SET plan_approved_at = ${NOW} WHERE id = ? AND ${guard} AND plan_approved_at IS NOT NULL`, params: [id, ...guardParams] });
+    if (held) statements.push({ sql: `UPDATE tickets SET plan_approved_at = ${nowMinuteSql()} WHERE id = ? AND ${guard} AND plan_approved_at IS NOT NULL`, params: [id, ...guardParams] });
   }
   if (args.title !== undefined) {
     const intent = args.intent === undefined ? { sql: "", params: [] } : { sql: ", intent = ?", params: [args.intent] };

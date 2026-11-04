@@ -9,9 +9,9 @@
 import { DataServerError, NotFoundError, ValidationError } from "../../errors.js";
 import { submissionDataQuery, submissionDataWriteAll } from "../backend.js";
 import { checkClaim, heldBy, touchStatements } from "./job-activity.js";
+import { nowMinuteSql } from "./timings.js";
 
 const TOOL = "drafting_data__approve_plan";
-const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 /** The fixed step a job with no plan yet carries (jobs-create.md §3, "The plan marker"). */
 export const PLAN_MARKER = "Create a plan for how to complete this job.";
 
@@ -69,7 +69,7 @@ export async function submissionDataApprovePlan(args: ApprovePlanArgs, env: Node
   const written = await submissionDataWriteAll(
     args.db_path,
     [
-      { sql: `UPDATE tickets SET plan_approved_at = ${NOW} WHERE id = ? AND ${held.sql} AND plan_approved_at IS NULL`, params: [id, ...held.params] },
+      { sql: `UPDATE tickets SET plan_approved_at = ${nowMinuteSql()} WHERE id = ? AND ${held.sql} AND plan_approved_at IS NULL`, params: [id, ...held.params] },
       ...touchStatements(args.db_path, id, held),
     ],
     env

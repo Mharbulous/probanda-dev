@@ -1,4 +1,4 @@
-// build-stamp: a36c4bdec708
+// build-stamp: 759e8295c150
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "a36c4bdec708";
+var BUILD_STAMP = false ? null : "759e8295c150";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -92622,8 +92622,8 @@ function trimTrailingBlank(lines2) {
   while (out.length > 0 && out[out.length - 1].trim() === "") out.pop();
   return out;
 }
-function serialize(stamp2, sections, eol) {
-  const out = ["---", `last_updated: ${stamp2}`, "---", TITLE];
+function serialize(stamp3, sections, eol) {
+  const out = ["---", `last_updated: ${stamp3}`, "---", TITLE];
   for (const section3 of sections) {
     out.push("", `## ${section3.date}`, ...trimTrailingBlank(section3.lines));
   }
@@ -92691,14 +92691,14 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
     }
     section3.lines = [...trimTrailingBlank(section3.lines), bullet];
   }
-  const stamp2 = localIsoWithOffset(now);
+  const stamp3 = localIsoWithOffset(now);
   const temp = `${path}.tmp-${process.pid}`;
-  writeFileSync10(temp, serialize(stamp2, sections, eol), "utf-8");
+  writeFileSync10(temp, serialize(stamp3, sections, eol), "utf-8");
   renameSync4(temp, path);
   return {
     ok: true,
     path,
-    last_updated: stamp2,
+    last_updated: stamp3,
     created: existing === void 0,
     added: bullet ?? null,
     heading_created: headingCreated,
@@ -96481,9 +96481,9 @@ function threadOf(row2) {
   };
 }
 function backupName(dbPath) {
-  const stamp2 = (/* @__PURE__ */ new Date()).toISOString().replace(/[-:]|\.\d+/g, "");
+  const stamp3 = (/* @__PURE__ */ new Date()).toISOString().replace(/[-:]|\.\d+/g, "");
   const held2 = timestampedBackups(dbPath);
-  const base = `.bak-${stamp2}`;
+  const base = `.bak-${stamp3}`;
   const name = dbPath.split(/[\\/]/).pop();
   let suffix = base;
   for (let n3 = 1; held2.has(name + suffix); n3 += 1) suffix = `${base}-${n3}`;
@@ -96641,8 +96641,8 @@ async function looseThreadsUpdate(args, env = process.env) {
       }
       case "discard": {
         check(Array.isArray(args.ids) && args.ids.length > 0, "update", "ids", "must name every thread discarded");
-        const stamp2 = threadStamp();
-        return save2(args.ids.map((id) => found(threads, id)).filter((t3) => t3.discarded_at === null).map((t3) => ({ ...t3, discarded_at: stamp2 })));
+        const stamp3 = threadStamp();
+        return save2(args.ids.map((id) => found(threads, id)).filter((t3) => t3.discarded_at === null).map((t3) => ({ ...t3, discarded_at: stamp3 })));
       }
       case "restore": {
         const t3 = one();
@@ -97603,8 +97603,8 @@ function parseSidecar(text8, file, knowledgePath) {
     if (corrected !== Object.hasOwn(row2, "value")) {
       invalid2(file, `${where}.value`, corrected ? "is required on a corrected row" : "appears only on a corrected row");
     }
-    const stamp2 = stampProblem(row2);
-    if (stamp2) invalid2(file, `${where}.${stamp2[0]}`, stamp2[1]);
+    const stamp3 = stampProblem(row2);
+    if (stamp3) invalid2(file, `${where}.${stamp3[0]}`, stamp3[1]);
     rows4.push({
       rule_ref: row2.rule_ref,
       status: row2.status,
@@ -98266,8 +98266,8 @@ function deleteUnreferencedPdfs(hashes, seams, label2) {
 
 // src/knowledge/write-document.ts
 var MAX_DOCUMENT_BYTES = 200 * 1024;
-function stampHeader(content, stamp2) {
-  const keys = Object.keys(stamp2);
+function stampHeader(content, stamp3) {
+  const keys = Object.keys(stamp3);
   const eol = content.includes("\r\n") ? "\r\n" : "\n";
   const lines2 = content.split(/\r?\n/);
   const end = lines2.findIndex((line, i3) => i3 > 0 && (line.trimEnd() === "---" || line.trimEnd() === "..."));
@@ -98280,7 +98280,7 @@ function stampHeader(content, stamp2) {
     }
     kept.push(lines2[i3]);
   }
-  const header = keys.map((key) => `${key}: ${stamp2[key] === null ? "null" : JSON.stringify(stamp2[key])}`);
+  const header = keys.map((key) => `${key}: ${stamp3[key] === null ? "null" : JSON.stringify(stamp3[key])}`);
   return [lines2[0], ...header, ...kept, ...lines2.slice(end)].join(eol);
 }
 function memoizedPage(path, pageUrl, fetcher) {
@@ -98379,8 +98379,8 @@ async function writeDocument(kp, args, matter, seams, label2) {
   checkExcerpts(kp.path, front, fetcher);
   checkClientGuidance(kp, front, seams, label2);
   const saved = args.saved_copy === void 0 ? null : savedCopyOf(args.saved_copy, kp.path, front, seams);
-  const stamp2 = { learned_by: "agent", matter: mattNum, plugin_version: pluginVersion(seams.installRoot), shipped_from: loc.shipped_from };
-  const text8 = stampHeader(content, saved?.pdf ? { ...stamp2, pdf_sha256: saved.pdf.sha256 } : stamp2);
+  const stamp3 = { learned_by: "agent", matter: mattNum, plugin_version: pluginVersion(seams.installRoot), shipped_from: loc.shipped_from };
+  const text8 = stampHeader(content, saved?.pdf ? { ...stamp3, pdf_sha256: saved.pdf.sha256 } : stamp3);
   const target = writableOverlayPath(kp, seams, label2);
   const previous = await withFileLock(target.abs, () => {
     const existing = entryType(target, label2, kp.path);
@@ -98401,7 +98401,7 @@ async function writeDocument(kp, args, matter, seams, label2) {
     layer: "local",
     status: previous.old === null ? "created" : "overwritten",
     size: Buffer.byteLength(text8, "utf-8"),
-    header: stamp2,
+    header: stamp3,
     ...previous.stale_check ? { stale_check: previous.stale_check } : {},
     ...saved ? { saved_copy: copySavedCopy(saved, seams, label2) } : {},
     fetched_deleted: previous.old === null ? [] : deleteUnreferencedPdfs(pdfHashesIn(previous.old), seams, label2),
@@ -103371,9 +103371,37 @@ var BoardIndex = class {
   }
 };
 
+// src/submission/forms/timings.ts
+function elapsedMs(start2) {
+  return Math.round((performance.now() - start2) * 10) / 10;
+}
+function timed(timings, phase, fn2) {
+  const start2 = performance.now();
+  const value2 = fn2();
+  timings.push({ phase, ms: elapsedMs(start2) });
+  return value2;
+}
+function withTotal(timings, start2) {
+  timings.push({ phase: "total", ms: elapsedMs(start2) });
+  return timings;
+}
+function nowStamp() {
+  return nowMinute().replace("T", " ");
+}
+function nowMinute(offset = 0) {
+  const d3 = new Date(Date.now() + offset * 6e4);
+  const pad = (n3) => String(n3).padStart(2, "0");
+  return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())}T${pad(d3.getHours())}:${pad(d3.getMinutes())}`;
+}
+function nowMinuteSql(offset = 0) {
+  return `'${nowMinute(offset)}'`;
+}
+function todaySql() {
+  return `'${nowMinute().slice(0, 10)}'`;
+}
+
 // src/submission/forms/board-goals.ts
 var TOOL3 = "drafting_data__set_board_goal";
-var NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var FILING_PREFIX = "board_goal:filing:";
 var PROCEEDING_PREFIX = "board_goal:proceeding:";
 var STATUSES = ["confirmed", "inferred", "declined"];
@@ -103481,9 +103509,10 @@ async function submissionDataSetBoardGoal(args, env = process.env) {
                  (SELECT id FROM proceedings p WHERE NOT EXISTS (SELECT 1 FROM filings f WHERE f.proceeding_id = p.id AND f.kind NOT IN (${RESEARCH_WRITING_KINDS_SQL}))))
         ORDER BY key`
   ).rows.map((r3) => r3.key).filter((k3) => k3 !== key && !(k3.startsWith(PROCEEDING_PREFIX) && index.proceedingSurvives(Number(k3.slice(PROCEEDING_PREFIX.length)))));
-  const entry3 = `json_object('description', ?, 'statement', ?, 'status', ?, 'approved_at', CASE WHEN ? = 'confirmed' THEN ${NOW} END, 'session_token', ?, 'updated_at', ${NOW})`;
+  const now = nowMinuteSql();
+  const entry3 = `json_object('description', ?, 'statement', ?, 'status', ?, 'approved_at', CASE WHEN ? = 'confirmed' THEN ${now} END, 'session_token', ?, 'updated_at', ${now})`;
   const entryParams = [description, statement, status3, status3, args.session_token];
-  const write2 = at !== void 0 ? { sql: `json_set(json(?), '$.merged[${at - 1}]', json_set(${entry3}, '$.from', ?))`, params: [JSON.stringify(prior), ...entryParams, merged[at - 1].from] } : merged.length > 0 ? { sql: `json_set(${entry3}, '$.merged', json(?), '$.consolidated_at', ${NOW})`, params: [...entryParams, JSON.stringify(merged)] } : { sql: entry3, params: entryParams };
+  const write2 = at !== void 0 ? { sql: `json_set(json(?), '$.merged[${at - 1}]', json_set(${entry3}, '$.from', ?))`, params: [JSON.stringify(prior), ...entryParams, merged[at - 1].from] } : merged.length > 0 ? { sql: `json_set(${entry3}, '$.merged', json(?), '$.consolidated_at', ${now})`, params: [...entryParams, JSON.stringify(merged)] } : { sql: entry3, params: entryParams };
   const written = await submissionDataWriteAll(
     args.db_path,
     [
@@ -103578,7 +103607,7 @@ async function submissionDataMergeMilestones(args, env = process.env) {
   const merged = [...history(survivorKey, readStored(args.db_path, survivorKey)), ...history(absorbedKey, taken)];
   const goalStatus = statement === void 0 ? NEEDS_CONSOLIDATION : "confirmed";
   const goals = { description: args.goal_description ?? null, statement: statement ?? null, status: goalStatus, session_token: args.session_token, merged };
-  const now = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
+  const now = nowMinuteSql();
   const stamps = statement === void 0 ? `json_set(json(?), '$.approved_at', json('null'), '$.updated_at', ${now})` : `json_set(json(?), '$.approved_at', ${now}, '$.updated_at', ${now}, '$.consolidated_at', ${now})`;
   const value2 = JSON.stringify({ filing_id: survivor.filing_id, proceeding_id: survivor.proceeding_id });
   const written = await submissionDataWriteAll(
@@ -103780,16 +103809,16 @@ function manifestDir(dbPath, manifest) {
 function stampsEqual(a3, b3) {
   return a3.filing_id === b3.filing_id && a3.revision === b3.revision && a3.approvals === b3.approvals && a3.schema_version === b3.schema_version && a3.build_stamp === b3.build_stamp && a3.client_name === b3.client_name && a3.client_no === b3.client_no && a3.matter_no === b3.matter_no && a3.date === b3.date;
 }
-function renderState(dbPath, filingId, stamp2, partiesDrift) {
+function renderState(dbPath, filingId, stamp3, partiesDrift) {
   const manifest = readManifest(dbPath, filingId);
   if (manifest === null) return "never";
-  if (!stampsEqual(manifest.stamp, stamp2) || manifest.parties_drift !== partiesDrift) return "stale";
+  if (!stampsEqual(manifest.stamp, stamp3) || manifest.parties_drift !== partiesDrift) return "stale";
   const dir = manifestDir(dbPath, manifest);
   return manifest.files.every((f3) => existsSync28(join32(dir, f3.file_name))) ? "fresh" : "stale";
 }
-function freshManifest(dbPath, filingId, stamp2, partiesDrift) {
+function freshManifest(dbPath, filingId, stamp3, partiesDrift) {
   const manifest = readManifest(dbPath, filingId);
-  if (manifest === null || !stampsEqual(manifest.stamp, stamp2) || manifest.parties_drift !== partiesDrift) return null;
+  if (manifest === null || !stampsEqual(manifest.stamp, stamp3) || manifest.parties_drift !== partiesDrift) return null;
   const dir = manifestDir(dbPath, manifest);
   const contents = /* @__PURE__ */ new Map();
   for (const f3 of manifest.files) {
@@ -103928,9 +103957,8 @@ var WORKBOARD_DATA_FILE = "workboard-data.js";
 
 // src/submission/forms/job-activity.ts
 var LAPSE_AFTER_MINUTES = 60;
-var NOW2 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var NAMESPACE = "last_activity";
-var touch = (held2) => `INSERT INTO kv_store (namespace, key, value, updated_at) SELECT '${NAMESPACE}', 'tickets:' || id, '"' || ${NOW2} || '"', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND ${held2} ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`;
+var touch = (held2, now) => `INSERT INTO kv_store (namespace, key, value, updated_at) SELECT '${NAMESPACE}', 'tickets:' || id, '"' || ${now} || '"', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND ${held2} ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`;
 var claimSql = (t3 = "tickets") => `(SELECT CAST(value AS INTEGER) FROM kv_store WHERE namespace = 'claim_no' AND key = 'tickets:' || ${t3}.id)`;
 function nextClaimSql(guard2) {
   return `INSERT INTO kv_store (namespace, key, value, updated_at) SELECT 'claim_no', 'tickets:' || id, COALESCE(${claimSql()}, 0) + 1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND ${guard2} ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`;
@@ -103955,9 +103983,10 @@ function checkClaim(tool, dbPath, id, token, claim) {
 }
 function touchStatements(dbPath, id, held2) {
   if (!hasTable(dbPath, "kv_store")) return [];
+  const now = nowMinuteSql();
   return [
-    { sql: `INSERT OR REPLACE INTO db_meta (key, value) SELECT 'job_active:' || id, ${NOW2} FROM tickets WHERE id = ? AND ${held2.sql}`, params: [id, ...held2.params] },
-    { sql: touch(held2.sql), params: [id, ...held2.params] }
+    { sql: `INSERT OR REPLACE INTO db_meta (key, value) SELECT 'job_active:' || id, ${now} FROM tickets WHERE id = ? AND ${held2.sql}`, params: [id, ...held2.params] },
+    { sql: touch(held2.sql, now), params: [id, ...held2.params] }
   ];
 }
 async function touchJob(dbPath, id, token, claim, env = process.env) {
@@ -103975,16 +104004,16 @@ function lastActivitySql(dbPath) {
   return hasTable(dbPath, "kv_store") ? `COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = '${NAMESPACE}' AND key = 'tickets:' || tickets.id), tickets.locked_at)` : "tickets.locked_at";
 }
 function idleClause(dbPath, minutes) {
-  const stamp2 = "replace(substr(tickets.locked_at, 1, 16), ' ', 'T')";
-  const last = hasTable(dbPath, "kv_store") ? `COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = '${NAMESPACE}' AND key = 'tickets:' || tickets.id), ${stamp2})` : stamp2;
+  const stamp3 = "replace(substr(tickets.locked_at, 1, 16), ' ', 'T')";
+  const last = hasTable(dbPath, "kv_store") ? `COALESCE((SELECT trim(value, '"') FROM kv_store WHERE namespace = '${NAMESPACE}' AND key = 'tickets:' || tickets.id), ${stamp3})` : stamp3;
   const wait = hasColumn(dbPath, "ticket_steps", "wait_until") ? ", COALESCE((SELECT max(wait_until) FROM ticket_steps s WHERE s.ticket_id = tickets.id AND s.done_at IS NULL AND s.status = 'waiting'), '')" : "";
-  return `COALESCE(max(${last}${wait}, '') <= strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '-${minutes} minutes'), 0)`;
+  return `COALESCE(max(${last}${wait}, '') <= ${nowMinuteSql(-minutes)}, 0)`;
 }
 function lapsedClause(dbPath) {
   return `(tickets.status = 'wip' AND tickets.locked_by IS NOT NULL AND tickets.rejected_at IS NULL AND ${idleClause(dbPath, LAPSE_AFTER_MINUTES)})`;
 }
 function recordLapseSql(guard2) {
-  return `INSERT INTO kv_store (namespace, key, value, updated_at) SELECT 'lock_lapsed', 'tickets:' || id, '{"at":"' || ${NOW2} || '","from":"' || substr(locked_by, -8) || '"}', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND status = 'wip' AND ${guard2} ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`;
+  return `INSERT INTO kv_store (namespace, key, value, updated_at) SELECT 'lock_lapsed', 'tickets:' || id, '{"at":"' || ${nowMinuteSql()} || '","from":"' || substr(locked_by, -8) || '"}', strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM tickets WHERE id = ? AND status = 'wip' AND ${guard2} ON CONFLICT (namespace, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`;
 }
 function jobIdentity(tool, args) {
   const named2 = [args.db_path, args.ticket_id, args.session_token].filter((v3) => v3 !== void 0).length;
@@ -104028,7 +104057,7 @@ async function submissionDataTouchJob(args, env = process.env) {
 }
 
 // src/submission/forms/step-state.ts
-var minute = (stamp2) => stamp2.replace(" ", "T").slice(0, 16);
+var minute = (stamp3) => stamp3.replace(" ", "T").slice(0, 16);
 function stepView(s3, now) {
   if (s3.done_at !== null) return "done";
   if (s3.status === "waiting") return s3.wait_until && minute(s3.wait_until) > minute(now) ? "waiting" : "open";
@@ -104058,9 +104087,9 @@ function reachesItself(startId, blockersOf) {
 }
 var allStepsDone = (steps) => steps.length > 0 && steps.every(stepResolved);
 var holdsMaterial = (t3) => t3.status === "wip" && !allStepsDone(t3.steps);
-function activeAt(ticket, stamp2) {
-  if (ticket.status !== "wip" || stamp2 === void 0 || ticket.locked_at === null) return null;
-  return stamp2.replace(" ", "T") >= ticket.locked_at.replace(" ", "T") ? stamp2 : null;
+function activeAt(ticket, stamp3) {
+  if (ticket.status !== "wip" || stamp3 === void 0 || ticket.locked_at === null) return null;
+  return stamp3.replace(" ", "T") >= ticket.locked_at.replace(" ", "T") ? stamp3 : null;
 }
 function classify2(ticket, blockers, conflictPartners, today3) {
   if (ticket.rejected_at !== null) return "rejected";
@@ -104079,8 +104108,8 @@ function supersededReason(ticket, retiredOn) {
   return retired === null ? null : `Superseded by: retirement of this Writing (${retired})`;
 }
 var scopesShare = (a3, b3) => a3 === b3 || a3.split(":")[0] === b3 || b3.split(":")[0] === a3;
-function localMinutes(stamp2) {
-  const m3 = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(stamp2);
+function localMinutes(stamp3) {
+  const m3 = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(stamp3);
   return m3 === null ? null : Math.round(new Date(+m3[1], +m3[2] - 1, +m3[3], +m3[4], +m3[5]).getTime() / 6e4);
 }
 function idleSince(t3) {
@@ -104101,7 +104130,6 @@ function lockLapsed(t3, rendered) {
 
 // src/submission/forms/track-source.ts
 var TOOL5 = "drafting_data__track_source";
-var NOW3 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var KINDS2 = ["decision", "legislation", "file"];
 var OUTCOMES = ["got", "not_retrieved"];
 var LABEL_MAX = 200;
@@ -104153,12 +104181,12 @@ async function submissionDataTrackSource(args, env = process.env) {
         params: [id, a3.kind, a3.label, id, ...h3.params]
       },
       {
-        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${NOW3} FROM tickets WHERE id = ? AND ${h3.sql}`,
+        sql: `INSERT OR IGNORE INTO ticket_sources (ticket_id, kind, label, added_at) SELECT id, ?, ?, ${nowMinuteSql()} FROM tickets WHERE id = ? AND ${h3.sql}`,
         params: [a3.kind, a3.label, id, ...h3.params]
       }
     ]),
     ...close.map((c3) => ({
-      sql: `UPDATE ticket_sources SET closed_at = ${NOW3}, outcome = ?, reason = ? WHERE ticket_id = ? AND kind = ? AND label = ? AND ${held2}`,
+      sql: `UPDATE ticket_sources SET closed_at = ${nowMinuteSql()}, outcome = ?, reason = ? WHERE ticket_id = ? AND kind = ? AND label = ? AND ${held2}`,
       params: [c3.outcome, c3.reason, id, c3.kind, c3.label, id, ...h3.params]
     }))
   ];
@@ -104207,26 +104235,6 @@ async function submissionDataTrackSource(args, env = process.env) {
     note,
     ...written?.warning ? { warning: written.warning } : {}
   };
-}
-
-// src/submission/forms/timings.ts
-function elapsedMs(start2) {
-  return Math.round((performance.now() - start2) * 10) / 10;
-}
-function timed(timings, phase, fn2) {
-  const start2 = performance.now();
-  const value2 = fn2();
-  timings.push({ phase, ms: elapsedMs(start2) });
-  return value2;
-}
-function withTotal(timings, start2) {
-  timings.push({ phase: "total", ms: elapsedMs(start2) });
-  return timings;
-}
-function nowStamp() {
-  const d3 = /* @__PURE__ */ new Date();
-  const pad = (n3) => String(n3).padStart(2, "0");
-  return `${d3.getFullYear()}-${pad(d3.getMonth() + 1)}-${pad(d3.getDate())} ${pad(d3.getHours())}:${pad(d3.getMinutes())}`;
 }
 
 // src/submission/forms/unattended-eligibility.ts
@@ -105055,7 +105063,6 @@ function buildWorkBoardData(ctx, deadlines = []) {
 
 // src/submission/forms/sent-write.ts
 var TOOL6 = "drafting_data__record_sent";
-var NOW4 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var DELIVER_TITLE = "Deliver";
 var WAIVER2 = " \u2014 WAIVED: ";
 var PRE_SEND_INTENT = "Meet or waive each criterion that holds this Writing back from being recorded as sent.";
@@ -105115,7 +105122,7 @@ function planPreSendGate(dbPath, filing, held2, rev) {
     const job = { sql: `(SELECT id FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`, params: [filing.id, PRE_SEND_TITLE] };
     const statements2 = [
       {
-        sql: `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created) SELECT ?, ?, ?, ?, 'work', (SELECT COALESCE(MAX(priority), 0) + 1 FROM tickets WHERE filing_id = ?), ?, ${NOW4} WHERE NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`,
+        sql: `INSERT INTO tickets (proceeding_id, filing_id, title, intent, kind, priority, billing_anchor, created) SELECT ?, ?, ?, ?, 'work', (SELECT COALESCE(MAX(priority), 0) + 1 FROM tickets WHERE filing_id = ?), ?, ${nowMinuteSql()} WHERE NOT EXISTS (SELECT 1 FROM tickets WHERE filing_id = ? AND title = ? AND status IN ('queued', 'wip')${notDeleted})`,
         params: [filing.proceeding_id, filing.id, PRE_SEND_TITLE, PRE_SEND_INTENT, filing.id, anchor.billing_anchor, filing.id, PRE_SEND_TITLE],
         expect_changes: 1
       },
@@ -105138,7 +105145,7 @@ function planPreSendGate(dbPath, filing, held2, rev) {
     if (step2.text.includes(WAIVER2) || label2 === void 0) continue;
     const c3 = byId2.get(id);
     statements.push(
-      c3 === void 0 ? { sql: `UPDATE ticket_steps SET text = ?, done_at = ${NOW4} WHERE ticket_id = ? AND ordinal = ?`, params: [`${label2}: met [rev ${rev}]`, ticketId, step2.ordinal] } : { sql: "UPDATE ticket_steps SET text = ?, done_at = NULL WHERE ticket_id = ? AND ordinal = ?", params: [unmetStep(c3, rev), ticketId, step2.ordinal] }
+      c3 === void 0 ? { sql: `UPDATE ticket_steps SET text = ?, done_at = ${nowMinuteSql()} WHERE ticket_id = ? AND ordinal = ?`, params: [`${label2}: met [rev ${rev}]`, ticketId, step2.ordinal] } : { sql: "UPDATE ticket_steps SET text = ?, done_at = NULL WHERE ticket_id = ? AND ordinal = ?", params: [unmetStep(c3, rev), ticketId, step2.ordinal] }
     );
   }
   let next2 = Math.max(0, ...steps.map((s3) => s3.ordinal));
@@ -105275,12 +105282,12 @@ ${unlisted} more not listed.` : "") + "\nCorrect the stored text to what was sen
     statements.push(...gate.statements);
     if (waived.length > 0) {
       statements.push({
-        sql: `UPDATE ticket_steps SET text = text || ? || ?, done_at = ${NOW4} WHERE ticket_id = ${job.sql} AND done_at IS NULL AND text NOT LIKE '% \u2014 WAIVED: %'`,
+        sql: `UPDATE ticket_steps SET text = text || ? || ?, done_at = ${nowMinuteSql()} WHERE ticket_id = ${job.sql} AND done_at IS NULL AND text NOT LIKE '% \u2014 WAIVED: %'`,
         params: [WAIVER2, args.send_anyway, ...job.params]
       });
     }
     statements.push({
-      sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW4} WHERE id = ${job.sql} AND status IN ('queued', 'wip') AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = ${job.sql} AND done_at IS NULL)`,
+      sql: `UPDATE tickets SET status = 'completed', completed_at = ${nowMinuteSql()} WHERE id = ${job.sql} AND status IN ('queued', 'wip') AND NOT EXISTS (SELECT 1 FROM ticket_steps WHERE ticket_id = ${job.sql} AND done_at IS NULL)`,
       params: [...job.params, ...job.params],
       expect_changes: 1
     });
@@ -105289,8 +105296,8 @@ ${unlisted} more not listed.` : "") + "\nCorrect the stored text to what was sen
   if (deliverId !== null) {
     const live = "status IN ('queued', 'wip') AND rejected_at IS NULL";
     statements.push(
-      { sql: `UPDATE ticket_steps SET done_at = ${NOW4} WHERE ticket_id = ? AND done_at IS NULL AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`, params: [deliverId, deliverId] },
-      { sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW4}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live}`, params: [deliverId] }
+      { sql: `UPDATE ticket_steps SET done_at = ${nowMinuteSql()} WHERE ticket_id = ? AND done_at IS NULL AND ticket_id IN (SELECT id FROM tickets WHERE id = ? AND ${live})`, params: [deliverId, deliverId] },
+      { sql: `UPDATE tickets SET status = 'completed', completed_at = ${nowMinuteSql()}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${live}`, params: [deliverId] }
     );
   }
   const written = await submissionDataWriteAll(args.db_path, statements, env);
@@ -105437,8 +105444,6 @@ async function submissionDataRecordServed(args, env = process.env) {
 
 // src/submission/forms/assign-job.ts
 var TOOL9 = "drafting_data__assign_job";
-var NOW5 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
-var ARRIVED = "(bf_on IS NULL OR bf_on <= date('now', 'localtime'))";
 async function submissionDataAssignJob(args, env = process.env) {
   if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL9}.ticket_id must be a positive integer`, "invalid_ticket_id");
   if (typeof args.session_token !== "string" || args.session_token.trim() === "") {
@@ -105458,7 +105463,8 @@ async function submissionDataAssignJob(args, env = process.env) {
   const creatorHeld = createdByHeld(args.db_path);
   const creator = creatorHeld ? " AND (created_by = ? OR NOT EXISTS (SELECT 1 FROM tickets c WHERE c.created_by = ?))" : "";
   const bfHeld = bfOnHeld(args.db_path);
-  const notBefore = bfHeld && !takeover ? ` AND ${ARRIVED}` : "";
+  const arrived = `(bf_on IS NULL OR bf_on <= ${todaySql()})`;
+  const notBefore = bfHeld && !takeover ? ` AND ${arrived}` : "";
   const lapsed = lapsedClause(args.db_path);
   const last = lastActivitySql(args.db_path);
   const guard2 = (takeover ? `status IN ('queued', 'wip') AND rejected_at IS NULL${live} AND substr(locked_by, -8) = ? AND ${last} = ?` : `(status = 'queued' AND locked_by IS NULL OR ${lapsed}) AND rejected_at IS NULL${live}${notBefore}`) + creator;
@@ -105471,14 +105477,14 @@ async function submissionDataAssignJob(args, env = process.env) {
     [
       ...record2,
       ...claim,
-      { sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${NOW5} WHERE id = ? AND ${guard2}`, params: [args.session_token, args.ticket_id, ...guardParams] },
+      { sql: `UPDATE tickets SET status = 'wip', locked_by = ?, locked_at = ${nowMinuteSql()} WHERE id = ? AND ${guard2}`, params: [args.session_token, args.ticket_id, ...guardParams] },
       ...touchStatements(args.db_path, args.ticket_id, { sql: "locked_by = ?", params: [args.session_token] })
     ],
     env
   );
   const changes = written.ok ? written.results[record2.length + claim.length].changes : written.changes;
   const tookLapsed = written.ok && record2.length === 1 && written.results[0].changes === 1;
-  const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${last} AS last_activity${kv ? `, ${claimSql()} AS claim_no` : ""}${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${ARRIVED} AS before_bf` : ""}`;
+  const columns = `locked_by, locked_at, status, rejected_at, ${lapsed} AS lapsed, ${last} AS last_activity${kv ? `, ${claimSql()} AS claim_no` : ""}${deletedAtHeld(args.db_path) ? ", deleted_at" : ""}${creatorHeld ? ", created_by" : ""}${bfHeld ? `, bf_on, NOT ${arrived} AS before_bf` : ""}`;
   const [read3] = submissionDataQuery(args.db_path, `SELECT ${columns} FROM tickets WHERE id = ?`, [args.ticket_id]).rows;
   if (read3 === void 0) throw new NotFoundError(`${TOOL9}: no job ${args.ticket_id} in ${args.db_path}`, "not_found");
   const id = args.ticket_id;
@@ -105970,8 +105976,8 @@ function generalLayoutFor(filing) {
 function hasLiveTags(general) {
   return general !== null && Object.keys(general.passage_hashes).length > 0;
 }
-function renderStateFor(dbPath, stamp2, filing, digest) {
-  const state = renderState(dbPath, filing.id, stamp2, digest);
+function renderStateFor(dbPath, stamp3, filing, digest) {
+  const state = renderState(dbPath, filing.id, stamp3, digest);
   return state === "fresh" && hasLiveTags(generalLayoutFor(filing)) ? "stale" : state;
 }
 
@@ -112613,8 +112619,8 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
   const baseDir = folder?.dir;
   const general = generalLayoutFor(filing);
   const liveTags = hasLiveTags(general);
-  const stamp2 = renderMode === "mockup" ? stampFor(filingId, proceeding, client, now, revision, schemaVersion, timed(timings, "build_stamp_check", () => buildStampStatus().build_stamp), approvals) : null;
-  const fresh = stamp2 === null || liveTags ? null : timed(timings, "stamp_check", () => freshManifest(dbPath, filingId, stamp2, driftDigest));
+  const stamp3 = renderMode === "mockup" ? stampFor(filingId, proceeding, client, now, revision, schemaVersion, timed(timings, "build_stamp_check", () => buildStampStatus().build_stamp), approvals) : null;
+  const fresh = stamp3 === null || liveTags ? null : timed(timings, "stamp_check", () => freshManifest(dbPath, filingId, stamp3, driftDigest));
   const hit = fresh !== null && fresh.dir.toLowerCase() === baseDir.toLowerCase() ? fresh : null;
   const recordParagraphMap = (docs) => {
     const mapDir = paragraphMapDir(dbPath, filingId);
@@ -112684,12 +112690,12 @@ function submissionFormsRender(dbPath, filingId, client = {}, renderMode = "mock
     markdown: doc.markdown,
     ...symbolNotes(doc.symbolNotes)
   }));
-  if (stamp2) {
+  if (stamp3) {
     timed(
       timings,
       "manifest_write",
       () => writeManifest(dbPath, filingId, {
-        stamp: stamp2,
+        stamp: stamp3,
         folder: basename9(baseDir),
         rendered_at: ctx.rendered,
         files: finished.map((doc) => ({ document_type: doc.documentType, file_name: doc.fileName, sha256: sha2562(doc.markdown), label: doc.label })),
@@ -114285,8 +114291,8 @@ function localMs(date3, hours = 0, minutes = 0) {
   const [y3, m3, d3] = date3.split("-").map(Number);
   return new Date(y3, m3 - 1, d3, hours, minutes, 0, 0).getTime();
 }
-function stampMs(stamp2) {
-  const [date3, time3] = stamp2.split(" ");
+function stampMs(stamp3) {
+  const [date3, time3] = stamp3.split(" ");
   const [hh, mm] = (time3 ?? "00:00").split(":").map(Number);
   return localMs(date3, hh, mm);
 }
@@ -114321,7 +114327,7 @@ function orderByRecency(filings) {
 }
 
 // src/submission/forms/rank-filings.ts
-function rankFilings(dbPath, client, now, stamp2, timings) {
+function rankFilings(dbPath, client, now, stamp3, timings) {
   const listed = timed(
     timings,
     "filing_list",
@@ -114408,7 +114414,7 @@ function rankFilings(dbPath, client, now, stamp2, timings) {
       }
       const state = renderStateFor(
         dbPath,
-        stampFor(filing.id, proceeding, client, now, stamp2.revision, stamp2.schemaVersion, stamp2.buildStamp, approvals),
+        stampFor(filing.id, proceeding, client, now, stamp3.revision, stamp3.schemaVersion, stamp3.buildStamp, approvals),
         filing,
         digests.get(filing.id)
       );
@@ -114773,8 +114779,8 @@ function markRenderedInForeground(dbPath, filingId, env = process.env) {
 function renderStateOf(dbPath, filingId, client) {
   const filing = fetchFilingById(dbPath, filingId);
   const proceeding = fetchProceeding(dbPath, filing.proceeding_id);
-  const stamp2 = stampFor(filing.id, proceeding, client, nowStamp(), fetchRevision(dbPath), readSchemaVersion(dbPath), buildStampStatus().build_stamp, fetchApprovalsMark(dbPath));
-  return renderStateFor(dbPath, stamp2, filing, partiesDigest(partiesFor(dbPath, proceeding, filing)));
+  const stamp3 = stampFor(filing.id, proceeding, client, nowStamp(), fetchRevision(dbPath), readSchemaVersion(dbPath), buildStampStatus().build_stamp, fetchApprovalsMark(dbPath));
+  return renderStateFor(dbPath, stamp3, filing, partiesDigest(partiesFor(dbPath, proceeding, filing)));
 }
 function startBootstrapJob(result, client, dates = DATES_NOT_READ, viewsPending = false) {
   const dbPath = result.db_path;
@@ -114830,7 +114836,6 @@ function combinedPageDates(dates, sections, combined2) {
 
 // src/submission/forms/approve-plan.ts
 var TOOL11 = "drafting_data__approve_plan";
-var NOW6 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var PLAN_MARKER = "Create a plan for how to complete this job.";
 async function submissionDataApprovePlan(args, env = process.env) {
   if (!Number.isInteger(args.ticket_id) || args.ticket_id <= 0) throw new ValidationError(`${TOOL11}.ticket_id must be a positive integer`, "invalid_ticket_id");
@@ -114852,7 +114857,7 @@ async function submissionDataApprovePlan(args, env = process.env) {
   const written = await submissionDataWriteAll(
     args.db_path,
     [
-      { sql: `UPDATE tickets SET plan_approved_at = ${NOW6} WHERE id = ? AND ${held2.sql} AND plan_approved_at IS NULL`, params: [id, ...held2.params] },
+      { sql: `UPDATE tickets SET plan_approved_at = ${nowMinuteSql()} WHERE id = ? AND ${held2.sql} AND plan_approved_at IS NULL`, params: [id, ...held2.params] },
       ...touchStatements(args.db_path, id, held2)
     ],
     env
@@ -115022,7 +115027,6 @@ function planApproved(dbPath, id) {
 
 // src/submission/forms/create-job.ts
 var TOOL13 = "drafting_data__create_job";
-var NOW7 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var isId2 = (v3) => Number.isInteger(v3) && v3 > 0;
 var isText2 = (v3) => typeof v3 === "string" && v3.trim() !== "";
 function check2(ok, field, why) {
@@ -115193,7 +115197,7 @@ async function submissionDataCreateJob(args, env = process.env) {
   const anchor = args.billing_anchor ?? null;
   const statements = [
     {
-      sql: `INSERT INTO tickets (${cols}) SELECT ?, ?, ?, ?, ?, ${priority.sql}, ?, ${NOW7}${tail}${where.sql}`,
+      sql: `INSERT INTO tickets (${cols}) SELECT ?, ?, ?, ?, ?, ${priority.sql}, ?, ${nowMinuteSql()}${tail}${where.sql}`,
       params: [args.proceeding_id, args.filing_id, args.title, args.intent, args.kind, ...priority.params, anchor, ...tailParams, ...where.params],
       expect_changes: 1
     },
@@ -115211,7 +115215,7 @@ async function submissionDataCreateJob(args, env = process.env) {
     const at = statements.length;
     companionAt.push(at);
     statements.push({
-      sql: `INSERT INTO tickets (${cols}) SELECT ?, ?, ?, ?, ?, (SELECT priority FROM tickets WHERE id = ?), ?, ${NOW7}${tail}`,
+      sql: `INSERT INTO tickets (${cols}) SELECT ?, ?, ?, ?, ?, (SELECT priority FROM tickets WHERE id = ?), ?, ${nowMinuteSql()}${tail}`,
       params: [args.proceeding_id, args.filing_id, c3.title, c3.intent, args.kind, lead, anchor, ...tailParams],
       expect_changes: 1
     });
@@ -115270,7 +115274,6 @@ function guardedReport(args, holder) {
 // src/submission/forms/set-step.ts
 var TOOL14 = "drafting_data__set_step";
 var STATUSES3 = ["done", "open", "retry", "cancelled", "deferred", "waiting"];
-var NOW8 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var DEFAULT_WAIT_MINUTES = 5;
 var WAIT_MINUTES_MAX = 1440;
 var WORDS_MAX = 500;
@@ -115318,8 +115321,8 @@ async function submissionDataSetStep(args, env = process.env) {
   const minutes = status3 === "waiting" ? args.wait_minutes ?? DEFAULT_WAIT_MINUTES : null;
   const held2 = heldBy2(args.db_path, token, checkClaim(TOOL14, args.db_path, id, token, args.claim_no));
   const guard2 = `WHERE ticket_id = ? AND ordinal = ? AND done_at IS NULL AND EXISTS (SELECT 1 FROM tickets WHERE id = ? AND ${held2.sql})`;
-  const write2 = status3 === "done" ? { sql: `UPDATE ticket_steps SET ${text8.sql}done_at = ${NOW8}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard2}`, params: [...text8.params, id, ordinal, id, ...held2.params] } : {
-    sql: `UPDATE ticket_steps SET ${text8.sql}status = ?, wait_until = ${minutes === null ? "NULL" : `strftime('%Y-%m-%dT%H:%M', 'now', 'localtime', '+${minutes} minutes')`}, status_note = ? ${guard2}`,
+  const write2 = status3 === "done" ? { sql: `UPDATE ticket_steps SET ${text8.sql}done_at = ${nowMinuteSql()}${statusHeld ? ", status = NULL, wait_until = NULL, status_note = NULL" : ""} ${guard2}`, params: [...text8.params, id, ordinal, id, ...held2.params] } : {
+    sql: `UPDATE ticket_steps SET ${text8.sql}status = ?, wait_until = ${minutes === null ? "NULL" : nowMinuteSql(minutes)}, status_note = ? ${guard2}`,
     params: [...text8.params, status3 === "open" ? null : status3, owesWords ? words2 : null, id, ordinal, id, ...held2.params]
   };
   const written = await submissionDataWriteAll(args.db_path, [write2, ...touchStatements(args.db_path, id, held2)], env);
@@ -115362,7 +115365,6 @@ async function submissionDataSetStep(args, env = process.env) {
 
 // src/submission/forms/rewrite-job.ts
 var TOOL15 = "drafting_data__rewrite_job";
-var NOW9 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 var isText3 = (v3) => typeof v3 === "string" && v3.trim() !== "" && v3.length <= JOB_TEXT_MAX && !/[\r\n]/.test(v3);
 function checkResearchForm2(args, storedTitle) {
   const refuse2 = (why) => {
@@ -115422,7 +115424,7 @@ async function submissionDataRewriteJob(args, env = process.env) {
         expect_changes: 1
       });
     }
-    if (held2) statements.push({ sql: `UPDATE tickets SET plan_approved_at = ${NOW9} WHERE id = ? AND ${guard2} AND plan_approved_at IS NOT NULL`, params: [id, ...guardParams] });
+    if (held2) statements.push({ sql: `UPDATE tickets SET plan_approved_at = ${nowMinuteSql()} WHERE id = ? AND ${guard2} AND plan_approved_at IS NOT NULL`, params: [id, ...guardParams] });
   }
   if (args.title !== void 0) {
     const intent = args.intent === void 0 ? { sql: "", params: [] } : { sql: ", intent = ?", params: [args.intent] };
@@ -115480,7 +115482,6 @@ async function submissionDataRewriteJob(args, env = process.env) {
 import { readFileSync as readFileSync39 } from "node:fs";
 import { dirname as dirname30, join as join52 } from "node:path";
 var TOOL16 = "drafting_data__complete_job";
-var NOW10 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function rewritePages(args, read3, client, todos, dates) {
   try {
     const boards = fetchBoardFilings(args.db_path, read3.proceeding_id);
@@ -115584,7 +115585,7 @@ async function submissionDataCompleteJob(args, client = {}, todos, dates, env = 
         params: [id, id, id, id, ...held2.params]
       },
       {
-        sql: `UPDATE tickets SET status = 'completed', completed_at = ${NOW10}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${held2.sql}`,
+        sql: `UPDATE tickets SET status = 'completed', completed_at = ${nowMinuteSql()}, locked_by = NULL, locked_at = NULL WHERE id = ? AND ${held2.sql}`,
         params: [id, ...held2.params]
       }
     ],
@@ -115769,7 +115770,7 @@ async function submissionDataReleaseJob(args, env = process.env) {
 
 // src/submission/forms/delete-job.ts
 var TOOL19 = "drafting_data__delete_job";
-var STAMP2 = "UPDATE tickets SET deleted_at = strftime('%Y-%m-%dT%H:%M', 'now', 'localtime'), status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = ? AND deleted_at IS NULL AND (status = 'queued' OR (status = 'wip' AND ";
+var stamp2 = () => `UPDATE tickets SET deleted_at = ${nowMinuteSql()}, status = 'queued', locked_by = NULL, locked_at = NULL WHERE id = ? AND deleted_at IS NULL AND (status = 'queued' OR (status = 'wip' AND `;
 async function submissionDataDeleteJob(args, env = process.env) {
   const ids = args.ticket_ids;
   if (!Array.isArray(ids) || ids.length === 0 || !ids.every((id) => Number.isInteger(id) && id > 0) || new Set(ids).size !== ids.length) {
@@ -115782,7 +115783,7 @@ async function submissionDataDeleteJob(args, env = process.env) {
   const held2 = heldBy2(args.db_path, args.session_token, claims[0]);
   const written = await submissionDataWriteAll(
     args.db_path,
-    ids.map((id) => ({ sql: `${STAMP2}${held2.sql}))`, params: [id, ...held2.params] })),
+    ids.map((id) => ({ sql: `${stamp2()}${held2.sql}))`, params: [id, ...held2.params] })),
     env
   );
   const jobs2 = ids.map((id, i3) => {
@@ -115931,7 +115932,6 @@ var PREVIEW = "drafting_forms__preview_edit";
 var APPLY = "drafting_forms__apply_edit";
 var TOKEN_TTL_MS = 30 * 60 * 1e3;
 var TOKEN_PRUNE_MS = 24 * 60 * 60 * 1e3;
-var TODAY_SQL = "date('now', 'localtime')";
 var TRIAL_TABLES = [
   "facts",
   "statements_of_fact",
@@ -116364,7 +116364,7 @@ function planKill(plan2, t3) {
   if (t3.sub !== 0 || t3.entity !== "submissions" && t3.entity !== "law_assertions") {
     throw new Refusal("unsupported", `${describe3(t3)} is a ${t3.sub ? "statement printed under a paragraph" : KIND[t3.entity]}; only a submission or a proposition is killed.`);
   }
-  plan2.push(`kill ${KIND[t3.entity]} ${t3.row_id}`, `UPDATE ${t3.entity} SET killed_on = ${TODAY_SQL} WHERE id = ? AND killed_on IS NULL`, [t3.row_id], 1);
+  plan2.push(`kill ${KIND[t3.entity]} ${t3.row_id}`, `UPDATE ${t3.entity} SET killed_on = ${todaySql()} WHERE id = ? AND killed_on IS NULL`, [t3.row_id], 1);
   plan2.written.add(`${t3.entity}:${t3.row_id}`);
   if (t3.entity === "submissions") {
     const elsewhere = Number(
@@ -120282,7 +120282,7 @@ function skillRulesCoverage(skill) {
 
 // src/files/rules-position.ts
 var POSITION_SCHEMA_VERSION = 73;
-var NOW11 = "strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')";
+var NOW = "strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime')";
 var MAIN = "main";
 var DB_FACTS = ["job_held", "job_steps"];
 var SESSION_FACTS = ["unattended", "host"];
@@ -120395,7 +120395,7 @@ function serve(composed, skill, prior) {
 async function logServed(dbPath, token, path, sent2, env) {
   if (sent2.length === 0) return null;
   const statements = sent2.map(({ rule }) => ({
-    sql: `INSERT INTO rule_served (rule_id, node, path, session_token, served_at) VALUES (?, ?, ?, ?, ${NOW11})`,
+    sql: `INSERT INTO rule_served (rule_id, node, path, session_token, served_at) VALUES (?, ?, ?, ?, ${NOW})`,
     params: [rule.id, rule.node, path.join(" "), token]
   }));
   try {
@@ -120417,9 +120417,9 @@ function block(dag, composed, served, options) {
   if (options.logError !== null) extra.push(`  <log_error message="${xmlAttr(options.logError)}"/>`);
   return renderRules(dag, { ...composed, rules: served.sent }, { attrs, left: options.left, head, extra });
 }
-var UPSERT_POSITION = `INSERT INTO session_position (session_token, branch, path, session_facts, in_force, updated_at) VALUES (?, ?, ?, ?, ?, ${NOW11}) ON CONFLICT (session_token, branch) DO UPDATE SET path = excluded.path, session_facts = excluded.session_facts, in_force = excluded.in_force, updated_at = excluded.updated_at`;
-var OUT_OF_BOUNDS_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, last_insert_rowid(), ${NOW11}) ON CONFLICT (job_id) DO UPDATE SET went_out_of_bounds_to = excluded.went_out_of_bounds_to, updated_at = excluded.updated_at`;
-var UPSERT_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, NULL, ${NOW11}) ON CONFLICT (job_id) DO UPDATE SET last_in_bounds_path = excluded.last_in_bounds_path, went_out_of_bounds_to = NULL, updated_at = excluded.updated_at`;
+var UPSERT_POSITION = `INSERT INTO session_position (session_token, branch, path, session_facts, in_force, updated_at) VALUES (?, ?, ?, ?, ?, ${NOW}) ON CONFLICT (session_token, branch) DO UPDATE SET path = excluded.path, session_facts = excluded.session_facts, in_force = excluded.in_force, updated_at = excluded.updated_at`;
+var OUT_OF_BOUNDS_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, last_insert_rowid(), ${NOW}) ON CONFLICT (job_id) DO UPDATE SET went_out_of_bounds_to = excluded.went_out_of_bounds_to, updated_at = excluded.updated_at`;
+var UPSERT_JOB_POSITION = `INSERT INTO job_position (job_id, last_in_bounds_path, went_out_of_bounds_to, updated_at) VALUES (?, ?, NULL, ${NOW}) ON CONFLICT (job_id) DO UPDATE SET last_in_bounds_path = excluded.last_in_bounds_path, went_out_of_bounds_to = NULL, updated_at = excluded.updated_at`;
 async function rulesMove(args, env = process.env) {
   const tool = "rules__move";
   checkArgs2(tool, args.db_path, args.session_token);
@@ -120499,7 +120499,7 @@ async function rulesMove(args, env = process.env) {
   ];
   if (entersOutOfBounds) {
     statements.push({
-      sql: `INSERT INTO out_of_bounds_visit (session_token, from_path, visited_at) VALUES (?, ?, ${NOW11})`,
+      sql: `INSERT INTO out_of_bounds_visit (session_token, from_path, visited_at) VALUES (?, ?, ${NOW})`,
       params: [token, (stored ?? [skill]).join(" ")]
     });
   }
@@ -120646,7 +120646,7 @@ async function rulesBranch(args, env = process.env) {
     statements = [
       { sql: "DELETE FROM session_position WHERE session_token = ? AND branch = ?", params: [token, label2] },
       {
-        sql: `UPDATE session_position SET in_force = ?, updated_at = ${NOW11} WHERE session_token = ? AND branch = ?`,
+        sql: `UPDATE session_position SET in_force = ?, updated_at = ${NOW} WHERE session_token = ? AND branch = ?`,
         params: [JSON.stringify(served.inForce), token, MAIN]
       }
     ];
@@ -127549,7 +127549,6 @@ function closeForm(lib, { info: info3, handle: handle4 }) {
 
 // src/submission/forms/save-job-answer.ts
 var TOOL21 = "research_filing__save_answer";
-var NOW12 = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 function lawRelativePath(path) {
   const segments = path.split(/[\\/]+/);
   return segments.slice(segments.findIndex((s3) => s3.toLowerCase() === "6. law")).join("\\");
@@ -127586,7 +127585,7 @@ async function saveAnswerTool(args, env = process.env) {
     written = await submissionDataWriteAll(
       dbPath,
       [
-        { sql: `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${NOW12} FROM tickets WHERE id = ? AND ${held2.sql}`, params: [lawRelativePath(saved.path), id, ...held2.params] },
+        { sql: `INSERT INTO ticket_answers (ticket_id, file_path, saved_at) SELECT id, ?, ${nowMinuteSql()} FROM tickets WHERE id = ? AND ${held2.sql}`, params: [lawRelativePath(saved.path), id, ...held2.params] },
         ...touchStatements(dbPath, id, held2)
       ],
       env

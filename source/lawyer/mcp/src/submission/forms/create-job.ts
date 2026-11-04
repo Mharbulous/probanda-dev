@@ -16,9 +16,9 @@ import { BRIEF_JOB_PREFIX, citationKey } from "./brief-job.js";
 import { createdByHeld, liveTicketClause, MILESTONE_KIND } from "./query.js";
 import { checkClaim, heldBy } from "./job-activity.js";
 import { isResearchTitle, RESEARCH_JOB_PREFIX, researchFormProblems } from "./research-job.js";
+import { nowMinuteSql } from "./timings.js";
 
 const TOOL = "drafting_data__create_job";
-const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";
 
 export type CreateJobGuard =
   | "none"
@@ -300,7 +300,7 @@ export async function submissionDataCreateJob(args: CreateJobArgs, env: NodeJS.P
   const anchor = args.billing_anchor ?? null;
   const statements: WriteStatement[] = [
     {
-      sql: `INSERT INTO tickets (${cols}) SELECT ?, ?, ?, ?, ?, ${priority.sql}, ?, ${NOW}${tail}${where.sql}`,
+      sql: `INSERT INTO tickets (${cols}) SELECT ?, ?, ?, ?, ?, ${priority.sql}, ?, ${nowMinuteSql()}${tail}${where.sql}`,
       params: [args.proceeding_id, args.filing_id, args.title, args.intent, args.kind, ...priority.params, anchor, ...tailParams, ...where.params],
       expect_changes: 1,
     },
@@ -319,7 +319,7 @@ export async function submissionDataCreateJob(args: CreateJobArgs, env: NodeJS.P
     const at = statements.length;
     companionAt.push(at);
     statements.push({
-      sql: `INSERT INTO tickets (${cols}) SELECT ?, ?, ?, ?, ?, (SELECT priority FROM tickets WHERE id = ?), ?, ${NOW}${tail}`,
+      sql: `INSERT INTO tickets (${cols}) SELECT ?, ?, ?, ?, ?, (SELECT priority FROM tickets WHERE id = ?), ?, ${nowMinuteSql()}${tail}`,
       params: [args.proceeding_id, args.filing_id, c.title, c.intent, args.kind, lead, anchor, ...tailParams],
       expect_changes: 1,
     });
