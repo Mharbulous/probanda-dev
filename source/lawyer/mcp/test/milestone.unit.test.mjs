@@ -4,7 +4,9 @@
 // rename from "Job Board" (the page's title, heading and a stylesheet comment), and again on
 // 2026-10-29, when the Work Board stopped drawing loose threads. The page pin was retaken again on
 // 2026-10-31 for the idle-flag comment in milestone.js (inlined into the page) and the fixture's
-// moved activity stamp (job staleness fixtures).
+// moved activity stamp (job staleness fixtures). It was retaken on 2026-11-04 for the Blocked lane's
+// label in milestone.js, whose glyph changed from a work marker to a coloured circle, which also takes
+// in the page changes since the last pin (944856d8, a14c68d4).
 
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -18,7 +20,7 @@ const SECTION = JSON.parse(readFileSync(new URL("./fixtures/work-board-data.json
 const DATA = { meta: { revision: 3, matter: "L200", client: "Acme <Co>", rendered: "2026-10-19 09:30" }, sections: [SECTION] };
 
 test("the Work Board renders byte-identically to the pinned page", () => {
-  assertSha256Pin(renderWorkBoardHtml(DATA), "b6daa635b8c25a397593a9d9ecbdebdb6d04befd7feb36d211e43cc6c12b701b", "Work Board");
+  assertSha256Pin(renderWorkBoardHtml(DATA), "6a5f7d38bb00d71c614e612a89281b5648e336a2026efe27b3478d41d46906a6", "Work Board");
 });
 
 test("WORKBOARD_CSS and WORKBOARD_JS are byte-identical to the pinned constants", () => {
