@@ -13,6 +13,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import fake_repo
+
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _spec = importlib.util.spec_from_file_location("check_layering", os.path.join(SCRIPTS, "check_layering.py"))
 check_layering = importlib.util.module_from_spec(_spec)
@@ -31,8 +33,7 @@ def make_repo(root, skills, agents=None, hooks=None):
     plugins = json.loads(json.dumps(PLUGINS))
     for plugin, mapping in (hooks or {}).items():
         plugins[plugin]["hooks"] = mapping
-    (root / "source").mkdir(parents=True)
-    (root / "source" / "assignment.json").write_text(json.dumps({"status": "cutover", "plugins": plugins}), encoding="utf-8")
+    fake_repo.write_assignment(root, plugins)
     for name, text in skills.items():
         path = root / ".claude" / "skills" / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -83,8 +84,7 @@ class ScanTest(unittest.TestCase):
             plugins = make_repo(root, {"show-me/SKILL.md": "x\n"},
                                 agents={"docket-clerk": "- mcp__plugin_practice_data__rules__at\n"})
             plugins["practice"]["skills"].append("tldr")
-            (root / "source" / "assignment.json").write_text(
-                json.dumps({"status": "cutover", "plugins": plugins}), encoding="utf-8")
+            fake_repo.write_assignment(root, plugins)
             for rel, text in (("public/plugins/practice/skills/tldr/SKILL.md", "Ask `/matter-data`.\n"),):
                 (root / rel).parent.mkdir(parents=True)
                 (root / rel).write_text(text, encoding="utf-8")

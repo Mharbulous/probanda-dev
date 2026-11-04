@@ -10,6 +10,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import fake_repo
+
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "build_plugin.py"
 SOURCE = REPO / "source"
@@ -138,7 +140,7 @@ class BuildPluginTest(unittest.TestCase):
             (public / "references" / "notes.txt").write_bytes(b"shipped whole\n")
             assignment = json.loads((repo / "source" / "assignment.json").read_text(encoding="utf-8"))
             assignment["plugins"]["lawyer"]["skills"].append("zz-public")
-            (repo / "source" / "assignment.json").write_text(json.dumps(assignment), encoding="utf-8")
+            fake_repo.write_assignment(repo, assignment["plugins"], status=assignment["status"])
             out = repo / "out"
             result = build("--repo", str(repo), "--out", str(out))
             self.assertEqual(result.returncode, 0, result.stderr)
@@ -168,7 +170,6 @@ ASSIGNMENT = {"status": "cutover", "plugins": {
 # A two-plugin repo at cutover: one private skill each, one public skill each under
 # differently named public plugins, and a leftover plugins/probanda/ folder.
 CUTOVER_REPO = {
-    "source/assignment.json": json.dumps(ASSIGNMENT),
     "source/practice/plugin.json": json.dumps(PRACTICE),
     "source/practice/roster.json": json.dumps({"alpha": ["assets"]}),
     "source/practice/.mcp.json": json.dumps({"data": {"command": "node"}}),
@@ -196,6 +197,7 @@ class CutoverBuildTest(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
         self.repo = Path(self._tmp.name) / "repo"
+        fake_repo.write_assignment(self.repo, ASSIGNMENT["plugins"])
         for rel, text in CUTOVER_REPO.items():
             self.put(rel, text)
 
@@ -281,7 +283,7 @@ class CutoverBuildTest(unittest.TestCase):
     def with_payload(self, executables):
         assignment = json.loads(json.dumps(ASSIGNMENT))
         assignment["plugins"]["research"].update(payload=["LICENSE", "lib", "scripts"], executables=executables)
-        self.put("source/assignment.json", json.dumps(assignment))
+        fake_repo.write_assignment(self.repo, assignment["plugins"])
         self.put("source/research/LICENSE", "Apache\r\n")
         self.put("source/research/lib/pkg/mod.py", "x = 1\r\n")
         self.put("source/research/lib/pkg/__pycache__/mod.cpython-312.pyc", "bytecode")
@@ -303,7 +305,7 @@ class CutoverBuildTest(unittest.TestCase):
     def test_a_plugin_can_leave_out_the_shared_tree(self):
         assignment = json.loads(json.dumps(ASSIGNMENT))
         assignment["plugins"]["research"]["shared"] = False
-        self.put("source/assignment.json", json.dumps(assignment))
+        fake_repo.write_assignment(self.repo, assignment["plugins"])
         result = self.build()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse((self.repo / "plugins" / "research" / "skills" / "shared").exists())

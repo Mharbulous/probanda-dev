@@ -13,6 +13,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import fake_repo
+
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _spec = importlib.util.spec_from_file_location("check_file_ops", os.path.join(SCRIPTS, "check_file_ops.py"))
 check_file_ops = importlib.util.module_from_spec(_spec)
@@ -25,8 +27,7 @@ PLUGINS = {
 
 
 def make_repo(root, files, plugins=PLUGINS):
-    (root / "source").mkdir(parents=True, exist_ok=True)
-    (root / "source" / "assignment.json").write_text(json.dumps({"status": "cutover", "plugins": plugins}), encoding="utf-8")
+    fake_repo.write_assignment(root, plugins)
     for rel, text in files.items():
         path = root / rel
         path.parent.mkdir(parents=True, exist_ok=True)

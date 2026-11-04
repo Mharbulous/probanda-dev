@@ -16,6 +16,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import fake_repo
+
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _spec = importlib.util.spec_from_file_location("approve_public", os.path.join(SCRIPTS, "approve_public.py"))
 approve_public = importlib.util.module_from_spec(_spec)
@@ -35,8 +37,7 @@ class ApproveTest(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
         self.repo = Path(self._tmp.name).resolve()
-        self.put("source/assignment.json", '{"status": "cutover", "plugins": {"lawyer": {"requires": [], "skills": ["x", "y"], '
-                                           '"agents": [], "hooks": {}, "servers": []}}}')
+        fake_repo.write_assignment(self.repo, {"lawyer": {"skills": ["x", "y"]}})
         self.put("source/lawyer/plugin.json", "{}")
         self.put(".claude/skills/data/SKILL.md", "the private skill\n")
         self.put("cloud/pool/notes.md", "the pool\n")
