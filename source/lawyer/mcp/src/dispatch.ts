@@ -1,20 +1,11 @@
 import { dirname } from "node:path";
 
 import { DataServerError, ValidationError } from "./errors.js";
-import {
-  buildToolDefinitions,
-  caseDataToolDefinitions,
-  submissionDataToolDefinitions,
-  submissionFormsToolDefinitions,
-  timecampingToolDefinitions,
-  timePipelineToolDefinitions,
-  looseThreadsToolDefinitions,
-  type ToolDefinition,
-} from "./schema-gen.js";
-import { defineTool, definitionLookup, jsonText, pairTools, toolReply, type PairedTool, type Tool, type ToolReply } from "./tool-list.js";
-import { validateToolInput } from "./validate.js";
+import { buildToolDefinitions } from "./schema-gen.js";
+import { defineTool, dispatchFrom, jsonText, type Tool } from "./tool-list.js";
+import type { ToolInput } from "./validate.js";
 import type { PracticeStore } from "./practice/store.js";
-import { callPracticeTool } from "./tools/practice/index.js";
+import { callPracticeTool, practiceTools } from "./tools/practice/index.js";
 import { matter_lookup } from "./tools/practice/reads.js";
 import { caseDataQuery, caseDataExecute } from "./case/backend.js";
 import { acquireCaseLock, matterRevision } from "./case/case-lock.js";
@@ -56,7 +47,7 @@ import { submissionDataApprovePlan, type ApprovePlanArgs } from "./submission/fo
 import { submissionDataTrackSource, type TrackSourceArgs } from "./submission/forms/track-source.js";
 import { submissionDataSetStep, type SetStepArgs } from "./submission/forms/set-step.js";
 import { submissionDataRewriteJob, type RewriteJobArgs } from "./submission/forms/rewrite-job.js";
-import { submissionDataTouchJob, withJobActivity, type TouchJobArgs } from "./submission/forms/job-activity.js";
+import { submissionDataTouchJob, withJobActivity, type JobIdentity, type TouchJobArgs } from "./submission/forms/job-activity.js";
 import { submissionDataCompleteJob, type CompleteJobArgs } from "./submission/forms/complete-job.js";
 import { submissionDataAttachToBoard, type AttachToBoardArgs } from "./submission/forms/attach-to-board.js";
 import { submissionDataReleaseJob, type ReleaseJobArgs } from "./submission/forms/release-job.js";
@@ -113,7 +104,7 @@ import { checkSources } from "./sources/check.js";
 import { sourcesFetch } from "./sources/fetch.js";
 import { knowledgeList, knowledgeRead, knowledgeRetire, knowledgeWrite } from "./knowledge/tools.js";
 import { preferencesRead, preferencesWrite } from "./preferences/tools.js";
-import { callSuggestionCardTool, callSuggestionTool, isSuggestionCardToolName, isSuggestionToolName } from "./suggestions/tools.js";
+import { suggestionTools } from "./suggestions/tools.js";
 import { repoDocsRead, repoDocsWrite } from "./files/repo-docs.js";
 import { pagesPreview, pagesTemplate, type PreviewArgs } from "./pages/preview.js";
 import {
@@ -132,7 +123,7 @@ import { pdfPageImages } from "./files/extract/page-images.js";
 import { pdfPagesCompare } from "./files/extract/page-compare.js";
 import { saveAnswerTool, type SaveAnswerArgs } from "./submission/forms/save-job-answer.js";
 import { caseDataRootFromDbPath, caseDataRootFromMatterRoot } from "./files/matter-root.js";
-import { callKeyRequestTool, isKeyRequestToolName } from "./key-request/tools.js";
+import { keyRequestTools } from "./key-request/tools.js";
 import type { KnowledgeSeams } from "./knowledge/tree.js";
 
 export interface DispatchContext {
@@ -141,15 +132,16 @@ export interface DispatchContext {
   practiceDb: PracticeStore;
 }
 
-const toolDefinition = definitionLookup(buildToolDefinitions);
-
 type MatterArgs = { matter_root: string };
 
 /** An inline sql_script in a run the orchestrator began is refused above this many bytes (est., spec §2.5). */
 const INLINE_SQL_CAP = 8 * 1024;
 
-// The tools that have left the `if` chain below (#183). The rest follow in later children.
+// The data server's tools, paired with buildToolDefinitions by name (#183).
 export const dataTools: Tool<DispatchContext>[] = [
+  ...practiceTools.map(({ name }) =>
+    defineTool(name, (args: ToolInput, context: DispatchContext) => callPracticeTool(context.practiceDb, name, args))),
+
   defineTool("matter_data__query", (args: MatterArgs & { sql: string; params?: unknown[] }) =>
     caseDataQuery(args.matter_root, args.sql, args.params)),
   defineTool("matter_data__execute", async (args: MatterArgs & { sql_script?: string; generator?: Generator; run_id?: string; expected_revision?: number }) => {
@@ -352,25 +344,83 @@ export const dataTools: Tool<DispatchContext>[] = [
   defineTool("drafting_forms__assemble_general", (args: AssembleGeneralArgs) => assembleGeneral(args)),
   defineTool("drafting_forms__pre_filing_check", (args: { db_path: string; filing_id: number; package_dir: string }) =>
     submissionFormsPreFilingCheck(args.db_path, args.filing_id, args.package_dir)),
+
+  defineTool("skill_source__read", (args: { path: string; from?: string; match?: string | string[] }) =>
+    skillSourceRead(args.path, undefined, args.from, args.match)),
+  defineTool("skill_source__list", (args: { dir?: string; recursive?: boolean }) => skillSourceList(args.dir ?? "", args.recursive ?? false)),
+  defineTool("skill_rules__applicable", (args: { skill: string; operation: string; facts?: Record<string, unknown> }) =>
+    skillRulesApplicable(args.skill, args.operation, args.facts)),
+  defineTool("skill_rules__coverage", (args: { skill: string }) => skillRulesCoverage(args.skill)),
+  defineTool("rules__at", (args: { skill: string; path?: unknown; facts?: Record<string, unknown> }) => rulesAt(args.skill, args.path, args.facts)),
+  defineTool("rules__audit", (args: { skill: string; path?: unknown; rule_id?: string; facts?: Record<string, unknown> }) =>
+    rulesAudit(args.skill, args.path, args.rule_id, args.facts)),
+  defineTool("rules__move", (args: MoveArgs) => rulesMove(args)),
+  defineTool("rules__branch", (args: BranchArgs) => rulesBranch(args)),
+  defineTool("rules__provisional", (args: ProvisionalArgs) => rulesProvisional(args)),
+  defineTool("rules__lifecycle", (args: { db_path: string; since?: string }) => rulesLifecycle(args.db_path, args.since)),
+
+  defineTool("sources__check", (args: { files?: unknown }) => checkSources(args.files)),
+  defineTool("sources__fetch", (args: { url?: unknown; match?: unknown; save?: unknown }) => sourcesFetch(args)),
+
+  defineTool("knowledge__read", (args: { path?: unknown; matter_root?: unknown }) =>
+    knowledgeRead(args.path, matterRootSeams("knowledge__read", args.matter_root))),
+  defineTool("knowledge__list", (args: { dir?: string; recursive?: boolean; resolve?: string; recipient?: string; matter_root?: unknown }) =>
+    knowledgeList(
+      { dir: args.dir, recursive: args.recursive, resolve: args.resolve, recipient: args.recipient },
+      matterRootSeams("knowledge__list", args.matter_root)
+    )),
+  defineTool("knowledge__write", (args: ToolInput, context: DispatchContext) =>
+    knowledgeWrite(args, {
+      lookUpMatter: async (mattNum) =>
+        (await matter_lookup(context.practiceDb, { matt_num: mattNum })).rows,
+    })),
+  defineTool("knowledge__retire", (args: ToolInput) => knowledgeRetire(args)),
+  defineTool("preferences__read", (args: ToolInput) => preferencesRead(args)),
+  defineTool("preferences__write", (args: ToolInput) => preferencesWrite(args)),
+
+  ...suggestionTools,
+
+  defineTool("pages__template", (args: { page: string }) => pagesTemplate(args.page)),
+  defineTool("pages__preview", (args: PreviewArgs, context: DispatchContext) => pagesPreview(args, context.practiceDb)),
+
+  defineTool("repo_docs__write", (args: { path: string; content: string; overwrite?: boolean }) =>
+    repoDocsWrite(args.path, args.content, args.overwrite ?? false)),
+  defineTool("repo_docs__read", (args: { path: string }) => repoDocsRead(args.path)),
+
+  defineTool("research_filing__list_downloads", (args: { since_mtime?: string; filename?: string }) => listDownloads(args.since_mtime, args.filename)),
+  defineTool("research_filing__list_law_folder", (args: { destination_dir: string }) => listLawFolder(args.destination_dir)),
+  defineTool("research_filing__file_download", (args: JobIdentity & { destination_dir: string; source_filename: string; destination_filename?: string }) =>
+    withJobActivity("research_filing__file_download", args, () =>
+      fileDownload(args.destination_dir, args.source_filename, args.destination_filename))),
+  defineTool("research_filing__append_manifest", (args: JobIdentity & { destination_dir: string; record?: unknown }) =>
+    withJobActivity("research_filing__append_manifest", args, () => appendManifest(args.destination_dir, args.record))),
+  defineTool("research_filing__save_answer", (args: SaveAnswerArgs) => saveAnswerTool(args)),
+  defineTool("research_filing__write_scratch", (args: JobIdentity & { matter_root: string; filename: string; text: string; kind?: string }) =>
+    withJobActivity("research_filing__write_scratch", args, () => writeScratch(args.matter_root, args.filename, args.text, args.kind))),
+  defineTool(
+    "research_filing__law_folder_text",
+    (args: { matter_root: string; destination_dir: string; file?: unknown; pattern?: unknown; context?: unknown; max_matches?: unknown }) =>
+      lawFolderText(args.matter_root, args.destination_dir, {
+        file: args.file ?? undefined,
+        pattern: args.pattern ?? undefined,
+        context: args.context ?? undefined,
+        max_matches: args.max_matches ?? undefined,
+      })
+  ),
+  defineTool("research_filing__legislation_search", (args: { matter_root: string; path: string; terms?: unknown; regex?: unknown; pages?: unknown; pinpoint?: unknown }) =>
+    legislationSearch(args.matter_root, args.path, args.terms, args.regex, args.pages, {}, args.pinpoint)),
+  defineTool("research_filing__matter_folder", (args: MatterFolderArgs) => matterFolder(args)),
+  defineTool("research_filing__research_folder", (args: MatterFolderArgs) => researchFolder(args)),
+  defineTool("research_filing__file_fetched", (args: JobIdentity & { url: string; destination_dir: string; filename: string; record?: unknown }) =>
+    withJobActivity("research_filing__file_fetched", args, () => fileFetched(args.url, args.destination_dir, args.filename, args.record))),
+  defineTool("research__preflight", () => researchPreflight()),
+  defineTool("pdf_pages__images", (args: { path: string; pages?: string; tiles?: boolean; destination_dir?: string }) =>
+    pdfPageImages({ path: args.path, pages: args.pages, tiles: args.tiles, destination_dir: args.destination_dir })),
+  defineTool("pdf_pages__compare", (args: { a: string; b: string; pages?: string; destination_dir: string }) =>
+    pdfPagesCompare({ a: args.a, b: args.b, pages: args.pages, destination_dir: args.destination_dir })),
+
+  ...keyRequestTools,
 ];
-
-/** The definitions `dataTools` covers. */
-export function dataToolDefinitions(): ToolDefinition[] {
-  return [
-    ...caseDataToolDefinitions(),
-    ...timePipelineToolDefinitions(),
-    ...looseThreadsToolDefinitions(),
-    ...timecampingToolDefinitions(),
-    ...submissionDataToolDefinitions(),
-    ...submissionFormsToolDefinitions(),
-  ];
-}
-
-let dataTable: Map<string, PairedTool<DispatchContext>> | undefined;
-
-export function dispatchTool(context: DispatchContext, name: string, rawArgs: unknown): Promise<ToolReply> {
-  return toolReply(name, () => callTool(context, name, rawArgs), replyText);
-}
 
 function replyText(name: string, result: unknown): string {
   if (!name.startsWith("rules__")) return jsonText(name, result);
@@ -379,231 +429,7 @@ function replyText(name: string, result: unknown): string {
   return result;
 }
 
-export async function callTool(
-  context: DispatchContext,
-  name: string,
-  rawArgs: unknown
-): Promise<unknown> {
-  const definition = toolDefinition(name);
-  const args = validateToolInput(definition, rawArgs);
-
-  if (name.startsWith("practice_data__")) {
-    return callPracticeTool(context.practiceDb, name, args);
-  }
-
-  dataTable ??= pairTools(dataToolDefinitions(), dataTools);
-  const dataTool = dataTable.get(name);
-  if (dataTool) return dataTool.handler(args, context);
-
-  if (name === "skill_source__read") {
-    return skillSourceRead(
-      args.path as string,
-      undefined,
-      args.from as string | undefined,
-      args.match as string | string[] | undefined
-    );
-  }
-
-  if (name === "skill_source__list") {
-    return skillSourceList(
-      (args.dir as string | undefined) ?? "",
-      (args.recursive as boolean | undefined) ?? false
-    );
-  }
-
-  if (name === "skill_rules__applicable") {
-    return skillRulesApplicable(
-      args.skill as string,
-      args.operation as string,
-      args.facts as Record<string, unknown> | undefined
-    );
-  }
-
-  if (name === "skill_rules__coverage") {
-    return skillRulesCoverage(args.skill as string);
-  }
-
-  if (name === "rules__at") {
-    return rulesAt(args.skill as string, args.path, args.facts as Record<string, unknown> | undefined);
-  }
-
-  if (name === "rules__audit") {
-    return rulesAudit(
-      args.skill as string,
-      args.path,
-      args.rule_id as string | undefined,
-      args.facts as Record<string, unknown> | undefined
-    );
-  }
-
-  if (name === "rules__move") {
-    return rulesMove(args as unknown as MoveArgs);
-  }
-
-  if (name === "rules__branch") {
-    return rulesBranch(args as unknown as BranchArgs);
-  }
-
-  if (name === "rules__provisional") {
-    return rulesProvisional(args as unknown as ProvisionalArgs);
-  }
-
-  if (name === "rules__lifecycle") {
-    return rulesLifecycle(args.db_path as string, args.since as string | undefined);
-  }
-
-  if (name === "sources__check") {
-    return checkSources(args.files);
-  }
-
-  if (name === "knowledge__read") {
-    return knowledgeRead(args.path, matterRootSeams(name, args.matter_root));
-  }
-
-  if (name === "knowledge__list") {
-    return knowledgeList(
-      {
-        dir: args.dir as string | undefined,
-        recursive: args.recursive as boolean | undefined,
-        resolve: args.resolve as string | undefined,
-        recipient: args.recipient as string | undefined,
-      },
-      matterRootSeams(name, args.matter_root)
-    );
-  }
-
-  if (name === "knowledge__write") {
-    return knowledgeWrite(args, {
-      lookUpMatter: async (mattNum) =>
-        (await matter_lookup(context.practiceDb, { matt_num: mattNum })).rows,
-    });
-  }
-
-  if (name === "knowledge__retire") {
-    return knowledgeRetire(args);
-  }
-
-  if (name === "preferences__read") {
-    return preferencesRead(args);
-  }
-
-  if (name === "preferences__write") {
-    return preferencesWrite(args);
-  }
-
-  if (isSuggestionCardToolName(name)) {
-    return callSuggestionCardTool(context.practiceDb, name, args);
-  }
-
-  if (isSuggestionToolName(name)) {
-    return callSuggestionTool(name, args);
-  }
-
-  if (name === "pages__template") {
-    return pagesTemplate(args.page as string);
-  }
-
-  if (name === "pages__preview") {
-    return pagesPreview(args as unknown as PreviewArgs, context.practiceDb);
-  }
-
-  if (name === "sources__fetch") {
-    return sourcesFetch(args);
-  }
-
-  if (name === "repo_docs__write") {
-    return repoDocsWrite(
-      args.path as string,
-      args.content as string,
-      (args.overwrite as boolean | undefined) ?? false
-    );
-  }
-
-  if (name === "repo_docs__read") {
-    return repoDocsRead(args.path as string);
-  }
-
-  if (name === "research_filing__list_downloads") {
-    return listDownloads(args.since_mtime as string | undefined, args.filename as string | undefined);
-  }
-
-  if (name === "research_filing__list_law_folder") {
-    return listLawFolder(args.destination_dir as string);
-  }
-
-  if (name === "research_filing__file_download") {
-    return withJobActivity(name, args, () =>
-      fileDownload(args.destination_dir as string, args.source_filename as string, args.destination_filename as string | undefined)
-    );
-  }
-
-  if (name === "research_filing__append_manifest") {
-    return withJobActivity(name, args, () => appendManifest(args.destination_dir as string, args.record));
-  }
-
-  if (name === "research_filing__save_answer") {
-    return saveAnswerTool(args as unknown as SaveAnswerArgs);
-  }
-
-  if (name === "research_filing__write_scratch") {
-    return withJobActivity(name, args, () =>
-      writeScratch(args.matter_root as string, args.filename as string, args.text as string, args.kind as string | undefined)
-    );
-  }
-
-  if (name === "research_filing__law_folder_text") {
-    return lawFolderText(args.matter_root as string, args.destination_dir as string, {
-      file: args.file ?? undefined,
-      pattern: args.pattern ?? undefined,
-      context: args.context ?? undefined,
-      max_matches: args.max_matches ?? undefined,
-    });
-  }
-
-  if (name === "research_filing__legislation_search") {
-    return legislationSearch(args.matter_root as string, args.path as string, args.terms, args.regex, args.pages, {}, args.pinpoint);
-  }
-
-  if (name === "research_filing__matter_folder") {
-    return matterFolder(args as unknown as MatterFolderArgs);
-  }
-
-  if (name === "research_filing__research_folder") {
-    return researchFolder(args as unknown as MatterFolderArgs);
-  }
-
-  if (name === "research_filing__file_fetched") {
-    return withJobActivity(name, args, () => fileFetched(args.url as string, args.destination_dir as string, args.filename as string, args.record));
-  }
-
-  if (name === "research__preflight") {
-    return researchPreflight();
-  }
-
-  if (name === "pdf_pages__images") {
-    return pdfPageImages({
-      path: args.path as string,
-      pages: args.pages as string | undefined,
-      tiles: args.tiles as boolean | undefined,
-      destination_dir: args.destination_dir as string | undefined,
-    });
-  }
-
-  if (name === "pdf_pages__compare") {
-    return pdfPagesCompare({
-      a: args.a as string,
-      b: args.b as string,
-      pages: args.pages as string | undefined,
-      destination_dir: args.destination_dir as string,
-    });
-  }
-
-  if (isKeyRequestToolName(name)) {
-    return callKeyRequestTool(name);
-  }
-
-  throw new ValidationError(`Unknown tool "${name}"`);
-}
+export const { call: callTool, dispatch: dispatchTool } = dispatchFrom(buildToolDefinitions, dataTools, replyText);
 
 /** #589: starting the background job is part of the call, so its phase goes in ahead of `total`, which
  * stays last and grows by it. */

@@ -76,17 +76,6 @@ export function pairTools<C, F = undefined>(definitions: ToolDefinition[], tools
   return table;
 }
 
-/** A definition by name, read once: for dispatch.ts until its `if` chain moves onto a tool list. */
-export function definitionLookup(buildDefinitions: () => ToolDefinition[]): (name: string) => ToolDefinition {
-  let definitions: Map<string, ToolDefinition> | undefined;
-  return (name) => {
-    definitions ??= new Map(buildDefinitions().map((tool) => [tool.name, tool]));
-    const definition = definitions.get(name);
-    if (!definition) throw new ValidationError(`Unknown tool "${name}"`);
-    return definition;
-  };
-}
-
 /** Set, never sent, on an isError reply whose error is a fault (not a tool's own refusal), for the call log (call-log.ts). */
 export const FAULT = Symbol("fault");
 

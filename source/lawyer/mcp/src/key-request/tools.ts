@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { defaultStateDir, readProtectedJson, writeProtectedJson } from "../../../../mcp-shared/dpapi-store.js";
 import { loadCloudKey } from "../cloud-key.js";
 import { ValidationError } from "../errors.js";
+import { defineTool, type Tool } from "../tool-list.js";
 import { escape, listen, page, readBody } from "./page.js";
 import { configureCloudKey } from "./save-key.js";
 
@@ -52,9 +53,9 @@ export function requestPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(defaultStateDir(env), "key-request.json.dpapi");
 }
 
-export function isKeyRequestToolName(name: string): boolean {
-  return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
-}
+/** The data server's list entries for these tools. */
+export const keyRequestTools: Tool<unknown>[] = ["key_request__submit", "key_request__status", "cloud_key__configure_credential"].map((name) =>
+  defineTool(name, () => callKeyRequestTool(name)));
 
 export function callKeyRequestTool(name: string, env: NodeJS.ProcessEnv = process.env): Promise<unknown> {
   switch (name) {

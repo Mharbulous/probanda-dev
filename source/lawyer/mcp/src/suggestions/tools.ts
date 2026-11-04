@@ -30,6 +30,7 @@ import { DataServerError, ValidationError } from "../errors.js";
 import { type SendSeams, readStatuses } from "./send.js";
 import { writePastSuggestionsPage } from "./page.js";
 import type { PracticeStore } from "../practice/store.js";
+import { defineTool, type Tool } from "../tool-list.js";
 import { attachMockup, buildCard, cardInput, openCards, waitForCard } from "./card.js";
 import { loadStopWords, runCrossCheck, type CardText } from "./crosscheck.js";
 import { environmentFacts } from "./environment.js";
@@ -40,13 +41,31 @@ import { cardStatus, isHeld, isSuggestion, loadStore, withStore } from "./store.
 
 type Args = Record<string, unknown>;
 
-export function isSuggestionToolName(name: string): boolean {
-  return name.startsWith("suggestion_box__") || name.startsWith("suggestion_log__") || name.startsWith("suggestion_observation__");
-}
+const CARD_TOOLS = [
+  "suggestion_card__check",
+  "suggestion_card__environment_facts",
+  "suggestion_card__build",
+  "suggestion_card__wait",
+  "suggestion_card__attach_mockup",
+  "suggestion_card__write_up_brief",
+  "suggestion_card__write_up_check",
+  "suggestion_card__write_up_send",
+];
 
-export function isSuggestionCardToolName(name: string): boolean {
-  return name.startsWith("suggestion_card__");
-}
+const OTHER_TOOLS = [
+  "suggestion_observation__record",
+  "suggestion_observation__next",
+  "suggestion_box__status",
+  "suggestion_box__past_suggestions",
+  "suggestion_log__read",
+  "suggestion_log__write",
+];
+
+/** The data server's list entries for these tools. */
+export const suggestionTools: Tool<{ practiceDb: PracticeStore }>[] = [
+  ...CARD_TOOLS.map((name) => defineTool(name, (args: Args, context: { practiceDb: PracticeStore }) => callSuggestionCardTool(context.practiceDb, name, args))),
+  ...OTHER_TOOLS.map((name) => defineTool(name, (args: Args, _context: { practiceDb: PracticeStore }) => callSuggestionTool(name, args))),
+];
 
 export async function callSuggestionCardTool(store: PracticeStore, name: string, args: Args, env: NodeJS.ProcessEnv = store.env): Promise<unknown> {
   const deps = { env, records: () => readRecordTexts(store, env) };

@@ -70,6 +70,8 @@ test("each real server's tool list pairs with its definitions", async () => {
   const { callContactsCalendarsEmailTool } = await import("../build/contacts-calendars-email-dispatch.js");
   await assert.rejects(callFileManagerTool("demo__nope", {}), /^ValidationError: Unknown tool "demo__nope"$/);
   await assert.rejects(callContactsCalendarsEmailTool({}, "demo__nope", {}), /^ValidationError: Unknown tool "demo__nope"$/);
+  const { callTool } = await import("../build/dispatch.js");
+  await assert.rejects(callTool({}, "demo__nope", {}), /^ValidationError: Unknown tool "demo__nope"$/);
 });
 
 test("a server's replyText shapes the success reply, and an error it throws becomes an isError reply", async () => {
@@ -93,12 +95,13 @@ test("practice: every definition pairs with one list entry, and a definition wit
   assert.throws(() => pairTools(practiceToolDefinitions(), rest), (err) => err.code === "internal_error" && err.message.includes(`no handler for ${dropped.name}`));
 });
 
-test("dispatch.ts: the matter, time-pipeline, timecamping, drafting data and drafting forms tools pair with their definitions", async () => {
-  const { dataTools, dataToolDefinitions } = await import("../build/dispatch.js");
+test("dispatch.ts: every tool pairs with its definition", async () => {
+  const { dataTools } = await import("../build/dispatch.js");
+  const { buildToolDefinitions } = await import("../build/schema-gen.js");
   const { pairTools } = await import("../build/tool-list.js");
-  const definitions = dataToolDefinitions();
+  const definitions = buildToolDefinitions();
   assert.equal(pairTools(definitions, dataTools).size, definitions.length);
-  for (const name of ["matter_data__query", "drafting_data__complete_job", "drafting_forms__render", "drafting_forms__open_session"]) {
+  for (const name of ["practice_data__matter_lookup", "matter_data__query", "drafting_data__complete_job", "drafting_forms__render", "drafting_forms__open_session", "rules__at", "knowledge__read", "suggestion_card__build", "key_request__submit"]) {
     assert.ok(definitions.some((tool) => tool.name === name), name);
   }
 });
