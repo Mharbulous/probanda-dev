@@ -33,6 +33,7 @@ import check_plugin_skill_md  # noqa: E402
 import check_plugin_sources  # noqa: E402
 import check_plugin_tree  # noqa: E402
 import plugin_layout  # noqa: E402
+import fake_repo  # noqa: E402
 
 VERSION = "0.1.0"
 ASSETS = {"alpha": ("templates",)}
@@ -201,9 +202,8 @@ class Fixture:
         legal-commons, every public skill and every agent file in its source."""
         skills = set(self.roster) | {"legal-commons"} | set(check_plugin_sources.public_skill_dirs(self.root))
         agents = [fn[:-3] for fn in os.listdir(os.path.join(self.root, "source", "litigator", "agents"))]
-        self.write("source/assignment.json", json.dumps({"status": "cutover", "plugins": {"litigator": {
-            "requires": [], "skills": sorted(skills), "agents": sorted(agents), "hooks": {},
-            "servers": ["data", "canlii", "commons"]}}}) + "\n")
+        fake_repo.write_assignment(self.root, {"litigator": {
+            "skills": sorted(skills), "agents": sorted(agents), "servers": ["data", "canlii", "commons"]}})
 
     @property
     def plugin(self):
@@ -702,8 +702,8 @@ class TestAcrossPlugins(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
 
     def assign(self, practice, litigator):
-        write(self.root, "source/assignment.json", json.dumps({"status": "cutover", "plugins": {
-            "practice": {**SPEC, **practice}, "litigator": {**SPEC, "requires": ["practice"], **litigator}}}))
+        fake_repo.write_assignment(self.root, {
+            "practice": {**SPEC, **practice}, "litigator": {**SPEC, "requires": ["practice"], **litigator}})
         for name, given in (("practice", practice), ("litigator", litigator)):
             write(self.root, f"source/{name}/roster.json", json.dumps({s: [] for s in given.get("skills", [])}))
 

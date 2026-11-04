@@ -13,6 +13,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import fake_repo
+
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _spec = importlib.util.spec_from_file_location("check_internals", os.path.join(SCRIPTS, "check_internals.py"))
 check_internals = importlib.util.module_from_spec(_spec)
@@ -53,12 +55,12 @@ def make_repo(root, reason="Refused: that page is for the practitioner to view."
               text="A Writing on its Work Board, with its Loose Threads.",
               name='`${id} Notice of Application`', leaf='"Notice of Application.md"',
               err='`"${title}" was not written`', mockup='`Order 1 <!-- order_sought_id ${r.id} -->`'):
-    assignment = {"status": "cutover", "plugins": {
+    assignment = {
         "lawyer": {"requires": [], "skills": [], "agents": [], "servers": [],
                    "hooks": {"gate": "source/lawyer/hooks/gate.py", "note": "source/lawyer/hooks/note.py"}},
         "developer": {"requires": ["lawyer"], "skills": [], "agents": [], "servers": [],
                       "hooks": {"dev": "source/developer/hooks/dev.py"}},
-    }}
+    }
     plugin = {"name": "lawyer", "hooks": {
         "PreToolUse": [{"matcher": "Read", "hooks": [
             {"type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/gate.py"]}]}],
@@ -68,7 +70,6 @@ def make_repo(root, reason="Refused: that page is for the practitioner to view."
     developer = {"name": "developer", "hooks": {"PreToolUse": [{"matcher": "Read", "hooks": [
         {"type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/dev.py"]}]}]}}
     files = {
-        "source/assignment.json": json.dumps(assignment),
         "source/lawyer/plugin.json": json.dumps(plugin),
         "source/developer/plugin.json": json.dumps(developer),
         "source/lawyer/hooks/gate.py": GATE.replace("{reason}", reason.replace('"', '\\"')),
@@ -78,6 +79,7 @@ def make_repo(root, reason="Refused: that page is for the practitioner to view."
         "source/lawyer/mcp/src/submission/names.ts": SERVER.format(name=name, leaf=leaf, err=err, mockup=mockup),
         "source/lawyer/mcp/src/submission/names.test.ts": 'const p = join(dir, "Unstructured.md");\n',
     }
+    fake_repo.write_assignment(root, assignment)
     for rel, body in files.items():
         path = root / rel
         path.parent.mkdir(parents=True, exist_ok=True)

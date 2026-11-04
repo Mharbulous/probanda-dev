@@ -12,6 +12,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import fake_repo
+
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _spec = importlib.util.spec_from_file_location("check_public_tree", os.path.join(SCRIPTS, "check_public_tree.py"))
 public_tree = importlib.util.module_from_spec(_spec)
@@ -23,10 +25,7 @@ MATTER_CODE = "L" + "8443"
 LONG_PRIVATE_LINE = "The clerk counts back from the anchor and lands on the next open registry day."
 MIT_LINE = "Permission is hereby granted, free of charge, to any person obtaining a copy"
 
-ASSIGNMENT = '{"status": "cutover", "plugins": {"lawyer": {"requires": [], "skills": [], "agents": [], "hooks": {}, "servers": []}}}'
-
 PRIVATE = {
-    "source/assignment.json": ASSIGNMENT,
     ".claude/skills/data/references/schema.sql":
         f"{CREATE} evidence_links (\n  evidence_link_id INTEGER,\n  source_locator TEXT,\n  file_path TEXT\n);\n"
         f"-- a comment naming comment_only_name\n{CREATE} IF NOT EXISTS facts (description TEXT);\n",
@@ -54,6 +53,7 @@ class TreeProblemsTest(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
         self.repo = Path(self._tmp.name).resolve()
+        fake_repo.write_assignment(self.repo, {"lawyer": {}})
         for rel, text in PRIVATE.items():
             path = self.repo / rel
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -150,20 +150,16 @@ class TreeProblemsTest(unittest.TestCase):
         self.assert_reports({".claude-plugin/marketplace.json": marketplace}, "lists a plugin that is not public: developer")
 
     def test_developer_skill_or_agent_under_a_public_plugin_is_reported(self):
-        spec = {"requires": [], "skills": [], "agents": [], "hooks": {}, "servers": []}
-        (self.repo / "source" / "assignment.json").write_text(json.dumps({"status": "cutover", "plugins": {
-            "lawyer": {**spec, "skills": ["other"]},
-            "developer": {**spec, "skills": ["view-suggestions"], "agents": ["black-hat"]}}}),
-            encoding="utf-8")
+        fake_repo.write_assignment(self.repo, {
+            "lawyer": {"skills": ["other"]},
+            "developer": {"skills": ["view-suggestions"], "agents": ["black-hat"]}})
         (self.repo / "source" / "developer").mkdir()
         self.assert_reports({"plugins/lawyer/skills/view-suggestions/SKILL.md": "x\n"}, "developer-only, never public")
         self.assert_reports({"plugins/lawyer/agents/black-hat.md": "x\n"}, "developer-only, never public")
         self.assertEqual(self.messages({"plugins/lawyer/skills/other/SKILL.md": "x\n"}), [])
 
     def write_assignment(self, plugins):
-        spec = {"requires": [], "skills": [], "agents": [], "hooks": {}, "servers": []}
-        (self.repo / "source" / "assignment.json").write_text(json.dumps({"status": "cutover", "plugins": {
-            name: {**spec, "skills": skills} for name, skills in plugins.items()}}), encoding="utf-8")
+        fake_repo.write_assignment(self.repo, {name: {"skills": skills} for name, skills in plugins.items()})
         for name in plugins:
             (self.repo / "source" / name).mkdir(exist_ok=True)
 
@@ -193,15 +189,12 @@ class TreeProblemsTest(unittest.TestCase):
         self.assertIn("cloud/ is missing", str(stopped.exception.code))
 
     def test_missing_assignment_file_stops_the_check(self):
-        (self.repo / "source" / "assignment.json").unlink()
+        fake_repo.write_assignment(self.repo, omit=True)
         with self.assertRaises(SystemExit):
             self.messages({"a.md": "x\n"})
 
     def test_the_server_source_is_read_from_each_plugin_folder(self):
-        spec = {"requires": [], "skills": [], "agents": [], "hooks": {}, "servers": []}
-        (self.repo / "source" / "assignment.json").write_text(
-            json.dumps({"status": "cutover", "plugins": {"practice": {**spec, "servers": ["data"]}, "research": spec}}),
-            encoding="utf-8")
+        fake_repo.write_assignment(self.repo, {"practice": {"servers": ["data"]}, "research": {}})
         (self.repo / "source" / "lawyer").rename(self.repo / "source" / "practice")
         with self.assertRaises(SystemExit) as stopped:
             self.messages({"a.md": "x\n"})

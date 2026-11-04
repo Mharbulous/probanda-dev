@@ -15,6 +15,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import fake_repo
+
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _spec = importlib.util.spec_from_file_location("export_public", os.path.join(SCRIPTS, "export_public.py"))
 export_public = importlib.util.module_from_spec(_spec)
@@ -39,7 +41,6 @@ PRIVATE = {
     "CLAUDE.md": "dev notes\n",
     "COMMANDMENTS.md": "rules\n",
     "README.md": "the private readme\n",
-    "source/assignment.json": '{"status": "cutover", "plugins": {"lawyer": {"requires": [], "skills": ["x", "y"], "agents": [], "hooks": {}, "servers": []}}}',
     "source/lawyer/plugin.json": "{}",
     "cloud/pool/notes.md": "the pool\n",
     "plugins/lawyer/skills/secret/SKILL.md": "the development plugin\n",
@@ -61,6 +62,7 @@ class ExportTest(unittest.TestCase):
         path.write_bytes(text.encode("utf-8"))
 
     def repo_with(self, public, approve=True):
+        fake_repo.write_assignment(self.repo, {"lawyer": {"skills": ["x", "y"]}})
         for rel, text in PRIVATE.items():
             self.put(rel, text)
         for rel, text in public.items():
