@@ -1,4 +1,4 @@
-// build-stamp: 46f87b88e9e2
+// build-stamp: dd7b5d0fde47
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "46f87b88e9e2";
+var BUILD_STAMP = false ? null : "dd7b5d0fde47";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -84461,7 +84461,7 @@ async function acquireLock2(site, target, env, options = {}) {
   const lock = hostLocalFile(site, target, "lock", env);
   let brokeStale = false;
   const attempts = options.waitsMs ? options.waitsMs.length + 1 : site.attempts;
-  let waitedMs = 0;
+  const windowMs = options.waitsMs ? options.waitsMs.reduce((sum, ms2) => sum + ms2, 0) : site.attempts * LOCK_RETRY_MS2;
   for (let attempt = 0; attempt < attempts + (brokeStale ? 1 : 0); attempt++) {
     try {
       const token = randomUUID6();
@@ -84491,12 +84491,11 @@ async function acquireLock2(site, target, env, options = {}) {
       if (attempt < attempts - 1) {
         const wait = options.waitsMs?.[attempt] ?? LOCK_RETRY_MS2;
         await sleep(wait);
-        waitedMs += wait;
       }
     }
   }
   throw new DataServerError(
-    `could not acquire the ${site.label} write lock within ${waitedMs / 1e3}s (${lock}: ${holderOf(lock)}); another session is writing to or migrating this ${site.subject}`,
+    `could not acquire the ${site.label} write lock within ${windowMs / 1e3}s (${lock}: ${holderOf(lock)}); another session is writing to or migrating this ${site.subject}`,
     "lock_unavailable"
   );
 }
