@@ -68,10 +68,10 @@ async function record(d, args = TOOL_ERROR) {
 }
 
 async function raise(d, session) {
-  const next = await obs.nextObservation({ session_id: session }, d.f.env, d.seams);
+  const next = await obs.nextObservation({ chat_session: session }, d.f.env, d.seams);
   if (next.observation === null) return null;
   const input = card.cardInput({
-    origin: "probanda", source: "llm", observation_id: next.observation.observation_id, session_id: session,
+    origin: "probanda", source: "llm", observation_id: next.observation.observation_id, chat_session: session,
     pain_point: { text: "A step in drafting stopped with an error and had to be done another way.", guess: true },
     items: [{ text: "Make the step finish without the error.", guess: true }],
   });
@@ -154,17 +154,17 @@ test("one card a day across sessions: a second is not raised the same day, and i
   assert.equal(shown.ai_noticed.latest_observation, second);
   assert.equal(shown.ai_noticed.recheck_at, new Date(2026, 9, 27).toISOString(), "the answer holds until the next local midnight");
 
-  assert.deepEqual(await obs.nextObservation({ session_id: "session-a" }, d.f.env, d.seams), { observation: null });
-  assert.deepEqual(await obs.nextObservation({ session_id: "session-b" }, d.f.env, d.seams), { observation: null }, "the cap is across sessions");
+  assert.deepEqual(await obs.nextObservation({ chat_session: "session-a" }, d.f.env, d.seams), { observation: null });
+  assert.deepEqual(await obs.nextObservation({ chat_session: "session-b" }, d.f.env, d.seams), { observation: null }, "the cap is across sessions");
   const forced = await card.buildCard(card.cardInput({
-    origin: "probanda", source: "llm", observation_id: second, session_id: "session-b",
+    origin: "probanda", source: "llm", observation_id: second, chat_session: "session-b",
     pain_point: { text: "A guess.", guess: true }, items: [{ text: "A change.", guess: true }],
   }), structuredClone(FACTS), d.deps);
   assert.deepEqual(forced, { built: false, reason: "not_raised" }, "the build enforces the cap itself");
   assert.equal(stored(d.f).records.find((r) => r.record_id === second).displayed_at, null);
 
   later(d.state, 1);
-  const next = await obs.nextObservation({ session_id: "session-c" }, d.f.env, d.seams);
+  const next = await obs.nextObservation({ chat_session: "session-c" }, d.f.env, d.seams);
   assert.equal(next.observation.observation_id, second, "the next day, the other fingerprint is raised");
 });
 
@@ -179,19 +179,19 @@ test("a dismissed fingerprint is suppressed for 30 days and while the version is
 
   later(d.state, 2);
   await record(d, { ...TOOL_ERROR, error_code: "records_unreadable" });
-  assert.deepEqual(await obs.nextObservation({ session_id: "s2" }, d.f.env, d.seams), { observation: null }, "within 30 days");
+  assert.deepEqual(await obs.nextObservation({ chat_session: "s2" }, d.f.env, d.seams), { observation: null }, "within 30 days");
 
   later(d.state, 31);
-  assert.deepEqual(await obs.nextObservation({ session_id: "s3" }, d.f.env, d.seams), { observation: null }, "after 30 days, but the version is the one it was dismissed under");
+  assert.deepEqual(await obs.nextObservation({ chat_session: "s3" }, d.f.env, d.seams), { observation: null }, "after 30 days, but the version is the one it was dismissed under");
 
   later(d.state, 12);
   d.state.plugins[1].version = "0.5.1";
   const fresh = await record(d, { ...TOOL_ERROR, error_code: "ECONNREFUSED" });
   assert.equal(stored(d.f).records.find((r) => r.record_id === fresh).fingerprint.version, "0.5.1");
-  assert.deepEqual(await obs.nextObservation({ session_id: "s4" }, d.f.env, d.seams), { observation: null },
+  assert.deepEqual(await obs.nextObservation({ chat_session: "s4" }, d.f.env, d.seams), { observation: null },
     "a new version within 30 days is still suppressed, and an observation noticed under the old version is not raised");
   later(d.state, 32);
-  const next = await obs.nextObservation({ session_id: "s5" }, d.f.env, d.seams);
+  const next = await obs.nextObservation({ chat_session: "s5" }, d.f.env, d.seams);
   assert.equal(next.observation?.observation_id, fresh, "after 30 days, under a new version");
 });
 
@@ -209,7 +209,7 @@ test("a sent fingerprint is suppressed, and the payload carries the fingerprint"
   assert.equal(body.raw_observation, "A Probanda tool returned an error.\nTool: plugin_lawyer_data__practice_data__matter_lookup\nError code: not_found");
   later(d.state, 5);
   await record(d, { ...TOOL_ERROR, error_code: "HTTP 500" });
-  assert.deepEqual(await obs.nextObservation({ session_id: "s2" }, d.f.env, d.seams), { observation: null });
+  assert.deepEqual(await obs.nextObservation({ chat_session: "s2" }, d.f.env, d.seams), { observation: null });
 });
 
 test("a card left unanswered when its session ended counts as dismissed at the next check, with no hook at session end", async (t) => {
@@ -217,11 +217,11 @@ test("a card left unanswered when its session ended counts as dismissed at the n
   await record(d);
   const cardId = await raise(d, "session-a");
   later(d.state, 1);
-  assert.deepEqual(await obs.nextObservation({ session_id: "session-a" }, d.f.env, d.seams), { observation: null });
+  assert.deepEqual(await obs.nextObservation({ chat_session: "session-a" }, d.f.env, d.seams), { observation: null });
   assert.equal(stored(d.f).records.find((r) => r.record_id === cardId).state, "open", "its own session may still answer it");
 
   await record(d, { ...TOOL_ERROR, error_code: "invalid" });
-  assert.deepEqual(await obs.nextObservation({ session_id: "session-b" }, d.f.env, d.seams), { observation: null }, "the unanswered fingerprint is suppressed");
+  assert.deepEqual(await obs.nextObservation({ chat_session: "session-b" }, d.f.env, d.seams), { observation: null }, "the unanswered fingerprint is suppressed");
   const after = stored(d.f);
   const left = after.records.find((r) => r.record_id === cardId);
   assert.equal(left.state, "dismissed");
@@ -251,10 +251,11 @@ test("the cross-check runs over the raw observation before the card is shown: a 
 test("a card for an observation takes its raw observation and skill from the observation alone", async (t) => {
   const d = await device(t);
   const id = await record(d);
-  const base = { origin: "probanda", source: "llm", observation_id: id, session_id: "s", pain_point: { text: "A guess.", guess: true }, items: [{ text: "A change." }] };
+  const base = { origin: "probanda", source: "llm", observation_id: id, chat_session: "s", pain_point: { text: "A guess.", guess: true }, items: [{ text: "A change." }] };
   assert.throws(() => card.cardInput({ ...base, raw_observation: ["anything at all"] }), /raw observation from the observation/);
   assert.throws(() => card.cardInput({ ...base, skill: "draft" }), /skill from the observation/);
   assert.throws(() => card.cardInput({ ...base, origin: "practitioner" }), /origin probanda and source llm/);
-  assert.throws(() => card.cardInput({ ...base, session_id: undefined }), /session_id/);
-  assert.throws(() => card.cardInput({ origin: "probanda", source: "assisted", session_id: "s", pain_point: base.pain_point, items: base.items }), /only with observation_id/);
+  assert.throws(() => card.cardInput({ ...base, chat_session: undefined }), /chat_session/);
+  assert.throws(() => card.cardInput({ ...base, session_id: "s" }), /unknown field "session_id"/, "the old input name is an unknown field: the Cowork bridge strips it");
+  assert.throws(() => card.cardInput({ origin: "probanda", source: "assisted", chat_session: "s", pain_point: base.pain_point, items: base.items }), /only with observation_id/);
 });

@@ -43,7 +43,7 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
         "guess: true marks a block that holds words the practitioner did not use; the card labels it for them to edit. visual: true marks an item that changes how something looks (layout, colour, typography or page structure). " +
         "source is user for the practitioner's own suggestion, assisted for one Probanda offered and they accepted, llm for a loose thread. skill, optional, names the one skill it is about. " +
         "tool_names: every tool name this session sees, exactly as written, for the card's technical details. held_id, optional: a held draft from suggestion_log__read that this card offers, which then leaves the store. " +
-        "observation_id and session_id, together: the AI-noticed card for the observation suggestion_observation__next returned, with origin probanda and source llm and no skill or raw_observation, which come from the observation itself; " +
+        "observation_id and chat_session, together: the AI-noticed card for the observation suggestion_observation__next returned, with origin probanda and source llm and no skill or raw_observation, which come from the observation itself; " +
         "it is built only while the daily cap and suppression allow it, and otherwise returns {built: false, reason: \"not_raised\"}: then say nothing and end the reply. " +
         "The full check runs first, over everything the card would send, against this computer's client, matter, contact, folder, document and file records and for emails, paths, dates and amounts. " +
         "While it finds a match in the pain point, an item or a context line, no card is built: it returns {built: false, hits: [{part, id, index, start, end, kind, offer}]}, each where a match lies in that block's text (end exclusive), never the text; " +
@@ -87,7 +87,7 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
           tool_names: { type: "array", maxItems: 5000, items: { type: "string", maxLength: 300 } },
           held_id: { type: "string" },
           observation_id: { type: "string" },
-          session_id: { type: "string", maxLength: 128 },
+          chat_session: { type: "string", maxLength: 128 },
         },
         required: ["origin", "source", "pain_point", "items"],
         additionalProperties: false,
@@ -252,8 +252,8 @@ export function suggestionToolDefinitions(): ToolDefinition[] {
         "Returns {observation: {observation_id, fingerprint: {plugin, version, skill?, kind}, raw_observation: [lines]}} or {observation: null}. With null, say nothing and end the reply. Sends nothing.",
       inputSchema: {
         type: "object",
-        properties: { session_id: { type: "string", maxLength: 128 } },
-        required: ["session_id"],
+        properties: { chat_session: { type: "string", maxLength: 128 } },
+        required: ["chat_session"],
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false, openWorldHint: false },

@@ -429,7 +429,7 @@ function decide(store: SuggestionStore, sessionId: string, plugins: PluginInstal
 }
 
 function sessionIdOf(raw: unknown): string {
-  if (typeof raw !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(raw)) throw new ValidationError("session_id must be the session id the reminder named");
+  if (typeof raw !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(raw)) throw new ValidationError("chat_session must be the session id the reminder named");
   return raw;
 }
 
@@ -439,7 +439,7 @@ export type NextResult =
 
 /** The observation to raise as this session's AI-noticed card now, or null when the cap or suppression allows none. */
 export async function nextObservation(args: Record<string, unknown>, env: NodeJS.ProcessEnv, seams: ObservationSeams = {}): Promise<NextResult> {
-  const sessionId = sessionIdOf(args.session_id);
+  const sessionId = sessionIdOf(args.chat_session);
   const plugins = pluginsOf(seams);
   const now = nowOf(seams);
   return withStore(env, (store): NextResult => {
