@@ -3,7 +3,7 @@
 choose_issue: which issue an implementer lane takes next, and whether its lock is free.
 
   python scripts/choose_issue.py queue --lane cloud|local --issues <file> [--issues <file> ...]
-      [--handled <n> ...] [--now <ISO time>]
+      [--handled <n> ...]
   python scripts/choose_issue.py pick --lane cloud|local --issues <file> [--issues <file> ...]
       [--comments <n>=<file> ...] [--handled <n> ...] [--now <ISO time>]
   python scripts/choose_issue.py lock --lane cloud|local --comments <file> [--comments <file> ...]
@@ -37,8 +37,7 @@ The rule:
   `ready-for-agent` and not `withdrawn` (its sender withdrew the suggestion, so
   intake closes it), and has not been handled by this run. The cloud lane takes
   an issue labelled `cloud` and not `local`; the local lane takes an issue
-  labelled `local`, with or without `cloud`. An issue labelled `off peak` is in
-  no queue during peak hours, weekdays 12:00 to 19:00 UTC.
+  labelled `local`, with or without `cloud`.
 - Queue order: the maintainer lane (no `lane:user` or `lane:ai` label) first,
   then `lane:user`, then `lane:ai`; lowest issue number (oldest) first within each.
 - pick walks the queue in order and takes the first issue with no live claim: no
@@ -77,10 +76,6 @@ STATE_LABELS = {"ready-for-agent", "ready-for-human", "needs-info", "wontfix"}
 NEEDS_PERSON = {"suggestion", "authorization", "wrong-rule", "behaviour-unknown", "new-dependency",
                 "costly-evidence", "person-only-check"}
 HANDBACK_PREFIX = "Hand-back ("
-OFF_PEAK_LABEL = "off peak"
-# Peak is weekdays 05:00 to 11:00 Pacific. These UTC hours cover it in both summer and winter
-# time, so the rule needs no time-zone data, which a Windows Python may not have.
-PEAK_UTC_HOURS = range(12, 19)
 
 
 class Unsettled(Exception):
@@ -126,19 +121,12 @@ def rank(issue):
     return min([LANE_RANK[n] for n in names if n in LANE_RANK] or [0])
 
 
-def is_peak(now):
-    return now.weekday() < 5 and now.hour in PEAK_UTC_HOURS
-
-
-def queue(issues, lane, handled=(), now=None):
+def queue(issues, lane, handled=()):
     """The lane's queue, in the order it is worked."""
-    peak = is_peak(now or datetime.now(timezone.utc))
     seen, out = set(), []
     for issue in issues:
         n = int(issue["number"])
         if n in seen or n in handled or not in_lane(issue, lane):
-            continue
-        if peak and OFF_PEAK_LABEL in labels(issue):
             continue
         seen.add(n)
         out.append(issue)
@@ -167,7 +155,7 @@ def live(comments, prefix, window, now):
 
 def pick(issues, lane, comments, handled=(), now=None):
     now = now or datetime.now(timezone.utc)
-    order, skipped = queue(issues, lane, handled, now), []
+    order, skipped = queue(issues, lane, handled), []
     for n in order:
         if n not in comments:
             raise Unsettled(f"the claim comments of #{n} were not given (--comments {n}=<file>)")
@@ -235,7 +223,7 @@ def main(argv):
                 handled.add(int(value.lstrip("#")))
             elif flag == "--own" and command == "lock":
                 own = int(value)
-            elif flag == "--now" and command in ("queue", "pick", "lock"):
+            elif flag == "--now" and command in ("pick", "lock"):
                 now = parse_time(value)
             else:
                 raise Unsettled(f"unknown option {flag} for {command}")
@@ -249,7 +237,7 @@ def main(argv):
         elif command == "handback":
             result = handback(reason, lock_comments, issue_labels)
         elif command == "queue":
-            result = {"lane": lane, "queue": queue(issues, lane, handled, now)}
+            result = {"lane": lane, "queue": queue(issues, lane, handled)}
         elif command == "pick":
             result = pick(issues, lane, comments, handled, now)
         else:
