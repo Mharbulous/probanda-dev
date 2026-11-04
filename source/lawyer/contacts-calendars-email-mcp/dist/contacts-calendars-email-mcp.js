@@ -1,4 +1,4 @@
-// build-stamp: da7fe88111a4
+// build-stamp: 05e80d2d1c82
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -108233,7 +108233,8 @@ var CONTENT_SOURCES = {
   knowledge__read: "knowledge file",
   research_filing__law_folder_text: "law folder file",
   research_filing__legislation_search: "law folder file",
-  research_filing__matter_folder: "matter folder file"
+  research_filing__matter_folder: "matter folder file",
+  research_filing__research_folder: "research folder file"
 };
 function jsonText(name2, result) {
   const source = Object.hasOwn(CONTENT_SOURCES, name2) ? CONTENT_SOURCES[name2] : void 0;

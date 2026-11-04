@@ -41,7 +41,7 @@ needing the correct proposition comes back through this gate.
 
 **Asking what we already hold is not asking what the law is.** A holdings question —
 "which of these criteria already have a recorded authority?" — goes to the same audit
-agent as a *scoped* dispatch: `mode: inventory`, the named criteria, `report: brief`
+agent as a *scoped* dispatch: `mode: inventory`, `Matter root:`, the named criteria, `report: brief`
 (contract: `shared/legal-audit-scoped.md`). It costs a fraction of an opinion-grade
 audit because the question is narrower, not because a check was skipped. It states no
 law — never build a conclusion on it; re-dispatch in opinion mode over any criterion

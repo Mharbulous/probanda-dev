@@ -1,4 +1,4 @@
-// build-stamp: 5c725a3120d6
+// build-stamp: 639b900d413d
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -15851,7 +15851,8 @@ var CONTENT_SOURCES = {
   knowledge__read: "knowledge file",
   research_filing__law_folder_text: "law folder file",
   research_filing__legislation_search: "law folder file",
-  research_filing__matter_folder: "matter folder file"
+  research_filing__matter_folder: "matter folder file",
+  research_filing__research_folder: "research folder file"
 };
 function jsonText(name, result) {
   const source = Object.hasOwn(CONTENT_SOURCES, name) ? CONTENT_SOURCES[name] : void 0;
