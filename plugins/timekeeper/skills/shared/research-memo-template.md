@@ -121,7 +121,8 @@ of one authority, in exactly this shape:
    > <the verbatim passage at that pinpoint>
 ```
 
-A point two authorities support is two items.
+A point two authorities support is two items. Each item supports a sentence of a Conclusion:
+an item that supports none is out of scope (`shared/legal-audit-protocol.md` Step 4).
 
 In every format:
 
@@ -137,9 +138,8 @@ In every format:
     proceeding. Context may hint at the setting ("a commercial tenant"), never identify it.
 
   **A job's memo.** In an audit whose `Job question:` is not `none`, the Issue is that question
-  verbatim if it meets rules A to D. If not, return no
-  memo but one rewording proposal (`shared/legal-research.md`, "A research question holds one
-  question"). No other issue or topic heading: a further finding is a Step 5 offer.
+  verbatim if it meets rules A to D. If not, return no memo but one rewording proposal
+  (`shared/legal-research.md`, "A research question holds one question").
 - A Conclusion is one paragraph answering the Issue, followed, only where research is required
   (`shared/legal-audit-protocol.md` Step 4), by the open-issues paragraph, after the last
   Conclusion. It cites in parentheses and has no block quote.
