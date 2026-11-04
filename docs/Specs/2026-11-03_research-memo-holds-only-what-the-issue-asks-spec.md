@@ -91,3 +91,17 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 | Template: "A Conclusion is one paragraph answering the Issue" | same | UNVERIFIED |
 | memo-reviewer step 2's test and "beyond the Issue" wording | `researcher/agents/memo-reviewer.md` | UNVERIFIED |
 | Nothing checks Conclusion shape or per-item responsiveness | memo-reviewer, protocol, template | UNVERIFIED |
+
+## 11. Verified against HEAD (2cf1c2f0, 2026-11-03)
+
+Every claim holds. Paths are under `.claude/skills/` except memo-reviewer's, `source/researcher/agents/memo-reviewer.md`.
+
+| Claim | Where at HEAD | Result |
+|---|---|---|
+| Step 4 scope test covers only research not done | `shared/legal-audit-protocol.md:268-273` | Holds: "For each piece of research not done, ask" |
+| "The memo always answers ... from the sources held" sets no responsiveness limit | same, 276-281 | Holds. Its only exclusion is a proposition that could not be pinpointed |
+| Template: "No other issue or topic heading: a further finding is a Step 5 offer." | `shared/research-memo-template.md:142` | Holds |
+| Template: "A Conclusion is one paragraph answering the Issue" | same, 143 | Holds |
+| memo-reviewer step 2's test and "beyond the Issue" wording | `memo-reviewer.md:39`, description at 5-6 | Holds: "beyond the Issue" is not defined |
+| Nothing checks Conclusion shape or per-item responsiveness | memo-reviewer steps 1-4, protocol Steps 4 and 6, template | Holds. Reviewer step 4 tests Application items for one finding only, and `mcp/src` has no memo Conclusion check |
+| `2026-11-03_legal-research-rules-served-by-operation-spec.md` has not moved Step 4 | `git log` on the protocol | Holds: Step 4 still lives in `shared/legal-audit-protocol.md` |
