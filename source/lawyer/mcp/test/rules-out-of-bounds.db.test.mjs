@@ -139,7 +139,7 @@ test("a provisional rule carrying an override edge, or any field beyond the four
     );
   }
   await assert.rejects(provisional(dbPath, [{ ...IMPROVISED[0], id: "draft.job.x" }]), refused(/rules\[0\]\.id 'draft\.job\.x' must be oob\.<kebab-slug>/));
-  await assert.rejects(provisional(dbPath, [{ ...IMPROVISED[0], door: "revolving" }]), refused(/rules\[0\]\.door must be "one-way" or "two-way"/));
+  await assert.rejects(provisional(dbPath, [{ ...IMPROVISED[0], door: "revolving" }]), refused(/rules\[0\]\.door must be one of: one-way, two-way/));
   await assert.rejects(provisional(dbPath, [IMPROVISED[0], IMPROVISED[0]]), refused(/rules\[1\]\.id 'oob\.send-email' is given twice/));
   await assert.rejects(provisional(dbPath, Array(7).fill(IMPROVISED[1])), refused(/holds 7 rules; the improviser writes at most 6/));
   await assert.rejects(provisional(dbPath, IMPROVISED, " "), refused(/turn_summary must say/));
