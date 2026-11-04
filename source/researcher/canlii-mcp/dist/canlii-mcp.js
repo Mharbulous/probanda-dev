@@ -21708,6 +21708,21 @@ var citatorSchemas = {
   citingCases: CitingCasesResponseSchema,
   citedLegislations: CitedLegislationsResponseSchema
 };
+var CITING_CASES_RETURNED = 5;
+function neutralOrder(citation) {
+  const match = citation.match(/\b(\d{4}) [A-Za-z][\w()-]* (\d+)\b/);
+  return match ? [Number(match[1]), Number(match[2])] : [0, 0];
+}
+function newestCitingCases({ citingCases }) {
+  const ranked = citingCases.map((entry) => ({ entry, order: neutralOrder(entry.citation) }));
+  ranked.sort((a, b) => b.order[0] - a.order[0] || b.order[1] - a.order[1]);
+  return {
+    total: citingCases.length,
+    returned: Math.min(citingCases.length, CITING_CASES_RETURNED),
+    order: "newest first by neutral citation: year, then number",
+    citingCases: ranked.slice(0, CITING_CASES_RETURNED).map(({ entry }) => entry)
+  };
+}
 var handlers = {
   async get_case_citator(client, params) {
     try {
@@ -21717,6 +21732,7 @@ var handlers = {
         "Failed to fetch case citator data",
         buildDateParams(dateParams)
       );
+      if (metadataType === "citingCases") return jsonResponse(newestCitingCases(CitingCasesResponseSchema.parse(data)));
       return jsonResponse(citatorSchemas[metadataType].parse(data));
     } catch (error2) {
       return caughtResponse(error2);
@@ -21863,7 +21879,7 @@ function createServer(client, version2) {
   });
   server.tool(
     "get_case_citator",
-    "Look up citation relationships for a case. Critical for verifying if a case is still good law. Use 'citingCases' to see what later cases cite this decision \u2014 if many recent cases cite it approvingly, it is strong authority. Use 'citedCases' to see what authorities this case relied on. Use 'citedLegislations' to see what statutes the case references. Returns the full list of citing/cited items.",
+    "Look up citation relationships for a case. Critical for verifying if a case is still good law. Use 'citingCases' to see what later cases cite this decision \u2014 if many recent cases cite it approvingly, it is strong authority. Use 'citedCases' to see what authorities this case relied on. Use 'citedLegislations' to see what statutes the case references. Returns the full list of cited items. For 'citingCases' it returns the total and the 5 newest by neutral citation (year, then number).",
     {
       language: external_exports.enum(["en", "fr"]).default("en").describe("Language: 'en' for English (default), 'fr' for French"),
       databaseId: pathSegmentSchema.describe("Court database ID (e.g., 'onsc', 'onca', 'csc-scc')"),
@@ -21875,7 +21891,7 @@ function createServer(client, version2) {
   );
   server.tool(
     "get_case_citator_tease",
-    "Quick preview of citation relationships (max 5 results). Faster than the full citator. Use this for a quick check on whether a case has been cited, then use get_case_citator for the complete list if needed.",
+    "Quick preview of citation relationships (max 5 results). Faster than the full citator. Use this for a quick check on whether a case has been cited, then use get_case_citator for the count and the newest citing cases.",
     {
       language: external_exports.enum(["en", "fr"]).default("en").describe("Language: 'en' for English (default), 'fr' for French"),
       databaseId: pathSegmentSchema.describe("Court database ID (e.g., 'onsc', 'onca', 'csc-scc')"),
