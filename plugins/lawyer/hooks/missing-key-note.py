@@ -13,8 +13,9 @@ hook frees the handle at once and never decodes, keeps or prints a key's value.
 Tests set PROBANDA_CLOUD_KEY_TARGET to look up another target instead.
 A key an earlier version saved as a file is moved into the entry by the first
 server read, so before that read the hook may still say the key is missing.
-Outside Windows (Cowork's VM) the store is out of reach, so the hook tells the
-session to ask practice_data__config_status instead.
+Outside Windows (Cowork's VM) the store is out of reach, so the hook says only
+that the session cannot see the key. No branch asks the model to act or names a
+tool or a skill (context-engineering rule 19, issue #227).
 
 With the key present, the hook names any suggestions held unposted, so each is
 offered once as a suggestion card. Nothing is held any more: a suggestion submitted
@@ -38,26 +39,23 @@ sys.path[:0] = [str(p) for p in (HERE.parents[1] / "skills" / "shared" / "script
                                  HERE.parents[3] / ".claude" / "skills" / "shared" / "scripts") if p.is_dir()]
 import hook_io  # noqa: E402
 
-TELL = (
-    "Early in this session, before other Probanda work, tell the practitioner once, in this one "
-    "sentence: \"This computer has no Probanda key yet, so suggestions to the Probanda team cannot be "
-    "sent and changes to practice records cannot be saved; I can ask Probanda for one now.\" Do not repeat it "
-    "later in the session. On their yes, follow the key-request route in the practice-data skill, "
-    "operations/credentials.md, \"Probanda's key\" (key_request__submit). Never ask for the key in chat. A complaint "
-    "about Probanda raised before the key is stored still goes to /lawyer:suggestion: once the "
-    "practitioner submits its card, the suggestion is kept on this computer and sent by itself after "
-    "the key is stored."
+# Every branch states facts only: no text asks the model to act, and none names a
+# tool or a skill. The skills that need the key check it themselves (practice-data,
+# operations/credentials.md, "Key check"; suggestion).
+EFFECT = (
+    "Without Probanda's key, suggestions to the Probanda team cannot be sent and changes to "
+    "practice records cannot be saved. A suggestion submitted from its card before the key is "
+    "stored is kept on this computer and sent by itself once the key is stored."
 )
-MISSING = "This computer holds no Probanda key. " + TELL
+MISSING = "This computer holds no Probanda key. " + EFFECT
 UNSEEN = (
-    "This session cannot see whether this computer holds Probanda's key. Call "
-    "practice_data__config_status once, in the same round trip as a skill's first tool call or after "
-    "its card. If it reports cloud_credential: missing: " + TELL
+    "This session cannot see whether this computer holds Probanda's key: the store that holds "
+    "it is out of this session's reach. " + EFFECT
 )
 HELD = (
     "This computer holds {count} suggestion(s) to the Probanda team, drafted while it had no Probanda "
-    "key, before suggestions were shown as cards. Invoke /lawyer:suggestion to offer each once as a "
-    "card; one is sent only if the practitioner submits its card."
+    "key, before suggestions were shown as cards. None of them has been sent. One is sent only if the "
+    "practitioner submits its card."
 )
 
 
