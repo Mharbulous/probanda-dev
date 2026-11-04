@@ -4,7 +4,7 @@
 // legal-research.db.test.mjs holds the pages it is left off. Every name is synthetic.
 
 import assert from "node:assert/strict";
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test, { after } from "node:test";
@@ -14,6 +14,8 @@ after(() => rmSync(process.env.COCLERK_SUBMISSION_LOCK_ROOT, { recursive: true, 
 
 const { generalWritingFixture } = await import("./helpers/general-writing-fixture.mjs");
 const { partiesSnapshotSql, seedSql } = await import("./helpers/template-db.mjs");
+const { readBoardData } = await import("./fixtures/forms-render-seeds.mjs");
+const { buildLegalMemosData } = await import("../build/submission/forms/legal-memos.js");
 const { callTool } = await import("../build/dispatch.js");
 const { boardSection } = await import("../build/submission/board-card.js");
 const { submissionFormsRender, submissionFormsRenderProceedingBoard } = await import("../build/submission/forms.js");
@@ -321,6 +323,72 @@ test("a merge row made before the refusal, naming a memo, is read as no row: the
   const merged = await submissionDataMergeMilestones({ db_path: g.dbPath, boards: [{ filing_id: first }, { filing_id: second }], confirmed: true, session_token: "s" });
   assert.deepEqual(merged.absorbed, { filing_id: second, proceeding_id: 1 });
   assert.deepEqual(new BoardIndex(g.dbPath).survivorOf({ filing_id: second, proceeding_id: 1 }), { filing_id: first, proceeding_id: 1 });
+});
+
+const MEMO = "6. LAW\\Limits\\2026-10-20 ML re limits.md";
+const saved = (g, ticket, file) => g.execute(`INSERT INTO ticket_answers (ticket_id, file_path, saved_at) VALUES (${ticket}, '${file}', '2026-10-20T09:00');`);
+const memoStrip = (rendered) => readBoardData(rendered.milestone_path).strip.filter((i) => i.key.startsWith("memo:"));
+const memosLane = (g, board) => buildLegalMemosData(g.dbPath, section(g, board).tickets, dirname(g.draft)).memos;
+
+test("a memo saved under a job is one thumbnail on its board, at its current version, between the Writings and the view pages", async (t) => {
+  const g = await fixture(t);
+  const { filing_id: letter } = await g.createLetter();
+  await job(g, 7, letter, "Research the limits");
+  await saved(g, 7, MEMO);
+  await saved(g, 7, MEMO.replace(".md", " v2.md"));
+  const rendered = render(g, letter);
+  await awaitBackgroundJobs();
+  const { strip } = readBoardData(rendered.milestone_path);
+  const at = strip.findIndex((i) => i.key.startsWith("memo:"));
+  assert.deepEqual(
+    [strip[at].kind, strip[at].short, strip[at].long],
+    ["writing", "Memo #7 v2", "ML re limits (research memo: ask a session to show it)"]
+  );
+  assert.equal(memoStrip(rendered).length, 1, "every version is one tile");
+  assert.ok(strip.slice(at + 1).every((i) => i.kind === "view"), "the view pages follow it");
+  assert.ok(strip.slice(0, at).every((i) => i.kind === "writing"), "the Writings come before it");
+});
+
+test("a merged board draws each member's memo once, a memo both members' jobs saved included", async (t) => {
+  const g = await fixture(t);
+  const { filing_id: first } = await g.createLetter();
+  const { filing_id: second } = await g.createLetter({ title: "Letter two" });
+  await job(g, 7, first, "Research the limits");
+  await job(g, 8, second, "Research the limits again");
+  await saved(g, 7, MEMO);
+  await saved(g, 8, MEMO);
+  await saved(g, 8, "6. LAW\\Costs\\2026-10-21 ML re costs.md");
+  await submissionDataMergeMilestones({ db_path: g.dbPath, boards: [{ filing_id: first }, { filing_id: second }], confirmed: true, session_token: "s" });
+  const rendered = render(g, first);
+  await awaitBackgroundJobs();
+  assert.deepEqual(memoStrip(rendered).map((i) => i.short).sort(), ["Memo #7", "Memo #8"]);
+});
+
+test("a memo with no job and a saved case brief draw no thumbnail, and the memos lane still lists the memo", async (t) => {
+  const g = await fixture(t);
+  const { filing_id: letter } = await g.createLetter();
+  await job(g, 7, letter, "Brief the case");
+  await saved(g, 7, "6. LAW\\Cases\\2026-10-20 case brief A v B.md");
+  const lawDir = join(dirname(g.draft), "6. LAW");
+  mkdirSync(lawDir, { recursive: true });
+  writeFileSync(join(lawDir, "2026-10-01 ML re alone.md"), "A memo no job saved.", "utf-8");
+  const rendered = render(g, letter);
+  await awaitBackgroundJobs();
+  assert.deepEqual(memoStrip(rendered), []);
+  assert.deepEqual(memosLane(g, { filing_id: letter }).map((m) => [m.title, m.status]), [["ML re alone", "no_job"]]);
+});
+
+test("a reworded job: a memo's row shows the job's current question, as the Legal Memos rule says, and its thumbnail is unchanged", async (t) => {
+  const g = await fixture(t);
+  const { filing_id: letter } = await g.createLetter();
+  await job(g, 7, letter, "Research the limits");
+  await saved(g, 7, MEMO);
+  const before = memoStrip(render(g, letter));
+  await g.execute("UPDATE tickets SET intent = 'Is the claim out of time?' WHERE id = 7;");
+  assert.deepEqual(memosLane(g, { filing_id: letter }).map((m) => m.issues), [["Is the claim out of time?"]]);
+  const after = memoStrip(render(g, letter));
+  await awaitBackgroundJobs();
+  assert.deepEqual(after, before);
 });
 
 test("two merges of one board into different survivors: the second is refused and the first's row stands", async (t) => {

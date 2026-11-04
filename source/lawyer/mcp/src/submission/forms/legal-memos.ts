@@ -22,7 +22,7 @@
 // Writing's board in its proceeding. A memo whose only job sits on a board with no Legal Research page (a
 // retired Writing's, or a Work Board with no Writing that no Writing's board absorbed) falls under rule 2.
 //
-// Everything shown is recorded: the issue is each recording job's question (its intent) verbatim,
+// Everything shown is recorded: the issue is each recording job's current question (its intent) verbatim,
 // never a summary; the facts are the facts its scope names; the status is its jobs'. Nothing is read
 // from a memo's text, which names nothing of the working matter. Only names and dates are read from disk.
 
@@ -35,6 +35,7 @@ import { rows } from "../query-rows.js";
 import { BoardIndex } from "./board-members.js";
 import { readTexts } from "./paragraph-map.js";
 import { isJobOnlyBoard, isResearchWriting, liveTicketClause, ticketAnswersHeld } from "./query.js";
+import type { StripItem } from "./work-board-page.js";
 import type { WorkBoardTicket } from "./work-board-ticket.js";
 
 /** The matter's law folder, beside its 0. DRAFT folder; ticket_answers paths start with it. */
@@ -204,6 +205,37 @@ function recordedOnPagedBoards(dbPath: string): Set<string> {
   );
 }
 
+const answerFiles = (jobs: BoardJob[]) => jobs.flatMap((j) => j.answers.map((a) => a.file_path));
+
+/** Each memo's versions among these files, by the key every version shares. A case brief is no memo. */
+function memoVersions(files: string[]): Map<string, Map<number, string>> {
+  const groups = new Map<string, Map<number, string>>();
+  for (const file of files) {
+    if (isCaseBriefFile(baseName(file))) continue;
+    const { key, version } = versionOf(file);
+    const versions = groups.get(key) ?? new Map<number, string>();
+    if (!versions.has(version)) versions.set(version, file);
+    groups.set(key, versions);
+  }
+  return groups;
+}
+
+/** A Work Board's thumbnail for each memo its jobs recorded, at its current version. From the jobs alone, so
+ * a page write scans no folder. A memo with no job on the board has none. */
+export function memoTiles(jobs: BoardJob[]): StripItem[] {
+  return [...memoVersions(answerFiles(jobs))].map(([key, versions]) => {
+    const version = Math.max(...versions.keys());
+    const job = Math.min(...jobs.filter((j) => j.answers.some((a) => versionOf(a.file_path).key === key)).map((j) => j.id));
+    return {
+      kind: "writing",
+      key: `memo:${key}`,
+      viewed: false,
+      short: `Memo #${job}${version > 1 ? ` v${version}` : ""}`,
+      long: `${titleOf(versions.get(version) as string)} (research memo: ask a session to show it)`,
+    };
+  });
+}
+
 /**
  * The memos linked to one board (the rule in this file's header), newest first. `jobs` are the
  * board's jobs as its Work Board page draws them; `matterDir` is the matter folder holding `6. LAW`.
@@ -220,15 +252,8 @@ export function buildLegalMemosData(dbPath: string, jobs: BoardJob[], matterDir:
     }
   }
 
-  // Each memo's versions, every recorded answer of the board's jobs included whether or not it is on disk now.
-  const groups = new Map<string, Map<number, string>>();
-  for (const file of [...onDisk.values()].map((f) => f.file).concat(jobs.flatMap((j) => j.answers.map((a) => a.file_path)))) {
-    if (isCaseBriefFile(baseName(file))) continue;
-    const { key, version } = versionOf(file);
-    const versions = groups.get(key) ?? new Map<number, string>();
-    if (!versions.has(version)) versions.set(version, file);
-    groups.set(key, versions);
-  }
+  // Every recorded answer of the board's jobs is included whether or not it is on disk now.
+  const groups = memoVersions([...onDisk.values()].map((f) => f.file).concat(answerFiles(jobs)));
 
   const memos: LegalMemo[] = [];
   for (const [key, versions] of groups) {

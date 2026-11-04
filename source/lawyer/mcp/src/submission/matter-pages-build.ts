@@ -10,6 +10,7 @@ import { docItemKey, orderStrip, readViewed, viewItemKey } from "./forms/board-v
 import { combineSections } from "./forms/combined-board.js";
 import { courtFileAffidavits } from "./court-file-affidavits.js";
 import { type ClientContext, rankFilings, type Ranked, readSchemaVersion } from "./forms.js";
+import { memoTiles } from "./forms/legal-memos.js";
 import { LOOSE_IDEAS_PAGE, LOOSE_THREADS_FILE, type LooseThreadsContext } from "./forms/loose-ideas-page.js";
 import { MATTER_BOARD_FILE, renderMatterBoardHtml } from "./forms/matter-board-shell.js";
 import { fetchPreFilingProceedings, isJobOnlyBoard, isResearchWriting } from "./forms/query.js";
@@ -144,6 +145,7 @@ export function buildMatterPages(
       strip: orderStrip(
         [
           ...built.flatMap((b) => b.writings),
+          ...memoTiles(board.tickets),
           ...views.filter((v) => v.group === group).map((v): StripItem => ({ kind: "view", key: viewItemKey(v.page.name), viewed: false, name: v.page.name, file: v.file })),
         ],
         readViewed(dbPath, group.board)

@@ -30,10 +30,11 @@ export interface MatterMilestoneData {
   dates: PageDates;
   /** The board's thumbnails, drawn on the page in one row, in no section: the viewed ones first, most
    * recently viewed first (board-viewed.ts), then the never-viewed ones, each live Writing's documents
-   * in its last render's document order and then the view pages in registry order. A Writing's
-   * document gives its manifest label: `short` is drawn on the tile, `long` is its `title`; an entry
-   * with no label gives the file name for both. A view page (../view-pages.ts VIEW_PAGES) gives its
-   * name and its sibling file's name, and is never a link. Empty on a pre-filing page. */
+   * in its last render's document order, the memos the board's jobs saved (legal-memos.ts memoTiles) and
+   * then the view pages in registry order. A Writing's document gives its manifest label: `short` is
+   * drawn on the tile, `long` is its `title`; an entry with no label gives the file name for both. A
+   * view page (../view-pages.ts VIEW_PAGES) gives its name and its sibling file's name, and is never a
+   * link. A pre-filing page has only its memos. */
   strip: StripItem[];
   /** The section's attachments as found on disk when the page was written (../board-attachments.ts),
    * drawn as cards after the strip's thumbnails, never a link (shared/html-pages.md, "Cards only, no link"). */
