@@ -46,4 +46,6 @@ Otherwise run `gh issue list -R Mharbulous/probanda-dev --label ready-for-human 
 
 ## 3. Start a local build
 
+When this session relabels an issue `ready-for-agent`, it also adds `off peak` if the brief's work is token-intensive (**Off-peak work** in `docs/agents/issue-tracker.md`).
+
 When the route's steps are done, this session relabelled the issue `ready-for-agent`, the issue carries `local`, and this session is not building it itself, start the local implementer: `powershell.exe -NoProfile -Command 'Start-ScheduledTask -TaskName "Probanda local implementer"'`. A run already in progress ignores the start and takes the issue when it lists the queue again. If the command fails, quote its error and say the daily run takes the issue.
