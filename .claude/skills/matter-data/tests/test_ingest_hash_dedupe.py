@@ -181,7 +181,7 @@ class IngestHashDedupeTests(unittest.TestCase):
 
     def test_unattended_re_extraction_routes_inherit_the_reuse(self):
         unattended = (CASE_DATA_ROOT / "operations" / "ingest-unattended.md").read_text(encoding="utf-8")
-        for prefix in ("| `failed` | re-extract", "| `none` with no record, or a main record with no child rows |"):
+        for prefix in ("| `failed` | Step 2", "| `none` with no record, or a main record with no child rows |"):
             with self.subTest(route=prefix):
                 self.assertIn("re-extraction rule", self.line_starting(unattended, prefix))
 

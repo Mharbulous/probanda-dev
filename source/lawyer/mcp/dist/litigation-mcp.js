@@ -1,4 +1,4 @@
-// build-stamp: a36c4bdec708
+// build-stamp: c42f310764fd
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75261,7 +75261,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "a36c4bdec708";
+var BUILD_STAMP = false ? null : "c42f310764fd";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -77536,7 +77536,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("ingest_run"),
-      description: "Several ingestions of one matter may run at once, each claiming the files it reads: each run's lease and journal are kept on this computer outside the matter. action begin (mode attended or unattended; orchestrator true only from the /ingest-orchestrator skill) starts a run and returns {ok, run_id, resumed, next, asked?, path_b?, report?: lines to relay}; pass run_id on every matter_data__execute of the run. While a matter-wide change is running it returns {ok: false, refused: matter_busy, say}. With orchestrator true, a run left unfinished with results still to record, once its heartbeat is 60 minutes old and until its folder is deleted 30 days on, returns {ok: false, refused: run_unfinished, run_id, files, say} naming it to resume; any other caller starts anyway and is told in report. begin with resume (an unfinished run's run_id) takes that run over at once with a new run_id, its claims included, and with orchestrator true makes it the orchestrator's run. The displaced holder's next call is refused lease_lost. resume naming no unfinished run is refused unknown_run. action status with no run_id returns {active, revision, runs: [{run_id, active, started, heartbeat, mode, files}]}, the matter's unfinished runs; with run_id it returns that run {active, revision, run_id, started, heartbeat, mode, ended, next, asked?, path_b?} and renews the heartbeat; with run_id and ack (an extractor's failed reply line, or the ok line of a dispatch whose contract is null) it records that reply, whose ref must be one this run dispatched. action end (run_id) finishes the run and returns {ok, run_id, report?}. action next (run_id; routes the first time each file is routed, each {file_path, file_hash, kind facts|notice_of_application|affidavit|path_b, rendering?, execution?, witness?, answers_source_id?, category?, proceeding_id?, attachment_hashes?}; bridged true in a bridged session) claims each new file and returns {ok, routed?: the routed files' refs in order (f1, f2, ...), left_out?: files another session holds or has just recorded, report?: lines to relay, dispatch: [{dispatch_id, agent, model, effort, ref, contract, stage?}] to start, each with the one-line prompt DISPATCH <dispatch_id>, write: [{ref, contract, result_ids}] acknowledged results still to write, close: [{ref, contract}] items to close with result_ids [], asked?: [{ref, contract, result_ids}] writes waiting for the practitioner's answer, never to repeat until it is given, path_b?: [{ref, file_path}] documents for the session to read itself (routed path_b, or refused path_b) until their privileged write, running, more?}. Pass a write or close line's ref to ingest_result as document.ref. A file routed again, or another file with the same bytes, keeps the first ref. The run's work is done when dispatch, write and close are empty, running is 0 and waiting_for_slot is absent; waiting_for_slot true means no extractor slot is free yet, so call next again. At most 10 extractors run at once on this computer, across all runs. A dispatch line without its stage list, and a close line, is at most 200 bytes; a write line adds about 40 bytes per result_id, and stage about 120 bytes per path. A page is at most 50 lines. action claim (run_id; files, each {file_path, file_hash, attachment_hashes?}) claims files read outside next, until the run ends, and returns {ok, claimed, left_out?, report?}; read only what it claimed. action staged (run_id, dispatch_id, paths) records a bridged session's copies of a dispatch's stage list, in its order. Every call carrying run_id renews the heartbeat. A refusal writes nothing; relay its say to the practitioner, never the code. A call refused plugin_changed means the plugin was updated mid-run: in a run the /ingest-orchestrator skill drives, stop without end, and after a restart resume the run (status, then begin with resume); any other caller ends the run as its operation says. Only the /matter-data skill and the /ingest-orchestrator skill may call this tool -- invoke one (Skill: lawyer:matter-data or lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
+      description: "Several ingestions of one matter may run at once, each claiming the files it reads: each run's lease and journal are kept on this computer outside the matter. action begin (mode attended or unattended; orchestrator true only from the /ingest-orchestrator skill) starts a run and returns {ok, run_id, resumed, next, asked?, path_b?, report?: lines to relay}; pass run_id on every matter_data__execute of the run. While a matter-wide change is running it returns {ok: false, refused: matter_busy, say}. With orchestrator true, a run left unfinished with results still to record, once its heartbeat is 60 minutes old and until its folder is deleted 30 days on, returns {ok: false, refused: run_unfinished, run_id, files, say} naming it to resume; any other caller starts anyway and is told in report. begin with resume (an unfinished run's run_id) takes that run over at once with a new run_id, its claims included, and with orchestrator true makes it the orchestrator's run. The displaced holder's next call is refused lease_lost. resume naming no unfinished run is refused unknown_run. action status with no run_id returns {active, revision, runs: [{run_id, active, started, heartbeat, mode, files}]}, the matter's unfinished runs; with run_id it returns that run {active, revision, run_id, started, heartbeat, mode, ended, next, asked?, path_b?} and renews the heartbeat; with run_id and ack (an extractor's failed reply line, or the ok line of a dispatch whose contract is null) it records that reply, whose ref must be one this run dispatched. action end (run_id) finishes the run and returns {ok, run_id, report?}. action next (run_id; routes the first time each file is routed, each {file_path, file_hash, kind facts|notice_of_application|affidavit|path_b|caselaw|provision, rendering?, execution?, witness?, answers_source_id?, category?, proceeding_id?, attachment_hashes?, attachments?: an email's attachments to read once its own write lands, each {name, file_hash, path, rendering?}, transcript?: true for a transcript, second_copy_of?: the authority a caselaw or provision file was matched to by citation, read by reference through a close line, possible_versions?: held source ids it may be another version of, version_newcomers?: the hashes of other files of this run it may be another version of}; bridged true in a bridged session) claims each new file and returns {ok, routed?: the routed files' refs in order (f1, f2, ...), left_out?: files another session holds or has just recorded, report?: lines to relay, dispatch: [{dispatch_id, agent, model, effort, ref, contract, stage?}] to start, each with the one-line prompt DISPATCH <dispatch_id>, write: [{ref, contract, result_ids}] acknowledged results still to write, close: [{ref, contract}] items to close with result_ids [], asked?: [{ref, contract, result_ids}] writes waiting for the practitioner's answer, never to repeat until it is given, path_b?: [{ref, file_path}] documents for the session to read itself (routed path_b, or refused path_b) until their privileged write, running, more?}. Pass a write or close line's ref to ingest_result as document.ref. A file routed again, or another file with the same bytes, keeps the first ref. The run's work is done when dispatch, write and close are empty, running is 0 and waiting_for_slot is absent; waiting_for_slot true means no extractor slot is free yet, so call next again. At most 10 extractors run at once on this computer, across all runs. A dispatch line without its stage list, and a close line, is at most 200 bytes; a write line adds about 40 bytes per result_id, and stage about 120 bytes per path. A page is at most 50 lines. action claim (run_id; files, each {file_path, file_hash, attachment_hashes?}) claims files read outside next, until the run ends, and returns {ok, claimed, left_out?, report?}; read only what it claimed. action staged (run_id, dispatch_id, paths) records a bridged session's copies of a dispatch's stage list, in its order. Every call carrying run_id renews the heartbeat. A refusal writes nothing; relay its say to the practitioner, never the code. A call refused plugin_changed means the plugin was updated mid-run: in a run the /ingest-orchestrator skill drives, stop without end, and after a restart resume the run (status, then begin with resume); any other caller ends the run as its operation says. Only the /matter-data skill and the /ingest-orchestrator skill may call this tool -- invoke one (Skill: lawyer:matter-data or lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77553,7 +77553,7 @@ function caseDataToolDefinitions() {
               properties: {
                 file_path: { type: "string" },
                 file_hash: { type: "string" },
-                kind: { type: "string", enum: ["facts", "notice_of_application", "affidavit", "path_b"] },
+                kind: { type: "string", enum: ["facts", "notice_of_application", "affidavit", "path_b", "caselaw", "provision"] },
                 rendering: { type: "string" },
                 execution: { type: "string", enum: ["draft", "affirmed", "filed"] },
                 witness: { type: "string", enum: ["fact", "expert"] },
@@ -77561,7 +77561,20 @@ function caseDataToolDefinitions() {
                 category: { type: "string", enum: ["court", "correspondence", "production", "work_product", "disbursements"] },
                 proceeding_id: { type: "integer" },
                 other_version: { type: "string", enum: ["superseded", "not_version"] },
-                attachment_hashes: { type: "array", items: { type: "string" } }
+                attachment_hashes: { type: "array", items: { type: "string" } },
+                attachments: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: { name: { type: "string" }, file_hash: { type: "string" }, path: { type: "string" }, rendering: { type: "string" } },
+                    required: ["name", "file_hash", "path"],
+                    additionalProperties: false
+                  }
+                },
+                transcript: { type: "boolean" },
+                second_copy_of: { type: "integer" },
+                possible_versions: { type: "array", items: { type: "integer" } },
+                version_newcomers: { type: "array", items: { type: "string" } }
               },
               required: ["file_path", "file_hash", "kind"],
               additionalProperties: false
@@ -77592,7 +77605,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("ingest_result"),
-      description: "Write one document's extracted results from their staged result_ids, in one transaction (an affidavit's exhibits each under their own savepoint), then regenerate evidence.sql. No extraction output and no SQL pass through the session. contract is facts, affidavit_body, affidavit_exhibits, sought_orders or privileged; document is {ref, store} for a file routed in this run (the ref of its dispatch, write, close or path_b line, as given), or {file_path (stored form), file_hash, store} for a Path B document; store is privileged only for a privileged contract answered yes; result_ids are the ids from the extractors' ok lines: one result named by its dispatch line's ref, or the result_ids of a write line, each already acknowledged (a call of several that holds an unacknowledged id is an error); [] closes an item whose extraction failed twice. answers carries the practitioner's answers to an earlier call's ask: privilege (yes, no or unclear, any case, required for privileged, whose call takes exactly one result), category, proceeding_id, participants {name as extracted: party_id, or 0 for a filing party that is none of the parties}, informants {locator: privileged source id, or 0 when it came from no document on file} for a privileged informant. Returns at most 600 bytes: {outcome written|already_written|refused, refused?, source_id, counts {facts, positions, relief, links, exhibits}, items [{ref, outcome, reason}] for items that failed, ask [{kind, ref, say}], post [{pass, ref}] after-completion passes to run, report [lines]}. Relay report lines and ask the ask items in plain words; never show refused, reason or ref. A repeated call is safe: it returns already_written. refused waiting means call again once next lists it; path_b means read the document as Path B; set_aside, race and store_change mean set it aside for /ingest; already_held and taken mean the file is settled in another session, so do nothing more for it. An ask of kind other_version names a held copy by its ref: settle the pair, then repeat the call with answers.other_version superseded or not_version. A result that cannot be read, or belongs to another contract, file or item than its reply, is refused and its item alone read once more. dropped counts ask or items entries left out to keep the cap: a repeated call lists them. Refuses without a live run_id (lease_lost) or after a plugin update (plugin_changed). Only the /ingest-orchestrator skill may call this tool -- invoke it (Skill: lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
+      description: "Write one document's extracted results from their staged result_ids, in one transaction (an affidavit's exhibits each under their own savepoint), then regenerate evidence.sql. No extraction output and no SQL pass through the session. contract is facts, attachment, affidavit_body, affidavit_exhibits, sought_orders, caselaw, provision or privileged; for caselaw and provision, source_id is the authority's id and store is still main; document is {ref, store} for a file routed in this run (the ref of its dispatch, write, close or path_b line, as given), or {file_path (stored form), file_hash, store} for a Path B document; store is privileged only for a privileged contract answered yes; result_ids are the ids from the extractors' ok lines: one result named by its dispatch line's ref, or the result_ids of a write line, each already acknowledged (a call of several that holds an unacknowledged id is an error); [] closes an item whose extraction failed twice, or records by reference an authority routed with second_copy_of. answers carries the practitioner's answers to an earlier call's ask: privilege (yes, no or unclear, any case, required for privileged, whose call takes exactly one result), category, proceeding_id, participants {name as extracted: party_id, or 0 for a filing party that is none of the parties}, informants {locator: privileged source id, or 0 when it came from no document on file} for a privileged informant. Returns at most 600 bytes: {outcome written|already_written|refused, refused?, source_id, counts {facts, positions, relief, links, exhibits}, items [{ref, outcome, reason}] for items that failed, ask [{kind, ref, say}], post [{pass, ref}] after-completion passes to run, report [lines]}. Relay report lines and ask the ask items in plain words; never show refused, reason or ref. A repeated call is safe: it returns already_written. refused waiting means call again once next lists it; path_b means read the document as Path B; set_aside, race and store_change mean set it aside for /ingest; already_held and taken mean the file is settled in another session, so do nothing more for it; attachment_held means that attachment is already on file. An ask of kind other_version names a held copy by its ref: settle the pair, then repeat the call with answers.other_version superseded or not_version. A result that cannot be read, or belongs to another contract, file or item than its reply, is refused and its item alone read once more. dropped counts ask or items entries left out to keep the cap: a repeated call lists them. Refuses without a live run_id (lease_lost) or after a plugin update (plugin_changed). Only the /ingest-orchestrator skill may call this tool -- invoke it (Skill: lawyer:ingest-orchestrator) and follow it, whatever skill you started in.",
       inputSchema: {
         type: "object",
         properties: {
@@ -77609,7 +77622,7 @@ function caseDataToolDefinitions() {
             required: ["store"],
             additionalProperties: false
           },
-          contract: { type: "string", enum: ["facts", "affidavit_body", "affidavit_exhibits", "sought_orders", "caselaw", "provision", "efiling_statement", "register_only", "privileged"] },
+          contract: { type: "string", enum: ["facts", "attachment", "affidavit_body", "affidavit_exhibits", "sought_orders", "caselaw", "provision", "efiling_statement", "register_only", "privileged"] },
           result_ids: { type: "array", items: { type: "string" } },
           answers: {
             type: "object",
@@ -77630,7 +77643,7 @@ function caseDataToolDefinitions() {
     },
     {
       name: caseDataPrefixed("dispatch_inputs"),
-      description: "An extraction agent's first call: the inputs stored for its dispatch (PAGE_MANIFEST or RENDERING, DOCUMENT, MATTER_CONTEXT, ANSWERED_FACTS and ANSWERED_RELIEF for a response, PASS, PAGE_RANGE and EXHIBIT_LETTER for an affidavit pass, ITEMS and CONTRACT). dispatch_id is the id in the agent's prompt line DISPATCH <dispatch_id>. Read-only. Only an extraction agent dispatched with DISPATCH <dispatch_id> may call this tool.",
+      description: "An extraction agent's first call: the inputs stored for its dispatch (PAGE_MANIFEST or RENDERING, DOCUMENT, MATTER_CONTEXT, or for an authority LEGAL_CONTEXT and TREATMENT_VOCABULARY and never a party's name, ANSWERED_FACTS and ANSWERED_RELIEF for a response, PASS, PAGE_RANGE and EXHIBIT_LETTER for an affidavit pass, ITEMS and CONTRACT). dispatch_id is the id in the agent's prompt line DISPATCH <dispatch_id>. Read-only. Only an extraction agent dispatched with DISPATCH <dispatch_id> may call this tool.",
       inputSchema: objectSchema([{ name: "dispatch_id", type: "str" }], ["dispatch_id"]),
       annotations: { readOnlyHint: true, openWorldHint: false }
     },
@@ -91685,6 +91698,8 @@ async function checkRun(matterRoot, runId, env = process.env, route2) {
     return null;
   });
 }
+var isAuthority = (route2) => route2.kind === "caselaw" || route2.kind === "provision";
+var isAuthorityContract = (contract) => contract === "caselaw" || contract === "provision";
 function ledger(events) {
   const routes = events.filter((e3) => e3.event === "route").map((e3) => e3.route);
   let lastTakeover = -1;
@@ -91833,6 +91848,15 @@ function plan(events, env) {
       if (!l3.written("privileged", route2.ref) && !blocked) pathB.push({ ref: route2.ref, file_path: route2.file_path });
       continue;
     }
+    if (isAuthority(route2)) {
+      if (route2.second_copy_of !== void 0) {
+        if (!l3.lastWrite(route2.kind, route2.ref)) close.push({ ref: route2.ref, contract: route2.kind });
+        continue;
+      }
+      const s3 = consider({ ref: route2.ref, agent: `lawyer:extract-${route2.kind}`, contract: route2.kind, route: route2 });
+      if (s3.state === "failed" && !l3.written(route2.kind, route2.ref)) close.push({ ref: route2.ref, contract: route2.kind });
+      continue;
+    }
     if (route2.kind !== "affidavit") {
       const s3 = consider({ ref: route2.ref, agent: "lawyer:extract-facts", contract: "facts", route: route2 });
       if (s3.state === "failed" && !l3.written("facts", route2.ref)) closeOrAsk("facts", route2.ref);
@@ -91840,6 +91864,13 @@ function plan(events, env) {
         const ref = `${route2.ref}:so`;
         const so2 = consider({ ref, agent: "lawyer:extract-sought-orders", contract: "sought_orders", route: route2 }, s3.state === "written");
         if (so2.state === "failed" && s3.state === "written" && !l3.written("sought_orders", ref)) close.push({ ref, contract: "sought_orders" });
+      }
+      if (s3.state === "written") {
+        (route2.attachments ?? []).forEach((attachment, i3) => {
+          const ref = `${route2.ref}:a${i3 + 1}`;
+          const a3 = consider({ ref, agent: "lawyer:extract-facts", contract: "attachment", route: route2, attachment });
+          if (a3.state === "failed" && !l3.written("attachment", ref)) closeOrAsk("attachment", ref);
+        });
       }
       continue;
     }
@@ -92005,16 +92036,15 @@ var hostPath = (matterRoot, stored) => pathWin329.join(matterRoot, stored);
 var imagesDir = (matterRoot, dispatchId) => pathWin329.join(matterRoot, "0. CASE DATA", "Page images", `ingest-${dispatchId}`);
 async function inputsFor(item, matterRoot, context, bridged, dispatchId) {
   const route2 = item.route;
-  const file = hostPath(matterRoot, route2.file_path);
-  const kind = pathWin329.extname(route2.file_path).slice(1).toLowerCase();
-  const inputs = {
-    MATTER_CONTEXT: context.matter_context,
-    CONTRACT: { id: item.contract ?? "boundaries", version: CONTRACT_VERSION }
-  };
+  const file = item.attachment ? item.attachment.path : hostPath(matterRoot, route2.file_path);
+  const rendering = item.attachment ? item.attachment.rendering : route2.rendering;
+  const kind = pathWin329.extname(item.attachment ? item.attachment.name : route2.file_path).slice(1).toLowerCase();
+  const authority = isAuthorityContract(item.contract);
+  const inputs = authority ? { LEGAL_CONTEXT: context.legal_context, TREATMENT_VOCABULARY: context.treatment_vocabulary, CONTRACT: { id: item.contract, version: CONTRACT_VERSION } } : { MATTER_CONTEXT: context.matter_context, CONTRACT: { id: item.contract ?? "boundaries", version: CONTRACT_VERSION } };
   let pageCount;
   let scanned = false;
-  if (route2.rendering) {
-    inputs.RENDERING = route2.rendering;
+  if (rendering) {
+    inputs.RENDERING = rendering;
   } else {
     const count2 = (await classifyPdfPages(file)).length;
     pageCount = count2;
@@ -92023,10 +92053,11 @@ async function inputsFor(item, matterRoot, context, bridged, dispatchId) {
     inputs.PAGE_MANIFEST = m3.manifest;
     scanned = m3.scanned && m3.manifest.every((e3) => "page" in e3);
   }
-  inputs.DOCUMENT = scanned ? { name: pathWin329.basename(file), kind, date: "auto", author_or_filing_party: "auto" } : { path: file, kind, date: "auto", author_or_filing_party: "auto" };
+  const asRead = authority ? { kind } : { kind, date: "auto", author_or_filing_party: "auto" };
+  inputs.DOCUMENT = scanned ? { name: pathWin329.basename(file), ...asRead } : { path: file, ...asRead };
   if (item.agent === "lawyer:extract-facts") {
-    inputs.ANSWERED_FACTS = context.answered_facts;
-    inputs.ANSWERED_RELIEF = context.answered_relief;
+    inputs.ANSWERED_FACTS = item.attachment ? [] : context.answered_facts;
+    inputs.ANSWERED_RELIEF = item.attachment ? [] : context.answered_relief;
   }
   if (item.pass) inputs.PASS = item.pass;
   if (item.pages) inputs.PAGE_RANGE = item.pages;
@@ -92038,19 +92069,20 @@ async function inputsFor(item, matterRoot, context, bridged, dispatchId) {
       if ("images" in e3) stage.push(...e3.images);
       else if (!stage.includes(e3.pdf)) stage.push(e3.pdf);
     }
-    if (route2.rendering) stage.push(route2.rendering);
+    if (rendering) stage.push(rendering);
   }
   return { inputs, stage, pageCount };
 }
-function matterContext(matterRoot, answersSourceId, env) {
-  const out = runCaseScript("dispatch_context", "run", {
+function matterContext(matterRoot, answersSourceId, authority, env) {
+  const out = authority ? runCaseScript("ingest_authority", "dispatch_context", { case_data_dir: caseDataFolder(matterRoot, env) }, env) : runCaseScript("dispatch_context", "run", {
     case_data_dir: caseDataFolder(matterRoot, env),
     answers_source_id: answersSourceId ?? null
   }, env);
   if (out.status !== "ok") throw new DataServerError(`the matter's case data cannot be read: ${String(out.reason)}`, "case_data_unavailable");
   return out;
 }
-var ROUTE_KINDS = ["facts", "notice_of_application", "affidavit", "path_b"];
+var ROUTE_KINDS = ["facts", "notice_of_application", "affidavit", "path_b", "caselaw", "provision"];
+var SHA256 = /^[0-9a-f]{64}$/;
 function storedForm(path, matterRoot) {
   let p3 = path.replace(/\//g, "\\");
   const r3 = matterRoot.replace(/\//g, "\\").replace(/\\+$/, "");
@@ -92071,11 +92103,30 @@ function checkRoutes(routes, matterRoot) {
     if (sha256(host) !== r3.file_hash) throw new ValidationError(`routes[${i3}].file_hash is not the hash of ${stored}`);
     if (r3.rendering !== void 0 && !existsSync15(r3.rendering)) throw new ValidationError(`routes[${i3}].rendering does not exist`);
     if (r3.attachment_hashes?.some((hash) => !/^[0-9a-f]{64}$/.test(hash))) throw new ValidationError(`routes[${i3}].attachment_hashes must each be a file's SHA-256`);
-    if (r3.kind !== "path_b" && r3.rendering === void 0 && pathWin329.extname(stored).toLowerCase() !== ".pdf") {
+    if (r3.second_copy_of !== void 0 && (!isAuthority(r3) || !Number.isInteger(r3.second_copy_of))) throw new ValidationError(`routes[${i3}].second_copy_of must be an authority's id, on an authority's route`);
+    if (r3.possible_versions?.some((id) => !Number.isInteger(id))) throw new ValidationError(`routes[${i3}].possible_versions must each be a source's id`);
+    if (r3.version_newcomers?.some((hash) => !SHA256.test(hash))) throw new ValidationError(`routes[${i3}].version_newcomers must each be a file's SHA-256`);
+    if (r3.kind !== "path_b" && r3.second_copy_of === void 0 && r3.rendering === void 0 && pathWin329.extname(stored).toLowerCase() !== ".pdf") {
       throw new ValidationError(`routes[${i3}] is not a PDF, so it needs its rendering`);
     }
-    return { ...r3, file_path: stored };
+    return { ...r3, file_path: stored, ...attachmentsOf(r3, i3) };
   });
+}
+function attachmentsOf(r3, i3) {
+  if (r3.attachments === void 0) return {};
+  if (r3.kind !== "facts") throw new ValidationError(`routes[${i3}].attachments belong only on an email routed facts`);
+  const attachments = /* @__PURE__ */ new Map();
+  r3.attachments.forEach((a3, k3) => {
+    const label2 = `routes[${i3}].attachments[${k3}]`;
+    if (typeof a3.name !== "string" || a3.name === "") throw new ValidationError(`${label2}.name is required`);
+    if (!SHA256.test(a3.file_hash ?? "")) throw new ValidationError(`${label2}.file_hash must be the attachment's SHA-256`);
+    if (!existsSync15(a3.path ?? "")) throw new ValidationError(`${label2}.path does not exist`);
+    if (sha256(a3.path) !== a3.file_hash) throw new ValidationError(`${label2}.file_hash is not the hash of its path`);
+    if (a3.rendering !== void 0 && !existsSync15(a3.rendering)) throw new ValidationError(`${label2}.rendering does not exist`);
+    if (a3.rendering === void 0 && pathWin329.extname(a3.name).toLowerCase() !== ".pdf") throw new ValidationError(`${label2} is not a PDF, so it needs its rendering`);
+    if (!attachments.has(a3.file_hash)) attachments.set(a3.file_hash, a3);
+  });
+  return { attachments: [...attachments.values()], attachment_hashes: [.../* @__PURE__ */ new Set([...r3.attachment_hashes ?? [], ...attachments.keys()])] };
 }
 var unjournaled = /* @__PURE__ */ new Map();
 async function next(args, env) {
@@ -92152,10 +92203,11 @@ async function next(args, env) {
     mkdirSync10(pathWin329.join(reserved.dir, "dispatches"), { recursive: true });
     for (; k3 < reserved.items.length; k3++) {
       const { id, item } = reserved.items[k3];
-      const key = String(item.route.answers_source_id ?? "");
+      const authority = isAuthorityContract(item.contract);
+      const key = authority ? "authority" : String(item.route.answers_source_id ?? "");
       if (!contexts.has(key)) {
         try {
-          contexts.set(key, matterContext(args.matter_root, item.route.answers_source_id, env));
+          contexts.set(key, matterContext(args.matter_root, item.route.answers_source_id, authority, env));
         } catch (err) {
           contexts.set(key, err);
         }
@@ -92366,7 +92418,7 @@ function finishRun(dir, lease, runId, matterRoot, env) {
   const dropped = dropStagedResults(idsOf("privileged"), env);
   if (dropped.deleted > 0) report.push(PRIVILEGED_DROPPED);
   if (dropped.left > 0) report.push(PRIVILEGED_LEFT);
-  dropStagedResults(idsOf("affidavit_exhibits"), env);
+  dropStagedResults([...idsOf("affidavit_exhibits"), ...idsOf("attachment")], env);
   return { report, keys };
 }
 var tornIn = (matterDir) => [...torn].filter((dir) => dir === matterDir || dir.startsWith(`${matterDir}\\`));
@@ -92709,13 +92761,17 @@ function proceduralHistoryAppend(args, now = /* @__PURE__ */ new Date()) {
 // src/case/ingest-result.ts
 var CONVERTERS = {
   facts: "ingest_facts",
+  attachment: "ingest_facts",
   affidavit_body: "ingest_affidavit",
   affidavit_exhibits: "ingest_affidavit",
   sought_orders: "ingest_sought_orders",
-  privileged: "ingest_privileged"
+  privileged: "ingest_privileged",
+  caselaw: "ingest_authority",
+  provision: "ingest_authority"
 };
-var LATER = ["caselaw", "provision", "efiling_statement", "register_only"];
-var CLOSABLE = ["facts", "affidavit_body", "affidavit_exhibits", "sought_orders"];
+var LATER = ["efiling_statement", "register_only"];
+var CLOSABLE = ["facts", "attachment", "affidavit_body", "affidavit_exhibits", "sought_orders", "caselaw", "provision"];
+var ROUTED_ONLY = ["attachment", "caselaw", "provision", "affidavit_body", "affidavit_exhibits"];
 var COUNTS = ["facts", "positions", "relief", "links", "exhibits"];
 var RESULT_CAP = 600;
 var SAY_REFUSED = {
@@ -92727,6 +92783,7 @@ var SAY_REFUSED = {
   path_b: "This document may be privileged, so nothing was recorded from its reading. It will be read here instead, once its privilege is decided.",
   set_aside: "This document is a legal authority, so it was not recorded in this run. It will be ingested on its own once the run ends.",
   already_held: "This document has already been recorded in another session, so it was not recorded again.",
+  attachment_held: "This attachment is already on file, so it was not recorded again.",
   refused: "This document could not be recorded, so nothing from its reading was kept."
 };
 var refused = (code, extra = {}) => ({
@@ -92750,7 +92807,7 @@ function partyNames(contract, result) {
       for (const f3 of fields2) names.push(row2?.[f3]);
     }
   };
-  if (contract === "facts") {
+  if (contract === "facts" || contract === "attachment") {
     each("fact_positions", ["party_name"]);
     each("relief_items", ["seeking_party_name", "against_party_name"]);
     each("relief_positions", ["party_name"]);
@@ -92851,7 +92908,7 @@ async function ingestResult(args, env = process.env) {
     dropStaged([...drop ? privileged : [], ...dropAlso]);
   }
 }
-var DEFINITE = ["invalid", "contract_mismatch", "contract_version", "race", "store_change", "path_b", "set_aside", "unresolved", "refused", "already_held", "taken"];
+var DEFINITE = ["invalid", "contract_mismatch", "contract_version", "race", "store_change", "path_b", "set_aside", "unresolved", "refused", "already_held", "attachment_held", "taken"];
 async function checkAndWrite(args, env, dropAlso, lock) {
   if (new Set(args.result_ids).size !== args.result_ids.length) throw new ValidationError("result_ids must not repeat an id");
   if (args.result_ids.length === 0 && !CLOSABLE.includes(args.contract)) throw new ValidationError(`contract ${args.contract} needs result_ids`);
@@ -92866,7 +92923,7 @@ async function checkAndWrite(args, env, dropAlso, lock) {
   }
   const run2 = await runForWrite(args.matter_root, args.run_id, document2, args.contract, args.result_ids, env);
   if ("refused" in run2) return { outcome: "refused", refused: run2.refused, ask: [], report: [run2.say] };
-  if (args.contract.startsWith("affidavit_") && !run2.route) throw new ValidationError("an affidavit is written only for a file routed in this run");
+  if (ROUTED_ONLY.includes(args.contract) && !run2.route) throw new ValidationError(`contract ${args.contract} is written only for a file routed in this run`);
   const filePath = run2.route?.file_path ?? storedForm(String(document2.file_path ?? ""), args.matter_root);
   const fileHash = run2.route?.file_hash ?? String(document2.file_hash ?? "");
   if (filePath === "" || outsideMatter(filePath)) throw new ValidationError("document.file_path must be a file inside the matter folder");
@@ -92917,10 +92974,12 @@ async function checkAndWrite(args, env, dropAlso, lock) {
 }
 async function write(args, env, run2, filePath, fileHash, results, dropAlso, lock) {
   const fileRef = run2.route?.ref ?? "";
+  const attachment = args.contract === "attachment" ? attachmentOf(run2.route, args.document.ref) : void 0;
   const exhibits = args.contract === "affidavit_exhibits" ? await affidavitRun(args.matter_root, args.run_id, fileRef, results.map((r3) => r3.ref), env) : null;
   const refs = [.../* @__PURE__ */ new Set([
     fileRef || results[0]?.ref || fileHash,
     ...args.contract === "sought_orders" && fileRef ? [`${fileRef}:so`] : [],
+    ...attachment ? [args.document.ref] : [],
     ...results.map((r3) => r3.ref)
   ])];
   const acks = args.contract === "privileged" || !run2.route ? [] : results.map((r3) => ({ ref: r3.ref, result_id: r3.result_id }));
@@ -92997,6 +93056,7 @@ async function write(args, env, run2, filePath, fileHash, results, dropAlso, loc
     participants,
     route: route2,
     exhibits,
+    ...attachment ? { attachment: { name: attachment.name, file_hash: attachment.file_hash } } : {},
     answered: run2.answered,
     // Read only where the delivery check can fire: an attended document with a letter flag (N-2).
     firm_name: run2.mode === "attended" && results.some((r3) => flagged(r3.doc, "outgoing_letter")) ? firmName(env) : null
@@ -93109,10 +93169,11 @@ async function write(args, env, run2, filePath, fileHash, results, dropAlso, loc
   for (const f3 of failures) {
     report.push(closedNow.includes(f3.ref) ? `Exhibit ${letterOf(f3.ref)} could not be read after two attempts; it is marked for review.` : `Exhibit ${letterOf(f3.ref)} could not be recorded as read; it is marked for review and will be read again.`);
   }
-  if (plan2.title && !plan2.failed) {
+  if (plan2.summary) report.unshift(plan2.summary);
+  else if (plan2.title && !plan2.failed) {
     report.unshift(`${plan2.title.slice(0, 60)}: ${counts3.facts} facts, ${counts3.positions} positions, ${counts3.relief} relief items, ${counts3.links} evidence links${counts3.exhibits ? `, ${counts3.exhibits} exhibits` : ""}.`);
   }
-  if (plan2.failed) report.unshift(`${(plan2.title ?? "This document").slice(0, 60)} could not be read and is recorded as not read.`);
+  if (plan2.failed && !plan2.summary) report.unshift(`${(plan2.title ?? "This document").slice(0, 60)} could not be read and is recorded as not read.`);
   const asked = asks.filter((a3) => !(args.contract === "affidavit_exhibits" && badLetters.includes(a3.ref)));
   const out = fit({
     outcome,
@@ -93130,7 +93191,14 @@ async function write(args, env, run2, filePath, fileHash, results, dropAlso, loc
     const pending3 = out.ask.filter((a3) => a3.kind === "privilege").map((a3) => a3.ref);
     dropAlso.push(...results.filter((r3) => pending3.includes(letterOf(r3.ref)) || badLetters.includes(letterOf(r3.ref)) && flagged(r3.doc, "privilege_signal")).map((r3) => r3.path));
   }
+  if (attachment && out.ask.some((a3) => a3.kind === "privilege")) dropAlso.push(...results.map((r3) => r3.path));
   return out;
+}
+function attachmentOf(route2, ref) {
+  const found2 = /:a(\d+)$/.exec(ref ?? "");
+  const attachment = found2 ? route2?.attachments?.[Number(found2[1]) - 1] : void 0;
+  if (!attachment) throw new ValidationError("document.ref must name an attachment of this run's email");
+  return attachment;
 }
 function inventoryOf(doc) {
   const inventory = Array.isArray(doc?.exhibit_inventory) ? doc.exhibit_inventory : [];

@@ -7,9 +7,11 @@ concepts it establishes and their criteria — as a single structured JSON objec
 
 ## Binding constraints
 
-- **Read-only.** You have a file-read tool only. No write, edit, shell, network,
-  or skill access. You own no IDs; the main agent performs all writes.
+- **Read-only.** You have a file-read tool, and in a dispatch by id (below) the two
+  data-server tools that section names. No write, edit, shell, network, or skill
+  access. You own no IDs; the main agent or the data server performs all writes.
 - **Output is a single JSON object and NOTHING else.** No prose, no fences.
+  In a dispatch by id you stage that object and reply with one line.
 - Read the pages in the page manifest in order. Read a page given as images only
   from those images. Never open the PDF for it, and never use its text layer.
   Read the document at most 20 pages or images at a time.
@@ -104,3 +106,26 @@ named parties.
 ```
 
 `criterion_order` is a 1-based integer. Output the JSON object only.
+
+## Dispatch by id
+
+When your prompt is the one line `DISPATCH <dispatch_id>`, your inputs do not come in
+the prompt, and you reply with one line instead of the JSON object.
+
+1. Your first call is `matter_data__dispatch_inputs` with that `dispatch_id`, under
+   whichever of `mcp__plugin_lawyer_data__matter_data__dispatch_inputs` and
+   `mcp__remote-devices__plugin_lawyer_data__matter_data__dispatch_inputs` this host
+   grants. It returns `LEGAL_CONTEXT`, `TREATMENT_VOCABULARY`, `DOCUMENT`, and
+   `PAGE_MANIFEST` or `RENDERING`, each as described above (a rendering is read whole),
+   plus `ITEMS` (one `{ref, page_range}`) and
+   `CONTRACT` (`{id, version}`).
+2. Do the work exactly as above.
+3. Call `matter_data__stage_result` once (either prefix), with `result` set to the
+   output contract's object plus four keys: `contract` (`CONTRACT`'s `id`),
+   `contract_version` (its `version`), `ref` (the item's `ref`) and `flags` (an empty
+   list). It returns `result_id` and `bytes`.
+4. Reply with one line and nothing else: `ok <ref> <result_id> <bytes>`. When you
+   cannot do the work, reply `failed <ref> <reason>` instead, the reason one of
+   `unreadable` (the pages cannot be read), `stage_refused` (`stage_result` refused the
+   result) or `not_this_type` (the document is not the kind you read). Never put
+   concepts, counts or doubts in the reply.

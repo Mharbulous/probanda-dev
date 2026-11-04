@@ -89,10 +89,21 @@ export interface Route {
   ref: string;
   file_path: string;
   file_hash: string;
-  /** `path_b`: an internal document the session reads itself (Path B); journaled so a resume lists it (N-10). */
-  kind: "facts" | "notice_of_application" | "affidavit" | "path_b";
+  /** `path_b`: an internal document the session reads itself (Path B); journaled so a resume lists it (N-10).
+   *  `caselaw` and `provision`: a legal authority, read with no matter context (#10, #79). */
+  kind: "facts" | "notice_of_application" | "affidavit" | "path_b" | "caselaw" | "provision";
   /** An email's attachment files, claimed with it, all or none (group locking spec 5.1). */
   attachment_hashes?: string[];
+  /** The attachments to read once the email's own write has landed, each as a child item (#51, #79). */
+  attachments?: RouteAttachment[];
+  /** A transcript: its write notes each contradiction of a pleaded position (Path A step 7). */
+  transcript?: boolean;
+  /** An authority matched by citation: nothing is read, and the tool records the file by reference. */
+  second_copy_of?: number;
+  /** Held rows Substitution 1j's `candidates` paired this file with. */
+  possible_versions?: number[];
+  /** The hashes of other files of this run it paired this file with. */
+  version_newcomers?: string[];
   /** A .docx/.eml/.msg rendering, a host path (ingest-extract.md "Document pre-processing"). */
   rendering?: string;
   execution?: "draft" | "affirmed" | "filed";
@@ -100,6 +111,16 @@ export interface Route {
   answers_source_id?: number;
   category?: string;
   proceeding_id?: number;
+}
+
+/** One attachment of a routed email, as the renderer wrote it out. */
+export interface RouteAttachment {
+  name: string;
+  file_hash: string;
+  /** The bytes the renderer wrote out, outside the matter. */
+  path: string;
+  /** A .docx attachment's rendering. */
+  rendering?: string;
 }
 
 export interface IngestRunArgs {
@@ -534,7 +555,11 @@ interface Item {
   pass?: 1 | 2 | 3;
   pages?: [number, number];
   letter?: string;
+  attachment?: RouteAttachment;
 }
+
+const isAuthority = (route: Route) => route.kind === "caselaw" || route.kind === "provision";
+const isAuthorityContract = (contract: string | null) => contract === "caselaw" || contract === "provision";
 
 /** `blocked`: its result was refused for a reason a repeat cannot clear (a store change, a race, a
  *  document for Path B or for /ingest): neither written nor listed again. `asked`: its write waits
@@ -737,6 +762,16 @@ function plan(events: Event[], env: NodeJS.ProcessEnv) {
       if (!l.written("privileged", route.ref) && !blocked) pathB.push({ ref: route.ref, file_path: route.file_path });
       continue;
     }
+    if (isAuthority(route)) {
+      if (route.second_copy_of !== undefined) {
+        // Nothing to read: the close line records the file by reference, and is not listed twice.
+        if (!l.lastWrite(route.kind, route.ref)) close.push({ ref: route.ref, contract: route.kind });
+        continue;
+      }
+      const s = consider({ ref: route.ref, agent: `lawyer:extract-${route.kind}`, contract: route.kind, route });
+      if (s.state === "failed" && !l.written(route.kind, route.ref)) close.push({ ref: route.ref, contract: route.kind });
+      continue;
+    }
     if (route.kind !== "affidavit") {
       const s = consider({ ref: route.ref, agent: "lawyer:extract-facts", contract: "facts", route });
       if (s.state === "failed" && !l.written("facts", route.ref)) closeOrAsk("facts", route.ref);
@@ -746,6 +781,14 @@ function plan(events: Event[], env: NodeJS.ProcessEnv) {
         const ref = `${route.ref}:so`;
         const so = consider({ ref, agent: "lawyer:extract-sought-orders", contract: "sought_orders", route }, s.state === "written");
         if (so.state === "failed" && s.state === "written" && !l.written("sought_orders", ref)) close.push({ ref, contract: "sought_orders" });
+      }
+      // An attachment waits for its email's own write, and a privileged email never reaches here (#51).
+      if (s.state === "written") {
+        (route.attachments ?? []).forEach((attachment, i) => {
+          const ref = `${route.ref}:a${i + 1}`;
+          const a = consider({ ref, agent: "lawyer:extract-facts", contract: "attachment", route, attachment });
+          if (a.state === "failed" && !l.written("attachment", ref)) closeOrAsk("attachment", ref);
+        });
       }
       continue;
     }
@@ -946,16 +989,18 @@ const imagesDir = (matterRoot: string, dispatchId: string) => pathWin32.join(mat
 
 async function inputsFor(item: Item, matterRoot: string, context: Record<string, unknown>, bridged: boolean, dispatchId: string) {
   const route = item.route;
-  const file = hostPath(matterRoot, route.file_path);
-  const kind = pathWin32.extname(route.file_path).slice(1).toLowerCase();
-  const inputs: Record<string, unknown> = {
-    MATTER_CONTEXT: context.matter_context,
-    CONTRACT: { id: item.contract ?? "boundaries", version: CONTRACT_VERSION },
-  };
+  const file = item.attachment ? item.attachment.path : hostPath(matterRoot, route.file_path);
+  const rendering = item.attachment ? item.attachment.rendering : route.rendering;
+  const kind = pathWin32.extname(item.attachment ? item.attachment.name : route.file_path).slice(1).toLowerCase();
+  const authority = isAuthorityContract(item.contract);
+  // An authority's extractor is never told the matter's parties or its style of cause (#10).
+  const inputs: Record<string, unknown> = authority
+    ? { LEGAL_CONTEXT: context.legal_context, TREATMENT_VOCABULARY: context.treatment_vocabulary, CONTRACT: { id: item.contract, version: CONTRACT_VERSION } }
+    : { MATTER_CONTEXT: context.matter_context, CONTRACT: { id: item.contract ?? "boundaries", version: CONTRACT_VERSION } };
   let pageCount: number | undefined;
   let scanned = false;
-  if (route.rendering) {
-    inputs.RENDERING = route.rendering;
+  if (rendering) {
+    inputs.RENDERING = rendering;
   } else {
     const count = (await classifyPdfPages(file)).length;
     pageCount = count;
@@ -965,12 +1010,12 @@ async function inputsFor(item: Item, matterRoot: string, context: Record<string,
     scanned = m.scanned && m.manifest.every((e) => "page" in e);
   }
   // #71: a wholly scanned document is named, never given a path.
-  inputs.DOCUMENT = scanned
-    ? { name: pathWin32.basename(file), kind, date: "auto", author_or_filing_party: "auto" }
-    : { path: file, kind, date: "auto", author_or_filing_party: "auto" };
+  const asRead = authority ? { kind } : { kind, date: "auto", author_or_filing_party: "auto" };
+  inputs.DOCUMENT = scanned ? { name: pathWin32.basename(file), ...asRead } : { path: file, ...asRead };
   if (item.agent === "lawyer:extract-facts") {
-    inputs.ANSWERED_FACTS = context.answered_facts;
-    inputs.ANSWERED_RELIEF = context.answered_relief;
+    // An attachment answers no pleading of its own.
+    inputs.ANSWERED_FACTS = item.attachment ? [] : context.answered_facts;
+    inputs.ANSWERED_RELIEF = item.attachment ? [] : context.answered_relief;
   }
   if (item.pass) inputs.PASS = item.pass;
   if (item.pages) inputs.PAGE_RANGE = item.pages;
@@ -982,21 +1027,24 @@ async function inputsFor(item: Item, matterRoot: string, context: Record<string,
       if ("images" in e) stage.push(...e.images);
       else if (!stage.includes(e.pdf)) stage.push(e.pdf);
     }
-    if (route.rendering) stage.push(route.rendering);
+    if (rendering) stage.push(rendering);
   }
   return { inputs, stage, pageCount };
 }
 
-function matterContext(matterRoot: string, answersSourceId: number | undefined, env: NodeJS.ProcessEnv): Record<string, unknown> {
-  const out = runCaseScript<Record<string, unknown>>("dispatch_context", "run", {
-    case_data_dir: caseDataFolder(matterRoot, env),
-    answers_source_id: answersSourceId ?? null,
-  }, env);
+function matterContext(matterRoot: string, answersSourceId: number | undefined, authority: boolean, env: NodeJS.ProcessEnv): Record<string, unknown> {
+  const out = authority
+    ? runCaseScript<Record<string, unknown>>("ingest_authority", "dispatch_context", { case_data_dir: caseDataFolder(matterRoot, env) }, env)
+    : runCaseScript<Record<string, unknown>>("dispatch_context", "run", {
+      case_data_dir: caseDataFolder(matterRoot, env),
+      answers_source_id: answersSourceId ?? null,
+    }, env);
   if (out.status !== "ok") throw new DataServerError(`the matter's case data cannot be read: ${String(out.reason)}`, "case_data_unavailable");
   return out;
 }
 
-const ROUTE_KINDS = ["facts", "notice_of_application", "affidavit", "path_b"];
+const ROUTE_KINDS = ["facts", "notice_of_application", "affidavit", "path_b", "caselaw", "provision"];
+const SHA256 = /^[0-9a-f]{64}$/;
 
 /** conventions.md §2.4's stored form: relative to the matter root, backslashes, no leading `.\`. */
 export function storedForm(path: string, matterRoot: string): string {
@@ -1025,11 +1073,33 @@ function checkRoutes(routes: Array<Omit<Route, "ref">>, matterRoot: string): Arr
     if (sha256(host) !== r.file_hash) throw new ValidationError(`routes[${i}].file_hash is not the hash of ${stored}`);
     if (r.rendering !== undefined && !existsSync(r.rendering)) throw new ValidationError(`routes[${i}].rendering does not exist`);
     if (r.attachment_hashes?.some((hash) => !/^[0-9a-f]{64}$/.test(hash))) throw new ValidationError(`routes[${i}].attachment_hashes must each be a file's SHA-256`);
-    if (r.kind !== "path_b" && r.rendering === undefined && pathWin32.extname(stored).toLowerCase() !== ".pdf") {
+    if (r.second_copy_of !== undefined && (!isAuthority(r as Route) || !Number.isInteger(r.second_copy_of))) throw new ValidationError(`routes[${i}].second_copy_of must be an authority's id, on an authority's route`);
+    if (r.possible_versions?.some((id) => !Number.isInteger(id))) throw new ValidationError(`routes[${i}].possible_versions must each be a source's id`);
+    if (r.version_newcomers?.some((hash) => !SHA256.test(hash))) throw new ValidationError(`routes[${i}].version_newcomers must each be a file's SHA-256`);
+    if (r.kind !== "path_b" && r.second_copy_of === undefined && r.rendering === undefined && pathWin32.extname(stored).toLowerCase() !== ".pdf") {
       throw new ValidationError(`routes[${i}] is not a PDF, so it needs its rendering`);
     }
-    return { ...r, file_path: stored };
+    return { ...r, file_path: stored, ...attachmentsOf(r, i) };
   });
+}
+
+/** A route's attachments, each checked like a route (S-M2), the first of two with one hash kept (#53),
+ *  and every one claimed with the email (group locking spec 5.1). */
+function attachmentsOf(r: Omit<Route, "ref">, i: number): Pick<Route, "attachments" | "attachment_hashes"> | Record<string, never> {
+  if (r.attachments === undefined) return {};
+  if (r.kind !== "facts") throw new ValidationError(`routes[${i}].attachments belong only on an email routed facts`);
+  const attachments = new Map<string, RouteAttachment>();
+  r.attachments.forEach((a, k) => {
+    const label = `routes[${i}].attachments[${k}]`;
+    if (typeof a.name !== "string" || a.name === "") throw new ValidationError(`${label}.name is required`);
+    if (!SHA256.test(a.file_hash ?? "")) throw new ValidationError(`${label}.file_hash must be the attachment's SHA-256`);
+    if (!existsSync(a.path ?? "")) throw new ValidationError(`${label}.path does not exist`);
+    if (sha256(a.path) !== a.file_hash) throw new ValidationError(`${label}.file_hash is not the hash of its path`);
+    if (a.rendering !== undefined && !existsSync(a.rendering)) throw new ValidationError(`${label}.rendering does not exist`);
+    if (a.rendering === undefined && pathWin32.extname(a.name).toLowerCase() !== ".pdf") throw new ValidationError(`${label} is not a PDF, so it needs its rendering`);
+    if (!attachments.has(a.file_hash)) attachments.set(a.file_hash, a);
+  });
+  return { attachments: [...attachments.values()], attachment_hashes: [...new Set([...(r.attachment_hashes ?? []), ...attachments.keys()])] };
 }
 
 /** Records a dispatch's outcome made after `next`'s lock was released (S-m10). When that second lock
@@ -1121,10 +1191,11 @@ async function next(args: IngestRunArgs, env: NodeJS.ProcessEnv): Promise<unknow
     mkdirSync(pathWin32.join(reserved.dir, "dispatches"), { recursive: true });
     for (; k < reserved.items.length; k++) {
       const { id, item } = reserved.items[k];
-      const key = String(item.route.answers_source_id ?? "");
+      const authority = isAuthorityContract(item.contract);
+      const key = authority ? "authority" : String(item.route.answers_source_id ?? "");
       if (!contexts.has(key)) {
         try {
-          contexts.set(key, matterContext(args.matter_root, item.route.answers_source_id, env));
+          contexts.set(key, matterContext(args.matter_root, item.route.answers_source_id, authority, env));
         } catch (err) {
           contexts.set(key, err as Error);
         }
@@ -1401,7 +1472,7 @@ function finishRun(dir: string, lease: Lease, runId: string, matterRoot: string,
   const dropped = dropStagedResults(idsOf("privileged"), env);
   if (dropped.deleted > 0) report.push(PRIVILEGED_DROPPED);
   if (dropped.left > 0) report.push(PRIVILEGED_LEFT);
-  dropStagedResults(idsOf("affidavit_exhibits"), env);
+  dropStagedResults([...idsOf("affidavit_exhibits"), ...idsOf("attachment")], env);
   return { report, keys };
 }
 

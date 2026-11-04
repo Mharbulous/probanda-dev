@@ -1066,3 +1066,69 @@ test("report lines the reply's cap left out are counted, and each result alone s
   for (const id of ids) lines.push(...(await byRef(matterRoot, run_id, "f1", "affidavit_exhibits", [id])).report);
   assert.deepEqual(lines.map((l) => /^Exhibit (\w) may be privileged/.exec(l)?.[1]), ["A", "B", "C", "D"], JSON.stringify(lines));
 });
+
+const CASE = (ref) => ({
+  contract: "caselaw", contract_version: 2, ref, flags: [],
+  authority: { title: "Invented v. Case", citation: "2026 BCCA 999", authority_type: "case_law", jurisdiction: "BC" },
+  concepts: [{ name: "Invented test", jurisdiction: "BC", concept_kind: "legal test", authority_role: "establishes", authority_proposition: "A rule.", criteria: [] }],
+});
+
+test("an authority whose extraction fails twice is closed, records nothing, and is not listed again (R4)", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const doc = file(matterRoot, "2026 BCCA 999.pdf", pdfBytes(["Reasons"]));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "unattended", orchestrator: true });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...doc, kind: "caselaw" }] });
+  await run(matterRoot, { action: "status", run_id, ack: "failed f1 unreadable" });
+  assert.equal((await run(matterRoot, { action: "next", run_id })).dispatch.length, 1, "read once more");
+  await run(matterRoot, { action: "status", run_id, ack: "failed f1 unreadable" });
+  const closing = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual([closing.dispatch, closing.close], [[], [{ ref: "f1", contract: "caselaw" }]]);
+  const out = await byRef(matterRoot, run_id, "f1", "caselaw", []);
+  assert.equal(out.outcome, "written", JSON.stringify(out));
+  assert.match(out.report[0], /nothing was recorded/);
+  assert.deepEqual(sql(caseDataDir, "SELECT * FROM authorities", "law"), []);
+  assert.deepEqual((await run(matterRoot, { action: "next", run_id })).close, []);
+});
+
+test("an authority's result read but unwritten, and an attachment not yet read, survive a takeover (R9)", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const authority = file(matterRoot, "2026 BCCA 999.pdf", pdfBytes(["Reasons"]));
+  const email = file(matterRoot, "mail.pdf", pdfBytes(["An email"]));
+  const attached = file(matterRoot, "Invoice.pdf", pdfBytes(["An invoice"]));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "unattended", orchestrator: true });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...authority, kind: "caselaw" }, { ...email, kind: "facts", attachments: [{ name: "Invoice.pdf", file_hash: attached.file_hash, path: join(matterRoot, attached.file_path) }] }] });
+  const staged = await stage(CASE("f1"));
+  const size = Buffer.byteLength(JSON.stringify(CASE("f1")));
+  await run(matterRoot, { action: "status", run_id, ack: `ok f1 ${staged.result_id} ${size}` });
+  const parent = await stage(FACTS("f2"));
+  assert.equal((await byRef(matterRoot, run_id, "f2", "facts", [parent.result_id])).outcome, "written");
+
+  const resumed = await run(matterRoot, { action: "begin", mode: "unattended", orchestrator: true, resume: run_id });
+  assert.deepEqual(resumed.next, [{ ref: "f1", contract: "caselaw", result_ids: [staged.result_id] }]);
+  assert.equal((await byRef(matterRoot, resumed.run_id, "f1", "caselaw", [staged.result_id])).outcome, "written");
+  assert.equal(sql(caseDataDir, "SELECT count(*) AS n FROM authorities", "law")[0].n, 1);
+  const next = await run(matterRoot, { action: "next", run_id: resumed.run_id });
+  assert.deepEqual(next.dispatch.map((d) => [d.ref, d.contract]), [["f2:a1", "attachment"]]);
+});
+
+test("an attachment whose extraction fails twice is registered failed under its email (R4, #54)", async (t) => {
+  const { matterRoot, caseDataDir } = fixture(t);
+  const email = file(matterRoot, "mail.pdf", pdfBytes(["An email"]));
+  const attached = file(matterRoot, "Invoice.pdf", pdfBytes(["An invoice"]));
+  const { run_id } = await run(matterRoot, { action: "begin", mode: "unattended", orchestrator: true });
+  await run(matterRoot, { action: "next", run_id, routes: [{ ...email, kind: "facts", category: "correspondence", attachments: [{ name: "Invoice.pdf", file_hash: attached.file_hash, path: join(matterRoot, attached.file_path) }] }] });
+  const parent = await stage(FACTS("f1"));
+  await byRef(matterRoot, run_id, "f1", "facts", [parent.result_id]);
+  for (let i = 0; i < 2; i++) {
+    assert.deepEqual((await run(matterRoot, { action: "next", run_id })).dispatch.map((d) => d.ref), ["f1:a1"]);
+    await run(matterRoot, { action: "status", run_id, ack: "failed f1:a1 unreadable" });
+  }
+  const closing = await run(matterRoot, { action: "next", run_id });
+  assert.deepEqual([closing.dispatch, closing.close], [[], [{ ref: "f1:a1", contract: "attachment" }]]);
+  const out = await byRef(matterRoot, run_id, "f1:a1", "attachment", []);
+  assert.equal(out.outcome, "written", JSON.stringify(out));
+  assert.match(out.report[0], /Attachment Invoice\.pdf could not be read/);
+  assert.deepEqual(sql(caseDataDir, "SELECT title, ingestion_status FROM sources WHERE parent_source_id = 1"), [{ title: "Invoice.pdf", ingestion_status: "failed" }]);
+  assert.deepEqual((await run(matterRoot, { action: "next", run_id })).close, []);
+  assert.equal(sql(caseDataDir, "SELECT ingestion_status FROM sources WHERE parent_source_id IS NULL")[0].ingestion_status, "complete", "the email stands");
+});

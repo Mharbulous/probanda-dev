@@ -398,3 +398,40 @@ test("a run an older build left in the matter's folder moves to a folder of its 
   assert.equal(fs.existsSync(join(key, "lease.json")), false);
   assert.deepEqual(journal(runRoot).map((e) => e.event), ["begin", "takeover"]);
 });
+
+test("the new route kinds and fields are defined, and each is checked before any is journaled", async (t) => {
+  const defs = buildToolDefinitions();
+  const routes = defs.find((d) => d.name === TOOL).inputSchema.properties.routes.items;
+  assert.deepEqual(routes.properties.kind.enum, ["facts", "notice_of_application", "affidavit", "path_b", "caselaw", "provision"]);
+  for (const field of ["attachments", "transcript", "second_copy_of", "possible_versions", "version_newcomers"]) assert.ok(routes.properties[field], field);
+
+  const { matterRoot, runRoot } = matterFixture(t);
+  const path = join(matterRoot, "a.pdf");
+  writeFileSync(path, "%PDF-1.4\n");
+  const hash = spawnSync(process.env.COCLERK_PYTHON || "python", ["-c", "import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())", path], { encoding: "utf-8" }).stdout.trim();
+  const { run_id } = await begin(matterRoot, { mode: "unattended", orchestrator: true });
+  const route = { file_path: "a.pdf", file_hash: hash };
+  const next = (extra) => run(matterRoot, { action: "next", run_id, routes: [{ ...route, kind: "facts", ...extra }] });
+  await assert.rejects(next({ kind: "facts", second_copy_of: 3 }), /second_copy_of/);
+  await assert.rejects(next({ possible_versions: ["x"] }), /possible_versions/);
+  await assert.rejects(next({ version_newcomers: ["x"] }), /version_newcomers/);
+  await assert.rejects(next({ attachments: [{ name: "b.pdf", file_hash: "x", path }] }), /file_hash/);
+  await assert.rejects(next({ attachments: [{ name: "b.pdf", file_hash: "a".repeat(64), path }] }), /not the hash/);
+  await assert.rejects(next({ attachments: [{ name: "b.pdf", file_hash: hash, path: join(matterRoot, "gone.pdf") }] }), /does not exist/);
+  await assert.rejects(next({ attachments: [{ name: "b.docx", file_hash: hash, path }] }), /needs its rendering/);
+  assert.deepEqual(journal(runRoot).filter((e) => e.event === "route"), [], "nothing was routed");
+});
+
+test("an email's attachments are claimed with it, so another run leaves the email out", async (t) => {
+  const { matterRoot } = matterFixture(t);
+  const path = join(matterRoot, "a.pdf");
+  writeFileSync(path, "%PDF-1.4\n");
+  const hash = spawnSync(process.env.COCLERK_PYTHON || "python", ["-c", "import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())", path], { encoding: "utf-8" }).stdout.trim();
+  const mine = await begin(matterRoot, { mode: "unattended", orchestrator: true });
+  const held = await run(matterRoot, { action: "claim", run_id: mine.run_id, files: [{ file_path: "held.eml", file_hash: "a".repeat(64), attachment_hashes: [hash] }] });
+  assert.deepEqual(held.claimed, ["held.eml"]);
+  const other = await begin(matterRoot, { mode: "unattended", orchestrator: true });
+  const out = await run(matterRoot, { action: "next", run_id: other.run_id, routes: [{ file_path: "a.pdf", file_hash: hash, kind: "caselaw" }] });
+  assert.deepEqual(out.left_out, ["a.pdf"]);
+  assert.deepEqual(out.dispatch, []);
+});
