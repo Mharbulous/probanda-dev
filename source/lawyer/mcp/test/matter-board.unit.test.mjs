@@ -25,7 +25,7 @@ const FIXTURE = {
   pre_filing: [{ proceeding_id: 3, proceeding: { court_or_centre: "BCSC", file_number: "S-123" }, state_label: "Not yet filed", in_progress: 0 }],
 };
 
-/** sha256 of renderMatterBoardHtml(FIXTURE), taken from the inline-string shell before the move to templates. */
+/** sha256 of renderMatterBoardHtml(FIXTURE), re-taken 2026-11-01 in 679ad07c. On 2026-11-04 each commit since b699a7f on the render path was read and every change to this page found deliberate. */
 const PAGE_PIN = "ad74d54bae0081eea8cc9c6c268c03878325d5ff438d960b483c8d6d7b35c134";
 
 test("the Litigation Strategy page is byte-identical to the pinned render", () => {
