@@ -3,7 +3,7 @@
 // The category rules live here and only here. The board page draws the category it is given and never
 // derives one, so a session and the practitioner always see the same sort.
 
-import { CHECK_AFTER_MINUTES, LAPSE_AFTER_MINUTES } from "./job-activity.js";
+import { LAPSE_AFTER_MINUTES } from "./job-activity.js";
 import { type StepStateFields, stepResolved } from "./step-state.js";
 import type { TicketRow, TicketStatus } from "./work-board-reads.js";
 import type { Category, WorkBoardEdge, WorkBoardTicket } from "./work-board-ticket.js";
@@ -101,15 +101,4 @@ export function lockLapsed(t: Pick<WorkBoardTicket, "status" | "locked_by" | "re
   if (t.status !== "wip" || t.locked_by === null || t.rejected_at !== null) return false;
   const idle = idleMinutes(t, rendered);
   return idle !== null && idle >= LAPSE_AFTER_MINUTES;
-}
-
-/** The ticket with its idle flag when it is an In progress job idle for CHECK_AFTER_MINUTES or more
- * at the section's Rendered minute: the check window, since from LAPSE_AFTER_MINUTES the job reads
- * as released. The text names the threshold, not the elapsed time, so it changes once at the
- * crossing and never churns board_changed. */
-export function withIdleFlag(t: WorkBoardTicket, rendered: string): WorkBoardTicket {
-  if (t.category !== "wip") return t;
-  const idle = idleMinutes(t, rendered);
-  if (idle === null || idle < CHECK_AFTER_MINUTES) return t;
-  return { ...t, idle_flag: `check window: idle past ${CHECK_AFTER_MINUTES} min` };
 }

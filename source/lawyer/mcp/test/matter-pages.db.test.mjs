@@ -1138,7 +1138,7 @@ const headline = (f) =>
 test("a job's last activity is its stored stamp, and its card lists the seeds captured from it", async (t) => {
   const { f } = await heldMilestone(t);
 
-  assert.equal(headline(f), "- Job #1 Legal research: When did time start to run? · In Progress 0/1 · idle 30 min, about 0% · check window: idle past 30 min", "the stamp at 11:30, not the lock at 09:00");
+  assert.equal(headline(f), "- Job #1 Legal research: When did time start to run? · In Progress 0/1 · idle 30 min, about 0%", "the stamp at 11:30, not the lock at 09:00");
   assert.equal(
     proceedingCard(f),
     [
@@ -1151,28 +1151,6 @@ test("a job's last activity is its stored stamp, and its card lists the seeds ca
     ].join("\n"),
     "only the seed captured from this job"
   );
-});
-
-// ADR 0015: from 30 minutes idle an In progress job carries the check window's flag, naming the
-// threshold, on the live lane after the idle tag and on the page's card; under it, nothing.
-test("the check-window flag from 30 minutes idle, on the live lane and the page", async (t) => {
-  const { f } = await heldMilestone(t);
-  const { draft } = draftFolder(f);
-
-  submissionFormsRenderProceedingBoard(f.dbPath, 1, {}, NOON, "tok", draft);
-  const live = submissionFormsBoardCard({ db_path: f.dbPath, proceeding_id: 1, lanes: ["live"] }, {}, NOON).card;
-  const line = live.split("\n").find((l) => l.startsWith("- Job #1 "));
-  assert.equal(line, "- Job #1 Legal research: When did time start to run? · In Progress 0/1 · idle 30 min, about 0% · check window: idle past 30 min");
-  const ticket = readBoardData(join(draft, "Work Board - proceeding 1.html")).sections[0].tickets.find((x) => x.id === 1);
-  assert.equal(ticket.idle_flag, "check window: idle past 30 min");
-  assert.ok(drawPage(join(draft, "Work Board - proceeding 1.html")).main.all().some((n) => n.className === "subtitle" && n.textContent === "check window: idle past 30 min"), "the card draws it as a subtitle");
-});
-
-test("no check-window flag, and the board data as before, under 30 minutes idle", async (t) => {
-  const { f } = await heldMilestone(t);
-  const data = buildPreFilingBoardData(f.dbPath, fetchProceeding(f.dbPath, 1), { revision: 1, matter: "", client: "", rendered: "2026-01-16 11:59" });
-  assert.equal(renderLiveLanes(data).find((line) => line.startsWith("- Job #1 ")), "- Job #1 Legal research: When did time start to run? · In Progress 0/1 · idle 29 min, about 0%");
-  assert.equal("idle_flag" in data.tickets[0], false);
 });
 
 test("save_answer with the job's id lists the answer on its card and restarts its idle clock", async (t) => {

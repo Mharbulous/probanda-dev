@@ -130,28 +130,24 @@ test("board_card's last activity and the idle tag read the stamp, and a ⏳ step
     renderLiveLanes(buildPreFilingBoardData(dbPath, fetchProceeding(dbPath, 1), { revision: 1, matter: "", client: "", rendered })).find((l) => l.startsWith("- Job #1 "));
   const head = "- Job #1 Legal research: When did time start to run? · In Progress 0/1";
 
-  const flag = " · check window: idle past 30 min";
-
   assert.equal(line("2026-01-16 09:20"), `${head} · idle 20 min, about 0%`, "no stamp yet: the lock");
   await submissionDataExecute(dbPath, `INSERT INTO kv_store (namespace, key, value, updated_at) VALUES ('last_activity', 'tickets:1', '"2026-01-16T11:00"', '2026-01-16T19:00:00.000Z');`);
-  assert.equal(line("2026-01-16 11:40"), `${head} · idle 40 min, about 0%${flag}`);
+  assert.equal(line("2026-01-16 11:40"), `${head} · idle 40 min, about 0%`);
   assert.match(submissionFormsBoardCard({ db_path: dbPath, proceeding_id: 1, jobs: [1] }, {}, "2026-01-16 11:40").card, / · last activity: 2026-01-16T11:00\n/);
 
   await submissionDataExecute(dbPath, "UPDATE ticket_steps SET status = 'waiting', wait_until = '2026-01-16T12:30' WHERE ticket_id = 1;");
   assert.equal(line("2026-01-16 12:10"), head, "waiting: not idle");
-  assert.equal(line("2026-01-16 13:00"), `${head} · idle 30 min, about 0%${flag}`, "idle from the wake-up minute once it has passed");
+  assert.equal(line("2026-01-16 13:00"), `${head} · idle 30 min, about 0%`, "idle from the wake-up minute once it has passed");
 });
 
-// ADR 0015: under 30 minutes a held job is live; from 30 it is flagged in the check window and still
-// held; from 60 its lock has lapsed and every board reads it as released, so Dispatch can choose it.
-test("a held job is live under 30 minutes idle, flagged in the check window from 30, and reads as released from 60", async (t) => {
+// ADR 0015: a held job stays held until 60 minutes idle; then its lock has lapsed and every board
+// reads it as released, so Dispatch can choose it.
+test("a held job stays held until 60 minutes idle, then reads as released", async (t) => {
   const { dbPath } = await seeded(t);
   const ticket = (rendered) => buildPreFilingBoardData(dbPath, fetchProceeding(dbPath, 1), { revision: 1, matter: "", client: "", rendered }).tickets.find((x) => x.id === 1);
 
   assert.equal(ticket("2026-01-16 09:10").category, "wip");
-  assert.equal(ticket("2026-01-16 09:10").idle_flag, undefined, "10 minutes: no flag");
   assert.equal(ticket("2026-01-16 09:45").category, "wip", "45 minutes: still held");
-  assert.equal(ticket("2026-01-16 09:45").idle_flag, "check window: idle past 30 min");
   const lapsed = ticket("2026-01-16 10:01");
   assert.equal(lapsed.category, "ready", "61 minutes: the lock has lapsed");
   assert.equal(lapsed.locked_by, null, "a lapsed lock reads as released, so no holder shows");

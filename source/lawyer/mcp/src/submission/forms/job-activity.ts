@@ -12,11 +12,10 @@ import { DataServerError, NotFoundError, ValidationError } from "../../errors.js
 import { submissionDataQuery, submissionDataWriteAll, type WriteStatement } from "../backend.js";
 import { hasColumn, hasTable } from "../schema-capabilities.js";
 
-/** A held job's staleness, measured from its last activity (ticket-category.ts idleSince): live under
- * CHECK_AFTER_MINUTES; in the check window from there, still held, its take-over only on the
- * practitioner's instruction; from LAPSE_AFTER_MINUTES its lock has lapsed, so every board reads it as
- * released and assign_job takes it without a take-over (ADR 0015). Lock-lapse times, never countdowns. */
-export const CHECK_AFTER_MINUTES = 30;
+/** A held job's staleness, measured from its last activity (ticket-category.ts idleSince): until
+ * LAPSE_AFTER_MINUTES it is held, its take-over only on the practitioner's instruction; from there its
+ * lock has lapsed, so every board reads it as released and assign_job takes it without a take-over
+ * (ADR 0015). A lock-lapse time, never a countdown. */
 export const LAPSE_AFTER_MINUTES = 60;
 
 const NOW = "strftime('%Y-%m-%dT%H:%M', 'now', 'localtime')";

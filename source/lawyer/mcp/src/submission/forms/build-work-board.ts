@@ -9,7 +9,7 @@ import { isJobOnlyBoard, type FilingRow } from "./query.js";
 import { fetchAttachments } from "./work-board-reads.js";
 import type { DispatchSkip, WorkBoardTicket } from "./work-board-ticket.js";
 import type { GoalCriterion, WorkBoardContext, WorkBoardData } from "./work-board-data.js";
-import { holdsMaterial, withIdleFlag } from "./ticket-category.js";
+import { holdsMaterial } from "./ticket-category.js";
 import { allKeysDead, deadKeySubtitle, ineligibleReasons } from "./unattended-eligibility.js";
 import { buildProceedingBoard, onFilingBoard } from "./build-proceeding-board.js";
 import { proposalsFor } from "./board-proposals.js";
@@ -49,7 +49,7 @@ export function buildWorkBoardData(ctx: WorkBoardContext, deadlines: readonly Go
       const inventory = research ? null : printed;
       const ineligible_reasons = ineligibleReasons(t.ticket, filed && !research, inventory, titles, inProgress);
       const eligible = ineligible_reasons.length === 0;
-      return withIdleFlag({ ...t.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t.ticket, inventory), ...(t.filing_id === null ? { general: true } : {}) }, ctx.rendered);
+      return { ...t.ticket, eligible, ineligible_reasons, subtitle: eligible ? "can be picked up with nobody present" : deadKeySubtitle(t.ticket, inventory), ...(t.filing_id === null ? { general: true } : {}) };
     });
   // A research Writing's job is on this board and is none of this Writing's completion.
   const { goal, criteria } = goalFor(ctx, tickets.filter((t) => t.research_writing === undefined), shelved, current, deadlines, afterGateJobs(board.tickets, ctx.filing.id));

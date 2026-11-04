@@ -92,8 +92,7 @@ function idleTag(t: WorkBoardTicket, rendered: string): string | null {
 }
 
 /** The tags only the model sees after a `live` lane job line: Dispatch's on a Ready job, the idle
- * report's on an In progress one, then its check-window flag, and `BF <date>` on
- * a Bring Forward one: its start date as a plain date, never a deadline and never a day count. */
+ * report's on an In progress one, and `BF <date>` on a Bring Forward one: its start date as a plain date, never a deadline and never a day count. */
 export function tagTail(t: WorkBoardTicket, rendered: string): string {
   if (t.category === "ready") {
     const eligible = t.eligible ? "yes" : `no (${t.ineligible_reasons.join(", ")})`;
@@ -103,7 +102,7 @@ export function tagTail(t: WorkBoardTicket, rendered: string): string {
   if (t.category === "bring_forward") return ` · BF ${t.bf_on}`;
   if (t.category !== "wip") return "";
   const idle = idleTag(t, rendered);
-  return (idle === null ? "" : ` · ${idle}`) + (t.idle_flag ? ` · ${t.idle_flag}` : "");
+  return idle === null ? "" : ` · ${idle}`;
 }
 
 /** A job's sources to get as its card prints them: the count got, then every source that is open

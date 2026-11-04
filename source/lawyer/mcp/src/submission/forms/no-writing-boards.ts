@@ -4,7 +4,6 @@ import { fetchBoardGoals } from "./board-goals.js";
 import type { FilingRow, ProceedingRow } from "./query.js";
 import { fetchAttachments } from "./work-board-reads.js";
 import type { WorkBoardContext, WorkBoardData } from "./work-board-data.js";
-import { withIdleFlag } from "./ticket-category.js";
 import { buildProceedingBoard } from "./build-proceeding-board.js";
 
 /** The State row of a proceeding with no filing (ADR 0018), shared with its Matter Board card. */
@@ -40,7 +39,7 @@ export function buildJobOnlyBoardData(ctx: WorkBoardContext): WorkBoardData {
       ready_to_retire: false,
       job_only: true,
     },
-    tickets: board.tickets.filter((t) => t.filing_id === own).map((t) => withIdleFlag(t.ticket, ctx.rendered)),
+    tickets: board.tickets.filter((t) => t.filing_id === own).map((t) => t.ticket),
     seeds: board.seeds.filter((s) => s.filing_id === own),
     deleted: board.deleted.filter((d) => d.filing_id === own).map((d) => ({ id: d.id, title: d.title })),
     attachments: fetchAttachments(ctx.dbPath, ctx.proceeding.id, own),
@@ -73,7 +72,7 @@ export function buildPreFilingBoardData(
       state_since: null,
       ready_to_retire: false,
     },
-    tickets: board.tickets.map((t) => withIdleFlag(t.ticket, meta.rendered)),
+    tickets: board.tickets.map((t) => t.ticket),
     seeds: board.seeds,
     deleted: board.deleted.map((d) => ({ id: d.id, title: d.title })),
     attachments: fetchAttachments(dbPath, proceeding.id, null),

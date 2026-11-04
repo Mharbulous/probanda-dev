@@ -194,8 +194,6 @@
       if (t.subtitle) summary.appendChild(el("span", "subtitle", t.subtitle));
       // An unattended run's lock, finished on the server (Goal card design §5.4) and drawn as given.
       if (t.lock_note) summary.appendChild(el("span", "subtitle", t.lock_note));
-      // The check window's flag, finished on the server and drawn as given.
-      if (t.idle_flag) summary.appendChild(el("span", "subtitle", t.idle_flag));
       // The job's start date as a plain date: never a deadline, and never a day count.
       if (t.category === "bring_forward") summary.appendChild(el("span", "subtitle", "Bring forward " + t.bf_on));
       var progress = el("span", "progress");
