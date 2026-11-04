@@ -120,7 +120,7 @@ Brahm asked for the queue to run in parallel for this night only. Sessions and t
 - **In parallel, with a release:** #223 in the shared checkout, beside #188 and then #206 in the implementer's clone. Their releases collided on version numbers and built files, and merging and rebuilding resolved each collision. That cost repeated re-releases of #188, which is why the lock normally keeps releases apart.
 - **In series:** #187 after #206, because both change `key-request/tools.ts`.
 
-#187's first run handed it back with `node-modules`, since its clone had no packages for the commons and canlii bundles. Brahm approved installing them, and `a8c5d9df` added both to `run-local-implementer.ps1`. Before that run could take it again, it was held out of the queue, because a second hand-back would have sent it to `ready-for-human`. It was relabelled `ready-for-agent` after the lock was released.
+#187's first run handed it back with `node-modules`, since its clone had no packages for the commons and canlii bundles. Brahm approved installing them, and `a8c5d9df` added both to `run-local-implementer.ps1`. Before that run could take it again, it was held out of the queue, because a second hand-back would have sent it to `ready-for-human`. It was relabelled `ready-for-agent` after the lock was released, and landed in `5f0c659c` and `9ce00069`, a minor release of all seven plugins. That leaves no `ready-for-agent` issue and 3 `ready-for-human` (#191, #216, #226).
 
 #202 also converted `scripts/tests/test_stamp_dependencies.py`, outside the 8 files of its Scope. The file was added after the brief, and the brief's check covers every test file.
 
