@@ -327,7 +327,8 @@ test("a merge row made before the refusal, naming a memo, is read as no row: the
 
 const MEMO = "6. LAW\\Limits\\2026-10-20 ML re limits.md";
 const saved = (g, ticket, file) => g.execute(`INSERT INTO ticket_answers (ticket_id, file_path, saved_at) VALUES (${ticket}, '${file}', '2026-10-20T09:00');`);
-const memoStrip = (rendered) => readBoardData(rendered.milestone_path).strip.filter((i) => i.key.startsWith("memo:"));
+const boardStrip = (rendered) => readBoardData(rendered.documents.find((d) => d.document_type === "Work_board").path).strip;
+const memoStrip = (rendered) => boardStrip(rendered).filter((i) => i.key.startsWith("memo:"));
 const memosLane = (g, board) => buildLegalMemosData(g.dbPath, section(g, board).tickets, dirname(g.draft)).memos;
 
 test("a memo saved under a job is one thumbnail on its board, at its current version, between the Writings and the view pages", async (t) => {
@@ -338,7 +339,7 @@ test("a memo saved under a job is one thumbnail on its board, at its current ver
   await saved(g, 7, MEMO.replace(".md", " v2.md"));
   const rendered = render(g, letter);
   await awaitBackgroundJobs();
-  const { strip } = readBoardData(rendered.milestone_path);
+  const strip = boardStrip(rendered);
   const at = strip.findIndex((i) => i.key.startsWith("memo:"));
   assert.deepEqual(
     [strip[at].kind, strip[at].short, strip[at].long],
