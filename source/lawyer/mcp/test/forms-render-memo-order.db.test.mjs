@@ -394,7 +394,7 @@ test("order: bootstrap ranks two filings by their own latest activity", async ()
   }
 });
 
-test("order: a proceeding-scoped ticket counts for every filing, so it cannot break the tie", async () => {
+test("order: a filing's own activity outranks a newer proceeding-wide ticket", async () => {
   const f = seededDbFixture();
   try {
     await freshSubmissionDb(f.dbPath);
@@ -405,9 +405,9 @@ test("order: a proceeding-scoped ticket counts for every filing, so it cannot br
          VALUES (1, 1, NULL, 'Proceeding-wide', 'chart it', 'queued', 0, 'charting', NULL, '2026-09-15 09:00'),
                 (2, 1, 2, 'Filing two only', 'draft it', 'queued', 0, 'work', 'L8470', '2026-09-01 08:00');`
     );
-    // Both filings inherit the proceeding-scoped 09:00, which is newer than filing 2's own row,
-    // so neither leads on activity and the tie falls to filing id.
-    assert.deepEqual(orderOf(f.dbPath, PINNED), [1, 2]);
+    // Filing 2 has its own activity (08:00), so it ranks in band 0. Filing 1 has only the
+    // proceeding-wide 09:00 ticket, which is band 1 however new it is, so filing 2 leads.
+    assert.deepEqual(orderOf(f.dbPath, PINNED), [2, 1]);
   } finally {
     f.cleanup();
   }
