@@ -74,3 +74,21 @@ Scope: edit the source files the fix needs (skill text, mcp/src, docs), and writ
 - `researcher` citation-checker agent file and `shared/citation-checker/keycite-canada.md`, `canlii-citator.md`, `note-up.md`.
 - The CanLII MCP server's `get_case_citator`.
 - `shared/legal-research.md` "Proposition-level note-up" and the research-agent's reading rules.
+
+### Verification against HEAD, 2026-11-03 (commit 7bdae22f)
+
+| Item in this spec | Where it is at HEAD | Result |
+|---|---|---|
+| KeyCite "Record every row's six fields word for word" and the OPEN on paging and a date sort (§2) | `.claude/skills/shared/citation-checker/keycite-canada.md` §4, lines 63 and 67-70 | Confirmed as quoted |
+| Depth shows only as an image (§2) | Same file, an OPEN at line 67 says this was not yet seen | Not a recorded fact at HEAD. A live read on 2026-11-03 shows a readable `role="img"` label, so it does not hold |
+| CanLII citator returns the whole list (§2) | `source/researcher/canlii-mcp/src/tools.ts` `get_case_citator`, lines 95-109: parses and returns all rows, no cap | Confirmed |
+| CanLII list has dates (`canlii-citator.md` "citation, title and date"; `note-up.md` `<citation> \| <title> \| <date>`) | `source/researcher/canlii-mcp/src/schema.ts` `CaseSchema`: `databaseId`, `caseId`, `title`, `citation`, optional `aiContentId` | Not supported: the schema has no date, so both guides need correcting. "Newest" means sorted by neutral citation |
+| Who calls `get_case_citator` | `citation-checker` only, by its grant and `legal-research/hooks/block-main-session-canlii.py`. Only `citingCases` is used in any playbook | Confirmed. `get_case_citator_tease` is granted to `citation-checker` but no playbook calls it |
+| Citation-checker agent, batch cap | `source/researcher/agents/citation-checker.md`, Input, cap of 5; landed in 99989eb9 | Confirmed, out of this spec's scope |
+| `note-up.md` record format | `.claude/skills/shared/citation-checker/note-up.md` "The record" | Confirmed: no field for a cap, an order or a banner |
+| Proposition-level note-up (§4.4) | `.claude/skills/shared/legal-research.md`, line 565: "`research-paralegal` downloads every citing decision the record lists" | Confirmed |
+| Research-agent's reading rule (§4.4) | `.claude/skills/shared/legal-audit-protocol.md` Step 2, lines 201-209: reads every citing decision and puts each on `needs_download` | Confirmed. `research-memo-template.md` lines 33 and 53 say the same |
+| "no more than 3 reading agents at once" (§4.6) | `source/researcher/agents/research-agent.md` has no Agent tool. Precedent for one agent per decision: `/case-brief`, main session only, `mode: case_brief` | The gate in the main session must run them. research-agent cannot |
+| Citation search finds pages (§4.5) | `source/lawyer/mcp/src/files/research-filing.ts` `matchBlocks` returns line numbers only. `text-extract.ts` joins PDF pages with `\n\f\n`. research-agent's grant has `research_folder` (reads PDF `pages`), not `law_folder_text` | The search gives no page today and research-agent cannot run it |
+| Paths in this spec's header (`researcher/skills/shared/...`) | The source is `.claude/skills/shared/...`; `researcher/skills/` is only the built copy | Installed-copy paths; the source paths above are the ones to edit |
+| research-paralegal's playbook repeats "every citing decision" | `.claude/skills/shared/research-paralegal/citation-download.md` has no such rule; it caps a dispatch at 5 citations | No change needed |
