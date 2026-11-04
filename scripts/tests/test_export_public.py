@@ -166,6 +166,7 @@ class ExportTest(unittest.TestCase):
         self.assertIn("no ## entry", err.getvalue())
 
     def test_no_public_folder_refuses(self):
+        fake_repo.write_assignment(self.repo, {"lawyer": {"skills": ["x", "y"]}})
         for rel, text in PRIVATE.items():
             self.put(rel, text)
         code, out, _ = self.run_export(self.target)
