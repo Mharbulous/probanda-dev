@@ -77,7 +77,8 @@ export async function acquireLock(site: LockSite, target: string, env: NodeJS.Pr
   const lock = hostLocalFile(site, target, "lock", env);
   let brokeStale = false;
   const attempts = options.waitsMs ? options.waitsMs.length + 1 : site.attempts;
-  let waitedMs = 0;
+  // The refusal states the configured window, not the sleeps taken (one fewer than the attempts).
+  const windowMs = options.waitsMs ? options.waitsMs.reduce((sum, ms) => sum + ms, 0) : site.attempts * LOCK_RETRY_MS;
 
   // A broken stale lock earns one extra attempt, so breaking it on the last attempt still takes it.
   for (let attempt = 0; attempt < attempts + (brokeStale ? 1 : 0); attempt++) {
@@ -112,14 +113,13 @@ export async function acquireLock(site: LockSite, target: string, env: NodeJS.Pr
       if (attempt < attempts - 1) {
         const wait = options.waitsMs?.[attempt] ?? LOCK_RETRY_MS;
         await sleep(wait);
-        waitedMs += wait;
       }
     }
   }
 
   throw new DataServerError(
     `could not acquire the ${site.label} write lock within ${
-      waitedMs / 1000
+      windowMs / 1000
     }s (${lock}: ${holderOf(lock)}); another session is writing to or migrating this ${site.subject}`,
     "lock_unavailable"
   );
