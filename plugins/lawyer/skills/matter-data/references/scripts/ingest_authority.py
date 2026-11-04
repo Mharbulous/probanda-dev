@@ -47,6 +47,24 @@ The provision extractor's result is the same shape with fewer keys, and an
 absent key is stored as NULL. Standard library only.
 
     python ingest_authority.py < request.json
+
+The same module is the converter behind `matter_data__ingest_result` contracts
+`caselaw` and `provision` (ingest orchestrator spec 2.1; see ingest_common.py for
+the shape). A request with `results` takes that path, in one transaction, with
+the checks above and these differences (design decision #79):
+
+  treatments  no `treats_prior` is returned. Each treatment is a
+              `[TREATMENT-PENDING:<citation>|<treatment>|<scope>]` marker on the
+              authority's notes, because matching it is an attended judgment (#16).
+  second copy a route with `second_copy_of` extracts nothing: a fixed statement
+              appends `[SECOND-COPY:<hash>]` to that authority, or to the row it
+              was merged into.
+  no result   the extraction failed twice. Nothing is written, and the call is
+              journaled as closed.
+
+`dispatch_context` is what an extractor dispatch of those contracts is served:
+the matter's live legal issues with every party's name taken out, and the
+treatment vocabulary. No party name and no style of cause (#10).
 """
 
 import json
@@ -56,6 +74,7 @@ import sys
 
 _SKILL = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _CONVENTIONS = os.path.join(_SKILL, 'shared', 'conventions.md')
+_VOCABULARY = os.path.join(os.path.dirname(_SKILL), 'shared', 'treatment-vocabulary.md')
 
 AUTHORITY_TYPES = ('case_law', 'statute', 'regulation', 'treatise', 'other')
 # shared/extraction-protocol.md, "Descriptor mapping".
@@ -231,28 +250,28 @@ class _Reader:
         return allowed[value] if isinstance(allowed, dict) else value
 
 
-def plan(request):
-    read = _Reader()
-    problems = read.problems
-
+def _load(path):
+    """The result at `path`, or the problems that keep it from being one."""
     try:
-        with open(request['result_path'], encoding='utf-8-sig') as fh:
+        with open(path, encoding='utf-8-sig') as fh:
             doc = json.load(fh)
     except (OSError, ValueError) as exc:
-        return {'problems': [f'result_path could not be read as JSON: {exc}']}
+        return None, [f'result_path could not be read as JSON: {exc}']
     if not isinstance(doc, dict) or not isinstance(doc.get('authority'), dict) \
             or not isinstance(doc.get('concepts'), list):
-        return {'problems': ['the result is not the extractor\'s JSON object: it needs an '
-                             '"authority" object and a "concepts" list']}
+        return None, ['the result is not the extractor\'s JSON object: it needs an '
+                      '"authority" object and a "concepts" list']
+    return doc, []
 
-    file_path = _stored_form(request.get('file_path') or '', request.get('matter_root') or '')
+
+def _check(doc, file_path, file_hash, bundled_pages, read):
+    """The checked result as the statements read it, with what the plans report of it."""
+    problems = read.problems
     if not file_path or re.match(r'^[A-Za-z]:', file_path) or file_path.startswith('\\'):
         problems.append('file_path must name the file relative to the matter root '
                         '(shared/conventions.md §2.4)')
-    file_hash = request.get('file_hash') or ''
     if not re.fullmatch(r'[0-9a-f]{64}', file_hash):
         problems.append('file_hash must be the file\'s SHA-256 as 64 lowercase hex characters')
-    bundled_pages = (request.get('bundled_pages') or '').strip()
 
     source = doc['authority']
     authority = {
@@ -353,13 +372,29 @@ def plan(request):
             criteria.append(row)
 
     if problems:
-        return {'problems': problems}
-
+        return None
     payload = {
         'authority': authority, 'bundled': 1 if bundled_pages else 0,
         'concepts': concepts, 'links': links, 'criteria': criteria,
         'determined_by': [{'name': n, 'jurisdiction': j} for n, j in determined_by],
     }
+    return {'payload': payload, 'concepts': concepts, 'determined_by': determined_by,
+            'held_back': held_back, 'offered': offered}
+
+
+def plan(request):
+    if 'results' in request:
+        return _result_plan(request)
+    doc, unread = _load(request['result_path'])
+    if unread:
+        return {'problems': unread}
+    read = _Reader()
+    file_path = _stored_form(request.get('file_path') or '', request.get('matter_root') or '')
+    checked = _check(doc, file_path, request.get('file_hash') or '', (request.get('bundled_pages') or '').strip(), read)
+    if checked is None:
+        return {'problems': read.problems}
+    payload, concepts, determined_by = checked['payload'], checked['concepts'], checked['determined_by']
+    held_back, offered = checked['held_back'], checked['offered']
     return {
         'params': {'doc': json.dumps(payload, ensure_ascii=False)},
         'statements': [
@@ -377,6 +412,140 @@ def plan(request):
         'treats_prior': doc.get('treats_prior'),
         'held_back': held_back,
     }
+
+
+# The ingest_result path: the guards above, as refusals the data server reads by their code.
+_REFUSALS = [
+    {'sql': f"SELECT 'refused: this file is already held as another authority' FROM ({GUARD_HASH}) LIMIT 1", 'refuse': True},
+    {'sql': f"SELECT 'refused: this file is held by an authority merged into another' FROM ({GUARD_MERGED}) LIMIT 1", 'refuse': True},
+]
+
+_CANONICAL = """(SELECT CASE WHEN a.notes LIKE '[MERGED-INTO:#%'
+             THEN CAST(substr(a.notes, 15, instr(substr(a.notes, 15), ' ') - 1) AS INTEGER)
+             ELSE a.authority_id END
+        FROM law.authorities a WHERE a.authority_id = json_extract(:doc, '$.authority_id'))"""
+
+GUARD_NAMED = {'sql': f"""SELECT 'refused: the authority this file was matched to is not on file'
+WHERE {_CANONICAL} IS NULL""", 'refuse': True}
+
+SECOND_COPY_HELD = {'sql': f"""SELECT (SELECT authority_id FROM law.authorities
+        WHERE authority_id = {_CANONICAL} AND instr(coalesce(notes, ''), json_extract(:doc, '$.marker')) > 0) AS prior""",
+                    'value_as': 'prior'}
+
+APPEND_SECOND_COPY = f"""
+UPDATE law.authorities
+SET notes = CASE WHEN notes IS NULL OR notes = '' THEN json_extract(:doc, '$.marker')
+                 ELSE notes || char(10) || json_extract(:doc, '$.marker') END
+WHERE authority_id = {_CANONICAL} AND instr(coalesce(notes, ''), json_extract(:doc, '$.marker')) = 0
+"""
+
+SELECT_CANONICAL = {'sql': f"SELECT {_CANONICAL} AS source_id", 'value_as': 'source_id'}
+
+REPORT_STUBS = {'sql': f"""SELECT 'A sub-test, ' || s.name || ', was added with no criteria yet.' FROM ({SELECT_STUBS}) s""",
+                'report': True}
+
+
+def _append_treatment(i):
+    marker = f"json_extract(:doc, '$.treatments[{i}]')"
+    return {'sql': f"""
+UPDATE law.authorities
+SET notes = CASE WHEN notes IS NULL OR notes = '' THEN {marker} ELSE notes || char(10) || {marker} END
+WHERE authority_id = {_AUTHORITY} AND instr(coalesce(notes, ''), {marker}) = 0
+"""}
+
+
+def _treatments(doc, read):
+    """conventions.md 11's marker for each treatment the result reports. `|` and `]` end its fields,
+    so neither survives inside one."""
+    given = doc.get('treats_prior') or []
+    markers = []
+    for i, entry in enumerate([given] if isinstance(given, dict) else given):
+        where = f'treats_prior[{i}]'
+        if not isinstance(entry, dict):
+            read.problems.append(f'{where} must be an object')
+            continue
+        fields = [read.text(entry, 'citation', where) or read.text(entry, 'title', where, required=True),
+                  read.text(entry, 'treatment', where, required=True), read.text(entry, 'scope', where) or 'full']
+        markers.append('[TREATMENT-PENDING:' + '|'.join(re.sub(r'[|\]]', ' ', f or '') for f in fields) + ']')
+    return markers
+
+
+def _result_plan(request):
+    route = request.get('route') or {}
+    file_path, file_hash = request.get('file_path') or '', request.get('file_hash') or ''
+    title = os.path.splitext(os.path.basename(file_path.replace('\\', '/')))[0]
+    if isinstance(route.get('second_copy_of'), int):
+        doc = {'authority_id': route['second_copy_of'], 'marker': f'[SECOND-COPY:{file_hash}]'}
+        return {'params': {'doc': json.dumps(doc)},
+                'statements': [GUARD_NAMED, SECOND_COPY_HELD, {'sql': APPEND_SECOND_COPY}, SELECT_CANONICAL],
+                'post': [], 'markers': [], 'asks': [], 'report': [], 'title': title,
+                'summary': f'{title[:60]} is a second copy of an authority already held, so it was recorded by reference.'}
+    if not request.get('results'):
+        return {'params': {}, 'statements': [{'sql': 'SELECT NULL AS source_id', 'value_as': 'source_id'}],
+                'post': [], 'markers': [], 'asks': [], 'report': [], 'title': title, 'failed': True,
+                'summary': f'{title[:60]} could not be read, so nothing was recorded for it.'}
+    if len(request['results']) != 1:
+        return {'problems': [f"contract {request.get('contract')} takes one result per authority"]}
+    doc, unread = _load(request['results'][0]['path'])
+    if unread:
+        return {'problems': unread}
+    if request.get('contract') == 'provision' and doc['authority'].get('authority_type') == 'case_law':
+        return {'blocked': 'set_aside'}
+    read = _Reader()
+    checked = _check(doc, file_path, file_hash, '', read)
+    treatments = _treatments(doc, read)
+    if checked is None or read.problems:
+        return {'problems': read.problems}
+    payload = {**checked['payload'], 'treatments': treatments}
+    report = [f"The link to {link['name'][:60]} ({link['relationship']}) could not be recorded here, and is reported instead."
+              for link in checked['held_back']]
+    if treatments:
+        report.append('This decision treats an earlier one. That waits for an attended check, which matches it.')
+    name = payload['authority']['title'] or title
+    return {
+        'params': {'doc': json.dumps(payload, ensure_ascii=False)},
+        'statements': _REFUSALS + [
+            {'sql': f'SELECT {_AUTHORITY} AS prior', 'value_as': 'prior'},
+            {'sql': INSERT_AUTHORITY},
+            {'sql': INSERT_CONCEPTS}, REPORT_STUBS, {'sql': INSERT_STUBS},
+            {'sql': INSERT_LINKS, 'count': 'links'}, {'sql': INSERT_CRITERIA},
+        ] + [_append_treatment(i) for i in range(len(treatments))] + [
+            {'sql': SELECT_AUTHORITY, 'value_as': 'source_id'},
+        ],
+        'post': [], 'markers': [], 'asks': [], 'report': report, 'title': name,
+        'summary': f"{name[:60]}: recorded as a legal authority, with {len(checked['concepts'])} concepts.",
+    }
+
+
+def _scrubbed(text, names):
+    """`text` with each party's name, and each word of four letters or more in it, taken out (#10).
+    A word too many costs a phrase of the context; a name left in is the harm the rule prevents."""
+    if not text:
+        return text
+    for name in names:
+        for part in sorted({name, *(w for w in re.findall(r'\w+', name) if len(w) >= 4)}, key=len, reverse=True):
+            text = re.sub(r'(?<!\w)' + re.escape(part) + r'(?!\w)', 'a party', text, flags=re.I)
+    return text
+
+
+def dispatch_context(request):
+    """request = {"case_data_dir": str}. Read-only, from a temp copy of main.sqlite."""
+    from list_parties import read_staged
+    from parties_of_record import _behind
+
+    def read(con):
+        behind = _behind(con)
+        if behind:
+            return behind
+        names = [row[0] for row in con.execute('SELECT name FROM parties')]
+        names += [row[0] for row in con.execute('SELECT style_of_cause FROM proceedings') if row[0]]
+        issues = [{'title': _scrubbed(title, names), 'description': _scrubbed(description, names)}
+                  for title, description in con.execute(
+                      "SELECT title, description FROM issues WHERE status = 'open' "
+                      "AND issue_type IN ('legal', 'mixed') ORDER BY issue_id")]
+        with open(_VOCABULARY, encoding='utf-8') as fh:
+            return {'status': 'ok', 'legal_context': issues, 'treatment_vocabulary': fh.read()}
+    return read_staged(request.get('case_data_dir'), 'authority dispatch', read)
 
 
 if __name__ == '__main__':

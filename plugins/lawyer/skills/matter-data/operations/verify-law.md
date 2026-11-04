@@ -123,6 +123,8 @@ Present the correction batch and take the practitioner's sign-off before it appl
 
 Stamp `law.authorities.last_verified_at` for each authority whose verifier pass **completed successfully** — the pass re-read that document, which is exactly what the column attests. An authority whose document was unresolvable, or whose verifier failed, is **not** stamped. The stamp is `date('now','localtime')` in the writing statement, never typed (`../shared/conventions.md` §10).
 
+**A pending treatment.** An authority carrying `[TREATMENT-PENDING:]` (`../shared/conventions.md` §11): apply it by `ingest-extract.md` Path D's Treatments bullet, or report the deferral when the treated authority is not held, then clear the marker with §11's clear statement in the same call.
+
 **It is not edge verification.** `last_verified_at` says the document was re-read; `concept_authorities.verified` says the edge is right. Never let a consumer or a pool payload read one as the other.
 
 ## 7. Report, then dump

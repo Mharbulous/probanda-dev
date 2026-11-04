@@ -216,7 +216,7 @@ Out of scope: dates taken from a document (a fact's date, a filing date), and th
 
 ## 11. Pending markers
 
-Five fixed markers record work an ingest deferred, or a file an ingest read by reference. [`../operations/ingest-unattended.md`](../operations/ingest-unattended.md) writes the four pending markers. An attended ingest writes one of them, `SUPERSEDE-PENDING:`, when its question about the pair gets no answer ([`../operations/ingest-extract.md`](../operations/ingest-extract.md), "Another copy of a registered source"). [`../operations/ingest-extract.md`](../operations/ingest-extract.md) Path D writes `[SECOND-COPY:]`, whichever caller reached it. They are not §5 prefixes: they never change `verified` and route nothing to a review queue. Each is appended on its own line after any existing note, never prepended, because `review_queue` classifies notes by position-anchored prefixes (`../references/design-decisions.md` #42). The text is fixed, so a substring test finds a marker and a plain `REPLACE` removes it.
+Six fixed markers record work an ingest deferred, or a file an ingest read by reference. The data server's tools write the five pending markers for [`../operations/ingest-unattended.md`](../operations/ingest-unattended.md). An attended ingest writes one of them, `SUPERSEDE-PENDING:`, when its question about the pair gets no answer ([`../operations/ingest-extract.md`](../operations/ingest-extract.md), "Another copy of a registered source"). [`../operations/ingest-extract.md`](../operations/ingest-extract.md) Path D writes `[SECOND-COPY:]`, and for an unattended run the tool writes it by the same rule. They are not §5 prefixes: they never change `verified` and route nothing to a review queue. Each is appended on its own line after any existing note, never prepended, because `review_queue` classifies notes by position-anchored prefixes (`../references/design-decisions.md` #42). The text is fixed, so a substring test finds a marker and a plain `REPLACE` removes it.
 
 | Marker (exact text) | Column | Means | Cleared by |
 |---|---|---|---|
@@ -224,6 +224,7 @@ Five fixed markers record work an ingest deferred, or a file an ingest read by r
 | `LINKAGE-PENDING: proceeding linkage check not yet run` | `main.sources.notes` | the proceeding linkage check needed the practitioner and was deferred | [`../operations/proceedings-profile.md`](../operations/proceedings-profile.md) §6, when the check reaches an outcome for the source |
 | `DATE-ANCHOR-PENDING: date not yet recorded as an anchor` | `main.sources.notes` | the source is correspondence from the forum that sets a date, and no anchor has been recorded from it | [`../SKILL.md`](../SKILL.md)'s clear route, once the practitioner has recorded the anchor through `lawyer:docket-clerk` or says none is needed |
 | `SUPERSEDE-PENDING: possible other version of source #<id>.` | `main.sources.notes` | the source is a court document an ingest registered while source `<id>` may be another version of it: an unattended ingest, or an attended one whose question about the pair got no answer. The text is fixed for each pair; the closing period keeps `#3.` from matching inside `#34.` | [`../operations/supersede-draft.md`](../operations/supersede-draft.md), when the pair is decided, or when the row carrying it is superseded by any pair |
+| `[TREATMENT-PENDING:<citation>\|<treatment>\|<scope>]` | `law.authorities.notes` | an unattended ingest read this decision, and it treats the earlier decision named. Whether that one is held, and which of its propositions the treatment reaches, is an attended judgment (`../references/design-decisions.md` #16). The authority's row is the treating authority | an attended Path D run, or [`../operations/verify-law.md`](../operations/verify-law.md) §6, once the treatment is applied or the deferral is reported |
 | `[SECOND-COPY:<sha256>]` | `law.authorities.notes` | a second file of this authority, with that hash, was read by reference: the citation matched, nothing was extracted, and the authority stays the file of record | never: the hash is that file's lasting identity |
 
 A marked source still counts as ingested. Append a marker (named values are SQL literals, §2.4):
@@ -237,7 +238,7 @@ WHERE source_id = :source_id
   AND (notes IS NULL OR instr(notes, :marker) = 0);
 ```
 
-For `[SECOND-COPY:]`, run the same statement against `law.authorities`, keyed on `authority_id`. On a merge tombstone (notes starting `[MERGED-INTO:#<C>`) append to the canonical row `<C>` instead. Clear a marker:
+For `[SECOND-COPY:]`, run the same statement against `law.authorities`, keyed on `authority_id`. On a merge tombstone (notes starting `[MERGED-INTO:#<C>`) append to the canonical row `<C>` instead. Clear a marker (`[TREATMENT-PENDING:]`: the same statement against `law.authorities`, keyed on `authority_id`):
 
 ```sql
 -- pending marker: clear

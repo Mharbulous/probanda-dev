@@ -2,7 +2,8 @@
 
 Behind `matter_data__ingest_result` (ingest orchestrator spec 2.1, 2.2). The
 converters (`ingest_facts.py`, `ingest_affidavit.py`, `ingest_sought_orders.py`,
-`ingest_privileged.py`) open no database and read no clock. Each reads the
+`ingest_privileged.py`, and `ingest_authority.py` for the two authority
+contracts) open no database and read no clock. Each reads the
 staged extractor results it is handed, checks them against their contract, and
 returns fixed statements with the checked result bound as JSON parameters, read
 through `json_each`. Every table and column name stays in these scripts (#56,
@@ -102,6 +103,14 @@ def top_level(hash_key='$.source.file_hash'):
 
 
 SOURCE = top_level()
+
+
+def top_level_by_hash(file_hash):
+    """The top-level row of a file the route names by its SHA-256, checked here because it is spliced."""
+    if not re.fullmatch(r'[0-9a-f]{64}', file_hash or ''):
+        raise ValueError('a route named a version pair by something other than a SHA-256')
+    return f"""(SELECT min(s.source_id) FROM main.sources s
+        WHERE s.file_hash = '{file_hash}' AND s.parent_source_id IS NULL)"""
 
 
 def guard_privileged_store():
@@ -222,15 +231,28 @@ def other_copy(source=SOURCE):
           AND lower(trim(s.title)) = lower(trim(json_extract(:doc, '$.other_copy_title'))))"""
 
 
+def _version_marker(other):
+    """conventions.md 11's fixed text for a possible other version; `other` is an SQL expression."""
+    return f"'SUPERSEDE-PENDING: possible other version of source #' || {other} || '.'"
+
+
 def marker_statements(markers, source=SOURCE):
-    """The unattended markers, in ingest-unattended.md's order (Substitutions 1f, 1g, 1h, 1j)."""
+    """The unattended markers, in ingest-unattended.md's order (Substitutions 1f, 1g, 1h, 1j).
+    `version:<id>` names a held row the route paired this file with. `newcomer:<hash>` names another
+    file of the run: each of the two rows is marked with the other's id once both rows exist, so
+    the first of them to be written adds nothing (the marker's expression is NULL)."""
     out = []
     for m in markers:
         if m == 'other_copy':
-            expr = f"'SUPERSEDE-PENDING: possible other version of source #' || {other_copy(source)} || '.'"
+            out.append(append_marker(_version_marker(other_copy(source)), source))
+        elif m.startswith('version:'):
+            out.append(append_marker(_version_marker(str(int(m.split(':', 1)[1]))), source))
+        elif m.startswith('newcomer:'):
+            other = top_level_by_hash(m.split(':', 1)[1])
+            out.append(append_marker(_version_marker(other), source))
+            out.append(append_marker(_version_marker(source), other))
         else:
-            expr = "'" + MARKERS[m].replace("'", "''") + "'"
-        out.append(append_marker(expr, source))
+            out.append(append_marker("'" + MARKERS[m].replace("'", "''") + "'", source))
     return out
 
 
@@ -330,4 +352,8 @@ def post_passes(request, category, file_path, title, description, flags):
         report.append("Whether this letter was delivered was not checked, because the firm's name is not set up "
                       "in Probanda.")
     passes.append('name_check')
+    # The pairs ingest-unattended.md Substitution 1j found before the read, as the route gives them.
+    route = request.get('route') or {}
+    markers += [f'version:{int(other)}' for other in route.get('possible_versions') or []]
+    markers += [f'newcomer:{other}' for other in route.get('version_newcomers') or []]
     return passes, list(dict.fromkeys(markers)), report
