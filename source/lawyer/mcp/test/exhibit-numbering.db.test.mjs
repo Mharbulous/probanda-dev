@@ -86,11 +86,11 @@ test("a witness statement ahead of an exhibit shifts no Ex. N on the Notice of A
     const noaPart4 = noa.split("## PART 4: MATERIAL TO BE RELIED ON")[1];
     const noaPart4Items = noaPart4.split("\n").filter((l) => /<!-- document \d+ -->$/.test(l));
     assert.equal(noaPart4Items.length, 1, `expected Part 4 to list the invoice only; got: ${noaPart4Items.join(" | ")}`);
-    assert.match(noaPart4Items[0], /^1\. Invoice #114 \(2026-03-01\)/);
+    assert.match(noaPart4Items[0], /^1\. Invoice #114, dated March 1, 2026 /);
 
     assert.equal(
       filed.split("## Part 4")[1].trim(),
-      "- Invoice #114 (March 1, 2026)\n- Pleadings filed in this proceeding",
+      "- Invoice #114, dated March 1, 2026\n- Pleadings filed in this proceeding",
       "expected the filed face's Part 4 to list the invoice, its date as Form 32 prints it, then the pleadings line alone"
     );
   } finally {
