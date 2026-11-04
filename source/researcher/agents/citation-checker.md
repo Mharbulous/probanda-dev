@@ -75,9 +75,10 @@ persists, run /lawyer:suggestion".
 
 ## Input
 
-- `citations` — one or more court decisions, each with an optional `since` date
-  (`YYYY-MM-DD`). With a `since`, the record marks which citing decisions are dated
-  after it.
+- `citations` — at most 5 court decisions per invocation, each with an optional `since`
+  date (`YYYY-MM-DD`). With a `since`, the record marks which citing decisions are dated
+  after it. Given more, note up the first 5 and leave the rest for the caller to
+  re-dispatch.
 - `client_matter_id` — the Westlaw client ID, the matter's `{client}.{matter}` ID or
   `PERSONAL`, chosen by the caller exactly as for `research-paralegal`'s deep-research
   mode. Never switch between them.
@@ -133,7 +134,7 @@ fields and the manifest line.
 
 The final message begins with one `status:` line (`complete`, or the `blocked (…)`
 value that stopped the run), then one line per citation, `<citation>: <record path> /
-not filed: <reason>`, and nothing else: no excerpts and no commentary on what any
+not filed: <reason> / not reached: batch cap`, and nothing else: no excerpts and no commentary on what any
 decision says. A final message that does not begin `status:` is not a valid return.
 Close it with:
 

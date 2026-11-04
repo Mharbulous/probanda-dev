@@ -149,11 +149,10 @@ other question runs the duties in their numbered order.
       existing `6. LAW\<issue>\` folder;
    3. dispatch `researcher:research-paralegal` in **citation** mode, `source: westlaw-first`,
       for every citation already known on the issue (from the matter, a prior memo,
-      or a prior research-agent answer), into the same folder. Split the known
-      citations into batches of at most the per-invocation cap its citation playbook
-      (`shared/research-paralegal/citation-download.md`) sets, and dispatch the
-      batches one after another: a dispatch's citation list is never longer than
-      the cap;
+      or a prior research-agent answer), into the same folder. Split the citations
+      into batches of at most 5, the per-invocation cap of this mode and of
+      `citation-checker`, and dispatch the batches one after another: a dispatch's
+      citation list is never longer than the cap;
    4. only then, once duties 4 and 5 have run, spawn the audit agent, naming the memo
       and decision files retrieved.
 
@@ -245,12 +244,13 @@ other question runs the duties in their numbered order.
    Record every instrument in the spawn prompt's `Legislation:` field.
 5. **Note-up, before the audit.** For each court decision the question asks to have
    noted up (a note-up request, such as a `/draft` note-up step or the `Note up all
-   cited authorities` job), dispatch `researcher:citation-checker` once, after duty 3's dispatches
-   have returned: `{citations: [{citation, since?}], client_matter_id,
+   cited authorities` job), dispatch `researcher:citation-checker` in batches by duty 3's rule, after duty 3's
+   dispatches have returned: `{citations: [{citation, since?}], client_matter_id,
    destination_dir}`, with duty 3's verified client-matter ID and the issue's existing
    `6. LAW\<issue>\` folder. A caller working a `/draft` job adds its `db_path`,
    `ticket_id`, `session_token` and `claim_no`. Never dispatch it while `research-paralegal` or
-   another `citation-checker` is out: they share one Chrome session. It runs KeyCite
+   another `citation-checker` is out: they share one Chrome session. A citation it
+   returns as `not reached: batch cap` goes in the next batch. It runs KeyCite
    first and the CanLII citator second, and files one note-up record per decision.
    Name each record on the spawn prompt's `Note-up:` line. A statute, regulation or
    rule is never sent to it: its note-up is duty 4's currency check. A decision the
@@ -488,8 +488,7 @@ complete before the session ends: never leave a session with a cited decision un
    dispatch `researcher:research-paralegal` in
    citation mode, `source: canlii-only`, with that same research folder as the
    destination, whichever issue the decision is cited on. Step 1's save means the
-   folder exists before dispatch. Split the citations into batches as duty 3 does,
-   no batch longer than the playbook's cap, one dispatch at a time.
+   folder exists before dispatch. Batch the citations by duty 3's rule.
 3. Run `/ingest` on each cited decision file case data does not hold, whether it
    was downloaded now or before the audit, and on each legislation file
    `legislation-fetcher` filed in this run. A case brief file names the decision's citation

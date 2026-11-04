@@ -345,6 +345,21 @@ class NoteUpRoutingTests(unittest.TestCase):
                         text.index("**A `needs_download` or hand-off-packet return")]
         self.assertEqual(len([l for l in template.splitlines() if l.startswith("Note-up:")]), 1)
 
+    def test_note_ups_and_downloads_share_one_batch_cap(self):
+        self.assertIn("Up to **5 citations** per invocation",
+                      flat(read(SHARED / "research-paralegal" / "citation-download.md")))
+        agent = flat(read(CITATION_CHECKER))
+        self.assertIn("at most 5 court decisions", agent)
+        self.assertIn("not reached: batch cap", agent[agent.index("## Output"):])
+        text = read(SHARED / "legal-research.md")
+        duty_3 = flat(text[text.index("3. **Tier 4, Westlaw"):
+                           text.index("4. **Legislation text, before the audit.**")])
+        self.assertIn("batches of at most 5", duty_3)
+        duty_5 = flat(text[text.index("5. **Note-up, before the audit"):
+                           text.index("**Westlaw unreachable is a hard stop.**")])
+        self.assertIn("in batches by duty 3's rule", duty_5)
+        self.assertNotIn("citation-checker` once", duty_5)
+
     def test_keycite_runs_before_the_canlii_citator(self):
         rows = [line for line in read(NOTE_UP_PLAYBOOK).splitlines()
                 if re.match(r"^\|\s*\d+\s*\|", line)]
