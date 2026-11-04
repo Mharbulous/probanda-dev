@@ -59,6 +59,10 @@ None.
 
 | Claim | Where | Check |
 |---|---|---|
-| "any context sentences, then the one question in bold" | `shared/research-memo-template.md` | UNVERIFIED |
-| Renderer or save path adds Issue bold | `drafting_forms__render` `General_writing`, `research_filing__save_answer` | UNVERIFIED |
-| A test asserts question-only bold | `legal-research/tests/` or mcp tests | UNVERIFIED |
+| "any context sentences, then the one question in bold" | `shared/research-memo-template.md` | Superseded: `c02c3c1c` changed it to "any context sentences, then the one question, the whole paragraph in bold" |
+| Renderer or save path adds Issue bold | `drafting_forms__render` `General_writing`, `research_filing__save_answer` | No: nothing in `source/lawyer/mcp/src` adds Issue bold, and `render-general.db.test.mjs` shows the `issue` slot printing the template's `**...**` as written. Bold is applied in the template only |
+| A test asserts question-only bold | `legal-research/tests/` or mcp tests | No: `test_memo_format.py` pins the whole-paragraph wording and refuses "the one question in bold" |
+
+## 11. Outcome
+
+Already implemented by `c02c3c1c` before this spec was picked up, so no further change was made. All three criteria in §8 hold. `test_memo_format.py` (23 tests) and `render-general.db.test.mjs` (45 tests) passed on 2026-11-03.
