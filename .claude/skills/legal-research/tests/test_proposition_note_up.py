@@ -61,6 +61,31 @@ class PropositionNoteUpTests(unittest.TestCase):
         self.assertIn("keep its items and their numbers", step_two)
         self.assertIn("update Validity, Confidence, the CanLII segment and Status", step_two)
 
+    def test_the_read_is_capped_and_run_by_the_gate(self):
+        section = between(flat(read("shared/legal-research.md")), "**Proposition-level note-up.**",
+                          "**Statute currency.**")
+        self.assertIn("choose at most 5 citing decisions", section)
+        self.assertIn("no more than 3 at once per authority", section)
+        self.assertNotIn("every citing decision", section)
+        scoped = flat(between(read("shared/legal-audit-scoped.md"), "## `mode: citing_read`", "## Hard boundaries"))
+        self.assertIn("one instance per decision or 20 pages", scoped)
+        self.assertIn("each with the page after it", scoped)
+        self.assertIn("never that the decision does not cite the authority", scoped)
+        step_two = flat(between(read("shared/legal-audit-protocol.md"), "For every authority you intend to rely on",
+                                "### Step 3"))
+        self.assertNotIn("every citing decision", step_two)
+
+    def test_the_record_is_capped_and_says_so(self):
+        keycite = flat(read("shared/citation-checker/keycite-canada.md"))
+        self.assertNotIn("Record every row", keycite)
+        self.assertIn("Record at most 5 rows", keycite)
+        self.assertIn("`not recorded: <the control> would not apply`, never as `none`", keycite)
+        self.assertIn("A note-up never decides which labels are negative", keycite)
+        record = read("shared/citation-checker/note-up.md")
+        self.assertIn("Not recorded: cap 5, newest first", record)
+        self.assertIn("Not recorded: cap 5, newest by neutral citation", record)
+        self.assertNotIn("<citation> | <title> | <date>", record)
+
 
 if __name__ == "__main__":
     unittest.main()

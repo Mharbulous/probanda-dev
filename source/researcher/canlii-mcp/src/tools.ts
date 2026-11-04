@@ -84,6 +84,27 @@ const citatorSchemas = {
 type Language = "en" | "fr";
 type MetadataType = keyof typeof citatorSchemas;
 
+// A heavily cited decision's list runs past the tool output limit (326,621 characters seen).
+// CanLII's citator gives no date, so the neutral citation's year, then number, stands in for it.
+// The number only orders decisions of one court exactly. A citation with none sorts last.
+const CITING_CASES_RETURNED = 5;
+
+function neutralOrder(citation: string): [number, number] {
+	const match = citation.match(/\b(\d{4}) [A-Za-z][\w()-]* (\d+)\b/);
+	return match ? [Number(match[1]), Number(match[2])] : [0, 0];
+}
+
+function newestCitingCases({ citingCases }: z.infer<typeof CitingCasesResponseSchema>) {
+	const ranked = citingCases.map((entry) => ({ entry, order: neutralOrder(entry.citation) }));
+	ranked.sort((a, b) => b.order[0] - a.order[0] || b.order[1] - a.order[1]);
+	return {
+		total: citingCases.length,
+		returned: Math.min(citingCases.length, CITING_CASES_RETURNED),
+		order: "newest first by neutral citation: year, then number",
+		citingCases: ranked.slice(0, CITING_CASES_RETURNED).map(({ entry }) => entry),
+	};
+}
+
 export interface Instrument {
 	citation: string;
 	title: string;
@@ -102,6 +123,7 @@ export const handlers = {
 				"Failed to fetch case citator data",
 				buildDateParams(dateParams),
 			);
+			if (metadataType === "citingCases") return jsonResponse(newestCitingCases(CitingCasesResponseSchema.parse(data)));
 			return jsonResponse(citatorSchemas[metadataType].parse(data));
 		} catch (error) {
 			return caughtResponse(error);
@@ -290,7 +312,7 @@ export function createServer(client: CanliiClient, version: string): McpServer {
 		"Use 'citingCases' to see what later cases cite this decision — if many recent cases cite it approvingly, it is strong authority. " +
 		"Use 'citedCases' to see what authorities this case relied on. " +
 		"Use 'citedLegislations' to see what statutes the case references. " +
-		"Returns the full list of citing/cited items.",
+		"Returns the full list of cited items. For 'citingCases' it returns the total and the 5 newest by neutral citation (year, then number).",
 		{
 			language: z.enum(["en", "fr"]).default("en")
 				.describe("Language: 'en' for English (default), 'fr' for French"),
@@ -308,7 +330,7 @@ export function createServer(client: CanliiClient, version: string): McpServer {
 	server.tool(
 		"get_case_citator_tease",
 		"Quick preview of citation relationships (max 5 results). Faster than the full citator. " +
-		"Use this for a quick check on whether a case has been cited, then use get_case_citator for the complete list if needed.",
+		"Use this for a quick check on whether a case has been cited, then use get_case_citator for the count and the newest citing cases.",
 		{
 			language: z.enum(["en", "fr"]).default("en")
 				.describe("Language: 'en' for English (default), 'fr' for French"),

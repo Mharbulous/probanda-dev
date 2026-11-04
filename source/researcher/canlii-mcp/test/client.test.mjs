@@ -98,6 +98,48 @@ test("get_case_citator maps its inputs to the URL and a non-2xx reply to the old
 	assert.deepEqual(result, { content: [{ type: "text", text: "Error: Failed to fetch case citator data (403)" }], isError: true });
 });
 
+test("get_case_citator on a heavily cited decision returns the count and the 5 newest by neutral citation", async () => {
+	const invented = (citation) => ({ databaseId: "bcsc", caseId: { en: citation }, title: "Invented v Fixture", citation, padding: "x".repeat(300) });
+	const citingCases = Array.from({ length: 1100 }, (_, i) => invented(`2001 BCSC ${i + 1} (CanLII)`));
+	citingCases.splice(40, 0,
+		invented("2024 BCSC 9 (CanLII)"),
+		invented("2024 BCSC 120 (CanLII)"),
+		invented("[2025] 1 SCR 7, 2025 SCC 3 (CanLII)"),
+		invented("2023 NLTD(G) 17 (CanLII)"),
+		invented("2022 CanLII 613 (BC SC)"),
+		invented("(1992), 65 BCLR 123 (CA)"),
+	);
+	const { client } = fakeClient(() => json({ citingCases }));
+	const result = await handlers.get_case_citator(client, {
+		language: "en", databaseId: "bcsc", caseId: "2000bcsc1", metadataType: "citingCases",
+	});
+	assert.ok(result.content[0].text.length < 5000);
+	const body = JSON.parse(result.content[0].text);
+	assert.equal(body._notice, "No decision text is included in this response or available through this API.");
+	assert.deepEqual({ total: body.total, returned: body.returned }, { total: 1106, returned: 5 });
+	assert.deepEqual(body.citingCases.map((c) => c.citation), [
+		"[2025] 1 SCR 7, 2025 SCC 3 (CanLII)",
+		"2024 BCSC 120 (CanLII)",
+		"2024 BCSC 9 (CanLII)",
+		"2023 NLTD(G) 17 (CanLII)",
+		"2022 CanLII 613 (BC SC)",
+	]);
+});
+
+test("get_case_citator returns a short citing list whole, a citation with no neutral form last, and other types uncapped", async () => {
+	const invented = (citation) => ({ databaseId: "bcsc", caseId: { en: citation }, title: "Invented v Fixture", citation });
+	const short = ["(1992), 65 BCLR 123 (CA)", "2020 BCSC 1"].map(invented);
+	const cited = Array.from({ length: 8 }, (_, i) => invented(`2001 BCSC ${i + 1}`));
+	const { client } = fakeClient((url) => json(url.includes("citingCases") ? { citingCases: short } : { citedCases: cited }));
+	const params = { language: "en", databaseId: "bcsc", caseId: "2000bcsc1" };
+	const citing = JSON.parse((await handlers.get_case_citator(client, { ...params, metadataType: "citingCases" })).content[0].text);
+	assert.deepEqual({ total: citing.total, returned: citing.returned }, { total: 2, returned: 2 });
+	assert.deepEqual(citing.citingCases.map((c) => c.citation), ["2020 BCSC 1", "(1992), 65 BCLR 123 (CA)"]);
+	const other = JSON.parse((await handlers.get_case_citator(client, { ...params, metadataType: "citedCases" })).content[0].text);
+	assert.equal(other.citedCases.length, 8);
+	assert.equal(other.total, undefined);
+});
+
 test("browse_legislation filters and pages the database and reports the counts", async () => {
 	const legislations = ["Limitation Act", "Family Law Act", "Limitation Regulation"].map((title, i) => ({
 		databaseId: "bcs", legislationId: `id-${i}`, title, citation: `SBC ${i}`, type: "STATUTE",

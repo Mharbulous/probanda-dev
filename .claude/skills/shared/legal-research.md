@@ -295,6 +295,7 @@ Re-invocation: no / yes: Westlaw did not return <citations, or none>; paralegal:
 Review: <memo-reviewer's last JSON, verbatim> / none
 Final instructed: yes / no
 Note up paragraphs: <the saved memo's path>: <n>[, <n>] / none
+Citing reads: <citation>: <the note's path> / <citation>: UNREAD: <reason> / <citation>: not located by citation search / none
 Background memos: <path>[; <path>] / none
 Here are the memos that will provide some background context for your research. Repeat the propositions and excerpts from the previous memo only if they are necessary context for explaining your own research memo, but make sure that you go beyond that information and dig deeper into the legal issue posed by your particular question.
 Flag unsettled: <what to flag as unsettled> / none
@@ -326,7 +327,7 @@ put the same words in `Question:`.
 when no paralegal ran for it. `Review:` is `none` until memo-reviewer has returned on this question.
 `Final instructed:` is `yes` only when the practitioner has explicitly instructed that this
 memo's status change to FINAL (`shared/research-memo-template.md`, "Status").
-`Note up paragraphs:` is `none` except on a proposition-level note-up (below).
+`Note up paragraphs:` and `Citing reads:` are `none` except on a proposition-level note-up (below).
 Write one `Westlaw:` line per issue.
 Write one `Legislation:` line per instrument, and `Legislation: none` when no instrument
 is in issue. For an instrument filed in parts, `<path>` lists every part's path, separated by `; `.
@@ -568,9 +569,15 @@ the memo Writing's `n`th item, and its stored item is the `statement_of_law_id` 
 with. With `/drafting-data` installed, write the job by its §3k, "A research memo's
 paragraphs", and work each step there; without it, run the steps here and say no job was
 written. A step runs the gate on the memo's question with `Note up paragraphs:` naming the memo
-and its paragraph: `citation-checker` notes up any authority without a record, and
-`research-paralegal` downloads every citing decision the record lists. research-agent reads
-each at its pinpoint and returns the memo with the same items, its Validity, Confidence,
+and its paragraph: `citation-checker` notes up any authority without a record. Then, for each
+authority, choose at most 5 citing decisions: the one the record's KeyCite banner names
+`Most Recent`, then its KeyCite rows, then its CanLII rows, each decision once and the rest
+unread. `research-paralegal` downloads those not on disk, in one citation-mode dispatch. Spawn
+one `researcher:research-agent` with `mode: citing_read` (`shared/legal-audit-scoped.md`) per
+decision, no more than 3 at once per authority, with that mode's fields, and another from the
+page a return's `More:` line names.
+Name each return on the audit spawn's `Citing reads:` line. research-agent
+returns the memo with the same items, its Validity, Confidence,
 CanLII segment and Status updated (`shared/legal-audit-protocol.md` Step 2). Save it onto
 the same Writing: replace its `memo-header` row, then render and save by persist step 1's
 Copy. Record an authority's treatment, which clears its 📇, by `/drafting-data`

@@ -227,6 +227,24 @@ test("law_folder_text with file and pattern returns matching lines with context 
   }
 });
 
+test("law_folder_text with a pattern gives each PDF match its pages, and no pages on a file that has none", async () => {
+  const f = fixture();
+  const third = `${LINES}\nPlaceholder citing line one.\nPlaceholder citing line two.`;
+  writeFileSync(join(f.law, "citing.pdf"), pdfBytes([LINES, `Placeholder citing line.\n${LINES}`, third]));
+  writeFileSync(join(f.law, "citing.doc"), docBytes([{ text: `Placeholder citing line.\r\fPlaceholder later.\r`, unicode: false }]));
+  try {
+    const pdf = await lawFolderText(f.matter, f.law, { file: "citing.pdf", pattern: "citing line", context: 0 });
+    assert.deepEqual(pdf.matches.map((m) => m.pages), [[2], [3]]);
+    const merged = await lawFolderText(f.matter, f.law, { file: "citing.pdf", pattern: "citing line", context: 50 });
+    assert.deepEqual(merged.matches.map((m) => m.pages), [[2, 3]]);
+    const doc = await lawFolderText(f.matter, f.law, { file: "citing.doc", pattern: "citing line" });
+    assert.equal(doc.match_count, 1);
+    assert.equal("pages" in doc.matches[0], false);
+  } finally {
+    f.cleanup();
+  }
+});
+
 test("law_folder_text with a pattern that matches nothing returns no matches, still showing the file's head", async () => {
   const f = rulesFixture();
   try {

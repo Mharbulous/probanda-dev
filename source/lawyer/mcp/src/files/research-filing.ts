@@ -388,6 +388,7 @@ export interface LawTextMatch {
   first: number;
   last: number;
   matched: number[];
+  pages?: number[];
   text: string;
 }
 
@@ -508,8 +509,14 @@ function matchBlocks(file: string, text: string, regex: RegExp, context: number,
 } {
   const lines = text.split(/\r?\n/);
   const hits: number[] = [];
+  // Only a PDF has pages: extractText sets a form feed between them. A Word page break is no page.
+  const isPdf = pathWin32.extname(file).toLowerCase() === ".pdf";
+  const pageOfLine: number[] = [];
+  let page = 1;
   let truncated = false;
   for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes("\f")) page++;
+    pageOfLine.push(page);
     if (!regex.test(lines[i])) continue;
     if (hits.length === budget) {
       truncated = true;
@@ -535,6 +542,7 @@ function matchBlocks(file: string, text: string, regex: RegExp, context: number,
     first: s.first + 1,
     last: s.last + 1,
     matched: s.matched,
+    ...(isPdf ? { pages: [...new Set(s.matched.map((line) => pageOfLine[line - 1]))] } : {}),
     text: lines.slice(s.first, s.last + 1).join("\n"),
   }));
   return { blocks, count: hits.length, truncated };

@@ -30,7 +30,7 @@ not.
 
 1. **Automatic.** Every proposition of law the memo cites, and every case cited in Application
    for a finding of fact or of law, has a proposition-level note-up.
-2. **On instruction.** Each of them has a case-level note-up, every citing decision that treats
+2. **On instruction.** Each of them has a case-level note-up, every citing decision its record lists that treats
    the case negatively or that no citator classifies has been read at its pinpoint against the
    proposition or finding the case is cited for, and the spawn prompt's `Final instructed:` reads
    `yes`.
@@ -50,8 +50,9 @@ A memo's notes report each case's two checks apart, in these labels and no other
   whose history check is not complete makes the memo `INCOMPLETE:`.
 - `case-level`: a citator's flag and count of citing decisions in other proceedings, not all
   of them read for the proposition.
-- `proposition-level: ¶4, ¶5`: every citing decision was read at its pinpoint against the named
-  paragraphs' proposition or finding.
+- `proposition-level: ¶4, ¶5`: at most 5 citing decisions per authority, chosen by
+  `shared/legal-research.md`, "Proposition-level note-up", were read at the pages that cite it
+  against the named paragraphs' proposition or finding.
 - `NOT NOTED UP`: no note-up record.
 
 `noted up` is never a label: a citator list alone shows no treatment.

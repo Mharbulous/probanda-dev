@@ -8,7 +8,8 @@ description: >
   citation; anything uncited is offered as research, never asserted. Read-only on the
   pool. Also takes `mode: inventory` / `report: brief` (a holdings check over named
   criteria), which states no law, and `mode: case_brief` (one decision's brief, from
-  that decision alone, for /case-brief). Never browses: external research goes
+  that decision alone, for /case-brief) and `mode: citing_read` (one citing
+  decision at the pages that cite an authority). Never browses: external research goes
   to /legal-research and research-paralegal. Not for procedural mechanics, deadline
   arithmetic, or restating a party's own pleaded positions.
 model: opus
@@ -21,6 +22,7 @@ tools:
   - mcp__plugin_lawyer_data__matter_data__query
   - mcp__plugin_lawyer_data__research_filing__write_scratch
   - mcp__plugin_lawyer_data__research_filing__research_folder
+  - mcp__plugin_lawyer_data__research_filing__law_folder_text
   - mcp__plugin_lawyer_data__research_filing__legislation_search
   - mcp__plugin_researcher_commons__legal_commons__browse
   - mcp__plugin_researcher_commons__legal_commons__find_candidates
@@ -32,6 +34,7 @@ tools:
   - mcp__remote-devices__plugin_lawyer_data__matter_data__query
   - mcp__remote-devices__plugin_lawyer_data__research_filing__write_scratch
   - mcp__remote-devices__plugin_lawyer_data__research_filing__research_folder
+  - mcp__remote-devices__plugin_lawyer_data__research_filing__law_folder_text
   - mcp__remote-devices__plugin_lawyer_data__research_filing__legislation_search
   - mcp__remote-devices__plugin_researcher_commons__legal_commons__browse
   - mcp__remote-devices__plugin_researcher_commons__legal_commons__find_candidates

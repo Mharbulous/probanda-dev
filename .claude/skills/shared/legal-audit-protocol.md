@@ -17,7 +17,7 @@ edit or ingest anything. Your deliverable is the return described in Step 6. Fil
 the memo in `6. LAW` is the caller's job, never yours.
 
 **Scoped dispatch.** If the spawn prompt names any other `mode:`, or `report:`, fetch
-`shared/legal-audit-scoped.md`. For `mode: inventory` the scoped file is
+`shared/legal-audit-scoped.md`. For `mode: inventory` and `mode: citing_read` the scoped file is
 self-contained — follow it alone, never this file or `shared/research-priority.md`.
 For scoped `opinion` dispatches, follow both this file and the scoped file: it
 narrows the question asked and the shape of the answer, never an audit guarantee.
@@ -200,11 +200,12 @@ For every authority you intend to rely on:
      optional.
    - **Note-up**, from a note-up record, commons `treatment_chain`, or an existing
      verified memo named with its date (for legislation, step e's pointer). A memo not
-     named with its date is no note-up. It is case-level unless you read every citing
-     decision at its pinpoint against the paragraph's proposition or finding, which you
+     named with its date is no note-up. It is case-level unless the citing decisions were
+     read against the paragraph's proposition or finding, which you
      do for each paragraph the spawn prompt's `Note up paragraphs:` names: start from that
-     memo, keep its items and their numbers, put every citing decision not on disk on
-     `needs_download`, and update Validity, Confidence, the CanLII segment and Status. Record
+     memo, keep its items and their numbers, read each note on `Citing reads:`, name in your
+     notes each decision it lists as unread or not located, and update Validity, Confidence,
+     the CanLII segment and Status. Record
      negative or distinguishing treatment. An authority with no record is NOT NOTED UP
      and drags reliability down.
 3. **Compare facts**: state the factual circumstances before that court against the

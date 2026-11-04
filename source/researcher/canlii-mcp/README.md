@@ -10,7 +10,7 @@ Vendored from [Mharbulous/canlii-mcp](https://github.com/Mharbulous/canlii-mcp) 
 
 | Tool | Returns |
 |---|---|
-| `get_case_citator` | The full list of cases citing a decision, cases it cites, or legislation it cites |
+| `get_case_citator` | Cases a decision cites and legislation it cites, in full, or the count of cases citing it and the 5 newest |
 | `get_case_citator_tease` | The same lists, capped at 5 results |
 | `get_legislation_databases` | The legislation database IDs |
 | `browse_legislation` | Legislation items in one database, filtered by `titleContains` and paginated |
