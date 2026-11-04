@@ -653,7 +653,7 @@ INSERT INTO statements_of_law (id, proceeding_id, authority_id, pinpoint, excerp
 INSERT INTO filing_law (filing_id, statement_id) VALUES (${id}, 70), (${id}, 71);
 `);
   await g.prose(id, "memo-header", "---\nDocument: MEMORANDUM OF LAW\nFormat: ICRA\n---");
-  await g.prose(id, "issue", "**Is the test met?**");
+  await g.prose(id, "issue", "**A tenant holds over. Is the test met?**");
   await g.prose(id, "conclusion", "Yes (Alpha v Beta, 2020 BCCA 1, at para. 5).");
   await g.prose(id, "rule", "The first rule. <!-- statement_of_law_id 70 -->\n\nThe second rule. <!-- statement_of_law_id 71 -->");
   await g.prose(id, "application", "The court applied it. <!-- statement_of_law_id 70 -->\n\nAn unlinked item. <!-- statement_of_law_id 99 -->");
@@ -677,7 +677,7 @@ INSERT INTO filing_law (filing_id, statement_id) VALUES (${id}, 70), (${id}, 71)
     /^3\. The court applied it\.$/m,
     /^4\. An unlinked item\.$/m,
     /^🧩 ________ <!-- statement_of_law 99 is not cited by this Writing -->/m,
-    /^## Issue\n\n\*\*Is the test met\?\*\*/m,
+    /^## Issue\n\n\*\*A tenant holds over\. Is the test met\?\*\*/m,
     /^## Sources\n\n### Case authority$/m,
   ]) {
     assert.match(md, line);

@@ -125,8 +125,8 @@ A point two authorities support is two items.
 
 In every format:
 
-- The Issue is the question: any context sentences, then the one question in bold. One memo
-  has one `## Issue` and no sub-issues. The Issue:
+- The Issue is the question: any context sentences, then the one question, the whole paragraph
+  in bold. One memo has one `## Issue` and no sub-issues. The Issue:
   - **A.** holds one question;
   - **B.** makes sense on its own;
   - **C.** holds at most one list, and that list conjunctive, joined by "and". "Is gambling legal
