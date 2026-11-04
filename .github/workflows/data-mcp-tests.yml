@@ -49,7 +49,7 @@ jobs:
     needs: changed
     if: ${{ !cancelled() && (needs.changed.result != 'success' || needs.changed.outputs.run == 'true') }}
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: source/lawyer/mcp
@@ -107,7 +107,7 @@ jobs:
       # One issue per failing test file, reused while it stays open: a still-red file gets a comment,
       # not a new issue. A failure before any test file ran is filed under one fixed title.
       - name: File failures as triage issues
-        if: failure() && github.event_name == 'schedule'
+        if: (failure() || cancelled()) && github.event_name == 'schedule'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}

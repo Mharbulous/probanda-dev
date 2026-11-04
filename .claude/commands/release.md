@@ -43,7 +43,7 @@ For each released plugin, read its change set and apply the version rule in `CLA
 
 Write one line per plugin: `P: patch` or `P: minor`, then the reason. For a minor release, also write what each user must do and in what order.
 
-A patch goes on to step 5. A minor release needs a freeze, so show the lines to Brahm and wait for his go-ahead before step 5.
+A patch goes on to step 5. A minor release needs a freeze, so show the lines to Brahm and wait for his go-ahead before step 5. In `/implement-queue`, nobody can answer: a **Minor go-ahead** on the issue (that command's step 4) is his go-ahead for the plugins it covers, and without one the run hands the issue back.
 
 ## 5. Bump and build
 

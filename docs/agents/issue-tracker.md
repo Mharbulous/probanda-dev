@@ -47,6 +47,20 @@ Never put a standalone `-` (including `--input -` and `--body-file -`) in the ar
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
+## What needs a person
+
+An issue carries `ready-for-human` only for a reason on this closed list. `/triage-issue`, `/implement-queue` and `/hitl-triage` all use it, and it lives here because a cloud run may not load Brahm's own skills. Each reason is written `Needs a person: <reason>`, by its key:
+
+- `suggestion`: a suggestion item.
+- `authorization`: consequential authorization, meaning `public/`, `COMMANDMENTS.md`, a minor version, a migration of real data, or anything destructive or externally visible.
+- `wrong-rule`: the work shows an adopted rule or decision is itself wrong.
+- `behaviour-unknown`: the code, tests and docs don't establish the intended behaviour.
+- `new-dependency`: a new dependency, runtime or service.
+- `costly-evidence`: deciding evidence is disproportionately costly.
+- `person-only-check`: a check that only a person can perform, such as a live Cowork session.
+
+Anything else, triage decides itself and records under `### Decisions` with its reason and the option rejected, so Brahm can override it. `scripts/check_brief.py` enforces the `Needs a person:` line, and `scripts/choose_issue.py handback` routes a hand-back by the same list.
+
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
@@ -73,7 +87,7 @@ GitHub shares one number space across issues and PRs, so a bare `#42` may be eit
 
 The implement queue is every open `ready-for-agent` issue that does not carry `withdrawn`, in two location lanes: the cloud run takes the `cloud` issues not labelled `local`, and the local implementer takes the `local` ones. Each works its lane in the same order, lowest issue number first within each group: the maintainer lane (any issue with no lane label: everything opened on probanda-dev, by Brahm or a session working for him, and suggestions he approved by hand), then `lane:user` (Suggestion Box entries a practitioner wrote or confirmed, source `user` or `assisted`), then `lane:ai` (entries Probanda raised itself, source `llm`). `/intake-suggestions` sets the lane label, and `scripts/choose_issue.py` applies the rule for both lanes. Any session that leaves an issue in the cloud lane then runs `/implement-queue` with no issue number. A run that finds its lane's lock held stops at once: the holder works the lane until it is empty. The holder releases the lock and only then reads the queue once more, and takes the lock again if anything is left, so an issue queued while the holder was finishing is never stranded.
 
-**Local implementer.** `/implement-queue local` works the `local` lane on Brahm's machine (**Local lane** in that command). A daily Windows scheduled task under his own account, "Probanda local implementer", registered by `scripts/local-implementer/register-local-implementer.ps1`, runs `run-local-implementer.ps1` in a dedicated clone, `%LOCALAPPDATA%\probanda-local-implementer\probanda-dev`, never the checkout Brahm and his sessions share or any worktree of it: `scripts/local_implementer_guard.py` stops the run anywhere else. `/hitl-triage` starts that task as soon as it relabels a `local` issue `ready-for-agent`, and the daily run is the backstop. Brahm may also run it there by hand. The script itself runs `npm ci --ignore-scripts` in `source/lawyer/mcp` from the committed lockfile before starting Claude Code, so the run never installs Node packages. It fast-forwards `main`, takes the same per-issue claim comments as the cloud run (**Claim**), builds approved items with `fix-maker`, commits by pathspec and pushes to `main`. Its `gh` writes pass their payload in a file, never `--input -` (**Windows PowerShell invocation safety**). An issue it cannot finish is handed back: it removes `ready-for-agent`, adds `ready-for-human`, leaves `local`, comments one line naming the gate item or check that failed, and releases its claim.
+**Local implementer.** `/implement-queue local` works the `local` lane on Brahm's machine (**Local lane** in that command). A daily Windows scheduled task under his own account, "Probanda local implementer", registered by `scripts/local-implementer/register-local-implementer.ps1`, runs `run-local-implementer.ps1` in a dedicated clone, `%LOCALAPPDATA%\probanda-local-implementer\probanda-dev`, never the checkout Brahm and his sessions share or any worktree of it: `scripts/local_implementer_guard.py` stops the run anywhere else. `/hitl-triage` starts that task as soon as it relabels a `local` issue `ready-for-agent`, and the daily run is the backstop. Brahm may also run it there by hand. The script itself runs `npm ci --ignore-scripts` in `source/lawyer/mcp` from the committed lockfile before starting Claude Code, so the run never installs Node packages. It fast-forwards `main`, takes the same per-issue claim comments as the cloud run (**Claim**), builds approved items with `fix-maker`, commits by pathspec and pushes to `main`. Its `gh` writes pass their payload in a file, never `--input -` (**Windows PowerShell invocation safety**). An issue it cannot finish is handed back by **Hand back** in that command, which routes it by reason (**What needs a person**).
 
 ## Intake lock
 

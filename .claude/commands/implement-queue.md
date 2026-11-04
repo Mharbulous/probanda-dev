@@ -29,8 +29,8 @@ With `local` as the first argument, this run is the **local implementer**: the `
 - **Suggestion Box calls**: `node cloud/suggestions/tools/triage.mjs show <suggestion_id> > <file under /tmp>` gives the cloud record. When it prints `set POOL_SECRET_KEY first`, the suggestion issue cannot be selected: hand it back, quoting that line.
 - **The local implementer lock** replaces the implementer lock. It is the earliest live comment on #189 starting `Local lock stamp.`, live for 90 minutes. The cloud run's lock comments start `Claim stamp.`, so neither lane's lock blocks the other. Take: save #189's comments to a file and run `python scripts/choose_issue.py lock --lane local --comments <file>`. `held`: stop and report `Local implementer lock held`. Otherwise post its `body` on #189, record the new comment's id, read the comments again and run it with `--own <id>`: `mine` holds the lock; otherwise delete your comment and stop the same way. Refresh: post a new stamp, then delete your old one. Release: delete your own stamp, and nothing else. Never delete a `Claim stamp.` comment on #189.
 - **Pick** (step 2): list `labels=ready-for-agent,local`, and run `choose_issue.py` with `--lane local`. An issue number in the arguments is taken only when that `queue` holds it. The claim comments on each issue are the cloud run's (**Claim**).
-- **Local gate** (step 4) replaces the cloud gate. The issue is unsuitable only when a plan step or Done-when check needs: `public/` approval or publication; a minor or 1.0 version, or a schema migration; a change to `COMMANDMENTS.md`; a whole test suite or folder (the repo's hook refuses those outside CI); a browser; or a decision or check by a person.
-- **Hand back** replaces step 7, "Mark local", wherever a step names it: discard as step 7 says, then `POST /issues/<n>/labels` with `{"labels":["ready-for-human"]}` and `DELETE /issues/<n>/labels/ready-for-agent`, leaving `local` on the issue. Comment one line naming the gate item or check that failed, with its output quoted, and release the claim by **Release**.
+- **Local gate** (step 4) replaces the cloud gate. The issue is unsuitable only when a plan step or Done-when check needs: `public/` approval or publication; a minor version with no **Minor go-ahead**, a 1.0 version, or a schema migration; a change to `COMMANDMENTS.md`; a write under `.claude/`, which this lane's permission mode refuses whatever the allowlist says (tested 2026-11-04), so never route it through a shell; a browser; or a decision or check by a person.
+- **Hand back** (the section below step 7) replaces step 7, "Mark local", wherever a step names it.
 - **Packages.** `run-local-implementer.ps1` has already run `npm ci --ignore-scripts` in `source/lawyer/mcp`, so skip step 5's `npm ci`. When `node_modules` is missing there, because the run was started another way, hand the issue back naming that.
 - The sandbox SQLite workaround in step 5 is for the cloud only. Skip it.
 - Step 8 releases the local implementer lock, and lists the queue again as the local Pick does.
@@ -69,13 +69,15 @@ Read the issue's Plan, Scope and Done when in full, from its latest `## Agent Br
 - the practitioner's data, matter folders or installed plugin copies;
 - a secret the sandbox lacks (`POOL_SECRET_KEY`, DPAPI stores, any credential);
 - `public/` approval or publication;
-- a minor or 1.0 version under the version rule in `CLAUDE.md`, or a schema migration;
+- a minor version under the version rule in `CLAUDE.md` with no **Minor go-ahead** (below), a 1.0 version, or a schema migration;
 - a change to `COMMANDMENTS.md`;
 - a decision or check by a person.
 
 A single narrow test file named in Done when (for example one `pytest` file) is not a Windows-only suite: try it. Any Done-when check this run cannot perform itself, such as a manual or live-session check, is "a decision or check by a person": an issue is never closed with a Done-when check not run.
 
-When the issue is unsuitable, mark it (step 7, "Mark local") and go back to step 2.
+**Minor go-ahead.** A comment on the issue that opens with `> *Decisions recorded by /hitl-triage.*` and whose `### Decisions` list records Brahm's go-ahead for a minor version of the plugins it covers. It passes the minor gate here and `.claude/commands/release.md` step 4, for those plugins only. The rollout that `release.md` step 8 gives Brahm goes in the step 6 comment. Without one, the minor gate stands.
+
+When the issue is unsuitable only because of the cloud (Windows, a browser, the practitioner's data, a secret), mark it (step 7, "Mark local"). When any other item fails, the local lane would refuse it too, so **Hand back** instead. Then go back to step 2.
 
 ## 5. Implement
 
@@ -84,13 +86,13 @@ A **suggestion issue** is one labelled `suggestion` whose work order has a `Sugg
 - **Select** (a suggestion issue only). Save the issue (`GET /issues/<n>`) and every page of `GET /issues/<n>/comments?per_page=100` to files under `/tmp`. Read the cloud record (**Suggestion Box calls**) of the suggestion its work order names and of each suggestion named in an `### Also covers` comment, each to its own file. Run `python scripts/select_approved_items.py --issue <issue file> --comments <page 1> [--comments <page 2> ...] --record <record> [--record <record> ...] > /tmp/selection.json`. Its rule: an item is built only when its status in the cloud record is `approved`, the latest brief's `### Decisions` list approves it, and the brief has its `### Item <n>` section; every other item is listed under `not_built` with why, and is never built, even when one of the two approves it. Exit 2, or an empty `build` list: step 7, "Mark local", quoting the script's output or each `not_built` line ("a decision or check by a person"). Otherwise keep the `not_built` lines for the step 6 comment. Each entry of `build` is a **unit**: one item, with the items merged with it.
 - The red tests, when the work order has a `### Red tests` section with at least one test, or, for a suggestion issue, the red test of each unit's `### Item <n>` section (never one of an item not in `build`). Write each test at its path, and run it in the `/tmp/base` worktree. Each must fail on the assertion the brief quotes. If every one now passes, the problem was fixed on `main` after triage: comment naming the passing tests, add the `wontfix` label, close the issue, delete your claim comment, and go back to step 2. If only some pass, drop the Plan parts (for a suggestion issue, the units) they cover and say so in the step 6 comment. Keep each dropped unit as `<id>:<n>` for step 6.
 - **Build a suggestion issue with `fix-maker`.** For each unit not dropped, in item order, dispatch one Agent with model `opus`, effort `medium`, and the Read, Glob, Grep, Edit, Write and Bash tools. Its prompt is the body of `source/developer/agents/fix-maker.md` (below its frontmatter), followed by: the issue number and suggestion id; the unit as JSON from `/tmp/selection.json`; the unit's `### Item <n>` section verbatim from the brief; the brief's Scope and the Done-when lines for that item; the paths of `/tmp/selection.json` and of each record; and the line "Work on `main` in this checkout and commit there by pathspec. Never push, stash, rebase, reset, clean, or check out another branch." Wait for it to return before dispatching the next, so each item's commit lands before the next item starts. A return of `already green` drops that unit. A return of `stopped`, or one with no commit: discard this issue's unpushed commits (`git reset --hard origin/main`, which touches only this run's local commits) and step 7, "Mark local", quoting its reason. Never build an item yourself, and never pass fix-maker an item outside its unit.
-- For any other issue: follow the Plan inside the Scope. Change nothing outside the Scope. The red tests stay, committed with the change, and every one must pass when you finish.
+- For any other issue: follow the Plan inside the Scope. Change nothing outside the Scope. The red tests stay, committed with the change, and every one must pass when you finish. A sha256 page pin that fails only because the Plan deliberately changed that page is in scope to re-take from a fresh build. Take only the hash, never the page.
 - Install only what the checks need: `npm ci` in `source/lawyer/mcp` for a Node build or test, `pip install` of `pytest` and the packages a named Python test imports.
 - The sandbox's SQLite (3.45) is too old for the drafting-data migrations (`near "||": syntax error`). Before any test that migrates a database, `pip install pysqlite3-binary`, write a `sitecustomize.py` holding `import sys, pysqlite3; sys.modules["sqlite3"] = pysqlite3` into a scratch folder outside the repo, and run pytest with `PYTHONPATH=<that folder>`.
 - A Done-when check that runs a whole test folder or suite fails partly on Linux for reasons unrelated to the issue, because those suites run on Windows in CI. Run it on the base too (in the `/tmp/base` worktree), and count only failures that the base does not have. Give each test command a timeout of 10 minutes.
-- Run every Done-when check, then `python scripts/build_plugin.py --check`, `python scripts/check_plugin.py`, `python scripts/check_layering.py`, `python scripts/check_file_ops.py` and `python scripts/check_publishable.py --new-since origin/main`. A check that fails and cannot be fixed inside the Scope: step 7, "Mark local", quoting its output.
+- Run every Done-when check, and none under `### After landing`, which only CI can run. Then run `python scripts/build_plugin.py --check`, `python scripts/check_plugin.py`, `python scripts/check_layering.py`, `python scripts/check_file_ops.py` and `python scripts/check_publishable.py --new-since origin/main`. A check that fails and cannot be fixed inside the Scope: step 7, "Mark local", quoting its output.
 - For any other issue, commit the source change by pathspec. A suggestion issue's fix commits are fix-maker's, one per unit. Do not push yet.
-- Release by `.claude/commands/release.md` steps 2 to 6, then commit as its step 7 says, but do not push: step 6 pushes. A plugin it classes as minor: discard this issue's unpushed commits (`git reset --hard origin/main`) and step 7, "Mark local", naming the minor change.
+- Release by `.claude/commands/release.md` steps 2 to 6, then commit as its step 7 says, but do not push: step 6 pushes. A plugin it classes as minor with no **Minor go-ahead** for it: discard this issue's unpushed commits (`git reset --hard origin/main`) and **Hand back** with the reason `authorization`, naming the minor change.
 
 ## 6. Land
 
@@ -98,7 +100,7 @@ A **suggestion issue** is one labelled `suggestion` whose work order has a `Sugg
 - **Fix-commit check** (a suggestion issue only), before every push: `python scripts/check_fix_commit.py --selection /tmp/selection.json --suggestion <record> [--suggestion <record> ...] --range origin/main..HEAD [--dropped <id>:<n> ...]`. It passes only when each unit built is named by exactly one commit as `Suggestion <id> item <n>`, no commit names an item outside `build`, and no commit message or added line holds a sentence of the submitted text. A failure: discard this issue's unpushed commits as above and step 7, "Mark local", quoting its output. Never amend or rewrite a commit to pass it.
 - Push: `git pull --ff-only`, then `git push origin HEAD:main`. If `main` moved on, merge `origin/main` (`git merge --no-edit origin/main`), re-run the step 5 checks, the withdrawn check and the fix-commit check, then push. A merge conflict you cannot resolve keeping both sides' intent: `git merge --abort`, discard the local commits as above, and step 7, "Mark local".
 - Check: `git rev-parse HEAD` equals `git rev-parse origin/main` after a fresh `git fetch`.
-- Comment on the issue: the commit SHA (for a suggestion issue, each fix commit's SHA with its `Suggestion <id> item <n>`), each check run and its result, any Plan part or unit dropped because its red test already passed, and each `not_built` item with why. Run the verbatim guard (`python scripts/check_verbatim.py --suggestion <record> ... <comment file>`) over the comment first.
+- Comment on the issue: the commit SHA (for a suggestion issue, each fix commit's SHA with its `Suggestion <id> item <n>`), each check run and its result, each `### After landing` check left to CI, any Plan part or unit dropped because its red test already passed, and each `not_built` item with why. Run the verbatim guard (`python scripts/check_verbatim.py --suggestion <record> ... <comment file>`) over the comment first.
 - Close it: `PATCH /issues/<n>` with `{"state":"closed"}`.
 - Delete your claim comment (`docs/agents/issue-tracker.md` **Release**, delete only).
 - Go back to step 2.
@@ -111,8 +113,17 @@ A **suggestion issue** is one labelled `suggestion` whose work order has a `Sugg
 - Comment one line naming which gate item or check failed, with the failing output quoted when there is one.
 - Release the claim by `docs/agents/issue-tracker.md` **Release**.
 
+## Hand back
+
+For an issue a person or a new brief must look at, in either lane.
+
+- Discard as step 7 says, and any unpushed commits as the step naming this says.
+- Save every page of the issue's comments and `GET /issues/<n>` to files, and run `python scripts/choose_issue.py handback --reason <reason> --comments <comments file> --issue <issue file>`. The reason is a key from **What needs a person** in `docs/agents/issue-tracker.md` when the failure is one of those. Otherwise it is a short word for the failure, such as `suite`, `hook-refused`, `check-failed`, `merge-conflict`, `node-modules`, `secret` or `browser`. A check refused by `no-regression-suite.py` is `hook-refused`, not `person-only-check`.
+- Apply what it prints: `POST /issues/<n>/labels` with its `add`, and `DELETE /issues/<n>/labels/<label>` for each of its `remove`. Leave the location label.
+- Comment one line that starts with its `comment_prefix` and names the gate item or check that failed, with its output quoted, then release the claim by **Release**.
+
 ## 8. Release and report
 
 Release the implementer lock (**Implementer lock**, Release). Then list the queue once more as in step 2. If an issue is left, take the lock again and go back to step 2. If the lock is now held, another run has the queue: stop.
 
-End with a short report: each issue implemented with its SHA, each issue relabelled `local` with its reason, and each issue skipped as claimed or blocked.
+End with a short report: each issue implemented with its SHA, each issue relabelled `local` with its reason, each issue handed back with its reason and label, and each issue skipped as claimed or blocked.

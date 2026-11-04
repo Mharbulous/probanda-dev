@@ -187,9 +187,55 @@ class Cli(unittest.TestCase):
             self.assertEqual(self.run_main("queue", "--lane", "local", "--issues", bad)[0], 2)
 
 
+class Handback(unittest.TestCase):
+    EARLIER = comment(70, "Hand-back (hook-refused): a check was refused.", LIVE)
+
+    def test_a_listed_reason_goes_to_a_person(self):
+        for reason in ci.NEEDS_PERSON:
+            self.assertEqual(ci.handback(reason, [])["add"], ["ready-for-human"], reason)
+
+    def test_any_other_reason_goes_back_to_triage_once(self):
+        first = ci.handback("hook-refused", [])
+        self.assertEqual((first["add"], first["remove"]), (["needs-triage"], ["ready-for-agent"]))
+        self.assertEqual(ci.handback("hook-refused", [self.EARLIER])["add"], ["ready-for-human"])
+
+    def test_a_suggestion_issue_always_goes_to_a_person(self):
+        self.assertEqual(ci.handback("hook-refused", [], ["suggestion", "local"])["add"], ["ready-for-human"])
+
+    def test_only_the_marker_counts_as_an_earlier_hand_back(self):
+        others = [comment(71, "Handed back by the local implementer.", LIVE),
+                  comment(72, "A note about a Hand-back (x): in the middle.", LIVE)]
+        self.assertEqual(ci.handback("hook-refused", others)["earlier"], 0)
+
+    def test_the_comment_prefix_names_the_reason_and_is_counted_later(self):
+        prefix = ci.handback("merge-conflict", [])["comment_prefix"]
+        self.assertEqual(prefix, "Hand-back (merge-conflict):")
+        self.assertEqual(ci.handback("x", [comment(73, prefix + " why", LIVE)])["earlier"], 1)
+
+    def test_cli(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            comments = os.path.join(tmp, "c.json")
+            with open(comments, "w", encoding="utf-8") as f:
+                # Two pages back to back, as `gh api --paginate` prints them.
+                f.write(json.dumps([self.EARLIER]) + json.dumps([]))
+            detail = os.path.join(tmp, "i.json")
+            with open(detail, "w", encoding="utf-8") as f:
+                json.dump({"number": 5, "labels": [{"name": "local"}]}, f)
+            out = io.StringIO()
+            with redirect_stdout(out):
+                code = ci.main(["handback", "--reason", "suite", "--comments", comments, "--issue", detail])
+            self.assertEqual((code, json.loads(out.getvalue())["add"]), (0, ["ready-for-human"]))
+            with redirect_stderr(io.StringIO()):
+                self.assertEqual(ci.main(["handback", "--comments", comments]), 2)
+                self.assertEqual(ci.main(["handback", "--reason", "suite"]), 2)
+
+
 class Untriaged(unittest.TestCase):
     def bare(self, n, *names):
         return {"number": n, "state": "open", "labels": [{"name": x} for x in names]}
+
+    def test_a_handed_back_issue_is_taken_again(self):
+        self.assertEqual(ci.untriaged([self.bare(5, "bug", "needs-triage", "local")]), [5])
 
     def test_only_open_issues_with_no_state_label_newest_first(self):
         issues = [

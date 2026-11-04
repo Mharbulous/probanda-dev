@@ -9,6 +9,14 @@ choose_issue: which issue an implementer lane takes next, and whether its lock i
   python scripts/choose_issue.py lock --lane cloud|local --comments <file> [--comments <file> ...]
       [--own <comment id>] [--now <ISO time>]
   python scripts/choose_issue.py untriaged --issues <file> [--issues <file> ...]
+  python scripts/choose_issue.py handback --reason <reason> --comments <file> [--comments <file> ...]
+      [--issue <file>]
+
+handback prints the labels for an issue an implementer cannot finish. A reason on
+the closed list (docs/agents/issue-tracker.md, What needs a person) or a suggestion
+issue goes to `ready-for-human`. Any other reason goes to `needs-triage`, so triage
+rewrites the brief, once: an issue that already holds a `Hand-back (` comment goes to
+`ready-for-human`. `--issue` is the REST reply of `GET /issues/<n>`.
 
 untriaged is for the nightly sweep of /triage-issue, not the implementers: the open
 issues with no state label, newest first, so an issue that stops a sweep holds back
@@ -65,6 +73,9 @@ LANES = {
 }
 LANE_RANK = {"lane:user": 1, "lane:ai": 2}
 STATE_LABELS = {"ready-for-agent", "ready-for-human", "needs-info", "wontfix"}
+NEEDS_PERSON = {"suggestion", "authorization", "wrong-rule", "behaviour-unknown", "new-dependency",
+                "costly-evidence", "person-only-check"}
+HANDBACK_PREFIX = "Hand-back ("
 
 
 class Unsettled(Exception):
@@ -170,11 +181,20 @@ def lock(comments, lane, own=None, now=None):
             "state": state, "holder": holder}
 
 
+def handback(reason, comments, issue_labels=()):
+    """The labels for an issue handed back, and how its comment must start."""
+    earlier = sum((c.get("body") or "").startswith(HANDBACK_PREFIX) for c in comments)
+    person = reason in NEEDS_PERSON or "suggestion" in issue_labels or earlier > 0
+    return {"reason": reason, "earlier": earlier, "add": ["ready-for-human" if person else "needs-triage"],
+            "remove": ["ready-for-agent"], "comment_prefix": f"{HANDBACK_PREFIX}{reason}):"}
+
+
 def main(argv):
     try:
-        if not argv or argv[0] not in ("queue", "pick", "lock", "untriaged"):
-            raise Unsettled("give queue, pick, lock or untriaged first")
+        if not argv or argv[0] not in ("queue", "pick", "lock", "untriaged", "handback"):
+            raise Unsettled("give queue, pick, lock, untriaged or handback first")
         command, lane, issues, comments, lock_comments, handled, own, now = argv[0], None, [], {}, [], set(), None, None
+        reason, comments_given, issue_labels = None, False, set()
         i = 1
         while i < len(argv):
             flag = argv[i]
@@ -185,15 +205,20 @@ def main(argv):
                 if value not in LANES:
                     raise Unsettled("--lane is cloud or local")
                 lane = value
-            elif flag == "--issues" and command != "lock":
+            elif flag == "--issues" and command not in ("lock", "handback"):
                 issues.extend(load_arrays(value))
             elif flag == "--comments" and command == "pick":
                 m = re.fullmatch(r"#?(\d+)=(.+)", value)
                 if not m:
                     raise Unsettled("pick takes --comments <issue number>=<file>")
                 comments.setdefault(int(m.group(1)), []).extend(load_arrays(m.group(2)))
-            elif flag == "--comments" and command == "lock":
+            elif flag == "--comments" and command in ("lock", "handback"):
                 lock_comments.extend(load_arrays(value))
+                comments_given = True
+            elif flag == "--reason" and command == "handback":
+                reason = value
+            elif flag == "--issue" and command == "handback":
+                issue_labels = labels(json.loads(Path(value).read_text(encoding="utf-8")))
             elif flag == "--handled" and command in ("queue", "pick"):
                 handled.add(int(value.lstrip("#")))
             elif flag == "--own" and command == "lock":
@@ -203,10 +228,14 @@ def main(argv):
             else:
                 raise Unsettled(f"unknown option {flag} for {command}")
             i += 2
-        if lane is None and command != "untriaged":
+        if lane is None and command not in ("untriaged", "handback"):
             raise Unsettled("give --lane cloud or --lane local")
+        if command == "handback" and (not reason or not comments_given):
+            raise Unsettled("handback takes --reason and the issue's --comments")
         if command == "untriaged":
             result = {"queue": untriaged(issues)}
+        elif command == "handback":
+            result = handback(reason, lock_comments, issue_labels)
         elif command == "queue":
             result = {"lane": lane, "queue": queue(issues, lane, handled)}
         elif command == "pick":
