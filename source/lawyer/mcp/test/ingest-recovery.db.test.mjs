@@ -754,7 +754,7 @@ test("a privileged call's shape is checked first, keeping its wording; the answe
   const two = await object();
   const write = (result_ids, privilege, store) => callTool({}, "matter_data__ingest_result", { matter_root: matterRoot, run_id, document: { ...memo, store },
     contract: "privileged", result_ids, answers: { privilege } });
-  await assert.rejects(write([one.result_id], "maybe", "main"), /privilege must be yes, no or unclear/);
+  await assert.rejects(write([one.result_id], "maybe", "main"), /must be one of: yes, no, unclear/);
   await assert.rejects(write([one.result_id, two.result_id], "yes", "privileged"), /one result/);
   assert.deepEqual([existsSync(stagedPath(one.result_id)), existsSync(stagedPath(two.result_id))], [true, true], "the wording is kept for the corrected call");
   assert.equal((await write([one.result_id], " Yes ", "privileged")).outcome, "written");
