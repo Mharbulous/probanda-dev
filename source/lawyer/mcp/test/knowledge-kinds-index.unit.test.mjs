@@ -1,7 +1,9 @@
 // Every shipped index (plan Phase 5, decision 3): each `kinds.json` row's `file` exists, each
 // alias resolves to exactly one file, and every type file in a `Documents` folder is named by a
 // row. Each `venues.json` venue has its folder, and each venue alias resolves to exactly one
-// venue. Resolution is the runtime's own (knowledge/venues-kinds.ts), the one knowledge__list uses.
+// venue. A jurisdiction whose only folder is `_NoVenue` (as /legal-research's tree is) has no
+// venues to index and carries no `venues.json`; one with any other folder must carry it.
+// Resolution is the runtime's own (knowledge/venues-kinds.ts), the one knowledge__list uses.
 
 import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -57,8 +59,15 @@ test("every shipped kinds.json row names a file that exists, and each alias reso
 });
 
 test("every shipped venues.json venue has its folder, and each alias resolves to exactly that venue", () => {
+  let checked = 0;
   for (const j of jurisdictions()) {
     const label = `${j.label}/venues.json`;
+    const venueFolders = dirs(j.path).filter((name) => name !== NO_VENUE);
+    if (!existsSync(join(j.path, "venues.json"))) {
+      assert.deepEqual(venueFolders, [], `${label} is missing, yet the jurisdiction holds venue folders`);
+      continue;
+    }
+    checked += 1;
     const view = mergeVenues({ doc: readJson(join(j.path, "venues.json")), file: label }, null);
     const venues = view.venues.filter((row) => !row.reserved);
     assert.ok(venues.length > 0, `${label} lists venues`);
@@ -71,8 +80,9 @@ test("every shipped venues.json venue has its folder, and each alias resolves to
       }
     }
     const listed = new Set(venues.map((row) => row.code));
-    assert.deepEqual(dirs(j.path).filter((name) => name !== NO_VENUE && !listed.has(name)), [], `${label}: venue folders it does not list`);
+    assert.deepEqual(venueFolders.filter((name) => !listed.has(name)), [], `${label}: venue folders it does not list`);
   }
+  assert.ok(checked > 0, "the shipped tree holds a venues.json");
 });
 
 test("mergeKinds refuses a row whose file ends in .md, in either layer, naming the file and the stem", () => {
