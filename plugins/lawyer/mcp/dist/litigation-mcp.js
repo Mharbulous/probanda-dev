@@ -1,4 +1,4 @@
-// build-stamp: ef0f840e6784
+// build-stamp: 00005314684e
 import { createRequire as __bundleCreateRequire } from "node:module";
 const require = __bundleCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -75264,7 +75264,7 @@ function missingMessage(subject, env, tried) {
 }
 
 // src/build-stamp.ts
-var BUILD_STAMP = false ? null : "ef0f840e6784";
+var BUILD_STAMP = false ? null : "00005314684e";
 var STAMP_LINE = /^\/\/ build-stamp: ([0-9a-f]{12})\r?\n/;
 function noComparison(build_note) {
   return { build_stamp: BUILD_STAMP, current_build_stamp: null, server_outdated: false, build_note };
@@ -75371,6 +75371,16 @@ var WithImages = class {
 function defineTool(name, handler, flags) {
   return { name, handler: (args, context) => handler(args, context), flags };
 }
+function dispatchFrom(buildDefinitions, tools, replyText2 = jsonText) {
+  let table2;
+  const call = async (context, name, rawArgs) => {
+    table2 ??= pairTools(buildDefinitions(), tools);
+    const entry3 = table2.get(name);
+    if (!entry3) throw new ValidationError(`Unknown tool "${name}"`);
+    return entry3.handler(validateToolInput(entry3.definition, rawArgs), context);
+  };
+  return { call, dispatch: (context, name, rawArgs) => toolReply(name, () => call(context, name, rawArgs), replyText2) };
+}
 function pairTools(definitions, tools) {
   const entries = /* @__PURE__ */ new Map();
   const problems = [];
@@ -75389,15 +75399,6 @@ function pairTools(definitions, tools) {
   }
   if (problems.length) throw new DataServerError(`The tool list and its definitions differ: ${problems.join("; ")}`, "internal_error");
   return table2;
-}
-function definitionLookup(buildDefinitions) {
-  let definitions;
-  return (name) => {
-    definitions ??= new Map(buildDefinitions().map((tool) => [tool.name, tool]));
-    const definition = definitions.get(name);
-    if (!definition) throw new ValidationError(`Unknown tool "${name}"`);
-    return definition;
-  };
 }
 var FAULT = /* @__PURE__ */ Symbol("fault");
 async function toolReply(name, run2, replyText2 = jsonText) {
@@ -123891,12 +123892,28 @@ async function sendWriteUp(cardId, rawJudgement, deps) {
 }
 
 // src/suggestions/tools.ts
-function isSuggestionToolName(name) {
-  return name.startsWith("suggestion_box__") || name.startsWith("suggestion_log__") || name.startsWith("suggestion_observation__");
-}
-function isSuggestionCardToolName(name) {
-  return name.startsWith("suggestion_card__");
-}
+var CARD_TOOLS = [
+  "suggestion_card__check",
+  "suggestion_card__environment_facts",
+  "suggestion_card__build",
+  "suggestion_card__wait",
+  "suggestion_card__attach_mockup",
+  "suggestion_card__write_up_brief",
+  "suggestion_card__write_up_check",
+  "suggestion_card__write_up_send"
+];
+var OTHER_TOOLS = [
+  "suggestion_observation__record",
+  "suggestion_observation__next",
+  "suggestion_box__status",
+  "suggestion_box__past_suggestions",
+  "suggestion_log__read",
+  "suggestion_log__write"
+];
+var suggestionTools = [
+  ...CARD_TOOLS.map((name) => defineTool(name, (args, context) => callSuggestionCardTool(context.practiceDb, name, args))),
+  ...OTHER_TOOLS.map((name) => defineTool(name, (args, _context) => callSuggestionTool(name, args)))
+];
 async function callSuggestionCardTool(store, name, args, env = store.env) {
   const deps = { env, records: () => readRecordTexts(store, env) };
   switch (name) {
@@ -127625,9 +127642,7 @@ var sent;
 function requestPath(env = process.env) {
   return join67(defaultStateDir(env), "key-request.json.dpapi");
 }
-function isKeyRequestToolName(name) {
-  return name.startsWith("key_request__") || name === "cloud_key__configure_credential";
-}
+var keyRequestTools = ["key_request__submit", "key_request__status", "cloud_key__configure_credential"].map((name) => defineTool(name, () => callKeyRequestTool(name)));
 function callKeyRequestTool(name, env = process.env) {
   switch (name) {
     case "key_request__submit":
@@ -127783,9 +127798,9 @@ async function handle2(req, res) {
 var FORM2 = `<p>Probanda's key lets this computer use Probanda's shared services: the legal commons, the Suggestion Box and the saving of practice records. Probanda gives one to each practising lawyer it has verified.</p><form method="post"><label>Full name, as the Law Society's directory shows it<br><input name="full_name" maxlength="200" autocomplete="name" required autofocus></label><p>Jurisdiction: British Columbia</p><label>Year of call<br><input name="year_of_call" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></label><label>Call date (optional)<br><input type="date" name="call_date"></label><label>Firm name, as the directory shows it under "Primary location"<br><input name="firm_name" maxlength="200" autocomplete="organization" required></label><label>Email, so Probanda can contact you about this request<br><input type="email" name="email" maxlength="254" autocomplete="email" required></label><label>Phone (optional)<br><input type="tel" name="phone" maxlength="40" autocomplete="tel"></label><button type="submit">Send request</button></form><p class="note">These details go only to Probanda, which uses them only to check in the Law Society of British Columbia's public directory that you are a practising lawyer, and to contact you about this request. Your key is sent only to the email address your firm's website or the directory lists for you, never to the one you type here. They are never sent to Claude. Do not include any client or matter information. Sending the request is your consent.</p>`;
 
 // src/dispatch.ts
-var toolDefinition = definitionLookup(buildToolDefinitions);
 var INLINE_SQL_CAP = 8 * 1024;
 var dataTools = [
+  ...practiceTools.map(({ name }) => defineTool(name, (args, context) => callPracticeTool(context.practiceDb, name, args))),
   defineTool("matter_data__query", (args) => caseDataQuery(args.matter_root, args.sql, args.params)),
   defineTool("matter_data__execute", async (args) => {
     if (args.sql_script === void 0 === (args.generator === void 0)) {
@@ -127962,209 +127977,65 @@ var dataTools = [
   defineTool("drafting_forms__publish_bcca_factum", (args) => publishBccaFactum(args)),
   defineTool("drafting_forms__publish_vaniac_package", (args) => publishVaniacPackage(args)),
   defineTool("drafting_forms__assemble_general", (args) => assembleGeneral(args)),
-  defineTool("drafting_forms__pre_filing_check", (args) => submissionFormsPreFilingCheck(args.db_path, args.filing_id, args.package_dir))
+  defineTool("drafting_forms__pre_filing_check", (args) => submissionFormsPreFilingCheck(args.db_path, args.filing_id, args.package_dir)),
+  defineTool("skill_source__read", (args) => skillSourceRead(args.path, void 0, args.from, args.match)),
+  defineTool("skill_source__list", (args) => skillSourceList(args.dir ?? "", args.recursive ?? false)),
+  defineTool("skill_rules__applicable", (args) => skillRulesApplicable(args.skill, args.operation, args.facts)),
+  defineTool("skill_rules__coverage", (args) => skillRulesCoverage(args.skill)),
+  defineTool("rules__at", (args) => rulesAt(args.skill, args.path, args.facts)),
+  defineTool("rules__audit", (args) => rulesAudit(args.skill, args.path, args.rule_id, args.facts)),
+  defineTool("rules__move", (args) => rulesMove(args)),
+  defineTool("rules__branch", (args) => rulesBranch(args)),
+  defineTool("rules__provisional", (args) => rulesProvisional(args)),
+  defineTool("rules__lifecycle", (args) => rulesLifecycle(args.db_path, args.since)),
+  defineTool("sources__check", (args) => checkSources(args.files)),
+  defineTool("sources__fetch", (args) => sourcesFetch(args)),
+  defineTool("knowledge__read", (args) => knowledgeRead(args.path, matterRootSeams("knowledge__read", args.matter_root))),
+  defineTool("knowledge__list", (args) => knowledgeList(
+    { dir: args.dir, recursive: args.recursive, resolve: args.resolve, recipient: args.recipient },
+    matterRootSeams("knowledge__list", args.matter_root)
+  )),
+  defineTool("knowledge__write", (args, context) => knowledgeWrite(args, {
+    lookUpMatter: async (mattNum) => (await matter_lookup(context.practiceDb, { matt_num: mattNum })).rows
+  })),
+  defineTool("knowledge__retire", (args) => knowledgeRetire(args)),
+  defineTool("preferences__read", (args) => preferencesRead(args)),
+  defineTool("preferences__write", (args) => preferencesWrite(args)),
+  ...suggestionTools,
+  defineTool("pages__template", (args) => pagesTemplate(args.page)),
+  defineTool("pages__preview", (args, context) => pagesPreview(args, context.practiceDb)),
+  defineTool("repo_docs__write", (args) => repoDocsWrite(args.path, args.content, args.overwrite ?? false)),
+  defineTool("repo_docs__read", (args) => repoDocsRead(args.path)),
+  defineTool("research_filing__list_downloads", (args) => listDownloads(args.since_mtime, args.filename)),
+  defineTool("research_filing__list_law_folder", (args) => listLawFolder(args.destination_dir)),
+  defineTool("research_filing__file_download", (args) => withJobActivity("research_filing__file_download", args, () => fileDownload(args.destination_dir, args.source_filename, args.destination_filename))),
+  defineTool("research_filing__append_manifest", (args) => withJobActivity("research_filing__append_manifest", args, () => appendManifest(args.destination_dir, args.record))),
+  defineTool("research_filing__save_answer", (args) => saveAnswerTool(args)),
+  defineTool("research_filing__write_scratch", (args) => withJobActivity("research_filing__write_scratch", args, () => writeScratch(args.matter_root, args.filename, args.text, args.kind))),
+  defineTool(
+    "research_filing__law_folder_text",
+    (args) => lawFolderText(args.matter_root, args.destination_dir, {
+      file: args.file ?? void 0,
+      pattern: args.pattern ?? void 0,
+      context: args.context ?? void 0,
+      max_matches: args.max_matches ?? void 0
+    })
+  ),
+  defineTool("research_filing__legislation_search", (args) => legislationSearch(args.matter_root, args.path, args.terms, args.regex, args.pages, {}, args.pinpoint)),
+  defineTool("research_filing__matter_folder", (args) => matterFolder(args)),
+  defineTool("research_filing__research_folder", (args) => researchFolder(args)),
+  defineTool("research_filing__file_fetched", (args) => withJobActivity("research_filing__file_fetched", args, () => fileFetched(args.url, args.destination_dir, args.filename, args.record))),
+  defineTool("research__preflight", () => researchPreflight()),
+  defineTool("pdf_pages__images", (args) => pdfPageImages({ path: args.path, pages: args.pages, tiles: args.tiles, destination_dir: args.destination_dir })),
+  defineTool("pdf_pages__compare", (args) => pdfPagesCompare({ a: args.a, b: args.b, pages: args.pages, destination_dir: args.destination_dir })),
+  ...keyRequestTools
 ];
-function dataToolDefinitions() {
-  return [
-    ...caseDataToolDefinitions(),
-    ...timePipelineToolDefinitions(),
-    ...looseThreadsToolDefinitions(),
-    ...timecampingToolDefinitions(),
-    ...submissionDataToolDefinitions(),
-    ...submissionFormsToolDefinitions()
-  ];
-}
-var dataTable;
-function dispatchTool(context, name, rawArgs) {
-  return toolReply(name, () => callTool(context, name, rawArgs), replyText);
-}
 function replyText(name, result) {
   if (!name.startsWith("rules__")) return jsonText(name, result);
   if (typeof result !== "string") throw new DataServerError(`${name} returned a ${typeof result}, not its XML`, "internal_error");
   return result;
 }
-async function callTool(context, name, rawArgs) {
-  const definition = toolDefinition(name);
-  const args = validateToolInput(definition, rawArgs);
-  if (name.startsWith("practice_data__")) {
-    return callPracticeTool(context.practiceDb, name, args);
-  }
-  dataTable ??= pairTools(dataToolDefinitions(), dataTools);
-  const dataTool = dataTable.get(name);
-  if (dataTool) return dataTool.handler(args, context);
-  if (name === "skill_source__read") {
-    return skillSourceRead(
-      args.path,
-      void 0,
-      args.from,
-      args.match
-    );
-  }
-  if (name === "skill_source__list") {
-    return skillSourceList(
-      args.dir ?? "",
-      args.recursive ?? false
-    );
-  }
-  if (name === "skill_rules__applicable") {
-    return skillRulesApplicable(
-      args.skill,
-      args.operation,
-      args.facts
-    );
-  }
-  if (name === "skill_rules__coverage") {
-    return skillRulesCoverage(args.skill);
-  }
-  if (name === "rules__at") {
-    return rulesAt(args.skill, args.path, args.facts);
-  }
-  if (name === "rules__audit") {
-    return rulesAudit(
-      args.skill,
-      args.path,
-      args.rule_id,
-      args.facts
-    );
-  }
-  if (name === "rules__move") {
-    return rulesMove(args);
-  }
-  if (name === "rules__branch") {
-    return rulesBranch(args);
-  }
-  if (name === "rules__provisional") {
-    return rulesProvisional(args);
-  }
-  if (name === "rules__lifecycle") {
-    return rulesLifecycle(args.db_path, args.since);
-  }
-  if (name === "sources__check") {
-    return checkSources(args.files);
-  }
-  if (name === "knowledge__read") {
-    return knowledgeRead(args.path, matterRootSeams(name, args.matter_root));
-  }
-  if (name === "knowledge__list") {
-    return knowledgeList(
-      {
-        dir: args.dir,
-        recursive: args.recursive,
-        resolve: args.resolve,
-        recipient: args.recipient
-      },
-      matterRootSeams(name, args.matter_root)
-    );
-  }
-  if (name === "knowledge__write") {
-    return knowledgeWrite(args, {
-      lookUpMatter: async (mattNum) => (await matter_lookup(context.practiceDb, { matt_num: mattNum })).rows
-    });
-  }
-  if (name === "knowledge__retire") {
-    return knowledgeRetire(args);
-  }
-  if (name === "preferences__read") {
-    return preferencesRead(args);
-  }
-  if (name === "preferences__write") {
-    return preferencesWrite(args);
-  }
-  if (isSuggestionCardToolName(name)) {
-    return callSuggestionCardTool(context.practiceDb, name, args);
-  }
-  if (isSuggestionToolName(name)) {
-    return callSuggestionTool(name, args);
-  }
-  if (name === "pages__template") {
-    return pagesTemplate(args.page);
-  }
-  if (name === "pages__preview") {
-    return pagesPreview(args, context.practiceDb);
-  }
-  if (name === "sources__fetch") {
-    return sourcesFetch(args);
-  }
-  if (name === "repo_docs__write") {
-    return repoDocsWrite(
-      args.path,
-      args.content,
-      args.overwrite ?? false
-    );
-  }
-  if (name === "repo_docs__read") {
-    return repoDocsRead(args.path);
-  }
-  if (name === "research_filing__list_downloads") {
-    return listDownloads(args.since_mtime, args.filename);
-  }
-  if (name === "research_filing__list_law_folder") {
-    return listLawFolder(args.destination_dir);
-  }
-  if (name === "research_filing__file_download") {
-    return withJobActivity(
-      name,
-      args,
-      () => fileDownload(args.destination_dir, args.source_filename, args.destination_filename)
-    );
-  }
-  if (name === "research_filing__append_manifest") {
-    return withJobActivity(name, args, () => appendManifest(args.destination_dir, args.record));
-  }
-  if (name === "research_filing__save_answer") {
-    return saveAnswerTool(args);
-  }
-  if (name === "research_filing__write_scratch") {
-    return withJobActivity(
-      name,
-      args,
-      () => writeScratch(args.matter_root, args.filename, args.text, args.kind)
-    );
-  }
-  if (name === "research_filing__law_folder_text") {
-    return lawFolderText(args.matter_root, args.destination_dir, {
-      file: args.file ?? void 0,
-      pattern: args.pattern ?? void 0,
-      context: args.context ?? void 0,
-      max_matches: args.max_matches ?? void 0
-    });
-  }
-  if (name === "research_filing__legislation_search") {
-    return legislationSearch(args.matter_root, args.path, args.terms, args.regex, args.pages, {}, args.pinpoint);
-  }
-  if (name === "research_filing__matter_folder") {
-    return matterFolder(args);
-  }
-  if (name === "research_filing__research_folder") {
-    return researchFolder(args);
-  }
-  if (name === "research_filing__file_fetched") {
-    return withJobActivity(name, args, () => fileFetched(args.url, args.destination_dir, args.filename, args.record));
-  }
-  if (name === "research__preflight") {
-    return researchPreflight();
-  }
-  if (name === "pdf_pages__images") {
-    return pdfPageImages({
-      path: args.path,
-      pages: args.pages,
-      tiles: args.tiles,
-      destination_dir: args.destination_dir
-    });
-  }
-  if (name === "pdf_pages__compare") {
-    return pdfPagesCompare({
-      a: args.a,
-      b: args.b,
-      pages: args.pages,
-      destination_dir: args.destination_dir
-    });
-  }
-  if (isKeyRequestToolName(name)) {
-    return callKeyRequestTool(name);
-  }
-  throw new ValidationError(`Unknown tool "${name}"`);
-}
+var { call: callTool, dispatch: dispatchTool } = dispatchFrom(buildToolDefinitions, dataTools, replyText);
 function addJobPhase(timings, started) {
   insertPhase(timings, "background_job", Math.round((performance.now() - started) * 10) / 10);
 }
